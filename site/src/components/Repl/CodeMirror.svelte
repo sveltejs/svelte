@@ -12,33 +12,60 @@
 </script>
 
 <script>
-	import { onMount, beforeUpdate, createEventDispatcher } from 'svelte';
+	import { onMount, beforeUpdate, createEventDispatcher, getContext } from 'svelte';
+	import Message from './Message.svelte';
 
 	const dispatch = createEventDispatcher();
+	const { navigate } = getContext('REPL');
 
-	export let mode;
-	export let code;
 	export let readonly = false;
-	export let error = null;
 	export let errorLoc = null;
-	export let warningCount = 0;
 	export let flex = false;
 	export let lineNumbers = true;
 	export let tab = true;
 
 	let w;
 	let h;
+	let code = '';
+	let mode;
+
+	// We have to expose set and update methods, rather
+	// than making this state-driven through props,
+	// because it's difficult to update an editor
+	// without resetting scroll otherwise
+	export function set(new_code, new_mode) {
+		if (new_mode !== mode) {
+			createEditor(mode = new_mode);
+		}
+
+		code = new_code;
+		if (editor) editor.setValue(code);
+	}
+
+	export function update(new_code) {
+		code = new_code;
+
+		if (editor) {
+			const { left, top } = editor.getScrollInfo();
+			editor.setValue(code = new_code);
+			editor.scrollTo(left, top);
+		}
+	}
 
 	export function resize() {
 		editor.refresh();
 	}
 
 	const modes = {
+		js: {
+			name: 'javascript',
+			json: false
+		},
 		json: {
 			name: 'javascript',
 			json: true
 		},
-		handlebars: {
+		svelte: {
 			name: 'handlebars',
 			base: 'text/html'
 		}
@@ -51,15 +78,6 @@
 	let error_line;
 	let destroyed = false;
 	let CodeMirror;
-
-	$: if (CodeMirror) {
-		createEditor(mode);
-	}
-
-	$: if (editor && !updating && code != null) {
-		updating = true;
-		editor.setValue(code);
-	}
 
 	$: if (editor && w && h) {
 		editor.refresh();
@@ -97,9 +115,13 @@
 	onMount(() => {
 		if (_CodeMirror) {
 			CodeMirror = _CodeMirror;
+			createEditor(mode || 'svelte');
+			editor.setValue(code || '');
 		} else {
 			codemirror_promise.then(mod => {
 				CodeMirror = mod.default;
+				createEditor(mode || 'svelte');
+				editor.setValue(code || '');
 			});
 		}
 
@@ -114,7 +136,7 @@
 	});
 
 	function createEditor(mode) {
-		if (destroyed) return;
+		if (destroyed || !CodeMirror) return;
 
 		if (editor) {
 			editor.toTextArea();
@@ -126,7 +148,7 @@
 			indentWithTabs: true,
 			indentUnit: 2,
 			tabSize: 2,
-			value: code,
+			value: '',
 			mode: modes[mode] || {
 				name: mode
 			},
@@ -143,8 +165,8 @@
 		editor.on('change', instance => {
 			if (!updating) {
 				updating = true;
-				code = instance.getValue();
-				dispatch('change', { value: code });
+				// code = instance.getValue();
+				dispatch('change', { value: instance.getValue() });
 			}
 		});
 
@@ -159,6 +181,7 @@
 		height: 100%;
 		border: none;
 		line-height: 1.5;
+		overflow: hidden;
 	}
 
 	.codemirror-container :global(.CodeMirror) {
@@ -182,13 +205,6 @@
 		border: none;
 	}
 
-	.codemirror-container .message {
-		position: absolute;
-		bottom: 2.4rem;
-		left: 2.4rem;
-		z-index: 20;
-	}
-
 	.codemirror-container :global(.error-loc) {
 		position: relative;
 		border-bottom: 2px solid #da106e;
@@ -196,18 +212,6 @@
 
 	.codemirror-container :global(.error-line) {
 		background-color: rgba(200, 0, 0, .05);
-	}
-
-	.loading,
-	.error {
-		text-align: center;
-		color: #999;
-		font-weight: 400;
-		margin: 2.4rem 0 0 0;
-	}
-
-	.loading {
-		background-color: #666;
 	}
 
 	textarea {
@@ -221,7 +225,7 @@
 		top: 0;
 		left: 0;
 		border: none;
-		padding: 4px 4px 4px 57px;
+		padding: 4px 4px 4px 60px;
 		resize: none;
 		font-family: var(--font-mono);
 		font-size: 1.3rem;
@@ -237,19 +241,8 @@
 		padding: 0 0 0 4px;
 		height: auto;
 	}
-
-	.flex .loading {
-		display: none;
-	}
 </style>
 
-<!--
------------------------------------------------
-	syntax-highlighting [prism]
-	NOTE
-	- just started to transfer colors from prism to codemirror
------------------------------------------------
--->
 <div class='codemirror-container' class:flex bind:offsetWidth={w} bind:offsetHeight={h}>
 	<textarea
 		tabindex='2'
@@ -258,33 +251,12 @@
 		value={code}
 	></textarea>
 
-	{#if error}
-		<p class='error message'>
-			{#if error.loc}
-				<strong>
-					{#if error.filename}
-						<span
-							class='filename'
-							on:click="{() => dispatch('navigate', { filename: error.filename })}"
-						>{error.filename}</span>
-					{/if}
-
-					({error.loc.line}:{error.loc.column})
-				</strong>
-			{/if}
-
-			{error.message}
-		</p>
-	{:elseif warningCount > 0}
-		<p class='warning message'>
-			Compiled, but with {warningCount} {warningCount === 1 ? 'warning' : 'warnings'} — check the console for details
-		</p>
-	{/if}
-
 	{#if !CodeMirror}
 		<pre style="position: absolute; left: 0; top: 0"
 		>{code}</pre>
 
-		<p class='loading message'>loading editor...</p>
+		<div style="position: absolute; width: 100%; bottom: 0">
+			<Message kind='info'>loading editor...</Message>
+		</div>
 	{/if}
 </div>

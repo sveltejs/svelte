@@ -6,7 +6,7 @@
 	import * as doNotZip from 'do-not-zip';
 	import downloadBlob from '../../_utils/downloadBlob.js';
 	import { user } from '../../../../user.js';
-	import { enter } from '../events.js';
+	import { enter } from '../../../../utils/events.js';
 
 	const dispatch = createEventDispatcher();
 
