@@ -10,5 +10,7 @@
 </style>
 
 <div class="box">
-	<!-- content should be injected here -->
+	<slot>
+		<em>no content was provided</em>
+	</slot>
 </div>
