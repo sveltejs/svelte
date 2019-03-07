@@ -113,6 +113,7 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 * [x] Custom JS transitions
 * [x] Thunk(?) transitions
 * [x] `on:introstart` etc
+* [ ] Local transitions
 
 ## Animations
 
