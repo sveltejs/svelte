@@ -11,11 +11,11 @@ export default {
 			<p>doubled: 4</p>
 		`);
 
-		component.doubled = 6;
+		component.doubled = 3;
 
-		assert.equal(component.doubled, 4);
+		assert.equal(component.doubled, 3);
 		assert.htmlEqual(target.innerHTML, `
-			<p>doubled: 4</p>
+			<p>doubled: 3</p>
 		`);
 	}
 };
