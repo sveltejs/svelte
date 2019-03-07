@@ -1,19 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import * as fleece from 'golden-fleece';
-import process_markdown from '../../utils/_process_markdown.js';
+import { extract_frontmatter, extract_metadata, langs } from '../../utils/markdown.js';
 import marked from 'marked';
-
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
-
-// map lang to prism-language-attr
-const prismLang = {
-	bash: 'bash',
-	html: 'markup',
-	js: 'javascript',
-	css: 'css',
-};
 
 const escaped = {
 	'"': '&quot;',
@@ -45,24 +35,6 @@ const blockTypes = [
 	'tablecell'
 ];
 
-function extractMeta(line, lang) {
-	try {
-		if (lang === 'html' && line.startsWith('<!--') && line.endsWith('-->')) {
-			return fleece.evaluate(line.slice(4, -3).trim());
-		}
-
-		if (
-			lang === 'js' ||
-			(lang === 'json' && line.startsWith('/*') && line.endsWith('*/'))
-		) {
-			return fleece.evaluate(line.slice(2, -2).trim());
-		}
-	} catch (err) {
-		// TODO report these errors, don't just squelch them
-		return null;
-	}
-}
-
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function getHash(str) {
 	let hash = 5381;
@@ -81,7 +53,7 @@ export default function() {
 		.map(file => {
 			const markdown = fs.readFileSync(`content/guide/${file}`, 'utf-8');
 
-			const { content, metadata } = process_markdown(markdown);
+			const { content, metadata } = extract_frontmatter(markdown);
 
 			const subsections = [];
 			const groups = [];
@@ -97,7 +69,7 @@ export default function() {
 
 				const lines = source.split('\n');
 
-				const meta = extractMeta(lines[0], lang);
+				const meta = extract_metadata(lines[0], lang);
 
 				let prefix = '';
 				let className = 'code-block';
@@ -124,7 +96,7 @@ export default function() {
 
 				if (meta && meta.hidden) return '';
 
-				const plang = prismLang[lang];
+				const plang = langs[lang];
 				const highlighted = PrismJS.highlight(
 					source,
 					PrismJS.languages[plang],

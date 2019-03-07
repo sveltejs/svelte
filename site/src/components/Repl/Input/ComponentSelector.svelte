@@ -1,33 +1,31 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
-	import Icon from '../../../../components/Icon.svelte';
-	import { enter } from '../events.js';
+	import { getContext, createEventDispatcher } from 'svelte';
+	import Icon from '../../Icon.svelte';
+	import { enter } from '../../../utils/events.js';
 
-	const dispatch = createEventDispatcher();
+	export let handle_select;
 
-	export let component_store;
-	export let selected_store;
+	const { components, selected } = getContext('REPL');
 
 	let editing = null;
 
 	function selectComponent(component) {
-		if ($selected_store != component) {
+		if ($selected !== component) {
 			editing = null;
+			handle_select(component);
 		}
-
-		selected_store.set(component);
 	}
 
 	function editTab(component) {
-		if ($selected_store === component) {
-			editing = $selected_store;
+		if ($selected === component) {
+			editing = $selected;
 		}
 	}
 
 	function closeEdit() {
-		const match = /(.+)\.(svelte|js)$/.exec($selected_store.name);
-		$selected_store.name = match ? match[1] : $selected_store.name;
-		if (match && match[2]) $selected_store.type = match[2];
+		const match = /(.+)\.(svelte|js)$/.exec($selected.name);
+		$selected.name = match ? match[1] : $selected.name;
+		if (match && match[2]) $selected.type = match[2];
 		editing = null;
 
 		components = components; // TODO necessary?
@@ -35,7 +33,18 @@
 
 	function remove(component) {
 		let result = confirm(`Are you sure you want to delete ${component.name}.${component.type}?`);
-		if (result) dispatch('remove');
+
+		if (result) {
+			const index = $components.indexOf(component);
+
+			if (~index) {
+				components.set($components.slice(0, index).concat($components.slice(index + 1)));
+			} else {
+				console.error(`Could not find component! That's... odd`);
+			}
+
+			selected.set($components[index] || $components[$components.length - 1]);
+		}
 	}
 
 	function selectInput(event) {
@@ -60,8 +69,8 @@
 			document.getElementById(component.name).scrollIntoView(false);
 		});
 
-		component_store.update(components => components.concat(component));
-		selected_store.set(component);
+		components.update(components => components.concat(component));
+		selected.set(component);
 	}
 </script>
 
@@ -171,10 +180,10 @@
 
 <div class="component-selector">
 	<div class="file-tabs" on:dblclick="{addNew}">
-		{#each $component_store as component}
+		{#each $components as component}
 			<button
 				id={component.name}
-				class:active="{component === $selected_store}"
+				class:active="{component === $selected}"
 				data-name={component.name}
 				on:click="{() => selectComponent(component)}"
 				on:dblclick="{e => e.stopPropagation()}"
@@ -185,11 +194,11 @@
 					</div>
 				{:else}
 					{#if component === editing}
-						<span class="input-sizer">{component.name + (/\./.test(component.name) ? '' : `.${component.type}`)}</span>
+						<span class="input-sizer">{editing.name + (/\./.test(editing.name) ? '' : `.${editing.type}`)}</span>
 
 						<input
 							autofocus
-							bind:value={component.name}
+							bind:value={editing.name}
 							on:focus={selectInput}
 							on:blur="{() => closeEdit()}"
 							use:enter="{e => e.target.blur()}"
@@ -213,7 +222,7 @@
 		{/each}
 	</div>
 
-	<button class="add-new" on:click="{addNew}" title="add new component">
+	<button class="add-new" on:click={addNew} title="add new component">
 		<Icon name="plus" />
 	</button>
 </div>
