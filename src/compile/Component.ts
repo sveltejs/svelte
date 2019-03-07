@@ -839,6 +839,13 @@ export default class Component {
 
 									current_group.declarators.push(declarator);
 								}
+
+								if (next) {
+									const next_variable = component.var_lookup.get(next.id.name)
+									if (next_variable && !next_variable.export_name) {
+										code.overwrite(declarator.end, next.start, ` ${node.kind} `);
+									}
+								}
 							} else {
 								current_group = null;
 
