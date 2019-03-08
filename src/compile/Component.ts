@@ -839,7 +839,7 @@ export default class Component {
 								}
 
 								if (variable.name !== variable.export_name) {
-                  code.prependRight(declarator.id.start, `${variable.export_name}:`)
+									code.prependRight(declarator.id.start, `${variable.export_name}:`)
 								}
 
 								if (next) {
