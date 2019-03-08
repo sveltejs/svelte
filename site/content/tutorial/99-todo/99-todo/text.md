@@ -147,7 +147,7 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 * [x] `<svelte:self>`
 * [x] `<svelte:component>`
 * [x] `<svelte:window>`
-* [ ] `<svelte:body>`
+* [x] `<svelte:body>`
 * [ ] `<svelte:head>`
 
 
