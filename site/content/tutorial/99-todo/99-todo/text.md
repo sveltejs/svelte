@@ -52,8 +52,7 @@ Another one should cover how to set up an editor for syntax highlighting.
 
 * [x] `export let foo`
 * [x] `export let foo = 1`
-
-
+* [ ] spread props
 * [ ] `export function foo(){...}`
 
 
@@ -140,7 +139,7 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## Context
 
-* [ ] `setContext` and `getContext`
+* [x] `setContext` and `getContext`
 
 
 ## Special elements
