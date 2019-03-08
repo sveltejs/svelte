@@ -820,29 +820,34 @@ export default class Component {
 							}
 
 							if (variable.export_name) {
-								if (variable.subscribable) {
-									coalesced_declarations.push({
-										kind: node.kind,
-										declarators: [declarator],
-										insert: get_insert(variable)
-									});
+								if (current_group && current_group.kind !== node.kind) {
 									current_group = null;
-								} else {
-									if (current_group && current_group.kind !== node.kind) {
-										current_group = null;
-									}
+								}
 
-									if (!current_group) {
-										current_group = { kind: node.kind, declarators: [], insert: null };
-										coalesced_declarations.push(current_group);
-									}
+								const insert = variable.subscribable
+									? get_insert(variable)
+									: null;
 
+								if (!current_group || (current_group.insert && insert)) {
+									current_group = { kind: node.kind, declarators: [declarator], insert };
+									coalesced_declarations.push(current_group);
+								} else if (insert) {
+									current_group.insert = insert
 									current_group.declarators.push(declarator);
+								} else {
+									current_group.declarators.push(declarator);
+								}
+
+								if (variable.name !== variable.export_name) {
+                  code.prependRight(declarator.id.start, `${variable.export_name}:`)
 								}
 
 								if (next) {
 									const next_variable = component.var_lookup.get(next.id.name)
-									if (next_variable && !next_variable.export_name) {
+									const new_declaration = !next_variable.export_name
+										|| (current_group.insert && next_variable.subscribable)
+
+									if (new_declaration) {
 										code.overwrite(declarator.end, next.start, ` ${node.kind} `);
 									}
 								}
@@ -919,6 +924,11 @@ export default class Component {
 				const all_hoistable = node.declarations.every(d => {
 					if (!d.init) return false;
 					if (d.init.type !== 'Literal') return false;
+
+					const v = this.var_lookup.get(d.id.name)
+					if (v.reassigned) return false
+					if (v.export_name && v.export_name !== v.name) return false
+
 					if (this.var_lookup.get(d.id.name).reassigned) return false;
 					if (this.vars.find(variable => variable.name === d.id.name && variable.module)) return false;
 
