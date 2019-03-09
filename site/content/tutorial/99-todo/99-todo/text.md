@@ -37,21 +37,21 @@ Another one should cover how to set up an editor for syntax highlighting.
 * [x] Statements
 
 
+## Props
+
+* [x] `export let foo`
+* [x] `export let foo = 1`
+* [x] spread props
+* [ ] `export function foo(){...}`
+
+
 ## Logic
 
 * [x] If blocks
 * [x] Else/elseif blocks
 * [x] Each blocks
 * [x] Keyed each blocks
-* [ ] Await blocks
-
-
-## Props
-
-* [x] `export let foo`
-* [x] `export let foo = 1`
-* [ ] spread props
-* [ ] `export function foo(){...}`
+* [x] Await blocks
 
 
 ## Events
