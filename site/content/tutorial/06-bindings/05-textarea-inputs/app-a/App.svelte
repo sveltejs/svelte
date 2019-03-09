@@ -1,12 +1,12 @@
 <script>
 	import marked from 'marked';
-	let markdown = `Some words are *italic*, some are **bold**`;
+	let value = `Some words are *italic*, some are **bold**`;
 </script>
 
 <style>
 	textarea { width: 100%; height: 200px; }
 </style>
 
-<textarea value={markdown}></textarea>
+<textarea value={value}></textarea>
 
-{@html marked(markdown)}
+{@html marked(value)}
