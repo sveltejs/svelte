@@ -42,6 +42,23 @@ describe('store', () => {
 			unsubscribe2();
 			assert.equal(called, 0);
 		});
+
+		it('does not assume immutable data', () => {
+			const obj = {};
+			let called = 0;
+
+			const store = writable(obj);
+
+			store.subscribe(value => {
+				called += 1;
+			});
+
+			store.set(obj);
+			assert.equal(called, 2);
+
+			store.update(obj => obj);
+			assert.equal(called, 3);
+		});
 	});
 
 	describe('readable', () => {
