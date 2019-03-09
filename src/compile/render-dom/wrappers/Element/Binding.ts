@@ -213,6 +213,12 @@ function getBindingGroup(renderer: Renderer, value: Node) {
 	return index;
 }
 
+function mutate_store(store, value, tail) {
+	return tail
+		? `${store}.update($$value => ($$value${tail} = ${value}, $$value));`
+		: `${store}.set(${value});`;
+}
+
 function getEventHandler(
 	binding: BindingWrapper,
 	renderer: Renderer,
@@ -223,36 +229,26 @@ function getEventHandler(
 	const value = getValueFromDom(renderer, binding.parent, binding);
 	const store = binding.object[0] === '$' ? binding.object.slice(1) : null;
 
-	if (store && binding.node.expression.node.type === 'MemberExpression') {
-		// TODO is there a way around this? Mutating an object doesn't work,
-		// because stores check for referential equality (i.e. immutable data).
-		// But we can't safely or easily clone objects. So for now, we bail
-		renderer.component.error(binding.node.expression.node.property, {
-			code: 'invalid-store-binding',
-			message: 'Cannot bind to a nested property of a store'
-		});
+	let tail = '';
+	if (binding.node.expression.node.type === 'MemberExpression') {
+		const { start, end } = get_tail(binding.node.expression.node);
+		tail = renderer.component.source.slice(start, end);
 	}
 
 	if (binding.node.isContextual) {
-		let tail = '';
-		if (binding.node.expression.node.type === 'MemberExpression') {
-			const { start, end } = get_tail(binding.node.expression.node);
-			tail = renderer.component.source.slice(start, end);
-		}
-
 		const { object, property, snippet } = block.bindings.get(name);
 
 		return {
 			usesContext: true,
 			mutation: store
-				? `${store}.set(${value});`
+				? mutate_store(store, value, tail)
 				: `${snippet}${tail} = ${value};`,
 			contextual_dependencies: new Set([object, property])
 		};
 	}
 
 	const mutation = store
-		? `${store}.set(${value});`
+		? mutate_store(store, value, tail)
 		: `${snippet} = ${value};`;
 
 	if (binding.node.expression.node.type === 'MemberExpression') {
