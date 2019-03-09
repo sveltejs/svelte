@@ -9,7 +9,9 @@
 <h1>The Famous Cats of YouTube</h1>
 
 <ul>
-	{#each cats as { id, name }}
-		<li><a target="_blank" href="https://www.youtube.com/watch?v={id}">{name}</a></li>
-	{/each}
+	<!-- open each block -->
+		<li><a target="_blank" href="https://www.youtube.com/watch?v={cat.id}">
+			{cat.name}
+		</a></li>
+	<!-- close each block -->
 </ul>

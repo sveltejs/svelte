@@ -42,10 +42,8 @@ Another one should cover how to set up an editor for syntax highlighting.
 * [x] If blocks
 * [x] Else/elseif blocks
 * [x] Each blocks
+* [x] Keyed each blocks
 * [ ] Await blocks
-
-
-* [ ] Keyed each blocks (maybe? kind of need to cover transitions before we can make this obvious)
 
 
 ## Props
@@ -153,7 +151,6 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## Miscellaneous
 
-* [ ] Keyed each blocks
 * [ ] Debug tags
 * [ ] `context="module"`
 * [ ] `tick`
