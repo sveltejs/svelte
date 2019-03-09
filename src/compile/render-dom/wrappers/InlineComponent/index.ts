@@ -63,7 +63,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 
 		this.var = (
-			this.node.name === 'svelte:self' ? renderer.component.name :
+			this.node.name === 'svelte:self' ? '__svelte:self__' : // TODO conflict-proof this
 			this.node.name === 'svelte:component' ? 'switch_instance' :
 			this.node.name
 		).toLowerCase();
