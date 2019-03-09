@@ -59,3 +59,9 @@ button:active {
 button:focus {
 	border-color: #666;
 }
+
+code {
+	background-color: #eee;
+	padding: 0.2em 0.4em;
+	border-radius: 2px;
+}
