@@ -70,22 +70,19 @@ export default function dom(
 		options.css !== false
 	);
 
+	const $$props = component.uses_props ? `$$new_props` : `$$props`;
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	const set = (component.componentOptions.props || writable_props.length > 0 || renderer.slots.size > 0)
+	const set = (component.uses_props || writable_props.length > 0 || renderer.slots.size > 0)
 		? deindent`
-			$$props => {
-				${component.componentOptions.props && deindent`
-				if (!${component.componentOptions.props}) ${component.componentOptions.props} = {};
-				@assign(${component.componentOptions.props}, $$props);
-				${component.invalidate(component.componentOptions.props_object)};
-				`}
+			${$$props} => {
+				${component.uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
 				`if ('${prop.export_name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = $$props.${prop.export_name}`)};`
 				)}
 				${renderer.slots.size > 0 &&
-				`if ('$$scope' in $$props) ${component.invalidate('$$scope', `$$scope = $$props.$$scope`)};`}
+				`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
 		: null;
@@ -281,9 +278,9 @@ export default function dom(
 		.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
 		.map(v => v.name);
 
-	const filtered_props = props.filter(prop => {
-		if (prop.name === component.componentOptions.props_object) return false;
+	if (component.uses_props) filtered_declarations.push(`$$props: $$props = ${component.helper('exclude_internal_props')}($$props)`);
 
+	const filtered_props = props.filter(prop => {
 		const variable = component.var_lookup.get(prop.name);
 
 		if (variable.hoistable) return false;
@@ -305,7 +302,7 @@ export default function dom(
 	const has_definition = (
 		component.javascript ||
 		filtered_props.length > 0 ||
-		component.componentOptions.props_object ||
+		component.uses_props ||
 		component.partly_hoisted.length > 0 ||
 		filtered_declarations.length > 0 ||
 		component.reactive_declarations.length > 0
@@ -325,10 +322,9 @@ export default function dom(
 	if (component.javascript) {
 		user_code = component.javascript;
 	} else {
-		if (!component.ast.instance && !component.ast.module && (filtered_props.length > 0 || component.componentOptions.props)) {
+		if (!component.ast.instance && !component.ast.module && (filtered_props.length > 0 || component.uses_props)) {
 			const statements = [];
 
-			if (component.componentOptions.props) statements.push(`let ${component.componentOptions.props} = $$props;`);
 			if (filtered_props.length > 0) statements.push(`let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`);
 
 			reactive_stores.forEach(({ name }) => {
@@ -444,7 +440,7 @@ export default function dom(
 							@insert(options.target, this, options.anchor);
 						}
 
-						${(props.length > 0 || component.componentOptions.props) && deindent`
+						${(props.length > 0 || component.uses_props) && deindent`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();
