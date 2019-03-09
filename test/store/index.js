@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { readable, writable, derive, get } from '../../store.js';
 
-describe.only('store', () => {
+describe('store', () => {
 	describe('writable', () => {
 		it('creates a writable store', () => {
 			const count = writable(0);

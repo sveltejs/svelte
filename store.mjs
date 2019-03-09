@@ -1,38 +1,8 @@
 import { run_all, noop, get_store_value, safe_not_equal } from './internal';
 
 export function readable(start, value) {
-	const subscribers = [];
-	let stop;
-
-	function set(new_value) {
-		if (safe_not_equal(value, new_value)) {
-			value = new_value;
-			subscribers.forEach(s => s[1]());
-			subscribers.forEach(s => s[0](value));
-		}
-	}
-
-	return {
-		subscribe(run, invalidate = noop) {
-			if (subscribers.length === 0) {
-				stop = start(set);
-			}
-
-			const subscriber = [run, invalidate];
-			subscribers.push(subscriber);
-			run(value);
-
-			return function() {
-				const index = subscribers.indexOf(subscriber);
-				if (index !== -1) subscribers.splice(index, 1);
-
-				if (subscribers.length === 0) {
-					stop && stop();
-					stop = null;
-				}
-			};
-		}
-	};
+	const { set, subscribe } = writable(value, () => start(set));
+	return { subscribe };
 }
 
 export function writable(value, start = noop) {
@@ -42,6 +12,7 @@ export function writable(value, start = noop) {
 	function set(new_value) {
 		if (safe_not_equal(value, new_value)) {
 			value = new_value;
+			if (!stop) return; // not ready
 			subscribers.forEach(s => s[1]());
 			subscribers.forEach(s => s[0](value));
 		}
