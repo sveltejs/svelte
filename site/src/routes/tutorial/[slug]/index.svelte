@@ -92,7 +92,7 @@
 			return expected && (
 				file.name === expected.name &&
 				file.type === expected.type &&
-				file.source === expected.source
+				file.source.trim().replace(/\s+$/gm, '') === expected.source.trim().replace(/\s+$/gm, '')
 			);
 		});
 	}

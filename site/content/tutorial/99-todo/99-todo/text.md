@@ -98,6 +98,7 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 * [x] `onDestroy`
 * [x] `beforeUpdate`
 * [x] `afterUpdate`
+* [x] `tick`
 * [x] how lifecycle functions behave in SSR mode?
 
 
@@ -159,5 +160,3 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 ## Miscellaneous
 
 * [ ] Debug tags
-* [ ] `tick`
-
