@@ -68,8 +68,8 @@ Another one should cover how to set up an editor for syntax highlighting.
 * [x] deep/contextual bindings
 * [x] Dimensions
 * [x] `this`
-* [ ] shorthand
-* [ ] component bindings
+* [x] shorthand
+* [x] component bindings
 
 Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
@@ -98,7 +98,7 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 * [x] `onDestroy`
 * [x] `beforeUpdate`
 * [x] `afterUpdate`
-* [ ] how lifecycle functions behave in SSR mode?
+* [x] how lifecycle functions behave in SSR mode?
 
 
 ## Transitions
@@ -147,18 +147,17 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 * [x] `<svelte:window>`
 * [x] `<svelte:body>`
 * [x] `<svelte:head>`
+* [ ] `<svelte:options>`
+
+
+## Module context
+
+* [x] sharing code
+* [x] exports
 
 
 ## Miscellaneous
 
 * [ ] Debug tags
-* [ ] `context="module"`
 * [ ] `tick`
 
-
----
-
-## Bugs etc
-
-* 'Show me' should be greyed out if current state is identical to target state
-* Clicking 'Show me' shouldn't change the file you're looking at
