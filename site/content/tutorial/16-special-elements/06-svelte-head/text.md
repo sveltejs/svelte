@@ -2,7 +2,7 @@
 title: <svelte:head>
 ---
 
-Lastly, `<svelte:head>` allows you to insert elements inside the `<head>` of your document:
+The `<svelte:head>` element allows you to insert elements inside the `<head>` of your document:
 
 ```html
 <svelte:head>

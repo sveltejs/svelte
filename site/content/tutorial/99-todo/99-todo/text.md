@@ -148,7 +148,7 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 * [x] `<svelte:window>`
 * [x] `<svelte:body>`
 * [x] `<svelte:head>`
-* [ ] `<svelte:options>`
+* [x] `<svelte:options>`
 
 
 ## Module context
@@ -159,4 +159,4 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## Miscellaneous
 
-* [ ] Debug tags
+* [x] Debug tags
