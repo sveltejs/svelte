@@ -9,7 +9,7 @@ import error from '../utils/error';
 interface ParserOptions {
 	filename?: string;
 	bind?: boolean;
-	customElement?: CustomElementOptions | true;
+	customElement?: CustomElementOptions;
 }
 
 type ParserState = (parser: Parser) => (ParserState | void);
@@ -17,7 +17,7 @@ type ParserState = (parser: Parser) => (ParserState | void);
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
-	readonly customElement: CustomElementOptions | true;
+	readonly customElement: CustomElementOptions;
 
 	index = 0;
 	stack: Array<Node> = [];
