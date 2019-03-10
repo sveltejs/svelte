@@ -28,6 +28,9 @@
 		if (match && match[2]) $selected.type = match[2];
 		editing = null;
 
+		// re-select, in case the type changed
+		handle_select($selected);
+
 		components = components; // TODO necessary?
 	}
 
@@ -43,7 +46,7 @@
 				console.error(`Could not find component! That's... odd`);
 			}
 
-			selected.set($components[index] || $components[$components.length - 1]);
+			handle_select($components[index] || $components[$components.length - 1]);
 		}
 	}
 
@@ -70,7 +73,7 @@
 		});
 
 		components.update(components => components.concat(component));
-		selected.set(component);
+		handle_select(component);
 	}
 </script>
 
@@ -193,7 +196,7 @@
 								spellcheck={false}
 								bind:value={editing.name}
 								on:focus={selectInput}
-								on:blur="{() => closeEdit()}"
+								on:blur={closeEdit}
 								use:enter="{e => e.target.blur()}"
 							>
 						{:else}

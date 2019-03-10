@@ -162,9 +162,8 @@
 
 		editor.on('change', instance => {
 			if (!updating_externally) {
-				updating_externally = true;
-				// code = instance.getValue();
-				dispatch('change', { value: instance.getValue() });
+				const value = instance.getValue();
+				dispatch('change', { value });
 			}
 		});
 
