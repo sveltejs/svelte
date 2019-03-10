@@ -69,7 +69,6 @@ export default class Component {
 	has_reactive_assignments = false;
 	injected_reactive_declaration_vars: Set<string> = new Set();
 	helpers: Set<string> = new Set();
-	uses_props = false;
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
 
@@ -151,7 +150,11 @@ export default class Component {
 		if (variable) {
 			variable.referenced = true;
 		} else if (name === '$$props') {
-			this.uses_props = true;
+			this.add_var({
+				name,
+				implicit: true,
+				referenced: true
+			});
 		} else if (name[0] === '$') {
 			this.add_var({
 				name,
@@ -599,7 +602,10 @@ export default class Component {
 					initialised: true
 				});
 			} else if (name === '$$props') {
-				this.uses_props = true;
+				this.add_var({
+					name,
+					implicit: true
+				});
 			} else if (name[0] === '$') {
 				this.add_var({
 					name,
