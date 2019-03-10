@@ -39,7 +39,9 @@
 		}
 
 		code = new_code;
+		updating_externally = true;
 		if (editor) editor.setValue(code);
+		updating_externally = false;
 	}
 
 	export function update(new_code) {
@@ -73,7 +75,7 @@
 
 	const refs = {};
 	let editor;
-	let updating = false;
+	let updating_externally = false;
 	let marker;
 	let error_line;
 	let destroyed = false;
@@ -131,10 +133,6 @@
 		}
 	});
 
-	beforeUpdate(() => {
-		updating = false;
-	});
-
 	function createEditor(mode) {
 		if (destroyed || !CodeMirror) return;
 
@@ -163,8 +161,8 @@
 		editor = CodeMirror.fromTextArea(refs.editor, opts);
 
 		editor.on('change', instance => {
-			if (!updating) {
-				updating = true;
+			if (!updating_externally) {
+				updating_externally = true;
 				// code = instance.getValue();
 				dispatch('change', { value: instance.getValue() });
 			}
