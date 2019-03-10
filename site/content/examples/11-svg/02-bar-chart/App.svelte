@@ -78,7 +78,7 @@
 </style>
 
 <div class="chart">
-	<h2>US birthrate by year {width}/{height}</h2>
+	<h2>US birthrate by year</h2>
 	<svg bind:clientWidth={width} bind:clientHeight={height}>
 		<!-- y axis -->
 		<g class="axis y-axis" transform="translate(0,{padding.top})">

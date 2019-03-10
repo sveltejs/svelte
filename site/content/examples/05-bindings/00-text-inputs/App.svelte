@@ -1,9 +1,6 @@
 <script>
-	let name = 'world';
+	let name = '';
 </script>
 
-<label>
-	<input bind:value={name}>
-</label>
-
-<h1>Hello {name}!</h1>
+<input bind:value={name} placeholder="enter your name">
+<p>Hello {name || 'stranger'}!</p>

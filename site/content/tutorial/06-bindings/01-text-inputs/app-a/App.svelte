@@ -2,8 +2,6 @@
 	let name = 'world';
 </script>
 
-<label>
-	<input value={name}>
-</label>
+<input value={name}>
 
 <h1>Hello {name}!</h1>

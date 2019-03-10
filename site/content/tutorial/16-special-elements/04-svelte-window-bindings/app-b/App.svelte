@@ -80,5 +80,9 @@
 		padding: 50vh 0 0 0;
 	}
 
-	:global(body) { margin: 0; padding: 0; }
+	:global(body) {
+		margin: 0;
+		padding: 0;
+		background-color: rgb(253, 174, 51);
+	}
 </style>
