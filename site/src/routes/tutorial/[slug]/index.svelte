@@ -64,6 +64,7 @@
 	});
 
 	$: if (repl) {
+		completed = false;
 		repl.set({
 			components: chapter.app_a.map(clone)
 		});
