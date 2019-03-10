@@ -65,22 +65,19 @@
 
 	$: if (repl) {
 		repl.set({
-			components: chapter.app_a.map(clone),
-			values: {}
+			components: chapter.app_a.map(clone)
 		});
 	}
 
 	function reset() {
 		repl.update({
-			components: chapter.app_a.map(clone),
-			values: {}
+			components: chapter.app_a.map(clone)
 		});
 	}
 
 	function complete() {
 		repl.update({
-			components: chapter.app_b.map(clone),
-			values: {}
+			components: chapter.app_b.map(clone)
 		});
 	}
 
