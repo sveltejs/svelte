@@ -1,8 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { scaleLinear } from 'd3-scale';
-
-	export let points;
+	import points from './data.js';
 
 	const yTicks = [0, 2, 4, 6, 8];
 	const xTicks = [1980, 1990, 2000, 2010];

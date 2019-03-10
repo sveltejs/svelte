@@ -4,7 +4,11 @@
 	import ImmutableTodo from './ImmutableTodo.svelte';
 	import MutableTodo from './MutableTodo.svelte';
 
-	export let todos;
+	let todos = [
+		{ id: 1, done: true, text: 'wash the car' },
+		{ id: 2, done: false, text: 'take the dog for a walk' },
+		{ id: 3, done: false, text: 'mow the lawn' }
+	];
 
 	function toggle(id) {
 		todos = todos.map(todo => {

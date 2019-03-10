@@ -1,20 +1,7 @@
 <script>
 	import Scatterplot from './Scatterplot.svelte';
-
-	export let a;
-	export let b;
-	export let c;
-	export let d;
+	import data from './data.js';
 </script>
-
-<div class="chart">
-	<h2>Anscombe's quartet</h2>
-
-	<Scatterplot points={a}/>
-	<Scatterplot points={b}/>
-	<Scatterplot points={c}/>
-	<Scatterplot points={d}/>
-</div>
 
 <style>
 	.chart {
@@ -26,3 +13,12 @@
 		margin: 0 auto;
 	}
 </style>
+
+<div class="chart">
+	<h2>Anscombe's quartet</h2>
+
+	<Scatterplot points={data.a}/>
+	<Scatterplot points={data.b}/>
+	<Scatterplot points={data.c}/>
+	<Scatterplot points={data.d}/>
+</div>
