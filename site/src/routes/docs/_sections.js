@@ -136,7 +136,7 @@ export default function() {
 					return `
 						<h${level}>
 							<span id="${slug}" class="offset-anchor"></span>
-							<a href="guide#${slug}" class="anchor" aria-hidden="true"></a>
+							<a href="docs#${slug}" class="anchor" aria-hidden="true"></a>
 							${text}
 						</h${level}>`;
 				}

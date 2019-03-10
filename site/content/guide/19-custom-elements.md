@@ -45,7 +45,7 @@ One crucial difference is that styles are *fully encapsulated* — whereas Svelt
 
 ### Using `<slot>`
 
-Custom elements can use [slots](guide#composing-with-slot) to place child elements, just like regular Svelte components.
+Custom elements can use [slots](docs#composing-with-slot) to place child elements, just like regular Svelte components.
 
 ### Firing events
 

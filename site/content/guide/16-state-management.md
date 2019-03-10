@@ -39,7 +39,7 @@ store.set({ name: 'everybody' }); // 'hello everybody'
 
 ### Creating components with stores
 
-Let's adapt our [very first example](guide#understanding-svelte-components):
+Let's adapt our [very first example](docs#understanding-svelte-components):
 
 ```html
 <!-- { repl: false } -->
@@ -169,7 +169,7 @@ Each component gets a reference to `this.store`. This allows you to attach behav
 			const listener = this.store.on('state', ({ current }) => {
 				// ...
 			});
-	
+
 			// listeners are not automatically removed — cancel
 			// them to prevent memory leaks
 			this.on('destroy', listener.cancel);

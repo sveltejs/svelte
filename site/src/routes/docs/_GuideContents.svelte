@@ -106,7 +106,7 @@
 >
 	{#each sections as section}
 		<li>
-			<a class="section" class:active="{section.slug === active_section}" href="guide#{section.slug}">
+			<a class="section" class:active="{section.slug === active_section}" href="docs#{section.slug}">
 				{section.metadata.title}
 
 				{#if section.slug === active_section}
@@ -116,7 +116,7 @@
 
 			{#each section.subsections as subsection}
 				<!-- see <script> below: on:click='scrollTo(event, subsection.slug)' -->
-				<a class="subsection" class:active="{subsection.slug === active_section}" href="guide#{subsection.slug}">
+				<a class="subsection" class:active="{subsection.slug === active_section}" href="docs#{subsection.slug}">
 					{subsection.title}
 
 					{#if subsection.slug === active_section}

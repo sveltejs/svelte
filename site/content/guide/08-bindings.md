@@ -5,7 +5,7 @@ title: Bindings
 
 ### Bindings
 
-As we've seen, data can be passed down to elements and components with attributes and [props](guide#props). Occasionally, you need to get data back *up*; for that we use bindings.
+As we've seen, data can be passed down to elements and components with attributes and [props](docs#props). Occasionally, you need to get data back *up*; for that we use bindings.
 
 
 #### Component bindings

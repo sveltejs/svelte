@@ -197,7 +197,7 @@
 						<div style="padding: 0.5em" class="linkify">
 							<!-- TODO explain distincion between logic-less and logic-ful components? -->
 							<!-- TODO style the <a> so it looks like a link -->
-							<p style="font-size: 1.3rem; color: var(--second)">This component has no props — <a href="guide#external-properties">declare props with the export keyword</a></p>
+							<p style="font-size: 1.3rem; color: var(--second)">This component has no props — <a href="docs#external-properties">declare props with the export keyword</a></p>
 						</div>
 					{/if}
 				{/if}
