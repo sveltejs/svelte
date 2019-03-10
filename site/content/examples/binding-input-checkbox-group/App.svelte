@@ -1,3 +1,7 @@
+<script>
+	const selected = ['blue'];
+</script>
+
 <label>
 	<input type=checkbox bind:group={selected} value="red">
 	red

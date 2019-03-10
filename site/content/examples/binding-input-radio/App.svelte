@@ -1,3 +1,7 @@
+<script>
+	let selected = 'blue';
+</script>
+
 <label>
 	<input type=radio bind:group={selected} value="red">
 	red

@@ -1,7 +1,7 @@
 <script>
 	import Modal from './Modal.svelte';
 
-	export let showModal;
+	let showModal = true;
 </script>
 
 {#if showModal}

@@ -1,7 +1,20 @@
 <!-- https://eugenkiss.github.io/7guis/tasks#crud -->
 
 <script>
-	export let people = [];
+	let people = [
+		{
+			first: 'Hans',
+			last: 'Emil'
+		},
+		{
+			first: 'Max',
+			last: 'Mustermann'
+		},
+		{
+			first: 'Roman',
+			last: 'Tisch'
+		}
+	];
 
 	let prefix = '';
 	let first = '';
