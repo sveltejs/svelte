@@ -1,6 +1,9 @@
 <script>
-	let count = 0;
+	let count = 1;
+
+	// the `$:` means 're-run whenever these values change'
 	$: doubled = count * 2;
+	$: quadrupled = doubled * 2;
 
 	function handleClick() {
 		count += 1;
@@ -8,7 +11,8 @@
 </script>
 
 <button on:click={handleClick}>
-	Clicked {count} {count === 1 ? 'time' : 'times'}
+	Count: {count}
 </button>
 
-<p>{count} doubled is {doubled}</p>
+<p>{count} * 2 = {doubled}</p>
+<p>{doubled} * 2 = {quadrupled}</p>
