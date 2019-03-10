@@ -21,7 +21,7 @@ export default class AttributeWrapper {
 			// special case — <option value={foo}> — see below
 			if (this.parent.node.name === 'option' && node.name === 'value') {
 				let select: ElementWrapper = this.parent;
-				while (select && (select.node.type !== 'Element' || select.node.name !== 'select')) select = select.parent;
+				while (select && (select.node.isDomNode() || select.node.name !== 'select')) select = select.parent;
 
 				if (select && select.selectBindingDependencies) {
 					select.selectBindingDependencies.forEach(prop => {

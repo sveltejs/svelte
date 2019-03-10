@@ -157,7 +157,7 @@ export default function tag(parser: Parser) {
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (parent.name !== name) {
-			if (parent.type !== 'Element')
+			if (parent.isDomNode())
 				parser.error({
 					code: `invalid-closing-tag`,
 					message: `</${name}> attempted to close an element that was not open`

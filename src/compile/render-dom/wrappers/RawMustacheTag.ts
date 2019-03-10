@@ -21,9 +21,8 @@ export default class RawMustacheTagWrapper extends Tag {
 	render(block: Block, parentNode: string, parentNodes: string) {
 		const name = this.var;
 
-		// TODO use isDomNode instead of type === 'Element'?
-		const needsAnchorBefore = this.prev ? this.prev.node.type !== 'Element' : !parentNode;
-		const needsAnchorAfter = this.next ? this.next.node.type !== 'Element' : !parentNode;
+		const needsAnchorBefore = this.prev ? this.prev.isDomNode() : !parentNode;
+		const needsAnchorAfter = this.next ? this.next.isDomNode() : !parentNode;
 
 		const anchorBefore = needsAnchorBefore
 			? block.getUniqueName(`${name}_before`)

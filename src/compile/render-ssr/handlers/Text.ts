@@ -4,7 +4,7 @@ export default function(node, renderer, options) {
 	let text = node.data;
 	if (
 		!node.parent ||
-		node.parent.type !== 'Element' ||
+		node.parent.isDomNode() ||
 		(node.parent.name !== 'script' && node.parent.name !== 'style')
 	) {
 		// unless this Text node is inside a <script> or <style> element, escape &,<,>
