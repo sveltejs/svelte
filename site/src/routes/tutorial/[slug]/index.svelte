@@ -224,6 +224,10 @@
 	}
 </style>
 
+<svelte:head>
+	<title>{selected.section.title} / {selected.chapter.title} • Svelte Tutorial</title>
+</svelte:head>
+
 <div class="tutorial-outer">
 	<div class="tutorial-text">
 		<div class="table-of-contents">
