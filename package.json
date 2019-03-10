@@ -67,7 +67,7 @@
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.2",
     "mocha": "^5.2.0",
-    "nightmare": "^3.0.1",
+    "puppeteer": "^1.13.0",
     "rollup": "^1.1.2",
     "rollup-plugin-commonjs": "^9.1.0",
     "rollup-plugin-json": "^3.0.0",
