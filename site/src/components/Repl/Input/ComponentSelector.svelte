@@ -135,7 +135,6 @@
 		border: none;
 		color: var(--flash);
 		outline: none;
-		line-height: 1;
 		background-color: transparent;
 	}
 
