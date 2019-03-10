@@ -10,7 +10,6 @@
 	const dispatch = createEventDispatcher();
 
 	export let repl;
-	export let examples;
 	export let gist;
 	export let name;
 	export let zen_mode;
@@ -195,32 +194,11 @@ export default app;` });
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="app-controls">
-	<div>
-		<div class="icon" style="position: relative; width: 3.2rem; top: -.2rem">
-			<Icon name="menu" />
-
-			<select
-				class="hidden-select"
-				on:change="{e => dispatch('select', { slug: e.target.value })}"
-			>
-				<option value={null} disabled>Select an example</option>
-
-				{#each examples as group}
-					<optgroup label={group.name}>
-						{#each group.examples as example}
-							<option value={example.slug}>{example.title}</option>
-						{/each}
-					</optgroup>
-				{/each}
-			</select>
-		</div>
-
-		<input
-			bind:value={name}
-			on:focus="{e => e.target.select()}"
-			use:enter="{e => e.target.blur()}"
-		>
-	</div>
+	<input
+		bind:value={name}
+		on:focus="{e => e.target.select()}"
+		use:enter="{e => e.target.blur()}"
+	>
 
 	<div style="text-align: right; margin-right:.4rem">
 		<button class="icon" on:click="{() => zen_mode = !zen_mode}" title="fullscreen editor">

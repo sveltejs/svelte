@@ -3,7 +3,7 @@
 		return {
 			version: query.version || 'beta',
 			gist_id: query.gist,
-			demo: query.demo || 'hello-world'
+			example: query.example || 'hello-world'
 		};
 	}
 </script>
@@ -13,9 +13,10 @@
 	import { locate } from 'locate-character';
 	import AppControls from './_components/AppControls/index.svelte';
 	import Repl from '../../components/Repl/index.svelte';
-	import examples from '../../../content/examples/manifest.json';
 
-	export let version, demo, gist_id;
+	export let version, example, gist_id;
+
+	console.log({ example });
 
 	let repl;
 	let gist;
@@ -27,7 +28,7 @@
 
 		if (version !== 'latest') params.push(`version=${version}`);
 		if (gist_id) params.push(`gist=${gist_id}`);
-		else if (demo) params.push(`demo=${demo}`);
+		else if (example) params.push(`example=${example}`);
 
 		const url = params.length > 0
 			? `repl?${params.join('&')}`
@@ -35,13 +36,6 @@
 
 		history.replaceState({}, 'x', url);
 	}
-
-	const slugs = new Set();
-	examples.forEach(group => {
-		group.examples.forEach(example => {
-			slugs.add(example.slug);
-		});
-	});
 
 	onMount(() => {
 		if (version !== 'local') {
@@ -90,22 +84,31 @@
 		}
 	});
 
-	function load_demo(slug) {
-		const url = slugs.has(slug)
-			? `api/examples/${slug}`
-			: `guide/demo/${slug}.json`;
+	function load_example(slug) {
+		console.log(`loading ${slug}`);
 
-		fetch(url).then(async response => {
+		fetch(`examples/${slug}.json`).then(async response => {
 			if (response.ok) {
 				const data = await response.json();
 
 				name = data.title;
 
-				console.log(data.components);
+				const components = data.files
+					.map(file => {
+						const [name, type] = file.name.split('.');
+						return { name, type, source: file.source };
+					})
+					.sort((a, b) => {
+						if (a.name === 'App' && a.type === 'svelte') return -1;
+						if (b.name === 'App' && b.type === 'svelte') return 1;
 
-				repl.set({
-					components: data.components
-				});
+						if (a.type === b.type) return a.name < b.name ? -1 : 1;
+
+						if (a.type === 'svelte') return -1;
+						if (b.type === 'svelte') return 1;
+					});
+
+				repl.set({ components });
 
 				gist = null;
 			}
@@ -113,14 +116,13 @@
 	}
 
 	function handle_fork(event) {
-		console.log(event);
-		demo = null;
+		example = null;
 		gist = event.detail.gist;
 		gist_id = gist.id;
 	}
 
-	$: if (process.browser && demo) {
-		load_demo(demo);
+	$: if (process.browser && example) {
+		load_example(example);
 	}
 </script>
 
@@ -174,12 +176,10 @@
 
 <div class="repl-outer {zen_mode ? 'zen-mode' : ''}">
 	<AppControls
-		{examples}
 		{name}
 		{gist}
 		{repl}
 		bind:zen_mode
-		on:select="{e => (demo = e.detail.slug, gist = null)}"
 		on:forked={handle_fork}
 	/>
 
