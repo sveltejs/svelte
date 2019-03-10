@@ -6,9 +6,8 @@
 	import { decode } from 'sourcemap-codec';
 
 	const dispatch = createEventDispatcher();
-	const { bundle, values, navigate } = getContext('REPL');
+	const { bundle, navigate } = getContext('REPL');
 
-	export let props;
 	export let error; // TODO should this be exposed as a prop?
 
 	export function setProp(prop, value) {
@@ -26,13 +25,6 @@
 
 	onMount(() => {
 		proxy = new ReplProxy(iframe, {
-			onPropUpdate: (prop, value) => {
-				dispatch('binding', { prop, value });
-				values.update(values => Object.assign({}, values, {
-					[prop]: value
-				}));
-			},
-
 			onFetchProgress: progress => {
 				pending_imports = progress;
 			}
@@ -84,12 +76,9 @@
 				window._svelteTransitionManager = null;
 
 				window.component = new SvelteComponent({
-					target: document.body,
-					props: ${JSON.stringify($values)}
+					target: document.body
 				});
 			`);
-
-			await proxy.bindProps(props);
 
 			error = null;
 		} catch (e) {

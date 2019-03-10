@@ -11,7 +11,6 @@
 <script>
 	import { onMount } from 'svelte';
 	import { locate } from 'locate-character';
-	import * as fleece from 'golden-fleece';
 	import AppControls from './_components/AppControls/index.svelte';
 	import Repl from '../../components/Repl/index.svelte';
 	import examples from '../../../content/examples/manifest.json';
@@ -60,19 +59,12 @@
 
 				name = description;
 
-				let values = {};
-
 				const components = Object.keys(files)
 					.map(file => {
 						const dot = file.lastIndexOf('.');
 						if (!~dot) return;
 
 						const source = files[file].content;
-
-						// while we're here...
-						if (file === 'data.json' || file === 'data.json5') {
-							values = tryParseData(source) || {};
-						}
 
 						let type = file.slice(dot + 1);
 						if (type === 'html') type = 'svelte';
@@ -93,7 +85,7 @@
 						return a.name < b.name ? -1 : 1;
 					});
 
-				repl.set({ components, values });
+				repl.set({ components });
 			});
 		}
 	});
@@ -112,7 +104,6 @@
 				console.log(data.components);
 
 				repl.set({
-					values: tryParseData(data.json5) || {}, // TODO make this more error-resistant
 					components: data.components
 				});
 
@@ -126,14 +117,6 @@
 		demo = null;
 		gist = event.detail.gist;
 		gist_id = gist.id;
-	}
-
-	function tryParseData(json5) {
-		try {
-			return fleece.evaluate(json5);
-		} catch (err) {
-			return null;
-		}
 	}
 
 	$: if (process.browser && demo) {

@@ -57,11 +57,6 @@ export default class ReplProxy {
 			this.handleCommandMessage(event.data);
 		}
 
-		if (action === 'prop_update') {
-			const { prop, value } = args;
-			this.handlers.onPropUpdate(prop, value)
-		}
-
 		if (action === 'fetch_progress') {
 			this.handlers.onFetchProgress(args.remaining)
 		}
@@ -69,14 +64,6 @@ export default class ReplProxy {
 
 	eval(script) {
 		return this.iframeCommand('eval', { script });
-	}
-
-	setProp(prop, value) {
-		return this.iframeCommand('set_prop', {prop, value})
-	}
-
-	bindProps(props) {
-		return this.iframeCommand('bind_props', { props })
 	}
 
 	handleLinks() {
