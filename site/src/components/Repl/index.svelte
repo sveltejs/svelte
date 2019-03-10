@@ -11,7 +11,6 @@
 	export let version = 'beta'; // TODO change this to latest when the time comes
 	export let embedded = false;
 	export let orientation = 'columns';
-	export let show_props = true;
 
 	export function toJSON() {
 		// TODO there's a bug here — Svelte hoists this function because
@@ -22,14 +21,12 @@
 
 		return {
 			imports: $bundle.imports,
-			components: $components,
-			values: $values
+			components: $components
 		};
 	}
 
 	export function set(data) {
 		components.set(data.components);
-		values.set(data.values);
 		selected.set(data.components[0]);
 
 		module_editor.set($selected.source, $selected.type);
@@ -40,7 +37,6 @@
 		const { name, type } = $selected || {};
 
 		components.set(data.components);
-		values.set(data.values);
 
 		const matched_component = data.components.find(file => file.name === name && file.type === type);
 		selected.set(matched_component || data.components[0]);
@@ -57,7 +53,6 @@
 	const dispatch = createEventDispatcher();
 
 	const components = writable([]);
-	const values = writable({});
 	const selected = writable(null);
 	const bundle = writable(null);
 
@@ -66,7 +61,6 @@
 
 	setContext('REPL', {
 		components,
-		values,
 		selected,
 		bundle,
 
@@ -227,7 +221,7 @@
 			</section>
 
 			<section slot=b style='height: 100%;'>
-				<Output {version} {embedded} {show_props}/>
+				<Output {version} {embedded}/>
 			</section>
 		</SplitPane>
 	</div>

@@ -10,7 +10,6 @@
 
 <script>
 	import { onMount } from 'svelte';
-	import * as fleece from 'golden-fleece';
 	import Repl from '../../components/Repl/index.svelte';
 
 	export let version, gist, demo;
@@ -33,19 +32,12 @@
 
 				name = description;
 
-				let values = {};
-
 				const components = Object.keys(files)
 					.map(file => {
 						const dot = file.lastIndexOf('.');
 						if (!~dot) return;
 
 						const source = files[file].content;
-
-						// while we're here...
-						if (file === 'data.json' || file === 'data.json5') {
-							values = tryParseData(source) || {};
-						}
 
 						return {
 							name: file.slice(0, dot),
@@ -63,7 +55,7 @@
 						return a.name < b.name ? -1 : 1;
 					});
 
-				repl.set({ components, values });
+				repl.set({ components });
 			});
 		} else if (demo) {
 			const url = `api/examples/${demo}`;
@@ -73,21 +65,12 @@
 					const data = await response.json();
 
 					repl.set({
-						values: tryParseData(data.json5) || {}, // TODO make this more error-resistant
 						components: data.components
 					});
 				}
 			});
 		}
 	});
-
-	function tryParseData(json5) {
-		try {
-			return fleece.evaluate(json5);
-		} catch (err) {
-			return null;
-		}
-	}
 </script>
 
 <style>
