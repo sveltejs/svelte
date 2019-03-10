@@ -6,7 +6,7 @@
 	import Compiler from './Compiler.js';
 	import CodeMirror from '../CodeMirror.svelte';
 
-	const { values, register_output } = getContext('REPL');
+	const { register_output } = getContext('REPL');
 
 	export let version;
 	export let sourceErrorLoc;
@@ -61,23 +61,6 @@
 	const setters = {};
 
 	let view = 'result';
-
-	function updateValues(prop, value) {
-		values.update(v => Object.assign({}, v, {
-			[prop]: value
-		}));
-	}
-
-	function setPropFromViewer(prop, value) {
-		// console.log(setters, prop, value);
-		// setters[prop](value);
-		updateValues(prop, value);
-	}
-
-	function setPropFromEditor(prop, value) {
-		viewer.setProp(prop, value);
-		updateValues(prop, value);
-	}
 </script>
 
 <style>
