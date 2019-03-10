@@ -72,5 +72,3 @@ tutorial_sections.forEach((section, i) => {
 		});
 	});
 });
-
-console.log(tutorial_sections);

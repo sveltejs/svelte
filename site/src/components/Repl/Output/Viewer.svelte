@@ -22,6 +22,7 @@
 	let proxy = null;
 
 	let ready = false;
+	let inited = false;
 
 	onMount(() => {
 		proxy = new ReplProxy(iframe, {
@@ -90,6 +91,8 @@
 
 			error = e;
 		}
+
+		inited = true;
 	}
 
 	$: if (ready) apply_bundle($bundle);
@@ -125,7 +128,7 @@
 </style>
 
 <div class="iframe-container">
-	<iframe title="Result" bind:this={iframe} sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals" class="{error || pending || pending_imports ? 'greyed-out' : ''}" srcdoc='
+	<iframe title="Result" class:inited bind:this={iframe} sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals" class="{error || pending || pending_imports ? 'greyed-out' : ''}" srcdoc='
 		<!doctype html>
 		<html>
 			<head>
