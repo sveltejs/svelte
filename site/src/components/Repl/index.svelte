@@ -113,6 +113,10 @@
 
 		register_output(handlers) {
 			output = handlers;
+		},
+
+		request_focus() {
+			module_editor.focus();
 		}
 	});
 

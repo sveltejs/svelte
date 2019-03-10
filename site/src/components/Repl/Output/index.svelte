@@ -100,7 +100,7 @@
 		position: relative;
 		font: 400 1.2rem/1.5 var(--font);
 		border-bottom: var(--border-w) solid transparent;
-		padding: 1.2rem 0.8rem 0.8rem 0.8rem;
+		padding: 1.2rem 1.2rem 0.8rem 1.2rem;
 		color: #999;
 	}
 
