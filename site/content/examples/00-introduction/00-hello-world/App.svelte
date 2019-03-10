@@ -2,4 +2,4 @@
 	let name = 'world';
 </script>
 
-<h1>Hello {name.toUpperCase()}!</h1>
+<h1>Hello {name}!</h1>

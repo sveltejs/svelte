@@ -6,4 +6,4 @@
 	}
 </style>
 
-<p>This is a paragraph.</p>
+<p>Styled!</p>

@@ -10,5 +10,5 @@
 	}
 </style>
 
-<p>This is a paragraph.</p>
+<p>These styles...</p>
 <Nested/>
