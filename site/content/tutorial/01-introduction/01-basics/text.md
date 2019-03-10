@@ -20,9 +20,11 @@ You can build your entire app with Svelte, or you can add it incrementally to an
 
 ## How to use this tutorial
 
-TKTK is this necessary?
+You'll need to have basic familiarity with HTML, CSS and JavaScript to understand Svelte.
 
-You'll need to have basic familiarity with HTML, CSS and JavaScript to understand Svelte. Later on we'll be using Node.js and the command line, but don't worry if that's new territory for you — you won't be thrown in at the deep end.
+As you progress through the tutorial, you'll be presented with mini exercises designed to illustrate new features. Later chapters build on the knowledge gained in earlier ones, so it's recommended that you go from start to finish. If necessary, you can navigate via the dropdown above (click 'Introduction / Basics').
+
+Each tutorial chapter will have a 'Show me' button that you can click if you get stuck following the instructions. Try not to rely on it too much; you will learn faster by figuring out where to put each suggested code block and manually typing it in to the editor.
 
 
 ## Understanding components
