@@ -52,7 +52,7 @@
 
 	// TODO: this will need to be changed to the master branch, and probably should be dynamic instead of included
 	//   here statically
-	const tutorial_repo_link = 'https://github.com/sveltejs/svelte/tree/restructure-docs/site/content/tutorial';
+	const tutorial_repo_link = 'https://github.com/sveltejs/svelte/tree/master/site/content/tutorial';
 
 	$: selected = lookup.get(slug);
 	$: improve_link = `${tutorial_repo_link}/${selected.chapter.section_dir}/${selected.chapter.chapter_dir}`;
