@@ -1,0 +1,1 @@
+<p>{JSON.stringify($$props)}</p>
