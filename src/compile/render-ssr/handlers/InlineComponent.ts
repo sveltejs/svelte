@@ -74,7 +74,7 @@ export default function(node, renderer: Renderer, options) {
 
 	const expression = (
 		node.name === 'svelte:self'
-			? node.component.name
+			? '__svelte:self__' // TODO conflict-proof this
 			: node.name === 'svelte:component'
 				? `((${snip(node.expression)}) || @missingComponent)`
 				: node.name
