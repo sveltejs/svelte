@@ -1028,7 +1028,6 @@ export default class Component {
 							assignees.add(identifier.name);
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = getObject(node.argument);
-							assignee_nodes.add(identifier);
 							assignees.add(identifier.name);
 						} else if (isReference(node, parent)) {
 							const identifier = getObject(node);
