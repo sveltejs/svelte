@@ -5,7 +5,7 @@
 
 	export let handle_select;
 
-	const { components, selected } = getContext('REPL');
+	const { components, selected, request_focus } = getContext('REPL');
 
 	let editing = null;
 
@@ -28,7 +28,13 @@
 		if (match && match[2]) $selected.type = match[2];
 		editing = null;
 
+		// re-select, in case the type changed
+		handle_select($selected);
+
 		components = components; // TODO necessary?
+
+		// focus the editor, but wait a beat (so key events aren't misdirected)
+		setTimeout(request_focus);
 	}
 
 	function remove(component) {
@@ -43,7 +49,7 @@
 				console.error(`Could not find component! That's... odd`);
 			}
 
-			selected.set($components[index] || $components[$components.length - 1]);
+			handle_select($components[index] || $components[$components.length - 1]);
 		}
 	}
 
@@ -70,7 +76,7 @@
 		});
 
 		components.update(components => components.concat(component));
-		selected.set(component);
+		handle_select(component);
 	}
 </script>
 
@@ -83,7 +89,6 @@
 
 	.file-tabs {
 		border: none;
-		padding: 0 0 0 5rem;
 		margin: 0;
 		white-space: nowrap;
 		overflow-x: auto;
@@ -91,16 +96,21 @@
 		height: 10em;
 	}
 
-	.file-tabs button {
+	.file-tabs .button, .file-tabs button {
 		position: relative;
+		display: inline-block;
 		font: 400 1.2rem/1.5 var(--font);
 		border-bottom: var(--border-w) solid transparent;
-		padding: 1.2rem 1.2rem 0.8rem 0.5rem;
-		margin: 0 0.5rem 0 0;
+		padding: 1.2rem 1.4rem 0.8rem 0.8rem;
+		margin: 0;
 		color: #999;
 	}
 
-	.file-tabs button.active {
+	.file-tabs .button:first-child {
+		padding-left: 1.2rem;
+	}
+
+	.file-tabs .button.active {
 		/* color: var(--second); */
 		color: #333;
 		border-bottom: var(--border-w) solid var(--prime);
@@ -119,24 +129,13 @@
 	input {
 		position: absolute;
 		width: 100%;
-		left: 0.5rem;
+		left: 0.8rem;
 		top: 1.2rem;
-		/* padding: 0 0.4rem; */
-		/* font-size: 1rem; */
 		font: 400 1.2rem/1.5 var(--font);
 		border: none;
 		color: var(--flash);
 		outline: none;
-		line-height: 1;
 		background-color: transparent;
-	}
-
-	.editable {
-		/* margin-right: 2.4rem; */
-	}
-
-	.uneditable {
-		/* padding-left: 1.2rem; */
 	}
 
 	.remove {
@@ -155,74 +154,78 @@
 		color: var(--flash);
 	}
 
-	.file-tabs button.active .editable {
+	.file-tabs .button.active .editable {
 		cursor: text;
 	}
 
-	.file-tabs button.active .remove {
-		display: inline-block;
+	.file-tabs .button.active .remove {
+		display: block;
 	}
 
 	.add-new {
 		position: absolute;
 		left: 0;
 		top: 0;
-		width: 5rem;
-		height: 100%;
+		padding: 1.2rem 1rem 0.8rem 0 !important;
+		height: 4.2rem;
 		text-align: center;
 		background-color: white;
 	}
 
 	.add-new:hover {
-		color: var(--flash);
+		color: var(--flash) !important;
 	}
 </style>
 
 <div class="component-selector">
-	<div class="file-tabs" on:dblclick="{addNew}">
-		{#each $components as component}
-			<button
-				id={component.name}
-				class:active="{component === $selected}"
-				data-name={component.name}
-				on:click="{() => selectComponent(component)}"
-				on:dblclick="{e => e.stopPropagation()}"
-			>
-				{#if component.name == 'App'}
-					<div class="uneditable">
-						App.svelte
-					</div>
-				{:else}
-					{#if component === editing}
-						<span class="input-sizer">{editing.name + (/\./.test(editing.name) ? '' : `.${editing.type}`)}</span>
-
-						<input
-							autofocus
-							bind:value={editing.name}
-							on:focus={selectInput}
-							on:blur="{() => closeEdit()}"
-							use:enter="{e => e.target.blur()}"
-						>
-					{:else}
-						<div
-							class="editable"
-							title="edit component name"
-							on:click="{() => editTab(component)}"
-						>
-							{component.name}.{component.type}
+	{#if $components.length}
+		<div class="file-tabs" on:dblclick="{addNew}">
+			{#each $components as component}
+				<div
+					id={component.name}
+					class="button"
+					role="button"
+					class:active="{component === $selected}"
+					on:click="{() => selectComponent(component)}"
+					on:dblclick="{e => e.stopPropagation()}"
+				>
+					{#if component.name == 'App'}
+						<div class="uneditable">
+							App.svelte
 						</div>
+					{:else}
+						{#if component === editing}
+							<span class="input-sizer">{editing.name + (/\./.test(editing.name) ? '' : `.${editing.type}`)}</span>
 
-						<span class="remove" on:click="{() => remove(component)}">
-							<Icon name="close" size={12}/>
-							<!-- &times; -->
-						</span>
+							<input
+								autofocus
+								spellcheck={false}
+								bind:value={editing.name}
+								on:focus={selectInput}
+								on:blur={closeEdit}
+								use:enter="{e => e.target.blur()}"
+							>
+						{:else}
+							<div
+								class="editable"
+								title="edit component name"
+								on:click="{() => editTab(component)}"
+							>
+								{component.name}.{component.type}
+							</div>
+
+							<span class="remove" on:click="{() => remove(component)}">
+								<Icon name="close" size={12}/>
+								<!-- &times; -->
+							</span>
+						{/if}
 					{/if}
-				{/if}
-			</button>
-		{/each}
-	</div>
+				</div>
+			{/each}
 
-	<button class="add-new" on:click={addNew} title="add new component">
-		<Icon name="plus" />
-	</button>
+			<button class="add-new" on:click={addNew} title="add new component">
+				<Icon name="plus" />
+			</button>
+		</div>
+	{/if}
 </div>
