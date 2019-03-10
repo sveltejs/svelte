@@ -204,6 +204,7 @@ export default class Expression {
 	dynamic_dependencies() {
 		return Array.from(this.dependencies).filter(name => {
 			if (this.template_scope.is_let(name)) return true;
+			if (name === '$$props') return true;
 
 			const variable = this.component.var_lookup.get(name);
 			if (!variable) return false;
@@ -487,6 +488,8 @@ function get_function_name(node, parent) {
 }
 
 function isContextual(component: Component, scope: TemplateScope, name: string) {
+	if (name === '$$props') return true;
+
 	// if it's a name below root scope, it's contextual
 	if (!scope.isTopLevel(name)) return true;
 
