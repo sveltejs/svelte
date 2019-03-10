@@ -152,7 +152,7 @@ export default class Component {
 		} else if (name === '$$props') {
 			this.add_var({
 				name,
-				implicit: true,
+				injected: true,
 				referenced: true
 			});
 		} else if (name[0] === '$') {
@@ -607,7 +607,7 @@ export default class Component {
 			} else if (name === '$$props') {
 				this.add_var({
 					name,
-					implicit: true
+					injected: true
 				});
 			} else if (name[0] === '$') {
 				this.add_var({
