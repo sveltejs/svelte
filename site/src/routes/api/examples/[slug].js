@@ -39,14 +39,9 @@ function createExample(slug) {
 			return a.name < b.name ? -1 : 1;
 		});
 
-	const json5 = fs.existsSync(`content/examples/${slug}/data.json5`)
-		? fs.readFileSync(`content/examples/${slug}/data.json5`, 'utf-8')
-		: '{}';
-
 	return JSON.stringify({
 		title: titles.get(slug),
-		components,
-		json5
+		components
 	});
 }
 
