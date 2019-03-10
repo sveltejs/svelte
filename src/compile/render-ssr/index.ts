@@ -24,7 +24,7 @@ export default function ssr(
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
 
-	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name !== '$$props');
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 	const reactive_store_values = reactive_stores
 		.map(({ name }) => {
 			const store = component.var_lookup.get(name.slice(1));

@@ -294,7 +294,7 @@ export default function dom(
 		return true;
 	});
 
-	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name !== '$$props');
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 
 	if (renderer.slots.size > 0) {
 		const arr = Array.from(renderer.slots);
