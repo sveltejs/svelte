@@ -5,7 +5,7 @@
 
 	export let handle_select;
 
-	const { components, selected } = getContext('REPL');
+	const { components, selected, request_focus } = getContext('REPL');
 
 	let editing = null;
 
@@ -32,6 +32,9 @@
 		handle_select($selected);
 
 		components = components; // TODO necessary?
+
+		// focus the editor, but wait a beat (so key events aren't misdirected)
+		setTimeout(request_focus);
 	}
 
 	function remove(component) {
@@ -99,8 +102,12 @@
 		font: 400 1.2rem/1.5 var(--font);
 		border-bottom: var(--border-w) solid transparent;
 		padding: 1.2rem 1.4rem 0.8rem 0.8rem;
-		margin: 0 0.5rem 0 0;
+		margin: 0;
 		color: #999;
+	}
+
+	.file-tabs .button:first-child {
+		padding-left: 1.2rem;
 	}
 
 	.file-tabs .button.active {

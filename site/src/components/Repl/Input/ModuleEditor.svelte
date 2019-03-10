@@ -11,6 +11,10 @@
 	onMount(() => {
 		register_module_editor(editor);
 	});
+
+	export function focus() {
+		editor.focus();
+	}
 </script>
 
 <style>

@@ -58,6 +58,10 @@
 		editor.refresh();
 	}
 
+	export function focus() {
+		editor.focus();
+	}
+
 	const modes = {
 		js: {
 			name: 'javascript',
