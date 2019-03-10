@@ -68,7 +68,7 @@ const { questions, answer } = component.get();
 console.log(answer); // 'ask your mother'
 ```
 
-This will also retrieve the value of [computed properties](guide#computed-properties).
+This will also retrieve the value of [computed properties](docs#computed-properties).
 
 > Previous versions of Svelte allowed you to specify a key to retrieve a specific value — this was removed in version 2.
 
@@ -85,7 +85,7 @@ const listener = component.on('thingHappened', event => {
 listener.cancel();
 ```
 
-Each component has three built-in events, corresponding to their [lifecycle hooks](guide#lifecycle-hooks):
+Each component has three built-in events, corresponding to their [lifecycle hooks](docs#lifecycle-hooks):
 
 ```js
 component.on('state', ({ changed, current, previous }) => {
@@ -112,7 +112,7 @@ component.fire('thingHappened', {
 });
 ```
 
-At first glance `component.on(...)` and `component.fire(...)` aren't particularly useful, but it'll become more so when we learn about [nested components](guide#nested-components) and [component events](guide#component-events).
+At first glance `component.on(...)` and `component.fire(...)` aren't particularly useful, but it'll become more so when we learn about [nested components](docs#nested-components) and [component events](docs#component-events).
 
 
 ### component.destroy()
@@ -150,6 +150,6 @@ This gives you access to standard options like `target` and `data`, but can also
 
 ### component.root
 
-In [nested components](guide#nested-components), each component has a `root` property pointing to the top-level root component – that is, the one instantiated with `new MyComponent({...})`.
+In [nested components](docs#nested-components), each component has a `root` property pointing to the top-level root component – that is, the one instantiated with `new MyComponent({...})`.
 
-> Earlier versions of Svelte had a `component.observe(...)` method. This was removed in version 2, in favour of the `onstate` [lifecycle hook](guide#lifecycle-hooks), but is still available via [svelte-extras](https://github.com/sveltejs/svelte-extras).
+> Earlier versions of Svelte had a `component.observe(...)` method. This was removed in version 2, in favour of the `onstate` [lifecycle hook](docs#lifecycle-hooks), but is still available via [svelte-extras](https://github.com/sveltejs/svelte-extras).

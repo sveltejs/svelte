@@ -132,4 +132,4 @@ You can do that with the `<svelte:head>` tag:
 </svelte:head>
 ```
 
-When [server rendering](guide#server-side-rendering), the `<head>` contents can be extracted separately to the rest of the markup.
+When [server rendering](docs#server-side-rendering), the `<head>` contents can be extracted separately to the rest of the markup.

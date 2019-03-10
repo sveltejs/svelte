@@ -1,6 +1,6 @@
 [{
 	"code": "missing-namespace",
-	"message": "<rect> is an SVG element – did you forget to add { namespace: 'svg' } ?",
+	"message": "<rect> is an SVG element – did you forget to add <svelte:options namespace=\"svg\"/> ?",
 	"start": {
 		"line": 1,
 		"column": 0,

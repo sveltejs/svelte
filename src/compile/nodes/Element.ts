@@ -101,7 +101,7 @@ export default class Element extends Node {
 		if (!this.namespace && svg.test(this.name)) {
 			this.component.warn(this, {
 				code: `missing-namespace`,
-				message: `<${this.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`
+				message: `<${this.name}> is an SVG element – did you forget to add <svelte:options namespace="svg"/> ?`
 			});
 		}
 

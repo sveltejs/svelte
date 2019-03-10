@@ -30,7 +30,7 @@ Open the example above in the REPL and inspect the element to see what has happe
 
 This is vastly simpler than achieving the same effect via [Shadow DOM](http://caniuse.com/#search=shadow%20dom) and works everywhere without polyfills.
 
-> Svelte will add a `<style>` tag to the page containing your scoped styles. Dynamically adding styles may be impossible if your site has a [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP). If that's the case, you can use scoped styles by [server-rendering your CSS](guide#rendering-css) and using the `css: false` compiler option (or `--no-css` with the CLI).
+> Svelte will add a `<style>` tag to the page containing your scoped styles. Dynamically adding styles may be impossible if your site has a [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP). If that's the case, you can use scoped styles by [server-rendering your CSS](docs#rendering-css) and using the `css: false` compiler option (or `--no-css` with the CLI).
 
 
 ### Cascading rules
@@ -95,7 +95,7 @@ For rules *not* to be removed, they must apply to the component's markup. As far
 </script>
 ```
 
-Instead of manually manipulating the DOM, you should always use the `class` attribute (or the [class directive](https://svelte.technology/guide#classes)):
+Instead of manually manipulating the DOM, you should always use the `class` attribute (or the [class directive](https://svelte.technology/docs#classes)):
 
 ```html
 <!-- { repl: false } -->

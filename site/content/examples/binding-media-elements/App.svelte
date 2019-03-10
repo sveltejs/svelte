@@ -2,8 +2,7 @@
 	let paused = true;
 	let t = 0;
 	let d;
-
-	let icon, bg;
+	let bg;
 
 	$: icon = `https://icon.now.sh/${paused ? 'play' : 'pause'}_circle_filled`;
 

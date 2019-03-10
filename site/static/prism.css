@@ -29,6 +29,7 @@ pre[class*='language-'] {
 	font: 300 var(--code-fs)/1.7 var(--font-mono);
 	color: var(--base);
 	tab-size: 2;
+	-moz-tab-size: 2;
 	-webkit-hyphens: none;
 	hyphens: none;
 }
