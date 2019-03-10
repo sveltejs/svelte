@@ -9,9 +9,6 @@
 
 	let width = 500;
 	let height = 200;
-	let barWidth;
-	let xScale;
-	let yScale;
 
 	function formatMobile(tick) {
 		return "'" + tick % 100;
@@ -25,10 +22,8 @@
 		.domain([0, Math.max.apply(null, yTicks)])
 		.range([height - padding.bottom, padding.top]);
 
-	$: {
-		const innerWidth = width - (padding.left + padding.right);
-		barWidth = innerWidth / xTicks.length;
-	}
+	$: innerWidth = width - (padding.left + padding.right);
+	$: barWidth = innerWidth / xTicks.length;
 </script>
 
 <style>

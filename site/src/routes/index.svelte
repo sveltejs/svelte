@@ -107,11 +107,6 @@
 		top: 0.6em;
 	}
 
-	h6 {
-		max-width: 25em;
-		padding: 2.4rem;
-	}
-
 	.example {
 		background: var(--second);
 		color: white;

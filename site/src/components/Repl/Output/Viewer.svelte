@@ -63,9 +63,14 @@
 				const styles = document.querySelectorAll('style.svelte');
 				let i = styles.length;
 				while (i--) styles[i].parentNode.removeChild(styles[i]);
-			`)
+			`);
 
-			await proxy.eval(`${$bundle.dom.code}
+			await proxy.eval(`
+				// needed for context API tutorial
+				window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
+
+				${$bundle.dom.code}
+
 				if (window.component) {
 					try {
 						window.component.$destroy();
