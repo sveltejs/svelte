@@ -1050,6 +1050,7 @@ export default class Component {
 				this.reactive_declaration_nodes.add(node);
 
 				const assignees = new Set();
+				const assignee_nodes = new Set();
 				const dependencies = new Set();
 
 				let scope = this.instance_scope;
@@ -1062,18 +1063,21 @@ export default class Component {
 						}
 
 						if (node.type === 'AssignmentExpression') {
-							const { name } = getObject(node.left)
-							assignees.add(name);
-							dependencies.delete(name);
+							const identifier = getObject(node.left)
+							assignee_nodes.add(identifier);
+							assignees.add(identifier.name);
 						} else if (node.type === 'UpdateExpression') {
-							const { name } = getObject(node.argument);
-							assignees.add(name);
-							dependencies.delete(name);
+							const identifier = getObject(node.argument);
+							assignee_nodes.add(identifier);
+							assignees.add(identifier.name);
 						} else if (isReference(node, parent)) {
-							const { name } = getObject(node);
-							const owner = scope.findOwner(name);
-							if ((!owner || owner === component.instance_scope) && (name[0] === '$' || component.var_lookup.has(name)) && !assignees.has(name)) {
-								dependencies.add(name);
+							const identifier = getObject(node);
+							if (!assignee_nodes.has(identifier)) {
+								const { name } = identifier;
+								const owner = scope.findOwner(name);
+								if ((!owner || owner === component.instance_scope) && (name[0] === '$' || component.var_lookup.has(name))) {
+									dependencies.add(name);
+								}
 							}
 
 							this.skip();
