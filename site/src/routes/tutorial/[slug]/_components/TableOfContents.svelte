@@ -24,7 +24,6 @@
 		font-weight: 300;
 		font-size: var(--h6);
 		color: white;
-		cursor: pointer;
 	}
 
 	a {
@@ -54,6 +53,7 @@
 		width: 100%;
 		height: 100%;
 		opacity: 0.0001;
+		cursor: pointer;
 	}
 </style>
 
