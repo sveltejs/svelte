@@ -30,7 +30,7 @@
 <h2>Immutable</h2>
 {#each todos as todo}
 	<label on:click="{() => toggle(todo.id)}">
-		<span>{todo.done ? "😎": "☹️"}</span>
+		<span>{todo.done ? "😎": "🙁"}</span>
 		<ImmutableTodo {todo}/>
 	</label>
 {/each}
@@ -38,7 +38,7 @@
 <h2>Mutable</h2>
 {#each todos as todo}
 	<label on:click="{() => toggle(todo.id)}">
-		<span>{todo.done ? "😎": "☹️"}</span>
+		<span>{todo.done ? "😎": "🙁"}</span>
 		<MutableTodo {todo}/>
 	</label>
 {/each}

@@ -233,7 +233,7 @@ npm run dev & open http://localhost:5000
 
 	<iframe
 		title="Hello world example"
-		src="/repl/embed?demo=homepage-demo-hello-world"
+		src="/repl/embed?example=hello-world"
 		scrolling="no"
 	></iframe>
 </section>
@@ -245,7 +245,7 @@ npm run dev & open http://localhost:5000
 
 	<iframe
 		title="Scope styles example"
-		src="/repl/embed?demo=homepage-demo-scoped-styles"
+		src="/repl/embed?example=nested-components"
 		scrolling="no"
 	></iframe>
 </section>
@@ -257,7 +257,7 @@ npm run dev & open http://localhost:5000
 
 	<iframe
 		title="Reactivity example"
-		src="/repl/embed?demo=homepage-demo-reactivity"
+		src="/repl/embed?example=reactive-assignments"
 		scrolling="no"
 	></iframe>
 </section>
@@ -269,7 +269,7 @@ npm run dev & open http://localhost:5000
 
 	<iframe
 		title="Transitions example"
-		src="/repl/embed?demo=homepage-demo-transitions"
+		src="/repl/embed?example=svg-transitions"
 		scrolling="no"
 	></iframe>
 </section>
