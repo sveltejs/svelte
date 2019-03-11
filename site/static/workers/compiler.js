@@ -36,16 +36,11 @@ function compile({ id, source, options, entry }) {
 			Object.assign({}, commonCompilerOptions, options)
 		);
 
-		const props = entry
-			? (vars || stats.vars).map(v => v.writable && v.export_name).filter(Boolean) // TODO remove stats post-launch
-			: null;
-
 		return {
 			id,
 			result: {
 				js: js.code,
-				css: css.code || `/* Add a <sty` + `le> tag to see compiled CSS */`,
-				props
+				css: css.code || `/* Add a <sty` + `le> tag to see compiled CSS */`
 			}
 		};
 	} catch (err) {
@@ -57,8 +52,7 @@ function compile({ id, source, options, entry }) {
 			id,
 			result: {
 				js: message,
-				css: message,
-				props: null
+				css: message
 			}
 		};
 	}

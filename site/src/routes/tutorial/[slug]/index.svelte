@@ -64,23 +64,21 @@
 	});
 
 	$: if (repl) {
+		completed = false;
 		repl.set({
-			components: chapter.app_a.map(clone),
-			values: {}
+			components: chapter.app_a.map(clone)
 		});
 	}
 
 	function reset() {
 		repl.update({
-			components: chapter.app_a.map(clone),
-			values: {}
+			components: chapter.app_a.map(clone)
 		});
 	}
 
 	function complete() {
 		repl.update({
-			components: chapter.app_b.map(clone),
-			values: {}
+			components: chapter.app_b.map(clone)
 		});
 	}
 
@@ -258,6 +256,6 @@
 	</div>
 
 	<div class="tutorial-repl">
-		<Repl bind:this={repl} orientation="rows" show_props={false} on:change={handle_change}/>
+		<Repl bind:this={repl} orientation="rows" on:change={handle_change}/>
 	</div>
 </div>

@@ -1,5 +1,4 @@
 <script>
-	import * as fleece from 'golden-fleece';
 	import { createEventDispatcher } from 'svelte';
 	import UserMenu from './UserMenu.svelte';
 	import Icon from '../../../../components/Icon.svelte';
@@ -11,7 +10,6 @@
 	const dispatch = createEventDispatcher();
 
 	export let repl;
-	export let examples;
 	export let gist;
 	export let name;
 	export let zen_mode;
@@ -54,8 +52,7 @@
 	async function fork(intentWasSave) {
 		saving = true;
 
-		const { components, values } = repl.toJSON();
-		const json5 = fleece.stringify(values); // TODO preserve the original code
+		const { components } = repl.toJSON();
 
 		try {
 			const r = await fetch(`gist/create`, {
@@ -63,8 +60,7 @@
 				credentials: 'include',
 				body: JSON.stringify({
 					name,
-					components,
-					json5
+					components
 				})
 			});
 
@@ -106,8 +102,7 @@
 
 		saving = true;
 
-		const { components, values } = repl.toJSON();
-		const json5 = fleece.stringify(values); // TODO preserve the original code
+		const { components } = repl.toJSON();
 
 		try {
 			const files = {};
@@ -130,13 +125,6 @@
 					files[file] = { content: module.source };
 				}
 			});
-
-			if (!gist.files['data.json5'] || json5 !== gist.files['data.json5'].content) {
-				files['data.json5'] = { content: json5 };
-			}
-
-			// data.json has been deprecated in favour of data.json5
-			if (gist.files['data.json']) gist.files['data.json'] = null;
 
 			const r = await fetch(`gist/${gist.id}`, {
 				method: 'PATCH',
@@ -171,7 +159,7 @@
 	async function download() {
 		downloading = true;
 
-		const { components, imports, values } = repl.toJSON();
+		const { components, imports } = repl.toJSON();
 
 		const files = await (await fetch('/svelte-app.json')).json();
 
@@ -192,8 +180,7 @@
 			path: `src/main.js`, data: `import App from './App.svelte';
 
 var app = new App({
-	target: document.body,
-	props: ${JSON.stringify(values, null, '\t').replace(/\n/g, '\n\t')}
+	target: document.body
 });
 
 export default app;` });
@@ -207,32 +194,11 @@ export default app;` });
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="app-controls">
-	<div>
-		<div class="icon" style="position: relative; width: 3.2rem; top: -.2rem">
-			<Icon name="menu" />
-
-			<select
-				class="hidden-select"
-				on:change="{e => dispatch('select', { slug: e.target.value })}"
-			>
-				<option value={null} disabled>Select an example</option>
-
-				{#each examples as group}
-					<optgroup label={group.name}>
-						{#each group.examples as example}
-							<option value={example.slug}>{example.title}</option>
-						{/each}
-					</optgroup>
-				{/each}
-			</select>
-		</div>
-
-		<input
-			bind:value={name}
-			on:focus="{e => e.target.select()}"
-			use:enter="{e => e.target.blur()}"
-		>
-	</div>
+	<input
+		bind:value={name}
+		on:focus="{e => e.target.select()}"
+		use:enter="{e => e.target.blur()}"
+	>
 
 	<div style="text-align: right; margin-right:.4rem">
 		<button class="icon" on:click="{() => zen_mode = !zen_mode}" title="fullscreen editor">

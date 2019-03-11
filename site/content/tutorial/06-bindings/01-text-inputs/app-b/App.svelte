@@ -2,8 +2,6 @@
 	let name = 'world';
 </script>
 
-<label>
-	<input bind:value={name}>
-</label>
+<input bind:value={name}>
 
 <h1>Hello {name}!</h1>
