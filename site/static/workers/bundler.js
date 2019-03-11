@@ -89,6 +89,8 @@ async function getBundle(mode, cache, lookup) {
 					if (importee.endsWith('.html')) importee = importee.replace(/\.html$/, '.svelte');
 
 					if (importee in lookup) return importee;
+
+					throw new Error(`Could not resolve "${importee}" from "${importer}"`);
 				},
 				load(id) {
 					if (id.startsWith(`https://`)) return fetch_if_uncached(id);
