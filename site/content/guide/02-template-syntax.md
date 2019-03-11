@@ -87,13 +87,13 @@ You can combine the two blocks above with `{:else}`:
 {/if}
 ```
 
-You can also use `{:elseif ...}`:
+You can also use `{:else if ...}`:
 
 ```html
-<!--{ title: 'If, else and elseif' }-->
+<!--{ title: 'If, else and else if' }-->
 {#if x > 10}
 	<p>{x} is greater than 10</p>
-{:elseif 5 > x}
+{:else if 5 > x}
 	<p>{x} is less than 5</p>
 {:else}
 	<p>{x} is between 5 and 10</p>
@@ -176,7 +176,7 @@ You can access the index of the current element with *expression* as *name*, *in
 }
 ```
 
-> By default, if the list `a, b, c` becomes `a, c`, Svelte will *remove* the third block and *change* the second from `b` to `c`, rather than removing `b`. If that's not what you want, use a [keyed each block](guide#keyed-each-blocks).
+> By default, if the list `a, b, c` becomes `a, c`, Svelte will *remove* the third block and *change* the second from `b` to `c`, rather than removing `b`. If that's not what you want, use a [keyed each block](docs#keyed-each-blocks).
 
 You can use destructuring patterns on the elements of the array:
 
@@ -237,7 +237,7 @@ If the expression in `{#await expression}` *isn't* a promise, Svelte skips ahead
 
 ### Directives
 
-Directives allow you to add special instructions for adding [event handlers](guide#event-handlers), [bindings](guide#bindings), [transitions](guide#transitions) and so on. We'll cover each of those in later stages of this guide – for now, all you need to know is that directives can be identified by the `:` character:
+Directives allow you to add special instructions for adding [event handlers](docs#event-handlers), [bindings](docs#bindings), [transitions](docs#transitions) and so on. We'll cover each of those in later stages of this guide – for now, all you need to know is that directives can be identified by the `:` character:
 
 ```html
 <!--{ title: 'Element directives' }-->

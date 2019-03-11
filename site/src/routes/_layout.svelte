@@ -1,18 +1,19 @@
 <script>
+	import { page } from '@sapper/app';
 	import InlineSvg from '../components/InlineSvg.svelte';
 	import Nav from '../components/TopNav.svelte';
 
-	export let child;
+	export let segment;
 	export let path;
 </script>
 
 <InlineSvg />
-{#if path !== '/repl/embed'}
-	<Nav segment={child.segment} />
+{#if $page.path !== '/repl/embed'}
+	<Nav {segment}/>
 {/if}
 
 <main>
-	<svelte:component this={child.component} {...child.props} />
+	<slot></slot>
 </main>
 
 <style>

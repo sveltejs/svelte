@@ -452,7 +452,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.builders.destroy.addLine(`if (${name}) ${name}.$destroy(${parentNode ? '' : 'detach'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
-				? component.name
+				? '__svelte:self__' // TODO conflict-proof this
 				: component.qualify(this.node.name);
 
 			block.builders.init.addBlock(deindent`

@@ -22,11 +22,11 @@ function instance($$self, $$props, $$invalidate) {
 		if ('x' in $$props) $$invalidate('x', x = $$props.x);
 	};
 
-	$$self.$$.update = ($$dirty = { b: 1, x: 1, a: 1 }) => {
-		if ($$dirty.b || $$dirty.x) {
+	$$self.$$.update = ($$dirty = { x: 1, b: 1 }) => {
+		if ($$dirty.x) {
 			b = x; $$invalidate('b', b);
 		}
-		if ($$dirty.a || $$dirty.b) {
+		if ($$dirty.b) {
 			a = b; $$invalidate('a', a);
 		}
 	};

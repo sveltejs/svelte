@@ -32,7 +32,7 @@ export default class EventHandler extends Node {
 				if (node && node.type === 'VariableDeclaration') {
 					// for `const handleClick = () => {...}`, we want the [arrow] function expression node
 					const declarator = node.declarations.find(d => d.id.name === info.expression.name);
-					node = declarator.init;
+					node = declarator && declarator.init;
 				}
 
 				if (node && /Function/.test(node.type) && node.params.length === 0) {

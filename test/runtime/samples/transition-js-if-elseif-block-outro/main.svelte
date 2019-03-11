@@ -17,6 +17,6 @@
 
 {#if x}
 	<div bind:this={yes} out:foo>yes</div>
-{:elseif y}
+{:else if y}
 	<div bind:this={no} out:foo>no</div>
 {/if}

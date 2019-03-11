@@ -24,7 +24,7 @@ export default function ssr(
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
 
-	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 	const reactive_store_values = reactive_stores
 		.map(({ name }) => {
 			const store = component.var_lookup.get(name.slice(1));
@@ -38,7 +38,7 @@ export default function ssr(
 		});
 
 	// TODO remove this, just use component.vars everywhere
-	const props = component.vars.filter(variable => !variable.module && variable.export_name && variable.export_name !== component.componentOptions.props_object);
+	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 
 	let user_code;
 
@@ -58,10 +58,9 @@ export default function ssr(
 		});
 
 		user_code = component.javascript;
-	} else if (!component.ast.instance && !component.ast.module && (props.length > 0 || component.componentOptions.props)) {
+	} else if (!component.ast.instance && !component.ast.module && (props.length > 0 || component.var_lookup.has('$$props'))) {
 		const statements = [];
 
-		if (component.componentOptions.props) statements.push(`let ${component.componentOptions.props} = $$props;`);
 		if (props.length > 0) statements.push(`let { ${props.map(x => x.name).join(', ')} } = $$props;`);
 
 		reactive_stores.forEach(({ name }) => {

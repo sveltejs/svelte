@@ -49,15 +49,15 @@ It's easier to show the effect of this than to describe it. Open the following e
 	import { slide } from 'svelte/transition';
 
 	const names = ['Alice', 'Barry', 'Cecilia', 'Douglas', 'Eleanor', 'Felix', 'Grace', 'Horatio', 'Isabelle'];
-	
+
 	function random() {
 		return names
 			.filter(() => Math.random() < 0.5)
 			.map(name => ({ name }));
 	}
-	
+
 	let people = random();
-	
+
 	function update() {
 		people = random();
 	}
@@ -67,7 +67,7 @@ It's easier to show the effect of this than to describe it. Open the following e
 
 ### Hydration
 
-If you're using [server-side rendering](guide#server-side-rendering), it's likely that you'll need to create a client-side version of your app *on top of* the server-rendered version. A naive way to do that would involve removing all the existing DOM and rendering the client-side app in its place:
+If you're using [server-side rendering](docs#server-side-rendering), it's likely that you'll need to create a client-side version of your app *on top of* the server-rendered version. A naive way to do that would involve removing all the existing DOM and rendering the client-side app in its place:
 
 ```js
 import App from './App.html';

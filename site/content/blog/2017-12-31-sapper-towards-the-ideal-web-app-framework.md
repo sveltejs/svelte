@@ -48,7 +48,7 @@ What happens if we use the new model as a starting point?
 
 ## Introducing Sapper
 
-<aside><p>The <a href="https://sapper.svelte.technology/guide#why-the-name-">name comes from</a> the term for combat engineers, and is also short for Svelte app maker</p></aside>
+<aside><p>The <a href="https://sapper.svelte.technology/docs#why-the-name-">name comes from</a> the term for combat engineers, and is also short for Svelte app maker</p></aside>
 
 [Sapper](https://sapper.svelte.technology) is the answer to that question. **Sapper is a Next.js-style framework that aims to meet the eleven criteria at the top of this article while dramatically reducing the amount of code that gets sent to the browser.** It's implemented as Express-compatible middleware, meaning it's easy to understand and customise.
 
@@ -67,7 +67,7 @@ But size is only part of the story. Svelte apps are also extremely performant an
 
 The biggest drawback for many developers evaluating Sapper would be 'but I like React, and I already know how to use it', which is fair.
 
-If you're in that camp, I'd invite you to at least try alternative frameworks. You might be pleasantly surprised! The [Sapper RealWorld](https://github.com/sveltejs/realworld) implementation totals 1,201 lines of source code, compared to 2,377 for the reference implementation, because you're able to express concepts very concisely using Svelte's template syntax (which [takes all of five minutes to master](https://svelte.technology/guide#template-syntax)). You get [scoped CSS](the-zen-of-just-writing-css), with unused style removal and minification built-in, and you can use preprocessors like LESS if you want. You no longer need to use Babel. SSR is ridiculously fast, because it's just string concatenation. And we recently introduced [svelte/store](https://svelte.technology/guide#state-management), a tiny global store that synchronises state across your component hierarchy with zero boilerplate. The worst that can happen is that you'll end up feeling vindicated!
+If you're in that camp, I'd invite you to at least try alternative frameworks. You might be pleasantly surprised! The [Sapper RealWorld](https://github.com/sveltejs/realworld) implementation totals 1,201 lines of source code, compared to 2,377 for the reference implementation, because you're able to express concepts very concisely using Svelte's template syntax (which [takes all of five minutes to master](https://svelte.technology/docs#template-syntax)). You get [scoped CSS](the-zen-of-just-writing-css), with unused style removal and minification built-in, and you can use preprocessors like LESS if you want. You no longer need to use Babel. SSR is ridiculously fast, because it's just string concatenation. And we recently introduced [svelte/store](https://svelte.technology/docs#state-management), a tiny global store that synchronises state across your component hierarchy with zero boilerplate. The worst that can happen is that you'll end up feeling vindicated!
 
 But there are trade-offs nonetheless. Some people have a pathological aversion to any form of 'template language', and maybe that applies to you. JSX proponents will clobber you with the 'it's just JavaScript' mantra, and therein lies React's greatest strength, which is that it is infinitely flexible. That flexibility comes with its own set of trade-offs, but we're not here to discuss those.
 
