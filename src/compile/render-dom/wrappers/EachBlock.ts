@@ -1,6 +1,5 @@
 import Renderer from '../Renderer';
 import Block from '../Block';
-import Node from '../../nodes/shared/Node';
 import Wrapper from './shared/Wrapper';
 import createDebuggingComment from '../../../utils/createDebuggingComment';
 import EachBlock from '../../nodes/EachBlock';
@@ -55,8 +54,9 @@ export default class EachBlockWrapper extends Wrapper {
 		each_block_value: string;
 		get_each_context: string;
 		iterations: string;
-		data_length: string,
-		view_length: string,
+		fixed_length: number;
+		data_length: string;
+		view_length: string;
 		length: string;
 	}
 
@@ -113,6 +113,7 @@ export default class EachBlockWrapper extends Wrapper {
 			length: `[✂${c}-${c+4}✂]`,
 
 			// optimisation for array literal
+			fixed_length,
 			data_length: fixed_length === null ? `${each_block_value}.[✂${c}-${c+4}✂]` : fixed_length,
 			view_length: fixed_length === null ? `${iterations}.[✂${c}-${c+4}✂]` : fixed_length,
 
@@ -373,6 +374,7 @@ export default class EachBlockWrapper extends Wrapper {
 			create_each_block,
 			length,
 			iterations,
+			fixed_length,
 			data_length,
 			view_length,
 			anchor
@@ -475,7 +477,7 @@ export default class EachBlockWrapper extends Wrapper {
 					for (${this.block.hasUpdateMethod ? `` : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${view_length}; #i += 1) {
 						${iterations}[#i].d(1);
 					}
-					${view_length} = ${this.vars.each_block_value}.${length};
+					${!fixed_length && `${view_length} = ${this.vars.each_block_value}.${length};`}
 				`;
 			}
 

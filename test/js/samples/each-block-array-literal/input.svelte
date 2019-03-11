@@ -1,3 +1,3 @@
-{#each [1, 2, 3, 4, 5] as num}
+{#each [a, b, c, d, e] as num}
 	<span>{num}</span>
 {/each}
