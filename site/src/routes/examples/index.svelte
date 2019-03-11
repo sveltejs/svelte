@@ -14,13 +14,13 @@
 
 <style>
 	.content {
-		max-width: 80rem;
+		max-width: 120rem;
 		margin: 0 auto;
 	}
 
 	h1 {
 		margin: 4rem 0 4rem -0.05em;
-		font-size: 5.4rem;
+		font-size: 4rem;
 	}
 
 	h2 {
@@ -52,6 +52,12 @@
 	@media (min-width: 720px) {
 		.grid {
 			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	@media (min-width: 1080px) {
+		.grid {
+			grid-template-columns: repeat(3, 1fr);
 		}
 	}
 
