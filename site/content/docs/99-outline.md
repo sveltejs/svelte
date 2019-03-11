@@ -4,7 +4,17 @@ title: Outline
 
 (This isn't the actual documentation, this is just me getting my thoughts straight so that we can create the documentation.)
 
-I think it makes sense to split the docs into compile time (`svelte.preprocess` and `svelte.compile`), then run time (component API, `svelte`, `svelte/store`, `svelte/motion`, etc). I'm not sure where template syntax, style scoping (and `:global(...)`), `context="module"` etc goes.
+I think it makes sense to split the docs into component format (script, style, markup), compile time (`svelte.preprocess` and `svelte.compile`), then run time (component API, `svelte`, `svelte/store`, `svelte/motion`, etc). I'm not sure where template syntax, style scoping (and `:global(...)`), `context="module"` etc goes.
+
+
+### Component format
+
+* .svelte
+* `<script>`
+* `<style>`
+* markup
+* `<script context="module">`
+
 
 ### Compile time
 
