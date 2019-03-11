@@ -315,24 +315,24 @@
 </style>
 
 <svelte:head>
-	<title>Learn Svelte</title>
+	<title>API Docs • Svelte</title>
 </svelte:head>
 
 <div bind:this={container} class='content linkify listify'>
 	{#each sections as section}
-	<section data-id={section.slug}>
-		<h2>
-			<span class="offset-anchor" id={section.slug}></span>
-			<a href="#{section.slug}" class="anchor" aria-hidden></a>
+		<section data-id={section.slug}>
+			<h2>
+				<span class="offset-anchor" id={section.slug}></span>
+				<a href="#{section.slug}" class="anchor" aria-hidden></a>
 
-			{section.metadata.title}
-			<small>
-				<a href='https://github.com/sveltejs/svelte/edit/master/site/content/guide/{section.file}' title='edit this section'>
-					<Icon name='edit' /></a>
-			</small>
-		</h2>
-		{@html section.html}
-	</section>
+				{section.metadata.title}
+				<small>
+					<a href='https://github.com/sveltejs/svelte/edit/master/site/content/docs/{section.file}' title='edit this section'>
+						<Icon name='edit' /></a>
+				</small>
+			</h2>
+			{@html section.html}
+		</section>
 	{/each}
 </div>
 

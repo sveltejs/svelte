@@ -72,7 +72,7 @@
 </script>
 
 <style>
-	.guide-toc li {
+	.reference-toc li {
 		display: block;
 		line-height: 1.2;
 		margin: 0 0 4.8rem 0;
@@ -100,7 +100,7 @@
 
 <ul
 	bind:this={ul}
-	class="guide-toc"
+	class="reference-toc"
 	on:mouseenter="{() => prevent_sidebar_scroll = true}"
 	on:mouseleave="{() => prevent_sidebar_scroll = false}"
 >
