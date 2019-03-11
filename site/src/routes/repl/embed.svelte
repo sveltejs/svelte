@@ -3,16 +3,17 @@
 		return {
 			version: query.version || 'beta',
 			gist: query.gist,
-			demo: query.demo
+			example: query.example
 		};
 	}
 </script>
 
 <script>
 	import { onMount } from 'svelte';
+	import { process_example } from './_utils/process_example.js';
 	import Repl from '../../components/Repl/index.svelte';
 
-	export let version, gist, demo;
+	export let version, gist, example;
 
 	let repl;
 	let name = 'loading...';
@@ -57,15 +58,13 @@
 
 				repl.set({ components });
 			});
-		} else if (demo) {
-			const url = `api/examples/${demo}`;
-
-			fetch(url).then(async response => {
+		} else if (example) {
+			fetch(`examples/${example}.json`).then(async response => {
 				if (response.ok) {
 					const data = await response.json();
 
 					repl.set({
-						components: data.components
+						components: process_example(data.files)
 					});
 				}
 			});

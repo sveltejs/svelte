@@ -11,6 +11,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { locate } from 'locate-character';
+	import { process_example } from './_utils/process_example.js';
 	import AppControls from './_components/AppControls/index.svelte';
 	import Repl from '../../components/Repl/index.svelte';
 
@@ -93,21 +94,7 @@
 
 				name = data.title;
 
-				const components = data.files
-					.map(file => {
-						const [name, type] = file.name.split('.');
-						return { name, type, source: file.source };
-					})
-					.sort((a, b) => {
-						if (a.name === 'App' && a.type === 'svelte') return -1;
-						if (b.name === 'App' && b.type === 'svelte') return 1;
-
-						if (a.type === b.type) return a.name < b.name ? -1 : 1;
-
-						if (a.type === 'svelte') return -1;
-						if (b.type === 'svelte') return 1;
-					});
-
+				const components = process_example(data.files);
 				repl.set({ components });
 
 				gist = null;
