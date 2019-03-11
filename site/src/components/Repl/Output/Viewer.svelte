@@ -6,9 +6,8 @@
 	import { decode } from 'sourcemap-codec';
 
 	const dispatch = createEventDispatcher();
-	const { bundle, values, navigate } = getContext('REPL');
+	const { bundle, navigate } = getContext('REPL');
 
-	export let props;
 	export let error; // TODO should this be exposed as a prop?
 
 	export function setProp(prop, value) {
@@ -23,16 +22,10 @@
 	let proxy = null;
 
 	let ready = false;
+	let inited = false;
 
 	onMount(() => {
 		proxy = new ReplProxy(iframe, {
-			onPropUpdate: (prop, value) => {
-				dispatch('binding', { prop, value });
-				values.update(values => Object.assign({}, values, {
-					[prop]: value
-				}));
-			},
-
 			onFetchProgress: progress => {
 				pending_imports = progress;
 			}
@@ -84,12 +77,9 @@
 				window._svelteTransitionManager = null;
 
 				window.component = new SvelteComponent({
-					target: document.body,
-					props: ${JSON.stringify($values)}
+					target: document.body
 				});
 			`);
-
-			await proxy.bindProps(props);
 
 			error = null;
 		} catch (e) {
@@ -101,6 +91,8 @@
 
 			error = e;
 		}
+
+		inited = true;
 	}
 
 	$: if (ready) apply_bundle($bundle);
@@ -136,7 +128,7 @@
 </style>
 
 <div class="iframe-container">
-	<iframe title="Result" bind:this={iframe} sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals" class="{error || pending || pending_imports ? 'greyed-out' : ''}" srcdoc='
+	<iframe title="Result" class:inited bind:this={iframe} sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals" class="{error || pending || pending_imports ? 'greyed-out' : ''}" srcdoc='
 		<!doctype html>
 		<html>
 			<head>

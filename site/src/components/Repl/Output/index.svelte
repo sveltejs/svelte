@@ -4,18 +4,14 @@
 	import Viewer from './Viewer.svelte';
 	import CompilerOptions from './CompilerOptions.svelte';
 	import Compiler from './Compiler.js';
-	import PropEditor from './PropEditor.svelte';
 	import CodeMirror from '../CodeMirror.svelte';
 
-	const { values, register_output } = getContext('REPL');
+	const { register_output } = getContext('REPL');
 
 	export let version;
 	export let sourceErrorLoc;
 	export let runtimeError;
 	export let embedded;
-	export let show_props;
-
-	let props;
 
 	let compile_options = {
 		generate: 'dom',
@@ -39,7 +35,6 @@
 
 			js_editor.set(compiled.js, 'js');
 			css_editor.set(compiled.css, 'css');
-			if (compiled.props) props = compiled.props;
 		},
 
 		update: async selected => {
@@ -49,7 +44,6 @@
 
 			js_editor.update(compiled.js);
 			css_editor.update(compiled.css);
-			if (compiled.props) props = compiled.props;
 		}
 	});
 
@@ -67,23 +61,6 @@
 	const setters = {};
 
 	let view = 'result';
-
-	function updateValues(prop, value) {
-		values.update(v => Object.assign({}, v, {
-			[prop]: value
-		}));
-	}
-
-	function setPropFromViewer(prop, value) {
-		// console.log(setters, prop, value);
-		// setters[prop](value);
-		updateValues(prop, value);
-	}
-
-	function setPropFromEditor(prop, value) {
-		viewer.setProp(prop, value);
-		updateValues(prop, value);
-	}
 </script>
 
 <style>
@@ -117,19 +94,6 @@
 		font: 700 1.2rem/1.5 var(--font);
 		padding: 1.2rem 0 0.8rem 1rem;
 		color: var(--text);
-	}
-
-	.props {
-		display: grid;
-		padding: 0.5em;
-		grid-template-columns: auto 1fr;
-		grid-auto-rows: min-content;
-		grid-gap: 0.5em;
-		overflow-y: auto;
-	}
-
-	.props code {
-		top: .1rem;
 	}
 
 	.tab-content {
@@ -166,44 +130,11 @@
 
 <!-- component viewer -->
 <div class="tab-content" class:visible="{view === 'result'}">
-	<SplitPane type="vertical" pos={67} fixed={!show_props} fixed_pos={100}>
-		<div slot="a">
-			<Viewer
-				bind:this={viewer}
-				{props}
-				bind:error={runtimeError}
-				on:binding="{e => setPropFromViewer(e.detail.prop, e.detail.value)}"
-			/>
-		</div>
-
-		<section slot="b">
-			{#if show_props}
-				<h3>Props editor</h3>
-
-				{#if props}
-					{#if props.length > 0}
-						<div class="props">
-							{#each props.sort() as prop (prop)}
-								<code style="display: block; whitespace: pre;">{prop}</code>
-
-								<!-- TODO `bind:this={propEditors[prop]}` — currently fails -->
-								<PropEditor
-									value={$values[prop]}
-									on:change="{e => setPropFromEditor(prop, e.detail.value)}"
-								/>
-							{/each}
-						</div>
-					{:else}
-						<div style="padding: 0.5em" class="linkify">
-							<!-- TODO explain distincion between logic-less and logic-ful components? -->
-							<!-- TODO style the <a> so it looks like a link -->
-							<p style="font-size: 1.3rem; color: var(--second)">This component has no props — <a href="docs#external-properties">declare props with the export keyword</a></p>
-						</div>
-					{/if}
-				{/if}
-			{/if}
-		</section>
-	</SplitPane>
+	<Viewer
+		bind:this={viewer}
+		bind:error={runtimeError}
+		on:binding="{e => setPropFromViewer(e.detail.prop, e.detail.value)}"
+	/>
 </div>
 
 <!-- js output -->

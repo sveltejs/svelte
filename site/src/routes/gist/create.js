@@ -13,7 +13,7 @@ export async function post(req, res) {
 	}
 
 	try {
-		const { name, components, json5 } = await body(req);
+		const { name, components } = await body(req);
 
 		const files = {
 			'meta.json': {
@@ -32,10 +32,6 @@ export async function post(req, res) {
 			}
 			files[file] = { content: component.source };
 		});
-
-		if (json5) {
-			files['data.json5'] = { content: json5 };
-		}
 
 		const r = await fetch(`https://api.github.com/gists`, {
 			method: 'POST',
