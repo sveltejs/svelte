@@ -211,6 +211,10 @@
 		margin-top: 0;
 	}
 
+	.content :global(h4) {
+		margin: 2em 0 1em 0;
+	}
+
 	.content :global(.offset-anchor) {
 		position: relative;
 		display: block;
