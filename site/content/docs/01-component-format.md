@@ -490,10 +490,69 @@ You can bind to component props using the same mechanism:
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
 
 
+#### Classes
+
+A `class:` directive provides a shorter way of toggling a class on an element. These are equivalent:
+
+```html
+<div class="{active ? 'active' : ''}">...</div>
+<div class:active={active}>...</div>
+
+<!-- equivalent shorthand, for when name and value match -->
+<div class:active>...</div>
+```
+
+
+#### Actions
+
+Actions are functions that are called when an element is created. They must return an object with a `destroy` method that is called after the element is unmounted:
+
+```html
+<script>
+	function foo(node) {
+		// the node has been mounted in the DOM
+
+		return {
+			destroy() {
+				// the node has been removed from the DOM
+			}
+		};
+	}
+</script>
+
+<div use:foo></div>
+```
+
+An action can have arguments. If the returned value has an `update` method, it will be called whenever those arguments change, immediately after Svelte has applied updates to the markup:
+
+```html
+<script>
+	export let bar;
+
+	function foo(node, bar) {
+		// the node has been mounted in the DOM
+
+		return {
+			update(bar) {
+				// the value of `bar` has changed
+			},
+
+			destroy() {
+				// the node has been removed from the DOM
+			}
+		};
+	}
+</script>
+
+<div use:foo={bar}></div>
+```
+
+> Don't worry about the fact that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
+
+
+
 #### TODO
 
-* classes
-* actions
 * transitions
 * animations
 * slots
