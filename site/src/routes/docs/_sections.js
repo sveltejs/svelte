@@ -48,6 +48,14 @@ export default function() {
 
 			const renderer = new marked.Renderer();
 
+			let block_open = false;
+
+			renderer.hr = (...args) => {
+				block_open = true;
+
+				return '<div class="side-by-side"><div class="copy">';
+			};
+
 			renderer.code = (source, lang) => {
 				source = source.replace(/^ +/gm, match =>
 					match.split('    ').join('\t')
@@ -78,7 +86,14 @@ export default function() {
 					lang
 				);
 
-				return `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
+				let html = `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
+
+				if (block_open) {
+					block_open = false;
+					return `</div><div class="code">${html}</div></div>`;
+				}
+
+				return html;
 			};
 
 			const seen = new Set();

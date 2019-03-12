@@ -2,7 +2,11 @@
 title: Component format
 ---
 
-Components are the building blocks of Svelte applications. They are written into `.svelte` files, using a superset of HTML:
+---
+
+Components are the building blocks of Svelte applications. They are written into `.svelte` files, using a superset of HTML.
+
+All three sections — script, styles and markup — are optional.
 
 ```html
 <script>
@@ -16,10 +20,9 @@ Components are the building blocks of Svelte applications. They are written into
 <!-- markup (zero or more items) goes here -->
 ```
 
-All three sections — script, styles and markup — are optional.
-
-
 ### Script
+
+---
 
 A `<script>` block contains JavaScript that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup. There are four additional rules:
 
@@ -45,10 +48,13 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 </script>
 ```
 
-
 #### 2. Assignments are 'reactive'
 
-To change component state and trigger a re-render, just assign to a locally declared variable:
+---
+
+To change component state and trigger a re-render, just assign to a locally declared variable.
+
+Update expressions (`count += 1`) and property assignments (`obj.x = y`) have the same effect.
 
 ```html
 <script>
@@ -62,10 +68,9 @@ To change component state and trigger a re-render, just assign to a locally decl
 </script>
 ```
 
-Update expressions (`count += 1`) and property assignments (`obj.x = y`) have the same effect.
-
-
 #### 3. `$:` marks a statement as reactive
+
+---
 
 Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` label. Reactive statements run immediately before the component updates, whenever the values that they depend on have changed:
 
@@ -84,6 +89,8 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 </script>
 ```
 
+---
+
 If a statement consists entirely of an assignment to an undeclared variable, Svelte will inject a `let` declaration on your behalf:
 
 ```html
@@ -94,10 +101,13 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 </script>
 ```
 
-
 #### 4. Prefix stores with `$` to access their values
 
-Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, and set up a store subscription that will be unsubscribed when appropriate:
+---
+
+Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, and set up a store subscription that will be unsubscribed when appropriate.
+
+Local variables (that do not represent store values) must *not* have a `$` prefix.
 
 ```html
 <script>
@@ -110,8 +120,6 @@ Any time you have a reference to a store, you can access its value inside a comp
 	console.log($count); // logs 1
 </script>
 ```
-
-Local variables (that do not represent store values) must *not* have a `$` prefix.
 
 
 #### Module context
