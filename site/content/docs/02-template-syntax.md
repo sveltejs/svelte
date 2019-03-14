@@ -635,7 +635,7 @@ The `transition:` directive indicates a *bidirectional* transition, which means 
 ```html
 {#if visible}
 	<div transition:fade>
-		fades in
+		fades in and out
 	</div>
 {/if}
 ```
