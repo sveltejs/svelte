@@ -652,13 +652,133 @@ The `in:` and `out:` directives are not bidirectional. An in transition will con
 {/if}
 ```
 
-* TODO parameters
-* custom CSS transitions
-* custom JS transitions
-* deferred transitions
-* events
-* local
+---
 
+Like actions, transitions can have parameters.
+
+(The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
+
+```html
+{#if visible}
+	<div transition:fade="{{ duration: 2000 }}">
+		flies in, fades out over two seconds
+	</div>
+{/if}
+```
+
+---
+
+Transitions can use custom functions. If the returned object has a `css` function, Svelte will create a CSS animation that plays on the element.
+
+The `t` argument passed to `css` is a value between `0` and `1` after the `easing` function has been applied. *In* transitions run from `0` to `1`, *out* transitions run from `1` to `0` — in other words `1` is the element's natural state, as though no transition had been applied. The `u` argument is equal to `1 - t`.
+
+The function is called repeatedly *before* the transition begins, with different `t` and `u` arguments.
+
+```html
+<script>
+	import { elasticOut } from 'svelte/easing';
+
+	export let visible;
+
+	function whoosh(node, params) {
+		const existingTransform = getComputedStyle(node).transform.replace('none', '');
+
+		return {
+			delay: params.delay || 0,
+			duration: params.duration || 400,
+			easing: params.easing || elasticOut,
+			css: (t, u) => `transform: ${existingTransform} scale(${t})`
+		};
+	}
+</script>
+
+{#if visible}
+	<div in:whoosh>
+		whooshes in
+	</div>
+{/if}
+```
+
+---
+
+A custom transition function can also return a `tick` function, which is called *during* the transition with the same `t` and `u` arguments.
+
+> If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
+
+```html
+<script>
+	export let visible = false;
+
+	function typewriter(node, { speed = 50 }) {
+		const valid = (
+			node.childNodes.length === 1 &&
+			node.childNodes[0].nodeType === 3
+		);
+
+		if (!valid) return {};
+
+		const text = node.textContent;
+		const duration = text.length * speed;
+
+		return {
+			duration,
+			tick: (t, u) => {
+				const i = ~~(text.length * t);
+				node.textContent = text.slice(0, i);
+			}
+		};
+	}
+</script>
+
+{#if visible}
+	<p in:typewriter="{{ speed: 20 }}">
+		The quick brown fox jumps over the lazy dog
+	</p>
+{/if}
+```
+
+If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](https://v3.svelte.technology/tutorial/deferred-transitions) possible.
+
+---
+
+An element with transitions will dispatch the following events in addition to any standard DOM events:
+
+* `introstart`
+* `introend`
+* `outrostart`
+* `outroend`
+
+```html
+{#if visible}
+	<p
+		transition:fly="{{ y: 200, duration: 2000 }}"
+		on:introstart="{() => status = 'intro started'}"
+		on:outrostart="{() => status = 'outro started'}"
+		on:introend="{() => status = 'intro ended'}"
+		on:outroend="{() => status = 'outro ended'}"
+	>
+		Flies in and out
+	</p>
+{/if}
+```
+
+---
+
+Local transitions only play when the block they belong to is created or destroyed, *not* when parent blocks are created or destroyed.
+
+```html
+{#if x}
+	{#if y}
+		<p transition:fade>
+			fades in and out when x or y change
+		</p>
+
+		<p transition:fade|local>
+			fades in and out only when y changes
+		</p>
+	{/if}
+{/if}
+```
 
 
 ### TODO
