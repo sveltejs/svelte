@@ -58,7 +58,7 @@ Or they can *be* JavaScript expressions.
 
 ---
 
-An expression might include characters that would cause syntax highlighting to fail in regular HTML, in which case quoting the value is permitted. The quotes do not affect how the value is parsed:
+An expression might include characters that would cause syntax highlighting to fail in regular HTML, so quoting the value is permitted. The quotes do not affect how the value is parsed:
 
 ```html
 <button disabled="{number !== 42}">...</button>
@@ -180,7 +180,7 @@ An each block can also specify an *index*, equivalent to the second argument in 
 
 ---
 
-If a *key* expression is provided, Svelte will diff the list when data changes, rather than adding or removing items at the end.
+If a *key* expression is provided — which must uniquely identify each list item — Svelte will use it to diff the list when data changes, rather than adding or removing items at the end.
 
 ```html
 {#each items as item, i (item.id)}
@@ -236,7 +236,21 @@ Await blocks allow you to branch on the three possible states of a Promise — p
 
 ---
 
-The `catch` block can be omitted if no error is possible, and the initial block can be omitted if you don't care about the pending state.
+The `catch` block can be omitted if you don't need to render anything when the promise rejects (or no error is possible).
+
+```html
+{#await promise}
+	<!-- promise is pending -->
+	<p>waiting for the promise to resolve...</p>
+{:then value}
+	<!-- promise was fulfilled -->
+	<p>The value is {value}</p>
+{/await}
+```
+
+---
+
+If you don't care about the pending state, you can also omit the initial block.
 
 ```html
 {#await promise then value}
@@ -353,7 +367,7 @@ If the name matches the value, you can use a shorthand.
 
 ---
 
-Numeric input values are coerced; even though `input.value` is a string as far as the DOM is concerned, Svelte will treat it as a number.
+Numeric input values are coerced; even though `input.value` is a string as far as the DOM is concerned, Svelte will treat it as a number. If the input is empty (in the case of `type="number"`), the value is `undefined`.
 
 ```html
 <input type="number" bind:value={num}>
@@ -492,7 +506,7 @@ You can bind to component props using the same mechanism.
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
 
-(Note that we can do `{cart.empty}` rather than `{() => cart.empty()}`, since there is no `this` inside a component's `<script>` block.)
+(Note that we can do `{cart.empty}` rather than `{() => cart.empty()}`, since component methods are closures. You don't need to worry about the value of `this` when calling them.)
 
 ```html
 <ShoppingCart bind:this={cart}/>
@@ -530,13 +544,13 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 ```js
 action = (node: HTMLElement, parameters: any) => {
 	update?: (parameters: any) => void,
-	destroy: () => void
+	destroy?: () => void
 }
 ```
 
 ---
 
-Actions are functions that are called when an element is created. They must return an object with a `destroy` method that is called after the element is unmounted:
+Actions are functions that are called when an element is created. They can return an object with a `destroy` method that is called after the element is unmounted:
 
 ```html
 <script>
@@ -583,10 +597,70 @@ An action can have parameters. If the returned value has an `update` method, it 
 ```
 
 
+### Transitions
+
+* `transition:name`
+* `transition:name={params}`
+* `transition:name|local`
+* `transition:name|local={params}`
+* `in:name`
+* `in:name={params}`
+* `in:name|local`
+* `in:name|local={params}`
+* `out:name`
+* `out:name={params}`
+* `out:name|local`
+* `out:name|local={params}`
+
+```js
+transition = (node: HTMLElement, params: any) => {
+	delay?: number,
+	duration?: number,
+	easing?: (t: number) => number,
+	css?: (t: number, u: number) => string,
+	tick?: (t: number, u: number) => void
+}
+```
+
+---
+
+A transition is triggered by an element entering or leaving the DOM as a result of a state change. Transitions do not run when a component is first mounted, but only on subsequent updates.
+
+Elements inside an *outroing* block are kept in the DOM until all current transitions have completed.
+
+The `transition:` directive indicates a *bidirectional* transition, which means it can be smoothly reversed while the transition is in progress.
+
+```html
+{#if visible}
+	<div transition:fade>
+		fades in
+	</div>
+{/if}
+```
+
+---
+
+The `in:` and `out:` directives are not bidirectional. An in transition will continue to 'play' alongside the out transition, if the block is outroed while the transition is in progress. If an out transition is aborted, transitions will restart from scratch.
+
+```html
+{#if visible}
+	<div in:fly out:fade>
+		flies in, fades out
+	</div>
+{/if}
+```
+
+* TODO parameters
+* custom CSS transitions
+* custom JS transitions
+* deferred transitions
+* events
+* local
+
+
 
 ### TODO
 
-* transitions
 * animations
 * slots
 * special elements

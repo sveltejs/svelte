@@ -107,6 +107,8 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 
 Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, and set up a store subscription that will be unsubscribed when appropriate.
 
+Note that the store must be declared at the top level of the component — not inside an `if` block or a function, for example.
+
 Local variables (that do not represent store values) must *not* have a `$` prefix.
 
 ```html
