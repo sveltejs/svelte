@@ -496,6 +496,8 @@ To get a reference to a DOM node, use `bind:this`.
 
 * `bind:property={value}`
 
+---
+
 You can bind to component props using the same mechanism.
 
 ```html
@@ -506,7 +508,7 @@ You can bind to component props using the same mechanism.
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
 
-(Note that we can do `{cart.empty}` rather than `{() => cart.empty()}`, since component methods are closures. You don't need to worry about the value of `this` when calling them.)
+> Note that we can do `{cart.empty}` rather than `{() => cart.empty()}`, since component methods are closures. You don't need to worry about the value of `this` when calling them.
 
 ```html
 <ShoppingCart bind:this={cart}/>
