@@ -171,12 +171,12 @@
 		}
 
 		.sidebar {
-			padding: var(--top-offset) 3.2rem var(--top-offset) 0;
+			padding: var(--top-offset) 0;
 			font-family: var(--font);
 			overflow-y: auto;
 			height: 100%;
 			bottom: auto;
-			width: calc(var(--sidebar-w) + 5rem);
+			width: 100%;
 		}
 
 		.content {
@@ -186,7 +186,7 @@
 
 		.content :global(.side-by-side) {
 			display: grid;
-			grid-template-columns: 50% 50%;
+			grid-template-columns: calc(50% - 0.5em) calc(50% - 0.5em);
 			grid-gap: 1em;
 		}
 	}
@@ -284,6 +284,14 @@
 		fill: none;
 	}
 
+	section > :global(.code-block)> :global(pre) {
+		background: transparent;
+		color: white;
+		padding: 0;
+		border: none;
+		box-shadow: none;
+	}
+
 	/* max line-length ~60 chars */
 	section > :global(p) {
 		max-width: var(--linemax)
@@ -301,11 +309,10 @@
 	small a        { all: unset }
 	small a:before { all: unset }
 
-
 	section :global(blockquote) {
 		color: hsl(204, 100%, 50%);
 		border: 2px solid var(--flash);
-		padding-left: 8.8rem;
+		/* padding-left: 8.8rem; */
 	}
 
 	section :global(blockquote) :global(code) {
