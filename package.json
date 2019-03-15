@@ -51,7 +51,7 @@
   "devDependencies": {
     "@types/mocha": "^5.2.0",
     "@types/node": "^10.5.5",
-    "acorn": "^6.0.5",
+    "acorn": "^6.1.1",
     "acorn-dynamic-import": "^4.0.0",
     "agadoo": "^1.0.1",
     "c8": "^3.4.0",
