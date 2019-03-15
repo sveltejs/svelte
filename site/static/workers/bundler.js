@@ -174,6 +174,7 @@ async function bundle(components) {
 				import_map.set(id, name);
 				return name;
 			},
+			exports: 'named',
 			sourcemap: true
 		});
 
@@ -197,6 +198,7 @@ async function bundle(components) {
 				format: 'iife',
 				name: 'SvelteComponent',
 				globals: id => import_map.get(id),
+				exports: 'named',
 				sourcemap: true
 			})
 			: null;
