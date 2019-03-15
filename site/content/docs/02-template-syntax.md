@@ -781,8 +781,220 @@ Local transitions only play when the block they belong to is created or destroye
 ```
 
 
-### TODO
+### Animations
 
-* animations
-* slots
-* special elements
+TODO i can't remember how any of this works
+
+
+### Slots
+
+* `<slot><!-- optional fallback --></slot>`
+* `<slot name="x"><!-- optional fallback --></slot>`
+* `<slot prop={value}></slot>`
+
+---
+
+Components can have child content, in the same way that elements can.
+
+The content is exposed in the child component using the `<slot>` element, which can contain fallback content that is rendered if no children are provided.
+
+```html
+<!-- App.svelte -->
+<Widget>
+	<p>this is some child content</p>
+</Widget>
+
+<!-- Widget.svelte -->
+<div>
+	<slot>
+		this will be rendered if someone does <Widget/>
+	</slot>
+</div>
+```
+
+---
+
+Named slots allow consumers to target specific areas. They can also have fallback content.
+
+```html
+<!-- App.svelte -->
+<Widget>
+	<h1 slot="header">Hello</h1>
+	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
+</Widget>
+
+<!-- Widget.svelte -->
+<div>
+	<slot name"header">No header was provided</slot>
+	<p>Some content between header and footer</p>
+	</slot name="footer"></slot>
+</div>
+```
+
+---
+
+Slots can be rendered zero or more times, and can pass values *back* to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
+
+The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}`, and `<slot {item}>` is equivalent to `<slot item={item}>`.
+
+```html
+<!-- App.svelte -->
+<FancyList {items} let:item={item}>
+	<div>{item.text}</div>
+</FancyList>
+
+<!-- FancyList.svelte -->
+<ul>
+	{#each items as item}
+		<li class="fancy">
+			<slot item={item}></slot>
+		</li>
+	{/each}
+</ul>
+```
+
+---
+
+Named slots can also expose values. The `let:` directive goes on the element with the `slot` attribute.
+
+```html
+<!-- App.svelte -->
+<FancyList {items}>
+	<div slot="item" let:item={item}>{item.text}</div>
+	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
+</FancyList>
+
+<!-- FancyList.svelte -->
+<ul>
+	{#each items as item}
+		<li class="fancy">
+			<slot name="item" item={item}></slot>
+		</li>
+	{/each}
+</ul>
+
+</slot name="footer"></slot>
+```
+
+
+### &lt;svelte:self&gt;
+
+---
+
+The `<svelte:self>` element allows a component to include itself, recursively.
+
+It cannot appear at the top level of your markup; it must be inside an if or each block to prevent an infinite loop.
+
+```html
+<script>
+	export let count;
+</script>
+
+{#if count > 0}
+	<p>counting down... {count}</p>
+	<svelte:self count="{count - 1}"/>
+{:else}
+	<p>lift-off!</p>
+{/if}
+```
+
+### &lt;svelte:component&gt;
+
+* `<svelte:component this={expression}>`
+
+---
+
+The `<svelte:component>` element renders a component dynamically, using the component constructor specified as the `this` property. When the property changes, the component is destroyed and recreated.
+
+If `this` is falsy, no component is rendered.
+
+```html
+<svelte:component this={currentSelection.component} foo={bar}/>
+```
+
+
+### &lt;svelte:window&gt;
+
+* `<svelte:window on:event={handler}/>`
+* `<svelte:window bind:prop={value}/>`
+
+---
+
+The `<svelte:window>` element allows you to add event listeners to the `window` object without worrying about removing them when the component is destroyed, or checking for the existence of `window` when server-side rendering.
+
+```html
+<script>
+	function handleKeydown(event) {
+		alert(`pressed the ${event.key} key`);
+	}
+</script>
+
+<svelte:window on:keydown={handleKeydown}/>
+```
+
+---
+
+You can also bind to the following properties:
+
+* `innerWidth`
+* `innerHeight`
+* `outerWidth`
+* `outerHeight`
+* `scrollX`
+* `scrollY`
+* `online` — an alias for window.navigator.onLine
+
+All except `scrollX` and `scrollY` are readonly.
+
+```html
+<svelte:window bind:scrollY={y}/>
+```
+
+
+### &lt;svelte:body&gt;
+
+* `<svelte:body on:event={handler}/>`
+
+---
+
+As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`.
+
+```html
+<svelte:body
+	on:mouseenter={handleMouseenter}
+	on:mouseleave={handleMouseleave}
+/>
+```
+
+
+### &lt;svelte:head&gt;
+
+* `<svelte:head>`
+
+---
+
+This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content exposed separately to the main `html` content.
+
+```html
+<svelte:head>
+	<link rel="stylesheet" href="tutorial/dark-theme.css">
+</svelte:head>
+```
+
+
+### &lt;svelte:options&gt;
+
+* `<svelte:options option={value}>`
+
+---
+
+The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the next section. The possible options are:
+
+* `immutable={true}` — you never use mutable data, so the compiler can do simple referential equality checks to determine if values have changed
+* `immutable={false}` — the default. Svelte will be more conservative about whether or not mutable objects have changed
+* `namespace="..."` — the namespace where this component will be used, most commonly "svg"
+* `tag="..."` — the name to use when compiling this component as a custom element
+
+```html
+<svelte:options tag="my-custom-element"/>
+```
