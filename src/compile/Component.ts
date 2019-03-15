@@ -1034,7 +1034,10 @@ export default class Component {
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
 								const owner = scope.findOwner(name);
-								if ((!owner || owner === component.instance_scope) && (name[0] === '$' || component.var_lookup.has(name))) {
+								if (
+									(!owner || owner === component.instance_scope) &&
+									(name[0] === '$' || component.var_lookup.has(name) && component.var_lookup.get(name).writable)
+								) {
 									dependencies.add(name);
 								}
 							}
