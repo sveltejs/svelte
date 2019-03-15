@@ -14,7 +14,7 @@ self.addEventListener('message', async event => {
 				version === 'local' ?
 					'/repl/local?file=compiler.js' :
 					`https://unpkg.com/svelte@${version}/compiler.js`,
-				`https://unpkg.com/rollup@0.68/dist/rollup.browser.js`
+				`https://unpkg.com/rollup@1/dist/rollup.browser.js`
 			);
 			fulfil();
 
@@ -62,7 +62,6 @@ function fetch_if_uncached(url) {
 
 async function getBundle(mode, cache, lookup) {
 	let bundle;
-	let error;
 	const all_warnings = [];
 
 	const new_cache = {};
@@ -89,6 +88,8 @@ async function getBundle(mode, cache, lookup) {
 					if (importee.endsWith('.html')) importee = importee.replace(/\.html$/, '.svelte');
 
 					if (importee in lookup) return importee;
+
+					throw new Error(`Could not resolve "${importee}" from "${importer}"`);
 				},
 				load(id) {
 					if (id.startsWith(`https://`)) return fetch_if_uncached(id);
@@ -104,7 +105,7 @@ async function getBundle(mode, cache, lookup) {
 						: svelte.compile(code, Object.assign({
 							generate: mode,
 							format: 'esm',
-							name: name,
+							name,
 							filename: name + '.svelte'
 						}, commonCompilerOptions));
 
@@ -122,6 +123,7 @@ async function getBundle(mode, cache, lookup) {
 					return result.js;
 				}
 			}],
+			inlineDynamicImports: true,
 			onwarn(warning) {
 				all_warnings.push({
 					message: warning.message
@@ -129,7 +131,7 @@ async function getBundle(mode, cache, lookup) {
 			}
 		});
 	} catch (error) {
-		return { error, bundle: null, cache: new_cache, warnings: all_warnings }
+		return { error, bundle: null, cache: new_cache, warnings: all_warnings };
 	}
 
 	return { bundle, cache: new_cache, error: null, warnings: all_warnings };
@@ -166,7 +168,7 @@ async function bundle(components) {
 
 		let uid = 1;
 
-		const dom_result = await dom.bundle.generate({
+		const dom_result = (await dom.bundle.generate({
 			format: 'iife',
 			name: 'SvelteComponent',
 			globals: id => {
@@ -176,7 +178,7 @@ async function bundle(components) {
 			},
 			exports: 'named',
 			sourcemap: true
-		});
+		})).output[0];
 
 		if (token !== currentToken) return;
 
@@ -194,17 +196,17 @@ async function bundle(components) {
 		if (token !== currentToken) return;
 
 		const ssr_result = ssr
-			? await ssr.bundle.generate({
+			? (await ssr.bundle.generate({
 				format: 'iife',
 				name: 'SvelteComponent',
 				globals: id => import_map.get(id),
 				exports: 'named',
 				sourcemap: true
-			})
+			})).output[0]
 			: null;
 
 		return {
-			imports: dom.bundle.imports,
+			imports: dom_result.imports,
 			import_map,
 			dom: dom_result,
 			ssr: ssr_result,
