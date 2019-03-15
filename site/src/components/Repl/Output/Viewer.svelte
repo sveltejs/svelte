@@ -76,7 +76,7 @@
 				window.location.hash = '';
 				window._svelteTransitionManager = null;
 
-				window.component = new SvelteComponent({
+				window.component = new SvelteComponent.default({
 					target: document.body
 				});
 			`);
