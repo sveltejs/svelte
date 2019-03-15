@@ -438,6 +438,12 @@ export default class Component {
 			}
 
 			if (node.type === 'ExportNamedDeclaration') {
+				if (node.source) {
+					this.error(node, {
+						code: `not-implemented`,
+						message: `A component currently cannot have an export ... from`
+					});
+				}
 				if (node.declaration) {
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
