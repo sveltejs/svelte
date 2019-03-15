@@ -438,6 +438,12 @@ export default class Component {
 			}
 
 			if (node.type === 'ExportNamedDeclaration') {
+				if (node.source) {
+					this.error(node, {
+						code: `not-implemented`,
+						message: `A component currently cannot have an export ... from`
+					});
+				}
 				if (node.declaration) {
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
@@ -1034,7 +1040,10 @@ export default class Component {
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
 								const owner = scope.findOwner(name);
-								if ((!owner || owner === component.instance_scope) && (name[0] === '$' || component.var_lookup.has(name))) {
+								if (
+									(!owner || owner === component.instance_scope) &&
+									(name[0] === '$' || component.var_lookup.has(name) && component.var_lookup.get(name).writable)
+								) {
 									dependencies.add(name);
 								}
 							}

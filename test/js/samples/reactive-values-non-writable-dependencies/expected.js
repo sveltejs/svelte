@@ -17,11 +17,11 @@ let a = 1;
 let b = 2;
 
 function instance($$self, $$props, $$invalidate) {
-	
+
 
 	let max;
 
-	$$self.$$.update = ($$dirty = { Math: 1, a: 1, b: 1 }) => {
+	$$self.$$.update = ($$dirty = { a: 1, b: 1 }) => {
 		if ($$dirty.a || $$dirty.b) {
 			max = Math.max(a, b); $$invalidate('max', max);
 		}
