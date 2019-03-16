@@ -290,13 +290,8 @@ export default class ElementWrapper extends Wrapper {
 			});
 		}
 
-		const eventHandlerOrBindingUsesComponent = (
-			this.bindings.length > 0 ||
-			this.node.handlers.some(handler => handler.usesComponent)
-		);
-
 		const eventHandlerOrBindingUsesContext = (
-			this.bindings.some(binding => binding.node.usesContext) ||
+			this.bindings.some(binding => binding.handler.usesContext) ||
 			this.node.handlers.some(handler => handler.usesContext) ||
 			this.node.actions.some(action => action.usesContext)
 		);
