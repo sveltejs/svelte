@@ -1,3 +1,7 @@
+<script>
+	let things = [];
+</script>
+
 {#each things as thing}
 
 {/each}

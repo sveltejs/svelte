@@ -1,3 +1,7 @@
+<script>
+	export let props;
+</script>
+
 <div {...props} >
 	Big red Comic Sans
 </div>

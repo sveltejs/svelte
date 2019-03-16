@@ -1,3 +1,7 @@
+<script>
+	export let active;
+</script>
+
 <div class='{active ? "active": "inactive"}'></div>
 
 <style>

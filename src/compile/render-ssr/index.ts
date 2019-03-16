@@ -40,8 +40,6 @@ export default function ssr(
 	// TODO remove this, just use component.vars everywhere
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 
-	let user_code;
-
 	if (component.javascript) {
 		component.rewrite_props(({ name }) => {
 			const value = `$${name}`;
@@ -56,22 +54,6 @@ export default function ssr(
 
 			return insert;
 		});
-
-		user_code = component.javascript;
-	} else if (!component.ast.instance && !component.ast.module && (props.length > 0 || component.var_lookup.has('$$props'))) {
-		const statements = [];
-
-		if (props.length > 0) statements.push(`let { ${props.map(x => x.name).join(', ')} } = $$props;`);
-
-		reactive_stores.forEach(({ name }) => {
-			if (component.compileOptions.dev) {
-				statements.push(`${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}`);
-			}
-
-			statements.push(`${name} = @get_store_value(${name.slice(1)});`);
-		});
-
-		user_code = statements.join('\n');
 	}
 
 	// TODO only do this for props with a default value
@@ -121,7 +103,7 @@ export default function ssr(
 				return name;
 			})
 			.join(', ')};`,
-		user_code,
+		component.javascript,
 		parent_bindings.join('\n'),
 		css.code && `$$result.css.add(#css);`,
 		main

@@ -1,3 +1,8 @@
+<script>
+	export let selected;
+	export let tasks;
+</script>
+
 <select bind:value={selected}>
 	{#each tasks as task}
 		<option value='{task}'>{task.description}</option>

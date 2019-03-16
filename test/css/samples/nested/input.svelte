@@ -1,3 +1,7 @@
+<script>
+	export let dynamic;
+</script>
+
 <span class='foo'>
 	<span class='bar'>text</span>
 </span>

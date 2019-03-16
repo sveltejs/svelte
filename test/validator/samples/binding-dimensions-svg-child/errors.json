@@ -1,15 +1,15 @@
 [{
 	"code": "invalid-binding",
 	"message": "'offsetWidth' is not a valid binding on SVG elements",
-	"pos": 13,
+	"pos": 51,
 	"start": {
-		"line": 2,
+		"line": 6,
 		"column": 7,
-		"character": 13
+		"character": 51
 	},
 	"end": {
-		"line": 2,
+		"line": 6,
 		"column": 23,
-		"character": 29
+		"character": 67
 	}
 }]
