@@ -579,7 +579,7 @@ export default class ElementWrapper extends Wrapper {
 
 					updates.push(condition ? `${condition} && ${snippet}` : snippet);
 				} else {
-					const snippet = `{ ${quoteNameIfNecessary(attr.name)}: ${attr.getValue()} }`;
+					const snippet = `{ ${quoteNameIfNecessary(attr.name)}: ${attr.getValue(block)} }`;
 					initialProps.push(snippet);
 
 					updates.push(condition ? `${condition} && ${snippet}` : snippet);

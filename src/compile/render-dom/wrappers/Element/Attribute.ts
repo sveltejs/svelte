@@ -179,7 +179,7 @@ export default class AttributeWrapper {
 				);
 			}
 		} else {
-			const value = this.node.getValue();
+			const value = this.node.getValue(block);
 
 			const statement = (
 				isLegacyInputType
