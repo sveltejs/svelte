@@ -2,14 +2,14 @@
 	"code": "missing-namespace",
 	"message": "<rect> is an SVG element – did you forget to add <svelte:options namespace=\"svg\"/> ?",
 	"start": {
-		"line": 1,
+		"line": 8,
 		"column": 0,
-		"character": 0
+		"character": 89
 	},
 	"end": {
-		"line": 1,
-		"column": 57,
-		"character": 57
+		"line": 8,
+		"column": 49,
+		"character": 138
 	},
-	"pos": 0
+	"pos": 89
 }]

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as assert from 'assert';
 import { svelte, loadConfig, tryToLoadJson } from '../helpers.js';
 
-describe.only('vars', () => {
+describe('vars', () => {
 	fs.readdirSync('test/vars/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 
