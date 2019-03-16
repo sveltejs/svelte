@@ -150,7 +150,7 @@ export default class Expression {
 						}
 
 						component.add_reference(name);
-						component.warn_if_undefined(nodes[0], template_scope, true);
+						component.warn_if_undefined(nodes[0], template_scope);
 					}
 
 					this.skip();
