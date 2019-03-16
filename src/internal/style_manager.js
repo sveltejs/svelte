@@ -52,7 +52,7 @@ export function delete_rule(node, name) {
 		)
 		.join(', ');
 
-	if (!--active) clear_rules();
+	if (name && !--active) clear_rules();
 }
 
 export function clear_rules() {
