@@ -326,7 +326,7 @@ export default function dom(
 	const reactive_store_subscriptions = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable.hoistable;
+			return !variable || variable.hoistable;
 		})
 		.map(({ name }) => deindent`
 			${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
@@ -336,7 +336,7 @@ export default function dom(
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable.reassigned;
+			return variable && variable.reassigned;
 		})
 		.map(({ name }) => `$$self.$$.on_destroy.push(() => $$unsubscribe_${name.slice(1)}());`);
 
@@ -370,7 +370,7 @@ export default function dom(
 			const name = $name.slice(1);
 
 			const store = component.var_lookup.get(name);
-			if (store.reassigned) {
+			if (store && store.reassigned) {
 				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = ${name}.subscribe($$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`
 			}
 
