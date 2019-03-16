@@ -64,6 +64,12 @@ export function get_slot_context(definition, ctx, fn) {
 		: ctx.$$scope.ctx;
 }
 
+export function get_slot_changes(definition, ctx, changed, fn) {
+	return definition[1]
+		? assign({}, assign(ctx.$$scope.changed || {}, definition[1](fn ? fn(changed) : {})))
+		: ctx.$$scope.changed || {};
+}
+
 export function exclude_internal_props(props) {
 	const result = {};
 	for (const k in props) if (k[0] !== '$') result[k] = props[k];
