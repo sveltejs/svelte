@@ -85,7 +85,6 @@ export interface Var {
 
 	// used internally, but not exposed
 	global?: boolean;
-	implicit?: boolean; // logic-less template references
 	internal?: boolean; // event handlers, bindings
 	initialised?: boolean;
 	hoistable?: boolean;
