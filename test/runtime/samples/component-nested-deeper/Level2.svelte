@@ -1,3 +1,7 @@
+<script>
+	export let condition;
+</script>
+
 
 
 <div class="level2">

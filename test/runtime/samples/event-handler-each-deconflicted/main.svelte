@@ -1,3 +1,9 @@
+<script>
+	export let foo;
+	export let clicked;
+	export let bar;
+</script>
+
 {#each foo as f}
 	<button on:click='{() => clicked = "foo"}'>foo</button>
 {/each}

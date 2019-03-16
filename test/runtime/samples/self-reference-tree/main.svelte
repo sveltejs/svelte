@@ -1,3 +1,7 @@
+<script>
+	export let file;
+</script>
+
 <article class='file {file.type}'>
 	<span class='name'>{file.name}</span>
 
