@@ -1,3 +1,8 @@
+<script>
+	export let things;
+	export let soDoesThis;
+</script>
+
 {#each things as thing}
 	<span>this only exists...</span>
 	<span>...to increase test coverage</span>

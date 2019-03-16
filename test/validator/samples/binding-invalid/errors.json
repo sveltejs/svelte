@@ -1,15 +1,15 @@
 [{
 	"code": "invalid-binding",
 	"message": "'whatever' is not a valid binding",
-	"pos": 5,
+	"pos": 40,
 	"start": {
-		"line": 1,
+		"line": 5,
 		"column": 5,
-		"character": 5
+		"character": 40
 	},
 	"end": {
-		"line": 1,
+		"line": 5,
 		"column": 18,
-		"character": 18
+		"character": 53
 	}
 }]

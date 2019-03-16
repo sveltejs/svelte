@@ -7,4 +7,4 @@
 	export let height;
 </script>
 
-<rect x='{x}' y='{y}' width='{width}' height='{height}'/>
+<rect x={x} y={y} width={width} height={height}/>
