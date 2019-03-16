@@ -9,6 +9,8 @@
 	export let intro_count = 0;
 	export let outro_count = 0;
 
+	let status = 'waiting...';
+
 	function foo(node, params) {
 		return {
 			duration: 100,
@@ -21,21 +23,27 @@
 	function introstart(e) {
 		intros.push(e.target.textContent);
 		intro_count += 1;
+		status = 'introstart';
 	}
 
 	function introend(e) {
 		intro_count -= 1;
+		status = 'introend';
 	}
 
 	function outrostart(e) {
 		outros.push(e.target.textContent);
 		outro_count += 1;
+		status = 'outrostart';
 	}
 
 	function outroend(e) {
 		outro_count -= 1;
+		status = 'outroend';
 	}
 </script>
+
+<p>{status}</p>
 
 {#each things as thing}
 	{#if visible}
