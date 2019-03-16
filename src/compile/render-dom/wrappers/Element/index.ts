@@ -770,7 +770,7 @@ export default class ElementWrapper extends Wrapper {
 
 		block.builders.animate.addBlock(deindent`
 			${stop_animation}();
-			${stop_animation} = @animate(${this.var}, ${rect}, ${name}, ${params});
+			${stop_animation} = @create_animation(${this.var}, ${rect}, ${name}, ${params});
 		`);
 	}
 
