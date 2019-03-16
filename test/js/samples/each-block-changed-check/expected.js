@@ -8,7 +8,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (1:0) {#each comments as comment, i}
+// (8:0) {#each comments as comment, i}
 function create_each_block(ctx) {
 	var div, strong, text0, text1, span, text2_value = ctx.comment.author, text2, text3, text4_value = ctx.elapsed(ctx.comment.time, ctx.time), text4, text5, text6, raw_value = ctx.comment.html, raw_before;
 

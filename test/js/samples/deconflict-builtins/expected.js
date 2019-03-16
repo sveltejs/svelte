@@ -7,7 +7,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (1:0) {#each createElement as node}
+// (5:0) {#each createElement as node}
 function create_each_block(ctx) {
 	var span, text_value = ctx.node, text;
 

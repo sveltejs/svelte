@@ -7,7 +7,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (1:0) {#each [a, b, c, d, e] as num}
+// (9:0) {#each [a, b, c, d, e] as num}
 function create_each_block(ctx) {
 	var span, text_value = ctx.num, text;
 

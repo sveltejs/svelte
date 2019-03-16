@@ -1,3 +1,11 @@
+<script>
+	export let a;
+	export let b;
+	export let c;
+	export let d;
+	export let e;
+</script>
+
 <div>
 	{#if a}
 		<p>a</p>
