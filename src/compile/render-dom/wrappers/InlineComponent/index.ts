@@ -118,7 +118,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const attributeObject = usesSpread
 			? stringifyProps(slot_props)
 			: stringifyProps(
-				this.node.attributes.map(attr => `${quoteNameIfNecessary(attr.name)}: ${attr.getValue()}`).concat(slot_props)
+				this.node.attributes.map(attr => `${quoteNameIfNecessary(attr.name)}: ${attr.getValue(block)}`).concat(slot_props)
 			);
 
 		if (this.node.attributes.length || this.node.bindings.length || slot_props.length) {
@@ -190,7 +190,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 						changes.push(condition ? `${condition} && ${value}` : value);
 					} else {
-						const obj = `{ ${quoteNameIfNecessary(name)}: ${attr.getValue()} }`;
+						const obj = `{ ${quoteNameIfNecessary(name)}: ${attr.getValue(block)} }`;
 						initialProps.push(obj);
 
 						changes.push(condition ? `${condition} && ${obj}` : obj);
@@ -224,7 +224,7 @@ export default class InlineComponentWrapper extends Wrapper {
 							updates.push(deindent`
 								if (${[...attribute.dependencies]
 									.map(dependency => `changed.${dependency}`)
-									.join(' || ')}) ${name_changes}${quotePropIfNecessary(attribute.name)} = ${attribute.getValue()};
+									.join(' || ')}) ${name_changes}${quotePropIfNecessary(attribute.name)} = ${attribute.getValue(block)};
 							`);
 						}
 					});
