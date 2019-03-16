@@ -1,7 +1,6 @@
 import Wrapper from '../shared/Wrapper';
 import Renderer from '../../Renderer';
 import Block from '../../Block';
-import Node from '../../../nodes/shared/Node';
 import InlineComponent from '../../../nodes/InlineComponent';
 import FragmentWrapper from '../Fragment';
 import { quoteNameIfNecessary, quotePropIfNecessary } from '../../../../utils/quoteIfNecessary';
@@ -85,7 +84,16 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, stripWhitespace, nextSibling);
 
-			block.addDependencies(default_slot.dependencies);
+			const dependencies = new Set();
+
+			// TODO is this filtering necessary? (I *think* so)
+			default_slot.dependencies.forEach(name => {
+				if (!this.node.scope.is_let(name)) {
+					dependencies.add(name);
+				}
+			});
+
+			block.addDependencies(dependencies);
 		}
 
 		block.addOutro();
@@ -160,7 +168,9 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 		});
 
-		if (!usesSpread && (this.node.attributes.filter(a => a.isDynamic).length || this.node.bindings.length || fragment_dependencies.size > 0)) {
+		const non_let_dependencies = Array.from(fragment_dependencies).filter(name => !this.node.scope.is_let(name));
+
+		if (!usesSpread && (this.node.attributes.filter(a => a.isDynamic).length || this.node.bindings.length || non_let_dependencies.length > 0)) {
 			updates.push(`var ${name_changes} = {};`);
 		}
 
@@ -231,8 +241,8 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 		}
 
-		if (fragment_dependencies.size > 0) {
-			updates.push(`if (${Array.from(fragment_dependencies).map(n => `changed.${n}`).join(' || ')}) ${name_changes}.$$scope = { changed, ctx };`);
+		if (non_let_dependencies.length > 0) {
+			updates.push(`if (${non_let_dependencies.map(n => `changed.${n}`).join(' || ')}) ${name_changes}.$$scope = { changed, ctx };`);
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {
@@ -498,13 +508,4 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 		}
 	}
-}
-
-function isComputed(node: Node) {
-	while (node.type === 'MemberExpression') {
-		if (node.computed) return true;
-		node = node.object;
-	}
-
-	return false;
 }
