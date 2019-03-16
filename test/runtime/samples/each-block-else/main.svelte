@@ -1,3 +1,8 @@
+<script>
+	export let animals;
+	export let foo;
+</script>
+
 before
 {#each animals as animal}
 	<p>{animal}</p>
