@@ -492,7 +492,6 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			if (updates.length) {
-				console.log({ updates });
 				block.builders.update.addBlock(deindent`
 					${updates}
 					${name}.$set(${name_changes});
