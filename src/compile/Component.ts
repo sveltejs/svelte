@@ -1143,9 +1143,12 @@ export default class Component {
 		if (template_scope && template_scope.names.has(name)) return;
 		if (globalWhitelist.has(name)) return;
 
+		let message = `'${name}' is not defined`;
+		if (!this.ast.instance) message += `. Consider adding a <script> block with 'export let ${name}' to declare a prop`;
+
 		this.warn(node, {
 			code: 'missing-declaration',
-			message: `'${name}' is not defined`
+			message
 		});
 	}
 }
