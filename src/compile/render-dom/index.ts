@@ -407,6 +407,8 @@ export default function dom(
 		`);
 	}
 
+	const prop_names = `[${props.map(v => JSON.stringify(v.export_name)).join(', ')}]`;
+
 	if (options.customElement) {
 		builder.addBlock(deindent`
 			class ${name} extends @SvelteElement {
@@ -415,7 +417,7 @@ export default function dom(
 
 					${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal});
+					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}
 
@@ -449,7 +451,7 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && `if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
-					@init(this, options, ${definition}, create_fragment, ${not_equal});
+					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}
 				}

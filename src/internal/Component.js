@@ -5,6 +5,7 @@ import { blankObject } from './utils.js';
 import { children } from './dom.js';
 
 export function bind(component, name, callback) {
+	if (component.$$.props.indexOf(name) === -1) return;
 	component.$$.bound[name] = callback;
 	callback(component.$$.ctx[name]);
 }
@@ -53,7 +54,7 @@ function make_dirty(component, key) {
 	component.$$.dirty[key] = true;
 }
 
-export function init(component, options, instance, create_fragment, not_equal) {
+export function init(component, options, instance, create_fragment, not_equal, prop_names) {
 	const parent_component = current_component;
 	set_current_component(component);
 
@@ -64,6 +65,7 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		ctx: null,
 
 		// state
+		props: prop_names,
 		update: noop,
 		not_equal,
 		bound: blankObject(),
