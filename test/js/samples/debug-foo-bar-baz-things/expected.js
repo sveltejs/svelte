@@ -150,7 +150,7 @@ function instance($$self, $$props, $$invalidate) {
 class SvelteComponent extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, instance, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal, ["things", "foo", "bar", "baz"]);
 
 		const { ctx } = this.$$;
 		const props = options.props || {};
