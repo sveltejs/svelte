@@ -5,7 +5,7 @@ import { loadConfig, svelte } from "../helpers.js";
 import { SourceMapConsumer } from "source-map";
 import { getLocator } from "locate-character";
 
-describe.only("sourcemaps", () => {
+describe("sourcemaps", () => {
 	fs.readdirSync("test/sourcemaps/samples").forEach(dir => {
 		if (dir[0] === ".") return;
 
