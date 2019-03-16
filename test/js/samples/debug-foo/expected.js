@@ -9,7 +9,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (1:0) {#each things as thing}
+// (6:0) {#each things as thing}
 function create_each_block(ctx) {
 	var span, text0_value = ctx.thing.name, text0, text1;
 
@@ -24,7 +24,7 @@ function create_each_block(ctx) {
 				console.log({ foo });
 				debugger;
 			}
-			addLoc(span, file, 1, 1, 25);
+			addLoc(span, file, 6, 1, 82);
 		},
 
 		m: function mount(target, anchor) {
@@ -75,7 +75,7 @@ function create_fragment(ctx) {
 			p = createElement("p");
 			text1 = createText("foo: ");
 			text2 = createText(ctx.foo);
-			addLoc(p, file, 5, 0, 74);
+			addLoc(p, file, 10, 0, 131);
 		},
 
 		l: function claim(nodes) {

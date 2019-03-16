@@ -1,25 +1,31 @@
 {
 	"html": {
-		"start": 0,
-		"end": 25,
+		"start": 31,
+		"end": 56,
 		"type": "Fragment",
 		"children": [
 			{
-				"start": 0,
-				"end": 25,
+				"start": 29,
+				"end": 31,
+				"type": "Text",
+				"data": "\n\n"
+			},
+			{
+				"start": 31,
+				"end": 56,
 				"type": "Element",
 				"name": "input",
 				"attributes": [
 					{
-						"start": 7,
-						"end": 24,
+						"start": 38,
+						"end": 55,
 						"type": "Binding",
 						"name": "value",
 						"modifiers": [],
 						"expression": {
 							"type": "Identifier",
-							"start": 19,
-							"end": 23,
+							"start": 50,
+							"end": 54,
 							"name": "name"
 						}
 					}
@@ -28,7 +34,37 @@
 			}
 		]
 	},
-	"css": null,
-	"instance": null,
-	"module": null
+	"instance": {
+		"start": 0,
+		"end": 29,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 20,
+			"body": [
+				{
+					"type": "VariableDeclaration",
+					"start": 10,
+					"end": 19,
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 14,
+							"end": 18,
+							"id": {
+								"type": "Identifier",
+								"start": 14,
+								"end": 18,
+								"name": "name"
+							},
+							"init": null
+						}
+					],
+					"kind": "let"
+				}
+			],
+			"sourceType": "module"
+		}
+	}
 }

@@ -14,7 +14,7 @@ function create_fragment(ctx) {
 			text2 = createText("!");
 			text3 = createText("\n");
 			debugger;
-			addLoc(h1, file, 0, 0, 0);
+			addLoc(h1, file, 4, 0, 38);
 		},
 
 		l: function claim(nodes) {
