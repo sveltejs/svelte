@@ -27,13 +27,14 @@ export default function ssr(
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 	const reactive_store_values = reactive_stores
 		.map(({ name }) => {
-			const store = component.var_lookup.get(name.slice(1));
-			if (store.hoistable) return;
+			const store_name = name.slice(1);
+			const store = component.var_lookup.get(store_name);
+			if (store && store.hoistable) return;
 
-			const assignment = `${name} = @get_store_value(${store.name});`;
+			const assignment = `${name} = @get_store_value(${store_name});`;
 
 			return component.compileOptions.dev
-				? `@validate_store(${store.name}, '${store.name}'); ${assignment}`
+				? `@validate_store(${store_name}, '${store_name}'); ${assignment}`
 				: assignment;
 		});
 
@@ -95,10 +96,11 @@ export default function ssr(
 	const blocks = [
 		reactive_stores.length > 0 && `let ${reactive_stores
 			.map(({ name }) => {
-				const store = component.var_lookup.get(name.slice(1));
-				if (store.hoistable) {
+				const store_name = name.slice(1);
+				const store = component.var_lookup.get(store_name);
+				if (store && store.hoistable) {
 					const get_store_value = component.helper('get_store_value');
-					return `${name} = ${get_store_value}(${store.name})`;
+					return `${name} = ${get_store_value}(${store_name})`;
 				}
 				return name;
 			})
