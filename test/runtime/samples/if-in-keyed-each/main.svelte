@@ -1,3 +1,7 @@
+<script>
+	export let items;
+</script>
+
 <ul>
 	{#each items as item (item.id)}
 		{#if item.id}

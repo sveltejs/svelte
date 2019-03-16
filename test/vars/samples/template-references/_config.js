@@ -2,7 +2,17 @@ export default {
 	test(assert, vars) {
 		assert.deepEqual(vars, [
 			{
-				export_name: 'foo',
+				export_name: null,
+				injected: false,
+				module: false,
+				mutated: false,
+				name: 'Bar',
+				reassigned: false,
+				referenced: true,
+				writable: false,
+			},
+			{
+				export_name: null,
 				injected: false,
 				module: false,
 				mutated: false,
@@ -12,17 +22,7 @@ export default {
 				writable: true,
 			},
 			{
-				export_name: 'Bar',
-				injected: false,
-				module: false,
-				mutated: false,
-				name: 'Bar',
-				reassigned: false,
-				referenced: true,
-				writable: true,
-			},
-			{
-				export_name: 'baz',
+				export_name: null,
 				injected: false,
 				module: false,
 				mutated: false,

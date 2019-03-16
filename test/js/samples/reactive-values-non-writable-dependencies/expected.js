@@ -17,7 +17,7 @@ let a = 1;
 let b = 2;
 
 function instance($$self, $$props, $$invalidate) {
-
+	
 
 	let max;
 

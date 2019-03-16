@@ -7,7 +7,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (1:0) {#each things as thing (thing.id)}
+// (5:0) {#each things as thing (thing.id)}
 function create_each_block(key_1, ctx) {
 	var div, text_value = ctx.thing.name, text;
 

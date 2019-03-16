@@ -323,28 +323,6 @@ export default function dom(
 		addToSet(all_reactive_dependencies, d.dependencies);
 	});
 
-	let user_code;
-
-	if (component.javascript) {
-		user_code = component.javascript;
-	} else {
-		if (!component.ast.instance && !component.ast.module && (filtered_props.length > 0 || uses_props)) {
-			const statements = [];
-
-			if (filtered_props.length > 0) statements.push(`let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`);
-
-			reactive_stores.forEach(({ name }) => {
-				if (component.compileOptions.dev) {
-					statements.push(`${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}`);
-				}
-
-				statements.push(`@subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });`);
-			});
-
-			user_code = statements.join('\n');
-		}
-	}
-
 	const reactive_store_subscriptions = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
@@ -407,7 +385,7 @@ export default function dom(
 
 				${resubscribable_reactive_store_unsubscribers}
 
-				${user_code}
+				${component.javascript}
 
 				${renderer.slots.size && `let { ${[...renderer.slots].map(name => `$$slot_${sanitize(name)}`).join(', ')}, $$scope } = $$props;`}
 

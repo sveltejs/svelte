@@ -1,24 +1,30 @@
 {
 	"html": {
-		"start": 0,
-		"end": 18,
+		"start": 30,
+		"end": 48,
 		"type": "Fragment",
 		"children": [
 			{
-				"start": 0,
-				"end": 18,
+				"start": 28,
+				"end": 30,
+				"type": "Text",
+				"data": "\n\n"
+			},
+			{
+				"start": 30,
+				"end": 48,
 				"type": "InlineComponent",
 				"name": "Widget",
 				"attributes": [
 					{
-						"start": 8,
-						"end": 16,
+						"start": 38,
+						"end": 46,
 						"type": "Binding",
 						"name": "foo",
 						"modifiers": [],
 						"expression": {
-							"start": 13,
-							"end": 16,
+							"start": 43,
+							"end": 46,
 							"type": "Identifier",
 							"name": "foo"
 						}
@@ -28,7 +34,37 @@
 			}
 		]
 	},
-	"css": null,
-	"instance": null,
-	"module": null
+	"instance": {
+		"start": 0,
+		"end": 28,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 19,
+			"body": [
+				{
+					"type": "VariableDeclaration",
+					"start": 10,
+					"end": 18,
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 14,
+							"end": 17,
+							"id": {
+								"type": "Identifier",
+								"start": 14,
+								"end": 17,
+								"name": "foo"
+							},
+							"init": null
+						}
+					],
+					"kind": "let"
+				}
+			],
+			"sourceType": "module"
+		}
+	}
 }

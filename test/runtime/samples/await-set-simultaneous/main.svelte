@@ -1,3 +1,8 @@
+<script>
+	export let promise;
+	export let answer;
+</script>
+
 {#if promise}
 	{#await promise}
 		<p>wait for it...</p>

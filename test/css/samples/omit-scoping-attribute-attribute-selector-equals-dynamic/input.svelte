@@ -1,3 +1,7 @@
+<script>
+	export let dynamic;
+</script>
+
 <div>
 	<p data-foo='{dynamic}'>this is styled</p>
 	<p data-foo='baz'>this is unstyled</p>

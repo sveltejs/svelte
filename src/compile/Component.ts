@@ -169,15 +169,6 @@ export default class Component {
 
 			const variable = this.var_lookup.get(subscribable_name);
 			variable.subscribable = true;
-		} else if (!this.ast.instance) {
-			this.add_var({
-				name,
-				export_name: name,
-				implicit: true,
-				mutated: false,
-				referenced: true,
-				writable: true
-			});
 		} else {
 			this.usedNames.add(name);
 		}
@@ -1140,7 +1131,7 @@ export default class Component {
 		return `ctx.${name}`;
 	}
 
-	warn_if_undefined(node, template_scope: TemplateScope, allow_implicit?: boolean) {
+	warn_if_undefined(node, template_scope: TemplateScope) {
 		let { name } = node;
 
 		if (name[0] === '$') {
@@ -1148,14 +1139,16 @@ export default class Component {
 			this.has_reactive_assignments = true;
 		}
 
-		if (allow_implicit && !this.ast.instance && !this.ast.module) return;
 		if (this.var_lookup.has(name)) return;
 		if (template_scope && template_scope.names.has(name)) return;
 		if (globalWhitelist.has(name)) return;
 
+		let message = `'${name}' is not defined`;
+		if (!this.ast.instance) message += `. Consider adding a <script> block with 'export let ${name}' to declare a prop`;
+
 		this.warn(node, {
 			code: 'missing-declaration',
-			message: `'${name}' is not defined`
+			message
 		});
 	}
 }
