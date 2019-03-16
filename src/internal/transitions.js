@@ -164,8 +164,10 @@ export function create_out_transition(node, fn, params) {
 	}
 
 	if (typeof config === 'function') {
-		config = config();
-		wait().then(go);
+		wait().then(() => {
+			config = config();
+			go();
+		});
 	} else {
 		go();
 	}
