@@ -129,7 +129,7 @@ export function crossfade({ fallback, ...defaults }) {
 				// (i.e. wasn't claimed by the other list)
 				// then we need to supply an outro
 				items.delete(params.key);
-				return fallback(node, params, intro);
+				return fallback && fallback(node, params, intro);
 			};
 		};
 	}
