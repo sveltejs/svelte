@@ -59,10 +59,16 @@
 	let module_editor;
 	let output;
 
+	function rebundle() {
+		workers.bundler.postMessage({ type: 'bundle', components: $components });
+	}
+
 	setContext('REPL', {
 		components,
 		selected,
 		bundle,
+
+		rebundle,
 
 		navigate: item => {
 			const match = /^(.+)\.(\w+)$/.exec(item.filename);
@@ -93,8 +99,7 @@
 			// recompile selected component
 			output.update($selected);
 
-			// regenerate bundle (TODO do this in a separate worker?)
-			workers.bundler.postMessage({ type: 'bundle', components: $components });
+			rebundle();
 
 			dispatch('change', {
 				components: $components
