@@ -119,9 +119,9 @@ export default class Component {
 		this.namespace = namespaces[this.componentOptions.namespace] || this.componentOptions.namespace;
 
 		if (compileOptions.customElement) {
-			this.tag = compileOptions.customElement.tag || this.componentOptions.tag;
+			this.tag = this.componentOptions.tag || compileOptions.tag;
 			if (!this.tag) {
-				throw new Error(`Cannot compile to a custom element without specifying a tag name via options.customElement or <svelte:options>`);
+				throw new Error(`Cannot compile to a custom element without specifying a tag name via options.tag or <svelte:options>`);
 			}
 		} else {
 			this.tag = this.name;

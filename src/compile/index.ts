@@ -42,10 +42,6 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 		throw new Error(`options.name must be a valid identifier (got '${name}')`);
 	}
 
-	if ('customElement' in options) {
-		options.customElement = normalize_customElement_option(options.customElement);
-	}
-
 	if (name && /^[a-z]/.test(name)) {
 		const message = `options.name should be capitalised`;
 		warnings.push({
@@ -55,34 +51,6 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 			toString: () => message,
 		});
 	}
-}
-
-const valid_customElement_options = ['tag'];
-
-function normalize_customElement_option(customElement: boolean | string | CustomElementOptions) {
-	if (typeof customElement === 'boolean') {
-		return customElement ? {} : null;
-	} else if (typeof customElement === 'string') {
-		customElement = { tag: customElement };
-	} else if (typeof customElement === 'object') {
-		Object.keys(customElement).forEach(key => {
-			if (valid_customElement_options.indexOf(key) === -1) {
-				const match = fuzzymatch(key, valid_customElement_options);
-				let message = `Unrecognized option 'customElement.${key}'`;
-				if (match) message += ` (did you mean 'customElement.${match}'?)`;
-
-				throw new Error(message);
-			}
-		});
-	} else {
-		throw new Error(`options.customElement must be a boolean, a string or an object`);
-	}
-
-	if ('tag' in customElement && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(customElement.tag)) {
-		throw new Error(`options.customElement tag name must be two or more words joined by the '-' character`);
-	}
-
-	return customElement;
 }
 
 function get_name(filename) {
