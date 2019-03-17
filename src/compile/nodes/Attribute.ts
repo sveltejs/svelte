@@ -86,14 +86,14 @@ export default class Attribute extends Node {
 		return Array.from(dependencies);
 	}
 
-	getValue() {
+	getValue(block) {
 		if (this.isTrue) return true;
 		if (this.chunks.length === 0) return `""`;
 
 		if (this.chunks.length === 1) {
 			return this.chunks[0].type === 'Text'
 				? stringify(this.chunks[0].data)
-				: this.chunks[0].render();
+				: this.chunks[0].render(block);
 		}
 
 		return (this.chunks[0].type === 'Text' ? '' : `"" + `) +

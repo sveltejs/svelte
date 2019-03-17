@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as http from 'http';
 import { rollup } from 'rollup';
 import * as virtual from 'rollup-plugin-virtual';
-import * as Nightmare from 'nightmare';
+import * as puppeteer from 'puppeteer';
 import { addLineNumbers, loadConfig, loadSvelte } from "../helpers.js";
 
 const page = `
@@ -20,30 +20,36 @@ describe('custom-elements', function() {
 
 	let svelte;
 	let server;
-	let bundle;
+	let browser;
+	let code;
 
-	before(() => {
-		svelte = loadSvelte();
-
+	function create_server() {
 		return new Promise((fulfil) => {
-			server = http.createServer((req, res) => {
+			const server = http.createServer((req, res) => {
 				if (req.url === '/') {
 					res.end(page);
 				}
 
 				if (req.url === '/bundle.js') {
-					res.end(bundle);
+					res.end(code);
 				}
 			});
 
 			server.listen('6789', () => {
-				fulfil();
+				fulfil(server);
 			});
 		});
+	}
+
+	before(async () => {
+		svelte = loadSvelte();
+		server = await create_server();
+		browser = await puppeteer.launch();
 	});
 
-	after(() => {
+	after(async () => {
 		server.close();
+		await browser.close();
 	});
 
 	fs.readdirSync('test/custom-elements/samples').forEach(dir => {
@@ -54,10 +60,10 @@ describe('custom-elements', function() {
 		const internal = path.resolve('internal.mjs');
 		const index = path.resolve('index.mjs');
 
-		(solo ? it.only : skip ? it.skip : it)(dir, () => {
+		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
 			const config = loadConfig(`./custom-elements/samples/${dir}/_config.js`);
 
-			return rollup({
+			const bundle = await rollup({
 				input: `test/custom-elements/samples/${dir}/test.js`,
 				plugins: [
 					{
@@ -87,35 +93,26 @@ describe('custom-elements', function() {
 						assert
 					})
 				]
-			})
-				.then(bundle => bundle.generate({ format: 'iife', name: 'test' }))
-				.then(result => {
-					bundle = result.output[0].code;
+			});
 
-					const nightmare = new Nightmare({ show: false });
+			const result = await bundle.generate({ format: 'iife', name: 'test' });
+			code = result.output[0].code;
 
-					nightmare.on('console', (type, ...args) => {
-						console[type](...args);
-					});
+			const page = await browser.newPage();
 
-					return nightmare
-						.goto('http://localhost:6789')
-						.evaluate(() => {
-							return test(document.querySelector('main'));
-						})
-						.then(result => {
-							if (result) console.log(result);
-							return nightmare.end();
-						})
-						.catch(message => {
-							console.log(addLineNumbers(bundle));
-							return nightmare.end().then(() => {
-								throw new Error(message);
-							});
-						});
-				});
+			page.on('console', (type, ...args) => {
+				console[type](...args);
+			});
 
+			try {
+				await page.goto('http://localhost:6789');
 
+				const result = await page.evaluate(() => test(document.querySelector('main')));
+				if (result) console.log(result);
+			} catch (err) {
+				console.log(addLineNumbers(code));
+				throw err;
+			}
 		});
 	});
 });

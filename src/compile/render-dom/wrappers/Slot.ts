@@ -141,8 +141,8 @@ export default class SlotWrapper extends Wrapper {
 		if (this.dependencies.size > 1) update_conditions = `(${update_conditions})`;
 
 		block.builders.update.addBlock(deindent`
-			if (${slot} && ${update_conditions}) {
-				${slot}.p(@assign(@assign({}, ${get_slot_changes}(changed)), ctx.$$scope.changed), @get_slot_context(${slot_definition}, ctx, ${get_slot_context}));
+			if (${slot} && ${slot}.p && ${update_conditions}) {
+				${slot}.p(@get_slot_changes(${slot_definition}, ctx, changed, ${get_slot_changes}), @get_slot_context(${slot_definition}, ctx, ${get_slot_context}));
 			}
 		`);
 

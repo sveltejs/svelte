@@ -1,0 +1,7 @@
+[{
+	"message": "Invalid reactive declaration — must depend on local state",
+	"code": "invalid-reactive-declaration",
+	"start": { "line": 2, "column": 1, "character": 10 },
+	"end": { "line": 2, "column": 23, "character": 32 },
+	"pos": 10
+}]

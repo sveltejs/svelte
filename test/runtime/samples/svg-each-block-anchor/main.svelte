@@ -1,3 +1,8 @@
+<script>
+	export let foo;
+	export let bar;
+</script>
+
 <svg>
 	{#each foo as x}
 		<g class='foo'></g>

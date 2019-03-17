@@ -3,23 +3,19 @@
 		return {
 			version: query.version || 'beta',
 			gist: query.gist,
-			demo: query.demo
+			example: query.example
 		};
 	}
 </script>
 
 <script>
 	import { onMount } from 'svelte';
-	import * as fleece from 'golden-fleece';
-	import Repl from './_components/Repl.svelte';
+	import { process_example } from './_utils/process_example.js';
+	import Repl from '../../components/Repl/index.svelte';
 
-	export let version, gist, demo;
+	export let version, gist, example;
 
-	let app = {
-		components: [],
-		values: {}
-	};
-
+	let repl;
 	let name = 'loading...';
 
 	onMount(() => {
@@ -37,19 +33,12 @@
 
 				name = description;
 
-				let values = {};
-
 				const components = Object.keys(files)
 					.map(file => {
 						const dot = file.lastIndexOf('.');
 						if (!~dot) return;
 
 						const source = files[file].content;
-
-						// while we're here...
-						if (file === 'data.json' || file === 'data.json5') {
-							values = tryParseData(source) || {};
-						}
 
 						return {
 							name: file.slice(0, dot),
@@ -67,31 +56,20 @@
 						return a.name < b.name ? -1 : 1;
 					});
 
-				app = { components, values };
+				repl.set({ components });
 			});
-		} else if (demo) {
-			const url = `api/examples/${demo}`;
-
-			fetch(url).then(async response => {
+		} else if (example) {
+			fetch(`examples/${example}.json`).then(async response => {
 				if (response.ok) {
 					const data = await response.json();
 
-					app = {
-						values: tryParseData(data.json5) || {}, // TODO make this more error-resistant
-						components: data.components
-					};
+					repl.set({
+						components: process_example(data.files)
+					});
 				}
 			});
 		}
 	});
-
-	function tryParseData(json5) {
-		try {
-			return fleece.evaluate(json5);
-		} catch (err) {
-			return null;
-		}
-	}
 </script>
 
 <style>
@@ -114,6 +92,6 @@
 
 <div class="repl-outer">
 	{#if process.browser}
-		<Repl {version} {app} embedded={true}/>
+		<Repl bind:this={repl} {version} embedded={true}/>
 	{/if}
 </div>

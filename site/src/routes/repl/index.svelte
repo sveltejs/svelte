@@ -3,7 +3,7 @@
 		return {
 			version: query.version || 'beta',
 			gist_id: query.gist,
-			demo: query.demo || 'hello-world'
+			example: query.example || 'hello-world'
 		};
 	}
 </script>
@@ -11,30 +11,25 @@
 <script>
 	import { onMount } from 'svelte';
 	import { locate } from 'locate-character';
-	import * as fleece from 'golden-fleece';
+	import { process_example } from './_utils/process_example.js';
 	import AppControls from './_components/AppControls/index.svelte';
-	import Repl from './_components/Repl.svelte';
-	import examples from '../../../content/examples/manifest.json';
+	import Repl from '../../components/Repl/index.svelte';
 
-	export let version, demo, gist_id;
+	export let version, example, gist_id;
 
+	console.log({ example });
+
+	let repl;
 	let gist;
-
-	let app = {
-		components: [],
-		values: {}
-	};
-
 	let name = 'loading...';
 	let zen_mode = false;
-	let repl;
 
 	$: if (typeof history !== 'undefined') {
 		const params = [];
 
 		if (version !== 'latest') params.push(`version=${version}`);
 		if (gist_id) params.push(`gist=${gist_id}`);
-		else if (demo) params.push(`demo=${demo}`);
+		else if (example) params.push(`example=${example}`);
 
 		const url = params.length > 0
 			? `repl?${params.join('&')}`
@@ -42,13 +37,6 @@
 
 		history.replaceState({}, 'x', url);
 	}
-
-	const slugs = new Set();
-	examples.forEach(group => {
-		group.examples.forEach(example => {
-			slugs.add(example.slug);
-		});
-	});
 
 	onMount(() => {
 		if (version !== 'local') {
@@ -66,19 +54,12 @@
 
 				name = description;
 
-				let values = {};
-
 				const components = Object.keys(files)
 					.map(file => {
 						const dot = file.lastIndexOf('.');
 						if (!~dot) return;
 
 						const source = files[file].content;
-
-						// while we're here...
-						if (file === 'data.json' || file === 'data.json5') {
-							values = tryParseData(source) || {};
-						}
 
 						let type = file.slice(dot + 1);
 						if (type === 'html') type = 'svelte';
@@ -99,26 +80,22 @@
 						return a.name < b.name ? -1 : 1;
 					});
 
-				app = { components, values };
+				repl.set({ components });
 			});
 		}
 	});
 
-	function load_demo(slug) {
-		const url = slugs.has(slug)
-			? `api/examples/${slug}`
-			: `guide/demo/${slug}.json`;
+	function load_example(slug) {
+		console.log(`loading ${slug}`);
 
-		fetch(url).then(async response => {
+		fetch(`examples/${slug}.json`).then(async response => {
 			if (response.ok) {
 				const data = await response.json();
 
 				name = data.title;
 
-				app = {
-					values: tryParseData(data.json5) || {}, // TODO make this more error-resistant
-					components: data.components
-				};
+				const components = process_example(data.files);
+				repl.set({ components });
 
 				gist = null;
 			}
@@ -126,22 +103,13 @@
 	}
 
 	function handle_fork(event) {
-		console.log(event);
-		demo = null;
+		example = null;
 		gist = event.detail.gist;
 		gist_id = gist.id;
 	}
 
-	function tryParseData(json5) {
-		try {
-			return fleece.evaluate(json5);
-		} catch (err) {
-			return null;
-		}
-	}
-
-	$: if (process.browser && demo) {
-		load_demo(demo);
+	$: if (process.browser && example) {
+		load_example(example);
 	}
 </script>
 
@@ -195,17 +163,14 @@
 
 <div class="repl-outer {zen_mode ? 'zen-mode' : ''}">
 	<AppControls
-		{examples}
-		{app}
 		{name}
 		{gist}
 		{repl}
 		bind:zen_mode
-		on:select="{e => (demo = e.detail.slug, gist = null)}"
 		on:forked={handle_fork}
 	/>
 
 	{#if process.browser}
-		<Repl bind:this={repl} {version} {app}/>
+		<Repl bind:this={repl} {version}/>
 	{/if}
 </div>

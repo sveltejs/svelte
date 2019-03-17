@@ -8,22 +8,22 @@ export default {
 		code: `css-unused-selector`,
 		message: "Unused CSS selector",
 		start: {
-			line: 12,
+			line: 16,
 			column: 1,
-			character: 123
+			character: 163
 		},
 		end: {
-			line: 12,
+			line: 16,
 			column: 13,
-			character: 135
+			character: 175
 		},
-		pos: 123,
+		pos: 163,
 		frame: `
-			10:   }
-			11:
-			12:   .maybeactive {
+			14:   }
+			15:
+			16:   .maybeactive {
 			      ^
-			13:     color: green;
-			14:   }`
+			17:     color: green;
+			18:   }`
 	}]
 };

@@ -156,23 +156,6 @@
 		height: 2rem;
 	}
 
-	.menu-link {
-		cursor: pointer;
-		-webkit-tap-highlight-color: transparent;
-		-webkit-touch-callout: none;
-	}
-
-	.logo {
-		position: relative;
-		top: .3rem;
-		width: 18rem;
-		color: var(--second);
-		-webkit-tap-highlight-color: transparent;
-		-webkit-touch-callout: none;
-		z-index: 11;
-		padding: 0.5em 0;
-	}
-
 	.home {
 		position: relative;
 		top: 0;
@@ -190,7 +173,7 @@
 		color: var(--prime)
 	}
 
-	@media (min-width: 768px) {
+	@media (min-width: 840px) {
 		ul {
 			padding: 0;
 			background: none;
@@ -244,7 +227,9 @@
 			on:mouseleave="{() => open = false}"
 		>
 			<li class="hide-if-desktop" class:active="{!segment}"><a rel="prefetch" href=".">Home</a></li>
-			<li class:active="{segment === 'guide'}"><a rel="prefetch" href="guide">Guide</a></li>
+			<li class:active="{segment === 'tutorial'}"><a rel="prefetch" href="tutorial">Tutorial</a></li>
+			<li class:active="{segment === 'docs'}"><a rel="prefetch" href="docs">API Docs</a></li>
+			<li class:active="{segment === 'examples'}"><a rel="prefetch" href="examples">Examples</a></li>
 			<li class:active="{segment === 'repl'}"><a rel="prefetch" href="repl">REPL</a></li>
 			<li class:active="{segment === 'blog'}"><a rel="prefetch" href="blog">Blog</a></li>
 			<li><a href="https://sapper.svelte.technology">Sapper</a></li>

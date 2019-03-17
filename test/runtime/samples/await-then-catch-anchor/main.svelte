@@ -1,3 +1,7 @@
+<script>
+	export let thePromise;
+</script>
+
 <div>
 {#await thePromise}
 <p>loading...</p>

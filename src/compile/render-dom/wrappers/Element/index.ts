@@ -290,13 +290,8 @@ export default class ElementWrapper extends Wrapper {
 			});
 		}
 
-		const eventHandlerOrBindingUsesComponent = (
-			this.bindings.length > 0 ||
-			this.node.handlers.some(handler => handler.usesComponent)
-		);
-
 		const eventHandlerOrBindingUsesContext = (
-			this.bindings.some(binding => binding.node.usesContext) ||
+			this.bindings.some(binding => binding.handler.usesContext) ||
 			this.node.handlers.some(handler => handler.usesContext) ||
 			this.node.actions.some(action => action.usesContext)
 		);
@@ -584,7 +579,7 @@ export default class ElementWrapper extends Wrapper {
 
 					updates.push(condition ? `${condition} && ${snippet}` : snippet);
 				} else {
-					const snippet = `{ ${quoteNameIfNecessary(attr.name)}: ${attr.getValue()} }`;
+					const snippet = `{ ${quoteNameIfNecessary(attr.name)}: ${attr.getValue(block)} }`;
 					initialProps.push(snippet);
 
 					updates.push(condition ? `${condition} && ${snippet}` : snippet);
@@ -775,7 +770,7 @@ export default class ElementWrapper extends Wrapper {
 
 		block.builders.animate.addBlock(deindent`
 			${stop_animation}();
-			${stop_animation} = @animate(${this.var}, ${rect}, ${name}, ${params});
+			${stop_animation} = @create_animation(${this.var}, ${rect}, ${name}, ${params});
 		`);
 	}
 

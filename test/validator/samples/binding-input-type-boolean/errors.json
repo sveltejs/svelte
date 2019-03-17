@@ -2,14 +2,14 @@
 	"code": "missing-type",
 	"message": "'type' attribute must be specified",
 	"start": {
-		"line": 1,
+		"line": 5,
 		"column": 24,
-		"character": 24
+		"character": 54
 	},
 	"end": {
-		"line": 1,
+		"line": 5,
 		"column": 28,
-		"character": 28
+		"character": 58
 	},
-	"pos": 24
+	"pos": 54
 }]

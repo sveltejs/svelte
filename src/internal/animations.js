@@ -2,11 +2,11 @@ import { identity as linear, noop } from './utils.js';
 import { loop } from './loop.js';
 import { create_rule, delete_rule } from './style_manager.js';
 
-export function animate(node, from, fn, params) {
-	if (!from) return;
+export function create_animation(node, from, fn, params) {
+	if (!from) return noop;
 
 	const to = node.getBoundingClientRect();
-	if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) return;
+	if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) return noop;
 
 	const {
 		delay = 0,

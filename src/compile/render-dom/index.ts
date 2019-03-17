@@ -70,22 +70,20 @@ export default function dom(
 		options.css !== false
 	);
 
+	const uses_props = component.var_lookup.has('$$props');
+	const $$props = uses_props ? `$$new_props` : `$$props`;
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	const set = (component.componentOptions.props || writable_props.length > 0 || renderer.slots.size > 0)
+	const set = (uses_props || writable_props.length > 0 || renderer.slots.size > 0)
 		? deindent`
-			$$props => {
-				${component.componentOptions.props && deindent`
-				if (!${component.componentOptions.props}) ${component.componentOptions.props} = {};
-				@assign(${component.componentOptions.props}, $$props);
-				${component.invalidate(component.componentOptions.props_object)};
-				`}
+			${$$props} => {
+				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
 				`if ('${prop.export_name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = $$props.${prop.export_name}`)};`
 				)}
 				${renderer.slots.size > 0 &&
-				`if ('$$scope' in $$props) ${component.invalidate('$$scope', `$$scope = $$props.$$scope`)};`}
+				`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
 		: null;
@@ -104,7 +102,7 @@ export default function dom(
 					return ${x.name};
 				}
 			`);
-		} else {
+		} else if (component.componentOptions.accessors) {
 			body.push(deindent`
 				get ${x.export_name}() {
 					return this.$$.ctx.${x.name};
@@ -113,12 +111,14 @@ export default function dom(
 		}
 
 		if (variable.writable && !renderer.readonly.has(x.export_name)) {
-			body.push(deindent`
-				set ${x.export_name}(${x.name}) {
-					this.$set({ ${x.name} });
-					@flush();
-				}
-			`);
+			if (component.componentOptions.accessors) {
+				body.push(deindent`
+					set ${x.export_name}(${x.name}) {
+						this.$set({ ${x.name} });
+						@flush();
+					}
+				`);
+			}
 		} else if (component.compileOptions.dev) {
 			body.push(deindent`
 				set ${x.export_name}(value) {
@@ -165,9 +165,14 @@ export default function dom(
 				}
 
 				if (node.type === 'AssignmentExpression') {
-					const names = node.left.type === 'MemberExpression'
-						? [getObject(node.left).name]
-						: extractNames(node.left);
+					let names = [];
+
+					if (node.left.type === 'MemberExpression') {
+						const left_object_name = getObject(node.left).name;
+						left_object_name && (names = [left_object_name]);
+					} else {
+						names = extractNames(node.left);
+					}
 
 					if (node.operator === '=' && nodes_match(node.left, node.right)) {
 						const dirty = names.filter(name => {
@@ -281,9 +286,9 @@ export default function dom(
 		.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
 		.map(v => v.name);
 
-	const filtered_props = props.filter(prop => {
-		if (prop.name === component.componentOptions.props_object) return false;
+	if (uses_props) filtered_declarations.push(`$$props: $$props = ${component.helper('exclude_internal_props')}($$props)`);
 
+	const filtered_props = props.filter(prop => {
 		const variable = component.var_lookup.get(prop.name);
 
 		if (variable.hoistable) return false;
@@ -291,7 +296,7 @@ export default function dom(
 		return true;
 	});
 
-	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 
 	if (renderer.slots.size > 0) {
 		const arr = Array.from(renderer.slots);
@@ -305,7 +310,7 @@ export default function dom(
 	const has_definition = (
 		component.javascript ||
 		filtered_props.length > 0 ||
-		component.componentOptions.props_object ||
+		uses_props ||
 		component.partly_hoisted.length > 0 ||
 		filtered_declarations.length > 0 ||
 		component.reactive_declarations.length > 0
@@ -320,33 +325,10 @@ export default function dom(
 		addToSet(all_reactive_dependencies, d.dependencies);
 	});
 
-	let user_code;
-
-	if (component.javascript) {
-		user_code = component.javascript;
-	} else {
-		if (!component.ast.instance && !component.ast.module && (filtered_props.length > 0 || component.componentOptions.props)) {
-			const statements = [];
-
-			if (component.componentOptions.props) statements.push(`let ${component.componentOptions.props} = $$props;`);
-			if (filtered_props.length > 0) statements.push(`let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`);
-
-			reactive_stores.forEach(({ name }) => {
-				if (component.compileOptions.dev) {
-					statements.push(`${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}`);
-				}
-
-				statements.push(`@subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });`);
-			});
-
-			user_code = statements.join('\n');
-		}
-	}
-
 	const reactive_store_subscriptions = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable.hoistable;
+			return !variable || variable.hoistable;
 		})
 		.map(({ name }) => deindent`
 			${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
@@ -356,7 +338,7 @@ export default function dom(
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable.reassigned;
+			return variable && variable.reassigned;
 		})
 		.map(({ name }) => `$$self.$$.on_destroy.push(() => $$unsubscribe_${name.slice(1)}());`);
 
@@ -390,7 +372,7 @@ export default function dom(
 			const name = $name.slice(1);
 
 			const store = component.var_lookup.get(name);
-			if (store.reassigned) {
+			if (store && store.reassigned) {
 				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = ${name}.subscribe($$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`
 			}
 
@@ -405,7 +387,7 @@ export default function dom(
 
 				${resubscribable_reactive_store_unsubscribers}
 
-				${user_code}
+				${component.javascript}
 
 				${renderer.slots.size && `let { ${[...renderer.slots].map(name => `$$slot_${sanitize(name)}`).join(', ')}, $$scope } = $$props;`}
 
@@ -427,6 +409,8 @@ export default function dom(
 		`);
 	}
 
+	const prop_names = `[${props.map(v => JSON.stringify(v.export_name)).join(', ')}]`;
+
 	if (options.customElement) {
 		builder.addBlock(deindent`
 			class ${name} extends @SvelteElement {
@@ -435,7 +419,7 @@ export default function dom(
 
 					${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal});
+					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}
 
@@ -444,7 +428,7 @@ export default function dom(
 							@insert(options.target, this, options.anchor);
 						}
 
-						${(props.length > 0 || component.componentOptions.props) && deindent`
+						${(props.length > 0 || uses_props) && deindent`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();
@@ -469,7 +453,7 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && `if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
-					@init(this, options, ${definition}, create_fragment, ${not_equal});
+					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}
 				}

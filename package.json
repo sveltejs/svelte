@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.0.0-beta.10",
+  "version": "3.0.0-beta.18",
   "description": "The magical disappearing UI framework",
   "module": "index.mjs",
   "main": "index",
@@ -51,7 +51,7 @@
   "devDependencies": {
     "@types/mocha": "^5.2.0",
     "@types/node": "^10.5.5",
-    "acorn": "^6.0.5",
+    "acorn": "^6.1.1",
     "acorn-dynamic-import": "^4.0.0",
     "agadoo": "^1.0.1",
     "c8": "^3.4.0",
@@ -67,7 +67,7 @@
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.2",
     "mocha": "^5.2.0",
-    "nightmare": "^3.0.1",
+    "puppeteer": "^1.13.0",
     "rollup": "^1.1.2",
     "rollup-plugin-commonjs": "^9.1.0",
     "rollup-plugin-json": "^3.0.0",
