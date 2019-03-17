@@ -1,3 +1,5 @@
+<svelte:options accessors/>
+
 <script>
 	export let h1;
 </script>

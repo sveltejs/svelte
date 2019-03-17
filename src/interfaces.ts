@@ -49,6 +49,7 @@ export interface CompileOptions {
 	sveltePath?: string;
 
 	dev?: boolean;
+	accessors?: boolean;
 	immutable?: boolean;
 	hydratable?: boolean;
 	legacy?: boolean;
