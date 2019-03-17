@@ -49,6 +49,7 @@ export interface CompileOptions {
 	sveltePath?: string;
 
 	dev?: boolean;
+	accessors?: boolean;
 	immutable?: boolean;
 	hydratable?: boolean;
 	legacy?: boolean;
@@ -84,7 +85,6 @@ export interface Var {
 
 	// used internally, but not exposed
 	global?: boolean;
-	implicit?: boolean; // logic-less template references
 	internal?: boolean; // event handlers, bindings
 	initialised?: boolean;
 	hoistable?: boolean;

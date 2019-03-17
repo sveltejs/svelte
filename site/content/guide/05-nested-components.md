@@ -51,7 +51,7 @@ Often, the name of the property will be the same as the value, in which case we 
 <Widget {foo}/>
 ```
 
-> Note that props are *one-way* — to get data from a child component into a parent component, use [bindings](guide#bindings).
+> Note that props are *one-way* — to get data from a child component into a parent component, use [bindings](docs#bindings).
 
 
 ### Composing with `<slot>`

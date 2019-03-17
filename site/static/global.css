@@ -380,7 +380,7 @@ button[outline] {
 	transform: scaleX(1);
 } */
 
-a:hover > .icon { stroke: var(--flash) }
+a:hover:not(.disabled) > .icon { stroke: var(--flash) }
 
 /*  lists ---------------------------------- */
 .listify ol,

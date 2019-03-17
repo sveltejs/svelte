@@ -51,7 +51,7 @@ const props = { answer: 42 };
 const { html, css, head } = Thing.render(props);
 ```
 
-[Lifecycle hooks](guide#lifecycle-hooks) will *not* run, with the exception of `onDestroy`, because the component is never 'mounted'.
+[Lifecycle hooks](docs#lifecycle-hooks) will *not* run, with the exception of `onDestroy`, because the component is never 'mounted'.
 
 > The SSR compiler will generate a CommonJS module for each of your components – meaning that `import` and `export` statements are converted into their `require` and `module.exports` equivalents. If your components have non-component dependencies, they must also work as CommonJS modules in Node. If you're using ES2015 modules, we recommend the [`esm`](https://github.com/standard-things/esm) module for automatically converting them to CommonJS.
 
@@ -59,7 +59,7 @@ const { html, css, head } = Thing.render(props);
 
 #### Rendering styles
 
-You can also extract any [scoped styles](guide#scoped-styles) that are used by the component or its children:
+You can also extract any [scoped styles](docs#scoped-styles) that are used by the component or its children:
 
 ```js
 const { css } = Thing.render(data);
@@ -71,7 +71,7 @@ You could put the resulting `css` in a separate stylesheet, or include them in t
 
 #### Rendering `<head>` contents
 
-If your component, any of its children, use the `<svelte:head>` [component](guide#-head-tags), you can extract the contents:
+If your component, any of its children, use the `<svelte:head>` [component](docs#-head-tags), you can extract the contents:
 
 ```js
 const { head } = Thing.render(data);

@@ -1,1 +1,0 @@
-<p>And this is a nested component.</p>

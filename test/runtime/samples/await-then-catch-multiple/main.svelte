@@ -1,3 +1,7 @@
+<script>
+	export let thePromise;
+</script>
+
 {#await thePromise}
 	<p>loading...</p>
 {:then theValue}

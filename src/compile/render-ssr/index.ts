@@ -24,23 +24,22 @@ export default function ssr(
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
 
-	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 	const reactive_store_values = reactive_stores
 		.map(({ name }) => {
-			const store = component.var_lookup.get(name.slice(1));
-			if (store.hoistable) return;
+			const store_name = name.slice(1);
+			const store = component.var_lookup.get(store_name);
+			if (store && store.hoistable) return;
 
-			const assignment = `${name} = @get_store_value(${store.name});`;
+			const assignment = `${name} = @get_store_value(${store_name});`;
 
 			return component.compileOptions.dev
-				? `@validate_store(${store.name}, '${store.name}'); ${assignment}`
+				? `@validate_store(${store_name}, '${store_name}'); ${assignment}`
 				: assignment;
 		});
 
 	// TODO remove this, just use component.vars everywhere
-	const props = component.vars.filter(variable => !variable.module && variable.export_name && variable.export_name !== component.componentOptions.props_object);
-
-	let user_code;
+	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 
 	if (component.javascript) {
 		component.rewrite_props(({ name }) => {
@@ -56,23 +55,6 @@ export default function ssr(
 
 			return insert;
 		});
-
-		user_code = component.javascript;
-	} else if (!component.ast.instance && !component.ast.module && (props.length > 0 || component.componentOptions.props)) {
-		const statements = [];
-
-		if (component.componentOptions.props) statements.push(`let ${component.componentOptions.props} = $$props;`);
-		if (props.length > 0) statements.push(`let { ${props.map(x => x.name).join(', ')} } = $$props;`);
-
-		reactive_stores.forEach(({ name }) => {
-			if (component.compileOptions.dev) {
-				statements.push(`${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}`);
-			}
-
-			statements.push(`${name} = @get_store_value(${name.slice(1)});`);
-		});
-
-		user_code = statements.join('\n');
 	}
 
 	// TODO only do this for props with a default value
@@ -114,15 +96,16 @@ export default function ssr(
 	const blocks = [
 		reactive_stores.length > 0 && `let ${reactive_stores
 			.map(({ name }) => {
-				const store = component.var_lookup.get(name.slice(1));
-				if (store.hoistable) {
+				const store_name = name.slice(1);
+				const store = component.var_lookup.get(store_name);
+				if (store && store.hoistable) {
 					const get_store_value = component.helper('get_store_value');
-					return `${name} = ${get_store_value}(${store.name})`;
+					return `${name} = ${get_store_value}(${store_name})`;
 				}
 				return name;
 			})
 			.join(', ')};`,
-		user_code,
+		component.javascript,
 		parent_bindings.join('\n'),
 		css.code && `$$result.css.add(#css);`,
 		main

@@ -6,7 +6,8 @@
 		"NODE_ENV": "production",
 		"BASEURL": "https://v3.svelte.technology",
 		"GITHUB_CLIENT_ID": "@svelte-gist-client-id-v3",
-		"GITHUB_CLIENT_SECRET": "@svelte-gist-client-secret-v3"
+		"GITHUB_CLIENT_SECRET": "@svelte-gist-client-secret-v3",
+		"MAPBOX_ACCESS_TOKEN": "@svelte-mapbox-access-token"
 	},
 	"files": [
 		"__sapper__/build",

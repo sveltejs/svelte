@@ -95,7 +95,7 @@ The example above can be achieved with modifiers — no need for a separate even
 
 ### Component events
 
-Events are an excellent way for [nested components](guide#nested-components) to communicate with their parents. Let's revisit our earlier example, but turn it into a `<CategoryChooser>` component:
+Events are an excellent way for [nested components](docs#nested-components) to communicate with their parents. Let's revisit our earlier example, but turn it into a `<CategoryChooser>` component:
 
 ```html
 <!-- { filename: 'CategoryChooser.html', repl: false } -->

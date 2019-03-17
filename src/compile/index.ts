@@ -16,6 +16,7 @@ const valid_options = [
 	'cssOutputFilename',
 	'sveltePath',
 	'dev',
+	'accessors',
 	'immutable',
 	'hydratable',
 	'legacy',

@@ -239,6 +239,8 @@ export default class Block {
 
 		const properties = new CodeBuilder();
 
+		const methodName = (short: string, long: string) => dev ? `${short}: function ${this.getUniqueName(long)}` : short;
+
 		if (localKey) {
 			properties.addBlock(`key: ${localKey},`);
 		}
@@ -258,7 +260,7 @@ export default class Block {
 			);
 
 			properties.addBlock(deindent`
-				${dev ? 'c: function create' : 'c'}() {
+				${methodName('c', 'create')}() {
 					${this.builders.create}
 					${hydrate}
 				},
@@ -270,7 +272,7 @@ export default class Block {
 				properties.addLine(`l: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'l: function claim' : 'l'}(nodes) {
+					${methodName('l', 'claim')}(nodes) {
 						${this.builders.claim}
 						${this.renderer.options.hydratable && !this.builders.hydrate.isEmpty() && `this.h();`}
 					},
@@ -280,7 +282,7 @@ export default class Block {
 
 		if (this.renderer.options.hydratable && !this.builders.hydrate.isEmpty()) {
 			properties.addBlock(deindent`
-				${dev ? 'h: function hydrate' : 'h'}() {
+				${methodName('h', 'hydrate')}() {
 					${this.builders.hydrate}
 				},
 			`);
@@ -290,7 +292,7 @@ export default class Block {
 			properties.addLine(`m: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				${dev ? 'm: function mount' : 'm'}(#target, anchor) {
+				${methodName('m', 'mount')}(#target, anchor) {
 					${this.builders.mount}
 				},
 			`);
@@ -301,7 +303,7 @@ export default class Block {
 				properties.addLine(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'p: function update' : 'p'}(changed, ${this.maintainContext ? 'new_ctx' : 'ctx'}) {
+					${methodName('p', 'update')}(changed, ${this.maintainContext ? 'new_ctx' : 'ctx'}) {
 						${this.maintainContext && `ctx = new_ctx;`}
 						${this.builders.update}
 					},
@@ -311,15 +313,15 @@ export default class Block {
 
 		if (this.hasAnimation) {
 			properties.addBlock(deindent`
-				${dev ? `r: function measure` : `r`}() {
+				${methodName('r', 'measure')}() {
 					${this.builders.measure}
 				},
 
-				${dev ? `f: function fix` : `f`}() {
+				${methodName('f', 'fix')}() {
 					${this.builders.fix}
 				},
 
-				${dev ? `a: function animate` : `a`}() {
+				${methodName('a', 'animate')}() {
 					${this.builders.animate}
 				},
 			`);
@@ -330,7 +332,7 @@ export default class Block {
 				properties.addLine(`i: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'i: function intro' : 'i'}(#local) {
+					${methodName('i', 'intro')}(#local) {
 						${this.hasOutros && `if (#current) return;`}
 						${this.builders.intro}
 					},
@@ -341,7 +343,7 @@ export default class Block {
 				properties.addLine(`o: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'o: function outro' : 'o'}(#local) {
+					${methodName('o', 'outro')}(#local) {
 						${this.builders.outro}
 					},
 				`);
@@ -352,7 +354,7 @@ export default class Block {
 			properties.addLine(`d: @noop`);
 		} else {
 			properties.addBlock(deindent`
-				${dev ? 'd: function destroy' : 'd'}(detach) {
+				${methodName('d', 'destroy')}(detach) {
 					${this.builders.destroy}
 				}
 			`);

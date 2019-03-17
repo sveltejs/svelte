@@ -17,12 +17,12 @@ let a = 1;
 let b = 2;
 
 function instance($$self, $$props, $$invalidate) {
-
+	
 
 	let max;
 
-	$$self.$$.update = ($$dirty = { max: 1, Math: 1, a: 1, b: 1 }) => {
-		if ($$dirty.max || $$dirty.a || $$dirty.b) {
+	$$self.$$.update = ($$dirty = { a: 1, b: 1 }) => {
+		if ($$dirty.a || $$dirty.b) {
 			max = Math.max(a, b); $$invalidate('max', max);
 		}
 	};
@@ -33,7 +33,7 @@ function instance($$self, $$props, $$invalidate) {
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal, []);
 	}
 }
 

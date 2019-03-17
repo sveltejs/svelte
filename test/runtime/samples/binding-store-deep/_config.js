@@ -1,5 +1,41 @@
 export default {
-	error(assert, err) {
-		assert.equal(err.message, `Cannot bind to a nested property of a store`);
-	}
+	html: `
+		<input>
+		<p>hello world</p>
+	`,
+
+	ssrHtml: `
+		<input value="world">
+		<p>hello world</p>
+	`,
+
+	async test({ assert, component, target, window }) {
+		const input = target.querySelector('input');
+		assert.equal(input.value, 'world');
+
+		const event = new window.Event('input');
+
+		const names = [];
+		const unsubscribe = component.user.subscribe(user => {
+			names.push(user.name);
+		});
+
+		input.value = 'everybody';
+		await input.dispatchEvent(event);
+
+		assert.htmlEqual(target.innerHTML, `
+			<input>
+			<p>hello everybody</p>
+		`);
+
+		await component.user.set({ name: 'goodbye' });
+		assert.equal(input.value, 'goodbye');
+		assert.htmlEqual(target.innerHTML, `
+			<input>
+			<p>hello goodbye</p>
+		`);
+
+		assert.deepEqual(names, ['world', 'everybody', 'goodbye']);
+		unsubscribe();
+	},
 };
