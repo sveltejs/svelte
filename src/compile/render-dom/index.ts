@@ -102,7 +102,7 @@ export default function dom(
 					return ${x.name};
 				}
 			`);
-		} else {
+		} else if (component.componentOptions.accessors) {
 			body.push(deindent`
 				get ${x.export_name}() {
 					return this.$$.ctx.${x.name};
@@ -111,12 +111,14 @@ export default function dom(
 		}
 
 		if (variable.writable && !renderer.readonly.has(x.export_name)) {
-			body.push(deindent`
-				set ${x.export_name}(${x.name}) {
-					this.$set({ ${x.name} });
-					@flush();
-				}
-			`);
+			if (component.componentOptions.accessors) {
+				body.push(deindent`
+					set ${x.export_name}(${x.name}) {
+						this.$set({ ${x.name} });
+						@flush();
+					}
+				`);
+			}
 		} else if (component.compileOptions.dev) {
 			body.push(deindent`
 				set ${x.export_name}(value) {
