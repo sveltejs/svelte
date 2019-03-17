@@ -719,9 +719,15 @@ export default class Component {
 
 	invalidate(name, value = name) {
 		const variable = this.var_lookup.get(name);
+
 		if (variable && (variable.subscribable && variable.reassigned)) {
 			return `$$subscribe_${name}(), $$invalidate('${name}', ${value})`;
 		}
+
+		if (name[0] === '$' && name[1] !== '$') {
+			return `${name.slice(1)}.set(${name})`
+		}
+
 		return `$$invalidate('${name}', ${value})`;
 	}
 
