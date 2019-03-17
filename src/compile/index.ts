@@ -3,7 +3,7 @@ import Stats from '../Stats';
 import parse from '../parse/index';
 import renderDOM from './render-dom/index';
 import renderSSR from './render-ssr/index';
-import { CompileOptions, Ast, Warning, CustomElementOptions } from '../interfaces';
+import { CompileOptions, Ast, Warning } from '../interfaces';
 import Component from './Component';
 import fuzzymatch from '../utils/fuzzymatch';
 
@@ -21,6 +21,7 @@ const valid_options = [
 	'hydratable',
 	'legacy',
 	'customElement',
+	'tag',
 	'css',
 	'preserveComments'
 ];
