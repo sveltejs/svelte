@@ -30,7 +30,7 @@
 		selected.set(data.components[0]);
 
 		module_editor.set($selected.source, $selected.type);
-		output.set($selected);
+		output.set($selected, $compile_options);
 	}
 
 	export function update(data) {
@@ -43,10 +43,10 @@
 
 		if (matched_component) {
 			module_editor.update(matched_component.source);
-			output.update(matched_component);
+			output.update(matched_component, $compile_options);
 		} else {
 			module_editor.set(matched_component.source, matched_component.type);
-			output.set(matched_component);
+			output.set(matched_component, $compile_options);
 		}
 	}
 
@@ -56,13 +56,30 @@
 	const selected = writable(null);
 	const bundle = writable(null);
 
+	const compile_options = writable({
+		generate: 'dom',
+		dev: false,
+		css: false,
+		hydratable: false,
+		customElement: false,
+		immutable: false,
+		legacy: false
+	});
+
 	let module_editor;
 	let output;
+
+	function rebundle() {
+		workers.bundler.postMessage({ type: 'bundle', components: $components });
+	}
 
 	setContext('REPL', {
 		components,
 		selected,
 		bundle,
+		compile_options,
+
+		rebundle,
 
 		navigate: item => {
 			const match = /^(.+)\.(\w+)$/.exec(item.filename);
@@ -72,7 +89,7 @@
 			const component = $components.find(c => c.name === name && c.type === type);
 			selected.set(component);
 
-			output.set($selected);
+			output.set($selected, $compile_options);
 
 			// TODO select the line/column in question
 		},
@@ -91,10 +108,9 @@
 			components.update(c => c);
 
 			// recompile selected component
-			output.update($selected);
+			output.update($selected, $compile_options);
 
-			// regenerate bundle (TODO do this in a separate worker?)
-			workers.bundler.postMessage({ type: 'bundle', components: $components });
+			rebundle();
 
 			dispatch('change', {
 				components: $components
@@ -117,7 +133,7 @@
 	function handle_select(component) {
 		selected.set(component);
 		module_editor.set(component.source, component.type);
-		output.set($selected);
+		output.set($selected, $compile_options);
 	}
 
 	let workers;
@@ -152,6 +168,10 @@
 
 	$: if (workers && $components) {
 		workers.bundler.postMessage({ type: 'bundle', components: $components });
+	}
+
+	$: if (output && $selected) {
+		output.update($selected, $compile_options);
 	}
 </script>
 
