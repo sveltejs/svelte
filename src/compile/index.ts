@@ -21,6 +21,7 @@ const valid_options = [
 	'hydratable',
 	'legacy',
 	'customElement',
+	'tag',
 	'css',
 	'preserveComments'
 ];
