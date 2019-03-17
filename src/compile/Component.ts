@@ -26,6 +26,7 @@ type ComponentOptions = {
 	namespace?: string;
 	tag?: string;
 	immutable?: boolean;
+	accessors?: boolean;
 };
 
 // We need to tell estree-walker that it should always
@@ -52,6 +53,7 @@ export default class Component {
 	componentOptions: ComponentOptions;
 	namespace: string;
 	tag: string;
+	accessors: boolean;
 
 	vars: Var[] = [];
 	var_lookup: Map<string, Var> = new Map();
@@ -1155,7 +1157,10 @@ export default class Component {
 
 function process_component_options(component: Component, nodes) {
 	const componentOptions: ComponentOptions = {
-		immutable: component.compileOptions.immutable || false
+		immutable: component.compileOptions.immutable || false,
+		accessors: 'accessors' in component.compileOptions
+			? component.compileOptions.accessors
+			: !!component.compileOptions.customElement
 	};
 
 	const node = nodes.find(node => node.name === 'svelte:options');
@@ -1229,14 +1234,15 @@ function process_component_options(component: Component, nodes) {
 						break;
 					}
 
+					case 'accessors':
 					case 'immutable':
-						const code = `invalid-immutable-value`;
-						const message = `immutable attribute must be true or false`
+						const code = `invalid-${name}-value`;
+						const message = `${name} attribute must be true or false`
 						const value = get_value(attribute, code, message);
 
 						if (typeof value !== 'boolean') component.error(attribute, { code, message });
 
-						componentOptions.immutable = value;
+						componentOptions[name] = value;
 						break;
 
 					default:
@@ -1250,7 +1256,7 @@ function process_component_options(component: Component, nodes) {
 			else {
 				component.error(attribute, {
 					code: `invalid-options-attribute`,
-					message: `<svelte:options> can only have static 'tag', 'namespace' and 'immutable' attributes`
+					message: `<svelte:options> can only have static 'tag', 'namespace', 'accessors' and 'immutable' attributes`
 				});
 			}
 		});
