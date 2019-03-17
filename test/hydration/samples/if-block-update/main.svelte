@@ -1,3 +1,5 @@
+<svelte:options accessors={true}/>
+
 <script>
 	export let foo;
 	export let bar;

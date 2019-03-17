@@ -72,6 +72,7 @@ describe("runtime", () => {
 			compileOptions.sveltePath = sveltePath;
 			compileOptions.hydratable = hydrate;
 			compileOptions.immutable = config.immutable;
+			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".svelte"))
