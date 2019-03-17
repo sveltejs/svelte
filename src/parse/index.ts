@@ -3,13 +3,13 @@ import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
 import reservedNames from '../utils/reservedNames';
 import fullCharCodeAt from '../utils/fullCharCodeAt';
-import { Node, Ast, CustomElementOptions } from '../interfaces';
+import { Node, Ast } from '../interfaces';
 import error from '../utils/error';
 
 interface ParserOptions {
 	filename?: string;
 	bind?: boolean;
-	customElement?: CustomElementOptions;
+	customElement?: boolean;
 }
 
 type ParserState = (parser: Parser) => (ParserState | void);
@@ -17,7 +17,7 @@ type ParserState = (parser: Parser) => (ParserState | void);
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
-	readonly customElement: CustomElementOptions;
+	readonly customElement: boolean;
 
 	index = 0;
 	stack: Array<Node> = [];
