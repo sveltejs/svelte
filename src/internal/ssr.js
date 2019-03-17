@@ -65,28 +65,39 @@ export function debug(file, line, column, values) {
 	return '';
 }
 
-export function create_ssr_component($$render) {
+let on_destroy;
+
+export function create_ssr_component(fn) {
+	function $$render(result, props, bindings, slots) {
+		const parent_component = current_component;
+
+		const $$ = {
+			on_destroy,
+			context: new Map(parent_component ? parent_component.$$.context : []),
+
+			// these will be immediately discarded
+			on_mount: [],
+			before_render: [],
+			after_render: [],
+			callbacks: blankObject()
+		};
+
+		set_current_component({ $$ });
+
+		const html = fn(result, props, bindings, slots);
+
+		set_current_component(parent_component);
+		return html;
+	}
+
 	return {
 		render: (props = {}, options = {}) => {
-			const parent_component = current_component;
-
-			// TODO do we need on_ready, since on_mount,
-			// before_render and after_render don't run?
-			const $$ = {
-				on_mount: [],
-				on_destroy: [],
-				before_render: [],
-				after_render: [],
-				context: new Map(parent_component ? parent_component.$$.context : []),
-				callbacks: blankObject()
-			};
-
-			set_current_component({ $$ });
+			on_destroy = [];
 
 			const result = { head: '', css: new Set() };
 			const html = $$render(result, props, {}, options);
 
-			run_all($$.on_destroy);
+			run_all(on_destroy);
 
 			return {
 				html,
