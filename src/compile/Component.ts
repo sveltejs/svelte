@@ -118,15 +118,14 @@ export default class Component {
 		this.componentOptions = process_component_options(this, this.ast.html.children);
 		this.namespace = namespaces[this.componentOptions.namespace] || this.componentOptions.namespace;
 
-		if (compileOptions.customElement === true && !this.componentOptions.tag) {
-			throw new Error(`No tag name specified`); // TODO better error
+		if (compileOptions.customElement) {
+			this.tag = this.componentOptions.tag || compileOptions.tag;
+			if (!this.tag) {
+				throw new Error(`Cannot compile to a custom element without specifying a tag name via options.tag or <svelte:options>`);
+			}
+		} else {
+			this.tag = this.name;
 		}
-
-		this.tag = compileOptions.customElement
-			? compileOptions.customElement === true
-				? this.componentOptions.tag
-				: compileOptions.customElement as string
-			: this.name;
 
 		this.walk_module_js();
 		this.walk_instance_js_pre_template();

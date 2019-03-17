@@ -53,7 +53,8 @@ export interface CompileOptions {
 	immutable?: boolean;
 	hydratable?: boolean;
 	legacy?: boolean;
-	customElement?: CustomElementOptions | true;
+	customElement?: boolean;
+	tag?: string;
 	css?: boolean;
 
 	preserveComments?: boolean | false;
@@ -62,11 +63,6 @@ export interface CompileOptions {
 export interface Visitor {
 	enter: (node: Node) => void;
 	leave?: (node: Node) => void;
-}
-
-export interface CustomElementOptions {
-	tag?: string;
-	props?: string[];
 }
 
 export interface AppendTarget {
