@@ -40,6 +40,8 @@ export function on_outro(callback) {
 	outros.callbacks.push(callback);
 }
 
+const null_transition = { duration: 0 };
+
 export function create_in_transition(node, fn, params) {
 	let config = fn(node, params);
 	let running = false;
@@ -58,7 +60,7 @@ export function create_in_transition(node, fn, params) {
 			easing = linear,
 			tick = noop,
 			css
-		} = config;
+		} = config || null_transition;
 
 		if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
 		tick(0, 1);
@@ -132,7 +134,7 @@ export function create_out_transition(node, fn, params) {
 			easing = linear,
 			tick = noop,
 			css
-		} = config;
+		} = config || null_transition;
 
 		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
 
@@ -221,7 +223,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 			easing = linear,
 			tick = noop,
 			css
-		} = config;
+		} = config || null_transition;
 
 		const program = {
 			start: window.performance.now() + delay,
