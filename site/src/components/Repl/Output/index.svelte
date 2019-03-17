@@ -13,34 +13,26 @@
 	export let runtimeError;
 	export let embedded;
 
-	let compile_options = {
-		generate: 'dom',
-		dev: false,
-		css: false,
-		hydratable: false,
-		customElement: false,
-		immutable: false,
-		legacy: false
-	};
+	let foo; // TODO workaround for https://github.com/sveltejs/svelte/issues/2122
 
 	register_output({
-		set: async selected => {
+		set: async (selected, options) => {
 			if (selected.type === 'js') {
 				js_editor.set(`/* Select a component to see its compiled code */`);
 				css_editor.set(`/* Select a component to see its compiled code */`);
 				return;
 			}
 
-			const compiled = await compiler.compile(selected, compile_options);
+			const compiled = await compiler.compile(selected, options);
 
 			js_editor.set(compiled.js, 'js');
 			css_editor.set(compiled.css, 'css');
 		},
 
-		update: async selected => {
+		update: async (selected, options) => {
 			if (selected.type === 'js') return;
 
-			const compiled = await compiler.compile(selected, compile_options);
+			const compiled = await compiler.compile(selected, options);
 
 			js_editor.update(compiled.js);
 			css_editor.update(compiled.css);
@@ -160,7 +152,7 @@
 			<section slot="b">
 				<h3>Compiler options</h3>
 
-				<CompilerOptions bind:options={compile_options}/>
+				<CompilerOptions bind:foo={foo}/>
 			</section>
 		</SplitPane>
 	{/if}

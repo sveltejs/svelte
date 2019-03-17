@@ -5,7 +5,7 @@
 
 	export let handle_select;
 
-	const { components, selected, request_focus } = getContext('REPL');
+	const { components, selected, request_focus, rebundle } = getContext('REPL');
 
 	let editing = null;
 
@@ -35,6 +35,8 @@
 
 		// focus the editor, but wait a beat (so key events aren't misdirected)
 		setTimeout(request_focus);
+
+		rebundle();
 	}
 
 	function remove(component) {

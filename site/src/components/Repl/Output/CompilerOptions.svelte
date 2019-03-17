@@ -1,5 +1,7 @@
 <script>
-	export let options;
+	import { getContext } from 'svelte';
+
+	const { compile_options } = getContext('REPL');
 </script>
 
 <style>
@@ -104,41 +106,41 @@
 	<div class="option">
 		<span class="key">generate:</span>
 
-		<input id="dom-input" type="radio" bind:group={options.generate} value="dom">
+		<input id="dom-input" type="radio" bind:group={$compile_options.generate} value="dom">
 		<label for="dom-input"><span class="string">"dom"</span></label>
 
-		<input id="ssr-input" type="radio" bind:group={options.generate} value="ssr">
+		<input id="ssr-input" type="radio" bind:group={$compile_options.generate} value="ssr">
 		<label for="ssr-input"><span class="string">"ssr"</span>,</label>
 	</div>
 
 	<label class="option">
 		<span class="key">dev:</span>
-		<input type="checkbox" bind:checked={options.dev}> <span class="boolean">{options.dev}</span>,
+		<input type="checkbox" bind:checked={$compile_options.dev}> <span class="boolean">{$compile_options.dev}</span>,
 	</label>
 
 	<label class="option">
 		<span class="key">css:</span>
-		<input type="checkbox" bind:checked={options.css}> <span class="boolean">{options.css}</span>,
+		<input type="checkbox" bind:checked={$compile_options.css}> <span class="boolean">{$compile_options.css}</span>,
 	</label>
 
 	<label class="option">
 		<span class="key">hydratable:</span>
-		<input type="checkbox" bind:checked={options.hydratable}> <span class="boolean">{options.hydratable}</span>,
+		<input type="checkbox" bind:checked={$compile_options.hydratable}> <span class="boolean">{$compile_options.hydratable}</span>,
 	</label>
 
 	<label class="option">
 		<span class="key">customElement:</span>
-		<input type="checkbox" bind:checked={options.customElement}> <span class="boolean">{options.customElement}</span>,
+		<input type="checkbox" bind:checked={$compile_options.customElement}> <span class="boolean">{$compile_options.customElement}</span>,
 	</label>
 
 	<label class="option">
 		<span class="key">immutable:</span>
-		<input type="checkbox" bind:checked={options.immutable}> <span class="boolean">{options.immutable}</span>,
+		<input type="checkbox" bind:checked={$compile_options.immutable}> <span class="boolean">{$compile_options.immutable}</span>,
 	</label>
 
 	<label class="option">
 		<span class="key">legacy:</span>
-		<input type="checkbox" bind:checked={options.legacy}> <span class="boolean">{options.legacy}</span>
+		<input type="checkbox" bind:checked={$compile_options.legacy}> <span class="boolean">{$compile_options.legacy}</span>
 	</label>
 	});
 </div>
