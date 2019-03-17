@@ -168,7 +168,7 @@ export default class Component {
 			this.add_reference(subscribable_name);
 
 			const variable = this.var_lookup.get(subscribable_name);
-			variable.subscribable = true;
+			if (variable) variable.subscribable = true;
 		} else {
 			this.usedNames.add(name);
 		}
