@@ -792,7 +792,7 @@ export default class Component {
 									current_group = { kind: node.kind, declarators: [declarator], insert };
 									coalesced_declarations.push(current_group);
 								} else if (insert) {
-									current_group.insert = insert
+									current_group.insert = insert;
 									current_group.declarators.push(declarator);
 								} else {
 									current_group.declarators.push(declarator);
@@ -841,8 +841,9 @@ export default class Component {
 		});
 
 		coalesced_declarations.forEach(group => {
-			let c = 0;
+			const writable = group.kind === 'var' || group.kind === 'let';
 
+			let c = 0;
 			let combining = false;
 
 			group.declarators.forEach(declarator => {
@@ -851,7 +852,7 @@ export default class Component {
 				if (combining) {
 					code.overwrite(c, id.start, ', ');
 				} else {
-					code.appendLeft(id.start, '{ ');
+					if (writable) code.appendLeft(id.start, '{ ');
 					combining = true;
 				}
 
@@ -863,7 +864,7 @@ export default class Component {
 					? `; ${group.insert}`
 					: '';
 
-				const suffix = code.original[c] === ';' ? ` } = $$props${insert}` : ` } = $$props${insert};`;
+				const suffix = `${writable ? ` } = $$props` : ``}${insert}` + (code.original[c] === ';' ? `` : `;`);
 				code.appendLeft(c, suffix);
 			}
 		});
