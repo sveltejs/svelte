@@ -50,7 +50,7 @@ function tick_spring(velocity, current_value, target_value, stiffness, damping, 
 			value = current_value + d;
 		}
 
-		if (Math.abs(d) > threshold) settled = false;
+		if (Math.abs(d) > threshold || Math.abs(delta) > threshold) settled = false;
 	}
 
 	else if (Array.isArray(current_value)) {
@@ -100,7 +100,7 @@ function tick_spring(velocity, current_value, target_value, stiffness, damping, 
 export function spring(value, opts = {}) {
 	const store = writable(value);
 
-	const { stiffness = 0.15, damping = 0.8 } = opts;
+	const { stiffness = 0.15, damping = 0.8, precision = 0.001 } = opts;
 	const velocity = get_initial_velocity(value);
 
 	let task;
@@ -108,10 +108,13 @@ export function spring(value, opts = {}) {
 	let last_time;
 	let settled;
 	let threshold;
+	let current_token;
 
 	function set(new_value) {
 		target_value = new_value;
-		threshold = get_threshold(value, target_value, 0.000001); // TODO make precision configurable?
+		threshold = get_threshold(value, target_value, spring.precision);
+
+		const token = current_token = {};
 
 		if (!task) {
 			last_time = window.performance.now();
@@ -140,7 +143,11 @@ export function spring(value, opts = {}) {
 			});
 		}
 
-		return task.promise;
+		return new Promise(fulfil => {
+			task.promise.then(() => {
+				if (token === current_token) fulfil();
+			});
+		});
 	}
 
 	const spring = {
@@ -148,7 +155,8 @@ export function spring(value, opts = {}) {
 		update: fn => set(fn(target_value, value)),
 		subscribe: store.subscribe,
 		stiffness,
-		damping
+		damping,
+		precision
 	};
 
 	return spring;
