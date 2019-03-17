@@ -88,7 +88,7 @@ export default [
 	},
 
 	// everything else
-	...['index', 'store', 'easing', 'transition'].map(name => ({
+	...['index', 'store', 'easing', 'transition', 'animate'].map(name => ({
 		input: `${name}.mjs`,
 		output: {
 			file: `${name}.js`,
