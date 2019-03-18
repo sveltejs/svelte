@@ -180,6 +180,38 @@ class SvelteComponent extends SvelteComponentDev {
 			console.warn("<SvelteComponent> was created without expected prop 'baz'");
 		}
 	}
+
+	get things() {
+		throw new Error("<SvelteComponent>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+	}
+
+	set things(value) {
+		throw new Error("<SvelteComponent>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+	}
+
+	get foo() {
+		throw new Error("<SvelteComponent>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+	}
+
+	set foo(value) {
+		throw new Error("<SvelteComponent>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+	}
+
+	get bar() {
+		throw new Error("<SvelteComponent>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+	}
+
+	set bar(value) {
+		throw new Error("<SvelteComponent>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+	}
+
+	get baz() {
+		throw new Error("<SvelteComponent>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+	}
+
+	set baz(value) {
+		throw new Error("<SvelteComponent>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+	}
 }
 
 export default SvelteComponent;
