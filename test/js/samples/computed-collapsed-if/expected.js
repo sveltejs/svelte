@@ -40,6 +40,14 @@ class SvelteComponent extends SvelteComponent_1 {
 		super();
 		init(this, options, instance, create_fragment, safe_not_equal, ["x", "a", "b"]);
 	}
+
+	get a() {
+		return this.$$.ctx.a;
+	}
+
+	get b() {
+		return this.$$.ctx.b;
+	}
 }
 
 export default SvelteComponent;
