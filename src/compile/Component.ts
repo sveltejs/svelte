@@ -593,7 +593,7 @@ export default class Component {
 
 			const { type, name } = node.body.expression.left;
 
-			if (type === 'Identifier' && !this.var_lookup.has(name)) {
+			if (type === 'Identifier' && !this.var_lookup.has(name) && name[0] !== '$') {
 				this.injected_reactive_declaration_vars.add(name);
 			}
 		});
@@ -761,7 +761,7 @@ export default class Component {
 
 	rewrite_props(get_insert: (variable: Var) => string) {
 		const component = this;
-		const { code, instance_scope, instance_scope_map: map, component_options } = this;
+		const { code, instance_scope, instance_scope_map: map } = this;
 		let scope = instance_scope;
 
 		const coalesced_declarations = [];
