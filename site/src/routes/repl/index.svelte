@@ -122,7 +122,7 @@
 		overflow: hidden;
 		background-color: var(--back);
 		padding: var(--app-controls-h) 0 0 0;
-		margin: 0 calc(var(--side-nav) * -1);
+		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
 	}
 

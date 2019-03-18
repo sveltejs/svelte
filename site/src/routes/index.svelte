@@ -10,6 +10,7 @@
 	.container {
 		position: relative;
 		margin: 10rem auto;
+		padding: 0 var(--side-nav);
 		max-width: 120rem;
 	}
 
@@ -107,15 +108,22 @@
 		top: 0.6em;
 	}
 
-	.example {
+	.examples {
 		background: var(--second);
 		color: white;
+		/* padding: 2em 0; */
+		overflow: hidden;
+	}
+
+	.example {
+		/* background: var(--second);
+		color: white;
 		padding: 0.8rem;
-		border-radius: var(--border-r);
+		border-radius: var(--border-r); */
 	}
 
 	.example > div:first-child {
-		padding: 0.8rem;
+		/* padding: 0.8rem; */
 	}
 
 	iframe {
@@ -226,53 +234,55 @@ npm run dev & open http://localhost:5000
 	</div>
 </section>
 
-<section class="container example linkify">
-	<div>
-		<p>Svelte components are written in HTML files. Just add data.</p>
-	</div>
+<div class="examples">
+	<section class="container example linkify">
+		<div>
+			<p>Svelte components are written in HTML files. Just add data.</p>
+		</div>
 
-	<iframe
-		title="Hello world example"
-		src="/repl/embed?example=hello-world"
-		scrolling="no"
-	></iframe>
-</section>
+		<iframe
+			title="Hello world example"
+			src="/repl/embed?example=hello-world"
+			scrolling="no"
+		></iframe>
+	</section>
 
-<section class="container example linkify">
-	<div>
-		<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
-	</div>
+	<section class="container example linkify">
+		<div>
+			<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
+		</div>
 
-	<iframe
-		title="Scope styles example"
-		src="/repl/embed?example=nested-components"
-		scrolling="no"
-	></iframe>
-</section>
+		<iframe
+			title="Scope styles example"
+			src="/repl/embed?example=nested-components"
+			scrolling="no"
+		></iframe>
+	</section>
 
-<section class="container example linkify">
-	<div>
-		<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
-	</div>
+	<section class="container example linkify">
+		<div>
+			<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
+		</div>
 
-	<iframe
-		title="Reactivity example"
-		src="/repl/embed?example=reactive-assignments"
-		scrolling="no"
-	></iframe>
-</section>
+		<iframe
+			title="Reactivity example"
+			src="/repl/embed?example=reactive-assignments"
+			scrolling="no"
+		></iframe>
+	</section>
 
-<section class="container example linkify">
-	<div>
-		<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
-	</div>
+	<section class="container example linkify">
+		<div>
+			<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
+		</div>
 
-	<iframe
-		title="Transitions example"
-		src="/repl/embed?example=svg-transitions"
-		scrolling="no"
-	></iframe>
-</section>
+		<iframe
+			title="Transitions example"
+			src="/repl/embed?example=svg-transitions"
+			scrolling="no"
+		></iframe>
+	</section>
+</div>
 
 <section class="container linkify">
 	<h3>Who's using Svelte?</h3>
