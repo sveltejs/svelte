@@ -834,8 +834,8 @@ export default class Component {
 									current_group.declarators.push(declarator);
 								}
 
-								if (variable.name !== variable.export_name) {
-									code.prependRight(declarator.id.start, `${variable.export_name}:`)
+								if (variable.writable && variable.name !== variable.export_name) {
+									code.prependRight(declarator.id.start, `${variable.export_name}: `)
 								}
 
 								if (next) {
