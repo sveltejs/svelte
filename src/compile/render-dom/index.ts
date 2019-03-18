@@ -114,7 +114,7 @@ export default function dom(
 			if (component.component_options.accessors) {
 				body.push(deindent`
 					set ${x.export_name}(${x.name}) {
-						this.$set({ ${x.name} });
+						this.$set({ ${x.name === x.export_name ? x.name : `${x.export_name}: ${x.name}`} });
 						@flush();
 					}
 				`);
