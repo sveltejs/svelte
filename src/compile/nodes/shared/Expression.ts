@@ -77,8 +77,7 @@ export default class Expression {
 
 	is_synthetic: boolean;
 	declarations: string[] = [];
-	usesContext = false;
-	usesEvent = false;
+	uses_context = false;
 
 	rendered: string;
 
@@ -93,7 +92,7 @@ export default class Expression {
 		this.node = info;
 		this.template_scope = template_scope;
 		this.owner = owner;
-		this.is_synthetic = owner.isSynthetic;
+		this.is_synthetic = owner.is_synthetic;
 
 		const { dependencies, contextual_dependencies } = this;
 
@@ -137,12 +136,12 @@ export default class Expression {
 							dependencies.add(name);
 						}
 					} else if (template_scope.names.has(name)) {
-						expression.usesContext = true;
+						expression.uses_context = true;
 
 						contextual_dependencies.add(name);
 
 						if (!function_expression) {
-							template_scope.dependenciesForName.get(name).forEach(name => dependencies.add(name));
+							template_scope.dependencies_for_name.get(name).forEach(name => dependencies.add(name));
 						}
 					} else {
 						if (!function_expression) {
@@ -175,7 +174,7 @@ export default class Expression {
 				if (names) {
 					names.forEach(name => {
 						if (template_scope.names.has(name)) {
-							template_scope.dependenciesForName.get(name).forEach(name => {
+							template_scope.dependencies_for_name.get(name).forEach(name => {
 								const variable = component.var_lookup.get(name);
 								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
 							});
@@ -214,7 +213,7 @@ export default class Expression {
 		});
 	}
 
-	getPrecedence() {
+	get_precedence() {
 		return this.node.type in precedence ? precedence[this.node.type](this.node) : 0;
 	}
 
@@ -263,14 +262,14 @@ export default class Expression {
 						if (template_scope.names.has(name)) {
 							contextual_dependencies.add(name);
 
-							template_scope.dependenciesForName.get(name).forEach(dependency => {
+							template_scope.dependencies_for_name.get(name).forEach(dependency => {
 								dependencies.add(dependency);
 							});
 						} else {
 							dependencies.add(name);
 							component.add_reference(name);
 						}
-					} else if (!is_synthetic && isContextual(component, template_scope, name)) {
+					} else if (!is_synthetic && is_contextual(component, template_scope, name)) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
 							? `${name}: ctx.`
 							: 'ctx.');
@@ -347,7 +346,7 @@ export default class Expression {
 						// the return value doesn't matter
 					}
 
-					const name = component.getUniqueName(
+					const name = component.get_unique_name(
 						sanitize(get_function_name(node, owner))
 					);
 
@@ -465,7 +464,7 @@ export default class Expression {
 		});
 
 		if (declarations.length > 0) {
-			block.maintainContext = true;
+			block.maintain_context = true;
 			declarations.forEach(declaration => {
 				block.builders.init.add_block(declaration);
 			});
@@ -487,11 +486,11 @@ function get_function_name(node, parent) {
 	return 'func';
 }
 
-function isContextual(component: Component, scope: TemplateScope, name: string) {
+function is_contextual(component: Component, scope: TemplateScope, name: string) {
 	if (name === '$$props') return true;
 
 	// if it's a name below root scope, it's contextual
-	if (!scope.isTopLevel(name)) return true;
+	if (!scope.is_top_level(name)) return true;
 
 	const variable = component.var_lookup.get(name);
 

@@ -1,6 +1,6 @@
 import Node from './shared/Node';
 import Block from '../render-dom/Block';
-import mapChildren from './shared/mapChildren';
+import map_children from './shared/map_children';
 
 export default class Head extends Node {
 	type: 'Head';
@@ -16,7 +16,7 @@ export default class Head extends Node {
 			});
 		}
 
-		this.children = mapChildren(component, parent, scope, info.children.filter(child => {
+		this.children = map_children(component, parent, scope, info.children.filter(child => {
 			return (child.type !== 'Text' || /\S/.test(child.data));
 		}));
 	}

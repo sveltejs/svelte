@@ -9,20 +9,20 @@ export default class MustacheTagWrapper extends Tag {
 
 	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: Node) {
 		super(renderer, block, parent, node);
-		this.cannotUseInnerHTML();
+		this.cannot_use_innerhtml();
 	}
 
-	render(block: Block, parentNode: string, parentNodes: string) {
-		const { init } = this.renameThisMethod(
+	render(block: Block, parent_node: string, parent_nodes: string) {
+		const { init } = this.rename_this_method(
 			block,
 			value => `@set_data(${this.var}, ${value});`
 		);
 
-		block.addElement(
+		block.add_element(
 			this.var,
 			`@create_text(${init})`,
-			parentNodes && `@claim_text(${parentNodes}, ${init})`,
-			parentNode
+			parent_nodes && `@claim_text(${parent_nodes}, ${init})`,
+			parent_node
 		);
 	}
 }

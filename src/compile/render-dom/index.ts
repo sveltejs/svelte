@@ -21,23 +21,23 @@ export default function dom(
 	const renderer = new Renderer(component, options);
 	const { block } = renderer;
 
-	block.hasOutroMethod = true;
+	block.has_outro_method = true;
 
 	// prevent fragment being created twice (#1063)
 	if (options.customElement) block.builders.create.add_line(`this.c = @noop;`);
 
 	const builder = new CodeBuilder();
 
-	if (component.compileOptions.dev) {
-		builder.add_line(`const ${renderer.fileVar} = ${JSON.stringify(component.file)};`);
+	if (component.compile_options.dev) {
+		builder.add_line(`const ${renderer.file_var} = ${JSON.stringify(component.file)};`);
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
-	const styles = component.stylesheet.hasStyles && stringify(options.dev ?
+	const styles = component.stylesheet.has_styles && stringify(options.dev ?
 		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
 		css.code, { onlyEscapeAtSymbol: true });
 
-	if (styles && component.compileOptions.css !== false && !options.customElement) {
+	if (styles && component.compile_options.css !== false && !options.customElement) {
 		builder.add_block(deindent`
 			function @add_css() {
 				var style = @element("style");
@@ -66,7 +66,7 @@ export default function dom(
 	// explicit opt-in, or something?
 	const should_add_css = (
 		!options.customElement &&
-		component.stylesheet.hasStyles &&
+		component.stylesheet.has_styles &&
 		options.css !== false
 	);
 
@@ -90,7 +90,7 @@ export default function dom(
 
 	const body = [];
 
-	const not_equal = component.componentOptions.immutable ? `@not_equal` : `@safe_not_equal`;
+	const not_equal = component.component_options.immutable ? `@not_equal` : `@safe_not_equal`;
 	let dev_props_check;
 
 	props.forEach(x => {
@@ -102,7 +102,7 @@ export default function dom(
 					return ${x.name};
 				}
 			`);
-		} else if (component.componentOptions.accessors) {
+		} else if (component.component_options.accessors) {
 			body.push(deindent`
 				get ${x.export_name}() {
 					return this.$$.ctx.${x.name};
@@ -111,7 +111,7 @@ export default function dom(
 		}
 
 		if (variable.writable && !renderer.readonly.has(x.export_name)) {
-			if (component.componentOptions.accessors) {
+			if (component.component_options.accessors) {
 				body.push(deindent`
 					set ${x.export_name}(${x.name}) {
 						this.$set({ ${x.name} });
@@ -119,7 +119,7 @@ export default function dom(
 					}
 				`);
 			}
-		} else if (component.compileOptions.dev) {
+		} else if (component.compile_options.dev) {
 			body.push(deindent`
 				set ${x.export_name}(value) {
 					throw new Error("<${component.tag}>: Cannot set read-only property '${x.export_name}'");
@@ -128,7 +128,7 @@ export default function dom(
 		}
 	});
 
-	if (component.compileOptions.dev) {
+	if (component.compile_options.dev) {
 		// TODO check no uunexpected props were passed, as well as
 		// checking that expected ones were passed
 		const expected = props.filter(prop => !prop.initialised);
@@ -258,7 +258,7 @@ export default function dom(
 			const subscribe = component.helper('subscribe');
 
 			let insert = `${subscribe}($$self, ${name}, $${callback})`;
-			if (component.compileOptions.dev) {
+			if (component.compile_options.dev) {
 				const validate_store = component.helper('validate_store');
 				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
 			}
@@ -274,7 +274,7 @@ export default function dom(
 
 	builder.add_block(deindent`
 		function create_fragment(ctx) {
-			${block.getContents()}
+			${block.get_contents()}
 		}
 
 		${component.module_javascript}
@@ -303,7 +303,7 @@ export default function dom(
 		filtered_declarations.push(...arr.map(name => `$$slot_${sanitize(name)}`), '$$scope');
 	}
 
-	if (renderer.bindingGroups.length > 0) {
+	if (renderer.binding_groups.length > 0) {
 		filtered_declarations.push(`$$binding_groups`);
 	}
 
@@ -331,7 +331,7 @@ export default function dom(
 			return !variable || variable.hoistable;
 		})
 		.map(({ name }) => deindent`
-			${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
+			${component.compile_options.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
 			@subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });
 		`);
 
@@ -391,7 +391,7 @@ export default function dom(
 
 				${renderer.slots.size && `let { ${[...renderer.slots].map(name => `$$slot_${sanitize(name)}`).join(', ')}, $$scope } = $$props;`}
 
-				${renderer.bindingGroups.length > 0 && `const $$binding_groups = [${renderer.bindingGroups.map(_ => `[]`).join(', ')}];`}
+				${renderer.binding_groups.length > 0 && `const $$binding_groups = [${renderer.binding_groups.map(_ => `[]`).join(', ')}];`}
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 

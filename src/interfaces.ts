@@ -67,7 +67,7 @@ export interface Visitor {
 
 export interface AppendTarget {
 	slots: Record<string, string>;
-	slotStack: string[]
+	slot_stack: string[]
 }
 
 export interface Var {

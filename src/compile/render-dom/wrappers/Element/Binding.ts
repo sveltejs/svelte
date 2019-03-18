@@ -10,7 +10,7 @@ import EachBlock from '../../../nodes/EachBlock';
 import { Node as INode } from '../../../../interfaces';
 
 // TODO this should live in a specific binding
-const readOnlyMediaAttributes = new Set([
+const read_only_media_attributes = new Set([
 	'duration',
 	'buffered',
 	'seekable',
@@ -29,15 +29,14 @@ export default class BindingWrapper {
 
 	object: string;
 	handler: {
-		usesContext: boolean;
+		uses_context: boolean;
 		mutation: string;
 		contextual_dependencies: Set<string>,
 		snippet?: string
 	};
 	snippet: string;
-	initialUpdate: string;
-	isReadOnly: boolean;
-	needsLock: boolean;
+	is_readonly: boolean;
+	needs_lock: boolean;
 
 	constructor(block: Block, node: Binding, parent: ElementWrapper) {
 		this.node = node;
@@ -45,23 +44,23 @@ export default class BindingWrapper {
 
 		const { dependencies } = this.node.expression;
 
-		block.addDependencies(dependencies);
+		block.add_dependencies(dependencies);
 
 		// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
 		if (parent.node.name === 'select') {
-			parent.selectBindingDependencies = dependencies;
+			parent.select_binding_dependencies = dependencies;
 			dependencies.forEach((prop: string) => {
-				parent.renderer.component.indirectDependencies.set(prop, new Set());
+				parent.renderer.component.indirect_dependencies.set(prop, new Set());
 			});
 		}
 
-		if (node.isContextual) {
+		if (node.is_contextual) {
 			// we need to ensure that the each block creates a context including
 			// the list and the index, if they're not otherwise referenced
 			const { name } = get_object(this.node.expression.node);
-			const eachBlock = this.parent.node.scope.getOwner(name);
+			const each_block = this.parent.node.scope.get_owner(name);
 
-			(eachBlock as EachBlock).has_binding = true;
+			(each_block as EachBlock).has_binding = true;
 		}
 
 		this.object = get_object(this.node.expression.node).name;
@@ -71,28 +70,28 @@ export default class BindingWrapper {
 		const contextless_snippet = this.parent.renderer.component.source.slice(this.node.expression.node.start, this.node.expression.node.end);
 
 		// view to model
-		this.handler = getEventHandler(this, parent.renderer, block, this.object, contextless_snippet);
+		this.handler = get_event_handler(this, parent.renderer, block, this.object, contextless_snippet);
 
 		this.snippet = this.node.expression.render(block);
 
-		const type = parent.node.getStaticAttributeValue('type');
+		const type = parent.node.get_static_attribute_value('type');
 
-		this.isReadOnly = (
+		this.is_readonly = (
 			dimensions.test(this.node.name) ||
-			(parent.node.isMediaNode() && readOnlyMediaAttributes.has(this.node.name)) ||
+			(parent.node.is_media_node() && read_only_media_attributes.has(this.node.name)) ||
 			(parent.node.name === 'input' && type === 'file') // TODO others?
 		);
 
-		this.needsLock = this.node.name === 'currentTime'; // TODO others?
+		this.needs_lock = this.node.name === 'currentTime'; // TODO others?
 	}
 
 	get_dependencies() {
 		const dependencies = new Set(this.node.expression.dependencies);
 
 		this.node.expression.dependencies.forEach((prop: string) => {
-			const indirectDependencies = this.parent.renderer.component.indirectDependencies.get(prop);
-			if (indirectDependencies) {
-				indirectDependencies.forEach(indirectDependency => {
+			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(prop);
+			if (indirect_dependencies) {
+				indirect_dependencies.forEach(indirectDependency => {
 					dependencies.add(indirectDependency);
 				});
 			}
@@ -101,34 +100,34 @@ export default class BindingWrapper {
 		return dependencies;
 	}
 
-	isReadOnlyMediaAttribute() {
-		return readOnlyMediaAttributes.has(this.node.name);
+	is_readonly_media_attribute() {
+		return read_only_media_attributes.has(this.node.name);
 	}
 
 	render(block: Block, lock: string) {
-		if (this.isReadOnly) return;
+		if (this.is_readonly) return;
 
 		const { parent } = this;
 
-		let updateConditions: string[] = this.needsLock ? [`!${lock}`] : [];
+		let update_conditions: string[] = this.needs_lock ? [`!${lock}`] : [];
 
-		const dependencyArray = [...this.node.expression.dependencies]
+		const dependency_array = [...this.node.expression.dependencies]
 
-		if (dependencyArray.length === 1) {
-			updateConditions.push(`changed.${dependencyArray[0]}`)
-		} else if (dependencyArray.length > 1) {
-			updateConditions.push(
-				`(${dependencyArray.map(prop => `changed.${prop}`).join(' || ')})`
+		if (dependency_array.length === 1) {
+			update_conditions.push(`changed.${dependency_array[0]}`)
+		} else if (dependency_array.length > 1) {
+			update_conditions.push(
+				`(${dependency_array.map(prop => `changed.${prop}`).join(' || ')})`
 			)
 		}
 
 		// model to view
-		let updateDom = getDomUpdater(parent, this);
+		let update_dom = get_dom_updater(parent, this);
 
 		// special cases
 		switch (this.node.name) {
 			case 'group':
-				const bindingGroup = getBindingGroup(parent.renderer, this.node.expression.node);
+				const bindingGroup = get_binding_group(parent.renderer, this.node.expression.node);
 
 				block.builders.hydrate.add_line(
 					`ctx.$$binding_groups[${bindingGroup}].push(${parent.var});`
@@ -141,43 +140,43 @@ export default class BindingWrapper {
 
 			case 'currentTime':
 			case 'volume':
-				updateConditions.push(`!isNaN(${this.snippet})`);
+				update_conditions.push(`!isNaN(${this.snippet})`);
 				break;
 
 			case 'paused':
 				// this is necessary to prevent audio restarting by itself
-				const last = block.getUniqueName(`${parent.var}_is_paused`);
-				block.addVariable(last, 'true');
+				const last = block.get_unique_name(`${parent.var}_is_paused`);
+				block.add_variable(last, 'true');
 
-				updateConditions.push(`${last} !== (${last} = ${this.snippet})`);
-				updateDom = `${parent.var}[${last} ? "pause" : "play"]();`;
+				update_conditions.push(`${last} !== (${last} = ${this.snippet})`);
+				update_dom = `${parent.var}[${last} ? "pause" : "play"]();`;
 				break;
 
 			case 'value':
-				if (parent.getStaticAttributeValue('type') === 'file') {
-					updateDom = null;
+				if (parent.get_static_attribute_value('type') === 'file') {
+					update_dom = null;
 				}
 		}
 
-		if (updateDom) {
+		if (update_dom) {
 			block.builders.update.add_line(
-				updateConditions.length ? `if (${updateConditions.join(' && ')}) ${updateDom}` : updateDom
+				update_conditions.length ? `if (${update_conditions.join(' && ')}) ${update_dom}` : update_dom
 			);
 		}
 
 		if (!/(currentTime|paused)/.test(this.node.name)) {
-			block.builders.mount.add_block(updateDom);
+			block.builders.mount.add_block(update_dom);
 		}
 	}
 }
 
-function getDomUpdater(
+function get_dom_updater(
 	element: ElementWrapper,
 	binding: BindingWrapper
 ) {
 	const { node } = element;
 
-	if (binding.isReadOnlyMediaAttribute()) {
+	if (binding.is_readonly_media_attribute()) {
 		return null;
 	}
 
@@ -186,13 +185,13 @@ function getDomUpdater(
 	}
 
 	if (node.name === 'select') {
-		return node.getStaticAttributeValue('multiple') === true ?
+		return node.get_static_attribute_value('multiple') === true ?
 			`@select_options(${element.var}, ${binding.snippet})` :
 			`@select_option(${element.var}, ${binding.snippet})`;
 	}
 
 	if (binding.node.name === 'group') {
-		const type = node.getStaticAttributeValue('type');
+		const type = node.get_static_attribute_value('type');
 
 		const condition = type === 'checkbox'
 			? `~${binding.snippet}.indexOf(${element.var}.__value)`
@@ -204,16 +203,16 @@ function getDomUpdater(
 	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
-function getBindingGroup(renderer: Renderer, value: Node) {
+function get_binding_group(renderer: Renderer, value: Node) {
 	const { parts } = flatten_reference(value); // TODO handle cases involving computed member expressions
 	const keypath = parts.join('.');
 
 	// TODO handle contextual bindings — `keypath` should include unique ID of
 	// each block that provides context
-	let index = renderer.bindingGroups.indexOf(keypath);
+	let index = renderer.binding_groups.indexOf(keypath);
 	if (index === -1) {
-		index = renderer.bindingGroups.length;
-		renderer.bindingGroups.push(keypath);
+		index = renderer.binding_groups.length;
+		renderer.binding_groups.push(keypath);
 	}
 
 	return index;
@@ -225,14 +224,14 @@ function mutate_store(store, value, tail) {
 		: `${store}.set(${value});`;
 }
 
-function getEventHandler(
+function get_event_handler(
 	binding: BindingWrapper,
 	renderer: Renderer,
 	block: Block,
 	name: string,
 	snippet: string
 ) {
-	const value = getValueFromDom(renderer, binding.parent, binding);
+	const value = get_value_from_dom(renderer, binding.parent, binding);
 	const store = binding.object[0] === '$' ? binding.object.slice(1) : null;
 
 	let tail = '';
@@ -241,11 +240,11 @@ function getEventHandler(
 		tail = renderer.component.source.slice(start, end);
 	}
 
-	if (binding.node.isContextual) {
+	if (binding.node.is_contextual) {
 		const { object, property, snippet } = block.bindings.get(name);
 
 		return {
-			usesContext: true,
+			uses_context: true,
 			mutation: store
 				? mutate_store(store, value, tail)
 				: `${snippet}${tail} = ${value};`,
@@ -259,7 +258,7 @@ function getEventHandler(
 
 	if (binding.node.expression.node.type === 'MemberExpression') {
 		return {
-			usesContext: binding.node.expression.usesContext,
+			uses_context: binding.node.expression.uses_context,
 			mutation,
 			contextual_dependencies: binding.node.expression.contextual_dependencies,
 			snippet
@@ -267,13 +266,13 @@ function getEventHandler(
 	}
 
 	return {
-		usesContext: false,
+		uses_context: false,
 		mutation,
 		contextual_dependencies: new Set()
 	};
 }
 
-function getValueFromDom(
+function get_value_from_dom(
 	renderer: Renderer,
 	element: ElementWrapper,
 	binding: BindingWrapper
@@ -287,16 +286,16 @@ function getValueFromDom(
 
 	// <select bind:value='selected>
 	if (node.name === 'select') {
-		return node.getStaticAttributeValue('multiple') === true ?
+		return node.get_static_attribute_value('multiple') === true ?
 			`@select_multiple_value(this)` :
 			`@select_value(this)`;
 	}
 
-	const type = node.getStaticAttributeValue('type');
+	const type = node.get_static_attribute_value('type');
 
 	// <input type='checkbox' bind:group='foo'>
 	if (name === 'group') {
-		const bindingGroup = getBindingGroup(renderer, binding.node.expression.node);
+		const bindingGroup = get_binding_group(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
 			return `@get_binding_group_value($$binding_groups[${bindingGroup}])`;
 		}

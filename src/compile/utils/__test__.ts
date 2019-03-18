@@ -102,7 +102,7 @@ describe('CodeBuilder', () => {
 		builder.add_line('// line 1');
 		builder.add_line('// line 2');
 		builder.add_block(deindent`
-			if ( foo ) {
+			if (foo) {
 				bar();
 			}
 		`);
@@ -115,7 +115,7 @@ describe('CodeBuilder', () => {
 			// line 1
 			// line 2
 
-			if ( foo ) {
+			if (foo) {
 				bar();
 			}
 
@@ -139,7 +139,7 @@ describe('CodeBuilder', () => {
 		builder.add_line('// line 1');
 		builder.add_line('// line 2');
 		builder.add_block(deindent`
-			if ( foo ) {
+			if (foo) {
 				${child}
 			}
 		`);
@@ -152,7 +152,7 @@ describe('CodeBuilder', () => {
 			// line 1
 			// line 2
 
-			if ( foo ) {
+			if (foo) {
 				var obj = {
 					answer: 42
 				};

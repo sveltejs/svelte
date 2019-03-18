@@ -5,7 +5,7 @@ export default function get_slot_data(attributes, is_ssr: boolean) {
 	return attributes
 		.filter(attribute => attribute.name !== 'name')
 		.map(attribute => {
-			const value = attribute.isTrue
+			const value = attribute.is_true
 				? 'true'
 				: attribute.chunks.length === 0
 					? '""'

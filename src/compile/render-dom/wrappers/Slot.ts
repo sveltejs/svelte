@@ -22,36 +22,36 @@ export default class SlotWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: Slot,
-		stripWhitespace: boolean,
-		nextSibling: Wrapper
+		strip_whitespace: boolean,
+		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
-		this.cannotUseInnerHTML();
+		this.cannot_use_innerhtml();
 
 		this.fragment = new FragmentWrapper(
 			renderer,
 			block,
 			node.children,
 			parent,
-			stripWhitespace,
-			nextSibling
+			strip_whitespace,
+			next_sibling
 		);
 
 		this.node.attributes.forEach(attribute => {
 			add_to_set(this.dependencies, attribute.dependencies);
 		});
 
-		block.addDependencies(this.dependencies);
+		block.add_dependencies(this.dependencies);
 	}
 
 	render(
 		block: Block,
-		parentNode: string,
-		parentNodes: string
+		parent_node: string,
+		parent_nodes: string
 	) {
 		const { renderer } = this;
 
-		const slot_name = this.node.getStaticAttributeValue('name') || 'default';
+		const slot_name = this.node.get_static_attribute_value('name') || 'default';
 		renderer.slots.add(slot_name);
 
 		let get_slot_changes;
@@ -60,8 +60,8 @@ export default class SlotWrapper extends Wrapper {
 		const attributes = this.node.attributes.filter(attribute => attribute.name !== 'name');
 
 		if (attributes.length > 0) {
-			get_slot_changes = renderer.component.getUniqueName(`get_${slot_name}_slot_changes`);
-			get_slot_context = renderer.component.getUniqueName(`get_${slot_name}_slot_context`);
+			get_slot_changes = renderer.component.get_unique_name(`get_${slot_name}_slot_changes`);
+			get_slot_context = renderer.component.get_unique_name(`get_${slot_name}_slot_context`);
 
 			const context_props = get_slot_data(attributes, false);
 			const changes_props = [];
@@ -91,8 +91,8 @@ export default class SlotWrapper extends Wrapper {
 			get_slot_context = 'null';
 		}
 
-		const slot = block.getUniqueName(`${sanitize(slot_name)}_slot`);
-		const slot_definition = block.getUniqueName(`${sanitize(slot_name)}_slot`);
+		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
+		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot`);
 
 		block.builders.init.add_block(deindent`
 			const ${slot_definition} = ctx.$$slot_${sanitize(slot_name)};
@@ -109,8 +109,8 @@ export default class SlotWrapper extends Wrapper {
 
 		const listeners = block.event_listeners;
 		block.event_listeners = [];
-		this.fragment.render(block, parentNode, parentNodes);
-		block.renderListeners(`_${slot}`);
+		this.fragment.render(block, parent_node, parent_nodes);
+		block.render_listeners(`_${slot}`);
 		block.event_listeners = listeners;
 
 		block.builders.create.pop_condition();
@@ -124,16 +124,16 @@ export default class SlotWrapper extends Wrapper {
 		);
 
 		block.builders.claim.add_line(
-			`if (${slot}) ${slot}.l(${parentNodes});`
+			`if (${slot}) ${slot}.l(${parent_nodes});`
 		);
 
-		const mountLeadin = block.builders.mount.toString() !== mountBefore
+		const mount_leadin = block.builders.mount.toString() !== mountBefore
 			? `else`
 			: `if (${slot})`;
 
 		block.builders.mount.add_block(deindent`
-			${mountLeadin} {
-				${slot}.m(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+			${mount_leadin} {
+				${slot}.m(${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
 			}
 		`);
 

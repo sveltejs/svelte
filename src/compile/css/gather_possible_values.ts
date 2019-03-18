@@ -2,14 +2,14 @@ import { Node } from '../interfaces';
 
 export const UNKNOWN = {};
 
-export function gatherPossibleValues(node: Node, set: Set<string|{}>) {
+export function gather_possible_values(node: Node, set: Set<string|{}>) {
 	if (node.type === 'Literal') {
 		set.add(node.value);
 	}
 
 	else if (node.type === 'ConditionalExpression') {
-		gatherPossibleValues(node.consequent, set);
-		gatherPossibleValues(node.alternate, set);
+		gather_possible_values(node.consequent, set);
+		gather_possible_values(node.alternate, set);
 	}
 
 	else {

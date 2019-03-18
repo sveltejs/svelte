@@ -7,16 +7,16 @@ import { get_slot_scope } from './shared/get_slot_scope';
 
 type AppendTarget = any; // TODO
 
-function stringifyAttribute(chunk: Node) {
+function stringify_attribute(chunk: Node) {
 	if (chunk.type === 'Text') {
 		return escape_template(escape(chunk.data));
 	}
 
-	return '${@escape( ' + snip(chunk) + ')}';
+	return '${@escape(' + snip(chunk) + ')}';
 }
 
-function getAttributeValue(attribute) {
-	if (attribute.isTrue) return `true`;
+function get_attribute_value(attribute) {
+	if (attribute.is_true) return `true`;
 	if (attribute.chunks.length === 0) return `''`;
 
 	if (attribute.chunks.length === 1) {
@@ -28,7 +28,7 @@ function getAttributeValue(attribute) {
 		return snip(chunk);
 	}
 
-	return '`' + attribute.chunks.map(stringifyAttribute).join('') + '`';
+	return '`' + attribute.chunks.map(stringify_attribute).join('') + '`';
 }
 
 export default function(node, renderer: Renderer, options) {
@@ -45,18 +45,18 @@ export default function(node, renderer: Renderer, options) {
 		binding_fns.push(`${binding.name}: $$value => { ${snippet} = $$value; $$settled = false }`);
 	});
 
-	const usesSpread = node.attributes.find(attr => attr.isSpread);
+	const uses_spread = node.attributes.find(attr => attr.is_spread);
 
 	let props;
 
-	if (usesSpread) {
+	if (uses_spread) {
 		props = `Object.assign(${
 			node.attributes
 				.map(attribute => {
-					if (attribute.isSpread) {
+					if (attribute.is_spread) {
 						return snip(attribute.expression);
 					} else {
-						return `{ ${attribute.name}: ${getAttributeValue(attribute)} }`;
+						return `{ ${attribute.name}: ${get_attribute_value(attribute)} }`;
 					}
 				})
 				.concat(binding_props.map(p => `{ ${p} }`))
@@ -65,7 +65,7 @@ export default function(node, renderer: Renderer, options) {
 	} else {
 		props = stringify_props(
 			node.attributes
-				.map(attribute => `${attribute.name}: ${getAttributeValue(attribute)}`)
+				.map(attribute => `${attribute.name}: ${get_attribute_value(attribute)}`)
 				.concat(binding_props)
 		);
 	}
@@ -85,7 +85,7 @@ export default function(node, renderer: Renderer, options) {
 	if (node.children.length) {
 		const target: AppendTarget = {
 			slots: { default: '' },
-			slotStack: ['default']
+			slot_stack: ['default']
 		};
 
 		renderer.targets.push(target);

@@ -1,14 +1,14 @@
 import Node from './shared/Node';
-import mapChildren from './shared/mapChildren';
+import map_children from './shared/map_children';
 
 export default class Title extends Node {
 	type: 'Title';
 	children: any[]; // TODO
-	shouldCache: boolean;
+	should_cache: boolean;
 
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-		this.children = mapChildren(component, parent, scope, info.children);
+		this.children = map_children(component, parent, scope, info.children);
 
 		if (info.attributes.length > 0) {
 			component.error(info.attributes[0], {
@@ -26,7 +26,7 @@ export default class Title extends Node {
 			}
 		});
 
-		this.shouldCache = info.children.length === 1
+		this.should_cache = info.children.length === 1
 			? (
 				info.children[0].type !== 'Identifier' ||
 				scope.names.has(info.children[0].name)

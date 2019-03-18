@@ -13,19 +13,19 @@ export default class TitleWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: Title,
-		stripWhitespace: boolean,
-		nextSibling: Wrapper
+		strip_whitespace: boolean,
+		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, parentNode: string, parentNodes: string) {
-		const isDynamic = !!this.node.children.find(node => node.type !== 'Text');
+	render(block: Block, parent_node: string, parent_nodes: string) {
+		const is_dynamic = !!this.node.children.find(node => node.type !== 'Text');
 
-		if (isDynamic) {
+		if (is_dynamic) {
 			let value;
 
-			const allDependencies = new Set();
+			const all_dependencies = new Set();
 
 			// TODO some of this code is repeated in Tag.ts — would be good to
 			// DRY it out if that's possible without introducing crazy indirection
@@ -33,7 +33,7 @@ export default class TitleWrapper extends Wrapper {
 				// single {tag} — may be a non-string
 				const { expression } = this.node.children[0];
 				value = expression.render(block);
-				add_to_set(allDependencies, expression.dependencies);
+				add_to_set(all_dependencies, expression.dependencies);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				value =
@@ -46,41 +46,41 @@ export default class TitleWrapper extends Wrapper {
 								const snippet = chunk.expression.render(block);
 
 								chunk.expression.dependencies.forEach(d => {
-									allDependencies.add(d);
+									all_dependencies.add(d);
 								});
 
-								return chunk.expression.getPrecedence() <= 13 ? `(${snippet})` : snippet;
+								return chunk.expression.get_precedence() <= 13 ? `(${snippet})` : snippet;
 							}
 						})
 						.join(' + ');
 			}
 
-			const last = this.node.shouldCache && block.getUniqueName(
+			const last = this.node.should_cache && block.get_unique_name(
 				`title_value`
 			);
 
-			if (this.node.shouldCache) block.addVariable(last);
+			if (this.node.should_cache) block.add_variable(last);
 
 			let updater;
-			const init = this.node.shouldCache ? `${last} = ${value}` : value;
+			const init = this.node.should_cache ? `${last} = ${value}` : value;
 
 			block.builders.init.add_line(
 				`document.title = ${init};`
 			);
-			updater = `document.title = ${this.node.shouldCache ? last : value};`;
+			updater = `document.title = ${this.node.should_cache ? last : value};`;
 
-			if (allDependencies.size) {
-				const dependencies = Array.from(allDependencies);
-				const changedCheck = (
-					( block.hasOutros ? `!#current || ` : '' ) +
+			if (all_dependencies.size) {
+				const dependencies = Array.from(all_dependencies);
+				const changed_check = (
+					(block.has_outros ? `!#current || ` : '') +
 					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 				);
 
-				const updateCachedValue = `${last} !== (${last} = ${value})`;
+				const update_cached_value = `${last} !== (${last} = ${value})`;
 
-				const condition = this.node.shouldCache ?
-					( dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue ) :
-					changedCheck;
+				const condition = this.node.should_cache ?
+					(dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value) :
+					changed_check;
 
 				block.builders.update.add_conditional(
 					condition,

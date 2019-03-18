@@ -19,13 +19,6 @@ export default class Slot extends Element {
 				});
 			}
 
-			// if (attr.name !== 'name') {
-			// 	component.error(attr, {
-			// 		code: `invalid-slot-attribute`,
-			// 		message: `"name" is the only attribute permitted on <slot> elements`
-			// 	});
-			// }
-
 			if (attr.name === 'name') {
 				if (attr.value.length !== 1 || attr.value[0].type !== 'Text') {
 					component.error(attr, {
@@ -61,14 +54,14 @@ export default class Slot extends Element {
 		// }
 	}
 
-	getStaticAttributeValue(name: string) {
+	get_static_attribute_value(name: string) {
 		const attribute = this.attributes.find(
 			attr => attr.name.toLowerCase() === name
 		);
 
 		if (!attribute) return null;
 
-		if (attribute.isTrue) return true;
+		if (attribute.is_true) return true;
 		if (attribute.chunks.length === 0) return '';
 
 		if (attribute.chunks.length === 1 && attribute.chunks[0].type === 'Text') {

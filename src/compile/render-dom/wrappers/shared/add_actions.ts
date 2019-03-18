@@ -2,7 +2,7 @@ import Block from '../../Block';
 import Action from '../../../nodes/Action';
 import Component from '../../../Component';
 
-export default function addActions(
+export default function add_actions(
 	component: Component,
 	block: Block,
 	target: string,
@@ -17,11 +17,11 @@ export default function addActions(
 			dependencies = expression.dynamic_dependencies();
 		}
 
-		const name = block.getUniqueName(
+		const name = block.get_unique_name(
 			`${action.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
 		);
 
-		block.addVariable(name);
+		block.add_variable(name);
 
 		const fn = component.qualify(action.name);
 

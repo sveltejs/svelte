@@ -7,7 +7,7 @@ import TemplateScope from './shared/TemplateScope';
 export default class Binding extends Node {
 	name: string;
 	expression: Expression;
-	isContextual: boolean;
+	is_contextual: boolean;
 	obj: string;
 	prop: string;
 
@@ -28,11 +28,11 @@ export default class Binding extends Node {
 		let prop;
 
 		const { name } = get_object(this.expression.node);
-		this.isContextual = scope.names.has(name);
+		this.is_contextual = scope.names.has(name);
 
 		// make sure we track this as a mutable ref
-		if (this.isContextual) {
-			scope.dependenciesForName.get(name).forEach(name => {
+		if (this.is_contextual) {
+			scope.dependencies_for_name.get(name).forEach(name => {
 				const variable = component.var_lookup.get(name);
 				variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
 			});

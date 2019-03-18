@@ -6,7 +6,7 @@ import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Action from './Action';
 
-const validBindings = [
+const valid_bindings = [
 	'innerWidth',
 	'innerHeight',
 	'outerWidth',
@@ -41,11 +41,11 @@ export default class Window extends Node {
 					});
 				}
 
-				if (!~validBindings.indexOf(node.name)) {
+				if (!~valid_bindings.indexOf(node.name)) {
 					const match = (
 						node.name === 'width' ? 'innerWidth' :
 						node.name === 'height' ? 'innerHeight' :
-						fuzzymatch(node.name, validBindings)
+						fuzzymatch(node.name, valid_bindings)
 					);
 
 					const message = `'${node.name}' is not a valid binding on <svelte:window>`;
@@ -58,7 +58,7 @@ export default class Window extends Node {
 					} else {
 						component.error(node, {
 							code: `invalid-binding`,
-							message: `${message} — valid bindings are ${list(validBindings)}`
+							message: `${message} — valid bindings are ${list(valid_bindings)}`
 						});
 					}
 				}

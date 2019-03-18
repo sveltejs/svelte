@@ -15,7 +15,7 @@ export default class ReplProxy {
 	}
 
 	iframeCommand(command, args) {
-		return new Promise( (resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			this.cmdId += 1;
 			this.pendingCmds.set(this.cmdId, { resolve, reject });
 
@@ -23,7 +23,7 @@ export default class ReplProxy {
 				action: command,
 				cmdId: this.cmdId,
 				args
-			}, '*')
+			}, '*');
 		});
 	}
 
