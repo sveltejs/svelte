@@ -1,4 +1,4 @@
-import deindent from '../../utils/deindent';
+import deindent from '../utils/deindent';
 import Component from '../Component';
 import { CompileOptions } from '../../interfaces';
 import { stringify } from '../../utils/stringify';

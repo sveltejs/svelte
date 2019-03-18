@@ -1,6 +1,6 @@
-import deindent from '../../utils/deindent';
+import deindent from '../utils/deindent';
 import { stringify, escape } from '../../utils/stringify';
-import CodeBuilder from '../../utils/CodeBuilder';
+import CodeBuilder from '../utils/CodeBuilder';
 import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
@@ -24,12 +24,12 @@ export default function dom(
 	block.hasOutroMethod = true;
 
 	// prevent fragment being created twice (#1063)
-	if (options.customElement) block.builders.create.addLine(`this.c = @noop;`);
+	if (options.customElement) block.builders.create.add_line(`this.c = @noop;`);
 
 	const builder = new CodeBuilder();
 
 	if (component.compileOptions.dev) {
-		builder.addLine(`const ${renderer.fileVar} = ${JSON.stringify(component.file)};`);
+		builder.add_line(`const ${renderer.fileVar} = ${JSON.stringify(component.file)};`);
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
@@ -38,7 +38,7 @@ export default function dom(
 		css.code, { onlyEscapeAtSymbol: true });
 
 	if (styles && component.compileOptions.css !== false && !options.customElement) {
-		builder.addBlock(deindent`
+		builder.add_block(deindent`
 			function @add_css() {
 				var style = @createElement("style");
 				style.id = '${component.stylesheet.id}-style';
@@ -53,11 +53,11 @@ export default function dom(
 	const blocks = renderer.blocks.slice().reverse();
 
 	blocks.forEach(block => {
-		builder.addBlock(block.toString());
+		builder.add_block(block.toString());
 	});
 
 	if (options.dev && !options.hydratable) {
-		block.builders.claim.addLine(
+		block.builders.claim.add_line(
 			'throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
 		);
 	}
@@ -272,7 +272,7 @@ export default function dom(
 		args.push('$$props', '$$invalidate');
 	}
 
-	builder.addBlock(deindent`
+	builder.add_block(deindent`
 		function create_fragment(ctx) {
 			${block.getContents()}
 		}
@@ -379,7 +379,7 @@ export default function dom(
 			return $name;
 		});
 
-		builder.addBlock(deindent`
+		builder.add_block(deindent`
 			function ${definition}(${args.join(', ')}) {
 				${reactive_store_declarations.length > 0 && `let ${reactive_store_declarations.join(', ')};`}
 
@@ -412,7 +412,7 @@ export default function dom(
 	const prop_names = `[${props.map(v => JSON.stringify(v.export_name)).join(', ')}]`;
 
 	if (options.customElement) {
-		builder.addBlock(deindent`
+		builder.add_block(deindent`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
@@ -448,7 +448,7 @@ export default function dom(
 	} else {
 		const superclass = options.dev ? 'SvelteComponentDev' : 'SvelteComponent';
 
-		builder.addBlock(deindent`
+		builder.add_block(deindent`
 			class ${name} extends @${superclass} {
 				constructor(options) {
 					super(${options.dev && `options`});

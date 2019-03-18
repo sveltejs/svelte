@@ -1,6 +1,6 @@
 import Block from '../Block';
 import Wrapper from './shared/Wrapper';
-import deindent from '../../../utils/deindent';
+import deindent from '../../utils/deindent';
 import Body from '../../nodes/Body';
 
 export default class BodyWrapper extends Wrapper {
@@ -10,11 +10,11 @@ export default class BodyWrapper extends Wrapper {
 		this.node.handlers.forEach(handler => {
 			const snippet = handler.render(block);
 
-			block.builders.init.addBlock(deindent`
+			block.builders.init.add_block(deindent`
 				document.body.addEventListener("${handler.name}", ${snippet});
 			`);
 
-			block.builders.destroy.addBlock(deindent`
+			block.builders.destroy.add_block(deindent`
 				document.body.removeEventListener("${handler.name}", ${snippet});
 			`);
 		});

@@ -5,7 +5,7 @@ import flattenReference from '../../../utils/flattenReference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
 import globalWhitelist from '../../../utils/globalWhitelist';
-import deindent from '../../../utils/deindent';
+import deindent from '../../utils/deindent';
 import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
 import sanitize from '../../../utils/sanitize';
 import TemplateScope from './TemplateScope';
@@ -467,7 +467,7 @@ export default class Expression {
 		if (declarations.length > 0) {
 			block.maintainContext = true;
 			declarations.forEach(declaration => {
-				block.builders.init.addBlock(declaration);
+				block.builders.init.add_block(declaration);
 			});
 		}
 

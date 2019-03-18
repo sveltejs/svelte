@@ -3,7 +3,7 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import AwaitBlock from '../../nodes/AwaitBlock';
 import createDebuggingComment from '../../../utils/createDebuggingComment';
-import deindent from '../../../utils/deindent';
+import deindent from '../../utils/deindent';
 import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
 import ThenBlock from '../../nodes/ThenBlock';
@@ -145,22 +145,22 @@ export default class AwaitBlockWrapper extends Wrapper {
 			this.pending.block.hasOutroMethod && `blocks: Array(3)`
 		].filter(Boolean);
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			let ${info} = {
 				${infoProps.join(',\n')}
 			};
 		`);
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			@handlePromise(${promise} = ${snippet}, ${info});
 		`);
 
-		block.builders.create.addBlock(deindent`
+		block.builders.create.add_block(deindent`
 			${info}.block.c();
 		`);
 
 		if (parentNodes && this.renderer.options.hydratable) {
-			block.builders.claim.addBlock(deindent`
+			block.builders.claim.add_block(deindent`
 				${info}.block.l(${parentNodes});
 			`);
 		}
@@ -170,14 +170,14 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		const hasTransitions = this.pending.block.hasIntroMethod || this.pending.block.hasOutroMethod;
 
-		block.builders.mount.addBlock(deindent`
+		block.builders.mount.add_block(deindent`
 			${info}.block.m(${initialMountNode}, ${info}.anchor = ${anchorNode});
 			${info}.mount = () => ${updateMountNode};
 			${info}.anchor = ${anchor};
 		`);
 
 		if (hasTransitions) {
-			block.builders.intro.addLine(`${info}.block.i();`);
+			block.builders.intro.add_line(`${info}.block.i();`);
 		}
 
 		const conditions = [];
@@ -194,12 +194,12 @@ export default class AwaitBlockWrapper extends Wrapper {
 			`@handlePromise(${promise}, ${info})`
 		);
 
-		block.builders.update.addLine(
+		block.builders.update.add_line(
 			`${info}.ctx = ctx;`
 		);
 
 		if (this.pending.block.hasUpdateMethod) {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				if (${conditions.join(' && ')}) {
 					// nothing
 				} else {
@@ -207,13 +207,13 @@ export default class AwaitBlockWrapper extends Wrapper {
 				}
 			`);
 		} else {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				${conditions.join(' && ')}
 			`);
 		}
 
 		if (this.pending.block.hasOutroMethod) {
-			block.builders.outro.addBlock(deindent`
+			block.builders.outro.add_block(deindent`
 				for (let #i = 0; #i < 3; #i += 1) {
 					const block = ${info}.blocks[#i];
 					if (block) block.o();
@@ -221,7 +221,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			`);
 		}
 
-		block.builders.destroy.addBlock(deindent`
+		block.builders.destroy.add_block(deindent`
 			${info}.block.d(${parentNode ? '' : 'detach'});
 			${info} = null;
 		`);

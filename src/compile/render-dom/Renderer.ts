@@ -2,7 +2,7 @@ import Block from './Block';
 import { CompileOptions } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
-import CodeBuilder from '../../utils/CodeBuilder';
+import CodeBuilder from '../utils/CodeBuilder';
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?

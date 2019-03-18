@@ -124,11 +124,11 @@ export default class BindingWrapper {
 			case 'group':
 				const bindingGroup = getBindingGroup(parent.renderer, this.node.expression.node);
 
-				block.builders.hydrate.addLine(
+				block.builders.hydrate.add_line(
 					`ctx.$$binding_groups[${bindingGroup}].push(${parent.var});`
 				);
 
-				block.builders.destroy.addLine(
+				block.builders.destroy.add_line(
 					`ctx.$$binding_groups[${bindingGroup}].splice(ctx.$$binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
 				);
 				break;
@@ -154,13 +154,13 @@ export default class BindingWrapper {
 		}
 
 		if (updateDom) {
-			block.builders.update.addLine(
+			block.builders.update.add_line(
 				updateConditions.length ? `if (${updateConditions.join(' && ')}) ${updateDom}` : updateDom
 			);
 		}
 
 		if (!/(currentTime|paused)/.test(this.node.name)) {
-			block.builders.mount.addBlock(updateDom);
+			block.builders.mount.add_block(updateDom);
 		}
 	}
 }

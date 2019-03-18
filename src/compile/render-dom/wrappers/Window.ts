@@ -2,7 +2,7 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Node from '../../nodes/shared/Node';
 import Wrapper from './shared/Wrapper';
-import deindent from '../../../utils/deindent';
+import deindent from '../../utils/deindent';
 import addEventHandlers from './shared/addEventHandlers';
 import Window from '../../nodes/Window';
 import addActions from './shared/addActions';
@@ -90,7 +90,7 @@ export default class WindowWrapper extends Wrapper {
  				const x = bindings.scrollX && `this._state.${bindings.scrollX}`;
 				const y = bindings.scrollY && `this._state.${bindings.scrollY}`;
 
-				renderer.metaBindings.addBlock(deindent`
+				renderer.metaBindings.add_block(deindent`
 					if (${condition}) {
 						window.scrollTo(${x || 'window.pageXOffset'}, ${y || 'window.pageYOffset'});
 					}
@@ -108,7 +108,7 @@ export default class WindowWrapper extends Wrapper {
 				`);
 			} else {
 				props.forEach(prop => {
-					renderer.metaBindings.addLine(
+					renderer.metaBindings.add_line(
 						`this._state.${prop.name} = window.${prop.value};`
 					);
 				});
@@ -130,7 +130,7 @@ export default class WindowWrapper extends Wrapper {
 				}
 			`);
 
-			block.builders.init.addBlock(deindent`
+			block.builders.init.add_block(deindent`
 				@add_render_callback(ctx.${handler_name});
 			`);
 
@@ -139,7 +139,7 @@ export default class WindowWrapper extends Wrapper {
 
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				if (${
 					[bindings.scrollX, bindings.scrollY].filter(Boolean).map(
 						b => `changed.${b}`
@@ -160,7 +160,7 @@ export default class WindowWrapper extends Wrapper {
 		// another special case. (I'm starting to think these are all special cases.)
 		if (bindings.online) {
 			const handler_name = block.getUniqueName(`onlinestatuschanged`);
-			block.builders.init.addBlock(deindent`
+			block.builders.init.add_block(deindent`
 				function ${handler_name}(event) {
 					${component.compileOptions.dev && `component._updatingReadonlyProperty = true;`}
 					#component.set({ ${bindings.online}: navigator.onLine });
@@ -171,11 +171,11 @@ export default class WindowWrapper extends Wrapper {
 			`);
 
 			// add initial value
-			renderer.metaBindings.addLine(
+			renderer.metaBindings.add_line(
 				`this._state.${bindings.online} = navigator.onLine;`
 			);
 
-			block.builders.destroy.addBlock(deindent`
+			block.builders.destroy.add_block(deindent`
 				window.removeEventListener("online", ${handler_name});
 				window.removeEventListener("offline", ${handler_name});
 			`);

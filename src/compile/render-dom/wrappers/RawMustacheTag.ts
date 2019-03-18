@@ -3,7 +3,7 @@ import Block from '../Block';
 import Node from '../../nodes/shared/Node';
 import Tag from './shared/Tag';
 import Wrapper from './shared/wrapper';
-import deindent from '../../../utils/deindent';
+import deindent from '../../utils/deindent';
 
 export default class RawMustacheTagWrapper extends Tag {
 	var = 'raw';
@@ -87,10 +87,10 @@ export default class RawMustacheTagWrapper extends Tag {
 			addAnchorAfter();
 		}
 
-		block.builders.mount.addLine(insert(init));
+		block.builders.mount.add_line(insert(init));
 
 		if (!parentNode) {
-			block.builders.destroy.addConditional('detach', needsAnchorBefore
+			block.builders.destroy.add_conditional('detach', needsAnchorBefore
 				? `${detach}\n@detachNode(${anchorBefore});`
 				: detach);
 		}

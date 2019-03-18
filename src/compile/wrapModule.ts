@@ -1,4 +1,4 @@
-import deindent from '../utils/deindent';
+import deindent from './utils/deindent';
 import list from '../utils/list';
 import { CompileOptions, ModuleFormat, Node } from '../interfaces';
 

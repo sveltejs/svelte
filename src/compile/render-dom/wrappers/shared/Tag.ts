@@ -38,7 +38,7 @@ export default class Tag extends Wrapper {
 				? `(${changedCheck}) && ${updateCachedValue}`
 				: changedCheck;
 
-			block.builders.update.addConditional(
+			block.builders.update.add_conditional(
 				condition,
 				update(content)
 			);

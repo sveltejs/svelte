@@ -49,7 +49,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 					);
 
-					block.builders.update.addConditional(
+					block.builders.update.add_conditional(
 						condition,
 						`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
 					);
@@ -58,7 +58,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 				value = stringify(prop.value[0].data);
 			}
 
-			block.builders.hydrate.addLine(
+			block.builders.hydrate.add_line(
 				`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
 			);
 		});

@@ -25,7 +25,7 @@ export default function addActions(
 
 		const fn = component.qualify(action.name);
 
-		block.builders.mount.addLine(
+		block.builders.mount.add_line(
 			`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
 		);
 
@@ -34,13 +34,13 @@ export default function addActions(
 			const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
 			conditional += dependencies.length > 1 ? `(${deps})` : deps;
 
-			block.builders.update.addConditional(
+			block.builders.update.add_conditional(
 				conditional,
 				`${name}.update.call(null, ${snippet});`
 			);
 		}
 
-		block.builders.destroy.addLine(
+		block.builders.destroy.add_line(
 			`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy();`
 		);
 	});

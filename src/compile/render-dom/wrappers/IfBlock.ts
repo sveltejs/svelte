@@ -6,7 +6,7 @@ import IfBlock from '../../nodes/IfBlock';
 import createDebuggingComment from '../../../utils/createDebuggingComment';
 import ElseBlock from '../../nodes/ElseBlock';
 import FragmentWrapper from './Fragment';
-import deindent from '../../../utils/deindent';
+import deindent from '../../utils/deindent';
 
 function isElseIf(node: ElseBlock) {
 	return (
@@ -160,7 +160,7 @@ export default class IfBlockWrapper extends Wrapper {
 			if (hasOutros) {
 				this.renderCompoundWithOutros(block, parentNode, parentNodes, dynamic, vars);
 
-				block.builders.outro.addLine(`if (${name}) ${name}.o();`);
+				block.builders.outro.add_line(`if (${name}) ${name}.o();`);
 			} else {
 				this.renderCompound(block, parentNode, parentNodes, dynamic, vars);
 			}
@@ -168,20 +168,20 @@ export default class IfBlockWrapper extends Wrapper {
 			this.renderSimple(block, parentNode, parentNodes, dynamic, vars);
 
 			if (hasOutros) {
-				block.builders.outro.addLine(`if (${name}) ${name}.o();`);
+				block.builders.outro.add_line(`if (${name}) ${name}.o();`);
 			}
 		}
 
-		block.builders.create.addLine(`${if_name}${name}.c();`);
+		block.builders.create.add_line(`${if_name}${name}.c();`);
 
 		if (parentNodes && this.renderer.options.hydratable) {
-			block.builders.claim.addLine(
+			block.builders.claim.add_line(
 				`${if_name}${name}.l(${parentNodes});`
 			);
 		}
 
 		if (hasIntros || hasOutros) {
-			block.builders.intro.addLine(`if (${name}) ${name}.i();`);
+			block.builders.intro.add_line(`if (${name}) ${name}.i();`);
 		}
 
 		if (needsAnchor) {
@@ -209,7 +209,7 @@ export default class IfBlockWrapper extends Wrapper {
 		const current_block_type = block.getUniqueName(`current_block_type`);
 		const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			function ${select_block_type}(ctx) {
 				${this.branches
 					.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block.name};`)
@@ -217,14 +217,14 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			var ${current_block_type} = ${select_block_type}(ctx);
 			var ${name} = ${current_block_type_and}${current_block_type}(ctx);
 		`);
 
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
-		block.builders.mount.addLine(
+		block.builders.mount.add_line(
 			`${if_name}${name}.m(${initialMountNode}, ${anchorNode});`
 		);
 
@@ -241,7 +241,7 @@ export default class IfBlockWrapper extends Wrapper {
 		`;
 
 		if (dynamic) {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				if (${current_block_type} === (${current_block_type} = ${select_block_type}(ctx)) && ${name}) {
 					${name}.p(changed, ctx);
 				} else {
@@ -249,14 +249,14 @@ export default class IfBlockWrapper extends Wrapper {
 				}
 			`);
 		} else {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				if (${current_block_type} !== (${current_block_type} = ${select_block_type}(ctx))) {
 					${changeBlock}
 				}
 			`);
 		}
 
-		block.builders.destroy.addLine(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
+		block.builders.destroy.add_line(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
 	}
 
 	// if any of the siblings have outros, we need to keep references to the blocks
@@ -281,7 +281,7 @@ export default class IfBlockWrapper extends Wrapper {
 		block.addVariable(current_block_type_index);
 		block.addVariable(name);
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			var ${if_block_creators} = [
 				${this.branches.map(branch => branch.block.name).join(',\n')}
 			];
@@ -297,12 +297,12 @@ export default class IfBlockWrapper extends Wrapper {
 		`);
 
 		if (hasElse) {
-			block.builders.init.addBlock(deindent`
+			block.builders.init.add_block(deindent`
 				${current_block_type_index} = ${select_block_type}(ctx);
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 			`);
 		} else {
-			block.builders.init.addBlock(deindent`
+			block.builders.init.add_block(deindent`
 				if (~(${current_block_type_index} = ${select_block_type}(ctx))) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 				}
@@ -312,7 +312,7 @@ export default class IfBlockWrapper extends Wrapper {
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
-		block.builders.mount.addLine(
+		block.builders.mount.add_line(
 			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].m(${initialMountNode}, ${anchorNode});`
 		);
 
@@ -357,7 +357,7 @@ export default class IfBlockWrapper extends Wrapper {
 			`;
 
 		if (dynamic) {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				var ${previous_block_index} = ${current_block_type_index};
 				${current_block_type_index} = ${select_block_type}(ctx);
 				if (${current_block_type_index} === ${previous_block_index}) {
@@ -367,7 +367,7 @@ export default class IfBlockWrapper extends Wrapper {
 				}
 			`);
 		} else {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				var ${previous_block_index} = ${current_block_type_index};
 				${current_block_type_index} = ${select_block_type}(ctx);
 				if (${current_block_type_index} !== ${previous_block_index}) {
@@ -376,7 +376,7 @@ export default class IfBlockWrapper extends Wrapper {
 			`);
 		}
 
-		block.builders.destroy.addLine(deindent`
+		block.builders.destroy.add_line(deindent`
 			${if_current_block_type_index}${if_blocks}[${current_block_type_index}].d(${parentNode ? '' : 'detach'});
 		`);
 	}
@@ -390,14 +390,14 @@ export default class IfBlockWrapper extends Wrapper {
 	) {
 		const branch = this.branches[0];
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			var ${name} = (${branch.condition}) && ${branch.block.name}(ctx);
 		`);
 
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
-		block.builders.mount.addLine(
+		block.builders.mount.add_line(
 			`if (${name}) ${name}.m(${initialMountNode}, ${anchorNode});`
 		);
 
@@ -444,7 +444,7 @@ export default class IfBlockWrapper extends Wrapper {
 				${name} = null;
 			`;
 
-		block.builders.update.addBlock(deindent`
+		block.builders.update.add_block(deindent`
 			if (${branch.condition}) {
 				${enter}
 			} else if (${name}) {
@@ -452,6 +452,6 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.destroy.addLine(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
+		block.builders.destroy.add_line(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
 	}
 }

@@ -3,7 +3,7 @@ import Wrapper from './shared/Wrapper';
 import Block from '../Block';
 import DebugTag from '../../nodes/DebugTag';
 import add_to_set from '../../utils/add_to_set';
-import deindent from '../../../utils/deindent';
+import deindent from '../../utils/deindent';
 
 export default class DebugTagWrapper extends Wrapper {
 	node: DebugTag;
@@ -34,8 +34,8 @@ export default class DebugTagWrapper extends Wrapper {
 			});
 			const statement = `[✂${this.node.start + 1}-${this.node.start + 7}✂];`;
 
-			block.builders.create.addLine(statement);
-			block.builders.update.addLine(statement);
+			block.builders.create.add_line(statement);
+			block.builders.update.add_line(statement);
 		} else {
 			const { code } = component;
 			code.overwrite(this.node.start + 1, this.node.start + 7, 'log', {
@@ -52,7 +52,7 @@ export default class DebugTagWrapper extends Wrapper {
 
 			const identifiers = this.node.expressions.map(e => e.node.name).join(', ');
 
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				if (${condition}) {
 					const { ${identifiers} } = ctx;
 					console.${log}({ ${identifiers} });
@@ -60,7 +60,7 @@ export default class DebugTagWrapper extends Wrapper {
 				}
 			`);
 
-			block.builders.create.addBlock(deindent`
+			block.builders.create.add_block(deindent`
 				{
 					const { ${identifiers} } = ctx;
 					console.${log}({ ${identifiers} });

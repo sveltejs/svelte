@@ -9,7 +9,7 @@ import FragmentWrapper from '../Fragment';
 import { stringify, escapeHTML, escape } from '../../../../utils/stringify';
 import TextWrapper from '../Text';
 import fixAttributeCasing from '../../../../utils/fixAttributeCasing';
-import deindent from '../../../../utils/deindent';
+import deindent from '../../../utils/deindent';
 import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
@@ -230,43 +230,43 @@ export default class ElementWrapper extends Wrapper {
 
 		block.addVariable(node);
 		const renderStatement = this.getRenderStatement();
-		block.builders.create.addLine(
+		block.builders.create.add_line(
 			`${node} = ${renderStatement};`
 		);
 
 		if (renderer.options.hydratable) {
 			if (parentNodes) {
-				block.builders.claim.addBlock(deindent`
+				block.builders.claim.add_block(deindent`
 					${node} = ${this.getClaimStatement(parentNodes)};
 					var ${nodes} = @children(${this.node.name === 'template' ? `${node}.content` : node});
 				`);
 			} else {
-				block.builders.claim.addLine(
+				block.builders.claim.add_line(
 					`${node} = ${renderStatement};`
 				);
 			}
 		}
 
 		if (parentNode) {
-			block.builders.mount.addLine(
+			block.builders.mount.add_line(
 				`@append(${parentNode}, ${node});`
 			);
 
 			if (parentNode === 'document.head') {
-				block.builders.destroy.addLine(`@detachNode(${node});`);
+				block.builders.destroy.add_line(`@detachNode(${node});`);
 			}
 		} else {
-			block.builders.mount.addLine(`@insert(#target, ${node}, anchor);`);
+			block.builders.mount.add_line(`@insert(#target, ${node}, anchor);`);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
-			block.builders.destroy.addConditional('detach', `@detachNode(${node});`);
+			block.builders.destroy.add_conditional('detach', `@detachNode(${node});`);
 		}
 
 		// insert static children with textContent or innerHTML
 		if (!this.node.namespace && this.canUseInnerHTML && this.fragment.nodes.length > 0) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
-				block.builders.create.addLine(
+				block.builders.create.add_line(
 					`${node}.textContent = ${stringify(this.fragment.nodes[0].data)};`
 				);
 			} else {
@@ -276,7 +276,7 @@ export default class ElementWrapper extends Wrapper {
 						.join('')
 				);
 
-				block.builders.create.addLine(
+				block.builders.create.add_line(
 					`${node}.innerHTML = \`${innerHTML}\`;`
 				);
 			}
@@ -309,7 +309,7 @@ export default class ElementWrapper extends Wrapper {
 		this.addClasses(block);
 
 		if (nodes && this.renderer.options.hydratable) {
-			block.builders.claim.addLine(
+			block.builders.claim.add_line(
 				`${nodes}.forEach(@detachNode);`
 			);
 		}
@@ -346,7 +346,7 @@ export default class ElementWrapper extends Wrapper {
 
 		if (renderer.options.dev) {
 			const loc = renderer.locate(this.node.start);
-			block.builders.hydrate.addLine(
+			block.builders.hydrate.add_line(
 				`@addLoc(${this.var}, ${renderer.fileVar}, ${loc.line}, ${loc.column}, ${this.node.start});`
 			);
 		}
@@ -443,7 +443,7 @@ export default class ElementWrapper extends Wrapper {
 			// TODO dry this out — similar code for event handlers and component bindings
 			if (has_local_function) {
 				// need to create a block-local function that calls an instance-level function
-				block.builders.init.addBlock(deindent`
+				block.builders.init.add_block(deindent`
 					function ${handler}() {
 						${animation_frame && deindent`
 						cancelAnimationFrame(${animation_frame});
@@ -471,11 +471,11 @@ export default class ElementWrapper extends Wrapper {
 					const resize_listener = block.getUniqueName(`${this.var}_resize_listener`);
 					block.addVariable(resize_listener);
 
-					block.builders.mount.addLine(
+					block.builders.mount.add_line(
 						`${resize_listener} = @addResizeListener(${this.var}, ${callee}.bind(${this.var}));`
 					);
 
-					block.builders.destroy.addLine(
+					block.builders.destroy.add_line(
 						`${resize_listener}.cancel();`
 					);
 				} else {
@@ -491,20 +491,20 @@ export default class ElementWrapper extends Wrapper {
 
 			if (this.node.name === 'select' || group.bindings.find(binding => binding.node.name === 'indeterminate' || binding.isReadOnlyMediaAttribute())) {
 				const callback = has_local_function ? handler : `() => ${callee}.call(${this.var})`;
-				block.builders.hydrate.addLine(
+				block.builders.hydrate.add_line(
 					`if (${someInitialStateIsUndefined}) @add_render_callback(${callback});`
 				);
 			}
 
 			if (group.events[0] === 'resize') {
-				block.builders.hydrate.addLine(
+				block.builders.hydrate.add_line(
 					`@add_render_callback(() => ${callee}.call(${this.var}));`
 				);
 			}
 		});
 
 		if (lock) {
-			block.builders.update.addLine(`${lock} = false;`);
+			block.builders.update.add_line(`${lock} = false;`);
 		}
 
 		const this_binding = this.bindings.find(b => b.node.name === 'this');
@@ -532,9 +532,9 @@ export default class ElementWrapper extends Wrapper {
 				}
 			`);
 
-			block.builders.mount.addLine(`@add_binding_callback(() => ctx.${name}(${[this.var, 'null'].concat(args).join(', ')}));`);
-			block.builders.destroy.addLine(`ctx.${name}(${['null', this.var].concat(args).join(', ')});`);
-			block.builders.update.addLine(deindent`
+			block.builders.mount.add_line(`@add_binding_callback(() => ctx.${name}(${[this.var, 'null'].concat(args).join(', ')}));`);
+			block.builders.destroy.add_line(`ctx.${name}(${['null', this.var].concat(args).join(', ')});`);
+			block.builders.update.add_line(deindent`
 				if (changed.items) {
 					ctx.${name}(${['null', this.var].concat(args).join(', ')});
 					${args.map(a => `${a} = ctx.${a}`).join(', ')};
@@ -586,7 +586,7 @@ export default class ElementWrapper extends Wrapper {
 				}
 			});
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			var ${levels} = [
 				${initialProps.join(',\n')}
 			];
@@ -597,11 +597,11 @@ export default class ElementWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.hydrate.addLine(
+		block.builders.hydrate.add_line(
 			`@setAttributes(${this.var}, ${data});`
 		);
 
-		block.builders.update.addBlock(deindent`
+		block.builders.update.add_block(deindent`
 			@setAttributes(${this.var}, @getSpreadUpdate(${levels}, [
 				${updates.join(',\n')}
 			]));
@@ -644,23 +644,23 @@ export default class ElementWrapper extends Wrapper {
 			`;
 
 			if (intro.is_local) {
-				block.builders.intro.addBlock(deindent`
+				block.builders.intro.add_block(deindent`
 					if (#local) {
 						${intro_block}
 					}
 				`);
 
-				block.builders.outro.addBlock(deindent`
+				block.builders.outro.add_block(deindent`
 					if (#local) {
 						${outro_block}
 					}
 				`);
 			} else {
-				block.builders.intro.addBlock(intro_block);
-				block.builders.outro.addBlock(outro_block);
+				block.builders.intro.add_block(intro_block);
+				block.builders.outro.add_block(outro_block);
 			}
 
-			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.end();`);
+			block.builders.destroy.add_conditional('detach', `if (${name}) ${name}.end();`);
 		}
 
 		else {
@@ -686,7 +686,7 @@ export default class ElementWrapper extends Wrapper {
 						});
 					`;
 
-					block.builders.outro.addLine(`if (${introName}) ${introName}.invalidate();`);
+					block.builders.outro.add_line(`if (${introName}) ${introName}.invalidate();`);
 				} else {
 					intro_block = deindent`
 						if (!${introName}) {
@@ -706,7 +706,7 @@ export default class ElementWrapper extends Wrapper {
 					`;
 				}
 
-				block.builders.intro.addBlock(intro_block);
+				block.builders.intro.add_block(intro_block);
 			}
 
 			if (outro) {
@@ -718,7 +718,7 @@ export default class ElementWrapper extends Wrapper {
 				const fn = component.qualify(outro.name);
 
 				if (!intro) {
-					block.builders.intro.addBlock(deindent`
+					block.builders.intro.add_block(deindent`
 						if (${outroName}) ${outroName}.end(1);
 					`);
 				}
@@ -737,9 +737,9 @@ export default class ElementWrapper extends Wrapper {
 					`;
 				}
 
-				block.builders.outro.addBlock(outro_block);
+				block.builders.outro.add_block(outro_block);
 
-				block.builders.destroy.addConditional('detach', `if (${outroName}) ${outroName}.end();`);
+				block.builders.destroy.add_conditional('detach', `if (${outroName}) ${outroName}.end();`);
 			}
 		}
 	}
@@ -755,11 +755,11 @@ export default class ElementWrapper extends Wrapper {
 		block.addVariable(rect);
 		block.addVariable(stop_animation, '@noop');
 
-		block.builders.measure.addBlock(deindent`
+		block.builders.measure.add_block(deindent`
 			${rect} = ${this.var}.getBoundingClientRect();
 		`);
 
-		block.builders.fix.addBlock(deindent`
+		block.builders.fix.add_block(deindent`
 			@fix_position(${this.var});
 			${stop_animation}();
 		`);
@@ -768,7 +768,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const name = component.qualify(this.node.animation.name);
 
-		block.builders.animate.addBlock(deindent`
+		block.builders.animate.add_block(deindent`
 			${stop_animation}();
 			${stop_animation} = @create_animation(${this.var}, ${rect}, ${name}, ${params});
 		`);
@@ -791,14 +791,14 @@ export default class ElementWrapper extends Wrapper {
 			}
 			const updater = `@toggleClass(${this.var}, "${name}", ${snippet});`;
 
-			block.builders.hydrate.addLine(updater);
+			block.builders.hydrate.add_line(updater);
 
 			if ((dependencies && dependencies.size > 0) || this.classDependencies.length) {
 				const allDeps = this.classDependencies.concat(...dependencies);
 				const deps = allDeps.map(dependency => `changed${quotePropIfNecessary(dependency)}`).join(' || ');
 				const condition = allDeps.length > 1 ? `(${deps})` : deps;
 
-				block.builders.update.addConditional(
+				block.builders.update.add_conditional(
 					condition,
 					updater
 				);

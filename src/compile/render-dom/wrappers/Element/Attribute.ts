@@ -3,7 +3,7 @@ import Block from '../../Block';
 import fixAttributeCasing from '../../../../utils/fixAttributeCasing';
 import ElementWrapper from './index';
 import { stringify } from '../../../../utils/stringify';
-import deindent from '../../../../utils/deindent';
+import deindent from '../../../utils/deindent';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -111,7 +111,7 @@ export default class AttributeWrapper {
 			const init = shouldCache ? `${last} = ${value}` : value;
 
 			if (isLegacyInputType) {
-				block.builders.hydrate.addLine(
+				block.builders.hydrate.add_line(
 					`@setInputType(${element.var}, ${init});`
 				);
 				updater = `@setInputType(${element.var}, ${shouldCache ? last : value});`;
@@ -138,22 +138,22 @@ export default class AttributeWrapper {
 					}
 				`;
 
-				block.builders.mount.addBlock(deindent`
+				block.builders.mount.add_block(deindent`
 					${last} = ${value};
 					${updater}
 				`);
 			} else if (propertyName) {
-				block.builders.hydrate.addLine(
+				block.builders.hydrate.add_line(
 					`${element.var}.${propertyName} = ${init};`
 				);
 				updater = `${element.var}.${propertyName} = ${shouldCache ? last : value};`;
 			} else if (isDataSet) {
-				block.builders.hydrate.addLine(
+				block.builders.hydrate.add_line(
 					`${element.var}.dataset.${camelCaseName} = ${init};`
 				);
 				updater = `${element.var}.dataset.${camelCaseName} = ${shouldCache ? last : value};`;
 			} else {
-				block.builders.hydrate.addLine(
+				block.builders.hydrate.add_line(
 					`${method}(${element.var}, "${name}", ${init});`
 				);
 				updater = `${method}(${element.var}, "${name}", ${shouldCache ? last : value});`;
@@ -173,7 +173,7 @@ export default class AttributeWrapper {
 					? (dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue)
 					: changedCheck;
 
-				block.builders.update.addConditional(
+				block.builders.update.add_conditional(
 					condition,
 					updater
 				);
@@ -191,7 +191,7 @@ export default class AttributeWrapper {
 							: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
 			);
 
-			block.builders.hydrate.addLine(statement);
+			block.builders.hydrate.add_line(statement);
 
 			// special case – autofocus. has to be handled in a bit of a weird way
 			if (this.node.isTrue && name === 'autofocus') {
@@ -202,8 +202,8 @@ export default class AttributeWrapper {
 		if (isIndirectlyBoundValue) {
 			const updateValue = `${element.var}.value = ${element.var}.__value;`;
 
-			block.builders.hydrate.addLine(updateValue);
-			if (this.node.isDynamic) block.builders.update.addLine(updateValue);
+			block.builders.hydrate.add_line(updateValue);
+			if (this.node.isDynamic) block.builders.update.add_line(updateValue);
 		}
 	}
 
