@@ -8,7 +8,7 @@ import {
 	insert,
 	noop,
 	safe_not_equal,
-	text
+	space
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -17,7 +17,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			div0 = element("div");
-			t = text("\n");
+			t = space();
 			div1 = element("div");
 			attr(div0, "data-foo", "bar");
 			attr(div1, "data-foo", ctx.bar);

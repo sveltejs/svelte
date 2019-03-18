@@ -9,7 +9,7 @@ import {
 	insert,
 	noop,
 	safe_not_equal,
-	text
+	space
 } from "svelte/internal";
 
 // (10:1) {#if a}
@@ -139,19 +139,19 @@ function create_fragment(ctx) {
 		c() {
 			div = element("div");
 			if (if_block0) if_block0.c();
-			t0 = text("\n\n\t");
+			t0 = space();
 			p0 = element("p");
 			p0.textContent = "this can be used as an anchor";
-			t2 = text("\n\n\t");
+			t2 = space();
 			if (if_block1) if_block1.c();
-			t3 = text("\n\n\t");
+			t3 = space();
 			if (if_block2) if_block2.c();
-			t4 = text("\n\n\t");
+			t4 = space();
 			p1 = element("p");
 			p1.textContent = "so can this";
-			t6 = text("\n\n\t");
+			t6 = space();
 			if (if_block3) if_block3.c();
-			t7 = text("\n\n");
+			t7 = space();
 			if (if_block4) if_block4.c();
 			if_block4_anchor = comment();
 		},

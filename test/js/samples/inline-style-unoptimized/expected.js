@@ -7,7 +7,7 @@ import {
 	insert,
 	noop,
 	safe_not_equal,
-	text
+	space
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -16,7 +16,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			div0 = element("div");
-			t = text("\n");
+			t = space();
 			div1 = element("div");
 			div0.style.cssText = ctx.style;
 			div1.style.cssText = div1_style_value = "" + ctx.key + ": " + ctx.value;

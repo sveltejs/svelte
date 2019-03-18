@@ -57,7 +57,8 @@ export interface CompileOptions {
 	tag?: string;
 	css?: boolean;
 
-	preserveComments?: boolean | false;
+	preserveComments?: boolean;
+	preserveWhitespace?: boolean;
 }
 
 export interface Visitor {

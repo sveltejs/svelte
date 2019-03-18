@@ -11,6 +11,7 @@ import {
 	noop,
 	safe_not_equal,
 	set_data,
+	space,
 	text
 } from "svelte/internal";
 
@@ -30,7 +31,7 @@ function create_each_block(ctx) {
 		c: function create() {
 			span = element("span");
 			t0 = text(t0_value);
-			t1 = text("\n\t");
+			t1 = space();
 
 			{
 				const { foo } = ctx;
@@ -84,7 +85,7 @@ function create_fragment(ctx) {
 				each_blocks[i].c();
 			}
 
-			t0 = text("\n\n");
+			t0 = space();
 			p = element("p");
 			t1 = text("foo: ");
 			t2 = text(ctx.foo);

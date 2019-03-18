@@ -23,7 +23,8 @@ const valid_options = [
 	'customElement',
 	'tag',
 	'css',
-	'preserveComments'
+	'preserveComments',
+	'preserveWhitespace'
 ];
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {

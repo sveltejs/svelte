@@ -7,7 +7,7 @@ import {
 	mount_component,
 	noop,
 	safe_not_equal,
-	text
+	space
 } from "svelte/internal";
 import Imported from "Imported.svelte";
 
@@ -21,7 +21,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			imported.$$.fragment.c();
-			t = text("\n");
+			t = space();
 			nonimported.$$.fragment.c();
 		},
 
