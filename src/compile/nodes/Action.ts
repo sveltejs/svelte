@@ -6,7 +6,7 @@ export default class Action extends Node {
 	type: 'Action';
 	name: string;
 	expression: Expression;
-	usesContext: boolean;
+	uses_context: boolean;
 
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
@@ -20,6 +20,6 @@ export default class Action extends Node {
 			? new Expression(component, this, scope, info.expression)
 			: null;
 
-		this.usesContext = this.expression && this.expression.usesContext;
+		this.uses_context = this.expression && this.expression.uses_context;
 	}
 }

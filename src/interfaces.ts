@@ -2,7 +2,7 @@ export interface Node {
 	start: number;
 	end: number;
 	type: string;
-	[propName: string]: any;
+	[prop_name: string]: any;
 }
 
 export interface Parser {
@@ -15,7 +15,7 @@ export interface Parser {
 	html: Node;
 	css: Node;
 	js: Node;
-	metaTags: {};
+	meta_tags: {};
 }
 
 export interface Ast {
@@ -67,7 +67,7 @@ export interface Visitor {
 
 export interface AppendTarget {
 	slots: Record<string, string>;
-	slotStack: string[]
+	slot_stack: string[]
 }
 
 export interface Var {

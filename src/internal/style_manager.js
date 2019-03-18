@@ -1,4 +1,4 @@
-import { createElement } from './dom.js';
+import { element } from './dom.js';
 
 let stylesheet;
 let active = 0;
@@ -27,7 +27,7 @@ export function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
 
 	if (!current_rules[name]) {
 		if (!stylesheet) {
-			const style = createElement('style');
+			const style = element('style');
 			document.head.appendChild(style);
 			stylesheet = style.sheet;
 		}

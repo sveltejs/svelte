@@ -9,36 +9,36 @@ export default class Tag extends Wrapper {
 
 	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: MustacheTag | RawMustacheTag) {
 		super(renderer, block, parent, node);
-		this.cannotUseInnerHTML();
+		this.cannot_use_innerhtml();
 
-		block.addDependencies(node.expression.dependencies);
+		block.add_dependencies(node.expression.dependencies);
 	}
 
-	renameThisMethod(
+	rename_this_method(
 		block: Block,
 		update: ((value: string) => string)
 	) {
 		const dependencies = this.node.expression.dynamic_dependencies();
 		const snippet = this.node.expression.render(block);
 
-		const value = this.node.shouldCache && block.getUniqueName(`${this.var}_value`);
-		const content = this.node.shouldCache ? value : snippet;
+		const value = this.node.should_cache && block.get_unique_name(`${this.var}_value`);
+		const content = this.node.should_cache ? value : snippet;
 
-		if (this.node.shouldCache) block.addVariable(value, snippet);
+		if (this.node.should_cache) block.add_variable(value, snippet);
 
 		if (dependencies.length > 0) {
-			const changedCheck = (
-				(block.hasOutros ? `!#current || ` : '') +
+			const changed_check = (
+				(block.has_outros ? `!#current || ` : '') +
 				dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')
 			);
 
-			const updateCachedValue = `${value} !== (${value} = ${snippet})`;
+			const update_cached_value = `${value} !== (${value} = ${snippet})`;
 
-			const condition =this.node.shouldCache
-				? `(${changedCheck}) && ${updateCachedValue}`
-				: changedCheck;
+			const condition =this.node.should_cache
+				? `(${changed_check}) && ${update_cached_value}`
+				: changed_check;
 
-			block.builders.update.addConditional(
+			block.builders.update.add_conditional(
 				condition,
 				update(content)
 			);

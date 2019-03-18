@@ -1,6 +1,6 @@
-import htmlEntities from './entities';
+import entities from './entities';
 
-const windows1252 = [
+const windows_1252 = [
 	8364,
 	129,
 	8218,
@@ -34,18 +34,19 @@ const windows1252 = [
 	382,
 	376,
 ];
-const entityPattern = new RegExp(
-	`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(htmlEntities).join('|')}));?`,
+
+const entity_pattern = new RegExp(
+	`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(entities).join('|')}));?`,
 	'g'
 );
 
-export function decodeCharacterReferences(html: string) {
-	return html.replace(entityPattern, (match, entity) => {
+export function decode_character_references(html: string) {
+	return html.replace(entity_pattern, (match, entity) => {
 		let code;
 
 		// Handle named entities
 		if (entity[0] !== '#') {
-			code = htmlEntities[entity];
+			code = entities[entity];
 		} else if (entity[1] === 'x') {
 			code = parseInt(entity.substring(2), 16);
 		} else {
@@ -56,7 +57,7 @@ export function decodeCharacterReferences(html: string) {
 			return match;
 		}
 
-		return String.fromCodePoint(validateCode(code));
+		return String.fromCodePoint(validate_code(code));
 	});
 }
 
@@ -67,7 +68,7 @@ const NUL = 0;
 // to replace them ourselves
 //
 // Source: http://en.wikipedia.org/wiki/Character_encodings_in_HTML#Illegal_characters
-function validateCode(code: number) {
+function validate_code(code: number) {
 	// line feed becomes generic whitespace
 	if (code === 10) {
 		return 32;
@@ -81,7 +82,7 @@ function validateCode(code: number) {
 	// code points 128-159 are dealt with leniently by browsers, but they're incorrect. We need
 	// to correct the mistake or we'll end up with missing € signs and so on
 	if (code <= 159) {
-		return windows1252[code - 128];
+		return windows_1252[code - 128];
 	}
 
 	// basic multilingual plane

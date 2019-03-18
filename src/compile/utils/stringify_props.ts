@@ -1,4 +1,4 @@
-export default function stringifyProps(props: string[]) {
+export function stringify_props(props: string[]) {
 	if (!props.length) return '{}';
 
 	const joined = props.join(', ');

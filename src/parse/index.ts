@@ -1,14 +1,13 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
-import reservedNames from '../utils/reservedNames';
-import fullCharCodeAt from '../utils/fullCharCodeAt';
+import { reserved } from '../utils/names';
+import full_char_code_at from '../utils/full_char_code_at';
 import { Node, Ast } from '../interfaces';
 import error from '../utils/error';
 
 interface ParserOptions {
 	filename?: string;
-	bind?: boolean;
 	customElement?: boolean;
 }
 
@@ -25,9 +24,7 @@ export class Parser {
 	html: Node;
 	css: Node[] = [];
 	js: Node[] = [];
-	metaTags = {};
-
-	allowBindings: boolean;
+	meta_tags = {};
 
 	constructor(template: string, options: ParserOptions) {
 		if (typeof template !== 'string') {
@@ -37,8 +34,6 @@ export class Parser {
 		this.template = template.replace(/\s+$/, '');
 		this.filename = options.filename;
 		this.customElement = options.customElement;
-
-		this.allowBindings = options.bind !== false;
 
 		this.html = {
 			start: null,
@@ -92,7 +87,7 @@ export class Parser {
 		return this.stack[this.stack.length - 1];
 	}
 
-	acornError(err: any) {
+	acorn_error(err: any) {
 		this.error({
 			code: `parse-error`,
 			message: err.message.replace(/ \(\d+:\d+\)$/, '')
@@ -129,14 +124,14 @@ export class Parser {
 		return this.template.slice(this.index, this.index + str.length) === str;
 	}
 
-	matchRegex(pattern: RegExp) {
+	match_regex(pattern: RegExp) {
 		const match = pattern.exec(this.template.slice(this.index));
 		if (!match || match.index !== 0) return null;
 
 		return match[0];
 	}
 
-	allowWhitespace() {
+	allow_whitespace() {
 		while (
 			this.index < this.template.length &&
 			whitespace.test(this.template[this.index])
@@ -146,23 +141,23 @@ export class Parser {
 	}
 
 	read(pattern: RegExp) {
-		const result = this.matchRegex(pattern);
+		const result = this.match_regex(pattern);
 		if (result) this.index += result.length;
 		return result;
 	}
 
-	readIdentifier() {
+	read_identifier() {
 		const start = this.index;
 
 		let i = this.index;
 
-		const code = fullCharCodeAt(this.template, i);
+		const code = full_char_code_at(this.template, i);
 		if (!isIdentifierStart(code, true)) return null;
 
 		i += code <= 0xffff ? 1 : 2;
 
 		while (i < this.template.length) {
-			const code = fullCharCodeAt(this.template, i);
+			const code = full_char_code_at(this.template, i);
 
 			if (!isIdentifierChar(code, true)) break;
 			i += code <= 0xffff ? 1 : 2;
@@ -170,7 +165,7 @@ export class Parser {
 
 		const identifier = this.template.slice(this.index, this.index = i);
 
-		if (reservedNames.has(identifier)) {
+		if (reserved.has(identifier)) {
 			this.error({
 				code: `unexpected-reserved-word`,
 				message: `'${identifier}' is a reserved word in JavaScript and cannot be used here`
@@ -180,7 +175,7 @@ export class Parser {
 		return identifier;
 	}
 
-	readUntil(pattern: RegExp) {
+	read_until(pattern: RegExp) {
 		if (this.index >= this.template.length)
 			this.error({
 				code: `unexpected-eof`,
@@ -199,7 +194,7 @@ export class Parser {
 		return this.template.slice(start);
 	}
 
-	requireWhitespace() {
+	require_whitespace() {
 		if (!whitespace.test(this.template[this.index])) {
 			this.error({
 				code: `missing-whitespace`,
@@ -207,7 +202,7 @@ export class Parser {
 			});
 		}
 
-		this.allowWhitespace();
+		this.allow_whitespace();
 	}
 }
 

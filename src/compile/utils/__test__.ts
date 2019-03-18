@@ -84,30 +84,30 @@ describe('CodeBuilder', () => {
 	it('creates a block with a line', () => {
 		const builder = new CodeBuilder();
 
-		builder.addLine('var answer = 42;');
+		builder.add_line('var answer = 42;');
 		assert.equal(builder.toString(), 'var answer = 42;');
 	});
 
 	it('creates a block with two lines', () => {
 		const builder = new CodeBuilder();
 
-		builder.addLine('var problems = 99;');
-		builder.addLine('var answer = 42;');
+		builder.add_line('var problems = 99;');
+		builder.add_line('var answer = 42;');
 		assert.equal(builder.toString(), 'var problems = 99;\nvar answer = 42;');
 	});
 
 	it('adds newlines around blocks', () => {
 		const builder = new CodeBuilder();
 
-		builder.addLine('// line 1');
-		builder.addLine('// line 2');
-		builder.addBlock(deindent`
-			if ( foo ) {
+		builder.add_line('// line 1');
+		builder.add_line('// line 2');
+		builder.add_block(deindent`
+			if (foo) {
 				bar();
 			}
 		`);
-		builder.addLine('// line 3');
-		builder.addLine('// line 4');
+		builder.add_line('// line 3');
+		builder.add_line('// line 4');
 
 		assert.equal(
 			builder.toString(),
@@ -115,7 +115,7 @@ describe('CodeBuilder', () => {
 			// line 1
 			// line 2
 
-			if ( foo ) {
+			if (foo) {
 				bar();
 			}
 
@@ -128,7 +128,7 @@ describe('CodeBuilder', () => {
 	it('nests codebuilders with correct indentation', () => {
 		const child = new CodeBuilder();
 
-		child.addBlock(deindent`
+		child.add_block(deindent`
 			var obj = {
 				answer: 42
 			};
@@ -136,15 +136,15 @@ describe('CodeBuilder', () => {
 
 		const builder = new CodeBuilder();
 
-		builder.addLine('// line 1');
-		builder.addLine('// line 2');
-		builder.addBlock(deindent`
-			if ( foo ) {
+		builder.add_line('// line 1');
+		builder.add_line('// line 2');
+		builder.add_block(deindent`
+			if (foo) {
 				${child}
 			}
 		`);
-		builder.addLine('// line 3');
-		builder.addLine('// line 4');
+		builder.add_line('// line 3');
+		builder.add_line('// line 4');
 
 		assert.equal(
 			builder.toString(),
@@ -152,7 +152,7 @@ describe('CodeBuilder', () => {
 			// line 1
 			// line 2
 
-			if ( foo ) {
+			if (foo) {
 				var obj = {
 					answer: 42
 				};

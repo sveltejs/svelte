@@ -1,7 +1,7 @@
-import Component from '../compile/Component';
-import { Node } from '../interfaces';
+import Component from '../../../Component';
+import { Node } from '../../../../interfaces';
 
-export default function createDebuggingComment(
+export default function create_debugging_comment(
 	node: Node,
 	component: Component
 ) {

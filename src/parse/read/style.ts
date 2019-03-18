@@ -3,17 +3,17 @@ import { walk } from 'estree-walker';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
-export default function readStyle(parser: Parser, start: number, attributes: Node[]) {
-	const contentStart = parser.index;
-	const styles = parser.readUntil(/<\/style>/);
-	const contentEnd = parser.index;
+export default function read_style(parser: Parser, start: number, attributes: Node[]) {
+	const content_start = parser.index;
+	const styles = parser.read_until(/<\/style>/);
+	const content_end = parser.index;
 
 	let ast;
 
 	try {
 		ast = parse(styles, {
 			positions: true,
-			offset: contentStart,
+			offset: content_start,
 		});
 	} catch (err) {
 		if (err.name === 'CssSyntaxError') {
@@ -37,7 +37,7 @@ export default function readStyle(parser: Parser, start: number, attributes: Nod
 					const a = node.children[i];
 					const b = node.children[i + 1];
 
-					if (isRefSelector(a, b)) {
+					if (is_ref_selector(a, b)) {
 						parser.error({
 							code: `invalid-ref-selector`,
 							message: 'ref selectors are no longer supported'
@@ -63,14 +63,14 @@ export default function readStyle(parser: Parser, start: number, attributes: Nod
 		attributes,
 		children: ast.children,
 		content: {
-			start: contentStart,
-			end: contentEnd,
+			start: content_start,
+			end: content_end,
 			styles,
 		},
 	};
 }
 
-function isRefSelector(a: Node, b: Node) {
+function is_ref_selector(a: Node, b: Node) {
 	if (!b) return false;
 
 	return (

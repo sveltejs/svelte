@@ -2,13 +2,12 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Text from '../../nodes/Text';
 import Wrapper from './shared/Wrapper';
-import { CompileOptions } from '../../../interfaces';
-import { stringify } from '../../../utils/stringify';
+import { stringify } from '../../utils/stringify';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
 // list is almost certainly very incomplete)
-const elementsWithoutText = new Set([
+const elements_without_text = new Set([
 	'audio',
 	'datalist',
 	'dl',
@@ -18,16 +17,16 @@ const elementsWithoutText = new Set([
 ]);
 
 // TODO this should probably be in Fragment
-function shouldSkip(node: Text) {
+function should_skip(node: Text) {
 	if (/\S/.test(node.data)) return false;
 
-	const parentElement = node.findNearest(/(?:Element|InlineComponent|Head)/);
-	if (!parentElement) return false;
+	const parent_element = node.find_nearest(/(?:Element|InlineComponent|Head)/);
+	if (!parent_element) return false;
 
-	if (parentElement.type === 'Head') return true;
-	if (parentElement.type === 'InlineComponent') return parentElement.children.length === 1 && node === parentElement.children[0];
+	if (parent_element.type === 'Head') return true;
+	if (parent_element.type === 'InlineComponent') return parent_element.children.length === 1 && node === parent_element.children[0];
 
-	return parentElement.namespace || elementsWithoutText.has(parentElement.name);
+	return parent_element.namespace || elements_without_text.has(parent_element.name);
 }
 
 export default class TextWrapper extends Wrapper {
@@ -45,19 +44,19 @@ export default class TextWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		this.skip = shouldSkip(this.node);
+		this.skip = should_skip(this.node);
 		this.data = data;
-		this.var = this.skip ? null : 'text';
+		this.var = this.skip ? null : 't';
 	}
 
-	render(block: Block, parentNode: string, parentNodes: string) {
+	render(block: Block, parent_node: string, parent_nodes: string) {
 		if (this.skip) return;
 
-		block.addElement(
+		block.add_element(
 			this.var,
-			`@createText(${stringify(this.data)})`,
-			parentNodes && `@claimText(${parentNodes}, ${stringify(this.data)})`,
-			parentNode
+			`@text(${stringify(this.data)})`,
+			parent_nodes && `@claim_text(${parent_nodes}, ${stringify(this.data)})`,
+			parent_node
 		);
 	}
 }

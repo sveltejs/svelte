@@ -16,7 +16,7 @@ import Title from '../Title';
 import Window from '../Window';
 import Node from './Node';
 
-function getConstructor(type): typeof Node {
+function get_constructor(type): typeof Node {
 	switch (type) {
 		case 'AwaitBlock': return AwaitBlock;
 		case 'Body': return Body;
@@ -38,10 +38,10 @@ function getConstructor(type): typeof Node {
 	}
 }
 
-export default function mapChildren(component, parent, scope, children: any[]) {
+export default function map_children(component, parent, scope, children: any[]) {
 	let last = null;
 	return children.map(child => {
-		const constructor = getConstructor(child.type);
+		const constructor = get_constructor(child.type);
 		const node = new constructor(component, parent, scope, child);
 
 		if (last) last.next = node;

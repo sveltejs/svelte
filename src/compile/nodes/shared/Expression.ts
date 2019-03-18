@@ -1,19 +1,19 @@
 import Component from '../../Component';
 import { walk } from 'estree-walker';
-import isReference from 'is-reference';
-import flattenReference from '../../../utils/flattenReference';
-import { createScopes, Scope, extractNames } from '../../../utils/annotateWithScopes';
+import is_reference from 'is-reference';
+import flatten_reference from '../../utils/flatten_reference';
+import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
-import globalWhitelist from '../../../utils/globalWhitelist';
-import deindent from '../../../utils/deindent';
+import { globals } from '../../../utils/names';
+import deindent from '../../utils/deindent';
 import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
-import sanitize from '../../../utils/sanitize';
+import { sanitize } from '../../../utils/names';
 import TemplateScope from './TemplateScope';
-import getObject from '../../../utils/getObject';
+import get_object from '../../utils/get_object';
 import { nodes_match } from '../../../utils/nodes_match';
 import Block from '../../render-dom/Block';
 
-const binaryOperators: Record<string, number> = {
+const binary_operators: Record<string, number> = {
 	'**': 15,
 	'*': 14,
 	'/': 14,
@@ -38,7 +38,7 @@ const binaryOperators: Record<string, number> = {
 	'|': 7
 };
 
-const logicalOperators: Record<string, number> = {
+const logical_operators: Record<string, number> = {
 	'&&': 6,
 	'||': 5
 };
@@ -52,8 +52,8 @@ const precedence: Record<string, (node?: Node) => number> = {
 	CallExpression: () => 19,
 	UpdateExpression: () => 17,
 	UnaryExpression: () => 16,
-	BinaryExpression: (node: Node) => binaryOperators[node.operator],
-	LogicalExpression: (node: Node) => logicalOperators[node.operator],
+	BinaryExpression: (node: Node) => binary_operators[node.operator],
+	LogicalExpression: (node: Node) => logical_operators[node.operator],
 	ConditionalExpression: () => 4,
 	AssignmentExpression: () => 3,
 	YieldExpression: () => 2,
@@ -77,8 +77,7 @@ export default class Expression {
 
 	is_synthetic: boolean;
 	declarations: string[] = [];
-	usesContext = false;
-	usesEvent = false;
+	uses_context = false;
 
 	rendered: string;
 
@@ -93,11 +92,11 @@ export default class Expression {
 		this.node = info;
 		this.template_scope = template_scope;
 		this.owner = owner;
-		this.is_synthetic = owner.isSynthetic;
+		this.is_synthetic = owner.is_synthetic;
 
 		const { dependencies, contextual_dependencies } = this;
 
-		let { map, scope } = createScopes(info);
+		let { map, scope } = create_scopes(info);
 		this.scope = scope;
 		this.scope_map = map;
 
@@ -118,12 +117,12 @@ export default class Expression {
 					function_expression = node;
 				}
 
-				if (isReference(node, parent)) {
-					const { name, nodes } = flattenReference(node);
+				if (is_reference(node, parent)) {
+					const { name, nodes } = flatten_reference(node);
 
 					if (scope.has(name)) return;
 
-					if (globalWhitelist.has(name) && !component.var_lookup.has(name)) return;
+					if (globals.has(name) && !component.var_lookup.has(name)) return;
 
 					if (name[0] === '$' && template_scope.names.has(name.slice(1))) {
 						component.error(node, {
@@ -137,12 +136,12 @@ export default class Expression {
 							dependencies.add(name);
 						}
 					} else if (template_scope.names.has(name)) {
-						expression.usesContext = true;
+						expression.uses_context = true;
 
 						contextual_dependencies.add(name);
 
 						if (!function_expression) {
-							template_scope.dependenciesForName.get(name).forEach(name => dependencies.add(name));
+							template_scope.dependencies_for_name.get(name).forEach(name => dependencies.add(name));
 						}
 					} else {
 						if (!function_expression) {
@@ -164,10 +163,10 @@ export default class Expression {
 					if (node.type === 'AssignmentExpression') {
 						deep = node.left.type === 'MemberExpression';
 						names = deep
-							? [getObject(node.left).name]
-							: extractNames(node.left);
+							? [get_object(node.left).name]
+							: extract_names(node.left);
 					} else if (node.type === 'UpdateExpression') {
-						const { name } = getObject(node.argument);
+						const { name } = get_object(node.argument);
 						names = [name];
 					}
 				}
@@ -175,7 +174,7 @@ export default class Expression {
 				if (names) {
 					names.forEach(name => {
 						if (template_scope.names.has(name)) {
-							template_scope.dependenciesForName.get(name).forEach(name => {
+							template_scope.dependencies_for_name.get(name).forEach(name => {
 								const variable = component.var_lookup.get(name);
 								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
 							});
@@ -214,7 +213,7 @@ export default class Expression {
 		});
 	}
 
-	getPrecedence() {
+	get_precedence() {
 		return this.node.type in precedence ? precedence[this.node.type](this.node) : 0;
 	}
 
@@ -253,24 +252,24 @@ export default class Expression {
 					scope = map.get(node);
 				}
 
-				if (isReference(node, parent)) {
-					const { name, nodes } = flattenReference(node);
+				if (is_reference(node, parent)) {
+					const { name, nodes } = flatten_reference(node);
 
 					if (scope.has(name)) return;
-					if (globalWhitelist.has(name) && !component.var_lookup.has(name)) return;
+					if (globals.has(name) && !component.var_lookup.has(name)) return;
 
 					if (function_expression) {
 						if (template_scope.names.has(name)) {
 							contextual_dependencies.add(name);
 
-							template_scope.dependenciesForName.get(name).forEach(dependency => {
+							template_scope.dependencies_for_name.get(name).forEach(dependency => {
 								dependencies.add(dependency);
 							});
 						} else {
 							dependencies.add(name);
 							component.add_reference(name);
 						}
-					} else if (!is_synthetic && isContextual(component, template_scope, name)) {
+					} else if (!is_synthetic && is_contextual(component, template_scope, name)) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
 							? `${name}: ctx.`
 							: 'ctx.');
@@ -289,8 +288,8 @@ export default class Expression {
 				if (function_expression) {
 					if (node.type === 'AssignmentExpression') {
 						const names = node.left.type === 'MemberExpression'
-							? [getObject(node.left).name]
-							: extractNames(node.left);
+							? [get_object(node.left).name]
+							: extract_names(node.left);
 
 						if (node.operator === '=' && nodes_match(node.left, node.right)) {
 							const dirty = names.filter(name => {
@@ -311,7 +310,7 @@ export default class Expression {
 							});
 						}
 					} else if (node.type === 'UpdateExpression') {
-						const { name } = getObject(node.argument);
+						const { name } = get_object(node.argument);
 
 						if (scope.declarations.has(name)) return;
 
@@ -347,7 +346,7 @@ export default class Expression {
 						// the return value doesn't matter
 					}
 
-					const name = component.getUniqueName(
+					const name = component.get_unique_name(
 						sanitize(get_function_name(node, owner))
 					);
 
@@ -465,9 +464,9 @@ export default class Expression {
 		});
 
 		if (declarations.length > 0) {
-			block.maintainContext = true;
+			block.maintain_context = true;
 			declarations.forEach(declaration => {
-				block.builders.init.addBlock(declaration);
+				block.builders.init.add_block(declaration);
 			});
 		}
 
@@ -487,11 +486,11 @@ function get_function_name(node, parent) {
 	return 'func';
 }
 
-function isContextual(component: Component, scope: TemplateScope, name: string) {
+function is_contextual(component: Component, scope: TemplateScope, name: string) {
 	if (name === '$$props') return true;
 
 	// if it's a name below root scope, it's contextual
-	if (!scope.isTopLevel(name)) return true;
+	if (!scope.is_top_level(name)) return true;
 
 	const variable = component.var_lookup.get(name);
 

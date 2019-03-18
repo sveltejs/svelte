@@ -1,5 +1,5 @@
-import { stringify } from '../../utils/stringify';
-import addToSet from '../../utils/addToSet';
+import { stringify } from '../utils/stringify';
+import add_to_set from '../utils/add_to_set';
 import Component from '../Component';
 import Node from './shared/Node';
 import Element from './Element';
@@ -14,12 +14,12 @@ export default class Attribute extends Node {
 	component: Component;
 	parent: Element;
 	name: string;
-	isSpread: boolean;
-	isTrue: boolean;
-	isDynamic: boolean;
-	isStatic: boolean;
-	isSynthetic: boolean;
-	shouldCache: boolean;
+	is_spread: boolean;
+	is_true: boolean;
+	is_dynamic: boolean;
+	is_static: boolean;
+	is_synthetic: boolean;
+	should_cache: boolean;
 	expression?: Expression;
 	chunks: (Text | Expression)[];
 	dependencies: Set<string>;
@@ -29,43 +29,43 @@ export default class Attribute extends Node {
 
 		if (info.type === 'Spread') {
 			this.name = null;
-			this.isSpread = true;
-			this.isTrue = false;
-			this.isSynthetic = false;
+			this.is_spread = true;
+			this.is_true = false;
+			this.is_synthetic = false;
 
 			this.expression = new Expression(component, this, scope, info.expression);
 			this.dependencies = this.expression.dependencies;
 			this.chunks = null;
 
-			this.isDynamic = true; // TODO not necessarily
-			this.isStatic = false;
-			this.shouldCache = false; // TODO does this mean anything here?
+			this.is_dynamic = true; // TODO not necessarily
+			this.is_static = false;
+			this.should_cache = false; // TODO does this mean anything here?
 		}
 
 		else {
 			this.name = info.name;
-			this.isTrue = info.value === true;
-			this.isStatic = true;
-			this.isSynthetic = info.synthetic;
+			this.is_true = info.value === true;
+			this.is_static = true;
+			this.is_synthetic = info.synthetic;
 
 			this.dependencies = new Set();
 
-			this.chunks = this.isTrue
+			this.chunks = this.is_true
 				? []
 				: info.value.map(node => {
 					if (node.type === 'Text') return node;
 
-					this.isStatic = false;
+					this.is_static = false;
 
 					const expression = new Expression(component, this, scope, node.expression);
 
-					addToSet(this.dependencies, expression.dependencies);
+					add_to_set(this.dependencies, expression.dependencies);
 					return expression;
 				});
 
-			this.isDynamic = this.dependencies.size > 0;
+			this.is_dynamic = this.dependencies.size > 0;
 
-			this.shouldCache = this.isDynamic
+			this.should_cache = this.is_dynamic
 				? this.chunks.length === 1
 					? this.chunks[0].node.type !== 'Identifier' || scope.names.has(this.chunks[0].node.name)
 					: true
@@ -74,20 +74,20 @@ export default class Attribute extends Node {
 	}
 
 	get_dependencies() {
-		if (this.isSpread) return this.expression.dynamic_dependencies();
+		if (this.is_spread) return this.expression.dynamic_dependencies();
 
 		const dependencies = new Set();
 		this.chunks.forEach(chunk => {
 			if (chunk.type === 'Expression') {
-				addToSet(dependencies, chunk.dynamic_dependencies());
+				add_to_set(dependencies, chunk.dynamic_dependencies());
 			}
 		});
 
 		return Array.from(dependencies);
 	}
 
-	getValue(block) {
-		if (this.isTrue) return true;
+	get_value(block) {
+		if (this.is_true) return true;
 		if (this.chunks.length === 0) return `""`;
 
 		if (this.chunks.length === 1) {
@@ -102,16 +102,16 @@ export default class Attribute extends Node {
 					if (chunk.type === 'Text') {
 						return stringify(chunk.data);
 					} else {
-						return chunk.getPrecedence() <= 13 ? `(${chunk.render()})` : chunk.render();
+						return chunk.get_precedence() <= 13 ? `(${chunk.render()})` : chunk.render();
 					}
 				})
 				.join(' + ');
 	}
 
-	getStaticValue() {
-		if (this.isSpread || this.isDynamic) return null;
+	get_static_value() {
+		if (this.is_spread || this.is_dynamic) return null;
 
-		return this.isTrue
+		return this.is_true
 			? true
 			: this.chunks[0]
 				? this.chunks[0].data

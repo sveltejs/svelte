@@ -1,8 +1,8 @@
-import { assign, isPromise } from './utils.js';
+import { assign, is_promise } from './utils.js';
 import { check_outros, group_outros, on_outro } from './transitions.js';
 import { flush } from '../internal/scheduler.js';
 
-export function handlePromise(promise, info) {
+export function handle_promise(promise, info) {
 	var token = info.token = {};
 
 	function update(type, index, key, value) {
@@ -41,7 +41,7 @@ export function handlePromise(promise, info) {
 		if (info.blocks) info.blocks[index] = block;
 	}
 
-	if (isPromise(promise)) {
+	if (is_promise(promise)) {
 		promise.then(value => {
 			update(info.then, 1, info.value, value);
 		}, error => {

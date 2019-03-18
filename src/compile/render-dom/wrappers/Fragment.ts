@@ -14,10 +14,10 @@ import Text from './Text';
 import Title from './Title';
 import Window from './Window';
 import Node from '../../nodes/shared/Node';
-import { trimStart, trimEnd } from '../../../utils/trim';
 import TextWrapper from './Text';
 import Renderer from '../Renderer';
 import Block from '../Block';
+import { trim_start, trim_end } from '../../../utils/trim';
 
 const wrappers = {
 	AwaitBlock,
@@ -51,13 +51,13 @@ export default class FragmentWrapper {
 		block: Block,
 		nodes: Node[],
 		parent: Wrapper,
-		stripWhitespace: boolean,
-		nextSibling: Wrapper
+		strip_whitespace: boolean,
+		next_sibling: Wrapper
 	) {
 		this.nodes = [];
 
-		let lastChild: Wrapper;
-		let windowWrapper;
+		let last_child: Wrapper;
+		let window_wrapper;
 
 		let i = nodes.length;
 		while (i--) {
@@ -74,7 +74,7 @@ export default class FragmentWrapper {
 			// special case — this is an easy way to remove whitespace surrounding
 			// <svelte:window/>. lil hacky but it works
 			if (child.type === 'Window') {
-				windowWrapper = new Window(renderer, block, parent, child);
+				window_wrapper = new Window(renderer, block, parent, child);
 				continue;
 			}
 
@@ -84,19 +84,19 @@ export default class FragmentWrapper {
 				// We want to remove trailing whitespace inside an element/component/block,
 				// *unless* there is no whitespace between this node and its next sibling
 				if (this.nodes.length === 0) {
-					const shouldTrim = (
-						nextSibling ? (nextSibling.node.type === 'Text' && /^\s/.test(nextSibling.data)) : !child.hasAncestor('EachBlock')
+					const should_trim = (
+						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.data)) : !child.has_ancestor('EachBlock')
 					);
 
-					if (shouldTrim) {
-						data = trimEnd(data);
+					if (should_trim) {
+						data = trim_end(data);
 						if (!data) continue;
 					}
 				}
 
 				// glue text nodes (which could e.g. be separated by comments) together
-				if (lastChild && lastChild.node.type === 'Text') {
-					lastChild.data = data + lastChild.data;
+				if (last_child && last_child.node.type === 'Text') {
+					last_child.data = data + last_child.data;
 					continue;
 				}
 
@@ -105,23 +105,23 @@ export default class FragmentWrapper {
 
 				this.nodes.unshift(wrapper);
 
-				link(lastChild, lastChild = wrapper);
+				link(last_child, last_child = wrapper);
 			} else {
 				const Wrapper = wrappers[child.type];
 				if (!Wrapper) continue;
 
-				const wrapper = new Wrapper(renderer, block, parent, child, stripWhitespace, lastChild || nextSibling);
+				const wrapper = new Wrapper(renderer, block, parent, child, strip_whitespace, last_child || next_sibling);
 				this.nodes.unshift(wrapper);
 
-				link(lastChild, lastChild = wrapper);
+				link(last_child, last_child = wrapper);
 			}
 		}
 
-		if (stripWhitespace) {
+		if (strip_whitespace) {
 			const first = this.nodes[0] as TextWrapper;
 
 			if (first && first.node.type === 'Text') {
-				first.data = trimStart(first.data);
+				first.data = trim_start(first.data);
 				if (!first.data) {
 					first.var = null;
 					this.nodes.shift();
@@ -133,15 +133,15 @@ export default class FragmentWrapper {
 			}
 		}
 
-		if (windowWrapper) {
-			this.nodes.unshift(windowWrapper);
-			link(lastChild, windowWrapper);
+		if (window_wrapper) {
+			this.nodes.unshift(window_wrapper);
+			link(last_child, window_wrapper);
 		}
 	}
 
-	render(block: Block, parentNode: string, parentNodes: string) {
+	render(block: Block, parent_node: string, parent_nodes: string) {
 		for (let i = 0; i < this.nodes.length; i += 1) {
-			this.nodes[i].render(block, parentNode, parentNodes);
+			this.nodes[i].render(block, parent_node, parent_nodes);
 		}
 	}
 }

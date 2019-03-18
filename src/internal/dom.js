@@ -6,122 +6,99 @@ export function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
-export function detachNode(node) {
+export function detach(node) {
 	node.parentNode.removeChild(node);
 }
 
-export function detachBetween(before, after) {
+export function detach_between(before, after) {
 	while (before.nextSibling && before.nextSibling !== after) {
 		before.parentNode.removeChild(before.nextSibling);
 	}
 }
 
-export function detachBefore(after) {
+export function detach_before(after) {
 	while (after.previousSibling) {
 		after.parentNode.removeChild(after.previousSibling);
 	}
 }
 
-export function detachAfter(before) {
+export function detach_after(before) {
 	while (before.nextSibling) {
 		before.parentNode.removeChild(before.nextSibling);
 	}
 }
 
-export function reinsertBetween(before, after, target) {
-	while (before.nextSibling && before.nextSibling !== after) {
-		target.appendChild(before.parentNode.removeChild(before.nextSibling));
-	}
-}
-
-export function reinsertChildren(parent, target) {
-	while (parent.firstChild) target.appendChild(parent.firstChild);
-}
-
-export function reinsertAfter(before, target) {
-	while (before.nextSibling) target.appendChild(before.nextSibling);
-}
-
-export function reinsertBefore(after, target) {
-	var parent = after.parentNode;
-	while (parent.firstChild !== after) target.appendChild(parent.firstChild);
-}
-
-export function destroyEach(iterations, detach) {
+export function destroy_each(iterations, detaching) {
 	for (var i = 0; i < iterations.length; i += 1) {
-		if (iterations[i]) iterations[i].d(detach);
+		if (iterations[i]) iterations[i].d(detaching);
 	}
 }
 
-export function createFragment() {
-	return document.createDocumentFragment();
-}
-
-export function createElement(name) {
+export function element(name) {
 	return document.createElement(name);
 }
 
-export function createSvgElement(name) {
+export function svg_element(name) {
 	return document.createElementNS('http://www.w3.org/2000/svg', name);
 }
 
-export function createText(data) {
+export function text(data) {
 	return document.createTextNode(data);
 }
 
-export function createComment() {
+export function comment() {
 	return document.createComment('');
 }
 
-export function addListener(node, event, handler, options) {
+export function listen(node, event, handler, options) {
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
 }
 
-export function preventDefault(fn) {
+export function prevent_default(fn) {
 	return function(event) {
 		event.preventDefault();
 		return fn.call(this, event);
 	};
 }
 
-export function stopPropagation(fn) {
+export function stop_propagation(fn) {
 	return function(event) {
 		event.stopPropagation();
 		return fn.call(this, event);
 	};
 }
 
-export function setAttribute(node, attribute, value) {
+export function attr(node, attribute, value) {
 	if (value == null) node.removeAttribute(attribute);
 	else node.setAttribute(attribute, value);
 }
 
-export function setAttributes(node, attributes) {
+export function set_attributes(node, attributes) {
 	for (var key in attributes) {
 		if (key === 'style') {
 			node.style.cssText = attributes[key];
 		} else if (key in node) {
 			node[key] = attributes[key];
 		} else {
-			setAttribute(node, key, attributes[key]);
+			attr(node, key, attributes[key]);
 		}
 	}
 }
 
-export function setCustomElementData(node, prop, value) {
+export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
 		node[prop] = value;
 	} else {
-		setAttribute(node, prop, value);
+		attr(node, prop, value);
 	}
 }
 
-export function setXlinkAttribute(node, attribute, value) {
+export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
-export function getBindingGroupValue(group) {
+export function get_binding_group_value(group) {
 	var value = [];
 	for (var i = 0; i < group.length; i += 1) {
 		if (group[i].checked) value.push(group[i].__value);
@@ -129,11 +106,11 @@ export function getBindingGroupValue(group) {
 	return value;
 }
 
-export function toNumber(value) {
+export function to_number(value) {
 	return value === '' ? undefined : +value;
 }
 
-export function timeRangesToArray(ranges) {
+export function time_ranges_to_array(ranges) {
 	var array = [];
 	for (var i = 0; i < ranges.length; i += 1) {
 		array.push({ start: ranges.start(i), end: ranges.end(i) });
@@ -141,11 +118,11 @@ export function timeRangesToArray(ranges) {
 	return array;
 }
 
-export function children (element) {
+export function children(element) {
 	return Array.from(element.childNodes);
 }
 
-export function claimElement (nodes, name, attributes, svg) {
+export function claim_element(nodes, name, attributes, svg) {
 	for (var i = 0; i < nodes.length; i += 1) {
 		var node = nodes[i];
 		if (node.nodeName === name) {
@@ -157,10 +134,10 @@ export function claimElement (nodes, name, attributes, svg) {
 		}
 	}
 
-	return svg ? createSvgElement(name) : createElement(name);
+	return svg ? svg_element(name) : element(name);
 }
 
-export function claimText (nodes, data) {
+export function claim_text(nodes, data) {
 	for (var i = 0; i < nodes.length; i += 1) {
 		var node = nodes[i];
 		if (node.nodeType === 3) {
@@ -169,24 +146,24 @@ export function claimText (nodes, data) {
 		}
 	}
 
-	return createText(data);
+	return text(data);
 }
 
-export function setData(text, data) {
+export function set_data(text, data) {
 	text.data = '' + data;
 }
 
-export function setInputType(input, type) {
+export function set_input_type(input, type) {
 	try {
 		input.type = type;
 	} catch (e) {}
 }
 
-export function setStyle(node, key, value) {
+export function set_style(node, key, value) {
 	node.style.setProperty(key, value);
 }
 
-export function selectOption(select, value) {
+export function select_option(select, value) {
 	for (var i = 0; i < select.options.length; i += 1) {
 		var option = select.options[i];
 
@@ -197,25 +174,25 @@ export function selectOption(select, value) {
 	}
 }
 
-export function selectOptions(select, value) {
+export function select_options(select, value) {
 	for (var i = 0; i < select.options.length; i += 1) {
 		var option = select.options[i];
 		option.selected = ~value.indexOf(option.__value);
 	}
 }
 
-export function selectValue(select) {
+export function select_value(select) {
 	var selectedOption = select.querySelector(':checked') || select.options[0];
 	return selectedOption && selectedOption.__value;
 }
 
-export function selectMultipleValue(select) {
+export function select_multiple_value(select) {
 	return [].map.call(select.querySelectorAll(':checked'), function(option) {
 		return option.__value;
 	});
 }
 
-export function addResizeListener(element, fn) {
+export function add_resize_listener(element, fn) {
 	if (getComputedStyle(element).position === 'static') {
 		element.style.position = 'relative';
 	}
@@ -247,7 +224,7 @@ export function addResizeListener(element, fn) {
 	};
 }
 
-export function toggleClass(element, name, toggle) {
+export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 

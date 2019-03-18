@@ -1,6 +1,6 @@
 import Node from './shared/Node';
 import Block from '../render-dom/Block';
-import mapChildren from './shared/mapChildren';
+import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
 
 export default class CatchBlock extends Node {
@@ -13,8 +13,8 @@ export default class CatchBlock extends Node {
 
 		this.scope = scope.child();
 		this.scope.add(parent.error, parent.expression.dependencies, this);
-		this.children = mapChildren(component, parent, this.scope, info.children);
+		this.children = map_children(component, parent, this.scope, info.children);
 
-		this.warnIfEmptyBlock();
+		this.warn_if_empty_block();
 	}
 }
