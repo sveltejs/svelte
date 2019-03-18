@@ -1097,6 +1097,7 @@ export default class Component {
 						node.body.type === 'ExpressionStatement' &&
 						node.body.expression.type === 'AssignmentExpression' &&
 						node.body.expression.left.type === 'Identifier' &&
+						node.body.expression.left.name[0] !== '$' &&
 						this.var_lookup.get(node.body.expression.left.name).injected
 					)
 				});
