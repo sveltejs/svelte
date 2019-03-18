@@ -346,6 +346,7 @@ export default function dom(
 		const reactive_declarations = component.reactive_declarations.map(d => {
 			const condition = Array.from(d.dependencies)
 				.filter(n => {
+					if (n === '$$props') return false;
 					const variable = component.var_lookup.get(n);
 					return variable && variable.writable;
 				})
@@ -358,8 +359,11 @@ export default function dom(
 						[✂${d.node.body.start}-${d.node.end}✂]
 					}`;
 
-			return deindent`
-				if (${condition}) ${snippet}`
+			return condition
+				? deindent`
+					if (${condition}) ${snippet}`
+				: deindent`
+					${snippet}`
 		});
 
 		const injected = Array.from(component.injected_reactive_declaration_vars).filter(name => {
