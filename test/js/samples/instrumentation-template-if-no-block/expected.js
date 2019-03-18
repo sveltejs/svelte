@@ -10,6 +10,7 @@ import {
 	noop,
 	safe_not_equal,
 	set_data,
+	space,
 	text
 } from "svelte/internal";
 
@@ -20,7 +21,7 @@ function create_fragment(ctx) {
 		c() {
 			button = element("button");
 			button.textContent = "foo";
-			t1 = text("\n\n");
+			t1 = space();
 			p = element("p");
 			t2 = text("x: ");
 			t3 = text(ctx.x);

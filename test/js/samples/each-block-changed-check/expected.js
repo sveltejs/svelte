@@ -11,6 +11,7 @@ import {
 	noop,
 	safe_not_equal,
 	set_data,
+	space,
 	text
 } from "svelte/internal";
 
@@ -30,13 +31,13 @@ function create_each_block(ctx) {
 			div = element("div");
 			strong = element("strong");
 			t0 = text(ctx.i);
-			t1 = text("\n\n\t\t");
+			t1 = space();
 			span = element("span");
 			t2 = text(t2_value);
 			t3 = text(" wrote ");
 			t4 = text(t4_value);
 			t5 = text(" ago:");
-			t6 = text("\n\n\t\t");
+			t6 = space();
 			raw_before = element('noscript');
 			span.className = "meta";
 			div.className = "comment";
@@ -97,7 +98,7 @@ function create_fragment(ctx) {
 				each_blocks[i].c();
 			}
 
-			t0 = text("\n\n");
+			t0 = space();
 			p = element("p");
 			t1 = text(ctx.foo);
 		},

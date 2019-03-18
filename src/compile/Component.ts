@@ -25,6 +25,7 @@ type ComponentOptions = {
 	tag?: string;
 	immutable?: boolean;
 	accessors?: boolean;
+	preserveWhitespace?: boolean;
 };
 
 // We need to tell estree-walker that it should always
@@ -1196,7 +1197,8 @@ function process_component_options(component: Component, nodes) {
 		immutable: component.compile_options.immutable || false,
 		accessors: 'accessors' in component.compile_options
 			? component.compile_options.accessors
-			: !!component.compile_options.customElement
+			: !!component.compile_options.customElement,
+		preserveWhitespace: !!component.compile_options.preserveWhitespace
 	};
 
 	const node = nodes.find(node => node.name === 'svelte:options');
@@ -1272,6 +1274,7 @@ function process_component_options(component: Component, nodes) {
 
 					case 'accessors':
 					case 'immutable':
+					case 'preserveWhitespace':
 						const code = `invalid-${name}-value`;
 						const message = `${name} attribute must be true or false`
 						const value = get_value(attribute, code, message);
@@ -1292,7 +1295,7 @@ function process_component_options(component: Component, nodes) {
 			else {
 				component.error(attribute, {
 					code: `invalid-options-attribute`,
-					message: `<svelte:options> can only have static 'tag', 'namespace', 'accessors' and 'immutable' attributes`
+					message: `<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable' and 'preserveWhitespace' attributes`
 				});
 			}
 		});
