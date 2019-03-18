@@ -1,13 +1,18 @@
 import { writable } from '../../../../store.js';
 
+const c = writable(0);
+
 export default {
 	props: {
-		count: writable(0)
+		c
 	},
 
 	html: `
-		<button>count 0</button>
-		<p>doubled: 0</p>
+		<p>a: 0</p>
+		<p>b: 0</p>
+		<p>c: 0</p>
+
+		<button>+1</button>
 	`,
 
 	async test({ assert, component, target, window }) {
@@ -17,15 +22,21 @@ export default {
 		await button.dispatchEvent(click);
 
 		assert.htmlEqual(target.innerHTML, `
-			<button>count 1</button>
-			<p>doubled: 2</p>
+			<p>a: 1</p>
+			<p>b: 1</p>
+			<p>c: 1</p>
+
+			<button>+1</button>
 		`);
 
-		await component.count.set(42);
+		await component.c.set(42);
 
 		assert.htmlEqual(target.innerHTML, `
-			<button>count 42</button>
-			<p>doubled: 84</p>
+			<p>a: 42</p>
+			<p>b: 42</p>
+			<p>c: 42</p>
+
+			<button>+1</button>
 		`);
 	}
 };
