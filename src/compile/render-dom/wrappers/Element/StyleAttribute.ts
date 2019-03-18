@@ -3,7 +3,7 @@ import Block from '../../Block';
 import AttributeWrapper from './Attribute';
 import Node from '../../../nodes/shared/Node';
 import ElementWrapper from '.';
-import { stringify } from '../../../../utils/stringify';
+import { stringify } from '../../../utils/stringify';
 import add_to_set from '../../../utils/add_to_set';
 
 export interface StyleProp {

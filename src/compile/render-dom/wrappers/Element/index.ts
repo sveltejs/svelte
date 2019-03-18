@@ -5,7 +5,7 @@ import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
 import { is_void, quote_prop_if_necessary, quote_name_if_necessary, sanitize } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
-import { stringify, escapeHTML, escape } from '../../../../utils/stringify';
+import { stringify, escape_html, escape } from '../../../utils/stringify';
 import TextWrapper from '../Text';
 import fix_attribute_casing from './fix_attribute_casing';
 import deindent from '../../../utils/deindent';
@@ -323,7 +323,7 @@ export default class ElementWrapper extends Wrapper {
 
 				return raw
 					? wrapper.node.data
-					: escapeHTML(wrapper.node.data)
+					: escape_html(wrapper.node.data)
 						.replace(/\\/g, '\\\\')
 						.replace(/`/g, '\\`')
 						.replace(/\$/g, '\\$');

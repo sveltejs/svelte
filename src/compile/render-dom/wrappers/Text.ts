@@ -2,8 +2,7 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Text from '../../nodes/Text';
 import Wrapper from './shared/Wrapper';
-import { CompileOptions } from '../../../interfaces';
-import { stringify } from '../../../utils/stringify';
+import { stringify } from '../../utils/stringify';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This

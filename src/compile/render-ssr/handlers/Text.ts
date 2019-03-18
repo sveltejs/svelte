@@ -1,4 +1,4 @@
-import { escapeHTML, escapeTemplate, escape } from '../../../utils/stringify';
+import { escape_html, escape_template, escape } from '../../utils/stringify';
 
 export default function(node, renderer, options) {
 	let text = node.data;
@@ -8,7 +8,7 @@ export default function(node, renderer, options) {
 		(node.parent.name !== 'script' && node.parent.name !== 'style')
 	) {
 		// unless this Text node is inside a <script> or <style> element, escape &,<,>
-		text = escapeHTML(text);
+		text = escape_html(text);
 	}
-	renderer.append(escape(escapeTemplate(text)));
+	renderer.append(escape(escape_template(text)));
 }

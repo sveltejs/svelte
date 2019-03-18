@@ -1,6 +1,6 @@
-import { escape, escapeTemplate, stringify } from '../../../utils/stringify';
+import { escape, escape_template, stringify } from '../../utils/stringify';
 import { quote_name_if_necessary } from '../../../utils/names';
-import { snip } from '../../../utils/snip';
+import { snip } from '../../utils/snip';
 import Renderer from '../Renderer';
 import { stringify_props } from '../../utils/stringify_props';
 import { get_slot_scope } from './shared/get_slot_scope';
@@ -9,7 +9,7 @@ type AppendTarget = any; // TODO
 
 function stringifyAttribute(chunk: Node) {
 	if (chunk.type === 'Text') {
-		return escapeTemplate(escape(chunk.data));
+		return escape_template(escape(chunk.data));
 	}
 
 	return '${@escape( ' + snip(chunk) + ')}';

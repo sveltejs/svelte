@@ -1,7 +1,7 @@
 import deindent from '../utils/deindent';
 import Component from '../Component';
 import { CompileOptions } from '../../interfaces';
-import { stringify } from '../../utils/stringify';
+import { stringify } from '../utils/stringify';
 import Renderer from './Renderer';
 
 export default function ssr(

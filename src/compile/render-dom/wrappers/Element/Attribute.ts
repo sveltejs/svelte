@@ -2,7 +2,7 @@ import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
 import fix_attribute_casing from './fix_attribute_casing';
 import ElementWrapper from './index';
-import { stringify } from '../../../../utils/stringify';
+import { stringify } from '../../../utils/stringify';
 import deindent from '../../../utils/deindent';
 
 export default class AttributeWrapper {

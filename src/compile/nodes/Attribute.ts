@@ -1,4 +1,4 @@
-import { stringify } from '../../utils/stringify';
+import { stringify } from '../utils/stringify';
 import add_to_set from '../utils/add_to_set';
 import Component from '../Component';
 import Node from './shared/Node';

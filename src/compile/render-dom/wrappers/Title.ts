@@ -2,8 +2,7 @@ import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Title from '../../nodes/Title';
-import FragmentWrapper from './Fragment';
-import { stringify } from '../../../utils/stringify';
+import { stringify } from '../../utils/stringify';
 import add_to_set from '../../utils/add_to_set';
 
 export default class TitleWrapper extends Wrapper {

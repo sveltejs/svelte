@@ -14,10 +14,10 @@ const escaped = {
 	'>': '&gt;',
 };
 
-export function escapeHTML(html) {
+export function escape_html(html) {
 	return String(html).replace(/[&<>]/g, match => escaped[match]);
 }
 
-export function escapeTemplate(str) {
+export function escape_template(str) {
 	return str.replace(/(\${|`|\\)/g, '\\$1');
 }
