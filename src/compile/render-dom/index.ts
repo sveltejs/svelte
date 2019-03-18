@@ -96,33 +96,39 @@ export default function dom(
 	props.forEach(x => {
 		const variable = component.var_lookup.get(x.name);
 
-		if (variable.hoistable) {
+		if (!variable.writable || component.component_options.accessors) {
 			body.push(deindent`
 				get ${x.export_name}() {
-					return ${x.name};
+					return ${x.hoistable ? x.name : 'this.$$.ctx.' + x.name};
 				}
 			`);
-		} else if (component.component_options.accessors) {
+		} else if (component.compile_options.dev) {
 			body.push(deindent`
 				get ${x.export_name}() {
-					return this.$$.ctx.${x.name};
+					throw new Error("<${component.tag}>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 				}
 			`);
 		}
 
-		if (variable.writable && !renderer.readonly.has(x.export_name)) {
-			if (component.component_options.accessors) {
+		if (component.component_options.accessors) {
+			if (variable.writable && !renderer.readonly.has(x.name)) {
 				body.push(deindent`
 					set ${x.export_name}(${x.name}) {
 						this.$set({ ${x.name === x.export_name ? x.name : `${x.export_name}: ${x.name}`} });
 						@flush();
 					}
 				`);
+			} else if (component.compile_options.dev) {
+				body.push(deindent`
+					set ${x.export_name}(value) {
+						throw new Error("<${component.tag}>: Cannot set read-only property '${x.export_name}'");
+					}
+				`);
 			}
 		} else if (component.compile_options.dev) {
 			body.push(deindent`
 				set ${x.export_name}(value) {
-					throw new Error("<${component.tag}>: Cannot set read-only property '${x.export_name}'");
+					throw new Error("<${component.tag}>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 				}
 			`);
 		}
