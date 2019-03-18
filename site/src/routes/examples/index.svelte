@@ -15,6 +15,7 @@
 <style>
 	.content {
 		max-width: 120rem;
+		padding: 0 var(--side-nav);
 		margin: 0 auto;
 	}
 
