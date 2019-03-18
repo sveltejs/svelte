@@ -14,7 +14,7 @@ import Text from './Text';
 import Title from './Title';
 import Window from './Window';
 import Node from '../../nodes/shared/Node';
-import { trimStart, trimEnd } from '../../../utils/trim';
+import { trim_start, trim_end } from '../../../utils/trim';
 import TextWrapper from './Text';
 import Renderer from '../Renderer';
 import Block from '../Block';
@@ -89,7 +89,7 @@ export default class FragmentWrapper {
 					);
 
 					if (shouldTrim) {
-						data = trimEnd(data);
+						data = trim_end(data);
 						if (!data) continue;
 					}
 				}
@@ -121,7 +121,7 @@ export default class FragmentWrapper {
 			const first = this.nodes[0] as TextWrapper;
 
 			if (first && first.node.type === 'Text') {
-				first.data = trimStart(first.data);
+				first.data = trim_start(first.data);
 				if (!first.data) {
 					first.var = null;
 					this.nodes.shift();

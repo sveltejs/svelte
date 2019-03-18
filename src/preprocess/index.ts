@@ -21,17 +21,17 @@ interface Processed {
 	dependencies?: string[];
 }
 
-function parseAttributeValue(value: string) {
+function parse_attribute_value(value: string) {
 	return /^['"]/.test(value) ?
 		value.slice(1, -1) :
 		value;
 }
 
-function parseAttributes(str: string) {
+function parse_attributes(str: string) {
 	const attrs = {};
 	str.split(/\s+/).filter(Boolean).forEach(attr => {
 		const [name, value] = attr.split('=');
-		attrs[name] = value ? parseAttributeValue(value) : true;
+		attrs[name] = value ? parse_attribute_value(value) : true;
 	});
 	return attrs;
 }
@@ -99,7 +99,7 @@ export default async function preprocess(
 			async (match, attributes, content) => {
 				const processed: Processed = await fn({
 					content,
-					attributes: parseAttributes(attributes),
+					attributes: parse_attributes(attributes),
 					filename
 				});
 				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
@@ -115,7 +115,7 @@ export default async function preprocess(
 			async (match, attributes, content) => {
 				const processed: Processed = await fn({
 					content,
-					attributes: parseAttributes(attributes),
+					attributes: parse_attributes(attributes),
 					filename
 				});
 				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);

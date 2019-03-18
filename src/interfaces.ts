@@ -15,7 +15,7 @@ export interface Parser {
 	html: Node;
 	css: Node;
 	js: Node;
-	metaTags: {};
+	meta_tags: {};
 }
 
 export interface Ast {
