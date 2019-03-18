@@ -88,6 +88,14 @@ class SvelteComponent extends SvelteComponentDev {
 			console.warn("<SvelteComponent> was created without expected prop 'foo'");
 		}
 	}
+
+	get foo() {
+		throw new Error("<SvelteComponent>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+	}
+
+	set foo(value) {
+		throw new Error("<SvelteComponent>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+	}
 }
 
 export default SvelteComponent;
