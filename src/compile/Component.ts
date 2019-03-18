@@ -113,6 +113,7 @@ export default class Component {
 
 	aliases: Map<string, string> = new Map();
 	used_names: Set<string> = new Set();
+	globally_used_names: Set<string> = new Set();
 
 	constructor(
 		ast: Ast,
@@ -349,7 +350,8 @@ export default class Component {
 			let i = 1;
 			reserved.has(alias) ||
 			this.var_lookup.has(alias) ||
-			this.used_names.has(alias);
+			this.used_names.has(alias) ||
+			this.globally_used_names.has(alias);
 			alias = `${name}_${i++}`
 		);
 		this.used_names.add(alias);
@@ -377,6 +379,7 @@ export default class Component {
 				alias = `${name}_${i++}`
 			);
 			local_used_names.add(alias);
+			this.globally_used_names.add(alias);
 			return alias;
 		};
 	}

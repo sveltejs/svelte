@@ -20,7 +20,7 @@ export default class MustacheTagWrapper extends Tag {
 
 		block.add_element(
 			this.var,
-			`@create_text(${init})`,
+			`@text(${init})`,
 			parent_nodes && `@claim_text(${parent_nodes}, ${init})`,
 			parent_node
 		);

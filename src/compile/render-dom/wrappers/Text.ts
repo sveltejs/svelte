@@ -54,7 +54,7 @@ export default class TextWrapper extends Wrapper {
 
 		block.add_element(
 			this.var,
-			`@create_text(${stringify(this.data)})`,
+			`@text(${stringify(this.data)})`,
 			parent_nodes && `@claim_text(${parent_nodes}, ${stringify(this.data)})`,
 			parent_node
 		);

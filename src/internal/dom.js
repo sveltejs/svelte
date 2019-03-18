@@ -42,7 +42,7 @@ export function svg_element(name) {
 	return document.createElementNS('http://www.w3.org/2000/svg', name);
 }
 
-export function create_text(data) {
+export function text(data) {
 	return document.createTextNode(data);
 }
 
@@ -146,7 +146,7 @@ export function claim_text(nodes, data) {
 		}
 	}
 
-	return create_text(data);
+	return text(data);
 }
 
 export function set_data(text, data) {
