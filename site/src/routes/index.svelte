@@ -1,6 +1,7 @@
 <script>
 	import Icon from '../components/Icon.svelte';
 	import Logo from '../components/Logo.svelte';
+	import ReplWidget from '../components/Repl/ReplWidget.svelte'; // TODO lazyload?
 	import contributors from './_contributors.js';
 
 	let sy = 0;
@@ -120,6 +121,9 @@
 		color: white;
 		padding: 0.8rem;
 		border-radius: var(--border-r); */
+		width: 100%;
+		height: 420px;
+		border-radius: var(--border-r);
 	}
 
 	.example > div:first-child {
@@ -240,11 +244,7 @@ npm run dev & open http://localhost:5000
 			<p>Svelte components are written in HTML files. Just add data.</p>
 		</div>
 
-		<iframe
-			title="Hello world example"
-			src="/repl/embed?example=hello-world"
-			scrolling="no"
-		></iframe>
+		<ReplWidget example="hello-world"/>
 	</section>
 
 	<section class="container example linkify">
@@ -252,11 +252,7 @@ npm run dev & open http://localhost:5000
 			<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
 		</div>
 
-		<iframe
-			title="Scope styles example"
-			src="/repl/embed?example=nested-components"
-			scrolling="no"
-		></iframe>
+		<ReplWidget example="nested-components"/>
 	</section>
 
 	<section class="container example linkify">
@@ -264,11 +260,7 @@ npm run dev & open http://localhost:5000
 			<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
 		</div>
 
-		<iframe
-			title="Reactivity example"
-			src="/repl/embed?example=reactive-assignments"
-			scrolling="no"
-		></iframe>
+		<ReplWidget example="reactive-assignments"/>
 	</section>
 
 	<section class="container example linkify">
@@ -276,11 +268,7 @@ npm run dev & open http://localhost:5000
 			<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
 		</div>
 
-		<iframe
-			title="Transitions example"
-			src="/repl/embed?example=svg-transitions"
-			scrolling="no"
-		></iframe>
+		<ReplWidget example="svg-transitions"/>
 	</section>
 </div>
 

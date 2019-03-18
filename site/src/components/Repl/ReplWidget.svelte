@@ -1,19 +1,11 @@
-<script context="module">
-	export function preload({ query }) {
-		return {
-			version: query.version || 'beta',
-			gist: query.gist,
-			example: query.example
-		};
-	}
-</script>
-
 <script>
 	import { onMount } from 'svelte';
-	import { process_example } from '../../components/Repl/process_example.js';
+	import { process_example } from './process_example.js';
 	import Repl from '../../components/Repl/index.svelte';
 
-	export let version, gist, example;
+	export let version = 'beta';
+	export let gist;
+	export let example;
 
 	let repl;
 	let name = 'loading...';
@@ -74,7 +66,7 @@
 
 <style>
 	.repl-outer {
-		position: fixed;
+		position: relative;
 		top: 0;
 		left: 0;
 		width: 100%;
