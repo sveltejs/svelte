@@ -5,9 +5,9 @@ import Slot from '../../nodes/Slot';
 import FragmentWrapper from './Fragment';
 import deindent from '../../../utils/deindent';
 import sanitize from '../../../utils/sanitize';
-import addToSet from '../../../utils/addToSet';
+import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../../utils/get_slot_data';
-import stringifyProps from '../../../utils/stringifyProps';
+import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
 
 export default class SlotWrapper extends Wrapper {
@@ -38,7 +38,7 @@ export default class SlotWrapper extends Wrapper {
 		);
 
 		this.node.attributes.forEach(attribute => {
-			addToSet(this.dependencies, attribute.dependencies);
+			add_to_set(this.dependencies, attribute.dependencies);
 		});
 
 		block.addDependencies(this.dependencies);
@@ -71,8 +71,8 @@ export default class SlotWrapper extends Wrapper {
 			attributes.forEach(attribute => {
 				attribute.chunks.forEach(chunk => {
 					if ((chunk as Expression).dependencies) {
-						addToSet(dependencies, (chunk as Expression).dependencies);
-						addToSet(dependencies, (chunk as Expression).contextual_dependencies);
+						add_to_set(dependencies, (chunk as Expression).dependencies);
+						add_to_set(dependencies, (chunk as Expression).contextual_dependencies);
 					}
 				});
 
@@ -84,8 +84,8 @@ export default class SlotWrapper extends Wrapper {
 			const arg = dependencies.size > 0 ? `{ ${Array.from(dependencies).join(', ')} }` : '{}';
 
 			renderer.blocks.push(deindent`
-				const ${get_slot_changes} = (${arg}) => (${stringifyProps(changes_props)});
-				const ${get_slot_context} = (${arg}) => (${stringifyProps(context_props)});
+				const ${get_slot_changes} = (${arg}) => (${stringify_props(changes_props)});
+				const ${get_slot_context} = (${arg}) => (${stringify_props(context_props)});
 			`);
 		} else {
 			get_slot_context = 'null';

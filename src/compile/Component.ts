@@ -6,7 +6,7 @@ import reservedNames from '../utils/reservedNames';
 import { namespaces, validNamespaces } from '../utils/namespaces';
 import { removeNode } from '../utils/removeNode';
 import wrapModule from './wrapModule';
-import { createScopes, extractNames, Scope } from '../utils/annotateWithScopes';
+import { create_scopes, extract_names, Scope } from './utils/scope';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
@@ -15,7 +15,7 @@ import { Node, Ast, CompileOptions, Var, Warning } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
-import isReference from 'is-reference';
+import is_reference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import { remove_indentation, add_indentation } from '../utils/indentation';
@@ -439,7 +439,7 @@ export default class Component {
 				if (node.declaration) {
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
-							extractNames(declarator.id).forEach(name => {
+							extract_names(declarator.id).forEach(name => {
 								const variable = this.var_lookup.get(name);
 								variable.export_name = name;
 							});
@@ -511,7 +511,7 @@ export default class Component {
 
 		this.addSourcemapLocations(script.content);
 
-		let { scope, globals } = createScopes(script.content);
+		let { scope, globals } = create_scopes(script.content);
 		this.module_scope = scope;
 
 		scope.declarations.forEach((node, name) => {
@@ -569,7 +569,7 @@ export default class Component {
 			}
 		});
 
-		let { scope: instance_scope, map, globals } = createScopes(script.content);
+		let { scope: instance_scope, map, globals } = create_scopes(script.content);
 		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
 
@@ -663,14 +663,14 @@ export default class Component {
 
 					names = deep
 						? [getObject(node.left).name]
-						: extractNames(node.left);
+						: extract_names(node.left);
 				} else if (node.type === 'UpdateExpression') {
 					names = [getObject(node.argument).name];
 				}
 
 				if (names) {
 					names.forEach(name => {
-						if (scope.findOwner(name) === instance_scope) {
+						if (scope.find_owner(name) === instance_scope) {
 							const variable = component.var_lookup.get(name);
 							variable[deep ? 'mutated' : 'reassigned'] = true;
 						}
@@ -698,7 +698,7 @@ export default class Component {
 					scope = map.get(node);
 				}
 
-				if (isReference(node, parent)) {
+				if (is_reference(node, parent)) {
 					const object = getObject(node);
 					const { name } = object;
 
@@ -757,7 +757,7 @@ export default class Component {
 							if (declarator.id.type !== 'Identifier') {
 								const inserts = [];
 
-								extractNames(declarator.id).forEach(name => {
+								extract_names(declarator.id).forEach(name => {
 									const variable = component.var_lookup.get(name);
 
 									if (variable.export_name) {
@@ -946,9 +946,9 @@ export default class Component {
 						scope = map.get(node);
 					}
 
-					if (isReference(node, parent)) {
+					if (is_reference(node, parent)) {
 						const { name } = flattenReference(node);
-						const owner = scope.findOwner(name);
+						const owner = scope.find_owner(name);
 
 						if (name[0] === '$' && !owner) {
 							hoistable = false;
@@ -1034,11 +1034,11 @@ export default class Component {
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = getObject(node.argument);
 							assignees.add(identifier.name);
-						} else if (isReference(node, parent)) {
+						} else if (is_reference(node, parent)) {
 							const identifier = getObject(node);
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
-								const owner = scope.findOwner(name);
+								const owner = scope.find_owner(name);
 								if (
 									(!owner || owner === component.instance_scope) &&
 									(name[0] === '$' || component.var_lookup.has(name) && component.var_lookup.get(name).writable)

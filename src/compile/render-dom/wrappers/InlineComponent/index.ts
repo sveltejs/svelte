@@ -4,8 +4,8 @@ import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
 import FragmentWrapper from '../Fragment';
 import { quoteNameIfNecessary, quotePropIfNecessary } from '../../../../utils/quoteIfNecessary';
-import stringifyProps from '../../../../utils/stringifyProps';
-import addToSet from '../../../../utils/addToSet';
+import { stringify_props } from '../../../utils/stringify_props';
+import add_to_set from '../../../utils/add_to_set';
 import deindent from '../../../../utils/deindent';
 import Attribute from '../../../nodes/Attribute';
 import getObject from '../../../../utils/getObject';
@@ -124,8 +124,8 @@ export default class InlineComponentWrapper extends Wrapper {
 		if (slot_props.length > 0) slot_props.push(`$$scope: { ctx }`);
 
 		const attributeObject = usesSpread
-			? stringifyProps(slot_props)
-			: stringifyProps(
+			? stringify_props(slot_props)
+			: stringify_props(
 				this.node.attributes.map(attr => `${quoteNameIfNecessary(attr.name)}: ${attr.getValue(block)}`).concat(slot_props)
 			);
 
@@ -184,7 +184,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				const allDependencies = new Set();
 
 				this.node.attributes.forEach(attr => {
-					addToSet(allDependencies, attr.dependencies);
+					add_to_set(allDependencies, attr.dependencies);
 				});
 
 				this.node.attributes.forEach(attr => {
@@ -378,7 +378,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					${(this.node.attributes.length || this.node.bindings.length) && deindent`
 					${props && `let ${props} = ${attributeObject};`}`}
 					${statements}
-					return ${stringifyProps(component_opts)};
+					return ${stringify_props(component_opts)};
 				}
 
 				if (${switch_value}) {
@@ -469,7 +469,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				${(this.node.attributes.length || this.node.bindings.length) && deindent`
 				${props && `let ${props} = ${attributeObject};`}`}
 				${statements}
-				var ${name} = new ${expression}(${stringifyProps(component_opts)});
+				var ${name} = new ${expression}(${stringify_props(component_opts)});
 
 				${munged_bindings}
 				${munged_handlers}

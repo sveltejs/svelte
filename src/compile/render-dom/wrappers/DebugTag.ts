@@ -2,7 +2,7 @@ import Renderer from '../Renderer';
 import Wrapper from './shared/Wrapper';
 import Block from '../Block';
 import DebugTag from '../../nodes/DebugTag';
-import addToSet from '../../../utils/addToSet';
+import add_to_set from '../../utils/add_to_set';
 import deindent from '../../../utils/deindent';
 
 export default class DebugTagWrapper extends Wrapper {
@@ -45,7 +45,7 @@ export default class DebugTagWrapper extends Wrapper {
 
 			const dependencies = new Set();
 			this.node.expressions.forEach(expression => {
-				addToSet(dependencies, expression.dependencies);
+				add_to_set(dependencies, expression.dependencies);
 			});
 
 			const condition = Array.from(dependencies).map(d => `changed.${d}`).join(' || ');

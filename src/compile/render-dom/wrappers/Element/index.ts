@@ -16,7 +16,7 @@ import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';
 import Binding from './Binding';
 import InlineComponentWrapper from '../InlineComponent';
-import addToSet from '../../../../utils/addToSet';
+import add_to_set from '../../../utils/add_to_set';
 import addEventHandlers from '../shared/addEventHandlers';
 import addActions from '../shared/addActions';
 import createDebuggingComment from '../../../../utils/createDebuggingComment';
@@ -420,9 +420,9 @@ export default class ElementWrapper extends Wrapper {
 
 			group.bindings.forEach(binding => {
 				// TODO this is a mess
-				addToSet(dependencies, binding.get_dependencies());
-				addToSet(contextual_dependencies, binding.node.expression.contextual_dependencies);
-				addToSet(contextual_dependencies, binding.handler.contextual_dependencies);
+				add_to_set(dependencies, binding.get_dependencies());
+				add_to_set(contextual_dependencies, binding.node.expression.contextual_dependencies);
+				add_to_set(contextual_dependencies, binding.handler.contextual_dependencies);
 
 				binding.render(block, lock);
 			});

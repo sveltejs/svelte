@@ -1,5 +1,5 @@
 import { stringify } from '../../utils/stringify';
-import addToSet from '../../utils/addToSet';
+import add_to_set from '../utils/add_to_set';
 import Component from '../Component';
 import Node from './shared/Node';
 import Element from './Element';
@@ -59,7 +59,7 @@ export default class Attribute extends Node {
 
 					const expression = new Expression(component, this, scope, node.expression);
 
-					addToSet(this.dependencies, expression.dependencies);
+					add_to_set(this.dependencies, expression.dependencies);
 					return expression;
 				});
 
@@ -79,7 +79,7 @@ export default class Attribute extends Node {
 		const dependencies = new Set();
 		this.chunks.forEach(chunk => {
 			if (chunk.type === 'Expression') {
-				addToSet(dependencies, chunk.dynamic_dependencies());
+				add_to_set(dependencies, chunk.dynamic_dependencies());
 			}
 		});
 

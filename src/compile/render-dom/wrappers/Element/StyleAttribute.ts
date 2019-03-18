@@ -4,7 +4,7 @@ import AttributeWrapper from './Attribute';
 import Node from '../../../nodes/shared/Node';
 import ElementWrapper from '.';
 import { stringify } from '../../../../utils/stringify';
-import addToSet from '../../../../utils/addToSet';
+import add_to_set from '../../../utils/add_to_set';
 
 export interface StyleProp {
 	key: string;
@@ -35,7 +35,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 							} else {
 								const snippet = chunk.render();
 
-								addToSet(propDependencies, chunk.dependencies);
+								add_to_set(propDependencies, chunk.dependencies);
 
 								return chunk.getPrecedence() <= 13 ? `(${snippet})` : snippet;
 							}

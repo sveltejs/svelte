@@ -2,7 +2,7 @@ import { escape, escapeTemplate, stringify } from '../../../utils/stringify';
 import { quoteNameIfNecessary } from '../../../utils/quoteIfNecessary';
 import { snip } from '../../../utils/snip';
 import Renderer from '../Renderer';
-import stringifyProps from '../../../utils/stringifyProps';
+import { stringify_props } from '../../utils/stringify_props';
 import { get_slot_scope } from './shared/get_slot_scope';
 
 type AppendTarget = any; // TODO
@@ -63,14 +63,14 @@ export default function(node, renderer: Renderer, options) {
 				.join(', ')
 		})`;
 	} else {
-		props = stringifyProps(
+		props = stringify_props(
 			node.attributes
 				.map(attribute => `${attribute.name}: ${getAttributeValue(attribute)}`)
 				.concat(binding_props)
 		);
 	}
 
-	const bindings = stringifyProps(binding_fns);
+	const bindings = stringify_props(binding_fns);
 
 	const expression = (
 		node.name === 'svelte:self'
@@ -108,7 +108,7 @@ export default function(node, renderer: Renderer, options) {
 		renderer.targets.pop();
 	}
 
-	const slots = stringifyProps(slot_fns);
+	const slots = stringify_props(slot_fns);
 
 	renderer.append(`\${@validate_component(${expression}, '${node.name}').$$render($$result, ${props}, ${bindings}, ${slots})}`);
 }

@@ -1,8 +1,8 @@
 import Component from '../../Component';
 import { walk } from 'estree-walker';
-import isReference from 'is-reference';
+import is_reference from 'is-reference';
 import flattenReference from '../../../utils/flattenReference';
-import { createScopes, Scope, extractNames } from '../../../utils/annotateWithScopes';
+import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
 import globalWhitelist from '../../../utils/globalWhitelist';
 import deindent from '../../../utils/deindent';
@@ -97,7 +97,7 @@ export default class Expression {
 
 		const { dependencies, contextual_dependencies } = this;
 
-		let { map, scope } = createScopes(info);
+		let { map, scope } = create_scopes(info);
 		this.scope = scope;
 		this.scope_map = map;
 
@@ -118,7 +118,7 @@ export default class Expression {
 					function_expression = node;
 				}
 
-				if (isReference(node, parent)) {
+				if (is_reference(node, parent)) {
 					const { name, nodes } = flattenReference(node);
 
 					if (scope.has(name)) return;
@@ -165,7 +165,7 @@ export default class Expression {
 						deep = node.left.type === 'MemberExpression';
 						names = deep
 							? [getObject(node.left).name]
-							: extractNames(node.left);
+							: extract_names(node.left);
 					} else if (node.type === 'UpdateExpression') {
 						const { name } = getObject(node.argument);
 						names = [name];
@@ -253,7 +253,7 @@ export default class Expression {
 					scope = map.get(node);
 				}
 
-				if (isReference(node, parent)) {
+				if (is_reference(node, parent)) {
 					const { name, nodes } = flattenReference(node);
 
 					if (scope.has(name)) return;
@@ -290,7 +290,7 @@ export default class Expression {
 					if (node.type === 'AssignmentExpression') {
 						const names = node.left.type === 'MemberExpression'
 							? [getObject(node.left).name]
-							: extractNames(node.left);
+							: extract_names(node.left);
 
 						if (node.operator === '=' && nodes_match(node.left, node.right)) {
 							const dirty = names.filter(name => {

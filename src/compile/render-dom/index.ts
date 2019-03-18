@@ -5,10 +5,10 @@ import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
-import stringifyProps from '../../utils/stringifyProps';
-import addToSet from '../../utils/addToSet';
+import { stringify_props } from '../utils/stringify_props';
+import add_to_set from '../utils/add_to_set';
 import getObject from '../../utils/getObject';
-import { extractNames } from '../../utils/annotateWithScopes';
+import { extract_names } from '../utils/scope';
 import { nodes_match } from '../../utils/nodes_match';
 import sanitize from '../../utils/sanitize';
 
@@ -171,12 +171,12 @@ export default function dom(
 						const left_object_name = getObject(node.left).name;
 						left_object_name && (names = [left_object_name]);
 					} else {
-						names = extractNames(node.left);
+						names = extract_names(node.left);
 					}
 
 					if (node.operator === '=' && nodes_match(node.left, node.right)) {
 						const dirty = names.filter(name => {
-							return scope.findOwner(name) === component.instance_scope;
+							return scope.find_owner(name) === component.instance_scope;
 						});
 
 						if (dirty.length) component.has_reactive_assignments = true;
@@ -184,7 +184,7 @@ export default function dom(
 						code.overwrite(node.start, node.end, dirty.map(n => component.invalidate(n)).join('; '));
 					} else {
 						names.forEach(name => {
-							const owner = scope.findOwner(name);
+							const owner = scope.find_owner(name);
 							if (owner && owner !== component.instance_scope) return;
 
 							const variable = component.var_lookup.get(name);
@@ -199,7 +199,7 @@ export default function dom(
 				else if (node.type === 'UpdateExpression') {
 					const { name } = getObject(node.argument);
 
-					if (scope.findOwner(name) !== component.instance_scope) return;
+					if (scope.find_owner(name) !== component.instance_scope) return;
 
 					const variable = component.var_lookup.get(name);
 					if (variable && variable.hoistable) return;
@@ -322,7 +322,7 @@ export default function dom(
 
 	const all_reactive_dependencies = new Set();
 	component.reactive_declarations.forEach(d => {
-		addToSet(all_reactive_dependencies, d.dependencies);
+		add_to_set(all_reactive_dependencies, d.dependencies);
 	});
 
 	const reactive_store_subscriptions = reactive_stores
@@ -404,7 +404,7 @@ export default function dom(
 				};
 				`}
 
-				return ${stringifyProps(filtered_declarations)};
+				return ${stringify_props(filtered_declarations)};
 			}
 		`);
 	}

@@ -3,8 +3,6 @@ import Component from '../Component';
 import { CompileOptions } from '../../interfaces';
 import { stringify } from '../../utils/stringify';
 import Renderer from './Renderer';
-import { walk } from 'estree-walker';
-import { extractNames } from '../../utils/annotateWithScopes';
 
 export default function ssr(
 	component: Component,

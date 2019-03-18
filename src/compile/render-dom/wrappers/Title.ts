@@ -4,7 +4,7 @@ import Block from '../Block';
 import Title from '../../nodes/Title';
 import FragmentWrapper from './Fragment';
 import { stringify } from '../../../utils/stringify';
-import addToSet from '../../../utils/addToSet';
+import add_to_set from '../../utils/add_to_set';
 
 export default class TitleWrapper extends Wrapper {
 	node: Title;
@@ -34,7 +34,7 @@ export default class TitleWrapper extends Wrapper {
 				// single {tag} — may be a non-string
 				const { expression } = this.node.children[0];
 				value = expression.render(block);
-				addToSet(allDependencies, expression.dependencies);
+				add_to_set(allDependencies, expression.dependencies);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				value =
