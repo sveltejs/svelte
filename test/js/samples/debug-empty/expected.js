@@ -10,6 +10,7 @@ import {
 	noop,
 	safe_not_equal,
 	set_data,
+	space,
 	text
 } from "svelte/internal";
 
@@ -24,7 +25,7 @@ function create_fragment(ctx) {
 			t0 = text("Hello ");
 			t1 = text(ctx.name);
 			t2 = text("!");
-			t3 = text("\n");
+			t3 = space();
 			debugger;
 			add_location(h1, file, 4, 0, 38);
 		},
