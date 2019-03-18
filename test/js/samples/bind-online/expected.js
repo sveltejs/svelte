@@ -33,7 +33,7 @@ function create_fragment(ctx) {
 	};
 }
 
-function instance($$self) {
+function instance($$self, $$props, $$invalidate) {
 	let online;
 
 	function onlinestatuschanged() {

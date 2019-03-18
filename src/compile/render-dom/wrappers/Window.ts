@@ -182,6 +182,8 @@ export default class WindowWrapper extends Wrapper {
 				`@listen(window, "online", ctx.${handler_name})`,
 				`@listen(window, "offline", ctx.${handler_name})`
 			);
+
+			component.has_reactive_assignments = true;
 		}
 	}
 }
