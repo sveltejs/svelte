@@ -3,7 +3,7 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import EachBlock from '../../nodes/EachBlock';
 import IfBlock from '../../nodes/IfBlock';
-import createDebuggingComment from '../../../utils/createDebuggingComment';
+import create_debugging_comment from './shared/create_debugging_comment';
 import ElseBlock from '../../nodes/ElseBlock';
 import FragmentWrapper from './Fragment';
 import deindent from '../../utils/deindent';
@@ -35,7 +35,7 @@ class IfBlockBranch extends Wrapper {
 		this.condition = (node as IfBlock).expression && (node as IfBlock).expression.render(block);
 
 		this.block = block.child({
-			comment: createDebuggingComment(node, parent.renderer.component),
+			comment: create_debugging_comment(node, parent.renderer.component),
 			name: parent.renderer.component.getUniqueName(
 				(node as IfBlock).expression ? `create_if_block` : `create_else_block`
 			)

@@ -5,7 +5,7 @@ import getObject from '../../../../utils/getObject';
 import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
-import flattenReference from '../../../../utils/flattenReference';
+import flatten_reference from '../../../utils/flatten_reference';
 import { get_tail } from '../../../../utils/get_tail_snippet';
 import EachBlock from '../../../nodes/EachBlock';
 
@@ -199,7 +199,7 @@ function getDomUpdater(
 }
 
 function getBindingGroup(renderer: Renderer, value: Node) {
-	const { parts } = flattenReference(value); // TODO handle cases involving computed member expressions
+	const { parts } = flatten_reference(value); // TODO handle cases involving computed member expressions
 	const keypath = parts.join('.');
 
 	// TODO handle contextual bindings — `keypath` should include unique ID of

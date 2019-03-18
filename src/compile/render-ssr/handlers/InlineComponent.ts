@@ -1,5 +1,5 @@
 import { escape, escapeTemplate, stringify } from '../../../utils/stringify';
-import { quoteNameIfNecessary } from '../../../utils/quoteIfNecessary';
+import { quote_name_if_necessary } from '../../../utils/names';
 import { snip } from '../../../utils/snip';
 import Renderer from '../Renderer';
 import { stringify_props } from '../../utils/stringify_props';
@@ -101,7 +101,7 @@ export default function(node, renderer: Renderer, options) {
 			const slot_scope = slot_scopes.get(name);
 
 			slot_fns.push(
-				`${quoteNameIfNecessary(name)}: (${slot_scope}) => \`${target.slots[name]}\``
+				`${quote_name_if_necessary(name)}: (${slot_scope}) => \`${target.slots[name]}\``
 			);
 		});
 

@@ -1,7 +1,7 @@
 import Node from './shared/Node';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
-import flattenReference from '../../utils/flattenReference';
+import flatten_reference from '../utils/flatten_reference';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Action from './Action';
@@ -32,7 +32,7 @@ export default class Window extends Node {
 
 			else if (node.type === 'Binding') {
 				if (node.expression.type !== 'Identifier') {
-					const { parts } = flattenReference(node.expression);
+					const { parts } = flatten_reference(node.expression);
 
 					// TODO is this constraint necessary?
 					component.error(node.expression, {

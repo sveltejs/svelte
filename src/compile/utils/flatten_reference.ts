@@ -1,6 +1,6 @@
-import { Node } from '../interfaces';
+import { Node } from '../../interfaces';
 
-export default function flattenReference(node: Node) {
+export default function flatten_reference(node: Node) {
 	if (node.type === 'Expression') throw new Error('bad');
 	const nodes = [];
 	const parts = [];

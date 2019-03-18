@@ -1,4 +1,4 @@
-import { quotePropIfNecessary, quoteNameIfNecessary } from '../../../utils/quoteIfNecessary';
+import { quote_prop_if_necessary, quote_name_if_necessary } from '../../../utils/names';
 import isVoidElementName from '../../../utils/isVoidElementName';
 import Attribute from '../../nodes/Attribute';
 import Node from '../../nodes/shared/Node';
@@ -64,7 +64,7 @@ export default function(node, renderer, options) {
 
 	const classExpr = node.classes.map((classDir: Class) => {
 		const { expression, name } = classDir;
-		const snippet = expression ? snip(expression) : `ctx${quotePropIfNecessary(name)}`;
+		const snippet = expression ? snip(expression) : `ctx${quote_prop_if_necessary(name)}`;
 		return `${snippet} ? "${name}" : ""`;
 	}).join(', ');
 
@@ -80,16 +80,16 @@ export default function(node, renderer, options) {
 				if (attribute.name === 'value' && node.name === 'textarea') {
 					textareaContents = stringify_attribute(attribute, true);
 				} else if (attribute.isTrue) {
-					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: true }`);
+					args.push(`{ ${quote_name_if_necessary(attribute.name)}: true }`);
 				} else if (
 					boolean_attributes.has(attribute.name) &&
 					attribute.chunks.length === 1 &&
 					attribute.chunks[0].type !== 'Text'
 				) {
 					// a boolean attribute with one non-Text chunk
-					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: ${snip(attribute.chunks[0])} }`);
+					args.push(`{ ${quote_name_if_necessary(attribute.name)}: ${snip(attribute.chunks[0])} }`);
 				} else {
-					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: \`${stringify_attribute(attribute, true)}\` }`);
+					args.push(`{ ${quote_name_if_necessary(attribute.name)}: \`${stringify_attribute(attribute, true)}\` }`);
 				}
 			}
 		});

@@ -2,7 +2,7 @@ import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import AwaitBlock from '../../nodes/AwaitBlock';
-import createDebuggingComment from '../../../utils/createDebuggingComment';
+import create_debugging_comment from './shared/create_debugging_comment';
 import deindent from '../../utils/deindent';
 import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
@@ -29,7 +29,7 @@ class AwaitBlockBranch extends Wrapper {
 		super(renderer, block, parent, node);
 
 		this.block = block.child({
-			comment: createDebuggingComment(node, this.renderer.component),
+			comment: create_debugging_comment(node, this.renderer.component),
 			name: this.renderer.component.getUniqueName(`create_${status}_block`)
 		});
 

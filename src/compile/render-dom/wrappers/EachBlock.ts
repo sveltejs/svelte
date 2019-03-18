@@ -1,7 +1,7 @@
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Wrapper from './shared/Wrapper';
-import createDebuggingComment from '../../../utils/createDebuggingComment';
+import create_debugging_comment from './shared/create_debugging_comment';
 import EachBlock from '../../nodes/EachBlock';
 import FragmentWrapper from './Fragment';
 import deindent from '../../utils/deindent';
@@ -26,7 +26,7 @@ class ElseBlockWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 
 		this.block = block.child({
-			comment: createDebuggingComment(node, this.renderer.component),
+			comment: create_debugging_comment(node, this.renderer.component),
 			name: this.renderer.component.getUniqueName(`create_else_block`)
 		});
 
@@ -80,7 +80,7 @@ export default class EachBlockWrapper extends Wrapper {
 		block.addDependencies(dependencies);
 
 		this.block = block.child({
-			comment: createDebuggingComment(this.node, this.renderer.component),
+			comment: create_debugging_comment(this.node, this.renderer.component),
 			name: renderer.component.getUniqueName('create_each_block'),
 			key: node.key as string,
 

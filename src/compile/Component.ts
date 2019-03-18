@@ -2,7 +2,7 @@ import MagicString, { Bundle } from 'magic-string';
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
-import reservedNames from '../utils/reservedNames';
+import { reserved } from '../utils/names';
 import { namespaces, validNamespaces } from '../utils/namespaces';
 import { removeNode } from '../utils/removeNode';
 import wrapModule from './wrapModule';
@@ -14,7 +14,7 @@ import internal_exports from './internal-exports';
 import { Node, Ast, CompileOptions, Var, Warning } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
-import flattenReference from '../utils/flattenReference';
+import flatten_reference from './utils/flatten_reference';
 import is_reference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
@@ -322,7 +322,7 @@ export default class Component {
 		let alias = name;
 		for (
 			let i = 1;
-			reservedNames.has(alias) ||
+			reserved.has(alias) ||
 			this.var_lookup.has(alias) ||
 			this.usedNames.has(alias);
 			alias = `${name}_${i++}`
@@ -338,7 +338,7 @@ export default class Component {
 			localUsedNames.add(name);
 		}
 
-		reservedNames.forEach(add);
+		reserved.forEach(add);
 		this.var_lookup.forEach((value, key) => add(key));
 
 		return (name: string) => {
@@ -947,7 +947,7 @@ export default class Component {
 					}
 
 					if (is_reference(node, parent)) {
-						const { name } = flattenReference(node);
+						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
 
 						if (name[0] === '$' && !owner) {

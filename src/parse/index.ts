@@ -1,8 +1,8 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
-import reservedNames from '../utils/reservedNames';
-import fullCharCodeAt from '../utils/fullCharCodeAt';
+import { reserved } from '../utils/names';
+import full_char_code_at from '../utils/full_char_code_at';
 import { Node, Ast } from '../interfaces';
 import error from '../utils/error';
 
@@ -156,13 +156,13 @@ export class Parser {
 
 		let i = this.index;
 
-		const code = fullCharCodeAt(this.template, i);
+		const code = full_char_code_at(this.template, i);
 		if (!isIdentifierStart(code, true)) return null;
 
 		i += code <= 0xffff ? 1 : 2;
 
 		while (i < this.template.length) {
-			const code = fullCharCodeAt(this.template, i);
+			const code = full_char_code_at(this.template, i);
 
 			if (!isIdentifierChar(code, true)) break;
 			i += code <= 0xffff ? 1 : 2;
@@ -170,7 +170,7 @@ export class Parser {
 
 		const identifier = this.template.slice(this.index, this.index = i);
 
-		if (reservedNames.has(identifier)) {
+		if (reserved.has(identifier)) {
 			this.error({
 				code: `unexpected-reserved-word`,
 				message: `'${identifier}' is a reserved word in JavaScript and cannot be used here`

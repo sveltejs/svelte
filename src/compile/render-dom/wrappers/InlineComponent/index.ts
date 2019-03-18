@@ -3,14 +3,14 @@ import Renderer from '../../Renderer';
 import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
 import FragmentWrapper from '../Fragment';
-import { quoteNameIfNecessary, quotePropIfNecessary } from '../../../../utils/quoteIfNecessary';
+import { quote_name_if_necessary, quote_prop_if_necessary } from '../../../../utils/names';
 import { stringify_props } from '../../../utils/stringify_props';
 import add_to_set from '../../../utils/add_to_set';
 import deindent from '../../../utils/deindent';
 import Attribute from '../../../nodes/Attribute';
 import getObject from '../../../../utils/getObject';
-import flattenReference from '../../../../utils/flattenReference';
-import createDebuggingComment from '../../../../utils/createDebuggingComment';
+import flatten_reference from '../../../utils/flatten_reference';
+import create_debugging_comment from '../shared/create_debugging_comment';
 import sanitize from '../../../../utils/sanitize';
 import { get_context_merger } from '../shared/get_context_merger';
 import EachBlock from '../../../nodes/EachBlock';
@@ -69,7 +69,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		if (this.node.children.length) {
 			const default_slot = block.child({
-				comment: createDebuggingComment(node, renderer.component),
+				comment: create_debugging_comment(node, renderer.component),
 				name: renderer.component.getUniqueName(`create_default_slot`)
 			});
 
@@ -126,7 +126,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const attributeObject = usesSpread
 			? stringify_props(slot_props)
 			: stringify_props(
-				this.node.attributes.map(attr => `${quoteNameIfNecessary(attr.name)}: ${attr.getValue(block)}`).concat(slot_props)
+				this.node.attributes.map(attr => `${quote_name_if_necessary(attr.name)}: ${attr.getValue(block)}`).concat(slot_props)
 			);
 
 		if (this.node.attributes.length || this.node.bindings.length || slot_props.length) {
@@ -200,7 +200,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 						changes.push(condition ? `${condition} && ${value}` : value);
 					} else {
-						const obj = `{ ${quoteNameIfNecessary(name)}: ${attr.getValue(block)} }`;
+						const obj = `{ ${quote_name_if_necessary(name)}: ${attr.getValue(block)} }`;
 						initialProps.push(obj);
 
 						changes.push(condition ? `${condition} && ${obj}` : obj);
@@ -234,7 +234,7 @@ export default class InlineComponentWrapper extends Wrapper {
 							updates.push(deindent`
 								if (${[...attribute.dependencies]
 									.map(dependency => `changed.${dependency}`)
-									.join(' || ')}) ${name_changes}${quotePropIfNecessary(attribute.name)} = ${attribute.getValue(block)};
+									.join(' || ')}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.getValue(block)};
 							`);
 						}
 					});
@@ -269,7 +269,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 					// TODO we need to invalidate... something
 				} else {
-					object = flattenReference(binding.expression.node).name;
+					object = flatten_reference(binding.expression.node).name;
 					lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 				}
 
@@ -299,13 +299,13 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			statements.push(deindent`
 				if (${snippet} !== void 0) {
-					${props}${quotePropIfNecessary(binding.name)} = ${snippet};
+					${props}${quote_prop_if_necessary(binding.name)} = ${snippet};
 				}`
 			);
 
 			updates.push(deindent`
 				if (!${updating} && ${[...binding.expression.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-					${name_changes}${quotePropIfNecessary(binding.name)} = ${snippet};
+					${name_changes}${quote_prop_if_necessary(binding.name)} = ${snippet};
 				}
 			`);
 

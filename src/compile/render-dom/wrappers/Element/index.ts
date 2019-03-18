@@ -3,12 +3,12 @@ import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
-import { quotePropIfNecessary, quoteNameIfNecessary } from '../../../../utils/quoteIfNecessary';
+import { quote_prop_if_necessary, quote_name_if_necessary } from '../../../../utils/names';
 import isVoidElementName from '../../../../utils/isVoidElementName';
 import FragmentWrapper from '../Fragment';
 import { stringify, escapeHTML, escape } from '../../../../utils/stringify';
 import TextWrapper from '../Text';
-import fixAttributeCasing from '../../../../utils/fixAttributeCasing';
+import fix_attribute_casing from './fix_attribute_casing';
 import deindent from '../../../utils/deindent';
 import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
@@ -19,7 +19,7 @@ import InlineComponentWrapper from '../InlineComponent';
 import add_to_set from '../../../utils/add_to_set';
 import addEventHandlers from '../shared/addEventHandlers';
 import addActions from '../shared/addActions';
-import createDebuggingComment from '../../../../utils/createDebuggingComment';
+import create_debugging_comment from '../shared/create_debugging_comment';
 import sanitize from '../../../../utils/sanitize';
 import { get_context_merger } from '../shared/get_context_merger';
 
@@ -133,7 +133,7 @@ export default class ElementWrapper extends Wrapper {
 
 					if (!(owner as InlineComponentWrapper).slots.has(name)) {
 						const child_block = block.child({
-							comment: createDebuggingComment(node, this.renderer.component),
+							comment: create_debugging_comment(node, this.renderer.component),
 							name: this.renderer.component.getUniqueName(`create_${sanitize(name)}_slot`)
 						});
 
@@ -336,7 +336,7 @@ export default class ElementWrapper extends Wrapper {
 			let open = `<${wrapper.node.name}`;
 
 			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
-				open += ` ${fixAttributeCasing(attr.node.name)}${attr.stringify()}`
+				open += ` ${fix_attribute_casing(attr.node.name)}${attr.stringify()}`
 			});
 
 			if (isVoidElementName(wrapper.node.name)) return open + '>';
@@ -369,7 +369,7 @@ export default class ElementWrapper extends Wrapper {
 	getClaimStatement(nodes: string) {
 		const attributes = this.node.attributes
 			.filter((attr: Node) => attr.type === 'Attribute')
-			.map((attr: Node) => `${quoteNameIfNecessary(attr.name)}: true`)
+			.map((attr: Node) => `${quote_name_if_necessary(attr.name)}: true`)
 			.join(', ');
 
 		const name = this.node.namespace
@@ -579,7 +579,7 @@ export default class ElementWrapper extends Wrapper {
 
 					updates.push(condition ? `${condition} && ${snippet}` : snippet);
 				} else {
-					const snippet = `{ ${quoteNameIfNecessary(attr.name)}: ${attr.getValue(block)} }`;
+					const snippet = `{ ${quote_name_if_necessary(attr.name)}: ${attr.getValue(block)} }`;
 					initialProps.push(snippet);
 
 					updates.push(condition ? `${condition} && ${snippet}` : snippet);
@@ -786,7 +786,7 @@ export default class ElementWrapper extends Wrapper {
 				snippet = expression.render(block);
 				dependencies = expression.dependencies;
 			} else {
-				snippet = `${quotePropIfNecessary(name)}`;
+				snippet = `${quote_prop_if_necessary(name)}`;
 				dependencies = new Set([name]);
 			}
 			const updater = `@toggleClass(${this.var}, "${name}", ${snippet});`;
@@ -795,7 +795,7 @@ export default class ElementWrapper extends Wrapper {
 
 			if ((dependencies && dependencies.size > 0) || this.classDependencies.length) {
 				const allDeps = this.classDependencies.concat(...dependencies);
-				const deps = allDeps.map(dependency => `changed${quotePropIfNecessary(dependency)}`).join(' || ');
+				const deps = allDeps.map(dependency => `changed${quote_prop_if_necessary(dependency)}`).join(' || ');
 				const condition = allDeps.length > 1 ? `(${deps})` : deps;
 
 				block.builders.update.add_conditional(

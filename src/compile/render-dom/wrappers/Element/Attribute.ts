@@ -1,6 +1,6 @@
 import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
-import fixAttributeCasing from '../../../../utils/fixAttributeCasing';
+import fix_attribute_casing from './fix_attribute_casing';
 import ElementWrapper from './index';
 import { stringify } from '../../../../utils/stringify';
 import deindent from '../../../utils/deindent';
@@ -36,7 +36,7 @@ export default class AttributeWrapper {
 
 	render(block: Block) {
 		const element = this.parent;
-		const name = fixAttributeCasing(this.node.name);
+		const name = fix_attribute_casing(this.node.name);
 
 		let metadata = element.node.namespace ? null : attributeLookup[name];
 		if (metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf(element.node.name))

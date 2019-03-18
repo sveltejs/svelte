@@ -1,7 +1,7 @@
 import Component from '../../Component';
 import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
-import flattenReference from '../../../utils/flattenReference';
+import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
 import globalWhitelist from '../../../utils/globalWhitelist';
@@ -119,7 +119,7 @@ export default class Expression {
 				}
 
 				if (is_reference(node, parent)) {
-					const { name, nodes } = flattenReference(node);
+					const { name, nodes } = flatten_reference(node);
 
 					if (scope.has(name)) return;
 
@@ -254,7 +254,7 @@ export default class Expression {
 				}
 
 				if (is_reference(node, parent)) {
-					const { name, nodes } = flattenReference(node);
+					const { name, nodes } = flatten_reference(node);
 
 					if (scope.has(name)) return;
 					if (globalWhitelist.has(name) && !component.var_lookup.has(name)) return;
