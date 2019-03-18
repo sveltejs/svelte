@@ -5,7 +5,7 @@ import Tag from './shared/Tag';
 import Wrapper from './shared/Wrapper';
 
 export default class MustacheTagWrapper extends Tag {
-	var = 'text';
+	var = 't';
 
 	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: Node) {
 		super(renderer, block, parent, node);
@@ -15,13 +15,13 @@ export default class MustacheTagWrapper extends Tag {
 	render(block: Block, parentNode: string, parentNodes: string) {
 		const { init } = this.renameThisMethod(
 			block,
-			value => `@setData(${this.var}, ${value});`
+			value => `@set_data(${this.var}, ${value});`
 		);
 
 		block.addElement(
 			this.var,
-			`@createText(${init})`,
-			parentNodes && `@claimText(${parentNodes}, ${init})`,
+			`@create_text(${init})`,
+			parentNodes && `@claim_text(${parentNodes}, ${init})`,
 			parentNode
 		);
 	}

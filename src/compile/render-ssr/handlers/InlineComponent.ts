@@ -76,7 +76,7 @@ export default function(node, renderer: Renderer, options) {
 		node.name === 'svelte:self'
 			? '__svelte:self__' // TODO conflict-proof this
 			: node.name === 'svelte:component'
-				? `((${snip(node.expression)}) || @missingComponent)`
+				? `((${snip(node.expression)}) || @missing_component)`
 				: node.name
 	);
 

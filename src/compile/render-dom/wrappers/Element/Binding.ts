@@ -187,8 +187,8 @@ function getDomUpdater(
 
 	if (node.name === 'select') {
 		return node.getStaticAttributeValue('multiple') === true ?
-			`@selectOptions(${element.var}, ${binding.snippet})` :
-			`@selectOption(${element.var}, ${binding.snippet})`;
+			`@select_options(${element.var}, ${binding.snippet})` :
+			`@select_option(${element.var}, ${binding.snippet})`;
 	}
 
 	if (binding.node.name === 'group') {
@@ -288,8 +288,8 @@ function getValueFromDom(
 	// <select bind:value='selected>
 	if (node.name === 'select') {
 		return node.getStaticAttributeValue('multiple') === true ?
-			`@selectMultipleValue(this)` :
-			`@selectValue(this)`;
+			`@select_multiple_value(this)` :
+			`@select_value(this)`;
 	}
 
 	const type = node.getStaticAttributeValue('type');
@@ -298,7 +298,7 @@ function getValueFromDom(
 	if (name === 'group') {
 		const bindingGroup = getBindingGroup(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			return `@getBindingGroupValue($$binding_groups[${bindingGroup}])`;
+			return `@get_binding_group_value($$binding_groups[${bindingGroup}])`;
 		}
 
 		return `this.__value`;
@@ -306,11 +306,11 @@ function getValueFromDom(
 
 	// <input type='range|number' bind:value>
 	if (type === 'range' || type === 'number') {
-		return `@toNumber(this.${name})`;
+		return `@to_number(this.${name})`;
 	}
 
 	if ((name === 'buffered' || name === 'seekable' || name === 'played')) {
-		return `@timeRangesToArray(this.${name})`
+		return `@time_ranges_to_array(this.${name})`
 	}
 
 	// everything else

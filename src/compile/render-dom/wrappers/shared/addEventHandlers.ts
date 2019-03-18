@@ -8,8 +8,8 @@ export default function addEventHandlers(
 ) {
 	handlers.forEach(handler => {
 		let snippet = handler.render(block);
-		if (handler.modifiers.has('preventDefault')) snippet = `@preventDefault(${snippet})`;
-		if (handler.modifiers.has('stopPropagation')) snippet = `@stopPropagation(${snippet})`;
+		if (handler.modifiers.has('preventDefault')) snippet = `@prevent_default(${snippet})`;
+		if (handler.modifiers.has('stopPropagation')) snippet = `@stop_propagation(${snippet})`;
 
 		const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
 
@@ -19,11 +19,11 @@ export default function addEventHandlers(
 				: `{ ${opts.map(opt => `${opt}: true`).join(', ')} }`;
 
 			block.event_listeners.push(
-				`@addListener(${target}, "${handler.name}", ${snippet}, ${optString})`
+				`@listen(${target}, "${handler.name}", ${snippet}, ${optString})`
 			);
 		} else {
 			block.event_listeners.push(
-				`@addListener(${target}, "${handler.name}", ${snippet})`
+				`@listen(${target}, "${handler.name}", ${snippet})`
 			);
 		}
 	});

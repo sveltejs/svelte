@@ -167,10 +167,10 @@ export default class Block {
 
 		if (parentNode) {
 			this.builders.mount.add_line(`@append(${parentNode}, ${name});`);
-			if (parentNode === 'document.head') this.builders.destroy.add_line(`@detachNode(${name});`);
+			if (parentNode === 'document.head') this.builders.destroy.add_line(`@detach(${name});`);
 		} else {
 			this.builders.mount.add_line(`@insert(#target, ${name}, anchor);`);
-			if (!noDetach) this.builders.destroy.add_conditional('detach', `@detachNode(${name});`);
+			if (!noDetach) this.builders.destroy.add_conditional('detaching', `@detach(${name});`);
 		}
 	}
 
@@ -354,7 +354,7 @@ export default class Block {
 			properties.add_line(`d: @noop`);
 		} else {
 			properties.add_block(deindent`
-				${methodName('d', 'destroy')}(detach) {
+				${methodName('d', 'destroy')}(detaching) {
 					${this.builders.destroy}
 				}
 			`);

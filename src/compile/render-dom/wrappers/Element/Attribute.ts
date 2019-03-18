@@ -59,10 +59,10 @@ export default class AttributeWrapper {
 		// namespaced attributes but I'm not sure that's applicable in
 		// HTML5?
 		const method = /-/.test(element.node.name)
-			? '@setCustomElementData'
+			? '@set_custom_element_data'
 			: name.slice(0, 6) === 'xlink:'
-				? '@setXlinkAttribute'
-				: '@setAttribute';
+				? '@xlink_attr'
+				: '@attr';
 
 		const isLegacyInputType = element.renderer.component.compileOptions.legacy && name === 'type' && this.parent.node.name === 'input';
 
@@ -112,9 +112,9 @@ export default class AttributeWrapper {
 
 			if (isLegacyInputType) {
 				block.builders.hydrate.add_line(
-					`@setInputType(${element.var}, ${init});`
+					`@set_input_type(${element.var}, ${init});`
 				);
-				updater = `@setInputType(${element.var}, ${shouldCache ? last : value});`;
+				updater = `@set_input_type(${element.var}, ${shouldCache ? last : value});`;
 			} else if (isSelectValueAttribute) {
 				// annoying special case
 				const isMultipleSelect = element.getStaticAttributeValue('multiple');
@@ -183,7 +183,7 @@ export default class AttributeWrapper {
 
 			const statement = (
 				isLegacyInputType
-					? `@setInputType(${element.var}, ${value});`
+					? `@set_input_type(${element.var}, ${value});`
 					: propertyName
 						? `${element.var}.${propertyName} = ${value};`
 						: isDataSet

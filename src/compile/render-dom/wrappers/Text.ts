@@ -46,7 +46,7 @@ export default class TextWrapper extends Wrapper {
 
 		this.skip = shouldSkip(this.node);
 		this.data = data;
-		this.var = this.skip ? null : 'text';
+		this.var = this.skip ? null : 't';
 	}
 
 	render(block: Block, parentNode: string, parentNodes: string) {
@@ -54,8 +54,8 @@ export default class TextWrapper extends Wrapper {
 
 		block.addElement(
 			this.var,
-			`@createText(${stringify(this.data)})`,
-			parentNodes && `@claimText(${parentNodes}, ${stringify(this.data)})`,
+			`@create_text(${stringify(this.data)})`,
+			parentNodes && `@claim_text(${parentNodes}, ${stringify(this.data)})`,
 			parentNode
 		);
 	}

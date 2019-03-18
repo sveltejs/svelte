@@ -187,8 +187,8 @@ export default class IfBlockWrapper extends Wrapper {
 		if (needsAnchor) {
 			block.addElement(
 				anchor,
-				`@createComment()`,
-				parentNodes && `@createComment()`,
+				`@comment()`,
+				parentNodes && `@comment()`,
 				parentNode
 			);
 		}
@@ -256,7 +256,7 @@ export default class IfBlockWrapper extends Wrapper {
 			`);
 		}
 
-		block.builders.destroy.add_line(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
+		block.builders.destroy.add_line(`${if_name}${name}.d(${parentNode ? '' : 'detaching'});`);
 	}
 
 	// if any of the siblings have outros, we need to keep references to the blocks
@@ -377,7 +377,7 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 
 		block.builders.destroy.add_line(deindent`
-			${if_current_block_type_index}${if_blocks}[${current_block_type_index}].d(${parentNode ? '' : 'detach'});
+			${if_current_block_type_index}${if_blocks}[${current_block_type_index}].d(${parentNode ? '' : 'detaching'});
 		`);
 	}
 
@@ -452,6 +452,6 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.destroy.add_line(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
+		block.builders.destroy.add_line(`${if_name}${name}.d(${parentNode ? '' : 'detaching'});`);
 	}
 }

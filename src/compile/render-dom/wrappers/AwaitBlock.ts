@@ -152,7 +152,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		`);
 
 		block.builders.init.add_block(deindent`
-			@handlePromise(${promise} = ${snippet}, ${info});
+			@handle_promise(${promise} = ${snippet}, ${info});
 		`);
 
 		block.builders.create.add_block(deindent`
@@ -191,7 +191,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		conditions.push(
 			`${promise} !== (${promise} = ${snippet})`,
-			`@handlePromise(${promise}, ${info})`
+			`@handle_promise(${promise}, ${info})`
 		);
 
 		block.builders.update.add_line(
@@ -222,7 +222,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		}
 
 		block.builders.destroy.add_block(deindent`
-			${info}.block.d(${parentNode ? '' : 'detach'});
+			${info}.block.d(${parentNode ? '' : 'detaching'});
 			${info} = null;
 		`);
 

@@ -147,7 +147,7 @@ export default class SlotWrapper extends Wrapper {
 		`);
 
 		block.builders.destroy.add_line(
-			`if (${slot}) ${slot}.d(detach);`
+			`if (${slot}) ${slot}.d(detaching);`
 		);
 	}
 }

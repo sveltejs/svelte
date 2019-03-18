@@ -365,6 +365,7 @@ export default class Component {
 		}
 
 		reserved.forEach(add);
+		internal_exports.forEach(add);
 		this.var_lookup.forEach((value, key) => add(key));
 
 		return (name: string) => {

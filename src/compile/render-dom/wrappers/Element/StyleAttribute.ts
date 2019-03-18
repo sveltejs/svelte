@@ -51,7 +51,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 
 					block.builders.update.add_conditional(
 						condition,
-						`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
+						`@set_style(${this.parent.var}, "${prop.key}", ${value});`
 					);
 				}
 			} else {
@@ -59,7 +59,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 			}
 
 			block.builders.hydrate.add_line(
-				`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
+				`@set_style(${this.parent.var}, "${prop.key}", ${value});`
 			);
 		});
 	}

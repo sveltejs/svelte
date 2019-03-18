@@ -3,7 +3,7 @@ import { CompileOptions } from '../../../interfaces';
 import { snip } from '../../utils/snip';
 
 export default function(node, renderer: Renderer, options: CompileOptions) {
-	renderer.append('${(function(__value) { if(@isPromise(__value)) return `');
+	renderer.append('${(function(__value) { if(@is_promise(__value)) return `');
 
 	renderer.render(node.pending.children, options);
 

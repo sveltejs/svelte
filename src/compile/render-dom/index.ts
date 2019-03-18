@@ -40,7 +40,7 @@ export default function dom(
 	if (styles && component.compileOptions.css !== false && !options.customElement) {
 		builder.add_block(deindent`
 			function @add_css() {
-				var style = @createElement("style");
+				var style = @element("style");
 				style.id = '${component.stylesheet.id}-style';
 				style.textContent = ${styles};
 				@append(document.head, style);

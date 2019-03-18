@@ -7,11 +7,11 @@ export function assign(tar, src) {
 	return tar;
 }
 
-export function isPromise(value) {
+export function is_promise(value) {
 	return value && typeof value.then === 'function';
 }
 
-export function addLoc(element, file, line, column, char) {
+export function add_location(element, file, line, column, char) {
 	element.__svelte_meta = {
 		loc: { file, line, column, char }
 	};
@@ -21,7 +21,7 @@ export function run(fn) {
 	return fn();
 }
 
-export function blankObject() {
+export function blank_object() {
 	return Object.create(null);
 }
 

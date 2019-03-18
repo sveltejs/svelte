@@ -1,6 +1,7 @@
 import deindent from './utils/deindent';
 import list from '../utils/list';
 import { CompileOptions, ModuleFormat, Node } from '../interfaces';
+import { stringify_props } from './utils/stringify_props';
 
 interface Dependency {
 	name: string;
@@ -57,7 +58,7 @@ function esm(
 	source: string
 ) {
 	const importHelpers = helpers.length > 0 && (
-		`import { ${helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).join(', ')} } from ${JSON.stringify(internalPath)};`
+		`import ${stringify_props(helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).sort())} from ${JSON.stringify(internalPath)};`
 	);
 
 	const importBlock = imports.length > 0 && (
@@ -95,10 +96,10 @@ function cjs(
 	imports: Node[],
 	module_exports: Export[]
 ) {
-	const helperDeclarations = helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).join(', ');
+	const helperDeclarations = helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).sort();
 
 	const helperBlock = helpers.length > 0 && (
-		`const { ${helperDeclarations} } = require(${JSON.stringify(internalPath)});\n`
+		`const ${stringify_props(helperDeclarations)} = require(${JSON.stringify(internalPath)});\n`
 	);
 
 	const requires = imports.map(node => {

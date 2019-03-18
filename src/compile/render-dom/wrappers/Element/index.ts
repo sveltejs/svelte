@@ -193,7 +193,7 @@ export default class ElementWrapper extends Wrapper {
 			if (this.node.name === 'option') this.parent.cannotUseInnerHTML();
 
 			if (renderer.options.dev) {
-				this.parent.cannotUseInnerHTML(); // need to use addLoc
+				this.parent.cannotUseInnerHTML(); // need to use add_location
 			}
 		}
 
@@ -251,14 +251,14 @@ export default class ElementWrapper extends Wrapper {
 			);
 
 			if (parentNode === 'document.head') {
-				block.builders.destroy.add_line(`@detachNode(${node});`);
+				block.builders.destroy.add_line(`@detach(${node});`);
 			}
 		} else {
 			block.builders.mount.add_line(`@insert(#target, ${node}, anchor);`);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
-			block.builders.destroy.add_conditional('detach', `@detachNode(${node});`);
+			block.builders.destroy.add_conditional('detaching', `@detach(${node});`);
 		}
 
 		// insert static children with textContent or innerHTML
@@ -308,7 +308,7 @@ export default class ElementWrapper extends Wrapper {
 
 		if (nodes && this.renderer.options.hydratable) {
 			block.builders.claim.add_line(
-				`${nodes}.forEach(@detachNode);`
+				`${nodes}.forEach(@detach);`
 			);
 		}
 
@@ -345,7 +345,7 @@ export default class ElementWrapper extends Wrapper {
 		if (renderer.options.dev) {
 			const loc = renderer.locate(this.node.start);
 			block.builders.hydrate.add_line(
-				`@addLoc(${this.var}, ${renderer.fileVar}, ${loc.line}, ${loc.column}, ${this.node.start});`
+				`@add_location(${this.var}, ${renderer.fileVar}, ${loc.line}, ${loc.column}, ${this.node.start});`
 			);
 		}
 	}
@@ -354,14 +354,14 @@ export default class ElementWrapper extends Wrapper {
 		const { name, namespace } = this.node;
 
 		if (namespace === 'http://www.w3.org/2000/svg') {
-			return `@createSvgElement("${name}")`;
+			return `@svg_element("${name}")`;
 		}
 
 		if (namespace) {
 			return `document.createElementNS("${namespace}", "${name}")`;
 		}
 
-		return `@createElement("${name}")`;
+		return `@element("${name}")`;
 	}
 
 	getClaimStatement(nodes: string) {
@@ -374,7 +374,7 @@ export default class ElementWrapper extends Wrapper {
 			? this.node.name
 			: this.node.name.toUpperCase();
 
-		return `@claimElement(${nodes}, "${name}", ${attributes
+		return `@claim_element(${nodes}, "${name}", ${attributes
 			? `{ ${attributes} }`
 			: `{}`}, ${this.node.namespace === namespaces.svg ? true : false})`;
 	}
@@ -470,7 +470,7 @@ export default class ElementWrapper extends Wrapper {
 					block.addVariable(resize_listener);
 
 					block.builders.mount.add_line(
-						`${resize_listener} = @addResizeListener(${this.var}, ${callee}.bind(${this.var}));`
+						`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
 					);
 
 					block.builders.destroy.add_line(
@@ -478,7 +478,7 @@ export default class ElementWrapper extends Wrapper {
 					);
 				} else {
 					block.event_listeners.push(
-						`@addListener(${this.var}, "${name}", ${callee})`
+						`@listen(${this.var}, "${name}", ${callee})`
 					);
 				}
 			});
@@ -596,11 +596,11 @@ export default class ElementWrapper extends Wrapper {
 		`);
 
 		block.builders.hydrate.add_line(
-			`@setAttributes(${this.var}, ${data});`
+			`@set_attributes(${this.var}, ${data});`
 		);
 
 		block.builders.update.add_block(deindent`
-			@setAttributes(${this.var}, @getSpreadUpdate(${levels}, [
+			@set_attributes(${this.var}, @get_spread_update(${levels}, [
 				${updates.join(',\n')}
 			]));
 		`);
@@ -658,7 +658,7 @@ export default class ElementWrapper extends Wrapper {
 				block.builders.outro.add_block(outro_block);
 			}
 
-			block.builders.destroy.add_conditional('detach', `if (${name}) ${name}.end();`);
+			block.builders.destroy.add_conditional('detaching', `if (${name}) ${name}.end();`);
 		}
 
 		else {
@@ -737,7 +737,7 @@ export default class ElementWrapper extends Wrapper {
 
 				block.builders.outro.add_block(outro_block);
 
-				block.builders.destroy.add_conditional('detach', `if (${outroName}) ${outroName}.end();`);
+				block.builders.destroy.add_conditional('detaching', `if (${outroName}) ${outroName}.end();`);
 			}
 		}
 	}
@@ -787,7 +787,7 @@ export default class ElementWrapper extends Wrapper {
 				snippet = `${quote_prop_if_necessary(name)}`;
 				dependencies = new Set([name]);
 			}
-			const updater = `@toggleClass(${this.var}, "${name}", ${snippet});`;
+			const updater = `@toggle_class(${this.var}, "${name}", ${snippet});`;
 
 			block.builders.hydrate.add_line(updater);
 

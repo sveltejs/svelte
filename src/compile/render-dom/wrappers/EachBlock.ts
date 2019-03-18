@@ -207,8 +207,8 @@ export default class EachBlockWrapper extends Wrapper {
 		if (needsAnchor) {
 			block.addElement(
 				this.vars.anchor,
-				`@createComment()`,
-				parentNodes && `@createComment()`,
+				`@comment()`,
+				parentNodes && `@comment()`,
 				parentNode
 			);
 		}
@@ -263,7 +263,7 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 
 			block.builders.destroy.add_block(deindent`
-				if (${each_block_else}) ${each_block_else}.d(${parentNode ? '' : 'detach'});
+				if (${each_block_else}) ${each_block_else}.d(${parentNode ? '' : 'detaching'});
 			`);
 		}
 
@@ -292,7 +292,7 @@ export default class EachBlockWrapper extends Wrapper {
 		const lookup = block.getUniqueName(`${this.var}_lookup`);
 
 		block.addVariable(iterations, '[]');
-		block.addVariable(lookup, `@blankObject()`);
+		block.addVariable(lookup, `@blank_object()`);
 
 		if (this.fragment.nodes[0].isDomNode()) {
 			this.block.first = this.fragment.nodes[0].var;
@@ -300,8 +300,8 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.first = this.block.getUniqueName('first');
 			this.block.addElement(
 				this.block.first,
-				`@createComment()`,
-				parentNodes && `@createComment()`,
+				`@comment()`,
+				parentNodes && `@comment()`,
 				null
 			);
 		}
@@ -338,17 +338,17 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const rects = block.getUniqueName('rects');
 		const destroy = this.node.hasAnimation
-			? `@fixAndOutroAndDestroyBlock`
+			? `@fix_and_outro_and_destroy_block`
 			: this.block.hasOutros
-				? `@outroAndDestroyBlock`
-				: `@destroyBlock`;
+				? `@outro_and_destroy_block`
+				: `@destroy_block`;
 
 		block.builders.update.add_block(deindent`
 			const ${this.vars.each_block_value} = ${snippet};
 
 			${this.block.hasOutros && `@group_outros();`}
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
-			${iterations} = @updateKeyedEach(${iterations}, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, ${anchor}, ${this.vars.get_each_context});
+			${iterations} = @update_keyed_each(${iterations}, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, ${anchor}, ${this.vars.get_each_context});
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
 			${this.block.hasOutros && `@check_outros();`}
 		`);
@@ -360,7 +360,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		block.builders.destroy.add_block(deindent`
-			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].d(${parentNode ? '' : 'detach'});
+			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].d(${parentNode ? '' : 'detaching'});
 		`);
 	}
 
@@ -421,11 +421,11 @@ export default class EachBlockWrapper extends Wrapper {
 		const outroBlock = this.block.hasOutros && block.getUniqueName('outroBlock')
 		if (outroBlock) {
 			block.builders.init.add_block(deindent`
-				function ${outroBlock}(i, detach, local) {
+				function ${outroBlock}(i, detaching, local) {
 					if (${iterations}[i]) {
-						if (detach) {
+						if (detaching) {
 							@on_outro(() => {
-								${iterations}[i].d(detach);
+								${iterations}[i].d(detaching);
 								${iterations}[i] = null;
 							});
 						}
@@ -507,6 +507,6 @@ export default class EachBlockWrapper extends Wrapper {
 			);
 		}
 
-		block.builders.destroy.add_block(`@destroyEach(${iterations}, detach);`);
+		block.builders.destroy.add_block(`@destroy_each(${iterations}, detaching);`);
 	}
 }

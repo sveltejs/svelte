@@ -99,7 +99,7 @@ export default class WindowWrapper extends Wrapper {
 				`);
 
 				block.event_listeners.push(deindent`
-					@addListener(window, "${event}", () => {
+					@listen(window, "${event}", () => {
 						${scrolling} = true;
 						clearTimeout(${scrolling_timeout});
 						${scrolling_timeout} = setTimeout(${clear_scrolling}, 100);
@@ -114,7 +114,7 @@ export default class WindowWrapper extends Wrapper {
 				});
 
 				block.event_listeners.push(deindent`
-					@addListener(window, "${event}", ctx.${handler_name})
+					@listen(window, "${event}", ctx.${handler_name})
 				`);
 			}
 

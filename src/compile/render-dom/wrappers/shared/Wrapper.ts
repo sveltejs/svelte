@@ -53,8 +53,8 @@ export default class Wrapper {
 		if (needsAnchor) {
 			block.addElement(
 				anchor,
-				`@createComment()`,
-				parentNodes && `@createComment()`,
+				`@comment()`,
+				parentNodes && `@comment()`,
 				parentNode
 			);
 		}

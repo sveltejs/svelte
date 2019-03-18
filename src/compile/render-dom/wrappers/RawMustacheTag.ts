@@ -42,13 +42,13 @@ export default class RawMustacheTagWrapper extends Tag {
 			detach = `${parentNode}.innerHTML = '';`;
 			insert = content => `${parentNode}.innerHTML = ${content};`;
 		} else if (anchorBefore === 'null') {
-			detach = `@detachBefore(${anchorAfter});`;
+			detach = `@detach_before(${anchorAfter});`;
 			insert = content => `${anchorAfter}.insertAdjacentHTML("beforebegin", ${content});`;
 		} else if (anchorAfter === 'null') {
-			detach = `@detachAfter(${anchorBefore});`;
+			detach = `@detach_after(${anchorBefore});`;
 			insert = content => `${anchorBefore}.insertAdjacentHTML("afterend", ${content});`;
 		} else {
-			detach = `@detachBetween(${anchorBefore}, ${anchorAfter});`;
+			detach = `@detach_between(${anchorBefore}, ${anchorAfter});`;
 			insert = content => `${anchorBefore}.insertAdjacentHTML("afterend", ${content});`;
 		}
 
@@ -65,8 +65,8 @@ export default class RawMustacheTagWrapper extends Tag {
 		if (needsAnchorBefore) {
 			block.addElement(
 				anchorBefore,
-				`@createElement('noscript')`,
-				parentNodes && `@createElement('noscript')`,
+				`@element('noscript')`,
+				parentNodes && `@element('noscript')`,
 				parentNode,
 				true
 			);
@@ -75,8 +75,8 @@ export default class RawMustacheTagWrapper extends Tag {
 		function addAnchorAfter() {
 			block.addElement(
 				anchorAfter,
-				`@createElement('noscript')`,
-				parentNodes && `@createElement('noscript')`,
+				`@element('noscript')`,
+				parentNodes && `@element('noscript')`,
 				parentNode
 			);
 		}
@@ -90,8 +90,8 @@ export default class RawMustacheTagWrapper extends Tag {
 		block.builders.mount.add_line(insert(init));
 
 		if (!parentNode) {
-			block.builders.destroy.add_conditional('detach', needsAnchorBefore
-				? `${detach}\n@detachNode(${anchorBefore});`
+			block.builders.destroy.add_conditional('detaching', needsAnchorBefore
+				? `${detach}\n@detach(${anchorBefore});`
 				: detach);
 		}
 

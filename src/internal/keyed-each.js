@@ -1,24 +1,24 @@
 import { on_outro } from './transitions.js';
 
-export function destroyBlock(block, lookup) {
+export function destroy_block(block, lookup) {
 	block.d(1);
 	lookup[block.key] = null;
 }
 
-export function outroAndDestroyBlock(block, lookup) {
+export function outro_and_destroy_block(block, lookup) {
 	on_outro(() => {
-		destroyBlock(block, lookup);
+		destroy_block(block, lookup);
 	});
 
 	block.o(1);
 }
 
-export function fixAndOutroAndDestroyBlock(block, lookup) {
+export function fix_and_outro_and_destroy_block(block, lookup) {
 	block.f();
-	outroAndDestroyBlock(block, lookup);
+	outro_and_destroy_block(block, lookup);
 }
 
-export function updateKeyedEach(old_blocks, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
+export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
 	var o = old_blocks.length;
 	var n = list.length;
 
