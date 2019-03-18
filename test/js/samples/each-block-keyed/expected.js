@@ -4,7 +4,6 @@ import {
 	append,
 	blank_object,
 	comment,
-	create_text,
 	destroy_block,
 	detach,
 	element,
@@ -13,6 +12,7 @@ import {
 	noop,
 	safe_not_equal,
 	set_data,
+	text,
 	update_keyed_each
 } from "svelte/internal";
 
@@ -33,7 +33,7 @@ function create_each_block(key_1, ctx) {
 
 		c() {
 			div = element("div");
-			t = create_text(t_value);
+			t = text(t_value);
 			this.first = div;
 		},
 

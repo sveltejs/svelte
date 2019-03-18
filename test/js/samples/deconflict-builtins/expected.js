@@ -3,7 +3,6 @@ import {
 	SvelteComponent as SvelteComponent_1,
 	append,
 	comment,
-	create_text,
 	destroy_each,
 	detach,
 	element,
@@ -11,7 +10,8 @@ import {
 	insert,
 	noop,
 	safe_not_equal,
-	set_data
+	set_data,
+	text
 } from "svelte/internal";
 
 function get_each_context(ctx, list, i) {
@@ -27,7 +27,7 @@ function create_each_block(ctx) {
 	return {
 		c() {
 			span = element("span");
-			t = create_text(t_value);
+			t = text(t_value);
 		},
 
 		m(target, anchor) {

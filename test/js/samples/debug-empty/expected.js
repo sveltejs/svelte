@@ -3,14 +3,14 @@ import {
 	SvelteComponentDev,
 	add_location,
 	append,
-	create_text,
 	detach,
 	element,
 	init,
 	insert,
 	noop,
 	safe_not_equal,
-	set_data
+	set_data,
+	text
 } from "svelte/internal";
 
 const file = undefined;
@@ -21,10 +21,10 @@ function create_fragment(ctx) {
 	return {
 		c: function create() {
 			h1 = element("h1");
-			t0 = create_text("Hello ");
-			t1 = create_text(ctx.name);
-			t2 = create_text("!");
-			t3 = create_text("\n");
+			t0 = text("Hello ");
+			t1 = text(ctx.name);
+			t2 = text("!");
+			t3 = text("\n");
 			debugger;
 			add_location(h1, file, 4, 0, 38);
 		},

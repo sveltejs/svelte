@@ -3,7 +3,6 @@ import {
 	SvelteComponentDev,
 	add_location,
 	append,
-	create_text,
 	destroy_each,
 	detach,
 	element,
@@ -11,7 +10,8 @@ import {
 	insert,
 	noop,
 	safe_not_equal,
-	set_data
+	set_data,
+	text
 } from "svelte/internal";
 
 const file = undefined;
@@ -29,8 +29,8 @@ function create_each_block(ctx) {
 	return {
 		c: function create() {
 			span = element("span");
-			t0 = create_text(t0_value);
-			t1 = create_text("\n\t");
+			t0 = text(t0_value);
+			t1 = text("\n\t");
 
 			{
 				const { foo, bar, baz, thing } = ctx;
@@ -84,10 +84,10 @@ function create_fragment(ctx) {
 				each_blocks[i].c();
 			}
 
-			t0 = create_text("\n\n");
+			t0 = text("\n\n");
 			p = element("p");
-			t1 = create_text("foo: ");
-			t2 = create_text(ctx.foo);
+			t1 = text("foo: ");
+			t2 = text(ctx.foo);
 			add_location(p, file, 12, 0, 182);
 		},
 

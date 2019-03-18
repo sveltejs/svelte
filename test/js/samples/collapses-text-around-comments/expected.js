@@ -2,14 +2,14 @@
 import {
 	SvelteComponent as SvelteComponent_1,
 	append,
-	create_text,
 	detach,
 	element,
 	init,
 	insert,
 	noop,
 	safe_not_equal,
-	set_data
+	set_data,
+	text
 } from "svelte/internal";
 
 function add_css() {
@@ -25,7 +25,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t = create_text(ctx.foo);
+			t = text(ctx.foo);
 			p.className = "svelte-1a7i8ec";
 		},
 

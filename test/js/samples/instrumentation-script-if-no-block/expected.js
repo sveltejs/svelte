@@ -2,7 +2,6 @@
 import {
 	SvelteComponent as SvelteComponent_1,
 	append,
-	create_text,
 	detach,
 	element,
 	init,
@@ -10,7 +9,8 @@ import {
 	listen,
 	noop,
 	safe_not_equal,
-	set_data
+	set_data,
+	text
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -20,10 +20,10 @@ function create_fragment(ctx) {
 		c() {
 			button = element("button");
 			button.textContent = "foo";
-			t1 = create_text("\n\n");
+			t1 = text("\n\n");
 			p = element("p");
-			t2 = create_text("x: ");
-			t3 = create_text(ctx.x);
+			t2 = text("x: ");
+			t3 = text(ctx.x);
 			dispose = listen(button, "click", ctx.foo);
 		},
 

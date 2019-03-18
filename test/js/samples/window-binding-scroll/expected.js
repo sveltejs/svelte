@@ -3,7 +3,6 @@ import {
 	SvelteComponent as SvelteComponent_1,
 	add_render_callback,
 	append,
-	create_text,
 	detach,
 	element,
 	init,
@@ -11,7 +10,8 @@ import {
 	listen,
 	noop,
 	safe_not_equal,
-	set_data
+	set_data,
+	text
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -22,8 +22,8 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t0 = create_text("scrolled to ");
-			t1 = create_text(ctx.y);
+			t0 = text("scrolled to ");
+			t1 = text(ctx.y);
 			dispose = listen(window, "scroll", () => {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);

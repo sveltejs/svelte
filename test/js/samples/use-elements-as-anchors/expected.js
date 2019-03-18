@@ -3,13 +3,13 @@ import {
 	SvelteComponent as SvelteComponent_1,
 	append,
 	comment,
-	create_text,
 	detach,
 	element,
 	init,
 	insert,
 	noop,
-	safe_not_equal
+	safe_not_equal,
+	text
 } from "svelte/internal";
 
 // (10:1) {#if a}
@@ -139,19 +139,19 @@ function create_fragment(ctx) {
 		c() {
 			div = element("div");
 			if (if_block0) if_block0.c();
-			t0 = create_text("\n\n\t");
+			t0 = text("\n\n\t");
 			p0 = element("p");
 			p0.textContent = "this can be used as an anchor";
-			t2 = create_text("\n\n\t");
+			t2 = text("\n\n\t");
 			if (if_block1) if_block1.c();
-			t3 = create_text("\n\n\t");
+			t3 = text("\n\n\t");
 			if (if_block2) if_block2.c();
-			t4 = create_text("\n\n\t");
+			t4 = text("\n\n\t");
 			p1 = element("p");
 			p1.textContent = "so can this";
-			t6 = create_text("\n\n\t");
+			t6 = text("\n\n\t");
 			if (if_block3) if_block3.c();
-			t7 = create_text("\n\n");
+			t7 = text("\n\n");
 			if (if_block4) if_block4.c();
 			if_block4_anchor = comment();
 		},

@@ -2,13 +2,13 @@
 import {
 	SvelteComponent as SvelteComponent_1,
 	append,
-	create_text,
 	detach,
 	init,
 	insert,
 	noop,
 	safe_not_equal,
-	svg_element
+	svg_element,
+	text
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -18,7 +18,7 @@ function create_fragment(ctx) {
 		c() {
 			svg = svg_element("svg");
 			title = svg_element("title");
-			t = create_text("a title");
+			t = text("a title");
 		},
 
 		m(target, anchor) {

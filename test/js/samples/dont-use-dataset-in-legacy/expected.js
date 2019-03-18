@@ -2,13 +2,13 @@
 import {
 	SvelteComponent as SvelteComponent_1,
 	attr,
-	create_text,
 	detach,
 	element,
 	init,
 	insert,
 	noop,
-	safe_not_equal
+	safe_not_equal,
+	text
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -17,7 +17,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			div0 = element("div");
-			t = create_text("\n");
+			t = text("\n");
 			div1 = element("div");
 			attr(div0, "data-foo", "bar");
 			attr(div1, "data-foo", ctx.bar);

@@ -2,7 +2,6 @@
 import {
 	SvelteComponent as SvelteComponent_1,
 	append,
-	create_text,
 	destroy_each,
 	detach,
 	detach_after,
@@ -11,7 +10,8 @@ import {
 	insert,
 	noop,
 	safe_not_equal,
-	set_data
+	set_data,
+	text
 } from "svelte/internal";
 
 function get_each_context(ctx, list, i) {
@@ -29,14 +29,14 @@ function create_each_block(ctx) {
 		c() {
 			div = element("div");
 			strong = element("strong");
-			t0 = create_text(ctx.i);
-			t1 = create_text("\n\n\t\t");
+			t0 = text(ctx.i);
+			t1 = text("\n\n\t\t");
 			span = element("span");
-			t2 = create_text(t2_value);
-			t3 = create_text(" wrote ");
-			t4 = create_text(t4_value);
-			t5 = create_text(" ago:");
-			t6 = create_text("\n\n\t\t");
+			t2 = text(t2_value);
+			t3 = text(" wrote ");
+			t4 = text(t4_value);
+			t5 = text(" ago:");
+			t6 = text("\n\n\t\t");
 			raw_before = element('noscript');
 			span.className = "meta";
 			div.className = "comment";
@@ -97,9 +97,9 @@ function create_fragment(ctx) {
 				each_blocks[i].c();
 			}
 
-			t0 = create_text("\n\n");
+			t0 = text("\n\n");
 			p = element("p");
-			t1 = create_text(ctx.foo);
+			t1 = text(ctx.foo);
 		},
 
 		m(target, anchor) {
