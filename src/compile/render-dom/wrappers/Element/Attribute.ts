@@ -1,9 +1,9 @@
 import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
-import fixAttributeCasing from '../../../../utils/fixAttributeCasing';
+import fix_attribute_casing from './fix_attribute_casing';
 import ElementWrapper from './index';
-import { stringify } from '../../../../utils/stringify';
-import deindent from '../../../../utils/deindent';
+import { stringify } from '../../../utils/stringify';
+import deindent from '../../../utils/deindent';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -14,19 +14,19 @@ export default class AttributeWrapper {
 		this.parent = parent;
 
 		if (node.dependencies.size > 0) {
-			parent.cannotUseInnerHTML();
+			parent.cannot_use_innerhtml();
 
-			block.addDependencies(node.dependencies);
+			block.add_dependencies(node.dependencies);
 
 			// special case — <option value={foo}> — see below
 			if (this.parent.node.name === 'option' && node.name === 'value') {
 				let select: ElementWrapper = this.parent;
 				while (select && (select.node.type !== 'Element' || select.node.name !== 'select')) select = select.parent;
 
-				if (select && select.selectBindingDependencies) {
-					select.selectBindingDependencies.forEach(prop => {
+				if (select && select.select_binding_dependencies) {
+					select.select_binding_dependencies.forEach(prop => {
 						this.node.dependencies.forEach((dependency: string) => {
-							this.parent.renderer.component.indirectDependencies.get(prop).add(dependency);
+							this.parent.renderer.component.indirect_dependencies.get(prop).add(dependency);
 						});
 					});
 				}
@@ -36,13 +36,13 @@ export default class AttributeWrapper {
 
 	render(block: Block) {
 		const element = this.parent;
-		const name = fixAttributeCasing(this.node.name);
+		const name = fix_attribute_casing(this.node.name);
 
-		let metadata = element.node.namespace ? null : attributeLookup[name];
-		if (metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf(element.node.name))
+		let metadata = element.node.namespace ? null : attribute_lookup[name];
+		if (metadata && metadata.applies_to && !~metadata.applies_to.indexOf(element.node.name))
 			metadata = null;
 
-		const isIndirectlyBoundValue =
+		const is_indirectly_bound_value =
 			name === 'value' &&
 			(element.node.name === 'option' || // TODO check it's actually bound
 				(element.node.name === 'input' &&
@@ -51,27 +51,27 @@ export default class AttributeWrapper {
 							/checked|group/.test(binding.name)
 						)));
 
-		const propertyName = isIndirectlyBoundValue
+		const property_name = is_indirectly_bound_value
 			? '__value'
-			: metadata && metadata.propertyName;
+			: metadata && metadata.property_name;
 
 		// xlink is a special case... we could maybe extend this to generic
 		// namespaced attributes but I'm not sure that's applicable in
 		// HTML5?
 		const method = /-/.test(element.node.name)
-			? '@setCustomElementData'
+			? '@set_custom_element_data'
 			: name.slice(0, 6) === 'xlink:'
-				? '@setXlinkAttribute'
-				: '@setAttribute';
+				? '@xlink_attr'
+				: '@attr';
 
-		const isLegacyInputType = element.renderer.component.compileOptions.legacy && name === 'type' && this.parent.node.name === 'input';
+		const is_legacy_input_type = element.renderer.component.compile_options.legacy && name === 'type' && this.parent.node.name === 'input';
 
-		const isDataSet = /^data-/.test(name) && !element.renderer.component.compileOptions.legacy && !element.node.namespace;
-		const camelCaseName = isDataSet ? name.replace('data-', '').replace(/(-\w)/g, function (m) {
+		const is_dataset = /^data-/.test(name) && !element.renderer.component.compile_options.legacy && !element.node.namespace;
+		const camel_case_name = is_dataset ? name.replace('data-', '').replace(/(-\w)/g, function (m) {
 			return m[1].toUpperCase();
 		}) : name;
 
-		if (this.node.isDynamic) {
+		if (this.node.is_dynamic) {
 			let value;
 
 			// TODO some of this code is repeated in Tag.ts — would be good to
@@ -88,7 +88,7 @@ export default class AttributeWrapper {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								return chunk.getPrecedence() <= 13
+								return chunk.get_precedence() <= 13
 									? `(${chunk.render()})`
 									: chunk.render();
 							}
@@ -96,32 +96,32 @@ export default class AttributeWrapper {
 						.join(' + ');
 			}
 
-			const isSelectValueAttribute =
+			const is_select_value_attribute =
 				name === 'value' && element.node.name === 'select';
 
-			const shouldCache = (this.node.shouldCache || isSelectValueAttribute);
+			const should_cache = (this.node.should_cache || is_select_value_attribute);
 
-			const last = shouldCache && block.getUniqueName(
+			const last = should_cache && block.get_unique_name(
 				`${element.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
 			);
 
-			if (shouldCache) block.addVariable(last);
+			if (should_cache) block.add_variable(last);
 
 			let updater;
-			const init = shouldCache ? `${last} = ${value}` : value;
+			const init = should_cache ? `${last} = ${value}` : value;
 
-			if (isLegacyInputType) {
-				block.builders.hydrate.addLine(
-					`@setInputType(${element.var}, ${init});`
+			if (is_legacy_input_type) {
+				block.builders.hydrate.add_line(
+					`@set_input_type(${element.var}, ${init});`
 				);
-				updater = `@setInputType(${element.var}, ${shouldCache ? last : value});`;
-			} else if (isSelectValueAttribute) {
+				updater = `@set_input_type(${element.var}, ${should_cache ? last : value});`;
+			} else if (is_select_value_attribute) {
 				// annoying special case
-				const isMultipleSelect = element.getStaticAttributeValue('multiple');
-				const i = block.getUniqueName('i');
-				const option = block.getUniqueName('option');
+				const is_multiple_select = element.get_static_attribute_value('multiple');
+				const i = block.get_unique_name('i');
+				const option = block.get_unique_name('option');
 
-				const ifStatement = isMultipleSelect
+				const if_statement = is_multiple_select
 					? deindent`
 						${option}.selected = ~${last}.indexOf(${option}.__value);`
 					: deindent`
@@ -134,81 +134,81 @@ export default class AttributeWrapper {
 					for (var ${i} = 0; ${i} < ${element.var}.options.length; ${i} += 1) {
 						var ${option} = ${element.var}.options[${i}];
 
-						${ifStatement}
+						${if_statement}
 					}
 				`;
 
-				block.builders.mount.addBlock(deindent`
+				block.builders.mount.add_block(deindent`
 					${last} = ${value};
 					${updater}
 				`);
-			} else if (propertyName) {
-				block.builders.hydrate.addLine(
-					`${element.var}.${propertyName} = ${init};`
+			} else if (property_name) {
+				block.builders.hydrate.add_line(
+					`${element.var}.${property_name} = ${init};`
 				);
-				updater = `${element.var}.${propertyName} = ${shouldCache ? last : value};`;
-			} else if (isDataSet) {
-				block.builders.hydrate.addLine(
-					`${element.var}.dataset.${camelCaseName} = ${init};`
+				updater = `${element.var}.${property_name} = ${should_cache ? last : value};`;
+			} else if (is_dataset) {
+				block.builders.hydrate.add_line(
+					`${element.var}.dataset.${camel_case_name} = ${init};`
 				);
-				updater = `${element.var}.dataset.${camelCaseName} = ${shouldCache ? last : value};`;
+				updater = `${element.var}.dataset.${camel_case_name} = ${should_cache ? last : value};`;
 			} else {
-				block.builders.hydrate.addLine(
+				block.builders.hydrate.add_line(
 					`${method}(${element.var}, "${name}", ${init});`
 				);
-				updater = `${method}(${element.var}, "${name}", ${shouldCache ? last : value});`;
+				updater = `${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
 			}
 
 			// only add an update if mutations are involved (or it's a select?)
 			const dependencies = this.node.get_dependencies();
-			if (dependencies.length > 0 || isSelectValueAttribute) {
-				const changedCheck = (
-					(block.hasOutros ? `!#current || ` : '') +
+			if (dependencies.length > 0 || is_select_value_attribute) {
+				const changed_check = (
+					(block.has_outros ? `!#current || ` : '') +
 					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 				);
 
-				const updateCachedValue = `${last} !== (${last} = ${value})`;
+				const update_cached_value = `${last} !== (${last} = ${value})`;
 
-				const condition = shouldCache
-					? (dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue)
-					: changedCheck;
+				const condition = should_cache
+					? (dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value)
+					: changed_check;
 
-				block.builders.update.addConditional(
+				block.builders.update.add_conditional(
 					condition,
 					updater
 				);
 			}
 		} else {
-			const value = this.node.getValue(block);
+			const value = this.node.get_value(block);
 
 			const statement = (
-				isLegacyInputType
-					? `@setInputType(${element.var}, ${value});`
-					: propertyName
-						? `${element.var}.${propertyName} = ${value};`
-						: isDataSet
-							? `${element.var}.dataset.${camelCaseName} = ${value};`
+				is_legacy_input_type
+					? `@set_input_type(${element.var}, ${value});`
+					: property_name
+						? `${element.var}.${property_name} = ${value};`
+						: is_dataset
+							? `${element.var}.dataset.${camel_case_name} = ${value};`
 							: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
 			);
 
-			block.builders.hydrate.addLine(statement);
+			block.builders.hydrate.add_line(statement);
 
 			// special case – autofocus. has to be handled in a bit of a weird way
-			if (this.node.isTrue && name === 'autofocus') {
+			if (this.node.is_true && name === 'autofocus') {
 				block.autofocus = element.var;
 			}
 		}
 
-		if (isIndirectlyBoundValue) {
-			const updateValue = `${element.var}.value = ${element.var}.__value;`;
+		if (is_indirectly_bound_value) {
+			const update_value = `${element.var}.value = ${element.var}.__value;`;
 
-			block.builders.hydrate.addLine(updateValue);
-			if (this.node.isDynamic) block.builders.update.addLine(updateValue);
+			block.builders.hydrate.add_line(update_value);
+			if (this.node.is_dynamic) block.builders.update.add_line(update_value);
 		}
 	}
 
 	stringify() {
-		if (this.node.isTrue) return '';
+		if (this.node.is_true) return '';
 
 		const value = this.node.chunks;
 		if (value.length === 0) return `=""`;
@@ -222,13 +222,13 @@ export default class AttributeWrapper {
 }
 
 // source: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes
-const attributeLookup = {
-	accept: { appliesTo: ['form', 'input'] },
-	'accept-charset': { propertyName: 'acceptCharset', appliesTo: ['form'] },
-	accesskey: { propertyName: 'accessKey' },
-	action: { appliesTo: ['form'] },
+const attribute_lookup = {
+	accept: { applies_to: ['form', 'input'] },
+	'accept-charset': { property_name: 'acceptCharset', applies_to: ['form'] },
+	accesskey: { property_name: 'accessKey' },
+	action: { applies_to: ['form'] },
 	align: {
-		appliesTo: [
+		applies_to: [
 			'applet',
 			'caption',
 			'col',
@@ -245,16 +245,16 @@ const attributeLookup = {
 			'tr',
 		],
 	},
-	allowfullscreen: { propertyName: 'allowFullscreen', appliesTo: ['iframe'] },
-	alt: { appliesTo: ['applet', 'area', 'img', 'input'] },
-	async: { appliesTo: ['script'] },
-	autocomplete: { appliesTo: ['form', 'input'] },
-	autofocus: { appliesTo: ['button', 'input', 'keygen', 'select', 'textarea'] },
-	autoplay: { appliesTo: ['audio', 'video'] },
-	autosave: { appliesTo: ['input'] },
+	allowfullscreen: { property_name: 'allowFullscreen', applies_to: ['iframe'] },
+	alt: { applies_to: ['applet', 'area', 'img', 'input'] },
+	async: { applies_to: ['script'] },
+	autocomplete: { applies_to: ['form', 'input'] },
+	autofocus: { applies_to: ['button', 'input', 'keygen', 'select', 'textarea'] },
+	autoplay: { applies_to: ['audio', 'video'] },
+	autosave: { applies_to: ['input'] },
 	bgcolor: {
-		propertyName: 'bgColor',
-		appliesTo: [
+		property_name: 'bgColor',
+		applies_to: [
 			'body',
 			'col',
 			'colgroup',
@@ -267,31 +267,31 @@ const attributeLookup = {
 			'tr',
 		],
 	},
-	border: { appliesTo: ['img', 'object', 'table'] },
-	buffered: { appliesTo: ['audio', 'video'] },
-	challenge: { appliesTo: ['keygen'] },
-	charset: { appliesTo: ['meta', 'script'] },
-	checked: { appliesTo: ['command', 'input'] },
-	cite: { appliesTo: ['blockquote', 'del', 'ins', 'q'] },
-	class: { propertyName: 'className' },
-	code: { appliesTo: ['applet'] },
-	codebase: { propertyName: 'codeBase', appliesTo: ['applet'] },
-	color: { appliesTo: ['basefont', 'font', 'hr'] },
-	cols: { appliesTo: ['textarea'] },
-	colspan: { propertyName: 'colSpan', appliesTo: ['td', 'th'] },
-	content: { appliesTo: ['meta'] },
-	contenteditable: { propertyName: 'contentEditable' },
+	border: { applies_to: ['img', 'object', 'table'] },
+	buffered: { applies_to: ['audio', 'video'] },
+	challenge: { applies_to: ['keygen'] },
+	charset: { applies_to: ['meta', 'script'] },
+	checked: { applies_to: ['command', 'input'] },
+	cite: { applies_to: ['blockquote', 'del', 'ins', 'q'] },
+	class: { property_name: 'className' },
+	code: { applies_to: ['applet'] },
+	codebase: { property_name: 'codeBase', applies_to: ['applet'] },
+	color: { applies_to: ['basefont', 'font', 'hr'] },
+	cols: { applies_to: ['textarea'] },
+	colspan: { property_name: 'colSpan', applies_to: ['td', 'th'] },
+	content: { applies_to: ['meta'] },
+	contenteditable: { property_name: 'contentEditable' },
 	contextmenu: {},
-	controls: { appliesTo: ['audio', 'video'] },
-	coords: { appliesTo: ['area'] },
-	data: { appliesTo: ['object'] },
-	datetime: { propertyName: 'dateTime', appliesTo: ['del', 'ins', 'time'] },
-	default: { appliesTo: ['track'] },
-	defer: { appliesTo: ['script'] },
+	controls: { applies_to: ['audio', 'video'] },
+	coords: { applies_to: ['area'] },
+	data: { applies_to: ['object'] },
+	datetime: { property_name: 'dateTime', applies_to: ['del', 'ins', 'time'] },
+	default: { applies_to: ['track'] },
+	defer: { applies_to: ['script'] },
 	dir: {},
-	dirname: { propertyName: 'dirName', appliesTo: ['input', 'textarea'] },
+	dirname: { property_name: 'dirName', applies_to: ['input', 'textarea'] },
 	disabled: {
-		appliesTo: [
+		applies_to: [
 			'button',
 			'command',
 			'fieldset',
@@ -303,13 +303,13 @@ const attributeLookup = {
 			'textarea',
 		],
 	},
-	download: { appliesTo: ['a', 'area'] },
+	download: { applies_to: ['a', 'area'] },
 	draggable: {},
 	dropzone: {},
-	enctype: { appliesTo: ['form'] },
-	for: { propertyName: 'htmlFor', appliesTo: ['label', 'output'] },
+	enctype: { applies_to: ['form'] },
+	for: { property_name: 'htmlFor', applies_to: ['label', 'output'] },
 	form: {
-		appliesTo: [
+		applies_to: [
 			'button',
 			'fieldset',
 			'input',
@@ -323,38 +323,38 @@ const attributeLookup = {
 			'textarea',
 		],
 	},
-	formaction: { appliesTo: ['input', 'button'] },
-	headers: { appliesTo: ['td', 'th'] },
+	formaction: { applies_to: ['input', 'button'] },
+	headers: { applies_to: ['td', 'th'] },
 	height: {
-		appliesTo: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video'],
+		applies_to: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video'],
 	},
 	hidden: {},
-	high: { appliesTo: ['meter'] },
-	href: { appliesTo: ['a', 'area', 'base', 'link'] },
-	hreflang: { appliesTo: ['a', 'area', 'link'] },
-	'http-equiv': { propertyName: 'httpEquiv', appliesTo: ['meta'] },
-	icon: { appliesTo: ['command'] },
+	high: { applies_to: ['meter'] },
+	href: { applies_to: ['a', 'area', 'base', 'link'] },
+	hreflang: { applies_to: ['a', 'area', 'link'] },
+	'http-equiv': { property_name: 'httpEquiv', applies_to: ['meta'] },
+	icon: { applies_to: ['command'] },
 	id: {},
-	indeterminate: { appliesTo: ['input'] },
-	ismap: { propertyName: 'isMap', appliesTo: ['img'] },
+	indeterminate: { applies_to: ['input'] },
+	ismap: { property_name: 'isMap', applies_to: ['img'] },
 	itemprop: {},
-	keytype: { appliesTo: ['keygen'] },
-	kind: { appliesTo: ['track'] },
-	label: { appliesTo: ['track'] },
+	keytype: { applies_to: ['keygen'] },
+	kind: { applies_to: ['track'] },
+	label: { applies_to: ['track'] },
 	lang: {},
-	language: { appliesTo: ['script'] },
-	loop: { appliesTo: ['audio', 'bgsound', 'marquee', 'video'] },
-	low: { appliesTo: ['meter'] },
-	manifest: { appliesTo: ['html'] },
-	max: { appliesTo: ['input', 'meter', 'progress'] },
-	maxlength: { propertyName: 'maxLength', appliesTo: ['input', 'textarea'] },
-	media: { appliesTo: ['a', 'area', 'link', 'source', 'style'] },
-	method: { appliesTo: ['form'] },
-	min: { appliesTo: ['input', 'meter'] },
-	multiple: { appliesTo: ['input', 'select'] },
-	muted: { appliesTo: ['audio', 'video'] },
+	language: { applies_to: ['script'] },
+	loop: { applies_to: ['audio', 'bgsound', 'marquee', 'video'] },
+	low: { applies_to: ['meter'] },
+	manifest: { applies_to: ['html'] },
+	max: { applies_to: ['input', 'meter', 'progress'] },
+	maxlength: { property_name: 'maxLength', applies_to: ['input', 'textarea'] },
+	media: { applies_to: ['a', 'area', 'link', 'source', 'style'] },
+	method: { applies_to: ['form'] },
+	min: { applies_to: ['input', 'meter'] },
+	multiple: { applies_to: ['input', 'select'] },
+	muted: { applies_to: ['audio', 'video'] },
 	name: {
-		appliesTo: [
+		applies_to: [
 			'button',
 			'form',
 			'fieldset',
@@ -370,33 +370,33 @@ const attributeLookup = {
 			'param',
 		],
 	},
-	novalidate: { propertyName: 'noValidate', appliesTo: ['form'] },
-	open: { appliesTo: ['details'] },
-	optimum: { appliesTo: ['meter'] },
-	pattern: { appliesTo: ['input'] },
-	ping: { appliesTo: ['a', 'area'] },
-	placeholder: { appliesTo: ['input', 'textarea'] },
-	poster: { appliesTo: ['video'] },
-	preload: { appliesTo: ['audio', 'video'] },
-	radiogroup: { appliesTo: ['command'] },
-	readonly: { propertyName: 'readOnly', appliesTo: ['input', 'textarea'] },
-	rel: { appliesTo: ['a', 'area', 'link'] },
-	required: { appliesTo: ['input', 'select', 'textarea'] },
-	reversed: { appliesTo: ['ol'] },
-	rows: { appliesTo: ['textarea'] },
-	rowspan: { propertyName: 'rowSpan', appliesTo: ['td', 'th'] },
-	sandbox: { appliesTo: ['iframe'] },
-	scope: { appliesTo: ['th'] },
-	scoped: { appliesTo: ['style'] },
-	seamless: { appliesTo: ['iframe'] },
-	selected: { appliesTo: ['option'] },
-	shape: { appliesTo: ['a', 'area'] },
-	size: { appliesTo: ['input', 'select'] },
-	sizes: { appliesTo: ['link', 'img', 'source'] },
-	span: { appliesTo: ['col', 'colgroup'] },
+	novalidate: { property_name: 'noValidate', applies_to: ['form'] },
+	open: { applies_to: ['details'] },
+	optimum: { applies_to: ['meter'] },
+	pattern: { applies_to: ['input'] },
+	ping: { applies_to: ['a', 'area'] },
+	placeholder: { applies_to: ['input', 'textarea'] },
+	poster: { applies_to: ['video'] },
+	preload: { applies_to: ['audio', 'video'] },
+	radiogroup: { applies_to: ['command'] },
+	readonly: { property_name: 'readOnly', applies_to: ['input', 'textarea'] },
+	rel: { applies_to: ['a', 'area', 'link'] },
+	required: { applies_to: ['input', 'select', 'textarea'] },
+	reversed: { applies_to: ['ol'] },
+	rows: { applies_to: ['textarea'] },
+	rowspan: { property_name: 'rowSpan', applies_to: ['td', 'th'] },
+	sandbox: { applies_to: ['iframe'] },
+	scope: { applies_to: ['th'] },
+	scoped: { applies_to: ['style'] },
+	seamless: { applies_to: ['iframe'] },
+	selected: { applies_to: ['option'] },
+	shape: { applies_to: ['a', 'area'] },
+	size: { applies_to: ['input', 'select'] },
+	sizes: { applies_to: ['link', 'img', 'source'] },
+	span: { applies_to: ['col', 'colgroup'] },
 	spellcheck: {},
 	src: {
-		appliesTo: [
+		applies_to: [
 			'audio',
 			'embed',
 			'iframe',
@@ -408,18 +408,18 @@ const attributeLookup = {
 			'video',
 		],
 	},
-	srcdoc: { appliesTo: ['iframe'] },
-	srclang: { appliesTo: ['track'] },
-	srcset: { appliesTo: ['img'] },
-	start: { appliesTo: ['ol'] },
-	step: { appliesTo: ['input'] },
-	style: { propertyName: 'style.cssText' },
-	summary: { appliesTo: ['table'] },
-	tabindex: { propertyName: 'tabIndex' },
-	target: { appliesTo: ['a', 'area', 'base', 'form'] },
+	srcdoc: { applies_to: ['iframe'] },
+	srclang: { applies_to: ['track'] },
+	srcset: { applies_to: ['img'] },
+	start: { applies_to: ['ol'] },
+	step: { applies_to: ['input'] },
+	style: { property_name: 'style.cssText' },
+	summary: { applies_to: ['table'] },
+	tabindex: { property_name: 'tabIndex' },
+	target: { applies_to: ['a', 'area', 'base', 'form'] },
 	title: {},
 	type: {
-		appliesTo: [
+		applies_to: [
 			'button',
 			'command',
 			'embed',
@@ -430,9 +430,9 @@ const attributeLookup = {
 			'menu',
 		],
 	},
-	usemap: { propertyName: 'useMap', appliesTo: ['img', 'input', 'object'] },
+	usemap: { property_name: 'useMap', applies_to: ['img', 'input', 'object'] },
 	value: {
-		appliesTo: [
+		applies_to: [
 			'button',
 			'option',
 			'input',
@@ -444,14 +444,14 @@ const attributeLookup = {
 			'textarea',
 		],
 	},
-	volume: { appliesTo: ['audio', 'video'] },
+	volume: { applies_to: ['audio', 'video'] },
 	width: {
-		appliesTo: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video'],
+		applies_to: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video'],
 	},
-	wrap: { appliesTo: ['textarea'] },
+	wrap: { applies_to: ['textarea'] },
 };
 
-Object.keys(attributeLookup).forEach(name => {
-	const metadata = attributeLookup[name];
-	if (!metadata.propertyName) metadata.propertyName = name;
+Object.keys(attribute_lookup).forEach(name => {
+	const metadata = attribute_lookup[name];
+	if (!metadata.property_name) metadata.property_name = name;
 });

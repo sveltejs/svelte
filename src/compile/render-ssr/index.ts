@@ -1,10 +1,8 @@
-import deindent from '../../utils/deindent';
+import deindent from '../utils/deindent';
 import Component from '../Component';
 import { CompileOptions } from '../../interfaces';
-import { stringify } from '../../utils/stringify';
+import { stringify } from '../utils/stringify';
 import Renderer from './Renderer';
-import { walk } from 'estree-walker';
-import { extractNames } from '../../utils/annotateWithScopes';
 
 export default function ssr(
 	component: Component,
@@ -33,7 +31,7 @@ export default function ssr(
 
 			const assignment = `${name} = @get_store_value(${store_name});`;
 
-			return component.compileOptions.dev
+			return component.compile_options.dev
 				? `@validate_store(${store_name}, '${store_name}'); ${assignment}`
 				: assignment;
 		});
@@ -48,7 +46,7 @@ export default function ssr(
 			const get_store_value = component.helper('get_store_value');
 
 			let insert = `${value} = ${get_store_value}(${name})`;
-			if (component.compileOptions.dev) {
+			if (component.compile_options.dev) {
 				const validate_store = component.helper('validate_store');
 				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
 			}

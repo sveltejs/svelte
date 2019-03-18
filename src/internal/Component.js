@@ -1,7 +1,7 @@
 import { add_render_callback, flush, intros, schedule_update, dirty_components } from './scheduler.js';
 import { current_component, set_current_component } from './lifecycle.js'
 import { is_function, run, run_all, noop } from './utils.js';
-import { blankObject } from './utils.js';
+import { blank_object } from './utils.js';
 import { children } from './dom.js';
 
 export function bind(component, name, callback) {
@@ -33,10 +33,10 @@ export function mount_component(component, target, anchor) {
 	after_render.forEach(add_render_callback);
 }
 
-function destroy(component, detach) {
+function destroy(component, detaching) {
 	if (component.$$) {
 		run_all(component.$$.on_destroy);
-		component.$$.fragment.d(detach);
+		component.$$.fragment.d(detaching);
 
 		// TODO null out other refs, including component.$$ (but need to
 		// preserve final state?)
@@ -68,7 +68,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		props: prop_names,
 		update: noop,
 		not_equal,
-		bound: blankObject(),
+		bound: blank_object(),
 
 		// lifecycle
 		on_mount: [],
@@ -78,7 +78,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		context: new Map(parent_component ? parent_component.$$.context : []),
 
 		// everything else
-		callbacks: blankObject(),
+		callbacks: blank_object(),
 		dirty: null
 	};
 

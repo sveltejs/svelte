@@ -2,7 +2,7 @@ import Block from '../../Block';
 import Action from '../../../nodes/Action';
 import Component from '../../../Component';
 
-export default function addActions(
+export default function add_actions(
 	component: Component,
 	block: Block,
 	target: string,
@@ -17,15 +17,15 @@ export default function addActions(
 			dependencies = expression.dynamic_dependencies();
 		}
 
-		const name = block.getUniqueName(
+		const name = block.get_unique_name(
 			`${action.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
 		);
 
-		block.addVariable(name);
+		block.add_variable(name);
 
 		const fn = component.qualify(action.name);
 
-		block.builders.mount.addLine(
+		block.builders.mount.add_line(
 			`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
 		);
 
@@ -34,13 +34,13 @@ export default function addActions(
 			const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
 			conditional += dependencies.length > 1 ? `(${deps})` : deps;
 
-			block.builders.update.addConditional(
+			block.builders.update.add_conditional(
 				conditional,
 				`${name}.update.call(null, ${snippet});`
 			);
 		}
 
-		block.builders.destroy.addLine(
+		block.builders.destroy.add_line(
 			`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy();`
 		);
 	});

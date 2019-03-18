@@ -1,4 +1,4 @@
-import repeat from './repeat';
+import repeat from '../../utils/repeat';
 
 const whitespace = /^\s+$/;
 
@@ -24,10 +24,10 @@ export default class CodeBuilder {
 
 	constructor(str = '') {
 		this.current = this.last = this.root;
-		this.addLine(str);
+		this.add_line(str);
 	}
 
-	addConditional(condition: string, body: string) {
+	add_conditional(condition: string, body: string) {
 		if (this.last.type === 'condition' && this.last.condition === condition) {
 			if (body && !whitespace.test(body)) this.last.children.push({ type: 'line', line: body });
 		} else {
@@ -37,17 +37,17 @@ export default class CodeBuilder {
 		}
 	}
 
-	addLine(line: string) {
+	add_line(line: string) {
 		if (line && !whitespace.test(line)) this.current.children.push(this.last = { type: 'line', line });
 	}
 
-	addBlock(block: string) {
+	add_block(block: string) {
 		if (block && !whitespace.test(block)) this.current.children.push(this.last = { type: 'line', line: block, block: true });
 	}
 
-	isEmpty() { return !findLine(this.root); }
+	is_empty() { return !find_line(this.root); }
 
-	pushCondition(condition: string) {
+	push_condition(condition: string) {
 		if (this.last.type === 'condition' && this.last.condition === condition) {
 			this.current = this.last as BlockChunk;
 		} else {
@@ -57,41 +57,41 @@ export default class CodeBuilder {
 		}
 	}
 
-	popCondition() {
+	pop_condition() {
 		if (!this.current.parent) throw new Error(`Popping a condition that maybe wasn't pushed.`);
 		this.current = this.current.parent;
 	}
 
 	toString() {
-		return chunkToString(this.root);
+		return chunk_to_string(this.root);
 	}
 }
 
-function findLine(chunk: BlockChunk) {
+function find_line(chunk: BlockChunk) {
 	for (const c of chunk.children) {
-		if (c.type === 'line' || findLine(c as BlockChunk)) return true;
+		if (c.type === 'line' || find_line(c as BlockChunk)) return true;
 	}
 	return false;
 }
 
-function chunkToString(chunk: Chunk, level: number = 0, lastBlock?: boolean, first?: boolean): string {
+function chunk_to_string(chunk: Chunk, level: number = 0, last_block?: boolean, first?: boolean): string {
 	if (chunk.type === 'line') {
-		return `${lastBlock || (!first && chunk.block) ? '\n' : ''}${chunk.line.replace(/^/gm, repeat('\t', level))}`;
+		return `${last_block || (!first && chunk.block) ? '\n' : ''}${chunk.line.replace(/^/gm, repeat('\t', level))}`;
 	} else if (chunk.type === 'condition') {
 		let t = false;
 		const lines = chunk.children.map((c, i) => {
-			const str = chunkToString(c, level + 1, t, i === 0);
+			const str = chunk_to_string(c, level + 1, t, i === 0);
 			t = c.type !== 'line' || c.block;
 			return str;
 		}).filter(l => !!l);
 
 		if (!lines.length) return '';
 
-		return `${lastBlock || (!first) ? '\n' : ''}${repeat('\t', level)}if (${chunk.condition}) {\n${lines.join('\n')}\n${repeat('\t', level)}}`;
+		return `${last_block || (!first) ? '\n' : ''}${repeat('\t', level)}if (${chunk.condition}) {\n${lines.join('\n')}\n${repeat('\t', level)}}`;
 	} else if (chunk.type === 'root') {
 		let t = false;
 		const lines = chunk.children.map((c, i) => {
-			const str = chunkToString(c, 0, t, i === 0);
+			const str = chunk_to_string(c, 0, t, i === 0);
 			t = c.type !== 'line' || c.block;
 			return str;
 		}).filter(l => !!l);

@@ -1,8 +1,8 @@
 import { walk } from 'estree-walker';
-import isReference from 'is-reference';
-import { Node } from '../interfaces';
+import is_reference from 'is-reference';
+import { Node } from '../../interfaces';
 
-export function createScopes(expression: Node) {
+export function create_scopes(expression: Node) {
 	const map = new WeakMap();
 
 	const globals: Map<string, Node> = new Map();
@@ -26,7 +26,7 @@ export function createScopes(expression: Node) {
 				}
 
 				node.params.forEach((param: Node) => {
-					extractNames(param).forEach(name => {
+					extract_names(param).forEach(name => {
 						scope.declarations.set(name, node);
 					});
 				});
@@ -37,8 +37,8 @@ export function createScopes(expression: Node) {
 				scope = new Scope(scope, true);
 				map.set(node, scope);
 			} else if (/(Class|Variable)Declaration/.test(node.type)) {
-				scope.addDeclaration(node);
-			} else if (node.type === 'Identifier' && isReference(node, parent)) {
+				scope.add_declaration(node);
+			} else if (node.type === 'Identifier' && is_reference(node, parent)) {
 				if (!scope.has(node.name) && !globals.has(node.name)) {
 					globals.set(node.name, node);
 				}
@@ -71,14 +71,14 @@ export class Scope {
 		this.block = block;
 	}
 
-	addDeclaration(node: Node) {
+	add_declaration(node: Node) {
 		if (node.kind === 'var' && this.block && this.parent) {
-			this.parent.addDeclaration(node);
+			this.parent.add_declaration(node);
 		} else if (node.type === 'VariableDeclaration') {
 			const initialised = !!node.init;
 
 			node.declarations.forEach((declarator: Node) => {
-				extractNames(declarator.id).forEach(name => {
+				extract_names(declarator.id).forEach(name => {
 					this.declarations.set(name, node);
 					if (initialised) this.initialised_declarations.add(name);
 				});
@@ -88,9 +88,9 @@ export class Scope {
 		}
 	}
 
-	findOwner(name: string): Scope {
+	find_owner(name: string): Scope {
 		if (this.declarations.has(name)) return this;
-		return this.parent && this.parent.findOwner(name);
+		return this.parent && this.parent.find_owner(name);
 	}
 
 	has(name: string): boolean {
@@ -100,7 +100,7 @@ export class Scope {
 	}
 }
 
-export function extractNames(param: Node) {
+export function extract_names(param: Node) {
 	const names: string[] = [];
 	extractors[param.type](names, param);
 	return names;
@@ -133,5 +133,5 @@ const extractors = {
 
 	AssignmentPattern(names: string[], param: Node) {
 		extractors[param.left.type](names, param.left);
-	},
+	}
 };

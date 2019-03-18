@@ -3,15 +3,14 @@ import Renderer from '../../Renderer';
 import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
 import FragmentWrapper from '../Fragment';
-import { quoteNameIfNecessary, quotePropIfNecessary } from '../../../../utils/quoteIfNecessary';
-import stringifyProps from '../../../../utils/stringifyProps';
-import addToSet from '../../../../utils/addToSet';
-import deindent from '../../../../utils/deindent';
+import { quote_name_if_necessary, quote_prop_if_necessary, sanitize } from '../../../../utils/names';
+import { stringify_props } from '../../../utils/stringify_props';
+import add_to_set from '../../../utils/add_to_set';
+import deindent from '../../../utils/deindent';
 import Attribute from '../../../nodes/Attribute';
-import getObject from '../../../../utils/getObject';
-import flattenReference from '../../../../utils/flattenReference';
-import createDebuggingComment from '../../../../utils/createDebuggingComment';
-import sanitize from '../../../../utils/sanitize';
+import get_object from '../../../utils/get_object';
+import flatten_reference from '../../../utils/flatten_reference';
+import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_context_merger } from '../shared/get_context_merger';
 import EachBlock from '../../../nodes/EachBlock';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
@@ -27,37 +26,37 @@ export default class InlineComponentWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: InlineComponent,
-		stripWhitespace: boolean,
-		nextSibling: Wrapper
+		strip_whitespace: boolean,
+		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 
-		this.cannotUseInnerHTML();
+		this.cannot_use_innerhtml();
 
 		if (this.node.expression) {
-			block.addDependencies(this.node.expression.dependencies);
+			block.add_dependencies(this.node.expression.dependencies);
 		}
 
 		this.node.attributes.forEach(attr => {
-			block.addDependencies(attr.dependencies);
+			block.add_dependencies(attr.dependencies);
 		});
 
 		this.node.bindings.forEach(binding => {
-			if (binding.isContextual) {
+			if (binding.is_contextual) {
 				// we need to ensure that the each block creates a context including
 				// the list and the index, if they're not otherwise referenced
-				const { name } = getObject(binding.expression.node);
-				const eachBlock = this.node.scope.getOwner(name);
+				const { name } = get_object(binding.expression.node);
+				const each_block = this.node.scope.get_owner(name);
 
-				(eachBlock as EachBlock).has_binding = true;
+				(each_block as EachBlock).has_binding = true;
 			}
 
-			block.addDependencies(binding.expression.dependencies);
+			block.add_dependencies(binding.expression.dependencies);
 		});
 
 		this.node.handlers.forEach(handler => {
 			if (handler.expression) {
-				block.addDependencies(handler.expression.dependencies);
+				block.add_dependencies(handler.expression.dependencies);
 			}
 		});
 
@@ -69,8 +68,8 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		if (this.node.children.length) {
 			const default_slot = block.child({
-				comment: createDebuggingComment(node, renderer.component),
-				name: renderer.component.getUniqueName(`create_default_slot`)
+				comment: create_debugging_comment(node, renderer.component),
+				name: renderer.component.get_unique_name(`create_default_slot`)
 			});
 
 			this.renderer.blocks.push(default_slot);
@@ -82,7 +81,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				scope: this.node.scope,
 				fn
 			});
-			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, stripWhitespace, nextSibling);
+			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, strip_whitespace, next_sibling);
 
 			const dependencies = new Set();
 
@@ -93,16 +92,16 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 			});
 
-			block.addDependencies(dependencies);
+			block.add_dependencies(dependencies);
 		}
 
-		block.addOutro();
+		block.add_outro();
 	}
 
 	render(
 		block: Block,
-		parentNode: string,
-		parentNodes: string
+		parent_node: string,
+		parent_nodes: string
 	) {
 		const { renderer } = this;
 		const { component } = renderer;
@@ -116,24 +115,24 @@ export default class InlineComponentWrapper extends Wrapper {
 		const postupdates: string[] = [];
 
 		let props;
-		const name_changes = block.getUniqueName(`${name}_changes`);
+		const name_changes = block.get_unique_name(`${name}_changes`);
 
-		const usesSpread = !!this.node.attributes.find(a => a.isSpread);
+		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
 
 		const slot_props = Array.from(this.slots).map(([name, slot]) => `$$slot_${sanitize(name)}: [${slot.block.name}${slot.fn ? `, ${slot.fn}` : ''}]`);
 		if (slot_props.length > 0) slot_props.push(`$$scope: { ctx }`);
 
-		const attributeObject = usesSpread
-			? stringifyProps(slot_props)
-			: stringifyProps(
-				this.node.attributes.map(attr => `${quoteNameIfNecessary(attr.name)}: ${attr.getValue(block)}`).concat(slot_props)
+		const attribute_object = uses_spread
+			? stringify_props(slot_props)
+			: stringify_props(
+				this.node.attributes.map(attr => `${quote_name_if_necessary(attr.name)}: ${attr.get_value(block)}`).concat(slot_props)
 			);
 
 		if (this.node.attributes.length || this.node.bindings.length || slot_props.length) {
-			if (!usesSpread && this.node.bindings.length === 0) {
-				component_opts.push(`props: ${attributeObject}`);
+			if (!uses_spread && this.node.bindings.length === 0) {
+				component_opts.push(`props: ${attribute_object}`);
 			} else {
-				props = block.getUniqueName(`${name}_props`);
+				props = block.get_unique_name(`${name}_props`);
 				component_opts.push(`props: ${props}`);
 			}
 		}
@@ -146,7 +145,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 		}
 
-		if (component.compileOptions.dev) {
+		if (component.compile_options.dev) {
 			// TODO this is a terrible hack, but without it the component
 			// will complain that options.target is missing. This would
 			// work better if components had separate public and private
@@ -170,46 +169,46 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const non_let_dependencies = Array.from(fragment_dependencies).filter(name => !this.node.scope.is_let(name));
 
-		if (!usesSpread && (this.node.attributes.filter(a => a.isDynamic).length || this.node.bindings.length || non_let_dependencies.length > 0)) {
+		if (!uses_spread && (this.node.attributes.filter(a => a.is_dynamic).length || this.node.bindings.length || non_let_dependencies.length > 0)) {
 			updates.push(`var ${name_changes} = {};`);
 		}
 
 		if (this.node.attributes.length) {
-			if (usesSpread) {
-				const levels = block.getUniqueName(`${this.var}_spread_levels`);
+			if (uses_spread) {
+				const levels = block.get_unique_name(`${this.var}_spread_levels`);
 
-				const initialProps = [];
+				const initial_props = [];
 				const changes = [];
 
-				const allDependencies = new Set();
+				const all_dependencies = new Set();
 
 				this.node.attributes.forEach(attr => {
-					addToSet(allDependencies, attr.dependencies);
+					add_to_set(all_dependencies, attr.dependencies);
 				});
 
 				this.node.attributes.forEach(attr => {
 					const { name, dependencies } = attr;
 
-					const condition = dependencies.size > 0 && (dependencies.size !== allDependencies.size)
+					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
 						? `(${Array.from(dependencies).map(d => `changed.${d}`).join(' || ')})`
 						: null;
 
-					if (attr.isSpread) {
+					if (attr.is_spread) {
 						const value = attr.expression.render(block);
-						initialProps.push(value);
+						initial_props.push(value);
 
 						changes.push(condition ? `${condition} && ${value}` : value);
 					} else {
-						const obj = `{ ${quoteNameIfNecessary(name)}: ${attr.getValue(block)} }`;
-						initialProps.push(obj);
+						const obj = `{ ${quote_name_if_necessary(name)}: ${attr.get_value(block)} }`;
+						initial_props.push(obj);
 
 						changes.push(condition ? `${condition} && ${obj}` : obj);
 					}
 				});
 
-				block.builders.init.addBlock(deindent`
+				block.builders.init.add_block(deindent`
 					var ${levels} = [
-						${initialProps.join(',\n')}
+						${initial_props.join(',\n')}
 					];
 				`);
 
@@ -219,22 +218,22 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 				`);
 
-				const conditions = Array.from(allDependencies).map(dep => `changed.${dep}`).join(' || ');
+				const conditions = Array.from(all_dependencies).map(dep => `changed.${dep}`).join(' || ');
 
 				updates.push(deindent`
-					var ${name_changes} = ${allDependencies.size === 1 ? `${conditions}` : `(${conditions})`} ? @getSpreadUpdate(${levels}, [
+					var ${name_changes} = ${all_dependencies.size === 1 ? `${conditions}` : `(${conditions})`} ? @get_spread_update(${levels}, [
 						${changes.join(',\n')}
 					]) : {};
 				`);
 			} else {
 				this.node.attributes
-					.filter((attribute: Attribute) => attribute.isDynamic)
+					.filter((attribute: Attribute) => attribute.is_dynamic)
 					.forEach((attribute: Attribute) => {
 						if (attribute.dependencies.size > 0) {
 							updates.push(deindent`
 								if (${[...attribute.dependencies]
 									.map(dependency => `changed.${dependency}`)
-									.join(' || ')}) ${name_changes}${quotePropIfNecessary(attribute.name)} = ${attribute.getValue(block)};
+									.join(' || ')}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
 							`);
 						}
 					});
@@ -249,7 +248,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			component.has_reactive_assignments = true;
 
 			if (binding.name === 'this') {
-				const fn = component.getUniqueName(`${this.var}_binding`);
+				const fn = component.get_unique_name(`${this.var}_binding`);
 
 				component.add_var({
 					name: fn,
@@ -260,7 +259,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				let lhs;
 				let object;
 
-				if (binding.isContextual && binding.expression.node.type === 'Identifier') {
+				if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
 					// bind:x={y} — we can't just do `y = x`, we need to
 					// to `array[index] = x;
 					const { name } = binding.expression.node;
@@ -269,7 +268,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 					// TODO we need to invalidate... something
 				} else {
-					object = flattenReference(binding.expression.node).name;
+					object = flatten_reference(binding.expression.node).name;
 					lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 				}
 
@@ -280,11 +279,11 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 				`);
 
-				block.builders.destroy.addLine(`ctx.${fn}(null);`);
+				block.builders.destroy.add_line(`ctx.${fn}(null);`);
 				return `@add_binding_callback(() => ctx.${fn}(${this.var}));`;
 			}
 
-			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
+			const name = component.get_unique_name(`${this.var}_${binding.name}_binding`);
 
 			component.add_var({
 				name,
@@ -292,20 +291,20 @@ export default class InlineComponentWrapper extends Wrapper {
 				referenced: true
 			});
 
-			const updating = block.getUniqueName(`updating_${binding.name}`);
-			block.addVariable(updating);
+			const updating = block.get_unique_name(`updating_${binding.name}`);
+			block.add_variable(updating);
 
 			const snippet = binding.expression.render(block);
 
 			statements.push(deindent`
 				if (${snippet} !== void 0) {
-					${props}${quotePropIfNecessary(binding.name)} = ${snippet};
+					${props}${quote_prop_if_necessary(binding.name)} = ${snippet};
 				}`
 			);
 
 			updates.push(deindent`
 				if (!${updating} && ${[...binding.expression.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-					${name_changes}${quotePropIfNecessary(binding.name)} = ${snippet};
+					${name_changes}${quote_prop_if_necessary(binding.name)} = ${snippet};
 				}
 			`);
 
@@ -316,7 +315,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			let lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 
-			if (binding.isContextual && binding.expression.node.type === 'Identifier') {
+			if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
 				// bind:x={y} — we can't just do `y = x`, we need to
 				// to `array[index] = x;
 				const { name } = binding.expression.node;
@@ -329,7 +328,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (contextual_dependencies.length > 0) {
 				args.push(`{ ${contextual_dependencies.join(', ')} }`);
 
-				block.builders.init.addBlock(deindent`
+				block.builders.init.add_block(deindent`
 					function ${name}(value) {
 						if (ctx.${name}.call(null, value, ctx)) {
 							${updating} = true;
@@ -337,9 +336,9 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 				`);
 
-				block.maintainContext = true; // TODO put this somewhere more logical
+				block.maintain_context = true; // TODO put this somewhere more logical
 			} else {
-				block.builders.init.addBlock(deindent`
+				block.builders.init.add_block(deindent`
 					function ${name}(value) {
 						if (ctx.${name}.call(null, value)) {
 							${updating} = true;
@@ -366,19 +365,19 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 
 		if (this.node.name === 'svelte:component') {
-			const switch_value = block.getUniqueName('switch_value');
-			const switch_props = block.getUniqueName('switch_props');
+			const switch_value = block.get_unique_name('switch_value');
+			const switch_props = block.get_unique_name('switch_props');
 
 			const snippet = this.node.expression.render(block);
 
-			block.builders.init.addBlock(deindent`
+			block.builders.init.add_block(deindent`
 				var ${switch_value} = ${snippet};
 
 				function ${switch_props}(ctx) {
 					${(this.node.attributes.length || this.node.bindings.length) && deindent`
-					${props && `let ${props} = ${attributeObject};`}`}
+					${props && `let ${props} = ${attribute_object};`}`}
 					${statements}
-					return ${stringifyProps(component_opts)};
+					return ${stringify_props(component_opts)};
 				}
 
 				if (${switch_value}) {
@@ -389,32 +388,32 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 			`);
 
-			block.builders.create.addLine(
+			block.builders.create.add_line(
 				`if (${name}) ${name}.$$.fragment.c();`
 			);
 
-			if (parentNodes && this.renderer.options.hydratable) {
-				block.builders.claim.addLine(
-					`if (${name}) ${name}.$$.fragment.l(${parentNodes});`
+			if (parent_nodes && this.renderer.options.hydratable) {
+				block.builders.claim.add_line(
+					`if (${name}) ${name}.$$.fragment.l(${parent_nodes});`
 				);
 			}
 
-			block.builders.mount.addBlock(deindent`
+			block.builders.mount.add_block(deindent`
 				if (${name}) {
-					@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
 				}
 			`);
 
-			const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
-			const updateMountNode = this.getUpdateMountNode(anchor);
+			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+			const update_mount_node = this.get_update_mount_node(anchor);
 
 			if (updates.length) {
-				block.builders.update.addBlock(deindent`
+				block.builders.update.add_block(deindent`
 					${updates}
 				`);
 			}
 
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) {
 						@group_outros();
@@ -434,19 +433,19 @@ export default class InlineComponentWrapper extends Wrapper {
 
 						${name}.$$.fragment.c();
 						${name}.$$.fragment.i(1);
-						@mount_component(${name}, ${updateMountNode}, ${anchor});
+						@mount_component(${name}, ${update_mount_node}, ${anchor});
 					} else {
 						${name} = null;
 					}
 				}
 			`);
 
-			block.builders.intro.addBlock(deindent`
+			block.builders.intro.add_block(deindent`
 				if (${name}) ${name}.$$.fragment.i(#local);
 			`);
 
 			if (updates.length) {
-				block.builders.update.addBlock(deindent`
+				block.builders.update.add_block(deindent`
 					else if (${switch_value}) {
 						${name}.$set(${name_changes});
 					}
@@ -455,55 +454,55 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 			}
 
-			block.builders.outro.addLine(
+			block.builders.outro.add_line(
 				`if (${name}) ${name}.$$.fragment.o(#local);`
 			);
 
-			block.builders.destroy.addLine(`if (${name}) ${name}.$destroy(${parentNode ? '' : 'detach'});`);
+			block.builders.destroy.add_line(`if (${name}) ${name}.$destroy(${parent_node ? '' : 'detaching'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? '__svelte:self__' // TODO conflict-proof this
 				: component.qualify(this.node.name);
 
-			block.builders.init.addBlock(deindent`
+			block.builders.init.add_block(deindent`
 				${(this.node.attributes.length || this.node.bindings.length) && deindent`
-				${props && `let ${props} = ${attributeObject};`}`}
+				${props && `let ${props} = ${attribute_object};`}`}
 				${statements}
-				var ${name} = new ${expression}(${stringifyProps(component_opts)});
+				var ${name} = new ${expression}(${stringify_props(component_opts)});
 
 				${munged_bindings}
 				${munged_handlers}
 			`);
 
-			block.builders.create.addLine(`${name}.$$.fragment.c();`);
+			block.builders.create.add_line(`${name}.$$.fragment.c();`);
 
-			if (parentNodes && this.renderer.options.hydratable) {
-				block.builders.claim.addLine(
-					`${name}.$$.fragment.l(${parentNodes});`
+			if (parent_nodes && this.renderer.options.hydratable) {
+				block.builders.claim.add_line(
+					`${name}.$$.fragment.l(${parent_nodes});`
 				);
 			}
 
-			block.builders.mount.addLine(
-				`@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
+			block.builders.mount.add_line(
+				`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
 			);
 
-			block.builders.intro.addBlock(deindent`
+			block.builders.intro.add_block(deindent`
 				${name}.$$.fragment.i(#local);
 			`);
 
 			if (updates.length) {
-				block.builders.update.addBlock(deindent`
+				block.builders.update.add_block(deindent`
 					${updates}
 					${name}.$set(${name_changes});
 					${postupdates.length > 0 && `${postupdates.join(' = ')} = false;`}
 				`);
 			}
 
-			block.builders.destroy.addBlock(deindent`
-				${name}.$destroy(${parentNode ? '' : 'detach'});
+			block.builders.destroy.add_block(deindent`
+				${name}.$destroy(${parent_node ? '' : 'detaching'});
 			`);
 
-			block.builders.outro.addLine(
+			block.builders.outro.add_line(
 				`${name}.$$.fragment.o(#local);`
 			);
 		}

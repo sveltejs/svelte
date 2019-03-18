@@ -2,25 +2,23 @@ import MagicString, { Bundle } from 'magic-string';
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
-import reservedNames from '../utils/reservedNames';
-import { namespaces, validNamespaces } from '../utils/namespaces';
-import { removeNode } from '../utils/removeNode';
-import wrapModule from './wrapModule';
-import { createScopes, extractNames, Scope } from '../utils/annotateWithScopes';
+import { globals, reserved } from '../utils/names';
+import { namespaces, valid_namespaces } from '../utils/namespaces';
+import create_module from './create_module';
+import { create_scopes, extract_names, Scope } from './utils/scope';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import internal_exports from './internal-exports';
 import { Node, Ast, CompileOptions, Var, Warning } from '../interfaces';
 import error from '../utils/error';
-import getCodeFrame from '../utils/getCodeFrame';
-import flattenReference from '../utils/flattenReference';
-import isReference from 'is-reference';
+import get_code_frame from '../utils/get_code_frame';
+import flatten_reference from './utils/flatten_reference';
+import is_reference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import { remove_indentation, add_indentation } from '../utils/indentation';
-import getObject from '../utils/getObject';
-import globalWhitelist from '../utils/globalWhitelist';
+import get_object from './utils/get_object';
 
 type ComponentOptions = {
 	namespace?: string;
@@ -36,6 +34,34 @@ childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
 childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
 
+function remove_node(code: MagicString, start: number, end: number, body: Node, node: Node) {
+	const i = body.indexOf(node);
+	if (i === -1) throw new Error('node not in list');
+
+	let a;
+	let b;
+
+	if (body.length === 1) {
+		// remove everything, leave {}
+		a = start;
+		b = end;
+	} else if (i === 0) {
+		// remove everything before second node, including comments
+		a = start;
+		while (/\s/.test(code.original[a])) a += 1;
+
+		b = body[i].end;
+		while (/[\s,]/.test(code.original[b])) b += 1;
+	} else {
+		// remove the end of the previous node to the end of this one
+		a = body[i - 1].end;
+		b = node.end;
+	}
+
+	code.remove(a, b);
+	return;
+}
+
 export default class Component {
 	stats: Stats;
 	warnings: Warning[];
@@ -44,13 +70,13 @@ export default class Component {
 	source: string;
 	code: MagicString;
 	name: string;
-	compileOptions: CompileOptions;
+	compile_options: CompileOptions;
 	fragment: Fragment;
 	module_scope: Scope;
 	instance_scope: Scope;
 	instance_scope_map: WeakMap<Node, Scope>;
 
-	componentOptions: ComponentOptions;
+	component_options: ComponentOptions;
 	namespace: string;
 	tag: string;
 	accessors: boolean;
@@ -72,7 +98,7 @@ export default class Component {
 	injected_reactive_declaration_vars: Set<string> = new Set();
 	helpers: Set<string> = new Set();
 
-	indirectDependencies: Map<string, Set<string>> = new Map();
+	indirect_dependencies: Map<string, Set<string>> = new Map();
 
 	file: string;
 	locate: (c: number) => { line: number, column: number };
@@ -86,13 +112,14 @@ export default class Component {
 	stylesheet: Stylesheet;
 
 	aliases: Map<string, string> = new Map();
-	usedNames: Set<string> = new Set();
+	used_names: Set<string> = new Set();
+	globally_used_names: Set<string> = new Set();
 
 	constructor(
 		ast: Ast,
 		source: string,
 		name: string,
-		compileOptions: CompileOptions,
+		compile_options: CompileOptions,
 		stats: Stats,
 		warnings: Warning[]
 	) {
@@ -102,24 +129,24 @@ export default class Component {
 		this.warnings = warnings;
 		this.ast = ast;
 		this.source = source;
-		this.compileOptions = compileOptions;
+		this.compile_options = compile_options;
 
-		this.file = compileOptions.filename && (
-			typeof process !== 'undefined' ? compileOptions.filename.replace(process.cwd(), '').replace(/^[\/\\]/, '') : compileOptions.filename
+		this.file = compile_options.filename && (
+			typeof process !== 'undefined' ? compile_options.filename.replace(process.cwd(), '').replace(/^[\/\\]/, '') : compile_options.filename
 		);
 		this.locate = getLocator(this.source);
 
 		this.code = new MagicString(source);
 
 		// styles
-		this.stylesheet = new Stylesheet(source, ast, compileOptions.filename, compileOptions.dev);
+		this.stylesheet = new Stylesheet(source, ast, compile_options.filename, compile_options.dev);
 		this.stylesheet.validate(this);
 
-		this.componentOptions = process_component_options(this, this.ast.html.children);
-		this.namespace = namespaces[this.componentOptions.namespace] || this.componentOptions.namespace;
+		this.component_options = process_component_options(this, this.ast.html.children);
+		this.namespace = namespaces[this.component_options.namespace] || this.component_options.namespace;
 
-		if (compileOptions.customElement) {
-			this.tag = this.componentOptions.tag || compileOptions.tag;
+		if (compile_options.customElement) {
+			this.tag = this.component_options.tag || compile_options.tag;
 			if (!this.tag) {
 				throw new Error(`Cannot compile to a custom element without specifying a tag name via options.tag or <svelte:options>`);
 			}
@@ -131,13 +158,13 @@ export default class Component {
 		this.walk_instance_js_pre_template();
 
 		this.fragment = new Fragment(this, ast.html);
-		this.name = this.getUniqueName(name);
+		this.name = this.get_unique_name(name);
 
 		this.walk_instance_js_post_template();
 
-		if (!compileOptions.customElement) this.stylesheet.reify();
+		if (!compile_options.customElement) this.stylesheet.reify();
 
-		this.stylesheet.warnOnUnusedSelectors(this);
+		this.stylesheet.warn_on_unused_selectors(this);
 	}
 
 	add_var(variable: Var) {
@@ -171,11 +198,11 @@ export default class Component {
 			const variable = this.var_lookup.get(subscribable_name);
 			if (variable) variable.subscribable = true;
 		} else {
-			this.usedNames.add(name);
+			this.used_names.add(name);
 		}
 	}
 
-	addSourcemapLocations(node: Node) {
+	add_sourcemap_locations(node: Node) {
 		walk(node, {
 			enter: (node: Node) => {
 				this.code.addSourcemapLocation(node.start);
@@ -186,7 +213,7 @@ export default class Component {
 
 	alias(name: string) {
 		if (!this.aliases.has(name)) {
-			this.aliases.set(name, this.getUniqueName(name));
+			this.aliases.set(name, this.get_unique_name(name));
 		}
 
 		return this.aliases.get(name);
@@ -202,17 +229,17 @@ export default class Component {
 		let css = null;
 
 		if (result) {
-			const { compileOptions, name } = this;
-			const { format = 'esm' } = compileOptions;
+			const { compile_options, name } = this;
+			const { format = 'esm' } = compile_options;
 
 			const banner = `/* ${this.file ? `${this.file} ` : ``}generated by Svelte v${"__VERSION__"} */`;
 
 			result = result
 				.replace(/__svelte:self__/g, this.name)
-				.replace(compileOptions.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
+				.replace(compile_options.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
 					if (sigil === '@') {
 						if (internal_exports.has(name)) {
-							if (compileOptions.dev && internal_exports.has(`${name}Dev`)) name = `${name}Dev`;
+							if (compile_options.dev && internal_exports.has(`${name}Dev`)) name = `${name}Dev`;
 							this.helpers.add(name);
 						}
 
@@ -222,21 +249,20 @@ export default class Component {
 					return sigil.slice(1) + name;
 				});
 
-			const importedHelpers = Array.from(this.helpers)
+			const imported_helpers = Array.from(this.helpers)
 				.sort()
 				.map(name => {
 					const alias = this.alias(name);
 					return { name, alias };
 				});
 
-			const module = wrapModule(
+			const module = create_module(
 				result,
 				format,
 				name,
-				compileOptions,
 				banner,
-				compileOptions.sveltePath,
-				importedHelpers,
+				compile_options.sveltePath,
+				imported_helpers,
 				this.imports,
 				this.vars.filter(variable => variable.module && variable.export_name).map(variable => ({
 					name: variable.name,
@@ -246,17 +272,17 @@ export default class Component {
 			);
 
 			const parts = module.split('✂]');
-			const finalChunk = parts.pop();
+			const final_chunk = parts.pop();
 
 			const compiled = new Bundle({ separator: '' });
 
-			function addString(str: string) {
+			function add_string(str: string) {
 				compiled.addSource({
 					content: new MagicString(str),
 				});
 			}
 
-			const { filename } = compileOptions;
+			const { filename } = compile_options;
 
 			// special case — the source file doesn't actually get used anywhere. we need
 			// to add an empty file to populate map.sources and map.sourcesContent
@@ -271,7 +297,7 @@ export default class Component {
 
 			parts.forEach((str: string) => {
 				const chunk = str.replace(pattern, '');
-				if (chunk) addString(chunk);
+				if (chunk) add_string(chunk);
 
 				const match = pattern.exec(str);
 
@@ -283,17 +309,17 @@ export default class Component {
 				});
 			});
 
-			addString(finalChunk);
+			add_string(final_chunk);
 
-			css = compileOptions.customElement ?
+			css = compile_options.customElement ?
 				{ code: null, map: null } :
-				this.stylesheet.render(compileOptions.cssOutputFilename, true);
+				this.stylesheet.render(compile_options.cssOutputFilename, true);
 
 			js = {
 				code: compiled.toString(),
 				map: compiled.generateMap({
 					includeContent: true,
-					file: compileOptions.outputFilename,
+					file: compile_options.outputFilename,
 				})
 			};
 		}
@@ -317,28 +343,30 @@ export default class Component {
 		};
 	}
 
-	getUniqueName(name: string) {
+	get_unique_name(name: string) {
 		if (test) name = `${name}$`;
 		let alias = name;
 		for (
 			let i = 1;
-			reservedNames.has(alias) ||
+			reserved.has(alias) ||
 			this.var_lookup.has(alias) ||
-			this.usedNames.has(alias);
+			this.used_names.has(alias) ||
+			this.globally_used_names.has(alias);
 			alias = `${name}_${i++}`
 		);
-		this.usedNames.add(alias);
+		this.used_names.add(alias);
 		return alias;
 	}
 
-	getUniqueNameMaker() {
-		const localUsedNames = new Set();
+	get_unique_name_maker() {
+		const local_used_names = new Set();
 
 		function add(name: string) {
-			localUsedNames.add(name);
+			local_used_names.add(name);
 		}
 
-		reservedNames.forEach(add);
+		reserved.forEach(add);
+		internal_exports.forEach(add);
 		this.var_lookup.forEach((value, key) => add(key));
 
 		return (name: string) => {
@@ -346,11 +374,12 @@ export default class Component {
 			let alias = name;
 			for (
 				let i = 1;
-				this.usedNames.has(alias) ||
-				localUsedNames.has(alias);
+				this.used_names.has(alias) ||
+				local_used_names.has(alias);
 				alias = `${name}_${i++}`
 			);
-			localUsedNames.add(alias);
+			local_used_names.add(alias);
+			this.globally_used_names.add(alias);
 			return alias;
 		};
 	}
@@ -371,7 +400,7 @@ export default class Component {
 			source: this.source,
 			start: pos.start,
 			end: pos.end,
-			filename: this.compileOptions.filename
+			filename: this.compile_options.filename
 		});
 	}
 
@@ -392,7 +421,7 @@ export default class Component {
 		const start = this.locator(pos.start);
 		const end = this.locator(pos.end);
 
-		const frame = getCodeFrame(this.source, start.line - 1, start.column);
+		const frame = get_code_frame(this.source, start.line - 1, start.column);
 
 		this.warnings.push({
 			code: warning.code,
@@ -401,7 +430,7 @@ export default class Component {
 			start,
 			end,
 			pos: pos.start,
-			filename: this.compileOptions.filename,
+			filename: this.compile_options.filename,
 			toString: () => `${warning.message} (${start.line + 1}:${start.column})\n${frame}`,
 		});
 	}
@@ -412,7 +441,7 @@ export default class Component {
 		content.body.forEach(node => {
 			if (node.type === 'ImportDeclaration') {
 				// imports need to be hoisted out of the IIFE
-				removeNode(code, content.start, content.end, content.body, node);
+				remove_node(code, content.start, content.end, content.body, node);
 				this.imports.push(node);
 			}
 		});
@@ -439,7 +468,7 @@ export default class Component {
 				if (node.declaration) {
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
-							extractNames(declarator.id).forEach(name => {
+							extract_names(declarator.id).forEach(name => {
 								const variable = this.var_lookup.get(name);
 								variable.export_name = name;
 							});
@@ -453,7 +482,7 @@ export default class Component {
 
 					code.remove(node.start, node.declaration.start);
 				} else {
-					removeNode(code, content.start, content.end, content.body, node);
+					remove_node(code, content.start, content.end, content.body, node);
 					node.specifiers.forEach(specifier => {
 						const variable = this.var_lookup.get(specifier.local.name);
 
@@ -509,9 +538,9 @@ export default class Component {
 		const script = this.ast.module;
 		if (!script) return;
 
-		this.addSourcemapLocations(script.content);
+		this.add_sourcemap_locations(script.content);
 
-		let { scope, globals } = createScopes(script.content);
+		let { scope, globals } = create_scopes(script.content);
 		this.module_scope = scope;
 
 		scope.declarations.forEach((node, name) => {
@@ -554,7 +583,7 @@ export default class Component {
 		const script = this.ast.instance;
 		if (!script) return;
 
-		this.addSourcemapLocations(script.content);
+		this.add_sourcemap_locations(script.content);
 
 		// inject vars for reactive declarations
 		script.content.body.forEach(node => {
@@ -569,7 +598,7 @@ export default class Component {
 			}
 		});
 
-		let { scope: instance_scope, map, globals } = createScopes(script.content);
+		let { scope: instance_scope, map, globals } = create_scopes(script.content);
 		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
 
@@ -662,15 +691,15 @@ export default class Component {
 					deep = node.left.type === 'MemberExpression';
 
 					names = deep
-						? [getObject(node.left).name]
-						: extractNames(node.left);
+						? [get_object(node.left).name]
+						: extract_names(node.left);
 				} else if (node.type === 'UpdateExpression') {
-					names = [getObject(node.argument).name];
+					names = [get_object(node.argument).name];
 				}
 
 				if (names) {
 					names.forEach(name => {
-						if (scope.findOwner(name) === instance_scope) {
+						if (scope.find_owner(name) === instance_scope) {
 							const variable = component.var_lookup.get(name);
 							variable[deep ? 'mutated' : 'reassigned'] = true;
 						}
@@ -698,8 +727,8 @@ export default class Component {
 					scope = map.get(node);
 				}
 
-				if (isReference(node, parent)) {
-					const object = getObject(node);
+				if (is_reference(node, parent)) {
+					const object = get_object(node);
 					const { name } = object;
 
 					if (name[0] === '$' && !scope.has(name)) {
@@ -732,7 +761,7 @@ export default class Component {
 
 	rewrite_props(get_insert: (variable: Var) => string) {
 		const component = this;
-		const { code, instance_scope, instance_scope_map: map, componentOptions } = this;
+		const { code, instance_scope, instance_scope_map: map, component_options } = this;
 		let scope = instance_scope;
 
 		const coalesced_declarations = [];
@@ -757,7 +786,7 @@ export default class Component {
 							if (declarator.id.type !== 'Identifier') {
 								const inserts = [];
 
-								extractNames(declarator.id).forEach(name => {
+								extract_names(declarator.id).forEach(name => {
 									const variable = component.var_lookup.get(name);
 
 									if (variable.export_name) {
@@ -946,9 +975,9 @@ export default class Component {
 						scope = map.get(node);
 					}
 
-					if (isReference(node, parent)) {
-						const { name } = flattenReference(node);
-						const owner = scope.findOwner(name);
+					if (is_reference(node, parent)) {
+						const { name } = flatten_reference(node);
+						const owner = scope.find_owner(name);
 
 						if (name[0] === '$' && !owner) {
 							hoistable = false;
@@ -1028,17 +1057,17 @@ export default class Component {
 						}
 
 						if (node.type === 'AssignmentExpression') {
-							const identifier = getObject(node.left)
+							const identifier = get_object(node.left)
 							assignee_nodes.add(identifier);
 							assignees.add(identifier.name);
 						} else if (node.type === 'UpdateExpression') {
-							const identifier = getObject(node.argument);
+							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
-						} else if (isReference(node, parent)) {
-							const identifier = getObject(node);
+						} else if (is_reference(node, parent)) {
+							const identifier = get_object(node);
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
-								const owner = scope.findOwner(name);
+								const owner = scope.find_owner(name);
 								if (
 									(!owner || owner === component.instance_scope) &&
 									(name[0] === '$' || component.var_lookup.has(name) && component.var_lookup.get(name).writable)
@@ -1149,7 +1178,7 @@ export default class Component {
 
 		if (this.var_lookup.has(name)) return;
 		if (template_scope && template_scope.names.has(name)) return;
-		if (globalWhitelist.has(name)) return;
+		if (globals.has(name)) return;
 
 		let message = `'${name}' is not defined`;
 		if (!this.ast.instance) message += `. Consider adding a <script> block with 'export let ${name}' to declare a prop`;
@@ -1162,11 +1191,11 @@ export default class Component {
 }
 
 function process_component_options(component: Component, nodes) {
-	const componentOptions: ComponentOptions = {
-		immutable: component.compileOptions.immutable || false,
-		accessors: 'accessors' in component.compileOptions
-			? component.compileOptions.accessors
-			: !!component.compileOptions.customElement
+	const component_options: ComponentOptions = {
+		immutable: component.compile_options.immutable || false,
+		accessors: 'accessors' in component.compile_options
+			? component.compile_options.accessors
+			: !!component.compile_options.customElement
 	};
 
 	const node = nodes.find(node => node.name === 'svelte:options');
@@ -1210,7 +1239,7 @@ function process_component_options(component: Component, nodes) {
 							});
 						}
 
-						componentOptions.tag = tag;
+						component_options.tag = tag;
 						break;
 					}
 
@@ -1221,8 +1250,8 @@ function process_component_options(component: Component, nodes) {
 
 						if (typeof ns !== 'string') component.error(attribute, { code, message });
 
-						if (validNamespaces.indexOf(ns) === -1) {
-							const match = fuzzymatch(ns, validNamespaces);
+						if (valid_namespaces.indexOf(ns) === -1) {
+							const match = fuzzymatch(ns, valid_namespaces);
 							if (match) {
 								component.error(attribute, {
 									code: `invalid-namespace-property`,
@@ -1236,7 +1265,7 @@ function process_component_options(component: Component, nodes) {
 							}
 						}
 
-						componentOptions.namespace = ns;
+						component_options.namespace = ns;
 						break;
 					}
 
@@ -1248,7 +1277,7 @@ function process_component_options(component: Component, nodes) {
 
 						if (typeof value !== 'boolean') component.error(attribute, { code, message });
 
-						componentOptions[name] = value;
+						component_options[name] = value;
 						break;
 
 					default:
@@ -1268,5 +1297,5 @@ function process_component_options(component: Component, nodes) {
 		});
 	}
 
-	return componentOptions;
+	return component_options;
 }

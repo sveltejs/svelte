@@ -1,10 +1,10 @@
-import { Node } from '../interfaces';
+import { Node } from '../../interfaces';
 
-export default function flattenReference(node: Node) {
+export default function flatten_reference(node: Node) {
 	if (node.type === 'Expression') throw new Error('bad');
 	const nodes = [];
 	const parts = [];
-	const propEnd = node.end;
+	const prop_end = node.end;
 
 	while (node.type === 'MemberExpression') {
 		if (node.computed) return null;
@@ -15,7 +15,7 @@ export default function flattenReference(node: Node) {
 		node = node.object;
 	}
 
-	const propStart = node.end;
+	const prop_start = node.end;
 	const name = node.type === 'Identifier'
 		? node.name
 		: node.type === 'ThisExpression' ? 'this' : null;
@@ -25,5 +25,5 @@ export default function flattenReference(node: Node) {
 	parts.unshift(name);
 	nodes.unshift(node);
 
-	return { name, nodes, parts, keypath: `${name}[✂${propStart}-${propEnd}✂]` };
+	return { name, nodes, parts, keypath: `${name}[✂${prop_start}-${prop_end}✂]` };
 }

@@ -3,11 +3,11 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Slot from '../../nodes/Slot';
 import FragmentWrapper from './Fragment';
-import deindent from '../../../utils/deindent';
-import sanitize from '../../../utils/sanitize';
-import addToSet from '../../../utils/addToSet';
-import get_slot_data from '../../../utils/get_slot_data';
-import stringifyProps from '../../../utils/stringifyProps';
+import deindent from '../../utils/deindent';
+import { sanitize } from '../../../utils/names';
+import add_to_set from '../../utils/add_to_set';
+import get_slot_data from '../../utils/get_slot_data';
+import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
 
 export default class SlotWrapper extends Wrapper {
@@ -22,36 +22,36 @@ export default class SlotWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: Slot,
-		stripWhitespace: boolean,
-		nextSibling: Wrapper
+		strip_whitespace: boolean,
+		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
-		this.cannotUseInnerHTML();
+		this.cannot_use_innerhtml();
 
 		this.fragment = new FragmentWrapper(
 			renderer,
 			block,
 			node.children,
 			parent,
-			stripWhitespace,
-			nextSibling
+			strip_whitespace,
+			next_sibling
 		);
 
 		this.node.attributes.forEach(attribute => {
-			addToSet(this.dependencies, attribute.dependencies);
+			add_to_set(this.dependencies, attribute.dependencies);
 		});
 
-		block.addDependencies(this.dependencies);
+		block.add_dependencies(this.dependencies);
 	}
 
 	render(
 		block: Block,
-		parentNode: string,
-		parentNodes: string
+		parent_node: string,
+		parent_nodes: string
 	) {
 		const { renderer } = this;
 
-		const slot_name = this.node.getStaticAttributeValue('name') || 'default';
+		const slot_name = this.node.get_static_attribute_value('name') || 'default';
 		renderer.slots.add(slot_name);
 
 		let get_slot_changes;
@@ -60,8 +60,8 @@ export default class SlotWrapper extends Wrapper {
 		const attributes = this.node.attributes.filter(attribute => attribute.name !== 'name');
 
 		if (attributes.length > 0) {
-			get_slot_changes = renderer.component.getUniqueName(`get_${slot_name}_slot_changes`);
-			get_slot_context = renderer.component.getUniqueName(`get_${slot_name}_slot_context`);
+			get_slot_changes = renderer.component.get_unique_name(`get_${slot_name}_slot_changes`);
+			get_slot_context = renderer.component.get_unique_name(`get_${slot_name}_slot_context`);
 
 			const context_props = get_slot_data(attributes, false);
 			const changes_props = [];
@@ -71,8 +71,8 @@ export default class SlotWrapper extends Wrapper {
 			attributes.forEach(attribute => {
 				attribute.chunks.forEach(chunk => {
 					if ((chunk as Expression).dependencies) {
-						addToSet(dependencies, (chunk as Expression).dependencies);
-						addToSet(dependencies, (chunk as Expression).contextual_dependencies);
+						add_to_set(dependencies, (chunk as Expression).dependencies);
+						add_to_set(dependencies, (chunk as Expression).contextual_dependencies);
 					}
 				});
 
@@ -84,70 +84,70 @@ export default class SlotWrapper extends Wrapper {
 			const arg = dependencies.size > 0 ? `{ ${Array.from(dependencies).join(', ')} }` : '{}';
 
 			renderer.blocks.push(deindent`
-				const ${get_slot_changes} = (${arg}) => (${stringifyProps(changes_props)});
-				const ${get_slot_context} = (${arg}) => (${stringifyProps(context_props)});
+				const ${get_slot_changes} = (${arg}) => (${stringify_props(changes_props)});
+				const ${get_slot_context} = (${arg}) => (${stringify_props(context_props)});
 			`);
 		} else {
 			get_slot_context = 'null';
 		}
 
-		const slot = block.getUniqueName(`${sanitize(slot_name)}_slot`);
-		const slot_definition = block.getUniqueName(`${sanitize(slot_name)}_slot`);
+		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
+		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot`);
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			const ${slot_definition} = ctx.$$slot_${sanitize(slot_name)};
 			const ${slot} = @create_slot(${slot_definition}, ctx, ${get_slot_context});
 		`);
 
-		let mountBefore = block.builders.mount.toString();
+		let mount_before = block.builders.mount.toString();
 
-		block.builders.create.pushCondition(`!${slot}`);
-		block.builders.hydrate.pushCondition(`!${slot}`);
-		block.builders.mount.pushCondition(`!${slot}`);
-		block.builders.update.pushCondition(`!${slot}`);
-		block.builders.destroy.pushCondition(`!${slot}`);
+		block.builders.create.push_condition(`!${slot}`);
+		block.builders.hydrate.push_condition(`!${slot}`);
+		block.builders.mount.push_condition(`!${slot}`);
+		block.builders.update.push_condition(`!${slot}`);
+		block.builders.destroy.push_condition(`!${slot}`);
 
 		const listeners = block.event_listeners;
 		block.event_listeners = [];
-		this.fragment.render(block, parentNode, parentNodes);
-		block.renderListeners(`_${slot}`);
+		this.fragment.render(block, parent_node, parent_nodes);
+		block.render_listeners(`_${slot}`);
 		block.event_listeners = listeners;
 
-		block.builders.create.popCondition();
-		block.builders.hydrate.popCondition();
-		block.builders.mount.popCondition();
-		block.builders.update.popCondition();
-		block.builders.destroy.popCondition();
+		block.builders.create.pop_condition();
+		block.builders.hydrate.pop_condition();
+		block.builders.mount.pop_condition();
+		block.builders.update.pop_condition();
+		block.builders.destroy.pop_condition();
 
-		block.builders.create.addLine(
+		block.builders.create.add_line(
 			`if (${slot}) ${slot}.c();`
 		);
 
-		block.builders.claim.addLine(
-			`if (${slot}) ${slot}.l(${parentNodes});`
+		block.builders.claim.add_line(
+			`if (${slot}) ${slot}.l(${parent_nodes});`
 		);
 
-		const mountLeadin = block.builders.mount.toString() !== mountBefore
+		const mount_leadin = block.builders.mount.toString() !== mount_before
 			? `else`
 			: `if (${slot})`;
 
-		block.builders.mount.addBlock(deindent`
-			${mountLeadin} {
-				${slot}.m(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+		block.builders.mount.add_block(deindent`
+			${mount_leadin} {
+				${slot}.m(${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
 			}
 		`);
 
 		let update_conditions = [...this.dependencies].map(name => `changed.${name}`).join(' || ');
 		if (this.dependencies.size > 1) update_conditions = `(${update_conditions})`;
 
-		block.builders.update.addBlock(deindent`
+		block.builders.update.add_block(deindent`
 			if (${slot} && ${slot}.p && ${update_conditions}) {
 				${slot}.p(@get_slot_changes(${slot_definition}, ctx, changed, ${get_slot_changes}), @get_slot_context(${slot_definition}, ctx, ${get_slot_context}));
 			}
 		`);
 
-		block.builders.destroy.addLine(
-			`if (${slot}) ${slot}.d(detach);`
+		block.builders.destroy.add_line(
+			`if (${slot}) ${slot}.d(detaching);`
 		);
 	}
 }

@@ -1,4 +1,4 @@
-export function getSpreadUpdate(levels, updates) {
+export function get_spread_update(levels, updates) {
 	var update = {};
 
 	var to_null_out = {};

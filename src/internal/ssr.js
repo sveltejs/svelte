@@ -1,7 +1,7 @@
 import { set_current_component, current_component } from './lifecycle.js';
-import { run_all, blankObject } from './utils.js';
+import { run_all, blank_object } from './utils.js';
 
-export const invalidAttributeNameCharacter = /[\s'">\/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
+export const invalid_attribute_name_character = /[\s'">\/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 
@@ -10,7 +10,7 @@ export function spread(args) {
 	let str = '';
 
 	Object.keys(attributes).forEach(name => {
-		if (invalidAttributeNameCharacter.test(name)) return;
+		if (invalid_attribute_name_character.test(name)) return;
 
 		const value = attributes[name];
 		if (value === undefined) return;
@@ -46,7 +46,7 @@ export function each(items, fn) {
 	return str;
 }
 
-export const missingComponent = {
+export const missing_component = {
 	$$render: () => ''
 };
 
@@ -79,7 +79,7 @@ export function create_ssr_component(fn) {
 			on_mount: [],
 			before_render: [],
 			after_render: [],
-			callbacks: blankObject()
+			callbacks: blank_object()
 		};
 
 		set_current_component({ $$ });

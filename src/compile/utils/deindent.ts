@@ -20,7 +20,7 @@ export default function deindent(
 		}
 
 		// discard empty codebuilders
-		if (expression && expression.isEmpty && expression.isEmpty()) {
+		if (expression && expression.is_empty && expression.is_empty()) {
 			expression = null;
 		}
 

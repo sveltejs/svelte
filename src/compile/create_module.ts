@@ -1,12 +1,7 @@
-import deindent from '../utils/deindent';
+import deindent from './utils/deindent';
 import list from '../utils/list';
-import { CompileOptions, ModuleFormat, Node } from '../interfaces';
-
-interface Dependency {
-	name: string;
-	statements: string[];
-	source: string;
-}
+import { ModuleFormat, Node } from '../interfaces';
+import { stringify_props } from './utils/stringify_props';
 
 const wrappers = { esm, cjs };
 
@@ -15,11 +10,10 @@ type Export = {
 	as: string;
 };
 
-export default function wrapModule(
+export default function create_module(
 	code: string,
 	format: ModuleFormat,
 	name: string,
-	options: CompileOptions,
 	banner: string,
 	sveltePath = 'svelte',
 	helpers: { name: string, alias: string }[],
@@ -27,18 +21,18 @@ export default function wrapModule(
 	module_exports: Export[],
 	source: string
 ): string {
-	const internalPath = `${sveltePath}/internal`;
+	const internal_path = `${sveltePath}/internal`;
 
 	if (format === 'esm') {
-		return esm(code, name, options, banner, sveltePath, internalPath, helpers, imports, module_exports, source);
+		return esm(code, name, banner, sveltePath, internal_path, helpers, imports, module_exports, source);
 	}
 
-	if (format === 'cjs') return cjs(code, name, banner, sveltePath, internalPath, helpers, imports, module_exports);
+	if (format === 'cjs') return cjs(code, name, banner, sveltePath, internal_path, helpers, imports, module_exports);
 
 	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 }
 
-function editSource(source, sveltePath) {
+function edit_source(source, sveltePath) {
 	return source === 'svelte' || source.startsWith('svelte/')
 		? source.replace('svelte', sveltePath)
 		: source;
@@ -47,23 +41,22 @@ function editSource(source, sveltePath) {
 function esm(
 	code: string,
 	name: string,
-	options: CompileOptions,
 	banner: string,
 	sveltePath: string,
-	internalPath: string,
+	internal_path: string,
 	helpers: { name: string, alias: string }[],
 	imports: Node[],
 	module_exports: Export[],
 	source: string
 ) {
-	const importHelpers = helpers.length > 0 && (
-		`import { ${helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).join(', ')} } from ${JSON.stringify(internalPath)};`
+	const internal_imports = helpers.length > 0 && (
+		`import ${stringify_props(helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).sort())} from ${JSON.stringify(internal_path)};`
 	);
 
-	const importBlock = imports.length > 0 && (
+	const user_imports = imports.length > 0 && (
 		imports
 			.map((declaration: Node) => {
-				const import_source = editSource(declaration.source.value, sveltePath);
+				const import_source = edit_source(declaration.source.value, sveltePath);
 
 				return (
 					source.slice(declaration.start, declaration.source.start) +
@@ -76,8 +69,8 @@ function esm(
 
 	return deindent`
 		${banner}
-		${importHelpers}
-		${importBlock}
+		${internal_imports}
+		${user_imports}
 
 		${code}
 
@@ -90,15 +83,15 @@ function cjs(
 	name: string,
 	banner: string,
 	sveltePath: string,
-	internalPath: string,
+	internal_path: string,
 	helpers: { name: string, alias: string }[],
 	imports: Node[],
 	module_exports: Export[]
 ) {
-	const helperDeclarations = helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).join(', ');
+	const declarations = helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).sort();
 
-	const helperBlock = helpers.length > 0 && (
-		`const { ${helperDeclarations} } = require(${JSON.stringify(internalPath)});\n`
+	const internal_imports = helpers.length > 0 && (
+		`const ${stringify_props(declarations)} = require(${JSON.stringify(internal_path)});\n`
 	);
 
 	const requires = imports.map(node => {
@@ -120,7 +113,7 @@ function cjs(
 			lhs = `{ ${properties.join(', ')} }`;
 		}
 
-		const source = editSource(node.source.value, sveltePath);
+		const source = edit_source(node.source.value, sveltePath);
 
 		return `const ${lhs} = require("${source}");`
 	});
@@ -133,7 +126,7 @@ function cjs(
 		${banner}
 		"use strict";
 
-		${helperBlock}
+		${internal_imports}
 		${requires}
 
 		${code}

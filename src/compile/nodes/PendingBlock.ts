@@ -1,6 +1,6 @@
 import Node from './shared/Node';
 import Block from '../render-dom/Block';
-import mapChildren from './shared/mapChildren';
+import map_children from './shared/map_children';
 
 export default class PendingBlock extends Node {
 	block: Block;
@@ -8,8 +8,8 @@ export default class PendingBlock extends Node {
 
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-		this.children = mapChildren(component, parent, scope, info.children);
+		this.children = map_children(component, parent, scope, info.children);
 
-		this.warnIfEmptyBlock();
+		this.warn_if_empty_block();
 	}
 }
