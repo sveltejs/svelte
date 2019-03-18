@@ -1,7 +1,7 @@
 import { run_all } from './utils.js';
 import { set_current_component } from './lifecycle.js';
 
-export let dirty_components = [];
+export const dirty_components = [];
 export const intros = { enabled: false };
 
 let update_promise;

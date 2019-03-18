@@ -1,5 +1,5 @@
-import { writable } from 'svelte/store';
-import { loop } from 'svelte/internal';
+import { writable } from 'svelte/store'; // eslint-disable-line import/no-unresolved
+import { loop } from 'svelte/internal'; // eslint-disable-line import/no-unresolved
 import { is_date } from './utils.js';
 
 function get_initial_velocity(value) {
@@ -120,7 +120,7 @@ export function spring(value, opts = {}) {
 			last_time = window.performance.now();
 			settled = false;
 
-			task = loop(now=> {
+			task = loop(now => {
 				({ value, settled } = tick_spring(
 					velocity,
 					value,

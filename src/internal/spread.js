@@ -1,20 +1,20 @@
 export function get_spread_update(levels, updates) {
-	var update = {};
+	const update = {};
 
-	var to_null_out = {};
-	var accounted_for = {};
+	const to_null_out = {};
+	const accounted_for = {};
 
-	var i = levels.length;
+	let i = levels.length;
 	while (i--) {
-		var o = levels[i];
-		var n = updates[i];
+		const o = levels[i];
+		const n = updates[i];
 
 		if (n) {
-			for (var key in o) {
+			for (const key in o) {
 				if (!(key in n)) to_null_out[key] = 1;
 			}
 
-			for (var key in n) {
+			for (const key in n) {
 				if (!accounted_for[key]) {
 					update[key] = n[key];
 					accounted_for[key] = 1;
@@ -23,13 +23,13 @@ export function get_spread_update(levels, updates) {
 
 			levels[i] = n;
 		} else {
-			for (var key in o) {
+			for (const key in o) {
 				accounted_for[key] = 1;
 			}
 		}
 	}
 
-	for (var key in to_null_out) {
+	for (const key in to_null_out) {
 		if (!(key in update)) update[key] = undefined;
 	}
 

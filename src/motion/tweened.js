@@ -1,6 +1,6 @@
-import { writable } from 'svelte/store';
-import { assign, loop } from 'svelte/internal';
-import { linear } from 'svelte/easing';
+import { writable } from 'svelte/store'; // eslint-disable-line import/no-unresolved
+import { assign, loop } from 'svelte/internal'; // eslint-disable-line import/no-unresolved
+import { linear } from 'svelte/easing'; // eslint-disable-line import/no-unresolved
 import { is_date } from './utils.js';
 
 function get_interpolator(a, b) {

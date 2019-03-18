@@ -246,7 +246,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 			if (b) tick(0, 1);
 
 			running_program = init(program, duration);
-			add_render_callback(() => dispatch(node, b, 'start'))
+			add_render_callback(() => dispatch(node, b, 'start'));
 
 			loop(now => {
 				if (pending_program && now > pending_program.start) {
