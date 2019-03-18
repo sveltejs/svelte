@@ -29,7 +29,7 @@ export function detach_after(before) {
 }
 
 export function destroy_each(iterations, detaching) {
-	for (var i = 0; i < iterations.length; i += 1) {
+	for (let i = 0; i < iterations.length; i += 1) {
 		if (iterations[i]) iterations[i].d(detaching);
 	}
 }
@@ -79,7 +79,7 @@ export function attr(node, attribute, value) {
 }
 
 export function set_attributes(node, attributes) {
-	for (var key in attributes) {
+	for (const key in attributes) {
 		if (key === 'style') {
 			node.style.cssText = attributes[key];
 		} else if (key in node) {
@@ -103,8 +103,8 @@ export function xlink_attr(node, attribute, value) {
 }
 
 export function get_binding_group_value(group) {
-	var value = [];
-	for (var i = 0; i < group.length; i += 1) {
+	const value = [];
+	for (let i = 0; i < group.length; i += 1) {
 		if (group[i].checked) value.push(group[i].__value);
 	}
 	return value;
@@ -115,8 +115,8 @@ export function to_number(value) {
 }
 
 export function time_ranges_to_array(ranges) {
-	var array = [];
-	for (var i = 0; i < ranges.length; i += 1) {
+	const array = [];
+	for (let i = 0; i < ranges.length; i += 1) {
 		array.push({ start: ranges.start(i), end: ranges.end(i) });
 	}
 	return array;
@@ -127,11 +127,11 @@ export function children(element) {
 }
 
 export function claim_element(nodes, name, attributes, svg) {
-	for (var i = 0; i < nodes.length; i += 1) {
-		var node = nodes[i];
+	for (let i = 0; i < nodes.length; i += 1) {
+		const node = nodes[i];
 		if (node.nodeName === name) {
-			for (var j = 0; j < node.attributes.length; j += 1) {
-				var attribute = node.attributes[j];
+			for (let j = 0; j < node.attributes.length; j += 1) {
+				const attribute = node.attributes[j];
 				if (!attributes[attribute.name]) node.removeAttribute(attribute.name);
 			}
 			return nodes.splice(i, 1)[0]; // TODO strip unwanted attributes
@@ -142,8 +142,8 @@ export function claim_element(nodes, name, attributes, svg) {
 }
 
 export function claim_text(nodes, data) {
-	for (var i = 0; i < nodes.length; i += 1) {
-		var node = nodes[i];
+	for (let i = 0; i < nodes.length; i += 1) {
+		const node = nodes[i];
 		if (node.nodeType === 3) {
 			node.data = data;
 			return nodes.splice(i, 1)[0];
@@ -160,7 +160,9 @@ export function set_data(text, data) {
 export function set_input_type(input, type) {
 	try {
 		input.type = type;
-	} catch (e) {}
+	} catch (e) {
+		// do nothing
+	}
 }
 
 export function set_style(node, key, value) {
@@ -168,8 +170,8 @@ export function set_style(node, key, value) {
 }
 
 export function select_option(select, value) {
-	for (var i = 0; i < select.options.length; i += 1) {
-		var option = select.options[i];
+	for (let i = 0; i < select.options.length; i += 1) {
+		const option = select.options[i];
 
 		if (option.__value === value) {
 			option.selected = true;
@@ -179,21 +181,19 @@ export function select_option(select, value) {
 }
 
 export function select_options(select, value) {
-	for (var i = 0; i < select.options.length; i += 1) {
-		var option = select.options[i];
+	for (let i = 0; i < select.options.length; i += 1) {
+		const option = select.options[i];
 		option.selected = ~value.indexOf(option.__value);
 	}
 }
 
 export function select_value(select) {
-	var selectedOption = select.querySelector(':checked') || select.options[0];
-	return selectedOption && selectedOption.__value;
+	const selected_option = select.querySelector(':checked') || select.options[0];
+	return selected_option && selected_option.__value;
 }
 
 export function select_multiple_value(select) {
-	return [].map.call(select.querySelectorAll(':checked'), function(option) {
-		return option.__value;
-	});
+	return [].map.call(select.querySelectorAll(':checked'), option => option.__value);
 }
 
 export function add_resize_listener(element, fn) {

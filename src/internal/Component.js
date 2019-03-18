@@ -1,7 +1,6 @@
-import { add_render_callback, flush, intros, schedule_update, dirty_components } from './scheduler.js';
-import { current_component, set_current_component } from './lifecycle.js'
-import { is_function, run, run_all, noop } from './utils.js';
-import { blank_object } from './utils.js';
+import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler.js';
+import { current_component, set_current_component } from './lifecycle.js';
+import { blank_object, is_function, run, run_all, noop } from './utils.js';
 import { children } from './dom.js';
 
 export function bind(component, name, callback) {
@@ -23,7 +22,7 @@ export function mount_component(component, target, anchor) {
 		if (on_destroy) {
 			on_destroy.push(...new_on_destroy);
 		} else {
-			// Edge case — component was destroyed immediately,
+			// Edge case - component was destroyed immediately,
 			// most likely as a result of a binding initialising
 			run_all(new_on_destroy);
 		}
@@ -129,7 +128,7 @@ if (typeof HTMLElement !== 'undefined') {
 		}
 
 		connectedCallback() {
-			for (let key in this.$$.slotted) {
+			for (const key in this.$$.slotted) {
 				this.appendChild(this.$$.slotted[key]);
 			}
 		}
@@ -157,7 +156,7 @@ if (typeof HTMLElement !== 'undefined') {
 		$set() {
 			// overridden by instance, if it has props
 		}
-	}
+	};
 }
 
 export class SvelteComponent {
@@ -193,7 +192,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	$destroy() {
 		super.$destroy();
 		this.$destroy = () => {
-			console.warn(`Component was already destroyed`);
+			console.warn(`Component was already destroyed`); // eslint-disable-line no-console
 		};
 	}
 }

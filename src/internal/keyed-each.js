@@ -19,22 +19,22 @@ export function fix_and_outro_and_destroy_block(block, lookup) {
 }
 
 export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
-	var o = old_blocks.length;
-	var n = list.length;
+	let o = old_blocks.length;
+	let n = list.length;
 
-	var i = o;
-	var old_indexes = {};
+	let i = o;
+	const old_indexes = {};
 	while (i--) old_indexes[old_blocks[i].key] = i;
 
-	var new_blocks = [];
-	var new_lookup = {};
-	var deltas = {};
+	const new_blocks = [];
+	const new_lookup = {};
+	const deltas = {};
 
-	var i = n;
+	i = n;
 	while (i--) {
-		var child_ctx = get_context(ctx, list, i);
-		var key = get_key(child_ctx);
-		var block = lookup[key];
+		const child_ctx = get_context(ctx, list, i);
+		const key = get_key(child_ctx);
+		let block = lookup[key];
 
 		if (!block) {
 			block = create_each_block(key, child_ctx);
@@ -48,8 +48,8 @@ export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, li
 		if (key in old_indexes) deltas[key] = Math.abs(i - old_indexes[key]);
 	}
 
-	var will_move = {};
-	var did_move = {};
+	const will_move = {};
+	const did_move = {};
 
 	function insert(block) {
 		if (block.i) block.i(1);
@@ -60,10 +60,10 @@ export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, li
 	}
 
 	while (o && n) {
-		var new_block = new_blocks[n - 1];
-		var old_block = old_blocks[o - 1];
-		var new_key = new_block.key;
-		var old_key = old_block.key;
+		const new_block = new_blocks[n - 1];
+		const old_block = old_blocks[o - 1];
+		const new_key = new_block.key;
+		const old_key = old_block.key;
 
 		if (new_block === old_block) {
 			// do nothing
@@ -96,7 +96,7 @@ export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, li
 	}
 
 	while (o--) {
-		var old_block = old_blocks[o];
+		const old_block = old_blocks[o];
 		if (!new_lookup[old_block.key]) destroy(old_block, lookup);
 	}
 
