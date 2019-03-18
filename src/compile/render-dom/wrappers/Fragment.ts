@@ -139,9 +139,9 @@ export default class FragmentWrapper {
 		}
 	}
 
-	render(block: Block, parentNode: string, parent_nodes: string) {
+	render(block: Block, parent_node: string, parent_nodes: string) {
 		for (let i = 0; i < this.nodes.length; i += 1) {
-			this.nodes[i].render(block, parentNode, parent_nodes);
+			this.nodes[i].render(block, parent_node, parent_nodes);
 		}
 	}
 }

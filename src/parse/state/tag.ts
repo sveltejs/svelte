@@ -185,7 +185,7 @@ export default function tag(parser: Parser) {
 	const unique_names = new Set();
 
 	let attribute;
-	while ((attribute = readAttribute(parser, unique_names))) {
+	while ((attribute = read_attribute(parser, unique_names))) {
 		element.attributes.push(attribute);
 		parser.allow_whitespace();
 	}
@@ -314,7 +314,7 @@ function read_tag_name(parser: Parser) {
 	return name;
 }
 
-function readAttribute(parser: Parser, unique_names: Set<string>) {
+function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const start = parser.index;
 
 	if (parser.eat('{')) {

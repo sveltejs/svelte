@@ -2,7 +2,7 @@ export interface Node {
 	start: number;
 	end: number;
 	type: string;
-	[propName: string]: any;
+	[prop_name: string]: any;
 }
 
 export interface Parser {

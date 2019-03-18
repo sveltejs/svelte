@@ -53,12 +53,12 @@ export default function(node, renderer, options) {
 	const slot = node.get_static_attribute_value('slot');
 	if (slot && node.has_ancestor('InlineComponent')) {
 		const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
-		const slotName = slot.chunks[0].data;
+		const slot_name = slot.chunks[0].data;
 		const target = renderer.targets[renderer.targets.length - 1];
-		target.slot_stack.push(slotName);
-		target.slots[slotName] = '';
+		target.slot_stack.push(slot_name);
+		target.slots[slot_name] = '';
 
-		options.slot_scopes.set(slotName, get_slot_scope(node.lets));
+		options.slot_scopes.set(slot_name, get_slot_scope(node.lets));
 	}
 
 	const class_expression = node.classes.map((class_directive: Class) => {

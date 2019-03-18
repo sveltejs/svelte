@@ -22,11 +22,11 @@ export function create_animation(node, from, fn, params) {
 	let started = false;
 	let name;
 
-	const cssText = node.style.cssText;
+	const css_text = node.style.cssText;
 
 	function start() {
 		if (css) {
-			if (delay) node.style.cssText = cssText; // TODO create delayed animation instead?
+			if (delay) node.style.cssText = css_text; // TODO create delayed animation instead?
 			name = create_rule(node, 0, 1, duration, 0, easing, css);
 		}
 

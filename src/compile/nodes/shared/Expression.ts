@@ -13,7 +13,7 @@ import get_object from '../../utils/get_object';
 import { nodes_match } from '../../../utils/nodes_match';
 import Block from '../../render-dom/Block';
 
-const binaryOperators: Record<string, number> = {
+const binary_operators: Record<string, number> = {
 	'**': 15,
 	'*': 14,
 	'/': 14,
@@ -38,7 +38,7 @@ const binaryOperators: Record<string, number> = {
 	'|': 7
 };
 
-const logicalOperators: Record<string, number> = {
+const logical_operators: Record<string, number> = {
 	'&&': 6,
 	'||': 5
 };
@@ -52,8 +52,8 @@ const precedence: Record<string, (node?: Node) => number> = {
 	CallExpression: () => 19,
 	UpdateExpression: () => 17,
 	UnaryExpression: () => 16,
-	BinaryExpression: (node: Node) => binaryOperators[node.operator],
-	LogicalExpression: (node: Node) => logicalOperators[node.operator],
+	BinaryExpression: (node: Node) => binary_operators[node.operator],
+	LogicalExpression: (node: Node) => logical_operators[node.operator],
 	ConditionalExpression: () => 4,
 	AssignmentExpression: () => 3,
 	YieldExpression: () => 2,

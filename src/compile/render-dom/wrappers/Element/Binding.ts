@@ -91,8 +91,8 @@ export default class BindingWrapper {
 		this.node.expression.dependencies.forEach((prop: string) => {
 			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(prop);
 			if (indirect_dependencies) {
-				indirect_dependencies.forEach(indirectDependency => {
-					dependencies.add(indirectDependency);
+				indirect_dependencies.forEach(indirect_dependency => {
+					dependencies.add(indirect_dependency);
 				});
 			}
 		});
@@ -127,14 +127,14 @@ export default class BindingWrapper {
 		// special cases
 		switch (this.node.name) {
 			case 'group':
-				const bindingGroup = get_binding_group(parent.renderer, this.node.expression.node);
+				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
 
 				block.builders.hydrate.add_line(
-					`ctx.$$binding_groups[${bindingGroup}].push(${parent.var});`
+					`ctx.$$binding_groups[${binding_group}].push(${parent.var});`
 				);
 
 				block.builders.destroy.add_line(
-					`ctx.$$binding_groups[${bindingGroup}].splice(ctx.$$binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
+					`ctx.$$binding_groups[${binding_group}].splice(ctx.$$binding_groups[${binding_group}].indexOf(${parent.var}), 1);`
 				);
 				break;
 
@@ -295,9 +295,9 @@ function get_value_from_dom(
 
 	// <input type='checkbox' bind:group='foo'>
 	if (name === 'group') {
-		const bindingGroup = get_binding_group(renderer, binding.node.expression.node);
+		const binding_group = get_binding_group(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			return `@get_binding_group_value($$binding_groups[${bindingGroup}])`;
+			return `@get_binding_group_value($$binding_groups[${binding_group}])`;
 		}
 
 		return `this.__value`;

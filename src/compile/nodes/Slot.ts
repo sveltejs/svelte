@@ -27,8 +27,8 @@ export default class Slot extends Element {
 					});
 				}
 
-				const slotName = attr.value[0].data;
-				if (slotName === 'default') {
+				const slot_name = attr.value[0].data;
+				if (slot_name === 'default') {
 					component.error(attr, {
 						code: `invalid-slot-name`,
 						message: `default is a reserved word — it cannot be used as a slot name`
@@ -39,11 +39,11 @@ export default class Slot extends Element {
 			// TODO should duplicate slots be disallowed? Feels like it's more likely to be a
 			// bug than anything. Perhaps it should be a warning
 
-			// if (validator.slots.has(slotName)) {
-			// 	validator.error(`duplicate '${slotName}' <slot> element`, nameAttribute.start);
+			// if (validator.slots.has(slot_name)) {
+			// 	validator.error(`duplicate '${slot_name}' <slot> element`, nameAttribute.start);
 			// }
 
-			// validator.slots.add(slotName);
+			// validator.slots.add(slot_name);
 		});
 
 		// if (node.attributes.length === 0) && validator.slots.has('default')) {

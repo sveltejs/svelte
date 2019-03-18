@@ -210,7 +210,7 @@ const operators = {
 	'*=': (value: string, flags: string) => new RegExp(value, flags)
 };
 
-function attribute_matches(node: Node, name: string, expected_value: string, operator: string, caseInsensitive: boolean) {
+function attribute_matches(node: Node, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
 	const spread = node.attributes.find(attr => attr.type === 'Spread');
 	if (spread) return true;
 
@@ -220,7 +220,7 @@ function attribute_matches(node: Node, name: string, expected_value: string, ope
 	if (attr.chunks.length > 1) return true;
 	if (!expected_value) return true;
 
-	const pattern = operators[operator](expected_value, caseInsensitive ? 'i' : '');
+	const pattern = operators[operator](expected_value, case_insensitive ? 'i' : '');
 	const value = attr.chunks[0];
 
 	if (!value) return false;

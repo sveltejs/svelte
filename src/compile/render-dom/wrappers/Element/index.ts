@@ -777,8 +777,8 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_classes(block: Block) {
-		this.node.classes.forEach(classDir => {
-			const { expression, name } = classDir;
+		this.node.classes.forEach(class_directive => {
+			const { expression, name } = class_directive;
 			let snippet, dependencies;
 			if (expression) {
 				snippet = expression.render(block);
@@ -821,16 +821,16 @@ export default class ElementWrapper extends Wrapper {
 		return null;
 	}
 
-	add_css_class(className = this.component.stylesheet.id) {
+	add_css_class(class_name = this.component.stylesheet.id) {
 		const class_attribute = this.attributes.find(a => a.name === 'class');
 		if (class_attribute && !class_attribute.is_true) {
 			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
-				(class_attribute.chunks[0] as Text).data += ` ${className}`;
+				(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
 			} else {
 				(class_attribute.chunks as Node[]).push(
 					new Text(this.component, this, this.scope, {
 						type: 'Text',
-						data: ` ${className}`
+						data: ` ${class_name}`
 					})
 				);
 			}
@@ -839,7 +839,7 @@ export default class ElementWrapper extends Wrapper {
 				new Attribute(this.component, this, this.scope, {
 					type: 'Attribute',
 					name: 'class',
-					value: [{ type: 'Text', data: className }]
+					value: [{ type: 'Text', data: class_name }]
 				})
 			);
 		}

@@ -74,9 +74,9 @@ function find_line(chunk: BlockChunk) {
 	return false;
 }
 
-function chunk_to_string(chunk: Chunk, level: number = 0, lastBlock?: boolean, first?: boolean): string {
+function chunk_to_string(chunk: Chunk, level: number = 0, last_block?: boolean, first?: boolean): string {
 	if (chunk.type === 'line') {
-		return `${lastBlock || (!first && chunk.block) ? '\n' : ''}${chunk.line.replace(/^/gm, repeat('\t', level))}`;
+		return `${last_block || (!first && chunk.block) ? '\n' : ''}${chunk.line.replace(/^/gm, repeat('\t', level))}`;
 	} else if (chunk.type === 'condition') {
 		let t = false;
 		const lines = chunk.children.map((c, i) => {
@@ -87,7 +87,7 @@ function chunk_to_string(chunk: Chunk, level: number = 0, lastBlock?: boolean, f
 
 		if (!lines.length) return '';
 
-		return `${lastBlock || (!first) ? '\n' : ''}${repeat('\t', level)}if (${chunk.condition}) {\n${lines.join('\n')}\n${repeat('\t', level)}}`;
+		return `${last_block || (!first) ? '\n' : ''}${repeat('\t', level)}if (${chunk.condition}) {\n${lines.join('\n')}\n${repeat('\t', level)}}`;
 	} else if (chunk.type === 'root') {
 		let t = false;
 		const lines = chunk.children.map((c, i) => {

@@ -391,7 +391,7 @@ export default class Stylesheet {
 		});
 	}
 
-	warnOnUnusedSelectors(component: Component) {
+	warn_on_unused_selectors(component: Component) {
 		this.children.forEach(child => {
 			child.warn_on_unused_selector((selector: Selector) => {
 				component.warn(selector.node, {

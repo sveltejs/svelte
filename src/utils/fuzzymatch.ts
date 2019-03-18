@@ -202,11 +202,11 @@ class FuzzySet {
 		let match_score;
 
 		// build a results list of [score, str]
-		for (const matchIndex in matches) {
-			match_score = matches[matchIndex];
+		for (const match_index in matches) {
+			match_score = matches[match_index];
 			results.push([
-				match_score / (vector_normal * items[matchIndex][0]),
-				items[matchIndex][1],
+				match_score / (vector_normal * items[match_index][0]),
+				items[match_index][1],
 			]);
 		}
 

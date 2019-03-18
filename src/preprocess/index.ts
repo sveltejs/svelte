@@ -58,14 +58,14 @@ async function replace_async(str: string, re: RegExp, func: (...any) => Promise<
 		return '';
 	});
 	let out = '';
-	let lastEnd = 0;
+	let last_end = 0;
 	for (const { offset, length, replacement } of await Promise.all(
 		replacements
 	)) {
-		out += str.slice(lastEnd, offset) + replacement;
-		lastEnd = offset + length;
+		out += str.slice(last_end, offset) + replacement;
+		last_end = offset + length;
 	}
-	out += str.slice(lastEnd);
+	out += str.slice(last_end);
 	return out;
 }
 

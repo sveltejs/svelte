@@ -35,7 +35,7 @@ export default function dom(
 	const css = component.stylesheet.render(options.filename, !options.customElement);
 	const styles = component.stylesheet.has_styles && stringify(options.dev ?
 		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
-		css.code, { onlyEscapeAtSymbol: true });
+		css.code, { only_escape_at_symbol: true });
 
 	if (styles && component.compile_options.css !== false && !options.customElement) {
 		builder.add_block(deindent`
@@ -417,7 +417,7 @@ export default function dom(
 				constructor(options) {
 					super();
 
-					${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { only_escape_at_symbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
 					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 

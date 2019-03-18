@@ -8,25 +8,25 @@ import { Node } from '../../interfaces';
 function trim_whitespace(block: Node, trim_before: boolean, trim_after: boolean) {
 	if (!block.children || block.children.length === 0) return; // AwaitBlock
 
-	const firstChild = block.children[0];
-	const lastChild = block.children[block.children.length - 1];
+	const first_child = block.children[0];
+	const last_child = block.children[block.children.length - 1];
 
-	if (firstChild.type === 'Text' && trim_before) {
-		firstChild.data = trim_start(firstChild.data);
-		if (!firstChild.data) block.children.shift();
+	if (first_child.type === 'Text' && trim_before) {
+		first_child.data = trim_start(first_child.data);
+		if (!first_child.data) block.children.shift();
 	}
 
-	if (lastChild.type === 'Text' && trim_after) {
-		lastChild.data = trim_end(lastChild.data);
-		if (!lastChild.data) block.children.pop();
+	if (last_child.type === 'Text' && trim_after) {
+		last_child.data = trim_end(last_child.data);
+		if (!last_child.data) block.children.pop();
 	}
 
 	if (block.else) {
 		trim_whitespace(block.else, trim_before, trim_after);
 	}
 
-	if (firstChild.elseif) {
-		trim_whitespace(firstChild, trim_before, trim_after);
+	if (first_child.elseif) {
+		trim_whitespace(first_child, trim_before, trim_after);
 	}
 }
 
@@ -310,9 +310,9 @@ export default function mustache(parser: Parser) {
 		parser.stack.push(block);
 
 		if (type === 'AwaitBlock') {
-			const childBlock = await_block_shorthand ? block.then : block.pending;
-			childBlock.start = parser.index;
-			parser.stack.push(childBlock);
+			const child_block = await_block_shorthand ? block.then : block.pending;
+			child_block.start = parser.index;
+			parser.stack.push(child_block);
 		}
 	} else if (parser.eat('@html')) {
 		// {@html content} tag

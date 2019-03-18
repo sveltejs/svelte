@@ -99,7 +99,7 @@ export default class SlotWrapper extends Wrapper {
 			const ${slot} = @create_slot(${slot_definition}, ctx, ${get_slot_context});
 		`);
 
-		let mountBefore = block.builders.mount.toString();
+		let mount_before = block.builders.mount.toString();
 
 		block.builders.create.push_condition(`!${slot}`);
 		block.builders.hydrate.push_condition(`!${slot}`);
@@ -127,7 +127,7 @@ export default class SlotWrapper extends Wrapper {
 			`if (${slot}) ${slot}.l(${parent_nodes});`
 		);
 
-		const mount_leadin = block.builders.mount.toString() !== mountBefore
+		const mount_leadin = block.builders.mount.toString() !== mount_before
 			? `else`
 			: `if (${slot})`;
 

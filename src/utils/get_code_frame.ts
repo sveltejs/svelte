@@ -1,6 +1,6 @@
 import repeat from './repeat';
 
-function tabsToSpaces(str: string) {
+function tabs_to_spaces(str: string) {
 	return str.replace(/^\t+/, match => match.split('\t').join('  '));
 }
 
@@ -11,26 +11,26 @@ export default function get_code_frame(
 ) {
 	const lines = source.split('\n');
 
-	const frameStart = Math.max(0, line - 2);
-	const frameEnd = Math.min(line + 3, lines.length);
+	const frame_start = Math.max(0, line - 2);
+	const frame_end = Math.min(line + 3, lines.length);
 
-	const digits = String(frameEnd + 1).length;
+	const digits = String(frame_end + 1).length;
 
 	return lines
-		.slice(frameStart, frameEnd)
+		.slice(frame_start, frame_end)
 		.map((str, i) => {
-			const isErrorLine = frameStart + i === line;
+			const isErrorLine = frame_start + i === line;
 
-			let lineNum = String(i + frameStart + 1);
-			while (lineNum.length < digits) lineNum = ` ${lineNum}`;
+			let line_num = String(i + frame_start + 1);
+			while (line_num.length < digits) line_num = ` ${line_num}`;
 
 			if (isErrorLine) {
 				const indicator =
-					repeat(' ', digits + 2 + tabsToSpaces(str.slice(0, column)).length) + '^';
-				return `${lineNum}: ${tabsToSpaces(str)}\n${indicator}`;
+					repeat(' ', digits + 2 + tabs_to_spaces(str.slice(0, column)).length) + '^';
+				return `${line_num}: ${tabs_to_spaces(str)}\n${indicator}`;
 			}
 
-			return `${lineNum}: ${tabsToSpaces(str)}`;
+			return `${line_num}: ${tabs_to_spaces(str)}`;
 		})
 		.join('\n');
 }

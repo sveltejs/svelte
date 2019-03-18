@@ -163,7 +163,7 @@ export default class Component {
 
 		if (!compile_options.customElement) this.stylesheet.reify();
 
-		this.stylesheet.warnOnUnusedSelectors(this);
+		this.stylesheet.warn_on_unused_selectors(this);
 	}
 
 	add_var(variable: Var) {

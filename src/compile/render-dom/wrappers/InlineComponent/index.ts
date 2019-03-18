@@ -100,7 +100,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 	render(
 		block: Block,
-		parentNode: string,
+		parent_node: string,
 		parent_nodes: string
 	) {
 		const { renderer } = this;
@@ -122,7 +122,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const slot_props = Array.from(this.slots).map(([name, slot]) => `$$slot_${sanitize(name)}: [${slot.block.name}${slot.fn ? `, ${slot.fn}` : ''}]`);
 		if (slot_props.length > 0) slot_props.push(`$$scope: { ctx }`);
 
-		const attributeObject = uses_spread
+		const attribute_object = uses_spread
 			? stringify_props(slot_props)
 			: stringify_props(
 				this.node.attributes.map(attr => `${quote_name_if_necessary(attr.name)}: ${attr.get_value(block)}`).concat(slot_props)
@@ -130,7 +130,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		if (this.node.attributes.length || this.node.bindings.length || slot_props.length) {
 			if (!uses_spread && this.node.bindings.length === 0) {
-				component_opts.push(`props: ${attributeObject}`);
+				component_opts.push(`props: ${attribute_object}`);
 			} else {
 				props = block.get_unique_name(`${name}_props`);
 				component_opts.push(`props: ${props}`);
@@ -375,7 +375,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				function ${switch_props}(ctx) {
 					${(this.node.attributes.length || this.node.bindings.length) && deindent`
-					${props && `let ${props} = ${attributeObject};`}`}
+					${props && `let ${props} = ${attribute_object};`}`}
 					${statements}
 					return ${stringify_props(component_opts)};
 				}
@@ -400,11 +400,11 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.builders.mount.add_block(deindent`
 				if (${name}) {
-					@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
 				}
 			`);
 
-			const anchor = this.get_or_create_anchor(block, parentNode, parent_nodes);
+			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 			const update_mount_node = this.get_update_mount_node(anchor);
 
 			if (updates.length) {
@@ -458,7 +458,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`if (${name}) ${name}.$$.fragment.o(#local);`
 			);
 
-			block.builders.destroy.add_line(`if (${name}) ${name}.$destroy(${parentNode ? '' : 'detaching'});`);
+			block.builders.destroy.add_line(`if (${name}) ${name}.$destroy(${parent_node ? '' : 'detaching'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? '__svelte:self__' // TODO conflict-proof this
@@ -466,7 +466,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.builders.init.add_block(deindent`
 				${(this.node.attributes.length || this.node.bindings.length) && deindent`
-				${props && `let ${props} = ${attributeObject};`}`}
+				${props && `let ${props} = ${attribute_object};`}`}
 				${statements}
 				var ${name} = new ${expression}(${stringify_props(component_opts)});
 
@@ -483,7 +483,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.builders.mount.add_line(
-				`@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
+				`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
 			);
 
 			block.builders.intro.add_block(deindent`
@@ -499,7 +499,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.builders.destroy.add_block(deindent`
-				${name}.$destroy(${parentNode ? '' : 'detaching'});
+				${name}.$destroy(${parent_node ? '' : 'detaching'});
 			`);
 
 			block.builders.outro.add_line(

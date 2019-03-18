@@ -1,8 +1,8 @@
 import { assign } from '../internal';
 import Stats from '../Stats';
 import parse from '../parse/index';
-import renderDOM from './render-dom/index';
-import renderSSR from './render-ssr/index';
+import render_dom from './render-dom/index';
+import render_ssr from './render-ssr/index';
 import { CompileOptions, Ast, Warning } from '../interfaces';
 import Component from './Component';
 import fuzzymatch from '../utils/fuzzymatch';
@@ -100,8 +100,8 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	const js = options.generate === false
 		? null
 		: options.generate === 'ssr'
-			? renderSSR(component, options)
-			: renderDOM(component, options);
+			? render_ssr(component, options)
+			: render_dom(component, options);
 
 	return component.generate(js);
 }
