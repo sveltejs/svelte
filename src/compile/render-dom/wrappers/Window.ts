@@ -160,25 +160,30 @@ export default class WindowWrapper extends Wrapper {
 		// another special case. (I'm starting to think these are all special cases.)
 		if (bindings.online) {
 			const handler_name = block.get_unique_name(`onlinestatuschanged`);
-			block.builders.init.add_block(deindent`
-				function ${handler_name}(event) {
-					${component.compile_options.dev && `component._updatingReadonlyProperty = true;`}
-					#component.set({ ${bindings.online}: navigator.onLine });
-					${component.compile_options.dev && `component._updatingReadonlyProperty = false;`}
+			const name = bindings.online;
+
+			component.add_var({
+				name: handler_name,
+				internal: true,
+				referenced: true
+			});
+
+			component.partly_hoisted.push(deindent`
+				function ${handler_name}() {
+					${name} = navigator.onLine; $$invalidate('${name}', ${name});
 				}
-				window.addEventListener("online", ${handler_name});
-				window.addEventListener("offline", ${handler_name});
 			`);
 
-			// add initial value
-			renderer.meta_bindings.add_line(
-				`this._state.${bindings.online} = navigator.onLine;`
+			block.builders.init.add_block(deindent`
+				@add_render_callback(ctx.${handler_name});
+			`);
+
+			block.event_listeners.push(
+				`@listen(window, "online", ctx.${handler_name})`,
+				`@listen(window, "offline", ctx.${handler_name})`
 			);
 
-			block.builders.destroy.add_block(deindent`
-				window.removeEventListener("online", ${handler_name});
-				window.removeEventListener("offline", ${handler_name});
-			`);
+			component.has_reactive_assignments = true;
 		}
 	}
 }
