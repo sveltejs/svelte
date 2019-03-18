@@ -53,16 +53,15 @@
 			if (token !== current_token) return;
 
 			await proxy.eval(`
-				const styles = document.querySelectorAll('style.svelte');
-				let i = styles.length;
-				while (i--) styles[i].parentNode.removeChild(styles[i]);
-			`);
-
-			await proxy.eval(`
 				// needed for context API tutorial
 				window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
 
+				const styles = document.querySelectorAll('style[id^=svelte-]');
+
 				${$bundle.dom.code}
+
+				let i = styles.length;
+				while (i--) styles[i].parentNode.removeChild(styles[i]);
 
 				if (window.component) {
 					try {
