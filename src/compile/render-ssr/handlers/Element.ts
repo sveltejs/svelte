@@ -1,5 +1,4 @@
-import { quote_prop_if_necessary, quote_name_if_necessary } from '../../../utils/names';
-import isVoidElementName from '../../../utils/isVoidElementName';
+import { is_void, quote_prop_if_necessary, quote_name_if_necessary } from '../../../utils/names';
 import Attribute from '../../nodes/Attribute';
 import Node from '../../nodes/shared/Node';
 import { snip } from '../../../utils/snip';
@@ -149,7 +148,7 @@ export default function(node, renderer, options) {
 		renderer.render(node.children, options);
 	}
 
-	if (!isVoidElementName(node.name)) {
+	if (!is_void(node.name)) {
 		renderer.append(`</${node.name}>`);
 	}
 }

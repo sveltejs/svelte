@@ -1,13 +1,24 @@
 import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
-import hash from '../../utils/hash';
-import removeCSSPrefix from '../../utils/removeCSSPrefix';
 import Element from '../nodes/Element';
 import { Node, Ast } from '../../interfaces';
 import Component from '../Component';
 
-const isKeyframesNode = (node: Node) => removeCSSPrefix(node.name) === 'keyframes'
+function remove_css_prefox(name: string): string {
+	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
+}
+
+const isKeyframesNode = (node: Node) => remove_css_prefox(node.name) === 'keyframes';
+
+// https://github.com/darkskyapp/string-hash/blob/master/index.js
+function hash(str: string): string {
+	let hash = 5381;
+	let i = str.length;
+
+	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
+	return (hash >>> 0).toString(36);
+}
 
 class Rule {
 	selectors: Selector[];
@@ -97,7 +108,7 @@ class Declaration {
 	}
 
 	transform(code: MagicString, keyframes: Map<string, string>) {
-		const property = this.node.property && removeCSSPrefix(this.node.property.toLowerCase());
+		const property = this.node.property && remove_css_prefox(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
 			this.node.value.children.forEach((block: Node) => {
 				if (block.type === 'Identifier') {

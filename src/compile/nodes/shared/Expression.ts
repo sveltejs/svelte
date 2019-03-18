@@ -4,12 +4,12 @@ import is_reference from 'is-reference';
 import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
-import globalWhitelist from '../../../utils/globalWhitelist';
+import { globals } from '../../../utils/names';
 import deindent from '../../utils/deindent';
 import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
-import sanitize from '../../../utils/sanitize';
+import { sanitize } from '../../../utils/names';
 import TemplateScope from './TemplateScope';
-import getObject from '../../../utils/getObject';
+import get_object from '../../utils/get_object';
 import { nodes_match } from '../../../utils/nodes_match';
 import Block from '../../render-dom/Block';
 
@@ -123,7 +123,7 @@ export default class Expression {
 
 					if (scope.has(name)) return;
 
-					if (globalWhitelist.has(name) && !component.var_lookup.has(name)) return;
+					if (globals.has(name) && !component.var_lookup.has(name)) return;
 
 					if (name[0] === '$' && template_scope.names.has(name.slice(1))) {
 						component.error(node, {
@@ -164,10 +164,10 @@ export default class Expression {
 					if (node.type === 'AssignmentExpression') {
 						deep = node.left.type === 'MemberExpression';
 						names = deep
-							? [getObject(node.left).name]
+							? [get_object(node.left).name]
 							: extract_names(node.left);
 					} else if (node.type === 'UpdateExpression') {
-						const { name } = getObject(node.argument);
+						const { name } = get_object(node.argument);
 						names = [name];
 					}
 				}
@@ -257,7 +257,7 @@ export default class Expression {
 					const { name, nodes } = flatten_reference(node);
 
 					if (scope.has(name)) return;
-					if (globalWhitelist.has(name) && !component.var_lookup.has(name)) return;
+					if (globals.has(name) && !component.var_lookup.has(name)) return;
 
 					if (function_expression) {
 						if (template_scope.names.has(name)) {
@@ -289,7 +289,7 @@ export default class Expression {
 				if (function_expression) {
 					if (node.type === 'AssignmentExpression') {
 						const names = node.left.type === 'MemberExpression'
-							? [getObject(node.left).name]
+							? [get_object(node.left).name]
 							: extract_names(node.left);
 
 						if (node.operator === '=' && nodes_match(node.left, node.right)) {
@@ -311,7 +311,7 @@ export default class Expression {
 							});
 						}
 					} else if (node.type === 'UpdateExpression') {
-						const { name } = getObject(node.argument);
+						const { name } = get_object(node.argument);
 
 						if (scope.declarations.has(name)) return;
 

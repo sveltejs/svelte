@@ -1,5 +1,5 @@
-import { snip } from './snip';
-import { stringify_attribute } from './stringify_attribute';
+import { snip } from '../../utils/snip';
+import { stringify_attribute } from '../../utils/stringify_attribute';
 
 export default function get_slot_data(attributes, is_ssr: boolean) {
 	return attributes

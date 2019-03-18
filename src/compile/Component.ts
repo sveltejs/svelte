@@ -2,9 +2,8 @@ import MagicString, { Bundle } from 'magic-string';
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
-import { reserved } from '../utils/names';
+import { globals, reserved } from '../utils/names';
 import { namespaces, validNamespaces } from '../utils/namespaces';
-import { removeNode } from '../utils/removeNode';
 import wrapModule from './wrapModule';
 import { create_scopes, extract_names, Scope } from './utils/scope';
 import Stylesheet from './css/Stylesheet';
@@ -13,14 +12,13 @@ import Fragment from './nodes/Fragment';
 import internal_exports from './internal-exports';
 import { Node, Ast, CompileOptions, Var, Warning } from '../interfaces';
 import error from '../utils/error';
-import getCodeFrame from '../utils/getCodeFrame';
+import get_code_frame from '../utils/get_code_frame';
 import flatten_reference from './utils/flatten_reference';
 import is_reference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import { remove_indentation, add_indentation } from '../utils/indentation';
-import getObject from '../utils/getObject';
-import globalWhitelist from '../utils/globalWhitelist';
+import get_object from './utils/get_object';
 
 type ComponentOptions = {
 	namespace?: string;
@@ -35,6 +33,34 @@ type ComponentOptions = {
 childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
 childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
+
+function remove_node(code: MagicString, start: number, end: number, body: Node, node: Node) {
+	const i = body.indexOf(node);
+	if (i === -1) throw new Error('node not in list');
+
+	let a;
+	let b;
+
+	if (body.length === 1) {
+		// remove everything, leave {}
+		a = start;
+		b = end;
+	} else if (i === 0) {
+		// remove everything before second node, including comments
+		a = start;
+		while (/\s/.test(code.original[a])) a += 1;
+
+		b = body[i].end;
+		while (/[\s,]/.test(code.original[b])) b += 1;
+	} else {
+		// remove the end of the previous node to the end of this one
+		a = body[i - 1].end;
+		b = node.end;
+	}
+
+	code.remove(a, b);
+	return;
+}
 
 export default class Component {
 	stats: Stats;
@@ -392,7 +418,7 @@ export default class Component {
 		const start = this.locator(pos.start);
 		const end = this.locator(pos.end);
 
-		const frame = getCodeFrame(this.source, start.line - 1, start.column);
+		const frame = get_code_frame(this.source, start.line - 1, start.column);
 
 		this.warnings.push({
 			code: warning.code,
@@ -412,7 +438,7 @@ export default class Component {
 		content.body.forEach(node => {
 			if (node.type === 'ImportDeclaration') {
 				// imports need to be hoisted out of the IIFE
-				removeNode(code, content.start, content.end, content.body, node);
+				remove_node(code, content.start, content.end, content.body, node);
 				this.imports.push(node);
 			}
 		});
@@ -453,7 +479,7 @@ export default class Component {
 
 					code.remove(node.start, node.declaration.start);
 				} else {
-					removeNode(code, content.start, content.end, content.body, node);
+					remove_node(code, content.start, content.end, content.body, node);
 					node.specifiers.forEach(specifier => {
 						const variable = this.var_lookup.get(specifier.local.name);
 
@@ -662,10 +688,10 @@ export default class Component {
 					deep = node.left.type === 'MemberExpression';
 
 					names = deep
-						? [getObject(node.left).name]
+						? [get_object(node.left).name]
 						: extract_names(node.left);
 				} else if (node.type === 'UpdateExpression') {
-					names = [getObject(node.argument).name];
+					names = [get_object(node.argument).name];
 				}
 
 				if (names) {
@@ -699,7 +725,7 @@ export default class Component {
 				}
 
 				if (is_reference(node, parent)) {
-					const object = getObject(node);
+					const object = get_object(node);
 					const { name } = object;
 
 					if (name[0] === '$' && !scope.has(name)) {
@@ -1028,14 +1054,14 @@ export default class Component {
 						}
 
 						if (node.type === 'AssignmentExpression') {
-							const identifier = getObject(node.left)
+							const identifier = get_object(node.left)
 							assignee_nodes.add(identifier);
 							assignees.add(identifier.name);
 						} else if (node.type === 'UpdateExpression') {
-							const identifier = getObject(node.argument);
+							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
 						} else if (is_reference(node, parent)) {
-							const identifier = getObject(node);
+							const identifier = get_object(node);
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
 								const owner = scope.find_owner(name);
@@ -1149,7 +1175,7 @@ export default class Component {
 
 		if (this.var_lookup.has(name)) return;
 		if (template_scope && template_scope.names.has(name)) return;
-		if (globalWhitelist.has(name)) return;
+		if (globals.has(name)) return;
 
 		let message = `'${name}' is not defined`;
 		if (!this.ast.instance) message += `. Consider adding a <script> block with 'export let ${name}' to declare a prop`;

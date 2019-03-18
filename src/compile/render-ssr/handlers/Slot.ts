@@ -1,5 +1,5 @@
 import { quote_prop_if_necessary } from '../../../utils/names';
-import get_slot_data from '../../../utils/get_slot_data';
+import get_slot_data from '../../utils/get_slot_data';
 
 export default function(node, renderer, options) {
 	const name = node.attributes.find(attribute => attribute.name === 'name');

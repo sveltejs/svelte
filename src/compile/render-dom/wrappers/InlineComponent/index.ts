@@ -3,15 +3,14 @@ import Renderer from '../../Renderer';
 import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
 import FragmentWrapper from '../Fragment';
-import { quote_name_if_necessary, quote_prop_if_necessary } from '../../../../utils/names';
+import { quote_name_if_necessary, quote_prop_if_necessary, sanitize } from '../../../../utils/names';
 import { stringify_props } from '../../../utils/stringify_props';
 import add_to_set from '../../../utils/add_to_set';
 import deindent from '../../../utils/deindent';
 import Attribute from '../../../nodes/Attribute';
-import getObject from '../../../../utils/getObject';
+import get_object from '../../../utils/get_object';
 import flatten_reference from '../../../utils/flatten_reference';
 import create_debugging_comment from '../shared/create_debugging_comment';
-import sanitize from '../../../../utils/sanitize';
 import { get_context_merger } from '../shared/get_context_merger';
 import EachBlock from '../../../nodes/EachBlock';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
@@ -46,7 +45,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (binding.isContextual) {
 				// we need to ensure that the each block creates a context including
 				// the list and the index, if they're not otherwise referenced
-				const { name } = getObject(binding.expression.node);
+				const { name } = get_object(binding.expression.node);
 				const eachBlock = this.node.scope.getOwner(name);
 
 				(eachBlock as EachBlock).has_binding = true;

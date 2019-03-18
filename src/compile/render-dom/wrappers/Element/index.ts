@@ -3,8 +3,7 @@ import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
-import { quote_prop_if_necessary, quote_name_if_necessary } from '../../../../utils/names';
-import isVoidElementName from '../../../../utils/isVoidElementName';
+import { is_void, quote_prop_if_necessary, quote_name_if_necessary, sanitize } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
 import { stringify, escapeHTML, escape } from '../../../../utils/stringify';
 import TextWrapper from '../Text';
@@ -20,7 +19,6 @@ import add_to_set from '../../../utils/add_to_set';
 import addEventHandlers from '../shared/addEventHandlers';
 import addActions from '../shared/addActions';
 import create_debugging_comment from '../shared/create_debugging_comment';
-import sanitize from '../../../../utils/sanitize';
 import { get_context_merger } from '../shared/get_context_merger';
 
 const events = [
@@ -339,7 +337,7 @@ export default class ElementWrapper extends Wrapper {
 				open += ` ${fix_attribute_casing(attr.node.name)}${attr.stringify()}`
 			});
 
-			if (isVoidElementName(wrapper.node.name)) return open + '>';
+			if (is_void(wrapper.node.name)) return open + '>';
 
 			return `${open}>${wrapper.fragment.nodes.map(toHTML).join('')}</${wrapper.node.name}>`;
 		}

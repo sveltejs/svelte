@@ -1,4 +1,4 @@
-import isVoidElementName from '../../utils/isVoidElementName';
+import { is_void } from '../../utils/names';
 import Node from './shared/Node';
 import Attribute from './Attribute';
 import Binding from './Binding';
@@ -557,7 +557,7 @@ export default class Element extends Node {
 						code: 'invalid-binding',
 						message: `'${binding.name}' is not a valid binding on SVG elements`
 					});
-				} else if (isVoidElementName(this.name)) {
+				} else if (is_void(this.name)) {
 					component.error(binding, {
 						code: 'invalid-binding',
 						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`

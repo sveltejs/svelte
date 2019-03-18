@@ -2,7 +2,7 @@ import readExpression from '../read/expression';
 import readScript from '../read/script';
 import readStyle from '../read/style';
 import { decodeCharacterReferences } from '../utils/html';
-import isVoidElementName from '../../utils/isVoidElementName';
+import { is_void } from '../../utils/names';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
@@ -146,7 +146,7 @@ export default function tag(parser: Parser) {
 	parser.allowWhitespace();
 
 	if (isClosingTag) {
-		if (isVoidElementName(name)) {
+		if (is_void(name)) {
 			parser.error({
 				code: `invalid-void-content`,
 				message: `<${name}> is a void element and cannot have children, or a closing tag`
@@ -244,7 +244,7 @@ export default function tag(parser: Parser) {
 
 	parser.current().children.push(element);
 
-	const selfClosing = parser.eat('/') || isVoidElementName(name);
+	const selfClosing = parser.eat('/') || is_void(name);
 
 	parser.eat('>', true);
 

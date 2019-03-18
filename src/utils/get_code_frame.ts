@@ -4,7 +4,7 @@ function tabsToSpaces(str: string) {
 	return str.replace(/^\t+/, match => match.split('\t').join('  '));
 }
 
-export default function getCodeFrame(
+export default function get_code_frame(
 	source: string,
 	line: number,
 	column: number

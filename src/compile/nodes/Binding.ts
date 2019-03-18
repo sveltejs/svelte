@@ -1,5 +1,5 @@
 import Node from './shared/Node';
-import getObject from '../../utils/getObject';
+import get_object from '../utils/get_object';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
@@ -27,7 +27,7 @@ export default class Binding extends Node {
 		let obj;
 		let prop;
 
-		const { name } = getObject(this.expression.node);
+		const { name } = get_object(this.expression.node);
 		this.isContextual = scope.names.has(name);
 
 		// make sure we track this as a mutable ref

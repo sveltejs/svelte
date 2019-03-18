@@ -1,13 +1,13 @@
 import Binding from '../../../nodes/Binding';
 import ElementWrapper from '.';
 import { dimensions } from '../../../../utils/patterns';
-import getObject from '../../../../utils/getObject';
+import get_object from '../../../utils/get_object';
 import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
-import { get_tail } from '../../../../utils/get_tail_snippet';
 import EachBlock from '../../../nodes/EachBlock';
+import { Node as INode } from '../../../../interfaces';
 
 // TODO this should live in a specific binding
 const readOnlyMediaAttributes = new Set([
@@ -16,6 +16,12 @@ const readOnlyMediaAttributes = new Set([
 	'seekable',
 	'played'
 ]);
+
+function get_tail(node: INode) {
+	const end = node.end;
+	while (node.type === 'MemberExpression') node = node.object;
+	return { start: node.end, end };
+}
 
 export default class BindingWrapper {
 	node: Binding;
@@ -52,13 +58,13 @@ export default class BindingWrapper {
 		if (node.isContextual) {
 			// we need to ensure that the each block creates a context including
 			// the list and the index, if they're not otherwise referenced
-			const { name } = getObject(this.node.expression.node);
+			const { name } = get_object(this.node.expression.node);
 			const eachBlock = this.parent.node.scope.getOwner(name);
 
 			(eachBlock as EachBlock).has_binding = true;
 		}
 
-		this.object = getObject(this.node.expression.node).name;
+		this.object = get_object(this.node.expression.node).name;
 
 		// TODO unfortunate code is necessary because we need to use `ctx`
 		// inside the fragment, but not inside the <script>

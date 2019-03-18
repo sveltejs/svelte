@@ -4,9 +4,9 @@ import Block from '../Block';
 import Slot from '../../nodes/Slot';
 import FragmentWrapper from './Fragment';
 import deindent from '../../utils/deindent';
-import sanitize from '../../../utils/sanitize';
+import { sanitize } from '../../../utils/names';
 import add_to_set from '../../utils/add_to_set';
-import get_slot_data from '../../../utils/get_slot_data';
+import get_slot_data from '../../utils/get_slot_data';
 import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
 

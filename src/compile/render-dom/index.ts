@@ -7,10 +7,10 @@ import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
 import { stringify_props } from '../utils/stringify_props';
 import add_to_set from '../utils/add_to_set';
-import getObject from '../../utils/getObject';
+import get_object from '../utils/get_object';
 import { extract_names } from '../utils/scope';
 import { nodes_match } from '../../utils/nodes_match';
-import sanitize from '../../utils/sanitize';
+import { sanitize } from '../../utils/names';
 
 export default function dom(
 	component: Component,
@@ -168,7 +168,7 @@ export default function dom(
 					let names = [];
 
 					if (node.left.type === 'MemberExpression') {
-						const left_object_name = getObject(node.left).name;
+						const left_object_name = get_object(node.left).name;
 						left_object_name && (names = [left_object_name]);
 					} else {
 						names = extract_names(node.left);
@@ -197,7 +197,7 @@ export default function dom(
 				}
 
 				else if (node.type === 'UpdateExpression') {
-					const { name } = getObject(node.argument);
+					const { name } = get_object(node.argument);
 
 					if (scope.find_owner(name) !== component.instance_scope) return;
 
