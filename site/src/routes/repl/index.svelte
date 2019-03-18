@@ -11,7 +11,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { locate } from 'locate-character';
-	import { process_example } from './_utils/process_example.js';
+	import { process_example } from '../../components/Repl/process_example.js';
 	import AppControls from './_components/AppControls/index.svelte';
 	import Repl from '../../components/Repl/index.svelte';
 
