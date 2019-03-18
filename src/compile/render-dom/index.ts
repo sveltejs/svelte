@@ -374,7 +374,7 @@ export default function dom(
 
 		const injected = Array.from(component.injected_reactive_declaration_vars).filter(name => {
 			const variable = component.var_lookup.get(name);
-			return variable.injected;
+			return variable.injected && variable.name[0] !== '$';
 		});
 
 		const reactive_store_declarations = reactive_stores.map(variable => {
