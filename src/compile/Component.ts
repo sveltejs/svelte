@@ -1175,7 +1175,9 @@ export default class Component {
 
 		if (name[0] === '$') {
 			name = name.slice(1);
-			this.has_reactive_assignments = true;
+			this.has_reactive_assignments = true; // TODO does this belong here?
+
+			if (name[0] === '$') return; // $$props
 		}
 
 		if (this.var_lookup.has(name)) return;
