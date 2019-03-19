@@ -32,6 +32,8 @@
 
 		module_editor.set($selected.source, $selected.type);
 		output.set($selected, $compile_options);
+
+		rebundle();
 	}
 
 	export function update(data) {

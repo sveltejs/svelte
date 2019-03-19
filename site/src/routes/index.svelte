@@ -1,10 +1,18 @@
 <script>
 	import Icon from '../components/Icon.svelte';
 	import Logo from '../components/Logo.svelte';
-	import ReplWidget from '../components/Repl/ReplWidget.svelte'; // TODO lazyload?
+	import IntersectionObserver from '../components/IntersectionObserver.svelte';
+	import Lazy from '../components/Lazy.svelte';
+	import ReplWidget from '../components/Repl/ReplWidget.svelte';
 	import contributors from './_contributors.js';
 
 	let sy = 0;
+
+	// TODO this causes a Sapper CSS bug...
+	// function loadReplWidget() {
+	// 	console.log('lazy loading');
+	// 	return import('../components/Repl/ReplWidget.svelte').then(mod => mod.default);
+	// }
 </script>
 
 <style>
@@ -123,7 +131,13 @@
 		border-radius: var(--border-r); */
 		width: 100%;
 		height: 420px;
+	}
+
+	.repl-container {
+		width: 100%;
+		height: 100%;
 		border-radius: var(--border-r);
+		overflow: hidden;
 	}
 
 	.example > div:first-child {
@@ -244,7 +258,14 @@ npm run dev & open http://localhost:5000
 			<p>Svelte components are written in HTML files. Just add data.</p>
 		</div>
 
-		<ReplWidget example="hello-world"/>
+		<div class="repl-container">
+			<IntersectionObserver once let:intersecting top={400}>
+				{#if intersecting}
+					<!-- <Lazy this={loadReplWidget} example="hello-world"/> -->
+					<ReplWidget example="hello-world"/>
+				{/if}
+			</IntersectionObserver>
+		</div>
 	</section>
 
 	<section class="container example linkify">
@@ -252,7 +273,14 @@ npm run dev & open http://localhost:5000
 			<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
 		</div>
 
-		<ReplWidget example="nested-components"/>
+		<div class="repl-container">
+			<IntersectionObserver once let:intersecting top={400}>
+				{#if intersecting}
+					<!-- <Lazy this={loadReplWidget} example="nested-components"/> -->
+					<ReplWidget example="nested-components"/>
+				{/if}
+			</IntersectionObserver>
+		</div>
 	</section>
 
 	<section class="container example linkify">
@@ -260,7 +288,14 @@ npm run dev & open http://localhost:5000
 			<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
 		</div>
 
-		<ReplWidget example="reactive-assignments"/>
+		<div class="repl-container">
+			<IntersectionObserver once let:intersecting top={400}>
+				{#if intersecting}
+					<!-- <Lazy this={loadReplWidget} example="reactive-assignments"/> -->
+					<ReplWidget example="reactive-assignments"/>
+				{/if}
+			</IntersectionObserver>
+		</div>
 	</section>
 
 	<section class="container example linkify">
@@ -268,7 +303,14 @@ npm run dev & open http://localhost:5000
 			<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
 		</div>
 
-		<ReplWidget example="svg-transitions"/>
+		<div class="repl-container">
+			<IntersectionObserver once let:intersecting top={400}>
+				{#if intersecting}
+					<!-- <Lazy this={loadReplWidget} example="svg-transitions"/> -->
+					<ReplWidget example="svg-transitions"/>
+				{/if}
+			</IntersectionObserver>
+		</div>
 	</section>
 </div>
 

@@ -33,9 +33,9 @@
 	// than making this state-driven through props,
 	// because it's difficult to update an editor
 	// without resetting scroll otherwise
-	export function set(new_code, new_mode) {
+	export async function set(new_code, new_mode) {
 		if (new_mode !== mode) {
-			createEditor(mode = new_mode);
+			await createEditor(mode = new_mode);
 		}
 
 		code = new_code;
@@ -121,12 +121,13 @@
 	onMount(() => {
 		if (_CodeMirror) {
 			CodeMirror = _CodeMirror;
-			createEditor(mode || 'svelte');
-			editor.setValue(code || '');
+			createEditor(mode || 'svelte').then(() => {
+				editor.setValue(code || '');
+			});
 		} else {
-			codemirror_promise.then(mod => {
+			codemirror_promise.then(async mod => {
 				CodeMirror = mod.default;
-				createEditor(mode || 'svelte');
+				await createEditor(mode || 'svelte');
 				editor.setValue(code || '');
 			});
 		}
@@ -137,12 +138,10 @@
 		}
 	});
 
-	function createEditor(mode) {
+	async function createEditor(mode) {
 		if (destroyed || !CodeMirror) return;
 
-		if (editor) {
-			editor.toTextArea();
-		}
+		if (editor) editor.toTextArea();
 
 		const opts = {
 			lineNumbers,
@@ -162,6 +161,12 @@
 			'Shift-Tab': tab
 		};
 
+		// Creating a text editor is a lot of work, so we yield
+		// the main thread for a moment. This helps reduce jank
+		await sleep(50);
+
+		if (destroyed) return;
+
 		editor = CodeMirror.fromTextArea(refs.editor, opts);
 
 		editor.on('change', instance => {
@@ -171,7 +176,12 @@
 			}
 		});
 
+		await sleep(50);
 		editor.refresh();
+	}
+
+	function sleep(ms) {
+		return new Promise(fulfil => setTimeout(fulfil, ms));
 	}
 </script>
 

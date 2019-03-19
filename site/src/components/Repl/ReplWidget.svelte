@@ -78,10 +78,6 @@
 	}
 </style>
 
-<svelte:head>
-	<title>{name} • Svelte REPL</title>
-</svelte:head>
-
 <div class="repl-outer">
 	{#if process.browser}
 		<Repl bind:this={repl} {version} embedded={true}/>
