@@ -87,9 +87,7 @@
 
 			const [, name, type] = match;
 			const component = $components.find(c => c.name === name && c.type === type);
-			selected.set(component);
-
-			output.set($selected, $compile_options);
+			handle_select(component);
 
 			// TODO select the line/column in question
 		},
