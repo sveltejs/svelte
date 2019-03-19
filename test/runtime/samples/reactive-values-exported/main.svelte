@@ -1,7 +1,6 @@
 <script>
-	export let x;
+	export let x, y
 
-	export let y;
 	$: y = x;
 
 	export let z;
