@@ -1,12 +1,12 @@
-import { parseExpressionAt } from '../acorn';
+import { parse_expression_at } from '../acorn';
 import { Parser } from '../index';
 
 const literals = new Map([['true', true], ['false', false], ['null', null]]);
 
-export default function readExpression(parser: Parser) {
+export default function read_expression(parser: Parser) {
 	const start = parser.index;
 
-	const name = parser.readUntil(/\s*}/);
+	const name = parser.read_until(/\s*}/);
 	if (name && /^[a-z]+$/.test(name)) {
 		const end = start + name.length;
 
@@ -31,11 +31,11 @@ export default function readExpression(parser: Parser) {
 	parser.index = start;
 
 	try {
-		const node = parseExpressionAt(parser.template, parser.index);
+		const node = parse_expression_at(parser.template, parser.index);
 		parser.index = node.end;
 
 		return node;
 	} catch (err) {
-		parser.acornError(err);
+		parser.acorn_error(err);
 	}
 }

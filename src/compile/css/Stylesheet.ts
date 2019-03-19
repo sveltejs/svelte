@@ -1,13 +1,24 @@
 import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
-import hash from '../../utils/hash';
-import removeCSSPrefix from '../../utils/removeCSSPrefix';
 import Element from '../nodes/Element';
 import { Node, Ast } from '../../interfaces';
 import Component from '../Component';
 
-const isKeyframesNode = (node: Node) => removeCSSPrefix(node.name) === 'keyframes'
+function remove_css_prefox(name: string): string {
+	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
+}
+
+const is_keyframes_node = (node: Node) => remove_css_prefox(node.name) === 'keyframes';
+
+// https://github.com/darkskyapp/string-hash/blob/master/index.js
+function hash(str: string): string {
+	let hash = 5381;
+	let i = str.length;
+
+	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
+	return (hash >>> 0).toString(36);
+}
 
 class Rule {
 	selectors: Selector[];
@@ -26,8 +37,8 @@ class Rule {
 		this.selectors.forEach(selector => selector.apply(node, stack)); // TODO move the logic in here?
 	}
 
-	isUsed(dev: boolean) {
-		if (this.parent && this.parent.node.type === 'Atrule' && isKeyframesNode(this.parent.node)) return true;
+	is_used(dev: boolean) {
+		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) return true;
 		if (this.declarations.length === 0) return dev;
 		return this.selectors.some(s => s.used);
 	}
@@ -68,7 +79,7 @@ class Rule {
 	}
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>) {
-		if (this.parent && this.parent.node.type === 'Atrule' && isKeyframesNode(this.parent.node)) return true;
+		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) return true;
 
 		const attr = `.${id}`;
 
@@ -82,7 +93,7 @@ class Rule {
 		});
 	}
 
-	warnOnUnusedSelector(handler: (selector: Selector) => void) {
+	warn_on_unused_selector(handler: (selector: Selector) => void) {
 		this.selectors.forEach(selector => {
 			if (!selector.used) handler(selector);
 		});
@@ -97,7 +108,7 @@ class Declaration {
 	}
 
 	transform(code: MagicString, keyframes: Map<string, string>) {
-		const property = this.node.property && removeCSSPrefix(this.node.property.toLowerCase());
+		const property = this.node.property && remove_css_prefox(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
 			this.node.value.children.forEach((block: Node) => {
 				if (block.type === 'Identifier') {
@@ -143,7 +154,7 @@ class Atrule {
 			});
 		}
 
-		else if (isKeyframesNode(this.node)) {
+		else if (is_keyframes_node(this.node)) {
 			this.children.forEach((rule: Rule) => {
 				rule.selectors.forEach(selector => {
 					selector.used = true;
@@ -152,14 +163,14 @@ class Atrule {
 		}
 	}
 
-	isUsed(dev: boolean) {
+	is_used(dev: boolean) {
 		return true; // TODO
 	}
 
 	minify(code: MagicString, dev: boolean) {
 		if (this.node.name === 'media') {
-			const expressionChar = code.original[this.node.expression.start];
-			let c = this.node.start + (expressionChar === '(' ? 6 : 7);
+			const expression_char = code.original[this.node.expression.start];
+			let c = this.node.start + (expression_char === '(' ? 6 : 7);
 			if (this.node.expression.start > c) code.remove(c, this.node.expression.start);
 
 			this.node.expression.children.forEach((query: Node) => {
@@ -168,7 +179,7 @@ class Atrule {
 			});
 
 			code.remove(c, this.node.block.start);
-		} else if (isKeyframesNode(this.node)) {
+		} else if (is_keyframes_node(this.node)) {
 			let c = this.node.start + this.node.name.length + 1;
 			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
 			c = this.node.expression.end;
@@ -189,7 +200,7 @@ class Atrule {
 			let c = this.node.block.start + 1;
 
 			this.children.forEach(child => {
-				if (child.isUsed(dev)) {
+				if (child.is_used(dev)) {
 					code.remove(c, child.node.start);
 					child.minify(code, dev);
 					c = child.node.end;
@@ -201,7 +212,7 @@ class Atrule {
 	}
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>) {
-		if (isKeyframesNode(this.node)) {
+		if (is_keyframes_node(this.node)) {
 			this.node.expression.children.forEach(({ type, name, start, end }: Node) => {
 				if (type === 'Identifier') {
 					if (name.startsWith('-global-')) {
@@ -215,7 +226,7 @@ class Atrule {
 
 		this.children.forEach(child => {
 			child.transform(code, id, keyframes);
-		})
+		});
 	}
 
 	validate(component: Component) {
@@ -224,16 +235,14 @@ class Atrule {
 		});
 	}
 
-	warnOnUnusedSelector(handler: (selector: Selector) => void) {
+	warn_on_unused_selector(handler: (selector: Selector) => void) {
 		if (this.node.name !== 'media') return;
 
 		this.children.forEach(child => {
-			child.warnOnUnusedSelector(handler);
+			child.warn_on_unused_selector(handler);
 		});
 	}
 }
-
-const keys = {};
 
 export default class Stylesheet {
 	source: string;
@@ -241,14 +250,13 @@ export default class Stylesheet {
 	filename: string;
 	dev: boolean;
 
-	hasStyles: boolean;
+	has_styles: boolean;
 	id: string;
 
-	children: (Rule|Atrule)[];
-	keyframes: Map<string, string>;
+	children: (Rule|Atrule)[] = [];
+	keyframes: Map<string, string> = new Map();
 
-	nodesWithCssClass: Set<Node>;
-	nodesWithRefCssClass: Map<String, Node>;
+	nodes_with_css_class: Set<Node> = new Set();
 
 	constructor(source: string, ast: Ast, filename: string, dev: boolean) {
 		this.source = source;
@@ -256,19 +264,13 @@ export default class Stylesheet {
 		this.filename = filename;
 		this.dev = dev;
 
-		this.children = [];
-		this.keyframes = new Map();
-
-		this.nodesWithCssClass = new Set();
-		this.nodesWithRefCssClass = new Map();
-
 		if (ast.css && ast.css.children.length) {
 			this.id = `svelte-${hash(ast.css.content.styles)}`;
 
-			this.hasStyles = true;
+			this.has_styles = true;
 
 			const stack: (Rule | Atrule)[] = [];
-			let currentAtrule: Atrule = null;
+			let current_atrule: Atrule = null;
 
 			walk(ast.css, {
 				enter: (node: Node) => {
@@ -282,13 +284,13 @@ export default class Stylesheet {
 						// possibly other future constructs)
 						if (last && !(last instanceof Atrule)) return;
 
-						if (currentAtrule) {
-							currentAtrule.children.push(atrule);
+						if (current_atrule) {
+							current_atrule.children.push(atrule);
 						} else {
 							this.children.push(atrule);
 						}
 
-						if (isKeyframesNode(node)) {
+						if (is_keyframes_node(node)) {
 							node.expression.children.forEach((expression: Node) => {
 								if (expression.type === 'Identifier' && !expression.name.startsWith('-global-')) {
 									this.keyframes.set(expression.name, `${this.id}-${expression.name}`);
@@ -296,15 +298,15 @@ export default class Stylesheet {
 							});
 						}
 
-						currentAtrule = atrule;
+						current_atrule = atrule;
 					}
 
 					if (node.type === 'Rule') {
-						const rule = new Rule(node, this, currentAtrule);
+						const rule = new Rule(node, this, current_atrule);
 						stack.push(rule);
 
-						if (currentAtrule) {
-							currentAtrule.children.push(rule);
+						if (current_atrule) {
+							current_atrule.children.push(rule);
 						} else {
 							this.children.push(rule);
 						}
@@ -313,16 +315,16 @@ export default class Stylesheet {
 
 				leave: (node: Node) => {
 					if (node.type === 'Rule' || node.type === 'Atrule') stack.pop();
-					if (node.type === 'Atrule') currentAtrule = stack[stack.length - 1] as Atrule;
+					if (node.type === 'Atrule') current_atrule = stack[stack.length - 1] as Atrule;
 				}
 			});
 		} else {
-			this.hasStyles = false;
+			this.has_styles = false;
 		}
 	}
 
 	apply(node: Element) {
-		if (!this.hasStyles) return;
+		if (!this.has_styles) return;
 
 		const stack: Element[] = [];
 		let parent: Node = node;
@@ -337,13 +339,13 @@ export default class Stylesheet {
 	}
 
 	reify() {
-		this.nodesWithCssClass.forEach((node: Node) => {
-			node.addCssClass();
+		this.nodes_with_css_class.forEach((node: Node) => {
+			node.add_css_class();
 		});
 	}
 
-	render(cssOutputFilename: string, shouldTransformSelectors: boolean) {
-		if (!this.hasStyles) {
+	render(file: string, should_transform_selectors: boolean) {
+		if (!this.has_styles) {
 			return { code: null, map: null };
 		}
 
@@ -356,7 +358,7 @@ export default class Stylesheet {
 			}
 		});
 
-		if (shouldTransformSelectors) {
+		if (should_transform_selectors) {
 			this.children.forEach((child: (Atrule|Rule)) => {
 				child.transform(code, this.id, this.keyframes);
 			});
@@ -364,7 +366,7 @@ export default class Stylesheet {
 
 		let c = 0;
 		this.children.forEach(child => {
-			if (child.isUsed(this.dev)) {
+			if (child.is_used(this.dev)) {
 				code.remove(c, child.node.start);
 				child.minify(code, this.dev);
 				c = child.node.end;
@@ -378,7 +380,7 @@ export default class Stylesheet {
 			map: code.generateMap({
 				includeContent: true,
 				source: this.filename,
-				file: cssOutputFilename
+				file
 			})
 		};
 	}
@@ -389,9 +391,9 @@ export default class Stylesheet {
 		});
 	}
 
-	warnOnUnusedSelectors(component: Component) {
+	warn_on_unused_selectors(component: Component) {
 		this.children.forEach(child => {
-			child.warnOnUnusedSelector((selector: Selector) => {
+			child.warn_on_unused_selector((selector: Selector) => {
 				component.warn(selector.node, {
 					code: `css-unused-selector`,
 					message: `Unused CSS selector`

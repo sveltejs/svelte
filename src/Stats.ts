@@ -12,27 +12,27 @@ type Timing = {
 	children: Timing[];
 }
 
-function collapseTimings(timings) {
+function collapse_timings(timings) {
 	const result = {};
 	timings.forEach(timing => {
 		result[timing.label] = Object.assign({
 			total: timing.end - timing.start
-		}, timing.children && collapseTimings(timing.children));
+		}, timing.children && collapse_timings(timing.children));
 	});
 	return result;
 }
 
 export default class Stats {
-	startTime: number;
-	currentTiming: Timing;
-	currentChildren: Timing[];
+	start_time: number;
+	current_timing: Timing;
+	current_children: Timing[];
 	timings: Timing[];
 	stack: Timing[];
 
 	constructor() {
-		this.startTime = now();
+		this.start_time = now();
 		this.stack = [];
-		this.currentChildren = this.timings = [];
+		this.current_children = this.timings = [];
 	}
 
 	start(label) {
@@ -43,28 +43,28 @@ export default class Stats {
 			children: []
 		};
 
-		this.currentChildren.push(timing);
+		this.current_children.push(timing);
 		this.stack.push(timing);
 
-		this.currentTiming = timing;
-		this.currentChildren = timing.children;
+		this.current_timing = timing;
+		this.current_children = timing.children;
 	}
 
 	stop(label) {
-		if (label !== this.currentTiming.label) {
-			throw new Error(`Mismatched timing labels (expected ${this.currentTiming.label}, got ${label})`);
+		if (label !== this.current_timing.label) {
+			throw new Error(`Mismatched timing labels (expected ${this.current_timing.label}, got ${label})`);
 		}
 
-		this.currentTiming.end = now();
+		this.current_timing.end = now();
 		this.stack.pop();
-		this.currentTiming = this.stack[this.stack.length - 1];
-		this.currentChildren = this.currentTiming ? this.currentTiming.children : this.timings;
+		this.current_timing = this.stack[this.stack.length - 1];
+		this.current_children = this.current_timing ? this.current_timing.children : this.timings;
 	}
 
 	render() {
 		const timings = Object.assign({
-			total: now() - this.startTime
-		}, collapseTimings(this.timings));
+			total: now() - this.start_time
+		}, collapse_timings(this.timings));
 
 		return {
 			timings

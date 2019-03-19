@@ -1,22 +1,22 @@
-import { escape, escapeTemplate, stringify } from '../../../utils/stringify';
-import { quoteNameIfNecessary } from '../../../utils/quoteIfNecessary';
-import { snip } from '../../../utils/snip';
+import { escape, escape_template, stringify } from '../../utils/stringify';
+import { quote_name_if_necessary } from '../../../utils/names';
+import { snip } from '../../utils/snip';
 import Renderer from '../Renderer';
-import stringifyProps from '../../../utils/stringifyProps';
+import { stringify_props } from '../../utils/stringify_props';
 import { get_slot_scope } from './shared/get_slot_scope';
 
 type AppendTarget = any; // TODO
 
-function stringifyAttribute(chunk: Node) {
+function stringify_attribute(chunk: Node) {
 	if (chunk.type === 'Text') {
-		return escapeTemplate(escape(chunk.data));
+		return escape_template(escape(chunk.data));
 	}
 
-	return '${@escape( ' + snip(chunk) + ')}';
+	return '${@escape(' + snip(chunk) + ')}';
 }
 
-function getAttributeValue(attribute) {
-	if (attribute.isTrue) return `true`;
+function get_attribute_value(attribute) {
+	if (attribute.is_true) return `true`;
 	if (attribute.chunks.length === 0) return `''`;
 
 	if (attribute.chunks.length === 1) {
@@ -28,7 +28,7 @@ function getAttributeValue(attribute) {
 		return snip(chunk);
 	}
 
-	return '`' + attribute.chunks.map(stringifyAttribute).join('') + '`';
+	return '`' + attribute.chunks.map(stringify_attribute).join('') + '`';
 }
 
 export default function(node, renderer: Renderer, options) {
@@ -45,38 +45,38 @@ export default function(node, renderer: Renderer, options) {
 		binding_fns.push(`${binding.name}: $$value => { ${snippet} = $$value; $$settled = false }`);
 	});
 
-	const usesSpread = node.attributes.find(attr => attr.isSpread);
+	const uses_spread = node.attributes.find(attr => attr.is_spread);
 
 	let props;
 
-	if (usesSpread) {
+	if (uses_spread) {
 		props = `Object.assign(${
 			node.attributes
 				.map(attribute => {
-					if (attribute.isSpread) {
+					if (attribute.is_spread) {
 						return snip(attribute.expression);
 					} else {
-						return `{ ${attribute.name}: ${getAttributeValue(attribute)} }`;
+						return `{ ${attribute.name}: ${get_attribute_value(attribute)} }`;
 					}
 				})
 				.concat(binding_props.map(p => `{ ${p} }`))
 				.join(', ')
 		})`;
 	} else {
-		props = stringifyProps(
+		props = stringify_props(
 			node.attributes
-				.map(attribute => `${attribute.name}: ${getAttributeValue(attribute)}`)
+				.map(attribute => `${attribute.name}: ${get_attribute_value(attribute)}`)
 				.concat(binding_props)
 		);
 	}
 
-	const bindings = stringifyProps(binding_fns);
+	const bindings = stringify_props(binding_fns);
 
 	const expression = (
 		node.name === 'svelte:self'
 			? '__svelte:self__' // TODO conflict-proof this
 			: node.name === 'svelte:component'
-				? `((${snip(node.expression)}) || @missingComponent)`
+				? `((${snip(node.expression)}) || @missing_component)`
 				: node.name
 	);
 
@@ -85,7 +85,7 @@ export default function(node, renderer: Renderer, options) {
 	if (node.children.length) {
 		const target: AppendTarget = {
 			slots: { default: '' },
-			slotStack: ['default']
+			slot_stack: ['default']
 		};
 
 		renderer.targets.push(target);
@@ -101,14 +101,14 @@ export default function(node, renderer: Renderer, options) {
 			const slot_scope = slot_scopes.get(name);
 
 			slot_fns.push(
-				`${quoteNameIfNecessary(name)}: (${slot_scope}) => \`${target.slots[name]}\``
+				`${quote_name_if_necessary(name)}: (${slot_scope}) => \`${target.slots[name]}\``
 			);
 		});
 
 		renderer.targets.pop();
 	}
 
-	const slots = stringifyProps(slot_fns);
+	const slots = stringify_props(slot_fns);
 
 	renderer.append(`\${@validate_component(${expression}, '${node.name}').$$render($$result, ${props}, ${bindings}, ${slots})}`);
 }

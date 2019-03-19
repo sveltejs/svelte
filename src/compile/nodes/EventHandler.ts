@@ -1,7 +1,7 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
-import deindent from '../../utils/deindent';
+import deindent from '../utils/deindent';
 import Block from '../render-dom/Block';
 
 export default class EventHandler extends Node {
@@ -9,8 +9,8 @@ export default class EventHandler extends Node {
 	modifiers: Set<string>;
 	expression: Expression;
 	handler_name: string;
-	usesContext = false;
-	canMakePassive = false;
+	uses_context = false;
+	can_make_passive = false;
 
 	constructor(component: Component, parent, template_scope, info) {
 		super(component, parent, template_scope, info);
@@ -20,12 +20,12 @@ export default class EventHandler extends Node {
 
 		if (info.expression) {
 			this.expression = new Expression(component, this, template_scope, info.expression);
-			this.usesContext = this.expression.usesContext;
+			this.uses_context = this.expression.uses_context;
 
 			if (/FunctionExpression/.test(info.expression.type) && info.expression.params.length === 0) {
 				// TODO make this detection more accurate — if `event.preventDefault` isn't called, and
 				// `event` is passed to another function, we can make it passive
-				this.canMakePassive = true;
+				this.can_make_passive = true;
 			} else if (info.expression.type === 'Identifier') {
 				let node = component.node_for_declaration.get(info.expression.name);
 
@@ -36,11 +36,11 @@ export default class EventHandler extends Node {
 				}
 
 				if (node && /Function/.test(node.type) && node.params.length === 0) {
-					this.canMakePassive = true;
+					this.can_make_passive = true;
 				}
 			}
 		} else {
-			const name = component.getUniqueName(`${this.name}_handler`);
+			const name = component.get_unique_name(`${this.name}_handler`);
 
 			component.add_var({
 				name,

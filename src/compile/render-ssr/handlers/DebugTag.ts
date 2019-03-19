@@ -1,4 +1,4 @@
-import { stringify } from '../../../utils/stringify';
+import { stringify } from '../../utils/stringify';
 
 export default function(node, renderer, options) {
 	if (!options.dev) return;

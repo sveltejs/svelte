@@ -1,25 +1,31 @@
 {
 	"html": {
-		"start": 0,
-		"end": 33,
+		"start": 30,
+		"end": 63,
 		"type": "Fragment",
 		"children": [
 			{
-				"start": 0,
-				"end": 33,
+				"start": 28,
+				"end": 30,
+				"type": "Text",
+				"data": "\n\n"
+			},
+			{
+				"start": 30,
+				"end": 63,
 				"type": "Element",
 				"name": "canvas",
 				"attributes": [
 					{
-						"start": 8,
-						"end": 23,
+						"start": 38,
+						"end": 53,
 						"type": "Binding",
 						"name": "this",
 						"modifiers": [],
 						"expression": {
 							"type": "Identifier",
-							"start": 19,
-							"end": 22,
+							"start": 49,
+							"end": 52,
 							"name": "foo"
 						}
 					}
@@ -28,7 +34,37 @@
 			}
 		]
 	},
-	"css": null,
-	"instance": null,
-	"module": null
+	"instance": {
+		"start": 0,
+		"end": 28,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 19,
+			"body": [
+				{
+					"type": "VariableDeclaration",
+					"start": 10,
+					"end": 18,
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 14,
+							"end": 17,
+							"id": {
+								"type": "Identifier",
+								"start": 14,
+								"end": 17,
+								"name": "foo"
+							},
+							"init": null
+						}
+					],
+					"kind": "let"
+				}
+			],
+			"sourceType": "module"
+		}
+	}
 }

@@ -3,7 +3,7 @@ import Block from '../Block';
 import Node from '../../nodes/shared/Node';
 import Tag from './shared/Tag';
 import Wrapper from './shared/wrapper';
-import deindent from '../../../utils/deindent';
+import deindent from '../../utils/deindent';
 
 export default class RawMustacheTagWrapper extends Tag {
 	var = 'raw';
@@ -15,89 +15,89 @@ export default class RawMustacheTagWrapper extends Tag {
 		node: Node
 	) {
 		super(renderer, block, parent, node);
-		this.cannotUseInnerHTML();
+		this.cannot_use_innerhtml();
 	}
 
-	render(block: Block, parentNode: string, parentNodes: string) {
+	render(block: Block, parent_node: string, parent_nodes: string) {
 		const name = this.var;
 
-		// TODO use isDomNode instead of type === 'Element'?
-		const needsAnchorBefore = this.prev ? this.prev.node.type !== 'Element' : !parentNode;
-		const needsAnchorAfter = this.next ? this.next.node.type !== 'Element' : !parentNode;
+		// TODO use is_dom_node instead of type === 'Element'?
+		const needs_anchor_before = this.prev ? this.prev.node.type !== 'Element' : !parent_node;
+		const needs_anchor_after = this.next ? this.next.node.type !== 'Element' : !parent_node;
 
-		const anchorBefore = needsAnchorBefore
-			? block.getUniqueName(`${name}_before`)
+		const anchor_before = needs_anchor_before
+			? block.get_unique_name(`${name}_before`)
 			: (this.prev && this.prev.var) || 'null';
 
-		const anchorAfter = needsAnchorAfter
-			? block.getUniqueName(`${name}_after`)
+		const anchor_after = needs_anchor_after
+			? block.get_unique_name(`${name}_after`)
 			: (this.next && this.next.var) || 'null';
 
 		let detach: string;
 		let insert: (content: string) => string;
-		let useInnerHTML = false;
+		let use_innerhtml = false;
 
-		if (anchorBefore === 'null' && anchorAfter === 'null') {
-			useInnerHTML = true;
-			detach = `${parentNode}.innerHTML = '';`;
-			insert = content => `${parentNode}.innerHTML = ${content};`;
-		} else if (anchorBefore === 'null') {
-			detach = `@detachBefore(${anchorAfter});`;
-			insert = content => `${anchorAfter}.insertAdjacentHTML("beforebegin", ${content});`;
-		} else if (anchorAfter === 'null') {
-			detach = `@detachAfter(${anchorBefore});`;
-			insert = content => `${anchorBefore}.insertAdjacentHTML("afterend", ${content});`;
+		if (anchor_before === 'null' && anchor_after === 'null') {
+			use_innerhtml = true;
+			detach = `${parent_node}.innerHTML = '';`;
+			insert = content => `${parent_node}.innerHTML = ${content};`;
+		} else if (anchor_before === 'null') {
+			detach = `@detach_before(${anchor_after});`;
+			insert = content => `${anchor_after}.insertAdjacentHTML("beforebegin", ${content});`;
+		} else if (anchor_after === 'null') {
+			detach = `@detach_after(${anchor_before});`;
+			insert = content => `${anchor_before}.insertAdjacentHTML("afterend", ${content});`;
 		} else {
-			detach = `@detachBetween(${anchorBefore}, ${anchorAfter});`;
-			insert = content => `${anchorBefore}.insertAdjacentHTML("afterend", ${content});`;
+			detach = `@detach_between(${anchor_before}, ${anchor_after});`;
+			insert = content => `${anchor_before}.insertAdjacentHTML("afterend", ${content});`;
 		}
 
-		const { init } = this.renameThisMethod(
+		const { init } = this.rename_this_method(
 			block,
 			content => deindent`
-				${!useInnerHTML && detach}
+				${!use_innerhtml && detach}
 				${insert(content)}
 			`
 		);
 
 		// we would have used comments here, but the `insertAdjacentHTML` api only
 		// exists for `Element`s.
-		if (needsAnchorBefore) {
-			block.addElement(
-				anchorBefore,
-				`@createElement('noscript')`,
-				parentNodes && `@createElement('noscript')`,
-				parentNode,
+		if (needs_anchor_before) {
+			block.add_element(
+				anchor_before,
+				`@element('noscript')`,
+				parent_nodes && `@element('noscript')`,
+				parent_node,
 				true
 			);
 		}
 
-		function addAnchorAfter() {
-			block.addElement(
-				anchorAfter,
-				`@createElement('noscript')`,
-				parentNodes && `@createElement('noscript')`,
-				parentNode
+		function add_anchor_after() {
+			block.add_element(
+				anchor_after,
+				`@element('noscript')`,
+				parent_nodes && `@element('noscript')`,
+				parent_node
 			);
 		}
 
-		if (needsAnchorAfter && anchorBefore === 'null') {
-			// anchorAfter needs to be in the DOM before we
+		if (needs_anchor_after && anchor_before === 'null') {
+			// anchor_after needs to be in the DOM before we
 			// insert the HTML...
-			addAnchorAfter();
+			add_anchor_after();
 		}
 
-		block.builders.mount.addLine(insert(init));
+		block.builders.mount.add_line(insert(init));
 
-		if (!parentNode) {
-			block.builders.destroy.addConditional('detach', needsAnchorBefore
-				? `${detach}\n@detachNode(${anchorBefore});`
+		if (!parent_node) {
+			block.builders.destroy.add_conditional('detaching', needs_anchor_before
+				? `${detach}\n@detach(${anchor_before});`
 				: detach);
 		}
 
-		if (needsAnchorAfter && anchorBefore !== 'null') {
+		if (needs_anchor_after && anchor_before !== 'null') {
 			// ...otherwise it should go afterwards
-			addAnchorAfter();
+			add_anchor_after();
 		}
 	}
 }

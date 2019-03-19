@@ -1,4 +1,4 @@
-import { decodeCharacterReferences } from '../utils/html';
+import { decode_character_references } from '../utils/html';
 import { Parser } from '../index';
 
 export default function text(parser: Parser) {
@@ -18,6 +18,6 @@ export default function text(parser: Parser) {
 		start,
 		end: parser.index,
 		type: 'Text',
-		data: decodeCharacterReferences(data),
+		data: decode_character_references(data),
 	});
 }

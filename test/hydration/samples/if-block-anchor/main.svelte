@@ -1,3 +1,8 @@
+<script>
+	export let foo;
+	export let bar;
+</script>
+
 <div>
 	{#if foo}
 		<p>foo!</p>

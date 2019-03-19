@@ -46,8 +46,8 @@ export default class Renderer {
 	append(code: string) {
 		if (this.targets.length) {
 			const target = this.targets[this.targets.length - 1];
-			const slotName = target.slotStack[target.slotStack.length - 1];
-			target.slots[slotName] += code;
+			const slot_name = target.slot_stack[target.slot_stack.length - 1];
+			target.slots[slot_name] += code;
 		} else {
 			this.code += code;
 		}

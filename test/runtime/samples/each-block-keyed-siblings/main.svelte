@@ -1,3 +1,8 @@
+<script>
+	export let ones;
+	export let twos;
+</script>
+
 {#each ones as one (one.text)}
 	<div>{one.text}</div>
 {/each}

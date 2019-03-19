@@ -3,7 +3,7 @@ import repeat from '../../utils/repeat';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
-const scriptClosingTag = '</script>';
+const script_closing_tag = '</script>';
 
 function get_context(parser: Parser, attributes: Node[], start: number) {
 	const context = attributes.find(attribute => attribute.name === 'context');
@@ -28,28 +28,28 @@ function get_context(parser: Parser, attributes: Node[], start: number) {
 	return value;
 }
 
-export default function readScript(parser: Parser, start: number, attributes: Node[]) {
-	const scriptStart = parser.index;
-	const scriptEnd = parser.template.indexOf(scriptClosingTag, scriptStart);
+export default function read_script(parser: Parser, start: number, attributes: Node[]) {
+	const script_start = parser.index;
+	const script_end = parser.template.indexOf(script_closing_tag, script_start);
 
-	if (scriptEnd === -1) parser.error({
+	if (script_end === -1) parser.error({
 		code: `unclosed-script`,
 		message: `<script> must have a closing tag`
 	});
 
 	const source =
-		repeat(' ', scriptStart) + parser.template.slice(scriptStart, scriptEnd);
-	parser.index = scriptEnd + scriptClosingTag.length;
+		repeat(' ', script_start) + parser.template.slice(script_start, script_end);
+	parser.index = script_end + script_closing_tag.length;
 
 	let ast;
 
 	try {
 		ast = acorn.parse(source);
 	} catch (err) {
-		parser.acornError(err);
+		parser.acorn_error(err);
 	}
 
-	ast.start = scriptStart;
+	ast.start = script_start;
 	return {
 		start,
 		end: parser.index,

@@ -53,30 +53,28 @@ function levenshtein(str1: string, str2: string) {
 	return current.pop();
 }
 
-const _nonWordRe = /[^\w, ]+/;
+const non_word_regex = /[^\w, ]+/;
 
-function _iterateGrams(value: string, gramSize: number) {
-	gramSize = gramSize || 2;
-	const simplified = '-' + value.toLowerCase().replace(_nonWordRe, '') + '-';
-	const lenDiff = gramSize - simplified.length;
+function iterate_grams(value: string, gram_size = 2) {
+	const simplified = '-' + value.toLowerCase().replace(non_word_regex, '') + '-';
+	const len_diff = gram_size - simplified.length;
 	const results = [];
 
-	if (lenDiff > 0) {
-		for (let i = 0; i < lenDiff; ++i) {
+	if (len_diff > 0) {
+		for (let i = 0; i < len_diff; ++i) {
 			value += '-';
 		}
 	}
-	for (let i = 0; i < simplified.length - gramSize + 1; ++i) {
-		results.push(simplified.slice(i, i + gramSize));
+	for (let i = 0; i < simplified.length - gram_size + 1; ++i) {
+		results.push(simplified.slice(i, i + gram_size));
 	}
 	return results;
 }
 
-function _gramCounter(value: string, gramSize: number) {
+function gram_counter(value: string, gram_size = 2) {
 	// return an object where key=gram, value=number of occurrences
-	gramSize = gramSize || 2;
 	const result = {};
-	const grams = _iterateGrams(value, gramSize);
+	const grams = iterate_grams(value, gram_size);
 	let i = 0;
 
 	for (i; i < grams.length; ++i) {
@@ -89,25 +87,21 @@ function _gramCounter(value: string, gramSize: number) {
 	return result;
 }
 
-function sortDescending(a, b) {
+function sort_descending(a, b) {
 	return b[0] - a[0];
 }
 
 class FuzzySet {
-	exactSet: object;
-	matchDict: object;
-	items: object;
+	exact_set = {};
+	match_dict = {};
+	items = {};
 
 	constructor(arr: string[]) {
-		// define all the object functions and attributes
-		this.exactSet = {};
-		this.matchDict = {};
-		this.items = {};
-
 		// initialization
 		for (let i = GRAM_SIZE_LOWER; i < GRAM_SIZE_UPPER + 1; ++i) {
 			this.items[i] = [];
 		}
+
 		// add all the items to the set
 		for (let i = 0; i < arr.length; ++i) {
 			this.add(arr[i]);
@@ -115,8 +109,8 @@ class FuzzySet {
 	}
 
 	add(value: string) {
-		const normalizedValue = value.toLowerCase();
-		if (normalizedValue in this.exactSet) {
+		const normalized_value = value.toLowerCase();
+		if (normalized_value in this.exact_set) {
 			return false;
 		}
 
@@ -126,35 +120,35 @@ class FuzzySet {
 		}
 	}
 
-	_add(value: string, gramSize: number) {
-		const normalizedValue = value.toLowerCase();
-		const items = this.items[gramSize] || [];
+	_add(value: string, gram_size: number) {
+		const normalized_value = value.toLowerCase();
+		const items = this.items[gram_size] || [];
 		const index = items.length;
 
 		items.push(0);
-		const gramCounts = _gramCounter(normalizedValue, gramSize);
-		let sumOfSquareGramCounts = 0;
+		const gram_counts = gram_counter(normalized_value, gram_size);
+		let sum_of_square_gram_counts = 0;
 		let gram;
-		let gramCount;
+		let gram_count;
 
-		for (gram in gramCounts) {
-			gramCount = gramCounts[gram];
-			sumOfSquareGramCounts += Math.pow(gramCount, 2);
-			if (gram in this.matchDict) {
-				this.matchDict[gram].push([index, gramCount]);
+		for (gram in gram_counts) {
+			gram_count = gram_counts[gram];
+			sum_of_square_gram_counts += Math.pow(gram_count, 2);
+			if (gram in this.match_dict) {
+				this.match_dict[gram].push([index, gram_count]);
 			} else {
-				this.matchDict[gram] = [[index, gramCount]];
+				this.match_dict[gram] = [[index, gram_count]];
 			}
 		}
-		const vectorNormal = Math.sqrt(sumOfSquareGramCounts);
-		items[index] = [vectorNormal, normalizedValue];
-		this.items[gramSize] = items;
-		this.exactSet[normalizedValue] = value;
+		const vector_normal = Math.sqrt(sum_of_square_gram_counts);
+		items[index] = [vector_normal, normalized_value];
+		this.items[gram_size] = items;
+		this.exact_set[normalized_value] = value;
 	};
 
 	get(value: string) {
-		const normalizedValue = value.toLowerCase();
-		const result = this.exactSet[normalizedValue];
+		const normalized_value = value.toLowerCase();
+		const result = this.exact_set[normalized_value];
 
 		if (result) {
 			return [[1, result]];
@@ -163,11 +157,11 @@ class FuzzySet {
 		let results = [];
 		// start with high gram size and if there are no results, go to lower gram sizes
 		for (
-			let gramSize = GRAM_SIZE_UPPER;
-			gramSize >= GRAM_SIZE_LOWER;
-			--gramSize
+			let gram_size = GRAM_SIZE_UPPER;
+			gram_size >= GRAM_SIZE_LOWER;
+			--gram_size
 		) {
-			results = this.__get(value, gramSize);
+			results = this.__get(value, gram_size);
 			if (results) {
 				return results;
 			}
@@ -175,68 +169,68 @@ class FuzzySet {
 		return null;
 	}
 
-	__get(value: string, gramSize: number) {
-		const normalizedValue = value.toLowerCase();
+	__get(value: string, gram_size: number) {
+		const normalized_value = value.toLowerCase();
 		const matches = {};
-		const gramCounts = _gramCounter(normalizedValue, gramSize);
-		const items = this.items[gramSize];
-		let sumOfSquareGramCounts = 0;
+		const gram_counts = gram_counter(normalized_value, gram_size);
+		const items = this.items[gram_size];
+		let sum_of_square_gram_counts = 0;
 		let gram;
-		let gramCount;
+		let gram_count;
 		let i;
 		let index;
-		let otherGramCount;
+		let other_gram_count;
 
-		for (gram in gramCounts) {
-			gramCount = gramCounts[gram];
-			sumOfSquareGramCounts += Math.pow(gramCount, 2);
-			if (gram in this.matchDict) {
-				for (i = 0; i < this.matchDict[gram].length; ++i) {
-					index = this.matchDict[gram][i][0];
-					otherGramCount = this.matchDict[gram][i][1];
+		for (gram in gram_counts) {
+			gram_count = gram_counts[gram];
+			sum_of_square_gram_counts += Math.pow(gram_count, 2);
+			if (gram in this.match_dict) {
+				for (i = 0; i < this.match_dict[gram].length; ++i) {
+					index = this.match_dict[gram][i][0];
+					other_gram_count = this.match_dict[gram][i][1];
 					if (index in matches) {
-						matches[index] += gramCount * otherGramCount;
+						matches[index] += gram_count * other_gram_count;
 					} else {
-						matches[index] = gramCount * otherGramCount;
+						matches[index] = gram_count * other_gram_count;
 					}
 				}
 			}
 		}
 
-		const vectorNormal = Math.sqrt(sumOfSquareGramCounts);
+		const vector_normal = Math.sqrt(sum_of_square_gram_counts);
 		let results = [];
-		let matchScore;
+		let match_score;
 
 		// build a results list of [score, str]
-		for (const matchIndex in matches) {
-			matchScore = matches[matchIndex];
+		for (const match_index in matches) {
+			match_score = matches[match_index];
 			results.push([
-				matchScore / (vectorNormal * items[matchIndex][0]),
-				items[matchIndex][1],
+				match_score / (vector_normal * items[match_index][0]),
+				items[match_index][1],
 			]);
 		}
 
-		results.sort(sortDescending);
+		results.sort(sort_descending);
 
-		let newResults = [];
-		const endIndex = Math.min(50, results.length);
+		let new_results = [];
+		const end_index = Math.min(50, results.length);
 		// truncate somewhat arbitrarily to 50
-		for (let i = 0; i < endIndex; ++i) {
-			newResults.push([
-				_distance(results[i][1], normalizedValue),
+		for (let i = 0; i < end_index; ++i) {
+			new_results.push([
+				_distance(results[i][1], normalized_value),
 				results[i][1],
 			]);
 		}
-		results = newResults;
-		results.sort(sortDescending);
+		results = new_results;
+		results.sort(sort_descending);
 
-		newResults = [];
+		new_results = [];
 		for (let i = 0; i < results.length; ++i) {
 			if (results[i][0] == results[0][0]) {
-				newResults.push([results[i][0], this.exactSet[results[i][1]]]);
+				new_results.push([results[i][0], this.exact_set[results[i][1]]]);
 			}
 		}
 
-		return newResults;
+		return new_results;
 	};
 }

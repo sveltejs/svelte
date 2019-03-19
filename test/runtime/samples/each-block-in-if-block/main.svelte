@@ -1,3 +1,7 @@
+<script>
+	export let fruits;
+</script>
+
 <div>
 	{#if fruits}
 		{#each fruits as fruit (fruit)}

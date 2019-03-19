@@ -85,11 +85,11 @@ function cleanChildren(node) {
 				node.removeChild(child);
 			}
 
-			child.data = child.data.replace(/\s{2,}/g, '\n');
+			child.data = child.data.replace(/\s+/g, '\n');
 
 			if (previous && previous.nodeType === 3) {
 				previous.data += child.data;
-				previous.data = previous.data.replace(/\s{2,}/g, '\n');
+				previous.data = previous.data.replace(/\s+/g, '\n');
 
 				node.removeChild(child);
 				child = previous;
