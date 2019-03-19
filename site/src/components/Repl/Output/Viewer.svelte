@@ -26,13 +26,13 @@
 
 	onMount(() => {
 		proxy = new ReplProxy(iframe, {
-			onFetchProgress: progress => {
+			on_fetch_progress: progress => {
 				pending_imports = progress;
 			}
 		});
 
 		iframe.addEventListener('load', () => {
-			proxy.handleLinks();
+			proxy.handle_links();
 			ready = true;
 		});
 
@@ -49,7 +49,7 @@
 		const token = current_token = {};
 
 		try {
-			await proxy.fetchImports($bundle.imports, $bundle.import_map);
+			await proxy.fetch_imports($bundle.imports, $bundle.import_map);
 			if (token !== current_token) return;
 
 			await proxy.eval(`

@@ -4,8 +4,8 @@
 	import Repl from '../../components/Repl/index.svelte';
 
 	export let version = 'beta';
-	export let gist;
-	export let example;
+	export let gist = null;
+	export let example = null;
 
 	let repl;
 	let name = 'loading...';

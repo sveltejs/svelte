@@ -7,6 +7,7 @@
 	import ModuleEditor from './Input/ModuleEditor.svelte';
 	import Output from './Output/index.svelte';
 	import InputOutputToggle from './InputOutputToggle.svelte';
+	import Bundler from './Bundler.js';
 
 	export let version = 'beta'; // TODO change this to latest when the time comes
 	export let embedded = false;
@@ -69,8 +70,11 @@
 	let module_editor;
 	let output;
 
-	function rebundle() {
-		workers.bundler.postMessage({ type: 'bundle', components: $components });
+	let current_token;
+	async function rebundle() {
+		const token = current_token = {};
+		const result = await bundler.bundle($components);
+		if (result && token === current_token) bundle.set(result);
 	}
 
 	setContext('REPL', {
@@ -145,30 +149,7 @@
 	let width = typeof window !== 'undefined' ? window.innerWidth : 300;
 	let show_output = false;
 
-	onMount(async () => {
-		workers = {
-			bundler: new Worker('/workers/bundler.js')
-		};
-
-		workers.bundler.postMessage({ type: 'init', version });
-		workers.bundler.onmessage = event => {
-			bundle.set(event.data);
-		};
-
-		return () => {
-			workers.bundler.terminate();
-		};
-	});
-
-	$: if ($bundle && $bundle.error && $selected) {
-		sourceErrorLoc = $bundle.error.filename === `${$selected.name}.${$selected.type}`
-			? $bundle.error.start
-			: null;
-	}
-
-	$: if (workers && $components) {
-		workers.bundler.postMessage({ type: 'bundle', components: $components });
-	}
+	const bundler = process.browser && new Bundler(version);
 
 	$: if (output && $selected) {
 		output.update($selected, $compile_options);
