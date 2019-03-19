@@ -865,7 +865,7 @@ export default class Component {
 					}
 				} else {
 					if (node.type !== 'ExportNamedDeclaration') {
-						if (!parent) current_group = null;
+						if (!parent || parent.type === 'Program') current_group = null;
 					}
 				}
 			},
