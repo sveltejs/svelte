@@ -4,7 +4,6 @@
 	import Nav from '../components/TopNav.svelte';
 
 	export let segment;
-	export let path;
 </script>
 
 <InlineSvg />
