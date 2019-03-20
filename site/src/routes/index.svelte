@@ -2,7 +2,7 @@
 	import Icon from '../components/Icon.svelte';
 	import Logo from '../components/Logo.svelte';
 	import IntersectionObserver from '../components/IntersectionObserver.svelte';
-	import Lazy from '../components/Lazy.svelte';
+	// import Lazy from '../components/Lazy.svelte';
 	import ReplWidget from '../components/Repl/ReplWidget.svelte';
 	import contributors from './_contributors.js';
 
