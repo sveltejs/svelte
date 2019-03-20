@@ -83,6 +83,6 @@
 
 <div class="repl-outer">
 	{#if process.browser}
-		<Repl bind:this={repl} {version} embedded={true}/>
+		<Repl bind:this={repl} {version} embedded={true} relaxed/>
 	{/if}
 </div>
