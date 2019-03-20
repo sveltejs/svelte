@@ -15,6 +15,8 @@
 		proxy.setProp(prop, value);
 	}
 
+	export let relaxed = false;
+
 	let iframe;
 	let pending_imports = 0;
 	let pending = false;
@@ -127,7 +129,7 @@
 </style>
 
 <div class="iframe-container">
-	<iframe title="Result" class:inited bind:this={iframe} sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals" class="{error || pending || pending_imports ? 'greyed-out' : ''}" srcdoc='
+	<iframe title="Result" class:inited bind:this={iframe} sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals {relaxed ? 'allow-scripts allow-same-origin' : ''}" class="{error || pending || pending_imports ? 'greyed-out' : ''}" srcdoc='
 		<!doctype html>
 		<html>
 			<head>
