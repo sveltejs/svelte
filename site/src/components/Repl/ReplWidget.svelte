@@ -6,6 +6,7 @@
 	export let version = 'beta';
 	export let gist = null;
 	export let example = null;
+	export let embedded = false;
 
 	let repl;
 	let name = 'loading...';
@@ -62,6 +63,8 @@
 			});
 		}
 	});
+
+	$: if (embedded) document.title = `${name} • Svelte REPL`;
 </script>
 
 <style>
