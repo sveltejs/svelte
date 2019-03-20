@@ -24,7 +24,7 @@ self.addEventListener('message', async event => {
 			if (event.data.components.length === 0) return;
 
 			await ready;
-			const result = await bundle(event.data.components);
+			const result = await bundle(event.data);
 			if (result) {
 				postMessage(result);
 			}
@@ -33,7 +33,7 @@ self.addEventListener('message', async event => {
 	}
 });
 
-const commonCompilerOptions = {
+const common_options = {
 	dev: true,
 };
 
@@ -41,8 +41,6 @@ let cached = {
 	dom: {},
 	ssr: {}
 };
-
-let currentToken;
 
 const is_svelte_module = id => id === 'svelte' || id.startsWith('svelte/');
 
@@ -60,7 +58,7 @@ function fetch_if_uncached(url) {
 	return cache.get(url);
 }
 
-async function getBundle(mode, cache, lookup) {
+async function get_bundle(mode, cache, lookup) {
 	let bundle;
 	const all_warnings = [];
 
@@ -107,7 +105,7 @@ async function getBundle(mode, cache, lookup) {
 							format: 'esm',
 							name,
 							filename: name + '.svelte'
-						}, commonCompilerOptions));
+						}, common_options));
 
 					new_cache[id] = { code, result };
 
@@ -137,11 +135,9 @@ async function getBundle(mode, cache, lookup) {
 	return { bundle, cache: new_cache, error: null, warnings: all_warnings };
 }
 
-async function bundle(components) {
+async function bundle({ id, components }) {
 	// console.clear();
 	console.log(`running Svelte compiler version %c${svelte.VERSION}`, 'font-weight: bold');
-
-	const token = currentToken = {};
 
 	const lookup = {};
 	components.forEach(component => {
@@ -154,14 +150,9 @@ async function bundle(components) {
 	let error;
 
 	try {
-		dom = await getBundle('dom', cached.dom, lookup);
+		dom = await get_bundle('dom', cached.dom, lookup);
 		if (dom.error) {
 			throw dom.error;
-		}
-
-		if (token !== currentToken) {
-			console.error(`aborted`);
-			return;
 		}
 
 		cached.dom = dom.cache;
@@ -180,10 +171,8 @@ async function bundle(components) {
 			sourcemap: true
 		})).output[0];
 
-		if (token !== currentToken) return;
-
 		const ssr = false // TODO how can we do SSR?
-			? await getBundle('ssr', cached.ssr, lookup)
+			? await get_bundle('ssr', cached.ssr, lookup)
 			: null;
 
 		if (ssr) {
@@ -192,8 +181,6 @@ async function bundle(components) {
 				throw ssr.error;
 			}
 		}
-
-		if (token !== currentToken) return;
 
 		const ssr_result = ssr
 			? (await ssr.bundle.generate({
@@ -206,6 +193,7 @@ async function bundle(components) {
 			: null;
 
 		return {
+			id,
 			imports: dom_result.imports,
 			import_map,
 			dom: dom_result,
@@ -218,6 +206,7 @@ async function bundle(components) {
 		delete e.toString;
 
 		return {
+			id,
 			imports: [],
 			import_map,
 			dom: null,

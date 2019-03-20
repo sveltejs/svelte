@@ -102,7 +102,7 @@
 		height: calc(100vh - var(--nav-h));
 		overflow: hidden;
 		padding: 0;
-		margin: 0 calc(var(--side-nav) * -1);
+		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
 		display: grid;
 		grid-template-columns: minmax(33.333%, 480px) auto;
@@ -116,14 +116,6 @@
 		border-right: 1px solid var(--second);
 		background-color: var(--second);
 		color: white;
-	}
-
-	.tutorial-repl {
-
-	}
-
-	.table-of-contents {
-
 	}
 
 	.chapter-markup {
@@ -153,11 +145,6 @@
 		color: white;
 	}
 
-	/* .chapter-markup::-webkit-scrollbar-track {
-		background-color: var(--second);
-		width: 4px;
-	} */
-
 	.chapter-markup::-webkit-scrollbar {
 		background-color: var(--second);
 		width: 8px;
@@ -175,10 +162,6 @@
 		background: rgba(255,255,255,0.1);
 		padding: 0.2em 0.4em;
 		white-space: nowrap;
-	}
-
-	.chapter-markup :global(pre) :global(code) {
-		/* color: var(--text); */
 	}
 
 	.controls {

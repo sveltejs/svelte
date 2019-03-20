@@ -20,20 +20,19 @@ self.addEventListener('message', async event => {
 			await ready;
 			postMessage(compile(event.data));
 			break;
-
 	}
 });
 
-const commonCompilerOptions = {
+const common_options = {
 	dev: false,
 	css: false
 };
 
-function compile({ id, source, options, entry }) {
+function compile({ id, source, options }) {
 	try {
-		const { js, css, stats, vars } = svelte.compile(
+		const { js, css } = svelte.compile(
 			source,
-			Object.assign({}, commonCompilerOptions, options)
+			Object.assign({}, common_options, options)
 		);
 
 		return {

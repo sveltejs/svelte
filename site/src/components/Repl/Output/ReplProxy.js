@@ -1,12 +1,13 @@
+let uid = 1;
+
 export default class ReplProxy {
 	constructor(iframe, handlers) {
 		this.iframe = iframe;
 		this.handlers = handlers;
 
-		this.cmdId = 1;
-		this.pendingCmds = new Map();
+		this.pending_cmds = new Map();
 
-		this.handle_event = e => this.handleReplMessage(e);
+		this.handle_event = e => this.handle_repl_message(e);
 		window.addEventListener('message', this.handle_event, false);
 	}
 
@@ -14,63 +15,61 @@ export default class ReplProxy {
 		window.removeEventListener('message', this.handle_event);
 	}
 
-	iframeCommand(command, args) {
+	iframe_command(action, args) {
 		return new Promise((resolve, reject) => {
-			this.cmdId += 1;
-			this.pendingCmds.set(this.cmdId, { resolve, reject });
+			const cmd_id = uid++;
 
-			this.iframe.contentWindow.postMessage({
-				action: command,
-				cmdId: this.cmdId,
-				args
-			}, '*');
+			this.pending_cmds.set(cmd_id, { resolve, reject });
+
+			this.iframe.contentWindow.postMessage({ action, cmd_id, args }, '*');
 		});
 	}
 
-	handleCommandMessage(cmdData) {
-		let action = cmdData.action;
-		let id = cmdData.cmdId;
-		let handler = this.pendingCmds.get(id);
+	handle_command_message(cmd_data) {
+		let action = cmd_data.action;
+		let id = cmd_data.cmd_id;
+		let handler = this.pending_cmds.get(id);
 
 		if (handler) {
-			this.pendingCmds.delete(id);
-			if (action === 'cmdError') {
-				let { message, stack } = cmdData;
+			this.pending_cmds.delete(id);
+			if (action === 'cmd_error') {
+				let { message, stack } = cmd_data;
 				let e = new Error(message);
 				e.stack = stack;
-				console.log('repl cmd fail');
 				handler.reject(e)
 			}
 
-			if (action === 'cmdOk') {
-				handler.resolve(cmdData.args)
+			if (action === 'cmd_ok') {
+				handler.resolve(cmd_data.args)
 			}
 		} else {
-			console.error('command not found', id, cmdData, [...this.pendingCmds.keys()]);
+			console.error('command not found', id, cmd_data, [...this.pending_cmds.keys()]);
 		}
 	}
 
-	handleReplMessage(event) {
+	handle_repl_message(event) {
+		if (event.source !== this.iframe.contentWindow) return;
+
 		const { action, args } = event.data;
 
-		if (action === 'cmdError' || action === 'cmdOk') {
-			this.handleCommandMessage(event.data);
+		if (action === 'cmd_error' || action === 'cmd_ok') {
+			this.handle_command_message(event.data);
 		}
 
 		if (action === 'fetch_progress') {
-			this.handlers.onFetchProgress(args.remaining)
+			this.handlers.on_fetch_progress(args.remaining)
 		}
 	}
 
 	eval(script) {
-		return this.iframeCommand('eval', { script });
+		return this.iframe_command('eval', { script });
 	}
 
-	handleLinks() {
-		return this.iframeCommand('catch_clicks', {});
+	handle_links() {
+		return this.iframe_command('catch_clicks', {});
 	}
 
-	fetchImports(imports, import_map) {
-		return this.iframeCommand('fetch_imports', { imports, import_map })
+	fetch_imports(imports, import_map) {
+		return this.iframe_command('fetch_imports', { imports, import_map })
 	}
 }

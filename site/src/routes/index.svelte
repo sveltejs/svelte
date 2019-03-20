@@ -1,15 +1,25 @@
 <script>
 	import Icon from '../components/Icon.svelte';
 	import Logo from '../components/Logo.svelte';
+	import IntersectionObserver from '../components/IntersectionObserver.svelte';
+	// import Lazy from '../components/Lazy.svelte';
+	import ReplWidget from '../components/Repl/ReplWidget.svelte';
 	import contributors from './_contributors.js';
 
 	let sy = 0;
+
+	// TODO this causes a Sapper CSS bug...
+	// function loadReplWidget() {
+	// 	console.log('lazy loading');
+	// 	return import('../components/Repl/ReplWidget.svelte').then(mod => mod.default);
+	// }
 </script>
 
 <style>
 	.container {
 		position: relative;
 		margin: 10rem auto;
+		padding: 0 var(--side-nav);
 		max-width: 120rem;
 	}
 
@@ -107,15 +117,31 @@
 		top: 0.6em;
 	}
 
-	.example {
+	.examples {
 		background: var(--second);
 		color: white;
+		/* padding: 2em 0; */
+		overflow: hidden;
+	}
+
+	.example {
+		/* background: var(--second);
+		color: white;
 		padding: 0.8rem;
+		border-radius: var(--border-r); */
+		width: 100%;
+		height: 420px;
+	}
+
+	.repl-container {
+		width: 100%;
+		height: 100%;
 		border-radius: var(--border-r);
+		overflow: hidden;
 	}
 
 	.example > div:first-child {
-		padding: 0.8rem;
+		/* padding: 0.8rem; */
 	}
 
 	iframe {
@@ -226,53 +252,67 @@ npm run dev & open http://localhost:5000
 	</div>
 </section>
 
-<section class="container example linkify">
-	<div>
-		<p>Svelte components are written in HTML files. Just add data.</p>
-	</div>
+<div class="examples">
+	<section class="container example linkify">
+		<div>
+			<p>Svelte components are written in HTML files. Just add data.</p>
+		</div>
 
-	<iframe
-		title="Hello world example"
-		src="/repl/embed?example=hello-world"
-		scrolling="no"
-	></iframe>
-</section>
+		<div class="repl-container">
+			<IntersectionObserver once let:intersecting top={400}>
+				{#if intersecting}
+					<!-- <Lazy this={loadReplWidget} example="hello-world"/> -->
+					<ReplWidget example="hello-world"/>
+				{/if}
+			</IntersectionObserver>
+		</div>
+	</section>
 
-<section class="container example linkify">
-	<div>
-		<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
-	</div>
+	<section class="container example linkify">
+		<div>
+			<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
+		</div>
 
-	<iframe
-		title="Scope styles example"
-		src="/repl/embed?example=nested-components"
-		scrolling="no"
-	></iframe>
-</section>
+		<div class="repl-container">
+			<IntersectionObserver once let:intersecting top={400}>
+				{#if intersecting}
+					<!-- <Lazy this={loadReplWidget} example="nested-components"/> -->
+					<ReplWidget example="nested-components"/>
+				{/if}
+			</IntersectionObserver>
+		</div>
+	</section>
 
-<section class="container example linkify">
-	<div>
-		<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
-	</div>
+	<section class="container example linkify">
+		<div>
+			<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
+		</div>
 
-	<iframe
-		title="Reactivity example"
-		src="/repl/embed?example=reactive-assignments"
-		scrolling="no"
-	></iframe>
-</section>
+		<div class="repl-container">
+			<IntersectionObserver once let:intersecting top={400}>
+				{#if intersecting}
+					<!-- <Lazy this={loadReplWidget} example="reactive-assignments"/> -->
+					<ReplWidget example="reactive-assignments"/>
+				{/if}
+			</IntersectionObserver>
+		</div>
+	</section>
 
-<section class="container example linkify">
-	<div>
-		<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
-	</div>
+	<section class="container example linkify">
+		<div>
+			<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
+		</div>
 
-	<iframe
-		title="Transitions example"
-		src="/repl/embed?example=svg-transitions"
-		scrolling="no"
-	></iframe>
-</section>
+		<div class="repl-container">
+			<IntersectionObserver once let:intersecting top={400}>
+				{#if intersecting}
+					<!-- <Lazy this={loadReplWidget} example="svg-transitions"/> -->
+					<ReplWidget example="svg-transitions"/>
+				{/if}
+			</IntersectionObserver>
+		</div>
+	</section>
+</div>
 
 <section class="container linkify">
 	<h3>Who's using Svelte?</h3>
