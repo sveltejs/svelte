@@ -9,9 +9,9 @@
 	const { register_output } = getContext('REPL');
 
 	export let version;
-	export let sourceErrorLoc;
-	export let runtimeError;
-	export let embedded;
+	export let sourceErrorLoc = null;
+	export let runtimeError = null;
+	export let embedded = false;
 
 	let foo; // TODO workaround for https://github.com/sveltejs/svelte/issues/2122
 
@@ -39,12 +39,7 @@
 		}
 	});
 
-	let compiler;
-
-	onMount(() => {
-		compiler = new Compiler(version);
-		return () => compiler.destroy();
-	});
+	const compiler = process.browser && new Compiler(version);
 
 	// refs
 	let viewer;

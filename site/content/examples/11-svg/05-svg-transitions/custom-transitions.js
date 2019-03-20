@@ -16,19 +16,3 @@ export function expand(node, params) {
 		css: t => `opacity: ${t}; stroke-width: ${t * w}`
 	};
 }
-
-export function blur(node, params) {
-	const {
-		b = 10,
-		delay = 0,
-		duration = 400,
-		easing = cubicOut
-	} = params;
-
-	return {
-		delay,
-		duration,
-		easing,
-		css: (t, u) => `opacity: ${t}; filter: blur(${u * b}px);`
-	};
-}

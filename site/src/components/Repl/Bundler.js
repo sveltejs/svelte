@@ -2,10 +2,10 @@ const workers = new Map();
 
 let uid = 1;
 
-export default class Compiler {
+export default class Bundler {
 	constructor(version) {
 		if (!workers.has(version)) {
-			const worker = new Worker('/workers/compiler.js');
+			const worker = new Worker('/workers/bundler.js');
 			worker.postMessage({ type: 'init', version });
 			workers.set(version, worker);
 		}
@@ -18,13 +18,13 @@ export default class Compiler {
 			const handler = this.handlers.get(event.data.id);
 
 			if (handler) { // if no handler, was meant for a different REPL
-				handler(event.data.result);
+				handler(event.data);
 				this.handlers.delete(event.data.id);
 			}
 		});
 	}
 
-	compile(component, options) {
+	bundle(components) {
 		return new Promise(fulfil => {
 			const id = uid++;
 
@@ -32,13 +32,8 @@ export default class Compiler {
 
 			this.worker.postMessage({
 				id,
-				type: 'compile',
-				source: component.source,
-				options: Object.assign({
-					name: component.name,
-					filename: `${component.name}.svelte`
-				}, options),
-				entry: component.name === 'App'
+				type: 'bundle',
+				components
 			});
 		});
 	}
