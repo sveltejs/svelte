@@ -15,6 +15,75 @@ Nonetheless, it's useful to understand how to use the compiler, since bundler pl
 ### svelte.compile
 
 ```js
+result: {
+	js,
+	css,
+	ast,
+	warnings,
+	vars,
+	stats
+} = svelte.compile(source: string, options?: {...})
+```
+
+| option | type | default
+| --- | --- | --- |
+| `filename` | string | `null`
+| `name` | string | `null`
+| `format` | `"esm"` or `"cjs"` | `"esm"`
+| `generate` | `"dom"` or `"ssr"` | `"dom"`
+| `dev` | boolean | `false`
+| `immutable` | boolean | `false`
+| `hydratable` | boolean | `false`
+| `legacy` | boolean | `false`
+| `customElement` | boolean | `false`
+| `css` | boolean | `true`
+| `preserveComments` | boolean | `false`
+| `preserveWhitespace` | boolean | `false`
+| `outputFilename` | string | `null`
+| `cssOutputFilename` | string | `null`
+| `sveltePath` | string | `"node_modules/svelte"`
+
+---
+
+This is where the magic happens. `svelte.compile` takes your component source code, and turns it into a JavaScript module that exports a class.
+
+Don't worry if the signature above looks a little overwhelming — none of the options are required.
+
+```js
+const svelte = require('svelte/compiler');
+
+const { js } = svelte.compile(source);
+console.log(js.code);
+```
+
+#### `result.js`
+
+* TODO
+
+#### `result.css`
+
+* TODO
+
+#### `result.ast`
+
+* TODO
+
+#### `result.warnings`
+
+* TODO
+
+#### `result.vars`
+
+* TODO
+
+#### `result.stats`
+
+* TODO
+
+
+<!--
+
+```js
 compiled: {
 	// `map` is a v3 sourcemap with toString()/toUrl() methods
 	js: { code: string, map: {...} },
@@ -43,39 +112,10 @@ compiled: {
 	stats: {
 		timings: { [label]: number }
 	}
-} = svelte.compile(source: string, options: {
-	format?: 'esm' | 'cjs',
-	name?: string,
-	filename?: string,
-	generate?: 'dom' | 'ssr' | false,
-	dev?: boolean,
-	immutable?: boolean,
-	hydratable?: boolean,
-	legacy?: boolean,
-	customElement?: { tag: string } | true,
-	css?: boolean,
-	preserveComments?: boolean,
-	outputFilename?: string,
-	cssOutputFilename?: string,
-	sveltePath?: string
-})
+} = svelte.compile(source: string, options?: {...})
 ```
 
----
-
-This is where the magic happens. `svelte.compile` takes your component source code, and turns it into a JavaScript module that exports a class.
-
-Don't worry if the signature above looks a little overwhelming — none of the options are required.
-
-```js
-const svelte = require('svelte/compiler');
-
-const { js } = svelte.compile(source);
-console.log(js.code);
-```
-
-* TODO document this mess of options
-
+-->
 
 
 ### svelte.preprocess

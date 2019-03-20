@@ -285,6 +285,10 @@
 		fill: none;
 	}
 
+	.content :global(table) {
+		margin: 0 0 2em 0;
+	}
+
 	section > :global(.code-block)> :global(pre) {
 		background: transparent;
 		color: white;
