@@ -90,6 +90,7 @@
 		font: 400 var(--h6) var(--font);
 		text-transform: uppercase;
 		letter-spacing: 0.12em;
+		font-weight: 700;
 	}
 
 	.subsection {

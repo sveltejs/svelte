@@ -208,6 +208,7 @@
 		border-top: 2px solid var(--second);
 		color: var(--second);
 		line-height: 1;
+		text-transform: uppercase;
 	}
 
 	.content section:first-of-type > h2 {
