@@ -1,5 +1,5 @@
 import { locate } from 'locate-character';
-import getCodeFrame from '../utils/getCodeFrame';
+import get_code_frame from '../utils/get_code_frame';
 
 class CompileError extends Error {
 	code: string;
@@ -34,7 +34,7 @@ export default function error(message: string, props: {
 	error.pos = props.start;
 	error.filename = props.filename;
 
-	error.frame = getCodeFrame(props.source, start.line - 1, start.column);
+	error.frame = get_code_frame(props.source, start.line - 1, start.column);
 
 	throw error;
 }

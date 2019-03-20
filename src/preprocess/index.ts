@@ -1,5 +1,4 @@
 import { SourceMap } from 'magic-string';
-import replaceAsync from '../utils/replaceAsync';
 
 export interface PreprocessorGroup {
 	markup?: (options: {
@@ -22,19 +21,52 @@ interface Processed {
 	dependencies?: string[];
 }
 
-function parseAttributeValue(value: string) {
+function parse_attribute_value(value: string) {
 	return /^['"]/.test(value) ?
 		value.slice(1, -1) :
 		value;
 }
 
-function parseAttributes(str: string) {
+function parse_attributes(str: string) {
 	const attrs = {};
 	str.split(/\s+/).filter(Boolean).forEach(attr => {
 		const [name, value] = attr.split('=');
-		attrs[name] = value ? parseAttributeValue(value) : true;
+		attrs[name] = value ? parse_attribute_value(value) : true;
 	});
 	return attrs;
+}
+
+interface Replacement {
+	offset: number;
+	length: number;
+	replacement: string;
+}
+
+async function replace_async(str: string, re: RegExp, func: (...any) => Promise<string>) {
+	const replacements: Promise<Replacement>[] = [];
+	str.replace(re, (...args) => {
+		replacements.push(
+			func(...args).then(
+				res =>
+					<Replacement>({
+						offset: args[args.length - 2],
+						length: args[0].length,
+						replacement: res,
+					})
+			)
+		);
+		return '';
+	});
+	let out = '';
+	let last_end = 0;
+	for (const { offset, length, replacement } of await Promise.all(
+		replacements
+	)) {
+		out += str.slice(last_end, offset) + replacement;
+		last_end = offset + length;
+	}
+	out += str.slice(last_end);
+	return out;
 }
 
 export default async function preprocess(
@@ -61,13 +93,13 @@ export default async function preprocess(
 	}
 
 	for (const fn of script) {
-		source = await replaceAsync(
+		source = await replace_async(
 			source,
 			/<script([^]*?)>([^]*?)<\/script>/gi,
 			async (match, attributes, content) => {
 				const processed: Processed = await fn({
 					content,
-					attributes: parseAttributes(attributes),
+					attributes: parse_attributes(attributes),
 					filename
 				});
 				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
@@ -77,13 +109,13 @@ export default async function preprocess(
 	}
 
 	for (const fn of style) {
-		source = await replaceAsync(
+		source = await replace_async(
 			source,
 			/<style([^]*?)>([^]*?)<\/style>/gi,
 			async (match, attributes, content) => {
 				const processed: Processed = await fn({
 					content,
-					attributes: parseAttributes(attributes),
+					attributes: parse_attributes(attributes),
 					filename
 				});
 				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);

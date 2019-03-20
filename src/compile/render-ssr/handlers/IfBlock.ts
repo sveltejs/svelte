@@ -1,4 +1,4 @@
-import { snip } from '../../../utils/snip';
+import { snip } from '../../utils/snip';
 
 export default function(node, renderer, options) {
 	const snippet = snip(node.expression);

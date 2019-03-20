@@ -1,32 +1,32 @@
-import readContext from '../read/context';
-import readExpression from '../read/expression';
+import read_context from '../read/context';
+import read_expression from '../read/expression';
 import { whitespace } from '../../utils/patterns';
-import { trimStart, trimEnd } from '../../utils/trim';
+import { trim_start, trim_end } from '../../utils/trim';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
-function trimWhitespace(block: Node, trimBefore: boolean, trimAfter: boolean) {
+function trim_whitespace(block: Node, trim_before: boolean, trim_after: boolean) {
 	if (!block.children || block.children.length === 0) return; // AwaitBlock
 
-	const firstChild = block.children[0];
-	const lastChild = block.children[block.children.length - 1];
+	const first_child = block.children[0];
+	const last_child = block.children[block.children.length - 1];
 
-	if (firstChild.type === 'Text' && trimBefore) {
-		firstChild.data = trimStart(firstChild.data);
-		if (!firstChild.data) block.children.shift();
+	if (first_child.type === 'Text' && trim_before) {
+		first_child.data = trim_start(first_child.data);
+		if (!first_child.data) block.children.shift();
 	}
 
-	if (lastChild.type === 'Text' && trimAfter) {
-		lastChild.data = trimEnd(lastChild.data);
-		if (!lastChild.data) block.children.pop();
+	if (last_child.type === 'Text' && trim_after) {
+		last_child.data = trim_end(last_child.data);
+		if (!last_child.data) block.children.pop();
 	}
 
 	if (block.else) {
-		trimWhitespace(block.else, trimBefore, trimAfter);
+		trim_whitespace(block.else, trim_before, trim_after);
 	}
 
-	if (firstChild.elseif) {
-		trimWhitespace(firstChild, trimBefore, trimAfter);
+	if (first_child.elseif) {
+		trim_whitespace(first_child, trim_before, trim_after);
 	}
 }
 
@@ -34,7 +34,7 @@ export default function mustache(parser: Parser) {
 	const start = parser.index;
 	parser.index += 1;
 
-	parser.allowWhitespace();
+	parser.allow_whitespace();
 
 	// {/if} or {/each}
 	if (parser.eat('/')) {
@@ -63,7 +63,7 @@ export default function mustache(parser: Parser) {
 		}
 
 		parser.eat(expected, true);
-		parser.allowWhitespace();
+		parser.allow_whitespace();
 		parser.eat('}', true);
 
 		while (block.elseif) {
@@ -77,12 +77,12 @@ export default function mustache(parser: Parser) {
 		}
 
 		// strip leading/trailing whitespace as necessary
-		const charBefore = parser.template[block.start - 1];
-		const charAfter = parser.template[parser.index];
-		const trimBefore = !charBefore || whitespace.test(charBefore);
-		const trimAfter = !charAfter || whitespace.test(charAfter);
+		const char_before = parser.template[block.start - 1];
+		const char_after = parser.template[parser.index];
+		const trim_before = !char_before || whitespace.test(char_before);
+		const trim_after = !char_after || whitespace.test(char_after);
 
-		trimWhitespace(block, trimBefore, trimAfter);
+		trim_whitespace(block, trim_before, trim_after);
 
 		block.end = parser.index;
 		parser.stack.pop();
@@ -94,7 +94,7 @@ export default function mustache(parser: Parser) {
 			});
 		}
 
-		parser.allowWhitespace();
+		parser.allow_whitespace();
 
 		// :else if
 		if (parser.eat('if')) {
@@ -105,11 +105,11 @@ export default function mustache(parser: Parser) {
 					message: 'Cannot have an {:else if ...} block outside an {#if ...} block'
 				});
 
-			parser.requireWhitespace();
+			parser.require_whitespace();
 
-			const expression = readExpression(parser);
+			const expression = read_expression(parser);
 
-			parser.allowWhitespace();
+			parser.allow_whitespace();
 			parser.eat('}', true);
 
 			block.else = {
@@ -141,7 +141,7 @@ export default function mustache(parser: Parser) {
 				});
 			}
 
-			parser.allowWhitespace();
+			parser.allow_whitespace();
 			parser.eat('}', true);
 
 			block.else = {
@@ -155,52 +155,52 @@ export default function mustache(parser: Parser) {
 		}
 	} else if (parser.eat(':then')) {
 		// TODO DRY out this and the next section
-		const pendingBlock = parser.current();
-		if (pendingBlock.type === 'PendingBlock') {
-			pendingBlock.end = start;
+		const pending_block = parser.current();
+		if (pending_block.type === 'PendingBlock') {
+			pending_block.end = start;
 			parser.stack.pop();
-			const awaitBlock = parser.current();
+			const await_block = parser.current();
 
 			if (!parser.eat('}')) {
-				parser.requireWhitespace();
-				awaitBlock.value = parser.readIdentifier();
-				parser.allowWhitespace();
+				parser.require_whitespace();
+				await_block.value = parser.read_identifier();
+				parser.allow_whitespace();
 				parser.eat('}', true);
 			}
 
-			const thenBlock: Node = {
+			const then_block: Node = {
 				start,
 				end: null,
 				type: 'ThenBlock',
 				children: []
 			};
 
-			awaitBlock.then = thenBlock;
-			parser.stack.push(thenBlock);
+			await_block.then = then_block;
+			parser.stack.push(then_block);
 		}
 	} else if (parser.eat(':catch')) {
-		const thenBlock = parser.current();
-		if (thenBlock.type === 'ThenBlock') {
-			thenBlock.end = start;
+		const then_block = parser.current();
+		if (then_block.type === 'ThenBlock') {
+			then_block.end = start;
 			parser.stack.pop();
-			const awaitBlock = parser.current();
+			const await_block = parser.current();
 
 			if (!parser.eat('}')) {
-				parser.requireWhitespace();
-				awaitBlock.error = parser.readIdentifier();
-				parser.allowWhitespace();
+				parser.require_whitespace();
+				await_block.error = parser.read_identifier();
+				parser.allow_whitespace();
 				parser.eat('}', true);
 			}
 
-			const catchBlock: Node = {
+			const catch_block: Node = {
 				start,
 				end: null,
 				type: 'CatchBlock',
 				children: []
 			};
 
-			awaitBlock.catch = catchBlock;
-			parser.stack.push(catchBlock);
+			await_block.catch = catch_block;
+			parser.stack.push(catch_block);
 		}
 	} else if (parser.eat('#')) {
 		// {#if foo}, {#each foo} or {#await foo}
@@ -219,9 +219,9 @@ export default function mustache(parser: Parser) {
 			});
 		}
 
-		parser.requireWhitespace();
+		parser.require_whitespace();
 
-		const expression = readExpression(parser);
+		const expression = read_expression(parser);
 
 		const block: Node = type === 'AwaitBlock' ?
 			{
@@ -258,50 +258,50 @@ export default function mustache(parser: Parser) {
 				children: [],
 			};
 
-		parser.allowWhitespace();
+		parser.allow_whitespace();
 
 		// {#each} blocks must declare a context – {#each list as item}
 		if (type === 'EachBlock') {
 			parser.eat('as', true);
-			parser.requireWhitespace();
+			parser.require_whitespace();
 
-			block.context = readContext(parser);
+			block.context = read_context(parser);
 
-			parser.allowWhitespace();
+			parser.allow_whitespace();
 
 			if (parser.eat(',')) {
-				parser.allowWhitespace();
-				block.index = parser.readIdentifier();
+				parser.allow_whitespace();
+				block.index = parser.read_identifier();
 				if (!block.index) parser.error({
 					code: `expected-name`,
 					message: `Expected name`
 				});
 
-				parser.allowWhitespace();
+				parser.allow_whitespace();
 			}
 
 			if (parser.eat('(')) {
-				parser.allowWhitespace();
+				parser.allow_whitespace();
 
-				block.key = readExpression(parser);
-				parser.allowWhitespace();
+				block.key = read_expression(parser);
+				parser.allow_whitespace();
 				parser.eat(')', true);
-				parser.allowWhitespace();
+				parser.allow_whitespace();
 			} else if (parser.eat('@')) {
-				block.key = parser.readIdentifier();
+				block.key = parser.read_identifier();
 				if (!block.key) parser.error({
 					code: `expected-name`,
 					message: `Expected name`
 				});
-				parser.allowWhitespace();
+				parser.allow_whitespace();
 			}
 		}
 
-		let awaitBlockShorthand = type === 'AwaitBlock' && parser.eat('then');
-		if (awaitBlockShorthand) {
-			parser.requireWhitespace();
-			block.value = parser.readIdentifier();
-			parser.allowWhitespace();
+		let await_block_shorthand = type === 'AwaitBlock' && parser.eat('then');
+		if (await_block_shorthand) {
+			parser.require_whitespace();
+			block.value = parser.read_identifier();
+			parser.allow_whitespace();
 		}
 
 		parser.eat('}', true);
@@ -310,17 +310,17 @@ export default function mustache(parser: Parser) {
 		parser.stack.push(block);
 
 		if (type === 'AwaitBlock') {
-			const childBlock = awaitBlockShorthand ? block.then : block.pending;
-			childBlock.start = parser.index;
-			parser.stack.push(childBlock);
+			const child_block = await_block_shorthand ? block.then : block.pending;
+			child_block.start = parser.index;
+			parser.stack.push(child_block);
 		}
 	} else if (parser.eat('@html')) {
 		// {@html content} tag
-		parser.requireWhitespace();
+		parser.require_whitespace();
 
-		const expression = readExpression(parser);
+		const expression = read_expression(parser);
 
-		parser.allowWhitespace();
+		parser.allow_whitespace();
 		parser.eat('}', true);
 
 		parser.current().children.push({
@@ -336,7 +336,7 @@ export default function mustache(parser: Parser) {
 		if (parser.read(/\s*}/)) {
 			identifiers = [];
 		} else {
-			const expression = readExpression(parser);
+			const expression = read_expression(parser);
 
 			identifiers = expression.type === 'SequenceExpression'
 				? expression.expressions
@@ -351,7 +351,7 @@ export default function mustache(parser: Parser) {
 				}
 			});
 
-			parser.allowWhitespace();
+			parser.allow_whitespace();
 			parser.eat('}', true);
 		}
 
@@ -362,9 +362,9 @@ export default function mustache(parser: Parser) {
 			identifiers
 		});
 	} else {
-		const expression = readExpression(parser);
+		const expression = read_expression(parser);
 
-		parser.allowWhitespace();
+		parser.allow_whitespace();
 		parser.eat('}', true);
 
 		parser.current().children.push({

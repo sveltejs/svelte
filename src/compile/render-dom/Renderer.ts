@@ -2,7 +2,7 @@ import Block from './Block';
 import { CompileOptions } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
-import CodeBuilder from '../../utils/CodeBuilder';
+import CodeBuilder from '../utils/CodeBuilder';
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
@@ -11,16 +11,13 @@ export default class Renderer {
 	blocks: (Block | string)[];
 	readonly: Set<string>;
 	slots: Set<string>;
-	metaBindings: CodeBuilder;
-	bindingGroups: string[];
+	meta_bindings: CodeBuilder;
+	binding_groups: string[];
 
 	block: Block;
 	fragment: FragmentWrapper;
 
-	fileVar: string;
-
-	hasIntroTransitions: boolean;
-	hasOutroTransitions: boolean;
+	file_var: string;
 
 	constructor(component: Component, options: CompileOptions) {
 		this.component = component;
@@ -30,12 +27,12 @@ export default class Renderer {
 		this.readonly = new Set();
 		this.slots = new Set();
 
-		this.fileVar = options.dev && this.component.getUniqueName('file');
+		this.file_var = options.dev && this.component.get_unique_name('file');
 
 		// initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
-		this.metaBindings = new CodeBuilder();
+		this.meta_bindings = new CodeBuilder();
 
-		this.bindingGroups = [];
+		this.binding_groups = [];
 
 		// main block
 		this.block = new Block({
@@ -48,7 +45,7 @@ export default class Renderer {
 			dependencies: new Set(),
 		});
 
-		this.block.hasUpdateMethod = true;
+		this.block.has_update_method = true;
 		this.blocks = [];
 
 		this.fragment = new FragmentWrapper(
@@ -62,11 +59,11 @@ export default class Renderer {
 
 		this.blocks.forEach(block => {
 			if (typeof block !== 'string') {
-				block.assignVariableNames();
+				block.assign_variable_names();
 			}
 		});
 
-		this.block.assignVariableNames();
+		this.block.assign_variable_names();
 
 		this.fragment.render(this.block, null, 'nodes');
 	}

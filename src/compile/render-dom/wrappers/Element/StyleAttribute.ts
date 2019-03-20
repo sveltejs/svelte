@@ -3,8 +3,8 @@ import Block from '../../Block';
 import AttributeWrapper from './Attribute';
 import Node from '../../../nodes/shared/Node';
 import ElementWrapper from '.';
-import { stringify } from '../../../../utils/stringify';
-import addToSet from '../../../../utils/addToSet';
+import { stringify } from '../../../utils/stringify';
+import add_to_set from '../../../utils/add_to_set';
 
 export interface StyleProp {
 	key: string;
@@ -16,15 +16,14 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 	parent: ElementWrapper;
 
 	render(block: Block) {
-		const styleProps = optimizeStyle(this.node.chunks);
-		if (!styleProps) return super.render(block);
+		const style_props = optimize_style(this.node.chunks);
+		if (!style_props) return super.render(block);
 
-		styleProps.forEach((prop: StyleProp) => {
+		style_props.forEach((prop: StyleProp) => {
 			let value;
 
-			if (isDynamic(prop.value)) {
-				const propDependencies = new Set();
-				let shouldCache;
+			if (is_dynamic(prop.value)) {
+				const prop_dependencies = new Set();
 
 				value =
 					((prop.value.length === 1 || prop.value[0].type === 'Text') ? '' : `"" + `) +
@@ -35,37 +34,37 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 							} else {
 								const snippet = chunk.render();
 
-								addToSet(propDependencies, chunk.dependencies);
+								add_to_set(prop_dependencies, chunk.dependencies);
 
-								return chunk.getPrecedence() <= 13 ? `(${snippet})` : snippet;
+								return chunk.get_precedence() <= 13 ? `(${snippet})` : snippet;
 							}
 						})
 						.join(' + ');
 
-				if (propDependencies.size) {
-					const dependencies = Array.from(propDependencies);
+				if (prop_dependencies.size) {
+					const dependencies = Array.from(prop_dependencies);
 					const condition = (
-						(block.hasOutros ? `!#current || ` : '') +
+						(block.has_outros ? `!#current || ` : '') +
 						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 					);
 
-					block.builders.update.addConditional(
+					block.builders.update.add_conditional(
 						condition,
-						`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
+						`@set_style(${this.parent.var}, "${prop.key}", ${value});`
 					);
 				}
 			} else {
 				value = stringify(prop.value[0].data);
 			}
 
-			block.builders.hydrate.addLine(
-				`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
+			block.builders.hydrate.add_line(
+				`@set_style(${this.parent.var}, "${prop.key}", ${value});`
 			);
 		});
 	}
 }
 
-function optimizeStyle(value: Node[]) {
+function optimize_style(value: Node[]) {
 	const props: { key: string, value: Node[] }[] = [];
 	let chunks = value.slice();
 
@@ -74,26 +73,26 @@ function optimizeStyle(value: Node[]) {
 
 		if (chunk.type !== 'Text') return null;
 
-		const keyMatch = /^\s*([\w-]+):\s*/.exec(chunk.data);
-		if (!keyMatch) return null;
+		const key_match = /^\s*([\w-]+):\s*/.exec(chunk.data);
+		if (!key_match) return null;
 
-		const key = keyMatch[1];
+		const key = key_match[1];
 
-		const offset = keyMatch.index + keyMatch[0].length;
-		const remainingData = chunk.data.slice(offset);
+		const offset = key_match.index + key_match[0].length;
+		const remaining_data = chunk.data.slice(offset);
 
-		if (remainingData) {
+		if (remaining_data) {
 			chunks[0] = {
 				start: chunk.start + offset,
 				end: chunk.end,
 				type: 'Text',
-				data: remainingData
+				data: remaining_data
 			};
 		} else {
 			chunks.shift();
 		}
 
-		const result = getStyleValue(chunks);
+		const result = get_style_value(chunks);
 		if (!result) return null;
 
 		props.push({ key, value: result.value });
@@ -103,11 +102,11 @@ function optimizeStyle(value: Node[]) {
 	return props;
 }
 
-function getStyleValue(chunks: Node[]) {
+function get_style_value(chunks: Node[]) {
 	const value: Node[] = [];
 
-	let inUrl = false;
-	let quoteMark = null;
+	let in_url = false;
+	let quote_mark = null;
 	let escaped = false;
 
 	while (chunks.length) {
@@ -122,15 +121,15 @@ function getStyleValue(chunks: Node[]) {
 					escaped = false;
 				} else if (char === '\\') {
 					escaped = true;
-				} else if (char === quoteMark) {
-					quoteMark === null;
+				} else if (char === quote_mark) {
+					quote_mark === null;
 				} else if (char === '"' || char === "'") {
-					quoteMark = char;
-				} else if (char === ')' && inUrl) {
-					inUrl = false;
+					quote_mark = char;
+				} else if (char === ')' && in_url) {
+					in_url = false;
 				} else if (char === 'u' && chunk.data.slice(c, c + 4) === 'url(') {
-					inUrl = true;
-				} else if (char === ';' && !inUrl && !quoteMark) {
+					in_url = true;
+				} else if (char === ';' && !in_url && !quote_mark) {
 					break;
 				}
 
@@ -147,14 +146,14 @@ function getStyleValue(chunks: Node[]) {
 			}
 
 			while (/[;\s]/.test(chunk.data[c])) c += 1;
-			const remainingData = chunk.data.slice(c);
+			const remaining_data = chunk.data.slice(c);
 
-			if (remainingData) {
+			if (remaining_data) {
 				chunks.unshift({
 					start: chunk.start + c,
 					end: chunk.end,
 					type: 'Text',
-					data: remainingData
+					data: remaining_data
 				});
 
 				break;
@@ -172,6 +171,6 @@ function getStyleValue(chunks: Node[]) {
 	};
 }
 
-function isDynamic(value: Node[]) {
+function is_dynamic(value: Node[]) {
 	return value.length > 1 || value[0].type !== 'Text';
 }

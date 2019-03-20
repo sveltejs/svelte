@@ -12,24 +12,24 @@ export default class HeadWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: Head,
-		stripWhitespace: boolean,
-		nextSibling: Wrapper
+		strip_whitespace: boolean,
+		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 
-		this.canUseInnerHTML = false;
+		this.can_use_innerhtml = false;
 
 		this.fragment = new FragmentWrapper(
 			renderer,
 			block,
 			node.children,
 			this,
-			stripWhitespace,
-			nextSibling
+			strip_whitespace,
+			next_sibling
 		);
 	}
 
-	render(block: Block, parentNode: string, parentNodes: string) {
+	render(block: Block, parent_node: string, parent_nodes: string) {
 		this.fragment.render(block, 'document.head', null);
 	}
 }

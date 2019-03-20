@@ -2,11 +2,11 @@ import { identity as linear, noop } from './utils.js';
 import { loop } from './loop.js';
 import { create_rule, delete_rule } from './style_manager.js';
 
-export function animate(node, from, fn, params) {
-	if (!from) return;
+export function create_animation(node, from, fn, params) {
+	if (!from) return noop;
 
 	const to = node.getBoundingClientRect();
-	if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) return;
+	if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) return noop;
 
 	const {
 		delay = 0,
@@ -22,11 +22,11 @@ export function animate(node, from, fn, params) {
 	let started = false;
 	let name;
 
-	const cssText = node.style.cssText;
+	const css_text = node.style.cssText;
 
 	function start() {
 		if (css) {
-			if (delay) node.style.cssText = cssText; // TODO create delayed animation instead?
+			if (delay) node.style.cssText = css_text; // TODO create delayed animation instead?
 			name = create_rule(node, 0, 1, duration, 0, easing, css);
 		}
 

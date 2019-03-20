@@ -1,6 +1,6 @@
 [{
 	"code": "missing-declaration",
-	"message": "'whatever' is not defined",
+	"message": "'whatever' is not defined. Consider adding a <script> block with 'export let whatever' to declare a prop",
 	"pos": 5,
 	"start": {
 		"line": 1,

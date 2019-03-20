@@ -3,12 +3,12 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import EachBlock from '../../nodes/EachBlock';
 import IfBlock from '../../nodes/IfBlock';
-import createDebuggingComment from '../../../utils/createDebuggingComment';
+import create_debugging_comment from './shared/create_debugging_comment';
 import ElseBlock from '../../nodes/ElseBlock';
 import FragmentWrapper from './Fragment';
-import deindent from '../../../utils/deindent';
+import deindent from '../../utils/deindent';
 
-function isElseIf(node: ElseBlock) {
+function is_else_if(node: ElseBlock) {
 	return (
 		node && node.children.length === 1 && node.children[0].type === 'IfBlock'
 	);
@@ -18,7 +18,7 @@ class IfBlockBranch extends Wrapper {
 	block: Block;
 	fragment: FragmentWrapper;
 	condition: string;
-	isDynamic: boolean;
+	is_dynamic: boolean;
 
 	var = null;
 
@@ -27,23 +27,23 @@ class IfBlockBranch extends Wrapper {
 		block: Block,
 		parent: IfBlockWrapper,
 		node: IfBlock | ElseBlock,
-		stripWhitespace: boolean,
-		nextSibling: Wrapper
+		strip_whitespace: boolean,
+		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 
 		this.condition = (node as IfBlock).expression && (node as IfBlock).expression.render(block);
 
 		this.block = block.child({
-			comment: createDebuggingComment(node, parent.renderer.component),
-			name: parent.renderer.component.getUniqueName(
+			comment: create_debugging_comment(node, parent.renderer.component),
+			name: parent.renderer.component.get_unique_name(
 				(node as IfBlock).expression ? `create_if_block` : `create_else_block`
 			)
 		});
 
-		this.fragment = new FragmentWrapper(renderer, this.block, node.children, parent, stripWhitespace, nextSibling);
+		this.fragment = new FragmentWrapper(renderer, this.block, node.children, parent, strip_whitespace, next_sibling);
 
-		this.isDynamic = this.block.dependencies.size > 0;
+		this.is_dynamic = this.block.dependencies.size > 0;
 	}
 }
 
@@ -58,55 +58,53 @@ export default class IfBlockWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: EachBlock,
-		stripWhitespace: boolean,
-		nextSibling: Wrapper
+		strip_whitespace: boolean,
+		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 
-		const { component } = renderer;
-
-		this.cannotUseInnerHTML();
+		this.cannot_use_innerhtml();
 
 		this.branches = [];
 
 		const blocks: Block[] = [];
-		let isDynamic = false;
-		let hasIntros = false;
-		let hasOutros = false;
+		let is_dynamic = false;
+		let has_intros = false;
+		let has_outros = false;
 
-		const createBranches = (node: IfBlock) => {
+		const create_branches = (node: IfBlock) => {
 			const branch = new IfBlockBranch(
 				renderer,
 				block,
 				this,
 				node,
-				stripWhitespace,
-				nextSibling
+				strip_whitespace,
+				next_sibling
 			);
 
 			this.branches.push(branch);
 
 			blocks.push(branch.block);
-			block.addDependencies(node.expression.dependencies);
+			block.add_dependencies(node.expression.dependencies);
 
 			if (branch.block.dependencies.size > 0) {
-				isDynamic = true;
-				block.addDependencies(branch.block.dependencies);
+				is_dynamic = true;
+				block.add_dependencies(branch.block.dependencies);
 			}
 
-			if (branch.block.hasIntros) hasIntros = true;
-			if (branch.block.hasOutros) hasOutros = true;
+			if (branch.block.has_intros) has_intros = true;
+			if (branch.block.has_outros) has_outros = true;
 
-			if (isElseIf(node.else)) {
-				createBranches(node.else.children[0]);
+			if (is_else_if(node.else)) {
+				create_branches(node.else.children[0]);
 			} else if (node.else) {
 				const branch = new IfBlockBranch(
 					renderer,
 					block,
 					this,
 					node.else,
-					stripWhitespace,
-					nextSibling
+					strip_whitespace,
+					next_sibling
 				);
 
 				this.branches.push(branch);
@@ -114,21 +112,21 @@ export default class IfBlockWrapper extends Wrapper {
 				blocks.push(branch.block);
 
 				if (branch.block.dependencies.size > 0) {
-					isDynamic = true;
-					block.addDependencies(branch.block.dependencies);
+					is_dynamic = true;
+					block.add_dependencies(branch.block.dependencies);
 				}
 
-				if (branch.block.hasIntros) hasIntros = true;
-				if (branch.block.hasOutros) hasOutros = true;
+				if (branch.block.has_intros) has_intros = true;
+				if (branch.block.has_outros) has_outros = true;
 			}
 		};
 
-		createBranches(this.node);
+		create_branches(this.node);
 
 		blocks.forEach(block => {
-			block.hasUpdateMethod = isDynamic;
-			block.hasIntroMethod = hasIntros;
-			block.hasOutroMethod = hasOutros;
+			block.has_update_method = is_dynamic;
+			block.has_intro_method = has_intros;
+			block.has_outro_method = has_outros;
 		});
 
 		renderer.blocks.push(...blocks);
@@ -136,60 +134,60 @@ export default class IfBlockWrapper extends Wrapper {
 
 	render(
 		block: Block,
-		parentNode: string,
-		parentNodes: string
+		parent_node: string,
+		parent_nodes: string
 	) {
 		const name = this.var;
 
-		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
-		const anchor = needsAnchor
-			? block.getUniqueName(`${name}_anchor`)
+		const needs_anchor = this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node();
+		const anchor = needs_anchor
+			? block.get_unique_name(`${name}_anchor`)
 			: (this.next && this.next.var) || 'null';
 
-		const hasElse = !(this.branches[this.branches.length - 1].condition);
-		const if_name = hasElse ? '' : `if (${name}) `;
+		const has_else = !(this.branches[this.branches.length - 1].condition);
+		const if_name = has_else ? '' : `if (${name}) `;
 
-		const dynamic = this.branches[0].block.hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
-		const hasIntros = this.branches[0].block.hasIntroMethod;
-		const hasOutros = this.branches[0].block.hasOutroMethod;
-		const has_transitions = hasIntros || hasOutros;
+		const dynamic = this.branches[0].block.has_update_method; // can use [0] as proxy for all, since they necessarily have the same value
+		const has_intros = this.branches[0].block.has_intro_method;
+		const has_outros = this.branches[0].block.has_outro_method;
+		const has_transitions = has_intros || has_outros;
 
-		const vars = { name, anchor, if_name, hasElse, has_transitions };
+		const vars = { name, anchor, if_name, has_else, has_transitions };
 
 		if (this.node.else) {
-			if (hasOutros) {
-				this.renderCompoundWithOutros(block, parentNode, parentNodes, dynamic, vars);
+			if (has_outros) {
+				this.render_compound_with_outros(block, parent_node, parent_nodes, dynamic, vars);
 
-				block.builders.outro.addLine(`if (${name}) ${name}.o();`);
+				block.builders.outro.add_line(`if (${name}) ${name}.o();`);
 			} else {
-				this.renderCompound(block, parentNode, parentNodes, dynamic, vars);
+				this.render_compound(block, parent_node, parent_nodes, dynamic, vars);
 			}
 		} else {
-			this.renderSimple(block, parentNode, parentNodes, dynamic, vars);
+			this.render_simple(block, parent_node, parent_nodes, dynamic, vars);
 
-			if (hasOutros) {
-				block.builders.outro.addLine(`if (${name}) ${name}.o();`);
+			if (has_outros) {
+				block.builders.outro.add_line(`if (${name}) ${name}.o();`);
 			}
 		}
 
-		block.builders.create.addLine(`${if_name}${name}.c();`);
+		block.builders.create.add_line(`${if_name}${name}.c();`);
 
-		if (parentNodes && this.renderer.options.hydratable) {
-			block.builders.claim.addLine(
-				`${if_name}${name}.l(${parentNodes});`
+		if (parent_nodes && this.renderer.options.hydratable) {
+			block.builders.claim.add_line(
+				`${if_name}${name}.l(${parent_nodes});`
 			);
 		}
 
-		if (hasIntros || hasOutros) {
-			block.builders.intro.addLine(`if (${name}) ${name}.i();`);
+		if (has_intros || has_outros) {
+			block.builders.intro.add_line(`if (${name}) ${name}.i();`);
 		}
 
-		if (needsAnchor) {
-			block.addElement(
+		if (needs_anchor) {
+			block.add_element(
 				anchor,
-				`@createComment()`,
-				parentNodes && `@createComment()`,
-				parentNode
+				`@comment()`,
+				parent_nodes && `@comment()`,
+				parent_node
 			);
 		}
 
@@ -198,18 +196,18 @@ export default class IfBlockWrapper extends Wrapper {
 		});
 	}
 
-	renderCompound(
+	render_compound(
 		block: Block,
-		parentNode: string,
-		parentNodes: string,
+		parent_node: string,
+		parent_nodes: string,
 		dynamic,
-		{ name, anchor, hasElse, if_name, has_transitions }
+		{ name, anchor, has_else, if_name, has_transitions }
 	) {
-		const select_block_type = this.renderer.component.getUniqueName(`select_block_type`);
-		const current_block_type = block.getUniqueName(`current_block_type`);
-		const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
+		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
+		const current_block_type = block.get_unique_name(`current_block_type`);
+		const current_block_type_and = has_else ? '' : `${current_block_type} && `;
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			function ${select_block_type}(ctx) {
 				${this.branches
 					.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block.name};`)
@@ -217,71 +215,71 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			var ${current_block_type} = ${select_block_type}(ctx);
 			var ${name} = ${current_block_type_and}${current_block_type}(ctx);
 		`);
 
-		const initialMountNode = parentNode || '#target';
-		const anchorNode = parentNode ? 'null' : 'anchor';
-		block.builders.mount.addLine(
-			`${if_name}${name}.m(${initialMountNode}, ${anchorNode});`
+		const initial_mount_node = parent_node || '#target';
+		const anchor_node = parent_node ? 'null' : 'anchor';
+		block.builders.mount.add_line(
+			`${if_name}${name}.m(${initial_mount_node}, ${anchor_node});`
 		);
 
-		const updateMountNode = this.getUpdateMountNode(anchor);
+		const update_mount_node = this.get_update_mount_node(anchor);
 
-		const changeBlock = deindent`
+		const change_block = deindent`
 			${if_name}${name}.d(1);
 			${name} = ${current_block_type_and}${current_block_type}(ctx);
 			if (${name}) {
 				${name}.c();
 				${has_transitions && `${name}.i(1);`}
-				${name}.m(${updateMountNode}, ${anchor});
+				${name}.m(${update_mount_node}, ${anchor});
 			}
 		`;
 
 		if (dynamic) {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				if (${current_block_type} === (${current_block_type} = ${select_block_type}(ctx)) && ${name}) {
 					${name}.p(changed, ctx);
 				} else {
-					${changeBlock}
+					${change_block}
 				}
 			`);
 		} else {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				if (${current_block_type} !== (${current_block_type} = ${select_block_type}(ctx))) {
-					${changeBlock}
+					${change_block}
 				}
 			`);
 		}
 
-		block.builders.destroy.addLine(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
+		block.builders.destroy.add_line(`${if_name}${name}.d(${parent_node ? '' : 'detaching'});`);
 	}
 
 	// if any of the siblings have outros, we need to keep references to the blocks
 	// (TODO does this only apply to bidi transitions?)
-	renderCompoundWithOutros(
+	render_compound_with_outros(
 		block: Block,
-		parentNode: string,
-		parentNodes: string,
+		parent_node: string,
+		parent_nodes: string,
 		dynamic,
-		{ name, anchor, hasElse, has_transitions }
+		{ name, anchor, has_else, has_transitions }
 	) {
-		const select_block_type = this.renderer.component.getUniqueName(`select_block_type`);
-		const current_block_type_index = block.getUniqueName(`current_block_type_index`);
-		const previous_block_index = block.getUniqueName(`previous_block_index`);
-		const if_block_creators = block.getUniqueName(`if_block_creators`);
-		const if_blocks = block.getUniqueName(`if_blocks`);
+		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
+		const current_block_type_index = block.get_unique_name(`current_block_type_index`);
+		const previous_block_index = block.get_unique_name(`previous_block_index`);
+		const if_block_creators = block.get_unique_name(`if_block_creators`);
+		const if_blocks = block.get_unique_name(`if_blocks`);
 
-		const if_current_block_type_index = hasElse
+		const if_current_block_type_index = has_else
 			? ''
 			: `if (~${current_block_type_index}) `;
 
-		block.addVariable(current_block_type_index);
-		block.addVariable(name);
+		block.add_variable(current_block_type_index);
+		block.add_variable(name);
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			var ${if_block_creators} = [
 				${this.branches.map(branch => branch.block.name).join(',\n')}
 			];
@@ -292,33 +290,33 @@ export default class IfBlockWrapper extends Wrapper {
 				${this.branches
 					.map(({ condition }, i) => `${condition ? `if (${condition}) ` : ''}return ${i};`)
 					.join('\n')}
-				${!hasElse && `return -1;`}
+				${!has_else && `return -1;`}
 			}
 		`);
 
-		if (hasElse) {
-			block.builders.init.addBlock(deindent`
+		if (has_else) {
+			block.builders.init.add_block(deindent`
 				${current_block_type_index} = ${select_block_type}(ctx);
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 			`);
 		} else {
-			block.builders.init.addBlock(deindent`
+			block.builders.init.add_block(deindent`
 				if (~(${current_block_type_index} = ${select_block_type}(ctx))) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 				}
 			`);
 		}
 
-		const initialMountNode = parentNode || '#target';
-		const anchorNode = parentNode ? 'null' : 'anchor';
+		const initial_mount_node = parent_node || '#target';
+		const anchor_node = parent_node ? 'null' : 'anchor';
 
-		block.builders.mount.addLine(
-			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].m(${initialMountNode}, ${anchorNode});`
+		block.builders.mount.add_line(
+			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].m(${initial_mount_node}, ${anchor_node});`
 		);
 
-		const updateMountNode = this.getUpdateMountNode(anchor);
+		const update_mount_node = this.get_update_mount_node(anchor);
 
-		const destroyOldBlock = deindent`
+		const destroy_old_block = deindent`
 			@group_outros();
 			@on_outro(() => {
 				${if_blocks}[${previous_block_index}].d(1);
@@ -328,80 +326,80 @@ export default class IfBlockWrapper extends Wrapper {
 			@check_outros();
 		`;
 
-		const createNewBlock = deindent`
+		const create_new_block = deindent`
 			${name} = ${if_blocks}[${current_block_type_index}];
 			if (!${name}) {
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 				${name}.c();
 			}
 			${has_transitions && `${name}.i(1);`}
-			${name}.m(${updateMountNode}, ${anchor});
+			${name}.m(${update_mount_node}, ${anchor});
 		`;
 
-		const changeBlock = hasElse
+		const change_block = has_else
 			? deindent`
-				${destroyOldBlock}
+				${destroy_old_block}
 
-				${createNewBlock}
+				${create_new_block}
 			`
 			: deindent`
 				if (${name}) {
-					${destroyOldBlock}
+					${destroy_old_block}
 				}
 
 				if (~${current_block_type_index}) {
-					${createNewBlock}
+					${create_new_block}
 				} else {
 					${name} = null;
 				}
 			`;
 
 		if (dynamic) {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				var ${previous_block_index} = ${current_block_type_index};
 				${current_block_type_index} = ${select_block_type}(ctx);
 				if (${current_block_type_index} === ${previous_block_index}) {
 					${if_current_block_type_index}${if_blocks}[${current_block_type_index}].p(changed, ctx);
 				} else {
-					${changeBlock}
+					${change_block}
 				}
 			`);
 		} else {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				var ${previous_block_index} = ${current_block_type_index};
 				${current_block_type_index} = ${select_block_type}(ctx);
 				if (${current_block_type_index} !== ${previous_block_index}) {
-					${changeBlock}
+					${change_block}
 				}
 			`);
 		}
 
-		block.builders.destroy.addLine(deindent`
-			${if_current_block_type_index}${if_blocks}[${current_block_type_index}].d(${parentNode ? '' : 'detach'});
+		block.builders.destroy.add_line(deindent`
+			${if_current_block_type_index}${if_blocks}[${current_block_type_index}].d(${parent_node ? '' : 'detaching'});
 		`);
 	}
 
-	renderSimple(
+	render_simple(
 		block: Block,
-		parentNode: string,
-		parentNodes: string,
+		parent_node: string,
+		parent_nodes: string,
 		dynamic,
 		{ name, anchor, if_name, has_transitions }
 	) {
 		const branch = this.branches[0];
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			var ${name} = (${branch.condition}) && ${branch.block.name}(ctx);
 		`);
 
-		const initialMountNode = parentNode || '#target';
-		const anchorNode = parentNode ? 'null' : 'anchor';
+		const initial_mount_node = parent_node || '#target';
+		const anchor_node = parent_node ? 'null' : 'anchor';
 
-		block.builders.mount.addLine(
-			`if (${name}) ${name}.m(${initialMountNode}, ${anchorNode});`
+		block.builders.mount.add_line(
+			`if (${name}) ${name}.m(${initial_mount_node}, ${anchor_node});`
 		);
 
-		const updateMountNode = this.getUpdateMountNode(anchor);
+		const update_mount_node = this.get_update_mount_node(anchor);
 
 		const enter = dynamic
 			? deindent`
@@ -412,7 +410,7 @@ export default class IfBlockWrapper extends Wrapper {
 					${name} = ${branch.block.name}(ctx);
 					${name}.c();
 					${has_transitions && `${name}.i(1);`}
-					${name}.m(${updateMountNode}, ${anchor});
+					${name}.m(${update_mount_node}, ${anchor});
 				}
 			`
 			: deindent`
@@ -420,7 +418,7 @@ export default class IfBlockWrapper extends Wrapper {
 					${name} = ${branch.block.name}(ctx);
 					${name}.c();
 					${has_transitions && `${name}.i(1);`}
-					${name}.m(${updateMountNode}, ${anchor});
+					${name}.m(${update_mount_node}, ${anchor});
 				${has_transitions && `} else {
 					${name}.i(1);`}
 				}
@@ -428,7 +426,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		// no `p()` here — we don't want to update outroing nodes,
 		// as that will typically result in glitching
-		const exit = branch.block.hasOutroMethod
+		const exit = branch.block.has_outro_method
 			? deindent`
 				@group_outros();
 				@on_outro(() => {
@@ -444,7 +442,7 @@ export default class IfBlockWrapper extends Wrapper {
 				${name} = null;
 			`;
 
-		block.builders.update.addBlock(deindent`
+		block.builders.update.add_block(deindent`
 			if (${branch.condition}) {
 				${enter}
 			} else if (${name}) {
@@ -452,6 +450,6 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.destroy.addLine(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
+		block.builders.destroy.add_line(`${if_name}${name}.d(${parent_node ? '' : 'detaching'});`);
 	}
 }

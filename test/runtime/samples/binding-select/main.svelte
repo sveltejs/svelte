@@ -1,3 +1,7 @@
+<script>
+	export let selected;
+</script>
+
 <p>selected: {selected}</p>
 
 <select bind:value={selected}>

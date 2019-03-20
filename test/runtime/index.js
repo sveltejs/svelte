@@ -72,6 +72,7 @@ describe("runtime", () => {
 			compileOptions.sveltePath = sveltePath;
 			compileOptions.hydratable = hydrate;
 			compileOptions.immutable = config.immutable;
+			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".svelte"))
@@ -114,7 +115,7 @@ describe("runtime", () => {
 						mod = require(`./samples/${dir}/main.svelte`);
 						SvelteComponent = mod.default;
 					} catch (err) {
-						showOutput(cwd, compileOptions, svelte.compile); // eslint-disable-line no-console
+						showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -185,13 +186,13 @@ describe("runtime", () => {
 						}
 					} else {
 						failed.add(dir);
-						showOutput(cwd, compileOptions, svelte.compile); // eslint-disable-line no-console
+						showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
 					if (config.show) {
-						showOutput(cwd, compileOptions, svelte.compile);
+						showOutput(cwd, compileOptions, compile);
 					}
 
 					flush();

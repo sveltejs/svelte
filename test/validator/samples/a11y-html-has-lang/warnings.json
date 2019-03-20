@@ -4,14 +4,14 @@
 		"message": "A11y: <html> element should have a lang attribute",
 		"start": {
 			"column": 0,
-			"line": 5,
-			"character": 82
+			"line": 9,
+			"character": 124
 		},
 		"end": {
-			"line": 5,
+			"line": 9,
 			"column": 13,
-			"character": 95
+			"character": 137
 		},
-		"pos": 82
+		"pos": 124
 	}
 ]

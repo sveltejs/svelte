@@ -30,7 +30,7 @@
 		grid-template-columns: 1fr 1fr;
 		grid-gap: 1em;
 		min-height: calc(100vh - var(--nav-h));
-		padding: var(--top-offset) 0;
+		padding: var(--top-offset) var(--side-nav) 0 var(--side-nav);
 		max-width: var(--main-width);
 		margin: 0 auto;
 	}

@@ -1,21 +1,32 @@
+const workers = new Map();
+
+let uid = 1;
+
 export default class Compiler {
 	constructor(version) {
-		this.worker = new Worker('/workers/compiler.js');
-		this.worker.postMessage({ type: 'init', version });
+		if (!workers.has(version)) {
+			const worker = new Worker('/workers/compiler.js');
+			worker.postMessage({ type: 'init', version });
+			workers.set(version, worker);
+		}
 
-		this.uid = 1;
+		this.worker = workers.get(version);
+
 		this.handlers = new Map();
 
-		this.worker.onmessage = event => {
+		this.worker.addEventListener('message', event => {
 			const handler = this.handlers.get(event.data.id);
-			handler(event.data.result);
-			this.handlers.delete(event.data.id);
-		};
+
+			if (handler) { // if no handler, was meant for a different REPL
+				handler(event.data.result);
+				this.handlers.delete(event.data.id);
+			}
+		});
 	}
 
 	compile(component, options) {
 		return new Promise(fulfil => {
-			const id = this.uid++;
+			const id = uid++;
 
 			this.handlers.set(id, fulfil);
 

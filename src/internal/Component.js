@@ -1,10 +1,10 @@
-import { add_render_callback, flush, intros, schedule_update, dirty_components } from './scheduler.js';
-import { current_component, set_current_component } from './lifecycle.js'
-import { is_function, run, run_all, noop } from './utils.js';
-import { blankObject } from './utils.js';
+import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler.js';
+import { current_component, set_current_component } from './lifecycle.js';
+import { blank_object, is_function, run, run_all, noop } from './utils.js';
 import { children } from './dom.js';
 
 export function bind(component, name, callback) {
+	if (component.$$.props.indexOf(name) === -1) return;
 	component.$$.bound[name] = callback;
 	callback(component.$$.ctx[name]);
 }
@@ -22,7 +22,7 @@ export function mount_component(component, target, anchor) {
 		if (on_destroy) {
 			on_destroy.push(...new_on_destroy);
 		} else {
-			// Edge case — component was destroyed immediately,
+			// Edge case - component was destroyed immediately,
 			// most likely as a result of a binding initialising
 			run_all(new_on_destroy);
 		}
@@ -32,10 +32,10 @@ export function mount_component(component, target, anchor) {
 	after_render.forEach(add_render_callback);
 }
 
-function destroy(component, detach) {
+function destroy(component, detaching) {
 	if (component.$$) {
 		run_all(component.$$.on_destroy);
-		component.$$.fragment.d(detach);
+		component.$$.fragment.d(detaching);
 
 		// TODO null out other refs, including component.$$ (but need to
 		// preserve final state?)
@@ -53,7 +53,7 @@ function make_dirty(component, key) {
 	component.$$.dirty[key] = true;
 }
 
-export function init(component, options, instance, create_fragment, not_equal) {
+export function init(component, options, instance, create_fragment, not_equal, prop_names) {
 	const parent_component = current_component;
 	set_current_component(component);
 
@@ -64,9 +64,10 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		ctx: null,
 
 		// state
+		props: prop_names,
 		update: noop,
 		not_equal,
-		bound: blankObject(),
+		bound: blank_object(),
 
 		// lifecycle
 		on_mount: [],
@@ -76,7 +77,7 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		context: new Map(parent_component ? parent_component.$$.context : []),
 
 		// everything else
-		callbacks: blankObject(),
+		callbacks: blank_object(),
 		dirty: null
 	};
 
@@ -127,7 +128,7 @@ if (typeof HTMLElement !== 'undefined') {
 		}
 
 		connectedCallback() {
-			for (let key in this.$$.slotted) {
+			for (const key in this.$$.slotted) {
 				this.appendChild(this.$$.slotted[key]);
 			}
 		}
@@ -155,7 +156,7 @@ if (typeof HTMLElement !== 'undefined') {
 		$set() {
 			// overridden by instance, if it has props
 		}
-	}
+	};
 }
 
 export class SvelteComponent {
@@ -191,7 +192,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	$destroy() {
 		super.$destroy();
 		this.$destroy = () => {
-			console.warn(`Component was already destroyed`);
+			console.warn(`Component was already destroyed`); // eslint-disable-line no-console
 		};
 	}
 }

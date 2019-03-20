@@ -1,6 +1,6 @@
 import Node from './shared/Node';
 import Attribute from './Attribute';
-import mapChildren from './shared/mapChildren';
+import map_children from './shared/map_children';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
 import Expression from './shared/Expression';
@@ -96,6 +96,6 @@ export default class InlineComponent extends Node {
 			this.scope = scope;
 		}
 
-		this.children = mapChildren(component, this, this.scope, info.children);
+		this.children = map_children(component, this, this.scope, info.children);
 	}
 }

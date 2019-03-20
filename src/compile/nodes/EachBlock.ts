@@ -2,9 +2,28 @@ import Node from './shared/Node';
 import ElseBlock from './ElseBlock';
 import Block from '../render-dom/Block';
 import Expression from './shared/Expression';
-import mapChildren from './shared/mapChildren';
+import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
-import unpackDestructuring from '../../utils/unpackDestructuring';
+import { Node as INode } from '../../interfaces';
+
+function unpack_destructuring(contexts: Array<{ name: string, tail: string }>, node: INode, tail: string) {
+	if (!node) return;
+
+	if (node.type === 'Identifier') {
+		contexts.push({
+			key: node,
+			tail
+		});
+	} else if (node.type === 'ArrayPattern') {
+		node.elements.forEach((element, i) => {
+			unpack_destructuring(contexts, element, `${tail}[${i}]`);
+		});
+	} else if (node.type === 'ObjectPattern') {
+		node.properties.forEach((property) => {
+			unpack_destructuring(contexts, property.value, `${tail}.${property.key.name}`);
+		});
+	}
+}
 
 export default class EachBlock extends Node {
 	type: 'EachBlock';
@@ -19,7 +38,7 @@ export default class EachBlock extends Node {
 	key: Expression;
 	scope: TemplateScope;
 	contexts: Array<{ name: string, tail: string }>;
-	hasAnimation: boolean;
+	has_animation: boolean;
 	has_binding = false;
 
 	children: Node[];
@@ -36,7 +55,7 @@ export default class EachBlock extends Node {
 		this.scope = scope.child();
 
 		this.contexts = [];
-		unpackDestructuring(this.contexts, info.context, '');
+		unpack_destructuring(this.contexts, info.context, '');
 
 		this.contexts.forEach(context => {
 			this.scope.add(context.key.name, this.expression.dependencies, this);
@@ -52,11 +71,11 @@ export default class EachBlock extends Node {
 			this.scope.add(this.index, dependencies, this);
 		}
 
-		this.hasAnimation = false;
+		this.has_animation = false;
 
-		this.children = mapChildren(component, this, this.scope, info.children);
+		this.children = map_children(component, this, this.scope, info.children);
 
-		if (this.hasAnimation) {
+		if (this.has_animation) {
 			if (this.children.length !== 1) {
 				const child = this.children.find(child => !!child.animation);
 				component.error(child.animation, {
@@ -66,7 +85,7 @@ export default class EachBlock extends Node {
 			}
 		}
 
-		this.warnIfEmptyBlock(); // TODO would be better if EachBlock, IfBlock etc extended an abstract Block class
+		this.warn_if_empty_block(); // TODO would be better if EachBlock, IfBlock etc extended an abstract Block class
 
 		this.else = info.else
 			? new ElseBlock(component, this, this.scope, info.else)
