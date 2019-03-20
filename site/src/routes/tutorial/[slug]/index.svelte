@@ -239,6 +239,6 @@
 	</div>
 
 	<div class="tutorial-repl">
-		<Repl bind:this={repl} orientation="rows" on:change={handle_change}/>
+		<Repl bind:this={repl} orientation="rows" on:change={handle_change} relaxed/>
 	</div>
 </div>
