@@ -23,6 +23,7 @@
 	let gist;
 	let name = 'loading...';
 	let zen_mode = false;
+	let relaxed = false;
 
 	$: if (typeof history !== 'undefined') {
 		const params = [];
@@ -48,6 +49,7 @@
 		}
 
 		if (gist_id) {
+			relaxed = false;
 			fetch(`gist/${gist_id}`).then(r => r.json()).then(data => {
 				gist = data;
 				const { id, description, files } = data;
@@ -88,6 +90,7 @@
 	function load_example(slug) {
 		console.log(`loading ${slug}`);
 
+		relaxed = true;
 		fetch(`examples/${slug}.json`).then(async response => {
 			if (response.ok) {
 				const data = await response.json();
@@ -171,6 +174,6 @@
 	/>
 
 	{#if process.browser}
-		<Repl bind:this={repl} {version}/>
+		<Repl bind:this={repl} {version} {relaxed}/>
 	{/if}
 </div>
