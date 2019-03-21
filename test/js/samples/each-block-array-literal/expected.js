@@ -2,10 +2,10 @@
 import {
 	SvelteComponent as SvelteComponent_1,
 	append,
-	comment,
 	destroy_each,
 	detach,
 	element,
+	empty,
 	init,
 	insert,
 	noop,
@@ -66,7 +66,7 @@ function create_fragment(ctx) {
 				each_blocks[i].c();
 			}
 
-			each_1_anchor = comment();
+			each_1_anchor = empty();
 		},
 
 		m(target, anchor) {
