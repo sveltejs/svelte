@@ -191,8 +191,7 @@ export default function tag(parser: Parser) {
 	}
 
 	if (name === 'svelte:component') {
-		// TODO post v2, treat this just as any other attribute
-		const index = element.attributes.findIndex(attr => attr.name === 'this');
+		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
 		if (!~index) {
 			parser.error({
 				code: `missing-component-definition`,

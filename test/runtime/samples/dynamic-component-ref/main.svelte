@@ -4,4 +4,4 @@
 	export let test;
 </script>
 
-<svelte:component this={Foo} bind:this={test}/>
+<svelte:component bind:this={test} this={Foo}/>
