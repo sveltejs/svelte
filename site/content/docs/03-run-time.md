@@ -163,6 +163,25 @@ const unsubscribe = store.subscribe(value => {
 unsubscribe();
 ```
 
+---
+
+Stores have special significance inside Svelte components. Their values can be read by prefixing the store's name with the `$` character, which causes Svelte to set up subscriptions and unsubscriptions automatically during the component's lifecycle.
+
+```html
+<script>
+	import { count } from './stores.js';
+
+	function handleClick() {
+		// this is equivalent to count.update(n => n + 1)
+		$count += 1;
+	}
+</script>
+
+<button on:click={handleClick}>
+	Clicks: {$count}
+</button>
+```
+
 * `store = writable(value: any)`
 * `store = writable(value: any, () => () => void)`
 
@@ -286,9 +305,49 @@ const value = get(store);
 
 ### svelte/motion
 
-TODO
+The `svelte/motion` module exports two functions, `tweened` and `spring`, for creating writable stores whose values change over time after `set` and `update`, rather than immediately.
 
-* spring, tweened
+* `store = tweened(value: any, options)`
+
+---
+
+Tweened stores update their values over a fixed duration. The following options are available:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the tween lasts
+* `easing` (`function`, default `t => t`) — an [easing function](docs#svelte-easing)
+* `interpolator` (`function`) — see below
+
+TODO passing these options into `store.set` and `store.update`, to override defaults
+
+```html
+<script>
+	import { tweened } from 'svelte/motion';
+	import { cubicOut } from 'svelte/easing';
+
+	const size = tweened(1, {
+		duration: 300,
+		easing: cubicOut
+	});
+
+	function handleClick() {
+		$size += 1;
+	}
+</script>
+
+<button
+	on:click={handleClick}
+	style="transform: scale({$size}); transform-origin: 0 0"
+>embiggen</button>
+```
+
+TODO custom interpolators
+
+* `store = spring(value: any, options)`
+
+A `spring` store gradually changes to its target value based on its `stiffness` and `damping` parameters. Whereas `tweened` stores change their values over a fixed duration, `spring` stores change over a duration that is determined by their existing velocity, allowing for more natural-seeming motion in many situations.
+
+TODO
 
 ### svelte/transition
 
