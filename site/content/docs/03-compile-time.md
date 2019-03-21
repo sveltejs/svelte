@@ -25,10 +25,21 @@ result: {
 } = svelte.compile(source: string, options?: {...})
 ```
 
-| option | type | default
+---
+
+This is where the magic happens. `svelte.compile` takes your component source code, and turns it into a JavaScript module that exports a class.
+
+```js
+const svelte = require('svelte/compiler');
+const result = svelte.compile(source);
+```
+
+The following options can be passed to the compiler. None are required:
+
+<!-- | option | type | default
 | --- | --- | --- |
 | `filename` | string | `null`
-| `name` | string | `null`
+| `name` | string | `"Component"`
 | `format` | `"esm"` or `"cjs"` | `"esm"`
 | `generate` | `"dom"` or `"ssr"` | `"dom"`
 | `dev` | boolean | `false`
@@ -36,25 +47,142 @@ result: {
 | `hydratable` | boolean | `false`
 | `legacy` | boolean | `false`
 | `customElement` | boolean | `false`
+| `tag` | string | null
+| `accessors` | boolean | `false`
 | `css` | boolean | `true`
 | `preserveComments` | boolean | `false`
 | `preserveWhitespace` | boolean | `false`
 | `outputFilename` | string | `null`
 | `cssOutputFilename` | string | `null`
-| `sveltePath` | string | `"svelte"`
+| `sveltePath` | string | `"svelte"` -->
 
 ---
 
-This is where the magic happens. `svelte.compile` takes your component source code, and turns it into a JavaScript module that exports a class.
+* `filename` (string, default `null`) is used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 
-Don't worry if the signature above looks a little overwhelming — none of the options are required.
+* `name` (string, default `"Component"`) sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope). It will normally be inferred from `filename`.
 
 ```js
-const svelte = require('svelte/compiler');
-
-const { js } = svelte.compile(source);
-console.log(js.code);
+const result = svelte.compile(source, {
+	filename: 'src/components/Widget.svelte',
+	name: 'Widget'
+});
 ```
+
+---
+
+* `format` (`"esm"` or `"cjs"`, default `"esm"`) controls whether Svelte creates a JavaScript module (with `import` and `export`) or a CommonJS module (with `require` and `module.exports` — useful in some server-side rendering situations or for testing).
+
+* `generate` (`"dom"` or `"ssr"`, default `"dom"`) controls whether Svelte emits a JavaScript class for mounting to the DOM, or an object with a `render` method suitable for server-side rendering.
+
+```js
+const result = svelte.compile(source, {
+	format: 'cjs',
+	generate: 'ssr'
+});
+```
+
+---
+
+* `dev` (boolean, default `false`) causes extra code to be added to components that will perform runtime checks and provide debugging information during development.
+
+```js
+const result = svelte.compile(source, {
+	dev: true
+});
+```
+
+---
+
+* `immutable` (boolean, default `false`) tells the compiler that you promise not to mutate any objects. This allows it to be less conservative about checking whether values have changed.
+
+```js
+const result = svelte.compile(source, {
+	immutable: true
+});
+```
+
+---
+
+* `hydratable` (boolean, default `false`) enables the `hydrate: true` runtime option, which allows a component to upgrade existing DOM rather than creating new DOM from scratch.
+
+```js
+const result = svelte.compile(source, {
+	hydratable: true
+});
+```
+
+---
+
+* `legacy` (boolean, default `false`) generates code that will work in IE9 and IE10, which don't support things like `element.dataset`.
+
+```js
+const result = svelte.compile(source, {
+	legacy: true
+});
+```
+
+---
+
+* `customElement` (boolean, default `false`) tells the compiler to generate a custom element constructor instead of a regular Svelte
+
+* `tag` (string, default `null`) tells it what tag name to register the custom element with. It must be a lowercase alphanumeric string with at least one hyphen.
+
+```js
+const result = svelte.compile(source, {
+	customElement: true,
+	tag: 'my-element'
+});
+```
+
+---
+
+* `css` (boolean, default `true`) controls whether or not styles will be included in the JavaScript class and injected at runtime. It's recommended that you set this to `false` and use the CSS that is statically generated, as it will result in smaller JavaScript bundles and better performance.
+
+```js
+const result = svelte.compile(source, {
+	css: false
+});
+```
+
+---
+
+* `preserveComments` (boolean, default `false`) will cause your HTML comments to be recreated inside your component. By default, they are stripped out.
+
+* `preserveWhitespace` (boolean, default `false`) ensures that whitespace inside and between elements is kept as you typed it, rather than optimised by Svelte.
+
+```js
+const result = svelte.compile(source, {
+	preserveComments: true,
+	preserveWhitespace: true
+});
+```
+
+---
+
+* `outputFilename` (string, default `null`) is used for your JavaScript sourcemap.
+
+* `cssOutputFilename` (string, default `null`) is used for your CSS sourcemap.
+
+```js
+const result = svelte.compile(source, {
+	outputFilename: 'build/component.js',
+	cssOutputFilename: 'build/component.css'
+});
+```
+
+---
+
+* `sveltePath` (string, default `"svelte"`) is the location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.
+
+```js
+const result = svelte.compile(source, {
+	sveltePath: 'path/to/alternative/svelte'
+});
+```
+
+
+
 
 #### `result.js`
 
