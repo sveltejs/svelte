@@ -226,16 +226,62 @@ const time = readable(set => {
 }, new Date());
 ```
 
-* `store = derive(a, (a: any) => any)`
-* `store = derive(a, (a: any, set: (value: any) => void) => void)`
-* `store = derive([a, ...b], ([a: any, ...b: any[]]) => any)`
-* `store = derive([a, ...b], ([a: any, ...b: any[]], set: (value: any) => void) => void)`
+* `store = derive(a, callback: (a: any) => any)`
+* `store = derive(a, callback: (a: any, set: (value: any) => void) => void)`
+* `store = derive([a, ...b], callback: ([a: any, ...b: any[]]) => any)`
+* `store = derive([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void)`
 
-TODO
+---
+
+Derives a store from one or more other stores. Whenever those dependencies change, the callback runs.
+
+In the simplest version, `derive` takes a single store, and the callback returns a derived value.
+
+```js
+import { derive } from 'svelte/store';
+
+const doubled = derive(a, $a => $a * 2);
+```
+
+---
+
+The callback can set a value asynchronously by accepting a second argument, `set`, and calling it when appropriate.
+
+```js
+import { derive } from 'svelte/store';
+
+const delayed = derive(a, ($a, set) => {
+	setTimeout(() => set($a), 1000);
+});
+```
+
+---
+
+In both cases, an array of arguments can be passed as the first argument instead of a single store.
+
+```js
+import { derive } from 'svelte/store';
+
+const summed = derive([a, b], ([$a, $b]) => $a + $b);
+
+const delayed = derive([a, b], ([$a, $b], set) => {
+	setTimeout(() => set($a + $b), 1000);
+});
+```
 
 * `value: any = get(store)`
 
-TODO
+---
+
+Generally, you should read the value of a store by subscribing to it and using the value as it changes over time. Occasionally, you may need to retrieve the value of a store to which you're not subscribed. `get` allows you to do so.
+
+> This works by creating a subscription, reading the value, then unsubscribing. It's therefore not recommended in hot code paths.
+
+```js
+import { get } from 'svelte/store';
+
+const value = get(store);
+```
 
 
 ### svelte/motion
