@@ -41,7 +41,7 @@ result: {
 | `preserveWhitespace` | boolean | `false`
 | `outputFilename` | string | `null`
 | `cssOutputFilename` | string | `null`
-| `sveltePath` | string | `"node_modules/svelte"`
+| `sveltePath` | string | `"svelte"`
 
 ---
 
