@@ -2,7 +2,7 @@ export interface Node {
 	start: number;
 	end: number;
 	type: string;
-	[propName: string]: any;
+	[prop_name: string]: any;
 }
 
 export interface Parser {
@@ -15,7 +15,7 @@ export interface Parser {
 	html: Node;
 	css: Node;
 	js: Node;
-	metaTags: {};
+	meta_tags: {};
 }
 
 export interface Ast {
@@ -49,13 +49,16 @@ export interface CompileOptions {
 	sveltePath?: string;
 
 	dev?: boolean;
+	accessors?: boolean;
 	immutable?: boolean;
 	hydratable?: boolean;
 	legacy?: boolean;
-	customElement?: CustomElementOptions | true;
+	customElement?: boolean;
+	tag?: string;
 	css?: boolean;
 
-	preserveComments?: boolean | false;
+	preserveComments?: boolean;
+	preserveWhitespace?: boolean;
 }
 
 export interface Visitor {
@@ -63,14 +66,9 @@ export interface Visitor {
 	leave?: (node: Node) => void;
 }
 
-export interface CustomElementOptions {
-	tag?: string;
-	props?: string[];
-}
-
 export interface AppendTarget {
 	slots: Record<string, string>;
-	slotStack: string[]
+	slot_stack: string[]
 }
 
 export interface Var {
@@ -85,7 +83,6 @@ export interface Var {
 
 	// used internally, but not exposed
 	global?: boolean;
-	implicit?: boolean; // logic-less template references
 	internal?: boolean; // event handlers, bindings
 	initialised?: boolean;
 	hoistable?: boolean;

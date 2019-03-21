@@ -1,3 +1,7 @@
+<script>
+  export let items;
+</script>
+
 {#each items as item}
   <select bind:value={item.id}>
     <option value='a'>a</option>

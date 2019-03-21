@@ -7,6 +7,7 @@
 	import ModuleEditor from './Input/ModuleEditor.svelte';
 	import Output from './Output/index.svelte';
 	import InputOutputToggle from './InputOutputToggle.svelte';
+	import Bundler from './Bundler.js';
 
 	export let version = 'beta'; // TODO change this to latest when the time comes
 	export let embedded = false;
@@ -30,7 +31,9 @@
 		selected.set(data.components[0]);
 
 		module_editor.set($selected.source, $selected.type);
-		output.set($selected);
+		output.set($selected, $compile_options);
+
+		rebundle();
 	}
 
 	export function update(data) {
@@ -43,10 +46,10 @@
 
 		if (matched_component) {
 			module_editor.update(matched_component.source);
-			output.update(matched_component);
+			output.update(matched_component, $compile_options);
 		} else {
 			module_editor.set(matched_component.source, matched_component.type);
-			output.set(matched_component);
+			output.set(matched_component, $compile_options);
 		}
 	}
 
@@ -56,13 +59,33 @@
 	const selected = writable(null);
 	const bundle = writable(null);
 
+	const compile_options = writable({
+		generate: 'dom',
+		dev: false,
+		css: false,
+		hydratable: false,
+		customElement: false,
+		immutable: false,
+		legacy: false
+	});
+
 	let module_editor;
 	let output;
+
+	let current_token;
+	async function rebundle() {
+		const token = current_token = {};
+		const result = await bundler.bundle($components);
+		if (result && token === current_token) bundle.set(result);
+	}
 
 	setContext('REPL', {
 		components,
 		selected,
 		bundle,
+		compile_options,
+
+		rebundle,
 
 		navigate: item => {
 			const match = /^(.+)\.(\w+)$/.exec(item.filename);
@@ -70,9 +93,7 @@
 
 			const [, name, type] = match;
 			const component = $components.find(c => c.name === name && c.type === type);
-			selected.set(component);
-
-			output.set($selected);
+			handle_select(component);
 
 			// TODO select the line/column in question
 		},
@@ -91,10 +112,9 @@
 			components.update(c => c);
 
 			// recompile selected component
-			output.update($selected);
+			output.update($selected, $compile_options);
 
-			// regenerate bundle (TODO do this in a separate worker?)
-			workers.bundler.postMessage({ type: 'bundle', components: $components });
+			rebundle();
 
 			dispatch('change', {
 				components: $components
@@ -117,7 +137,7 @@
 	function handle_select(component) {
 		selected.set(component);
 		module_editor.set(component.source, component.type);
-		output.set($selected);
+		output.set($selected, $compile_options);
 	}
 
 	let workers;
@@ -129,29 +149,10 @@
 	let width = typeof window !== 'undefined' ? window.innerWidth : 300;
 	let show_output = false;
 
-	onMount(async () => {
-		workers = {
-			bundler: new Worker('/workers/bundler.js')
-		};
+	const bundler = process.browser && new Bundler(version);
 
-		workers.bundler.postMessage({ type: 'init', version });
-		workers.bundler.onmessage = event => {
-			bundle.set(event.data);
-		};
-
-		return () => {
-			workers.bundler.terminate();
-		};
-	});
-
-	$: if ($bundle && $bundle.error && $selected) {
-		sourceErrorLoc = $bundle.error.filename === `${$selected.name}.${$selected.type}`
-			? $bundle.error.start
-			: null;
-	}
-
-	$: if (workers && $components) {
-		workers.bundler.postMessage({ type: 'bundle', components: $components });
+	$: if (output && $selected) {
+		output.update($selected, $compile_options);
 	}
 </script>
 

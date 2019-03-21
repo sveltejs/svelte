@@ -9,7 +9,7 @@ export const parse = (source: string) => Parser.parse(source, {
 	preserveParens: true
 });
 
-export const parseExpressionAt = (source: string, index: number) => Parser.parseExpressionAt(source, index, {
+export const parse_expression_at = (source: string, index: number) => Parser.parseExpressionAt(source, index, {
 	ecmaVersion: 9,
 	preserveParens: true
 });

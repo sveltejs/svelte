@@ -21,11 +21,11 @@ export default class Transition extends Node {
 		this.is_local = info.modifiers.includes('local');
 
 		if ((info.intro && parent.intro) || (info.outro && parent.outro)) {
-			const parentTransition = (parent.intro || parent.outro);
+			const parent_transition = (parent.intro || parent.outro);
 
-			const message = this.directive === parentTransition.directive
+			const message = this.directive === parent_transition.directive
 				? `An element can only have one '${this.directive}' directive`
-				: `An element cannot have both ${describe(parentTransition)} directive and ${describe(this)} directive`;
+				: `An element cannot have both ${describe(parent_transition)} directive and ${describe(this)} directive`;
 
 			component.error(info, {
 				code: `duplicate-transition`,

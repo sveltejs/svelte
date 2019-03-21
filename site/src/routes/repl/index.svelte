@@ -11,7 +11,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { locate } from 'locate-character';
-	import { process_example } from './_utils/process_example.js';
+	import { process_example } from '../../components/Repl/process_example.js';
 	import AppControls from './_components/AppControls/index.svelte';
 	import Repl from '../../components/Repl/index.svelte';
 
@@ -122,7 +122,7 @@
 		overflow: hidden;
 		background-color: var(--back);
 		padding: var(--app-controls-h) 0 0 0;
-		margin: 0 calc(var(--side-nav) * -1);
+		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
 	}
 

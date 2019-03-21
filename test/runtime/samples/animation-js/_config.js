@@ -31,7 +31,7 @@ export default {
 					bottom: top + 20
 				}
 			};
-		})
+		});
 
 		component.things = [
 			{ id: 5, name: 'e' },
@@ -50,6 +50,27 @@ export default {
 		assert.equal(divs[4].dy, -60);
 
 		raf.tick(100);
+		assert.equal(divs[0].dy, 0);
+		assert.equal(divs[4].dy, 0);
+
+		component.things = [
+			{ id: 1, name: 'a' },
+			{ id: 2, name: 'b' },
+			{ id: 3, name: 'c' },
+			{ id: 4, name: 'd' },
+			{ id: 5, name: 'e' }
+		];
+
+		divs = document.querySelectorAll('div');
+
+		assert.equal(divs[0].dy, 120);
+		assert.equal(divs[4].dy, -120);
+
+		raf.tick(150);
+		assert.equal(divs[0].dy, 60);
+		assert.equal(divs[4].dy, -60);
+
+		raf.tick(200);
 		assert.equal(divs[0].dy, 0);
 		assert.equal(divs[4].dy, 0);
 	}

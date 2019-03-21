@@ -1,7 +1,7 @@
 <script>
 	import { quintOut } from 'svelte/easing';
 	import { fade, draw, fly } from 'svelte/transition';
-	import { expand, blur } from './custom-transitions.js';
+	import { expand } from './custom-transitions.js';
 	import { inner, outer } from './shape.js';
 
 	let visible = true;
@@ -60,7 +60,7 @@
 	<div class="centered" out:fly="{{y: -20, duration: 800}}">
 		{#each 'SVELTE' as char, i}
 			<span
-				in:blur="{{delay: 1000 + i * 150, duration: 800}}"
+				in:fade="{{delay: 1000 + i * 150, duration: 800}}"
 			>{char}</span>
 		{/each}
 	</div>

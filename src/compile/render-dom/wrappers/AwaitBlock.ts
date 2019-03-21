@@ -2,8 +2,8 @@ import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import AwaitBlock from '../../nodes/AwaitBlock';
-import createDebuggingComment from '../../../utils/createDebuggingComment';
-import deindent from '../../../utils/deindent';
+import create_debugging_comment from './shared/create_debugging_comment';
+import deindent from '../../utils/deindent';
 import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
 import ThenBlock from '../../nodes/ThenBlock';
@@ -13,7 +13,7 @@ class AwaitBlockBranch extends Wrapper {
 	node: PendingBlock | ThenBlock | CatchBlock;
 	block: Block;
 	fragment: FragmentWrapper;
-	isDynamic: boolean;
+	is_dynamic: boolean;
 
 	var = null;
 
@@ -23,14 +23,14 @@ class AwaitBlockBranch extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: AwaitBlock,
-		stripWhitespace: boolean,
-		nextSibling: Wrapper
+		strip_whitespace: boolean,
+		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 
 		this.block = block.child({
-			comment: createDebuggingComment(node, this.renderer.component),
-			name: this.renderer.component.getUniqueName(`create_${status}_block`)
+			comment: create_debugging_comment(node, this.renderer.component),
+			name: this.renderer.component.get_unique_name(`create_${status}_block`)
 		});
 
 		this.fragment = new FragmentWrapper(
@@ -38,11 +38,11 @@ class AwaitBlockBranch extends Wrapper {
 			this.block,
 			this.node.children,
 			parent,
-			stripWhitespace,
-			nextSibling
+			strip_whitespace,
+			next_sibling
 		);
 
-		this.isDynamic = this.block.dependencies.size > 0;
+		this.is_dynamic = this.block.dependencies.size > 0;
 	}
 }
 
@@ -60,18 +60,18 @@ export default class AwaitBlockWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: AwaitBlock,
-		stripWhitespace: boolean,
-		nextSibling: Wrapper
+		strip_whitespace: boolean,
+		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 
-		this.cannotUseInnerHTML();
+		this.cannot_use_innerhtml();
 
-		block.addDependencies(this.node.expression.dependencies);
+		block.add_dependencies(this.node.expression.dependencies);
 
-		let isDynamic = false;
-		let hasIntros = false;
-		let hasOutros = false;
+		let is_dynamic = false;
+		let has_intros = false;
+		let has_outros = false;
 
 		['pending', 'then', 'catch'].forEach(status => {
 			const child = this.node[status];
@@ -82,59 +82,59 @@ export default class AwaitBlockWrapper extends Wrapper {
 				block,
 				this,
 				child,
-				stripWhitespace,
-				nextSibling
+				strip_whitespace,
+				next_sibling
 			);
 
 			renderer.blocks.push(branch.block);
 
-			if (branch.isDynamic) {
-				isDynamic = true;
+			if (branch.is_dynamic) {
+				is_dynamic = true;
 				// TODO should blocks update their own parents?
-				block.addDependencies(branch.block.dependencies);
+				block.add_dependencies(branch.block.dependencies);
 			}
 
-			if (branch.block.hasIntros) hasIntros = true;
-			if (branch.block.hasOutros) hasOutros = true;
+			if (branch.block.has_intros) has_intros = true;
+			if (branch.block.has_outros) has_outros = true;
 
 			this[status] = branch;
 		});
 
-		this.pending.block.hasUpdateMethod = isDynamic;
-		this.then.block.hasUpdateMethod = isDynamic;
-		this.catch.block.hasUpdateMethod = isDynamic;
+		this.pending.block.has_update_method = is_dynamic;
+		this.then.block.has_update_method = is_dynamic;
+		this.catch.block.has_update_method = is_dynamic;
 
-		this.pending.block.hasIntroMethod = hasIntros;
-		this.then.block.hasIntroMethod = hasIntros;
-		this.catch.block.hasIntroMethod = hasIntros;
+		this.pending.block.has_intro_method = has_intros;
+		this.then.block.has_intro_method = has_intros;
+		this.catch.block.has_intro_method = has_intros;
 
-		this.pending.block.hasOutroMethod = hasOutros;
-		this.then.block.hasOutroMethod = hasOutros;
-		this.catch.block.hasOutroMethod = hasOutros;
+		this.pending.block.has_outro_method = has_outros;
+		this.then.block.has_outro_method = has_outros;
+		this.catch.block.has_outro_method = has_outros;
 
-		if (hasOutros) {
-			block.addOutro();
+		if (has_outros) {
+			block.add_outro();
 		}
 	}
 
 	render(
 		block: Block,
-		parentNode: string,
-		parentNodes: string
+		parent_node: string,
+		parent_nodes: string
 	) {
-		const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
-		const updateMountNode = this.getUpdateMountNode(anchor);
+		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+		const update_mount_node = this.get_update_mount_node(anchor);
 
 		const snippet = this.node.expression.render(block);
 
-		const info = block.getUniqueName(`info`);
-		const promise = block.getUniqueName(`promise`);
+		const info = block.get_unique_name(`info`);
+		const promise = block.get_unique_name(`promise`);
 
-		block.addVariable(promise);
+		block.add_variable(promise);
 
-		block.maintainContext = true;
+		block.maintain_context = true;
 
-		const infoProps = [
+		const info_props = [
 			'ctx',
 			'current: null',
 			this.pending.block.name && `pending: ${this.pending.block.name}`,
@@ -142,42 +142,42 @@ export default class AwaitBlockWrapper extends Wrapper {
 			this.catch.block.name && `catch: ${this.catch.block.name}`,
 			this.then.block.name && `value: '${this.node.value}'`,
 			this.catch.block.name && `error: '${this.node.error}'`,
-			this.pending.block.hasOutroMethod && `blocks: Array(3)`
+			this.pending.block.has_outro_method && `blocks: Array(3)`
 		].filter(Boolean);
 
-		block.builders.init.addBlock(deindent`
+		block.builders.init.add_block(deindent`
 			let ${info} = {
-				${infoProps.join(',\n')}
+				${info_props.join(',\n')}
 			};
 		`);
 
-		block.builders.init.addBlock(deindent`
-			@handlePromise(${promise} = ${snippet}, ${info});
+		block.builders.init.add_block(deindent`
+			@handle_promise(${promise} = ${snippet}, ${info});
 		`);
 
-		block.builders.create.addBlock(deindent`
+		block.builders.create.add_block(deindent`
 			${info}.block.c();
 		`);
 
-		if (parentNodes && this.renderer.options.hydratable) {
-			block.builders.claim.addBlock(deindent`
-				${info}.block.l(${parentNodes});
+		if (parent_nodes && this.renderer.options.hydratable) {
+			block.builders.claim.add_block(deindent`
+				${info}.block.l(${parent_nodes});
 			`);
 		}
 
-		const initialMountNode = parentNode || '#target';
-		const anchorNode = parentNode ? 'null' : 'anchor';
+		const initial_mount_node = parent_node || '#target';
+		const anchor_node = parent_node ? 'null' : 'anchor';
 
-		const hasTransitions = this.pending.block.hasIntroMethod || this.pending.block.hasOutroMethod;
+		const has_transitions = this.pending.block.has_intro_method || this.pending.block.has_outro_method;
 
-		block.builders.mount.addBlock(deindent`
-			${info}.block.m(${initialMountNode}, ${info}.anchor = ${anchorNode});
-			${info}.mount = () => ${updateMountNode};
+		block.builders.mount.add_block(deindent`
+			${info}.block.m(${initial_mount_node}, ${info}.anchor = ${anchor_node});
+			${info}.mount = () => ${update_mount_node};
 			${info}.anchor = ${anchor};
 		`);
 
-		if (hasTransitions) {
-			block.builders.intro.addLine(`${info}.block.i();`);
+		if (has_transitions) {
+			block.builders.intro.add_line(`${info}.block.i();`);
 		}
 
 		const conditions = [];
@@ -191,15 +191,15 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		conditions.push(
 			`${promise} !== (${promise} = ${snippet})`,
-			`@handlePromise(${promise}, ${info})`
+			`@handle_promise(${promise}, ${info})`
 		);
 
-		block.builders.update.addLine(
+		block.builders.update.add_line(
 			`${info}.ctx = ctx;`
 		);
 
-		if (this.pending.block.hasUpdateMethod) {
-			block.builders.update.addBlock(deindent`
+		if (this.pending.block.has_update_method) {
+			block.builders.update.add_block(deindent`
 				if (${conditions.join(' && ')}) {
 					// nothing
 				} else {
@@ -207,13 +207,13 @@ export default class AwaitBlockWrapper extends Wrapper {
 				}
 			`);
 		} else {
-			block.builders.update.addBlock(deindent`
+			block.builders.update.add_block(deindent`
 				${conditions.join(' && ')}
 			`);
 		}
 
-		if (this.pending.block.hasOutroMethod) {
-			block.builders.outro.addBlock(deindent`
+		if (this.pending.block.has_outro_method) {
+			block.builders.outro.add_block(deindent`
 				for (let #i = 0; #i < 3; #i += 1) {
 					const block = ${info}.blocks[#i];
 					if (block) block.o();
@@ -221,8 +221,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 			`);
 		}
 
-		block.builders.destroy.addBlock(deindent`
-			${info}.block.d(${parentNode ? '' : 'detach'});
+		block.builders.destroy.add_block(deindent`
+			${info}.block.d(${parent_node ? '' : 'detaching'});
 			${info} = null;
 		`);
 

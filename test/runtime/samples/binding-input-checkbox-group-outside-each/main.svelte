@@ -1,3 +1,8 @@
+<script>
+	export let selected;
+	export let values;
+</script>
+
 <label>
 	<input type="checkbox" value="{values[0]}" bind:group={selected} /> {values[0].name}
 </label>

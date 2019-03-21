@@ -1,6 +1,6 @@
 import MagicString from 'magic-string';
 import Stylesheet from './Stylesheet';
-import { gatherPossibleValues, UNKNOWN } from './gatherPossibleValues';
+import { gather_possible_values, UNKNOWN } from './gather_possible_values';
 import { Node } from '../interfaces';
 import Component from '../compile/Component';
 
@@ -8,14 +8,14 @@ export default class Selector {
 	node: Node;
 	stylesheet: Stylesheet;
 	blocks: Block[];
-	localBlocks: Block[];
+	local_blocks: Block[];
 	used: boolean;
 
 	constructor(node: Node, stylesheet: Stylesheet) {
 		this.node = node;
 		this.stylesheet = stylesheet;
 
-		this.blocks = groupSelectors(node);
+		this.blocks = group_selectors(node);
 
 		// take trailing :global(...) selectors out of consideration
 		let i = this.blocks.length;
@@ -24,19 +24,19 @@ export default class Selector {
 			i -= 1;
 		}
 
-		this.localBlocks = this.blocks.slice(0, i);
+		this.local_blocks = this.blocks.slice(0, i);
 		this.used = this.blocks[0].global;
 	}
 
 	apply(node: Node, stack: Node[]) {
-		const toEncapsulate: Node[] = [];
+		const to_encapsulate: Node[] = [];
 
-		applySelector(this.stylesheet, this.localBlocks.slice(), node, stack.slice(), toEncapsulate);
+		apply_selector(this.stylesheet, this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
 
-		if (toEncapsulate.length > 0) {
-			toEncapsulate.filter((_, i) => i === 0 || i === toEncapsulate.length - 1).forEach(({ node, block }) => {
-				this.stylesheet.nodesWithCssClass.add(node);
-				block.shouldEncapsulate = true;
+		if (to_encapsulate.length > 0) {
+			to_encapsulate.filter((_, i) => i === 0 || i === to_encapsulate.length - 1).forEach(({ node, block }) => {
+				this.stylesheet.nodes_with_css_class.add(node);
+				block.should_encapsulate = true;
 			});
 
 			this.used = true;
@@ -57,7 +57,7 @@ export default class Selector {
 	}
 
 	transform(code: MagicString, attr: string) {
-		function encapsulateBlock(block: Block) {
+		function encapsulate_block(block: Block) {
 			let i = block.selectors.length;
 			while (i--) {
 				const selector = block.selectors[i];
@@ -81,7 +81,7 @@ export default class Selector {
 				code.remove(selector.start, first.start).remove(last.end, selector.end);
 			}
 
-			if (block.shouldEncapsulate) encapsulateBlock(block);
+			if (block.should_encapsulate) encapsulate_block(block);
 		});
 	}
 
@@ -121,7 +121,7 @@ export default class Selector {
 	}
 }
 
-function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stack: Node[], toEncapsulate: any[]): boolean {
+function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, stack: Node[], to_encapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
@@ -145,15 +145,15 @@ function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stac
 		}
 
 		if (selector.type === 'ClassSelector') {
-			if (!attributeMatches(node, 'class', selector.name, '~=', false) && !classMatches(node, selector.name)) return false;
+			if (!attribute_matches(node, 'class', selector.name, '~=', false) && !class_matches(node, selector.name)) return false;
 		}
 
 		else if (selector.type === 'IdSelector') {
-			if (!attributeMatches(node, 'id', selector.name, '=', false)) return false;
+			if (!attribute_matches(node, 'id', selector.name, '=', false)) return false;
 		}
 
 		else if (selector.type === 'AttributeSelector') {
-			if (!attributeMatches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return false;
+			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return false;
 		}
 
 		else if (selector.type === 'TypeSelector') {
@@ -163,7 +163,7 @@ function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stac
 
 		else {
 			// bail. TODO figure out what these could be
-			toEncapsulate.push({ node, block });
+			to_encapsulate.push({ node, block });
 			return true;
 		}
 	}
@@ -171,21 +171,21 @@ function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stac
 	if (block.combinator) {
 		if (block.combinator.type === 'WhiteSpace') {
 			while (stack.length) {
-				if (applySelector(stylesheet, blocks.slice(), stack.pop(), stack, toEncapsulate)) {
-					toEncapsulate.push({ node, block });
+				if (apply_selector(stylesheet, blocks.slice(), stack.pop(), stack, to_encapsulate)) {
+					to_encapsulate.push({ node, block });
 					return true;
 				}
 			}
 
 			if (blocks.every(block => block.global)) {
-				toEncapsulate.push({ node, block });
+				to_encapsulate.push({ node, block });
 				return true;
 			}
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			if (applySelector(stylesheet, blocks, stack.pop(), stack, toEncapsulate)) {
-				toEncapsulate.push({ node, block });
+			if (apply_selector(stylesheet, blocks, stack.pop(), stack, to_encapsulate)) {
+				to_encapsulate.push({ node, block });
 				return true;
 			}
 
@@ -193,11 +193,11 @@ function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stac
 		}
 
 		// TODO other combinators
-		toEncapsulate.push({ node, block });
+		to_encapsulate.push({ node, block });
 		return true;
 	}
 
-	toEncapsulate.push({ node, block });
+	to_encapsulate.push({ node, block });
 	return true;
 }
 
@@ -210,41 +210,37 @@ const operators = {
 	'*=': (value: string, flags: string) => new RegExp(value, flags)
 };
 
-function attributeMatches(node: Node, name: string, expectedValue: string, operator: string, caseInsensitive: boolean) {
+function attribute_matches(node: Node, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
 	const spread = node.attributes.find(attr => attr.type === 'Spread');
 	if (spread) return true;
 
 	const attr = node.attributes.find((attr: Node) => attr.name === name);
 	if (!attr) return false;
-	if (attr.isTrue) return operator === null;
+	if (attr.is_true) return operator === null;
 	if (attr.chunks.length > 1) return true;
-	if (!expectedValue) return true;
+	if (!expected_value) return true;
 
-	const pattern = operators[operator](expectedValue, caseInsensitive ? 'i' : '');
+	const pattern = operators[operator](expected_value, case_insensitive ? 'i' : '');
 	const value = attr.chunks[0];
 
 	if (!value) return false;
 	if (value.type === 'Text') return pattern.test(value.data);
 
-	const possibleValues = new Set();
-	gatherPossibleValues(value.node, possibleValues);
-	if (possibleValues.has(UNKNOWN)) return true;
+	const possible_values = new Set();
+	gather_possible_values(value.node, possible_values);
+	if (possible_values.has(UNKNOWN)) return true;
 
-	for (const x of Array.from(possibleValues)) { // TypeScript for-of is slightly unlike JS
+	for (const x of Array.from(possible_values)) { // TypeScript for-of is slightly unlike JS
 		if (pattern.test(x)) return true;
 	}
 
 	return false;
 }
 
-function classMatches(node, name: string) {
-	return node.classes.some(function(classDir) {
-		return classDir.name === name;
+function class_matches(node, name: string) {
+	return node.classes.some(function(class_directive) {
+		return class_directive.name === name;
 	});
-}
-
-function isDynamic(value: Node) {
-	return value.length > 1 || value[0].type !== 'Text';
 }
 
 function unquote(value: Node) {
@@ -262,7 +258,7 @@ class Block {
 	selectors: Node[]
 	start: number;
 	end: number;
-	shouldEncapsulate: boolean;
+	should_encapsulate: boolean;
 
 	constructor(combinator: Node) {
 		this.combinator = combinator;
@@ -272,7 +268,7 @@ class Block {
 		this.start = null;
 		this.end = null;
 
-		this.shouldEncapsulate = false;
+		this.should_encapsulate = false;
 	}
 
 	add(selector: Node) {
@@ -286,7 +282,7 @@ class Block {
 	}
 }
 
-function groupSelectors(selector: Node) {
+function group_selectors(selector: Node) {
 	let block: Block = new Block(null);
 
 	const blocks = [block];

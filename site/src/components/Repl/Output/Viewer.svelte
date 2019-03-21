@@ -26,13 +26,13 @@
 
 	onMount(() => {
 		proxy = new ReplProxy(iframe, {
-			onFetchProgress: progress => {
+			on_fetch_progress: progress => {
 				pending_imports = progress;
 			}
 		});
 
 		iframe.addEventListener('load', () => {
-			proxy.handleLinks();
+			proxy.handle_links();
 			ready = true;
 		});
 
@@ -49,20 +49,19 @@
 		const token = current_token = {};
 
 		try {
-			await proxy.fetchImports($bundle.imports, $bundle.import_map);
+			await proxy.fetch_imports($bundle.imports, $bundle.import_map);
 			if (token !== current_token) return;
-
-			await proxy.eval(`
-				const styles = document.querySelectorAll('style.svelte');
-				let i = styles.length;
-				while (i--) styles[i].parentNode.removeChild(styles[i]);
-			`);
 
 			await proxy.eval(`
 				// needed for context API tutorial
 				window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
 
+				const styles = document.querySelectorAll('style[id^=svelte-]');
+
 				${$bundle.dom.code}
+
+				let i = styles.length;
+				while (i--) styles[i].parentNode.removeChild(styles[i]);
 
 				if (window.component) {
 					try {

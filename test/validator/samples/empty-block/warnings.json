@@ -3,30 +3,30 @@
 		"code": "empty-block",
 		"message": "Empty block",
 		"start": {
-			"line": 1,
+			"line": 5,
 			"column": 0,
-			"character": 0
+			"character": 38
 		},
 		"end": {
-			"line": 3,
+			"line": 7,
 			"column": 7,
-			"character": 32
+			"character": 70
 		},
-		"pos": 0
+		"pos": 38
 	},
 	{
 		"code": "empty-block",
 		"message": "Empty block",
 		"start": {
-			"line": 5,
+			"line": 9,
 			"column": 0,
-			"character": 34
+			"character": 72
 		},
 		"end": {
-			"line": 5,
+			"line": 9,
 			"column": 30,
-			"character": 64
+			"character": 102
 		},
-		"pos": 34
+		"pos": 72
 	}
 ]

@@ -1,36 +1,36 @@
-import readExpression from '../read/expression';
-import readScript from '../read/script';
-import readStyle from '../read/style';
-import { decodeCharacterReferences } from '../utils/html';
-import isVoidElementName from '../../utils/isVoidElementName';
+import read_expression from '../read/expression';
+import read_script from '../read/script';
+import read_style from '../read/style';
+import { decode_character_references } from '../utils/html';
+import { is_void } from '../../utils/names';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 
-const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
+const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
-const metaTags = new Map([
+const meta_tags = new Map([
 	['svelte:head', 'Head'],
 	['svelte:options', 'Options'],
 	['svelte:window', 'Window'],
 	['svelte:body', 'Body']
 ]);
 
-const valid_meta_tags = Array.from(metaTags.keys()).concat('svelte:self', 'svelte:component');
+const valid_meta_tags = Array.from(meta_tags.keys()).concat('svelte:self', 'svelte:component');
 
 const specials = new Map([
 	[
 		'script',
 		{
-			read: readScript,
+			read: read_script,
 			property: 'js',
 		},
 	],
 	[
 		'style',
 		{
-			read: readStyle,
+			read: read_style,
 			property: 'css',
 		},
 	],
@@ -40,7 +40,7 @@ const SELF = /^svelte:self(?=[\s\/>])/;
 const COMPONENT = /^svelte:component(?=[\s\/>])/;
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
-const disallowedContents = new Map([
+const disallowed_contents = new Map([
 	['li', new Set(['li'])],
 	['dt', new Set(['dt', 'dd'])],
 	['dd', new Set(['dt', 'dd'])],
@@ -64,7 +64,7 @@ const disallowedContents = new Map([
 	['th', new Set(['td', 'th', 'tr'])],
 ]);
 
-function parentIsHead(stack) {
+function parent_is_head(stack) {
 	let i = stack.length;
 	while (i--) {
 		const { type } = stack[i];
@@ -80,7 +80,7 @@ export default function tag(parser: Parser) {
 	let parent = parser.current();
 
 	if (parser.eat('!--')) {
-		const data = parser.readUntil(/-->/);
+		const data = parser.read_until(/-->/);
 		parser.eat('-->', true, 'comment was left open, expected -->');
 
 		parser.current().children.push({
@@ -93,13 +93,13 @@ export default function tag(parser: Parser) {
 		return;
 	}
 
-	const isClosingTag = parser.eat('/');
+	const is_closing_tag = parser.eat('/');
 
-	const name = readTagName(parser);
+	const name = read_tag_name(parser);
 
-	if (metaTags.has(name)) {
-		const slug = metaTags.get(name).toLowerCase();
-		if (isClosingTag) {
+	if (meta_tags.has(name)) {
+		const slug = meta_tags.get(name).toLowerCase();
+		if (is_closing_tag) {
 			if (
 				(name === 'svelte:window' || name === 'svelte:body') &&
 				parser.current().children.length
@@ -110,7 +110,7 @@ export default function tag(parser: Parser) {
 				}, parser.current().children[0].start);
 			}
 		} else {
-			if (name in parser.metaTags) {
+			if (name in parser.meta_tags) {
 				parser.error({
 					code: `duplicate-${slug}`,
 					message: `A component can only have one <${name}> tag`
@@ -124,14 +124,14 @@ export default function tag(parser: Parser) {
 				}, start);
 			}
 
-			parser.metaTags[name] = true;
+			parser.meta_tags[name] = true;
 		}
 	}
 
-	const type = metaTags.has(name)
-		? metaTags.get(name)
+	const type = meta_tags.has(name)
+		? meta_tags.get(name)
 		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
-		: name === 'title' && parentIsHead(parser.stack) ? 'Title'
+		: name === 'title' && parent_is_head(parser.stack) ? 'Title'
 		: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
 	const element: Node = {
@@ -143,10 +143,10 @@ export default function tag(parser: Parser) {
 		children: [],
 	};
 
-	parser.allowWhitespace();
+	parser.allow_whitespace();
 
-	if (isClosingTag) {
-		if (isVoidElementName(name)) {
+	if (is_closing_tag) {
+		if (is_void(name)) {
 			parser.error({
 				code: `invalid-void-content`,
 				message: `<${name}> is a void element and cannot have children, or a closing tag`
@@ -173,42 +173,21 @@ export default function tag(parser: Parser) {
 		parser.stack.pop();
 
 		return;
-	} else if (disallowedContents.has(parent.name)) {
+	} else if (disallowed_contents.has(parent.name)) {
 		// can this be a child of the parent element, or does it implicitly
 		// close it, like `<li>one<li>two`?
-		if (disallowedContents.get(parent.name).has(name)) {
+		if (disallowed_contents.get(parent.name).has(name)) {
 			parent.end = start;
 			parser.stack.pop();
 		}
 	}
 
-	// TODO should this still error in in web component mode?
-	// if (name === 'slot') {
-	// 	let i = parser.stack.length;
-	// 	while (i--) {
-	// 		const item = parser.stack[i];
-	// 		if (item.type === 'EachBlock') {
-	// 			parser.error({
-	// 				code: `invalid-slot-placement`,
-	// 				message: `<slot> cannot be a child of an each-block`
-	// 			}, start);
-	// 		}
-	// 	}
-	// }
-
-	const uniqueNames = new Set();
+	const unique_names = new Set();
 
 	let attribute;
-	while ((attribute = readAttribute(parser, uniqueNames))) {
-		if (attribute.type === 'Binding' && !parser.allowBindings) {
-			parser.error({
-				code: `binding-disabled`,
-				message: `Two-way binding is disabled`
-			}, attribute.start);
-		}
-
+	while ((attribute = read_attribute(parser, unique_names))) {
 		element.attributes.push(attribute);
-		parser.allowWhitespace();
+		parser.allow_whitespace();
 	}
 
 	if (name === 'svelte:component') {
@@ -244,16 +223,16 @@ export default function tag(parser: Parser) {
 
 	parser.current().children.push(element);
 
-	const selfClosing = parser.eat('/') || isVoidElementName(name);
+	const self_closing = parser.eat('/') || is_void(name);
 
 	parser.eat('>', true);
 
-	if (selfClosing) {
+	if (self_closing) {
 		// don't push self-closing elements onto the stack
 		element.end = parser.index;
 	} else if (name === 'textarea') {
 		// special case
-		element.children = readSequence(
+		element.children = read_sequence(
 			parser,
 			() =>
 				parser.template.slice(parser.index, parser.index + 11) === '</textarea>'
@@ -263,7 +242,7 @@ export default function tag(parser: Parser) {
 	} else if (name === 'script') {
 		// special case
 		const start = parser.index;
-		const data = parser.readUntil(/<\/script>/);
+		const data = parser.read_until(/<\/script>/);
 		const end = parser.index;
 		element.children.push({ start, end, type: 'Text', data });
 		parser.eat('</script>', true);
@@ -271,7 +250,7 @@ export default function tag(parser: Parser) {
 	} else if (name === 'style') {
 		// special case
 		const start = parser.index;
-		const data = parser.readUntil(/<\/style>/);
+		const data = parser.read_until(/<\/style>/);
 		const end = parser.index;
 		element.children.push({ start, end, type: 'Text', data });
 		parser.eat('</style>', true);
@@ -280,7 +259,7 @@ export default function tag(parser: Parser) {
 	}
 }
 
-function readTagName(parser: Parser) {
+function read_tag_name(parser: Parser) {
 	const start = parser.index;
 
 	if (parser.read(SELF)) {
@@ -309,9 +288,9 @@ function readTagName(parser: Parser) {
 
 	if (parser.read(COMPONENT)) return 'svelte:component';
 
-	const name = parser.readUntil(/(\s|\/|>)/);
+	const name = parser.read_until(/(\s|\/|>)/);
 
-	if (metaTags.has(name)) return name;
+	if (meta_tags.has(name)) return name;
 
 	if (name.startsWith('svelte:')) {
 		const match = fuzzymatch(name.slice(7), valid_meta_tags);
@@ -325,7 +304,7 @@ function readTagName(parser: Parser) {
 		}, start);
 	}
 
-	if (!validTagName.test(name)) {
+	if (!valid_tag_name.test(name)) {
 		parser.error({
 			code: `invalid-tag-name`,
 			message: `Expected valid tag name`
@@ -335,16 +314,16 @@ function readTagName(parser: Parser) {
 	return name;
 }
 
-function readAttribute(parser: Parser, uniqueNames: Set<string>) {
+function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const start = parser.index;
 
 	if (parser.eat('{')) {
-		parser.allowWhitespace();
+		parser.allow_whitespace();
 
 		if (parser.eat('...')) {
-			const expression = readExpression(parser);
+			const expression = read_expression(parser);
 
-			parser.allowWhitespace();
+			parser.allow_whitespace();
 			parser.eat('}', true);
 
 			return {
@@ -354,10 +333,10 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 				expression
 			};
 		} else {
-			const valueStart = parser.index;
+			const value_start = parser.index;
 
-			const name = parser.readIdentifier();
-			parser.allowWhitespace();
+			const name = parser.read_identifier();
+			parser.allow_whitespace();
 			parser.eat('}', true);
 
 			return {
@@ -366,12 +345,12 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 				type: 'Attribute',
 				name,
 				value: [{
-					start: valueStart,
-					end: valueStart + name.length,
+					start: value_start,
+					end: value_start + name.length,
 					type: 'AttributeShorthand',
 					expression: {
-						start: valueStart,
-						end: valueStart + name.length,
+						start: value_start,
+						end: value_start + name.length,
 						type: 'Identifier',
 						name
 					}
@@ -380,27 +359,27 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 		}
 	}
 
-	let name = parser.readUntil(/(\s|=|\/|>)/);
+	let name = parser.read_until(/(\s|=|\/|>)/);
 	if (!name) return null;
-	if (uniqueNames.has(name)) {
+	if (unique_names.has(name)) {
 		parser.error({
 			code: `duplicate-attribute`,
 			message: 'Attributes need to be unique'
 		}, start);
 	}
 
-	uniqueNames.add(name);
+	unique_names.add(name);
 
 	let end = parser.index;
 
-	parser.allowWhitespace();
+	parser.allow_whitespace();
 
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
 	let value: any[] | true = true;
 	if (parser.eat('=')) {
-		value = readAttributeValue(parser);
+		value = read_attribute_value(parser);
 		end = parser.index;
 	}
 
@@ -470,23 +449,23 @@ function get_directive_type(name) {
 	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
 }
 
-function readAttributeValue(parser: Parser) {
-	const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
+function read_attribute_value(parser: Parser) {
+	const quote_mark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
 
 	const regex = (
-		quoteMark === `'` ? /'/ :
-		quoteMark === `"` ? /"/ :
+		quote_mark === `'` ? /'/ :
+		quote_mark === `"` ? /"/ :
 		/(\/>|[\s"'=<>`])/
 	);
 
-	const value = readSequence(parser, () => !!parser.matchRegex(regex));
+	const value = read_sequence(parser, () => !!parser.match_regex(regex));
 
-	if (quoteMark) parser.index += 1;
+	if (quote_mark) parser.index += 1;
 	return value;
 }
 
-function readSequence(parser: Parser, done: () => boolean) {
-	let currentChunk: Node = {
+function read_sequence(parser: Parser, done: () => boolean) {
+	let current_chunk: Node = {
 		start: parser.index,
 		end: null,
 		type: 'Text',
@@ -499,25 +478,25 @@ function readSequence(parser: Parser, done: () => boolean) {
 		const index = parser.index;
 
 		if (done()) {
-			currentChunk.end = parser.index;
+			current_chunk.end = parser.index;
 
-			if (currentChunk.data) chunks.push(currentChunk);
+			if (current_chunk.data) chunks.push(current_chunk);
 
 			chunks.forEach(chunk => {
 				if (chunk.type === 'Text')
-					chunk.data = decodeCharacterReferences(chunk.data);
+					chunk.data = decode_character_references(chunk.data);
 			});
 
 			return chunks;
 		} else if (parser.eat('{')) {
-			if (currentChunk.data) {
-				currentChunk.end = index;
-				chunks.push(currentChunk);
+			if (current_chunk.data) {
+				current_chunk.end = index;
+				chunks.push(current_chunk);
 			}
 
-			parser.allowWhitespace();
-			const expression = readExpression(parser);
-			parser.allowWhitespace();
+			parser.allow_whitespace();
+			const expression = read_expression(parser);
+			parser.allow_whitespace();
 			parser.eat('}', true);
 
 			chunks.push({
@@ -527,14 +506,14 @@ function readSequence(parser: Parser, done: () => boolean) {
 				expression,
 			});
 
-			currentChunk = {
+			current_chunk = {
 				start: parser.index,
 				end: null,
 				type: 'Text',
 				data: '',
 			};
 		} else {
-			currentChunk.data += parser.template[parser.index++];
+			current_chunk.data += parser.template[parser.index++];
 		}
 	}
 

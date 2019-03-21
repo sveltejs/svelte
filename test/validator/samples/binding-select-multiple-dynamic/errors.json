@@ -2,14 +2,14 @@
 	"code": "dynamic-multiple-attribute",
 	"message": "'multiple' attribute cannot be dynamic if select uses two-way binding",
 	"start": {
-		"line": 1,
+		"line": 6,
 		"column": 19,
-		"character": 19
+		"character": 66
 	},
 	"end": {
-		"line": 1,
+		"line": 6,
 		"column": 29,
-		"character": 29
+		"character": 76
 	},
-	"pos": 19
+	"pos": 66
 }]

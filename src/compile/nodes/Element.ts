@@ -1,4 +1,4 @@
-import isVoidElementName from '../../utils/isVoidElementName';
+import { is_void } from '../../utils/names';
 import Node from './shared/Node';
 import Attribute from './Attribute';
 import Binding from './Binding';
@@ -9,7 +9,7 @@ import Action from './Action';
 import Class from './Class';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
-import mapChildren from './shared/mapChildren';
+import map_children from './shared/map_children';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
@@ -18,13 +18,13 @@ import TemplateScope from './shared/TemplateScope';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
-const ariaAttributes = 'activedescendant atomic autocomplete busy checked colindex controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowindex selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
-const ariaAttributeSet = new Set(ariaAttributes);
+const aria_attributes = 'activedescendant atomic autocomplete busy checked colindex controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowindex selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
+const aria_attribute_set = new Set(aria_attributes);
 
-const ariaRoles = 'alert alertdialog application article banner button cell checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document feed figure form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search searchbox section sectionhead select separator slider spinbutton status structure switch tab table tablist tabpanel term textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(' ');
-const ariaRoleSet = new Set(ariaRoles);
+const aria_roles = 'alert alertdialog application article banner button cell checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document feed figure form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search searchbox section sectionhead select separator slider spinbutton status structure switch tab table tablist tabpanel term textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(' ');
+const aria_role_set = new Set(aria_roles);
 
-const a11yRequiredAttributes = {
+const a11y_required_attributes = {
 	a: ['href'],
 	area: ['alt', 'aria-label', 'aria-labelledby'],
 
@@ -37,12 +37,12 @@ const a11yRequiredAttributes = {
 	object: ['title', 'aria-label', 'aria-labelledby']
 };
 
-const a11yDistractingElements = new Set([
+const a11y_distracting_elements = new Set([
 	'blink',
 	'marquee'
 ]);
 
-const a11yRequiredContent = new Set([
+const a11y_required_content = new Set([
 	// anchor-has-content
 	'a',
 
@@ -55,9 +55,9 @@ const a11yRequiredContent = new Set([
 	'h6'
 ])
 
-const invisibleElements = new Set(['meta', 'html', 'script', 'style']);
+const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
-const validModifiers = new Set([
+const valid_modifiers = new Set([
 	'preventDefault',
 	'stopPropagation',
 	'capture',
@@ -65,7 +65,7 @@ const validModifiers = new Set([
 	'passive'
 ]);
 
-const passiveEvents = new Set([
+const passive_events = new Set([
 	'wheel',
 	'touchstart',
 	'touchmove',
@@ -93,10 +93,10 @@ export default class Element extends Node {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
-		const parentElement = parent.findNearest(/^Element/);
+		const parent_element = parent.find_nearest(/^Element/);
 		this.namespace = this.name === 'svg' ?
 			namespaces.svg :
-			parentElement ? parentElement.namespace : this.component.namespace;
+			parent_element ? parent_element.namespace : this.component.namespace;
 
 		if (!this.namespace && svg.test(this.name)) {
 			this.component.warn(this, {
@@ -107,9 +107,9 @@ export default class Element extends Node {
 
 		if (this.name === 'textarea') {
 			if (info.children.length > 0) {
-				const valueAttribute = info.attributes.find(node => node.name === 'value');
-				if (valueAttribute) {
-					component.error(valueAttribute, {
+				const value_attribute = info.attributes.find(node => node.name === 'value');
+				if (value_attribute) {
+					component.error(value_attribute, {
 						code: `textarea-duplicate-value`,
 						message: `A <textarea> can have either a value attribute or (equivalently) child content, but not both`
 					});
@@ -131,9 +131,9 @@ export default class Element extends Node {
 			// Special case — treat these the same way:
 			//   <option>{foo}</option>
 			//   <option value={foo}>{foo}</option>
-			const valueAttribute = info.attributes.find((attribute: Node) => attribute.name === 'value');
+			const value_attribute = info.attributes.find((attribute: Node) => attribute.name === 'value');
 
-			if (!valueAttribute) {
+			if (!value_attribute) {
 				info.attributes.push({
 					type: 'Attribute',
 					name: 'value',
@@ -202,7 +202,7 @@ export default class Element extends Node {
 			this.scope = scope;
 		}
 
-		this.children = mapChildren(component, this, this.scope, info.children);
+		this.children = map_children(component, this, this.scope, info.children);
 
 		this.validate();
 
@@ -210,7 +210,7 @@ export default class Element extends Node {
 	}
 
 	validate() {
-		if (a11yDistractingElements.has(this.name)) {
+		if (a11y_distracting_elements.has(this.name)) {
 			// no-distracting-elements
 			this.component.warn(this, {
 				code: `a11y-distracting-elements`,
@@ -244,25 +244,25 @@ export default class Element extends Node {
 			}
 		}
 
-		this.validateAttributes();
-		this.validateBindings();
-		this.validateContent();
-		this.validateEventHandlers();
+		this.validate_attributes();
+		this.validate_bindings();
+		this.validate_content();
+		this.validate_event_handlers();
 	}
 
-	validateAttributes() {
+	validate_attributes() {
 		const { component } = this;
 
-		const attributeMap = new Map();
+		const attribute_map = new Map();
 
 		this.attributes.forEach(attribute => {
-			if (attribute.isSpread) return;
+			if (attribute.is_spread) return;
 
 			const name = attribute.name.toLowerCase();
 
 			// aria-props
 			if (name.startsWith('aria-')) {
-				if (invisibleElements.has(this.name)) {
+				if (invisible_elements.has(this.name)) {
 					// aria-unsupported-elements
 					component.warn(attribute, {
 						code: `a11y-aria-attributes`,
@@ -271,8 +271,8 @@ export default class Element extends Node {
 				}
 
 				const type = name.slice(5);
-				if (!ariaAttributeSet.has(type)) {
-					const match = fuzzymatch(type, ariaAttributes);
+				if (!aria_attribute_set.has(type)) {
+					const match = fuzzymatch(type, aria_attributes);
 					let message = `A11y: Unknown aria attribute 'aria-${type}'`;
 					if (match) message += ` (did you mean '${match}'?)`;
 
@@ -292,7 +292,7 @@ export default class Element extends Node {
 
 			// aria-role
 			if (name === 'role') {
-				if (invisibleElements.has(this.name)) {
+				if (invisible_elements.has(this.name)) {
 					// aria-unsupported-elements
 					component.warn(attribute, {
 						code: `a11y-misplaced-role`,
@@ -300,9 +300,9 @@ export default class Element extends Node {
 					});
 				}
 
-				const value = attribute.getStaticValue();
-				if (value && !ariaRoleSet.has(value)) {
-					const match = fuzzymatch(value, ariaRoles);
+				const value = attribute.get_static_value();
+				if (value && !aria_role_set.has(value)) {
+					const match = fuzzymatch(value, aria_roles);
 					let message = `A11y: Unknown role '${value}'`;
 					if (match) message += ` (did you mean '${match}'?)`;
 
@@ -339,7 +339,7 @@ export default class Element extends Node {
 
 			// tabindex-no-positive
 			if (name === 'tabindex') {
-				const value = attribute.getStaticValue();
+				const value = attribute.get_static_value();
 				if (!isNaN(value) && +value > 0) {
 					component.warn(attribute, {
 						code: `a11y-positive-tabindex`,
@@ -349,7 +349,7 @@ export default class Element extends Node {
 			}
 
 			if (name === 'slot') {
-				if (!attribute.isStatic) {
+				if (!attribute.is_static) {
 					component.error(attribute, {
 						code: `invalid-slot-attribute`,
 						message: `slot attribute cannot have a dynamic value`
@@ -380,15 +380,15 @@ export default class Element extends Node {
 				}
 			}
 
-			attributeMap.set(attribute.name, attribute);
+			attribute_map.set(attribute.name, attribute);
 		});
 
 		// handle special cases
 		if (this.name === 'a') {
-			const attribute = attributeMap.get('href') || attributeMap.get('xlink:href');
+			const attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
 
 			if (attribute) {
-				const value = attribute.getStaticValue();
+				const value = attribute.get_static_value();
 
 				if (value === '' || value === '#') {
 					component.warn(attribute, {
@@ -405,19 +405,19 @@ export default class Element extends Node {
 		}
 
 		else {
-			const requiredAttributes = a11yRequiredAttributes[this.name];
-			if (requiredAttributes) {
-				const hasAttribute = requiredAttributes.some(name => attributeMap.has(name));
+			const required_attributes = a11y_required_attributes[this.name];
+			if (required_attributes) {
+				const has_attribute = required_attributes.some(name => attribute_map.has(name));
 
-				if (!hasAttribute) {
-					shouldHaveAttribute(this, requiredAttributes);
+				if (!has_attribute) {
+					should_have_attribute(this, required_attributes);
 				}
 			}
 
 			if (this.name === 'input') {
-				const type = attributeMap.get('type');
-				if (type && type.getStaticValue() === 'image') {
-					shouldHaveAttribute(
+				const type = attribute_map.get('type');
+				if (type && type.get_static_value() === 'image') {
+					should_have_attribute(
 						this,
 						['alt', 'aria-label', 'aria-labelledby'],
 						'input type="image"'
@@ -427,24 +427,24 @@ export default class Element extends Node {
 		}
 	}
 
-	validateBindings() {
+	validate_bindings() {
 		const { component } = this;
 
-		const checkTypeAttribute = () => {
+		const check_type_attribute = () => {
 			const attribute = this.attributes.find(
 				(attribute: Attribute) => attribute.name === 'type'
 			);
 
 			if (!attribute) return null;
 
-			if (!attribute.isStatic) {
+			if (!attribute.is_static) {
 				component.error(attribute, {
 					code: `invalid-type`,
 					message: `'type' attribute cannot be dynamic if input uses two-way binding`
 				});
 			}
 
-			const value = attribute.getStaticValue();
+			const value = attribute.get_static_value();
 
 			if (value === true) {
 				component.error(attribute, {
@@ -476,14 +476,14 @@ export default class Element extends Node {
 						(attribute: Attribute) => attribute.name === 'multiple'
 					);
 
-					if (attribute && !attribute.isStatic) {
+					if (attribute && !attribute.is_static) {
 						component.error(attribute, {
 							code: `dynamic-multiple-attribute`,
 							message: `'multiple' attribute cannot be dynamic if select uses two-way binding`
 						});
 					}
 				} else {
-					checkTypeAttribute();
+					check_type_attribute();
 				}
 			} else if (name === 'checked' || name === 'indeterminate') {
 				if (this.name !== 'input') {
@@ -493,7 +493,7 @@ export default class Element extends Node {
 					});
 				}
 
-				if (checkTypeAttribute() !== 'checkbox') {
+				if (check_type_attribute() !== 'checkbox') {
 					component.error(binding, {
 						code: `invalid-binding`,
 						message: `'${name}' binding can only be used with <input type="checkbox">`
@@ -507,7 +507,7 @@ export default class Element extends Node {
 					});
 				}
 
-				const type = checkTypeAttribute();
+				const type = check_type_attribute();
 
 				if (type !== 'checkbox' && type !== 'radio') {
 					component.error(binding, {
@@ -523,7 +523,7 @@ export default class Element extends Node {
 					});
 				}
 
-				const type = checkTypeAttribute();
+				const type = check_type_attribute();
 
 				if (type !== 'file') {
 					component.error(binding, {
@@ -557,7 +557,7 @@ export default class Element extends Node {
 						code: 'invalid-binding',
 						message: `'${binding.name}' is not a valid binding on SVG elements`
 					});
-				} else if (isVoidElementName(this.name)) {
+				} else if (is_void(this.name)) {
 					component.error(binding, {
 						code: 'invalid-binding',
 						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`
@@ -572,8 +572,8 @@ export default class Element extends Node {
 		});
 	}
 
-	validateContent() {
-		if (!a11yRequiredContent.has(this.name)) return;
+	validate_content() {
+		if (!a11y_required_content.has(this.name)) return;
 
 		if (this.children.length === 0) {
 			this.component.warn(this, {
@@ -583,7 +583,7 @@ export default class Element extends Node {
 		}
 	}
 
-	validateEventHandlers() {
+	validate_event_handlers() {
 		const { component } = this;
 
 		this.handlers.forEach(handler => {
@@ -595,16 +595,16 @@ export default class Element extends Node {
 			}
 
 			handler.modifiers.forEach(modifier => {
-				if (!validModifiers.has(modifier)) {
+				if (!valid_modifiers.has(modifier)) {
 					component.error(handler, {
 						code: 'invalid-event-modifier',
-						message: `Valid event modifiers are ${list(Array.from(validModifiers))}`
+						message: `Valid event modifiers are ${list(Array.from(valid_modifiers))}`
 					});
 				}
 
 				if (modifier === 'passive') {
-					if (passiveEvents.has(handler.name)) {
-						if (handler.canMakePassive) {
+					if (passive_events.has(handler.name)) {
+						if (handler.can_make_passive) {
 							component.warn(handler, {
 								code: 'redundant-event-modifier',
 								message: `Touch event handlers that don't use the 'event' object are passive by default`
@@ -618,7 +618,7 @@ export default class Element extends Node {
 					}
 				}
 
-				if (component.compileOptions.legacy && (modifier === 'once' || modifier === 'passive')) {
+				if (component.compile_options.legacy && (modifier === 'once' || modifier === 'passive')) {
 					// TODO this could be supported, but it would need a few changes to
 					// how event listeners work
 					component.error(handler, {
@@ -628,21 +628,21 @@ export default class Element extends Node {
 				}
 			});
 
-			if (passiveEvents.has(handler.name) && handler.canMakePassive && !handler.modifiers.has('preventDefault')) {
+			if (passive_events.has(handler.name) && handler.can_make_passive && !handler.modifiers.has('preventDefault')) {
 				// touch/wheel events should be passive by default
 				handler.modifiers.add('passive');
 			}
 		});
 	}
 
-	getStaticAttributeValue(name: string) {
+	get_static_attribute_value(name: string) {
 		const attribute = this.attributes.find(
 			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
 		);
 
 		if (!attribute) return null;
 
-		if (attribute.isTrue) return true;
+		if (attribute.is_true) return true;
 		if (attribute.chunks.length === 0) return '';
 
 		if (attribute.chunks.length === 1 && attribute.chunks[0].type === 'Text') {
@@ -652,20 +652,20 @@ export default class Element extends Node {
 		return null;
 	}
 
-	isMediaNode() {
+	is_media_node() {
 		return this.name === 'audio' || this.name === 'video';
 	}
 
-	addCssClass(className = this.component.stylesheet.id) {
-		const classAttribute = this.attributes.find(a => a.name === 'class');
-		if (classAttribute && !classAttribute.isTrue) {
-			if (classAttribute.chunks.length === 1 && classAttribute.chunks[0].type === 'Text') {
-				(classAttribute.chunks[0] as Text).data += ` ${className}`;
+	add_css_class(class_name = this.component.stylesheet.id) {
+		const class_attribute = this.attributes.find(a => a.name === 'class');
+		if (class_attribute && !class_attribute.is_true) {
+			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
+				(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
 			} else {
-				(<Node[]>classAttribute.chunks).push(
+				(<Node[]>class_attribute.chunks).push(
 					new Text(this.component, this, this.scope, {
 						type: 'Text',
-						data: ` ${className}`
+						data: ` ${class_name}`
 					})
 				);
 			}
@@ -674,14 +674,14 @@ export default class Element extends Node {
 				new Attribute(this.component, this, this.scope, {
 					type: 'Attribute',
 					name: 'class',
-					value: [{ type: 'Text', data: className }]
+					value: [{ type: 'Text', data: class_name }]
 				})
 			);
 		}
 	}
 }
 
-function shouldHaveAttribute(
+function should_have_attribute(
 	node,
 	attributes: string[],
 	name = node.name

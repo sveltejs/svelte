@@ -1,3 +1,7 @@
+<script>
+	export let checked;
+</script>
+
 <style>
 	.input-output-toggle {
 		display: grid;
