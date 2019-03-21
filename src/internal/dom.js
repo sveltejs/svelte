@@ -54,6 +54,10 @@ export function comment() {
 	return document.createComment('');
 }
 
+export function empty() {
+	return text('');
+}
+
 export function listen(node, event, handler, options) {
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
