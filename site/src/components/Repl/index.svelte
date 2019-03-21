@@ -12,6 +12,7 @@
 	export let version = 'beta'; // TODO change this to latest when the time comes
 	export let embedded = false;
 	export let orientation = 'columns';
+	export let relaxed = false;
 
 	export function toJSON() {
 		// TODO there's a bug here — Svelte hoists this function because
@@ -222,7 +223,7 @@
 			</section>
 
 			<section slot=b style='height: 100%;'>
-				<Output {version} {embedded}/>
+				<Output {version} {embedded} {relaxed}/>
 			</section>
 		</SplitPane>
 	</div>
