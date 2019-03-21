@@ -31,7 +31,10 @@ This is where the magic happens. `svelte.compile` takes your component source co
 
 ```js
 const svelte = require('svelte/compiler');
-const result = svelte.compile(source);
+
+const result = svelte.compile(source, {
+	// options
+});
 ```
 
 The following options can be passed to the compiler. None are required:
@@ -56,157 +59,60 @@ The following options can be passed to the compiler. None are required:
 | `cssOutputFilename` | string | `null`
 | `sveltePath` | string | `"svelte"` -->
 
----
+| option | default | description |
+| --- | --- | --- |
+| `filename` | `null` | `string` used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
+| `name` | `"Component"` | `string` that sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope). It will normally be inferred from `filename`.
+| `format` | `"esm"` | If `"esm"`, creates a JavaScript module (with `import` and `export`). If `"cjs"`, creates a CommonJS module (with `require` and `module.exports`), which is useful in some server-side rendering situations or for testing.
+| `generate` | `"dom"` | If `"dom"`, Svelte emits a JavaScript class for mounting to the DOM. If `"ssr"`, Svelte emits an object with a `render` method suitable for server-side rendering. If `false`, no JavaScript or CSS is returned; just metadata.
+| `dev` | `false` | If `true`, causes extra code to be added to components that will perform runtime checks and provide debugging information during development.
+| `immutable` | `false` | If `true`, tells the compiler that you promise not to mutate any objects. This allows it to be less conservative about checking whether values have changed.
+| `hydratable` | `false` | If `true`, enables the `hydrate: true` runtime option, which allows a component to upgrade existing DOM rather than creating new DOM from scratch.
+| `legacy` | `false` | If `true`, generates code that will work in IE9 and IE10, which don't support things like `element.dataset`.
+| `customElement` | `false` | If `true`, tells the compiler to generate a custom element constructor instead of a regular Svelte component.
+| `tag` | `null` | A `string` that tells Svelte what tag name to register the custom element with. It must be a lowercase alphanumeric string with at least one hyphen, e.g. `"my-element"`.
+| `css` | `true` | If `true`, styles will be included in the JavaScript class and injected at runtime. It's recommended that you set this to `false` and use the CSS that is statically generated, as it will result in smaller JavaScript bundles and better performance.
+| `preserveComments` | `false` | If `true`, your HTML comments will be recreated inside your component. By default, they are stripped out.
+| `preserveWhitespace` | `false` | If `true`, whitespace inside and between elements is kept as you typed it, rather than optimised by Svelte.
+| `outputFilename` | `null` | A `string` used for your JavaScript sourcemap.
+| `cssOutputFilename` | `null` | A `string` used for your CSS sourcemap.
+| `sveltePath` | `"svelte"` | The location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.
 
-* `filename` (string, default `null`) is used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
-
-* `name` (string, default `"Component"`) sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope). It will normally be inferred from `filename`.
-
-```js
-const result = svelte.compile(source, {
-	filename: 'src/components/Widget.svelte',
-	name: 'Widget'
-});
-```
-
----
-
-* `format` (`"esm"` or `"cjs"`, default `"esm"`) controls whether Svelte creates a JavaScript module (with `import` and `export`) or a CommonJS module (with `require` and `module.exports` — useful in some server-side rendering situations or for testing).
-
-* `generate` (`"dom"` or `"ssr"`, default `"dom"`) controls whether Svelte emits a JavaScript class for mounting to the DOM, or an object with a `render` method suitable for server-side rendering.
-
-```js
-const result = svelte.compile(source, {
-	format: 'cjs',
-	generate: 'ssr'
-});
-```
 
 ---
 
-* `dev` (boolean, default `false`) causes extra code to be added to components that will perform runtime checks and provide debugging information during development.
+The returned `result` object contains the code for your component, along with useful bits of metadata.
 
 ```js
-const result = svelte.compile(source, {
-	dev: true
-});
+const {
+	js,
+	css,
+	ast,
+	warnings,
+	vars,
+	stats
+} = svelte.compile(source);
 ```
 
----
-
-* `immutable` (boolean, default `false`) tells the compiler that you promise not to mutate any objects. This allows it to be less conservative about checking whether values have changed.
-
-```js
-const result = svelte.compile(source, {
-	immutable: true
-});
-```
-
----
-
-* `hydratable` (boolean, default `false`) enables the `hydrate: true` runtime option, which allows a component to upgrade existing DOM rather than creating new DOM from scratch.
-
-```js
-const result = svelte.compile(source, {
-	hydratable: true
-});
-```
-
----
-
-* `legacy` (boolean, default `false`) generates code that will work in IE9 and IE10, which don't support things like `element.dataset`.
-
-```js
-const result = svelte.compile(source, {
-	legacy: true
-});
-```
-
----
-
-* `customElement` (boolean, default `false`) tells the compiler to generate a custom element constructor instead of a regular Svelte
-
-* `tag` (string, default `null`) tells it what tag name to register the custom element with. It must be a lowercase alphanumeric string with at least one hyphen.
-
-```js
-const result = svelte.compile(source, {
-	customElement: true,
-	tag: 'my-element'
-});
-```
-
----
-
-* `css` (boolean, default `true`) controls whether or not styles will be included in the JavaScript class and injected at runtime. It's recommended that you set this to `false` and use the CSS that is statically generated, as it will result in smaller JavaScript bundles and better performance.
-
-```js
-const result = svelte.compile(source, {
-	css: false
-});
-```
-
----
-
-* `preserveComments` (boolean, default `false`) will cause your HTML comments to be recreated inside your component. By default, they are stripped out.
-
-* `preserveWhitespace` (boolean, default `false`) ensures that whitespace inside and between elements is kept as you typed it, rather than optimised by Svelte.
-
-```js
-const result = svelte.compile(source, {
-	preserveComments: true,
-	preserveWhitespace: true
-});
-```
-
----
-
-* `outputFilename` (string, default `null`) is used for your JavaScript sourcemap.
-
-* `cssOutputFilename` (string, default `null`) is used for your CSS sourcemap.
-
-```js
-const result = svelte.compile(source, {
-	outputFilename: 'build/component.js',
-	cssOutputFilename: 'build/component.css'
-});
-```
-
----
-
-* `sveltePath` (string, default `"svelte"`) is the location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.
-
-```js
-const result = svelte.compile(source, {
-	sveltePath: 'path/to/alternative/svelte'
-});
-```
-
-
-
-
-#### `result.js`
-
-* TODO
-
-#### `result.css`
-
-* TODO
-
-#### `result.ast`
-
-* TODO
-
-#### `result.warnings`
-
-* TODO
-
-#### `result.vars`
-
-* TODO
-
-#### `result.stats`
-
-* TODO
+* `js` and `css` are obejcts with the following properties:
+	* `code` is a JavaScript string
+	* `map` is a sourcemap with additional `toString()` and `toUrl()` convenience methods
+* `ast` is an abstract syntax tree representing the structure of your component.
+* `warnings` is an array of warning objects that were generated during compilation. Each warning has several properties:
+	* `code` is a string identifying the category of warning
+	* `message` describes the issue in human-readable terms
+	* `start` and `end`, if the warning relates to a specific location, are objects with `line`, `column` and `character` properties
+	* `frame`, if applicable, is a string highlighting the offending code with line numbers
+* `vars` is an array of the component's declarations, used by [eslint-plugin-svelte3](https://github.com/sveltejs/eslint-plugin-svelte3) for example. Each variable has several properties:
+	* `name` is self-explanatory
+	* `export_name` is the name the value is exported as, if it is exported (will match `name` unless you do `export...as`)
+	* `injected` is `true` if the declaration is injected by Svelte, rather than in the code you wrote
+	* `module` is `true` if the value is declared in a `context="module"` script
+	* `mutated` is `true` if the value's properties are assigned to inside the component
+	* `reassigned` is `true` if the value is reassigned inside the component
+	* `referenced` is `true` if the value is used outside the declaration
+	* `writable` is `true` if the value was declared with `let` or `var` (but not `const`, `class` or `function`)
+* `stats` is an object used by the Svelte developer team for diagnosing the compiler. Avoid relying on it to stay the same!
 
 
 <!--

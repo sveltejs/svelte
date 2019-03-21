@@ -137,7 +137,7 @@
 		/* max-width: calc(var(--main-width) + var(--side-nav)); */
 		margin: 0;
 		-moz-tab-size: 2;
-		padding: var(--top-offset) 0;
+		padding: var(--top-offset) var(--side-nav);
 		tab-size: 2;
 	}
 
@@ -181,7 +181,7 @@
 
 		.content {
 			/* max-width: none; */
-			padding-left: var(--sidebar-w);
+			padding-left: calc(var(--sidebar-w) + var(--side-nav));
 		}
 
 		.content :global(.side-by-side) {
