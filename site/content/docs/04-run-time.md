@@ -268,9 +268,78 @@ Retrieves the context that belongs to the closest parent component with the spec
 
 ### svelte/store
 
+The `svelte/store` module exports functions for creating [stores](http://localhost:3000/tutorial/writable-stores).
+
+---
+
+To be considered a store, an object must have a `subscribe` method that returns an `unsubscribe` function.
+
+```js
+const unsubscribe = store.subscribe(value => {
+	console.log(value);
+}); // logs `value`
+
+// later...
+unsubscribe();
+```
+
+* `store = writable(value: any)`
+* `store = writable(value: any, () => () => void)`
+
+---
+
+Creates a store with additional `set` and `update` methods.
+
+```js
+import { writable } from 'svelte/store';
+
+const count = writable(0);
+
+count.subscribe(value => {
+	console.log(value);
+}); // logs '0'
+
+count.set(1); // logs '1'
+
+count.update(n => n + 1); // logs '2'
+```
+
+---
+
+If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function can return another function that is called when the number of subscribers goes from one to zero.
+
+```js
+import { writable } from 'svelte/store';
+
+const count = writable(0, () => {
+	console.log('got a subscriber');
+	return () => console.log('no more subscribers');
+});
+
+count.set(1); // does nothing
+
+const unsubscribe = count.subscribe(value => {
+	console.log(value);
+}); // logs 'got a subscriber', then '1'
+
+unsubscribe(); // logs 'no more subscribers'
+```
+
+* `store = readable((set: (value: any) => void) => () => void)`
+
 TODO
 
-* writable, readable, derive, get
+* `store = derive(a, (a: any) => any)`
+* `store = derive(a, (a: any, set: (value: any) => void) => void)`
+* `store = derive([a, ...b], ([a: any, ...b: any[]]) => any)`
+* `store = derive([a, ...b], ([a: any, ...b: any[]], set: (value: any) => void) => void)`
+
+TODO
+
+* `value: any = get(store)`
+
+TODO
+
 
 ### svelte/motion
 
