@@ -11,17 +11,6 @@ title: Run time
 
 A client-side component — that is, a component compiled with `generate: 'dom'` (or the `generate` option left unspecified) is a JavaScript class.
 
-The following initialisation options can be provided:
-
-* `target` (`HTMLElement`, **required**) — the parent DOM node
-* `anchor` (`HTMLElement`, default `null`) — the next sibling DOM node. Must be a child of `target`
-* `props` (`Object`, default `{}`) — an object of properties to supply to the component
-* `hydrate` (`boolean`, default `false`) — see below
-* `intro` (`boolean`, default `false`) — whether to play in transitions on initial render
-
-Existing children of `target` are left where they are.
-
-
 ```js
 import App from './App.svelte';
 
@@ -34,6 +23,19 @@ const app = new App({
 	}
 });
 ```
+
+The following initialisation options can be provided:
+
+| option | default | description |
+| --- | --- | --- |
+| `target` | **none** | An `HTMLElement` to render to. This option is required
+| `anchor` | `null` | A child of `target` to render the component immediately before
+| `props` | `{}` | An object of proeprties to supply to the component
+| `hydrate` | `false` | See below
+| `intro` | `false` | If `true`, will play transitions on initial render, rather than waiting for subsequent state changes
+
+Existing children of `target` are left where they are.
+
 
 ---
 
@@ -104,17 +106,164 @@ app.count += 1;
 
 ### Server-side component API
 
-TODO
-
 * `const result = Component.render(...)`
+
+---
+
+Unlike client-side components, server-side components don't have a lifespan after you render them — their whole job is to create some HTML and CSS. For that reason, the API is somewhat different.
+
+A server-side component exposes a `render` method that can be called with optional props. It returns an object with `head`, `html`, and `css` properties, where `head` contains the contents of any `<svelte:head>` elements encountered.
+
+```js
+const App = require('./App.svelte');
+
+const { head, html, css } = App.render({
+	answer: 42
+});
+```
 
 
 ### svelte
 
-TODO
+The `svelte` package exposes [lifecycle functions](tutorial/onmount) and the [context API](tutorial/context-api).
 
-* lifecycle methods, tick, context
-* SSR behaviour
+* `onMount(() => void)`
+* `onMount(() => () => void)`
+
+---
+
+The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live *inside* the component; it can be called from an external module).
+
+`onMount` does not run inside a server-side component.
+
+```html
+<script>
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		console.log('the component has mounted');
+	});
+</script>
+```
+
+---
+
+If a function is returned from `onMount`, it will be called when the component is unmounted.
+
+```html
+<script>
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			console.log('beep');
+		}, 1000);
+
+		return () => clearInterval(interval);
+	});
+</script>
+```
+
+* `beforeUpdate(() => void)`
+
+---
+
+Schedules a callback to run immediately before the component is updated after any state change.
+
+> The first time the callback runs will be before the initial `onMount`
+
+```html
+<script>
+	import { beforeUpdate } from 'svelte';
+
+	beforeUpdate(() => {
+		console.log('the component is about to update');
+	});
+</script>
+```
+
+* `afterUpdate(() => void)`
+
+---
+
+Schedules a callback to run immediately after the component has been updated.
+
+```html
+<script>
+	import { afterUpdate } from 'svelte';
+
+	afterUpdate(() => {
+		console.log('the component just updated');
+	});
+</script>
+```
+
+* `onDestroy(() => void)`
+
+---
+
+Schedules a callback to run once the component is unmounted.
+
+Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the only one that runs inside a server-side component.
+
+```html
+<script>
+	import { onDestroy } from 'svelte';
+
+	onDestroy(() => {
+		console.log('the component is being destroyed');
+	});
+</script>
+```
+
+* `promise: Promise = tick()`
+
+---
+
+Returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
+
+```html
+<script>
+	import { beforeUpdate, tick } from 'svelte';
+
+	beforeUpdate(async () => {
+		console.log('the component is about to update');
+		await tick();
+		console.log('the component just updated');
+	});
+</script>
+```
+
+* `setContext(key: any, context: any)`
+
+---
+
+Associates an arbitrary `context` object with the current component and the specified `key`. The context is then available to children of the component (including slotted content) with `getContext`.
+
+Like lifecycle functions, this must be called during component initialisation.
+
+```html
+<script>
+	import { setContext } from 'svelte';
+
+	setContext('answer', 42);
+</script>
+```
+
+* `context: any = getContext(key: any)`
+
+---
+
+Retrieves the context that belongs to the closest parent component with the specified `key`. Must be called during component initialisation.
+
+```html
+<script>
+	import { getContext } from 'svelte';
+
+	const answer = getContext('answer');
+</script>
+```
+
 
 
 ### svelte/store
