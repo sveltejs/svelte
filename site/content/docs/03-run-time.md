@@ -307,9 +307,9 @@ const value = get(store);
 
 The `svelte/motion` module exports two functions, `tweened` and `spring`, for creating writable stores whose values change over time after `set` and `update`, rather than immediately.
 
-* `store = tweened(value: any, options)`
+#### tweened
 
----
+* `store = tweened(value: any, options)`
 
 Tweened stores update their values over a fixed duration. The following options are available:
 
@@ -318,7 +318,13 @@ Tweened stores update their values over a fixed duration. The following options 
 * `easing` (`function`, default `t => t`) — an [easing function](docs#svelte-easing)
 * `interpolator` (`function`) — see below
 
-TODO passing these options into `store.set` and `store.update`, to override defaults
+`store.set` and `store.update` can accept a second `options` argument that will override the options passed in upon instantiation.
+
+Both functions return a Promise that resolves when the tween completes. If the tween is interrupted, the promise will never resolve.
+
+---
+
+Out of the box, Svelte will interpolate between two numbers, two arrays or two objects (as long as the arrays and objects are the same 'shape', and their 'leaf' properties are also numbers).
 
 ```html
 <script>
@@ -331,6 +337,7 @@ TODO passing these options into `store.set` and `store.update`, to override defa
 	});
 
 	function handleClick() {
+		// this is equivalent to size.update(n => n + 1)
 		$size += 1;
 	}
 </script>
@@ -341,13 +348,63 @@ TODO passing these options into `store.set` and `store.update`, to override defa
 >embiggen</button>
 ```
 
-TODO custom interpolators
+---
+
+The `interpolator` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
+
+```html
+<script>
+	import { interpolateLab } from 'd3-interpolate';
+	import { tweened } from 'svelte/motion';
+
+	const colors = [
+		'rgb(255, 62, 0)',
+		'rgb(64, 179, 255)',
+		'rgb(103, 103, 120)'
+	];
+
+	const color = tweened(colors[0], {
+		duration: 800,
+		interpolate: interpolateLab
+	});
+</script>
+
+{#each colors as c}
+	<button
+		style="background-color: {c}; color: white; border: none;"
+		on:click="{e => color.set(c)}"
+	>{c}</button>
+{/each}
+
+<h1 style="color: {$color}">{$color}</h1>
+```
+
+#### spring
 
 * `store = spring(value: any, options)`
 
-A `spring` store gradually changes to its target value based on its `stiffness` and `damping` parameters. Whereas `tweened` stores change their values over a fixed duration, `spring` stores change over a duration that is determined by their existing velocity, allowing for more natural-seeming motion in many situations.
+A `spring` store gradually changes to its target value based on its `stiffness` and `damping` parameters. Whereas `tweened` stores change their values over a fixed duration, `spring` stores change over a duration that is determined by their existing velocity, allowing for more natural-seeming motion in many situations. The following options are available:
 
-TODO
+* `stiffness` (`number`, default `0.15`) — a value between 0 and 1 where higher means a 'tighter' spring
+* `damping` (`number`, default `0.8`) — a value between 0 and 1 where lower means a 'springier' spring
+* `precision` (`number`, default `0.001`) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise
+
+---
+
+As with `tweened` stores, `set` and `update` return a Promise that resolves if the spring settles. The `store.stiffness` and `store.damping` properties can be changed while the spring is in motion, and will take immediate effect.
+
+[See a full example here.](tutorial/spring)
+
+```html
+<script>
+	import { spring } from 'svelte/motion';
+
+	const coords = spring({ x: 50, y: 50 }, {
+		stiffness: 0.1,
+		damping: 0.25
+	});
+</script>
+```
 
 ### svelte/transition
 

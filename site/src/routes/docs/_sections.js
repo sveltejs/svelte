@@ -99,7 +99,7 @@ export default function() {
 			const seen = new Set();
 
 			renderer.heading = (text, level, rawtext) => {
-				if (level <= 3) {
+				if (level <= 4) {
 					const slug = rawtext
 						.toLowerCase()
 						.replace(/[^a-zA-Z0-9]+/g, '-')

@@ -242,8 +242,13 @@
 
 	@media (min-width: 768px) {
 		.content :global(h2):hover :global(.anchor),
-		.content :global(h3):hover :global(.anchor) {
+		.content :global(h3):hover :global(.anchor),
+		.content :global(h4):hover :global(.anchor) {
 			opacity: 1;
+		}
+
+		.content :global(h4):hover :global(.anchor) {
+			top: 0.4em;
 		}
 	}
 
