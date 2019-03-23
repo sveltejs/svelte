@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-slot-name",
+	"message": "<slot> name cannot start with a digit",
+	"start": {
+		"line": 2,
+		"column": 7,
+		"character": 13
+	},
+	"end": {
+		"line": 2,
+		"column": 21,
+		"character": 27
+	},
+	"pos": 13
+}]
