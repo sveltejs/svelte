@@ -493,11 +493,12 @@ export default class Element extends Node {
 					});
 				}
 
-				if (check_type_attribute() !== 'checkbox') {
-					component.error(binding, {
-						code: `invalid-binding`,
-						message: `'${name}' binding can only be used with <input type="checkbox">`
-					});
+				const type = check_type_attribute();
+
+				if (type !== 'checkbox') {
+					let message = `'${name}' binding can only be used with <input type="checkbox">`;
+					if (type === 'radio') message += ` — for <input type="radio">, use 'group' binding`;
+					component.error(binding, { code: `invalid-binding`, message });
 				}
 			} else if (name === 'group') {
 				if (this.name !== 'input') {
@@ -512,14 +513,14 @@ export default class Element extends Node {
 				if (type !== 'checkbox' && type !== 'radio') {
 					component.error(binding, {
 						code: `invalid-binding`,
-						message: `'checked' binding can only be used with <input type="checkbox"> or <input type="radio">`
+						message: `'group' binding can only be used with <input type="checkbox"> or <input type="radio">`
 					});
 				}
 			} else if (name == 'files') {
 				if (this.name !== 'input') {
 					component.error(binding, {
 						code: `invalid-binding`,
-						message: `'files' binding acn only be used with <input type="file">`
+						message: `'files' is not a valid binding on <${this.name}> elements`
 					});
 				}
 
