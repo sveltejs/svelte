@@ -50,10 +50,6 @@ export function space() {
 	return text(' ');
 }
 
-export function comment() {
-	return document.createComment('');
-}
-
 export function empty() {
 	return text('');
 }
