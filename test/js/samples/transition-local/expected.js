@@ -2,10 +2,10 @@
 import {
 	SvelteComponent as SvelteComponent_1,
 	add_render_callback,
-	comment,
 	create_in_transition,
 	detach,
 	element,
+	empty,
 	init,
 	insert,
 	noop,
@@ -21,7 +21,7 @@ function create_if_block(ctx) {
 	return {
 		c() {
 			if (if_block) if_block.c();
-			if_block_anchor = comment();
+			if_block_anchor = empty();
 		},
 
 		m(target, anchor) {
@@ -98,7 +98,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			if (if_block) if_block.c();
-			if_block_anchor = comment();
+			if_block_anchor = empty();
 		},
 
 		m(target, anchor) {
