@@ -1164,9 +1164,11 @@ export default class Component {
 		const variable = this.var_lookup.get(name);
 
 		if (!variable) return name;
-		if (variable && variable.hoistable) return name;
 
 		this.add_reference(name); // TODO we can probably remove most other occurrences of this
+
+		if (variable.hoistable) return name;
+
 		return `ctx.${name}`;
 	}
 
