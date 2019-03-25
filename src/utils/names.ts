@@ -111,5 +111,9 @@ export function quote_prop_if_necessary(name: string) {
 }
 
 export function sanitize(name: string) {
-	return name.replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_/, '').replace(/_$/, '');
+	return name
+		.replace(/[^a-zA-Z0-9_]+/g, '_')
+		.replace(/^_/, '')
+		.replace(/_$/, '')
+		.replace(/^[0-9]/, '_$&');
 }

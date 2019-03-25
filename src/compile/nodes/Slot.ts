@@ -34,13 +34,6 @@ export default class Slot extends Element {
 						message: `default is a reserved word — it cannot be used as a slot name`
 					});
 				}
-
-				if (/^[0-9]/.test(slot_name)) {
-					component.error(attr, {
-						code: `invalid-slot-name`,
-						message: `<slot> name cannot start with a digit`
-					});
-				}
 			}
 
 			// TODO should duplicate slots be disallowed? Feels like it's more likely to be a
