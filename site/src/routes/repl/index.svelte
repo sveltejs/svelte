@@ -125,7 +125,7 @@
 		width: 100%;
 		height: 100%;
 		top: 0;
-		z-index: 11;
+		z-index: 111;
 	}
 
 	.pane { width: 100%; height: 100% }
