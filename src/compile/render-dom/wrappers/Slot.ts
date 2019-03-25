@@ -55,7 +55,7 @@ export default class SlotWrapper extends Wrapper {
 	) {
 		const { renderer } = this;
 
-		const slot_name = this.node.get_static_attribute_value('name') || 'default';
+		const { slot_name } = this.node;
 		renderer.slots.add(slot_name);
 
 		let get_slot_changes;

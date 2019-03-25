@@ -20,6 +20,7 @@ import add_event_handlers from '../shared/add_event_handlers';
 import add_actions from '../shared/add_actions';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_context_merger } from '../shared/get_context_merger';
+import Slot from '../../../nodes/Slot';
 
 const events = [
 	{
@@ -213,8 +214,7 @@ export default class ElementWrapper extends Wrapper {
 		const { renderer } = this;
 
 		if (this.node.name === 'slot') {
-			const slot_name = this.node.get_static_attribute_value('name') || 'default';
-			renderer.slots.add(slot_name);
+			renderer.slots.add((this.node as Slot).slot_name);
 		}
 
 		if (this.node.name === 'noscript') return;
