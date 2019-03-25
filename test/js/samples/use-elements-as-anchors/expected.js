@@ -2,9 +2,9 @@
 import {
 	SvelteComponent as SvelteComponent_1,
 	append,
-	comment,
 	detach,
 	element,
+	empty,
 	init,
 	insert,
 	noop,
@@ -153,7 +153,7 @@ function create_fragment(ctx) {
 			if (if_block3) if_block3.c();
 			t7 = space();
 			if (if_block4) if_block4.c();
-			if_block4_anchor = comment();
+			if_block4_anchor = empty();
 		},
 
 		m(target, anchor) {
