@@ -648,7 +648,7 @@ export default class Component {
 				this.add_reference(name.slice(1));
 
 				const variable = this.var_lookup.get(name.slice(1));
-				variable.subscribable = true;
+				if (variable) variable.subscribable = true;
 			} else {
 				this.add_var({
 					name,
