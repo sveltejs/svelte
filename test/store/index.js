@@ -66,7 +66,7 @@ describe('store', () => {
 			let running;
 			let tick;
 
-			const store = readable(set => {
+			const store = readable(undefined, set => {
 				tick = set;
 				running = true;
 
@@ -192,7 +192,7 @@ describe('store', () => {
 
 	describe('get', () => {
 		it('gets the current value of a store', () => {
-			const store = readable(() => {}, 42);
+			const store = readable(42, () => {});
 			assert.equal(get(store), 42);
 		});
 	});
