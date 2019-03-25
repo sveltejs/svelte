@@ -42,6 +42,10 @@ export default class SlotWrapper extends Wrapper {
 		});
 
 		block.add_dependencies(this.dependencies);
+
+		// we have to do this, just in case
+		block.add_intro();
+		block.add_outro();
 	}
 
 	render(
@@ -136,6 +140,14 @@ export default class SlotWrapper extends Wrapper {
 				${slot}.m(${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
 			}
 		`);
+
+		block.builders.intro.add_line(
+			`if (${slot} && ${slot}.i) ${slot}.i(#local);`
+		);
+
+		block.builders.outro.add_line(
+			`if (${slot} && ${slot}.o) ${slot}.o(#local);`
+		);
 
 		let update_conditions = [...this.dependencies].map(name => `changed.${name}`).join(' || ');
 		if (this.dependencies.size > 1) update_conditions = `(${update_conditions})`;
