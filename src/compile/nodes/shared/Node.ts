@@ -37,15 +37,32 @@ export default class Node {
 		}
 	}
 
+	find_nearest(selector: RegExp) {
+		if (selector.test(this.type)) return this;
+		if (this.parent) return this.parent.find_nearest(selector);
+	}
+
+	get_static_attribute_value(name: string) {
+		const attribute = this.attributes.find(
+			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
+		);
+
+		if (!attribute) return null;
+
+		if (attribute.is_true) return true;
+		if (attribute.chunks.length === 0) return '';
+
+		if (attribute.chunks.length === 1 && attribute.chunks[0].type === 'Text') {
+			return attribute.chunks[0].data;
+		}
+
+		return null;
+	}
+
 	has_ancestor(type: string) {
 		return this.parent ?
 			this.parent.type === type || this.parent.has_ancestor(type) :
 			false;
-	}
-
-	find_nearest(selector: RegExp) {
-		if (selector.test(this.type)) return this;
-		if (this.parent) return this.parent.find_nearest(selector);
 	}
 
 	warn_if_empty_block() {

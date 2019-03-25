@@ -153,7 +153,7 @@ export default class BindingWrapper {
 				break;
 
 			case 'value':
-				if (parent.get_static_attribute_value('type') === 'file') {
+				if (parent.node.get_static_attribute_value('type') === 'file') {
 					update_dom = null;
 				}
 		}

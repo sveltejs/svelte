@@ -636,23 +636,6 @@ export default class Element extends Node {
 		});
 	}
 
-	get_static_attribute_value(name: string) {
-		const attribute = this.attributes.find(
-			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
-		);
-
-		if (!attribute) return null;
-
-		if (attribute.is_true) return true;
-		if (attribute.chunks.length === 0) return '';
-
-		if (attribute.chunks.length === 1 && attribute.chunks[0].type === 'Text') {
-			return attribute.chunks[0].data;
-		}
-
-		return null;
-	}
-
 	is_media_node() {
 		return this.name === 'audio' || this.name === 'video';
 	}

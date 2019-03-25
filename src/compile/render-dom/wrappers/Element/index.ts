@@ -213,8 +213,8 @@ export default class ElementWrapper extends Wrapper {
 		const { renderer } = this;
 
 		if (this.node.name === 'slot') {
-			const slotName = this.get_static_attribute_value('name') || 'default';
-			renderer.slots.add(slotName);
+			const slot_name = this.node.get_static_attribute_value('name') || 'default';
+			renderer.slots.add(slot_name);
 		}
 
 		if (this.node.name === 'noscript') return;
@@ -802,23 +802,6 @@ export default class ElementWrapper extends Wrapper {
 				);
 			}
 		});
-	}
-
-	get_static_attribute_value(name: string) {
-		const attribute = this.node.attributes.find(
-			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
-		);
-
-		if (!attribute) return null;
-
-		if (attribute.is_true) return true;
-		if (attribute.chunks.length === 0) return '';
-
-		if (attribute.chunks.length === 1 && attribute.chunks[0].type === 'Text') {
-			return attribute.chunks[0].data;
-		}
-
-		return null;
 	}
 
 	add_css_class(class_name = this.component.stylesheet.id) {
