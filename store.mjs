@@ -1,8 +1,9 @@
 import { run_all, noop, get_store_value, safe_not_equal } from './internal';
 
-export function readable(start, value) {
-	const { set, subscribe } = writable(value, () => start(set));
-	return { subscribe };
+export function readable(value, start) {
+	return {
+		subscribe: writable(value, start).subscribe
+	};
 }
 
 export function writable(value, start = noop) {
@@ -25,7 +26,7 @@ export function writable(value, start = noop) {
 	function subscribe(run, invalidate = noop) {
 		const subscriber = [run, invalidate];
 		subscribers.push(subscriber);
-		if (subscribers.length === 1) stop = start() || noop;
+		if (subscribers.length === 1) stop = start(set) || noop;
 		run(value);
 
 		return () => {
@@ -45,7 +46,7 @@ export function derive(stores, fn) {
 	const auto = fn.length < 2;
 	let value = {};
 
-	return readable(set => {
+	return readable(undefined, set => {
 		let inited = false;
 		const values = [];
 
