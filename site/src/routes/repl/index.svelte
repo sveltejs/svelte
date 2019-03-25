@@ -10,14 +10,13 @@
 
 <script>
 	import { onMount } from 'svelte';
-	import { locate } from 'locate-character';
 	import { process_example } from '../../components/Repl/process_example.js';
 	import AppControls from './_components/AppControls/index.svelte';
 	import Repl from '../../components/Repl/index.svelte';
 
-	export let version, example, gist_id;
-
-	console.log({ example });
+	export let version;
+	export let example;
+	export let gist_id;
 
 	let repl;
 	let gist;
@@ -52,7 +51,7 @@
 			relaxed = false;
 			fetch(`gist/${gist_id}`).then(r => r.json()).then(data => {
 				gist = data;
-				const { id, description, files } = data;
+				const { description, files } = data;
 
 				name = description;
 
@@ -84,35 +83,27 @@
 
 				repl.set({ components });
 			});
+		} else {
+			relaxed = true;
+			fetch(`examples/${example}.json`).then(async response => {
+				if (response.ok) {
+					const data = await response.json();
+
+					name = data.title;
+
+					const components = process_example(data.files);
+					repl.set({ components });
+
+					gist = null;
+				}
+			});
 		}
 	});
-
-	function load_example(slug) {
-		console.log(`loading ${slug}`);
-
-		relaxed = true;
-		fetch(`examples/${slug}.json`).then(async response => {
-			if (response.ok) {
-				const data = await response.json();
-
-				name = data.title;
-
-				const components = process_example(data.files);
-				repl.set({ components });
-
-				gist = null;
-			}
-		});
-	}
 
 	function handle_fork(event) {
 		example = null;
 		gist = event.detail.gist;
 		gist_id = gist.id;
-	}
-
-	$: if (process.browser && example) {
-		load_example(example);
 	}
 </script>
 
