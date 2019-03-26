@@ -94,16 +94,11 @@ export default class Element extends Node {
 		this.name = info.name;
 
 		const parent_element = parent.find_nearest(/^Element/);
-		this.namespace = this.name === 'svg' ?
-			namespaces.svg :
-			parent_element ? parent_element.namespace : this.component.namespace;
-
-		if (!this.namespace && svg.test(this.name)) {
-			this.component.warn(this, {
-				code: `missing-namespace`,
-				message: `<${this.name}> is an SVG element – did you forget to add <svelte:options namespace="svg"/> ?`
-			});
-		}
+		this.namespace = this.name === 'svg' || (!parent_element && svg.test(this.name))
+			? namespaces.svg
+			: this.name === 'foreignObject'
+				? namespaces.html
+				: parent_element ? parent_element.namespace : this.component.namespace;
 
 		if (this.name === 'textarea') {
 			if (info.children.length > 0) {
