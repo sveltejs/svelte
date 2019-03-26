@@ -10,7 +10,7 @@ import add_to_set from '../utils/add_to_set';
 import get_object from '../utils/get_object';
 import { extract_names } from '../utils/scope';
 import { nodes_match } from '../../utils/nodes_match';
-import { sanitize } from '../../utils/names';
+import { sanitize, quote_prop_if_necessary, quote_name_if_necessary } from '../../utils/names';
 
 export default function dom(
 	component: Component,
@@ -305,8 +305,7 @@ export default function dom(
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 
 	if (renderer.slots.size > 0) {
-		const arr = Array.from(renderer.slots);
-		filtered_declarations.push(...arr.map(name => `$$slot_${sanitize(name)}`), '$$scope');
+		filtered_declarations.push('$$slots', '$$scope');
 	}
 
 	if (renderer.binding_groups.length > 0) {
@@ -399,7 +398,7 @@ export default function dom(
 
 				${component.javascript}
 
-				${renderer.slots.size && `let { ${[...renderer.slots].map(name => `$$slot_${sanitize(name)}`).join(', ')}, $$scope } = $$props;`}
+				${renderer.slots.size && `let { $$slots = {}, $$scope } = $$props;`}
 
 				${renderer.binding_groups.length > 0 && `const $$binding_groups = [${renderer.binding_groups.map(_ => `[]`).join(', ')}];`}
 
