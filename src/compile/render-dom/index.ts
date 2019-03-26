@@ -10,7 +10,6 @@ import add_to_set from '../utils/add_to_set';
 import get_object from '../utils/get_object';
 import { extract_names } from '../utils/scope';
 import { nodes_match } from '../../utils/nodes_match';
-import { sanitize, quote_prop_if_necessary, quote_name_if_necessary } from '../../utils/names';
 
 export default function dom(
 	component: Component,
