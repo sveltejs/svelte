@@ -4,7 +4,7 @@ import Block from '../Block';
 import Slot from '../../nodes/Slot';
 import FragmentWrapper from './Fragment';
 import deindent from '../../utils/deindent';
-import { sanitize } from '../../../utils/names';
+import { sanitize, quote_prop_if_necessary } from '../../../utils/names';
 import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../utils/get_slot_data';
 import { stringify_props } from '../../utils/stringify_props';
@@ -55,7 +55,7 @@ export default class SlotWrapper extends Wrapper {
 	) {
 		const { renderer } = this;
 
-		const slot_name = this.node.get_static_attribute_value('name') || 'default';
+		const { slot_name } = this.node;
 		renderer.slots.add(slot_name);
 
 		let get_slot_changes;
@@ -99,7 +99,7 @@ export default class SlotWrapper extends Wrapper {
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot`);
 
 		block.builders.init.add_block(deindent`
-			const ${slot_definition} = ctx.$$slot_${sanitize(slot_name)};
+			const ${slot_definition} = ctx.$$slots${quote_prop_if_necessary(slot_name)};
 			const ${slot} = @create_slot(${slot_definition}, ctx, ${get_slot_context});
 		`);
 
