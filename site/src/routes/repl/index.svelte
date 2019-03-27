@@ -12,7 +12,7 @@
 	import { onMount } from 'svelte';
 	import { process_example } from '../../components/Repl/process_example.js';
 	import AppControls from './_components/AppControls/index.svelte';
-	import Repl from '../../components/Repl/index.svelte';
+	import Repl from '@sveltejs/svelte-repl';
 
 	export let version;
 	export let example;
@@ -105,6 +105,12 @@
 		gist = event.detail.gist;
 		gist_id = gist.id;
 	}
+
+	$: svelteUrl = version === 'local' ?
+		'/repl/local' :
+		`https://unpkg.com/svelte@${version}`;
+
+	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
 </script>
 
 <style>
@@ -165,6 +171,6 @@
 	/>
 
 	{#if process.browser}
-		<Repl bind:this={repl} {version} {relaxed}/>
+		<Repl bind:this={repl} {svelteUrl} {rollupUrl} {relaxed}/>
 	{/if}
 </div>

@@ -74,25 +74,6 @@
 		border-radius: 2px;
 		box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
 	}
-
-	/* .thumbnail::before {
-		content: "";
-		width: 1px;
-		margin-left: -1px;
-		float: left;
-		height: 0;
-		padding-top: 100%;
-	}
-
-	.thumbnail::after {
-		content: "";
-		display: table;
-		clear: both;
-	} */
-
-	img {
-		background-color: #eee;
-	}
 </style>
 
 <div class="content">
