@@ -291,6 +291,7 @@ export default app;` });
 		font-size: 1.6rem;
 		opacity: 0.7;
 		outline: none;
+		flex: 1;
 	}
 
 	input:focus {

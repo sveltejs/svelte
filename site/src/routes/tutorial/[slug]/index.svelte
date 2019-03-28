@@ -97,6 +97,9 @@
 
 	const svelteUrl = `https://unpkg.com/svelte@beta`;
 	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
+
+	// needed for context API tutorial
+	const mapbox_setup = `window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;`;
 </script>
 
 <style>
@@ -242,6 +245,14 @@
 	</div>
 
 	<div class="tutorial-repl">
-		<Repl bind:this={repl} {svelteUrl} {rollupUrl} orientation="rows" on:change={handle_change} relaxed/>
+		<Repl
+			bind:this={repl}
+			{svelteUrl}
+			{rollupUrl}
+			orientation="rows"
+			on:change={handle_change}
+			setup={mapbox_setup}
+			relaxed
+		/>
 	</div>
 </div>
