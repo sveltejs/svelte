@@ -38,7 +38,8 @@ function create_fragment(ctx) {
 				listen(audio, "pause", ctx.audio_play_pause_handler),
 				listen(audio, "progress", ctx.audio_progress_handler),
 				listen(audio, "loadedmetadata", ctx.audio_loadedmetadata_handler),
-				listen(audio, "volumechange", ctx.audio_volumechange_handler)
+				listen(audio, "volumechange", ctx.audio_volumechange_handler),
+				listen(audio, "ratechange", ctx.audio_ratechange_handler)
 			];
 		},
 
@@ -46,12 +47,15 @@ function create_fragment(ctx) {
 			insert(target, audio, anchor);
 
 			audio.volume = ctx.volume;
+
+			audio.playbackRate = ctx.playbackRate;
 		},
 
 		p(changed, ctx) {
 			if (!audio_updating && changed.currentTime && !isNaN(ctx.currentTime)) audio.currentTime = ctx.currentTime;
 			if (changed.paused && audio_is_paused !== (audio_is_paused = ctx.paused)) audio[audio_is_paused ? "pause" : "play"]();
 			if (changed.volume && !isNaN(ctx.volume)) audio.volume = ctx.volume;
+			if (changed.playbackRate && !isNaN(ctx.playbackRate)) audio.playbackRate = ctx.playbackRate;
 			audio_updating = false;
 		},
 
@@ -69,7 +73,7 @@ function create_fragment(ctx) {
 }
 
 function instance($$self, $$props, $$invalidate) {
-	let { buffered, seekable, played, currentTime, duration, paused, volume } = $$props;
+	let { buffered, seekable, played, currentTime, duration, paused, volume, playbackRate } = $$props;
 
 	function audio_timeupdate_handler() {
 		played = time_ranges_to_array(this.played);
@@ -105,6 +109,11 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate('volume', volume);
 	}
 
+	function audio_ratechange_handler() {
+		playbackRate = this.playbackRate;
+		$$invalidate('playbackRate', playbackRate);
+	}
+
 	$$self.$set = $$props => {
 		if ('buffered' in $$props) $$invalidate('buffered', buffered = $$props.buffered);
 		if ('seekable' in $$props) $$invalidate('seekable', seekable = $$props.seekable);
@@ -113,6 +122,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ('duration' in $$props) $$invalidate('duration', duration = $$props.duration);
 		if ('paused' in $$props) $$invalidate('paused', paused = $$props.paused);
 		if ('volume' in $$props) $$invalidate('volume', volume = $$props.volume);
+		if ('playbackRate' in $$props) $$invalidate('playbackRate', playbackRate = $$props.playbackRate);
 	};
 
 	return {
@@ -123,19 +133,21 @@ function instance($$self, $$props, $$invalidate) {
 		duration,
 		paused,
 		volume,
+		playbackRate,
 		audio_timeupdate_handler,
 		audio_durationchange_handler,
 		audio_play_pause_handler,
 		audio_progress_handler,
 		audio_loadedmetadata_handler,
-		audio_volumechange_handler
+		audio_volumechange_handler,
+		audio_ratechange_handler
 	};
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["buffered", "seekable", "played", "currentTime", "duration", "paused", "volume"]);
+		init(this, options, instance, create_fragment, safe_not_equal, ["buffered", "seekable", "played", "currentTime", "duration", "paused", "volume", "playbackRate"]);
 	}
 }
 
