@@ -16,7 +16,7 @@
 <script>
 	import TableOfContents from './_components/TableOfContents.svelte';
 	import Icon from '../../../components/Icon.svelte';
-	import Repl from '../../../components/Repl/index.svelte';
+	import Repl from '@sveltejs/svelte-repl';
 	import { getContext } from 'svelte';
 
 	export let slug;
@@ -94,6 +94,9 @@
 			);
 		});
 	}
+
+	const svelteUrl = `https://unpkg.com/svelte@beta`;
+	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
 </script>
 
 <style>
@@ -239,6 +242,6 @@
 	</div>
 
 	<div class="tutorial-repl">
-		<Repl bind:this={repl} orientation="rows" on:change={handle_change} relaxed/>
+		<Repl bind:this={repl} {svelteUrl} {rollupUrl} orientation="rows" on:change={handle_change} relaxed/>
 	</div>
 </div>
