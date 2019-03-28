@@ -83,7 +83,14 @@ const events = [
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
 			name === 'volume'
-	}
+	},
+	{
+		event_names: ['ratechange'],
+		filter: (node: Element, name: string) =>
+			node.is_media_node() &&
+			name === 'playbackRate'
+	},
+
 ];
 
 export default class ElementWrapper extends Wrapper {

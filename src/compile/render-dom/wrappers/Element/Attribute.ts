@@ -445,6 +445,7 @@ const attribute_lookup = {
 		],
 	},
 	volume: { applies_to: ['audio', 'video'] },
+	playbackRate: { applies_to: ['audio', 'video'] },
 	width: {
 		applies_to: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video'],
 	},
