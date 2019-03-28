@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { process_example } from './process_example.js';
-	import Repl from '../../components/Repl/index.svelte';
+	import Repl from '@sveltejs/svelte-repl';
 
 	export let version = 'beta';
 	export let gist = null;
@@ -65,6 +65,12 @@
 	});
 
 	$: if (embedded) document.title = `${name} • Svelte REPL`;
+
+	$: svelteUrl = version === 'local' ?
+		'/repl/local' :
+		`https://unpkg.com/svelte@${version}`;
+
+	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
 </script>
 
 <style>
@@ -83,6 +89,6 @@
 
 <div class="repl-outer">
 	{#if process.browser}
-		<Repl bind:this={repl} {version} embedded={true} relaxed/>
+		<Repl bind:this={repl} {svelteUrl} {rollupUrl} embedded={true} relaxed/>
 	{/if}
 </div>
