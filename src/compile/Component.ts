@@ -1182,7 +1182,7 @@ export default class Component {
 			if (name[0] === '$') return; // $$props
 		}
 
-		if (this.var_lookup.has(name)) return;
+		if (this.var_lookup.has(name) && !this.var_lookup.get(name).global) return;
 		if (template_scope && template_scope.names.has(name)) return;
 		if (globals.has(name)) return;
 
