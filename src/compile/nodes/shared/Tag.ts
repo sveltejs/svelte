@@ -11,11 +11,11 @@ export default class Tag extends Node {
 
 		this.should_cache = (
 			(info.expression.type !== 'Identifier' || (this.expression.dependencies.size && scope.names.has(info.expression.name))) &&
-			!this.contains_mutable_expression()
+			!this.contains_mutated_variable()
 		);
 	}
 
-	contains_mutable_expression() {
+	contains_mutated_variable() {
 		const { node: expression } = this.expression;
 
 		if (expression.type !== 'MemberExpression') return false;
