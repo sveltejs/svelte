@@ -95,8 +95,8 @@ export default async function preprocess(
 	for (const fn of script) {
 		source = await replace_async(
 			source,
-			/<script([^]*?)>([^]*?)<\/script>/gi,
-			async (match, attributes, content) => {
+			/<script(\s[^]*?)?>([^]*?)<\/script>/gi,
+			async (match, attributes = '', content) => {
 				const processed: Processed = await fn({
 					content,
 					attributes: parse_attributes(attributes),
@@ -111,8 +111,8 @@ export default async function preprocess(
 	for (const fn of style) {
 		source = await replace_async(
 			source,
-			/<style([^]*?)>([^]*?)<\/style>/gi,
-			async (match, attributes, content) => {
+			/<style(\s[^]*?)?>([^]*?)<\/style>/gi,
+			async (match, attributes = '', content) => {
 				const processed: Processed = await fn({
 					content,
 					attributes: parse_attributes(attributes),
