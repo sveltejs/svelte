@@ -5,6 +5,7 @@ import Attribute from './Attribute';
 export default class Slot extends Element {
 	type: 'Element';
 	name: string;
+	slot_name: string;
 	attributes: Attribute[];
 	children: Node[];
 
@@ -27,8 +28,8 @@ export default class Slot extends Element {
 					});
 				}
 
-				const slot_name = attr.value[0].data;
-				if (slot_name === 'default') {
+				this.slot_name = attr.value[0].data;
+				if (this.slot_name === 'default') {
 					component.error(attr, {
 						code: `invalid-slot-name`,
 						message: `default is a reserved word — it cannot be used as a slot name`
@@ -46,28 +47,13 @@ export default class Slot extends Element {
 			// validator.slots.add(slot_name);
 		});
 
+		if (!this.slot_name) this.slot_name = 'default';
+
 		// if (node.attributes.length === 0) && validator.slots.has('default')) {
 		// 	validator.error(node, {
 		// 		code: `duplicate-slot`,
 		// 		message: `duplicate default <slot> element`
 		// 	});
 		// }
-	}
-
-	get_static_attribute_value(name: string) {
-		const attribute = this.attributes.find(
-			attr => attr.name.toLowerCase() === name
-		);
-
-		if (!attribute) return null;
-
-		if (attribute.is_true) return true;
-		if (attribute.chunks.length === 0) return '';
-
-		if (attribute.chunks.length === 1 && attribute.chunks[0].type === 'Text') {
-			return attribute.chunks[0].data;
-		}
-
-		return null;
 	}
 }

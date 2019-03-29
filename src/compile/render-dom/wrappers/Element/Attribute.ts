@@ -117,7 +117,7 @@ export default class AttributeWrapper {
 				updater = `@set_input_type(${element.var}, ${should_cache ? last : value});`;
 			} else if (is_select_value_attribute) {
 				// annoying special case
-				const is_multiple_select = element.get_static_attribute_value('multiple');
+				const is_multiple_select = element.node.get_static_attribute_value('multiple');
 				const i = block.get_unique_name('i');
 				const option = block.get_unique_name('option');
 

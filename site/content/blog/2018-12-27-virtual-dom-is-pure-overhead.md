@@ -121,7 +121,7 @@ function MoreRealisticComponent(props) {
 			<p>Selected {selected ? selected.name : 'nothing'}</p>
 
 			<ul>
-				${props.items.map(item =>
+				{props.items.map(item =>
 					<li>
 						<button onClick={() => setSelected(item)}>
 							{item.name}
