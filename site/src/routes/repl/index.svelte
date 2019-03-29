@@ -111,6 +111,9 @@
 		`https://unpkg.com/svelte@${version}`;
 
 	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
+
+	// needed for context API example
+	const mapbox_setup = `window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;`;
 </script>
 
 <style>
@@ -171,6 +174,12 @@
 	/>
 
 	{#if process.browser}
-		<Repl bind:this={repl} {svelteUrl} {rollupUrl} {relaxed}/>
+		<Repl
+			bind:this={repl}
+			{svelteUrl}
+			{rollupUrl}
+			{relaxed}
+			setup={mapbox_setup}
+		/>
 	{/if}
 </div>
