@@ -139,6 +139,7 @@ export default class BindingWrapper {
 				break;
 
 			case 'currentTime':
+			case 'playbackRate':
 			case 'volume':
 				update_conditions.push(`!isNaN(${this.snippet})`);
 				break;
