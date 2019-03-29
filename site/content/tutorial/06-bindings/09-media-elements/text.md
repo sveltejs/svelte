@@ -34,5 +34,6 @@ The complete set of bindings for `<audio>` and `<video>` is as follows — four 
 ...and three *two-way* bindings:
 
 * `currentTime` — the current point in the video, in seconds
+* `playbackRate` — how fast to play the video, where `1` is 'normal'
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
