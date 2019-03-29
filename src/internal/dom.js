@@ -157,6 +157,10 @@ export function set_data(text, data) {
 	text.data = '' + data;
 }
 
+export function set_data_strict(text, data) {
+	if (text.data !== '' + data) text.data = '' + data;
+}
+
 export function set_input_type(input, type) {
 	try {
 		input.type = type;

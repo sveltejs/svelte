@@ -72,7 +72,8 @@ export default class Wrapper {
 		return (
 			this.node.type === 'Element' ||
 			this.node.type === 'Text' ||
-			this.node.type === 'MustacheTag'
+			this.node.type === 'MustacheTag' ||
+			this.node.type === 'StrictMustacheTag'
 		);
 	}
 }

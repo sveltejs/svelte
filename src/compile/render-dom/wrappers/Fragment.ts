@@ -9,6 +9,7 @@ import IfBlock from './IfBlock';
 import InlineComponent from './InlineComponent/index';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
+import StrictMustacheTag from './StrictMustacheTag';
 import Slot from './Slot';
 import Text from './Text';
 import Title from './Title';
@@ -32,6 +33,7 @@ const wrappers = {
 	MustacheTag,
 	Options: null,
 	RawMustacheTag,
+	StrictMustacheTag,
 	Slot,
 	Text,
 	Title,

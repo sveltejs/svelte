@@ -329,6 +329,21 @@ export default function mustache(parser: Parser) {
 			type: 'RawMustacheTag',
 			expression,
 		});
+	} else if (parser.eat('@strict')) {
+		// {@equal content} tag
+		parser.require_whitespace();
+
+		const expression = read_expression(parser);
+
+		parser.allow_whitespace();
+		parser.eat('}', true);
+
+		parser.current().children.push({
+			start,
+			end: parser.index,
+			type: 'StrictMustacheTag',
+			expression,
+		});
 	} else if (parser.eat('@debug')) {
 		let identifiers;
 

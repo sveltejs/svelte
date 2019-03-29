@@ -9,6 +9,7 @@ import InlineComponent from '../InlineComponent';
 import MustacheTag from '../MustacheTag';
 import Options from '../Options';
 import RawMustacheTag from '../RawMustacheTag';
+import StrictMustacheTag from '../StrictMustacheTag';
 import DebugTag from '../DebugTag';
 import Slot from '../Slot';
 import Text from '../Text';
@@ -29,6 +30,7 @@ function get_constructor(type): typeof Node {
 		case 'MustacheTag': return MustacheTag;
 		case 'Options': return Options;
 		case 'RawMustacheTag': return RawMustacheTag;
+		case 'StrictMustacheTag': return StrictMustacheTag;
 		case 'DebugTag': return DebugTag;
 		case 'Slot': return Slot;
 		case 'Text': return Text;

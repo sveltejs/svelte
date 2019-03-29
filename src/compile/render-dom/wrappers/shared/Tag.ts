@@ -3,11 +3,12 @@ import Renderer from '../../Renderer';
 import Block from '../../Block';
 import MustacheTag from '../../../nodes/MustacheTag';
 import RawMustacheTag from '../../../nodes/RawMustacheTag';
+import StrictMustacheTag from '../../../nodes/StrictMustacheTag';
 
 export default class Tag extends Wrapper {
-	node: MustacheTag | RawMustacheTag;
+	node: MustacheTag | RawMustacheTag | StrictMustacheTag;
 
-	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: MustacheTag | RawMustacheTag) {
+	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: MustacheTag | RawMustacheTag | StrictMustacheTag) {
 		super(renderer, block, parent, node);
 		this.cannot_use_innerhtml();
 

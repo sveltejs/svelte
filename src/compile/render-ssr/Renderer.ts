@@ -30,6 +30,7 @@ const handlers: Record<string, Handler> = {
 	MustacheTag: Tag, // TODO MustacheTag is an anachronism
 	Options: noop,
 	RawMustacheTag: HtmlTag,
+	StrictMustacheTag: Tag,
 	Slot,
 	Text,
 	Title,
