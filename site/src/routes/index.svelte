@@ -240,7 +240,7 @@ npm run dev & open http://localhost:5000
 
 		<p class="linkify">See the <a href="blog/the-easiest-way-to-get-started">quickstart guide</a> for more information.</p>
 
-		<p><a rel="prefetch" class="cta" href="guide">Learn Svelte</a></p>
+		<p><a rel="prefetch" class="cta" href="tutorial">Learn Svelte</a></p>
 	</div>
 </section>
 
