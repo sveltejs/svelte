@@ -6,7 +6,7 @@ import {
 	escape
 } from "svelte/internal";
 
-const SvelteComponent = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+const Component = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	let { things, foo } = $$props;
 
 	if ($$props.things === void 0 && $$bindings.things && things !== void 0) $$bindings.things(things);
@@ -18,4 +18,4 @@ const SvelteComponent = create_ssr_component(($$result, $$props, $$bindings, $$s
 	<p>foo: ${escape(foo)}</p>`;
 });
 
-export default SvelteComponent;
+export default Component;

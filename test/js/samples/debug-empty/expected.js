@@ -72,7 +72,7 @@ function instance($$self, $$props, $$invalidate) {
 	return { name };
 }
 
-class SvelteComponent extends SvelteComponentDev {
+class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
 		init(this, options, instance, create_fragment, safe_not_equal, ["name"]);
@@ -80,17 +80,17 @@ class SvelteComponent extends SvelteComponentDev {
 		const { ctx } = this.$$;
 		const props = options.props || {};
 		if (ctx.name === undefined && !('name' in props)) {
-			console.warn("<SvelteComponent> was created without expected prop 'name'");
+			console.warn("<Component> was created without expected prop 'name'");
 		}
 	}
 
 	get name() {
-		throw new Error("<SvelteComponent>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		throw new Error("<Component>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	set name(value) {
-		throw new Error("<SvelteComponent>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		throw new Error("<Component>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 }
 
-export default SvelteComponent;
+export default Component;
