@@ -35,7 +35,7 @@ function create_fragment(ctx) {
 	};
 }
 
-class SvelteComponent extends SvelteElement {
+class Component extends SvelteElement {
 	constructor(options) {
 		super();
 
@@ -55,6 +55,6 @@ class SvelteComponent extends SvelteElement {
 	}
 }
 
-customElements.define("custom-element", SvelteComponent);
+customElements.define("custom-element", Component);
 
-export default SvelteComponent;
+export default Component;

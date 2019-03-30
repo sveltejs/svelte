@@ -82,7 +82,6 @@
 		overflow: hidden;
 		border: 1px solid #eee;
 		box-shadow: 1px 1px 6px rgba(0,0,0,0.1);
-		border-radius: var(--border-r);
 		padding: 1.6rem;
 		transition: width 0.2s, height 0.2s;
 	}
@@ -107,7 +106,7 @@
 		bottom: calc(100vh - var(--nav-h) - 10.8rem);
 		width: 100%;
 		height: 2em;
-		background: linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%);
+		background: linear-gradient(to top, rgba(103,103,120,0) 0%, rgba(103,103,120,0.7) 50%, rgba(103,103,120,1) 100%);
 		pointer-events: none;
 		z-index: 2;
 	}
@@ -119,7 +118,7 @@
 		bottom: 1.9em;
 		width: 100%;
 		height: 2em;
-		background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%);
+		background: linear-gradient(to bottom, rgba(103,103,120,0) 0%, rgba(103,103,120,0.7) 50%, rgba(103,103,120,1) 100%);
 		pointer-events: none;
 	}
 
@@ -135,10 +134,10 @@
 
 	.content {
 		width: 100%;
-		max-width: calc(var(--main-width) + var(--side-nav));
-		margin: 0 auto;
+		/* max-width: calc(var(--main-width) + var(--side-nav)); */
+		margin: 0;
 		-moz-tab-size: 2;
-		padding: var(--top-offset) 0;
+		padding: var(--top-offset) var(--side-nav);
 		tab-size: 2;
 	}
 
@@ -146,14 +145,15 @@
 		aside {
 			display: block;
 			width: var(--sidebar-w);
-			height: calc(100vh - var(--nav-h));
-			top: var(--nav-h);
-			left: var(--side-nav);
+			height: 100vh;
+			top: 0;
+			left: 0;
 			overflow: hidden;
 			box-shadow: none;
 			border: none;
 			overflow: hidden;
-			padding: 0;
+			background-color: var(--second);
+			color: white;
 		}
 
 		aside.open::before {
@@ -171,30 +171,33 @@
 		}
 
 		.sidebar {
-			padding: var(--top-offset) 3.2rem var(--top-offset) 0;
+			padding: var(--top-offset) 0;
 			font-family: var(--font);
 			overflow-y: auto;
 			height: 100%;
 			bottom: auto;
-			width: calc(var(--sidebar-w) + 5rem);
+			width: 100%;
 		}
 
 		.content {
-			max-width: none;
-			padding-left: 28rem;
+			/* max-width: none; */
+			padding-left: calc(var(--sidebar-w) + var(--side-nav));
+		}
+
+		.content :global(.side-by-side) {
+			display: grid;
+			grid-template-columns: calc(50% - 0.5em) calc(50% - 0.5em);
+			grid-gap: 1em;
 		}
 	}
 
 	@media (min-width: 1200px) { /* can't use vars in @media :( */
 		aside {
 			display: block;
-			left: calc(50vw - (60rem - var(--side-nav)));
 		}
 
 		.content {
-			width: 80rem;
-			padding-left: calc(50vw - 32rem);
-			box-sizing: content-box;
+			/* box-sizing: content-box; */
 			/* padding-right: calc(50% - 50rem); */
 		}
 	}
@@ -205,10 +208,15 @@
 		border-top: 2px solid var(--second);
 		color: var(--second);
 		line-height: 1;
+		text-transform: uppercase;
 	}
 
 	.content section:first-of-type > h2 {
 		margin-top: 0;
+	}
+
+	.content :global(h4) {
+		margin: 2em 0 1em 0;
 	}
 
 	.content :global(.offset-anchor) {
@@ -234,8 +242,13 @@
 
 	@media (min-width: 768px) {
 		.content :global(h2):hover :global(.anchor),
-		.content :global(h3):hover :global(.anchor) {
+		.content :global(h3):hover :global(.anchor),
+		.content :global(h4):hover :global(.anchor) {
 			opacity: 1;
+		}
+
+		.content :global(h4):hover :global(.anchor) {
+			top: 0.4em;
 		}
 	}
 
@@ -263,6 +276,10 @@
 		background: transparent;
 	}
 
+	.content :global(pre) {
+		margin: 0 0 2em 0;
+	}
+
 	.content :global(.icon) {
 		width: 20px;
 		height: 20px;
@@ -271,6 +288,18 @@
 		stroke-linecap: round;
 		stroke-linejoin: round;
 		fill: none;
+	}
+
+	.content :global(table) {
+		margin: 0 0 2em 0;
+	}
+
+	section > :global(.code-block)> :global(pre) {
+		background: transparent;
+		color: white;
+		padding: 0;
+		border: none;
+		box-shadow: none;
 	}
 
 	/* max line-length ~60 chars */
@@ -290,11 +319,10 @@
 	small a        { all: unset }
 	small a:before { all: unset }
 
-
 	section :global(blockquote) {
 		color: hsl(204, 100%, 50%);
 		border: 2px solid var(--flash);
-		padding-left: 8.8rem;
+		/* padding-left: 8.8rem; */
 	}
 
 	section :global(blockquote) :global(code) {
@@ -315,24 +343,24 @@
 </style>
 
 <svelte:head>
-	<title>Learn Svelte</title>
+	<title>API Docs • Svelte</title>
 </svelte:head>
 
 <div bind:this={container} class='content linkify listify'>
 	{#each sections as section}
-	<section data-id={section.slug}>
-		<h2>
-			<span class="offset-anchor" id={section.slug}></span>
-			<a href="#{section.slug}" class="anchor" aria-hidden></a>
+		<section data-id={section.slug}>
+			<h2>
+				<span class="offset-anchor" id={section.slug}></span>
+				<a href="#{section.slug}" class="anchor" aria-hidden></a>
 
-			{section.metadata.title}
-			<small>
-				<a href='https://github.com/sveltejs/svelte/edit/master/site/content/guide/{section.file}' title='edit this section'>
-					<Icon name='edit' /></a>
-			</small>
-		</h2>
-		{@html section.html}
-	</section>
+				{section.metadata.title}
+				<small>
+					<a href='https://github.com/sveltejs/svelte/edit/master/site/content/docs/{section.file}' title='edit this section'>
+						<Icon name='edit' /></a>
+				</small>
+			</h2>
+			{@html section.html}
+		</section>
 	{/each}
 </div>
 

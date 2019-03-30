@@ -35,32 +35,26 @@ const blockTypes = [
 	'tablecell'
 ];
 
-// https://github.com/darkskyapp/string-hash/blob/master/index.js
-function getHash(str) {
-	let hash = 5381;
-	let i = str.length;
-
-	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
-	return (hash >>> 0).toString(36);
-}
-
-export const demos = new Map();
-
 export default function() {
 	return fs
-		.readdirSync(`content/guide`)
+		.readdirSync(`content/docs`)
 		.filter(file => file[0] !== '.' && path.extname(file) === '.md')
 		.map(file => {
-			const markdown = fs.readFileSync(`content/guide/${file}`, 'utf-8');
+			const markdown = fs.readFileSync(`content/docs/${file}`, 'utf-8');
 
 			const { content, metadata } = extract_frontmatter(markdown);
 
 			const subsections = [];
-			const groups = [];
-			let group = null;
-			let uid = 1;
 
 			const renderer = new marked.Renderer();
+
+			let block_open = false;
+
+			renderer.hr = (...args) => {
+				block_open = true;
+
+				return '<div class="side-by-side"><div class="copy">';
+			};
 
 			renderer.code = (source, lang) => {
 				source = source.replace(/^ +/gm, match =>
@@ -74,15 +68,6 @@ export default function() {
 				let prefix = '';
 				let className = 'code-block';
 
-				if (lang === 'html' && !group) {
-					if (!meta || meta.repl !== false) {
-						prefix = `<a class='open-in-repl' href='repl?demo=@@${uid}' title='open in REPL'><svg class='icon'><use xlink:href='#maximize-2' /></svg></a>`;
-					}
-
-					group = { id: uid++, blocks: [] };
-					groups.push(group);
-				}
-
 				if (meta) {
 					source = lines.slice(1).join('\n');
 					const filename = meta.filename || (lang === 'html' && 'App.svelte');
@@ -91,8 +76,6 @@ export default function() {
 						className += ' named';
 					}
 				}
-
-				if (group) group.blocks.push({ meta: meta || {}, lang, source });
 
 				if (meta && meta.hidden) return '';
 
@@ -103,13 +86,20 @@ export default function() {
 					lang
 				);
 
-				return `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
+				let html = `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
+
+				if (block_open) {
+					block_open = false;
+					return `</div><div class="code">${html}</div></div>`;
+				}
+
+				return html;
 			};
 
 			const seen = new Set();
 
 			renderer.heading = (text, level, rawtext) => {
-				if (level <= 3) {
+				if (level <= 4) {
 					const slug = rawtext
 						.toLowerCase()
 						.replace(/[^a-zA-Z0-9]+/g, '-')
@@ -147,7 +137,6 @@ export default function() {
 			blockTypes.forEach(type => {
 				const fn = renderer[type];
 				renderer[type] = function() {
-					group = null;
 					return fn.apply(this, arguments);
 				};
 			});
@@ -155,37 +144,6 @@ export default function() {
 			const html = marked(content, { renderer });
 
 			const hashes = {};
-
-			groups.forEach(group => {
-				const main = group.blocks[0];
-				if (main.meta.repl === false) return;
-
-				const hash = getHash(group.blocks.map(block => block.source).join(''));
-				hashes[group.id] = hash;
-
-				const json5 = group.blocks.find(block => block.lang === 'json');
-
-				const title = main.meta.title;
-				if (!title) console.error(`Missing title for demo in ${file}`);
-
-				demos.set(
-					hash,
-					JSON.stringify({
-						title: title || 'Example from guide',
-						components: group.blocks
-							.filter(block => block.lang === 'html' || block.lang === 'js')
-							.map(block => {
-								const [name, type] = (block.meta.filename || '').split('.');
-								return {
-									name: name || 'App',
-									type: type || 'html',
-									source: block.source,
-								};
-							}),
-						json5: json5 && json5.source,
-					})
-				);
-			});
 
 			return {
 				html: html.replace(/@@(\d+)/g, (m, id) => hashes[id] || m),

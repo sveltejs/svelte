@@ -91,7 +91,7 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	const component = new Component(
 		ast,
 		source,
-		options.name || get_name(options.filename) || 'SvelteComponent',
+		options.name || get_name(options.filename) || 'Component',
 		options,
 		stats,
 		warnings

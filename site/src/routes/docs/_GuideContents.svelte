@@ -72,10 +72,16 @@
 </script>
 
 <style>
-	.guide-toc li {
+	.reference-toc li {
 		display: block;
 		line-height: 1.2;
 		margin: 0 0 4.8rem 0;
+	}
+
+	a {
+		position: relative;
+		opacity: 0.7;
+		transition: opacity 0.2s;
 	}
 
 	.section {
@@ -84,23 +90,37 @@
 		font: 400 var(--h6) var(--font);
 		text-transform: uppercase;
 		letter-spacing: 0.12em;
+		font-weight: 700;
 	}
 
 	.subsection {
 		display: block;
 		font-size: 1.6rem;
 		font-family: var(--font);
-		padding: 0.3em 0;
+		padding: 0 0 0.6em 0;
 	}
 
 	.section:hover,
-	.subsection:hover { color: var(--flash) }
-	.active           { color: var(--prime) }
+	.subsection:hover {
+		color: var(--flash);
+		opacity: 1
+	}
+
+	.active {
+		opacity: 1;
+		/* font-weight: 700; */
+	}
+
+	.icon-container {
+		position: absolute;
+		top: -.3rem;
+		right: 3.2rem;
+	}
 </style>
 
 <ul
 	bind:this={ul}
-	class="guide-toc"
+	class="reference-toc"
 	on:mouseenter="{() => prevent_sidebar_scroll = true}"
 	on:mouseleave="{() => prevent_sidebar_scroll = false}"
 >
@@ -110,7 +130,9 @@
 				{section.metadata.title}
 
 				{#if section.slug === active_section}
-					<Icon name="arrow-right" />
+					<div class="icon-container">
+						<Icon name="arrow-right" />
+					</div>
 				{/if}
 			</a>
 
@@ -120,7 +142,9 @@
 					{subsection.title}
 
 					{#if subsection.slug === active_section}
-						<Icon name="arrow-right" />
+						<div class="icon-container">
+							<Icon name="arrow-right" />
+						</div>
 					{/if}
 				</a>
 			{/each}

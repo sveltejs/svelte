@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { extract_frontmatter, langs } from '../../../utils/markdown.js';
+import { extract_frontmatter, langs } from '../../utils/markdown.js';
 import marked from 'marked';
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
