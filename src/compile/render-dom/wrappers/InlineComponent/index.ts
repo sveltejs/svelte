@@ -119,16 +119,19 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
 
-		const slot_props = Array.from(this.slots).map(([name, slot]) => `$$slot_${sanitize(name)}: [${slot.block.name}${slot.fn ? `, ${slot.fn}` : ''}]`);
-		if (slot_props.length > 0) slot_props.push(`$$scope: { ctx }`);
+		const slot_props = Array.from(this.slots).map(([name, slot]) => `${quote_name_if_necessary(name)}: [${slot.block.name}${slot.fn ? `, ${slot.fn}` : ''}]`);
+
+		const initial_props = slot_props.length > 0
+			? [`$$slots: ${stringify_props(slot_props)}`, `$$scope: { ctx }`]
+			: [];
 
 		const attribute_object = uses_spread
-			? stringify_props(slot_props)
+			? stringify_props(initial_props)
 			: stringify_props(
-				this.node.attributes.map(attr => `${quote_name_if_necessary(attr.name)}: ${attr.get_value(block)}`).concat(slot_props)
+				this.node.attributes.map(attr => `${quote_name_if_necessary(attr.name)}: ${attr.get_value(block)}`).concat(initial_props)
 			);
 
-		if (this.node.attributes.length || this.node.bindings.length || slot_props.length) {
+		if (this.node.attributes.length || this.node.bindings.length || initial_props.length) {
 			if (!uses_spread && this.node.bindings.length === 0) {
 				component_opts.push(`props: ${attribute_object}`);
 			} else {

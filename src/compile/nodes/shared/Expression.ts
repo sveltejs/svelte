@@ -364,7 +364,18 @@ export default class Expression {
 					let body = code.slice(node.body.start, node.body.end).trim();
 					if (node.body.type !== 'BlockStatement') {
 						if (pending_assignments.size > 0) {
-							const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
+							const dependencies = new Set();
+							pending_assignments.forEach(name => {
+								if (template_scope.names.has(name)) {
+									template_scope.dependencies_for_name.get(name).forEach(dependency => {
+										dependencies.add(dependency);
+									});
+								} else {
+									dependencies.add(name);
+								}
+							});
+
+							const insert = Array.from(dependencies).map(name => component.invalidate(name)).join('; ');
 							pending_assignments = new Set();
 
 							component.has_reactive_assignments = true;

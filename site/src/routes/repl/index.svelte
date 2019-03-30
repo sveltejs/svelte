@@ -10,14 +10,13 @@
 
 <script>
 	import { onMount } from 'svelte';
-	import { locate } from 'locate-character';
 	import { process_example } from '../../components/Repl/process_example.js';
 	import AppControls from './_components/AppControls/index.svelte';
-	import Repl from '../../components/Repl/index.svelte';
+	import Repl from '@sveltejs/svelte-repl';
 
-	export let version, example, gist_id;
-
-	console.log({ example });
+	export let version;
+	export let example;
+	export let gist_id;
 
 	let repl;
 	let gist;
@@ -52,7 +51,7 @@
 			relaxed = false;
 			fetch(`gist/${gist_id}`).then(r => r.json()).then(data => {
 				gist = data;
-				const { id, description, files } = data;
+				const { description, files } = data;
 
 				name = description;
 
@@ -84,26 +83,22 @@
 
 				repl.set({ components });
 			});
+		} else {
+			relaxed = true;
+			fetch(`examples/${example}.json`).then(async response => {
+				if (response.ok) {
+					const data = await response.json();
+
+					name = data.title;
+
+					const components = process_example(data.files);
+					repl.set({ components });
+
+					gist = null;
+				}
+			});
 		}
 	});
-
-	function load_example(slug) {
-		console.log(`loading ${slug}`);
-
-		relaxed = true;
-		fetch(`examples/${slug}.json`).then(async response => {
-			if (response.ok) {
-				const data = await response.json();
-
-				name = data.title;
-
-				const components = process_example(data.files);
-				repl.set({ components });
-
-				gist = null;
-			}
-		});
-	}
 
 	function handle_fork(event) {
 		example = null;
@@ -111,9 +106,14 @@
 		gist_id = gist.id;
 	}
 
-	$: if (process.browser && example) {
-		load_example(example);
-	}
+	$: svelteUrl = version === 'local' ?
+		'/repl/local' :
+		`https://unpkg.com/svelte@${version}`;
+
+	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
+
+	// needed for context API example
+	const mapbox_setup = `window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;`;
 </script>
 
 <style>
@@ -134,7 +134,7 @@
 		width: 100%;
 		height: 100%;
 		top: 0;
-		z-index: 11;
+		z-index: 111;
 	}
 
 	.pane { width: 100%; height: 100% }
@@ -174,6 +174,12 @@
 	/>
 
 	{#if process.browser}
-		<Repl bind:this={repl} {version} {relaxed}/>
+		<Repl
+			bind:this={repl}
+			{svelteUrl}
+			{rollupUrl}
+			{relaxed}
+			setup={mapbox_setup}
+		/>
 	{/if}
 </div>

@@ -185,8 +185,8 @@ export default class IfBlockWrapper extends Wrapper {
 		if (needs_anchor) {
 			block.add_element(
 				anchor,
-				`@comment()`,
-				parent_nodes && `@comment()`,
+				`@empty()`,
+				parent_nodes && `@empty()`,
 				parent_node
 			);
 		}

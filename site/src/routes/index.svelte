@@ -144,14 +144,6 @@
 		/* padding: 0.8rem; */
 	}
 
-	iframe {
-		display: block;
-		width: 100%;
-		height: 420px;
-		border: none;
-		border-radius: var(--border-r);
-	}
-
 	a.cta {
 		background-color: var(--prime);
 		padding: 0.5em 1.8em 0.5em 1em;

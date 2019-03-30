@@ -263,15 +263,6 @@ export default app;` });
 		color: white;
 	}
 
-	.hidden-select {
-		position: absolute;
-		width: 100%;
-		height: 100%;
-		opacity: 0.0001;
-		top: 0;
-		left: 0;
-	}
-
 	.icon {
 		position: relative;
 		top: -0.1rem;
@@ -300,6 +291,7 @@ export default app;` });
 		font-size: 1.6rem;
 		opacity: 0.7;
 		outline: none;
+		flex: 1;
 	}
 
 	input:focus {

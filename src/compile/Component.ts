@@ -648,7 +648,7 @@ export default class Component {
 				this.add_reference(name.slice(1));
 
 				const variable = this.var_lookup.get(name.slice(1));
-				variable.subscribable = true;
+				if (variable) variable.subscribable = true;
 			} else {
 				this.add_var({
 					name,
@@ -1164,9 +1164,11 @@ export default class Component {
 		const variable = this.var_lookup.get(name);
 
 		if (!variable) return name;
-		if (variable && variable.hoistable) return name;
 
 		this.add_reference(name); // TODO we can probably remove most other occurrences of this
+
+		if (variable.hoistable) return name;
+
 		return `ctx.${name}`;
 	}
 
@@ -1180,7 +1182,7 @@ export default class Component {
 			if (name[0] === '$') return; // $$props
 		}
 
-		if (this.var_lookup.has(name)) return;
+		if (this.var_lookup.has(name) && !this.var_lookup.get(name).global) return;
 		if (template_scope && template_scope.names.has(name)) return;
 		if (globals.has(name)) return;
 

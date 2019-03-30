@@ -92,9 +92,11 @@ export default class EachBlockWrapper extends Wrapper {
 
 		this.index_name = this.node.index || renderer.component.get_unique_name(`${this.node.context}_index`);
 
-		const fixed_length = node.expression.node.type === 'ArrayExpression'
-			? node.expression.node.elements.length
-			: null;
+		const fixed_length =
+			node.expression.node.type === 'ArrayExpression' &&
+			node.expression.node.elements.every(element => element.type !== 'SpreadElement')
+				? node.expression.node.elements.length
+				: null;
 
 		// hack the sourcemap, so that if data is missing the bug
 		// is easy to find
@@ -207,8 +209,8 @@ export default class EachBlockWrapper extends Wrapper {
 		if (needs_anchor) {
 			block.add_element(
 				this.vars.anchor,
-				`@comment()`,
-				parent_nodes && `@comment()`,
+				`@empty()`,
+				parent_nodes && `@empty()`,
 				parent_node
 			);
 		}
@@ -300,8 +302,8 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.first = this.block.get_unique_name('first');
 			this.block.add_element(
 				this.block.first,
-				`@comment()`,
-				parent_nodes && `@comment()`,
+				`@empty()`,
+				parent_nodes && `@empty()`,
 				null
 			);
 		}
