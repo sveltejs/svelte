@@ -216,9 +216,10 @@ If a `dependencies` array is returned, it will be included in the result object.
 ```js
 const svelte = require('svelte/compiler');
 const sass = require('node-sass');
+const { dirname } = require('path');
 
 const { code, dependencies } = svelte.preprocess(source, {
-	style: ({ content, attributes, filename }) => {
+	style: async ({ content, attributes, filename }) => {
 		// only process <style lang="sass">
 		if (attributes.lang !== 'sass') return;
 
@@ -228,7 +229,7 @@ const { code, dependencies } = svelte.preprocess(source, {
 			includePaths: [
 				dirname(filename),
 			],
-		}), (err, result) => {
+		}, (err, result) => {
 			if (err) reject(err);
 			else resolve(result);
 		}));
