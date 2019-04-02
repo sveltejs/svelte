@@ -457,7 +457,7 @@ The following initialisation options can be provided:
 | --- | --- | --- |
 | `target` | **none** | An `HTMLElement` to render to. This option is required
 | `anchor` | `null` | A child of `target` to render the component immediately before
-| `props` | `{}` | An object of proeprties to supply to the component
+| `props` | `{}` | An object of properties to supply to the component
 | `hydrate` | `false` | See below
 | `intro` | `false` | If `true`, will play transitions on initial render, rather than waiting for subsequent state changes
 
