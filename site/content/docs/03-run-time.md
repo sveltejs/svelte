@@ -148,7 +148,7 @@ Retrieves the context that belongs to the closest parent component with the spec
 
 ### svelte/store
 
-The `svelte/store` module exports functions for creating [stores](http://localhost:3000/tutorial/writable-stores).
+The `svelte/store` module exports functions for creating [stores](tutorial/writable-stores).
 
 ---
 
