@@ -22,6 +22,7 @@ export default {
     v2=4
     vi1=4
     $vs1=1
+    vl0=hello
     vl1=test
     $s3=29
     loop...
