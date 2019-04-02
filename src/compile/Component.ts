@@ -925,7 +925,7 @@ export default class Component {
 
 					const v = this.var_lookup.get(d.id.name)
 					if (v.reassigned) return false
-					if (v.export_name && v.export_name !== v.name) return false
+					if (v.export_name) return false
 
 					if (this.var_lookup.get(d.id.name).reassigned) return false;
 					if (this.vars.find(variable => variable.name === d.id.name && variable.module)) return false;
