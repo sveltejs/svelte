@@ -25,6 +25,7 @@ describe("ssr", () => {
 	before(() => {
 		require("../../register")({
 			extensions: ['.svelte', '.html'],
+			css: true,
 			sveltePath
 		});
 
