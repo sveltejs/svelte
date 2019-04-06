@@ -737,7 +737,7 @@ A custom transition function can also return a `tick` function, which is called 
 {/if}
 ```
 
-If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](https://v3.svelte.technology/tutorial/deferred-transitions) possible.
+If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](tutorial/deferred-transitions) possible.
 
 ---
 
