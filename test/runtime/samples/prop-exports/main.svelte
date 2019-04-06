@@ -19,6 +19,10 @@
   let vs1 = v1
   export { vs1 as a4 }
 
+  // literal initializer
+  let vl0 = 'hello'
+  export { vl0 }
+
   // aliased with literal initializer
   let vl1 = 'test'
   export { vl1 as a5 }
@@ -41,6 +45,7 @@ $v1={$v1}
 v2={v2}
 vi1={vi1}
 $vs1={$vs1}
+vl0={vl0}
 vl1={vl1}
 $s3={$s3}
 {k1}{k2}
