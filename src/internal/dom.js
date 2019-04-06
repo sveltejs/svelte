@@ -154,7 +154,8 @@ export function claim_text(nodes, data) {
 }
 
 export function set_data(text, data) {
-	if (text.data !== '' + data) text.data = '' + data;
+	data = '' + data;
+	if (text.data !== data) text.data = data;
 }
 
 export function set_input_type(input, type) {
