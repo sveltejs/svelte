@@ -247,7 +247,7 @@ npm run dev & open http://localhost:5000
 <div class="examples">
 	<section class="container example linkify">
 		<div>
-			<p>Svelte components are written in HTML files. Just add data.</p>
+			<p>Svelte components are built on top of HTML. Just add data.</p>
 		</div>
 
 		<div class="repl-container">
