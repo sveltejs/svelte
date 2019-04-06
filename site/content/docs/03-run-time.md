@@ -393,7 +393,7 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 
 As with `tweened` stores, `set` and `update` return a Promise that resolves if the spring settles. The `store.stiffness` and `store.damping` properties can be changed while the spring is in motion, and will take immediate effect.
 
-[See a full example here.](tutorial/spring)
+[See a full example on the spring tutorial.](tutorial/spring)
 
 ```html
 <script>
