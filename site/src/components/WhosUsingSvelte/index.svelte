@@ -16,24 +16,30 @@
 	}
 
 	a {
-		height: 60px;
+		height: 40px;
 		margin: 0 0.5em 0.5em 0;
 		text-decoration: none;
 		border: 1px solid #aaa;
-		padding: 10px 20px;
-		border-radius: 30px;
+		padding: 5px 10px;
+		border-radius: 20px;
 	}
 
 	.add-yourself {
 		display: flex;
 		align-items: center;
 		border: 1px solid #eee;
-		border-radius: 30px;
-		padding: 0 1em;
 	}
 
 	img {
 		height: 100%;
+	}
+
+	@media (min-width: 540px) {
+		a {
+			height: 60px;
+			padding: 10px 20px;
+			border-radius: 30px;
+		}
 	}
 </style>
 
