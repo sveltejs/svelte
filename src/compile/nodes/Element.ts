@@ -73,13 +73,13 @@ const passive_events = new Set([
 	'touchcancel'
 ]);
 
-function get_namespace(parent: Element, element: Element) {
+function get_namespace(parent: Element, element: Element, explicit_namespace: string) {
 	const parent_element = parent.find_nearest(/^Element/);
 
 	if (!parent_element) {
-		return svg.test(element.name)
+		return explicit_namespace || (svg.test(element.name)
 			? namespaces.svg
-			: null;
+			: null);
 	}
 
 	if (element.name.toLowerCase() === 'svg') return namespaces.svg;
@@ -108,7 +108,7 @@ export default class Element extends Node {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
-		this.namespace = component.namespace || get_namespace(parent, this);
+		this.namespace = get_namespace(parent, this, component.namespace);
 
 		if (this.name === 'textarea') {
 			if (info.children.length > 0) {
