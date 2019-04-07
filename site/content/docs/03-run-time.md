@@ -224,25 +224,25 @@ const unsubscribe = count.subscribe(value => {
 unsubscribe(); // logs 'no more subscribers'
 ```
 
-* `store = readable((set: (value: any) => void) => () => void)`
-* `store = readable((set: (value: any) => void) => () => void, value: any)`
+* `store = readable(value: any)`
+* `store = readable(value: any, (set: (value: any) => void) => () => void)`
 
 ---
 
-Creates a store whose value cannot be set from 'outside'. Instead, the function passed to `readable`, which is called when the subscriber count goes from zero to one, must call the provided `set` value. It must return a function that is called when the subscriber count goes from one to zero.
+Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value.
 
-If a second argument is provided, it becomes the store's initial value.
+The second argument to `readable` can be a function which is called when the subscriber count goes from zero to one. That function will be passed a `set` function and can change the value of the store by calling `set` with an updated value. It must return a function that is called when the subscriber count goes from one to zero.
 
 ```js
 import { readable } from 'svelte/store';
 
-const time = readable(set => {
+const time = readable(new Date(), set => {
 	const interval = setInterval(() => {
 		set(new Date());
 	}, 1000);
 
 	return () => clearInterval(interval);
-}, new Date());
+});
 ```
 
 * `store = derive(a, callback: (a: any) => any)`
