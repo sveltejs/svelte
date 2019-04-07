@@ -183,7 +183,7 @@ Stores have special significance inside Svelte components. Their values can be r
 ```
 
 * `store = writable(value: any)`
-* `store = writable(value: any, () => () => void)`
+* `store = writable(value: any, (set: (value: any) => void) => () => void)`
 
 ---
 
@@ -205,7 +205,7 @@ count.update(n => n + 1); // logs '2'
 
 ---
 
-If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function can return another function that is called when the number of subscribers goes from one to zero.
+If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store. It must return a `stop` function that is called when the subscriber count goes from one to zero.
 
 ```js
 import { writable } from 'svelte/store';
@@ -224,14 +224,13 @@ const unsubscribe = count.subscribe(value => {
 unsubscribe(); // logs 'no more subscribers'
 ```
 
-* `store = readable(value: any)`
 * `store = readable(value: any, (set: (value: any) => void) => () => void)`
 
 ---
 
 Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value.
 
-The second argument to `readable` can be a function which is called when the subscriber count goes from zero to one. That function will be passed a `set` function and can change the value of the store by calling `set` with an updated value. It must return a function that is called when the subscriber count goes from one to zero.
+The second argument to `readable` is the same as the second argument to `writable`, except that it is required with `readable` (since otherwise there would be no way to update the store value).
 
 ```js
 import { readable } from 'svelte/store';
