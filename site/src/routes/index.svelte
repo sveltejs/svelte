@@ -1,6 +1,7 @@
 <script>
 	import Icon from '../components/Icon.svelte';
 	import Logo from '../components/Logo.svelte';
+	import WhosUsingSvelte from '../components/WhosUsingSvelte/index.svelte';
 	import IntersectionObserver from '../components/IntersectionObserver.svelte';
 	// import Lazy from '../components/Lazy.svelte';
 	import ReplWidget from '../components/Repl/ReplWidget.svelte';
@@ -306,9 +307,10 @@ npm run dev & open http://localhost:5000
 	</section>
 </div>
 
-<section class="container linkify">
+<section class="container">
 	<h3>Who's using Svelte?</h3>
-	<p>TODO. See <a href="https://github.com/sveltejs/svelte.technology/issues/379">this issue</a></p>
+
+	<WhosUsingSvelte/>
 </section>
 
 <section class="container">
