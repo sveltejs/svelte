@@ -11,8 +11,7 @@ Typically, you won't interact with the Svelte compiler directly, but will instea
 Nonetheless, it's useful to understand how to use the compiler, since bundler plugins generally expose compiler options to you.
 
 
-
-### svelte.compile
+### `compile`
 
 ```js
 result: {
@@ -22,17 +21,17 @@ result: {
 	warnings,
 	vars,
 	stats
-} = svelte.compile(source: string, options?: {...})
+} = compile(source: string, options?: {...})
 ```
 
 ---
 
-This is where the magic happens. `svelte.compile` takes your component source code, and turns it into a JavaScript module that exports a class.
+This is where the magic happens. `compile` takes your component source code, and turns it into a JavaScript module that exports a class.
 
 ```js
-const svelte = require('svelte/compiler');
+const {compile} = require('svelte/compiler');
 
-const result = svelte.compile(source, {
+const result = compile(source, {
 	// options
 });
 ```
@@ -92,10 +91,10 @@ const {
 	warnings,
 	vars,
 	stats
-} = svelte.compile(source);
+} = compile(source);
 ```
 
-* `js` and `css` are obejcts with the following properties:
+* `js` and `css` are objects with the following properties:
 	* `code` is a JavaScript string
 	* `map` is a sourcemap with additional `toString()` and `toUrl()` convenience methods
 * `ast` is an abstract syntax tree representing the structure of your component.
@@ -147,19 +146,19 @@ compiled: {
 	stats: {
 		timings: { [label]: number }
 	}
-} = svelte.compile(source: string, options?: {...})
+} = compile(source: string, options?: {...})
 ```
 
 -->
 
 
-### svelte.preprocess
+### `preprocess`
 
 ```js
 result: {
 	code: string,
 	dependencies: Array<string>
-} = svelte.preprocess(
+} = preprocess(
 	source: string,
 	preprocessors: Array<{
 		markup?: (input: { source: string, filename: string }) => Promise<{
@@ -194,9 +193,9 @@ The `markup` function receives the entire component source text, along with the 
 > Preprocessor functions may additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation. In current versions of Svelte it will be ignored, but future versions of Svelte may take account of preprocessor sourcemaps.
 
 ```js
-const svelte = require('svelte/compiler');
+const {preprocess} = require('svelte/compiler');
 
-const { code } = svelte.preprocess(source, {
+const { code } = preprocess(source, {
 	markup: ({ content, filename }) => {
 		return {
 			code: content.replace(/foo/g, 'bar')
@@ -214,11 +213,11 @@ The `script` and `style` functions receive the contents of `<script>` and `<styl
 If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 
 ```js
-const svelte = require('svelte/compiler');
+const {preprocess} = require('svelte/compiler');
 const sass = require('node-sass');
 const { dirname } = require('path');
 
-const { code, dependencies } = svelte.preprocess(source, {
+const { code, dependencies } = preprocess(source, {
 	style: async ({ content, attributes, filename }) => {
 		// only process <style lang="sass">
 		if (attributes.lang !== 'sass') return;
@@ -249,9 +248,9 @@ const { code, dependencies } = svelte.preprocess(source, {
 Multiple preprocessors can be used together. The output of the first becomes the input to the second. `markup` functions run first, then `script` and `style`.
 
 ```js
-const svelte = require('svelte/compiler');
+const {preprocess} = require('svelte/compiler');
 
-const { code } = svelte.preprocess(source, [
+const { code } = preprocess(source, [
 	{
 		markup: () => {
 			console.log('this runs first');
@@ -280,13 +279,13 @@ const { code } = svelte.preprocess(source, [
 ```
 
 
-### svelte.VERSION
+### `VERSION`
 
 ---
 
 The current version, as set in package.json.
 
 ```js
-const svelte = require('svelte/compiler');
-console.log(`running svelte version ${svelte.VERSION}`);
+const {VERSION} = require('svelte/compiler');
+console.log(`running svelte version ${VERSION}`);
 ```

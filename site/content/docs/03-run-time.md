@@ -3,9 +3,11 @@ title: Run time
 ---
 
 
-### svelte
+### `svelte`
 
 The `svelte` package exposes [lifecycle functions](tutorial/onmount) and the [context API](tutorial/context-api).
+
+#### `onMount`
 
 * `onMount(callback: () => void)`
 * `onMount(callback: () => () => void)`
@@ -44,7 +46,9 @@ If a function is returned from `onMount`, it will be called when the component i
 </script>
 ```
 
-* `beforeUpdate(callback: () => void)`
+#### `beforeUpdate`
+
+`beforeUpdate(callback: () => void)`
 
 ---
 
@@ -62,7 +66,9 @@ Schedules a callback to run immediately before the component is updated after an
 </script>
 ```
 
-* `afterUpdate(callback: () => void)`
+#### `afterUpdate`
+
+`afterUpdate(callback: () => void)`
 
 ---
 
@@ -78,7 +84,9 @@ Schedules a callback to run immediately after the component has been updated.
 </script>
 ```
 
-* `onDestroy(callback: () => void)`
+#### `onDestroy`
+
+`onDestroy(callback: () => void)`
 
 ---
 
@@ -96,7 +104,9 @@ Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the onl
 </script>
 ```
 
-* `promise: Promise = tick()`
+#### `tick`
+
+`promise: Promise = tick()`
 
 ---
 
@@ -114,7 +124,9 @@ Returns a promise that resolves once any pending state changes have been applied
 </script>
 ```
 
-* `setContext(key: any, context: any)`
+#### `setContext`
+
+`setContext(key: any, context: any)`
 
 ---
 
@@ -130,7 +142,9 @@ Like lifecycle functions, this must be called during component initialisation.
 </script>
 ```
 
-* `context: any = getContext(key: any)`
+#### `getContext`
+
+`context: any = getContext(key: any)`
 
 ---
 
@@ -144,9 +158,12 @@ Retrieves the context that belongs to the closest parent component with the spec
 </script>
 ```
 
+#### `createEventDispatcher`
+
+TODO
 
 
-### svelte/store
+### `svelte/store`
 
 The `svelte/store` module exports functions for creating [stores](tutorial/writable-stores).
 
@@ -181,6 +198,8 @@ Stores have special significance inside Svelte components. Their values can be r
 	Clicks: {$count}
 </button>
 ```
+
+#### `writable`
 
 * `store = writable(value: any)`
 * `store = writable(value: any, (set: (value: any) => void) => () => void)`
@@ -224,7 +243,9 @@ const unsubscribe = count.subscribe(value => {
 unsubscribe(); // logs 'no more subscribers'
 ```
 
-* `store = readable(value: any, (set: (value: any) => void) => () => void)`
+#### `readable`
+
+`store = readable(value: any, (set: (value: any) => void) => () => void)`
 
 ---
 
@@ -243,6 +264,8 @@ const time = readable(new Date(), set => {
 	return () => clearInterval(interval);
 });
 ```
+
+#### `derive`
 
 * `store = derive(a, callback: (a: any) => any)`
 * `store = derive(a, callback: (a: any, set: (value: any) => void) => void)`
@@ -287,7 +310,9 @@ const delayed = derive([a, b], ([$a, $b], set) => {
 });
 ```
 
-* `value: any = get(store)`
+#### `get`
+
+`value: any = get(store)`
 
 ---
 
@@ -302,13 +327,13 @@ const value = get(store);
 ```
 
 
-### svelte/motion
+### `svelte/motion`
 
 The `svelte/motion` module exports two functions, `tweened` and `spring`, for creating writable stores whose values change over time after `set` and `update`, rather than immediately.
 
-#### tweened
+#### `tweened`
 
-* `store = tweened(value: any, options)`
+`store = tweened(value: any, options)`
 
 Tweened stores update their values over a fixed duration. The following options are available:
 
@@ -378,9 +403,9 @@ The `interpolator` option allows you to tween between *any* arbitrary values. It
 <h1 style="color: {$color}">{$color}</h1>
 ```
 
-#### spring
+#### `spring`
 
-* `store = spring(value: any, options)`
+`store = spring(value: any, options)`
 
 A `spring` store gradually changes to its target value based on its `stiffness` and `damping` parameters. Whereas `tweened` stores change their values over a fixed duration, `spring` stores change over a duration that is determined by their existing velocity, allowing for more natural-seeming motion in many situations. The following options are available:
 
@@ -390,7 +415,7 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 
 ---
 
-As with `tweened` stores, `set` and `update` return a Promise that resolves if the spring settles. The `store.stiffness` and `store.damping` properties can be changed while the spring is in motion, and will take immediate effect.
+As with [`tweened`](#tweened) stores, `set` and `update` return a Promise that resolves if the spring settles. The `store.stiffness` and `store.damping` properties can be changed while the spring is in motion, and will take immediate effect.
 
 [See a full example on the spring tutorial.](tutorial/spring)
 
@@ -405,14 +430,14 @@ As with `tweened` stores, `set` and `update` return a Promise that resolves if t
 </script>
 ```
 
-### svelte/transition
+### `svelte/transition`
 
 TODO
 
 * fade, fly, slide, draw
 * crossfade...
 
-### svelte/animation
+### `svelte/animation`
 
 TODO
 
@@ -420,18 +445,22 @@ TODO
 
 TODO
 
-### svelte/easing
+### `svelte/easing`
 
 * TODO could have nice little interactive widgets showing the different functions, maybe
 
-### svelte/register
+### `svelte/register`
 
 TODO
 
 
 ### Client-side component API
 
-* `const component = new Component(options)`
+#### Creating a component
+
+```js
+const component = new Component(options)
+```
 
 ---
 
@@ -465,7 +494,7 @@ Existing children of `target` are left where they are.
 
 ---
 
-The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the `hydratable: true` option.
+The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the [`hydratable: true` option](docs#compile).
 
 Whereas children of `target` are normally left alone, `hydrate: true` will cause any children to be removed. For that reason, the `anchor` option cannot be used alongside `hydrate: true`.
 
@@ -480,7 +509,11 @@ const app = new App({
 });
 ```
 
-* `component.$set(props)`
+#### `$set`
+
+```js
+component.$set(props)
+```
 
 ---
 
@@ -489,10 +522,14 @@ Programmatically sets props on an instance. `component.$set({ x: 1 })` is equiva
 Calling this method schedules an update for the next microtask — the DOM is *not* updated synchronously.
 
 ```js
-app.$set({ answer: 42 });
+component.$set({ answer: 42 });
 ```
 
-* `component.$on(event, callback)`
+#### `$on`
+
+```js
+component.$on(event, callback)
+```
 
 ---
 
@@ -504,14 +541,22 @@ app.$on('selected', event => {
 });
 ```
 
+#### `$destroy`
 
-* `component.$destroy()`
+```js
+component.$destroy()
+```
 
 Removes a component from the DOM and triggers any `onDestroy` handlers.
 
+#### Component props
 
-* `component.prop`
-* `component.prop = value`
+```js
+component.prop
+```
+```js
+component.prop = value
+```
 
 ---
 
@@ -532,7 +577,9 @@ app.count += 1;
 
 ### Server-side component API
 
-* `const result = Component.render(...)`
+```js
+const result = Component.render(...)
+```
 
 ---
 
