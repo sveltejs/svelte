@@ -159,7 +159,8 @@
 		border-radius: 50%;
 		text-indent: -9999px;
 		display: inline-block;
-		background-size: 100% 100%;
+		background: no-repeat url(/contributors.jpg);
+		background-size: auto 102%;
 		margin: 0 0.5em 0.5em 0;
 		border: 1px solid var(--second);
 	}
@@ -318,11 +319,11 @@ npm run dev & open http://localhost:5000
 
 	<p class="linkify">Svelte is free and open source software, made possible by the work of dozens of volunteers. <a href="https://github.com/sveltejs/svelte">Join us!</a></p>
 
-	{#each contributors as contributor}
+	{#each contributors as contributor, i}
 		<a
 			class="contributor"
-			style="background-image: url({contributor.src})"
-			href="https://github.com/{contributor.name}"
-		>{contributor.name}</a>
+			style="background-position: {100 * i / (contributors.length - 1)}% 0"
+			href="https://github.com/{contributor}"
+		>{contributor}</a>
 	{/each}
 </section>
