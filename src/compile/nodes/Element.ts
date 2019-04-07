@@ -16,7 +16,7 @@ import list from '../../utils/list';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 
-const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
+const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colindex controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowindex selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
@@ -73,6 +73,21 @@ const passive_events = new Set([
 	'touchcancel'
 ]);
 
+function get_namespace(parent: Element, element: Element) {
+	const parent_element = parent.find_nearest(/^Element/);
+
+	if (!parent_element) {
+		return svg.test(element.name)
+			? namespaces.svg
+			: null;
+	}
+
+	if (element.name.toLowerCase() === 'svg') return namespaces.svg;
+	if (parent_element.name.toLowerCase() === 'foreignobject') return null;
+
+	return parent_element.namespace;
+}
+
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
@@ -93,12 +108,7 @@ export default class Element extends Node {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
-		const parent_element = parent.find_nearest(/^Element/);
-		this.namespace = this.name === 'svg' || (!parent_element && svg.test(this.name))
-			? namespaces.svg
-			: this.name === 'foreignObject'
-				? namespaces.html
-				: parent_element ? parent_element.namespace : this.component.namespace;
+		this.namespace = component.namespace || get_namespace(parent, this);
 
 		if (this.name === 'textarea') {
 			if (info.children.length > 0) {
