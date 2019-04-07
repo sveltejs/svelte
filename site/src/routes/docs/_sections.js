@@ -125,7 +125,7 @@ export default function() {
 
 					return `
 						<h${level}>
-							<span id="${slug}" class="offset-anchor"></span>
+							<span id="${slug}" class="offset-anchor" ${level > 3 ? 'data-scrollignore' : ''}></span>
 							<a href="docs#${slug}" class="anchor" aria-hidden="true"></a>
 							${text}
 						</h${level}>`;
