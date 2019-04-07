@@ -330,7 +330,7 @@ If the `on:` directive is used without a value, the component will *forward* the
 
 ---
 
-Components can emit events using [createEventDispatcher](#docs/createEventDispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
+Components can emit events using [createEventDispatcher](docs#createeventdispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
 
 ```html
 <SomeComponent on:whatever={handler}/>
@@ -340,7 +340,9 @@ Components can emit events using [createEventDispatcher](#docs/createEventDispat
 
 ### Element bindings
 
-* `bind:property={value}`
+* `bind:property={variable}`
+* `bind:group={variable}`
+* `bind:this={dom_node}`
 
 ---
 
@@ -374,6 +376,8 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 <input type="range" bind:value={num}>
 ```
 
+#### Binding related elements
+
 ---
 
 Inputs that work together can use `bind:group`.
@@ -395,6 +399,8 @@ Inputs that work together can use `bind:group`.
 <input type="checkbox" bind:group={fillings} value="Cheese">
 <input type="checkbox" bind:group={fillings} value="Guac (extra)">
 ```
+
+#### Binding `<select>` value
 
 ---
 
@@ -434,6 +440,8 @@ When the value of an `<option>` matches its text content, the attribute can be o
 </select>
 ```
 
+#### Media elements bindings
+
 ---
 
 Media elements (`<audio>` and `<video>`) have their own set of bindings — four *readonly* ones...
@@ -462,15 +470,27 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — four
 ></video>
 ```
 
+#### Block-level elements bindings
+
 ---
 
-Block-level elements have readonly `clientWidth`, `clientHeight`, `offsetWidth` and `offsetHeight` bindings, measured using a technique similar to [this one](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/).
+Block-level elements have 4 readonly bindings, measured using a technique similar to [this one](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/):
+
+* `clientWidth`
+* `clientHeight`
+* `offsetWidth`
+* `offsetHeight`
 
 ```html
-<div bind:offsetWidth={width} bind:offsetHeight={height}>
+<div
+	bind:offsetWidth={width}
+	bind:offsetHeight={height}
+>
 	<Chart {width} {height}/>
 </div>
 ```
+
+#### Binding a DOM node
 
 ---
 
@@ -494,7 +514,8 @@ To get a reference to a DOM node, use `bind:this`.
 
 ### Component bindings
 
-* `bind:property={value}`
+* `bind:property={variable}`
+* `bind:this={component_instance}`
 
 ---
 
@@ -652,6 +673,8 @@ The `in:` and `out:` directives are not bidirectional. An in transition will con
 {/if}
 ```
 
+#### Transition parameters
+
 ---
 
 Like actions, transitions can have parameters.
@@ -665,6 +688,8 @@ Like actions, transitions can have parameters.
 	</div>
 {/if}
 ```
+
+#### Custom transition functions
 
 ---
 
@@ -740,6 +765,8 @@ A custom transition function can also return a `tick` function, which is called 
 If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](tutorial/deferred-transitions) possible.
 
 ---
+
+#### Transitions events
 
 An element with transitions will dispatch the following events in addition to any standard DOM events:
 
@@ -825,7 +852,7 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 
 <!-- Widget.svelte -->
 <div>
-	<slot name"header">No header was provided</slot>
+	<slot name="header">No header was provided</slot>
 	<p>Some content between header and footer</p>
 	</slot name="footer"></slot>
 </div>
@@ -988,7 +1015,7 @@ This element makes it possible to insert elements into `document.head`. During s
 
 ---
 
-The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the next section. The possible options are:
+The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the [compiler section](docs#compile). The possible options are:
 
 * `immutable={true}` — you never use mutable data, so the compiler can do simple referential equality checks to determine if values have changed
 * `immutable={false}` — the default. Svelte will be more conservative about whether or not mutable objects have changed
