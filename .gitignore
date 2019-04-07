@@ -25,5 +25,6 @@ _actual*.*
 /site/.env
 /site/.sessions
 /site/static/svelte-app.json
+/site/static/contributors.jpg
 /site/scripts/svelte-app
 /site/src/routes/_contributors.js
