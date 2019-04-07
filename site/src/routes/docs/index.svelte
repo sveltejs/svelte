@@ -351,7 +351,7 @@
 		<section data-id={section.slug}>
 			<h2>
 				<span class="offset-anchor" id={section.slug}></span>
-				<a href="#{section.slug}" class="anchor" aria-hidden></a>
+				<a href="docs#{section.slug}" class="anchor" aria-hidden></a>
 
 				{section.metadata.title}
 				<small>
