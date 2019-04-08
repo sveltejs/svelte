@@ -195,6 +195,14 @@ function get_dom_updater(
 		return `${element.var}.checked = ${condition};`
 	}
 
+	if (binding.node.name === 'text') {
+		return `${element.var}.textContent = ${binding.snippet};`;
+	}
+
+	if (binding.node.name === 'html') {
+		return `${element.var}.innerHTML = ${binding.snippet};`;
+	}
+
 	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
@@ -305,6 +313,14 @@ function get_value_from_dom(
 
 	if ((name === 'buffered' || name === 'seekable' || name === 'played')) {
 		return `@time_ranges_to_array(this.${name})`
+	}
+
+	if (name === 'text') {
+		return `this.textContent`;
+	}
+
+	if (name === 'html') {
+		return `this.innerHTML`;
 	}
 
 	// everything else
