@@ -8,6 +8,9 @@ export default {
 	`,
 
 	test({ assert, target }) {
+		const foreignObject = target.querySelector('foreignObject');
+		assert.equal(foreignObject.namespaceURI, 'http://www.w3.org/2000/svg');
+
 		const p = target.querySelector('p');
 		assert.equal(p.namespaceURI, 'http://www.w3.org/1999/xhtml');
 	}
