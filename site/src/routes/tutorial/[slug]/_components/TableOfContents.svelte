@@ -28,7 +28,7 @@
 
 	a {
 		display: block;
-		padding: 0.7em 0;
+		padding: 0.75em 0;
 		text-align: center;
 		opacity: 0.7;
 	}
@@ -64,7 +64,13 @@
 	</a>
 
 	<div>
-		<span><strong>{selected.section.title} /</strong> {selected.chapter.title}</span>
+		<span>
+			<strong>
+				<span style="position: relative; top: -0.1em; margin: 0 0.5em 0 0"><Icon name="menu"/></span>
+				{selected.section.title} /
+			</strong>
+			{selected.chapter.title}
+		</span>
 
 		<select value={slug} on:change={navigate}>
 			{#each sections as section, i}
