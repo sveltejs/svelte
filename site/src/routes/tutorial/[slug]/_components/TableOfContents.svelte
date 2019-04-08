@@ -54,6 +54,7 @@
 		height: 100%;
 		opacity: 0.0001;
 		cursor: pointer;
+		-webkit-appearance: none;
 	}
 </style>
 
