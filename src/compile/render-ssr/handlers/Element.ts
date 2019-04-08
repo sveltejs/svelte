@@ -133,7 +133,7 @@ export default function(node, renderer, options) {
 
 		if (name === 'group') {
 			// TODO server-render group bindings
-		} else if (contenteditable && (node === 'text' || node === 'html')) {
+		} else if (contenteditable && (name === 'text' || name === 'html')) {
 			const snippet = snip(expression)
 			if (name == 'text') {
 				node_contents = '${@escape(' + snippet + ')}'
