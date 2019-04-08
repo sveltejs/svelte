@@ -1,0 +1,15 @@
+[{
+	"code": "missing-contenteditable-attribute",
+	"message": "'contenteditable' attribute is required for text and html two-way bindings",
+	"start": {
+		"line": 4,
+		"column": 8,
+		"character": 48
+	},
+	"end": {
+		"line": 4,
+		"column": 24,
+		"character": 64
+	},
+	"pos": 48
+}]

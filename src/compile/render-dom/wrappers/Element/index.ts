@@ -30,6 +30,12 @@ const events = [
 			node.name === 'input' && !/radio|checkbox|range/.test(node.get_static_attribute_value('type'))
 	},
 	{
+		event_names: ['input'],
+		filter: (node: Element, name: string) =>
+			(name === 'text' || name === 'html') &&
+			node.attributes.some(attribute => attribute.name === 'contenteditable')
+	},
+	{
 		event_names: ['change'],
 		filter: (node: Element, name: string) =>
 			node.name === 'select' ||
