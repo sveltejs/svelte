@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.0.0-beta.22",
+  "version": "3.0.0-beta.23",
   "description": "The magical disappearing UI framework",
   "module": "index.mjs",
   "main": "index",
