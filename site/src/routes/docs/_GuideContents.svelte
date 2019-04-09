@@ -106,6 +106,10 @@
 		opacity: 1
 	}
 
+	.subsection[data-level="4"] {
+		padding-left: 1em;
+	}
+
 	.active {
 		opacity: 1;
 		/* font-weight: 700; */
@@ -138,7 +142,12 @@
 
 			{#each section.subsections as subsection}
 				<!-- see <script> below: on:click='scrollTo(event, subsection.slug)' -->
-				<a class="subsection" class:active="{subsection.slug === active_section}" href="docs#{subsection.slug}">
+				<a
+					class="subsection"
+					class:active="{subsection.slug === active_section}"
+					href="docs#{subsection.slug}"
+					data-level="{subsection.level}"
+				>
 					{subsection.title}
 
 					{#if subsection.slug === active_section}

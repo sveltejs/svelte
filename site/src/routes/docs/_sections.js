@@ -109,7 +109,7 @@ export default function() {
 					if (seen.has(slug)) throw new Error(`Duplicate slug ${slug}`);
 					seen.add(slug);
 
-					if (level === 3) {
+					if (level === 3 || level === 4) {
 						const title = unescape(
 							text
 								.replace(/<\/?code>/g, '')
@@ -120,12 +120,12 @@ export default function() {
 								})
 						);
 
-						subsections.push({ slug, title });
+						subsections.push({ slug, title, level });
 					}
 
 					return `
 						<h${level}>
-							<span id="${slug}" class="offset-anchor" ${level > 3 ? 'data-scrollignore' : ''}></span>
+							<span id="${slug}" class="offset-anchor"></span>
 							<a href="docs#${slug}" class="anchor" aria-hidden="true"></a>
 							${text}
 						</h${level}>`;

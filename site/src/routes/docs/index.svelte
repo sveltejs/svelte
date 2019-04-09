@@ -18,8 +18,7 @@
 	let show_contents = false;
 
 	onMount(() => {
-		// don't update `active_section` for headings below level 3, see _sections.js
-		const anchors = container.querySelectorAll('[id]:not([data-scrollignore])');
+		const anchors = container.querySelectorAll('[id]');
 
 		let positions;
 
