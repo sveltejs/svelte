@@ -5,11 +5,11 @@ import Element from '../nodes/Element';
 import { Node, Ast } from '../../interfaces';
 import Component from '../Component';
 
-function remove_css_prefox(name: string): string {
+function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
 }
 
-const is_keyframes_node = (node: Node) => remove_css_prefox(node.name) === 'keyframes';
+const is_keyframes_node = (node: Node) => remove_css_prefix(node.name) === 'keyframes';
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function hash(str: string): string {
@@ -108,7 +108,7 @@ class Declaration {
 	}
 
 	transform(code: MagicString, keyframes: Map<string, string>) {
-		const property = this.node.property && remove_css_prefox(this.node.property.toLowerCase());
+		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
 			this.node.value.children.forEach((block: Node) => {
 				if (block.type === 'Identifier') {
