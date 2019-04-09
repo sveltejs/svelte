@@ -262,6 +262,7 @@
 		margin: 6.4rem 0 1.6rem 0;
 		background: transparent;
 		line-height: 1;
+		padding: 0;
 	}
 
 	.content :global(code) {
