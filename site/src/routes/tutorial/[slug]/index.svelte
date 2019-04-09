@@ -116,7 +116,10 @@
 		padding: 0;
 		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
+	}
 
+	.tutorial-outer.mobile {
+		padding: 0 0 42px 0;
 	}
 
 	.viewport {
@@ -129,7 +132,7 @@
 
 	.mobile .viewport {
 		width: 300%;
-		height: calc(100% - 42px);
+		height: 100%;
 		grid-template-columns: 33.333% 66.666%;
 		transition: transform 0.3s;
 	}
