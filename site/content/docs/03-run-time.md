@@ -409,7 +409,7 @@ As with `tweened` stores, `set` and `update` return a Promise that resolves if t
 
 TODO
 
-* fade, fly, slide, draw
+* fade, fly, slide, scale, draw
 * crossfade...
 
 ### svelte/animation

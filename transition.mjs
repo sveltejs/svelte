@@ -66,6 +66,32 @@ export function slide(node, {
 	};
 }
 
+export function scale(node, {
+	delay = 0,
+	duration = 400,
+	easing = cubicOut,
+	start = 0,
+	opacity = 0
+}) {
+	const sd = 1 - start;
+	const od = 1 - opacity;
+
+	const transform = (
+		node.style.transform ||
+		getComputedStyle(node).transform
+	).replace('none', '');
+
+	return {
+		delay,
+		duration,
+		easing,
+		css: (t, u) => `
+			transform: ${transform} scale(${1 - (sd * u)});
+			opacity: ${1 - (od * u)}
+		`
+	};
+}
+
 export function draw(node, {
 	delay = 0,
 	duration = 800,
