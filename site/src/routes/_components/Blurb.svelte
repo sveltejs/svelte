@@ -46,18 +46,20 @@
 		text-decoration: underline;
 	}
 
-	.box a::after, .cta::after {
+	.box a::after, .cta a::after {
 		content: '';
 		position: absolute;
 		display: block;
 		right: 0;
-		top: 0.25em;
+		top: 0.35em;
 		width: 1em;
 		height: 1em;
 		background: url(/icons/arrow-right.svg);
 	}
 
-	a.cta {
+	.cta a {
+		display: inline-block;
+		text-align: right;
 		background-color: var(--prime);
 		padding: 0.5em 1.8em 0.5em 1em;
 		border-radius: var(--border-r);
@@ -65,13 +67,17 @@
 		position: relative;
 	}
 
-	.cta::after {
+	.cta a::after {
 		right: 0.5em;
-		top: 0.6em;
+		top: 0.75em;
 	}
 
 	.description {
 		margin: 2em 0 0 0;
+	}
+
+	.cta {
+		margin: 0;
 	}
 
 	@media (min-width: 900px) {
@@ -88,6 +94,10 @@
 		.box {
 			padding: 2em;
 		}
+
+		.cta {
+			text-align: right;
+		}
 	}
 
 	@media (min-width: 1200px) {
@@ -102,6 +112,10 @@
 
 		.description {
 			margin: 0;
+		}
+
+		.cta {
+			text-align: left;
 		}
 	}
 </style>
@@ -136,7 +150,7 @@
 		<p><a href="TODO-svelte-3-blog-post">Read the introductory blog post</a> to learn more.</p>
 	</div>
 
-	<div style="grid-area: start">
+	<div style="grid-area: start; display: flex; flex-direction: column">
 		<pre class="language-bash" style="margin: 0 0 1em 0">
 npx degit sveltejs/template my-svelte-project
 cd my-svelte-project
@@ -145,8 +159,8 @@ npm install
 npm run dev & open http://localhost:5000
 		</pre>
 
-		<p class="linkify">See the <a href="blog/the-easiest-way-to-get-started">quickstart guide</a> for more information.</p>
+		<p class="linkify" style="flex: 1">See the <a href="blog/the-easiest-way-to-get-started">quickstart guide</a> for more information.</p>
 
-		<p><a rel="prefetch" class="cta" href="tutorial">Learn Svelte</a></p>
+		<p class="cta"><a rel="prefetch" href="tutorial">Learn Svelte</a></p>
 	</div>
 </section>
