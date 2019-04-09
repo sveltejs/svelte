@@ -342,7 +342,6 @@ Components can emit events using [createEventDispatcher](docs#createeventdispatc
 
 * `bind:property={variable}`
 * `bind:group={variable}`
-* `bind:this={dom_node}`
 
 ---
 
