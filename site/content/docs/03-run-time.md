@@ -265,7 +265,7 @@ const time = readable(new Date(), set => {
 });
 ```
 
-#### `derive`
+#### `derived`
 
 * `store = derived(a, callback: (a: any) => any)`
 * `store = derived(a, callback: (a: any, set: (value: any) => void) => void)`
