@@ -39,7 +39,7 @@ export function writable(value, start = noop) {
 	return { set, update, subscribe };
 }
 
-export function derive(stores, fn) {
+export function derived(stores, fn) {
 	const single = !Array.isArray(stores);
 	if (single) stores = [stores];
 
