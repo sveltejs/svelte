@@ -244,21 +244,21 @@ const time = readable(new Date(), set => {
 });
 ```
 
-* `store = derive(a, callback: (a: any) => any)`
-* `store = derive(a, callback: (a: any, set: (value: any) => void) => void)`
-* `store = derive([a, ...b], callback: ([a: any, ...b: any[]]) => any)`
-* `store = derive([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void)`
+* `store = derived(a, callback: (a: any) => any)`
+* `store = derived(a, callback: (a: any, set: (value: any) => void) => void)`
+* `store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)`
+* `store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void)`
 
 ---
 
 Derives a store from one or more other stores. Whenever those dependencies change, the callback runs.
 
-In the simplest version, `derive` takes a single store, and the callback returns a derived value.
+In the simplest version, `derived` takes a single store, and the callback returns a derived value.
 
 ```js
-import { derive } from 'svelte/store';
+import { derived } from 'svelte/store';
 
-const doubled = derive(a, $a => $a * 2);
+const doubled = derived(a, $a => $a * 2);
 ```
 
 ---
@@ -266,9 +266,9 @@ const doubled = derive(a, $a => $a * 2);
 The callback can set a value asynchronously by accepting a second argument, `set`, and calling it when appropriate.
 
 ```js
-import { derive } from 'svelte/store';
+import { derived } from 'svelte/store';
 
-const delayed = derive(a, ($a, set) => {
+const delayed = derived(a, ($a, set) => {
 	setTimeout(() => set($a), 1000);
 });
 ```
@@ -278,11 +278,11 @@ const delayed = derive(a, ($a, set) => {
 In both cases, an array of arguments can be passed as the first argument instead of a single store.
 
 ```js
-import { derive } from 'svelte/store';
+import { derived } from 'svelte/store';
 
-const summed = derive([a, b], ([$a, $b]) => $a + $b);
+const summed = derived([a, b], ([$a, $b]) => $a + $b);
 
-const delayed = derive([a, b], ([$a, $b], set) => {
+const delayed = derived([a, b], ([$a, $b], set) => {
 	setTimeout(() => set($a + $b), 1000);
 });
 ```
