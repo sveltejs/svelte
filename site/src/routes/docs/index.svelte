@@ -260,6 +260,17 @@
 		font-size: var(--h3);
 		color: var(--second);
 		margin: 6.4rem 0 1.6rem 0;
+		padding-left: 0;
+		background: transparent;
+		line-height: 1;
+	}
+
+	.content :global(h4 > code) {
+		font-weight: 700;
+		font-size: var(--h4);
+		color: var(--second);
+		margin: 6.4rem 0 1.6rem 0;
+		padding-left: 0;
 		background: transparent;
 		line-height: 1;
 		padding: 0;
@@ -298,11 +309,17 @@
 	}
 
 	section > :global(.code-block)> :global(pre) {
+		display: inline-block;
 		background: transparent;
 		color: white;
-		padding: 0;
-		border: none;
+		padding: 0.4em 0.8em;
+		margin: 0;
+		border: 1px solid #81b9e0;
 		box-shadow: none;
+	}
+
+	section > :global(.code-block)> :global(pre.language-markup) {
+		background: #f7fcff;
 	}
 
 	/* max line-length ~60 chars */
