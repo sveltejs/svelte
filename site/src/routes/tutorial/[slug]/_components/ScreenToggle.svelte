@@ -4,12 +4,15 @@
 
 <style>
 	.toggle {
+		position: fixed;
+		bottom: 0;
 		width: 100%;
 		height: 42px;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		border-top: 1px solid var(--second);
+		background-color: white;
 	}
 
 	button {
