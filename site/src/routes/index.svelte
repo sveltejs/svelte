@@ -1,7 +1,8 @@
 <script>
 	import Icon from '../components/Icon.svelte';
 	import Logo from '../components/Logo.svelte';
-	import WhosUsingSvelte from '../components/WhosUsingSvelte/index.svelte';
+	import Blurb from './_components/Blurb.svelte';
+	import WhosUsingSvelte from './_components/WhosUsingSvelte.svelte';
 	import IntersectionObserver from '../components/IntersectionObserver.svelte';
 	// import Lazy from '../components/Lazy.svelte';
 	import ReplWidget from '../components/Repl/ReplWidget.svelte';
@@ -70,54 +71,6 @@
 		opacity: 0.7;
 	}
 
-	.box {
-		padding: 2em;
-		display: flex;
-		flex-direction: column;
-	}
-
-	.box > h2 {
-		padding: 0;
-		margin: 0 0 0.5em 0;
-		font-size: var(--h2);
-		color: white;
-		text-align: left;
-	}
-
-	.box > p {
-		font-size: var(--h5);
-	}
-
-	.box a {
-		position: relative;
-		text-align: right;
-		margin-top: auto;
-		padding: 0 1.2em 0 0;
-		font-family: Roboto, sans-serif;
-		font-size: 1.6rem;
-	}
-
-	.box a:hover {
-		color: white;
-		text-decoration: underline;
-	}
-
-	.box a::after, .cta::after {
-		content: '';
-		position: absolute;
-		display: block;
-		right: 0;
-		top: 0.25em;
-		width: 1em;
-		height: 1em;
-		background: url(/icons/arrow-right.svg);
-	}
-
-	.cta::after {
-		right: 0.5em;
-		top: 0.6em;
-	}
-
 	.examples {
 		background: var(--second);
 		color: white;
@@ -143,14 +96,6 @@
 
 	.example > div:first-child {
 		/* padding: 0.8rem; */
-	}
-
-	a.cta {
-		background-color: var(--prime);
-		padding: 0.5em 1.8em 0.5em 1em;
-		border-radius: var(--border-r);
-		color: white;
-		position: relative;
 	}
 
 	.contributor {
@@ -197,54 +142,7 @@
 	<h1>Svelte</h1>
 </section>
 
-<section class='container'>
-	<ul class='grid stretch'>
-		<li class='box bg-prime white'>
-			<h2 style='padding:2.4rem 0 0 0'>Write less code</h2>
-			<p>Build boilerplate-free components using languages you already know — HTML, CSS and JavaScript</p>
-
-			<a href="TODO-blog-post-on-loc">learn more</a>
-		</li>
-
-		<li class='box bg-flash white'>
-			<h2 style='padding:2.4rem 0 0 0'>No virtual DOM</h2>
-			<p>Svelte compiles your code to tiny, framework-less vanilla JS — your app starts fast and stays fast</p>
-
-			<a href="TODO-blog-post-on-vdom-overhead">learn more</a>
-		</li>
-
-		<li class='box bg-second white'>
-			<h2 style='padding:2.4rem 0 0 0'>Truly reactive</h2>
-			<p>No more complex state management libraries — Svelte brings reactivity to JavaScript itself</p>
-
-			<a href="TODO-blog-post-on-reactivity">learn more</a>
-		</li>
-	</ul>
-</section>
-
-<section class="container grid half">
-	<div class="linkify">
-		<p>Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the <em>browser</em>, Svelte shifts that work into a <em>compile step</em> that happens when you build your app.</p>
-
-		<p>Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.</p>
-
-		<p><a href="TODO-svelte-3-blog-post">Read the introductory blog post</a> to learn more.</p>
-	</div>
-
-	<div>
-		<pre class="language-bash">
-npx degit sveltejs/template my-svelte-project
-cd my-svelte-project
-
-npm install
-npm run dev & open http://localhost:5000
-		</pre>
-
-		<p class="linkify">See the <a href="blog/the-easiest-way-to-get-started">quickstart guide</a> for more information.</p>
-
-		<p><a rel="prefetch" class="cta" href="tutorial">Learn Svelte</a></p>
-	</div>
-</section>
+<Blurb/>
 
 <div class="examples">
 	<section class="container example linkify">

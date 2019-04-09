@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { readable, writable, derive, get } from '../../store.js';
+import { readable, writable, derived, get } from '../../store.js';
 
 describe('store', () => {
 	describe('writable', () => {
@@ -100,10 +100,10 @@ describe('store', () => {
 		});
 	});
 
-	describe('derive', () => {
+	describe('derived', () => {
 		it('maps a single store', () => {
 			const a = writable(1);
-			const b = derive(a, n => n * 2);
+			const b = derived(a, n => n * 2);
 
 			const values = [];
 
@@ -123,7 +123,7 @@ describe('store', () => {
 		it('maps multiple stores', () => {
 			const a = writable(2);
 			const b = writable(3);
-			const c = derive(([a, b]), ([a, b]) => a * b);
+			const c = derived(([a, b]), ([a, b]) => a * b);
 
 			const values = [];
 
@@ -143,7 +143,7 @@ describe('store', () => {
 
 		it('passes optional set function', () => {
 			const number = writable(0);
-			const evens = derive(number, (n, set) => {
+			const evens = derived(number, (n, set) => {
 				if (n % 2 === 0) set(n);
 			});
 
@@ -169,9 +169,9 @@ describe('store', () => {
 
 		it('prevents glitches', () => {
 			const lastname = writable('Jekyll');
-			const firstname = derive(lastname, n => n === 'Jekyll' ? 'Henry' : 'Edward');
+			const firstname = derived(lastname, n => n === 'Jekyll' ? 'Henry' : 'Edward');
 
-			const fullname = derive([firstname, lastname], names => names.join(' '));
+			const fullname = derived([firstname, lastname], names => names.join(' '));
 
 			const values = [];
 
