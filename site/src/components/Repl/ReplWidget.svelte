@@ -66,8 +66,8 @@
 
 	$: if (embedded) document.title = `${name} • Svelte REPL`;
 
-	$: svelteUrl = version === 'local' ?
-		'/repl/local' :
+	$: svelteUrl = process.browser && version === 'local' ?
+		`${location.origin}/repl/local` :
 		`https://unpkg.com/svelte@${version}`;
 
 	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
