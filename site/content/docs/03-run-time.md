@@ -9,8 +9,12 @@ The `svelte` package exposes [lifecycle functions](tutorial/onmount) and the [co
 
 #### `onMount`
 
-* `onMount(callback: () => void)`
-* `onMount(callback: () => () => void)`
+```js
+onMount(callback: () => void)
+```
+```js
+onMount(callback: () => () => void)
+```
 
 ---
 
@@ -48,7 +52,9 @@ If a function is returned from `onMount`, it will be called when the component i
 
 #### `beforeUpdate`
 
-`beforeUpdate(callback: () => void)`
+```js
+beforeUpdate(callback: () => void)
+```
 
 ---
 
@@ -68,7 +74,9 @@ Schedules a callback to run immediately before the component is updated after an
 
 #### `afterUpdate`
 
-`afterUpdate(callback: () => void)`
+```js
+afterUpdate(callback: () => void)
+```
 
 ---
 
@@ -86,7 +94,9 @@ Schedules a callback to run immediately after the component has been updated.
 
 #### `onDestroy`
 
-`onDestroy(callback: () => void)`
+```js
+onDestroy(callback: () => void)
+```
 
 ---
 
@@ -106,7 +116,9 @@ Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the onl
 
 #### `tick`
 
-`promise: Promise = tick()`
+```js
+promise: Promise = tick()
+```
 
 ---
 
@@ -126,7 +138,9 @@ Returns a promise that resolves once any pending state changes have been applied
 
 #### `setContext`
 
-`setContext(key: any, context: any)`
+```js
+setContext(key: any, context: any)
+```
 
 ---
 
@@ -144,7 +158,9 @@ Like lifecycle functions, this must be called during component initialisation.
 
 #### `getContext`
 
-`context: any = getContext(key: any)`
+```js
+context: any = getContext(key: any)
+```
 
 ---
 
@@ -201,8 +217,12 @@ Stores have special significance inside Svelte components. Their values can be r
 
 #### `writable`
 
-* `store = writable(value: any)`
-* `store = writable(value: any, (set: (value: any) => void) => () => void)`
+```js
+store = writable(value: any)
+```
+```js
+store = writable(value: any, (set: (value: any) => void) => () => void)
+```
 
 ---
 
@@ -245,7 +265,9 @@ unsubscribe(); // logs 'no more subscribers'
 
 #### `readable`
 
-`store = readable(value: any, (set: (value: any) => void) => () => void)`
+```js
+store = readable(value: any, (set: (value: any) => void) => () => void)
+```
 
 ---
 
@@ -267,10 +289,18 @@ const time = readable(new Date(), set => {
 
 #### `derived`
 
-* `store = derived(a, callback: (a: any) => any)`
-* `store = derived(a, callback: (a: any, set: (value: any) => void) => void)`
-* `store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)`
-* `store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void)`
+```js
+store = derived(a, callback: (a: any) => any)
+```
+```js
+store = derived(a, callback: (a: any, set: (value: any) => void) => void)
+```
+```js
+store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
+```
+```js
+store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void)
+```
 
 ---
 
@@ -312,7 +342,9 @@ const delayed = derived([a, b], ([$a, $b], set) => {
 
 #### `get`
 
-`value: any = get(store)`
+```js
+value: any = get(store)
+```
 
 ---
 
@@ -333,7 +365,9 @@ The `svelte/motion` module exports two functions, `tweened` and `spring`, for cr
 
 #### `tweened`
 
-`store = tweened(value: any, options)`
+```js
+store = tweened(value: any, options)
+```
 
 Tweened stores update their values over a fixed duration. The following options are available:
 
@@ -405,7 +439,9 @@ The `interpolator` option allows you to tween between *any* arbitrary values. It
 
 #### `spring`
 
-`store = spring(value: any, options)`
+```js
+store = spring(value: any, options)
+```
 
 A `spring` store gradually changes to its target value based on its `stiffness` and `damping` parameters. Whereas `tweened` stores change their values over a fixed duration, `spring` stores change over a duration that is determined by their existing velocity, allowing for more natural-seeming motion in many situations. The following options are available:
 
