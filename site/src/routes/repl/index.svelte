@@ -11,6 +11,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { process_example } from '../../components/Repl/process_example.js';
+	import InputOutputToggle from '../../components/Repl/InputOutputToggle.svelte';
 	import AppControls from './_components/AppControls/index.svelte';
 	import Repl from '@sveltejs/svelte-repl';
 
@@ -23,6 +24,8 @@
 	let name = 'loading...';
 	let zen_mode = false;
 	let relaxed = false;
+	let width = process.browser ? window.innerWidth : 1000;
+	let checked = false;
 
 	$: if (typeof history !== 'undefined') {
 		const params = [];
@@ -114,6 +117,8 @@
 
 	// needed for context API example
 	const mapbox_setup = `window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;`;
+
+	$: mobile = width < 540;
 </script>
 
 <style>
@@ -127,6 +132,21 @@
 		padding: var(--app-controls-h) 0 0 0;
 		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
+	}
+
+	.viewport {
+		width: 100%;
+		height: 100%;
+	}
+
+	.mobile .viewport {
+		width: 200%;
+		height: calc(100% - 42px);
+		transition: transform 0.3s;
+	}
+
+	.mobile .offset {
+		transform: translate(-50%, 0);
 	}
 
 	.zen-mode {
@@ -164,7 +184,9 @@
 	<title>Svelte REPL</title>
 </svelte:head>
 
-<div class="repl-outer {zen_mode ? 'zen-mode' : ''}">
+<svelte:window bind:innerWidth={width}/>
+
+<div class="repl-outer {zen_mode ? 'zen-mode' : ''}" class:mobile>
 	<AppControls
 		{name}
 		{gist}
@@ -174,12 +196,19 @@
 	/>
 
 	{#if process.browser}
-		<Repl
-			bind:this={repl}
-			{svelteUrl}
-			{rollupUrl}
-			{relaxed}
-			setup={mapbox_setup}
-		/>
+		<div class="viewport" class:offset={checked}>
+			<Repl
+				bind:this={repl}
+				{svelteUrl}
+				{rollupUrl}
+				{relaxed}
+				fixed={mobile}
+				setup={mapbox_setup}
+			/>
+		</div>
+
+		{#if mobile}
+			<InputOutputToggle bind:checked/>
+		{/if}
 	{/if}
 </div>
