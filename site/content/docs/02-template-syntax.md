@@ -440,7 +440,7 @@ When the value of an `<option>` matches its text content, the attribute can be o
 </select>
 ```
 
-#### Media elements bindings
+#### Media element bindings
 
 ---
 
@@ -470,7 +470,7 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — four
 ></video>
 ```
 
-#### Block-level elements bindings
+#### Block-level element bindings
 
 ---
 
@@ -766,7 +766,7 @@ If a transition returns a function instead of a transition object, the function 
 
 ---
 
-#### Transitions events
+#### Transition events
 
 An element with transitions will dispatch the following events in addition to any standard DOM events:
 
