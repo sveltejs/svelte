@@ -15,6 +15,7 @@
 
 <script>
 	import TableOfContents from './_components/TableOfContents.svelte';
+	import ScreenToggle from './_components/ScreenToggle.svelte';
 	import Icon from '../../../components/Icon.svelte';
 	import Repl from '@sveltejs/svelte-repl';
 	import { getContext } from 'svelte';
@@ -28,6 +29,9 @@
 	let prev;
 	let scrollable;
 	const lookup = new Map();
+
+	let width = process.browser ? window.innerWidth : 1000;
+	let offset = 0;
 
 	sections.forEach(section => {
 		section.chapters.forEach(chapter => {
@@ -70,6 +74,8 @@
 		});
 	}
 
+	$: mobile = width < 768;
+
 	function reset() {
 		repl.update({
 			components: chapter.app_a.map(clone)
@@ -107,12 +113,38 @@
 		position: relative;
 		height: calc(100vh - var(--nav-h));
 		overflow: hidden;
-		padding: 0;
+		padding: 0 0 42px 0;
 		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
+	}
+
+	.viewport {
 		display: grid;
-		grid-template-columns: minmax(33.333%, 480px) auto;
+		width: 300%;
+		height: 100%;
+		grid-template-columns: 33.333% 66.666%;
+		transition: transform 0.3s;
 		grid-auto-rows: 100%;
+	}
+
+	.offset-1 { transform: translate(-33.333%, 0); }
+	.offset-2 { transform: translate(-66.666%, 0); }
+
+	@media (min-width: 768px) {
+		.tutorial-outer {
+			padding: 0;
+		}
+
+		.viewport {
+			width: 100%;
+			height: 100%;
+			display: grid;
+			grid-template-columns: minmax(33.333%, 480px) auto;
+			grid-auto-rows: 100%;
+			transition: none;
+		}
+
+		.offset-1, .offset-2 { transform: none; }
 	}
 
 	.tutorial-text {
@@ -215,44 +247,53 @@
 	<title>{selected.section.title} / {selected.chapter.title} • Svelte Tutorial</title>
 </svelte:head>
 
+<svelte:window bind:innerWidth={width}/>
+
 <div class="tutorial-outer">
-	<div class="tutorial-text">
-		<div class="table-of-contents">
-			<TableOfContents {sections} {slug} {selected}/>
+	<div class="viewport offset-{offset}">
+		<div class="tutorial-text">
+			<div class="table-of-contents">
+				<TableOfContents {sections} {slug} {selected}/>
+			</div>
+
+			<div class="chapter-markup" bind:this={scrollable}>
+				{@html chapter.html}
+
+				<div class="controls">
+					{#if chapter.app_b}
+						<!-- TODO disable this button when the contents of the REPL
+							matches the expected end result -->
+						<button class="show" on:click="{() => completed ? reset() : complete()}">
+							{completed ? 'Reset' : 'Show me'}
+						</button>
+					{/if}
+
+					{#if selected.next}
+						<a class="next" href="tutorial/{selected.next.slug}">Next <Icon name="arrow-right" /></a>
+					{/if}
+				</div>
+
+				<div class="improve-chapter">
+					<a href={improve_link}><Icon name="edit" size={14}/> Edit this chapter</a>
+				</div>
+			</div>
 		</div>
 
-		<div class="chapter-markup" bind:this={scrollable}>
-			{@html chapter.html}
-
-			<div class="controls">
-				{#if chapter.app_b}
-					<!-- TODO disable this button when the contents of the REPL
-						matches the expected end result -->
-					<button class="show" on:click="{() => completed ? reset() : complete()}">
-						{completed ? 'Reset' : 'Show me'}
-					</button>
-				{/if}
-
-				{#if selected.next}
-					<a class="next" href="tutorial/{selected.next.slug}">Next <Icon name="arrow-right" /></a>
-				{/if}
-			</div>
-
-			<div class="improve-chapter">
-				<a href={improve_link}><Icon name="edit" size={14}/> Edit this chapter</a>
-			</div>
+		<div class="tutorial-repl">
+			<Repl
+				bind:this={repl}
+				{svelteUrl}
+				{rollupUrl}
+				orientation={mobile ? 'columns' : 'rows'}
+				fixed={mobile}
+				on:change={handle_change}
+				setup={mapbox_setup}
+				relaxed
+			/>
 		</div>
 	</div>
 
-	<div class="tutorial-repl">
-		<Repl
-			bind:this={repl}
-			{svelteUrl}
-			{rollupUrl}
-			orientation="rows"
-			on:change={handle_change}
-			setup={mapbox_setup}
-			relaxed
-		/>
-	</div>
+	{#if mobile}
+		<ScreenToggle bind:offset/>
+	{/if}
 </div>

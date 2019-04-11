@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { process_example } from './process_example.js';
 	import Repl from '@sveltejs/svelte-repl';
+	import InputOutputToggle from './InputOutputToggle.svelte';
 
 	export let version = 'beta';
 	export let gist = null;
@@ -10,6 +11,11 @@
 
 	let repl;
 	let name = 'loading...';
+	let width = process.browser
+		? window.innerWidth - 32
+		: 1000;
+
+	let checked = false;
 
 	onMount(() => {
 		if (version !== 'local') {
@@ -71,6 +77,8 @@
 		`https://unpkg.com/svelte@${version}`;
 
 	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
+
+	$: mobile = width < 560;
 </script>
 
 <style>
@@ -85,10 +93,38 @@
 		box-sizing: border-box;
 		--pane-controls-h: 4.2rem;
 	}
+
+	.viewport {
+		width: 100%;
+		height: 100%;
+	}
+
+	.mobile .viewport {
+		width: 200%;
+		height: calc(100% - 42px);
+		transition: transform 0.3s;
+	}
+
+	.mobile .offset {
+		transform: translate(-50%, 0);
+	}
 </style>
 
-<div class="repl-outer">
-	{#if process.browser}
-		<Repl bind:this={repl} {svelteUrl} {rollupUrl} embedded={true} relaxed/>
+<div class="repl-outer" bind:clientWidth={width} class:mobile>
+	<div class="viewport" class:offset={checked}>
+		{#if process.browser}
+			<Repl
+				bind:this={repl}
+				fixed={mobile}
+				{svelteUrl}
+				{rollupUrl}
+				embedded
+				relaxed
+			/>
+		{/if}
+	</div>
+
+	{#if mobile}
+		<InputOutputToggle bind:checked/>
 	{/if}
 </div>
