@@ -113,32 +113,39 @@
 		position: relative;
 		height: calc(100vh - var(--nav-h));
 		overflow: hidden;
-		padding: 0;
+		padding: 0 0 42px 0;
 		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
 	}
 
-	.tutorial-outer.mobile {
-		padding: 0 0 42px 0;
-	}
-
 	.viewport {
-		width: 100%;
-		height: 100%;
 		display: grid;
-		grid-template-columns: minmax(33.333%, 480px) auto;
-		grid-auto-rows: 100%;
-	}
-
-	.mobile .viewport {
 		width: 300%;
 		height: 100%;
 		grid-template-columns: 33.333% 66.666%;
 		transition: transform 0.3s;
+		grid-auto-rows: 100%;
 	}
 
-	.mobile .offset-1 { transform: translate(-33.333%, 0); }
-	.mobile .offset-2 { transform: translate(-66.666%, 0); }
+	.offset-1 { transform: translate(-33.333%, 0); }
+	.offset-2 { transform: translate(-66.666%, 0); }
+
+	@media (min-width: 768px) {
+		.tutorial-outer {
+			padding: 0;
+		}
+
+		.viewport {
+			width: 100%;
+			height: 100%;
+			display: grid;
+			grid-template-columns: minmax(33.333%, 480px) auto;
+			grid-auto-rows: 100%;
+			transition: none;
+		}
+
+		.offset-1, .offset-2 { transform: none; }
+	}
 
 	.tutorial-text {
 		display: flex;
@@ -242,7 +249,7 @@
 
 <svelte:window bind:innerWidth={width}/>
 
-<div class="tutorial-outer" class:mobile>
+<div class="tutorial-outer">
 	<div class="viewport offset-{offset}">
 		<div class="tutorial-text">
 			<div class="table-of-contents">
