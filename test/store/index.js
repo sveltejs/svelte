@@ -142,10 +142,10 @@ describe('store', () => {
 		});
 
 		it('passes optional set function', () => {
-			const number = writable(0);
+			const number = writable(1);
 			const evens = derived(number, (n, set) => {
 				if (n % 2 === 0) set(n);
-			});
+			}, 0);
 
 			const values = [];
 
@@ -153,17 +153,17 @@ describe('store', () => {
 				values.push(value);
 			});
 
-			number.set(1);
 			number.set(2);
 			number.set(3);
 			number.set(4);
+			number.set(5);
 			assert.deepEqual(values, [0, 2, 4]);
 
 			unsubscribe();
 
-			number.set(5);
 			number.set(6);
 			number.set(7);
+			number.set(8);
 			assert.deepEqual(values, [0, 2, 4]);
 		});
 

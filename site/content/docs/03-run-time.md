@@ -293,13 +293,13 @@ const time = readable(new Date(), set => {
 store = derived(a, callback: (a: any) => any)
 ```
 ```js
-store = derived(a, callback: (a: any, set: (value: any) => void) => void)
+store = derived(a, callback: (a: any, set: (value: any) => void) => void, initial_value: any)
 ```
 ```js
 store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
 ```
 ```js
-store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void)
+store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void, initial_value: any)
 ```
 
 ---
@@ -318,12 +318,14 @@ const doubled = derived(a, $a => $a * 2);
 
 The callback can set a value asynchronously by accepting a second argument, `set`, and calling it when appropriate.
 
+In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` is first called.
+
 ```js
 import { derived } from 'svelte/store';
 
 const delayed = derived(a, ($a, set) => {
 	setTimeout(() => set($a), 1000);
-});
+}, 'one moment...');
 ```
 
 ---
