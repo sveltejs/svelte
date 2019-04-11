@@ -38,6 +38,7 @@ export function extract_metadata(line, lang) {
 export const langs = {
 	bash: 'bash',
 	html: 'markup',
+	sv: 'markup',
 	js: 'javascript',
-	css: 'css',
+	css: 'css'
 };

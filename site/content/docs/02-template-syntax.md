@@ -87,7 +87,9 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ### Text expressions
 
-* `{expression}`
+```sv
+{expression}
+```
 
 ---
 
@@ -101,7 +103,9 @@ Text can also contain JavaScript expressions:
 
 ### HTML expressions
 
-* `{@html expression}`
+```sv
+{@html expression}
+```
 
 ---
 
@@ -119,9 +123,15 @@ In a text expression, characters like `<` and `>` are escaped. With HTML express
 
 ### If blocks
 
-* `{#if expression}...{/if}`
-* `{#if expression}...{:else if expression}...{/if}`
-* `{#if expression}...{:else}...{/if}`
+```sv
+{#if expression}...{/if}
+```
+```sv
+{#if expression}...{:else if expression}...{/if}
+```
+```sv
+{#if expression}...{:else}...{/if}
+```
 
 ---
 
@@ -150,10 +160,18 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 
 ### Each blocks
 
-* `{#each expression as name}...{/each}`
-* `{#each expression as name, index}...{/each}`
-* `{#each expression as name, index (key)}...{/each}`
-* `{#each expression as name}...{:else}...{/each}`
+```sv
+{#each expression as name}...{/each}
+```
+```sv
+{#each expression as name, index}...{/each}
+```
+```sv
+{#each expression as name, index (key)}...{/each}
+```
+```sv
+{#each expression as name}...{:else}...{/each}
+```
 
 ---
 
@@ -213,9 +231,15 @@ An each block can also have an `{:else}` clause, which is rendered if the list i
 
 ### Await blocks
 
-* `{#await expression}...{:then name}...{:catch name}...{/await}`
-* `{#await expression}...{:then name}...{/await}`
-* `{#await expression then name}...{/await}`
+```sv
+{#await expression}...{:then name}...{:catch name}...{/await}
+```
+```sv
+{#await expression}...{:then name}...{/await}
+```
+```sv
+{#await expression then name}...{/await}
+```
 
 ---
 
@@ -261,8 +285,12 @@ If you don't care about the pending state, you can also omit the initial block.
 
 ### DOM events
 
-* `on:eventname={handler}`
-* `on:eventname|modifiers={handler}`
+```sv
+on:eventname={handler}
+```
+```sv
+on:eventname|modifiers={handler}
+```
 
 ---
 
@@ -326,7 +354,9 @@ If the `on:` directive is used without a value, the component will *forward* the
 
 ### Component events
 
-* `on:eventname={handler}`
+```sv
+on:eventname={handler}
+```
 
 ---
 
@@ -340,9 +370,15 @@ Components can emit events using [createEventDispatcher](docs#createeventdispatc
 
 ### Element bindings
 
-* `bind:property={variable}`
-* `bind:group={variable}`
-* `bind:this={dom_node}`
+```sv
+bind:property={variable}
+```
+```sv
+bind:group={variable}
+```
+```sv
+bind:this={dom_node}
+```
 
 ---
 
@@ -514,8 +550,12 @@ To get a reference to a DOM node, use `bind:this`.
 
 ### Component bindings
 
-* `bind:property={variable}`
-* `bind:this={component_instance}`
+```sv
+bind:property={variable}
+```
+```sv
+bind:this={component_instance}
+```
 
 ---
 
@@ -542,8 +582,12 @@ Components also support `bind:this`, allowing you to interact with component ins
 
 ### Classes
 
-* `class:name={value}`
-* `class:name`
+```sv
+class:name={value}
+```
+```sv
+class:name
+```
 
 ---
 
@@ -561,8 +605,12 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 
 ### Actions
 
-* `use:action`
-* `use:action={parameters}`
+```sv
+use:action
+```
+```sv
+use:action={parameters}
+```
 
 ```js
 action = (node: HTMLElement, parameters: any) => {
@@ -622,18 +670,43 @@ An action can have parameters. If the returned value has an `update` method, it 
 
 ### Transitions
 
-* `transition:name`
-* `transition:name={params}`
-* `transition:name|local`
-* `transition:name|local={params}`
-* `in:name`
-* `in:name={params}`
-* `in:name|local`
-* `in:name|local={params}`
-* `out:name`
-* `out:name={params}`
-* `out:name|local`
-* `out:name|local={params}`
+```sv
+transition:name
+```
+```sv
+transition:name={params}
+```
+```sv
+transition:name|local
+```
+```sv
+transition:name|local={params}
+```
+```sv
+in:name
+```
+```sv
+in:name={params}
+```
+```sv
+in:name|local
+```
+```sv
+in:name|local={params}
+```
+```sv
+out:name
+```
+```sv
+out:name={params}
+```
+```sv
+out:name|local
+```
+```sv
+out:name|local={params}
+```
+
 
 ```js
 transition = (node: HTMLElement, params: any) => {
@@ -764,9 +837,10 @@ A custom transition function can also return a `tick` function, which is called 
 
 If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](tutorial/deferred-transitions) possible.
 
----
 
 #### Transition events
+
+---
 
 An element with transitions will dispatch the following events in addition to any standard DOM events:
 
@@ -815,9 +889,15 @@ TODO i can't remember how any of this works
 
 ### Slots
 
-* `<slot><!-- optional fallback --></slot>`
-* `<slot name="x"><!-- optional fallback --></slot>`
-* `<slot prop={value}></slot>`
+```sv
+<slot><!-- optional fallback --></slot>
+```
+```sv
+<slot name="x"><!-- optional fallback --></slot>
+```
+```sv
+<slot prop={value}></slot>
+```
 
 ---
 
@@ -927,7 +1007,9 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 
 ### &lt;svelte:component&gt;
 
-* `<svelte:component this={expression}>`
+```sv
+<svelte:component this={expression}>
+```
 
 ---
 
@@ -942,8 +1024,12 @@ If `this` is falsy, no component is rendered.
 
 ### &lt;svelte:window&gt;
 
-* `<svelte:window on:event={handler}/>`
-* `<svelte:window bind:prop={value}/>`
+```sv
+<svelte:window on:event={handler}/>
+```
+```sv
+<svelte:window bind:prop={value}/>
+```
 
 ---
 
@@ -980,7 +1066,9 @@ All except `scrollX` and `scrollY` are readonly.
 
 ### &lt;svelte:body&gt;
 
-* `<svelte:body on:event={handler}/>`
+```sv
+<svelte:body on:event={handler}/>
+```
 
 ---
 
@@ -996,7 +1084,9 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 
 ### &lt;svelte:head&gt;
 
-* `<svelte:head>`
+```sv
+<svelte:head>
+```
 
 ---
 
@@ -1011,7 +1101,9 @@ This element makes it possible to insert elements into `document.head`. During s
 
 ### &lt;svelte:options&gt;
 
-* `<svelte:options option={value}>`
+```sv
+<svelte:options option={value}>
+```
 
 ---
 
