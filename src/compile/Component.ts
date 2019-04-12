@@ -592,11 +592,11 @@ export default class Component {
 			if (node.body.type !== 'ExpressionStatement') return;
 			if (node.body.expression.type !== 'AssignmentExpression') return;
 
-			const { type, name } = node.body.expression.left;
-
-			if (type === 'Identifier' && !this.var_lookup.has(name) && name[0] !== '$') {
-				this.injected_reactive_declaration_vars.add(name);
-			}
+			extract_names(node.body.expression.left).forEach(name => {
+				if (!this.var_lookup.has(name) && name[0] !== '$') {
+					this.injected_reactive_declaration_vars.add(name);
+				}
+			});
 		});
 
 		let { scope: instance_scope, map, globals } = create_scopes(script.content);
@@ -1058,9 +1058,15 @@ export default class Component {
 						}
 
 						if (node.type === 'AssignmentExpression') {
-							const identifier = get_object(node.left)
-							assignee_nodes.add(identifier);
-							assignees.add(identifier.name);
+							if (node.left.type === 'MemberExpression' || node.left.type === 'Identifier') {
+								const identifier = get_object(node.left)
+								assignee_nodes.add(identifier);
+								assignees.add(identifier.name);
+							} else {
+								extract_names(node.left).forEach(name => {
+									assignees.add(name);
+								});
+							}
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
@@ -1097,9 +1103,9 @@ export default class Component {
 					injected: (
 						node.body.type === 'ExpressionStatement' &&
 						node.body.expression.type === 'AssignmentExpression' &&
-						node.body.expression.left.type === 'Identifier' &&
-						node.body.expression.left.name[0] !== '$' &&
-						this.var_lookup.get(node.body.expression.left.name).injected
+						extract_names(node.body.expression.left).every(name => {
+							return name[0] !== '$' && this.var_lookup.get(name).injected;
+						})
 					)
 				});
 			}
