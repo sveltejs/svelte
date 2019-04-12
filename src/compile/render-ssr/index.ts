@@ -3,6 +3,7 @@ import Component from '../Component';
 import { CompileOptions } from '../../interfaces';
 import { stringify } from '../utils/stringify';
 import Renderer from './Renderer';
+import { extract_names } from '../utils/scope';
 
 export default function ssr(
 	component: Component,
@@ -63,8 +64,32 @@ export default function ssr(
 		: [];
 
 	const reactive_declarations = component.reactive_declarations.map(d => {
-		const snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
-		return d.injected ? `let ${snippet}` : snippet;
+		let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
+
+		if (d.declaration) {
+			const declared = extract_names(d.declaration);
+			const injected = declared.filter(name => {
+				return name[0] !== '$' && component.var_lookup.get(name).injected;
+			});
+
+			const self_dependencies = injected.filter(name => d.dependencies.has(name));
+
+			if (injected.length) {
+				// in some cases we need to do `let foo; [expression]`, in
+				// others we can do `let [expression]`
+				const separate = (
+					self_dependencies.length > 0 ||
+					declared.length > injected.length ||
+					d.node.body.expression.type === 'ParenthesizedExpression'
+				);
+
+				snippet = separate
+					? `let ${injected.join(', ')}; ${snippet}`
+					: `let ${snippet}`;
+			}
+		}
+
+		return snippet;
 	});
 
 	const main = renderer.has_bindings
