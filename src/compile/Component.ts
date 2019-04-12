@@ -1134,13 +1134,6 @@ export default class Component {
 
 			seen.add(declaration);
 
-			if (declaration.dependencies.size === 0) {
-				this.error(declaration.node, {
-					code: 'invalid-reactive-declaration',
-					message: 'Invalid reactive declaration — must depend on local state'
-				});
-			}
-
 			declaration.dependencies.forEach(name => {
 				if (declaration.assignees.has(name)) return;
 				const earlier_declarations = lookup.get(name);

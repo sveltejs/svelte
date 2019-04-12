@@ -1,20 +1,12 @@
 export default {
-	props: {
-		a: 1,
-		b: 2,
-		c: 3,
-		d: 4
-	},
-
 	html: `
-		<p>4</p>
+		<p>10 - 90</p>
 	`,
 
 	test({ assert, component, target }) {
-		component.d = 5;
-
+		component.width = 50;
 		assert.htmlEqual(target.innerHTML, `
-			<p>5</p>
+			<p>10 - 40</p>
 		`);
 	}
 };

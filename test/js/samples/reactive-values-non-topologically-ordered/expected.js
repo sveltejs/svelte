@@ -28,12 +28,8 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$$.update = ($$dirty = { x: 1, b: 1 }) => {
-		if ($$dirty.x) {
-			b = x; $$invalidate('b', b);
-		}
-		if ($$dirty.b) {
-			a = b; $$invalidate('a', a);
-		}
+		if ($$dirty.x) { b = x; $$invalidate('b', b); }
+		if ($$dirty.b) { a = b; $$invalidate('a', a); }
 	};
 
 	return { x };

@@ -347,28 +347,34 @@ export default function dom(
 		.map(({ name }) => `$$self.$$.on_destroy.push(() => $$unsubscribe_${name.slice(1)}());`);
 
 	if (has_definition) {
-		const reactive_declarations = component.reactive_declarations.map(d => {
-			const condition = Array.from(d.dependencies)
-				.filter(n => {
-					if (n === '$$props') return false;
-					const variable = component.var_lookup.get(n);
-					return variable && variable.writable;
-				})
-				.map(n => `$$dirty.${n}`).join(' || ');
+		const reactive_declarations = [];
+		const fixed_reactive_declarations = []; // not really 'reactive' but whatever
 
-			const snippet = d.node.body.type === 'BlockStatement'
-				? `[✂${d.node.body.start}-${d.node.end}✂]`
-				: deindent`
-					{
-						[✂${d.node.body.start}-${d.node.end}✂]
-					}`;
+		component.reactive_declarations
+			.forEach(d => {
+				let uses_props;
 
-			return condition
-				? deindent`
-					if (${condition}) ${snippet}`
-				: deindent`
-					${snippet}`
-		});
+				const condition = Array.from(d.dependencies)
+					.filter(n => {
+						if (n === '$$props') {
+							uses_props = true;
+							return false;
+						}
+
+						const variable = component.var_lookup.get(n);
+						return variable && variable.writable;
+					})
+					.map(n => `$$dirty.${n}`).join(' || ');
+
+				let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
+				if (condition) snippet = `if (${condition}) { ${snippet} }`;
+
+				if (condition || uses_props) {
+					reactive_declarations.push(snippet);
+				} else {
+					fixed_reactive_declarations.push(snippet);
+				}
+			});
 
 		const injected = Array.from(component.injected_reactive_declaration_vars).filter(name => {
 			const variable = component.var_lookup.get(name);
@@ -410,6 +416,8 @@ export default function dom(
 				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
 					${reactive_declarations}
 				};
+
+				${fixed_reactive_declarations}
 				`}
 
 				return ${stringify_props(filtered_declarations)};
