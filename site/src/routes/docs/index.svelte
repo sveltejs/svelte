@@ -18,7 +18,8 @@
 	let show_contents = false;
 
 	onMount(() => {
-		const anchors = container.querySelectorAll('[id]');
+		// don't update `active_section` for headings above level 4, see _sections.js
+		const anchors = container.querySelectorAll('[id]:not([data-scrollignore])');
 
 		let positions;
 
@@ -244,12 +245,15 @@
 	@media (min-width: 768px) {
 		.content :global(h2):hover :global(.anchor),
 		.content :global(h3):hover :global(.anchor),
-		.content :global(h4):hover :global(.anchor) {
+		.content :global(h4):hover :global(.anchor),
+		.content :global(h5):hover :global(.anchor),
+		.content :global(h6):hover :global(.anchor) {
 			opacity: 1;
 		}
 
-		.content :global(h4):hover :global(.anchor) {
-			top: 0.4em;
+		.content :global(h5) :global(.anchor),
+		.content :global(h6) :global(.anchor) {
+			top: 0.5em;
 		}
 	}
 
@@ -264,6 +268,7 @@
 		line-height: 1;
 	}
 
+	.content :global(h4),
 	.content :global(h4 > code) {
 		font-weight: 700;
 		font-size: var(--h4);

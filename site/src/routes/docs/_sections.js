@@ -99,39 +99,35 @@ export default function() {
 			const seen = new Set();
 
 			renderer.heading = (text, level, rawtext) => {
-				if (level <= 4) {
-					const slug = rawtext
-						.toLowerCase()
-						.replace(/[^a-zA-Z0-9]+/g, '-')
-						.replace(/^-/, '')
-						.replace(/-$/, '');
+				const slug = rawtext
+					.toLowerCase()
+					.replace(/[^a-zA-Z0-9]+/g, '-')
+					.replace(/^-/, '')
+					.replace(/-$/, '');
 
-					if (seen.has(slug)) throw new Error(`Duplicate slug ${slug}`);
-					seen.add(slug);
+				if (seen.has(slug)) throw new Error(`Duplicate slug ${slug}`);
+				seen.add(slug);
 
-					if (level === 3 || level === 4) {
-						const title = unescape(
-							text
-								.replace(/<\/?code>/g, '')
-								.replace(/\.(\w+)(\((.+)?\))?/, (m, $1, $2, $3) => {
-									if ($3) return `.${$1}(...)`;
-									if ($2) return `.${$1}()`;
-									return `.${$1}`;
-								})
-						);
+				if (level === 3 || level === 4) {
+					const title = unescape(
+						text
+							.replace(/<\/?code>/g, '')
+							.replace(/\.(\w+)(\((.+)?\))?/, (m, $1, $2, $3) => {
+								if ($3) return `.${$1}(...)`;
+								if ($2) return `.${$1}()`;
+								return `.${$1}`;
+							})
+					);
 
-						subsections.push({ slug, title, level });
-					}
-
-					return `
-						<h${level}>
-							<span id="${slug}" class="offset-anchor"></span>
-							<a href="docs#${slug}" class="anchor" aria-hidden="true"></a>
-							${text}
-						</h${level}>`;
+					subsections.push({ slug, title, level });
 				}
 
-				return `<h${level}>${text}</h${level}>`;
+				return `
+					<h${level}>
+						<span id="${slug}" class="offset-anchor" ${level > 4 ? 'data-scrollignore' : ''}></span>
+						<a href="docs#${slug}" class="anchor" aria-hidden="true"></a>
+						${text}
+					</h${level}>`;
 			};
 
 			blockTypes.forEach(type => {
