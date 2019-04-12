@@ -188,6 +188,12 @@ export default function dom(
 
 						code.overwrite(node.start, node.end, dirty.map(n => component.invalidate(n)).join('; '));
 					} else {
+						const single = (
+							node.left.type === 'Identifier' &&
+							parent.type === 'ExpressionStatement' &&
+							node.left.name[0] !== '$'
+						);
+
 						names.forEach(name => {
 							const owner = scope.find_owner(name);
 							if (owner && owner !== component.instance_scope) return;
@@ -195,7 +201,13 @@ export default function dom(
 							const variable = component.var_lookup.get(name);
 							if (variable && (variable.hoistable || variable.global || variable.module)) return;
 
-							pending_assignments.add(name);
+							if (single) {
+								code.prependRight(node.start, `$$invalidate('${name}', `);
+								code.appendLeft(node.end, `)`);
+							} else {
+								pending_assignments.add(name);
+							}
+
 							component.has_reactive_assignments = true;
 						});
 					}

@@ -27,7 +27,7 @@ function instance($$self, $$props, $$invalidate) {
 	let max;
 
 	$$self.$$.update = ($$dirty = { a: 1, b: 1 }) => {
-		if ($$dirty.a || $$dirty.b) { max = Math.max(a, b); $$invalidate('max', max); }
+		if ($$dirty.a || $$dirty.b) { $$invalidate('max', max = Math.max(a, b)); }
 	};
 
 	return {};
