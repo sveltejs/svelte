@@ -39,14 +39,14 @@ export function writable(value, start = noop) {
 	return { set, update, subscribe };
 }
 
-export function derived(stores, fn) {
+export function derived(stores, fn, initial_value) {
 	const single = !Array.isArray(stores);
 	if (single) stores = [stores];
 
 	const auto = fn.length < 2;
 	let value = {};
 
-	return readable(undefined, set => {
+	return readable(initial_value, set => {
 		let inited = false;
 		const values = [];
 
@@ -56,7 +56,7 @@ export function derived(stores, fn) {
 			if (pending) return;
 			const result = fn(single ? values[0] : values, set);
 			if (auto && (value !== (value = result))) set(result);
-		}
+		};
 
 		const unsubscribers = stores.map((store, i) => store.subscribe(
 			value => {
