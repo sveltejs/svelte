@@ -49,10 +49,6 @@ class Component extends SvelteElement {
 			}
 		}
 	}
-
-	static get observedAttributes() {
-		return [];
-	}
 }
 
 customElements.define("custom-element", Component);

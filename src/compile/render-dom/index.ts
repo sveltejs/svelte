@@ -464,9 +464,10 @@ export default function dom(
 					}
 				}
 
+				${props.length > 0 && deindent`
 				static get observedAttributes() {
 					return ${JSON.stringify(props.map(x => x.export_name))};
-				}
+				}`}
 
 				${body.length > 0 && body.join('\n\n')}
 			}
