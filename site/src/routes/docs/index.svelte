@@ -280,6 +280,10 @@
 		padding: 0;
 	}
 
+	.content :global(h5) {
+		font-size: 2rem;
+	}
+
 	.content :global(code) {
 		padding: .3rem .8rem .3rem;
 		margin: 0 0.2rem;
