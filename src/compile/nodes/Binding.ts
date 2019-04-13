@@ -31,7 +31,12 @@ export default class Binding extends Node {
 		this.is_contextual = scope.names.has(name);
 
 		// make sure we track this as a mutable ref
-		if (this.is_contextual) {
+		if (scope.is_let(name)) {
+			component.error(this, {
+				code: 'invalid-binding',
+				message: 'Cannot bind to a variable declared with the let: directive'
+			});
+		} else if (this.is_contextual) {
 			scope.dependencies_for_name.get(name).forEach(name => {
 				const variable = component.var_lookup.get(name);
 				variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
