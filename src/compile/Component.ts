@@ -5,7 +5,7 @@ import Stats from '../Stats';
 import { globals, reserved } from '../utils/names';
 import { namespaces, valid_namespaces } from '../utils/namespaces';
 import create_module from './create_module';
-import { create_scopes, extract_names, Scope } from './utils/scope';
+import { create_scopes, extract_names, Scope, extract_identifiers } from './utils/scope';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
@@ -19,6 +19,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import { remove_indentation, add_indentation } from '../utils/indentation';
 import get_object from './utils/get_object';
+import unwrap_parens from './utils/unwrap_parens';
 
 type ComponentOptions = {
 	namespace?: string;
@@ -93,7 +94,7 @@ export default class Component {
 	node_for_declaration: Map<string, Node> = new Map();
 	partly_hoisted: string[] = [];
 	fully_hoisted: string[] = [];
-	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, node: Node, injected: boolean }> = [];
+	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, node: Node, declaration: Node }> = [];
 	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
 	injected_reactive_declaration_vars: Set<string> = new Set();
@@ -590,13 +591,15 @@ export default class Component {
 		script.content.body.forEach(node => {
 			if (node.type !== 'LabeledStatement') return;
 			if (node.body.type !== 'ExpressionStatement') return;
-			if (node.body.expression.type !== 'AssignmentExpression') return;
 
-			const { type, name } = node.body.expression.left;
+			const expression = unwrap_parens(node.body.expression);
+			if (expression.type !== 'AssignmentExpression') return;
 
-			if (type === 'Identifier' && !this.var_lookup.has(name) && name[0] !== '$') {
-				this.injected_reactive_declaration_vars.add(name);
-			}
+			extract_names(expression.left).forEach(name => {
+				if (!this.var_lookup.has(name) && name[0] !== '$') {
+					this.injected_reactive_declaration_vars.add(name);
+				}
+			});
 		});
 
 		let { scope: instance_scope, map, globals } = create_scopes(script.content);
@@ -1058,9 +1061,10 @@ export default class Component {
 						}
 
 						if (node.type === 'AssignmentExpression') {
-							const identifier = get_object(node.left)
-							assignee_nodes.add(identifier);
-							assignees.add(identifier.name);
+							extract_identifiers(get_object(node.left)).forEach(node => {
+								assignee_nodes.add(node);
+								assignees.add(node.name);
+							});
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
@@ -1090,18 +1094,10 @@ export default class Component {
 
 				add_indentation(this.code, node.body, 2);
 
-				unsorted_reactive_declarations.push({
-					assignees,
-					dependencies,
-					node,
-					injected: (
-						node.body.type === 'ExpressionStatement' &&
-						node.body.expression.type === 'AssignmentExpression' &&
-						node.body.expression.left.type === 'Identifier' &&
-						node.body.expression.left.name[0] !== '$' &&
-						this.var_lookup.get(node.body.expression.left.name).injected
-					)
-				});
+				const expression = node.body.expression && unwrap_parens(node.body.expression);
+				const declaration = expression && expression.left;
+
+				unsorted_reactive_declarations.push({ assignees, dependencies, node, declaration });
 			}
 		});
 
@@ -1133,13 +1129,6 @@ export default class Component {
 			}
 
 			seen.add(declaration);
-
-			if (declaration.dependencies.size === 0) {
-				this.error(declaration.node, {
-					code: 'invalid-reactive-declaration',
-					message: 'Invalid reactive declaration — must depend on local state'
-				});
-			}
 
 			declaration.dependencies.forEach(name => {
 				if (declaration.assignees.has(name)) return;
