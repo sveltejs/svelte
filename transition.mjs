@@ -25,15 +25,15 @@ export function fly(node, {
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
 
-	const od = target_opacity - opacity;
+	const od = target_opacity * (1 - opacity);
 
 	return {
 		delay,
 		duration,
 		easing,
-		css: t => `
+		css: (t, u) => `
 			transform: ${transform} translate(${(1 - t) * x}px, ${(1 - t) * y}px);
-			opacity: ${1 - (od * u)}`
+			opacity: ${target_opacity - (od * u)}`
 	};
 }
 
@@ -81,7 +81,7 @@ export function scale(node, {
 	const transform = style.transform === 'none' ? '' : style.transform;
 
 	const sd = 1 - start;
-	const od = target_opacity - opacity;
+	const od = target_opacity * (1 - opacity);
 
 	return {
 		delay,
@@ -89,7 +89,7 @@ export function scale(node, {
 		easing,
 		css: (t, u) => `
 			transform: ${transform} scale(${1 - (sd * u)});
-			opacity: ${1 - (od * u)}
+			opacity: ${target_opacity - (od * u)}
 		`
 	};
 }
