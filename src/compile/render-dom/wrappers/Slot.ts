@@ -106,6 +106,7 @@ export default class SlotWrapper extends Wrapper {
 		let mount_before = block.builders.mount.toString();
 
 		block.builders.create.push_condition(`!${slot}`);
+		block.builders.claim.push_condition(`!${slot}`);
 		block.builders.hydrate.push_condition(`!${slot}`);
 		block.builders.mount.push_condition(`!${slot}`);
 		block.builders.update.push_condition(`!${slot}`);
@@ -118,6 +119,7 @@ export default class SlotWrapper extends Wrapper {
 		block.event_listeners = listeners;
 
 		block.builders.create.pop_condition();
+		block.builders.claim.pop_condition();
 		block.builders.hydrate.pop_condition();
 		block.builders.mount.pop_condition();
 		block.builders.update.pop_condition();
