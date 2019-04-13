@@ -70,9 +70,7 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$$.update = ($$dirty = { foo: 1 }) => {
-		if ($$dirty.foo) {
-			bar = foo * 2; $$invalidate('bar', bar);
-		}
+		if ($$dirty.foo) { $$invalidate('bar', bar = foo * 2); }
 	};
 
 	return { foo, bar };

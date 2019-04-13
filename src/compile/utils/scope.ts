@@ -101,37 +101,41 @@ export class Scope {
 }
 
 export function extract_names(param: Node) {
-	const names: string[] = [];
-	extractors[param.type](names, param);
-	return names;
+	return extract_identifiers(param).map(node => node.name);
+}
+
+export function extract_identifiers(param: Node) {
+	const nodes: Node[] = [];
+	extractors[param.type](nodes, param);
+	return nodes;
 }
 
 const extractors = {
-	Identifier(names: string[], param: Node) {
-		names.push(param.name);
+	Identifier(nodes: Node[], param: Node) {
+		nodes.push(param);
 	},
 
-	ObjectPattern(names: string[], param: Node) {
+	ObjectPattern(nodes: Node[], param: Node) {
 		param.properties.forEach((prop: Node) => {
 			if (prop.type === 'RestElement') {
-				names.push(prop.argument.name);
+				nodes.push(prop.argument);
 			} else {
-				extractors[prop.value.type](names, prop.value);
+				extractors[prop.value.type](nodes, prop.value);
 			}
 		});
 	},
 
-	ArrayPattern(names: string[], param: Node) {
+	ArrayPattern(nodes: Node[], param: Node) {
 		param.elements.forEach((element: Node) => {
-			if (element) extractors[element.type](names, element);
+			if (element) extractors[element.type](nodes, element);
 		});
 	},
 
-	RestElement(names: string[], param: Node) {
-		extractors[param.argument.type](names, param.argument);
+	RestElement(nodes: Node[], param: Node) {
+		extractors[param.argument.type](nodes, param.argument);
 	},
 
-	AssignmentPattern(names: string[], param: Node) {
-		extractors[param.left.type](names, param.left);
+	AssignmentPattern(nodes: Node[], param: Node) {
+		extractors[param.left.type](nodes, param.left);
 	}
 };
