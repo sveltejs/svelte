@@ -18,11 +18,14 @@ export function fly(node, {
 	duration = 400,
 	easing = cubicOut,
 	x = 0,
-	y = 0
+	y = 0,
+	opacity = 0
 }) {
 	const style = getComputedStyle(node);
-	const opacity = +style.opacity;
+	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
+
+	const od = target_opacity - opacity;
 
 	return {
 		delay,
@@ -30,7 +33,7 @@ export function fly(node, {
 		easing,
 		css: t => `
 			transform: ${transform} translate(${(1 - t) * x}px, ${(1 - t) * y}px);
-			opacity: ${t * opacity}`
+			opacity: ${1 - (od * u)}`
 	};
 }
 
@@ -73,13 +76,12 @@ export function scale(node, {
 	start = 0,
 	opacity = 0
 }) {
-	const sd = 1 - start;
-	const od = 1 - opacity;
+	const style = getComputedStyle(node);
+	const target_opacity = +style.opacity;
+	const transform = style.transform === 'none' ? '' : style.transform;
 
-	const transform = (
-		node.style.transform ||
-		getComputedStyle(node).transform
-	).replace('none', '');
+	const sd = 1 - start;
+	const od = target_opacity - opacity;
 
 	return {
 		delay,
@@ -94,10 +96,21 @@ export function scale(node, {
 
 export function draw(node, {
 	delay = 0,
-	duration = 800,
+	speed,
+	duration,
 	easing = cubicInOut
 }) {
 	const len = node.getTotalLength();
+
+	if (duration === undefined) {
+		if (speed === undefined) {
+			duration = 800;
+		} else {
+			duration = len / speed;
+		}
+	} else if (typeof duration === 'function') {
+		duration = duration(len);
+	}
 
 	return {
 		delay,
