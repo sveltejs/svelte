@@ -51,12 +51,20 @@ export default function(node, renderer, options) {
 	let textarea_contents; // awkward special case
 
 	const slot = node.get_static_attribute_value('slot');
-	if (slot && node.has_ancestor('InlineComponent')) {
+	const component = node.find_nearest(/InlineComponent/);
+	if (slot && component) {
 		const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const slot_name = slot.chunks[0].data;
 		const target = renderer.targets[renderer.targets.length - 1];
 		target.slot_stack.push(slot_name);
 		target.slots[slot_name] = '';
+
+		const lets = node.lets;
+		const seen = new Set(lets.map(l => l.name));
+
+		component.lets.forEach(l => {
+			if (!seen.has(l.name)) lets.push(l);
+		});
 
 		options.slot_scopes.set(slot_name, get_slot_scope(node.lets));
 	}
