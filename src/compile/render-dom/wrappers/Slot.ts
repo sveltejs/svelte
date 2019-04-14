@@ -47,8 +47,6 @@ export default class SlotWrapper extends Wrapper {
 		// we have to do this, just in case
 		block.add_intro();
 		block.add_outro();
-
-		renderer.slots.set(this.node.slot_name, { slot: this, block });
 	}
 
 	render(

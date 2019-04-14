@@ -11,7 +11,6 @@ export default class Renderer {
 
 	blocks: (Block | string)[] = [];
 	readonly: Set<string> = new Set();
-	slots: Map<string, { slot: SlotWrapper, block: Block }> = new Map();
 	meta_bindings: CodeBuilder = new CodeBuilder(); // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
 	binding_groups: string[] = [];
 
