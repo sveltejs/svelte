@@ -112,7 +112,6 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const statements: string[] = [];
 		const updates: string[] = [];
-		const postupdates: string[] = [];
 
 		let props;
 		const name_changes = block.get_unique_name(`${name}_changes`);
@@ -311,8 +310,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 			`);
 
-			postupdates.push(updating);
-
 			const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
 			const dependencies = Array.from(binding.expression.dependencies);
 
@@ -334,9 +331,9 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				block.builders.init.add_block(deindent`
 					function ${name}(${value}) {
-						if (ctx.${name}.call(null, ${value}, ctx)) {
-							${updating} = true;
-						}
+						ctx.${name}.call(null, ${value}, ctx);
+						${updating} = true;
+						@add_flush_callback(() => ${updating} = false);
 					}
 				`);
 
@@ -344,9 +341,9 @@ export default class InlineComponentWrapper extends Wrapper {
 			} else {
 				block.builders.init.add_block(deindent`
 					function ${name}(${value}) {
-						if (ctx.${name}.call(null, ${value})) {
-							${updating} = true;
-						}
+						ctx.${name}.call(null, ${value});
+						${updating} = true;
+						@add_flush_callback(() => ${updating} = false);
 					}
 				`);
 			}
@@ -354,7 +351,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const body = deindent`
 				function ${name}(${args.join(', ')}) {
 					${lhs} = ${value};
-					return ${component.invalidate(dependencies[0])}
+					${component.invalidate(dependencies[0])};
 				}
 			`;
 
@@ -453,8 +450,6 @@ export default class InlineComponentWrapper extends Wrapper {
 					else if (${switch_value}) {
 						${name}.$set(${name_changes});
 					}
-
-					${postupdates.length > 0 && `${postupdates.join(' = ')} = false;`}
 				`);
 			}
 
@@ -498,7 +493,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				block.builders.update.add_block(deindent`
 					${updates}
 					${name}.$set(${name_changes});
-					${postupdates.length > 0 && `${postupdates.join(' = ')} = false;`}
 				`);
 			}
 
