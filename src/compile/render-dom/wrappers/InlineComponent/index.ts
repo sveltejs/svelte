@@ -344,7 +344,6 @@ export default class InlineComponentWrapper extends Wrapper {
 						ctx.${name}.call(null, ${value});
 						${updating} = true;
 						@add_flush_callback(() => ${updating} = false);
-						}
 					}
 				`);
 			}
