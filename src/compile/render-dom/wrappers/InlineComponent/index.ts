@@ -156,7 +156,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			component_opts.push(`$$inline: true`);
 		}
 
-		const fragment_dependencies = new Set();
+		const fragment_dependencies = new Set(this.fragment ? ['$$scope'] : []);
 		this.slots.forEach(slot => {
 			slot.block.dependencies.forEach(name => {
 				const is_let = slot.scope.is_let(name);
