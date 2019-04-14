@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import marked from 'marked';
 import PrismJS from 'prismjs';
-import { extract_frontmatter, extract_metadata, langs } from '../../../utils/markdown';
+import { extract_frontmatter, extract_metadata, langs, link_renderer } from '../../../utils/markdown';
 
 const cache = new Map();
 
@@ -32,6 +32,8 @@ function get_tutorial(slug) {
 	const { content } = extract_frontmatter(markdown);
 
 	const renderer = new marked.Renderer();
+
+	renderer.link = link_renderer;
 
 	renderer.code = (source, lang) => {
 		source = source.replace(/^ +/gm, match =>

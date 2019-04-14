@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { extract_frontmatter, extract_metadata, langs } from '../../utils/markdown.js';
+import { extract_frontmatter, extract_metadata, langs, link_renderer } from '../../utils/markdown.js';
 import marked from 'marked';
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
@@ -49,6 +49,8 @@ export default function() {
 			const renderer = new marked.Renderer();
 
 			let block_open = false;
+
+			renderer.link = link_renderer;
 
 			renderer.hr = (...args) => {
 				block_open = true;
