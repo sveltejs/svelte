@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { extract_frontmatter, langs } from '../../utils/markdown.js';
+import { extract_frontmatter, langs, link_renderer } from '../../utils/markdown.js';
 import marked from 'marked';
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
@@ -19,6 +19,8 @@ export default function() {
 			metadata.dateString = date.toDateString();
 
 			const renderer = new marked.Renderer();
+
+			renderer.link = link_renderer;
 
 			renderer.code = (source, lang) => {
 				const plang = langs[lang];
