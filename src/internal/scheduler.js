@@ -7,16 +7,13 @@ export const intros = { enabled: false };
 let update_promise;
 const binding_callbacks = [];
 const render_callbacks = [];
+const flush_callbacks = [];
 
 export function schedule_update() {
 	if (!update_promise) {
 		update_promise = Promise.resolve();
 		update_promise.then(flush);
 	}
-}
-
-export function add_render_callback(fn) {
-	render_callbacks.push(fn);
 }
 
 export function tick() {
@@ -26,6 +23,14 @@ export function tick() {
 
 export function add_binding_callback(fn) {
 	binding_callbacks.push(fn);
+}
+
+export function add_render_callback(fn) {
+	render_callbacks.push(fn);
+}
+
+export function add_flush_callback(fn) {
+	flush_callbacks.push(fn);
 }
 
 export function flush() {
@@ -55,6 +60,10 @@ export function flush() {
 			}
 		}
 	} while (dirty_components.length);
+
+	while (flush_callbacks.length) {
+		flush_callbacks.pop()();
+	}
 
 	update_promise = null;
 }
