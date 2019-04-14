@@ -3,7 +3,7 @@ export default {
 		<button>click me</button>
 		<button>click me</button>
 
-		<p>{"value":{"x":true}}</p>
+		<p>{"value":{"i":0,"j":0}}</p>
 		<p></p>
 	`,
 
@@ -16,8 +16,8 @@ export default {
 			<button>click me</button>
 			<button>click me</button>
 
-			<p>{"value":{"x":true}}</p>
-			<p>{"value":{"x":true}}</p>
+			<p>{"value":{"i":0,"j":0}}</p>
+			<p>{"value":{"i":1,"j":0}}</p>
 		`);
 	}
 };
