@@ -20,6 +20,7 @@ import fuzzymatch from '../utils/fuzzymatch';
 import { remove_indentation, add_indentation } from '../utils/indentation';
 import get_object from './utils/get_object';
 import unwrap_parens from './utils/unwrap_parens';
+import Slot from './nodes/Slot';
 
 type ComponentOptions = {
 	namespace?: string;
@@ -116,6 +117,8 @@ export default class Component {
 	aliases: Map<string, string> = new Map();
 	used_names: Set<string> = new Set();
 	globally_used_names: Set<string> = new Set();
+
+	slots: Map<string, Slot> = new Map();
 
 	constructor(
 		ast: Ast,

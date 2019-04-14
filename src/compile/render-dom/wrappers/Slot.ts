@@ -14,7 +14,6 @@ import Attribute from '../../nodes/Attribute';
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
 	fragment: FragmentWrapper;
-	slot_values: Map<string, Attribute> = new Map();
 
 	var = 'slot';
 	dependencies: Set<string> = new Set(['$$scope']);
@@ -39,36 +38,7 @@ export default class SlotWrapper extends Wrapper {
 			next_sibling
 		);
 
-		this.node.attributes.forEach(attribute => {
-			if (attribute.name !== 'name') this.slot_values.set(attribute.name, attribute);
-		});
-
-		if (this.node.slot_name === 'default') {
-			// if this is the default slot, add our dependencies to any
-			// other slots (which inherit our slot values) that were
-			// previously encountered
-			renderer.slots.forEach(({ slot, block }) => {
-				this.slot_values.forEach((attribute, name) => {
-					if (!slot.slot_values.has(name)) {
-						slot.slot_values.set(name, attribute);
-
-						add_to_set(slot.dependencies, attribute.dependencies);
-						block.add_dependencies(attribute.dependencies);
-					}
-				});
-			});
-		} else if (renderer.slots.has('default')) {
-			// otherwise, go the other way — inherit values from
-			// a previously encountered default slot
-			const { slot: default_slot } = renderer.slots.get('default');
-			default_slot.slot_values.forEach((attribute, name) => {
-				if (!this.slot_values.has(name)) {
-					this.slot_values.set(name, attribute);
-				}
-			});
-		}
-
-		this.slot_values.forEach(attribute => {
+		this.node.values.forEach(attribute => {
 			add_to_set(this.dependencies, attribute.dependencies);
 			block.add_dependencies(attribute.dependencies);
 		});
@@ -92,18 +62,18 @@ export default class SlotWrapper extends Wrapper {
 		let get_slot_changes;
 		let get_slot_context;
 
-		if (this.slot_values.size > 0) {
-			const attributes = Array.from(this.slot_values.values());
+		if (this.node.values.size > 0) {
+			const attributes = Array.from(this.node.values.values());
 
 			get_slot_changes = renderer.component.get_unique_name(`get_${slot_name}_slot_changes`);
 			get_slot_context = renderer.component.get_unique_name(`get_${slot_name}_slot_context`);
 
-			const context_props = get_slot_data(attributes, false);
+			const context_props = get_slot_data(this.node.values, false);
 			const changes_props = [];
 
 			const dependencies = new Set();
 
-			attributes.forEach(attribute => {
+			this.node.values.forEach(attribute => {
 				attribute.chunks.forEach(chunk => {
 					if ((chunk as Expression).dependencies) {
 						add_to_set(dependencies, (chunk as Expression).dependencies);
