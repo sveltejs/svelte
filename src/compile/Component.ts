@@ -119,6 +119,7 @@ export default class Component {
 	globally_used_names: Set<string> = new Set();
 
 	slots: Map<string, Slot> = new Map();
+	slot_outlets: Set<string> = new Set();
 
 	constructor(
 		ast: Ast,

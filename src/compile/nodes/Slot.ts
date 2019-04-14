@@ -40,15 +40,6 @@ export default class Slot extends Element {
 			}
 
 			this.values.set(attr.name, new Attribute(component, this, scope, attr));
-
-			// TODO should duplicate slots be disallowed? Feels like it's more likely to be a
-			// bug than anything. Perhaps it should be a warning
-
-			// if (validator.slots.has(slot_name)) {
-			// 	validator.error(`duplicate '${slot_name}' <slot> element`, nameAttribute.start);
-			// }
-
-			// validator.slots.add(slot_name);
 		});
 
 		if (!this.slot_name) this.slot_name = 'default';
@@ -76,12 +67,5 @@ export default class Slot extends Element {
 		}
 
 		component.slots.set(this.slot_name, this);
-
-		// if (node.attributes.length === 0) && validator.slots.has('default')) {
-		// 	validator.error(node, {
-		// 		code: `duplicate-slot`,
-		// 		message: `duplicate default <slot> element`
-		// 	});
-		// }
 	}
 }
