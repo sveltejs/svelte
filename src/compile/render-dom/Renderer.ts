@@ -3,16 +3,17 @@ import { CompileOptions } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
 import CodeBuilder from '../utils/CodeBuilder';
+import SlotWrapper from './wrappers/Slot';
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
 	options: CompileOptions;
 
-	blocks: (Block | string)[];
-	readonly: Set<string>;
-	slots: Set<string>;
-	meta_bindings: CodeBuilder;
-	binding_groups: string[];
+	blocks: (Block | string)[] = [];
+	readonly: Set<string> = new Set();
+	slots: Map<string, { slot: SlotWrapper, block: Block }> = new Map();
+	meta_bindings: CodeBuilder = new CodeBuilder(); // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
+	binding_groups: string[] = [];
 
 	block: Block;
 	fragment: FragmentWrapper;
@@ -24,15 +25,7 @@ export default class Renderer {
 		this.options = options;
 		this.locate = component.locate; // TODO messy
 
-		this.readonly = new Set();
-		this.slots = new Set();
-
 		this.file_var = options.dev && this.component.get_unique_name('file');
-
-		// initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
-		this.meta_bindings = new CodeBuilder();
-
-		this.binding_groups = [];
 
 		// main block
 		this.block = new Block({
@@ -46,7 +39,6 @@ export default class Renderer {
 		});
 
 		this.block.has_update_method = true;
-		this.blocks = [];
 
 		this.fragment = new FragmentWrapper(
 			this,
