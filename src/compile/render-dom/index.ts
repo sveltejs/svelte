@@ -74,14 +74,14 @@ export default function dom(
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	const set = (uses_props || writable_props.length > 0 || renderer.slots.size > 0)
+	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
 		? deindent`
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
 				`if ('${prop.export_name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = $$props.${prop.export_name}`)};`
 				)}
-				${renderer.slots.size > 0 &&
+				${component.slots.size > 0 &&
 				`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
@@ -285,7 +285,7 @@ export default function dom(
 	}
 
 	const args = ['$$self'];
-	if (props.length > 0 || component.has_reactive_assignments || renderer.slots.size > 0) {
+	if (props.length > 0 || component.has_reactive_assignments || component.slots.size > 0) {
 		args.push('$$props', '$$invalidate');
 	}
 
@@ -315,7 +315,7 @@ export default function dom(
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 
-	if (renderer.slots.size > 0) {
+	if (component.slots.size > 0) {
 		filtered_declarations.push('$$slots', '$$scope');
 	}
 
@@ -415,7 +415,7 @@ export default function dom(
 
 				${component.javascript}
 
-				${renderer.slots.size && `let { $$slots = {}, $$scope } = $$props;`}
+				${component.slots.size && `let { $$slots = {}, $$scope } = $$props;`}
 
 				${renderer.binding_groups.length > 0 && `const $$binding_groups = [${renderer.binding_groups.map(_ => `[]`).join(', ')}];`}
 
