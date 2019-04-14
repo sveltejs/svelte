@@ -85,11 +85,10 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	$$.ctx = instance
 		? instance(component, props, (key, value) => {
-			if ($$.bound[key]) $$.bound[key](value);
-
 			if ($$.ctx) {
 				const changed = not_equal(value, $$.ctx[key]);
 				if (ready && changed) {
+					if ($$.bound[key]) $$.bound[key](value);
 					make_dirty(component, key);
 				}
 
