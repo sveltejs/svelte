@@ -324,13 +324,14 @@ export default class InlineComponentWrapper extends Wrapper {
 				contextual_dependencies.push(object, property);
 			}
 
-			const args = ['value'];
+			const value = block.get_unique_name('value');
+			const args = [value];
 			if (contextual_dependencies.length > 0) {
 				args.push(`{ ${contextual_dependencies.join(', ')} }`);
 
 				block.builders.init.add_block(deindent`
-					function ${name}(value) {
-						ctx.${name}.call(null, value, ctx);
+					function ${name}(${value}) {
+						ctx.${name}.call(null, ${value}, ctx);
 						${updating} = true;
 						@add_flush_callback(() => ${updating} = false);
 					}
@@ -339,17 +340,18 @@ export default class InlineComponentWrapper extends Wrapper {
 				block.maintain_context = true; // TODO put this somewhere more logical
 			} else {
 				block.builders.init.add_block(deindent`
-					function ${name}(value) {
-						ctx.${name}.call(null, value);
+					function ${name}(${value}) {
+						ctx.${name}.call(null, ${value});
 						${updating} = true;
 						@add_flush_callback(() => ${updating} = false);
+						}
 					}
 				`);
 			}
 
 			const body = deindent`
 				function ${name}(${args.join(', ')}) {
-					${lhs} = value;
+					${lhs} = ${value};
 					${component.invalidate(dependencies[0])};
 				}
 			`;
