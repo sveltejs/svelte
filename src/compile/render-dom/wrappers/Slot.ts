@@ -64,8 +64,6 @@ export default class SlotWrapper extends Wrapper {
 		let get_slot_context;
 
 		if (this.node.values.size > 0) {
-			const attributes = Array.from(this.node.values.values());
-
 			get_slot_changes = renderer.component.get_unique_name(`get_${slot_name}_slot_changes`);
 			get_slot_context = renderer.component.get_unique_name(`get_${slot_name}_slot_context`);
 
