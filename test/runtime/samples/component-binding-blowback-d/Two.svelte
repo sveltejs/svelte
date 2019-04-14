@@ -1,3 +1,4 @@
 <script>
-	export let value = 'x';
+	export let i, j;
+	export let value = `${i}:${j}`;
 </script>

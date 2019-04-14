@@ -3,7 +3,7 @@ export default {
 		<button>click me</button>
 		<button>click me</button>
 
-		<p>{"value":"x"}</p>
+		<p>{"value":"0:0"}</p>
 		<p></p>
 	`,
 
@@ -16,8 +16,8 @@ export default {
 			<button>click me</button>
 			<button>click me</button>
 
-			<p>{"value":"x"}</p>
-			<p>{"value":"x"}</p>
+			<p>{"value":"0:0"}</p>
+			<p>{"value":"1:0"}</p>
 		`);
 	}
 };
