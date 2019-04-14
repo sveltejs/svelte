@@ -40,8 +40,9 @@ export default class SlotWrapper extends Wrapper {
 
 		this.node.values.forEach(attribute => {
 			add_to_set(this.dependencies, attribute.dependencies);
-			block.add_dependencies(attribute.dependencies);
 		});
+
+		block.add_dependencies(this.dependencies);
 
 		// we have to do this, just in case
 		block.add_intro();
