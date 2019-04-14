@@ -220,10 +220,6 @@ export default class ElementWrapper extends Wrapper {
 	render(block: Block, parent_node: string, parent_nodes: string) {
 		const { renderer } = this;
 
-		if (this.node.name === 'slot') {
-			renderer.slots.add((this.node as Slot).slot_name);
-		}
-
 		if (this.node.name === 'noscript') return;
 
 		if (this.slot_block) {

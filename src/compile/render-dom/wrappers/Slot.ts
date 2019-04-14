@@ -9,10 +9,12 @@ import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../utils/get_slot_data';
 import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
+import Attribute from '../../nodes/Attribute';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
 	fragment: FragmentWrapper;
+	slot_values: Map<string, Attribute> = new Map();
 
 	var = 'slot';
 	dependencies: Set<string> = new Set(['$$scope']);
@@ -38,14 +40,44 @@ export default class SlotWrapper extends Wrapper {
 		);
 
 		this.node.attributes.forEach(attribute => {
-			add_to_set(this.dependencies, attribute.dependencies);
+			if (attribute.name !== 'name') this.slot_values.set(attribute.name, attribute);
 		});
 
-		block.add_dependencies(this.dependencies);
+		if (this.node.slot_name === 'default') {
+			// if this is the default slot, add our dependencies to any
+			// other slots (which inherit our slot values) that were
+			// previously encountered
+			renderer.slots.forEach(({ slot, block }) => {
+				this.slot_values.forEach((attribute, name) => {
+					if (!slot.slot_values.has(name)) {
+						slot.slot_values.set(name, attribute);
+
+						add_to_set(slot.dependencies, attribute.dependencies);
+						block.add_dependencies(attribute.dependencies);
+					}
+				});
+			});
+		} else if (renderer.slots.has('default')) {
+			// otherwise, go the other way — inherit values from
+			// a previously encountered default slot
+			const { slot: default_slot } = renderer.slots.get('default');
+			default_slot.slot_values.forEach((attribute, name) => {
+				if (!this.slot_values.has(name)) {
+					this.slot_values.set(name, attribute);
+				}
+			});
+		}
+
+		this.slot_values.forEach(attribute => {
+			add_to_set(this.dependencies, attribute.dependencies);
+			block.add_dependencies(attribute.dependencies);
+		});
 
 		// we have to do this, just in case
 		block.add_intro();
 		block.add_outro();
+
+		renderer.slots.set(this.node.slot_name, { slot: this, block });
 	}
 
 	render(
@@ -56,14 +88,13 @@ export default class SlotWrapper extends Wrapper {
 		const { renderer } = this;
 
 		const { slot_name } = this.node;
-		renderer.slots.add(slot_name);
 
 		let get_slot_changes;
 		let get_slot_context;
 
-		const attributes = this.node.attributes.filter(attribute => attribute.name !== 'name');
+		if (this.slot_values.size > 0) {
+			const attributes = Array.from(this.slot_values.values());
 
-		if (attributes.length > 0) {
 			get_slot_changes = renderer.component.get_unique_name(`get_${slot_name}_slot_changes`);
 			get_slot_context = renderer.component.get_unique_name(`get_${slot_name}_slot_context`);
 
