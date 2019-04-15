@@ -1,24 +1,21 @@
 <script>
 	import { beforeUpdate } from "svelte";
-	import Summary from "./Summary.html";
+	import Summary from "./Summary.svelte";
 
 	const PAGE_SIZE = 20;
 
-	export let items;
-	export let offset;
 	export let page;
 
-	let previous_page;
+	let items;
+	let offset;
 
-	beforeUpdate(async () => {
-		if (page !== previous_page) {
-			previous_page = page;
-
-			items = await fetch(`https://node-hnapi.herokuapp.com/news?page=${page}`).then(r => r.json())
+	$: fetch(`https://node-hnapi.herokuapp.com/news?page=${page}`)
+		.then(r => r.json())
+		.then(data => {
+			items = data;
 			offset = PAGE_SIZE * (page - 1);
 			window.scrollTo(0, 0);
-		}
-	});
+		});
 </script>
 
 <style>

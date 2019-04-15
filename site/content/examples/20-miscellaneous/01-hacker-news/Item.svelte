@@ -1,12 +1,8 @@
 <script>
-	import Comment from "./Comment.html";
+	import Comment from "./Comment.svelte";
 
 	export let item;
-
-	function back(event) {
-		event.preventDefault();
-		window.history.back();
-	}
+	export let returnTo;
 </script>
 
 <style>
@@ -25,7 +21,7 @@
 	}
 </style>
 
-<a href="#/top/1" on:click={back}>&laquo; back</a>
+<a href={returnTo}>&laquo; back</a>
 
 <article>
 	<a href="{item.url}">

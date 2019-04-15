@@ -1,3 +1,7 @@
+<script>
+	export let comment;
+</script>
+
 <style>
 	article {
 		border-top: 1px solid #eee;

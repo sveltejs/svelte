@@ -12,12 +12,20 @@
 	function clear() {
 		todos = todos.filter(t => !t.done);
 	}
+
+	$: remaining = todos.filter(t => !t.done).length;
 </script>
+
+<style>
+	.done {
+		opacity: 0.4;
+	}
+</style>
 
 <h1>Todos</h1>
 
 {#each todos as todo}
-	<div>
+	<div class:done={todo.done}>
 		<input
 			type=checkbox
 			bind:checked={todo.done}
@@ -29,6 +37,8 @@
 		>
 	</div>
 {/each}
+
+<p>{remaining} remaining</p>
 
 <button on:click={add}>
 	Add new
