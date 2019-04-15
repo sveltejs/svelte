@@ -143,7 +143,14 @@ export default class ElementWrapper extends Wrapper {
 							name: this.renderer.component.get_unique_name(`create_${sanitize(name)}_slot`)
 						});
 
-						const fn = get_context_merger(this.node.lets);
+						const lets = this.node.lets;
+						const seen = new Set(lets.map(l => l.name));
+
+						(owner as InlineComponentWrapper).node.lets.forEach(l => {
+							if (!seen.has(l.name)) lets.push(l);
+						});
+
+						const fn = get_context_merger(lets);
 
 						(owner as InlineComponentWrapper).slots.set(name, {
 							block: child_block,
@@ -219,10 +226,6 @@ export default class ElementWrapper extends Wrapper {
 
 	render(block: Block, parent_node: string, parent_nodes: string) {
 		const { renderer } = this;
-
-		if (this.node.name === 'slot') {
-			renderer.slots.add((this.node as Slot).slot_name);
-		}
 
 		if (this.node.name === 'noscript') return;
 
