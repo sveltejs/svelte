@@ -24,7 +24,7 @@
 
 <style>
 	.post {
-		padding: var(--top-offset) 0;
+		padding: var(--top-offset) var(--side-nav) 0 var(--side-nav);
 		max-width: var(--main-width);
 		margin: 0 auto;
 	}
