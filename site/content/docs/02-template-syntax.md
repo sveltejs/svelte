@@ -1111,6 +1111,8 @@ The `<svelte:options>` element provides a place to specify per-component compile
 
 * `immutable={true}` — you never use mutable data, so the compiler can do simple referential equality checks to determine if values have changed
 * `immutable={false}` — the default. Svelte will be more conservative about whether or not mutable objects have changed
+* `accessors={true}` — adds getters and setters for the component's props
+* `accessors={false}` — the default
 * `namespace="..."` — the namespace where this component will be used, most commonly "svg"
 * `tag="..."` — the name to use when compiling this component as a custom element
 
