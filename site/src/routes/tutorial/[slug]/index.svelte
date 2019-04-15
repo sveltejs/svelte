@@ -287,7 +287,7 @@
 				orientation={mobile ? 'columns' : 'rows'}
 				fixed={mobile}
 				on:change={handle_change}
-				setup={mapbox_setup}
+				injectedJS={mapbox_setup}
 				relaxed
 			/>
 		</div>
