@@ -108,7 +108,7 @@
 		bottom: calc(100vh - var(--nav-h) - 10.8rem);
 		width: 100%;
 		height: 2em;
-		background: linear-gradient(to top, rgba(103,103,120,0) 0%, rgba(103,103,120,0.7) 50%, rgba(103,103,120,1) 100%);
+		background: linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%);
 		pointer-events: none;
 		z-index: 2;
 	}
@@ -120,7 +120,7 @@
 		bottom: 1.9em;
 		width: 100%;
 		height: 2em;
-		background: linear-gradient(to bottom, rgba(103,103,120,0) 0%, rgba(103,103,120,0.7) 50%, rgba(103,103,120,1) 100%);
+		background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%);
 		pointer-events: none;
 	}
 
@@ -324,6 +324,7 @@
 		margin: 0;
 		border: 1px solid #81b9e0;
 		box-shadow: none;
+		max-width: 100%;
 	}
 
 	section > :global(.code-block)> :global(pre.language-markup) {
