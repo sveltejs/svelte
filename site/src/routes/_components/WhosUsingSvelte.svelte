@@ -54,5 +54,5 @@
 	<a href="https://www.nesta.org.uk"><img src="organisations/nesta.svg" alt="Nesta logo"></a>
 	<a href="https://nytimes.com"><img src="organisations/nyt.svg" alt="The New York Times logo"></a>
 	<a href="https://www.stone.co"><img src="organisations/stone.svg" alt="Stone Payments logo"></a>
-	<a href="https://github.com/sveltejs/svelte/blob/master/site/src/components/WhosUsingSvelte/index.svelte" class="add-yourself"><span>+ your company?</span></a>
+	<a href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
 </div>
