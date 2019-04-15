@@ -1,5 +1,4 @@
 <script>
-	import { onMount } from 'svelte';
 	import { scaleLinear } from 'd3-scale';
 	import points from './data.js';
 
@@ -26,21 +25,12 @@
 	function formatMobile (tick) {
 		return "'" + tick % 100;
 	}
-
-	let svg;
-	function resize() {
-		({ width, height } = svg.getBoundingClientRect());
-	}
-
-	onMount(resize);
 </script>
 
-<svelte:window on:resize='{resize}'/>
+<h2>Arctic sea ice minimum</h2>
 
-<div class="chart">
-	<h2>Arctic sea ice minimum</h2>
-
-	<svg bind:this={svg}>
+<div class="chart" bind:clientWidth={width} bind:clientHeight={height}>
+	<svg>
 		<!-- y axis -->
 		<g class="axis y-axis" transform="translate(0, {padding.top})">
 			{#each yTicks as tick}
@@ -65,21 +55,23 @@
 		<path class="path-area" d={area}></path>
 		<path class="path-line" d={path}></path>
 	</svg>
-
-	<p>Average September extent. Source: <a href='https://climate.nasa.gov/vital-signs/arctic-sea-ice/'>NSIDC/NASA</a>
 </div>
 
+<p>Average September extent. Source: <a href='https://climate.nasa.gov/vital-signs/arctic-sea-ice/'>NSIDC/NASA</a></p>
+
 <style>
-	.chart {
+	.chart, h2, p {
 		width: 100%;
 		max-width: 500px;
-		margin: 0 auto;
+		margin-left: auto;
+		margin-right: auto;
 	}
 
 	svg {
 		position: relative;
 		width: 100%;
 		height: 200px;
+		overflow: visible;
 	}
 
 	.tick {

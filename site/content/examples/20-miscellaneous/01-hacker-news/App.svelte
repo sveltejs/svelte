@@ -6,10 +6,6 @@
 	let item;
 	let page;
 
-	onMount(() => {
-		hashchange();
-	});
-
 	async function hashchange() {
 		// the poor man's router!
 		const path = window.location.hash.slice(1);
@@ -26,6 +22,8 @@
 			window.location.hash = '/top/1';
 		}
 	}
+
+	onMount(hashchange);
 </script>
 
 <style>
@@ -52,7 +50,7 @@
 
 <main>
 	{#if item}
-		<Item {item}/>
+		<Item {item} returnTo="#/top/{page}"/>
 	{:else if page}
 		<List {page}/>
 	{/if}
