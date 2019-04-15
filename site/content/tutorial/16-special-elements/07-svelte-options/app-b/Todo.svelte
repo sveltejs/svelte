@@ -1,3 +1,5 @@
+<svelte:options immutable={true}/>
+
 <script>
 	import { afterUpdate } from 'svelte';
 	import flash from './flash.js';
@@ -20,7 +22,7 @@
 </style>
 
 <!-- the text will flash red whenever
-		the `todo` object changes -->
+     the `todo` object changes -->
 <div bind:this={div} on:click>
 	{todo.done ? '👍': ''} {todo.text}
 </div>
