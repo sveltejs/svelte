@@ -4,7 +4,8 @@
   "description": "Docs and examples for Svelte",
   "scripts": {
     "dev": "sapper dev",
-    "sapper": "sapper build --legacy",
+    "sapper": "sapper build --legacy && npm run update_shimport",
+    "update_shimport": "cp node_modules/shimport/index.js __sapper__/build/client/shimport@0.0.14.js",
     "update": "node scripts/update_template.js && node scripts/get-contributors.js",
     "start": "node __sapper__/build",
     "cy:run": "cypress run",
@@ -55,6 +56,7 @@
     "rollup-plugin-svelte": "^5.0.3",
     "rollup-plugin-terser": "^4.0.4",
     "sapper": "^0.26.0-alpha.12",
+    "shimport": "0.0.15",
     "svelte": "^3.0.0-beta.21"
   }
 }
