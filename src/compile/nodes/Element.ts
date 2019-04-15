@@ -361,6 +361,15 @@ export default class Element extends Node {
 					});
 				}
 
+				if (component.slot_outlets.has(name)) {
+					component.error(attribute, {
+						code: `duplicate-slot-attribute`,
+						message: `Duplicate '${name}' slot`
+					});
+
+					component.slot_outlets.add(name);
+				}
+
 				let ancestor = this.parent;
 				do {
 					if (ancestor.type === 'InlineComponent') break;

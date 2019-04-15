@@ -9,6 +9,7 @@ import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../utils/get_slot_data';
 import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
+import Attribute from '../../nodes/Attribute';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
@@ -37,7 +38,7 @@ export default class SlotWrapper extends Wrapper {
 			next_sibling
 		);
 
-		this.node.attributes.forEach(attribute => {
+		this.node.values.forEach(attribute => {
 			add_to_set(this.dependencies, attribute.dependencies);
 		});
 
@@ -56,23 +57,20 @@ export default class SlotWrapper extends Wrapper {
 		const { renderer } = this;
 
 		const { slot_name } = this.node;
-		renderer.slots.add(slot_name);
 
 		let get_slot_changes;
 		let get_slot_context;
 
-		const attributes = this.node.attributes.filter(attribute => attribute.name !== 'name');
+		if (this.node.values.size > 0) {
+			get_slot_changes = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_changes`);
+			get_slot_context = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_context`);
 
-		if (attributes.length > 0) {
-			get_slot_changes = renderer.component.get_unique_name(`get_${slot_name}_slot_changes`);
-			get_slot_context = renderer.component.get_unique_name(`get_${slot_name}_slot_context`);
-
-			const context_props = get_slot_data(attributes, false);
+			const context_props = get_slot_data(this.node.values, false);
 			const changes_props = [];
 
 			const dependencies = new Set();
 
-			attributes.forEach(attribute => {
+			this.node.values.forEach(attribute => {
 				attribute.chunks.forEach(chunk => {
 					if ((chunk as Expression).dependencies) {
 						add_to_set(dependencies, (chunk as Expression).dependencies);
