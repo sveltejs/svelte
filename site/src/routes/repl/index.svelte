@@ -203,7 +203,7 @@
 				{rollupUrl}
 				{relaxed}
 				fixed={mobile}
-				setup={mapbox_setup}
+				injectedJS={mapbox_setup}
 			/>
 		</div>
 
