@@ -122,8 +122,8 @@ export function draw(node, {
 }
 
 export function crossfade({ fallback, ...defaults }) {
-	let to_receive = new Map();
-	let to_send = new Map();
+	const to_receive = new Map();
+	const to_send = new Map();
 
 	function crossfade(from, node, params) {
 		const {
