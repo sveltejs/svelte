@@ -10,6 +10,7 @@ node_modules
 /easing.js
 /motion.*
 /transition.js
+/animate.js
 /scratch/
 /coverage/
 /coverage.lcov/
