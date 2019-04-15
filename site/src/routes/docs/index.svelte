@@ -166,6 +166,7 @@
 			content: '';
 			bottom: 0;
 			height: var(--top-offset);
+			background: linear-gradient(to bottom, rgba(103,103,120,0) 0%, rgba(103,103,120,0.7) 50%, rgba(103,103,120,1) 100%);
 		}
 
 		aside button {
