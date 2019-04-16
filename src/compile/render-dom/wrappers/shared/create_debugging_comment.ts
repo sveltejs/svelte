@@ -16,7 +16,7 @@ export default function create_debugging_comment(
 	let d;
 
 	if (node.type === 'InlineComponent' || node.type === 'Element') {
-		d = node.children[0].start;
+		d = node.children.length ? node.children[0].start : node.start;
 		while (source[d - 1] !== '>') d -= 1;
 	} else {
 		d = node.expression ? node.expression.node.end : c;
