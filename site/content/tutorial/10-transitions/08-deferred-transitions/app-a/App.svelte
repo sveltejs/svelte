@@ -62,10 +62,7 @@
 	<div class='left'>
 		<h2>todo</h2>
 		{#each todos.filter(t => !t.done) as todo (todo.id)}
-			<label
-				in:receive="{{key: todo.id}}"
-				out:send="{{key: todo.id}}"
-			>
+			<label>
 				<input type=checkbox on:change={() => mark(todo, true)}>
 				{todo.description}
 				<button on:click="{() => remove(todo)}">remove</button>
@@ -76,11 +73,7 @@
 	<div class='right'>
 		<h2>done</h2>
 		{#each todos.filter(t => t.done) as todo (todo.id)}
-			<label
-				class="done"
-				in:receive="{{key: todo.id}}"
-				out:send="{{key: todo.id}}"
-			>
+			<label class="done">
 				<input type=checkbox checked on:change={() => mark(todo, false)}>
 				{todo.description}
 				<button on:click="{() => remove(todo)}">remove</button>
