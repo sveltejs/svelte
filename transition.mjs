@@ -138,7 +138,7 @@ export function crossfade({ fallback, ...defaults }) {
 
 		const style = getComputedStyle(node);
 		const transform = style.transform === 'none' ? '' : style.transform;
-		const opacity = +opacity;
+		const opacity = +style.opacity;
 
 		return {
 			delay,
