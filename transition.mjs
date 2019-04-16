@@ -135,6 +135,7 @@ export function crossfade({ fallback, ...defaults }) {
 		const to = node.getBoundingClientRect();
 		const dx = from.left - to.left;
 		const dy = from.top - to.top;
+		const d = Math.sqrt(dx * dx + dy * dy);
 
 		const style = getComputedStyle(node);
 		const transform = style.transform === 'none' ? '' : style.transform;
