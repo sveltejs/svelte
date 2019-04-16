@@ -122,8 +122,8 @@ export function draw(node, {
 }
 
 export function crossfade({ fallback, ...defaults }) {
-	let to_receive = new Map();
-	let to_send = new Map();
+	const to_receive = new Map();
+	const to_send = new Map();
 
 	function crossfade(from, node, params) {
 		const {
@@ -138,13 +138,14 @@ export function crossfade({ fallback, ...defaults }) {
 
 		const style = getComputedStyle(node);
 		const transform = style.transform === 'none' ? '' : style.transform;
+		const opacity = +opacity;
 
 		return {
 			delay,
 			duration: is_function(duration) ? duration(d) : duration,
 			easing,
 			css: (t, u) => `
-				opacity: ${t};
+				opacity: ${t * opacity};
 				transform: ${transform} translate(${u * dx}px,${u * dy}px);
 			`
 		};
