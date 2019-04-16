@@ -1,8 +1,8 @@
 <script>
 	import { quintOut } from 'svelte/easing';
-	import crossfade from './crossfade.js'; // TODO put this in svelte/transition!
+	import { crossfade } from 'svelte/transition';
 
-	const { send, receive } = crossfade({
+	const [send, receive] = crossfade({
 		fallback(node, params) {
 			const style = getComputedStyle(node);
 			const transform = style.transform === 'none' ? '' : style.transform;
@@ -46,53 +46,47 @@
 
 	function handleKeydown(event) {
 		if (event.which === 13) {
-			addTodo(event.target);
+			add(event.target);
 		}
 	}
 </script>
 
 <style>
-	.new-todo {
-		font-size: 1.4em;
-		width: 100%;
-		margin: 2em 0 1em 0;
-	}
-
 	.board {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-gap: 1em;
 		max-width: 36em;
 		margin: 0 auto;
 	}
 
-	.left, .right {
-		float: left;
-		width: 50%;
-		padding: 0 1em 0 0;
-		box-sizing: border-box;
+	.new-todo {
+		font-size: 1.4em;
+		grid-column: 1/3;
 	}
 
 	h2 {
 		font-size: 2em;
 		font-weight: 200;
 		user-select: none;
+		margin: 0 0 0.5em 0;
 	}
 
 	label {
-		top: 0;
-		left: 0;
-		display: block;
-		font-size: 1em;
 		line-height: 1;
 		padding: 0.5em;
-		margin: 0 auto 0.5em auto;
+		margin: 0 0 0.5em 0;
 		border-radius: 2px;
-		background-color: #eee;
 		user-select: none;
+		border: 1px solid rgba(103,103,120, 0.5);
+		background-color: rgba(103,103,120,0.1);
+		color: #333;
 	}
 
 	input { margin: 0 }
 
-	.right label {
-		background-color: rgb(180,240,100);
+	.done {
+		opacity: 0.3;
 	}
 
 	button {
@@ -114,7 +108,7 @@
 </style>
 
 <div class='board'>
-	<input class="new-todo" placeholder="what needs to be done?" on:enter={add}>
+	<input class="new-todo" placeholder="what needs to be done?" on:keydown={handleKeydown}>
 
 	<div class='left'>
 		<h2>todo</h2>
@@ -134,6 +128,7 @@
 		<h2>done</h2>
 		{#each todos.filter(t => t.done) as todo (todo.id)}
 			<label
+				class="done"
 				in:receive="{{key: todo.id}}"
 				out:send="{{key: todo.id}}"
 			>
