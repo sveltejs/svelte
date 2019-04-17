@@ -294,7 +294,7 @@ export default class EachBlockWrapper extends Wrapper {
 		const lookup = block.get_unique_name(`${this.var}_lookup`);
 
 		block.add_variable(iterations, '[]');
-		block.add_variable(lookup, `@blank_object()`);
+		block.add_variable(lookup, `new Map()`);
 
 		if (this.fragment.nodes[0].is_dom_node()) {
 			this.block.first = this.fragment.nodes[0].var;
@@ -314,7 +314,7 @@ export default class EachBlockWrapper extends Wrapper {
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
-				${iterations}[#i] = ${lookup}[key] = ${create_each_block}(key, child_ctx);
+				${lookup}.set(key, ${iterations}[#i] = ${create_each_block}(key, child_ctx));
 			}
 		`);
 
