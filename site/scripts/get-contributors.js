@@ -1,3 +1,4 @@
+require('dotenv/config');
 const fs = require('fs');
 const fetch = require('node-fetch');
 const Jimp = require('jimp');
@@ -7,7 +8,7 @@ process.chdir(__dirname);
 const SIZE = 64;
 
 async function main() {
-	const res = await fetch(`https://api.github.com/repos/sveltejs/svelte/stats/contributors`);
+	const res = await fetch(`https://api.github.com/repos/sveltejs/svelte/stats/contributors?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}`);
 	const contributors = await res.json();
 
 	const authors = contributors
