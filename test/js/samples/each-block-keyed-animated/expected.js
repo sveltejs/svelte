@@ -2,7 +2,6 @@
 import {
 	SvelteComponent,
 	append,
-	blank_object,
 	create_animation,
 	detach,
 	element,
@@ -73,7 +72,7 @@ function create_each_block(key_1, ctx) {
 }
 
 function create_fragment(ctx) {
-	var each_blocks = [], each_1_lookup = blank_object(), each_1_anchor;
+	var each_blocks = [], each_1_lookup = new Map(), each_1_anchor;
 
 	var each_value = ctx.things;
 
@@ -82,7 +81,7 @@ function create_fragment(ctx) {
 	for (var i = 0; i < each_value.length; i += 1) {
 		let child_ctx = get_each_context(ctx, each_value, i);
 		let key = get_key(child_ctx);
-		each_blocks[i] = each_1_lookup[key] = create_each_block(key, child_ctx);
+		each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
 	}
 
 	return {
