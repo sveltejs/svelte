@@ -198,7 +198,7 @@ An each block can also specify an *index*, equivalent to the second argument in 
 
 ---
 
-If a *key* expression is provided — which must uniquely identify each list item — Svelte will use it to diff the list when data changes, rather than adding or removing items at the end.
+If a *key* expression is provided — which must uniquely identify each list item — Svelte will use it to diff the list when data changes, rather than adding or removing items at the end. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
 
 ```html
 {#each items as item, i (item.id)}
