@@ -4,8 +4,6 @@
   </a>
 </p>
 
----
-
 
 ## What is Svelte?
 
