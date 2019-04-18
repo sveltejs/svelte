@@ -579,7 +579,26 @@ export default class Element extends Node {
 						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`
 					});
 				}
-			} else if (name !== 'this') {
+			} else if (
+				name === 'text' ||
+				name === 'html'
+			){
+				const contenteditable = this.attributes.find(
+					(attribute: Attribute) => attribute.name === 'contenteditable'
+				);
+
+				if (!contenteditable) {
+					component.error(binding, {
+						code: `missing-contenteditable-attribute`,
+						message: `'contenteditable' attribute is required for text and html two-way bindings`
+					});
+				} else if (contenteditable && !contenteditable.is_static) {
+					component.error(contenteditable, {
+						code: `dynamic-contenteditable-attribute`,
+						message: `'contenteditable' attribute cannot be dynamic if element uses two-way binding`
+					});
+				}
+		} else if (name !== 'this') {
 				component.error(binding, {
 					code: `invalid-binding`,
 					message: `'${binding.name}' is not a valid binding`
