@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://svelte.dev">
-	<img width="695" alt="Cybernetically enhanced web apps: Svelte" src="https://user-images.githubusercontent.com/1162160/56335691-7a22b280-616b-11e9-91ec-711cf6f262e3.png">
+	<img width="695" alt="Cybernetically enhanced web apps: Svelte" src="banner.png">
   </a>
 </p>
 
@@ -22,6 +22,17 @@ To install and work on Svelte locally:
 git clone git@github.com:sveltejs/svelte.git
 cd svelte
 npm install
+```
+
+To build the compiler, and all the other modules included in the package:
+
+```bash
+npm run build
+```
+
+To watch for changes and continually rebuild the package (this is useful if you're using [npm link](https://docs.npmjs.com/cli/link.html) to test out changes in a project locally):
+
+```bash
 npm run dev
 ```
 
@@ -34,10 +45,21 @@ The compiler is written in [TypeScript](https://www.typescriptlang.org/), but do
 npm run test
 ```
 
-For running single tests, you can use pattern matching. For example, to run all the tests involving transitions:
+To filter tests, use `-g` (aka `--grep`). For example, to only run tests involving transitions:
 
 ```bash
 npm run test -- -g transition
+```
+
+
+## svelte.dev
+
+The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.technology) To develop locally:
+
+```bash
+cd site
+npm install
+npm run dev
 ```
 
 
