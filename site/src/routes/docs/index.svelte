@@ -74,7 +74,6 @@
 
 <style>
 	aside {
-		/* display: none; */
 		position: fixed;
 		background-color: white;
 		left: 0.8rem;
@@ -84,7 +83,6 @@
 		overflow: hidden;
 		border: 1px solid #eee;
 		box-shadow: 1px 1px 6px rgba(0,0,0,0.1);
-		padding: 1.6rem;
 		transition: width 0.2s, height 0.2s;
 	}
 
@@ -130,17 +128,16 @@
 		overflow-y: auto;
 		width: calc(100vw - 4.8rem);
 		height: calc(100vh - var(--nav-h) - 10.8rem);
-		padding: 2em 0;
+		padding: 2em 1.6rem 2em 3.2rem;
 		bottom: 2em;
 	}
 
 	.content {
 		width: 100%;
-		/* max-width: calc(var(--main-width) + var(--side-nav)); */
 		margin: 0;
-		-moz-tab-size: 2;
 		padding: var(--top-offset) var(--side-nav);
 		tab-size: 2;
+		-moz-tab-size: 2;
 	}
 
 	@media (min-width: 832px) { /* can't use vars in @media :( */
@@ -174,7 +171,7 @@
 		}
 
 		.sidebar {
-			padding: var(--top-offset) 0;
+			padding: var(--top-offset) 0 6.4rem 3.2rem;
 			font-family: var(--font);
 			overflow-y: auto;
 			height: 100%;
@@ -183,7 +180,6 @@
 		}
 
 		.content {
-			/* max-width: none; */
 			padding-left: calc(var(--sidebar-w) + var(--side-nav));
 		}
 
@@ -194,23 +190,14 @@
 		}
 	}
 
-	@media (min-width: 1200px) { /* can't use vars in @media :( */
-		aside {
-			display: block;
-		}
-
-		.content {
-			/* box-sizing: content-box; */
-			/* padding-right: calc(50% - 50rem); */
-		}
-	}
-
 	.content h2 {
-		margin-top: 16rem;
+		margin-top: 8rem;
 		padding: 2rem 1.6rem 5.6rem 0.2rem;
-		border-top: 2px solid var(--second);
-		color: var(--second);
+		border-top: var(--border-w) solid #6767785b; /* based on --second */
+		color: black;
 		line-height: 1;
+		font-size: var(--h3);
+		letter-spacing: .05em;
 		text-transform: uppercase;
 	}
 
@@ -260,18 +247,26 @@
 
 	.content :global(h3),
 	.content :global(h3 > code) {
-		font-weight: 700;
-		font-size: var(--h3);
-		color: var(--second);
-		margin: 6.4rem 0 1.6rem 0;
-		padding-left: 0;
+		margin: 6.4rem 0 0 0;
+		padding: 2rem 1.6rem 5.6rem .2rem;
+		color: black;
+		border-top: var(--border-w) solid #6767781f; /* based on --second */
 		background: transparent;
 		line-height: 1;
 	}
 
+	/* avoid doubled border-top */
+	.content :global(h3 > code) {
+		border-radius: 0 0 0 0;
+		border: none;
+		font-size: var(--h4);
+		line-height: 1.2;
+	}
+
+
 	.content :global(h4),
 	.content :global(h4 > code) {
-		font-weight: 700;
+		font-weight: 600;
 		font-size: var(--h4);
 		color: var(--second);
 		margin: 6.4rem 0 1.6rem 0;
@@ -289,7 +284,7 @@
 		padding: .3rem .8rem .3rem;
 		margin: 0 0.2rem;
 		top: -.1rem;
-		background: #f4f4f4;
+		background: var(--back-api);
 	}
 
 	.content :global(pre) :global(code) {
@@ -304,8 +299,8 @@
 	}
 
 	.content :global(.icon) {
-		width: 20px;
-		height: 20px;
+		width: 2rem;
+		height: 2rem;
 		stroke: currentColor;
 		stroke-width: 2;
 		stroke-linecap: round;
@@ -317,22 +312,20 @@
 		margin: 0 0 2em 0;
 	}
 
-	section > :global(.code-block)> :global(pre) {
+	section > :global(.code-block) > :global(pre) {
 		display: inline-block;
-		background: transparent;
+		background: var(--back-api);
 		color: white;
-		padding: 0.4em 0.8em;
+		padding: .3rem .8rem;
 		margin: 0;
-		border: 1px solid #81b9e0;
-		box-shadow: none;
 		max-width: 100%;
 	}
 
 	section > :global(.code-block)> :global(pre.language-markup) {
-		background: #f7fcff;
+		padding: .3rem .8rem .2rem;
+		background: var(--back-api);
 	}
 
-	/* max line-length ~60 chars */
 	section > :global(p) {
 		max-width: var(--linemax)
 	}
@@ -352,23 +345,11 @@
 	section :global(blockquote) {
 		color: hsl(204, 100%, 50%);
 		border: 2px solid var(--flash);
-		/* padding-left: 8.8rem; */
 	}
 
 	section :global(blockquote) :global(code) {
 		background: hsl(204, 100%, 95%) !important;
 		color: hsl(204, 100%, 50%);
-	}
-
-	section :global(blockquote::before) {
-		content: ' ';
-		position: absolute;
-		top: 1.5rem;
-		left: 3.2rem;
-		width: 3rem;
-		height: 3rem;
-		background-repeat: no-repeat;
-		background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#40b3ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12' y2='17'/%3E%3C/svg%3E");
 	}
 </style>
 
