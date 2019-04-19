@@ -114,7 +114,6 @@
 		height: calc(100vh - var(--nav-h));
 		overflow: hidden;
 		padding: 0 0 42px 0;
-		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
 	}
 
@@ -123,7 +122,7 @@
 		width: 300%;
 		height: 100%;
 		grid-template-columns: 33.333% 66.666%;
-		transition: transform 0.3s;
+		transition: transform .3s;
 		grid-auto-rows: 100%;
 	}
 
@@ -131,9 +130,7 @@
 	.offset-2 { transform: translate(-66.666%, 0); }
 
 	@media (min-width: 768px) {
-		.tutorial-outer {
-			padding: 0;
-		}
+		.tutorial-outer { padding: 0 }
 
 		.viewport {
 			width: 100%;
@@ -157,17 +154,21 @@
 	}
 
 	.chapter-markup {
-		padding: 1em;
+		padding: 3.2rem 4rem;
 		overflow: auto;
 		flex: 1;
 		height: 0;
 	}
 
 	.chapter-markup :global(h2) {
+		margin: 4rem 0 1.6rem 0;
 		font-size: var(--h3);
-		margin: 3.2rem 0 1.6rem 0;
 		line-height: 1;
 		color: white;
+	}
+
+	.chapter-markup :global(h2:first-child) {
+		margin-top: .4rem;
 	}
 
 	.chapter-markup :global(a) {
@@ -179,7 +180,7 @@
 	}
 
 	.chapter-markup :global(blockquote) {
-		background-color: rgba(255,255,255,0.1);
+		background-color: rgba(255,255,255,.1);
 		color: white;
 	}
 
@@ -189,7 +190,7 @@
 	}
 
 	.chapter-markup::-webkit-scrollbar-thumb {
-		background-color: rgba(255,255,255,0.7);
+		background-color: rgba(255,255,255,.7);
 		border-radius: 1em;
 		outline: 1px solid green;
 	}
@@ -197,34 +198,38 @@
 	.chapter-markup :global(p) > :global(code),
 	.chapter-markup :global(ul) :global(code) {
 		color: white;
-		background: rgba(255,255,255,0.1);
-		padding: 0.2em 0.4em;
+		background: rgba(255,255,255,.1);
+		padding: .2em .4em;
 		white-space: nowrap;
 	}
 
 	.controls {
-		border-top: 1px solid rgba(255,255,255,0.1);
+		border-top: 1px solid rgba(255,255,255,.1);
 		padding: 1em 0 0 0;
 		display: flex;
 	}
 
 	.show {
-		text-transform: uppercase;
-		background: rgba(255,255,255,0.1);
-		padding: 0.2em 0.7em;
-		border-radius: 2em;
-		top: 0.1em;
+		background: rgba(255,255,255,.1);
+		padding: .2em .7em .3em;
+		border-radius: var(--border-r);
+		top: .1em;
 		position: relative;
 		font-size: var(--h5);
 		font-weight: 300;
 	}
 
 	.show:hover {
-		background: rgba(255,255,255,0.2);
+		background: rgba(255,255,255,.2);
 	}
 
 	a.next {
+		text-decoration: none;
 		margin-left: auto;
+	}
+
+	a.next:hover {
+		text-decoration: underline;
 	}
 
 	.improve-chapter {
@@ -232,10 +237,10 @@
 	}
 
 	.improve-chapter a {
+		padding: 0 .1em;
 		font-size: 14px;
 		text-decoration: none;
-		opacity: 0.3;
-		padding: 0 0.1em;
+		opacity: .3;
 	}
 
 	.improve-chapter a:hover {
