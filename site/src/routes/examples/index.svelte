@@ -19,60 +19,57 @@
 		margin: 0 auto;
 	}
 
-	h1 {
-		margin: 4rem 0 4rem -0.05em;
-		font-size: 4rem;
-	}
+	h1 { margin: 6rem 0 6rem -0.05em }
 
 	h2 {
 		margin: 0 0 1em 0;
-		font-size: 18px;
-		border-bottom: 1px solid #eee;
+		font: 600 var(--h6) var(--font);
+		border-bottom: var(--border-w) solid #eee;
 		text-transform: uppercase;
+		letter-spacing: .05em;
 		padding: 0 0 0.5em 0;
 	}
 
-	section {
-		margin: 0 0 2em 0;
-	}
+	section { margin: 0 0 4rem 0 }
 
 	.example {
-		position: relative;
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		padding: 0 0 0 85px;
-		min-height: 50px;
-		font-weight: 300;
+		justify-content: center;
+		text-align: center;
+		font: 300 var(--h6) var(--font);
 	}
 
-	.grid {
-		grid-template-columns: repeat(1, 1fr);
-		grid-gap: 0.5em;
+	.thumbnail {
+		position: relative;
+		background: white 50% 50% no-repeat;
+		background-size: contain;
+		width: 5rem;
+		height: 5rem;
+		margin: .8rem 33%;
+		border: 1px solid #ccc;
+		border-radius: var(--border-r);
+		box-shadow: 1px 1px 2px rgba(0,0,0,0.13);
+	}
+
+	.e-grid {
+		display: grid;
+		/* grid-gap: 2.4rem; */
+		grid-template-columns: repeat(2, 1fr);
+		align-items: center;
 	}
 
 	@media (min-width: 720px) {
-		.grid {
-			grid-template-columns: repeat(2, 1fr);
+		.e-grid {
+			grid-template-columns: repeat(4, 1fr);
 		}
 	}
 
 	@media (min-width: 1080px) {
-		.grid {
-			grid-template-columns: repeat(3, 1fr);
+		.e-grid {
+			grid-template-columns: repeat(6, 1fr);
 		}
-	}
-
-	.thumbnail {
-		position: absolute;
-		background: white 50% 50% no-repeat;
-		background-size: contain;
-		width: 75px;
-		height: 50px;
-		left: 0;
-		top: 0;
-		border: 1px solid #ccc;
-		border-radius: 2px;
-		box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
 	}
 </style>
 
@@ -80,14 +77,14 @@
 	<h1>Examples</h1>
 
 	{#each groups as group}
-		<section>
+		<section class="">
 			<h2>{group.title}</h2>
 
-			<div class="grid">
+			<div class="e-grid">
 				{#each group.examples as example}
 					<a class="example" href="repl?example={example.slug}">
 						<div class="thumbnail" style="background-image: url(examples/thumbnails/{example.slug}.png)"></div>
-						<span>{example.title}</span>
+						<p>{example.title}</p>
 					</a>
 				{/each}
 			</div>
