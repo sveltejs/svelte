@@ -1,6 +1,4 @@
 <script>
-	import Icon from '../components/Icon.svelte';
-	import Logo from '../components/Logo.svelte';
 	import Blurb from './_components/Blurb.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte.svelte';
 	import IntersectionObserver from '../components/IntersectionObserver.svelte';
@@ -25,9 +23,8 @@
 		max-width: 120rem;
 	}
 
-	.container ul {
-		list-style: none;
-	}
+	.container h3 { color: black }
+	.container ul { list-style: none }
 
 	/* max line-length ~60 chars */
 	li:not(.box) > p {
@@ -39,52 +36,41 @@
 		--text: hsl(36, 3%, 44%);
 	}
 
+	.hero { height: 20rem }
+
+	.hero h3 {
+		position: relative;
+		margin: -3.2rem 0 0 3rem;
+	}
+
 	.logo {
 		position: absolute;
-		left: -120px;
-		top: -120px;
-		width: 80vmin;
-		height: 80vmin;
-		opacity: 0.1;
+		top: -23rem;
+		right: -4rem;
+		width: 68rem;
+		height: 68rem;
+		mix-blend-mode: multiply;
 		will-change: transform;
 	}
 
-	.hero h1 {
-		text-align: center;
-		margin: 2rem 0;
-		font-size: 6rem;
-		color: var(--heading);
-		font-weight: 100;
-		letter-spacing: .12em;
-		text-transform: uppercase;
-	}
-
-	.hero h2 {
-		text-align: center;
-		display: block;
-		position: relative;
-		font-size: 3.2rem;
-		text-align: center;
-		width: 100%;
-		text-transform: lowercase;
-		font-weight: 300;
-		opacity: 0.7;
+	.logotype {
+		margin: 2rem 0 0 0;
+		height: 12rem;
 	}
 
 	.examples {
 		background: var(--second);
 		color: white;
-		/* padding: 2em 0; */
 		overflow: hidden;
 	}
 
 	.example {
-		/* background: var(--second);
-		color: white;
-		padding: 0.8rem;
-		border-radius: var(--border-r); */
 		width: 100%;
 		height: 420px;
+	}
+
+	.example > p {
+		margin: 4.4rem 2.4rem 2.4rem 0;
 	}
 
 	.repl-container {
@@ -92,10 +78,6 @@
 		height: 100%;
 		border-radius: var(--border-r);
 		overflow: hidden;
-	}
-
-	.example > div:first-child {
-		/* padding: 0.8rem; */
 	}
 
 	.contributor {
@@ -107,24 +89,15 @@
 		background: no-repeat url(/contributors.jpg);
 		background-size: auto 102%;
 		margin: 0 0.5em 0.5em 0;
-		border: 1px solid var(--second);
+		border: .2rem solid var(--second);
 	}
 
 	@media (min-width: 920px) {
 		.example {
 			display: grid;
-			grid-template-columns: 1fr 4fr;
+			grid-template-columns: 1fr 3fr;
 			grid-gap: 0.5em;
 			align-items: start;
-		}
-	}
-
-	@media screen and (min-width: 870px) {
-		.hero h1 {
-			position: relative;
-			top: -.8rem;
-			font-size: 18rem;
-			margin: 2rem 2rem 0 1rem;
 		}
 	}
 </style>
@@ -135,20 +108,18 @@
 
 <svelte:window bind:scrollY={sy}/>
 
-<img alt="Svelte logo" class="logo" src="logo.svg" style="transform: translate(0,{sy * 0.2}px)">
-
 <section class="hero container">
-	<h2>Cybernetically enhanced web apps</h2>
-	<h1>Svelte</h1>
+	<img alt="Svelte logotype" class="logotype" src="svelte-logotype.svg">
+	<h3>Cybernetically enhanced web apps</h3>
+
+	<img alt="Svelte logo" class="logo" src="svelte-logo-outline.svg" style="transform: translate(0, {sy * .7}px)">
 </section>
 
 <Blurb/>
 
 <div class="examples">
 	<section class="container example linkify">
-		<div>
-			<p>Svelte components are built on top of HTML. Just add data.</p>
-		</div>
+		<p><b>A taste of Svelte</b><br/>Svelte components are built on top of HTML. Just add data.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
@@ -161,9 +132,7 @@
 	</section>
 
 	<section class="container example linkify">
-		<div>
-			<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
-		</div>
+		<p><b>Scoped styles</b><br/>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
@@ -176,9 +145,7 @@
 	</section>
 
 	<section class="container example linkify">
-		<div>
-			<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
-		</div>
+		<p><b>Intelligent compiler</b><br/>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
@@ -191,9 +158,7 @@
 	</section>
 
 	<section class="container example linkify">
-		<div>
-			<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
-		</div>
+		<p><b>Build-in Transitions</b><br/>Create beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>

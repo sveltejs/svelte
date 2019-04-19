@@ -1,7 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
-	import Logo from './Logo.svelte';
 
 	export let segment;
 
@@ -78,17 +77,6 @@
 		box-shadow: none;
 	}
 
-	h2 {
-		display: block;
-		text-transform: uppercase;
-		font-weight: 300;
-		font-size: 2.8rem;
-		letter-spacing: .12em;
-		line-height: 1;
-		margin: 0;
-		top: .1rem;
-	}
-
 	.primary {
 		list-style: none;
 		font-family: var(--font);
@@ -142,7 +130,7 @@
 	}
 
 	ul li a {
-		font-size: var(--h6);
+		font-size: var(--h5);
 		padding: 0 .8rem;
 	}
 
@@ -158,15 +146,14 @@
 
 	.home {
 		position: relative;
-		top: 0;
+		top: -.1rem;
 		width: 18rem;
-		color: var(--second);
+		height: 4.2rem;
 		-webkit-tap-highlight-color: transparent;
 		-webkit-touch-callout: none;
-		z-index: 11;
-		padding: 0.5rem 0 0.3rem 4.2rem;
-		background: url(/logo.svg) 0 50% no-repeat;
+		background: url(/svelte-logo-horizontal.svg) 0 50% no-repeat;
 		background-size: auto 100%;
+		z-index: 11;
 	}
 
 	.active {
@@ -192,7 +179,7 @@
 		}
 
 		ul.open li a {
-			font-size: var(--h6);
+			font-size: var(--h5);
 			padding: 0 .8rem;
 			display: inline;
 		}
@@ -215,9 +202,7 @@
 
 <header class:visible="{visible || open}">
 	<nav>
-		<a rel="prefetch" href='.' class="home" title='Homepage'>
-			<h2>Svelte</h2>
-		</a>
+		<a rel="prefetch" href='.' class="home" title='Homepage'></a>
 
 		<ul
 			bind:this={ul}
