@@ -1,16 +1,76 @@
-/* fonts */
+/*
+-----------------------------------------------
+	vars – css custom-properties
 
-/* overpass-100normal - latin */
-@font-face {
-	font-family: 'Overpass';
-	font-style: normal;
-	font-weight: 100;
-	src:
-		local('Overpass Thin '),
-		local('Overpass-Thin'),
-		url('fonts/overpass/overpass-latin-100.woff2') format('woff2');
+	NOTE
+	- some vars change inside media-queries!
+	- under normal conditions, there's no need to touch these
+-----------------------------------------------
+*/
+:root {
+	--nav-h:       6rem;
+	--top-offset:  6rem;
+	--sidebar-w:  30rem;
+	--main-width: 80rem;
+	--code-w:      72em;
+	--side-nav:  3.2rem;
+	--side-page:   var(--side-nav);
+
+	/* easings */
+	--in-cubic:    cubic-bezier(0.55, 0.055, 0.675, 0.19);
+	--out-cubic:   cubic-bezier(0.215, 0.61, 0.355, 1);
+	--inout-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
+
+	--in-back:     cubic-bezier(0.6, -0.28, 0.735, 0.045);
+	--out-back:    cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	--inout-back:  cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
+@media screen and (min-width: 768px) {
+	:root {
+		--side-page:  14vw;
+		--top-offset: 10rem;
+		--side-nav: 4.8rem;
+	}
+}
+
+/*	theme vars */
+.theme-default {
+	--back:       	#ffffff;
+	--back-light: 	#f6fafd;
+	--back-api: 		#eff8ff;
+	--prime:      	#ff3e00;
+	--second:     	#676778;
+	--flash:      	#40b3ff;
+	--heading:	var(--second);
+	--text:      		#444;
+	--border-w:  		.3rem; /* border-width  */
+	--border-r:  		.4rem; /* border-radius */
+}
+
+/*	typo vars */
+.typo-default {
+	--unit:     .8rem;
+	--code-fs: 1.3rem;
+	--h6:      1.4rem;
+	--h5:      1.6rem;
+	--h4:      1.8rem; /* default font-size */
+	--h3:      2.6rem;
+	--h2:        3rem;
+	--h1:      3.2rem;
+	--linemax:   42em; /* max line-length */
+	--lh:  		 	  1.5; /* base line-height */
+}
+
+body {
+	--font: 'Overpass', sans-serif;
+	--font-mono: 'Fira Mono', monospace;
+	--font-ui: var(--font-mono);
+	--font-system: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+}
+
+
+/*	fonts ---------------------------------- */
 /* overpass-300normal - latin */
 @font-face {
 	font-family: 'Overpass';
@@ -22,26 +82,15 @@
 		url('fonts/overpass/overpass-latin-300.woff2') format('woff2');
 }
 
-/* overpass-400normal - latin */
+/* overpass-600normal - latin */
 @font-face {
 	font-family: 'Overpass';
 	font-style: normal;
-	font-weight: 400;
-	src:
-		local('Overpass Light '),
-		local('Overpass-Light'),
-		url('fonts/overpass/overpass-latin-400.woff2') format('woff2');
-}
-
-/* overpass-700normal - latin */
-@font-face {
-	font-family: 'Overpass';
-	font-style: normal;
-	font-weight: 700;
+	font-weight: 600;
 	src:
 		local('Overpass Bold '),
 		local('Overpass-Bold'),
-		url('fonts/overpass/overpass-latin-700.woff2') format('woff2');
+		url('fonts/overpass/overpass-latin-600.woff2') format('woff2');
 }
 
 /* fira-mono-400normal - latin */
@@ -53,65 +102,6 @@
 		local('Fira Mono Regular '),
 		local('Fira Mono-Regular'),
 		url('fonts/fira-mono/fira-mono-latin-400.woff2') format('woff2');
-}
-
-/* roboto-400normal - latin */
-@font-face {
-	font-family: 'Roboto';
-	font-style: normal;
-	font-display: swap;
-	font-weight: 400;
-	src:
-		local('Roboto Regular '),
-		local('Roboto-Regular'),
-		url('fonts/roboto/roboto-latin-400.woff2') format('woff2');
-}
-
-/* roboto-400italic - latin */
-@font-face {
-	font-family: 'Roboto';
-	font-style: italic;
-	font-display: swap;
-	font-weight: 400;
-	src:
-		local('Roboto Regular italic'),
-		local('Roboto-Regularitalic'),
-		url('fonts/roboto/roboto-latin-400italic.woff2') format('woff2');
-}
-
-/* roboto-500normal - latin */
-@font-face {
-	font-family: 'Roboto';
-	font-style: normal;
-	font-display: swap;
-	font-weight: 500;
-	src:
-		local('Roboto Medium '),
-		local('Roboto-Medium'),
-		url('fonts/roboto/roboto-latin-500.woff2') format('woff2');
-}
-
-/* roboto-500italic - latin */
-@font-face {
-	font-family: 'Roboto';
-	font-style: italic;
-	font-display: swap;
-	font-weight: 500;
-	src:
-		local('Roboto Medium italic'),
-		local('Roboto-Mediumitalic'),
-		url('fonts/roboto/roboto-latin-500italic.woff2') format('woff2');
-}
-
-
-body {
-	--font: 'Overpass', sans-serif;
-	/* --font: 'Roboto', 'sans-serif'; */
-	/* --font-mono: 'Overpass Mono', monospace; */
-	/* --font-mono: 'IBM Plex Mono'; */
-	--font-mono: 'Fira Mono', monospace;
-	--font-ui: var(--font-mono);
-	--font-system: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 }
 
 /*	base reset ----------------------------- */
@@ -130,99 +120,40 @@ html {
 	padding: 0;
 }
 
-/*	links reset ---------------------------- */
+/*	link reset ----------------------------- */
 a {
 	text-decoration: none;
 	cursor: pointer;
 	color: inherit;
 }
 
-a:hover,
-a:active {
-	color: var(--flash);
-}
-
-a:focus {
-	outline: none
-}
+a:hover, a:active { color: var(--flash) }
+a:focus { outline: none }
 
 /*
 -----------------------------------------------
 	global styles
-
-	NOTE
-	– !important overrides class-definitions
-	- some vars change inside media-queries!
 -----------------------------------------------
 */
-
-/*	constants and calc -----------------------
-	- commonly used values
-	- under normal conditions, there's no need to touch these
-	- look confusing/cluttering at first,
-		but they simplify life immensely
------------------------------------------------
-*/
-:root {
-	--nav-h:       6rem;
-	--top-offset:  6rem;
-	--sidebar-w:  30rem;
-	--main-width: 80rem;
-	--code-w:      72em;
-	--side-nav:  1.6rem;
-	--side-page:   var(--side-nav);
-
-	/* easings */
-	--in-cubic:    cubic-bezier(0.55, 0.055, 0.675, 0.19);
-	--out-cubic:   cubic-bezier(0.215, 0.61, 0.355, 1);
-	--inout-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
-
-	--in-back:     cubic-bezier(0.6, -0.28, 0.735, 0.045);
-	--out-back:    cubic-bezier(0.175, 0.885, 0.32, 1.275);
-	--inout-back:  cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-/*	theme vars ----------------------------- */
-.theme-default {
-	--back:       #ffffff;
-	--back-light: #fbfcfd;
-	--prime:      #ff3e00;
-	--second:     #676778;
-	--flash:       #40b3ff;
-	--heading:    var(--second);
-	--text:       #333; /* hsl(36, 3%, 62%) */
-	--border-w:   .3rem;     /* border-width  */
-	--border-r:   .4rem;     /* border-radius */
-}
-
-/*	typo vars ------------------------------ */
-.typo-default {
-	--unit:     .8rem;
-	--code-fs: 1.3rem;
-	--h6:      1.6rem;
-	--h5:      1.6rem;
-	--h4:      1.8rem;
-	--h3:      2.4rem;
-	--h2:        3rem;
-	--h1:      3.2rem;
-	--linemax:   42em;      /* max line-length */
-	--lh:      calc(4/2.2); /* base line-height */
-}
 
 /*	typography ----------------------------- */
 body {
-	font: 400 var(--h4)/var(--lh) var(--font);
+	font: 300 var(--h4)/var(--lh) var(--font);
 	background-color: var(--back);
 	color: var(--text);
+	-webkit-font-smoothing: antialiased;
+
+	/* default spacing of Overpass is a bit too airy */
+	letter-spacing: -.013em;
 }
 
 h1, h2, h3, h4, h5, h6, blockquote {
+	position: relative;
 	margin: 0;
 	color: var(--heading);
-	position: relative;
 }
 
-h1, h2, h3, h4, h5, h6 { font-weight: 700 }
+/* h1, h2, h3, h4, h5, h6 { font-weight: 600 } */
 h6 { font-size: var(--h6) }
 h5 { font-size: var(--h5) }
 h4 { font-size: var(--h4) }
@@ -230,15 +161,18 @@ h3 { font-size: var(--h3) }
 h2 { font-size: var(--h2) }
 h1 { font-size: var(--h1) }
 
-p, ol, ul {
-	line-height: 1.5;
-	margin: 0 0 1em 0;
-	font-family: Roboto, sans-serif;
-	-webkit-font-smoothing: antialiased;
-	/* font-family: var(--font-system); */
+h1, h2 {
+	font-family: var(--font);
+	line-height: 1.25;
 }
 
-.b, b, strong { font-weight: 500 }
+h3 { font-weight: 300 }
+
+p, ol, ul {
+	margin: 0 0 1em 0;
+}
+
+.b, b, strong { font-weight: 600 }
 
 tt, code, kbd, samp {
 	font: 400 var(--code-fs)/1.7 var(--font-mono);
@@ -246,11 +180,8 @@ tt, code, kbd, samp {
 
 code {
 	position: relative;
-	border-radius: 0.3em;
+	border-radius: .3em;
 	white-space: nowrap;
-	/* border-top: .1rem solid #e5e5e9;
-	border-left: .1rem solid #e5e5e9; */
-	/* color: inherit; */
 	color: #444;
 	-webkit-font-smoothing: initial;
 }
@@ -261,16 +192,17 @@ pre code {
 	background-color: none;
 }
 
+/* sync CodeMirror with prism  */
+.CodeMirror {
+	font-size: var(--code-fs) !important;
+}
+
 ::selection {
 	background: var(--flash);
 	color: white;
 }
 
 /*	opinionated styles --------------------- */
-h1, h2 {
-	font-family: var(--font);
-	line-height: 1.2;
-}
 
 li:not(.white) > h2 {
 	color: var(--second)
@@ -293,7 +225,6 @@ blockquote :last-child {
 	margin: 0;
 }
 
-
 /*  buttons -------------------------------- */
 button {
 	font-family: inherit;
@@ -301,50 +232,78 @@ button {
 	background-color: transparent;
 	border: none;
 	color: currentColor;
+	cursor: pointer;
 }
 
-button:focus { outline: 0 }
+button:focus,
+.btn:focus { outline: 0 }
 
-button[disabled] {
+button[disabled],
+.btn[disabled],
+.btn:hover[disabled] {
 	opacity: .55;
 	pointer-events: none;
 }
 
-button > svg {
+button > svg,
+.btn > svg {
 	position: relative;
 	top: -.1rem;
 	width: 2rem !important;
 	height: 2rem !important;
+	stroke: currentColor !important;
 }
 
-/*  options */
-button[outline] {
-	min-height: var(--bttn-calc-h);
-	line-height: var(--bttn-calc-h);
-	border: var(--bttn-outline) solid currentColor;
-	background-color: white;
-	color: currentColor;
+/*  reset ------- */
+.btn {
+  --btn-h: 4rem;
+  --btn-outline: .2rem;
+  --btn-font: var(--font);
+  --btn-calc-h: calc(var(--btn-h) - var(--btn-outline) * 2);
+  --btn-hover: linear-gradient(to top, rgba(0,0,0,.07), rgba(0,0,0,.07));
+
+  position: relative;
+  margin: 0 .8rem .8rem 0;
+  vertical-align: middle;
+  white-space: nowrap;
+  display: inline-block;
+  zoom: 1;
+  border: none transparent;
+	font: var(--h4) var(--btn-font);
+	border-radius: var(--border-r);
+  color: currentColor;
+  cursor: pointer;
 }
 
-/*  links -------------------------------------
-		- idea from https://up.docs.apex.sh
+/*  default */
+.btn {
+	line-height: var(--btn-h);
+  height: var(--btn-h);
+  padding: 0 1.6rem;
+	transition: all .1s;
+}
 
-		How can this be solved?
-		Setup for all links is risky/tricky
+.btn:hover  {
+	transform: scale(.98);
+	mix-blend-mode: multiply;
+	background-image: var(--btn-hover);
+}
 
-		We need global <a>-styles and <ul>-styles inside markdown.
-		These bleed into places, where not wanted (i.e. nav, homepage)
-		Same with lists - see below
+/*  optional */
+.btn[outline] {
+	line-height: var(--btn-calc-h);
+  height: var(--btn-calc-h);
+  border: var(--btn-outline) solid currentColor;
+  background-color: white;
+  color: currentColor;
+}
 
-		THIS WAY IS SHITTY!!
-		I'm too blind to see...
-*/
+/*  links ------------------------------------- */
 .linkify a:not(.open-in-repl) {
 	position: relative;
 	padding: 0 0 .1rem 0;
 	border-bottom: .1rem solid hsla(15, 100%, 50%, 0.5); /* muted --prime */
 	user-select: none;
-	/* white-space: nowrap; */
 	color: inherit;
 	transition: color .2s, border .2s, padding .2s;
 }
@@ -357,28 +316,6 @@ button[outline] {
 	padding: 0;
 	border-bottom: .2rem solid hsla(15, 100%, 50%, 1);
 }
-
-/* .linkify a:not(.open-in-repl):before {
-	content: '';
-	position: absolute;
-	width: 100%;
-	height: .2rem;
-	bottom: -.2rem;
-	left: 0;
-	white-space: nowrap;
-	background: var(--prime);
-	border-radius: var(--border-r);
-	visibility: hidden;
-	transform: scaleX(0);
-	transform-origin: left center;
-	transition: all .15s var(--out-cubic);
-	z-index: -1;
-}
-
-.linkify a:not(.open-in-repl):hover:before  {
-	visibility: visible;
-	transform: scaleX(1);
-} */
 
 a:hover:not(.disabled) > .icon { stroke: var(--flash) }
 
@@ -405,8 +342,8 @@ a:hover:not(.disabled) > .icon { stroke: var(--flash) }
 	margin-top: 1.1rem;
 	margin-left: -1.8rem;
 	background-color: var(--second);
-	width: .8rem;
-	height: 0.8rem;
+	width: .6rem;
+	height: .6rem;
 	border-radius: 2px;
 	opacity: 0.7;
 }
@@ -425,14 +362,12 @@ td, th {
 	padding: 0.4rem 0.8rem 0.4rem 0;
 }
 
-table code,
-table span {
+table code, table span {
 	white-space: pre;
 }
 
 /*	grid ----------------------------------- */
-.grid,
-.grid.half {
+.grid, .grid.half {
 	display: grid;
 	grid-gap: 2.4rem;
 	grid-template-columns: 1fr;
@@ -444,6 +379,18 @@ table span {
 .grid > .cols-2,
 .grid > .cols-3 { grid-column: span 1 }
 
+@media screen and (min-width: 840px) {
+	.grid.half,
+	.grid { grid-template-columns: repeat(2, 1fr) }
+	.grid > .cols-2,
+	.grid > .cols-3 { grid-column: span 2 }
+}
+
+@media screen and (min-width: 1100px) {
+	.grid { grid-template-columns: repeat(3, 1fr) }
+	.grid > .cols-2 { grid-column: span 2 }
+	.grid > .cols-3 { grid-column: span 3 }
+}
 
 /*	helper styles -------------------------- */
 .flex-auto { flex: 1 0 auto }
@@ -453,8 +400,7 @@ table span {
 	padding-bottom: 0 !important;
 }
 
-.legend, figcaption,
-.post aside {
+.legend, figcaption, .post aside {
 	max-width: none;
 	margin: 0 auto;
 	padding: 1.6rem 0 0 .8rem;
@@ -487,7 +433,7 @@ table span {
 /*	theme colors --------------------------- */
 .prime      { color: var(--prime) !important }
 .second     { color: var(--second) !important }
-.flash       { color: var(--flash) !important }
+.flash      { color: var(--flash) !important }
 .black      { color: black !important }
 .white      { color: white !important }
 
@@ -495,15 +441,9 @@ table span {
 .back-light { background-color: var(--back-light) !important }
 .bg-prime   { background-color: var(--prime) !important }
 .bg-second  { background-color: var(--second) !important }
-.bg-flash    { background-color: var(--flash) !important }
+.bg-flash   { background-color: var(--flash) !important }
 
-
-/*
------------------------------------------------
-  inputs
------------------------------------------------
-*/
-
+/*	inputs --------------------------------- */
 input[type="checkbox"] {
 	/* display: block; */
 	position: relative;
@@ -523,13 +463,13 @@ input[type="checkbox"]::before {
 	display: block;
 	height: 100%;
 	width: 100%;
-	border-radius: 1em;
-	top: 0px;
-	left: 0px;
-	background: var(--second);
-	box-sizing: border-box;
-	-webkit-transition: .25s ease-out;
 	padding: 2px;
+	border-radius: 1em;
+	top: 0;
+	left: 0;
+	background: var(--second);
+	-webkit-transition: .25s ease-out;
+	/* box-sizing: border-box; */
 	box-sizing: content-box;
 }
 
@@ -553,31 +493,4 @@ input[type="checkbox"]::after {
 
 input[type="checkbox"]:checked::after {
 	left: calc(100% - 9px);
-}
-
-
-/*
------------------------------------------------
-  media-queries
------------------------------------------------
-*/
-@media screen and (min-width: 768px) {
-	:root {
-		--side-page:  14vw;
-		--top-offset: 10rem;
-		--side-nav: 4.8rem;
-	}
-}
-
-@media screen and (min-width: 840px) {
-	.grid.half,
-	.grid { grid-template-columns: repeat(2, 1fr) }
-	.grid > .cols-2,
-	.grid > .cols-3 { grid-column: span 2 }
-}
-
-@media screen and (min-width: 1100px) {
-	.grid { grid-template-columns: repeat(3, 1fr) }
-	.grid > .cols-2 { grid-column: span 2 }
-	.grid > .cols-3 { grid-column: span 3 }
 }
