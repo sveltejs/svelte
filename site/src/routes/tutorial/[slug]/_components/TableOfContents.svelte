@@ -38,13 +38,8 @@
 		opacity: 0.4;
 	}
 
-	span {
-		white-space: nowrap;
-	}
-
-	strong {
-		opacity: 0.7;
-	}
+	span   { white-space: nowrap }
+	strong { opacity: 0.7 }
 
 	select {
 		position: absolute;
