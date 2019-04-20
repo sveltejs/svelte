@@ -6,4 +6,4 @@ authorURL: https://twitter.com/Rich_Harris
 draft: true
 ---
 
-TODO walk through installing Node.js and git and using Terminal.app (or whatever the Windows equivalent is) to clone a project template and start developing
+*Coming soon* This blog post will walk you through installing Node.js and git and using Terminal.app to clone a project template and start developing with Svelte
