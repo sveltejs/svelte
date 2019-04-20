@@ -201,6 +201,8 @@
 		background: rgba(255,255,255,.1);
 		padding: .2em .4em;
 		white-space: nowrap;
+		position: relative;
+		top: -0.1em;
 	}
 
 	.controls {
