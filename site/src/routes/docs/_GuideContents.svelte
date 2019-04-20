@@ -7,38 +7,6 @@
 	export let show_contents;
 	export let prevent_sidebar_scroll = false;
 
-	onMount(() => {
-		//	------------------------------------------
-		//	TODO – smooth-scroll
-		//	must be something that makes more sense
-		//	this one is too annoying (area too tall)
-		//	maybe svelte-transitions are a solution?
-		//	unfortunately I have no idea how. For now.
-		//	------------------------------------------
-		// methods: {
-		// 	scrollTo(e, item) {
-		// 		e.preventDefault();
-		// 		let top = document.querySelector('#' + item).getBoundingClientRect().top;
-		// 		window.scrollTo({
-		// 			top,
-		// 			behavior: "smooth"
-		// 		});
-		// 	}
-		// },
-
-		const onhashchange = _ => {
-			// TODO wire this up
-			// this.store.set({active_section: window.location.hash.slice(1) });
-		};
-
-		window.addEventListener('hashchange', onhashchange, false);
-		onhashchange();
-
-		return () => {
-			window.removeEventListener('hashchange', onhashchange, false);
-		};
-	});
-
 	let ul;
 
 	afterUpdate(() => {
@@ -75,22 +43,22 @@
 	.reference-toc li {
 		display: block;
 		line-height: 1.2;
-		margin: 0 0 4.8rem 0;
+		margin: 0 0 4rem 0;
 	}
 
 	a {
 		position: relative;
-		opacity: 0.7;
+		opacity: 0.75;
 		transition: opacity 0.2s;
 	}
 
 	.section {
 		display: block;
 		padding: 0 0 .8rem 0;
-		font: 400 var(--h6) var(--font);
+		font-size: var(--h6);
 		text-transform: uppercase;
-		letter-spacing: 0.12em;
-		font-weight: 700;
+		letter-spacing: 0.1em;
+		font-weight: 600;
 	}
 
 	.subsection {
@@ -107,18 +75,15 @@
 	}
 
 	.subsection[data-level="4"] {
-		padding-left: 1em;
+		padding-left: 1.2rem;
 	}
 
-	.active {
-		opacity: 1;
-		/* font-weight: 700; */
-	}
+	.active { opacity: 1 }
 
 	.icon-container {
 		position: absolute;
-		top: -.3rem;
-		right: 3.2rem;
+		top: -.2rem;
+		right: 2.4rem;
 	}
 </style>
 
