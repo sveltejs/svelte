@@ -192,9 +192,9 @@
 
 	.content h2 {
 		margin-top: 8rem;
-		padding: 2rem 1.6rem 5.6rem 0.2rem;
+		padding: 2rem 1.6rem 4rem 0.2rem;
 		border-top: var(--border-w) solid #6767785b; /* based on --second */
-		color: black;
+		color: var(--text);
 		line-height: 1;
 		font-size: var(--h3);
 		letter-spacing: .05em;
@@ -249,10 +249,15 @@
 	.content :global(h3 > code) {
 		margin: 6.4rem 0 0 0;
 		padding: 2rem 1.6rem 5.6rem .2rem;
-		color: black;
+		color: var(--text);
 		border-top: var(--border-w) solid #6767781f; /* based on --second */
 		background: transparent;
 		line-height: 1;
+	}
+
+	.content :global(h3):first-of-type {
+		border: none;
+		margin: 0;
 	}
 
 	/* avoid doubled border-top */
@@ -370,6 +375,7 @@
 						<Icon name='edit' /></a>
 				</small>
 			</h2>
+
 			{@html section.html}
 		</section>
 	{/each}
