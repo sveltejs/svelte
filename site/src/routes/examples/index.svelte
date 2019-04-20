@@ -23,11 +23,11 @@
 
 	h2 {
 		margin: 0 0 1em 0;
-		font: 600 var(--h6) var(--font);
+		font: 600 var(--h4) var(--font);
 		border-bottom: var(--border-w) solid #eee;
 		text-transform: uppercase;
 		letter-spacing: .05em;
-		padding: 0 0 0.5em 0;
+		padding: 0 0 0.2em 0;
 	}
 
 	section { margin: 0 0 4rem 0 }
@@ -38,7 +38,7 @@
 		align-items: center;
 		justify-content: center;
 		text-align: center;
-		font: 300 var(--h6) var(--font);
+		font: 300 var(--h5) var(--font);
 	}
 
 	.thumbnail {
