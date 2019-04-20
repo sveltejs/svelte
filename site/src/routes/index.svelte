@@ -23,7 +23,7 @@
 		max-width: 120rem;
 	}
 
-	.container h3 { color: black }
+	.container h3 { color: var(--text) }
 	.container ul { list-style: none }
 
 	/* max line-length ~60 chars */
@@ -36,26 +36,27 @@
 		--text: hsl(36, 3%, 44%);
 	}
 
-	.hero { height: 20rem }
+	.hero {
+		margin: 15rem auto;
+	}
 
-	.hero h3 {
+	.hero h3, .logotype {
 		position: relative;
-		margin: -3.2rem 0 0 3rem;
+		left: 3rem;
+	}
+
+	.logotype {
+		height: 6rem;
 	}
 
 	.logo {
 		position: absolute;
-		top: -23rem;
-		right: -4rem;
+		top: -4rem;
+		right: 0;
 		width: 68rem;
 		height: 68rem;
 		/* mix-blend-mode: multiply; */
 		will-change: transform;
-	}
-
-	.logotype {
-		margin: 2rem 0 0 0;
-		height: 12rem;
 	}
 
 	.examples {
@@ -108,11 +109,11 @@
 
 <svelte:window bind:scrollY={sy}/>
 
+<img alt="Svelte logo" class="logo" src="svelte-logo-outline.svg" style="transform: translate(0, {sy * .2}px)">
+
 <section class="hero container">
 	<img alt="Svelte logotype" class="logotype" src="svelte-logotype.svg">
 	<h3>Cybernetically enhanced web apps</h3>
-
-	<img alt="Svelte logo" class="logo" src="svelte-logo-outline.svg" style="transform: translate(0, {sy * .2}px)">
 </section>
 
 <Blurb/>
