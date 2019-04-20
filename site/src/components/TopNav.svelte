@@ -1,11 +1,17 @@
 <script>
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
+	import { page } from '@sapper/app';
 
 	export let segment;
 
 	let open = false;
 	let visible = true;
+
+	// hide nav whenever we navigate
+	page.subscribe(() => {
+		open = false;
+	});
 
 	// TODO remove this post-https://github.com/sveltejs/svelte/issues/1914
 	let ul;
@@ -95,7 +101,7 @@
 
 	ul {
 		position: relative;
-		padding: 0 2em 0 0;
+		padding: 0 3rem 0 0;
 		background: url(/icons/chevron.svg) calc(100% - 1em) 0.05em no-repeat;
 		background-size: 1em 1em;
 	}
@@ -111,7 +117,7 @@
 	}
 
 	ul.open {
-		padding: 0 2em 1em 2em;
+		padding: 0 0 1em 0;
 		background: white;
 		border-left: 1px solid #eee;
 		border-right: 1px solid #eee;
@@ -135,8 +141,12 @@
 	}
 
 	ul.open li a {
-		padding: 2.3rem .7rem 0 .8rem;
+		padding: 1.5rem 3.7rem 1.5rem 4rem;
 		display: block;
+	}
+
+	ul.open li:first-child a {
+		padding-top: 2.3rem;
 	}
 
 	.primary :global(svg) {
@@ -153,11 +163,20 @@
 		-webkit-touch-callout: none;
 		background: url(/svelte-logo-horizontal.svg) 0 50% no-repeat;
 		background-size: auto 100%;
-		z-index: 11;
+		/* z-index: 11; */
 	}
 
 	.active {
 		color: var(--prime)
+	}
+
+	.modal-background {
+		position: fixed;
+		width: 100%;
+		height: 100%;
+		left: 0;
+		top: 0;
+		background-color: rgba(255, 255, 255, 0.9);
 	}
 
 	@media (min-width: 840px) {
@@ -198,11 +217,15 @@
 	}
 </style>
 
-<svelte:window on:click="{() => open = false}" on:scroll={handle_scroll}/>
+<svelte:window on:scroll={handle_scroll}/>
 
 <header class:visible="{visible || open}">
 	<nav>
 		<a rel="prefetch" href='.' class="home" title='Homepage'></a>
+
+		{#if open}
+			<div class="modal-background" on:click="{() => open = false}"></div>
+		{/if}
 
 		<ul
 			bind:this={ul}
