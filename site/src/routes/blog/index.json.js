@@ -4,12 +4,16 @@ let json;
 
 export function get(req, res) {
 	if (!json || process.env.NODE_ENV !== 'production') {
-		json = JSON.stringify(get_posts().map(post => {
-			return {
-				slug: post.slug,
-				metadata: post.metadata
-			};
-		}));
+		const posts = get_posts()
+			.filter(post => !post.metadata.draft)
+			.map(post => {
+				return {
+					slug: post.slug,
+					metadata: post.metadata
+				};
+			});
+
+		json = JSON.stringify(posts);
 	}
 
 	res.set({
