@@ -13,23 +13,32 @@
 		margin: 1em 0 0 0;
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
-    justify-content: space-between;
 	}
 
-	a:not(.btn) {
-		height: 5rem;
-		margin: 0 1.6rem 3.2rem;
+	a {
+		height: 40px;
+		margin: 0 0.5em 0.5em 0;
 		text-decoration: none;
+		border: 1px solid #aaa;
+		padding: 5px 10px;
+		border-radius: 20px;
 	}
 
-	img { height: 100% }
+	.add-yourself {
+		display: flex;
+		align-items: center;
+		border: 1px solid #eee;
+	}
+
+	img {
+		height: 100%;
+	}
 
 	@media (min-width: 540px) {
-		a:not(.btn) {
-			height: 6rem;
-			padding: 1rem 2rem;
-			border-radius: var(--border-r);
+		a {
+			height: 60px;
+			padding: 10px 20px;
+			border-radius: 30px;
 		}
 	}
 </style>
@@ -45,5 +54,5 @@
 	<a href="https://www.nesta.org.uk"><img src="organisations/nesta.svg" alt="Nesta logo"></a>
 	<a href="https://nytimes.com"><img src="organisations/nyt.svg" alt="The New York Times logo"></a>
 	<a href="https://www.stone.co"><img src="organisations/stone.svg" alt="Stone Payments logo"></a>
-	<p><a href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="btn bg-flash white">+ your company?</a></p>
+	<a href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
 </div>

@@ -141,10 +141,9 @@ body {
 	font: 300 var(--h4)/var(--lh) var(--font);
 	background-color: var(--back);
 	color: var(--text);
-	-webkit-font-smoothing: antialiased;
 
 	/* default spacing of Overpass is a bit too airy */
-	letter-spacing: -.013em;
+	/* letter-spacing: -.013em; */
 }
 
 h1, h2, h3, h4, h5, h6, blockquote {
