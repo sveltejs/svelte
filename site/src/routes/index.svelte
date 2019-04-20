@@ -70,7 +70,6 @@
 
 	.example {
 		width: 100%;
-		height: 420px;
 	}
 
 	.example > p {
@@ -79,7 +78,7 @@
 
 	.repl-container {
 		width: 100%;
-		height: 100%;
+		height: 420px;
 		border-radius: var(--border-r);
 		overflow: hidden;
 	}
