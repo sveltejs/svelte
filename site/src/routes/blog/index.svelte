@@ -38,7 +38,7 @@
 	h2 {
 		display: inline-block;
 		margin: 3.2rem 0 0.4rem 0;
-		color: black;
+		color: var(--text);
 		max-width: 18em;
 		font-size: var(--h3);
 		font-weight: 300;
