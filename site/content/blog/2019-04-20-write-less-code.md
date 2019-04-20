@@ -57,18 +57,18 @@ export default () => {
 	const [a, setA] = useState(1);
 	const [b, setB] = useState(2);
 
-	function handleInputA(event) {
+	function handleChangeA(event) {
 		setA(+event.target.value);
 	}
 
-	function handleInputB(event) {
+	function handleChangeB(event) {
 		setB(+event.target.value);
 	}
 
 	return (
 		<div>
-			<input type="number" value={a} onInput={handleInputA}/>
-			<input type="number" value={b} onInput={handleInputB}/>
+			<input type="number" value={a} onChange={handleChangeA}/>
+			<input type="number" value={b} onChange={handleChangeB}/>
 
 			<p>{a} + {b} = {a + b}</p>
 		</div>
@@ -121,7 +121,7 @@ In Vue, your markup must be wrapped in a `<template>` element, which I'd argue i
 In React, we have to respond to input events ourselves:
 
 ```js
-function handleInputA(event) {
+function handleChangeA(event) {
 	setA(+event.target.value);
 }
 ```
