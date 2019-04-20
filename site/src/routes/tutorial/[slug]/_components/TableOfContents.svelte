@@ -28,7 +28,7 @@
 
 	a {
 		display: block;
-		padding: 0.75em 0;
+		padding: 0.7em 0;
 		text-align: center;
 		opacity: 0.7;
 	}
@@ -40,11 +40,11 @@
 
 	span {
 		white-space: nowrap;
+		position: relative;
+    	top: 0.3em;
 	}
 
-	strong {
-		opacity: 0.7;
-	}
+	strong { opacity: 0.7 }
 
 	select {
 		position: absolute;
