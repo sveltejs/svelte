@@ -24,7 +24,7 @@
 
 <style>
 	.post {
-		padding: var(--top-offset) var(--side-nav) 0 var(--side-nav);
+		padding: var(--top-offset) var(--side-nav);
 		max-width: var(--main-width);
 		margin: 0 auto;
 	}
@@ -102,6 +102,10 @@
 		z-index: 2;
 	}
 
+	.post :global(.max) {
+		width: 100%;
+	}
+
 	.post :global(iframe) {
 		width: 100%;
 		height: 420px;
@@ -111,13 +115,20 @@
 	}
 
 	@media (min-width: 910px) {
-		.post :global(iframe) {
+		.post :global(.max) {
 			width: calc(100vw - 2 * var(--side-nav));
-			margin: 2em calc(400px + var(--side-nav) - 50vw);
+			margin: 0 calc(var(--main-width) / 2 - 50vw);
+			text-align: center;
+		}
+
+		.post :global(iframe) {
+			width: 100%;
+			max-width: 1100px;
+			margin: 2em auto;
 		}
 	}
 
-	@media (min-width: 1460px) {
+	/* @media (min-width: 1460px) {
 		.post :global(iframe) {
 			width: 1360px;
 			margin: 2em -280px;
@@ -128,5 +139,5 @@
 		.post :global(iframe) {
 			height: 640px;
 		}
-	}
+	} */
 </style>
