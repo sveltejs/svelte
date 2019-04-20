@@ -224,7 +224,7 @@
 		<a rel="prefetch" href='.' class="home" title='Homepage'></a>
 
 		{#if open}
-			<div class="modal-background" on:click="{() => open = false}"></div>
+			<div class="modal-background hide-if-desktop" on:click="{() => open = false}"></div>
 		{/if}
 
 		<ul
