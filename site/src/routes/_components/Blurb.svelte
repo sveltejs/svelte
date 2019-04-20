@@ -144,8 +144,8 @@
 		<p><a href="TODO-svelte-3-blog-post">Read the introductory blog post</a> to learn more.</p>
 	</div>
 
-	<div style="grid-area: start; display: flex; flex-direction: column">
-		<pre class="language-bash" style="margin: 0 0 1em 0">
+	<div style="grid-area: start; display: flex; flex-direction: column; min-width: 0">
+		<pre class="language-bash" style="margin: 0 0 1em 0; min-width: 0; min-height: 0">
 npx degit sveltejs/template my-svelte-project
 cd my-svelte-project
 
