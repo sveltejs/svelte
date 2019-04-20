@@ -196,11 +196,11 @@ function get_dom_updater(
 	}
 
 	if (binding.node.name === 'text') {
-		return `${element.var}.textContent = ${binding.snippet};`;
+		return `if (${binding.snippet} !== ${element.var}.textContent) ${element.var}.textContent = ${binding.snippet};`;
 	}
 
 	if (binding.node.name === 'html') {
-		return `${element.var}.innerHTML = ${binding.snippet};`;
+		return `if (${binding.snippet} !== ${element.var}.innerHTML) ${element.var}.innerHTML = ${binding.snippet};`;
 	}
 
 	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
