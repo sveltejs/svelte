@@ -1,7 +1,6 @@
 ---
 title: The easiest way to get started with Svelte
 description: This'll only take a minute.
-pubdate: 2017-08-07
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---

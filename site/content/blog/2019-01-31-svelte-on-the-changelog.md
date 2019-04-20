@@ -1,7 +1,6 @@
 ---
 title: Svelte on The Changelog
 description: Listen to the interview here
-pubdate: 2019-01-31
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---

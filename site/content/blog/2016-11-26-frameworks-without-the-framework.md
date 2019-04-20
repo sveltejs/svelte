@@ -1,7 +1,6 @@
 ---
 title: Frameworks without the framework: why didn't we think of this sooner?
 description: You can't write serious applications in vanilla JavaScript without hitting a complexity wall. But a compiler can do it for you.
-pubdate: 2016-11-26
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---
