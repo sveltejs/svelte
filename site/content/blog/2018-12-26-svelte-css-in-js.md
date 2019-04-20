@@ -1,7 +1,6 @@
 ---
 title: Using CSS-in-JS with Svelte
 description: You don't need to, but you can
-pubdate: 2018-12-26
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---

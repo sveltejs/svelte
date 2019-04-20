@@ -5,17 +5,23 @@ import marked from 'marked';
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
 
-export default function() {
+export default function get_posts() {
 	return fs
 		.readdirSync('content/blog')
 		.map(file => {
 			if (path.extname(file) !== '.md') return;
 
+			const match = /^(\d+-\d+-\d+)-(.+)\.md$/.exec(file);
+			if (!match) throw new Error(`Invalid filename '${file}'`);
+
+			const [, pubdate, slug] = match;
+
 			const markdown = fs.readFileSync(`content/blog/${file}`, 'utf-8');
 
 			const { content, metadata } = extract_frontmatter(markdown);
 
-			const date = new Date(`${metadata.pubdate} EDT`); // cheeky hack
+			const date = new Date(`${pubdate} EDT`); // cheeky hack
+			metadata.pubdate = pubdate;
 			metadata.dateString = date.toDateString();
 
 			const renderer = new marked.Renderer();
@@ -41,7 +47,7 @@ export default function() {
 			return {
 				html,
 				metadata,
-				slug: file.replace(/^[\d-]+/, '').replace(/\.md$/, ''),
+				slug
 			};
 		})
 		.sort((a, b) => a.metadata.pubdate < b.metadata.pubdate ? 1 : -1);

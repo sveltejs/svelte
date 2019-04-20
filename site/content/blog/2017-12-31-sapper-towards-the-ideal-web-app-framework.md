@@ -1,7 +1,6 @@
 ---
 title: Sapper: Towards the ideal web app framework
 description: Taking the next-plus-one step
-pubdate: 2017-12-31
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---
