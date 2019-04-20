@@ -37,26 +37,29 @@
 	}
 
 	.hero {
-		margin: 15rem auto;
+		margin: 10rem auto;
 	}
 
 	.hero h3, .logotype {
 		position: relative;
-		left: 3rem;
+		left: 1.6rem;
+	}
+
+	.hero h3 {
+		font-size: 2rem;
 	}
 
 	.logotype {
-		height: 6rem;
+		height: 4rem;
 	}
 
 	.logo {
 		position: absolute;
 		top: -4rem;
-		right: 0;
-		width: 68rem;
-		height: 68rem;
-		/* mix-blend-mode: multiply; */
+		right: 4rem;
+		width: 52rem;
 		will-change: transform;
+		display: none;
 	}
 
 	.examples {
@@ -93,6 +96,30 @@
 		border: 2px solid var(--second);
 	}
 
+	@media (min-width: 640px) {
+		.logotype {
+			height: 6rem;
+		}
+
+		.hero h3 {
+			font-size: var(--h3);
+		}
+	}
+
+	@media (min-width: 800px) {
+		.logo {
+			display: block;
+		}
+
+		.hero {
+			margin: 15rem auto;
+		}
+
+		.hero h3, .logotype {
+			left: 3rem;
+		}
+	}
+
 	@media (min-width: 920px) {
 		.example {
 			display: grid;
@@ -104,7 +131,7 @@
 </style>
 
 <svelte:head>
-	<title>Svelte • The magical disappearing UI framework</title>
+	<title>Svelte • Cybernetically enhanced web apps</title>
 </svelte:head>
 
 <svelte:window bind:scrollY={sy}/>
