@@ -1,12 +1,17 @@
 <script>
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
-	import Logo from './Logo.svelte';
+	import { page } from '@sapper/app';
 
 	export let segment;
 
 	let open = false;
 	let visible = true;
+
+	// hide nav whenever we navigate
+	page.subscribe(() => {
+		open = false;
+	});
 
 	// TODO remove this post-https://github.com/sveltejs/svelte/issues/1914
 	let ul;
@@ -78,17 +83,6 @@
 		box-shadow: none;
 	}
 
-	h2 {
-		display: block;
-		text-transform: uppercase;
-		font-weight: 300;
-		font-size: 2.8rem;
-		letter-spacing: .12em;
-		line-height: 1;
-		margin: 0;
-		top: .1rem;
-	}
-
 	.primary {
 		list-style: none;
 		font-family: var(--font);
@@ -107,7 +101,7 @@
 
 	ul {
 		position: relative;
-		padding: 0 2em 0 0;
+		padding: 0 3rem 0 0;
 		background: url(/icons/chevron.svg) calc(100% - 1em) 0.05em no-repeat;
 		background-size: 1em 1em;
 	}
@@ -123,7 +117,7 @@
 	}
 
 	ul.open {
-		padding: 0 2em 1em 2em;
+		padding: 0 0 1em 0;
 		background: white;
 		border-left: 1px solid #eee;
 		border-right: 1px solid #eee;
@@ -142,13 +136,17 @@
 	}
 
 	ul li a {
-		font-size: var(--h6);
+		font-size: var(--h5);
 		padding: 0 .8rem;
 	}
 
 	ul.open li a {
-		padding: 2.3rem .7rem 0 .8rem;
+		padding: 1.5rem 3.7rem 1.5rem 4rem;
 		display: block;
+	}
+
+	ul.open li:first-child a {
+		padding-top: 2.3rem;
 	}
 
 	.primary :global(svg) {
@@ -158,19 +156,27 @@
 
 	.home {
 		position: relative;
-		top: 0;
+		top: -.1rem;
 		width: 18rem;
-		color: var(--second);
+		height: 4.2rem;
 		-webkit-tap-highlight-color: transparent;
 		-webkit-touch-callout: none;
-		z-index: 11;
-		padding: 0.5rem 0 0.3rem 4.2rem;
-		background: url(/logo.svg) 0 50% no-repeat;
+		background: url(/svelte-logo-horizontal.svg) 0 50% no-repeat;
 		background-size: auto 100%;
+		/* z-index: 11; */
 	}
 
 	.active {
 		color: var(--prime)
+	}
+
+	.modal-background {
+		position: fixed;
+		width: 100%;
+		height: 100%;
+		left: 0;
+		top: 0;
+		background-color: rgba(255, 255, 255, 0.9);
 	}
 
 	@media (min-width: 840px) {
@@ -192,7 +198,7 @@
 		}
 
 		ul.open li a {
-			font-size: var(--h6);
+			font-size: var(--h5);
 			padding: 0 .8rem;
 			display: inline;
 		}
@@ -211,13 +217,15 @@
 	}
 </style>
 
-<svelte:window on:click="{() => open = false}" on:scroll={handle_scroll}/>
+<svelte:window on:scroll={handle_scroll}/>
 
 <header class:visible="{visible || open}">
 	<nav>
-		<a rel="prefetch" href='.' class="home" title='Homepage'>
-			<h2>Svelte</h2>
-		</a>
+		<a rel="prefetch" href='.' class="home" title='Homepage'></a>
+
+		{#if open}
+			<div class="modal-background hide-if-desktop" on:click="{() => open = false}"></div>
+		{/if}
 
 		<ul
 			bind:this={ul}

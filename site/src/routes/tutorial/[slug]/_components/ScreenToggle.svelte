@@ -7,7 +7,7 @@
 		position: fixed;
 		bottom: 0;
 		width: 100%;
-		height: 42px;
+		height: 4.6rem;
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -16,15 +16,15 @@
 	}
 
 	button {
-		padding: 0.3em 0.6em;
-		border-radius: 1em;
-		line-height: 1;
-		height: 1em;
-		box-sizing: content-box;
-		color: #999;
-		border: 1px solid #f4f4f4;
+		margin: 0 .15em;
 		width: 4em;
-		margin: 0 0.15em;
+		height: 1em;
+		padding: .2em .4em .3em;
+		border-radius: var(--border-r);
+		line-height: 1;
+		box-sizing: content-box;
+		color: #888;
+		border: 1px solid var(--back-light);
 	}
 
 	.selected {
