@@ -1,12 +1,12 @@
 ---
 title: Setting up your editor
 description: Instructions for configuring linting and syntax highlighting
-pubdate: 2019-04-15
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
+draft: true
 ---
 
-TODO:
+*Coming soon* This post will walk you through setting up your editor so that recognises Svelte files:
 
 * eslint-plugin-svelte3
 * svelte-vscode
