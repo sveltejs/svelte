@@ -19,7 +19,7 @@
 		height: 40px;
 		margin: 0 0.5em 0.5em 0;
 		text-decoration: none;
-		border: 1px solid #aaa;
+		border: 2px solid var(--second);
 		padding: 5px 10px;
 		border-radius: 20px;
 	}
@@ -27,7 +27,7 @@
 	.add-yourself {
 		display: flex;
 		align-items: center;
-		border: 1px solid #eee;
+		border: 2px solid var(--second);
 	}
 
 	img {
