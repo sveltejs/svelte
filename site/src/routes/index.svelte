@@ -49,7 +49,7 @@
 		right: -4rem;
 		width: 68rem;
 		height: 68rem;
-		mix-blend-mode: multiply;
+		/* mix-blend-mode: multiply; */
 		will-change: transform;
 	}
 
@@ -112,14 +112,14 @@
 	<img alt="Svelte logotype" class="logotype" src="svelte-logotype.svg">
 	<h3>Cybernetically enhanced web apps</h3>
 
-	<img alt="Svelte logo" class="logo" src="svelte-logo-outline.svg" style="transform: translate(0, {sy * .7}px)">
+	<img alt="Svelte logo" class="logo" src="svelte-logo-outline.svg" style="transform: translate(0, {sy * .2}px)">
 </section>
 
 <Blurb/>
 
 <div class="examples">
 	<section class="container example linkify">
-		<p><b>A taste of Svelte</b><br/>Svelte components are built on top of HTML. Just add data.</p>
+		<p>Svelte components are built on top of HTML. Just add data.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
@@ -132,7 +132,7 @@
 	</section>
 
 	<section class="container example linkify">
-		<p><b>Scoped styles</b><br/>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
+		<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
@@ -145,7 +145,7 @@
 	</section>
 
 	<section class="container example linkify">
-		<p><b>Intelligent compiler</b><br/>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
+		<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
@@ -158,7 +158,7 @@
 	</section>
 
 	<section class="container example linkify">
-		<p><b>Build-in Transitions</b><br/>Create beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
+		<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
