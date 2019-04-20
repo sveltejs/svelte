@@ -89,7 +89,7 @@
 		background: no-repeat url(/contributors.jpg);
 		background-size: auto 102%;
 		margin: 0 0.5em 0.5em 0;
-		border: .2rem solid var(--second);
+		border: 2px solid var(--second);
 	}
 
 	@media (min-width: 920px) {
