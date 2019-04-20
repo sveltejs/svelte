@@ -56,7 +56,7 @@
 	.logo {
 		position: absolute;
 		top: -4rem;
-		right: 4rem;
+		right: 0rem;
 		width: 52rem;
 		will-change: transform;
 		display: none;
@@ -125,6 +125,12 @@
 			grid-template-columns: 1fr 3fr;
 			grid-gap: 0.5em;
 			align-items: start;
+		}
+	}
+
+	@media (min-width: 1200px) {
+		.logo {
+			right: calc(50vw - 60rem);
 		}
 	}
 </style>
