@@ -1,6 +1,4 @@
 <script>
-	import Icon from '../components/Icon.svelte';
-	import Logo from '../components/Logo.svelte';
 	import Blurb from './_components/Blurb.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte.svelte';
 	import IntersectionObserver from '../components/IntersectionObserver.svelte';
@@ -25,9 +23,8 @@
 		max-width: 120rem;
 	}
 
-	.container ul {
-		list-style: none;
-	}
+	.container h3 { color: var(--text) }
+	.container ul { list-style: none }
 
 	/* max line-length ~60 chars */
 	li:not(.box) > p {
@@ -39,63 +36,51 @@
 		--text: hsl(36, 3%, 44%);
 	}
 
+	.hero {
+		margin: 10rem auto;
+	}
+
+	.hero h3, .logotype {
+		position: relative;
+		left: 1.6rem;
+	}
+
+	.hero h3 {
+		font-size: 2rem;
+	}
+
+	.logotype {
+		height: 4rem;
+	}
+
 	.logo {
 		position: absolute;
-		left: -120px;
-		top: -120px;
-		width: 80vmin;
-		height: 80vmin;
-		opacity: 0.1;
+		top: -4rem;
+		right: 0rem;
+		width: 52rem;
 		will-change: transform;
-	}
-
-	.hero h1 {
-		text-align: center;
-		margin: 2rem 0;
-		font-size: 6rem;
-		color: var(--heading);
-		font-weight: 100;
-		letter-spacing: .12em;
-		text-transform: uppercase;
-	}
-
-	.hero h2 {
-		text-align: center;
-		display: block;
-		position: relative;
-		font-size: 3.2rem;
-		text-align: center;
-		width: 100%;
-		text-transform: lowercase;
-		font-weight: 300;
-		opacity: 0.7;
+		display: none;
 	}
 
 	.examples {
 		background: var(--second);
 		color: white;
-		/* padding: 2em 0; */
 		overflow: hidden;
 	}
 
 	.example {
-		/* background: var(--second);
-		color: white;
-		padding: 0.8rem;
-		border-radius: var(--border-r); */
 		width: 100%;
-		height: 420px;
+	}
+
+	.example > p {
+		margin: 4.4rem 2.4rem 2.4rem 0;
 	}
 
 	.repl-container {
 		width: 100%;
-		height: 100%;
+		height: 420px;
 		border-radius: var(--border-r);
 		overflow: hidden;
-	}
-
-	.example > div:first-child {
-		/* padding: 0.8rem; */
 	}
 
 	.contributor {
@@ -107,48 +92,67 @@
 		background: no-repeat url(/contributors.jpg);
 		background-size: auto 102%;
 		margin: 0 0.5em 0.5em 0;
-		border: 1px solid var(--second);
+		border: 2px solid var(--second);
+	}
+
+	@media (min-width: 640px) {
+		.logotype {
+			height: 6rem;
+		}
+
+		.hero h3 {
+			font-size: var(--h3);
+		}
+	}
+
+	@media (min-width: 800px) {
+		.logo {
+			display: block;
+		}
+
+		.hero {
+			margin: 15rem auto;
+		}
+
+		.hero h3, .logotype {
+			left: 3rem;
+		}
 	}
 
 	@media (min-width: 920px) {
 		.example {
 			display: grid;
-			grid-template-columns: 1fr 4fr;
+			grid-template-columns: 1fr 3fr;
 			grid-gap: 0.5em;
 			align-items: start;
 		}
 	}
 
-	@media screen and (min-width: 870px) {
-		.hero h1 {
-			position: relative;
-			top: -.8rem;
-			font-size: 18rem;
-			margin: 2rem 2rem 0 1rem;
+	@media (min-width: 1200px) {
+		.logo {
+			right: calc(50vw - 60rem);
 		}
 	}
 </style>
 
 <svelte:head>
-	<title>Svelte • The magical disappearing UI framework</title>
+	<title>Svelte • Cybernetically enhanced web apps</title>
 </svelte:head>
 
 <svelte:window bind:scrollY={sy}/>
 
-<img alt="Svelte logo" class="logo" src="logo.svg" style="transform: translate(0,{sy * 0.2}px)">
+<img alt="Svelte logo" class="logo" src="svelte-logo-outline.svg" style="transform: translate(0, {sy * .2}px)">
 
 <section class="hero container">
-	<h2>Cybernetically enhanced web apps</h2>
-	<h1>Svelte</h1>
+	<img alt="Svelte logotype" class="logotype" src="svelte-logotype.svg">
+	<h3>Cybernetically enhanced web apps</h3>
 </section>
 
 <Blurb/>
 
 <div class="examples">
 	<section class="container example linkify">
-		<div>
-			<p>Svelte components are built on top of HTML. Just add data.</p>
-		</div>
+		<p>Svelte components are built on top of HTML. Just add data.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
@@ -161,9 +165,7 @@
 	</section>
 
 	<section class="container example linkify">
-		<div>
-			<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
-		</div>
+		<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
@@ -176,9 +178,7 @@
 	</section>
 
 	<section class="container example linkify">
-		<div>
-			<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
-		</div>
+		<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
@@ -191,9 +191,7 @@
 	</section>
 
 	<section class="container example linkify">
-		<div>
-			<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
-		</div>
+		<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>
