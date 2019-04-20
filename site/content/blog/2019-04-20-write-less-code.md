@@ -111,7 +111,7 @@ It's unusual for the difference to be *quite* so obvious — in my experience, a
 
 ### Top-level elements
 
-In Svelte, a component can have as many top-level elements as you like. In React and Vue, a component must have a single top-level element — in React's case, trying to return two top-level elements from a component function would result in syntactically invalid code. (You can use a fragment — `<>` — instead of a `<div>`, but it's the same basic idea).
+In Svelte, a component can have as many top-level elements as you like. In React and Vue, a component must have a single top-level element — in React's case, trying to return two top-level elements from a component function would result in syntactically invalid code. (You can use a fragment — `<>` — instead of a `<div>`, but it's the same basic idea, and still results in an extra level of indentation).
 
 In Vue, your markup must be wrapped in a `<template>` element, which I'd argue is redundant.
 
