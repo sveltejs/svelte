@@ -54,7 +54,7 @@
 	.post :global(h2) {
 		margin: 2em 0 0.5em 0;
 		/* color: var(--second); */
-		color: black;
+		color: var(--text);
 		font-size: var(--h3);
 		font-weight: 300;
 	}
