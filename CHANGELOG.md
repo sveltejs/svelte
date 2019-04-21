@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.0.0
+
+* Everything
+
 ## 2.15.4
 
 * IE `classList` fix ([#1868](https://github.com/sveltejs/svelte/pull/1868))
