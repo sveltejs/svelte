@@ -6,9 +6,10 @@
 </script>
 
 <script>
-	import { onMount, afterUpdate } from 'svelte';
+	import { onMount } from 'svelte';
 	import GuideContents from './_GuideContents.svelte';
 	import Icon from '../../components/Icon.svelte';
+	import { getFragment } from '../../utils/navigation';
 
 	export let sections;
 	let active_section;
@@ -30,7 +31,7 @@
 			});
 		}
 
-		let last_id = window.location.hash.slice(1);
+		let last_id = getFragment();
 
 		const onscroll = () => {
 			const top = -window.scrollY;
@@ -57,7 +58,7 @@
 		// wait for fonts to load...
 		const timeouts = [
 			setTimeout(onresize, 1000),
-			setTimeout(onresize, 5000)
+			setTimeout(onscroll, 5000)
 		];
 
 		onresize();
