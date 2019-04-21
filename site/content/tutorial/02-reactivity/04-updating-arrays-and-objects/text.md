@@ -17,7 +17,7 @@ But there's a more *idiomatic* solution:
 
 ```js
 function addNumber() {
-	numbers = [...numbers, numbers.length + 1;]
+	numbers = [...numbers, numbers.length + 1];
 }
 ```
 

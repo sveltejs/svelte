@@ -1,7 +1,6 @@
 ---
 title: The zen of Just Writing CSS
 description: I would say this is the future, but we're already doing it.
-pubdate: 2017-09-06
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---
