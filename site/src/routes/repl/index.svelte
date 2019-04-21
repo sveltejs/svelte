@@ -1,7 +1,7 @@
 <script context="module">
 	export function preload({ query }) {
 		return {
-			version: query.version || 'beta',
+			version: query.version || '3',
 			gist_id: query.gist,
 			example: query.example || 'hello-world'
 		};
@@ -43,7 +43,7 @@
 
 	onMount(() => {
 		if (version !== 'local') {
-			fetch(`https://unpkg.com/svelte@${version || 'beta'}/package.json`)
+			fetch(`https://unpkg.com/svelte@${version || '3'}/package.json`)
 				.then(r => r.json())
 				.then(pkg => {
 					version = pkg.version;
