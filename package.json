@@ -1,7 +1,7 @@
 {
   "name": "svelte",
   "version": "3.0.0-beta.28",
-  "description": "The magical disappearing UI framework",
+  "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
   "files": [
