@@ -13,17 +13,17 @@ const rss = `
 
 <channel>
 	<title>Svelte blog</title>
-	<link>https://svelte.technology/blog</link>
+	<link>https://svelte.dev/blog</link>
 	<description>News and information about the magical disappearing UI framework</description>
 	<image>
-		<url>https://svelte.technology/favicon.png</url>
+		<url>https://svelte.dev/favicon.png</url>
 		<title>Svelte</title>
-		<link>https://svelte.technology/blog</link>
+		<link>https://svelte.dev/blog</link>
 	</image>
 	${get_posts().map(post => `
 		<item>
 			<title>${post.metadata.title}</title>
-			<link>https://svelte.technology/blog/${post.slug}</link>
+			<link>https://svelte.dev/blog/${post.slug}</link>
 			<description>${post.metadata.description}</description>
 			<pubDate>${formatPubdate(post.metadata.pubdate)}</pubDate>
 		</item>
