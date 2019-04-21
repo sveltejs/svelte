@@ -44,15 +44,15 @@
 </style>
 
 <div class="logos">
-	<a target="_blank" href="https://beyonk.com"><img src="organisations/beyonk.svg" alt="Beyonk logo"></a>
-	<a target="_blank" href="https://chess.com" style="background-color: rgb(49,46,43);"><img src="organisations/chess.svg" alt="Chess.com logo"></a>
-	<a target="_blank" href="https://datawrapper.de"><img src="organisations/datawrapper.svg" alt="Datawrapper logo"></a>
-	<a target="_blank" href="https://db.nomics.world" style="background-color: rgb(15,39,47);"><img src="organisations/dbnomics.png" alt="DBNomics logo"></a>
-	<a target="_blank" href="https://from-now-on.com"><img src="organisations/from-now-on.png" alt="From-Now-On logo"></a>
-	<a target="_blank" href="https://itslearning.com"><img src="organisations/itslearning.svg" alt="itslearning logo"></a>
-	<a target="_blank" href="http://mustlab.ru"><img src="organisations/mustlab.png" alt="Mustlab logo"></a>
-	<a target="_blank" href="https://www.nesta.org.uk"><img src="organisations/nesta.svg" alt="Nesta logo"></a>
-	<a target="_blank" href="https://nytimes.com"><img src="organisations/nyt.svg" alt="The New York Times logo"></a>
-	<a target="_blank" href="https://www.stone.co"><img src="organisations/stone.svg" alt="Stone Payments logo"></a>
-	<a target="_blank" href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
+	<a target="_blank" rel="noopener" href="https://beyonk.com"><img src="organisations/beyonk.svg" alt="Beyonk logo"></a>
+	<a target="_blank" rel="noopener" href="https://chess.com" style="background-color: rgb(49,46,43);"><img src="organisations/chess.svg" alt="Chess.com logo"></a>
+	<a target="_blank" rel="noopener" href="https://datawrapper.de"><img src="organisations/datawrapper.svg" alt="Datawrapper logo"></a>
+	<a target="_blank" rel="noopener" href="https://db.nomics.world" style="background-color: rgb(15,39,47);"><img src="organisations/dbnomics.png" alt="DBNomics logo"></a>
+	<a target="_blank" rel="noopener" href="https://from-now-on.com"><img src="organisations/from-now-on.png" alt="From-Now-On logo"></a>
+	<a target="_blank" rel="noopener" href="https://itslearning.com"><img src="organisations/itslearning.svg" alt="itslearning logo"></a>
+	<a target="_blank" rel="noopener" href="http://mustlab.ru"><img src="organisations/mustlab.png" alt="Mustlab logo"></a>
+	<a target="_blank" rel="noopener" href="https://www.nesta.org.uk"><img src="organisations/nesta.svg" alt="Nesta logo"></a>
+	<a target="_blank" rel="noopener" href="https://nytimes.com"><img src="organisations/nyt.svg" alt="The New York Times logo"></a>
+	<a target="_blank" rel="noopener" href="https://www.stone.co"><img src="organisations/stone.svg" alt="Stone Payments logo"></a>
+	<a target="_blank" rel="noopener" href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
 </div>
