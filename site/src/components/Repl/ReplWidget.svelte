@@ -4,7 +4,7 @@
 	import Repl from '@sveltejs/svelte-repl';
 	import InputOutputToggle from './InputOutputToggle.svelte';
 
-	export let version = 'beta';
+	export let version = '3';
 	export let gist = null;
 	export let example = null;
 	export let embedded = false;
