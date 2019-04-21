@@ -30,6 +30,13 @@
 	}
 </style>
 
+<svelte:head>
+	<title>REPL • Svelte</title>
+
+	<meta name='twitter:title' content='Svelte REPL'>
+	<meta name='twitter:description' content='Cybernetically enhanced web apps'>
+</svelte:head>
+
 <div class="repl-outer">
 	{#if process.browser}
 		<ReplWidget {version} {gist} {example} embedded={true}/>

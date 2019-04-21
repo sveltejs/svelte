@@ -137,6 +137,9 @@
 
 <svelte:head>
 	<title>Svelte • Cybernetically enhanced web apps</title>
+
+	<meta name='twitter:title' content='Svelte'>
+	<meta name='twitter:description' content='Cybernetically enhanced web apps'>
 </svelte:head>
 
 <svelte:window bind:scrollY={sy}/>
