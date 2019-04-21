@@ -11,7 +11,7 @@
 <script>
 	import ReplWidget from '../../components/Repl/ReplWidget.svelte';
 
-	export let version = 'beta';
+	export let version = '3';
 	export let gist;
 	export let example;
 </script>

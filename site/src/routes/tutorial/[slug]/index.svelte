@@ -101,7 +101,7 @@
 		});
 	}
 
-	const svelteUrl = `https://unpkg.com/svelte@beta`;
+	const svelteUrl = `https://unpkg.com/svelte@3`;
 	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
 
 	// needed for context API tutorial
