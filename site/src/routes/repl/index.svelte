@@ -183,8 +183,9 @@
 <svelte:head>
 	<title>REPL • Svelte</title>
 
-	<meta name='twitter:title' content='Svelte REPL'>
-	<meta name='twitter:description' content='Cybernetically enhanced web apps'>
+	<meta name="twitter:title" content="Svelte REPL">
+	<meta name="twitter:description" content="Cybernetically enhanced web apps">
+	<meta name="Description" content="Interactive Svelte playground">
 </svelte:head>
 
 <svelte:window bind:innerWidth={width}/>
