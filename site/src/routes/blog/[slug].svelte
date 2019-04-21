@@ -68,7 +68,8 @@
 	}
 
 	.post :global(figcaption) {
-		color: var(--second)
+		color: var(--second);
+		text-align: left;
 	}
 
 	.post :global(video) {
