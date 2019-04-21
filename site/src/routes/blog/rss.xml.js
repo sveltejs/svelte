@@ -20,7 +20,7 @@ const rss = `
 		<title>Svelte</title>
 		<link>https://svelte.dev/blog</link>
 	</image>
-	${get_posts().map(post => `
+	${get_posts().filter(post => !post.metadata.draft).map(post => `
 		<item>
 			<title>${post.metadata.title}</title>
 			<link>https://svelte.dev/blog/${post.slug}</link>
