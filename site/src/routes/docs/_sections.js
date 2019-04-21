@@ -1,8 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { SLUG_PRESERVE_UNICODE } from '../../../config';
 import { extract_frontmatter, extract_metadata, langs, link_renderer } from '../../utils/markdown.js';
-import { makeSessionSlugProcessor } from '../../utils/slug';
 import marked from 'marked';
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
@@ -38,8 +36,6 @@ const blockTypes = [
 ];
 
 export default function() {
-	const makeSlug = makeSessionSlugProcessor(SLUG_PRESERVE_UNICODE);
-
 	return fs
 		.readdirSync(`content/docs`)
 		.filter(file => file[0] !== '.' && path.extname(file) === '.md')
@@ -102,8 +98,17 @@ export default function() {
 				return html;
 			};
 
+			const seen = new Set();
+
 			renderer.heading = (text, level, rawtext) => {
-				const slug = makeSlug(rawtext);
+				const slug = rawtext
+					.toLowerCase()
+					.replace(/[^a-zA-Z0-9]+/g, '-')
+					.replace(/^-/, '')
+					.replace(/-$/, '');
+
+				if (seen.has(slug)) throw new Error(`Duplicate slug ${slug}`);
+				seen.add(slug);
 
 				if (level === 3 || level === 4) {
 					const title = unescape(
