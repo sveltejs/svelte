@@ -316,7 +316,7 @@
 
 ## 2.0.0
 
-*See [the blog post](https://svelte.technology/blog/version-2) for information on how to upgrade your apps*
+*See [the blog post](https://svelte.dev/blog/version-2) for information on how to upgrade your apps*
 
 * New template syntax ([#1318](https://github.com/sveltejs/svelte/issues/1318))
 * Emit ES2015 code, not ES5 ([#1348](https://github.com/sveltejs/svelte/pull/1348))
