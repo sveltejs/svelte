@@ -18,7 +18,7 @@ if (process.env.GITHUB_CLIENT_ID) {
 		clientID: process.env.GITHUB_CLIENT_ID,
 		clientSecret: process.env.GITHUB_CLIENT_SECRET,
 		callbackURL: `${process.env.BASEURL}/auth/callback`,
-		userAgent: 'svelte.technology'
+		userAgent: 'svelte.dev'
 	}, (accessToken, refreshToken, profile, callback) => {
 		return callback(null, {
 			token: accessToken,

@@ -22,7 +22,7 @@ export async function post(req, res) {
 				}, null, '  ')
 			},
 			'README.md': {
-				content: `Created with [svelte.technology/repl](https://svelte.technology/repl)`
+				content: `Created with [svelte.dev/repl](https://svelte.dev/repl)`
 			}
 		};
 		components.forEach(component => {
