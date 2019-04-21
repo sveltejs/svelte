@@ -33,12 +33,7 @@
 	});
 </script>
 
-<ul
-	bind:this={ul}
-	class="examples-toc"
-	on:mouseenter="{() => prevent_sidebar_scroll = true}"
-	on:mouseleave="{() => prevent_sidebar_scroll = false}"
->
+<ul bind:this={ul} class="examples-toc">
 	{#each sections as section}
 		<li>
 			<span class="section-title">

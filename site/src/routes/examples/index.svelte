@@ -1,6 +1,6 @@
 <!-- FIXME sometimes it adds a trailing slash when landing -->
 <script context="module">
-	export async function preload({params, query}) {
+	export async function preload() {
 		const sections = await this.fetch(`examples.json`).then(r => r.json());
 		const title_by_slug = sections.reduce((acc, {examples}) => {
 			examples.forEach(({slug, title}) => {
