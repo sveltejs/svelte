@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://svelte.dev">
-	<img alt="Cybernetically enhanced web apps: Svelte" src="banner.png">
+	<img alt="Cybernetically enhanced web apps: Svelte" src="https://svelte-assets.surge.sh/banner.png">
   </a>
 </p>
 
