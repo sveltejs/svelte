@@ -10,8 +10,10 @@
 </script>
 
 <svelte:head>
-	<title>Svelte • The magical disappearing UI framework</title>
+	<title>Blog • Svelte</title>
 	<link rel="alternate" type="application/rss+xml" title="Svelte blog" href="blog/rss.xml">
+
+	<meta name='twitter:title' content='Svelte blog'>
 </svelte:head>
 
 <div class='posts stretch'>
