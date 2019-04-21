@@ -361,8 +361,9 @@
 <svelte:head>
 	<title>API Docs • Svelte</title>
 
-	<meta name='twitter:title' content='Svelte API docs'>
-	<meta name='twitter:description' content='Cybernetically enhanced web apps'>
+	<meta name="twitter:title" content="Svelte API docs">
+	<meta name="twitter:description" content="Cybernetically enhanced web apps">
+	<meta name="Description" content="Cybernetically enhanced web apps">
 </svelte:head>
 
 <div bind:this={container} class='content linkify listify'>

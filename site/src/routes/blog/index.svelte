@@ -13,7 +13,9 @@
 	<title>Blog • Svelte</title>
 	<link rel="alternate" type="application/rss+xml" title="Svelte blog" href="blog/rss.xml">
 
-	<meta name='twitter:title' content='Svelte blog'>
+	<meta name="twitter:title" content="Svelte blog">
+	<meta name="twitter:description" content="Articles about Svelte and UI development">
+	<meta name="Description" content="Articles about Svelte and UI development">
 </svelte:head>
 
 <div class='posts stretch'>
