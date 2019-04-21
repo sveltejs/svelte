@@ -123,21 +123,21 @@
 		<h2>Write less code</h2>
 		<p>Build boilerplate-free components using languages you already know — HTML, CSS and JavaScript</p>
 
-		<a class="learn-more">learn more</a>
+		<span class="learn-more">learn more</span>
 	</a>
 
 	<a href="blog/virtual-dom-is-pure-overhead" class='box bg-flash white' style="grid-area: two">
 		<h2>No virtual DOM</h2>
 		<p>Svelte compiles your code to tiny, framework-less vanilla JS — your app starts fast and stays fast</p>
 
-		<a class="learn-more">learn more</a>
+		<span class="learn-more">learn more</span>
 	</a>
 
 	<a href="blog/svelte-3-rethinking-reactivity" class='box bg-second white' style="grid-area: three">
 		<h2>Truly reactive</h2>
 		<p>No more complex state management libraries — Svelte brings reactivity to JavaScript itself</p>
 
-		<a class="learn-more">learn more</a>
+		<span class="learn-more">learn more</span>
 	</a>
 
 	<div class="linkify description" style="grid-area: what;">
