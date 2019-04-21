@@ -130,6 +130,11 @@
 			text-align: center;
 		}
 
+		.post :global(.max) > :global(*) {
+			width: 100%;
+			max-width: 1200px;
+		}
+
 		.post :global(iframe) {
 			width: 100%;
 			max-width: 1100px;
