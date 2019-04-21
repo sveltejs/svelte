@@ -1,5 +1,10 @@
 <script context="module">
 	export function preload({ query }) {
+		if (/^[^>]?[12]/.test(query.version)) {
+			const search = Object.keys(query).map(key => `${key}=${query[key]}`).join('&');
+			return this.redirect(302, `https://v2.svelte.dev/repl?${search}`);
+		}
+
 		return {
 			version: query.version || '3',
 			gist_id: query.gist,
