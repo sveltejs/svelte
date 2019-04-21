@@ -1,7 +1,7 @@
 <script context="module">
 	export async function preload({ params }) {
-		const post = await this.fetch(`blog/${params.slug}.json`).then(r => r.json());
-		return { post };
+		const res = await this.fetch(`blog/${params.slug}.json`);
+		return res.ok ? { post: await res.json() } : this.error(404, 'Not found');
 	}
 </script>
 
@@ -24,32 +24,40 @@
 
 <style>
 	.post {
-		padding: var(--top-offset) var(--side-nav) 0 var(--side-nav);
+		padding: var(--top-offset) var(--side-nav) 6rem var(--side-nav);
 		max-width: var(--main-width);
 		margin: 0 auto;
 	}
 
 	.byline {
-		font-size: 0.8em;
-		border-bottom: 1px solid #eee;
-		padding: 0;
+		margin: 0 0 4rem 0;
+		padding: 0 0 1.6rem 0;
+		border-bottom: var(--border-w) solid #6767785b;
+		font-size: var(--h6);
+	}
+
+	.byline a {
+		border-bottom: none;
+		font-weight: 600;
+	}
+
+	.byline a:hover {
+		border-bottom: 2px solid var(--prime);
 	}
 
 	.post h1 {
 		color: var(--second);
 		max-width: 20em;
-		margin: 0 0 1.2rem 0;
+		margin: 0 0 .8rem 0;
 	}
 
 	.post :global(h2) {
 		margin: 2em 0 0.5em 0;
-		color: var(--second);
+		/* color: var(--second); */
+		color: var(--text);
+		font-size: var(--h3);
+		font-weight: 300;
 	}
-
-	/* .post p,
-	.post :global(p) {
-		max-width: var(--linemax)
-	} */
 
 	.post :global(figure) {
 		margin: 1.6rem 0 3.2rem 0;
@@ -78,7 +86,7 @@
 		padding: .3rem .8rem .3rem;
 		margin: 0 0.2rem;
 		top: -.1rem;
-		background: #f4f4f4;
+		background: var(--back-api);
 	}
 
 	.post :global(pre) :global(code) {
@@ -102,6 +110,10 @@
 		z-index: 2;
 	}
 
+	.post :global(.max) {
+		width: 100%;
+	}
+
 	.post :global(iframe) {
 		width: 100%;
 		height: 420px;
@@ -111,13 +123,20 @@
 	}
 
 	@media (min-width: 910px) {
-		.post :global(iframe) {
+		.post :global(.max) {
 			width: calc(100vw - 2 * var(--side-nav));
-			margin: 2em calc(400px + var(--side-nav) - 50vw);
+			margin: 0 calc(var(--main-width) / 2 - 50vw);
+			text-align: center;
+		}
+
+		.post :global(iframe) {
+			width: 100%;
+			max-width: 1100px;
+			margin: 2em auto;
 		}
 	}
 
-	@media (min-width: 1460px) {
+	/* @media (min-width: 1460px) {
 		.post :global(iframe) {
 			width: 1360px;
 			margin: 2em -280px;
@@ -128,5 +147,5 @@
 		.post :global(iframe) {
 			height: 640px;
 		}
-	}
+	} */
 </style>

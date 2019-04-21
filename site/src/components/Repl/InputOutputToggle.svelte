@@ -15,17 +15,9 @@
 		border-top: 1px solid var(--second);
 	}
 
-	input {
-		display: block;
-	}
-
-	span {
-		color: #ccc;
-	}
-
-	.active {
-		color: #555;
-	}
+	input { display: block }
+	span { color: #ccc }
+	.active { color: #555 }
 </style>
 
 <label class="input-output-toggle">

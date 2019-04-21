@@ -32,21 +32,19 @@
 		font-size: var(--h5);
 	}
 
-	.box a {
+	.learn-more {
 		position: relative;
 		text-align: right;
 		margin-top: auto;
 		padding: 0 1.2em 0 0;
-		font-family: Roboto, sans-serif;
-		font-size: 1.6rem;
 	}
 
-	.box a:hover {
+	.box:hover .learn-more {
 		color: white;
 		text-decoration: underline;
 	}
 
-	.box a::after, .cta a::after {
+	.learn-more::after, .cta a::after {
 		content: '';
 		position: absolute;
 		display: block;
@@ -121,26 +119,26 @@
 </style>
 
 <section class='container'>
-	<div class='box bg-prime white' style="grid-area: one">
-		<h2 style='padding:2.4rem 0 0 0'>Write less code</h2>
+	<a href="blog/write-less-code" class='box bg-prime white' style="grid-area: one">
+		<h2>Write less code</h2>
 		<p>Build boilerplate-free components using languages you already know — HTML, CSS and JavaScript</p>
 
-		<a href="TODO-blog-post-on-loc">learn more</a>
-	</div>
+		<a class="learn-more">learn more</a>
+	</a>
 
-	<div class='box bg-flash white' style="grid-area: two">
-		<h2 style='padding:2.4rem 0 0 0'>No virtual DOM</h2>
+	<a href="blog/virtual-dom-is-pure-overhead" class='box bg-flash white' style="grid-area: two">
+		<h2>No virtual DOM</h2>
 		<p>Svelte compiles your code to tiny, framework-less vanilla JS — your app starts fast and stays fast</p>
 
-		<a href="TODO-blog-post-on-vdom-overhead">learn more</a>
-	</div>
+		<a class="learn-more">learn more</a>
+	</a>
 
-	<div class='box bg-second white' style="grid-area: three">
-		<h2 style='padding:2.4rem 0 0 0'>Truly reactive</h2>
+	<a href="TODO-blog-post-on-reactivity" class='box bg-second white' style="grid-area: three">
+		<h2>Truly reactive</h2>
 		<p>No more complex state management libraries — Svelte brings reactivity to JavaScript itself</p>
 
-		<a href="TODO-blog-post-on-reactivity">learn more</a>
-	</div>
+		<a class="learn-more">learn more</a>
+	</a>
 
 	<div class="linkify description" style="grid-area: what;">
 		<p>Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the <em>browser</em>, Svelte shifts that work into a <em>compile step</em> that happens when you build your app.</p>
@@ -150,8 +148,8 @@
 		<p><a href="TODO-svelte-3-blog-post">Read the introductory blog post</a> to learn more.</p>
 	</div>
 
-	<div style="grid-area: start; display: flex; flex-direction: column">
-		<pre class="language-bash" style="margin: 0 0 1em 0">
+	<div style="grid-area: start; display: flex; flex-direction: column; min-width: 0">
+		<pre class="language-bash" style="margin: 0 0 1em 0; min-width: 0; min-height: 0">
 npx degit sveltejs/template my-svelte-project
 cd my-svelte-project
 

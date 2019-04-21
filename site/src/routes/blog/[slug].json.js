@@ -16,5 +16,8 @@ export function get(req, res) {
 			'Cache-Control': `max-age=${5 * 60 * 1e3}` // 5 minutes
 		});
 		res.end(lookup.get(req.params.slug));
+	} else {
+		res.statusCode = 404;
+		res.end(JSON.stringify({ message: 'not found' }));
 	}
 }
