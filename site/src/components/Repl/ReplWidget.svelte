@@ -1,7 +1,8 @@
 <script>
-	import { onMount } from 'svelte';
-	import { process_example } from './process_example.js';
 	import Repl from '@sveltejs/svelte-repl';
+	import { onMount } from 'svelte';
+
+	import { process_example } from '../../utils/examples';
 	import InputOutputToggle from './InputOutputToggle.svelte';
 
 	export let version = '3';

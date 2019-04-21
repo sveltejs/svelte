@@ -14,11 +14,12 @@
 </script>
 
 <script>
-	import { onMount } from 'svelte';
-	import { process_example } from '../../components/Repl/process_example.js';
-	import InputOutputToggle from '../../components/Repl/InputOutputToggle.svelte';
-	import AppControls from './_components/AppControls/index.svelte';
 	import Repl from '@sveltejs/svelte-repl';
+	import { onMount } from 'svelte';
+
+	import InputOutputToggle from '../../components/Repl/InputOutputToggle.svelte';
+	import { process_example } from '../../utils/examples';
+	import AppControls from './_components/AppControls/index.svelte';
 
 	export let version;
 	export let example;

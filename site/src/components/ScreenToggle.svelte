@@ -1,4 +1,5 @@
 <script>
+	export let labels;
 	export let offset = 0;
 </script>
 
@@ -34,7 +35,12 @@
 </style>
 
 <div class="toggle">
-	<button class:selected={offset === 0} on:click={() => offset = 0}>tutorial</button>
-	<button class:selected={offset === 1} on:click={() => offset = 1}>input</button>
-	<button class:selected={offset === 2} on:click={() => offset = 2}>output</button>
+	{#each labels as label, index}
+		<button
+			class:selected={offset === index}
+			on:click={() => {offset = index}}
+		>
+			{label}
+		</button>
+	{/each}
 </div>
