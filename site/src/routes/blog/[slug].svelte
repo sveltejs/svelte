@@ -11,6 +11,9 @@
 
 <svelte:head>
 	<title>{post.metadata.title}</title>
+
+	<meta name="twitter:title" content={post.metadata.title}>
+	<meta name="twitter:description" content={post.metadata.description}>
 </svelte:head>
 
 <article class='post linkify listify'>

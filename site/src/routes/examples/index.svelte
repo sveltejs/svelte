@@ -73,6 +73,13 @@
 	}
 </style>
 
+<svelte:head>
+	<title>Examples • Svelte</title>
+
+	<meta name='twitter:title' content='Svelte examples'>
+	<meta name='twitter:description' content='Cybernetically enhanced web apps'>
+</svelte:head>
+
 <div class="content">
 	<h1>Examples</h1>
 
