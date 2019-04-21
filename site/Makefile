@@ -1,7 +1,7 @@
 HASH := `git rev-parse --short HEAD`
 
 SERVICE := svelte-website
-PROJECT := todo_google_project_name
+PROJECT := svelte-dev
 
 IMAGE := gcr.io/$(PROJECT)/$(SERVICE):$(HASH)
 
