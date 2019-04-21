@@ -133,7 +133,7 @@
 		<a class="learn-more">learn more</a>
 	</a>
 
-	<a href="TODO-blog-post-on-reactivity" class='box bg-second white' style="grid-area: three">
+	<a href="blog/svelte-3-rethinking-reactivity" class='box bg-second white' style="grid-area: three">
 		<h2>Truly reactive</h2>
 		<p>No more complex state management libraries — Svelte brings reactivity to JavaScript itself</p>
 
@@ -145,7 +145,7 @@
 
 		<p>Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.</p>
 
-		<p><a href="TODO-svelte-3-blog-post">Read the introductory blog post</a> to learn more.</p>
+		<p><a href="blog/svelte-3-rethinking-reactivity">Read the introductory blog post</a> to learn more.</p>
 	</div>
 
 	<div style="grid-area: start; display: flex; flex-direction: column; min-width: 0">
