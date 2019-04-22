@@ -1,9 +1,8 @@
 ---
-title: Svelte 3: Rethinking Reactivity
+title: Svelte 3: Rethinking reactivity
 description: It's finally here
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
-draft: true
 ---
 
 After several months of being just days away, we are over the moon to announce the stable release of Svelte 3. This is a huge release representing hundreds of hours of work by many people in the Svelte community, including invaluable feedback from beta testers who have helped shape the design every step of the way.
@@ -23,14 +22,15 @@ Version 3 is a significant overhaul. Our focus for the last five or six months h
 
 To make that possible we first needed to rethink the concept at the heart of modern UI frameworks: reactivity.
 
-<figure class="max">
-<img
-	src="https://svelte-assets.surge.sh/yglf-poster.jpg"
-	alt="Rich Harris delivering a conference talk at You Gotta Love Frontend"
->
+<div class="max">
+<figure style="max-width: 960px; margin: 0 auto">
+<div style="height: 0; padding: 0 0 57.1% 0; position: relative; margin: 0 auto;">
+	<iframe style="position: absolute; width: 100%; height: 100%; left: 0; top: 0; margin: 0;" src="https://www.youtube-nocookie.com/embed/AdNJ3fydeao" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
-<figcaption>TKTKTK replace this with a video embed once the YGLF videos appear on YouTube</figcaption>
+<figcaption>'Rethinking Reactivity' from <a href="https://www.israel.yglfconf.com/">You Gotta Love Frontend Code Camp</a></figcaption>
 </figure>
+</div>
 
 
 ## Moving reactivity into the language
