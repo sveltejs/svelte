@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import express from 'express';
-import compression from 'compression';
 import session from 'express-session';
 import passport from 'passport';
 import { Strategy } from 'passport-github';
@@ -93,7 +92,6 @@ if (process.env.GITHUB_CLIENT_ID) {
 }
 
 app.use(
-	compression({ threshold: 0 }),
 	serve('static', { setHeaders: res => res.setHeader('Access-Control-Allow-Origin', '*') }),
 	sapper.middleware({
 		// TODO update Sapper so that we can pass props to the client
