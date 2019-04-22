@@ -1,36 +1,6 @@
 <script>
-	import { afterUpdate } from 'svelte';
-	import Icon from '../../components/Icon.svelte';
-
 	export let sections = [];
 	export let active_section = null;
-
-	let ul;
-
-	afterUpdate(() => {
-		const active = ul.querySelector('.active');
-
-		if (active) {
-			const { top, bottom } = active.getBoundingClientRect();
-
-			const min = 200;
-			const max = window.innerHeight - 200;
-
-			if (top > max) {
-				ul.parentNode.scrollBy({
-					top: top - max,
-					left: 0,
-					behavior: 'smooth'
-				});
-			} else if (bottom < min) {
-				ul.parentNode.scrollBy({
-					top: bottom - min,
-					left: 0,
-					behavior: 'smooth'
-				});
-			}
-		}
-	});
 </script>
 
 <style>
@@ -58,21 +28,6 @@
 		font-weight: 700;
 	}
 
-	.example-title {
-		display: block;
-		font-size: 1.6rem;
-		font-family: var(--font);
-		padding: 0 0 0.2em 0.6em;
-	}
-
-	.example-title:hover {
-		color: var(--flash);
-	}
-
-	/* .active {
-		font-weight: 600;
-	} */
-
 	a {
 		display: flex;
 		position: relative;
@@ -80,7 +35,7 @@
 		border-bottom: none;
 		padding: 0.2rem 3rem;
 		margin: 0 -3rem;
-		/* margin: 0.5em 0; */
+		font-size: 1.6rem;
 		align-items: center;
 		justify-content: start;
 	}
@@ -100,14 +55,13 @@
 		object-fit: contain;
 		width: 5rem;
 		height: 5rem;
-		/* border: 1px solid #ccc; */
 		border-radius: 2px;
 		box-shadow: 1px 1px 3px rgba(0,0,0,0.13);
 		margin: 0.2em 0.5em 0.2em 0;
 	}
 </style>
 
-<ul bind:this={ul} class="examples-toc">
+<ul class="examples-toc">
 	{#each sections as section}
 		<li>
 			<span class="section-title">
@@ -127,9 +81,6 @@
 					>
 
 					<span>{example.title}</span>
-						<!-- {#if example.slug === active_section}
-						<Icon name="arrow-right" />
-						{/if} -->
 				</a>
 			{/each}
 		</li>
