@@ -1,6 +1,6 @@
 <script>
 	import { goto } from '@sapper/app';
-	import Icon from '../../../../components/Icon.svelte';
+	import Icon from '../../../components/Icon.svelte';
 
 	export let sections;
 	export let slug;
