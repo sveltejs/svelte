@@ -13,7 +13,7 @@ export function keyEvent(code) {
 				node.removeEventListener('keydown', handleKeydown);
 			}
 		};
-	}
+	};
 }
 
 export const enter = keyEvent(13);

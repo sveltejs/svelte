@@ -42,7 +42,7 @@ function get_sections() {
 							throw new Error(`Error building tutorial ${dir}/${tutorial}: ${err.message}`);
 						}
 					})
-			}
+			};
 		});
 
 	return sections;
