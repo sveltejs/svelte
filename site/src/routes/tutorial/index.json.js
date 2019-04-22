@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import send from '@polka/send';
 import { extract_frontmatter } from '../../utils/markdown';
 
 let json;
@@ -50,21 +51,13 @@ function get_sections() {
 export function get(req, res) {
 	try {
 		if (!json || process.env.NODE_ENV !== 'production') {
-			json = JSON.stringify(get_sections());
+			json = get_sections();
 		}
 
-		res.set({
-			'Content-Type': 'application/json'
-		});
-
-		res.end(json);
+		send(res, 200, json);
 	} catch (err) {
-		res.writeHead(500, {
-			'Content-Type': 'application/json'
-		});
-
-		res.end(JSON.stringify({
+		send(res, 500, {
 			message: err.message
-		}));
+		});
 	}
 }
