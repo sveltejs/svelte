@@ -11,10 +11,7 @@
     "cy:run": "cypress run",
     "cy:open": "cypress open",
     "test": "run-p --race dev cy:run",
-    "testsrc": "mocha -r esm test/**",
-    "deploy": "npm run stage && now alias",
-    "prestage": "npm run update && npm run sapper",
-    "stage": "now"
+    "testsrc": "mocha -r esm test/**"
   },
   "dependencies": {
     "codemirror": "^5.44.0",
