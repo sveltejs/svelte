@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import express from 'express';
+import polka from 'polka';
 import compression from 'compression';
 import session from 'express-session';
 import passport from 'passport';
@@ -9,7 +9,7 @@ import serve from 'serve-static';
 import devalue from 'devalue';
 import * as sapper from '@sapper/server';
 
-const app = express();
+const app = polka();
 
 if (process.env.GITHUB_CLIENT_ID) {
 	const FileStore = sessionFileStore(session);
@@ -67,7 +67,8 @@ if (process.env.GITHUB_CLIENT_ID) {
 		.get('/auth/callback', passport.authenticate('github', { failureRedirect: '/auth/error' }), (req, res) => {
 			const { id, username, displayName, photo } = req.session.passport && req.session.passport.user;
 
-			res.set({ 'Content-Type': 'text/html; charset=utf-8' });
+			res.setHeader('Content-Type', 'text/html; charset=utf-8');
+
 			res.end(`
 				<script>
 					window.opener.postMessage({
