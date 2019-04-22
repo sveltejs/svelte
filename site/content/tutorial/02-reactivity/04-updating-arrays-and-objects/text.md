@@ -7,8 +7,8 @@ Because Svelte's reactivity is triggered by assignments, using array methods lik
 One way to fix that is to add an assignment that would otherwise be redundant:
 
 ```js
-function addNumber() {
-	numbers.push(numbers.length + 1);
+function addNumber(value) {
+	numbers.push(value);
 	numbers = numbers;
 }
 ```
@@ -16,8 +16,8 @@ function addNumber() {
 But there's a more *idiomatic* solution:
 
 ```js
-function addNumber() {
-	numbers = [...numbers, numbers.length + 1];
+function addNumber(value) {
+	numbers = [...numbers, value];
 }
 ```
 
