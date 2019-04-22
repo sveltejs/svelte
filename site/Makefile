@@ -14,9 +14,7 @@ sapper:
 
 docker:
 	@echo "\n~> building docker image"
-	@docker build . -t $(IMAGE)
-	@echo "\n~> pushing docker image"
-	@docker push $(IMAGE)
+	@gcloud builds submit -t $(IMAGE)
 
 
 deploy: sapper docker
