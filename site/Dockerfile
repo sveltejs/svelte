@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:10.15
+FROM mhart/alpine-node:11.14
 
 # install dependencies
 WORKDIR /app
@@ -12,7 +12,7 @@ RUN npm install --production
 # Only copy over the Node pieces we need
 # ~> Saves 35MB
 ###
-FROM mhart/alpine-node:base-10.15
+FROM mhart/alpine-node:base-11.14
 
 WORKDIR /app
 COPY --from=0 /app .
