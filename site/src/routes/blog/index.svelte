@@ -21,7 +21,7 @@
 <div class='posts stretch'>
 	{#each posts as post}
 		<article class='post' data-pubdate={post.metadata.dateString}>
-			<a rel='prefetch' href='blog/{post.slug}' title='Read the article »'>
+			<a class="no-underline" rel='prefetch' href='blog/{post.slug}' title='Read the article »'>
 				<h2>{post.metadata.title}</h2>
 				<p>{post.metadata.description}</p>
 			</a>
@@ -45,7 +45,7 @@
 		color: var(--text);
 		max-width: 18em;
 		font-size: var(--h3);
-		font-weight: 300;
+		font-weight: 400;
 	}
 
 	.post:first-child {
@@ -56,7 +56,7 @@
 
 	.post:first-child h2 {
 		font-size: 4rem;
-		font-weight: 600;
+		font-weight: 400;
 		color: var(--second);
 	}
 
@@ -65,7 +65,7 @@
 		content: 'Latest post • ' attr(data-pubdate);
 		color: var(--flash);
 		font-size: var(--h6);
-		font-weight: 600;
+		font-weight: 400;
 		letter-spacing: .05em;
 		text-transform: uppercase;
 	}

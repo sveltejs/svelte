@@ -307,25 +307,30 @@ button > svg,
 }
 
 /*  links ------------------------------------- */
-.linkify a:not(.open-in-repl) {
+a {
 	position: relative;
-	padding: 0 0 .1rem 0;
-	border-bottom: .1rem solid hsla(15, 100%, 50%, 0.5); /* muted --prime */
+	padding: 0 0 1px 0;
+	border-bottom: 1px solid currentColor;
 	user-select: none;
-	color: inherit;
+	color: var(--prime);
 	transition: color .2s, border .2s, padding .2s;
 }
 
-.linkify a:not(.open-in-repl):hover  {
+a:hover  {
 	color: var(--flash);
 }
 
-.linkify a:not(.open-in-repl):hover {
+a:hover {
 	padding: 0;
-	border-bottom: .2rem solid hsla(15, 100%, 50%, 1);
+	border-bottom: 2px solid currentColor;
 }
 
-a:hover:not(.disabled) > .icon { stroke: var(--flash) }
+a.no-underline {
+	border-bottom: none;
+	padding: 0;
+}
+
+/* a:hover:not(.disabled) > .icon { stroke: var(--flash) } */
 
 /*  lists ---------------------------------- */
 .listify ol,
@@ -424,18 +429,6 @@ table code, table span {
 .box {
 	padding: 2.4rem 3.2rem;
 	border-radius: var(--border-r);
-}
-
-.open-in-repl {
-	position: absolute;
-	margin-top: 4rem;
-	margin-left: -2.5rem;
-	width: 3.6rem;
-	height: 3.6rem;
-	padding: .9rem;
-	background-color: var(--back-light);
-	border-radius: 50%;
-	border-left: .1rem solid #c7c6c6;
 }
 
 /*	theme colors --------------------------- */
