@@ -232,7 +232,7 @@ export default app;` });
 		{/if}
 
 		{#if gist}
-			<a class="icon" href={gist.html_url} title="link to gist">
+			<a class="icon no-underline" href={gist.html_url} title="link to gist">
 				<Icon name="link" />
 			</a>
 		{/if}
@@ -272,6 +272,7 @@ export default app;` });
 		transition: opacity .3s;
 		font-family: var(--font);
 		font-size: 1.6rem;
+		color: white;
 		/* width: 1.6em;
 		height: 1.6em; */
 		line-height: 1;
