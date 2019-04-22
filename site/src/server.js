@@ -94,7 +94,12 @@ if (process.env.GITHUB_CLIENT_ID) {
 
 app.use(
 	compression({ threshold: 0 }),
-	serve('static', { setHeaders: res => res.setHeader('Access-Control-Allow-Origin', '*') }),
+	serve('static', {
+		setHeaders(res, pathname) {
+			res.setHeader('Access-Control-Allow-Origin', '*');
+			res.hasHeader('Cache-Control') || res.setHeader('Cache-Control', 'max-age=600'); // 10min default
+		}
+	}),
 	sapper.middleware({
 		// TODO update Sapper so that we can pass props to the client
 		props: req => {
