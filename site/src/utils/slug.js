@@ -17,13 +17,6 @@ const unicodeRegex = /\p{Letter}/u;
 const isNonAlphaNumUnicode =
 	string => !alphaNumRegex.test(string) && unicodeRegex.test(string);
 
-const nonUnicodeSanitizer = string =>
-	string
-		.toLowerCase()
-		.replace(/[^a-zA-Z0-9]+/g, '-')
-		.replace(/^-/, '')
-		.replace(/-$/, '');
-
 export const unicodeSafeProcessor = string =>
 	string.split('')
 	.reduce((accum, char, index, array) => {
@@ -48,7 +41,6 @@ export const unicodeSafeProcessor = string =>
 	.reduce((accum, chunk) => {
 		const processed = chunk.type === 'process'
 			? limaxProcessor(chunk.string)
-			// ? nonUnicodeSanitizer(chunk.string)
 			: chunk.string;
 
 		processed.length > 0 && accum.push(processed);
