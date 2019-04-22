@@ -20,7 +20,7 @@ onMount(callback: () => () => void)
 
 The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live *inside* the component; it can be called from an external module).
 
-`onMount` does not run inside a [server-side component](docs#server-side-component-api).
+`onMount` does not run inside a [server-side component](docs#Server-side_component_API).
 
 ```html
 <script>
@@ -375,7 +375,7 @@ Tweened stores update their values over a fixed duration. The following options 
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the tween lasts
-* `easing` (`function`, default `t => t`) — an [easing function](docs#svelte-easing)
+* `easing` (`function`, default `t => t`) — an [easing function](docs#svelte_easing)
 * `interpolator` (`function`) — see below
 
 `store.set` and `store.update` can accept a second `options` argument that will override the options passed in upon instantiation.
@@ -532,7 +532,7 @@ Existing children of `target` are left where they are.
 
 ---
 
-The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the [`hydratable: true` option](docs#compile).
+The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the [`hydratable: true` option](docs#svelte_compile).
 
 Whereas children of `target` are normally left alone, `hydrate: true` will cause any children to be removed. For that reason, the `anchor` option cannot be used alongside `hydrate: true`.
 
