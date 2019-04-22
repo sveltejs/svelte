@@ -72,6 +72,10 @@
 		width: 100%;
 	}
 
+	.example a {
+		color: inherit;
+	}
+
 	.example > p {
 		margin: 4.4rem 2.4rem 2.4rem 0;
 	}
@@ -155,7 +159,7 @@
 <Blurb/>
 
 <div class="examples">
-	<section class="container example linkify">
+	<section class="container example">
 		<p>Svelte components are built on top of HTML. Just add data.</p>
 
 		<div class="repl-container">
@@ -168,7 +172,7 @@
 		</div>
 	</section>
 
-	<section class="container example linkify">
+	<section class="container example">
 		<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
 
 		<div class="repl-container">
@@ -181,7 +185,7 @@
 		</div>
 	</section>
 
-	<section class="container example linkify">
+	<section class="container example">
 		<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
 
 		<div class="repl-container">
@@ -194,7 +198,7 @@
 		</div>
 	</section>
 
-	<section class="container example linkify">
+	<section class="container example">
 		<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
 
 		<div class="repl-container">
@@ -217,7 +221,7 @@
 <section class="container">
 	<h3>Contributors</h3>
 
-	<p class="linkify">Svelte is free and open source software, made possible by the work of dozens of volunteers. <a href="https://github.com/sveltejs/svelte">Join us!</a></p>
+	<p>Svelte is free and open source software, made possible by the work of dozens of volunteers. <a href="https://github.com/sveltejs/svelte">Join us!</a></p>
 
 	{#each contributors as contributor, i}
 		<a

@@ -18,7 +18,6 @@
 	a {
 		height: 40px;
 		margin: 0 0.5em 0.5em 0;
-		text-decoration: none;
 		border: 2px solid var(--second);
 		padding: 5px 10px;
 		border-radius: 20px;
