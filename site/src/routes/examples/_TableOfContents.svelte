@@ -49,7 +49,7 @@
 					<div class="info">
 						<div
 							class="thumbnail"
-							style="background-image: url(examples/thumbnails/{example.slug}.png)"
+							style="background-image: url(examples/thumbnails/{example.slug}.jpg)"
 						></div>
 						<div class="example-title">
 							{example.title}
