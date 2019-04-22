@@ -31,6 +31,7 @@
 		padding: 0.7em 0;
 		text-align: center;
 		opacity: 0.7;
+		color: white;
 	}
 
 	a.disabled, a.disabled:hover, a.disabled:active {
@@ -59,7 +60,7 @@
 </style>
 
 <nav>
-	<a rel="prefetch" href="tutorial/{(selected.prev || selected).slug}" class:disabled={!selected.prev}>
+	<a rel="prefetch" class="no-underline" href="tutorial/{(selected.prev || selected).slug}" class:disabled={!selected.prev}>
 		<Icon name="arrow-left" />
 	</a>
 
@@ -83,7 +84,7 @@
 		</select>
 	</div>
 
-	<a rel="prefetch" href="tutorial/{(selected.next || selected).slug}" class:disabled={!selected.next}>
+	<a rel="prefetch" class="no-underline" href="tutorial/{(selected.next || selected).slug}" class:disabled={!selected.next}>
 		<Icon name="arrow-right" />
 	</a>
 </nav>

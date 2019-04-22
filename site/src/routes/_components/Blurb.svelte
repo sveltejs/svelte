@@ -18,6 +18,7 @@
 		padding: 1em;
 		display: flex;
 		flex-direction: column;
+		border-bottom: none;
 	}
 
 	h2 {
@@ -140,7 +141,7 @@
 		<span class="learn-more">learn more</span>
 	</a>
 
-	<div class="linkify description" style="grid-area: what;">
+	<div class="description" style="grid-area: what;">
 		<p>Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the <em>browser</em>, Svelte shifts that work into a <em>compile step</em> that happens when you build your app.</p>
 
 		<p>Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.</p>
@@ -157,7 +158,7 @@ npm install
 npm run dev & open http://localhost:5000
 		</pre>
 
-		<p class="linkify" style="flex: 1">See the <a href="blog/the-easiest-way-to-get-started">quickstart guide</a> for more information.</p>
+		<p style="flex: 1">See the <a href="blog/the-easiest-way-to-get-started">quickstart guide</a> for more information.</p>
 
 		<p class="cta"><a rel="prefetch" href="tutorial">Learn Svelte</a></p>
 	</div>

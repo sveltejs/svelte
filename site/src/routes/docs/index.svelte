@@ -367,7 +367,7 @@
 	<meta name="Description" content="Cybernetically enhanced web apps">
 </svelte:head>
 
-<div bind:this={container} class='content linkify listify'>
+<div bind:this={container} class='content listify'>
 	{#each sections as section}
 		<section data-id={section.slug}>
 			<h2>

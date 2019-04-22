@@ -33,38 +33,6 @@
 	});
 </script>
 
-<ul bind:this={ul} class="examples-toc">
-	{#each sections as section}
-		<li>
-			<span class="section-title">
-				{section.title}
-			</span>
-
-			{#each section.examples as example}
-			<a href="examples#{example.slug}">
-				<div
-					class="row"
-					class:active="{example.slug === active_section}"
-				>
-					<div class="info">
-						<div
-							class="thumbnail"
-							style="background-image: url(examples/thumbnails/{example.slug}.jpg)"
-						></div>
-						<div class="example-title">
-							{example.title}
-						</div>
-					</div>
-					{#if example.slug === active_section}
-					<Icon name="arrow-right" />
-					{/if}
-				</div>
-			</a>
-			{/each}
-		</li>
-	{/each}
-</ul>
-
 <style>
 	.examples-toc {
 		overflow-y: auto;
@@ -85,6 +53,7 @@
 		position: relative;
 		opacity: 0.7;
 		transition: opacity 0.2s;
+		color: white;
 	}
 
 	.section-title {
@@ -136,3 +105,35 @@
 		box-shadow: 1px 1px 3px rgba(0,0,0,0.13);
 	}
 </style>
+
+<ul bind:this={ul} class="examples-toc">
+	{#each sections as section}
+		<li>
+			<span class="section-title">
+				{section.title}
+			</span>
+
+			{#each section.examples as example}
+			<a href="examples#{example.slug}">
+				<div
+					class="row"
+					class:active="{example.slug === active_section}"
+				>
+					<div class="info">
+						<div
+							class="thumbnail"
+							style="background-image: url(examples/thumbnails/{example.slug}.jpg)"
+						></div>
+						<div class="example-title">
+							{example.title}
+						</div>
+					</div>
+					{#if example.slug === active_section}
+					<Icon name="arrow-right" />
+					{/if}
+				</div>
+			</a>
+			{/each}
+		</li>
+	{/each}
+</ul>
