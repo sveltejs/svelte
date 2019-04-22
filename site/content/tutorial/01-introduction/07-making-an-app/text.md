@@ -28,4 +28,4 @@ const app = new App({
 });
 ```
 
-You can then interact with `app` using the [component API](docs/component-api) if you need to.
+You can then interact with `app` using the [component API](docs#Client-side_component_API) if you need to.
