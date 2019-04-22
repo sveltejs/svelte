@@ -15,7 +15,7 @@ fs.readdirSync(`content/examples`).forEach(group_dir => {
 async function main() {
 	const browser = await puppeteer.launch({
 		defaultViewport: {
-			width: 600 * 10 / 4,
+			width: 400 * 10 / 4,
 			height: 400 + 42,
 			deviceScaleFactor: 2
 		}
@@ -25,7 +25,7 @@ async function main() {
 
 	for (const slug of slugs) {
 		try {
-			const output_file = `static/examples/thumbnails/${slug}.png`;
+			const output_file = `static/examples/thumbnails/${slug}.jpg`;
 			if (fs.existsSync(output_file)) {
 				console.log(c.gray(`skipping ${slug}`));
 				continue;
@@ -45,16 +45,16 @@ async function main() {
 			image.autocrop();
 			// image.scale(0.25);
 
-			if (image.bitmap.width > 300 || image.bitmap.width > 200) {
+			if (image.bitmap.width > 200 || image.bitmap.width > 200) {
 				const scale = Math.min(
-					300 / image.bitmap.width,
+					200 / image.bitmap.width,
 					200 / image.bitmap.height
 				);
 
 				image.scale(scale);
 			}
 
-			await image.write(output_file);
+			await image.quality(75).write(output_file);
 		} catch (err) {
 			console.log(c.bold().red(`failed to screenshot ${slug}`));
 			console.log(err);
