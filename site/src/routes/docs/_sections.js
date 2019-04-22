@@ -48,6 +48,8 @@ export default function() {
 
 			const { content, metadata } = extract_frontmatter(markdown);
 
+			const sectionSlug = makeSlug(metadata.title);
+
 			const subsections = [];
 
 			const renderer = new marked.Renderer();
@@ -142,7 +144,7 @@ export default function() {
 				html: html.replace(/@@(\d+)/g, (m, id) => hashes[id] || m),
 				metadata,
 				subsections,
-				slug: file.replace(/^\d+-/, '').replace(/\.md$/, ''),
+				slug: sectionSlug,
 				file,
 			};
 		});

@@ -45,10 +45,10 @@ export const langs = {
 
 
 // links renderer
-export function link_renderer(href,title,text) {
+export function link_renderer (href, title, text) {
 	let target_attr = '';
 	let title_attr = '';
-	
+
 	if(href.startsWith("http")) {
 		target_attr = ' target="_blank"';
 	}
@@ -56,6 +56,6 @@ export function link_renderer(href,title,text) {
 	if(title !== null) {
 		title_attr = ` title="${title}"`;
 	}
-	
+
 	return `<a href="${href}"${target_attr}${title_attr}>${text}</a>`;
 };
