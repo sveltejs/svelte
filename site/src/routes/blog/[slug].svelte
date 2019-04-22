@@ -17,11 +17,11 @@
 	<meta name="Description" content={post.metadata.description}>
 </svelte:head>
 
-<article class='post linkify listify'>
-	<p class='byline'><a href='{post.metadata.authorURL}'>{post.metadata.author}</a> <time datetime='{post.metadata.pubdate}'>{post.metadata.dateString}</time></p>
-
+<article class='post listify'>
 	<h1>{post.metadata.title}</h1>
 	<p class='standfirst'>{post.metadata.description}</p>
+
+	<p class='byline'><a href='{post.metadata.authorURL}'>{post.metadata.author}</a> <time datetime='{post.metadata.pubdate}'>{post.metadata.dateString}</time></p>
 
 	{@html post.html}
 </article>
@@ -33,20 +33,32 @@
 		margin: 0 auto;
 	}
 
+	h1 {
+		font-size: 4rem;
+		font-weight: 400;
+	}
+
+	.standfirst {
+		font-size: var(--h4);
+		color: var(--second);
+		margin: 0 0 1em 0;
+	}
+
 	.byline {
-		margin: 0 0 4rem 0;
-		padding: 0 0 1.6rem 0;
-		border-bottom: var(--border-w) solid #6767785b;
+		margin: 0 0 6rem 0;
+		padding: 1.6rem 0 0 0;
+		border-top: var(--border-w) solid #6767785b;
 		font-size: var(--h6);
+		text-transform: uppercase;
 	}
 
 	.byline a {
-		border-bottom: none;
-		font-weight: 600;
+		/* border-bottom: none; */
+		/* font-weight: 600; */
 	}
 
 	.byline a:hover {
-		border-bottom: 2px solid var(--prime);
+		/* border-bottom: 2px solid var(--prime); */
 	}
 
 	.post h1 {
@@ -99,12 +111,6 @@
 		margin: 0;
 		top: 0;
 		background: transparent;
-	}
-
-	.standfirst {
-		font-size: var(--h4);
-		color: var(--second);
-		margin: 0 0 2em 0;
 	}
 
 	.post :global(aside) {

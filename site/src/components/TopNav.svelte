@@ -179,6 +179,12 @@
 		background-color: rgba(255, 255, 255, 0.9);
 	}
 
+	a {
+		color: inherit;
+		border-bottom: none;
+		transition: none;
+	}
+
 	@media (min-width: 840px) {
 		ul {
 			padding: 0;

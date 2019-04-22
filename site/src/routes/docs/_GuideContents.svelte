@@ -50,6 +50,9 @@
 		position: relative;
 		opacity: 0.75;
 		transition: opacity 0.2s;
+		border-bottom: none;
+		padding: 0;
+		color: white;
 	}
 
 	.section {

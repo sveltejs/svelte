@@ -173,7 +173,7 @@
 	}
 
 	.chapter-markup :global(a) {
-		text-decoration: underline;
+		color: white;
 	}
 
 	.chapter-markup :global(ul) {
@@ -227,12 +227,16 @@
 	}
 
 	a.next {
-		text-decoration: none;
+		/* border-bottom: none; */
+		padding-right: 1.2em;
+		background: no-repeat 100% 50% url(/icons/arrow-right.svg);
+		background-size: 1em 1em;
 		margin-left: auto;
 	}
 
 	a.next:hover {
-		text-decoration: underline;
+		/* border-bottom: 2px solid currentColor; */
+		/* text-decoration: underline; */
 	}
 
 	.improve-chapter {
@@ -244,6 +248,9 @@
 		font-size: 14px;
 		text-decoration: none;
 		opacity: .3;
+		padding-left: 1.2em;
+		background: no-repeat 0 50% url(/icons/edit.svg);
+		background-size: 1em 1em;
 	}
 
 	.improve-chapter a:hover {
@@ -281,12 +288,12 @@
 					{/if}
 
 					{#if selected.next}
-						<a class="next" href="tutorial/{selected.next.slug}">Next <Icon name="arrow-right" /></a>
+						<a class="next" href="tutorial/{selected.next.slug}">Next</a>
 					{/if}
 				</div>
 
 				<div class="improve-chapter">
-					<a href={improve_link}><Icon name="edit" size={14}/> Edit this chapter</a>
+					<a class="no-underline" href={improve_link}>Edit this chapter</a>
 				</div>
 			</div>
 		</div>
