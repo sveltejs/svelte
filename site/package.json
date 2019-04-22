@@ -31,7 +31,7 @@
     "prismjs": "^1.15.0",
     "session-file-store": "^1.2.0",
     "shelljs": "^0.8.3",
-    "sirv": "^0.2.2",
+    "sirv": "^0.3.1",
     "yootils": "0.0.14"
   },
   "devDependencies": {
