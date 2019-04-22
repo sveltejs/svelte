@@ -1,101 +1,137 @@
+<!-- FIXME sometimes it adds a trailing slash when landing -->
 <script context="module">
 	export async function preload() {
-		const groups = await this.fetch(`examples.json`).then(r => r.json());
+		const sections = await this.fetch(`examples.json`).then(r => r.json());
+		const title_by_slug = sections.reduce((acc, {examples}) => {
+			examples.forEach(({slug, title}) => {
+				acc[slug] = title;
+			});
 
-		return {
-			groups
-		};
+			return acc;
+		}, {});
+
+		return {sections, title_by_slug};
 	}
 </script>
 
 <script>
-	export let groups;
+	import { onMount } from 'svelte';
+	import { goto } from '@sapper/app';
+	import Repl from '@sveltejs/svelte-repl';
+
+	import ScreenToggle from '../../components/ScreenToggle.svelte';
+	import {
+		mapbox_setup, // needed for context API example
+		rollupUrl,
+		svelteUrl
+	} from '../../config';
+	import { process_example } from '../../utils/examples';
+	import { getFragment } from '../../utils/navigation';
+	import TableOfContents from './_TableOfContents.svelte';
+
+	export let sections;
+	export let title_by_slug;
+
+	let active_slug;
+	let width;
+	let offset = 1;
+	let repl;
+
+	$: title = title_by_slug[active_slug] || '';
+	$: first_slug = sections[0].examples[0].slug;
+	$: if (repl) {
+		fetch(`examples/${active_slug}.json`)
+		.then(async response => {
+			if (response.ok) {
+				const data = await response.json();
+
+				repl.set({
+					components: process_example(data.files)
+				});
+			}
+		});
+	}
+	$: mobile = width < 768; // note: same as per media query below
+
+	onMount(() => {
+		const onhashchange = () => {
+			active_slug = getFragment();
+			offset = 1;
+		};
+		window.addEventListener('hashchange', onhashchange, false);
+
+		if (getFragment()) {
+			active_slug = getFragment();
+		} else {
+			active_slug = first_slug;
+			goto(`examples#${active_slug}`);
+		}
+
+		return () => {
+			window.removeEventListener('hashchange', onhashchange, false);
+		};
+	});
 </script>
 
-<style>
-	.content {
-		max-width: 120rem;
-		padding: 0 var(--side-nav);
-		margin: 0 auto;
-	}
-
-	h1 { margin: 6rem 0 6rem -0.05em }
-
-	h2 {
-		margin: 0 0 1em 0;
-		font: 600 var(--h4) var(--font);
-		border-bottom: var(--border-w) solid #eee;
-		text-transform: uppercase;
-		letter-spacing: .05em;
-		padding: 0 0 0.2em 0;
-	}
-
-	section { margin: 0 0 4rem 0 }
-
-	.example {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		font: 300 var(--h5) var(--font);
-	}
-
-	.thumbnail {
-		position: relative;
-		background: white 50% 50% no-repeat;
-		background-size: contain;
-		width: 5rem;
-		height: 5rem;
-		margin: .8rem 33%;
-		border: 1px solid #ccc;
-		border-radius: var(--border-r);
-		box-shadow: 1px 1px 2px rgba(0,0,0,0.13);
-	}
-
-	.e-grid {
-		display: grid;
-		/* grid-gap: 2.4rem; */
-		grid-template-columns: repeat(2, 1fr);
-		align-items: center;
-	}
-
-	@media (min-width: 720px) {
-		.e-grid {
-			grid-template-columns: repeat(4, 1fr);
-		}
-	}
-
-	@media (min-width: 1080px) {
-		.e-grid {
-			grid-template-columns: repeat(6, 1fr);
-		}
-	}
-</style>
-
 <svelte:head>
-	<title>Examples • Svelte</title>
+	<title>{title} {title ? '•' : ''} Svelte Examples</title>
 
 	<meta name="twitter:title" content="Svelte examples">
 	<meta name="twitter:description" content="Cybernetically enhanced web apps">
 	<meta name="Description" content="Interactive example Svelte apps">
 </svelte:head>
 
-<div class="content">
-	<h1>Examples</h1>
-
-	{#each groups as group}
-		<section class="">
-			<h2>{group.title}</h2>
-
-			<div class="e-grid">
-				{#each group.examples as example}
-					<a class="example" href="repl?example={example.slug}">
-						<div class="thumbnail" style="background-image: url(examples/thumbnails/{example.slug}.png)"></div>
-						<p>{example.title}</p>
-					</a>
-				{/each}
-			</div>
-		</section>
-	{/each}
+<div class='examples-container' bind:clientWidth={width}>
+	<div class="viewport offset-{offset}">
+		<TableOfContents {sections} active_section={active_slug} />
+		<Repl
+			bind:this={repl}
+			{svelteUrl}
+			{rollupUrl}
+			orientation={mobile ? 'columns' : 'rows'}
+			fixed={mobile}
+			relaxed
+			injectedJS={mapbox_setup}
+		/>
+	</div>
+	{#if mobile}
+	<ScreenToggle bind:offset labels={['index', 'input', 'output']}/>
+	{/if}
 </div>
+
+<style>
+	.examples-container {
+		position: relative;
+		height: calc(100vh - var(--nav-h));
+		overflow: hidden;
+		padding: 0 0 42px 0;
+		box-sizing: border-box;
+	}
+
+	.viewport {
+		display: grid;
+		width: 300%;
+		height: 100%;
+		grid-template-columns: 33.333% 66.666%;
+		transition: transform .3s;
+		grid-auto-rows: 100%;
+	}
+
+	.offset-1 { transform: translate(-33.333%, 0); }
+	.offset-2 { transform: translate(-66.666%, 0); }
+
+	@media (min-width: 768px) {
+		.examples-container { padding: 0 }
+
+		.viewport {
+			width: 100%;
+			height: 100%;
+			display: grid;
+			grid-template-columns: var(--sidebar-mid-w) auto;
+			grid-auto-rows: 100%;
+			transition: none;
+		}
+
+		.offset-1, .offset-2 { transform: none; }
+	}
+</style>

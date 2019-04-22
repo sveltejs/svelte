@@ -14,11 +14,18 @@
 </script>
 
 <script>
-	import TableOfContents from './_components/TableOfContents.svelte';
-	import ScreenToggle from './_components/ScreenToggle.svelte';
-	import Icon from '../../../components/Icon.svelte';
 	import Repl from '@sveltejs/svelte-repl';
 	import { getContext } from 'svelte';
+
+	import ScreenToggle from '../../../components/ScreenToggle.svelte';
+	import Icon from '../../../components/Icon.svelte';
+	import TableOfContents from './_TableOfContents.svelte';
+
+	import {
+		mapbox_setup, // needed for context API tutorial
+		rollupUrl,
+		svelteUrl
+	} from '../../../config';
 
 	export let slug;
 	export let chapter;
@@ -100,12 +107,6 @@
 			);
 		});
 	}
-
-	const svelteUrl = `https://unpkg.com/svelte@3`;
-	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
-
-	// needed for context API tutorial
-	const mapbox_setup = `window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;`;
 </script>
 
 <style>
@@ -136,7 +137,7 @@
 			width: 100%;
 			height: 100%;
 			display: grid;
-			grid-template-columns: minmax(33.333%, 480px) auto;
+			grid-template-columns: minmax(33.333%, var(--sidebar-large-w)) auto;
 			grid-auto-rows: 100%;
 			transition: none;
 		}
@@ -305,6 +306,6 @@
 	</div>
 
 	{#if mobile}
-		<ScreenToggle bind:offset/>
+		<ScreenToggle bind:offset labels={['tutorial', 'input', 'output']}/>
 	{/if}
 </div>

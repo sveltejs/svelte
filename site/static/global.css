@@ -11,6 +11,8 @@
 	--nav-h:       6rem;
 	--top-offset:  6rem;
 	--sidebar-w:  30rem;
+	--sidebar-mid-w: 36rem;
+	--sidebar-large-w: 48rem;
 	--main-width: 80rem;
 	--code-w:      72em;
 	--side-nav:  3.2rem;
@@ -112,6 +114,13 @@ html {
 	-ms-overflow-style: -ms-autohiding-scrollbar;
 	box-sizing: border-box;
 	border-collapse: collapse;
+}
+
+html,
+body,
+#sapper {
+	width: 100%;
+	height: 100%;
 }
 
 * {
