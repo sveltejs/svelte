@@ -14,6 +14,7 @@
     "testsrc": "mocha -r esm test/**"
   },
   "dependencies": {
+    "@polka/send": "^1.0.0-next.1",
     "codemirror": "^5.44.0",
     "compression": "^1.7.3",
     "devalue": "^1.1.0",
