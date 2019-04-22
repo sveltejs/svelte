@@ -1,8 +1,8 @@
 <script>
 	let numbers = [1, 2, 3, 4];
 
-	function addNumber() {
-		numbers = [...numbers, numbers.length + 1];
+	function addNumber(value) {
+		numbers = [...numbers, value];
 	}
 
 	$: sum = numbers.reduce((t, n) => t + n, 0);
