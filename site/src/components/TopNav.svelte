@@ -185,6 +185,10 @@
 		transition: none;
 	}
 
+	li:not(.active) a:hover {
+		color: var(--flash);
+	}
+
 	@media (min-width: 840px) {
 		ul {
 			padding: 0;
