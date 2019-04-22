@@ -3,6 +3,7 @@
 	import { fade } from 'svelte/transition';
 
 	let p = 0;
+	let visible = false;
 
 	const sleep = ms => new Promise(f => setTimeout(f, ms));
 
@@ -10,6 +11,7 @@
 		let running = true;
 
 		function next() {
+			visible = true;
 			p += 0.1;
 
 			const remaining = 1 - p;
@@ -53,7 +55,7 @@
 	}
 </style>
 
-{#if p > 0}
+{#if visible}
 	<div class="progress-container" transition:fade>
 		<div class="progress" style="width: {p * 100}%"></div>
 	</div>
