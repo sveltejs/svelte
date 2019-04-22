@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import sirv from 'sirv';
 import express from 'express';
-import compression from 'compression';
 import session from 'express-session';
 import passport from 'passport';
 import { Strategy } from 'passport-github';
@@ -93,7 +92,6 @@ if (process.env.GITHUB_CLIENT_ID) {
 }
 
 app.use(
-	compression({ threshold: 0 }),
 	sirv('static', {
 		setHeaders(res) {
 			res.setHeader('Access-Control-Allow-Origin', '*');
