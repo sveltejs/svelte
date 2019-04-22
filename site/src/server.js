@@ -94,7 +94,7 @@ if (process.env.GITHUB_CLIENT_ID) {
 
 app.use(
 	compression({ threshold: 0 }),
-	serve('static', {
+	sirv('static', {
 		setHeaders(res) {
 			res.setHeader('Access-Control-Allow-Origin', '*');
 			res.hasHeader('Cache-Control') || res.setHeader('Cache-Control', 'max-age=600'); // 10min default
