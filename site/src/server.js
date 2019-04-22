@@ -1,9 +1,10 @@
+import 'dotenv/config';
+import sirv from 'sirv';
 import express from 'express';
 import session from 'express-session';
 import passport from 'passport';
 import { Strategy } from 'passport-github';
 import sessionFileStore from 'session-file-store';
-import serve from 'serve-static';
 import devalue from 'devalue';
 import * as sapper from '@sapper/server';
 
@@ -91,7 +92,12 @@ if (process.env.GITHUB_CLIENT_ID) {
 }
 
 app.use(
-	serve('static', { setHeaders: res => res.setHeader('Access-Control-Allow-Origin', '*') }),
+	sirv('static', {
+		setHeaders(res) {
+			res.setHeader('Access-Control-Allow-Origin', '*');
+			res.hasHeader('Cache-Control') || res.setHeader('Cache-Control', 'max-age=600'); // 10min default
+		}
+	}),
 	sapper.middleware({
 		// TODO update Sapper so that we can pass props to the client
 		props: req => {
