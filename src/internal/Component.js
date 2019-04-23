@@ -115,9 +115,9 @@ export function init(component, options, instance, create_fragment, not_equal, p
 export let SvelteElement;
 if (typeof HTMLElement !== 'undefined') {
 	SvelteElement = class extends HTMLElement {
-		constructor() {
+		constructor({ use_shadow_dom = true } = {}) {
 			super();
-			if (options.shadowDom !== false) {
+			if (use_shadow_dom) {
 				this.attachShadow({ mode: 'open' });
 			}
 		}

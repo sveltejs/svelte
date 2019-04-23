@@ -445,11 +445,10 @@ export default function dom(
 		builder.add_block(deindent`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
-					super();
+					super(${should_use_shadow_dom ? '' : '{ use_shadow_dom: true }'});
 
 					${css.code && should_use_shadow_dom && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { only_escape_at_symbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					// TODO: Figure out what target should point to
 					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}
