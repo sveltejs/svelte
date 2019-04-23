@@ -12,7 +12,7 @@ A component can specify *fallbacks* for any slots that are left empty, by puttin
 </div>
 ```
 
-We can now create instances of `<Box>` eithout any children:
+We can now create instances of `<Box>` without any children:
 
 ```html
 <Box>
