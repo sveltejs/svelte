@@ -14,7 +14,7 @@
     "testsrc": "mocha -r esm test/**"
   },
   "dependencies": {
-    "@polka/send": "^1.0.0-next.1",
+    "@polka/send": "^1.0.0-next.2",
     "codemirror": "^5.44.0",
     "compression": "^1.7.3",
     "devalue": "^1.1.0",
@@ -27,7 +27,7 @@
     "node-fetch": "^2.3.0",
     "passport": "^0.4.0",
     "passport-github": "^1.1.0",
-    "polka": "^1.0.0-next.1",
+    "polka": "^1.0.0-next.2",
     "prismjs": "^1.15.0",
     "session-file-store": "^1.2.0",
     "shelljs": "^0.8.3",
