@@ -1,8 +1,8 @@
 <script>
 	import { onMount } from 'svelte';
-	import { fade } from 'svelte/transition';
 
 	let p = 0;
+	let visible = false;
 
 	const sleep = ms => new Promise(f => setTimeout(f, ms));
 
@@ -10,6 +10,7 @@
 		let running = true;
 
 		function next() {
+			visible = true;
 			p += 0.1;
 
 			const remaining = 1 - p;
@@ -50,15 +51,21 @@
 		background-color: rgba(255,255,255,0.3);
 		pointer-events: none;
 		z-index: 998;
+		animation: fade 0.4s;
+	}
+
+	@keyframes fade {
+		from { opacity: 0 }
+		to { opacity: 1 }
 	}
 </style>
 
-{#if p > 0}
-	<div class="progress-container" transition:fade>
+{#if visible}
+	<div class="progress-container">
 		<div class="progress" style="width: {p * 100}%"></div>
 	</div>
 {/if}
 
 {#if p >= 0.4}
-	<div class="fade" in:fade={{duration:800}}></div>
+	<div class="fade"></div>
 {/if}

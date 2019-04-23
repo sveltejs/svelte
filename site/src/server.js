@@ -1,12 +1,11 @@
 import 'dotenv/config';
-import polka from 'polka';
 import sirv from 'sirv';
-import compression from 'compression';
+import polka from 'polka';
+import devalue from 'devalue';
 import session from 'express-session';
 import passport from 'passport';
 import { Strategy } from 'passport-github';
 import sessionFileStore from 'session-file-store';
-import devalue from 'devalue';
 import * as sapper from '@sapper/server';
 
 const app = polka();
@@ -94,7 +93,6 @@ if (process.env.GITHUB_CLIENT_ID) {
 }
 
 app.use(
-	compression({ threshold: 0 }),
 	sirv('static', {
 		setHeaders(res) {
 			res.setHeader('Access-Control-Allow-Origin', '*');
