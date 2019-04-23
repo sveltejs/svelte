@@ -143,8 +143,8 @@
 	<title>Svelte • Cybernetically enhanced web apps</title>
 
 	<meta name="twitter:title" content="Svelte">
-	<meta name="twitter:description" content="Cybernetically enhanced web apps">
-	<meta name="Description" content="Cybernetically enhanced web apps">
+	<meta name="twitter:description" content="Just works web apps">
+	<meta name="Description" content="Just works web apps">
 </svelte:head>
 
 <svelte:window bind:scrollY={sy}/>
@@ -153,7 +153,7 @@
 
 <section class="hero container">
 	<img alt="Svelte logotype" class="logotype" src="svelte-logotype.svg">
-	<h3>Cybernetically enhanced web apps</h3>
+	<h3>Just works web apps</h3>
 </section>
 
 <Blurb/>
