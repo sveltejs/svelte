@@ -602,7 +602,7 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 <div class:active>...</div>
 
 <!-- Multiple class toggles can be included -->
-<div class:active class:inactive={!active} class:is-admin>...</div>
+<div class:active class:inactive={!active} class:isAdmin>...</div>
 ```
 
 
