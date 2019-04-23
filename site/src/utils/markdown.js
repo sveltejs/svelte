@@ -45,7 +45,7 @@ export const langs = {
 
 
 // links renderer
-export function link_renderer(href,title,text) {
+export function link_renderer (href, title, text) {
 	let target_attr = '';
 	let title_attr = '';
 

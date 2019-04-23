@@ -31,7 +31,7 @@ The complete set of bindings for `<audio>` and `<video>` is as follows — four 
 * `seekable` (readonly) — ditto
 * `played` (readonly) — ditto
 
-...and three *two-way* bindings:
+...and four *two-way* bindings:
 
 * `currentTime` — the current point in the video, in seconds
 * `playbackRate` — how fast to play the video, where `1` is 'normal'
