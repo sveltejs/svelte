@@ -117,7 +117,9 @@ if (typeof HTMLElement !== 'undefined') {
 	SvelteElement = class extends HTMLElement {
 		constructor() {
 			super();
-			this.attachShadow({ mode: 'open' });
+			if (options.shadowDom !== false) {
+				this.attachShadow({ mode: 'open' });
+			}
 		}
 
 		connectedCallback() {

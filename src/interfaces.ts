@@ -54,6 +54,7 @@ export interface CompileOptions {
 	hydratable?: boolean;
 	legacy?: boolean;
 	customElement?: boolean;
+	shadowDom?: boolean;
 	tag?: string;
 	css?: boolean;
 

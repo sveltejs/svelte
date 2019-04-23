@@ -22,6 +22,8 @@ export default function dom(
 
 	block.has_outro_method = true;
 
+	const should_use_shadow_dom = options.customElement && options.shadowDom !== false;
+
 	// prevent fragment being created twice (#1063)
 	if (options.customElement) block.builders.create.add_line(`this.c = @noop;`);
 
@@ -64,7 +66,7 @@ export default function dom(
 	// TODO injecting CSS this way is kinda dirty. Maybe it should be an
 	// explicit opt-in, or something?
 	const should_add_css = (
-		!options.customElement &&
+		!should_use_shadow_dom &&
 		component.stylesheet.has_styles &&
 		options.css !== false
 	);
@@ -445,8 +447,9 @@ export default function dom(
 				constructor(options) {
 					super();
 
-					${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { only_escape_at_symbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && should_use_shadow_dom && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { only_escape_at_symbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
+					// TODO: Figure out what target should point to
 					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}
