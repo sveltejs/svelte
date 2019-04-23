@@ -35,12 +35,21 @@
 		};
 	});
 
+	// Prevents navbar to show/hide when clicking in docs sidebar
+	let hash_changed = false;
+	function handle_hashchange() {
+		hash_changed = true;
+	}
+
 	let last_scroll = 0;
 	function handle_scroll() {
 		const scroll = window.pageYOffset;
-		visible = (scroll < 50 || scroll < last_scroll);
+		if (!hash_changed) {
+			visible = (scroll < 50 || scroll < last_scroll);
+		}
 
 		last_scroll = scroll;
+		hash_changed = false;
 	}
 </script>
 
@@ -227,7 +236,7 @@
 	}
 </style>
 
-<svelte:window on:scroll={handle_scroll}/>
+<svelte:window on:hashchange={handle_hashchange} on:scroll={handle_scroll} />
 
 <header class:visible="{visible || open}">
 	<nav>
