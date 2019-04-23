@@ -31,7 +31,7 @@ export default {
 		const select = target.querySelector('select');
 		const options = [...target.querySelectorAll('option')];
 
-		assert.deepEqual(options, select.options);
+		assert.deepEqual(options, [...select.options]);
 		assert.equal(component.selected, 'one');
 
 		const change = new window.Event('change');
