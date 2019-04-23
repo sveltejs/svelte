@@ -37,7 +37,7 @@ function create_fragment(ctx) {
 
 class Component extends SvelteElement {
 	constructor(options) {
-		super({ use_shadow_dom: true });
+		super({ use_shadow_dom: false });
 
 		init(this, { target: this }, null, create_fragment, safe_not_equal, []);
 

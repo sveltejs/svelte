@@ -445,7 +445,7 @@ export default function dom(
 		builder.add_block(deindent`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
-					super(${should_use_shadow_dom ? '' : '{ use_shadow_dom: true }'});
+					super(${should_use_shadow_dom ? '' : '{ use_shadow_dom: false }'});
 
 					${css.code && should_use_shadow_dom && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { only_escape_at_symbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
