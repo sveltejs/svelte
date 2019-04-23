@@ -449,7 +449,7 @@ export default function dom(
 
 					${css.code && should_use_shadow_dom && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { only_escape_at_symbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
+					@init(this, { target: this${should_use_shadow_dom ? '.shadowRoot' : ''} }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}
 
