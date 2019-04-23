@@ -29,7 +29,7 @@ const valid_options = [
 ];
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {
-	const { name, filename } = options;
+	const { name, filename, shadowDom, customElement } = options;
 
 	Object.keys(options).forEach(key => {
 		if (valid_options.indexOf(key) === -1) {
@@ -54,6 +54,10 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 			toString: () => message,
 		});
 	}
+
+	if (!customElement && shadowDom) {
+		throw new Error(`options.shadowDom cannot be true if options.customElement is false`)
+	}
 }
 
 function get_name(filename) {
@@ -75,7 +79,7 @@ function get_name(filename) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = assign({ generate: 'dom', dev: false }, options);
+	options = assign({ generate: 'dom', dev: false, shadowDom: options.customElement }, options);
 
 	const stats = new Stats();
 	const warnings = [];
