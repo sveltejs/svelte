@@ -52,7 +52,13 @@
 		transition: opacity 0.2s;
 		border-bottom: none;
 		padding: 0;
-		color: white;
+		color: var(--second);
+	}
+
+	@media (min-width: 832px) {
+		a {
+			color: white;
+		}
 	}
 
 	.section {
