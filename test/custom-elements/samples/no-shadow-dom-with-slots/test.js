@@ -9,9 +9,5 @@ export default function (target) {
 	assert.equal(target.innerHTML, '<custom-element><other-element><h1>Hello world!</h1></other-element></custom-element>');
 
 	const el = target.querySelector('custom-element');
-	const h1 = el.querySelector('h1');
-	const { color } = getComputedStyle(h1);
-
-	assert.equal(h1.textContent, 'Hello world!');
-	assert.equal(color, 'rgb(0, 0, 255)');
+	assert.equal(el.innerText, "Hello world!");
 }
