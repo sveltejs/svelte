@@ -132,7 +132,7 @@ export default function tag(parser: Parser) {
 		? meta_tags.get(name)
 		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
 		: name === 'title' && parent_is_head(parser.stack) ? 'Title'
-		: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+		: name === 'slot' && !parser.shadowDom ? 'Slot' : 'Element';
 
 	const element: Node = {
 		start,

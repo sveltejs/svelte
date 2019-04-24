@@ -168,7 +168,7 @@ export default class Component {
 
 		this.walk_instance_js_post_template();
 
-		if (!compile_options.customElement) this.stylesheet.reify();
+		if (!compile_options.shadowDom) this.stylesheet.reify();
 
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
@@ -317,7 +317,7 @@ export default class Component {
 
 			add_string(final_chunk);
 
-			css = compile_options.customElement ?
+			css = compile_options.shadowDom ?
 				{ code: null, map: null } :
 				this.stylesheet.render(compile_options.cssOutputFilename, true);
 

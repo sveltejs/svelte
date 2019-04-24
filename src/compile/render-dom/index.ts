@@ -22,8 +22,6 @@ export default function dom(
 
 	block.has_outro_method = true;
 
-	const should_use_shadow_dom = options.customElement && options.shadowDom !== false;
-
 	// prevent fragment being created twice (#1063)
 	if (options.customElement) block.builders.create.add_line(`this.c = @noop;`);
 
@@ -33,12 +31,13 @@ export default function dom(
 		builder.add_line(`const ${renderer.file_var} = ${JSON.stringify(component.file)};`);
 	}
 
-	const css = component.stylesheet.render(options.filename, !options.customElement);
+
+	const css = component.stylesheet.render(options.filename, !options.shadowDom);
 	const styles = component.stylesheet.has_styles && stringify(options.dev ?
 		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
 		css.code, { only_escape_at_symbol: true });
 
-	if (styles && component.compile_options.css !== false && !options.customElement) {
+	if (styles && component.compile_options.css !== false && !options.shadowDom) {
 		builder.add_block(deindent`
 			function @add_css() {
 				var style = @element("style");
@@ -66,7 +65,7 @@ export default function dom(
 	// TODO injecting CSS this way is kinda dirty. Maybe it should be an
 	// explicit opt-in, or something?
 	const should_add_css = (
-		!should_use_shadow_dom &&
+		!options.shadowDom &&
 		component.stylesheet.has_styles &&
 		options.css !== false
 	);
@@ -445,11 +444,12 @@ export default function dom(
 		builder.add_block(deindent`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
-					super(${should_use_shadow_dom ? '' : '{ use_shadow_dom: false }'});
+					super(${options.shadowDom ? '' : '{ use_shadow_dom: false }'});
 
-					${css.code && should_use_shadow_dom && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { only_escape_at_symbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && options.shadowDom && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { only_escape_at_symbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${should_add_css && `if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
 
-					@init(this, { target: this${should_use_shadow_dom ? '.shadowRoot' : ''} }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
+					@init(this, { target: this${options.shadowDom ? '.shadowRoot' : ''} }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}
 

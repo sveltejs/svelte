@@ -8,7 +8,7 @@ import error from '../utils/error';
 
 interface ParserOptions {
 	filename?: string;
-	customElement?: boolean;
+	shadowDom?: boolean;
 }
 
 type ParserState = (parser: Parser) => (ParserState | void);
@@ -16,7 +16,7 @@ type ParserState = (parser: Parser) => (ParserState | void);
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
-	readonly customElement: boolean;
+	readonly shadowDom: boolean;
 
 	index = 0;
 	stack: Array<Node> = [];
@@ -33,7 +33,7 @@ export class Parser {
 
 		this.template = template.replace(/\s+$/, '');
 		this.filename = options.filename;
-		this.customElement = options.customElement;
+		this.shadowDom = options.shadowDom;
 
 		this.html = {
 			start: null,

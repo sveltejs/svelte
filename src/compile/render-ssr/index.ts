@@ -19,7 +19,7 @@ export default function ssr(
 	}, options));
 
 	// TODO concatenate CSS maps
-	const css = options.customElement ?
+	const css = options.shadowDom ?
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
 
