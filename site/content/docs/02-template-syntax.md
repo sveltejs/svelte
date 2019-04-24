@@ -934,7 +934,7 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 <div>
 	<slot name="header">No header was provided</slot>
 	<p>Some content between header and footer</p>
-	</slot name="footer"></slot>
+	<slot name="footer"></slot>
 </div>
 ```
 
