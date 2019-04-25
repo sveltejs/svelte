@@ -28,7 +28,6 @@
     "polka": "^1.0.0-next.2",
     "prismjs": "^1.15.0",
     "session-file-store": "^1.2.0",
-    "shelljs": "^0.8.3",
     "sirv": "^0.3.1",
     "yootils": "0.0.14"
   },
@@ -56,6 +55,7 @@
     "rollup-plugin-svelte": "^5.0.3",
     "rollup-plugin-terser": "^4.0.4",
     "sapper": "^0.26.0-alpha.12",
+    "shelljs": "^0.8.3",
     "shimport": "0.0.16",
     "svelte": "^3.0.0-beta.28"
   },
