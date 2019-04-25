@@ -96,16 +96,16 @@
 	}
 
 	aside.open {
-		width: calc(100vw - 1.6rem);
-		height: calc(100vh - var(--nav-h) - 7rem);
+		width: calc(100vw - 3rem);
+		height: calc(100vh - var(--nav-h));
 	}
 
 	aside.open::before {
 		content: '';
 		position: absolute;
+		top: 0;
 		left: 0;
-		bottom: calc(100vh - var(--nav-h) - 10.8rem);
-		width: 100%;
+		width: calc(100% - 2rem);
 		height: 2em;
 		background: linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%);
 		pointer-events: none;
@@ -117,7 +117,7 @@
 		position: absolute;
 		left: 0;
 		bottom: 1.9em;
-		width: calc(100% - 1em);
+		width: calc(100% - 2rem);
 		height: 2em;
 		background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%);
 		pointer-events: none;
@@ -127,9 +127,9 @@
 		position: absolute;
 		font-family: var(--font);
 		overflow-y: auto;
-		width: calc(100vw - 4.8rem);
-		height: calc(100vh - var(--nav-h) - 10.8rem);
-		padding: 2em 1.6rem 2em 3.2rem;
+		width: 100%;
+		height: 100%;
+		padding: 4em 1.6rem 2em 3.2rem;
 		bottom: 2em;
 	}
 
