@@ -11,6 +11,25 @@ Svelte is a new way to build web applications. It's a compiler that takes your d
 
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://discord.gg/yy75DKs).
 
+## What does it look like?
+
+Svelte Components are single-file components, which contain HTML, styles, and some JavaScript. At compile time, the component is transformed into vanilla JavaScript, ready for the browser.
+
+```
+<script>
+	let count = 0;
+
+	function handleClick() {
+		count += 1;
+	}
+</script>
+
+<button on:click={handleClick}>
+	Clicked {count} {count === 1 ? 'time' : 'times'}
+</button>
+```
+
+You can interact with live examples like this one on the [Svelte website](https://svelte.dev).
 
 ## Development
 
