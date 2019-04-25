@@ -50,7 +50,7 @@ export function validate_store(store, name) {
 export function subscribe(component, store, callback) {
 	let unsub = store.subscribe(callback);
 	// Prevent memory leaks for RxJS users.
-	if (typeof unsub === 'object' && typeof unsub.unsubscribe === 'function') {
+	if (unsub.unsubscribe) {
 		unsub = () => unsub.unsubscribe();
 	}
 	component.$$.on_destroy.push(unsub);
