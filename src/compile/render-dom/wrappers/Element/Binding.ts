@@ -111,7 +111,7 @@ export default class BindingWrapper {
 
 		let update_conditions: string[] = this.needs_lock ? [`!${lock}`] : [];
 
-		const dependency_array = [...this.node.expression.dependencies]
+		const dependency_array = [...this.node.expression.dependencies];
 
 		if (dependency_array.length === 1) {
 			update_conditions.push(`changed.${dependency_array[0]}`)
@@ -119,6 +119,14 @@ export default class BindingWrapper {
 			update_conditions.push(
 				`(${dependency_array.map(prop => `changed.${prop}`).join(' || ')})`
 			)
+		}
+
+		if (parent.node.name === 'input') {
+			const type = parent.node.get_static_attribute_value('type');
+
+			if (type === null || type === "" || type === "text") {
+				update_conditions.push(`(${parent.var}.${this.node.name} !== ${this.snippet})`)
+			}
 		}
 
 		// model to view
