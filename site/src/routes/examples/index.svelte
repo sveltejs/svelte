@@ -21,7 +21,7 @@
 
 	import ScreenToggle from '../../components/ScreenToggle.svelte';
 	import {
-		mapbox_setup, // needed for context API example
+		mapbox_setup, // see site/content/examples/15-context/00-context-api
 		rollupUrl,
 		svelteUrl
 	} from '../../config';
@@ -36,32 +36,47 @@
 	let width;
 	let offset = 1;
 	let repl;
+	let isLoading = false;
+	let cache = {};
 
 	$: title = title_by_slug[active_slug] || '';
 	$: first_slug = sections[0].examples[0].slug;
-	$: if (repl) {
-		fetch(`examples/${active_slug}.json`)
-		.then(async response => {
-			if (response.ok) {
-				const data = await response.json();
-
-				repl.set({
-					components: process_example(data.files)
-				});
-			}
-		});
-	}
 	$: mobile = width < 768; // note: same as per media query below
+	$: replOrientation = (mobile || width > 1080) ? 'columns' : 'rows';
+	$: if (repl && active_slug) {
+		if (active_slug in cache) {
+			repl.set({ components: cache[active_slug] });
+			offset = 1;
+		} else {
+			isLoading = true;
+			fetch(`examples/${active_slug}.json`)
+			.then(async response => {
+				if (response.ok) {
+					const {files} = await response.json();
+					return process_example(files);
+				}
+			})
+			.then(components => {
+				cache[active_slug] = components;
+ 				repl.set({components});
+				offset = 1;
+				isLoading = false;
+			})
+			.catch(function(error) {
+				isLoading = false;
+			});
+		}
+	}
 
 	onMount(() => {
 		const onhashchange = () => {
 			active_slug = getFragment();
-			offset = 1;
 		};
 		window.addEventListener('hashchange', onhashchange, false);
 
-		if (getFragment()) {
-			active_slug = getFragment();
+		const fragment = getFragment();
+		if (fragment) {
+			active_slug = fragment;
 		} else {
 			active_slug = first_slug;
 			goto(`examples#${active_slug}`);
@@ -82,17 +97,21 @@
 </svelte:head>
 
 <div class='examples-container' bind:clientWidth={width}>
-	<div class="viewport offset-{offset}">
-		<TableOfContents {sections} active_section={active_slug} />
-		<Repl
-			bind:this={repl}
-			{svelteUrl}
-			{rollupUrl}
-			orientation={mobile ? 'columns' : 'rows'}
-			fixed={mobile}
-			relaxed
-			injectedJS={mapbox_setup}
-		/>
+	<div
+		class="viewport offset-{offset}"
+	>
+		<TableOfContents {sections} active_section={active_slug} {isLoading} />
+		<div class="toc" class:loading={isLoading}>
+			<Repl
+				bind:this={repl}
+				{svelteUrl}
+				{rollupUrl}
+				orientation={replOrientation}
+				fixed={mobile}
+				relaxed
+				injectedJS={mapbox_setup}
+			/>
+		</div>
 	</div>
 	{#if mobile}
 	<ScreenToggle bind:offset labels={['index', 'input', 'output']}/>
@@ -115,6 +134,10 @@
 		grid-template-columns: 33.333% 66.666%;
 		transition: transform .3s;
 		grid-auto-rows: 100%;
+	}
+
+	.toc.loading {
+		opacity: 0.6;
 	}
 
 	.offset-1 { transform: translate(-33.333%, 0); }
