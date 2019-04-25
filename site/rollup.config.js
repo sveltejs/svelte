@@ -75,9 +75,10 @@ export default {
 			json()
 		],
 		external: [
+			'yootils',
 			'codemirror',
 			...Object.keys(pkg.dependencies || {}).concat(
-			require('module').builtinModules || Object.keys(process.binding('natives'))
+				require('module').builtinModules || Object.keys(process.binding('natives'))
 			)
 		]
 
