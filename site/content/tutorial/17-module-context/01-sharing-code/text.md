@@ -10,21 +10,15 @@ We can do that by declaring a `<script context="module">` block. Code contained 
 
 ```html
 <script context="module">
-	const elements = new Set();
+	let current;
 </script>
 ```
 
 It's now possible for the components to 'talk' to each other without any state management:
 
 ```js
-onMount(() => {
-	elements.add(audio);
-	return () => elements.delete(audio);
-});
-
 function stopOthers() {
-	elements.forEach(element => {
-		if (element !== audio) element.pause();
-	});
+	if (current && current !== audio) current.pause();
+	current = audio;
 }
 ```

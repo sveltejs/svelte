@@ -1,5 +1,4 @@
 import fs from 'fs';
-import path from 'path';
 
 let lookup;
 const titles = new Map();

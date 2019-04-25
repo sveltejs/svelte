@@ -1,6 +1,7 @@
 <script>
 	export let sections = [];
 	export let active_section = null;
+	export let isLoading = false;
 </script>
 
 <style>
@@ -50,6 +51,12 @@
 		color: white;
 	}
 
+	a.active.loading {
+		background: rgba(255, 255, 255, 0.1) calc(100% - 3rem) 50% no-repeat url(/icons/loading.svg);
+		background-size: 1em 1em;
+		color: white;
+	}
+
 	.thumbnail {
 		background-color: white;
 		object-fit: contain;
@@ -73,6 +80,7 @@
 					href="examples#{example.slug}"
 					class="row"
 					class:active="{example.slug === active_section}"
+					class:loading="{isLoading}"
 				>
 					<img
 						class="thumbnail"

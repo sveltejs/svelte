@@ -1002,9 +1002,11 @@ export default class Component {
 
 								if (walking.has(other_declaration)) {
 									hoistable = false;
+								} else if (other_declaration.type === 'ExportNamedDeclaration' && walking.has(other_declaration.declaration)) {
+									hoistable = false;
 								} else if (!is_hoistable(other_declaration)) {
 									hoistable = false;
-								}
+                }
 							}
 
 							else {

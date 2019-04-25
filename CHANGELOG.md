@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 3.0.1
+
+* Prevent text input cursor jumping in Safari ([#2506](https://github.com/sveltejs/svelte/issues/2506))
+* Allow assignments to member expressions ([#2510](https://github.com/sveltejs/svelte/issues/2510))
+* Prevent mutually dependent functions causing an infinite during hoisting ([#2542](https://github.com/sveltejs/svelte/issues/2542))
+* Reuse scheduler promise instead of creating new one each time ([#2555](https://github.com/sveltejs/svelte/pull/2555))
+* Various site/docs fixes
+
 ## 3.0.0
 
 * Everything
