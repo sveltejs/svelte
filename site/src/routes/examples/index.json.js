@@ -5,7 +5,7 @@ let cached;
 export function get(req, res) {
 	try {
 		if (!cached || process.env.NODE_ENV !== 'production') {
-			cached = JSON.stringify(get_examples());
+			cached = JSON.stringify(get_examples().filter(section => section.title));
 		}
 
 		res.writeHead(200, {

@@ -19,7 +19,7 @@ Here, we're using [Emotion](https://emotion.sh) to generate scoped class names t
 <div class="max">
 	<iframe
 		title="Aphrodite example"
-		src="/repl/embed?gist=ad495ff5ba9ceefe5984fe62c1f15e19"
+		src="/repl/embed?example=blog-svelte-css-in-js"
 		scrolling="no"
 	></iframe>
 </div>
@@ -27,4 +27,3 @@ Here, we're using [Emotion](https://emotion.sh) to generate scoped class names t
 It's important to note that most CSS-in-JS libraries have a runtime library, and many don't support statically extracting styles out into a separate <code>.css</code> file at build time (which is essential for the best performance). You should therefore only use CSS-in-JS if it's necessary for your application!
 
 Note that you can mix-and-match — you can still use Svelte's built-in CSS handling alongside a CSS-in-JS library.
-
