@@ -106,7 +106,7 @@ export function extract_names(param: Node) {
 
 export function extract_identifiers(param: Node) {
 	const nodes: Node[] = [];
-	extractors[param.type](nodes, param);
+	extractors[param.type] && extractors[param.type](nodes, param);
 	return nodes;
 }
 
