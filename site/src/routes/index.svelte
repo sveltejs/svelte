@@ -173,7 +173,7 @@
 	</section>
 
 	<section class="container example">
-		<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
+		<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="/blog/svelte-css-in-js">use your favourite CSS-in-JS library</a>.</p>
 
 		<div class="repl-container">
 			<IntersectionObserver once let:intersecting top={400}>

@@ -31,7 +31,7 @@ The `t` value is `0` at the beginning of an intro or the end of an outro, and `1
 
 Most of the time you should return the `css` property and *not* the `tick` property, as CSS animations run off the main thread to prevent jank where possible. Svelte 'simulates' the transition and constructs a CSS animation, then lets it run.
 
-For example the `fade` transition generates a CSS animation somewhat like this:
+For example, the `fade` transition generates a CSS animation somewhat like this:
 
 ```css
 0% { opacity: 0 }

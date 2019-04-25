@@ -6,7 +6,7 @@ let cached;
 export function get(req, res) {
 	try {
 		if (!cached || process.env.NODE_ENV !== 'production') {
-			cached = get_examples();
+			cached = get_examples().filter(section => section.title);
 		}
 
 		send(res, 200, cached);
