@@ -1,15 +1,12 @@
 import fetch from 'node-fetch';
 import { body } from './_utils.js';
+import send from '@polka/send';
 
 export async function post(req, res) {
 	const user = req.session.passport && req.session.passport.user;
 
 	if (!user) {
-		res.writeHead(403, {
-			'Content-Type': 'application/json'
-		});
-		res.end(JSON.stringify({ error: 'unauthorized' }));
-		return;
+		return send(res, 403, { error: 'unauthorized' });
 	}
 
 	try {
@@ -45,26 +42,18 @@ export async function post(req, res) {
 			})
 		});
 
-		res.writeHead(r.status, {
-			'Content-Type': 'application/json'
-		});
-
 		const gist = await r.json();
 
-		res.end(JSON.stringify({
+		send(res, r.status, {
 			id: gist.id,
 			description: gist.description,
 			owner: gist.owner,
 			html_url: gist.html_url,
 			files: gist.files
-		}));
-	} catch (err) {
-		res.writeHead(500, {
-			'Content-Type': 'application/json'
 		});
-
-		res.end(JSON.stringify({
+	} catch (err) {
+		send(res, 500, {
 			error: err.message
-		}));
+		});
 	}
 }

@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { body } from './_utils.js';
+import send from '@polka/send';
 
 export async function get(req, res) {
 	const { id } = req.params;
@@ -14,22 +15,18 @@ export async function get(req, res) {
 		headers
 	});
 
-	res.writeHead(r.status, {
-		'Content-Type': 'application/json'
-	});
-
 	const result = await r.json();
 
 	if (r.status === 200) {
-		res.end(JSON.stringify({
+		send(res, 200, {
 			id: result.id,
 			description: result.description,
 			owner: result.owner,
 			html_url: result.html_url,
 			files: result.files
-		}));
+		});
 	} else {
-		res.end(JSON.stringify(result));
+		send(res, r.status, result);
 	}
 }
 
@@ -37,11 +34,7 @@ export async function patch(req, res) {
 	const user = req.session && req.session.passport && req.session.passport.user;
 
 	if (!user) {
-		res.writeHead(403, {
-			'Content-Type': 'application/json'
-		});
-		res.end(JSON.stringify({ error: 'unauthorized' }));
-		return;
+		return send(res, 403, { error: 'unauthorized' });
 	}
 
 	try {
@@ -58,24 +51,16 @@ export async function patch(req, res) {
 			})
 		});
 
-		res.writeHead(r.status, {
-			'Content-Type': 'application/json'
-		});
-
 		if (r.status === 200) {
-			res.end(JSON.stringify({
-				ok: true
-			}));
+			send(res, 200, { ok: true });
 		} else {
-			res.end(await r.text());
+			send(res, r.status, await r.text(), {
+				'Content-Type': 'application/json'
+			});
 		}
 	} catch (err) {
-		res.writeHead(500, {
-			'Content-Type': 'application/json'
-		});
-
-		res.end(JSON.stringify({
+		send(res, 500, {
 			error: err.message
-		}));
+		});
 	}
 }

@@ -1,9 +1,10 @@
+import send from '@polka/send';
+
 export function get(req, res) {
 	if (!req.session || !req.session.passport || !req.session.passport.user) {
-		res.send('null');
-		return;
+		return send(res, 200, 'null');
 	}
 
-	const { id, username, displayName, photo } = req.session.passport && req.session.passport.user;
-	res.send({ id, username, displayName, photo });
+	const { id, username, displayName, photo } = req.session.passport.user;
+	send(res, 200, { id, username, displayName, photo });
 }

@@ -58,7 +58,7 @@ export default function() {
 
 			renderer.link = link_renderer;
 
-			renderer.hr = (...args) => {
+			renderer.hr = () => {
 				block_open = true;
 
 				return '<div class="side-by-side"><div class="copy">';
@@ -94,7 +94,7 @@ export default function() {
 					lang
 				);
 
-				let html = `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
+				const html = `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
 
 				if (block_open) {
 					block_open = false;
