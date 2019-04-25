@@ -600,6 +600,9 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 
 <!-- Shorthand, for when name and value match -->
 <div class:active>...</div>
+
+<!-- Multiple class toggles can be included -->
+<div class:active class:inactive={!active} class:isAdmin>...</div>
 ```
 
 
@@ -934,7 +937,7 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 <div>
 	<slot name="header">No header was provided</slot>
 	<p>Some content between header and footer</p>
-	</slot name="footer"></slot>
+	<slot name="footer"></slot>
 </div>
 ```
 

@@ -117,7 +117,7 @@
 		position: absolute;
 		left: 0;
 		bottom: 1.9em;
-		width: 100%;
+		width: calc(100% - 1em);
 		height: 2em;
 		background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%);
 		pointer-events: none;

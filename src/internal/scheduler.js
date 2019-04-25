@@ -4,21 +4,22 @@ import { set_current_component } from './lifecycle.js';
 export const dirty_components = [];
 export const intros = { enabled: false };
 
-let update_promise;
+const resolved_promise = Promise.resolve();
+let update_scheduled = false;
 const binding_callbacks = [];
 const render_callbacks = [];
 const flush_callbacks = [];
 
 export function schedule_update() {
-	if (!update_promise) {
-		update_promise = Promise.resolve();
-		update_promise.then(flush);
+	if (!update_scheduled) {
+		update_scheduled = true;
+		resolved_promise.then(flush);
 	}
 }
 
 export function tick() {
 	schedule_update();
-	return update_promise;
+	return resolved_promise;
 }
 
 export function add_binding_callback(fn) {
@@ -65,7 +66,7 @@ export function flush() {
 		flush_callbacks.pop()();
 	}
 
-	update_promise = null;
+	update_scheduled = false;
 }
 
 function update($$) {
