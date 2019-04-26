@@ -1,7 +1,7 @@
 import send from '@polka/send';
+import { body } from './_utils.js';
 import { query } from '../../utils/db';
 import { isUser } from '../../backend/auth';
-import { body } from './_utils.js';
 
 export async function post(req, res) {
 	const user = await isUser(req, res);
@@ -25,6 +25,7 @@ export async function post(req, res) {
 			uid: row.uid,
 			name: row.name,
 			files: row.files,
+			owner: user.uid,
 		});
 	} catch (err) {
 		send(res, 500, {

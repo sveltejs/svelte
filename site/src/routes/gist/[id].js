@@ -1,66 +1,65 @@
-import fetch from 'node-fetch';
-import { body } from './_utils.js';
 import send from '@polka/send';
+import { body } from './_utils.js';
+import { query } from '../../utils/db';
+import { isUser } from '../../backend/auth';
 
 export async function get(req, res) {
-	const { id } = req.params;
+	const [row] = await query(`
+		select g.*, u.uid as owner from gists g
+		left join users u on g.user_id = u.id
+		where g.uid = $1 limit 1
+	`, [req.params.id]); // via filename pattern
 
-	const headers = {};
-	const user = req.session && req.session.passport && req.session.passport.user;
-	if (user) {
-		headers.Authorization = `token ${user.token}`;
+	if (!row) {
+		return send(res, 404, { error: 'Gist not found' });
 	}
 
-	const r = await fetch(`https://api.github.com/gists/${id}`, {
-		headers
+	send(res, 200, {
+		uid: row.uid,
+		name: row.name,
+		files: row.files,
+		owner: row.owner
 	});
-
-	const result = await r.json();
-
-	if (r.status === 200) {
-		send(res, 200, {
-			id: result.id,
-			description: result.description,
-			owner: result.owner,
-			html_url: result.html_url,
-			files: result.files
-		});
-	} else {
-		send(res, r.status, result);
-	}
 }
 
 export async function patch(req, res) {
-	const user = req.session && req.session.passport && req.session.passport.user;
+	const user = await isUser(req, res);
+	if (!user) return; // response already sent
 
-	if (!user) {
-		return send(res, 403, { error: 'unauthorized' });
+	let id, uid=req.params.id;
+
+	try {
+		const [row] = await query(`select * from gists where uid = $1 limit 1`, [uid]);
+		if (!row) return send(res, 404, { error: 'Gist not found' });
+		if (row.user_id !== user.id) return send(res, 403, { error: 'Item does not belong to you' });
+		id = row.id;
+	} catch (err) {
+		console.error('PATCH /gists @ select', err);
+		return send(res, 500);
 	}
 
 	try {
-		const { description, files } = await body(req);
-
-		const r = await fetch(`https://api.github.com/gists/${req.params.id}`, {
-			method: 'PATCH',
-			headers: {
-				Authorization: `token ${user.token}`
-			},
-			body: JSON.stringify({
-				description,
-				files
-			})
-		});
-
-		if (r.status === 200) {
-			send(res, 200, { ok: true });
-		} else {
-			send(res, r.status, await r.text(), {
-				'Content-Type': 'application/json'
-			});
+		const obj = await body(req);
+		obj.updated_at = 'now()';
+		let k, cols=[], vals=[];
+		for (k in obj) {
+			cols.push(k);
+			vals.push(obj[k]);
 		}
-	} catch (err) {
-		send(res, 500, {
-			error: err.message
+
+		const tmp = vals.map((x, i) => `$${i + 1}`).join(',');
+		const set = `set (${cols.join(',')}) = (${tmp})`;
+
+		const [row] = await query(`update gists ${set} where id = ${id} returning *`, vals);
+
+		send(res, 200, {
+			uid: row.uid,
+			name: row.name,
+			files: row.files,
+			owner: user.uid,
 		});
+	} catch (err) {
+		console.error('PATCH /gists @ update', err);
+		send(res, 500, { error: err.message });
 	}
 }
