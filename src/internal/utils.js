@@ -48,12 +48,11 @@ export function validate_store(store, name) {
 }
 
 export function subscribe(component, store, callback) {
-	let unsub = store.subscribe(callback);
-	// Prevent memory leaks for RxJS users.
-	if (unsub.unsubscribe) {
-		unsub = () => unsub.unsubscribe();
-	}
-	component.$$.on_destroy.push(unsub);
+	const unsub = store.subscribe(callback);
+
+	component.$$.on_destroy.push(unsub.unsubscribe
+		? () => unsub.unsubscribe()
+		: unsub);
 }
 
 export function create_slot(definition, ctx, fn) {
