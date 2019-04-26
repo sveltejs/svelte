@@ -573,10 +573,14 @@ component.$on(event, callback)
 
 Causes the `callback` function to be called whenever the component dispatches an `event`.
 
+A function is returned that will remove the event listener when called.
+
 ```js
-app.$on('selected', event => {
+const off = app.$on('selected', event => {
 	console.log(event.detail.selection);
 });
+
+off();
 ```
 
 #### `$destroy`
