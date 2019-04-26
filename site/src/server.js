@@ -14,20 +14,7 @@ API()
 		}),
 
 		sapper.middleware({
-			// TODO update Sapper so that we can pass props to the client
-			props: req => {
-				const user = req.user;
-
-				return {
-					user: user && {
-						// strip access token
-						id: user.id,
-						username: user.username,
-						displayName: user.displayName,
-						photo: user.photo
-					}
-				};
-			}
+			//
 		})
 	)
 	.listen(PORT);

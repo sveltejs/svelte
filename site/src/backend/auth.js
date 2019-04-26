@@ -59,9 +59,9 @@ export async function isUser(req, res) {
 }
 
 export function toUser(obj={}) {
-	const { uid, username, name:displayName, avatar } = obj;
+	const { uid, username, name, avatar } = obj;
 	const token = sign({ uid, username });
-	return { uid, username, displayName, avatar, token };
+	return { uid, username, name, avatar, token };
 }
 
 export function API() {

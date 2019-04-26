@@ -4,12 +4,12 @@
 	let showMenu = false;
 	let name;
 
-	$: name = $user.displayName || $user.username;
+	$: name = $user.name || $user.username;
 </script>
 
 <div class="user" on:mouseenter="{() => showMenu = true}" on:mouseleave="{() => showMenu = false}">
 	<span>{name}</span>
-	<img alt="{name} avatar" src="{$user.photo}">
+	<img alt="{name} avatar" src="{$user.avatar}">
 
 	{#if showMenu}
 		<div class="menu">
