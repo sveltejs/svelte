@@ -27,7 +27,7 @@
 	}
 
 	$: Authorization = $user && `Bearer ${$user.token}`;
-	$: canSave = !!$user && !!gist && !!gist.owner && $user.id == gist.owner.id; // comparing number and string
+	$: canSave = $user && gist && gist.owner === $user.uid;
 
 	function handleKeydown(event) {
 		if (event.which === 83 && (isMac ? event.metaKey : event.ctrlKey)) {
@@ -102,37 +102,22 @@
 
 		saving = true;
 
-		const { components } = repl.toJSON();
-
 		try {
+			// Send all files back to API
+			// ~> Any missing files are considered deleted!
 			const files = {};
-
-			// null out any deleted files
-			const set = new Set(components.map(m => `${m.name}.${m.type}`));
-			Object.keys(gist.files).forEach(file => {
-				if (/\.(svelte|html|js)$/.test(file)) {
-					if (!set.has(file)) files[file] = null;
-				}
-			});
+			const { components } = repl.toJSON();
 
 			components.forEach(module => {
-				const file = `${module.name}.${module.type}`;
-				if (!module.source.trim()) {
-					throw new Error(`GitHub does not allow saving gists with empty files - ${file}`);
-				}
-
-				if (!gist.files[file] || module.source !== gist.files[file].content) {
-					files[file] = { content: module.source };
-				}
+				const text = module.source.trim();
+				if (!text.length) return; // skip empty file
+				files[`${module.name}.${module.type}`] = text;
 			});
 
-			const r = await fetch(`gist/${gist.id}`, {
+			const r = await fetch(`gist/${gist.uid}`, {
 				method: 'PATCH',
-				credentials: 'include',
-				body: JSON.stringify({
-					description: name,
-					files
-				})
+				headers: { Authorization },
+				body: JSON.stringify({ name, files })
 			});
 
 			if (r.status < 200 || r.status >= 300) {

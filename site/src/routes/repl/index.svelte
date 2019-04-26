@@ -17,8 +17,8 @@
 	import Repl from '@sveltejs/svelte-repl';
 	import { onMount } from 'svelte';
 
-	import InputOutputToggle from '../../components/Repl/InputOutputToggle.svelte';
 	import { process_example } from '../../utils/examples';
+	import InputOutputToggle from '../../components/Repl/InputOutputToggle.svelte';
 	import AppControls from './_components/AppControls/index.svelte';
 
 	export let version;
@@ -58,39 +58,38 @@
 
 		if (gist_id) {
 			relaxed = false;
-			fetch(`gist/${gist_id}`).then(r => r.json()).then(data => {
-				gist = data;
-				const { description, files } = data;
+			fetch(`gist/${gist_id}`).then(r => {
+				if (r.ok) {
+					r.json().then(data => {
+						gist = data;
+						name = data.name;
 
-				name = description;
+						const components = [];
+						const files = data.files;
+						const rgx = /(js|svelte)$/i;
 
-				const components = Object.keys(files)
-					.map(file => {
-						const dot = file.lastIndexOf('.');
-						if (!~dot) return;
+						Object.keys(files).forEach(key => {
+							let [name, type] = key.split('.');
+							if (type === 'html') type = 'svelte';
+							if (rgx.test(type)) {
+								components.push({ name, type, source:files[key] });
+							}
+						});
 
-						const source = files[file].content;
+						components.sort((a, b) => {
+							if (a.name === 'App' && a.type === 'svelte') return -1;
+							if (b.name === 'App' && b.type === 'svelte') return 1;
 
-						let type = file.slice(dot + 1);
-						if (type === 'html') type = 'svelte';
+							if (a.type !== b.type) return a.type === 'svelte' ? -1 : 1;
 
-						return {
-							name: file.slice(0, dot),
-							type,
-							source
-						};
-					})
-					.filter(x => x.type === 'svelte' || x.type === 'js')
-					.sort((a, b) => {
-						if (a.name === 'App' && a.type === 'svelte') return -1;
-						if (b.name === 'App' && b.type === 'svelte') return 1;
+							return a.name < b.name ? -1 : 1;
+						});
 
-						if (a.type !== b.type) return a.type === 'svelte' ? -1 : 1;
-
-						return a.name < b.name ? -1 : 1;
+						repl.set({ components });
 					});
-
-				repl.set({ components });
+				} else {
+					console.warn('TODO: 404 Gist')
+				}
 			});
 		} else {
 			relaxed = true;
@@ -111,8 +110,9 @@
 
 	function handle_fork(event) {
 		example = null;
+		console.log('> handle_fork', event);
 		gist = event.detail.gist;
-		gist_id = gist.id;
+		gist_id = gist.uid;
 	}
 
 	$: svelteUrl = process.browser && version === 'local' ?
