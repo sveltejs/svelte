@@ -15,12 +15,14 @@ const {
 const OAuth = 'https://github.com/login/oauth';
 
 function exit(res, code, msg='') {
-	send(res, code, msg.charAt(0).toUpperCase() + msg.substring(1));
+	const error = msg.charAt(0).toUpperCase() + msg.substring(1);
+	send(res, code, { error });
 }
 
 function onError(err, req, res) {
+	const error = err.message || err;
 	const code = err.code || err.status || 500;
-	res.headersSent || send(res, code, err.message || err);
+	res.headersSent || send(res, code, { error });
 }
 
 /**
