@@ -1,55 +1,30 @@
-import fetch from 'node-fetch';
-import { body } from './_utils.js';
 import send from '@polka/send';
+import { query } from '../../utils/db';
+import { isUser } from '../../backend/auth';
+import { body } from './_utils.js';
 
 export async function post(req, res) {
-	const user = req.session.passport && req.session.passport.user;
-
-	if (!user) {
-		return send(res, 403, { error: 'unauthorized' });
-	}
+	const user = await isUser(req, res);
+	if (!user) return; // response already sent
 
 	try {
 		const { name, components } = await body(req);
 
-		const files = {
-			'meta.json': {
-				content: JSON.stringify({
-					svelte: true
-				}, null, '  ')
-			},
-			'README.md': {
-				content: `Created with [svelte.dev/repl](https://svelte.dev/repl)`
-			}
-		};
+		const files = {};
 		components.forEach(component => {
-			const file = `${component.name}.${component.type}`;
-			if (!component.source.trim()) {
-				throw new Error(`GitHub does not allow saving gists with empty files - ${file}`);
-			}
-			files[file] = { content: component.source };
+			const text = component.source.trim();
+			if (!text.length) return; // skip empty file
+			files[`${component.name}.${component.type}`] = text;
 		});
 
-		const r = await fetch(`https://api.github.com/gists`, {
-			method: 'POST',
-			headers: {
-				Authorization: `token ${user.token}`
-			},
-			body: JSON.stringify({
-				description: name,
-				files,
-				public: false
-			})
-		});
+		const [row] = await query(`
+			insert into gists(user_id, name, files)
+			values ($1, $2, $3) returning *`, [user.id, name, files]);
 
-		const gist = await r.json();
-
-		send(res, r.status, {
-			id: gist.id,
-			description: gist.description,
-			owner: gist.owner,
-			html_url: gist.html_url,
-			files: gist.files
+		send(res, 201, {
+			uid: row.uid,
+			name: row.name,
+			files: row.files,
 		});
 	} catch (err) {
 		send(res, 500, {

@@ -2,7 +2,6 @@ import polka from 'polka';
 import devalue from 'devalue';
 import send from '@polka/send';
 import { get, post } from 'httpie';
-import { json } from '@polka/parse';
 import { parse, stringify } from 'querystring';
 import { decode, sign, verify } from './token';
 import { find, query } from '../utils/db';
@@ -65,7 +64,7 @@ export function toUser(obj={}) {
 }
 
 export function API() {
-	const app = polka({ onError }).use(json());
+	const app = polka({ onError });
 
 	if (GITHUB_CLIENT_ID) {
 		app.get('/auth/login', (req, res) => {

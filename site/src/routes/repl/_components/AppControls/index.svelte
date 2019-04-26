@@ -26,7 +26,7 @@
 		return new Promise(f => setTimeout(f, ms));
 	}
 
-	let canSave;
+	$: Authorization = $user && `Bearer ${$user.token}`;
 	$: canSave = !!$user && !!gist && !!gist.owner && $user.id == gist.owner.id; // comparing number and string
 
 	function handleKeydown(event) {
@@ -57,7 +57,7 @@
 		try {
 			const r = await fetch(`gist/create`, {
 				method: 'POST',
-				credentials: 'include',
+				headers: { Authorization },
 				body: JSON.stringify({
 					name,
 					components
