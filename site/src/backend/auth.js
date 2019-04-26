@@ -70,8 +70,6 @@ export function API() {
 	if (GITHUB_CLIENT_ID) {
 		app.get('/auth/login', (req, res) => {
 			try {
-				console.log('inside');
-
 				const Location = `${OAuth}/authorize?` + stringify({
 					scope: 'read:user',
 					client_id: GITHUB_CLIENT_ID,
@@ -108,7 +106,7 @@ export function API() {
 				const [user] = await query(`
 					insert into users(uid, name, username, avatar, token)
 					values ($1, $2, $3, $4, $5) on conflict (uid) do update
-					set (name, username, avatar, token) = ($2, $3, $4, $5)
+					set (name, username, avatar, token, updated_at) = ($2, $3, $4, $5, now())
 					returning *
 				`, [id, name, login, avatar_url, access_token]);
 

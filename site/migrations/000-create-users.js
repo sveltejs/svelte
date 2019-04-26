@@ -6,7 +6,9 @@ exports.up = DB => {
 			name character varying(255),
 			username character varying(255) not null,
 			avatar text,
-			token character varying(255) not null
+			token character varying(255) not null,
+			created_at timestamp with time zone NOT NULL DEFAULT now(),
+			updated_at timestamp with time zone
 		);
 
 		create unique index if not exists users_pkey ON users(id int4_ops);
