@@ -6,7 +6,7 @@ exports.up = DB => {
 			name character varying(255),
 			username character varying(255) not null,
 			avatar text,
-			token character varying(255) not null,
+			github_token character varying(255) not null,
 			created_at timestamp with time zone NOT NULL DEFAULT now(),
 			updated_at timestamp with time zone
 		);

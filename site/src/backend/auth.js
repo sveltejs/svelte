@@ -79,7 +79,8 @@ export function API() {
 
 				send(res, 302, Location, { Location });
 			} catch (err) {
-				//
+				console.error('GET /auth/login', err);
+				send(res, 500);
 			}
 		});
 
@@ -105,9 +106,9 @@ export function API() {
 
 				// Upsert `users` table
 				const [user] = await query(`
-					insert into users(uid, name, username, avatar, token)
+					insert into users(uid, name, username, avatar, github_token)
 					values ($1, $2, $3, $4, $5) on conflict (uid) do update
-					set (name, username, avatar, token, updated_at) = ($2, $3, $4, $5, now())
+					set (name, username, avatar, github_token, updated_at) = ($2, $3, $4, $5, now())
 					returning *
 				`, [id, name, login, avatar_url, access_token]);
 
@@ -121,7 +122,7 @@ export function API() {
 					'Content-Type': 'text/html; charset=utf-8'
 				});
 			} catch (err) {
-				console.error('OAuth Callback', err);
+				console.error('GET /auth/callback', err);
 				send(res, 500, err.data, {
 					'Content-Type': err.headers['content-type'],
 					'Content-Length': err.headers['content-length']
