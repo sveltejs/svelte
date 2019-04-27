@@ -6,7 +6,7 @@ export default function (target) {
 		target
 	});
 
-	assert.equal(target.innerHTML, '<custom-element><other-element><h1>Hello world!</h1></other-element></custom-element>');
+	assert.equal(target.innerHTML, '<custom-element><as-element><h1>Hello</h1></as-element><imported-element><h2>world</h2></imported-element></custom-element>');
 
 	const el = target.querySelector('custom-element');
 	assert.equal(el.innerText, "Hello world!");

@@ -1,7 +1,9 @@
 <svelte:options tag="custom-element"/>
 
 <script>
-import './other.svelte'
+import './AsElement.svelte';
+import ImportedElement from './AsImported.svelte';
 </script>
 
-<other-element>Hello world</other-element>
+<as-element>Hello</as-element>
+<ImportedElement>world</ImportedElement>
