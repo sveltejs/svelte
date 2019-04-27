@@ -15,6 +15,8 @@ export default class CatchBlock extends Node {
 		this.scope.add(parent.error, parent.expression.dependencies, this);
 		this.children = map_children(component, parent, this.scope, info.children);
 
-		this.warn_if_empty_block();
+		if (!info.skip) {
+			this.warn_if_empty_block();
+		}
 	}
 }
