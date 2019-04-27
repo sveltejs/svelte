@@ -176,8 +176,39 @@ Retrieves the context that belongs to the closest parent component with the spec
 
 #### `createEventDispatcher`
 
-TODO
+```js
+dispatch: ((name: string, detail?: any) => void) = createEventDispatcher();
+```
 
+---
+
+Creates an event dispatcher that can be used to dispatch [component events](docs#Component_events). Event dispatchers are functions that can take two arguments: `name` and `detail`.
+
+Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture) and are not cancellable with `event.preventDefault()`. The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
+
+```html
+<script>
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+</script>
+
+<button on:click="{() => dispatch('notify', 'detail value')}">Fire Event</button>
+```
+
+---
+
+Events dispatched from child components can be listened to in their parent. Any data provided when the event was dispatched is available on the `detail` property of the event object.
+
+```html
+<script>
+	function callbackFunction(event) {
+		console.log(`Notify fired! Detail: ${event.detail}`)
+	}
+</script>
+
+<Child on:notify="{callbackFunction}"/>
+```
 
 ### `svelte/store`
 
