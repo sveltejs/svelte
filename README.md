@@ -58,7 +58,7 @@ The source code for https://svelte.dev, including all the documentation, lives i
 
 ```bash
 cd site
-npm install
+npm install && npm run update
 npm run dev
 ```
 
