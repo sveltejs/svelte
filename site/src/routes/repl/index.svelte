@@ -155,6 +155,20 @@
 		transform: translate(-50%, 0);
 	}
 
+	/* temp fix for #2499 and #2550 while waiting for a fix for https://github.com/sveltejs/svelte-repl/issues/8 */
+
+	.viewport :global(.tab-content),
+	.viewport :global(.tab-content.visible) {
+		pointer-events: all;
+		opacity: 1;
+	}
+	.viewport :global(.tab-content) {
+		visibility: hidden;
+	}
+	.viewport :global(.tab-content.visible) {
+		visibility: visible;
+	}
+
 	.zen-mode {
 		position: fixed;
 		width: 100%;
