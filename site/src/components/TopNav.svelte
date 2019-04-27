@@ -13,28 +13,6 @@
 		open = false;
 	});
 
-	// TODO remove this post-https://github.com/sveltejs/svelte/issues/1914
-	let ul;
-	onMount(() => {
-		function handler(event) {
-			if (!open) {
-				event.preventDefault();
-				event.stopPropagation();
-				open = true;
-			}
-		}
-
-		ul.addEventListener('touchstart', handler, {
-			capture: true
-		});
-
-		return () => {
-			ul.removeEventListener('touchstart', handler, {
-				capture: true
-			});
-		};
-	});
-
 	// Prevents navbar to show/hide when clicking in docs sidebar
 	let hash_changed = false;
 	function handle_hashchange() {
@@ -247,7 +225,6 @@
 		{/if}
 
 		<ul
-			bind:this={ul}
 			class="primary"
 			class:open
 			on:mouseenter="{() => open = true}"
