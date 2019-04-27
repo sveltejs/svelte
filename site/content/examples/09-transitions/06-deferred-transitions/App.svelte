@@ -1,7 +1,7 @@
 <script>
 	import { quintOut } from 'svelte/easing';
+	import { flip } from 'svelte/animate';
 	import crossfade from './crossfade.js'; // TODO put this in svelte/transition!
-	import { flip } from './flip.js';
 
 	const { send, receive } = crossfade({
 		fallback(node, params) {
@@ -12,9 +12,9 @@
 				duration: 600,
 				easing: quintOut,
 				css: t => `
-							transform: ${transform} scale(${t});
-							opacity: ${t}
-						`,
+								transform: ${transform} scale(${t});
+								opacity: ${t}
+							`,
 			};
 		},
 	});
