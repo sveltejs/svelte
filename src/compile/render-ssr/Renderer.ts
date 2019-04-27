@@ -11,7 +11,7 @@ import Slot from './handlers/Slot';
 import Tag from './handlers/Tag';
 import Text from './handlers/Text';
 import Title from './handlers/Title';
-import { CompileOptions } from '../../interfaces';
+import { AppendTarget, CompileOptions } from '../../interfaces';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
 
@@ -35,8 +35,6 @@ const handlers: Record<string, Handler> = {
 	Title,
 	Window: noop
 };
-
-type AppendTarget = any; // TODO
 
 export default class Renderer {
 	has_bindings = false;
