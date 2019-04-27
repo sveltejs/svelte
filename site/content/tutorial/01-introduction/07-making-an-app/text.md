@@ -10,7 +10,7 @@ First, you'll need to integrate Svelte with a build tool. Popular choices are:
 * [webpack](https://webpack.js.org/) / [svelte-loader](https://github.com/sveltejs/svelte-loader)
 * [Parcel](https://parceljs.org/) / [parcel-plugin-svelte](https://github.com/DeMoorJasper/parcel-plugin-svelte)
 
-Don't worry if you're relatively new to web development and haven't used these tools before. We've prepared a simple step-by-step guide, [Svelte for new developers](blog/svelte-for-new-developers), which walks you through the process.
+Don't worry if you're relatively new to web development and haven't used these tools before. We are preparing a simple step-by-step guide, [Svelte for new developers](blog/svelte-for-new-developers), which walks you through the process.
 
 You'll also want to configure your text editor to treat `.svelte` files the same as `.html` for the sake of syntax highlighting. [Read this guide to learn how](blog/setting-up-your-editor).
 
