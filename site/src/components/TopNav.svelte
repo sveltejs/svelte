@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import Icon from './Icon.svelte';
+	import { Icon } from '@sveltejs/site-kit';
 	import { page } from '@sapper/app';
 
 	export let segment;

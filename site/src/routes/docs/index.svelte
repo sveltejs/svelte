@@ -8,7 +8,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import GuideContents from './_GuideContents.svelte';
-	import Icon from '../../components/Icon.svelte';
+	import { Icon } from '@sveltejs/site-kit';
 	import { getFragment } from '../../utils/navigation';
 
 	export let sections;
