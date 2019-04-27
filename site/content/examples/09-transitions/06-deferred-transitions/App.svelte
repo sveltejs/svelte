@@ -1,6 +1,7 @@
 <script>
 	import { quintOut } from 'svelte/easing';
 	import crossfade from './crossfade.js'; // TODO put this in svelte/transition!
+	import { flip } from './flip.js';
 
 	const { send, receive } = crossfade({
 		fallback(node, params) {
@@ -11,11 +12,11 @@
 				duration: 600,
 				easing: quintOut,
 				css: t => `
-					transform: ${transform} scale(${t});
-					opacity: ${t}
-				`
+							transform: ${transform} scale(${t});
+							opacity: ${t}
+						`,
 			};
-		}
+		},
 	});
 
 	let todos = [
@@ -33,7 +34,7 @@
 		const todo = {
 			id: uid++,
 			done: false,
-			description: input.value
+			description: input.value,
 		};
 
 		todos = [todo, ...todos];
@@ -57,7 +58,8 @@
 		margin: 0 auto;
 	}
 
-	.left, .right {
+	.left,
+	.right {
 		float: left;
 		width: 50%;
 		padding: 0 1em 0 0;
@@ -83,10 +85,12 @@
 		user-select: none;
 	}
 
-	input { margin: 0 }
+	input {
+		margin: 0;
+	}
 
 	.right label {
-		background-color: rgb(180,240,100);
+		background-color: rgb(180, 240, 100);
 	}
 
 	button {
@@ -97,7 +101,7 @@
 		line-height: 1;
 		background-color: transparent;
 		border: none;
-		color: rgb(170,30,30);
+		color: rgb(170, 30, 30);
 		opacity: 0;
 		transition: opacity 0.2s;
 	}
@@ -116,6 +120,7 @@
 			<label
 				in:receive="{{key: todo.id}}"
 				out:send="{{key: todo.id}}"
+				animate:flip
 			>
 				<input type=checkbox bind:checked={todo.done}>
 				{todo.description}
@@ -130,6 +135,7 @@
 			<label
 				in:receive="{{key: todo.id}}"
 				out:send="{{key: todo.id}}"
+				animate:flip
 			>
 				<input type=checkbox bind:checked={todo.done}>
 				{todo.description}
