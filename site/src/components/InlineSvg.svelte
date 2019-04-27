@@ -5,7 +5,7 @@
 	- advantage of css-styling
 	- https://github.com/jacobmischka/svelte-feather-icon
 	- https://feathericons.com/
-	- if requred we can split out app-controls to REPL only
+	- if required we can split out app-controls to REPL only
 -----------------------------------------------
 -->
 
