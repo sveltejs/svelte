@@ -15,6 +15,8 @@ export default class ThenBlock extends Node {
 		this.scope.add(parent.value, parent.expression.dependencies, this);
 		this.children = map_children(component, parent, this.scope, info.children);
 
-		this.warn_if_empty_block();
+		if (!info.skip) {
+			this.warn_if_empty_block();
+		}
 	}
 }

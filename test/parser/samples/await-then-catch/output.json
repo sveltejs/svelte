@@ -19,6 +19,7 @@
 				"pending": {
 					"start": 19,
 					"end": 39,
+					"skip": false,
 					"type": "PendingBlock",
 					"children": [
 						{
@@ -53,6 +54,7 @@
 				"then": {
 					"start": 39,
 					"end": 88,
+					"skip": false,
 					"type": "ThenBlock",
 					"children": [
 						{
@@ -98,6 +100,7 @@
 				"catch": {
 					"start": 88,
 					"end": 140,
+					"skip": false,
 					"type": "CatchBlock",
 					"children": [
 						{
