@@ -1,14 +1,20 @@
-import limax from 'limax';
-import {SLUG_LANG, SLUG_SEPARATOR} from '../../config';
+import slugify from '@sindresorhus/slugify';
+import {SLUG_SEPARATOR} from '../../config';
 
-/* latinizer processor */
+/* url-safe processor */
 
-export const limaxProcessor = (string, lang = SLUG_LANG) => limax(string, {
-	custom: ['$'],
-	separator: SLUG_SEPARATOR,
-	maintainCase: true,
-	lang
-});
+export const urlsafeSlugProcessor = string =>
+	slugify(string, {
+		customReplacements: [	// runs before any other transformations
+			['$', 'DOLLAR'], // `$destroy` & co
+			['-', 'DASH'], // conflicts with `separator`
+		],
+		separator: SLUG_SEPARATOR,
+		decamelize: false,
+		lowercase: false
+	})
+	.replace(/DOLLAR/g, '$')
+	.replace(/DASH/g, '-');
 
 /* unicode-preserver processor */
 
@@ -40,7 +46,7 @@ export const unicodeSafeProcessor = string =>
 	.chunks
 	.reduce((accum, chunk) => {
 		const processed = chunk.type === 'process'
-			? limaxProcessor(chunk.string)
+			? urlsafeSlugProcessor(chunk.string)
 			: chunk.string;
 
 		processed.length > 0 && accum.push(processed);
@@ -52,7 +58,7 @@ export const unicodeSafeProcessor = string =>
 /* session processor */
 
 export const makeSessionSlugProcessor = (preserveUnicode = false) => {
-	const processor = preserveUnicode ? unicodeSafeProcessor : limaxProcessor;
+	const processor = preserveUnicode ? unicodeSafeProcessor : urlsafeSlugProcessor;
 	const seen = new Set();
 
 	return string => {

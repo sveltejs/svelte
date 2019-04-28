@@ -97,11 +97,9 @@
 </svelte:head>
 
 <div class='examples-container' bind:clientWidth={width}>
-	<div
-		class="viewport offset-{offset}"
-	>
+	<div class="viewport offset-{offset}">
 		<TableOfContents {sections} active_section={active_slug} {isLoading} />
-		<div class="toc" class:loading={isLoading}>
+		<div class="repl-container" class:loading={isLoading}>
 			<Repl
 				bind:this={repl}
 				{svelteUrl}
@@ -136,8 +134,22 @@
 		grid-auto-rows: 100%;
 	}
 
-	.toc.loading {
+	.repl-container.loading {
 		opacity: 0.6;
+	}
+
+	/* temp fix for #2499 and #2550 while waiting for a fix for https://github.com/sveltejs/svelte-repl/issues/8 */
+
+	.repl-container :global(.tab-content),
+	.repl-container :global(.tab-content.visible) {
+		pointer-events: all;
+		opacity: 1;
+	}
+	.repl-container :global(.tab-content) {
+		visibility: hidden;
+	}
+	.repl-container :global(.tab-content.visible) {
+		visibility: visible;
 	}
 
 	.offset-1 { transform: translate(-33.333%, 0); }
