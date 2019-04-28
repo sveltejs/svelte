@@ -1,8 +1,8 @@
 <script>
 	import { page, preloading } from '@sapper/app';
-	import { Icons } from '@sveltejs/site-kit';
+	import { Icon, Icons, Nav, NavItem } from '@sveltejs/site-kit';
 	import PreloadingIndicator from '../components/PreloadingIndicator.svelte';
-	import Nav from '../components/TopNav.svelte';
+	// import Nav from '../components/TopNav.svelte';
 
 	export let segment;
 </script>
@@ -14,7 +14,23 @@
 {/if}
 
 {#if $page.path !== '/repl/embed'}
-	<Nav {segment}/>
+	<Nav {segment} {page} logo="svelte-logo-horizontal.svg">
+		<NavItem segment="tutorial">Tutorial</NavItem>
+		<NavItem segment="docs">API</NavItem>
+		<NavItem segment="examples">Examples</NavItem>
+		<NavItem segment="repl">REPL</NavItem>
+		<NavItem segment="blog">Blog</NavItem>
+
+		<NavItem external="https://sapper.svelte.technology">Sapper</NavItem>
+
+		<NavItem external="https://discord.gg/yy75DKs" title="Discord Chat">
+			<Icon name="message-square"/>
+		</NavItem>
+
+		<NavItem external="https://github.com/sveltejs/svelte" title="GitHub Repo">
+			<Icon name="github"/>
+		</NavItem>
+	</Nav>
 {/if}
 
 <main>
