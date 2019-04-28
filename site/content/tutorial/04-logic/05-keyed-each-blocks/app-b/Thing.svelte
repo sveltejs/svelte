@@ -6,4 +6,12 @@
 	const valueAtStart = value;
 </script>
 
-<p>{valueAtStart} / {value}</p>
+{#if valueAtStart === value}
+	<p>
+		{valueAtStart} / {value}
+	</p>
+{:else}
+	<p>
+		{valueAtStart} / {value} => <i>bye bye last element...!</i>
+	</p>
+{/if}
