@@ -983,7 +983,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 	{/each}
 </ul>
 
-</slot name="footer"></slot>
+<slot name="footer"></slot>
 ```
 
 
