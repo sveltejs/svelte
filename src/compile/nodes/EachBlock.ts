@@ -1,9 +1,9 @@
 import Node from './shared/Node';
 import ElseBlock from './ElseBlock';
-import Block from '../render-dom/Block';
 import Expression from './shared/Expression';
 import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
+import AbstractBlock from './shared/AbstractBlock';
 import { Node as INode } from '../../interfaces';
 
 function unpack_destructuring(contexts: Array<{ name: string, tail: string }>, node: INode, tail: string) {
@@ -25,10 +25,9 @@ function unpack_destructuring(contexts: Array<{ name: string, tail: string }>, n
 	}
 }
 
-export default class EachBlock extends Node {
+export default class EachBlock extends AbstractBlock {
 	type: 'EachBlock';
 
-	block: Block;
 	expression: Expression;
 	context_node: Node;
 
@@ -41,7 +40,6 @@ export default class EachBlock extends Node {
 	has_animation: boolean;
 	has_binding = false;
 
-	children: Node[];
 	else?: ElseBlock;
 
 	constructor(component, parent, scope, info) {
@@ -85,7 +83,7 @@ export default class EachBlock extends Node {
 			}
 		}
 
-		this.warn_if_empty_block(); // TODO would be better if EachBlock, IfBlock etc extended an abstract Block class
+		this.warn_if_empty_block();
 
 		this.else = info.else
 			? new ElseBlock(component, this, this.scope, info.else)
