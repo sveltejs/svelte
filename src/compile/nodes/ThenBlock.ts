@@ -1,12 +1,9 @@
-import Node from './shared/Node';
-import Block from '../render-dom/Block';
 import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
+import AbstractBlock from './shared/AbstractBlock';
 
-export default class ThenBlock extends Node {
-	block: Block;
+export default class ThenBlock extends AbstractBlock {
 	scope: TemplateScope;
-	children: Node[];
 
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
