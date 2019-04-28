@@ -17,13 +17,17 @@ By default, the REPL will fetch the most recent version of Svelte from https://u
 
 ## REPL GitHub integration
 
-In order for the REPL's GitHub integration to work properly when running locally, you will need to create a GitHub OAuth app. Set its authorization callback URL to `http://localhost:3000/auth/callback`, and in this project, create `site/.env` containing:
-
-```
-GITHUB_CLIENT_ID=[your app's client id]
-GITHUB_CLIENT_SECRET=[your app's client secret]
-BASEURL=http://localhost:3000
-```
+In order for the REPL's GitHub integration to work properly when running locally, you will need to:
+- [create a GitHub OAuth app](https://github.com/settings/developers):
+   - set `Authorization callback URL` to `http://localhost:3000/auth/callback`;
+   - set `Application name` as you like, and `Homepage URL` as `http://localhost:3000/`;
+   - create the app and take note of `Client ID` and `Client Secret`
+- in this repo, create `site/.env` containing:
+   ```
+   GITHUB_CLIENT_ID=[your app's Client ID]
+   GITHUB_CLIENT_SECRET=[your app's Client Secret]
+   BASEURL=http://localhost:3000
+   ```
 
 ## Translating the API docs
 
