@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { SLUG_PRESERVE_UNICODE } from '../../../config';
-import { extract_frontmatter, extract_metadata, langs, link_renderer } from '../../utils/markdown.js';
-import { makeSessionSlugProcessor } from '../../utils/slug';
+import { SLUG_PRESERVE_UNICODE, SLUG_SEPARATOR } from '../../../config';
+import { extract_frontmatter, extract_metadata, langs, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
+import { make_session_slug_processor } from '@sveltejs/site-kit/utils/slug';
 import marked from 'marked';
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
@@ -38,7 +38,10 @@ const blockTypes = [
 ];
 
 export default function() {
-	const makeSlug = makeSessionSlugProcessor(SLUG_PRESERVE_UNICODE);
+	const makeSlug = make_session_slug_processor({
+		preserve_unicode: SLUG_PRESERVE_UNICODE,
+		separator: SLUG_SEPARATOR
+	});
 
 	return fs
 		.readdirSync(`content/docs`)
