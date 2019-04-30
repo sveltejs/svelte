@@ -75,9 +75,8 @@ export class Scope {
 		if (node.kind === 'var' && this.block && this.parent) {
 			this.parent.add_declaration(node);
 		} else if (node.type === 'VariableDeclaration') {
-			const initialised = !!node.init;
-
 			node.declarations.forEach((declarator: Node) => {
+				const initialised = !!declarator.init;
 				extract_names(declarator.id).forEach(name => {
 					this.declarations.set(name, node);
 					if (initialised) this.initialised_declarations.add(name);
