@@ -2,144 +2,92 @@ import { writable } from 'svelte/store'; // eslint-disable-line import/no-unreso
 import { loop } from 'svelte/internal'; // eslint-disable-line import/no-unresolved
 import { is_date } from './utils.js';
 
-function get_initial_velocity(value) {
-	if (typeof value === 'number' || is_date(value)) return 0;
-
-	if (Array.isArray(value)) return value.map(get_initial_velocity);
-
-	if (value && typeof value === 'object') {
-		const velocities = {};
-		for (const k in value) velocities[k] = get_initial_velocity(value[k]);
-		return velocities;
-	}
-
-	throw new Error(`Cannot spring ${typeof value} values`);
-}
-
-function get_threshold(value, target_value, precision) {
-	if (typeof value === 'number' || is_date(value)) return precision * Math.abs((target_value - value));
-
-	if (Array.isArray(value)) return value.map((v, i) => get_threshold(v, target_value[i], precision));
-
-	if (value && typeof value === 'object') {
-		const threshold = {};
-		for (const k in value) threshold[k] = get_threshold(value[k], target_value[k], precision);
-		return threshold;
-	}
-
-	throw new Error(`Cannot spring ${typeof value} values`);
-}
-
-function tick_spring(velocity, current_value, target_value, stiffness, damping, multiplier, threshold) {
-	let settled = true;
-	let value;
-
+function tick_spring(ctx, last_value, current_value, target_value) {
 	if (typeof current_value === 'number' || is_date(current_value)) {
 		const delta = target_value - current_value;
-		const spring = stiffness * delta;
-		const damper = damping * velocity;
+		const velocity = (current_value - last_value) / (ctx.dt||1/60); // guard div by 0
+		const spring = ctx.opts.stiffness * delta;
+		const damper = ctx.opts.damping * velocity;
+		const acceleration = (spring - damper) * ctx.inv_mass;
+		const d = (velocity + acceleration) * ctx.dt;
 
-		const acceleration = spring - damper;
-
-		velocity += acceleration;
-		const d = velocity * multiplier;
-
-		if (is_date(current_value)) {
-			value = new Date(current_value.getTime() + d);
+		if (Math.abs(d) < ctx.opts.precision && Math.abs(delta) < ctx.opts.precision) {
+			return target_value; // settled
 		} else {
-			value = current_value + d;
+			ctx.settled = false; // signal loop to keep ticking
+			return is_date(current_value) ?
+				new Date(current_value.getTime() + d) : current_value + d;
 		}
-
-		if (Math.abs(d) > threshold || Math.abs(delta) > threshold) settled = false;
-	}
-
-	else if (Array.isArray(current_value)) {
-		value = current_value.map((v, i) => {
-			const result = tick_spring(
-				velocity[i],
-				v,
-				target_value[i],
-				stiffness,
-				damping,
-				multiplier,
-				threshold[i]
-			);
-
-			velocity[i] = result.velocity;
-			if (!result.settled) settled = false;
-			return result.value;
-		});
-	}
-
-	else if (typeof current_value === 'object') {
-		value = {};
-		for (const k in current_value) {
-			const result = tick_spring(
-				velocity[k],
-				current_value[k],
-				target_value[k],
-				stiffness,
-				damping,
-				multiplier,
-				threshold[k]
-			);
-
-			velocity[k] = result.velocity;
-			if (!result.settled) settled = false;
-			value[k] = result.value;
-		}
-	}
-
-	else {
+	} else if (Array.isArray(current_value)) {
+		return current_value.map((_, i) => 
+			tick_spring(ctx, last_value[i], current_value[i], target_value[i]));
+	} else if (typeof current_value === 'object') {
+		let next_value = {};
+		for (const k in current_value)
+			next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
+		return next_value;
+	} else {
 		throw new Error(`Cannot spring ${typeof value} values`);
 	}
-
-	return { velocity, value, settled };
 }
 
 export function spring(value, opts = {}) {
 	const store = writable(value);
+	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
 
-	const { stiffness = 0.15, damping = 0.8, precision = 0.001 } = opts;
-	const velocity = get_initial_velocity(value);
-
-	let task;
+	let last_time, task, current_token;
+	let last_value = value;
 	let target_value = value;
-	let last_time;
-	let settled;
-	let threshold;
-	let current_token;
 
-	function set(new_value) {
+	let inv_mass = 1;
+	let inv_mass_recovery_rate = 0;
+	let cancel_task = false;
+
+	function set(new_value, opts = {}) {
 		target_value = new_value;
-		threshold = get_threshold(value, target_value, spring.precision);
-
 		const token = current_token = {};
+		
+		if (opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
+			cancel_task = true; // cancel any running animation
+			last_time = window.performance.now();
+			last_value = value;
+			store.set(value = target_value);
+			return new Promise(f => f()); // fulfil immediately
+		} else if (opts.soft) {
+			let rate = opts.soft === true ? .5 : +opts.soft;
+			inv_mass_recovery_rate = 1 / (rate * 60);
+			inv_mass = 0; // infinite mass, unaffected by spring forces
+		}
 
 		if (!task) {
 			last_time = window.performance.now();
-			settled = false;
-
+			cancel_task = false;
+			
 			task = loop(now => {
-				({ value, settled } = tick_spring(
-					velocity,
-					value,
-					target_value,
-					spring.stiffness,
-					spring.damping,
-					(now - last_time) * 60 / 1000,
-					threshold
-				));
+				
+				if (cancel_task) {
+					cancel_task = false;
+					task = null;
+					return false;
+				}
+				
+				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
+
+				const ctx = {
+					inv_mass,
+					opts: spring,
+					settled: true, // tick_spring may signal false
+					dt: (now - last_time) * 60 / 1000
+				};
+				const next_value = tick_spring(ctx, last_value, value, target_value);
 
 				last_time = now;
+				last_value = value;
+				store.set(value = next_value);
 
-				if (settled) {
-					value = target_value;
+				if (ctx.settled)
 					task = null;
-				}
-
-				store.set(value);
-				return !settled;
+				return !ctx.settled;
 			});
 		}
 
@@ -152,7 +100,7 @@ export function spring(value, opts = {}) {
 
 	const spring = {
 		set,
-		update: fn => set(fn(target_value, value)),
+		update: (fn, opts) => set(fn(target_value, value), opts),
 		subscribe: store.subscribe,
 		stiffness,
 		damping,
