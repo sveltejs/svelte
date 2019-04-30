@@ -423,14 +423,15 @@ export default function dom(
 
 				${set && `$$self.$set = ${set};`}
 
-				${reactive_declarations.length > 0 && deindent`
 				${injected.length && `let ${injected.join(', ')};`}
+
+				${reactive_declarations.length > 0 && deindent`
 				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
 					${reactive_declarations}
 				};
+				`}
 
 				${fixed_reactive_declarations}
-				`}
 
 				return ${stringify_props(filtered_declarations)};
 			}
