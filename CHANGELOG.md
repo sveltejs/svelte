@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.1.0
+
+* Allow store subscribe functions to return an object with an `unsubscribe` method, providing native RxJS support ([#2549](https://github.com/sveltejs/svelte/issues/2549))
+
 ## 3.0.1
 
 * Prevent text input cursor jumping in Safari ([#2506](https://github.com/sveltejs/svelte/issues/2506))

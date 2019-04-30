@@ -366,7 +366,13 @@ Components can emit events using [createEventDispatcher](docs#createEventDispatc
 <SomeComponent on:whatever={handler}/>
 ```
 
+---
 
+As with DOM events, if the `on:` directive is used without a value, the component will *forward* the event, meaning that a consumer of the component can listen for it.
+
+```html
+<SomeComponent on:whatever/>
+```
 
 ### Element bindings
 
@@ -983,7 +989,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 	{/each}
 </ul>
 
-</slot name="footer"></slot>
+<slot name="footer"></slot>
 ```
 
 

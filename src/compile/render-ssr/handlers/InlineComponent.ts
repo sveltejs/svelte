@@ -4,8 +4,7 @@ import { snip } from '../../utils/snip';
 import Renderer from '../Renderer';
 import { stringify_props } from '../../utils/stringify_props';
 import { get_slot_scope } from './shared/get_slot_scope';
-
-type AppendTarget = any; // TODO
+import { AppendTarget } from '../../../interfaces';
 
 function stringify_attribute(chunk: Node) {
 	if (chunk.type === 'Text') {

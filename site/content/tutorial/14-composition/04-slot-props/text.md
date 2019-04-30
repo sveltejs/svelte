@@ -42,6 +42,6 @@ You can rename the variable, if you want — let's call it `active` in the paren
 </Hoverable>
 ```
 
-You can have as many of these components you like, and the slotted props will remain local to the component where they're declared.
+You can have as many of these components as you like, and the slotted props will remain local to the component where they're declared.
 
 > Named slots can also have props; use the `let` directive on an element with a `slot="..."` attribute, instead of on the component itself.

@@ -48,7 +48,11 @@ export function validate_store(store, name) {
 }
 
 export function subscribe(component, store, callback) {
-	component.$$.on_destroy.push(store.subscribe(callback));
+	const unsub = store.subscribe(callback);
+
+	component.$$.on_destroy.push(unsub.unsubscribe
+		? () => unsub.unsubscribe()
+		: unsub);
 }
 
 export function create_slot(definition, ctx, fn) {

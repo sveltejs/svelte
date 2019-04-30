@@ -176,8 +176,39 @@ Retrieves the context that belongs to the closest parent component with the spec
 
 #### `createEventDispatcher`
 
-TODO
+```js
+dispatch: ((name: string, detail?: any) => void) = createEventDispatcher();
+```
 
+---
+
+Creates an event dispatcher that can be used to dispatch [component events](docs#Component_events). Event dispatchers are functions that can take two arguments: `name` and `detail`.
+
+Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture) and are not cancellable with `event.preventDefault()`. The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
+
+```html
+<script>
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+</script>
+
+<button on:click="{() => dispatch('notify', 'detail value')}">Fire Event</button>
+```
+
+---
+
+Events dispatched from child components can be listened to in their parent. Any data provided when the event was dispatched is available on the `detail` property of the event object.
+
+```html
+<script>
+	function callbackFunction(event) {
+		console.log(`Notify fired! Detail: ${event.detail}`)
+	}
+</script>
+
+<Child on:notify="{callbackFunction}"/>
+```
 
 ### `svelte/store`
 
@@ -475,13 +506,51 @@ TODO
 * fade, fly, slide, scale, draw
 * crossfade...
 
-### `svelte/animation`
+### `svelte/animate`
 
-TODO
+The `svelte/animate` module exports one function for use with svelte [animations](docs#Animations).
 
-* TODO this doesn't even exist yet
+#### `flip`
 
-TODO
+```sv
+animate:flip={params}
+```
+
+The `flip` function calculates the start and end position of an element and animates between them, translating the `x` and `y` values. `flip` stands for [First, Last, Invert, Play](https://aerotwist.com/blog/flip-your-animations/).
+
+`flip` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number` | `function`, default `d => Math.sqrt(d) * 120`) — see below
+* `easing` (`function`, default [`cubicOut`](docs#cubicOut)) — an [easing function](docs#svelte_easing)
+
+
+`duration` can be be provided as either:
+
+- a `number`, in milliseconds.
+- a function, `distance: number => duration: number`, receiving the distance the element will travel in pixels and returning the duration in milliseconds. This allows you to assign a duration that is relative to the distance travelled by each element.
+
+---
+
+You can see a full example on the [animations tutorial](tutorial/animate)
+
+
+```html
+<script>
+	import { flip } from 'svelte/animate';
+	import { quintOut } from 'svelte/easing';
+
+	let list = [1, 2, 3];
+</script>
+
+{#each list as n (n)}
+	<div animate:flip="{{delay: 250, duration: 250, easing: quintOut}}">
+		{n}
+	</div>
+{/each}
+```
+
+
 
 ### `svelte/easing`
 
@@ -573,10 +642,14 @@ component.$on(event, callback)
 
 Causes the `callback` function to be called whenever the component dispatches an `event`.
 
+A function is returned that will remove the event listener when called.
+
 ```js
-app.$on('selected', event => {
+const off = app.$on('selected', event => {
 	console.log(event.detail.selection);
 });
+
+off();
 ```
 
 #### `$destroy`

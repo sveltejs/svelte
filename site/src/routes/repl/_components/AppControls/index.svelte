@@ -6,6 +6,7 @@
 	import downloadBlob from '../../_utils/downloadBlob.js';
 	import { user } from '../../../../user.js';
 	import { enter } from '../../../../utils/events.js';
+	import { isMac } from '../../../../utils/compat.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -19,8 +20,6 @@
 	let downloading = false;
 	let justSaved = false;
 	let justForked = false;
-
-	const isMac = typeof navigator !== 'undefined' && navigator.platform === 'MacIntel';
 
 	function wait(ms) {
 		return new Promise(f => setTimeout(f, ms));
