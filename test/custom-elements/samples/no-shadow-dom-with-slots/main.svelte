@@ -2,8 +2,8 @@
 
 <script>
 import './AsElement.svelte';
-import ImportedElement from './AsImported.svelte';
+import AsImported from './AsImported.svelte';
 </script>
 
 <as-element>Hello</as-element>
-<ImportedElement>world</ImportedElement>
+<AsImported>world</AsImported>
