@@ -166,7 +166,7 @@
 		font-size: var(--h3);
 		line-height: 1;
 		font-weight: 400;
-		color: var(--sidebar-text);
+		color: white;
 	}
 
 	.chapter-markup :global(h2:first-child) {
@@ -213,7 +213,7 @@
 	}
 
 	.controls {
-		border-top: 1px solid rgba(0,0,0,.25);
+		border-top: 1px solid rgba(255,255,255,.15);
 		padding: 1em 0 0 0;
 		display: flex;
 	}
