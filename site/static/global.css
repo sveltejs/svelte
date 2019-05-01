@@ -46,6 +46,7 @@
 	--flash:      	#40b3ff;
 	--heading:	var(--second);
 	--text:      		#444;
+	--sidebar-text: rgba(255, 255, 255, .75);
 	--border-w:  		.3rem; /* border-width  */
 	--border-r:  		.4rem; /* border-radius */
 }
