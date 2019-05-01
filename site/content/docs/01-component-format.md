@@ -56,7 +56,7 @@ To change component state and trigger a re-render, just assign to a locally decl
 
 Update expressions (`count += 1`) and property assignments (`obj.x = y`) have the same effect.
 
-Because Svelte's reactivity is triggered only by assignments, using array methods like push and splice won't automatically cause updates. Options for getting around the limitation can be found in the [tutorial](https://svelte.dev/tutorial/updating-arrays-and-objects).
+Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. Options for getting around this can be found in the [tutorial](tutorial/updating-arrays-and-objects).
 
 ```html
 <script>
