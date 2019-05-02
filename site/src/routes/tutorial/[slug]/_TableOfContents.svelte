@@ -30,13 +30,17 @@
 		display: block;
 		padding: 0.7em 0;
 		text-align: center;
-		opacity: 0.7;
+		opacity: 0.75;
 		color: white;
+	}
+
+	a:hover {
+		opacity: 1;
 	}
 
 	a.disabled, a.disabled:hover, a.disabled:active {
 		color: white;
-		opacity: 0.4;
+		opacity: 0.3;
 	}
 
 	span {
