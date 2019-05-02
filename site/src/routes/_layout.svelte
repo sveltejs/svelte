@@ -1,8 +1,9 @@
 <script>
-	import { page, preloading } from '@sapper/app';
+	import { stores } from '@sapper/app';
 	import { Icon, Icons, Nav, NavItem } from '@sveltejs/site-kit';
 	import PreloadingIndicator from '../components/PreloadingIndicator.svelte';
-	// import Nav from '../components/TopNav.svelte';
+
+	const { page, preloading } = stores();
 
 	export let segment;
 </script>
@@ -21,7 +22,7 @@
 		<NavItem segment="repl">REPL</NavItem>
 		<NavItem segment="blog">Blog</NavItem>
 
-		<NavItem external="https://sapper.svelte.technology">Sapper</NavItem>
+		<NavItem external="https://sapper.svelte.dev">Sapper</NavItem>
 
 		<NavItem external="https://discord.gg/yy75DKs" title="Discord Chat">
 			<Icon name="message-square"/>
