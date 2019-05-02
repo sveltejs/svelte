@@ -37,6 +37,7 @@
     "@babel/preset-env": "^7.3.1",
     "@babel/runtime": "^7.3.1",
     "@sindresorhus/slugify": "^0.9.1",
+    "@sveltejs/site-kit": "^1.0.3",
     "@sveltejs/svelte-repl": "0.0.10",
     "chokidar": "^2.1.2",
     "degit": "^2.1.3",
