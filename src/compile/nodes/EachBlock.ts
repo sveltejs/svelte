@@ -16,7 +16,7 @@ function unpack_destructuring(contexts: Array<{ name: string, tail: string }>, n
 		});
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
-			if (element.type === 'RestIdentifier') {
+			if (element && element.type === 'RestIdentifier') {
 				unpack_destructuring(contexts, element, `${tail}.slice(${i})`)
 			} else {
 				unpack_destructuring(contexts, element, `${tail}[${i}]`);
