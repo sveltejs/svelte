@@ -39,7 +39,7 @@ It starts to get a bit boilerplatey though, especially if your component subscri
 <h1>The count is {$count}</h1>
 ```
 
-> Autosubscription only works on store variables either declared or imported at the top-level scope of a component.
+> Auto-subscription only works with store variables that are declared (or imported) at the top-level scope of a component.
 
 You're not limited to using `$count` inside the markup, either — you can use it anywhere in the `<script>` as well, such as in event handlers or reactive declarations.
 
