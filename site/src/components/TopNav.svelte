@@ -1,12 +1,14 @@
 <script>
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
-	import { page } from '@sapper/app';
+	import { stores } from '@sapper/app';
 
 	export let segment;
 
 	let open = false;
 	let visible = true;
+
+	const { page } = stores();
 
 	// hide nav whenever we navigate
 	page.subscribe(() => {
