@@ -18,7 +18,7 @@
 	import { getContext } from 'svelte';
 
 	import ScreenToggle from '../../../components/ScreenToggle.svelte';
-	import Icon from '../../../components/Icon.svelte';
+	import { Icon } from '@sveltejs/site-kit';
 	import TableOfContents from './_TableOfContents.svelte';
 
 	import {
