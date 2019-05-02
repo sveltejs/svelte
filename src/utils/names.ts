@@ -2,8 +2,10 @@ import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import full_char_code_at from './full_char_code_at';
 
 export const globals = new Set([
+	'alert',
 	'Array',
 	'Boolean',
+	'confirm',
 	'console',
 	'Date',
 	'decodeURI',
@@ -24,6 +26,7 @@ export const globals = new Set([
 	'parseInt',
 	'process',
 	'Promise',
+	'prompt',
 	'RegExp',
 	'Set',
 	'String',
