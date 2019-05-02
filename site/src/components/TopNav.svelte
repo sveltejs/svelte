@@ -259,7 +259,7 @@
 			<li class:active="{segment === 'examples'}"><a rel="prefetch" href="examples">Examples</a></li>
 			<li class:active="{segment === 'repl'}"><a rel="prefetch" href="repl">REPL</a></li>
 			<li class:active="{segment === 'blog'}"><a rel="prefetch" href="blog">Blog</a></li>
-			<li><a href="https://sapper.svelte.technology">Sapper</a></li>
+			<li><a href="https://sapper.svelte.dev">Sapper</a></li>
 
 			<li>
 				<a href="https://discord.gg/yy75DKs" title="Discord Chat">
