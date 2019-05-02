@@ -36,7 +36,7 @@ export default function mustache(parser: Parser) {
 
 	parser.allow_whitespace();
 
-	// {/if} or {/each}
+	// {/if}, {/each} or {/await}
 	if (parser.eat('/')) {
 		let block = parser.current();
 		let expected;
@@ -286,13 +286,6 @@ export default function mustache(parser: Parser) {
 				block.key = read_expression(parser);
 				parser.allow_whitespace();
 				parser.eat(')', true);
-				parser.allow_whitespace();
-			} else if (parser.eat('@')) {
-				block.key = parser.read_identifier();
-				if (!block.key) parser.error({
-					code: `expected-name`,
-					message: `Expected name`
-				});
 				parser.allow_whitespace();
 			}
 		}
