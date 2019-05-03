@@ -38,6 +38,16 @@ export function element(name) {
 	return document.createElement(name);
 }
 
+export function object_without_properties(obj, exclude) {
+	const target = {};
+	for (const k in obj) {
+		if (Object.prototype.hasOwnProperty.call(obj, k) && exclude.indexOf(k) === -1) {
+			target[k] = obj[k];
+		}
+	}
+	return target;
+}
+
 export function svg_element(name) {
 	return document.createElementNS('http://www.w3.org/2000/svg', name);
 }

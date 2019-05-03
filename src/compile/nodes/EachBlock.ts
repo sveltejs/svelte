@@ -5,6 +5,7 @@ import Expression from './shared/Expression';
 import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
 import { Node as INode } from '../../interfaces';
+import { new_tail } from '../utils/tail';
 
 function unpack_destructuring(contexts: Array<{ name: string, tail: string }>, node: INode, tail: string) {
 	if (!node) return;
@@ -19,8 +20,20 @@ function unpack_destructuring(contexts: Array<{ name: string, tail: string }>, n
 			unpack_destructuring(contexts, element, `${tail}[${i}]`);
 		});
 	} else if (node.type === 'ObjectPattern') {
+		const used_properties = [];
+
 		node.properties.forEach((property) => {
-			unpack_destructuring(contexts, property.value, `${tail}.${property.key.name}`);
+			if (property.kind === 'rest') {
+				unpack_destructuring(
+					contexts,
+					property.value,
+					`@object_without_properties(${tail}, ${JSON.stringify(used_properties)})`
+				);
+			} else {
+				used_properties.push(property.key.name);
+
+				unpack_destructuring(contexts, property.value,`${tail}.${property.key.name}`);
+			}
 		});
 	}
 }
@@ -55,7 +68,7 @@ export default class EachBlock extends Node {
 		this.scope = scope.child();
 
 		this.contexts = [];
-		unpack_destructuring(this.contexts, info.context, '');
+		unpack_destructuring(this.contexts, info.context, new_tail());
 
 		this.contexts.forEach(context => {
 			this.scope.add(context.key.name, this.expression.dependencies, this);
