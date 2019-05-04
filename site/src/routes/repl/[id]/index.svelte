@@ -10,7 +10,7 @@
 <script>
 	import Repl from '@sveltejs/svelte-repl';
 	import { onMount } from 'svelte';
-
+	import { goto } from '@sapper/app';
 	import { process_example } from '../../../utils/examples';
 	import InputOutputToggle from '../../../components/Repl/InputOutputToggle.svelte';
 	import AppControls from './_components/AppControls/index.svelte';
@@ -26,7 +26,7 @@
 	let width = process.browser ? window.innerWidth : 1000;
 	let checked = false;
 
-	$: if (typeof history !== 'undefined') {
+	function update_query_string(version) {
 		const params = [];
 
 		if (version !== 'latest') params.push(`version=${version}`);
@@ -38,17 +38,15 @@
 		history.replaceState({}, 'x', url);
 	}
 
-	onMount(() => {
-		if (version !== 'local') {
-			fetch(`https://unpkg.com/svelte@${version || '3'}/package.json`)
-				.then(r => r.json())
-				.then(pkg => {
-					version = pkg.version;
-				});
+	$: if (typeof history !== 'undefined') update_query_string(version);
+
+	function fetch_gist(id) {
+		if (gist && gist.uid === id) {
+			// if the id changed because we just forked, don't refetch
+			return;
 		}
 
 		// TODO handle `relaxed` logic
-
 		fetch(`repl/${id}.json`).then(r => {
 			if (r.ok) {
 				r.json().then(data => {
@@ -77,12 +75,24 @@
 				console.warn('TODO: 404 Gist')
 			}
 		});
+	}
+
+	$: if (process.browser) fetch_gist(id);
+
+	onMount(() => {
+		if (version !== 'local') {
+			fetch(`https://unpkg.com/svelte@${version || '3'}/package.json`)
+				.then(r => r.json())
+				.then(pkg => {
+					version = pkg.version;
+				});
+		}
 	});
 
 	function handle_fork(event) {
 		console.log('> handle_fork', event);
 		gist = event.detail.gist;
-		id = gist.uid;
+		goto(`/repl/${gist.uid}?version=${version}`);
 	}
 
 	$: svelteUrl = process.browser && version === 'local' ?

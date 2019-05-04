@@ -10,8 +10,6 @@ export async function post(req, res) {
 	try {
 		const { name, files } = await body(req);
 
-		console.log({ name, files });
-
 		const [row] = await query(`
 			insert into gists(user_id, name, files)
 			values ($1, $2, $3) returning *`, [user.id, name, JSON.stringify(files)]);
