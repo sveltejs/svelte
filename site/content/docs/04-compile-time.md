@@ -153,6 +153,30 @@ compiled: {
 -->
 
 
+### `svelte.parse`
+
+```js
+ast: object = svelte.parse(
+	source: string,
+	options?: {
+		filename?: string,
+		customElement?: boolean
+	}
+)
+```
+
+---
+
+The `parse` function parses a component, returning only its abstract syntax tree. Unlike compiling with the `generate: false` option, this will not perform any validation or other analysis of the component beyond parsing it.
+
+
+```js
+const svelte = require('svelte/compiler');
+
+const ast = svelte.parse(source, { filename: 'App.svelte' });
+```
+
+
 ### `svelte.preprocess`
 
 ```js
