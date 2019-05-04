@@ -2,8 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { extract_frontmatter, langs, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
 import marked from 'marked';
+import { makeSlugProcessor } from '../../utils/slug';
+import { SLUG_PRESERVE_UNICODE } from '../../../config';
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
+
+const makeSlug = makeSlugProcessor(SLUG_PRESERVE_UNICODE);
 
 export default function get_posts() {
 	return fs
@@ -37,6 +41,17 @@ export default function get_posts() {
 				);
 
 				return `<pre class='language-${plang}'><code>${highlighted}</code></pre>`;
+			};
+
+			renderer.heading = (text, level, rawtext) => {
+				const fragment = makeSlug(rawtext);
+
+				return `
+					<h${level}>
+						<span id="${fragment}" class="offset-anchor"></span>
+						<a href="blog/${slug}#${fragment}" class="anchor" aria-hidden="true"></a>
+						${text}
+					</h${level}>`;
 			};
 
 			const html = marked(

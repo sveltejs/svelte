@@ -55,10 +55,16 @@ export const unicodeSafeProcessor = string =>
 	}, [])
 	.join(SLUG_SEPARATOR);
 
+/* processor */
+
+export const makeSlugProcessor = (preserveUnicode = false) => preserveUnicode
+	? unicodeSafeProcessor
+	: urlsafeSlugProcessor;
+
 /* session processor */
 
 export const makeSessionSlugProcessor = (preserveUnicode = false) => {
-	const processor = preserveUnicode ? unicodeSafeProcessor : urlsafeSlugProcessor;
+	const processor = makeSlugProcessor(preserveUnicode);
 	const seen = new Set();
 
 	return string => {
