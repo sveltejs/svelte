@@ -172,7 +172,8 @@ export default function mustache(parser: Parser) {
 				start,
 				end: null,
 				type: 'ThenBlock',
-				children: []
+				children: [],
+				skip: false
 			};
 
 			await_block.then = then_block;
@@ -196,7 +197,8 @@ export default function mustache(parser: Parser) {
 				start,
 				end: null,
 				type: 'CatchBlock',
-				children: []
+				children: [],
+				skip: false
 			};
 
 			await_block.catch = catch_block;
@@ -235,19 +237,22 @@ export default function mustache(parser: Parser) {
 					start: null,
 					end: null,
 					type: 'PendingBlock',
-					children: []
+					children: [],
+					skip: true
 				},
 				then: {
 					start: null,
 					end: null,
 					type: 'ThenBlock',
-					children: []
+					children: [],
+					skip: true
 				},
 				catch: {
 					start: null,
 					end: null,
 					type: 'CatchBlock',
-					children: []
+					children: [],
+					skip: true
 				},
 			} :
 			{
@@ -303,7 +308,15 @@ export default function mustache(parser: Parser) {
 		parser.stack.push(block);
 
 		if (type === 'AwaitBlock') {
-			const child_block = await_block_shorthand ? block.then : block.pending;
+			let child_block;
+			if (await_block_shorthand) {
+				block.then.skip = false;
+				child_block = block.then;
+			} else {
+				block.pending.skip = false;
+				child_block = block.pending;
+			}
+
 			child_block.start = parser.index;
 			parser.stack.push(child_block);
 		}
