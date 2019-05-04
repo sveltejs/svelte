@@ -28,7 +28,7 @@
 		}
 
 		if (gist) {
-			fetch(`gist/${gist}`).then(r => r.json()).then(data => {
+			fetch(`repl/${gist}.json`).then(r => r.json()).then(data => {
 				const { id, description, files } = data;
 
 				name = description;

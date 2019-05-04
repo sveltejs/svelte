@@ -1,5 +1,5 @@
 <script>
-	import { user, logout } from '../../../../user.js';
+	import { user, logout } from '../../../../../user.js';
 
 	let showMenu = false;
 	let name;

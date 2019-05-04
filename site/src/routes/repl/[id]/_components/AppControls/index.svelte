@@ -3,10 +3,10 @@
 	import UserMenu from './UserMenu.svelte';
 	import { Icon } from '@sveltejs/site-kit';
 	import * as doNotZip from 'do-not-zip';
-	import downloadBlob from '../../_utils/downloadBlob.js';
-	import { user } from '../../../../user.js';
-	import { enter } from '../../../../utils/events.js';
-	import { isMac } from '../../../../utils/compat.js';
+	import downloadBlob from '../../../_utils/downloadBlob.js';
+	import { user } from '../../../../../user.js';
+	import { enter } from '../../../../../utils/events.js';
+	import { isMac } from '../../../../../utils/compat.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -54,7 +54,7 @@
 		const { components } = repl.toJSON();
 
 		try {
-			const r = await fetch(`gist/create`, {
+			const r = await fetch(`repl/create.json`, {
 				method: 'POST',
 				headers: { Authorization },
 				body: JSON.stringify({
@@ -113,7 +113,7 @@
 				files[`${module.name}.${module.type}`] = text;
 			});
 
-			const r = await fetch(`gist/${gist.uid}`, {
+			const r = await fetch(`repl/${gist.uid}.json`, {
 				method: 'PATCH',
 				headers: { Authorization },
 				body: JSON.stringify({ name, files })
