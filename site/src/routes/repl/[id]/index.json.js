@@ -113,7 +113,7 @@ export async function patch(req, res) {
 		let k, cols=[], vals=[];
 		for (k in obj) {
 			cols.push(k);
-			vals.push(obj[k]);
+			vals.push(k === 'files' ? JSON.stringify(obj[k]) : obj[k]);
 		}
 
 		const tmp = vals.map((x, i) => `$${i + 1}`).join(',');

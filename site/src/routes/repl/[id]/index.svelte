@@ -80,10 +80,9 @@
 	});
 
 	function handle_fork(event) {
-		example = null;
 		console.log('> handle_fork', event);
 		gist = event.detail.gist;
-		gist_id = gist.uid;
+		id = gist.uid;
 	}
 
 	$: svelteUrl = process.browser && version === 'local' ?

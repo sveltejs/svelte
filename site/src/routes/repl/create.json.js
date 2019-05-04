@@ -8,21 +8,16 @@ export async function post(req, res) {
 	if (!user) return; // response already sent
 
 	try {
-		const { name, components } = await body(req);
+		const { name, files } = await body(req);
 
-		const files = {};
-		components.forEach(component => {
-			const text = component.source.trim();
-			if (!text.length) return; // skip empty file
-			files[`${component.name}.${component.type}`] = text;
-		});
+		console.log({ name, files });
 
 		const [row] = await query(`
 			insert into gists(user_id, name, files)
-			values ($1, $2, $3) returning *`, [user.id, name, files]);
+			values ($1, $2, $3) returning *`, [user.id, name, JSON.stringify(files)]);
 
 		send(res, 201, {
-			uid: row.uid,
+			uid: row.uid.replace(/-/g, ''),
 			name: row.name,
 			files: row.files,
 			owner: user.uid,
