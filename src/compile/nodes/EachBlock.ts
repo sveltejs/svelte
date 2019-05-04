@@ -10,14 +10,18 @@ import { new_tail } from '../utils/tail';
 function unpack_destructuring(contexts: Array<{ name: string, tail: string }>, node: INode, tail: string) {
 	if (!node) return;
 
-	if (node.type === 'Identifier') {
+	if (node.type === 'Identifier' || node.type === 'RestIdentifier') {
 		contexts.push({
 			key: node,
 			tail
 		});
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
-			unpack_destructuring(contexts, element, `${tail}[${i}]`);
+			if (element && element.type === 'RestIdentifier') {
+				unpack_destructuring(contexts, element, `${tail}.slice(${i})`)
+			} else {
+				unpack_destructuring(contexts, element, `${tail}[${i}]`);
+			}
 		});
 	} else if (node.type === 'ObjectPattern') {
 		const used_properties = [];
