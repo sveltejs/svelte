@@ -20,7 +20,7 @@ type Property = {
 type Context = {
 	start: number;
 	end: number;
-	type: 'Identifier' | 'ArrayPattern' | 'ObjectPattern';
+	type: 'Identifier' | 'ArrayPattern' | 'ObjectPattern' | 'RestIdentifier';
 	name?: string;
 	elements?: Context[];
 	properties?: Property[];
@@ -33,6 +33,13 @@ function error_on_assignment_pattern(parser: Parser) {
 			message: 'Assignment patterns are not supported'
 		}, parser.index - 1);
 	}
+}
+
+function error_on_rest_pattern_not_last(parser: Parser) {
+	parser.error({
+		code: 'rest-pattern-not-last',
+		message: 'Rest destructuring expected to be last'
+	}, parser.index);
 }
 
 export default function read_context(parser: Parser) {
@@ -48,6 +55,11 @@ export default function read_context(parser: Parser) {
 
 		do {
 			parser.allow_whitespace();
+
+			const lastContext = context.elements[context.elements.length - 1];
+			if (lastContext && lastContext.type === 'RestIdentifier') {
+				error_on_rest_pattern_not_last(parser);
+			}
 
 			if (parser.template[parser.index] === ',') {
 				context.elements.push(null);
@@ -136,6 +148,22 @@ export default function read_context(parser: Parser) {
 		error_on_assignment_pattern(parser);
 		parser.eat('}', true);
 		context.end = parser.index;
+	}
+
+	else if (parser.eat('...')) {
+		const name = parser.read_identifier();
+		if (name) {
+			context.type = 'RestIdentifier';
+			context.end = parser.index;
+			context.name = name;
+		}
+
+		else {
+			parser.error({
+				code: 'invalid-context',
+				message: 'Expected a rest pattern'
+			});
+		}
 	}
 
 	else {
