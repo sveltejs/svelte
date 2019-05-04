@@ -1,6 +1,5 @@
 <script>
 	import { Blurb, Hero, Section } from '@sveltejs/site-kit';
-	// import Blurb from './_components/Blurb.svelte';
 	import Example from './_components/Example.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte.svelte';
 	// import Lazy from '../components/Lazy.svelte';
