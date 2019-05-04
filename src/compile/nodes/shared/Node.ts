@@ -1,3 +1,4 @@
+import Attribute from './../Attribute';
 import Component from './../../Component';
 
 export default class Node {
@@ -12,6 +13,7 @@ export default class Node {
 
 	can_use_innerhtml: boolean;
 	var: string;
+	attributes: Attribute[];
 
 	constructor(component: Component, parent, scope, info: any) {
 		this.start = info.start;
@@ -63,19 +65,5 @@ export default class Node {
 		return this.parent ?
 			this.parent.type === type || this.parent.has_ancestor(type) :
 			false;
-	}
-
-	warn_if_empty_block() {
-		if (!/Block$/.test(this.type) || !this.children) return;
-		if (this.children.length > 1) return;
-
-		const child = this.children[0];
-
-		if (!child || (child.type === 'Text' && !/[^ \r\n\f\v\t]/.test(child.data))) {
-			this.component.warn(this, {
-				code: 'empty-block',
-				message: 'Empty block'
-			});
-		}
 	}
 }
