@@ -48,17 +48,10 @@
 
 	a {
 		position: relative;
-		opacity: 0.75;
-		transition: opacity 0.2s;
+		transition: color 0.2s;
 		border-bottom: none;
 		padding: 0;
 		color: var(--second);
-	}
-
-	@media (min-width: 832px) {
-		a {
-			color: white;
-		}
 	}
 
 	.section {
@@ -78,21 +71,32 @@
 	}
 
 	.section:hover,
-	.subsection:hover {
+	.subsection:hover,
+	.active {
 		color: var(--flash);
-		opacity: 1
 	}
 
 	.subsection[data-level="4"] {
 		padding-left: 1.2rem;
 	}
 
-	.active { opacity: 1 }
-
 	.icon-container {
 		position: absolute;
 		top: -.2rem;
 		right: 2.4rem;
+	}
+
+	@media (min-width: 832px) {
+		a {
+			color: var(--sidebar-text);
+		}
+
+		a:hover,
+		.section:hover,
+		.subsection:hover,
+		.active {
+			color: white
+		}
 	}
 </style>
 
