@@ -19,10 +19,10 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 				new Date(current_value.getTime() + d) : current_value + d;
 		}
 	} else if (Array.isArray(current_value)) {
-		return current_value.map((_, i) => 
+		return current_value.map((_, i) =>
 			tick_spring(ctx, last_value[i], current_value[i], target_value[i]));
 	} else if (typeof current_value === 'object') {
-		let next_value = {};
+		const next_value = {};
 		for (const k in current_value)
 			next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
 		return next_value;
@@ -35,7 +35,9 @@ export function spring(value, opts = {}) {
 	const store = writable(value);
 	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
 
-	let last_time, task, current_token;
+	let last_time;
+	let task;
+	let current_token;
 	let last_value = value;
 	let target_value = value;
 
@@ -46,7 +48,7 @@ export function spring(value, opts = {}) {
 	function set(new_value, opts = {}) {
 		target_value = new_value;
 		const token = current_token = {};
-		
+
 		if (opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
 			cancel_task = true; // cancel any running animation
 			last_time = window.performance.now();
@@ -54,7 +56,7 @@ export function spring(value, opts = {}) {
 			store.set(value = target_value);
 			return new Promise(f => f()); // fulfil immediately
 		} else if (opts.soft) {
-			let rate = opts.soft === true ? .5 : +opts.soft;
+			const rate = opts.soft === true ? .5 : +opts.soft;
 			inv_mass_recovery_rate = 1 / (rate * 60);
 			inv_mass = 0; // infinite mass, unaffected by spring forces
 		}
@@ -62,15 +64,15 @@ export function spring(value, opts = {}) {
 		if (!task) {
 			last_time = window.performance.now();
 			cancel_task = false;
-			
+
 			task = loop(now => {
-				
+
 				if (cancel_task) {
 					cancel_task = false;
 					task = null;
 					return false;
 				}
-				
+
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
 
 				const ctx = {
