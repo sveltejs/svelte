@@ -3,7 +3,7 @@ export function append(target, node) {
 }
 
 export function insert(target, node, anchor) {
-	target.insertBefore(node, anchor);
+	target.insertBefore(node, anchor || null);
 }
 
 export function detach(node) {
