@@ -203,7 +203,7 @@ export default function dom(
 							const variable = component.var_lookup.get(name);
 							if (variable && (variable.hoistable || variable.global || variable.module)) return;
 
-							if (single) {
+							if (single && !(variable.subscribable && variable.reassigned)) {
 								code.prependRight(node.start, `$$invalidate('${name}', `);
 								code.appendLeft(node.end, `)`);
 							} else {
