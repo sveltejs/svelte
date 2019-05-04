@@ -11,7 +11,7 @@ type Property = {
 	start: number;
 	end: number;
 	type: 'Property';
-	kind: string;
+	kind: 'init' | 'rest';
 	shorthand: boolean;
 	key: Identifier;
 	value: Context;
@@ -68,6 +68,41 @@ export default function read_context(parser: Parser) {
 
 		do {
 			parser.allow_whitespace();
+
+			if (parser.eat('...')) {
+				parser.allow_whitespace();
+
+				const start = parser.index;
+				const name = parser.read_identifier();
+				const key: Identifier = {
+					start,
+					end: parser.index,
+					type: 'Identifier',
+					name
+				}
+				const property: Property = {
+					start,
+					end: parser.index,
+					type: 'Property',
+					kind: 'rest',
+					shorthand: true,
+					key,
+					value: key
+				}
+
+				context.properties.push(property);
+
+				parser.allow_whitespace();
+
+				if (parser.eat(',')) {
+					parser.error({
+						code: `comma-after-rest`,
+						message: `Comma is not permitted after the rest element`
+					}, parser.index - 1);
+				}
+
+				break;
+			}
 
 			const start = parser.index;
 			const name = parser.read_identifier();
