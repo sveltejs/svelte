@@ -1,0 +1,15 @@
+[{
+	"code": "comma-after-rest",
+	"message": "Comma is not permitted after the rest element",
+	"pos": 100,
+	"start": {
+		"line": 5,
+		"column": 53,
+		"character": 100
+	},
+	"end": {
+		"line": 5,
+		"column": 53,
+		"character": 100
+	}
+}]

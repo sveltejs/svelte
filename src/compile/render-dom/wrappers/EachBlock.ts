@@ -6,6 +6,7 @@ import EachBlock from '../../nodes/EachBlock';
 import FragmentWrapper from './Fragment';
 import deindent from '../../utils/deindent';
 import ElseBlock from '../../nodes/ElseBlock';
+import { attach_head } from '../../utils/tail';
 
 class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -127,7 +128,7 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.bindings.set(prop.key.name, {
 				object: this.vars.each_block_value,
 				property: this.index_name,
-				snippet: `${this.vars.each_block_value}[${this.index_name}]${prop.tail}`
+				snippet: attach_head(`${this.vars.each_block_value}[${this.index_name}]`, prop.tail)
 			});
 		});
 
@@ -177,7 +178,7 @@ export default class EachBlockWrapper extends Wrapper {
 			? block.get_unique_name(`${this.var}_anchor`)
 			: (this.next && this.next.var) || 'null';
 
-		this.context_props = this.node.contexts.map(prop => `child_ctx.${prop.key.name} = list[i]${prop.tail};`);
+		this.context_props = this.node.contexts.map(prop => `child_ctx.${prop.key.name} = ${attach_head('list[i]', prop.tail)};`);
 
 		if (this.node.has_binding) this.context_props.push(`child_ctx.${this.vars.each_block_value} = list;`);
 		if (this.node.has_binding || this.node.index) this.context_props.push(`child_ctx.${this.index_name} = i;`);
