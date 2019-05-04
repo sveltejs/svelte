@@ -35,6 +35,9 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 	// these properties can be set externally
 	export let foo;
 	export let bar = 'optional default value';
+	
+	// this property is readonly externally
+	export const buzz = 'buzz';
 
 	// Values that are passed in as props
 	// are immediately available
