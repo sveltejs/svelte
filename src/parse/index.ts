@@ -3,13 +3,8 @@ import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
 import { reserved } from '../utils/names';
 import full_char_code_at from '../utils/full_char_code_at';
-import { Node, Ast } from '../interfaces';
+import { Node, Ast, ParserOptions } from '../interfaces';
 import error from '../utils/error';
-
-interface ParserOptions {
-	filename?: string;
-	customElement?: boolean;
-}
 
 type ParserState = (parser: Parser) => (ParserState | void);
 
