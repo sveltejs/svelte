@@ -2,12 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { extract_frontmatter, langs, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
 import marked from 'marked';
-import PrismJS from 'prismjs';
-import 'prismjs/components/prism-bash';
-
-import { extract_frontmatter, langs, link_renderer } from '../../utils/markdown';
 import { makeSlugProcessor } from '../../utils/slug';
 import { SLUG_PRESERVE_UNICODE } from '../../../config';
+import PrismJS from 'prismjs';
+import 'prismjs/components/prism-bash';
 
 const makeSlug = makeSlugProcessor(SLUG_PRESERVE_UNICODE);
 
