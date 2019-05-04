@@ -4,8 +4,7 @@
   "description": "Docs and examples for Svelte",
   "scripts": {
     "dev": "sapper dev",
-    "sapper": "sapper build --legacy && npm run update_shimport",
-    "update_shimport": "cp node_modules/shimport/index.js __sapper__/build/client/shimport@0.0.14.js",
+    "sapper": "sapper build --legacy",
     "update": "node scripts/update_template.js && node scripts/get-contributors.js",
     "start": "node __sapper__/build",
     "cy:run": "cypress run",
@@ -20,7 +19,6 @@
     "do-not-zip": "^1.0.0",
     "express-session": "^1.15.6",
     "golden-fleece": "^1.0.9",
-    "limax": "^1.7.0",
     "marked": "^0.6.1",
     "node-fetch": "^2.3.0",
     "passport": "^0.4.0",
@@ -38,6 +36,8 @@
     "@babel/plugin-transform-runtime": "^7.2.0",
     "@babel/preset-env": "^7.3.1",
     "@babel/runtime": "^7.3.1",
+    "@sindresorhus/slugify": "^0.9.1",
+    "@sveltejs/site-kit": "^1.0.3",
     "@sveltejs/svelte-repl": "0.0.10",
     "chokidar": "^2.1.2",
     "degit": "^2.1.3",
@@ -55,9 +55,8 @@
     "rollup-plugin-replace": "^2.1.0",
     "rollup-plugin-svelte": "^5.0.3",
     "rollup-plugin-terser": "^4.0.4",
-    "sapper": "^0.26.0-alpha.12",
-    "shimport": "0.0.16",
-    "svelte": "^3.0.0-beta.28"
+    "sapper": "^0.26.0",
+    "svelte": "^3.1.0"
   },
   "engines": {
     "node": ">=10.0.0"

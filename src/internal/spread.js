@@ -2,7 +2,7 @@ export function get_spread_update(levels, updates) {
 	const update = {};
 
 	const to_null_out = {};
-	const accounted_for = {};
+	const accounted_for = { $$scope: 1 };
 
 	let i = levels.length;
 	while (i--) {
