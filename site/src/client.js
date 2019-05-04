@@ -1,3 +1,4 @@
+import '@sveltejs/site-kit/base.css';
 import * as sapper from '@sapper/app';
 
 sapper.start({

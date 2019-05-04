@@ -92,5 +92,6 @@
     ],
     "sourceMap": true,
     "instrument": true
-  }
+  },
+  "dependencies": {}
 }
