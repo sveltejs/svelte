@@ -1,5 +1,22 @@
 # Svelte changelog
 
+## 3.2.0
+
+* Improve `spring` animations, and add `hard`/`soft` options ([#2627](https://github.com/sveltejs/svelte/pull/2627))
+* Expose `parse` and `walk` functions ([#2661](https://github.com/sveltejs/svelte/issues/2661), [#2534](https://github.com/sveltejs/svelte/pull/2534))
+* Support array/object rest in `each` block destructuring patterns ([#2647](https://github.com/sveltejs/svelte/issues/2647), [#2658](https://github.com/sveltejs/svelte/pull/2658))
+* Use `setAttribute` to change `form` property on form elements ([#1742](https://github.com/sveltejs/svelte/issues/1742))
+* Fix a11y warning when `<figcaption>` is non-direct descendant of `<figure>` ([#2582](https://github.com/sveltejs/svelte/issues/2582))
+* Squelch erroneous 'empty block' warnings ([#1716](https://github.com/sveltejs/svelte/issues/1716))
+* Fix IE9/10 error with `insertBefore` ([#2573](https://github.com/sveltejs/svelte/issues/2573))
+* Prevent `$$scope` from being spread onto an element ([#2520](https://github.com/sveltejs/svelte/issues/2520))
+* Resubscribe to stores that are assigned to in `<script>` ([#2435](https://github.com/sveltejs/svelte/issues/2435))
+* Allow reactive declarations to depend on `const` variables ([#2285](https://github.com/sveltejs/svelte/issues/2285))
+* Trigger store changes on UpdateExpression ([#2625](https://github.com/sveltejs/svelte/issues/2625))
+* Squelch missing prop warning if variable is initialised ([#2635](https://github.com/sveltejs/svelte/issues/2635))
+* Add `alert`, `confirm` and `prompt` to known globals ([#2648](https://github.com/sveltejs/svelte/issues/2648))
+
+
 ## 3.1.0
 
 * Allow store subscribe functions to return an object with an `unsubscribe` method, providing native RxJS support ([#2549](https://github.com/sveltejs/svelte/issues/2549))
