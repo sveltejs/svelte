@@ -308,21 +308,6 @@ const attribute_lookup = {
 	dropzone: {},
 	enctype: { applies_to: ['form'] },
 	for: { property_name: 'htmlFor', applies_to: ['label', 'output'] },
-	form: {
-		applies_to: [
-			'button',
-			'fieldset',
-			'input',
-			'keygen',
-			'label',
-			'meter',
-			'object',
-			'output',
-			'progress',
-			'select',
-			'textarea',
-		],
-	},
 	formaction: { applies_to: ['input', 'button'] },
 	headers: { applies_to: ['td', 'th'] },
 	height: {
