@@ -1,16 +1,12 @@
-import Node from './shared/Node';
 import ElseBlock from './ElseBlock';
-import Block from '../render-dom/Block';
 import Expression from './shared/Expression';
 import map_children from './shared/map_children';
+import AbstractBlock from './shared/AbstractBlock';
 
-export default class IfBlock extends Node {
+export default class IfBlock extends AbstractBlock {
 	type: 'IfBlock';
 	expression: Expression;
-	children: any[];
 	else: ElseBlock;
-
-	block: Block;
 
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);

@@ -1,12 +1,12 @@
 {
 	"html": {
 		"start": 0,
-		"end": 62,
+		"end": 71,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 62,
+				"end": 71,
 				"type": "EachBlock",
 				"expression": {
 					"type": "Identifier",
@@ -16,37 +16,37 @@
 				},
 				"children": [
 					{
-						"start": 33,
-						"end": 54,
+						"start": 42,
+						"end": 63,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 36,
-								"end": 41,
-								"type": "MustacheTag",
-								"expression": {
-									"type": "Identifier",
-									"start": 37,
-									"end": 40,
-									"name": "key"
-								}
-							},
-							{
-								"start": 41,
-								"end": 43,
-								"type": "Text",
-								"data": ": "
-							},
-							{
-								"start": 43,
+								"start": 45,
 								"end": 50,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 44,
+									"start": 46,
 									"end": 49,
+									"name": "key"
+								}
+							},
+							{
+								"start": 50,
+								"end": 52,
+								"type": "Text",
+								"data": ": "
+							},
+							{
+								"start": 52,
+								"end": 59,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 53,
+									"end": 58,
 									"name": "value"
 								}
 							}
@@ -55,7 +55,7 @@
 				],
 				"context": {
 					"start": 18,
-					"end": 30,
+					"end": 39,
 					"type": "ArrayPattern",
 					"elements": [
 						{
@@ -69,6 +69,12 @@
 							"end": 29,
 							"type": "Identifier",
 							"name": "value"
+						},
+						{
+							"start": 31,
+							"end": 38,
+							"type": "RestIdentifier",
+							"name": "rest"
 						}
 					]
 				}

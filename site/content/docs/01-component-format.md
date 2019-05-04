@@ -35,6 +35,9 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 	// these properties can be set externally
 	export let foo;
 	export let bar = 'optional default value';
+	
+	// this property is readonly externally
+	export const buzz = 'buzz';
 
 	// Values that are passed in as props
 	// are immediately available
@@ -55,6 +58,8 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 To change component state and trigger a re-render, just assign to a locally declared variable.
 
 Update expressions (`count += 1`) and property assignments (`obj.x = y`) have the same effect.
+
+Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. Options for getting around this can be found in the [tutorial](tutorial/updating-arrays-and-objects).
 
 ```html
 <script>

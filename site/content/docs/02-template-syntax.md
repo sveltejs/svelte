@@ -755,6 +755,8 @@ The `in:` and `out:` directives are not bidirectional. An in transition will con
 {/if}
 ```
 
+> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](docs#Client-side_component_API).
+
 #### Transition parameters
 
 ---

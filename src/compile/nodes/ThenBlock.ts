@@ -1,12 +1,9 @@
-import Node from './shared/Node';
-import Block from '../render-dom/Block';
 import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
+import AbstractBlock from './shared/AbstractBlock';
 
-export default class ThenBlock extends Node {
-	block: Block;
+export default class ThenBlock extends AbstractBlock {
 	scope: TemplateScope;
-	children: Node[];
 
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
@@ -15,6 +12,8 @@ export default class ThenBlock extends Node {
 		this.scope.add(parent.value, parent.expression.dependencies, this);
 		this.children = map_children(component, parent, this.scope, info.children);
 
-		this.warn_if_empty_block();
+		if (!info.skip) {
+			this.warn_if_empty_block();
+		}
 	}
 }

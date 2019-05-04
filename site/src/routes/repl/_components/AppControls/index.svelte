@@ -1,7 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import UserMenu from './UserMenu.svelte';
-	import Icon from '../../../../components/Icon.svelte';
+	import { Icon } from '@sveltejs/site-kit';
 	import * as doNotZip from 'do-not-zip';
 	import downloadBlob from '../../_utils/downloadBlob.js';
 	import { user } from '../../../../user.js';

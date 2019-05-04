@@ -224,7 +224,21 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'figcaption') {
-			if (this.parent.name !== 'figure') {
+			let { parent } = this;
+			let is_figure_parent = false;
+
+			while (parent) {
+				if (parent.name === 'figure') {
+					is_figure_parent = true;
+					break;
+				}
+				if (parent.type === 'Element') {
+					break;
+				}
+				parent = parent.parent;
+			}
+
+			if (!is_figure_parent) {
 				this.component.warn(this, {
 					code: `a11y-structure`,
 					message: `A11y: <figcaption> must be an immediate child of <figure>`

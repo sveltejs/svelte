@@ -1,11 +1,8 @@
-import Node from './shared/Node';
-import Block from '../render-dom/Block';
 import map_children from './shared/map_children';
+import AbstractBlock from './shared/AbstractBlock';
 
-export default class ElseBlock extends Node {
+export default class ElseBlock extends AbstractBlock {
 	type: 'ElseBlock';
-	children: Node[];
-	block: Block;
 
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);

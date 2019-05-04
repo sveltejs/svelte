@@ -61,6 +61,11 @@ export interface CompileOptions {
 	preserveWhitespace?: boolean;
 }
 
+export interface ParserOptions {
+	filename?: string;
+	customElement?: boolean;
+}
+
 export interface Visitor {
 	enter: (node: Node) => void;
 	leave?: (node: Node) => void;

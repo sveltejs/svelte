@@ -39,6 +39,8 @@ It starts to get a bit boilerplatey though, especially if your component subscri
 <h1>The count is {$count}</h1>
 ```
 
+> Auto-subscription only works with store variables that are declared (or imported) at the top-level scope of a component.
+
 You're not limited to using `$count` inside the markup, either — you can use it anywhere in the `<script>` as well, such as in event handlers or reactive declarations.
 
 > Any name beginning with `$` is assumed to refer to a store value. It's effectively a reserved character — Svelte will prevent you from declaring your own variables with a `$` prefix.
