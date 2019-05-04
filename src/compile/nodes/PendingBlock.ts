@@ -7,6 +7,8 @@ export default class PendingBlock extends AbstractBlock {
 		super(component, parent, scope, info);
 		this.children = map_children(component, parent, scope, info.children);
 
-		this.warn_if_empty_block();
+		if (!info.skip) {
+			this.warn_if_empty_block();
+		}
 	}
 }

@@ -366,7 +366,13 @@ Components can emit events using [createEventDispatcher](docs#createEventDispatc
 <SomeComponent on:whatever={handler}/>
 ```
 
+---
 
+As with DOM events, if the `on:` directive is used without a value, the component will *forward* the event, meaning that a consumer of the component can listen for it.
+
+```html
+<SomeComponent on:whatever/>
+```
 
 ### Element bindings
 
@@ -749,6 +755,8 @@ The `in:` and `out:` directives are not bidirectional. An in transition will con
 {/if}
 ```
 
+> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](docs#Client-side_component_API).
+
 #### Transition parameters
 
 ---
@@ -983,7 +991,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 	{/each}
 </ul>
 
-</slot name="footer"></slot>
+<slot name="footer"></slot>
 ```
 
 

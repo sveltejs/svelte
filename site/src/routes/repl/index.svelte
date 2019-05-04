@@ -27,7 +27,7 @@
 
 	let repl;
 	let gist;
-	let name = 'loading...';
+	let name = 'Loading...';
 	let zen_mode = false;
 	let relaxed = false;
 	let width = process.browser ? window.innerWidth : 1000;
@@ -58,7 +58,9 @@
 
 		if (gist_id) {
 			relaxed = false;
-			fetch(`gist/${gist_id}`).then(r => r.json()).then(data => {
+			fetch(`gist/${gist_id}`)
+			.then(r => r.json())
+			.then(data => {
 				gist = data;
 				const { description, files } = data;
 
@@ -155,6 +157,20 @@
 		transform: translate(-50%, 0);
 	}
 
+	/* temp fix for #2499 and #2550 while waiting for a fix for https://github.com/sveltejs/svelte-repl/issues/8 */
+
+	.viewport :global(.tab-content),
+	.viewport :global(.tab-content.visible) {
+		pointer-events: all;
+		opacity: 1;
+	}
+	.viewport :global(.tab-content) {
+		visibility: hidden;
+	}
+	.viewport :global(.tab-content.visible) {
+		visibility: visible;
+	}
+
 	.zen-mode {
 		position: fixed;
 		width: 100%;
@@ -187,7 +203,7 @@
 </style>
 
 <svelte:head>
-	<title>REPL • Svelte</title>
+	<title>{name} • REPL • Svelte</title>
 
 	<meta name="twitter:title" content="Svelte REPL">
 	<meta name="twitter:description" content="Cybernetically enhanced web apps">
@@ -198,9 +214,9 @@
 
 <div class="repl-outer {zen_mode ? 'zen-mode' : ''}" class:mobile>
 	<AppControls
-		{name}
 		{gist}
 		{repl}
+		bind:name
 		bind:zen_mode
 		on:forked={handle_fork}
 	/>

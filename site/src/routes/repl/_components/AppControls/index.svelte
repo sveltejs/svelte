@@ -1,11 +1,12 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import UserMenu from './UserMenu.svelte';
-	import Icon from '../../../../components/Icon.svelte';
+	import { Icon } from '@sveltejs/site-kit';
 	import * as doNotZip from 'do-not-zip';
 	import downloadBlob from '../../_utils/downloadBlob.js';
 	import { user } from '../../../../user.js';
 	import { enter } from '../../../../utils/events.js';
+	import { isMac } from '../../../../utils/compat.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -19,8 +20,6 @@
 	let downloading = false;
 	let justSaved = false;
 	let justForked = false;
-
-	const isMac = typeof navigator !== 'undefined' && navigator.platform === 'MacIntel';
 
 	function wait(ms) {
 		return new Promise(f => setTimeout(f, ms));

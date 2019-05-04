@@ -169,14 +169,15 @@ export default function dom(
 					scope = scope.parent;
 				}
 
-				if (node.type === 'AssignmentExpression') {
+				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 					let names = [];
 
-					if (node.left.type === 'MemberExpression') {
-						const left_object_name = get_object(node.left).name;
+					if (assignee.type === 'MemberExpression') {
+						const left_object_name = get_object(assignee).name;
 						left_object_name && (names = [left_object_name]);
 					} else {
-						names = extract_names(node.left);
+						names = extract_names(assignee);
 					}
 
 					if (node.operator === '=' && nodes_match(node.left, node.right)) {
@@ -189,9 +190,10 @@ export default function dom(
 						code.overwrite(node.start, node.end, dirty.map(n => component.invalidate(n)).join('; '));
 					} else {
 						const single = (
-							node.left.type === 'Identifier' &&
+							node.type === 'AssignmentExpression' &&
+							assignee.type === 'Identifier' &&
 							parent.type === 'ExpressionStatement' &&
-							node.left.name[0] !== '$'
+							assignee.name[0] !== '$'
 						);
 
 						names.forEach(name => {
@@ -201,7 +203,7 @@ export default function dom(
 							const variable = component.var_lookup.get(name);
 							if (variable && (variable.hoistable || variable.global || variable.module)) return;
 
-							if (single) {
+							if (single && !(variable.subscribable && variable.reassigned)) {
 								code.prependRight(node.start, `$$invalidate('${name}', `);
 								code.appendLeft(node.end, `)`);
 							} else {
@@ -211,18 +213,6 @@ export default function dom(
 							component.has_reactive_assignments = true;
 						});
 					}
-				}
-
-				else if (node.type === 'UpdateExpression') {
-					const { name } = get_object(node.argument);
-
-					if (scope.find_owner(name) !== component.instance_scope) return;
-
-					const variable = component.var_lookup.get(name);
-					if (variable && variable.hoistable) return;
-
-					pending_assignments.add(name);
-					component.has_reactive_assignments = true;
 				}
 
 				if (pending_assignments.size > 0) {
@@ -423,14 +413,15 @@ export default function dom(
 
 				${set && `$$self.$set = ${set};`}
 
-				${reactive_declarations.length > 0 && deindent`
 				${injected.length && `let ${injected.join(', ')};`}
+
+				${reactive_declarations.length > 0 && deindent`
 				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
 					${reactive_declarations}
 				};
+				`}
 
 				${fixed_reactive_declarations}
-				`}
 
 				return ${stringify_props(filtered_declarations)};
 			}
