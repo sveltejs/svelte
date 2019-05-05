@@ -1,0 +1,96 @@
+{
+	"html": {
+		"start": 0,
+		"end": 87,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 87,
+				"type": "Element",
+				"name": "button",
+				"attributes": [
+					{
+						"start": 8,
+						"end": 45,
+						"type": "EventHandler",
+						"name": "click",
+						"modifiers": [],
+						"expression": {
+							"type": "ArrowFunctionExpression",
+							"start": 19,
+							"end": 43,
+							"id": null,
+							"expression": true,
+							"generator": false,
+							"async": false,
+							"params": [],
+							"body": {
+								"type": "AssignmentExpression",
+								"start": 25,
+								"end": 43,
+								"operator": "=",
+								"left": {
+									"type": "Identifier",
+									"start": 25,
+									"end": 32,
+									"name": "visible"
+								},
+								"right": {
+									"type": "UnaryExpression",
+									"start": 35,
+									"end": 43,
+									"operator": "!",
+									"prefix": true,
+									"argument": {
+										"type": "Identifier",
+										"start": 36,
+										"end": 43,
+										"name": "visible"
+									}
+								}
+							}
+						}
+					},
+					{
+						"start": 46,
+						"end": 77,
+						"type": "EventHandler",
+						"name": "click",
+						"modifiers": [],
+						"expression": {
+							"type": "ArrowFunctionExpression",
+							"start": 57,
+							"end": 75,
+							"id": null,
+							"expression": true,
+							"generator": false,
+							"async": false,
+							"params": [],
+							"body": {
+								"type": "AssignmentExpression",
+								"start": 63,
+								"end": 75,
+								"operator": "=",
+								"left": {
+									"type": "Identifier",
+									"start": 63,
+									"end": 67,
+									"name": "ajax"
+								},
+								"right": {
+									"type": "Literal",
+									"start": 70,
+									"end": 75,
+									"value": false,
+									"raw": "false"
+								}
+							}
+						}
+					}
+				],
+				"children": []
+			}
+		]
+	}
+}
