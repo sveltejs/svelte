@@ -744,7 +744,7 @@ export default class ElementWrapper extends Wrapper {
 					${outro_name} = @create_out_transition(${this.var}, ${fn}, ${snippet});
 				`;
 
-				if (outro_block) {
+				if (outro.is_local) {
 					outro_block = deindent`
 						if (#local) {
 							${outro_block}
