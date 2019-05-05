@@ -11,7 +11,6 @@
 	import Repl from '@sveltejs/svelte-repl';
 	import { onMount } from 'svelte';
 	import { goto } from '@sapper/app';
-	import { process_example } from '../../../utils/examples';
 	import { user } from '../../../user.js';
 	import InputOutputToggle from '../../../components/Repl/InputOutputToggle.svelte';
 	import AppControls from './_components/AppControls/index.svelte';
@@ -56,7 +55,6 @@
 
 					is_relaxed_gist = data.relaxed;
 
-					const rgx = /(js|svelte)$/i;
 					const components = data.files.map(file => {
 						let [name, type] = file.name.split('.');
 						if (type === 'html') type = 'svelte'; // TODO do this on the server
@@ -75,7 +73,7 @@
 					repl.set({ components });
 				});
 			} else {
-				console.warn('TODO: 404 Gist')
+				console.warn('TODO: 404 Gist');
 			}
 		});
 	}

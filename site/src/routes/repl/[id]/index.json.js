@@ -1,5 +1,4 @@
 import send from '@polka/send';
-import redirect from '@polka/redirect';
 import body from '../_utils/body.js';
 import * as httpie from 'httpie';
 import { query, find } from '../../../utils/db';

@@ -1,4 +1,4 @@
-import { Node } from '../interfaces';
+import { Node } from '../../interfaces';
 
 export const UNKNOWN = {};
 

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { compile } = require('./compiler.js');
 
-let extensions = ['.svelte', '.html'];
+const extensions = ['.svelte', '.html'];
 let compileOptions = {};
 
 function capitalise(name) {

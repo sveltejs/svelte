@@ -29,7 +29,7 @@
 
 		if (gist) {
 			fetch(`repl/${gist}.json`).then(r => r.json()).then(data => {
-				const { id, description, files } = data;
+				const { description, files } = data;
 
 				name = description;
 
