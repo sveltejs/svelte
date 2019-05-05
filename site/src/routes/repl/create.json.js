@@ -1,5 +1,5 @@
 import send from '@polka/send';
-import { body } from './_utils.js';
+import body from './_utils/body.js';
 import { query } from '../../utils/db';
 import { isUser } from '../../backend/auth';
 
@@ -8,21 +8,14 @@ export async function post(req, res) {
 	if (!user) return; // response already sent
 
 	try {
-		const { name, components } = await body(req);
-
-		const files = {};
-		components.forEach(component => {
-			const text = component.source.trim();
-			if (!text.length) return; // skip empty file
-			files[`${component.name}.${component.type}`] = text;
-		});
+		const { name, files } = await body(req);
 
 		const [row] = await query(`
 			insert into gists(user_id, name, files)
-			values ($1, $2, $3) returning *`, [user.id, name, files]);
+			values ($1, $2, $3) returning *`, [user.id, name, JSON.stringify(files)]);
 
 		send(res, 201, {
-			uid: row.uid,
+			uid: row.uid.replace(/-/g, ''),
 			name: row.name,
 			files: row.files,
 			owner: user.uid,

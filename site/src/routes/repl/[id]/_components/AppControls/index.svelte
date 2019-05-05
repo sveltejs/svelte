@@ -3,10 +3,10 @@
 	import UserMenu from './UserMenu.svelte';
 	import { Icon } from '@sveltejs/site-kit';
 	import * as doNotZip from 'do-not-zip';
-	import downloadBlob from '../../_utils/downloadBlob.js';
-	import { user } from '../../../../user.js';
-	import { enter } from '../../../../utils/events.js';
-	import { isMac } from '../../../../utils/compat.js';
+	import downloadBlob from '../../../_utils/downloadBlob.js';
+	import { user } from '../../../../../user.js';
+	import { enter } from '../../../../../utils/events.js';
+	import { isMac } from '../../../../../utils/compat.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -54,12 +54,15 @@
 		const { components } = repl.toJSON();
 
 		try {
-			const r = await fetch(`gist/create`, {
+			const r = await fetch(`repl/create.json`, {
 				method: 'POST',
 				headers: { Authorization },
 				body: JSON.stringify({
 					name,
-					components
+					files: components.map(component => ({
+						name: `${component.name}.${component.type}`,
+						source: component.source
+					}))
 				})
 			});
 
@@ -107,16 +110,16 @@
 			const files = {};
 			const { components } = repl.toJSON();
 
-			components.forEach(module => {
-				const text = module.source.trim();
-				if (!text.length) return; // skip empty file
-				files[`${module.name}.${module.type}`] = text;
-			});
-
-			const r = await fetch(`gist/${gist.uid}`, {
+			const r = await fetch(`repl/${gist.uid}.json`, {
 				method: 'PATCH',
 				headers: { Authorization },
-				body: JSON.stringify({ name, files })
+				body: JSON.stringify({
+					name,
+					files: components.map(component => ({
+						name: `${component.name}.${component.type}`,
+						source: component.source
+					}))
+				})
 			});
 
 			if (r.status < 200 || r.status >= 300) {
@@ -197,29 +200,21 @@ export default app;` });
 			<Icon name="download" />
 		</button>
 
-		{#if $user}
-			<button class="icon" disabled="{saving || !$user}" on:click={fork} title="fork">
-				{#if justForked}
-					<Icon name="check" />
-				{:else}
-					<Icon name="git-branch" />
-				{/if}
-			</button>
+		<button class="icon" disabled="{saving || !$user}" on:click={() => fork(false)} title="fork">
+			{#if justForked}
+				<Icon name="check" />
+			{:else}
+				<Icon name="git-branch" />
+			{/if}
+		</button>
 
-			<button class="icon" disabled="{saving || !$user}" on:click={save} title="save">
-				{#if justSaved}
-					<Icon name="check" />
-				{:else}
-					<Icon name="save" />
-				{/if}
-			</button>
-		{/if}
-
-		{#if gist}
-			<a class="icon no-underline" href={gist.html_url} title="link to gist">
-				<Icon name="link" />
-			</a>
-		{/if}
+		<button class="icon" disabled="{saving || !$user}" on:click={save} title="save">
+			{#if justSaved}
+				<Icon name="check" />
+			{:else}
+				<Icon name="save" />
+			{/if}
+		</button>
 
 		{#if $user}
 			<UserMenu />
