@@ -13,7 +13,7 @@
 </script>
 
 <style>
-	/* darken text for accesibility */
+	/* darken text for accessibility */
 	/* TODO does this belong elsewhere? */
 	:global(.back-light) {
 		--text: hsl(36, 3%, 44%);

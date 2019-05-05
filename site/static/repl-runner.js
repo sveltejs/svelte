@@ -19,7 +19,7 @@
 		let pending_imports = missing_imports.length;
 
 		if (missing_imports.length) {
-			let promise = Promise.all(
+			const promise = Promise.all(
 				missing_imports.map(id => fetch_import(id).then(() => {
 					pending_imports -= 1;
 					if (progress_func) progress_func(pending_imports);
@@ -33,7 +33,7 @@
 	}
 
 	function handle_message(ev) {
-		let { action, cmd_id } = ev.data;
+		const { action, cmd_id } = ev.data;
 		const send_message = (payload) => parent.postMessage( { ...payload }, ev.origin);
 		const send_reply = (payload) => send_message({ ...payload, cmd_id });
 		const send_ok = () => send_reply({ action: 'cmd_ok' });
@@ -77,7 +77,7 @@
 					window.open(el.href, '_blank');
 				});
 				send_ok();
-			} catch(e) {
+			} catch (e) {
 				send_error(e.message, e.stack);
 			}
 		}
@@ -87,17 +87,17 @@
 			fetch_imports(imports, (remaining) => {
 				send_message({action: 'fetch_progress', args: { remaining }});
 			})
-			.then(() => {
-				imports.forEach(x=> {
-					const module = import_cache[x];
-					const name = import_map.get(x);
-					window[name] = module;
+				.then(() => {
+					imports.forEach(x => {
+						const module = import_cache[x];
+						const name = import_map.get(x);
+						window[name] = module;
+					});
+					send_ok();
+				})
+				.catch(e => {
+					send_error(e.message, e.stack);
 				});
-				send_ok();
-			})
-			.catch(e => {
-				send_error(e.message, e.stack);
-			});
 		}
 	}
 

@@ -6,7 +6,7 @@
 </script>
 
 <script>
-	import { Docs } from '@sveltejs/site-kit'
+	import { Docs } from '@sveltejs/site-kit';
 
 	export let sections;
 </script>

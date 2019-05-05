@@ -35,7 +35,7 @@
 	],
 	"plugins": ["svelte3"],
 	"parserOptions": {
-		"ecmaVersion": 8,
+		"ecmaVersion": 9,
 		"sourceType": "module"
 	},
 	"settings": {
