@@ -27,7 +27,7 @@ async function import_gist(req, res) {
 
 			[user] = await query(`
 				insert into users(uid, name, username, avatar)
-				values ($1, $2, $3, $4) on conflict (uid) do nothing
+				values ($1, $2, $3, $4)
 				returning *
 			`, [id, name, login, avatar_url]);
 		}
