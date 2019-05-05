@@ -66,6 +66,7 @@ export async function get(req, res) {
 
 	if (example) {
 		return send(res, 200, {
+			relaxed: true,
 			uid: req.params.id,
 			name: example.title,
 			files: example.files,

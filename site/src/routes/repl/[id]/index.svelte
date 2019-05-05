@@ -12,6 +12,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '@sapper/app';
 	import { process_example } from '../../../utils/examples';
+	import { user } from '../../../user.js';
 	import InputOutputToggle from '../../../components/Repl/InputOutputToggle.svelte';
 	import AppControls from './_components/AppControls/index.svelte';
 
@@ -22,7 +23,7 @@
 	let gist;
 	let name = 'Loading...';
 	let zen_mode = false;
-	let relaxed = false;
+	let is_relaxed_gist = false;
 	let width = process.browser ? window.innerWidth : 1000;
 	let checked = false;
 
@@ -52,6 +53,8 @@
 				r.json().then(data => {
 					gist = data;
 					name = data.name;
+
+					is_relaxed_gist = data.relaxed;
 
 					const rgx = /(js|svelte)$/i;
 					const components = data.files.map(file => {
@@ -105,6 +108,8 @@
 	const mapbox_setup = `window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;`;
 
 	$: mobile = width < 540;
+
+	$: relaxed = is_relaxed_gist || ($user && gist && $user.uid === gist.owner);
 </script>
 
 <style>
