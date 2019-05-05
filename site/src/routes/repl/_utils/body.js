@@ -1,4 +1,4 @@
-export function body(req) {
+export default function body(req) {
 	return new Promise((fulfil, reject) => {
 		let str = '';
 

@@ -3,10 +3,10 @@
 	import UserMenu from './UserMenu.svelte';
 	import { Icon } from '@sveltejs/site-kit';
 	import * as doNotZip from 'do-not-zip';
-	import downloadBlob from '../../_utils/downloadBlob.js';
-	import { user } from '../../../../user.js';
-	import { enter } from '../../../../utils/events.js';
-	import { isMac } from '../../../../utils/compat.js';
+	import downloadBlob from '../../../_utils/downloadBlob.js';
+	import { user } from '../../../../../user.js';
+	import { enter } from '../../../../../utils/events.js';
+	import { isMac } from '../../../../../utils/compat.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -25,8 +25,8 @@
 		return new Promise(f => setTimeout(f, ms));
 	}
 
-	let canSave;
-	$: canSave = !!$user && !!gist && !!gist.owner && $user.id == gist.owner.id; // comparing number and string
+	$: Authorization = $user && `Bearer ${$user.token}`;
+	$: canSave = $user && gist && gist.owner === $user.uid;
 
 	function handleKeydown(event) {
 		if (event.which === 83 && (isMac ? event.metaKey : event.ctrlKey)) {
@@ -54,12 +54,15 @@
 		const { components } = repl.toJSON();
 
 		try {
-			const r = await fetch(`gist/create`, {
+			const r = await fetch(`repl/create.json`, {
 				method: 'POST',
-				credentials: 'include',
+				headers: { Authorization },
 				body: JSON.stringify({
 					name,
-					components
+					files: components.map(component => ({
+						name: `${component.name}.${component.type}`,
+						source: component.source
+					}))
 				})
 			});
 
@@ -101,36 +104,21 @@
 
 		saving = true;
 
-		const { components } = repl.toJSON();
-
 		try {
+			// Send all files back to API
+			// ~> Any missing files are considered deleted!
 			const files = {};
+			const { components } = repl.toJSON();
 
-			// null out any deleted files
-			const set = new Set(components.map(m => `${m.name}.${m.type}`));
-			Object.keys(gist.files).forEach(file => {
-				if (/\.(svelte|html|js)$/.test(file)) {
-					if (!set.has(file)) files[file] = null;
-				}
-			});
-
-			components.forEach(module => {
-				const file = `${module.name}.${module.type}`;
-				if (!module.source.trim()) {
-					throw new Error(`GitHub does not allow saving gists with empty files - ${file}`);
-				}
-
-				if (!gist.files[file] || module.source !== gist.files[file].content) {
-					files[file] = { content: module.source };
-				}
-			});
-
-			const r = await fetch(`gist/${gist.id}`, {
+			const r = await fetch(`repl/${gist.uid}.json`, {
 				method: 'PATCH',
-				credentials: 'include',
+				headers: { Authorization },
 				body: JSON.stringify({
-					description: name,
-					files
+					name,
+					files: components.map(component => ({
+						name: `${component.name}.${component.type}`,
+						source: component.source
+					}))
 				})
 			});
 
@@ -212,29 +200,21 @@ export default app;` });
 			<Icon name="download" />
 		</button>
 
-		{#if $user}
-			<button class="icon" disabled="{saving || !$user}" on:click={fork} title="fork">
-				{#if justForked}
-					<Icon name="check" />
-				{:else}
-					<Icon name="git-branch" />
-				{/if}
-			</button>
+		<button class="icon" disabled="{saving || !$user}" on:click={() => fork(false)} title="fork">
+			{#if justForked}
+				<Icon name="check" />
+			{:else}
+				<Icon name="git-branch" />
+			{/if}
+		</button>
 
-			<button class="icon" disabled="{saving || !$user}" on:click={save} title="save">
-				{#if justSaved}
-					<Icon name="check" />
-				{:else}
-					<Icon name="save" />
-				{/if}
-			</button>
-		{/if}
-
-		{#if gist}
-			<a class="icon no-underline" href={gist.html_url} title="link to gist">
-				<Icon name="link" />
-			</a>
-		{/if}
+		<button class="icon" disabled="{saving || !$user}" on:click={save} title="save">
+			{#if justSaved}
+				<Icon name="check" />
+			{:else}
+				<Icon name="save" />
+			{/if}
+		</button>
 
 		{#if $user}
 			<UserMenu />
