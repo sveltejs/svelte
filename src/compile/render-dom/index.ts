@@ -468,11 +468,21 @@ export default function dom(
 	} else {
 		const superclass = options.dev ? 'SvelteComponentDev' : 'SvelteComponent';
 
+		let slots_block = '';
+		if (component.slots.size > 0) {
+			slots_block = '\n' + deindent`
+			if (options.slots) {
+				options.props = options.props || {};
+				options.props.$$scope = {};
+				options.props.$$slots = @create_root_component_slots(options.slots);
+			}`;
+		}
+
 		builder.add_block(deindent`
 			class ${name} extends @${superclass} {
 				constructor(options) {
 					super(${options.dev && `options`});
-					${should_add_css && `if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
+					${should_add_css && `if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}${slots_block}
 					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}

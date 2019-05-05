@@ -134,12 +134,13 @@ describe("runtime", () => {
 						warnings.push(warning);
 					};
 
+					const configOptions = typeof config.options === 'function' ? config.options(window) : config.options;
 					const options = Object.assign({}, {
 						target,
 						hydrate,
 						props: config.props,
 						intro: config.intro
-					}, config.options || {});
+					}, configOptions || {});
 
 					const component = new SvelteComponent(options);
 
