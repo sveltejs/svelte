@@ -90,6 +90,7 @@ export default class SlotWrapper extends Wrapper {
 				const ${get_slot_context} = (${arg}) => (${stringify_props(context_props)});
 			`);
 		} else {
+			get_slot_changes = 'null';
 			get_slot_context = 'null';
 		}
 
