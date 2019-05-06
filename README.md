@@ -11,6 +11,11 @@
     <img src="https://packagephobia.now.sh/badge?p=svelte" alt="install size">
   </a>
 
+  <a href="https://travis-ci.org/sveltejs/svelte">
+    <img src="https://api.travis-ci.org/sveltejs/svelte.svg?branch=master"
+         alt="build status">
+  </a>
+
   <a href="https://github.com/svelte/svelte/blob/master/LICENSE.md">
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
   </a>
