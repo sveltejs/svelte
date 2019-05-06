@@ -55,7 +55,7 @@ export function derived(stores, fn, initial_value) {
 		const sync = () => {
 			if (pending) return;
 			const result = fn(single ? values[0] : values, set);
-			if (auto && (value !== (value = result))) set(result);
+			if (auto) set(result);
 		};
 
 		const unsubscribers = stores.map((store, i) => store.subscribe(
