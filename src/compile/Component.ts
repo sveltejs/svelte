@@ -772,18 +772,34 @@ export default class Component {
 		});
 	}
 
-	invalidate(name, value = name) {
+	invalidate(name, value) {
 		const variable = this.var_lookup.get(name);
 
 		if (variable && (variable.subscribable && variable.reassigned)) {
-			return `$$subscribe_${name}(), $$invalidate('${name}', ${value})`;
+			return `$$subscribe_${name}(), $$invalidate('${name}', ${value || name})`;
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
 			return `${name.slice(1)}.set(${name})`
 		}
 
-		return `$$invalidate('${name}', ${value})`;
+		if (value) {
+			return `$$invalidate('${name}', ${value})`;
+		}
+
+		// if this is a reactive declaration, invalidate dependencies recursively
+		const deps = new Set([name]);
+
+		deps.forEach(name => {
+			const reactive_declarations = this.reactive_declarations.filter(x => x.assignees.has(name));
+			reactive_declarations.forEach(declaration => {
+				declaration.dependencies.forEach(name => {
+					deps.add(name);
+				});
+			});
+		});
+
+		return Array.from(deps).map(n => `$$invalidate('${n}', ${n})`).join(', ');
 	}
 
 	rewrite_props(get_insert: (variable: Var) => string) {
