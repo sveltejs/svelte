@@ -188,6 +188,29 @@ describe('store', () => {
 
 			unsubscribe();
 		});
+
+		it('is updated with safe_not_equal logic', () => {
+			const arr = [0];
+
+			const number = writable(1);
+			const numbers = derived(number, $number => {
+				arr[0] = $number;
+				return arr;
+			});
+
+			const concatenated = [];
+
+			const unsubscribe = numbers.subscribe(value => {
+				concatenated.push(...value);
+			});
+
+			number.set(2);
+			number.set(3);
+
+			assert.deepEqual(concatenated, [1, 2, 3]);
+
+			unsubscribe();
+		});
 	});
 
 	describe('get', () => {
