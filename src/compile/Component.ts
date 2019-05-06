@@ -541,8 +541,20 @@ export default class Component {
 	}
 
 	walk_module_js() {
+		const component = this;
 		const script = this.ast.module;
 		if (!script) return;
+
+		walk(script.content, {
+			enter(node) {
+				if (node.type === 'LabeledStatement' && node.label.name === '$') {
+					component.warn(node, {
+						code: 'module-script-reactive-declaration',
+						message: '$: has no effect in a module script'
+					});
+				}
+			}
+		});
 
 		this.add_sourcemap_locations(script.content);
 
@@ -733,6 +745,13 @@ export default class Component {
 			enter(node, parent) {
 				if (map.has(node)) {
 					scope = map.get(node);
+				}
+
+				if (node.type === 'LabeledStatement' && node.label.name === '$' && parent.type !== 'Program') {
+					component.warn(node, {
+						code: 'non-top-level-reactive-declaration',
+						message: '$: has no effect outside of the top-level'
+					});
 				}
 
 				if (is_reference(node, parent)) {
