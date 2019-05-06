@@ -182,7 +182,7 @@ export default function dom(
 
 					if (node.operator === '=' && nodes_match(node.left, node.right)) {
 						const dirty = names.filter(name => {
-							return scope.find_owner(name) === component.instance_scope;
+							return name[0] === '$' || scope.find_owner(name) === component.instance_scope;
 						});
 
 						if (dirty.length) component.has_reactive_assignments = true;
