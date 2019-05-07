@@ -35,7 +35,12 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 	// these properties can be set externally
 	export let foo;
 	export let bar = 'optional default value';
-	
+
+	// you can use export { ... as ... } to have
+	// props whose names are reserved keywords
+	let clazz;
+	export { clazz as class };
+
 	// this property is readonly externally
 	export const buzz = 'buzz';
 
@@ -48,6 +53,13 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 	export function instanceMethod() {
 		alert(foo);
 	}
+
+	// you can also use export { ... as ... } to have
+	// methods whose names are reserved keywords
+	function del() {
+		do_something();
+	}
+	export { del as delete };
 </script>
 ```
 
