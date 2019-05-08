@@ -8,4 +8,4 @@ To get set up in your local development environment, check out [the quickstart g
 
 If you're looking for a more expansive framework that includes routing, server-side rendering and everything else, take a look at [Sapper](https://sapper.svelte.dev).
 
-Most importantly: since you're now a member of the Svelte community, you should [join our friendly Discord chatroom](https://discord.gg/yy75DKs). That's where you'll find fellow Svelte users, and it's where we plan the future of the framework.
+Most importantly: since you're now a member of the Svelte community, you should [join our friendly Discord chatroom](chat). That's where you'll find fellow Svelte users, and it's where we plan the future of the framework.
