@@ -10,6 +10,7 @@ export const globals = new Set([
 	'Date',
 	'decodeURI',
 	'decodeURIComponent',
+	'document',
 	'encodeURI',
 	'encodeURIComponent',
 	'Infinity',
@@ -31,6 +32,7 @@ export const globals = new Set([
 	'Set',
 	'String',
 	'undefined',
+	'window',
 ]);
 
 export const reserved = new Set([
