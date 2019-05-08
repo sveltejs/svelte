@@ -26,7 +26,7 @@ One way to fix it would be to use the `onDestroy` [lifecycle hook](tutorial/onde
 <h1>The count is {count_value}</h1>
 ```
 
-It starts to get a bit boilerplatey though, especially if your component subscribes to multiple stores. Instead, Svelte has a trick up its sleeve — you can reference a store value by prefixing the store name with `$`:
+It starts to get a bit boilerplatey though, especially if your component subscribes to multiple stores. Instead, Svelte has a trick up its sleeve — you can reference a store value by prefixing the store variable with `$`:
 
 ```html
 <script>
