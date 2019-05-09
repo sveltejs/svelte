@@ -955,7 +955,7 @@ export default class Component {
 		// reference instance variables other than other
 		// hoistable functions. TODO others?
 
-		const { hoistable_nodes, var_lookup } = this;
+		const { hoistable_nodes, var_lookup, injected_reactive_declaration_vars } = this;
 
 		const top_level_function_declarations = new Map();
 
@@ -1022,11 +1022,11 @@ export default class Component {
 						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
 
-						if (name[0] === '$' && !owner) {
+						if (node.type === 'Identifier' && injected_reactive_declaration_vars.has(name)) {
 							hoistable = false;
-						}
-
-						else if (owner === instance_scope) {
+						} else if (name[0] === '$' && !owner) {
+							hoistable = false;
+						} else if (owner === instance_scope) {
 							if (name === fn_declaration.id.name) return;
 
 							const variable = var_lookup.get(name);
