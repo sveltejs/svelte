@@ -553,6 +553,27 @@ To get a reference to a DOM node, use `bind:this`.
 <canvas bind:this={canvasElement}></canvas>
 ```
 
+Note that binding a property of a parent component to a child component's DOM node will throw a warning unless the property is assigned a default value:
+
+```html
+<!-- Child.svelte -->
+<script>
+  export let inputElement
+</script>
+
+<input bind:this={inputElement} />
+
+...
+
+<!-- Parent.svelte -->
+<script>
+  let inputElement
+</script>
+
+<Child bind:inputElement>
+```
+
+Assign a non-`undefined` value in either component to suppress the warning.
 
 ### Component bindings
 
