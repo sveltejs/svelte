@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 3.2.2
+
+* Add `window` and `document` to expected globals ([#2722](https://github.com/sveltejs/svelte/pull/2722))
+* Prevent hoisting of functions that depend on reactive state ([#2703](https://github.com/sveltejs/svelte/pull/2703))
+* Generate correct code when slot has no changes ([#2697](https://github.com/sveltejs/svelte/issues/2697))
+* Prevent `Object.prototype`-related bugs ([#2696](https://github.com/sveltejs/svelte/pull/2696))
+
 ## 3.2.1
 
 * Use same comparison logic for `derived` as for other stores ([#2644](https://github.com/sveltejs/svelte/issues/2644))
