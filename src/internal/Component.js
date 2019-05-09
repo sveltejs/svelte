@@ -48,7 +48,7 @@ function make_dirty(component, key) {
 	if (!component.$$.dirty) {
 		dirty_components.push(component);
 		schedule_update();
-		component.$$.dirty = {};
+		component.$$.dirty = blank_object();
 	}
 	component.$$.dirty[key] = true;
 }
