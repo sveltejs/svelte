@@ -1,8 +1,8 @@
-<p align="center">
+<p>
   <a href="https://svelte.dev">
 	<img alt="Cybernetically enhanced web apps: Svelte" src="https://svelte-assets.surge.sh/banner.png">
   </a>
-
+	
   <a href="https://www.npmjs.com/package/svelte">
     <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
   </a>
