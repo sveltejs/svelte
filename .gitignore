@@ -6,7 +6,7 @@ node_modules
 /compiler.js
 /index.js
 /internal.*
-/store.js
+/store.*
 /easing.js
 /motion.*
 /transition.js

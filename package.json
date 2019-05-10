@@ -31,7 +31,8 @@
     "dev": "rollup -cw",
     "pretest": "npm run build",
     "posttest": "agadoo src/internal/index.js",
-    "prepublishOnly": "export PUBLISH=true && npm run lint && npm test"
+    "prepublishOnly": "export PUBLISH=true && npm run lint && npm test",
+    "tsd": "tsc -d src/store.ts --outDir ."
   },
   "repository": {
     "type": "git",
