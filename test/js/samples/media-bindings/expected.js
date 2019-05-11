@@ -26,18 +26,18 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			audio = element("audio");
-			if (ctx.played === void 0 || ctx.currentTime === void 0) add_render_callback(audio_timeupdate_handler);
-			if (ctx.duration === void 0) add_render_callback(() => ctx.audio_durationchange_handler.call(audio));
 			if (ctx.buffered === void 0) add_render_callback(() => ctx.audio_progress_handler.call(audio));
 			if (ctx.buffered === void 0 || ctx.seekable === void 0) add_render_callback(() => ctx.audio_loadedmetadata_handler.call(audio));
+			if (ctx.played === void 0 || ctx.currentTime === void 0) add_render_callback(audio_timeupdate_handler);
+			if (ctx.duration === void 0) add_render_callback(() => ctx.audio_durationchange_handler.call(audio));
 
 			dispose = [
+				listen(audio, "progress", ctx.audio_progress_handler),
+				listen(audio, "loadedmetadata", ctx.audio_loadedmetadata_handler),
 				listen(audio, "timeupdate", audio_timeupdate_handler),
 				listen(audio, "durationchange", ctx.audio_durationchange_handler),
 				listen(audio, "play", ctx.audio_play_pause_handler),
 				listen(audio, "pause", ctx.audio_play_pause_handler),
-				listen(audio, "progress", ctx.audio_progress_handler),
-				listen(audio, "loadedmetadata", ctx.audio_loadedmetadata_handler),
 				listen(audio, "volumechange", ctx.audio_volumechange_handler),
 				listen(audio, "ratechange", ctx.audio_ratechange_handler)
 			];
@@ -53,10 +53,10 @@ function create_fragment(ctx) {
 
 		p(changed, ctx) {
 			if (!audio_updating && changed.currentTime && !isNaN(ctx.currentTime)) audio.currentTime = ctx.currentTime;
+			audio_updating = false;
 			if (changed.paused && audio_is_paused !== (audio_is_paused = ctx.paused)) audio[audio_is_paused ? "pause" : "play"]();
 			if (changed.volume && !isNaN(ctx.volume)) audio.volume = ctx.volume;
 			if (changed.playbackRate && !isNaN(ctx.playbackRate)) audio.playbackRate = ctx.playbackRate;
-			audio_updating = false;
 		},
 
 		i: noop,
@@ -75,6 +75,18 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { buffered, seekable, played, currentTime, duration, paused, volume, playbackRate } = $$props;
 
+	function audio_progress_handler() {
+		buffered = time_ranges_to_array(this.buffered);
+		$$invalidate('buffered', buffered);
+	}
+
+	function audio_loadedmetadata_handler() {
+		buffered = time_ranges_to_array(this.buffered);
+		seekable = time_ranges_to_array(this.seekable);
+		$$invalidate('buffered', buffered);
+		$$invalidate('seekable', seekable);
+	}
+
 	function audio_timeupdate_handler() {
 		played = time_ranges_to_array(this.played);
 		currentTime = this.currentTime;
@@ -90,18 +102,6 @@ function instance($$self, $$props, $$invalidate) {
 	function audio_play_pause_handler() {
 		paused = this.paused;
 		$$invalidate('paused', paused);
-	}
-
-	function audio_progress_handler() {
-		buffered = time_ranges_to_array(this.buffered);
-		$$invalidate('buffered', buffered);
-	}
-
-	function audio_loadedmetadata_handler() {
-		buffered = time_ranges_to_array(this.buffered);
-		seekable = time_ranges_to_array(this.seekable);
-		$$invalidate('buffered', buffered);
-		$$invalidate('seekable', seekable);
 	}
 
 	function audio_volumechange_handler() {
@@ -134,11 +134,11 @@ function instance($$self, $$props, $$invalidate) {
 		paused,
 		volume,
 		playbackRate,
+		audio_progress_handler,
+		audio_loadedmetadata_handler,
 		audio_timeupdate_handler,
 		audio_durationchange_handler,
 		audio_play_pause_handler,
-		audio_progress_handler,
-		audio_loadedmetadata_handler,
 		audio_volumechange_handler,
 		audio_ratechange_handler
 	};
