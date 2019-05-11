@@ -377,8 +377,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		this.add_attributes(block);
-		this.add_bindings(block);
-		this.add_event_handlers(block);
+		this.add_directives_in_order(block);
 		this.add_transitions(block);
 		this.add_animation(block);
 		this.add_actions(block);
@@ -436,20 +435,13 @@ export default class ElementWrapper extends Wrapper {
 		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
 	}
 
-	add_bindings(block: Block) {
-		const { renderer } = this;
+	add_directives_in_order (block: Block) {
+		interface BindingGroup {
+			events: string[];
+			bindings: Binding[];
+		}
 
-		if (this.bindings.length === 0) return;
-
-		renderer.component.has_reactive_assignments = true;
-
-		const lock = this.bindings.some(binding => binding.needs_lock) ?
-			block.get_unique_name(`${this.var.name}_updating`) :
-			null;
-
-		if (lock) block.add_variable(lock, x`false`);
-
-		const groups = events
+		const bindingGroups = events
 			.map(event => ({
 				events: event.event_names,
 				bindings: this.bindings
@@ -458,7 +450,47 @@ export default class ElementWrapper extends Wrapper {
 			}))
 			.filter(group => group.bindings.length);
 
-		groups.forEach(group => {
+		const this_binding = this.bindings.find(b => b.node.name === 'this');
+
+		function getOrder (item: EventHandler | BindingGroup | Binding) {
+			if (item instanceof EventHandler) {
+				return item.node.start;
+			} else if (item instanceof Binding) {
+				return item.node.start;
+			} else {
+				return item.bindings[0].node.start;
+			}
+		}
+
+		const ordered: Array<EventHandler | BindingGroup | Binding> = [].concat(bindingGroups, this.event_handlers, this_binding).filter(Boolean);
+
+		ordered.sort((a, b) => getOrder(a) - getOrder(b));
+
+		ordered.forEach(bindingGroupOrEventHandler => {
+			if (bindingGroupOrEventHandler instanceof EventHandler) {
+				add_event_handlers(block, this.var, [bindingGroupOrEventHandler]);
+			} else if (bindingGroupOrEventHandler instanceof Binding) {
+				this.add_this_binding(block, bindingGroupOrEventHandler);
+			} else {
+				this.add_bindings(block, bindingGroupOrEventHandler);
+			}
+		});
+	}
+
+	add_bindings(block: Block, bindingGroup) {
+		const { renderer } = this;
+
+		if (bindingGroup.bindings.length === 0) return;
+
+		renderer.component.has_reactive_assignments = true;
+
+		const lock = bindingGroup.bindings.some(binding => binding.needs_lock) ?
+			block.get_unique_name(`${this.var.name}_updating`) :
+			null;
+
+		if (lock) block.add_variable(lock, x`false`);
+
+		[bindingGroup].forEach(group => {
 			const handler = renderer.component.get_unique_name(`${this.var.name}_${group.events.join('_')}_handler`);
 			renderer.add_to_context(handler.name);
 
@@ -586,13 +618,15 @@ export default class ElementWrapper extends Wrapper {
 		if (lock) {
 			block.chunks.update.push(b`${lock} = false;`);
 		}
+	}
 
-		const this_binding = this.bindings.find(b => b.node.name === 'this');
-		if (this_binding) {
-			const binding_callback = bind_this(renderer.component, block, this_binding.node, this.var);
+	add_this_binding(block: Block, this_binding: Binding) {
+		const { renderer } = this;
+		
+		renderer.component.has_reactive_assignments = true;
 
-			block.chunks.mount.push(binding_callback);
-		}
+		const binding_callback = bind_this(renderer.component, block, this_binding.node, this.var);
+		block.chunks.mount.push(binding_callback);
 	}
 
 	add_attributes(block: Block) {
