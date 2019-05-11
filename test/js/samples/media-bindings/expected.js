@@ -29,26 +29,26 @@ function create_fragment(ctx) {
 			audio_updating = true;
 		}
 
-		/*audio_timeupdate_handler*/ ctx[10].call(audio);
+		/*audio_timeupdate_handler*/ ctx[12].call(audio);
 	}
 
 	return {
 		c() {
 			audio = element("audio");
+			if (/*buffered*/ ctx[0] === void 0) add_render_callback(() => /*audio_progress_handler*/ ctx[10].call(audio));
+			if (/*buffered*/ ctx[0] === void 0 || /*seekable*/ ctx[1] === void 0) add_render_callback(() => /*audio_loadedmetadata_handler*/ ctx[11].call(audio));
 			if (/*played*/ ctx[2] === void 0 || /*currentTime*/ ctx[3] === void 0 || /*ended*/ ctx[9] === void 0) add_render_callback(audio_timeupdate_handler);
-			if (/*duration*/ ctx[4] === void 0) add_render_callback(() => /*audio_durationchange_handler*/ ctx[11].call(audio));
-			if (/*buffered*/ ctx[0] === void 0) add_render_callback(() => /*audio_progress_handler*/ ctx[13].call(audio));
-			if (/*buffered*/ ctx[0] === void 0 || /*seekable*/ ctx[1] === void 0) add_render_callback(() => /*audio_loadedmetadata_handler*/ ctx[14].call(audio));
+			if (/*duration*/ ctx[4] === void 0) add_render_callback(() => /*audio_durationchange_handler*/ ctx[13].call(audio));
 			if (/*seeking*/ ctx[8] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[17].call(audio));
 			if (/*ended*/ ctx[9] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[18].call(audio));
 
 			dispose = [
+				listen(audio, "progress", /*audio_progress_handler*/ ctx[10]),
+				listen(audio, "loadedmetadata", /*audio_loadedmetadata_handler*/ ctx[11]),
 				listen(audio, "timeupdate", audio_timeupdate_handler),
-				listen(audio, "durationchange", /*audio_durationchange_handler*/ ctx[11]),
-				listen(audio, "play", /*audio_play_pause_handler*/ ctx[12]),
-				listen(audio, "pause", /*audio_play_pause_handler*/ ctx[12]),
-				listen(audio, "progress", /*audio_progress_handler*/ ctx[13]),
-				listen(audio, "loadedmetadata", /*audio_loadedmetadata_handler*/ ctx[14]),
+				listen(audio, "durationchange", /*audio_durationchange_handler*/ ctx[13]),
+				listen(audio, "play", /*audio_play_pause_handler*/ ctx[14]),
+				listen(audio, "pause", /*audio_play_pause_handler*/ ctx[14]),
 				listen(audio, "volumechange", /*audio_volumechange_handler*/ ctx[15]),
 				listen(audio, "ratechange", /*audio_ratechange_handler*/ ctx[16]),
 				listen(audio, "seeking", /*audio_seeking_seeked_handler*/ ctx[17]),
@@ -72,6 +72,8 @@ function create_fragment(ctx) {
 				audio.currentTime = /*currentTime*/ ctx[3];
 			}
 
+			audio_updating = false;
+
 			if (dirty & /*paused*/ 32 && audio_is_paused !== (audio_is_paused = /*paused*/ ctx[5])) {
 				audio[audio_is_paused ? "pause" : "play"]();
 			}
@@ -83,8 +85,6 @@ function create_fragment(ctx) {
 			if (dirty & /*playbackRate*/ 128 && !isNaN(/*playbackRate*/ ctx[7])) {
 				audio.playbackRate = /*playbackRate*/ ctx[7];
 			}
-
-			audio_updating = false;
 		},
 		i: noop,
 		o: noop,
@@ -107,6 +107,18 @@ function instance($$self, $$props, $$invalidate) {
 	let { seeking } = $$props;
 	let { ended } = $$props;
 
+	function audio_progress_handler() {
+		buffered = time_ranges_to_array(this.buffered);
+		$$invalidate(0, buffered);
+	}
+
+	function audio_loadedmetadata_handler() {
+		buffered = time_ranges_to_array(this.buffered);
+		seekable = time_ranges_to_array(this.seekable);
+		$$invalidate(0, buffered);
+		$$invalidate(1, seekable);
+	}
+
 	function audio_timeupdate_handler() {
 		played = time_ranges_to_array(this.played);
 		currentTime = this.currentTime;
@@ -124,18 +136,6 @@ function instance($$self, $$props, $$invalidate) {
 	function audio_play_pause_handler() {
 		paused = this.paused;
 		$$invalidate(5, paused);
-	}
-
-	function audio_progress_handler() {
-		buffered = time_ranges_to_array(this.buffered);
-		$$invalidate(0, buffered);
-	}
-
-	function audio_loadedmetadata_handler() {
-		buffered = time_ranges_to_array(this.buffered);
-		seekable = time_ranges_to_array(this.seekable);
-		$$invalidate(0, buffered);
-		$$invalidate(1, seekable);
 	}
 
 	function audio_volumechange_handler() {
@@ -182,11 +182,11 @@ function instance($$self, $$props, $$invalidate) {
 		playbackRate,
 		seeking,
 		ended,
+		audio_progress_handler,
+		audio_loadedmetadata_handler,
 		audio_timeupdate_handler,
 		audio_durationchange_handler,
 		audio_play_pause_handler,
-		audio_progress_handler,
-		audio_loadedmetadata_handler,
 		audio_volumechange_handler,
 		audio_ratechange_handler,
 		audio_seeking_seeked_handler,
