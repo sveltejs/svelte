@@ -368,14 +368,16 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	if (unique_names.has(name) && type != "EventHandler") {
+	if (unique_names.has(name)) {
 		parser.error({
 			code: `duplicate-attribute`,
 			message: 'Attributes need to be unique'
 		}, start);
 	}
 
-	unique_names.add(name);
+	if (type !== "EventHandler") {
+		unique_names.add(name);
+	}
 
 	let value: any[] | true = true;
 	if (parser.eat('=')) {
