@@ -131,8 +131,8 @@ export default function tag(parser: Parser) {
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
 		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
-		: name === 'title' && parent_is_head(parser.stack) ? 'Title'
-		: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+			: name === 'title' && parent_is_head(parser.stack) ? 'Title'
+				: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
 	const element: Node = {
 		start,
@@ -360,14 +360,6 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 	let name = parser.read_until(/(\s|=|\/|>)/);
 	if (!name) return null;
-	if (unique_names.has(name)) {
-		parser.error({
-			code: `duplicate-attribute`,
-			message: 'Attributes need to be unique'
-		}, start);
-	}
-
-	unique_names.add(name);
 
 	let end = parser.index;
 
@@ -375,6 +367,17 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
+
+	if (unique_names.has(name)) {
+		parser.error({
+			code: `duplicate-attribute`,
+			message: 'Attributes need to be unique'
+		}, start);
+	}
+
+	if (type !== "EventHandler") {
+		unique_names.add(name);
+	}
 
 	let value: any[] | true = true;
 	if (parser.eat('=')) {
@@ -453,8 +456,8 @@ function read_attribute_value(parser: Parser) {
 
 	const regex = (
 		quote_mark === `'` ? /'/ :
-		quote_mark === `"` ? /"/ :
-		/(\/>|[\s"'=<>`])/
+			quote_mark === `"` ? /"/ :
+				/(\/>|[\s"'=<>`])/
 	);
 
 	const value = read_sequence(parser, () => !!parser.match_regex(regex));
