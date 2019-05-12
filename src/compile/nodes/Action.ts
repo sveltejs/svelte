@@ -11,7 +11,7 @@ export default class Action extends Node {
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
 
-		component.warn_if_undefined(info, scope);
+		component.warn_if_undefined(info.name, info, scope);
 
 		this.name = info.name;
 		component.qualify(info.name);
