@@ -51,11 +51,14 @@ export function derived(stores, fn, initial_value) {
 		const values = [];
 
 		let pending = 0;
+		let cleanup = noop;
 
 		const sync = () => {
 			if (pending) return;
+			cleanup();
 			const result = fn(single ? values[0] : values, set);
 			if (auto) set(result);
+			else cleanup = result || noop;
 		};
 
 		const unsubscribers = stores.map((store, i) => store.subscribe(
@@ -74,6 +77,7 @@ export function derived(stores, fn, initial_value) {
 
 		return function stop() {
 			run_all(unsubscribers);
+			cleanup();
 		};
 	});
 }
