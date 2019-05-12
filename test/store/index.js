@@ -211,6 +211,37 @@ describe('store', () => {
 
 			unsubscribe();
 		});
+
+		it('calls a cleanup function', () => {
+			const num = writable(1);
+
+			const values = [];
+			const cleaned_up = [];
+
+			const d = derived(num, ($num, set) => {
+				set($num * 2);
+
+				return function cleanup() {
+					cleaned_up.push($num);
+				};
+			});
+
+			num.set(2);
+
+			const unsubscribe = d.subscribe(value => {
+				values.push(value);
+			});
+
+			num.set(3);
+			num.set(4);
+
+			assert.deepEqual(values, [4, 6, 8]);
+			assert.deepEqual(cleaned_up, [2, 3]);
+
+			unsubscribe();
+
+			assert.deepEqual(cleaned_up, [2, 3, 4]);
+		});
 	});
 
 	describe('get', () => {
