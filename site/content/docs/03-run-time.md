@@ -324,13 +324,13 @@ const time = readable(new Date(), set => {
 store = derived(a, callback: (a: any) => any)
 ```
 ```js
-store = derived(a, callback: (a: any, set: (value: any) => void) => void, initial_value: any)
+store = derived(a, callback: (a: any, set: (value: any) => void) => void | () => void, initial_value: any)
 ```
 ```js
 store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
 ```
 ```js
-store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void, initial_value: any)
+store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void | () => void, initial_value: any)
 ```
 
 ---
@@ -356,6 +356,20 @@ import { derived } from 'svelte/store';
 
 const delayed = derived(a, ($a, set) => {
 	setTimeout(() => set($a), 1000);
+}, 'one moment...');
+```
+
+If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes:
+
+```js
+import { derived } from 'svelte/store';
+
+const tick = derived(frequency, ($frequency, set) => {
+	const interval = setInterval(() => set(Date.now()), 1000 / frequency);
+
+	return () => {
+		clearInterval(interval);
+	}
 }, 'one moment...');
 ```
 
