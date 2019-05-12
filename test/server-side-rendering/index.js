@@ -97,7 +97,7 @@ describe("ssr", () => {
 			const cwd = path.resolve("test/runtime/samples", dir);
 
 			Object.keys(require.cache)
-				.filter(x => x.startsWith(cwd))
+				.filter(x => x.endsWith('.svelte'))
 				.forEach(file => {
 					delete require.cache[file];
 				});
