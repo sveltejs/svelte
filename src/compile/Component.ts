@@ -759,7 +759,7 @@ export default class Component {
 					const { name } = object;
 
 					if (name[0] === '$' && !scope.has(name)) {
-						component.warn_if_undefined(object, null);
+						component.warn_if_undefined(name, object, null);
 					}
 				}
 			},
@@ -1202,9 +1202,7 @@ export default class Component {
 		return `ctx.${name}`;
 	}
 
-	warn_if_undefined(node, template_scope: TemplateScope) {
-		let { name } = node;
-
+	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
 			name = name.slice(1);
 			this.has_reactive_assignments = true; // TODO does this belong here?
