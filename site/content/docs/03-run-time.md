@@ -680,7 +680,7 @@ out:draw={params}
 
 ---
 
-Animates the stroke of an SVG element, like a snake in a tube. `in` transitions being with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
+Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
 
 `scale` accepts the following parameters:
 
