@@ -1,3 +1,5 @@
+import * as path from 'path';
+
 export default {
 	props: {
 		a: 1
@@ -6,6 +8,10 @@ export default {
 	html: `
 		<p>foo 1</p>
 	`,
+
+	before_test() {
+		delete require.cache[path.resolve(__dirname, 'components.js')];
+	},
 
 	test({ assert, component, target }) {
 		component.a = 2;
