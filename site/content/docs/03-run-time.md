@@ -517,10 +517,204 @@ Both `set` and `update` can take a second argument — an object with `hard` or 
 
 ### `svelte/transition`
 
-TODO
+The `svelte/transition` module exports six functions: `fade`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with svelte [`transitions`](docs#Transitions).
 
-* fade, fly, slide, scale, draw
-* crossfade...
+#### `fade`
+
+```sv
+transition:fade={params}
+```
+```sv
+in:fade={params}
+```
+```sv
+out:fade={params}
+```
+
+---
+
+Animates the opacity of an element from 0 to the current opacity for `in` transitions and from the current opacity to 0 for `out` transitions.
+
+`fade` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+
+You can see the `fade` transition in action in the [transition tutorial](tutorial/transition).
+
+```html
+<script>
+	import { fade } from 'svelte/transition';
+</script>
+
+{#if condition}
+	<div transition:fade="{{delay: 250, duration: 300}}">
+		fades in and out
+	</div>
+{/if}
+```
+
+#### `fly`
+
+```sv
+transition:fly={params}
+```
+```sv
+in:fly={params}
+```
+```sv
+out:fly={params}
+```
+
+---
+
+Animates the x and y positions and the opacity of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+
+`fly` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `x` (`number`, default 0) - the x offset to animate out to and in from
+* `y` (`number`, default 0) - the y offset to animate out to and in from
+* `opacity` (`number`, default 0) - the opacity value to animate out to and in from
+
+You can see the `fly` transition in action in the [transition tutorial](tutorial/adding-parameters-to-transitions).
+
+```html
+<script>
+	import { fly } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+{#if condition}
+	<div transition:fly="{{delay: 250, duration: 300, x: 100, y: 500, opacity: 0.5, easing: quintOut}}">
+		flies in and out
+	</div>
+{/if}
+```
+
+#### `slide`
+
+```sv
+transition:slide={params}
+```
+```sv
+in:slide={params}
+```
+```sv
+out:slide={params}
+```
+
+---
+
+Slides an element in and out.
+
+`slide` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+
+```html
+<script>
+	import { fly } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+{#if condition}
+	<div transition:fly="{{delay: 250, duration: 300, easing: quintOut }}">
+		flies in and out
+	</div>
+{/if}
+```
+
+#### `scale`
+
+```sv
+transition:scale={params}
+```
+```sv
+in:scale={params}
+```
+```sv
+out:scale={params}
+```
+
+---
+
+Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+
+`scale` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `start` (`number`, default 0) - the scale value to animate out to and in from
+* `opacity` (`number`, default 0) - the opacity value to animate out to and in from
+
+```html
+<script>
+	import { scale } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+{#if condition}
+	<div transition:scale="{{duration: 500, delay: 500, opacity: 0.5, start: 0.5, easing: quintOut}}">
+		scales in and out
+	</div>
+{/if}
+```
+
+#### `draw`
+
+```sv
+transition:draw={params}
+```
+```sv
+in:draw={params}
+```
+```sv
+out:draw={params}
+```
+
+---
+
+Animates the stroke of an SVG path, like a snake in a tube. `in` transitions being with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erases the path. `draw` only works with SVG Path elements.
+
+`scale` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `speed` (`number`, default undefined) - the speed of the animation, see below.
+* `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicInOut`) — an [easing function](docs#svelte_easing)
+
+The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will halve that duration and setting it to `2` will double it.
+
+```html
+<script>
+	import { draw } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+<svg viewBox="0 0 5 5" xmlns="http://www.w3.org/2000/svg">
+	{#if condition}
+		<path transition:draw="{{duration: 5000, delay: 500, easing: quintOut}}"
+					d="M2 1 h1 v1 h1 v1 h-1 v1 h-1 v-1 h-1 v-1 h1 z"
+					fill="none"
+					stroke="cornflowerblue"
+					stroke-width="0.1px"
+					stroke-linejoin="round"
+		/>
+	{/if}
+</svg>
+
+```
+
+
+<!-- Crossfade is coming soon... -->
+
+
 
 ### `svelte/animate`
 
