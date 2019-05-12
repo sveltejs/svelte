@@ -1,8 +1,9 @@
 <script>
 	import { quintOut } from 'svelte/easing';
-	import crossfade from './crossfade.js'; // TODO put this in svelte/transition!
+	import { crossfade } from 'svelte/transition'; 
+	import { flip } from 'svelte/animate';
 
-	const { send, receive } = crossfade({
+	const [send, receive] = crossfade({
 		fallback(node, params) {
 			const style = getComputedStyle(node);
 			const transform = style.transform === 'none' ? '' : style.transform;
@@ -122,6 +123,7 @@
 			<label
 				in:receive="{{key: todo.id}}"
 				out:send="{{key: todo.id}}"
+				animate:flip
 			>
 				<input type=checkbox bind:checked={todo.done}>
 				{todo.description}
@@ -136,6 +138,7 @@
 			<label
 				in:receive="{{key: todo.id}}"
 				out:send="{{key: todo.id}}"
+				animate:flip
 			>
 				<input type=checkbox bind:checked={todo.done}>
 				{todo.description}
