@@ -12,7 +12,8 @@
     "cy:run": "cypress run",
     "cy:open": "cypress open",
     "test": "run-p --race dev cy:run",
-    "testsrc": "mocha -r esm test/**"
+    "testsrc": "mocha -r esm test/**",
+    "deploy": "make deploy"
   },
   "dependencies": {
     "@polka/redirect": "^1.0.0-next.0",
