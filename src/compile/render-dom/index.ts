@@ -462,9 +462,13 @@ export default function dom(
 
 				${body.length > 0 && body.join('\n\n')}
 			}
-
-			customElements.define("${component.tag}", ${name});
 		`);
+
+		if (component.tag != null) {
+			builder.add_block(deindent`
+				customElements.define("${component.tag}", ${name});
+			`);
+		}
 	} else {
 		const superclass = options.dev ? 'SvelteComponentDev' : 'SvelteComponent';
 
