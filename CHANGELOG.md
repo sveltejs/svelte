@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 3.3.0
+
+* Allow multiple event listeners on a single node ([#2688](https://github.com/sveltejs/svelte/issues/2688))
+* Allow derivers to return a cleanup function ([#2553](https://github.com/sveltejs/svelte/issues/2553))
+* Support namespaced components (`<Foo.Bar/>`) ([#2743](https://github.com/sveltejs/svelte/pull/2743))
+
 ## 3.2.2
 
 * Add `window` and `document` to expected globals ([#2722](https://github.com/sveltejs/svelte/pull/2722))
