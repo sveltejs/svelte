@@ -152,10 +152,14 @@ export default class Component {
 		this.namespace = namespaces[this.component_options.namespace] || this.component_options.namespace;
 
 		if (compile_options.customElement) {
-			this.tag = this.component_options.tag || compile_options.tag;
-			if (!this.tag) {
-				throw new Error(`Cannot compile to a custom element without specifying a tag name via options.tag or <svelte:options>`);
+			if (this.component_options.tag === undefined && compile_options.tag === undefined) {
+				const svelteOptions = ast.html.children.find(child => child.name === 'svelte:options');
+				this.warn(svelteOptions, {
+					code: 'custom-element-no-tag',
+					message: `No custom element 'tag' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>`
+				});
 			}
+			this.tag = this.component_options.tag || compile_options.tag;
 		} else {
 			this.tag = this.name;
 		}
@@ -1265,9 +1269,9 @@ function process_component_options(component: Component, nodes) {
 						const message = `'tag' must be a string literal`;
 						const tag = get_value(attribute, code, message);
 
-						if (typeof tag !== 'string') component.error(attribute, { code, message });
+						if (typeof tag !== 'string' && tag !== null) component.error(attribute, { code, message });
 
-						if (!/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
+						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
 							component.error(attribute, {
 								code: `invalid-tag-property`,
 								message: `tag name must be two or more words joined by the '-' character`
