@@ -319,9 +319,6 @@ export default class IfBlockWrapper extends Wrapper {
 		const destroy_old_block = deindent`
 			@group_outros();
 			@on_outro(() => {
-				if (${if_blocks}[${previous_block_index}] === null) {
-					return;
-				}
 				${if_blocks}[${previous_block_index}].d(1);
 				${if_blocks}[${previous_block_index}] = null;
 			});
@@ -433,9 +430,6 @@ export default class IfBlockWrapper extends Wrapper {
 			? deindent`
 				@group_outros();
 				@on_outro(() => {
-					if (${name} === null) {
-						return;
-					}
 					${name}.d(1);
 					${name} = null;
 				});
