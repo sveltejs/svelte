@@ -52,7 +52,7 @@ export function flush() {
 		// afterUpdate functions. This may cause
 		// subsequent updates...
 		while (render_callbacks.length) {
-			const callback = render_callbacks.pop();
+			const callback = render_callbacks.shift();
 			if (!seen_callbacks.has(callback)) {
 				callback();
 
