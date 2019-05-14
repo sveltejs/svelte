@@ -23,16 +23,21 @@ function dispatch(node, direction, kind) {
 
 let outros;
 
-export function group_outros() {
+function reset_outros() {
 	outros = {
 		remaining: 0,
 		callbacks: []
 	};
 }
 
+export function group_outros() {
+	reset_outros();
+}
+
 export function check_outros() {
 	if (!outros.remaining) {
 		run_all(outros.callbacks);
+		reset_outros();
 	}
 }
 
