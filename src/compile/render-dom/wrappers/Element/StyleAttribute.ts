@@ -122,7 +122,7 @@ function get_style_value(chunks: Node[]) {
 				} else if (char === '\\') {
 					escaped = true;
 				} else if (char === quote_mark) {
-					quote_mark === null;
+					quote_mark = null;
 				} else if (char === '"' || char === "'") {
 					quote_mark = char;
 				} else if (char === ')' && in_url) {
