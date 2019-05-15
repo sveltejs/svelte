@@ -7,8 +7,7 @@
         "allowJs": true,
         "lib": ["es5", "es6", "dom"],
         "importHelpers": true,
-        "moduleResolution": "node",
-        "strict": true
+        "moduleResolution": "node"
     },
     "include": [
         "src"
