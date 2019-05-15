@@ -1266,7 +1266,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 ### @debug
 
 ```sv
-{@debug variable}
+{@debug}
 ```
 ```sv
 {@debug var1, var2, ..., varN}
@@ -1274,7 +1274,9 @@ The `<svelte:options>` element provides a place to specify per-component compile
 
 ---
 
-The `{@debug ...}` tag offers an alternative to `console.log(...)`. It allows you to inspect the value of a specific variable, but additionally pauses code execution when you have devtools open.
+The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.
+
+It accepts a comma-separated list of variable names (not arbitrary expressions).
 
 ```html
 <script>
@@ -1291,16 +1293,18 @@ The `{@debug ...}` tag offers an alternative to `console.log(...)`. It allows yo
 
 ---
 
-`{@debug ...}` can also accept a comma-separated list of values, however it accepts only variable identifiers, and as such does not support inspecting of expressions.
+`{@debug ...}` accepts a comma-separated list of variable names (not arbitrary expressions).
 
-```sv
-# Compiles
+```html
+<!-- Compiles -->
 {@debug user}
 {@debug user1, user2, user3}
 
-# WON'T compile
+<!-- WON'T compile -->
 {@debug user.firstname}
 {@debug myArray[0]}
 {@debug !isReady}
 {@debug typeof user === 'object'}
 ```
+
+The `{@debug}` tag without any arguments will insert a `debugger` statement that gets triggered when *any* state changes, as opposed to the specified variables.
