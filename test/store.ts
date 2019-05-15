@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { readable, writable, derived, get } from '../../store.js';
+import { readable, writable, derived, get } from '../store';
 
 describe('store', () => {
 	describe('writable', () => {
@@ -30,10 +30,10 @@ describe('store', () => {
 				return () => called -= 1;
 			});
 
-			const unsubscribe1 = store.subscribe(() => {});
+			const unsubscribe1 = store.subscribe(() => { });
 			assert.equal(called, 1);
 
-			const unsubscribe2 = store.subscribe(() => {});
+			const unsubscribe2 = store.subscribe(() => { });
 			assert.equal(called, 1);
 
 			unsubscribe1();
@@ -73,7 +73,7 @@ describe('store', () => {
 				set(0);
 
 				return () => {
-					tick = () => {};
+					tick = () => { };
 					running = false;
 				};
 			});
@@ -242,11 +242,29 @@ describe('store', () => {
 
 			assert.deepEqual(cleaned_up, [2, 3, 4]);
 		});
+
+		it('allows derived with different types', () => {
+			const a = writable('one');
+			const b = writable(1);
+			const c = derived([a, b], ([a, b]) => `${a} ${b}`);
+
+			const values: string[] = [];
+
+			const unsubscribe = c.subscribe(value => {
+				values.push(value);
+			});
+
+			a.set('two');
+			b.set(2);
+			assert.deepEqual(values, 'two 2');
+
+			unsubscribe();
+		});
 	});
 
 	describe('get', () => {
 		it('gets the current value of a store', () => {
-			const store = readable(42, () => {});
+			const store = readable(42, () => { });
 			assert.equal(get(store), 42);
 		});
 	});

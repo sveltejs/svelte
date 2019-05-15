@@ -10,24 +10,24 @@ type Invalidater<T> = (value?: T) => void;
 
 type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
 
-export interface ReadableStore<T> {
+export interface Readable<T> {
 	subscribe(run: Subscriber<T>, invalidate?: Invalidater<T>): Unsubscriber;
 }
 
-export interface WritableStore<T> extends ReadableStore<T> {
+export interface Writable<T> extends Readable<T> {
 	set(value: T): void;
 	update(updater: Updater<T>): void;
 }
 
 type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidater<T>];
 
-export function readable<T>(value: T, start: StartStopNotifier<T>): ReadableStore<T> {
+export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
 	return {
 		subscribe: writable(value, start).subscribe,
 	};
 }
 
-export function writable<T>(value: T, start: StartStopNotifier<T> = noop): WritableStore<T> {
+export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
 	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
 
@@ -68,21 +68,27 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 	return { set, update, subscribe };
 }
 
-export function derived<T>(
-	stores: ReadableStore<T> | Array<ReadableStore<T>>,
-	fn: (values: T | T[], set?: Subscriber<T>) => T | Unsubscriber | void,
-	initial_value: T): ReadableStore<T> {
+type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>];
+
+type StoresValues<T> = T extends Readable<infer U> ? U :
+	{ [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
+
+export function derived<T, S extends Stores>(
+	stores: S,
+	fn: (values: StoresValues<S>, set?: Subscriber<T>) => T | Unsubscriber | void,
+	initial_value?: T,
+): Readable<T> {
 
 	const single = !Array.isArray(stores);
-	const stores_array: Array<ReadableStore<T>> = single
-		? [stores as ReadableStore<T>]
-		: stores as Array<ReadableStore<T>>;
+	const stores_array: Array<Readable<any>> = single
+		? [stores as Readable<any>]
+		: stores as Array<Readable<any>>;
 
 	const auto = fn.length < 2;
 
 	return readable(initial_value, (set) => {
 		let inited = false;
-		const values: T[] = [];
+		const values: StoresValues<S> = [] as StoresValues<S>;
 
 		let pending = 0;
 		let cleanup = noop;
@@ -123,7 +129,7 @@ export function derived<T>(
 	});
 }
 
-export function get<T>(store: ReadableStore<T>): T {
+export function get<T>(store: Readable<T>): T {
 	let value: T | undefined;
 	store.subscribe((_: T) => value = _)();
 	return value as T;
