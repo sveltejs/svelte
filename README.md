@@ -16,7 +16,7 @@
          alt="build status">
   </a>
 
-  <a href="https://github.com/svelte/svelte/blob/master/LICENSE">
+  <a href="https://github.com/sveltejs/svelte/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
   </a>
 </p>
