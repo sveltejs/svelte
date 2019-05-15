@@ -1,6 +1,6 @@
 <script>
 	import { quintOut } from 'svelte/easing';
-	import { crossfade } from 'svelte/transition'; 
+	import { crossfade } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
 
 	const [send, receive] = crossfade({
