@@ -364,7 +364,7 @@ export default function dom(
 						}
 
 						const variable = component.var_lookup.get(n);
-						return variable && variable.writable;
+						return variable && (variable.writable || variable.mutated);
 					})
 					.map(n => `$$dirty.${n}`).join(' || ');
 
