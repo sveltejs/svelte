@@ -2,7 +2,7 @@
   <a href="https://svelte.dev">
 	<img alt="Cybernetically enhanced web apps: Svelte" src="https://svelte-assets.surge.sh/banner.png">
   </a>
-	
+
   <a href="https://www.npmjs.com/package/svelte">
     <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
   </a>
@@ -16,7 +16,7 @@
          alt="build status">
   </a>
 
-  <a href="https://github.com/svelte/svelte/blob/master/LICENSE.md">
+  <a href="https://github.com/sveltejs/svelte/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
   </a>
 </p>
