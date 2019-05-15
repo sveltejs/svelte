@@ -1261,3 +1261,46 @@ The `<svelte:options>` element provides a place to specify per-component compile
 ```html
 <svelte:options tag="my-custom-element"/>
 ```
+
+
+### @debug
+
+```sv
+{@debug variable}
+```
+```sv
+{@debug var1, var2, ..., varN}
+```
+
+---
+
+The `{@debug ...}` tag offers an alternative to `console.log(...)`. It allows you to inspect the value of a specific variable, but additionally pauses code execution when you have devtools open.
+
+```html
+<script>
+	let user = {
+		firstname: 'Ada',
+		lastname: 'Lovelace'
+	};
+</script>
+
+{@debug user}
+
+<h1>Hello {user.firstname}!</h1>
+```
+
+---
+
+`{@debug ...}` can also accept a comma-separated list of values, however it accepts only variable identifiers, and as such does not support inspecting of expressions.
+
+```sv
+# Compiles
+{@debug user}
+{@debug user1, user2, user3}
+
+# WON'T compile
+{@debug user.firstname}
+{@debug myArray[0]}
+{@debug !isReady}
+{@debug typeof user === 'object'}
+```
