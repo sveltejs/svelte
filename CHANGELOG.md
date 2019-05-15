@@ -1,5 +1,14 @@
 # Svelte changelog
 
+## 3.4.0
+
+* Allow custom element to be defined without a `tag` ([#2417](https://github.com/sveltejs/svelte/issues/2417))
+* Fix parsing of quote marks inside attribute values ([#2715](https://github.com/sveltejs/svelte/pull/2754))
+* Convert `svelte/store` to TypeScript ([#2733](https://github.com/sveltejs/svelte/pull/2733))
+* Allow `debug` tags to include hoisted values ([#2764](https://github.com/sveltejs/svelte/issues/2764))
+* Parse error if attribute name is missing `=` ([#1513](https://github.com/sveltejs/svelte/pull/2770))
+* Allow reactive declarations to depend on mutated `const` values ([#2728](https://github.com/sveltejs/svelte/issues/2728))
+
 ## 3.3.0
 
 * Allow multiple event listeners on a single node ([#2688](https://github.com/sveltejs/svelte/issues/2688))
