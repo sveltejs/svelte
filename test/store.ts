@@ -248,17 +248,11 @@ describe('store', () => {
 			const b = writable(1);
 			const c = derived([a, b], ([a, b]) => `${a} ${b}`);
 
-			const values: string[] = [];
-
-			const unsubscribe = c.subscribe(value => {
-				values.push(value);
-			});
+			assert.deepEqual(get(c), 'one 1');
 
 			a.set('two');
 			b.set(2);
-			assert.deepEqual(values, 'two 2');
-
-			unsubscribe();
+			assert.deepEqual(get(c), 'two 2');
 		});
 	});
 
