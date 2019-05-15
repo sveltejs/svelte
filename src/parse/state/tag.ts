@@ -358,7 +358,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		}
 	}
 
-	let name = parser.read_until(/(\s|=|\/|>)/);
+	let name = parser.read_until(/[\s=\/>"']/);
 	if (!name) return null;
 
 	let end = parser.index;
@@ -383,6 +383,11 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	if (parser.eat('=')) {
 		value = read_attribute_value(parser);
 		end = parser.index;
+	} else if (parser.match_regex(/["']/)) {
+		parser.error({
+			code: `unexpected-token`,
+			message: `Expected =`
+		}, parser.index);
 	}
 
 	if (type) {
