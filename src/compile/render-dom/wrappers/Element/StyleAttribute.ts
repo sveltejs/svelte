@@ -93,7 +93,6 @@ function optimize_style(value: Node[]) {
 		}
 
 		const result = get_style_value(chunks);
-		if (!result) return null;
 
 		props.push({ key, value: result.value });
 		chunks = result.chunks;
