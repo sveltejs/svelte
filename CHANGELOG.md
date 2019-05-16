@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 3.4.1
+
+* Handle non-falsy non-function return values from derivers ([#2780](https://github.com/sveltejs/svelte/issues/2780))
+* Allow `spring` to work server-side ([#2773](https://github.com/sveltejs/svelte/issues/2773))
+
 ## 3.4.0
 
 * Allow custom element to be defined without a `tag` ([#2417](https://github.com/sveltejs/svelte/issues/2417))
