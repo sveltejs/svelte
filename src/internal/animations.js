@@ -1,4 +1,4 @@
-import { identity as linear, noop } from './utils.js';
+import { identity as linear, noop, now } from './utils.js';
 import { loop } from './loop.js';
 import { create_rule, delete_rule } from './style_manager.js';
 
@@ -12,7 +12,7 @@ export function create_animation(node, from, fn, params) {
 		delay = 0,
 		duration = 300,
 		easing = linear,
-		start: start_time = window.performance.now() + delay,
+		start: start_time = now() + delay,
 		end = start_time + duration,
 		tick = noop,
 		css

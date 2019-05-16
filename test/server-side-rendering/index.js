@@ -102,6 +102,8 @@ describe("ssr", () => {
 					delete require.cache[file];
 				});
 
+			delete global.window;
+
 			const compileOptions = Object.assign({ sveltePath }, config.compileOptions, {
 				generate: 'ssr'
 			});
