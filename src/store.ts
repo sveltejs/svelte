@@ -1,4 +1,4 @@
-import { run_all, noop, safe_not_equal } from './internal/utils';
+import { run_all, noop, safe_not_equal, is_function } from './internal/utils';
 
 type Subscriber<T> = (value: T) => void;
 
@@ -102,7 +102,7 @@ export function derived<T, S extends Stores>(
 			if (auto) {
 				set(result as T);
 			} else {
-				cleanup = result as Unsubscriber || noop;
+				cleanup = is_function(result) ? result as Unsubscriber : noop;
 			}
 		};
 
