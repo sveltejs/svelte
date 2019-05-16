@@ -20,7 +20,6 @@ export default {
 		input.value = 'everybody';
 		await input.dispatchEvent(new window.Event('input'));
 
-		assert.equal(component.name, 'everybody');
 		assert.htmlEqual(target.innerHTML, `
 			<input>
 			<p>Hello everybody!</p>

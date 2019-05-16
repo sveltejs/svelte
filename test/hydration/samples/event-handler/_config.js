@@ -17,7 +17,6 @@ export default {
 
 		await button.dispatchEvent(new window.MouseEvent('click'));
 
-		assert.ok(component.clicked);
 		assert.htmlEqual(target.innerHTML, `
 			<button>click me</button>
 			<p>clicked!</p>
