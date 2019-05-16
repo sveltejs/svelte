@@ -8,10 +8,10 @@ In this app we want to convert the text in the input field into specified symbol
 
 ```html
 <script>
-	import { convertable } from './convertable.js';
+  import { convertable } from './convertable.js';
 
-	export let symbol;
-	export let text;
+  export let symbol;
+  export let text;
 </script>
 ```
 
@@ -19,7 +19,7 @@ We can now use it with the element:
 
 ```html
 <div use:convertable={{ symbol, text }}>
-	<span>{symbol}</span>
+  <span>{symbol}</span>
 </div>
 ```
 
@@ -31,15 +31,15 @@ Update the return value of `convertable` function in `convertable.js`:
 
 ```js
 return {
-	update ({ symbol, text }) {
-		tooltip.textContent = convertText(text, symbol)
-	},
+  update ({ symbol, text }) {
+    tooltip.textContent = convertText(text, symbol)
+  },
 
-	destroy () {
-		tooltip.remove()
-		node.removeEventListener('mouseenter', append)
-		node.removeEventListener('mouseleave', remove)
-	}
+  destroy () {
+    tooltip.remove()
+    node.removeEventListener('mouseenter', append)
+    node.removeEventListener('mouseleave', remove)
+  }
 }
 ```
 
