@@ -17,6 +17,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 
 	render(block: Block) {
 		const style_props = optimize_style(this.node.chunks);
+		if (!style_props) return super.render(block);
 
 		style_props.forEach((prop: StyleProp) => {
 			let value;
