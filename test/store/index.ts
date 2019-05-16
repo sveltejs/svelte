@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { readable, writable, derived, get } from '../store';
+import { readable, writable, derived, get } from '../../store';
 
 describe('store', () => {
 	describe('writable', () => {
@@ -241,6 +241,30 @@ describe('store', () => {
 			unsubscribe();
 
 			assert.deepEqual(cleaned_up, [2, 3, 4]);
+		});
+
+		it('discards non-function return values', () => {
+			const num = writable(1);
+
+			const values = [];
+
+			const d = derived(num, ($num, set) => {
+				set($num * 2);
+				return {};
+			});
+
+			num.set(2);
+
+			const unsubscribe = d.subscribe(value => {
+				values.push(value);
+			});
+
+			num.set(3);
+			num.set(4);
+
+			assert.deepEqual(values, [4, 6, 8]);
+
+			unsubscribe();
 		});
 
 		it('allows derived with different types', () => {
