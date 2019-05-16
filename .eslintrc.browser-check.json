@@ -1,27 +1,27 @@
 {
-	"root": true,
-	"plugins": [
-		"builtin-compat"
-	],
-	"rules": {
-		"builtin-compat/no-incompatible-builtins": 2
-	},
-	"env": {
-		"es6": true,
-		"browser": true,
-		"node": true,
-		"mocha": true
-	},
-	"parserOptions": {
-		"ecmaVersion": 9,
-		"sourceType": "module"
-	},
-	"settings": {
-		"import/core-modules": [
-			"svelte"
-		],
-		"svelte3/extensions": [
-			"html"
-		]
-	}
+  "root": true,
+  "plugins": [
+    "builtin-compat"
+  ],
+  "rules": {
+    "builtin-compat/no-incompatible-builtins": 2
+  },
+  "env": {
+    "es6": true,
+    "browser": true,
+    "node": true,
+    "mocha": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 9,
+    "sourceType": "module"
+  },
+  "settings": {
+    "import/core-modules": [
+      "svelte"
+    ],
+    "svelte3/extensions": [
+      "html"
+    ]
+  }
 }

@@ -11,6 +11,6 @@ trim_trailing_whitespace = true
 [test/**/expected.css]
 insert_final_newline = false
 
-[{package.json,.travis.yml,.eslintrc.json}]
+[{package.json,.travis.yml,.eslintrc.json,.eslintrc.browser-check.json}]
 indent_style = space
 indent_size = 2
