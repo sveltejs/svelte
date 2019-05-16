@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store'; // eslint-disable-line import/no-unresolved
-import { assign, loop } from 'svelte/internal'; // eslint-disable-line import/no-unresolved
+import { assign, loop, now } from 'svelte/internal'; // eslint-disable-line import/no-unresolved
 import { linear } from 'svelte/easing'; // eslint-disable-line import/no-unresolved
 import { is_date } from './utils.js';
 
@@ -73,7 +73,7 @@ export function tweened(value, defaults = {}) {
 			interpolate = get_interpolator
 		} = assign(assign({}, defaults), opts);
 
-		const start = window.performance.now() + delay;
+		const start = now() + delay;
 		let fn;
 
 		task = loop(now => {

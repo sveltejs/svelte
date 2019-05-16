@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store'; // eslint-disable-line import/no-unresolved
-import { loop } from 'svelte/internal'; // eslint-disable-line import/no-unresolved
+import { loop, now } from 'svelte/internal'; // eslint-disable-line import/no-unresolved
 import { is_date } from './utils.js';
 
 function tick_spring(ctx, last_value, current_value, target_value) {
@@ -51,7 +51,7 @@ export function spring(value, opts = {}) {
 
 		if (opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
 			cancel_task = true; // cancel any running animation
-			last_time = window.performance.now();
+			last_time = now();
 			last_value = value;
 			store.set(value = target_value);
 			return new Promise(f => f()); // fulfil immediately
@@ -62,7 +62,7 @@ export function spring(value, opts = {}) {
 		}
 
 		if (!task) {
-			last_time = window.performance.now();
+			last_time = now();
 			cancel_task = false;
 
 			task = loop(now => {

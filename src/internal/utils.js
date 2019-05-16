@@ -79,3 +79,12 @@ export function exclude_internal_props(props) {
 	for (const k in props) if (k[0] !== '$') result[k] = props[k];
 	return result;
 }
+
+export let now = typeof window !== 'undefined'
+	? () => window.performance.now()
+	: () => Date.now();
+
+// used internally for testing
+export function set_now(fn) {
+	now = fn;
+}
