@@ -1,4 +1,4 @@
-import { identity as linear, noop, run_all } from './utils.js';
+import { identity as linear, noop, now, run_all } from './utils.js';
 import { loop } from './loop.js';
 import { create_rule, delete_rule } from './style_manager.js';
 import { custom_event } from './dom.js';
@@ -63,7 +63,7 @@ export function create_in_transition(node, fn, params) {
 		if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
 		tick(0, 1);
 
-		const start_time = window.performance.now() + delay;
+		const start_time = now() + delay;
 		const end_time = start_time + duration;
 
 		if (task) task.abort();
@@ -136,7 +136,7 @@ export function create_out_transition(node, fn, params) {
 
 		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
 
-		const start_time = window.performance.now() + delay;
+		const start_time = now() + delay;
 		const end_time = start_time + duration;
 
 		loop(now => {
@@ -224,7 +224,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 		} = config;
 
 		const program = {
-			start: window.performance.now() + delay,
+			start: now() + delay,
 			b
 		};
 

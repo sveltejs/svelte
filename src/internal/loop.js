@@ -1,9 +1,11 @@
+import { now } from './utils.js';
+
 const tasks = new Set();
 let running = false;
 
 function run_tasks() {
 	tasks.forEach(task => {
-		if (!task[0](window.performance.now())) {
+		if (!task[0](now())) {
 			tasks.delete(task);
 			task[1]();
 		}
