@@ -61,6 +61,7 @@
     "codecov": "^3.0.0",
     "css-tree": "1.0.0-alpha22",
     "eslint": "^5.3.0",
+    "eslint-plugin-builtin-compat": "0.0.2",
     "eslint-plugin-html": "^5.0.0",
     "eslint-plugin-import": "^2.11.0",
     "estree-walker": "^0.6.0",
