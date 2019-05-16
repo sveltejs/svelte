@@ -26,12 +26,14 @@
     "codecov": "codecov",
     "precodecov": "npm run coverage",
     "lint": "eslint src test/*.js",
+    "lint:browser-check": "npm run prepare && eslint --no-eslintrc -c .eslintrc.browser-check.json ./*.js --no-ignore",
     "build": "rollup -c",
     "prepare": "npm run build && npm run tsd",
     "dev": "rollup -cw",
     "pretest": "npm run build",
     "posttest": "agadoo src/internal/index.js",
     "prepublishOnly": "export PUBLISH=true && npm run lint && npm test",
+    "supportedbrowsers": "browserslist",
     "tsd": "tsc -d src/store.ts --outDir ."
   },
   "repository": {
@@ -95,5 +97,10 @@
     "sourceMap": true,
     "instrument": true
   },
-  "dependencies": {}
+  "dependencies": {},
+  "browserslist": [
+    "> 1%",
+    "not ie <= 11",
+    "not dead"
+  ]
 }
