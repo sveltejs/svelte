@@ -44,7 +44,7 @@ In the terminal, you can instantly create a new project like so:
 npx degit sveltejs/template my-svelte-project
 cd my-svelte-project
 npm install
-npm run dev & open http://localhost:5000
+npm run dev && open http://localhost:5000
 ```
 
 Once you've tinkered a bit and understood how everything fits together, you can fork [sveltejs/template](https://github.com/sveltejs/template) and start doing this instead:
