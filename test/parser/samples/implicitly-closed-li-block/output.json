@@ -1,0 +1,89 @@
+{
+	"html": {
+		"start": 0,
+		"end": 51,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 51,
+				"type": "Element",
+				"name": "ul",
+				"attributes": [],
+				"children": [
+					{
+						"start": 4,
+						"end": 6,
+						"type": "Text",
+						"data": "\n\t"
+					},
+					{
+						"start": 6,
+						"end": 40,
+						"type": "Element",
+						"name": "li",
+						"attributes": [],
+						"children": [
+							{
+								"start": 10,
+								"end": 13,
+								"type": "Text",
+								"data": "a\n\t"
+							},
+							{
+								"start": 13,
+								"end": 38,
+								"type": "IfBlock",
+								"expression": {
+									"type": "Literal",
+									"start": 18,
+									"end": 22,
+									"value": true,
+									"raw": "true"
+								},
+								"children": [
+									{
+										"start": 26,
+										"end": 33,
+										"type": "Element",
+										"name": "li",
+										"attributes": [],
+										"children": [
+											{
+												"start": 30,
+												"end": 33,
+												"type": "Text",
+												"data": "b\n\t"
+											}
+										]
+									}
+								]
+							},
+							{
+								"start": 38,
+								"end": 40,
+								"type": "Text",
+								"data": "\n\t"
+							}
+						]
+					},
+					{
+						"start": 40,
+						"end": 46,
+						"type": "Element",
+						"name": "li",
+						"attributes": [],
+						"children": [
+							{
+								"start": 44,
+								"end": 46,
+								"type": "Text",
+								"data": "c\n"
+							}
+						]
+					}
+				]
+			}
+		]
+	}
+}

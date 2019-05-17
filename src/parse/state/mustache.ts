@@ -1,5 +1,6 @@
 import read_context from '../read/context';
 import read_expression from '../read/expression';
+import { closing_tag_omitted } from '../utils/html';
 import { whitespace } from '../../utils/patterns';
 import { trim_start, trim_end } from '../../utils/trim';
 import { Parser } from '../index';
@@ -40,6 +41,12 @@ export default function mustache(parser: Parser) {
 	if (parser.eat('/')) {
 		let block = parser.current();
 		let expected;
+
+		if (closing_tag_omitted(block.name)) {
+			block.end = start;
+			parser.stack.pop();
+			block = parser.current();
+		}
 
 		if (block.type === 'ElseBlock' || block.type === 'PendingBlock' || block.type === 'ThenBlock' || block.type === 'CatchBlock') {
 			block.end = start;
