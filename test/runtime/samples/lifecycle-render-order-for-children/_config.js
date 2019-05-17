@@ -5,6 +5,8 @@ export default {
 
 	test({ assert, component, target }) {
 		assert.deepEqual(order, [
+			'0: beforeUpdate',
+			'0: render',
 			'1: beforeUpdate',
 			'1: render',
 			'2: beforeUpdate',
@@ -16,7 +18,9 @@ export default {
 			'2: afterUpdate',
 			'2: onMount',
 			'3: afterUpdate',
-			'3: onMount'
+			'3: onMount',
+			'0: afterUpdate',
+			'0: onMount',
 		]);
 
 		order.length = 0;

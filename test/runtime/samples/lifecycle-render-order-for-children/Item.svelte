@@ -1,6 +1,5 @@
 <script>
 	import { onMount, beforeUpdate, afterUpdate } from 'svelte';
-
 	import order from './order.js';
 
 	export let index;
