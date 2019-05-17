@@ -1,5 +1,5 @@
 <script>
-	import { fly } from 'svelte/transition';
+	import { fade, fly } from 'svelte/transition';
 	let visible = true;
 </script>
 
