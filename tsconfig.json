@@ -1,18 +1,42 @@
 {
-    "compilerOptions": {
-        "target": "ES6",
-        "diagnostics": true,
-        "noImplicitThis": true,
-        "noEmitOnError": true,
-        "allowJs": true,
-        "lib": ["es5", "es6", "dom"],
-        "importHelpers": true,
-        "moduleResolution": "node"
-    },
-    "include": [
-        "src"
-    ],
-    "exclude": [
-        "node_modules"
-    ]
+	"include": ["src"],
+	"exclude": ["node_modules"],
+
+	"compilerOptions": {
+		// target node 8+ and browsers
+		// see https://node.green/
+		// the only missing feature is Array.prototype.values
+		"target": "es2017",
+		"lib": ["es2017", "dom"],
+
+		// rollup and plugins deal with modules
+		"module": "esnext",
+		"moduleResolution": "node",
+		"resolveJsonModule": true,
+
+		// typechecking
+		"noImplicitThis": true,
+		"allowSyntheticDefaultImports": true, // rollup deals with this
+
+		// TODO: error all the things
+		//"strict": true,
+		//"noUnusedLocals": true,
+		//"noUnusedParameters": true,
+
+		// reporting
+		"diagnostics": true,
+		"noEmitOnError": true,
+		"noErrorTruncation": true,
+
+		// TODO: migrate everything to typescript
+		"allowJs": true,
+		"checkJs": true,
+
+		// resolve `import { thing } from 'svelte'`
+		// again, rollup deals with this
+		"baseUrl": "src",
+		"paths": {
+			"svelte/": ["./*"]
+		}
+	}
 }
