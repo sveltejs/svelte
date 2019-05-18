@@ -22,10 +22,6 @@ export class Parser {
 	meta_tags = {};
 
 	constructor(template: string, options: ParserOptions) {
-		if (typeof template !== 'string') {
-			throw new TypeError('Template must be a string');
-		}
-
 		this.template = template.replace(/\s+$/, '');
 		this.filename = options.filename;
 		this.customElement = options.customElement;
