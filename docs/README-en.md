@@ -21,16 +21,13 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="/docs/README-en.md">English</a> •
-  <a href="/docs/README-ptbr.md">Português (Brasil)</a> •
-</p>
 
 ## What is Svelte?
 
 Svelte is a new way to build web applications. It's a compiler that takes your declarative components and converts them into efficient JavaScript that surgically updates the DOM.
 
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://svelte.dev/chat).
+
 
 ## Development
 
@@ -58,6 +55,7 @@ npm run dev
 
 The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/) you may need to install a plugin in order to get syntax highlighting and code hints etc.
 
+
 ### Running Tests
 
 ```bash
@@ -70,6 +68,7 @@ To filter tests, use `-g` (aka `--grep`). For example, to only run tests involvi
 npm run test -- -g transition
 ```
 
+
 ## svelte.dev
 
 The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.dev). To develop locally:
@@ -79,6 +78,7 @@ cd site
 npm install && npm run update
 npm run dev
 ```
+
 
 ## License
 
