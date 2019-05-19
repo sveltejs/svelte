@@ -23,7 +23,7 @@
 
 <p align="center">
   <a href="/docs/README-en.md">English</a> •
-  <a href="/docs/README-ptbr.md">Português (Brasil)</a> •
+  <a href="/docs/README-ptbr.md">Português (Brasil)</a>
 </p>
 
 ## What is Svelte?
