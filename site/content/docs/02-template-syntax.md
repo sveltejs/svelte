@@ -366,22 +366,24 @@ Components can emit events using [createEventDispatcher](docs#createEventDispatc
 <SomeComponent on:whatever={handler}/>
 ```
 
-It's also possible to have multiple event listeners that react on the same event:
+---
+
+It's possible to have multiple event listeners for the same event:
 
 ```html
 <script>
-	let counter;
+	let counter = 0;
  	function increment() {
 		counter = counter + 1;
- 	}
-	
+	}
+
 	function track(event) {
 		trackEvent(event)
 	}
 </script>
 
-<button on:click="{increment}" on:click="{track}">Click me!</button>
-```html
+<button on:click={increment} on:click={track}>Click me!</button>
+```
 
 ---
 
