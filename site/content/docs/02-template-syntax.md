@@ -366,6 +366,23 @@ Components can emit events using [createEventDispatcher](docs#createEventDispatc
 <SomeComponent on:whatever={handler}/>
 ```
 
+It's also possible to have two different listeners that react on the same event:
+
+```html
+<script>
+	let counter;
+ 	function increment() {
+		counter = counter + 1;
+ 	}
+	
+	function track(event) {
+		trackEvent(event)
+	}
+</script>
+
+<button on:click="{increment}" on:click="{track}">Click me!</button>
+```html
+
 ---
 
 As with DOM events, if the `on:` directive is used without a value, the component will *forward* the event, meaning that a consumer of the component can listen for it.
