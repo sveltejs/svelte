@@ -366,7 +366,7 @@ Components can emit events using [createEventDispatcher](docs#createEventDispatc
 <SomeComponent on:whatever={handler}/>
 ```
 
-It's also possible to have two different listeners that react on the same event:
+It's also possible to have multiple event listeners that react on the same event:
 
 ```html
 <script>
