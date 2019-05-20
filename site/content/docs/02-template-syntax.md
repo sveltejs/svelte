@@ -351,6 +351,24 @@ If the `on:` directive is used without a value, the component will *forward* the
 </button>
 ```
 
+---
+
+It's possible to have multiple event listeners for the same event:
+
+```html
+<script>
+	let counter = 0;
+	function increment() {
+		counter = counter + 1;
+	}
+
+	function track(event) {
+		trackEvent(event)
+	}
+</script>
+
+<button on:click={increment} on:click={track}>Click me!</button>
+```
 
 ### Component events
 
