@@ -36,7 +36,7 @@ Pull requests are encouraged and always welcome. [Pick an issue](https://github.
 To install and work on Svelte locally:
 
 ```bash
-git clone git@github.com:sveltejs/svelte.git
+git clone https://github.com/sveltejs/svelte.git
 cd svelte
 npm install
 ```
