@@ -36,21 +36,21 @@ Pull requests are encouraged and always welcome. [Pick an issue](https://github.
 To install and work on Svelte locally:
 
 ```bash
-git clone https://github.com/sveltejs/svelte.git
+git clone git@github.com:sveltejs/svelte.git
 cd svelte
-npm i
+npm install
 ```
 
 To build the compiler, and all the other modules included in the package:
 
 ```bash
-npm run build or yarn build
+npm run build
 ```
 
 To watch for changes and continually rebuild the package (this is useful if you're using [npm link](https://docs.npmjs.com/cli/link.html) to test out changes in a project locally):
 
 ```bash
-npm run dev or yarn dev
+npm run dev
 ```
 
 The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/) you may need to install a plugin in order to get syntax highlighting and code hints etc.
@@ -59,13 +59,13 @@ The compiler is written in [TypeScript](https://www.typescriptlang.org/), but do
 ### Running Tests
 
 ```bash
-npm run test or yarn test
+npm run test
 ```
 
 To filter tests, use `-g` (aka `--grep`). For example, to only run tests involving transitions:
 
 ```bash
-npm run test or yarn test -- -g transition
+npm run test -- -g transition
 ```
 
 
@@ -75,8 +75,8 @@ The source code for https://svelte.dev, including all the documentation, lives i
 
 ```bash
 cd site
-npm i && npm run update or yarn && yarn update
-npm run dev or yarn dev
+npm install && npm run update
+npm run dev
 ```
 
 
