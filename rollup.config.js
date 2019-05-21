@@ -94,26 +94,21 @@ export default [
 			{
 				file: `store.mjs`,
 				format: 'esm',
-				paths: id => id.startsWith('svelte/') && id.replace('svelte', '.')
 			},
 			{
 				file: `store.js`,
 				format: 'cjs',
-				paths: id => id.startsWith('svelte/') && id.replace('svelte', '.')
 			}
 		],
 		plugins: [
 			is_publish
 				? typescript({
-					include: 'src/**',
-					exclude: 'src/internal/**',
 					typescript: require('typescript')
 				})
 				: sucrase({
 					transforms: ['typescript']
 				})
-		],
-		external: id => id.startsWith('svelte/')
+		]
 	},
 
 	// everything else

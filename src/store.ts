@@ -1,4 +1,10 @@
-import { run_all, noop, safe_not_equal, is_function } from './internal/utils';
+/** Safe not equal. */
+function safe_not_equal(a: any, b: any) {
+	return a !== a ? b === b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+}
+
+/** No operation. */
+function noop() { }
 
 /** Callback to inform of a value updates. */
 type Subscriber<T> = (value: T) => void;
@@ -143,7 +149,7 @@ export function derived<T, S extends Stores>(
 			if (auto) {
 				set(result as T);
 			} else {
-				cleanup = is_function(result) ? result as Unsubscriber : noop;
+				cleanup = result instanceof Function ? result as Unsubscriber : noop;
 			}
 		};
 
@@ -164,7 +170,7 @@ export function derived<T, S extends Stores>(
 		sync();
 
 		return function stop() {
-			run_all(unsubscribers);
+			unsubscribers.forEach((unsubscribe) => unsubscribe());
 			cleanup();
 		};
 	});
