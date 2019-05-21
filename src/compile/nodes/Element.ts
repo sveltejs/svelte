@@ -250,7 +250,7 @@ export default class Element extends Node {
 		if (this.name === 'figure') {
 			const children = this.children.filter(node => {
 				if (node.type === 'Comment') return false;
-				if (node.type === 'Text') return /\S/.test((node as Text).data );
+				if (node.type === 'Text') return /\S/.test(node.data);
 				return true;
 			});
 
@@ -391,7 +391,7 @@ export default class Element extends Node {
 				let ancestor = this.parent;
 				do {
 					if (ancestor.type === 'InlineComponent') break;
-					if (ancestor.type === 'Element' && /-/.test((ancestor as Element).name)) break;
+					if (ancestor.type === 'Element' && /-/.test(ancestor.name)) break;
 
 					if (ancestor.type === 'IfBlock' || ancestor.type === 'EachBlock') {
 						const type = ancestor.type === 'IfBlock' ? 'if' : 'each';

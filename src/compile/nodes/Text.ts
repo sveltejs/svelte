@@ -2,7 +2,6 @@ import Node from './shared/Node';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
-import Element from './Element';
 
 export default class Text extends Node {
 	type: 'Text';
@@ -16,7 +15,7 @@ export default class Text extends Node {
 		if (!component.component_options.preserveWhitespace && !/\S/.test(info.data)) {
 			let node = parent;
 			while (node) {
-				if (node.type === 'Element' && (node as Element).name === 'pre') {
+				if (node.type === 'Element' && node.name === 'pre') {
 					return;
 				}
 				node = node.parent;
