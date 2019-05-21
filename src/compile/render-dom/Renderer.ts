@@ -3,7 +3,6 @@ import { CompileOptions } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
 import CodeBuilder from '../utils/CodeBuilder';
-import SlotWrapper from './wrappers/Slot';
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
@@ -18,6 +17,7 @@ export default class Renderer {
 	fragment: FragmentWrapper;
 
 	file_var: string;
+	locate: (c: number) => { line: number; column: number; };
 
 	constructor(component: Component, options: CompileOptions) {
 		this.component = component;

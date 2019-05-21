@@ -55,7 +55,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 	}
 }
 
-function get_name(filename) {
+function get_name(filename: string) {
 	if (!filename) return null;
 	const parts = filename.split(/[\/\\]/);
 

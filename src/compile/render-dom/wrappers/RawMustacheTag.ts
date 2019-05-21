@@ -1,9 +1,10 @@
 import Renderer from '../Renderer';
 import Block from '../Block';
-import Node from '../../nodes/shared/Node';
 import Tag from './shared/Tag';
 import Wrapper from './shared/wrapper';
 import deindent from '../../utils/deindent';
+import MustacheTag from '../../nodes/MustacheTag';
+import RawMustacheTag from '../../nodes/RawMustacheTag';
 
 export default class RawMustacheTagWrapper extends Tag {
 	var = 'raw';
@@ -12,7 +13,7 @@ export default class RawMustacheTagWrapper extends Tag {
 		renderer: Renderer,
 		block: Block,
 		parent: Wrapper,
-		node: Node
+		node: MustacheTag | RawMustacheTag
 	) {
 		super(renderer, block, parent, node);
 		this.cannot_use_innerhtml();

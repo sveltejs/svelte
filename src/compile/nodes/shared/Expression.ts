@@ -223,7 +223,7 @@ export default class Expression {
 	}
 
 	// TODO move this into a render-dom wrapper?
-	render(block: Block) {
+	render(block?: Block) {
 		if (this.rendered) return this.rendered;
 
 		const {
