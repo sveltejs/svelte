@@ -6,8 +6,15 @@ import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 import { Node as INode } from '../../interfaces';
 import { new_tail } from '../utils/tail';
+import Element from './Element';
 
-function unpack_destructuring(contexts: Array<{ name: string, tail: string }>, node: INode, tail: string) {
+type Context = {
+	key: INode,
+	name?: string,
+	tail: string
+};
+
+function unpack_destructuring(contexts: Array<Context>, node: INode, tail: string) {
 	if (!node) return;
 
 	if (node.type === 'Identifier' || node.type === 'RestIdentifier') {
@@ -53,7 +60,7 @@ export default class EachBlock extends AbstractBlock {
 	context: string;
 	key: Expression;
 	scope: TemplateScope;
-	contexts: Array<{ name: string, tail: string }>;
+	contexts: Array<Context>;
 	has_animation: boolean;
 	has_binding = false;
 
@@ -82,7 +89,7 @@ export default class EachBlock extends AbstractBlock {
 
 		if (this.index) {
 			// index can only change if this is a keyed each block
-			const dependencies = this.key ? this.expression.dependencies : [];
+			const dependencies = this.key ? this.expression.dependencies : new Set([]);
 			this.scope.add(this.index, dependencies, this);
 		}
 
@@ -92,8 +99,8 @@ export default class EachBlock extends AbstractBlock {
 
 		if (this.has_animation) {
 			if (this.children.length !== 1) {
-				const child = this.children.find(child => !!child.animation);
-				component.error(child.animation, {
+				const child = this.children.find(child => !!(child as Element).animation);
+				component.error((child as Element).animation, {
 					code: `invalid-animation`,
 					message: `An element that use the animate directive must be the sole child of a keyed each block`
 				});

@@ -9,7 +9,7 @@ export function create_scopes(expression: Node) {
 	let scope = new Scope(null, false);
 
 	walk(expression, {
-		enter(node: Node, parent: Node) {
+		enter(node, parent) {
 			if (node.type === 'ImportDeclaration') {
 				node.specifiers.forEach(specifier => {
 					scope.declarations.set(specifier.local.name, specifier);
@@ -25,7 +25,7 @@ export function create_scopes(expression: Node) {
 					if (node.id) scope.declarations.set(node.id.name, node);
 				}
 
-				node.params.forEach((param: Node) => {
+				node.params.forEach((param) => {
 					extract_names(param).forEach(name => {
 						scope.declarations.set(name, node);
 					});
