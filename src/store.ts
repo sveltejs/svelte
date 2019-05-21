@@ -109,7 +109,7 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
 
 /**
  * Derived value store by synchronizing one or more readable stores and
- * applying an aggration function over its input values.
+ * applying an aggregation function over its input values.
  * @param stores input stores
  * @param fn function callback that aggregates the values
  * @param initial_value when used asynchronously
