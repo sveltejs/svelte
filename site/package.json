@@ -56,7 +56,7 @@
     "rollup-plugin-replace": "^2.2.0",
     "rollup-plugin-svelte": "^5.0.3",
     "rollup-plugin-terser": "^4.0.4",
-    "sapper": "^0.26.0",
+    "sapper": "^0.27.1",
     "shelljs": "^0.8.3",
     "svelte": "^3.0.0"
   },
