@@ -4,7 +4,7 @@ import read_style from '../read/style';
 import { decode_character_references } from '../utils/html';
 import { is_void } from '../../utils/names';
 import { Parser } from '../index';
-import { Node } from '../../interfaces';
+import { Directive, DirectiveType, Node, Text } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 
@@ -401,7 +401,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		}
 
 		if (value[0]) {
-			if (value.length > 1 || value[0].type === 'Text') {
+			if ((value as Array<any>).length > 1 || value[0].type === 'Text') {
 				parser.error({
 					code: `invalid-directive-value`,
 					message: `Directive value must be a JavaScript expression enclosed in curly braces`
@@ -409,7 +409,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			}
 		}
 
-		const directive = {
+		const directive: Directive = {
 			start,
 			end,
 			type,
@@ -445,7 +445,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	};
 }
 
-function get_directive_type(name) {
+function get_directive_type(name: string):DirectiveType {
 	if (name === 'use') return 'Action';
 	if (name === 'animate') return 'Animation';
 	if (name === 'bind') return 'Binding';
@@ -471,15 +471,15 @@ function read_attribute_value(parser: Parser) {
 	return value;
 }
 
-function read_sequence(parser: Parser, done: () => boolean) {
-	let current_chunk: Node = {
+function read_sequence(parser: Parser, done: () => boolean): Node[] {
+	let current_chunk: Text = {
 		start: parser.index,
 		end: null,
 		type: 'Text',
 		data: '',
 	};
 
-	const chunks = [];
+	const chunks: Node[] = [];
 
 	while (parser.index < parser.template.length) {
 		const index = parser.index;
