@@ -5,6 +5,7 @@ import CatchBlock from './CatchBlock';
 import Expression from './shared/Expression';
 
 export default class AwaitBlock extends Node {
+	type: 'AwaitBlock';
 	expression: Expression;
 	value: string;
 	error: string;

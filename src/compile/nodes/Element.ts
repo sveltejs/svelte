@@ -15,6 +15,7 @@ import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
+import { INode } from './interfaces';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -101,7 +102,7 @@ export default class Element extends Node {
 	intro?: Transition = null;
 	outro?: Transition = null;
 	animation?: Animation = null;
-	children: Node[];
+	children: INode[];
 	namespace: string;
 
 	constructor(component, parent, scope, info: any) {
@@ -136,7 +137,7 @@ export default class Element extends Node {
 			// Special case — treat these the same way:
 			//   <option>{foo}</option>
 			//   <option value={foo}>{foo}</option>
-			const value_attribute = info.attributes.find((attribute: Node) => attribute.name === 'value');
+			const value_attribute = info.attributes.find(attribute => attribute.name === 'value');
 
 			if (!value_attribute) {
 				info.attributes.push({
@@ -228,7 +229,7 @@ export default class Element extends Node {
 			let is_figure_parent = false;
 
 			while (parent) {
-				if (parent.name === 'figure') {
+				if ((parent as Element).name === 'figure') {
 					is_figure_parent = true;
 					break;
 				}
@@ -249,11 +250,11 @@ export default class Element extends Node {
 		if (this.name === 'figure') {
 			const children = this.children.filter(node => {
 				if (node.type === 'Comment') return false;
-				if (node.type === 'Text') return /\S/.test(node.data);
+				if (node.type === 'Text') return /\S/.test((node as Text).data );
 				return true;
 			});
 
-			const index = children.findIndex(child => child.name === 'figcaption');
+			const index = children.findIndex(child => (child as Element).name === 'figcaption');
 
 			if (index !== -1 && (index !== 0 && index !== children.length - 1)) {
 				this.component.warn(children[index], {
@@ -320,7 +321,9 @@ export default class Element extends Node {
 				}
 
 				const value = attribute.get_static_value();
+				// @ts-ignore
 				if (value && !aria_role_set.has(value)) {
+					// @ts-ignore
 					const match = fuzzymatch(value, aria_roles);
 					let message = `A11y: Unknown role '${value}'`;
 					if (match) message += ` (did you mean '${match}'?)`;
@@ -359,6 +362,7 @@ export default class Element extends Node {
 			// tabindex-no-positive
 			if (name === 'tabindex') {
 				const value = attribute.get_static_value();
+				// @ts-ignore todo is tabindex=true correct case?
 				if (!isNaN(value) && +value > 0) {
 					component.warn(attribute, {
 						code: `a11y-positive-tabindex`,
@@ -387,7 +391,7 @@ export default class Element extends Node {
 				let ancestor = this.parent;
 				do {
 					if (ancestor.type === 'InlineComponent') break;
-					if (ancestor.type === 'Element' && /-/.test(ancestor.name)) break;
+					if (ancestor.type === 'Element' && /-/.test((ancestor as Element).name)) break;
 
 					if (ancestor.type === 'IfBlock' || ancestor.type === 'EachBlock') {
 						const type = ancestor.type === 'IfBlock' ? 'if' : 'each';

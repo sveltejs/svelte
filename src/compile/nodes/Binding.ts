@@ -5,6 +5,7 @@ import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 
 export default class Binding extends Node {
+	type: 'Binding';
 	name: string;
 	expression: Expression;
 	is_contextual: boolean;
