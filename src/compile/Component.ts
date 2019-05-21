@@ -1,4 +1,5 @@
 import MagicString, { Bundle } from 'magic-string';
+// @ts-ignore
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
@@ -21,6 +22,7 @@ import { remove_indentation, add_indentation } from '../utils/indentation';
 import get_object from './utils/get_object';
 import unwrap_parens from './utils/unwrap_parens';
 import Slot from './nodes/Slot';
+import { Node as ESTreeNode } from 'estree';
 
 type ComponentOptions = {
 	namespace?: string;
@@ -758,7 +760,7 @@ export default class Component {
 					});
 				}
 
-				if (is_reference(node, parent)) {
+				if (is_reference(node as ESTreeNode, parent as ESTreeNode)) {
 					const object = get_object(node);
 					const { name } = object;
 
@@ -1022,7 +1024,7 @@ export default class Component {
 						scope = map.get(node);
 					}
 
-					if (is_reference(node, parent)) {
+					if (is_reference(node as ESTreeNode, parent as ESTreeNode)) {
 						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
 
@@ -1113,7 +1115,7 @@ export default class Component {
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
-						} else if (is_reference(node, parent)) {
+						} else if (is_reference(node as ESTreeNode, parent as ESTreeNode)) {
 							const identifier = get_object(node);
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
