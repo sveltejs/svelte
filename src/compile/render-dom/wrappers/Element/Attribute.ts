@@ -187,7 +187,7 @@ export default class AttributeWrapper {
 					: property_name
 						? `${element.var}.${property_name} = ${value};`
 						: is_dataset
-							? `${element.var}.dataset.${camel_case_name} = ${value};`
+							? `${element.var}.dataset.${camel_case_name} = ${value === true ? '""' : value};`
 							: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
 			);
 
