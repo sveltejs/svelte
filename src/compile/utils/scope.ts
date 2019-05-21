@@ -1,6 +1,7 @@
 import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
 import { Node } from '../../interfaces';
+import { Node as ESTreeNode } from 'estree';
 
 export function create_scopes(expression: Node) {
 	const map = new WeakMap();
@@ -38,7 +39,7 @@ export function create_scopes(expression: Node) {
 				map.set(node, scope);
 			} else if (/(Class|Variable)Declaration/.test(node.type)) {
 				scope.add_declaration(node);
-			} else if (node.type === 'Identifier' && is_reference(node, parent)) {
+			} else if (node.type === 'Identifier' && is_reference(node as ESTreeNode, parent as ESTreeNode)) {
 				if (!scope.has(node.name) && !globals.has(node.name)) {
 					globals.set(node.name, node);
 				}
