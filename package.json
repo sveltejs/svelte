@@ -84,7 +84,7 @@
     "tiny-glob": "^0.2.1",
     "ts-node": "^8.0.2",
     "tslib": "^1.8.0",
-    "typescript": "^3.0.1"
+    "typescript": "^3.4.0"
   },
   "nyc": {
     "include": [

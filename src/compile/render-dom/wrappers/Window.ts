@@ -6,6 +6,7 @@ import deindent from '../../utils/deindent';
 import add_event_handlers from './shared/add_event_handlers';
 import Window from '../../nodes/Window';
 import add_actions from './shared/add_actions';
+import { INode } from '../../nodes/interfaces';
 
 const associated_events = {
 	innerWidth: 'resize',
@@ -33,7 +34,7 @@ const readonly = new Set([
 export default class WindowWrapper extends Wrapper {
 	node: Window;
 
-	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: Node) {
+	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: INode) {
 		super(renderer, block, parent, node);
 	}
 

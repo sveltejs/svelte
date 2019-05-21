@@ -96,7 +96,7 @@ export default class IfBlockWrapper extends Wrapper {
 			if (branch.block.has_outros) has_outros = true;
 
 			if (is_else_if(node.else)) {
-				create_branches(node.else.children[0]);
+				create_branches(node.else.children[0] as IfBlock);
 			} else if (node.else) {
 				const branch = new IfBlockBranch(
 					renderer,

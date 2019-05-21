@@ -776,7 +776,7 @@ export default class Component {
 		});
 	}
 
-	invalidate(name, value) {
+	invalidate(name, value?) {
 		const variable = this.var_lookup.get(name);
 
 		if (variable && (variable.subscribable && variable.reassigned)) {
