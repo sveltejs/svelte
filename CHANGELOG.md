@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 3.4.2
+
+* Use empty string for empty data attributes ([#2804](https://github.com/sveltejs/svelte/pull/2804))
+* Support `customElement: true` with no `<svelte:options>` ([#2821](https://github.com/sveltejs/svelte/issues/2821))
+* Add docstrings to `svelte/store` ([#2795](https://github.com/sveltejs/svelte/pull/2795))
+
 ## 3.4.1
 
 * Handle non-falsy non-function return values from derivers ([#2780](https://github.com/sveltejs/svelte/issues/2780))
