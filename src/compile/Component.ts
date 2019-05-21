@@ -153,7 +153,7 @@ export default class Component {
 
 		if (compile_options.customElement) {
 			if (this.component_options.tag === undefined && compile_options.tag === undefined) {
-				const svelteOptions = ast.html.children.find(child => child.name === 'svelte:options');
+				const svelteOptions = ast.html.children.find(child => child.name === 'svelte:options') || { start: 0, end: 0 };
 				this.warn(svelteOptions, {
 					code: 'custom-element-no-tag',
 					message: `No custom element 'tag' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>`
