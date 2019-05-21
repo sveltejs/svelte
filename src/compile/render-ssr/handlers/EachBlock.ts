@@ -1,6 +1,8 @@
 import { snip } from '../../utils/snip';
+import Renderer, { RenderOptions } from '../Renderer';
+import EachBlock from '../../nodes/EachBlock';
 
-export default function(node, renderer, options) {
+export default function(node: EachBlock, renderer: Renderer, options: RenderOptions) {
 	const snippet = snip(node.expression);
 
 	const { start, end } = node.context_node;
