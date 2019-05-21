@@ -4,9 +4,8 @@ import Component from '../Component';
 
 export default class Title extends Node {
 	type: 'Title';
-
-	should_cache: boolean;
 	children: Children;
+	should_cache: boolean;
 
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);

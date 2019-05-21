@@ -1,5 +1,4 @@
 import Component from '../../../Component';
-import { Node } from '../../../../interfaces';
 import { INode } from '../../../nodes/interfaces';
 
 export default function create_debugging_comment(

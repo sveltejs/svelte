@@ -85,7 +85,7 @@ export default class FragmentWrapper {
 				// *unless* there is no whitespace between this node and its next sibling
 				if (this.nodes.length === 0) {
 					const should_trim = (
-						// @ts-ignore todo:
+						// @ts-ignore todo: probably error, should it be next_sibling.node.data?
 						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.data)) : !child.has_ancestor('EachBlock')
 					);
 

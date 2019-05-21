@@ -17,7 +17,7 @@ export default class Node {
 	var: string;
 	attributes: Attribute[];
 
-	constructor(component: Component, parent: any, scope: any, info: { start: number; end: number; type: string; }) {
+	constructor(component: Component, parent, scope, info: any) {
 		this.start = info.start;
 		this.end = info.end;
 		this.type = info.type;
