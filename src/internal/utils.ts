@@ -80,7 +80,7 @@ export function exclude_internal_props(props) {
 	return result;
 }
 
-export let now = typeof window !== 'undefined'
+export let now: () => number = typeof window !== 'undefined'
 	? () => window.performance.now()
 	: () => Date.now();
 
