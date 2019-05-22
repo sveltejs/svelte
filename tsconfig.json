@@ -17,9 +17,10 @@
 		"moduleResolution": "node",
 		"baseUrl": ".",
 		"paths": {
-			"svelte/*": [
-				"./src/*"
-			]
+			"svelte/internal": ["./src/internal"],
+			"svelte/easing": ["./src/easing"],
+			"svelte/motion": ["./src/motion"],
+			"svelte/store": ["./src/store"]
 		},
 		"typeRoots": [
 			"node_modules/@types"
