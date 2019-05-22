@@ -32,8 +32,8 @@
     "pretest": "npm run build",
     "posttest": "agadoo internal.mjs",
     "prepublishOnly": "export PUBLISH=true && npm run lint && npm test",
-    "tsd": "tsc -d src/store.ts --outDir .",
-    "typecheck": "tsc --noEmit"
+    "tsd": "tsc -p . --emitDeclarationOnly",
+    "typecheck": "tsc -p . --noEmit"
   },
   "repository": {
     "type": "git",
