@@ -1,23 +1,34 @@
 {
-    "compilerOptions": {
-        "target": "ES6",
-        "diagnostics": true,
-        "noImplicitThis": true,
-        "noEmitOnError": true,
-        "allowJs": true,
-        "lib": ["es5", "es6", "dom"],
-        "importHelpers": true,
-        "moduleResolution": "node",
-				"baseUrl": ".",
-				"paths": {
-						"svelte/*": ["./src/*"]
-				}
-    },
-    "include": [
-        "src"
-    ],
-    "exclude": [
-			  "./*.*js",
-        "node_modules"
-    ]
+	"compilerOptions": {
+		"target": "es2015",
+		"module": "es6",
+		"declarationDir": "./dist",
+		"outDir": "./dist",
+		"declaration": true,
+		"noImplicitThis": true,
+		"noEmitOnError": true,
+		"lib": [
+			"es5",
+			"es6",
+			"dom",
+			"es2015"
+		],
+		"importHelpers": true,
+		"moduleResolution": "node",
+		"baseUrl": ".",
+		"paths": {
+			"svelte/*": [
+				"./src/*"
+			]
+		},
+		"typeRoots": [
+			"node_modules/@types"
+		]
+	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"dist"
+	]
 }
