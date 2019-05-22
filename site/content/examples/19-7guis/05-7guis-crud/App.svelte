@@ -16,44 +16,24 @@
 		}
 	];
 
-	let prefix = '';
-	let first = '';
-	let last = '';
+	let query = '';
 	let i = 0;
 
-	$: filteredPeople = prefix
-		? people.filter(person => {
-			const name = `${person.last}, ${person.first}`;
-			return name.toLowerCase().startsWith(prefix.toLowerCase());
-		})
-		: people;
+	$: filteredPeople = query ? people.filter(person => {
+			const name = `${person.first} ${person.last}`;
+			return name.toLowerCase().indexOf(query.toLowerCase()) !== -1;
+		}) : people;
 
-	$: selected = filteredPeople[i];
-
-	$: {
-		first = selected ? selected.first : '';
-		last = selected ? selected.last : '';
-	}
+	$: selected = filteredPeople[i] ? filteredPeople[i] : { first: '', last: '' };
 
 	function create() {
-		people = people.concat({ first, last });
+		people = people.concat({ first: "PLACE", last: "HODL"});
 		i = people.length - 1;
-		first = last = '';
-	}
-
-	function update() {
-		people[i] = { first, last };
 	}
 
 	function remove() {
 		people = [...people.slice(0, i), ...people.slice(i + 1)];
-
-		first = last = '';
 		i = Math.min(i, people.length - 1);
-	}
-
-	function reset_inputs(person) {
-		({ first, last } = person);
 	}
 </script>
 
@@ -71,7 +51,8 @@
 	select {
 		float: left;
 		margin: 0 1em 1em 0;
-		width: 14em;
+		width: 10em;
+		font-size: 1.618em;
 	}
 
 	.buttons {
@@ -79,19 +60,25 @@
 	}
 </style>
 
-<input placeholder="filter prefix" bind:value={prefix}>
-
-<select bind:value={i} size={5}>
+<select bind:value={i}>
 	{#each filteredPeople as person, i}
-		<option value={i}>{person.last}, {person.first}</option>
+		<option value={i}>{person.first} {person.last}</option>
 	{/each}
 </select>
 
-<label><input bind:value={first} placeholder="first"></label>
-<label><input bind:value={last} placeholder="last"></label>
+<p>
+	<br />
+	<br />
+</p>
+
+<input placeholder="search" bind:value={query}>
+
+<br />
+<label><input bind:value={selected.first} placeholder="first"></label>
+<label><input bind:value={selected.last} placeholder="last"></label>
+<br />
 
 <div class='buttons'>
-	<button on:click={create} disabled="{!first || !last}">create</button>
-	<button on:click={update} disabled="{!first || !last || !selected}">update</button>
+	<button on:click={create}>create</button>
 	<button on:click={remove} disabled="{!selected}">delete</button>
 </div>
