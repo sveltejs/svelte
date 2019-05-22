@@ -7,12 +7,17 @@
         "allowJs": true,
         "lib": ["es5", "es6", "dom"],
         "importHelpers": true,
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+				"baseUrl": ".",
+				"paths": {
+						"svelte/*": ["./src/*"]
+				}
     },
     "include": [
         "src"
     ],
     "exclude": [
+			  "./*.*js",
         "node_modules"
     ]
 }

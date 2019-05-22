@@ -1,5 +1,5 @@
-import { cubicOut, cubicInOut } from './easing';
-import { assign, is_function } from './internal';
+import { cubicOut, cubicInOut } from 'svelte/easing';
+import { assign, is_function } from 'svelte/internal';
 
 export function fade(node, {
 	delay = 0,
