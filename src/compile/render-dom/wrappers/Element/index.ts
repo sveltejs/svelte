@@ -91,6 +91,12 @@ const events = [
 			name === 'playbackRate'
 	},
 
+	// details event
+	{
+		event_names: ['toggle'],
+		filter: (node: Element, name: string) =>
+			node.name === 'details'
+	},
 ];
 
 export default class ElementWrapper extends Wrapper {
