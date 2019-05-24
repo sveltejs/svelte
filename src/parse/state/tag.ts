@@ -490,8 +490,13 @@ function read_sequence(parser: Parser, done: () => boolean) {
 			if (current_chunk.data) chunks.push(current_chunk);
 
 			chunks.forEach(chunk => {
-				if (chunk.type === 'Text')
-					chunk.data = decode_character_references(chunk.data);
+				if (chunk.type === 'Text') {
+					let decoded = decode_character_references(chunk.data);
+					if (chunk.data != decoded) {
+						chunk.raw = chunk.data;
+						chunk.data = decoded;
+					}
+				}
 			});
 
 			return chunks;
