@@ -19,7 +19,7 @@
 	let prefix = '';
 	let first = '';
 	let last = '';
-	let i = 0;
+	let i = -1;
 
 	$: filteredPeople = prefix
 		? people.filter(person => {
@@ -28,11 +28,13 @@
 		})
 		: people;
 
-	$: selected = filteredPeople[i];
+	$: selected = indexChanged(i)
 
-	$: {
+	function indexChanged() {
+		selected = filteredPeople[i];
 		first = selected ? selected.first : '';
 		last = selected ? selected.last : '';
+		return selected
 	}
 
 	function create() {
