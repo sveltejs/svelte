@@ -15,7 +15,8 @@
 						"start": 6,
 						"end": 12,
 						"type": "Text",
-						"data": " "
+						"data": " ",
+						"raw": "&nbsp;"
 					}
 				]
 			}

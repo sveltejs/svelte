@@ -20,7 +20,8 @@
 								"start": 15,
 								"end": 33,
 								"type": "Text",
-								"data": "\"quoted\""
+								"data": "\"quoted\"",
+								"raw": "&quot;quoted&quot;"
 							}
 						]
 					}
