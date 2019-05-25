@@ -86,9 +86,13 @@ export let now = is_client
 	? () => window.performance.now()
 	: () => Date.now();
 
+export let raf = is_client ? requestAnimationFrame : noop;
+
 // used internally for testing
 export function set_now(fn) {
 	now = fn;
 }
 
-export const raf = is_client ? requestAnimationFrame : noop;
+export function set_raf(fn) {
+	raf = fn;
+}
