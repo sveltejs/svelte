@@ -787,6 +787,10 @@ export default class Component {
 			return `${name.slice(1)}.set(${name})`
 		}
 
+		if (variable && !variable.referenced && !variable.is_reactive_dependency && !variable.export_name && !name.startsWith('$$')) {
+			return value || name;
+		}
+
 		if (value) {
 			return `$$invalidate('${name}', ${value})`;
 		}
@@ -1118,8 +1122,9 @@ export default class Component {
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
 								const owner = scope.find_owner(name);
-								const component_var = component.var_lookup.get(name);
-								const is_writable_or_mutated = component_var && (component_var.writable || component_var.mutated);
+								const variable = component.var_lookup.get(name);
+								if (variable) variable.is_reactive_dependency = true;
+								const is_writable_or_mutated = variable && (variable.writable || variable.mutated);
 								if (
 									(!owner || owner === component.instance_scope) &&
 									(name[0] === '$' || is_writable_or_mutated)
