@@ -5,5 +5,5 @@
 </script>
 
 <div>
-  <Nested bind:this={nested} />
+	<Nested bind:this={nested} />
 </div>
