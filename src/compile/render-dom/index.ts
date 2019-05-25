@@ -415,8 +415,20 @@ export default function dom(
 
 				${injected.length && `let ${injected.join(', ')};`}
 
-				${reactive_declarations.length > 0 && deindent`
+				${component.compile_options.dev && `let $$update_count = 0; let $$changed = new Set();`}
+				${(component.compile_options.dev || reactive_declarations.length > 0) && deindent`
 				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
+					${component.compile_options.dev && deindent`
+					$$update_count += 1;
+					Object.keys($$dirty).forEach(x => { if ($$dirty[x]) $$changed.add(x); });
+					@raf(() => {
+						if ($$update_count > 1) {
+							const changed = Array.from($$changed);
+							console.warn('<${component.tag}> was updated ' + $$update_count + ' times in a single frame (' + changed.join(', ') + '). This may cause degraded performance');
+						}
+						$$update_count = 0;
+						$$changed.clear();
+					});`}
 					${reactive_declarations}
 				};
 				`}
