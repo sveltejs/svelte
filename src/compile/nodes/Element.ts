@@ -544,7 +544,7 @@ export default class Element extends Node {
 						message: `'group' binding can only be used with <input type="checkbox"> or <input type="radio">`
 					});
 				}
-			} else if (name == 'files') {
+			} else if (name === 'files') {
 				if (this.name !== 'input') {
 					component.error(binding, {
 						code: `invalid-binding`,
@@ -558,6 +558,14 @@ export default class Element extends Node {
 					component.error(binding, {
 						code: `invalid-binding`,
 						message: `'files' binding can only be used with <input type="file">`
+					});
+				}
+
+			} else if (name === 'open') {
+				if (this.name !== 'details') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${name}' binding can only be used with <details>`
 					});
 				}
 			} else if (
