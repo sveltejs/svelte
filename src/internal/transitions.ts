@@ -1,10 +1,11 @@
-import { identity as linear, noop, now, run_all } from './utils';
+import { identity as linear, is_function, noop, now, run_all } from './utils';
 import { loop } from './loop';
 import { create_rule, delete_rule } from './style_manager';
 import { custom_event } from './dom';
 import { add_render_callback } from './scheduler';
+import { TransitionConfig } from '../transition';
 
-let promise;
+let promise: Promise<void>|null;
 
 function wait() {
 	if (!promise) {
@@ -17,7 +18,7 @@ function wait() {
 	return promise;
 }
 
-function dispatch(node, direction, kind) {
+function dispatch(node: Element, direction: boolean, kind: 'start' | 'end') {
 	node.dispatchEvent(custom_event(`${direction ? 'intro' : 'outro'}${kind}`));
 }
 
@@ -39,8 +40,9 @@ export function check_outros() {
 export function on_outro(callback) {
 	outros.callbacks.push(callback);
 }
+type TransitionFn = (node: Element, params: any) => TransitionConfig;
 
-export function create_in_transition(node, fn, params) {
+export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
 	let config = fn(node, params);
 	let running = false;
 	let animation_name;
@@ -95,7 +97,7 @@ export function create_in_transition(node, fn, params) {
 
 			delete_rule(node);
 
-			if (typeof config === 'function') {
+			if (is_function(config)) {
 				config = config();
 				wait().then(go);
 			} else {
@@ -116,7 +118,7 @@ export function create_in_transition(node, fn, params) {
 	};
 }
 
-export function create_out_transition(node, fn, params) {
+export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
 	let config = fn(node, params);
 	let running = true;
 	let animation_name;
@@ -163,8 +165,9 @@ export function create_out_transition(node, fn, params) {
 		});
 	}
 
-	if (typeof config === 'function') {
+	if (is_function(config)) {
 		wait().then(() => {
+			// @ts-ignore
 			config = config();
 			go();
 		});
@@ -186,7 +189,7 @@ export function create_out_transition(node, fn, params) {
 	};
 }
 
-export function create_bidirectional_transition(node, fn, params, intro) {
+export function create_bidirectional_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any, intro: boolean) {
 	let config = fn(node, params);
 
 	let t = intro ? 0 : 1;
@@ -295,8 +298,9 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 
 	return {
 		run(b) {
-			if (typeof config === 'function') {
+			if (is_function(config)) {
 				wait().then(() => {
+					// @ts-ignore
 					config = config();
 					go(b);
 				});

@@ -2,9 +2,18 @@ import { Readable, writable } from 'svelte/store';
 import { loop, now, Task } from 'svelte/internal';
 import { is_date } from './utils';
 
-function tick_spring(ctx, last_value, current_value, target_value) {
+interface TickContext<T> {
+	inv_mass: number;
+	dt: number;
+	opts: Spring<T>;
+	settled: boolean
+}
+
+function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, target_value: T):T {
 	if (typeof current_value === 'number' || is_date(current_value)) {
+		// @ts-ignore
 		const delta = target_value - current_value;
+		// @ts-ignore
 		const velocity = (current_value - last_value) / (ctx.dt||1/60); // guard div by 0
 		const spring = ctx.opts.stiffness * delta;
 		const damper = ctx.opts.damping * velocity;
@@ -15,16 +24,20 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 			return target_value; // settled
 		} else {
 			ctx.settled = false; // signal loop to keep ticking
+			// @ts-ignore
 			return is_date(current_value) ?
 				new Date(current_value.getTime() + d) : current_value + d;
 		}
 	} else if (Array.isArray(current_value)) {
+		// @ts-ignore
 		return current_value.map((_, i) =>
 			tick_spring(ctx, last_value[i], current_value[i], target_value[i]));
 	} else if (typeof current_value === 'object') {
 		const next_value = {};
 		for (const k in current_value)
+			// @ts-ignore
 			next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
+		// @ts-ignore
 		return next_value;
 	} else {
 		throw new Error(`Cannot spring ${typeof current_value} values`);
@@ -37,17 +50,22 @@ interface SpringOpts {
 	precision?: number,
 }
 
-type SpringUpdateOpts = { hard?: any; soft?: string | number | boolean; };
+interface SpringUpdateOpts {
+	hard?: any;
+	soft?: string | number | boolean;
+}
 
-interface Spring<T=any> extends Readable<T>{
-	set: (new_value: T, opts?: SpringUpdateOpts) => (Promise<T> | Promise<T>);
+type Updater<T> = (target_value: T, value: T) => T;
+
+interface Spring<T> extends Readable<T>{
+	set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
+	update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
 	precision: number;
-	update: (fn, opts: SpringUpdateOpts) => Promise<T>;
 	damping: number;
 	stiffness: number
 }
 
-export function spring<T=any>(value: T, opts: SpringOpts = {}) {
+export function spring<T=any>(value: T, opts: SpringOpts = {}): Spring<T> {
 	const store = writable(value);
 	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
 
@@ -61,7 +79,7 @@ export function spring<T=any>(value: T, opts: SpringOpts = {}) {
 	let inv_mass_recovery_rate = 0;
 	let cancel_task = false;
 
-	function set(new_value: any, opts: SpringUpdateOpts={}) {
+	function set(new_value: T, opts: SpringUpdateOpts={}): Promise<void> {
 		target_value = new_value;
 		const token = current_token = {};
 
@@ -91,7 +109,7 @@ export function spring<T=any>(value: T, opts: SpringOpts = {}) {
 
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
 
-				const ctx = {
+				const ctx: TickContext<T> = {
 					inv_mass,
 					opts: spring,
 					settled: true, // tick_spring may signal false
@@ -116,14 +134,14 @@ export function spring<T=any>(value: T, opts: SpringOpts = {}) {
 		});
 	}
 
-	const spring: Spring = {
+	const spring = {
 		set,
 		update: (fn, opts:SpringUpdateOpts) => set(fn(target_value, value), opts),
 		subscribe: store.subscribe,
 		stiffness,
 		damping,
 		precision
-	};
+	} as Spring<T>;
 
 	return spring;
 }

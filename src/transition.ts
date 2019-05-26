@@ -1,10 +1,23 @@
 import { cubicOut, cubicInOut } from 'svelte/easing';
 import { assign, is_function } from 'svelte/internal';
 
-export function fade(node, {
+export interface TransitionConfig {
+	delay?: number,
+	duration?: number,
+	easing?: (t: number) => number,
+	css?: (t: number, u: number) => string,
+	tick?: (t: number, u: number) => void
+}
+
+interface FadeParams {
+	delay: number;
+	duration: number;
+}
+
+export function fade(node: Element, {
 	delay = 0,
 	duration = 400
-}) {
+}: FadeParams): TransitionConfig {
 	const o = +getComputedStyle(node).opacity;
 
 	return {
@@ -14,14 +27,23 @@ export function fade(node, {
 	};
 }
 
-export function fly(node, {
+interface FlyParams {
+	delay: number;
+	duration: number;
+	easing: (t: number)=>number,
+	x: number;
+	y: number;
+	opacity: number;
+}
+
+export function fly(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut,
 	x = 0,
 	y = 0,
 	opacity = 0
-}) {
+}: FlyParams): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
@@ -38,11 +60,17 @@ export function fly(node, {
 	};
 }
 
-export function slide(node, {
+interface SlideParams {
+	delay: number;
+	duration: number;
+	easing: (t: number)=>number,
+}
+
+export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut
-}) {
+}: SlideParams): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const height = parseFloat(style.height);
@@ -70,13 +98,21 @@ export function slide(node, {
 	};
 }
 
-export function scale(node, {
+interface ScaleParams {
+	delay: number;
+	duration: number;
+	easing: (t: number)=>number,
+	start: number;
+	opacity: number;
+}
+
+export function scale(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut,
 	start = 0,
 	opacity = 0
-}) {
+}: ScaleParams): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
@@ -95,12 +131,19 @@ export function scale(node, {
 	};
 }
 
-export function draw(node, {
+interface DrawParams {
+	delay: number;
+	speed: number;
+	duration: number | ((len: number) => number);
+	easing: (t: number) => number,
+}
+
+export function draw(node: SVGElement & { getTotalLength(): number }, {
 	delay = 0,
 	speed,
 	duration,
 	easing = cubicInOut
-}) {
+}: DrawParams): TransitionConfig {
 	const len = node.getTotalLength();
 
 	if (duration === undefined) {
@@ -121,11 +164,21 @@ export function draw(node, {
 	};
 }
 
-export function crossfade({ fallback, ...defaults }) {
-	const to_receive = new Map();
-	const to_send = new Map();
+interface CrossfadeParams {
+	delay: number;
+	duration: number | ((len: number) => number);
+	easing: (t: number) => number,
+}
 
-	function crossfade(from, node, params) {
+type ClientRectMap = Map<any, { rect: ClientRect }>;
+
+export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
+	fallback: (node: Element, params: CrossfadeParams, intro: boolean)=> TransitionConfig
+}) {
+	const to_receive: ClientRectMap = new Map();
+	const to_send: ClientRectMap = new Map();
+
+	function crossfade(from: ClientRect, node: Element, params: CrossfadeParams):TransitionConfig {
 		const {
 			delay = 0,
 			duration = d => Math.sqrt(d) * 30,
@@ -152,8 +205,8 @@ export function crossfade({ fallback, ...defaults }) {
 		};
 	}
 
-	function transition(items, counterparts, intro) {
-		return (node, params) => {
+	function transition(items: ClientRectMap, counterparts: ClientRectMap, intro: boolean) {
+		return (node: Element, params: CrossfadeParams & { key: any }) => {
 			items.set(params.key, {
 				rect: node.getBoundingClientRect()
 			});
