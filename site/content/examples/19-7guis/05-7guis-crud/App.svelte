@@ -30,10 +30,7 @@
 
 	$: selected = filteredPeople[i];
 
-	$: {
-		first = selected ? selected.first : '';
-		last = selected ? selected.last : '';
-	}
+	$: reset_inputs(selected);
 
 	function create() {
 		people = people.concat({ first, last });
@@ -53,7 +50,8 @@
 	}
 
 	function reset_inputs(person) {
-		({ first, last } = person);
+		first = person ? person.first : '';
+		last = person ? person.last : '';
 	}
 </script>
 

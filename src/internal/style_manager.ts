@@ -1,4 +1,5 @@
 import { element } from './dom';
+import { raf } from './utils';
 
 let stylesheet;
 let active = 0;
@@ -56,7 +57,7 @@ export function delete_rule(node, name?) {
 }
 
 export function clear_rules() {
-	requestAnimationFrame(() => {
+	raf(() => {
 		if (active) return;
 		let i = stylesheet.cssRules.length;
 		while (i--) stylesheet.deleteRule(i);
