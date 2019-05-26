@@ -1,4 +1,4 @@
-import { now } from './utils';
+import { now, raf } from './utils';
 
 export interface Task { abort(): void; promise: Promise<undefined> }
 
@@ -14,7 +14,7 @@ function run_tasks() {
 	});
 
 	running = tasks.size > 0;
-	if (running) requestAnimationFrame(run_tasks);
+	if (running) raf(run_tasks);
 }
 
 export function clear_loops() {
@@ -28,7 +28,7 @@ export function loop(fn: (number)=>void): Task {
 
 	if (!running) {
 		running = true;
-		requestAnimationFrame(run_tasks);
+		raf(run_tasks);
 	}
 
 	return {
