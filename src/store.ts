@@ -45,8 +45,8 @@ type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidater<T>];
 
 /**
  * Creates a `Readable` store that allows reading by subscription.
- * @param [value] initial value
- * @param [start] start and stop notifications for subscriptions
+ * @param value initial value
+ * @param {StartStopNotifier}start start and stop notifications for subscriptions
  */
 export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
 	return {
