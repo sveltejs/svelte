@@ -1,5 +1,5 @@
-import { element } from './dom.js';
-import { raf } from './utils.js';
+import { element } from './dom';
+import { raf } from './utils';
 
 let stylesheet;
 let active = 0;
@@ -44,7 +44,7 @@ export function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
 	return name;
 }
 
-export function delete_rule(node, name) {
+export function delete_rule(node, name?) {
 	node.style.animation = (node.style.animation || '')
 		.split(', ')
 		.filter(name

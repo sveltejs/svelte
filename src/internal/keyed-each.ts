@@ -1,4 +1,4 @@
-import { on_outro } from './transitions.js';
+import { on_outro } from './transitions';
 
 export function destroy_block(block, lookup) {
 	block.d(1);
