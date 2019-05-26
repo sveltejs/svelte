@@ -1,4 +1,4 @@
-import { now } from './utils.js';
+import { now, raf } from './utils.js';
 
 const tasks = new Set();
 let running = false;
@@ -12,7 +12,7 @@ function run_tasks() {
 	});
 
 	running = tasks.size > 0;
-	if (running) requestAnimationFrame(run_tasks);
+	if (running) raf(run_tasks);
 }
 
 export function clear_loops() {
@@ -26,7 +26,7 @@ export function loop(fn) {
 
 	if (!running) {
 		running = true;
-		requestAnimationFrame(run_tasks);
+		raf(run_tasks);
 	}
 
 	return {
