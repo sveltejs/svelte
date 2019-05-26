@@ -14,10 +14,15 @@ export default function text(parser: Parser) {
 		data += parser.template[parser.index++];
 	}
 
-	parser.current().children.push({
+	let node = {
 		start,
 		end: parser.index,
 		type: 'Text',
 		data: decode_character_references(data),
-	});
+	};
+
+	if (node.data != data)
+		node.raw = data;
+
+	parser.current().children.push(node);
 }

@@ -15,7 +15,8 @@
 						"start": 3,
 						"end": 20,
 						"type": "Text",
-						"data": "Hello & World"
+						"data": "Hello & World",
+						"raw": "Hello &amp; World"
 					}
 				]
 			}
