@@ -1,11 +1,11 @@
-import { assign, is_promise } from './utils.js';
-import { check_outros, group_outros, on_outro } from './transitions.js';
-import { flush } from '../internal/scheduler.js';
+import { assign, is_promise } from './utils';
+import { check_outros, group_outros, on_outro } from './transitions';
+import { flush } from '../internal/scheduler';
 
 export function handle_promise(promise, info) {
 	const token = info.token = {};
 
-	function update(type, index, key, value) {
+	function update(type, index, key?, value?) {
 		if (info.token !== token) return;
 
 		info.resolved = key && { [key]: value };

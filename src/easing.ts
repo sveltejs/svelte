@@ -3,7 +3,7 @@ Adapted from https://github.com/mattdesl
 Distributed under MIT License https://github.com/mattdesl/eases/blob/master/LICENSE.md
 */
 
-export { identity as linear } from './internal';
+export { identity as linear } from 'svelte/internal';
 
 export function backInOut(t) {
 	const s = 1.70158 * 1.525;
