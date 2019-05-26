@@ -54,13 +54,11 @@
 						"start": 31,
 						"end": 39,
 						"type": "Text",
+						"raw": "fades in",
 						"data": "fades in"
 					}
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

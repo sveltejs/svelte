@@ -37,6 +37,7 @@
 								"start": 50,
 								"end": 52,
 								"type": "Text",
+								"raw": ": ",
 								"data": ": "
 							},
 							{
@@ -80,8 +81,5 @@
 				}
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

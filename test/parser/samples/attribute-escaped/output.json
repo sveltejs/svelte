@@ -20,8 +20,8 @@
 								"start": 15,
 								"end": 33,
 								"type": "Text",
-								"data": "\"quoted\"",
-								"raw": "&quot;quoted&quot;"
+								"raw": "&quot;quoted&quot;",
+								"data": "\"quoted\""
 							}
 						]
 					}
@@ -29,8 +29,5 @@
 				"children": []
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

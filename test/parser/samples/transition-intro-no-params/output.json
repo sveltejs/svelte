@@ -26,13 +26,11 @@
 						"start": 13,
 						"end": 21,
 						"type": "Text",
+						"raw": "fades in",
 						"data": "fades in"
 					}
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }
