@@ -461,7 +461,7 @@ export default class ElementWrapper extends Wrapper {
 					function ${handler}() {
 						${animation_frame && deindent`
 						cancelAnimationFrame(${animation_frame});
-						if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`}
+						if (!${this.var}.paused) ${animation_frame} = @raf(${handler});`}
 						${needs_lock && `${lock} = true;`}
 						ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
 					}
