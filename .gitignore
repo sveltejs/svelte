@@ -1,16 +1,17 @@
+.idea
 .DS_Store
 .nyc_output
 node_modules
 *.map
 /src/compile/internal-exports.ts
-/compiler.js
-/index.js
-/internal.*
-/store.*
-/easing.js
-/motion.*
-/transition.js
-/animate.js
+/compiler.*js
+/index.*js
+/internal.*js
+/store.*js
+/easing.*js
+/motion.*js
+/transition.*js
+/animate.*js
 /scratch/
 /coverage/
 /coverage.lcov/
@@ -20,6 +21,7 @@ node_modules
 /test/sourcemaps/samples/*/output.css.map
 /yarn-error.log
 _actual*.*
+/dist
 
 /site/cypress/screenshots/
 /site/__sapper__/

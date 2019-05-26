@@ -1,5 +1,5 @@
-import { cubicOut } from './easing';
-import { is_function } from './internal';
+import { cubicOut } from 'svelte/easing';
+import { is_function } from 'svelte/internal';
 
 export function flip(node, animation, params) {
 	const style = getComputedStyle(node);

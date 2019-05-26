@@ -1,6 +1,6 @@
-import { identity as linear, noop, now } from './utils.js';
-import { loop } from './loop.js';
-import { create_rule, delete_rule } from './style_manager.js';
+import { identity as linear, noop, now } from './utils';
+import { loop } from './loop';
+import { create_rule, delete_rule } from './style_manager';
 
 export function create_animation(node, from, fn, params) {
 	if (!from) return noop;

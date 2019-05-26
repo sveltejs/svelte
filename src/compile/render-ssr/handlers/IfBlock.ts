@@ -1,6 +1,7 @@
 import { snip } from '../../utils/snip';
-
-export default function(node, renderer, options) {
+import IfBlock from '../../nodes/IfBlock';
+import Renderer, { RenderOptions } from '../Renderer';
+export default function(node: IfBlock, renderer: Renderer, options: RenderOptions) {
 	const snippet = snip(node.expression);
 
 	renderer.append('${ ' + snippet + ' ? `');

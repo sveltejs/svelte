@@ -13,7 +13,7 @@ import Slot from './Slot';
 import Text from './Text';
 import Title from './Title';
 import Window from './Window';
-import Node from '../../nodes/shared/Node';
+import { INode } from '../../nodes/interfaces';
 import TextWrapper from './Text';
 import Renderer from '../Renderer';
 import Block from '../Block';
@@ -49,7 +49,7 @@ export default class FragmentWrapper {
 	constructor(
 		renderer: Renderer,
 		block: Block,
-		nodes: Node[],
+		nodes: INode[],
 		parent: Wrapper,
 		strip_whitespace: boolean,
 		next_sibling: Wrapper
@@ -85,6 +85,7 @@ export default class FragmentWrapper {
 				// *unless* there is no whitespace between this node and its next sibling
 				if (this.nodes.length === 0) {
 					const should_trim = (
+						// @ts-ignore todo: probably error, should it be next_sibling.node.data?
 						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.data)) : !child.has_ancestor('EachBlock')
 					);
 
@@ -96,6 +97,7 @@ export default class FragmentWrapper {
 
 				// glue text nodes (which could e.g. be separated by comments) together
 				if (last_child && last_child.node.type === 'Text') {
+					// @ts-ignore todo: probably error, should it be last_child.node.data?
 					last_child.data = data + last_child.data;
 					continue;
 				}

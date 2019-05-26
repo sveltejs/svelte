@@ -1,8 +1,8 @@
 import Component from '../../../Component';
-import { Node } from '../../../../interfaces';
+import { INode } from '../../../nodes/interfaces';
 
 export default function create_debugging_comment(
-	node: Node,
+	node: INode,
 	component: Component
 ) {
 	const { locate, source } = component;
@@ -19,6 +19,7 @@ export default function create_debugging_comment(
 		d = node.children.length ? node.children[0].start : node.start;
 		while (source[d - 1] !== '>') d -= 1;
 	} else {
+		// @ts-ignore
 		d = node.expression ? node.expression.node.end : c;
 		while (source[d] !== '}') d += 1;
 		while (source[d] === '}') d += 1;

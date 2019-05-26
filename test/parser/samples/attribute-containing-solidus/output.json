@@ -20,6 +20,7 @@
 								"start": 8,
 								"end": 30,
 								"type": "Text",
+								"raw": "https://www.google.com",
 								"data": "https://www.google.com"
 							}
 						]
@@ -30,13 +31,11 @@
 						"start": 31,
 						"end": 37,
 						"type": "Text",
+						"raw": "Google",
 						"data": "Google"
 					}
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

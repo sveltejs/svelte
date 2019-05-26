@@ -15,6 +15,7 @@
 						"start": 4,
 						"end": 6,
 						"type": "Text",
+						"raw": "\n\t",
 						"data": "\n\t"
 					},
 					{
@@ -28,6 +29,7 @@
 								"start": 10,
 								"end": 13,
 								"type": "Text",
+								"raw": "a\n\t",
 								"data": "a\n\t"
 							}
 						]
@@ -43,6 +45,7 @@
 								"start": 17,
 								"end": 20,
 								"type": "Text",
+								"raw": "b\n\t",
 								"data": "b\n\t"
 							}
 						]
@@ -58,6 +61,7 @@
 								"start": 24,
 								"end": 26,
 								"type": "Text",
+								"raw": "c\n",
 								"data": "c\n"
 							}
 						]
@@ -65,8 +69,5 @@
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

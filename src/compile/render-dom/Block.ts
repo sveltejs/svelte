@@ -9,7 +9,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: string;
-	bindings?: Map<string, () => { object: string, property: string, snippet: string }>;
+	bindings?: Map<string, { object: string, property: string, snippet: string }>;
 	dependencies?: Set<string>;
 }
 

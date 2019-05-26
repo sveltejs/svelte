@@ -1,12 +1,13 @@
 import Node from './shared/Node';
-import map_children from './shared/map_children';
+import map_children, { Children } from './shared/map_children';
+import Component from '../Component';
 
 export default class Title extends Node {
 	type: 'Title';
-	children: any[]; // TODO
+	children: Children;
 	should_cache: boolean;
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
 		this.children = map_children(component, parent, scope, info.children);
 

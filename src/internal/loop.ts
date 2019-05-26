@@ -1,4 +1,6 @@
-import { now } from './utils.js';
+import { now, raf } from './utils';
+
+export interface Task { abort(): void; promise: Promise<undefined> }
 
 const tasks = new Set();
 let running = false;
@@ -12,7 +14,7 @@ function run_tasks() {
 	});
 
 	running = tasks.size > 0;
-	if (running) requestAnimationFrame(run_tasks);
+	if (running) raf(run_tasks);
 }
 
 export function clear_loops() {
@@ -21,16 +23,16 @@ export function clear_loops() {
 	running = false;
 }
 
-export function loop(fn) {
+export function loop(fn: (number)=>void): Task {
 	let task;
 
 	if (!running) {
 		running = true;
-		requestAnimationFrame(run_tasks);
+		raf(run_tasks);
 	}
 
 	return {
-		promise: new Promise(fulfil => {
+		promise: new Promise<undefined>(fulfil => {
 			tasks.add(task = [fn, fulfil]);
 		}),
 		abort() {
