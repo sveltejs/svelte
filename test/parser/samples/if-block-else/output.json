@@ -26,6 +26,7 @@
 								"start": 14,
 								"end": 17,
 								"type": "Text",
+								"raw": "foo",
 								"data": "foo"
 							}
 						]
@@ -47,6 +48,7 @@
 									"start": 34,
 									"end": 41,
 									"type": "Text",
+									"raw": "not foo",
 									"data": "not foo"
 								}
 							]
@@ -55,8 +57,5 @@
 				}
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

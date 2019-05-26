@@ -476,8 +476,17 @@ function read_sequence(parser: Parser, done: () => boolean): Node[] {
 		start: parser.index,
 		end: null,
 		type: 'Text',
-		data: '',
+		raw: '',
+		data: null
 	};
+
+	function flush() {
+		if (current_chunk.raw) {
+			current_chunk.data = decode_character_references(current_chunk.raw);
+			current_chunk.end = parser.index;
+			chunks.push(current_chunk);
+		}
+	}
 
 	const chunks: Node[] = [];
 
@@ -485,26 +494,10 @@ function read_sequence(parser: Parser, done: () => boolean): Node[] {
 		const index = parser.index;
 
 		if (done()) {
-			current_chunk.end = parser.index;
-
-			if (current_chunk.data) chunks.push(current_chunk);
-
-			chunks.forEach(chunk => {
-				if (chunk.type === 'Text') {
-					let decoded = decode_character_references(chunk.data);
-					if (chunk.data != decoded) {
-						chunk.raw = chunk.data;
-						chunk.data = decoded;
-					}
-				}
-			});
-
+			flush();
 			return chunks;
 		} else if (parser.eat('{')) {
-			if (current_chunk.data) {
-				current_chunk.end = index;
-				chunks.push(current_chunk);
-			}
+			flush();
 
 			parser.allow_whitespace();
 			const expression = read_expression(parser);
@@ -522,10 +515,11 @@ function read_sequence(parser: Parser, done: () => boolean): Node[] {
 				start: parser.index,
 				end: null,
 				type: 'Text',
-				data: '',
+				raw: '',
+				data: null
 			};
 		} else {
-			current_chunk.data += parser.template[parser.index++];
+			current_chunk.raw += parser.template[parser.index++];
 		}
 	}
 

@@ -8,12 +8,9 @@
 				"start": 0,
 				"end": 17,
 				"type": "Text",
-				"data": "Hello & World",
-				"raw": "Hello &amp; World"
+				"raw": "Hello &amp; World",
+				"data": "Hello & World"
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }
