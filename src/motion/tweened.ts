@@ -1,6 +1,6 @@
-import { writable } from 'svelte/store'; // eslint-disable-line import/no-unresolved
-import { assign, loop, now } from 'svelte/internal'; // eslint-disable-line import/no-unresolved
-import { linear } from 'svelte/easing'; // eslint-disable-line import/no-unresolved
+import { Readable, writable } from 'svelte/store';
+import { assign, loop, now, Task } from 'svelte/internal';
+import { linear } from 'svelte/easing';
 import { is_date } from './utils';
 
 function get_interpolator(a, b) {
@@ -54,13 +54,28 @@ function get_interpolator(a, b) {
 	throw new Error(`Cannot interpolate ${type} values`);
 }
 
-export function tweened(value, defaults = {}) {
+interface Options<T> {
+	delay?: number;
+	duration?: number | ((from: T, to: T) => number)
+	easing?: (t: number) => number;
+	interpolate?: (a: T, b: T) => (t: number) => T
+}
+
+type Updater<T> = (target_value: T, value: T) => T;
+
+interface Tweened<T> extends Readable<T> {
+	set(value: T, opts: Options<T>): Promise<void>;
+
+	update(updater: Updater<T>, opts: Options<T>): Promise<void>;
+}
+
+export function tweened<T>(value: T, defaults: Options<T> = {}):Tweened<T> {
 	const store = writable(value);
 
-	let task;
+	let task: Task;
 	let target_value = value;
 
-	function set(new_value, opts) {
+	function set(new_value: T, opts: Options<T>) {
 		target_value = new_value;
 
 		let previous_task = task;
@@ -97,6 +112,7 @@ export function tweened(value, defaults = {}) {
 				return false;
 			}
 
+			// @ts-ignore
 			store.set(value = fn(easing(elapsed / duration)));
 			return true;
 		});
@@ -106,7 +122,7 @@ export function tweened(value, defaults = {}) {
 
 	return {
 		set,
-		update: (fn, opts) => set(fn(target_value, value), opts),
+		update: (fn, opts:Options<T>) => set(fn(target_value, value), opts),
 		subscribe: store.subscribe
 	};
 }
