@@ -8,7 +8,8 @@
 				"start": 0,
 				"end": 17,
 				"type": "Text",
-				"data": "Hello & World"
+				"data": "Hello & World",
+				"raw": "Hello &amp; World"
 			}
 		]
 	},
