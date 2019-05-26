@@ -4,6 +4,6 @@ export default {
 	},
 
 	warnings: [
-		`<Foo> was created with unknown attribute 'fo'`
+		`<Foo> was created with unknown prop 'fo'`
 	]
 };

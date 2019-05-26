@@ -394,12 +394,12 @@ export default function dom(
 			return $name;
 		});
 
-		let unknownPropsCheck;
+		let unknown_props_check;
 		if (component.compile_options.dev && writable_props.length) {
-			unknownPropsCheck = deindent`
-				const writableProps = [${writable_props.map(prop => `'${prop.export_name}'`).join(', ')}];
+			unknown_props_check = deindent`
+				const writable_props = [${writable_props.map(prop => `'${prop.export_name}'`).join(', ')}];
 				Object.keys($$props).forEach(key => {
-					if (!writableProps.includes(key)) console.warn(\`<${component.tag}> was created with unknown attribute '\${key}'\`);
+					if (!writable_props.includes(key)) console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
 			`;
 		}
@@ -413,8 +413,8 @@ export default function dom(
 				${resubscribable_reactive_store_unsubscribers}
 
 				${component.javascript}
-				
-				${unknownPropsCheck}
+
+				${unknown_props_check}
 
 				${component.slots.size && `let { $$slots = {}, $$scope } = $$props;`}
 
