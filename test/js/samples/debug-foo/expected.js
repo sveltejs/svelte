@@ -151,9 +151,9 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { things, foo } = $$props;
 
-	const writableProps = ['things', 'foo'];
+	const writable_props = ['things', 'foo'];
 	Object.keys($$props).forEach(key => {
-		if (!writableProps.includes(key)) console.warn(`<Component> was created with unknown attribute '${key}'`);
+		if (!writable_props.includes(key)) console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$set = $$props => {
