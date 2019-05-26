@@ -32,7 +32,8 @@
     "pretest": "npm run build",
     "posttest": "agadoo src/internal/index.js",
     "prepublishOnly": "export PUBLISH=true && npm run lint && npm test",
-    "tsd": "tsc -d src/store.ts --outDir ."
+    "tsd": "tsc -d src/store.ts --outDir .",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
@@ -84,7 +85,7 @@
     "tiny-glob": "^0.2.1",
     "ts-node": "^8.0.2",
     "tslib": "^1.8.0",
-    "typescript": "^3.0.1"
+    "typescript": "^3.4.0"
   },
   "nyc": {
     "include": [

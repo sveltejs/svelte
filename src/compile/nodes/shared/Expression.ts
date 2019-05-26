@@ -12,6 +12,7 @@ import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import { nodes_match } from '../../../utils/nodes_match';
 import Block from '../../render-dom/Block';
+import { INode } from '../interfaces';
 
 const binary_operators: Record<string, number> = {
 	'**': 15,
@@ -61,10 +62,12 @@ const precedence: Record<string, (node?: Node) => number> = {
 	SequenceExpression: () => 0
 };
 
+type Owner = Wrapper | INode;
+
 export default class Expression {
-	type = 'Expression';
+	type: 'Expression' = 'Expression';
 	component: Component;
-	owner: Wrapper;
+	owner: Owner;
 	node: any;
 	snippet: string;
 	references: Set<string>;
@@ -81,7 +84,8 @@ export default class Expression {
 
 	rendered: string;
 
-	constructor(component: Component, owner: Wrapper, template_scope: TemplateScope, info) {
+	// todo: owner type
+	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
@@ -92,6 +96,7 @@ export default class Expression {
 		this.node = info;
 		this.template_scope = template_scope;
 		this.owner = owner;
+		// @ts-ignore
 		this.is_synthetic = owner.is_synthetic;
 
 		const { dependencies, contextual_dependencies } = this;
@@ -218,7 +223,7 @@ export default class Expression {
 	}
 
 	// TODO move this into a render-dom wrapper?
-	render(block: Block) {
+	render(block?: Block) {
 		if (this.rendered) return this.rendered;
 
 		const {
