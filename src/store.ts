@@ -56,8 +56,8 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
 
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
- * @param [value] initial value
- * @param {StartStopNotifier}[start] start and stop notifications for subscriptions
+ * @param {*=}value initial value
+ * @param {StartStopNotifier=}start start and stop notifications for subscriptions
  */
 export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
@@ -111,8 +111,8 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  * @param {Stores} stores input stores
- * @param {function(StoresValues,[Subscriber])|Unsubscriber|void}fn function callback that aggregates the values
- * @param [initial_value] when used asynchronously
+ * @param {function(Stores=, function(*)=):*}fn function callback that aggregates the values
+ * @param {*=}initial_value when used asynchronously
  */
 export function derived<T, S extends Stores>(
 	stores: S,
