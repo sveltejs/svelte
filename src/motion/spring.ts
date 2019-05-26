@@ -1,6 +1,6 @@
-import { writable } from 'svelte/store'; // eslint-disable-line import/no-unresolved
-import { loop, now } from 'svelte/internal'; // eslint-disable-line import/no-unresolved
-import { is_date } from './utils.js';
+import { Readable, writable } from 'svelte/store';
+import { loop, now, Task } from 'svelte/internal';
+import { is_date } from './utils';
 
 function tick_spring(ctx, last_value, current_value, target_value) {
 	if (typeof current_value === 'number' || is_date(current_value)) {
@@ -27,25 +27,41 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 			next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
 		return next_value;
 	} else {
-		throw new Error(`Cannot spring ${typeof value} values`);
+		throw new Error(`Cannot spring ${typeof current_value} values`);
 	}
 }
 
-export function spring(value, opts = {}) {
+interface SpringOpts {
+	stiffness?: number,
+	damping?: number,
+	precision?: number,
+}
+
+type SpringUpdateOpts = { hard?: any; soft?: string | number | boolean; };
+
+interface Spring<T=any> extends Readable<T>{
+	set: (new_value: T, opts?: SpringUpdateOpts) => (Promise<T> | Promise<T>);
+	precision: number;
+	update: (fn, opts: SpringUpdateOpts) => Promise<T>;
+	damping: number;
+	stiffness: number
+}
+
+export function spring<T=any>(value: T, opts: SpringOpts = {}) {
 	const store = writable(value);
 	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
 
-	let last_time;
-	let task;
-	let current_token;
-	let last_value = value;
-	let target_value = value;
+	let last_time: number;
+	let task: Task;
+	let current_token: object;
+	let last_value:T = value;
+	let target_value:T = value;
 
 	let inv_mass = 1;
 	let inv_mass_recovery_rate = 0;
 	let cancel_task = false;
 
-	function set(new_value, opts = {}) {
+	function set(new_value: any, opts: SpringUpdateOpts={}) {
 		target_value = new_value;
 		const token = current_token = {};
 
@@ -100,9 +116,9 @@ export function spring(value, opts = {}) {
 		});
 	}
 
-	const spring = {
+	const spring: Spring = {
 		set,
-		update: (fn, opts) => set(fn(target_value, value), opts),
+		update: (fn, opts:SpringUpdateOpts) => set(fn(target_value, value), opts),
 		subscribe: store.subscribe,
 		stiffness,
 		damping,

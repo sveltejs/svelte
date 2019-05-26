@@ -1,8 +1,8 @@
-import { identity as linear, noop, now, run_all } from './utils.js';
-import { loop } from './loop.js';
-import { create_rule, delete_rule } from './style_manager.js';
-import { custom_event } from './dom.js';
-import { add_render_callback } from './scheduler.js';
+import { identity as linear, noop, now, run_all } from './utils';
+import { loop } from './loop';
+import { create_rule, delete_rule } from './style_manager';
+import { custom_event } from './dom';
+import { add_render_callback } from './scheduler';
 
 let promise;
 
@@ -229,6 +229,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 		};
 
 		if (!b) {
+			// @ts-ignore todo: improve typings
 			program.group = outros;
 			outros.remaining += 1;
 		}
