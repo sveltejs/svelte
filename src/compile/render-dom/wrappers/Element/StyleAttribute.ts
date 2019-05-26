@@ -1,14 +1,15 @@
 import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
 import AttributeWrapper from './Attribute';
-import Node from '../../../nodes/shared/Node';
 import ElementWrapper from '.';
 import { stringify } from '../../../utils/stringify';
 import add_to_set from '../../../utils/add_to_set';
+import Expression from '../../../nodes/shared/Expression';
+import Text from '../../../nodes/Text';
 
 export interface StyleProp {
 	key: string;
-	value: Node[];
+	value: (Text|Expression)[];
 }
 
 export default class StyleAttributeWrapper extends AttributeWrapper {
@@ -28,7 +29,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 				value =
 					((prop.value.length === 1 || prop.value[0].type === 'Text') ? '' : `"" + `) +
 					prop.value
-						.map((chunk: Node) => {
+						.map((chunk) => {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
@@ -54,7 +55,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 					);
 				}
 			} else {
-				value = stringify(prop.value[0].data);
+				value = stringify((prop.value[0] as Text).data);
 			}
 
 			block.builders.hydrate.add_line(
@@ -64,8 +65,8 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 	}
 }
 
-function optimize_style(value: Node[]) {
-	const props: { key: string, value: Node[] }[] = [];
+function optimize_style(value: (Text|Expression)[]) {
+	const props: StyleProp[] = [];
 	let chunks = value.slice();
 
 	while (chunks.length) {
@@ -87,7 +88,7 @@ function optimize_style(value: Node[]) {
 				end: chunk.end,
 				type: 'Text',
 				data: remaining_data
-			};
+			} as Text;
 		} else {
 			chunks.shift();
 		}
@@ -101,8 +102,8 @@ function optimize_style(value: Node[]) {
 	return props;
 }
 
-function get_style_value(chunks: Node[]) {
-	const value: Node[] = [];
+function get_style_value(chunks: (Text | Expression)[]) {
+	const value: (Text|Expression)[] = [];
 
 	let in_url = false;
 	let quote_mark = null;
@@ -141,7 +142,7 @@ function get_style_value(chunks: Node[]) {
 					start: chunk.start,
 					end: chunk.start + c,
 					data: chunk.data.slice(0, c)
-				});
+				} as Text);
 			}
 
 			while (/[;\s]/.test(chunk.data[c])) c += 1;
@@ -153,7 +154,7 @@ function get_style_value(chunks: Node[]) {
 					end: chunk.end,
 					type: 'Text',
 					data: remaining_data
-				});
+				} as Text);
 
 				break;
 			}
@@ -170,6 +171,6 @@ function get_style_value(chunks: Node[]) {
 	};
 }
 
-function is_dynamic(value: Node[]) {
+function is_dynamic(value: (Text|Expression)[]) {
 	return value.length > 1 || value[0].type !== 'Text';
 }

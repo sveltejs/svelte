@@ -9,7 +9,6 @@ import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../utils/get_slot_data';
 import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
-import Attribute from '../../nodes/Attribute';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;

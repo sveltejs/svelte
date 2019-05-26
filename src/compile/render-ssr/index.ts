@@ -4,6 +4,8 @@ import { CompileOptions } from '../../interfaces';
 import { stringify } from '../utils/stringify';
 import Renderer from './Renderer';
 import { extract_names } from '../utils/scope';
+import { INode } from '../nodes/interfaces';
+import Text from '../nodes/Text';
 
 export default function ssr(
 	component: Component,
@@ -151,10 +153,10 @@ export default function ssr(
 	`).trim();
 }
 
-function trim(nodes) {
+function trim(nodes: INode[]) {
 	let start = 0;
 	for (; start < nodes.length; start += 1) {
-		const node = nodes[start];
+		const node = nodes[start] as Text;
 		if (node.type !== 'Text') break;
 
 		node.data = node.data.replace(/^\s+/, '');
@@ -163,7 +165,7 @@ function trim(nodes) {
 
 	let end = nodes.length;
 	for (; end > start; end -= 1) {
-		const node = nodes[end - 1];
+		const node = nodes[end - 1] as Text;
 		if (node.type !== 'Text') break;
 
 		node.data = node.data.replace(/\s+$/, '');
