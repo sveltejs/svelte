@@ -1,6 +1,6 @@
 import { snip } from '../../utils/snip';
-
-export default function(node, renderer, options) {
+import Renderer, { RenderOptions } from '../Renderer';
+export default function(node, renderer: Renderer, options: RenderOptions) {
 	const snippet = snip(node.expression);
 
 	renderer.append(

@@ -15,6 +15,7 @@
 						"start": 5,
 						"end": 8,
 						"type": "Text",
+						"raw": "foo",
 						"data": "foo"
 					}
 				]
@@ -23,6 +24,7 @@
 				"start": 14,
 				"end": 16,
 				"type": "Text",
+				"raw": "\n\n",
 				"data": "\n\n"
 			}
 		]
@@ -90,7 +92,5 @@
 			"end": 48,
 			"styles": "\n\tdiv {\n\t\tcolor: red;\n\t}\n"
 		}
-	},
-	"instance": null,
-	"module": null
+	}
 }

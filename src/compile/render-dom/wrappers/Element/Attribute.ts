@@ -4,6 +4,7 @@ import fix_attribute_casing from './fix_attribute_casing';
 import ElementWrapper from './index';
 import { stringify } from '../../../utils/stringify';
 import deindent from '../../../utils/deindent';
+import Expression from '../../../nodes/shared/Expression';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -21,7 +22,9 @@ export default class AttributeWrapper {
 			// special case — <option value={foo}> — see below
 			if (this.parent.node.name === 'option' && node.name === 'value') {
 				let select: ElementWrapper = this.parent;
-				while (select && (select.node.type !== 'Element' || select.node.name !== 'select')) select = select.parent;
+				while (select && (select.node.type !== 'Element' || select.node.name !== 'select'))
+					// @ts-ignore todo: doublecheck this, but looks to be correct
+					select = select.parent;
 
 				if (select && select.select_binding_dependencies) {
 					select.select_binding_dependencies.forEach(prop => {
@@ -47,7 +50,7 @@ export default class AttributeWrapper {
 			(element.node.name === 'option' || // TODO check it's actually bound
 				(element.node.name === 'input' &&
 					element.node.bindings.find(
-						(binding: Binding) =>
+						(binding) =>
 							/checked|group/.test(binding.name)
 						)));
 
@@ -78,13 +81,13 @@ export default class AttributeWrapper {
 			// DRY it out if that's possible without introducing crazy indirection
 			if (this.node.chunks.length === 1) {
 				// single {tag} — may be a non-string
-				value = this.node.chunks[0].render(block);
+				value = (this.node.chunks[0] as Expression).render(block);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				value =
 					(this.node.chunks[0].type === 'Text' ? '' : `"" + `) +
 					this.node.chunks
-						.map((chunk: Node) => {
+						.map((chunk) => {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {

@@ -1,17 +1,17 @@
-import Node from './shared/Node';
 import Element from './Element';
 import Attribute from './Attribute';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
+import { INode } from './interfaces';
 
 export default class Slot extends Element {
 	type: 'Element';
 	name: string;
-	children: Node[];
+	children: INode[];
 	slot_name: string;
 	values: Map<string, Attribute> = new Map();
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
+	constructor(component: Component, parent: INode, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
 
 		info.attributes.forEach(attr => {

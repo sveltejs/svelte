@@ -1,8 +1,8 @@
-import Renderer from '../Renderer';
-import { CompileOptions } from '../../../interfaces';
+import Renderer, { RenderOptions } from '../Renderer';
 import { snip } from '../../utils/snip';
+import AwaitBlock from '../../nodes/AwaitBlock';
 
-export default function(node, renderer: Renderer, options: CompileOptions) {
+export default function(node: AwaitBlock, renderer: Renderer, options: RenderOptions) {
 	renderer.append('${(function(__value) { if(@is_promise(__value)) return `');
 
 	renderer.render(node.pending.children, options);

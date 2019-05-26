@@ -20,20 +20,19 @@ import add_event_handlers from '../shared/add_event_handlers';
 import add_actions from '../shared/add_actions';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_context_merger } from '../shared/get_context_merger';
-import Slot from '../../../nodes/Slot';
 
 const events = [
 	{
 		event_names: ['input'],
 		filter: (node: Element, name: string) =>
 			node.name === 'textarea' ||
-			node.name === 'input' && !/radio|checkbox|range/.test(node.get_static_attribute_value('type'))
+			node.name === 'input' && !/radio|checkbox|range/.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['change'],
 		filter: (node: Element, name: string) =>
 			node.name === 'select' ||
-			node.name === 'input' && /radio|checkbox/.test(node.get_static_attribute_value('type'))
+			node.name === 'input' && /radio|checkbox/.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['change', 'input'],
@@ -91,6 +90,12 @@ const events = [
 			name === 'playbackRate'
 	},
 
+	// details event
+	{
+		event_names: ['toggle'],
+		filter: (node: Element, name: string) =>
+			node.name === 'details'
+	},
 ];
 
 export default class ElementWrapper extends Wrapper {
@@ -135,7 +140,7 @@ export default class ElementWrapper extends Wrapper {
 				}
 
 				if (owner && owner.node.type === 'InlineComponent') {
-					const name = attribute.get_static_value();
+					const name = attribute.get_static_value() as string;
 
 					if (!(owner as InlineComponentWrapper).slots.has(name)) {
 						const child_block = block.child({
@@ -275,6 +280,7 @@ export default class ElementWrapper extends Wrapper {
 		if (!this.node.namespace && this.can_use_innerhtml && this.fragment.nodes.length > 0) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				block.builders.create.add_line(
+					 // @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
 					`${node}.textContent = ${stringify(this.fragment.nodes[0].data)};`
 				);
 			} else {
@@ -324,7 +330,7 @@ export default class ElementWrapper extends Wrapper {
 
 		function to_html(wrapper: ElementWrapper | TextWrapper) {
 			if (wrapper.node.type === 'Text') {
-				const { parent } = wrapper.node;
+				const parent = wrapper.node.parent as Element;
 
 				const raw = parent && (
 					parent.name === 'script' ||
@@ -349,7 +355,7 @@ export default class ElementWrapper extends Wrapper {
 
 			if (is_void(wrapper.node.name)) return open + '>';
 
-			return `${open}>${wrapper.fragment.nodes.map(to_html).join('')}</${wrapper.node.name}>`;
+			return `${open}>${(wrapper as ElementWrapper).fragment.nodes.map(to_html).join('')}</${wrapper.node.name}>`;
 		}
 
 		if (renderer.options.dev) {
@@ -376,8 +382,8 @@ export default class ElementWrapper extends Wrapper {
 
 	get_claim_statement(nodes: string) {
 		const attributes = this.node.attributes
-			.filter((attr: Node) => attr.type === 'Attribute')
-			.map((attr: Node) => `${quote_name_if_necessary(attr.name)}: true`)
+			.filter((attr) => attr.type === 'Attribute')
+			.map((attr) => `${quote_name_if_necessary(attr.name)}: true`)
 			.join(', ');
 
 		const name = this.node.namespace
@@ -455,7 +461,7 @@ export default class ElementWrapper extends Wrapper {
 					function ${handler}() {
 						${animation_frame && deindent`
 						cancelAnimationFrame(${animation_frame});
-						if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`}
+						if (!${this.var}.paused) ${animation_frame} = @raf(${handler});`}
 						${needs_lock && `${lock} = true;`}
 						ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
 					}
@@ -553,12 +559,13 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_attributes(block: Block) {
+		// @ts-ignore todo:
 		if (this.node.attributes.find(attr => attr.type === 'Spread')) {
 			this.add_spread_attributes(block);
 			return;
 		}
 
-		this.attributes.forEach((attribute: Attribute) => {
+		this.attributes.forEach((attribute) => {
 			if (attribute.node.name === 'class' && attribute.node.is_dynamic) {
 				this.class_dependencies.push(...attribute.node.dependencies);
 			}
@@ -814,27 +821,28 @@ export default class ElementWrapper extends Wrapper {
 		});
 	}
 
-	add_css_class(class_name = this.component.stylesheet.id) {
-		const class_attribute = this.attributes.find(a => a.name === 'class');
-		if (class_attribute && !class_attribute.is_true) {
-			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
-				(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
-			} else {
-				(class_attribute.chunks as Node[]).push(
-					new Text(this.component, this, this.scope, {
-						type: 'Text',
-						data: ` ${class_name}`
-					})
-				);
-			}
-		} else {
-			this.attributes.push(
-				new Attribute(this.component, this, this.scope, {
-					type: 'Attribute',
-					name: 'class',
-					value: [{ type: 'Text', data: class_name }]
-				})
-			);
-		}
-	}
+	// todo: looks to be dead code copypasted from Element.add_css_class in src/compile/nodes/Element.ts
+	// add_css_class(class_name = this.component.stylesheet.id) {
+	// 	const class_attribute = this.attributes.find(a => a.name === 'class');
+	// 	if (class_attribute && !class_attribute.is_true) {
+	// 		if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
+	// 			(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
+	// 		} else {
+	// 			(class_attribute.chunks as Node[]).push(
+	// 				new Text(this.component, this, this.scope, {
+	// 					type: 'Text',
+	// 					data: ` ${class_name}`
+	// 				})
+	// 			);
+	// 		}
+	// 	} else {
+	// 		this.attributes.push(
+	// 			new Attribute(this.component, this, this.scope, {
+	// 				type: 'Attribute',
+	// 				name: 'class',
+	// 				value: [{ type: 'Text', data: class_name }]
+	// 			})
+	// 		);
+	// 	}
+	// }
 }
