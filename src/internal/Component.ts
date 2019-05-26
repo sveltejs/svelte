@@ -1,7 +1,23 @@
-import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler.js';
-import { current_component, set_current_component } from './lifecycle.js';
-import { blank_object, is_function, run, run_all, noop } from './utils.js';
-import { children } from './dom.js';
+import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
+import { current_component, set_current_component } from './lifecycle';
+import { blank_object, is_function, run, run_all, noop } from './utils';
+import { children } from './dom';
+
+interface T$$ {
+	dirty: null;
+	ctx: null|any;
+	bound: any;
+	update: () => void;
+	callbacks: any;
+	after_render: any[];
+	props: any;
+	fragment: null|any;
+	not_equal: any;
+	before_render: any[];
+	context: Map<any, any>;
+	on_mount: any[];
+	on_destroy: any[]
+}
 
 export function bind(component, name, callback) {
 	if (component.$$.props.indexOf(name) === -1) return;
@@ -59,7 +75,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	const props = options.props || {};
 
-	const $$ = component.$$ = {
+	const $$: T$$ = component.$$ = {
 		fragment: null,
 		ctx: null,
 
@@ -99,9 +115,9 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	if (options.target) {
 		if (options.hydrate) {
-			$$.fragment.l(children(options.target));
+			$$.fragment!.l(children(options.target));
 		} else {
-			$$.fragment.c();
+			$$.fragment!.c();
 		}
 
 		if (options.intro && component.$$.fragment.i) component.$$.fragment.i();
@@ -115,13 +131,16 @@ export function init(component, options, instance, create_fragment, not_equal, p
 export let SvelteElement;
 if (typeof HTMLElement !== 'undefined') {
 	SvelteElement = class extends HTMLElement {
+		$$: T$$;
 		constructor() {
 			super();
 			this.attachShadow({ mode: 'open' });
 		}
 
 		connectedCallback() {
+			// @ts-ignore todo: improve typings
 			for (const key in this.$$.slotted) {
+				// @ts-ignore todo: improve typings
 				this.appendChild(this.$$.slotted[key]);
 			}
 		}
@@ -153,6 +172,8 @@ if (typeof HTMLElement !== 'undefined') {
 }
 
 export class SvelteComponent {
+	$$: T$$;
+
 	$destroy() {
 		destroy(this, true);
 		this.$destroy = noop;
