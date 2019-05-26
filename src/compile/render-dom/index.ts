@@ -134,7 +134,6 @@ export default function dom(
 	});
 
 	if (component.compile_options.dev) {
-		// TODO check no uunexpected props were passed, as well as
 		// checking that expected ones were passed
 		const expected = props.filter(prop => !prop.initialised);
 
@@ -395,6 +394,16 @@ export default function dom(
 			return $name;
 		});
 
+		let unknownPropsCheck;
+		if (component.compile_options.dev && writable_props.length) {
+			unknownPropsCheck = deindent`
+				const writableProps = [${writable_props.map(prop => `'${prop.export_name}'`).join(', ')}];
+				Object.keys($$props).forEach(key => {
+					if (!writableProps.includes(key)) console.warn(\`<${component.tag}> was created with unknown attribute '\${key}'\`);
+				});
+			`;
+		}
+
 		builder.add_block(deindent`
 			function ${definition}(${args.join(', ')}) {
 				${reactive_store_declarations.length > 0 && `let ${reactive_store_declarations.join(', ')};`}
@@ -404,6 +413,8 @@ export default function dom(
 				${resubscribable_reactive_store_unsubscribers}
 
 				${component.javascript}
+				
+				${unknownPropsCheck}
 
 				${component.slots.size && `let { $$slots = {}, $$scope } = $$props;`}
 
