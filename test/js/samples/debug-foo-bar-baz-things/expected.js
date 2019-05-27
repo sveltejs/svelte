@@ -153,7 +153,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	const writable_props = ['things', 'foo', 'bar', 'baz'];
 	Object.keys($$props).forEach(key => {
-		if (!writable_props.includes(key)) console.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!writable_props.includes(key) && !key.startsWith('$$')) console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$set = $$props => {
