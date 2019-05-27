@@ -58,6 +58,7 @@
 									"start": 55,
 									"end": 65,
 									"type": "Text",
+									"raw": "no animals",
 									"data": "no animals"
 								}
 							]
@@ -66,8 +67,5 @@
 				}
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

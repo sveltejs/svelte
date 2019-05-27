@@ -8,7 +8,7 @@ import deindent from '../../utils/deindent';
 import ElseBlock from '../../nodes/ElseBlock';
 import { attach_head } from '../../utils/tail';
 
-class ElseBlockWrapper extends Wrapper {
+export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
 	block: Block;
 	fragment: FragmentWrapper;
@@ -83,6 +83,7 @@ export default class EachBlockWrapper extends Wrapper {
 		this.block = block.child({
 			comment: create_debugging_comment(this.node, this.renderer.component),
 			name: renderer.component.get_unique_name('create_each_block'),
+			// @ts-ignore todo: probably error
 			key: node.key as string,
 
 			bindings: new Map(block.bindings)
@@ -310,7 +311,9 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		block.builders.init.add_block(deindent`
-			const ${get_key} = ctx => ${this.node.key.render()};
+			const ${get_key} = ctx => ${
+			// @ts-ignore todo: probably error
+			this.node.key.render()};
 
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);

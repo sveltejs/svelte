@@ -15,6 +15,7 @@
 						"start": 4,
 						"end": 10,
 						"type": "Text",
+						"raw": "hello ",
 						"data": "hello "
 					},
 					{
@@ -32,13 +33,11 @@
 						"start": 16,
 						"end": 17,
 						"type": "Text",
+						"raw": "!",
 						"data": "!"
 					}
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

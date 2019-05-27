@@ -1,11 +1,11 @@
 import Renderer from '../../Renderer';
-import Node from '../../../nodes/shared/Node';
 import Block from '../../Block';
+import { INode } from '../../../nodes/interfaces';
 
 export default class Wrapper {
 	renderer: Renderer;
 	parent: Wrapper;
-	node: Node;
+	node: INode;
 
 	prev: Wrapper | null;
 	next: Wrapper | null;
@@ -17,7 +17,7 @@ export default class Wrapper {
 		renderer: Renderer,
 		block: Block,
 		parent: Wrapper,
-		node: Node
+		node: INode
 	) {
 		this.node = node;
 
@@ -74,5 +74,9 @@ export default class Wrapper {
 			this.node.type === 'Text' ||
 			this.node.type === 'MustacheTag'
 		);
+	}
+
+	render(block: Block, parent_node: string, parent_nodes: string){
+		throw Error('Wrapper class is not renderable');
 	}
 }
