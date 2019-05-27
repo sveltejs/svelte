@@ -5,7 +5,7 @@ node_modules
 *.map
 /src/compiler/compile/internal-exports.ts
 /compiler.*js
-/index
+/index.*js
 /internal
 /store
 /easing
