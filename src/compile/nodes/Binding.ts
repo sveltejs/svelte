@@ -3,6 +3,15 @@ import get_object from '../utils/get_object';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
+import {dimensions} from "../../utils/patterns";
+
+// TODO this should live in a specific binding
+const read_only_media_attributes = new Set([
+	'duration',
+	'buffered',
+	'seekable',
+	'played'
+]);
 
 export default class Binding extends Node {
 	type: 'Binding';
@@ -11,6 +20,7 @@ export default class Binding extends Node {
 	is_contextual: boolean;
 	obj: string;
 	prop: string;
+	is_readonly: boolean;
 
 	constructor(component: Component, parent, scope: TemplateScope, info) {
 		super(component, parent, scope, info);
@@ -64,5 +74,17 @@ export default class Binding extends Node {
 
 		this.obj = obj;
 		this.prop = prop;
+
+		const type = parent.get_static_attribute_value('type');
+
+		this.is_readonly = (
+			dimensions.test(this.name) ||
+			(parent.is_media_node && parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
+			(parent.name === 'input' && type === 'file') // TODO others?
+		);
+	}
+
+	is_readonly_media_attribute() {
+		return read_only_media_attributes.has(this.name);
 	}
 }
