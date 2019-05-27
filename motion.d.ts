@@ -1,1 +1,1 @@
-export * from './dist/motion';
+export * from './types/motion';
