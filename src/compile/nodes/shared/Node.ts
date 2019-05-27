@@ -1,15 +1,17 @@
 import Attribute from './../Attribute';
 import Component from './../../Component';
+import { INode } from '../interfaces';
+import Text from '../Text';
 
 export default class Node {
 	readonly start: number;
 	readonly end: number;
 	readonly component: Component;
-	readonly parent: Node;
+	readonly parent: INode;
 	readonly type: string;
 
-	prev?: Node;
-	next?: Node;
+	prev?: INode;
+	next?: INode;
 
 	can_use_innerhtml: boolean;
 	var: string;
@@ -45,7 +47,7 @@ export default class Node {
 	}
 
 	get_static_attribute_value(name: string) {
-		const attribute = this.attributes.find(
+		const attribute = this.attributes && this.attributes.find(
 			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
 		);
 
@@ -55,7 +57,7 @@ export default class Node {
 		if (attribute.chunks.length === 0) return '';
 
 		if (attribute.chunks.length === 1 && attribute.chunks[0].type === 'Text') {
-			return attribute.chunks[0].data;
+			return (attribute.chunks[0] as Text).data;
 		}
 
 		return null;

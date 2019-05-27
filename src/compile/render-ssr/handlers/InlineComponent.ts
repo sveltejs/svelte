@@ -1,14 +1,17 @@
 import { escape, escape_template, stringify } from '../../utils/stringify';
 import { quote_name_if_necessary } from '../../../utils/names';
 import { snip } from '../../utils/snip';
-import Renderer from '../Renderer';
+import Renderer, { RenderOptions } from '../Renderer';
 import { stringify_props } from '../../utils/stringify_props';
 import { get_slot_scope } from './shared/get_slot_scope';
 import { AppendTarget } from '../../../interfaces';
+import InlineComponent from '../../nodes/InlineComponent';
+import { INode } from '../../nodes/interfaces';
+import Text from '../../nodes/Text';
 
-function stringify_attribute(chunk: Node) {
+function stringify_attribute(chunk: INode) {
 	if (chunk.type === 'Text') {
-		return escape_template(escape(chunk.data));
+		return escape_template(escape((chunk as Text).data));
 	}
 
 	return '${@escape(' + snip(chunk) + ')}';
@@ -30,7 +33,7 @@ function get_attribute_value(attribute) {
 	return '`' + attribute.chunks.map(stringify_attribute).join('') + '`';
 }
 
-export default function(node, renderer: Renderer, options) {
+export default function(node: InlineComponent, renderer: Renderer, options: RenderOptions) {
 	const binding_props = [];
 	const binding_fns = [];
 

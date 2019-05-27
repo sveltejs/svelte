@@ -1,28 +1,28 @@
-export function append(target, node) {
+export function append(target:Node, node:Node) {
 	target.appendChild(node);
 }
 
-export function insert(target, node, anchor) {
+export function insert(target: Node, node: Node, anchor?:Node) {
 	target.insertBefore(node, anchor || null);
 }
 
-export function detach(node) {
+export function detach(node: Node) {
 	node.parentNode.removeChild(node);
 }
 
-export function detach_between(before, after) {
+export function detach_between(before: Node, after: Node) {
 	while (before.nextSibling && before.nextSibling !== after) {
 		before.parentNode.removeChild(before.nextSibling);
 	}
 }
 
-export function detach_before(after) {
+export function detach_before(after:Node) {
 	while (after.previousSibling) {
 		after.parentNode.removeChild(after.previousSibling);
 	}
 }
 
-export function detach_after(before) {
+export function detach_after(before:Node) {
 	while (before.nextSibling) {
 		before.parentNode.removeChild(before.nextSibling);
 	}
@@ -34,25 +34,30 @@ export function destroy_each(iterations, detaching) {
 	}
 }
 
-export function element(name) {
-	return document.createElement(name);
+export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
+	return document.createElement<K>(name);
 }
 
-export function object_without_properties(obj, exclude) {
-	const target = {};
+export function object_without_properties<T,K extends keyof T>(obj:T, exclude: K[]) {
+	const target = {} as Pick<T, Exclude<keyof T, K>>;
 	for (const k in obj) {
-		if (Object.prototype.hasOwnProperty.call(obj, k) && exclude.indexOf(k) === -1) {
+		if (
+			Object.prototype.hasOwnProperty.call(obj, k)
+			// @ts-ignore
+			&& exclude.indexOf(k) === -1
+		) {
+			// @ts-ignore
 			target[k] = obj[k];
 		}
 	}
 	return target;
 }
 
-export function svg_element(name) {
+export function svg_element(name:string):SVGElement {
 	return document.createElementNS('http://www.w3.org/2000/svg', name);
 }
 
-export function text(data) {
+export function text(data:string) {
 	return document.createTextNode(data);
 }
 
@@ -64,7 +69,7 @@ export function empty() {
 	return text('');
 }
 
-export function listen(node, event, handler, options) {
+export function listen(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
 }
@@ -72,6 +77,7 @@ export function listen(node, event, handler, options) {
 export function prevent_default(fn) {
 	return function(event) {
 		event.preventDefault();
+		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
@@ -79,16 +85,17 @@ export function prevent_default(fn) {
 export function stop_propagation(fn) {
 	return function(event) {
 		event.stopPropagation();
+		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
 
-export function attr(node, attribute, value) {
+export function attr(node: Element, attribute: string, value?: string) {
 	if (value == null) node.removeAttribute(attribute);
 	else node.setAttribute(attribute, value);
 }
 
-export function set_attributes(node, attributes) {
+export function set_attributes(node: HTMLElement, attributes: { [x: string]: string; }) {
 	for (const key in attributes) {
 		if (key === 'style') {
 			node.style.cssText = attributes[key];
@@ -243,8 +250,8 @@ export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event(type, detail) {
-	const e = document.createEvent('CustomEvent');
+export function custom_event<T=any>(type: string, detail?: T) {
+	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, false, false, detail);
 	return e;
 }

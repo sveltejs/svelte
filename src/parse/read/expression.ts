@@ -1,9 +1,10 @@
 import { parse_expression_at } from '../acorn';
 import { Parser } from '../index';
+import { Identifier, Node, SimpleLiteral } from 'estree';
 
 const literals = new Map([['true', true], ['false', false], ['null', null]]);
 
-export default function read_expression(parser: Parser) {
+export default function read_expression(parser: Parser): Node {
 	const start = parser.index;
 
 	const name = parser.read_until(/\s*}/);
@@ -17,7 +18,7 @@ export default function read_expression(parser: Parser) {
 				end,
 				value: literals.get(name),
 				raw: name,
-			};
+			} as SimpleLiteral;
 		}
 
 		return {
@@ -25,7 +26,7 @@ export default function read_expression(parser: Parser) {
 			start,
 			end: start + name.length,
 			name,
-		};
+		} as Identifier;
 	}
 
 	parser.index = start;
@@ -34,7 +35,7 @@ export default function read_expression(parser: Parser) {
 		const node = parse_expression_at(parser.template, parser.index);
 		parser.index = node.end;
 
-		return node;
+		return node as Node;
 	} catch (err) {
 		parser.acorn_error(err);
 	}

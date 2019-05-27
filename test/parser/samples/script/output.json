@@ -8,6 +8,7 @@
 				"start": 39,
 				"end": 41,
 				"type": "Text",
+				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
@@ -21,6 +22,7 @@
 						"start": 45,
 						"end": 51,
 						"type": "Text",
+						"raw": "Hello ",
 						"data": "Hello "
 					},
 					{
@@ -38,6 +40,7 @@
 						"start": 57,
 						"end": 58,
 						"type": "Text",
+						"raw": "!",
 						"data": "!"
 					}
 				]

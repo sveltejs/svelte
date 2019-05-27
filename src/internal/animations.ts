@@ -1,6 +1,6 @@
-import { identity as linear, noop, now } from './utils.js';
-import { loop } from './loop.js';
-import { create_rule, delete_rule } from './style_manager.js';
+import { identity as linear, noop, now } from './utils';
+import { loop } from './loop';
+import { create_rule, delete_rule } from './style_manager';
 
 export function create_animation(node, from, fn, params) {
 	if (!from) return noop;
@@ -22,15 +22,14 @@ export function create_animation(node, from, fn, params) {
 	let started = false;
 	let name;
 
-	const css_text = node.style.cssText;
-
 	function start() {
 		if (css) {
-			if (delay) node.style.cssText = css_text; // TODO create delayed animation instead?
-			name = create_rule(node, 0, 1, duration, 0, easing, css);
+			name = create_rule(node, 0, 1, duration, delay, easing, css);
 		}
 
-		started = true;
+		if (!delay) {
+			started = true;
+		}
 	}
 
 	function stop() {
@@ -40,7 +39,7 @@ export function create_animation(node, from, fn, params) {
 
 	loop(now => {
 		if (!started && now >= start_time) {
-			start();
+			started = true;
 		}
 
 		if (started && now >= end) {
@@ -61,11 +60,7 @@ export function create_animation(node, from, fn, params) {
 		return true;
 	});
 
-	if (delay) {
-		if (css) node.style.cssText += css(0, 1);
-	} else {
-		start();
-	}
+	start();
 
 	tick(0, 1);
 
