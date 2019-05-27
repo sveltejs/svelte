@@ -397,11 +397,11 @@ export default function dom(
 		});
 
 		let unknown_props_check;
-		if (component.compile_options.dev && writable_props.length) {
+		if (component.compile_options.dev && !component.var_lookup.has('$$props') && writable_props.length) {
 			unknown_props_check = deindent`
 				const writable_props = [${writable_props.map(prop => `'${prop.export_name}'`).join(', ')}];
 				Object.keys($$props).forEach(key => {
-					if (!writable_props.includes(key)) console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
+					if (!writable_props.includes(key) && !key.startsWith('$$')) console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
 			`;
 		}
