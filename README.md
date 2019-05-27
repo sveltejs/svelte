@@ -21,7 +21,7 @@
   </a>
 </p>
 
-English | [简体中文](./README.zh_CN.md)
+English | [简体中文](./README.zh-CN.md)
 
 ## What is Svelte?
 
