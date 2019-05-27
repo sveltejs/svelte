@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "Docs and examples for Svelte",
   "scripts": {
-    "dev": "sapper dev",
+    "dev": "npm run copy-workers && sapper dev",
+    "copy-workers": "rm -rf static/workers && cp -r node_modules/@sveltejs/svelte-repl/workers static",
     "migrate": "node-pg-migrate -r dotenv/config",
-    "sapper": "sapper build --legacy",
+    "sapper": "npm run copy-workers && sapper build --legacy",
     "update_shimport": "cp node_modules/shimport/index.js __sapper__/build/client/shimport@0.0.14.js",
     "update": "node scripts/update_template.js && node scripts/get-contributors.js",
     "start": "node __sapper__/build",
