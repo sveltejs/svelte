@@ -5,6 +5,7 @@
   "module": "index.mjs",
   "main": "index",
   "files": [
+    "dist",
     "compiler.js",
     "register.js",
     "index.*",
