@@ -5018,6 +5018,11 @@
 		}
 	}
 
+	const require = `function require(id) {
+	if (id in __repl_lookup) return __repl_lookup[id];
+	throw new Error(\`Cannot require modules dynamically (\${id})\`);
+}`;
+
 	var commonjs = {
 		name: 'commonjs',
 
@@ -5043,11 +5048,20 @@
 					}
 				});
 
-				const imports = requires.map((id, i) => `import _${i} from '${id}';`).join('\n');
-				const lookup = `const lookup = { ${requires.map((id, i) => `'${id}': _${i}`).join(', ')} };`;
+				const imports = requires.map((id, i) => `import __repl_${i} from '${id}';`).join('\n');
+				const lookup = `const __repl_lookup = { ${requires.map((id, i) => `'${id}': __repl_${i}`).join(', ')} };`;
+
+				const transformed = [
+					imports,
+					lookup,
+					require,
+					`const exports = {}; const module = { exports };`,
+					code,
+					`export default module.exports;`
+				].join('\n\n');
 
 				return {
-					code: `${imports}\n\n${lookup}\n\nconst exports = {}; const module = { exports };\n\n${code}\n\nexport default exports;`,
+					code: transformed,
 					map: null
 				};
 			} catch (err) {
@@ -5060,7 +5074,11 @@
 		name: 'glsl',
 		transform: (code, id) => {
 			if (!id.endsWith('.glsl')) return;
-			return `export default ${JSON.stringify(code)};`;
+
+			return {
+				code: `export default ${JSON.stringify(code)};`,
+				map: null
+			};
 		}
 	};
 
@@ -5068,7 +5086,11 @@
 		name: 'json',
 		transform: (code, id) => {
 			if (!id.endsWith('.json')) return;
-			return `export default ${code};`;
+
+			return {
+				code: `export default ${code};`,
+				map: null
+			};
 		}
 	};
 
@@ -5111,10 +5133,6 @@
 			return fetch_cache.get(url);
 		}
 
-		if (/svelte.+internal/.test(url)) {
-			console.trace(url);
-		}
-
 		const promise = fetch(url)
 			.then(async r => {
 				if (r.ok) {
@@ -5152,6 +5170,13 @@
 				if (importee === `svelte`) return `${svelteUrl}/index.mjs`;
 				if (importee.startsWith(`svelte/`)) return `${svelteUrl}/${importee.slice(7)}.mjs`;
 
+				// temporary workaround for lack of package.json files in sub-packages
+				// https://github.com/sveltejs/svelte/pull/2887
+				if (importer && importer.startsWith(svelteUrl)) {
+					const resolved = new URL(importee, importer).href;
+					return resolved.endsWith('.mjs') ? resolved : `${resolved}.mjs`;
+				}
+
 				if (/[^.]svelte/.test(importee)) console.log({ importee, importer });
 
 				// importing from another file in REPL
@@ -5181,37 +5206,11 @@
 					}
 
 					return await follow_redirects(`https://unpkg.com/${importee}`);
-
-					// const parts = importee.split('/');
-					// let module_id;
-
-					// if (parts[0][0] === '@') {
-					// 	if (!parts[1]) throw new Error(`Invalid module ID: ${parts[0]}`);
-					// 	module_id = `${parts.shift()}/${parts.shift()}`;
-					// } else {
-					// 	module_id = parts.shift();
-					// }
-
-					// if (parts.length > 0) {
-					// 	// deep import
-					// 	return await follow_redirects(`https://unpkg.com/${module_id}/${parts.join('/')}`);
-					// } else {
-					// 	const pkg_url = await follow_redirects(`https://unpkg.com/${module_id}/package.json`);
-					// 	const pkg_json = (await fetch_if_uncached(pkg_url)).body;
-
-					// 	const pkg = JSON.parse(pkg_json);
-
-					// 	const url = pkg_url.replace(/\/package\.json$/, '');
-
-					// 	if (pkg.svelte || pkg.module) {
-					// 		return new URL(pkg.svelte || pkg.module, `${url}/`).href;
-					// 	}
-
-					// 	return follow_redirects(url);
-					// }
 				}
 			},
 			async load(id) {
+				if (id in lookup) return lookup[id].source;
+
 				if (!fetch_cache.has(id)) {
 					self.postMessage({
 						type: 'fetch',
@@ -5219,7 +5218,6 @@
 					});
 				}
 
-				if (id in lookup) return lookup[id].source;
 				const res = await fetch_if_uncached(id);
 				return res.body;
 			},
