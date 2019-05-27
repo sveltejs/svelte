@@ -47,7 +47,7 @@ export default class Node {
 	}
 
 	get_static_attribute_value(name: string) {
-		const attribute = this.attributes.find(
+		const attribute = this.attributes && this.attributes.find(
 			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
 		);
 
