@@ -3,7 +3,7 @@
 .nyc_output
 node_modules
 *.map
-/src/compile/internal-exports.ts
+/src/compile/internal_exports.ts
 /compiler.*js
 /index.*js
 /internal.*js
