@@ -1,5 +1,5 @@
 <script>
-	import { writable } from '../../../../store.js';
+	import { writable } from '../../../../store';
 
 	const a = writable();
 	const b = writable();

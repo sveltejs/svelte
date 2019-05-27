@@ -1,5 +1,5 @@
 import Binding from '../../../nodes/Binding';
-import ElementWrapper from '.';
+import ElementWrapper from '../Element';
 import { dimensions } from '../../../../utils/patterns';
 import get_object from '../../../utils/get_object';
 import Block from '../../Block';

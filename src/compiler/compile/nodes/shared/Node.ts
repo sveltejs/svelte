@@ -1,5 +1,5 @@
-import Attribute from './../Attribute';
-import Component from './../../Component';
+import Attribute from '../Attribute';
+import Component from '../../Component';
 import { INode } from '../interfaces';
 import Text from '../Text';
 
