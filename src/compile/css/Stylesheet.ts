@@ -2,8 +2,13 @@ import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
 import Element from '../nodes/Element';
+import InlineComponent from '../nodes/InlineComponent';
 import { Node, Ast } from '../../interfaces';
 import Component from '../Component';
+
+type ClassTarget = Element
+	| InlineComponent;
+
 
 function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
@@ -33,7 +38,7 @@ class Rule {
 		this.declarations = node.block.children.map((node: Node) => new Declaration(node));
 	}
 
-	apply(node: Element, stack: Element[]) {
+	apply(node: ClassTarget, stack: ClassTarget[]) {
 		this.selectors.forEach(selector => selector.apply(node, stack)); // TODO move the logic in here?
 	}
 
@@ -147,7 +152,7 @@ class Atrule {
 		this.children = [];
 	}
 
-	apply(node: Element, stack: Element[]) {
+	apply(node: ClassTarget, stack: ClassTarget[]) {
 		if (this.node.name === 'media' || this.node.name === 'supports') {
 			this.children.forEach(child => {
 				child.apply(node, stack);
@@ -323,10 +328,10 @@ export default class Stylesheet {
 		}
 	}
 
-	apply(node: Element) {
+	apply(node: ClassTarget) {
 		if (!this.has_styles) return;
 
-		const stack: Element[] = [];
+		const stack: ClassTarget[] = [];
 		let parent: Node = node;
 		while (parent = parent.parent) {
 			if (parent.type === 'Element') stack.unshift(parent as Element);

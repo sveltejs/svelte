@@ -1,5 +1,7 @@
 import Node from './shared/Node';
 import Attribute from './Attribute';
+import Class from './Class';
+import Text from './Text';
 import map_children from './shared/map_children';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
@@ -15,6 +17,7 @@ export default class InlineComponent extends Node {
 	expression: Expression;
 	attributes: Attribute[] = [];
 	bindings: Binding[] = [];
+	classes: Class[] = [];
 	handlers: EventHandler[] = [];
 	lets: Let[] = [];
 	children: INode[];
@@ -60,10 +63,8 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Class':
-					component.error(node, {
-						code: `invalid-class`,
-						message: `Classes can only be applied to DOM elements, not components`
-					});
+					this.classes.push(new Class(component, this, scope, node));
+					break;
 
 				case 'EventHandler':
 					this.handlers.push(new EventHandler(component, this, scope, node));
@@ -99,5 +100,31 @@ export default class InlineComponent extends Node {
 		}
 
 		this.children = map_children(component, this, this.scope, info.children);
+
+		component.stylesheet.apply(this);
+	}
+
+	add_css_class(class_name = this.component.stylesheet.id) {
+		const class_attribute = this.attributes.find(a => a.name === 'class');
+		if (class_attribute && !class_attribute.is_true) {
+			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
+				(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
+			} else {
+				(<Node[]>class_attribute.chunks).push(
+					new Text(this.component, this, this.scope, {
+						type: 'Text',
+						data: ` ${class_name}`
+					})
+				);
+			}
+		} else {
+			this.attributes.push(
+				new Attribute(this.component, this, this.scope, {
+					type: 'Attribute',
+					name: 'class',
+					value: [{ type: 'Text', data: class_name }]
+				})
+			);
+		}
 	}
 }
