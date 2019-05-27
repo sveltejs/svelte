@@ -2,8 +2,8 @@
 	"compilerOptions": {
 		"target": "es2015",
 		"module": "es6",
-		"declarationDir": "./dist",
-		"outDir": "./dist",
+		"declarationDir": "./types",
+		"outDir": "./types",
 		"declaration": true,
 		"noImplicitThis": true,
 		"noEmitOnError": true,
@@ -30,6 +30,6 @@
 		"src/**/*"
 	],
 	"exclude": [
-		"dist"
+		"types"
 	]
 }

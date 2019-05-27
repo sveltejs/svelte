@@ -1,1 +1,1 @@
-export * from './dist/internal';
+export * from './types/internal';

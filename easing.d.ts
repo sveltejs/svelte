@@ -1,1 +1,1 @@
-export * from './dist/easing';
+export * from './types/easing';
