@@ -203,8 +203,10 @@ export default function dom(
 							if (variable && (variable.hoistable || variable.global || variable.module)) return;
 
 							if (single && !(variable.subscribable && variable.reassigned)) {
-								code.prependRight(node.start, `$$invalidate('${name}', `);
-								code.appendLeft(node.end, `)`);
+								if (variable.referenced || variable.is_reactive_dependency || variable.export_name) {
+									code.prependRight(node.start, `$$invalidate('${name}', `);
+									code.appendLeft(node.end, `)`);
+								}
 							} else {
 								pending_assignments.add(name);
 							}
