@@ -58,7 +58,7 @@ describe('custom-elements', function() {
 
 		const solo = /\.solo$/.test(dir);
 		const skip = /\.skip$/.test(dir);
-		const internal = path.resolve('internal.mjs');
+		const internal = path.resolve('internal/index.mjs');
 		const index = path.resolve('index.mjs');
 		const warnings = [];
 
@@ -71,7 +71,7 @@ describe('custom-elements', function() {
 				plugins: [
 					{
 						resolveId(importee) {
-							if (importee === 'svelte/internal') {
+							if (importee === 'svelte/internal' || importee === './internal') {
 								return internal;
 							}
 

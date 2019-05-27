@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
 import * as virtual from 'rollup-plugin-virtual';
-import { clear_loops, set_now, set_raf } from "../../internal.js";
+import { clear_loops, set_now, set_raf } from "../../internal";
 
 import {
 	showOutput,
@@ -20,7 +20,7 @@ let compileOptions = null;
 let compile = null;
 
 const sveltePath = process.cwd().split('\\').join('/');
-const internal = `${sveltePath}/internal.js`;
+const internal = `${sveltePath}/internal`;
 
 describe("runtime", () => {
 	before(() => {
@@ -223,7 +223,7 @@ describe("runtime", () => {
 				{
 					resolveId: (importee, importer) => {
 						if (importee.startsWith('svelte/')) {
-							return importee.replace('svelte', process.cwd()) + '.mjs';
+							return importee.replace('svelte', process.cwd()) + '/index.mjs';
 						}
 					}
 				}
