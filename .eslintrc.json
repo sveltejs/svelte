@@ -38,7 +38,6 @@
 		"sourceType": "module"
 	},
 	"settings": {
-		"import/core-modules": ["svelte"],
-		"svelte3/extensions": ["html"]
+		"import/core-modules": ["svelte"]
 	}
 }
