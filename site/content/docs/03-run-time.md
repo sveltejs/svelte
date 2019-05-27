@@ -618,13 +618,13 @@ Slides an element in and out.
 
 ```html
 <script>
-	import { fly } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 </script>
 
 {#if condition}
-	<div transition:fly="{{delay: 250, duration: 300, easing: quintOut }}">
-		flies in and out
+	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut }}">
+		slides in and out
 	</div>
 {/if}
 ```
