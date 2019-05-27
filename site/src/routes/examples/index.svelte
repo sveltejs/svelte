@@ -102,6 +102,7 @@
 		<div class="repl-container" class:loading={isLoading}>
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				{svelteUrl}
 				{rollupUrl}
 				orientation={replOrientation}
