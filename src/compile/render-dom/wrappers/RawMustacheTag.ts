@@ -22,9 +22,18 @@ export default class RawMustacheTagWrapper extends Tag {
 	render(block: Block, parent_node: string, parent_nodes: string) {
 		const name = this.var;
 
+		const in_head = parent_node === 'document.head';
+		const needs_anchors = !parent_node || in_head;
+
+		// if in head always needs anchors
+		if (in_head) {
+			this.prev = null;
+			this.next = null;
+		}
+
 		// TODO use is_dom_node instead of type === 'Element'?
-		const needs_anchor_before = this.prev ? this.prev.node.type !== 'Element' : !parent_node;
-		const needs_anchor_after = this.next ? this.next.node.type !== 'Element' : !parent_node;
+		const needs_anchor_before = this.prev ? this.prev.node.type !== 'Element' : needs_anchors;
+		const needs_anchor_after = this.next ? this.next.node.type !== 'Element' : needs_anchors;
 
 		const anchor_before = needs_anchor_before
 			? block.get_unique_name(`${name}_before`)
@@ -90,7 +99,7 @@ export default class RawMustacheTagWrapper extends Tag {
 
 		block.builders.mount.add_line(insert(init));
 
-		if (!parent_node) {
+		if (needs_anchors) {
 			block.builders.destroy.add_conditional('detaching', needs_anchor_before
 				? `${detach}\n@detach(${anchor_before});`
 				: detach);
