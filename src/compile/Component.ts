@@ -1,4 +1,5 @@
 import MagicString, { Bundle } from 'magic-string';
+// @ts-ignore
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
@@ -21,6 +22,7 @@ import { remove_indentation, add_indentation } from '../utils/indentation';
 import get_object from './utils/get_object';
 import unwrap_parens from './utils/unwrap_parens';
 import Slot from './nodes/Slot';
+import { Node as ESTreeNode } from 'estree';
 
 type ComponentOptions = {
 	namespace?: string;
@@ -152,10 +154,14 @@ export default class Component {
 		this.namespace = namespaces[this.component_options.namespace] || this.component_options.namespace;
 
 		if (compile_options.customElement) {
-			this.tag = this.component_options.tag || compile_options.tag;
-			if (!this.tag) {
-				throw new Error(`Cannot compile to a custom element without specifying a tag name via options.tag or <svelte:options>`);
+			if (this.component_options.tag === undefined && compile_options.tag === undefined) {
+				const svelteOptions = ast.html.children.find(child => child.name === 'svelte:options') || { start: 0, end: 0 };
+				this.warn(svelteOptions, {
+					code: 'custom-element-no-tag',
+					message: `No custom element 'tag' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>`
+				});
 			}
+			this.tag = this.component_options.tag || compile_options.tag;
 		} else {
 			this.tag = this.name;
 		}
@@ -754,7 +760,7 @@ export default class Component {
 					});
 				}
 
-				if (is_reference(node, parent)) {
+				if (is_reference(node as ESTreeNode, parent as ESTreeNode)) {
 					const object = get_object(node);
 					const { name } = object;
 
@@ -772,7 +778,7 @@ export default class Component {
 		});
 	}
 
-	invalidate(name, value) {
+	invalidate(name, value?) {
 		const variable = this.var_lookup.get(name);
 
 		if (variable && (variable.subscribable && variable.reassigned)) {
@@ -1018,7 +1024,7 @@ export default class Component {
 						scope = map.get(node);
 					}
 
-					if (is_reference(node, parent)) {
+					if (is_reference(node as ESTreeNode, parent as ESTreeNode)) {
 						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
 
@@ -1109,14 +1115,16 @@ export default class Component {
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
-						} else if (is_reference(node, parent)) {
+						} else if (is_reference(node as ESTreeNode, parent as ESTreeNode)) {
 							const identifier = get_object(node);
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
 								const owner = scope.find_owner(name);
+								const component_var = component.var_lookup.get(name);
+								const is_writable_or_mutated = component_var && (component_var.writable || component_var.mutated);
 								if (
 									(!owner || owner === component.instance_scope) &&
-									(name[0] === '$' || component.var_lookup.has(name) && component.var_lookup.get(name).writable)
+									(name[0] === '$' || is_writable_or_mutated)
 								) {
 									dependencies.add(name);
 								}
@@ -1265,9 +1273,9 @@ function process_component_options(component: Component, nodes) {
 						const message = `'tag' must be a string literal`;
 						const tag = get_value(attribute, code, message);
 
-						if (typeof tag !== 'string') component.error(attribute, { code, message });
+						if (typeof tag !== 'string' && tag !== null) component.error(attribute, { code, message });
 
-						if (!/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
+						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
 							component.error(attribute, {
 								code: `invalid-tag-property`,
 								message: `tag name must be two or more words joined by the '-' character`

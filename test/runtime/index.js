@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
 import * as virtual from 'rollup-plugin-virtual';
-import { clear_loops } from "../../internal.js";
+import { clear_loops, set_now, set_raf } from "../../internal.js";
 
 import {
 	showOutput,
@@ -100,8 +100,8 @@ describe("runtime", () => {
 							if (raf.callback) raf.callback();
 						}
 					};
-					window.performance.now = () => raf.time;
-					global.requestAnimationFrame = cb => {
+					set_now(() => raf.time);
+					set_raf(cb => {
 						let called = false;
 						raf.callback = () => {
 							if (!called) {
@@ -109,7 +109,7 @@ describe("runtime", () => {
 								cb();
 							}
 						};
-					};
+					});
 
 					try {
 						mod = require(`./samples/${dir}/main.svelte`);

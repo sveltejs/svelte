@@ -1,4 +1,4 @@
-import { assign } from '../internal';
+import { assign } from '../internal/index';
 import Stats from '../Stats';
 import parse from '../parse/index';
 import render_dom from './render-dom/index';
@@ -55,7 +55,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 	}
 }
 
-function get_name(filename) {
+function get_name(filename: string) {
 	if (!filename) return null;
 	const parts = filename.split(/[\/\\]/);
 

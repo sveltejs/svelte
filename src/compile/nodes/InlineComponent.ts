@@ -7,6 +7,7 @@ import Expression from './shared/Expression';
 import Component from '../Component';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
+import { INode } from './interfaces';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -16,7 +17,7 @@ export default class InlineComponent extends Node {
 	bindings: Binding[] = [];
 	handlers: EventHandler[] = [];
 	lets: Let[] = [];
-	children: Node[];
+	children: INode[];
 	scope: TemplateScope;
 
 	constructor(component: Component, parent, scope, info) {

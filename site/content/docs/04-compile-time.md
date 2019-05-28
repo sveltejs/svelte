@@ -308,8 +308,8 @@ const { code } = svelte.preprocess(source, [
 
 ```js
 walk(ast: Node, {
-	enter(node: Node, parent: Node)?: void,
-	leave(node: Node, parent: Node)?: void
+	enter(node: Node, parent: Node, prop: string, index: number)?: void,
+	leave(node: Node, parent: Node, prop: string, index: number)?: void
 })
 ```
 
@@ -323,13 +323,13 @@ The walker takes an abstract syntax tree to walk and an object with two optional
 ```js
 const svelte = require('svelte/compiler');
 svelte.walk(ast, {
-	enter(node, parent) {
+	enter(node, parent, prop, index) {
 		do_something(node);
 		if (should_skip_children(node)) {
 			this.skip();
 		}
 	},
-	leave(node, parent) {
+	leave(node, parent, prop, index) {
 		do_something_else(node);
 	}
 });

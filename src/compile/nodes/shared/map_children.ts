@@ -14,9 +14,11 @@ import Slot from '../Slot';
 import Text from '../Text';
 import Title from '../Title';
 import Window from '../Window';
-import Node from './Node';
+import { Node } from '../../../interfaces';
 
-function get_constructor(type): typeof Node {
+export type Children = ReturnType<typeof map_children>;
+
+function get_constructor(type) {
 	switch (type) {
 		case 'AwaitBlock': return AwaitBlock;
 		case 'Body': return Body;
@@ -38,7 +40,7 @@ function get_constructor(type): typeof Node {
 	}
 }
 
-export default function map_children(component, parent, scope, children: any[]) {
+export default function map_children(component, parent, scope, children: Node[]) {
 	let last = null;
 	return children.map(child => {
 		const constructor = get_constructor(child.type);

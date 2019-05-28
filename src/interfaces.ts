@@ -1,9 +1,50 @@
-export interface Node {
+interface BaseNode {
 	start: number;
 	end: number;
 	type: string;
+	children?: Node[];
 	[prop_name: string]: any;
 }
+
+export interface Text extends BaseNode {
+	type: 'Text',
+	data: string;
+}
+
+export interface MustacheTag extends BaseNode {
+	type: 'MustacheTag',
+	expresion: Node;
+}
+
+export type DirectiveType = 'Action'
+	| 'Animation'
+	| 'Binding'
+	| 'Class'
+	| 'EventHandler'
+	| 'Let'
+	| 'Ref'
+	| 'Transition';
+
+interface BaseDirective extends BaseNode {
+	type: DirectiveType;
+	expression: null|Node;
+	name: string;
+	modifiers: string[]
+}
+
+export interface Transition extends BaseDirective{
+	type: 'Transition',
+	intro: boolean;
+	outro: boolean;
+}
+
+export type Directive = BaseDirective | Transition;
+
+export type Node = Text
+	| MustacheTag
+	| BaseNode
+	| Directive
+	| Transition;
 
 export interface Parser {
 	readonly template: string;

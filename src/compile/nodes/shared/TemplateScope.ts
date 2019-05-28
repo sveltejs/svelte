@@ -2,6 +2,7 @@ import EachBlock from '../EachBlock';
 import ThenBlock from '../ThenBlock';
 import CatchBlock from '../CatchBlock';
 import InlineComponent from '../InlineComponent';
+import Element from '../Element';
 
 type NodeWithScope = EachBlock | ThenBlock | CatchBlock | InlineComponent | Element;
 

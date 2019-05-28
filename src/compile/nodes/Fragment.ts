@@ -3,10 +3,12 @@ import Component from '../Component';
 import map_children from './shared/map_children';
 import Block from '../render-dom/Block';
 import TemplateScope from './shared/TemplateScope';
+import { INode } from './interfaces';
 
 export default class Fragment extends Node {
+	type: 'Fragment';
 	block: Block;
-	children: Node[];
+	children: INode[];
 	scope: TemplateScope;
 
 	constructor(component: Component, info: any) {
