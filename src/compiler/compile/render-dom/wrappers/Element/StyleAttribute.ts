@@ -1,7 +1,7 @@
 import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
 import AttributeWrapper from './Attribute';
-import ElementWrapper from '.';
+import ElementWrapper from '../Element';
 import { stringify } from '../../../utils/stringify';
 import add_to_set from '../../../utils/add_to_set';
 import Expression from '../../../nodes/shared/Expression';
