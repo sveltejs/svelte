@@ -4,12 +4,12 @@ import { create_rule, delete_rule } from './style_manager';
 import { AnimationConfig } from '../animate';
 
 
-//todo: documentation says it is DOMRect, but in IE it would be ClientReact
-type PositionReact = DOMRect|ClientRect;
+//todo: documentation says it is DOMRect, but in IE it would be ClientRect
+type PositionRect = DOMRect|ClientRect;
 
-type AnimationFn = (node: Element, { from, to }: { from: PositionReact, to: PositionReact }, params: any) => AnimationConfig;
+type AnimationFn = (node: Element, { from, to }: { from: PositionRect, to: PositionRect }, params: any) => AnimationConfig;
 
-export function create_animation(node: Element & ElementCSSInlineStyle, from: PositionReact, fn: AnimationFn, params) {
+export function create_animation(node: Element & ElementCSSInlineStyle, from: PositionRect, fn: AnimationFn, params) {
 	if (!from) return noop;
 
 	const to = node.getBoundingClientRect();
