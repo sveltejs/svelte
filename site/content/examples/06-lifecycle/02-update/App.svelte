@@ -1,5 +1,5 @@
 <script>
-	import Eliza from 'elizanode';
+	import Eliza from 'elizabot';
 	import { beforeUpdate, afterUpdate } from 'svelte';
 
 	let div;

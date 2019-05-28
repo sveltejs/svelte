@@ -302,6 +302,7 @@
 		<div class="tutorial-repl">
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				{svelteUrl}
 				{rollupUrl}
 				orientation={mobile ? 'columns' : 'rows'}
