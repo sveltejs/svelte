@@ -1,7 +1,22 @@
 import { cubicOut } from 'svelte/easing';
 import { is_function } from 'svelte/internal';
 
-export function flip(node, animation, params) {
+// todo: same as Transition, should it be shared?
+export interface AnimationConfig {
+	delay?: number,
+	duration?: number,
+	easing?: (t: number) => number,
+	css?: (t: number, u: number) => string,
+	tick?: (t: number, u: number) => void
+}
+
+interface FlipParams {
+	delay: number;
+	duration: number | ((len: number) => number);
+	easing: (t: number) => number,
+}
+
+export function flip(node: Element, animation: { from: DOMRect, to: DOMRect }, params: FlipParams): AnimationConfig {
 	const style = getComputedStyle(node);
 	const transform = style.transform === 'none' ? '' : style.transform;
 
