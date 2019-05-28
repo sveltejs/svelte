@@ -6,7 +6,7 @@
   "main": "index",
   "files": [
     "types",
-    "compiler.js",
+    "compiler.*",
     "register.js",
     "index.*",
     "internal.*",

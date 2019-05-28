@@ -1,18 +1,28 @@
 import { identity as linear, noop, now } from './utils';
 import { loop } from './loop';
 import { create_rule, delete_rule } from './style_manager';
+import { AnimationConfig } from '../animate';
 
-export function create_animation(node, from, fn, params) {
+
+//todo: documentation says it is DOMRect, but in IE it would be ClientRect
+type PositionRect = DOMRect|ClientRect;
+
+type AnimationFn = (node: Element, { from, to }: { from: PositionRect, to: PositionRect }, params: any) => AnimationConfig;
+
+export function create_animation(node: Element & ElementCSSInlineStyle, from: PositionRect, fn: AnimationFn, params) {
 	if (!from) return noop;
 
 	const to = node.getBoundingClientRect();
 	if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) return noop;
 
+
 	const {
 		delay = 0,
 		duration = 300,
 		easing = linear,
+		// @ts-ignore todo: should this be separated from destructuring? Or start/end added to public api and documentation?
 		start: start_time = now() + delay,
+		// @ts-ignore todo:
 		end = start_time + duration,
 		tick = noop,
 		css
@@ -67,7 +77,7 @@ export function create_animation(node, from, fn, params) {
 	return stop;
 }
 
-export function fix_position(node) {
+export function fix_position(node: Element & ElementCSSInlineStyle) {
 	const style = getComputedStyle(node);
 
 	if (style.position !== 'absolute' && style.position !== 'fixed') {

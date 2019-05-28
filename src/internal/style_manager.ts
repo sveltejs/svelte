@@ -6,7 +6,7 @@ let active = 0;
 let current_rules = {};
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
-function hash(str) {
+function hash(str: string) {
 	let hash = 5381;
 	let i = str.length;
 
@@ -14,7 +14,7 @@ function hash(str) {
 	return hash >>> 0;
 }
 
-export function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
+export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
 	const step = 16.666 / duration;
 	let keyframes = '{\n';
 
@@ -44,7 +44,7 @@ export function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
 	return name;
 }
 
-export function delete_rule(node, name?) {
+export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string) {
 	node.style.animation = (node.style.animation || '')
 		.split(', ')
 		.filter(name

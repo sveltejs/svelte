@@ -1,6 +1,6 @@
 import { now, raf } from './utils';
 
-export interface Task { abort(): void; promise: Promise<undefined> }
+export interface Task { abort(): void; promise: Promise<void> }
 
 const tasks = new Set();
 let running = false;
@@ -32,7 +32,7 @@ export function loop(fn: (number)=>void): Task {
 	}
 
 	return {
-		promise: new Promise<undefined>(fulfil => {
+		promise: new Promise<void>(fulfil => {
 			tasks.add(task = [fn, fulfil]);
 		}),
 		abort() {
