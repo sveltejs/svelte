@@ -3,6 +3,7 @@ import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 
 export default class CatchBlock extends AbstractBlock {
+	type: 'CatchBlock';
 	scope: TemplateScope;
 
 	constructor(component, parent, scope, info) {

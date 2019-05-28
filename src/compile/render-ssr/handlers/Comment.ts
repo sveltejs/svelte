@@ -1,7 +1,7 @@
-import Renderer from '../Renderer';
-import { CompileOptions } from '../../../interfaces';
+import Renderer, { RenderOptions } from '../Renderer';
+import Comment from '../../nodes/Comment';
 
-export default function(node, renderer: Renderer, options: CompileOptions) {
+export default function(node: Comment, renderer: Renderer, options: RenderOptions) {
 	if (options.preserveComments) {
 		renderer.append(`<!--${node.data}-->`);
 	}

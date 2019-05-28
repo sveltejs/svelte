@@ -5,6 +5,7 @@ import deindent from '../utils/deindent';
 import Block from '../render-dom/Block';
 
 export default class EventHandler extends Node {
+	type: 'EventHandler';
 	name: string;
 	modifiers: Set<string>;
 	expression: Expression;

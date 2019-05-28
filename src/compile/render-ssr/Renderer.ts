@@ -12,6 +12,7 @@ import Tag from './handlers/Tag';
 import Text from './handlers/Text';
 import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
+import { INode } from '../nodes/interfaces';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
 
@@ -36,6 +37,10 @@ const handlers: Record<string, Handler> = {
 	Window: noop
 };
 
+export interface RenderOptions extends CompileOptions{
+	locate: (c: number) => { line: number; column: number; };
+};
+
 export default class Renderer {
 	has_bindings = false;
 	code = '';
@@ -51,7 +56,7 @@ export default class Renderer {
 		}
 	}
 
-	render(nodes, options) {
+	render(nodes: INode[], options: RenderOptions) {
 		nodes.forEach(node => {
 			const handler = handlers[node.type];
 

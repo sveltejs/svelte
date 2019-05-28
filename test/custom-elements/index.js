@@ -5,6 +5,7 @@ import { rollup } from 'rollup';
 import * as virtual from 'rollup-plugin-virtual';
 import * as puppeteer from 'puppeteer';
 import { addLineNumbers, loadConfig, loadSvelte } from "../helpers.js";
+import { deepEqual } from 'assert';
 
 const page = `
 <body>
@@ -59,9 +60,11 @@ describe('custom-elements', function() {
 		const skip = /\.skip$/.test(dir);
 		const internal = path.resolve('internal.mjs');
 		const index = path.resolve('index.mjs');
+		const warnings = [];
 
 		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
 			const config = loadConfig(`./custom-elements/samples/${dir}/_config.js`);
+			const expected_warnings = config.warnings || [];
 
 			const bundle = await rollup({
 				input: `test/custom-elements/samples/${dir}/test.js`,
@@ -83,6 +86,8 @@ describe('custom-elements', function() {
 									customElement: true,
 									dev: config.dev
 								});
+
+								compiled.warnings.forEach(w => warnings.push(w));
 
 								return compiled.js;
 							}
@@ -112,6 +117,16 @@ describe('custom-elements', function() {
 			} catch (err) {
 				console.log(addLineNumbers(code));
 				throw err;
+			} finally {
+				if (expected_warnings) {
+					deepEqual(warnings.map(w => ({
+						code: w.code,
+						message: w.message,
+						pos: w.pos,
+						start: w.start,
+						end: w.end
+					})), expected_warnings);
+				}
 			}
 		});
 	});

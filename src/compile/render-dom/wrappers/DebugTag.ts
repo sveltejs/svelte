@@ -25,7 +25,7 @@ export default class DebugTagWrapper extends Wrapper {
 
 		if (!renderer.options.dev) return;
 
-		const { code } = component;
+		const { code, var_lookup } = component;
 
 		if (this.node.expressions.length === 0) {
 			// Debug all
@@ -50,20 +50,27 @@ export default class DebugTagWrapper extends Wrapper {
 
 			const condition = Array.from(dependencies).map(d => `changed.${d}`).join(' || ');
 
-			const identifiers = this.node.expressions.map(e => e.node.name).join(', ');
+			const ctx_identifiers = this.node.expressions
+				.filter(e => {
+					const looked_up_var = var_lookup.get(e.node.name);
+					return !(looked_up_var && looked_up_var.hoistable);
+				})
+				.map(e => e.node.name)
+				.join(', ');
+			const logged_identifiers = this.node.expressions.map(e => e.node.name).join(', ');
 
 			block.builders.update.add_block(deindent`
 				if (${condition}) {
-					const { ${identifiers} } = ctx;
-					console.${log}({ ${identifiers} });
+					const { ${ctx_identifiers} } = ctx;
+					console.${log}({ ${logged_identifiers} });
 					debugger;
 				}
 			`);
 
 			block.builders.create.add_block(deindent`
 				{
-					const { ${identifiers} } = ctx;
-					console.${log}({ ${identifiers} });
+					const { ${ctx_identifiers} } = ctx;
+					console.${log}({ ${logged_identifiers} });
 					debugger;
 				}
 			`);

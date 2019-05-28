@@ -47,11 +47,14 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 	// Values that are passed in as props
 	// are immediately available
 	console.log(foo, bar);
+	
+	// Function expressions can also be props
+	export let format = (number) => (number.toFixed(2));
 
-	// function declarations cannot be set externally,
-	// but can be accessed from outside
-	export function instanceMethod() {
-		alert(foo);
+	// Function declarations are added as methods
+	// on the component, rather than props
+	export function greetMethod() {
+		alert(`I'm a <${this.constructor.name}>!`);
 	}
 
 	// you can also use export { ... as ... } to have
@@ -89,7 +92,7 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 
 ---
 
-Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` label. Reactive statements run immediately before the component updates, whenever the values that they depend on have changed.
+Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` [JS label syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label). Reactive statements run immediately before the component updates, whenever the values that they depend on have changed.
 
 ```html
 <script>

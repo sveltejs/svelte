@@ -7,6 +7,7 @@ import Expression from './shared/Expression';
 import Component from '../Component';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
+import { INode } from './interfaces';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -16,15 +17,16 @@ export default class InlineComponent extends Node {
 	bindings: Binding[] = [];
 	handlers: EventHandler[] = [];
 	lets: Let[] = [];
-	children: Node[];
+	children: INode[];
 	scope: TemplateScope;
 
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
 
 		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
-			component.warn_if_undefined(info, scope);
-			component.add_reference(info.name);
+			const name = info.name.split('.')[0]; // accommodate namespaces
+			component.warn_if_undefined(name, info, scope);
+			component.add_reference(name);
 		}
 
 		this.name = info.name;

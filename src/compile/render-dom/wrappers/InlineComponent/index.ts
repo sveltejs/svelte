@@ -63,7 +63,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		this.var = (
 			this.node.name === 'svelte:self' ? renderer.component.name :
 			this.node.name === 'svelte:component' ? 'switch_instance' :
-			this.node.name
+			sanitize(this.node.name)
 		).toLowerCase();
 
 		if (this.node.children.length) {
@@ -142,7 +142,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		if (this.fragment) {
 			const default_slot = this.slots.get('default');
 
-			this.fragment.nodes.forEach((child: Wrapper) => {
+			this.fragment.nodes.forEach((child) => {
 				child.render(default_slot.block, null, 'nodes');
 			});
 		}
