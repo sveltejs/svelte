@@ -6,7 +6,7 @@
   "main": "index",
   "files": [
     "types",
-    "compiler.js",
+    "compiler.*",
     "register.js",
     "index.*",
     "internal",
@@ -63,7 +63,7 @@
     "c8": "^3.4.0",
     "codecov": "^3.0.0",
     "css-tree": "1.0.0-alpha22",
-    "estree-walker": "^0.6.0",
+    "estree-walker": "^0.6.1",
     "is-reference": "^1.1.1",
     "jsdom": "^12.2.0",
     "kleur": "^3.0.0",

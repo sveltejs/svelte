@@ -2,13 +2,14 @@ export function noop() {}
 
 export const identity = x => x;
 
-export function assign(tar, src) {
+export function assign<T, S>(tar:T, src:S): T & S {
+	// @ts-ignore
 	for (const k in src) tar[k] = src[k];
-	return tar;
+	return tar as T & S;
 }
 
-export function is_promise(value) {
-	return value && typeof value.then === 'function';
+export function is_promise<T = any>(value: any): value is PromiseLike<T> {
+	return value && typeof value === 'object' && typeof value.then === 'function';
 }
 
 export function add_location(element, file, line, column, char) {
@@ -29,7 +30,7 @@ export function run_all(fns) {
 	fns.forEach(run);
 }
 
-export function is_function(thing) {
+export function is_function(thing: any): thing is Function {
 	return typeof thing === 'function';
 }
 

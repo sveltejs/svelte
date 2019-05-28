@@ -53,8 +53,8 @@ export function object_without_properties<T,K extends keyof T>(obj:T, exclude: K
 	return target;
 }
 
-export function svg_element(name:string):SVGElement {
-	return document.createElementNS('http://www.w3.org/2000/svg', name);
+export function svg_element<K extends keyof SVGElementTagNameMap>(name:K):SVGElement {
+	return document.createElementNS<K>('http://www.w3.org/2000/svg', name);
 }
 
 export function text(data:string) {
@@ -95,7 +95,7 @@ export function attr(node: Element, attribute: string, value?: string) {
 	else node.setAttribute(attribute, value);
 }
 
-export function set_attributes(node: HTMLElement, attributes: { [x: string]: string; }) {
+export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string; }) {
 	for (const key in attributes) {
 		if (key === 'style') {
 			node.style.cssText = attributes[key];
