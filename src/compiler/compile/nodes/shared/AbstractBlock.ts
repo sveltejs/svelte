@@ -1,5 +1,5 @@
 import Block from '../../render-dom/Block';
-import Component from './../../Component';
+import Component from '../../Component';
 import Node from './Node';
 import { INode } from '../interfaces';
 

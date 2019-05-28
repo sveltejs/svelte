@@ -2,9 +2,8 @@
 	"compilerOptions": {
 		"target": "es2015",
 		"module": "es6",
-		"declarationDir": "./types",
-		"outDir": "./types",
 		"declaration": true,
+		"declarationDir": "types",
 		"noImplicitThis": true,
 		"noEmitOnError": true,
 		"lib": [
@@ -17,10 +16,10 @@
 		"moduleResolution": "node",
 		"baseUrl": ".",
 		"paths": {
-			"svelte/internal": ["./src/internal"],
-			"svelte/easing": ["./src/easing"],
-			"svelte/motion": ["./src/motion"],
-			"svelte/store": ["./src/store"]
+			"svelte/internal": ["./src/runtime/internal/index"],
+			"svelte/easing": ["./src/runtime/easing/index"],
+			"svelte/motion": ["./src/runtime/motion/index"],
+			"svelte/store": ["./src/runtime/store/index"]
 		},
 		"typeRoots": [
 			"node_modules/@types"
@@ -28,8 +27,5 @@
 	},
 	"include": [
 		"src/**/*"
-	],
-	"exclude": [
-		"types"
 	]
 }
