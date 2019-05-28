@@ -154,16 +154,18 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const vars = { name, anchor, if_name, has_else, has_transitions };
 
+		const detaching = (parent_node && parent_node !== 'document.head') ? '' : 'detaching';
+
 		if (this.node.else) {
 			if (has_outros) {
-				this.render_compound_with_outros(block, parent_node, parent_nodes, dynamic, vars);
+				this.render_compound_with_outros(block, parent_node, parent_nodes, dynamic, vars, detaching);
 
 				block.builders.outro.add_line(`if (${name}) ${name}.o();`);
 			} else {
-				this.render_compound(block, parent_node, parent_nodes, dynamic, vars);
+				this.render_compound(block, parent_node, parent_nodes, dynamic, vars, detaching);
 			}
 		} else {
-			this.render_simple(block, parent_node, parent_nodes, dynamic, vars);
+			this.render_simple(block, parent_node, parent_nodes, dynamic, vars, detaching);
 
 			if (has_outros) {
 				block.builders.outro.add_line(`if (${name}) ${name}.o();`);
@@ -201,7 +203,8 @@ export default class IfBlockWrapper extends Wrapper {
 		parent_node: string,
 		parent_nodes: string,
 		dynamic,
-		{ name, anchor, has_else, if_name, has_transitions }
+		{ name, anchor, has_else, if_name, has_transitions },
+		detaching
 	) {
 		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
 		const current_block_type = block.get_unique_name(`current_block_type`);
@@ -254,7 +257,7 @@ export default class IfBlockWrapper extends Wrapper {
 			`);
 		}
 
-		block.builders.destroy.add_line(`${if_name}${name}.d(${parent_node ? '' : 'detaching'});`);
+		block.builders.destroy.add_line(`${if_name}${name}.d(${detaching});`);
 	}
 
 	// if any of the siblings have outros, we need to keep references to the blocks
@@ -264,7 +267,8 @@ export default class IfBlockWrapper extends Wrapper {
 		parent_node: string,
 		parent_nodes: string,
 		dynamic,
-		{ name, anchor, has_else, has_transitions }
+		{ name, anchor, has_else, has_transitions },
+		detaching
 	) {
 		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
 		const current_block_type_index = block.get_unique_name(`current_block_type_index`);
@@ -375,7 +379,7 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 
 		block.builders.destroy.add_line(deindent`
-			${if_current_block_type_index}${if_blocks}[${current_block_type_index}].d(${parent_node ? '' : 'detaching'});
+			${if_current_block_type_index}${if_blocks}[${current_block_type_index}].d(${detaching});
 		`);
 	}
 
@@ -384,7 +388,8 @@ export default class IfBlockWrapper extends Wrapper {
 		parent_node: string,
 		parent_nodes: string,
 		dynamic,
-		{ name, anchor, if_name, has_transitions }
+		{ name, anchor, if_name, has_transitions },
+		detaching
 	) {
 		const branch = this.branches[0];
 
@@ -450,6 +455,6 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.destroy.add_line(`${if_name}${name}.d(${parent_node ? '' : 'detaching'});`);
+		block.builders.destroy.add_line(`${if_name}${name}.d(${detaching});`);
 	}
 }

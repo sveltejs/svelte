@@ -1,5 +1,15 @@
 # Svelte changelog
 
+## 3.4.4
+
+* Publish type declaration files ([#2874](https://github.com/sveltejs/svelte/issues/2874))
+* Don't trigger updates for unreferenced values ([#2865](https://github.com/sveltejs/svelte/pull/2865))
+* Omit readonly bindings from SSR output ([#2339](https://github.com/sveltejs/svelte/issues/2339))
+* Prevent outdated animation CSS ([#2871](https://github.com/sveltejs/svelte/issues/2871))
+* Repair dynamic `{@html ...}` in head ([#2880](https://github.com/sveltejs/svelte/pull/2880))
+* Don't create unknown prop warnings for internal props, or if component has `$$props` ([#2881](https://github.com/sveltejs/svelte/pull/2881))
+
+
 ## 3.4.3
 
 * Add type declaration files for everything ([#2842](https://github.com/sveltejs/svelte/pull/2842))

@@ -140,6 +140,10 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	node.bindings.forEach(binding => {
 		const { name, expression } = binding;
 
+		if (binding.is_readonly) {
+			return;
+		}
+
 		if (name === 'group') {
 			// TODO server-render group bindings
 		} else {

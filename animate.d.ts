@@ -1,1 +1,1 @@
-export * from './dist/animate';
+export * from './types/animate';

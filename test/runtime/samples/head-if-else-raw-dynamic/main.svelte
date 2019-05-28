@@ -1,9 +1,11 @@
 <script>
-	export let condition;
+	export let condition, foo, bar;
 </script>
 
 <svelte:head>
 	{#if condition}
-		<title>woo!!!</title>
+		{@html foo}
+	{:else}
+		{@html bar}
 	{/if}
 </svelte:head>

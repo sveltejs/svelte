@@ -1,1 +1,1 @@
-export * from './dist/transition';
+export * from './types/transition';

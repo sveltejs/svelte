@@ -1,1 +1,1 @@
-export * from './dist/store';
+export * from './types/store';

@@ -46,7 +46,7 @@ type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidater<T>];
 /**
  * Creates a `Readable` store that allows reading by subscription.
  * @param value initial value
- * @param start start and stop notifications for subscriptions
+ * @param {StartStopNotifier}start start and stop notifications for subscriptions
  */
 export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
 	return {
@@ -56,8 +56,8 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
 
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
- * @param value initial value
- * @param start start and stop notifications for subscriptions
+ * @param {*=}value initial value
+ * @param {StartStopNotifier=}start start and stop notifications for subscriptions
  */
 export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
@@ -110,9 +110,9 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
 /**
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
- * @param stores input stores
- * @param fn function callback that aggregates the values
- * @param initial_value when used asynchronously
+ * @param {Stores} stores input stores
+ * @param {function(Stores=, function(*)=):*}fn function callback that aggregates the values
+ * @param {*=}initial_value when used asynchronously
  */
 export function derived<T, S extends Stores>(
 	stores: S,

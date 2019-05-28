@@ -9,14 +9,6 @@ import flatten_reference from '../../../utils/flatten_reference';
 import EachBlock from '../../../nodes/EachBlock';
 import { Node as INode } from '../../../../interfaces';
 
-// TODO this should live in a specific binding
-const read_only_media_attributes = new Set([
-	'duration',
-	'buffered',
-	'seekable',
-	'played'
-]);
-
 function get_tail(node: INode) {
 	const end = node.end;
 	while (node.type === 'MemberExpression') node = node.object;
@@ -74,13 +66,7 @@ export default class BindingWrapper {
 
 		this.snippet = this.node.expression.render(block);
 
-		const type = parent.node.get_static_attribute_value('type');
-
-		this.is_readonly = (
-			dimensions.test(this.node.name) ||
-			(parent.node.is_media_node() && read_only_media_attributes.has(this.node.name)) ||
-			(parent.node.name === 'input' && type === 'file') // TODO others?
-		);
+		this.is_readonly = this.node.is_readonly;
 
 		this.needs_lock = this.node.name === 'currentTime'; // TODO others?
 	}
@@ -101,7 +87,7 @@ export default class BindingWrapper {
 	}
 
 	is_readonly_media_attribute() {
-		return read_only_media_attributes.has(this.node.name);
+		return this.node.is_readonly_media_attribute()
 	}
 
 	render(block: Block, lock: string) {
