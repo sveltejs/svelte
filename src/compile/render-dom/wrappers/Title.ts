@@ -4,6 +4,7 @@ import Block from '../Block';
 import Title from '../../nodes/Title';
 import { stringify } from '../../utils/stringify';
 import add_to_set from '../../utils/add_to_set';
+import Text from '../../nodes/Text';
 
 export default class TitleWrapper extends Wrapper {
 	node: Title;
@@ -31,6 +32,7 @@ export default class TitleWrapper extends Wrapper {
 			// DRY it out if that's possible without introducing crazy indirection
 			if (this.node.children.length === 1) {
 				// single {tag} — may be a non-string
+				// @ts-ignore todo: check this
 				const { expression } = this.node.children[0];
 				value = expression.render(block);
 				add_to_set(all_dependencies, expression.dependencies);
@@ -39,16 +41,18 @@ export default class TitleWrapper extends Wrapper {
 				value =
 					(this.node.children[0].type === 'Text' ? '' : `"" + `) +
 					this.node.children
-						.map((chunk: Node) => {
+						.map((chunk) => {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
+								// @ts-ignore todo: check this
 								const snippet = chunk.expression.render(block);
-
+								// @ts-ignore todo: check this
 								chunk.expression.dependencies.forEach(d => {
 									all_dependencies.add(d);
 								});
 
+								// @ts-ignore todo: check this
 								return chunk.expression.get_precedence() <= 13 ? `(${snippet})` : snippet;
 							}
 						})
@@ -88,7 +92,7 @@ export default class TitleWrapper extends Wrapper {
 				);
 			}
 		} else {
-			const value = stringify(this.node.children[0].data);
+			const value = stringify((this.node.children[0] as Text).data);
 			block.builders.hydrate.add_line(`document.title = ${value};`);
 		}
 	}

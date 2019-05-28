@@ -3,6 +3,7 @@ import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 
 export default class ThenBlock extends AbstractBlock {
+	type: 'ThenBlock';
 	scope: TemplateScope;
 
 	constructor(component, parent, scope, info) {

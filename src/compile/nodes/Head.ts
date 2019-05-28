@@ -1,5 +1,4 @@
 import Node from './shared/Node';
-import Block from '../render-dom/Block';
 import map_children from './shared/map_children';
 
 export default class Head extends Node {

@@ -351,6 +351,24 @@ If the `on:` directive is used without a value, the component will *forward* the
 </button>
 ```
 
+---
+
+It's possible to have multiple event listeners for the same event:
+
+```html
+<script>
+	let counter = 0;
+	function increment() {
+		counter = counter + 1;
+	}
+
+	function track(event) {
+		trackEvent(event)
+	}
+</script>
+
+<button on:click={increment} on:click={track}>Click me!</button>
+```
 
 ### Component events
 
@@ -1261,3 +1279,50 @@ The `<svelte:options>` element provides a place to specify per-component compile
 ```html
 <svelte:options tag="my-custom-element"/>
 ```
+
+
+### @debug
+
+```sv
+{@debug}
+```
+```sv
+{@debug var1, var2, ..., varN}
+```
+
+---
+
+The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.
+
+It accepts a comma-separated list of variable names (not arbitrary expressions).
+
+```html
+<script>
+	let user = {
+		firstname: 'Ada',
+		lastname: 'Lovelace'
+	};
+</script>
+
+{@debug user}
+
+<h1>Hello {user.firstname}!</h1>
+```
+
+---
+
+`{@debug ...}` accepts a comma-separated list of variable names (not arbitrary expressions).
+
+```html
+<!-- Compiles -->
+{@debug user}
+{@debug user1, user2, user3}
+
+<!-- WON'T compile -->
+{@debug user.firstname}
+{@debug myArray[0]}
+{@debug !isReady}
+{@debug typeof user === 'object'}
+```
+
+The `{@debug}` tag without any arguments will insert a `debugger` statement that gets triggered when *any* state changes, as opposed to the specified variables.

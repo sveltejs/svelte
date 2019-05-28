@@ -19,13 +19,11 @@
 						"start": 9,
 						"end": 12,
 						"type": "Text",
+						"raw": "bar",
 						"data": "bar"
 					}
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

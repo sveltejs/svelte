@@ -74,6 +74,7 @@ export default async function preprocess(
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
 	options?: { filename?: string }
 ) {
+	// @ts-ignore todo: doublecheck
 	const filename = (options && options.filename) || preprocessor.filename; // legacy
 	const dependencies = [];
 

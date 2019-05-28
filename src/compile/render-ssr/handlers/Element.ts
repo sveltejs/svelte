@@ -5,6 +5,9 @@ import Node from '../../nodes/shared/Node';
 import { snip } from '../../utils/snip';
 import { stringify_attribute } from '../../utils/stringify_attribute';
 import { get_slot_scope } from './shared/get_slot_scope';
+import Renderer, { RenderOptions } from '../Renderer';
+import Element from '../../nodes/Element';
+import Text from '../../nodes/Text';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
 const boolean_attributes = new Set([
@@ -47,15 +50,17 @@ const boolean_attributes = new Set([
 	'translate'
 ]);
 
-export default function(node, renderer, options) {
+export default function(node: Element, renderer: Renderer, options: RenderOptions & {
+	slot_scopes: Map<any, any>;
+}) {
 	let opening_tag = `<${node.name}`;
 	let textarea_contents; // awkward special case
 
 	const slot = node.get_static_attribute_value('slot');
 	const component = node.find_nearest(/InlineComponent/);
 	if (slot && component) {
-		const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
-		const slot_name = slot.chunks[0].data;
+		const slot = node.attributes.find((attribute) => attribute.name === 'slot');
+		const slot_name = (slot.chunks[0] as Text).data;
 		const target = renderer.targets[renderer.targets.length - 1];
 		target.slot_stack.push(slot_name);
 		target.slots[slot_name] = '';

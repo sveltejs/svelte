@@ -4,7 +4,7 @@ import read_style from '../read/style';
 import { decode_character_references } from '../utils/html';
 import { is_void } from '../../utils/names';
 import { Parser } from '../index';
-import { Node } from '../../interfaces';
+import { Directive, DirectiveType, Node, Text } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 
@@ -358,7 +358,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		}
 	}
 
-	let name = parser.read_until(/(\s|=|\/|>)/);
+	let name = parser.read_until(/[\s=\/>"']/);
 	if (!name) return null;
 
 	let end = parser.index;
@@ -383,6 +383,11 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	if (parser.eat('=')) {
 		value = read_attribute_value(parser);
 		end = parser.index;
+	} else if (parser.match_regex(/["']/)) {
+		parser.error({
+			code: `unexpected-token`,
+			message: `Expected =`
+		}, parser.index);
 	}
 
 	if (type) {
@@ -396,7 +401,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		}
 
 		if (value[0]) {
-			if (value.length > 1 || value[0].type === 'Text') {
+			if ((value as Array<any>).length > 1 || value[0].type === 'Text') {
 				parser.error({
 					code: `invalid-directive-value`,
 					message: `Directive value must be a JavaScript expression enclosed in curly braces`
@@ -404,7 +409,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			}
 		}
 
-		const directive = {
+		const directive: Directive = {
 			start,
 			end,
 			type,
@@ -440,7 +445,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	};
 }
 
-function get_directive_type(name) {
+function get_directive_type(name: string):DirectiveType {
 	if (name === 'use') return 'Action';
 	if (name === 'animate') return 'Animation';
 	if (name === 'bind') return 'Binding';
@@ -466,35 +471,33 @@ function read_attribute_value(parser: Parser) {
 	return value;
 }
 
-function read_sequence(parser: Parser, done: () => boolean) {
-	let current_chunk: Node = {
+function read_sequence(parser: Parser, done: () => boolean): Node[] {
+	let current_chunk: Text = {
 		start: parser.index,
 		end: null,
 		type: 'Text',
-		data: '',
+		raw: '',
+		data: null
 	};
 
-	const chunks = [];
+	function flush() {
+		if (current_chunk.raw) {
+			current_chunk.data = decode_character_references(current_chunk.raw);
+			current_chunk.end = parser.index;
+			chunks.push(current_chunk);
+		}
+	}
+
+	const chunks: Node[] = [];
 
 	while (parser.index < parser.template.length) {
 		const index = parser.index;
 
 		if (done()) {
-			current_chunk.end = parser.index;
-
-			if (current_chunk.data) chunks.push(current_chunk);
-
-			chunks.forEach(chunk => {
-				if (chunk.type === 'Text')
-					chunk.data = decode_character_references(chunk.data);
-			});
-
+			flush();
 			return chunks;
 		} else if (parser.eat('{')) {
-			if (current_chunk.data) {
-				current_chunk.end = index;
-				chunks.push(current_chunk);
-			}
+			flush();
 
 			parser.allow_whitespace();
 			const expression = read_expression(parser);
@@ -512,10 +515,11 @@ function read_sequence(parser: Parser, done: () => boolean) {
 				start: parser.index,
 				end: null,
 				type: 'Text',
-				data: '',
+				raw: '',
+				data: null
 			};
 		} else {
-			current_chunk.data += parser.template[parser.index++];
+			current_chunk.raw += parser.template[parser.index++];
 		}
 	}
 

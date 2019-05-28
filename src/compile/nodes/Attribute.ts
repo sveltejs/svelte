@@ -67,6 +67,7 @@ export default class Attribute extends Node {
 
 			this.should_cache = this.is_dynamic
 				? this.chunks.length === 1
+					// @ts-ignore todo: probably error
 					? this.chunks[0].node.type !== 'Identifier' || scope.names.has(this.chunks[0].node.name)
 					: true
 				: false;
@@ -91,8 +92,10 @@ export default class Attribute extends Node {
 		if (this.chunks.length === 0) return `""`;
 
 		if (this.chunks.length === 1) {
+
 			return this.chunks[0].type === 'Text'
-				? stringify(this.chunks[0].data)
+				? stringify((this.chunks[0] as Text).data)
+				// @ts-ignore todo: probably error
 				: this.chunks[0].render(block);
 		}
 
@@ -102,6 +105,7 @@ export default class Attribute extends Node {
 					if (chunk.type === 'Text') {
 						return stringify(chunk.data);
 					} else {
+						// @ts-ignore todo: probably error
 						return chunk.get_precedence() <= 13 ? `(${chunk.render()})` : chunk.render();
 					}
 				})
@@ -114,7 +118,8 @@ export default class Attribute extends Node {
 		return this.is_true
 			? true
 			: this.chunks[0]
-				? this.chunks[0].data
+				// method should be called only when `is_static = true`
+				? (this.chunks[0] as Text).data
 				: '';
 	}
 }
