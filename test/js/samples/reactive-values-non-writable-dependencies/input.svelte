@@ -1,7 +1,6 @@
 <script>
-	let a = 1;
-	let b = 2;
+	export let a = 1;
+	export let b = 2;
 
-	let max;
-	$: max = Math.max(a, b);
+	$: console.log('max', Math.max(a, b));
 </script>
