@@ -39,6 +39,10 @@
 	let isLoading = false;
 	const cache = {};
 
+	function showExampleCodeOnChange() {
+		offset = 1;
+	}
+
 	$: title = title_by_slug[active_slug] || '';
 	$: first_slug = sections[0].examples[0].slug;
 	$: mobile = width < 768; // note: same as per media query below
@@ -46,7 +50,7 @@
 	$: if (repl && active_slug) {
 		if (active_slug in cache) {
 			repl.set({ components: cache[active_slug] });
-			offset = 1;
+			showExampleCodeOnChange();
 		} else {
 			isLoading = true;
 			fetch(`examples/${active_slug}.json`)
@@ -59,7 +63,7 @@
 				.then(components => {
 					cache[active_slug] = components;
 					repl.set({components});
-					offset = 1;
+					showExampleCodeOnChange();
 					isLoading = false;
 				})
 				.catch(() => {
@@ -102,6 +106,7 @@
 		<div class="repl-container" class:loading={isLoading}>
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				{svelteUrl}
 				{rollupUrl}
 				orientation={replOrientation}
