@@ -763,6 +763,7 @@ export default class ElementWrapper extends Wrapper {
 		if (!this.node.animation) return;
 
 		const { component } = this.renderer;
+		const { outro } = this.node;
 
 		const rect = block.get_unique_name('rect');
 		const stop_animation = block.get_unique_name('stop_animation');
@@ -777,6 +778,7 @@ export default class ElementWrapper extends Wrapper {
 		block.builders.fix.add_block(deindent`
 			@fix_position(${this.var});
 			${stop_animation}();
+			${outro && `@prepare_outro(${this.var}, ${rect});`}
 		`);
 
 		const params = this.node.animation.expression ? this.node.animation.expression.render(block) : '{}';
