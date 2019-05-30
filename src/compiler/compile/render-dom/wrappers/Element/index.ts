@@ -775,11 +775,10 @@ export default class ElementWrapper extends Wrapper {
 			${rect} = ${this.var}.getBoundingClientRect();
 		`);
 
-		const prepare_outro = outro ? `@prepare_outro(${this.var}, ${rect})` : ``;
 		block.builders.fix.add_block(deindent`
 			@fix_position(${this.var});
 			${stop_animation}();
-			${prepare_outro}
+			${outro && `@prepare_outro(${this.var}, ${rect});`}
 		`);
 
 		const params = this.node.animation.expression ? this.node.animation.expression.render(block) : '{}';
