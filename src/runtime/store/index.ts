@@ -1,4 +1,4 @@
-import { run_all, noop, safe_not_equal, is_function } from 'svelte/internal';
+import { run_all, noop, not_equal, safe_not_equal, is_function } from 'svelte/internal';
 
 /** Callback to inform of a value updates. */
 type Subscriber<T> = (value: T) => void;
@@ -54,17 +54,34 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
 	};
 }
 
+interface WritableOptions<T> {
+	/** Start and stop notifications for subscriptions */
+	start?: StartStopNotifier<T>;
+	/** Use immutable equality comparison */
+	immutable?: boolean;
+}
+
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
- * @param {*=}value initial value
- * @param {StartStopNotifier=}start start and stop notifications for subscriptions
+ * @param {*=} value initial value
+ * @param {StartStopNotifier|WritableOptions?} options start and stop notifications for subscriptions or options
  */
-export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
+export function writable<T>(
+	value: T,
+	options?: StartStopNotifier<T> | WritableOptions<T>,
+): Writable<T> {
 	let stop: Unsubscriber;
 	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
+	let start: StartStopNotifier<T> = noop;
+	if (typeof options === "function") {
+		start = options;
+	} else if (typeof options === "object" && options.start) {
+		start = options.start;
+	}
+	const not_equal_compare = typeof options === "object" && options.immutable ? not_equal : safe_not_equal;
 
 	function set(new_value: T): void {
-		if (safe_not_equal(value, new_value)) {
+		if (not_equal_compare(value, new_value)) {
 			value = new_value;
 			if (!stop) {
 				return; // not ready

@@ -278,6 +278,22 @@ describe('store', () => {
 			b.set(2);
 			assert.deepEqual(get(c), 'two 2');
 		});
+
+		it('allows immutable stores', () => {
+			const obj = { value: 1 };
+			const a = writable(obj, { immutable: true });
+			let called = 0;
+			a.subscribe(() => {
+				called++;
+			})
+
+			assert.equal(called, 1);
+			obj.value += 1;
+			a.set(obj);
+			assert.equal(called, 1);
+			a.set({ value: 2 });
+			assert.equal(called, 2);
+		});
 	});
 
 	describe('get', () => {
