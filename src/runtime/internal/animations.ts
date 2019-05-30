@@ -77,6 +77,10 @@ export function create_animation(node: Element & ElementCSSInlineStyle, from: Po
 	return stop;
 }
 
+export function prepare_outro(node: Element & ElementCSSInlineStyle, rect: PositionRect) {
+	add_transform(node, rect);
+}
+
 export function fix_position(node: Element & ElementCSSInlineStyle) {
 	const style = getComputedStyle(node);
 
@@ -86,13 +90,17 @@ export function fix_position(node: Element & ElementCSSInlineStyle) {
 		node.style.position = 'absolute';
 		node.style.width = width;
 		node.style.height = height;
-		const b = node.getBoundingClientRect();
+		add_transform(node, a);
+	}
+}
 
-		if (a.left !== b.left || a.top !== b.top) {
-			const style = getComputedStyle(node);
-			const transform = style.transform === 'none' ? '' : style.transform;
+function add_transform(node: Element & ElementCSSInlineStyle, a: PositionRect) {
+	const b = node.getBoundingClientRect();
 
-			node.style.transform = `${transform} translate(${a.left - b.left}px, ${a.top - b.top}px)`;
-		}
+	if (a.left !== b.left || a.top !== b.top) {
+		const style = getComputedStyle(node);
+		const transform = style.transform === 'none' ? '' : style.transform;
+
+		node.style.transform = `${transform} translate(${a.left - b.left}px, ${a.top - b.top}px)`;
 	}
 }
