@@ -343,7 +343,9 @@ export default class EachBlockWrapper extends Wrapper {
 		const dynamic = this.block.has_update_method;
 
 		const destroy = this.node.has_animation
-			? `@fix_and_outro_and_destroy_block`
+			? (this.block.has_outros
+				? `@fix_and_outro_and_destroy_block`
+				: `@fix_and_destroy_block`)
 			: this.block.has_outros
 				? `@outro_and_destroy_block`
 				: `@destroy_block`;
