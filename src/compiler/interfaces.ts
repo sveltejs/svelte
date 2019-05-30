@@ -13,7 +13,7 @@ export interface Text extends BaseNode {
 
 export interface MustacheTag extends BaseNode {
 	type: 'MustacheTag',
-	expresion: Node;
+	expression: Node;
 }
 
 export type DirectiveType = 'Action'
