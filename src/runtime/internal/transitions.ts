@@ -71,10 +71,15 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 		if (task) task.abort();
 		running = true;
 
+    add_render_callback(() => dispatch(node, true, 'start'));
+
 		task = loop(now => {
 			if (running) {
 				if (now >= end_time) {
 					tick(1, 0);
+
+          dispatch(node, true, 'end');
+
 					cleanup();
 					return running = false;
 				}
@@ -141,10 +146,14 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 		const start_time = now() + delay;
 		const end_time = start_time + duration;
 
+    add_render_callback(() => dispatch(node, false, 'start'));
+
 		loop(now => {
 			if (running) {
 				if (now >= end_time) {
 					tick(0, 1);
+
+          dispatch(node, false, 'end');
 
 					if (!--group.remaining) {
 						// this will result in `end()` being called,
