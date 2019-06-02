@@ -25,8 +25,7 @@ function deregisterExtension(extension) {
 
 function registerExtension(extension) {
 	require.extensions[extension] = function(module, filename) {
-		const name = path.basename(filename)
-			.slice(0, -path.extname(filename).length)
+		const name = path.parse(filename).name
 			.replace(/^\d/, '_$&')
 			.replace(/[^a-zA-Z0-9_$]/g, '');
 
