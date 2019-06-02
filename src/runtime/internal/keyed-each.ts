@@ -13,6 +13,11 @@ export function outro_and_destroy_block(block, lookup) {
 	block.o(1);
 }
 
+export function fix_and_destroy_block(block, lookup) {
+	block.f();
+	destroy_block(block, lookup);
+}
+
 export function fix_and_outro_and_destroy_block(block, lookup) {
 	block.f();
 	outro_and_destroy_block(block, lookup);
