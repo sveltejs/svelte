@@ -94,7 +94,7 @@ export function fix_position(node: Element & ElementCSSInlineStyle) {
 	}
 }
 
-function add_transform(node: Element & ElementCSSInlineStyle, a: PositionRect) {
+export function add_transform(node: Element & ElementCSSInlineStyle, a: PositionRect) {
 	const b = node.getBoundingClientRect();
 
 	if (a.left !== b.left || a.top !== b.top) {
