@@ -239,7 +239,8 @@ function attribute_matches(node: Node, name: string, expected_value: string, ope
 
 function class_matches(node, name: string) {
 	return node.classes.some(function(class_directive) {
-		return class_directive.name === name;
+		name = new RegExp(`\\b${name}\\b`);
+		return name.test(class_directive.name);
 	});
 }
 
