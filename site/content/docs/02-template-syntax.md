@@ -593,12 +593,12 @@ You can bind to component props using the same mechanism.
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
 
-> Note that we can do `{cart.empty}` rather than `{() => cart.empty()}`, since component methods are closures. You don't need to worry about the value of `this` when calling them.
+> Note that we can't do `{cart.empty}` since `cart` is `undefined` when the button is first rendered and throws an error.
 
 ```html
 <ShoppingCart bind:this={cart}/>
 
-<button on:click={cart.empty}>
+<button on:click={() => cart.empty()}>
 	Empty shopping cart
 </button>
 ```
