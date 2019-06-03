@@ -77,10 +77,6 @@ export function create_animation(node: Element & ElementCSSInlineStyle, from: Po
 	return stop;
 }
 
-export function prepare_outro(node: Element & ElementCSSInlineStyle, rect: PositionRect) {
-	add_transform(node, rect);
-}
-
 export function fix_position(node: Element & ElementCSSInlineStyle) {
 	const style = getComputedStyle(node);
 
