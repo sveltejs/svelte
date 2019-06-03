@@ -54,7 +54,7 @@
 	<a target="_blank" rel="noopener" href="https://nytimes.com"><img src="organisations/nyt.svg" alt="The New York Times logo"></a>
 	<a target="_blank" rel="noopener" href="https://razorpay.com"><img src="organisations/razorpay.svg" alt="Razorpay logo"></a>
 	<a target="_blank" rel="noopener" href="https://www.stone.co"><img src="organisations/stone.svg" alt="Stone Payments logo"></a>
-	<a target="_blank" rel="noopener" href="https://www.strixengine.com/" class="add-yourself"><img src="organisations/strixcloud.svg" alt="Strix Cloud logo"><span>Strix Cloud</span></a>
+	<a target="_blank" rel="noopener" href="https://www.strixengine.com" class="add-yourself"><img src="organisations/strixcloud.svg" alt="Strix Cloud logo"><span>Strix Cloud</span></a>
 	<a target="_blank" rel="noopener" href="https://thunderdome.dev"><img src="organisations/thunderdome.svg" alt="Thunderdome logo"></a>
 	<a target="_blank" rel="noopener" href="https://m.tokopedia.com"><img src="organisations/tokopedia.png" alt="Tokopedia logo"></a>
 	<a target="_blank" rel="noopener" href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
