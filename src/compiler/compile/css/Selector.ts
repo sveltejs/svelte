@@ -239,8 +239,7 @@ function attribute_matches(node: Node, name: string, expected_value: string, ope
 
 function class_matches(node, name: string) {
 	return node.classes.some(function(class_directive) {
-		name = new RegExp(`\\b${name}\\b`);
-		return name.test(class_directive.name);
+		return new RegExp(`\\b${name}\\b`).test(class_directive.name);
 	});
 }
 
