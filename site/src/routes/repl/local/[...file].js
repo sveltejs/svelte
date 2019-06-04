@@ -1,12 +1,13 @@
 import { createReadStream } from 'fs';
 
 export function get(req, res) {
-	if (process.env.NODE_ENV !== 'development' || !/^[a-z.]+$/.test(req.params.file)) {
+	const path = req.params.file.join('/');
+	if (process.env.NODE_ENV !== 'development' || ('/' + path).includes('/.')) {
 		res.writeHead(403);
 		res.end();
 		return;
 	}
-	createReadStream('../' + req.params.file)
+	createReadStream('../' + path)
 		.on('error', () => {
 			res.writeHead(403);
 			res.end();
