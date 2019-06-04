@@ -106,7 +106,7 @@
 
 ## 2.15.1
 
-* Don't throw missing store error when store is declared in component ([#1828](https://github.com/sveltejs/svelte/issues/1828))
+* Don't throw missing store error when the store is declared in component ([#1828](https://github.com/sveltejs/svelte/issues/1828))
 
 ## 2.15.0
 
@@ -155,7 +155,7 @@
 
 ## 2.13.3
 
-* Fix bug with keyed each blocks and nested components ([#1706](https://github.com/sveltejs/svelte/issues/1706))
+* Fix bug with keyed each block and nested components ([#1706](https://github.com/sveltejs/svelte/issues/1706))
 
 ## 2.13.2
 
@@ -251,7 +251,7 @@
 
 ## 2.9.3
 
-* Fix bug when an each block contains transitions but its else branch does not ([#1559](https://github.com/sveltejs/svelte/issues/1559))
+* Fix bug when each block contains transitions but its else branch does not ([#1559](https://github.com/sveltejs/svelte/issues/1559))
 * If an event handler throws an exception, don't block all future calls to that handler ([#1573](https://github.com/sveltejs/svelte/issues/1573))
 
 ## 2.9.2
@@ -541,7 +541,7 @@
 
 ## 1.56.2
 
-* Null out `key` for children of keyed each blocks ([#1202](https://github.com/sveltejs/svelte/issues/1202))
+* Null out `key` for children of keyed each block ([#1202](https://github.com/sveltejs/svelte/issues/1202))
 
 ## 1.56.1
 
@@ -1084,7 +1084,7 @@
 
 ## 1.15.1
 
-* Clone data before merging it with state ([#479](https://github.com/sveltejs/svelte/issues/479))
+* Clone data before merging it with the state ([#479](https://github.com/sveltejs/svelte/issues/479))
 * Apply binding event handlers before user event handlers ([#486](https://github.com/sveltejs/svelte/issues/486))
 
 ## 1.15.0
@@ -1428,7 +1428,7 @@ Set `style.cssText` rather than `style` ([#44](https://github.com/sveltejs/svelt
 
 ## 1.0.1
 
-* Preserve SVG namespace inside each blocks
+* Preserve SVG namespace inside each block
 * Always use `setAttribute` with SVG elements
 
 ## 1.0.0
@@ -1458,7 +1458,7 @@ Set `style.cssText` rather than `style` ([#44](https://github.com/sveltejs/svelt
 * Faster initial render
 * Parent data overrides child defaults
 * Remove top-level text nodes on teardown
-* Handle `readUntil` errors in parser
+* Handle `readUntil` errors in the parser
 * Basic `<select>` binding
 * Handle missing data
 * Prevent infinite set/observe loops
