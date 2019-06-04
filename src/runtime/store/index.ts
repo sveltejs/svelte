@@ -112,12 +112,12 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
  * applying an aggregation function over its input values.
  * @param {Stores} stores input stores
  * @param {function(Stores=, function(*)=):*}fn function callback that aggregates the values
- * @param {*=}initial_value when used asynchronously
+ * @param {*=}value initial value, when used asynchronously
  */
 export function derived<T, S extends Stores>(
 	stores: S,
 	fn: (values: StoresValues<S>, set?: Subscriber<T>) => T | Unsubscriber | void,
-	initial_value?: T,
+	value?: T,
 ): Readable<T> {
 
 	const single = !Array.isArray(stores);
@@ -127,12 +127,28 @@ export function derived<T, S extends Stores>(
 
 	const auto = fn.length < 2;
 
-	return readable(initial_value, (set) => {
-		let inited = false;
+	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
+	let unsubscribers;
+	let cleanup = noop;
+	let running = false;
+
+	function invalidate() {
+		subscribers.forEach(subscriber => subscriber[1]());
+	}
+
+	function set(current_value) {
+		value = current_value;
+		if (running) {
+			invalidate();
+			subscribers.forEach(subscriber => subscriber[0](value));
+		}
+	}
+
+	function start() {
 		const values: StoresValues<S> = [] as StoresValues<S>;
 
 		let pending = 0;
-		let cleanup = noop;
+		running = false;
 
 		const sync = () => {
 			if (pending) {
@@ -147,27 +163,47 @@ export function derived<T, S extends Stores>(
 			}
 		};
 
-		const unsubscribers = stores_array.map((store, i) => store.subscribe(
+		unsubscribers = stores_array.map((store, i) => store.subscribe(
 			(value) => {
 				values[i] = value;
 				pending &= ~(1 << i);
-				if (inited) {
+				if (running) {
 					sync();
 				}
 			},
 			() => {
+				invalidate();
 				pending |= (1 << i);
 			}),
 		);
 
-		inited = true;
 		sync();
+		running = true;
+	}
 
-		return function stop() {
-			run_all(unsubscribers);
-			cleanup();
-		};
-	});
+	function stop() {
+		run_all(unsubscribers);
+		cleanup();
+	}
+
+	return {
+		subscribe(run: Subscriber<T>, invalidate: Invalidater<T> = noop): Unsubscriber {
+			const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
+			subscribers.push(subscriber);
+			if (subscribers.length === 1) start();
+			run(value);
+
+			return () => {
+				const index = subscribers.indexOf(subscriber);
+				if (index !== -1) {
+					subscribers.splice(index, 1);
+				}
+				if (subscribers.length === 0) {
+					stop();
+				}
+			};
+		}
+	};
 }
 
 /**
