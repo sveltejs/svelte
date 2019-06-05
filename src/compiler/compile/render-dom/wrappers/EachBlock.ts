@@ -190,7 +190,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		renderer.blocks.push(deindent`
 			function ${this.vars.get_each_context}(ctx, list, i) {
-				const child_ctx = Object.create(ctx);
+				const child_ctx = @Object.create(ctx);
 				${this.context_props}
 				return child_ctx;
 			}
@@ -296,7 +296,7 @@ export default class EachBlockWrapper extends Wrapper {
 		const lookup = block.get_unique_name(`${this.var}_lookup`);
 
 		block.add_variable(iterations, '[]');
-		block.add_variable(lookup, `new Map()`);
+		block.add_variable(lookup, `new @Map()`);
 
 		if (this.fragment.nodes[0].is_dom_node()) {
 			this.block.first = this.fragment.nodes[0].var;

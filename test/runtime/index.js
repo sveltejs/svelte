@@ -125,6 +125,7 @@ describe("runtime", () => {
 
 					// Put things we need on window for testing
 					window.SvelteComponent = SvelteComponent;
+					window.Error = global.Error;
 
 					const target = window.document.querySelector("main");
 

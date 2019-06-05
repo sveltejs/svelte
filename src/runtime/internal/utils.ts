@@ -90,7 +90,7 @@ export function once(fn) {
 	}
 }
 
-const is_client = typeof window !== 'undefined';
+export const is_client = typeof window !== 'undefined';
 
 export let now: () => number = is_client
 	? () => window.performance.now()
