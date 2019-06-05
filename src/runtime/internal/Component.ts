@@ -148,7 +148,7 @@ if (typeof HTMLElement !== 'undefined') {
 			}
 		}
 
-		attributeChangedCallback(attr, oldValue, newValue) {
+		attributeChangedCallback(attr, _oldValue, newValue) {
 			this[attr] = newValue;
 		}
 

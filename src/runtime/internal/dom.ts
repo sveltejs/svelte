@@ -39,7 +39,8 @@ export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
 }
 
 export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
-	const target: Pick<T, Exclude<keyof T, K>> = {};
+	// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
+	const target = {} as Pick<T, Exclude<keyof T, K>>;
 	for (const k in obj) {
 		if (
 			Object.prototype.hasOwnProperty.call(obj, k)

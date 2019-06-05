@@ -363,7 +363,7 @@ export default class Component {
 
 			result = result
 				.replace(/__svelte:self__/g, this.name)
-				.replace(compile_options.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
+				.replace(compile_options.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (_match: string, sigil: string, name: string) => {
 					if (sigil === '@') {
 						if (internal_exports.has(name)) {
 							if (compile_options.dev && internal_exports.has(`${name}Dev`)) name = `${name}Dev`;
@@ -398,7 +398,7 @@ export default class Component {
 				this.source
 			);
 
-			const parts = module.split('ÃÂ¢ÃÂÃÂ]');
+			const parts = module.split('ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ]');
 			const final_chunk = parts.pop();
 
 			const compiled = new Bundle({ separator: '' });
@@ -411,7 +411,7 @@ export default class Component {
 
 			const { filename } = compile_options;
 
-			// special case ÃÂ¢ÃÂÃÂ the source file doesn't actually get used anywhere. we need
+			// special case ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ the source file doesn't actually get used anywhere. we need
 			// to add an empty file to populate map.sources and map.sourcesContent
 			if (!parts.length) {
 				compiled.addSource({
@@ -420,7 +420,7 @@ export default class Component {
 				});
 			}
 
-			const pattern = /\[ÃÂ¢ÃÂÃÂ(\d+)-(\d+)$/;
+			const pattern = /\[ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ(\d+)-(\d+)$/;
 
 			parts.forEach((str: string) => {
 				const chunk = str.replace(pattern, '');
@@ -494,7 +494,7 @@ export default class Component {
 
 		reserved.forEach(add);
 		internal_exports.forEach(add);
-		this.var_lookup.forEach((value, key) => add(key));
+		this.var_lookup.forEach((_value, key) => add(key));
 
 		return (name: string) => {
 			if (test) name = `${name}$`;
@@ -644,7 +644,7 @@ export default class Component {
 
 		script.content.body.forEach((node) => {
 			if (this.hoistable_nodes.has(node) || this.reactive_declaration_nodes.has(node)) {
-				if (a !== b) result += `[ÃÂ¢ÃÂÃÂ${a}-${b}ÃÂ¢ÃÂÃÂ]`;
+				if (a !== b) result += `[ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ${a}-${b}ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ]`;
 				a = node.end;
 			}
 
@@ -656,7 +656,7 @@ export default class Component {
 		b = script.content.end;
 		while (/\s/.test(this.source[b - 1])) b -= 1;
 
-		if (a < b) result += `[ÃÂ¢ÃÂÃÂ${a}-${b}ÃÂ¢ÃÂÃÂ]`;
+		if (a < b) result += `[ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ${a}-${b}ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ]`;
 
 		return result || null;
 	}
@@ -761,7 +761,7 @@ export default class Component {
 			this.node_for_declaration.set(name, node);
 		});
 
-		globals.forEach((node, name) => {
+		globals.forEach((_node, name) => {
 			if (this.var_lookup.has(name)) return;
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
@@ -1107,7 +1107,7 @@ export default class Component {
 					});
 
 					hoistable_nodes.add(node);
-					this.fully_hoisted.push(`[ÃÂ¢ÃÂÃÂ${node.start}-${node.end}ÃÂ¢ÃÂÃÂ]`);
+					this.fully_hoisted.push(`[ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ${node.start}-${node.end}ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ]`);
 				}
 			}
 
@@ -1199,7 +1199,7 @@ export default class Component {
 
 				remove_indentation(this.code, node);
 
-				this.fully_hoisted.push(`[ÃÂ¢ÃÂÃÂ${node.start}-${node.end}ÃÂ¢ÃÂÃÂ]`);
+				this.fully_hoisted.push(`[ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ${node.start}-${node.end}ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ]`);
 			}
 		}
 	}

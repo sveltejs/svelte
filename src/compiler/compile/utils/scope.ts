@@ -132,7 +132,7 @@ export function create_scopes(expression: Node) {
 		},
 	});
 
-	scope.declarations.forEach((node, name) => {
+	scope.declarations.forEach((_node, name) => {
 		globals.delete(name);
 	});
 

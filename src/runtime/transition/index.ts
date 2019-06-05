@@ -124,7 +124,7 @@ export function scale(node: Element, {
 		delay,
 		duration,
 		easing,
-		css: (t, u) => `
+		css: (_t, u) => `
 			transform: ${transform} scale(${1 - (sd * u)});
 			opacity: ${target_opacity - (od * u)}
 		`

@@ -201,7 +201,7 @@ export default class IfBlockWrapper extends Wrapper {
 	render_compound(
 		block: Block,
 		parent_node: string,
-		parent_nodes: string,
+		_parent_nodes: string,
 		dynamic,
 		{ name, anchor, has_else, if_name, has_transitions },
 		detaching
@@ -265,7 +265,7 @@ export default class IfBlockWrapper extends Wrapper {
 	render_compound_with_outros(
 		block: Block,
 		parent_node: string,
-		parent_nodes: string,
+		_parent_nodes: string,
 		dynamic,
 		{ name, anchor, has_else, has_transitions },
 		detaching
@@ -386,7 +386,7 @@ export default class IfBlockWrapper extends Wrapper {
 	render_simple(
 		block: Block,
 		parent_node: string,
-		parent_nodes: string,
+		_parent_nodes: string,
 		dynamic,
 		{ name, anchor, if_name, has_transitions },
 		detaching
@@ -429,7 +429,7 @@ export default class IfBlockWrapper extends Wrapper {
 				}
 			`;
 
-		// no `p()` here — we don't want to update outroing nodes,
+		// no `p()` here ÃÂ¢ÃÂÃÂ we don't want to update outroing nodes,
 		// as that will typically result in glitching
 		const exit = branch.block.has_outro_method
 			? deindent`

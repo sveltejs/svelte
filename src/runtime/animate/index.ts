@@ -35,6 +35,6 @@ export function flip(node: Element, animation: { from: DOMRect; to: DOMRect }, p
 		delay,
 		duration: is_function(duration) ? duration(d) : duration,
 		easing,
-		css: (t, u) => `transform: ${transform} translate(${u * dx}px, ${u * dy}px);`
+		css: (_t, u) => `transform: ${transform} translate(${u * dx}px, ${u * dy}px);`
 	};
 }

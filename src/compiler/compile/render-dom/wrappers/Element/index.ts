@@ -41,7 +41,7 @@ const events = [
 
 	{
 		event_names: ['resize'],
-		filter: (node: Element, name: string) =>
+		filter: (_node: Element, name: string) =>
 			dimensions.test(name)
 	},
 
@@ -440,7 +440,7 @@ export default class ElementWrapper extends Wrapper {
 				binding.render(block, lock);
 			});
 
-			// media bindings Ã¢ÂÂ awkward special case. The native timeupdate events
+			// media bindings ÃÂ¢ÃÂÃÂ awkward special case. The native timeupdate events
 			// fire too infrequently, so we need to take matters into our
 			// own hands
 			let animation_frame;
@@ -453,7 +453,7 @@ export default class ElementWrapper extends Wrapper {
 
 			let callee;
 
-			// TODO dry this out Ã¢ÂÂ similar code for event handlers and component bindings
+			// TODO dry this out ÃÂ¢ÃÂÃÂ similar code for event handlers and component bindings
 			if (has_local_function) {
 				// need to create a block-local function that calls an instance-level function
 				block.builders.init.add_block(deindent`

@@ -64,7 +64,7 @@ const precedence: Record<string, (node?: Node) => number> = {
 
 type Owner = Wrapper | INode;
 
-function get_function_name(node, parent) {
+function get_function_name(_node, parent) {
 	if (parent.type === 'EventHandler') {
 		return `${parent.name}_handler`;
 	}
@@ -374,7 +374,7 @@ export default class Expression {
 							throw new Error(`Well that's odd`);
 						}
 
-						// TOOD optimisation â if this is an event handler,
+						// TOOD optimisation Ã¢ÂÂ if this is an event handler,
 						// the return value doesn't matter
 					}
 
@@ -513,6 +513,6 @@ export default class Expression {
 			});
 		}
 
-		return this.rendered = `[â${this.node.start}-${this.node.end}â]`;
+		return this.rendered = `[Ã¢ÂÂ${this.node.start}-${this.node.end}Ã¢ÂÂ]`;
 	}
 }

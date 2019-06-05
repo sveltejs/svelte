@@ -1,2 +1,3 @@
 **/_actual.js
 **/expected.js
+test/*/samples/*/output.js
