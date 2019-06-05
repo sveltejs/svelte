@@ -112,12 +112,12 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
  * applying an aggregation function over its input values.
  * @param {Stores} stores input stores
  * @param {function(Stores=, function(*)=):*}fn function callback that aggregates the values
- * @param {*=}value initial value, when used asynchronously
+ * @param {*=}initial_value when used asynchronously
  */
 export function derived<T, S extends Stores>(
 	stores: S,
 	fn: (values: StoresValues<S>, set?: Subscriber<T>) => T | Unsubscriber | void,
-	value?: T,
+	initial_value?: T,
 ): Readable<T> {
 
 	const single = !Array.isArray(stores);
@@ -127,28 +127,14 @@ export function derived<T, S extends Stores>(
 
 	const auto = fn.length < 2;
 
-	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
-	let unsubscribers;
-	let cleanup = noop;
-	let running = false;
+	const invalidators: Array<Invalidater<T>> = [];
 
-	function invalidate() {
-		subscribers.forEach(subscriber => subscriber[1]());
-	}
-
-	function set(current_value) {
-		value = current_value;
-		if (running) {
-			invalidate();
-			subscribers.forEach(subscriber => subscriber[0](value));
-		}
-	}
-
-	function start() {
+	const store = readable(initial_value, (set) => {
+		let inited = false;
 		const values: StoresValues<S> = [] as StoresValues<S>;
 
 		let pending = 0;
-		running = false;
+		let cleanup = noop;
 
 		const sync = () => {
 			if (pending) {
@@ -163,47 +149,44 @@ export function derived<T, S extends Stores>(
 			}
 		};
 
-		unsubscribers = stores_array.map((store, i) => store.subscribe(
+		const unsubscribers = stores_array.map((store, i) => store.subscribe(
 			(value) => {
 				values[i] = value;
 				pending &= ~(1 << i);
-				if (running) {
+				if (inited) {
 					sync();
 				}
 			},
 			() => {
-				invalidate();
+				run_all(invalidators);
 				pending |= (1 << i);
 			}),
 		);
 
+		inited = true;
 		sync();
-		running = true;
-	}
 
-	function stop() {
-		run_all(unsubscribers);
-		cleanup();
-	}
+		return function stop() {
+			run_all(unsubscribers);
+			cleanup();
+		};
+	});
 
 	return {
 		subscribe(run: Subscriber<T>, invalidate: Invalidater<T> = noop): Unsubscriber {
-			const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
-			subscribers.push(subscriber);
-			if (subscribers.length === 1) start();
-			run(value);
+			invalidators.push(invalidate);
+
+			const unsubscribe = store.subscribe(run, invalidate);
 
 			return () => {
-				const index = subscribers.indexOf(subscriber);
+				const index = invalidators.indexOf(invalidate);
 				if (index !== -1) {
-					subscribers.splice(index, 1);
+					invalidators.splice(index, 1);
 				}
-				if (subscribers.length === 0) {
-					stop();
-				}
+				unsubscribe();
 			};
 		}
-	};
+	}
 }
 
 /**
