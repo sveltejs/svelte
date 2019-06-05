@@ -22,6 +22,9 @@
     "arrow-spacing": 2,
     "no-inner-declarations": 0,
     "@typescript-eslint/indent": [2, "tab", { "SwitchCase": 1 }],
+    "@typescript-eslint/explicit-function-return-type": ["error", {
+      "allowExpressions": true
+    }],
     "@typescript-eslint/camelcase": "off"
   },
   "env": {

@@ -35,7 +35,8 @@
     "prepublishOnly": "export PUBLISH=true && npm test && npm run create-stubs",
     "create-stubs": "node scripts/create-stubs.js",
     "tsd": "tsc -p . --emitDeclarationOnly",
-    "typecheck": "tsc -p . --noEmit"
+    "typecheck": "tsc -p . --noEmit",
+    "lint": "eslint \"{src,test}/**/*.{ts,js}\""
   },
   "repository": {
     "type": "git",
