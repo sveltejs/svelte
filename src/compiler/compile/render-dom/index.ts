@@ -57,7 +57,7 @@ export default function dom(
 
 	if (options.dev && !options.hydratable) {
 		block.builders.claim.add_line(
-			'throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
+			'throw new @Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
 		);
 	}
 
@@ -106,7 +106,7 @@ export default function dom(
 		} else if (component.compile_options.dev) {
 			body.push(deindent`
 				get ${x.export_name}() {
-					throw new Error("<${component.tag}>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+					throw new @Error("<${component.tag}>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 				}
 			`);
 		}
@@ -122,14 +122,14 @@ export default function dom(
 			} else if (component.compile_options.dev) {
 				body.push(deindent`
 					set ${x.export_name}(value) {
-						throw new Error("<${component.tag}>: Cannot set read-only property '${x.export_name}'");
+						throw new @Error("<${component.tag}>: Cannot set read-only property '${x.export_name}'");
 					}
 				`);
 			}
 		} else if (component.compile_options.dev) {
 			body.push(deindent`
 				set ${x.export_name}(value) {
-					throw new Error("<${component.tag}>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+					throw new @Error("<${component.tag}>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 				}
 			`);
 		}
@@ -145,7 +145,7 @@ export default function dom(
 				const props = ${options.customElement ? `this.attributes` : `options.props || {}`};
 				${expected.map(prop => deindent`
 				if (ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
-					console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
+					@console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
 				}`)}
 			`;
 		}
@@ -402,7 +402,7 @@ export default function dom(
 		if (component.compile_options.dev && !component.var_lookup.has('$$props') && writable_props.length) {
 			unknown_props_check = deindent`
 				const writable_props = [${writable_props.map(prop => `'${prop.export_name}'`).join(', ')}];
-				Object.keys($$props).forEach(key => {
+				@Object.keys($$props).forEach(key => {
 					if (!writable_props.includes(key) && !key.startsWith('$$')) console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
 			`;

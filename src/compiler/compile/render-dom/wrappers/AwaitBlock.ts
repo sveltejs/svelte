@@ -142,7 +142,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			this.catch.block.name && `catch: ${this.catch.block.name}`,
 			this.then.block.name && `value: '${this.node.value}'`,
 			this.catch.block.name && `error: '${this.node.error}'`,
-			this.pending.block.has_outro_method && `blocks: Array(3)`
+			this.pending.block.has_outro_method && `blocks: [,,,]`
 		].filter(Boolean);
 
 		block.builders.init.add_block(deindent`
