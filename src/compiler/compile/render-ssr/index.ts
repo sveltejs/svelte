@@ -7,6 +7,28 @@ import { extract_names } from '../utils/scope';
 import { INode } from '../nodes/interfaces';
 import Text from '../nodes/Text';
 
+function trim(nodes: INode[]) {
+	let start = 0;
+	for (; start < nodes.length; start += 1) {
+		const node = nodes[start] as Text;
+		if (node.type !== 'Text') break;
+
+		node.data = node.data.replace(/^\s+/, '');
+		if (node.data) break;
+	}
+
+	let end = nodes.length;
+	for (; end > start; end -= 1) {
+		const node = nodes[end - 1] as Text;
+		if (node.type !== 'Text') break;
+
+		node.data = node.data.replace(/\s+$/, '');
+		if (node.data) break;
+	}
+
+	return nodes.slice(start, end);
+}
+
 export default function ssr(
 	component: Component,
 	options: CompileOptions
@@ -66,7 +88,7 @@ export default function ssr(
 		: [];
 
 	const reactive_declarations = component.reactive_declarations.map(d => {
-		let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
+		let snippet = `[â${d.node.body.start}-${d.node.end}â]`;
 
 		if (d.declaration) {
 			const declared = extract_names(d.declaration);
@@ -151,26 +173,4 @@ export default function ssr(
 			${blocks.join('\n\n')}
 		});
 	`).trim();
-}
-
-function trim(nodes: INode[]) {
-	let start = 0;
-	for (; start < nodes.length; start += 1) {
-		const node = nodes[start] as Text;
-		if (node.type !== 'Text') break;
-
-		node.data = node.data.replace(/^\s+/, '');
-		if (node.data) break;
-	}
-
-	let end = nodes.length;
-	for (; end > start; end -= 1) {
-		const node = nodes[end - 1] as Text;
-		if (node.type !== 'Text') break;
-
-		node.data = node.data.replace(/\s+$/, '');
-		if (node.data) break;
-	}
-
-	return nodes.slice(start, end);
 }

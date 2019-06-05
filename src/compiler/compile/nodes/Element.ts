@@ -54,7 +54,7 @@ const a11y_required_content = new Set([
 	'h4',
 	'h5',
 	'h6'
-])
+]);
 
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
@@ -87,6 +87,22 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 	if (parent_element.name.toLowerCase() === 'foreignobject') return null;
 
 	return parent_element.namespace;
+}
+
+function should_have_attribute(
+	node,
+	attributes: string[],
+	name = node.name
+) {
+	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
+	const sequence = attributes.length > 1 ?
+		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
+		attributes[0];
+
+	node.component.warn(node, {
+		code: `a11y-missing-attribute`,
+		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
+	});
 }
 
 export default class Element extends Node {
@@ -134,7 +150,7 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'option') {
-			// Special case — treat these the same way:
+			// Special case â treat these the same way:
 			//   <option>{foo}</option>
 			//   <option value={foo}>{foo}</option>
 			const value_attribute = info.attributes.find(attribute => attribute.name === 'value');
@@ -180,10 +196,12 @@ export default class Element extends Node {
 					break;
 
 				case 'Transition':
+				{
 					const transition = new Transition(component, this, scope, node);
 					if (node.intro) this.intro = transition;
 					if (node.outro) this.outro = transition;
 					break;
+				}
 
 				case 'Animation':
 					this.animation = new Animation(component, this, scope, node);
@@ -529,7 +547,7 @@ export default class Element extends Node {
 
 				if (type !== 'checkbox') {
 					let message = `'${name}' binding can only be used with <input type="checkbox">`;
-					if (type === 'radio') message += ` — for <input type="radio">, use 'group' binding`;
+					if (type === 'radio') message += ` â for <input type="radio">, use 'group' binding`;
 					component.error(binding, { code: `invalid-binding`, message });
 				}
 			} else if (name === 'group') {
@@ -687,7 +705,7 @@ export default class Element extends Node {
 			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
 				(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
 			} else {
-				(<Node[]>class_attribute.chunks).push(
+				(class_attribute.chunks as Node[]).push(
 					new Text(this.component, this, this.scope, {
 						type: 'Text',
 						data: ` ${class_name}`
@@ -704,20 +722,4 @@ export default class Element extends Node {
 			);
 		}
 	}
-}
-
-function should_have_attribute(
-	node,
-	attributes: string[],
-	name = node.name
-) {
-	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
-	const sequence = attributes.length > 1 ?
-		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
-		attributes[0];
-
-	node.component.warn(node, {
-		code: `a11y-missing-attribute`,
-		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
-	});
 }

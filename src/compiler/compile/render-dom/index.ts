@@ -79,8 +79,8 @@ export default function dom(
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
-				`if ('${prop.export_name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = $$props.${prop.export_name}`)};`
-				)}
+		`if ('${prop.export_name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = $$props.${prop.export_name}`)};`
+	)}
 				${component.slots.size > 0 &&
 				`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
 			}
@@ -152,12 +152,12 @@ export default function dom(
 	// instrument assignments
 	if (component.ast.instance) {
 		let scope = component.instance_scope;
-		let map = component.instance_scope_map;
+		const map = component.instance_scope_map;
 
 		let pending_assignments = new Set();
 
 		walk(component.ast.instance.content, {
-			enter: (node, parent) => {
+			enter: (node) => {
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
@@ -369,7 +369,7 @@ export default function dom(
 					})
 					.map(n => `$$dirty.${n}`).join(' || ');
 
-				let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
+				let snippet = `[â${d.node.body.start}-${d.node.end}â]`;
 				if (condition) snippet = `if (${condition}) { ${snippet} }`;
 
 				if (condition || uses_props) {
@@ -390,7 +390,7 @@ export default function dom(
 
 			const store = component.var_lookup.get(name);
 			if (store && store.reassigned) {
-				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = ${name}.subscribe($$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`
+				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = ${name}.subscribe($$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`;
 			}
 
 			return $name;

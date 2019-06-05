@@ -13,13 +13,13 @@ export default class DebugTagWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: DebugTag,
-		strip_whitespace: boolean,
-		next_sibling: Wrapper
+		_strip_whitespace: boolean,
+		_next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, _parent_node: string, _parent_nodes: string) {
 		const { renderer } = this;
 		const { component } = renderer;
 
@@ -32,7 +32,7 @@ export default class DebugTagWrapper extends Wrapper {
 			code.overwrite(this.node.start + 1, this.node.start + 7, 'debugger', {
 				storeName: true
 			});
-			const statement = `[✂${this.node.start + 1}-${this.node.start + 7}✂];`;
+			const statement = `[â${this.node.start + 1}-${this.node.start + 7}â];`;
 
 			block.builders.create.add_line(statement);
 			block.builders.update.add_line(statement);
@@ -41,7 +41,7 @@ export default class DebugTagWrapper extends Wrapper {
 			code.overwrite(this.node.start + 1, this.node.start + 7, 'log', {
 				storeName: true
 			});
-			const log = `[✂${this.node.start + 1}-${this.node.start + 7}✂]`;
+			const log = `[â${this.node.start + 1}-${this.node.start + 7}â]`;
 
 			const dependencies = new Set();
 			this.node.expressions.forEach(expression => {

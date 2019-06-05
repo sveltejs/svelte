@@ -213,8 +213,8 @@ export default class IfBlockWrapper extends Wrapper {
 		block.builders.init.add_block(deindent`
 			function ${select_block_type}(ctx) {
 				${this.branches
-					.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block.name};`)
-					.join('\n')}
+		.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block.name};`)
+		.join('\n')}
 			}
 		`);
 
@@ -292,8 +292,8 @@ export default class IfBlockWrapper extends Wrapper {
 
 			function ${select_block_type}(ctx) {
 				${this.branches
-					.map(({ condition }, i) => `${condition ? `if (${condition}) ` : ''}return ${i};`)
-					.join('\n')}
+		.map(({ condition }, i) => `${condition ? `if (${condition}) ` : ''}return ${i};`)
+		.join('\n')}
 				${!has_else && `return -1;`}
 			}
 		`);

@@ -20,6 +20,44 @@ function hash(str: string): string {
 	return (hash >>> 0).toString(36);
 }
 
+class Declaration {
+	node: Node;
+
+	constructor(node: Node) {
+		this.node = node;
+	}
+
+	transform(code: MagicString, keyframes: Map<string, string>) {
+		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
+		if (property === 'animation' || property === 'animation-name') {
+			this.node.value.children.forEach((block: Node) => {
+				if (block.type === 'Identifier') {
+					const name = block.name;
+					if (keyframes.has(name)) {
+						code.overwrite(block.start, block.end, keyframes.get(name));
+					}
+				}
+			});
+		}
+	}
+
+	minify(code: MagicString) {
+		if (!this.node.property) return; // @apply, and possibly other weird cases?
+
+		const c = this.node.start + this.node.property.length;
+		const first = this.node.value.children
+			? this.node.value.children[0]
+			: this.node.value;
+
+		let start = first.start;
+		while (/\s/.test(code.original[start])) start += 1;
+
+		if (start - c > 1) {
+			code.overwrite(c, start, ':');
+		}
+	}
+}
+
 class Rule {
 	selectors: Selector[];
 	declarations: Declaration[];
@@ -43,11 +81,11 @@ class Rule {
 		return this.selectors.some(s => s.used);
 	}
 
-	minify(code: MagicString, dev: boolean) {
+	minify(code: MagicString, _dev: boolean) {
 		let c = this.node.start;
 		let started = false;
 
-		this.selectors.forEach((selector, i) => {
+		this.selectors.forEach((selector) => {
 			if (selector.used) {
 				const separator = started ? ',' : '';
 				if ((selector.node.start - c) > separator.length) {
@@ -100,47 +138,9 @@ class Rule {
 	}
 }
 
-class Declaration {
-	node: Node;
-
-	constructor(node: Node) {
-		this.node = node;
-	}
-
-	transform(code: MagicString, keyframes: Map<string, string>) {
-		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
-		if (property === 'animation' || property === 'animation-name') {
-			this.node.value.children.forEach((block: Node) => {
-				if (block.type === 'Identifier') {
-					const name = block.name;
-					if (keyframes.has(name)) {
-						code.overwrite(block.start, block.end, keyframes.get(name));
-					}
-				}
-			});
-		}
-	}
-
-	minify(code: MagicString) {
-		if (!this.node.property) return; // @apply, and possibly other weird cases?
-
-		const c = this.node.start + this.node.property.length;
-		const first = this.node.value.children
-			? this.node.value.children[0]
-			: this.node.value;
-
-		let start = first.start;
-		while (/\s/.test(code.original[start])) start += 1;
-
-		if (start - c > 1) {
-			code.overwrite(c, start, ':');
-		}
-	}
-}
-
 class Atrule {
 	node: Node;
-	children: (Atrule|Rule)[];
+	children: Array<Atrule|Rule>;
 
 	constructor(node: Node) {
 		this.node = node;
@@ -163,7 +163,7 @@ class Atrule {
 		}
 	}
 
-	is_used(dev: boolean) {
+	is_used(_dev: boolean) {
 		return true; // TODO
 	}
 
@@ -253,7 +253,7 @@ export default class Stylesheet {
 	has_styles: boolean;
 	id: string;
 
-	children: (Rule|Atrule)[] = [];
+	children: Array<Rule|Atrule> = [];
 	keyframes: Map<string, string> = new Map();
 
 	nodes_with_css_class: Set<Node> = new Set();
@@ -269,7 +269,7 @@ export default class Stylesheet {
 
 			this.has_styles = true;
 
-			const stack: (Rule | Atrule)[] = [];
+			const stack: Array<Rule | Atrule> = [];
 			let current_atrule: Atrule = null;
 
 			walk(ast.css, {
@@ -280,7 +280,7 @@ export default class Stylesheet {
 						const atrule = new Atrule(node);
 						stack.push(atrule);
 
-						// this is an awkward special case — @apply (and
+						// this is an awkward special case â @apply (and
 						// possibly other future constructs)
 						if (last && !(last instanceof Atrule)) return;
 

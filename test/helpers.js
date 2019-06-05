@@ -187,6 +187,12 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 	});
 }
 
+function getTrailingIndentation(str) {
+	let i = str.length;
+	while (str[i - 1] === ' ' || str[i - 1] === '\t') i -= 1;
+	return str.slice(i, str.length);
+}
+
 const start = /\n(\t+)/;
 export function deindent(strings, ...values) {
 	const indentation = start.exec(strings[0])[1];
@@ -220,12 +226,6 @@ export function deindent(strings, ...values) {
 	}
 
 	return result.trim().replace(/\t+$/gm, '');
-}
-
-function getTrailingIndentation(str) {
-	let i = str.length;
-	while (str[i - 1] === ' ' || str[i - 1] === '\t') i -= 1;
-	return str.slice(i, str.length);
 }
 
 export function spaces(i) {

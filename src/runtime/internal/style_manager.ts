@@ -44,6 +44,15 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	return name;
 }
 
+export function clear_rules() {
+	raf(() => {
+		if (active) return;
+		let i = stylesheet.cssRules.length;
+		while (i--) stylesheet.deleteRule(i);
+		current_rules = {};
+	});
+}
+
 export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string) {
 	node.style.animation = (node.style.animation || '')
 		.split(', ')
@@ -54,13 +63,4 @@ export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string
 		.join(', ');
 
 	if (name && !--active) clear_rules();
-}
-
-export function clear_rules() {
-	raf(() => {
-		if (active) return;
-		let i = stylesheet.cssRules.length;
-		while (i--) stylesheet.deleteRule(i);
-		current_rules = {};
-	});
 }

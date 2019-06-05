@@ -17,7 +17,7 @@ import TemplateScope from '../../../nodes/shared/TemplateScope';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: string;
-	slots: Map<string, { block: Block, scope: TemplateScope, fn?: string }> = new Map();
+	slots: Map<string, { block: Block; scope: TemplateScope; fn?: string }> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 
@@ -62,8 +62,8 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		this.var = (
 			this.node.name === 'svelte:self' ? renderer.component.name :
-			this.node.name === 'svelte:component' ? 'switch_instance' :
-			sanitize(this.node.name)
+				this.node.name === 'svelte:component' ? 'switch_instance' :
+					sanitize(this.node.name)
 		).toLowerCase();
 
 		if (this.node.children.length) {
@@ -234,12 +234,12 @@ export default class InlineComponentWrapper extends Wrapper {
 						if (attribute.dependencies.size > 0) {
 							updates.push(deindent`
 								if (${[...attribute.dependencies]
-									.map(dependency => `changed.${dependency}`)
-									.join(' || ')}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
+		.map(dependency => `changed.${dependency}`)
+		.join(' || ')}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
 							`);
 						}
 					});
-				}
+			}
 		}
 
 		if (non_let_dependencies.length > 0) {
@@ -262,10 +262,10 @@ export default class InlineComponentWrapper extends Wrapper {
 				let object;
 
 				if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
-					// bind:x={y} — we can't just do `y = x`, we need to
+					// bind:x={y} â we can't just do `y = x`, we need to
 					// to `array[index] = x;
 					const { name } = binding.expression.node;
-					const { object, property, snippet } = block.bindings.get(name);
+					const { snippet } = block.bindings.get(name);
 					lhs = snippet;
 
 					// TODO we need to invalidate... something
@@ -316,7 +316,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			let lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 
 			if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
-				// bind:x={y} — we can't just do `y = x`, we need to
+				// bind:x={y} â we can't just do `y = x`, we need to
 				// to `array[index] = x;
 				const { name } = binding.expression.node;
 				const { object, property, snippet } = block.bindings.get(name);

@@ -2,7 +2,6 @@ import Renderer from '../../Renderer';
 import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
-import Node from '../../../nodes/shared/Node';
 import { is_void, quote_prop_if_necessary, quote_name_if_necessary, sanitize } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
 import { stringify, escape_html, escape } from '../../../utils/stringify';
@@ -24,19 +23,19 @@ import { get_context_merger } from '../shared/get_context_merger';
 const events = [
 	{
 		event_names: ['input'],
-		filter: (node: Element, name: string) =>
+		filter: (node: Element, _name: string) =>
 			node.name === 'textarea' ||
 			node.name === 'input' && !/radio|checkbox|range/.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['change'],
-		filter: (node: Element, name: string) =>
+		filter: (node: Element, _name: string) =>
 			node.name === 'select' ||
 			node.name === 'input' && /radio|checkbox/.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['change', 'input'],
-		filter: (node: Element, name: string) =>
+		filter: (node: Element, _name: string) =>
 			node.name === 'input' && node.get_static_attribute_value('type') === 'range'
 	},
 
@@ -93,7 +92,7 @@ const events = [
 	// details event
 	{
 		event_names: ['toggle'],
-		filter: (node: Element, name: string) =>
+		filter: (node: Element, _name: string) =>
 			node.name === 'details'
 	},
 ];
@@ -119,7 +118,7 @@ export default class ElementWrapper extends Wrapper {
 		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
-		this.var = node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+		this.var = node.name.replace(/[^a-zA-Z0-9_$]/g, '_');
 
 		this.class_dependencies = [];
 
@@ -230,6 +229,36 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	render(block: Block, parent_node: string, parent_nodes: string) {
+		function to_html(wrapper: ElementWrapper | TextWrapper) {
+			if (wrapper.node.type === 'Text') {
+				const parent = wrapper.node.parent as Element;
+
+				const raw = parent && (
+					parent.name === 'script' ||
+					parent.name === 'style'
+				);
+
+				return raw
+					? wrapper.node.data
+					: escape_html(wrapper.node.data)
+						.replace(/\\/g, '\\\\')
+						.replace(/`/g, '\\`')
+						.replace(/\$/g, '\\$');
+			}
+
+			if (wrapper.node.name === 'noscript') return '';
+
+			let open = `<${wrapper.node.name}`;
+
+			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
+				open += ` ${fix_attribute_casing(attr.node.name)}${attr.stringify()}`;
+			});
+
+			if (is_void(wrapper.node.name)) return open + '>';
+
+			return `${open}>${(wrapper as ElementWrapper).fragment.nodes.map(to_html).join('')}</${wrapper.node.name}>`;
+		}
+
 		const { renderer } = this;
 
 		if (this.node.name === 'noscript') return;
@@ -239,7 +268,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		const node = this.var;
-		const nodes = parent_nodes && block.get_unique_name(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
+		const nodes = parent_nodes && block.get_unique_name(`${this.var}_nodes`); // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
 
 		block.add_variable(node);
 		const render_statement = this.get_render_statement();
@@ -328,36 +357,6 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 
-		function to_html(wrapper: ElementWrapper | TextWrapper) {
-			if (wrapper.node.type === 'Text') {
-				const parent = wrapper.node.parent as Element;
-
-				const raw = parent && (
-					parent.name === 'script' ||
-					parent.name === 'style'
-				);
-
-				return raw
-					? wrapper.node.data
-					: escape_html(wrapper.node.data)
-						.replace(/\\/g, '\\\\')
-						.replace(/`/g, '\\`')
-						.replace(/\$/g, '\\$');
-			}
-
-			if (wrapper.node.name === 'noscript') return '';
-
-			let open = `<${wrapper.node.name}`;
-
-			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
-				open += ` ${fix_attribute_casing(attr.node.name)}${attr.stringify()}`
-			});
-
-			if (is_void(wrapper.node.name)) return open + '>';
-
-			return `${open}>${(wrapper as ElementWrapper).fragment.nodes.map(to_html).join('')}</${wrapper.node.name}>`;
-		}
-
 		if (renderer.options.dev) {
 			const loc = renderer.locate(this.node.start);
 			block.builders.hydrate.add_line(
@@ -441,7 +440,7 @@ export default class ElementWrapper extends Wrapper {
 				binding.render(block, lock);
 			});
 
-			// media bindings — awkward special case. The native timeupdate events
+			// media bindings Ã¢ÂÂ awkward special case. The native timeupdate events
 			// fire too infrequently, so we need to take matters into our
 			// own hands
 			let animation_frame;
@@ -454,7 +453,7 @@ export default class ElementWrapper extends Wrapper {
 
 			let callee;
 
-			// TODO dry this out — similar code for event handlers and component bindings
+			// TODO dry this out Ã¢ÂÂ similar code for event handlers and component bindings
 			if (has_local_function) {
 				// need to create a block-local function that calls an instance-level function
 				block.builders.init.add_block(deindent`
@@ -796,7 +795,8 @@ export default class ElementWrapper extends Wrapper {
 	add_classes(block: Block) {
 		this.node.classes.forEach(class_directive => {
 			const { expression, name } = class_directive;
-			let snippet, dependencies;
+			let snippet;
+			let dependencies;
 			if (expression) {
 				snippet = expression.render(block);
 				dependencies = expression.dependencies;

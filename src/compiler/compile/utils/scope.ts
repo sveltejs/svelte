@@ -3,6 +3,85 @@ import is_reference from 'is-reference';
 import { Node } from '../../interfaces';
 import { Node as ESTreeNode } from 'estree';
 
+const extractors = {
+	Identifier(nodes: Node[], param: Node) {
+		nodes.push(param);
+	},
+
+	ObjectPattern(nodes: Node[], param: Node) {
+		param.properties.forEach((prop: Node) => {
+			if (prop.type === 'RestElement') {
+				nodes.push(prop.argument);
+			} else {
+				extractors[prop.value.type](nodes, prop.value);
+			}
+		});
+	},
+
+	ArrayPattern(nodes: Node[], param: Node) {
+		param.elements.forEach((element: Node) => {
+			if (element) extractors[element.type](nodes, element);
+		});
+	},
+
+	RestElement(nodes: Node[], param: Node) {
+		extractors[param.argument.type](nodes, param.argument);
+	},
+
+	AssignmentPattern(nodes: Node[], param: Node) {
+		extractors[param.left.type](nodes, param.left);
+	}
+};
+
+export function extract_identifiers(param: Node) {
+	const nodes: Node[] = [];
+	extractors[param.type] && extractors[param.type](nodes, param);
+	return nodes;
+}
+
+export function extract_names(param: Node) {
+	return extract_identifiers(param).map(node => node.name);
+}
+
+export class Scope {
+	parent: Scope;
+	block: boolean;
+
+	declarations: Map<string, Node> = new Map();
+	initialised_declarations: Set<string> = new Set();
+
+	constructor(parent: Scope, block: boolean) {
+		this.parent = parent;
+		this.block = block;
+	}
+
+	add_declaration(node: Node) {
+		if (node.kind === 'var' && this.block && this.parent) {
+			this.parent.add_declaration(node);
+		} else if (node.type === 'VariableDeclaration') {
+			node.declarations.forEach((declarator: Node) => {
+				extract_names(declarator.id).forEach(name => {
+					this.declarations.set(name, node);
+					if (declarator.init) this.initialised_declarations.add(name);
+				});
+			});
+		} else {
+			this.declarations.set(node.id.name, node);
+		}
+	}
+
+	find_owner(name: string): Scope {
+		if (this.declarations.has(name)) return this;
+		return this.parent && this.parent.find_owner(name);
+	}
+
+	has(name: string): boolean {
+		return (
+			this.declarations.has(name) || (this.parent && this.parent.has(name))
+		);
+	}
+}
+
 export function create_scopes(expression: Node) {
 	const map = new WeakMap();
 
@@ -59,82 +138,3 @@ export function create_scopes(expression: Node) {
 
 	return { map, scope, globals };
 }
-
-export class Scope {
-	parent: Scope;
-	block: boolean;
-
-	declarations: Map<string, Node> = new Map();
-	initialised_declarations: Set<string> = new Set();
-
-	constructor(parent: Scope, block: boolean) {
-		this.parent = parent;
-		this.block = block;
-	}
-
-	add_declaration(node: Node) {
-		if (node.kind === 'var' && this.block && this.parent) {
-			this.parent.add_declaration(node);
-		} else if (node.type === 'VariableDeclaration') {
-			node.declarations.forEach((declarator: Node) => {
-				extract_names(declarator.id).forEach(name => {
-					this.declarations.set(name, node);
-					if (declarator.init) this.initialised_declarations.add(name);
-				});
-			});
-		} else {
-			this.declarations.set(node.id.name, node);
-		}
-	}
-
-	find_owner(name: string): Scope {
-		if (this.declarations.has(name)) return this;
-		return this.parent && this.parent.find_owner(name);
-	}
-
-	has(name: string): boolean {
-		return (
-			this.declarations.has(name) || (this.parent && this.parent.has(name))
-		);
-	}
-}
-
-export function extract_names(param: Node) {
-	return extract_identifiers(param).map(node => node.name);
-}
-
-export function extract_identifiers(param: Node) {
-	const nodes: Node[] = [];
-	extractors[param.type] && extractors[param.type](nodes, param);
-	return nodes;
-}
-
-const extractors = {
-	Identifier(nodes: Node[], param: Node) {
-		nodes.push(param);
-	},
-
-	ObjectPattern(nodes: Node[], param: Node) {
-		param.properties.forEach((prop: Node) => {
-			if (prop.type === 'RestElement') {
-				nodes.push(prop.argument);
-			} else {
-				extractors[prop.value.type](nodes, prop.value);
-			}
-		});
-	},
-
-	ArrayPattern(nodes: Node[], param: Node) {
-		param.elements.forEach((element: Node) => {
-			if (element) extractors[element.type](nodes, element);
-		});
-	},
-
-	RestElement(nodes: Node[], param: Node) {
-		extractors[param.argument.type](nodes, param.argument);
-	},
-
-	AssignmentPattern(nodes: Node[], param: Node) {
-		extractors[param.left.type](nodes, param.left);
-	}
-};

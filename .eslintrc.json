@@ -2,12 +2,12 @@
   "root": true,
   "rules": {
     "indent": "off",
+    "no-unused-vars": "off",
     "semi": [2, "always"],
     "keyword-spacing": [2, { "before": true, "after": true }],
     "space-before-blocks": [2, "always"],
     "no-mixed-spaces-and-tabs": [2, "smart-tabs"],
     "no-cond-assign": 0,
-    "no-unused-vars": 2,
     "object-shorthand": [2, "always"],
     "no-const-assign": 2,
     "no-class-assign": 2,
@@ -22,10 +22,17 @@
     "arrow-spacing": 2,
     "no-inner-declarations": 0,
     "@typescript-eslint/indent": [2, "tab", { "SwitchCase": 1 }],
-    "@typescript-eslint/explicit-function-return-type": ["error", {
-      "allowExpressions": true
+    "@typescript-eslint/camelcase": "off",
+    "@typescript-eslint/array-type": ["error", "array-simple"],
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/explicit-member-accessibility": "off",
+    "@typescript-eslint/no-unused-vars": ["error", {
+      "argsIgnorePattern": "^_"
     }],
-    "@typescript-eslint/camelcase": "off"
+    "@typescript-eslint/no-object-literal-type-assertion": ["error", {
+      "allowAsParameter": true
+    }]
   },
   "env": {
     "es6": true,
@@ -45,6 +52,20 @@
     "sourceType": "module"
   },
   "settings": {
-    "import/core-modules": ["svelte"]
-  }
+    "import/core-modules": [
+      "svelte",
+      "svelte/internal",
+      "svelte/store",
+      "svelte/easing",
+      "estree"
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["*.js"],
+      "rules": {
+        "@typescript-eslint/no-var-requires": "off"
+      }
+    }
+  ]
 }

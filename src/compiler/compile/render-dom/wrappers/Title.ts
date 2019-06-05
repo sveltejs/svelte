@@ -14,13 +14,13 @@ export default class TitleWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: Title,
-		strip_whitespace: boolean,
-		next_sibling: Wrapper
+		_strip_whitespace: boolean,
+		_next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, _parent_node: string, _parent_nodes: string) {
 		const is_dynamic = !!this.node.children.find(node => node.type !== 'Text');
 
 		if (is_dynamic) {
@@ -28,16 +28,16 @@ export default class TitleWrapper extends Wrapper {
 
 			const all_dependencies = new Set();
 
-			// TODO some of this code is repeated in Tag.ts — would be good to
+			// TODO some of this code is repeated in Tag.ts â would be good to
 			// DRY it out if that's possible without introducing crazy indirection
 			if (this.node.children.length === 1) {
-				// single {tag} — may be a non-string
+				// single {tag} â may be a non-string
 				// @ts-ignore todo: check this
 				const { expression } = this.node.children[0];
 				value = expression.render(block);
 				add_to_set(all_dependencies, expression.dependencies);
 			} else {
-				// '{foo} {bar}' — treat as string concatenation
+				// '{foo} {bar}' â treat as string concatenation
 				value =
 					(this.node.children[0].type === 'Text' ? '' : `"" + `) +
 					this.node.children
@@ -65,13 +65,12 @@ export default class TitleWrapper extends Wrapper {
 
 			if (this.node.should_cache) block.add_variable(last);
 
-			let updater;
 			const init = this.node.should_cache ? `${last} = ${value}` : value;
 
 			block.builders.init.add_line(
 				`document.title = ${init};`
 			);
-			updater = `document.title = ${this.node.should_cache ? last : value};`;
+			const updater = `document.title = ${this.node.should_cache ? last : value};`;
 
 			if (all_dependencies.size) {
 				const dependencies = Array.from(all_dependencies);

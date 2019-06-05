@@ -1,6 +1,5 @@
 import Renderer from '../Renderer';
 import Block from '../Block';
-import Node from '../../nodes/shared/Node';
 import Wrapper from './shared/Wrapper';
 import deindent from '../../utils/deindent';
 import add_event_handlers from './shared/add_event_handlers';
@@ -38,7 +37,7 @@ export default class WindowWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, _parent_node: string, _parent_nodes: string) {
 		const { renderer } = this;
 		const { component } = renderer;
 
@@ -88,7 +87,7 @@ export default class WindowWrapper extends Wrapper {
 					bindings.scrollY && `"${bindings.scrollY}" in this._state`
 				].filter(Boolean).join(' || ');
 
- 				const x = bindings.scrollX && `this._state.${bindings.scrollX}`;
+				const x = bindings.scrollX && `this._state.${bindings.scrollX}`;
 				const y = bindings.scrollY && `this._state.${bindings.scrollY}`;
 
 				renderer.meta_bindings.add_block(deindent`
@@ -142,17 +141,17 @@ export default class WindowWrapper extends Wrapper {
 		if (bindings.scrollX || bindings.scrollY) {
 			block.builders.update.add_block(deindent`
 				if (${
-					[bindings.scrollX, bindings.scrollY].filter(Boolean).map(
-						b => `changed.${b}`
-					).join(' || ')
-				} && !${scrolling}) {
+	[bindings.scrollX, bindings.scrollY].filter(Boolean).map(
+		b => `changed.${b}`
+	).join(' || ')
+} && !${scrolling}) {
 					${scrolling} = true;
 					clearTimeout(${scrolling_timeout});
 					window.scrollTo(${
-						bindings.scrollX ? `ctx.${bindings.scrollX}` : `window.pageXOffset`
-					}, ${
-						bindings.scrollY ? `ctx.${bindings.scrollY}` : `window.pageYOffset`
-					});
+	bindings.scrollX ? `ctx.${bindings.scrollX}` : `window.pageXOffset`
+}, ${
+	bindings.scrollY ? `ctx.${bindings.scrollY}` : `window.pageYOffset`
+});
 					${scrolling_timeout} = setTimeout(${clear_scrolling}, 100);
 				}
 			`);

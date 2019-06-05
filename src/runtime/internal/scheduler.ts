@@ -10,28 +10,19 @@ const binding_callbacks = [];
 const render_callbacks = [];
 const flush_callbacks = [];
 
-export function schedule_update() {
-	if (!update_scheduled) {
-		update_scheduled = true;
-		resolved_promise.then(flush);
-	}
-}
-
-export function tick() {
-	schedule_update();
-	return resolved_promise;
-}
-
-export function add_binding_callback(fn) {
-	binding_callbacks.push(fn);
-}
-
 export function add_render_callback(fn) {
 	render_callbacks.push(fn);
 }
 
-export function add_flush_callback(fn) {
-	flush_callbacks.push(fn);
+function update($$) {
+	if ($$.fragment) {
+		$$.update($$.dirty);
+		run_all($$.before_render);
+		$$.fragment.p($$.dirty, $$.ctx);
+		$$.dirty = null;
+
+		$$.after_render.forEach(add_render_callback);
+	}
 }
 
 export function flush() {
@@ -69,13 +60,22 @@ export function flush() {
 	update_scheduled = false;
 }
 
-function update($$) {
-	if ($$.fragment) {
-		$$.update($$.dirty);
-		run_all($$.before_render);
-		$$.fragment.p($$.dirty, $$.ctx);
-		$$.dirty = null;
-
-		$$.after_render.forEach(add_render_callback);
+export function schedule_update() {
+	if (!update_scheduled) {
+		update_scheduled = true;
+		resolved_promise.then(flush);
 	}
+}
+
+export function tick() {
+	schedule_update();
+	return resolved_promise;
+}
+
+export function add_binding_callback(fn) {
+	binding_callbacks.push(fn);
+}
+
+export function add_flush_callback(fn) {
+	flush_callbacks.push(fn);
 }

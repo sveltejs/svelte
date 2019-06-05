@@ -33,32 +33,32 @@ import Window from './Window';
 // note: to write less types each of types in union below should have type defined as literal
 // https://www.typescriptlang.org/docs/handbook/advanced-types.html#discriminated-unions
 export type INode = Action
- | Animation
- | Attribute
- | AwaitBlock
- | Binding
- | Body
- | CatchBlock
- | Class
- | Comment
- | DebugTag
- | EachBlock
- | Element
- | ElseBlock
- | EventHandler
- | Fragment
- | Head
- | IfBlock
- | InlineComponent
- | Let
- | MustacheTag
- | Options
- | PendingBlock
- | RawMustacheTag
- | Slot
- | Tag
- | Text
- | ThenBlock
- | Title
- | Transition
- | Window;
+| Animation
+| Attribute
+| AwaitBlock
+| Binding
+| Body
+| CatchBlock
+| Class
+| Comment
+| DebugTag
+| EachBlock
+| Element
+| ElseBlock
+| EventHandler
+| Fragment
+| Head
+| IfBlock
+| InlineComponent
+| Let
+| MustacheTag
+| Options
+| PendingBlock
+| RawMustacheTag
+| Slot
+| Tag
+| Text
+| ThenBlock
+| Title
+| Transition
+| Window;

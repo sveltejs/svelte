@@ -4,10 +4,10 @@ import is_reference from 'is-reference';
 import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
-import { globals } from '../../../utils/names';
+import { globals , sanitize } from '../../../utils/names';
 import deindent from '../../utils/deindent';
 import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
-import { sanitize } from '../../../utils/names';
+
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import { nodes_match } from '../../../utils/nodes_match';
@@ -28,8 +28,8 @@ const binary_operators: Record<string, number> = {
 	'<=': 11,
 	'>': 11,
 	'>=': 11,
-	'in': 11,
-	'instanceof': 11,
+	in: 11,
+	instanceof: 11,
 	'==': 10,
 	'!=': 10,
 	'===': 10,
@@ -63,6 +63,33 @@ const precedence: Record<string, (node?: Node) => number> = {
 };
 
 type Owner = Wrapper | INode;
+
+function get_function_name(node, parent) {
+	if (parent.type === 'EventHandler') {
+		return `${parent.name}_handler`;
+	}
+
+	if (parent.type === 'Action') {
+		return `${parent.name}_function`;
+	}
+
+	return 'func';
+}
+
+function is_contextual(component: Component, scope: TemplateScope, name: string) {
+	if (name === '$$props') return true;
+
+	// if it's a name below root scope, it's contextual
+	if (!scope.is_top_level(name)) return true;
+
+	const variable = component.var_lookup.get(name);
+
+	// hoistables, module declarations, and imports are non-contextual
+	if (!variable || variable.hoistable) return false;
+
+	// assume contextual
+	return true;
+}
 
 export default class Expression {
 	type: 'Expression' = 'Expression';
@@ -347,7 +374,7 @@ export default class Expression {
 							throw new Error(`Well that's odd`);
 						}
 
-						// TOOD optimisation — if this is an event handler,
+						// TOOD optimisation â if this is an event handler,
 						// the return value doesn't matter
 					}
 
@@ -486,33 +513,6 @@ export default class Expression {
 			});
 		}
 
-		return this.rendered = `[✂${this.node.start}-${this.node.end}✂]`;
+		return this.rendered = `[â${this.node.start}-${this.node.end}â]`;
 	}
-}
-
-function get_function_name(node, parent) {
-	if (parent.type === 'EventHandler') {
-		return `${parent.name}_handler`;
-	}
-
-	if (parent.type === 'Action') {
-		return `${parent.name}_function`;
-	}
-
-	return 'func';
-}
-
-function is_contextual(component: Component, scope: TemplateScope, name: string) {
-	if (name === '$$props') return true;
-
-	// if it's a name below root scope, it's contextual
-	if (!scope.is_top_level(name)) return true;
-
-	const variable = component.var_lookup.get(name);
-
-	// hoistables, module declarations, and imports are non-contextual
-	if (!variable || variable.hoistable) return false;
-
-	// assume contextual
-	return true;
 }

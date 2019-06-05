@@ -44,8 +44,8 @@ export default class Window extends Node {
 				if (!~valid_bindings.indexOf(node.name)) {
 					const match = (
 						node.name === 'width' ? 'innerWidth' :
-						node.name === 'height' ? 'innerHeight' :
-						fuzzymatch(node.name, valid_bindings)
+							node.name === 'height' ? 'innerHeight' :
+								fuzzymatch(node.name, valid_bindings)
 					);
 
 					const message = `'${node.name}' is not a valid binding on <svelte:window>`;

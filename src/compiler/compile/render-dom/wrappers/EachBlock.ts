@@ -312,8 +312,8 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.builders.init.add_block(deindent`
 			const ${get_key} = ctx => ${
-			// @ts-ignore todo: probably error
-			this.node.key.render()};
+	// @ts-ignore todo: probably error
+	this.node.key.render()};
 
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
@@ -425,7 +425,7 @@ export default class EachBlockWrapper extends Wrapper {
 			all_dependencies.add(dependency);
 		});
 
-		const outro_block = this.block.has_outros && block.get_unique_name('outro_block')
+		const outro_block = this.block.has_outros && block.get_unique_name('outro_block');
 		if (outro_block) {
 			block.builders.init.add_block(deindent`
 				function ${outro_block}(i, detaching, local) {

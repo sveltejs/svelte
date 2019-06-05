@@ -2,6 +2,12 @@ import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
 
+function describe(transition: Transition) {
+	return transition.directive === 'transition'
+		? `a 'transition'`
+		: `an '${transition.directive}'`;
+}
+
 export default class Transition extends Node {
 	type: 'Transition';
 	name: string;
@@ -37,10 +43,4 @@ export default class Transition extends Node {
 			? new Expression(component, this, scope, info.expression)
 			: null;
 	}
-}
-
-function describe(transition: Transition) {
-	return transition.directive === 'transition'
-		? `a 'transition'`
-		: `an '${transition.directive}'`;
 }

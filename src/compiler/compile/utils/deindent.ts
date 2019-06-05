@@ -1,5 +1,15 @@
 const start = /\n(\t+)/;
 
+function get_current_indentation(str: string) {
+	let a = str.length;
+	while (a > 0 && str[a - 1] !== '\n') a -= 1;
+
+	let b = a;
+	while (b < str.length && /\s/.test(str[b])) b += 1;
+
+	return str.slice(a, b);
+}
+
 export default function deindent(
 	strings: TemplateStringsArray,
 	...values: any[]
@@ -40,14 +50,4 @@ export default function deindent(
 	}
 
 	return result.trim().replace(/\t+$/gm, '').replace(/{\n\n/gm, '{\n');
-}
-
-function get_current_indentation(str: string) {
-	let a = str.length;
-	while (a > 0 && str[a - 1] !== '\n') a -= 1;
-
-	let b = a;
-	while (b < str.length && /\s/.test(str[b])) b += 1;
-
-	return str.slice(a, b);
 }

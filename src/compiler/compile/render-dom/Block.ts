@@ -9,7 +9,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: string;
-	bindings?: Map<string, { object: string, property: string, snippet: string }>;
+	bindings?: Map<string, { object: string; property: string; snippet: string }>;
 	dependencies?: Set<string>;
 }
 
@@ -26,7 +26,7 @@ export default class Block {
 
 	dependencies: Set<string>;
 
-	bindings: Map<string, { object: string, property: string, snippet: string }>;
+	bindings: Map<string, { object: string; property: string; snippet: string }>;
 
 	builders: {
 		init: CodeBuilder;
@@ -372,8 +372,8 @@ export default class Block {
 				${properties}
 			};
 		`.replace(/(#+)(\w*)/g, (match: string, sigil: string, name: string) => {
-			return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;
-		});
+		return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;
+	});
 	}
 
 	render_listeners(chunk: string = '') {
@@ -387,7 +387,7 @@ export default class Block {
 
 				this.builders.destroy.add_line(
 					`#dispose${chunk}();`
-				)
+				);
 			} else {
 				this.builders.hydrate.add_block(deindent`
 					#dispose${chunk} = [

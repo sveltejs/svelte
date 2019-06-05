@@ -49,7 +49,7 @@ describe('store', () => {
 
 			const store = writable(obj);
 
-			store.subscribe(value => {
+			store.subscribe(() => {
 				called += 1;
 			});
 

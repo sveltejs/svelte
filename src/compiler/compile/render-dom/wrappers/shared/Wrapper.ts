@@ -43,7 +43,7 @@ export default class Wrapper {
 	}
 
 	get_or_create_anchor(block: Block, parent_node: string, parent_nodes: string) {
-		// TODO use this in EachBlock and IfBlock — tricky because
+		// TODO use this in EachBlock and IfBlock Ã¢ÂÂ tricky because
 		// children need to be created first
 		const needs_anchor = this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node();
 		const anchor = needs_anchor
@@ -76,7 +76,7 @@ export default class Wrapper {
 		);
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string){
+	render(_block: Block, _parent_node: string, _parent_nodes: string) {
 		throw Error('Wrapper class is not renderable');
 	}
 }

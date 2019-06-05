@@ -44,17 +44,6 @@ export interface Writable<T> extends Readable<T> {
 type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidater<T>];
 
 /**
- * Creates a `Readable` store that allows reading by subscription.
- * @param value initial value
- * @param {StartStopNotifier}start start and stop notifications for subscriptions
- */
-export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
-	return {
-		subscribe: writable(value, start).subscribe,
-	};
-}
-
-/**
  * Create a `Writable` store that allows both updating and reading by subscription.
  * @param {*=}value initial value
  * @param {StartStopNotifier=}start start and stop notifications for subscriptions
@@ -98,6 +87,17 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 	}
 
 	return { set, update, subscribe };
+}
+
+/**
+ * Creates a `Readable` store that allows reading by subscription.
+ * @param value initial value
+ * @param {StartStopNotifier}start start and stop notifications for subscriptions
+ */
+export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
+	return {
+		subscribe: writable(value, start).subscribe,
+	};
 }
 
 /** One or more `Readable`s. */
