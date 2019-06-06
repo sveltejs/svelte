@@ -357,6 +357,7 @@ export default class Block {
 			`);
 		}
 
+		/* eslint-disable @typescript-eslint/indent,indent */
 		return deindent`
 			${this.variables.size > 0 &&
 				`var ${Array.from(this.variables.keys())
@@ -374,6 +375,7 @@ export default class Block {
 		`.replace(/(#+)(\w*)/g, (_match: string, sigil: string, name: string) => {
 			return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;
 		});
+		/* eslint-enable @typescript-eslint/indent,indent */
 	}
 
 	render_listeners(chunk: string = '') {

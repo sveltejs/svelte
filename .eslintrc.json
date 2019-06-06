@@ -21,7 +21,10 @@
     "prefer-const": [2, { "destructuring": "all" }],
     "arrow-spacing": 2,
     "no-inner-declarations": 0,
-    "@typescript-eslint/indent": ["warn", "tab", { "SwitchCase": 1 }],
+    "@typescript-eslint/indent": ["error", "tab", {
+      "SwitchCase": 1,
+      "ignoredNodes": ["TemplateLiteral"]
+    }],
     "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/array-type": ["error", "array-simple"],

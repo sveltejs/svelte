@@ -232,11 +232,13 @@ export default class InlineComponentWrapper extends Wrapper {
 					.filter((attribute: Attribute) => attribute.is_dynamic)
 					.forEach((attribute: Attribute) => {
 						if (attribute.dependencies.size > 0) {
+							/* eslint-disable @typescript-eslint/indent,indent */
 							updates.push(deindent`
 								if (${[...attribute.dependencies]
 									.map(dependency => `changed.${dependency}`)
 									.join(' || ')}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
 							`);
+							/* eslint-enable @typescript-eslint/indent,indent */
 						}
 					});
 			}
@@ -262,7 +264,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				let object;
 
 				if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
-					// bind:x={y} — we can't just do `y = x`, we need to
+					// bind:x={y} Ã¢ÂÂ we can't just do `y = x`, we need to
 					// to `array[index] = x;
 					const { name } = binding.expression.node;
 					const { snippet } = block.bindings.get(name);
@@ -316,7 +318,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			let lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 
 			if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
-				// bind:x={y} — we can't just do `y = x`, we need to
+				// bind:x={y} Ã¢ÂÂ we can't just do `y = x`, we need to
 				// to `array[index] = x;
 				const { name } = binding.expression.node;
 				const { object, property, snippet } = block.bindings.get(name);

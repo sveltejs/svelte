@@ -210,6 +210,7 @@ export default class IfBlockWrapper extends Wrapper {
 		const current_block_type = block.get_unique_name(`current_block_type`);
 		const current_block_type_and = has_else ? '' : `${current_block_type} && `;
 
+		/* eslint-disable @typescript-eslint/indent,indent */
 		block.builders.init.add_block(deindent`
 			function ${select_block_type}(ctx) {
 				${this.branches
@@ -217,6 +218,7 @@ export default class IfBlockWrapper extends Wrapper {
 					.join('\n')}
 			}
 		`);
+		/* eslint-enable @typescript-eslint/indent,indent */
 
 		block.builders.init.add_block(deindent`
 			var ${current_block_type} = ${select_block_type}(ctx);
@@ -283,6 +285,7 @@ export default class IfBlockWrapper extends Wrapper {
 		block.add_variable(current_block_type_index);
 		block.add_variable(name);
 
+		/* eslint-disable @typescript-eslint/indent,indent */
 		block.builders.init.add_block(deindent`
 			var ${if_block_creators} = [
 				${this.branches.map(branch => branch.block.name).join(',\n')}
@@ -297,6 +300,7 @@ export default class IfBlockWrapper extends Wrapper {
 				${!has_else && `return -1;`}
 			}
 		`);
+		/* eslint-enable @typescript-eslint/indent,indent */
 
 		if (has_else) {
 			block.builders.init.add_block(deindent`
@@ -429,7 +433,7 @@ export default class IfBlockWrapper extends Wrapper {
 				}
 			`;
 
-		// no `p()` here — we don't want to update outroing nodes,
+		// no `p()` here Ã¢ÂÂ we don't want to update outroing nodes,
 		// as that will typically result in glitching
 		const exit = branch.block.has_outro_method
 			? deindent`

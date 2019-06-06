@@ -74,6 +74,7 @@ export default function dom(
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
+	/* eslint-disable @typescript-eslint/indent,indent */
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
 		? deindent`
 			${$$props} => {
@@ -86,6 +87,7 @@ export default function dom(
 			}
 		`
 		: null;
+	/* eslint-enable @typescript-eslint/indent,indent */
 
 	const body = [];
 
@@ -369,7 +371,7 @@ export default function dom(
 					})
 					.map(n => `$$dirty.${n}`).join(' || ');
 
-				let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
+				let snippet = `[Ã¢ÂÂ${d.node.body.start}-${d.node.end}Ã¢ÂÂ]`;
 				if (condition) snippet = `if (${condition}) { ${snippet} }`;
 
 				if (condition || uses_props) {
