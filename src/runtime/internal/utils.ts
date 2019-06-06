@@ -1,3 +1,5 @@
+import { requestAnimationFrame } from './globals';
+
 export function noop() {}
 
 export const identity = x => x;

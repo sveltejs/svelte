@@ -1,3 +1,5 @@
+import { document, getComputedStyle, navigator } from './globals';
+
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }

@@ -2,6 +2,7 @@
 import {
 	Error,
 	SvelteComponentDev,
+	console,
 	init,
 	noop,
 	safe_not_equal

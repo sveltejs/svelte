@@ -136,7 +136,7 @@ export default class BindingWrapper {
 			case 'currentTime':
 			case 'playbackRate':
 			case 'volume':
-				update_conditions.push(`!isNaN(${this.snippet})`);
+				update_conditions.push(`!@isNaN(${this.snippet})`);
 				break;
 
 			case 'paused':

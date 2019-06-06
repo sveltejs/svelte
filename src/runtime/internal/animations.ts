@@ -2,7 +2,7 @@ import { identity as linear, noop, now } from './utils';
 import { loop } from './loop';
 import { create_rule, delete_rule } from './style_manager';
 import { AnimationConfig } from '../animate';
-
+import { getComputedStyle } from './globals';
 
 //todo: documentation says it is DOMRect, but in IE it would be ClientRect
 type PositionRect = DOMRect|ClientRect;

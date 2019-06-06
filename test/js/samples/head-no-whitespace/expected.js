@@ -3,6 +3,7 @@ import {
 	SvelteComponent,
 	append,
 	detach,
+	document,
 	element,
 	init,
 	noop,

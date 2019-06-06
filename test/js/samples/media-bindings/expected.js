@@ -2,10 +2,12 @@
 import {
 	SvelteComponent,
 	add_render_callback,
+	cancelAnimationFrame,
 	detach,
 	element,
 	init,
 	insert,
+	isNaN,
 	listen,
 	noop,
 	raf,

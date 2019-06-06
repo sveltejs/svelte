@@ -36,13 +36,15 @@ export default function dom(
 		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
 		css.code, { only_escape_at_symbol: true });
 
+	const add_css = component.get_unique_name('add_css');
+
 	if (styles && component.compile_options.css !== false && !options.customElement) {
 		builder.add_block(deindent`
-			function @add_css() {
+			function ${add_css}() {
 				var style = @element("style");
 				style.id = '${component.stylesheet.id}-style';
 				style.textContent = ${styles};
-				@append(document.head, style);
+				@append(@document.head, style);
 			}
 		`);
 	}
@@ -481,7 +483,7 @@ export default function dom(
 
 		if (component.tag != null) {
 			builder.add_block(deindent`
-				customElements.define("${component.tag}", ${name});
+				@customElements.define("${component.tag}", ${name});
 			`);
 		}
 	} else {
@@ -491,7 +493,7 @@ export default function dom(
 			class ${name} extends @${superclass} {
 				constructor(options) {
 					super(${options.dev && `options`});
-					${should_add_css && `if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
+					${should_add_css && `if (!@document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
 					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}

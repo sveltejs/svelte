@@ -154,7 +154,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const vars = { name, anchor, if_name, has_else, has_transitions };
 
-		const detaching = (parent_node && parent_node !== 'document.head') ? '' : 'detaching';
+		const detaching = (parent_node && parent_node !== '@document.head') ? '' : 'detaching';
 
 		if (this.node.else) {
 			if (has_outros) {
