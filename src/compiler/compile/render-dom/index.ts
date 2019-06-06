@@ -371,7 +371,7 @@ export default function dom(
 					})
 					.map(n => `$$dirty.${n}`).join(' || ');
 
-				let snippet = `[Ã¢ÂÂ${d.node.body.start}-${d.node.end}Ã¢ÂÂ]`;
+				let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
 				if (condition) snippet = `if (${condition}) { ${snippet} }`;
 
 				if (condition || uses_props) {
