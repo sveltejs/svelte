@@ -189,6 +189,34 @@ describe('store', () => {
 			unsubscribe();
 		});
 
+		it('prevents diamond dependency problem', () => {
+			const count = writable(0);
+			const values = [];
+
+			const a = derived(count, $count => {
+				return 'a' + $count;
+			});
+
+			const b = derived(count, $count => {
+				return 'b' + $count;
+			});
+
+			const combined = derived([a, b], ([a, b]) => {
+				return a + b;
+			});
+
+			const unsubscribe = combined.subscribe(v => {
+				values.push(v);
+			});
+
+			assert.deepEqual(values, ['a0b0']);
+
+			count.set(1);
+			assert.deepEqual(values, ['a0b0', 'a1b1']);
+
+			unsubscribe();
+		});
+
 		it('is updated with safe_not_equal logic', () => {
 			const arr = [0];
 
