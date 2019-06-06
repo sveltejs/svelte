@@ -101,27 +101,7 @@ Text can also contain JavaScript expressions:
 ```
 
 
-### HTML expressions
-
-```sv
-{@html expression}
-```
-
----
-
-In a text expression, characters like `<` and `>` are escaped. With HTML expressions, they're not.
-
-> Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
-
-```html
-<div class="blog-post">
-	<h1>{post.title}</h1>
-	{@html post.content}
-</div>
-```
-
-
-### If blocks
+### `{#if ...}`
 
 ```sv
 {#if expression}...{/if}
@@ -158,7 +138,7 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 ```
 
 
-### Each blocks
+### `{#each ...}`
 
 ```sv
 {#each expression as name}...{/each}
@@ -229,7 +209,7 @@ An each block can also have an `{:else}` clause, which is rendered if the list i
 ```
 
 
-### Await blocks
+### `{#await ...}`
 
 ```sv
 {#await expression}...{:then name}...{:catch name}...{/await}
@@ -283,7 +263,77 @@ If you don't care about the pending state, you can also omit the initial block.
 ```
 
 
-### DOM events (on:eventname)
+### `{@html ...}`
+
+```sv
+{@html expression}
+```
+
+---
+
+In a text expression, characters like `<` and `>` are escaped. With HTML expressions, they're not.
+
+> Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
+
+```html
+<div class="blog-post">
+	<h1>{post.title}</h1>
+	{@html post.content}
+</div>
+```
+
+
+### `{@debug ...}`
+
+```sv
+{@debug}
+```
+```sv
+{@debug var1, var2, ..., varN}
+```
+
+---
+
+The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.
+
+It accepts a comma-separated list of variable names (not arbitrary expressions).
+
+```html
+<script>
+	let user = {
+		firstname: 'Ada',
+		lastname: 'Lovelace'
+	};
+</script>
+
+{@debug user}
+
+<h1>Hello {user.firstname}!</h1>
+```
+
+---
+
+`{@debug ...}` accepts a comma-separated list of variable names (not arbitrary expressions).
+
+```html
+<!-- Compiles -->
+{@debug user}
+{@debug user1, user2, user3}
+
+<!-- WON'T compile -->
+{@debug user.firstname}
+{@debug myArray[0]}
+{@debug !isReady}
+{@debug typeof user === 'object'}
+```
+
+The `{@debug}` tag without any arguments will insert a `debugger` statement that gets triggered when *any* state changes, as opposed to the specified variables.
+
+
+
+### Element directives
+
+#### on:*event*
 
 ```sv
 on:eventname={handler}
@@ -370,29 +420,7 @@ It's possible to have multiple event listeners for the same event:
 <button on:click={increment} on:click={track}>Click me!</button>
 ```
 
-### Component events (on:eventname)
-
-```sv
-on:eventname={handler}
-```
-
----
-
-Components can emit events using [createEventDispatcher](docs#createEventDispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
-
-```html
-<SomeComponent on:whatever={handler}/>
-```
-
----
-
-As with DOM events, if the `on:` directive is used without a value, the component will *forward* the event, meaning that a consumer of the component can listen for it.
-
-```html
-<SomeComponent on:whatever/>
-```
-
-### Element bindings (bind:property)
+#### bind:*name*
 
 ```sv
 bind:property={variable}
@@ -436,7 +464,7 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 <input type="range" bind:value={num}>
 ```
 
-#### Binding related elements (bind:group)
+#### `bind:group`
 
 ---
 
@@ -459,6 +487,28 @@ Inputs that work together can use `bind:group`.
 <input type="checkbox" bind:group={fillings} value="Cheese">
 <input type="checkbox" bind:group={fillings} value="Guac (extra)">
 ```
+
+#### `bind:this` (elements)
+
+---
+
+To get a reference to a DOM node, use `bind:this`.
+
+```html
+<script>
+	import { onMount } from 'svelte';
+
+	let canvasElement;
+
+	onMount(() => {
+		const ctx = canvasElement.getContext('2d');
+		drawStuff(ctx);
+	});
+</script>
+
+<canvas bind:this={canvasElement}></canvas>
+```
+
 
 #### Binding `<select>` value
 
@@ -550,63 +600,8 @@ Block-level elements have 4 readonly bindings, measured using a technique simila
 </div>
 ```
 
-#### Binding a DOM node (bind:this)
 
----
-
-To get a reference to a DOM node, use `bind:this`.
-
-```html
-<script>
-	import { onMount } from 'svelte';
-
-	let canvasElement;
-
-	onMount(() => {
-		const ctx = canvasElement.getContext('2d');
-		drawStuff(ctx);
-	});
-</script>
-
-<canvas bind:this={canvasElement}></canvas>
-```
-
-
-### Component bindings (bind:property)
-
-```sv
-bind:property={variable}
-```
-```sv
-bind:this={component_instance}
-```
-
----
-
-You can bind to component props using the same mechanism.
-
-```html
-<Keypad bind:value={pin}/>
-```
-
-#### Binding a component instance (bind:this)
-
----
-
-Components also support `bind:this`, allowing you to interact with component instances programmatically.
-
-> Note that we can't do `{cart.empty}` since `cart` is `undefined` when the button is first rendered and throws an error.
-
-```html
-<ShoppingCart bind:this={cart}/>
-
-<button on:click={() => cart.empty()}>
-	Empty shopping cart
-</button>
-```
-
-
-### Class directive (class:name)
+#### `class:`
 
 ```sv
 class:name={value}
@@ -632,7 +627,7 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 ```
 
 
-### Use directive (use:action)
+#### `use:`
 
 ```sv
 use:action
@@ -697,7 +692,7 @@ An action can have parameters. If the returned value has an `update` method, it 
 ```
 
 
-### Transitions (transition/in/out:name)
+#### `transition:`/`in:`/`out:`
 
 ```sv
 transition:name
@@ -777,7 +772,7 @@ The `in:` and `out:` directives are not bidirectional. An in transition will con
 
 > By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](docs#Client-side_component_API).
 
-#### Transition parameters
+##### Transition parameters
 
 ---
 
@@ -793,7 +788,7 @@ Like actions, transitions can have parameters.
 {/if}
 ```
 
-#### Custom transition functions
+##### Custom transition functions
 
 ---
 
@@ -869,7 +864,7 @@ A custom transition function can also return a `tick` function, which is called 
 If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](tutorial/deferred-transitions) possible.
 
 
-#### Transition events
+##### Transition events
 
 ---
 
@@ -913,7 +908,7 @@ Local transitions only play when the block they belong to is created or destroye
 ```
 
 
-### Animations (animate:name)
+#### `animate:`
 
 ```sv
 animate:name
@@ -959,7 +954,7 @@ Animations can be used with Svelte's [built-in animation functions](docs#svelte_
 {/each}
 ```
 
-#### Animation Parameters
+##### Animation Parameters
 
 ---
 
@@ -973,7 +968,7 @@ As with actions and transitions, animations can have parameters.
 {/each}
 ```
 
-#### Custom animation functions
+##### Custom animation functions
 
 ---
 
@@ -1047,9 +1042,68 @@ A custom animation function can also return a `tick` function, which is called *
 {/each}
 ```
 
+### Component directives
+
+#### on:*event* <span hidden>components</span>
+
+```sv
+on:eventname={handler}
+```
+
+---
+
+Components can emit events using [createEventDispatcher](docs#createEventDispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
+
+```html
+<SomeComponent on:whatever={handler}/>
+```
+
+---
+
+As with DOM events, if the `on:` directive is used without a value, the component will *forward* the event, meaning that a consumer of the component can listen for it.
+
+```html
+<SomeComponent on:whatever/>
+```
 
 
-### &lt;slot&gt;
+#### bind:*property* <span hidden>components</span>
+
+```sv
+bind:property={variable}
+```
+
+---
+
+You can bind to component props using the same mechanism.
+
+```html
+<Keypad bind:value={pin}/>
+```
+
+#### `bind:this` <span hidden>components</span>
+
+```sv
+bind:this={component_instance}
+```
+
+---
+
+Components also support `bind:this`, allowing you to interact with component instances programmatically.
+
+> Note that we can't do `{cart.empty}` since `cart` is `undefined` when the button is first rendered and throws an error.
+
+```html
+<ShoppingCart bind:this={cart}/>
+
+<button on:click={() => cart.empty()}>
+	Empty shopping cart
+</button>
+```
+
+
+
+### `<slot>`
 
 ```sv
 <slot><!-- optional fallback --></slot>
@@ -1150,7 +1204,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 ```
 
 
-### &lt;svelte:self&gt;
+### `<svelte:self>`
 
 ---
 
@@ -1171,7 +1225,7 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 {/if}
 ```
 
-### &lt;svelte:component&gt;
+### `<svelte:component>`
 
 ```sv
 <svelte:component this={expression}>
@@ -1188,7 +1242,7 @@ If `this` is falsy, no component is rendered.
 ```
 
 
-### &lt;svelte:window&gt;
+### `<svelte:window>`
 
 ```sv
 <svelte:window on:event={handler}/>
@@ -1230,7 +1284,7 @@ All except `scrollX` and `scrollY` are readonly.
 ```
 
 
-### &lt;svelte:body&gt;
+### `<svelte:body>`
 
 ```sv
 <svelte:body on:event={handler}/>
@@ -1248,7 +1302,7 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 ```
 
 
-### &lt;svelte:head&gt;
+### `<svelte:head>`
 
 ```sv
 <svelte:head>
@@ -1265,7 +1319,7 @@ This element makes it possible to insert elements into `document.head`. During s
 ```
 
 
-### &lt;svelte:options&gt;
+### `<svelte:options>`
 
 ```sv
 <svelte:options option={value}>
@@ -1285,50 +1339,3 @@ The `<svelte:options>` element provides a place to specify per-component compile
 ```html
 <svelte:options tag="my-custom-element"/>
 ```
-
-
-### @debug
-
-```sv
-{@debug}
-```
-```sv
-{@debug var1, var2, ..., varN}
-```
-
----
-
-The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.
-
-It accepts a comma-separated list of variable names (not arbitrary expressions).
-
-```html
-<script>
-	let user = {
-		firstname: 'Ada',
-		lastname: 'Lovelace'
-	};
-</script>
-
-{@debug user}
-
-<h1>Hello {user.firstname}!</h1>
-```
-
----
-
-`{@debug ...}` accepts a comma-separated list of variable names (not arbitrary expressions).
-
-```html
-<!-- Compiles -->
-{@debug user}
-{@debug user1, user2, user3}
-
-<!-- WON'T compile -->
-{@debug user.firstname}
-{@debug myArray[0]}
-{@debug !isReady}
-{@debug typeof user === 'object'}
-```
-
-The `{@debug}` tag without any arguments will insert a `debugger` statement that gets triggered when *any* state changes, as opposed to the specified variables.
