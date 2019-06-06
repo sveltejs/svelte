@@ -70,7 +70,7 @@ export default class FragmentWrapper {
 				throw new Error(`TODO implement ${child.type}`);
 			}
 
-			// special case â this is an easy way to remove whitespace surrounding
+			// special case — this is an easy way to remove whitespace surrounding
 			// <svelte:window/>. lil hacky but it works
 			if (child.type === 'Window') {
 				window_wrapper = new Window(renderer, block, parent, child);

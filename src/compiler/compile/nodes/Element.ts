@@ -150,7 +150,7 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'option') {
-			// Special case â treat these the same way:
+			// Special case — treat these the same way:
 			//   <option>{foo}</option>
 			//   <option value={foo}>{foo}</option>
 			const value_attribute = info.attributes.find(attribute => attribute.name === 'value');
@@ -547,7 +547,7 @@ export default class Element extends Node {
 
 				if (type !== 'checkbox') {
 					let message = `'${name}' binding can only be used with <input type="checkbox">`;
-					if (type === 'radio') message += ` â for <input type="radio">, use 'group' binding`;
+					if (type === 'radio') message += ` — for <input type="radio">, use 'group' binding`;
 					component.error(binding, { code: `invalid-binding`, message });
 				}
 			} else if (name === 'group') {

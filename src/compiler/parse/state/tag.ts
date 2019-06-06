@@ -300,7 +300,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		if (type === 'Ref') {
 			parser.error({
 				code: `invalid-ref-directive`,
-				message: `The ref directive is no longer supported ÃÂ¢ÃÂÃÂ use \`bind:this={${directive_name}}\` instead`
+				message: `The ref directive is no longer supported — use \`bind:this={${directive_name}}\` instead`
 			}, start);
 		}
 
@@ -485,7 +485,7 @@ export default function tag(parser: Parser) {
 		element.expression = definition.value[0].expression;
 	}
 
-	// special cases ÃÂ¢ÃÂÃÂ top-level <script> and <style>
+	// special cases - top-level <script> and <style>
 	if (specials.has(name) && parser.stack.length === 1) {
 		const special = specials.get(name);
 

@@ -32,7 +32,7 @@ export default class DebugTagWrapper extends Wrapper {
 			code.overwrite(this.node.start + 1, this.node.start + 7, 'debugger', {
 				storeName: true
 			});
-			const statement = `[â${this.node.start + 1}-${this.node.start + 7}â];`;
+			const statement = `[✂${this.node.start + 1}-${this.node.start + 7}✂];`;
 
 			block.builders.create.add_line(statement);
 			block.builders.update.add_line(statement);
@@ -41,7 +41,7 @@ export default class DebugTagWrapper extends Wrapper {
 			code.overwrite(this.node.start + 1, this.node.start + 7, 'log', {
 				storeName: true
 			});
-			const log = `[â${this.node.start + 1}-${this.node.start + 7}â]`;
+			const log = `[✂${this.node.start + 1}-${this.node.start + 7}✂]`;
 
 			const dependencies = new Set();
 			this.node.expressions.forEach(expression => {

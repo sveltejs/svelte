@@ -398,7 +398,7 @@ export default class Component {
 				this.source
 			);
 
-			const parts = module.split('ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ]');
+			const parts = module.split('✂]');
 			const final_chunk = parts.pop();
 
 			const compiled = new Bundle({ separator: '' });
@@ -411,7 +411,7 @@ export default class Component {
 
 			const { filename } = compile_options;
 
-			// special case ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ the source file doesn't actually get used anywhere. we need
+			// special case — the source file doesn't actually get used anywhere. we need
 			// to add an empty file to populate map.sources and map.sourcesContent
 			if (!parts.length) {
 				compiled.addSource({
@@ -420,7 +420,7 @@ export default class Component {
 				});
 			}
 
-			const pattern = /\[ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ(\d+)-(\d+)$/;
+			const pattern = /\[✂(\d+)-(\d+)$/;
 
 			parts.forEach((str: string) => {
 				const chunk = str.replace(pattern, '');
@@ -644,7 +644,7 @@ export default class Component {
 
 		script.content.body.forEach((node) => {
 			if (this.hoistable_nodes.has(node) || this.reactive_declaration_nodes.has(node)) {
-				if (a !== b) result += `[ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ${a}-${b}ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ]`;
+				if (a !== b) result += `[✂${a}-${b}✂]`;
 				a = node.end;
 			}
 
@@ -656,7 +656,7 @@ export default class Component {
 		b = script.content.end;
 		while (/\s/.test(this.source[b - 1])) b -= 1;
 
-		if (a < b) result += `[ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ${a}-${b}ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ]`;
+		if (a < b) result += `[✂${a}-${b}✂]`;
 
 		return result || null;
 	}
@@ -1107,7 +1107,7 @@ export default class Component {
 					});
 
 					hoistable_nodes.add(node);
-					this.fully_hoisted.push(`[ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ${node.start}-${node.end}ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ]`);
+					this.fully_hoisted.push(`[✂${node.start}-${node.end}✂]`);
 				}
 			}
 
@@ -1199,7 +1199,7 @@ export default class Component {
 
 				remove_indentation(this.code, node);
 
-				this.fully_hoisted.push(`[ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ${node.start}-${node.end}ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ]`);
+				this.fully_hoisted.push(`[✂${node.start}-${node.end}✂]`);
 			}
 		}
 	}

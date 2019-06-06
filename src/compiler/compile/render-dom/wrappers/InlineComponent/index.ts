@@ -262,7 +262,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				let object;
 
 				if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
-					// bind:x={y} â we can't just do `y = x`, we need to
+					// bind:x={y} — we can't just do `y = x`, we need to
 					// to `array[index] = x;
 					const { name } = binding.expression.node;
 					const { snippet } = block.bindings.get(name);
@@ -316,7 +316,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			let lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 
 			if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
-				// bind:x={y} â we can't just do `y = x`, we need to
+				// bind:x={y} — we can't just do `y = x`, we need to
 				// to `array[index] = x;
 				const { name } = binding.expression.node;
 				const { object, property, snippet } = block.bindings.get(name);

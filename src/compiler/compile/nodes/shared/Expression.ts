@@ -374,7 +374,7 @@ export default class Expression {
 							throw new Error(`Well that's odd`);
 						}
 
-						// TOOD optimisation Ã¢ÂÂ if this is an event handler,
+						// TOOD optimisation — if this is an event handler,
 						// the return value doesn't matter
 					}
 
@@ -513,6 +513,6 @@ export default class Expression {
 			});
 		}
 
-		return this.rendered = `[Ã¢ÂÂ${this.node.start}-${this.node.end}Ã¢ÂÂ]`;
+		return this.rendered = `[✂${this.node.start}-${this.node.end}✂]`;
 	}
 }

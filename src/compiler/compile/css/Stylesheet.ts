@@ -280,7 +280,7 @@ export default class Stylesheet {
 						const atrule = new Atrule(node);
 						stack.push(atrule);
 
-						// this is an awkward special case â @apply (and
+						// this is an awkward special case — @apply (and
 						// possibly other future constructs)
 						if (last && !(last instanceof Atrule)) return;
 

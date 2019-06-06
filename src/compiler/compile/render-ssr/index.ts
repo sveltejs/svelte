@@ -88,7 +88,7 @@ export default function ssr(
 		: [];
 
 	const reactive_declarations = component.reactive_declarations.map(d => {
-		let snippet = `[â${d.node.body.start}-${d.node.end}â]`;
+		let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
 
 		if (d.declaration) {
 			const declared = extract_names(d.declaration);

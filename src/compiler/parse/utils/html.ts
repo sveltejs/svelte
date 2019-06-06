@@ -58,7 +58,7 @@ function validate_code(code: number) {
 	}
 
 	// code points 128-159 are dealt with leniently by browsers, but they're incorrect. We need
-	// to correct the mistake or we'll end up with missing Ã¢ÂÂ¬ signs and so on
+	// to correct the mistake or we'll end up with missing € signs and so on
 	if (code <= 159) {
 		return windows_1252[code - 128];
 	}

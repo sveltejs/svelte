@@ -28,16 +28,16 @@ export default class TitleWrapper extends Wrapper {
 
 			const all_dependencies = new Set();
 
-			// TODO some of this code is repeated in Tag.ts â would be good to
+			// TODO some of this code is repeated in Tag.ts — would be good to
 			// DRY it out if that's possible without introducing crazy indirection
 			if (this.node.children.length === 1) {
-				// single {tag} â may be a non-string
+				// single {tag} — may be a non-string
 				// @ts-ignore todo: check this
 				const { expression } = this.node.children[0];
 				value = expression.render(block);
 				add_to_set(all_dependencies, expression.dependencies);
 			} else {
-				// '{foo} {bar}' â treat as string concatenation
+				// '{foo} {bar}' — treat as string concatenation
 				value =
 					(this.node.children[0].type === 'Text' ? '' : `"" + `) +
 					this.node.children
