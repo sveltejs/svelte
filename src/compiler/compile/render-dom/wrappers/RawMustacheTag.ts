@@ -22,7 +22,7 @@ export default class RawMustacheTagWrapper extends Tag {
 	render(block: Block, parent_node: string, parent_nodes: string) {
 		const name = this.var;
 
-		const in_head = parent_node === 'document.head';
+		const in_head = parent_node === '@document.head';
 		const needs_anchors = !parent_node || in_head;
 
 		// if in head always needs anchors

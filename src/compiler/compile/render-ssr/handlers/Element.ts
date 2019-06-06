@@ -163,7 +163,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			node_contents='${(' + snippet + ') || ""}';
 		} else {
 			const snippet = snip(expression);
-			opening_tag += ' ${(v => v ? ("' + name + '" + (v === true ? "" : "=" + JSON.stringify(v))) : "")(' + snippet + ')}';
+			opening_tag += ' ${(v => v ? ("' + name + '" + (v === true ? "" : "=" + @JSON.stringify(v))) : "")(' + snippet + ')}';
 		}
 	});
 

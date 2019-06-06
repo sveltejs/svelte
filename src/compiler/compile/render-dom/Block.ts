@@ -164,7 +164,7 @@ export default class Block {
 
 		if (parent_node) {
 			this.builders.mount.add_line(`@append(${parent_node}, ${name});`);
-			if (parent_node === 'document.head' && !no_detach) this.builders.destroy.add_line(`@detach(${name});`);
+			if (parent_node === '@document.head' && !no_detach) this.builders.destroy.add_line(`@detach(${name});`);
 		} else {
 			this.builders.mount.add_line(`@insert(#target, ${name}, anchor);`);
 			if (!no_detach) this.builders.destroy.add_conditional('detaching', `@detach(${name});`);

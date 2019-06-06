@@ -3,6 +3,7 @@ import {
 	SvelteComponent,
 	add_render_callback,
 	append,
+	clearTimeout,
 	detach,
 	element,
 	init,
@@ -10,8 +11,10 @@ import {
 	listen,
 	noop,
 	safe_not_equal,
+	setTimeout,
 	set_data,
-	text
+	text,
+	window
 } from "svelte/internal";
 
 function create_fragment(ctx) {
