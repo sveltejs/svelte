@@ -4,184 +4,6 @@ import { gather_possible_values, UNKNOWN } from './gather_possible_values';
 import { Node } from '../../interfaces';
 import Component from '../Component';
 
-class Block {
-	global: boolean;
-	combinator: Node;
-	selectors: Node[]
-	start: number;
-	end: number;
-	should_encapsulate: boolean;
-
-	constructor(combinator: Node) {
-		this.combinator = combinator;
-		this.global = false;
-		this.selectors = [];
-
-		this.start = null;
-		this.end = null;
-
-		this.should_encapsulate = false;
-	}
-
-	add(selector: Node) {
-		if (this.selectors.length === 0) {
-			this.start = selector.start;
-			this.global = selector.type === 'PseudoClassSelector' && selector.name === 'global';
-		}
-
-		this.selectors.push(selector);
-		this.end = selector.end;
-	}
-}
-
-function group_selectors(selector: Node) {
-	let block: Block = new Block(null);
-
-	const blocks = [block];
-
-	selector.children.forEach((child: Node) => {
-		if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
-			block = new Block(child);
-			blocks.push(block);
-		} else {
-			block.add(child);
-		}
-	});
-
-	return blocks;
-}
-
-const operators = {
-	'=' : (value: string, flags: string) => new RegExp(`^${value}$`, flags),
-	'~=': (value: string, flags: string) => new RegExp(`\\b${value}\\b`, flags),
-	'|=': (value: string, flags: string) => new RegExp(`^${value}(-.+)?$`, flags),
-	'^=': (value: string, flags: string) => new RegExp(`^${value}`, flags),
-	'$=': (value: string, flags: string) => new RegExp(`${value}$`, flags),
-	'*=': (value: string, flags: string) => new RegExp(value, flags)
-};
-
-function attribute_matches(node: Node, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
-	const spread = node.attributes.find(attr => attr.type === 'Spread');
-	if (spread) return true;
-
-	const attr = node.attributes.find((attr: Node) => attr.name === name);
-	if (!attr) return false;
-	if (attr.is_true) return operator === null;
-	if (attr.chunks.length > 1) return true;
-	if (!expected_value) return true;
-
-	const pattern = operators[operator](expected_value, case_insensitive ? 'i' : '');
-	const value = attr.chunks[0];
-
-	if (!value) return false;
-	if (value.type === 'Text') return pattern.test(value.data);
-
-	const possible_values = new Set();
-	gather_possible_values(value.node, possible_values);
-	if (possible_values.has(UNKNOWN)) return true;
-
-	for (const x of Array.from(possible_values)) { // TypeScript for-of is slightly unlike JS
-		if (pattern.test(x)) return true;
-	}
-
-	return false;
-}
-
-function class_matches(node, name: string) {
-	return node.classes.some((class_directive) => {
-		return new RegExp(`\\b${name}\\b`).test(class_directive.name);
-	});
-}
-
-function unquote(value: Node) {
-	if (value.type === 'Identifier') return value.name;
-	const str = value.value;
-	if (str[0] === str[str.length - 1] && str[0] === "'" || str[0] === '"') {
-		return str.slice(1, str.length - 1);
-	}
-	return str;
-}
-
-function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, stack: Node[], to_encapsulate: any[]): boolean {
-	const block = blocks.pop();
-	if (!block) return false;
-
-	if (!node) {
-		return blocks.every(block => block.global);
-	}
-
-	let i = block.selectors.length;
-
-	while (i--) {
-		const selector = block.selectors[i];
-
-		if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-			// TODO shouldn't see this here... maybe we should enforce that :global(...)
-			// cannot be sandwiched between non-global selectors?
-			return false;
-		}
-
-		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
-			continue;
-		}
-
-		if (selector.type === 'ClassSelector') {
-			if (!attribute_matches(node, 'class', selector.name, '~=', false) && !class_matches(node, selector.name)) return false;
-		}
-
-		else if (selector.type === 'IdSelector') {
-			if (!attribute_matches(node, 'id', selector.name, '=', false)) return false;
-		}
-
-		else if (selector.type === 'AttributeSelector') {
-			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return false;
-		}
-
-		else if (selector.type === 'TypeSelector') {
-			// remove toLowerCase() in v2, when uppercase elements will be forbidden
-			if (node.name.toLowerCase() !== selector.name.toLowerCase() && selector.name !== '*') return false;
-		}
-
-		else {
-			// bail. TODO figure out what these could be
-			to_encapsulate.push({ node, block });
-			return true;
-		}
-	}
-
-	if (block.combinator) {
-		if (block.combinator.type === 'WhiteSpace') {
-			while (stack.length) {
-				if (apply_selector(stylesheet, blocks.slice(), stack.pop(), stack, to_encapsulate)) {
-					to_encapsulate.push({ node, block });
-					return true;
-				}
-			}
-
-			if (blocks.every(block => block.global)) {
-				to_encapsulate.push({ node, block });
-				return true;
-			}
-
-			return false;
-		} else if (block.combinator.name === '>') {
-			if (apply_selector(stylesheet, blocks, stack.pop(), stack, to_encapsulate)) {
-				to_encapsulate.push({ node, block });
-				return true;
-			}
-
-			return false;
-		}
-
-		// TODO other combinators
-		to_encapsulate.push({ node, block });
-		return true;
-	}
-
-	to_encapsulate.push({ node, block });
-	return true;
-}
-
 export default class Selector {
 	node: Node;
 	stylesheet: Stylesheet;
@@ -297,4 +119,182 @@ export default class Selector {
 			}
 		}
 	}
+}
+
+function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, stack: Node[], to_encapsulate: any[]): boolean {
+	const block = blocks.pop();
+	if (!block) return false;
+
+	if (!node) {
+		return blocks.every(block => block.global);
+	}
+
+	let i = block.selectors.length;
+
+	while (i--) {
+		const selector = block.selectors[i];
+
+		if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+			// TODO shouldn't see this here... maybe we should enforce that :global(...)
+			// cannot be sandwiched between non-global selectors?
+			return false;
+		}
+
+		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
+			continue;
+		}
+
+		if (selector.type === 'ClassSelector') {
+			if (!attribute_matches(node, 'class', selector.name, '~=', false) && !class_matches(node, selector.name)) return false;
+		}
+
+		else if (selector.type === 'IdSelector') {
+			if (!attribute_matches(node, 'id', selector.name, '=', false)) return false;
+		}
+
+		else if (selector.type === 'AttributeSelector') {
+			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return false;
+		}
+
+		else if (selector.type === 'TypeSelector') {
+			// remove toLowerCase() in v2, when uppercase elements will be forbidden
+			if (node.name.toLowerCase() !== selector.name.toLowerCase() && selector.name !== '*') return false;
+		}
+
+		else {
+			// bail. TODO figure out what these could be
+			to_encapsulate.push({ node, block });
+			return true;
+		}
+	}
+
+	if (block.combinator) {
+		if (block.combinator.type === 'WhiteSpace') {
+			while (stack.length) {
+				if (apply_selector(stylesheet, blocks.slice(), stack.pop(), stack, to_encapsulate)) {
+					to_encapsulate.push({ node, block });
+					return true;
+				}
+			}
+
+			if (blocks.every(block => block.global)) {
+				to_encapsulate.push({ node, block });
+				return true;
+			}
+
+			return false;
+		} else if (block.combinator.name === '>') {
+			if (apply_selector(stylesheet, blocks, stack.pop(), stack, to_encapsulate)) {
+				to_encapsulate.push({ node, block });
+				return true;
+			}
+
+			return false;
+		}
+
+		// TODO other combinators
+		to_encapsulate.push({ node, block });
+		return true;
+	}
+
+	to_encapsulate.push({ node, block });
+	return true;
+}
+
+const operators = {
+	'=' : (value: string, flags: string) => new RegExp(`^${value}$`, flags),
+	'~=': (value: string, flags: string) => new RegExp(`\\b${value}\\b`, flags),
+	'|=': (value: string, flags: string) => new RegExp(`^${value}(-.+)?$`, flags),
+	'^=': (value: string, flags: string) => new RegExp(`^${value}`, flags),
+	'$=': (value: string, flags: string) => new RegExp(`${value}$`, flags),
+	'*=': (value: string, flags: string) => new RegExp(value, flags)
+};
+
+function attribute_matches(node: Node, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
+	const spread = node.attributes.find(attr => attr.type === 'Spread');
+	if (spread) return true;
+
+	const attr = node.attributes.find((attr: Node) => attr.name === name);
+	if (!attr) return false;
+	if (attr.is_true) return operator === null;
+	if (attr.chunks.length > 1) return true;
+	if (!expected_value) return true;
+
+	const pattern = operators[operator](expected_value, case_insensitive ? 'i' : '');
+	const value = attr.chunks[0];
+
+	if (!value) return false;
+	if (value.type === 'Text') return pattern.test(value.data);
+
+	const possible_values = new Set();
+	gather_possible_values(value.node, possible_values);
+	if (possible_values.has(UNKNOWN)) return true;
+
+	for (const x of Array.from(possible_values)) { // TypeScript for-of is slightly unlike JS
+		if (pattern.test(x)) return true;
+	}
+
+	return false;
+}
+
+function class_matches(node, name: string) {
+	return node.classes.some((class_directive) => {
+		return new RegExp(`\\b${name}\\b`).test(class_directive.name);
+	});
+}
+
+function unquote(value: Node) {
+	if (value.type === 'Identifier') return value.name;
+	const str = value.value;
+	if (str[0] === str[str.length - 1] && str[0] === "'" || str[0] === '"') {
+		return str.slice(1, str.length - 1);
+	}
+	return str;
+}
+
+class Block {
+	global: boolean;
+	combinator: Node;
+	selectors: Node[]
+	start: number;
+	end: number;
+	should_encapsulate: boolean;
+
+	constructor(combinator: Node) {
+		this.combinator = combinator;
+		this.global = false;
+		this.selectors = [];
+
+		this.start = null;
+		this.end = null;
+
+		this.should_encapsulate = false;
+	}
+
+	add(selector: Node) {
+		if (this.selectors.length === 0) {
+			this.start = selector.start;
+			this.global = selector.type === 'PseudoClassSelector' && selector.name === 'global';
+		}
+
+		this.selectors.push(selector);
+		this.end = selector.end;
+	}
+}
+
+function group_selectors(selector: Node) {
+	let block: Block = new Block(null);
+
+	const blocks = [block];
+
+	selector.children.forEach((child: Node) => {
+		if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
+			block = new Block(child);
+			blocks.push(block);
+		} else {
+			block.add(child);
+		}
+	});
+
+	return blocks;
 }

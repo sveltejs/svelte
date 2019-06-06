@@ -36,14 +36,6 @@ function create(code) {
 	return module.exports.default;
 }
 
-function read(file) {
-	try {
-		return fs.readFileSync(file, 'utf-8');
-	} catch (err) {
-		return null;
-	}
-}
-
 describe('css', () => {
 	fs.readdirSync('test/css/samples').forEach(dir => {
 		if (dir[0] === '.') return;
@@ -136,3 +128,11 @@ describe('css', () => {
 		});
 	});
 });
+
+function read(file) {
+	try {
+		return fs.readFileSync(file, 'utf-8');
+	} catch (err) {
+		return null;
+	}
+}

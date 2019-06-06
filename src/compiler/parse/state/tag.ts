@@ -77,278 +77,6 @@ function parent_is_head(stack) {
 	return false;
 }
 
-function read_tag_name(parser: Parser) {
-	const start = parser.index;
-
-	if (parser.read(SELF)) {
-		// check we're inside a block, otherwise this
-		// will cause infinite recursion
-		let i = parser.stack.length;
-		let legal = false;
-
-		while (i--) {
-			const fragment = parser.stack[i];
-			if (fragment.type === 'IfBlock' || fragment.type === 'EachBlock') {
-				legal = true;
-				break;
-			}
-		}
-
-		if (!legal) {
-			parser.error({
-				code: `invalid-self-placement`,
-				message: `<svelte:self> components can only exist inside if-blocks or each-blocks`
-			}, start);
-		}
-
-		return 'svelte:self';
-	}
-
-	if (parser.read(COMPONENT)) return 'svelte:component';
-
-	const name = parser.read_until(/(\s|\/|>)/);
-
-	if (meta_tags.has(name)) return name;
-
-	if (name.startsWith('svelte:')) {
-		const match = fuzzymatch(name.slice(7), valid_meta_tags);
-
-		let message = `Valid <svelte:...> tag names are ${list(valid_meta_tags)}`;
-		if (match) message += ` (did you mean '${match}'?)`;
-
-		parser.error({
-			code: 'invalid-tag-name',
-			message
-		}, start);
-	}
-
-	if (!valid_tag_name.test(name)) {
-		parser.error({
-			code: `invalid-tag-name`,
-			message: `Expected valid tag name`
-		}, start);
-	}
-
-	return name;
-}
-
-function get_directive_type(name: string): DirectiveType {
-	if (name === 'use') return 'Action';
-	if (name === 'animate') return 'Animation';
-	if (name === 'bind') return 'Binding';
-	if (name === 'class') return 'Class';
-	if (name === 'on') return 'EventHandler';
-	if (name === 'let') return 'Let';
-	if (name === 'ref') return 'Ref';
-	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
-}
-
-function read_sequence(parser: Parser, done: () => boolean): Node[] {
-	let current_chunk: Text = {
-		start: parser.index,
-		end: null,
-		type: 'Text',
-		raw: '',
-		data: null
-	};
-
-	const chunks: Node[] = [];
-
-	function flush() {
-		if (current_chunk.raw) {
-			current_chunk.data = decode_character_references(current_chunk.raw);
-			current_chunk.end = parser.index;
-			chunks.push(current_chunk);
-		}
-	}
-
-	while (parser.index < parser.template.length) {
-		const index = parser.index;
-
-		if (done()) {
-			flush();
-			return chunks;
-		} else if (parser.eat('{')) {
-			flush();
-
-			parser.allow_whitespace();
-			const expression = read_expression(parser);
-			parser.allow_whitespace();
-			parser.eat('}', true);
-
-			chunks.push({
-				start: index,
-				end: parser.index,
-				type: 'MustacheTag',
-				expression,
-			});
-
-			current_chunk = {
-				start: parser.index,
-				end: null,
-				type: 'Text',
-				raw: '',
-				data: null
-			};
-		} else {
-			current_chunk.raw += parser.template[parser.index++];
-		}
-	}
-
-	parser.error({
-		code: `unexpected-eof`,
-		message: `Unexpected end of input`
-	});
-}
-
-function read_attribute_value(parser: Parser) {
-	const quote_mark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
-
-	const regex = (
-		quote_mark === `'` ? /'/ :
-			quote_mark === `"` ? /"/ :
-				/(\/>|[\s"'=<>`])/
-	);
-
-	const value = read_sequence(parser, () => !!parser.match_regex(regex));
-
-	if (quote_mark) parser.index += 1;
-	return value;
-}
-
-function read_attribute(parser: Parser, unique_names: Set<string>) {
-	const start = parser.index;
-
-	if (parser.eat('{')) {
-		parser.allow_whitespace();
-
-		if (parser.eat('...')) {
-			const expression = read_expression(parser);
-
-			parser.allow_whitespace();
-			parser.eat('}', true);
-
-			return {
-				start,
-				end: parser.index,
-				type: 'Spread',
-				expression
-			};
-		} else {
-			const value_start = parser.index;
-
-			const name = parser.read_identifier();
-			parser.allow_whitespace();
-			parser.eat('}', true);
-
-			return {
-				start,
-				end: parser.index,
-				type: 'Attribute',
-				name,
-				value: [{
-					start: value_start,
-					end: value_start + name.length,
-					type: 'AttributeShorthand',
-					expression: {
-						start: value_start,
-						end: value_start + name.length,
-						type: 'Identifier',
-						name
-					}
-				}]
-			};
-		}
-	}
-
-	// eslint-disable-next-line no-useless-escape
-	const name = parser.read_until(/[\s=\/>"']/);
-	if (!name) return null;
-
-	let end = parser.index;
-
-	parser.allow_whitespace();
-
-	const colon_index = name.indexOf(':');
-	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
-
-	if (unique_names.has(name)) {
-		parser.error({
-			code: `duplicate-attribute`,
-			message: 'Attributes need to be unique'
-		}, start);
-	}
-
-	if (type !== "EventHandler") {
-		unique_names.add(name);
-	}
-
-	let value: any[] | true = true;
-	if (parser.eat('=')) {
-		value = read_attribute_value(parser);
-		end = parser.index;
-	} else if (parser.match_regex(/["']/)) {
-		parser.error({
-			code: `unexpected-token`,
-			message: `Expected =`
-		}, parser.index);
-	}
-
-	if (type) {
-		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
-
-		if (type === 'Ref') {
-			parser.error({
-				code: `invalid-ref-directive`,
-				message: `The ref directive is no longer supported — use \`bind:this={${directive_name}}\` instead`
-			}, start);
-		}
-
-		if (value[0]) {
-			if ((value as any[]).length > 1 || value[0].type === 'Text') {
-				parser.error({
-					code: `invalid-directive-value`,
-					message: `Directive value must be a JavaScript expression enclosed in curly braces`
-				}, value[0].start);
-			}
-		}
-
-		const directive: Directive = {
-			start,
-			end,
-			type,
-			name: directive_name,
-			modifiers,
-			expression: (value[0] && value[0].expression) || null
-		};
-
-		if (type === 'Transition') {
-			const direction = name.slice(0, colon_index);
-			directive.intro = direction === 'in' || direction === 'transition';
-			directive.outro = direction === 'out' || direction === 'transition';
-		}
-
-		if (!directive.expression && (type === 'Binding' || type === 'Class')) {
-			directive.expression = {
-				start: directive.start + colon_index + 1,
-				end: directive.end,
-				type: 'Identifier',
-				name: directive.name
-			};
-		}
-
-		return directive;
-	}
-
-	return {
-		start,
-		end,
-		type: 'Attribute',
-		name,
-		value,
-	};
-}
-
 export default function tag(parser: Parser) {
 	const start = parser.index++;
 
@@ -485,7 +213,7 @@ export default function tag(parser: Parser) {
 		element.expression = definition.value[0].expression;
 	}
 
-	// special cases - top-level <script> and <style>
+	// special cases – top-level <script> and <style>
 	if (specials.has(name) && parser.stack.length === 1) {
 		const special = specials.get(name);
 
@@ -531,4 +259,276 @@ export default function tag(parser: Parser) {
 	} else {
 		parser.stack.push(element);
 	}
+}
+
+function read_tag_name(parser: Parser) {
+	const start = parser.index;
+
+	if (parser.read(SELF)) {
+		// check we're inside a block, otherwise this
+		// will cause infinite recursion
+		let i = parser.stack.length;
+		let legal = false;
+
+		while (i--) {
+			const fragment = parser.stack[i];
+			if (fragment.type === 'IfBlock' || fragment.type === 'EachBlock') {
+				legal = true;
+				break;
+			}
+		}
+
+		if (!legal) {
+			parser.error({
+				code: `invalid-self-placement`,
+				message: `<svelte:self> components can only exist inside if-blocks or each-blocks`
+			}, start);
+		}
+
+		return 'svelte:self';
+	}
+
+	if (parser.read(COMPONENT)) return 'svelte:component';
+
+	const name = parser.read_until(/(\s|\/|>)/);
+
+	if (meta_tags.has(name)) return name;
+
+	if (name.startsWith('svelte:')) {
+		const match = fuzzymatch(name.slice(7), valid_meta_tags);
+
+		let message = `Valid <svelte:...> tag names are ${list(valid_meta_tags)}`;
+		if (match) message += ` (did you mean '${match}'?)`;
+
+		parser.error({
+			code: 'invalid-tag-name',
+			message
+		}, start);
+	}
+
+	if (!valid_tag_name.test(name)) {
+		parser.error({
+			code: `invalid-tag-name`,
+			message: `Expected valid tag name`
+		}, start);
+	}
+
+	return name;
+}
+
+function read_attribute(parser: Parser, unique_names: Set<string>) {
+	const start = parser.index;
+
+	if (parser.eat('{')) {
+		parser.allow_whitespace();
+
+		if (parser.eat('...')) {
+			const expression = read_expression(parser);
+
+			parser.allow_whitespace();
+			parser.eat('}', true);
+
+			return {
+				start,
+				end: parser.index,
+				type: 'Spread',
+				expression
+			};
+		} else {
+			const value_start = parser.index;
+
+			const name = parser.read_identifier();
+			parser.allow_whitespace();
+			parser.eat('}', true);
+
+			return {
+				start,
+				end: parser.index,
+				type: 'Attribute',
+				name,
+				value: [{
+					start: value_start,
+					end: value_start + name.length,
+					type: 'AttributeShorthand',
+					expression: {
+						start: value_start,
+						end: value_start + name.length,
+						type: 'Identifier',
+						name
+					}
+				}]
+			};
+		}
+	}
+
+	// eslint-disable-next-line no-useless-escape
+	const name = parser.read_until(/[\s=\/>"']/);
+	if (!name) return null;
+
+	let end = parser.index;
+
+	parser.allow_whitespace();
+
+	const colon_index = name.indexOf(':');
+	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
+
+	if (unique_names.has(name)) {
+		parser.error({
+			code: `duplicate-attribute`,
+			message: 'Attributes need to be unique'
+		}, start);
+	}
+
+	if (type !== "EventHandler") {
+		unique_names.add(name);
+	}
+
+	let value: any[] | true = true;
+	if (parser.eat('=')) {
+		value = read_attribute_value(parser);
+		end = parser.index;
+	} else if (parser.match_regex(/["']/)) {
+		parser.error({
+			code: `unexpected-token`,
+			message: `Expected =`
+		}, parser.index);
+	}
+
+	if (type) {
+		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
+
+		if (type === 'Ref') {
+			parser.error({
+				code: `invalid-ref-directive`,
+				message: `The ref directive is no longer supported — use \`bind:this={${directive_name}}\` instead`
+			}, start);
+		}
+
+		if (value[0]) {
+			if ((value as any[]).length > 1 || value[0].type === 'Text') {
+				parser.error({
+					code: `invalid-directive-value`,
+					message: `Directive value must be a JavaScript expression enclosed in curly braces`
+				}, value[0].start);
+			}
+		}
+
+		const directive: Directive = {
+			start,
+			end,
+			type,
+			name: directive_name,
+			modifiers,
+			expression: (value[0] && value[0].expression) || null
+		};
+
+		if (type === 'Transition') {
+			const direction = name.slice(0, colon_index);
+			directive.intro = direction === 'in' || direction === 'transition';
+			directive.outro = direction === 'out' || direction === 'transition';
+		}
+
+		if (!directive.expression && (type === 'Binding' || type === 'Class')) {
+			directive.expression = {
+				start: directive.start + colon_index + 1,
+				end: directive.end,
+				type: 'Identifier',
+				name: directive.name
+			};
+		}
+
+		return directive;
+	}
+
+	return {
+		start,
+		end,
+		type: 'Attribute',
+		name,
+		value,
+	};
+}
+
+function get_directive_type(name: string): DirectiveType {
+	if (name === 'use') return 'Action';
+	if (name === 'animate') return 'Animation';
+	if (name === 'bind') return 'Binding';
+	if (name === 'class') return 'Class';
+	if (name === 'on') return 'EventHandler';
+	if (name === 'let') return 'Let';
+	if (name === 'ref') return 'Ref';
+	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
+}
+
+function read_attribute_value(parser: Parser) {
+	const quote_mark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
+
+	const regex = (
+		quote_mark === `'` ? /'/ :
+			quote_mark === `"` ? /"/ :
+				/(\/>|[\s"'=<>`])/
+	);
+
+	const value = read_sequence(parser, () => !!parser.match_regex(regex));
+
+	if (quote_mark) parser.index += 1;
+	return value;
+}
+
+function read_sequence(parser: Parser, done: () => boolean): Node[] {
+	let current_chunk: Text = {
+		start: parser.index,
+		end: null,
+		type: 'Text',
+		raw: '',
+		data: null
+	};
+
+	function flush() {
+		if (current_chunk.raw) {
+			current_chunk.data = decode_character_references(current_chunk.raw);
+			current_chunk.end = parser.index;
+			chunks.push(current_chunk);
+		}
+	}
+
+	const chunks: Node[] = [];
+
+	while (parser.index < parser.template.length) {
+		const index = parser.index;
+
+		if (done()) {
+			flush();
+			return chunks;
+		} else if (parser.eat('{')) {
+			flush();
+
+			parser.allow_whitespace();
+			const expression = read_expression(parser);
+			parser.allow_whitespace();
+			parser.eat('}', true);
+
+			chunks.push({
+				start: index,
+				end: parser.index,
+				type: 'MustacheTag',
+				expression,
+			});
+
+			current_chunk = {
+				start: parser.index,
+				end: null,
+				type: 'Text',
+				raw: '',
+				data: null
+			};
+		} else {
+			current_chunk.raw += parser.template[parser.index++];
+		}
+	}
+
+	parser.error({
+		code: `unexpected-eof`,
+		message: `Unexpected end of input`
+	});
 }

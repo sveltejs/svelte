@@ -429,7 +429,7 @@ export default class IfBlockWrapper extends Wrapper {
 				}
 			`;
 
-		// no `p()` here ÃÂ¢ÃÂÃÂ we don't want to update outroing nodes,
+		// no `p()` here — we don't want to update outroing nodes,
 		// as that will typically result in glitching
 		const exit = branch.block.has_outro_method
 			? deindent`

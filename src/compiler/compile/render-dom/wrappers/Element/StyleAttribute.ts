@@ -12,6 +12,98 @@ export interface StyleProp {
 	value: Array<Text|Expression>;
 }
 
+export default class StyleAttributeWrapper extends AttributeWrapper {
+	node: Attribute;
+	parent: ElementWrapper;
+
+	render(block: Block) {
+		const style_props = optimize_style(this.node.chunks);
+		if (!style_props) return super.render(block);
+
+		style_props.forEach((prop: StyleProp) => {
+			let value;
+
+			if (is_dynamic(prop.value)) {
+				const prop_dependencies = new Set();
+
+				value =
+					((prop.value.length === 1 || prop.value[0].type === 'Text') ? '' : `"" + `) +
+					prop.value
+						.map((chunk) => {
+							if (chunk.type === 'Text') {
+								return stringify(chunk.data);
+							} else {
+								const snippet = chunk.render();
+
+								add_to_set(prop_dependencies, chunk.dependencies);
+
+								return chunk.get_precedence() <= 13 ? `(${snippet})` : snippet;
+							}
+						})
+						.join(' + ');
+
+				if (prop_dependencies.size) {
+					const dependencies = Array.from(prop_dependencies);
+					const condition = (
+						(block.has_outros ? `!#current || ` : '') +
+						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
+					);
+
+					block.builders.update.add_conditional(
+						condition,
+						`@set_style(${this.parent.var}, "${prop.key}", ${value});`
+					);
+				}
+			} else {
+				value = stringify((prop.value[0] as Text).data);
+			}
+
+			block.builders.hydrate.add_line(
+				`@set_style(${this.parent.var}, "${prop.key}", ${value});`
+			);
+		});
+	}
+}
+
+function optimize_style(value: Array<Text|Expression>) {
+	const props: StyleProp[] = [];
+	let chunks = value.slice();
+
+	while (chunks.length) {
+		const chunk = chunks[0];
+
+		if (chunk.type !== 'Text') return null;
+
+		const key_match = /^\s*([\w-]+):\s*/.exec(chunk.data);
+		if (!key_match) return null;
+
+		const key = key_match[1];
+
+		const offset = key_match.index + key_match[0].length;
+		const remaining_data = chunk.data.slice(offset);
+
+		if (remaining_data) {
+			/* eslint-disable @typescript-eslint/no-object-literal-type-assertion */
+			chunks[0] = {
+				start: chunk.start + offset,
+				end: chunk.end,
+				type: 'Text',
+				data: remaining_data
+			} as Text;
+			/* eslint-enable @typescript-eslint/no-object-literal-type-assertion */
+		} else {
+			chunks.shift();
+		}
+
+		const result = get_style_value(chunks);
+
+		props.push({ key, value: result.value });
+		chunks = result.chunks;
+	}
+
+	return props;
+}
+
 function get_style_value(chunks: Array<Text | Expression>) {
 	const value: Array<Text|Expression> = [];
 
@@ -81,97 +173,6 @@ function get_style_value(chunks: Array<Text | Expression>) {
 	};
 }
 
-function optimize_style(value: Array<Text|Expression>) {
-	const props: StyleProp[] = [];
-	let chunks = value.slice();
-
-	while (chunks.length) {
-		const chunk = chunks[0];
-
-		if (chunk.type !== 'Text') return null;
-
-		const key_match = /^\s*([\w-]+):\s*/.exec(chunk.data);
-		if (!key_match) return null;
-
-		const key = key_match[1];
-
-		const offset = key_match.index + key_match[0].length;
-		const remaining_data = chunk.data.slice(offset);
-
-		if (remaining_data) {
-			// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
-			chunks[0] = {
-				start: chunk.start + offset,
-				end: chunk.end,
-				type: 'Text',
-				data: remaining_data
-			} as Text;
-		} else {
-			chunks.shift();
-		}
-
-		const result = get_style_value(chunks);
-
-		props.push({ key, value: result.value });
-		chunks = result.chunks;
-	}
-
-	return props;
-}
-
 function is_dynamic(value: Array<Text|Expression>) {
 	return value.length > 1 || value[0].type !== 'Text';
-}
-
-export default class StyleAttributeWrapper extends AttributeWrapper {
-	node: Attribute;
-	parent: ElementWrapper;
-
-	render(block: Block) {
-		const style_props = optimize_style(this.node.chunks);
-		if (!style_props) return super.render(block);
-
-		style_props.forEach((prop: StyleProp) => {
-			let value;
-
-			if (is_dynamic(prop.value)) {
-				const prop_dependencies = new Set();
-
-				value =
-					((prop.value.length === 1 || prop.value[0].type === 'Text') ? '' : `"" + `) +
-					prop.value
-						.map((chunk) => {
-							if (chunk.type === 'Text') {
-								return stringify(chunk.data);
-							} else {
-								const snippet = chunk.render();
-
-								add_to_set(prop_dependencies, chunk.dependencies);
-
-								return chunk.get_precedence() <= 13 ? `(${snippet})` : snippet;
-							}
-						})
-						.join(' + ');
-
-				if (prop_dependencies.size) {
-					const dependencies = Array.from(prop_dependencies);
-					const condition = (
-						(block.has_outros ? `!#current || ` : '') +
-						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
-					);
-
-					block.builders.update.add_conditional(
-						condition,
-						`@set_style(${this.parent.var}, "${prop.key}", ${value});`
-					);
-				}
-			} else {
-				value = stringify((prop.value[0] as Text).data);
-			}
-
-			block.builders.hydrate.add_line(
-				`@set_style(${this.parent.var}, "${prop.key}", ${value});`
-			);
-		});
-	}
 }

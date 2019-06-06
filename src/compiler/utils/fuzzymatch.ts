@@ -1,8 +1,31 @@
+export default function fuzzymatch(name: string, names: string[]) {
+	const set = new FuzzySet(names);
+	const matches = set.get(name);
+
+	return matches && matches[0] && matches[0][0] > 0.7 ? matches[0][1] : null;
+}
+
 // adapted from https://github.com/Glench/fuzzyset.js/blob/master/lib/fuzzyset.js
 // BSD Licensed
 
 const GRAM_SIZE_LOWER = 2;
 const GRAM_SIZE_UPPER = 3;
+
+// return an edit distance from 0 to 1
+function _distance(str1: string, str2: string) {
+	if (str1 === null && str2 === null)
+		throw 'Trying to compare two null values';
+	if (str1 === null || str2 === null) return 0;
+	str1 = String(str1);
+	str2 = String(str2);
+
+	const distance = levenshtein(str1, str2);
+	if (str1.length > str2.length) {
+		return 1 - distance / str1.length;
+	} else {
+		return 1 - distance / str2.length;
+	}
+}
 
 // helper functions
 function levenshtein(str1: string, str2: string) {
@@ -28,22 +51,6 @@ function levenshtein(str1: string, str2: string) {
 	}
 
 	return current.pop();
-}
-
-// return an edit distance from 0 to 1
-function _distance(str1: string, str2: string) {
-	if (str1 === null && str2 === null)
-		throw 'Trying to compare two null values';
-	if (str1 === null || str2 === null) return 0;
-	str1 = String(str1);
-	str2 = String(str2);
-
-	const distance = levenshtein(str1, str2);
-	if (str1.length > str2.length) {
-		return 1 - distance / str1.length;
-	} else {
-		return 1 - distance / str2.length;
-	}
 }
 
 const non_word_regex = /[^\w, ]+/;
@@ -227,11 +234,3 @@ class FuzzySet {
 		return new_results;
 	}
 }
-
-export default function fuzzymatch(name: string, names: string[]) {
-	const set = new FuzzySet(names);
-	const matches = set.get(name);
-
-	return matches && matches[0] && matches[0][0] > 0.7 ? matches[0][1] : null;
-}
-

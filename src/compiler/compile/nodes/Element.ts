@@ -89,22 +89,6 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 	return parent_element.namespace;
 }
 
-function should_have_attribute(
-	node,
-	attributes: string[],
-	name = node.name
-) {
-	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
-	const sequence = attributes.length > 1 ?
-		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
-		attributes[0];
-
-	node.component.warn(node, {
-		code: `a11y-missing-attribute`,
-		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
-	});
-}
-
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
@@ -722,4 +706,20 @@ export default class Element extends Node {
 			);
 		}
 	}
+}
+
+function should_have_attribute(
+	node,
+	attributes: string[],
+	name = node.name
+) {
+	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
+	const sequence = attributes.length > 1 ?
+		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
+		attributes[0];
+
+	node.component.warn(node, {
+		code: `a11y-missing-attribute`,
+		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
+	});
 }

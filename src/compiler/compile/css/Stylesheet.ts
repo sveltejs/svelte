@@ -20,44 +20,6 @@ function hash(str: string): string {
 	return (hash >>> 0).toString(36);
 }
 
-class Declaration {
-	node: Node;
-
-	constructor(node: Node) {
-		this.node = node;
-	}
-
-	transform(code: MagicString, keyframes: Map<string, string>) {
-		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
-		if (property === 'animation' || property === 'animation-name') {
-			this.node.value.children.forEach((block: Node) => {
-				if (block.type === 'Identifier') {
-					const name = block.name;
-					if (keyframes.has(name)) {
-						code.overwrite(block.start, block.end, keyframes.get(name));
-					}
-				}
-			});
-		}
-	}
-
-	minify(code: MagicString) {
-		if (!this.node.property) return; // @apply, and possibly other weird cases?
-
-		const c = this.node.start + this.node.property.length;
-		const first = this.node.value.children
-			? this.node.value.children[0]
-			: this.node.value;
-
-		let start = first.start;
-		while (/\s/.test(code.original[start])) start += 1;
-
-		if (start - c > 1) {
-			code.overwrite(c, start, ':');
-		}
-	}
-}
-
 class Rule {
 	selectors: Selector[];
 	declarations: Declaration[];
@@ -135,6 +97,44 @@ class Rule {
 		this.selectors.forEach(selector => {
 			if (!selector.used) handler(selector);
 		});
+	}
+}
+
+class Declaration {
+	node: Node;
+
+	constructor(node: Node) {
+		this.node = node;
+	}
+
+	transform(code: MagicString, keyframes: Map<string, string>) {
+		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
+		if (property === 'animation' || property === 'animation-name') {
+			this.node.value.children.forEach((block: Node) => {
+				if (block.type === 'Identifier') {
+					const name = block.name;
+					if (keyframes.has(name)) {
+						code.overwrite(block.start, block.end, keyframes.get(name));
+					}
+				}
+			});
+		}
+	}
+
+	minify(code: MagicString) {
+		if (!this.node.property) return; // @apply, and possibly other weird cases?
+
+		const c = this.node.start + this.node.property.length;
+		const first = this.node.value.children
+			? this.node.value.children[0]
+			: this.node.value;
+
+		let start = first.start;
+		while (/\s/.test(code.original[start])) start += 1;
+
+		if (start - c > 1) {
+			code.overwrite(c, start, ':');
+		}
 	}
 }
 

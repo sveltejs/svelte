@@ -56,17 +56,17 @@ export function subscribe(component, store, callback) {
 		: unsub);
 }
 
-export function get_slot_context(definition, ctx, fn) {
-	return definition[1]
-		? assign({}, assign(ctx.$$scope.ctx, definition[1](fn ? fn(ctx) : {})))
-		: ctx.$$scope.ctx;
-}
-
 export function create_slot(definition, ctx, fn) {
 	if (definition) {
 		const slot_ctx = get_slot_context(definition, ctx, fn);
 		return definition[0](slot_ctx);
 	}
+}
+
+export function get_slot_context(definition, ctx, fn) {
+	return definition[1]
+		? assign({}, assign(ctx.$$scope.ctx, definition[1](fn ? fn(ctx) : {})))
+		: ctx.$$scope.ctx;
 }
 
 export function get_slot_changes(definition, ctx, changed, fn) {

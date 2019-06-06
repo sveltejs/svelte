@@ -3,16 +3,6 @@ import { walk } from 'estree-walker';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
-function is_ref_selector(a: Node, b: Node) {
-	if (!b) return false;
-
-	return (
-		a.type === 'TypeSelector' &&
-		a.name === 'ref' &&
-		b.type === 'PseudoClassSelector'
-	);
-}
-
 export default function read_style(parser: Parser, start: number, attributes: Node[]) {
 	const content_start = parser.index;
 	const styles = parser.read_until(/<\/style>/);
@@ -78,4 +68,14 @@ export default function read_style(parser: Parser, start: number, attributes: No
 			styles,
 		},
 	};
+}
+
+function is_ref_selector(a: Node, b: Node) {
+	if (!b) return false;
+
+	return (
+		a.type === 'TypeSelector' &&
+		a.name === 'ref' &&
+		b.type === 'PseudoClassSelector'
+	);
 }

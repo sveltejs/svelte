@@ -229,36 +229,6 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	render(block: Block, parent_node: string, parent_nodes: string) {
-		function to_html(wrapper: ElementWrapper | TextWrapper) {
-			if (wrapper.node.type === 'Text') {
-				const parent = wrapper.node.parent as Element;
-
-				const raw = parent && (
-					parent.name === 'script' ||
-					parent.name === 'style'
-				);
-
-				return raw
-					? wrapper.node.data
-					: escape_html(wrapper.node.data)
-						.replace(/\\/g, '\\\\')
-						.replace(/`/g, '\\`')
-						.replace(/\$/g, '\\$');
-			}
-
-			if (wrapper.node.name === 'noscript') return '';
-
-			let open = `<${wrapper.node.name}`;
-
-			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
-				open += ` ${fix_attribute_casing(attr.node.name)}${attr.stringify()}`;
-			});
-
-			if (is_void(wrapper.node.name)) return open + '>';
-
-			return `${open}>${(wrapper as ElementWrapper).fragment.nodes.map(to_html).join('')}</${wrapper.node.name}>`;
-		}
-
 		const { renderer } = this;
 
 		if (this.node.name === 'noscript') return;
@@ -357,6 +327,36 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 
+		function to_html(wrapper: ElementWrapper | TextWrapper) {
+			if (wrapper.node.type === 'Text') {
+				const parent = wrapper.node.parent as Element;
+
+				const raw = parent && (
+					parent.name === 'script' ||
+					parent.name === 'style'
+				);
+
+				return raw
+					? wrapper.node.data
+					: escape_html(wrapper.node.data)
+						.replace(/\\/g, '\\\\')
+						.replace(/`/g, '\\`')
+						.replace(/\$/g, '\\$');
+			}
+
+			if (wrapper.node.name === 'noscript') return '';
+
+			let open = `<${wrapper.node.name}`;
+
+			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
+				open += ` ${fix_attribute_casing(attr.node.name)}${attr.stringify()}`;
+			});
+
+			if (is_void(wrapper.node.name)) return open + '>';
+
+			return `${open}>${(wrapper as ElementWrapper).fragment.nodes.map(to_html).join('')}</${wrapper.node.name}>`;
+		}
+
 		if (renderer.options.dev) {
 			const loc = renderer.locate(this.node.start);
 			block.builders.hydrate.add_line(
@@ -440,7 +440,7 @@ export default class ElementWrapper extends Wrapper {
 				binding.render(block, lock);
 			});
 
-			// media bindings ÃÂ¢ÃÂÃÂ awkward special case. The native timeupdate events
+			// media bindings — awkward special case. The native timeupdate events
 			// fire too infrequently, so we need to take matters into our
 			// own hands
 			let animation_frame;
@@ -453,7 +453,7 @@ export default class ElementWrapper extends Wrapper {
 
 			let callee;
 
-			// TODO dry this out ÃÂ¢ÃÂÃÂ similar code for event handlers and component bindings
+			// TODO dry this out — similar code for event handlers and component bindings
 			if (has_local_function) {
 				// need to create a block-local function that calls an instance-level function
 				block.builders.init.add_block(deindent`

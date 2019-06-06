@@ -16,6 +16,8 @@ import Title from '../Title';
 import Window from '../Window';
 import { Node } from '../../../interfaces';
 
+export type Children = ReturnType<typeof map_children>;
+
 function get_constructor(type) {
 	switch (type) {
 		case 'AwaitBlock': return AwaitBlock;
@@ -51,5 +53,3 @@ export default function map_children(component, parent, scope, children: Node[])
 		return node;
 	});
 }
-
-export type Children = ReturnType<typeof map_children>;

@@ -1,6 +1,5 @@
 import entities from './entities';
 
-const NUL = 0;
 const windows_1252 = [
 	8364,
 	129,
@@ -40,6 +39,29 @@ const entity_pattern = new RegExp(
 	`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(entities).join('|')}));?`,
 	'g'
 );
+
+export function decode_character_references(html: string) {
+	return html.replace(entity_pattern, (match, entity) => {
+		let code;
+
+		// Handle named entities
+		if (entity[0] !== '#') {
+			code = entities[entity];
+		} else if (entity[1] === 'x') {
+			code = parseInt(entity.substring(2), 16);
+		} else {
+			code = parseInt(entity.substring(1), 10);
+		}
+
+		if (!code) {
+			return match;
+		}
+
+		return String.fromCodePoint(validate_code(code));
+	});
+}
+
+const NUL = 0;
 
 // some code points are verboten. If we were inserting HTML, the browser would replace the illegal
 // code points with alternatives in some cases - since we're bypassing that mechanism, we need
@@ -89,25 +111,4 @@ function validate_code(code: number) {
 	}
 
 	return NUL;
-}
-
-export function decode_character_references(html: string) {
-	return html.replace(entity_pattern, (match, entity) => {
-		let code;
-
-		// Handle named entities
-		if (entity[0] !== '#') {
-			code = entities[entity];
-		} else if (entity[1] === 'x') {
-			code = parseInt(entity.substring(2), 16);
-		} else {
-			code = parseInt(entity.substring(1), 10);
-		}
-
-		if (!code) {
-			return match;
-		}
-
-		return String.fromCodePoint(validate_code(code));
-	});
 }

@@ -64,33 +64,6 @@ const precedence: Record<string, (node?: Node) => number> = {
 
 type Owner = Wrapper | INode;
 
-function get_function_name(_node, parent) {
-	if (parent.type === 'EventHandler') {
-		return `${parent.name}_handler`;
-	}
-
-	if (parent.type === 'Action') {
-		return `${parent.name}_function`;
-	}
-
-	return 'func';
-}
-
-function is_contextual(component: Component, scope: TemplateScope, name: string) {
-	if (name === '$$props') return true;
-
-	// if it's a name below root scope, it's contextual
-	if (!scope.is_top_level(name)) return true;
-
-	const variable = component.var_lookup.get(name);
-
-	// hoistables, module declarations, and imports are non-contextual
-	if (!variable || variable.hoistable) return false;
-
-	// assume contextual
-	return true;
-}
-
 export default class Expression {
 	type: 'Expression' = 'Expression';
 	component: Component;
@@ -515,4 +488,31 @@ export default class Expression {
 
 		return this.rendered = `[✂${this.node.start}-${this.node.end}✂]`;
 	}
+}
+
+function get_function_name(_node, parent) {
+	if (parent.type === 'EventHandler') {
+		return `${parent.name}_handler`;
+	}
+
+	if (parent.type === 'Action') {
+		return `${parent.name}_function`;
+	}
+
+	return 'func';
+}
+
+function is_contextual(component: Component, scope: TemplateScope, name: string) {
+	if (name === '$$props') return true;
+
+	// if it's a name below root scope, it's contextual
+	if (!scope.is_top_level(name)) return true;
+
+	const variable = component.var_lookup.get(name);
+
+	// hoistables, module declarations, and imports are non-contextual
+	if (!variable || variable.hoistable) return false;
+
+	// assume contextual
+	return true;
 }
