@@ -234,8 +234,8 @@ export default class InlineComponentWrapper extends Wrapper {
 						if (attribute.dependencies.size > 0) {
 							updates.push(deindent`
 								if (${[...attribute.dependencies]
-		.map(dependency => `changed.${dependency}`)
-		.join(' || ')}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
+									.map(dependency => `changed.${dependency}`)
+									.join(' || ')}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
 							`);
 						}
 					});

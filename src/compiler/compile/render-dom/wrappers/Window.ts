@@ -141,17 +141,17 @@ export default class WindowWrapper extends Wrapper {
 		if (bindings.scrollX || bindings.scrollY) {
 			block.builders.update.add_block(deindent`
 				if (${
-	[bindings.scrollX, bindings.scrollY].filter(Boolean).map(
-		b => `changed.${b}`
-	).join(' || ')
-} && !${scrolling}) {
+					[bindings.scrollX, bindings.scrollY].filter(Boolean).map(
+						b => `changed.${b}`
+					).join(' || ')
+				} && !${scrolling}) {
 					${scrolling} = true;
 					clearTimeout(${scrolling_timeout});
 					window.scrollTo(${
-	bindings.scrollX ? `ctx.${bindings.scrollX}` : `window.pageXOffset`
-}, ${
-	bindings.scrollY ? `ctx.${bindings.scrollY}` : `window.pageYOffset`
-});
+						bindings.scrollX ? `ctx.${bindings.scrollX}` : `window.pageXOffset`
+					}, ${
+						bindings.scrollY ? `ctx.${bindings.scrollY}` : `window.pageYOffset`
+					});
 					${scrolling_timeout} = setTimeout(${clear_scrolling}, 100);
 				}
 			`);

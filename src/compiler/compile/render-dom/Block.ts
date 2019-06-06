@@ -372,8 +372,8 @@ export default class Block {
 				${properties}
 			};
 		`.replace(/(#+)(\w*)/g, (_match: string, sigil: string, name: string) => {
-		return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;
-	});
+			return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;
+		});
 	}
 
 	render_listeners(chunk: string = '') {
