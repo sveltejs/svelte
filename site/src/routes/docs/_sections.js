@@ -111,15 +111,13 @@ export default function() {
 				const slug = makeSlug(rawtext);
 
 				if (level === 3 || level === 4) {
-					const title = unescape(
-						text
-							.replace(/<\/?code>/g, '')
-							.replace(/\.(\w+)(\((.+)?\))?/, (m, $1, $2, $3) => {
-								if ($3) return `.${$1}(...)`;
-								if ($2) return `.${$1}()`;
-								return `.${$1}`;
-							})
-					);
+					const title = text
+						.replace(/<\/?code>/g, '')
+						.replace(/\.(\w+)(\((.+)?\))?/, (m, $1, $2, $3) => {
+							if ($3) return `.${$1}(...)`;
+							if ($2) return `.${$1}()`;
+							return `.${$1}`;
+						});
 
 					subsections.push({ slug, title, level });
 				}
