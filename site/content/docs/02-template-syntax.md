@@ -283,7 +283,7 @@ If you don't care about the pending state, you can also omit the initial block.
 ```
 
 
-### DOM events
+### DOM events (on:eventname)
 
 ```sv
 on:eventname={handler}
@@ -370,7 +370,7 @@ It's possible to have multiple event listeners for the same event:
 <button on:click={increment} on:click={track}>Click me!</button>
 ```
 
-### Component events
+### Component events (on:eventname)
 
 ```sv
 on:eventname={handler}
@@ -392,7 +392,7 @@ As with DOM events, if the `on:` directive is used without a value, the componen
 <SomeComponent on:whatever/>
 ```
 
-### Element bindings
+### Element bindings (bind:property)
 
 ```sv
 bind:property={variable}
@@ -436,7 +436,7 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 <input type="range" bind:value={num}>
 ```
 
-#### Binding related elements
+#### Binding related elements (bind:group)
 
 ---
 
@@ -550,7 +550,7 @@ Block-level elements have 4 readonly bindings, measured using a technique simila
 </div>
 ```
 
-#### Binding a DOM node
+#### Binding a DOM node (bind:this)
 
 ---
 
@@ -572,7 +572,7 @@ To get a reference to a DOM node, use `bind:this`.
 ```
 
 
-### Component bindings
+### Component bindings (bind:property)
 
 ```sv
 bind:property={variable}
@@ -589,6 +589,8 @@ You can bind to component props using the same mechanism.
 <Keypad bind:value={pin}/>
 ```
 
+#### Binding a component instance (bind:this)
+
 ---
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
@@ -604,7 +606,7 @@ Components also support `bind:this`, allowing you to interact with component ins
 ```
 
 
-### Classes
+### Class directive (class:name)
 
 ```sv
 class:name={value}
@@ -630,7 +632,7 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 ```
 
 
-### Actions
+### Use directive (use:action)
 
 ```sv
 use:action
@@ -695,7 +697,7 @@ An action can have parameters. If the returned value has an `update` method, it 
 ```
 
 
-### Transitions
+### Transitions (transition/in/out:name)
 
 ```sv
 transition:name
@@ -911,7 +913,7 @@ Local transitions only play when the block they belong to is created or destroye
 ```
 
 
-### Animations
+### Animations (animate:name)
 
 ```sv
 animate:name
@@ -1047,7 +1049,7 @@ A custom animation function can also return a `tick` function, which is called *
 
 
 
-### Slots
+### &lt;slot&gt;
 
 ```sv
 <slot><!-- optional fallback --></slot>
@@ -1079,6 +1081,8 @@ The content is exposed in the child component using the `<slot>` element, which 
 </div>
 ```
 
+#### Named slots (slot="name")
+
 ---
 
 Named slots allow consumers to target specific areas. They can also have fallback content.
@@ -1097,6 +1101,8 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 	<slot name="footer"></slot>
 </div>
 ```
+
+#### Let directive (let:name)
 
 ---
 
