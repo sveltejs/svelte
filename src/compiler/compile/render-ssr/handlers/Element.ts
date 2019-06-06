@@ -58,7 +58,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	const contenteditable = (
 		node.name !== 'textarea' &&
 		node.name !== 'input' &&
-		node.attributes.some((attribute: Node) => attribute.name === 'contenteditable')
+		node.attributes.some((attribute) => attribute.name === 'contenteditable')
 	);
 
 	const slot = node.get_static_attribute_value('slot');
