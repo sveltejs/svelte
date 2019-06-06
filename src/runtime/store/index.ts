@@ -10,7 +10,7 @@ type Unsubscriber = () => void;
 type Updater<T> = (value: T) => T;
 
 /** Cleanup logic callback. */
-type Invalidater<T> = (value?: T) => void;
+type Invalidator<T> = (value?: T) => void;
 
 /** Start and stop notification callbacks. */
 type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
@@ -22,7 +22,7 @@ export interface Readable<T> {
 	 * @param run subscription callback
 	 * @param invalidate cleanup callback
 	 */
-	subscribe(run: Subscriber<T>, invalidate?: Invalidater<T>): Unsubscriber;
+	subscribe(run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
 }
 
 /** Writable interface for both updating and subscribing. */
@@ -41,7 +41,7 @@ export interface Writable<T> extends Readable<T> {
 }
 
 /** Pair of subscriber and invalidator. */
-type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidater<T>];
+type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
 
 /**
  * Creates a `Readable` store that allows reading by subscription.
@@ -78,7 +78,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 		set(fn(value));
 	}
 
-	function subscribe(run: Subscriber<T>, invalidate: Invalidater<T> = noop): Unsubscriber {
+	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
 		subscribers.push(subscriber);
 		if (subscribers.length === 1) {
@@ -127,7 +127,9 @@ export function derived<T, S extends Stores>(
 
 	const auto = fn.length < 2;
 
-	return readable(initial_value, (set) => {
+	const invalidators: Array<Invalidator<T>> = [];
+
+	const store = readable(initial_value, (set) => {
 		let inited = false;
 		const values: StoresValues<S> = [] as StoresValues<S>;
 
@@ -156,6 +158,7 @@ export function derived<T, S extends Stores>(
 				}
 			},
 			() => {
+				run_all(invalidators);
 				pending |= (1 << i);
 			}),
 		);
@@ -168,6 +171,22 @@ export function derived<T, S extends Stores>(
 			cleanup();
 		};
 	});
+
+	return {
+		subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
+			invalidators.push(invalidate);
+
+			const unsubscribe = store.subscribe(run, invalidate);
+
+			return () => {
+				const index = invalidators.indexOf(invalidate);
+				if (index !== -1) {
+					invalidators.splice(index, 1);
+				}
+				unsubscribe();
+			};
+		}
+	}
 }
 
 /**
