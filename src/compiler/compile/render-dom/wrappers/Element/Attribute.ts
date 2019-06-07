@@ -146,9 +146,15 @@ export default class AttributeWrapper {
 					${updater}
 				`);
 			} else if (property_name) {
-				block.builders.hydrate.add_line(
-					`${element.var}.${property_name} = ${init};`
-				);
+				if (property_name === attribute_lookup.class.property_name) {
+					block.builders.hydrate.add_line(
+						`${element.var}.${property_name} = [].concat(${init} || []).join(' ');`
+					);
+				} else {
+					block.builders.hydrate.add_line(
+						`${element.var}.${property_name} = ${init};`
+					);
+				}
 				updater = `${element.var}.${property_name} = ${should_cache ? last : value};`;
 			} else if (is_dataset) {
 				block.builders.hydrate.add_line(
