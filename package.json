@@ -19,7 +19,7 @@
     "README.md"
   ],
   "engines": {
-    "node": "^8"
+    "node": ">= 8"
   },
   "types": "types/runtime",
   "scripts": {
