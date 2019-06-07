@@ -18,6 +18,9 @@
     "svelte",
     "README.md"
   ],
+  "engines": {
+    "node": "^8"
+  },
   "types": "types/runtime",
   "scripts": {
     "test": "mocha --opts mocha.opts",
