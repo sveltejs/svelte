@@ -13,6 +13,8 @@ We can easily specify default values for props:
 If we now instantiate the component without an `answer` prop, it will fall back to the default:
 
 ```html
+// With prop
 <Nested answer={42}/>
+// Without prop
 <Nested/>
 ```
