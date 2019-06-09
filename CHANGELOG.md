@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.5.1
+
+* Accommodate webpack idiosyncracies
+
 ## 3.5.0
 
 * Update package folder structure ([#2887](https://github.com/sveltejs/svelte/pull/2887))
