@@ -1,3 +1,5 @@
+const win = typeof window !== 'undefined' ? window : global;
+
 const {
 	// ecmascript
 	Error,
@@ -15,9 +17,8 @@ const {
 	getComputedStyle,
 	navigator,
 	requestAnimationFrame,
-	setTimeout: export_setTimeout, // TODO: remove when upgrading typescript, bug
-	window: export_window,
-} = (window || global) as unknown as typeof globalThis;
+	setTimeout: export_setTimeout // TODO: remove when upgrading typescript, bug
+} = win as unknown as typeof globalThis;
 
 export {
 	// ecmascript
@@ -37,5 +38,5 @@ export {
 	navigator,
 	requestAnimationFrame,
 	export_setTimeout as setTimeout,
-	export_window as window,
+	win as window,
 };
