@@ -75,6 +75,7 @@ export default function dom(
 	const $$props = uses_props ? `$$new_props` : `$$props`;
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
+	const writable_vars = component.vars.filter(variable => !variable.module && variable.writable);
 
 	/* eslint-disable @typescript-eslint/indent,indent */
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
@@ -86,6 +87,16 @@ export default function dom(
 				)}
 				${component.slots.size > 0 &&
 				`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
+			}
+		`
+		: null;
+
+	const unsafe_set = writable_vars.length > 0
+		? deindent`
+			$$values => {
+				${writable_vars.map(variable =>
+					`if ('${variable.name}' in $$values) ${component.invalidate(variable.name, `${variable.name} = $$values.${variable.name}`)};`
+				)}
 			}
 		`
 		: null;
@@ -429,6 +440,8 @@ export default function dom(
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
 				${set && `$$self.$set = ${set};`}
+
+				${unsafe_set && component.compile_options.dev && `$$self.$unsafe_set = ${unsafe_set};`}
 
 				${injected.length && `let ${injected.join(', ')};`}
 
