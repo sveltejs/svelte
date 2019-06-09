@@ -81,6 +81,15 @@ export function exclude_internal_props(props) {
 	return result;
 }
 
+export function once(fn) {
+	let ran = false;
+	return function(this: any, ...args) {
+		if (ran) return;
+		ran = true;
+		fn.call(this, ...args);
+	}
+}
+
 const is_client = typeof window !== 'undefined';
 
 export let now: () => number = is_client
