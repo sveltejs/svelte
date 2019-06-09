@@ -13,7 +13,7 @@ function addNumber() {
 }
 ```
 
-But there's a more *idiomatic* solution:
+But there's a more idiomatic solution:
 
 ```js
 function addNumber() {
@@ -23,10 +23,10 @@ function addNumber() {
 
 You can use similar patterns to replace `pop`, `shift`, `unshift` and `splice`.
 
-> Assignments to *properties* of arrays and objects — e.g. `obj.foo += 1` or `array[i] = x` — work the same way as assignments to the values themselves.
->
-> ```js
-> function addNumber() {
->		numbers[numbers.length] = numbers.length + 1;
-> }
-> ```
+Assignments to *properties* of arrays and objects — e.g. `obj.foo += 1` or `array[i] = x` — work the same way as assignments to the values themselves.
+
+```js
+function addNumber() {
+	numbers[numbers.length] = numbers.length + 1;
+}
+```
