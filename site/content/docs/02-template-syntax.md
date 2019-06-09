@@ -101,7 +101,7 @@ Text can also contain JavaScript expressions:
 ```
 
 
-### `{#if ...}`
+### {#if ...}
 
 ```sv
 {#if expression}...{/if}
@@ -138,7 +138,7 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 ```
 
 
-### `{#each ...}`
+### {#each ...}
 
 ```sv
 {#each expression as name}...{/each}
@@ -209,7 +209,7 @@ An each block can also have an `{:else}` clause, which is rendered if the list i
 ```
 
 
-### `{#await ...}`
+### {#await ...}
 
 ```sv
 {#await expression}...{:then name}...{:catch name}...{/await}
@@ -263,7 +263,7 @@ If you don't care about the pending state, you can also omit the initial block.
 ```
 
 
-### `{@html ...}`
+### {@html ...}
 
 ```sv
 {@html expression}
@@ -283,7 +283,7 @@ In a text expression, characters like `<` and `>` are escaped. With HTML express
 ```
 
 
-### `{@debug ...}`
+### {@debug ...}
 
 ```sv
 {@debug}
@@ -333,7 +333,10 @@ The `{@debug}` tag without any arguments will insert a `debugger` statement that
 
 ### Element directives
 
-#### on:*event*
+As well as attributes, elements can have *directives*, which control the element's behaviour in some way.
+
+
+#### [on:*eventname*](on_component_event)
 
 ```sv
 on:eventname={handler}
@@ -420,16 +423,10 @@ It's possible to have multiple event listeners for the same event:
 <button on:click={increment} on:click={track}>Click me!</button>
 ```
 
-#### bind:*name*
+#### [bind:*property*](bind_element_property)
 
 ```sv
 bind:property={variable}
-```
-```sv
-bind:group={variable}
-```
-```sv
-bind:this={dom_node}
 ```
 
 ---
@@ -464,53 +461,8 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 <input type="range" bind:value={num}>
 ```
 
-#### `bind:group`
 
----
-
-Inputs that work together can use `bind:group`.
-
-```html
-<script>
-	let tortilla = 'Plain';
-	let fillings = [];
-</script>
-
-<!-- grouped radio inputs are mutually exclusive -->
-<input type="radio" bind:group={tortilla} value="Plain">
-<input type="radio" bind:group={tortilla} value="Whole wheat">
-<input type="radio" bind:group={tortilla} value="Spinach">
-
-<!-- grouped checkbox inputs populate an array -->
-<input type="checkbox" bind:group={fillings} value="Rice">
-<input type="checkbox" bind:group={fillings} value="Beans">
-<input type="checkbox" bind:group={fillings} value="Cheese">
-<input type="checkbox" bind:group={fillings} value="Guac (extra)">
-```
-
-#### `bind:this` (elements)
-
----
-
-To get a reference to a DOM node, use `bind:this`.
-
-```html
-<script>
-	import { onMount } from 'svelte';
-
-	let canvasElement;
-
-	onMount(() => {
-		const ctx = canvasElement.getContext('2d');
-		drawStuff(ctx);
-	});
-</script>
-
-<canvas bind:this={canvasElement}></canvas>
-```
-
-
-#### Binding `<select>` value
+##### Binding `<select>` value
 
 ---
 
@@ -550,7 +502,7 @@ When the value of an `<option>` matches its text content, the attribute can be o
 </select>
 ```
 
-#### Media element bindings
+##### Media element bindings
 
 ---
 
@@ -580,7 +532,7 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — four
 ></video>
 ```
 
-#### Block-level element bindings
+##### Block-level element bindings
 
 ---
 
@@ -600,8 +552,61 @@ Block-level elements have 4 readonly bindings, measured using a technique simila
 </div>
 ```
 
+#### bind:group
 
-#### `class:`
+```sv
+bind:group={variable}
+```
+
+---
+
+Inputs that work together can use `bind:group`.
+
+```html
+<script>
+	let tortilla = 'Plain';
+	let fillings = [];
+</script>
+
+<!-- grouped radio inputs are mutually exclusive -->
+<input type="radio" bind:group={tortilla} value="Plain">
+<input type="radio" bind:group={tortilla} value="Whole wheat">
+<input type="radio" bind:group={tortilla} value="Spinach">
+
+<!-- grouped checkbox inputs populate an array -->
+<input type="checkbox" bind:group={fillings} value="Rice">
+<input type="checkbox" bind:group={fillings} value="Beans">
+<input type="checkbox" bind:group={fillings} value="Cheese">
+<input type="checkbox" bind:group={fillings} value="Guac (extra)">
+```
+
+#### [bind:this](bind_element)
+
+```sv
+bind:this={dom_node}
+```
+
+---
+
+To get a reference to a DOM node, use `bind:this`.
+
+```html
+<script>
+	import { onMount } from 'svelte';
+
+	let canvasElement;
+
+	onMount(() => {
+		const ctx = canvasElement.getContext('2d');
+		drawStuff(ctx);
+	});
+</script>
+
+<canvas bind:this={canvasElement}></canvas>
+```
+
+
+#### class:*name*
 
 ```sv
 class:name={value}
@@ -627,7 +632,7 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 ```
 
 
-#### `use:`
+#### use:*action*
 
 ```sv
 use:action
@@ -692,7 +697,7 @@ An action can have parameters. If the returned value has an `update` method, it 
 ```
 
 
-#### `transition:`/`in:`/`out:`
+#### transition:/in:/out:
 
 ```sv
 transition:name
@@ -908,7 +913,7 @@ Local transitions only play when the block they belong to is created or destroye
 ```
 
 
-#### `animate:`
+#### animate:
 
 ```sv
 animate:name
@@ -1044,7 +1049,7 @@ A custom animation function can also return a `tick` function, which is called *
 
 ### Component directives
 
-#### on:*event* <span hidden>components</span>
+#### [on:*eventname*](on_component_event)
 
 ```sv
 on:eventname={handler}
@@ -1067,7 +1072,7 @@ As with DOM events, if the `on:` directive is used without a value, the componen
 ```
 
 
-#### bind:*property* <span hidden>components</span>
+#### [bind:*property*](bind_component_property)
 
 ```sv
 bind:property={variable}
@@ -1081,7 +1086,7 @@ You can bind to component props using the same mechanism.
 <Keypad bind:value={pin}/>
 ```
 
-#### `bind:this` <span hidden>components</span>
+#### [bind:this](bind_component)
 
 ```sv
 bind:this={component_instance}
@@ -1135,7 +1140,7 @@ The content is exposed in the child component using the `<slot>` element, which 
 </div>
 ```
 
-#### Named slots (slot="name")
+#### [`<slot name="`*name*`">`](slot_name)
 
 ---
 
@@ -1156,7 +1161,7 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 </div>
 ```
 
-#### Let directive (let:name)
+#### [`<slot let:`*name*`={`*value*`}>`](slot_let)
 
 ---
 
