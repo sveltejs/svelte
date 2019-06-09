@@ -53,7 +53,12 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	slot_scopes: Map<any, any>;
 }) {
 	let opening_tag = `<${node.name}`;
-	let textarea_contents; // awkward special case
+	let node_contents; // awkward special case
+	const contenteditable = (
+		node.name !== 'textarea' &&
+		node.name !== 'input' &&
+		node.attributes.some((attribute) => attribute.name === 'contenteditable')
+	);
 
 	const slot = node.get_static_attribute_value('slot');
 	const component = node.find_nearest(/InlineComponent/);
@@ -90,7 +95,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				args.push(snip(attribute.expression));
 			} else {
 				if (attribute.name === 'value' && node.name === 'textarea') {
-					textarea_contents = stringify_attribute(attribute, true);
+					node_contents = stringify_attribute(attribute, true);
 				} else if (attribute.is_true) {
 					args.push(`{ ${quote_name_if_necessary(attribute.name)}: true }`);
 				} else if (
@@ -112,7 +117,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			if (attribute.type !== 'Attribute') return;
 
 			if (attribute.name === 'value' && node.name === 'textarea') {
-				textarea_contents = stringify_attribute(attribute, true);
+				node_contents = stringify_attribute(attribute, true);
 			} else if (attribute.is_true) {
 				opening_tag += ` ${attribute.name}`;
 			} else if (
@@ -145,9 +150,17 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 		if (name === 'group') {
 			// TODO server-render group bindings
+		} else if (contenteditable && (name === 'text' || name === 'html')) {
+			const snippet = snip(expression)
+			if (name == 'text') {
+				node_contents = '${@escape(' + snippet + ')}'
+			} else {
+				// Do not escape HTML content
+				node_contents = '${' + snippet + '}'
+			}
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = snip(expression);
-			textarea_contents='${(' + snippet + ') || ""}';
+			node_contents='${(' + snippet + ') || ""}';
 		} else {
 			const snippet = snip(expression);
 			opening_tag += ' ${(v => v ? ("' + name + '" + (v === true ? "" : "=" + JSON.stringify(v))) : "")(' + snippet + ')}';
@@ -162,8 +175,8 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 	renderer.append(opening_tag);
 
-	if (node.name === 'textarea' && textarea_contents !== undefined) {
-		renderer.append(textarea_contents);
+	if ((node.name === 'textarea' || contenteditable) && node_contents !== undefined) {
+		renderer.append(node_contents);
 	} else {
 		renderer.render(node.children, options);
 	}
