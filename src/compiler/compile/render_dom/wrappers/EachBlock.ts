@@ -28,7 +28,8 @@ export class ElseBlockWrapper extends Wrapper {
 
 		this.block = block.child({
 			comment: create_debugging_comment(node, this.renderer.component),
-			name: this.renderer.component.get_unique_name(`create_else_block`)
+			name: this.renderer.component.get_unique_name(`create_else_block`),
+			type: 'else'
 		});
 
 		this.fragment = new FragmentWrapper(
@@ -82,6 +83,7 @@ export default class EachBlockWrapper extends Wrapper {
 		this.block = block.child({
 			comment: create_debugging_comment(this.node, this.renderer.component),
 			name: renderer.component.get_unique_name('create_each_block'),
+			type: 'each',
 			// @ts-ignore todo: probably error
 			key: node.key as string,
 
