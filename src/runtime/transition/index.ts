@@ -2,11 +2,11 @@ import { cubicOut, cubicInOut } from 'svelte/easing';
 import { assign, is_function } from 'svelte/internal';
 
 export interface TransitionConfig {
-	delay?: number,
-	duration?: number,
-	easing?: (t: number) => number,
-	css?: (t: number, u: number) => string,
-	tick?: (t: number, u: number) => void
+	delay?: number;
+	duration?: number;
+	easing?: (t: number) => number;
+	css?: (t: number, u: number) => string;
+	tick?: (t: number, u: number) => void;
 }
 
 interface FadeParams {
@@ -30,7 +30,7 @@ export function fade(node: Element, {
 interface FlyParams {
 	delay: number;
 	duration: number;
-	easing: (t: number)=>number,
+	easing: (t: number) => number;
 	x: number;
 	y: number;
 	opacity: number;
@@ -63,7 +63,7 @@ export function fly(node: Element, {
 interface SlideParams {
 	delay: number;
 	duration: number;
-	easing: (t: number)=>number,
+	easing: (t: number) => number;
 }
 
 export function slide(node: Element, {
@@ -101,7 +101,7 @@ export function slide(node: Element, {
 interface ScaleParams {
 	delay: number;
 	duration: number;
-	easing: (t: number)=>number,
+	easing: (t: number) => number;
 	start: number;
 	opacity: number;
 }
@@ -124,7 +124,7 @@ export function scale(node: Element, {
 		delay,
 		duration,
 		easing,
-		css: (t, u) => `
+		css: (_t, u) => `
 			transform: ${transform} scale(${1 - (sd * u)});
 			opacity: ${target_opacity - (od * u)}
 		`
@@ -135,7 +135,7 @@ interface DrawParams {
 	delay: number;
 	speed: number;
 	duration: number | ((len: number) => number);
-	easing: (t: number) => number,
+	easing: (t: number) => number;
 }
 
 export function draw(node: SVGElement & { getTotalLength(): number }, {
@@ -167,18 +167,18 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 interface CrossfadeParams {
 	delay: number;
 	duration: number | ((len: number) => number);
-	easing: (t: number) => number,
+	easing: (t: number) => number;
 }
 
 type ClientRectMap = Map<any, { rect: ClientRect }>;
 
 export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
-	fallback: (node: Element, params: CrossfadeParams, intro: boolean)=> TransitionConfig
+	fallback: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
 }) {
 	const to_receive: ClientRectMap = new Map();
 	const to_send: ClientRectMap = new Map();
 
-	function crossfade(from: ClientRect, node: Element, params: CrossfadeParams):TransitionConfig {
+	function crossfade(from: ClientRect, node: Element, params: CrossfadeParams): TransitionConfig {
 		const {
 			delay = 0,
 			duration = d => Math.sqrt(d) * 30,

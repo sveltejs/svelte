@@ -23,7 +23,7 @@ export function clear_loops() {
 	running = false;
 }
 
-export function loop(fn: (number)=>void): Task {
+export function loop(fn: (number) => void): Task {
 	let task;
 
 	if (!running) {

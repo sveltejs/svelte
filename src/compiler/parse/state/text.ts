@@ -14,7 +14,7 @@ export default function text(parser: Parser) {
 		data += parser.template[parser.index++];
 	}
 
-	let node = {
+	const node = {
 		start,
 		end: parser.index,
 		type: 'Text',

@@ -8,6 +8,7 @@ import { Directive, DirectiveType, Node, Text } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 
+// eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
 const meta_tags = new Map([
@@ -36,7 +37,9 @@ const specials = new Map([
 	],
 ]);
 
+// eslint-disable-next-line no-useless-escape
 const SELF = /^svelte:self(?=[\s\/>])/;
+// eslint-disable-next-line no-useless-escape
 const COMPONENT = /^svelte:component(?=[\s\/>])/;
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
@@ -358,7 +361,8 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		}
 	}
 
-	let name = parser.read_until(/[\s=\/>"']/);
+	// eslint-disable-next-line no-useless-escape
+	const name = parser.read_until(/[\s=\/>"']/);
 	if (!name) return null;
 
 	let end = parser.index;
@@ -401,7 +405,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		}
 
 		if (value[0]) {
-			if ((value as Array<any>).length > 1 || value[0].type === 'Text') {
+			if ((value as any[]).length > 1 || value[0].type === 'Text') {
 				parser.error({
 					code: `invalid-directive-value`,
 					message: `Directive value must be a JavaScript expression enclosed in curly braces`
@@ -445,7 +449,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	};
 }
 
-function get_directive_type(name: string):DirectiveType {
+function get_directive_type(name: string): DirectiveType {
 	if (name === 'use') return 'Action';
 	if (name === 'animate') return 'Animation';
 	if (name === 'bind') return 'Binding';

@@ -425,7 +425,7 @@ export default class EachBlockWrapper extends Wrapper {
 			all_dependencies.add(dependency);
 		});
 
-		const outro_block = this.block.has_outros && block.get_unique_name('outro_block')
+		const outro_block = this.block.has_outros && block.get_unique_name('outro_block');
 		if (outro_block) {
 			block.builders.init.add_block(deindent`
 				function ${outro_block}(i, detaching, local) {

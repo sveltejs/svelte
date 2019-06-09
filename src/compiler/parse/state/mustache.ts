@@ -295,7 +295,7 @@ export default function mustache(parser: Parser) {
 			}
 		}
 
-		let await_block_shorthand = type === 'AwaitBlock' && parser.eat('then');
+		const await_block_shorthand = type === 'AwaitBlock' && parser.eat('then');
 		if (await_block_shorthand) {
 			parser.require_whitespace();
 			block.value = parser.read_identifier();
