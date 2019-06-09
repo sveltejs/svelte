@@ -2,18 +2,18 @@ import { SourceMap } from 'magic-string';
 
 export interface PreprocessorGroup {
 	markup?: (options: {
-		content: string,
-		filename: string
-	}) => { code: string, map?: SourceMap | string, dependencies?: string[] };
+		content: string;
+		filename: string;
+	}) => { code: string; map?: SourceMap | string; dependencies?: string[] };
 	style?: Preprocessor;
 	script?: Preprocessor;
 }
 
 export type Preprocessor = (options: {
-	content: string,
-	attributes: Record<string, string | boolean>,
-	filename?: string
-}) => { code: string, map?: SourceMap | string, dependencies?: string[] };
+	content: string;
+	attributes: Record<string, string | boolean>;
+	filename?: string;
+}) => { code: string; map?: SourceMap | string; dependencies?: string[] };
 
 interface Processed {
 	code: string;
@@ -43,16 +43,16 @@ interface Replacement {
 }
 
 async function replace_async(str: string, re: RegExp, func: (...any) => Promise<string>) {
-	const replacements: Promise<Replacement>[] = [];
+	const replacements: Array<Promise<Replacement>> = [];
 	str.replace(re, (...args) => {
 		replacements.push(
 			func(...args).then(
-				res =>
-					<Replacement>({
+				res => // eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
+					({
 						offset: args[args.length - 2],
 						length: args[0].length,
 						replacement: res,
-					})
+					}) as Replacement
 			)
 		);
 		return '';

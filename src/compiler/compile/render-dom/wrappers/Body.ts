@@ -6,7 +6,7 @@ import Body from '../../nodes/Body';
 export default class BodyWrapper extends Wrapper {
 	node: Body;
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, _parent_node: string, _parent_nodes: string) {
 		this.node.handlers.forEach(handler => {
 			const snippet = handler.render(block);
 

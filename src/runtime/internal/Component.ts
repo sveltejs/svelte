@@ -3,6 +3,7 @@ import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_function, run, run_all, noop } from './utils';
 import { children } from './dom';
 
+// eslint-disable-next-line @typescript-eslint/class-name-casing
 interface T$$ {
 	dirty: null;
 	ctx: null|any;
@@ -16,7 +17,7 @@ interface T$$ {
 	before_render: any[];
 	context: Map<any, any>;
 	on_mount: any[];
-	on_destroy: any[]
+	on_destroy: any[];
 }
 
 export function bind(component, name, callback) {
@@ -115,8 +116,10 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	if (options.target) {
 		if (options.hydrate) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			$$.fragment!.l(children(options.target));
 		} else {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			$$.fragment!.c();
 		}
 
@@ -145,7 +148,7 @@ if (typeof HTMLElement !== 'undefined') {
 			}
 		}
 
-		attributeChangedCallback(attr, oldValue, newValue) {
+		attributeChangedCallback(attr, _oldValue, newValue) {
 			this[attr] = newValue;
 		}
 

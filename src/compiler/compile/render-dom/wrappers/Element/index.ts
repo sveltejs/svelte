@@ -2,7 +2,6 @@ import Renderer from '../../Renderer';
 import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
-import Node from '../../../nodes/shared/Node';
 import { is_void, quote_prop_if_necessary, quote_name_if_necessary, sanitize } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
 import { stringify, escape_html, escape } from '../../../utils/stringify';
@@ -24,25 +23,25 @@ import { get_context_merger } from '../shared/get_context_merger';
 const events = [
 	{
 		event_names: ['input'],
-		filter: (node: Element, name: string) =>
+		filter: (node: Element, _name: string) =>
 			node.name === 'textarea' ||
 			node.name === 'input' && !/radio|checkbox|range/.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['change'],
-		filter: (node: Element, name: string) =>
+		filter: (node: Element, _name: string) =>
 			node.name === 'select' ||
 			node.name === 'input' && /radio|checkbox/.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['change', 'input'],
-		filter: (node: Element, name: string) =>
+		filter: (node: Element, _name: string) =>
 			node.name === 'input' && node.get_static_attribute_value('type') === 'range'
 	},
 
 	{
 		event_names: ['resize'],
-		filter: (node: Element, name: string) =>
+		filter: (_node: Element, name: string) =>
 			dimensions.test(name)
 	},
 
@@ -93,7 +92,7 @@ const events = [
 	// details event
 	{
 		event_names: ['toggle'],
-		filter: (node: Element, name: string) =>
+		filter: (node: Element, _name: string) =>
 			node.name === 'details'
 	},
 ];
@@ -119,7 +118,7 @@ export default class ElementWrapper extends Wrapper {
 		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
-		this.var = node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+		this.var = node.name.replace(/[^a-zA-Z0-9_$]/g, '_');
 
 		this.class_dependencies = [];
 
@@ -239,7 +238,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		const node = this.var;
-		const nodes = parent_nodes && block.get_unique_name(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
+		const nodes = parent_nodes && block.get_unique_name(`${this.var}_nodes`); // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
 
 		block.add_variable(node);
 		const render_statement = this.get_render_statement();
@@ -350,7 +349,7 @@ export default class ElementWrapper extends Wrapper {
 			let open = `<${wrapper.node.name}`;
 
 			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
-				open += ` ${fix_attribute_casing(attr.node.name)}${attr.stringify()}`
+				open += ` ${fix_attribute_casing(attr.node.name)}${attr.stringify()}`;
 			});
 
 			if (is_void(wrapper.node.name)) return open + '>';
@@ -798,7 +797,8 @@ export default class ElementWrapper extends Wrapper {
 	add_classes(block: Block) {
 		this.node.classes.forEach(class_directive => {
 			const { expression, name } = class_directive;
-			let snippet, dependencies;
+			let snippet;
+			let dependencies;
 			if (expression) {
 				snippet = expression.render(block);
 				dependencies = expression.dependencies;

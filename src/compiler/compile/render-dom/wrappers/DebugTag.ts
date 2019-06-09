@@ -13,13 +13,13 @@ export default class DebugTagWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: DebugTag,
-		strip_whitespace: boolean,
-		next_sibling: Wrapper
+		_strip_whitespace: boolean,
+		_next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, _parent_node: string, _parent_nodes: string) {
 		const { renderer } = this;
 		const { component } = renderer;
 

@@ -15,7 +15,7 @@ export default {
 		</div>`,
 
 	test({ assert, component, target }) {
-		var nested = component.nested;
+		const nested = component.nested;
 
 		assert.htmlEqual(target.innerHTML, `
 			<div>
@@ -24,6 +24,7 @@ export default {
 			</div>
 		`);
 
+		// eslint-disable-next-line no-self-assign
 		nested.foo = nested.foo;
 		assert.htmlEqual(target.innerHTML, `
 			<div>
