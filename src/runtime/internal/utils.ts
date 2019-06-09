@@ -83,7 +83,7 @@ export function exclude_internal_props(props) {
 
 export function once(fn) {
 	let ran = false;
-	return function(...args) {
+	return function(this: any, ...args) {
 		if (ran) return;
 		ran = true;
 		fn.call(this, ...args);
