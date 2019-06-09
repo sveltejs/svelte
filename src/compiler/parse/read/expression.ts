@@ -12,6 +12,7 @@ export default function read_expression(parser: Parser): Node {
 		const end = start + name.length;
 
 		if (literals.has(name)) {
+			// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
 			return {
 				type: 'Literal',
 				start,
@@ -21,6 +22,7 @@ export default function read_expression(parser: Parser): Node {
 			} as SimpleLiteral;
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
 		return {
 			type: 'Identifier',
 			start,

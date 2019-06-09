@@ -1,3 +1,3 @@
 export default {
-  html: 'Compile plz'
-}
+	html: 'Compile plz'
+};

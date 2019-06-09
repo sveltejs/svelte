@@ -1,7 +1,6 @@
 import { is_void, quote_prop_if_necessary, quote_name_if_necessary } from '../../../utils/names';
 import Attribute from '../../nodes/Attribute';
 import Class from '../../nodes/Class';
-import Node from '../../nodes/shared/Node';
 import { snip } from '../../utils/snip';
 import { stringify_attribute } from '../../utils/stringify_attribute';
 import { get_slot_scope } from './shared/get_slot_scope';
@@ -159,6 +158,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				// Do not escape HTML content
 				node_contents = '${' + snippet + '}'
 			}
+		} else if (binding.name === 'value' && node.name === 'textarea') {
+			const snippet = snip(expression);
+			node_contents='${(' + snippet + ') || ""}';
 		} else {
 			const snippet = snip(expression);
 			opening_tag += ' ${(v => v ? ("' + name + '" + (v === true ? "" : "=" + JSON.stringify(v))) : "")(' + snippet + ')}';

@@ -7,33 +7,33 @@ interface BaseNode {
 }
 
 export interface Text extends BaseNode {
-	type: 'Text',
+	type: 'Text';
 	data: string;
 }
 
 export interface MustacheTag extends BaseNode {
-	type: 'MustacheTag',
+	type: 'MustacheTag';
 	expression: Node;
 }
 
 export type DirectiveType = 'Action'
-	| 'Animation'
-	| 'Binding'
-	| 'Class'
-	| 'EventHandler'
-	| 'Let'
-	| 'Ref'
-	| 'Transition';
+| 'Animation'
+| 'Binding'
+| 'Class'
+| 'EventHandler'
+| 'Let'
+| 'Ref'
+| 'Transition';
 
 interface BaseDirective extends BaseNode {
 	type: DirectiveType;
 	expression: null|Node;
 	name: string;
-	modifiers: string[]
+	modifiers: string[];
 }
 
 export interface Transition extends BaseDirective{
-	type: 'Transition',
+	type: 'Transition';
 	intro: boolean;
 	outro: boolean;
 }
@@ -41,17 +41,17 @@ export interface Transition extends BaseDirective{
 export type Directive = BaseDirective | Transition;
 
 export type Node = Text
-	| MustacheTag
-	| BaseNode
-	| Directive
-	| Transition;
+| MustacheTag
+| BaseNode
+| Directive
+| Transition;
 
 export interface Parser {
 	readonly template: string;
 	readonly filename?: string;
 
 	index: number;
-	stack: Array<Node>;
+	stack: Node[];
 
 	html: Node;
 	css: Node;
@@ -68,7 +68,7 @@ export interface Ast {
 
 export interface Warning {
 	start?: { line: number; column: number; pos?: number };
-	end?: { line: number; column: number; };
+	end?: { line: number; column: number };
 	pos?: number;
 	code: string;
 	message: string;
@@ -114,7 +114,7 @@ export interface Visitor {
 
 export interface AppendTarget {
 	slots: Record<string, string>;
-	slot_stack: string[]
+	slot_stack: string[];
 }
 
 export interface Var {

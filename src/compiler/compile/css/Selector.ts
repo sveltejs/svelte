@@ -73,7 +73,7 @@ export default class Selector {
 			}
 		}
 
-		this.blocks.forEach((block, i) => {
+		this.blocks.forEach((block) => {
 			if (block.global) {
 				const selector = block.selectors[0];
 				const first = selector.children[0];
@@ -238,8 +238,8 @@ function attribute_matches(node: Node, name: string, expected_value: string, ope
 }
 
 function class_matches(node, name: string) {
-	return node.classes.some(function(class_directive) {
-		return class_directive.name === name;
+	return node.classes.some((class_directive) => {
+		return new RegExp(`\\b${name}\\b`).test(class_directive.name);
 	});
 }
 
@@ -287,7 +287,7 @@ function group_selectors(selector: Node) {
 
 	const blocks = [block];
 
-	selector.children.forEach((child: Node, i: number) => {
+	selector.children.forEach((child: Node) => {
 		if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
 			block = new Block(child);
 			blocks.push(block);

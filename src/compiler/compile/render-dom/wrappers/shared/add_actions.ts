@@ -10,7 +10,8 @@ export default function add_actions(
 ) {
 	actions.forEach(action => {
 		const { expression } = action;
-		let snippet, dependencies;
+		let snippet;
+		let dependencies;
 
 		if (expression) {
 			snippet = expression.render(block);

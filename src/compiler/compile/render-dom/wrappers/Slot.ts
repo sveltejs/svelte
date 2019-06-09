@@ -78,7 +78,7 @@ export default class SlotWrapper extends Wrapper {
 				});
 
 				if (attribute.dependencies.size > 0) {
-					changes_props.push(`${attribute.name}: ${[...attribute.dependencies].join(' || ')}`)
+					changes_props.push(`${attribute.name}: ${[...attribute.dependencies].join(' || ')}`);
 				}
 			});
 
@@ -101,7 +101,7 @@ export default class SlotWrapper extends Wrapper {
 			const ${slot} = @create_slot(${slot_definition}, ctx, ${get_slot_context});
 		`);
 
-		let mount_before = block.builders.mount.toString();
+		const mount_before = block.builders.mount.toString();
 
 		block.builders.create.push_condition(`!${slot}`);
 		block.builders.claim.push_condition(`!${slot}`);

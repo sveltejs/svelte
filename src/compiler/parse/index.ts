@@ -14,7 +14,7 @@ export class Parser {
 	readonly customElement: boolean;
 
 	index = 0;
-	stack: Array<Node> = [];
+	stack: Node[] = [];
 
 	html: Node;
 	css: Node[] = [];
@@ -89,7 +89,7 @@ export class Parser {
 		}, err.pos);
 	}
 
-	error({ code, message }: { code: string, message: string }, index = this.index) {
+	error({ code, message }: { code: string; message: string }, index = this.index) {
 		error(message, {
 			name: 'ParseError',
 			code,

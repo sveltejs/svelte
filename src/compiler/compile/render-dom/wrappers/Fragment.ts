@@ -14,7 +14,6 @@ import Text from './Text';
 import Title from './Title';
 import Window from './Window';
 import { INode } from '../../nodes/interfaces';
-import TextWrapper from './Text';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import { trim_start, trim_end } from '../../../utils/trim';
@@ -64,7 +63,7 @@ export default class FragmentWrapper {
 			const child = nodes[i];
 
 			if (!child.type) {
-				throw new Error(`missing type`)
+				throw new Error(`missing type`);
 			}
 
 			if (!(child.type in wrappers)) {
@@ -102,7 +101,7 @@ export default class FragmentWrapper {
 					continue;
 				}
 
-				const wrapper = new TextWrapper(renderer, block, parent, child, data);
+				const wrapper = new Text(renderer, block, parent, child, data);
 				if (wrapper.skip) continue;
 
 				this.nodes.unshift(wrapper);
@@ -120,7 +119,7 @@ export default class FragmentWrapper {
 		}
 
 		if (strip_whitespace) {
-			const first = this.nodes[0] as TextWrapper;
+			const first = this.nodes[0] as Text;
 
 			if (first && first.node.type === 'Text') {
 				first.data = trim_start(first.data);
