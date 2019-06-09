@@ -4,7 +4,7 @@ fs.readdirSync('src/runtime')
 	.filter(dir => fs.statSync(`src/runtime/${dir}`).isDirectory())
 	.forEach(dir => {
 		fs.writeFileSync(`${dir}/package.json`, JSON.stringify({
-			main: './index.js',
+			main: './index',
 			module: './index.mjs'
 		}, null, '  '));
 
