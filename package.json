@@ -35,8 +35,7 @@
     "dev": "rollup -cw",
     "pretest": "npm run build",
     "posttest": "agadoo internal/index.mjs",
-    "prepublishOnly": "export PUBLISH=true && npm test && npm run create-stubs",
-    "create-stubs": "node scripts/create-stubs.js",
+    "prepublishOnly": "PUBLISH=true npm test",
     "tsd": "tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\""
   },
