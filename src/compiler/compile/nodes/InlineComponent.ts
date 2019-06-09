@@ -100,6 +100,17 @@ export default class InlineComponent extends Node {
 			this.scope = scope;
 		}
 
+		this.handlers.forEach(handler => {
+			handler.modifiers.forEach(modifier => {
+				if (modifier !== 'once') {
+					component.error(handler, {
+						code: 'invalid-event-modifier',
+						message: `Event modifiers other than 'once' can only be used on DOM elements`
+					});
+				}
+			});
+		});
+
 		this.children = map_children(component, this, this.scope, info.children);
 	}
 }
