@@ -1,4 +1,4 @@
-import { writable } from '../../../../store.js';
+import { writable } from '../../../../store';
 
 const todos = [
 	writable({ done: false, text: 'write docs' }),

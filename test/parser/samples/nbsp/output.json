@@ -15,13 +15,11 @@
 						"start": 6,
 						"end": 12,
 						"type": "Text",
+						"raw": "&nbsp;",
 						"data": " "
 					}
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

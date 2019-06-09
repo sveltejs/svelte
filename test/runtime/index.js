@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
 import * as virtual from 'rollup-plugin-virtual';
-import { clear_loops } from "../../internal.js";
+import { clear_loops, set_now, set_raf } from "../../internal";
 
 import {
 	showOutput,
@@ -20,7 +20,7 @@ let compileOptions = null;
 let compile = null;
 
 const sveltePath = process.cwd().split('\\').join('/');
-const internal = `${sveltePath}/internal.js`;
+const internal = `${sveltePath}/internal`;
 
 describe("runtime", () => {
 	before(() => {
@@ -75,7 +75,7 @@ describe("runtime", () => {
 			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
 
 			Object.keys(require.cache)
-				.filter(x => x.endsWith(".svelte"))
+				.filter(x => x.endsWith('.svelte'))
 				.forEach(file => {
 					delete require.cache[file];
 				});
@@ -100,8 +100,8 @@ describe("runtime", () => {
 							if (raf.callback) raf.callback();
 						}
 					};
-					window.performance.now = () => raf.time;
-					global.requestAnimationFrame = cb => {
+					set_now(() => raf.time);
+					set_raf(cb => {
 						let called = false;
 						raf.callback = () => {
 							if (!called) {
@@ -109,7 +109,7 @@ describe("runtime", () => {
 								cb();
 							}
 						};
-					};
+					});
 
 					try {
 						mod = require(`./samples/${dir}/main.svelte`);
@@ -223,7 +223,7 @@ describe("runtime", () => {
 				{
 					resolveId: (importee, importer) => {
 						if (importee.startsWith('svelte/')) {
-							return importee.replace('svelte', process.cwd()) + '.mjs';
+							return importee.replace('svelte', process.cwd()) + '/index.mjs';
 						}
 					}
 				}

@@ -116,6 +116,7 @@
 		{#if process.browser}
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				fixed={mobile}
 				{svelteUrl}
 				{rollupUrl}
