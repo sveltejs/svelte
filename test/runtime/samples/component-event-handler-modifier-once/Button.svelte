@@ -1,0 +1,1 @@
+<button on:click><slot></slot></button>

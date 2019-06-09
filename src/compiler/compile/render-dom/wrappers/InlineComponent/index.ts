@@ -363,7 +363,9 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {
-			const snippet = handler.render(block);
+			let snippet = handler.render(block);
+			if (handler.modifiers.has('once')) snippet = `@once(${snippet})`;
+
 			return `${name}.$on("${handler.name}", ${snippet});`;
 		});
 
