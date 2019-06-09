@@ -30,7 +30,8 @@ class AwaitBlockBranch extends Wrapper {
 
 		this.block = block.child({
 			comment: create_debugging_comment(node, this.renderer.component),
-			name: this.renderer.component.get_unique_name(`create_${status}_block`)
+			name: this.renderer.component.get_unique_name(`create_${status}_block`),
+			type: status
 		});
 
 		this.fragment = new FragmentWrapper(
