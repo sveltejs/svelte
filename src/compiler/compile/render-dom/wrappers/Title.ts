@@ -91,7 +91,10 @@ export default class TitleWrapper extends Wrapper {
 				);
 			}
 		} else {
-			const value = stringify((this.node.children[0] as Text).data);
+			const value = this.node.children.length > 0
+				? stringify((this.node.children[0] as Text).data)
+				: '""';
+
 			block.builders.hydrate.add_line(`document.title = ${value};`);
 		}
 	}
