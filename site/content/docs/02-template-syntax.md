@@ -377,6 +377,13 @@ Handlers can be declared inline with no performance penalty. As with attributes,
 
 Add *modifiers* to DOM events with the `|` character.
 
+```html
+<form on:submit|preventDefault={handleSubmit}>
+	<!-- the `submit` event's default is prevented,
+	     so the page won't reload -->
+</form>
+```
+
 The following modifiers are available:
 
 * `preventDefault` — calls `event.preventDefault()` before running the handler
@@ -386,13 +393,6 @@ The following modifiers are available:
 * `once` — remove the handler after the first time it runs
 
 Modifiers can be chained together, e.g. `on:click|once|capture={...}`.
-
-```html
-<form on:submit|preventDefault={handleSubmit}>
-	<!-- the `submit` event's default is prevented,
-	     so the page won't reload -->
-</form>
-```
 
 ---
 
@@ -697,43 +697,19 @@ An action can have parameters. If the returned value has an `update` method, it 
 ```
 
 
-#### transition:/in:/out:
+#### transition:*fn*
 
 ```sv
-transition:name
+transition:fn
 ```
 ```sv
-transition:name={params}
+transition:fn={params}
 ```
 ```sv
-transition:name|local
+transition:fn|local
 ```
 ```sv
-transition:name|local={params}
-```
-```sv
-in:name
-```
-```sv
-in:name={params}
-```
-```sv
-in:name|local
-```
-```sv
-in:name|local={params}
-```
-```sv
-out:name
-```
-```sv
-out:name={params}
-```
-```sv
-out:name|local
-```
-```sv
-out:name|local={params}
+transition:fn|local={params}
 ```
 
 
@@ -749,7 +725,7 @@ transition = (node: HTMLElement, params: any) => {
 
 ---
 
-A transition is triggered by an element entering or leaving the DOM as a result of a state change. Transitions do not run when a component is first mounted, but only on subsequent updates.
+A transition is triggered by an element entering or leaving the DOM as a result of a state change.
 
 Elements inside an *outroing* block are kept in the DOM until all current transitions have completed.
 
@@ -759,18 +735,6 @@ The `transition:` directive indicates a *bidirectional* transition, which means 
 {#if visible}
 	<div transition:fade>
 		fades in and out
-	</div>
-{/if}
-```
-
----
-
-The `in:` and `out:` directives are not bidirectional. An in transition will continue to 'play' alongside the out transition, if the block is outroed while the transition is in progress. If an out transition is aborted, transitions will restart from scratch.
-
-```html
-{#if visible}
-	<div in:fly out:fade>
-		flies in, fades out
 	</div>
 {/if}
 ```
@@ -911,6 +875,50 @@ Local transitions only play when the block they belong to is created or destroye
 	{/if}
 {/if}
 ```
+
+
+#### in:*fn*/out:*fn*
+
+```sv
+in:fn
+```
+```sv
+in:fn={params}
+```
+```sv
+in:fn|local
+```
+```sv
+in:fn|local={params}
+```
+
+```sv
+out:fn
+```
+```sv
+out:fn={params}
+```
+```sv
+out:fn|local
+```
+```sv
+out:fn|local={params}
+```
+
+---
+
+Similar to `transition:`, but only applies to elements entering (`in:`) or leaving (`out:`) the DOM.
+
+Unlike with `transition:`, transitions applied with `in:` and `out:` are not bidirectional — an in transition will continue to 'play' alongside the out transition, rather than reversing, if the block is outroed while the transition is in progress. If an out transition is aborted, transitions will restart from scratch.
+
+```html
+{#if visible}
+	<div in:fly out:fade>
+		flies in, fades out
+	</div>
+{/if}
+```
+
 
 
 #### animate:
