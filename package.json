@@ -21,7 +21,7 @@
   "engines": {
     "node": ">= 8"
   },
-  "types": "types/runtime",
+  "types": "types/runtime/index.d.ts",
   "scripts": {
     "test": "mocha --opts mocha.opts",
     "test:unit": "mocha --require sucrase/register --recursive ./**/__test__.ts",
