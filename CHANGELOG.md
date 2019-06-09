@@ -1,5 +1,18 @@
 # Svelte changelog
 
+## 3.5.0
+
+* Update package folder structure ([#2887](https://github.com/sveltejs/svelte/pull/2887))
+* Support `once` modifier on component events ([#2654](https://github.com/sveltejs/svelte/issues/2654))
+* Allow empty `<title>` tags ([#2980](https://github.com/sveltejs/svelte/issues/2980))
+* Render textarea binding values inside element ([#2975](https://github.com/sveltejs/svelte/pull/2975))
+* Fix delayed animation glitch ([#2871](https://github.com/sveltejs/svelte/issues/2871))
+* Solve diamond dependencies problem with stores ([#2660](https://github.com/sveltejs/svelte/issues/2660))
+* Fix missing outros inside each blocks ([#2689](https://github.com/sveltejs/svelte/issues/2689))
+* Support animations without transitions ([#2908](https://github.com/sveltejs/svelte/issues/2908))
+* Add missing transition events ([#2912](https://github.com/sveltejs/svelte/pull/2912))
+
+
 ## 3.4.4
 
 * Publish type declaration files ([#2874](https://github.com/sveltejs/svelte/issues/2874))
