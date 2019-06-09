@@ -148,7 +148,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			// TODO server-render group bindings
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = snip(expression);
-			textarea_contents='${(v => v ? v : "")(' + snippet + ')}';
+			textarea_contents='${(' + snippet + ') || ""}';
 		} else {
 			const snippet = snip(expression);
 			opening_tag += ' ${(v => v ? ("' + name + '" + (v === true ? "" : "=" + JSON.stringify(v))) : "")(' + snippet + ')}';
