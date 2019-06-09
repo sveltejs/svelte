@@ -3,20 +3,20 @@ import { is_function } from 'svelte/internal';
 
 // todo: same as Transition, should it be shared?
 export interface AnimationConfig {
-	delay?: number,
-	duration?: number,
-	easing?: (t: number) => number,
-	css?: (t: number, u: number) => string,
-	tick?: (t: number, u: number) => void
+	delay?: number;
+	duration?: number;
+	easing?: (t: number) => number;
+	css?: (t: number, u: number) => string;
+	tick?: (t: number, u: number) => void;
 }
 
 interface FlipParams {
 	delay: number;
 	duration: number | ((len: number) => number);
-	easing: (t: number) => number,
+	easing: (t: number) => number;
 }
 
-export function flip(node: Element, animation: { from: DOMRect, to: DOMRect }, params: FlipParams): AnimationConfig {
+export function flip(node: Element, animation: { from: DOMRect; to: DOMRect }, params: FlipParams): AnimationConfig {
 	const style = getComputedStyle(node);
 	const transform = style.transform === 'none' ? '' : style.transform;
 
@@ -35,6 +35,6 @@ export function flip(node: Element, animation: { from: DOMRect, to: DOMRect }, p
 		delay,
 		duration: is_function(duration) ? duration(d) : duration,
 		easing,
-		css: (t, u) => `transform: ${transform} translate(${u * dx}px, ${u * dy}px);`
+		css: (_t, u) => `transform: ${transform} translate(${u * dx}px, ${u * dy}px);`
 	};
 }

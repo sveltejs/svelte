@@ -3,7 +3,7 @@ import Renderer, { RenderOptions } from '../Renderer';
 import Text from '../../nodes/Text';
 import Element from '../../nodes/Element';
 
-export default function(node: Text, renderer: Renderer, options: RenderOptions) {
+export default function(node: Text, renderer: Renderer, _options: RenderOptions) {
 	let text = node.data;
 	if (
 		!node.parent ||

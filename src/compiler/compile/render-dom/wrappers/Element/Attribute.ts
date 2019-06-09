@@ -52,7 +52,7 @@ export default class AttributeWrapper {
 					element.node.bindings.find(
 						(binding) =>
 							/checked|group/.test(binding.name)
-						)));
+					)));
 
 		const property_name = is_indirectly_bound_value
 			? '__value'
@@ -70,7 +70,7 @@ export default class AttributeWrapper {
 		const is_legacy_input_type = element.renderer.component.compile_options.legacy && name === 'type' && this.parent.node.name === 'input';
 
 		const is_dataset = /^data-/.test(name) && !element.renderer.component.compile_options.legacy && !element.node.namespace;
-		const camel_case_name = is_dataset ? name.replace('data-', '').replace(/(-\w)/g, function (m) {
+		const camel_case_name = is_dataset ? name.replace('data-', '').replace(/(-\w)/g, (m) => {
 			return m[1].toUpperCase();
 		}) : name;
 
@@ -219,7 +219,7 @@ export default class AttributeWrapper {
 		return `="${value.map(chunk => {
 			return chunk.type === 'Text'
 				? chunk.data.replace(/"/g, '\\"')
-				: `\${${chunk.render()}}`
+				: `\${${chunk.render()}}`;
 		})}"`;
 	}
 }

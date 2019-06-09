@@ -29,7 +29,7 @@ export default {
 					right: 100,
 					top,
 					bottom: top + 20
-				}
+				};
 			};
 		});
 

@@ -1,8 +1,8 @@
-export function append(target:Node, node:Node) {
+export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
 
-export function insert(target: Node, node: Node, anchor?:Node) {
+export function insert(target: Node, node: Node, anchor?: Node) {
 	target.insertBefore(node, anchor || null);
 }
 
@@ -16,13 +16,13 @@ export function detach_between(before: Node, after: Node) {
 	}
 }
 
-export function detach_before(after:Node) {
+export function detach_before(after: Node) {
 	while (after.previousSibling) {
 		after.parentNode.removeChild(after.previousSibling);
 	}
 }
 
-export function detach_after(before:Node) {
+export function detach_after(before: Node) {
 	while (before.nextSibling) {
 		before.parentNode.removeChild(before.nextSibling);
 	}
@@ -38,7 +38,8 @@ export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
 	return document.createElement<K>(name);
 }
 
-export function object_without_properties<T,K extends keyof T>(obj:T, exclude: K[]) {
+export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
+	// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
 	const target = {} as Pick<T, Exclude<keyof T, K>>;
 	for (const k in obj) {
 		if (
@@ -53,11 +54,11 @@ export function object_without_properties<T,K extends keyof T>(obj:T, exclude: K
 	return target;
 }
 
-export function svg_element<K extends keyof SVGElementTagNameMap>(name:K):SVGElement {
+export function svg_element<K extends keyof SVGElementTagNameMap>(name: K): SVGElement {
 	return document.createElementNS<K>('http://www.w3.org/2000/svg', name);
 }
 
-export function text(data:string) {
+export function text(data: string) {
 	return document.createTextNode(data);
 }
 
@@ -95,7 +96,7 @@ export function attr(node: Element, attribute: string, value?: string) {
 	else node.setAttribute(attribute, value);
 }
 
-export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string; }) {
+export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
 	for (const key in attributes) {
 		if (key === 'style') {
 			node.style.cssText = attributes[key];

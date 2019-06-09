@@ -4,10 +4,10 @@ import is_reference from 'is-reference';
 import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
-import { globals } from '../../../utils/names';
+import { globals , sanitize } from '../../../utils/names';
 import deindent from '../../utils/deindent';
 import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
-import { sanitize } from '../../../utils/names';
+
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import { nodes_match } from '../../../utils/nodes_match';
@@ -28,8 +28,8 @@ const binary_operators: Record<string, number> = {
 	'<=': 11,
 	'>': 11,
 	'>=': 11,
-	'in': 11,
-	'instanceof': 11,
+	in: 11,
+	instanceof: 11,
 	'==': 10,
 	'!=': 10,
 	'===': 10,
@@ -490,7 +490,7 @@ export default class Expression {
 	}
 }
 
-function get_function_name(node, parent) {
+function get_function_name(_node, parent) {
 	if (parent.type === 'EventHandler') {
 		return `${parent.name}_handler`;
 	}

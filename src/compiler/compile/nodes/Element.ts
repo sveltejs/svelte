@@ -54,7 +54,7 @@ const a11y_required_content = new Set([
 	'h4',
 	'h5',
 	'h6'
-])
+]);
 
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
@@ -180,10 +180,12 @@ export default class Element extends Node {
 					break;
 
 				case 'Transition':
+				{
 					const transition = new Transition(component, this, scope, node);
 					if (node.intro) this.intro = transition;
 					if (node.outro) this.outro = transition;
 					break;
+				}
 
 				case 'Animation':
 					this.animation = new Animation(component, this, scope, node);
@@ -706,7 +708,7 @@ export default class Element extends Node {
 			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
 				(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
 			} else {
-				(<Node[]>class_attribute.chunks).push(
+				(class_attribute.chunks as Node[]).push(
 					new Text(this.component, this, this.scope, {
 						type: 'Text',
 						data: ` ${class_name}`

@@ -6,10 +6,10 @@ interface TickContext<T> {
 	inv_mass: number;
 	dt: number;
 	opts: Spring<T>;
-	settled: boolean
+	settled: boolean;
 }
 
-function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, target_value: T):T {
+function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, target_value: T): T {
 	if (typeof current_value === 'number' || is_date(current_value)) {
 		// @ts-ignore
 		const delta = target_value - current_value;
@@ -45,9 +45,9 @@ function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, ta
 }
 
 interface SpringOpts {
-	stiffness?: number,
-	damping?: number,
-	precision?: number,
+	stiffness?: number;
+	damping?: number;
+	precision?: number;
 }
 
 interface SpringUpdateOpts {
@@ -62,7 +62,7 @@ interface Spring<T> extends Readable<T>{
 	update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
 	precision: number;
 	damping: number;
-	stiffness: number
+	stiffness: number;
 }
 
 export function spring<T=any>(value: T, opts: SpringOpts = {}): Spring<T> {
@@ -72,13 +72,14 @@ export function spring<T=any>(value: T, opts: SpringOpts = {}): Spring<T> {
 	let last_time: number;
 	let task: Task;
 	let current_token: object;
-	let last_value:T = value;
-	let target_value:T = value;
+	let last_value: T = value;
+	let target_value: T = value;
 
 	let inv_mass = 1;
 	let inv_mass_recovery_rate = 0;
 	let cancel_task = false;
 
+	/* eslint-disable @typescript-eslint/no-use-before-define */
 	function set(new_value: T, opts: SpringUpdateOpts={}): Promise<void> {
 		target_value = new_value;
 		const token = current_token = {};
@@ -133,15 +134,16 @@ export function spring<T=any>(value: T, opts: SpringOpts = {}): Spring<T> {
 			});
 		});
 	}
+	/* eslint-enable @typescript-eslint/no-use-before-define */
 
-	const spring = {
+	const spring: Spring<T> = {
 		set,
-		update: (fn, opts:SpringUpdateOpts) => set(fn(target_value, value), opts),
+		update: (fn, opts: SpringUpdateOpts) => set(fn(target_value, value), opts),
 		subscribe: store.subscribe,
 		stiffness,
 		damping,
 		precision
-	} as Spring<T>;
+	};
 
 	return spring;
 }
