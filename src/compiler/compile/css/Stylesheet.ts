@@ -9,12 +9,20 @@ function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
 }
 
-const is_keyframes_node = (node: Node) => remove_css_prefix(node.name) === 'keyframes';
-const at_rule_has_declaration = ({ block }: Node) =>
-	block && block.children && block.children.find((node: Node) => node.type === 'Declaration');
+const is_keyframes_node = (node: Node) =>
+	remove_css_prefix(node.name) === 'keyframes';
 
-function minify_declarations(code: MagicString, start: number, declarations: Declaration[]) {
-	let c = start
+const at_rule_has_declaration = ({ block }: Node): true =>
+	block &&
+	block.children &&
+	block.children.find((node: Node) => node.type === 'Declaration');
+
+function minify_declarations(
+	code: MagicString,
+	start: number,
+	declarations: Array<Declaration>
+): number {
+	let c = start;
 
 	declarations.forEach((declaration, i) => {
 		const separator = i > 0 ? ';' : '';
@@ -25,7 +33,7 @@ function minify_declarations(code: MagicString, start: number, declarations: Dec
 		c = declaration.node.end;
 	});
 
-	return c
+	return c;
 }
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
