@@ -256,7 +256,3 @@ export function custom_event<T=any>(type: string, detail?: T) {
 	e.initCustomEvent(type, false, false, detail);
 	return e;
 }
-
-export function dispatch_dev(type: string, detail?: T) {
-	document.dispatchEvent(custom_event(type, detail))
-}
