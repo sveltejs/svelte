@@ -2,14 +2,15 @@
 import {
 	SvelteComponentDev,
 	add_location,
-	append,
-	detach,
+	append_dev,
+	detach_dev,
+	dispatch_dev,
 	element,
 	init,
-	insert,
+	insert_dev,
 	noop,
 	safe_not_equal,
-	set_data,
+	set_data_dev,
 	space,
 	text
 } from "svelte/internal";
@@ -19,7 +20,7 @@ const file = undefined;
 function create_fragment(ctx) {
 	var p, t0_value = Math.max(0, ctx.foo), t0, t1, t2;
 
-	return {
+	const block = {
 		c: function create() {
 			p = element("p");
 			t0 = text(t0_value);
@@ -33,19 +34,19 @@ function create_fragment(ctx) {
 		},
 
 		m: function mount(target, anchor) {
-			insert(target, p, anchor);
-			append(p, t0);
-			append(p, t1);
-			append(p, t2);
+			insert_dev(target, p, anchor);
+			append_dev(p, t0);
+			append_dev(p, t1);
+			append_dev(p, t2);
 		},
 
 		p: function update(changed, ctx) {
 			if ((changed.foo) && t0_value !== (t0_value = Math.max(0, ctx.foo))) {
-				set_data(t0, t0_value);
+				set_data_dev(t0, t0_value);
 			}
 
 			if (changed.bar) {
-				set_data(t2, ctx.bar);
+				set_data_dev(t2, ctx.bar);
 			}
 		},
 
@@ -54,10 +55,12 @@ function create_fragment(ctx) {
 
 		d: function destroy(detaching) {
 			if (detaching) {
-				detach(p);
+				detach_dev(p);
 			}
 		}
 	};
+	dispatch_dev("SvelteRegisterBlock", { block, id: create_fragment.name, type: "component", source: "", ctx });
+	return block;
 }
 
 function instance($$self, $$props, $$invalidate) {
@@ -74,6 +77,11 @@ function instance($$self, $$props, $$invalidate) {
 		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
 	};
 
+	$$self.$unsafe_set = $$values => {
+		if ('foo' in $$values) $$invalidate('foo', foo = $$values.foo);
+		if ('bar' in $$values) $$invalidate('bar', bar = $$values.bar);
+	};
+
 	$$self.$$.update = ($$dirty = { foo: 1 }) => {
 		if ($$dirty.foo) { $$invalidate('bar', bar = foo * 2); }
 	};
@@ -85,6 +93,7 @@ class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
 		init(this, options, instance, create_fragment, safe_not_equal, ["foo"]);
+		dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "Component", id: create_fragment.name });
 
 		const { ctx } = this.$$;
 		const props = options.props || {};
