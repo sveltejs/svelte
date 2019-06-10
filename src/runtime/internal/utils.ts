@@ -2,7 +2,7 @@ export function noop() {}
 
 export const identity = x => x;
 
-export function assign<T, S>(tar:T, src:S): T & S {
+export function assign<T, S>(tar: T, src: S): T & S {
 	// @ts-ignore
 	for (const k in src) tar[k] = src[k];
 	return tar as T & S;
@@ -79,6 +79,15 @@ export function exclude_internal_props(props) {
 	const result = {};
 	for (const k in props) if (k[0] !== '$') result[k] = props[k];
 	return result;
+}
+
+export function once(fn) {
+	let ran = false;
+	return function(this: any, ...args) {
+		if (ran) return;
+		ran = true;
+		fn.call(this, ...args);
+	}
 }
 
 const is_client = typeof window !== 'undefined';

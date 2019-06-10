@@ -14,13 +14,13 @@ export default class TitleWrapper extends Wrapper {
 		block: Block,
 		parent: Wrapper,
 		node: Title,
-		strip_whitespace: boolean,
-		next_sibling: Wrapper
+		_strip_whitespace: boolean,
+		_next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, _parent_node: string, _parent_nodes: string) {
 		const is_dynamic = !!this.node.children.find(node => node.type !== 'Text');
 
 		if (is_dynamic) {
@@ -65,13 +65,12 @@ export default class TitleWrapper extends Wrapper {
 
 			if (this.node.should_cache) block.add_variable(last);
 
-			let updater;
 			const init = this.node.should_cache ? `${last} = ${value}` : value;
 
 			block.builders.init.add_line(
 				`document.title = ${init};`
 			);
-			updater = `document.title = ${this.node.should_cache ? last : value};`;
+			const updater = `document.title = ${this.node.should_cache ? last : value};`;
 
 			if (all_dependencies.size) {
 				const dependencies = Array.from(all_dependencies);
@@ -92,7 +91,10 @@ export default class TitleWrapper extends Wrapper {
 				);
 			}
 		} else {
-			const value = stringify((this.node.children[0] as Text).data);
+			const value = this.node.children.length > 0
+				? stringify((this.node.children[0] as Text).data)
+				: '""';
+
 			block.builders.hydrate.add_line(`document.title = ${value};`);
 		}
 	}

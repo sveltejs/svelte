@@ -9,7 +9,7 @@ import Text from '../../../nodes/Text';
 
 export interface StyleProp {
 	key: string;
-	value: (Text|Expression)[];
+	value: Array<Text|Expression>;
 }
 
 export default class StyleAttributeWrapper extends AttributeWrapper {
@@ -65,7 +65,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 	}
 }
 
-function optimize_style(value: (Text|Expression)[]) {
+function optimize_style(value: Array<Text|Expression>) {
 	const props: StyleProp[] = [];
 	let chunks = value.slice();
 
@@ -83,12 +83,14 @@ function optimize_style(value: (Text|Expression)[]) {
 		const remaining_data = chunk.data.slice(offset);
 
 		if (remaining_data) {
+			/* eslint-disable @typescript-eslint/no-object-literal-type-assertion */
 			chunks[0] = {
 				start: chunk.start + offset,
 				end: chunk.end,
 				type: 'Text',
 				data: remaining_data
 			} as Text;
+			/* eslint-enable @typescript-eslint/no-object-literal-type-assertion */
 		} else {
 			chunks.shift();
 		}
@@ -102,8 +104,8 @@ function optimize_style(value: (Text|Expression)[]) {
 	return props;
 }
 
-function get_style_value(chunks: (Text | Expression)[]) {
-	const value: (Text|Expression)[] = [];
+function get_style_value(chunks: Array<Text | Expression>) {
+	const value: Array<Text|Expression> = [];
 
 	let in_url = false;
 	let quote_mark = null;
@@ -171,6 +173,6 @@ function get_style_value(chunks: (Text | Expression)[]) {
 	};
 }
 
-function is_dynamic(value: (Text|Expression)[]) {
+function is_dynamic(value: Array<Text|Expression>) {
 	return value.length > 1 || value[0].type !== 'Text';
 }

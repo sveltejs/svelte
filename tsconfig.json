@@ -5,6 +5,8 @@
 		"declaration": true,
 		"declarationDir": "types",
 		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"noEmitOnError": true,
 		"lib": [
 			"es5",

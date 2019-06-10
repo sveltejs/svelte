@@ -56,9 +56,9 @@ function get_interpolator(a, b) {
 
 interface Options<T> {
 	delay?: number;
-	duration?: number | ((from: T, to: T) => number)
+	duration?: number | ((from: T, to: T) => number);
 	easing?: (t: number) => number;
-	interpolate?: (a: T, b: T) => (t: number) => T
+	interpolate?: (a: T, b: T) => (t: number) => T;
 }
 
 type Updater<T> = (target_value: T, value: T) => T;
@@ -69,7 +69,7 @@ interface Tweened<T> extends Readable<T> {
 	update(updater: Updater<T>, opts: Options<T>): Promise<void>;
 }
 
-export function tweened<T>(value: T, defaults: Options<T> = {}):Tweened<T> {
+export function tweened<T>(value: T, defaults: Options<T> = {}): Tweened<T> {
 	const store = writable(value);
 
 	let task: Task;
@@ -122,7 +122,7 @@ export function tweened<T>(value: T, defaults: Options<T> = {}):Tweened<T> {
 
 	return {
 		set,
-		update: (fn, opts:Options<T>) => set(fn(target_value, value), opts),
+		update: (fn, opts: Options<T>) => set(fn(target_value, value), opts),
 		subscribe: store.subscribe
 	};
 }

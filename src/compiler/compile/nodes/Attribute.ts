@@ -21,7 +21,7 @@ export default class Attribute extends Node {
 	is_synthetic: boolean;
 	should_cache: boolean;
 	expression?: Expression;
-	chunks: (Text | Expression)[];
+	chunks: Array<Text | Expression>;
 	dependencies: Set<string>;
 
 	constructor(component, parent, scope, info) {

@@ -16,7 +16,7 @@ import { INode } from '../nodes/interfaces';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
 
-function noop(){}
+function noop() {}
 
 const handlers: Record<string, Handler> = {
 	AwaitBlock,
@@ -38,8 +38,8 @@ const handlers: Record<string, Handler> = {
 };
 
 export interface RenderOptions extends CompileOptions{
-	locate: (c: number) => { line: number; column: number; };
-};
+	locate: (c: number) => { line: number; column: number };
+}
 
 export default class Renderer {
 	has_bindings = false;

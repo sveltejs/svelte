@@ -1,6 +1,5 @@
 import Binding from '../../../nodes/Binding';
 import ElementWrapper from '../Element';
-import { dimensions } from '../../../../utils/patterns';
 import get_object from '../../../utils/get_object';
 import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
@@ -23,8 +22,8 @@ export default class BindingWrapper {
 	handler: {
 		uses_context: boolean;
 		mutation: string;
-		contextual_dependencies: Set<string>,
-		snippet?: string
+		contextual_dependencies: Set<string>;
+		snippet?: string;
 	};
 	snippet: string;
 	is_readonly: boolean;
@@ -87,7 +86,7 @@ export default class BindingWrapper {
 	}
 
 	is_readonly_media_attribute() {
-		return this.node.is_readonly_media_attribute()
+		return this.node.is_readonly_media_attribute();
 	}
 
 	render(block: Block, lock: string) {
@@ -95,23 +94,23 @@ export default class BindingWrapper {
 
 		const { parent } = this;
 
-		let update_conditions: string[] = this.needs_lock ? [`!${lock}`] : [];
+		const update_conditions: string[] = this.needs_lock ? [`!${lock}`] : [];
 
 		const dependency_array = [...this.node.expression.dependencies];
 
 		if (dependency_array.length === 1) {
-			update_conditions.push(`changed.${dependency_array[0]}`)
+			update_conditions.push(`changed.${dependency_array[0]}`);
 		} else if (dependency_array.length > 1) {
 			update_conditions.push(
 				`(${dependency_array.map(prop => `changed.${prop}`).join(' || ')})`
-			)
+			);
 		}
 
 		if (parent.node.name === 'input') {
 			const type = parent.node.get_static_attribute_value('type');
 
 			if (type === null || type === "" || type === "text") {
-				update_conditions.push(`(${parent.var}.${this.node.name} !== ${this.snippet})`)
+				update_conditions.push(`(${parent.var}.${this.node.name} !== ${this.snippet})`);
 			}
 		}
 
@@ -121,6 +120,7 @@ export default class BindingWrapper {
 		// special cases
 		switch (this.node.name) {
 			case 'group':
+			{
 				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
 
 				block.builders.hydrate.add_line(
@@ -131,6 +131,7 @@ export default class BindingWrapper {
 					`ctx.$$binding_groups[${binding_group}].splice(ctx.$$binding_groups[${binding_group}].indexOf(${parent.var}), 1);`
 				);
 				break;
+			}
 
 			case 'currentTime':
 			case 'playbackRate':
@@ -139,6 +140,7 @@ export default class BindingWrapper {
 				break;
 
 			case 'paused':
+			{
 				// this is necessary to prevent audio restarting by itself
 				const last = block.get_unique_name(`${parent.var}_is_paused`);
 				block.add_variable(last, 'true');
@@ -146,6 +148,7 @@ export default class BindingWrapper {
 				update_conditions.push(`${last} !== (${last} = ${this.snippet})`);
 				update_dom = `${parent.var}[${last} ? "pause" : "play"]();`;
 				break;
+			}
 
 			case 'value':
 				if (parent.node.get_static_attribute_value('type') === 'file') {
@@ -192,7 +195,15 @@ function get_dom_updater(
 			? `~${binding.snippet}.indexOf(${element.var}.__value)`
 			: `${element.var}.__value === ${binding.snippet}`;
 
-		return `${element.var}.checked = ${condition};`
+		return `${element.var}.checked = ${condition};`;
+	}
+
+	if (binding.node.name === 'text') {
+		return `if (${binding.snippet} !== ${element.var}.textContent) ${element.var}.textContent = ${binding.snippet};`;
+	}
+
+	if (binding.node.name === 'html') {
+		return `if (${binding.snippet} !== ${element.var}.innerHTML) ${element.var}.innerHTML = ${binding.snippet};`;
 	}
 
 	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
@@ -304,7 +315,15 @@ function get_value_from_dom(
 	}
 
 	if ((name === 'buffered' || name === 'seekable' || name === 'played')) {
-		return `@time_ranges_to_array(this.${name})`
+		return `@time_ranges_to_array(this.${name})`;
+	}
+
+	if (name === 'text') {
+		return `this.textContent`;
+	}
+
+	if (name === 'html') {
+		return `this.innerHTML`;
 	}
 
 	// everything else

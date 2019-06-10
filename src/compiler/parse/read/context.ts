@@ -1,13 +1,13 @@
 import { Parser } from '../index';
 
-type Identifier = {
+interface Identifier {
 	start: number;
 	end: number;
 	type: 'Identifier';
 	name: string;
-};
+}
 
-type Property = {
+interface Property {
 	start: number;
 	end: number;
 	type: 'Property';
@@ -15,9 +15,9 @@ type Property = {
 	shorthand: boolean;
 	key: Identifier;
 	value: Context;
-};
+}
 
-type Context = {
+interface Context {
 	start: number;
 	end: number;
 	type: 'Identifier' | 'ArrayPattern' | 'ObjectPattern' | 'RestIdentifier';
@@ -91,7 +91,7 @@ export default function read_context(parser: Parser) {
 					end: parser.index,
 					type: 'Identifier',
 					name
-				}
+				};
 				const property: Property = {
 					start,
 					end: parser.index,
@@ -100,7 +100,7 @@ export default function read_context(parser: Parser) {
 					shorthand: true,
 					key,
 					value: key
-				}
+				};
 
 				context.properties.push(property);
 
