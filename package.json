@@ -58,7 +58,6 @@
   },
   "homepage": "https://github.com/sveltejs/svelte#README",
   "devDependencies": {
-    "@sveltejs/svelte-repl": "0.0.5",
     "@types/mocha": "^5.2.0",
     "@types/node": "^10.5.5",
     "@typescript-eslint/eslint-plugin": "^1.9.0",
