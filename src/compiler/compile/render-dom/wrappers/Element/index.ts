@@ -35,12 +35,6 @@ const events = [
 	},
 	{
 		event_names: ['change'],
-		filter: (node: Element, name: string) =>
-			(name === 'text' || name === 'html') &&
-			node.attributes.some(attribute => attribute.name === 'contenteditable')
-	},
-	{
-		event_names: ['change'],
 		filter: (node: Element, _name: string) =>
 			node.name === 'select' ||
 			node.name === 'input' && /radio|checkbox/.test(node.get_static_attribute_value('type') as string)
@@ -514,7 +508,19 @@ export default class ElementWrapper extends Wrapper {
 				.map(binding => `${binding.snippet} === void 0`)
 				.join(' || ');
 
-			if (this.node.name === 'select' || group.bindings.find(binding => binding.node.name === 'indeterminate' || binding.is_readonly_media_attribute())) {
+			const should_initialise = (
+				this.node.name === 'select' ||
+				group.bindings.find(binding => {
+					return (
+						binding.node.name === 'indeterminate' ||
+						binding.node.name === 'text' ||
+						binding.node.name === 'html' ||
+						binding.is_readonly_media_attribute()
+					);
+				})
+			);
+
+			if (should_initialise) {
 				const callback = has_local_function ? handler : `() => ${callee}.call(${this.var})`;
 				block.builders.hydrate.add_line(
 					`if (${some_initial_state_is_undefined}) @add_render_callback(${callback});`

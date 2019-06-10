@@ -1,5 +1,5 @@
 <script>
-    export let name;
+	export let name;
 </script>
 
 <editor contenteditable="true" bind:html={name}></editor>
