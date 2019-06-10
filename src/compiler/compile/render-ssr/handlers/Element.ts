@@ -53,7 +53,11 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	slot_scopes: Map<any, any>;
 }) {
 	let opening_tag = `<${node.name}`;
-	let node_contents; // awkward special case
+
+	// awkward special case
+	let node_contents;
+	let value;
+
 	const contenteditable = (
 		node.name !== 'textarea' &&
 		node.name !== 'input' &&
@@ -151,16 +155,16 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		if (name === 'group') {
 			// TODO server-render group bindings
 		} else if (contenteditable && (name === 'text' || name === 'html')) {
-			const snippet = snip(expression)
+			node_contents = snip(expression);
 			if (name == 'text') {
-				node_contents = '${@escape(' + snippet + ')}'
+				value = '@escape($$value)';
 			} else {
 				// Do not escape HTML content
-				node_contents = '${' + snippet + '}'
+				value = '$$value';
 			}
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = snip(expression);
-			node_contents='${(' + snippet + ') || ""}';
+			node_contents = '${(' + snippet + ') || ""}';
 		} else {
 			const snippet = snip(expression);
 			opening_tag += ' ${(v => v ? ("' + name + '" + (v === true ? "" : "=" + JSON.stringify(v))) : "")(' + snippet + ')}';
@@ -175,8 +179,14 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 	renderer.append(opening_tag);
 
-	if ((node.name === 'textarea' || contenteditable) && node_contents !== undefined) {
-		renderer.append(node_contents);
+	if (node_contents !== undefined) {
+		if (contenteditable) {
+			renderer.append('${($$value => $$value === void 0 ? `');
+			renderer.render(node.children, options);
+			renderer.append('` : ' + value + ')(' + node_contents + ')}');
+		} else {
+			renderer.append(node_contents);
+		}
 	} else {
 		renderer.render(node.children, options);
 	}
