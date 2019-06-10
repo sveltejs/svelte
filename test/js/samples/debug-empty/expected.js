@@ -2,14 +2,15 @@
 import {
 	SvelteComponentDev,
 	add_location,
-	append,
-	detach,
+	append_dev,
+	detach_dev,
+	dispatch_dev,
 	element,
 	init,
-	insert,
+	insert_dev,
 	noop,
 	safe_not_equal,
-	set_data,
+	set_data_dev,
 	space,
 	text
 } from "svelte/internal";
@@ -19,7 +20,7 @@ const file = undefined;
 function create_fragment(ctx) {
 	var h1, t0, t1, t2, t3;
 
-	return {
+	const block = {
 		c: function create() {
 			h1 = element("h1");
 			t0 = text("Hello ");
@@ -35,16 +36,16 @@ function create_fragment(ctx) {
 		},
 
 		m: function mount(target, anchor) {
-			insert(target, h1, anchor);
-			append(h1, t0);
-			append(h1, t1);
-			append(h1, t2);
-			insert(target, t3, anchor);
+			insert_dev(target, h1, anchor);
+			append_dev(h1, t0);
+			append_dev(h1, t1);
+			append_dev(h1, t2);
+			insert_dev(target, t3, anchor);
 		},
 
 		p: function update(changed, ctx) {
 			if (changed.name) {
-				set_data(t1, ctx.name);
+				set_data_dev(t1, ctx.name);
 			}
 
 			debugger;
@@ -55,11 +56,13 @@ function create_fragment(ctx) {
 
 		d: function destroy(detaching) {
 			if (detaching) {
-				detach(h1);
-				detach(t3);
+				detach_dev(h1);
+				detach_dev(t3);
 			}
 		}
 	};
+	dispatch_dev("SvelteRegisterBlock", { block, id: create_fragment.name, type: "component", source: "", ctx });
+	return block;
 }
 
 function instance($$self, $$props, $$invalidate) {
@@ -74,6 +77,10 @@ function instance($$self, $$props, $$invalidate) {
 		if ('name' in $$props) $$invalidate('name', name = $$props.name);
 	};
 
+	$$self.$unsafe_set = $$values => {
+		if ('name' in $$values) $$invalidate('name', name = $$values.name);
+	};
+
 	return { name };
 }
 
@@ -81,6 +88,7 @@ class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
 		init(this, options, instance, create_fragment, safe_not_equal, ["name"]);
+		dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "Component", id: create_fragment.name });
 
 		const { ctx } = this.$$;
 		const props = options.props || {};
