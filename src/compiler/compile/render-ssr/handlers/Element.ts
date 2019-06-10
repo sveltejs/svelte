@@ -156,23 +156,18 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			// TODO server-render group bindings
 		} else if (contenteditable && (name === 'text' || name === 'html')) {
 			node_contents = snip(expression);
-			if (name == 'text') {
-				value = '@escape($$value)';
-			} else {
-				// Do not escape HTML content
-				value = '$$value';
-			}
+			value = name === 'text' ? '@escape($$value)' : '$$value';
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = snip(expression);
 			node_contents = '${(' + snippet + ') || ""}';
 		} else {
 			const snippet = snip(expression);
-			opening_tag += ' ${(v => v ? ("' + name + '" + (v === true ? "" : "=" + JSON.stringify(v))) : "")(' + snippet + ')}';
+			opening_tag += ' ${($$value => $$value ? ("' + name + '" + ($$value === true ? "" : "=" + JSON.stringify($$value))) : "")(' + snippet + ')}';
 		}
 	});
 
 	if (add_class_attribute) {
-		opening_tag += `\${((v) => v ? ' class="' + v + '"' : '')([${class_expression}].join(' ').trim())}`;
+		opening_tag += `\${(($$value) => $$value ? ' class="' + $$value + '"' : '')([${class_expression}].join(' ').trim())}`;
 	}
 
 	opening_tag += '>';
