@@ -610,7 +610,7 @@ export default class Element extends Node {
 			} else if (
 				name === 'text' ||
 				name === 'html'
-			){
+			) {
 				const contenteditable = this.attributes.find(
 					(attribute: Attribute) => attribute.name === 'contenteditable'
 				);
@@ -626,7 +626,7 @@ export default class Element extends Node {
 						message: `'contenteditable' attribute cannot be dynamic if element uses two-way binding`
 					});
 				}
-		} else if (name !== 'this') {
+			} else if (name !== 'this') {
 				component.error(binding, {
 					code: `invalid-binding`,
 					message: `'${binding.name}' is not a valid binding`

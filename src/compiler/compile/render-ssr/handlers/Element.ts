@@ -151,12 +151,12 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		if (name === 'group') {
 			// TODO server-render group bindings
 		} else if (contenteditable && (name === 'text' || name === 'html')) {
-			const snippet = snip(expression)
+			const snippet = snip(expression);
 			if (name == 'text') {
-				node_contents = '${@escape(' + snippet + ')}'
+				node_contents = '${@escape(' + snippet + ')}';
 			} else {
 				// Do not escape HTML content
-				node_contents = '${' + snippet + '}'
+				node_contents = '${' + snippet + '}';
 			}
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = snip(expression);

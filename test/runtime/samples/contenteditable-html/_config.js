@@ -19,14 +19,14 @@ export default {
 
 		el.innerHTML = 'every<span>body</span>';
 
-        // No updates to data yet
+		// No updates to data yet
 		assert.htmlEqual(target.innerHTML, `
 			<editor>every<span>body</span></editor>
 			<p>hello <b>world</b></p>
 		`);
 
-        // Handle user input
-        const event = new window.Event('input');
+		// Handle user input
+		const event = new window.Event('input');
 		await el.dispatchEvent(event);
 		assert.htmlEqual(target.innerHTML, `
 			<editor>every<span>body</span></editor>
