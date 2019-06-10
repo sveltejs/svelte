@@ -1,7 +1,6 @@
 ---
 title: Virtual DOM is pure overhead
 description: Let's retire the 'virtual DOM is fast' myth once and for all
-pubdate: 2018-12-27
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---

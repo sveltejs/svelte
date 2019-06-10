@@ -8,8 +8,8 @@ On line 116, add `currentTime={time}`, `duration` and `paused` bindings:
 
 ```html
 <video
-	poster="http://svelte-assets.surge.sh/caminandes-llamigos.jpg"
-	src="http://svelte-assets.surge.sh/caminandes-llamigos.mp4"
+	poster="https://svelte-assets.surge.sh/caminandes-llamigos.jpg"
+	src="https://svelte-assets.surge.sh/caminandes-llamigos.mp4"
 	on:mousemove={handleMousemove}
 	on:mousedown={handleMousedown}
 	bind:currentTime={time}
@@ -31,7 +31,7 @@ The complete set of bindings for `<audio>` and `<video>` is as follows — four 
 * `seekable` (readonly) — ditto
 * `played` (readonly) — ditto
 
-...and three *two-way* bindings:
+...and four *two-way* bindings:
 
 * `currentTime` — the current point in the video, in seconds
 * `playbackRate` — how fast to play the video, where `1` is 'normal'

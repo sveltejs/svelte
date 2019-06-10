@@ -20,7 +20,7 @@ onMount(callback: () => () => void)
 
 The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live *inside* the component; it can be called from an external module).
 
-`onMount` does not run inside a [server-side component](docs#server-side-component-api).
+`onMount` does not run inside a [server-side component](docs#Server-side_component_API).
 
 ```html
 <script>
@@ -176,8 +176,39 @@ Retrieves the context that belongs to the closest parent component with the spec
 
 #### `createEventDispatcher`
 
-TODO
+```js
+dispatch: ((name: string, detail?: any) => void) = createEventDispatcher();
+```
 
+---
+
+Creates an event dispatcher that can be used to dispatch [component events](docs#Component_events). Event dispatchers are functions that can take two arguments: `name` and `detail`.
+
+Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture) and are not cancellable with `event.preventDefault()`. The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
+
+```html
+<script>
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+</script>
+
+<button on:click="{() => dispatch('notify', 'detail value')}">Fire Event</button>
+```
+
+---
+
+Events dispatched from child components can be listened to in their parent. Any data provided when the event was dispatched is available on the `detail` property of the event object.
+
+```html
+<script>
+	function callbackFunction(event) {
+		console.log(`Notify fired! Detail: ${event.detail}`)
+	}
+</script>
+
+<Child on:notify="{callbackFunction}"/>
+```
 
 ### `svelte/store`
 
@@ -293,13 +324,13 @@ const time = readable(new Date(), set => {
 store = derived(a, callback: (a: any) => any)
 ```
 ```js
-store = derived(a, callback: (a: any, set: (value: any) => void) => void, initial_value: any)
+store = derived(a, callback: (a: any, set: (value: any) => void) => void | () => void, initial_value: any)
 ```
 ```js
 store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
 ```
 ```js
-store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void, initial_value: any)
+store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void | () => void, initial_value: any)
 ```
 
 ---
@@ -325,6 +356,20 @@ import { derived } from 'svelte/store';
 
 const delayed = derived(a, ($a, set) => {
 	setTimeout(() => set($a), 1000);
+}, 'one moment...');
+```
+
+If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes:
+
+```js
+import { derived } from 'svelte/store';
+
+const tick = derived(frequency, ($frequency, set) => {
+	const interval = setInterval(() => set(Date.now()), 1000 / frequency);
+
+	return () => {
+		clearInterval(interval);
+	}
 }, 'one moment...');
 ```
 
@@ -375,7 +420,7 @@ Tweened stores update their values over a fixed duration. The following options 
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the tween lasts
-* `easing` (`function`, default `t => t`) — an [easing function](docs#svelte-easing)
+* `easing` (`function`, default `t => t`) — an [easing function](docs#svelte_easing)
 * `interpolator` (`function`) — see below
 
 `store.set` and `store.update` can accept a second `options` argument that will override the options passed in upon instantiation.
@@ -455,6 +500,8 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 
 As with [`tweened`](#tweened) stores, `set` and `update` return a Promise that resolves if the spring settles. The `store.stiffness` and `store.damping` properties can be changed while the spring is in motion, and will take immediate effect.
 
+Both `set` and `update` can take a second argument — an object with `hard` or `soft` properties. `{ hard: true }` sets the target value immediately; `{ soft: n }` preserves existing momentum for `n` seconds before settling. `{ soft: true }` is equivalent to `{ soft: 0.5 }`.
+
 [See a full example on the spring tutorial.](tutorial/spring)
 
 ```html
@@ -470,26 +517,280 @@ As with [`tweened`](#tweened) stores, `set` and `update` return a Promise that r
 
 ### `svelte/transition`
 
-TODO
+The `svelte/transition` module exports six functions: `fade`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with svelte [`transitions`](docs#Transitions).
 
-* fade, fly, slide, scale, draw
-* crossfade...
+#### `fade`
 
-### `svelte/animation`
+```sv
+transition:fade={params}
+```
+```sv
+in:fade={params}
+```
+```sv
+out:fade={params}
+```
 
-TODO
+---
 
-* TODO this doesn't even exist yet
+Animates the opacity of an element from 0 to the current opacity for `in` transitions and from the current opacity to 0 for `out` transitions.
 
-TODO
+`fade` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+
+You can see the `fade` transition in action in the [transition tutorial](tutorial/transition).
+
+```html
+<script>
+	import { fade } from 'svelte/transition';
+</script>
+
+{#if condition}
+	<div transition:fade="{{delay: 250, duration: 300}}">
+		fades in and out
+	</div>
+{/if}
+```
+
+#### `fly`
+
+```sv
+transition:fly={params}
+```
+```sv
+in:fly={params}
+```
+```sv
+out:fly={params}
+```
+
+---
+
+Animates the x and y positions and the opacity of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+
+`fly` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `x` (`number`, default 0) - the x offset to animate out to and in from
+* `y` (`number`, default 0) - the y offset to animate out to and in from
+* `opacity` (`number`, default 0) - the opacity value to animate out to and in from
+
+You can see the `fly` transition in action in the [transition tutorial](tutorial/adding-parameters-to-transitions).
+
+```html
+<script>
+	import { fly } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+{#if condition}
+	<div transition:fly="{{delay: 250, duration: 300, x: 100, y: 500, opacity: 0.5, easing: quintOut}}">
+		flies in and out
+	</div>
+{/if}
+```
+
+#### `slide`
+
+```sv
+transition:slide={params}
+```
+```sv
+in:slide={params}
+```
+```sv
+out:slide={params}
+```
+
+---
+
+Slides an element in and out.
+
+`slide` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+
+```html
+<script>
+	import { slide } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+{#if condition}
+	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut }}">
+		slides in and out
+	</div>
+{/if}
+```
+
+#### `scale`
+
+```sv
+transition:scale={params}
+```
+```sv
+in:scale={params}
+```
+```sv
+out:scale={params}
+```
+
+---
+
+Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+
+`scale` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `start` (`number`, default 0) - the scale value to animate out to and in from
+* `opacity` (`number`, default 0) - the opacity value to animate out to and in from
+
+```html
+<script>
+	import { scale } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+{#if condition}
+	<div transition:scale="{{duration: 500, delay: 500, opacity: 0.5, start: 0.5, easing: quintOut}}">
+		scales in and out
+	</div>
+{/if}
+```
+
+#### `draw`
+
+```sv
+transition:draw={params}
+```
+```sv
+in:draw={params}
+```
+```sv
+out:draw={params}
+```
+
+---
+
+Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
+
+`scale` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `speed` (`number`, default undefined) - the speed of the animation, see below.
+* `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicInOut`) — an [easing function](docs#svelte_easing)
+
+The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will halve that duration and setting it to `2` will double it.
+
+```html
+<script>
+	import { draw } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+<svg viewBox="0 0 5 5" xmlns="http://www.w3.org/2000/svg">
+	{#if condition}
+		<path transition:draw="{{duration: 5000, delay: 500, easing: quintOut}}"
+					d="M2 1 h1 v1 h1 v1 h-1 v1 h-1 v-1 h-1 v-1 h1 z"
+					fill="none"
+					stroke="cornflowerblue"
+					stroke-width="0.1px"
+					stroke-linejoin="round"
+		/>
+	{/if}
+</svg>
+
+```
+
+
+<!-- Crossfade is coming soon... -->
+
+
+
+### `svelte/animate`
+
+The `svelte/animate` module exports one function for use with svelte [animations](docs#Animations).
+
+#### `flip`
+
+```sv
+animate:flip={params}
+```
+
+The `flip` function calculates the start and end position of an element and animates between them, translating the `x` and `y` values. `flip` stands for [First, Last, Invert, Play](https://aerotwist.com/blog/flip-your-animations/).
+
+`flip` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number` | `function`, default `d => Math.sqrt(d) * 120`) — see below
+* `easing` (`function`, default [`cubicOut`](docs#cubicOut)) — an [easing function](docs#svelte_easing)
+
+
+`duration` can be be provided as either:
+
+- a `number`, in milliseconds.
+- a function, `distance: number => duration: number`, receiving the distance the element will travel in pixels and returning the duration in milliseconds. This allows you to assign a duration that is relative to the distance travelled by each element.
+
+---
+
+You can see a full example on the [animations tutorial](tutorial/animate)
+
+
+```html
+<script>
+	import { flip } from 'svelte/animate';
+	import { quintOut } from 'svelte/easing';
+
+	let list = [1, 2, 3];
+</script>
+
+{#each list as n (n)}
+	<div animate:flip="{{delay: 250, duration: 250, easing: quintOut}}">
+		{n}
+	</div>
+{/each}
+```
+
+
 
 ### `svelte/easing`
 
 * TODO could have nice little interactive widgets showing the different functions, maybe
 
+
 ### `svelte/register`
 
-TODO
+To render Svelte components in Node.js without bundling, use `require('svelte/register')`. After that, you can use `require` to include any `.svelte` file.
+
+```js
+require('svelte/register');
+
+const App = require('./App.svelte').default;
+
+...
+
+const { html, css, head } = App.render({ answer: 42 });
+```
+
+> The `.default` is necessary because we're converting from native JavaScript modules to the CommonJS modules recognised by Node. Note that if your component imports JavaScript modules, they will fail to load in Node and you will need to use a bundler instead.
+
+To set compile options, or to use a custom file extension, call the `register` hook as a function:
+
+```js
+require('svelte/register')({
+  extensions: ['.customextension'], // defaults to ['.html', '.svelte']
+	preserveComments: true
+});
+```
 
 
 ### Client-side component API
@@ -499,8 +800,6 @@ TODO
 ```js
 const component = new Component(options)
 ```
-
----
 
 A client-side component — that is, a component compiled with `generate: 'dom'` (or the `generate` option left unspecified) is a JavaScript class.
 
@@ -532,7 +831,7 @@ Existing children of `target` are left where they are.
 
 ---
 
-The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the [`hydratable: true` option](docs#compile).
+The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the [`hydratable: true` option](docs#svelte_compile).
 
 Whereas children of `target` are normally left alone, `hydrate: true` will cause any children to be removed. For that reason, the `anchor` option cannot be used alongside `hydrate: true`.
 
@@ -573,10 +872,14 @@ component.$on(event, callback)
 
 Causes the `callback` function to be called whenever the component dispatches an `event`.
 
+A function is returned that will remove the event listener when called.
+
 ```js
-app.$on('selected', event => {
+const off = app.$on('selected', event => {
 	console.log(event.detail.selection);
 });
+
+off();
 ```
 
 #### `$destroy`

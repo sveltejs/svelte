@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { extract_frontmatter, extract_metadata, langs, link_renderer } from '../../utils/markdown.js';
+import { SLUG_PRESERVE_UNICODE, SLUG_SEPARATOR } from '../../../config';
+import { extract_frontmatter, extract_metadata, langs, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
+import { make_session_slug_processor } from '@sveltejs/site-kit/utils/slug';
 import marked from 'marked';
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
@@ -36,6 +38,11 @@ const blockTypes = [
 ];
 
 export default function() {
+	const makeSlug = make_session_slug_processor({
+		preserve_unicode: SLUG_PRESERVE_UNICODE,
+		separator: SLUG_SEPARATOR
+	});
+
 	return fs
 		.readdirSync(`content/docs`)
 		.filter(file => file[0] !== '.' && path.extname(file) === '.md')
@@ -43,6 +50,8 @@ export default function() {
 			const markdown = fs.readFileSync(`content/docs/${file}`, 'utf-8');
 
 			const { content, metadata } = extract_frontmatter(markdown);
+
+			const sectionSlug = makeSlug(metadata.title);
 
 			const subsections = [];
 
@@ -52,7 +61,7 @@ export default function() {
 
 			renderer.link = link_renderer;
 
-			renderer.hr = (...args) => {
+			renderer.hr = () => {
 				block_open = true;
 
 				return '<div class="side-by-side"><div class="copy">';
@@ -88,7 +97,7 @@ export default function() {
 					lang
 				);
 
-				let html = `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
+				const html = `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
 
 				if (block_open) {
 					block_open = false;
@@ -98,17 +107,8 @@ export default function() {
 				return html;
 			};
 
-			const seen = new Set();
-
 			renderer.heading = (text, level, rawtext) => {
-				const slug = rawtext
-					.toLowerCase()
-					.replace(/[^a-zA-Z0-9]+/g, '-')
-					.replace(/^-/, '')
-					.replace(/-$/, '');
-
-				if (seen.has(slug)) throw new Error(`Duplicate slug ${slug}`);
-				seen.add(slug);
+				const slug = makeSlug(rawtext);
 
 				if (level === 3 || level === 4) {
 					const title = unescape(
@@ -147,7 +147,7 @@ export default function() {
 				html: html.replace(/@@(\d+)/g, (m, id) => hashes[id] || m),
 				metadata,
 				subsections,
-				slug: file.replace(/^\d+-/, '').replace(/\.md$/, ''),
+				slug: sectionSlug,
 				file,
 			};
 		});

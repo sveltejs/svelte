@@ -1,9 +1,8 @@
-export function get(req, res) {
-	if (!req.session || !req.session.passport || !req.session.passport.user) {
-		res.send('null');
-		return;
-	}
+import send from '@polka/send';
+import { isUser, toUser } from '../../backend/auth';
 
-	const { id, username, displayName, photo } = req.session.passport && req.session.passport.user;
-	res.send({ id, username, displayName, photo });
+export async function get(req, res) {
+	const user = await isUser(req, res);
+	res.setHeader('Cache-Control', 'private, no-cache, no-store');
+	return send(res, 200, user ? toUser(user) : null);
 }

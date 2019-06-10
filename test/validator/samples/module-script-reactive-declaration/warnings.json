@@ -1,0 +1,7 @@
+[{
+	"message": "$: has no effect in a module script",
+	"code": "module-script-reactive-declaration",
+	"start": { "line": 4, "column": 1, "character": 54 },
+	"end": { "line": 4, "column": 23, "character": 76 },
+	"pos": 54
+}]
