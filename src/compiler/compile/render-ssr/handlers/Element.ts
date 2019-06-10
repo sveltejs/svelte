@@ -162,12 +162,12 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			node_contents = '${(' + snippet + ') || ""}';
 		} else {
 			const snippet = snip(expression);
-			opening_tag += ' ${($$value => $$value ? ("' + name + '" + ($$value === true ? "" : "=" + JSON.stringify($$value))) : "")(' + snippet + ')}';
+			opening_tag += '${@add_attribute("' + name + '", ' + snippet + ')}';
 		}
 	});
 
 	if (add_class_attribute) {
-		opening_tag += `\${(($$value) => $$value ? ' class="' + $$value + '"' : '')([${class_expression}].join(' ').trim())}`;
+		opening_tag += `\${@add_classes([${class_expression}].join(' ').trim())}`;
 	}
 
 	opening_tag += '>';
