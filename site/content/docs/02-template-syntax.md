@@ -7,7 +7,7 @@ title: Template syntax
 
 ---
 
-A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag, such as `<Widget>`, indicates a *component*.
+A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag, such as `<Widget>` or `<Namespace.Widget>`, indicates a *component*.
 
 ```html
 <script>
@@ -351,6 +351,24 @@ If the `on:` directive is used without a value, the component will *forward* the
 </button>
 ```
 
+---
+
+It's possible to have multiple event listeners for the same event:
+
+```html
+<script>
+	let counter = 0;
+	function increment() {
+		counter = counter + 1;
+	}
+
+	function track(event) {
+		trackEvent(event)
+	}
+</script>
+
+<button on:click={increment} on:click={track}>Click me!</button>
+```
 
 ### Component events
 
@@ -360,13 +378,19 @@ on:eventname={handler}
 
 ---
 
-Components can emit events using [createEventDispatcher](docs#createeventdispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
+Components can emit events using [createEventDispatcher](docs#createEventDispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
 
 ```html
 <SomeComponent on:whatever={handler}/>
 ```
 
+---
 
+As with DOM events, if the `on:` directive is used without a value, the component will *forward* the event, meaning that a consumer of the component can listen for it.
+
+```html
+<SomeComponent on:whatever/>
+```
 
 ### Element bindings
 
@@ -569,12 +593,12 @@ You can bind to component props using the same mechanism.
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
 
-> Note that we can do `{cart.empty}` rather than `{() => cart.empty()}`, since component methods are closures. You don't need to worry about the value of `this` when calling them.
+> Note that we can't do `{cart.empty}` since `cart` is `undefined` when the button is first rendered and throws an error.
 
 ```html
 <ShoppingCart bind:this={cart}/>
 
-<button on:click={cart.empty}>
+<button on:click={() => cart.empty()}>
 	Empty shopping cart
 </button>
 ```
@@ -600,6 +624,9 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 
 <!-- Shorthand, for when name and value match -->
 <div class:active>...</div>
+
+<!-- Multiple class toggles can be included -->
+<div class:active class:inactive={!active} class:isAdmin>...</div>
 ```
 
 
@@ -746,6 +773,8 @@ The `in:` and `out:` directives are not bidirectional. An in transition will con
 {/if}
 ```
 
+> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](docs#Client-side_component_API).
+
 #### Transition parameters
 
 ---
@@ -884,7 +913,138 @@ Local transitions only play when the block they belong to is created or destroye
 
 ### Animations
 
-TODO i can't remember how any of this works
+```sv
+animate:name
+```
+
+```sv
+animate:name={params}
+```
+
+```js
+animation = (node: HTMLElement, { from: DOMRect, to: DOMRect } , params: any) => {
+	delay?: number,
+	duration?: number,
+	easing?: (t: number) => number,
+	css?: (t: number, u: number) => string,
+	tick?: (t: number, u: number) => void
+}
+```
+
+```js
+DOMRect {
+	bottom: number,
+	height: number,
+	​​left: number,
+	right: number,
+	​top: number,
+	width: number,
+	x: number,
+	y:number
+}
+```
+
+---
+
+An animation is triggered when the contents of a [keyed each block](docs#Each_blocks) are re-ordered. Animations do not run when an element is removed, only when the each block's data is reordered. Animate directives must be on an element that is an *immediate* child of a keyed each block.
+
+Animations can be used with Svelte's [built-in animation functions](docs#svelte_animate) or [custom animation functions](docs#Custom_animation_functions).
+
+```html
+<!-- When `list` is reordered the animation will run-->
+{#each list as item, index (item)}
+	<li animate:flip>{item}</li>
+{/each}
+```
+
+#### Animation Parameters
+
+---
+
+As with actions and transitions, animations can have parameters.
+
+(The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
+
+```html
+{#each list as item, index (item)}
+	<li animate:flip="{{ delay: 500 }}">{item}</li>
+{/each}
+```
+
+#### Custom animation functions
+
+---
+
+Animations can use custom functions that provide the `node`, an `animation` object and any `paramaters` as arguments. The `animation` parameter is an object containing `from` and `to` properties each containing a [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect#Properties) describing the geometry of the element in its `start` and `end` positions. The `from` property is the DOMRect of the element in its starting position, the `to` property is the DOMRect of the element in its final position after the list has been reordered and the DOM updated.
+
+If the returned object has a `css` method, Svelte will create a CSS animation that plays on the element.
+
+The `t` argument passed to `css` is a value that goes from `0` and `1` after the `easing` function has been applied. The `u` argument is equal to `1 - t`.
+
+The function is called repeatedly *before* the animation begins, with different `t` and `u` arguments.
+
+
+```html
+<script>
+	import { cubicOut } from 'svelte/easing';
+
+	function whizz(node, { from, to }, params) {
+
+		const dx = from.left - to.left;
+		const dy = from.top - to.top;
+
+		const d = Math.sqrt(dx * dx + dy * dy);
+
+		return {
+			delay: 0,
+			duration: Math.sqrt(d) * 120,
+			easing: cubicOut,
+			css: (t, u) =>
+				`transform: translate(${u * dx}px, ${u * dy}px) rotate(${t*360}deg);`
+		};
+	}
+</script>
+
+{#each list as item, index (item)}
+	<div animate:whizz>{item}</div>
+{/each}
+```
+
+---
+
+
+A custom animation function can also return a `tick` function, which is called *during* the animation with the same `t` and `u` arguments.
+
+> If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
+
+```html
+<script>
+	import { cubicOut } from 'svelte/easing';
+
+	function whizz(node, { from, to }, params) {
+
+		const dx = from.left - to.left;
+		const dy = from.top - to.top;
+
+		const d = Math.sqrt(dx * dx + dy * dy);
+
+		return {
+		delay: 0,
+		duration: Math.sqrt(d) * 120,
+		easing: cubicOut,
+		tick: (t, u) =>
+			Object.assign(node.style, {
+				color: t > 0.5 ? 'Pink' : 'Blue'
+			});
+	};
+	}
+</script>
+
+{#each list as item, index (item)}
+	<div animate:whizz>{item}</div>
+{/each}
+```
+
 
 
 ### Slots
@@ -934,7 +1094,7 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 <div>
 	<slot name="header">No header was provided</slot>
 	<p>Some content between header and footer</p>
-	</slot name="footer"></slot>
+	<slot name="footer"></slot>
 </div>
 ```
 
@@ -980,7 +1140,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 	{/each}
 </ul>
 
-</slot name="footer"></slot>
+<slot name="footer"></slot>
 ```
 
 
@@ -1107,7 +1267,7 @@ This element makes it possible to insert elements into `document.head`. During s
 
 ---
 
-The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the [compiler section](docs#compile). The possible options are:
+The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the [compiler section](docs#svelte_compile). The possible options are:
 
 * `immutable={true}` — you never use mutable data, so the compiler can do simple referential equality checks to determine if values have changed
 * `immutable={false}` — the default. Svelte will be more conservative about whether or not mutable objects have changed
@@ -1119,3 +1279,50 @@ The `<svelte:options>` element provides a place to specify per-component compile
 ```html
 <svelte:options tag="my-custom-element"/>
 ```
+
+
+### @debug
+
+```sv
+{@debug}
+```
+```sv
+{@debug var1, var2, ..., varN}
+```
+
+---
+
+The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.
+
+It accepts a comma-separated list of variable names (not arbitrary expressions).
+
+```html
+<script>
+	let user = {
+		firstname: 'Ada',
+		lastname: 'Lovelace'
+	};
+</script>
+
+{@debug user}
+
+<h1>Hello {user.firstname}!</h1>
+```
+
+---
+
+`{@debug ...}` accepts a comma-separated list of variable names (not arbitrary expressions).
+
+```html
+<!-- Compiles -->
+{@debug user}
+{@debug user1, user2, user3}
+
+<!-- WON'T compile -->
+{@debug user.firstname}
+{@debug myArray[0]}
+{@debug !isReady}
+{@debug typeof user === 'object'}
+```
+
+The `{@debug}` tag without any arguments will insert a `debugger` statement that gets triggered when *any* state changes, as opposed to the specified variables.

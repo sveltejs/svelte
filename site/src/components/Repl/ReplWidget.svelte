@@ -1,10 +1,11 @@
 <script>
-	import { onMount } from 'svelte';
-	import { process_example } from './process_example.js';
 	import Repl from '@sveltejs/svelte-repl';
+	import { onMount } from 'svelte';
+
+	import { process_example } from '../../utils/examples';
 	import InputOutputToggle from './InputOutputToggle.svelte';
 
-	export let version = 'beta';
+	export let version = '3';
 	export let gist = null;
 	export let example = null;
 	export let embedded = false;
@@ -27,8 +28,8 @@
 		}
 
 		if (gist) {
-			fetch(`gist/${gist}`).then(r => r.json()).then(data => {
-				const { id, description, files } = data;
+			fetch(`repl/${gist}.json`).then(r => r.json()).then(data => {
+				const { description, files } = data;
 
 				name = description;
 
@@ -115,6 +116,7 @@
 		{#if process.browser}
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				fixed={mobile}
 				{svelteUrl}
 				{rollupUrl}

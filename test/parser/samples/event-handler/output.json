@@ -21,8 +21,8 @@
 							"start": 19,
 							"end": 43,
 							"id": null,
-							"generator": false,
 							"expression": true,
+							"generator": false,
 							"async": false,
 							"params": [],
 							"body": {
@@ -58,6 +58,7 @@
 						"start": 46,
 						"end": 52,
 						"type": "Text",
+						"raw": "toggle",
 						"data": "toggle"
 					}
 				]
@@ -66,6 +67,7 @@
 				"start": 61,
 				"end": 63,
 				"type": "Text",
+				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
@@ -90,6 +92,7 @@
 								"start": 81,
 								"end": 87,
 								"type": "Text",
+								"raw": "hello!",
 								"data": "hello!"
 							}
 						]
@@ -97,8 +100,5 @@
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }
