@@ -88,7 +88,7 @@ class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
 		init(this, options, instance, create_fragment, safe_not_equal, ["name"]);
-		dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "Component", id: create_fragment.name });
+		dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "Component", options, id: create_fragment.name });
 
 		const { ctx } = this.$$;
 		const props = options.props || {};
