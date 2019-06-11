@@ -8,5 +8,5 @@ fs.readdirSync('src/runtime')
 			module: './index.mjs'
 		}, null, '  '));
 
-		fs.writeFileSync(`${dir}/index.d.ts`, `export * from '../types/runtime/${dir}/index.d.ts';`);
+		fs.writeFileSync(`${dir}/index.d.ts`, `export * from '../types/runtime/${dir}/index';`);
 	});
