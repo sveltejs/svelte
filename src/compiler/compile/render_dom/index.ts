@@ -508,7 +508,7 @@ export default function dom(
 					super(${options.dev && `options`});
 					${should_add_css && `if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
 					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
-					${options.dev && `@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name}", id: create_fragment.name });`}
+					${options.dev && `@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}
 				}
