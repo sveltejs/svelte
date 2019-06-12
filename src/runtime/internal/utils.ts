@@ -87,7 +87,7 @@ export function once(fn) {
 		if (ran) return;
 		ran = true;
 		fn.call(this, ...args);
-	}
+	};
 }
 
 const is_client = typeof window !== 'undefined';
@@ -96,7 +96,9 @@ export let now: () => number = is_client
 	? () => window.performance.now()
 	: () => Date.now();
 
-export let raf = is_client ? requestAnimationFrame.bind(window) : noop;
+export let raf = (callback) => is_client && window.requestAnimationFrame
+	? window.requestAnimationFrame.apply(window, callback)
+	: undefined;
 
 // used internally for testing
 export function set_now(fn) {
