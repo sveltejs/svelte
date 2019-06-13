@@ -49,6 +49,7 @@ virtualConsole.sendTo(console);
 
 global.window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
 global.document = window.document;
+global.requestAnimationFrame = null; // placeholder, filled in using set_raf
 
 // add missing ecmascript globals to window
 for (const key of Object.getOwnPropertyNames(global)) {
