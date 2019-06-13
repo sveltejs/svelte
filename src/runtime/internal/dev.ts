@@ -59,6 +59,18 @@ export function attr_dev(node: Element, attribute: string, value?: string) {
 	else dispatch_dev("SvelteDOMSetAttribute", { node, attribute, value });
 }
 
+export function prop_dev(node: Element, property: string, value?: any) {
+	node[property] = value;
+
+	dispatch_dev("SvelteDOMSetProperty", { node, property, value });
+}
+
+export function dataset_dev(node: HTMLElement, property: string, value?: any) {
+	node.dataset[property] = value;
+
+	dispatch_dev("SvelteDOMSetDataset", { node, property, value });
+}
+
 export function set_data_dev(text, data) {
 	data = '' + data;
 	if (text.data === data) return;
