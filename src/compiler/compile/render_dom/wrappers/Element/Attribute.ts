@@ -149,12 +149,16 @@ export default class AttributeWrapper {
 				block.builders.hydrate.add_line(
 					`${element.var}.${property_name} = ${init};`
 				);
-				updater = `${element.var}.${property_name} = ${should_cache ? last : value};`;
+				updater = block.renderer.options.dev
+					? `@prop_dev(${element.var}, "${property_name}", ${should_cache ? last : value});`
+					: `${element.var}.${property_name} = ${should_cache ? last : value};`;
 			} else if (is_dataset) {
 				block.builders.hydrate.add_line(
 					`${element.var}.dataset.${camel_case_name} = ${init};`
 				);
-				updater = `${element.var}.dataset.${camel_case_name} = ${should_cache ? last : value};`;
+				updater = block.renderer.options.dev
+					? `@dataset_dev(${element.var}, "${camel_case_name}", ${should_cache ? last : value});`
+					: `${element.var}.dataset.${camel_case_name} = ${should_cache ? last : value};`;
 			} else {
 				block.builders.hydrate.add_line(
 					`${method}(${element.var}, "${name}", ${init});`
