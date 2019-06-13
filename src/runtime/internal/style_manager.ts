@@ -1,5 +1,5 @@
 import { element } from './dom';
-import { raf } from './utils';
+import { raf } from './environment';
 
 let stylesheet;
 let active = 0;
