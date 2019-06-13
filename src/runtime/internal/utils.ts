@@ -97,7 +97,7 @@ export let now: () => number = is_client
 	: () => Date.now();
 
 export let raf = (callback) => is_client && window.requestAnimationFrame
-	? window.requestAnimationFrame.apply(window, callback)
+	? window.requestAnimationFrame.call(window, callback)
 	: undefined;
 
 // used internally for testing
