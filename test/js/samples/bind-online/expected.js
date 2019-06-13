@@ -4,11 +4,9 @@ import {
 	add_render_callback,
 	init,
 	listen,
-	navigator,
 	noop,
 	run_all,
-	safe_not_equal,
-	window
+	safe_not_equal
 } from "svelte/internal";
 
 function create_fragment(ctx) {

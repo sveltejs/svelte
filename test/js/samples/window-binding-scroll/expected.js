@@ -3,7 +3,6 @@ import {
 	SvelteComponent,
 	add_render_callback,
 	append,
-	clearTimeout,
 	detach,
 	element,
 	init,
@@ -11,10 +10,8 @@ import {
 	listen,
 	noop,
 	safe_not_equal,
-	setTimeout,
 	set_data,
-	text,
-	window
+	text
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -45,7 +42,7 @@ function create_fragment(ctx) {
 			if (changed.y && !scrolling) {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);
-				window.scrollTo(window.pageXOffset, ctx.y);
+				scrollTo(pageXOffset, ctx.y);
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
 			}
 
