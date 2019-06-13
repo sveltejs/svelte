@@ -1,33 +1,30 @@
 {
+	"include": [],
+
 	"compilerOptions": {
-		"target": "es2015",
-		"module": "es6",
+		"rootDir": "src",
+
+		// target node v8+ (https://node.green/)
+		// the only missing feature is Array.prototype.values
+		"lib": ["es2017"],
+		"target": "es2017",
+
 		"declaration": true,
 		"declarationDir": "types",
+
+		"noEmitOnError": true,
+		"noErrorTruncation": true,
+
+		// rollup takes care of these
+		"module": "esnext",
+		"moduleResolution": "node",
+		"resolveJsonModule": true,
+		"allowSyntheticDefaultImports": true,
+
+		// TODO: error all the things
+		//"strict": true,
 		"noImplicitThis": true,
 		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"noEmitOnError": true,
-		"lib": [
-			"es5",
-			"es6",
-			"dom",
-			"es2015"
-		],
-		"importHelpers": true,
-		"moduleResolution": "node",
-		"baseUrl": ".",
-		"paths": {
-			"svelte/internal": ["./src/runtime/internal/index"],
-			"svelte/easing": ["./src/runtime/easing/index"],
-			"svelte/motion": ["./src/runtime/motion/index"],
-			"svelte/store": ["./src/runtime/store/index"]
-		},
-		"typeRoots": [
-			"node_modules/@types"
-		]
-	},
-	"include": [
-		"src/**/*"
-	]
+		"noUnusedParameters": true
+	}
 }
