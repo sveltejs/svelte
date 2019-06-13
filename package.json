@@ -37,8 +37,7 @@
     "posttest": "agadoo internal/index.mjs",
     "prepublishOnly": "export PUBLISH=true && npm test && npm run create-stubs",
     "create-stubs": "node scripts/create-stubs.js",
-    "tsd": "tsc -p . --emitDeclarationOnly",
-    "typecheck": "tsc -p . --noEmit",
+    "tsd": "tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\""
   },
   "repository": {
