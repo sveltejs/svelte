@@ -1,6 +1,5 @@
 import { element } from './dom';
 import { raf } from './utils';
-import { document } from './globals';
 
 let stylesheet;
 let active = 0;

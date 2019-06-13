@@ -11,11 +11,11 @@ export default class BodyWrapper extends Wrapper {
 			const snippet = handler.render(block);
 
 			block.builders.init.add_block(deindent`
-				@document.body.addEventListener("${handler.name}", ${snippet});
+				@_document.body.addEventListener("${handler.name}", ${snippet});
 			`);
 
 			block.builders.destroy.add_block(deindent`
-				@document.body.removeEventListener("${handler.name}", ${snippet});
+				@_document.body.removeEventListener("${handler.name}", ${snippet});
 			`);
 		});
 	}

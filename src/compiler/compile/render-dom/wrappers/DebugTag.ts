@@ -62,7 +62,7 @@ export default class DebugTagWrapper extends Wrapper {
 			block.builders.update.add_block(deindent`
 				if (${condition}) {
 					const { ${ctx_identifiers} } = ctx;
-					@console.${log}({ ${logged_identifiers} });
+					@_console.${log}({ ${logged_identifiers} });
 					debugger;
 				}
 			`);
@@ -70,7 +70,7 @@ export default class DebugTagWrapper extends Wrapper {
 			block.builders.create.add_block(deindent`
 				{
 					const { ${ctx_identifiers} } = ctx;
-					@console.${log}({ ${logged_identifiers} });
+					@_console.${log}({ ${logged_identifiers} });
 					debugger;
 				}
 			`);
