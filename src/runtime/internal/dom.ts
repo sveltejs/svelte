@@ -66,6 +66,10 @@ export function space() {
 	return text(' ');
 }
 
+export function nbsp() {
+	return text(String.fromCharCode(160));
+}
+
 export function empty() {
 	return text('');
 }
