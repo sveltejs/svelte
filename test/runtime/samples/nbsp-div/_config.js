@@ -1,8 +1,16 @@
 export default {
-	html: `<div>hello&nbsp;</div>`,
+	html: `<div>&nbsp;hello</div>
+	<div>&nbsp;hello&nbsp;</div>
+	<div>&nbsp;hello&nbsp;hello</div>`,
 
 	test({ assert, component, target }) {
-		const text = target.querySelector( 'div' ).textContent;
-		assert.equal( text.charCodeAt( 5 ), 160 );
+		var divList = target.querySelectorAll('div')
+		assert.equal( divList[0].textContent.charCodeAt( 0 ), 160 );
+		assert.equal( divList[1].textContent.charCodeAt( 0 ), 160 );
+		assert.equal( divList[1].textContent.charCodeAt( 6 ), 160 );
+		assert.equal( divList[2].textContent.charCodeAt( 0 ), 160 );
+		assert.equal( divList[2].textContent.charCodeAt( 6 ), 160 );
+
+		
 	}
 };
