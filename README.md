@@ -31,7 +31,7 @@ Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord 
 
 ## Development
 
-Pull requests are encouraged and always welcome. [Pick an issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and help us out!
+Pull requests are encouraged and always welcome. Don't be afraid to [Pick an issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and help us out!
 
 To work on Svelte locally:
 
