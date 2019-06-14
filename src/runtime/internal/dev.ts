@@ -47,7 +47,7 @@ export function listen_dev(node: Node, event: string, handler: EventListenerOrEv
 
 	const dispose = listen(node, event, handler, options);
 	return () => {
-		dispatch_dev("SvelteDOMRemoveEventListener", { event, handler, modifiers });
+		dispatch_dev("SvelteDOMRemoveEventListener", { node, event, handler, modifiers });
 		dispose();
 	};
 }
