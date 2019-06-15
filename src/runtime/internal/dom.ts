@@ -62,6 +62,9 @@ export function text(data: string) {
 	return document.createTextNode(data);
 }
 
+export function space() {
+	return text(' ');
+}
 
 export function empty() {
 	return text('');
