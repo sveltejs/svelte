@@ -1,7 +1,7 @@
 export default {
 	html: `<div>&nbsp;hello</div>
 	<div>&nbsp;hello&nbsp;&nbsp;</div>
-	<div>&nbsp;hello&nbsp;&nbsp;hello</div>`,
+	<div>&nbsp;hello&nbsp; &nbsp;hello</div>`,
 
 	test({ assert, component, target }) {
 		var divList = target.querySelectorAll('div')
@@ -11,7 +11,8 @@ export default {
 		assert.equal( divList[1].textContent.charCodeAt( 7 ), 160 );
 		assert.equal( divList[2].textContent.charCodeAt( 0 ), 160 );
 		assert.equal( divList[2].textContent.charCodeAt( 6 ), 160 );
-		assert.equal( divList[2].textContent.charCodeAt( 7 ), 160 );
+		assert.equal( divList[2].textContent.charCodeAt( 7 ), 32 );//normal space
+		assert.equal( divList[2].textContent.charCodeAt( 8 ), 160 );
 
 		
 	}
