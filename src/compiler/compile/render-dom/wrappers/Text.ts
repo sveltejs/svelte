@@ -54,7 +54,7 @@ export default class TextWrapper extends Wrapper {
 
 		block.add_element(
 			this.var,
-			this.node.use_space ? (this.node.data && this.node.data.charCodeAt(0) === 160) ? `@nbsp()` : `@space()` : `@text(${stringify(this.data)})`,
+			`@text(${stringify(this.data)})`,
 			parent_nodes && `@claim_text(${parent_nodes}, ${stringify(this.data)})`,
 			parent_node
 		);

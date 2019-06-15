@@ -12,7 +12,7 @@ export default class Text extends Node {
 		super(component, parent, scope, info);
 		this.data = info.data;
 
-		if (!component.component_options.preserveWhitespace && !/\S/.test(info.data)) {
+		
 			let node = parent;
 			while (node) {
 				if (node.type === 'Element' && node.name === 'pre') {
@@ -21,7 +21,6 @@ export default class Text extends Node {
 				node = node.parent;
 			}
 
-			this.use_space = true;
-		}
+		
 	}
 }

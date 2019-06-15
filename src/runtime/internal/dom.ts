@@ -62,13 +62,6 @@ export function text(data: string) {
 	return document.createTextNode(data);
 }
 
-export function space() {
-	return text(' ');
-}
-
-export function nbsp() {
-	return text(String.fromCharCode(160));
-}
 
 export function empty() {
 	return text('');
