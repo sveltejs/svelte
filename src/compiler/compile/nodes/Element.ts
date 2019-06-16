@@ -54,7 +54,7 @@ const a11y_required_content = new Set([
 	'h4',
 	'h5',
 	'h6'
-])
+]);
 
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
@@ -180,10 +180,12 @@ export default class Element extends Node {
 					break;
 
 				case 'Transition':
+				{
 					const transition = new Transition(component, this, scope, node);
 					if (node.intro) this.intro = transition;
 					if (node.outro) this.outro = transition;
 					break;
+				}
 
 				case 'Animation':
 					this.animation = new Animation(component, this, scope, node);
@@ -605,6 +607,25 @@ export default class Element extends Node {
 						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`
 					});
 				}
+			} else if (
+				name === 'text' ||
+				name === 'html'
+			) {
+				const contenteditable = this.attributes.find(
+					(attribute: Attribute) => attribute.name === 'contenteditable'
+				);
+
+				if (!contenteditable) {
+					component.error(binding, {
+						code: `missing-contenteditable-attribute`,
+						message: `'contenteditable' attribute is required for text and html two-way bindings`
+					});
+				} else if (contenteditable && !contenteditable.is_static) {
+					component.error(contenteditable, {
+						code: `dynamic-contenteditable-attribute`,
+						message: `'contenteditable' attribute cannot be dynamic if element uses two-way binding`
+					});
+				}
 			} else if (name !== 'this') {
 				component.error(binding, {
 					code: `invalid-binding`,
@@ -687,7 +708,7 @@ export default class Element extends Node {
 			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
 				(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
 			} else {
-				(<Node[]>class_attribute.chunks).push(
+				(class_attribute.chunks as Node[]).push(
 					new Text(this.component, this, this.scope, {
 						type: 'Text',
 						data: ` ${class_name}`

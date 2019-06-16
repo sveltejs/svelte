@@ -24,13 +24,13 @@ import unwrap_parens from './utils/unwrap_parens';
 import Slot from './nodes/Slot';
 import { Node as ESTreeNode } from 'estree';
 
-type ComponentOptions = {
+interface ComponentOptions {
 	namespace?: string;
 	tag?: string;
 	immutable?: boolean;
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
-};
+}
 
 // We need to tell estree-walker that it should always
 // look for an `else` block, otherwise it might get
@@ -97,7 +97,7 @@ export default class Component {
 	node_for_declaration: Map<string, Node> = new Map();
 	partly_hoisted: string[] = [];
 	fully_hoisted: string[] = [];
-	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, node: Node, declaration: Node }> = [];
+	reactive_declarations: Array<{ assignees: Set<string>; dependencies: Set<string>; node: Node; declaration: Node }> = [];
 	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
 	injected_reactive_declaration_vars: Set<string> = new Set();
@@ -106,12 +106,12 @@ export default class Component {
 	indirect_dependencies: Map<string, Set<string>> = new Map();
 
 	file: string;
-	locate: (c: number) => { line: number, column: number };
+	locate: (c: number) => { line: number; column: number };
 
 	// TODO this does the same as component.locate! remove one or the other
 	locator: (search: number, startIndex?: number) => {
-		line: number,
-		column: number
+		line: number;
+		column: number;
 	};
 
 	stylesheet: Stylesheet;
@@ -140,6 +140,7 @@ export default class Component {
 		this.compile_options = compile_options;
 
 		this.file = compile_options.filename && (
+			// eslint-disable-next-line no-useless-escape
 			typeof process !== 'undefined' ? compile_options.filename.replace(process.cwd(), '').replace(/^[\/\\]/, '') : compile_options.filename
 		);
 		this.locate = getLocator(this.source);
@@ -248,7 +249,7 @@ export default class Component {
 
 			result = result
 				.replace(/__svelte:self__/g, this.name)
-				.replace(compile_options.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
+				.replace(compile_options.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (_match: string, sigil: string, name: string) => {
 					if (sigil === '@') {
 						if (internal_exports.has(name)) {
 							if (compile_options.dev && internal_exports.has(`${name}Dev`)) name = `${name}Dev`;
@@ -379,7 +380,7 @@ export default class Component {
 
 		reserved.forEach(add);
 		internal_exports.forEach(add);
-		this.var_lookup.forEach((value, key) => add(key));
+		this.var_lookup.forEach((_value, key) => add(key));
 
 		return (name: string) => {
 			if (test) name = `${name}$`;
@@ -398,12 +399,12 @@ export default class Component {
 
 	error(
 		pos: {
-			start: number,
-			end: number
+			start: number;
+			end: number;
 		},
-		e : {
-			code: string,
-			message: string
+		e: {
+			code: string;
+			message: string;
 		}
 	) {
 		error(e.message, {
@@ -418,12 +419,12 @@ export default class Component {
 
 	warn(
 		pos: {
-			start: number,
-			end: number
+			start: number;
+			end: number;
 		},
 		warning: {
-			code: string,
-			message: string
+			code: string;
+			message: string;
 		}
 	) {
 		if (!this.locator) {
@@ -527,7 +528,7 @@ export default class Component {
 
 		let result = '';
 
-		script.content.body.forEach((node, i) => {
+		script.content.body.forEach((node) => {
 			if (this.hoistable_nodes.has(node) || this.reactive_declaration_nodes.has(node)) {
 				if (a !== b) result += `[✂${a}-${b}✂]`;
 				a = node.end;
@@ -564,7 +565,7 @@ export default class Component {
 
 		this.add_sourcemap_locations(script.content);
 
-		let { scope, globals } = create_scopes(script.content);
+		const { scope, globals } = create_scopes(script.content);
 		this.module_scope = scope;
 
 		scope.declarations.forEach((node, name) => {
@@ -588,7 +589,7 @@ export default class Component {
 				this.error(node, {
 					code: 'illegal-subscription',
 					message: `Cannot reference store value inside <script context="module">`
-				})
+				});
 			} else {
 				this.add_var({
 					name,
@@ -624,7 +625,7 @@ export default class Component {
 			});
 		});
 
-		let { scope: instance_scope, map, globals } = create_scopes(script.content);
+		const { scope: instance_scope, map, globals } = create_scopes(script.content);
 		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
 
@@ -646,7 +647,7 @@ export default class Component {
 			this.node_for_declaration.set(name, node);
 		});
 
-		globals.forEach((node, name) => {
+		globals.forEach((_node, name) => {
 			if (this.var_lookup.has(name)) return;
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
@@ -705,7 +706,7 @@ export default class Component {
 		let scope = instance_scope;
 
 		walk(this.ast.instance.content, {
-			enter(node, parent) {
+			enter(node) {
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
@@ -738,7 +739,7 @@ export default class Component {
 					scope = scope.parent;
 				}
 			}
-		})
+		});
 	}
 
 	extract_reactive_store_references() {
@@ -786,7 +787,7 @@ export default class Component {
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
-			return `${name.slice(1)}.set(${name})`
+			return `${name.slice(1)}.set(${name})`;
 		}
 
 		if (variable && !variable.referenced && !variable.is_reactive_dependency && !variable.export_name && !name.startsWith('$$')) {
@@ -888,13 +889,13 @@ export default class Component {
 								}
 
 								if (variable.writable && variable.name !== variable.export_name) {
-									code.prependRight(declarator.id.start, `${variable.export_name}: `)
+									code.prependRight(declarator.id.start, `${variable.export_name}: `);
 								}
 
 								if (next) {
-									const next_variable = component.var_lookup.get(next.id.name)
+									const next_variable = component.var_lookup.get(next.id.name);
 									const new_declaration = !next_variable.export_name
-										|| (current_group.insert && next_variable.subscribable)
+										|| (current_group.insert && next_variable.subscribable);
 
 									if (new_declaration) {
 										code.overwrite(declarator.end, next.start, ` ${node.kind} `);
@@ -904,7 +905,7 @@ export default class Component {
 								current_group = null;
 
 								if (variable.subscribable) {
-									let insert = get_insert(variable);
+									const insert = get_insert(variable);
 
 									if (next) {
 										code.overwrite(declarator.end, next.start, `; ${insert}; ${node.kind} `);
@@ -975,9 +976,9 @@ export default class Component {
 					if (!d.init) return false;
 					if (d.init.type !== 'Literal') return false;
 
-					const v = this.var_lookup.get(d.id.name)
-					if (v.reassigned) return false
-					if (v.export_name) return false
+					const v = this.var_lookup.get(d.id.name);
+					if (v.reassigned) return false;
+					if (v.export_name) return false;
 
 					if (this.var_lookup.get(d.id.name).reassigned) return false;
 					if (this.vars.find(variable => variable.name === d.id.name && variable.module)) return false;
@@ -1006,7 +1007,7 @@ export default class Component {
 		});
 
 		const checked = new Set();
-		let walking = new Set();
+		const walking = new Set();
 
 		const is_hoistable = fn_declaration => {
 			if (fn_declaration.type === 'ExportNamedDeclaration') {
@@ -1015,7 +1016,7 @@ export default class Component {
 
 			const instance_scope = this.instance_scope;
 			let scope = this.instance_scope;
-			let map = this.instance_scope_map;
+			const map = this.instance_scope_map;
 
 			let hoistable = true;
 
@@ -1051,7 +1052,7 @@ export default class Component {
 									hoistable = false;
 								} else if (!is_hoistable(other_declaration)) {
 									hoistable = false;
-                }
+								}
 							}
 
 							else {
@@ -1103,7 +1104,7 @@ export default class Component {
 				const dependencies = new Set();
 
 				let scope = this.instance_scope;
-				let map = this.instance_scope_map;
+				const map = this.instance_scope_map;
 
 				walk(node.body, {
 					enter(node, parent) {
@@ -1320,14 +1321,16 @@ function process_component_options(component: Component, nodes) {
 					case 'accessors':
 					case 'immutable':
 					case 'preserveWhitespace':
+					{
 						const code = `invalid-${name}-value`;
-						const message = `${name} attribute must be true or false`
+						const message = `${name} attribute must be true or false`;
 						const value = get_value(attribute, code, message);
 
 						if (typeof value !== 'boolean') component.error(attribute, { code, message });
 
 						component_options[name] = value;
 						break;
+					}
 
 					default:
 						component.error(attribute, {

@@ -36,6 +36,7 @@ export default class InlineComponent extends Node {
 			: null;
 
 		info.attributes.forEach(node => {
+			/* eslint-disable no-fallthrough */
 			switch (node.type) {
 				case 'Action':
 					component.error(node, {
@@ -82,6 +83,7 @@ export default class InlineComponent extends Node {
 				default:
 					throw new Error(`Not implemented: ${node.type}`);
 			}
+			/* eslint-enable no-fallthrough */
 		});
 
 		if (this.lets.length > 0) {
@@ -97,6 +99,17 @@ export default class InlineComponent extends Node {
 		} else {
 			this.scope = scope;
 		}
+
+		this.handlers.forEach(handler => {
+			handler.modifiers.forEach(modifier => {
+				if (modifier !== 'once') {
+					component.error(handler, {
+						code: 'invalid-event-modifier',
+						message: `Event modifiers other than 'once' can only be used on DOM elements`
+					});
+				}
+			});
+		});
 
 		this.children = map_children(component, this, this.scope, info.children);
 	}

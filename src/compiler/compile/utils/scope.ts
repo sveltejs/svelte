@@ -50,10 +50,10 @@ export function create_scopes(expression: Node) {
 			if (map.has(node)) {
 				scope = scope.parent;
 			}
-		},
+		}
 	});
 
-	scope.declarations.forEach((node, name) => {
+	scope.declarations.forEach((_node, name) => {
 		globals.delete(name);
 	});
 

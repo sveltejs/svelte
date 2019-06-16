@@ -1,0 +1,11 @@
+{
+	"extends": "../../tsconfig.json",
+	"include": ["."],
+
+	"compilerOptions": {
+		"lib": ["es2017", "webworker"]
+
+		// TODO: remove mocha types from the whole project
+		// "types": ["node", "estree"]
+	}
+}

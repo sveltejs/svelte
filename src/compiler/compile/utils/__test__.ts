@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import deindent from './deindent';
 import CodeBuilder from './CodeBuilder';
+import get_name_from_filename from './get_name_from_filename';
 
 describe('deindent', () => {
 	it('deindents a simple string', () => {
@@ -162,5 +163,19 @@ describe('CodeBuilder', () => {
 			// line 4
 		`
 		);
+	});
+});
+
+describe('get_name_from_filename', () => {
+	it('uses the basename', () => {
+		assert.equal(get_name_from_filename('path/to/Widget.svelte'), 'Widget');
+	});
+
+	it('uses the directory name, if basename is index', () => {
+		assert.equal(get_name_from_filename('path/to/Widget/index.svelte'), 'Widget');
+	});
+
+	it('handles unusual filenames', () => {
+		assert.equal(get_name_from_filename('path/to/[...parts].svelte'), 'Parts');
 	});
 });
