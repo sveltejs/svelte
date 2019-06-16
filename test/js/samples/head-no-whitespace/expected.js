@@ -2,6 +2,7 @@
 import {
 	SvelteComponent,
 	append,
+	attr,
 	detach,
 	element,
 	init,
@@ -16,10 +17,10 @@ function create_fragment(ctx) {
 		c() {
 			meta0 = element("meta");
 			meta1 = element("meta");
-			meta0.name = "twitter:creator";
-			meta0.content = "@sveltejs";
-			meta1.name = "twitter:title";
-			meta1.content = "Svelte";
+			attr(meta0, "name", "twitter:creator");
+			attr(meta0, "content", "@sveltejs");
+			attr(meta1, "name", "twitter:title");
+			attr(meta1, "content", "Svelte");
 		},
 
 		m(target, anchor) {
