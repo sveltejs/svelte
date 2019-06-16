@@ -1,3 +1,5 @@
+import './ambient';
+
 export {
 	onMount,
 	onDestroy,
