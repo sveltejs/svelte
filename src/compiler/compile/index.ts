@@ -6,7 +6,7 @@ import render_ssr from './render-ssr/index';
 import { CompileOptions, Warning } from '../interfaces';
 import Component from './Component';
 import fuzzymatch from '../utils/fuzzymatch';
-import { get_name_from_filename } from './utils/get_name_from_filename';
+import get_name_from_filename from './utils/get_name_from_filename';
 
 const valid_options = [
 	'format',
