@@ -4,7 +4,7 @@ export default {
 	},
 
 	html: `
-		<editor><b>world</b></editor>
+		<editor contenteditable="true"><b>world</b></editor>
 		<p>hello <b>world</b></p>
 	`,
 
@@ -21,7 +21,7 @@ export default {
 
 		// No updates to data yet
 		assert.htmlEqual(target.innerHTML, `
-			<editor>every<span>body</span></editor>
+			<editor contenteditable="true">every<span>body</span></editor>
 			<p>hello <b>world</b></p>
 		`);
 
@@ -29,14 +29,14 @@ export default {
 		const event = new window.Event('input');
 		await el.dispatchEvent(event);
 		assert.htmlEqual(target.innerHTML, `
-			<editor>every<span>body</span></editor>
+			<editor contenteditable="true">every<span>body</span></editor>
 			<p>hello every<span>body</span></p>
 		`);
 
 		component.name = 'good<span>bye</span>';
 		assert.equal(el.innerHTML, 'good<span>bye</span>');
 		assert.htmlEqual(target.innerHTML, `
-			<editor>good<span>bye</span></editor>
+			<editor contenteditable="true">good<span>bye</span></editor>
 			<p>hello good<span>bye</span></p>
 		`);
 	},
