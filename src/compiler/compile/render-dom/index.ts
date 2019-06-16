@@ -74,18 +74,20 @@ export default function dom(
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
+	/* eslint-disable @typescript-eslint/indent,indent */
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
 		? deindent`
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
-				`if ('${prop.export_name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = $$props.${prop.export_name}`)};`
+					`if ('${prop.export_name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = $$props.${prop.export_name}`)};`
 				)}
 				${component.slots.size > 0 &&
 				`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
 		: null;
+	/* eslint-enable @typescript-eslint/indent,indent */
 
 	const body = [];
 
@@ -152,12 +154,12 @@ export default function dom(
 	// instrument assignments
 	if (component.ast.instance) {
 		let scope = component.instance_scope;
-		let map = component.instance_scope_map;
+		const map = component.instance_scope_map;
 
 		let pending_assignments = new Set();
 
 		walk(component.ast.instance.content, {
-			enter: (node, parent) => {
+			enter: (node) => {
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
@@ -390,7 +392,7 @@ export default function dom(
 
 			const store = component.var_lookup.get(name);
 			if (store && store.reassigned) {
-				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = ${name}.subscribe($$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`
+				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = ${name}.subscribe($$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`;
 			}
 
 			return $name;

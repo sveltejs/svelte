@@ -9,7 +9,7 @@ export default function(node: EachBlock, renderer: Renderer, options: RenderOpti
 
 	const ctx = node.index
 		? `([✂${start}-${end}✂], ${node.index})`
-		: `([✂${start}-${end}✂])`
+		: `([✂${start}-${end}✂])`;
 
 	const open = `\${${node.else ? `${snippet}.length ? ` : ''}@each(${snippet}, ${ctx} => \``;
 	renderer.append(open);

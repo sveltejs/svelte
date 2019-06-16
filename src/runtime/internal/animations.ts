@@ -1,4 +1,5 @@
-import { identity as linear, noop, now } from './utils';
+import { identity as linear, noop } from './utils';
+import { now } from './environment';
 import { loop } from './loop';
 import { create_rule, delete_rule } from './style_manager';
 import { AnimationConfig } from '../animate';
@@ -7,7 +8,7 @@ import { AnimationConfig } from '../animate';
 //todo: documentation says it is DOMRect, but in IE it would be ClientRect
 type PositionRect = DOMRect|ClientRect;
 
-type AnimationFn = (node: Element, { from, to }: { from: PositionRect, to: PositionRect }, params: any) => AnimationConfig;
+type AnimationFn = (node: Element, { from, to }: { from: PositionRect; to: PositionRect }, params: any) => AnimationConfig;
 
 export function create_animation(node: Element & ElementCSSInlineStyle, from: PositionRect, fn: AnimationFn, params) {
 	if (!from) return noop;

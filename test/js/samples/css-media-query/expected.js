@@ -2,6 +2,7 @@
 import {
 	SvelteComponent,
 	append,
+	attr,
 	detach,
 	element,
 	init,
@@ -23,7 +24,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			div = element("div");
-			div.className = "svelte-1slhpfn";
+			attr(div, "class", "svelte-1slhpfn");
 		},
 
 		m(target, anchor) {

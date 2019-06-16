@@ -3,8 +3,8 @@ import get_code_frame from './get_code_frame';
 
 class CompileError extends Error {
 	code: string;
-	start: { line: number, column: number };
-	end: { line: number, column: number };
+	start: { line: number; column: number };
+	end: { line: number; column: number };
 	pos: number;
 	filename: string;
 	frame: string;
@@ -15,12 +15,12 @@ class CompileError extends Error {
 }
 
 export default function error(message: string, props: {
-	name: string,
-	code: string,
-	source: string,
-	filename: string,
-	start: number,
-	end?: number
+	name: string;
+	code: string;
+	source: string;
+	filename: string;
+	start: number;
+	end?: number;
 }) {
 	const error = new CompileError(message);
 	error.name = props.name;

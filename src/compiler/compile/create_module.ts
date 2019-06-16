@@ -5,10 +5,10 @@ import { stringify_props } from './utils/stringify_props';
 
 const wrappers = { esm, cjs };
 
-type Export = {
+interface Export {
 	name: string;
 	as: string;
-};
+}
 
 export default function create_module(
 	code: string,
@@ -16,7 +16,7 @@ export default function create_module(
 	name: string,
 	banner: string,
 	sveltePath = 'svelte',
-	helpers: { name: string, alias: string }[],
+	helpers: Array<{ name: string; alias: string }>,
 	imports: Node[],
 	module_exports: Export[],
 	source: string
@@ -44,7 +44,7 @@ function esm(
 	banner: string,
 	sveltePath: string,
 	internal_path: string,
-	helpers: { name: string, alias: string }[],
+	helpers: Array<{ name: string; alias: string }>,
 	imports: Node[],
 	module_exports: Export[],
 	source: string
@@ -84,7 +84,7 @@ function cjs(
 	banner: string,
 	sveltePath: string,
 	internal_path: string,
-	helpers: { name: string, alias: string }[],
+	helpers: Array<{ name: string; alias: string }>,
 	imports: Node[],
 	module_exports: Export[]
 ) {
@@ -115,7 +115,7 @@ function cjs(
 
 		const source = edit_source(node.source.value, sveltePath);
 
-		return `const ${lhs} = require("${source}");`
+		return `const ${lhs} = require("${source}");`;
 	});
 
 	const exports = [`exports.default = ${name};`].concat(
@@ -131,5 +131,5 @@ function cjs(
 
 		${code}
 
-		${exports}`
+		${exports}`;
 }

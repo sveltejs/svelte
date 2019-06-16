@@ -186,7 +186,7 @@ export function derived<T, S extends Stores>(
 				unsubscribe();
 			};
 		}
-	}
+	};
 }
 
 /**

@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.4.4",
+  "version": "3.5.1",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -18,24 +18,26 @@
     "svelte",
     "README.md"
   ],
-  "types": "types/runtime",
+  "engines": {
+    "node": ">= 8"
+  },
+  "types": "types/runtime/index.d.ts",
   "scripts": {
     "test": "mocha --opts mocha.opts",
-    "test:unit": "mocha --require sucrase/register --recursive ./**/__test__.ts",
+    "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts",
     "quicktest": "mocha --opts mocha.opts",
     "precoverage": "c8 mocha --opts mocha.coverage.opts",
     "coverage": "c8 report --reporter=text-lcov > coverage.lcov && c8 report --reporter=html",
     "codecov": "codecov",
     "precodecov": "npm run coverage",
-    "build": "rollup -c",
-    "prepare": "npm run build && npm run tsd",
+    "build": "rollup -c && npm run tsd",
+    "prepare": "npm run build",
     "dev": "rollup -cw",
     "pretest": "npm run build",
     "posttest": "agadoo internal/index.mjs",
-    "prepublishOnly": "export PUBLISH=true && npm test && npm run create-stubs",
-    "create-stubs": "node scripts/create-stubs.js",
-    "tsd": "tsc -p . --emitDeclarationOnly",
-    "typecheck": "tsc -p . --noEmit"
+    "prepublishOnly": "PUBLISH=true npm test",
+    "tsd": "tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly",
+    "lint": "eslint \"{src,test}/**/*.{ts,js}\""
   },
   "repository": {
     "type": "git",
@@ -54,15 +56,18 @@
   },
   "homepage": "https://github.com/sveltejs/svelte#README",
   "devDependencies": {
-    "@sveltejs/svelte-repl": "0.0.5",
     "@types/mocha": "^5.2.0",
-    "@types/node": "^10.5.5",
+    "@types/node": "=8",
+    "@typescript-eslint/eslint-plugin": "^1.9.0",
+    "@typescript-eslint/parser": "^1.9.0",
     "acorn": "^6.1.1",
     "acorn-dynamic-import": "^4.0.0",
     "agadoo": "^1.0.1",
     "c8": "^3.4.0",
     "codecov": "^3.0.0",
     "css-tree": "1.0.0-alpha22",
+    "eslint": "^5.16.0",
+    "eslint-plugin-import": "^2.17.3",
     "estree-walker": "^0.6.1",
     "is-reference": "^1.1.1",
     "jsdom": "^12.2.0",

@@ -8,7 +8,7 @@ export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
 	options: CompileOptions;
 
-	blocks: (Block | string)[] = [];
+	blocks: Array<Block | string> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: CodeBuilder = new CodeBuilder(); // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
 	binding_groups: string[] = [];
@@ -17,7 +17,7 @@ export default class Renderer {
 	fragment: FragmentWrapper;
 
 	file_var: string;
-	locate: (c: number) => { line: number; column: number; };
+	locate: (c: number) => { line: number; column: number };
 
 	constructor(component: Component, options: CompileOptions) {
 		this.component = component;
