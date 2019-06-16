@@ -1,4 +1,4 @@
-import { assign } from '../../runtime/internal/index';
+import { assign } from '../../runtime/internal/utils';
 import Stats from '../Stats';
 import parse from '../parse/index';
 import render_dom from './render-dom/index';
