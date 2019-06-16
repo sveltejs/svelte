@@ -34,7 +34,7 @@
     "@babel/preset-env": "^7.4.4",
     "@babel/runtime": "^7.4.4",
     "@sindresorhus/slugify": "^0.9.1",
-    "@sveltejs/site-kit": "^1.0.4",
+    "@sveltejs/site-kit": "^1.1.0",
     "@sveltejs/svelte-repl": "^0.1.8",
     "degit": "^2.1.3",
     "dotenv": "^8.0.0",
