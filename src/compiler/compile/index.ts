@@ -1,4 +1,4 @@
-import { assign } from '../../runtime/internal/index';
+import { assign } from '../../runtime/internal/utils';
 import Stats from '../Stats';
 import parse from '../parse/index';
 import render_dom from './render-dom/index';
@@ -6,6 +6,7 @@ import render_ssr from './render-ssr/index';
 import { CompileOptions, Warning } from '../interfaces';
 import Component from './Component';
 import fuzzymatch from '../utils/fuzzymatch';
+import get_name_from_filename from './utils/get_name_from_filename';
 
 const valid_options = [
 	'format',
@@ -55,25 +56,6 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 	}
 }
 
-function get_name(filename: string) {
-	if (!filename) return null;
-	// eslint-disable-next-line no-useless-escape
-	const parts = filename.split(/[\/\\]/);
-
-	if (parts.length > 1 && /^index\.\w+/.test(parts[parts.length - 1])) {
-		parts.pop();
-	}
-
-	const base = parts.pop()
-		.replace(/\..+/, "")
-		.replace(/[^a-zA-Z_$0-9]+/g, '_')
-		.replace(/^_/, '')
-		.replace(/_$/, '')
-		.replace(/^(\d)/, '_$1');
-
-	return base[0].toUpperCase() + base.slice(1);
-}
-
 export default function compile(source: string, options: CompileOptions = {}) {
 	options = assign({ generate: 'dom', dev: false }, options);
 
@@ -90,7 +72,7 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	const component = new Component(
 		ast,
 		source,
-		options.name || get_name(options.filename) || 'Component',
+		options.name || get_name_from_filename(options.filename) || 'Component',
 		options,
 		stats,
 		warnings

@@ -1,5 +1,5 @@
 export default {
-	html: '<div></div>',
+	html: `<div draggable='false'></div>`,
 
-	ssrHtml: '<div foo=1></div>'
+	ssrHtml: `<div foo='1' draggable='false'></div>`,
 };
