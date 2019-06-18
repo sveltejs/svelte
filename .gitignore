@@ -4,6 +4,7 @@
 node_modules
 *.map
 /src/compiler/compile/internal-exports.ts
+/compiler.d.ts
 /compiler.*js
 /index.*js
 /internal
