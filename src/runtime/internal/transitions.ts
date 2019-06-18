@@ -53,7 +53,7 @@ export function transition_out(block, detaching: 0 | 1, local: 0 | 1, callback) 
 		outroing.add(block);
 		outros.callbacks.push(() => {
 			outroing.delete(block);
-			block.d(detaching);
+			if (local) block.d(detaching);
 			if (callback) callback();
 		});
 

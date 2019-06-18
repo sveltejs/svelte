@@ -142,7 +142,7 @@ export default class SlotWrapper extends Wrapper {
 		`);
 
 		block.builders.intro.add_line(
-			`@transition_in(${slot} && ${slot}.i, #local);`
+			`@transition_in(${slot}, #local);`
 		);
 
 		block.builders.outro.add_line(
