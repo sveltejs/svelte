@@ -436,18 +436,18 @@ export default class EachBlockWrapper extends Wrapper {
 				? deindent`
 					if (${iterations}[#i]) {
 						${iterations}[#i].p(changed, child_ctx);
-						${has_transitions && `@transition_in(${this.vars.iterations}[#i]);`}
+						${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
 					} else {
 						${iterations}[#i] = ${create_each_block}(child_ctx);
 						${iterations}[#i].c();
-						${has_transitions && `@transition_in(${this.vars.iterations}[#i]);`}
+						${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
 						${iterations}[#i].m(${update_mount_node}, ${anchor});
 					}
 				`
 				: deindent`
 					${iterations}[#i] = ${create_each_block}(child_ctx);
 					${iterations}[#i].c();
-					${has_transitions && `@transition_in(${this.vars.iterations}[#i]);`}
+					${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
 					${iterations}[#i].m(${update_mount_node}, ${anchor});
 				`;
 
