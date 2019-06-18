@@ -70,6 +70,7 @@ function create_fragment(ctx) {
 
 		p(changed, ctx) {
 			if (ctx.num < 5) {
+				outroing_if_block = false;
 				if (!if_block) {
 					if_block = create_if_block(ctx);
 					if_block.c();

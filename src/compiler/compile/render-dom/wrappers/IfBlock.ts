@@ -441,30 +441,33 @@ export default class IfBlockWrapper extends Wrapper {
 
 		// no `p()` here — we don't want to update outroing nodes,
 		// as that will typically result in glitching
-		const exit = branch.block.has_outro_method
-			? deindent`
-				@group_outros();
-				@on_outro(() => {
+		if (branch.block.has_outro_method) {
+			block.builders.update.add_block(deindent`
+				if (${branch.condition}) {
+					${outroing} = false;
+					${enter}
+				} else if (${name} && !${outroing}) {
+					${outroing} = true;
+					@group_outros();
+					@on_outro(() => {
+						${name}.d(1);
+						${name} = null;
+					});
+
+					${name}.o(1);
+					@check_outros();
+				}
+			`);
+		} else {
+			block.builders.update.add_block(deindent`
+				if (${branch.condition}) {
+					${enter}
+				} else if (${name}) {
 					${name}.d(1);
 					${name} = null;
-				});
-
-				${name}.o(1);
-				@check_outros();
-			`
-			: deindent`
-				${name}.d(1);
-				${name} = null;
-			`;
-
-		block.builders.update.add_block(deindent`
-			if (${branch.condition}) {
-				${enter}
-			} else if (${name} && !${outroing}) {
-				${outroing} = true;
-				${exit}
-			}
-		`);
+				}
+			`);
+		}
 
 		block.builders.destroy.add_line(`${if_name}${name}.d(${detaching});`);
 	}
