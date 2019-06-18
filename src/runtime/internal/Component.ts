@@ -153,8 +153,9 @@ if (typeof HTMLElement !== 'undefined') {
 		}
 
 		$destroy() {
-			this.$$.fragment.d(1);
+			const { fragment } = this.$$;
 			destroy(this);
+			fragment.d(1);
 			this.$destroy = noop;
 		}
 
@@ -179,8 +180,9 @@ export class SvelteComponent {
 	$$: T$$;
 
 	$destroy() {
-		this.$$.fragment.d(1);
+		const { fragment } = this.$$;
 		destroy(this);
+		fragment.d(1);
 		this.$destroy = noop;
 	}
 
