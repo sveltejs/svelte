@@ -457,7 +457,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.builders.outro.add_line(
-				`@transition_out(${name}.$$.fragment, #local);`
+				`if (${name}) @transition_out(${name}.$$.fragment, #local);`
 			);
 
 			block.builders.destroy.add_line(`if (${name}) ${name}.$destroy(${parent_node ? '' : 'detaching'});`);
