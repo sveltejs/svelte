@@ -92,10 +92,10 @@ export default class WindowWrapper extends Wrapper {
 
 				renderer.meta_bindings.add_block(deindent`
 					if (${condition}) {
-						@_scrollTo(${x || '@_pageXOffset'}, ${y || '@pageYOffset'});
+						@_scrollTo(${x || '@_window.pageXOffset'}, ${y || '@_window.pageYOffset'});
 					}
-					${x && `${x} = @_pageXOffset;`}
-					${y && `${y} = @_pageYOffset;`}
+					${x && `${x} = @_window.pageXOffset;`}
+					${y && `${y} = @_window.pageYOffset;`}
 				`);
 
 				block.event_listeners.push(deindent`
@@ -148,9 +148,9 @@ export default class WindowWrapper extends Wrapper {
 					${scrolling} = true;
 					@_clearTimeout(${scrolling_timeout});
 					@_scrollTo(${
-						bindings.scrollX ? `ctx.${bindings.scrollX}` : `@_pageXOffset`
+						bindings.scrollX ? `ctx.${bindings.scrollX}` : `@_window.pageXOffset`
 					}, ${
-						bindings.scrollY ? `ctx.${bindings.scrollY}` : `@_pageYOffset`
+						bindings.scrollY ? `ctx.${bindings.scrollY}` : `@_window.pageYOffset`
 					});
 					${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
 				}
