@@ -9,8 +9,9 @@ import {
 	group_outros,
 	init,
 	insert,
-	on_outro,
-	safe_not_equal
+	safe_not_equal,
+	transition_in,
+	transition_out
 } from "svelte/internal";
 import { fade } from "svelte/transition";
 
@@ -74,32 +75,29 @@ function create_fragment(ctx) {
 				if (!if_block) {
 					if_block = create_if_block(ctx);
 					if_block.c();
-					if_block.i(1);
+					transition_in(if_block, 1);
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
 				} else {
-									if_block.i(1);
+									transition_in(if_block, 1);
 				}
 			} else if (if_block && !outroing_if_block) {
 				outroing_if_block = true;
 				group_outros();
-				on_outro(() => {
-					if_block.d(1);
+				transition_out(if_block, 1, 1, () => {
 					if_block = null;
 				});
-
-				if_block.o(1);
 				check_outros();
 			}
 		},
 
 		i(local) {
 			if (current) return;
-			if (if_block) if_block.i();
+			transition_in(if_block);
 			current = true;
 		},
 
 		o(local) {
-			if (if_block) if_block.o();
+			transition_out(if_block);
 			current = false;
 		},
 

@@ -4,7 +4,9 @@ import {
 	init,
 	mount_component,
 	noop,
-	safe_not_equal
+	safe_not_equal,
+	transition_in,
+	transition_out
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -26,13 +28,13 @@ function create_fragment(ctx) {
 
 		i(local) {
 			if (current) return;
-			nested.$$.fragment.i(local);
+			transition_in(nested.$$.fragment, local);
 
 			current = true;
 		},
 
 		o(local) {
-			nested.$$.fragment.o(local);
+			transition_out(nested.$$.fragment, 0, local);
 			current = false;
 		},
 

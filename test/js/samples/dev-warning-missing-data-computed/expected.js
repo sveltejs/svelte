@@ -52,7 +52,7 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 
-		d: function destroy(detaching) {
+		d: function destroy_1(detaching) {
 			if (detaching) {
 				detach(p);
 			}

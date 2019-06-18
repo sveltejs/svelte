@@ -7,7 +7,9 @@ import {
 	mount_component,
 	noop,
 	safe_not_equal,
-	space
+	space,
+	transition_in,
+	transition_out
 } from "svelte/internal";
 import Imported from "Imported.svelte";
 
@@ -36,16 +38,16 @@ function create_fragment(ctx) {
 
 		i(local) {
 			if (current) return;
-			imported.$$.fragment.i(local);
+			transition_in(imported.$$.fragment, local);
 
-			nonimported.$$.fragment.i(local);
+			transition_in(nonimported.$$.fragment, local);
 
 			current = true;
 		},
 
 		o(local) {
-			imported.$$.fragment.o(local);
-			nonimported.$$.fragment.o(local);
+			transition_out(imported.$$.fragment, 0, local);
+			transition_out(nonimported.$$.fragment, 0, local);
 			current = false;
 		},
 

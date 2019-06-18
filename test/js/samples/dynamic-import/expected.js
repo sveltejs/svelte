@@ -4,7 +4,9 @@ import {
 	init,
 	mount_component,
 	noop,
-	safe_not_equal
+	safe_not_equal,
+	transition_in,
+	transition_out
 } from "svelte/internal";
 import LazyLoad from "./LazyLoad.svelte";
 
@@ -27,13 +29,13 @@ function create_fragment(ctx) {
 
 		i(local) {
 			if (current) return;
-			lazyload.$$.fragment.i(local);
+			transition_in(lazyload.$$.fragment, local);
 
 			current = true;
 		},
 
 		o(local) {
-			lazyload.$$.fragment.o(local);
+			transition_out(lazyload.$$.fragment, 0, local);
 			current = false;
 		},
 

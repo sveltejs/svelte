@@ -423,10 +423,9 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (${name}) {
 						@group_outros();
 						const old_component = ${name};
-						@on_outro(() => {
-							old_component.$destroy();
+						@transition_out(old_component.$$.fragment, 1, 1, () => {
+							@destroy(old_component);
 						});
-						old_component.$$.fragment.o(1);
 						@check_outros();
 					}
 
@@ -437,7 +436,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${munged_handlers}
 
 						${name}.$$.fragment.c();
-						${name}.$$.fragment.i(1);
+						@transition_in(${name}.$$.fragment, 1);
 						@mount_component(${name}, ${update_mount_node}, ${anchor});
 					} else {
 						${name} = null;
@@ -446,7 +445,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.builders.intro.add_block(deindent`
-				if (${name}) ${name}.$$.fragment.i(#local);
+				@transition_in(${name}.$$.fragment, #local);
 			`);
 
 			if (updates.length) {
@@ -458,7 +457,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.builders.outro.add_line(
-				`if (${name}) ${name}.$$.fragment.o(#local);`
+				`@transition_out(${name}.$$.fragment, #local);`
 			);
 
 			block.builders.destroy.add_line(`if (${name}) ${name}.$destroy(${parent_node ? '' : 'detaching'});`);
@@ -490,7 +489,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 			block.builders.intro.add_block(deindent`
-				${name}.$$.fragment.i(#local);
+				@transition_in(${name}.$$.fragment, #local);
 			`);
 
 			if (updates.length) {
@@ -505,7 +504,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.builders.outro.add_line(
-				`${name}.$$.fragment.o(#local);`
+				`@transition_out(${name}.$$.fragment, 0, #local);`
 			);
 		}
 	}
