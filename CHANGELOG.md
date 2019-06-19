@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.5.3
+
+* Don't double-destroy keyed each blocks with outros ([#3055](https://github.com/sveltejs/svelte/issues/3055))
+
 ## 3.5.2
 
 * Prevent duplicated outros causing errors ([#3001](https://github.com/sveltejs/svelte/issues/3001))
