@@ -177,7 +177,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		`);
 
 		if (has_transitions) {
-			block.builders.intro.add_line(`${info}.block.i();`);
+			block.builders.intro.add_line(`@transition_in(${info}.block);`);
 		}
 
 		const conditions = [];
@@ -216,7 +216,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			block.builders.outro.add_block(deindent`
 				for (let #i = 0; #i < 3; #i += 1) {
 					const block = ${info}.blocks[#i];
-					if (block) block.o();
+					@transition_out(block);
 				}
 			`);
 		}
