@@ -2,6 +2,7 @@ import { add_render_callback, flush, schedule_update, dirty_components } from '.
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_function, run, run_all, noop } from './utils';
 import { children } from './dom';
+import { transition_in } from './transitions';
 
 // eslint-disable-next-line @typescript-eslint/class-name-casing
 interface T$$ {
@@ -49,10 +50,11 @@ export function mount_component(component, target, anchor) {
 	after_render.forEach(add_render_callback);
 }
 
-function destroy(component, detaching) {
-	if (component.$$) {
+export function destroy_component(component, detaching) {
+	if (component.$$.fragment) {
 		run_all(component.$$.on_destroy);
-		component.$$.fragment.d(detaching);
+
+		if (detaching) component.$$.fragment.d(1);
 
 		// TODO null out other refs, including component.$$ (but need to
 		// preserve final state?)
@@ -123,7 +125,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 			$$.fragment!.c();
 		}
 
-		if (options.intro && component.$$.fragment.i) component.$$.fragment.i();
+		if (options.intro) transition_in(component.$$.fragment);
 		mount_component(component, options.target, options.anchor);
 		flush();
 	}
@@ -153,7 +155,7 @@ if (typeof HTMLElement !== 'undefined') {
 		}
 
 		$destroy() {
-			destroy(this, true);
+			destroy_component(this, 1);
 			this.$destroy = noop;
 		}
 
@@ -178,7 +180,7 @@ export class SvelteComponent {
 	$$: T$$;
 
 	$destroy() {
-		destroy(this, true);
+		destroy_component(this, 1);
 		this.$destroy = noop;
 	}
 
