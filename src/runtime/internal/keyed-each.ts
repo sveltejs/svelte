@@ -1,17 +1,13 @@
 import { transition_in, transition_out } from './transitions';
 
-export function remove_block_from_lookup(block, lookup) {
-	lookup.delete(block.key);
-}
-
 export function destroy_block(block, lookup) {
 	block.d(1);
-	remove_block_from_lookup(block, lookup);
+	lookup.delete(block.key);
 }
 
 export function outro_and_destroy_block(block, lookup) {
 	transition_out(block, 1, () => {
-		remove_block_from_lookup(block, lookup);
+		lookup.delete(block.key);
 	});
 }
 
