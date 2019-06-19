@@ -423,7 +423,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (${name}) {
 						@group_outros();
 						const old_component = ${name};
-						@transition_out(old_component.$$.fragment, 1, 1, () => {
+						@transition_out(old_component.$$.fragment, 1, () => {
 							@destroy_component(old_component);
 						});
 						@check_outros();
@@ -457,7 +457,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.builders.outro.add_line(
-				`if (${name}) @transition_out(${name}.$$.fragment, 0, #local);`
+				`if (${name}) @transition_out(${name}.$$.fragment, #local);`
 			);
 
 			block.builders.destroy.add_line(`if (${name}) @destroy_component(${name}, ${parent_node ? '' : 'detaching'});`);
@@ -504,7 +504,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.builders.outro.add_line(
-				`@transition_out(${name}.$$.fragment, 0, #local);`
+				`@transition_out(${name}.$$.fragment, #local);`
 			);
 		}
 	}

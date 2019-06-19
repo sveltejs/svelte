@@ -36,7 +36,7 @@ function create_fragment(ctx) {
 		},
 
 		o(local) {
-			transition_out(lazyload.$$.fragment, 0, local);
+			transition_out(lazyload.$$.fragment, local);
 			current = false;
 		},
 

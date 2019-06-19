@@ -35,7 +35,7 @@ function create_fragment(ctx) {
 		},
 
 		o(local) {
-			transition_out(nested.$$.fragment, 0, local);
+			transition_out(nested.$$.fragment, local);
 			current = false;
 		},
 

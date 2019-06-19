@@ -46,15 +46,17 @@ export function transition_in(block, local?: 0 | 1) {
 	}
 }
 
-export function transition_out(block, detaching: 0 | 1, local: 0 | 1, callback) {
+export function transition_out(block, local: 0 | 1, callback) {
 	if (block && block.o) {
 		if (outroing.has(block)) return;
-
 		outroing.add(block);
+
 		outros.callbacks.push(() => {
 			outroing.delete(block);
-			if (detaching) block.d(detaching);
-			if (callback) callback();
+			if (callback) {
+				block.d(1);
+				callback();
+			}
 		});
 
 		block.o(local);

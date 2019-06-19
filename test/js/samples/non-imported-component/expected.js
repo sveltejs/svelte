@@ -47,8 +47,8 @@ function create_fragment(ctx) {
 		},
 
 		o(local) {
-			transition_out(imported.$$.fragment, 0, local);
-			transition_out(nonimported.$$.fragment, 0, local);
+			transition_out(imported.$$.fragment, local);
+			transition_out(nonimported.$$.fragment, local);
 			current = false;
 		},
 
