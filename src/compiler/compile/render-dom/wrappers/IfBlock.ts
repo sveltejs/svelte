@@ -146,14 +146,13 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const has_else = !(this.branches[this.branches.length - 1].condition);
 		const if_name = has_else ? '' : `if (${name}) `;
-		const outroing = block.get_unique_name(`outroing_${this.var}`);
 
 		const dynamic = this.branches[0].block.has_update_method; // can use [0] as proxy for all, since they necessarily have the same value
 		const has_intros = this.branches[0].block.has_intro_method;
 		const has_outros = this.branches[0].block.has_outro_method;
 		const has_transitions = has_intros || has_outros;
 
-		const vars = { name, anchor, if_name, has_else, has_transitions, outroing };
+		const vars = { name, anchor, if_name, has_else, has_transitions };
 
 		const detaching = (parent_node && parent_node !== 'document.head') ? '' : 'detaching';
 
@@ -391,15 +390,10 @@ export default class IfBlockWrapper extends Wrapper {
 		parent_node: string,
 		_parent_nodes: string,
 		dynamic,
-		{ name, outroing, anchor, if_name, has_transitions },
+		{ name, anchor, if_name, has_transitions },
 		detaching
 	) {
 		const branch = this.branches[0];
-
-		if (branch.block.has_outro_method) {
-			// TODO this probably belongs in the main render method?
-			block.add_variable(outroing);
-		}
 
 		block.builders.init.add_block(deindent`
 			var ${name} = (${branch.condition}) && ${branch.block.name}(ctx);
@@ -442,10 +436,8 @@ export default class IfBlockWrapper extends Wrapper {
 		if (branch.block.has_outro_method) {
 			block.builders.update.add_block(deindent`
 				if (${branch.condition}) {
-					${outroing} = false;
 					${enter}
-				} else if (${name} && !${outroing}) {
-					${outroing} = true;
+				} else if (${name}) {
 					@group_outros();
 					@transition_out(${name}, 1, 1, () => {
 						${name} = null;

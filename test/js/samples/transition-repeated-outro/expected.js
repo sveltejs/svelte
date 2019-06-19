@@ -53,7 +53,7 @@ function create_if_block(ctx) {
 }
 
 function create_fragment(ctx) {
-	var outroing_if_block, if_block_anchor, current;
+	var if_block_anchor, current;
 
 	var if_block = (ctx.num < 5) && create_if_block(ctx);
 
@@ -71,7 +71,6 @@ function create_fragment(ctx) {
 
 		p(changed, ctx) {
 			if (ctx.num < 5) {
-				outroing_if_block = false;
 				if (!if_block) {
 					if_block = create_if_block(ctx);
 					if_block.c();
@@ -80,8 +79,7 @@ function create_fragment(ctx) {
 				} else {
 									transition_in(if_block, 1);
 				}
-			} else if (if_block && !outroing_if_block) {
-				outroing_if_block = true;
+			} else if (if_block) {
 				group_outros();
 				transition_out(if_block, 1, 1, () => {
 					if_block = null;
