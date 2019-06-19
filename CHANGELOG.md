@@ -1,5 +1,16 @@
 # Svelte changelog
 
+## 3.5.2
+
+* Prevent duplicated outros causing errors ([#3001](https://github.com/sveltejs/svelte/issues/3001))
+* Fix automatic name generation ([#2843](https://github.com/sveltejs/svelte/issues/2843))
+* Fix .d.ts stubs ([#3009](https://github.com/sveltejs/svelte/pull/3009))
+* Don't strip non-breaking spaces ([#3014](https://github.com/sveltejs/svelte/issues/3014))
+* Fix `requestAnimationFrame` context ([#2933](https://github.com/sveltejs/svelte/issues/2933))
+* Allow space before attribute value ([#3026](https://github.com/sveltejs/svelte/issues/3026))
+* Remove null/undefined attributes ([#1434](https://github.com/sveltejs/svelte/issues/1434))
+* Fix whitespace in static markup ([#3030](https://github.com/sveltejs/svelte/pull/3030))
+
 ## 3.5.1
 
 * Accommodate webpack idiosyncracies
