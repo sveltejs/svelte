@@ -50,9 +50,11 @@ export function mount_component(component, target, anchor) {
 	after_render.forEach(add_render_callback);
 }
 
-export function destroy(component) {
+export function destroy_component(component, detaching) {
 	if (component.$$) {
 		run_all(component.$$.on_destroy);
+
+		if (detaching) component.$$.fragment.d(1);
 
 		// TODO null out other refs, including component.$$ (but need to
 		// preserve final state?)
@@ -153,9 +155,7 @@ if (typeof HTMLElement !== 'undefined') {
 		}
 
 		$destroy() {
-			const { fragment } = this.$$;
-			destroy(this);
-			fragment.d(1);
+			destroy_component(this, 1);
 			this.$destroy = noop;
 		}
 
@@ -180,9 +180,7 @@ export class SvelteComponent {
 	$$: T$$;
 
 	$destroy() {
-		const { fragment } = this.$$;
-		destroy(this);
-		fragment.d(1);
+		destroy_component(this, 1);
 		this.$destroy = noop;
 	}
 

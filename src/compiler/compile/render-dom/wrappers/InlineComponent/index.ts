@@ -424,7 +424,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						@group_outros();
 						const old_component = ${name};
 						@transition_out(old_component.$$.fragment, 1, 1, () => {
-							@destroy(old_component);
+							@destroy_component(old_component);
 						});
 						@check_outros();
 					}
@@ -457,10 +457,10 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.builders.outro.add_line(
-				`if (${name}) @transition_out(${name}.$$.fragment, #local);`
+				`if (${name}) @transition_out(${name}.$$.fragment, 0, #local);`
 			);
 
-			block.builders.destroy.add_line(`if (${name}) ${name}.$destroy(${parent_node ? '' : 'detaching'});`);
+			block.builders.destroy.add_line(`if (${name}) @destroy_component(${name}, ${parent_node ? '' : 'detaching'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? '__svelte:self__' // TODO conflict-proof this
@@ -500,7 +500,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.builders.destroy.add_block(deindent`
-				${name}.$destroy(${parent_node ? '' : 'detaching'});
+				@destroy_component(${name}, ${parent_node ? '' : 'detaching'});
 			`);
 
 			block.builders.outro.add_line(

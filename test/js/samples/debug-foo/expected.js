@@ -59,7 +59,7 @@ function create_each_block(ctx) {
 			}
 		},
 
-		d: function destroy_1(detaching) {
+		d: function destroy(detaching) {
 			if (detaching) {
 				detach(span);
 				detach(t1);
@@ -137,7 +137,7 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 
-		d: function destroy_1(detaching) {
+		d: function destroy(detaching) {
 			destroy_each(each_blocks, detaching);
 
 			if (detaching) {

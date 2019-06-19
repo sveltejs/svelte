@@ -146,7 +146,7 @@ export default class SlotWrapper extends Wrapper {
 		);
 
 		block.builders.outro.add_line(
-			`@transition_out(${slot}, #local);`
+			`@transition_out(${slot}, 0, #local);`
 		);
 
 		let update_conditions = [...this.dependencies].map(name => `changed.${name}`).join(' || ');
