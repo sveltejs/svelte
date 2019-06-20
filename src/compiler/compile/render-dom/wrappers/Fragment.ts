@@ -85,7 +85,7 @@ export default class FragmentWrapper {
 				if (this.nodes.length === 0) {
 					const should_trim = (
 						// @ts-ignore todo: probably error, should it be next_sibling.node.data?
-						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.data)) : !child.has_ancestor('EachBlock')
+						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.data) && next_sibling.node.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/)) : !child.has_ancestor('EachBlock')
 					);
 
 					if (should_trim) {
