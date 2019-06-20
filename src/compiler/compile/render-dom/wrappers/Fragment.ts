@@ -43,7 +43,7 @@ function link(next: Wrapper, prev: Wrapper) {
 }
 
 function at_each_boundary(child: INode, next_sibling: Wrapper): boolean {
-	return next_sibling.node.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/) || next_sibling.node.prev.type === 'EachBlock'
+	return next_sibling.node.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/) || next_sibling.node.prev.type === 'EachBlock';
 } 
 
 export default class FragmentWrapper {
