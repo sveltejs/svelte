@@ -1249,7 +1249,7 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 ### `<svelte:component>`
 
 ```sv
-<svelte:component this={expression}>
+<svelte:component this={expression}/>
 ```
 
 ---
@@ -1326,7 +1326,7 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 ### `<svelte:head>`
 
 ```sv
-<svelte:head>
+<svelte:head>...</svelte:head>
 ```
 
 ---
@@ -1343,7 +1343,7 @@ This element makes it possible to insert elements into `document.head`. During s
 ### `<svelte:options>`
 
 ```sv
-<svelte:options option={value}>
+<svelte:options option={value}/>
 ```
 
 ---
