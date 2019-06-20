@@ -1335,7 +1335,7 @@ This element makes it possible to insert elements into `document.head`. During s
 ### `<svelte:options>`
 
 ```sv
-<svelte:options option={value}>
+<svelte:options option={value} />
 ```
 
 ---
