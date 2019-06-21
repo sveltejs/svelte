@@ -42,6 +42,13 @@ function link(next: Wrapper, prev: Wrapper) {
 	if (next) next.prev = prev;
 }
 
+function trimmable_at(child: INode, next_sibling: Wrapper): boolean {
+	// Whitespace is trimmable if one of the following is true:
+	// The child and its sibling share a common nearest each block (not at an each block boundary)
+	// The next sibling's previous node is an each block
+	return (next_sibling.node.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/)) || next_sibling.node.prev.type === 'EachBlock';
+} 
+
 export default class FragmentWrapper {
 	nodes: Wrapper[];
 
@@ -85,7 +92,7 @@ export default class FragmentWrapper {
 				if (this.nodes.length === 0) {
 					const should_trim = (
 						// @ts-ignore todo: probably error, should it be next_sibling.node.data?
-						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.data)) : !child.has_ancestor('EachBlock')
+						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.data) && trimmable_at(child, next_sibling)) : !child.has_ancestor('EachBlock')
 					);
 
 					if (should_trim) {
