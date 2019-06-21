@@ -80,10 +80,10 @@ export default function dom(
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
-					`if ('${prop.export_name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = $$props.${prop.export_name}`)};`
-				)}
+			`if ('${prop.export_name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = $$props.${prop.export_name}`)};`
+		)}
 				${component.slots.size > 0 &&
-				`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
+			`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
 		: null;
@@ -92,7 +92,7 @@ export default function dom(
 	const body = [];
 
 	const not_equal = component.component_options.immutable ? `@not_equal` : `@safe_not_equal`;
-	let dev_props_check;
+	let dev_props_check; let inject_state; let capture_state;
 
 	props.forEach(x => {
 		const variable = component.var_lookup.get(x.name);
@@ -149,6 +149,21 @@ export default function dom(
 				}`)}
 			`;
 		}
+
+		capture_state = (uses_props || writable_props.length > 0) ? deindent`
+			() => {
+				return { ${component.vars.map(prop => prop.name).join(", ")} };
+			}
+		` : null;
+
+		inject_state = (uses_props || writable_props.length > 0) ? deindent`
+			${$$props} => {
+				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
+				${component.vars.map(prop => deindent`
+					if ('${prop.name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.name}`)};
+				`)}
+			}
+		` : null;
 	}
 
 	// instrument assignments
@@ -427,6 +442,10 @@ export default function dom(
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
 				${set && `$$self.$set = ${set};`}
+
+				${capture_state && `$$self.$capture_state = ${capture_state};`}
+
+				${inject_state && `$$self.$inject_state = ${inject_state};`}
 
 				${injected.length && `let ${injected.join(', ')};`}
 
