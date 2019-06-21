@@ -405,7 +405,7 @@ export default function dom(
 			unknown_props_check = deindent`
 				const writable_props = [${writable_props.map(prop => `'${prop.export_name}'`).join(', ')}];
 				@_Object.keys($$props).forEach(key => {
-					if (!writable_props.includes(key) && !key.startsWith('$$')) console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
+					if (!writable_props.includes(key) && !key.startsWith('$$')) @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
 			`;
 		}
