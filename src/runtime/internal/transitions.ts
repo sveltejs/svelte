@@ -23,6 +23,7 @@ function dispatch(node: Element, direction: boolean, kind: 'start' | 'end') {
 	node.dispatchEvent(custom_event(`${direction ? 'intro' : 'outro'}${kind}`));
 }
 
+const outroing = new Set();
 let outros;
 
 export function group_outros() {
@@ -38,9 +39,30 @@ export function check_outros() {
 	}
 }
 
-export function on_outro(callback) {
-	outros.callbacks.push(callback);
+export function transition_in(block, local?: 0 | 1) {
+	if (block && block.i) {
+		outroing.delete(block);
+		block.i(local);
+	}
 }
+
+export function transition_out(block, local: 0 | 1, callback) {
+	if (block && block.o) {
+		if (outroing.has(block)) return;
+		outroing.add(block);
+
+		outros.callbacks.push(() => {
+			outroing.delete(block);
+			if (callback) {
+				block.d(1);
+				callback();
+			}
+		});
+
+		block.o(local);
+	}
+}
+
 type TransitionFn = (node: Element, params: any) => TransitionConfig;
 
 export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
