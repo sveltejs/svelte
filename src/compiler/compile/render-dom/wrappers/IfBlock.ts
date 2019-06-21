@@ -160,7 +160,7 @@ export default class IfBlockWrapper extends Wrapper {
 			if (has_outros) {
 				this.render_compound_with_outros(block, parent_node, parent_nodes, dynamic, vars, detaching);
 
-				block.builders.outro.add_line(`if (${name}) ${name}.o();`);
+				block.builders.outro.add_line(`@transition_out(${name});`);
 			} else {
 				this.render_compound(block, parent_node, parent_nodes, dynamic, vars, detaching);
 			}
@@ -168,7 +168,7 @@ export default class IfBlockWrapper extends Wrapper {
 			this.render_simple(block, parent_node, parent_nodes, dynamic, vars, detaching);
 
 			if (has_outros) {
-				block.builders.outro.add_line(`if (${name}) ${name}.o();`);
+				block.builders.outro.add_line(`@transition_out(${name});`);
 			}
 		}
 
@@ -181,7 +181,7 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 
 		if (has_intros || has_outros) {
-			block.builders.intro.add_line(`if (${name}) ${name}.i();`);
+			block.builders.intro.add_line(`@transition_in(${name});`);
 		}
 
 		if (needs_anchor) {
@@ -238,7 +238,7 @@ export default class IfBlockWrapper extends Wrapper {
 			${name} = ${current_block_type_and}${current_block_type}(ctx);
 			if (${name}) {
 				${name}.c();
-				${has_transitions && `${name}.i(1);`}
+				${has_transitions && `@transition_in(${name}, 1);`}
 				${name}.m(${update_mount_node}, ${anchor});
 			}
 		`;
@@ -326,11 +326,9 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const destroy_old_block = deindent`
 			@group_outros();
-			@on_outro(() => {
-				${if_blocks}[${previous_block_index}].d(1);
+			@transition_out(${if_blocks}[${previous_block_index}], 1, () => {
 				${if_blocks}[${previous_block_index}] = null;
 			});
-			${name}.o(1);
 			@check_outros();
 		`;
 
@@ -340,7 +338,7 @@ export default class IfBlockWrapper extends Wrapper {
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 				${name}.c();
 			}
-			${has_transitions && `${name}.i(1);`}
+			${has_transitions && `@transition_in(${name}, 1);`}
 			${name}.m(${update_mount_node}, ${anchor});
 		`;
 
@@ -414,11 +412,11 @@ export default class IfBlockWrapper extends Wrapper {
 			? deindent`
 				if (${name}) {
 					${name}.p(changed, ctx);
-					${has_transitions && `${name}.i(1);`}
+					${has_transitions && `@transition_in(${name}, 1);`}
 				} else {
 					${name} = ${branch.block.name}(ctx);
 					${name}.c();
-					${has_transitions && `${name}.i(1);`}
+					${has_transitions && `@transition_in(${name}, 1);`}
 					${name}.m(${update_mount_node}, ${anchor});
 				}
 			`
@@ -426,38 +424,37 @@ export default class IfBlockWrapper extends Wrapper {
 				if (!${name}) {
 					${name} = ${branch.block.name}(ctx);
 					${name}.c();
-					${has_transitions && `${name}.i(1);`}
+					${has_transitions && `@transition_in(${name}, 1);`}
 					${name}.m(${update_mount_node}, ${anchor});
 				${has_transitions && `} else {
-					${name}.i(1);`}
+					@transition_in(${name}, 1);`}
 				}
 			`;
 
 		// no `p()` here — we don't want to update outroing nodes,
 		// as that will typically result in glitching
-		const exit = branch.block.has_outro_method
-			? deindent`
-				@group_outros();
-				@on_outro(() => {
+		if (branch.block.has_outro_method) {
+			block.builders.update.add_block(deindent`
+				if (${branch.condition}) {
+					${enter}
+				} else if (${name}) {
+					@group_outros();
+					@transition_out(${name}, 1, () => {
+						${name} = null;
+					});
+					@check_outros();
+				}
+			`);
+		} else {
+			block.builders.update.add_block(deindent`
+				if (${branch.condition}) {
+					${enter}
+				} else if (${name}) {
 					${name}.d(1);
 					${name} = null;
-				});
-
-				${name}.o(1);
-				@check_outros();
-			`
-			: deindent`
-				${name}.d(1);
-				${name} = null;
-			`;
-
-		block.builders.update.add_block(deindent`
-			if (${branch.condition}) {
-				${enter}
-			} else if (${name}) {
-				${exit}
-			}
-		`);
+				}
+			`);
+		}
 
 		block.builders.destroy.add_line(`${if_name}${name}.d(${detaching});`);
 	}

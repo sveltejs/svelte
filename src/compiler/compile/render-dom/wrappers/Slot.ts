@@ -142,11 +142,11 @@ export default class SlotWrapper extends Wrapper {
 		`);
 
 		block.builders.intro.add_line(
-			`if (${slot} && ${slot}.i) ${slot}.i(#local);`
+			`@transition_in(${slot}, #local);`
 		);
 
 		block.builders.outro.add_line(
-			`if (${slot} && ${slot}.o) ${slot}.o(#local);`
+			`@transition_out(${slot}, #local);`
 		);
 
 		let update_conditions = [...this.dependencies].map(name => `changed.${name}`).join(' || ');
