@@ -509,7 +509,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (outro_block) {
 			block.builders.outro.add_block(deindent`
-				${iterations} = ${iterations}.filter(Boolean);
+				${iterations} = ${iterations}.filter(@_Boolean);
 				for (let #i = 0; #i < ${view_length}; #i += 1) ${outro_block}(#i, 0, 0);`
 			);
 		}
