@@ -188,11 +188,19 @@ If a *key* expression is provided — which must uniquely identify each list ite
 
 ---
 
-You can freely use destructuring patterns in each blocks.
+You can freely use destructuring and rest patterns in each blocks.
 
 ```html
 {#each items as { id, name, qty }, i (id)}
 	<li>{i + 1}: {name} x {qty}</li>
+{/each}
+
+{#each objects as { id, ...rest }}
+	<li><span>{id}</span><MyComponent {...rest}/></li>
+{/each}
+
+{#each items as [id, ...rest]}
+	<li><span>{id}</span><MyComponent values={rest}/></li>
 {/each}
 ```
 
