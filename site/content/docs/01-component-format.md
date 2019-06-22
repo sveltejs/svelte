@@ -47,7 +47,7 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 	// Values that are passed in as props
 	// are immediately available
 	console.log(foo, bar);
-
+	
 	// Function expressions can also be props
 	export let format = (number) => (number.toFixed(2));
 
