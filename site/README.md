@@ -15,7 +15,7 @@ Start the server with `npm run dev`, and navigate to [localhost:3000](http://loc
 
 By default, the REPL will fetch the most recent version of Svelte from https://unpkg.com/svelte. When running the site locally, you can also use your local copy of Svelte.
 
-To produce the proper browser-compatible UMD build of the compiler, you will need to run `npm run build` (or `npm run dev`) in the root of this repository with the `PUBLISH` environment variable set to any non-empty string.
+To produce the proper browser-compatible UMD build of the compiler, you will need to run `npm run sapper` (or `npm run dev`) in the root of this repository with the `PUBLISH` environment variable set to any non-empty string.
 
 Then visit the REPL at [localhost:3000/repl?version=local](http://localhost:3000/repl?version=local).
 
