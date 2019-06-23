@@ -29,4 +29,3 @@ export default function flatten_reference(node: Node) {
 
 	return { name, nodes, parts, keypath: `${name}[✂${prop_start}-${prop_end}✂]` };
 }
-	
