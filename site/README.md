@@ -35,7 +35,7 @@ In order for the REPL's GitHub integration to work properly when running locally
    GITHUB_CLIENT_SECRET=[your app's Client Secret]
    BASEURL=http://localhost:3000
    ```
-## Building the Site
+## Building the site
 
 To build the website, run `npm run sapper`. The output can be found in `__sapper__/build`.
 
