@@ -1,8 +1,4 @@
 export default {
-	props: {
-		name: '<b>world</b>',
-	},
-
 	html: `
 		<editor contenteditable="true"><b>world</b></editor>
 		<p>hello <b>world</b></p>
@@ -10,12 +6,13 @@ export default {
 
 	ssrHtml: `
 		<editor contenteditable="true"><b>world</b></editor>
-		<p>hello <b>world</b></p>
+		<p>hello undefined</p>
 	`,
 
 	async test({ assert, component, target, window }) {
+		assert.equal(component.name, '<b>world</b>');
+
 		const el = target.querySelector('editor');
-		assert.equal(el.innerHTML, '<b>world</b>');
 
 		el.innerHTML = 'every<span>body</span>';
 

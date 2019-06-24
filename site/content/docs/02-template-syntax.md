@@ -510,6 +510,14 @@ When the value of an `<option>` matches its text content, the attribute can be o
 </select>
 ```
 
+---
+
+Elements with the `contenteditable` attribute support `innerHTML` and `textContent` bindings.
+
+```html
+<div contenteditable="true" bind:innerHTML={html}></div>
+```
+
 ##### Media element bindings
 
 ---
