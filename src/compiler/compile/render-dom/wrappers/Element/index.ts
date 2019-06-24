@@ -30,7 +30,7 @@ const events = [
 	{
 		event_names: ['input'],
 		filter: (node: Element, name: string) =>
-			(name === 'text' || name === 'html') &&
+			(name === 'textContent' || name === 'innerHTML') &&
 			node.attributes.some(attribute => attribute.name === 'contenteditable')
 	},
 	{
@@ -515,8 +515,8 @@ export default class ElementWrapper extends Wrapper {
 				group.bindings.find(binding => {
 					return (
 						binding.node.name === 'indeterminate' ||
-						binding.node.name === 'text' ||
-						binding.node.name === 'html' ||
+						binding.node.name === 'textContent' ||
+						binding.node.name === 'innerHTML' ||
 						binding.is_readonly_media_attribute()
 					);
 				})
