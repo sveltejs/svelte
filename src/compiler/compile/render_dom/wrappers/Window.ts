@@ -44,8 +44,8 @@ export default class WindowWrapper extends Wrapper {
 		const events = {};
 		const bindings: Record<string, string> = {};
 
-		add_actions(component, block, 'window', this.node.actions);
-		add_event_handlers(block, 'window', this.node.handlers);
+		add_actions(component, block, '@_window', this.node.actions);
+		add_event_handlers(block, '@_window', this.node.handlers);
 
 		this.node.bindings.forEach(binding => {
 			// in dev mode, throw if read-only values are written to
@@ -92,29 +92,29 @@ export default class WindowWrapper extends Wrapper {
 
 				renderer.meta_bindings.add_block(deindent`
 					if (${condition}) {
-						window.scrollTo(${x || 'window.pageXOffset'}, ${y || 'window.pageYOffset'});
+						@_scrollTo(${x || '@_window.pageXOffset'}, ${y || '@_window.pageYOffset'});
 					}
-					${x && `${x} = window.pageXOffset;`}
-					${y && `${y} = window.pageYOffset;`}
+					${x && `${x} = @_window.pageXOffset;`}
+					${y && `${y} = @_window.pageYOffset;`}
 				`);
 
 				block.event_listeners.push(deindent`
-					@listen(window, "${event}", () => {
+					@listen(@_window, "${event}", () => {
 						${scrolling} = true;
-						clearTimeout(${scrolling_timeout});
-						${scrolling_timeout} = setTimeout(${clear_scrolling}, 100);
+						@_clearTimeout(${scrolling_timeout});
+						${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
 						ctx.${handler_name}();
 					})
 				`);
 			} else {
 				props.forEach(prop => {
 					renderer.meta_bindings.add_line(
-						`this._state.${prop.name} = window.${prop.value};`
+						`this._state.${prop.name} = @_window.${prop.value};`
 					);
 				});
 
 				block.event_listeners.push(deindent`
-					@listen(window, "${event}", ctx.${handler_name})
+					@listen(@_window, "${event}", ctx.${handler_name})
 				`);
 			}
 
@@ -126,7 +126,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(deindent`
 				function ${handler_name}() {
-					${props.map(prop => `${prop.name} = window.${prop.value}; $$invalidate('${prop.name}', ${prop.name});`)}
+					${props.map(prop => `${prop.name} = @_window.${prop.value}; $$invalidate('${prop.name}', ${prop.name});`)}
 				}
 			`);
 
@@ -146,13 +146,13 @@ export default class WindowWrapper extends Wrapper {
 					).join(' || ')
 				} && !${scrolling}) {
 					${scrolling} = true;
-					clearTimeout(${scrolling_timeout});
-					window.scrollTo(${
-						bindings.scrollX ? `ctx.${bindings.scrollX}` : `window.pageXOffset`
+					@_clearTimeout(${scrolling_timeout});
+					@_scrollTo(${
+						bindings.scrollX ? `ctx.${bindings.scrollX}` : `@_window.pageXOffset`
 					}, ${
-						bindings.scrollY ? `ctx.${bindings.scrollY}` : `window.pageYOffset`
+						bindings.scrollY ? `ctx.${bindings.scrollY}` : `@_window.pageYOffset`
 					});
-					${scrolling_timeout} = setTimeout(${clear_scrolling}, 100);
+					${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
 				}
 			`);
 		}
@@ -170,7 +170,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(deindent`
 				function ${handler_name}() {
-					${name} = navigator.onLine; $$invalidate('${name}', ${name});
+					${name} = @_navigator.onLine; $$invalidate('${name}', ${name});
 				}
 			`);
 
@@ -179,8 +179,8 @@ export default class WindowWrapper extends Wrapper {
 			`);
 
 			block.event_listeners.push(
-				`@listen(window, "online", ctx.${handler_name})`,
-				`@listen(window, "offline", ctx.${handler_name})`
+				`@listen(@_window, "online", ctx.${handler_name})`,
+				`@listen(@_window, "offline", ctx.${handler_name})`
 			);
 
 			component.has_reactive_assignments = true;

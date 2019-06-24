@@ -101,7 +101,8 @@ export default class Component {
 	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
 	injected_reactive_declaration_vars: Set<string> = new Set();
-	helpers: Set<string> = new Set();
+	helpers: Map<string, string> = new Map();
+	globals: Map<string, string> = new Map();
 
 	indirect_dependencies: Map<string, Set<string>> = new Map();
 
@@ -233,8 +234,15 @@ export default class Component {
 	}
 
 	helper(name: string) {
-		this.helpers.add(name);
-		return this.alias(name);
+		const alias = this.alias(name)
+		this.helpers.set(name, alias);
+		return alias;
+	}
+
+	global(name: string) {
+		const alias = this.alias(name);
+		this.globals.set(name, alias);
+		return alias;
 	}
 
 	generate(result: string) {
@@ -251,23 +259,29 @@ export default class Component {
 				.replace(/__svelte:self__/g, this.name)
 				.replace(compile_options.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (_match: string, sigil: string, name: string) => {
 					if (sigil === '@') {
-						if (internal_exports.has(name)) {
-							if (compile_options.dev && internal_exports.has(`${name}Dev`)) name = `${name}Dev`;
-							this.helpers.add(name);
+						if (name[0] === '_') {
+							return this.global(name.slice(1));
 						}
 
-						return this.alias(name);
+						if (!internal_exports.has(name)) {
+							throw new Error(`compiler error: this shouldn't happen! generated code is trying to use inexistent internal '${name}'`);
+						}
+
+						if (compile_options.dev && internal_exports.has(`${name}Dev`)) {
+							name = `${name}Dev`;
+						}
+
+						return this.helper(name);
 					}
 
 					return sigil.slice(1) + name;
 				});
 
-			const imported_helpers = Array.from(this.helpers)
-				.sort()
-				.map(name => {
-					const alias = this.alias(name);
-					return { name, alias };
-				});
+			const referenced_globals = Array.from(this.globals, ([name, alias]) => name !== alias && ({ name, alias })).filter(Boolean);
+			if (referenced_globals.length) {
+				this.helper('globals');
+			}
+			const imported_helpers = Array.from(this.helpers, ([name, alias]) => ({ name, alias }));
 
 			const module = create_module(
 				result,
@@ -276,6 +290,7 @@ export default class Component {
 				banner,
 				compile_options.sveltePath,
 				imported_helpers,
+				referenced_globals,
 				this.imports,
 				this.vars.filter(variable => variable.module && variable.export_name).map(variable => ({
 					name: variable.name,
