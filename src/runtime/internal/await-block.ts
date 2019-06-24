@@ -1,5 +1,5 @@
 import { assign, is_promise } from './utils';
-import { check_outros, group_outros, on_outro } from './transitions';
+import { check_outros, group_outros, transition_in, transition_out } from './transitions';
 import { flush } from '../internal/scheduler';
 
 export function handle_promise(promise, info) {
@@ -18,11 +18,9 @@ export function handle_promise(promise, info) {
 				info.blocks.forEach((block, i) => {
 					if (i !== index && block) {
 						group_outros();
-						on_outro(() => {
-							block.d(1);
+						transition_out(block, 1, () => {
 							info.blocks[i] = null;
 						});
-						block.o(1);
 						check_outros();
 					}
 				});
@@ -31,7 +29,7 @@ export function handle_promise(promise, info) {
 			}
 
 			block.c();
-			if (block.i) block.i(1);
+			transition_in(block, 1);
 			block.m(info.mount(), info.anchor);
 
 			flush();

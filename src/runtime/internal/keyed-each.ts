@@ -1,4 +1,4 @@
-import { on_outro } from './transitions';
+import { transition_in, transition_out } from './transitions';
 
 export function destroy_block(block, lookup) {
 	block.d(1);
@@ -6,11 +6,9 @@ export function destroy_block(block, lookup) {
 }
 
 export function outro_and_destroy_block(block, lookup) {
-	on_outro(() => {
-		destroy_block(block, lookup);
+	transition_out(block, 1, () => {
+		lookup.delete(block.key);
 	});
-
-	block.o(1);
 }
 
 export function fix_and_destroy_block(block, lookup) {
@@ -57,7 +55,7 @@ export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, li
 	const did_move = new Set();
 
 	function insert(block) {
-		if (block.i) block.i(1);
+		transition_in(block, 1);
 		block.m(node, next);
 		lookup.set(block.key, block);
 		next = block.first;

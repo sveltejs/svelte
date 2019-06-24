@@ -335,6 +335,8 @@ export default class ElementWrapper extends Wrapper {
 
 		function to_html(wrapper: ElementWrapper | TextWrapper) {
 			if (wrapper.node.type === 'Text') {
+				if (wrapper.node.use_space) return ' ';
+
 				const parent = wrapper.node.parent as Element;
 
 				const raw = parent && (
@@ -342,9 +344,9 @@ export default class ElementWrapper extends Wrapper {
 					parent.name === 'style'
 				);
 
-				return raw
+				return (raw
 					? wrapper.node.data
-					: escape_html(wrapper.node.data)
+					: escape_html(wrapper.node.data))
 						.replace(/\\/g, '\\\\')
 						.replace(/`/g, '\\`')
 						.replace(/\$/g, '\\$');

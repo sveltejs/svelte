@@ -7,10 +7,11 @@ export default function flatten_reference(node: Node) {
 	const prop_end = node.end;
 
 	while (node.type === 'MemberExpression') {
-		if (node.computed) return null;
-
 		nodes.unshift(node.property);
-		parts.unshift(node.property.name);
+
+		if (!node.computed) {
+			parts.unshift(node.property.name);
+		}
 
 		node = node.object;
 	}
@@ -20,10 +21,11 @@ export default function flatten_reference(node: Node) {
 		? node.name
 		: node.type === 'ThisExpression' ? 'this' : null;
 
-	if (!name) return null;
-
-	parts.unshift(name);
 	nodes.unshift(node);
+
+	if (!node.computed) {
+		parts.unshift(name);
+	}
 
 	return { name, nodes, parts, keypath: `${name}[✂${prop_start}-${prop_end}✂]` };
 }

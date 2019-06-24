@@ -1,5 +1,27 @@
 # Svelte changelog
 
+## 3.5.4
+
+* Preserve whitespace at the boundaries of `{#each}` blocks ([#713](https://github.com/sveltejs/svelte/issues/713))
+* Fix dynamic `bind:this` on components ([#2333](https://github.com/sveltejs/svelte/issues/2333))
+* Fix binding to values in a component when it uses `$$props` ([#2725](https://github.com/sveltejs/svelte/issues/2725))
+* Fix parsing ambiguous HTML entities ([#3071](https://github.com/sveltejs/svelte/pull/3071))
+
+## 3.5.3
+
+* Don't double-destroy keyed each blocks with outros ([#3055](https://github.com/sveltejs/svelte/issues/3055))
+
+## 3.5.2
+
+* Prevent duplicated outros causing errors ([#3001](https://github.com/sveltejs/svelte/issues/3001))
+* Fix automatic name generation ([#2843](https://github.com/sveltejs/svelte/issues/2843))
+* Fix .d.ts stubs ([#3009](https://github.com/sveltejs/svelte/pull/3009))
+* Don't strip non-breaking spaces ([#3014](https://github.com/sveltejs/svelte/issues/3014))
+* Fix `requestAnimationFrame` context ([#2933](https://github.com/sveltejs/svelte/issues/2933))
+* Allow space before attribute value ([#3026](https://github.com/sveltejs/svelte/issues/3026))
+* Remove null/undefined attributes ([#1434](https://github.com/sveltejs/svelte/issues/1434))
+* Fix whitespace in static markup ([#3030](https://github.com/sveltejs/svelte/pull/3030))
+
 ## 3.5.1
 
 * Accommodate webpack idiosyncracies
