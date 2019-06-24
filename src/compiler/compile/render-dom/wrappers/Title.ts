@@ -68,9 +68,9 @@ export default class TitleWrapper extends Wrapper {
 			const init = this.node.should_cache ? `${last} = ${value}` : value;
 
 			block.builders.init.add_line(
-				`document.title = ${init};`
+				`@_document.title = ${init};`
 			);
-			const updater = `document.title = ${this.node.should_cache ? last : value};`;
+			const updater = `@_document.title = ${this.node.should_cache ? last : value};`;
 
 			if (all_dependencies.size) {
 				const dependencies = Array.from(all_dependencies);
@@ -95,7 +95,7 @@ export default class TitleWrapper extends Wrapper {
 				? stringify((this.node.children[0] as Text).data)
 				: '""';
 
-			block.builders.hydrate.add_line(`document.title = ${value};`);
+			block.builders.hydrate.add_line(`@_document.title = ${value};`);
 		}
 	}
 }

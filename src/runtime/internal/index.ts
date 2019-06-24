@@ -2,6 +2,7 @@ export * from './animations';
 export * from './await-block';
 export * from './dom';
 export * from './environment';
+export * from './globals';
 export * from './keyed-each';
 export * from './lifecycle';
 export * from './loop';
