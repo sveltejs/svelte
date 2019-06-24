@@ -234,7 +234,7 @@ export default class Component {
 	}
 
 	helper(name: string) {
-		const alias = this.alias(name)
+		const alias = this.alias(name);
 		this.helpers.set(name, alias);
 		return alias;
 	}
