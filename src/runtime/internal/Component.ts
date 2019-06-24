@@ -54,7 +54,7 @@ export function destroy_component(component, detaching) {
 	if (component.$$.fragment) {
 		run_all(component.$$.on_destroy);
 
-		if (detaching) component.$$.fragment.d(1);
+		component.$$.fragment.d(detaching);
 
 		// TODO null out other refs, including component.$$ (but need to
 		// preserve final state?)
