@@ -1,21 +1,18 @@
 export default {
-	props: {
-		name: 'world',
-	},
-
 	html: `
-		<editor contenteditable="true">world</editor>
+		<editor contenteditable="true"><b>world</b></editor>
 		<p>hello world</p>
 	`,
 
 	ssrHtml: `
-		<editor contenteditable="true">world</editor>
-		<p>hello world</p>
+		<editor contenteditable="true"><b>world</b></editor>
+		<p>hello undefined</p>
 	`,
 
 	async test({ assert, component, target, window }) {
+		assert.equal(component.name, 'world');
+
 		const el = target.querySelector('editor');
-		assert.equal(el.textContent, 'world');
 
 		const event = new window.Event('input');
 

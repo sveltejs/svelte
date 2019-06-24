@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 3.5.4
+
+* Preserve whitespace at the boundaries of `{#each}` blocks ([#713](https://github.com/sveltejs/svelte/issues/713))
+* Fix dynamic `bind:this` on components ([#2333](https://github.com/sveltejs/svelte/issues/2333))
+* Fix binding to values in a component when it uses `$$props` ([#2725](https://github.com/sveltejs/svelte/issues/2725))
+* Fix parsing ambiguous HTML entities ([#3071](https://github.com/sveltejs/svelte/pull/3071))
+
 ## 3.5.3
 
 * Don't double-destroy keyed each blocks with outros ([#3055](https://github.com/sveltejs/svelte/issues/3055))

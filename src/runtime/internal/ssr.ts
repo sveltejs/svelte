@@ -119,3 +119,12 @@ export function get_store_value<T>(store: Readable<T>): T | undefined {
 	store.subscribe(_ => value = _)();
 	return value;
 }
+
+export function add_attribute(name, value) {
+	if (!value) return '';
+	return ` ${name}${value === true ? '' : `=${JSON.stringify(value)}`}`;
+}
+
+export function add_classes(classes) {
+	return classes ? ` class="${classes}"` : ``;
+}
