@@ -1,6 +1,6 @@
 export default {
 	html: `
-		<editor><b>world</b></editor>
+		<editor contenteditable="true"><b>world</b></editor>
 		<p>hello world</p>
 	`,
 
@@ -20,14 +20,14 @@ export default {
 		await el.dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `
-			<editor>everybody</editor>
+			<editor contenteditable="true">everybody</editor>
 			<p>hello everybody</p>
 		`);
 
 		component.name = 'goodbye';
 		assert.equal(el.textContent, 'goodbye');
 		assert.htmlEqual(target.innerHTML, `
-			<editor>goodbye</editor>
+			<editor contenteditable="true">goodbye</editor>
 			<p>hello goodbye</p>
 		`);
 	},

@@ -8,11 +8,6 @@ export default {
 		<p>hello world</p>
 	`,
 
-	ssrHtml: `
-		<editor contenteditable="true">world</editor>
-		<p>hello world</p>
-	`,
-
 	async test({ assert, component, target, window }) {
 		const el = target.querySelector('editor');
 		assert.equal(el.textContent, 'world');
