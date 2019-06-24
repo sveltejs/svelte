@@ -20,7 +20,7 @@ A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag
 ```
 
 
-### Attributes
+### Attributes and props
 
 ---
 
@@ -72,6 +72,16 @@ When the attribute name and value match (`name={name}`), they can be replaced wi
 <!-- These are equivalent -->
 <button disabled={disabled}>...</button>
 <button {disabled}>...</button>
+```
+
+---
+
+By convention, values passed to components are referred to as *properties* or *props* rather than *attributes*, which are a feature of the DOM.
+
+As with elements, `name={name}` can be replaced with the `{name}` shorthand.
+
+```html
+<Widget foo={bar} answer={42} text="hello"/>
 ```
 
 ---
