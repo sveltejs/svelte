@@ -3,4 +3,4 @@
 
     let toggle = false;
 </script>
-<editor contenteditable={toggle} bind:html={name}></editor>
+<editor contenteditable={toggle} bind:innerHTML={name}></editor>
