@@ -154,9 +154,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 		if (name === 'group') {
 			// TODO server-render group bindings
-		} else if (contenteditable && (name === 'text' || name === 'html')) {
+		} else if (contenteditable && (name === 'textContent' || name === 'innerHTML')) {
 			node_contents = snip(expression);
-			value = name === 'text' ? '@escape($$value)' : '$$value';
+			value = name === 'textContent' ? '@escape($$value)' : '$$value';
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = snip(expression);
 			node_contents = '${(' + snippet + ') || ""}';
