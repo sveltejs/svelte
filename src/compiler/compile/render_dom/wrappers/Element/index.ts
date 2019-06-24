@@ -344,12 +344,10 @@ export default class ElementWrapper extends Wrapper {
 					parent.name === 'style'
 				);
 
-				return (raw
-					? wrapper.node.data
-					: escape_html(wrapper.node.data))
-						.replace(/\\/g, '\\\\')
-						.replace(/`/g, '\\`')
-						.replace(/\$/g, '\\$');
+				return (raw ? wrapper.node.data : escape_html(wrapper.node.data))
+					.replace(/\\/g, '\\\\')
+					.replace(/`/g, '\\`')
+					.replace(/\$/g, '\\$');
 			}
 
 			if (wrapper.node.name === 'noscript') return '';
