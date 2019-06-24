@@ -2,7 +2,7 @@ import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import deindent from '../utils/deindent';
-import Block from '../render-dom/Block';
+import Block from '../render_dom/Block';
 
 export default class EventHandler extends Node {
 	type: 'EventHandler';

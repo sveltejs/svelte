@@ -1,6 +1,6 @@
 import { assign, is_promise } from './utils';
 import { check_outros, group_outros, transition_in, transition_out } from './transitions';
-import { flush } from '../internal/scheduler';
+import { flush } from './scheduler';
 
 export function handle_promise(promise, info) {
 	const token = info.token = {};

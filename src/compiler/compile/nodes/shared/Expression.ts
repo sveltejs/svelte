@@ -6,12 +6,12 @@ import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
 import { globals , sanitize } from '../../../utils/names';
 import deindent from '../../utils/deindent';
-import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
+import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
 
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import { nodes_match } from '../../../utils/nodes_match';
-import Block from '../../render-dom/Block';
+import Block from '../../render_dom/Block';
 import { INode } from '../interfaces';
 
 const binary_operators: Record<string, number> = {

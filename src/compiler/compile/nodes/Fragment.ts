@@ -1,7 +1,7 @@
 import Node from './shared/Node';
 import Component from '../Component';
 import map_children from './shared/map_children';
-import Block from '../render-dom/Block';
+import Block from '../render_dom/Block';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 
