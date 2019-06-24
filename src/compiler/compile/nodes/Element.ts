@@ -618,7 +618,7 @@ export default class Element extends Node {
 				if (!contenteditable) {
 					component.error(binding, {
 						code: `missing-contenteditable-attribute`,
-						message: `'contenteditable' attribute is required for texContent and innerHTML two-way bindings`
+						message: `'contenteditable' attribute is required for textContent and innerHTML two-way bindings`
 					});
 				} else if (contenteditable && !contenteditable.is_static) {
 					component.error(contenteditable, {
