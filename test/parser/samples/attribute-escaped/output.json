@@ -1,27 +1,27 @@
 {
 	"html": {
 		"start": 0,
-		"end": 41,
+		"end": 83,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 41,
+				"end": 83,
 				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
 						"start": 5,
-						"end": 34,
+						"end": 76,
 						"type": "Attribute",
 						"name": "data-foo",
 						"value": [
 							{
 								"start": 15,
-								"end": 33,
+								"end": 75,
 								"type": "Text",
-								"raw": "&quot;quoted&quot;",
-								"data": "\"quoted\""
+								"raw": "semi:&quot;space:&quot letter:&quote number:&quot1 end:&quot",
+								"data": "semi:\"space:\" letter:&quote number:&quot1 end:\""
 							}
 						]
 					}

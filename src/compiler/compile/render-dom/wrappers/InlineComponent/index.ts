@@ -276,15 +276,17 @@ export default class InlineComponentWrapper extends Wrapper {
 					lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 				}
 
+				const contextual_dependencies = [...binding.expression.contextual_dependencies];
+
 				component.partly_hoisted.push(deindent`
-					function ${fn}($$component) {
+					function ${fn}(${['$$component', ...contextual_dependencies].join(', ')}) {
 						${lhs} = $$component;
 						${object && component.invalidate(object)}
 					}
 				`);
 
 				block.builders.destroy.add_line(`ctx.${fn}(null);`);
-				return `@add_binding_callback(() => ctx.${fn}(${this.var}));`;
+				return `@add_binding_callback(() => ctx.${fn}(${[this.var, ...contextual_dependencies.map(name => `ctx.${name}`)].join(', ')}));`;
 			}
 
 			const name = component.get_unique_name(`${this.var}_${binding.name}_binding`);

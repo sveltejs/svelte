@@ -133,6 +133,14 @@ export default class BindingWrapper {
 				break;
 			}
 
+			case 'textContent':
+				update_conditions.push(`${this.snippet} !== ${parent.var}.textContent`);
+				break;
+
+			case 'innerHTML':
+				update_conditions.push(`${this.snippet} !== ${parent.var}.innerHTML`);
+				break;
+
 			case 'currentTime':
 			case 'playbackRate':
 			case 'volume':
@@ -162,7 +170,9 @@ export default class BindingWrapper {
 			);
 		}
 
-		if (!/(currentTime|paused)/.test(this.node.name)) {
+		if (this.node.name === 'innerHTML' || this.node.name === 'textContent') {
+			block.builders.mount.add_block(`if (${this.snippet} !== void 0) ${update_dom}`);
+		} else if (!/(currentTime|paused)/.test(this.node.name)) {
 			block.builders.mount.add_block(update_dom);
 		}
 	}
@@ -196,14 +206,6 @@ function get_dom_updater(
 			: `${element.var}.__value === ${binding.snippet}`;
 
 		return `${element.var}.checked = ${condition};`;
-	}
-
-	if (binding.node.name === 'text') {
-		return `if (${binding.snippet} !== ${element.var}.textContent) ${element.var}.textContent = ${binding.snippet};`;
-	}
-
-	if (binding.node.name === 'html') {
-		return `if (${binding.snippet} !== ${element.var}.innerHTML) ${element.var}.innerHTML = ${binding.snippet};`;
 	}
 
 	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
@@ -316,14 +318,6 @@ function get_value_from_dom(
 
 	if ((name === 'buffered' || name === 'seekable' || name === 'played')) {
 		return `@time_ranges_to_array(this.${name})`;
-	}
-
-	if (name === 'text') {
-		return `this.textContent`;
-	}
-
-	if (name === 'html') {
-		return `this.innerHTML`;
 	}
 
 	// everything else
