@@ -1,8 +1,8 @@
 import { assign } from '../../runtime/internal/utils';
 import Stats from '../Stats';
 import parse from '../parse/index';
-import render_dom from './render-dom/index';
-import render_ssr from './render-ssr/index';
+import render_dom from './render_dom/index';
+import render_ssr from './render_ssr/index';
 import { CompileOptions, Warning } from '../interfaces';
 import Component from './Component';
 import fuzzymatch from '../utils/fuzzymatch';

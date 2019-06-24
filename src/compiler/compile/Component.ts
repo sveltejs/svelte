@@ -10,7 +10,7 @@ import { create_scopes, extract_names, Scope, extract_identifiers } from './util
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
-import internal_exports from './internal-exports';
+import internal_exports from './internal_exports';
 import { Node, Ast, CompileOptions, Var, Warning } from '../interfaces';
 import error from '../utils/error';
 import get_code_frame from '../utils/get_code_frame';
