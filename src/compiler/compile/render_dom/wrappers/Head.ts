@@ -30,6 +30,6 @@ export default class HeadWrapper extends Wrapper {
 	}
 
 	render(block: Block, _parent_node: string, _parent_nodes: string) {
-		this.fragment.render(block, 'document.head', 'nodes');
+		this.fragment.render(block, '@_document.head', 'nodes');
 	}
 }
