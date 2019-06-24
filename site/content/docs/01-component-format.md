@@ -28,41 +28,60 @@ A `<script>` block contains JavaScript that runs when a component instance is cr
 
 ---
 
-Svelte uses the `export` keyword to mark a variable declaration as a *property* or *prop*, which means it becomes accessible to consumers of the component:
+Svelte uses the `export` keyword to mark a variable declaration as a *property* or *prop*, which means it becomes accessible to consumers of the component (see the section on [attributes and props](docs#Attributes_and_props) for more information).
 
 ```html
 <script>
-	// these properties can be set externally
 	export let foo;
-	export let bar = 'optional default value';
-
-	// you can use export { ... as ... } to have
-	// props whose names are reserved keywords
-	let clazz;
-	export { clazz as class };
-
-	// this property is readonly externally
-	export const buzz = 'buzz';
 
 	// Values that are passed in as props
 	// are immediately available
-	console.log(foo, bar);
-	
-	// Function expressions can also be props
-	export let format = (number) => (number.toFixed(2));
+	console.log({ foo });
+</script>
+```
 
-	// Function declarations are added as methods
-	// on the component, rather than props
-	export function greetMethod() {
-		alert(`I'm a <${this.constructor.name}>!`);
+---
+
+You can specify a default value, which will be used if the component's consumer doesn't specify a prop.
+
+In development mode (see the [compiler options](docs#svelte_compile)), a warning will be printed if no default is provided and the consumer does not specify a value. To squelch this warning, ensure that a default is specified, even if it is `undefined`.
+
+```html
+<script>
+	export let bar = 'optional default value';
+	export let baz = undefined;
+</script>
+```
+
+---
+
+If you export a `const`, `class` or `function`, it is readonly from outside the component. Function *expressions* are valid props, however.
+
+```html
+<script>
+	// these are readonly
+	export const thisIs = 'readonly';
+
+	export function greet(name) {
+		alert(`hello ${name}!`);
 	}
 
-	// you can also use export { ... as ... } to have
-	// methods whose names are reserved keywords
-	function del() {
-		do_something();
-	}
-	export { del as delete };
+	// this is a prop
+	export let format = n => n.toFixed(2);
+</script>
+```
+
+---
+
+You can use reserved words as prop names.
+
+```html
+<script>
+	let className;
+
+	// creates a `class` property, even
+	// though it is a reserved word
+	export { className as class };
 </script>
 ```
 
@@ -81,8 +100,8 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 	let count = 0;
 
 	function handleClick () {
-		// calling this function will trigger a re-render
-		// if the markup references `count`
+		// calling this function will trigger an
+		// update if the markup references `count`
 		count = count + 1;
 	}
 </script>
