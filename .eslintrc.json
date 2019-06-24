@@ -39,6 +39,9 @@
     }],
     "@typescript-eslint/no-unused-vars": "off"
   },
+  "globals": {
+    "globalThis": false
+  },
   "env": {
     "es6": true,
     "browser": true,
