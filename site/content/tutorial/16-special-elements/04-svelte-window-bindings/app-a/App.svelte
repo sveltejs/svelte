@@ -7,7 +7,7 @@
 <svelte:window/>
 
 <a class="parallax-container" href="https://www.firewatchgame.com">
-	{#each [0, 1, 2, 3, 4, 5, 6, 7, 8] as layer}
+	{#each layers as layer}
 		<img
 			style="transform: translate(0,{-y * layer / (layers.length - 1)}px)"
 			src="https://www.firewatchgame.com/images/parallax/parallax{layer}.png"

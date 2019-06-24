@@ -188,11 +188,19 @@ If a *key* expression is provided — which must uniquely identify each list ite
 
 ---
 
-You can freely use destructuring patterns in each blocks.
+You can freely use destructuring and rest patterns in each blocks.
 
 ```html
 {#each items as { id, name, qty }, i (id)}
 	<li>{i + 1}: {name} x {qty}</li>
+{/each}
+
+{#each objects as { id, ...rest }}
+	<li><span>{id}</span><MyComponent {...rest}/></li>
+{/each}
+
+{#each items as [id, ...rest]}
+	<li><span>{id}</span><MyComponent values={rest}/></li>
 {/each}
 ```
 
@@ -1241,7 +1249,7 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 ### `<svelte:component>`
 
 ```sv
-<svelte:component this={expression}>
+<svelte:component this={expression}/>
 ```
 
 ---
@@ -1318,7 +1326,7 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 ### `<svelte:head>`
 
 ```sv
-<svelte:head>
+<svelte:head>...</svelte:head>
 ```
 
 ---
@@ -1335,7 +1343,7 @@ This element makes it possible to insert elements into `document.head`. During s
 ### `<svelte:options>`
 
 ```sv
-<svelte:options option={value}>
+<svelte:options option={value}/>
 ```
 
 ---
