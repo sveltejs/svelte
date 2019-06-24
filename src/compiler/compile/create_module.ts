@@ -17,6 +17,7 @@ export default function create_module(
 	banner: string,
 	sveltePath = 'svelte',
 	helpers: Array<{ name: string; alias: string }>,
+	globals: Array<{ name: string; alias: string }>,
 	imports: Node[],
 	module_exports: Export[],
 	source: string
@@ -24,10 +25,10 @@ export default function create_module(
 	const internal_path = `${sveltePath}/internal`;
 
 	if (format === 'esm') {
-		return esm(code, name, banner, sveltePath, internal_path, helpers, imports, module_exports, source);
+		return esm(code, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports, source);
 	}
 
-	if (format === 'cjs') return cjs(code, name, banner, sveltePath, internal_path, helpers, imports, module_exports);
+	if (format === 'cjs') return cjs(code, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports);
 
 	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 }
@@ -45,12 +46,16 @@ function esm(
 	sveltePath: string,
 	internal_path: string,
 	helpers: Array<{ name: string; alias: string }>,
+	globals: Array<{ name: string; alias: string }>,
 	imports: Node[],
 	module_exports: Export[],
 	source: string
 ) {
 	const internal_imports = helpers.length > 0 && (
 		`import ${stringify_props(helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).sort())} from ${JSON.stringify(internal_path)};`
+	);
+	const internal_globals = globals.length > 0 && (
+		`const ${stringify_props(globals.map(g => `${g.name}: ${g.alias}`).sort())} = ${helpers.find(({ name }) => name === 'globals').alias};`
 	);
 
 	const user_imports = imports.length > 0 && (
@@ -70,6 +75,7 @@ function esm(
 	return deindent`
 		${banner}
 		${internal_imports}
+		${internal_globals}
 		${user_imports}
 
 		${code}
@@ -85,6 +91,7 @@ function cjs(
 	sveltePath: string,
 	internal_path: string,
 	helpers: Array<{ name: string; alias: string }>,
+	globals: Array<{ name: string; alias: string }>,
 	imports: Node[],
 	module_exports: Export[]
 ) {
@@ -92,6 +99,9 @@ function cjs(
 
 	const internal_imports = helpers.length > 0 && (
 		`const ${stringify_props(declarations)} = require(${JSON.stringify(internal_path)});\n`
+	);
+	const internal_globals = globals.length > 0 && (
+		`const ${stringify_props(globals.map(g => `${g.name}: ${g.alias}`).sort())} = ${helpers.find(({ name }) => name === 'globals').alias};`
 	);
 
 	const requires = imports.map(node => {
@@ -127,6 +137,7 @@ function cjs(
 		"use strict";
 
 		${internal_imports}
+		${internal_globals}
 		${requires}
 
 		${code}
