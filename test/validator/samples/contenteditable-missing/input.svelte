@@ -1,4 +1,4 @@
 <script>
     export let name;
 </script>
-<editor bind:text={name}></editor>
+<editor bind:textContent={name}></editor>
