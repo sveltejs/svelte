@@ -93,6 +93,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 			}
 			if (subscribers.length === 0) {
 				stop();
+				stop = null;
 			}
 		};
 	}
