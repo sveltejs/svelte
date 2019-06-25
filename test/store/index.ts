@@ -59,6 +59,22 @@ describe('store', () => {
 			store.update(obj => obj);
 			assert.equal(called, 3);
 		});
+
+		it('only calls subscriber once initially, including on resubscriptions', () => {
+			let num = 0;
+			const store = writable(num, set => set(num += 1));
+
+			let count1 = 0;
+			let count2 = 0;
+
+			store.subscribe(() => count1 += 1)();
+			assert.equal(count1, 1);
+
+			const unsubscribe = store.subscribe(() => count2 += 1);
+			assert.equal(count2, 1);
+
+			unsubscribe();
+		});
 	});
 
 	describe('readable', () => {
