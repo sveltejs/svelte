@@ -1,5 +1,21 @@
 # Svelte changelog
 
+## 3.6.0
+
+* Add `innerHTML` and `textContent` bindings for `contenteditable` elements ([#2996](https://github.com/sveltejs/svelte/pull/2996))
+* Fix destructuring assignments where targets are member expressions ([#3092](https://github.com/sveltejs/svelte/issues/3092))
+* Deconflict with used globals ([#2963](https://github.com/sveltejs/svelte/pull/2963))
+* Always run `onDestroy` functions, not just for detaching components ([#3058](https://github.com/sveltejs/svelte/issues/3058))
+* Fix scope analysis around catch clauses ([#3064](https://github.com/sveltejs/svelte/issues/3064))
+* Add error constructors to known globals (#3064](https://github.com/sveltejs/svelte/issues/3064))
+* Always bail out of hoisting on encountering local state in function definition ([#3044](https://github.com/sveltejs/svelte/issues/3044))
+* Fix incorrect merging of top-level text nodes ([#3027](https://github.com/sveltejs/svelte/issues/3027))
+* Handle removal of components in each blocks without props ([#3035](https://github.com/sveltejs/svelte/issues/3035))
+* Only call subscriber once when resubscribing to a store ([#3022](https://github.com/sveltejs/svelte/issues/3022))
+* Check for existence of dynamic component before introing ([#3054](https://github.com/sveltejs/svelte/issues/3054))
+* Sanitize names of bubbled event handlers ([#2923](https://github.com/sveltejs/svelte/issues/2923))
+
+
 ## 3.5.4
 
 * Preserve whitespace at the boundaries of `{#each}` blocks ([#713](https://github.com/sveltejs/svelte/issues/713))
