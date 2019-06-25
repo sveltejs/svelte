@@ -365,7 +365,7 @@ If you return a function from the callback, it will be called when a) the callba
 import { derived } from 'svelte/store';
 
 const tick = derived(frequency, ($frequency, set) => {
-	const interval = setInterval(() => set(Date.now()), 1000 / frequency);
+	const interval = setInterval(() => set(Date.now()), 1000 / $frequency);
 
 	return () => {
 		clearInterval(interval);
