@@ -49,12 +49,27 @@ export default class TextWrapper extends Wrapper {
 		this.var = this.skip ? null : 't';
 	}
 
+	use_space() {
+		if (this.renderer.component.component_options.preserveWhitespace) return false;
+		if (/[\S\u00A0]/.test(this.data)) return false;
+
+		let node = this.parent && this.parent.node;
+		while (node) {
+			if (node.type === 'Element' && node.name === 'pre') {
+				return false;
+			}
+			node = node.parent;
+		}
+
+		return true;
+	}
+
 	render(block: Block, parent_node: string, parent_nodes: string) {
 		if (this.skip) return;
 
 		block.add_element(
 			this.var,
-			this.node.use_space ? `@space()` : `@text(${stringify(this.data)})`,
+			this.use_space() ? `@space()` : `@text(${stringify(this.data)})`,
 			parent_nodes && `@claim_text(${parent_nodes}, ${stringify(this.data)})`,
 			parent_node
 		);

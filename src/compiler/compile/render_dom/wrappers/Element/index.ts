@@ -335,7 +335,7 @@ export default class ElementWrapper extends Wrapper {
 
 		function to_html(wrapper: ElementWrapper | TextWrapper) {
 			if (wrapper.node.type === 'Text') {
-				if (wrapper.node.use_space) return ' ';
+				if ((wrapper as TextWrapper).use_space()) return ' ';
 
 				const parent = wrapper.node.parent as Element;
 
