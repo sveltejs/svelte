@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.6.1
+
+* Fix escaping of `@` in dev mode debug filename ([#3114](https://github.com/sveltejs/svelte/pull/3114))
+
 ## 3.6.0
 
 * Add `innerHTML` and `textContent` bindings for `contenteditable` elements ([#2996](https://github.com/sveltejs/svelte/pull/2996))
