@@ -6,7 +6,6 @@ import { INode } from './interfaces';
 export default class Text extends Node {
 	type: 'Text';
 	data: string;
-	use_space = false;
 
 	constructor(component: Component, parent: INode, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
@@ -20,8 +19,6 @@ export default class Text extends Node {
 				}
 				node = node.parent;
 			}
-
-			this.use_space = true;
 		}
 	}
 }
