@@ -50,7 +50,6 @@ export default class EachBlockWrapper extends Wrapper {
 	fragment: FragmentWrapper;
 	else?: ElseBlockWrapper;
 	vars: {
-		anchor: string;
 		create_each_block: string;
 		each_block_value: string;
 		get_each_context: string;
@@ -119,10 +118,7 @@ export default class EachBlockWrapper extends Wrapper {
 			// optimisation for array literal
 			fixed_length,
 			data_length: fixed_length === null ? `${each_block_value}.[✂${c}-${c+4}✂]` : fixed_length,
-			view_length: fixed_length === null ? `${iterations}.[✂${c}-${c+4}✂]` : fixed_length,
-
-			// filled out later
-			anchor: null
+			view_length: fixed_length === null ? `${iterations}.[✂${c}-${c+4}✂]` : fixed_length
 		};
 
 		node.contexts.forEach(prop => {
@@ -175,10 +171,6 @@ export default class EachBlockWrapper extends Wrapper {
 			? !this.next.is_dom_node() :
 			!parent_node || !this.parent.is_dom_node();
 
-		this.vars.anchor = needs_anchor
-			? block.get_unique_name(`${this.var}_anchor`)
-			: (this.next && this.next.var) || 'null';
-
 		this.context_props = this.node.contexts.map(prop => `child_ctx.${prop.key.name} = ${attach_head('list[i]', prop.tail)};`);
 
 		if (this.node.has_binding) this.context_props.push(`child_ctx.${this.vars.each_block_value} = list;`);
@@ -196,10 +188,28 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		`);
 
+		const initial_anchor_node = parent_node ? 'null' : 'anchor';
+		const initial_mount_node = parent_node || '#target';
+		const update_anchor_node = needs_anchor
+			? block.get_unique_name(`${this.var}_anchor`)
+			: (this.next && this.next.var) || 'null';
+		const update_mount_node = this.get_update_mount_node(update_anchor_node);
+
+		const args = {
+			block,
+			parent_node,
+			parent_nodes,
+			snippet,
+			initial_anchor_node,
+			initial_mount_node,
+			update_anchor_node,
+			update_mount_node
+		};
+
 		if (this.node.key) {
-			this.render_keyed(block, parent_node, parent_nodes, snippet);
+			this.render_keyed(args);
 		} else {
-			this.render_unkeyed(block, parent_node, parent_nodes, snippet);
+			this.render_unkeyed(args);
 		}
 
 		if (this.block.has_intro_method || this.block.has_outro_method) {
@@ -210,7 +220,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (needs_anchor) {
 			block.add_element(
-				this.vars.anchor,
+				update_anchor_node,
 				`@empty()`,
 				parent_nodes && `@empty()`,
 				parent_node
@@ -232,11 +242,9 @@ export default class EachBlockWrapper extends Wrapper {
 
 			block.builders.mount.add_block(deindent`
 				if (${each_block_else}) {
-					${each_block_else}.m(${parent_node || '#target'}, null);
+					${each_block_else}.m(${initial_mount_node}, ${initial_anchor_node});
 				}
 			`);
-
-			const initial_mount_node = parent_node || `${this.vars.anchor}.parentNode`;
 
 			if (this.else.block.has_update_method) {
 				block.builders.update.add_block(deindent`
@@ -245,7 +253,7 @@ export default class EachBlockWrapper extends Wrapper {
 					} else if (!${this.vars.data_length}) {
 						${each_block_else} = ${this.else.block.name}(ctx);
 						${each_block_else}.c();
-						${each_block_else}.m(${initial_mount_node}, ${this.vars.anchor});
+						${each_block_else}.m(${update_mount_node}, ${update_anchor_node});
 					} else if (${each_block_else}) {
 						${each_block_else}.d(1);
 						${each_block_else} = null;
@@ -261,7 +269,7 @@ export default class EachBlockWrapper extends Wrapper {
 					} else if (!${each_block_else}) {
 						${each_block_else} = ${this.else.block.name}(ctx);
 						${each_block_else}.c();
-						${each_block_else}.m(${initial_mount_node}, ${this.vars.anchor});
+						${each_block_else}.m(${update_mount_node}, ${update_anchor_node});
 					}
 				`);
 			}
@@ -278,16 +286,28 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 	}
 
-	render_keyed(
+	render_keyed({
+		block,
+		parent_node,
+		parent_nodes,
+		snippet,
+		initial_anchor_node,
+		initial_mount_node,
+		update_anchor_node,
+		update_mount_node
+	}: {
 		block: Block,
 		parent_node: string,
 		parent_nodes: string,
-		snippet: string
-	) {
+		snippet: string,
+		initial_anchor_node: string,
+		initial_mount_node: string,
+		update_anchor_node: string,
+		update_mount_node: string
+	}) {
 		const {
 			create_each_block,
 			length,
-			anchor,
 			iterations,
 			view_length
 		} = this.vars;
@@ -322,10 +342,6 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		`);
 
-		const initial_mount_node = parent_node || '#target';
-		const update_mount_node = this.get_update_mount_node(anchor);
-		const anchor_node = parent_node ? 'null' : 'anchor';
-
 		block.builders.create.add_block(deindent`
 			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].c();
 		`);
@@ -337,7 +353,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		block.builders.mount.add_block(deindent`
-			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].m(${initial_mount_node}, ${anchor_node});
+			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
 		`);
 
 		const dynamic = this.block.has_update_method;
@@ -355,7 +371,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			${this.block.has_outros && `@group_outros();`}
 			${this.node.has_animation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
-			${iterations} = @update_keyed_each(${iterations}, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${anchor}, ${this.vars.get_each_context});
+			${iterations} = @update_keyed_each(${iterations}, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
 			${this.node.has_animation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
 			${this.block.has_outros && `@check_outros();`}
 		`);
@@ -371,20 +387,30 @@ export default class EachBlockWrapper extends Wrapper {
 		`);
 	}
 
-	render_unkeyed(
+	render_unkeyed({
+		block,
+		parent_nodes,
+		snippet,
+		initial_anchor_node,
+		initial_mount_node,
+		update_anchor_node,
+		update_mount_node
+	}: {
 		block: Block,
-		parent_node: string,
 		parent_nodes: string,
-		snippet: string
-	) {
+		snippet: string,
+		initial_anchor_node: string,
+		initial_mount_node: string,
+		update_anchor_node: string,
+		update_mount_node: string
+	}) {
 		const {
 			create_each_block,
 			length,
 			iterations,
 			fixed_length,
 			data_length,
-			view_length,
-			anchor
+			view_length
 		} = this.vars;
 
 		block.builders.init.add_block(deindent`
@@ -394,10 +420,6 @@ export default class EachBlockWrapper extends Wrapper {
 				${iterations}[#i] = ${create_each_block}(${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i));
 			}
 		`);
-
-		const initial_mount_node = parent_node || '#target';
-		const update_mount_node = this.get_update_mount_node(anchor);
-		const anchor_node = parent_node ? 'null' : 'anchor';
 
 		block.builders.create.add_block(deindent`
 			for (var #i = 0; #i < ${view_length}; #i += 1) {
@@ -415,7 +437,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.builders.mount.add_block(deindent`
 			for (var #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].m(${initial_mount_node}, ${anchor_node});
+				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
 			}
 		`);
 
@@ -441,14 +463,14 @@ export default class EachBlockWrapper extends Wrapper {
 						${iterations}[#i] = ${create_each_block}(child_ctx);
 						${iterations}[#i].c();
 						${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
-						${iterations}[#i].m(${update_mount_node}, ${anchor});
+						${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
 					}
 				`
 				: deindent`
 					${iterations}[#i] = ${create_each_block}(child_ctx);
 					${iterations}[#i].c();
 					${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
-					${iterations}[#i].m(${update_mount_node}, ${anchor});
+					${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
 				`;
 
 			const start = this.block.has_update_method ? '0' : `${view_length}`;
