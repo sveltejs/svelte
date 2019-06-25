@@ -1040,6 +1040,8 @@ export default class Component {
 
 			walk(fn_declaration, {
 				enter(node, parent) {
+					if (!hoistable) return this.skip();
+
 					if (map.has(node)) {
 						scope = map.get(node);
 					}
@@ -1048,7 +1050,7 @@ export default class Component {
 						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
 
-						if (node.type === 'Identifier' && injected_reactive_declaration_vars.has(name)) {
+						if (injected_reactive_declaration_vars.has(name)) {
 							hoistable = false;
 						} else if (name[0] === '$' && !owner) {
 							hoistable = false;
