@@ -40,6 +40,13 @@ export function create_scopes(expression: Node) {
 				map.set(node, scope);
 			} else if (/(Class|Variable)Declaration/.test(node.type)) {
 				scope.add_declaration(node);
+			} else if (node.type === 'CatchClause') {
+				scope = new Scope(scope, true);
+				map.set(node, scope);
+
+				extract_names(node.param).forEach(name => {
+					scope.declarations.set(name, node.param);
+				});
 			} else if (node.type === 'Identifier' && is_reference(node as ESTreeNode, parent as ESTreeNode)) {
 				if (!scope.has(node.name) && !globals.has(node.name)) {
 					globals.set(node.name, node);
