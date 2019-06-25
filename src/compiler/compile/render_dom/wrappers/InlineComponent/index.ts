@@ -447,7 +447,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.builders.intro.add_block(deindent`
-				@transition_in(${name}.$$.fragment, #local);
+				if (${name}) @transition_in(${name}.$$.fragment, #local);
 			`);
 
 			if (updates.length) {

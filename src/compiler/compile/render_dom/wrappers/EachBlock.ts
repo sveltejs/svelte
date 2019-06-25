@@ -466,14 +466,26 @@ export default class EachBlockWrapper extends Wrapper {
 						${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
 					}
 				`
-				: deindent`
-					${iterations}[#i] = ${create_each_block}(child_ctx);
-					${iterations}[#i].c();
-					${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
-					${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
-				`;
+				: has_transitions
+					? deindent`
+						if (${iterations}[#i]) {
+							@transition_in(${this.vars.iterations}[#i], 1);
+						} else {
+							${iterations}[#i] = ${create_each_block}(child_ctx);
+							${iterations}[#i].c();
+							@transition_in(${this.vars.iterations}[#i], 1);
+							${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
+						}
+					`
+					: deindent`
+						if (!${iterations}[#i]) {
+							${iterations}[#i] = ${create_each_block}(child_ctx);
+							${iterations}[#i].c();
+							${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
+						}
+					`;
 
-			const start = this.block.has_update_method ? '0' : `${view_length}`;
+			const start = this.block.has_update_method ? '0' : `#old_length`;
 
 			let remove_old_blocks;
 
@@ -487,12 +499,12 @@ export default class EachBlockWrapper extends Wrapper {
 				`);
 				remove_old_blocks = deindent`
 					@group_outros();
-					for (; #i < ${view_length}; #i += 1) ${out}(#i);
+					for (#i = ${this.vars.each_block_value}.${length}; #i < ${view_length}; #i += 1) ${out}(#i);
 					@check_outros();
 				`;
 			} else {
 				remove_old_blocks = deindent`
-					for (${this.block.has_update_method ? `` : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${view_length}; #i += 1) {
+					for (${this.block.has_update_method ? `` : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
 						${iterations}[#i].d(1);
 					}
 					${!fixed_length && `${view_length} = ${this.vars.each_block_value}.${length};`}
@@ -500,6 +512,7 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 
 			const update = deindent`
+				${!this.block.has_update_method && `const #old_length = ${this.vars.each_block_value}.length;`}
 				${this.vars.each_block_value} = ${snippet};
 
 				for (var #i = ${start}; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
