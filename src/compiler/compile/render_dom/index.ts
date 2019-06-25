@@ -28,7 +28,7 @@ export default function dom(
 	const builder = new CodeBuilder();
 
 	if (component.compile_options.dev) {
-		builder.add_line(`const ${renderer.file_var} = ${JSON.stringify(component.file)};`);
+		builder.add_line(`const ${renderer.file_var} = ${component.file && stringify(component.file, { only_escape_at_symbol: true })};`);
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
