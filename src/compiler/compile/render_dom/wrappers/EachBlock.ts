@@ -445,13 +445,18 @@ export default class EachBlockWrapper extends Wrapper {
 					}
 				`
 				: deindent`
-					${iterations}[#i] = ${create_each_block}(child_ctx);
-					${iterations}[#i].c();
-					${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
-					${iterations}[#i].m(${update_mount_node}, ${anchor});
+					if (${iterations}[#i]) {
+						${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
+					} else {
+						${iterations}[#i] = ${create_each_block}(child_ctx);
+						${iterations}[#i].c();
+						${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
+						${iterations}[#i].m(${update_mount_node}, ${anchor});
+					}
+
 				`;
 
-			const start = this.block.has_update_method ? '0' : `${view_length}`;
+			const start = this.block.has_update_method ? '0' : `old_length`;
 
 			let remove_old_blocks;
 
@@ -470,7 +475,7 @@ export default class EachBlockWrapper extends Wrapper {
 				`;
 			} else {
 				remove_old_blocks = deindent`
-					for (${this.block.has_update_method ? `` : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${view_length}; #i += 1) {
+					for (${this.block.has_update_method ? `` : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${this.block.has_update_method ? view_length : 'old_length'}; #i += 1) {
 						${iterations}[#i].d(1);
 					}
 					${!fixed_length && `${view_length} = ${this.vars.each_block_value}.${length};`}
@@ -478,6 +483,7 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 
 			const update = deindent`
+				${!this.block.has_update_method && `const old_length = ${this.vars.each_block_value}.length;`}
 				${this.vars.each_block_value} = ${snippet};
 
 				for (var #i = ${start}; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
