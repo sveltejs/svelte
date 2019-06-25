@@ -465,7 +465,7 @@ export default class EachBlockWrapper extends Wrapper {
 				`);
 				remove_old_blocks = deindent`
 					@group_outros();
-					for (; #i < ${view_length}; #i += 1) ${out}(#i);
+					for (#i = ${this.vars.each_block_value}.${length}; #i < ${view_length}; #i += 1) ${out}(#i);
 					@check_outros();
 				`;
 			} else {
