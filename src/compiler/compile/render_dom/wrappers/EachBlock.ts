@@ -444,17 +444,24 @@ export default class EachBlockWrapper extends Wrapper {
 						${iterations}[#i].m(${update_mount_node}, ${anchor});
 					}
 				`
-				: deindent`
-					if (${iterations}[#i]) {
-						${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
-					} else {
-						${iterations}[#i] = ${create_each_block}(child_ctx);
-						${iterations}[#i].c();
-						${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
-						${iterations}[#i].m(${update_mount_node}, ${anchor});
-					}
-
-				`;
+				: has_transitions
+					? deindent`
+						if (${iterations}[#i]) {
+							@transition_in(${this.vars.iterations}[#i], 1);
+						} else {
+							${iterations}[#i] = ${create_each_block}(child_ctx);
+							${iterations}[#i].c();
+							@transition_in(${this.vars.iterations}[#i], 1);
+							${iterations}[#i].m(${update_mount_node}, ${anchor});
+						}
+					`
+					: deindent`
+						if (!${iterations}[#i]) {
+							${iterations}[#i] = ${create_each_block}(child_ctx);
+							${iterations}[#i].c();
+							${iterations}[#i].m(${update_mount_node}, ${anchor});
+						}
+					`;
 
 			const start = this.block.has_update_method ? '0' : `old_length`;
 
