@@ -13,6 +13,7 @@ export const globals = new Set([
 	'document',
 	'encodeURI',
 	'encodeURIComponent',
+	'Error',
 	'Infinity',
 	'Intl',
 	'isFinite',
