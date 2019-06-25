@@ -7,7 +7,7 @@
 * Deconflict with used globals ([#2963](https://github.com/sveltejs/svelte/pull/2963))
 * Always run `onDestroy` functions, not just for detaching components ([#3058](https://github.com/sveltejs/svelte/issues/3058))
 * Fix scope analysis around catch clauses ([#3064](https://github.com/sveltejs/svelte/issues/3064))
-* Add error constructors to known globals (#3064](https://github.com/sveltejs/svelte/issues/3064))
+* Add error constructors to known globals ([#3064](https://github.com/sveltejs/svelte/issues/3064))
 * Always bail out of hoisting on encountering local state in function definition ([#3044](https://github.com/sveltejs/svelte/issues/3044))
 * Fix incorrect merging of top-level text nodes ([#3027](https://github.com/sveltejs/svelte/issues/3027))
 * Handle removal of components in each blocks without props ([#3035](https://github.com/sveltejs/svelte/issues/3035))
