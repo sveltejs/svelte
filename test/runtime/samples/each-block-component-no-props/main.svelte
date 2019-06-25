@@ -3,6 +3,10 @@
 
 	let items = [1];
 
+	export function add() {
+		items = [1];
+	}
+
 	export function remove() {
 		items = [];
 	}
