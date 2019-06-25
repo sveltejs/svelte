@@ -17,6 +17,7 @@ import { INode } from '../../nodes/interfaces';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import { trim_start, trim_end } from '../../../utils/trim';
+import TextWrapper from './Text';
 
 const wrappers = {
 	AwaitBlock,
@@ -47,7 +48,7 @@ function trimmable_at(child: INode, next_sibling: Wrapper): boolean {
 	// The child and its sibling share a common nearest each block (not at an each block boundary)
 	// The next sibling's previous node is an each block
 	return (next_sibling.node.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/)) || next_sibling.node.prev.type === 'EachBlock';
-} 
+}
 
 export default class FragmentWrapper {
 	nodes: Wrapper[];
@@ -91,8 +92,7 @@ export default class FragmentWrapper {
 				// *unless* there is no whitespace between this node and its next sibling
 				if (this.nodes.length === 0) {
 					const should_trim = (
-						// @ts-ignore todo: probably error, should it be next_sibling.node.data?
-						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.data) && trimmable_at(child, next_sibling)) : !child.has_ancestor('EachBlock')
+						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.node.data) && trimmable_at(child, next_sibling)) : !child.has_ancestor('EachBlock')
 					);
 
 					if (should_trim) {
@@ -103,8 +103,7 @@ export default class FragmentWrapper {
 
 				// glue text nodes (which could e.g. be separated by comments) together
 				if (last_child && last_child.node.type === 'Text') {
-					// @ts-ignore todo: probably error, should it be last_child.node.data?
-					last_child.data = data + last_child.data;
+					(last_child as TextWrapper).data = data + (last_child as TextWrapper).data;
 					continue;
 				}
 
