@@ -3,11 +3,11 @@
 test/*/samples/*/output.js
 
 # output files
-animate.js
-compiler.js
-esing.js
+animate/*.js
+esing/*.js
+internal/*.js
+motion/*.js
+store/*.js
+transition/*.js
 index.js
-internal.js
-motion.js
-store.js
-transition.js
+compiler.js
