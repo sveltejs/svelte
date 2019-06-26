@@ -7,8 +7,8 @@ The readonly `this` binding applies to every element (and component) and allows 
 ```html
 <canvas
 	bind:this={canvas}
-	width={256}
-	height={256}
+	width={32}
+	height={32}
 ></canvas>
 ```
 
