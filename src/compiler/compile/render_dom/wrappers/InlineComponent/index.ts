@@ -9,7 +9,6 @@ import add_to_set from '../../../utils/add_to_set';
 import deindent from '../../../utils/deindent';
 import Attribute from '../../../nodes/Attribute';
 import get_object from '../../../utils/get_object';
-import flatten_reference from '../../../utils/flatten_reference';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_context_merger } from '../shared/get_context_merger';
 import EachBlock from '../../../nodes/EachBlock';
