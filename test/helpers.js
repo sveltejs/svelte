@@ -28,7 +28,7 @@ export function exists(path) {
 
 export function tryToLoadJson(file) {
 	try {
-		return JSON.parse(fs.readFileSync(file));
+		return JSON.parse(fs.readFileSync(file, 'utf-8'));
 	} catch (err) {
 		if (err.code !== 'ENOENT') throw err;
 		return null;
@@ -44,14 +44,21 @@ export function tryToReadFile(file) {
 	}
 }
 
-export const virtualConsole = new jsdom.VirtualConsole();
-const { window } = new jsdom.JSDOM('<main></main>', {virtualConsole});
+const virtualConsole = new jsdom.VirtualConsole();
+virtualConsole.sendTo(console);
+
+global.window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
 global.document = window.document;
-global.getComputedStyle = window.getComputedStyle;
-global.navigator = {userAgent: 'fake'};
+global.requestAnimationFrame = null; // placeholder, filled in using set_raf
+
+// add missing ecmascript globals to window
+for (const key of Object.getOwnPropertyNames(global)) {
+	window[key] = window[key] || global[key];
+}
 
 export function env() {
 	window._svelteTransitionManager = null;
+	window.document.title = '';
 	window.document.body.innerHTML = '<main></main>';
 
 	return window;
@@ -120,7 +127,7 @@ export function normalizeHtml(window, html) {
 			.replace(/<!--.*?-->/g, '')
 			.replace(/>[\s\r\n]+</g, '><')
 			.trim();
-		cleanChildren(node, '');
+		cleanChildren(node);
 		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
 	} catch (err) {
 		throw new Error(`Failed to normalize HTML:\n${html}`);

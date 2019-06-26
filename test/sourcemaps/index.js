@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as assert from "assert";
-import { loadConfig, svelte } from "../helpers.js";
+import { svelte } from "../helpers.js";
 import { SourceMapConsumer } from "source-map";
 import { getLocator } from "locate-character";
 
@@ -18,8 +18,6 @@ describe("sourcemaps", () => {
 		}
 
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
-			const config = loadConfig(`./sourcemaps/samples/${dir}/_config.js`);
-
 			const filename = path.resolve(
 				`test/sourcemaps/samples/${dir}/input.svelte`
 			);

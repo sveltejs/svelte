@@ -2,7 +2,7 @@
   <a href="https://svelte.dev">
 	<img alt="Cybernetically enhanced web apps: Svelte" src="https://svelte-assets.surge.sh/banner.png">
   </a>
-	
+
   <a href="https://www.npmjs.com/package/svelte">
     <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
   </a>
@@ -16,7 +16,7 @@
          alt="build status">
   </a>
 
-  <a href="https://github.com/svelte/svelte/blob/master/LICENSE.md">
+  <a href="https://github.com/sveltejs/svelte/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
   </a>
 </p>
@@ -36,10 +36,15 @@ Pull requests are encouraged and always welcome. [Pick an issue](https://github.
 To install and work on Svelte locally:
 
 ```bash
-git clone git@github.com:sveltejs/svelte.git
+git clone https://github.com/sveltejs/svelte.git
 cd svelte
 npm install
 ```
+
+> Many tests depend on newlines being preserved as `<LF>`. On Windows, you can ensure this by cloning with:
+> ```bash
+> git -c core.autocrlf=false clone https://github.com/sveltejs/svelte.git
+> ```
 
 To build the compiler, and all the other modules included in the package:
 

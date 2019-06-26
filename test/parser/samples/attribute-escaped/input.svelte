@@ -1,1 +1,1 @@
-<div data-foo='&quot;quoted&quot;'></div>
+<div data-foo='semi:&quot;space:&quot letter:&quote number:&quot1 end:&quot'></div>

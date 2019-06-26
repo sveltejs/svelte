@@ -15,13 +15,11 @@
 						"start": 3,
 						"end": 20,
 						"type": "Text",
+						"raw": "Hello &amp; World",
 						"data": "Hello & World"
 					}
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

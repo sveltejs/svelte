@@ -1,7 +1,6 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import * as glob from 'tiny-glob/sync.js';
 
 import {
 	showOutput,
@@ -101,6 +100,8 @@ describe("ssr", () => {
 				.forEach(file => {
 					delete require.cache[file];
 				});
+
+			delete global.window;
 
 			const compileOptions = Object.assign({ sveltePath }, config.compileOptions, {
 				generate: 'ssr'
