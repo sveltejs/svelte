@@ -29,7 +29,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 	}
 
-	const contextual_dependencies = [...binding.expression.contextual_dependencies];
+	const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
 
 	component.partly_hoisted.push(deindent`
 		function ${fn}(${['$$value', ...contextual_dependencies].join(', ')}) {
@@ -37,6 +37,24 @@ export default function bind_this(component: Component, block: Block, binding: B
 			${object && component.invalidate(object)}
 		}
 	`);
+
+	if (contextual_dependencies.length) {
+		const args = [];
+		for (const arg of contextual_dependencies) {
+			args.push(arg);
+			block.add_variable(arg, `ctx.${arg}`);
+		}
+
+		const condition = Array.from(binding.expression.dependencies).map(name => `changed.${name}`).join(' || ');
+
+		block.builders.update.add_line(deindent`
+			if (${condition}) {
+				ctx.${fn}(${['null'].concat(args).join(', ')});
+				${args.map(a => `${a} = ctx.${a}`).join(', ')};
+				@add_binding_callback(() => ctx.${fn}(${[variable].concat(args).join(', ')}));
+			}`
+		);
+	}
 
 	block.builders.destroy.add_line(`ctx.${fn}(${['null', ...contextual_dependencies.map(name => `ctx.${name}`)].join(', ')});`);
 	return `@add_binding_callback(() => ctx.${fn}(${[variable, ...contextual_dependencies.map(name => `ctx.${name}`)].join(', ')}));`;
