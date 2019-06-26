@@ -285,7 +285,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 				`);
 
-				block.builders.destroy.add_line(`ctx.${fn}(null);`);
+				block.builders.destroy.add_line(`ctx.${fn}(${['null', ...contextual_dependencies.map(name => `ctx.${name}`)].join(', ')});`);
 				return `@add_binding_callback(() => ctx.${fn}(${[this.var, ...contextual_dependencies.map(name => `ctx.${name}`)].join(', ')}));`;
 			}
 
