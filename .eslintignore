@@ -5,3 +5,14 @@ test/test.js
 test/setup.js
 **/_actual.js
 **/expected.js
+
+
+# output files
+animate.js
+compiler.js
+esing.js
+index.js
+internal.js
+motion.js
+store.js
+transition.js
