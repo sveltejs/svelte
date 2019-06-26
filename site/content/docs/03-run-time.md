@@ -359,17 +359,21 @@ const delayed = derived(a, ($a, set) => {
 }, 'one moment...');
 ```
 
-If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes:
+---
+
+If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes.
 
 ```js
 import { derived } from 'svelte/store';
 
 const tick = derived(frequency, ($frequency, set) => {
-	const interval = setInterval(() => set(Date.now()), 1000 / frequency);
+	const interval = setInterval(() => {
+	  set(Date.now());
+	}, 1000 / $frequency);
 
 	return () => {
 		clearInterval(interval);
-	}
+	};
 }, 'one moment...');
 ```
 
@@ -618,13 +622,13 @@ Slides an element in and out.
 
 ```html
 <script>
-	import { fly } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 </script>
 
 {#if condition}
-	<div transition:fly="{{delay: 250, duration: 300, easing: quintOut }}">
-		flies in and out
+	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut }}">
+		slides in and out
 	</div>
 {/if}
 ```

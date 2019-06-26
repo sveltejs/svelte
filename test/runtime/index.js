@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
 import * as virtual from 'rollup-plugin-virtual';
-import { clear_loops } from "../../internal.js";
+import { clear_loops, flush, set_now, set_raf } from "../../internal";
 
 import {
 	showOutput,
@@ -20,7 +20,6 @@ let compileOptions = null;
 let compile = null;
 
 const sveltePath = process.cwd().split('\\').join('/');
-const internal = `${sveltePath}/internal.js`;
 
 describe("runtime", () => {
 	before(() => {
@@ -47,8 +46,6 @@ describe("runtime", () => {
 	function runTest(dir, hydrate) {
 		if (dir[0] === ".") return;
 
-		const { flush } = require(internal);
-
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
 
 		if (hydrate && config.skip_if_hydrate) return;
@@ -66,7 +63,6 @@ describe("runtime", () => {
 			compile = (config.preserveIdentifiers ? svelte : svelte$).compile;
 
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
-			global.document.title = '';
 
 			compileOptions = config.compileOptions || {};
 			compileOptions.sveltePath = sveltePath;
@@ -100,8 +96,8 @@ describe("runtime", () => {
 							if (raf.callback) raf.callback();
 						}
 					};
-					window.performance.now = () => raf.time;
-					global.requestAnimationFrame = cb => {
+					set_now(() => raf.time);
+					set_raf(cb => {
 						let called = false;
 						raf.callback = () => {
 							if (!called) {
@@ -109,7 +105,7 @@ describe("runtime", () => {
 								cb();
 							}
 						};
-					};
+					});
 
 					try {
 						mod = require(`./samples/${dir}/main.svelte`);
@@ -118,8 +114,6 @@ describe("runtime", () => {
 						showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 						throw err;
 					}
-
-					global.window = window;
 
 					if (config.before_test) config.before_test();
 
@@ -221,9 +215,10 @@ describe("runtime", () => {
 					'main.js': js.code
 				}),
 				{
+					name: 'svelte-packages',
 					resolveId: (importee, importer) => {
 						if (importee.startsWith('svelte/')) {
-							return importee.replace('svelte', process.cwd()) + '.mjs';
+							return importee.replace('svelte', process.cwd()) + '/index.mjs';
 						}
 					}
 				}

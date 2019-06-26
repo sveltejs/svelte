@@ -16,8 +16,9 @@
 						"value": [
 							{
 								"start": 10,
-								"end": 40,
+								"end": 41,
 								"type": "Text",
+								"raw": "\n\t<p>not actually an element. ",
 								"data": "\n\t<p>not actually an element. "
 							},
 							{
@@ -35,6 +36,7 @@
 								"start": 45,
 								"end": 50,
 								"type": "Text",
+								"raw": "</p>\n",
 								"data": "</p>\n"
 							}
 						]
@@ -43,8 +45,5 @@
 				"children": []
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

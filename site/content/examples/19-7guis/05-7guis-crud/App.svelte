@@ -30,10 +30,7 @@
 
 	$: selected = filteredPeople[i];
 
-	$: {
-		first = selected ? selected.first : '';
-		last = selected ? selected.last : '';
-	}
+	$: reset_inputs(selected);
 
 	function create() {
 		people = people.concat({ first, last });
@@ -46,14 +43,17 @@
 	}
 
 	function remove() {
-		people = [...people.slice(0, i), ...people.slice(i + 1)];
+		// Remove selected person from the source array (people), not the filtered array
+		const index = people.indexOf(selected);
+		people = [...people.slice(0, index), ...people.slice(index + 1)];
 
 		first = last = '';
-		i = Math.min(i, people.length - 1);
+		i = Math.min(i, filteredPeople.length - 2);
 	}
 
 	function reset_inputs(person) {
-		({ first, last } = person);
+		first = person ? person.first : '';
+		last = person ? person.last : '';
 	}
 </script>
 

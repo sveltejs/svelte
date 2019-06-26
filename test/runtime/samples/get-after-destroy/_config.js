@@ -10,4 +10,4 @@ export default {
 		const { foo } = component;
 		assert.equal(foo, undefined);
 	}
-}
+};
