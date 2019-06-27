@@ -19,6 +19,7 @@ import add_event_handlers from '../shared/add_event_handlers';
 import add_actions from '../shared/add_actions';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_context_merger } from '../shared/get_context_merger';
+import bind_this from '../shared/bind_this';
 
 const events = [
 	{
@@ -540,38 +541,9 @@ export default class ElementWrapper extends Wrapper {
 
 		const this_binding = this.bindings.find(b => b.node.name === 'this');
 		if (this_binding) {
-			const name = renderer.component.get_unique_name(`${this.var}_binding`);
+			const binding_callback = bind_this(renderer.component, block, this_binding.node, this.var);
 
-			renderer.component.add_var({
-				name,
-				internal: true,
-				referenced: true
-			});
-
-			const { handler, object } = this_binding;
-
-			const args = [];
-			for (const arg of handler.contextual_dependencies) {
-				args.push(arg);
-				block.add_variable(arg, `ctx.${arg}`);
-			}
-
-			renderer.component.partly_hoisted.push(deindent`
-				function ${name}(${['$$node', 'check'].concat(args).join(', ')}) {
-					${handler.snippet ? `if ($$node || (!$$node && ${handler.snippet} === check)) ` : ''}${handler.mutation}
-					${renderer.component.invalidate(object)};
-				}
-			`);
-
-			block.builders.mount.add_line(`@add_binding_callback(() => ctx.${name}(${[this.var, 'null'].concat(args).join(', ')}));`);
-			block.builders.destroy.add_line(`ctx.${name}(${['null', this.var].concat(args).join(', ')});`);
-			block.builders.update.add_line(deindent`
-				if (changed.items) {
-					ctx.${name}(${['null', this.var].concat(args).join(', ')});
-					${args.map(a => `${a} = ctx.${a}`).join(', ')};
-					ctx.${name}(${[this.var, 'null'].concat(args).join(', ')});
-				}`
-			);
+			block.builders.mount.add_line(binding_callback);
 		}
 	}
 
