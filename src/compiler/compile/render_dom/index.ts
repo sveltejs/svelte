@@ -154,14 +154,14 @@ export default function dom(
 
 		capture_state = (uses_props || writable_props.length > 0) ? deindent`
 			() => {
-				return { ${component.vars.map(prop => prop.name).join(", ")} };
+				return { ${component.vars.filter(prop => prop.writable).map(prop => prop.name).join(", ")} };
 			}
 		` : null;
 
 		inject_state = (uses_props || writable_props.length > 0) ? deindent`
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
-				${component.vars.map(prop => deindent`
+				${component.vars.filter(prop => prop.writable).map(prop => deindent`
 					if ('${prop.name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.name}`)};
 				`)}
 			}
