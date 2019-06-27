@@ -311,9 +311,6 @@ export default function dom(
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 
 	if (component.slots.size > 0) {
-		component.vars.map(v => {
-			if (v.hoistable) filtered_declarations.push(v.name);
-		});
 		filtered_declarations.push('$$slots', '$$scope');
 	}
 
