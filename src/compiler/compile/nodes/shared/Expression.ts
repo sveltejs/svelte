@@ -13,6 +13,7 @@ import get_object from '../../utils/get_object';
 import { nodes_match } from '../../../utils/nodes_match';
 import Block from '../../render_dom/Block';
 import { INode } from '../interfaces';
+import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
 
 const binary_operators: Record<string, number> = {
 	'**': 15,
@@ -211,10 +212,7 @@ export default class Expression {
 			if (name === '$$props') return true;
 
 			const variable = this.component.var_lookup.get(name);
-			if (!variable) return false;
-
-			if (variable.mutated || variable.reassigned) return true; // dynamic internal state
-			if (!variable.module && variable.writable && variable.export_name) return true; // writable props
+			return is_dynamic(variable);
 		});
 	}
 
