@@ -161,6 +161,15 @@ function instance($$self, $$props, $$invalidate) {
 		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
 	};
 
+	$$self.$capture_state = () => {
+		return { things, foo };
+	};
+
+	$$self.$inject_state = $$props => {
+		if ('things' in $$props) $$invalidate('things', things = $$props.things);
+		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+	};
+
 	return { things, foo };
 }
 
