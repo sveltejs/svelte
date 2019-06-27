@@ -160,8 +160,14 @@ export default class SlotWrapper extends Wrapper {
 			`@transition_out(${slot}, #local);`
 		);
 
-		let update_conditions = [...this.dependencies].map(name => `changed.${name}`).join(' || ');
-		if (this.dependencies.size > 1) update_conditions = `(${update_conditions})`;
+		const dynamic_dependencies = Array.from(this.dependencies).filter(name => {
+			if (name === '$$scope') return true;
+			const variable = renderer.component.var_lookup.get(name);
+			return is_dynamic(variable);
+		});
+
+		let update_conditions = dynamic_dependencies.map(name => `changed.${name}`).join(' || ');
+		if (dynamic_dependencies.length > 1) update_conditions = `(${update_conditions})`;
 
 		block.builders.update.add_block(deindent`
 			if (${slot} && ${slot}.p && ${update_conditions}) {
