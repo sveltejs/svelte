@@ -46,7 +46,7 @@ export function flush() {
 			update(component.$$);
 		}
 
-		while (binding_callbacks.length) binding_callbacks.shift()();
+		while (binding_callbacks.length) binding_callbacks.pop()();
 
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause

@@ -31,31 +31,50 @@ export default function bind_this(component: Component, block: Block, binding: B
 
 	const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
 
-	component.partly_hoisted.push(deindent`
-		function ${fn}(${['$$value', ...contextual_dependencies].join(', ')}) {
-			${lhs} = $$value;
-			${object && component.invalidate(object)}
-		}
-	`);
-
 	if (contextual_dependencies.length) {
+		component.partly_hoisted.push(deindent`
+			function ${fn}(${['$$value', ...contextual_dependencies].join(', ')}) {
+				if (${lhs} === $$value) return;
+				${lhs} = $$value;
+				${object && component.invalidate(object)}
+			}
+		`);
+
 		const args = [];
 		for (const arg of contextual_dependencies) {
 			args.push(arg);
 			block.add_variable(arg, `ctx.${arg}`);
 		}
 
-		const condition = Array.from(binding.expression.dependencies).map(name => `changed.${name}`).join(' || ');
+		const assign = block.get_unique_name(`assign_${variable}`);
+		const unassign = block.get_unique_name(`unassign_${variable}`);
+
+		block.builders.init.add_block(deindent`
+			const ${assign} = () => ctx.${fn}(${[variable].concat(args).join(', ')});
+			const ${unassign} = () => ctx.${fn}(${['null'].concat(args).join(', ')});
+		`);
+
+		const condition = Array.from(contextual_dependencies).map(name => `${name} !== ctx.${name}`).join(' || ');
 
 		block.builders.update.add_line(deindent`
 			if (${condition}) {
-				ctx.${fn}(${['null'].concat(args).join(', ')});
+				${unassign}();
 				${args.map(a => `${a} = ctx.${a}`).join(', ')};
-				@add_binding_callback(() => ctx.${fn}(${[variable].concat(args).join(', ')}));
+				@add_binding_callback(${assign});
 			}`
 		);
+
+		block.builders.destroy.add_line(`${unassign}();`);
+		return `@add_binding_callback(${assign});`;
 	}
 
-	block.builders.destroy.add_line(`ctx.${fn}(${['null', ...contextual_dependencies.map(name => `ctx.${name}`)].join(', ')});`);
-	return `@add_binding_callback(() => ctx.${fn}(${[variable, ...contextual_dependencies.map(name => `ctx.${name}`)].join(', ')}));`;
+	component.partly_hoisted.push(deindent`
+		function ${fn}($$value) {
+			${lhs} = $$value;
+			${object && component.invalidate(object)}
+		}
+	`);
+
+	block.builders.destroy.add_line(`ctx.${fn}(null);`);
+	return `@add_binding_callback(() => ctx.${fn}(${variable}));`;
 }
