@@ -30,6 +30,7 @@
 		color: var(--prime);
 	}
 
+	picture,
 	img {
 		height: 100%;
 	}
