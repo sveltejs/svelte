@@ -156,7 +156,11 @@ export default function dom(
 			() => {
 				return { ${component.vars.filter(prop => prop.writable).map(prop => prop.name).join(", ")} };
 			}
-		` : null;
+		` : deindent`
+			() => {
+				return {}
+			}
+		`;
 
 		inject_state = (uses_props || writable_props.length > 0) ? deindent`
 			${$$props} => {
@@ -165,7 +169,11 @@ export default function dom(
 					if ('${prop.name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.name}`)};
 				`)}
 			}
-		` : null;
+		` : deindent`
+			${$$props} => {
+				return
+			}
+		`;
 	}
 
 	// instrument assignments
