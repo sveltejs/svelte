@@ -43,6 +43,14 @@ let kobzol = 5;
 function instance($$self) {
 	let obj = { x: 5 };
 
+	$$self.$capture_state = () => {
+		return {}
+	};
+
+	$$self.$inject_state = $$props => {
+		return
+	};
+
 	return { obj };
 }
 
