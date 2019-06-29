@@ -296,14 +296,14 @@ export default class EachBlockWrapper extends Wrapper {
 		update_anchor_node,
 		update_mount_node
 	}: {
-		block: Block,
-		parent_node: string,
-		parent_nodes: string,
-		snippet: string,
-		initial_anchor_node: string,
-		initial_mount_node: string,
-		update_anchor_node: string,
-		update_mount_node: string
+		block: Block;
+		parent_node: string;
+		parent_nodes: string;
+		snippet: string;
+		initial_anchor_node: string;
+		initial_mount_node: string;
+		update_anchor_node: string;
+		update_mount_node: string;
 	}) {
 		const {
 			create_each_block,
@@ -396,13 +396,13 @@ export default class EachBlockWrapper extends Wrapper {
 		update_anchor_node,
 		update_mount_node
 	}: {
-		block: Block,
-		parent_nodes: string,
-		snippet: string,
-		initial_anchor_node: string,
-		initial_mount_node: string,
-		update_anchor_node: string,
-		update_mount_node: string
+		block: Block;
+		parent_nodes: string;
+		snippet: string;
+		initial_anchor_node: string;
+		initial_mount_node: string;
+		update_anchor_node: string;
+		update_mount_node: string;
 	}) {
 		const {
 			create_each_block,
