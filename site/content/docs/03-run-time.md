@@ -425,7 +425,7 @@ Tweened stores update their values over a fixed duration. The following options 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the tween lasts
 * `easing` (`function`, default `t => t`) — an [easing function](docs#svelte_easing)
-* `interpolator` (`function`) — see below
+* `interpolate` (`function`) — see below
 
 `store.set` and `store.update` can accept a second `options` argument that will override the options passed in upon instantiation.
 
@@ -459,7 +459,7 @@ Out of the box, Svelte will interpolate between two numbers, two arrays or two o
 
 ---
 
-The `interpolator` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
+The `interpolate` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
 
 ```html
 <script>
