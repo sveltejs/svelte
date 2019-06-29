@@ -315,7 +315,14 @@ export default class Stylesheet {
 
 				leave: (node: Node) => {
 					if (node.type === 'Rule' || node.type === 'Atrule') stack.pop();
-					if (node.type === 'Atrule') current_atrule = stack[stack.length - 1] as Atrule;
+					if (node.type === 'Atrule') {
+						current_atrule = null;
+						for (let i = stack.length - 1; i >= 0; i--) {
+							if (stack[i] instanceof Atrule) {
+								current_atrule = stack[i] as Atrule;
+							}
+						}
+					}
 				}
 			});
 		} else {
