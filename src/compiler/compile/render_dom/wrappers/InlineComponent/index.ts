@@ -13,6 +13,7 @@ import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_context_merger } from '../shared/get_context_merger';
 import EachBlock from '../../../nodes/EachBlock';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
+import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 
 export default class InlineComponentWrapper extends Wrapper {
@@ -161,11 +162,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				const is_let = slot.scope.is_let(name);
 				const variable = renderer.component.var_lookup.get(name);
 
-				if (is_let) fragment_dependencies.add(name);
-
-				if (!variable) return;
-				if (variable.mutated || variable.reassigned) fragment_dependencies.add(name);
-				if (!variable.module && variable.writable && variable.export_name) fragment_dependencies.add(name);
+				if (is_let || is_dynamic(variable)) fragment_dependencies.add(name);
 			});
 		});
 
