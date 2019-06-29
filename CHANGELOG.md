@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 3.6.2
+
+* Fix placement of each-else block ([#2917](https://github.com/sveltejs/svelte/issues/2917))
+* Make context accessible to `bind:this` ([#2806](https://github.com/sveltejs/svelte/issues/2806))
+* Pass hoisted values to slots ([#2586](https://github.com/sveltejs/svelte/issues/2586))
+
 ## 3.6.1
 
 * Fix escaping of `@` in dev mode debug filename ([#3114](https://github.com/sveltejs/svelte/pull/3114))
