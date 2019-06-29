@@ -9,6 +9,7 @@ import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../utils/get_slot_data';
 import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
+import is_dynamic from './shared/is_dynamic';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
@@ -72,17 +73,27 @@ export default class SlotWrapper extends Wrapper {
 			this.node.values.forEach(attribute => {
 				attribute.chunks.forEach(chunk => {
 					if ((chunk as Expression).dependencies) {
-						add_to_set(dependencies, (chunk as Expression).dependencies);
 						add_to_set(dependencies, (chunk as Expression).contextual_dependencies);
+
+						// add_to_set(dependencies, (chunk as Expression).dependencies);
+						(chunk as Expression).dependencies.forEach(name => {
+							const variable = renderer.component.var_lookup.get(name);
+							if (variable && !variable.hoistable) dependencies.add(name);
+						});
 					}
 				});
 
-				if (attribute.dependencies.size > 0) {
-					changes_props.push(`${attribute.name}: ${[...attribute.dependencies].join(' || ')}`);
+				const dynamic_dependencies = Array.from(attribute.dependencies).filter(name => {
+					const variable = renderer.component.var_lookup.get(name);
+					return is_dynamic(variable);
+				});
+
+				if (dynamic_dependencies.length > 0) {
+					changes_props.push(`${attribute.name}: ${dynamic_dependencies.join(' || ')}`);
 				}
 			});
 
-			const arg = dependencies.size > 0 ? `{ ${Array.from(dependencies).join(', ')} }` : '{}';
+			const arg = dependencies.size > 0 ? `{ ${Array.from(dependencies).join(', ')} }` : '';
 
 			renderer.blocks.push(deindent`
 				const ${get_slot_changes} = (${arg}) => (${stringify_props(changes_props)});
@@ -149,8 +160,14 @@ export default class SlotWrapper extends Wrapper {
 			`@transition_out(${slot}, #local);`
 		);
 
-		let update_conditions = [...this.dependencies].map(name => `changed.${name}`).join(' || ');
-		if (this.dependencies.size > 1) update_conditions = `(${update_conditions})`;
+		const dynamic_dependencies = Array.from(this.dependencies).filter(name => {
+			if (name === '$$scope') return true;
+			const variable = renderer.component.var_lookup.get(name);
+			return is_dynamic(variable);
+		});
+
+		let update_conditions = dynamic_dependencies.map(name => `changed.${name}`).join(' || ');
+		if (dynamic_dependencies.length > 1) update_conditions = `(${update_conditions})`;
 
 		block.builders.update.add_block(deindent`
 			if (${slot} && ${slot}.p && ${update_conditions}) {
