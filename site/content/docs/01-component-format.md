@@ -176,7 +176,7 @@ You can `export` bindings from this block, and they will become exports of the c
 
 You cannot `export default`, since the default export is the component itself.
 
-> Variables defined in `module` scripts are not reactive, reassigning them will not trigger a rerender even though the variable itself will update.
+> Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](https://svelte.dev/docs#svelte_store).
 
 ```html
 <script context="module">
