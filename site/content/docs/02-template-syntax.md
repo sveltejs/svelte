@@ -354,7 +354,7 @@ The `{@debug}` tag without any arguments will insert a `debugger` statement that
 As well as attributes, elements can have *directives*, which control the element's behaviour in some way.
 
 
-#### [on:*eventname*](on_component_event)
+#### [on:*eventname*](on_element_event)
 
 ```sv
 on:eventname={handler}
