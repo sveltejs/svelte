@@ -61,7 +61,10 @@ export default class Selector {
 			let i = block.selectors.length;
 			while (i--) {
 				const selector = block.selectors[i];
-				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') continue;
+				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
+					if (i === 0) code.prependRight(selector.start, attr);
+					continue;
+				}
 
 				if (selector.type === 'TypeSelector' && selector.name === '*') {
 					code.overwrite(selector.start, selector.end, attr);
