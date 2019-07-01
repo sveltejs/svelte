@@ -34,7 +34,7 @@ export default class Animation extends Node {
 		block.has_animation = true;
 
 		this.expression = info.expression
-			? new Expression(component, this, scope, info.expression)
+			? new Expression(component, this, scope, info.expression, true)
 			: null;
 	}
 }

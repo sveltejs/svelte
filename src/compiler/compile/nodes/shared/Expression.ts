@@ -86,7 +86,7 @@ export default class Expression {
 	rendered: string;
 
 	// todo: owner type
-	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info) {
+	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info, lazy?: boolean) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
@@ -146,11 +146,11 @@ export default class Expression {
 
 						contextual_dependencies.add(name);
 
-						if (!function_expression) {
+						if (!function_expression || !lazy) {
 							template_scope.dependencies_for_name.get(name).forEach(name => dependencies.add(name));
 						}
 					} else {
-						if (!function_expression) {
+						if (!function_expression || !lazy) {
 							dependencies.add(name);
 						}
 

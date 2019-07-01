@@ -21,7 +21,7 @@ export default class EventHandler extends Node {
 		this.modifiers = new Set(info.modifiers);
 
 		if (info.expression) {
-			this.expression = new Expression(component, this, template_scope, info.expression);
+			this.expression = new Expression(component, this, template_scope, info.expression, true);
 			this.uses_context = this.expression.uses_context;
 
 			if (/FunctionExpression/.test(info.expression.type) && info.expression.params.length === 0) {
