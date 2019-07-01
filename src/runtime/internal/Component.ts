@@ -32,9 +32,11 @@ export function mount_component(component, target, anchor) {
 
 	fragment.m(target, anchor);
 
-	// onMount happens after the initial afterUpdate. Because
-	// afterUpdate callbacks happen in reverse order (inner first)
-	// we schedule onMount callbacks before afterUpdate callbacks
+	// afterUpdate callbacks happen in reverse order (inner first) so
+	// reverse their position so callbacks are properly ordered
+	after_render.reverse().forEach(add_render_callback);
+
+	// onMount happens after the initial afterUpdate
 	add_render_callback(() => {
 		const new_on_destroy = on_mount.map(run).filter(is_function);
 		if (on_destroy) {
@@ -46,8 +48,6 @@ export function mount_component(component, target, anchor) {
 		}
 		component.$$.on_mount = [];
 	});
-
-	after_render.forEach(add_render_callback);
 }
 
 export function destroy_component(component, detaching) {
