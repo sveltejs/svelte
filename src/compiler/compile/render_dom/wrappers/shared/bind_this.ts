@@ -15,6 +15,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 
 	let lhs;
 	let object;
+	let body;
 
 	if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
 		// bind:x={y} — we can't just do `y = x`, we need to
@@ -23,10 +24,19 @@ export default function bind_this(component: Component, block: Block, binding: B
 		const { snippet } = block.bindings.get(name);
 		lhs = snippet;
 
-		// TODO we need to invalidate... something
+		body = `${lhs} = $$value`; // TODO we need to invalidate... something
 	} else {
 		object = flatten_reference(binding.expression.node).name;
 		lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
+
+		body = binding.expression.node.type === 'Identifier'
+			? deindent`
+				${component.invalidate(object, `${lhs} = $$value`)};
+			`
+			: deindent`
+				${lhs} = $$value;
+				${component.invalidate(object)};
+			`
 	}
 
 	const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
@@ -35,8 +45,9 @@ export default function bind_this(component: Component, block: Block, binding: B
 		component.partly_hoisted.push(deindent`
 			function ${fn}(${['$$value', ...contextual_dependencies].join(', ')}) {
 				if (${lhs} === $$value) return;
-				${lhs} = $$value;
-				${object && component.invalidate(object)}
+				@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+					${body}
+				});
 			}
 		`);
 
@@ -56,25 +67,29 @@ export default function bind_this(component: Component, block: Block, binding: B
 
 		const condition = Array.from(contextual_dependencies).map(name => `${name} !== ctx.${name}`).join(' || ');
 
+		// we push unassign and unshift assign so that references are
+		// nulled out before they're created, to avoid glitches
+		// with shifting indices
 		block.builders.update.add_line(deindent`
 			if (${condition}) {
 				${unassign}();
 				${args.map(a => `${a} = ctx.${a}`).join(', ')};
-				@add_binding_callback(${assign});
+				${assign}();
 			}`
 		);
 
 		block.builders.destroy.add_line(`${unassign}();`);
-		return `@add_binding_callback(${assign});`;
+		return `${assign}();`;
 	}
 
 	component.partly_hoisted.push(deindent`
 		function ${fn}($$value) {
-			${lhs} = $$value;
-			${object && component.invalidate(object)}
+			@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+				${body}
+			});
 		}
 	`);
 
 	block.builders.destroy.add_line(`ctx.${fn}(null);`);
-	return `@add_binding_callback(() => ctx.${fn}(${variable}));`;
+	return `ctx.${fn}(${variable});`;
 }
