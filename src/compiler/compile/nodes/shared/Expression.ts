@@ -146,11 +146,11 @@ export default class Expression {
 
 						contextual_dependencies.add(name);
 
-						if (!function_expression || !lazy) {
+						if (!lazy) {
 							template_scope.dependencies_for_name.get(name).forEach(name => dependencies.add(name));
 						}
 					} else {
-						if (!function_expression || !lazy) {
+						if (!lazy) {
 							dependencies.add(name);
 						}
 
