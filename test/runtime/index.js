@@ -98,12 +98,10 @@ describe("runtime", () => {
 					};
 					set_now(() => raf.time);
 					set_raf(cb => {
-						let called = false;
 						raf.callback = () => {
-							if (!called) {
-								called = true;
-								cb();
-							}
+							raf.callback = null;
+							cb();
+							flush();
 						};
 					});
 
