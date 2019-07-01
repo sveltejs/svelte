@@ -122,7 +122,7 @@ export function get_store_value<T>(store: Readable<T>): T | undefined {
 
 export function add_attribute(name, value) {
 	if (!value) return '';
-	return ` ${name}${value === true ? '' : `=${JSON.stringify(value)}`}`;
+	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(value) : `"${value}"`}`}`;
 }
 
 export function add_classes(classes) {
