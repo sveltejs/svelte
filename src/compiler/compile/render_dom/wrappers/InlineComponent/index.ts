@@ -324,7 +324,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			component.partly_hoisted.push(body);
 
-			return `@add_binding_callback(() => @bind(${this.var}, '${binding.name}', ${name}));`;
+			return `@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${name}));`;
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {

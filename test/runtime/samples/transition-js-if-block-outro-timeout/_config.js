@@ -8,7 +8,6 @@ export default {
 
 		raf.tick(200);
 		assert.equal(window.getComputedStyle(div).opacity, 0.5);
-		component.blabla = false;
 
 		raf.tick(400);
 		assert.equal(window.getComputedStyle(div).opacity, 0);
