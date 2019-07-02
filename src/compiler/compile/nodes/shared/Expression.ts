@@ -270,7 +270,7 @@ export default class Expression {
 							});
 						} else {
 							dependencies.add(name);
-							component.add_reference(name);
+							component.add_reference(name); // TODO is this redundant/misplaced?
 						}
 					} else if (!is_synthetic && is_contextual(component, template_scope, name)) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
