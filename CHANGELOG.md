@@ -1,5 +1,15 @@
 # Svelte changelog
 
+## 3.6.3
+
+* Fix await block mounting inside removed if block ([#1496](https://github.com/sveltejs/svelte/issues/1496))
+* Update when element references are removed ([#2034](https://github.com/sveltejs/svelte/issues/2034))
+* Don't attempt to serialize non-string values in server-rendered bindings ([#2135](https://github.com/sveltejs/svelte/issues/2135))
+* Recognise dependencies in function expressions ([#2693](https://github.com/sveltejs/svelte/issues/2693))
+* Scope pseudo-class selectors without class/type ([#1705](https://github.com/sveltejs/svelte/issues/1705))
+* Allow nested at-rules ([#3135](https://github.com/sveltejs/svelte/issues/3135))
+* Allow attributes to contain `=` characters ([#3149](https://github.com/sveltejs/svelte/pull/3149))
+
 ## 3.6.2
 
 * Fix placement of each-else block ([#2917](https://github.com/sveltejs/svelte/issues/2917))
