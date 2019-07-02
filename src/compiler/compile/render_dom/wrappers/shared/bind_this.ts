@@ -36,7 +36,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 			: deindent`
 				${lhs} = $$value;
 				${component.invalidate(object)};
-			`
+			`;
 	}
 
 	const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
