@@ -459,7 +459,7 @@ export default class Expression {
 						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
 							if (node.argument) {
 								code.overwrite(node.start, node.argument.start, `var $$result = `);
-								code.appendLeft(node.argument.end, `${insert}; return $$result`);
+								code.appendLeft(node.end, `${insert}; return $$result`);
 							} else {
 								code.prependRight(node.start, `${insert}; `);
 							}
