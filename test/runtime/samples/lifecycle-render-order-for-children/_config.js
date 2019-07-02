@@ -13,14 +13,14 @@ export default {
 			'2: render',
 			'3: beforeUpdate',
 			'3: render',
-			'1: afterUpdate',
 			'1: onMount',
-			'2: afterUpdate',
+			'1: afterUpdate',
 			'2: onMount',
-			'3: afterUpdate',
+			'2: afterUpdate',
 			'3: onMount',
-			'0: afterUpdate',
+			'3: afterUpdate',
 			'0: onMount',
+			'0: afterUpdate'
 		]);
 
 		order.length = 0;
