@@ -269,7 +269,7 @@ export default class Stylesheet {
 
 			this.has_styles = true;
 
-			const stack: Array<Atrule> = [];
+			const stack: Atrule[] = [];
 			let depth = 0;
 			let current_atrule: Atrule = null;
 
