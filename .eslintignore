@@ -1,6 +1,7 @@
 **/_actual.js
 **/expected.js
 test/*/samples/*/output.js
+node_modules
 
 # output files
 animate/*.js
