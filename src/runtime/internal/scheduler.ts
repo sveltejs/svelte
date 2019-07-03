@@ -48,8 +48,9 @@ export function flush() {
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause
 		// subsequent updates...
-		while (render_callbacks.length) {
-			const callback = render_callbacks.pop();
+		for (let i = 0; i < render_callbacks.length; i += 1) {
+			const callback = render_callbacks[i];
+
 			if (!seen_callbacks.has(callback)) {
 				callback();
 
@@ -57,6 +58,8 @@ export function flush() {
 				seen_callbacks.add(callback);
 			}
 		}
+
+		render_callbacks.length = 0;
 	} while (dirty_components.length);
 
 	while (flush_callbacks.length) {
@@ -69,10 +72,10 @@ export function flush() {
 function update($$) {
 	if ($$.fragment) {
 		$$.update($$.dirty);
-		run_all($$.before_render);
+		run_all($$.before_update);
 		$$.fragment.p($$.dirty, $$.ctx);
 		$$.dirty = null;
 
-		$$.after_render.forEach(add_render_callback);
+		$$.after_update.forEach(add_render_callback);
 	}
 }
