@@ -442,6 +442,10 @@ export default class Expression {
 						`);
 					}
 
+					if (parent && parent.method) {
+						code.prependRight(node.start, ': ');
+					}
+
 					function_expression = null;
 					dependencies = null;
 					contextual_dependencies = null;
