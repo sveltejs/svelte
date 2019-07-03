@@ -48,7 +48,7 @@ export function transition_in(block, local?: 0 | 1) {
 
 export function transition_out(block, local: 0 | 1, callback) {
 	if (block && block.o) {
-		if (outroing.has(block)) return;
+		if (outroing.has(block) || !outros.callbacks) return;
 		outroing.add(block);
 
 		outros.callbacks.push(() => {
