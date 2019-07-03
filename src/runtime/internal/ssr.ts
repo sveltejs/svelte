@@ -78,8 +78,8 @@ export function create_ssr_component(fn) {
 
 			// these will be immediately discarded
 			on_mount: [],
-			before_render: [],
-			after_render: [],
+			before_update: [],
+			after_update: [],
 			callbacks: blank_object()
 		};
 
