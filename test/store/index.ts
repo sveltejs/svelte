@@ -329,5 +329,18 @@ describe('store', () => {
 			const store = readable(42, () => { });
 			assert.equal(get(store), 42);
 		});
+
+		it('works with RxJS-style observables', () => {
+			const observable = {
+				subscribe(fn) {
+					fn(42);
+					return {
+						unsubscribe: () => {}
+					}
+				}
+			};
+
+			assert.equal(get(observable), 42);
+		});
 	});
 });
