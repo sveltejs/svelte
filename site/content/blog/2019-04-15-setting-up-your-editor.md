@@ -16,12 +16,18 @@ draft: true
 
 To treat all `*.svelte` files as HTML, add the following line to your `init.vim`:
 
-    au! BufNewFile,BufRead *.svelte set ft=html
+```bash
+au! BufNewFile,BufRead *.svelte set ft=html
+```
 
 To temporarily turn on HTML syntax highlighting for the current buffer, use:
 
-    :set ft=html
+```bash
+:set ft=html
+```
 
 To set the filetype for a single file, use a [modeline](https://vim.fandom.com/wiki/Modeline_magic):
 
-    <!-- vim: set ft=html :-->
+```bash
+<!-- vim: set ft=html :-->
+```
