@@ -326,7 +326,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const destroy_old_block = deindent`
 			@group_outros();
-			@transition_out(${if_blocks}[${previous_block_index}], 1, () => {
+			@transition_out(${if_blocks}[${previous_block_index}], 1, 1, () => {
 				${if_blocks}[${previous_block_index}] = null;
 			});
 			@check_outros();
@@ -439,7 +439,7 @@ export default class IfBlockWrapper extends Wrapper {
 					${enter}
 				} else if (${name}) {
 					@group_outros();
-					@transition_out(${name}, 1, () => {
+					@transition_out(${name}, 1, 1, () => {
 						${name} = null;
 					});
 					@check_outros();

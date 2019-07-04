@@ -21,6 +21,7 @@
     "prefer-const": [2, { "destructuring": "all" }],
     "arrow-spacing": 2,
     "no-inner-declarations": 0,
+    "require-atomic-updates": "off",
     "@typescript-eslint/indent": ["error", "tab", {
       "SwitchCase": 1,
       "ignoredNodes": ["TemplateLiteral"]

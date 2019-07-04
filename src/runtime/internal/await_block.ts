@@ -18,7 +18,7 @@ export function handle_promise(promise, info) {
 				info.blocks.forEach((block, i) => {
 					if (i !== index && block) {
 						group_outros();
-						transition_out(block, 1, () => {
+						transition_out(block, 1, 1, () => {
 							info.blocks[i] = null;
 						});
 						check_outros();

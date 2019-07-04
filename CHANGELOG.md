@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 3.6.4
+
+* Run `onMount` functions in correct order, and before initial `afterUpdate` functions ([#2281](https://github.com/sveltejs/svelte/issues/2281))
+* Fix code transformation for shorthand methods ([#2906](https://github.com/sveltejs/svelte/issues/2906))
+* Fix assignments in inline functions ([#3038](https://github.com/sveltejs/svelte/issues/3038))
+
 ## 3.6.3
 
 * Fix await block mounting inside removed if block ([#1496](https://github.com/sveltejs/svelte/issues/1496))

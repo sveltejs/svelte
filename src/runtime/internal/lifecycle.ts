@@ -12,7 +12,7 @@ function get_current_component() {
 }
 
 export function beforeUpdate(fn) {
-	get_current_component().$$.before_render.push(fn);
+	get_current_component().$$.before_update.push(fn);
 }
 
 export function onMount(fn) {
@@ -20,7 +20,7 @@ export function onMount(fn) {
 }
 
 export function afterUpdate(fn) {
-	get_current_component().$$.after_render.push(fn);
+	get_current_component().$$.after_update.push(fn);
 }
 
 export function onDestroy(fn) {

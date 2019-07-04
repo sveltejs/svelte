@@ -20,7 +20,8 @@
 		"prefer-arrow-callback": 2,
 		"prefer-const": [2, { "destructuring": "all" }],
 		"arrow-spacing": 2,
-		"no-inner-declarations": 0
+		"no-inner-declarations": 0,
+		"require-atomic-updates": 0
 	},
 	"env": {
 		"es6": true,
@@ -34,6 +35,12 @@
 		"plugin:import/warnings"
 	],
 	"plugins": ["svelte3"],
+	"overrides": [
+		{
+			"files": "*.svelte",
+			"processor": "svelte3/svelte3"
+		}
+	],
 	"parserOptions": {
 		"ecmaVersion": 9,
 		"sourceType": "module"
