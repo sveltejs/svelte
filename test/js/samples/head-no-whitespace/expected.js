@@ -33,10 +33,8 @@ function create_fragment(ctx) {
 		o: noop,
 
 		d(detaching) {
-			if (detaching) {
-				detach(meta0);
-				detach(meta1);
-			}
+			detach(meta0);
+			detach(meta1);
 		}
 	};
 }

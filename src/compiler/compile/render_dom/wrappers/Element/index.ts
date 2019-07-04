@@ -272,7 +272,7 @@ export default class ElementWrapper extends Wrapper {
 			);
 
 			if (parent_node === '@_document.head') {
-				block.builders.destroy.add_conditional('detaching', `@detach(${node});`);
+				block.builders.destroy.add_line(`@detach(${node});`);
 			}
 		} else {
 			block.builders.mount.add_line(`@insert(#target, ${node}, anchor);`);
