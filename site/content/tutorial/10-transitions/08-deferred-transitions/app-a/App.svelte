@@ -118,7 +118,7 @@
 	input[type="checkbox"] {
 		position: absolute;
 		left: 0.5em;
-		top: 0.6em;
+		top: 0.75em;
 		margin: 0;
 	}
 
