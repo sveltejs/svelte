@@ -388,8 +388,8 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (${name}) {
 						@group_outros();
 						const old_component = ${name};
-						@transition_out(old_component.$$.fragment, 1, () => {
-							@destroy_component(old_component);
+						@transition_out(old_component.$$.fragment, 1, 0, () => {
+							@destroy_component(old_component, 1);
 						});
 						@check_outros();
 					}

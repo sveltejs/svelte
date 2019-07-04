@@ -493,7 +493,7 @@ export default class EachBlockWrapper extends Wrapper {
 				const out = block.get_unique_name('out');
 
 				block.builders.init.add_block(deindent`
-					const ${out} = i => @transition_out(${iterations}[i], 1, () => {
+					const ${out} = i => @transition_out(${iterations}[i], 1, 1, () => {
 						${iterations}[i] = null;
 					});
 				`);
