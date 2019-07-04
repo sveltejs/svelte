@@ -81,7 +81,7 @@ function create_fragment(ctx) {
 				}
 			} else if (if_block) {
 				group_outros();
-				transition_out(if_block, 1, () => {
+				transition_out(if_block, 1, 1, () => {
 					if_block = null;
 				});
 				check_outros();
