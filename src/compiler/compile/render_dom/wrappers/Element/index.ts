@@ -2,6 +2,7 @@ import Renderer from '../../Renderer';
 import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
+import Text from '../../../nodes/Text';
 import { is_void, quote_prop_if_necessary, quote_name_if_necessary, sanitize } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
 import { stringify, escape_html, escape } from '../../../utils/stringify';
@@ -374,6 +375,17 @@ export default class ElementWrapper extends Wrapper {
 
 	get_render_statement() {
 		const { name, namespace } = this.node;
+		let isList = this.node.attributes.filter(attr => attr.type === 'Attribute' && attr.name === 'is');
+		let is = null;
+		if (isList.length === 1) {
+			let isAttribute = isList[0];
+			
+			let chunk = isAttribute.chunks[0];
+			if (chunk.type === 'Text') {
+				let text = chunk as Text
+				is = text.data
+			}
+		}
 
 		if (namespace === 'http://www.w3.org/2000/svg') {
 			return `@svg_element("${name}")`;
@@ -381,6 +393,10 @@ export default class ElementWrapper extends Wrapper {
 
 		if (namespace) {
 			return `@_document.createElementNS("${namespace}", "${name}")`;
+		}
+
+		if (is) {
+			return `@element("${name}", "${is}")`;
 		}
 
 		return `@element("${name}")`;

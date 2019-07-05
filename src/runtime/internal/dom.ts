@@ -34,7 +34,10 @@ export function destroy_each(iterations, detaching) {
 	}
 }
 
-export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
+export function element<K extends keyof HTMLElementTagNameMap>(name: K, is=null) {
+	if (is) {
+		return document.createElement<K>(name, { is })
+	}
 	return document.createElement<K>(name);
 }
 
