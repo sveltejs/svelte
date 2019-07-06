@@ -247,7 +247,7 @@ export function add_resize_listener(element, fn) {
 	};
 }
 
-export function toggle_class(element: Node, name: string, toggle?: boolean) {
+export function toggle_class(element: Element, name: string, toggle?: boolean) {
 	element.classList.toggle(name, toggle);
 }
 
