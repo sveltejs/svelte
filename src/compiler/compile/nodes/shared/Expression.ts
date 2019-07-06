@@ -138,7 +138,8 @@ export default class Expression {
 					}
 
 					if (template_scope.is_let(name)) {
-						if (!function_expression) {
+						if (!function_expression) { // TODO should this be `!lazy` ?
+							contextual_dependencies.add(name);
 							dependencies.add(name);
 						}
 					} else if (template_scope.names.has(name)) {
