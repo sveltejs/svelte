@@ -114,9 +114,15 @@ export function create_ssr_component(fn) {
 	};
 }
 
+/**
+ * Get the current value from a store by subscribing and immediately unsubscribing.
+ * @param store readable
+ */
 export function get_store_value<T>(store: Readable<T>): T | undefined {
 	let value;
-	store.subscribe(_ => value = _)();
+	const unsubscribe: any = store.subscribe(_ => value = _);
+	if (unsubscribe.unsubscribe) unsubscribe.unsubscribe();
+	else unsubscribe();
 	return value;
 }
 
