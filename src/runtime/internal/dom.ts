@@ -7,6 +7,8 @@ export function insert(target: Node, node: Node, anchor?: Node) {
 }
 
 export function detach(node: Node) {
+	if (!node.parentNode) return;
+
 	node.parentNode.removeChild(node);
 }
 
