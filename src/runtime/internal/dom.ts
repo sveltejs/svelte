@@ -247,8 +247,8 @@ export function add_resize_listener(element, fn) {
 	};
 }
 
-export function toggle_class(element, name, toggle) {
-	element.classList[toggle ? 'add' : 'remove'](name);
+export function toggle_class(element: Node, name: string, toggle?: boolean) {
+	element.classList.toggle(name, toggle);
 }
 
 export function custom_event<T=any>(type: string, detail?: T) {
