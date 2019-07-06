@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 3.6.5
+
+* Handle RxJS-style observables with `get` ([#3153](https://github.com/sveltejs/svelte/issues/3153))
+* Pass `let` values to bindings ([#3140](https://github.com/sveltejs/svelte/issues/3140))
+* Escape `@` symbols in props ([#3173](https://github.com/sveltejs/svelte/issues/3173))
+* Scale crossfaded elements ([#3175](https://github.com/sveltejs/svelte/pull/3175))
+
 ## 3.6.4
 
 * Run `onMount` functions in correct order, and before initial `afterUpdate` functions ([#2281](https://github.com/sveltejs/svelte/issues/2281))
