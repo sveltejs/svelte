@@ -188,6 +188,8 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 		const to = node.getBoundingClientRect();
 		const dx = from.left - to.left;
 		const dy = from.top - to.top;
+		const dw = from.width / to.width;
+		const dh = from.height / to.height;
 		const d = Math.sqrt(dx * dx + dy * dy);
 
 		const style = getComputedStyle(node);
@@ -200,7 +202,8 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 			easing,
 			css: (t, u) => `
 				opacity: ${t * opacity};
-				transform: ${transform} translate(${u * dx}px,${u * dy}px);
+				transform-origin: top left;
+				transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1-t) * dw}, ${t + (1-t) * dh});
 			`
 		};
 	}
