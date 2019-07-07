@@ -336,7 +336,7 @@ describe('store', () => {
 					fn(42);
 					return {
 						unsubscribe: () => {}
-					}
+					};
 				}
 			};
 
