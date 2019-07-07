@@ -239,11 +239,11 @@ function get_event_handler(
 	name: string,
 	snippet: string
 ): {
-	uses_context: boolean;
-	mutation: string;
-	contextual_dependencies: Set<string>;
-	snippet?: string;
-} {
+		uses_context: boolean;
+		mutation: string;
+		contextual_dependencies: Set<string>;
+		snippet?: string;
+	} {
 	const value = get_value_from_dom(renderer, binding.parent, binding);
 	const store = binding.object[0] === '$' ? binding.object.slice(1) : null;
 

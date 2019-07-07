@@ -95,7 +95,14 @@ export function create_ssr_component(fn) {
 		render: (props = {}, options = {}) => {
 			on_destroy = [];
 
-			const result: { head: string, css: Set<{ map: null, code: string }> } = { head: '', css: new Set() };
+			const result: {
+				head: string;
+				css: Set<{
+					map: null;
+					code: string;
+				}>;
+			} = { head: '', css: new Set() };
+
 			const html = $$render(result, props, {}, options);
 
 			run_all(on_destroy);
