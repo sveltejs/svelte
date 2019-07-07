@@ -185,7 +185,7 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	const unique_names = new Set();
+	const unique_names: Set<string> = new Set();
 
 	let attribute;
 	while ((attribute = read_attribute(parser, unique_names))) {
