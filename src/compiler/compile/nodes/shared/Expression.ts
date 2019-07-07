@@ -238,7 +238,7 @@ export default class Expression {
 		const { code } = component;
 
 		let function_expression;
-		let pending_assignments = new Set();
+		let pending_assignments: Set<string> = new Set();
 
 		let dependencies: Set<string>;
 		let contextual_dependencies: Set<string>;
