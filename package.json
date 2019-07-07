@@ -68,6 +68,7 @@
     "css-tree": "1.0.0-alpha22",
     "eslint": "^6.0.1",
     "eslint-plugin-import": "^2.18.0",
+    "eslint-plugin-svelte3": "^2.6.0",
     "estree-walker": "^0.6.1",
     "is-reference": "^1.1.1",
     "jsdom": "^12.2.0",
