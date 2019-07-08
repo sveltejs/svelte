@@ -63,5 +63,6 @@
 	<a target="_blank" rel="noopener" href="https://www.strixengine.com"><img src="organisations/strixcloud.svg" alt="Strix Cloud logo" loading="lazy"><span>Strix Cloud</span></a>
 	<a target="_blank" rel="noopener" href="https://thunderdome.dev"><img src="organisations/thunderdome.svg" alt="Thunderdome logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://m.tokopedia.com"><img src="organisations/tokopedia.png" alt="Tokopedia logo" srcset="organisations/tokopedia.2x.png 2x, organisations/tokopedia.3x.png 3x" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="http://healthtree.org/"><img src="organisations/healthtree.png" alt="HealthTree logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
 </div>
