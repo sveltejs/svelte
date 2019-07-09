@@ -138,7 +138,8 @@ export default class Expression {
 					}
 
 					if (template_scope.is_let(name)) {
-						if (!function_expression) {
+						if (!function_expression) { // TODO should this be `!lazy` ?
+							contextual_dependencies.add(name);
 							dependencies.add(name);
 						}
 					} else if (template_scope.names.has(name)) {
@@ -237,7 +238,7 @@ export default class Expression {
 		const { code } = component;
 
 		let function_expression;
-		let pending_assignments = new Set();
+		let pending_assignments: Set<string> = new Set();
 
 		let dependencies: Set<string>;
 		let contextual_dependencies: Set<string>;

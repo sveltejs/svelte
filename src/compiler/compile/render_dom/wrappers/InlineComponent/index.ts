@@ -84,7 +84,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, strip_whitespace, next_sibling);
 
-			const dependencies = new Set();
+			const dependencies: Set<string> = new Set();
 
 			// TODO is this filtering necessary? (I *think* so)
 			default_slot.dependencies.forEach(name => {
