@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.6.6
+
+* Prevent dynamic components being detached twice ([#3113](https://github.com/sveltejs/svelte/issues/3113), [#2086](https://github.com/sveltejs/svelte/issues/2086))
+
 ## 3.6.5
 
 * Handle RxJS-style observables with `get` ([#3153](https://github.com/sveltejs/svelte/issues/3153))
