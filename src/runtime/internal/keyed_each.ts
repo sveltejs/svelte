@@ -6,7 +6,7 @@ export function destroy_block(block, lookup) {
 }
 
 export function outro_and_destroy_block(block, lookup) {
-	transition_out(block, 1, () => {
+	transition_out(block, 1, 1, () => {
 		lookup.delete(block.key);
 	});
 }

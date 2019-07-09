@@ -46,7 +46,7 @@ export function transition_in(block, local?: 0 | 1) {
 	}
 }
 
-export function transition_out(block, local: 0 | 1, callback) {
+export function transition_out(block, local: 0 | 1, detach: 0 | 1, callback) {
 	if (block && block.o) {
 		if (outroing.has(block)) return;
 		outroing.add(block);
@@ -54,7 +54,7 @@ export function transition_out(block, local: 0 | 1, callback) {
 		outros.callbacks.push(() => {
 			outroing.delete(block);
 			if (callback) {
-				block.d(1);
+				if (detach) block.d(1);
 				callback();
 			}
 		});
