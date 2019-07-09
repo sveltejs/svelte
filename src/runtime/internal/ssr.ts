@@ -95,7 +95,14 @@ export function create_ssr_component(fn) {
 		render: (props = {}, options = {}) => {
 			on_destroy = [];
 
-			const result = { head: '', css: new Set() };
+			const result: {
+				head: string;
+				css: Set<{
+					map: null;
+					code: string;
+				}>;
+			} = { head: '', css: new Set() };
+
 			const html = $$render(result, props, {}, options);
 
 			run_all(on_destroy);
@@ -114,9 +121,15 @@ export function create_ssr_component(fn) {
 	};
 }
 
+/**
+ * Get the current value from a store by subscribing and immediately unsubscribing.
+ * @param store readable
+ */
 export function get_store_value<T>(store: Readable<T>): T | undefined {
 	let value;
-	store.subscribe(_ => value = _)();
+	const unsubscribe: any = store.subscribe(_ => value = _);
+	if (unsubscribe.unsubscribe) unsubscribe.unsubscribe();
+	else unsubscribe();
 	return value;
 }
 
