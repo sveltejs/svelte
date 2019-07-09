@@ -7,10 +7,10 @@ export default {
 		component.desks = [
 			{
 				id: 1,
-				teams: [{ id: 2 }]
+				teams: []
 			}
 		];
 
-		assert.htmlEqual(target.innerHTML, '2');
+		assert.htmlEqual(target.innerHTML, '');
 	}
 };
