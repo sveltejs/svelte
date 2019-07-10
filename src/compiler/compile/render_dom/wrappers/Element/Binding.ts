@@ -109,8 +109,7 @@ export default class BindingWrapper {
 		if (parent.node.name === 'input') {
 			const type = parent.node.get_static_attribute_value('type');
 
-      if (type === null || type === "" || type === "text"
-      || type === "email" || type === "password") {
+			if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
 				update_conditions.push(`(${parent.var}.${this.node.name} !== ${this.snippet})`);
 			}
 		}
