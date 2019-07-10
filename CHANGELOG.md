@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 3.6.7
+
+* Prevent corruption of outro callbacks with nested keyed each blocks ([#3209](https://github.com/sveltejs/svelte/pull/3209))
+* Prevent cursor jumping in bound input in Safari ([#3199](https://github.com/sveltejs/svelte/issues/3199))
+* Make resize listener object unfocusable ([#3206](https://github.com/sveltejs/svelte/issues/3206))
+
 ## 3.6.6
 
 * Prevent dynamic components being detached twice ([#3113](https://github.com/sveltejs/svelte/issues/3113), [#2086](https://github.com/sveltejs/svelte/issues/2086))
