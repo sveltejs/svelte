@@ -70,9 +70,12 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 		if (safe_not_equal(value, new_value)) {
 			value = new_value;
 			if (stop) { // store is ready
-				subscribers.forEach((s) => s[1]());
 				const run_queue = !subscriber_queue.length;
-				subscribers.forEach(s => subscriber_queue.push(s, value));
+				for (let i = 0; i < subscribers.length; i++) {
+					const s = subscribers[i];
+					s[1]();
+					subscriber_queue.push(s, value);
+				}
 				if (run_queue) {
 					let s;
 					while (s = subscriber_queue.shift()) {
