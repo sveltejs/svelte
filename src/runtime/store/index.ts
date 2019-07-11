@@ -44,6 +44,8 @@ export interface Writable<T> extends Readable<T> {
 /** Pair of subscriber and invalidator. */
 type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
 
+const subscriber_queue = [];
+
 /**
  * Creates a `Readable` store that allows reading by subscription.
  * @param value initial value
@@ -69,7 +71,15 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 			value = new_value;
 			if (stop) { // store is ready
 				subscribers.forEach((s) => s[1]());
-				subscribers.forEach((s) => s[0](value));
+				const run_queue = !subscriber_queue.length;
+				subscribers.forEach(s => subscriber_queue.push(s, value));
+				if (run_queue) {
+					let s;
+					while (s = subscriber_queue.shift()) {
+						const val = subscriber_queue.shift();
+						s[0](val);
+					}
+				}
 			}
 		}
 	}
@@ -128,10 +138,6 @@ export function derived<T, S extends Stores>(
 
 	const auto = fn.length < 2;
 
-	const subscribers: Array<Subscriber<T>> = [];
-	const invalidators: Array<Invalidator<T>> = [];
-	let value: T = initial_value;
-
 	const store = readable(initial_value, (set) => {
 		let inited = false;
 		const values: StoresValues<S> = [] as StoresValues<S>;
@@ -147,11 +153,6 @@ export function derived<T, S extends Stores>(
 			const result = fn(single ? values[0] : values, set);
 			if (auto) {
 				set(result as T);
-				const dirty = safe_not_equal(value, result);
-				value = result as T;
-				if (!dirty) {
-					subscribers.forEach(s => s(value));
-				}
 			} else {
 				cleanup = is_function(result) ? result as Unsubscriber : noop;
 			}
@@ -166,7 +167,6 @@ export function derived<T, S extends Stores>(
 				}
 			},
 			() => {
-				run_all(invalidators);
 				pending |= (1 << i);
 			}),
 		);
@@ -182,18 +182,7 @@ export function derived<T, S extends Stores>(
 
 	return {
 		subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
-			subscribers.push(run);
-			invalidators.push(invalidate);
-
-			const unsubscribe = store.subscribe(run, invalidate);
-
-			return () => {
-				const index = invalidators.indexOf(invalidate);
-				if (index !== -1) {
-					invalidators.splice(index, 1);
-				}
-				unsubscribe();
-			};
+			return store.subscribe(run, invalidate);
 		}
 	};
 }
