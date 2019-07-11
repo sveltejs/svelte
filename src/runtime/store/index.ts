@@ -85,7 +85,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 	}
 
 	function update(fn: Updater<T>): void {
-		return set(fn(value));
+		set(fn(value));
 	}
 
 	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
