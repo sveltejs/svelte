@@ -233,6 +233,30 @@ describe('store', () => {
 			unsubscribe();
 		});
 
+		it('derived dependency does not update and shared ancestor updates', () => {
+			const root = writable({ a: 0, b:0 });
+			const values = [];
+
+			const a = derived(root, $root => {
+				return 'a' + $root.a;
+			});
+
+			const b = derived([a, root], ([$a, $root]) => {
+				return 'b' + $root.b + $a;
+			});
+
+			const unsubscribe = b.subscribe(v => {
+				values.push(v);
+			});
+
+			assert.deepEqual(values, ['b0a0']);
+
+			root.set({ a: 0, b: 1 });
+			assert.deepEqual(values, ['b0a0', 'b1a0']);
+
+			unsubscribe();
+		});
+
 		it('is updated with safe_not_equal logic', () => {
 			const arr = [0];
 

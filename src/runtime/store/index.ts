@@ -67,16 +67,15 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 	function set(new_value: T): void {
 		if (safe_not_equal(value, new_value)) {
 			value = new_value;
-			if (!stop) {
-				return; // not ready
+			if (stop) { // store is ready
+				subscribers.forEach((s) => s[1]());
+				subscribers.forEach((s) => s[0](value));
 			}
-			subscribers.forEach((s) => s[1]());
-			subscribers.forEach((s) => s[0](value));
 		}
 	}
 
 	function update(fn: Updater<T>): void {
-		set(fn(value));
+		return set(fn(value));
 	}
 
 	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
@@ -129,7 +128,9 @@ export function derived<T, S extends Stores>(
 
 	const auto = fn.length < 2;
 
+	const subscribers: Array<Subscriber<T>> = [];
 	const invalidators: Array<Invalidator<T>> = [];
+	let value: T = initial_value;
 
 	const store = readable(initial_value, (set) => {
 		let inited = false;
@@ -146,6 +147,11 @@ export function derived<T, S extends Stores>(
 			const result = fn(single ? values[0] : values, set);
 			if (auto) {
 				set(result as T);
+				const dirty = safe_not_equal(value, result);
+				value = result as T;
+				if (!dirty) {
+					subscribers.forEach(s => s(value));
+				}
 			} else {
 				cleanup = is_function(result) ? result as Unsubscriber : noop;
 			}
@@ -176,6 +182,7 @@ export function derived<T, S extends Stores>(
 
 	return {
 		subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
+			subscribers.push(run);
 			invalidators.push(invalidate);
 
 			const unsubscribe = store.subscribe(run, invalidate);
