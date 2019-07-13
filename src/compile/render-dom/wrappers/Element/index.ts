@@ -538,15 +538,19 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	addAttributes(block: Block) {
+		// Get all the class dependencies first
+		this.attributes.forEach((attribute: Attribute) => {
+			if (attribute.node.name === 'class' && attribute.node.isDynamic) {
+				this.classDependencies.push(...attribute.node.dependencies);
+			}
+		});
+
 		if (this.node.attributes.find(attr => attr.type === 'Spread')) {
 			this.addSpreadAttributes(block);
 			return;
 		}
 
 		this.attributes.forEach((attribute: Attribute) => {
-			if (attribute.node.name === 'class' && attribute.node.isDynamic) {
-				this.classDependencies.push(...attribute.node.dependencies);
-			}
 			attribute.render(block);
 		});
 	}
