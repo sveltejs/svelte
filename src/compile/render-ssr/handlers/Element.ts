@@ -84,6 +84,9 @@ export default function(node, renderer, options) {
 				) {
 					// a boolean attribute with one non-Text chunk
 					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: ${attribute.chunks[0].snippet} }`);
+				} else if (attribute.name === 'class' && classExpr) {
+					// Add class expression
+					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: [\`${stringifyAttribute(attribute)}\`, \`\${${classExpr}}\`].join(' ').trim() }`);
 				} else {
 					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: \`${stringifyAttribute(attribute)}\` }`);
 				}
