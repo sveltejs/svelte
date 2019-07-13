@@ -100,7 +100,7 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 	for (const key in attributes) {
 		if (key === 'style') {
 			node.style.cssText = attributes[key];
-		} else if (key in node) {
+		} else if (key in node && attributes[key] != null) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key]);
