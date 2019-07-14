@@ -548,6 +548,13 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_attributes(block: Block) {
+		// Get all the class dependencies first
+		this.attributes.forEach((attribute) => {
+			if (attribute.node.name === 'class' && attribute.node.is_dynamic) {
+				this.class_dependencies.push(...attribute.node.dependencies);
+			}
+		});
+
 		// @ts-ignore todo:
 		if (this.node.attributes.find(attr => attr.type === 'Spread')) {
 			this.add_spread_attributes(block);
@@ -555,9 +562,6 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		this.attributes.forEach((attribute) => {
-			if (attribute.node.name === 'class' && attribute.node.is_dynamic) {
-				this.class_dependencies.push(...attribute.node.dependencies);
-			}
 			attribute.render(block);
 		});
 	}
