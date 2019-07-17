@@ -147,11 +147,11 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 
 ---
 
-A *store* is any object that allows reactive access to a value via a simpler *store contract*.
+A *store* is any object that allows reactive access to a value via a simple *store contract*.
 
 A store must contain a `.subscribe` method, which much accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes. The `.subscribe` method must also return an unsubscription function. Calling an unsubscription function must stop its subscription, and its corresponding subscription function must not be called again by the store.
 
-A store may optionally contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is calls a *writable store*.
+A store may optionally contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a *writable store*.
 
 ```js
 const unsubscribe = store.subscribe(value => {
