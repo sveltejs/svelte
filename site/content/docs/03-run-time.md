@@ -212,39 +212,7 @@ Events dispatched from child components can be listened to in their parent. Any 
 
 ### `svelte/store`
 
-The `svelte/store` module exports functions for creating [stores](tutorial/writable-stores).
-
----
-
-To be considered a store, an object must have a `subscribe` method that returns an `unsubscribe` function.
-
-```js
-const unsubscribe = store.subscribe(value => {
-	console.log(value);
-}); // logs `value`
-
-// later...
-unsubscribe();
-```
-
----
-
-Stores have special significance inside Svelte components. Their values can be read by prefixing the store's name with the `$` character, which causes Svelte to set up subscriptions and unsubscriptions automatically during the component's lifecycle.
-
-```html
-<script>
-	import { count } from './stores.js';
-
-	function handleClick() {
-		// this is equivalent to count.update(n => n + 1)
-		$count += 1;
-	}
-</script>
-
-<button on:click={handleClick}>
-	Clicks: {$count}
-</button>
-```
+The `svelte/store` module exports functions for creating [stores](docs#4_Prefix_stores_with_$_to_access_their_values).
 
 #### `writable`
 
