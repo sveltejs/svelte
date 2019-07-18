@@ -149,6 +149,8 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 
 A *store* is any object that allows reactive access to a value via a simple *store contract*.
 
+The [`svelte/store` module](docs#svelte_store) contains minimal store implementations which fulfil this contract. You can use these as the basis for your own stores, or you can implement your stores from scratch.
+
 A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes. The `.subscribe` method must also return an unsubscription function. Calling an unsubscription function must stop its subscription, and its corresponding subscription function must not be called again by the store.
 
 A store may optionally contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a *writable store*.
@@ -161,8 +163,6 @@ const unsubscribe = store.subscribe(value => {
 // later...
 unsubscribe();
 ```
-
-The [`svelte/store` module](docs#svelte_store) contains a minimal store implementation.
 
 ---
 
