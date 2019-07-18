@@ -19,6 +19,7 @@ describe('store', () => {
 			count.set(3);
 			count.update(n => n + 1);
 
+			assert.equal(count.get(), 4);
 			assert.deepEqual(values, [0, 1, 2]);
 		});
 

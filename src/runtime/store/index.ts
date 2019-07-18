@@ -29,6 +29,11 @@ export interface Readable<T> {
 /** Writable interface for both updating and subscribing. */
 export interface Writable<T> extends Readable<T> {
 	/**
+	 * Get value.
+	 */
+	get(): T;
+
+	/**
 	 * Set value and inform subscribers.
 	 * @param value to set
 	 */
@@ -63,6 +68,10 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
 export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
 	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
+
+	function get(): T {
+		return value;
+	}
 
 	function set(new_value: T): void {
 		if (safe_not_equal(value, new_value)) {
@@ -99,7 +108,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 		};
 	}
 
-	return { set, update, subscribe };
+	return { get, set, update, subscribe };
 }
 
 /** One or more `Readable`s. */
