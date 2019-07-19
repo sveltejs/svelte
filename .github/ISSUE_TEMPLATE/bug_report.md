@@ -11,7 +11,7 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **Logs**
-Please include browser console and server logs around the time this bug occured.
+Please include browser console and server logs around the time this bug occurred.
 
 **To Reproduce**
 To help us help you, if you've found a bug please consider the following:
@@ -46,7 +46,7 @@ If you have a stack trace to include, we recommend putting inside a `<details>` 
 **Severity**
 How severe an issue is this bug to you? Is this annoying, blocking some users, blocking an upgrade or blocking your usage of Svelte entirely?
 
-Note: the more honest and specific you are here the more we will take you seriously. 
+Note: the more honest and specific you are here the more we will take you seriously.
 
 **Additional context**
 Add any other context about the problem here.
