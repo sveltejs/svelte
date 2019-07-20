@@ -9,4 +9,4 @@
 
 <textarea bind:value={text}></textarea>
 
-{@html marked(value)}
+{@html marked(text)}
