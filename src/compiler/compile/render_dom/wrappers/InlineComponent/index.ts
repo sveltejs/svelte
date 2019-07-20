@@ -425,7 +425,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`if (${name}) @transition_out(${name}.$$.fragment, #local);`
 			);
 
-			block.builders.destroy.add_line(`if (${name}) @destroy_component(${name}, ${parent_node ? '' : 'detaching'});`);
+			block.builders.destroy.add_line(`if (${name}) @destroy_component(${name}${parent_node ? '' : ', detaching'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? '__svelte:self__' // TODO conflict-proof this
@@ -465,7 +465,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.builders.destroy.add_block(deindent`
-				@destroy_component(${name}, ${parent_node ? '' : 'detaching'});
+				@destroy_component(${name}${parent_node ? '' : ', detaching'});
 			`);
 
 			block.builders.outro.add_line(
