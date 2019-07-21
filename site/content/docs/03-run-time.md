@@ -225,7 +225,13 @@ store = writable(value: any, (set: (value: any) => void) => () => void)
 
 ---
 
-Creates a store with additional `set` and `update` methods.
+Function that creates a store which has values that can be set from 'outside' components. It gets created as an object with additional `set` and `update` methods.
+
+`set` is a method that takes one argument which is the value to be set. The store value gets set to the value of the argument if the store value is not already equal to it.
+
+`update` is a method that takes one argument which is a callback. The callback takes the existing store value as its argument and returns the new value to be set to the store.
+
+If a function is passed as the second argument to the `writable` function, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store. It must return a `stop` function that is called when the subscriber count goes from one to zero.
 
 ```js
 import { writable } from 'svelte/store';
@@ -243,7 +249,6 @@ count.update(n => n + 1); // logs '2'
 
 ---
 
-If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store. It must return a `stop` function that is called when the subscriber count goes from one to zero.
 
 ```js
 import { writable } from 'svelte/store';
