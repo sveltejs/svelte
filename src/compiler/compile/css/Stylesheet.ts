@@ -217,6 +217,11 @@ class Atrule {
 				if (type === 'Identifier') {
 					if (name.startsWith('-global-')) {
 						code.remove(start, start + 8);
+						this.children.forEach((rule: Rule) => {
+							rule.selectors.forEach(selector => {
+								selector.used = true;
+							});
+						});
 					} else {
 						code.overwrite(start, end, keyframes.get(name));
 					}
