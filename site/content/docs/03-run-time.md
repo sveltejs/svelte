@@ -225,7 +225,11 @@ store = writable(value: any, (set: (value: any) => void) => () => void)
 
 ---
 
-Creates a store with additional `set` and `update` methods.
+Function that creates a store which has values that can be set from 'outside' components. It gets created as an object with additional `set` and `update` methods.
+
+`set` is a method that takes one argument which is the value to be set. The store value gets set to the value of the argument if the store value is not already equal to it.
+
+`update` is a method that takes one argument which is a callback. The callback takes the existing store value as its argument and returns the new value to be set to the store.
 
 ```js
 import { writable } from 'svelte/store';
