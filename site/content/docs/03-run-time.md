@@ -247,7 +247,7 @@ count.update(n => n + 1); // logs '2'
 
 ---
 
-If a function is passed as the second argument to the `writable` function, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store. It must return a `stop` function that is called when the subscriber count goes from one to zero.
+If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store. It must return a `stop` function that is called when the subscriber count goes from one to zero.
 
 ```js
 import { writable } from 'svelte/store';
