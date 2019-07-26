@@ -20,17 +20,51 @@
 
 	async function runAnimations() {
 		playing = true;
+
 		value.set(1000, {duration: 0});
 		time.set(0, {duration: 0});
+
 		await ease_path.set(current.shape);
-		time.set(1000, {duration, easing: x => x});
-		await value.set(0, {duration, easing: current.fn});
+		await Promise.all([
+			time.set(1000, {duration, easing: x => x}),
+			value.set(0, {duration, easing: current.fn})
+		])
+
 		playing = false;
 	}
 
 	$: current = eases.get(current_ease)[current_type];
 	$: current && runAnimations();
 </script>
+
+<style>
+	.easing-vis {
+		display: flex;
+		max-height: 95%;
+		max-width: 800px;
+		margin: auto;
+		padding: 10px;
+		border: 1px solid #333;
+		border-radius: 2px;
+		padding: 20px;
+	}
+
+	svg {
+		width: 100%;
+		margin: 0 20px 0 0;
+	}
+
+	.graph {
+		transform: translate(200px,400px)
+	}
+
+	@media (max-width:600px) {
+		.easing-vis {
+			flex-direction: column;
+			max-height: calc(100% - 3rem);
+		}
+	}
+</style>
 
 <div bind:offsetWidth={width} class="easing-vis">
 	<svg viewBox="0 0 1400 1802">
@@ -70,33 +104,3 @@
 		on:play={runAnimations}
 	/>
 </div>
-
-<style>
-	.easing-vis {
-		display: flex;
-		justify-content: space-around;
-		max-height: 95%;
-		max-width: 800px;
-		margin: auto;
-		padding: 10px;
-		border: 1px solid #333;
-		border-radius: 2px;
-		padding: 20px;
-	}
-
-	svg {
-		width: 100%;
-		margin: 0 20px 0 0;
-	}
-
-	.graph {
-		transform: translate(200px,400px)
-	}
-
-	@media (max-width:600px) {
-		.easing-vis {
-			flex-direction: column;
-			max-height: calc(100% - 3rem);
-		}
-	}
-</style>
