@@ -3,7 +3,6 @@
 	import { tweened } from 'svelte/motion';
 
 	import Grid from './Grid.svelte';
-	import Progress from './Progress.svelte';
 	import Controls from './Controls.svelte';
 
 	import { eases, types } from './eases.js';
