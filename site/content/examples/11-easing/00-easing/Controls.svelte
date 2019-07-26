@@ -11,7 +11,7 @@
 
   const dispatch = createEventDispatcher();
 
-  $: mobile = width && width < 600
+  $: mobile = width && width < 600;
 </script>
 
 <style>
@@ -25,7 +25,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		font-size: 18px
+		font-size: 18px;
 	}
 
 	li {
@@ -183,6 +183,4 @@
 				{playing ? 'Restart' : 'Play'}
 			</button>
 		</div>
-
-
 	</div>

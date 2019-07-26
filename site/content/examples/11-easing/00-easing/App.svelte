@@ -28,7 +28,7 @@
 		await Promise.all([
 			time.set(1000, {duration, easing: x => x}),
 			value.set(0, {duration, easing: current.fn})
-		])
+		]);
 
 		playing = false;
 	}
