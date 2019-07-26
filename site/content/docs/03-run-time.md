@@ -740,8 +740,41 @@ You can see a full example on the [animations tutorial](tutorial/animate)
 
 ### `svelte/easing`
 
-* TODO could have nice little interactive widgets showing the different functions, maybe
+Easing functions specificy the rate of change over time and are useful when working with Svelte's built-in transitions and animations as well as the tweened and spring utilities. `svelte/easing` contains 31 names exports, a `linear` ease and 3 variants of 10 different easing functions: `in`, `out` and `inOut`.
 
+You can explore the various eases using the [ease visualiser](examples#easing) in the [examples section](examples).
+
+- `linear`
+- `backInOut`
+- `backIn`
+- `backOut`
+- `bounceOut`
+- `bounceInOut`
+- `bounceIn`
+- `circInOut`
+- `circIn`
+- `circOut`
+- `cubicInOut`
+- `cubicIn`
+- `cubicOut`
+- `elasticInOut`
+- `elasticIn`
+- `elasticOut`
+- `expoInOut`
+- `expoIn`
+- `expoOut`
+- `quadInOut`
+- `quadIn`
+- `quadOut`
+- `quartInOut`
+- `quartIn`
+- `quartOut`
+- `quintInOut`
+- `quintIn`
+- `quintOut`
+- `sineInOut`
+- `sineIn`
+- `sineOut`
 
 ### `svelte/register`
 
