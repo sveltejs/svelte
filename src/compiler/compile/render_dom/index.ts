@@ -359,15 +359,11 @@ export default function dom(
 
 		component.reactive_declarations
 			.forEach(d => {
-				let uses_props;
+				const dependencies = Array.from(d.dependencies);
+				const uses_props = !!dependencies.find(n => n === '$$props');
 
-				const condition = Array.from(d.dependencies)
+				const condition = !uses_props && dependencies
 					.filter(n => {
-						if (n === '$$props') {
-							uses_props = true;
-							return false;
-						}
-
 						const variable = component.var_lookup.get(n);
 						return variable && (variable.writable || variable.mutated);
 					})
