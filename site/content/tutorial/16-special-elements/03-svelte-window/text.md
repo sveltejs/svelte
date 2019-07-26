@@ -9,8 +9,5 @@ On line 33, add the `keydown` listener:
 ```html
 <svelte:window on:keydown={handleKeydown}/>
 ```
-Don't forget to add `preventDefault` modifier if you want to press any other key, e.g. after you have pressed `Tab` or `Ctrl + D`:
 
-```html
-<svelte:window on:keydown|preventDefault={handleKeydown}/>
-```
+> As with DOM elements, you can add [event modifiers](tutorial/event-modifiers) like `preventDefault`.
