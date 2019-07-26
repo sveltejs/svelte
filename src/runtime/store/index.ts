@@ -44,6 +44,8 @@ export interface Writable<T> extends Readable<T> {
 /** Pair of subscriber and invalidator. */
 type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
 
+const subscriber_queue = [];
+
 /**
  * Creates a `Readable` store that allows reading by subscription.
  * @param value initial value
@@ -67,11 +69,20 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 	function set(new_value: T): void {
 		if (safe_not_equal(value, new_value)) {
 			value = new_value;
-			if (!stop) {
-				return; // not ready
+			if (stop) { // store is ready
+				const run_queue = !subscriber_queue.length;
+				for (let i = 0; i < subscribers.length; i += 1) {
+					const s = subscribers[i];
+					s[1]();
+					subscriber_queue.push(s, value);
+				}
+				if (run_queue) {
+					for (let i = 0; i < subscriber_queue.length; i += 2) {
+						subscriber_queue[i][0](subscriber_queue[i + 1]);
+					}
+					subscriber_queue.length = 0;
+				}
 			}
-			subscribers.forEach((s) => s[1]());
-			subscribers.forEach((s) => s[0](value));
 		}
 	}
 
@@ -129,9 +140,7 @@ export function derived<T, S extends Stores>(
 
 	const auto = fn.length < 2;
 
-	const invalidators: Array<Invalidator<T>> = [];
-
-	const store = readable(initial_value, (set) => {
+	return readable(initial_value, (set) => {
 		let inited = false;
 		const values: StoresValues<S> = [] as StoresValues<S>;
 
@@ -160,7 +169,6 @@ export function derived<T, S extends Stores>(
 				}
 			},
 			() => {
-				run_all(invalidators);
 				pending |= (1 << i);
 			}),
 		);
@@ -173,20 +181,4 @@ export function derived<T, S extends Stores>(
 			cleanup();
 		};
 	});
-
-	return {
-		subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
-			invalidators.push(invalidate);
-
-			const unsubscribe = store.subscribe(run, invalidate);
-
-			return () => {
-				const index = invalidators.indexOf(invalidate);
-				if (index !== -1) {
-					invalidators.splice(index, 1);
-				}
-				unsubscribe();
-			};
-		}
-	};
 }
