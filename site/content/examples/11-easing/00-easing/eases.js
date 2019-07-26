@@ -16,7 +16,6 @@ for (const ease in eases) {
 		let shape = 'M0 1000';
 		for (let i = 1; i <= 1000; i++) {
 			shape = `${shape} L${(i / 1000) * 1000} ${1000 - eases[ease](i / 1000) * 1000} `;
-
 			processed_eases[name][type].shape = shape;
 		}
 	}
