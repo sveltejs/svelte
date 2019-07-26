@@ -1,21 +1,21 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 
-  export let current_ease;
-  export let current_type;
-  export let eases;
-  export let types;
-  export let duration;
-  export let playing;
-  export let width;
+	export let current_ease;
+	export let current_type;
+	export let eases;
+	export let types;
+	export let duration;
+	export let playing;
+	export let width;
 
-  const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher();
 
-  $: mobile = width && width < 600;
+	$: mobile = width && width < 600;
 </script>
 
 <style>
-  .easing-sidebar {
+	.easing-sidebar {
 		width: 11em;
 	}
 
@@ -46,7 +46,7 @@
 		color: white;
 	}
 
-  h3 {
+	h3 {
 		margin: 0 10px 0 0;
 	}
 
@@ -54,7 +54,7 @@
 		margin-bottom: 0;
 	}
 
-  select {
+	select {
 		display: inline;
 		padding: 0.2em;
 		margin: 0;
@@ -89,11 +89,11 @@
 		width: 100%;
 	}
 
-  @media (max-width:600px) {
+	@media (max-width:600px) {
 		.easing-types {
 			display: flex;
 			align-items: center;
-      margin-top: 10px;
+			margin-top: 10px;
 		}
 
 		.easing-sidebar {
