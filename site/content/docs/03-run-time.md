@@ -744,37 +744,20 @@ Easing functions specificy the rate of change over time and are useful when work
 
 You can explore the various eases using the [ease visualiser](examples#easing) in the [examples section](examples).
 
-- `linear`
-- `backInOut`
-- `backIn`
-- `backOut`
-- `bounceOut`
-- `bounceInOut`
-- `bounceIn`
-- `circInOut`
-- `circIn`
-- `circOut`
-- `cubicInOut`
-- `cubicIn`
-- `cubicOut`
-- `elasticInOut`
-- `elasticIn`
-- `elasticOut`
-- `expoInOut`
-- `expoIn`
-- `expoOut`
-- `quadInOut`
-- `quadIn`
-- `quadOut`
-- `quartInOut`
-- `quartIn`
-- `quartOut`
-- `quintInOut`
-- `quintIn`
-- `quintOut`
-- `sineInOut`
-- `sineIn`
-- `sineOut`
+
+| ease | in | out | inOut |
+| --- | --- | --- | --- |
+| **back** | `backIn` | `backOut` | `backInOut` |
+| **bounce** | `bounceIn` | `bounceOut` | `bounceInOut` |
+| **circ** | `circIn` | `circOut` | `circInOut` |
+| **cubic** | `cubicIn` | `cubicOut` | `cubicInOut` |
+| **elastic** | `elasticIn` | `elasticOut` | `elasticInOut` |
+| **expo** | `expoIn` | `expoOut` | `expoInOut` |
+| **quad** | `quadIn` | `quadOut` | `quadInOut` |
+| **quart** | `quartIn` | `quartOut` | `quartInOut` |
+| **quint** | `quintIn` | `quintOut` | `quintInOut` |
+| **sine** | `sineIn` | `sineOut` | `sineInOut` |
+
 
 ### `svelte/register`
 
