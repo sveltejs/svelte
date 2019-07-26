@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.6.9
+
+* Always update derived stores with a derived input whose value does not change ([#3191](https://github.com/sveltejs/svelte/issues/3191))
+
 ## 3.6.8
 
 * Preserve global keyframes that don't match local elements ([#3228](https://github.com/sveltejs/svelte/issues/3228))
