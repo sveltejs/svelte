@@ -156,6 +156,8 @@ Like lifecycle functions, this must be called during component initialisation.
 </script>
 ```
 
+> Context is not inherently reactive. If you need reactive values in context then you can pass a store into context, which *will* be reactive.
+
 #### `getContext`
 
 ```js
