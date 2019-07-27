@@ -21,10 +21,11 @@
 		<NavItem segment="examples">Examples</NavItem>
 		<NavItem segment="repl">REPL</NavItem>
 		<NavItem segment="blog">Blog</NavItem>
+		<NavItem segment="faq">FAQ</NavItem>
 
 		<NavItem external="https://sapper.svelte.dev">Sapper</NavItem>
 
-		<NavItem external="https://discord.gg/yy75DKs" title="Discord Chat">
+		<NavItem external="chat" title="Discord Chat">
 			<Icon name="message-square"/>
 		</NavItem>
 

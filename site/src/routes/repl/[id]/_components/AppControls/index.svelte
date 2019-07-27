@@ -107,7 +107,6 @@
 		try {
 			// Send all files back to API
 			// ~> Any missing files are considered deleted!
-			const files = {};
 			const { components } = repl.toJSON();
 
 			const r = await fetch(`repl/${gist.uid}.json`, {
@@ -127,7 +126,7 @@
 				throw new Error(`Received an HTTP ${r.status} response: ${error}`);
 			}
 
-			const result = await r.json();
+			await r.json();
 
 			justSaved = true;
 			await wait(600);
@@ -155,7 +154,7 @@
 			const pkg = JSON.parse(files[idx].data);
 			const deps = {};
 			imports.forEach(mod => {
-				const match = /^(@[^\/]+\/)?[^@\/]+/.exec(mod);
+				const match = /^(@[^/]+\/)?[^@/]+/.exec(mod);
 				deps[match[0]] = 'latest';
 			});
 			pkg.dependencies = deps;

@@ -13,7 +13,7 @@
 </script>
 
 <style>
-	/* darken text for accesibility */
+	/* darken text for accessibility */
 	/* TODO does this belong elsewhere? */
 	:global(.back-light) {
 		--text: hsl(36, 3%, 44%);
@@ -89,7 +89,7 @@ npx degit sveltejs/template my-svelte-project
 cd my-svelte-project
 
 npm install
-npm run dev & open http://localhost:5000
+npm run dev
 		</pre>
 
 		<p style="flex: 1">See the <a href="blog/the-easiest-way-to-get-started">quickstart guide</a> for more information.</p>

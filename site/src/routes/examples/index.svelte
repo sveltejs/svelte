@@ -37,7 +37,11 @@
 	let offset = 1;
 	let repl;
 	let isLoading = false;
-	let cache = {};
+	const cache = {};
+
+	function showExampleCodeOnChange() {
+		offset = 1;
+	}
 
 	$: title = title_by_slug[active_slug] || '';
 	$: first_slug = sections[0].examples[0].slug;
@@ -46,25 +50,25 @@
 	$: if (repl && active_slug) {
 		if (active_slug in cache) {
 			repl.set({ components: cache[active_slug] });
-			offset = 1;
+			showExampleCodeOnChange();
 		} else {
 			isLoading = true;
 			fetch(`examples/${active_slug}.json`)
-			.then(async response => {
-				if (response.ok) {
-					const {files} = await response.json();
-					return process_example(files);
-				}
-			})
-			.then(components => {
-				cache[active_slug] = components;
- 				repl.set({components});
-				offset = 1;
-				isLoading = false;
-			})
-			.catch(function(error) {
-				isLoading = false;
-			});
+				.then(async response => {
+					if (response.ok) {
+						const {files} = await response.json();
+						return process_example(files);
+					}
+				})
+				.then(components => {
+					cache[active_slug] = components;
+					repl.set({components});
+					showExampleCodeOnChange();
+					isLoading = false;
+				})
+				.catch(() => {
+					isLoading = false;
+				});
 		}
 	}
 
@@ -102,6 +106,7 @@
 		<div class="repl-container" class:loading={isLoading}>
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				{svelteUrl}
 				{rollupUrl}
 				orientation={replOrientation}

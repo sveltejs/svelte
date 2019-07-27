@@ -156,6 +156,8 @@ Like lifecycle functions, this must be called during component initialisation.
 </script>
 ```
 
+> Context is not inherently reactive. If you need reactive values in context then you can pass a store into context, which *will* be reactive.
+
 #### `getContext`
 
 ```js
@@ -212,39 +214,7 @@ Events dispatched from child components can be listened to in their parent. Any 
 
 ### `svelte/store`
 
-The `svelte/store` module exports functions for creating [stores](tutorial/writable-stores).
-
----
-
-To be considered a store, an object must have a `subscribe` method that returns an `unsubscribe` function.
-
-```js
-const unsubscribe = store.subscribe(value => {
-	console.log(value);
-}); // logs `value`
-
-// later...
-unsubscribe();
-```
-
----
-
-Stores have special significance inside Svelte components. Their values can be read by prefixing the store's name with the `$` character, which causes Svelte to set up subscriptions and unsubscriptions automatically during the component's lifecycle.
-
-```html
-<script>
-	import { count } from './stores.js';
-
-	function handleClick() {
-		// this is equivalent to count.update(n => n + 1)
-		$count += 1;
-	}
-</script>
-
-<button on:click={handleClick}>
-	Clicks: {$count}
-</button>
-```
+The `svelte/store` module exports functions for creating [stores](docs#4_Prefix_stores_with_$_to_access_their_values).
 
 #### `writable`
 
@@ -257,7 +227,11 @@ store = writable(value: any, (set: (value: any) => void) => () => void)
 
 ---
 
-Creates a store with additional `set` and `update` methods.
+Function that creates a store which has values that can be set from 'outside' components. It gets created as an object with additional `set` and `update` methods.
+
+`set` is a method that takes one argument which is the value to be set. The store value gets set to the value of the argument if the store value is not already equal to it.
+
+`update` is a method that takes one argument which is a callback. The callback takes the existing store value as its argument and returns the new value to be set to the store.
 
 ```js
 import { writable } from 'svelte/store';
@@ -324,13 +298,13 @@ const time = readable(new Date(), set => {
 store = derived(a, callback: (a: any) => any)
 ```
 ```js
-store = derived(a, callback: (a: any, set: (value: any) => void) => void, initial_value: any)
+store = derived(a, callback: (a: any, set: (value: any) => void) => void | () => void, initial_value: any)
 ```
 ```js
 store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
 ```
 ```js
-store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void, initial_value: any)
+store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void | () => void, initial_value: any)
 ```
 
 ---
@@ -356,6 +330,24 @@ import { derived } from 'svelte/store';
 
 const delayed = derived(a, ($a, set) => {
 	setTimeout(() => set($a), 1000);
+}, 'one moment...');
+```
+
+---
+
+If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes.
+
+```js
+import { derived } from 'svelte/store';
+
+const tick = derived(frequency, ($frequency, set) => {
+	const interval = setInterval(() => {
+	  set(Date.now());
+	}, 1000 / $frequency);
+
+	return () => {
+		clearInterval(interval);
+	};
 }, 'one moment...');
 ```
 
@@ -407,7 +399,7 @@ Tweened stores update their values over a fixed duration. The following options 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the tween lasts
 * `easing` (`function`, default `t => t`) — an [easing function](docs#svelte_easing)
-* `interpolator` (`function`) — see below
+* `interpolate` (`function`) — see below
 
 `store.set` and `store.update` can accept a second `options` argument that will override the options passed in upon instantiation.
 
@@ -441,7 +433,7 @@ Out of the box, Svelte will interpolate between two numbers, two arrays or two o
 
 ---
 
-The `interpolator` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
+The `interpolate` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
 
 ```html
 <script>
@@ -503,10 +495,204 @@ Both `set` and `update` can take a second argument — an object with `hard` or 
 
 ### `svelte/transition`
 
-TODO
+The `svelte/transition` module exports six functions: `fade`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with svelte [`transitions`](docs#Transitions).
 
-* fade, fly, slide, scale, draw
-* crossfade...
+#### `fade`
+
+```sv
+transition:fade={params}
+```
+```sv
+in:fade={params}
+```
+```sv
+out:fade={params}
+```
+
+---
+
+Animates the opacity of an element from 0 to the current opacity for `in` transitions and from the current opacity to 0 for `out` transitions.
+
+`fade` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+
+You can see the `fade` transition in action in the [transition tutorial](tutorial/transition).
+
+```html
+<script>
+	import { fade } from 'svelte/transition';
+</script>
+
+{#if condition}
+	<div transition:fade="{{delay: 250, duration: 300}}">
+		fades in and out
+	</div>
+{/if}
+```
+
+#### `fly`
+
+```sv
+transition:fly={params}
+```
+```sv
+in:fly={params}
+```
+```sv
+out:fly={params}
+```
+
+---
+
+Animates the x and y positions and the opacity of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+
+`fly` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `x` (`number`, default 0) - the x offset to animate out to and in from
+* `y` (`number`, default 0) - the y offset to animate out to and in from
+* `opacity` (`number`, default 0) - the opacity value to animate out to and in from
+
+You can see the `fly` transition in action in the [transition tutorial](tutorial/adding-parameters-to-transitions).
+
+```html
+<script>
+	import { fly } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+{#if condition}
+	<div transition:fly="{{delay: 250, duration: 300, x: 100, y: 500, opacity: 0.5, easing: quintOut}}">
+		flies in and out
+	</div>
+{/if}
+```
+
+#### `slide`
+
+```sv
+transition:slide={params}
+```
+```sv
+in:slide={params}
+```
+```sv
+out:slide={params}
+```
+
+---
+
+Slides an element in and out.
+
+`slide` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+
+```html
+<script>
+	import { slide } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+{#if condition}
+	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut }}">
+		slides in and out
+	</div>
+{/if}
+```
+
+#### `scale`
+
+```sv
+transition:scale={params}
+```
+```sv
+in:scale={params}
+```
+```sv
+out:scale={params}
+```
+
+---
+
+Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+
+`scale` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `start` (`number`, default 0) - the scale value to animate out to and in from
+* `opacity` (`number`, default 0) - the opacity value to animate out to and in from
+
+```html
+<script>
+	import { scale } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+{#if condition}
+	<div transition:scale="{{duration: 500, delay: 500, opacity: 0.5, start: 0.5, easing: quintOut}}">
+		scales in and out
+	</div>
+{/if}
+```
+
+#### `draw`
+
+```sv
+transition:draw={params}
+```
+```sv
+in:draw={params}
+```
+```sv
+out:draw={params}
+```
+
+---
+
+Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
+
+`scale` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `speed` (`number`, default undefined) - the speed of the animation, see below.
+* `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicInOut`) — an [easing function](docs#svelte_easing)
+
+The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will halve that duration and setting it to `2` will double it.
+
+```html
+<script>
+	import { draw } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+</script>
+
+<svg viewBox="0 0 5 5" xmlns="http://www.w3.org/2000/svg">
+	{#if condition}
+		<path transition:draw="{{duration: 5000, delay: 500, easing: quintOut}}"
+					d="M2 1 h1 v1 h1 v1 h-1 v1 h-1 v-1 h-1 v-1 h1 z"
+					fill="none"
+					stroke="cornflowerblue"
+					stroke-width="0.1px"
+					stroke-linejoin="round"
+		/>
+	{/if}
+</svg>
+
+```
+
+
+<!-- Crossfade is coming soon... -->
+
+
 
 ### `svelte/animate`
 
@@ -556,7 +742,23 @@ You can see a full example on the [animations tutorial](tutorial/animate)
 
 ### `svelte/easing`
 
-* TODO could have nice little interactive widgets showing the different functions, maybe
+Easing functions specificy the rate of change over time and are useful when working with Svelte's built-in transitions and animations as well as the tweened and spring utilities. `svelte/easing` contains 31 named exports, a `linear` ease and 3 variants of 10 different easing functions: `in`, `out` and `inOut`.
+
+You can explore the various eases using the [ease visualiser](examples#easing) in the [examples section](examples).
+
+
+| ease | in | out | inOut |
+| --- | --- | --- | --- |
+| **back** | `backIn` | `backOut` | `backInOut` |
+| **bounce** | `bounceIn` | `bounceOut` | `bounceInOut` |
+| **circ** | `circIn` | `circOut` | `circInOut` |
+| **cubic** | `cubicIn` | `cubicOut` | `cubicInOut` |
+| **elastic** | `elasticIn` | `elasticOut` | `elasticInOut` |
+| **expo** | `expoIn` | `expoOut` | `expoInOut` |
+| **quad** | `quadIn` | `quadOut` | `quadInOut` |
+| **quart** | `quartIn` | `quartOut` | `quartInOut` |
+| **quint** | `quintIn` | `quintOut` | `quintInOut` |
+| **sine** | `sineIn` | `sineOut` | `sineInOut` |
 
 
 ### `svelte/register`

@@ -2,6 +2,7 @@
 import {
 	SvelteComponent,
 	append,
+	attr,
 	destroy_each,
 	detach,
 	detach_after,
@@ -39,8 +40,8 @@ function create_each_block(ctx) {
 			t5 = text(" ago:");
 			t6 = space();
 			raw_before = element('noscript');
-			span.className = "meta";
-			div.className = "comment";
+			attr(span, "class", "meta");
+			attr(div, "class", "comment");
 		},
 
 		m(target, anchor) {

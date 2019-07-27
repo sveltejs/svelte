@@ -1,18 +1,30 @@
 {
-    "compilerOptions": {
-        "target": "ES6",
-        "diagnostics": true,
-        "noImplicitThis": true,
-        "noEmitOnError": true,
-        "allowJs": true,
-        "lib": ["es5", "es6", "dom"],
-        "importHelpers": true,
-        "moduleResolution": "node"
-    },
-    "include": [
-        "src"
-    ],
-    "exclude": [
-        "node_modules"
-    ]
+	"include": [],
+
+	"compilerOptions": {
+		"rootDir": "src",
+
+		// target node v8+ (https://node.green/)
+		// the only missing feature is Array.prototype.values
+		"lib": ["es2017"],
+		"target": "es2017",
+
+		"declaration": true,
+		"declarationDir": "types",
+
+		"noEmitOnError": true,
+		"noErrorTruncation": true,
+
+		// rollup takes care of these
+		"module": "esnext",
+		"moduleResolution": "node",
+		"resolveJsonModule": true,
+		"allowSyntheticDefaultImports": true,
+
+		// TODO: error all the things
+		//"strict": true,
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true
+	}
 }

@@ -17,26 +17,25 @@ function create_fragment(ctx) {
 	};
 }
 
-let a = 1;
-
-let b = 2;
-
 function instance($$self, $$props, $$invalidate) {
-	
+	let { a = 1, b = 2 } = $$props;
 
-	let max;
-
-	$$self.$$.update = ($$dirty = { a: 1, b: 1 }) => {
-		if ($$dirty.a || $$dirty.b) { $$invalidate('max', max = Math.max(a, b)); }
+	$$self.$set = $$props => {
+		if ('a' in $$props) $$invalidate('a', a = $$props.a);
+		if ('b' in $$props) $$invalidate('b', b = $$props.b);
 	};
 
-	return {};
+	$$self.$$.update = ($$dirty = { a: 1, b: 1 }) => {
+		if ($$dirty.a || $$dirty.b) { console.log('max', Math.max(a, b)); }
+	};
+
+	return { a, b };
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, []);
+		init(this, options, instance, create_fragment, safe_not_equal, ["a", "b"]);
 	}
 }
 

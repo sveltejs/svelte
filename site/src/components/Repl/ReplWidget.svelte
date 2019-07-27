@@ -29,7 +29,7 @@
 
 		if (gist) {
 			fetch(`repl/${gist}.json`).then(r => r.json()).then(data => {
-				const { id, description, files } = data;
+				const { description, files } = data;
 
 				name = description;
 
@@ -116,6 +116,7 @@
 		{#if process.browser}
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				fixed={mobile}
 				{svelteUrl}
 				{rollupUrl}

@@ -2,6 +2,7 @@
 import {
 	SvelteComponent,
 	append,
+	attr,
 	detach,
 	element,
 	init,
@@ -26,7 +27,7 @@ function create_fragment(ctx) {
 		c() {
 			p = element("p");
 			t = text(ctx.foo);
-			p.className = "svelte-1a7i8ec";
+			attr(p, "class", "svelte-1a7i8ec");
 		},
 
 		m(target, anchor) {
