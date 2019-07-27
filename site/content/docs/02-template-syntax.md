@@ -947,7 +947,7 @@ Unlike with `transition:`, transitions applied with `in:` and `out:` are not bid
 
 
 
-#### animate:
+#### animate:*fn*
 
 ```sv
 animate:name
