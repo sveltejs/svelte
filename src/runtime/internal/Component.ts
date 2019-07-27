@@ -1,7 +1,7 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_function, run, run_all, noop } from './utils';
-import { children } from './dom';
+import { children, insert, detach } from './dom';
 import { transition_in } from './transitions';
 
 interface Fragment {
@@ -225,4 +225,38 @@ export class SvelteComponent {
 	$set() {
 		// overridden by instance, if it has props
 	}
+}
+
+function create_root_component_slot_fn(elements) {
+	return function create_root_component_slot() {
+		return {
+			c: noop,
+
+			m: function mount(target, anchor) {
+				elements.forEach(element => {
+					insert(target, element, anchor);
+				});
+			},
+
+			d: function destroy(detaching) {
+				if (detaching) {
+					elements.forEach(element => detach(element));
+				}
+			},
+
+			l: noop,
+		};
+	};
+}
+
+export function create_root_component_slots(slots) {
+	const root_component_slots = {};
+	for (const slot_name in slots) {
+		let elements = slots[slot_name];
+		if (!Array.isArray(elements)) {
+			elements = [elements];
+		}
+		root_component_slots[slot_name] = [create_root_component_slot_fn(elements)];
+	}
+	return root_component_slots;
 }

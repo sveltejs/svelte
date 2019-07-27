@@ -1,5 +1,3 @@
-import { insert, detach } from './dom';
-
 export function noop() {}
 
 export const identity = x => x;
@@ -129,38 +127,4 @@ export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj,
 
 export function action_destroyer(action_result) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
-}
-
-function create_root_component_slot_fn(elements) {
-	return function create_root_component_slot() {
-		return {
-			c: noop,
-
-			m: function mount(target, anchor) {
-				elements.forEach(element => {
-					insert(target, element, anchor);
-				});
-			},
-
-			d: function destroy(detaching) {
-				if (detaching) {
-					elements.forEach(element => detach(element));
-				}
-			},
-
-			l: noop,
-		};
-	};
-}
-
-export function create_root_component_slots(slots) {
-	const root_component_slots = {};
-	for (const slot_name in slots) {
-		let elements = slots[slot_name];
-		if (!Array.isArray(elements)) {
-			elements = [elements];
-		}
-		root_component_slots[slot_name] = [create_root_component_slot_fn(elements)];
-	}
-	return root_component_slots;
 }
