@@ -1,7 +1,7 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_function, run, run_all, noop } from './utils';
-import { children } from './dom';
+import { children, insert, detach } from './dom';
 import { transition_in } from './transitions';
 
 // eslint-disable-next-line @typescript-eslint/class-name-casing
@@ -212,4 +212,38 @@ export class SvelteComponentDev extends SvelteComponent {
 			console.warn(`Component was already destroyed`); // eslint-disable-line no-console
 		};
 	}
+}
+
+function create_root_component_slot_fn(elements) {
+	return function create_root_component_slot() {
+		return {
+			c: noop,
+
+			m: function mount(target, anchor) {
+				elements.forEach(element => {
+					insert(target, element, anchor);
+				});
+			},
+
+			d: function destroy(detaching) {
+				if (detaching) {
+					elements.forEach(element => detach(element));
+				}
+			},
+
+			l: noop,
+		};
+	};
+}
+
+export function create_root_component_slots(slots) {
+	const root_component_slots = {};
+	for (const slot_name in slots) {
+		let elements = slots[slot_name];
+		if (!Array.isArray(elements)) {
+			elements = [elements];
+		}
+		root_component_slots[slot_name] = [create_root_component_slot_fn(elements)];
+	}
+	return root_component_slots;
 }

@@ -11,11 +11,13 @@ import {
 	init,
 	insert,
 	safe_not_equal,
-	space
+	space,
+	transition_in,
+	transition_out
 } from "svelte/internal";
 
-const get_slot1_slot_changes = ({}) => ({});
-const get_slot1_slot_context = ({}) => ({});
+const get_slot1_slot_changes = () => ({});
+const get_slot1_slot_context = () => ({});
 
 function create_fragment(ctx) {
 	var div, t, current;
@@ -60,7 +62,7 @@ function create_fragment(ctx) {
 
 		p(changed, ctx) {
 			if (default_slot && default_slot.p && changed.$$scope) {
-				default_slot.p(get_slot_changes(default_slot_1, ctx, changed,), get_slot_context(default_slot_1, ctx, null));
+				default_slot.p(get_slot_changes(default_slot_1, ctx, changed, null), get_slot_context(default_slot_1, ctx, null));
 			}
 
 			if (slot1_slot && slot1_slot.p && changed.$$scope) {
@@ -70,14 +72,14 @@ function create_fragment(ctx) {
 
 		i(local) {
 			if (current) return;
-			if (default_slot && default_slot.i) default_slot.i(local);
-			if (slot1_slot && slot1_slot.i) slot1_slot.i(local);
+			transition_in(default_slot, local);
+			transition_in(slot1_slot, local);
 			current = true;
 		},
 
 		o(local) {
-			if (default_slot && default_slot.o) default_slot.o(local);
-			if (slot1_slot && slot1_slot.o) slot1_slot.o(local);
+			transition_out(default_slot, local);
+			transition_out(slot1_slot, local);
 			current = false;
 		},
 
