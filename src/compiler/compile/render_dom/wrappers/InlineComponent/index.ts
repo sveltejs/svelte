@@ -195,8 +195,11 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (attr.is_spread) {
 						const value = attr.expression.render(block);
 						initial_props.push(value);
-
-						changes.push(condition ? `${condition} && ${value}` : value);
+						let value_object_check = value
+						if (attr.expression.node.type !== 'ObjectExpression') {
+							value_object_check = `typeof ${value} === 'object' && ${value} !== null ? ${value} : {}`;
+						}
+						changes.push(condition ? `${condition} && (${value_object_check})` : value_object_check);
 					} else {
 						const obj = `{ ${quote_name_if_necessary(name)}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
