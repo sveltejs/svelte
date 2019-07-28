@@ -1,5 +1,7 @@
 <script>
 	import Hoverable from './Hoverable.svelte';
+	
+	let hovering;
 </script>
 
 <style>
