@@ -35,6 +35,9 @@ export function flush() {
 	const seen_callbacks = new Set();
 
 	do {
+		// invalidate bindings before checking dirty_components
+		while (binding_callbacks.length) binding_callbacks.pop()();
+		
 		// first, call beforeUpdate functions
 		// and update components
 		while (dirty_components.length) {
@@ -42,8 +45,6 @@ export function flush() {
 			set_current_component(component);
 			update(component.$$);
 		}
-
-		while (binding_callbacks.length) binding_callbacks.pop()();
 
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause
