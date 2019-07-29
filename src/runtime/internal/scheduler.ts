@@ -35,15 +35,18 @@ export function flush() {
 	const seen_callbacks = new Set();
 
 	do {
-		// first, call beforeUpdate functions
-		// and update components
-		while (dirty_components.length) {
-			const component = dirty_components.shift();
-			set_current_component(component);
-			update(component.$$);
-		}
+		do {
+			// check dirty bindings first
+			while (binding_callbacks.length) binding_callbacks.pop()();
 
-		while (binding_callbacks.length) binding_callbacks.pop()();
+			// then call beforeUpdate functions
+			// and update components
+			while (dirty_components.length) {
+				const component = dirty_components.shift();
+				set_current_component(component);
+				update(component.$$);
+			}
+		} while (binding_callbacks.length);
 
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause
