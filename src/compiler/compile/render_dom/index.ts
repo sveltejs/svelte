@@ -267,9 +267,9 @@ export default function dom(
 				return `$$subscribe_${name}()`;
 			}
 
-			const subscribe = component.helper('subscribe');
+			const component_subscribe = component.helper('component_subscribe');
 
-			let insert = `${subscribe}($$self, ${name}, $${callback})`;
+			let insert = `${component_subscribe}($$self, ${name}, $${callback})`;
 			if (component.compile_options.dev) {
 				const validate_store = component.helper('validate_store');
 				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
@@ -343,7 +343,7 @@ export default function dom(
 		})
 		.map(({ name }) => deindent`
 			${component.compile_options.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
-			@subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });
+			@component_subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });
 		`);
 
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
@@ -390,7 +390,7 @@ export default function dom(
 
 			const store = component.var_lookup.get(name);
 			if (store && store.reassigned) {
-				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = ${name}.subscribe($$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`;
+				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`;
 			}
 
 			return $name;
