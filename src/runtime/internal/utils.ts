@@ -48,12 +48,19 @@ export function validate_store(store, name) {
 	}
 }
 
-export function subscribe(component, store, callback) {
+export function subscribe(store, callback) {
 	const unsub = store.subscribe(callback);
+	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+}
 
-	component.$$.on_destroy.push(unsub.unsubscribe
-		? () => unsub.unsubscribe()
-		: unsub);
+export function get_store_value(store) {
+	let value;
+	subscribe(store, _ => value = _)();
+	return value;
+}
+
+export function component_subscribe(component, store, callback) {
+	component.$$.on_destroy.push(subscribe(store, callback));
 }
 
 export function create_slot(definition, ctx, fn) {
