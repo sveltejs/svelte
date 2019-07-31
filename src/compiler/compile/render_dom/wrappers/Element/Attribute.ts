@@ -91,9 +91,16 @@ export default class AttributeWrapper {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								return chunk.get_precedence() <= 13
-									? `(${chunk.render()})`
-									: chunk.render();
+								const renderedChunk = chunk.render();
+								if (this.node.name === 'class') {
+									return chunk.get_precedence() <= 13
+										? `(${renderedChunk})`
+									  : `(${renderedChunk} || '')`;
+								} else {
+									return chunk.get_precedence() <= 13
+									  ? `(${renderedChunk})`
+									  : renderedChunk;
+								}
 							}
 						})
 						.join(' + ');
