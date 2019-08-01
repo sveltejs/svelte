@@ -212,7 +212,6 @@ export default class AttributeWrapper {
 
 		const classNameStringArray = this.render_attr();
 
-
 		if (!isStyled || classNameStringArray.length !== 2) {
 			return classNameStringArray.join(' + ');
 		}
