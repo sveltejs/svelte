@@ -35,5 +35,13 @@ export default {
 		component.testName1 = undefined;
 		component.testName2 = 1;
 		assert.equal(div.className, 'NaN svelte-x1o6ra');
+
+		component.testName1 = null;
+		component.testName2 = 0;
+		assert.equal(div.className, '0 svelte-x1o6ra');
+
+		component.testName1 = undefined;
+		component.testName2 = 0;
+		assert.equal(div.className, 'NaN svelte-x1o6ra');
 	}
 };

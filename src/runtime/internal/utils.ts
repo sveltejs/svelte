@@ -89,3 +89,7 @@ export function once(fn) {
 		fn.call(this, ...args);
 	};
 }
+
+export function class_name_resolver(nextClassName) {
+	return nextClassName == undefined ? '' : nextClassName;
+}

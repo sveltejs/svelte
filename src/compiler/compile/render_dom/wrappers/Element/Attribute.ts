@@ -5,6 +5,7 @@ import ElementWrapper from './index';
 import { stringify } from '../../../utils/stringify';
 import deindent from '../../../utils/deindent';
 import Expression from '../../../nodes/shared/Expression';
+import Text from '../../../nodes/Text';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -84,26 +85,13 @@ export default class AttributeWrapper {
 				value = (this.node.chunks[0] as Expression).render(block);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
-				value =
-					(this.node.chunks[0].type === 'Text' ? '' : `"" + `) +
-					this.node.chunks
-						.map((chunk) => {
-							if (chunk.type === 'Text') {
-								return stringify(chunk.data);
-							} else {
-								const renderedChunk = chunk.render();
-								if (this.node.name === 'class') {
-									return chunk.get_precedence() <= 13
-										? `(${renderedChunk})`
-									  : `(${renderedChunk} || '')`;
-								} else {
-									return chunk.get_precedence() <= 13
-									  ? `(${renderedChunk})`
-									  : renderedChunk;
-								}
-							}
-						})
-						.join(' + ');
+				const attrPrefix = this.node.chunks[0].type === 'Text' ? '' : `"" + `;
+
+				const attrText = this.node.name === 'class'
+					? this.get_class_name_text()
+					: this.get_attr_text();
+
+				value = `${attrPrefix}${attrText}`;
 			}
 
 			const is_select_value_attribute =
@@ -215,6 +203,41 @@ export default class AttributeWrapper {
 			block.builders.hydrate.add_line(update_value);
 			if (this.node.is_dynamic) block.builders.update.add_line(update_value);
 		}
+	}
+
+	get_class_name_text() {
+		const isStyled = this.node.chunks
+			.filter((chunk) => chunk.type === 'Text')
+			.some((chunk: Text) => !chunk.start && !chunk.end);
+
+		const classNameStringArray = this.render_attr();
+
+
+		if (!isStyled || classNameStringArray.length !== 2) {
+			return classNameStringArray.join(' + ');
+		}
+
+		const targetToken = 0;
+		return classNameStringArray
+			.map((token, index) => index === targetToken ? `@class_name_resolver(${token})` : token)
+			.join(' + ');
+	}
+
+	get_attr_text() {
+		return this.render_attr().join(' + ');
+	}
+
+	render_attr() {
+		return this.node.chunks.map((chunk) => {
+			if (chunk.type === 'Text') {
+				return stringify(chunk.data);
+			}
+
+			const renderedChunk = chunk.render();
+			return chunk.get_precedence() <= 13
+				? `(${renderedChunk})`
+				: renderedChunk;
+		});
 	}
 
 	stringify() {
