@@ -702,16 +702,20 @@ export default class Element extends Node {
 		return this.name === 'audio' || this.name === 'video';
 	}
 
-	add_css_class(class_name = this.component.stylesheet.id) {
+	add_css_class() {
+		const { id } = this.component.stylesheet;
+
 		const class_attribute = this.attributes.find(a => a.name === 'class');
+
 		if (class_attribute && !class_attribute.is_true) {
 			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
-				(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
+				(class_attribute.chunks[0] as Text).data += ` ${id}`;
 			} else {
 				(class_attribute.chunks as Node[]).push(
 					new Text(this.component, this, this.scope, {
 						type: 'Text',
-						data: ` ${class_name}`
+						data: ` ${id}`,
+						synthetic: true
 					})
 				);
 			}
@@ -720,7 +724,7 @@ export default class Element extends Node {
 				new Attribute(this.component, this, this.scope, {
 					type: 'Attribute',
 					name: 'class',
-					value: [{ type: 'Text', data: class_name }]
+					value: [{ type: 'Text', data: id, synthetic: true }]
 				})
 			);
 		}
