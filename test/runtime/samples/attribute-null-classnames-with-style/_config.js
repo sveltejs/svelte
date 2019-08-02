@@ -1,6 +1,4 @@
 export default {
-	skip_if_ssr: true,
-
 	props: {
 		testName1: "test1",
 		testName2: "test2",
