@@ -140,8 +140,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const { name } = attribute;
 				const snippet = snip(attribute.chunks[0]);
-
-				opening_tag += '${(v => v == null ? "" : ` ' + name + '="${@escape(' + snippet + ')}"`)(' + snippet + ')}';
+				opening_tag += '${@add_attribute("' + name + '", ' + snippet + ')}';
 			} else {
 				opening_tag += ` ${attribute.name}="${stringify_attribute(attribute, true)}"`;
 			}

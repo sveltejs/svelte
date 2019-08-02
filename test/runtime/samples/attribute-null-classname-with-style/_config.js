@@ -1,15 +1,8 @@
 export default {
-	skip_if_ssr: true,
-
-	props: {
-		testName: "testClassName"
-	},
-
-	html: `<div class="testClassName svelte-x1o6ra"></div>`,
+	html: `<div class=" svelte-x1o6ra"></div>`,
 
 	test({ assert, component, target }) {
 		const div = target.querySelector('div');
-		assert.equal(div.className, 'testClassName svelte-x1o6ra');
 
 		component.testName = null;
 		assert.equal(div.className, ' svelte-x1o6ra');
@@ -40,5 +33,8 @@ export default {
 
 		component.testName = '';
 		assert.equal(div.className, ' svelte-x1o6ra');
+
+		component.testName = 'testClassName';
+		assert.equal(div.className, 'testClassName svelte-x1o6ra');
 	}
 };
