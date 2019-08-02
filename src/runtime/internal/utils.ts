@@ -90,6 +90,6 @@ export function once(fn) {
 	};
 }
 
-export function class_name_resolver(nextClassName) {
-	return nextClassName == undefined ? '' : nextClassName;
+export function null_to_empty(value) {
+	return value == null ? '' : value;
 }

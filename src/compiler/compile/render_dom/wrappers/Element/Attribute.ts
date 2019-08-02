@@ -85,13 +85,13 @@ export default class AttributeWrapper {
 				value = (this.node.chunks[0] as Expression).render(block);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
-				const attrPrefix = this.node.chunks[0].type === 'Text' ? '' : `"" + `;
+				const prefix = this.node.chunks[0].type === 'Text' ? '' : `"" + `;
 
-				const attrText = this.node.name === 'class'
+				const text = this.node.name === 'class'
 					? this.get_class_name_text()
-					: this.get_attr_text();
+					: this.render_chunks().join(' + ');
 
-				value = `${attrPrefix}${attrText}`;
+				value = `${prefix}${text}`;
 			}
 
 			const is_select_value_attribute =
@@ -206,36 +206,27 @@ export default class AttributeWrapper {
 	}
 
 	get_class_name_text() {
-		const isStyled = this.node.chunks
-			.filter((chunk) => chunk.type === 'Text')
-			.some((chunk: Text) => !chunk.start && !chunk.end);
+		const scoped_css = this.node.chunks.some((chunk: Text) => chunk.synthetic);
+		const rendered = this.render_chunks();
 
-		const classNameStringArray = this.render_attr();
-
-		if (!isStyled || classNameStringArray.length !== 2) {
-			return classNameStringArray.join(' + ');
+		if (scoped_css && rendered.length === 2) {
+			// we have a situation like class={possiblyUndefined}
+			rendered[0] = `@null_to_empty(${rendered[0]})`;
 		}
 
-		const targetToken = 0;
-		return classNameStringArray
-			.map((token, index) => index === targetToken ? `@class_name_resolver(${token})` : token)
-			.join(' + ');
+		return rendered.join(' + ');
 	}
 
-	get_attr_text() {
-		return this.render_attr().join(' + ');
-	}
-
-	render_attr() {
+	render_chunks() {
 		return this.node.chunks.map((chunk) => {
 			if (chunk.type === 'Text') {
 				return stringify(chunk.data);
 			}
 
-			const renderedChunk = chunk.render();
+			const rendered = chunk.render();
 			return chunk.get_precedence() <= 13
-				? `(${renderedChunk})`
-				: renderedChunk;
+				? `(${rendered})`
+				: rendered;
 		});
 	}
 
