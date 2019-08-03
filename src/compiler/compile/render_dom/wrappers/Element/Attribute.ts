@@ -240,7 +240,7 @@ export default class AttributeWrapper {
 			return chunk.type === 'Text'
 				? chunk.data.replace(/"/g, '\\"')
 				: `\${${chunk.render()}}`;
-		})}"`;
+		}).join('')}"`;
 	}
 }
 
