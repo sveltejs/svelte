@@ -219,6 +219,8 @@ function attribute_matches(node: Node, name: string, expected_value: string, ope
 	const spread = node.attributes.find(attr => attr.type === 'Spread');
 	if (spread) return true;
 
+	if (node.bindings.some((binding: Node) => binding.name === name)) return true;
+
 	const attr = node.attributes.find((attr: Node) => attr.name === name);
 	if (!attr) return false;
 	if (attr.is_true) return operator === null;
