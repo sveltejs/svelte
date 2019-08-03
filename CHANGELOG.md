@@ -1,5 +1,17 @@
 # Svelte changelog
 
+## 3.6.11
+
+* Handle reassigned RxJS observables ([#3304](https://github.com/sveltejs/svelte/issues/3304))
+* Remove commas from HTMLified attributes with multiple chunks ([#3341](https://github.com/sveltejs/svelte/issues/3341))
+* Prevent `class` on element with scoped styles from rendering as `undefined` ([#3283](https://github.com/sveltejs/svelte/issues/3283))
+* Allow references to index in key expression ([#3274](https://github.com/sveltejs/svelte/issues/3274))
+* Mark attribute selectors as used if corresponding binding exists ([#3281](https://github.com/sveltejs/svelte/issues/3281))
+* Preserve `async`/`*` when hoisting functions ([#3179](https://github.com/sveltejs/svelte/issues/3179))
+* Make `raf` a noop on server ([#3324](https://github.com/sveltejs/svelte/issues/3324))
+* Prevent erroneous a11y warning for image input with alt attribute ([#3331](https://github.com/sveltejs/svelte/issues/3331))
+* Add several well-known globals ([#3316](https://github.com/sveltejs/svelte/pull/3316))
+
 ## 3.6.10
 
 * Use `change` event for file inputs ([#3226](https://github.com/sveltejs/svelte/issues/3226))
