@@ -257,3 +257,39 @@ export function custom_event<T=any>(type: string, detail?: T) {
 	e.initCustomEvent(type, false, false, detail);
 	return e;
 }
+
+export class HtmlTag {
+	e: HTMLElement;
+	n: ChildNode[];
+	t: HTMLElement;
+	a: HTMLElement;
+
+	constructor(html: string, anchor: HTMLElement = null) {
+		this.e = element('div');
+		this.a = anchor;
+		this.u(html);
+	}
+
+	m(target: HTMLElement, anchor: HTMLElement) {
+		for (let i = 0; i < this.n.length; i += 1) {
+			insert(target, this.n[i], anchor);
+		}
+
+		this.t = target;
+	}
+
+	u(html: string) {
+		this.e.innerHTML = html;
+		this.n = Array.from(this.e.childNodes);
+	}
+
+	p(html: string) {
+		this.d();
+		this.u(html);
+		this.m(this.t, this.a);
+	}
+
+	d() {
+		this.n.forEach(detach);
+	}
+}
