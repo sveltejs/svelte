@@ -35,21 +35,6 @@ The markers can now add themselves to the map.
 
 > A more finished version of `<MapMarker>` would also handle removal and prop changes, but we're only demonstrating context here.
 
-## Contexts vs. stores
-
-Contexts and stores seem similar. They differ in that stores are available to *any* part of an app, while a context is only *available to a component and its descendants*. This can be helpful if you want to use several copies of a component without the state of one interfering with the state of the others. 
-
-Try making a copy of the Map component in `App.svelte` to see how this works. Replace the style tag in `Map.svelte` with the following to show both maps:
-
-```html
-<style>
-	div {
-		width: 100%;
-		height: 50%;
-	}
-</style>
-```
-
 ## Context keys
 
 In `mapbox.js` you'll see this line:
@@ -60,4 +45,12 @@ const key = {};
 
 We can use anything as a key — we could do `setContext('mapbox', ...)` for example. The downside of using a string is that different component libraries might accidentally use the same one; using an object literal means the keys are guaranteed not to conflict in any circumstance, even when you have multiple different contexts operating across many component layers.
 
-> Remember that context is not inherently reactive. If you need context values to be reactive then you can pass a store into context, which *will* be reactive.
+## Contexts vs. stores
+
+Contexts and stores seem similar. They differ in that stores are available to *any* part of an app, while a context is only *available to a component and its descendants*. This can be helpful if you want to use several instances of a component without the state of one interfering with the state of the others.
+
+In fact, you might use the two together. Since context is not reactive, values that change over time should be represented as stores:
+
+```js
+const { these, are, stores } = getContext(...);
+```
