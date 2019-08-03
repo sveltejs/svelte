@@ -1,10 +1,13 @@
 <script>
-	export let foo = false;
+	import Widget from './Widget.svelte';
+
+	export let props;
+
+	export let corge = false;
 	export let a = 'a';
 	export let b = 'b';
-	export let bar = { baz: 'baz' };
-
-	import Widget from './Widget.svelte';
 </script>
 
-<Widget foo={foo ? a : b} {...bar}/>
+<div>
+	<Widget corge={corge ? a : b} {...props} qux="named"/>
+</div>

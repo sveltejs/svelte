@@ -10,7 +10,6 @@ export default {
 		<div><p>foo: lol</p>
 		<p>baz: 42</p>
 		<p>qux: named</p>
-		<p>corge: b</p>
 	`,
 
 	test({ assert, component, target }) {
@@ -18,7 +17,6 @@ export default {
 			<div><p>foo: undefined</p>
 			<p>baz: undefined</p>
 			<p>qux: named</p>
-			<p>corge: b</p>
 		`;
 
 		// test undefined
