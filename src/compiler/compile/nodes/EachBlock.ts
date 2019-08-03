@@ -83,15 +83,15 @@ export default class EachBlock extends AbstractBlock {
 			this.scope.add(context.key.name, this.expression.dependencies, this);
 		});
 
+		if (this.index) {
+			// index can only change if this is a keyed each block
+			const dependencies = info.key ? this.expression.dependencies : new Set([]);
+			this.scope.add(this.index, dependencies, this);
+		}
+
 		this.key = info.key
 			? new Expression(component, this, this.scope, info.key)
 			: null;
-
-		if (this.index) {
-			// index can only change if this is a keyed each block
-			const dependencies = this.key ? this.expression.dependencies : new Set([]);
-			this.scope.add(this.index, dependencies, this);
-		}
 
 		this.has_animation = false;
 

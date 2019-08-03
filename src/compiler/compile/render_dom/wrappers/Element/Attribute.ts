@@ -5,6 +5,7 @@ import ElementWrapper from './index';
 import { stringify } from '../../../utils/stringify';
 import deindent from '../../../utils/deindent';
 import Expression from '../../../nodes/shared/Expression';
+import Text from '../../../nodes/Text';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -69,11 +70,6 @@ export default class AttributeWrapper {
 
 		const is_legacy_input_type = element.renderer.component.compile_options.legacy && name === 'type' && this.parent.node.name === 'input';
 
-		const is_dataset = /^data-/.test(name) && !element.renderer.component.compile_options.legacy && !element.node.namespace;
-		const camel_case_name = is_dataset ? name.replace('data-', '').replace(/(-\w)/g, (m) => {
-			return m[1].toUpperCase();
-		}) : name;
-
 		if (this.node.is_dynamic) {
 			let value;
 
@@ -84,19 +80,13 @@ export default class AttributeWrapper {
 				value = (this.node.chunks[0] as Expression).render(block);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
-				value =
-					(this.node.chunks[0].type === 'Text' ? '' : `"" + `) +
-					this.node.chunks
-						.map((chunk) => {
-							if (chunk.type === 'Text') {
-								return stringify(chunk.data);
-							} else {
-								return chunk.get_precedence() <= 13
-									? `(${chunk.render()})`
-									: chunk.render();
-							}
-						})
-						.join(' + ');
+				const prefix = this.node.chunks[0].type === 'Text' ? '' : `"" + `;
+
+				const text = this.node.name === 'class'
+					? this.get_class_name_text()
+					: this.render_chunks().join(' + ');
+
+				value = `${prefix}${text}`;
 			}
 
 			const is_select_value_attribute =
@@ -150,11 +140,6 @@ export default class AttributeWrapper {
 					`${element.var}.${property_name} = ${init};`
 				);
 				updater = `${element.var}.${property_name} = ${should_cache ? last : value};`;
-			} else if (is_dataset) {
-				block.builders.hydrate.add_line(
-					`${element.var}.dataset.${camel_case_name} = ${init};`
-				);
-				updater = `${element.var}.dataset.${camel_case_name} = ${should_cache ? last : value};`;
 			} else {
 				block.builders.hydrate.add_line(
 					`${method}(${element.var}, "${name}", ${init});`
@@ -189,9 +174,7 @@ export default class AttributeWrapper {
 					? `@set_input_type(${element.var}, ${value});`
 					: property_name
 						? `${element.var}.${property_name} = ${value};`
-						: is_dataset
-							? `${element.var}.dataset.${camel_case_name} = ${value === true ? '""' : value};`
-							: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
+						: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
 			);
 
 			block.builders.hydrate.add_line(statement);
@@ -210,6 +193,31 @@ export default class AttributeWrapper {
 		}
 	}
 
+	get_class_name_text() {
+		const scoped_css = this.node.chunks.some((chunk: Text) => chunk.synthetic);
+		const rendered = this.render_chunks();
+
+		if (scoped_css && rendered.length === 2) {
+			// we have a situation like class={possiblyUndefined}
+			rendered[0] = `@null_to_empty(${rendered[0]})`;
+		}
+
+		return rendered.join(' + ');
+	}
+
+	render_chunks() {
+		return this.node.chunks.map((chunk) => {
+			if (chunk.type === 'Text') {
+				return stringify(chunk.data);
+			}
+
+			const rendered = chunk.render();
+			return chunk.get_precedence() <= 13
+				? `(${rendered})`
+				: rendered;
+		});
+	}
+
 	stringify() {
 		if (this.node.is_true) return '';
 
@@ -220,7 +228,7 @@ export default class AttributeWrapper {
 			return chunk.type === 'Text'
 				? chunk.data.replace(/"/g, '\\"')
 				: `\${${chunk.render()}}`;
-		})}"`;
+		}).join('')}"`;
 	}
 }
 
