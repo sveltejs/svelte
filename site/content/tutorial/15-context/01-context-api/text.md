@@ -44,6 +44,6 @@ In `mapbox.js` you'll see this line:
 const key = {};
 ```
 
-We can use anything as a key — we could do `setContext('mapbox', ...)` for example. The downside of using a string is that different component libraries might accidentally use the same one; using an object literal means the keys are guaranteed not to conflict in any circumstance, even when you have multiple different contexts operating across many component layers.
+We can use anything as a key — we could do `setContext('mapbox', ...)` for example. The downside of using a string is that different component libraries might accidentally use the same one; using an object literal means the keys are guaranteed not to conflict in any circumstance (since an object only has referential equality to itself, i.e. `{} !== {}` whereas `"x" === "x"`), even when you have multiple different contexts operating across many component layers.
 
 > Remember that context is not inherently reactive. If you need context values to be reactive then you can pass a store into context, which *will* be reactive.
