@@ -70,11 +70,6 @@ export default class AttributeWrapper {
 
 		const is_legacy_input_type = element.renderer.component.compile_options.legacy && name === 'type' && this.parent.node.name === 'input';
 
-		const is_dataset = /^data-/.test(name) && !element.renderer.component.compile_options.legacy && !element.node.namespace;
-		const camel_case_name = is_dataset ? name.replace('data-', '').replace(/(-\w)/g, (m) => {
-			return m[1].toUpperCase();
-		}) : name;
-
 		if (this.node.is_dynamic) {
 			let value;
 
@@ -145,11 +140,6 @@ export default class AttributeWrapper {
 					`${element.var}.${property_name} = ${init};`
 				);
 				updater = `${element.var}.${property_name} = ${should_cache ? last : value};`;
-			} else if (is_dataset) {
-				block.builders.hydrate.add_line(
-					`${element.var}.dataset.${camel_case_name} = ${init};`
-				);
-				updater = `${element.var}.dataset.${camel_case_name} = ${should_cache ? last : value};`;
 			} else {
 				block.builders.hydrate.add_line(
 					`${method}(${element.var}, "${name}", ${init});`
@@ -184,9 +174,7 @@ export default class AttributeWrapper {
 					? `@set_input_type(${element.var}, ${value});`
 					: property_name
 						? `${element.var}.${property_name} = ${value};`
-						: is_dataset
-							? `${element.var}.dataset.${camel_case_name} = ${value === true ? '""' : value};`
-							: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
+						: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
 			);
 
 			block.builders.hydrate.add_line(statement);
