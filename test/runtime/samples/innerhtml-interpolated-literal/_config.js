@@ -4,4 +4,4 @@ export default {
 			<span class="a/42"/>
 		</div>
 	`
-}
+};
