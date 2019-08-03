@@ -451,11 +451,12 @@ export default class Element extends Node {
 			if (this.name === 'input') {
 				const type = attribute_map.get('type');
 				if (type && type.get_static_value() === 'image') {
-					should_have_attribute(
-						this,
-						['alt', 'aria-label', 'aria-labelledby'],
-						'input type="image"'
-					);
+					const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
+					const has_attribute = required_attributes.some(name => attribute_map.has(name));
+
+					if (!has_attribute) {
+						should_have_attribute(this, required_attributes, 'input type="image"');
+					}
 				}
 			}
 		}
