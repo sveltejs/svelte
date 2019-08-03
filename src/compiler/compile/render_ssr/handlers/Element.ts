@@ -140,7 +140,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const { name } = attribute;
 				const snippet = snip(attribute.chunks[0]);
-				opening_tag += '${@add_attribute("' + name + '", ' + snippet + ')}';
+				opening_tag += '${@add_attribute("' + name + '", ' + snippet + ', ' + (boolean_attributes.has(name) ? 1 : 0) + ')}';
 			} else {
 				opening_tag += ` ${attribute.name}="${stringify_attribute(attribute, true)}"`;
 			}
@@ -164,7 +164,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			node_contents = '${(' + snippet + ') || ""}';
 		} else {
 			const snippet = snip(expression);
-			opening_tag += '${@add_attribute("' + name + '", ' + snippet + ')}';
+			opening_tag += '${@add_attribute("' + name + '", ' + snippet + ', 1)}';
 		}
 	});
 
