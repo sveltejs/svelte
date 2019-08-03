@@ -10,24 +10,6 @@ export function detach(node: Node) {
 	node.parentNode.removeChild(node);
 }
 
-export function detach_between(before: Node, after: Node) {
-	while (before.nextSibling && before.nextSibling !== after) {
-		before.parentNode.removeChild(before.nextSibling);
-	}
-}
-
-export function detach_before(after: Node) {
-	while (after.previousSibling) {
-		after.parentNode.removeChild(after.previousSibling);
-	}
-}
-
-export function detach_after(before: Node) {
-	while (before.nextSibling) {
-		before.parentNode.removeChild(before.nextSibling);
-	}
-}
-
 export function destroy_each(iterations, detaching) {
 	for (let i = 0; i < iterations.length; i += 1) {
 		if (iterations[i]) iterations[i].d(detaching);
