@@ -47,7 +47,7 @@ We can use anything as a key — we could do `setContext('mapbox', ...)` for exa
 
 ## Contexts vs. stores
 
-Contexts and stores seem similar. They differ in that stores are available to *any* part of an app, while a context is only *available to a component and its descendants*. This can be helpful if you want to use several instances of a component without the state of one interfering with the state of the others.
+Contexts and stores seem similar. They differ in that stores are available to *any* part of an app, while a context is only available to *a component and its descendants*. This can be helpful if you want to use several instances of a component without the state of one interfering with the state of the others.
 
 In fact, you might use the two together. Since context is not reactive, values that change over time should be represented as stores:
 
