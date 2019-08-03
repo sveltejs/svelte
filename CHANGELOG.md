@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 3.6.10
+
+* Use `change` event for file inputs ([#3226](https://github.com/sveltejs/svelte/issues/3226))
+* Always fire reactive declarations with `$$props` ([#3286](https://github.com/sveltejs/svelte/issues/3286))
+* More conservative spread prop updates ([#3289](https://github.com/sveltejs/svelte/issues/3289))
+* Quote props if necessary in SSR mode ([#3312](https://github.com/sveltejs/svelte/issues/3312))
+
 ## 3.6.9
 
 * Always update derived stores with a derived input whose value does not change ([#3191](https://github.com/sveltejs/svelte/issues/3191))

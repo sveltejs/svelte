@@ -1,6 +1,5 @@
 import { set_current_component, current_component } from './lifecycle';
 import { run_all, blank_object } from './utils';
-import { Readable } from 'svelte/store';
 
 export const invalid_attribute_name_character = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
@@ -119,18 +118,6 @@ export function create_ssr_component(fn) {
 
 		$$render
 	};
-}
-
-/**
- * Get the current value from a store by subscribing and immediately unsubscribing.
- * @param store readable
- */
-export function get_store_value<T>(store: Readable<T>): T | undefined {
-	let value;
-	const unsubscribe: any = store.subscribe(_ => value = _);
-	if (unsubscribe.unsubscribe) unsubscribe.unsubscribe();
-	else unsubscribe();
-	return value;
 }
 
 export function add_attribute(name, value, boolean) {
