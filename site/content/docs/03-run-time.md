@@ -156,6 +156,8 @@ Like lifecycle functions, this must be called during component initialisation.
 </script>
 ```
 
+> Context is not inherently reactive. If you need reactive values in context then you can pass a store into context, which *will* be reactive.
+
 #### `getContext`
 
 ```js
@@ -740,7 +742,23 @@ You can see a full example on the [animations tutorial](tutorial/animate)
 
 ### `svelte/easing`
 
-* TODO could have nice little interactive widgets showing the different functions, maybe
+Easing functions specificy the rate of change over time and are useful when working with Svelte's built-in transitions and animations as well as the tweened and spring utilities. `svelte/easing` contains 31 named exports, a `linear` ease and 3 variants of 10 different easing functions: `in`, `out` and `inOut`.
+
+You can explore the various eases using the [ease visualiser](examples#easing) in the [examples section](examples).
+
+
+| ease | in | out | inOut |
+| --- | --- | --- | --- |
+| **back** | `backIn` | `backOut` | `backInOut` |
+| **bounce** | `bounceIn` | `bounceOut` | `bounceInOut` |
+| **circ** | `circIn` | `circOut` | `circInOut` |
+| **cubic** | `cubicIn` | `cubicOut` | `cubicInOut` |
+| **elastic** | `elasticIn` | `elasticOut` | `elasticInOut` |
+| **expo** | `expoIn` | `expoOut` | `expoInOut` |
+| **quad** | `quadIn` | `quadOut` | `quadInOut` |
+| **quart** | `quartIn` | `quartOut` | `quartInOut` |
+| **quint** | `quintIn` | `quintOut` | `quintInOut` |
+| **sine** | `sineIn` | `sineOut` | `sineInOut` |
 
 
 ### `svelte/register`

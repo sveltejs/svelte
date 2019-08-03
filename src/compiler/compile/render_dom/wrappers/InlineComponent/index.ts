@@ -185,7 +185,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					add_to_set(all_dependencies, attr.dependencies);
 				});
 
-				this.node.attributes.forEach(attr => {
+				this.node.attributes.forEach((attr, i) => {
 					const { name, dependencies } = attr;
 
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
@@ -201,7 +201,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						const obj = `{ ${quote_name_if_necessary(name)}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
 
-						changes.push(condition ? `${condition} && ${obj}` : obj);
+						changes.push(condition ? `${condition} && ${obj}` : `${levels}[${i}]`);
 					}
 				});
 
