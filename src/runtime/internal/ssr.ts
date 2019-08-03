@@ -120,9 +120,9 @@ export function create_ssr_component(fn) {
 	};
 }
 
-export function add_attribute(name, value) {
-	if (!value) return '';
-	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(value) : `"${value}"`}`}`;
+export function add_attribute(name, value, boolean) {
+	if (value == null || (boolean && !value)) return '';
+	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value)) : `"${value}"`}`}`;
 }
 
 export function add_classes(classes) {
