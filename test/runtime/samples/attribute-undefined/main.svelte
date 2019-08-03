@@ -1,0 +1,1 @@
+<div class={undefined}></div>

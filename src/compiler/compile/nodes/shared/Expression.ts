@@ -363,7 +363,7 @@ export default class Expression {
 					}
 
 					const fn = deindent`
-						function ${name}(${args.join(', ')}) ${body}
+						${node.async && 'async '}function${node.generator && '*'} ${name}(${args.join(', ')}) ${body}
 					`;
 
 					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
