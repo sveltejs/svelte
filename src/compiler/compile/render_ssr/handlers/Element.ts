@@ -2,7 +2,7 @@ import { is_void, quote_prop_if_necessary, quote_name_if_necessary } from '../..
 import Attribute from '../../nodes/Attribute';
 import Class from '../../nodes/Class';
 import { snip } from '../../utils/snip';
-import { stringify_attribute } from '../../utils/stringify_attribute';
+import { stringify_attribute, stringify_class_attribute } from '../../utils/stringify_attribute';
 import { get_slot_scope } from './shared/get_slot_scope';
 import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
@@ -111,9 +111,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 					args.push(`{ ${quote_name_if_necessary(attribute.name)}: ${snip(attribute.chunks[0])} }`);
 				} else if (attribute.name === 'class' && class_expression) {
 					// Add class expression
-					args.push(`{ ${quote_name_if_necessary(attribute.name)}: [\`${stringify_attribute(attribute, true)}\`, \`\${${class_expression}}\`].join(' ').trim() }`);
+					args.push(`{ ${quote_name_if_necessary(attribute.name)}: [\`${stringify_class_attribute(attribute)}\`, \`\${${class_expression}}\`].join(' ').trim() }`);
 				} else {
-					args.push(`{ ${quote_name_if_necessary(attribute.name)}: \`${stringify_attribute(attribute, true)}\` }`);
+					args.push(`{ ${quote_name_if_necessary(attribute.name)}: \`${attribute.name === 'class' ? stringify_class_attribute(attribute) : stringify_attribute(attribute, true)}\` }`);
 				}
 			}
 		});
@@ -136,14 +136,13 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				opening_tag += '${' + snip(attribute.chunks[0]) + ' ? " ' + attribute.name + '" : "" }';
 			} else if (attribute.name === 'class' && class_expression) {
 				add_class_attribute = false;
-				opening_tag += ` class="\${[\`${stringify_attribute(attribute, true)}\`, ${class_expression}].join(' ').trim() }"`;
+				opening_tag += ` class="\${[\`${stringify_class_attribute(attribute)}\`, ${class_expression}].join(' ').trim() }"`;
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const { name } = attribute;
 				const snippet = snip(attribute.chunks[0]);
-
-				opening_tag += '${(v => v == null ? "" : ` ' + name + '="${@escape(' + snippet + ')}"`)(' + snippet + ')}';
+				opening_tag += '${@add_attribute("' + name + '", ' + snippet + ', ' + (boolean_attributes.has(name) ? 1 : 0) + ')}';
 			} else {
-				opening_tag += ` ${attribute.name}="${stringify_attribute(attribute, true)}"`;
+				opening_tag += ` ${attribute.name}="${attribute.name === 'class' ? stringify_class_attribute(attribute) : stringify_attribute(attribute, true)}"`;
 			}
 		});
 	}
@@ -165,7 +164,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			node_contents = '${(' + snippet + ') || ""}';
 		} else {
 			const snippet = snip(expression);
-			opening_tag += '${@add_attribute("' + name + '", ' + snippet + ')}';
+			opening_tag += '${@add_attribute("' + name + '", ' + snippet + ', 1)}';
 		}
 	});
 

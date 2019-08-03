@@ -267,9 +267,9 @@ export default function dom(
 				return `$$subscribe_${name}()`;
 			}
 
-			const subscribe = component.helper('subscribe');
+			const component_subscribe = component.helper('component_subscribe');
 
-			let insert = `${subscribe}($$self, ${name}, $${callback})`;
+			let insert = `${component_subscribe}($$self, ${name}, $${callback})`;
 			if (component.compile_options.dev) {
 				const validate_store = component.helper('validate_store');
 				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
@@ -343,7 +343,7 @@ export default function dom(
 		})
 		.map(({ name }) => deindent`
 			${component.compile_options.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
-			@subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });
+			@component_subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });
 		`);
 
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
@@ -359,15 +359,11 @@ export default function dom(
 
 		component.reactive_declarations
 			.forEach(d => {
-				let uses_props;
+				const dependencies = Array.from(d.dependencies);
+				const uses_props = !!dependencies.find(n => n === '$$props');
 
-				const condition = Array.from(d.dependencies)
+				const condition = !uses_props && dependencies
 					.filter(n => {
-						if (n === '$$props') {
-							uses_props = true;
-							return false;
-						}
-
 						const variable = component.var_lookup.get(n);
 						return variable && (variable.writable || variable.mutated);
 					})
@@ -394,7 +390,7 @@ export default function dom(
 
 			const store = component.var_lookup.get(name);
 			if (store && store.reassigned) {
-				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = ${name}.subscribe($$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`;
+				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`;
 			}
 
 			return $name;
