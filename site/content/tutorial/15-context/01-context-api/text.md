@@ -35,6 +35,20 @@ The markers can now add themselves to the map.
 
 > A more finished version of `<MapMarker>` would also handle removal and prop changes, but we're only demonstrating context here.
 
+## Contexts vs. stores
+
+Contexts and stores seem similar. They differ in that stores are available to *any* part of an app, while a context is only *available to a component and its descendants*. This can be helpful if you want to use several copies of a component without the state of one interfering with the state of the others. 
+
+Try making a copy of the Map component in `App.svelte` to see how this works. Replace the style tag in `Map.svelte` with the following to show both maps:
+
+```html
+<style>
+	div {
+		width: 100%;
+		height: 50%;
+	}
+</style>
+```
 
 ## Context keys
 
