@@ -96,3 +96,7 @@ export function once(fn) {
 		fn.call(this, ...args);
 	};
 }
+
+export function null_to_empty(value) {
+	return value == null ? '' : value;
+}
