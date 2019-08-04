@@ -17,7 +17,7 @@ export default class EventHandler extends Node {
 	constructor(component: Component, parent, template_scope, info) {
 		super(component, parent, template_scope, info);
 
-		this.name = info.name !== '*' ? info.name : 'any';
+		this.name = info.name !== '*' ? info.name : '$$any';
 		this.modifiers = new Set(info.modifiers);
 
 		if (info.expression) {
@@ -50,11 +50,13 @@ export default class EventHandler extends Node {
 				referenced: true
 			});
 
-			component.partly_hoisted.push(deindent`
-				function ${name}(event) {
-					@bubble($$self, event);
-				}
-			`);
+			if (this.name !== '$$any') {
+				component.partly_hoisted.push(deindent`
+					function ${name}(event) {
+						@bubble($$self, event);
+					}
+				`);
+			}
 
 			this.handler_name = name;
 		}
