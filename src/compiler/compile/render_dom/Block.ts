@@ -45,6 +45,7 @@ export default class Block {
 	};
 
 	event_listeners: string[] = [];
+	any_event_elements: string[] = [];
 
 	maintain_context: boolean;
 	has_animation: boolean;
@@ -323,6 +324,20 @@ export default class Block {
 					${this.builders.animate}
 				},
 			`);
+		}
+
+		if (this.variables.size > 0) {
+			const listens = Array.from(this.variables.keys())
+				.filter(key => this.any_event_elements.includes(key))
+				.join(', ');
+
+			if (listens.length > 0) {
+					properties.add_block(deindent`
+						${method_name('bbl', 'bubble')}() {
+							return [listen, [${listens}]];
+						},
+					`);
+			}
 		}
 
 		if (this.has_intro_method || this.has_outro_method) {

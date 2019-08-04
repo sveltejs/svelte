@@ -17,7 +17,7 @@ export default class EventHandler extends Node {
 	constructor(component: Component, parent, template_scope, info) {
 		super(component, parent, template_scope, info);
 
-		this.name = info.name;
+		this.name = info.name !== '*' ? info.name : 'any';
 		this.modifiers = new Set(info.modifiers);
 
 		if (info.expression) {

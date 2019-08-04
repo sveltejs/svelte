@@ -43,6 +43,16 @@ export function mount_component(component, target, anchor) {
 			run_all(new_on_destroy);
 		}
 		component.$$.on_mount = [];
+
+		if (fragment.bbl) {
+			Object.keys(component.$$.callbacks).forEach(type => {
+				if (!component.$$.ctx[`${type}_handler`]) {
+					const [listen, els] = fragment.bbl();
+
+					els.forEach(el => component.$$.callbacks[type].forEach(cb => listen(el, type, cb)));
+				}
+			});
+		}
 	});
 
 	after_update.forEach(add_render_callback);

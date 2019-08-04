@@ -21,6 +21,12 @@ export default function add_event_handlers(
 			block.event_listeners.push(
 				`@listen(${target}, "${handler.name}", ${snippet}, ${opts_string})`
 			);
+		} else if (handler.name === 'any') {
+			block.any_event_elements.push(target);
+			// This isn't required but listen is treeshaken otherwise
+			block.event_listeners.push(
+				`@listen(${target}, "${handler.name}", ${snippet})`
+			);
 		} else {
 			block.event_listeners.push(
 				`@listen(${target}, "${handler.name}", ${snippet})`
