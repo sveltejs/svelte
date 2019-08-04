@@ -669,7 +669,7 @@ export default class Component {
 			this.node_for_declaration.set(name, node);
 		});
 
-		globals.forEach((_node, name) => {
+		globals.forEach((node, name) => {
 			if (this.var_lookup.has(name)) return;
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
@@ -686,6 +686,13 @@ export default class Component {
 					injected: true
 				});
 			} else if (name[0] === '$') {
+				if (name === '$' || name[1] === '$') {
+					this.error(node, {
+						code: 'illegal-global',
+						message: `${name} is an illegal variable name`
+					});
+				}
+
 				this.add_var({
 					name,
 					injected: true,
@@ -1242,10 +1249,18 @@ export default class Component {
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
-			name = name.slice(1);
+			if (name === '$' || name[1] === '$' && name !== '$$props') {
+				this.error(node, {
+					code: 'illegal-global',
+					message: `${name} is an illegal variable name`
+				});
+			}
+
 			this.has_reactive_assignments = true; // TODO does this belong here?
 
-			if (name[0] === '$') return; // $$props
+			if (name === '$$props') return;
+
+			name = name.slice(1);
 		}
 
 		if (this.var_lookup.has(name) && !this.var_lookup.get(name).global) return;
