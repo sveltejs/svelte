@@ -44,13 +44,13 @@ export default class EventHandler extends Node {
 		} else {
 			const name = component.get_unique_name(`${sanitize(this.name)}_handler`);
 
-			component.add_var({
-				name,
-				internal: true,
-				referenced: true
-			});
-
 			if (this.name !== '$$any') {
+				component.add_var({
+					name,
+					internal: true,
+					referenced: true
+				});
+
 				component.partly_hoisted.push(deindent`
 					function ${name}(event) {
 						@bubble($$self, event);
