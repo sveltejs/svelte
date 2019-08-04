@@ -252,7 +252,7 @@ export class HtmlTag {
 		this.u(html);
 	}
 
-	m(target: HTMLElement, anchor: HTMLElement) {
+	m(target: HTMLElement, anchor: HTMLElement = null) {
 		for (let i = 0; i < this.n.length; i += 1) {
 			insert(target, this.n[i], anchor);
 		}
