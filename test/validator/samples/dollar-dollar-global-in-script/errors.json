@@ -1,6 +1,6 @@
 [{
 	"code": "illegal-global",
-	"message": "$ is an illegal variable name",
+	"message": "$$billsyall is an illegal variable name",
 	"pos": 10,
 	"start": {
 		"line": 2,
@@ -9,7 +9,7 @@
 	},
 	"end": {
 		"line": 2,
-		"column": 2,
-		"character": 11
+		"column": 12,
+		"character": 21
 	}
 }]
