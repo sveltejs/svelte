@@ -679,10 +679,10 @@ export default class Component {
 					injected: true
 				});
 			} else if (name[0] === '$') {
-				if (name === '$') {
+				if (name === '$' || name[1] === '$') {
 					this.error(node, {
 						code: 'illegal-global',
-						message: 'The $ sign is an illegal variable name'
+						message: `${name} is an illegal variable name`
 					});
 				}
 
@@ -1242,16 +1242,18 @@ export default class Component {
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
-			name = name.slice(1);
-			this.has_reactive_assignments = true; // TODO does this belong here?
-
-			if (name[0] === '$') return; // $$props
-			if (name === '') {
+			if (name === '$' || name[1] === '$' && name !== '$$props') {
 				this.error(node, {
 					code: 'illegal-global',
-					message: 'The $ sign is an illegal variable name'
+					message: `${name} is an illegal variable name`
 				});
 			}
+
+			this.has_reactive_assignments = true; // TODO does this belong here?
+
+			if (name === '$$props') return;
+
+			name = name.slice(1);
 		}
 
 		if (this.var_lookup.has(name) && !this.var_lookup.get(name).global) return;
