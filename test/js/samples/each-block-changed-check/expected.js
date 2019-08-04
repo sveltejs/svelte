@@ -55,7 +55,7 @@ function create_each_block(ctx) {
 			append(span, t4);
 			append(span, t5);
 			append(div, t6);
-			html_tag.m(div, anchor);
+			html_tag.m(div);
 		},
 
 		p(changed, ctx) {
