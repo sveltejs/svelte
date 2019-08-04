@@ -34,7 +34,7 @@ export default class Tag extends Wrapper {
 
 			const update_cached_value = `${value} !== (${value} = ${snippet})`;
 
-			const condition =this.node.should_cache
+			const condition = this.node.should_cache
 				? `(${changed_check}) && ${update_cached_value}`
 				: changed_check;
 
