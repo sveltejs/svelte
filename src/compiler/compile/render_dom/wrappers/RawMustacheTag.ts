@@ -47,10 +47,10 @@ export default class RawMustacheTagWrapper extends Tag {
 				content => `${html_tag}.p(${content});`
 			);
 
-			const anchor = in_head ? 'null' : needs_anchor ? html_anchor : this.next ? this.next.var : 'null';
+			const update_anchor = in_head ? 'null' : needs_anchor ? html_anchor : this.next ? this.next.var : 'null';
 
-			block.builders.hydrate.add_line(`${html_tag} = new @HtmlTag(${init}, ${anchor});`);
-			block.builders.mount.add_line(`${html_tag}.m(${parent_node || '#target'}, anchor);`);
+			block.builders.hydrate.add_line(`${html_tag} = new @HtmlTag(${init}, ${update_anchor});`);
+			block.builders.mount.add_line(`${html_tag}.m(${parent_node || '#target'}${parent_node ? '' : ', anchor'});`);
 
 			if (needs_anchor) {
 				block.add_element(html_anchor, '@empty()', '@empty()', parent_node);
