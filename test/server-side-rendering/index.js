@@ -1,7 +1,6 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import * as glob from 'tiny-glob/sync.js';
 
 import {
 	showOutput,
@@ -96,10 +95,13 @@ describe("ssr", () => {
 		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve("test/runtime/samples", dir);
 
-			glob('**/*.svelte', { cwd: `test/runtime/samples/${dir}` }).forEach(file => {
-				const resolved = require.resolve(`../runtime/samples/${dir}/${file}`);
-				delete require.cache[resolved];
-			});
+			Object.keys(require.cache)
+				.filter(x => x.endsWith('.svelte'))
+				.forEach(file => {
+					delete require.cache[file];
+				});
+
+			delete global.window;
 
 			const compileOptions = Object.assign({ sveltePath }, config.compileOptions, {
 				generate: 'ssr'

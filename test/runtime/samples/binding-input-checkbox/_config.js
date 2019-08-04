@@ -22,10 +22,16 @@ export default {
 		input.checked = false;
 		await input.dispatchEvent(event);
 
-		assert.equal(target.innerHTML, `<input type="checkbox">\n<p>false</p>`);
+		assert.htmlEqual(target.innerHTML, `
+			<input type="checkbox">
+			<p>false</p>
+		`);
 
 		component.foo = true;
 		assert.equal(input.checked, true);
-		assert.equal(target.innerHTML, `<input type="checkbox">\n<p>true</p>`);
+		assert.htmlEqual(target.innerHTML, `
+			<input type="checkbox">
+			<p>true</p>
+		`);
 	}
 };

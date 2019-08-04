@@ -18,6 +18,18 @@
 	Remove first thing
 </button>
 
-{#each things as thing (thing.id)}
-	<Thing value={thing.value}/>
-{/each}
+<div style="display: grid; grid-template-columns: 1fr 1fr; grip-gap: 1em">
+	<div>
+		<h2>Keyed</h2>
+		{#each things as thing (thing.id)}
+			<Thing value={thing.value}/>
+		{/each}
+	</div>
+
+	<div>
+		<h2>Unkeyed</h2>
+		{#each things as thing}
+			<Thing value={thing.value}/>
+		{/each}
+	</div>
+</div>

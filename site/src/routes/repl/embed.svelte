@@ -1,7 +1,7 @@
 <script context="module">
 	export function preload({ query }) {
 		return {
-			version: query.version || 'beta',
+			version: query.version,
 			gist: query.gist,
 			example: query.example
 		};
@@ -9,67 +9,11 @@
 </script>
 
 <script>
-	import { onMount } from 'svelte';
-	import { process_example } from './_utils/process_example.js';
-	import Repl from '../../components/Repl/index.svelte';
+	import ReplWidget from '../../components/Repl/ReplWidget.svelte';
 
-	export let version, gist, example;
-
-	let repl;
-	let name = 'loading...';
-
-	onMount(() => {
-		if (version !== 'local') {
-			fetch(`https://unpkg.com/svelte@${version}/package.json`)
-				.then(r => r.json())
-				.then(pkg => {
-					version = pkg.version;
-				});
-		}
-
-		if (gist) {
-			fetch(`gist/${gist}`).then(r => r.json()).then(data => {
-				const { id, description, files } = data;
-
-				name = description;
-
-				const components = Object.keys(files)
-					.map(file => {
-						const dot = file.lastIndexOf('.');
-						if (!~dot) return;
-
-						const source = files[file].content;
-
-						return {
-							name: file.slice(0, dot),
-							type: file.slice(dot + 1),
-							source
-						};
-					})
-					.filter(x => x.type === 'svelte' || x.type === 'js')
-					.sort((a, b) => {
-						if (a.name === 'App' && a.type === 'svelte') return -1;
-						if (b.name === 'App' && b.type === 'svelte') return 1;
-
-						if (a.type !== b.type) return a.type === 'svelte' ? -1 : 1;
-
-						return a.name < b.name ? -1 : 1;
-					});
-
-				repl.set({ components });
-			});
-		} else if (example) {
-			fetch(`examples/${example}.json`).then(async response => {
-				if (response.ok) {
-					const data = await response.json();
-
-					repl.set({
-						components: process_example(data.files)
-					});
-				}
-			});
-		}
-	});
+	export let version = '3';
+	export let gist;
+	export let example;
 </script>
 
 <style>
@@ -87,11 +31,15 @@
 </style>
 
 <svelte:head>
-	<title>{name} • Svelte REPL</title>
+	<title>REPL • Svelte</title>
+
+	<meta name="twitter:title" content="Svelte REPL">
+	<meta name="twitter:description" content="Cybernetically enhanced web apps">
+	<meta name="Description" content="Interactive Svelte playground">
 </svelte:head>
 
 <div class="repl-outer">
 	{#if process.browser}
-		<Repl bind:this={repl} {version} embedded={true}/>
+		<ReplWidget {version} {gist} {example} embedded={true}/>
 	{/if}
 </div>

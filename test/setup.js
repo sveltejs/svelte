@@ -7,7 +7,7 @@ process.env.TEST = true;
 require.extensions['.js'] = function(module, filename) {
 	const exports = [];
 
-	var code = fs.readFileSync(filename, 'utf-8')
+	let code = fs.readFileSync(filename, 'utf-8')
 		.replace(/^import \* as (\w+) from ['"]([^'"]+)['"];?/gm, 'var $1 = require("$2");')
 		.replace(/^import (\w+) from ['"]([^'"]+)['"];?/gm, 'var {default: $1} = require("$2");')
 		.replace(/^import {([^}]+)} from ['"](.+)['"];?/gm, 'var {$1} = require("$2");')

@@ -1,7 +1,6 @@
 ---
 title: Sapper: Towards the ideal web app framework
 description: Taking the next-plus-one step
-pubdate: 2017-12-31
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---
@@ -29,7 +28,7 @@ Everything else flows from that breakthrough design decision. Finding the code r
 But it's not perfect. As churlish as it might be to list the flaws in something *so, so good*, there are some:
 
 * Next uses something called 'route masking' to create nice URLs (e.g. `/blog/hello-world` instead of `/post?slug=hello-world`). This undermines the guarantee about directory structure corresponding to app structure, and forces you to maintain configuration that translates between the two forms
-* All your routes are assumed to be universal 'pages'. But it's very common to need routes that only render on the server, such as a 301 redirect or an [API endpoint](/api/blog/sapper-towards-the-ideal-web-app-framework) that serves the data for your pages, and Next doesn't have a great solution for this. You can add logic to your `server.js` file to handle these cases, but it feels at odds with the declarative approach taken for pages
+* All your routes are assumed to be universal 'pages'. But it's very common to need routes that only render on the server, such as a 301 redirect or an [API endpoint](/blog/sapper-towards-the-ideal-web-app-framework.json) that serves the data for your pages, and Next doesn't have a great solution for this. You can add logic to your `server.js` file to handle these cases, but it feels at odds with the declarative approach taken for pages
 * To use the client-side router, links can't be standard `<a>` tags. Instead, you have to use framework-specific `<Link>` components, which is impossible in the markdown content for a blog post such as this one, for example
 
 The real problem, though, is that all that goodness comes for a price. The simplest possible Next app — a single 'hello world' page that renders some static text — involves 66kb of gzipped JavaScript. Unzipped, it's 204kb, which is a non-trivial amount of code for a mobile device to parse at a time when performance is a critical factor determining whether or not your users will stick around. And that's the *baseline*.
@@ -39,7 +38,7 @@ We can do better!
 
 ## The compiler-as-framework paradigm shift
 
-[Svelte introduced a radical idea](https://svelte.technology/blog/frameworks-without-the-framework): what if your UI framework wasn't a framework at all, but a compiler that turned your components into standalone JavaScript modules? Instead of using a library like React or Vue, which knows nothing about your app and must therefore be a one-size-fits-all solution, we can ship highly-optimised vanilla JavaScript. Just the code your app needs, and without the memory and performance overhead of solutions based on a virtual DOM.
+[Svelte introduced a radical idea](blog/frameworks-without-the-framework): what if your UI framework wasn't a framework at all, but a compiler that turned your components into standalone JavaScript modules? Instead of using a library like React or Vue, which knows nothing about your app and must therefore be a one-size-fits-all solution, we can ship highly-optimised vanilla JavaScript. Just the code your app needs, and without the memory and performance overhead of solutions based on a virtual DOM.
 
 The JavaScript world is [moving towards this model](https://tomdale.net/2017/09/compilers-are-the-new-frameworks/). [Stencil](https://stenciljs.com), a Svelte-inspired framework from the Ionic team, compiles to web components. [Glimmer](https://glimmerjs.com) *doesn't* compile to standalone JavaScript (the pros and cons of which deserve a separate blog post), but the team is doing some fascinating research around compiling templates to bytecode. (React is [getting in on the action](https://twitter.com/trueadm/status/944908776896978946), though their current research focuses on optimising your JSX app code, which is arguably more similar to the ahead-of-time optimisations that Angular, Ractive and Vue have been doing for a few years.)
 
@@ -67,7 +66,7 @@ But size is only part of the story. Svelte apps are also extremely performant an
 
 The biggest drawback for many developers evaluating Sapper would be 'but I like React, and I already know how to use it', which is fair.
 
-If you're in that camp, I'd invite you to at least try alternative frameworks. You might be pleasantly surprised! The [Sapper RealWorld](https://github.com/sveltejs/realworld) implementation totals 1,201 lines of source code, compared to 2,377 for the reference implementation, because you're able to express concepts very concisely using Svelte's template syntax (which [takes all of five minutes to master](https://svelte.technology/docs#template-syntax)). You get [scoped CSS](the-zen-of-just-writing-css), with unused style removal and minification built-in, and you can use preprocessors like LESS if you want. You no longer need to use Babel. SSR is ridiculously fast, because it's just string concatenation. And we recently introduced [svelte/store](https://svelte.technology/docs#state-management), a tiny global store that synchronises state across your component hierarchy with zero boilerplate. The worst that can happen is that you'll end up feeling vindicated!
+If you're in that camp, I'd invite you to at least try alternative frameworks. You might be pleasantly surprised! The [Sapper RealWorld](https://github.com/sveltejs/realworld) implementation totals 1,201 lines of source code, compared to 2,377 for the reference implementation, because you're able to express concepts very concisely using Svelte's template syntax (which [takes all of five minutes to master](https://v2.svelte.dev/guide#template-syntax)). You get [scoped CSS](blog/the-zen-of-just-writing-css), with unused style removal and minification built-in, and you can use preprocessors like LESS if you want. You no longer need to use Babel. SSR is ridiculously fast, because it's just string concatenation. And we recently introduced [svelte/store](https://v2.svelte.dev/guide#state-management), a tiny global store that synchronises state across your component hierarchy with zero boilerplate. The worst that can happen is that you'll end up feeling vindicated!
 
 But there are trade-offs nonetheless. Some people have a pathological aversion to any form of 'template language', and maybe that applies to you. JSX proponents will clobber you with the 'it's just JavaScript' mantra, and therein lies React's greatest strength, which is that it is infinitely flexible. That flexibility comes with its own set of trade-offs, but we're not here to discuss those.
 
@@ -82,4 +81,4 @@ I believe the next frontier of web performance is 'whole-app optimisation'. Curr
 
 Speaking of Glimmer, the idea of compiling components to bytecode is one that we'll probably steal in 2018. A framework like Sapper could conceivably determine which compilation mode to use based on the characteristics of your app. It could even serve JavaScript for the initial route for the fastest possible startup time, then lazily serve a bytecode interpreter for subsequent routes, resulting in the optimal combination of startup size and total app size.
 
-Mostly, though, we want the direction of Sapper to be determined by its users. If you're the kind of developer who enjoys life on the bleeding edge and would like to help shape the future of how we build web apps, please join us on [GitHub](https://github.com/sveltejs/svelte) and [Gitter](https://gitter.im/sveltejs/svelte).
+Mostly, though, we want the direction of Sapper to be determined by its users. If you're the kind of developer who enjoys life on the bleeding edge and would like to help shape the future of how we build web apps, please join us on [GitHub](https://github.com/sveltejs/svelte) and [Discord](chat).

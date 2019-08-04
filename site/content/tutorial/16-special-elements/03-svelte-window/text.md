@@ -9,3 +9,5 @@ On line 33, add the `keydown` listener:
 ```html
 <svelte:window on:keydown={handleKeydown}/>
 ```
+
+> As with DOM elements, you can add [event modifiers](tutorial/event-modifiers) like `preventDefault`.

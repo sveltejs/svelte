@@ -14,7 +14,7 @@ function swipe(node, callback) {
 	// TODO implement
 }
 
-const SvelteComponent = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+const Component = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	onMount(() => {
 		console.log('onMount');
 	});
@@ -26,5 +26,5 @@ const SvelteComponent = create_ssr_component(($$result, $$props, $$bindings, $$s
 	return ``;
 });
 
-export default SvelteComponent;
+export default Component;
 export { preload };

@@ -1,114 +1,177 @@
+<!-- FIXME sometimes it adds a trailing slash when landing -->
 <script context="module">
 	export async function preload() {
-		const groups = await this.fetch(`examples.json`).then(r => r.json());
+		const sections = await this.fetch(`examples.json`).then(r => r.json());
+		const title_by_slug = sections.reduce((acc, {examples}) => {
+			examples.forEach(({slug, title}) => {
+				acc[slug] = title;
+			});
 
-		return {
-			groups
-		};
+			return acc;
+		}, {});
+
+		return {sections, title_by_slug};
 	}
 </script>
 
 <script>
-	export let groups;
+	import { onMount } from 'svelte';
+	import { goto } from '@sapper/app';
+	import Repl from '@sveltejs/svelte-repl';
+
+	import ScreenToggle from '../../components/ScreenToggle.svelte';
+	import {
+		mapbox_setup, // see site/content/examples/15-context/00-context-api
+		rollupUrl,
+		svelteUrl
+	} from '../../config';
+	import { process_example } from '../../utils/examples';
+	import { getFragment } from '@sveltejs/site-kit/utils/navigation';
+	import TableOfContents from './_TableOfContents.svelte';
+
+	export let sections;
+	export let title_by_slug;
+
+	let active_slug;
+	let width;
+	let offset = 1;
+	let repl;
+	let isLoading = false;
+	const cache = {};
+
+	function showExampleCodeOnChange() {
+		offset = 1;
+	}
+
+	$: title = title_by_slug[active_slug] || '';
+	$: first_slug = sections[0].examples[0].slug;
+	$: mobile = width < 768; // note: same as per media query below
+	$: replOrientation = (mobile || width > 1080) ? 'columns' : 'rows';
+	$: if (repl && active_slug) {
+		if (active_slug in cache) {
+			repl.set({ components: cache[active_slug] });
+			showExampleCodeOnChange();
+		} else {
+			isLoading = true;
+			fetch(`examples/${active_slug}.json`)
+				.then(async response => {
+					if (response.ok) {
+						const {files} = await response.json();
+						return process_example(files);
+					}
+				})
+				.then(components => {
+					cache[active_slug] = components;
+					repl.set({components});
+					showExampleCodeOnChange();
+					isLoading = false;
+				})
+				.catch(() => {
+					isLoading = false;
+				});
+		}
+	}
+
+	onMount(() => {
+		const onhashchange = () => {
+			active_slug = getFragment();
+		};
+		window.addEventListener('hashchange', onhashchange, false);
+
+		const fragment = getFragment();
+		if (fragment) {
+			active_slug = fragment;
+		} else {
+			active_slug = first_slug;
+			goto(`examples#${active_slug}`);
+		}
+
+		return () => {
+			window.removeEventListener('hashchange', onhashchange, false);
+		};
+	});
 </script>
 
+<svelte:head>
+	<title>{title} {title ? '•' : ''} Svelte Examples</title>
+
+	<meta name="twitter:title" content="Svelte examples">
+	<meta name="twitter:description" content="Cybernetically enhanced web apps">
+	<meta name="Description" content="Interactive example Svelte apps">
+</svelte:head>
+
+<div class='examples-container' bind:clientWidth={width}>
+	<div class="viewport offset-{offset}">
+		<TableOfContents {sections} active_section={active_slug} {isLoading} />
+		<div class="repl-container" class:loading={isLoading}>
+			<Repl
+				bind:this={repl}
+				workersUrl="workers"
+				{svelteUrl}
+				{rollupUrl}
+				orientation={replOrientation}
+				fixed={mobile}
+				relaxed
+				injectedJS={mapbox_setup}
+			/>
+		</div>
+	</div>
+	{#if mobile}
+	<ScreenToggle bind:offset labels={['index', 'input', 'output']}/>
+	{/if}
+</div>
+
 <style>
-	.content {
-		max-width: 120rem;
-		margin: 0 auto;
-	}
-
-	h1 {
-		margin: 4rem 0 4rem -0.05em;
-		font-size: 4rem;
-	}
-
-	h2 {
-		margin: 0 0 1em 0;
-		font-size: 18px;
-		border-bottom: 1px solid #eee;
-		text-transform: uppercase;
-		padding: 0 0 0.5em 0;
-	}
-
-	section {
-		margin: 0 0 2em 0;
-	}
-
-	.example {
+	.examples-container {
 		position: relative;
-		display: flex;
-		align-items: center;
-		padding: 0 0 0 85px;
-		min-height: 50px;
-		font-weight: 300;
+		height: calc(100vh - var(--nav-h));
+		overflow: hidden;
+		padding: 0 0 42px 0;
+		box-sizing: border-box;
 	}
 
-	.grid {
-		grid-template-columns: repeat(1, 1fr);
-		grid-gap: 0.5em;
+	.viewport {
+		display: grid;
+		width: 300%;
+		height: 100%;
+		grid-template-columns: 33.333% 66.666%;
+		transition: transform .3s;
+		grid-auto-rows: 100%;
 	}
 
-	@media (min-width: 720px) {
-		.grid {
-			grid-template-columns: repeat(2, 1fr);
+	.repl-container.loading {
+		opacity: 0.6;
+	}
+
+	/* temp fix for #2499 and #2550 while waiting for a fix for https://github.com/sveltejs/svelte-repl/issues/8 */
+
+	.repl-container :global(.tab-content),
+	.repl-container :global(.tab-content.visible) {
+		pointer-events: all;
+		opacity: 1;
+	}
+	.repl-container :global(.tab-content) {
+		visibility: hidden;
+	}
+	.repl-container :global(.tab-content.visible) {
+		visibility: visible;
+	}
+
+	.offset-1 { transform: translate(-33.333%, 0); }
+	.offset-2 { transform: translate(-66.666%, 0); }
+
+	@media (min-width: 768px) {
+		.examples-container { padding: 0 }
+
+		.viewport {
+			width: 100%;
+			height: 100%;
+			display: grid;
+			grid-template-columns: var(--sidebar-mid-w) auto;
+			grid-auto-rows: 100%;
+			transition: none;
 		}
-	}
 
-	@media (min-width: 1080px) {
-		.grid {
-			grid-template-columns: repeat(3, 1fr);
-		}
-	}
-
-	.thumbnail {
-		position: absolute;
-		background: white 50% 50% no-repeat;
-		background-size: contain;
-		width: 75px;
-		height: 50px;
-		left: 0;
-		top: 0;
-		border: 1px solid #ccc;
-		border-radius: 2px;
-		box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-	}
-
-	/* .thumbnail::before {
-		content: "";
-		width: 1px;
-		margin-left: -1px;
-		float: left;
-		height: 0;
-		padding-top: 100%;
-	}
-
-	.thumbnail::after {
-		content: "";
-		display: table;
-		clear: both;
-	} */
-
-	img {
-		background-color: #eee;
+		.offset-1, .offset-2 { transform: none; }
 	}
 </style>
-
-<div class="content">
-	<h1>Examples</h1>
-
-	{#each groups as group}
-		<section>
-			<h2>{group.title}</h2>
-
-			<div class="grid">
-				{#each group.examples as example}
-					<a class="example" href="repl?example={example.slug}">
-						<div class="thumbnail" style="background-image: url(examples/thumbnails/{example.slug}.png)"></div>
-						<span>{example.title}</span>
-					</a>
-				{/each}
-			</div>
-		</section>
-	{/each}
-</div>

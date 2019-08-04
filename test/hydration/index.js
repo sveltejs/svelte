@@ -80,7 +80,7 @@ describe('hydration', () => {
 				if (config.test) {
 					config.test(assert, target, snapshot, component, window);
 				} else {
-					component.destroy();
+					component.$destroy();
 					assert.equal(target.innerHTML, '');
 				}
 			} catch (err) {

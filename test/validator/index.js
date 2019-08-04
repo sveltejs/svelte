@@ -24,7 +24,7 @@ describe("validate", () => {
 			let error;
 
 			try {
-				let { warnings } = svelte.compile(input, {
+				const { warnings } = svelte.compile(input, {
 					dev: config.dev,
 					legacy: config.legacy,
 					generate: false
@@ -59,7 +59,7 @@ describe("validate", () => {
 					assert.deepEqual(error.end, expected.end);
 					assert.equal(error.pos, expected.pos);
 				} catch (e) {
-					console.error(error)
+					console.error(error); // eslint-disable-line no-console
 					throw e;
 				}
 			}
