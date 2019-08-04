@@ -11,7 +11,7 @@
 <script>
 	import ReplWidget from '../../components/Repl/ReplWidget.svelte';
 
-	export let version = 'beta';
+	export let version = '3';
 	export let gist;
 	export let example;
 </script>
@@ -29,6 +29,14 @@
 		--pane-controls-h: 4.2rem;
 	}
 </style>
+
+<svelte:head>
+	<title>REPL • Svelte</title>
+
+	<meta name="twitter:title" content="Svelte REPL">
+	<meta name="twitter:description" content="Cybernetically enhanced web apps">
+	<meta name="Description" content="Interactive Svelte playground">
+</svelte:head>
 
 <div class="repl-outer">
 	{#if process.browser}

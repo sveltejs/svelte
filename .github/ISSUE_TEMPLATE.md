@@ -1,21 +1,26 @@
-<!--
-Thanks for raising an issue! (For *questions*, we recommend instead using https://stackoverflow.com and adding the 'svelte' tag.)
+------
+Before filing an issue we'd appreciate it if you could take a moment to ensure
+there isn't already an open issue or pull-request.
+-----
 
-To help us help you, if you've found a bug please consider the following:
+If there's an existing issue, please add a :+1: reaction to the description of
+the issue. One way we prioritize issues is by the number of :+1: reactions on
+their descriptions. Please DO NOT add `+1` or :+1: comments.
 
-* If you can demonstrate the bug using https://svelte.technology/repl, please do.
-* If that's not possible, we recommend creating a small repo that illustrates the problem.
-* Make sure you include information about the browser, and which version of Svelte you're using
+### Feature requests and proposals
+We're excited to hear how we can make Svelte better. Please add as much detail
+as you can on your use case.
 
-Reproductions should be small, self-contained, correct examples – http://sscce.org.
+### Bugs
+If you're filing an issue about a bug please include as much information
+as you can including the following.
 
-Occasionally, this won't be possible, and that's fine – we still appreciate you raising the issue. But please understand that Svelte is run by unpaid volunteers in their free time, and issues that follow these instructions will get fixed faster.
+- Your browser and the version: (e.x. Chrome 52.1, Firefox 48.0, IE 10)
+- Your operating system: (e.x. OS X 10, Windows XP, etc)
+- Svelte version (Please check you can reproduce the issue with the latest release!)
+- Whether your project uses Webpack or Rollup
 
-If you have a stack trace to include, we recommend putting inside a `<details>` block for the sake of the thread's readability:
+- *Repeatable steps to reproduce the issue*
 
-<details>
-  <summary>Stack trace</summary>
-
-  Stack trace goes here...
-</details>
--->
+Thanks for being part of Svelte!
+-------

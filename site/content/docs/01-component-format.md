@@ -28,23 +28,60 @@ A `<script>` block contains JavaScript that runs when a component instance is cr
 
 ---
 
-Svelte uses the `export` keyword to mark a variable declaration as a *property* or *prop*, which means it becomes accessible to consumers of the component:
+Svelte uses the `export` keyword to mark a variable declaration as a *property* or *prop*, which means it becomes accessible to consumers of the component (see the section on [attributes and props](docs#Attributes_and_props) for more information).
 
 ```html
 <script>
-	// these properties can be set externally
 	export let foo;
-	export let bar = 'optional default value';
 
 	// Values that are passed in as props
 	// are immediately available
-	console.log(foo, bar);
+	console.log({ foo });
+</script>
+```
 
-	// function declarations cannot be set externally,
-	// but can be accessed from outside
-	export function instanceMethod() {
-		alert(foo);
+---
+
+You can specify a default value, which will be used if the component's consumer doesn't specify a prop.
+
+In development mode (see the [compiler options](docs#svelte_compile)), a warning will be printed if no default is provided and the consumer does not specify a value. To squelch this warning, ensure that a default is specified, even if it is `undefined`.
+
+```html
+<script>
+	export let bar = 'optional default value';
+	export let baz = undefined;
+</script>
+```
+
+---
+
+If you export a `const`, `class` or `function`, it is readonly from outside the component. Function *expressions* are valid props, however.
+
+```html
+<script>
+	// these are readonly
+	export const thisIs = 'readonly';
+
+	export function greet(name) {
+		alert(`hello ${name}!`);
 	}
+
+	// this is a prop
+	export let format = n => n.toFixed(2);
+</script>
+```
+
+---
+
+You can use reserved words as prop names.
+
+```html
+<script>
+	let className;
+
+	// creates a `class` property, even
+	// though it is a reserved word
+	export { className as class };
 </script>
 ```
 
@@ -56,13 +93,15 @@ To change component state and trigger a re-render, just assign to a locally decl
 
 Update expressions (`count += 1`) and property assignments (`obj.x = y`) have the same effect.
 
+Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. Options for getting around this can be found in the [tutorial](tutorial/updating-arrays-and-objects).
+
 ```html
 <script>
 	let count = 0;
 
 	function handleClick () {
-		// calling this function will trigger a re-render
-		// if the markup references `count`
+		// calling this function will trigger an
+		// update if the markup references `count`
 		count = count + 1;
 	}
 </script>
@@ -72,7 +111,7 @@ Update expressions (`count += 1`) and property assignments (`obj.x = y`) have th
 
 ---
 
-Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` label. Reactive statements run immediately before the component updates, whenever the values that they depend on have changed.
+Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` [JS label syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label). Reactive statements run immediately before the component updates, whenever the values that they depend on have changed.
 
 ```html
 <script>
@@ -108,7 +147,28 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 
 ---
 
+A *store* is any object that allows reactive access to a value via a simple *store contract*.
+
+The [`svelte/store` module](docs#svelte_store) contains minimal store implementations which fulfil this contract. You can use these as the basis for your own stores, or you can implement your stores from scratch.
+
+A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes. The `.subscribe` method must also return an unsubscription function. Calling an unsubscription function must stop its subscription, and its corresponding subscription function must not be called again by the store.
+
+A store may optionally contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a *writable store*.
+
+```js
+const unsubscribe = store.subscribe(value => {
+	console.log(value);
+}); // logs `value`
+
+// later...
+unsubscribe();
+```
+
+---
+
 Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, and set up a store subscription that will be unsubscribed when appropriate.
+
+Assignments to `$`-prefixed variables require that the variable be a writable store, and will result in a call to the store's `.set` method.
 
 Note that the store must be declared at the top level of the component — not inside an `if` block or a function, for example.
 
@@ -123,6 +183,9 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 
 	count.set(1);
 	console.log($count); // logs 1
+
+	$count = 2;
+	console.log($count); // logs 2
 </script>
 ```
 
@@ -136,6 +199,8 @@ A `<script>` tag with a `context="module"` attribute runs once when the module f
 You can `export` bindings from this block, and they will become exports of the compiled module.
 
 You cannot `export default`, since the default export is the component itself.
+
+> Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](https://svelte.dev/docs#svelte_store).
 
 ```html
 <script context="module">

@@ -14,11 +14,18 @@
 </script>
 
 <script>
-	import TableOfContents from './_components/TableOfContents.svelte';
-	import ScreenToggle from './_components/ScreenToggle.svelte';
-	import Icon from '../../../components/Icon.svelte';
 	import Repl from '@sveltejs/svelte-repl';
 	import { getContext } from 'svelte';
+
+	import ScreenToggle from '../../../components/ScreenToggle.svelte';
+	import { Icon } from '@sveltejs/site-kit';
+	import TableOfContents from './_TableOfContents.svelte';
+
+	import {
+		mapbox_setup, // needed for context API tutorial
+		rollupUrl,
+		svelteUrl
+	} from '../../../config';
 
 	export let slug;
 	export let chapter;
@@ -100,12 +107,6 @@
 			);
 		});
 	}
-
-	const svelteUrl = `https://unpkg.com/svelte@beta`;
-	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
-
-	// needed for context API tutorial
-	const mapbox_setup = `window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;`;
 </script>
 
 <style>
@@ -114,7 +115,6 @@
 		height: calc(100vh - var(--nav-h));
 		overflow: hidden;
 		padding: 0 0 42px 0;
-		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
 	}
 
@@ -123,7 +123,7 @@
 		width: 300%;
 		height: 100%;
 		grid-template-columns: 33.333% 66.666%;
-		transition: transform 0.3s;
+		transition: transform .3s;
 		grid-auto-rows: 100%;
 	}
 
@@ -131,15 +131,13 @@
 	.offset-2 { transform: translate(-66.666%, 0); }
 
 	@media (min-width: 768px) {
-		.tutorial-outer {
-			padding: 0;
-		}
+		.tutorial-outer { padding: 0 }
 
 		.viewport {
 			width: 100%;
 			height: 100%;
 			display: grid;
-			grid-template-columns: minmax(33.333%, 480px) auto;
+			grid-template-columns: minmax(33.333%, var(--sidebar-large-w)) auto;
 			grid-auto-rows: 100%;
 			transition: none;
 		}
@@ -153,34 +151,44 @@
 		height: 100%;
 		border-right: 1px solid var(--second);
 		background-color: var(--second);
-		color: white;
+		color: var(--sidebar-text);
 	}
 
 	.chapter-markup {
-		padding: 1em;
+		padding: 3.2rem 4rem;
 		overflow: auto;
 		flex: 1;
 		height: 0;
 	}
 
 	.chapter-markup :global(h2) {
+		margin: 4rem 0 1.6rem 0;
 		font-size: var(--h3);
-		margin: 3.2rem 0 1.6rem 0;
 		line-height: 1;
+		font-weight: 400;
 		color: white;
 	}
 
-	.chapter-markup :global(a) {
-		text-decoration: underline;
+	.chapter-markup :global(h2:first-child) {
+		margin-top: .4rem;
 	}
+
+	.chapter-markup :global(a) {
+		color: var(--sidebar-text);
+	}
+
+	.chapter-markup :global(a:hover) {
+		color: white;
+	}
+
 
 	.chapter-markup :global(ul) {
 		padding: 0 0 0 2em;
 	}
 
 	.chapter-markup :global(blockquote) {
-		background-color: rgba(255,255,255,0.1);
-		color: white;
+		background-color: rgba(0,0,0,.17);
+		color: var(--sidebar-text);
 	}
 
 	.chapter-markup::-webkit-scrollbar {
@@ -189,41 +197,46 @@
 	}
 
 	.chapter-markup::-webkit-scrollbar-thumb {
-		background-color: rgba(255,255,255,0.7);
+		background-color: rgba(255,255,255,.7);
 		border-radius: 1em;
 		outline: 1px solid green;
 	}
 
 	.chapter-markup :global(p) > :global(code),
 	.chapter-markup :global(ul) :global(code) {
-		color: white;
-		background: rgba(255,255,255,0.1);
-		padding: 0.2em 0.4em;
+		color: var(--sidebar-text);
+		background: rgba(0,0,0,.12);
+		padding: .2em .4em .3em;
 		white-space: nowrap;
+		position: relative;
+		top: -0.1em;
 	}
 
 	.controls {
-		border-top: 1px solid rgba(255,255,255,0.1);
+		border-top: 1px solid rgba(255,255,255,.15);
 		padding: 1em 0 0 0;
 		display: flex;
 	}
 
 	.show {
-		text-transform: uppercase;
-		background: rgba(255,255,255,0.1);
-		padding: 0.2em 0.7em;
-		border-radius: 2em;
-		top: 0.1em;
+		background: rgba(0,0,0,.4);
+		padding: .3em .7em;
+		border-radius: var(--border-r);
+		top: .1em;
 		position: relative;
 		font-size: var(--h5);
 		font-weight: 300;
 	}
 
 	.show:hover {
-		background: rgba(255,255,255,0.2);
+		background: rgba(0,0,0,.65);
+		color: white;
 	}
 
 	a.next {
+		padding-right: 1.2em;
+		background: no-repeat 100% 50% url(/icons/arrow-right.svg);
+		background-size: 1em 1em;
 		margin-left: auto;
 	}
 
@@ -232,10 +245,13 @@
 	}
 
 	.improve-chapter a {
+		padding: 0 .1em;
 		font-size: 14px;
 		text-decoration: none;
-		opacity: 0.3;
-		padding: 0 0.1em;
+		opacity: .3;
+		padding-left: 1.2em;
+		background: no-repeat 0 50% url(/icons/edit.svg);
+		background-size: 1em 1em;
 	}
 
 	.improve-chapter a:hover {
@@ -245,6 +261,10 @@
 
 <svelte:head>
 	<title>{selected.section.title} / {selected.chapter.title} • Svelte Tutorial</title>
+
+	<meta name="twitter:title" content="Svelte tutorial">
+	<meta name="twitter:description" content="{selected.section.title} / {selected.chapter.title}">
+	<meta name="Description" content="{selected.section.title} / {selected.chapter.title}">
 </svelte:head>
 
 <svelte:window bind:innerWidth={width}/>
@@ -269,12 +289,12 @@
 					{/if}
 
 					{#if selected.next}
-						<a class="next" href="tutorial/{selected.next.slug}">Next <Icon name="arrow-right" /></a>
+						<a class="next" href="tutorial/{selected.next.slug}">Next</a>
 					{/if}
 				</div>
 
 				<div class="improve-chapter">
-					<a href={improve_link}><Icon name="edit" size={14}/> Edit this chapter</a>
+					<a class="no-underline" href={improve_link}>Edit this chapter</a>
 				</div>
 			</div>
 		</div>
@@ -282,6 +302,7 @@
 		<div class="tutorial-repl">
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				{svelteUrl}
 				{rollupUrl}
 				orientation={mobile ? 'columns' : 'rows'}
@@ -294,6 +315,6 @@
 	</div>
 
 	{#if mobile}
-		<ScreenToggle bind:offset/>
+		<ScreenToggle bind:offset labels={['tutorial', 'input', 'output']}/>
 	{/if}
 </div>

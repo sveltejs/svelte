@@ -18,18 +18,19 @@
 	a {
 		height: 40px;
 		margin: 0 0.5em 0.5em 0;
-		text-decoration: none;
-		border: 1px solid #aaa;
+		display: flex;
+		align-items: center;
+		border: 2px solid var(--second);
 		padding: 5px 10px;
 		border-radius: 20px;
+		color: var(--text);
 	}
 
 	.add-yourself {
-		display: flex;
-		align-items: center;
-		border: 1px solid #eee;
+		color: var(--prime);
 	}
 
+	picture,
 	img {
 		height: 100%;
 	}
@@ -44,15 +45,29 @@
 </style>
 
 <div class="logos">
-	<a href="https://beyonk.com"><img src="organisations/beyonk.svg" alt="Beyonk logo"></a>
-	<a href="https://chess.com" style="background-color: rgb(49,46,43);"><img src="organisations/chess.svg" alt="Chess.com logo"></a>
-	<a href="https://datawrapper.de"><img src="organisations/datawrapper.svg" alt="Datawrapper logo"></a>
-	<a href="https://db.nomics.world" style="background-color: rgb(15,39,47);"><img src="organisations/dbnomics.png" alt="DBNomics logo"></a>
-	<a href="https://from-now-on.com"><img src="organisations/from-now-on.png" alt="From-Now-On logo"></a>
-	<a href="https://itslearning.com"><img src="organisations/itslearning.svg" alt="itslearning logo"></a>
-	<a href="http://mustlab.ru"><img src="organisations/mustlab.png" alt="Mustlab logo"></a>
-	<a href="https://www.nesta.org.uk"><img src="organisations/nesta.svg" alt="Nesta logo"></a>
-	<a href="https://nytimes.com"><img src="organisations/nyt.svg" alt="The New York Times logo"></a>
-	<a href="https://www.stone.co"><img src="organisations/stone.svg" alt="Stone Payments logo"></a>
-	<a href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
+	<a target="_blank" rel="noopener" href="https://beyonk.com"><img src="organisations/beyonk.svg" alt="Beyonk logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://chess.com" style="background-color: rgb(49,46,43);"><img src="organisations/chess.svg" alt="Chess.com logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://comigosaude.com.br"><img src="organisations/comigo.svg" alt="Comigo logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://datawrapper.de"><img src="organisations/datawrapper.svg" alt="Datawrapper logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://db.nomics.world" style="background-color: rgb(15,39,47);"><picture><source type="image/webp" srcset="organisations/dbnomics.webp"><img src="organisations/dbnomics.jpg" alt="DBNomics logo" loading="lazy"></picture></a>
+	<a target="_blank" rel="noopener" href="https://deck.nl"><img src="organisations/deck.svg" alt="Deck logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://from-now-on.com"><img src="organisations/from-now-on.png" alt="From-Now-On logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://godaddy.com"><img src="organisations/godaddy.svg" alt="GoDaddy logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://itslearning.com"><img src="organisations/itslearning.svg" alt="itslearning logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="http://mustlab.ru"><img src="organisations/mustlab.png" alt="Mustlab logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://www.nesta.org.uk"><img src="organisations/nesta.svg" alt="Nesta logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://www.nonkositelecoms.com"><img src="organisations/nonkosi.svg" alt="Nonkosi Telecoms logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://www.nzz.ch"><img src="organisations/nzz.svg" alt="Neue Zürcher Zeitung logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://nytimes.com"><img src="organisations/nyt.svg" alt="The New York Times logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://openstate.eu"><img src="organisations/open-state-foundation.svg" alt="Open State Foundation logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://razorpay.com"><img src="organisations/razorpay.svg" alt="Razorpay logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://sp.nl"><img src="organisations/socialist-party.svg" alt="Socialist Party logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://www.stone.co"><img src="organisations/stone.svg" alt="Stone Payments logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://www.strixengine.com"><img src="organisations/strixcloud.svg" alt="Strix Cloud logo" loading="lazy"><span>Strix Cloud</span></a>
+	<a target="_blank" rel="noopener" href="https://sucuri.net" style="background-color: rgb(93, 93, 93);"><img src="organisations/sucuri.png" alt="Sucuri logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://thunderdome.dev"><img src="organisations/thunderdome.svg" alt="Thunderdome logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://m.tokopedia.com"><img src="organisations/tokopedia.png" alt="Tokopedia logo" srcset="organisations/tokopedia.2x.png 2x, organisations/tokopedia.3x.png 3x" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://webdesq.net"><img src="organisations/webdesq.svg" alt="Webdesq logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="http://healthtree.org/"><img src="organisations/healthtree.png" alt="HealthTree logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
 </div>

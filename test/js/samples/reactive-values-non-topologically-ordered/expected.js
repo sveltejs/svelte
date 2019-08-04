@@ -29,7 +29,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$$.update = ($$dirty = { x: 1, b: 1 }) => {
 		if ($$dirty.x) { $$invalidate('b', b = x); }
-		if ($$dirty.b) { $$invalidate('a', a = b); }
+		if ($$dirty.b) { a = b; }
 	};
 
 	return { x };

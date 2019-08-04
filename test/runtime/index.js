@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
 import * as virtual from 'rollup-plugin-virtual';
-import { clear_loops } from "../../internal.js";
+import { clear_loops, flush, set_now, set_raf } from "../../internal";
 
 import {
 	showOutput,
@@ -20,7 +20,11 @@ let compileOptions = null;
 let compile = null;
 
 const sveltePath = process.cwd().split('\\').join('/');
-const internal = `${sveltePath}/internal.js`;
+
+let unhandled_rejection = false;
+process.on('unhandledRejection', err => {
+	unhandled_rejection = err;
+});
 
 describe("runtime", () => {
 	before(() => {
@@ -47,8 +51,6 @@ describe("runtime", () => {
 	function runTest(dir, hydrate) {
 		if (dir[0] === ".") return;
 
-		const { flush } = require(internal);
-
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
 
 		if (hydrate && config.skip_if_hydrate) return;
@@ -63,10 +65,11 @@ describe("runtime", () => {
 				throw new Error('skipping test, already failed');
 			}
 
+			unhandled_rejection = null;
+
 			compile = (config.preserveIdentifiers ? svelte : svelte$).compile;
 
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
-			global.document.title = '';
 
 			compileOptions = config.compileOptions || {};
 			compileOptions.sveltePath = sveltePath;
@@ -75,7 +78,7 @@ describe("runtime", () => {
 			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
 
 			Object.keys(require.cache)
-				.filter(x => x.endsWith(".svelte"))
+				.filter(x => x.endsWith('.svelte'))
 				.forEach(file => {
 					delete require.cache[file];
 				});
@@ -100,16 +103,14 @@ describe("runtime", () => {
 							if (raf.callback) raf.callback();
 						}
 					};
-					window.performance.now = () => raf.time;
-					global.requestAnimationFrame = cb => {
-						let called = false;
+					set_now(() => raf.time);
+					set_raf(cb => {
 						raf.callback = () => {
-							if (!called) {
-								called = true;
-								cb();
-							}
+							raf.callback = null;
+							cb();
+							flush();
 						};
-					};
+					});
 
 					try {
 						mod = require(`./samples/${dir}/main.svelte`);
@@ -118,8 +119,6 @@ describe("runtime", () => {
 						showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 						throw err;
 					}
-
-					global.window = window;
 
 					if (config.before_test) config.before_test();
 
@@ -171,10 +170,18 @@ describe("runtime", () => {
 							raf
 						})).then(() => {
 							component.$destroy();
+
+							if (unhandled_rejection) {
+								throw unhandled_rejection;
+							}
 						});
 					} else {
 						component.$destroy();
 						assert.htmlEqual(target.innerHTML, "");
+
+						if (unhandled_rejection) {
+							throw unhandled_rejection;
+						}
 					}
 				})
 				.catch(err => {
@@ -221,9 +228,10 @@ describe("runtime", () => {
 					'main.js': js.code
 				}),
 				{
+					name: 'svelte-packages',
 					resolveId: (importee, importer) => {
 						if (importee.startsWith('svelte/')) {
-							return importee.replace('svelte', process.cwd()) + '.mjs';
+							return importee.replace('svelte', process.cwd()) + '/index.mjs';
 						}
 					}
 				}
