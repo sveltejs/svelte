@@ -1,7 +1,6 @@
 ---
 title: The easiest way to get started with Svelte
 description: This'll only take a minute.
-pubdate: 2017-08-07
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---
@@ -13,7 +12,7 @@ Because of that, getting started with it can be a little bit confusing at first.
 
 ## 1. Use the REPL
 
-The [Svelte REPL](https://svelte.technology/repl) is the easiest way to begin. You can choose from a list of examples to get you started, and tweak them until they do what you want.
+The [Svelte REPL](repl) is the easiest way to begin. You can choose from a list of examples to get you started, and tweak them until they do what you want.
 
 <aside><p>You'll need to have <a href="https://nodejs.org/">Node.js</a> installed, and know how to use the terminal</p></aside>
 
@@ -39,28 +38,23 @@ This will serve your app on [localhost:5000](http://localhost:5000) and rebuild 
 
 When you download from the REPL, you're getting a customised version of the [sveltejs/template](https://github.com/sveltejs/template) repo. You can skip messing around with zip files by using [degit](https://github.com/Rich-Harris/degit), a project scaffolding tool.
 
-In the terminal, install degit globally (you only need to do this once):
+In the terminal, you can instantly create a new project like so:
 
 ```bash
-npm install -g degit
-```
-
-After that, you can instantly create a new project like so:
-
-```bash
-degit sveltejs/template my-new-project
-cd my-new-project
-
+npx degit sveltejs/template my-svelte-project
+cd my-svelte-project
 npm install
 npm run dev
 ```
 
+This will create a new project in the `my-svelte-project` directory, install its dependencies, and start a server on http://localhost:5000.
+
 Once you've tinkered a bit and understood how everything fits together, you can fork [sveltejs/template](https://github.com/sveltejs/template) and start doing this instead:
 
 ```bash
-degit your-name/template my-new-project
+npx degit your-name/template my-new-project
 ```
 
 And that's it! Do `npm run build` to create a production-ready version of your app, and check the project template's [README](https://github.com/sveltejs/template/blob/master/README.md) for instructions on how to easily deploy your app to the web with [Now](https://zeit.co/now) or [Surge](http://surge.sh/).
 
-You're not restricted to using Rollup — there are also integrations for [webpack](https://github.com/sveltejs/svelte-loader), [Browserify](https://github.com/tehshrike/sveltify) and others, or you can use the [Svelte CLI](https://github.com/sveltejs/svelte-cli) or the [API](https://github.com/sveltejs/svelte#api) directly. If you make a project template using one of these tools, please share it with the [Svelte Discord chatroom](https://discord.gg/yy75DKs), or via [@sveltejs](https://twitter.com/sveltejs) on Twitter!
+You're not restricted to using Rollup — there are also integrations for [webpack](https://github.com/sveltejs/svelte-loader), [Browserify](https://github.com/tehshrike/sveltify) and others, or you can use the [Svelte CLI](https://github.com/sveltejs/svelte-cli) (Update from 2019: with Svelte 3 the CLI was deprecated and we now use [sirv-cli](https://www.npmjs.com/package/sirv-cli) in our template. Feel free to use whatever tool you like!) or the [API](https://github.com/sveltejs/svelte/tree/v2#api) directly. If you make a project template using one of these tools, please share it with the [Svelte Discord chatroom](chat), or via [@sveltejs](https://twitter.com/sveltejs) on Twitter!

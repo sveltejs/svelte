@@ -2,6 +2,10 @@ const glob = require("tiny-glob/sync.js");
 
 require("./setup");
 
-glob("*/index.js", { cwd: "test" }).forEach(function(file) {
+// bind internal to jsdom
+require("./helpers");
+require("../internal");
+
+glob("*/index.{js,ts}", { cwd: "test" }).forEach((file) => {
 	require("./" + file);
 });

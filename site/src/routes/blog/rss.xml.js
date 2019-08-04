@@ -1,3 +1,4 @@
+import send from '@polka/send';
 import get_posts from '../blog/_posts.js';
 
 const months = ',Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
@@ -13,17 +14,17 @@ const rss = `
 
 <channel>
 	<title>Svelte blog</title>
-	<link>https://svelte.technology/blog</link>
+	<link>https://svelte.dev/blog</link>
 	<description>News and information about the magical disappearing UI framework</description>
 	<image>
-		<url>https://svelte.technology/favicon.png</url>
+		<url>https://svelte.dev/favicon.png</url>
 		<title>Svelte</title>
-		<link>https://svelte.technology/blog</link>
+		<link>https://svelte.dev/blog</link>
 	</image>
-	${get_posts().map(post => `
+	${get_posts().filter(post => !post.metadata.draft).map(post => `
 		<item>
 			<title>${post.metadata.title}</title>
-			<link>https://svelte.technology/blog/${post.slug}</link>
+			<link>https://svelte.dev/blog/${post.slug}</link>
 			<description>${post.metadata.description}</description>
 			<pubDate>${formatPubdate(post.metadata.pubdate)}</pubDate>
 		</item>
@@ -34,9 +35,8 @@ const rss = `
 `.replace(/>[^\S]+/gm, '>').replace(/[^\S]+</gm, '<').trim();
 
 export function get(req, res) {
-	res.set({
+	send(res, 200, rss, {
 		'Cache-Control': `max-age=${30 * 60 * 1e3}`,
 		'Content-Type': 'application/rss+xml'
 	});
-	res.end(rss);
 }

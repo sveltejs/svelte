@@ -1,3 +1,4 @@
+import send from '@polka/send';
 import { get_example } from './_examples.js';
 
 const cache = new Map();
@@ -5,21 +6,18 @@ const cache = new Map();
 export function get(req, res) {
 	const { slug } = req.params;
 
-	try {
-		if (!cache.has(slug) || process.env.NODE_ENV !== 'production') {
-			cache.set(slug, JSON.stringify(get_example(slug)));
-		}
+	let example = cache.get(slug);
 
-		res.writeHead(200, {
-			'Content-Type': 'application/json'
+	if (!example || process.env.NODE_ENV !== 'production') {
+		example = get_example(slug);
+		if (example) cache.set(slug, example);
+	}
+
+	if (example) {
+		send(res, 200, example);
+	} else {
+		send(res, 404, {
+			error: 'not found'
 		});
-
-		res.end(cache.get(slug));
-	} catch (err) {
-		res.writeHead(404, {
-			'Content-Type': 'application/json'
-		});
-
-		res.end(JSON.stringify({ error: 'not found' }));
 	}
 }
