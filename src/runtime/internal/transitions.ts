@@ -65,15 +65,11 @@ export function transition_out(block, local: 0 | 1, detach: 0 | 1, callback) {
 	}
 }
 
-<<<<<<< HEAD:src/internal/transitions.js
 const null_transition = { duration: 0 };
 
-export function create_in_transition(node, fn, params) {
-=======
 type TransitionFn = (node: Element, params: any) => TransitionConfig;
 
 export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
->>>>>>> master:src/runtime/internal/transitions.ts
 	let config = fn(node, params);
 	let running = false;
 	let animation_name;
