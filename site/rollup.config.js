@@ -53,9 +53,6 @@ export default {
 				module: true
 			})
 		],
-
-		// temporary, pending Rollup 1.0
-		experimentalCodeSplitting: true
 	},
 
 	server: {
@@ -74,12 +71,13 @@ export default {
 			commonjs(),
 			json()
 		],
-		external: Object.keys(pkg.dependencies).concat(
-			require('module').builtinModules || Object.keys(process.binding('natives'))
-		),
-
-		// temporary, pending Rollup 1.0
-		experimentalCodeSplitting: true
+		external: [
+			'yootils',
+			'codemirror',
+			...Object.keys(pkg.dependencies || {}).concat(
+				require('module').builtinModules || Object.keys(process.binding('natives'))
+			)
+		],
 	},
 
 	serviceworker: {

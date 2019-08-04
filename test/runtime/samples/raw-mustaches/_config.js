@@ -1,5 +1,3 @@
-const ns = '<noscript></noscript>';
-
 export default {
 	skip_if_ssr: true,
 
@@ -7,13 +5,13 @@ export default {
 		raw: '<span><em>raw html!!!\\o/</span></em>'
 	},
 
-	html: `before${ns}<span><em>raw html!!!\\o/</span></em>${ns}after`,
+	html: `before<span><em>raw html!!!\\o/</span></em>after`,
 
 	test({ assert, component, target }) {
 		component.raw = '';
-		assert.equal(target.innerHTML, `before${ns}${ns}after`);
+		assert.equal(target.innerHTML, `beforeafter`);
 		component.raw = 'how about <strong>unclosed elements?';
-		assert.equal(target.innerHTML, `before${ns}how about <strong>unclosed elements?</strong>${ns}after`);
+		assert.equal(target.innerHTML, `beforehow about <strong>unclosed elements?</strong>after`);
 		component.$destroy();
 		assert.equal(target.innerHTML, '');
 	}

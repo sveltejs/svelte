@@ -1,8 +1,9 @@
 <script>
 	import { quintOut } from 'svelte/easing';
-	import crossfade from './crossfade.js'; // TODO put this in svelte/transition!
+	import { crossfade } from 'svelte/transition';
+	import { flip } from 'svelte/animate';
 
-	const { send, receive } = crossfade({
+	const [send, receive] = crossfade({
 		fallback(node, params) {
 			const style = getComputedStyle(node);
 			const transform = style.transform === 'none' ? '' : style.transform;
@@ -42,12 +43,6 @@
 
 	function remove(todo) {
 		todos = todos.filter(t => t !== todo);
-	}
-
-	function handleKeydown(event) {
-		if (event.which === 13) {
-			addTodo(event.target);
-		}
 	}
 </script>
 
@@ -114,7 +109,7 @@
 </style>
 
 <div class='board'>
-	<input class="new-todo" placeholder="what needs to be done?" on:enter={add}>
+	<input class="new-todo" placeholder="what needs to be done?" on:keydown="{event => event.which === 13 && add(this)}">
 
 	<div class='left'>
 		<h2>todo</h2>
@@ -122,6 +117,7 @@
 			<label
 				in:receive="{{key: todo.id}}"
 				out:send="{{key: todo.id}}"
+				animate:flip
 			>
 				<input type=checkbox bind:checked={todo.done}>
 				{todo.description}
@@ -136,6 +132,7 @@
 			<label
 				in:receive="{{key: todo.id}}"
 				out:send="{{key: todo.id}}"
+				animate:flip
 			>
 				<input type=checkbox bind:checked={todo.done}>
 				{todo.description}

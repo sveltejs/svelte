@@ -9,7 +9,7 @@ export default {
 	`,
 
 	ssrHtml: `
-		<textarea value="some text"></textarea>
+		<textarea>some text</textarea>
 		<p>some text</p>
 	`,
 

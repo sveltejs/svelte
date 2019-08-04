@@ -6,6 +6,36 @@ export default {
 				injected: false,
 				module: false,
 				mutated: false,
+				name: 'hoistable_foo',
+				reassigned: false,
+				referenced: true,
+				writable: false
+			},
+			{
+				export_name: null,
+				injected: false,
+				module: false,
+				mutated: false,
+				name: 'hoistable_bar',
+				reassigned: false,
+				referenced: true,
+				writable: false
+			},
+			{
+				export_name: null,
+				injected: false,
+				module: false,
+				mutated: false,
+				name: 'hoistable_baz',
+				reassigned: false,
+				referenced: true,
+				writable: false
+			},
+			{
+				export_name: null,
+				injected: false,
+				module: false,
+				mutated: false,
 				name: 'foo',
 				reassigned: false,
 				referenced: true,

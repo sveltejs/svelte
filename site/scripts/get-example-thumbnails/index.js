@@ -15,8 +15,8 @@ fs.readdirSync(`content/examples`).forEach(group_dir => {
 async function main() {
 	const browser = await puppeteer.launch({
 		defaultViewport: {
-			width: 1280,
-			height: 960,
+			width: 400 * 10 / 4,
+			height: 400 + 42,
 			deviceScaleFactor: 2
 		}
 	});
@@ -25,14 +25,14 @@ async function main() {
 
 	for (const slug of slugs) {
 		try {
-			const output_file = `static/examples/thumbnails/${slug}.png`;
+			const output_file = `static/examples/thumbnails/${slug}.jpg`;
 			if (fs.existsSync(output_file)) {
 				console.log(c.gray(`skipping ${slug}`));
 				continue;
 			}
 
 			console.log(slug);
-			await page.goto(`http://localhost:3000/repl?example=${slug}`);
+			await page.goto(`http://localhost:3000/repl/embed?example=${slug}`);
 
 			await page.waitForSelector('iframe.inited[title=Result]');
 			await page.waitFor(1500);
@@ -40,21 +40,24 @@ async function main() {
 			const buffer = await iframe.screenshot();
 
 			const image = await Jimp.read(buffer);
+			console.log(image.bitmap.width, image.bitmap.height);
 			image.crop(3, 3, image.bitmap.width - 6, image.bitmap.height - 6);
 			image.autocrop();
+			// image.scale(0.25);
 
-			if (image.bitmap.width > 300 || image.bitmap.width > 200) {
+			if (image.bitmap.width > 200 || image.bitmap.width > 200) {
 				const scale = Math.min(
-					300 / image.bitmap.width,
+					200 / image.bitmap.width,
 					200 / image.bitmap.height
 				);
 
 				image.scale(scale);
 			}
 
-			await image.write(output_file);
+			await image.quality(75).write(output_file);
 		} catch (err) {
 			console.log(c.bold().red(`failed to screenshot ${slug}`));
+			console.log(err);
 		}
 	}
 

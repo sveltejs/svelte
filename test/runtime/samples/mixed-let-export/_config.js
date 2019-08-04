@@ -1,9 +1,9 @@
 export default {
-  props: {
-    a: 42
-  },
+	props: {
+		a: 42
+	},
 
-  html: `
-    42
-  `
-}
+	html: `
+		42
+	`
+};
