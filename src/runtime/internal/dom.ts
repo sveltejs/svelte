@@ -10,24 +10,6 @@ export function detach(node: Node) {
 	node.parentNode.removeChild(node);
 }
 
-export function detach_between(before: Node, after: Node) {
-	while (before.nextSibling && before.nextSibling !== after) {
-		before.parentNode.removeChild(before.nextSibling);
-	}
-}
-
-export function detach_before(after: Node) {
-	while (after.previousSibling) {
-		after.parentNode.removeChild(after.previousSibling);
-	}
-}
-
-export function detach_after(before: Node) {
-	while (before.nextSibling) {
-		before.parentNode.removeChild(before.nextSibling);
-	}
-}
-
 export function destroy_each(iterations, detaching) {
 	for (let i = 0; i < iterations.length; i += 1) {
 		if (iterations[i]) iterations[i].d(detaching);
@@ -256,4 +238,40 @@ export function custom_event<T=any>(type: string, detail?: T) {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, false, false, detail);
 	return e;
+}
+
+export class HtmlTag {
+	e: HTMLElement;
+	n: ChildNode[];
+	t: HTMLElement;
+	a: HTMLElement;
+
+	constructor(html: string, anchor: HTMLElement = null) {
+		this.e = element('div');
+		this.a = anchor;
+		this.u(html);
+	}
+
+	m(target: HTMLElement, anchor: HTMLElement) {
+		for (let i = 0; i < this.n.length; i += 1) {
+			insert(target, this.n[i], anchor);
+		}
+
+		this.t = target;
+	}
+
+	u(html: string) {
+		this.e.innerHTML = html;
+		this.n = Array.from(this.e.childNodes);
+	}
+
+	p(html: string) {
+		this.d();
+		this.u(html);
+		this.m(this.t, this.a);
+	}
+
+	d() {
+		this.n.forEach(detach);
+	}
 }
