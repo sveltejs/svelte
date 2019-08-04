@@ -23,6 +23,7 @@ import get_object from './utils/get_object';
 import unwrap_parens from './utils/unwrap_parens';
 import Slot from './nodes/Slot';
 import { Node as ESTreeNode } from 'estree';
+import add_to_set from './utils/add_to_set';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -70,6 +71,8 @@ function remove_node(code: MagicString, start: number, end: number, body: Node, 
 export default class Component {
 	stats: Stats;
 	warnings: Warning[];
+	ignores: Set<string>;
+	ignore_stack: Set<string>[] = [];
 
 	ast: Ast;
 	source: string;
@@ -442,6 +445,10 @@ export default class Component {
 			message: string;
 		}
 	) {
+		if (this.ignores && this.ignores.has(warning.code)) {
+			return;
+		}
+
 		if (!this.locator) {
 			this.locator = getLocator(this.source, { offsetLine: 1 });
 		}
@@ -1252,6 +1259,17 @@ export default class Component {
 			code: 'missing-declaration',
 			message
 		});
+	}
+
+	push_ignores(ignores) {
+		this.ignores = new Set(this.ignores || []);
+		add_to_set(this.ignores, ignores);
+		this.ignore_stack.push(this.ignores);
+	}
+
+	pop_ignores() {
+		this.ignore_stack.pop();
+		this.ignores = this.ignore_stack[this.ignore_stack.length - 1];
 	}
 }
 
