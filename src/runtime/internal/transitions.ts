@@ -65,7 +65,7 @@ export function transition_out(block, local: 0 | 1, detach: 0 | 1, callback) {
 	}
 }
 
-const null_transition = { duration: 0 };
+const null_transition: TransitionConfig = { duration: 0 };
 
 type TransitionFn = (node: Element, params: any) => TransitionConfig;
 
@@ -87,7 +87,7 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 			easing = linear,
 			tick = noop,
 			css
-		} = config || (null_transition as TransitionConfig);
+		} = config || null_transition;
 
 		if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
 		tick(0, 1);
@@ -166,7 +166,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 			easing = linear,
 			tick = noop,
 			css
-		} = config || (null_transition as TransitionConfig);
+		} = config || null_transition;
 
 		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
 
@@ -260,7 +260,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			easing = linear,
 			tick = noop,
 			css
-		} = config || (null_transition as TransitionConfig);
+		} = config || null_transition;
 
 		const program = {
 			start: now() + delay,
