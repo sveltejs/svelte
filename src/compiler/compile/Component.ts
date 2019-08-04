@@ -662,7 +662,7 @@ export default class Component {
 			this.node_for_declaration.set(name, node);
 		});
 
-		globals.forEach((_node, name) => {
+		globals.forEach((node, name) => {
 			if (this.var_lookup.has(name)) return;
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
@@ -679,6 +679,13 @@ export default class Component {
 					injected: true
 				});
 			} else if (name[0] === '$') {
+				if (name === '$') {
+					this.error(node, {
+						code: 'illegal-global',
+						message: 'The $ sign is an illegal variable name'
+					});
+				}
+
 				this.add_var({
 					name,
 					injected: true,
@@ -1239,6 +1246,12 @@ export default class Component {
 			this.has_reactive_assignments = true; // TODO does this belong here?
 
 			if (name[0] === '$') return; // $$props
+			if (name === '') {
+				this.error(node, {
+					code: 'illegal-global',
+					message: 'The $ sign is an illegal variable name'
+				});
+			}
 		}
 
 		if (this.var_lookup.has(name) && !this.var_lookup.get(name).global) return;
