@@ -76,6 +76,8 @@ function update($$) {
 		$$.fragment.p($$.dirty, $$.ctx);
 		$$.dirty = null;
 
+		$$.bubble && $$.bubble();
+
 		$$.after_update.forEach(add_render_callback);
 	}
 }

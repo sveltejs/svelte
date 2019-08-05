@@ -13,6 +13,7 @@ declare module '*.svelte' {
 		$set(props: Props): void;
 		$on<T = any>(event: string, callback: (event: CustomEvent<T>) => void): () => void;
 		$destroy(): void;
+		$bubble(): void;
 
 		[accessor: string]: any;
 	}

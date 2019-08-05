@@ -431,6 +431,10 @@ export default class IfBlockWrapper extends Wrapper {
 				}
 			`;
 
+		block.builders.bubble.add_line(
+			`if (${name}) bubbles.push(...${name}.bbl());`
+		);
+
 		// no `p()` here — we don't want to update outroing nodes,
 		// as that will typically result in glitching
 		if (branch.block.has_outro_method) {

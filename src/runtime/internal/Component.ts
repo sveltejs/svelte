@@ -1,7 +1,7 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_function, run, run_all, noop } from './utils';
-import { children } from './dom';
+import { children, listen } from './dom';
 import { transition_in } from './transitions';
 
 // eslint-disable-next-line @typescript-eslint/class-name-casing
@@ -27,6 +27,18 @@ export function bind(component, name, callback) {
 	callback(component.$$.ctx[name]);
 }
 
+function attach_any_listeners($$) {
+	$$.bubble = () => Object.keys($$.callbacks).forEach(type => {
+		if ($$.ctx[`${type}_handler`]) return;
+
+		$$.fragment.bbl().forEach(el => {
+			$$.callbacks[type].forEach(cb => listen(el, type, cb));
+		});
+	});
+
+	$$.bubble();
+}
+
 export function mount_component(component, target, anchor) {
 	const { fragment, on_mount, on_destroy, after_update } = component.$$;
 
@@ -44,15 +56,7 @@ export function mount_component(component, target, anchor) {
 		}
 		component.$$.on_mount = [];
 
-		if (fragment.bbl) {
-			Object.keys(component.$$.callbacks).forEach(type => {
-				if (!component.$$.ctx[`${type}_handler`]) {
-					const [listen, els] = fragment.bbl();
-
-					els.forEach(el => component.$$.callbacks[type].forEach(cb => listen(el, type, cb)));
-				}
-			});
-		}
+		if (fragment.bbl) attach_any_listeners(component.$$);
 	});
 
 	after_update.forEach(add_render_callback);

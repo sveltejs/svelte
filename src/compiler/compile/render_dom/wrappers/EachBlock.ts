@@ -218,6 +218,10 @@ export default class EachBlockWrapper extends Wrapper {
 			`);
 		}
 
+		block.builders.bubble.add_block(deindent`
+			for (#i = 0; #i < ${this.vars.data_length}; #i += 1) bubbles.push(...${this.vars.iterations}[#i].bbl());
+		`);
+
 		if (needs_anchor) {
 			block.add_element(
 				update_anchor_node,

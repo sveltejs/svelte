@@ -35,6 +35,7 @@ export default class Block {
 		claim: CodeBuilder;
 		hydrate: CodeBuilder;
 		mount: CodeBuilder;
+		bubble: CodeBuilder;
 		measure: CodeBuilder;
 		fix: CodeBuilder;
 		animate: CodeBuilder;
@@ -84,6 +85,7 @@ export default class Block {
 			claim: new CodeBuilder(),
 			hydrate: new CodeBuilder(),
 			mount: new CodeBuilder(),
+			bubble: new CodeBuilder(),
 			measure: new CodeBuilder(),
 			fix: new CodeBuilder(),
 			animate: new CodeBuilder(),
@@ -334,7 +336,9 @@ export default class Block {
 			if (listens.length > 0) {
 					properties.add_block(deindent`
 						${method_name('bbl', 'bubble')}() {
-							return [listen, [${listens}]];
+							let bubbles = [${listens}];
+							${this.builders.bubble}
+							return bubbles;
 						},
 					`);
 			}
