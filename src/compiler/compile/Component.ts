@@ -72,7 +72,7 @@ export default class Component {
 	stats: Stats;
 	warnings: Warning[];
 	ignores: Set<string>;
-	ignore_stack: Set<string>[] = [];
+	ignore_stack: Array<Set<string>> = [];
 
 	ast: Ast;
 	source: string;
