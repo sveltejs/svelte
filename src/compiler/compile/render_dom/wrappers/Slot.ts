@@ -105,7 +105,7 @@ export default class SlotWrapper extends Wrapper {
 		}
 
 		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
-		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot`);
+		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
 
 		block.builders.init.add_block(deindent`
 			const ${slot_definition} = ctx.$$slots${quote_prop_if_necessary(slot_name)};
@@ -171,7 +171,10 @@ export default class SlotWrapper extends Wrapper {
 
 		block.builders.update.add_block(deindent`
 			if (${slot} && ${slot}.p && ${update_conditions}) {
-				${slot}.p(@get_slot_changes(${slot_definition}, ctx, changed, ${get_slot_changes}), @get_slot_context(${slot_definition}, ctx, ${get_slot_context}));
+				${slot}.p(
+					@get_slot_changes(${slot_definition}, ctx, changed, ${get_slot_changes}),
+					@get_slot_context(${slot_definition}, ctx, ${get_slot_context})
+				);
 			}
 		`);
 
