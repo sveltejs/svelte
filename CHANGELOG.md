@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 3.7.1
+
+* Assume `let` variables are dynamic for slots ([#3354](https://github.com/sveltejs/svelte/issues/3354))
+* Allow transition functions to return nothing ([#2246](https://github.com/sveltejs/svelte/pull/2246))
+
 ## 3.7.0
 
 * Disable warnings via `svelte-ignore` comments ([#3351](https://github.com/sveltejs/svelte/pull/3351))
