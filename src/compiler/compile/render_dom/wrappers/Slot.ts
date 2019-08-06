@@ -84,6 +84,7 @@ export default class SlotWrapper extends Wrapper {
 				});
 
 				const dynamic_dependencies = Array.from(attribute.dependencies).filter(name => {
+					if (this.node.scope.is_let(name)) return true;
 					const variable = renderer.component.var_lookup.get(name);
 					return is_dynamic(variable);
 				});
@@ -162,6 +163,7 @@ export default class SlotWrapper extends Wrapper {
 
 		const dynamic_dependencies = Array.from(this.dependencies).filter(name => {
 			if (name === '$$scope') return true;
+			if (this.node.scope.is_let(name)) return true;
 			const variable = renderer.component.var_lookup.get(name);
 			return is_dynamic(variable);
 		});
