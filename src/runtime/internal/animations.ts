@@ -98,6 +98,6 @@ export function add_transform(node: Element & ElementCSSInlineStyle, a: Position
 		const style = getComputedStyle(node);
 		const transform = style.transform === 'none' ? '' : style.transform;
 
-		node.style.transform = `${transform} translate(${a.left - b.left}px, ${a.top - b.top}px)`;
+		node.style.transform = `${transform} translate3d(${a.left - b.left}px, ${a.top - b.top}px, 0)`;
 	}
 }

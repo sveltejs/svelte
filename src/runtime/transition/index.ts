@@ -55,7 +55,7 @@ export function fly(node: Element, {
 		duration,
 		easing,
 		css: (t, u) => `
-			transform: ${transform} translate(${(1 - t) * x}px, ${(1 - t) * y}px);
+			transform: ${transform} translate3d(${(1 - t) * x}px, ${(1 - t) * y}px, 0);
 			opacity: ${target_opacity - (od * u)}`
 	};
 }
@@ -203,7 +203,7 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 			css: (t, u) => `
 				opacity: ${t * opacity};
 				transform-origin: top left;
-				transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1-t) * dw}, ${t + (1-t) * dh});
+				transform: ${transform} translate3d(${u * dx}px,${u * dy}px,0) scale(${t + (1-t) * dw}, ${t + (1-t) * dh});
 			`
 		};
 	}
