@@ -73,6 +73,14 @@ export function stop_propagation(fn) {
 	};
 }
 
+export function self(fn, el) {
+	return function(event) {
+		if(event.target !== el) return;
+		// @ts-ignore
+		return fn.call(this, event);
+	};
+}
+
 export function attr(node: Element, attribute: string, value?: string) {
 	if (value == null) node.removeAttribute(attribute);
 	else node.setAttribute(attribute, value);
