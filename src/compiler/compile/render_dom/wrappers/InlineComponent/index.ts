@@ -220,9 +220,9 @@ export default class InlineComponentWrapper extends Wrapper {
 				const conditions = Array.from(all_dependencies).map(dep => `changed.${dep}`).join(' || ');
 
 				updates.push(deindent`
-					var ${name_changes} = ${all_dependencies.size === 1 ? `${conditions}` : `(${conditions})`} ? @get_spread_update(${levels}, [
+					var ${name_changes} = ${conditions ? `(${conditions}) ? @get_spread_update(${levels}, [
 						${changes.join(',\n')}
-					]) : {};
+					]) : {}` : '{}'};
 				`);
 			} else {
 				this.node.attributes
