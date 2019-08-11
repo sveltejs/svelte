@@ -22,7 +22,7 @@ function get_each_context(ctx, list, i) {
 
 // (5:0) {#each createElement as node}
 function create_each_block(ctx) {
-	var span, t_value = ctx.node, t;
+	var span, t_value = ctx.node + "", t;
 
 	return {
 		c() {
@@ -36,7 +36,7 @@ function create_each_block(ctx) {
 		},
 
 		p(changed, ctx) {
-			if ((changed.createElement) && t_value !== (t_value = ctx.node)) {
+			if ((changed.createElement) && t_value !== (t_value = ctx.node + "")) {
 				set_data(t, t_value);
 			}
 		},

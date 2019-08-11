@@ -25,7 +25,7 @@ function get_each_context(ctx, list, i) {
 
 // (19:0) {#each things as thing (thing.id)}
 function create_each_block(key_1, ctx) {
-	var div, t_value = ctx.thing.name, t, rect, stop_animation = noop;
+	var div, t_value = ctx.thing.name + "", t, rect, stop_animation = noop;
 
 	return {
 		key: key_1,
@@ -44,7 +44,7 @@ function create_each_block(key_1, ctx) {
 		},
 
 		p(changed, ctx) {
-			if ((changed.things) && t_value !== (t_value = ctx.thing.name)) {
+			if ((changed.things) && t_value !== (t_value = ctx.thing.name + "")) {
 				set_data(t, t_value);
 			}
 		},
