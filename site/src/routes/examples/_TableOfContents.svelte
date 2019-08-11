@@ -22,7 +22,7 @@
 
 	.section-title {
 		display: block;
-		padding: 0 0 .8rem 0;
+		padding: 0 0 0.8rem 0;
 		font: 400 var(--h6) var(--font);
 		text-transform: uppercase;
 		letter-spacing: 0.12em;
@@ -32,7 +32,7 @@
 	a {
 		display: flex;
 		position: relative;
-		color: white;
+		color: var(--sidebar-text);
 		border-bottom: none;
 		padding: 0.2rem 3rem;
 		margin: 0 -3rem;
@@ -42,17 +42,19 @@
 	}
 
 	a:hover {
-		color: var(--flash);
+		color: white;
 	}
 
 	a.active {
-		background: rgba(255, 255, 255, 0.1) calc(100% - 3rem) 50% no-repeat url(/icons/arrow-right.svg);
+		background: rgba(0, 0, 0, 0.15) calc(100% - 3rem) 50% no-repeat
+			url(/icons/arrow-right.svg);
 		background-size: 1em 1em;
 		color: white;
 	}
 
 	a.active.loading {
-		background: rgba(255, 255, 255, 0.1) calc(100% - 3rem) 50% no-repeat url(/icons/loading.svg);
+		background: rgba(0, 0, 0, 0.1) calc(100% - 3rem) 50% no-repeat
+			url(/icons/loading.svg);
 		background-size: 1em 1em;
 		color: white;
 	}
@@ -63,34 +65,34 @@
 		width: 5rem;
 		height: 5rem;
 		border-radius: 2px;
-		box-shadow: 1px 1px 3px rgba(0,0,0,0.13);
+		box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.13);
 		margin: 0.2em 0.5em 0.2em 0;
 	}
 </style>
 
 <ul class="examples-toc">
 	{#each sections as section}
-		<li>
-			<span class="section-title">
-				{section.title}
-			</span>
+	<li>
+		<span class="section-title">
+			{section.title}
+		</span>
 
-			{#each section.examples as example}
-				<a
-					href="examples#{example.slug}"
-					class="row"
-					class:active="{example.slug === active_section}"
-					class:loading="{isLoading}"
-				>
-					<img
-						class="thumbnail"
-						alt="{example.title} thumbnail"
-						src="examples/thumbnails/{example.slug}.jpg"
-					>
+		{#each section.examples as example}
+		<a
+			href="examples#{example.slug}"
+			class="row"
+			class:active="{example.slug === active_section}"
+			class:loading="{isLoading}"
+		>
+			<img
+				class="thumbnail"
+				alt="{example.title} thumbnail"
+				src="examples/thumbnails/{example.slug}.jpg"
+			/>
 
-					<span>{example.title}</span>
-				</a>
-			{/each}
-		</li>
+			<span>{example.title}</span>
+		</a>
+		{/each}
+	</li>
 	{/each}
 </ul>

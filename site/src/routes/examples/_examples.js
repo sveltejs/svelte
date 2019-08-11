@@ -35,7 +35,7 @@ export function get_example(slug) {
 	const dir = lookup.get(slug);
 	const title = titles.get(slug);
 
-	if (!dir || !title) throw { status: 404, message: 'not found' };
+	if (!dir || !title) return null;
 
 	const files = fs.readdirSync(`content/examples/${dir}`)
 		.filter(name => name[0] !== '.' && name !== 'meta.json')

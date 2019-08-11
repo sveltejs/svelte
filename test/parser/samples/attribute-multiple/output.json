@@ -20,6 +20,7 @@
 								"start": 9,
 								"end": 10,
 								"type": "Text",
+								"raw": "x",
 								"data": "x"
 							}
 						]
@@ -34,6 +35,7 @@
 								"start": 19,
 								"end": 20,
 								"type": "Text",
+								"raw": "y",
 								"data": "y"
 							}
 						]
@@ -42,8 +44,5 @@
 				"children": []
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

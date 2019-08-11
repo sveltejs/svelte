@@ -3,7 +3,7 @@ import * as path from 'path';
 import marked from 'marked';
 import PrismJS from 'prismjs';
 import send from '@polka/send';
-import { extract_frontmatter, extract_metadata, langs, link_renderer } from '../../../utils/markdown';
+import { extract_frontmatter, extract_metadata, langs, link_renderer } from '@sveltejs/site-kit/utils/markdown';
 
 const cache = new Map();
 

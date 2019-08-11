@@ -6,16 +6,16 @@ const cache = new Map();
 export function get(req, res) {
 	const { slug } = req.params;
 
-	try {
-		let example = cache.get(slug);
+	let example = cache.get(slug);
 
-		if (!example || process.env.NODE_ENV !== 'production') {
-			example = get_example(slug);
-			cache.set(slug, example);
-		}
+	if (!example || process.env.NODE_ENV !== 'production') {
+		example = get_example(slug);
+		if (example) cache.set(slug, example);
+	}
 
+	if (example) {
 		send(res, 200, example);
-	} catch (err) {
+	} else {
 		send(res, 404, {
 			error: 'not found'
 		});

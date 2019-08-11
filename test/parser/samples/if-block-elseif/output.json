@@ -39,6 +39,7 @@
 								"start": 17,
 								"end": 37,
 								"type": "Text",
+								"raw": "x is greater than 10",
 								"data": "x is greater than 10"
 							}
 						]
@@ -85,6 +86,7 @@
 											"start": 63,
 											"end": 79,
 											"type": "Text",
+											"raw": "x is less than 5",
 											"data": "x is less than 5"
 										}
 									]

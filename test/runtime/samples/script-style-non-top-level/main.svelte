@@ -1,4 +1,4 @@
 <div>
 	<style>div { color: red; }</style>
-	<script>alert('<>');</script>
+	<script>alert(`<>`);</script>
 </div>

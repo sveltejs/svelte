@@ -1,61 +1,61 @@
 import {strict as assert} from 'assert';
-import {limaxProcessor, unicodeSafeProcessor} from '../../src/utils/slug';
-import {SLUG_SEPARATOR as _, SLUG_LANG} from '../../config';
+import {urlsafeSlugProcessor, unicodeSafeProcessor} from '../../src/utils/slug';
+import {SLUG_SEPARATOR as _} from '../../config';
 
 describe('slug', () => {
-	describe('limaxProcessor (latinize unicode)', () => {
+	describe('urlsafeSlugProcessor', () => {
 		describe('ascii', () => {
 			it('space separated words', () => {
 				assert.equal(
-					limaxProcessor('Text expressions'),
-					`text${_}expressions`
+					urlsafeSlugProcessor('Text expressions'),
+					`Text${_}expressions`
 				);
 			});
 			it('numbered text', () => {
 				assert.equal(
-					limaxProcessor('1. export creates'),
+					urlsafeSlugProcessor('1. export creates'),
 					`1${_}export${_}creates`
 				);
 			});
 			it('punctuated text', () => {
 				assert.equal(
-					limaxProcessor('svelte.VERSION'),
-					`svelte${_}version`
+					urlsafeSlugProcessor('svelte.VERSION'),
+					`svelte${_}VERSION`
 				);
 			});
 			it('text starting with the dollar sign', () => {
 				assert.equal(
-					limaxProcessor('$destroy method'),
+					urlsafeSlugProcessor('$destroy method'),
 					`$destroy${_}method`
 				);
 			});
 			it('numbered text containing the dollar sign', () => {
 				assert.equal(
-					limaxProcessor('1. export $destroy'),
+					urlsafeSlugProcessor('1. export $destroy'),
 					`1${_}export${_}$destroy`
 				);
 			});
 			it('text containing the equal char', () => {
 				assert.equal(
-					limaxProcessor('script context=module'),
+					urlsafeSlugProcessor('script context=module'),
 					`script${_}context${_}module`
 				);
 			});
 			it('text containing the colon char', () => {
 				assert.equal(
-					limaxProcessor('svelte:body'),
+					urlsafeSlugProcessor('svelte:body'),
 					`svelte${_}body`
 				);
 			});
 			it('text containing the slash char', () => {
 				assert.equal(
-					limaxProcessor('svelte/motion'),
+					urlsafeSlugProcessor('svelte/motion'),
 					`svelte${_}motion`
 				);
 			});
 			it('text containing the comma char', () => {
 				assert.equal(
-					limaxProcessor('svelte, motion'),
+					urlsafeSlugProcessor('svelte, motion'),
 					`svelte${_}motion`
 				);
 			});
@@ -63,156 +63,150 @@ describe('slug', () => {
 		describe('unicode', () => {
 			it('should translate symbols to English', () => {
 				assert.equal(
-					limaxProcessor('Ich ♥ Deutsch'),
-					`ich${_}love${_}deutsch`
+					urlsafeSlugProcessor('Ich ♥ Deutsch'),
+					`Ich${_}love${_}Deutsch`
 				);
 			});
 			it('should remove emoji', () => {
 				assert.equal(
-					limaxProcessor('Ich 😍 Deutsch'),
-					`ich${_}deutsch`
-				);
-			});
-			it('should translate symbols to the given language (German)', () => {
-				assert.equal(
-					limaxProcessor('Ich ♥ Deutsch', 'de'),
-					`ich${_}liebe${_}deutsch`
+					urlsafeSlugProcessor('Ich 😍 Deutsch'),
+					`Ich${_}Deutsch`
 				);
 			});
 		});
 		describe('cyricllic', () => {
 			it('space separated words', () => {
 				assert.equal(
-					limaxProcessor('Всплытие и перехват событий'),
-					`vsplytie${_}i${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('Всплытие и перехват событий'),
+					`Vsplytie${_}i${_}perehvat${_}sobytij`
 				);
 			});
 			it('numbered text', () => {
 				assert.equal(
-					limaxProcessor('1 Всплытие и перехват событий'),
-					`1${_}vsplytie${_}i${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('1 Всплытие и перехват событий'),
+					`1${_}Vsplytie${_}i${_}perehvat${_}sobytij`
 				);
 			});
 			it('punctuated text', () => {
 				assert.equal(
-					limaxProcessor('.Всплытие.и.перехват событий'),
-					`vsplytie${_}i${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('.Всплытие.и.перехват событий'),
+					`Vsplytie${_}i${_}perehvat${_}sobytij`
 				);
 			});
 			it('text starting with the dollar sign', () => {
 				assert.equal(
-					limaxProcessor('$Всплытие $ перехват событий'),
-					`$vsplytie${_}$${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('$Всплытие $ перехват событий'),
+					`$Vsplytie${_}$${_}perehvat${_}sobytij`
 				);
 			});
 			it('text containing the dollar sign', () => {
 				assert.equal(
-					limaxProcessor('Всплытие$перехват'),
-					`vsplytie$perekhvat`
+					urlsafeSlugProcessor('Всплытие$перехват'),
+					`Vsplytie$perehvat`
 				);
 			});
 			it('text containing the equal char', () => {
 				assert.equal(
-					limaxProcessor('Всплытие = перехват=событий'),
-					`vsplytie${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('Всплытие = перехват=событий'),
+					`Vsplytie${_}perehvat${_}sobytij`
 				);
 			});
 			it('text containing the colon char', () => {
 				assert.equal(
-					limaxProcessor('Всплытие : перехват:событий'),
-					`vsplytie${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('Всплытие : перехват:событий'),
+					`Vsplytie${_}perehvat${_}sobytij`
 				);
 			});
 			it('text containing the slash char', () => {
 				assert.equal(
-					limaxProcessor('Всплытие / перехват/событий'),
-					`vsplytie${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('Всплытие / перехват/событий'),
+					`Vsplytie${_}perehvat${_}sobytij`
 				);
 			});
 			it('text containing the comma char', () => {
 				assert.equal(
-					limaxProcessor('Всплытие, перехват'),
-					`vsplytie${_}perekhvat`
+					urlsafeSlugProcessor('Всплытие, перехват'),
+					`Vsplytie${_}perehvat`
 				);
 			});
 		});
 		describe('ascii + cyricllic', () => {
 			it('space separated words', () => {
 				assert.equal(
-					limaxProcessor('Всплытие и export перехват событий'),
-					`vsplytie${_}i${_}export${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('Всплытие и export перехват событий'),
+					`Vsplytie${_}i${_}export${_}perehvat${_}sobytij`
 				);
 			});
 			it('ascii word concatenated to a cyricllic word', () => {
 				assert.equal(
-					limaxProcessor('exportВсплытие'),
-					'exportvsplytie'
+					urlsafeSlugProcessor('exportВсплытие'),
+					'exportVsplytie'
 				);
 			});
 			it('cyricllic word concatenated to an ascii word', () => {
 				assert.equal(
-					limaxProcessor('Всплытиеexport'),
-					`vsplytieexport`
+					urlsafeSlugProcessor('Всплытиеexport'),
+					`Vsplytieexport`
 				);
 			});
 			it('numbered text', () => {
 				assert.equal(
-					limaxProcessor('1 export Всплытие и перехват событий'),
-					`1${_}export${_}vsplytie${_}i${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('1 export Всплытие и перехват событий'),
+					`1${_}export${_}Vsplytie${_}i${_}perehvat${_}sobytij`
 				);
 			});
 			it('punctuated text', () => {
 				assert.equal(
-					limaxProcessor('.Всплытие.export.и.перехват событий'),
-					`vsplytie${_}export${_}i${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('.Всплытие.export.и.перехват событий'),
+					`Vsplytie${_}export${_}i${_}perehvat${_}sobytij`
 				);
 			});
 			it('text starting with the dollar sign, followed by ascii char', () => {
 				assert.equal(
-					limaxProcessor('$exportВсплытие перехват событий'),
-					`$exportvsplytie${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('$exportВсплытие перехват событий'),
+					`$exportVsplytie${_}perehvat${_}sobytij`
 				);
 			});
 			it('text starting with the dollar sign, followed by unicode char', () => {
 				assert.equal(
-					limaxProcessor('$Всплытие export перехват событий'),
-					`$vsplytie${_}export${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('$Всплытие export перехват событий'),
+					`$Vsplytie${_}export${_}perehvat${_}sobytij`
 				);
 			});
 			it('text containing the dollar sign, followed by ascii char', () => {
 				assert.equal(
-					limaxProcessor('export $destroy a component prop Всплытие и перехват событий'),
-					`export${_}$destroy${_}a${_}component${_}prop${_}vsplytie${_}i${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('export $destroy a component prop Всплытие и перехват событий'),
+					`export${_}$destroy${_}a${_}component${_}prop${_}Vsplytie${_}i${_}perehvat${_}sobytij`
 				);
 			});
 			it('text containing the dollar sign, followed by unicode char', () => {
 				assert.equal(
-					limaxProcessor('Всплытие export $Всплытие a component prop Всплытие и перехват событий'),
-					`vsplytie${_}export${_}$vsplytie${_}a${_}component${_}prop${_}vsplytie${_}i${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('Всплытие export $Всплытие a component prop Всплытие и перехват событий'),
+					`Vsplytie${_}export${_}$Vsplytie${_}a${_}component${_}prop${_}Vsplytie${_}i${_}perehvat${_}sobytij`
 				);
 			});
 			it('text containing the equal char', () => {
 				assert.equal(
-					limaxProcessor('script context=module Всплытие=и перехват событий'),
-					`script${_}context${_}module${_}vsplytie${_}i${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('script context=module Всплытие=и перехват событий'),
+					`script${_}context${_}module${_}Vsplytie${_}i${_}perehvat${_}sobytij`
 				);
 			});
 			it('text containing the colon char', () => {
 				assert.equal(
-					limaxProcessor('svelte:body Всплытие и:перехват событий'),
-					`svelte${_}body${_}vsplytie${_}i${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('svelte:body Всплытие и:перехват событий'),
+					`svelte${_}body${_}Vsplytie${_}i${_}perehvat${_}sobytij`
 				);
 			});
 			it('text containing the slash char', () => {
 				assert.equal(
-					limaxProcessor('svelte/motion Всплытие и / перехват/событий'),
-					`svelte${_}motion${_}vsplytie${_}i${_}perekhvat${_}sobytii`
+					urlsafeSlugProcessor('svelte/motion Всплытие и / перехват/событий'),
+					`svelte${_}motion${_}Vsplytie${_}i${_}perehvat${_}sobytij`
 				);
 			});
 			it('text containing the comma char', () => {
 				assert.equal(
-					limaxProcessor('Всплытие, export'),
-					`vsplytie${_}export`
+					urlsafeSlugProcessor('Всплытие, export'),
+					`Vsplytie${_}export`
 				);
 			});
 		});
@@ -223,7 +217,7 @@ describe('slug', () => {
 			it('space separated words', () => {
 				assert.equal(
 					unicodeSafeProcessor('Text expressions'),
-					`text${_}expressions`
+					`Text${_}expressions`
 				);
 			});
 			it('numbered text', () => {
@@ -235,7 +229,7 @@ describe('slug', () => {
 			it('punctuated text', () => {
 				assert.equal(
 					unicodeSafeProcessor('svelte.VERSION'),
-					`svelte${_}version`
+					`svelte${_}VERSION`
 				);
 			});
 			it('text starting with the dollar sign', () => {
@@ -279,13 +273,13 @@ describe('slug', () => {
 			it('should preserve symbols', () => {
 				assert.equal(
 					unicodeSafeProcessor('Ich ♥ Deutsch'),
-					`ich${_}love${_}deutsch`
+					`Ich${_}love${_}Deutsch`
 				);
 			});
 			it('should remove emoji', () => {
 				assert.equal(
 					unicodeSafeProcessor('Ich 😍 Deutsch'),
-					`ich${_}deutsch`
+					`Ich${_}Deutsch`
 				);
 			});
 		});

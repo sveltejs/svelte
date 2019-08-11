@@ -1,7 +1,14 @@
-src/shared
-shared.js
-store.js
-test/test.js
-test/setup.js
 **/_actual.js
 **/expected.js
+test/*/samples/*/output.js
+node_modules
+
+# output files
+animate/*.js
+esing/*.js
+internal/*.js
+motion/*.js
+store/*.js
+transition/*.js
+index.js
+compiler.js

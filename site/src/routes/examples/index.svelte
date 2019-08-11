@@ -26,7 +26,7 @@
 		svelteUrl
 	} from '../../config';
 	import { process_example } from '../../utils/examples';
-	import { getFragment } from '../../utils/navigation';
+	import { getFragment } from '@sveltejs/site-kit/utils/navigation';
 	import TableOfContents from './_TableOfContents.svelte';
 
 	export let sections;
@@ -37,7 +37,11 @@
 	let offset = 1;
 	let repl;
 	let isLoading = false;
-	let cache = {};
+	const cache = {};
+
+	function showExampleCodeOnChange() {
+		offset = 1;
+	}
 
 	$: title = title_by_slug[active_slug] || '';
 	$: first_slug = sections[0].examples[0].slug;
@@ -46,25 +50,25 @@
 	$: if (repl && active_slug) {
 		if (active_slug in cache) {
 			repl.set({ components: cache[active_slug] });
-			offset = 1;
+			showExampleCodeOnChange();
 		} else {
 			isLoading = true;
 			fetch(`examples/${active_slug}.json`)
-			.then(async response => {
-				if (response.ok) {
-					const {files} = await response.json();
-					return process_example(files);
-				}
-			})
-			.then(components => {
-				cache[active_slug] = components;
- 				repl.set({components});
-				offset = 1;
-				isLoading = false;
-			})
-			.catch(function(error) {
-				isLoading = false;
-			});
+				.then(async response => {
+					if (response.ok) {
+						const {files} = await response.json();
+						return process_example(files);
+					}
+				})
+				.then(components => {
+					cache[active_slug] = components;
+					repl.set({components});
+					showExampleCodeOnChange();
+					isLoading = false;
+				})
+				.catch(() => {
+					isLoading = false;
+				});
 		}
 	}
 
@@ -97,13 +101,12 @@
 </svelte:head>
 
 <div class='examples-container' bind:clientWidth={width}>
-	<div
-		class="viewport offset-{offset}"
-	>
+	<div class="viewport offset-{offset}">
 		<TableOfContents {sections} active_section={active_slug} {isLoading} />
-		<div class="toc" class:loading={isLoading}>
+		<div class="repl-container" class:loading={isLoading}>
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				{svelteUrl}
 				{rollupUrl}
 				orientation={replOrientation}
@@ -136,8 +139,22 @@
 		grid-auto-rows: 100%;
 	}
 
-	.toc.loading {
+	.repl-container.loading {
 		opacity: 0.6;
+	}
+
+	/* temp fix for #2499 and #2550 while waiting for a fix for https://github.com/sveltejs/svelte-repl/issues/8 */
+
+	.repl-container :global(.tab-content),
+	.repl-container :global(.tab-content.visible) {
+		pointer-events: all;
+		opacity: 1;
+	}
+	.repl-container :global(.tab-content) {
+		visibility: hidden;
+	}
+	.repl-container :global(.tab-content.visible) {
+		visibility: visible;
 	}
 
 	.offset-1 { transform: translate(-33.333%, 0); }
