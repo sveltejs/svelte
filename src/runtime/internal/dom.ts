@@ -73,11 +73,10 @@ export function stop_propagation(fn) {
 	};
 }
 
-export function self(fn, el) {
+export function self(fn) {
 	return function(event) {
-		if(event.target !== el) return;
 		// @ts-ignore
-		return fn.call(this, event);
+		if (event.target === this) fn.call(this, event);
 	};
 }
 
