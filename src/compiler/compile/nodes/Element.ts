@@ -63,7 +63,8 @@ const valid_modifiers = new Set([
 	'stopPropagation',
 	'capture',
 	'once',
-	'passive'
+	'passive',
+	'self'
 ]);
 
 const passive_events = new Set([
