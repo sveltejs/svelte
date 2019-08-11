@@ -94,6 +94,8 @@ An element or component can have multiple spread attributes, interspersed with r
 <Widget {...things}/>
 ```
 
+---
+
 *`$$props`* references all props that are passed to a component – including ones that are not declared with `export`. It is useful in rare cases, but not generally recommended, as it is difficult for Svelte to optimise.
 
 ```html
