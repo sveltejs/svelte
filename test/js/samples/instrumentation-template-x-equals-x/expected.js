@@ -15,7 +15,7 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var button, t1, p, t2, t3_value = ctx.things.length, t3, dispose;
+	var button, t1, p, t2, t3_value = ctx.things.length + "", t3, dispose;
 
 	return {
 		c() {
@@ -37,7 +37,7 @@ function create_fragment(ctx) {
 		},
 
 		p(changed, ctx) {
-			if ((changed.things) && t3_value !== (t3_value = ctx.things.length)) {
+			if ((changed.things) && t3_value !== (t3_value = ctx.things.length + "")) {
 				set_data(t3, t3_value);
 			}
 		},
