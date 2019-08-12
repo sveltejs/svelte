@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 3.8.0
+
+* Add `self` event modifier ([#3372](https://github.com/sveltejs/svelte/issues/3372))
+* Generate valid code when spreading literal ([#3185](https://github.com/sveltejs/svelte/issues/3185))
+* Coerce tag values to string before checking equality ([#2290](https://github.com/sveltejs/svelte/issues/2290))
+
 ## 3.7.1
 
 * Assume `let` variables are dynamic for slots ([#3354](https://github.com/sveltejs/svelte/issues/3354))
