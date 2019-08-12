@@ -146,7 +146,7 @@ if (typeof HTMLElement !== 'undefined') {
 			// @ts-ignore todo: improve typings
 			for (const key in this.$$.slotted) {
 				// @ts-ignore todo: improve typings
-				this.appendChild(this.$$.slotted[key]);
+				this.$$.slotted[key].m(this, null);
 			}
 		}
 
@@ -155,6 +155,11 @@ if (typeof HTMLElement !== 'undefined') {
 		}
 
 		$destroy() {
+			// @ts-ignore todo: improve typings
+			for (const key in this.$$.slotted) {
+				// @ts-ignore todo: improve typings
+				this.$$.slotted[key].d();
+			}
 			destroy_component(this, 1);
 			this.$destroy = noop;
 		}

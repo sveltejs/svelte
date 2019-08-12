@@ -7,7 +7,9 @@ export default async function (target) {
 
 	const block = el.shadowRoot.children[0];
 
-	const [slot] = block.children;
+	const h1 = block.shadowRoot.children[0];
+
+	const [slot] = h1.children;
 
 	assert.equal(slot.assignedNodes().length, 1);
 }

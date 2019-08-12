@@ -44,8 +44,17 @@ class Component extends SvelteElement {
 		init(this, { target: this.shadowRoot }, null, create_fragment, safe_not_equal, []);
 
 		if (options) {
+			this.$$.slotted = {};
+
 			if (options.target) {
 				insert(options.target, this, options.anchor);
+			}
+
+			if (options.props) {
+				for (const key in options.props.$$slots) {
+					this.$$.slotted[key] = options.props.$$slots[key][0]();
+					this.$$.slotted[key].c();
+				}
 			}
 		}
 	}

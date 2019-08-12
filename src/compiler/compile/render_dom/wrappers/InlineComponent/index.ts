@@ -449,9 +449,15 @@ export default class InlineComponentWrapper extends Wrapper {
 				);
 			}
 
-			block.builders.mount.add_line(
-				`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
-			);
+			if (component.compile_options.customElement) {
+				block.builders.mount.add_line(
+					`@insert(${ parent_node || '#target'}, ${name}, ${parent_node ? 'null' : 'anchor'});`
+				)
+			} else {
+				block.builders.mount.add_line(
+					`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
+				);
+			}
 
 			block.builders.intro.add_block(deindent`
 				@transition_in(${name}.$$.fragment, #local);
