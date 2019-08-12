@@ -468,7 +468,8 @@ export default function dom(
 
 						if (options.props) {
 							for (const key in options.props.$$slots) {
-								this.$$.slotted[key] = options.props.$$slots[key][0]();
+								const ctx = options.props.$$scope ? options.props.$$scope.ctx : {};
+								this.$$.slotted[key] = options.props.$$slots[key][0](ctx);
 								this.$$.slotted[key].c();
 							}
 							${(props.length > 0 || uses_props) && deindent`
