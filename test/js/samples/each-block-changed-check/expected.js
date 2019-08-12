@@ -25,7 +25,7 @@ function get_each_context(ctx, list, i) {
 
 // (8:0) {#each comments as comment, i}
 function create_each_block(ctx) {
-	var div, strong, t0, t1, span, t2_value = ctx.comment.author, t2, t3, t4_value = ctx.elapsed(ctx.comment.time, ctx.time), t4, t5, t6, html_tag, raw_value = ctx.comment.html;
+	var div, strong, t0, t1, span, t2_value = ctx.comment.author + "", t2, t3, t4_value = ctx.elapsed(ctx.comment.time, ctx.time) + "", t4, t5, t6, html_tag, raw_value = ctx.comment.html + "";
 
 	return {
 		c() {
@@ -59,15 +59,15 @@ function create_each_block(ctx) {
 		},
 
 		p(changed, ctx) {
-			if ((changed.comments) && t2_value !== (t2_value = ctx.comment.author)) {
+			if ((changed.comments) && t2_value !== (t2_value = ctx.comment.author + "")) {
 				set_data(t2, t2_value);
 			}
 
-			if ((changed.elapsed || changed.comments || changed.time) && t4_value !== (t4_value = ctx.elapsed(ctx.comment.time, ctx.time))) {
+			if ((changed.elapsed || changed.comments || changed.time) && t4_value !== (t4_value = ctx.elapsed(ctx.comment.time, ctx.time) + "")) {
 				set_data(t4, t4_value);
 			}
 
-			if ((changed.comments) && raw_value !== (raw_value = ctx.comment.html)) {
+			if ((changed.comments) && raw_value !== (raw_value = ctx.comment.html + "")) {
 				html_tag.p(raw_value);
 			}
 		},
