@@ -84,7 +84,7 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 			: null);
 	}
 
-	if (element.name.toLowerCase() === 'svg') return namespaces.svg;
+	if (svg.test(element.name.toLowerCase())) return namespaces.svg;
 	if (parent_element.name.toLowerCase() === 'foreignobject') return null;
 
 	return parent_element.namespace;
