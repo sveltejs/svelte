@@ -15,6 +15,7 @@ module.exports = {
 		'no-var': 2,
 		'no-unreachable': 2,
 		'valid-typeof': 2,
+		'quotes': ['error', 'single', 'avoid-escape'],
 		'quote-props': [2, 'as-needed'],
 		'one-var': [2, 'never'],
 		'prefer-arrow-callback': 2,
