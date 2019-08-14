@@ -132,14 +132,14 @@ export default function ssr(
 			.join(', ')};`,
 		component.javascript,
 		parent_bindings.join('\n'),
-		css.code && `$$result.css.add(#css);`,
+		css.code && '$$result.css.add(#css);',
 		main
 	].filter(Boolean);
 
 	return (deindent`
 		${css.code && deindent`
 		const #css = {
-			code: ${css.code ? stringify(css.code) : `''`},
+			code: ${css.code ? stringify(css.code) : '\'\''},
 			map: ${css.map ? stringify(css.map.toString()) : 'null'}
 		};`}
 

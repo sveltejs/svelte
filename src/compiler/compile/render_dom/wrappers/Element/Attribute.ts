@@ -80,7 +80,7 @@ export default class AttributeWrapper {
 				value = (this.node.chunks[0] as Expression).render(block);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
-				const prefix = this.node.chunks[0].type === 'Text' ? '' : `"" + `;
+				const prefix = this.node.chunks[0].type === 'Text' ? '' : '"" + ';
 
 				const text = this.node.name === 'class'
 					? this.get_class_name_text()
@@ -151,7 +151,7 @@ export default class AttributeWrapper {
 			const dependencies = this.node.get_dependencies();
 			if (dependencies.length > 0 || is_select_value_attribute) {
 				const changed_check = (
-					(block.has_outros ? `!#current || ` : '') +
+					(block.has_outros ? '!#current || ' : '') +
 					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 				);
 
@@ -222,7 +222,7 @@ export default class AttributeWrapper {
 		if (this.node.is_true) return '';
 
 		const value = this.node.chunks;
-		if (value.length === 0) return `=""`;
+		if (value.length === 0) return '=""';
 
 		return `="${value.map(chunk => {
 			return chunk.type === 'Text'

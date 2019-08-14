@@ -39,7 +39,7 @@ export default class TitleWrapper extends Wrapper {
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				value =
-					(this.node.children[0].type === 'Text' ? '' : `"" + `) +
+					(this.node.children[0].type === 'Text' ? '' : '"" + ') +
 					this.node.children
 						.map((chunk) => {
 							if (chunk.type === 'Text') {
@@ -60,7 +60,7 @@ export default class TitleWrapper extends Wrapper {
 			}
 
 			const last = this.node.should_cache && block.get_unique_name(
-				`title_value`
+				'title_value'
 			);
 
 			if (this.node.should_cache) block.add_variable(last);
@@ -75,7 +75,7 @@ export default class TitleWrapper extends Wrapper {
 			if (all_dependencies.size) {
 				const dependencies = Array.from(all_dependencies);
 				const changed_check = (
-					(block.has_outros ? `!#current || ` : '') +
+					(block.has_outros ? '!#current || ' : '') +
 					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 				);
 

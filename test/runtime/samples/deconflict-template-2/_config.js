@@ -1,3 +1,3 @@
 export default {
-	html: `template`
+	html: 'template'
 };

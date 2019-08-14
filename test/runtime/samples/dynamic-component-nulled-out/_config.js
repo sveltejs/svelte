@@ -8,7 +8,7 @@ export default {
 
 		component.Bar = null;
 
-		assert.htmlEqual(target.innerHTML, ``);
+		assert.htmlEqual(target.innerHTML, '');
 
 		component.Bar = Bar;
 

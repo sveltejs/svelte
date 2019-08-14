@@ -144,7 +144,7 @@ export default class SlotWrapper extends Wrapper {
 		);
 
 		const mount_leadin = block.builders.mount.toString() !== mount_before
-			? `else`
+			? 'else'
 			: `if (${slot})`;
 
 		block.builders.mount.add_block(deindent`

@@ -398,7 +398,7 @@ export default class ElementWrapper extends Wrapper {
 
 		return `@claim_element(${nodes}, "${name}", ${attributes
 			? `{ ${attributes} }`
-			: `{}`}, ${this.node.namespace === namespaces.svg ? true : false})`;
+			: '{}'}, ${this.node.namespace === namespaces.svg ? true : false})`;
 	}
 
 	add_bindings(block: Block) {
@@ -479,7 +479,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			this.renderer.component.partly_hoisted.push(deindent`
-				function ${handler}(${contextual_dependencies.size > 0 ? `{ ${Array.from(contextual_dependencies).join(', ')} }` : ``}) {
+				function ${handler}(${contextual_dependencies.size > 0 ? `{ ${Array.from(contextual_dependencies).join(', ')} }` : ''}) {
 					${group.bindings.map(b => b.handler.mutation)}
 					${Array.from(dependencies).filter(dep => dep[0] !== '$').map(dep => `${this.renderer.component.invalidate(dep)};`)}
 				}

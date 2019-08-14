@@ -400,8 +400,8 @@ export default class Stylesheet {
 		this.children.forEach(child => {
 			child.warn_on_unused_selector((selector: Selector) => {
 				component.warn(selector.node, {
-					code: `css-unused-selector`,
-					message: `Unused CSS selector`
+					code: 'css-unused-selector',
+					message: 'Unused CSS selector'
 				});
 			});
 		});

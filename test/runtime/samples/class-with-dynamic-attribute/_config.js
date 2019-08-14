@@ -3,7 +3,7 @@ export default {
 		myClass: 'one two'
 	},
 
-	html: `<div class="one two three"></div>`,
+	html: '<div class="one two three"></div>',
 
 	test({ assert, component, target, window }) {
 		component.myClass = 'one';

@@ -108,8 +108,8 @@ export default function read_context(parser: Parser) {
 
 				if (parser.eat(',')) {
 					parser.error({
-						code: `comma-after-rest`,
-						message: `Comma is not permitted after the rest element`
+						code: 'comma-after-rest',
+						message: 'Comma is not permitted after the rest element'
 					}, parser.index - 1);
 				}
 

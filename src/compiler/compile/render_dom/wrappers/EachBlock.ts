@@ -28,7 +28,7 @@ export class ElseBlockWrapper extends Wrapper {
 
 		this.block = block.child({
 			comment: create_debugging_comment(node, this.renderer.component),
-			name: this.renderer.component.get_unique_name(`create_else_block`)
+			name: this.renderer.component.get_unique_name('create_else_block')
 		});
 
 		this.fragment = new FragmentWrapper(
@@ -221,8 +221,8 @@ export default class EachBlockWrapper extends Wrapper {
 		if (needs_anchor) {
 			block.add_element(
 				update_anchor_node,
-				`@empty()`,
-				parent_nodes && `@empty()`,
+				'@empty()',
+				parent_nodes && '@empty()',
 				parent_node
 			);
 		}
@@ -316,7 +316,7 @@ export default class EachBlockWrapper extends Wrapper {
 		const lookup = block.get_unique_name(`${this.var}_lookup`);
 
 		block.add_variable(iterations, '[]');
-		block.add_variable(lookup, `new @_Map()`);
+		block.add_variable(lookup, 'new @_Map()');
 
 		if (this.fragment.nodes[0].is_dom_node()) {
 			this.block.first = this.fragment.nodes[0].var;
@@ -324,8 +324,8 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.first = this.block.get_unique_name('first');
 			this.block.add_element(
 				this.block.first,
-				`@empty()`,
-				parent_nodes && `@empty()`,
+				'@empty()',
+				parent_nodes && '@empty()',
 				null
 			);
 		}
@@ -360,20 +360,20 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const destroy = this.node.has_animation
 			? (this.block.has_outros
-				? `@fix_and_outro_and_destroy_block`
-				: `@fix_and_destroy_block`)
+				? '@fix_and_outro_and_destroy_block'
+				: '@fix_and_destroy_block')
 			: this.block.has_outros
-				? `@outro_and_destroy_block`
-				: `@destroy_block`;
+				? '@outro_and_destroy_block'
+				: '@destroy_block';
 
 		block.builders.update.add_block(deindent`
 			const ${this.vars.each_block_value} = ${snippet};
 
-			${this.block.has_outros && `@group_outros();`}
+			${this.block.has_outros && '@group_outros();'}
 			${this.node.has_animation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
 			${iterations} = @update_keyed_each(${iterations}, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
 			${this.node.has_animation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
-			${this.block.has_outros && `@check_outros();`}
+			${this.block.has_outros && '@check_outros();'}
 		`);
 
 		if (this.block.has_outros) {
@@ -485,7 +485,7 @@ export default class EachBlockWrapper extends Wrapper {
 						}
 					`;
 
-			const start = this.block.has_update_method ? '0' : `#old_length`;
+			const start = this.block.has_update_method ? '0' : '#old_length';
 
 			let remove_old_blocks;
 
@@ -504,7 +504,7 @@ export default class EachBlockWrapper extends Wrapper {
 				`;
 			} else {
 				remove_old_blocks = deindent`
-					for (${this.block.has_update_method ? `` : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
+					for (${this.block.has_update_method ? '' : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
 						${iterations}[#i].d(1);
 					}
 					${!fixed_length && `${view_length} = ${this.vars.each_block_value}.${length};`}

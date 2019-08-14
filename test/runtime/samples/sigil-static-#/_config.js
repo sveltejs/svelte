@@ -1,3 +1,3 @@
 export default {
-	html: `#foo`
+	html: '#foo'
 };

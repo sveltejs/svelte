@@ -1,5 +1,5 @@
 export default {
-	html: `<div>undefinedxundefined</div>`,
+	html: '<div>undefinedxundefined</div>',
 
 	skip: true, // some weird stuff happening with JSDOM 11
 	// skip: /^v4/.test(process.version), // node 4 apparently does some dumb stuff

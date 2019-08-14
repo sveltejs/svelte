@@ -14,13 +14,13 @@ export function spread(args) {
 
 		const value = attributes[name];
 		if (value === undefined) return;
-		if (value === true) str += " " + name;
+		if (value === true) str += ' ' + name;
 
 		const escaped = String(value)
 			.replace(/"/g, '&#34;')
 			.replace(/'/g, '&#39;');
 
-		str += " " + name + "=" + JSON.stringify(escaped);
+		str += ' ' + name + '=' + JSON.stringify(escaped);
 	});
 
 	return str;
@@ -126,5 +126,5 @@ export function add_attribute(name, value, boolean) {
 }
 
 export function add_classes(classes) {
-	return classes ? ` class="${classes}"` : ``;
+	return classes ? ` class="${classes}"` : '';
 }

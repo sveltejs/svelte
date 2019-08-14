@@ -46,9 +46,9 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 	}
 
 	if (name && /^[a-z]/.test(name)) {
-		const message = `options.name should be capitalised`;
+		const message = 'options.name should be capitalised';
 		warnings.push({
-			code: `options-lowercase-name`,
+			code: 'options-lowercase-name',
 			message,
 			filename,
 			toString: () => message,

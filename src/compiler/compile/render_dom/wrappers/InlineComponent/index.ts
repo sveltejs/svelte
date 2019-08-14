@@ -70,7 +70,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		if (this.node.children.length) {
 			const default_slot = block.child({
 				comment: create_debugging_comment(node, renderer.component),
-				name: renderer.component.get_unique_name(`create_default_slot`)
+				name: renderer.component.get_unique_name('create_default_slot')
 			});
 
 			this.renderer.blocks.push(default_slot);
@@ -122,7 +122,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const slot_props = Array.from(this.slots).map(([name, slot]) => `${quote_name_if_necessary(name)}: [${slot.block.name}${slot.fn ? `, ${slot.fn}` : ''}]`);
 
 		const initial_props = slot_props.length > 0
-			? [`$$slots: ${stringify_props(slot_props)}`, `$$scope: { ctx }`]
+			? [`$$slots: ${stringify_props(slot_props)}`, '$$scope: { ctx }']
 			: [];
 
 		const attribute_object = uses_spread
@@ -153,7 +153,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			// will complain that options.target is missing. This would
 			// work better if components had separate public and private
 			// APIs
-			component_opts.push(`$$inline: true`);
+			component_opts.push('$$inline: true');
 		}
 
 		const fragment_dependencies = new Set(this.fragment ? ['$$scope'] : []);

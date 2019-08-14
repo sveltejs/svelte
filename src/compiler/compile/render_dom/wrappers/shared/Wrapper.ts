@@ -53,8 +53,8 @@ export default class Wrapper {
 		if (needs_anchor) {
 			block.add_element(
 				anchor,
-				`@empty()`,
-				parent_nodes && `@empty()`,
+				'@empty()',
+				parent_nodes && '@empty()',
 				parent_node
 			);
 		}

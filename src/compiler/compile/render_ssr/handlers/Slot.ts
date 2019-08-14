@@ -14,5 +14,5 @@ export default function(node: Slot, renderer: Renderer, options: RenderOptions) 
 
 	renderer.render(node.children, options);
 
-	renderer.append(`\`}`);
+	renderer.append('`}');
 }

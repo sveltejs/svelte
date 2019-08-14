@@ -132,8 +132,8 @@ export default class Expression {
 
 					if (name[0] === '$' && template_scope.names.has(name.slice(1))) {
 						component.error(node, {
-							code: `contextual-store`,
-							message: `Stores must be declared at the top level of the component (this may change in a future version of Svelte)`
+							code: 'contextual-store',
+							message: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
 						});
 					}
 
@@ -309,7 +309,7 @@ export default class Expression {
 					if (pending_assignments.size > 0) {
 						if (node.type !== 'ArrowFunctionExpression') {
 							// this should never happen!
-							throw new Error(`Well that's odd`);
+							throw new Error('Well that\'s odd');
 						}
 
 						// TOOD optimisation — if this is an event handler,
@@ -463,7 +463,7 @@ export default class Expression {
 
 						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
 							if (node.argument) {
-								code.overwrite(node.start, node.argument.start, `var $$result = `);
+								code.overwrite(node.start, node.argument.start, 'var $$result = ');
 								code.appendLeft(node.end, `${insert}; return $$result`);
 							} else {
 								code.prependRight(node.start, `${insert}; `);

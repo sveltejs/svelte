@@ -1,5 +1,5 @@
 export default {
-	html: `<div>1024x768</div>`,
+	html: '<div>1024x768</div>',
 
 	skip: true, // some weird stuff happening with JSDOM 11
 	// skip: /^v4/.test(process.version), // node 4 apparently does some dumb stuff

@@ -3,7 +3,7 @@ import get_object from '../utils/get_object';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
-import {dimensions} from "../../utils/patterns";
+import {dimensions} from '../../utils/patterns';
 
 // TODO this should live in a specific binding
 const read_only_media_attributes = new Set([

@@ -28,7 +28,7 @@ export default class Tag extends Wrapper {
 
 		if (dependencies.length > 0) {
 			const changed_check = (
-				(block.has_outros ? `!#current || ` : '') +
+				(block.has_outros ? '!#current || ' : '') +
 				dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')
 			);
 

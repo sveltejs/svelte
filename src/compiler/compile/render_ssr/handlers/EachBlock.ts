@@ -16,13 +16,13 @@ export default function(node: EachBlock, renderer: Renderer, options: RenderOpti
 
 	renderer.render(node.children, options);
 
-	const close = `\`)`;
+	const close = '`)';
 	renderer.append(close);
 
 	if (node.else) {
-		renderer.append(` : \``);
+		renderer.append(' : `');
 		renderer.render(node.else.children, options);
-		renderer.append(`\``);
+		renderer.append('`');
 	}
 
 	renderer.append('}');

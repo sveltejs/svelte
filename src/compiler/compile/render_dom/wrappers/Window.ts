@@ -68,9 +68,9 @@ export default class WindowWrapper extends Wrapper {
 			});
 		});
 
-		const scrolling = block.get_unique_name(`scrolling`);
-		const clear_scrolling = block.get_unique_name(`clear_scrolling`);
-		const scrolling_timeout = block.get_unique_name(`scrolling_timeout`);
+		const scrolling = block.get_unique_name('scrolling');
+		const clear_scrolling = block.get_unique_name('clear_scrolling');
+		const scrolling_timeout = block.get_unique_name('scrolling_timeout');
 
 		Object.keys(events).forEach(event => {
 			const handler_name = block.get_unique_name(`onwindow${event}`);
@@ -148,9 +148,9 @@ export default class WindowWrapper extends Wrapper {
 					${scrolling} = true;
 					@_clearTimeout(${scrolling_timeout});
 					@_scrollTo(${
-						bindings.scrollX ? `ctx.${bindings.scrollX}` : `@_window.pageXOffset`
+						bindings.scrollX ? `ctx.${bindings.scrollX}` : '@_window.pageXOffset'
 					}, ${
-						bindings.scrollY ? `ctx.${bindings.scrollY}` : `@_window.pageYOffset`
+						bindings.scrollY ? `ctx.${bindings.scrollY}` : '@_window.pageYOffset'
 					});
 					${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
 				}
@@ -159,7 +159,7 @@ export default class WindowWrapper extends Wrapper {
 
 		// another special case. (I'm starting to think these are all special cases.)
 		if (bindings.online) {
-			const handler_name = block.get_unique_name(`onlinestatuschanged`);
+			const handler_name = block.get_unique_name('onlinestatuschanged');
 			const name = bindings.online;
 
 			component.add_var({

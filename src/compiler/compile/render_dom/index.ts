@@ -23,7 +23,7 @@ export default function dom(
 	block.has_outro_method = true;
 
 	// prevent fragment being created twice (#1063)
-	if (options.customElement) block.builders.create.add_line(`this.c = @noop;`);
+	if (options.customElement) block.builders.create.add_line('this.c = @noop;');
 
 	const builder = new CodeBuilder();
 
@@ -72,7 +72,7 @@ export default function dom(
 	);
 
 	const uses_props = component.var_lookup.has('$$props');
-	const $$props = uses_props ? `$$new_props` : `$$props`;
+	const $$props = uses_props ? '$$new_props' : '$$props';
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
@@ -80,7 +80,7 @@ export default function dom(
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
 		? deindent`
 			${$$props} => {
-				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
+				${uses_props && component.invalidate('$$props', '$$props = @assign(@assign({}, $$props), $$new_props)')}
 				${writable_props.map(prop =>
 					`if ('${prop.export_name}' in ${$$props}) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
@@ -93,7 +93,7 @@ export default function dom(
 
 	const body = [];
 
-	const not_equal = component.component_options.immutable ? `@not_equal` : `@safe_not_equal`;
+	const not_equal = component.component_options.immutable ? '@not_equal' : '@safe_not_equal';
 	let dev_props_check;
 
 	props.forEach(x => {
@@ -144,7 +144,7 @@ export default function dom(
 		if (expected.length) {
 			dev_props_check = deindent`
 				const { ctx } = this.$$;
-				const props = ${options.customElement ? `this.attributes` : `options.props || {}`};
+				const props = ${options.customElement ? 'this.attributes' : 'options.props || {}'};
 				${expected.map(prop => deindent`
 				if (ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
 					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
@@ -209,7 +209,7 @@ export default function dom(
 							if (single && !(variable.subscribable && variable.reassigned)) {
 								if (variable.referenced || variable.is_reactive_dependency || variable.export_name) {
 									code.prependRight(node.start, `$$invalidate('${name}', `);
-									code.appendLeft(node.end, `)`);
+									code.appendLeft(node.end, ')');
 								}
 							} else {
 								pending_assignments.add(name);
@@ -225,7 +225,7 @@ export default function dom(
 						const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
 						pending_assignments = new Set();
 
-						code.prependRight(node.body.start, `{ const $$result = `);
+						code.prependRight(node.body.start, '{ const $$result = ');
 						code.appendLeft(node.body.end, `; ${insert}; return $$result; }`);
 
 						pending_assignments = new Set();
@@ -236,7 +236,7 @@ export default function dom(
 
 						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
 							if (node.argument) {
-								code.overwrite(node.start, node.argument.start, `var $$result = `);
+								code.overwrite(node.start, node.argument.start, 'var $$result = ');
 								code.appendLeft(node.argument.end, `; ${insert}; return $$result`);
 							} else {
 								code.prependRight(node.start, `${insert}; `);
@@ -255,7 +255,7 @@ export default function dom(
 		});
 
 		if (pending_assignments.size > 0) {
-			throw new Error(`TODO this should not happen!`);
+			throw new Error('TODO this should not happen!');
 		}
 
 		component.rewrite_props(({ name, reassigned }) => {
@@ -315,7 +315,7 @@ export default function dom(
 	}
 
 	if (renderer.binding_groups.length > 0) {
-		filtered_declarations.push(`$$binding_groups`);
+		filtered_declarations.push('$$binding_groups');
 	}
 
 	const has_definition = (
@@ -418,9 +418,9 @@ export default function dom(
 
 				${unknown_props_check}
 
-				${component.slots.size && `let { $$slots = {}, $$scope } = $$props;`}
+				${component.slots.size && 'let { $$slots = {}, $$scope } = $$props;'}
 
-				${renderer.binding_groups.length > 0 && `const $$binding_groups = [${renderer.binding_groups.map(_ => `[]`).join(', ')}];`}
+				${renderer.binding_groups.length > 0 && `const $$binding_groups = [${renderer.binding_groups.map(_ => '[]').join(', ')}];`}
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
@@ -488,7 +488,7 @@ export default function dom(
 		builder.add_block(deindent`
 			class ${name} extends @${superclass} {
 				constructor(options) {
-					super(${options.dev && `options`});
+					super(${options.dev && 'options'});
 					${should_add_css && `if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
 					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 

@@ -1,3 +1,3 @@
 export default {
-	html: `<span title='"foo"'>foo</span>`
+	html: '<span title=\'"foo"\'>foo</span>'
 };

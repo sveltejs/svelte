@@ -8,7 +8,7 @@ export default function(node: DebugTag, renderer: Renderer, options: RenderOptio
 	const { line, column } = options.locate(node.start + 1);
 
 	const obj = node.expressions.length === 0
-		? `{}`
+		? '{}'
 		: `{ ${node.expressions
 			.map(e => e.node.name)
 			.join(', ')} }`;

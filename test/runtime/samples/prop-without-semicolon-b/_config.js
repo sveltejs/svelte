@@ -3,5 +3,5 @@ export default {
 		name: 'world'
 	},
 
-	html: `<h1>Hello world!</h1>`
+	html: '<h1>Hello world!</h1>'
 };

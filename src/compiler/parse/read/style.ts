@@ -18,7 +18,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	} catch (err) {
 		if (err.name === 'CssSyntaxError') {
 			parser.error({
-				code: `css-syntax-error`,
+				code: 'css-syntax-error',
 				message: err.message
 			}, err.offset);
 		} else {
@@ -39,7 +39,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 					if (is_ref_selector(a, b)) {
 						parser.error({
-							code: `invalid-ref-selector`,
+							code: 'invalid-ref-selector',
 							message: 'ref selectors are no longer supported'
 						}, a.loc.start.offset);
 					}

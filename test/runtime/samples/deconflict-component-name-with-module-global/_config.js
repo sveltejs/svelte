@@ -5,5 +5,5 @@ export default {
 
 	preserveIdentifiers: true,
 
-	html: `<p>true</p>`
+	html: '<p>true</p>'
 };

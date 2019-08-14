@@ -220,12 +220,12 @@ export default class Block {
 			this.add_variable('#current');
 
 			if (!this.builders.intro.is_empty()) {
-				this.builders.intro.add_line(`#current = true;`);
-				this.builders.mount.add_line(`#current = true;`);
+				this.builders.intro.add_line('#current = true;');
+				this.builders.mount.add_line('#current = true;');
 			}
 
 			if (!this.builders.outro.is_empty()) {
-				this.builders.outro.add_line(`#current = false;`);
+				this.builders.outro.add_line('#current = false;');
 			}
 		}
 
@@ -244,16 +244,16 @@ export default class Block {
 		}
 
 		if (this.first) {
-			properties.add_block(`first: null,`);
+			properties.add_block('first: null,');
 			this.builders.hydrate.add_line(`this.first = ${this.first};`);
 		}
 
 		if (this.builders.create.is_empty() && this.builders.hydrate.is_empty()) {
-			properties.add_line(`c: @noop,`);
+			properties.add_line('c: @noop,');
 		} else {
 			const hydrate = !this.builders.hydrate.is_empty() && (
 				this.renderer.options.hydratable
-					? `this.h()`
+					? 'this.h()'
 					: this.builders.hydrate
 			);
 
@@ -267,12 +267,12 @@ export default class Block {
 
 		if (this.renderer.options.hydratable || !this.builders.claim.is_empty()) {
 			if (this.builders.claim.is_empty() && this.builders.hydrate.is_empty()) {
-				properties.add_line(`l: @noop,`);
+				properties.add_line('l: @noop,');
 			} else {
 				properties.add_block(deindent`
 					${method_name('l', 'claim')}(nodes) {
 						${this.builders.claim}
-						${this.renderer.options.hydratable && !this.builders.hydrate.is_empty() && `this.h();`}
+						${this.renderer.options.hydratable && !this.builders.hydrate.is_empty() && 'this.h();'}
 					},
 				`);
 			}
@@ -287,7 +287,7 @@ export default class Block {
 		}
 
 		if (this.builders.mount.is_empty()) {
-			properties.add_line(`m: @noop,`);
+			properties.add_line('m: @noop,');
 		} else {
 			properties.add_block(deindent`
 				${method_name('m', 'mount')}(#target, anchor) {
@@ -298,11 +298,11 @@ export default class Block {
 
 		if (this.has_update_method || this.maintain_context) {
 			if (this.builders.update.is_empty() && !this.maintain_context) {
-				properties.add_line(`p: @noop,`);
+				properties.add_line('p: @noop,');
 			} else {
 				properties.add_block(deindent`
 					${method_name('p', 'update')}(changed, ${this.maintain_context ? 'new_ctx' : 'ctx'}) {
-						${this.maintain_context && `ctx = new_ctx;`}
+						${this.maintain_context && 'ctx = new_ctx;'}
 						${this.builders.update}
 					},
 				`);
@@ -327,18 +327,18 @@ export default class Block {
 
 		if (this.has_intro_method || this.has_outro_method) {
 			if (this.builders.intro.is_empty()) {
-				properties.add_line(`i: @noop,`);
+				properties.add_line('i: @noop,');
 			} else {
 				properties.add_block(deindent`
 					${method_name('i', 'intro')}(#local) {
-						${this.has_outros && `if (#current) return;`}
+						${this.has_outros && 'if (#current) return;'}
 						${this.builders.intro}
 					},
 				`);
 			}
 
 			if (this.builders.outro.is_empty()) {
-				properties.add_line(`o: @noop,`);
+				properties.add_line('o: @noop,');
 			} else {
 				properties.add_block(deindent`
 					${method_name('o', 'outro')}(#local) {
@@ -349,7 +349,7 @@ export default class Block {
 		}
 
 		if (this.builders.destroy.is_empty()) {
-			properties.add_line(`d: @noop`);
+			properties.add_line('d: @noop');
 		} else {
 			properties.add_block(deindent`
 				${method_name('d', 'destroy')}(detaching) {

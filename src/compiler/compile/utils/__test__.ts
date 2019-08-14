@@ -9,7 +9,7 @@ describe('deindent', () => {
 			deindent me please
 		`;
 
-		assert.equal(deindented, `deindent me please`);
+		assert.equal(deindented, 'deindent me please');
 	});
 
 	it('deindents a multiline string', () => {
@@ -18,7 +18,7 @@ describe('deindent', () => {
 			and me as well
 		`;
 
-		assert.equal(deindented, `deindent me please\nand me as well`);
+		assert.equal(deindented, 'deindent me please\nand me as well');
 	});
 
 	it('preserves indentation of inserted values', () => {
@@ -33,7 +33,7 @@ describe('deindent', () => {
 			after
 		`;
 
-		assert.equal(deindented, `before\n\tline one\n\tline two\nafter`);
+		assert.equal(deindented, 'before\n\tline one\n\tline two\nafter');
 	});
 
 	it('removes newlines before an empty expression', () => {
@@ -44,7 +44,7 @@ describe('deindent', () => {
 				${null}
 			}`;
 
-		assert.equal(deindented, `{\n\tsome text\n}`);
+		assert.equal(deindented, '{\n\tsome text\n}');
 	});
 
 	it('removes newlines after an empty expression', () => {
@@ -55,7 +55,7 @@ describe('deindent', () => {
 				some text
 			}`;
 
-		assert.equal(deindented, `{\n\tsome text\n}`);
+		assert.equal(deindented, '{\n\tsome text\n}');
 	});
 
 	it('removes newlines around empty expressions', () => {
@@ -72,7 +72,7 @@ describe('deindent', () => {
 				${null}
 			}`;
 
-		assert.equal(deindented, `{\n\tsome text\n\n\tsome text\n}`);
+		assert.equal(deindented, '{\n\tsome text\n\n\tsome text\n}');
 	});
 });
 

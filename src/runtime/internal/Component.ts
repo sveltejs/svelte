@@ -200,7 +200,7 @@ export class SvelteComponent {
 export class SvelteComponentDev extends SvelteComponent {
 	constructor(options) {
 		if (!options || (!options.target && !options.$$inline)) {
-			throw new Error(`'target' is a required option`);
+			throw new Error('\'target\' is a required option');
 		}
 
 		super();
@@ -209,7 +209,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	$destroy() {
 		super.$destroy();
 		this.$destroy = () => {
-			console.warn(`Component was already destroyed`); // eslint-disable-line no-console
+			console.warn('Component was already destroyed'); // eslint-disable-line no-console
 		};
 	}
 }

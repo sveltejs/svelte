@@ -3,6 +3,6 @@ export default {
 
 	test({ assert, component, target }) {
 		component.text = 'two';
-		assert.htmlEqual(target.innerHTML, `two`);
+		assert.htmlEqual(target.innerHTML, 'two');
 	}
 };

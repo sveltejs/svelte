@@ -22,7 +22,7 @@ export default class Let extends Node {
 					if (!applicable.has(node.type)) {
 						component.error(node, {
 							code: 'invalid-let',
-							message: `let directive value must be an identifier or an object/array pattern`
+							message: 'let directive value must be an identifier or an object/array pattern'
 						});
 					}
 

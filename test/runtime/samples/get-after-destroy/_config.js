@@ -3,7 +3,7 @@ export default {
 		foo: 1
 	},
 
-	html: `<div>1</div>`,
+	html: '<div>1</div>',
 
 	test({ assert, component }) {
 		component.$destroy();

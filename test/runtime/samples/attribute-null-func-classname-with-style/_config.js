@@ -1,9 +1,9 @@
 export default {
 	props: {
-		testName: "testClassName"
+		testName: 'testClassName'
 	},
 
-	html: `<div class="testClassName svelte-x1o6ra"></div>`,
+	html: '<div class="testClassName svelte-x1o6ra"></div>',
 
 	test({ assert, component, target }) {
 		const div = target.querySelector('div');

@@ -1,5 +1,5 @@
-const message = "the quick brown fox jumps over the lazy dog";
-const expected = [...message].map(c => `<span>${c + " "}</span>`).join("");
+const message = 'the quick brown fox jumps over the lazy dog';
+const expected = [...message].map(c => `<span>${c + ' '}</span>`).join('');
 
 export default {
 	props: {

@@ -89,7 +89,7 @@ export default class Attribute extends Node {
 
 	get_value(block) {
 		if (this.is_true) return true;
-		if (this.chunks.length === 0) return `""`;
+		if (this.chunks.length === 0) return '""';
 
 		if (this.chunks.length === 1) {
 
@@ -99,7 +99,7 @@ export default class Attribute extends Node {
 				: this.chunks[0].render(block);
 		}
 
-		return (this.chunks[0].type === 'Text' ? '' : `"" + `) +
+		return (this.chunks[0].type === 'Text' ? '' : '"" + ') +
 			this.chunks
 				.map(chunk => {
 					if (chunk.type === 'Text') {

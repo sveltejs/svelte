@@ -1,5 +1,5 @@
 export default {
-	html: ``,
+	html: '',
 
 	props: {
 		letter: 'b'

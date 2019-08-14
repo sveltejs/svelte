@@ -27,7 +27,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 				const prop_dependencies = new Set();
 
 				value =
-					((prop.value.length === 1 || prop.value[0].type === 'Text') ? '' : `"" + `) +
+					((prop.value.length === 1 || prop.value[0].type === 'Text') ? '' : '"" + ') +
 					prop.value
 						.map((chunk) => {
 							if (chunk.type === 'Text') {
@@ -45,7 +45,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 				if (prop_dependencies.size) {
 					const dependencies = Array.from(prop_dependencies);
 					const condition = (
-						(block.has_outros ? `!#current || ` : '') +
+						(block.has_outros ? '!#current || ' : '') +
 						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 					);
 

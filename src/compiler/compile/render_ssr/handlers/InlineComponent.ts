@@ -18,8 +18,8 @@ function stringify_attribute(chunk: INode) {
 }
 
 function get_attribute_value(attribute) {
-	if (attribute.is_true) return `true`;
-	if (attribute.chunks.length === 0) return `''`;
+	if (attribute.is_true) return 'true';
+	if (attribute.chunks.length === 0) return '\'\'';
 
 	if (attribute.chunks.length === 1) {
 		const chunk = attribute.chunks[0];

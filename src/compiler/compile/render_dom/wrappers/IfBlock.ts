@@ -37,7 +37,7 @@ class IfBlockBranch extends Wrapper {
 		this.block = block.child({
 			comment: create_debugging_comment(node, parent.renderer.component),
 			name: parent.renderer.component.get_unique_name(
-				(node as IfBlock).expression ? `create_if_block` : `create_else_block`
+				(node as IfBlock).expression ? 'create_if_block' : 'create_else_block'
 			)
 		});
 
@@ -187,8 +187,8 @@ export default class IfBlockWrapper extends Wrapper {
 		if (needs_anchor) {
 			block.add_element(
 				anchor,
-				`@empty()`,
-				parent_nodes && `@empty()`,
+				'@empty()',
+				parent_nodes && '@empty()',
 				parent_node
 			);
 		}
@@ -206,8 +206,8 @@ export default class IfBlockWrapper extends Wrapper {
 		{ name, anchor, has_else, if_name, has_transitions },
 		detaching
 	) {
-		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
-		const current_block_type = block.get_unique_name(`current_block_type`);
+		const select_block_type = this.renderer.component.get_unique_name('select_block_type');
+		const current_block_type = block.get_unique_name('current_block_type');
 		const current_block_type_and = has_else ? '' : `${current_block_type} && `;
 
 		/* eslint-disable @typescript-eslint/indent,indent */
@@ -272,11 +272,11 @@ export default class IfBlockWrapper extends Wrapper {
 		{ name, anchor, has_else, has_transitions },
 		detaching
 	) {
-		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
-		const current_block_type_index = block.get_unique_name(`current_block_type_index`);
-		const previous_block_index = block.get_unique_name(`previous_block_index`);
-		const if_block_creators = block.get_unique_name(`if_block_creators`);
-		const if_blocks = block.get_unique_name(`if_blocks`);
+		const select_block_type = this.renderer.component.get_unique_name('select_block_type');
+		const current_block_type_index = block.get_unique_name('current_block_type_index');
+		const previous_block_index = block.get_unique_name('previous_block_index');
+		const if_block_creators = block.get_unique_name('if_block_creators');
+		const if_blocks = block.get_unique_name('if_blocks');
 
 		const if_current_block_type_index = has_else
 			? ''
@@ -297,7 +297,7 @@ export default class IfBlockWrapper extends Wrapper {
 				${this.branches
 					.map(({ condition }, i) => `${condition ? `if (${condition}) ` : ''}return ${i};`)
 					.join('\n')}
-				${!has_else && `return -1;`}
+				${!has_else && 'return -1;'}
 			}
 		`);
 		/* eslint-enable @typescript-eslint/indent,indent */

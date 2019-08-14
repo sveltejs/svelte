@@ -13,8 +13,8 @@ export default class Title extends Node {
 
 		if (info.attributes.length > 0) {
 			component.error(info.attributes[0], {
-				code: `illegal-attribute`,
-				message: `<title> cannot have attributes`
+				code: 'illegal-attribute',
+				message: '<title> cannot have attributes'
 			});
 		}
 
@@ -22,7 +22,7 @@ export default class Title extends Node {
 			if (child.type !== 'Text' && child.type !== 'MustacheTag') {
 				component.error(child, {
 					code: 'illegal-structure',
-					message: `<title> can only contain text and {tags}`
+					message: '<title> can only contain text and {tags}'
 				});
 			}
 		});

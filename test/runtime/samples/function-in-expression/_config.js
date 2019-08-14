@@ -8,6 +8,6 @@ export default {
 	test({ assert, component, target }) {
 		component.numbers = [10, 11, 12, 13, 14, 15, 16];
 
-		assert.htmlEqual(target.innerHTML, `11, 13, 15`);
+		assert.htmlEqual(target.innerHTML, '11, 13, 15');
 	}
 };

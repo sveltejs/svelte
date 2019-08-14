@@ -58,7 +58,7 @@ export default class CodeBuilder {
 	}
 
 	pop_condition() {
-		if (!this.current.parent) throw new Error(`Popping a condition that maybe wasn't pushed.`);
+		if (!this.current.parent) throw new Error('Popping a condition that maybe wasn\'t pushed.');
 		this.current = this.current.parent;
 	}
 

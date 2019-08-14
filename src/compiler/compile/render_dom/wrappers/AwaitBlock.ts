@@ -127,8 +127,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		const snippet = this.node.expression.render(block);
 
-		const info = block.get_unique_name(`info`);
-		const promise = block.get_unique_name(`promise`);
+		const info = block.get_unique_name('info');
+		const promise = block.get_unique_name('promise');
 
 		block.add_variable(promise);
 
@@ -143,7 +143,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			this.catch.block.name && `catch: ${this.catch.block.name}`,
 			this.then.block.name && `value: '${this.node.value}'`,
 			this.catch.block.name && `error: '${this.node.error}'`,
-			this.pending.block.has_outro_method && `blocks: [,,,]`
+			this.pending.block.has_outro_method && 'blocks: [,,,]'
 		].filter(Boolean);
 
 		block.builders.init.add_block(deindent`

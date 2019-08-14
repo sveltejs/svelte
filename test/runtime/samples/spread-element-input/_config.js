@@ -5,5 +5,5 @@ export default {
 		}
 	},
 
-	html: `<input data-foo="bar">`
+	html: '<input data-foo="bar">'
 };

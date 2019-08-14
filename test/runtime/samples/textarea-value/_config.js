@@ -5,7 +5,7 @@ export default {
 		foo: 42
 	},
 
-	html: `<textarea></textarea>`,
+	html: '<textarea></textarea>',
 
 	test({ assert, component, target }) {
 		const textarea = target.querySelector( 'textarea' );

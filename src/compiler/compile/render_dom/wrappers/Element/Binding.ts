@@ -109,7 +109,7 @@ export default class BindingWrapper {
 		if (parent.node.name === 'input') {
 			const type = parent.node.get_static_attribute_value('type');
 
-			if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
+			if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
 				update_conditions.push(`(${parent.var}.${this.node.name} !== ${this.snippet})`);
 			}
 		}
@@ -294,14 +294,14 @@ function get_value_from_dom(
 	const { name } = binding.node;
 
 	if (name === 'this') {
-		return `$$node`;
+		return '$$node';
 	}
 
 	// <select bind:value='selected>
 	if (node.name === 'select') {
 		return node.get_static_attribute_value('multiple') === true ?
-			`@select_multiple_value(this)` :
-			`@select_value(this)`;
+			'@select_multiple_value(this)' :
+			'@select_value(this)';
 	}
 
 	const type = node.get_static_attribute_value('type');
@@ -313,7 +313,7 @@ function get_value_from_dom(
 			return `@get_binding_group_value($$binding_groups[${binding_group}])`;
 		}
 
-		return `this.__value`;
+		return 'this.__value';
 	}
 
 	// <input type='range|number' bind:value>

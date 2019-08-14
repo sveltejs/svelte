@@ -118,7 +118,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			}
 		});
 
-		opening_tag += "${@spread([" + args.join(', ') + "])}";
+		opening_tag += '${@spread([' + args.join(', ') + '])}';
 	} else {
 		node.attributes.forEach((attribute: Attribute) => {
 			if (attribute.type !== 'Attribute') return;
