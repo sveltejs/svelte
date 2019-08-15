@@ -1,10 +1,14 @@
-import { SourceMap } from 'magic-string';
+export interface Processed {
+	code: string;
+	map?: object | string;
+	dependencies?: string[];
+}
 
 export interface PreprocessorGroup {
 	markup?: (options: {
 		content: string;
 		filename: string;
-	}) => { code: string; map?: SourceMap | string; dependencies?: string[] };
+	}) => Processed;
 	style?: Preprocessor;
 	script?: Preprocessor;
 }
@@ -13,13 +17,7 @@ export type Preprocessor = (options: {
 	content: string;
 	attributes: Record<string, string | boolean>;
 	filename?: string;
-}) => { code: string; map?: SourceMap | string; dependencies?: string[] };
-
-interface Processed {
-	code: string;
-	map?: SourceMap | string;
-	dependencies?: string[];
-}
+}) => Processed;
 
 function parse_attributes(str: string) {
 	const attrs = {};
@@ -85,7 +83,7 @@ export default async function preprocess(
 	const style = preprocessors.map(p => p.style).filter(Boolean);
 
 	for (const fn of markup) {
-		const processed: Processed = await fn({
+		const processed = await fn({
 			content: source,
 			filename
 		});
@@ -98,7 +96,7 @@ export default async function preprocess(
 			source,
 			/<script(\s[^]*?)?>([^]*?)<\/script>/gi,
 			async (match, attributes = '', content) => {
-				const processed: Processed = await fn({
+				const processed = await fn({
 					content,
 					attributes: parse_attributes(attributes),
 					filename
