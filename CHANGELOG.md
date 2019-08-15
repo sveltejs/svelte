@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.8.1
+
+* Set SVG namespace for slotted elements ([#3321](https://github.com/sveltejs/svelte/issues/3321))
+
 ## 3.8.0
 
 * Add `self` event modifier ([#3372](https://github.com/sveltejs/svelte/issues/3372))
