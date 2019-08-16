@@ -8,7 +8,7 @@ export interface PreprocessorGroup {
 	markup?: (options: {
 		content: string;
 		filename: string;
-	}) => Processed;
+	}) => Processed | Promise<Processed>;
 	style?: Preprocessor;
 	script?: Preprocessor;
 }
@@ -17,7 +17,7 @@ export type Preprocessor = (options: {
 	content: string;
 	attributes: Record<string, string | boolean>;
 	filename?: string;
-}) => Processed;
+}) => Processed | Promise<Processed>;
 
 function parse_attributes(str: string) {
 	const attrs = {};
