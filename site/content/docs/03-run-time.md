@@ -907,7 +907,7 @@ app.count += 1;
 
 ### Custom element API
 
-* TODO
+To enable custom element generation `customElement: true` should be added to compiler. After that, you can put `<svelte:options tag="my-custom-element"/>` on top of you component file, which will create the custom element with a respective tag.
 
 
 ### Server-side component API
