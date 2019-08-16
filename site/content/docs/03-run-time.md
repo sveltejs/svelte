@@ -667,7 +667,7 @@ Animates the stroke of an SVG element, like a snake in a tube. `in` transitions 
 * `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicInOut`) — an [easing function](docs#svelte_easing)
 
-The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will halve that duration and setting it to `2` will double it.
+The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will double that duration and setting it to `2` will halve it.
 
 ```html
 <script>
