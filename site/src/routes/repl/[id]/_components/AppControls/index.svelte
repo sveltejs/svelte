@@ -142,6 +142,58 @@
 		saving = false;
 	}
 
+	async function load() {
+		const periodFormatter = new Intl.DateTimeFormat(undefined, {
+			year: "numeric",
+			month: "long",
+		});
+
+		function sections(gists) {
+			const grouped = gists.reduce((agg, gist) => {
+				const key = periodFormatter.format(new Date(gist.updated_at));
+				if (!agg.hasOwnProperty(key)) {
+					agg[key] = [];
+				}
+				agg[key].push(gist);
+				return agg;
+			}, {});
+			return Object.entries(grouped).map(([title, archive]) => {
+				return {
+					title,
+					archive,
+				};
+			});
+		}
+
+		try {
+			const r = await fetch(`../repl/archive.json`, {
+				method: 'GET',
+				headers: { Authorization },
+			});
+
+			if (r.status < 200 || r.status >= 300) {
+				const { error } = await r.json();
+				throw new Error(`Received an HTTP ${r.status} response: ${error}`);
+			}
+
+			const gists = await r.json();
+			for (const section of sections(gists)) {
+				console.log(section.title);
+				for (const repl of section.archive) {
+					console.log("  " + repl.name);
+					console.log("  " + location.origin + "/repl/" + repl.uid);
+				}
+			}
+
+		} catch (err) {
+			if (navigator.onLine) {
+				alert(err.message);
+			} else {
+				alert(`It looks like you're offline! Find the internet and try again`);
+			}
+		}
+	}
+
 	async function download() {
 		downloading = true;
 
@@ -216,7 +268,7 @@ export default app;` });
 		</button>
 
 		{#if $user}
-			<UserMenu />
+			<UserMenu {load} />
 		{:else}
 			<button class="icon" on:click={login}>
 				<Icon name="log-in" />
