@@ -20,7 +20,8 @@ const ts_plugin = is_publish
 
 const external = id => id.startsWith('svelte/');
 
-fs.writeFileSync(`./compiler.d.ts`, `export * from './types/compiler/index';`);
+const inlined_estree = fs.readFileSync('./node_modules/estree-walker/index.d.ts', 'utf-8').replace(/declare.*\{((.|[\n\r])+)\}/m, '$1');
+fs.writeFileSync(`./compiler.d.ts`, `export { compile, parse, preprocess, VERSION } from './types/compiler/index';\n${inlined_estree}`);
 
 export default [
 	/* runtime */
