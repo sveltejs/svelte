@@ -1,8 +1,6 @@
 <script>
 	import { user, logout } from '../../../../../user.js';
 
-	export let load;
-
 	let showMenu = false;
 	let name;
 
@@ -15,7 +13,6 @@
 
 	{#if showMenu}
 		<div class="menu">
-			<button on:click={load}>Archive</button>
 			<button on:click={logout}>Log out</button>
 		</div>
 	{/if}
@@ -75,8 +72,6 @@
 		z-index: 99;
 		text-align: left;
 		border-radius: 0.4rem;
-		display: flex;
-		flex-direction: column;
 	}
 
 	.menu button {
@@ -84,7 +79,6 @@
 		font-family: var(--font);
 		font-size: 1.6rem;
 		/* opacity: 0.7; */
-		padding: 0.4rem 0;
 	}
 
 	.menu button:hover {

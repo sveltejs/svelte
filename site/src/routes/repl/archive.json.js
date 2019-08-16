@@ -2,6 +2,10 @@ import send from '@polka/send';
 import { query } from '../../utils/db';
 import { isUser } from '../../backend/auth';
 
+const {
+	BASEURL,
+} = process.env;
+
 export async function get(req, res) {
 	const user = await isUser(req, res);
 	if (!user) return; // response already sent
@@ -16,5 +20,10 @@ export async function get(req, res) {
 		offset $2
 	`, [user.id, offset]);
 
-	send(res, 200, rows);
+	send(res, 200, rows.map((row) => {
+		return {
+			url: `${BASEURL}/repl/${row.uid}`,
+			...row,
+		}
+	}));
 }

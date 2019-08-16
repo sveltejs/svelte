@@ -30,4 +30,7 @@ if (process.browser) {
 
 export function logout() {
 	user.set(null);
+	fetch('/logout', {
+		method: 'DELETE',
+	});
 }

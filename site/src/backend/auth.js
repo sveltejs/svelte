@@ -2,7 +2,7 @@ import polka from 'polka';
 import devalue from 'devalue';
 import send from '@polka/send';
 import { get, post } from 'httpie';
-import { parse, stringify } from 'querystring';
+import { parse, stringify, unescape, escape } from 'querystring';
 import { decode, sign, verify } from './token';
 import { find, query } from '../utils/db';
 
@@ -25,13 +25,28 @@ function onError(err, req, res) {
 	res.headersSent || send(res, code, { error });
 }
 
+function cookies(req) {
+	if (!req.headers.hasOwnProperty("cookie")) {
+		return {};
+	}
+	return req.headers.cookie.split("; ").map((cookie) => {
+		const index = cookie.indexOf("=");
+		return [cookie.substring(0, index), cookie.substring(index+1)];
+	}).reduce((agg, [key, value]) => {
+		agg[unescape(key)] = unescape(value);
+		return agg;
+	}, {});
+}
+
 /**
  * Middleware to determine User validity
  */
 export async function isUser(req, res) {
 	const abort = exit.bind(null, res, 401);
 
-	const auth = req.headers.authorization;
+	const jwt_token = cookies(req).jwt_token
+
+	const auth = req.headers.authorization || (jwt_token && `Bearer ${jwt_token}`);
 	if (!auth) return abort('Missing Authorization header');
 
 	const [scheme, token] = auth.split(' ');
@@ -112,14 +127,16 @@ export function API() {
 					returning *
 				`, [id, name, login, avatar_url, access_token]);
 
+				const user_props = toUser(user);
 				send(res, 200, `
 					<script>
 						window.opener.postMessage({
-							user: ${devalue(toUser(user))}
+							user: ${devalue(user_props)}
 						}, window.location.origin);
 					</script>
 				`, {
-					'Content-Type': 'text/html; charset=utf-8'
+					'Content-Type': 'text/html; charset=utf-8',
+					'Set-Cookie': `jwt_token=${escape(user_props.token)}; path=/; MaxAge=${30 * 24 * 60 * 60}; HttpOnly`
 				});
 			} catch (err) {
 				console.error('GET /auth/callback', err);
@@ -128,6 +145,12 @@ export function API() {
 					'Content-Length': err.headers['content-length']
 				});
 			}
+		});
+
+		app.delete('/logout', async (req, res) => {
+			send(res, 204, ``, {
+				'Set-Cookie': `jwt_token=; MaxAge=0; HttpOnly`
+			});
 		});
 	} else {
 		// Print "Misconfigured" error
