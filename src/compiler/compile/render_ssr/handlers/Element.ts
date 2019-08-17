@@ -110,6 +110,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 					// a boolean attribute with one non-Text chunk
 					args.push(`{ ${quote_name_if_necessary(attribute.name)}: ${snip(attribute.chunks[0])} }`);
 				} else if (attribute.name === 'class' && class_expression) {
+					add_class_attribute = false;
 					// Add class expression
 					args.push(`{ ${quote_name_if_necessary(attribute.name)}: [\`${stringify_class_attribute(attribute)}\`, \`\${${class_expression}}\`].join(' ').trim() }`);
 				} else {
