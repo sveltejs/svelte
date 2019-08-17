@@ -238,7 +238,9 @@ export function add_resize_listener(element, fn) {
 }
 
 export function toggle_class(element, name, toggle) {
-	element.classList[toggle ? 'add' : 'remove'](name);
+	name.split(',').forEach(className => {
+		element.classList[toggle ? 'add' : 'remove'](className);
+	})
 }
 
 export function custom_event<T=any>(type: string, detail?: T) {

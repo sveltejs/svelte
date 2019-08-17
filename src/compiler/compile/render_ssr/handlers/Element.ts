@@ -86,8 +86,8 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	const class_expression = node.classes.map((class_directive: Class) => {
 		const { expression, name } = class_directive;
 		const snippet = expression ? snip(expression) : `ctx${quote_prop_if_necessary(name)}`;
-		return `${snippet} ? "${name}" : ""`;
-	}).join(', ');
+		return `(${snippet} ? "${name.replace(/,/g, ' ')} " : "")`;
+	}).join(' + ').trim();
 
 	let add_class_attribute = class_expression ? true : false;
 
