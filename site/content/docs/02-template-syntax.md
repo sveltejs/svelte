@@ -686,6 +686,13 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 <div class:active class:inactive={!active} class:isAdmin>...</div>
 ```
 
+It accepts multiple classes in a single expression, separated by comma `,`.
+However, the shorthand syntax cannot be used on this case.
+
+```html
+<!-- Toggle both active and primary classes -->
+<div class:active,primary="{isActive}">...</div>
+```
 
 #### use:*action*
 
