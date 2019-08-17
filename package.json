@@ -99,5 +99,7 @@
     "sourceMap": true,
     "instrument": true
   },
-  "dependencies": {}
+  "dependencies": {
+    "cookie": "^0.4.0"
+  }
 }
