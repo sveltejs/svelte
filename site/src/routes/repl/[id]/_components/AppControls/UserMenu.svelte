@@ -1,8 +1,6 @@
 <script>
 	import { user, logout } from '../../../../../user.js';
 
-	export let load;
-
 	let showMenu = false;
 	let name;
 
@@ -15,7 +13,7 @@
 
 	{#if showMenu}
 		<div class="menu">
-			<button on:click={load}>Archive</button>
+			<a href="repls/saved">Your saved REPLs</a>
 			<button on:click={logout}>Log out</button>
 		</div>
 	{/if}
@@ -67,7 +65,7 @@
 	.menu {
 		position: absolute;
 		width: calc(100% + 1.6rem);
-		min-width: 6em;
+		min-width: 10em;
 		top: 3rem;
 		right: -1.6rem;
 		background-color: var(--second);
@@ -79,16 +77,21 @@
 		flex-direction: column;
 	}
 
-	.menu button {
+	.menu button, .menu a {
 		background-color: transparent;
 		font-family: var(--font);
 		font-size: 1.6rem;
-		/* opacity: 0.7; */
+		opacity: 0.7;
 		padding: 0.4rem 0;
+		text-decoration: none;
+		text-align: left;
+		border: none;
+		color: inherit;
 	}
 
-	.menu button:hover {
+	.menu button:hover, .menu a:hover {
 		opacity: 1;
+		color: inherit;
 	}
 
 	@media (min-width: 600px) {
