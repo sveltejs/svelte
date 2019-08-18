@@ -1,14 +1,9 @@
 <script>
+	import { getContext } from 'svelte';
 	import { stores } from '@sapper/app';
 	const { session } = stores();
 
-	const logout = async () => {
-		const r = await fetch(`/auth/logout`, {
-			credentials: 'include'
-		});
-
-		if (r.ok) $session.user = null;
-	}
+	const { logout } = getContext('app');
 
 	let showMenu = false;
 	let name;
@@ -22,7 +17,7 @@
 
 	{#if showMenu}
 		<div class="menu">
-			<a href="repls/saved">Your saved REPLs</a>
+			<a href="apps">Your saved apps</a>
 			<button on:click={logout}>Log out</button>
 		</div>
 	{/if}
