@@ -1,12 +1,10 @@
 import send from '@polka/send';
 import * as cookie from 'cookie';
-import { query } from '../../utils/db.js';
 import { secure } from './_config.js';
+import { delete_session } from '../../utils/auth.js';
 
 export async function get(req, res) {
-	await query(`
-		delete from sessions where uid = $1
-	`, [req.cookies.sid]);
+	await delete_session(req.cookies.sid);
 
 	send(res, 200, '', {
 		'Set-Cookie': cookie.serialize('sid', '', {

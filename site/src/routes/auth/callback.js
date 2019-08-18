@@ -3,8 +3,7 @@ import devalue from 'devalue';
 import * as cookie from 'cookie';
 import * as httpie from 'httpie';
 import { parse, stringify } from 'querystring';
-import { find, query } from '../../utils/db.js';
-import { to_user } from '../../utils/auth';
+import { sanitize_user, create_user, create_session } from '../../utils/auth';
 import { oauth, secure, client_id, client_secret } from './_config.js';
 
 export async function get(req, res) {
@@ -25,21 +24,8 @@ export async function get(req, res) {
 			}
 		});
 
-		const { id: uid, name, avatar_url, login } = r2.data;
-
-		// Upsert `users` table
-		const [user] = await query(`
-			insert into users(uid, name, username, avatar, github_token)
-			values ($1, $2, $3, $4, $5) on conflict (uid) do update
-			set (name, username, avatar, github_token, updated_at) = ($2, $3, $4, $5, now())
-			returning *
-		`, [uid, name, login, avatar_url, access_token]);
-
-		const session = await find(`
-			insert into sessions(user_id)
-			values ($1)
-			returning *
-		`, [user.id]);
+		const user = await create_user(r2.data, access_token);
+		const session = await create_session(user);
 
 		res.writeHead(200, {
 			'Set-Cookie': cookie.serialize('sid', session.uid, {
@@ -54,7 +40,7 @@ export async function get(req, res) {
 		res.end(`
 			<script>
 				window.opener.postMessage({
-					user: ${devalue(to_user(user))}
+					user: ${devalue(sanitize_user(user))}
 				}, window.location.origin);
 			</script>
 		`);
