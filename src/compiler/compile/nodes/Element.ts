@@ -415,6 +415,13 @@ export default class Element extends Node {
 				}
 			}
 
+			if (name === 'is') {
+				component.warn(attribute, {
+					code: 'avoid-is',
+					message: `The 'is' attribute is not supported cross-browser and should be avoided`
+				});
+			}
+
 			attribute_map.set(attribute.name, attribute);
 		});
 
