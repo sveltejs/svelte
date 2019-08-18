@@ -99,5 +99,8 @@
     "sourceMap": true,
     "instrument": true
   },
-  "dependencies": {}
+  "dependencies": {
+    "cookie": "^0.4.0",
+    "flru": "^1.0.2"
+  }
 }

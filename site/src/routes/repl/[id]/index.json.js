@@ -2,7 +2,6 @@ import send from '@polka/send';
 import body from '../_utils/body.js';
 import * as httpie from 'httpie';
 import { query, find } from '../../../utils/db';
-import { isUser } from '../../../backend/auth';
 import { get_example } from '../../examples/_examples.js';
 
 const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } = process.env;
@@ -44,7 +43,7 @@ async function import_gist(req, res) {
 		});
 
 		// add gist to database...
-		const [gist] = await query(`
+		await query(`
 			insert into gists(uid, user_id, name, files)
 			values ($1, $2, $3, $4) returning *`, [req.params.id, user.id, data.description, JSON.stringify(files)]);
 
@@ -92,10 +91,10 @@ export async function get(req, res) {
 }
 
 export async function patch(req, res) {
-	const user = await isUser(req, res);
-	if (!user) return; // response already sent
+	const { user } = req;
+	if (!user) return;
 
-	let id, uid=req.params.id;
+	let id, uid = req.params.id;
 
 	try {
 		const [row] = await query(`select * from gists where uid = $1 limit 1`, [uid]);

@@ -1,15 +1,24 @@
 <script>
-	import { user, logout } from '../../../../../user.js';
+	import { stores } from '@sapper/app';
+	const { session } = stores();
+
+	const logout = async () => {
+		const r = await fetch(`/auth/logout`, {
+			credentials: 'include'
+		});
+
+		if (r.ok) $session.user = null;
+	}
 
 	let showMenu = false;
 	let name;
 
-	$: name = $user.name || $user.username;
+	$: name = $session.user.name || $session.user.username;
 </script>
 
 <div class="user" on:mouseenter="{() => showMenu = true}" on:mouseleave="{() => showMenu = false}">
 	<span>{name}</span>
-	<img alt="{name} avatar" src="{$user.avatar}">
+	<img alt="{name} avatar" src="{$session.user.avatar}">
 
 	{#if showMenu}
 		<div class="menu">
