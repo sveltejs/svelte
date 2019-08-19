@@ -909,7 +909,7 @@ app.count += 1;
 
 ---
 
-Svelte components can also be compiled to custom elements (aka web components) using the `customElements: true` compiler option. You should specify a tag name for the component using the [`<svelte:options>`](docs#svelte_options) element.
+Svelte components can also be compiled to custom elements (aka web components) using the `customElements: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](docs#svelte_options).
 
 ```html
 <svelte:options tag="my-element">
