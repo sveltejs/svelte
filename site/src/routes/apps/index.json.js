@@ -13,6 +13,10 @@ export async function get(req, res) {
 			offset $2
 		`, [req.user.id, offset]);
 
+		rows.forEach(row => {
+			row.uid = row.uid.replace(/-/g, '');
+		});
+
 		send(res, 200, rows);
 	} else {
 		send(res, 401);
