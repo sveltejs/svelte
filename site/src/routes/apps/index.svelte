@@ -1,17 +1,22 @@
 <script context="module">
 	export async function preload(page, { user }) {
-		let apps;
+		let apps = [];
+		let offset = null;
 
 		if (user) {
-			const r = await this.fetch('apps.json', {
+			var url = 'apps.json';
+			if (page.query.offset) {
+				url += `?offset=${encodeURIComponent(page.query.offset)}`;
+			}
+			const r = await this.fetch(url, {
 				credentials: 'include'
 			});
 			if (!r.ok) return this.error(r.status, await r.text());
 
-			apps = await r.json();
+			({ apps, offset } = await r.json());
 		}
 
-		return { user, apps };
+		return { user, apps, offset };
 	}
 </script>
 
@@ -20,6 +25,7 @@
 
 	export let user;
 	export let apps;
+	export let offset;
 
 	const { login, logout } = getContext('app');
 
@@ -62,6 +68,10 @@
 				</li>
 			{/each}
 		</ul>
+
+		{#if offset !== null}
+			<div><a href="apps?offset={offset}">Next page...</a></div>
+		{/if}
 	{:else}
 		<p>Please <a on:click|preventDefault={login} href="auth/login">log in</a> to see your saved apps.</p>
 	{/if}
