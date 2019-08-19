@@ -15,6 +15,7 @@
 						"start": 4,
 						"end": 6,
 						"type": "Text",
+						"raw": "\n\t",
 						"data": "\n\t"
 					},
 					{
@@ -28,6 +29,7 @@
 								"start": 10,
 								"end": 13,
 								"type": "Text",
+								"raw": "a\n\t",
 								"data": "a\n\t"
 							},
 							{
@@ -53,6 +55,7 @@
 												"start": 30,
 												"end": 33,
 												"type": "Text",
+												"raw": "b\n\t",
 												"data": "b\n\t"
 											}
 										]
@@ -63,6 +66,7 @@
 								"start": 38,
 								"end": 40,
 								"type": "Text",
+								"raw": "\n\t",
 								"data": "\n\t"
 							}
 						]
@@ -78,6 +82,7 @@
 								"start": 44,
 								"end": 46,
 								"type": "Text",
+								"raw": "c\n",
 								"data": "c\n"
 							}
 						]
