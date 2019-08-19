@@ -15,8 +15,10 @@
   "dependencies": {
     "@polka/redirect": "^1.0.0-next.0",
     "@polka/send": "^1.0.0-next.3",
+    "cookie": "^0.4.0",
     "devalue": "^2.0.0",
     "do-not-zip": "^1.0.0",
+    "flru": "^1.0.2",
     "httpie": "^1.1.2",
     "jsonwebtoken": "^8.5.1",
     "marked": "^0.7.0",
