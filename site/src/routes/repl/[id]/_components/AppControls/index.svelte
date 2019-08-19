@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, getContext } from 'svelte';
 	import { stores } from '@sapper/app';
 	import UserMenu from './UserMenu.svelte';
 	import { Icon } from '@sveltejs/site-kit';
@@ -10,6 +10,7 @@
 
 	const dispatch = createEventDispatcher();
 	const { session } = stores();
+	const { login } = getContext('app');
 
 	export let repl;
 	export let gist;
@@ -33,19 +34,6 @@
 			event.preventDefault();
 			save();
 		}
-	}
-
-	function login(event) {
-		event.preventDefault();
-		const loginWindow = window.open(`${window.location.origin}/auth/login`, 'login', 'width=600,height=400');
-
-		const handleLogin = event => {
-			loginWindow.close();
-			$session.user = event.data.user;
-			window.removeEventListener('message', handleLogin);
-		};
-
-		window.addEventListener('message', handleLogin);
 	}
 
 	async function fork(intentWasSave) {
@@ -218,7 +206,7 @@ export default app;` });
 		{#if $session.user}
 			<UserMenu/>
 		{:else}
-			<button class="icon" on:click={login}>
+			<button class="icon" on:click|preventDefault={login}>
 				<Icon name="log-in" />
 				<span>&nbsp;Log in to save</span>
 			</button>
