@@ -156,6 +156,8 @@ Like lifecycle functions, this must be called during component initialisation.
 </script>
 ```
 
+> Context is not inherently reactive. If you need reactive values in context then you can pass a store into context, which *will* be reactive.
+
 #### `getContext`
 
 ```js
@@ -212,39 +214,7 @@ Events dispatched from child components can be listened to in their parent. Any 
 
 ### `svelte/store`
 
-The `svelte/store` module exports functions for creating [stores](tutorial/writable-stores).
-
----
-
-To be considered a store, an object must have a `subscribe` method that returns an `unsubscribe` function.
-
-```js
-const unsubscribe = store.subscribe(value => {
-	console.log(value);
-}); // logs `value`
-
-// later...
-unsubscribe();
-```
-
----
-
-Stores have special significance inside Svelte components. Their values can be read by prefixing the store's name with the `$` character, which causes Svelte to set up subscriptions and unsubscriptions automatically during the component's lifecycle.
-
-```html
-<script>
-	import { count } from './stores.js';
-
-	function handleClick() {
-		// this is equivalent to count.update(n => n + 1)
-		$count += 1;
-	}
-</script>
-
-<button on:click={handleClick}>
-	Clicks: {$count}
-</button>
-```
+The `svelte/store` module exports functions for creating [stores](docs#4_Prefix_stores_with_$_to_access_their_values).
 
 #### `writable`
 
@@ -257,7 +227,11 @@ store = writable(value: any, (set: (value: any) => void) => () => void)
 
 ---
 
-Creates a store with additional `set` and `update` methods.
+Function that creates a store which has values that can be set from 'outside' components. It gets created as an object with additional `set` and `update` methods.
+
+`set` is a method that takes one argument which is the value to be set. The store value gets set to the value of the argument if the store value is not already equal to it.
+
+`update` is a method that takes one argument which is a callback. The callback takes the existing store value as its argument and returns the new value to be set to the store.
 
 ```js
 import { writable } from 'svelte/store';
@@ -359,17 +333,21 @@ const delayed = derived(a, ($a, set) => {
 }, 'one moment...');
 ```
 
-If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes:
+---
+
+If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes.
 
 ```js
 import { derived } from 'svelte/store';
 
 const tick = derived(frequency, ($frequency, set) => {
-	const interval = setInterval(() => set(Date.now()), 1000 / frequency);
+	const interval = setInterval(() => {
+	  set(Date.now());
+	}, 1000 / $frequency);
 
 	return () => {
 		clearInterval(interval);
-	}
+	};
 }, 'one moment...');
 ```
 
@@ -421,7 +399,7 @@ Tweened stores update their values over a fixed duration. The following options 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the tween lasts
 * `easing` (`function`, default `t => t`) — an [easing function](docs#svelte_easing)
-* `interpolator` (`function`) — see below
+* `interpolate` (`function`) — see below
 
 `store.set` and `store.update` can accept a second `options` argument that will override the options passed in upon instantiation.
 
@@ -455,7 +433,7 @@ Out of the box, Svelte will interpolate between two numbers, two arrays or two o
 
 ---
 
-The `interpolator` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
+The `interpolate` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
 
 ```html
 <script>
@@ -618,13 +596,13 @@ Slides an element in and out.
 
 ```html
 <script>
-	import { fly } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 </script>
 
 {#if condition}
-	<div transition:fly="{{delay: 250, duration: 300, easing: quintOut }}">
-		flies in and out
+	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut }}">
+		slides in and out
 	</div>
 {/if}
 ```
@@ -689,7 +667,7 @@ Animates the stroke of an SVG element, like a snake in a tube. `in` transitions 
 * `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicInOut`) — an [easing function](docs#svelte_easing)
 
-The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will halve that duration and setting it to `2` will double it.
+The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will double that duration and setting it to `2` will halve it.
 
 ```html
 <script>
@@ -764,7 +742,23 @@ You can see a full example on the [animations tutorial](tutorial/animate)
 
 ### `svelte/easing`
 
-* TODO could have nice little interactive widgets showing the different functions, maybe
+Easing functions specificy the rate of change over time and are useful when working with Svelte's built-in transitions and animations as well as the tweened and spring utilities. `svelte/easing` contains 31 named exports, a `linear` ease and 3 variants of 10 different easing functions: `in`, `out` and `inOut`.
+
+You can explore the various eases using the [ease visualiser](examples#easing) in the [examples section](examples).
+
+
+| ease | in | out | inOut |
+| --- | --- | --- | --- |
+| **back** | `backIn` | `backOut` | `backInOut` |
+| **bounce** | `bounceIn` | `bounceOut` | `bounceInOut` |
+| **circ** | `circIn` | `circOut` | `circInOut` |
+| **cubic** | `cubicIn` | `cubicOut` | `cubicInOut` |
+| **elastic** | `elasticIn` | `elasticOut` | `elasticInOut` |
+| **expo** | `expoIn` | `expoOut` | `expoInOut` |
+| **quad** | `quadIn` | `quadOut` | `quadInOut` |
+| **quart** | `quartIn` | `quartOut` | `quartInOut` |
+| **quint** | `quintIn` | `quintOut` | `quintInOut` |
+| **sine** | `sineIn` | `sineOut` | `sineInOut` |
 
 
 ### `svelte/register`
@@ -913,7 +907,68 @@ app.count += 1;
 
 ### Custom element API
 
-* TODO
+---
+
+Svelte components can also be compiled to custom elements (aka web components) using the `customElements: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](docs#svelte_options).
+
+```html
+<svelte:options tag="my-element">
+
+<script>
+	export let name = 'world';
+</script>
+
+<h1>Hello {name}!</h1>
+<slot></slot>
+```
+
+---
+
+Alternatively, use `tag={null}` to indicate that the consumer of the custom element should name it.
+
+```js
+import MyElement from './MyElement.svelte';
+
+customElements.define('my-element', MyElement);
+```
+
+---
+
+Once a custom element has been defined, it can be used as a regular DOM element:
+
+```js
+document.body.innerHTML = `
+	<my-element>
+		<p>This is some slotted content</p>
+	</my-element>
+`;
+```
+
+---
+
+By default, custom elements are compiled with `accessors: true`, which means that any [props](docs#Attributes_and_props) are exposed as properties of the DOM element (as well as being readable/writable as attributes, where possible).
+
+To prevent this, add `accessors={false}` to `<svelte:options>`.
+
+```js
+const el = document.querySelector('my-element');
+
+// get the current value of the 'name' prop
+console.log(el.name);
+
+// set a new value, updating the shadow DOM
+el.name = 'everybody';
+```
+
+Custom elements can be a useful way to package components for consumption in a non-Svelte app, as they will work with vanilla HTML and JavaScript as well as [most frameworks](https://custom-elements-everywhere.com/). There are, however, some important differences to be aware of:
+
+* Styles are *encapsulated*, rather than merely *scoped*. This means that any non-component styles (such as you might have in a `global.css` file) will not apply to the custom element, including styles with the `:global(...)` modifier
+* Instead of being extracted out as a separate .css file, styles are inlined into the component as a JavaScript string
+* Custom elements are not generally suitable for server-side rendering, as the shadow DOM is invisible until JavaScript loads
+* In Svelte, slotted content renders *lazily*. In the DOM, it renders *eagerly*. In other words, it will always be created even if the component's `<slot>` element is inside an `{#if ...}` block. Similarly, including a `<slot>` in an `{#each ...}` block will not cause the slotted content to be rendered multiple times
+* The `let:` directive has no effect
+* Polyfills are required to support older browsers
+
 
 
 ### Server-side component API

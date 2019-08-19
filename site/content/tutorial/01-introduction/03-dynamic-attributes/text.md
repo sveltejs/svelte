@@ -19,10 +19,10 @@ When building web apps, it's important to make sure that they're *accessible* to
 In this case, we're missing the `alt` attribute that describes the image for people using screenreaders, or people with slow or flaky internet connections that can't download the image. Let's add one:
 
 ```html
-<img src={src} alt="A man dancing">
+<img src={src} alt="A man dances.">
 ```
 
-We can use curly braces *inside* attributes. Try changing it to `"{name} dancing"` — remember to declare a `name` variable in the `<script>` block.
+We can use curly braces *inside* attributes. Try changing it to `"{name} dances."` — remember to declare a `name` variable in the `<script>` block.
 
 
 ## Shorthand attributes
@@ -30,6 +30,6 @@ We can use curly braces *inside* attributes. Try changing it to `"{name} dancing
 It's not uncommon to have an attribute where the name and value are the same, like `src={src}`. Svelte gives us a convenient shorthand for these cases:
 
 ```html
-<img {src} alt="A man dancing">
+<img {src} alt="A man dances.">
 ```
 

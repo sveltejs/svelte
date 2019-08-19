@@ -1,7 +1,7 @@
 let fulfil;
 let reject;
 
-let promise = new Promise((f, r) => {
+const promise = new Promise((f, r) => {
 	fulfil = f;
 	reject = r;
 });
@@ -14,7 +14,7 @@ export default {
 	intro: true,
 
 	test({ assert, target, raf }) {
-		let p = target.querySelector('p');
+		const p = target.querySelector('p');
 
 		assert.equal(p.className, 'pending');
 		assert.equal(p.foo, 0);
@@ -26,7 +26,7 @@ export default {
 
 		return promise.then(() => {
 			raf.tick(80);
-			let ps = document.querySelectorAll('p');
+			const ps = document.querySelectorAll('p');
 			assert.equal(ps[1].className, 'pending');
 			assert.equal(ps[0].className, 'then');
 			assert.equal(ps[1].foo, 0.2);

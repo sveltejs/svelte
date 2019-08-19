@@ -206,6 +206,7 @@
 		<div class="viewport" class:offset={checked}>
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				{svelteUrl}
 				{rollupUrl}
 				{relaxed}

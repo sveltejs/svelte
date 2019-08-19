@@ -5,7 +5,6 @@
 		"type": "Fragment",
 		"children": []
 	},
-	"css": null,
 	"instance": {
 		"start": 0,
 		"end": 146,
@@ -66,8 +65,8 @@
 								"start": 54,
 								"end": 134,
 								"id": null,
-								"generator": false,
 								"expression": false,
+								"generator": false,
 								"async": false,
 								"params": [],
 								"body": {
@@ -120,8 +119,8 @@
 														"start": 88,
 														"end": 129,
 														"id": null,
-														"generator": false,
 														"expression": false,
+														"generator": false,
 														"async": false,
 														"params": [
 															{
