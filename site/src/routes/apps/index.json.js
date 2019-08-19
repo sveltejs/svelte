@@ -3,7 +3,7 @@ import { query } from '../../utils/db';
 
 export async function get(req, res) {
 	if (req.user) {
-		const offset = req.params.offset || 0;
+		const offset = req.query.offset || 0;
 		const rows = await query(`
 			select g.uid, g.name, coalesce(g.updated_at, g.created_at) as updated_at
 			from gists g
