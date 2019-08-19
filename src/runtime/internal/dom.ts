@@ -20,6 +20,10 @@ export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
 	return document.createElement<K>(name);
 }
 
+export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: string) {
+	return document.createElement<K>(name, { is });
+}
+
 export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
 	// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
 	const target = {} as Pick<T, Exclude<keyof T, K>>;

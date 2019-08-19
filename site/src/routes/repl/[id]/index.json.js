@@ -23,7 +23,7 @@ async function import_gist(req, res) {
 		if (!user) {
 			const { id, name, login, avatar_url } = data.owner;
 
-			[user] = await query(`
+			user = await find(`
 				insert into users(uid, name, username, avatar)
 				values ($1, $2, $3, $4)
 				returning *
@@ -45,7 +45,8 @@ async function import_gist(req, res) {
 		// add gist to database...
 		await query(`
 			insert into gists(uid, user_id, name, files)
-			values ($1, $2, $3, $4) returning *`, [req.params.id, user.id, data.description, JSON.stringify(files)]);
+			values ($1, $2, $3, $4)
+		`, [req.params.id, user.id, data.description, JSON.stringify(files)]);
 
 		send(res, 200, {
 			uid: req.params.id,
