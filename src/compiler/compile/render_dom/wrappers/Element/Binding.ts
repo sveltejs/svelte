@@ -208,6 +208,10 @@ function get_dom_updater(
 		return `${element.var}.checked = ${condition};`;
 	}
 
+	if (binding.node.name === 'value') {
+		return `@set_input_value(${element.var}, ${binding.snippet});`
+	}
+
 	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
