@@ -220,7 +220,7 @@
 
 	.show {
 		background: rgba(0,0,0,.4);
-		padding: .2em .7em .3em;
+		padding: .3em .7em;
 		border-radius: var(--border-r);
 		top: .1em;
 		position: relative;
@@ -302,6 +302,7 @@
 		<div class="tutorial-repl">
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				{svelteUrl}
 				{rollupUrl}
 				orientation={mobile ? 'columns' : 'rows'}

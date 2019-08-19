@@ -6,7 +6,7 @@ import {
 	detach,
 	element,
 	empty,
-	fix_and_outro_and_destroy_block,
+	fix_and_destroy_block,
 	fix_position,
 	init,
 	insert,
@@ -25,7 +25,7 @@ function get_each_context(ctx, list, i) {
 
 // (19:0) {#each things as thing (thing.id)}
 function create_each_block(key_1, ctx) {
-	var div, t_value = ctx.thing.name, t, rect, stop_animation = noop;
+	var div, t_value = ctx.thing.name + "", t, rect, stop_animation = noop;
 
 	return {
 		key: key_1,
@@ -44,7 +44,7 @@ function create_each_block(key_1, ctx) {
 		},
 
 		p(changed, ctx) {
-			if ((changed.things) && t_value !== (t_value = ctx.thing.name)) {
+			if ((changed.things) && t_value !== (t_value = ctx.thing.name + "")) {
 				set_data(t, t_value);
 			}
 		},
@@ -100,7 +100,7 @@ function create_fragment(ctx) {
 		p(changed, ctx) {
 			const each_value = ctx.things;
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
-			each_blocks = update_keyed_each(each_blocks, changed, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_outro_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
+			each_blocks = update_keyed_each(each_blocks, changed, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].a();
 		},
 

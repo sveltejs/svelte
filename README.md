@@ -36,10 +36,15 @@ Pull requests are encouraged and always welcome. [Pick an issue](https://github.
 To install and work on Svelte locally:
 
 ```bash
-git clone git@github.com:sveltejs/svelte.git
+git clone https://github.com/sveltejs/svelte.git
 cd svelte
 npm install
 ```
+
+> Many tests depend on newlines being preserved as `<LF>`. On Windows, you can ensure this by cloning with:
+> ```bash
+> git -c core.autocrlf=false clone https://github.com/sveltejs/svelte.git
+> ```
 
 To build the compiler, and all the other modules included in the package:
 
