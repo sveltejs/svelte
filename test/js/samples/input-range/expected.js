@@ -10,6 +10,7 @@ import {
 	noop,
 	run_all,
 	safe_not_equal,
+	set_input_value,
 	to_number
 } from "svelte/internal";
 
@@ -30,11 +31,11 @@ function create_fragment(ctx) {
 		m(target, anchor) {
 			insert(target, input, anchor);
 
-			input.value = ctx.value;
+			set_input_value(input, ctx.value);
 		},
 
 		p(changed, ctx) {
-			if (changed.value) input.value = ctx.value;
+			if (changed.value) set_input_value(input, ctx.value);
 		},
 
 		i: noop,
