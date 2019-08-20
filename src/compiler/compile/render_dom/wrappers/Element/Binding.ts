@@ -209,7 +209,7 @@ function get_dom_updater(
 	}
 
 	if (binding.node.name === 'value') {
-		return `@set_input_value(${element.var}, ${binding.snippet});`
+		return `@set_input_value(${element.var}, ${binding.snippet});`;
 	}
 
 	return `${element.var}.${binding.node.name} = ${binding.snippet};`;

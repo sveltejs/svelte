@@ -385,7 +385,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const is = this.attributes.find(attr => attr.node.name === 'is');
 		if (is) {
-			return `@element_is("${name}", ${is.render_chunks().join(' + ')});`
+			return `@element_is("${name}", ${is.render_chunks().join(' + ')});`;
 		}
 
 		return `@element("${name}")`;
