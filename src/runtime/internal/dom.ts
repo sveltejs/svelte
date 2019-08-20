@@ -169,6 +169,12 @@ export function set_data(text, data) {
 	if (text.data !== data) text.data = data;
 }
 
+export function set_input_value(input, value) {
+	if (value != null || input.value) {
+		input.value = value;
+	}
+}
+
 export function set_input_type(input, type) {
 	try {
 		input.type = type;
