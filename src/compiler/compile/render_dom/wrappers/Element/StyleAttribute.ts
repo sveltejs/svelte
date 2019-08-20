@@ -110,8 +110,9 @@ function get_style_value(chunks: Array<Text | Expression>) {
 	let in_url = false;
 	let quote_mark = null;
 	let escaped = false;
+	let closed = false;
 
-	while (chunks.length) {
+	while (chunks.length && !closed) {
 		const chunk = chunks.shift();
 
 		if (chunk.type === 'Text') {
@@ -132,6 +133,7 @@ function get_style_value(chunks: Array<Text | Expression>) {
 				} else if (char === 'u' && chunk.data.slice(c, c + 4) === 'url(') {
 					in_url = true;
 				} else if (char === ';' && !in_url && !quote_mark) {
+					closed = true;
 					break;
 				}
 
