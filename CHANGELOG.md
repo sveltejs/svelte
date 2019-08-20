@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 3.9.0
+
+* Support `is` attribute on elements, with a warning ([#3182](https://github.com/sveltejs/svelte/issues/3182))
+* Handle missing slot prop ([#3322](https://github.com/sveltejs/svelte/issues/3322))
+* Don't set undefined/null input values, unless previous value exists ([#1233](https://github.com/sveltejs/svelte/issues/1233))
+* Fix style attribute optimisation bailout ([#1830](https://github.com/sveltejs/svelte/issues/1830))
+
 ## 3.8.1
 
 * Set SVG namespace for slotted elements ([#3321](https://github.com/sveltejs/svelte/issues/3321))
