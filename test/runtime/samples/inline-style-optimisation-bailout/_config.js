@@ -17,4 +17,4 @@ export default {
 		assert.equal(styles.color, '');
 		assert.equal(styles.fontSize, '20px');
 	}
-}
+};
