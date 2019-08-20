@@ -35,8 +35,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 							} else {
 								const snippet = chunk.render();
 
-								add_to_set(prop_dependencies, chunk.dependencies);
-
+								add_to_set(prop_dependencies, chunk.dynamic_dependencies());
 								return chunk.get_precedence() <= 13 ? `(${snippet})` : snippet;
 							}
 						})
