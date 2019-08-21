@@ -23,15 +23,15 @@ export default {
 
 		a = false;
 		component.foo = 'soup';
-		assert.equal(count_a, 1);
+		assert.equal(count_a, 2);
 		assert.equal(count_b, 1);
 
-		assert.htmlEqual(target.innerHTML, `<p>soup</p>`);
+		assert.htmlEqual(target.innerHTML, `<p>SOUP</p>`);
 
 		component.foo = 'salad';
-		assert.equal(count_a, 1);
+		assert.equal(count_a, 3);
 		assert.equal(count_b, 1);
 
-		assert.htmlEqual(target.innerHTML, `<p>salad</p>`);
+		assert.htmlEqual(target.innerHTML, `<p>SALAD</p>`);
 	}
 }
