@@ -7,7 +7,7 @@ import create_debugging_comment from './shared/create_debugging_comment';
 import ElseBlock from '../../nodes/ElseBlock';
 import FragmentWrapper from './Fragment';
 import deindent from '../../utils/deindent';
-import is_reference from 'is-reference';
+import { walk } from 'estree-walker';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -18,8 +18,9 @@ function is_else_if(node: ElseBlock) {
 class IfBlockBranch extends Wrapper {
 	block: Block;
 	fragment: FragmentWrapper;
-	updater?: string;
-	condition: string;
+	dependencies?: string[];
+	condition?: string;
+	snippet?: string;
 	is_dynamic: boolean;
 
 	var = null;
@@ -40,17 +41,21 @@ class IfBlockBranch extends Wrapper {
 		if (expression) {
 			const dependencies = expression.dynamic_dependencies();
 
-			// TODO is this the right rule? or should only functions
-			// be considered 'expensive'?
-			const should_cache = !is_reference(expression.node, null) && dependencies.length > 0;
+			// TODO is this the right rule? or should any non-reference count?
+			// const should_cache = !is_reference(expression.node, null) && dependencies.length > 0;
+			let should_cache = false;
+			walk(expression.node, {
+				enter(node) {
+					if (node.type === 'CallExpression' || node.type === 'NewExpression') {
+						should_cache = true;
+					}
+				}
+			});
 
 			if (should_cache) {
-				const name = block.get_unique_name(`show_if`);
-				const snippet = expression.render(block);
-
-				block.add_variable(name, snippet);
-				this.updater = `if (${dependencies.map(d => `changed.${d}`)}) ${name} = ${snippet};`;
-				this.condition = name;
+				this.condition = block.get_unique_name(`show_if`);
+				this.snippet = expression.render(block);
+				this.dependencies = dependencies;
 			} else {
 				this.condition = expression.render(block);
 			}
@@ -177,6 +182,10 @@ export default class IfBlockWrapper extends Wrapper {
 		const detaching = (parent_node && parent_node !== '@_document.head') ? '' : 'detaching';
 
 		if (this.node.else) {
+			this.branches.forEach(branch => {
+				if (branch.snippet) block.add_variable(branch.condition);
+			});
+
 			if (has_outros) {
 				this.render_compound_with_outros(block, parent_node, parent_nodes, dynamic, vars, detaching);
 
@@ -233,15 +242,17 @@ export default class IfBlockWrapper extends Wrapper {
 		/* eslint-disable @typescript-eslint/indent,indent */
 		block.builders.init.add_block(deindent`
 			function ${select_block_type}(changed, ctx) {
-				${this.branches.map(({ updater, condition, block }) => deindent`
-				${updater}
-				${condition ? `if (${condition}) ` : ''}return ${block.name};`)}
+				${this.branches.map(({ dependencies, condition, snippet, block }) => condition
+				? deindent`
+				${dependencies && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
+				if (${condition}) return ${block.name};`
+				: `return ${block.name};`)}
 			}
 		`);
 		/* eslint-enable @typescript-eslint/indent,indent */
 
 		block.builders.init.add_block(deindent`
-			var ${current_block_type} = ${select_block_type}(changed, ctx);
+			var ${current_block_type} = ${select_block_type}(null, ctx);
 			var ${name} = ${current_block_type_and}${current_block_type}(ctx);
 		`);
 
@@ -314,9 +325,11 @@ export default class IfBlockWrapper extends Wrapper {
 			var ${if_blocks} = [];
 
 			function ${select_block_type}(changed, ctx) {
-				${this.branches.map(({ updater, condition }, i) => deindent`
-				${updater}
-				${condition ? `if (${condition}) ` : ''}return ${i};`)}
+				${this.branches.map(({ dependencies, condition, snippet }, i) => condition
+				? deindent`
+				${dependencies && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
+				if (${condition}) return ${String(i)};`
+				: `return ${i};`)}
 				${!has_else && `return -1;`}
 			}
 		`);
@@ -324,12 +337,12 @@ export default class IfBlockWrapper extends Wrapper {
 
 		if (has_else) {
 			block.builders.init.add_block(deindent`
-				${current_block_type_index} = ${select_block_type}(changed, ctx);
+				${current_block_type_index} = ${select_block_type}(null, ctx);
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 			`);
 		} else {
 			block.builders.init.add_block(deindent`
-				if (~(${current_block_type_index} = ${select_block_type}(changed, ctx))) {
+				if (~(${current_block_type_index} = ${select_block_type}(null, ctx))) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 				}
 			`);
@@ -415,6 +428,8 @@ export default class IfBlockWrapper extends Wrapper {
 	) {
 		const branch = this.branches[0];
 
+		if (branch.snippet) block.add_variable(branch.condition, branch.snippet);
+
 		block.builders.init.add_block(deindent`
 			var ${name} = (${branch.condition}) && ${branch.block.name}(ctx);
 		`);
@@ -451,8 +466,8 @@ export default class IfBlockWrapper extends Wrapper {
 				}
 			`;
 
-		if (branch.updater) {
-			block.builders.update.add_block(branch.updater);
+		if (branch.snippet) {
+			block.builders.update.add_block(`if (${branch.dependencies.map(n => `changed.${n}`).join(' || ')}) ${branch.condition} = ${branch.snippet}`);
 		}
 
 		// no `p()` here — we don't want to update outroing nodes,

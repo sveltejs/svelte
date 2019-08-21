@@ -4,7 +4,7 @@
 	export let foo;
 </script>
 
-{#if fn()}
+{#if fn(foo)}
 	<p>{foo}</p>
 {:else if other_fn()}
 	<p>{foo.toUpperCase()}</p>

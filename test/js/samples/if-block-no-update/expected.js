@@ -57,12 +57,12 @@ function create_if_block(ctx) {
 function create_fragment(ctx) {
 	var if_block_anchor;
 
-	function select_block_type(ctx) {
+	function select_block_type(changed, ctx) {
 		if (ctx.foo) return create_if_block;
 		return create_else_block;
 	}
 
-	var current_block_type = select_block_type(ctx);
+	var current_block_type = select_block_type(null, ctx);
 	var if_block = current_block_type(ctx);
 
 	return {
@@ -77,7 +77,7 @@ function create_fragment(ctx) {
 		},
 
 		p(changed, ctx) {
-			if (current_block_type !== (current_block_type = select_block_type(ctx))) {
+			if (current_block_type !== (current_block_type = select_block_type(changed, ctx))) {
 				if_block.d(1);
 				if_block = current_block_type(ctx);
 				if (if_block) {
