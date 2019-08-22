@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 3.9.1
+
+* Only update style properties if necessary ([#3433](https://github.com/sveltejs/svelte/issues/3433))
+* Only update if/await blocks if necessary ([#2355](https://github.com/sveltejs/svelte/issues/2355))
+* Set context correctly inside await blocks ([#2443](https://github.com/sveltejs/svelte/issues/2443))
+* Handle `!important` inline styles ([#1834](https://github.com/sveltejs/svelte/issues/1834))
+* Make index references reactive in event handlers inside keyed each blocks ([#2569](https://github.com/sveltejs/svelte/issues/2569))
+
 ## 3.9.0
 
 * Support `is` attribute on elements, with a warning ([#3182](https://github.com/sveltejs/svelte/issues/3182))
