@@ -147,7 +147,10 @@ export default class Expression {
 
 						contextual_dependencies.add(name);
 
-						if (!lazy) {
+						const owner = template_scope.get_owner(name);
+						const is_index = owner.type === 'EachBlock' && owner.key && name === owner.index;
+
+						if (!lazy || is_index) {
 							template_scope.dependencies_for_name.get(name).forEach(name => dependencies.add(name));
 						}
 					} else {
