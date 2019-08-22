@@ -15,4 +15,4 @@ export default {
 		styles = window.getComputedStyle(p);
 		assert.equal(styles.color, 'green');
 	}
-}
+};

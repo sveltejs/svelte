@@ -19,4 +19,4 @@ export default {
 
 		assert.htmlEqual(target.innerHTML, `<p>soup</p>`);
 	}
-}
+};

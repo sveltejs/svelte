@@ -34,4 +34,4 @@ export default {
 
 		assert.htmlEqual(target.innerHTML, `<p>SALAD</p>`);
 	}
-}
+};
