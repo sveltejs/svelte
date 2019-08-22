@@ -249,6 +249,11 @@ export default function dom(
 						}
 
 						pending_assignments = new Set();
+					} else if (parent && parent.type !== 'ForStatement' && node.type === 'VariableDeclaration') {
+						const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
+
+						code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert};`);
+						pending_assignments = new Set();
 					}
 				}
 			}
