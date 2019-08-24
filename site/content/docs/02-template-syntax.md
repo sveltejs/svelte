@@ -694,6 +694,9 @@ However, the shorthand syntax cannot be used on this case.
 <div class:active,primary="{isActive}">...</div>
 ```
 
+> You should take care when using multiple `class` attributes, because it can affect each other. Like when using `class="foo" class:foo`, the second expression can remove the first one. Svelte warns when it finds the same name in multiple `class` expressions.
+
+
 #### use:*action*
 
 ```sv
