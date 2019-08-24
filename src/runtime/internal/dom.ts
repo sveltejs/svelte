@@ -20,6 +20,10 @@ export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
 	return document.createElement<K>(name);
 }
 
+export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: string) {
+	return document.createElement<K>(name, { is });
+}
+
 export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
 	// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
 	const target = {} as Pick<T, Exclude<keyof T, K>>;
@@ -165,6 +169,12 @@ export function set_data(text, data) {
 	if (text.data !== data) text.data = data;
 }
 
+export function set_input_value(input, value) {
+	if (value != null || input.value) {
+		input.value = value;
+	}
+}
+
 export function set_input_type(input, type) {
 	try {
 		input.type = type;
@@ -173,8 +183,8 @@ export function set_input_type(input, type) {
 	}
 }
 
-export function set_style(node, key, value) {
-	node.style.setProperty(key, value);
+export function set_style(node, key, value, important) {
+	node.style.setProperty(key, value, important ? 'important' : '');
 }
 
 export function select_option(select, value) {

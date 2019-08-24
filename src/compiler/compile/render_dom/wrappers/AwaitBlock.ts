@@ -188,29 +188,35 @@ export default class AwaitBlockWrapper extends Wrapper {
 			conditions.push(
 				`(${dependencies.map(dep => `'${dep}' in changed`).join(' || ')})`
 			);
-		}
 
-		conditions.push(
-			`${promise} !== (${promise} = ${snippet})`,
-			`@handle_promise(${promise}, ${info})`
-		);
+			conditions.push(
+				`${promise} !== (${promise} = ${snippet})`,
+				`@handle_promise(${promise}, ${info})`
+			);
 
-		block.builders.update.add_line(
-			`${info}.ctx = ctx;`
-		);
+			block.builders.update.add_line(
+				`${info}.ctx = ctx;`
+			);
 
-		if (this.pending.block.has_update_method) {
-			block.builders.update.add_block(deindent`
-				if (${conditions.join(' && ')}) {
-					// nothing
-				} else {
-					${info}.block.p(changed, @assign(@assign({}, ctx), ${info}.resolved));
-				}
-			`);
+			if (this.pending.block.has_update_method) {
+				block.builders.update.add_block(deindent`
+					if (${conditions.join(' && ')}) {
+						// nothing
+					} else {
+						${info}.block.p(changed, @assign(@assign({}, ctx), ${info}.resolved));
+					}
+				`);
+			} else {
+				block.builders.update.add_block(deindent`
+					${conditions.join(' && ')}
+				`);
+			}
 		} else {
-			block.builders.update.add_block(deindent`
-				${conditions.join(' && ')}
-			`);
+			if (this.pending.block.has_update_method) {
+				block.builders.update.add_block(deindent`
+					${info}.block.p(changed, @assign(@assign({}, ctx), ${info}.resolved));
+				`);
+			}
 		}
 
 		if (this.pending.block.has_outro_method) {
