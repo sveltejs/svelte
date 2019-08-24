@@ -181,12 +181,12 @@ export default class Element extends Node {
 					break;
 
 				case 'Transition':
-				{
-					const transition = new Transition(component, this, scope, node);
-					if (node.intro) this.intro = transition;
-					if (node.outro) this.outro = transition;
-					break;
-				}
+					{
+						const transition = new Transition(component, this, scope, node);
+						if (node.intro) this.intro = transition;
+						if (node.outro) this.outro = transition;
+						break;
+					}
 
 				case 'Animation':
 					this.animation = new Animation(component, this, scope, node);
@@ -268,6 +268,7 @@ export default class Element extends Node {
 		}
 
 		this.validate_attributes();
+		this.validate_classes();
 		this.validate_bindings();
 		this.validate_content();
 		this.validate_event_handlers();
@@ -468,6 +469,36 @@ export default class Element extends Node {
 				}
 			}
 		}
+	}
+
+	validate_classes() {
+		const classAttribute = this.attributes.find(
+			attribute => !attribute.is_spread && attribute.name.toLowerCase() === "class"
+		);
+
+		let value: string | true = '';
+
+		if (classAttribute) {
+			value = classAttribute.get_static_value()
+		}
+
+		const classNames = String(value).split(" ");
+
+		this.classes.forEach(class_directive => {
+			const { name } = class_directive;
+
+			name.split(",").forEach(className => {
+				if (classNames.includes(className)) {
+					this.component.warn(this, {
+						code: `class-name-multiple-attrs`,
+						message: `Class: avoid using class name '${className}' in more than one class attribute`
+					});
+
+				} else {
+					classNames.push(className);
+				}
+			})
+		})
 	}
 
 	validate_bindings() {
