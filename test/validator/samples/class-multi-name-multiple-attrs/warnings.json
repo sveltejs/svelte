@@ -1,0 +1,17 @@
+[
+	{
+		"code": "class-name-multiple-attrs",
+		"message": "Class: avoid using class name 'two' in more than one class attribute",
+		"start": {
+			"character": 0,
+			"column": 0,
+			"line": 1
+		},
+		"end": {
+			"character": 74,
+			"column": 6,
+			"line": 3
+		},
+		"pos": 0
+	}
+]
