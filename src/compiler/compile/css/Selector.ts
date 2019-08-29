@@ -64,21 +64,29 @@ export default class Selector {
 	}
 
 	transform(code: MagicString, attr: string) {
+		const should_double_up_attr = this.blocks.filter(block => block.should_encapsulate).length === 1;
+
 		function encapsulate_block(block: Block) {
 			let i = block.selectors.length;
+			let encapsulationAttr = attr;
+
+			if (should_double_up_attr) {
+				encapsulationAttr = attr + attr;
+			}
+
 			while (i--) {
 				const selector = block.selectors[i];
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
 					if (selector.name !== 'root') {
-						if (i === 0) code.prependRight(selector.start, attr);
+						if (i === 0) code.prependRight(selector.start, encapsulationAttr);
 					}
 					continue;
 				}
 
 				if (selector.type === 'TypeSelector' && selector.name === '*') {
-					code.overwrite(selector.start, selector.end, attr);
+					code.overwrite(selector.start, selector.end, encapsulationAttr);
 				} else {
-					code.appendLeft(selector.end, attr);
+					code.appendLeft(selector.end, encapsulationAttr);
 				}
 
 				break;

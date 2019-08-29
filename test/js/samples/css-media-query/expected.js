@@ -14,7 +14,7 @@ import {
 function add_css() {
 	var style = element("style");
 	style.id = "svelte-1slhpfn-style";
-	style.textContent = "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}";
+	style.textContent = "@media(min-width: 1px){div.svelte-1slhpfn.svelte-1slhpfn{color:red}}";
 	append(document.head, style);
 }
 
