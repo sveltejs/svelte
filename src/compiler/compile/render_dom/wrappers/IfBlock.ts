@@ -493,6 +493,10 @@ export default class IfBlockWrapper extends Wrapper {
 					}
 				`);
 			}
+		} else if (dynamic) {
+			block.builders.update.add_block(
+				`if (${branch.condition}) ${name}.p(changed, ctx);`
+			);
 		}
 
 		block.builders.destroy.add_line(`${if_name}${name}.d(${detaching});`);
