@@ -9,6 +9,24 @@ export interface TransitionConfig {
 	tick?: (t: number, u: number) => void;
 }
 
+interface BlurParams {
+	delay: number;
+	duration: number;
+}
+
+export function blur(node: Element, {
+	delay = 0,
+	duration = 400
+}: BlurParams): TransitionConfig {
+	const f = +getComputedStyle(node).filter;
+
+	return {
+		delay,
+		duration,
+		css: t => `filter: blur(${t * f})`
+	};
+}
+
 interface FadeParams {
 	delay: number;
 	duration: number;
