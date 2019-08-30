@@ -2,7 +2,7 @@ export function noop() {}
 
 export const identity = x => x;
 
-export function assign<T, S>(tar:T, src:S): T & S {
+export function assign<T, S>(tar: T, src: S): T & S {
 	// @ts-ignore
 	for (const k in src) tar[k] = src[k];
 	return tar as T & S;
@@ -48,12 +48,19 @@ export function validate_store(store, name) {
 	}
 }
 
-export function subscribe(component, store, callback) {
+export function subscribe(store, callback) {
 	const unsub = store.subscribe(callback);
+	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+}
 
-	component.$$.on_destroy.push(unsub.unsubscribe
-		? () => unsub.unsubscribe()
-		: unsub);
+export function get_store_value(store) {
+	let value;
+	subscribe(store, _ => value = _)();
+	return value;
+}
+
+export function component_subscribe(component, store, callback) {
+	component.$$.on_destroy.push(subscribe(store, callback));
 }
 
 export function create_slot(definition, ctx, fn) {
@@ -81,19 +88,15 @@ export function exclude_internal_props(props) {
 	return result;
 }
 
-const is_client = typeof window !== 'undefined';
-
-export let now: () => number = is_client
-	? () => window.performance.now()
-	: () => Date.now();
-
-export let raf = is_client ? requestAnimationFrame : noop;
-
-// used internally for testing
-export function set_now(fn) {
-	now = fn;
+export function once(fn) {
+	let ran = false;
+	return function(this: any, ...args) {
+		if (ran) return;
+		ran = true;
+		fn.call(this, ...args);
+	};
 }
 
-export function set_raf(fn) {
-	raf = fn;
+export function null_to_empty(value) {
+	return value == null ? '' : value;
 }

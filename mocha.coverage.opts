@@ -1,4 +1,3 @@
---compilers ts-node/register
 --require source-map-support/register
 --full-trace
 --recursive

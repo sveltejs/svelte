@@ -1,31 +1,13 @@
-export function append(target:Node, node:Node) {
+export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
 
-export function insert(target: Node, node: Node, anchor?:Node) {
+export function insert(target: Node, node: Node, anchor?: Node) {
 	target.insertBefore(node, anchor || null);
 }
 
 export function detach(node: Node) {
 	node.parentNode.removeChild(node);
-}
-
-export function detach_between(before: Node, after: Node) {
-	while (before.nextSibling && before.nextSibling !== after) {
-		before.parentNode.removeChild(before.nextSibling);
-	}
-}
-
-export function detach_before(after:Node) {
-	while (after.previousSibling) {
-		after.parentNode.removeChild(after.previousSibling);
-	}
-}
-
-export function detach_after(before:Node) {
-	while (before.nextSibling) {
-		before.parentNode.removeChild(before.nextSibling);
-	}
 }
 
 export function destroy_each(iterations, detaching) {
@@ -38,7 +20,12 @@ export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
 	return document.createElement<K>(name);
 }
 
-export function object_without_properties<T,K extends keyof T>(obj:T, exclude: K[]) {
+export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: string) {
+	return document.createElement<K>(name, { is });
+}
+
+export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
+	// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
 	const target = {} as Pick<T, Exclude<keyof T, K>>;
 	for (const k in obj) {
 		if (
@@ -53,11 +40,11 @@ export function object_without_properties<T,K extends keyof T>(obj:T, exclude: K
 	return target;
 }
 
-export function svg_element<K extends keyof SVGElementTagNameMap>(name:K):SVGElement {
+export function svg_element<K extends keyof SVGElementTagNameMap>(name: K): SVGElement {
 	return document.createElementNS<K>('http://www.w3.org/2000/svg', name);
 }
 
-export function text(data:string) {
+export function text(data: string) {
 	return document.createTextNode(data);
 }
 
@@ -90,12 +77,19 @@ export function stop_propagation(fn) {
 	};
 }
 
+export function self(fn) {
+	return function(event) {
+		// @ts-ignore
+		if (event.target === this) fn.call(this, event);
+	};
+}
+
 export function attr(node: Element, attribute: string, value?: string) {
 	if (value == null) node.removeAttribute(attribute);
 	else node.setAttribute(attribute, value);
 }
 
-export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string; }) {
+export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
 	for (const key in attributes) {
 		if (key === 'style') {
 			node.style.cssText = attributes[key];
@@ -175,6 +169,12 @@ export function set_data(text, data) {
 	if (text.data !== data) text.data = data;
 }
 
+export function set_input_value(input, value) {
+	if (value != null || input.value) {
+		input.value = value;
+	}
+}
+
 export function set_input_type(input, type) {
 	try {
 		input.type = type;
@@ -183,8 +183,8 @@ export function set_input_type(input, type) {
 	}
 }
 
-export function set_style(node, key, value) {
-	node.style.setProperty(key, value);
+export function set_style(node, key, value, important) {
+	node.style.setProperty(key, value, important ? 'important' : '');
 }
 
 export function select_option(select, value) {
@@ -222,6 +222,7 @@ export function add_resize_listener(element, fn) {
 	const object = document.createElement('object');
 	object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
 	object.type = 'text/html';
+	object.tabIndex = -1;
 
 	let win;
 
@@ -254,4 +255,40 @@ export function custom_event<T=any>(type: string, detail?: T) {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, false, false, detail);
 	return e;
+}
+
+export class HtmlTag {
+	e: HTMLElement;
+	n: ChildNode[];
+	t: HTMLElement;
+	a: HTMLElement;
+
+	constructor(html: string, anchor: HTMLElement = null) {
+		this.e = element('div');
+		this.a = anchor;
+		this.u(html);
+	}
+
+	m(target: HTMLElement, anchor: HTMLElement = null) {
+		for (let i = 0; i < this.n.length; i += 1) {
+			insert(target, this.n[i], anchor);
+		}
+
+		this.t = target;
+	}
+
+	u(html: string) {
+		this.e.innerHTML = html;
+		this.n = Array.from(this.e.childNodes);
+	}
+
+	p(html: string) {
+		this.d();
+		this.u(html);
+		this.m(this.t, this.a);
+	}
+
+	d() {
+		this.n.forEach(detach);
+	}
 }

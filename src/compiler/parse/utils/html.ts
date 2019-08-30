@@ -36,7 +36,7 @@ const windows_1252 = [
 ];
 
 const entity_pattern = new RegExp(
-	`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(entities).join('|')}));?`,
+	`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(entities).join('|')}))(?:;|\\b)`,
 	'g'
 );
 

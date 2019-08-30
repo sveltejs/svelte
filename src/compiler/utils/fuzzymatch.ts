@@ -144,7 +144,7 @@ class FuzzySet {
 		items[index] = [vector_normal, normalized_value];
 		this.items[gram_size] = items;
 		this.exact_set[normalized_value] = value;
-	};
+	}
 
 	get(value: string) {
 		const normalized_value = value.toLowerCase();
@@ -232,5 +232,5 @@ class FuzzySet {
 		}
 
 		return new_results;
-	};
+	}
 }

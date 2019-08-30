@@ -1,37 +1,35 @@
-import { SourceMap } from 'magic-string';
+export interface Processed {
+	code: string;
+	map?: object | string;
+	dependencies?: string[];
+}
 
 export interface PreprocessorGroup {
 	markup?: (options: {
-		content: string,
-		filename: string
-	}) => { code: string, map?: SourceMap | string, dependencies?: string[] };
+		content: string;
+		filename: string;
+	}) => Processed | Promise<Processed>;
 	style?: Preprocessor;
 	script?: Preprocessor;
 }
 
 export type Preprocessor = (options: {
-	content: string,
-	attributes: Record<string, string | boolean>,
-	filename?: string
-}) => { code: string, map?: SourceMap | string, dependencies?: string[] };
-
-interface Processed {
-	code: string;
-	map?: SourceMap | string;
-	dependencies?: string[];
-}
-
-function parse_attribute_value(value: string) {
-	return /^['"]/.test(value) ?
-		value.slice(1, -1) :
-		value;
-}
+	content: string;
+	attributes: Record<string, string | boolean>;
+	filename?: string;
+}) => Processed | Promise<Processed>;
 
 function parse_attributes(str: string) {
 	const attrs = {};
 	str.split(/\s+/).filter(Boolean).forEach(attr => {
-		const [name, value] = attr.split('=');
-		attrs[name] = value ? parse_attribute_value(value) : true;
+		const p = attr.indexOf('=');
+		if (p === -1) {
+			attrs[attr] = true;
+		} else {
+			attrs[attr.slice(0, p)] = `'"`.includes(attr[p + 1]) ?
+				attr.slice(p + 2, -1) :
+				attr.slice(p + 1);
+		}
 	});
 	return attrs;
 }
@@ -43,16 +41,16 @@ interface Replacement {
 }
 
 async function replace_async(str: string, re: RegExp, func: (...any) => Promise<string>) {
-	const replacements: Promise<Replacement>[] = [];
+	const replacements: Array<Promise<Replacement>> = [];
 	str.replace(re, (...args) => {
 		replacements.push(
 			func(...args).then(
-				res =>
-					<Replacement>({
+				res => // eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
+					({
 						offset: args[args.length - 2],
 						length: args[0].length,
 						replacement: res,
-					})
+					}) as Replacement
 			)
 		);
 		return '';
@@ -85,7 +83,7 @@ export default async function preprocess(
 	const style = preprocessors.map(p => p.style).filter(Boolean);
 
 	for (const fn of markup) {
-		const processed: Processed = await fn({
+		const processed = await fn({
 			content: source,
 			filename
 		});
@@ -98,7 +96,7 @@ export default async function preprocess(
 			source,
 			/<script(\s[^]*?)?>([^]*?)<\/script>/gi,
 			async (match, attributes = '', content) => {
-				const processed: Processed = await fn({
+				const processed = await fn({
 					content,
 					attributes: parse_attributes(attributes),
 					filename

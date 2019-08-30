@@ -8,13 +8,13 @@ import { Node as INode } from '../../interfaces';
 import { new_tail } from '../utils/tail';
 import Element from './Element';
 
-type Context = {
-	key: INode,
-	name?: string,
-	tail: string
-};
+interface Context {
+	key: INode;
+	name?: string;
+	tail: string;
+}
 
-function unpack_destructuring(contexts: Array<Context>, node: INode, tail: string) {
+function unpack_destructuring(contexts: Context[], node: INode, tail: string) {
 	if (!node) return;
 
 	if (node.type === 'Identifier' || node.type === 'RestIdentifier') {
@@ -25,7 +25,7 @@ function unpack_destructuring(contexts: Array<Context>, node: INode, tail: strin
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
 			if (element && element.type === 'RestIdentifier') {
-				unpack_destructuring(contexts, element, `${tail}.slice(${i})`)
+				unpack_destructuring(contexts, element, `${tail}.slice(${i})`);
 			} else {
 				unpack_destructuring(contexts, element, `${tail}[${i}]`);
 			}
@@ -60,7 +60,7 @@ export default class EachBlock extends AbstractBlock {
 	context: string;
 	key: Expression;
 	scope: TemplateScope;
-	contexts: Array<Context>;
+	contexts: Context[];
 	has_animation: boolean;
 	has_binding = false;
 
@@ -83,15 +83,15 @@ export default class EachBlock extends AbstractBlock {
 			this.scope.add(context.key.name, this.expression.dependencies, this);
 		});
 
+		if (this.index) {
+			// index can only change if this is a keyed each block
+			const dependencies = info.key ? this.expression.dependencies : new Set([]);
+			this.scope.add(this.index, dependencies, this);
+		}
+
 		this.key = info.key
 			? new Expression(component, this, this.scope, info.key)
 			: null;
-
-		if (this.index) {
-			// index can only change if this is a keyed each block
-			const dependencies = this.key ? this.expression.dependencies : new Set([]);
-			this.scope.add(this.index, dependencies, this);
-		}
 
 		this.has_animation = false;
 

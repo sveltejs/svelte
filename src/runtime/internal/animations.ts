@@ -1,4 +1,5 @@
-import { identity as linear, noop, now } from './utils';
+import { identity as linear, noop } from './utils';
+import { now } from './environment';
 import { loop } from './loop';
 import { create_rule, delete_rule } from './style_manager';
 import { AnimationConfig } from '../animate';
@@ -7,7 +8,7 @@ import { AnimationConfig } from '../animate';
 //todo: documentation says it is DOMRect, but in IE it would be ClientRect
 type PositionRect = DOMRect|ClientRect;
 
-type AnimationFn = (node: Element, { from, to }: { from: PositionRect, to: PositionRect }, params: any) => AnimationConfig;
+type AnimationFn = (node: Element, { from, to }: { from: PositionRect; to: PositionRect }, params: any) => AnimationConfig;
 
 export function create_animation(node: Element & ElementCSSInlineStyle, from: PositionRect, fn: AnimationFn, params) {
 	if (!from) return noop;
@@ -86,13 +87,17 @@ export function fix_position(node: Element & ElementCSSInlineStyle) {
 		node.style.position = 'absolute';
 		node.style.width = width;
 		node.style.height = height;
-		const b = node.getBoundingClientRect();
+		add_transform(node, a);
+	}
+}
 
-		if (a.left !== b.left || a.top !== b.top) {
-			const style = getComputedStyle(node);
-			const transform = style.transform === 'none' ? '' : style.transform;
+export function add_transform(node: Element & ElementCSSInlineStyle, a: PositionRect) {
+	const b = node.getBoundingClientRect();
 
-			node.style.transform = `${transform} translate(${a.left - b.left}px, ${a.top - b.top}px)`;
-		}
+	if (a.left !== b.left || a.top !== b.top) {
+		const style = getComputedStyle(node);
+		const transform = style.transform === 'none' ? '' : style.transform;
+
+		node.style.transform = `${transform} translate(${a.left - b.left}px, ${a.top - b.top}px)`;
 	}
 }

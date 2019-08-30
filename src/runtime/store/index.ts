@@ -1,4 +1,4 @@
-import { run_all, noop, safe_not_equal, is_function } from 'svelte/internal';
+import { run_all, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
 
 /** Callback to inform of a value updates. */
 type Subscriber<T> = (value: T) => void;
@@ -10,7 +10,7 @@ type Unsubscriber = () => void;
 type Updater<T> = (value: T) => T;
 
 /** Cleanup logic callback. */
-type Invalidater<T> = (value?: T) => void;
+type Invalidator<T> = (value?: T) => void;
 
 /** Start and stop notification callbacks. */
 type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
@@ -22,7 +22,7 @@ export interface Readable<T> {
 	 * @param run subscription callback
 	 * @param invalidate cleanup callback
 	 */
-	subscribe(run: Subscriber<T>, invalidate?: Invalidater<T>): Unsubscriber;
+	subscribe(run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
 }
 
 /** Writable interface for both updating and subscribing. */
@@ -41,7 +41,9 @@ export interface Writable<T> extends Readable<T> {
 }
 
 /** Pair of subscriber and invalidator. */
-type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidater<T>];
+type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
+
+const subscriber_queue = [];
 
 /**
  * Creates a `Readable` store that allows reading by subscription.
@@ -66,11 +68,20 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 	function set(new_value: T): void {
 		if (safe_not_equal(value, new_value)) {
 			value = new_value;
-			if (!stop) {
-				return; // not ready
+			if (stop) { // store is ready
+				const run_queue = !subscriber_queue.length;
+				for (let i = 0; i < subscribers.length; i += 1) {
+					const s = subscribers[i];
+					s[1]();
+					subscriber_queue.push(s, value);
+				}
+				if (run_queue) {
+					for (let i = 0; i < subscriber_queue.length; i += 2) {
+						subscriber_queue[i][0](subscriber_queue[i + 1]);
+					}
+					subscriber_queue.length = 0;
+				}
 			}
-			subscribers.forEach((s) => s[1]());
-			subscribers.forEach((s) => s[0](value));
 		}
 	}
 
@@ -78,7 +89,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 		set(fn(value));
 	}
 
-	function subscribe(run: Subscriber<T>, invalidate: Invalidater<T> = noop): Unsubscriber {
+	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
 		subscribers.push(subscriber);
 		if (subscribers.length === 1) {
@@ -93,6 +104,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 			}
 			if (subscribers.length === 0) {
 				stop();
+				stop = null;
 			}
 		};
 	}
@@ -174,8 +186,4 @@ export function derived<T, S extends Stores>(
  * Get the current value from a store by subscribing and immediately unsubscribing.
  * @param store readable
  */
-export function get<T>(store: Readable<T>): T {
-	let value: T | undefined;
-	store.subscribe((_: T) => value = _)();
-	return value as T;
-}
+export { get_store_value as get };

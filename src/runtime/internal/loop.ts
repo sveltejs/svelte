@@ -1,4 +1,4 @@
-import { now, raf } from './utils';
+import { now, raf } from './environment';
 
 export interface Task { abort(): void; promise: Promise<void> }
 
@@ -23,7 +23,7 @@ export function clear_loops() {
 	running = false;
 }
 
-export function loop(fn: (number)=>void): Task {
+export function loop(fn: (number) => void): Task {
 	let task;
 
 	if (!running) {

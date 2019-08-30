@@ -5,7 +5,7 @@ const now = (typeof process !== 'undefined' && process.hrtime)
 	}
 	: () => self.performance.now();
 
-type Timing = {
+interface Timing {
 	label: string;
 	start: number;
 	end: number;
