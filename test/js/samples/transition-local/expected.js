@@ -37,9 +37,7 @@ function create_if_block(ctx) {
 					if_block.c();
 					transition_in(if_block, 1);
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
-				} else {
-									transition_in(if_block, 1);
-				}
+				} else transition_in(if_block, 1);
 			} else if (if_block) {
 				if_block.d(1);
 				if_block = null;
