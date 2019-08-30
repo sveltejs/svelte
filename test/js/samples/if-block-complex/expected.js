@@ -49,19 +49,7 @@ function create_fragment(ctx) {
 			insert(target, if_block_anchor, anchor);
 		},
 
-		p(changed, ctx) {
-			if (show_if) {
-				if (!if_block) {
-					if_block = create_if_block(ctx);
-					if_block.c();
-					if_block.m(if_block_anchor.parentNode, if_block_anchor);
-				}
-			} else if (if_block) {
-				if_block.d(1);
-				if_block = null;
-			}
-		},
-
+		p: noop,
 		i: noop,
 		o: noop,
 
