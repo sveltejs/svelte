@@ -466,7 +466,7 @@ export default class IfBlockWrapper extends Wrapper {
 				}
 			`;
 
-		if (branch.snippet) {
+		if (branch.snippet && branch.dependencies.length) {
 			block.builders.update.add_block(`if (${branch.dependencies.map(n => `changed.${n}`).join(' || ')}) ${branch.condition} = ${branch.snippet}`);
 		}
 
