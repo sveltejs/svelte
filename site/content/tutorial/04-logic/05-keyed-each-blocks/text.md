@@ -10,7 +10,7 @@ To do that, we specify a unique identifier for the `each` block:
 
 ```html
 {#each things as thing (thing.id)}
-	<Thing value={thing.value}/>
+	<Thing current={thing.value}/>
 {/each}
 ```
 
