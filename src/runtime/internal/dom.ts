@@ -94,7 +94,9 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 		if (key === 'style') {
 			node.style.cssText = attributes[key];
 		} else if (key in node) {
-			node[key] = attributes[key];
+			if (node[key] !== attributes[key]) {
+				node[key] = attributes[key];
+			}
 		} else {
 			attr(node, key, attributes[key]);
 		}
