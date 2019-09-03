@@ -9,7 +9,32 @@ function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
 }
 
-const is_keyframes_node = (node: Node) => remove_css_prefix(node.name) === 'keyframes';
+const is_keyframes_node = (node: Node) =>
+	remove_css_prefix(node.name) === 'keyframes';
+
+const at_rule_has_declaration = ({ block }: Node): true =>
+	block &&
+	block.children &&
+	block.children.find((node: Node) => node.type === 'Declaration');
+
+function minify_declarations(
+	code: MagicString,
+	start: number,
+	declarations: Array<Declaration>
+): number {
+	let c = start;
+
+	declarations.forEach((declaration, i) => {
+		const separator = i > 0 ? ';' : '';
+		if ((declaration.node.start - c) > separator.length) {
+			code.overwrite(c, declaration.node.start, separator);
+		}
+		declaration.minify(code);
+		c = declaration.node.end;
+	});
+
+	return c;
+}
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function hash(str: string): string {
@@ -64,16 +89,7 @@ class Rule {
 		code.remove(c, this.node.block.start);
 
 		c = this.node.block.start + 1;
-		this.declarations.forEach((declaration, i) => {
-			const separator = i > 0 ? ';' : '';
-			if ((declaration.node.start - c) > separator.length) {
-				code.overwrite(c, declaration.node.start, separator);
-			}
-
-			declaration.minify(code);
-
-			c = declaration.node.end;
-		});
+		c = minify_declarations(code, c, this.declarations)
 
 		code.remove(c, this.node.block.end - 1);
 	}
@@ -141,10 +157,12 @@ class Declaration {
 class Atrule {
 	node: Node;
 	children: Array<Atrule|Rule>;
+	declarations: Array<Declaration>;
 
 	constructor(node: Node) {
 		this.node = node;
 		this.children = [];
+		this.declarations = [];
 	}
 
 	apply(node: Element, stack: Element[]) {
@@ -179,11 +197,6 @@ class Atrule {
 			});
 
 			code.remove(c, this.node.block.start);
-		} else if (is_keyframes_node(this.node)) {
-			let c = this.node.start + this.node.name.length + 1;
-			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
-			c = this.node.expression.end;
-			if (this.node.block.start - c > 0) code.remove(c, this.node.block.start);
 		} else if (this.node.name === 'supports') {
 			let c = this.node.start + 9;
 			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
@@ -192,12 +205,26 @@ class Atrule {
 				c = query.end;
 			});
 			code.remove(c, this.node.block.start);
+		} else {
+			let c = this.node.start + this.node.name.length + 1;
+			if(this.node.expression) {
+				if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
+				c = this.node.expression.end;
+			}
+			if (this.node.block && this.node.block.start - c > 0) {
+				code.remove(c, this.node.block.start);
+			}
 		}
 
 		// TODO other atrules
 
 		if (this.node.block) {
 			let c = this.node.block.start + 1;
+			if (this.declarations.length) {
+				c = minify_declarations(code, c, this.declarations);
+				// if the atrule has children, leave the last declaration semicolon alone
+				if (this.children.length) c++;
+			}
 
 			this.children.forEach(child => {
 				if (child.is_used(dev)) {
@@ -296,6 +323,11 @@ export default class Stylesheet {
 									this.keyframes.set(expression.name, `${this.id}-${expression.name}`);
 								}
 							});
+						} else if (at_rule_has_declaration(node)) {
+							const at_rule_declarations = node.block.children
+								.filter(node => node.type === 'Declaration')
+								.map(node => new Declaration(node));
+							atrule.declarations.push(...at_rule_declarations);
 						}
 
 						current_atrule = atrule;
