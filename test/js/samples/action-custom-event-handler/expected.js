@@ -23,7 +23,12 @@ function create_fragment(ctx) {
 			foo_action = foo.call(null, button, ctx.foo_function) || {};
 		},
 
-		p: noop,
+		p(changed, ctx) {
+			if (typeof foo_action.update === 'function' && changed.bar) {
+				foo_action.update.call(null, ctx.foo_function);
+			}
+		},
+
 		i: noop,
 		o: noop,
 

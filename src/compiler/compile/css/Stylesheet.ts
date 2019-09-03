@@ -244,6 +244,11 @@ class Atrule {
 				if (type === 'Identifier') {
 					if (name.startsWith('-global-')) {
 						code.remove(start, start + 8);
+						this.children.forEach((rule: Rule) => {
+							rule.selectors.forEach(selector => {
+								selector.used = true;
+							});
+						});
 					} else {
 						code.overwrite(start, end, keyframes.get(name));
 					}
@@ -296,24 +301,19 @@ export default class Stylesheet {
 
 			this.has_styles = true;
 
-			const stack: Array<Rule | Atrule> = [];
+			const stack: Atrule[] = [];
+			let depth = 0;
 			let current_atrule: Atrule = null;
 
 			walk(ast.css, {
 				enter: (node: Node) => {
 					if (node.type === 'Atrule') {
-						const last = stack[stack.length - 1];
-
 						const atrule = new Atrule(node);
 						stack.push(atrule);
 
-						// this is an awkward special case — @apply (and
-						// possibly other future constructs)
-						if (last && !(last instanceof Atrule)) return;
-
 						if (current_atrule) {
 							current_atrule.children.push(atrule);
-						} else {
+						} else if (depth <= 1) {
 							this.children.push(atrule);
 						}
 
@@ -335,19 +335,24 @@ export default class Stylesheet {
 
 					if (node.type === 'Rule') {
 						const rule = new Rule(node, this, current_atrule);
-						stack.push(rule);
 
 						if (current_atrule) {
 							current_atrule.children.push(rule);
-						} else {
+						} else if (depth <= 1) {
 							this.children.push(rule);
 						}
 					}
+
+					depth += 1;
 				},
 
 				leave: (node: Node) => {
-					if (node.type === 'Rule' || node.type === 'Atrule') stack.pop();
-					if (node.type === 'Atrule') current_atrule = stack[stack.length - 1] as Atrule;
+					if (node.type === 'Atrule') {
+						stack.pop();
+						current_atrule = stack[stack.length - 1];
+					}
+
+					depth -= 1;
 				}
 			});
 		} else {

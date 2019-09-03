@@ -48,12 +48,19 @@ export function validate_store(store, name) {
 	}
 }
 
-export function subscribe(component, store, callback) {
+export function subscribe(store, callback) {
 	const unsub = store.subscribe(callback);
+	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+}
 
-	component.$$.on_destroy.push(unsub.unsubscribe
-		? () => unsub.unsubscribe()
-		: unsub);
+export function get_store_value(store) {
+	let value;
+	subscribe(store, _ => value = _)();
+	return value;
+}
+
+export function component_subscribe(component, store, callback) {
+	component.$$.on_destroy.push(subscribe(store, callback));
 }
 
 export function create_slot(definition, ctx, fn) {
@@ -87,22 +94,9 @@ export function once(fn) {
 		if (ran) return;
 		ran = true;
 		fn.call(this, ...args);
-	}
+	};
 }
 
-const is_client = typeof window !== 'undefined';
-
-export let now: () => number = is_client
-	? () => window.performance.now()
-	: () => Date.now();
-
-export let raf = is_client ? requestAnimationFrame : noop;
-
-// used internally for testing
-export function set_now(fn) {
-	now = fn;
-}
-
-export function set_raf(fn) {
-	raf = fn;
+export function null_to_empty(value) {
+	return value == null ? '' : value;
 }

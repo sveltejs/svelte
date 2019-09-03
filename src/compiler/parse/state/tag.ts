@@ -185,7 +185,7 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	const unique_names = new Set();
+	const unique_names: Set<string> = new Set();
 
 	let attribute;
 	while ((attribute = read_attribute(parser, unique_names))) {
@@ -385,6 +385,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 	let value: any[] | true = true;
 	if (parser.eat('=')) {
+		parser.allow_whitespace();
 		value = read_attribute_value(parser);
 		end = parser.index;
 	} else if (parser.match_regex(/["']/)) {

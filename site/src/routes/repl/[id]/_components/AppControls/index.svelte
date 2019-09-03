@@ -1,14 +1,16 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, getContext } from 'svelte';
+	import { stores } from '@sapper/app';
 	import UserMenu from './UserMenu.svelte';
 	import { Icon } from '@sveltejs/site-kit';
 	import * as doNotZip from 'do-not-zip';
 	import downloadBlob from '../../../_utils/downloadBlob.js';
-	import { user } from '../../../../../user.js';
 	import { enter } from '../../../../../utils/events.js';
 	import { isMac } from '../../../../../utils/compat.js';
 
 	const dispatch = createEventDispatcher();
+	const { session } = stores();
+	const { login } = getContext('app');
 
 	export let repl;
 	export let gist;
@@ -25,27 +27,13 @@
 		return new Promise(f => setTimeout(f, ms));
 	}
 
-	$: Authorization = $user && `Bearer ${$user.token}`;
-	$: canSave = $user && gist && gist.owner === $user.uid;
+	$: canSave = $session.user && gist && gist.owner === $session.user.uid;
 
 	function handleKeydown(event) {
 		if (event.which === 83 && (isMac ? event.metaKey : event.ctrlKey)) {
 			event.preventDefault();
 			save();
 		}
-	}
-
-	function login(event) {
-		event.preventDefault();
-		const loginWindow = window.open(`${window.location.origin}/auth/login`, 'login', 'width=600,height=400');
-
-		const handleLogin = event => {
-			loginWindow.close();
-			user.set(event.data.user);
-			window.removeEventListener('message', handleLogin);
-		};
-
-		window.addEventListener('message', handleLogin);
 	}
 
 	async function fork(intentWasSave) {
@@ -56,7 +44,7 @@
 		try {
 			const r = await fetch(`repl/create.json`, {
 				method: 'POST',
-				headers: { Authorization },
+				credentials: 'include',
 				body: JSON.stringify({
 					name,
 					files: components.map(component => ({
@@ -111,7 +99,7 @@
 
 			const r = await fetch(`repl/${gist.uid}.json`, {
 				method: 'PATCH',
-				headers: { Authorization },
+				credentials: 'include',
 				body: JSON.stringify({
 					name,
 					files: components.map(component => ({
@@ -199,7 +187,7 @@ export default app;` });
 			<Icon name="download" />
 		</button>
 
-		<button class="icon" disabled="{saving || !$user}" on:click={() => fork(false)} title="fork">
+		<button class="icon" disabled="{saving || !$session.user}" on:click={() => fork(false)} title="fork">
 			{#if justForked}
 				<Icon name="check" />
 			{:else}
@@ -207,7 +195,7 @@ export default app;` });
 			{/if}
 		</button>
 
-		<button class="icon" disabled="{saving || !$user}" on:click={save} title="save">
+		<button class="icon" disabled="{saving || !$session.user}" on:click={save} title="save">
 			{#if justSaved}
 				<Icon name="check" />
 			{:else}
@@ -215,10 +203,10 @@ export default app;` });
 			{/if}
 		</button>
 
-		{#if $user}
-			<UserMenu />
+		{#if $session.user}
+			<UserMenu/>
 		{:else}
-			<button class="icon" on:click={login}>
+			<button class="icon" on:click|preventDefault={login}>
 				<Icon name="log-in" />
 				<span>&nbsp;Log in to save</span>
 			</button>

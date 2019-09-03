@@ -2,7 +2,8 @@ import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import deindent from '../utils/deindent';
-import Block from '../render-dom/Block';
+import Block from '../render_dom/Block';
+import { sanitize } from '../../utils/names';
 
 export default class EventHandler extends Node {
 	type: 'EventHandler';
@@ -20,7 +21,7 @@ export default class EventHandler extends Node {
 		this.modifiers = new Set(info.modifiers);
 
 		if (info.expression) {
-			this.expression = new Expression(component, this, template_scope, info.expression);
+			this.expression = new Expression(component, this, template_scope, info.expression, true);
 			this.uses_context = this.expression.uses_context;
 
 			if (/FunctionExpression/.test(info.expression.type) && info.expression.params.length === 0) {
@@ -41,7 +42,7 @@ export default class EventHandler extends Node {
 				}
 			}
 		} else {
-			const name = component.get_unique_name(`${this.name}_handler`);
+			const name = component.get_unique_name(`${sanitize(this.name)}_handler`);
 
 			component.add_var({
 				name,

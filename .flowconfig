@@ -1,9 +1,0 @@
-[ignore]
-<PROJECT_ROOT>/types/.*
-
-[include]
-
-[libs]
-
-[options]
-strip_root=true

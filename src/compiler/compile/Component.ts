@@ -10,7 +10,7 @@ import { create_scopes, extract_names, Scope, extract_identifiers } from './util
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
-import internal_exports from './internal-exports';
+import internal_exports from './internal_exports';
 import { Node, Ast, CompileOptions, Var, Warning } from '../interfaces';
 import error from '../utils/error';
 import get_code_frame from '../utils/get_code_frame';
@@ -23,6 +23,7 @@ import get_object from './utils/get_object';
 import unwrap_parens from './utils/unwrap_parens';
 import Slot from './nodes/Slot';
 import { Node as ESTreeNode } from 'estree';
+import add_to_set from './utils/add_to_set';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -70,6 +71,8 @@ function remove_node(code: MagicString, start: number, end: number, body: Node, 
 export default class Component {
 	stats: Stats;
 	warnings: Warning[];
+	ignores: Set<string>;
+	ignore_stack: Array<Set<string>> = [];
 
 	ast: Ast;
 	source: string;
@@ -101,7 +104,8 @@ export default class Component {
 	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
 	injected_reactive_declaration_vars: Set<string> = new Set();
-	helpers: Set<string> = new Set();
+	helpers: Map<string, string> = new Map();
+	globals: Map<string, string> = new Map();
 
 	indirect_dependencies: Map<string, Set<string>> = new Map();
 
@@ -233,8 +237,15 @@ export default class Component {
 	}
 
 	helper(name: string) {
-		this.helpers.add(name);
-		return this.alias(name);
+		const alias = this.alias(name);
+		this.helpers.set(name, alias);
+		return alias;
+	}
+
+	global(name: string) {
+		const alias = this.alias(name);
+		this.globals.set(name, alias);
+		return alias;
 	}
 
 	generate(result: string) {
@@ -251,23 +262,29 @@ export default class Component {
 				.replace(/__svelte:self__/g, this.name)
 				.replace(compile_options.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (_match: string, sigil: string, name: string) => {
 					if (sigil === '@') {
-						if (internal_exports.has(name)) {
-							if (compile_options.dev && internal_exports.has(`${name}Dev`)) name = `${name}Dev`;
-							this.helpers.add(name);
+						if (name[0] === '_') {
+							return this.global(name.slice(1));
 						}
 
-						return this.alias(name);
+						if (!internal_exports.has(name)) {
+							throw new Error(`compiler error: this shouldn't happen! generated code is trying to use inexistent internal '${name}'`);
+						}
+
+						if (compile_options.dev && internal_exports.has(`${name}Dev`)) {
+							name = `${name}Dev`;
+						}
+
+						return this.helper(name);
 					}
 
 					return sigil.slice(1) + name;
 				});
 
-			const imported_helpers = Array.from(this.helpers)
-				.sort()
-				.map(name => {
-					const alias = this.alias(name);
-					return { name, alias };
-				});
+			const referenced_globals = Array.from(this.globals, ([name, alias]) => name !== alias && ({ name, alias })).filter(Boolean);
+			if (referenced_globals.length) {
+				this.helper('globals');
+			}
+			const imported_helpers = Array.from(this.helpers, ([name, alias]) => ({ name, alias }));
 
 			const module = create_module(
 				result,
@@ -276,6 +293,7 @@ export default class Component {
 				banner,
 				compile_options.sveltePath,
 				imported_helpers,
+				referenced_globals,
 				this.imports,
 				this.vars.filter(variable => variable.module && variable.export_name).map(variable => ({
 					name: variable.name,
@@ -427,6 +445,10 @@ export default class Component {
 			message: string;
 		}
 	) {
+		if (this.ignores && this.ignores.has(warning.code)) {
+			return;
+		}
+
 		if (!this.locator) {
 			this.locator = getLocator(this.source, { offsetLine: 1 });
 		}
@@ -647,7 +669,7 @@ export default class Component {
 			this.node_for_declaration.set(name, node);
 		});
 
-		globals.forEach((_node, name) => {
+		globals.forEach((node, name) => {
 			if (this.var_lookup.has(name)) return;
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
@@ -664,6 +686,13 @@ export default class Component {
 					injected: true
 				});
 			} else if (name[0] === '$') {
+				if (name === '$' || name[1] === '$') {
+					this.error(node, {
+						code: 'illegal-global',
+						message: `${name} is an illegal variable name`
+					});
+				}
+
 				this.add_var({
 					name,
 					injected: true,
@@ -1025,6 +1054,8 @@ export default class Component {
 
 			walk(fn_declaration, {
 				enter(node, parent) {
+					if (!hoistable) return this.skip();
+
 					if (map.has(node)) {
 						scope = map.get(node);
 					}
@@ -1033,14 +1064,17 @@ export default class Component {
 						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
 
-						if (node.type === 'Identifier' && injected_reactive_declaration_vars.has(name)) {
+						if (injected_reactive_declaration_vars.has(name)) {
 							hoistable = false;
 						} else if (name[0] === '$' && !owner) {
 							hoistable = false;
 						} else if (owner === instance_scope) {
+							const variable = var_lookup.get(name);
+
+							if (variable.reassigned || variable.mutated) hoistable = false;
+
 							if (name === fn_declaration.id.name) return;
 
-							const variable = var_lookup.get(name);
 							if (variable.hoistable) return;
 
 							if (top_level_function_declarations.has(name)) {
@@ -1218,10 +1252,18 @@ export default class Component {
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
-			name = name.slice(1);
+			if (name === '$' || name[1] === '$' && name !== '$$props') {
+				this.error(node, {
+					code: 'illegal-global',
+					message: `${name} is an illegal variable name`
+				});
+			}
+
 			this.has_reactive_assignments = true; // TODO does this belong here?
 
-			if (name[0] === '$') return; // $$props
+			if (name === '$$props') return;
+
+			name = name.slice(1);
 		}
 
 		if (this.var_lookup.has(name) && !this.var_lookup.get(name).global) return;
@@ -1235,6 +1277,17 @@ export default class Component {
 			code: 'missing-declaration',
 			message
 		});
+	}
+
+	push_ignores(ignores) {
+		this.ignores = new Set(this.ignores || []);
+		add_to_set(this.ignores, ignores);
+		this.ignore_stack.push(this.ignores);
+	}
+
+	pop_ignores() {
+		this.ignore_stack.pop();
+		this.ignores = this.ignore_stack[this.ignore_stack.length - 1];
 	}
 }
 

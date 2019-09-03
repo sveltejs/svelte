@@ -1,4 +1,4 @@
-import { now, raf } from './utils';
+import { now, raf } from './environment';
 
 export interface Task { abort(): void; promise: Promise<void> }
 

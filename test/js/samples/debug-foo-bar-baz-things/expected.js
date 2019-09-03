@@ -25,7 +25,7 @@ function get_each_context(ctx, list, i) {
 
 // (8:0) {#each things as thing}
 function create_each_block(ctx) {
-	var span, t0_value = ctx.thing.name, t0, t1;
+	var span, t0_value = ctx.thing.name + "", t0, t1;
 
 	return {
 		c: function create() {
@@ -48,7 +48,7 @@ function create_each_block(ctx) {
 		},
 
 		p: function update(changed, ctx) {
-			if ((changed.things) && t0_value !== (t0_value = ctx.thing.name)) {
+			if ((changed.things) && t0_value !== (t0_value = ctx.thing.name + "")) {
 				set_data(t0, t0_value);
 			}
 

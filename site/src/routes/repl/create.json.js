@@ -1,10 +1,9 @@
 import send from '@polka/send';
 import body from './_utils/body.js';
 import { query } from '../../utils/db';
-import { isUser } from '../../backend/auth';
 
 export async function post(req, res) {
-	const user = await isUser(req, res);
+	const { user } = req;
 	if (!user) return; // response already sent
 
 	try {

@@ -3,7 +3,8 @@
 .nyc_output
 node_modules
 *.map
-/src/compiler/compile/internal-exports.ts
+/src/compiler/compile/internal_exports.ts
+/compiler.d.ts
 /compiler.*js
 /index.*js
 /internal
@@ -14,7 +15,7 @@ node_modules
 /animate
 /scratch/
 /coverage/
-/coverage.lcov/
+/coverage.lcov
 /test/sourcemaps/samples/*/output.js
 /test/sourcemaps/samples/*/output.js.map
 /test/sourcemaps/samples/*/output.css

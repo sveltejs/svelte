@@ -186,15 +186,15 @@ result: {
 } = svelte.preprocess(
 	source: string,
 	preprocessors: Array<{
-		markup?: (input: { source: string, filename: string }) => Promise<{
+		markup?: (input: { content: string, filename: string }) => Promise<{
 			code: string,
 			dependencies?: Array<string>
 		}>,
-		script?: (input: { source: string, attributes: Record<string, string>, filename: string }) => Promise<{
+		script?: (input: { content: string, attributes: Record<string, string>, filename: string }) => Promise<{
 			code: string,
 			dependencies?: Array<string>
 		}>,
-		style?: (input: { source: string, attributes: Record<string, string>, filename: string }) => Promise<{
+		style?: (input: { content: string, attributes: Record<string, string>, filename: string }) => Promise<{
 			code: string,
 			dependencies?: Array<string>
 		}>

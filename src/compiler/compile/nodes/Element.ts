@@ -63,7 +63,8 @@ const valid_modifiers = new Set([
 	'stopPropagation',
 	'capture',
 	'once',
-	'passive'
+	'passive',
+	'self'
 ]);
 
 const passive_events = new Set([
@@ -83,7 +84,7 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 			: null);
 	}
 
-	if (element.name.toLowerCase() === 'svg') return namespaces.svg;
+	if (svg.test(element.name.toLowerCase())) return namespaces.svg;
 	if (parent_element.name.toLowerCase() === 'foreignobject') return null;
 
 	return parent_element.namespace;
@@ -414,6 +415,13 @@ export default class Element extends Node {
 				}
 			}
 
+			if (name === 'is') {
+				component.warn(attribute, {
+					code: 'avoid-is',
+					message: `The 'is' attribute is not supported cross-browser and should be avoided`
+				});
+			}
+
 			attribute_map.set(attribute.name, attribute);
 		});
 
@@ -451,11 +459,12 @@ export default class Element extends Node {
 			if (this.name === 'input') {
 				const type = attribute_map.get('type');
 				if (type && type.get_static_value() === 'image') {
-					should_have_attribute(
-						this,
-						['alt', 'aria-label', 'aria-labelledby'],
-						'input type="image"'
-					);
+					const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
+					const has_attribute = required_attributes.some(name => attribute_map.has(name));
+
+					if (!has_attribute) {
+						should_have_attribute(this, required_attributes, 'input type="image"');
+					}
 				}
 			}
 		}
@@ -608,9 +617,9 @@ export default class Element extends Node {
 					});
 				}
 			} else if (
-				name === 'text' ||
-				name === 'html'
-			){
+				name === 'textContent' ||
+				name === 'innerHTML'
+			) {
 				const contenteditable = this.attributes.find(
 					(attribute: Attribute) => attribute.name === 'contenteditable'
 				);
@@ -618,7 +627,7 @@ export default class Element extends Node {
 				if (!contenteditable) {
 					component.error(binding, {
 						code: `missing-contenteditable-attribute`,
-						message: `'contenteditable' attribute is required for text and html two-way bindings`
+						message: `'contenteditable' attribute is required for textContent and innerHTML two-way bindings`
 					});
 				} else if (contenteditable && !contenteditable.is_static) {
 					component.error(contenteditable, {
@@ -626,7 +635,7 @@ export default class Element extends Node {
 						message: `'contenteditable' attribute cannot be dynamic if element uses two-way binding`
 					});
 				}
-		} else if (name !== 'this') {
+			} else if (name !== 'this') {
 				component.error(binding, {
 					code: `invalid-binding`,
 					message: `'${binding.name}' is not a valid binding`
@@ -702,16 +711,20 @@ export default class Element extends Node {
 		return this.name === 'audio' || this.name === 'video';
 	}
 
-	add_css_class(class_name = this.component.stylesheet.id) {
+	add_css_class() {
+		const { id } = this.component.stylesheet;
+
 		const class_attribute = this.attributes.find(a => a.name === 'class');
+
 		if (class_attribute && !class_attribute.is_true) {
 			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
-				(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
+				(class_attribute.chunks[0] as Text).data += ` ${id}`;
 			} else {
 				(class_attribute.chunks as Node[]).push(
 					new Text(this.component, this, this.scope, {
 						type: 'Text',
-						data: ` ${class_name}`
+						data: ` ${id}`,
+						synthetic: true
 					})
 				);
 			}
@@ -720,7 +733,7 @@ export default class Element extends Node {
 				new Attribute(this.component, this, this.scope, {
 					type: 'Attribute',
 					name: 'class',
-					value: [{ type: 'Text', data: class_name }]
+					value: [{ type: 'Text', data: id, synthetic: true }]
 				})
 			);
 		}
