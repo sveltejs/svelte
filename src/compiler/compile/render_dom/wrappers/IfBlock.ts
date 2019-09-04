@@ -39,7 +39,7 @@ class IfBlockBranch extends Wrapper {
 		const is_else = !expression;
 
 		if (expression) {
-			const dependencies = expression.dynamic_dependencies();
+			this.dependencies = expression.dynamic_dependencies();
 
 			// TODO is this the right rule? or should any non-reference count?
 			// const should_cache = !is_reference(expression.node, null) && dependencies.length > 0;
@@ -55,7 +55,6 @@ class IfBlockBranch extends Wrapper {
 			if (should_cache) {
 				this.condition = block.get_unique_name(`show_if`);
 				this.snippet = expression.render(block);
-				this.dependencies = dependencies;
 			} else {
 				this.condition = expression.render(block);
 			}
@@ -244,7 +243,7 @@ export default class IfBlockWrapper extends Wrapper {
 			function ${select_block_type}(changed, ctx) {
 				${this.branches.map(({ dependencies, condition, snippet, block }) => condition
 				? deindent`
-				${dependencies && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
+				${snippet && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
 				if (${condition}) return ${block.name};`
 				: `return ${block.name};`)}
 			}
@@ -327,7 +326,7 @@ export default class IfBlockWrapper extends Wrapper {
 			function ${select_block_type}(changed, ctx) {
 				${this.branches.map(({ dependencies, condition, snippet }, i) => condition
 				? deindent`
-				${dependencies && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
+				${snippet && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
 				if (${condition}) return ${String(i)};`
 				: `return ${i};`)}
 				${!has_else && `return -1;`}
@@ -441,7 +440,7 @@ export default class IfBlockWrapper extends Wrapper {
 			`if (${name}) ${name}.m(${initial_mount_node}, ${anchor_node});`
 		);
 
-		if (!branch.dependencies || branch.dependencies.length > 0) {
+		if (branch.dependencies.length > 0) {
 			const update_mount_node = this.get_update_mount_node(anchor);
 
 			const enter = dynamic
