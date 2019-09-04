@@ -70,13 +70,17 @@ function create_fragment(ctx) {
 
 	return {
 		c() {
-			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
+			for (i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].c();
+			}
 
 			each_1_anchor = empty();
 		},
 
 		m(target, anchor) {
-			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(target, anchor);
+			for (i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].m(target, anchor);
+			}
 
 			insert(target, each_1_anchor, anchor);
 		},
@@ -90,7 +94,9 @@ function create_fragment(ctx) {
 		o: noop,
 
 		d(detaching) {
-			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].d(detaching);
+			for (i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].d(detaching);
+			}
 
 			if (detaching) {
 				detach(each_1_anchor);

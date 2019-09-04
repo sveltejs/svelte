@@ -214,7 +214,9 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (this.block.has_intro_method || this.block.has_outro_method) {
 			block.builders.intro.add_block(deindent`
-				for (var #i = 0; #i < ${this.vars.data_length}; #i += 1) @transition_in(${this.vars.iterations}[#i]);
+				for (var #i = 0; #i < ${this.vars.data_length}; #i += 1) {
+					@transition_in(${this.vars.iterations}[#i]);
+				}
 			`);
 		}
 
@@ -343,17 +345,23 @@ export default class EachBlockWrapper extends Wrapper {
 		`);
 
 		block.builders.create.add_block(deindent`
-			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].c();
+			for (#i = 0; #i < ${view_length}; #i += 1) {
+				${iterations}[#i].c();
+			}
 		`);
 
 		if (parent_nodes && this.renderer.options.hydratable) {
 			block.builders.claim.add_block(deindent`
-				for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].l(${parent_nodes});
+				for (#i = 0; #i < ${view_length}; #i += 1) {
+					${iterations}[#i].l(${parent_nodes});
+				}
 			`);
 		}
 
 		block.builders.mount.add_block(deindent`
-			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
+			for (#i = 0; #i < ${view_length}; #i += 1) {
+				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
+			}
 		`);
 
 		const dynamic = this.block.has_update_method;
@@ -378,12 +386,16 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (this.block.has_outros) {
 			block.builders.outro.add_block(deindent`
-				for (#i = 0; #i < ${view_length}; #i += 1) @transition_out(${iterations}[#i]);
+				for (#i = 0; #i < ${view_length}; #i += 1) {
+					@transition_out(${iterations}[#i]);
+				}
 			`);
 		}
 
 		block.builders.destroy.add_block(deindent`
-			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].d(${parent_node ? '' : 'detaching'});
+			for (#i = 0; #i < ${view_length}; #i += 1) {
+				${iterations}[#i].d(${parent_node ? '' : 'detaching'});
+			}
 		`);
 	}
 
@@ -499,7 +511,9 @@ export default class EachBlockWrapper extends Wrapper {
 				`);
 				remove_old_blocks = deindent`
 					@group_outros();
-					for (#i = ${this.vars.each_block_value}.${length}; #i < ${view_length}; #i += 1) ${out}(#i);
+					for (#i = ${this.vars.each_block_value}.${length}; #i < ${view_length}; #i += 1) {
+						${out}(#i);
+					}
 					@check_outros();
 				`;
 			} else {
@@ -534,8 +548,10 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.block.has_outros) {
 			block.builders.outro.add_block(deindent`
 				${iterations} = ${iterations}.filter(@_Boolean);
-				for (let #i = 0; #i < ${view_length}; #i += 1) @transition_out(${iterations}[#i]);`
-			);
+				for (let #i = 0; #i < ${view_length}; #i += 1) {
+					@transition_out(${iterations}[#i]);
+				}
+			`);
 		}
 
 		block.builders.destroy.add_block(`@destroy_each(${iterations}, detaching);`);
