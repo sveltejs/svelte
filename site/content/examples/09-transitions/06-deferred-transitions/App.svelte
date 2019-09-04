@@ -10,7 +10,7 @@
 	let selected = null;
 	let loading = null;
 
-	const ASSETS = `https://svelte-assets.surge.sh/crossfade`;
+	const ASSETS = `https://sveltejs.github.io/assets/crossfade`;
 
 	const load = image => {
 		const timeout = setTimeout(() => loading = image, 100);
