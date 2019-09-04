@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.9.2
+
+* Fix if blocks with complex but static conditions ([#3447](https://github.com/sveltejs/svelte/issues/3447))
+
 ## 3.9.1
 
 * Only update style properties if necessary ([#3433](https://github.com/sveltejs/svelte/issues/3433))
