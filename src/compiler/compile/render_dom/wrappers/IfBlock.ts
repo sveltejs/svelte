@@ -39,7 +39,7 @@ class IfBlockBranch extends Wrapper {
 		const is_else = !expression;
 
 		if (expression) {
-			const dependencies = expression.dynamic_dependencies();
+			this.dependencies = expression.dynamic_dependencies();
 
 			// TODO is this the right rule? or should any non-reference count?
 			// const should_cache = !is_reference(expression.node, null) && dependencies.length > 0;
@@ -55,7 +55,6 @@ class IfBlockBranch extends Wrapper {
 			if (should_cache) {
 				this.condition = block.get_unique_name(`show_if`);
 				this.snippet = expression.render(block);
-				this.dependencies = dependencies;
 			} else {
 				this.condition = expression.render(block);
 			}
@@ -244,7 +243,7 @@ export default class IfBlockWrapper extends Wrapper {
 			function ${select_block_type}(changed, ctx) {
 				${this.branches.map(({ dependencies, condition, snippet, block }) => condition
 				? deindent`
-				${dependencies && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
+				${snippet && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
 				if (${condition}) return ${block.name};`
 				: `return ${block.name};`)}
 			}
@@ -327,7 +326,7 @@ export default class IfBlockWrapper extends Wrapper {
 			function ${select_block_type}(changed, ctx) {
 				${this.branches.map(({ dependencies, condition, snippet }, i) => condition
 				? deindent`
-				${dependencies && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
+				${snippet && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
 				if (${condition}) return ${String(i)};`
 				: `return ${i};`)}
 				${!has_else && `return -1;`}
@@ -441,58 +440,62 @@ export default class IfBlockWrapper extends Wrapper {
 			`if (${name}) ${name}.m(${initial_mount_node}, ${anchor_node});`
 		);
 
-		const update_mount_node = this.get_update_mount_node(anchor);
+		if (branch.dependencies.length > 0) {
+			const update_mount_node = this.get_update_mount_node(anchor);
 
-		const enter = dynamic
-			? deindent`
-				if (${name}) {
-					${name}.p(changed, ctx);
-					${has_transitions && `@transition_in(${name}, 1);`}
-				} else {
-					${name} = ${branch.block.name}(ctx);
-					${name}.c();
-					${has_transitions && `@transition_in(${name}, 1);`}
-					${name}.m(${update_mount_node}, ${anchor});
-				}
-			`
-			: deindent`
-				if (!${name}) {
-					${name} = ${branch.block.name}(ctx);
-					${name}.c();
-					${has_transitions && `@transition_in(${name}, 1);`}
-					${name}.m(${update_mount_node}, ${anchor});
-				${has_transitions && `} else {
-					@transition_in(${name}, 1);`}
-				}
-			`;
+			const enter = dynamic
+				? deindent`
+					if (${name}) {
+						${name}.p(changed, ctx);
+						${has_transitions && `@transition_in(${name}, 1);`}
+					} else {
+						${name} = ${branch.block.name}(ctx);
+						${name}.c();
+						${has_transitions && `@transition_in(${name}, 1);`}
+						${name}.m(${update_mount_node}, ${anchor});
+					}
+				`
+				: deindent`
+					if (!${name}) {
+						${name} = ${branch.block.name}(ctx);
+						${name}.c();
+						${has_transitions && `@transition_in(${name}, 1);`}
+						${name}.m(${update_mount_node}, ${anchor});
+					} ${has_transitions && `else @transition_in(${name}, 1);`}
+				`;
 
-		if (branch.snippet) {
-			block.builders.update.add_block(`if (${branch.dependencies.map(n => `changed.${n}`).join(' || ')}) ${branch.condition} = ${branch.snippet}`);
-		}
+			if (branch.snippet) {
+				block.builders.update.add_block(`if (${branch.dependencies.map(n => `changed.${n}`).join(' || ')}) ${branch.condition} = ${branch.snippet}`);
+			}
 
-		// no `p()` here — we don't want to update outroing nodes,
-		// as that will typically result in glitching
-		if (branch.block.has_outro_method) {
-			block.builders.update.add_block(deindent`
-				if (${branch.condition}) {
-					${enter}
-				} else if (${name}) {
-					@group_outros();
-					@transition_out(${name}, 1, 1, () => {
+			// no `p()` here — we don't want to update outroing nodes,
+			// as that will typically result in glitching
+			if (branch.block.has_outro_method) {
+				block.builders.update.add_block(deindent`
+					if (${branch.condition}) {
+						${enter}
+					} else if (${name}) {
+						@group_outros();
+						@transition_out(${name}, 1, 1, () => {
+							${name} = null;
+						});
+						@check_outros();
+					}
+				`);
+			} else {
+				block.builders.update.add_block(deindent`
+					if (${branch.condition}) {
+						${enter}
+					} else if (${name}) {
+						${name}.d(1);
 						${name} = null;
-					});
-					@check_outros();
-				}
-			`);
-		} else {
-			block.builders.update.add_block(deindent`
-				if (${branch.condition}) {
-					${enter}
-				} else if (${name}) {
-					${name}.d(1);
-					${name} = null;
-				}
-			`);
+					}
+				`);
+			}
+		} else if (dynamic) {
+			block.builders.update.add_block(
+				`if (${branch.condition}) ${name}.p(changed, ctx);`
+			);
 		}
 
 		block.builders.destroy.add_line(`${if_name}${name}.d(${detaching});`);
