@@ -20,7 +20,7 @@ const at_rule_has_declaration = ({ block }: Node): true =>
 function minify_declarations(
 	code: MagicString,
 	start: number,
-	declarations: Array<Declaration>
+	declarations: Declaration[]
 ): number {
 	let c = start;
 
@@ -89,7 +89,7 @@ class Rule {
 		code.remove(c, this.node.block.start);
 
 		c = this.node.block.start + 1;
-		c = minify_declarations(code, c, this.declarations)
+		c = minify_declarations(code, c, this.declarations);
 
 		code.remove(c, this.node.block.end - 1);
 	}
@@ -157,7 +157,7 @@ class Declaration {
 class Atrule {
 	node: Node;
 	children: Array<Atrule|Rule>;
-	declarations: Array<Declaration>;
+	declarations: Declaration[];
 
 	constructor(node: Node) {
 		this.node = node;
@@ -207,7 +207,7 @@ class Atrule {
 			code.remove(c, this.node.block.start);
 		} else {
 			let c = this.node.start + this.node.name.length + 1;
-			if(this.node.expression) {
+			if (this.node.expression) {
 				if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
 				c = this.node.expression.end;
 			}
