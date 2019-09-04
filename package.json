@@ -58,7 +58,7 @@
   "devDependencies": {
     "@types/mocha": "^5.2.7",
     "@types/node": "^8.10.53",
-    "@typescript-eslint/eslint-plugin": "^2.1.0",
+    "@typescript-eslint/eslint-plugin": "^1.13.0",
     "@typescript-eslint/parser": "^2.1.0",
     "acorn": "^7.0.0",
     "agadoo": "^1.0.1",
@@ -88,7 +88,7 @@
     "source-map-support": "^0.5.13",
     "tiny-glob": "^0.2.6",
     "tslib": "^1.10.0",
-    "typescript": "^3.6.2"
+    "typescript": "^3.5.3"
   },
   "nyc": {
     "include": [
