@@ -2,6 +2,7 @@
 
 ## 3.9.2
 
+* Fix handling of additional @-rules in style blocks ([#2995](https://github.com/sveltejs/svelte/pull/2995))
 * Fix if blocks with complex but static conditions ([#3447](https://github.com/sveltejs/svelte/issues/3447))
 
 ## 3.9.1
