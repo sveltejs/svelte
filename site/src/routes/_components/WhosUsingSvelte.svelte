@@ -54,6 +54,7 @@
 	<a target="_blank" rel="noopener" href="https://www.entriwise.com/"><img src="organisations/entriwise.png" alt="Entriwise logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://from-now-on.com"><img src="organisations/from-now-on.png" alt="From-Now-On logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://godaddy.com"><img src="organisations/godaddy.svg" alt="GoDaddy logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://www.grainger.com"><img src="organisations/grainger.svg" alt="Grainger logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="http://healthtree.org/"><img src="organisations/healthtree.png" alt="HealthTree logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://itslearning.com"><img src="organisations/itslearning.svg" alt="itslearning logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://www.metrovias.com.ar/"><img src="organisations/metrovias.svg" alt="Metrovias logo" loading="lazy"></a>
