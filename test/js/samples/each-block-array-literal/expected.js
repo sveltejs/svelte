@@ -52,17 +52,17 @@ function create_each_block(ctx) {
 function create_fragment(ctx) {
 	var each_1_anchor;
 
-	var each_value = [ctx.a, ctx.b, ctx.c, ctx.d, ctx.e];
+	let each_value = [ctx.a, ctx.b, ctx.c, ctx.d, ctx.e];
 
-	var each_blocks = [];
+	let each_blocks = [];
 
-	for (var i = 0; i < 5; i += 1) {
+	for (let i = 0; i < 5; i += 1) {
 		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
 	}
 
 	return {
 		c() {
-			for (var i = 0; i < 5; i += 1) {
+			for (let i = 0; i < 5; i += 1) {
 				each_blocks[i].c();
 			}
 
@@ -70,7 +70,7 @@ function create_fragment(ctx) {
 		},
 
 		m(target, anchor) {
-			for (var i = 0; i < 5; i += 1) {
+			for (let i = 0; i < 5; i += 1) {
 				each_blocks[i].m(target, anchor);
 			}
 
@@ -81,7 +81,8 @@ function create_fragment(ctx) {
 			if (changed.a || changed.b || changed.c || changed.d || changed.e) {
 				each_value = [ctx.a, ctx.b, ctx.c, ctx.d, ctx.e];
 
-				for (var i = 0; i < each_value.length; i += 1) {
+				let i;
+				for (i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {

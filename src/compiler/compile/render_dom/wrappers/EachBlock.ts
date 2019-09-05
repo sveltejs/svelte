@@ -178,7 +178,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const snippet = this.node.expression.render(block);
 
-		block.builders.init.add_line(`var ${this.vars.each_block_value} = ${snippet};`);
+		block.builders.init.add_line(`let ${this.vars.each_block_value} = ${snippet};`);
 
 		renderer.blocks.push(deindent`
 			function ${this.vars.get_each_context}(ctx, list, i) {
@@ -214,7 +214,9 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (this.block.has_intro_method || this.block.has_outro_method) {
 			block.builders.intro.add_block(deindent`
-				for (var #i = 0; #i < ${this.vars.data_length}; #i += 1) @transition_in(${this.vars.iterations}[#i]);
+				for (let #i = 0; #i < ${this.vars.data_length}; #i += 1) {
+					@transition_in(${this.vars.iterations}[#i]);
+				}
 			`);
 		}
 
@@ -230,7 +232,7 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.else) {
 			const each_block_else = component.get_unique_name(`${this.var}_else`);
 
-			block.builders.init.add_line(`var ${each_block_else} = null;`);
+			block.builders.init.add_line(`let ${each_block_else} = null;`);
 
 			// TODO neaten this up... will end up with an empty line in the block
 			block.builders.init.add_block(deindent`
@@ -335,7 +337,7 @@ export default class EachBlockWrapper extends Wrapper {
 			// @ts-ignore todo: probably error
 			this.node.key.render()};
 
-			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
+			for (let #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
 				${lookup}.set(key, ${iterations}[#i] = ${create_each_block}(key, child_ctx));
@@ -343,17 +345,23 @@ export default class EachBlockWrapper extends Wrapper {
 		`);
 
 		block.builders.create.add_block(deindent`
-			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].c();
+			for (let #i = 0; #i < ${view_length}; #i += 1) {
+				${iterations}[#i].c();
+			}
 		`);
 
 		if (parent_nodes && this.renderer.options.hydratable) {
 			block.builders.claim.add_block(deindent`
-				for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].l(${parent_nodes});
+				for (let #i = 0; #i < ${view_length}; #i += 1) {
+					${iterations}[#i].l(${parent_nodes});
+				}
 			`);
 		}
 
 		block.builders.mount.add_block(deindent`
-			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
+			for (let #i = 0; #i < ${view_length}; #i += 1) {
+				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
+			}
 		`);
 
 		const dynamic = this.block.has_update_method;
@@ -378,12 +386,16 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (this.block.has_outros) {
 			block.builders.outro.add_block(deindent`
-				for (#i = 0; #i < ${view_length}; #i += 1) @transition_out(${iterations}[#i]);
+				for (let #i = 0; #i < ${view_length}; #i += 1) {
+					@transition_out(${iterations}[#i]);
+				}
 			`);
 		}
 
 		block.builders.destroy.add_block(deindent`
-			for (#i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].d(${parent_node ? '' : 'detaching'});
+			for (let #i = 0; #i < ${view_length}; #i += 1) {
+				${iterations}[#i].d(${parent_node ? '' : 'detaching'});
+			}
 		`);
 	}
 
@@ -414,29 +426,29 @@ export default class EachBlockWrapper extends Wrapper {
 		} = this.vars;
 
 		block.builders.init.add_block(deindent`
-			var ${iterations} = [];
+			let ${iterations} = [];
 
-			for (var #i = 0; #i < ${data_length}; #i += 1) {
+			for (let #i = 0; #i < ${data_length}; #i += 1) {
 				${iterations}[#i] = ${create_each_block}(${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i));
 			}
 		`);
 
 		block.builders.create.add_block(deindent`
-			for (var #i = 0; #i < ${view_length}; #i += 1) {
+			for (let #i = 0; #i < ${view_length}; #i += 1) {
 				${iterations}[#i].c();
 			}
 		`);
 
 		if (parent_nodes && this.renderer.options.hydratable) {
 			block.builders.claim.add_block(deindent`
-				for (var #i = 0; #i < ${view_length}; #i += 1) {
+				for (let #i = 0; #i < ${view_length}; #i += 1) {
 					${iterations}[#i].l(${parent_nodes});
 				}
 			`);
 		}
 
 		block.builders.mount.add_block(deindent`
-			for (var #i = 0; #i < ${view_length}; #i += 1) {
+			for (let #i = 0; #i < ${view_length}; #i += 1) {
 				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
 			}
 		`);
@@ -499,7 +511,9 @@ export default class EachBlockWrapper extends Wrapper {
 				`);
 				remove_old_blocks = deindent`
 					@group_outros();
-					for (#i = ${this.vars.each_block_value}.${length}; #i < ${view_length}; #i += 1) ${out}(#i);
+					for (#i = ${this.vars.each_block_value}.${length}; #i < ${view_length}; #i += 1) {
+						${out}(#i);
+					}
 					@check_outros();
 				`;
 			} else {
@@ -511,11 +525,14 @@ export default class EachBlockWrapper extends Wrapper {
 				`;
 			}
 
+			// We declare `i` as block scoped here, as the `remove_old_blocks` code
+			// may rely on continuing where this iteration stopped.
 			const update = deindent`
 				${!this.block.has_update_method && `const #old_length = ${this.vars.each_block_value}.length;`}
 				${this.vars.each_block_value} = ${snippet};
 
-				for (var #i = ${start}; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
+				let #i;
+				for (#i = ${start}; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
 					const child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
 
 					${for_loop_body}
@@ -534,8 +551,10 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.block.has_outros) {
 			block.builders.outro.add_block(deindent`
 				${iterations} = ${iterations}.filter(@_Boolean);
-				for (let #i = 0; #i < ${view_length}; #i += 1) @transition_out(${iterations}[#i]);`
-			);
+				for (let #i = 0; #i < ${view_length}; #i += 1) {
+					@transition_out(${iterations}[#i]);
+				}
+			`);
 		}
 
 		block.builders.destroy.add_block(`@destroy_each(${iterations}, detaching);`);

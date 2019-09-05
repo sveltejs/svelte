@@ -74,11 +74,11 @@ function create_each_block(key_1, ctx) {
 function create_fragment(ctx) {
 	var each_blocks = [], each_1_lookup = new Map(), each_1_anchor;
 
-	var each_value = ctx.things;
+	let each_value = ctx.things;
 
 	const get_key = ctx => ctx.thing.id;
 
-	for (var i = 0; i < each_value.length; i += 1) {
+	for (let i = 0; i < each_value.length; i += 1) {
 		let child_ctx = get_each_context(ctx, each_value, i);
 		let key = get_key(child_ctx);
 		each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
@@ -86,13 +86,17 @@ function create_fragment(ctx) {
 
 	return {
 		c() {
-			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].c();
+			}
 
 			each_1_anchor = empty();
 		},
 
 		m(target, anchor) {
-			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(target, anchor);
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].m(target, anchor);
+			}
 
 			insert(target, each_1_anchor, anchor);
 		},
@@ -108,7 +112,9 @@ function create_fragment(ctx) {
 		o: noop,
 
 		d(detaching) {
-			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].d(detaching);
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].d(detaching);
+			}
 
 			if (detaching) {
 				detach(each_1_anchor);
