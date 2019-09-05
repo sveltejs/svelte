@@ -76,5 +76,6 @@
 	<a target="_blank" rel="noopener" href="https://m.tokopedia.com"><img src="organisations/tokopedia.png" alt="Tokopedia logo" srcset="organisations/tokopedia.2x.png 2x, organisations/tokopedia.3x.png 3x" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://webdesq.net"><img src="organisations/webdesq.svg" alt="Webdesq logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://zevvle.com/"><img src="organisations/zevvle.svg" alt="Zevvle logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://dextra.com.br/pt/"><img src="organisations/dextra.png" alt="Dextra logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
 </div>
