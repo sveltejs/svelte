@@ -67,7 +67,7 @@ export default class BindingWrapper {
 
 		this.is_readonly = this.node.is_readonly;
 
-		this.needs_lock = this.node.name === 'currentTime'; // TODO others?
+		this.needs_lock = this.node.name === 'currentTime' || (parent.node.name === 'input' && parent.node.get_static_attribute_value('type') === 'number'); // TODO others?
 	}
 
 	get_dependencies() {
