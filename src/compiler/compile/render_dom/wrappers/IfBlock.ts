@@ -74,6 +74,7 @@ class IfBlockBranch extends Wrapper {
 export default class IfBlockWrapper extends Wrapper {
 	node: IfBlock;
 	branches: IfBlockBranch[];
+	needs_update = false;
 
 	var = 'if_block';
 
@@ -112,8 +113,14 @@ export default class IfBlockWrapper extends Wrapper {
 			block.add_dependencies(node.expression.dependencies);
 
 			if (branch.block.dependencies.size > 0) {
+				// the condition, or its contents, is dynamic
 				is_dynamic = true;
 				block.add_dependencies(branch.block.dependencies);
+			}
+
+			if (branch.dependencies && branch.dependencies.length > 0) {
+				// the condition itself is dynamic
+				this.needs_update = true;
 			}
 
 			if (branch.block.has_intros) has_intros = true;
@@ -239,15 +246,29 @@ export default class IfBlockWrapper extends Wrapper {
 		const current_block_type_and = has_else ? '' : `${current_block_type} && `;
 
 		/* eslint-disable @typescript-eslint/indent,indent */
-		block.builders.init.add_block(deindent`
-			function ${select_block_type}(changed, ctx) {
-				${this.branches.map(({ dependencies, condition, snippet, block }) => condition
-				? deindent`
-				${snippet && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
-				if (${condition}) return ${block.name};`
-				: `return ${block.name};`)}
-			}
-		`);
+		if (this.needs_update) {
+			block.builders.init.add_block(deindent`
+				function ${select_block_type}(changed, ctx) {
+					${this.branches.map(({ dependencies, condition, snippet, block }) => condition
+					? deindent`
+					${snippet && (
+						dependencies.length > 0
+							? `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`
+							: `if (${condition} == null) ${condition} = !!(${snippet})`
+					)}
+					if (${condition}) return ${block.name};`
+					: `return ${block.name};`)}
+				}
+			`);
+		} else {
+			block.builders.init.add_block(deindent`
+				function ${select_block_type}(changed, ctx) {
+					${this.branches.map(({ condition, snippet, block }) => condition
+					? `if (${snippet}) return ${block.name};`
+					: `return ${block.name};`)}
+				}
+			`);
+		}
 		/* eslint-enable @typescript-eslint/indent,indent */
 
 		block.builders.init.add_block(deindent`
@@ -261,32 +282,36 @@ export default class IfBlockWrapper extends Wrapper {
 			`${if_name}${name}.m(${initial_mount_node}, ${anchor_node});`
 		);
 
-		const update_mount_node = this.get_update_mount_node(anchor);
+		if (this.needs_update) {
+			const update_mount_node = this.get_update_mount_node(anchor);
 
-		const change_block = deindent`
-			${if_name}${name}.d(1);
-			${name} = ${current_block_type_and}${current_block_type}(ctx);
-			if (${name}) {
-				${name}.c();
-				${has_transitions && `@transition_in(${name}, 1);`}
-				${name}.m(${update_mount_node}, ${anchor});
+			const change_block = deindent`
+				${if_name}${name}.d(1);
+				${name} = ${current_block_type_and}${current_block_type}(ctx);
+				if (${name}) {
+					${name}.c();
+					${has_transitions && `@transition_in(${name}, 1);`}
+					${name}.m(${update_mount_node}, ${anchor});
+				}
+			`;
+
+			if (dynamic) {
+				block.builders.update.add_block(deindent`
+					if (${current_block_type} === (${current_block_type} = ${select_block_type}(changed, ctx)) && ${name}) {
+						${name}.p(changed, ctx);
+					} else {
+						${change_block}
+					}
+				`);
+			} else {
+				block.builders.update.add_block(deindent`
+					if (${current_block_type} !== (${current_block_type} = ${select_block_type}(changed, ctx))) {
+						${change_block}
+					}
+				`);
 			}
-		`;
-
-		if (dynamic) {
-			block.builders.update.add_block(deindent`
-				if (${current_block_type} === (${current_block_type} = ${select_block_type}(changed, ctx)) && ${name}) {
-					${name}.p(changed, ctx);
-				} else {
-					${change_block}
-				}
-			`);
-		} else {
-			block.builders.update.add_block(deindent`
-				if (${current_block_type} !== (${current_block_type} = ${select_block_type}(changed, ctx))) {
-					${change_block}
-				}
-			`);
+		} else if (dynamic) {
+			block.builders.update.add_line(`${name}.p(changed, ctx);`);
 		}
 
 		block.builders.destroy.add_line(`${if_name}${name}.d(${detaching});`);
