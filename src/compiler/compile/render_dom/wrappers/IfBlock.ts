@@ -243,7 +243,7 @@ export default class IfBlockWrapper extends Wrapper {
 			function ${select_block_type}(changed, ctx) {
 				${this.branches.map(({ dependencies, condition, snippet, block }) => condition
 				? deindent`
-				${snippet && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
+				${snippet && `if ((${condition} == null) || ${dependencies.length > 0 ? dependencies.map(n => `changed.${n}`).join(' || ') : false}) ${condition} = !!(${snippet})`}
 				if (${condition}) return ${block.name};`
 				: `return ${block.name};`)}
 			}
