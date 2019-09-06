@@ -24,6 +24,7 @@ import unwrap_parens from './utils/unwrap_parens';
 import Slot from './nodes/Slot';
 import { Node as ESTreeNode } from 'estree';
 import add_to_set from './utils/add_to_set';
+import checkGraphForCycles from './utils/checkGraphForCycles';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -1205,14 +1206,27 @@ export default class Component {
 			});
 		});
 
-		const add_declaration = declaration => {
-			if (seen.has(declaration)) {
-				this.error(declaration.node, {
-					code: 'cyclical-reactive-declaration',
-					message: 'Cyclical dependency detected'
+		const cycle = checkGraphForCycles(unsorted_reactive_declarations.reduce((acc, declaration) => {
+			declaration.assignees.forEach(v => {
+				declaration.dependencies.forEach(w => {
+					if (!declaration.assignees.has(w)) {
+						acc.push([v, w]);
+					}
 				});
-			}
+			});
+			return acc;
+		}, []));
 
+		if (cycle && cycle.length) {
+			const declarationList = lookup.get(cycle[0]);
+			const declaration = declarationList[0];
+			this.error(declaration.node, {
+				code: 'cyclical-reactive-declaration',
+				message: `Cyclical dependency detected: ${cycle.join(' → ')}`
+			});
+		}
+
+		const add_declaration = declaration => {
 			if (this.reactive_declarations.indexOf(declaration) !== -1) {
 				return;
 			}
