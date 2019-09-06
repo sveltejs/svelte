@@ -164,6 +164,10 @@ export function claim_text(nodes, data) {
 	return text(data);
 }
 
+export function claim_space(nodes) {
+	return claim_text(nodes, ' ');
+}
+
 export function set_data(text, data) {
 	data = '' + data;
 	if (text.data !== data) text.data = data;
