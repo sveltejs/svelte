@@ -318,7 +318,9 @@ If you don't care about the pending state, you can also omit the initial block.
 
 ---
 
-In a text expression, characters like `<` and `>` are escaped. With HTML expressions, they're not.
+In a text expression, characters like `<` and `>` are escaped; however, with HTML expressions, they're not.
+
+The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML.
 
 > Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
 
