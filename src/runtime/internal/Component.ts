@@ -106,6 +106,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 				if ($$.bound[key]) $$.bound[key](value);
 				if (ready) make_dirty(component, key);
 			}
+			return value;
 		})
 		: props;
 
