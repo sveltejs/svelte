@@ -264,7 +264,7 @@ export default class IfBlockWrapper extends Wrapper {
 			block.builders.init.add_block(deindent`
 				function ${select_block_type}(changed, ctx) {
 					${this.branches.map(({ condition, snippet, block }) => condition
-					? `if (${snippet}) return ${block.name};`
+					? `if (${snippet || condition}) return ${block.name};`
 					: `return ${block.name};`)}
 				}
 			`);
@@ -341,32 +341,6 @@ export default class IfBlockWrapper extends Wrapper {
 		block.add_variable(name);
 
 		/* eslint-disable @typescript-eslint/indent,indent */
-		if (this.needs_update) {
-			block.builders.init.add_block(deindent`
-				function ${select_block_type}(changed, ctx) {
-					${this.branches.map(({ dependencies, condition, snippet, block }) => condition
-					? deindent`
-					${snippet && (
-						dependencies.length > 0
-							? `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`
-							: `if (${condition} == null) ${condition} = !!(${snippet})`
-					)}
-					if (${condition}) return ${block.name};`
-					: `return ${block.name};`)}
-				}
-			`);
-		} else {
-			block.builders.init.add_block(deindent`
-				function ${select_block_type}(changed, ctx) {
-					${this.branches.map(({ condition, snippet, block }) => condition
-					? `if (${snippet}) return ${block.name};`
-					: `return ${block.name};`)}
-				}
-			`);
-		}
-		/* eslint-enable @typescript-eslint/indent,indent */
-
-		/* eslint-disable @typescript-eslint/indent,indent */
 		block.builders.init.add_block(deindent`
 			var ${if_block_creators} = [
 				${this.branches.map(branch => branch.block.name).join(',\n')}
@@ -388,7 +362,7 @@ export default class IfBlockWrapper extends Wrapper {
 				: deindent`
 					function ${select_block_type}(changed, ctx) {
 						${this.branches.map(({ condition, snippet }, i) => condition
-						? `if (${snippet}) return ${String(i)};`
+						? `if (${snippet || condition}) return ${String(i)};`
 						: `return ${i};`)}
 						${!has_else && `return -1;`}
 					}
