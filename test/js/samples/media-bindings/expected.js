@@ -19,8 +19,10 @@ function create_fragment(ctx) {
 
 	function audio_timeupdate_handler() {
 		cancelAnimationFrame(audio_animationframe);
-		if (!audio.paused) audio_animationframe = raf(audio_timeupdate_handler);
-		audio_updating = true;
+		if (!audio.paused) {
+			audio_animationframe = raf(audio_timeupdate_handler);
+			audio_updating = true;
+		}
 		ctx.audio_timeupdate_handler.call(audio);
 	}
 
