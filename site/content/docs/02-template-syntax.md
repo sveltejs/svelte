@@ -320,9 +320,9 @@ If you don't care about the pending state, you can also omit the initial block.
 
 In a text expression, characters like `<` and `>` are escaped; however, with HTML expressions, they're not.
 
-> Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
+The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML.
 
-> Due to the limitations of the DOM APIs available to insert raw HTML fragments, this directive cannot be used to surround content with additional markup.
+> Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
 
 ```html
 <div class="blog-post">
