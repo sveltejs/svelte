@@ -24,7 +24,7 @@ import unwrap_parens from './utils/unwrap_parens';
 import Slot from './nodes/Slot';
 import { Node as ESTreeNode } from 'estree';
 import add_to_set from './utils/add_to_set';
-import checkGraphForCycles from './utils/checkGraphForCycles';
+import check_graph_for_cycles from './utils/check_graph_for_cycles';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -1206,7 +1206,7 @@ export default class Component {
 			});
 		});
 
-		const cycle = checkGraphForCycles(unsorted_reactive_declarations.reduce((acc, declaration) => {
+		const cycle = check_graph_for_cycles(unsorted_reactive_declarations.reduce((acc, declaration) => {
 			declaration.assignees.forEach(v => {
 				declaration.dependencies.forEach(w => {
 					if (!declaration.assignees.has(w)) {
