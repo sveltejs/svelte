@@ -468,17 +468,25 @@ export default class ElementWrapper extends Wrapper {
 			// TODO dry this out — similar code for event handlers and component bindings
 			if (has_local_function) {
 				// need to create a block-local function that calls an instance-level function
-				block.builders.init.add_block(deindent`
-					function ${handler}() {
-						${animation_frame && deindent`
-						@_cancelAnimationFrame(${animation_frame});
-						if (!${this.var}.paused) {
-							${animation_frame} = @raf(${handler});`}
-							${needs_lock && `${lock} = true;`}
+				if (animation_frame) {
+					block.builders.init.add_block(deindent`
+						function ${handler}() {
+							@_cancelAnimationFrame(${animation_frame});
+							if (!${this.var}.paused) {
+								${animation_frame} = @raf(${handler});
+								${needs_lock && `${lock} = true;`}
+							}
+							ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
 						}
-						ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
-					}
-				`);
+					`);
+				} else {
+					block.builders.init.add_block(deindent`
+						function ${handler}() {
+							${needs_lock && `${lock} = true;`}
+							ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
+						}
+					`);
+				}
 
 				callee = handler;
 			} else {
