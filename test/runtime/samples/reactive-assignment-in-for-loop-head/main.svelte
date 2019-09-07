@@ -2,7 +2,7 @@
   let foo1;
   let foo2;
   for (let bar = (foo1 = 0); bar < 5; bar += 1) {
-    foo1 = foo2;
+    foo2 = foo1;
   }
 </script>
 

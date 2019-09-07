@@ -36,7 +36,7 @@ export function blur(node: Element, {
 		delay,
 		duration,
 		easing,
-		css: (t, u) => `opacity: ${target_opacity - (od * u)}; filter: ${f} blur(${u * amount}px);`
+		css: (_t, u) => `opacity: ${target_opacity - (od * u)}; filter: ${f} blur(${u * amount}px);`
 	};
 }
 
