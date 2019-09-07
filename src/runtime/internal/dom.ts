@@ -125,6 +125,22 @@ export function to_number(value) {
 	return value === '' ? undefined : +value;
 }
 
+export function value_as_date(value) {
+	const valueAsDate = new Date(value);
+	return isNaN(valueAsDate.getTime()) ? undefined : valueAsDate;
+}
+
+export function date_as_value(date) {
+	const validDate = Object.prototype.toString.call(date) === '[object Date]' && !isNaN(date.getTime());
+	if (!validDate) {
+		return '';
+	}
+	const yyyy = date.getUTCFullYear();
+	const mm = date.getUTCMonth() + 1 < 10 ? `0${date.getUTCMonth() + 1}` : date.getUTCMonth() + 1;
+	const dd = date.getUTCDate() < 10 ? `0${date.getUTCDate()}` : date.getUTCDate();
+	return `${yyyy}-${mm}-${dd}`;
+}
+
 export function time_ranges_to_array(ranges) {
 	const array = [];
 	for (let i = 0; i < ranges.length; i += 1) {
@@ -174,7 +190,9 @@ export function set_data(text, data) {
 }
 
 export function set_input_value(input, value) {
-	if (value != null || input.value) {
+	if (Object.prototype.toString.call(value) === '[object Date]') {
+		input.value = date_as_value(value);
+	} else if (value != null || input.value) {
 		input.value = value;
 	}
 }
