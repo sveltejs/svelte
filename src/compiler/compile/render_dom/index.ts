@@ -204,7 +204,6 @@ export default function dom(
 
 							const variable = component.var_lookup.get(name);
 							if (variable && (variable.hoistable || variable.global || variable.module)) return;
-							debugger
 
 							if (single && !(variable.subscribable && variable.reassigned)) {
 								if (variable.referenced || variable.is_reactive_dependency || variable.export_name) {
