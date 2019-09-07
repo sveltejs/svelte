@@ -325,10 +325,6 @@ function get_value_from_dom(
 		return `@to_number(this.${name})`;
 	}
 
-	if (type === 'date') {
-		return `@value_as_date(this.${name})`;
-	}
-
 	if ((name === 'buffered' || name === 'seekable' || name === 'played')) {
 		return `@time_ranges_to_array(this.${name})`;
 	}

@@ -575,7 +575,24 @@ export default class Element extends Node {
 						message: `'files' binding can only be used with <input type="file">`
 					});
 				}
+			} else if (name === 'valueAsDate') {
+				if (this.name !== 'input') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'valueAsDate' is not a valid binding on <${this.name}> elements`
+					});
+				}
 
+				const type = (check_type_attribute() as string);
+
+				const valid_date_inputs = new Set(['date', 'datetime-local', 'time', 'month', 'week']);
+
+				if (!valid_date_inputs.has(type)) {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'valueAsDate' binding can only be used with <input type="${Array.from(valid_date_inputs).join('|')}">`
+					});
+				}
 			} else if (name === 'open') {
 				if (this.name !== 'details') {
 					component.error(binding, {

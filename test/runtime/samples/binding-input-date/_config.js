@@ -21,12 +21,15 @@ export default {
 
 	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
-		assert.equal(input.value, SEP_03_2019_INPUT_VALUE);
+		// https://github.com/jsdom/jsdom/issues/2658
+		// assert.equal(input.value, SEP_03_2019_INPUT_VALUE);
 		assert.equal(component.date.toString(), SEP_03_2019_DATE_VALUE.toString());
 
 		const event = new window.Event('input');
 
-		input.value = OCT_07_2019_INPUT_VALUE;
+		// https://github.com/jsdom/jsdom/issues/2658
+		// input.value = OCT_07_2019_INPUT_VALUE;
+		input.valueAsDate = OCT_07_2019_DATE_VALUE;
 		await input.dispatchEvent(event);
 
 		assert.equal(component.date.toString(), OCT_07_2019_DATE_VALUE.toString());
@@ -36,20 +39,25 @@ export default {
 		`);
 
 		component.date = SEP_03_2019_DATE_VALUE;
-		assert.equal(input.value, SEP_03_2019_INPUT_VALUE);
+		// https://github.com/jsdom/jsdom/issues/2658
+		// assert.equal(input.value, SEP_03_2019_INPUT_VALUE);
+		assert.equal(input.valueAsDate.toString(), SEP_03_2019_DATE_VALUE.toString());
 		assert.htmlEqual(target.innerHTML, `
 			<input type='date'>
 			<p>[object Date] ${SEP_03_2019_DATE_VALUE}</p>
 		`);
 
+		// https://github.com/jsdom/jsdom/issues/2658
 		// empty string should be treated as undefined
-		input.value = '';
+		// input.value = '';
+
+		input.valueAsDate = null;
 		await input.dispatchEvent(event);
 
-		assert.equal(component.date, undefined);
+		assert.equal(component.date, null);
 		assert.htmlEqual(target.innerHTML, `
 			<input type='date'>
-			<p>[object Undefined] undefined</p>
+			<p>[object Null] null</p>
 		`);
 	},
 };

@@ -64,11 +64,6 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		node.attributes.some((attribute) => attribute.name === 'contenteditable')
 	);
 
-	const is_date_input = (
-		node.name === 'input' &&
-		node.attributes.some((attribute) => attribute.name === 'type' && attribute.get_static_value() === 'date')
-	);
-
 	const slot = node.get_static_attribute_value('slot');
 	const component = node.find_nearest(/InlineComponent/);
 	if (slot && component) {
@@ -167,9 +162,6 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = snip(expression);
 			node_contents = '${(' + snippet + ') || ""}';
-		} else if (binding.name === 'value' && is_date_input) {
-			const snippet = snip(expression);
-			opening_tag += '${@add_attribute("' + name + '", @date_as_value(' + snippet + '), 1)}';
 		} else {
 			const snippet = snip(expression);
 			opening_tag += '${@add_attribute("' + name + '", ' + snippet + ', 1)}';
