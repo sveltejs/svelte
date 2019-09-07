@@ -555,8 +555,9 @@ export default class ElementWrapper extends Wrapper {
 	add_attributes(block: Block) {
 		// Get all the class dependencies first
 		this.attributes.forEach((attribute) => {
-			if (attribute.node.name === 'class' && attribute.node.is_dynamic) {
-				this.class_dependencies.push(...attribute.node.dependencies);
+			if (attribute.node.name === 'class') {
+				const dependencies = attribute.node.get_dependencies();
+				this.class_dependencies.push(...dependencies);
 			}
 		});
 
