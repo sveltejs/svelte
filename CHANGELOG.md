@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 3.10.0
+
+* Add `blur` transition ([#3477](https://github.com/sveltejs/svelte/pull/3477))
+* Prevent `<input type="number">` edge case with spread props ([#3426](https://github.com/sveltejs/svelte/issues/3426))
+* Robustify cyclical dependency detection, improve errors ([#3459](https://github.com/sveltejs/svelte/issues/3459))
+
 ## 3.9.2
 
 * Fix handling of additional @-rules in style blocks ([#2995](https://github.com/sveltejs/svelte/pull/2995))
