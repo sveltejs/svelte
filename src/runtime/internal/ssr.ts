@@ -128,3 +128,67 @@ export function add_attribute(name, value, boolean) {
 export function add_classes(classes) {
 	return classes ? ` class="${classes}"` : ``;
 }
+
+function is_date(value) {
+	return value instanceof Date;
+}
+
+function pad(n, len = 2) {
+	n = String(n);
+	while (n.length < len) n = `0${n}`;
+	return n;
+}
+
+export function date_input_value(date) {
+	if (!is_date(date)) return '';
+
+	const yyyy = date.getUTCFullYear();
+	const mm = pad(date.getUTCMonth() + 1);
+	const dd = pad(date.getUTCDate());
+
+	return `${yyyy}-${mm}-${dd}`;
+}
+
+export function month_input_value(date) {
+	if (!is_date(date)) return '';
+
+	const yyyy = date.getUTCFullYear();
+	const mm = pad(date.getUTCMonth() + 1);
+
+	return `${yyyy}-${mm}`;
+}
+
+export function time_input_value(date) {
+	if (!is_date(date)) return '';
+
+	const HH = pad(date.getHours());
+	const mm = pad(date.getMinutes());
+
+	let str = `${HH}:${mm}`;
+
+	let s, S;
+	if (s = date.getSeconds()) str += `:${pad(s)}`;
+	if (S = date.getMilliseconds()) str += `:${pad(S, 3)}`;
+
+	return str;
+}
+
+const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
+
+const to_day = (date, target) => {
+	const day = date.getUTCDay() || 7;
+	date.setDate(date.getDate() - (day - target));
+};
+
+export const week_input_value = date => {
+	date = new Date(date);
+	to_day(date, 4); // pretend it's Thursday to figure out which year we should use
+
+	const year = date.getUTCFullYear();
+	const start = new Date(year, 0, 4); // week 1 always contains Jan 4
+	to_day(start, 1); // weeks start on Mondays
+
+	const elapsed = Math.floor((date - start.getTime()) / ONE_WEEK);
+
+	return `${year}-W${pad(elapsed + 1)}`;
+};

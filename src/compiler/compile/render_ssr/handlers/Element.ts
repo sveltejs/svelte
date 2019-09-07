@@ -162,6 +162,11 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = snip(expression);
 			node_contents = '${(' + snippet + ') || ""}';
+		} else if (binding.name === 'valueAsDate') {
+			const snippet = snip(expression);
+			const type = node.get_static_attribute_value('type');
+			const fn = `${type}_input_value`;
+			opening_tag += '${@add_attribute("value", @' + fn + '(' + snippet + '), 1)}';
 		} else {
 			const snippet = snip(expression);
 			opening_tag += '${@add_attribute("' + name + '", ' + snippet + ', 1)}';

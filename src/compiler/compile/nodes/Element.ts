@@ -585,7 +585,7 @@ export default class Element extends Node {
 
 				const type = (check_type_attribute() as string);
 
-				const valid_date_inputs = new Set(['date', 'datetime-local', 'time', 'month', 'week']);
+				const valid_date_inputs = new Set(['date', 'time', 'month', 'week']);
 
 				if (!valid_date_inputs.has(type)) {
 					component.error(binding, {
