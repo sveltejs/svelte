@@ -532,6 +532,42 @@ You can see the `fade` transition in action in the [transition tutorial](tutoria
 {/if}
 ```
 
+#### `blur`
+
+```sv
+transition:blur={params}
+```
+```sv
+in:blur={params}
+```
+```sv
+out:blur={params}
+```
+
+---
+
+Animates a `blur` filter alongside an element's opacity.
+
+`blur` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicInOut`) — an [easing function](docs#svelte_easing)
+* `opacity` (`number`, default 0) - the opacity value to animate out to and in from
+* `amount` (`number`, default 5) - the size of the blur in pixels
+
+```html
+<script>
+	import { blur } from 'svelte/transition';
+</script>
+
+{#if condition}
+	<div transition:blur="{{amount: 10}}">
+		fades in and out
+	</div>
+{/if}
+```
+
 #### `fly`
 
 ```sv
