@@ -101,6 +101,12 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 	}
 }
 
+export function set_svg_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
+	for (const key in attributes) {
+		attr(node, key, attributes[key]);
+	}
+}
+
 export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
 		node[prop] = value;
