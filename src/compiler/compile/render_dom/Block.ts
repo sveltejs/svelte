@@ -10,7 +10,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: string;
-	bindings?: Map<string, { object: string; property: string; snippet: string }>;
+	bindings?: Map<string, { object: string; property: string; snippet: string; store: string; tail: string }>;
 	dependencies?: Set<string>;
 }
 
@@ -27,7 +27,7 @@ export default class Block {
 
 	dependencies: Set<string>;
 
-	bindings: Map<string, { object: string; property: string; snippet: string }>;
+	bindings: Map<string, { object: string; property: string; snippet: string; store: string; tail: string }>;
 
 	builders: {
 		init: CodeBuilder;

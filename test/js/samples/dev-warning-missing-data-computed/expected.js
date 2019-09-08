@@ -17,7 +17,7 @@ import {
 const file = undefined;
 
 function create_fragment(ctx) {
-	var p, t0_value = Math.max(0, ctx.foo), t0, t1, t2;
+	var p, t0_value = Math.max(0, ctx.foo) + "", t0, t1, t2;
 
 	return {
 		c: function create() {
@@ -40,7 +40,7 @@ function create_fragment(ctx) {
 		},
 
 		p: function update(changed, ctx) {
-			if ((changed.foo) && t0_value !== (t0_value = Math.max(0, ctx.foo))) {
+			if ((changed.foo) && t0_value !== (t0_value = Math.max(0, ctx.foo) + "")) {
 				set_data(t0, t0_value);
 			}
 
@@ -72,6 +72,15 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+	};
+
+	$$self.$capture_state = () => {
+		return { foo, bar };
+	};
+
+	$$self.$inject_state = $$props => {
+		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);
 	};
 
 	$$self.$$.update = ($$dirty = { foo: 1 }) => {

@@ -10,13 +10,14 @@
 <script>
 	import Repl from '@sveltejs/svelte-repl';
 	import { onMount } from 'svelte';
-	import { goto } from '@sapper/app';
-	import { user } from '../../../user.js';
+	import { goto, stores } from '@sapper/app';
 	import InputOutputToggle from '../../../components/Repl/InputOutputToggle.svelte';
 	import AppControls from './_components/AppControls/index.svelte';
 
 	export let version;
 	export let id;
+
+	const { session } = stores();
 
 	let repl;
 	let gist;
@@ -107,7 +108,7 @@
 
 	$: mobile = width < 540;
 
-	$: relaxed = is_relaxed_gist || ($user && gist && $user.uid === gist.owner);
+	$: relaxed = is_relaxed_gist || ($session.user && gist && $session.user.uid === gist.owner);
 </script>
 
 <style>

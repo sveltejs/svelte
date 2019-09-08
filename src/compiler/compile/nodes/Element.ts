@@ -63,7 +63,8 @@ const valid_modifiers = new Set([
 	'stopPropagation',
 	'capture',
 	'once',
-	'passive'
+	'passive',
+	'self'
 ]);
 
 const passive_events = new Set([
@@ -83,7 +84,7 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 			: null);
 	}
 
-	if (element.name.toLowerCase() === 'svg') return namespaces.svg;
+	if (svg.test(element.name.toLowerCase())) return namespaces.svg;
 	if (parent_element.name.toLowerCase() === 'foreignobject') return null;
 
 	return parent_element.namespace;
@@ -412,6 +413,13 @@ export default class Element extends Node {
 						message: `Element with a slot='...' attribute must be a descendant of a component or custom element`
 					});
 				}
+			}
+
+			if (name === 'is') {
+				component.warn(attribute, {
+					code: 'avoid-is',
+					message: `The 'is' attribute is not supported cross-browser and should be avoided`
+				});
 			}
 
 			attribute_map.set(attribute.name, attribute);

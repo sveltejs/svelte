@@ -70,7 +70,8 @@ export default class AttributeWrapper {
 
 		const is_legacy_input_type = element.renderer.component.compile_options.legacy && name === 'type' && this.parent.node.name === 'input';
 
-		if (this.node.is_dynamic) {
+		const dependencies = this.node.get_dependencies();
+		if (dependencies.length > 0) {
 			let value;
 
 			// TODO some of this code is repeated in Tag.ts — would be good to
@@ -92,7 +93,7 @@ export default class AttributeWrapper {
 			const is_select_value_attribute =
 				name === 'value' && element.node.name === 'select';
 
-			const should_cache = (this.node.should_cache || is_select_value_attribute);
+			const should_cache = (this.node.should_cache() || is_select_value_attribute);
 
 			const last = should_cache && block.get_unique_name(
 				`${element.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
@@ -147,25 +148,21 @@ export default class AttributeWrapper {
 				updater = `${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
 			}
 
-			// only add an update if mutations are involved (or it's a select?)
-			const dependencies = this.node.get_dependencies();
-			if (dependencies.length > 0 || is_select_value_attribute) {
-				const changed_check = (
-					(block.has_outros ? `!#current || ` : '') +
-					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
-				);
+			const changed_check = (
+				(block.has_outros ? `!#current || ` : '') +
+				dependencies.map(dependency => `changed.${dependency}`).join(' || ')
+			);
 
-				const update_cached_value = `${last} !== (${last} = ${value})`;
+			const update_cached_value = `${last} !== (${last} = ${value})`;
 
-				const condition = should_cache
-					? (dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value)
-					: changed_check;
+			const condition = should_cache
+				? (dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value)
+				: changed_check;
 
-				block.builders.update.add_conditional(
-					condition,
-					updater
-				);
-			}
+			block.builders.update.add_conditional(
+				condition,
+				updater
+			);
 		} else {
 			const value = this.node.get_value(block);
 
@@ -189,7 +186,7 @@ export default class AttributeWrapper {
 			const update_value = `${element.var}.value = ${element.var}.__value;`;
 
 			block.builders.hydrate.add_line(update_value);
-			if (this.node.is_dynamic) block.builders.update.add_line(update_value);
+			if (this.node.get_dependencies().length > 0) block.builders.update.add_line(update_value);
 		}
 	}
 

@@ -12,7 +12,7 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var b, t_value = get_answer(), t;
+	var b, t_value = get_answer() + "", t;
 
 	return {
 		c() {

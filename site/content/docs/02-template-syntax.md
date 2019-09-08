@@ -94,6 +94,14 @@ An element or component can have multiple spread attributes, interspersed with r
 <Widget {...things}/>
 ```
 
+---
+
+*`$$props`* references all props that are passed to a component – including ones that are not declared with `export`. It is useful in rare cases, but not generally recommended, as it is difficult for Svelte to optimise.
+
+```html
+<Widget {...$$props}/>
+```
+
 
 ### Text expressions
 
@@ -108,6 +116,27 @@ Text can also contain JavaScript expressions:
 ```html
 <h1>Hello {name}!</h1>
 <p>{a} + {b} = {a + b}.</p>
+```
+
+
+### Comments
+
+---
+
+You can use HTML comments inside components.
+
+```html
+<!-- this is a comment! -->
+<h1>Hello world</h1>
+```
+
+---
+
+Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually these are accessibility warnings; make sure that you're disabling them for a good reason.
+
+```html
+<!-- svelte-ignore a11y-autofocus -->
+<input bind:value={name} autofocus>
 ```
 
 
@@ -289,7 +318,9 @@ If you don't care about the pending state, you can also omit the initial block.
 
 ---
 
-In a text expression, characters like `<` and `>` are escaped. With HTML expressions, they're not.
+In a text expression, characters like `<` and `>` are escaped; however, with HTML expressions, they're not.
+
+The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML.
 
 > Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
 

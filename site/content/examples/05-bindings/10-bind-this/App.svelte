@@ -2,10 +2,6 @@
 	import { onMount } from 'svelte';
 
 	let canvas;
-	let ctx;
-	let running = false;
-
-	const r = Math.random();
 
 	onMount(() => {
 		const ctx = canvas.getContext('2d');
