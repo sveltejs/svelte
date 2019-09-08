@@ -2,7 +2,7 @@
 	import { writable } from 'svelte/store';
 
 	const items = writable([
-		 { id: 0, text: 'inital' }
+		 { id: 0, text: 'initial' }
 	]);
 </script>
 
