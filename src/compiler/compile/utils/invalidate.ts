@@ -4,7 +4,7 @@ import { Node } from '../../interfaces';
 import { nodes_match } from '../../utils/nodes_match';
 import { Scope } from './scope';
 
-export function invalidate(component: Component, scope: Scope, code: MagicString, node: Node, names: string[]) {
+export function invalidate(component: Component, scope: Scope, code: MagicString, node: Node, names: Set<string>) {
 	const [head, ...tail] = Array.from(names).filter(name => {
 		const owner = scope.find_owner(name);
 		if (owner && owner !== component.instance_scope) return false;

@@ -179,7 +179,7 @@ export default function dom(
 					// onto the initial function call
 					const names = new Set(extract_names(assignee));
 
-					invalidate(component, scope, code, node, Array.from(names));
+					invalidate(component, scope, code, node, names);
 				}
 			}
 		});
