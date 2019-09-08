@@ -7,10 +7,8 @@ import { Node } from '../../../interfaces';
 import { globals , sanitize } from '../../../utils/names';
 import deindent from '../../utils/deindent';
 import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
-
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
-// import { nodes_match } from '../../../utils/nodes_match';
 import Block from '../../render_dom/Block';
 import { INode } from '../interfaces';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
@@ -394,9 +392,7 @@ export default class Expression {
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(assignee.type === 'MemberExpression'
-						? [get_object(assignee).name]
-						: extract_names(assignee));
+					const names = new Set(extract_names(assignee));
 
 					const traced: Set<string> = new Set();
 					names.forEach(name => {
