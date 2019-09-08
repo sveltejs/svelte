@@ -121,7 +121,11 @@ export default class EachBlockWrapper extends Wrapper {
 			view_length: fixed_length === null ? `${iterations}.[✂${c}-${c+4}✂]` : fixed_length
 		};
 
-		const store = node.expression.node.name[0] === '$' ? node.expression.node.name.slice(1) : null;
+		const store = 
+			node.expression.node.type === 'Identifier' && 
+			node.expression.node.name[0] === '$'
+				? node.expression.node.name.slice(1)
+				: null;
 
 		node.contexts.forEach(prop => {
 			this.block.bindings.set(prop.key.name, {
