@@ -18,7 +18,8 @@ export function invalidate(component: Component, scope: Scope, code: MagicString
 			(
 				variable.referenced ||
 				variable.is_reactive_dependency ||
-				variable.export_name
+				variable.export_name ||
+				variable.name[0] === '$'
 			)
 		);
 	});
