@@ -249,7 +249,7 @@ function get_event_handler(
 		snippet?: string;
 	} {
 	const value = get_value_from_dom(renderer, binding.parent, binding);
-	const store = binding.object[0] === '$' ? binding.object.slice(1) : null;
+	let store = binding.object[0] === '$' ? binding.object.slice(1) : null;
 
 	let tail = '';
 	if (binding.node.expression.node.type === 'MemberExpression') {
@@ -258,7 +258,13 @@ function get_event_handler(
 	}
 
 	if (binding.node.is_contextual) {
-		const { object, property, snippet } = block.bindings.get(name);
+		const binding = block.bindings.get(name);
+		const { object, property, snippet } = binding;
+
+		if (binding.store) {
+			store = binding.store;
+			tail = `${binding.tail}${tail}`;
+		}
 
 		return {
 			uses_context: true,

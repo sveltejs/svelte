@@ -121,11 +121,19 @@ export default class EachBlockWrapper extends Wrapper {
 			view_length: fixed_length === null ? `${iterations}.[✂${c}-${c+4}✂]` : fixed_length
 		};
 
+		const store = 
+			node.expression.node.type === 'Identifier' && 
+			node.expression.node.name[0] === '$'
+				? node.expression.node.name.slice(1)
+				: null;
+
 		node.contexts.forEach(prop => {
 			this.block.bindings.set(prop.key.name, {
 				object: this.vars.each_block_value,
 				property: this.index_name,
-				snippet: attach_head(`${this.vars.each_block_value}[${this.index_name}]`, prop.tail)
+				snippet: attach_head(`${this.vars.each_block_value}[${this.index_name}]`, prop.tail),
+				store,
+				tail: attach_head(`[${this.index_name}]`, prop.tail)
 			});
 		});
 
