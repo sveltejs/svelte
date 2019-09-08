@@ -8,8 +8,9 @@ import { walk } from 'estree-walker';
 import { stringify_props } from '../utils/stringify_props';
 import add_to_set from '../utils/add_to_set';
 import get_object from '../utils/get_object';
-import { extract_names } from '../utils/scope';
+// import { extract_names } from '../utils/scope';
 import { nodes_match } from '../../utils/nodes_match';
+import { extract_names } from '../utils/scope';
 
 export default function dom(
 	component: Component,
@@ -158,8 +159,6 @@ export default function dom(
 		let scope = component.instance_scope;
 		const map = component.instance_scope_map;
 
-		let pending_assignments = new Set();
-
 		walk(component.ast.instance.content, {
 			enter: (node) => {
 				if (map.has(node)) {
@@ -167,101 +166,77 @@ export default function dom(
 				}
 			},
 
-			leave(node, parent) {
+			leave(node) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
 
+				// TODO dry out — most of this is shared with Expression.ts
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-					let names = [];
 
-					if (assignee.type === 'MemberExpression') {
-						const left_object_name = get_object(assignee).name;
-						left_object_name && (names = [left_object_name]);
-					} else {
-						names = extract_names(assignee);
-					}
+					// normally (`a = 1`, `b.c = 2`), there'll be a single name
+					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
+					// may be more, in which case we need to tack the extra ones
+					// onto the initial function call
+					const names = new Set(assignee.type === 'MemberExpression'
+						? [get_object(assignee).name]
+						: extract_names(assignee));
 
-					if (node.operator === '=' && nodes_match(node.left, node.right)) {
-						const dirty = names.filter(name => {
-							return name[0] === '$' || scope.find_owner(name) === component.instance_scope;
-						});
+					const [head, ...tail] = Array.from(names).filter(name => {
+						const owner = scope.find_owner(name);
+						if (owner && owner !== component.instance_scope) return;
 
-						if (dirty.length) component.has_reactive_assignments = true;
+						const variable = component.var_lookup.get(name);
 
-						code.overwrite(node.start, node.end, dirty.map(n => component.invalidate(n)).join('; '));
-					} else {
-						const single = (
-							node.type === 'AssignmentExpression' &&
-							assignee.type === 'Identifier' &&
-							parent.type === 'ExpressionStatement' &&
-							assignee.name[0] !== '$'
+						return variable && (
+							!variable.hoistable &&
+							!variable.global &&
+							!variable.module &&
+							(
+								variable.referenced ||
+								variable.is_reactive_dependency ||
+								variable.export_name
+							)
 						);
+					});
 
-						names.forEach(name => {
-							const owner = scope.find_owner(name);
-							if (owner && owner !== component.instance_scope) return;
+					if (head) {
+						component.has_reactive_assignments = true;
 
-							const variable = component.var_lookup.get(name);
-							if (variable && (variable.hoistable || variable.global || variable.module)) return;
-
-							if (single && !(variable.subscribable && variable.reassigned)) {
-								if (variable.referenced || variable.is_reactive_dependency || variable.export_name) {
-									code.prependRight(node.start, `$$invalidate('${name}', `);
-									code.appendLeft(node.end, `)`);
-								}
-							} else {
-								pending_assignments.add(name);
-							}
-
-							component.has_reactive_assignments = true;
-						});
-					}
-				}
-
-				if (pending_assignments.size > 0) {
-					if (node.type === 'ArrowFunctionExpression') {
-						const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
-						pending_assignments = new Set();
-
-						code.prependRight(node.body.start, `{ const $$result = `);
-						code.appendLeft(node.body.end, `; ${insert}; return $$result; }`);
-
-						pending_assignments = new Set();
-					}
-
-					else if (/Statement/.test(node.type)) {
-						const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
-
-						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
-							if (node.argument) {
-								code.overwrite(node.start, node.argument.start, `var $$result = `);
-								code.appendLeft(node.argument.end, `; ${insert}; return $$result`);
-							} else {
-								code.prependRight(node.start, `${insert}; `);
-							}
-						} else if (parent && /(If|For(In|Of)?|While)Statement/.test(parent.type) && node.type !== 'BlockStatement') {
-							code.prependRight(node.start, '{ ');
-							code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert}; }`);
+						if (node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
+							code.overwrite(node.start, node.end, component.invalidate(head));
 						} else {
-							code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert};`);
+							let suffix = ')';
+
+							if (head[0] === '$') {
+								code.prependRight(node.start, `${component.helper('set_store_value')}(${head.slice(1)}, `);
+							} else {
+								let prefix = `$$invalidate`;
+
+								const variable = component.var_lookup.get(head);
+								if (variable.subscribable && variable.reassigned) {
+									prefix = `$$subscribe_${head}($$invalidate`;
+									suffix += `)`;
+								}
+
+								code.prependRight(node.start, `${prefix}('${head}', `);
+							}
+
+							const extra_args = tail.map(name => component.invalidate(name));
+
+							if (assignee.type !== 'Identifier' || node.type === 'UpdateExpression' && !node.prefix || extra_args.length > 0) {
+								extra_args.unshift(head);
+							}
+
+							suffix = `${extra_args.map(arg => `, ${arg}`).join('')}${suffix}`;
+
+							code.appendLeft(node.end, suffix);
 						}
-
-						pending_assignments = new Set();
-					} else if (parent && parent.type !== 'ForStatement' && node.type === 'VariableDeclaration') {
-						const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
-
-						code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert};`);
-						pending_assignments = new Set();
 					}
 				}
 			}
 		});
-
-		if (pending_assignments.size > 0) {
-			throw new Error(`TODO this should not happen!`);
-		}
 
 		component.rewrite_props(({ name, reassigned }) => {
 			const value = `$${name}`;
@@ -395,7 +370,7 @@ export default function dom(
 
 			const store = component.var_lookup.get(name);
 			if (store && store.reassigned) {
-				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`;
+				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => ($$unsubscribe_${name}(), $$unsubscribe_${name} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }), ${name})`;
 			}
 
 			return $name;

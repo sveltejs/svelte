@@ -61,7 +61,7 @@ function instance($$self, $$props, $$invalidate) {
 	let x = 0;
 
 	function click_handler() {
-		if (true) { x += 1; $$invalidate('x', x); }
+		if (true) $$invalidate('x', x += 1);
 	}
 
 	return { x, click_handler };
