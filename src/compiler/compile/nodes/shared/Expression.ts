@@ -322,15 +322,11 @@ export default class Expression {
 						args.push(original_params);
 					}
 
-					// TODO is this still necessary?
-					let body = code.slice(node.body.start, node.body.end).trim();
-					if (node.body.type !== 'BlockStatement') {
-						body = `{\n\treturn ${body};\n}`;
-					}
+					const body = code.slice(node.body.start, node.body.end).trim();
 
-					const fn = deindent`
-						${node.async && 'async '}function${node.generator && '*'} ${name}(${args.join(', ')}) ${body}
-					`;
+					const fn = node.type === 'FunctionExpression'
+						? `${node.async ? 'async ' : ''}function${node.generator ? '*' : ''} ${name}(${args.join(', ')}) ${body}`
+						: `const ${name} = ${node.async ? 'async ' : ''}(${args.join(', ')}) => ${body};`;
 
 					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
 						// we can hoist this out of the component completely
