@@ -53,9 +53,7 @@ function foo(node, callback) {
 function instance($$self, $$props, $$invalidate) {
 	let { bar } = $$props;
 
-	function foo_function() {
-		return handleFoo(bar);
-	}
+	const foo_function = () => handleFoo(bar);
 
 	$$self.$set = $$props => {
 		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);

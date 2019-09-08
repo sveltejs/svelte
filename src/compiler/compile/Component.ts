@@ -813,7 +813,7 @@ export default class Component {
 		const variable = this.var_lookup.get(name);
 
 		if (variable && (variable.subscribable && variable.reassigned)) {
-			return `$$subscribe_${name}(), $$invalidate('${name}', ${value || name})`;
+			return `$$subscribe_${name}($$invalidate('${name}', ${value || name}))`;
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {

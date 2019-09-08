@@ -40,9 +40,7 @@ function create_fragment(ctx) {
 	};
 }
 
-function touchstart_handler(e) {
-	return e.preventDefault();
-}
+const touchstart_handler = (e) => e.preventDefault();
 
 class Component extends SvelteComponent {
 	constructor(options) {
