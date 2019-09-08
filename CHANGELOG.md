@@ -1,5 +1,14 @@
 # Svelte changelog
 
+## 3.10.1
+
+* Preserve reactivity inside if block heads etc ([#3512](https://github.com/sveltejs/svelte/issues/3512))
+* Fix store bindings inside each blocks ([#3455](https://github.com/sveltejs/svelte/issues/3455))
+* Generate correct code for if-else blocks with static conditions ([#3505](https://github.com/sveltejs/svelte/issues/3505))
+* Avoid generating unnecessary component update code ([#3526](https://github.com/sveltejs/svelte/issues/3526))
+* Make `bind:currentTime` more reliable ([#3524](https://github.com/sveltejs/svelte/issues/3524))
+* Prevent errors when setting spread props on SVG elements ([#3522](https://github.com/sveltejs/svelte/issues/3522))
+
 ## 3.10.0
 
 * Add `blur` transition ([#3477](https://github.com/sveltejs/svelte/pull/3477))
