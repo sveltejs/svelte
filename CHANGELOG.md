@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 3.11.0
+
+* `$capture_state` and `$inject_state` HMR hooks in dev mode ([#3148](https://github.com/sveltejs/svelte/pull/3148))
+* Allow unclosed tags inside if/each/etc blocks ([#2807](https://github.com/sveltejs/svelte/issues/2807))
+* Invalidate unreferenced store values inside `<script>` ([#3537](https://github.com/sveltejs/svelte/issues/3537))
+* Print `null` text when hydrating ([#3379](https://github.com/sveltejs/svelte/pull/3379))
+
 ## 3.10.1
 
 * Preserve reactivity inside if block heads etc ([#3512](https://github.com/sveltejs/svelte/issues/3512))
