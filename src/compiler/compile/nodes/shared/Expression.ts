@@ -399,7 +399,7 @@ export default class Expression {
 						}
 					});
 
-					invalidate(component, scope, code, node, Array.from(traced));
+					invalidate(component, scope, code, node, traced);
 				}
 			}
 		});
