@@ -10,10 +10,11 @@ import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
 
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
-import { nodes_match } from '../../../utils/nodes_match';
+// import { nodes_match } from '../../../utils/nodes_match';
 import Block from '../../render_dom/Block';
 import { INode } from '../interfaces';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
+import { nodes_match } from '../../../utils/nodes_match';
 
 const binary_operators: Record<string, number> = {
 	'**': 15,
@@ -241,7 +242,6 @@ export default class Expression {
 		const { code } = component;
 
 		let function_expression;
-		let pending_assignments: Set<string> = new Set();
 
 		let dependencies: Set<string>;
 		let contextual_dependencies: Set<string>;
@@ -309,16 +309,6 @@ export default class Expression {
 				if (map.has(node)) scope = scope.parent;
 
 				if (node === function_expression) {
-					if (pending_assignments.size > 0) {
-						if (node.type !== 'ArrowFunctionExpression') {
-							// this should never happen!
-							throw new Error(`Well that's odd`);
-						}
-
-						// TOOD optimisation — if this is an event handler,
-						// the return value doesn't matter
-					}
-
 					const name = component.get_unique_name(
 						sanitize(get_function_name(node, owner))
 					);
@@ -334,35 +324,10 @@ export default class Expression {
 						args.push(original_params);
 					}
 
+					// TODO is this still necessary?
 					let body = code.slice(node.body.start, node.body.end).trim();
 					if (node.body.type !== 'BlockStatement') {
-						if (pending_assignments.size > 0) {
-							const dependencies = new Set();
-							pending_assignments.forEach(name => {
-								if (template_scope.names.has(name)) {
-									template_scope.dependencies_for_name.get(name).forEach(dependency => {
-										dependencies.add(dependency);
-									});
-								} else {
-									dependencies.add(name);
-								}
-							});
-
-							const insert = Array.from(dependencies).map(name => component.invalidate(name)).join('; ');
-							pending_assignments = new Set();
-
-							component.has_reactive_assignments = true;
-
-							body = deindent`
-								{
-									const $$result = ${body};
-									${insert};
-									return $$result;
-								}
-							`;
-						} else {
-							body = `{\n\treturn ${body};\n}`;
-						}
+						body = `{\n\treturn ${body};\n}`;
 					}
 
 					const fn = deindent`
@@ -421,65 +386,78 @@ export default class Expression {
 					contextual_dependencies = null;
 				}
 
-				if (node.type === 'AssignmentExpression') {
-					const names = node.left.type === 'MemberExpression'
-						? [get_object(node.left).name]
-						: extract_names(node.left);
+				// TODO dry out — most of this is shared with render_dom/index.ts
+				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 
-					if (node.operator === '=' && nodes_match(node.left, node.right)) {
-						const dirty = names.filter(name => {
-							return !scope.declarations.has(name);
-						});
+					// normally (`a = 1`, `b.c = 2`), there'll be a single name
+					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
+					// may be more, in which case we need to tack the extra ones
+					// onto the initial function call
+					const names = new Set(assignee.type === 'MemberExpression'
+						? [get_object(assignee).name]
+						: extract_names(assignee));
 
-						if (dirty.length) component.has_reactive_assignments = true;
-
-						code.overwrite(node.start, node.end, dirty.map(n => component.invalidate(n)).join('; '));
-					} else {
-						names.forEach(name => {
-							if (scope.declarations.has(name)) return;
-
-							const variable = component.var_lookup.get(name);
-							if (variable && variable.hoistable) return;
-
-							pending_assignments.add(name);
-						});
-					}
-				} else if (node.type === 'UpdateExpression') {
-					const { name } = get_object(node.argument);
-
-					if (scope.declarations.has(name)) return;
-
-					const variable = component.var_lookup.get(name);
-					if (variable && variable.hoistable) return;
-
-					pending_assignments.add(name);
-				}
-
-				if (/Statement/.test(node.type)) {
-					if (pending_assignments.size > 0) {
-						const has_semi = code.original[node.end - 1] === ';';
-
-						const insert = (
-							(has_semi ? ' ' : '; ') +
-							Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ')
-						);
-
-						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
-							if (node.argument) {
-								code.overwrite(node.start, node.argument.start, `var $$result = `);
-								code.appendLeft(node.end, `${insert}; return $$result`);
-							} else {
-								code.prependRight(node.start, `${insert}; `);
-							}
-						} else if (parent && /(If|For(In|Of)?|While)Statement/.test(parent.type) && node.type !== 'BlockStatement') {
-							code.prependRight(node.start, '{ ');
-							code.appendLeft(node.end, `${insert}; }`);
+					const traced: Set<string> = new Set();
+					names.forEach(name => {
+						const dependencies = template_scope.dependencies_for_name.get(name);
+						if (dependencies) {
+							dependencies.forEach(name => traced.add(name));
 						} else {
-							code.appendLeft(node.end, `${insert};`);
+							traced.add(name);
 						}
+					});
 
+					const [head, ...tail] = Array.from(traced).filter(name => {
+						const owner = scope.find_owner(name);
+						if (owner && owner !== component.instance_scope) return;
+
+						const variable = component.var_lookup.get(name);
+
+						return variable && (
+							!variable.hoistable &&
+							!variable.global &&
+							!variable.module &&
+							(
+								variable.referenced ||
+								variable.is_reactive_dependency ||
+								variable.export_name
+							)
+						);
+					});
+
+					if (head) {
 						component.has_reactive_assignments = true;
-						pending_assignments = new Set();
+
+						if (node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
+							code.overwrite(node.start, node.end, component.invalidate(head));
+						} else {
+							let suffix = ')';
+
+							if (head[0] === '$') {
+								code.prependRight(node.start, `${component.helper('set_store_value')}(${head.slice(1)}, `);
+							} else {
+								let prefix = `$$invalidate`;
+
+								const variable = component.var_lookup.get(head);
+								if (variable.subscribable && variable.reassigned) {
+									prefix = `$$subscribe_${head}($$invalidate`;
+									suffix += `)`;
+								}
+
+								code.prependRight(node.start, `${prefix}('${head}', `);
+							}
+
+							const extra_args = tail.map(name => component.invalidate(name));
+
+							if (assignee.type !== 'Identifier' || node.type === 'UpdateExpression' && !node.prefix || extra_args.length > 0) {
+								extra_args.unshift(head);
+							}
+
+							suffix = `${extra_args.map(arg => `, ${arg}`).join('')}${suffix}`;
+
+							code.appendLeft(node.end, suffix);
+						}
 					}
 				}
 			}
