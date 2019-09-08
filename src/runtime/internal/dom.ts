@@ -162,7 +162,7 @@ export function claim_text(nodes, data) {
 	for (let i = 0; i < nodes.length; i += 1) {
 		const node = nodes[i];
 		if (node.nodeType === 3) {
-			node.data = data;
+			node.data = '' + data;
 			return nodes.splice(i, 1)[0];
 		}
 	}
