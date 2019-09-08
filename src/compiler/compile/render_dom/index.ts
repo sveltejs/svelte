@@ -7,8 +7,6 @@ import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
 import { stringify_props } from '../utils/stringify_props';
 import add_to_set from '../utils/add_to_set';
-import get_object from '../utils/get_object';
-// import { extract_names } from '../utils/scope';
 import { nodes_match } from '../../utils/nodes_match';
 import { extract_names } from '../utils/scope';
 
@@ -179,9 +177,7 @@ export default function dom(
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(assignee.type === 'MemberExpression'
-						? [get_object(assignee).name]
-						: extract_names(assignee));
+					const names = new Set(extract_names(assignee));
 
 					const [head, ...tail] = Array.from(names).filter(name => {
 						const owner = scope.find_owner(name);
