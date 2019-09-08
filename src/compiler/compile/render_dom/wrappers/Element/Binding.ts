@@ -262,7 +262,7 @@ function get_event_handler(
 		const { object, property, snippet } = binding;
 
 		if (binding.store) {
-			store = store || binding.store;
+			store = binding.store;
 			tail = `${binding.tail}${tail}`;
 		}
 
