@@ -46,9 +46,7 @@ function create_fragment(ctx) {
 	};
 }
 
-function func() {
-	return import('./Foo.svelte');
-}
+const func = () => import('./Foo.svelte');
 
 class Component extends SvelteComponent {
 	constructor(options) {

@@ -101,11 +101,12 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	let ready = false;
 
 	$$.ctx = instance
-		? instance(component, props, (key, value) => {
+		? instance(component, props, (key, ret, value = ret) => {
 			if ($$.ctx && not_equal($$.ctx[key], $$.ctx[key] = value)) {
 				if ($$.bound[key]) $$.bound[key](value);
 				if (ready) make_dirty(component, key);
 			}
+			return ret;
 		})
 		: props;
 

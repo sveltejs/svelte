@@ -7,9 +7,8 @@ import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
 import { stringify_props } from '../utils/stringify_props';
 import add_to_set from '../utils/add_to_set';
-import get_object from '../utils/get_object';
 import { extract_names } from '../utils/scope';
-import { nodes_match } from '../../utils/nodes_match';
+import { invalidate } from '../utils/invalidate';
 
 export default function dom(
 	component: Component,
@@ -158,8 +157,6 @@ export default function dom(
 		let scope = component.instance_scope;
 		const map = component.instance_scope_map;
 
-		let pending_assignments = new Set();
-
 		walk(component.ast.instance.content, {
 			enter: (node) => {
 				if (map.has(node)) {
@@ -167,101 +164,25 @@ export default function dom(
 				}
 			},
 
-			leave(node, parent) {
+			leave(node) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
 
+				// TODO dry out — most of this is shared with Expression.ts
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-					let names = [];
 
-					if (assignee.type === 'MemberExpression') {
-						const left_object_name = get_object(assignee).name;
-						left_object_name && (names = [left_object_name]);
-					} else {
-						names = extract_names(assignee);
-					}
+					// normally (`a = 1`, `b.c = 2`), there'll be a single name
+					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
+					// may be more, in which case we need to tack the extra ones
+					// onto the initial function call
+					const names = new Set(extract_names(assignee));
 
-					if (node.operator === '=' && nodes_match(node.left, node.right)) {
-						const dirty = names.filter(name => {
-							return name[0] === '$' || scope.find_owner(name) === component.instance_scope;
-						});
-
-						if (dirty.length) component.has_reactive_assignments = true;
-
-						code.overwrite(node.start, node.end, dirty.map(n => component.invalidate(n)).join('; '));
-					} else {
-						const single = (
-							node.type === 'AssignmentExpression' &&
-							assignee.type === 'Identifier' &&
-							parent.type === 'ExpressionStatement' &&
-							assignee.name[0] !== '$'
-						);
-
-						names.forEach(name => {
-							const owner = scope.find_owner(name);
-							if (owner && owner !== component.instance_scope) return;
-
-							const variable = component.var_lookup.get(name);
-							if (variable && (variable.hoistable || variable.global || variable.module)) return;
-
-							if (single && !(variable.subscribable && variable.reassigned)) {
-								if (variable.referenced || variable.is_reactive_dependency || variable.export_name) {
-									code.prependRight(node.start, `$$invalidate('${name}', `);
-									code.appendLeft(node.end, `)`);
-								}
-							} else {
-								pending_assignments.add(name);
-							}
-
-							component.has_reactive_assignments = true;
-						});
-					}
-				}
-
-				if (pending_assignments.size > 0) {
-					if (node.type === 'ArrowFunctionExpression') {
-						const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
-						pending_assignments = new Set();
-
-						code.prependRight(node.body.start, `{ const $$result = `);
-						code.appendLeft(node.body.end, `; ${insert}; return $$result; }`);
-
-						pending_assignments = new Set();
-					}
-
-					else if (/Statement/.test(node.type)) {
-						const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
-
-						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
-							if (node.argument) {
-								code.overwrite(node.start, node.argument.start, `var $$result = `);
-								code.appendLeft(node.argument.end, `; ${insert}; return $$result`);
-							} else {
-								code.prependRight(node.start, `${insert}; `);
-							}
-						} else if (parent && /(If|For(In|Of)?|While)Statement/.test(parent.type) && node.type !== 'BlockStatement') {
-							code.prependRight(node.start, '{ ');
-							code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert}; }`);
-						} else {
-							code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert};`);
-						}
-
-						pending_assignments = new Set();
-					} else if (parent && parent.type !== 'ForStatement' && node.type === 'VariableDeclaration') {
-						const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
-
-						code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert};`);
-						pending_assignments = new Set();
-					}
+					invalidate(component, scope, code, node, names);
 				}
 			}
 		});
-
-		if (pending_assignments.size > 0) {
-			throw new Error(`TODO this should not happen!`);
-		}
 
 		component.rewrite_props(({ name, reassigned }) => {
 			const value = `$${name}`;
@@ -395,7 +316,7 @@ export default function dom(
 
 			const store = component.var_lookup.get(name);
 			if (store && store.reassigned) {
-				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`;
+				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => ($$unsubscribe_${name}(), $$unsubscribe_${name} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }), ${name})`;
 			}
 
 			return $name;
