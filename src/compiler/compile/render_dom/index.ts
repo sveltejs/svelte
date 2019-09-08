@@ -7,8 +7,8 @@ import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
 import { stringify_props } from '../utils/stringify_props';
 import add_to_set from '../utils/add_to_set';
-import { nodes_match } from '../../utils/nodes_match';
 import { extract_names } from '../utils/scope';
+import { invalidate } from '../utils/invalidate';
 
 export default function dom(
 	component: Component,
@@ -179,57 +179,7 @@ export default function dom(
 					// onto the initial function call
 					const names = new Set(extract_names(assignee));
 
-					const [head, ...tail] = Array.from(names).filter(name => {
-						const owner = scope.find_owner(name);
-						if (owner && owner !== component.instance_scope) return;
-
-						const variable = component.var_lookup.get(name);
-
-						return variable && (
-							!variable.hoistable &&
-							!variable.global &&
-							!variable.module &&
-							(
-								variable.referenced ||
-								variable.is_reactive_dependency ||
-								variable.export_name
-							)
-						);
-					});
-
-					if (head) {
-						component.has_reactive_assignments = true;
-
-						if (node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
-							code.overwrite(node.start, node.end, component.invalidate(head));
-						} else {
-							let suffix = ')';
-
-							if (head[0] === '$') {
-								code.prependRight(node.start, `${component.helper('set_store_value')}(${head.slice(1)}, `);
-							} else {
-								let prefix = `$$invalidate`;
-
-								const variable = component.var_lookup.get(head);
-								if (variable.subscribable && variable.reassigned) {
-									prefix = `$$subscribe_${head}($$invalidate`;
-									suffix += `)`;
-								}
-
-								code.prependRight(node.start, `${prefix}('${head}', `);
-							}
-
-							const extra_args = tail.map(name => component.invalidate(name));
-
-							if (assignee.type !== 'Identifier' || node.type === 'UpdateExpression' && !node.prefix || extra_args.length > 0) {
-								extra_args.unshift(head);
-							}
-
-							suffix = `${extra_args.map(arg => `, ${arg}`).join('')}${suffix}`;
-
-							code.appendLeft(node.end, suffix);
-						}
-					}
+					invalidate(component, scope, code, node, Array.from(names));
 				}
 			}
 		});
