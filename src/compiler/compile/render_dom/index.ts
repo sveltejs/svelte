@@ -169,7 +169,6 @@ export default function dom(
 					scope = scope.parent;
 				}
 
-				// TODO dry out — most of this is shared with Expression.ts
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 
