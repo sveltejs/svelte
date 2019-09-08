@@ -60,9 +60,9 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let x = 0;
 
-	function click_handler() {
+	const click_handler = () => {
 		if (true) $$invalidate('x', x += 1);
-	}
+	};
 
 	return { x, click_handler };
 }
