@@ -12,7 +12,7 @@ import get_object from '../../utils/get_object';
 import Block from '../../render_dom/Block';
 import { INode } from '../interfaces';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
-import { nodes_match } from '../../../utils/nodes_match';
+import { invalidate } from '../../utils/invalidate';
 
 const binary_operators: Record<string, number> = {
 	'**': 15,
@@ -384,7 +384,6 @@ export default class Expression {
 					contextual_dependencies = null;
 				}
 
-				// TODO dry out — most of this is shared with render_dom/index.ts
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 
@@ -404,57 +403,7 @@ export default class Expression {
 						}
 					});
 
-					const [head, ...tail] = Array.from(traced).filter(name => {
-						const owner = scope.find_owner(name);
-						if (owner && owner !== component.instance_scope) return;
-
-						const variable = component.var_lookup.get(name);
-
-						return variable && (
-							!variable.hoistable &&
-							!variable.global &&
-							!variable.module &&
-							(
-								variable.referenced ||
-								variable.is_reactive_dependency ||
-								variable.export_name
-							)
-						);
-					});
-
-					if (head) {
-						component.has_reactive_assignments = true;
-
-						if (node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
-							code.overwrite(node.start, node.end, component.invalidate(head));
-						} else {
-							let suffix = ')';
-
-							if (head[0] === '$') {
-								code.prependRight(node.start, `${component.helper('set_store_value')}(${head.slice(1)}, `);
-							} else {
-								let prefix = `$$invalidate`;
-
-								const variable = component.var_lookup.get(head);
-								if (variable.subscribable && variable.reassigned) {
-									prefix = `$$subscribe_${head}($$invalidate`;
-									suffix += `)`;
-								}
-
-								code.prependRight(node.start, `${prefix}('${head}', `);
-							}
-
-							const extra_args = tail.map(name => component.invalidate(name));
-
-							if (assignee.type !== 'Identifier' || node.type === 'UpdateExpression' && !node.prefix || extra_args.length > 0) {
-								extra_args.unshift(head);
-							}
-
-							suffix = `${extra_args.map(arg => `, ${arg}`).join('')}${suffix}`;
-
-							code.appendLeft(node.end, suffix);
-						}
-					}
+					invalidate(component, scope, code, node, Array.from(traced));
 				}
 			}
 		});
