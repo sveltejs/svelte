@@ -610,12 +610,14 @@ export default class ElementWrapper extends Wrapper {
 			}
 		`);
 
+		const fn = this.node.namespace === namespaces.svg ? `set_svg_attributes` : `set_attributes`;
+
 		block.builders.hydrate.add_line(
-			`@set_attributes(${this.var}, ${data});`
+			`@${fn}(${this.var}, ${data});`
 		);
 
 		block.builders.update.add_block(deindent`
-			@set_attributes(${this.var}, @get_spread_update(${levels}, [
+			@${fn}(${this.var}, @get_spread_update(${levels}, [
 				${updates.join(',\n')}
 			]));
 		`);
