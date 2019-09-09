@@ -10,6 +10,7 @@ export default function add_event_handlers(
 		let snippet = handler.render(block);
 		if (handler.modifiers.has('preventDefault')) snippet = `@prevent_default(${snippet})`;
 		if (handler.modifiers.has('stopPropagation')) snippet = `@stop_propagation(${snippet})`;
+		if (handler.modifiers.has('self')) snippet = `@self(${snippet})`;
 
 		let opts_string = '';
 

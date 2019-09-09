@@ -23,7 +23,12 @@ function create_fragment(ctx) {
 			foo_action = foo.call(null, button, ctx.foo_function) || {};
 		},
 
-		p: noop,
+		p(changed, ctx) {
+			if (typeof foo_action.update === 'function' && changed.bar) {
+				foo_action.update.call(null, ctx.foo_function);
+			}
+		},
+
 		i: noop,
 		o: noop,
 
@@ -48,9 +53,7 @@ function foo(node, callback) {
 function instance($$self, $$props, $$invalidate) {
 	let { bar } = $$props;
 
-	function foo_function() {
-		return handleFoo(bar);
-	}
+	const foo_function = () => handleFoo(bar);
 
 	$$self.$set = $$props => {
 		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);

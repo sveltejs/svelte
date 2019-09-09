@@ -5,6 +5,7 @@ import ElementWrapper from './index';
 import { stringify } from '../../../utils/stringify';
 import deindent from '../../../utils/deindent';
 import Expression from '../../../nodes/shared/Expression';
+import Text from '../../../nodes/Text';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -69,12 +70,8 @@ export default class AttributeWrapper {
 
 		const is_legacy_input_type = element.renderer.component.compile_options.legacy && name === 'type' && this.parent.node.name === 'input';
 
-		const is_dataset = /^data-/.test(name) && !element.renderer.component.compile_options.legacy && !element.node.namespace;
-		const camel_case_name = is_dataset ? name.replace('data-', '').replace(/(-\w)/g, (m) => {
-			return m[1].toUpperCase();
-		}) : name;
-
-		if (this.node.is_dynamic) {
+		const dependencies = this.node.get_dependencies();
+		if (dependencies.length > 0) {
 			let value;
 
 			// TODO some of this code is repeated in Tag.ts — would be good to
@@ -84,25 +81,19 @@ export default class AttributeWrapper {
 				value = (this.node.chunks[0] as Expression).render(block);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
-				value =
-					(this.node.chunks[0].type === 'Text' ? '' : `"" + `) +
-					this.node.chunks
-						.map((chunk) => {
-							if (chunk.type === 'Text') {
-								return stringify(chunk.data);
-							} else {
-								return chunk.get_precedence() <= 13
-									? `(${chunk.render()})`
-									: chunk.render();
-							}
-						})
-						.join(' + ');
+				const prefix = this.node.chunks[0].type === 'Text' ? '' : `"" + `;
+
+				const text = this.node.name === 'class'
+					? this.get_class_name_text()
+					: this.render_chunks().join(' + ');
+
+				value = `${prefix}${text}`;
 			}
 
 			const is_select_value_attribute =
 				name === 'value' && element.node.name === 'select';
 
-			const should_cache = (this.node.should_cache || is_select_value_attribute);
+			const should_cache = (this.node.should_cache() || is_select_value_attribute);
 
 			const last = should_cache && block.get_unique_name(
 				`${element.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
@@ -152,13 +143,6 @@ export default class AttributeWrapper {
 				updater = block.renderer.options.dev
 					? `@prop_dev(${element.var}, "${property_name}", ${should_cache ? last : value});`
 					: `${element.var}.${property_name} = ${should_cache ? last : value};`;
-			} else if (is_dataset) {
-				block.builders.hydrate.add_line(
-					`${element.var}.dataset.${camel_case_name} = ${init};`
-				);
-				updater = block.renderer.options.dev
-					? `@dataset_dev(${element.var}, "${camel_case_name}", ${should_cache ? last : value});`
-					: `${element.var}.dataset.${camel_case_name} = ${should_cache ? last : value};`;
 			} else {
 				block.builders.hydrate.add_line(
 					`${method}(${element.var}, "${name}", ${init});`
@@ -166,25 +150,21 @@ export default class AttributeWrapper {
 				updater = `${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
 			}
 
-			// only add an update if mutations are involved (or it's a select?)
-			const dependencies = this.node.get_dependencies();
-			if (dependencies.length > 0 || is_select_value_attribute) {
-				const changed_check = (
-					(block.has_outros ? `!#current || ` : '') +
-					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
-				);
+			const changed_check = (
+				(block.has_outros ? `!#current || ` : '') +
+				dependencies.map(dependency => `changed.${dependency}`).join(' || ')
+			);
 
-				const update_cached_value = `${last} !== (${last} = ${value})`;
+			const update_cached_value = `${last} !== (${last} = ${value})`;
 
-				const condition = should_cache
-					? (dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value)
-					: changed_check;
+			const condition = should_cache
+				? (dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value)
+				: changed_check;
 
-				block.builders.update.add_conditional(
-					condition,
-					updater
-				);
-			}
+			block.builders.update.add_conditional(
+				condition,
+				updater
+			);
 		} else {
 			const value = this.node.get_value(block);
 
@@ -193,9 +173,7 @@ export default class AttributeWrapper {
 					? `@set_input_type(${element.var}, ${value});`
 					: property_name
 						? `${element.var}.${property_name} = ${value};`
-						: is_dataset
-							? `${element.var}.dataset.${camel_case_name} = ${value === true ? '""' : value};`
-							: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
+						: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
 			);
 
 			block.builders.hydrate.add_line(statement);
@@ -210,8 +188,33 @@ export default class AttributeWrapper {
 			const update_value = `${element.var}.value = ${element.var}.__value;`;
 
 			block.builders.hydrate.add_line(update_value);
-			if (this.node.is_dynamic) block.builders.update.add_line(update_value);
+			if (this.node.get_dependencies().length > 0) block.builders.update.add_line(update_value);
 		}
+	}
+
+	get_class_name_text() {
+		const scoped_css = this.node.chunks.some((chunk: Text) => chunk.synthetic);
+		const rendered = this.render_chunks();
+
+		if (scoped_css && rendered.length === 2) {
+			// we have a situation like class={possiblyUndefined}
+			rendered[0] = `@null_to_empty(${rendered[0]})`;
+		}
+
+		return rendered.join(' + ');
+	}
+
+	render_chunks() {
+		return this.node.chunks.map((chunk) => {
+			if (chunk.type === 'Text') {
+				return stringify(chunk.data);
+			}
+
+			const rendered = chunk.render();
+			return chunk.get_precedence() <= 13
+				? `(${rendered})`
+				: rendered;
+		});
 	}
 
 	stringify() {
@@ -224,7 +227,7 @@ export default class AttributeWrapper {
 			return chunk.type === 'Text'
 				? chunk.data.replace(/"/g, '\\"')
 				: `\${${chunk.render()}}`;
-		})}"`;
+		}).join('')}"`;
 	}
 }
 

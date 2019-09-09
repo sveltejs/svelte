@@ -17,7 +17,6 @@ import { INode } from '../../nodes/interfaces';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import { trim_start, trim_end } from '../../../utils/trim';
-import TextWrapper from './Text';
 
 const wrappers = {
 	AwaitBlock,
@@ -103,7 +102,7 @@ export default class FragmentWrapper {
 
 				// glue text nodes (which could e.g. be separated by comments) together
 				if (last_child && last_child.node.type === 'Text') {
-					(last_child as TextWrapper).data = data + (last_child as TextWrapper).data;
+					(last_child as Text).data = data + (last_child as Text).data;
 					continue;
 				}
 

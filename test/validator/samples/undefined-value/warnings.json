@@ -1,15 +1,15 @@
 [{
 	"code": "missing-declaration",
-	"message": "'potato' is not defined",
-	"pos": 67,
+	"message": "'potato' is not defined. Consider adding a <script> block with 'export let potato' to declare a prop",
+	"pos": 4,
 	"start": {
-		"line": 5,
+		"line": 1,
 		"column": 4,
-		"character": 67
+		"character": 4
 	},
 	"end": {
-		"line": 5,
+		"line": 1,
 		"column": 10,
-		"character": 73
+		"character": 10
 	}
 }]

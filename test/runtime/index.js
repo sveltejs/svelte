@@ -21,6 +21,11 @@ let compile = null;
 
 const sveltePath = process.cwd().split('\\').join('/');
 
+let unhandled_rejection = false;
+process.on('unhandledRejection', err => {
+	unhandled_rejection = err;
+});
+
 describe("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(false);
@@ -60,6 +65,8 @@ describe("runtime", () => {
 				throw new Error('skipping test, already failed');
 			}
 
+			unhandled_rejection = null;
+
 			compile = (config.preserveIdentifiers ? svelte : svelte$).compile;
 
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
@@ -98,12 +105,10 @@ describe("runtime", () => {
 					};
 					set_now(() => raf.time);
 					set_raf(cb => {
-						let called = false;
 						raf.callback = () => {
-							if (!called) {
-								called = true;
-								cb();
-							}
+							raf.callback = null;
+							cb();
+							flush();
 						};
 					});
 
@@ -165,10 +170,18 @@ describe("runtime", () => {
 							raf
 						})).then(() => {
 							component.$destroy();
+
+							if (unhandled_rejection) {
+								throw unhandled_rejection;
+							}
 						});
 					} else {
 						component.$destroy();
 						assert.htmlEqual(target.innerHTML, "");
+
+						if (unhandled_rejection) {
+							throw unhandled_rejection;
+						}
 					}
 				})
 				.catch(err => {

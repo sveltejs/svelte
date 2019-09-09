@@ -85,7 +85,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, strip_whitespace, next_sibling);
 
-			const dependencies = new Set();
+			const dependencies: Set<string> = new Set();
 
 			// TODO is this filtering necessary? (I *think* so)
 			default_slot.dependencies.forEach(name => {
@@ -169,7 +169,9 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const non_let_dependencies = Array.from(fragment_dependencies).filter(name => !this.node.scope.is_let(name));
 
-		if (!uses_spread && (this.node.attributes.filter(a => a.is_dynamic).length || this.node.bindings.length || non_let_dependencies.length > 0)) {
+		const dynamic_attributes = this.node.attributes.filter(a => a.get_dependencies().length > 0);
+
+		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || non_let_dependencies.length > 0)) {
 			updates.push(`var ${name_changes} = {};`);
 		}
 
@@ -186,7 +188,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					add_to_set(all_dependencies, attr.dependencies);
 				});
 
-				this.node.attributes.forEach(attr => {
+				this.node.attributes.forEach((attr, i) => {
 					const { name, dependencies } = attr;
 
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
@@ -202,7 +204,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						const obj = `{ ${quote_name_if_necessary(name)}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
 
-						changes.push(condition ? `${condition} && ${obj}` : obj);
+						changes.push(condition ? `${condition} && ${obj}` : `${levels}[${i}]`);
 					}
 				});
 
@@ -221,24 +223,21 @@ export default class InlineComponentWrapper extends Wrapper {
 				const conditions = Array.from(all_dependencies).map(dep => `changed.${dep}`).join(' || ');
 
 				updates.push(deindent`
-					var ${name_changes} = ${all_dependencies.size === 1 ? `${conditions}` : `(${conditions})`} ? @get_spread_update(${levels}, [
+					var ${name_changes} = ${conditions ? `(${conditions}) ? @get_spread_update(${levels}, [
 						${changes.join(',\n')}
-					]) : {};
+					]) : {}` : '{}'};
 				`);
 			} else {
-				this.node.attributes
-					.filter((attribute: Attribute) => attribute.is_dynamic)
-					.forEach((attribute: Attribute) => {
-						if (attribute.dependencies.size > 0) {
-							/* eslint-disable @typescript-eslint/indent,indent */
-							updates.push(deindent`
-								if (${[...attribute.dependencies]
-									.map(dependency => `changed.${dependency}`)
-									.join(' || ')}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
-							`);
-							/* eslint-enable @typescript-eslint/indent,indent */
-						}
-					});
+				dynamic_attributes.forEach((attribute: Attribute) => {
+					const dependencies = attribute.get_dependencies();
+					if (dependencies.length > 0) {
+						const condition = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
+
+						updates.push(deindent`
+							if (${condition}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
+						`);
+					}
+				});
 			}
 		}
 
@@ -325,7 +324,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			component.partly_hoisted.push(body);
 
-			return `@add_binding_callback(() => @bind(${this.var}, '${binding.name}', ${name}));`;
+			return `@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${name}));`;
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {
@@ -389,8 +388,8 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (${name}) {
 						@group_outros();
 						const old_component = ${name};
-						@transition_out(old_component.$$.fragment, 1, () => {
-							@destroy_component(old_component);
+						@transition_out(old_component.$$.fragment, 1, 0, () => {
+							@destroy_component(old_component, 1);
 						});
 						@check_outros();
 					}
@@ -426,7 +425,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`if (${name}) @transition_out(${name}.$$.fragment, #local);`
 			);
 
-			block.builders.destroy.add_line(`if (${name}) @destroy_component(${name}, ${parent_node ? '' : 'detaching'});`);
+			block.builders.destroy.add_line(`if (${name}) @destroy_component(${name}${parent_node ? '' : ', detaching'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? '__svelte:self__' // TODO conflict-proof this
@@ -466,7 +465,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.builders.destroy.add_block(deindent`
-				@destroy_component(${name}, ${parent_node ? '' : 'detaching'});
+				@destroy_component(${name}${parent_node ? '' : ', detaching'});
 			`);
 
 			block.builders.outro.add_line(

@@ -147,7 +147,28 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 
 ---
 
+A *store* is any object that allows reactive access to a value via a simple *store contract*.
+
+The [`svelte/store` module](docs#svelte_store) contains minimal store implementations which fulfil this contract. You can use these as the basis for your own stores, or you can implement your stores from scratch.
+
+A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes. The `.subscribe` method must also return an unsubscription function. Calling an unsubscription function must stop its subscription, and its corresponding subscription function must not be called again by the store.
+
+A store may optionally contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a *writable store*.
+
+```js
+const unsubscribe = store.subscribe(value => {
+	console.log(value);
+}); // logs `value`
+
+// later...
+unsubscribe();
+```
+
+---
+
 Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, and set up a store subscription that will be unsubscribed when appropriate.
+
+Assignments to `$`-prefixed variables require that the variable be a writable store, and will result in a call to the store's `.set` method.
 
 Note that the store must be declared at the top level of the component — not inside an `if` block or a function, for example.
 
@@ -162,6 +183,9 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 
 	count.set(1);
 	console.log($count); // logs 1
+
+	$count = 2;
+	console.log($count); // logs 2
 </script>
 ```
 

@@ -19,4 +19,4 @@ docker:
 
 deploy: sapper docker
 	@echo "\n~> deploying $(SERVICE) to Cloud Run servers"
-	@gcloud beta run deploy $(SERVICE) --allow-unauthenticated --region us-central1 --image $(IMAGE) --memory=512Mi
+	@gcloud beta run deploy $(SERVICE) --allow-unauthenticated --platform managed --region us-central1 --image $(IMAGE) --memory=512Mi

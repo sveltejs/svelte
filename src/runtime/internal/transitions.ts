@@ -28,15 +28,17 @@ let outros;
 
 export function group_outros() {
 	outros = {
-		remaining: 0,
-		callbacks: []
+		r: 0,     // remaining outros
+		c: [],    // callbacks
+		p: outros // parent group
 	};
 }
 
 export function check_outros() {
-	if (!outros.remaining) {
-		run_all(outros.callbacks);
+	if (!outros.r) {
+		run_all(outros.c);
 	}
+	outros = outros.p;
 }
 
 export function transition_in(block, local?: 0 | 1) {
@@ -46,15 +48,15 @@ export function transition_in(block, local?: 0 | 1) {
 	}
 }
 
-export function transition_out(block, local: 0 | 1, callback) {
+export function transition_out(block, local: 0 | 1, detach: 0 | 1, callback) {
 	if (block && block.o) {
 		if (outroing.has(block)) return;
 		outroing.add(block);
 
-		outros.callbacks.push(() => {
+		outros.c.push(() => {
 			outroing.delete(block);
 			if (callback) {
-				block.d(1);
+				if (detach) block.d(1);
 				callback();
 			}
 		});
@@ -62,6 +64,8 @@ export function transition_out(block, local: 0 | 1, callback) {
 		block.o(local);
 	}
 }
+
+const null_transition: TransitionConfig = { duration: 0 };
 
 type TransitionFn = (node: Element, params: any) => TransitionConfig;
 
@@ -83,7 +87,7 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 			easing = linear,
 			tick = noop,
 			css
-		} = config;
+		} = config || null_transition;
 
 		if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
 		tick(0, 1);
@@ -153,7 +157,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 
 	const group = outros;
 
-	group.remaining += 1;
+	group.r += 1;
 
 	function go() {
 		const {
@@ -162,7 +166,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 			easing = linear,
 			tick = noop,
 			css
-		} = config;
+		} = config || null_transition;
 
 		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
 
@@ -178,10 +182,10 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 
 					dispatch(node, false, 'end');
 
-					if (!--group.remaining) {
+					if (!--group.r) {
 						// this will result in `end()` being called,
 						// so we don't need to clean up here
-						run_all(group.callbacks);
+						run_all(group.c);
 					}
 
 					return false;
@@ -256,7 +260,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			easing = linear,
 			tick = noop,
 			css
-		} = config;
+		} = config || null_transition;
 
 		const program = {
 			start: now() + delay,
@@ -266,7 +270,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 		if (!b) {
 			// @ts-ignore todo: improve typings
 			program.group = outros;
-			outros.remaining += 1;
+			outros.r += 1;
 		}
 
 		if (running_program) {
@@ -309,7 +313,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 								clear_animation();
 							} else {
 								// outro — needs to be coordinated
-								if (!--running_program.group.remaining) run_all(running_program.group.callbacks);
+								if (!--running_program.group.r) run_all(running_program.group.c);
 							}
 						}
 

@@ -26,7 +26,7 @@ function get_each_context(ctx, list, i) {
 
 // (8:0) {#each things as thing}
 function create_each_block(ctx) {
-	var span, t0_value = ctx.thing.name, t0, t1;
+	var span, t0_value = ctx.thing.name + "", t0, t1;
 
 	const block = {
 		c: function create() {
@@ -49,8 +49,8 @@ function create_each_block(ctx) {
 		},
 
 		p: function update(changed, ctx) {
-			if ((changed.things) && t0_value !== (t0_value = ctx.thing.name)) {
-				set_data_dev(t0, t0_value);
+			if ((changed.things) && t0_value !== (t0_value = ctx.thing.name + "")) {
+				set_data(t0, t0_value);
 			}
 
 			if (changed.foo || changed.bar || changed.baz || changed.things) {
@@ -74,17 +74,17 @@ function create_each_block(ctx) {
 function create_fragment(ctx) {
 	var t0, p, t1, t2;
 
-	var each_value = ctx.things;
+	let each_value = ctx.things;
 
-	var each_blocks = [];
+	let each_blocks = [];
 
-	for (var i = 0; i < each_value.length; i += 1) {
+	for (let i = 0; i < each_value.length; i += 1) {
 		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
 	}
 
 	const block = {
 		c: function create() {
-			for (var i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
 			}
 
@@ -100,7 +100,7 @@ function create_fragment(ctx) {
 		},
 
 		m: function mount(target, anchor) {
-			for (var i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(target, anchor);
 			}
 
@@ -114,7 +114,8 @@ function create_fragment(ctx) {
 			if (changed.things) {
 				each_value = ctx.things;
 
-				for (var i = 0; i < each_value.length; i += 1) {
+				let i;
+				for (i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
@@ -168,11 +169,15 @@ function instance($$self, $$props, $$invalidate) {
 		if ('baz' in $$props) $$invalidate('baz', baz = $$props.baz);
 	};
 
-	$$self.$unsafe_set = $$values => {
-		if ('things' in $$values) $$invalidate('things', things = $$values.things);
-		if ('foo' in $$values) $$invalidate('foo', foo = $$values.foo);
-		if ('bar' in $$values) $$invalidate('bar', bar = $$values.bar);
-		if ('baz' in $$values) $$invalidate('baz', baz = $$values.baz);
+	$$self.$capture_state = () => {
+		return { things, foo, bar, baz };
+	};
+
+	$$self.$inject_state = $$props => {
+		if ('things' in $$props) $$invalidate('things', things = $$props.things);
+		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);
+		if ('baz' in $$props) $$invalidate('baz', baz = $$props.baz);
 	};
 
 	return { things, foo, bar, baz };

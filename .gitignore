@@ -15,7 +15,7 @@ node_modules
 /animate
 /scratch/
 /coverage/
-/coverage.lcov/
+/coverage.lcov
 /test/sourcemaps/samples/*/output.js
 /test/sourcemaps/samples/*/output.js.map
 /test/sourcemaps/samples/*/output.css

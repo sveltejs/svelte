@@ -5,7 +5,7 @@ export default {
 		<button>reset</button>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const buttons = target.querySelectorAll('button');
 		const click = new window.MouseEvent('click');
 

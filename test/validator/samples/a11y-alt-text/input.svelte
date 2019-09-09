@@ -7,3 +7,5 @@
 <object></object>
 
 <input type='image'>
+
+<input type='image' alt='hey'>

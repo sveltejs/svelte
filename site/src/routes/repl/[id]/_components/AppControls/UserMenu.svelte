@@ -1,18 +1,23 @@
 <script>
-	import { user, logout } from '../../../../../user.js';
+	import { getContext } from 'svelte';
+	import { stores } from '@sapper/app';
+	const { session } = stores();
+
+	const { logout } = getContext('app');
 
 	let showMenu = false;
 	let name;
 
-	$: name = $user.name || $user.username;
+	$: name = $session.user.name || $session.user.username;
 </script>
 
 <div class="user" on:mouseenter="{() => showMenu = true}" on:mouseleave="{() => showMenu = false}">
 	<span>{name}</span>
-	<img alt="{name} avatar" src="{$user.avatar}">
+	<img alt="{name} avatar" src="{$session.user.avatar}">
 
 	{#if showMenu}
 		<div class="menu">
+			<a href="apps">Your saved apps</a>
 			<button on:click={logout}>Log out</button>
 		</div>
 	{/if}
@@ -64,7 +69,7 @@
 	.menu {
 		position: absolute;
 		width: calc(100% + 1.6rem);
-		min-width: 6em;
+		min-width: 10em;
 		top: 3rem;
 		right: -1.6rem;
 		background-color: var(--second);
@@ -72,17 +77,25 @@
 		z-index: 99;
 		text-align: left;
 		border-radius: 0.4rem;
+		display: flex;
+		flex-direction: column;
 	}
 
-	.menu button {
+	.menu button, .menu a {
 		background-color: transparent;
 		font-family: var(--font);
 		font-size: 1.6rem;
-		/* opacity: 0.7; */
+		opacity: 0.7;
+		padding: 0.4rem 0;
+		text-decoration: none;
+		text-align: left;
+		border: none;
+		color: inherit;
 	}
 
-	.menu button:hover {
+	.menu button:hover, .menu a:hover {
 		opacity: 1;
+		color: inherit;
 	}
 
 	@media (min-width: 600px) {
