@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.12.0
+
+* Fire events on `document` in development to facilitate dev tooling ([#3005](https://github.com/sveltejs/svelte/pull/3005)])
+
 ## 3.11.0
 
 * `$capture_state` and `$inject_state` HMR hooks in dev mode ([#3148](https://github.com/sveltejs/svelte/pull/3148))
