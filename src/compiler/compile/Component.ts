@@ -165,11 +165,10 @@ export default class Component {
 
 		this.file =
 			compile_options.filename &&
-			// eslint-disable-next-line no-useless-escape
 			(typeof process !== 'undefined'
 				? compile_options.filename
-						.replace(process.cwd(), '')
-						.replace(/^[\/\\]/, '')
+					.replace(process.cwd(), '')
+					.replace(/^[/\\]/, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source);
 
