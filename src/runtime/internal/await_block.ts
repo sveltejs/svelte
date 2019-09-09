@@ -1,6 +1,7 @@
 import { assign, is_promise } from './utils';
 import { check_outros, group_outros, transition_in, transition_out } from './transitions';
 import { flush } from './scheduler';
+import { get_current_component, set_current_component } from './lifecycle';
 
 export function handle_promise(promise, info) {
 	const token = info.token = {};
@@ -18,7 +19,7 @@ export function handle_promise(promise, info) {
 				info.blocks.forEach((block, i) => {
 					if (i !== index && block) {
 						group_outros();
-						transition_out(block, 1, () => {
+						transition_out(block, 1, 1, () => {
 							info.blocks[i] = null;
 						});
 						check_outros();
@@ -40,10 +41,15 @@ export function handle_promise(promise, info) {
 	}
 
 	if (is_promise(promise)) {
+		const current_component = get_current_component();
 		promise.then(value => {
+			set_current_component(current_component);
 			update(info.then, 1, info.value, value);
+			set_current_component(null);
 		}, error => {
+			set_current_component(current_component);
 			update(info.catch, 2, info.error, error);
+			set_current_component(null);
 		});
 
 		// if we previously had a then/catch block, destroy it

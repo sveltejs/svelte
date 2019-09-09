@@ -1,0 +1,1 @@
+<p>{@html 'x'}<span>baz</span></p>

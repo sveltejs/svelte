@@ -1,12 +1,43 @@
 import { cubicOut, cubicInOut } from 'svelte/easing';
 import { assign, is_function } from 'svelte/internal';
 
+type EasingFunction = (t: number) => number;
+
 export interface TransitionConfig {
 	delay?: number;
 	duration?: number;
-	easing?: (t: number) => number;
+	easing?: EasingFunction;
 	css?: (t: number, u: number) => string;
 	tick?: (t: number, u: number) => void;
+}
+
+interface BlurParams {
+	delay: number;
+	duration: number;
+	easing?: EasingFunction;
+	amount: number;
+	opacity: number;
+}
+
+export function blur(node: Element, {
+	delay = 0,
+	duration = 400,
+	easing = cubicInOut,
+	amount = 5,
+	opacity = 0
+}: BlurParams): TransitionConfig {
+	const style = getComputedStyle(node);
+	const target_opacity = +style.opacity;
+	const f = style.filter === 'none' ? '' : style.filter;
+
+	const od = target_opacity * (1 - opacity);
+
+	return {
+		delay,
+		duration,
+		easing,
+		css: (_t, u) => `opacity: ${target_opacity - (od * u)}; filter: ${f} blur(${u * amount}px);`
+	};
 }
 
 interface FadeParams {
@@ -30,7 +61,7 @@ export function fade(node: Element, {
 interface FlyParams {
 	delay: number;
 	duration: number;
-	easing: (t: number) => number;
+	easing: EasingFunction;
 	x: number;
 	y: number;
 	opacity: number;
@@ -63,7 +94,7 @@ export function fly(node: Element, {
 interface SlideParams {
 	delay: number;
 	duration: number;
-	easing: (t: number) => number;
+	easing: EasingFunction;
 }
 
 export function slide(node: Element, {
@@ -101,7 +132,7 @@ export function slide(node: Element, {
 interface ScaleParams {
 	delay: number;
 	duration: number;
-	easing: (t: number) => number;
+	easing: EasingFunction;
 	start: number;
 	opacity: number;
 }
@@ -135,7 +166,7 @@ interface DrawParams {
 	delay: number;
 	speed: number;
 	duration: number | ((len: number) => number);
-	easing: (t: number) => number;
+	easing: EasingFunction;
 }
 
 export function draw(node: SVGElement & { getTotalLength(): number }, {
@@ -167,7 +198,7 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 interface CrossfadeParams {
 	delay: number;
 	duration: number | ((len: number) => number);
-	easing: (t: number) => number;
+	easing: EasingFunction;
 }
 
 type ClientRectMap = Map<any, { rect: ClientRect }>;
@@ -188,6 +219,8 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 		const to = node.getBoundingClientRect();
 		const dx = from.left - to.left;
 		const dy = from.top - to.top;
+		const dw = from.width / to.width;
+		const dh = from.height / to.height;
 		const d = Math.sqrt(dx * dx + dy * dy);
 
 		const style = getComputedStyle(node);
@@ -200,7 +233,8 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 			easing,
 			css: (t, u) => `
 				opacity: ${t * opacity};
-				transform: ${transform} translate(${u * dx}px,${u * dy}px);
+				transform-origin: top left;
+				transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1-t) * dw}, ${t + (1-t) * dh});
 			`
 		};
 	}

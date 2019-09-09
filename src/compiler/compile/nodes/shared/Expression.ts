@@ -7,13 +7,12 @@ import { Node } from '../../../interfaces';
 import { globals , sanitize } from '../../../utils/names';
 import deindent from '../../utils/deindent';
 import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
-
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
-import { nodes_match } from '../../../utils/nodes_match';
 import Block from '../../render_dom/Block';
 import { INode } from '../interfaces';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
+import { invalidate } from '../../utils/invalidate';
 
 const binary_operators: Record<string, number> = {
 	'**': 15,
@@ -86,7 +85,7 @@ export default class Expression {
 	rendered: string;
 
 	// todo: owner type
-	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info) {
+	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info, lazy?: boolean) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
@@ -138,7 +137,8 @@ export default class Expression {
 					}
 
 					if (template_scope.is_let(name)) {
-						if (!function_expression) {
+						if (!function_expression) { // TODO should this be `!lazy` ?
+							contextual_dependencies.add(name);
 							dependencies.add(name);
 						}
 					} else if (template_scope.names.has(name)) {
@@ -146,11 +146,14 @@ export default class Expression {
 
 						contextual_dependencies.add(name);
 
-						if (!function_expression) {
+						const owner = template_scope.get_owner(name);
+						const is_index = owner.type === 'EachBlock' && owner.key && name === owner.index;
+
+						if (!lazy || is_index) {
 							template_scope.dependencies_for_name.get(name).forEach(name => dependencies.add(name));
 						}
 					} else {
-						if (!function_expression) {
+						if (!lazy) {
 							dependencies.add(name);
 						}
 
@@ -237,7 +240,6 @@ export default class Expression {
 		const { code } = component;
 
 		let function_expression;
-		let pending_assignments = new Set();
 
 		let dependencies: Set<string>;
 		let contextual_dependencies: Set<string>;
@@ -270,7 +272,7 @@ export default class Expression {
 							});
 						} else {
 							dependencies.add(name);
-							component.add_reference(name);
+							component.add_reference(name); // TODO is this redundant/misplaced?
 						}
 					} else if (!is_synthetic && is_contextual(component, template_scope, name)) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
@@ -288,41 +290,7 @@ export default class Expression {
 					this.skip();
 				}
 
-				if (function_expression) {
-					if (node.type === 'AssignmentExpression') {
-						const names = node.left.type === 'MemberExpression'
-							? [get_object(node.left).name]
-							: extract_names(node.left);
-
-						if (node.operator === '=' && nodes_match(node.left, node.right)) {
-							const dirty = names.filter(name => {
-								return !scope.declarations.has(name);
-							});
-
-							if (dirty.length) component.has_reactive_assignments = true;
-
-							code.overwrite(node.start, node.end, dirty.map(n => component.invalidate(n)).join('; '));
-						} else {
-							names.forEach(name => {
-								if (scope.declarations.has(name)) return;
-
-								const variable = component.var_lookup.get(name);
-								if (variable && variable.hoistable) return;
-
-								pending_assignments.add(name);
-							});
-						}
-					} else if (node.type === 'UpdateExpression') {
-						const { name } = get_object(node.argument);
-
-						if (scope.declarations.has(name)) return;
-
-						const variable = component.var_lookup.get(name);
-						if (variable && variable.hoistable) return;
-
-						pending_assignments.add(name);
-					}
-				} else {
+				if (!function_expression) {
 					if (node.type === 'AssignmentExpression') {
 						// TODO should this be a warning/error? `<p>{foo = 1}</p>`
 					}
@@ -339,16 +307,6 @@ export default class Expression {
 				if (map.has(node)) scope = scope.parent;
 
 				if (node === function_expression) {
-					if (pending_assignments.size > 0) {
-						if (node.type !== 'ArrowFunctionExpression') {
-							// this should never happen!
-							throw new Error(`Well that's odd`);
-						}
-
-						// TOOD optimisation — if this is an event handler,
-						// the return value doesn't matter
-					}
-
 					const name = component.get_unique_name(
 						sanitize(get_function_name(node, owner))
 					);
@@ -364,40 +322,11 @@ export default class Expression {
 						args.push(original_params);
 					}
 
-					let body = code.slice(node.body.start, node.body.end).trim();
-					if (node.body.type !== 'BlockStatement') {
-						if (pending_assignments.size > 0) {
-							const dependencies = new Set();
-							pending_assignments.forEach(name => {
-								if (template_scope.names.has(name)) {
-									template_scope.dependencies_for_name.get(name).forEach(dependency => {
-										dependencies.add(dependency);
-									});
-								} else {
-									dependencies.add(name);
-								}
-							});
+					const body = code.slice(node.body.start, node.body.end).trim();
 
-							const insert = Array.from(dependencies).map(name => component.invalidate(name)).join('; ');
-							pending_assignments = new Set();
-
-							component.has_reactive_assignments = true;
-
-							body = deindent`
-								{
-									const $$result = ${body};
-									${insert};
-									return $$result;
-								}
-							`;
-						} else {
-							body = `{\n\treturn ${body};\n}`;
-						}
-					}
-
-					const fn = deindent`
-						function ${name}(${args.join(', ')}) ${body}
-					`;
+					const fn = node.type === 'FunctionExpression'
+						? `${node.async ? 'async ' : ''}function${node.generator ? '*' : ''} ${name}(${args.join(', ')}) ${body}`
+						: `const ${name} = ${node.async ? 'async ' : ''}(${args.join(', ')}) => ${body};`;
 
 					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
 						// we can hoist this out of the component completely
@@ -442,37 +371,35 @@ export default class Expression {
 						`);
 					}
 
+					if (parent && parent.method) {
+						code.prependRight(node.start, ': ');
+					}
+
 					function_expression = null;
 					dependencies = null;
 					contextual_dependencies = null;
 				}
 
-				if (/Statement/.test(node.type)) {
-					if (pending_assignments.size > 0) {
-						const has_semi = code.original[node.end - 1] === ';';
+				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 
-						const insert = (
-							(has_semi ? ' ' : '; ') +
-							Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ')
-						);
+					// normally (`a = 1`, `b.c = 2`), there'll be a single name
+					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
+					// may be more, in which case we need to tack the extra ones
+					// onto the initial function call
+					const names = new Set(extract_names(assignee));
 
-						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
-							if (node.argument) {
-								code.overwrite(node.start, node.argument.start, `var $$result = `);
-								code.appendLeft(node.argument.end, `${insert}; return $$result`);
-							} else {
-								code.prependRight(node.start, `${insert}; `);
-							}
-						} else if (parent && /(If|For(In|Of)?|While)Statement/.test(parent.type) && node.type !== 'BlockStatement') {
-							code.prependRight(node.start, '{ ');
-							code.appendLeft(node.end, `${insert}; }`);
+					const traced: Set<string> = new Set();
+					names.forEach(name => {
+						const dependencies = template_scope.dependencies_for_name.get(name);
+						if (dependencies) {
+							dependencies.forEach(name => traced.add(name));
 						} else {
-							code.appendLeft(node.end, `${insert};`);
+							traced.add(name);
 						}
+					});
 
-						component.has_reactive_assignments = true;
-						pending_assignments = new Set();
-					}
+					invalidate(component, scope, code, node, traced);
 				}
 			}
 		});

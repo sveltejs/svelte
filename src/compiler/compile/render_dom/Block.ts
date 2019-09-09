@@ -2,6 +2,7 @@ import CodeBuilder from '../utils/CodeBuilder';
 import deindent from '../utils/deindent';
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
+import { escape } from '../utils/stringify';
 
 export interface BlockOptions {
 	parent?: Block;
@@ -10,7 +11,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: string;
-	bindings?: Map<string, { object: string; property: string; snippet: string }>;
+	bindings?: Map<string, { object: string; property: string; snippet: string; store: string; tail: string }>;
 	dependencies?: Set<string>;
 }
 
@@ -28,7 +29,7 @@ export default class Block {
 
 	dependencies: Set<string>;
 
-	bindings: Map<string, { object: string; property: string; snippet: string }>;
+	bindings: Map<string, { object: string; property: string; snippet: string; store: string; tail: string }>;
 
 	builders: {
 		init: CodeBuilder;
@@ -420,7 +421,7 @@ export default class Block {
 		const local_key = this.key && this.get_unique_name('key');
 
 		return deindent`
-			${this.comment && `// ${this.comment}`}
+			${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
 			function ${this.name}(${this.key ? `${local_key}, ` : ''}ctx) {
 				${this.get_contents(local_key)}
 			}

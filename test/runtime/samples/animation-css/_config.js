@@ -17,8 +17,8 @@ export default {
 		<div>e</div>
 	`,
 
-	test({ assert, component, target, window, raf }) {
-		let divs = document.querySelectorAll('div');
+	test({ assert, component, target, raf }) {
+		let divs = target.querySelectorAll('div');
 		divs.forEach(div => {
 			div.getBoundingClientRect = function() {
 				const index = [...this.parentNode.children].indexOf(this);
@@ -41,11 +41,11 @@ export default {
 			{ id: 1, name: 'a' }
 		];
 
-		divs = document.querySelectorAll('div');
+		divs = target.querySelectorAll('div');
 		assert.ok(~divs[0].style.animation.indexOf('__svelte'));
-		assert.equal(divs[1].style.animation, undefined);
-		assert.equal(divs[2].style.animation, undefined);
-		assert.equal(divs[3].style.animation, undefined);
+		assert.equal(divs[1].style.animation, '');
+		assert.equal(divs[2].style.animation, '');
+		assert.equal(divs[3].style.animation, '');
 		assert.ok(~divs[4].style.animation.indexOf('__svelte'));
 
 		raf.tick(100);

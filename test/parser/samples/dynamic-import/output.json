@@ -87,23 +87,16 @@
 													"start": 64,
 													"end": 87,
 													"object": {
-														"type": "CallExpression",
+														"type": "ImportExpression",
 														"start": 64,
 														"end": 82,
-														"callee": {
-															"type": "Import",
-															"start": 64,
-															"end": 70
-														},
-														"arguments": [
-															{
-																"type": "Literal",
-																"start": 71,
-																"end": 81,
-																"value": "./foo.js",
-																"raw": "'./foo.js'"
-															}
-														]
+														"source": {
+															"type": "Literal",
+															"start": 71,
+															"end": 81,
+															"value": "./foo.js",
+															"raw": "'./foo.js'"
+														}
 													},
 													"property": {
 														"type": "Identifier",

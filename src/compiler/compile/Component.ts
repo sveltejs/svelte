@@ -28,6 +28,8 @@ import get_object from './utils/get_object';
 import unwrap_parens from './utils/unwrap_parens';
 import Slot from './nodes/Slot';
 import { Node as ESTreeNode } from 'estree';
+import add_to_set from './utils/add_to_set';
+import check_graph_for_cycles from './utils/check_graph_for_cycles';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -81,6 +83,8 @@ function remove_node(
 export default class Component {
 	stats: Stats;
 	warnings: Warning[];
+	ignores: Set<string>;
+	ignore_stack: Array<Set<string>> = [];
 
 	ast: Ast;
 	source: string;
@@ -500,6 +504,10 @@ export default class Component {
 			message: string;
 		}
 	) {
+		if (this.ignores && this.ignores.has(warning.code)) {
+			return;
+		}
+
 		if (!this.locator) {
 			this.locator = getLocator(this.source, { offsetLine: 1 });
 		}
@@ -727,7 +735,7 @@ export default class Component {
 			this.node_for_declaration.set(name, node);
 		});
 
-		globals.forEach((_node, name) => {
+		globals.forEach((node, name) => {
 			if (this.var_lookup.has(name)) return;
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
@@ -744,6 +752,13 @@ export default class Component {
 					injected: true,
 				});
 			} else if (name[0] === '$') {
+				if (name === '$' || name[1] === '$') {
+					this.error(node, {
+						code: 'illegal-global',
+						message: `${name} is an illegal variable name`
+					});
+				}
+
 				this.add_var({
 					name,
 					injected: true,
@@ -867,7 +882,7 @@ export default class Component {
 		const variable = this.var_lookup.get(name);
 
 		if (variable && (variable.subscribable && variable.reassigned)) {
-			return `$$subscribe_${name}(), $$invalidate('${name}', ${value || name})`;
+			return `$$subscribe_${name}($$invalidate('${name}', ${value || name}))`;
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
@@ -1170,9 +1185,12 @@ export default class Component {
 						} else if (name[0] === '$' && !owner) {
 							hoistable = false;
 						} else if (owner === instance_scope) {
+							const variable = var_lookup.get(name);
+
+							if (variable.reassigned || variable.mutated) hoistable = false;
+
 							if (name === fn_declaration.id.name) return;
 
-							const variable = var_lookup.get(name);
 							if (variable.hoistable) return;
 
 							if (top_level_function_declarations.has(name)) {
@@ -1313,14 +1331,27 @@ export default class Component {
 			});
 		});
 
-		const add_declaration = declaration => {
-			if (seen.has(declaration)) {
-				this.error(declaration.node, {
-					code: 'cyclical-reactive-declaration',
-					message: 'Cyclical dependency detected',
+		const cycle = check_graph_for_cycles(unsorted_reactive_declarations.reduce((acc, declaration) => {
+			declaration.assignees.forEach(v => {
+				declaration.dependencies.forEach(w => {
+					if (!declaration.assignees.has(w)) {
+						acc.push([v, w]);
+					}
 				});
-			}
+			});
+			return acc;
+		}, []));
 
+		if (cycle && cycle.length) {
+			const declarationList = lookup.get(cycle[0]);
+			const declaration = declarationList[0];
+			this.error(declaration.node, {
+				code: 'cyclical-reactive-declaration',
+				message: `Cyclical dependency detected: ${cycle.join(' → ')}`
+			});
+		}
+
+		const add_declaration = declaration => {
 			if (this.reactive_declarations.indexOf(declaration) !== -1) {
 				return;
 			}
@@ -1361,10 +1392,18 @@ export default class Component {
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
-			name = name.slice(1);
+			if (name === '$' || name[1] === '$' && name !== '$$props') {
+				this.error(node, {
+					code: 'illegal-global',
+					message: `${name} is an illegal variable name`
+				});
+			}
+
 			this.has_reactive_assignments = true; // TODO does this belong here?
 
-			if (name[0] === '$') return; // $$props
+			if (name === '$$props') return;
+
+			name = name.slice(1);
 		}
 
 		if (this.var_lookup.has(name) && !this.var_lookup.get(name).global) return;
@@ -1379,6 +1418,17 @@ export default class Component {
 			code: 'missing-declaration',
 			message,
 		});
+	}
+
+	push_ignores(ignores) {
+		this.ignores = new Set(this.ignores || []);
+		add_to_set(this.ignores, ignores);
+		this.ignore_stack.push(this.ignores);
+	}
+
+	pop_ignores() {
+		this.ignore_stack.pop();
+		this.ignores = this.ignore_stack[this.ignore_stack.length - 1];
 	}
 }
 

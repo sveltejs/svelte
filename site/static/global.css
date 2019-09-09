@@ -79,6 +79,7 @@ body {
 	font-family: 'Overpass';
 	font-style: normal;
 	font-weight: 300;
+	font-display: fallback;
 	src:
 		local('Overpass Light '),
 		local('Overpass-Light'),
@@ -90,6 +91,7 @@ body {
 	font-family: 'Overpass';
 	font-style: normal;
 	font-weight: 600;
+	font-display: fallback;
 	src:
 		local('Overpass Bold '),
 		local('Overpass-Bold'),
@@ -101,6 +103,7 @@ body {
 	font-family: 'Fira Mono';
 	font-style: normal;
 	font-weight: 400;
+	font-display: fallback;
 	src:
 		local('Fira Mono Regular '),
 		local('Fira Mono-Regular'),

@@ -138,6 +138,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const info_props = [
 			'ctx',
 			'current: null',
+			'token: null',
 			this.pending.block.name && `pending: ${this.pending.block.name}`,
 			this.then.block.name && `then: ${this.then.block.name}`,
 			this.catch.block.name && `catch: ${this.catch.block.name}`,
@@ -188,29 +189,35 @@ export default class AwaitBlockWrapper extends Wrapper {
 			conditions.push(
 				`(${dependencies.map(dep => `'${dep}' in changed`).join(' || ')})`
 			);
-		}
 
-		conditions.push(
-			`${promise} !== (${promise} = ${snippet})`,
-			`@handle_promise(${promise}, ${info})`
-		);
+			conditions.push(
+				`${promise} !== (${promise} = ${snippet})`,
+				`@handle_promise(${promise}, ${info})`
+			);
 
-		block.builders.update.add_line(
-			`${info}.ctx = ctx;`
-		);
+			block.builders.update.add_line(
+				`${info}.ctx = ctx;`
+			);
 
-		if (this.pending.block.has_update_method) {
-			block.builders.update.add_block(deindent`
-				if (${conditions.join(' && ')}) {
-					// nothing
-				} else {
-					${info}.block.p(changed, @assign(@assign({}, ctx), ${info}.resolved));
-				}
-			`);
+			if (this.pending.block.has_update_method) {
+				block.builders.update.add_block(deindent`
+					if (${conditions.join(' && ')}) {
+						// nothing
+					} else {
+						${info}.block.p(changed, @assign(@assign({}, ctx), ${info}.resolved));
+					}
+				`);
+			} else {
+				block.builders.update.add_block(deindent`
+					${conditions.join(' && ')}
+				`);
+			}
 		} else {
-			block.builders.update.add_block(deindent`
-				${conditions.join(' && ')}
-			`);
+			if (this.pending.block.has_update_method) {
+				block.builders.update.add_block(deindent`
+					${info}.block.p(changed, @assign(@assign({}, ctx), ${info}.resolved));
+				`);
+			}
 		}
 
 		if (this.pending.block.has_outro_method) {
@@ -224,6 +231,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		block.builders.destroy.add_block(deindent`
 			${info}.block.d(${parent_node ? '' : 'detaching'});
+			${info}.token = null;
 			${info} = null;
 		`);
 

@@ -26,7 +26,7 @@ const events = [
 		event_names: ['input'],
 		filter: (node: Element, _name: string) =>
 			node.name === 'textarea' ||
-			node.name === 'input' && !/radio|checkbox|range/.test(node.get_static_attribute_value('type') as string)
+			node.name === 'input' && !/radio|checkbox|range|file/.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['input'],
@@ -38,7 +38,7 @@ const events = [
 		event_names: ['change'],
 		filter: (node: Element, _name: string) =>
 			node.name === 'select' ||
-			node.name === 'input' && /radio|checkbox/.test(node.get_static_attribute_value('type') as string)
+			node.name === 'input' && /radio|checkbox|file/.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['change', 'input'],
@@ -384,6 +384,11 @@ export default class ElementWrapper extends Wrapper {
 			return `@_document.createElementNS("${namespace}", "${name}")`;
 		}
 
+		const is = this.attributes.find(attr => attr.node.name === 'is');
+		if (is) {
+			return `@element_is("${name}", ${is.render_chunks().join(' + ')});`;
+		}
+
 		return `@element("${name}")`;
 	}
 
@@ -464,15 +469,25 @@ export default class ElementWrapper extends Wrapper {
 			// TODO dry this out — similar code for event handlers and component bindings
 			if (has_local_function) {
 				// need to create a block-local function that calls an instance-level function
-				block.builders.init.add_block(deindent`
-					function ${handler}() {
-						${animation_frame && deindent`
-						@_cancelAnimationFrame(${animation_frame});
-						if (!${this.var}.paused) ${animation_frame} = @raf(${handler});`}
-						${needs_lock && `${lock} = true;`}
-						ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
-					}
-				`);
+				if (animation_frame) {
+					block.builders.init.add_block(deindent`
+						function ${handler}() {
+							@_cancelAnimationFrame(${animation_frame});
+							if (!${this.var}.paused) {
+								${animation_frame} = @raf(${handler});
+								${needs_lock && `${lock} = true;`}
+							}
+							ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
+						}
+					`);
+				} else {
+					block.builders.init.add_block(deindent`
+						function ${handler}() {
+							${needs_lock && `${lock} = true;`}
+							ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
+						}
+					`);
+				}
 
 				callee = handler;
 			} else {
@@ -549,6 +564,14 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_attributes(block: Block) {
+		// Get all the class dependencies first
+		this.attributes.forEach((attribute) => {
+			if (attribute.node.name === 'class') {
+				const dependencies = attribute.node.get_dependencies();
+				this.class_dependencies.push(...dependencies);
+			}
+		});
+
 		// @ts-ignore todo:
 		if (this.node.attributes.find(attr => attr.type === 'Spread')) {
 			this.add_spread_attributes(block);
@@ -556,9 +579,6 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		this.attributes.forEach((attribute) => {
-			if (attribute.node.name === 'class' && attribute.node.is_dynamic) {
-				this.class_dependencies.push(...attribute.node.dependencies);
-			}
 			attribute.render(block);
 		});
 	}
@@ -602,12 +622,14 @@ export default class ElementWrapper extends Wrapper {
 			}
 		`);
 
+		const fn = this.node.namespace === namespaces.svg ? `set_svg_attributes` : `set_attributes`;
+
 		block.builders.hydrate.add_line(
-			`@set_attributes(${this.var}, ${data});`
+			`@${fn}(${this.var}, ${data});`
 		);
 
 		block.builders.update.add_block(deindent`
-			@set_attributes(${this.var}, @get_spread_update(${levels}, [
+			@${fn}(${this.var}, @get_spread_update(${levels}, [
 				${updates.join(',\n')}
 			]));
 		`);
@@ -813,29 +835,4 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 	}
-
-	// todo: looks to be dead code copypasted from Element.add_css_class in src/compile/nodes/Element.ts
-	// add_css_class(class_name = this.component.stylesheet.id) {
-	// 	const class_attribute = this.attributes.find(a => a.name === 'class');
-	// 	if (class_attribute && !class_attribute.is_true) {
-	// 		if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
-	// 			(class_attribute.chunks[0] as Text).data += ` ${class_name}`;
-	// 		} else {
-	// 			(class_attribute.chunks as Node[]).push(
-	// 				new Text(this.component, this, this.scope, {
-	// 					type: 'Text',
-	// 					data: ` ${class_name}`
-	// 				})
-	// 			);
-	// 		}
-	// 	} else {
-	// 		this.attributes.push(
-	// 			new Attribute(this.component, this, this.scope, {
-	// 				type: 'Attribute',
-	// 				name: 'class',
-	// 				value: [{ type: 'Text', data: class_name }]
-	// 			})
-	// 		);
-	// 	}
-	// }
 }

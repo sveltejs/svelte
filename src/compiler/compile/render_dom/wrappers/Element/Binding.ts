@@ -67,7 +67,7 @@ export default class BindingWrapper {
 
 		this.is_readonly = this.node.is_readonly;
 
-		this.needs_lock = this.node.name === 'currentTime'; // TODO others?
+		this.needs_lock = this.node.name === 'currentTime' || (parent.node.name === 'input' && parent.node.get_static_attribute_value('type') === 'number'); // TODO others?
 	}
 
 	get_dependencies() {
@@ -109,7 +109,7 @@ export default class BindingWrapper {
 		if (parent.node.name === 'input') {
 			const type = parent.node.get_static_attribute_value('type');
 
-			if (type === null || type === "" || type === "text") {
+			if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
 				update_conditions.push(`(${parent.var}.${this.node.name} !== ${this.snippet})`);
 			}
 		}
@@ -208,6 +208,10 @@ function get_dom_updater(
 		return `${element.var}.checked = ${condition};`;
 	}
 
+	if (binding.node.name === 'value') {
+		return `@set_input_value(${element.var}, ${binding.snippet});`;
+	}
+
 	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
@@ -238,9 +242,14 @@ function get_event_handler(
 	block: Block,
 	name: string,
 	snippet: string
-) {
+): {
+		uses_context: boolean;
+		mutation: string;
+		contextual_dependencies: Set<string>;
+		snippet?: string;
+	} {
 	const value = get_value_from_dom(renderer, binding.parent, binding);
-	const store = binding.object[0] === '$' ? binding.object.slice(1) : null;
+	let store = binding.object[0] === '$' ? binding.object.slice(1) : null;
 
 	let tail = '';
 	if (binding.node.expression.node.type === 'MemberExpression') {
@@ -249,7 +258,13 @@ function get_event_handler(
 	}
 
 	if (binding.node.is_contextual) {
-		const { object, property, snippet } = block.bindings.get(name);
+		const binding = block.bindings.get(name);
+		const { object, property, snippet } = binding;
+
+		if (binding.store) {
+			store = binding.store;
+			tail = `${binding.tail}${tail}`;
+		}
 
 		return {
 			uses_context: true,
