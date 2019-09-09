@@ -30,6 +30,7 @@ export default class Renderer {
 		this.block = new Block({
 			renderer: this,
 			name: null,
+			type: 'component',
 			key: null,
 
 			bindings: new Map(),

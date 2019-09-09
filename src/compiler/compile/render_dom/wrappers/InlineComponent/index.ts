@@ -70,7 +70,8 @@ export default class InlineComponentWrapper extends Wrapper {
 		if (this.node.children.length) {
 			const default_slot = block.child({
 				comment: create_debugging_comment(node, renderer.component),
-				name: renderer.component.get_unique_name(`create_default_slot`)
+				name: renderer.component.get_unique_name(`create_default_slot`),
+				type: 'slot'
 			});
 
 			this.renderer.blocks.push(default_slot);

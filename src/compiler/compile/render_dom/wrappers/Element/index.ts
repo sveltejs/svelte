@@ -151,7 +151,8 @@ export default class ElementWrapper extends Wrapper {
 					if (!(owner as InlineComponentWrapper).slots.has(name)) {
 						const child_block = block.child({
 							comment: create_debugging_comment(node, this.renderer.component),
-							name: this.renderer.component.get_unique_name(`create_${sanitize(name)}_slot`)
+							name: this.renderer.component.get_unique_name(`create_${sanitize(name)}_slot`),
+							type: 'slot'
 						});
 
 						const lets = this.node.lets;

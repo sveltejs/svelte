@@ -157,21 +157,20 @@ export default function dom(
 			}
 		` : deindent`
 			() => {
-				return {}
+				return {};
 			}
 		`;
 
-		inject_state = (uses_props || writable_props.length > 0) ? deindent`
+		const writable_vars = component.vars.filter(variable => !variable.module && variable.writable);
+		inject_state = (uses_props || writable_vars.length > 0) ? deindent`
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
-				${component.vars.filter(prop => prop.writable).map(prop => deindent`
+				${writable_vars.map(prop => deindent`
 					if ('${prop.name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.name}`)};
 				`)}
 			}
 		` : deindent`
-			${$$props} => {
-				return
-			}
+			${$$props} => {}
 		`;
 	}
 
@@ -443,6 +442,7 @@ export default function dom(
 					super(${options.dev && `options`});
 					${should_add_css && `if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
 					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
+					${options.dev && `@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}
 				}
