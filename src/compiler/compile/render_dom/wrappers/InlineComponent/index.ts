@@ -6,7 +6,7 @@ import FragmentWrapper from '../Fragment';
 import { quote_name_if_necessary, quote_prop_if_necessary, sanitize } from '../../../../utils/names';
 import { stringify_props } from '../../../utils/stringify_props';
 import add_to_set from '../../../utils/add_to_set';
-import deindent from '../../../utils/deindent';
+import { b } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
 import get_object from '../../../utils/get_object';
 import create_debugging_comment from '../shared/create_debugging_comment';
@@ -212,13 +212,13 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 				});
 
-				block.builders.init.add_block(deindent`
+				block.chunks.init.push(b`
 					var ${levels} = [
 						${initial_props.join(',\n')}
 					];
 				`);
 
-				statements.push(deindent`
+				statements.push(b`
 					for (var #i = 0; #i < ${levels}.length; #i += 1) {
 						${props} = @assign(${props}, ${levels}[#i]);
 					}
@@ -226,7 +226,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				const conditions = Array.from(all_dependencies).map(dep => `changed.${dep}`).join(' || ');
 
-				updates.push(deindent`
+				updates.push(b`
 					var ${name_changes} = ${conditions ? `(${conditions}) ? @get_spread_update(${levels}, [
 						${changes.join(',\n')}
 					]) : {}` : '{}'};
@@ -237,7 +237,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (dependencies.length > 0) {
 						const condition = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
 
-						updates.push(deindent`
+						updates.push(b`
 							if (${condition}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
 						`);
 					}
@@ -269,13 +269,13 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const snippet = binding.expression.render(block);
 
-			statements.push(deindent`
+			statements.push(b`
 				if (${snippet} !== void 0) {
 					${props}${quote_prop_if_necessary(binding.name)} = ${snippet};
 				}`
 			);
 
-			updates.push(deindent`
+			updates.push(b`
 				if (!${updating} && ${[...binding.expression.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
 					${name_changes}${quote_prop_if_necessary(binding.name)} = ${snippet};
 				}
@@ -300,7 +300,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (contextual_dependencies.length > 0) {
 				args.push(`{ ${contextual_dependencies.join(', ')} }`);
 
-				block.builders.init.add_block(deindent`
+				block.chunks.init.push(b`
 					function ${name}(${value}) {
 						ctx.${name}.call(null, ${value}, ctx);
 						${updating} = true;
@@ -310,7 +310,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				block.maintain_context = true; // TODO put this somewhere more logical
 			} else {
-				block.builders.init.add_block(deindent`
+				block.chunks.init.push(b`
 					function ${name}(${value}) {
 						ctx.${name}.call(null, ${value});
 						${updating} = true;
@@ -319,7 +319,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 			}
 
-			const body = deindent`
+			const body = b`
 				function ${name}(${args.join(', ')}) {
 					${lhs} = ${value};
 					${component.invalidate(dependencies[0])};
@@ -344,11 +344,11 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const snippet = this.node.expression.render(block);
 
-			block.builders.init.add_block(deindent`
+			block.chunks.init.push(b`
 				var ${switch_value} = ${snippet};
 
 				function ${switch_props}(ctx) {
-					${(this.node.attributes.length || this.node.bindings.length) && deindent`
+					${(this.node.attributes.length || this.node.bindings.length) && b`
 					${props && `let ${props} = ${attribute_object};`}`}
 					${statements}
 					return ${stringify_props(component_opts)};
@@ -362,17 +362,17 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 			`);
 
-			block.builders.create.add_line(
-				`if (${name}) ${name}.$$.fragment.c();`
+			block.chunks.create.push(
+				b`if (${name}) ${name}.$$.fragment.c();`
 			);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
-				block.builders.claim.add_line(
-					`if (${name}) ${name}.$$.fragment.l(${parent_nodes});`
+				block.chunks.claim.push(
+					b`if (${name}) ${name}.$$.fragment.l(${parent_nodes});`
 				);
 			}
 
-			block.builders.mount.add_block(deindent`
+			block.chunks.mount.push(b`
 				if (${name}) {
 					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
 				}
@@ -382,12 +382,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			const update_mount_node = this.get_update_mount_node(anchor);
 
 			if (updates.length) {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					${updates}
 				`);
 			}
 
-			block.builders.update.add_block(deindent`
+			block.chunks.update.push(b`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) {
 						@group_outros();
@@ -413,30 +413,30 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 			`);
 
-			block.builders.intro.add_block(deindent`
+			block.chunks.intro.push(b`
 				if (${name}) @transition_in(${name}.$$.fragment, #local);
 			`);
 
 			if (updates.length) {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					else if (${switch_value}) {
 						${name}.$set(${name_changes});
 					}
 				`);
 			}
 
-			block.builders.outro.add_line(
-				`if (${name}) @transition_out(${name}.$$.fragment, #local);`
+			block.chunks.outro.push(
+				b`if (${name}) @transition_out(${name}.$$.fragment, #local);`
 			);
 
-			block.builders.destroy.add_line(`if (${name}) @destroy_component(${name}${parent_node ? '' : ', detaching'});`);
+			block.chunks.destroy.push(b`if (${name}) @destroy_component(${name}${parent_node ? '' : ', detaching'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? '__svelte:self__' // TODO conflict-proof this
 				: component.qualify(this.node.name);
 
-			block.builders.init.add_block(deindent`
-				${(this.node.attributes.length || this.node.bindings.length) && deindent`
+			block.chunks.init.push(b`
+				${(this.node.attributes.length || this.node.bindings.length) && b`
 				${props && `let ${props} = ${attribute_object};`}`}
 				${statements}
 				var ${name} = new ${expression}(${stringify_props(component_opts)});
@@ -445,35 +445,35 @@ export default class InlineComponentWrapper extends Wrapper {
 				${munged_handlers}
 			`);
 
-			block.builders.create.add_line(`${name}.$$.fragment.c();`);
+			block.chunks.create.push(b`${name}.$$.fragment.c();`);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
-				block.builders.claim.add_line(
-					`${name}.$$.fragment.l(${parent_nodes});`
+				block.chunks.claim.push(
+					b`${name}.$$.fragment.l(${parent_nodes});`
 				);
 			}
 
-			block.builders.mount.add_line(
-				`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
+			block.chunks.mount.push(
+				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
 			);
 
-			block.builders.intro.add_block(deindent`
+			block.chunks.intro.push(b`
 				@transition_in(${name}.$$.fragment, #local);
 			`);
 
 			if (updates.length) {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					${updates}
 					${name}.$set(${name_changes});
 				`);
 			}
 
-			block.builders.destroy.add_block(deindent`
+			block.chunks.destroy.push(b`
 				@destroy_component(${name}${parent_node ? '' : ', detaching'});
 			`);
 
-			block.builders.outro.add_line(
-				`@transition_out(${name}.$$.fragment, #local);`
+			block.chunks.outro.push(
+				b`@transition_out(${name}.$$.fragment, #local);`
 			);
 		}
 	}

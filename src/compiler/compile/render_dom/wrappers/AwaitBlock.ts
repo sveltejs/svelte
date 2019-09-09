@@ -3,7 +3,7 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import AwaitBlock from '../../nodes/AwaitBlock';
 import create_debugging_comment from './shared/create_debugging_comment';
-import deindent from '../../utils/deindent';
+import { b } from 'code-red';
 import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
 import ThenBlock from '../../nodes/ThenBlock';
@@ -147,22 +147,22 @@ export default class AwaitBlockWrapper extends Wrapper {
 			this.pending.block.has_outro_method && `blocks: [,,,]`
 		].filter(Boolean);
 
-		block.builders.init.add_block(deindent`
+		block.chunks.init.push(b`
 			let ${info} = {
 				${info_props.join(',\n')}
 			};
 		`);
 
-		block.builders.init.add_block(deindent`
+		block.chunks.init.push(b`
 			@handle_promise(${promise} = ${snippet}, ${info});
 		`);
 
-		block.builders.create.add_block(deindent`
+		block.chunks.create.push(b`
 			${info}.block.c();
 		`);
 
 		if (parent_nodes && this.renderer.options.hydratable) {
-			block.builders.claim.add_block(deindent`
+			block.chunks.claim.push(b`
 				${info}.block.l(${parent_nodes});
 			`);
 		}
@@ -172,14 +172,14 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		const has_transitions = this.pending.block.has_intro_method || this.pending.block.has_outro_method;
 
-		block.builders.mount.add_block(deindent`
+		block.chunks.mount.push(b`
 			${info}.block.m(${initial_mount_node}, ${info}.anchor = ${anchor_node});
 			${info}.mount = () => ${update_mount_node};
 			${info}.anchor = ${anchor};
 		`);
 
 		if (has_transitions) {
-			block.builders.intro.add_line(`@transition_in(${info}.block);`);
+			block.chunks.intro.push(b`@transition_in(${info}.block);`);
 		}
 
 		const conditions = [];
@@ -195,12 +195,12 @@ export default class AwaitBlockWrapper extends Wrapper {
 				`@handle_promise(${promise}, ${info})`
 			);
 
-			block.builders.update.add_line(
-				`${info}.ctx = ctx;`
+			block.chunks.update.push(
+				b`${info}.ctx = ctx;`
 			);
 
 			if (this.pending.block.has_update_method) {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					if (${conditions.join(' && ')}) {
 						// nothing
 					} else {
@@ -208,20 +208,20 @@ export default class AwaitBlockWrapper extends Wrapper {
 					}
 				`);
 			} else {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					${conditions.join(' && ')}
 				`);
 			}
 		} else {
 			if (this.pending.block.has_update_method) {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					${info}.block.p(changed, @assign(@assign({}, ctx), ${info}.resolved));
 				`);
 			}
 		}
 
 		if (this.pending.block.has_outro_method) {
-			block.builders.outro.add_block(deindent`
+			block.chunks.outro.push(b`
 				for (let #i = 0; #i < 3; #i += 1) {
 					const block = ${info}.blocks[#i];
 					@transition_out(block);
@@ -229,7 +229,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			`);
 		}
 
-		block.builders.destroy.add_block(deindent`
+		block.chunks.destroy.push(b`
 			${info}.block.d(${parent_node ? '' : 'detaching'});
 			${info}.token = null;
 			${info} = null;

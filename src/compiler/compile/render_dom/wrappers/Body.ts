@@ -1,6 +1,6 @@
 import Block from '../Block';
 import Wrapper from './shared/Wrapper';
-import deindent from '../../utils/deindent';
+import { b } from 'code-red';
 import Body from '../../nodes/Body';
 
 export default class BodyWrapper extends Wrapper {
@@ -10,11 +10,11 @@ export default class BodyWrapper extends Wrapper {
 		this.node.handlers.forEach(handler => {
 			const snippet = handler.render(block);
 
-			block.builders.init.add_block(deindent`
+			block.chunks.init.push(b`
 				@_document.body.addEventListener("${handler.name}", ${snippet});
 			`);
 
-			block.builders.destroy.add_block(deindent`
+			block.chunks.destroy.push(b`
 				@_document.body.removeEventListener("${handler.name}", ${snippet});
 			`);
 		});

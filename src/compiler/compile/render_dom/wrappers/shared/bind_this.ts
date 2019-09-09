@@ -1,5 +1,5 @@
 import flatten_reference from '../../../utils/flatten_reference';
-import deindent from '../../../utils/deindent';
+import { b } from 'code-red';
 import Component from '../../../Component';
 import Block from '../../Block';
 import Binding from '../../../nodes/Binding';
@@ -30,10 +30,10 @@ export default function bind_this(component: Component, block: Block, binding: B
 		lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 
 		body = binding.expression.node.type === 'Identifier'
-			? deindent`
+			? b`
 				${component.invalidate(object, `${lhs} = $$value`)};
 			`
-			: deindent`
+			: b`
 				${lhs} = $$value;
 				${component.invalidate(object)};
 			`;
@@ -42,7 +42,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 	const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
 
 	if (contextual_dependencies.length) {
-		component.partly_hoisted.push(deindent`
+		component.partly_hoisted.push(b`
 			function ${fn}(${['$$value', ...contextual_dependencies].join(', ')}) {
 				if (${lhs} === $$value) return;
 				@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
@@ -60,7 +60,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		const assign = block.get_unique_name(`assign_${variable}`);
 		const unassign = block.get_unique_name(`unassign_${variable}`);
 
-		block.builders.init.add_block(deindent`
+		block.chunks.init.push(b`
 			const ${assign} = () => ctx.${fn}(${[variable].concat(args).join(', ')});
 			const ${unassign} = () => ctx.${fn}(${['null'].concat(args).join(', ')});
 		`);
@@ -70,7 +70,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		// we push unassign and unshift assign so that references are
 		// nulled out before they're created, to avoid glitches
 		// with shifting indices
-		block.builders.update.add_line(deindent`
+		block.chunks.update.push(b`
 			if (${condition}) {
 				${unassign}();
 				${args.map(a => `${a} = ctx.${a}`).join(', ')};
@@ -78,11 +78,11 @@ export default function bind_this(component: Component, block: Block, binding: B
 			}`
 		);
 
-		block.builders.destroy.add_line(`${unassign}();`);
+		block.chunks.destroy.push(b`${unassign}();`);
 		return `${assign}();`;
 	}
 
-	component.partly_hoisted.push(deindent`
+	component.partly_hoisted.push(b`
 		function ${fn}($$value) {
 			@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 				${body}
@@ -90,6 +90,6 @@ export default function bind_this(component: Component, block: Block, binding: B
 		}
 	`);
 
-	block.builders.destroy.add_line(`ctx.${fn}(null);`);
-	return `ctx.${fn}(${variable});`;
+	block.chunks.destroy.push(b`ctx.${fn}(null);`);
+	return b`ctx.${fn}(${variable});`;
 }

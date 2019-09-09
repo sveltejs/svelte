@@ -1,3 +1,4 @@
+import { b } from 'code-red';
 import Block from '../../Block';
 import Action from '../../../nodes/Action';
 import Component from '../../../Component';
@@ -26,8 +27,8 @@ export default function add_actions(
 
 		const fn = component.qualify(action.name);
 
-		block.builders.mount.add_line(
-			`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
+		block.chunks.mount.push(
+			b`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
 		);
 
 		if (dependencies && dependencies.length > 0) {
@@ -35,14 +36,13 @@ export default function add_actions(
 			const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
 			conditional += dependencies.length > 1 ? `(${deps})` : deps;
 
-			block.builders.update.add_conditional(
-				conditional,
-				`${name}.update.call(null, ${snippet});`
+			block.chunks.update.push(
+				b`if (${conditional}) ${name}.update.call(null, ${snippet});`
 			);
 		}
 
-		block.builders.destroy.add_line(
-			`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy();`
+		block.chunks.destroy.push(
+			b`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy();`
 		);
 	});
 }

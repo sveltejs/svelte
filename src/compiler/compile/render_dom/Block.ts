@@ -1,8 +1,8 @@
-import CodeBuilder from '../utils/CodeBuilder';
-import deindent from '../utils/deindent';
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { escape } from '../utils/stringify';
+import { b, x } from 'code-red';
+import { Node } from '../../interfaces';
 
 export interface BlockOptions {
 	parent?: Block;
@@ -31,19 +31,19 @@ export default class Block {
 
 	bindings: Map<string, { object: string; property: string; snippet: string; store: string; tail: string }>;
 
-	builders: {
-		init: CodeBuilder;
-		create: CodeBuilder;
-		claim: CodeBuilder;
-		hydrate: CodeBuilder;
-		mount: CodeBuilder;
-		measure: CodeBuilder;
-		fix: CodeBuilder;
-		animate: CodeBuilder;
-		intro: CodeBuilder;
-		update: CodeBuilder;
-		outro: CodeBuilder;
-		destroy: CodeBuilder;
+	chunks: {
+		init: Node[];
+		create: Node[];
+		claim: Node[];
+		hydrate: Node[];
+		mount: Node[];
+		measure: Node[];
+		fix: Node[];
+		animate: Node[];
+		intro: Node[];
+		update: Node[];
+		outro: Node[];
+		destroy: Node[];
 	};
 
 	event_listeners: string[] = [];
@@ -80,19 +80,19 @@ export default class Block {
 
 		this.bindings = options.bindings;
 
-		this.builders = {
-			init: new CodeBuilder(),
-			create: new CodeBuilder(),
-			claim: new CodeBuilder(),
-			hydrate: new CodeBuilder(),
-			mount: new CodeBuilder(),
-			measure: new CodeBuilder(),
-			fix: new CodeBuilder(),
-			animate: new CodeBuilder(),
-			intro: new CodeBuilder(),
-			update: new CodeBuilder(),
-			outro: new CodeBuilder(),
-			destroy: new CodeBuilder(),
+		this.chunks = {
+			init: [],
+			create: [],
+			claim: [],
+			hydrate: [],
+			mount: [],
+			measure: [],
+			fix: [],
+			animate: [],
+			intro: [],
+			update: [],
+			outro: [],
+			destroy: [],
 		};
 
 		this.has_animation = false;
@@ -160,18 +160,18 @@ export default class Block {
 		no_detach?: boolean
 	) {
 		this.add_variable(name);
-		this.builders.create.add_line(`${name} = ${render_statement};`);
+		this.chunks.create.push(b`${name} = ${render_statement};`);
 
 		if (this.renderer.options.hydratable) {
-			this.builders.claim.add_line(`${name} = ${claim_statement || render_statement};`);
+			this.chunks.claim.push(b`${name} = ${claim_statement || render_statement};`);
 		}
 
 		if (parent_node) {
-			this.builders.mount.add_line(`@append(${parent_node}, ${name});`);
-			if (parent_node === '@_document.head' && !no_detach) this.builders.destroy.add_line(`@detach(${name});`);
+			this.chunks.mount.push(b`@append(${parent_node}, ${name});`);
+			if (parent_node === '@_document.head' && !no_detach) this.chunks.destroy.push(b`@detach(${name});`);
 		} else {
-			this.builders.mount.add_line(`@insert(#target, ${name}, anchor);`);
-			if (!no_detach) this.builders.destroy.add_conditional('detaching', `@detach(${name});`);
+			this.chunks.mount.push(b`@insert(#target, ${name}, anchor);`);
+			if (!no_detach) this.chunks.destroy.push(b`if (detaching) @detach(${name});`);
 		}
 	}
 
@@ -216,215 +216,222 @@ export default class Block {
 		return new Block(Object.assign({}, this, { key: null }, options, { parent: this }));
 	}
 
-	get_contents(local_key?: string) {
+	get_contents(key?: any) {
 		const { dev } = this.renderer.options;
 
 		if (this.has_outros) {
 			this.add_variable('#current');
 
-			if (!this.builders.intro.is_empty()) {
-				this.builders.intro.add_line(`#current = true;`);
-				this.builders.mount.add_line(`#current = true;`);
+			if (this.chunks.intro.length > 0) {
+				this.chunks.intro.push(b`#current = true;`);
+				this.chunks.mount.push(b`#current = true;`);
 			}
 
-			if (!this.builders.outro.is_empty()) {
-				this.builders.outro.add_line(`#current = false;`);
+			if (this.chunks.outro.length > 0) {
+				this.chunks.outro.push(b`#current = false;`);
 			}
 		}
 
 		if (this.autofocus) {
-			this.builders.mount.add_line(`${this.autofocus}.focus();`);
+			this.chunks.mount.push(b`${this.autofocus}.focus();`);
 		}
 
 		this.render_listeners();
 
-		const properties = new CodeBuilder();
+		const properties: Record<string, any> = {};
 
-		const method_name = (short: string, long: string) => dev ? `${short}: function ${this.get_unique_name(long)}` : short;
+		const noop = x`noop`;
 
-		if (local_key) {
-			properties.add_block(`key: ${local_key},`);
-		}
+		properties.key = key
+		properties.first = this.first;
 
-		if (this.first) {
-			properties.add_block(`first: null,`);
-			this.builders.hydrate.add_line(`this.first = ${this.first};`);
-		}
-
-		if (this.builders.create.is_empty() && this.builders.hydrate.is_empty()) {
-			properties.add_line(`c: @noop,`);
+		if (this.chunks.create.length === 0 && this.chunks.hydrate.length === 0) {
+			properties.create = noop;
 		} else {
-			const hydrate = !this.builders.hydrate.is_empty() && (
+			const hydrate = this.chunks.hydrate.length > 0 && (
 				this.renderer.options.hydratable
-					? `this.h()`
-					: this.builders.hydrate
+					? b`this.h();`
+					: this.chunks.hydrate
 			);
 
-			properties.add_block(deindent`
-				${method_name('c', 'create')}() {
-					${this.builders.create}
-					${hydrate}
-				},
-			`);
+			properties.create = b`function create() {
+				${this.chunks.create}
+				${hydrate}
+			}`;
 		}
 
-		if (this.renderer.options.hydratable || !this.builders.claim.is_empty()) {
-			if (this.builders.claim.is_empty() && this.builders.hydrate.is_empty()) {
-				properties.add_line(`l: @noop,`);
+		if (this.renderer.options.hydratable || this.chunks.claim.length > 0) {
+			if (this.chunks.claim.length === 0 && this.chunks.hydrate.length === 0) {
+				properties.claim = noop;
 			} else {
-				properties.add_block(deindent`
-					${method_name('l', 'claim')}(nodes) {
-						${this.builders.claim}
-						${this.renderer.options.hydratable && !this.builders.hydrate.is_empty() && `this.h();`}
-					},
-				`);
+				properties.claim = x`function claim(#nodes) {
+					${this.chunks.claim}
+					${this.renderer.options.hydratable && this.chunks.hydrate.length > 0 && b`this.h();`}
+				}`;
 			}
 		}
 
-		if (this.renderer.options.hydratable && !this.builders.hydrate.is_empty()) {
-			properties.add_block(deindent`
-				${method_name('h', 'hydrate')}() {
-					${this.builders.hydrate}
-				},
-			`);
+		if (this.renderer.options.hydratable && this.chunks.hydrate.length > 0) {
+			properties.hydrate = x`function hydrate() {
+				${this.chunks.hydrate}
+			}`;
 		}
 
-		if (this.builders.mount.is_empty()) {
-			properties.add_line(`m: @noop,`);
+		if (this.chunks.mount.length === 0) {
+			properties.mount = noop;
 		} else {
-			properties.add_block(deindent`
-				${method_name('m', 'mount')}(#target, anchor) {
-					${this.builders.mount}
-				},
-			`);
+			properties.mount = x`function mount(#target, anchor) {
+				${this.chunks.mount}
+			}`;
 		}
 
 		if (this.has_update_method || this.maintain_context) {
-			if (this.builders.update.is_empty() && !this.maintain_context) {
-				properties.add_line(`p: @noop,`);
+			if (this.chunks.update.length === 0 && !this.maintain_context) {
+				properties.update = noop;
 			} else {
-				properties.add_block(deindent`
-					${method_name('p', 'update')}(changed, ${this.maintain_context ? 'new_ctx' : 'ctx'}) {
-						${this.maintain_context && `ctx = new_ctx;`}
-						${this.builders.update}
-					},
-				`);
+				const ctx = this.maintain_context ? x`new_ctx` : x`ctx`;
+				properties.update = x`function update(#changed, ${ctx}) {
+					${this.maintain_context && b`ctx = ${ctx};`}
+					${this.chunks.update}
+				}`;
 			}
 		}
 
 		if (this.has_animation) {
-			properties.add_block(deindent`
-				${method_name('r', 'measure')}() {
-					${this.builders.measure}
-				},
+			properties.measure = x`function measure() {
+				${this.chunks.measure}
+			}`;
 
-				${method_name('f', 'fix')}() {
-					${this.builders.fix}
-				},
+			properties.fix = x`function fix() {
+				${this.chunks.fix}
+			}`;
 
-				${method_name('a', 'animate')}() {
-					${this.builders.animate}
-				},
-			`);
+			properties.animate = x`function animate() {
+				${this.chunks.animate}
+			}`;
 		}
 
 		if (this.has_intro_method || this.has_outro_method) {
-			if (this.builders.intro.is_empty()) {
-				properties.add_line(`i: @noop,`);
+			if (this.chunks.intro.length === 0) {
+				properties.intro = noop;
 			} else {
-				properties.add_block(deindent`
-					${method_name('i', 'intro')}(#local) {
-						${this.has_outros && `if (#current) return;`}
-						${this.builders.intro}
-					},
-				`);
+				properties.intro = x`function intro(#local) {
+					${this.has_outros && b`if (#current) return;`}
+					${this.chunks.intro}
+				}`;
 			}
 
-			if (this.builders.outro.is_empty()) {
-				properties.add_line(`o: @noop,`);
+			if (this.chunks.outro.length === 0) {
+				properties.outro = noop;
 			} else {
-				properties.add_block(deindent`
-					${method_name('o', 'outro')}(#local) {
-						${this.builders.outro}
-					},
-				`);
+				properties.outro = x`function outro(#local) {
+					${this.chunks.outro}
+				}`;
 			}
 		}
 
-		if (this.builders.destroy.is_empty()) {
-			properties.add_line(`d: @noop`);
+		if (this.chunks.destroy.length === 0) {
+			properties.destroy = noop;
 		} else {
-			properties.add_block(deindent`
-				${method_name('d', 'destroy')}(detaching) {
-					${this.builders.destroy}
-				}
-			`);
+			properties.destroy = x`function destroy(detaching) {
+				${this.chunks.destroy}
+			}`;
 		}
+
+		const return_value = x`{
+			key: ${properties.key},
+			first: ${properties.first},
+			c: ${properties.create},
+			l: ${properties.claim},
+			h: ${properties.hydrate},
+			m: ${properties.mount},
+			p: ${properties.update},
+			r: ${properties.measure},
+			f: ${properties.fix},
+			a: ${properties.animate},
+			i: ${properties.intro},
+			o: ${properties.outro},
+			d: ${properties.destroy}
+		}`;
 
 		/* eslint-disable @typescript-eslint/indent,indent */
-		return deindent`
-			${this.variables.size > 0 &&
-				`var ${Array.from(this.variables.keys())
-					.map(key => {
-						const init = this.variables.get(key);
-						return init !== undefined ? `${key} = ${init}` : key;
-					})
-					.join(', ')};`}
+		return b`
+			${Array.from(this.variables.entries()).map(([init, id]) => {
+				const id_node = { type: 'Identifier', name: id };
+				const init_node = { type: 'Identifier', name: init };
 
-			${!this.builders.init.is_empty() && this.builders.init}
+				return b`let ${id_node} = ${init_node}`;
+			})}
+
+			${this.chunks.init}
 
 			${dev
-				? deindent`
-					const block = {
-						${properties}
-					};
+				? b`
+					const block = ${return_value};
 					@dispatch_dev("SvelteRegisterBlock", { block, id: ${this.name || 'create_fragment'}.name, type: "${this.type}", source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}", ctx });
 					return block;`
-				: deindent`
-					return {
-						${properties}
-					};`
+				: b`
+					return ${return_value};`
 			}
-		`.replace(/([^{])(#+)(\w*)/g, (_match: string, pre: string, sigil: string, name: string) => {
-			return pre + (sigil === '#' ? this.alias(name) : sigil.slice(1) + name);
-		});
+		`;
 		/* eslint-enable @typescript-eslint/indent,indent */
+	}
+
+	render() {
+		const key = this.key && { type: 'Identifier', name: this.get_unique_name('key') };
+
+		const id = { type: 'Identifier', name: this.name };
+		const args: any[] = [x`ctx`];
+
+		if (key) args.unshift(key);
+
+		// TODO include this.comment
+
+		return b`
+			${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
+			function ${id}(${args}) {
+				${this.get_contents(key)}
+			}
+		`;
 	}
 
 	render_listeners(chunk: string = '') {
 		if (this.event_listeners.length > 0) {
-			this.add_variable(`#dispose${chunk}`);
+			const name = `#dispose${chunk}`
+			this.add_variable(name);
+
+			const dispose = { type: 'Identifier', name };
 
 			if (this.event_listeners.length === 1) {
-				this.builders.hydrate.add_line(
-					`#dispose${chunk} = ${this.event_listeners[0]};`
+				this.chunks.hydrate.push(
+					b`${dispose} = ${this.event_listeners[0]};`
 				);
 
-				this.builders.destroy.add_line(
-					`#dispose${chunk}();`
+				this.chunks.destroy.push(
+					b`${dispose}();`
 				);
 			} else {
-				this.builders.hydrate.add_block(deindent`
-					#dispose${chunk} = [
+				this.chunks.hydrate.push(b`
+					${dispose} = [
 						${this.event_listeners.join(',\n')}
 					];
 				`);
 
-				this.builders.destroy.add_line(
-					`@run_all(#dispose${chunk});`
+				this.chunks.destroy.push(
+					b`@run_all(${dispose});`
 				);
 			}
 		}
 	}
 
-	toString() {
-		const local_key = this.key && this.get_unique_name('key');
+	// toString() {
+	// 	const local_key = this.key && this.get_unique_name('key');
 
-		return deindent`
-			${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
-			function ${this.name}(${this.key ? `${local_key}, ` : ''}ctx) {
-				${this.get_contents(local_key)}
-			}
-		`;
-	}
+	// 	return deindent`
+	// 		${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
+	// 		function ${this.name}(${this.key ? `${local_key}, ` : ''}ctx) {
+	// 			${this.get_contents(local_key)}
+	// 		}
+	// 	`;
+	// }
 }

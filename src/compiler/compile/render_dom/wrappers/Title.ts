@@ -1,3 +1,4 @@
+import { b } from 'code-red';
 import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
@@ -67,8 +68,8 @@ export default class TitleWrapper extends Wrapper {
 
 			const init = this.node.should_cache ? `${last} = ${value}` : value;
 
-			block.builders.init.add_line(
-				`@_document.title = ${init};`
+			block.chunks.init.push(
+				b`@_document.title = ${init};`
 			);
 			const updater = `@_document.title = ${this.node.should_cache ? last : value};`;
 
@@ -85,17 +86,14 @@ export default class TitleWrapper extends Wrapper {
 					(dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value) :
 					changed_check;
 
-				block.builders.update.add_conditional(
-					condition,
-					updater
-				);
+				block.chunks.update.push(b`if (${condition}) ${updater}`);
 			}
 		} else {
 			const value = this.node.children.length > 0
 				? stringify((this.node.children[0] as Text).data)
 				: '""';
 
-			block.builders.hydrate.add_line(`@_document.title = ${value};`);
+			block.chunks.hydrate.push(b`@_document.title = ${value};`);
 		}
 	}
 }

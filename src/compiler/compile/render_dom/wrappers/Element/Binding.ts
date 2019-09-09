@@ -1,3 +1,4 @@
+import { b } from 'code-red';
 import Binding from '../../../nodes/Binding';
 import ElementWrapper from '../Element';
 import get_object from '../../../utils/get_object';
@@ -123,12 +124,12 @@ export default class BindingWrapper {
 			{
 				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
 
-				block.builders.hydrate.add_line(
-					`ctx.$$binding_groups[${binding_group}].push(${parent.var});`
+				block.chunks.hydrate.push(
+					b`ctx.$$binding_groups[${binding_group}].push(${parent.var});`
 				);
 
-				block.builders.destroy.add_line(
-					`ctx.$$binding_groups[${binding_group}].splice(ctx.$$binding_groups[${binding_group}].indexOf(${parent.var}), 1);`
+				block.chunks.destroy.push(
+					b`ctx.$$binding_groups[${binding_group}].splice(ctx.$$binding_groups[${binding_group}].indexOf(${parent.var}), 1);`
 				);
 				break;
 			}
@@ -154,7 +155,7 @@ export default class BindingWrapper {
 				block.add_variable(last, 'true');
 
 				update_conditions.push(`${last} !== (${last} = ${this.snippet})`);
-				update_dom = `${parent.var}[${last} ? "pause" : "play"]();`;
+				update_dom = b`${parent.var}[${last} ? "pause" : "play"]();`;
 				break;
 			}
 
@@ -165,15 +166,15 @@ export default class BindingWrapper {
 		}
 
 		if (update_dom) {
-			block.builders.update.add_line(
-				update_conditions.length ? `if (${update_conditions.join(' && ')}) ${update_dom}` : update_dom
+			block.chunks.update.push(
+				update_conditions.length ? b`if (${update_conditions.join(' && ')}) ${update_dom}` : update_dom
 			);
 		}
 
 		if (this.node.name === 'innerHTML' || this.node.name === 'textContent') {
-			block.builders.mount.add_block(`if (${this.snippet} !== void 0) ${update_dom}`);
+			block.chunks.mount.push(b`if (${this.snippet} !== void 0) ${update_dom}`);
 		} else if (!/(currentTime|paused)/.test(this.node.name)) {
-			block.builders.mount.add_block(update_dom);
+			block.chunks.mount.push(update_dom);
 		}
 	}
 }
@@ -194,25 +195,25 @@ function get_dom_updater(
 
 	if (node.name === 'select') {
 		return node.get_static_attribute_value('multiple') === true ?
-			`@select_options(${element.var}, ${binding.snippet})` :
-			`@select_option(${element.var}, ${binding.snippet})`;
+			b`@select_options(${element.var}, ${binding.snippet})` :
+			b`@select_option(${element.var}, ${binding.snippet})`;
 	}
 
 	if (binding.node.name === 'group') {
 		const type = node.get_static_attribute_value('type');
 
 		const condition = type === 'checkbox'
-			? `~${binding.snippet}.indexOf(${element.var}.__value)`
-			: `${element.var}.__value === ${binding.snippet}`;
+			? b`~${binding.snippet}.indexOf(${element.var}.__value)`
+			: b`${element.var}.__value === ${binding.snippet}`;
 
 		return `${element.var}.checked = ${condition};`;
 	}
 
 	if (binding.node.name === 'value') {
-		return `@set_input_value(${element.var}, ${binding.snippet});`;
+		return b`@set_input_value(${element.var}, ${binding.snippet});`;
 	}
 
-	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
+	return b`${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
 function get_binding_group(renderer: Renderer, value: Node) {

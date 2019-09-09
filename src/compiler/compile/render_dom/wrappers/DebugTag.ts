@@ -3,7 +3,7 @@ import Wrapper from './shared/Wrapper';
 import Block from '../Block';
 import DebugTag from '../../nodes/DebugTag';
 import add_to_set from '../../utils/add_to_set';
-import deindent from '../../utils/deindent';
+import { b } from 'code-red';
 
 export default class DebugTagWrapper extends Wrapper {
 	node: DebugTag;
@@ -25,17 +25,17 @@ export default class DebugTagWrapper extends Wrapper {
 
 		if (!renderer.options.dev) return;
 
-		const { code, var_lookup } = component;
+		const { var_lookup } = component;
 
 		if (this.node.expressions.length === 0) {
 			// Debug all
-			code.overwrite(this.node.start + 1, this.node.start + 7, 'debugger', {
-				storeName: true
-			});
-			const statement = `[✂${this.node.start + 1}-${this.node.start + 7}✂];`;
+			// code.overwrite(this.node.start + 1, this.node.start + 7, 'debugger', {
+			// 	storeName: true
+			// });
+			// const statement = `[✂${this.node.start + 1}-${this.node.start + 7}✂];`;
 
-			block.builders.create.add_line(statement);
-			block.builders.update.add_line(statement);
+			block.chunks.create.push(b`debugger`);
+			block.chunks.update.push(b`debugger`);
 		} else {
 			const { code } = component;
 			code.overwrite(this.node.start + 1, this.node.start + 7, 'log', {
@@ -59,7 +59,7 @@ export default class DebugTagWrapper extends Wrapper {
 				.join(', ');
 			const logged_identifiers = this.node.expressions.map(e => e.node.name).join(', ');
 
-			block.builders.update.add_block(deindent`
+			block.chunks.update.push(b`
 				if (${condition}) {
 					const { ${ctx_identifiers} } = ctx;
 					@_console.${log}({ ${logged_identifiers} });
@@ -67,7 +67,7 @@ export default class DebugTagWrapper extends Wrapper {
 				}
 			`);
 
-			block.builders.create.add_block(deindent`
+			block.chunks.create.push(b`
 				{
 					const { ${ctx_identifiers} } = ctx;
 					@_console.${log}({ ${logged_identifiers} });

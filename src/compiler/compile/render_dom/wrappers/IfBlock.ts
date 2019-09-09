@@ -6,7 +6,7 @@ import IfBlock from '../../nodes/IfBlock';
 import create_debugging_comment from './shared/create_debugging_comment';
 import ElseBlock from '../../nodes/ElseBlock';
 import FragmentWrapper from './Fragment';
-import deindent from '../../utils/deindent';
+import { b } from 'code-red';
 import { walk } from 'estree-walker';
 
 function is_else_if(node: ElseBlock) {
@@ -198,7 +198,7 @@ export default class IfBlockWrapper extends Wrapper {
 			if (has_outros) {
 				this.render_compound_with_outros(block, parent_node, parent_nodes, dynamic, vars, detaching);
 
-				block.builders.outro.add_line(`@transition_out(${name});`);
+				block.chunks.outro.push(b`@transition_out(${name});`);
 			} else {
 				this.render_compound(block, parent_node, parent_nodes, dynamic, vars, detaching);
 			}
@@ -206,20 +206,20 @@ export default class IfBlockWrapper extends Wrapper {
 			this.render_simple(block, parent_node, parent_nodes, dynamic, vars, detaching);
 
 			if (has_outros) {
-				block.builders.outro.add_line(`@transition_out(${name});`);
+				block.chunks.outro.push(b`@transition_out(${name});`);
 			}
 		}
 
-		block.builders.create.add_line(`${if_name}${name}.c();`);
+		block.chunks.create.push(b`${if_name}${name}.c();`);
 
 		if (parent_nodes && this.renderer.options.hydratable) {
-			block.builders.claim.add_line(
-				`${if_name}${name}.l(${parent_nodes});`
+			block.chunks.claim.push(
+				b`${if_name}${name}.l(${parent_nodes});`
 			);
 		}
 
 		if (has_intros || has_outros) {
-			block.builders.intro.add_line(`@transition_in(${name});`);
+			block.chunks.intro.push(b`@transition_in(${name});`);
 		}
 
 		if (needs_anchor) {
@@ -250,10 +250,10 @@ export default class IfBlockWrapper extends Wrapper {
 
 		/* eslint-disable @typescript-eslint/indent,indent */
 		if (this.needs_update) {
-			block.builders.init.add_block(deindent`
+			block.chunks.init.push(b`
 				function ${select_block_type}(changed, ctx) {
 					${this.branches.map(({ dependencies, condition, snippet, block }) => condition
-					? deindent`
+					? b`
 					${snippet && (
 						dependencies.length > 0
 							? `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`
@@ -264,7 +264,7 @@ export default class IfBlockWrapper extends Wrapper {
 				}
 			`);
 		} else {
-			block.builders.init.add_block(deindent`
+			block.chunks.init.push(b`
 				function ${select_block_type}(changed, ctx) {
 					${this.branches.map(({ condition, snippet, block }) => condition
 					? `if (${snippet || condition}) return ${block.name};`
@@ -274,21 +274,21 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 		/* eslint-enable @typescript-eslint/indent,indent */
 
-		block.builders.init.add_block(deindent`
+		block.chunks.init.push(b`
 			var ${current_block_type} = ${select_block_type}(null, ctx);
 			var ${name} = ${current_block_type_and}${current_block_type}(ctx);
 		`);
 
 		const initial_mount_node = parent_node || '#target';
 		const anchor_node = parent_node ? 'null' : 'anchor';
-		block.builders.mount.add_line(
-			`${if_name}${name}.m(${initial_mount_node}, ${anchor_node});`
+		block.chunks.mount.push(
+			b`${if_name}${name}.m(${initial_mount_node}, ${anchor_node});`
 		);
 
 		if (this.needs_update) {
 			const update_mount_node = this.get_update_mount_node(anchor);
 
-			const change_block = deindent`
+			const change_block = b`
 				${if_name}${name}.d(1);
 				${name} = ${current_block_type_and}${current_block_type}(ctx);
 				if (${name}) {
@@ -299,7 +299,7 @@ export default class IfBlockWrapper extends Wrapper {
 			`;
 
 			if (dynamic) {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					if (${current_block_type} === (${current_block_type} = ${select_block_type}(changed, ctx)) && ${name}) {
 						${name}.p(changed, ctx);
 					} else {
@@ -307,17 +307,17 @@ export default class IfBlockWrapper extends Wrapper {
 					}
 				`);
 			} else {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					if (${current_block_type} !== (${current_block_type} = ${select_block_type}(changed, ctx))) {
 						${change_block}
 					}
 				`);
 			}
 		} else if (dynamic) {
-			block.builders.update.add_line(`${name}.p(changed, ctx);`);
+			block.chunks.update.push(b`${name}.p(changed, ctx);`);
 		}
 
-		block.builders.destroy.add_line(`${if_name}${name}.d(${detaching});`);
+		block.chunks.destroy.push(b`${if_name}${name}.d(${detaching});`);
 	}
 
 	// if any of the siblings have outros, we need to keep references to the blocks
@@ -344,7 +344,7 @@ export default class IfBlockWrapper extends Wrapper {
 		block.add_variable(name);
 
 		/* eslint-disable @typescript-eslint/indent,indent */
-		block.builders.init.add_block(deindent`
+		block.chunks.init.push(b`
 			var ${if_block_creators} = [
 				${this.branches.map(branch => branch.block.name).join(',\n')}
 			];
@@ -352,17 +352,17 @@ export default class IfBlockWrapper extends Wrapper {
 			var ${if_blocks} = [];
 
 			${this.needs_update
-				? deindent`
+				? b`
 					function ${select_block_type}(changed, ctx) {
 						${this.branches.map(({ dependencies, condition, snippet }, i) => condition
-						? deindent`
+						? b`
 						${snippet && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
 						if (${condition}) return ${String(i)};`
 						: `return ${i};`)}
 						${!has_else && `return -1;`}
 					}
 				`
-				: deindent`
+				: b`
 					function ${select_block_type}(changed, ctx) {
 						${this.branches.map(({ condition, snippet }, i) => condition
 						? `if (${snippet || condition}) return ${String(i)};`
@@ -374,12 +374,12 @@ export default class IfBlockWrapper extends Wrapper {
 		/* eslint-enable @typescript-eslint/indent,indent */
 
 		if (has_else) {
-			block.builders.init.add_block(deindent`
+			block.chunks.init.push(b`
 				${current_block_type_index} = ${select_block_type}(null, ctx);
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 			`);
 		} else {
-			block.builders.init.add_block(deindent`
+			block.chunks.init.push(b`
 				if (~(${current_block_type_index} = ${select_block_type}(null, ctx))) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 				}
@@ -389,14 +389,14 @@ export default class IfBlockWrapper extends Wrapper {
 		const initial_mount_node = parent_node || '#target';
 		const anchor_node = parent_node ? 'null' : 'anchor';
 
-		block.builders.mount.add_line(
-			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].m(${initial_mount_node}, ${anchor_node});`
+		block.chunks.mount.push(
+			b`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].m(${initial_mount_node}, ${anchor_node});`
 		);
 
 		if (this.needs_update) {
 			const update_mount_node = this.get_update_mount_node(anchor);
 
-			const destroy_old_block = deindent`
+			const destroy_old_block = b`
 				@group_outros();
 				@transition_out(${if_blocks}[${previous_block_index}], 1, 1, () => {
 					${if_blocks}[${previous_block_index}] = null;
@@ -404,7 +404,7 @@ export default class IfBlockWrapper extends Wrapper {
 				@check_outros();
 			`;
 
-			const create_new_block = deindent`
+			const create_new_block = b`
 				${name} = ${if_blocks}[${current_block_type_index}];
 				if (!${name}) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
@@ -415,12 +415,12 @@ export default class IfBlockWrapper extends Wrapper {
 			`;
 
 			const change_block = has_else
-				? deindent`
+				? b`
 					${destroy_old_block}
 
 					${create_new_block}
 				`
-				: deindent`
+				: b`
 					if (${name}) {
 						${destroy_old_block}
 					}
@@ -433,7 +433,7 @@ export default class IfBlockWrapper extends Wrapper {
 				`;
 
 			if (dynamic) {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					var ${previous_block_index} = ${current_block_type_index};
 					${current_block_type_index} = ${select_block_type}(changed, ctx);
 					if (${current_block_type_index} === ${previous_block_index}) {
@@ -443,7 +443,7 @@ export default class IfBlockWrapper extends Wrapper {
 					}
 				`);
 			} else {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					var ${previous_block_index} = ${current_block_type_index};
 					${current_block_type_index} = ${select_block_type}(changed, ctx);
 					if (${current_block_type_index} !== ${previous_block_index}) {
@@ -452,10 +452,10 @@ export default class IfBlockWrapper extends Wrapper {
 				`);
 			}
 		} else if (dynamic) {
-			block.builders.update.add_line(`${name}.p(changed, ctx);`);
+			block.chunks.update.push(b`${name}.p(changed, ctx);`);
 		}
 
-		block.builders.destroy.add_line(deindent`
+		block.chunks.destroy.push(b`
 			${if_current_block_type_index}${if_blocks}[${current_block_type_index}].d(${detaching});
 		`);
 	}
@@ -472,22 +472,22 @@ export default class IfBlockWrapper extends Wrapper {
 
 		if (branch.snippet) block.add_variable(branch.condition, branch.snippet);
 
-		block.builders.init.add_block(deindent`
+		block.chunks.init.push(b`
 			var ${name} = (${branch.condition}) && ${branch.block.name}(ctx);
 		`);
 
 		const initial_mount_node = parent_node || '#target';
 		const anchor_node = parent_node ? 'null' : 'anchor';
 
-		block.builders.mount.add_line(
-			`if (${name}) ${name}.m(${initial_mount_node}, ${anchor_node});`
+		block.chunks.mount.push(
+			b`if (${name}) ${name}.m(${initial_mount_node}, ${anchor_node});`
 		);
 
 		if (branch.dependencies.length > 0) {
 			const update_mount_node = this.get_update_mount_node(anchor);
 
 			const enter = dynamic
-				? deindent`
+				? b`
 					if (${name}) {
 						${name}.p(changed, ctx);
 						${has_transitions && `@transition_in(${name}, 1);`}
@@ -498,7 +498,7 @@ export default class IfBlockWrapper extends Wrapper {
 						${name}.m(${update_mount_node}, ${anchor});
 					}
 				`
-				: deindent`
+				: b`
 					if (!${name}) {
 						${name} = ${branch.block.name}(ctx);
 						${name}.c();
@@ -508,13 +508,13 @@ export default class IfBlockWrapper extends Wrapper {
 				`;
 
 			if (branch.snippet) {
-				block.builders.update.add_block(`if (${branch.dependencies.map(n => `changed.${n}`).join(' || ')}) ${branch.condition} = ${branch.snippet}`);
+				block.chunks.update.push(b`if (${branch.dependencies.map(n => `changed.${n}`).join(' || ')}) ${branch.condition} = ${branch.snippet}`);
 			}
 
 			// no `p()` here — we don't want to update outroing nodes,
 			// as that will typically result in glitching
 			if (branch.block.has_outro_method) {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					if (${branch.condition}) {
 						${enter}
 					} else if (${name}) {
@@ -526,7 +526,7 @@ export default class IfBlockWrapper extends Wrapper {
 					}
 				`);
 			} else {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					if (${branch.condition}) {
 						${enter}
 					} else if (${name}) {
@@ -536,11 +536,11 @@ export default class IfBlockWrapper extends Wrapper {
 				`);
 			}
 		} else if (dynamic) {
-			block.builders.update.add_block(
-				`if (${branch.condition}) ${name}.p(changed, ctx);`
+			block.chunks.update.push(
+				b`if (${branch.condition}) ${name}.p(changed, ctx);`
 			);
 		}
 
-		block.builders.destroy.add_line(`${if_name}${name}.d(${detaching});`);
+		block.chunks.destroy.push(b`${if_name}${name}.d(${detaching});`);
 	}
 }

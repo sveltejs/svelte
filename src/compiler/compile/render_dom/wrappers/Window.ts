@@ -1,7 +1,7 @@
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Wrapper from './shared/Wrapper';
-import deindent from '../../utils/deindent';
+import { b } from 'code-red';
 import add_event_handlers from './shared/add_event_handlers';
 import Window from '../../nodes/Window';
 import add_actions from './shared/add_actions';
@@ -90,7 +90,7 @@ export default class WindowWrapper extends Wrapper {
 				const x = bindings.scrollX && `this._state.${bindings.scrollX}`;
 				const y = bindings.scrollY && `this._state.${bindings.scrollY}`;
 
-				renderer.meta_bindings.add_block(deindent`
+				renderer.meta_bindings.push(b`
 					if (${condition}) {
 						@_scrollTo(${x || '@_window.pageXOffset'}, ${y || '@_window.pageYOffset'});
 					}
@@ -98,7 +98,7 @@ export default class WindowWrapper extends Wrapper {
 					${y && `${y} = @_window.pageYOffset;`}
 				`);
 
-				block.event_listeners.push(deindent`
+				block.event_listeners.push(b`
 					@listen(@_window, "${event}", () => {
 						${scrolling} = true;
 						@_clearTimeout(${scrolling_timeout});
@@ -108,12 +108,12 @@ export default class WindowWrapper extends Wrapper {
 				`);
 			} else {
 				props.forEach(prop => {
-					renderer.meta_bindings.add_line(
-						`this._state.${prop.name} = @_window.${prop.value};`
+					renderer.meta_bindings.push(
+						b`this._state.${prop.name} = @_window.${prop.value};`
 					);
 				});
 
-				block.event_listeners.push(deindent`
+				block.event_listeners.push(b`
 					@listen(@_window, "${event}", ctx.${handler_name})
 				`);
 			}
@@ -124,13 +124,13 @@ export default class WindowWrapper extends Wrapper {
 				referenced: true
 			});
 
-			component.partly_hoisted.push(deindent`
+			component.partly_hoisted.push(b`
 				function ${handler_name}() {
 					${props.map(prop => `${prop.name} = @_window.${prop.value}; $$invalidate('${prop.name}', ${prop.name});`)}
 				}
 			`);
 
-			block.builders.init.add_block(deindent`
+			block.chunks.init.push(b`
 				@add_render_callback(ctx.${handler_name});
 			`);
 
@@ -139,7 +139,7 @@ export default class WindowWrapper extends Wrapper {
 
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
-			block.builders.update.add_block(deindent`
+			block.chunks.update.push(b`
 				if (${
 					[bindings.scrollX, bindings.scrollY].filter(Boolean).map(
 						b => `changed.${b}`
@@ -168,13 +168,13 @@ export default class WindowWrapper extends Wrapper {
 				referenced: true
 			});
 
-			component.partly_hoisted.push(deindent`
+			component.partly_hoisted.push(b`
 				function ${handler_name}() {
 					${name} = @_navigator.onLine; $$invalidate('${name}', ${name});
 				}
 			`);
 
-			block.builders.init.add_block(deindent`
+			block.chunks.init.push(b`
 				@add_render_callback(ctx.${handler_name});
 			`);
 

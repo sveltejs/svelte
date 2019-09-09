@@ -1,3 +1,4 @@
+import { b } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
 import AttributeWrapper from './Attribute';
@@ -49,17 +50,18 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 					);
 
-					block.builders.update.add_conditional(
-						condition,
-						`@set_style(${this.parent.var}, "${prop.key}", ${value}${prop.important ? ', 1' : ''});`
+					block.chunks.update.push(
+						b`if (${condition}) {
+							@set_style(${this.parent.var}, "${prop.key}", ${value}${prop.important ? ', 1' : ''});
+						}`
 					);
 				}
 			} else {
 				value = stringify((prop.value[0] as Text).data);
 			}
 
-			block.builders.hydrate.add_line(
-				`@set_style(${this.parent.var}, "${prop.key}", ${value}${prop.important ? ', 1' : ''});`
+			block.chunks.hydrate.push(
+				b`@set_style(${this.parent.var}, "${prop.key}", ${value}${prop.important ? ', 1' : ''});`
 			);
 		});
 	}

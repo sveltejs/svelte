@@ -1,6 +1,6 @@
+import { b, x } from 'code-red';
 import deindent from '../utils/deindent';
 import { stringify, escape } from '../utils/stringify';
-import CodeBuilder from '../utils/CodeBuilder';
 import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
@@ -22,12 +22,12 @@ export default function dom(
 	block.has_outro_method = true;
 
 	// prevent fragment being created twice (#1063)
-	if (options.customElement) block.builders.create.add_line(`this.c = @noop;`);
+	if (options.customElement) block.chunks.create.push(b`this.c = @noop;`);
 
-	const builder = new CodeBuilder();
+	const body = [];
 
 	if (component.compile_options.dev) {
-		builder.add_line(`const ${renderer.file_var} = ${component.file && stringify(component.file, { only_escape_at_symbol: true })};`);
+		body.push(b`const ${renderer.file_var} = ${component.file && stringify(component.file, { only_escape_at_symbol: true })};`);
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
@@ -38,7 +38,7 @@ export default function dom(
 	const add_css = component.get_unique_name('add_css');
 
 	if (styles && component.compile_options.css !== false && !options.customElement) {
-		builder.add_block(deindent`
+		body.push(b`
 			function ${add_css}() {
 				var style = @element("style");
 				style.id = '${component.stylesheet.id}-style';
@@ -52,13 +52,11 @@ export default function dom(
 	// TODO the deconflicted names of blocks are reversed... should set them here
 	const blocks = renderer.blocks.slice().reverse();
 
-	blocks.forEach(block => {
-		builder.add_block(block.toString());
-	});
+	body.push(...blocks);
 
 	if (options.dev && !options.hydratable) {
-		block.builders.claim.add_line(
-			'throw new @_Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
+		block.chunks.claim.push(
+			b`throw new @_Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`
 		);
 	}
 
@@ -77,7 +75,7 @@ export default function dom(
 
 	/* eslint-disable @typescript-eslint/indent,indent */
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
-		? deindent`
+		? x`
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
@@ -90,7 +88,7 @@ export default function dom(
 		: null;
 	/* eslint-enable @typescript-eslint/indent,indent */
 
-	const body = [];
+	const accessors = [];
 
 	const not_equal = component.component_options.immutable ? `@not_equal` : `@safe_not_equal`;
 	let dev_props_check; let inject_state; let capture_state;
@@ -99,13 +97,13 @@ export default function dom(
 		const variable = component.var_lookup.get(x.name);
 
 		if (!variable.writable || component.component_options.accessors) {
-			body.push(deindent`
+			accessors.push(deindent`
 				get ${x.export_name}() {
 					return ${x.hoistable ? x.name : 'this.$$.ctx.' + x.name};
 				}
 			`);
 		} else if (component.compile_options.dev) {
-			body.push(deindent`
+			accessors.push(deindent`
 				get ${x.export_name}() {
 					throw new @_Error("<${component.tag}>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 				}
@@ -114,21 +112,21 @@ export default function dom(
 
 		if (component.component_options.accessors) {
 			if (variable.writable && !renderer.readonly.has(x.name)) {
-				body.push(deindent`
+				accessors.push(deindent`
 					set ${x.export_name}(${x.name}) {
 						this.$set({ ${x.name === x.export_name ? x.name : `${x.export_name}: ${x.name}`} });
 						@flush();
 					}
 				`);
 			} else if (component.compile_options.dev) {
-				body.push(deindent`
+				accessors.push(deindent`
 					set ${x.export_name}(value) {
 						throw new @_Error("<${component.tag}>: Cannot set read-only property '${x.export_name}'");
 					}
 				`);
 			}
 		} else if (component.compile_options.dev) {
-			body.push(deindent`
+			accessors.push(deindent`
 				set ${x.export_name}(value) {
 					throw new @_Error("<${component.tag}>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 				}
@@ -141,35 +139,35 @@ export default function dom(
 		const expected = props.filter(prop => !prop.initialised);
 
 		if (expected.length) {
-			dev_props_check = deindent`
+			dev_props_check = b`
 				const { ctx } = this.$$;
 				const props = ${options.customElement ? `this.attributes` : `options.props || {}`};
-				${expected.map(prop => deindent`
+				${expected.map(prop => b`
 				if (ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
 					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
 				}`)}
 			`;
 		}
 
-		capture_state = (uses_props || writable_props.length > 0) ? deindent`
+		capture_state = (uses_props || writable_props.length > 0) ? x`
 			() => {
 				return { ${component.vars.filter(prop => prop.writable).map(prop => prop.name).join(", ")} };
 			}
-		` : deindent`
+		` : x`
 			() => {
 				return {};
 			}
 		`;
 
 		const writable_vars = component.vars.filter(variable => !variable.module && variable.writable);
-		inject_state = (uses_props || writable_vars.length > 0) ? deindent`
+		inject_state = (uses_props || writable_vars.length > 0) ? x`
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
-				${writable_vars.map(prop => deindent`
+				${writable_vars.map(prop => b`
 					if ('${prop.name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.name}`)};
 				`)}
 			}
-		` : deindent`
+		` : x`
 			${$$props} => {}
 		`;
 	}
@@ -231,7 +229,7 @@ export default function dom(
 		args.push('$$props', '$$invalidate');
 	}
 
-	builder.add_block(deindent`
+	body.push(b`
 		function create_fragment(ctx) {
 			${block.get_contents()}
 		}
@@ -288,7 +286,7 @@ export default function dom(
 			const variable = component.var_lookup.get(store.name.slice(1));
 			return !variable || variable.hoistable;
 		})
-		.map(({ name }) => deindent`
+		.map(({ name }) => b`
 			${component.compile_options.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
 			@component_subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });
 		`);
@@ -345,7 +343,7 @@ export default function dom(
 
 		let unknown_props_check;
 		if (component.compile_options.dev && !component.var_lookup.has('$$props') && writable_props.length) {
-			unknown_props_check = deindent`
+			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => `'${prop.export_name}'`).join(', ')}];
 				@_Object.keys($$props).forEach(key => {
 					if (!writable_props.includes(key) && !key.startsWith('$$')) @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
@@ -353,7 +351,7 @@ export default function dom(
 			`;
 		}
 
-		builder.add_block(deindent`
+		body.push(b`
 			function ${definition}(${args.join(', ')}) {
 				${reactive_store_declarations.length > 0 && `let ${reactive_store_declarations.join(', ')};`}
 
@@ -379,7 +377,7 @@ export default function dom(
 
 				${injected.length && `let ${injected.join(', ')};`}
 
-				${reactive_declarations.length > 0 && deindent`
+				${reactive_declarations.length > 0 && b`
 				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
 					${reactive_declarations}
 				};
@@ -395,7 +393,7 @@ export default function dom(
 	const prop_names = `[${props.map(v => JSON.stringify(v.export_name)).join(', ')}]`;
 
 	if (options.customElement) {
-		builder.add_block(deindent`
+		body.push(b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
@@ -411,7 +409,7 @@ export default function dom(
 							@insert(options.target, this, options.anchor);
 						}
 
-						${(props.length > 0 || uses_props) && deindent`
+						${(props.length > 0 || uses_props) && b`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();
@@ -429,14 +427,16 @@ export default function dom(
 		`);
 
 		if (component.tag != null) {
-			builder.add_block(deindent`
+			body.push(b`
 				@_customElements.define("${component.tag}", ${name});
 			`);
 		}
 	} else {
 		const superclass = options.dev ? 'SvelteComponentDev' : 'SvelteComponent';
 
-		builder.add_block(deindent`
+		// TODO add accessors
+
+		body.push(b`
 			class ${name} extends @${superclass} {
 				constructor(options) {
 					super(${options.dev && `options`});
@@ -446,11 +446,9 @@ export default function dom(
 
 					${dev_props_check}
 				}
-
-				${body.length > 0 && body.join('\n\n')}
 			}
 		`);
 	}
 
-	return builder.toString();
+	return body;
 }

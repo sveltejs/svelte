@@ -7,7 +7,7 @@ import FragmentWrapper from '../Fragment';
 import { stringify, escape_html, escape } from '../../../utils/stringify';
 import TextWrapper from '../Text';
 import fix_attribute_casing from './fix_attribute_casing';
-import deindent from '../../../utils/deindent';
+import { b, x } from 'code-red';
 import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
@@ -250,45 +250,45 @@ export default class ElementWrapper extends Wrapper {
 
 		block.add_variable(node);
 		const render_statement = this.get_render_statement();
-		block.builders.create.add_line(
-			`${node} = ${render_statement};`
+		block.chunks.create.push(
+			b`${node} = ${render_statement};`
 		);
 
 		if (renderer.options.hydratable) {
 			if (parent_nodes) {
-				block.builders.claim.add_block(deindent`
+				block.chunks.claim.push(b`
 					${node} = ${this.get_claim_statement(parent_nodes)};
 					var ${nodes} = @children(${this.node.name === 'template' ? `${node}.content` : node});
 				`);
 			} else {
-				block.builders.claim.add_line(
-					`${node} = ${render_statement};`
+				block.chunks.claim.push(
+					b`${node} = ${render_statement};`
 				);
 			}
 		}
 
 		if (parent_node) {
-			block.builders.mount.add_line(
-				`@append(${parent_node}, ${node});`
+			block.chunks.mount.push(
+				b`@append(${parent_node}, ${node});`
 			);
 
 			if (parent_node === '@_document.head') {
-				block.builders.destroy.add_line(`@detach(${node});`);
+				block.chunks.destroy.push(b`@detach(${node});`);
 			}
 		} else {
-			block.builders.mount.add_line(`@insert(#target, ${node}, anchor);`);
+			block.chunks.mount.push(b`@insert(#target, ${node}, anchor);`);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
-			block.builders.destroy.add_conditional('detaching', `@detach(${node});`);
+			block.chunks.destroy.push(b`if (detaching) @detach(${node});`);
 		}
 
 		// insert static children with textContent or innerHTML
 		if (!this.node.namespace && this.can_use_innerhtml && this.fragment.nodes.length > 0) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
-				block.builders.create.add_line(
+				block.chunks.create.push(
 					 // @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
-					`${node}.textContent = ${stringify(this.fragment.nodes[0].data)};`
+					b`${node}.textContent = ${stringify(this.fragment.nodes[0].data)};`
 				);
 			} else {
 				const inner_html = escape(
@@ -297,8 +297,8 @@ export default class ElementWrapper extends Wrapper {
 						.join('')
 				);
 
-				block.builders.create.add_line(
-					`${node}.innerHTML = \`${inner_html}\`;`
+				block.chunks.create.push(
+					b`${node}.innerHTML = \`${inner_html}\`;`
 				);
 			}
 		} else {
@@ -330,8 +330,8 @@ export default class ElementWrapper extends Wrapper {
 		this.add_classes(block);
 
 		if (nodes && this.renderer.options.hydratable) {
-			block.builders.claim.add_line(
-				`${nodes}.forEach(@detach);`
+			block.chunks.claim.push(
+				b`${nodes}.forEach(@detach);`
 			);
 		}
 
@@ -367,8 +367,8 @@ export default class ElementWrapper extends Wrapper {
 
 		if (renderer.options.dev) {
 			const loc = renderer.locate(this.node.start);
-			block.builders.hydrate.add_line(
-				`@add_location(${this.var}, ${renderer.file_var}, ${loc.line}, ${loc.column}, ${this.node.start});`
+			block.chunks.hydrate.push(
+				b`@add_location(${this.var}, ${renderer.file_var}, ${loc.line}, ${loc.column}, ${this.node.start});`
 			);
 		}
 	}
@@ -470,7 +470,7 @@ export default class ElementWrapper extends Wrapper {
 			if (has_local_function) {
 				// need to create a block-local function that calls an instance-level function
 				if (animation_frame) {
-					block.builders.init.add_block(deindent`
+					block.chunks.init.push(b`
 						function ${handler}() {
 							@_cancelAnimationFrame(${animation_frame});
 							if (!${this.var}.paused) {
@@ -481,7 +481,7 @@ export default class ElementWrapper extends Wrapper {
 						}
 					`);
 				} else {
-					block.builders.init.add_block(deindent`
+					block.chunks.init.push(b`
 						function ${handler}() {
 							${needs_lock && `${lock} = true;`}
 							ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
@@ -494,7 +494,7 @@ export default class ElementWrapper extends Wrapper {
 				callee = `ctx.${handler}`;
 			}
 
-			this.renderer.component.partly_hoisted.push(deindent`
+			this.renderer.component.partly_hoisted.push(b`
 				function ${handler}(${contextual_dependencies.size > 0 ? `{ ${Array.from(contextual_dependencies).join(', ')} }` : ``}) {
 					${group.bindings.map(b => b.handler.mutation)}
 					${Array.from(dependencies).filter(dep => dep[0] !== '$').map(dep => `${this.renderer.component.invalidate(dep)};`)}
@@ -507,12 +507,12 @@ export default class ElementWrapper extends Wrapper {
 					const resize_listener = block.get_unique_name(`${this.var}_resize_listener`);
 					block.add_variable(resize_listener);
 
-					block.builders.mount.add_line(
-						`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
+					block.chunks.mount.push(
+						b`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
 					);
 
-					block.builders.destroy.add_line(
-						`${resize_listener}.cancel();`
+					block.chunks.destroy.push(
+						b`${resize_listener}.cancel();`
 					);
 				} else {
 					block.event_listeners.push(
@@ -539,27 +539,27 @@ export default class ElementWrapper extends Wrapper {
 
 			if (should_initialise) {
 				const callback = has_local_function ? handler : `() => ${callee}.call(${this.var})`;
-				block.builders.hydrate.add_line(
-					`if (${some_initial_state_is_undefined}) @add_render_callback(${callback});`
+				block.chunks.hydrate.push(
+					b`if (${some_initial_state_is_undefined}) @add_render_callback(${callback});`
 				);
 			}
 
 			if (group.events[0] === 'resize') {
-				block.builders.hydrate.add_line(
-					`@add_render_callback(() => ${callee}.call(${this.var}));`
+				block.chunks.hydrate.push(
+					b`@add_render_callback(() => ${callee}.call(${this.var}));`
 				);
 			}
 		});
 
 		if (lock) {
-			block.builders.update.add_line(`${lock} = false;`);
+			block.chunks.update.push(b`${lock} = false;`);
 		}
 
 		const this_binding = this.bindings.find(b => b.node.name === 'this');
 		if (this_binding) {
 			const binding_callback = bind_this(renderer.component, block, this_binding.node, this.var);
 
-			block.builders.mount.add_line(binding_callback);
+			block.chunks.mount.push(binding_callback);
 		}
 	}
 
@@ -611,7 +611,7 @@ export default class ElementWrapper extends Wrapper {
 				}
 			});
 
-		block.builders.init.add_block(deindent`
+		block.chunks.init.push(b`
 			var ${levels} = [
 				${initial_props.join(',\n')}
 			];
@@ -622,14 +622,14 @@ export default class ElementWrapper extends Wrapper {
 			}
 		`);
 
-		const fn = this.node.namespace === namespaces.svg ? `set_svg_attributes` : `set_attributes`;
+		const fn = this.node.namespace === namespaces.svg ? x`@set_svg_attributes` : x`@set_attributes`;
 
-		block.builders.hydrate.add_line(
-			`@${fn}(${this.var}, ${data});`
+		block.chunks.hydrate.push(
+			b`${fn}(${this.var}, ${data});`
 		);
 
-		block.builders.update.add_block(deindent`
-			@${fn}(${this.var}, @get_spread_update(${levels}, [
+		block.chunks.update.push(b`
+			${fn}(${this.var}, @get_spread_update(${levels}, [
 				${updates.join(',\n')}
 			]));
 		`);
@@ -658,36 +658,36 @@ export default class ElementWrapper extends Wrapper {
 
 			const fn = component.qualify(intro.name);
 
-			const intro_block = deindent`
+			const intro_block = b`
 				@add_render_callback(() => {
 					if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
 				});
 			`;
 
-			const outro_block = deindent`
+			const outro_block = b`
 				if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, false);
 				${name}.run(0);
 			`;
 
 			if (intro.is_local) {
-				block.builders.intro.add_block(deindent`
+				block.chunks.intro.push(b`
 					if (#local) {
 						${intro_block}
 					}
 				`);
 
-				block.builders.outro.add_block(deindent`
+				block.chunks.outro.push(b`
 					if (#local) {
 						${outro_block}
 					}
 				`);
 			} else {
-				block.builders.intro.add_block(intro_block);
-				block.builders.outro.add_block(outro_block);
+				block.chunks.intro.push(intro_block);
+				block.chunks.outro.push(outro_block);
 			}
 
-			block.builders.destroy.add_conditional('detaching', `if (${name}) ${name}.end();`);
+			block.chunks.destroy.push(b`if (detaching && ${name}) ${name}.end();`);
 		}
 
 		else {
@@ -705,7 +705,7 @@ export default class ElementWrapper extends Wrapper {
 				let intro_block;
 
 				if (outro) {
-					intro_block = deindent`
+					intro_block = b`
 						@add_render_callback(() => {
 							if (${outro_name}) ${outro_name}.end(1);
 							if (!${intro_name}) ${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
@@ -713,9 +713,9 @@ export default class ElementWrapper extends Wrapper {
 						});
 					`;
 
-					block.builders.outro.add_line(`if (${intro_name}) ${intro_name}.invalidate();`);
+					block.chunks.outro.push(b`if (${intro_name}) ${intro_name}.invalidate();`);
 				} else {
-					intro_block = deindent`
+					intro_block = b`
 						if (!${intro_name}) {
 							@add_render_callback(() => {
 								${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
@@ -726,14 +726,14 @@ export default class ElementWrapper extends Wrapper {
 				}
 
 				if (intro.is_local) {
-					intro_block = deindent`
+					intro_block = b`
 						if (#local) {
 							${intro_block}
 						}
 					`;
 				}
 
-				block.builders.intro.add_block(intro_block);
+				block.chunks.intro.push(intro_block);
 			}
 
 			if (outro) {
@@ -745,28 +745,28 @@ export default class ElementWrapper extends Wrapper {
 				const fn = component.qualify(outro.name);
 
 				if (!intro) {
-					block.builders.intro.add_block(deindent`
+					block.chunks.intro.push(b`
 						if (${outro_name}) ${outro_name}.end(1);
 					`);
 				}
 
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
-				let outro_block = deindent`
+				let outro_block = b`
 					${outro_name} = @create_out_transition(${this.var}, ${fn}, ${snippet});
 				`;
 
 				if (outro.is_local) {
-					outro_block = deindent`
+					outro_block = b`
 						if (#local) {
 							${outro_block}
 						}
 					`;
 				}
 
-				block.builders.outro.add_block(outro_block);
+				block.chunks.outro.push(outro_block);
 
-				block.builders.destroy.add_conditional('detaching', `if (${outro_name}) ${outro_name}.end();`);
+				block.chunks.destroy.push(b`if (detaching && ${outro_name}) ${outro_name}.end();`);
 			}
 		}
 	}
@@ -783,11 +783,11 @@ export default class ElementWrapper extends Wrapper {
 		block.add_variable(rect);
 		block.add_variable(stop_animation, '@noop');
 
-		block.builders.measure.add_block(deindent`
+		block.chunks.measure.push(b`
 			${rect} = ${this.var}.getBoundingClientRect();
 		`);
 
-		block.builders.fix.add_block(deindent`
+		block.chunks.fix.push(b`
 			@fix_position(${this.var});
 			${stop_animation}();
 			${outro && `@add_transform(${this.var}, ${rect});`}
@@ -797,7 +797,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const name = component.qualify(this.node.animation.name);
 
-		block.builders.animate.add_block(deindent`
+		block.chunks.animate.push(b`
 			${stop_animation}();
 			${stop_animation} = @create_animation(${this.var}, ${rect}, ${name}, ${params});
 		`);
@@ -819,19 +819,16 @@ export default class ElementWrapper extends Wrapper {
 				snippet = `${quote_prop_if_necessary(name)}`;
 				dependencies = new Set([name]);
 			}
-			const updater = `@toggle_class(${this.var}, "${name}", ${snippet});`;
+			const updater = b`@toggle_class(${this.var}, "${name}", ${snippet});`;
 
-			block.builders.hydrate.add_line(updater);
+			block.chunks.hydrate.push(updater);
 
 			if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
 				const all_dependencies = this.class_dependencies.concat(...dependencies);
 				const deps = all_dependencies.map(dependency => `changed${quote_prop_if_necessary(dependency)}`).join(' || ');
 				const condition = all_dependencies.length > 1 ? `(${deps})` : deps;
 
-				block.builders.update.add_conditional(
-					condition,
-					updater
-				);
+				block.chunks.update.push(b`if (${condition}) ${updater}`);
 			}
 		});
 	}

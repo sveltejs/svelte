@@ -1,3 +1,4 @@
+import { b } from 'code-red';
 import Wrapper from './Wrapper';
 import Renderer from '../../Renderer';
 import Block from '../../Block';
@@ -38,10 +39,7 @@ export default class Tag extends Wrapper {
 				? `(${changed_check}) && ${update_cached_value}`
 				: changed_check;
 
-			block.builders.update.add_conditional(
-				condition,
-				update(content)
-			);
+			block.chunks.update.push(b`if (${condition}) ${update(content)}`);
 		}
 
 		return { init: content };

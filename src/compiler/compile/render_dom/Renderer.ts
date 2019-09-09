@@ -1,8 +1,7 @@
 import Block from './Block';
-import { CompileOptions } from '../../interfaces';
+import { CompileOptions, Node } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
-import CodeBuilder from '../utils/CodeBuilder';
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
@@ -10,7 +9,7 @@ export default class Renderer {
 
 	blocks: Array<Block | string> = [];
 	readonly: Set<string> = new Set();
-	meta_bindings: CodeBuilder = new CodeBuilder(); // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
+	meta_bindings: Node[] = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
 	binding_groups: string[] = [];
 
 	block: Block;

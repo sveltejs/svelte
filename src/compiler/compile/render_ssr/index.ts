@@ -1,4 +1,4 @@
-import deindent from '../utils/deindent';
+import { b } from 'code-red';
 import Component from '../Component';
 import { CompileOptions } from '../../interfaces';
 import { stringify } from '../utils/stringify';
@@ -95,7 +95,7 @@ export default function ssr(
 	});
 
 	const main = renderer.has_bindings
-		? deindent`
+		? b`
 			let $$settled;
 			let $$rendered;
 
@@ -111,7 +111,7 @@ export default function ssr(
 
 			return $$rendered;
 		`
-		: deindent`
+		: b`
 			${reactive_store_values}
 
 			${reactive_declarations}
@@ -136,8 +136,8 @@ export default function ssr(
 		main
 	].filter(Boolean);
 
-	return (deindent`
-		${css.code && deindent`
+	return b`
+		${css.code && b`
 		const #css = {
 			code: ${css.code ? stringify(css.code) : `''`},
 			map: ${css.map ? stringify(css.map.toString()) : 'null'}
@@ -150,7 +150,7 @@ export default function ssr(
 		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 			${blocks.join('\n\n')}
 		});
-	`).trim();
+	`;
 }
 
 function trim(nodes: INode[]) {

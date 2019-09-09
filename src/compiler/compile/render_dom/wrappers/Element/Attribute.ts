@@ -3,7 +3,7 @@ import Block from '../../Block';
 import fix_attribute_casing from './fix_attribute_casing';
 import ElementWrapper from './index';
 import { stringify } from '../../../utils/stringify';
-import deindent from '../../../utils/deindent';
+import { b } from 'code-red';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
 
@@ -105,8 +105,8 @@ export default class AttributeWrapper {
 			const init = should_cache ? `${last} = ${value}` : value;
 
 			if (is_legacy_input_type) {
-				block.builders.hydrate.add_line(
-					`@set_input_type(${element.var}, ${init});`
+				block.chunks.hydrate.push(
+					b`@set_input_type(${element.var}, ${init});`
 				);
 				updater = `@set_input_type(${element.var}, ${should_cache ? last : value});`;
 			} else if (is_select_value_attribute) {
@@ -116,15 +116,15 @@ export default class AttributeWrapper {
 				const option = block.get_unique_name('option');
 
 				const if_statement = is_multiple_select
-					? deindent`
+					? b`
 						${option}.selected = ~${last}.indexOf(${option}.__value);`
-					: deindent`
+					: b`
 						if (${option}.__value === ${last}) {
 							${option}.selected = true;
 							break;
 						}`;
 
-				updater = deindent`
+				updater = b`
 					for (var ${i} = 0; ${i} < ${element.var}.options.length; ${i} += 1) {
 						var ${option} = ${element.var}.options[${i}];
 
@@ -132,20 +132,20 @@ export default class AttributeWrapper {
 					}
 				`;
 
-				block.builders.mount.add_block(deindent`
+				block.chunks.mount.push(b`
 					${last} = ${value};
 					${updater}
 				`);
 			} else if (property_name) {
-				block.builders.hydrate.add_line(
-					`${element.var}.${property_name} = ${init};`
+				block.chunks.hydrate.push(
+					b`${element.var}.${property_name} = ${init};`
 				);
 				updater = block.renderer.options.dev
 					? `@prop_dev(${element.var}, "${property_name}", ${should_cache ? last : value});`
 					: `${element.var}.${property_name} = ${should_cache ? last : value};`;
 			} else {
-				block.builders.hydrate.add_line(
-					`${method}(${element.var}, "${name}", ${init});`
+				block.chunks.hydrate.push(
+					b`${method}(${element.var}, "${name}", ${init});`
 				);
 				updater = `${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
 			}
@@ -161,22 +161,19 @@ export default class AttributeWrapper {
 				? (dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value)
 				: changed_check;
 
-			block.builders.update.add_conditional(
-				condition,
-				updater
-			);
+			block.chunks.update.push(b`if (${condition}) ${updater}`);
 		} else {
 			const value = this.node.get_value(block);
 
 			const statement = (
 				is_legacy_input_type
-					? `@set_input_type(${element.var}, ${value});`
+					? b`@set_input_type(${element.var}, ${value});`
 					: property_name
-						? `${element.var}.${property_name} = ${value};`
-						: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
+						? b`${element.var}.${property_name} = ${value};`
+						: b`${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
 			);
 
-			block.builders.hydrate.add_line(statement);
+			block.chunks.hydrate.push(statement);
 
 			// special case – autofocus. has to be handled in a bit of a weird way
 			if (this.node.is_true && name === 'autofocus') {
@@ -185,10 +182,10 @@ export default class AttributeWrapper {
 		}
 
 		if (is_indirectly_bound_value) {
-			const update_value = `${element.var}.value = ${element.var}.__value;`;
+			const update_value = b`${element.var}.value = ${element.var}.__value;`;
 
-			block.builders.hydrate.add_line(update_value);
-			if (this.node.get_dependencies().length > 0) block.builders.update.add_line(update_value);
+			block.chunks.hydrate.push(update_value);
+			if (this.node.get_dependencies().length > 0) block.chunks.update.push(update_value);
 		}
 	}
 

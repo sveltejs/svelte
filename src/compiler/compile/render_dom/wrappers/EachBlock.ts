@@ -4,7 +4,7 @@ import Wrapper from './shared/Wrapper';
 import create_debugging_comment from './shared/create_debugging_comment';
 import EachBlock from '../../nodes/EachBlock';
 import FragmentWrapper from './Fragment';
-import deindent from '../../utils/deindent';
+import { b } from 'code-red';
 import ElseBlock from '../../nodes/ElseBlock';
 import { attach_head } from '../../utils/tail';
 
@@ -123,8 +123,8 @@ export default class EachBlockWrapper extends Wrapper {
 			view_length: fixed_length === null ? `${iterations}.[✂${c}-${c+4}✂]` : fixed_length
 		};
 
-		const store = 
-			node.expression.node.type === 'Identifier' && 
+		const store =
+			node.expression.node.type === 'Identifier' &&
 			node.expression.node.name[0] === '$'
 				? node.expression.node.name.slice(1)
 				: null;
@@ -188,9 +188,9 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const snippet = this.node.expression.render(block);
 
-		block.builders.init.add_line(`let ${this.vars.each_block_value} = ${snippet};`);
+		block.chunks.init.push(b`let ${this.vars.each_block_value} = ${snippet};`);
 
-		renderer.blocks.push(deindent`
+		renderer.blocks.push(b`
 			function ${this.vars.get_each_context}(ctx, list, i) {
 				const child_ctx = @_Object.create(ctx);
 				${this.context_props}
@@ -223,7 +223,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		if (this.block.has_intro_method || this.block.has_outro_method) {
-			block.builders.intro.add_block(deindent`
+			block.chunks.intro.push(b`
 				for (let #i = 0; #i < ${this.vars.data_length}; #i += 1) {
 					@transition_in(${this.vars.iterations}[#i]);
 				}
@@ -242,24 +242,24 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.else) {
 			const each_block_else = component.get_unique_name(`${this.var}_else`);
 
-			block.builders.init.add_line(`let ${each_block_else} = null;`);
+			block.chunks.init.push(b`let ${each_block_else} = null;`);
 
 			// TODO neaten this up... will end up with an empty line in the block
-			block.builders.init.add_block(deindent`
+			block.chunks.init.push(b`
 				if (!${this.vars.data_length}) {
 					${each_block_else} = ${this.else.block.name}(ctx);
 					${each_block_else}.c();
 				}
 			`);
 
-			block.builders.mount.add_block(deindent`
+			block.chunks.mount.push(b`
 				if (${each_block_else}) {
 					${each_block_else}.m(${initial_mount_node}, ${initial_anchor_node});
 				}
 			`);
 
 			if (this.else.block.has_update_method) {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					if (!${this.vars.data_length} && ${each_block_else}) {
 						${each_block_else}.p(changed, ctx);
 					} else if (!${this.vars.data_length}) {
@@ -272,7 +272,7 @@ export default class EachBlockWrapper extends Wrapper {
 					}
 				`);
 			} else {
-				block.builders.update.add_block(deindent`
+				block.chunks.update.push(b`
 					if (${this.vars.data_length}) {
 						if (${each_block_else}) {
 							${each_block_else}.d(1);
@@ -286,7 +286,7 @@ export default class EachBlockWrapper extends Wrapper {
 				`);
 			}
 
-			block.builders.destroy.add_block(deindent`
+			block.chunks.destroy.push(b`
 				if (${each_block_else}) ${each_block_else}.d(${parent_node ? '' : 'detaching'});
 			`);
 		}
@@ -342,7 +342,7 @@ export default class EachBlockWrapper extends Wrapper {
 			);
 		}
 
-		block.builders.init.add_block(deindent`
+		block.chunks.init.push(b`
 			const ${get_key} = ctx => ${
 			// @ts-ignore todo: probably error
 			this.node.key.render()};
@@ -354,21 +354,21 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.create.add_block(deindent`
+		block.chunks.create.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
 				${iterations}[#i].c();
 			}
 		`);
 
 		if (parent_nodes && this.renderer.options.hydratable) {
-			block.builders.claim.add_block(deindent`
+			block.chunks.claim.push(b`
 				for (let #i = 0; #i < ${view_length}; #i += 1) {
 					${iterations}[#i].l(${parent_nodes});
 				}
 			`);
 		}
 
-		block.builders.mount.add_block(deindent`
+		block.chunks.mount.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
 				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
 			}
@@ -384,7 +384,7 @@ export default class EachBlockWrapper extends Wrapper {
 				? `@outro_and_destroy_block`
 				: `@destroy_block`;
 
-		block.builders.update.add_block(deindent`
+		block.chunks.update.push(b`
 			const ${this.vars.each_block_value} = ${snippet};
 
 			${this.block.has_outros && `@group_outros();`}
@@ -395,14 +395,14 @@ export default class EachBlockWrapper extends Wrapper {
 		`);
 
 		if (this.block.has_outros) {
-			block.builders.outro.add_block(deindent`
+			block.chunks.outro.push(b`
 				for (let #i = 0; #i < ${view_length}; #i += 1) {
 					@transition_out(${iterations}[#i]);
 				}
 			`);
 		}
 
-		block.builders.destroy.add_block(deindent`
+		block.chunks.destroy.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
 				${iterations}[#i].d(${parent_node ? '' : 'detaching'});
 			}
@@ -435,7 +435,7 @@ export default class EachBlockWrapper extends Wrapper {
 			view_length
 		} = this.vars;
 
-		block.builders.init.add_block(deindent`
+		block.chunks.init.push(b`
 			let ${iterations} = [];
 
 			for (let #i = 0; #i < ${data_length}; #i += 1) {
@@ -443,21 +443,21 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.create.add_block(deindent`
+		block.chunks.create.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
 				${iterations}[#i].c();
 			}
 		`);
 
 		if (parent_nodes && this.renderer.options.hydratable) {
-			block.builders.claim.add_block(deindent`
+			block.chunks.claim.push(b`
 				for (let #i = 0; #i < ${view_length}; #i += 1) {
 					${iterations}[#i].l(${parent_nodes});
 				}
 			`);
 		}
 
-		block.builders.mount.add_block(deindent`
+		block.chunks.mount.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
 				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
 			}
@@ -477,7 +477,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (condition !== '') {
 			const for_loop_body = this.block.has_update_method
-				? deindent`
+				? b`
 					if (${iterations}[#i]) {
 						${iterations}[#i].p(changed, child_ctx);
 						${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
@@ -489,7 +489,7 @@ export default class EachBlockWrapper extends Wrapper {
 					}
 				`
 				: has_transitions
-					? deindent`
+					? b`
 						if (${iterations}[#i]) {
 							@transition_in(${this.vars.iterations}[#i], 1);
 						} else {
@@ -499,7 +499,7 @@ export default class EachBlockWrapper extends Wrapper {
 							${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
 						}
 					`
-					: deindent`
+					: b`
 						if (!${iterations}[#i]) {
 							${iterations}[#i] = ${create_each_block}(child_ctx);
 							${iterations}[#i].c();
@@ -514,12 +514,12 @@ export default class EachBlockWrapper extends Wrapper {
 			if (this.block.has_outros) {
 				const out = block.get_unique_name('out');
 
-				block.builders.init.add_block(deindent`
+				block.chunks.init.push(b`
 					const ${out} = i => @transition_out(${iterations}[i], 1, 1, () => {
 						${iterations}[i] = null;
 					});
 				`);
-				remove_old_blocks = deindent`
+				remove_old_blocks = b`
 					@group_outros();
 					for (#i = ${this.vars.each_block_value}.${length}; #i < ${view_length}; #i += 1) {
 						${out}(#i);
@@ -527,7 +527,7 @@ export default class EachBlockWrapper extends Wrapper {
 					@check_outros();
 				`;
 			} else {
-				remove_old_blocks = deindent`
+				remove_old_blocks = b`
 					for (${this.block.has_update_method ? `` : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
 						${iterations}[#i].d(1);
 					}
@@ -537,7 +537,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			// We declare `i` as block scoped here, as the `remove_old_blocks` code
 			// may rely on continuing where this iteration stopped.
-			const update = deindent`
+			const update = b`
 				${!this.block.has_update_method && `const #old_length = ${this.vars.each_block_value}.length;`}
 				${this.vars.each_block_value} = ${snippet};
 
@@ -551,7 +551,7 @@ export default class EachBlockWrapper extends Wrapper {
 				${remove_old_blocks}
 			`;
 
-			block.builders.update.add_block(deindent`
+			block.chunks.update.push(b`
 				if (${condition}) {
 					${update}
 				}
@@ -559,7 +559,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		if (this.block.has_outros) {
-			block.builders.outro.add_block(deindent`
+			block.chunks.outro.push(b`
 				${iterations} = ${iterations}.filter(@_Boolean);
 				for (let #i = 0; #i < ${view_length}; #i += 1) {
 					@transition_out(${iterations}[#i]);
@@ -567,6 +567,6 @@ export default class EachBlockWrapper extends Wrapper {
 			`);
 		}
 
-		block.builders.destroy.add_block(`@destroy_each(${iterations}, detaching);`);
+		block.chunks.destroy.push(b`@destroy_each(${iterations}, detaching);`);
 	}
 }

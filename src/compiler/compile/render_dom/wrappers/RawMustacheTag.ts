@@ -1,3 +1,4 @@
+import { b } from 'code-red';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Tag from './shared/Tag';
@@ -24,14 +25,14 @@ export default class RawMustacheTagWrapper extends Tag {
 		const can_use_innerhtml = !in_head && parent_node && !this.prev && !this.next;
 
 		if (can_use_innerhtml) {
-			const insert = content => `${parent_node}.innerHTML = ${content};`;
+			const insert = content => b`${parent_node}.innerHTML = ${content};`;
 
 			const { init } = this.rename_this_method(
 				block,
 				content => insert(content)
 			);
 
-			block.builders.mount.add_line(insert(init));
+			block.chunks.mount.push(insert(init));
 		}
 
 		else {
@@ -49,15 +50,15 @@ export default class RawMustacheTagWrapper extends Tag {
 
 			const update_anchor = in_head ? 'null' : needs_anchor ? html_anchor : this.next ? this.next.var : 'null';
 
-			block.builders.hydrate.add_line(`${html_tag} = new @HtmlTag(${init}, ${update_anchor});`);
-			block.builders.mount.add_line(`${html_tag}.m(${parent_node || '#target'}${parent_node ? '' : ', anchor'});`);
+			block.chunks.hydrate.push(b`${html_tag} = new @HtmlTag(${init}, ${update_anchor});`);
+			block.chunks.mount.push(b`${html_tag}.m(${parent_node || '#target'}${parent_node ? '' : ', anchor'});`);
 
 			if (needs_anchor) {
 				block.add_element(html_anchor, '@empty()', '@empty()', parent_node);
 			}
 
 			if (!parent_node || in_head) {
-				block.builders.destroy.add_conditional('detaching', `${html_tag}.d();`);
+				block.chunks.destroy.push(b`if (detaching) ${html_tag}.d();`);
 			}
 		}
 	}

@@ -1,11 +1,11 @@
 import Component from '../../Component';
 import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
+import { b } from 'code-red';
 import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
 import { globals , sanitize } from '../../../utils/names';
-import deindent from '../../utils/deindent';
 import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
@@ -79,7 +79,7 @@ export default class Expression {
 	scope_map: WeakMap<Node, Scope>;
 
 	is_synthetic: boolean;
-	declarations: string[] = [];
+	declarations: Node[] = [];
 	uses_context = false;
 
 	rendered: string;
@@ -364,7 +364,7 @@ export default class Expression {
 							referenced: true
 						});
 
-						declarations.push(deindent`
+						declarations.push(b`
 							function ${name}(${original_params ? '...args' : ''}) {
 								return ctx.${name}(ctx${original_params ? ', ...args' : ''});
 							}
@@ -407,7 +407,7 @@ export default class Expression {
 		if (declarations.length > 0) {
 			block.maintain_context = true;
 			declarations.forEach(declaration => {
-				block.builders.init.add_block(declaration);
+				block.chunks.init.push(declaration);
 			});
 		}
 

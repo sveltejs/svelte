@@ -3,7 +3,7 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Slot from '../../nodes/Slot';
 import FragmentWrapper from './Fragment';
-import deindent from '../../utils/deindent';
+import { b } from 'code-red';
 import { sanitize, quote_prop_if_necessary } from '../../../utils/names';
 import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../utils/get_slot_data';
@@ -96,7 +96,7 @@ export default class SlotWrapper extends Wrapper {
 
 			const arg = dependencies.size > 0 ? `{ ${Array.from(dependencies).join(', ')} }` : '';
 
-			renderer.blocks.push(deindent`
+			renderer.blocks.push(b`
 				const ${get_slot_changes} = (${arg}) => (${stringify_props(changes_props)});
 				const ${get_slot_context} = (${arg}) => (${stringify_props(context_props)});
 			`);
@@ -108,19 +108,19 @@ export default class SlotWrapper extends Wrapper {
 		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
 
-		block.builders.init.add_block(deindent`
+		block.chunks.init.push(b`
 			const ${slot_definition} = ctx.$$slots${quote_prop_if_necessary(slot_name)};
 			const ${slot} = @create_slot(${slot_definition}, ctx, ${get_slot_context});
 		`);
 
-		const mount_before = block.builders.mount.toString();
+		const mount_before = block.chunks.mount.slice();
 
-		block.builders.create.push_condition(`!${slot}`);
-		block.builders.claim.push_condition(`!${slot}`);
-		block.builders.hydrate.push_condition(`!${slot}`);
-		block.builders.mount.push_condition(`!${slot}`);
-		block.builders.update.push_condition(`!${slot}`);
-		block.builders.destroy.push_condition(`!${slot}`);
+		// block.builders.create.push_condition(`!${slot}`);
+		// block.builders.claim.push_condition(`!${slot}`);
+		// block.builders.hydrate.push_condition(`!${slot}`);
+		// block.builders.mount.push_condition(`!${slot}`);
+		// block.builders.update.push_condition(`!${slot}`);
+		// block.builders.destroy.push_condition(`!${slot}`);
 
 		const listeners = block.event_listeners;
 		block.event_listeners = [];
@@ -128,37 +128,37 @@ export default class SlotWrapper extends Wrapper {
 		block.render_listeners(`_${slot}`);
 		block.event_listeners = listeners;
 
-		block.builders.create.pop_condition();
-		block.builders.claim.pop_condition();
-		block.builders.hydrate.pop_condition();
-		block.builders.mount.pop_condition();
-		block.builders.update.pop_condition();
-		block.builders.destroy.pop_condition();
+		// block.builders.create.pop_condition();
+		// block.builders.claim.pop_condition();
+		// block.builders.hydrate.pop_condition();
+		// block.builders.mount.pop_condition();
+		// block.builders.update.pop_condition();
+		// block.builders.destroy.pop_condition();
 
-		block.builders.create.add_line(
-			`if (${slot}) ${slot}.c();`
+		block.chunks.create.push(
+			b`if (${slot}) ${slot}.c();`
 		);
 
-		block.builders.claim.add_line(
-			`if (${slot}) ${slot}.l(${parent_nodes});`
+		block.chunks.claim.push(
+			b`if (${slot}) ${slot}.l(${parent_nodes});`
 		);
 
-		const mount_leadin = block.builders.mount.toString() !== mount_before
+		const mount_leadin = block.chunks.mount.length !== mount_before.length
 			? `else`
 			: `if (${slot})`;
 
-		block.builders.mount.add_block(deindent`
+		block.chunks.mount.push(b`
 			${mount_leadin} {
 				${slot}.m(${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
 			}
 		`);
 
-		block.builders.intro.add_line(
-			`@transition_in(${slot}, #local);`
+		block.chunks.intro.push(
+			b`@transition_in(${slot}, #local);`
 		);
 
-		block.builders.outro.add_line(
-			`@transition_out(${slot}, #local);`
+		block.chunks.outro.push(
+			b`@transition_out(${slot}, #local);`
 		);
 
 		const dynamic_dependencies = Array.from(this.dependencies).filter(name => {
@@ -171,7 +171,7 @@ export default class SlotWrapper extends Wrapper {
 		let update_conditions = dynamic_dependencies.map(name => `changed.${name}`).join(' || ');
 		if (dynamic_dependencies.length > 1) update_conditions = `(${update_conditions})`;
 
-		block.builders.update.add_block(deindent`
+		block.chunks.update.push(b`
 			if (${slot} && ${slot}.p && ${update_conditions}) {
 				${slot}.p(
 					@get_slot_changes(${slot_definition}, ctx, changed, ${get_slot_changes}),
@@ -180,8 +180,8 @@ export default class SlotWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.destroy.add_line(
-			`if (${slot}) ${slot}.d(detaching);`
+		block.chunks.destroy.push(
+			b`if (${slot}) ${slot}.d(detaching);`
 		);
 	}
 }
