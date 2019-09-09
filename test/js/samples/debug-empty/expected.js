@@ -77,10 +77,6 @@ function instance($$self, $$props, $$invalidate) {
 		if ('name' in $$props) $$invalidate('name', name = $$props.name);
 	};
 
-	$$self.$unsafe_set = $$values => {
-		if ('name' in $$values) $$invalidate('name', name = $$values.name);
-	};
-
 	$$self.$capture_state = () => {
 		return { name };
 	};
