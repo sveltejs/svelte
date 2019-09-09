@@ -5,27 +5,28 @@ import Node from './shared/Node';
 import Element from './Element';
 import Text from './Text';
 import Expression from './shared/Expression';
+import TemplateScope from './shared/TemplateScope';
 
 export default class Attribute extends Node {
 	type: 'Attribute';
 	start: number;
 	end: number;
+	scope: TemplateScope;
 
 	component: Component;
 	parent: Element;
 	name: string;
 	is_spread: boolean;
 	is_true: boolean;
-	is_dynamic: boolean;
 	is_static: boolean;
 	is_synthetic: boolean;
-	should_cache: boolean;
 	expression?: Expression;
 	chunks: Array<Text | Expression>;
 	dependencies: Set<string>;
 
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
+		this.scope = scope;
 
 		if (info.type === 'Spread') {
 			this.name = null;
@@ -37,9 +38,7 @@ export default class Attribute extends Node {
 			this.dependencies = this.expression.dependencies;
 			this.chunks = null;
 
-			this.is_dynamic = true; // TODO not necessarily
 			this.is_static = false;
-			this.should_cache = false; // TODO does this mean anything here?
 		}
 
 		else {
@@ -62,22 +61,13 @@ export default class Attribute extends Node {
 					add_to_set(this.dependencies, expression.dependencies);
 					return expression;
 				});
-
-			this.is_dynamic = this.dependencies.size > 0;
-
-			this.should_cache = this.is_dynamic
-				? this.chunks.length === 1
-					// @ts-ignore todo: probably error
-					? this.chunks[0].node.type !== 'Identifier' || scope.names.has(this.chunks[0].node.name)
-					: true
-				: false;
 		}
 	}
 
 	get_dependencies() {
 		if (this.is_spread) return this.expression.dynamic_dependencies();
 
-		const dependencies = new Set();
+		const dependencies: Set<string> = new Set();
 		this.chunks.forEach(chunk => {
 			if (chunk.type === 'Expression') {
 				add_to_set(dependencies, chunk.dynamic_dependencies());
@@ -113,7 +103,7 @@ export default class Attribute extends Node {
 	}
 
 	get_static_value() {
-		if (this.is_spread || this.is_dynamic) return null;
+		if (this.is_spread || this.dependencies.size > 0) return null;
 
 		return this.is_true
 			? true
@@ -121,5 +111,14 @@ export default class Attribute extends Node {
 				// method should be called only when `is_static = true`
 				? (this.chunks[0] as Text).data
 				: '';
+	}
+
+	should_cache() {
+		return this.is_static
+			? false
+			: this.chunks.length === 1
+				// @ts-ignore todo: probably error
+				? this.chunks[0].node.type !== 'Identifier' || this.scope.names.has(this.chunks[0].node.name)
+				: true;
 	}
 }

@@ -8,7 +8,7 @@ export default function(node: Slot, renderer: Renderer, options: RenderOptions) 
 
 	const slot_data = get_slot_data(node.values, true);
 
-	const arg = slot_data.length > 0 ? `{ ${slot_data.join(', ')} }` : '';
+	const arg = slot_data.length > 0 ? `{ ${slot_data.join(', ')} }` : '{}';
 
 	renderer.append(`\${$$slots${prop} ? $$slots${prop}(${arg}) : \``);
 

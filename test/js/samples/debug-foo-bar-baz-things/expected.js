@@ -2,15 +2,16 @@
 import {
 	SvelteComponentDev,
 	add_location,
-	append,
+	append_dev,
 	destroy_each,
-	detach,
+	detach_dev,
+	dispatch_dev,
 	element,
 	init,
-	insert,
+	insert_dev,
 	noop,
 	safe_not_equal,
-	set_data,
+	set_data_dev,
 	space,
 	text
 } from "svelte/internal";
@@ -25,9 +26,9 @@ function get_each_context(ctx, list, i) {
 
 // (8:0) {#each things as thing}
 function create_each_block(ctx) {
-	var span, t0_value = ctx.thing.name, t0, t1;
+	var span, t0_value = ctx.thing.name + "", t0, t1;
 
-	return {
+	const block = {
 		c: function create() {
 			span = element("span");
 			t0 = text(t0_value);
@@ -42,14 +43,14 @@ function create_each_block(ctx) {
 		},
 
 		m: function mount(target, anchor) {
-			insert(target, span, anchor);
-			append(span, t0);
-			insert(target, t1, anchor);
+			insert_dev(target, span, anchor);
+			append_dev(span, t0);
+			insert_dev(target, t1, anchor);
 		},
 
 		p: function update(changed, ctx) {
-			if ((changed.things) && t0_value !== (t0_value = ctx.thing.name)) {
-				set_data(t0, t0_value);
+			if ((changed.things) && t0_value !== (t0_value = ctx.thing.name + "")) {
+				set_data_dev(t0, t0_value);
 			}
 
 			if (changed.foo || changed.bar || changed.baz || changed.things) {
@@ -61,27 +62,29 @@ function create_each_block(ctx) {
 
 		d: function destroy(detaching) {
 			if (detaching) {
-				detach(span);
-				detach(t1);
+				detach_dev(span);
+				detach_dev(t1);
 			}
 		}
 	};
+	dispatch_dev("SvelteRegisterBlock", { block, id: create_each_block.name, type: "each", source: "(8:0) {#each things as thing}", ctx });
+	return block;
 }
 
 function create_fragment(ctx) {
 	var t0, p, t1, t2;
 
-	var each_value = ctx.things;
+	let each_value = ctx.things;
 
-	var each_blocks = [];
+	let each_blocks = [];
 
-	for (var i = 0; i < each_value.length; i += 1) {
+	for (let i = 0; i < each_value.length; i += 1) {
 		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
 	}
 
-	return {
+	const block = {
 		c: function create() {
-			for (var i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
 			}
 
@@ -97,21 +100,22 @@ function create_fragment(ctx) {
 		},
 
 		m: function mount(target, anchor) {
-			for (var i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(target, anchor);
 			}
 
-			insert(target, t0, anchor);
-			insert(target, p, anchor);
-			append(p, t1);
-			append(p, t2);
+			insert_dev(target, t0, anchor);
+			insert_dev(target, p, anchor);
+			append_dev(p, t1);
+			append_dev(p, t2);
 		},
 
 		p: function update(changed, ctx) {
 			if (changed.things) {
 				each_value = ctx.things;
 
-				for (var i = 0; i < each_value.length; i += 1) {
+				let i;
+				for (i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
@@ -130,7 +134,7 @@ function create_fragment(ctx) {
 			}
 
 			if (changed.foo) {
-				set_data(t2, ctx.foo);
+				set_data_dev(t2, ctx.foo);
 			}
 		},
 
@@ -141,11 +145,13 @@ function create_fragment(ctx) {
 			destroy_each(each_blocks, detaching);
 
 			if (detaching) {
-				detach(t0);
-				detach(p);
+				detach_dev(t0);
+				detach_dev(p);
 			}
 		}
 	};
+	dispatch_dev("SvelteRegisterBlock", { block, id: create_fragment.name, type: "component", source: "", ctx });
+	return block;
 }
 
 function instance($$self, $$props, $$invalidate) {
@@ -163,6 +169,17 @@ function instance($$self, $$props, $$invalidate) {
 		if ('baz' in $$props) $$invalidate('baz', baz = $$props.baz);
 	};
 
+	$$self.$capture_state = () => {
+		return { things, foo, bar, baz };
+	};
+
+	$$self.$inject_state = $$props => {
+		if ('things' in $$props) $$invalidate('things', things = $$props.things);
+		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);
+		if ('baz' in $$props) $$invalidate('baz', baz = $$props.baz);
+	};
+
 	return { things, foo, bar, baz };
 }
 
@@ -170,6 +187,7 @@ class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
 		init(this, options, instance, create_fragment, safe_not_equal, ["things", "foo", "bar", "baz"]);
+		dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "Component", options, id: create_fragment.name });
 
 		const { ctx } = this.$$;
 		const props = options.props || {};

@@ -70,7 +70,8 @@ export default class InlineComponentWrapper extends Wrapper {
 		if (this.node.children.length) {
 			const default_slot = block.child({
 				comment: create_debugging_comment(node, renderer.component),
-				name: renderer.component.get_unique_name(`create_default_slot`)
+				name: renderer.component.get_unique_name(`create_default_slot`),
+				type: 'slot'
 			});
 
 			this.renderer.blocks.push(default_slot);
@@ -168,7 +169,9 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const non_let_dependencies = Array.from(fragment_dependencies).filter(name => !this.node.scope.is_let(name));
 
-		if (!uses_spread && (this.node.attributes.filter(a => a.is_dynamic).length || this.node.bindings.length || non_let_dependencies.length > 0)) {
+		const dynamic_attributes = this.node.attributes.filter(a => a.get_dependencies().length > 0);
+
+		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || non_let_dependencies.length > 0)) {
 			updates.push(`var ${name_changes} = {};`);
 		}
 
@@ -185,7 +188,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					add_to_set(all_dependencies, attr.dependencies);
 				});
 
-				this.node.attributes.forEach(attr => {
+				this.node.attributes.forEach((attr, i) => {
 					const { name, dependencies } = attr;
 
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
@@ -196,12 +199,16 @@ export default class InlineComponentWrapper extends Wrapper {
 						const value = attr.expression.render(block);
 						initial_props.push(value);
 
-						changes.push(condition ? `${condition} && ${value}` : value);
+						let value_object = value;
+						if (attr.expression.node.type !== 'ObjectExpression') {
+							value_object = `@get_spread_object(${value})`;
+						}
+						changes.push(condition ? `${condition} && ${value_object}` : value_object);
 					} else {
 						const obj = `{ ${quote_name_if_necessary(name)}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
 
-						changes.push(condition ? `${condition} && ${obj}` : obj);
+						changes.push(condition ? `${condition} && ${obj}` : `${levels}[${i}]`);
 					}
 				});
 
@@ -220,24 +227,21 @@ export default class InlineComponentWrapper extends Wrapper {
 				const conditions = Array.from(all_dependencies).map(dep => `changed.${dep}`).join(' || ');
 
 				updates.push(deindent`
-					var ${name_changes} = ${all_dependencies.size === 1 ? `${conditions}` : `(${conditions})`} ? @get_spread_update(${levels}, [
+					var ${name_changes} = ${conditions ? `(${conditions}) ? @get_spread_update(${levels}, [
 						${changes.join(',\n')}
-					]) : {};
+					]) : {}` : '{}'};
 				`);
 			} else {
-				this.node.attributes
-					.filter((attribute: Attribute) => attribute.is_dynamic)
-					.forEach((attribute: Attribute) => {
-						if (attribute.dependencies.size > 0) {
-							/* eslint-disable @typescript-eslint/indent,indent */
-							updates.push(deindent`
-								if (${[...attribute.dependencies]
-									.map(dependency => `changed.${dependency}`)
-									.join(' || ')}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
-							`);
-							/* eslint-enable @typescript-eslint/indent,indent */
-						}
-					});
+				dynamic_attributes.forEach((attribute: Attribute) => {
+					const dependencies = attribute.get_dependencies();
+					if (dependencies.length > 0) {
+						const condition = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
+
+						updates.push(deindent`
+							if (${condition}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
+						`);
+					}
+				});
 			}
 		}
 

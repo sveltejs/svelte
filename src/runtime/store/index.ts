@@ -1,5 +1,4 @@
-import { run_all, noop, safe_not_equal, is_function } from 'svelte/internal';
-export { get_store_value as get } from 'svelte/internal';
+import { run_all, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
 
 /** Callback to inform of a value updates. */
 type Subscriber<T> = (value: T) => void;
@@ -182,3 +181,9 @@ export function derived<T, S extends Stores>(
 		};
 	});
 }
+
+/**
+ * Get the current value from a store by subscribing and immediately unsubscribing.
+ * @param store readable
+ */
+export { get_store_value as get };

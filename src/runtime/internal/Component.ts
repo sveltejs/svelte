@@ -101,11 +101,12 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	let ready = false;
 
 	$$.ctx = instance
-		? instance(component, props, (key, value) => {
+		? instance(component, props, (key, ret, value = ret) => {
 			if ($$.ctx && not_equal($$.ctx[key], $$.ctx[key] = value)) {
 				if ($$.bound[key]) $$.bound[key](value);
 				if (ready) make_dirty(component, key);
 			}
+			return ret;
 		})
 		: props;
 
@@ -194,23 +195,6 @@ export class SvelteComponent {
 
 	$set() {
 		// overridden by instance, if it has props
-	}
-}
-
-export class SvelteComponentDev extends SvelteComponent {
-	constructor(options) {
-		if (!options || (!options.target && !options.$$inline)) {
-			throw new Error(`'target' is a required option`);
-		}
-
-		super();
-	}
-
-	$destroy() {
-		super.$destroy();
-		this.$destroy = () => {
-			console.warn(`Component was already destroyed`); // eslint-disable-line no-console
-		};
 	}
 }
 

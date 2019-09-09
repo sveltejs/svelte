@@ -1,11 +1,32 @@
 <script>
+	import { setContext } from 'svelte';
 	import { stores } from '@sapper/app';
 	import { Icon, Icons, Nav, NavItem } from '@sveltejs/site-kit';
 	import PreloadingIndicator from '../components/PreloadingIndicator.svelte';
 
-	const { page, preloading } = stores();
-
 	export let segment;
+
+	const { page, preloading, session } = stores();
+
+	setContext('app', {
+		login: () => {
+			const login_window = window.open(`${window.location.origin}/auth/login`, 'login', 'width=600,height=400');
+
+			window.addEventListener('message', function handler(event) {
+				login_window.close();
+				window.removeEventListener('message', handler);
+				$session.user = event.data.user;
+			});
+		},
+
+		logout: async () => {
+			const r = await fetch(`/auth/logout`, {
+				credentials: 'include'
+			});
+
+			if (r.ok) $session.user = null;
+		}
+	});
 </script>
 
 <Icons/>
