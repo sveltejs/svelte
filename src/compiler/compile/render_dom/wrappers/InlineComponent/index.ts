@@ -199,7 +199,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						const value = attr.expression.render(block);
 						initial_props.push(value);
 
-						let value_object = value
+						let value_object = value;
 						if (attr.expression.node.type !== 'ObjectExpression') {
 							value_object = `@get_spread_object(${value})`;
 						}
