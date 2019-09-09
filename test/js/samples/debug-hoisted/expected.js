@@ -46,6 +46,11 @@ let kobzol = 5;
 function instance($$self) {
 	let obj = { x: 5 };
 
+	$$self.$unsafe_set = $$values => {
+		if ('obj' in $$values) $$invalidate('obj', obj = $$values.obj);
+		if ('kobzol' in $$values) $$invalidate('kobzol', kobzol = $$values.kobzol);
+	};
+
 	$$self.$capture_state = () => {
 		return {}
 	};

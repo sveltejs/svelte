@@ -50,7 +50,7 @@ function create_each_block(ctx) {
 
 		p: function update(changed, ctx) {
 			if ((changed.things) && t0_value !== (t0_value = ctx.thing.name + "")) {
-				set_data(t0, t0_value);
+				set_data_dev(t0, t0_value);
 			}
 
 			if (changed.foo) {
@@ -165,6 +165,11 @@ function instance($$self, $$props, $$invalidate) {
 	$$self.$set = $$props => {
 		if ('things' in $$props) $$invalidate('things', things = $$props.things);
 		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+	};
+
+	$$self.$unsafe_set = $$values => {
+		if ('things' in $$values) $$invalidate('things', things = $$values.things);
+		if ('foo' in $$values) $$invalidate('foo', foo = $$values.foo);
 	};
 
 	$$self.$capture_state = () => {
