@@ -42,7 +42,7 @@ function create_fragment(ctx) {
 
 		p: function update(changed, ctx) {
 			if ((changed.foo) && t0_value !== (t0_value = Math.max(0, ctx.foo) + "")) {
-				set_data(t0, t0_value);
+				set_data_dev(t0, t0_value);
 			}
 
 			if (changed.bar) {
@@ -75,6 +75,11 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+	};
+
+	$$self.$unsafe_set = $$values => {
+		if ('foo' in $$values) $$invalidate('foo', foo = $$values.foo);
+		if ('bar' in $$values) $$invalidate('bar', bar = $$values.bar);
 	};
 
 	$$self.$capture_state = () => {
