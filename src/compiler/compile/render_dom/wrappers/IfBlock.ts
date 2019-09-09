@@ -62,7 +62,10 @@ class IfBlockBranch extends Wrapper {
 
 		this.block = block.child({
 			comment: create_debugging_comment(node, parent.renderer.component),
-			name: parent.renderer.component.get_unique_name(is_else ? `create_else_block` : `create_if_block`)
+			name: parent.renderer.component.get_unique_name(
+				is_else ? `create_else_block` : `create_if_block`
+			),
+			type: (node as IfBlock).expression ? 'if' : 'else'
 		});
 
 		this.fragment = new FragmentWrapper(renderer, this.block, node.children, parent, strip_whitespace, next_sibling);
