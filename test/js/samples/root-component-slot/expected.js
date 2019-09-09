@@ -22,11 +22,11 @@ const get_slot1_slot_context = () => ({});
 function create_fragment(ctx) {
 	var div, t, current;
 
-	const default_slot_1 = ctx.$$slots.default;
-	const default_slot = create_slot(default_slot_1, ctx, null);
+	const default_slot_template = ctx.$$slots.default;
+	const default_slot = create_slot(default_slot_template, ctx, null);
 
-	const slot1_slot_1 = ctx.$$slots.slot1;
-	const slot1_slot = create_slot(slot1_slot_1, ctx, get_slot1_slot_context);
+	const slot1_slot_template = ctx.$$slots.slot1;
+	const slot1_slot = create_slot(slot1_slot_template, ctx, get_slot1_slot_context);
 
 	return {
 		c() {
@@ -62,11 +62,17 @@ function create_fragment(ctx) {
 
 		p(changed, ctx) {
 			if (default_slot && default_slot.p && changed.$$scope) {
-				default_slot.p(get_slot_changes(default_slot_1, ctx, changed, null), get_slot_context(default_slot_1, ctx, null));
+				default_slot.p(
+					get_slot_changes(default_slot_template, ctx, changed, null),
+					get_slot_context(default_slot_template, ctx, null)
+				);
 			}
 
 			if (slot1_slot && slot1_slot.p && changed.$$scope) {
-				slot1_slot.p(get_slot_changes(slot1_slot_1, ctx, changed, get_slot1_slot_changes), get_slot_context(slot1_slot_1, ctx, get_slot1_slot_context));
+				slot1_slot.p(
+					get_slot_changes(slot1_slot_template, ctx, changed, get_slot1_slot_changes),
+					get_slot_context(slot1_slot_template, ctx, get_slot1_slot_context)
+				);
 			}
 		},
 
