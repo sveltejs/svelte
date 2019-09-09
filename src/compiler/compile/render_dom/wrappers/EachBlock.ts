@@ -188,8 +188,6 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const snippet = this.node.expression.render(block);
 
-		block.builders.init.add_line(`let ${this.vars.each_block_value} = ${snippet};`);
-
 		renderer.blocks.push(deindent`
 			function ${this.vars.get_each_context}(ctx, list, i) {
 				const child_ctx = @_Object.create(ctx);
@@ -216,13 +214,28 @@ export default class EachBlockWrapper extends Wrapper {
 			update_mount_node
 		};
 
-		if (this.node.key) {
+		// TODO: for now we use the helper only for very limited use cases.
+		// This is a first step, and more use cases will be ported over to the
+		// helper incrementally.
+		const use_helper = 
+			!this.block.has_intro_method &&
+			!this.block.has_outro_method &&
+			!this.node.key;
+
+		if (!use_helper) {
+			block.builders.init.add_line(`let ${this.vars.each_block_value} = ${snippet};`);
+		}
+
+
+		if (use_helper) {
+			this.render_helper(args);
+		} else if (this.node.key) {
 			this.render_keyed(args);
 		} else {
 			this.render_unkeyed(args);
 		}
 
-		if (this.block.has_intro_method || this.block.has_outro_method) {
+		if (!use_helper && (this.block.has_intro_method || this.block.has_outro_method)) {
 			block.builders.intro.add_block(deindent`
 				for (let #i = 0; #i < ${this.vars.data_length}; #i += 1) {
 					@transition_in(${this.vars.iterations}[#i]);
@@ -239,7 +252,7 @@ export default class EachBlockWrapper extends Wrapper {
 			);
 		}
 
-		if (this.else) {
+		if (!use_helper && this.else) {
 			const each_block_else = component.get_unique_name(`${this.var}_else`);
 
 			block.builders.init.add_line(`let ${each_block_else} = null;`);
@@ -296,6 +309,82 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.else) {
 			this.else.fragment.render(this.else.block, null, 'nodes');
 		}
+	}
+
+	render_helper({
+		block,
+		parent_nodes,
+		snippet,
+		initial_anchor_node,
+		initial_mount_node,
+		update_anchor_node,
+		update_mount_node
+	}: {
+		block: Block;
+		parent_nodes: string;
+		snippet: string;
+		initial_anchor_node: string;
+		initial_mount_node: string;
+		update_anchor_node: string;
+		update_mount_node: string;
+	}) {
+		const {
+			create_each_block,
+			get_each_context,
+			iterations,
+		} = this.vars;
+
+		block.builders.init.add_block(deindent`
+		let ${iterations} = new @EachBlock(ctx, ctx => ${snippet}, ${create_each_block}, ${get_each_context}, ${this.else ? this.else.block.name : 'null'});
+		`)
+
+		block.builders.create.add_block(deindent`
+			${iterations}.c();
+		`);
+
+		if (parent_nodes && this.renderer.options.hydratable) {
+			block.builders.claim.add_block(deindent`
+				${iterations}.l(${parent_nodes});
+			`);
+		}
+
+		block.builders.mount.add_block(deindent`
+			${iterations}.m(${initial_mount_node}, ${initial_anchor_node});
+		`);
+
+		const all_dependencies = new Set(this.block.dependencies);
+		const { dependencies } = this.node.expression;
+		dependencies.forEach((dependency: string) => {
+			all_dependencies.add(dependency);
+		});
+
+		const condition = Array.from(all_dependencies)
+			.map(dependency => `changed.${dependency}`)
+			.join(' || ');
+
+		if (condition !== '') {
+			block.builders.update.add_block(deindent`
+				if (${condition}) {
+					${iterations}.p(changed, ctx, ${update_mount_node}, ${update_anchor_node});
+				}
+			`);
+		}
+
+		if (this.block.has_intro_method || this.block.has_outro_method) {
+			block.builders.intro.add_block(deindent`
+				${iterations}.i();
+			`)
+		}
+
+		if (this.block.has_outros) {
+			block.builders.outro.add_block(deindent`
+				${iterations}.o();
+			`);
+		}
+
+		block.builders.destroy.add_block(deindent`
+			${iterations}.d(detaching);
+		`);
 	}
 
 	render_keyed({
