@@ -69,7 +69,7 @@ export default class Block {
 	outros: number;
 
 	aliases: Map<string, Identifier>;
-	variables: Map<string, string>;
+	variables: Map<string, { id: Identifier, init?: Node }> = new Map();
 	get_unique_name: (name: string) => Identifier;
 
 	has_update_method = false;
@@ -113,7 +113,6 @@ export default class Block {
 		this.outros = 0;
 
 		this.get_unique_name = this.renderer.component.get_unique_name_maker();
-		this.variables = new Map();
 
 		this.aliases = new Map().set('ctx', this.get_unique_name('ctx'));
 		if (this.key) this.aliases.set('key', this.get_unique_name('key'));
@@ -166,25 +165,25 @@ export default class Block {
 	}
 
 	add_element(
-		name: string,
+		id: Identifier,
 		render_statement: Node,
 		claim_statement: Node,
 		parent_node: string,
 		no_detach?: boolean
 	) {
-		this.add_variable(name);
-		this.chunks.create.push(b`${name} = ${render_statement};`);
+		this.add_variable(id);
+		this.chunks.create.push(b`${id} = ${render_statement};`);
 
 		if (this.renderer.options.hydratable) {
-			this.chunks.claim.push(b`${name} = ${claim_statement || render_statement};`);
+			this.chunks.claim.push(b`${id} = ${claim_statement || render_statement};`);
 		}
 
 		if (parent_node) {
-			this.chunks.mount.push(b`@append(${parent_node}, ${name});`);
-			if (parent_node === '@_document.head' && !no_detach) this.chunks.destroy.push(b`@detach(${name});`);
+			this.chunks.mount.push(b`@append(${parent_node}, ${id});`);
+			if (parent_node === '@_document.head' && !no_detach) this.chunks.destroy.push(b`@detach(${id});`);
 		} else {
-			this.chunks.mount.push(b`@insert(#target, ${name}, anchor);`);
-			if (!no_detach) this.chunks.destroy.push(b`if (detaching) @detach(${name});`);
+			this.chunks.mount.push(b`@insert(#target, ${id}, anchor);`);
+			if (!no_detach) this.chunks.destroy.push(b`if (detaching) @detach(${id});`);
 		}
 	}
 
@@ -203,18 +202,21 @@ export default class Block {
 		this.has_animation = true;
 	}
 
-	add_variable(name: string, init?: string) {
-		if (name[0] === '#') {
-			name = this.alias(name.slice(1)).name;
+	add_variable(id: Identifier, init?: Node) {
+		if (id.name[0] === '#') {
+			// TODO is this still necessary?
+			id.name = this.alias(id.name.slice(1)).name;
 		}
 
-		if (this.variables.has(name) && this.variables.get(name) !== init) {
-			throw new Error(
-				`Variable '${name}' already initialised with a different value`
-			);
-		}
+		this.variables.forEach(v => {
+			if (v.id.name === id.name) {
+				throw new Error(
+					`Variable '${id.name}' already initialised with a different value`
+				);
+			}
+		});
 
-		this.variables.set(name, init);
+		this.variables.set(id.name, { id, init });
 	}
 
 	alias(name: string) {
@@ -233,7 +235,7 @@ export default class Block {
 		const { dev } = this.renderer.options;
 
 		if (this.has_outros) {
-			this.add_variable('#current');
+			this.add_variable({ type: 'Identifier', name: '#current' });
 
 			if (this.chunks.intro.length > 0) {
 				this.chunks.intro.push(b`#current = true;`);
@@ -267,7 +269,7 @@ export default class Block {
 					: this.chunks.hydrate
 			);
 
-			properties.create = b`function create() {
+			properties.create = x`function create() {
 				${this.chunks.create}
 				${hydrate}
 			}`;
@@ -352,32 +354,29 @@ export default class Block {
 		}
 
 		const return_value: any = x`{
-			key: ${properties.key},
-			first: ${properties.first},
-			c: ${properties.create},
-			l: ${properties.claim},
-			h: ${properties.hydrate},
+			// key: ${properties.key},
+			// first: ${properties.first},
+			// c: ${properties.create},
+			// l: ${properties.claim},
+			// h: ${properties.hydrate},
 			m: ${properties.mount},
-			p: ${properties.update},
-			r: ${properties.measure},
-			f: ${properties.fix},
-			a: ${properties.animate},
-			i: ${properties.intro},
-			o: ${properties.outro},
-			d: ${properties.destroy}
+			// p: ${properties.update},
+			// r: ${properties.measure},
+			// f: ${properties.fix},
+			// a: ${properties.animate},
+			// i: ${properties.intro},
+			// o: ${properties.outro},
+			// d: ${properties.destroy}
 		}`;
 
 		return_value.properties = return_value.properties.filter(prop => prop.value);
 
 		/* eslint-disable @typescript-eslint/indent,indent */
 		return b`
-			${Array.from(this.variables.entries()).map(([id, init]) => {
-				const id_node = { type: 'Identifier', name: id };
-				const init_node = { type: 'Identifier', name: init };
-
+			${Array.from(this.variables.values()).map(({ id, init }) => {
 				return init
-					? b`let ${id_node} = ${init_node}`
-					: b`let ${id_node}`;
+					? b`let ${id} = ${init}`
+					: b`let ${id}`;
 			})}
 
 			${this.chunks.init}
@@ -414,10 +413,12 @@ export default class Block {
 
 	render_listeners(chunk: string = '') {
 		if (this.event_listeners.length > 0) {
-			const name = `#dispose${chunk}`
-			this.add_variable(name);
+			const dispose: Identifier = {
+				type: 'Identifier',
+				name: `#dispose${chunk}`
+			};
 
-			const dispose = { type: 'Identifier', name };
+			this.add_variable(dispose);
 
 			if (this.event_listeners.length === 1) {
 				this.chunks.hydrate.push(

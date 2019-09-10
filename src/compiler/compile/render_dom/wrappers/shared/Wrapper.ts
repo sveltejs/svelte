@@ -54,7 +54,7 @@ export default class Wrapper {
 
 		if (needs_anchor) {
 			block.add_element(
-				anchor.name,
+				anchor,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
 				parent_node

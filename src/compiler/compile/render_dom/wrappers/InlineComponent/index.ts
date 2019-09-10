@@ -269,7 +269,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 
 			const updating = block.get_unique_name(`updating_${binding.name}`);
-			block.add_variable(updating.name);
+			block.add_variable(updating);
 
 			const snippet = binding.expression.render(block);
 

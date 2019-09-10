@@ -90,7 +90,7 @@ export default function dom(
 
 	const accessors = [];
 
-	const not_equal = component.component_options.immutable ? `@not_equal` : `@safe_not_equal`;
+	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
 	let dev_props_check; let inject_state; let capture_state;
 
 	props.forEach(x => {
@@ -274,7 +274,7 @@ export default function dom(
 
 	const definition = has_definition
 		? component.alias('instance')
-		: 'null';
+		: { type: 'Literal', value: null };
 
 	const all_reactive_dependencies = new Set();
 	component.reactive_declarations.forEach(d => {
@@ -390,7 +390,7 @@ export default function dom(
 		`);
 	}
 
-	const prop_names = `[${props.map(v => JSON.stringify(v.export_name)).join(', ')}]`;
+	const prop_names = x`[${props.map(v => ({ type: 'Literal', value: v.export_name }))}]`;
 
 	if (options.customElement) {
 		body.push(b`
@@ -432,12 +432,15 @@ export default function dom(
 			`);
 		}
 	} else {
-		const superclass = options.dev ? 'SvelteComponentDev' : 'SvelteComponent';
+		const superclass = {
+			type: 'Identifier',
+			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
+		};
 
 		// TODO add accessors
 
 		body.push(b`
-			class ${name} extends @${superclass} {
+			class ${name} extends ${superclass} {
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && `if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}

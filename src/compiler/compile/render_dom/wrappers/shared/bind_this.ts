@@ -1,8 +1,9 @@
 import flatten_reference from '../../../utils/flatten_reference';
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import Component from '../../../Component';
 import Block from '../../Block';
 import Binding from '../../../nodes/Binding';
+import { Identifier } from '../../../../interfaces';
 
 export default function bind_this(component: Component, block: Block, binding: Binding, variable: string) {
 	const fn = component.get_unique_name(`${variable}_binding`);
@@ -53,8 +54,9 @@ export default function bind_this(component: Component, block: Block, binding: B
 
 		const args = [];
 		for (const arg of contextual_dependencies) {
-			args.push(arg);
-			block.add_variable(arg, `ctx.${arg}`);
+			const id: Identifier = { type: 'Identifier', name: arg };
+			args.push(id);
+			block.add_variable(id, x`ctx.${id}`);
 		}
 
 		const assign = block.get_unique_name(`assign_${variable}`);

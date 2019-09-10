@@ -1,4 +1,4 @@
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import Binding from '../../../nodes/Binding';
 import ElementWrapper from '../Element';
 import get_object from '../../../utils/get_object';
@@ -152,7 +152,7 @@ export default class BindingWrapper {
 			{
 				// this is necessary to prevent audio restarting by itself
 				const last = block.get_unique_name(`${parent.var}_is_paused`);
-				block.add_variable(last.name, 'true');
+				block.add_variable(last, x`true`);
 
 				update_conditions.push(`${last} !== (${last} = ${this.snippet})`);
 				update_dom = b`${parent.var}[${last} ? "pause" : "play"]();`;

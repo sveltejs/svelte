@@ -132,7 +132,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const info = block.get_unique_name(`info`);
 		const promise = block.get_unique_name(`promise`);
 
-		block.add_variable(promise.name);
+		block.add_variable(promise);
 
 		block.maintain_context = true;
 

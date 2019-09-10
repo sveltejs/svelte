@@ -25,7 +25,7 @@ export default class Tag extends Wrapper {
 		const value = this.node.should_cache && block.get_unique_name(`${this.var}_value`);
 		const content = this.node.should_cache ? value : snippet;
 
-		if (this.node.should_cache) block.add_variable(value.name, `${snippet} + ""`);
+		if (this.node.should_cache) block.add_variable(value, snippet); // TODO may need to coerce snippet to string
 
 		if (dependencies.length > 0) {
 			const changed_check = (

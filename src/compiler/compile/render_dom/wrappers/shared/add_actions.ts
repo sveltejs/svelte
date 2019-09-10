@@ -23,7 +23,7 @@ export default function add_actions(
 			`${action.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
 		);
 
-		block.add_variable(id.name);
+		block.add_variable(id);
 
 		const fn = component.qualify(action.name);
 

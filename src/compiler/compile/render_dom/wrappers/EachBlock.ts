@@ -235,7 +235,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (needs_anchor) {
 			block.add_element(
-				(update_anchor_node as Identifier).name,
+				update_anchor_node as Identifier,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
 				parent_node
@@ -330,15 +330,15 @@ export default class EachBlockWrapper extends Wrapper {
 		const get_key = block.get_unique_name('get_key');
 		const lookup = block.get_unique_name(`${this.var}_lookup`);
 
-		block.add_variable(iterations.name, '[]');
-		block.add_variable(lookup.name, `new @_Map()`);
+		block.add_variable(iterations, x`[]`);
+		block.add_variable(lookup, x`new @_Map()`);
 
 		if (this.fragment.nodes[0].is_dom_node()) {
 			this.block.first = this.fragment.nodes[0].var;
 		} else {
 			this.block.first = this.block.get_unique_name('first');
 			this.block.add_element(
-				this.block.first.name,
+				this.block.first,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
 				null

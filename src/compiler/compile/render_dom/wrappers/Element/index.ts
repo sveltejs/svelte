@@ -421,7 +421,7 @@ export default class ElementWrapper extends Wrapper {
 			block.get_unique_name(`${this.var}_updating`) :
 			null;
 
-		if (lock) block.add_variable(lock.name, 'false');
+		if (lock) block.add_variable(lock, x`false`);
 
 		const groups = events
 			.map(event => ({
@@ -508,7 +508,7 @@ export default class ElementWrapper extends Wrapper {
 				if (name === 'resize') {
 					// special case
 					const resize_listener = block.get_unique_name(`${this.var}_resize_listener`);
-					block.add_variable(resize_listener.name);
+					block.add_variable(resize_listener);
 
 					block.chunks.mount.push(
 						b`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
@@ -657,7 +657,7 @@ export default class ElementWrapper extends Wrapper {
 				? intro.expression.render(block)
 				: '{}';
 
-			block.add_variable(name.name);
+			block.add_variable(name);
 
 			const fn = component.qualify(intro.name);
 
@@ -698,7 +698,7 @@ export default class ElementWrapper extends Wrapper {
 			const outro_name = outro && block.get_unique_name(`${this.var}_outro`);
 
 			if (intro) {
-				block.add_variable(intro_name.name);
+				block.add_variable(intro_name);
 				const snippet = intro.expression
 					? intro.expression.render(block)
 					: '{}';
@@ -740,7 +740,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			if (outro) {
-				block.add_variable(outro_name.name);
+				block.add_variable(outro_name);
 				const snippet = outro.expression
 					? outro.expression.render(block)
 					: '{}';
@@ -783,8 +783,8 @@ export default class ElementWrapper extends Wrapper {
 		const rect = block.get_unique_name('rect');
 		const stop_animation = block.get_unique_name('stop_animation');
 
-		block.add_variable(rect.name);
-		block.add_variable(stop_animation.name, '@noop');
+		block.add_variable(rect);
+		block.add_variable(stop_animation, x`@noop`);
 
 		block.chunks.measure.push(b`
 			${rect} = ${this.var}.getBoundingClientRect();

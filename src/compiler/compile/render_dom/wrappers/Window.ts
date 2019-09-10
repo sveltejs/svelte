@@ -1,7 +1,7 @@
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Wrapper from './shared/Wrapper';
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import add_event_handlers from './shared/add_event_handlers';
 import Window from '../../nodes/Window';
 import add_actions from './shared/add_actions';
@@ -78,24 +78,24 @@ export default class WindowWrapper extends Wrapper {
 
 			if (event === 'scroll') {
 				// TODO other bidirectional bindings...
-				block.add_variable(scrolling.name, 'false');
-				block.add_variable(clear_scrolling.name, `() => { ${scrolling} = false }`);
-				block.add_variable(scrolling_timeout.name);
+				block.add_variable(scrolling, x`false`);
+				block.add_variable(clear_scrolling, x`() => { ${scrolling} = false }`);
+				block.add_variable(scrolling_timeout);
 
 				const condition = [
 					bindings.scrollX && `"${bindings.scrollX}" in this._state`,
 					bindings.scrollY && `"${bindings.scrollY}" in this._state`
 				].filter(Boolean).join(' || ');
 
-				const x = bindings.scrollX && `this._state.${bindings.scrollX}`;
-				const y = bindings.scrollY && `this._state.${bindings.scrollY}`;
+				const scrollX = bindings.scrollX && `this._state.${bindings.scrollX}`;
+				const scrollY = bindings.scrollY && `this._state.${bindings.scrollY}`;
 
 				renderer.meta_bindings.push(b`
 					if (${condition}) {
-						@_scrollTo(${x || '@_window.pageXOffset'}, ${y || '@_window.pageYOffset'});
+						@_scrollTo(${scrollX || '@_window.pageXOffset'}, ${scrollY || '@_window.pageYOffset'});
 					}
-					${x && `${x} = @_window.pageXOffset;`}
-					${y && `${y} = @_window.pageYOffset;`}
+					${scrollX && `${scrollX} = @_window.pageXOffset;`}
+					${scrollY && `${scrollY} = @_window.pageYOffset;`}
 				`);
 
 				block.event_listeners.push(b`

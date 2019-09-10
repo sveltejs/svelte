@@ -226,7 +226,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		if (needs_anchor) {
 			block.add_element(
-				(anchor as Identifier).name,
+				anchor as Identifier,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
 				parent_node
@@ -342,7 +342,7 @@ export default class IfBlockWrapper extends Wrapper {
 			? ''
 			: `if (~${current_block_type_index}) `;
 
-		block.add_variable(current_block_type_index.name);
+		block.add_variable(current_block_type_index);
 		block.add_variable(name);
 
 		/* eslint-disable @typescript-eslint/indent,indent */
@@ -472,7 +472,7 @@ export default class IfBlockWrapper extends Wrapper {
 	) {
 		const branch = this.branches[0];
 
-		if (branch.snippet) block.add_variable(branch.condition, '' + branch.snippet);
+		if (branch.snippet) block.add_variable(branch.condition, branch.snippet);
 
 		block.chunks.init.push(b`
 			var ${name} = (${branch.condition}) && ${branch.block.name}(ctx);

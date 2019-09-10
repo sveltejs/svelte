@@ -64,7 +64,7 @@ export default class TitleWrapper extends Wrapper {
 				`title_value`
 			);
 
-			if (this.node.should_cache) block.add_variable(last.name);
+			if (this.node.should_cache) block.add_variable(last);
 
 			const init = this.node.should_cache ? `${last} = ${value}` : value;
 

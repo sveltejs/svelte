@@ -71,7 +71,7 @@ export default class TextWrapper extends Wrapper {
 		const use_space = this.use_space();
 
 		block.add_element(
-			this.var.name,
+			this.var,
 			use_space ? x`@space()` : x`@text(${stringify(this.data)})`,
 			parent_nodes && (use_space ? x`@claim_space(${parent_nodes})` : x`@claim_text(${parent_nodes}, ${stringify(this.data)})`),
 			parent_node
