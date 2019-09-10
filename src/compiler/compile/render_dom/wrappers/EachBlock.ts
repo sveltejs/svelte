@@ -120,7 +120,7 @@ export default class EachBlockWrapper extends Wrapper {
 			// optimisation for array literal
 			fixed_length,
 			data_length: fixed_length === null ? `${each_block_value}.[✂${c}-${c+4}✂]` : fixed_length,
-			view_length: fixed_length === null ? `${iterations}.[✂${c}-${c+4}✂]` : fixed_length
+			view_length: fixed_length === null ? `${iterations}.b.[✂${c}-${c+4}✂]` : fixed_length
 		};
 
 		const store = 
@@ -175,7 +175,6 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.fragment.nodes.length === 0) return;
 
 		const { renderer } = this;
-		const { component } = renderer;
 
 		const needs_anchor = this.next
 			? !this.next.is_dom_node() :
@@ -187,8 +186,6 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.node.has_binding || this.node.index) this.context_props.push(`child_ctx.${this.index_name} = i;`);
 
 		const snippet = this.node.expression.render(block);
-
-		block.builders.init.add_line(`let ${this.vars.each_block_value} = ${snippet};`);
 
 		renderer.blocks.push(deindent`
 			function ${this.vars.get_each_context}(ctx, list, i) {
@@ -205,13 +202,25 @@ export default class EachBlockWrapper extends Wrapper {
 			: (this.next && this.next.var) || 'null';
 		const update_mount_node = this.get_update_mount_node(update_anchor_node);
 
+		block.builders.init.add_line(`let ${this.vars.each_block_value} = ${snippet};`);
+
+		const { iterations } = this.vars
+		block.builders.init.add_block(deindent`
+			let ${iterations} = @init_each_block(
+				ctx,
+				${this.vars.get_each_context},
+				ctx => ${snippet},
+				${this.node.key ? `ctx => ${this.node.key.render()}` : 'null'},
+				${this.vars.create_each_block},
+				${this.else ? this.else.block.name : 'null'}
+			);
+		`)
+
 		const args = {
 			block,
 			parent_node,
 			parent_nodes,
 			snippet,
-			initial_anchor_node,
-			initial_mount_node,
 			update_anchor_node,
 			update_mount_node
 		};
@@ -222,10 +231,24 @@ export default class EachBlockWrapper extends Wrapper {
 			this.render_unkeyed(args);
 		}
 
+		block.builders.create.add_block(deindent`
+			@create_each_blocks(${iterations});
+		`);
+
+		if (parent_nodes && this.renderer.options.hydratable) {
+			block.builders.claim.add_block(deindent`
+				@claim_each_blocks(${iterations}, ${parent_nodes});
+			`);
+		}
+
+		block.builders.mount.add_block(deindent`
+			@mount_each_blocks(${iterations}, ${initial_mount_node}, ${initial_anchor_node});
+		`);
+
 		if (this.block.has_intro_method || this.block.has_outro_method) {
 			block.builders.intro.add_block(deindent`
 				for (let #i = 0; #i < ${this.vars.data_length}; #i += 1) {
-					@transition_in(${this.vars.iterations}[#i]);
+					@transition_in(${iterations}.b[#i]);
 				}
 			`);
 		}
@@ -240,23 +263,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		if (this.else) {
-			const each_block_else = component.get_unique_name(`${this.var}_else`);
-
-			block.builders.init.add_line(`let ${each_block_else} = null;`);
-
-			// TODO neaten this up... will end up with an empty line in the block
-			block.builders.init.add_block(deindent`
-				if (!${this.vars.data_length}) {
-					${each_block_else} = ${this.else.block.name}(ctx);
-					${each_block_else}.c();
-				}
-			`);
-
-			block.builders.mount.add_block(deindent`
-				if (${each_block_else}) {
-					${each_block_else}.m(${initial_mount_node}, ${initial_anchor_node});
-				}
-			`);
+			const each_block_else = `${iterations}.e`;
 
 			if (this.else.block.has_update_method) {
 				block.builders.update.add_block(deindent`
@@ -285,10 +292,6 @@ export default class EachBlockWrapper extends Wrapper {
 					}
 				`);
 			}
-
-			block.builders.destroy.add_block(deindent`
-				if (${each_block_else}) ${each_block_else}.d(${parent_node ? '' : 'detaching'});
-			`);
 		}
 
 		this.fragment.render(this.block, null, 'nodes');
@@ -303,8 +306,6 @@ export default class EachBlockWrapper extends Wrapper {
 		parent_node,
 		parent_nodes,
 		snippet,
-		initial_anchor_node,
-		initial_mount_node,
 		update_anchor_node,
 		update_mount_node
 	}: {
@@ -312,23 +313,13 @@ export default class EachBlockWrapper extends Wrapper {
 		parent_node: string;
 		parent_nodes: string;
 		snippet: string;
-		initial_anchor_node: string;
-		initial_mount_node: string;
 		update_anchor_node: string;
 		update_mount_node: string;
 	}) {
 		const {
-			create_each_block,
-			length,
 			iterations,
 			view_length
 		} = this.vars;
-
-		const get_key = block.get_unique_name('get_key');
-		const lookup = block.get_unique_name(`${this.var}_lookup`);
-
-		block.add_variable(iterations, '[]');
-		block.add_variable(lookup, `new @_Map()`);
 
 		if (this.fragment.nodes[0].is_dom_node()) {
 			this.block.first = this.fragment.nodes[0].var;
@@ -341,38 +332,6 @@ export default class EachBlockWrapper extends Wrapper {
 				null
 			);
 		}
-
-		block.builders.init.add_block(deindent`
-			const ${get_key} = ctx => ${
-			// @ts-ignore todo: probably error
-			this.node.key.render()};
-
-			for (let #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
-				let child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
-				let key = ${get_key}(child_ctx);
-				${lookup}.set(key, ${iterations}[#i] = ${create_each_block}(key, child_ctx));
-			}
-		`);
-
-		block.builders.create.add_block(deindent`
-			for (let #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].c();
-			}
-		`);
-
-		if (parent_nodes && this.renderer.options.hydratable) {
-			block.builders.claim.add_block(deindent`
-				for (let #i = 0; #i < ${view_length}; #i += 1) {
-					${iterations}[#i].l(${parent_nodes});
-				}
-			`);
-		}
-
-		block.builders.mount.add_block(deindent`
-			for (let #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
-			}
-		`);
 
 		const dynamic = this.block.has_update_method;
 
@@ -388,41 +347,41 @@ export default class EachBlockWrapper extends Wrapper {
 			const ${this.vars.each_block_value} = ${snippet};
 
 			${this.block.has_outros && `@group_outros();`}
-			${this.node.has_animation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
-			${iterations} = @update_keyed_each(${iterations}, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
-			${this.node.has_animation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
+			${this.node.has_animation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}.b[#i].r();`}
+			@update_keyed_each(
+				${iterations},
+				changed,
+				${dynamic ? '1' : '0'},
+				ctx,
+				${update_mount_node},
+				${destroy},
+				${update_anchor_node}
+			);
+			${this.node.has_animation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}.b[#i].a();`}
 			${this.block.has_outros && `@check_outros();`}
 		`);
 
 		if (this.block.has_outros) {
 			block.builders.outro.add_block(deindent`
 				for (let #i = 0; #i < ${view_length}; #i += 1) {
-					@transition_out(${iterations}[#i]);
+					@transition_out(${iterations}.b[#i]);
 				}
 			`);
 		}
 
 		block.builders.destroy.add_block(deindent`
-			for (let #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].d(${parent_node ? '' : 'detaching'});
-			}
+			@destroy_each_blocks(${iterations}, ${parent_node ? '' : 'detaching'});
 		`);
 	}
 
 	render_unkeyed({
 		block,
-		parent_nodes,
 		snippet,
-		initial_anchor_node,
-		initial_mount_node,
 		update_anchor_node,
 		update_mount_node
 	}: {
 		block: Block;
-		parent_nodes: string;
 		snippet: string;
-		initial_anchor_node: string;
-		initial_mount_node: string;
 		update_anchor_node: string;
 		update_mount_node: string;
 	}) {
@@ -431,37 +390,8 @@ export default class EachBlockWrapper extends Wrapper {
 			length,
 			iterations,
 			fixed_length,
-			data_length,
 			view_length
 		} = this.vars;
-
-		block.builders.init.add_block(deindent`
-			let ${iterations} = [];
-
-			for (let #i = 0; #i < ${data_length}; #i += 1) {
-				${iterations}[#i] = ${create_each_block}(${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i));
-			}
-		`);
-
-		block.builders.create.add_block(deindent`
-			for (let #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].c();
-			}
-		`);
-
-		if (parent_nodes && this.renderer.options.hydratable) {
-			block.builders.claim.add_block(deindent`
-				for (let #i = 0; #i < ${view_length}; #i += 1) {
-					${iterations}[#i].l(${parent_nodes});
-				}
-			`);
-		}
-
-		block.builders.mount.add_block(deindent`
-			for (let #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
-			}
-		`);
 
 		const all_dependencies = new Set(this.block.dependencies);
 		const { dependencies } = this.node.expression;
@@ -478,32 +408,32 @@ export default class EachBlockWrapper extends Wrapper {
 		if (condition !== '') {
 			const for_loop_body = this.block.has_update_method
 				? deindent`
-					if (${iterations}[#i]) {
-						${iterations}[#i].p(changed, child_ctx);
-						${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
+					if (${iterations}.b[#i]) {
+						${iterations}.b[#i].p(changed, child_ctx);
+						${has_transitions && `@transition_in(${this.vars.iterations}.b[#i], 1);`}
 					} else {
-						${iterations}[#i] = ${create_each_block}(child_ctx);
-						${iterations}[#i].c();
-						${has_transitions && `@transition_in(${this.vars.iterations}[#i], 1);`}
-						${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
+						${iterations}.b[#i] = ${create_each_block}(child_ctx);
+						${iterations}.b[#i].c();
+						${has_transitions && `@transition_in(${this.vars.iterations}.b[#i], 1);`}
+						${iterations}.b[#i].m(${update_mount_node}, ${update_anchor_node});
 					}
 				`
 				: has_transitions
 					? deindent`
-						if (${iterations}[#i]) {
-							@transition_in(${this.vars.iterations}[#i], 1);
+						if (${iterations}.b[#i]) {
+							@transition_in(${this.vars.iterations}.b[#i], 1);
 						} else {
-							${iterations}[#i] = ${create_each_block}(child_ctx);
-							${iterations}[#i].c();
-							@transition_in(${this.vars.iterations}[#i], 1);
-							${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
+							${iterations}.b[#i] = ${create_each_block}(child_ctx);
+							${iterations}.b[#i].c();
+							@transition_in(${this.vars.iterations}.b[#i], 1);
+							${iterations}.b[#i].m(${update_mount_node}, ${update_anchor_node});
 						}
 					`
 					: deindent`
-						if (!${iterations}[#i]) {
-							${iterations}[#i] = ${create_each_block}(child_ctx);
-							${iterations}[#i].c();
-							${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
+						if (!${iterations}.b[#i]) {
+							${iterations}.b[#i] = ${create_each_block}(child_ctx);
+							${iterations}.b[#i].c();
+							${iterations}.b[#i].m(${update_mount_node}, ${update_anchor_node});
 						}
 					`;
 
@@ -515,8 +445,8 @@ export default class EachBlockWrapper extends Wrapper {
 				const out = block.get_unique_name('out');
 
 				block.builders.init.add_block(deindent`
-					const ${out} = i => @transition_out(${iterations}[i], 1, 1, () => {
-						${iterations}[i] = null;
+					const ${out} = i => @transition_out(${iterations}.b[i], 1, 1, () => {
+						${iterations}.b[i] = null;
 					});
 				`);
 				remove_old_blocks = deindent`
@@ -529,7 +459,7 @@ export default class EachBlockWrapper extends Wrapper {
 			} else {
 				remove_old_blocks = deindent`
 					for (${this.block.has_update_method ? `` : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
-						${iterations}[#i].d(1);
+						${iterations}.b[#i].d(1);
 					}
 					${!fixed_length && `${view_length} = ${this.vars.each_block_value}.${length};`}
 				`;
@@ -560,13 +490,13 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (this.block.has_outros) {
 			block.builders.outro.add_block(deindent`
-				${iterations} = ${iterations}.filter(@_Boolean);
+				${iterations}.b = ${iterations}.b.filter(@_Boolean);
 				for (let #i = 0; #i < ${view_length}; #i += 1) {
-					@transition_out(${iterations}[#i]);
+					@transition_out(${iterations}.b[#i]);
 				}
 			`);
 		}
 
-		block.builders.destroy.add_block(`@destroy_each(${iterations}, detaching);`);
+		block.builders.destroy.add_block(`@destroy_each_blocks(${iterations}, detaching);`);
 	}
 }

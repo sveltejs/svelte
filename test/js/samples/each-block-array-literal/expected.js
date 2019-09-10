@@ -2,12 +2,15 @@
 import {
 	SvelteComponent,
 	append,
-	destroy_each,
+	create_each_blocks,
+	destroy_each_blocks,
 	detach,
 	element,
 	empty,
 	init,
+	init_each_block,
 	insert,
+	mount_each_blocks,
 	noop,
 	safe_not_equal,
 	set_data,
@@ -54,25 +57,24 @@ function create_fragment(ctx) {
 
 	let each_value = [ctx.a, ctx.b, ctx.c, ctx.d, ctx.e];
 
-	let each_blocks = [];
-
-	for (let i = 0; i < 5; i += 1) {
-		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
-	}
+	let each_blocks = init_each_block(
+		ctx,
+		get_each_context,
+		ctx => [ctx.a, ctx.b, ctx.c, ctx.d, ctx.e],
+		null,
+		create_each_block,
+		null
+	);
 
 	return {
 		c() {
-			for (let i = 0; i < 5; i += 1) {
-				each_blocks[i].c();
-			}
+			create_each_blocks(each_blocks);
 
 			each_1_anchor = empty();
 		},
 
 		m(target, anchor) {
-			for (let i = 0; i < 5; i += 1) {
-				each_blocks[i].m(target, anchor);
-			}
+			mount_each_blocks(each_blocks, target, anchor);
 
 			insert(target, each_1_anchor, anchor);
 		},
@@ -85,17 +87,17 @@ function create_fragment(ctx) {
 				for (i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
-					if (each_blocks[i]) {
-						each_blocks[i].p(changed, child_ctx);
+					if (each_blocks.b[i]) {
+						each_blocks.b[i].p(changed, child_ctx);
 					} else {
-						each_blocks[i] = create_each_block(child_ctx);
-						each_blocks[i].c();
-						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
+						each_blocks.b[i] = create_each_block(child_ctx);
+						each_blocks.b[i].c();
+						each_blocks.b[i].m(each_1_anchor.parentNode, each_1_anchor);
 					}
 				}
 
 				for (; i < 5; i += 1) {
-					each_blocks[i].d(1);
+					each_blocks.b[i].d(1);
 				}
 			}
 		},
@@ -104,7 +106,7 @@ function create_fragment(ctx) {
 		o: noop,
 
 		d(detaching) {
-			destroy_each(each_blocks, detaching);
+			destroy_each_blocks(each_blocks, detaching);
 
 			if (detaching) {
 				detach(each_1_anchor);

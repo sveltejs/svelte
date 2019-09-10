@@ -3,13 +3,17 @@ import {
 	SvelteComponent,
 	append,
 	create_animation,
+	create_each_blocks,
+	destroy_each_blocks,
 	detach,
 	element,
 	empty,
 	fix_and_destroy_block,
 	fix_position,
 	init,
+	init_each_block,
 	insert,
+	mount_each_blocks,
 	noop,
 	safe_not_equal,
 	set_data,
@@ -24,7 +28,7 @@ function get_each_context(ctx, list, i) {
 }
 
 // (19:0) {#each things as thing (thing.id)}
-function create_each_block(key_1, ctx) {
+function create_each_block(ctx, key_1) {
 	var div, t_value = ctx.thing.name + "", t, rect, stop_animation = noop;
 
 	return {
@@ -72,49 +76,52 @@ function create_each_block(key_1, ctx) {
 }
 
 function create_fragment(ctx) {
-	var each_blocks = [], each_1_lookup = new Map(), each_1_anchor;
+	var each_1_anchor;
 
 	let each_value = ctx.things;
 
-	const get_key = ctx => ctx.thing.id;
-
-	for (let i = 0; i < each_value.length; i += 1) {
-		let child_ctx = get_each_context(ctx, each_value, i);
-		let key = get_key(child_ctx);
-		each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
-	}
+	let each_blocks = init_each_block(
+		ctx,
+		get_each_context,
+		ctx => ctx.things,
+		ctx => ctx.thing.id,
+		create_each_block,
+		null
+	);
 
 	return {
 		c() {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].c();
-			}
+			create_each_blocks(each_blocks);
 
 			each_1_anchor = empty();
 		},
 
 		m(target, anchor) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
-			}
+			mount_each_blocks(each_blocks, target, anchor);
 
 			insert(target, each_1_anchor, anchor);
 		},
 
 		p(changed, ctx) {
 			const each_value = ctx.things;
-			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
-			each_blocks = update_keyed_each(each_blocks, changed, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
-			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].a();
+			for (let i = 0; i < each_blocks.b.length; i += 1) each_blocks.b[i].r();
+			update_keyed_each(
+				each_blocks,
+				changed,
+				1,
+				ctx,
+				each_1_anchor.parentNode,
+				fix_and_destroy_block,
+				each_1_anchor
+			);
+			for (let i = 0; i < each_blocks.b.length; i += 1) each_blocks.b[i].a();
 		},
 
 		i: noop,
 		o: noop,
 
 		d(detaching) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].d(detaching);
-			}
+			destroy_each_blocks(each_blocks, detaching);
 
 			if (detaching) {
 				detach(each_1_anchor);

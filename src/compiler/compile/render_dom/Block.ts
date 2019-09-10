@@ -422,7 +422,7 @@ export default class Block {
 
 		return deindent`
 			${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
-			function ${this.name}(${this.key ? `${local_key}, ` : ''}ctx) {
+			function ${this.name}(ctx${this.key ? `, ${local_key}` : ''}) {
 				${this.get_contents(local_key)}
 			}
 		`;

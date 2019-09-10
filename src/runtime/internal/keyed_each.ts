@@ -1,3 +1,4 @@
+import { EachBlock } from './each_block';
 import { transition_in, transition_out } from './transitions';
 
 export function destroy_block(block, lookup) {
@@ -21,7 +22,15 @@ export function fix_and_outro_and_destroy_block(block, lookup) {
 	outro_and_destroy_block(block, lookup);
 }
 
-export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
+export function update_keyed_each(each_block: EachBlock, changed, dynamic, ctx, node, destroy, next) {
+	const {
+		b: old_blocks,
+		l: lookup,
+		cb: create_each_block,
+		gk: get_key,
+		gc: get_context,
+	} = each_block;
+	const list = each_block.gv(ctx);
 	let o = old_blocks.length;
 	let n = list.length;
 
@@ -40,7 +49,7 @@ export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, li
 		let block = lookup.get(key);
 
 		if (!block) {
-			block = create_each_block(key, child_ctx);
+			block = create_each_block(child_ctx, key);
 			block.c();
 		} else if (dynamic) {
 			block.p(changed, child_ctx);
@@ -105,7 +114,7 @@ export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, li
 
 	while (n) insert(new_blocks[n - 1]);
 
-	return new_blocks;
+	each_block.b = new_blocks;
 }
 
 export function measure(blocks) {

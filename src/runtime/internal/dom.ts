@@ -10,12 +10,6 @@ export function detach(node: Node) {
 	node.parentNode.removeChild(node);
 }
 
-export function destroy_each(iterations, detaching) {
-	for (let i = 0; i < iterations.length; i += 1) {
-		if (iterations[i]) iterations[i].d(detaching);
-	}
-}
-
 export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
 	return document.createElement<K>(name);
 }

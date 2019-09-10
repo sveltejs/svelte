@@ -3,12 +3,15 @@ import {
 	SvelteComponentDev,
 	add_location,
 	append_dev,
-	destroy_each,
+	create_each_blocks,
+	destroy_each_blocks,
 	detach_dev,
 	dispatch_dev,
 	element,
 	init,
+	init_each_block,
 	insert_dev,
+	mount_each_blocks,
 	noop,
 	safe_not_equal,
 	set_data_dev,
@@ -76,17 +79,18 @@ function create_fragment(ctx) {
 
 	let each_value = ctx.things;
 
-	let each_blocks = [];
-
-	for (let i = 0; i < each_value.length; i += 1) {
-		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
-	}
+	let each_blocks = init_each_block(
+		ctx,
+		get_each_context,
+		ctx => ctx.things,
+		null,
+		create_each_block,
+		null
+	);
 
 	const block = {
 		c: function create() {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].c();
-			}
+			create_each_blocks(each_blocks);
 
 			t0 = space();
 			p = element("p");
@@ -100,9 +104,7 @@ function create_fragment(ctx) {
 		},
 
 		m: function mount(target, anchor) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
-			}
+			mount_each_blocks(each_blocks, target, anchor);
 
 			insert_dev(target, t0, anchor);
 			insert_dev(target, p, anchor);
@@ -118,19 +120,19 @@ function create_fragment(ctx) {
 				for (i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
-					if (each_blocks[i]) {
-						each_blocks[i].p(changed, child_ctx);
+					if (each_blocks.b[i]) {
+						each_blocks.b[i].p(changed, child_ctx);
 					} else {
-						each_blocks[i] = create_each_block(child_ctx);
-						each_blocks[i].c();
-						each_blocks[i].m(t0.parentNode, t0);
+						each_blocks.b[i] = create_each_block(child_ctx);
+						each_blocks.b[i].c();
+						each_blocks.b[i].m(t0.parentNode, t0);
 					}
 				}
 
-				for (; i < each_blocks.length; i += 1) {
-					each_blocks[i].d(1);
+				for (; i < each_blocks.b.length; i += 1) {
+					each_blocks.b[i].d(1);
 				}
-				each_blocks.length = each_value.length;
+				each_blocks.b.length = each_value.length;
 			}
 
 			if (changed.foo) {
@@ -142,7 +144,7 @@ function create_fragment(ctx) {
 		o: noop,
 
 		d: function destroy(detaching) {
-			destroy_each(each_blocks, detaching);
+			destroy_each_blocks(each_blocks, detaching);
 
 			if (detaching) {
 				detach_dev(t0);
