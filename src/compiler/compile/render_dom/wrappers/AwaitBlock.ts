@@ -8,6 +8,7 @@ import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
 import ThenBlock from '../../nodes/ThenBlock';
 import CatchBlock from '../../nodes/CatchBlock';
+import { Identifier } from '../../../interfaces';
 
 class AwaitBlockBranch extends Wrapper {
 	node: PendingBlock | ThenBlock | CatchBlock;
@@ -54,7 +55,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 	then: AwaitBlockBranch;
 	catch: AwaitBlockBranch;
 
-	var = 'await_block';
+	var: Identifier = { type: 'Identifier', name: 'await_block' };
 
 	constructor(
 		renderer: Renderer,
@@ -131,7 +132,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const info = block.get_unique_name(`info`);
 		const promise = block.get_unique_name(`promise`);
 
-		block.add_variable(promise);
+		block.add_variable(promise.name);
 
 		block.maintain_context = true;
 

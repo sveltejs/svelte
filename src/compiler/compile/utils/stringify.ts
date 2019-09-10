@@ -2,6 +2,13 @@ export function stringify(data: string, options = {}) {
 	return JSON.stringify(escape(data, options));
 }
 
+export function string_literal(data: string) {
+	return {
+		type: 'Literal',
+		value: data
+	};
+}
+
 export function escape(data: string, { only_escape_at_symbol = false } = {}) {
 	return data.replace(only_escape_at_symbol ? /@+/g : /(@+|#+)/g, (match: string) => {
 		return match + match[0];

@@ -4,13 +4,14 @@ import Component from '../Component';
 import deindent from '../utils/deindent';
 import Block from '../render_dom/Block';
 import { sanitize } from '../../utils/names';
+import { Identifier } from '../../interfaces';
 
 export default class EventHandler extends Node {
 	type: 'EventHandler';
 	name: string;
 	modifiers: Set<string>;
 	expression: Expression;
-	handler_name: string;
+	handler_name: Identifier;
 	uses_context = false;
 	can_make_passive = false;
 
@@ -42,21 +43,21 @@ export default class EventHandler extends Node {
 				}
 			}
 		} else {
-			const name = component.get_unique_name(`${sanitize(this.name)}_handler`);
+			const id = component.get_unique_name(`${sanitize(this.name)}_handler`);
 
 			component.add_var({
-				name,
+				name: id.name,
 				internal: true,
 				referenced: true
 			});
 
 			component.partly_hoisted.push(deindent`
-				function ${name}(event) {
+				function ${id}(event) {
 					@bubble($$self, event);
 				}
 			`);
 
-			this.handler_name = name;
+			this.handler_name = id;
 		}
 	}
 

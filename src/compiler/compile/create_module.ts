@@ -1,6 +1,6 @@
 import deindent from './utils/deindent';
 import list from '../utils/list';
-import { ModuleFormat, Node } from '../interfaces';
+import { ModuleFormat, Node, Identifier } from '../interfaces';
 import { stringify_props } from './utils/stringify_props';
 
 const wrappers = { esm, cjs };
@@ -16,8 +16,8 @@ export default function create_module(
 	name: string,
 	banner: string,
 	sveltePath = 'svelte',
-	helpers: Array<{ name: string; alias: string }>,
-	globals: Array<{ name: string; alias: string }>,
+	helpers: Array<{ name: string; alias: Identifier }>,
+	globals: Array<{ name: string; alias: Identifier }>,
 	imports: Node[],
 	module_exports: Export[],
 	source: string
@@ -45,14 +45,14 @@ function esm(
 	banner: string,
 	sveltePath: string,
 	internal_path: string,
-	helpers: Array<{ name: string; alias: string }>,
-	globals: Array<{ name: string; alias: string }>,
+	helpers: Array<{ name: string; alias: Identifier }>,
+	globals: Array<{ name: string; alias: Identifier }>,
 	imports: Node[],
 	module_exports: Export[],
 	source: string
 ) {
 	const internal_imports = helpers.length > 0 && (
-		`import ${stringify_props(helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).sort())} from ${JSON.stringify(internal_path)};`
+		`import ${stringify_props(helpers.map(h => h.name === h.alias.name ? h.name : `${h.name} as ${h.alias}`).sort())} from ${JSON.stringify(internal_path)};`
 	);
 	const internal_globals = globals.length > 0 && (
 		`const ${stringify_props(globals.map(g => `${g.name}: ${g.alias}`).sort())} = ${helpers.find(({ name }) => name === 'globals').alias};`
@@ -90,12 +90,12 @@ function cjs(
 	banner: string,
 	sveltePath: string,
 	internal_path: string,
-	helpers: Array<{ name: string; alias: string }>,
-	globals: Array<{ name: string; alias: string }>,
+	helpers: Array<{ name: string; alias: Identifier }>,
+	globals: Array<{ name: string; alias: Identifier }>,
 	imports: Node[],
 	module_exports: Export[]
 ) {
-	const declarations = helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).sort();
+	const declarations = helpers.map(h => `${h.alias.name === h.name ? h.name : `${h.name}: ${h.alias}`}`).sort();
 
 	const internal_imports = helpers.length > 0 && (
 		`const ${stringify_props(declarations)} = require(${JSON.stringify(internal_path)});\n`

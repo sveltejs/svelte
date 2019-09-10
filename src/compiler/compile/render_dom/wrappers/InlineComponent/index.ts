@@ -6,7 +6,7 @@ import FragmentWrapper from '../Fragment';
 import { quote_name_if_necessary, quote_prop_if_necessary, sanitize } from '../../../../utils/names';
 import { stringify_props } from '../../../utils/stringify_props';
 import add_to_set from '../../../utils/add_to_set';
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
 import get_object from '../../../utils/get_object';
 import create_debugging_comment from '../shared/create_debugging_comment';
@@ -15,9 +15,10 @@ import EachBlock from '../../../nodes/EachBlock';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
+import { Identifier } from '../../../../interfaces';
 
 export default class InlineComponentWrapper extends Wrapper {
-	var: string;
+	var: Identifier;
 	slots: Map<string, { block: Block; scope: TemplateScope; fn?: string }> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
@@ -61,11 +62,14 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 		});
 
-		this.var = (
-			this.node.name === 'svelte:self' ? renderer.component.name :
-				this.node.name === 'svelte:component' ? 'switch_instance' :
-					sanitize(this.node.name)
-		).toLowerCase();
+		this.var = {
+			type: 'Identifier',
+			name: (
+				this.node.name === 'svelte:self' ? renderer.component.name.name :
+					this.node.name === 'svelte:component' ? 'switch_instance' :
+						sanitize(this.node.name)
+			).toLowerCase()
+		};
 
 		if (this.node.children.length) {
 			const default_slot = block.child({
@@ -253,19 +257,19 @@ export default class InlineComponentWrapper extends Wrapper {
 			component.has_reactive_assignments = true;
 
 			if (binding.name === 'this') {
-				return bind_this(component, block, binding, this.var);
+				return bind_this(component, block, binding, this.var.name);
 			}
 
-			const name = component.get_unique_name(`${this.var}_${binding.name}_binding`);
+			const id = component.get_unique_name(`${this.var}_${binding.name}_binding`);
 
 			component.add_var({
-				name,
+				name: id.name,
 				internal: true,
 				referenced: true
 			});
 
 			const updating = block.get_unique_name(`updating_${binding.name}`);
-			block.add_variable(updating);
+			block.add_variable(updating.name);
 
 			const snippet = binding.expression.render(block);
 
@@ -292,13 +296,13 @@ export default class InlineComponentWrapper extends Wrapper {
 				const { name } = binding.expression.node;
 				const { object, property, snippet } = block.bindings.get(name);
 				lhs = snippet;
-				contextual_dependencies.push(object, property);
+				contextual_dependencies.push(object.name, property.name);
 			}
 
 			const value = block.get_unique_name('value');
-			const args = [value];
+			const args: any[] = [value];
 			if (contextual_dependencies.length > 0) {
-				args.push(`{ ${contextual_dependencies.join(', ')} }`);
+				args.push(x`{ ${contextual_dependencies.join(', ')} }`);
 
 				block.chunks.init.push(b`
 					function ${name}(${value}) {
@@ -311,7 +315,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				block.maintain_context = true; // TODO put this somewhere more logical
 			} else {
 				block.chunks.init.push(b`
-					function ${name}(${value}) {
+					function ${id}(${value}) {
 						ctx.${name}.call(null, ${value});
 						${updating} = true;
 						@add_flush_callback(() => ${updating} = false);
@@ -320,7 +324,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const body = b`
-				function ${name}(${args.join(', ')}) {
+				function ${id}(${args.join(', ')}) {
 					${lhs} = ${value};
 					${component.invalidate(dependencies[0])};
 				}
@@ -328,7 +332,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			component.partly_hoisted.push(body);
 
-			return `@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${name}));`;
+			return `@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${id}));`;
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {

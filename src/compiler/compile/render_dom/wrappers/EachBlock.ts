@@ -4,9 +4,10 @@ import Wrapper from './shared/Wrapper';
 import create_debugging_comment from './shared/create_debugging_comment';
 import EachBlock from '../../nodes/EachBlock';
 import FragmentWrapper from './Fragment';
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import ElseBlock from '../../nodes/ElseBlock';
 import { attach_head } from '../../utils/tail';
+import { Identifier } from '../../../interfaces';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -51,10 +52,10 @@ export default class EachBlockWrapper extends Wrapper {
 	fragment: FragmentWrapper;
 	else?: ElseBlockWrapper;
 	vars: {
-		create_each_block: string;
-		each_block_value: string;
-		get_each_context: string;
-		iterations: string;
+		create_each_block: Identifier;
+		each_block_value: Identifier;
+		get_each_context: Identifier;
+		iterations: Identifier;
 		fixed_length: number;
 		data_length: string;
 		view_length: string;
@@ -62,9 +63,9 @@ export default class EachBlockWrapper extends Wrapper {
 	}
 
 	context_props: string[];
-	index_name: string;
+	index_name: Identifier;
 
-	var = 'each';
+	var: Identifier = { type: 'Identifier', name: 'each' };
 
 	constructor(
 		renderer: Renderer,
@@ -93,7 +94,9 @@ export default class EachBlockWrapper extends Wrapper {
 		// TODO this seems messy
 		this.block.has_animation = this.node.has_animation;
 
-		this.index_name = this.node.index || renderer.component.get_unique_name(`${this.node.context}_index`);
+		this.index_name = this.node.index
+			? { type: 'Identifier', name: this.node.index }
+			: renderer.component.get_unique_name(`${this.node.context}_index`);
 
 		const fixed_length =
 			node.expression.node.type === 'ArrayExpression' &&
@@ -198,12 +201,12 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		`);
 
-		const initial_anchor_node = parent_node ? 'null' : 'anchor';
-		const initial_mount_node = parent_node || '#target';
+		const initial_anchor_node: Identifier = { type: 'Identifier', name: parent_node ? 'null' : 'anchor' };
+		const initial_mount_node: Identifier = { type: 'Identifier', name: parent_node || '#target' };
 		const update_anchor_node = needs_anchor
 			? block.get_unique_name(`${this.var}_anchor`)
-			: (this.next && this.next.var) || 'null';
-		const update_mount_node = this.get_update_mount_node(update_anchor_node);
+			: (this.next && this.next.var) || { type: 'Identifier', name: 'null' };
+		const update_mount_node: Identifier = this.get_update_mount_node((update_anchor_node as Identifier));
 
 		const args = {
 			block,
@@ -232,9 +235,9 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (needs_anchor) {
 			block.add_element(
-				update_anchor_node,
-				`@empty()`,
-				parent_nodes && `@empty()`,
+				(update_anchor_node as Identifier).name,
+				x`@empty()`,
+				parent_nodes && x`@empty()`,
 				parent_node
 			);
 		}
@@ -312,10 +315,10 @@ export default class EachBlockWrapper extends Wrapper {
 		parent_node: string;
 		parent_nodes: string;
 		snippet: string;
-		initial_anchor_node: string;
-		initial_mount_node: string;
-		update_anchor_node: string;
-		update_mount_node: string;
+		initial_anchor_node: Identifier;
+		initial_mount_node: Identifier;
+		update_anchor_node: Identifier;
+		update_mount_node: Identifier;
 	}) {
 		const {
 			create_each_block,
@@ -327,17 +330,17 @@ export default class EachBlockWrapper extends Wrapper {
 		const get_key = block.get_unique_name('get_key');
 		const lookup = block.get_unique_name(`${this.var}_lookup`);
 
-		block.add_variable(iterations, '[]');
-		block.add_variable(lookup, `new @_Map()`);
+		block.add_variable(iterations.name, '[]');
+		block.add_variable(lookup.name, `new @_Map()`);
 
 		if (this.fragment.nodes[0].is_dom_node()) {
 			this.block.first = this.fragment.nodes[0].var;
 		} else {
 			this.block.first = this.block.get_unique_name('first');
 			this.block.add_element(
-				this.block.first,
-				`@empty()`,
-				parent_nodes && `@empty()`,
+				this.block.first.name,
+				x`@empty()`,
+				parent_nodes && x`@empty()`,
 				null
 			);
 		}
@@ -421,10 +424,10 @@ export default class EachBlockWrapper extends Wrapper {
 		block: Block;
 		parent_nodes: string;
 		snippet: string;
-		initial_anchor_node: string;
-		initial_mount_node: string;
-		update_anchor_node: string;
-		update_mount_node: string;
+		initial_anchor_node: Identifier;
+		initial_mount_node: Identifier;
+		update_anchor_node: Identifier;
+		update_mount_node: Identifier;
 	}) {
 		const {
 			create_each_block,

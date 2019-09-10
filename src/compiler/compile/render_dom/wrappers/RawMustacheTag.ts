@@ -1,13 +1,14 @@
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Tag from './shared/Tag';
 import Wrapper from './shared/Wrapper';
 import MustacheTag from '../../nodes/MustacheTag';
 import RawMustacheTag from '../../nodes/RawMustacheTag';
+import { Identifier } from '../../../interfaces';
 
 export default class RawMustacheTagWrapper extends Tag {
-	var = 'raw';
+	var: Identifier = { type: 'Identifier', name: 'raw' };
 
 	constructor(
 		renderer: Renderer,
@@ -41,7 +42,7 @@ export default class RawMustacheTagWrapper extends Tag {
 			const html_tag = block.get_unique_name('html_tag');
 			const html_anchor = needs_anchor && block.get_unique_name('html_anchor');
 
-			block.add_variable(html_tag);
+			block.add_variable(html_tag.name);
 
 			const { init } = this.rename_this_method(
 				block,
@@ -54,7 +55,7 @@ export default class RawMustacheTagWrapper extends Tag {
 			block.chunks.mount.push(b`${html_tag}.m(${parent_node || '#target'}${parent_node ? '' : ', anchor'});`);
 
 			if (needs_anchor) {
-				block.add_element(html_anchor, '@empty()', '@empty()', parent_node);
+				block.add_element(html_anchor.name, x`@empty()`, x`@empty()`, parent_node);
 			}
 
 			if (!parent_node || in_head) {

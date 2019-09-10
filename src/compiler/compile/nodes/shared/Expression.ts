@@ -307,7 +307,7 @@ export default class Expression {
 				if (map.has(node)) scope = scope.parent;
 
 				if (node === function_expression) {
-					const name = component.get_unique_name(
+					const id = component.get_unique_name(
 						sanitize(get_function_name(node, owner))
 					);
 
@@ -325,16 +325,16 @@ export default class Expression {
 					const body = code.slice(node.body.start, node.body.end).trim();
 
 					const fn = node.type === 'FunctionExpression'
-						? `${node.async ? 'async ' : ''}function${node.generator ? '*' : ''} ${name}(${args.join(', ')}) ${body}`
-						: `const ${name} = ${node.async ? 'async ' : ''}(${args.join(', ')}) => ${body};`;
+						? `${node.async ? 'async ' : ''}function${node.generator ? '*' : ''} ${id}(${args.join(', ')}) ${body}`
+						: `const ${id} = ${node.async ? 'async ' : ''}(${args.join(', ')}) => ${body};`;
 
 					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
 						// we can hoist this out of the component completely
 						component.fully_hoisted.push(fn);
-						code.overwrite(node.start, node.end, name);
+						code.overwrite(node.start, node.end, id.name);
 
 						component.add_var({
-							name,
+							name: id.name,
 							internal: true,
 							hoistable: true,
 							referenced: true
@@ -344,10 +344,10 @@ export default class Expression {
 					else if (contextual_dependencies.size === 0) {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(fn);
-						code.overwrite(node.start, node.end, `ctx.${name}`);
+						code.overwrite(node.start, node.end, `ctx.${id}`);
 
 						component.add_var({
-							name,
+							name: id.name,
 							internal: true,
 							referenced: true
 						});
@@ -356,17 +356,17 @@ export default class Expression {
 					else {
 						// we need a combo block/init recipe
 						component.partly_hoisted.push(fn);
-						code.overwrite(node.start, node.end, name);
+						code.overwrite(node.start, node.end, id.name);
 
 						component.add_var({
-							name,
+							name: id.name,
 							internal: true,
 							referenced: true
 						});
 
 						declarations.push(b`
-							function ${name}(${original_params ? '...args' : ''}) {
-								return ctx.${name}(ctx${original_params ? ', ...args' : ''});
+							function ${id}(${original_params ? '...args' : ''}) {
+								return ctx.${id}(ctx${original_params ? ', ...args' : ''});
 							}
 						`);
 					}

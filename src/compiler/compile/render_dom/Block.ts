@@ -2,34 +2,46 @@ import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { escape } from '../utils/stringify';
 import { b, x } from 'code-red';
-import { Node } from '../../interfaces';
+import { Node, Identifier } from '../../interfaces';
 
 export interface BlockOptions {
 	parent?: Block;
-	name: string;
+	name: Identifier;
 	type: string;
 	renderer?: Renderer;
 	comment?: string;
-	key?: string;
-	bindings?: Map<string, { object: string; property: string; snippet: string; store: string; tail: string }>;
+	key?: Identifier;
+	bindings?: Map<string, {
+		object: Identifier;
+		property: Identifier;
+		snippet: string;
+		store: string;
+		tail: string;
+	}>;
 	dependencies?: Set<string>;
 }
 
 export default class Block {
 	parent?: Block;
 	renderer: Renderer;
-	name: string;
+	name: Identifier;
 	type: string;
 	comment?: string;
 
 	wrappers: Wrapper[];
 
-	key: string;
-	first: string;
+	key: Identifier;
+	first: Identifier;
 
 	dependencies: Set<string>;
 
-	bindings: Map<string, { object: string; property: string; snippet: string; store: string; tail: string }>;
+	bindings: Map<string, {
+		object: Identifier;
+		property: Identifier;
+		snippet: string;
+		store: string;
+		tail: string
+	}>;
 
 	chunks: {
 		init: Node[];
@@ -56,9 +68,9 @@ export default class Block {
 	has_outro_method: boolean;
 	outros: number;
 
-	aliases: Map<string, string>;
+	aliases: Map<string, Identifier>;
 	variables: Map<string, string>;
-	get_unique_name: (name: string) => string;
+	get_unique_name: (name: string) => Identifier;
 
 	has_update_method = false;
 	autofocus: string;
@@ -108,6 +120,7 @@ export default class Block {
 	}
 
 	assign_variable_names() {
+		// TODO reimplement for #3539
 		const seen = new Set();
 		const dupes = new Set();
 
@@ -139,7 +152,7 @@ export default class Block {
 				counts.set(wrapper.var, i + 1);
 				wrapper.var = this.get_unique_name(wrapper.var + i);
 			} else {
-				wrapper.var = this.get_unique_name(wrapper.var);
+				wrapper.var = this.get_unique_name(wrapper.var.name);
 			}
 		}
 	}
@@ -154,8 +167,8 @@ export default class Block {
 
 	add_element(
 		name: string,
-		render_statement: string,
-		claim_statement: string,
+		render_statement: Node,
+		claim_statement: Node,
 		parent_node: string,
 		no_detach?: boolean
 	) {
@@ -192,7 +205,7 @@ export default class Block {
 
 	add_variable(name: string, init?: string) {
 		if (name[0] === '#') {
-			name = this.alias(name.slice(1));
+			name = this.alias(name.slice(1)).name;
 		}
 
 		if (this.variables.has(name) && this.variables.get(name) !== init) {
@@ -281,7 +294,7 @@ export default class Block {
 			properties.mount = noop;
 		} else {
 			properties.mount = x`function mount(#target, anchor) {
-				${this.chunks.mount}
+				//${this.chunks.mount}
 			}`;
 		}
 
@@ -338,7 +351,7 @@ export default class Block {
 			}`;
 		}
 
-		const return_value = x`{
+		const return_value: any = x`{
 			key: ${properties.key},
 			first: ${properties.first},
 			c: ${properties.create},
@@ -354,13 +367,17 @@ export default class Block {
 			d: ${properties.destroy}
 		}`;
 
+		return_value.properties = return_value.properties.filter(prop => prop.value);
+
 		/* eslint-disable @typescript-eslint/indent,indent */
 		return b`
-			${Array.from(this.variables.entries()).map(([init, id]) => {
+			${Array.from(this.variables.entries()).map(([id, init]) => {
 				const id_node = { type: 'Identifier', name: id };
 				const init_node = { type: 'Identifier', name: init };
 
-				return b`let ${id_node} = ${init_node}`;
+				return init
+					? b`let ${id_node} = ${init_node}`
+					: b`let ${id_node}`;
 			})}
 
 			${this.chunks.init}

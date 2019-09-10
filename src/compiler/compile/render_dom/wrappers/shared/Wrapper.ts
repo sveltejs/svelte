@@ -1,6 +1,8 @@
 import Renderer from '../../Renderer';
 import Block from '../../Block';
 import { INode } from '../../../nodes/interfaces';
+import { Identifier } from '../../../../interfaces';
+import { x } from 'code-red';
 
 export default class Wrapper {
 	renderer: Renderer;
@@ -10,7 +12,7 @@ export default class Wrapper {
 	prev: Wrapper | null;
 	next: Wrapper | null;
 
-	var: string;
+	var: Identifier;
 	can_use_innerhtml: boolean;
 
 	constructor(
@@ -48,13 +50,13 @@ export default class Wrapper {
 		const needs_anchor = this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node();
 		const anchor = needs_anchor
 			? block.get_unique_name(`${this.var}_anchor`)
-			: (this.next && this.next.var) || 'null';
+			: (this.next && this.next.var) || { type: 'Identifier', name: 'null' };
 
 		if (needs_anchor) {
 			block.add_element(
-				anchor,
-				`@empty()`,
-				parent_nodes && `@empty()`,
+				anchor.name,
+				x`@empty()`,
+				parent_nodes && x`@empty()`,
 				parent_node
 			);
 		}
@@ -62,10 +64,10 @@ export default class Wrapper {
 		return anchor;
 	}
 
-	get_update_mount_node(anchor: string) {
-		return (this.parent && this.parent.is_dom_node())
+	get_update_mount_node(anchor: Identifier): Identifier {
+		return ((this.parent && this.parent.is_dom_node())
 			? this.parent.var
-			: `${anchor}.parentNode`;
+			: x`${anchor}.parentNode`) as Identifier;
 	}
 
 	is_dom_node() {

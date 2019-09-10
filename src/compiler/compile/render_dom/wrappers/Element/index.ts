@@ -4,7 +4,7 @@ import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
 import { is_void, quote_prop_if_necessary, quote_name_if_necessary, sanitize } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
-import { stringify, escape_html, escape } from '../../../utils/stringify';
+import { escape_html, escape, string_literal } from '../../../utils/stringify';
 import TextWrapper from '../Text';
 import fix_attribute_casing from './fix_attribute_casing';
 import { b, x } from 'code-red';
@@ -114,7 +114,7 @@ export default class ElementWrapper extends Wrapper {
 	slot_block: Block;
 	select_binding_dependencies?: Set<string>;
 
-	var: string;
+	var: any;
 
 	constructor(
 		renderer: Renderer,
@@ -125,7 +125,10 @@ export default class ElementWrapper extends Wrapper {
 		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
-		this.var = node.name.replace(/[^a-zA-Z0-9_$]/g, '_');
+		this.var = {
+			type: 'Identifier',
+			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+		};
 
 		this.class_dependencies = [];
 
@@ -288,7 +291,7 @@ export default class ElementWrapper extends Wrapper {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				block.chunks.create.push(
 					 // @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
-					b`${node}.textContent = ${stringify(this.fragment.nodes[0].data)};`
+					b`${node}.textContent = ${string_literal(this.fragment.nodes[0].data)};`
 				);
 			} else {
 				const inner_html = escape(
@@ -306,7 +309,7 @@ export default class ElementWrapper extends Wrapper {
 				child.render(
 					block,
 					this.node.name === 'template' ? `${node}.content` : node,
-					nodes
+					nodes.name
 				);
 			});
 		}
@@ -377,19 +380,19 @@ export default class ElementWrapper extends Wrapper {
 		const { name, namespace } = this.node;
 
 		if (namespace === 'http://www.w3.org/2000/svg') {
-			return `@svg_element("${name}")`;
+			return x`@svg_element("${name}")`;
 		}
 
 		if (namespace) {
-			return `@_document.createElementNS("${namespace}", "${name}")`;
+			return x`@_document.createElementNS("${namespace}", "${name}")`;
 		}
 
 		const is = this.attributes.find(attr => attr.node.name === 'is');
 		if (is) {
-			return `@element_is("${name}", ${is.render_chunks().join(' + ')});`;
+			return x`@element_is("${name}", ${is.render_chunks().join(' + ')});`;
 		}
 
-		return `@element("${name}")`;
+		return x`@element("${name}")`;
 	}
 
 	get_claim_statement(nodes: string) {
@@ -402,9 +405,9 @@ export default class ElementWrapper extends Wrapper {
 			? this.node.name
 			: this.node.name.toUpperCase();
 
-		return `@claim_element(${nodes}, "${name}", ${attributes
-			? `{ ${attributes} }`
-			: `{}`}, ${this.node.namespace === namespaces.svg ? true : false})`;
+		return x`@claim_element(${nodes}, "${name}", ${attributes
+			? x`{ ${attributes} }`
+			: x`{}`}, ${this.node.namespace === namespaces.svg ? true : false})`;
 	}
 
 	add_bindings(block: Block) {
@@ -418,7 +421,7 @@ export default class ElementWrapper extends Wrapper {
 			block.get_unique_name(`${this.var}_updating`) :
 			null;
 
-		if (lock) block.add_variable(lock, 'false');
+		if (lock) block.add_variable(lock.name, 'false');
 
 		const groups = events
 			.map(event => ({
@@ -433,7 +436,7 @@ export default class ElementWrapper extends Wrapper {
 			const handler = renderer.component.get_unique_name(`${this.var}_${group.events.join('_')}_handler`);
 
 			renderer.component.add_var({
-				name: handler,
+				name: handler.name,
 				internal: true,
 				referenced: true
 			});
@@ -450,7 +453,7 @@ export default class ElementWrapper extends Wrapper {
 				add_to_set(contextual_dependencies, binding.node.expression.contextual_dependencies);
 				add_to_set(contextual_dependencies, binding.handler.contextual_dependencies);
 
-				binding.render(block, lock);
+				binding.render(block, lock.name);
 			});
 
 			// media bindings — awkward special case. The native timeupdate events
@@ -505,7 +508,7 @@ export default class ElementWrapper extends Wrapper {
 				if (name === 'resize') {
 					// special case
 					const resize_listener = block.get_unique_name(`${this.var}_resize_listener`);
-					block.add_variable(resize_listener);
+					block.add_variable(resize_listener.name);
 
 					block.chunks.mount.push(
 						b`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
@@ -654,7 +657,7 @@ export default class ElementWrapper extends Wrapper {
 				? intro.expression.render(block)
 				: '{}';
 
-			block.add_variable(name);
+			block.add_variable(name.name);
 
 			const fn = component.qualify(intro.name);
 
@@ -695,7 +698,7 @@ export default class ElementWrapper extends Wrapper {
 			const outro_name = outro && block.get_unique_name(`${this.var}_outro`);
 
 			if (intro) {
-				block.add_variable(intro_name);
+				block.add_variable(intro_name.name);
 				const snippet = intro.expression
 					? intro.expression.render(block)
 					: '{}';
@@ -737,7 +740,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			if (outro) {
-				block.add_variable(outro_name);
+				block.add_variable(outro_name.name);
 				const snippet = outro.expression
 					? outro.expression.render(block)
 					: '{}';
@@ -780,8 +783,8 @@ export default class ElementWrapper extends Wrapper {
 		const rect = block.get_unique_name('rect');
 		const stop_animation = block.get_unique_name('stop_animation');
 
-		block.add_variable(rect);
-		block.add_variable(stop_animation, '@noop');
+		block.add_variable(rect.name);
+		block.add_variable(stop_animation.name, '@noop');
 
 		block.chunks.measure.push(b`
 			${rect} = ${this.var}.getBoundingClientRect();

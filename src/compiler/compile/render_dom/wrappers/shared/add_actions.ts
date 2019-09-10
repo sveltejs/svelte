@@ -19,30 +19,30 @@ export default function add_actions(
 			dependencies = expression.dynamic_dependencies();
 		}
 
-		const name = block.get_unique_name(
+		const id = block.get_unique_name(
 			`${action.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
 		);
 
-		block.add_variable(name);
+		block.add_variable(id.name);
 
 		const fn = component.qualify(action.name);
 
 		block.chunks.mount.push(
-			b`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
+			b`${id} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
 		);
 
 		if (dependencies && dependencies.length > 0) {
-			let conditional = `typeof ${name}.update === 'function' && `;
+			let conditional = `typeof ${id}.update === 'function' && `;
 			const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
 			conditional += dependencies.length > 1 ? `(${deps})` : deps;
 
 			block.chunks.update.push(
-				b`if (${conditional}) ${name}.update.call(null, ${snippet});`
+				b`if (${conditional}) ${id}.update.call(null, ${snippet});`
 			);
 		}
 
 		block.chunks.destroy.push(
-			b`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy();`
+			b`if (${id} && typeof ${id}.destroy === 'function') ${id}.destroy();`
 		);
 	});
 }

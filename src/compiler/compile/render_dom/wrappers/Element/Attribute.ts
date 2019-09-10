@@ -99,7 +99,7 @@ export default class AttributeWrapper {
 				`${element.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
 			);
 
-			if (should_cache) block.add_variable(last);
+			if (should_cache) block.add_variable(last.name);
 
 			let updater;
 			const init = should_cache ? `${last} = ${value}` : value;

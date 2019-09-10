@@ -1,5 +1,5 @@
 import Block from './Block';
-import { CompileOptions, Node } from '../../interfaces';
+import { CompileOptions, Node, Identifier } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
 
@@ -15,7 +15,7 @@ export default class Renderer {
 	block: Block;
 	fragment: FragmentWrapper;
 
-	file_var: string;
+	file_var: Identifier;
 	locate: (c: number) => { line: number; column: number };
 
 	constructor(component: Component, options: CompileOptions) {

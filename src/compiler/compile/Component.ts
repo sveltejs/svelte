@@ -16,7 +16,7 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import internal_exports from './internal_exports';
-import { Node, Ast, CompileOptions, Var, Warning } from '../interfaces';
+import { Node, Ast, CompileOptions, Var, Warning, Identifier } from '../interfaces';
 import error from '../utils/error';
 import get_code_frame from '../utils/get_code_frame';
 import flatten_reference from './utils/flatten_reference';
@@ -90,7 +90,7 @@ export default class Component {
 	ast: Ast;
 	source: string;
 	code: MagicString;
-	name: string;
+	name: Identifier;
 	compile_options: CompileOptions;
 	fragment: Fragment;
 	module_scope: Scope;
@@ -99,7 +99,7 @@ export default class Component {
 
 	component_options: ComponentOptions;
 	namespace: string;
-	tag: string;
+	tag: Identifier;
 	accessors: boolean;
 
 	vars: Var[] = [];
@@ -122,8 +122,8 @@ export default class Component {
 	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
 	injected_reactive_declaration_vars: Set<string> = new Set();
-	helpers: Map<string, string> = new Map();
-	globals: Map<string, string> = new Map();
+	helpers: Map<string, Identifier> = new Map();
+	globals: Map<string, Identifier> = new Map();
 
 	indirect_dependencies: Map<string, Set<string>> = new Map();
 
@@ -141,7 +141,7 @@ export default class Component {
 
 	stylesheet: Stylesheet;
 
-	aliases: Map<string, string> = new Map();
+	aliases: Map<string, Identifier> = new Map();
 	used_names: Set<string> = new Set();
 	globally_used_names: Set<string> = new Set();
 
@@ -156,7 +156,7 @@ export default class Component {
 		stats: Stats,
 		warnings: Warning[]
 	) {
-		this.name = name;
+		this.name = { type: 'Identifier', name };
 
 		this.stats = stats;
 		this.warnings = warnings;
@@ -205,7 +205,10 @@ export default class Component {
 					message: `No custom element 'tag' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>`,
 				});
 			}
-			this.tag = this.component_options.tag || compile_options.tag;
+			this.tag = {
+				type: 'Identifier',
+				name: this.component_options.tag || compile_options.tag
+			};
 		} else {
 			this.tag = this.name;
 		}
@@ -335,7 +338,7 @@ export default class Component {
 
 			const referenced_globals = Array.from(
 				this.globals,
-				([name, alias]) => name !== alias && { name, alias }
+				([name, alias]) => name !== alias.name && { name, alias }
 			).filter(Boolean);
 			if (referenced_globals.length) {
 				this.helper('globals');
@@ -348,7 +351,7 @@ export default class Component {
 			const module = create_module(
 				printed.code,
 				format,
-				name,
+				name.name,
 				banner,
 				compile_options.sveltePath,
 				imported_helpers,
@@ -437,7 +440,7 @@ export default class Component {
 		};
 	}
 
-	get_unique_name(name: string) {
+	get_unique_name(name: string): Identifier {
 		if (test) name = `${name}$`;
 		let alias = name;
 		for (
@@ -449,7 +452,7 @@ export default class Component {
 			alias = `${name}_${i++}`
 		);
 		this.used_names.add(alias);
-		return alias;
+		return { type: 'Identifier', name: alias };
 	}
 
 	get_unique_name_maker() {
@@ -463,7 +466,7 @@ export default class Component {
 		internal_exports.forEach(add);
 		this.var_lookup.forEach((_value, key) => add(key));
 
-		return (name: string) => {
+		return (name: string): Identifier => {
 			if (test) name = `${name}$`;
 			let alias = name;
 			for (
@@ -473,7 +476,11 @@ export default class Component {
 			);
 			local_used_names.add(alias);
 			this.globally_used_names.add(alias);
-			return alias;
+
+			return {
+				type: 'Identifier',
+				name: alias
+			};
 		};
 	}
 

@@ -152,7 +152,7 @@ export default class BindingWrapper {
 			{
 				// this is necessary to prevent audio restarting by itself
 				const last = block.get_unique_name(`${parent.var}_is_paused`);
-				block.add_variable(last, 'true');
+				block.add_variable(last.name, 'true');
 
 				update_conditions.push(`${last} !== (${last} = ${this.snippet})`);
 				update_dom = b`${parent.var}[${last} ? "pause" : "play"]();`;
@@ -272,7 +272,7 @@ function get_event_handler(
 			mutation: store
 				? mutate_store(store, value, tail)
 				: `${snippet}${tail} = ${value};`,
-			contextual_dependencies: new Set([object, property])
+			contextual_dependencies: new Set([object.name, property.name])
 		};
 	}
 

@@ -8,7 +8,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 	const fn = component.get_unique_name(`${variable}_binding`);
 
 	component.add_var({
-		name: fn,
+		name: fn.name,
 		internal: true,
 		referenced: true
 	});

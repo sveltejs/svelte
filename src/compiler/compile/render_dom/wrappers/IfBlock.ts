@@ -6,8 +6,10 @@ import IfBlock from '../../nodes/IfBlock';
 import create_debugging_comment from './shared/create_debugging_comment';
 import ElseBlock from '../../nodes/ElseBlock';
 import FragmentWrapper from './Fragment';
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import { walk } from 'estree-walker';
+import { Identifier } from '../../../interfaces';
+import Node from '../../nodes/shared/Node';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -19,8 +21,8 @@ class IfBlockBranch extends Wrapper {
 	block: Block;
 	fragment: FragmentWrapper;
 	dependencies?: string[];
-	condition?: string;
-	snippet?: string;
+	condition?: any;
+	snippet?: Node;
 	is_dynamic: boolean;
 
 	var = null;
@@ -54,9 +56,9 @@ class IfBlockBranch extends Wrapper {
 
 			if (should_cache) {
 				this.condition = block.get_unique_name(`show_if`);
-				this.snippet = expression.render(block);
+				this.snippet = expression.node;
 			} else {
-				this.condition = expression.render(block);
+				this.condition = expression.node;
 			}
 		}
 
@@ -79,7 +81,7 @@ export default class IfBlockWrapper extends Wrapper {
 	branches: IfBlockBranch[];
 	needs_update = false;
 
-	var = 'if_block';
+	var: Identifier = { type: 'Identifier', name: 'if_block' };
 
 	constructor(
 		renderer: Renderer,
@@ -224,9 +226,9 @@ export default class IfBlockWrapper extends Wrapper {
 
 		if (needs_anchor) {
 			block.add_element(
-				anchor,
-				`@empty()`,
-				parent_nodes && `@empty()`,
+				(anchor as Identifier).name,
+				x`@empty()`,
+				parent_nodes && x`@empty()`,
 				parent_node
 			);
 		}
@@ -340,7 +342,7 @@ export default class IfBlockWrapper extends Wrapper {
 			? ''
 			: `if (~${current_block_type_index}) `;
 
-		block.add_variable(current_block_type_index);
+		block.add_variable(current_block_type_index.name);
 		block.add_variable(name);
 
 		/* eslint-disable @typescript-eslint/indent,indent */
@@ -470,7 +472,7 @@ export default class IfBlockWrapper extends Wrapper {
 	) {
 		const branch = this.branches[0];
 
-		if (branch.snippet) block.add_variable(branch.condition, branch.snippet);
+		if (branch.snippet) block.add_variable(branch.condition, '' + branch.snippet);
 
 		block.chunks.init.push(b`
 			var ${name} = (${branch.condition}) && ${branch.block.name}(ctx);

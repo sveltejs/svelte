@@ -73,14 +73,14 @@ export default class WindowWrapper extends Wrapper {
 		const scrolling_timeout = block.get_unique_name(`scrolling_timeout`);
 
 		Object.keys(events).forEach(event => {
-			const handler_name = block.get_unique_name(`onwindow${event}`);
+			const id = block.get_unique_name(`onwindow${event}`);
 			const props = events[event];
 
 			if (event === 'scroll') {
 				// TODO other bidirectional bindings...
-				block.add_variable(scrolling, 'false');
-				block.add_variable(clear_scrolling, `() => { ${scrolling} = false }`);
-				block.add_variable(scrolling_timeout);
+				block.add_variable(scrolling.name, 'false');
+				block.add_variable(clear_scrolling.name, `() => { ${scrolling} = false }`);
+				block.add_variable(scrolling_timeout.name);
 
 				const condition = [
 					bindings.scrollX && `"${bindings.scrollX}" in this._state`,
@@ -103,7 +103,7 @@ export default class WindowWrapper extends Wrapper {
 						${scrolling} = true;
 						@_clearTimeout(${scrolling_timeout});
 						${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
-						ctx.${handler_name}();
+						ctx.${id}();
 					})
 				`);
 			} else {
@@ -114,24 +114,24 @@ export default class WindowWrapper extends Wrapper {
 				});
 
 				block.event_listeners.push(b`
-					@listen(@_window, "${event}", ctx.${handler_name})
+					@listen(@_window, "${event}", ctx.${id})
 				`);
 			}
 
 			component.add_var({
-				name: handler_name,
+				name: id.name,
 				internal: true,
 				referenced: true
 			});
 
 			component.partly_hoisted.push(b`
-				function ${handler_name}() {
+				function ${id}() {
 					${props.map(prop => `${prop.name} = @_window.${prop.value}; $$invalidate('${prop.name}', ${prop.name});`)}
 				}
 			`);
 
 			block.chunks.init.push(b`
-				@add_render_callback(ctx.${handler_name});
+				@add_render_callback(ctx.${id});
 			`);
 
 			component.has_reactive_assignments = true;
@@ -159,28 +159,28 @@ export default class WindowWrapper extends Wrapper {
 
 		// another special case. (I'm starting to think these are all special cases.)
 		if (bindings.online) {
-			const handler_name = block.get_unique_name(`onlinestatuschanged`);
+			const id = block.get_unique_name(`onlinestatuschanged`);
 			const name = bindings.online;
 
 			component.add_var({
-				name: handler_name,
+				name: id.name,
 				internal: true,
 				referenced: true
 			});
 
 			component.partly_hoisted.push(b`
-				function ${handler_name}() {
+				function ${id}() {
 					${name} = @_navigator.onLine; $$invalidate('${name}', ${name});
 				}
 			`);
 
 			block.chunks.init.push(b`
-				@add_render_callback(ctx.${handler_name});
+				@add_render_callback(ctx.${id});
 			`);
 
 			block.event_listeners.push(
-				`@listen(@_window, "online", ctx.${handler_name})`,
-				`@listen(@_window, "offline", ctx.${handler_name})`
+				`@listen(@_window, "online", ctx.${id})`,
+				`@listen(@_window, "offline", ctx.${id})`
 			);
 
 			component.has_reactive_assignments = true;

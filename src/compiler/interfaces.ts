@@ -1,3 +1,8 @@
+export interface Identifier {
+	type: 'Identifier';
+	name: string;
+}
+
 interface BaseNode {
 	start: number;
 	end: number;
