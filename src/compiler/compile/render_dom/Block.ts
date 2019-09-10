@@ -2,7 +2,7 @@ import CodeBuilder from '../utils/CodeBuilder';
 import deindent from '../utils/deindent';
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
-import { escape } from '../utils/stringify';
+import { stringify, escape } from '../utils/stringify';
 
 export interface BlockOptions {
 	parent?: Block;
@@ -378,7 +378,7 @@ export default class Block {
 					const block = {
 						${properties}
 					};
-					@dispatch_dev("SvelteRegisterBlock", { block, id: ${this.name || 'create_fragment'}.name, type: "${this.type}", source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}", ctx });
+					@dispatch_dev("SvelteRegisterBlock", { block, id: ${this.name || 'create_fragment'}.name, type: "${this.type}", source: ${stringify(this.comment || '', { only_escape_at_symbol: true })}, ctx });
 					return block;`
 				: deindent`
 					return {
