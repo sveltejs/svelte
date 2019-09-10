@@ -56,6 +56,7 @@
 	<a target="_blank" rel="noopener" href="https://dextra.com.br/pt/"><img src="organisations/dextra.png" alt="Dextra logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://www.entriwise.com/"><img src="organisations/entriwise.png" alt="Entriwise logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://from-now-on.com"><img src="organisations/from-now-on.png" alt="From-Now-On logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://fusioncharts.com"><img src="organisations/fusioncharts.svg" alt="FusionCharts logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://godaddy.com"><img src="organisations/godaddy.svg" alt="GoDaddy logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://www.grainger.com"><img src="organisations/grainger.svg" alt="Grainger logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="http://healthtree.org/"><img src="organisations/healthtree.png" alt="HealthTree logo" loading="lazy"></a>
