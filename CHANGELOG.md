@@ -1,8 +1,12 @@
 # Svelte changelog
 
+## 3.12.1
+
+* Escape `@` symbols in props, again ([#3545](https://github.com/sveltejs/svelte/issues/3545))
+
 ## 3.12.0
 
-* Fire events on `document` in development to facilitate dev tooling ([#3005](https://github.com/sveltejs/svelte/pull/3005)])
+* Fire events on `document` in development to facilitate dev tooling ([#3005](https://github.com/sveltejs/svelte/pull/3005))
 
 ## 3.11.0
 
