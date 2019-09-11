@@ -1,4 +1,3 @@
-import MagicString from 'magic-string';
 // @ts-ignore
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
@@ -23,14 +22,13 @@ import flatten_reference from './utils/flatten_reference';
 import is_reference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
-import { remove_indentation, add_indentation } from '../utils/indentation';
 import get_object from './utils/get_object';
 import unwrap_parens from './utils/unwrap_parens';
 import Slot from './nodes/Slot';
 import { Node as ESTreeNode } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
-import { print } from 'code-red';
+import { print, x } from 'code-red';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -48,37 +46,13 @@ childKeys.Attribute = ['value'];
 childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
 
 function remove_node(
-	code: MagicString,
-	start: number,
-	end: number,
 	body: Node,
 	node: Node
 ) {
 	const i = body.indexOf(node);
 	if (i === -1) throw new Error('node not in list');
 
-	let a;
-	let b;
-
-	if (body.length === 1) {
-		// remove everything, leave {}
-		a = start;
-		b = end;
-	} else if (i === 0) {
-		// remove everything before second node, including comments
-		a = start;
-		while (/\s/.test(code.original[a])) a += 1;
-
-		b = body[i].end;
-		while (/[\s,]/.test(code.original[b])) b += 1;
-	} else {
-		// remove the end of the previous node to the end of this one
-		a = body[i - 1].end;
-		b = node.end;
-	}
-
-	code.remove(a, b);
-	return;
+	body.splice(i, 1);
 }
 
 export default class Component {
@@ -89,7 +63,6 @@ export default class Component {
 
 	ast: Ast;
 	source: string;
-	code: MagicString;
 	name: Identifier;
 	compile_options: CompileOptions;
 	fragment: Fragment;
@@ -172,8 +145,6 @@ export default class Component {
 					.replace(/^[/\\]/, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source);
-
-		this.code = new MagicString(source);
 
 		// styles
 		this.stylesheet = new Stylesheet(
@@ -259,15 +230,6 @@ export default class Component {
 		} else {
 			this.used_names.add(name);
 		}
-	}
-
-	add_sourcemap_locations(node: Node) {
-		walk(node, {
-			enter: (node: Node) => {
-				this.code.addSourcemapLocation(node.start);
-				this.code.addSourcemapLocation(node.end);
-			},
-		});
 	}
 
 	alias(name: string) {
@@ -502,21 +464,20 @@ export default class Component {
 	}
 
 	extract_imports(content) {
-		const { code } = this;
-
 		content.body.forEach(node => {
 			if (node.type === 'ImportDeclaration') {
 				// imports need to be hoisted out of the IIFE
-				remove_node(code, content.start, content.end, content.body, node);
+				remove_node(content.body, node);
 				this.imports.push(node);
 			}
 		});
 	}
 
 	extract_exports(content) {
-		const { code } = this;
+		let i = content.body.length;
+		while (i--) {
+			const node = content.body[i];
 
-		content.body.forEach(node => {
 			if (node.type === 'ExportDefaultDeclaration') {
 				this.error(node, {
 					code: `default-export`,
@@ -546,21 +507,20 @@ export default class Component {
 						variable.export_name = name;
 					}
 
-					code.remove(node.start, node.declaration.start);
+					content.body[i] = node.declaration;
 				} else {
-					remove_node(code, content.start, content.end, content.body, node);
 					node.specifiers.forEach(specifier => {
 						const variable = this.var_lookup.get(specifier.local.name);
 
 						if (variable) {
 							variable.export_name = specifier.exported.name;
-						} else {
-							// TODO what happens with `export { Math }` or some other global?
 						}
 					});
+
+					content.body.splice(i, 1);
 				}
 			}
-		});
+		}
 	}
 
 	extract_javascript(script) {
@@ -573,35 +533,37 @@ export default class Component {
 			return true;
 		});
 
+		return nodes_to_include;
+
 		if (nodes_to_include.length === 0) return null;
 
 		let a = script.content.start;
 		while (/\s/.test(this.source[a])) a += 1;
 
-		let b = a;
+		// let b = a;
 
-		let result = '';
+		// let result = '';
 
-		script.content.body.forEach(node => {
-			if (
-				this.hoistable_nodes.has(node) ||
-				this.reactive_declaration_nodes.has(node)
-			) {
-				if (a !== b) result += `[✂${a}-${b}✂]`;
-				a = node.end;
-			}
+		// script.content.body.forEach(node => {
+		// 	if (
+		// 		this.hoistable_nodes.has(node) ||
+		// 		this.reactive_declaration_nodes.has(node)
+		// 	) {
+		// 		if (a !== b) result += `[✂${a}-${b}✂]`;
+		// 		a = node.end;
+		// 	}
 
-			b = node.end;
-		});
+		// 	b = node.end;
+		// });
 
 		// while (/\s/.test(this.source[a - 1])) a -= 1;
 
-		b = script.content.end;
-		while (/\s/.test(this.source[b - 1])) b -= 1;
+		// b = script.content.end;
+		// while (/\s/.test(this.source[b - 1])) b -= 1;
 
-		if (a < b) result += `[✂${a}-${b}✂]`;
+		// if (a < b) result += `[✂${a}-${b}✂]`;
 
-		return result || null;
+		// return result || null;
 	}
 
 	walk_module_js() {
@@ -619,8 +581,6 @@ export default class Component {
 				}
 			},
 		});
-
-		this.add_sourcemap_locations(script.content);
 
 		const { scope, globals } = create_scopes(script.content);
 		this.module_scope = scope;
@@ -657,15 +617,12 @@ export default class Component {
 
 		this.extract_imports(script.content);
 		this.extract_exports(script.content);
-		remove_indentation(this.code, script.content);
 		this.module_javascript = this.extract_javascript(script);
 	}
 
 	walk_instance_js_pre_template() {
 		const script = this.ast.instance;
 		if (!script) return;
-
-		this.add_sourcemap_locations(script.content);
 
 		// inject vars for reactive declarations
 		script.content.body.forEach(node => {
@@ -893,18 +850,16 @@ export default class Component {
 			.join(', ');
 	}
 
-	rewrite_props(get_insert: (variable: Var) => string) {
+	rewrite_props(_get_insert: (variable: Var) => string) {
+		// TODO
+
 		const component = this;
-		const { code, instance_scope, instance_scope_map: map } = this;
+		const { instance_scope, instance_scope_map: map } = this;
 		let scope = instance_scope;
 
-		const coalesced_declarations = [];
-		let current_group;
-
 		walk(this.ast.instance.content, {
-			enter(node, parent) {
+			enter(node) {
 				if (/Function/.test(node.type)) {
-					current_group = null;
 					return this.skip();
 				}
 
@@ -914,16 +869,15 @@ export default class Component {
 
 				if (node.type === 'VariableDeclaration') {
 					if (node.kind === 'var' || scope === instance_scope) {
-						node.declarations.forEach((declarator, i) => {
-							const next = node.declarations[i + 1];
+						node.declarations.forEach(declarator => {
+							// const next = node.declarations[i + 1];
 
 							if (declarator.id.type !== 'Identifier') {
-								const inserts = [];
-
 								extract_names(declarator.id).forEach(name => {
 									const variable = component.var_lookup.get(name);
 
 									if (variable.export_name) {
+										// TODO is this still true post-#3539?
 										component.error(declarator, {
 											code: 'destructured-prop',
 											message: `Cannot declare props in destructured declaration`,
@@ -931,21 +885,9 @@ export default class Component {
 									}
 
 									if (variable.subscribable) {
-										inserts.push(get_insert(variable));
+										// TODO
 									}
 								});
-
-								if (inserts.length > 0) {
-									if (next) {
-										code.overwrite(
-											declarator.end,
-											next.start,
-											`; ${inserts.join('; ')}; ${node.kind} `
-										);
-									} else {
-										code.appendLeft(declarator.end, `; ${inserts.join('; ')}`);
-									}
-								}
 
 								return;
 							}
@@ -954,112 +896,43 @@ export default class Component {
 							const variable = component.var_lookup.get(name);
 
 							if (variable.export_name) {
-								if (current_group && current_group.kind !== node.kind) {
-									current_group = null;
-								}
+								// const insert = variable.subscribable
+								// 	? get_insert(variable)
+								// 	: null;
 
-								const insert = variable.subscribable
-									? get_insert(variable)
-									: null;
+								declarator.id = {
+									type: 'ObjectPattern',
+									properties: [{
+										type: 'Property',
+										method: false,
+										shorthand: true,
+										computed: false,
+										kind: 'init',
+										key: declarator.id,
+										value: {
+											type: 'AssignmentPattern',
+											left: declarator.id,
+											right: declarator.init
+										}
+									}]
+								};
 
-								if (!current_group || (current_group.insert && insert)) {
-									current_group = {
-										kind: node.kind,
-										declarators: [declarator],
-										insert,
-									};
-									coalesced_declarations.push(current_group);
-								} else if (insert) {
-									current_group.insert = insert;
-									current_group.declarators.push(declarator);
-								} else {
-									current_group.declarators.push(declarator);
-								}
-
-								if (
-									variable.writable &&
-									variable.name !== variable.export_name
-								) {
-									code.prependRight(
-										declarator.id.start,
-										`${variable.export_name}: `
-									);
-								}
-
-								if (next) {
-									const next_variable = component.var_lookup.get(next.id.name);
-									const new_declaration =
-										!next_variable.export_name ||
-										(current_group.insert && next_variable.subscribable);
-
-									if (new_declaration) {
-										code.overwrite(
-											declarator.end,
-											next.start,
-											` ${node.kind} `
-										);
-									}
-								}
-							} else {
-								current_group = null;
-
-								if (variable.subscribable) {
-									const insert = get_insert(variable);
-
-									if (next) {
-										code.overwrite(
-											declarator.end,
-											next.start,
-											`; ${insert}; ${node.kind} `
-										);
-									} else {
-										code.appendLeft(declarator.end, `; ${insert}`);
-									}
-								}
+								declarator.init = x`$$props`;
 							}
 						});
 					}
-				} else {
-					if (node.type !== 'ExportNamedDeclaration') {
-						if (!parent || parent.type === 'Program') current_group = null;
-					}
 				}
 			},
 
-			leave(node) {
+			leave(node, _parent, _key, index) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
-			},
-		});
 
-		coalesced_declarations.forEach(group => {
-			const writable = group.kind === 'var' || group.kind === 'let';
-
-			let c = 0;
-			let combining = false;
-
-			group.declarators.forEach(declarator => {
-				const { id } = declarator;
-
-				if (combining) {
-					code.overwrite(c, id.start, ', ');
-				} else {
-					if (writable) code.appendLeft(id.start, '{ ');
-					combining = true;
+				if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+					_parent.body[index] = node.declaration;
 				}
-
-				c = declarator.end;
-			});
-
-			if (combining) {
-				const insert = group.insert ? `; ${group.insert}` : '';
-
-				const suffix =
-					`${writable ? ` } = $$props` : ``}${insert}` +
-					(code.original[c] === ';' ? `` : `;`);
-				code.appendLeft(c, suffix);
-			}
+			},
 		});
 	}
 
@@ -1213,8 +1086,6 @@ export default class Component {
 				variable.hoistable = true;
 				hoistable_nodes.add(node);
 
-				remove_indentation(this.code, node);
-
 				const i = body.indexOf(node);
 				body.splice(i, 1);
 				this.fully_hoisted.push(node);
@@ -1279,8 +1150,6 @@ export default class Component {
 						}
 					},
 				});
-
-				add_indentation(this.code, node.body, 2);
 
 				const expression =
 					node.body.expression && unwrap_parens(node.body.expression);

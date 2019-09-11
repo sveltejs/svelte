@@ -104,11 +104,12 @@ export default class EachBlockWrapper extends Wrapper {
 				? node.expression.node.elements.length
 				: null;
 
+		// TODO
 		// hack the sourcemap, so that if data is missing the bug
 		// is easy to find
 		let c = this.node.start + 2;
 		while (renderer.component.source[c] !== 'e') c += 1;
-		renderer.component.code.overwrite(c, c + 4, 'length');
+		// renderer.component.code.overwrite(c, c + 4, 'length');
 
 		const each_block_value = renderer.component.get_unique_name(`${this.var}_value`);
 		const iterations = block.get_unique_name(`${this.var}_blocks`);

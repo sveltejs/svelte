@@ -14,7 +14,7 @@ export default function dom(
 	component: Component,
 	options: CompileOptions
 ) {
-	const { name, code } = component;
+	const { name } = component;
 
 	const renderer = new Renderer(component, options);
 	const { block } = renderer;
@@ -198,7 +198,7 @@ export default function dom(
 					// onto the initial function call
 					const names = new Set(extract_names(assignee));
 
-					invalidate(component, scope, code, node, names);
+					invalidate(component, scope, node, names);
 				}
 			}
 		});
