@@ -236,7 +236,7 @@ export default function dom(
 
 		${component.module_javascript}
 
-		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
+		${component.fully_hoisted}
 	`);
 
 	const filtered_declarations = component.vars
@@ -314,6 +314,7 @@ export default function dom(
 					})
 					.map(n => `$$dirty.${n}`).join(' || ');
 
+				throw new Error(`bad`);
 				let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
 				if (condition) snippet = `if (${condition}) { ${snippet} }`;
 

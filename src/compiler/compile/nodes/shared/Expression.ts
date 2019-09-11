@@ -325,8 +325,8 @@ export default class Expression {
 					const body = code.slice(node.body.start, node.body.end).trim();
 
 					const fn = node.type === 'FunctionExpression'
-						? `${node.async ? 'async ' : ''}function${node.generator ? '*' : ''} ${id}(${args.join(', ')}) ${body}`
-						: `const ${id} = ${node.async ? 'async ' : ''}(${args.join(', ')}) => ${body};`;
+						? b`${node.async ? 'async ' : ''}function${node.generator ? '*' : ''} ${id}(${args.join(', ')}) ${body}`
+						: b`const ${id} = ${node.async ? 'async ' : ''}(${args.join(', ')}) => ${body};`;
 
 					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
 						// we can hoist this out of the component completely
@@ -410,6 +410,8 @@ export default class Expression {
 				block.chunks.init.push(declaration);
 			});
 		}
+
+		throw new Error(`bad`);
 
 		return this.rendered = `[✂${this.node.start}-${this.node.end}✂]`;
 	}

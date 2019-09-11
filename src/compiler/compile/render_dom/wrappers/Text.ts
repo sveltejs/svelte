@@ -2,7 +2,6 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Text from '../../nodes/Text';
 import Wrapper from './shared/Wrapper';
-import { stringify } from '../../utils/stringify';
 import { Identifier } from '../../../interfaces';
 import { x } from 'code-red';
 
@@ -72,8 +71,8 @@ export default class TextWrapper extends Wrapper {
 
 		block.add_element(
 			this.var,
-			use_space ? x`@space()` : x`@text(${stringify(this.data)})`,
-			parent_nodes && (use_space ? x`@claim_space(${parent_nodes})` : x`@claim_text(${parent_nodes}, ${stringify(this.data)})`),
+			use_space ? x`@space()` : x`@text("${this.data}")`,
+			parent_nodes && (use_space ? x`@claim_space(${parent_nodes})` : x`@claim_text(${parent_nodes}, "${this.data}")`),
 			parent_node
 		);
 	}

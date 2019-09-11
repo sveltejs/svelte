@@ -4,7 +4,6 @@ export default function flatten_reference(node: Node) {
 	if (node.type === 'Expression') throw new Error('bad');
 	const nodes = [];
 	const parts = [];
-	const prop_end = node.end;
 
 	while (node.type === 'MemberExpression') {
 		nodes.unshift(node.property);
@@ -16,7 +15,6 @@ export default function flatten_reference(node: Node) {
 		node = node.object;
 	}
 
-	const prop_start = node.end;
 	const name = node.type === 'Identifier'
 		? node.name
 		: node.type === 'ThisExpression' ? 'this' : null;
@@ -27,5 +25,5 @@ export default function flatten_reference(node: Node) {
 		parts.unshift(name);
 	}
 
-	return { name, nodes, parts, keypath: `${name}[✂${prop_start}-${prop_end}✂]` };
+	return { name, nodes, parts };
 }

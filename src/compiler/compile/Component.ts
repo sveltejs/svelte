@@ -111,8 +111,8 @@ export default class Component {
 
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
-	partly_hoisted: string[] = [];
-	fully_hoisted: string[] = [];
+	partly_hoisted: Node[] = [];
+	fully_hoisted: Node[] = [];
 	reactive_declarations: Array<{
 		assignees: Set<string>;
 		dependencies: Set<string>;
@@ -1077,7 +1077,11 @@ export default class Component {
 
 		const top_level_function_declarations = new Map();
 
-		this.ast.instance.content.body.forEach(node => {
+		const { body } = this.ast.instance.content;
+		let i = body.length;
+		while (i--) {
+			const node = body[i];
+
 			if (node.type === 'VariableDeclaration') {
 				const all_hoistable = node.declarations.every(d => {
 					if (!d.init) return false;
@@ -1105,7 +1109,9 @@ export default class Component {
 					});
 
 					hoistable_nodes.add(node);
-					this.fully_hoisted.push(`[✂${node.start}-${node.end}✂]`);
+
+					body.splice(i, 1);
+					this.fully_hoisted.push(node);
 				}
 			}
 
@@ -1120,7 +1126,7 @@ export default class Component {
 			if (node.type === 'FunctionDeclaration') {
 				top_level_function_declarations.set(node.id.name, node);
 			}
-		});
+		}
 
 		const checked = new Set();
 		const walking = new Set();
@@ -1209,7 +1215,9 @@ export default class Component {
 
 				remove_indentation(this.code, node);
 
-				this.fully_hoisted.push(`[✂${node.start}-${node.end}✂]`);
+				const i = body.indexOf(node);
+				body.splice(i, 1);
+				this.fully_hoisted.push(node);
 			}
 		}
 	}

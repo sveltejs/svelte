@@ -1,7 +1,7 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
-import deindent from '../utils/deindent';
+import { b } from 'code-red';
 import Block from '../render_dom/Block';
 import { sanitize } from '../../utils/names';
 import { Identifier } from '../../interfaces';
@@ -51,7 +51,7 @@ export default class EventHandler extends Node {
 				referenced: true
 			});
 
-			component.partly_hoisted.push(deindent`
+			component.partly_hoisted.push(b`
 				function ${id}(event) {
 					@bubble($$self, event);
 				}

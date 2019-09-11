@@ -1,1 +1,5 @@
-<h1>Hello world!</h1>
+<script>
+	let name = 'world';
+</script>
+
+<h1>Hello {name}!</h1>

@@ -145,7 +145,7 @@ export default function ssr(
 
 		${component.module_javascript}
 
-		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
+		${component.fully_hoisted}
 
 		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 			${blocks.join('\n\n')}
