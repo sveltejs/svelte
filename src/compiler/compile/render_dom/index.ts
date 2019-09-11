@@ -208,7 +208,7 @@ export default function dom(
 		component.rewrite_props(({ name, reassigned }) => {
 			const value = `$${name}`;
 
-			const callback = `$value => { ${value} = $$value; $$invalidate('${value}', ${value}) }`;
+			const callback = `$value => $$invalidate('${value}', ${value} = $$value)`;
 
 			if (reassigned) {
 				return `$$subscribe_${name}()`;
@@ -290,7 +290,7 @@ export default function dom(
 		})
 		.map(({ name }) => deindent`
 			${component.compile_options.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
-			@component_subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });
+			@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate('${name}', ${name} = $$value));
 		`);
 
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
@@ -337,7 +337,7 @@ export default function dom(
 
 			const store = component.var_lookup.get(name);
 			if (store && store.reassigned) {
-				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => ($$unsubscribe_${name}(), $$unsubscribe_${name} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }), ${name})`;
+				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => ($$unsubscribe_${name}(), $$unsubscribe_${name} = @subscribe(${name}, $$value => $$invalidate('${$name}', ${$name} = $$value)), ${name})`;
 			}
 
 			return $name;

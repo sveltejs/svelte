@@ -37,7 +37,7 @@ function instance($$self, $$props, $$invalidate) {
 	let online;
 
 	function onlinestatuschanged() {
-		online = navigator.onLine; $$invalidate('online', online);
+		$$invalidate('online', online = navigator.onLine);
 	}
 
 	return { online, onlinestatuschanged };
