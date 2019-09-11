@@ -1,7 +1,6 @@
-import deindent from './utils/deindent';
 import list from '../utils/list';
 import { ModuleFormat, Node, Identifier } from '../interfaces';
-import { stringify_props } from './utils/stringify_props';
+import { b, x } from 'code-red';
 
 const wrappers = { esm, cjs };
 
@@ -11,24 +10,23 @@ interface Export {
 }
 
 export default function create_module(
-	code: string,
+	program: any,
 	format: ModuleFormat,
-	name: string,
+	name: Identifier,
 	banner: string,
 	sveltePath = 'svelte',
 	helpers: Array<{ name: string; alias: Identifier }>,
 	globals: Array<{ name: string; alias: Identifier }>,
 	imports: Node[],
-	module_exports: Export[],
-	source: string
-): string {
+	module_exports: Export[]
+) {
 	const internal_path = `${sveltePath}/internal`;
 
 	if (format === 'esm') {
-		return esm(code, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports, source);
+		return esm(program, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports);
 	}
 
-	if (format === 'cjs') return cjs(code, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports);
+	if (format === 'cjs') return cjs(program, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports);
 
 	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 }
@@ -40,54 +38,9 @@ function edit_source(source, sveltePath) {
 }
 
 function esm(
-	code: string,
-	name: string,
-	banner: string,
-	sveltePath: string,
-	internal_path: string,
-	helpers: Array<{ name: string; alias: Identifier }>,
-	globals: Array<{ name: string; alias: Identifier }>,
-	imports: Node[],
-	module_exports: Export[],
-	source: string
-) {
-	const internal_imports = helpers.length > 0 && (
-		`import ${stringify_props(helpers.map(h => h.name === h.alias.name ? h.name : `${h.name} as ${h.alias}`).sort())} from ${JSON.stringify(internal_path)};`
-	);
-	const internal_globals = globals.length > 0 && (
-		`const ${stringify_props(globals.map(g => `${g.name}: ${g.alias}`).sort())} = ${helpers.find(({ name }) => name === 'globals').alias};`
-	);
-
-	const user_imports = imports.length > 0 && (
-		imports
-			.map((declaration: Node) => {
-				const import_source = edit_source(declaration.source.value, sveltePath);
-
-				return (
-					source.slice(declaration.start, declaration.source.start) +
-					JSON.stringify(import_source) +
-					source.slice(declaration.source.end, declaration.end)
-				);
-			})
-			.join('\n')
-	);
-
-	return deindent`
-		${banner}
-		${internal_imports}
-		${internal_globals}
-		${user_imports}
-
-		${code}
-
-		export default ${name};
-		${module_exports.length > 0 && `export { ${module_exports.map(e => e.name === e.as ? e.name : `${e.name} as ${e.as}`).join(', ')} };`}`;
-}
-
-function cjs(
-	code: string,
-	name: string,
-	banner: string,
+	program: any,
+	name: Identifier,
+	_banner: string,
 	sveltePath: string,
 	internal_path: string,
 	helpers: Array<{ name: string; alias: Identifier }>,
@@ -95,52 +48,146 @@ function cjs(
 	imports: Node[],
 	module_exports: Export[]
 ) {
-	const declarations = helpers.map(h => `${h.alias.name === h.name ? h.name : `${h.name}: ${h.alias}`}`).sort();
+	const import_declaration = {
+		type: 'ImportDeclaration',
+		specifiers: helpers.map(h => ({
+			type: 'ImportSpecifier',
+			local: h.alias,
+			imported: { type: 'Identifier', name: h.name }
+		})),
+		source: { type: 'Literal', value: internal_path }
+	}
 
-	const internal_imports = helpers.length > 0 && (
-		`const ${stringify_props(declarations)} = require(${JSON.stringify(internal_path)});\n`
-	);
-	const internal_globals = globals.length > 0 && (
-		`const ${stringify_props(globals.map(g => `${g.name}: ${g.alias}`).sort())} = ${helpers.find(({ name }) => name === 'globals').alias};`
-	);
+	const internal_globals = globals.length > 0 &&{
+		type: 'VariableDeclaration',
+		kind: 'const',
+		declarations: [{
+			id: {
+				type: 'ObjectPattern',
+				properties: globals.sort((a, b) => a.name < b.name ? -1 : 1).map(g => ({
+					type: 'Property',
+					method: false,
+					shorthand: false,
+					computed: false,
+					key: { type: 'Identifier', name: g.name },
+					value: { type: 'Identifier', name: g.alias }
+				}))
+			},
+			init: { type: 'Identifier', name: helpers.find(({ name }) => name === 'globals').alias }
+		}]
+	};
 
-	const requires = imports.map(node => {
-		let lhs;
-
-		if (node.specifiers[0].type === 'ImportNamespaceSpecifier') {
-			lhs = node.specifiers[0].local.name;
-		} else {
-			const properties = node.specifiers.map(s => {
-				if (s.type === 'ImportDefaultSpecifier') {
-					return `default: ${s.local.name}`;
-				}
-
-				return s.local.name === s.imported.name
-					? s.local.name
-					: `${s.imported.name}: ${s.local.name}`;
-			});
-
-			lhs = `{ ${properties.join(', ')} }`;
-		}
-
-		const source = edit_source(node.source.value, sveltePath);
-
-		return `const ${lhs} = require("${source}");`;
+	// edit user imports
+	imports.forEach(node => {
+		node.source.value = edit_source(node.source.value, sveltePath);
 	});
 
-	const exports = [`exports.default = ${name};`].concat(
-		module_exports.map(x => `exports.${x.as} = ${x.name};`)
-	);
+	const exports = module_exports.length > 0 && {
+		type: 'ExportNamedDeclaration',
+		specifiers: module_exports.map(x => ({
+			type: 'Specifier',
+			local: { type: 'Identifier', name: x.name },
+			exported: { type: 'Identifier', name: x.as }
+		}))
+	};
 
-	return deindent`
-		${banner}
-		"use strict";
-
-		${internal_imports}
+	program.body = b`
+		${import_declaration}
 		${internal_globals}
-		${requires}
+		${imports}
 
-		${code}
+		${program.body}
 
-		${exports}`;
+		export default ${name};
+		${exports}
+	`;
+}
+
+function cjs(
+	program: any,
+	name: Identifier,
+	_banner: string,
+	sveltePath: string,
+	internal_path: string,
+	helpers: Array<{ name: string; alias: Identifier }>,
+	globals: Array<{ name: string; alias: Identifier }>,
+	imports: Node[],
+	module_exports: Export[]
+) {
+	const internal_requires = {
+		type: 'VariableDeclaration',
+		kind: 'const',
+		declarations: [{
+			type: 'VariableDeclarator',
+			id: {
+				type: 'ObjectPattern',
+				properties: helpers.sort((a, b) => a.name < b.name ? -1 : 1).map(h => ({
+					type: 'Property',
+					method: false,
+					shorthand: false,
+					computed: false,
+					key: { type: 'Identifier', name: h.name },
+					value: h.alias,
+					kind: 'init'
+				}))
+			},
+			init: x`require("${internal_path}")`
+		}]
+	};
+
+	const internal_globals = globals.length > 0 &&{
+		type: 'VariableDeclaration',
+		kind: 'const',
+		declarations: [{
+			type: 'VariableDeclarator',
+			id: {
+				type: 'ObjectPattern',
+				properties: globals.sort((a, b) => a.name < b.name ? -1 : 1).map(g => ({
+					type: 'Property',
+					method: false,
+					shorthand: false,
+					computed: false,
+					key: { type: 'Identifier', name: g.name },
+					value: { type: 'Identifier', name: g.alias }
+				}))
+			},
+			init: { type: 'Identifier', name: helpers.find(({ name }) => name === 'globals').alias }
+		}]
+	};
+
+	const user_requires = imports.map(node => ({
+		type: 'VariableDeclaration',
+		kind: 'const',
+		declarations: [{
+			type: 'VariableDeclarator',
+			id: node.specifiers[0].type === 'ImportNamespaceSpecifier'
+				? { type: 'Identifier', name: node.specifiers[0].local.name }
+				: {
+					type: 'ObjectPattern',
+					properties: node.specifiers.map(s => ({
+						type: 'Property',
+						method: false,
+						shorthand: false,
+						computed: false,
+						key: s.imported || { type: 'Identifier', name: 'default' },
+						value: s.local
+					}))
+				},
+			init: x`require("${edit_source(node.source.value, sveltePath)}")`
+		}]
+	}));
+
+	const exports = module_exports.map(x => b`exports.${{ type: 'Identifier', name: x.as }} = ${{ type: 'Identifier', name: x.name }};`);
+
+	program.body = b`
+		"use strict";
+		${internal_requires}
+		// ${internal_globals}
+		${user_requires}
+
+		${program.body}
+
+		exports.default = ${name};
+		${exports}
+	`;
 }

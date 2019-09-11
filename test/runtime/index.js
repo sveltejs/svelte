@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
 import * as virtual from 'rollup-plugin-virtual';
-import { clear_loops, flush, set_now, set_raf } from "../../internal";
+import { clear_loops, flush, set_now, set_raf, component_subscribe } from "../../internal";
 
 import {
 	showOutput,
@@ -33,9 +33,7 @@ describe("runtime", () => {
 
 		require.extensions[".svelte"] = function(module, filename) {
 			const options = Object.assign({
-				filename,
-				format: 'cjs',
-				sveltePath
+				filename
 			}, compileOptions);
 
 			const { js: { code } } = compile(fs.readFileSync(filename, "utf-8"), options);
@@ -72,6 +70,7 @@ describe("runtime", () => {
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
+			compileOptions.format = 'cjs';
 			compileOptions.sveltePath = sveltePath;
 			compileOptions.hydratable = hydrate;
 			compileOptions.immutable = config.immutable;

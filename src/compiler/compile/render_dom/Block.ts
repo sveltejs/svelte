@@ -255,7 +255,7 @@ export default class Block {
 
 		const properties: Record<string, any> = {};
 
-		const noop = x`noop`;
+		const noop = x`@noop`;
 
 		properties.key = key
 		properties.first = this.first;
@@ -296,7 +296,7 @@ export default class Block {
 			properties.mount = noop;
 		} else {
 			properties.mount = x`function mount(#target, anchor) {
-				//${this.chunks.mount}
+				${this.chunks.mount}
 			}`;
 		}
 
@@ -354,21 +354,22 @@ export default class Block {
 		}
 
 		const return_value: any = x`{
-			// key: ${properties.key},
-			// first: ${properties.first},
-			// c: ${properties.create},
-			// l: ${properties.claim},
-			// h: ${properties.hydrate},
+			key: ${properties.key},
+			first: ${properties.first},
+			c: ${properties.create},
+			l: ${properties.claim},
+			h: ${properties.hydrate},
 			m: ${properties.mount},
-			// p: ${properties.update},
-			// r: ${properties.measure},
-			// f: ${properties.fix},
-			// a: ${properties.animate},
-			// i: ${properties.intro},
-			// o: ${properties.outro},
-			// d: ${properties.destroy}
+			p: ${properties.update},
+			r: ${properties.measure},
+			f: ${properties.fix},
+			a: ${properties.animate},
+			i: ${properties.intro},
+			o: ${properties.outro},
+			d: ${properties.destroy}
 		}`;
 
+		// TODO should code-red do this automatically? probably
 		return_value.properties = return_value.properties.filter(prop => prop.value);
 
 		/* eslint-disable @typescript-eslint/indent,indent */

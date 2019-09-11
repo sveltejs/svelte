@@ -1,4 +1,4 @@
-import MagicString, { Bundle } from 'magic-string';
+import MagicString from 'magic-string';
 // @ts-ignore
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
@@ -333,8 +333,16 @@ export default class Component {
 			// 		}
 			// 	);
 
-			const printed = print({ type: 'Program', body: result } as any);
-			console.log(printed);
+			const program: any = { type: 'Program', body: result };
+
+			walk(program, {
+				enter: (node) => {
+					if (node.type === 'Identifier' && node.name[0] === '@') {
+						const alias = this.helper(node.name.slice(1));
+						node.name = alias.name;
+					}
+				}
+			});
 
 			const referenced_globals = Array.from(
 				this.globals,
@@ -348,10 +356,10 @@ export default class Component {
 				alias,
 			}));
 
-			const module = create_module(
-				printed.code,
+			create_module(
+				program,
 				format,
-				name.name,
+				name,
 				banner,
 				compile_options.sveltePath,
 				imported_helpers,
@@ -362,61 +370,14 @@ export default class Component {
 					.map(variable => ({
 						name: variable.name,
 						as: variable.export_name,
-					})),
-				this.source
+					}))
 			);
-
-			const parts = module.split('✂]');
-			const final_chunk = parts.pop();
-
-			const compiled = new Bundle({ separator: '' });
-
-			function add_string(str: string) {
-				compiled.addSource({
-					content: new MagicString(str),
-				});
-			}
-
-			const { filename } = compile_options;
-
-			// special case — the source file doesn't actually get used anywhere. we need
-			// to add an empty file to populate map.sources and map.sourcesContent
-			if (!parts.length) {
-				compiled.addSource({
-					filename,
-					content: new MagicString(this.source).remove(0, this.source.length),
-				});
-			}
-
-			const pattern = /\[✂(\d+)-(\d+)$/;
-
-			parts.forEach((str: string) => {
-				const chunk = str.replace(pattern, '');
-				if (chunk) add_string(chunk);
-
-				const match = pattern.exec(str);
-
-				const snippet = this.code.snip(+match[1], +match[2]);
-
-				compiled.addSource({
-					filename,
-					content: snippet,
-				});
-			});
-
-			add_string(final_chunk);
 
 			css = compile_options.customElement
 				? { code: null, map: null }
 				: this.stylesheet.render(compile_options.cssOutputFilename, true);
 
-			js = {
-				code: compiled.toString(),
-				map: compiled.generateMap({
-					includeContent: true,
-					file: compile_options.outputFilename,
-				}),
-			};
+			js = print(program);
 		}
 
 		return {

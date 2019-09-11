@@ -390,7 +390,12 @@ export default function dom(
 		`);
 	}
 
-	const prop_names = x`[${props.map(v => ({ type: 'Literal', value: v.export_name }))}]`;
+	const prop_names = x`[]`;
+
+	// TODO find a more idiomatic way of doing this
+	props.forEach(v => {
+		(prop_names as any).elements.push({ type: 'Literal', value: v.export_name });
+	});
 
 	if (options.customElement) {
 		body.push(b`
@@ -453,5 +458,18 @@ export default function dom(
 		`);
 	}
 
-	return body;
+	return flatten(body, []);
+}
+
+function flatten(nodes: any[], target: any[]) {
+	for (let i = 0; i < nodes.length; i += 1) {
+		const node = nodes[i];
+		if (Array.isArray(node)) {
+			flatten(node, target);
+		} else {
+			target.push(node);
+		}
+	}
+
+	return target;
 }
