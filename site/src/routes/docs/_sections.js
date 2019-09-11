@@ -7,23 +7,6 @@ import marked from 'marked';
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
 
-const escaped = {
-	'"': '&quot;',
-	"'": '&#39;',
-	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;',
-};
-
-const unescaped = Object.keys(escaped).reduce(
-	(unescaped, key) => ((unescaped[escaped[key]] = key), unescaped),
-	{}
-);
-
-function unescape(str) {
-	return String(str).replace(/&.+?;/g, match => unescaped[match] || match);
-}
-
 const blockTypes = [
 	'blockquote',
 	'html',

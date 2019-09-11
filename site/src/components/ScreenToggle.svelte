@@ -38,7 +38,7 @@
 	{#each labels as label, index}
 		<button
 			class:selected={offset === index}
-			on:click={() => {offset = index}}
+			on:click={() => offset = index}
 		>
 			{label}
 		</button>
