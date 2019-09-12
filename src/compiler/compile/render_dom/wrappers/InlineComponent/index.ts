@@ -200,7 +200,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						: null;
 
 					if (attr.is_spread) {
-						const value = attr.expression.render(block);
+						const value = attr.expression.manipulate(block);
 						initial_props.push(value);
 
 						let value_object = value;
@@ -271,7 +271,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const updating = block.get_unique_name(`updating_${binding.name}`);
 			block.add_variable(updating);
 
-			const snippet = binding.expression.render(block);
+			const snippet = binding.expression.manipulate(block);
 
 			statements.push(b`
 				if (${snippet} !== void 0) {
@@ -346,7 +346,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const switch_value = block.get_unique_name('switch_value');
 			const switch_props = block.get_unique_name('switch_props');
 
-			const snippet = this.node.expression.render(block);
+			const snippet = this.node.expression.manipulate(block);
 
 			block.chunks.init.push(b`
 				var ${switch_value} = ${snippet};

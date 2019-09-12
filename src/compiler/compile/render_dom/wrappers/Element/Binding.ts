@@ -64,7 +64,7 @@ export default class BindingWrapper {
 		// view to model
 		this.handler = get_event_handler(this, parent.renderer, block, this.object, contextless_snippet);
 
-		this.snippet = this.node.expression.render(block);
+		this.snippet = this.node.expression.manipulate(block);
 
 		this.is_readonly = this.node.is_readonly;
 

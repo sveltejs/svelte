@@ -127,7 +127,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 		const update_mount_node = this.get_update_mount_node(anchor);
 
-		const snippet = this.node.expression.render(block);
+		const snippet = this.node.expression.manipulate(block);
 
 		const info = block.get_unique_name(`info`);
 		const promise = block.get_unique_name(`promise`);

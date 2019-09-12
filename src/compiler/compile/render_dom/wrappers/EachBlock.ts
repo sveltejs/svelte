@@ -111,7 +111,7 @@ export default class EachBlockWrapper extends Wrapper {
 		while (renderer.component.source[c] !== 'e') c += 1;
 		// renderer.component.code.overwrite(c, c + 4, 'length');
 
-		const each_block_value = renderer.component.get_unique_name(`${this.var}_value`);
+		const each_block_value = renderer.component.get_unique_name(`${this.var.name}_value`);
 		const iterations = block.get_unique_name(`${this.var}_blocks`);
 
 		this.vars = {
@@ -190,7 +190,7 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.node.has_binding) this.context_props.push(`child_ctx.${this.vars.each_block_value} = list;`);
 		if (this.node.has_binding || this.node.index) this.context_props.push(`child_ctx.${this.index_name} = i;`);
 
-		const snippet = this.node.expression.render(block);
+		const snippet = this.node.expression.manipulate(block);
 
 		block.chunks.init.push(b`let ${this.vars.each_block_value} = ${snippet};`);
 

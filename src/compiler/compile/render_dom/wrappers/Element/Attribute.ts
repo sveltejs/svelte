@@ -78,7 +78,7 @@ export default class AttributeWrapper {
 			// DRY it out if that's possible without introducing crazy indirection
 			if (this.node.chunks.length === 1) {
 				// single {tag} — may be a non-string
-				value = (this.node.chunks[0] as Expression).render(block);
+				value = (this.node.chunks[0] as Expression).manipulate(block);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				const prefix = this.node.chunks[0].type === 'Text' ? '' : `"" + `;
@@ -207,10 +207,7 @@ export default class AttributeWrapper {
 				return stringify(chunk.data);
 			}
 
-			const rendered = chunk.render();
-			return chunk.get_precedence() <= 13
-				? `(${rendered})`
-				: rendered;
+			return chunk.manipulate();
 		});
 	}
 
@@ -223,7 +220,7 @@ export default class AttributeWrapper {
 		return `="${value.map(chunk => {
 			return chunk.type === 'Text'
 				? chunk.data.replace(/"/g, '\\"')
-				: `\${${chunk.render()}}`;
+				: `\${${chunk.manipulate()}}`;
 		}).join('')}"`;
 	}
 }

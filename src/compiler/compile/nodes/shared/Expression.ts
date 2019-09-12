@@ -1,7 +1,6 @@
 import Component from '../../Component';
 import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
-// import { b } from 'code-red';
 import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
@@ -12,7 +11,8 @@ import get_object from '../../utils/get_object';
 import Block from '../../render_dom/Block';
 import { INode } from '../interfaces';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
-// import { invalidate } from '../../utils/invalidate';
+import { x } from 'code-red';
+import { invalidate } from '../../utils/invalidate';
 
 const binary_operators: Record<string, number> = {
 	'**': 15,
@@ -81,8 +81,6 @@ export default class Expression {
 	is_synthetic: boolean;
 	declarations: Node[] = [];
 	uses_context = false;
-
-	rendered: string;
 
 	// todo: owner type
 	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info, lazy?: boolean) {
@@ -224,193 +222,191 @@ export default class Expression {
 	}
 
 	// TODO move this into a render-dom wrapper?
-	render(_block?: Block) {
-		// TODO
+	manipulate(block?: Block) {
+		const {
+			component,
+			declarations,
+			scope_map: map,
+			template_scope,
+			is_synthetic
+		} = this;
+		let scope = this.scope;
 
-		// if (this.rendered) return this.rendered;
+		let function_expression;
 
-		// const {
-		// 	component,
-		// 	declarations,
-		// 	scope_map: map,
-		// 	template_scope,
-		// 	owner,
-		// 	is_synthetic
-		// } = this;
-		// let scope = this.scope;
+		let dependencies: Set<string>;
+		let contextual_dependencies: Set<string>;
 
-		// let function_expression;
+		// TODO this feels a lil messy
+		let return_value = this.node;
 
-		// let dependencies: Set<string>;
-		// let contextual_dependencies: Set<string>;
+		walk(this.node, {
+			enter(node: any, parent: any, key: string, index: number) {
+				// don't manipulate shorthand props twice
+				if (key === 'value' && parent.shorthand) return;
 
-		// // rewrite code as appropriate
-		// walk(this.node, {
-		// 	enter(node: any, parent: any, key: string) {
-		// 		// don't manipulate shorthand props twice
-		// 		if (key === 'value' && parent.shorthand) return;
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
 
-		// 		if (map.has(node)) {
-		// 			scope = map.get(node);
-		// 		}
+				if (is_reference(node, parent)) {
+					const { name } = flatten_reference(node);
 
-		// 		if (is_reference(node, parent)) {
-		// 			const { name, nodes } = flatten_reference(node);
+					if (scope.has(name)) return;
+					if (globals.has(name) && !component.var_lookup.has(name)) return;
 
-		// 			if (scope.has(name)) return;
-		// 			if (globals.has(name) && !component.var_lookup.has(name)) return;
+					if (function_expression) {
+						if (template_scope.names.has(name)) {
+							contextual_dependencies.add(name);
 
-		// 			if (function_expression) {
-		// 				if (template_scope.names.has(name)) {
-		// 					contextual_dependencies.add(name);
+							template_scope.dependencies_for_name.get(name).forEach(dependency => {
+								dependencies.add(dependency);
+							});
+						} else {
+							dependencies.add(name);
+							component.add_reference(name); // TODO is this redundant/misplaced?
+						}
+					} else if (!is_synthetic && is_contextual(component, template_scope, name)) {
+						const replaced = x`ctx.${node}`;
 
-		// 					template_scope.dependencies_for_name.get(name).forEach(dependency => {
-		// 						dependencies.add(dependency);
-		// 					});
-		// 				} else {
-		// 					dependencies.add(name);
-		// 					component.add_reference(name); // TODO is this redundant/misplaced?
-		// 				}
-		// 			} else if (!is_synthetic && is_contextual(component, template_scope, name)) {
-		// 				code.prependRight(node.start, key === 'key' && parent.shorthand
-		// 					? `${name}: ctx.`
-		// 					: 'ctx.');
-		// 			}
+						if (parent) {
+							if (index !== null) {
+								// TODO can this happen?
+								parent[key][index] = replaced;
+							} else {
+								parent[key] = replaced;
+							}
+						} else {
+							return_value = replaced;
+						}
+					}
 
-		// 			if (node.type === 'MemberExpression') {
-		// 				nodes.forEach(node => {
-		// 					code.addSourcemapLocation(node.start);
-		// 					code.addSourcemapLocation(node.end);
-		// 				});
-		// 			}
+					this.skip();
+				}
 
-		// 			this.skip();
-		// 		}
+				if (!function_expression) {
+					if (node.type === 'AssignmentExpression') {
+						// TODO should this be a warning/error? `<p>{foo = 1}</p>`
+					}
 
-		// 		if (!function_expression) {
-		// 			if (node.type === 'AssignmentExpression') {
-		// 				// TODO should this be a warning/error? `<p>{foo = 1}</p>`
-		// 			}
+					if (node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') {
+						function_expression = node;
+						dependencies = new Set();
+						contextual_dependencies = new Set();
+					}
+				}
+			},
 
-		// 			if (node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') {
-		// 				function_expression = node;
-		// 				dependencies = new Set();
-		// 				contextual_dependencies = new Set();
-		// 			}
-		// 		}
-		// 	},
+			leave(node: Node, _parent: Node) {
+				if (map.has(node)) scope = scope.parent;
 
-		// 	leave(node: Node, parent: Node) {
-		// 		if (map.has(node)) scope = scope.parent;
+				if (node === function_expression) {
+					// const id = component.get_unique_name(
+					// 	sanitize(get_function_name(node, owner))
+					// );
 
-		// 		if (node === function_expression) {
-		// 			const id = component.get_unique_name(
-		// 				sanitize(get_function_name(node, owner))
-		// 			);
+					// const args = contextual_dependencies.size > 0
+					// 	? [`{ ${Array.from(contextual_dependencies).join(', ')} }`]
+					// 	: [];
 
-		// 			const args = contextual_dependencies.size > 0
-		// 				? [`{ ${Array.from(contextual_dependencies).join(', ')} }`]
-		// 				: [];
+					// let original_params;
 
-		// 			let original_params;
+					// if (node.params.length > 0) {
+					// 	original_params = code.slice(node.params[0].start, node.params[node.params.length - 1].end);
+					// 	args.push(original_params);
+					// }
 
-		// 			if (node.params.length > 0) {
-		// 				original_params = code.slice(node.params[0].start, node.params[node.params.length - 1].end);
-		// 				args.push(original_params);
-		// 			}
+					// const body = code.slice(node.body.start, node.body.end).trim();
 
-		// 			const body = code.slice(node.body.start, node.body.end).trim();
+					// const fn = node.type === 'FunctionExpression'
+					// 	? b`${node.async ? 'async ' : ''}function${node.generator ? '*' : ''} ${id}(${args.join(', ')}) ${body}`
+					// 	: b`const ${id} = ${node.async ? 'async ' : ''}(${args.join(', ')}) => ${body};`;
 
-		// 			const fn = node.type === 'FunctionExpression'
-		// 				? b`${node.async ? 'async ' : ''}function${node.generator ? '*' : ''} ${id}(${args.join(', ')}) ${body}`
-		// 				: b`const ${id} = ${node.async ? 'async ' : ''}(${args.join(', ')}) => ${body};`;
+					// if (dependencies.size === 0 && contextual_dependencies.size === 0) {
+					// 	// we can hoist this out of the component completely
+					// 	component.fully_hoisted.push(fn);
 
-		// 			if (dependencies.size === 0 && contextual_dependencies.size === 0) {
-		// 				// we can hoist this out of the component completely
-		// 				component.fully_hoisted.push(fn);
-		// 				code.overwrite(node.start, node.end, id.name);
+					// 	// code.overwrite(node.start, node.end, id.name);
 
-		// 				component.add_var({
-		// 					name: id.name,
-		// 					internal: true,
-		// 					hoistable: true,
-		// 					referenced: true
-		// 				});
-		// 			}
+					// 	component.add_var({
+					// 		name: id.name,
+					// 		internal: true,
+					// 		hoistable: true,
+					// 		referenced: true
+					// 	});
+					// }
 
-		// 			else if (contextual_dependencies.size === 0) {
-		// 				// function can be hoisted inside the component init
-		// 				component.partly_hoisted.push(fn);
-		// 				code.overwrite(node.start, node.end, `ctx.${id}`);
+					// else if (contextual_dependencies.size === 0) {
+					// 	// function can be hoisted inside the component init
+					// 	component.partly_hoisted.push(fn);
+					// 	code.overwrite(node.start, node.end, `ctx.${id}`);
 
-		// 				component.add_var({
-		// 					name: id.name,
-		// 					internal: true,
-		// 					referenced: true
-		// 				});
-		// 			}
+					// 	component.add_var({
+					// 		name: id.name,
+					// 		internal: true,
+					// 		referenced: true
+					// 	});
+					// }
 
-		// 			else {
-		// 				// we need a combo block/init recipe
-		// 				component.partly_hoisted.push(fn);
-		// 				code.overwrite(node.start, node.end, id.name);
+					// else {
+					// 	// we need a combo block/init recipe
+					// 	component.partly_hoisted.push(fn);
+					// 	code.overwrite(node.start, node.end, id.name);
 
-		// 				component.add_var({
-		// 					name: id.name,
-		// 					internal: true,
-		// 					referenced: true
-		// 				});
+					// 	component.add_var({
+					// 		name: id.name,
+					// 		internal: true,
+					// 		referenced: true
+					// 	});
 
-		// 				declarations.push(b`
-		// 					function ${id}(${original_params ? '...args' : ''}) {
-		// 						return ctx.${id}(ctx${original_params ? ', ...args' : ''});
-		// 					}
-		// 				`);
-		// 			}
+					// 	declarations.push(b`
+					// 		function ${id}(${original_params ? '...args' : ''}) {
+					// 			return ctx.${id}(ctx${original_params ? ', ...args' : ''});
+					// 		}
+					// 	`);
+					// }
 
-		// 			if (parent && parent.method) {
-		// 				code.prependRight(node.start, ': ');
-		// 			}
+					// if (parent && parent.method) {
+					// 	code.prependRight(node.start, ': ');
+					// }
 
-		// 			function_expression = null;
-		// 			dependencies = null;
-		// 			contextual_dependencies = null;
-		// 		}
+					function_expression = null;
+					dependencies = null;
+					contextual_dependencies = null;
+				}
 
-		// 		if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
-		// 			const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
+				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 
-		// 			// normally (`a = 1`, `b.c = 2`), there'll be a single name
-		// 			// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
-		// 			// may be more, in which case we need to tack the extra ones
-		// 			// onto the initial function call
-		// 			const names = new Set(extract_names(assignee));
+					// normally (`a = 1`, `b.c = 2`), there'll be a single name
+					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
+					// may be more, in which case we need to tack the extra ones
+					// onto the initial function call
+					const names = new Set(extract_names(assignee));
 
-		// 			const traced: Set<string> = new Set();
-		// 			names.forEach(name => {
-		// 				const dependencies = template_scope.dependencies_for_name.get(name);
-		// 				if (dependencies) {
-		// 					dependencies.forEach(name => traced.add(name));
-		// 				} else {
-		// 					traced.add(name);
-		// 				}
-		// 			});
+					const traced: Set<string> = new Set();
+					names.forEach(name => {
+						const dependencies = template_scope.dependencies_for_name.get(name);
+						if (dependencies) {
+							dependencies.forEach(name => traced.add(name));
+						} else {
+							traced.add(name);
+						}
+					});
 
-		// 			invalidate(component, scope, code, node, traced);
-		// 		}
-		// 	}
-		// });
+					invalidate(component, scope, node, traced);
+				}
+			}
+		});
 
-		// if (declarations.length > 0) {
-		// 	block.maintain_context = true;
-		// 	declarations.forEach(declaration => {
-		// 		block.chunks.init.push(declaration);
-		// 	});
-		// }
+		if (declarations.length > 0) {
+			block.maintain_context = true;
+			declarations.forEach(declaration => {
+				block.chunks.init.push(declaration);
+			});
+		}
 
-		throw new Error(`bad`);
-
-		return this.rendered = `[✂${this.node.start}-${this.node.end}✂]`;
+		return return_value;
 	}
 }
 
@@ -426,17 +422,17 @@ export default class Expression {
 // 	return 'func';
 // }
 
-// function is_contextual(component: Component, scope: TemplateScope, name: string) {
-// 	if (name === '$$props') return true;
+function is_contextual(component: Component, scope: TemplateScope, name: string) {
+	if (name === '$$props') return true;
 
-// 	// if it's a name below root scope, it's contextual
-// 	if (!scope.is_top_level(name)) return true;
+	// if it's a name below root scope, it's contextual
+	if (!scope.is_top_level(name)) return true;
 
-// 	const variable = component.var_lookup.get(name);
+	const variable = component.var_lookup.get(name);
 
-// 	// hoistables, module declarations, and imports are non-contextual
-// 	if (!variable || variable.hoistable) return false;
+	// hoistables, module declarations, and imports are non-contextual
+	if (!variable || variable.hoistable) return false;
 
-// 	// assume contextual
-// 	return true;
-// }
+	// assume contextual
+	return true;
+}

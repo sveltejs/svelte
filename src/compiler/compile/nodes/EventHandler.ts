@@ -63,7 +63,7 @@ export default class EventHandler extends Node {
 
 	// TODO move this? it is specific to render-dom
 	render(block: Block) {
-		if (this.expression) return this.expression.render(block);
+		if (this.expression) this.expression.manipulate(block);
 
 		// this.component.add_reference(this.handler_name);
 		return `ctx.${this.handler_name}`;

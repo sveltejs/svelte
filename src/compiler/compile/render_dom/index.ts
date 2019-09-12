@@ -77,12 +77,12 @@ export default function dom(
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
 		? x`
 			${$$props} => {
-				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
+				${uses_props && component.invalidate('$$props', b`$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
-					`if ('${prop.export_name}' in ${$$props}) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.export_name}`)};`
+					b`if ('${prop.export_name}' in ${$$props}) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
 				${component.slots.size > 0 &&
-				`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
+				b`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
 		: null;
@@ -370,7 +370,7 @@ export default function dom(
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
-				${set && `$$self.$set = ${set};`}
+				${set && b`$$self.$set = ${set};`}
 
 				${capture_state && `$$self.$capture_state = ${capture_state};`}
 

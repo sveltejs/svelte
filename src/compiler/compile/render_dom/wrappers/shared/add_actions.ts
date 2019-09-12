@@ -15,7 +15,7 @@ export default function add_actions(
 		let dependencies;
 
 		if (expression) {
-			snippet = expression.render(block);
+			snippet = expression.manipulate(block);
 			dependencies = expression.dynamic_dependencies();
 		}
 

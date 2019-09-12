@@ -601,7 +601,7 @@ export default class ElementWrapper extends Wrapper {
 					: null;
 
 				if (attr.is_spread) {
-					const snippet = attr.expression.render(block);
+					const snippet = attr.expression.manipulate(block);
 
 					initial_props.push(snippet);
 
@@ -654,7 +654,7 @@ export default class ElementWrapper extends Wrapper {
 			// bidirectional transition
 			const name = block.get_unique_name(`${this.var}_transition`);
 			const snippet = intro.expression
-				? intro.expression.render(block)
+				? intro.expression.manipulate(block)
 				: '{}';
 
 			block.add_variable(name);
@@ -700,7 +700,7 @@ export default class ElementWrapper extends Wrapper {
 			if (intro) {
 				block.add_variable(intro_name);
 				const snippet = intro.expression
-					? intro.expression.render(block)
+					? intro.expression.manipulate(block)
 					: '{}';
 
 				const fn = component.qualify(intro.name);
@@ -742,7 +742,7 @@ export default class ElementWrapper extends Wrapper {
 			if (outro) {
 				block.add_variable(outro_name);
 				const snippet = outro.expression
-					? outro.expression.render(block)
+					? outro.expression.manipulate(block)
 					: '{}';
 
 				const fn = component.qualify(outro.name);
@@ -796,7 +796,7 @@ export default class ElementWrapper extends Wrapper {
 			${outro && `@add_transform(${this.var}, ${rect});`}
 		`);
 
-		const params = this.node.animation.expression ? this.node.animation.expression.render(block) : '{}';
+		const params = this.node.animation.expression ? this.node.animation.expression.manipulate(block) : '{}';
 
 		const name = component.qualify(this.node.animation.name);
 
@@ -816,7 +816,7 @@ export default class ElementWrapper extends Wrapper {
 			let snippet;
 			let dependencies;
 			if (expression) {
-				snippet = expression.render(block);
+				snippet = expression.manipulate(block);
 				dependencies = expression.dependencies;
 			} else {
 				snippet = `${quote_prop_if_necessary(name)}`;

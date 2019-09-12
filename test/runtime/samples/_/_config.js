@@ -1,6 +1,3 @@
 export default {
-	solo: 1,
-	show: 1,
-
-	html: '<h1>Hello world!</h1>'
+	html: '<h1>1 + 2 = 3</h1>'
 };

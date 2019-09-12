@@ -35,10 +35,10 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								const snippet = chunk.render();
+								const snippet = chunk.manipulate();
 
 								add_to_set(prop_dependencies, chunk.dynamic_dependencies());
-								return chunk.get_precedence() <= 13 ? `(${snippet})` : snippet;
+								return snippet;
 							}
 						})
 						.join(' + ');
