@@ -102,7 +102,6 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	$$.ctx = instance
 		? instance(component, props, (key, ret, value = ret) => {
-			console.log(`invalidating`, key, ret, value);
 			if ($$.ctx && not_equal($$.ctx[key], $$.ctx[key] = value)) {
 				if ($$.bound[key]) $$.bound[key](value);
 				if (ready) make_dirty(component, key);

@@ -480,21 +480,21 @@ export default class ElementWrapper extends Wrapper {
 								${animation_frame} = @raf(${handler});
 								${needs_lock && `${lock} = true;`}
 							}
-							ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
+							#ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', #ctx' : ''});
 						}
 					`);
 				} else {
 					block.chunks.init.push(b`
 						function ${handler}() {
 							${needs_lock && `${lock} = true;`}
-							ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
+							#ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', #ctx' : ''});
 						}
 					`);
 				}
 
 				callee = handler;
 			} else {
-				callee = `ctx.${handler}`;
+				callee = x`#ctx.${handler}`;
 			}
 
 			this.renderer.component.partly_hoisted.push(b`
@@ -519,7 +519,7 @@ export default class ElementWrapper extends Wrapper {
 					);
 				} else {
 					block.event_listeners.push(
-						`@listen(${this.var}, "${name}", ${callee})`
+						x`@listen(${this.var}, "${name}", ${callee})`
 					);
 				}
 			});

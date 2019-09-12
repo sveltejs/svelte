@@ -1,5 +1,4 @@
 import { b, x } from 'code-red';
-import deindent from '../utils/deindent';
 import { stringify, escape } from '../utils/stringify';
 import Component from '../Component';
 import Renderer from './Renderer';
@@ -99,44 +98,59 @@ export default function dom(
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
 	let dev_props_check; let inject_state; let capture_state;
 
-	props.forEach(x => {
-		const variable = component.var_lookup.get(x.name);
+	props.forEach(prop => {
+		const variable = component.var_lookup.get(prop.name);
 
 		if (!variable.writable || component.component_options.accessors) {
-			accessors.push(deindent`
-				get ${x.export_name}() {
-					return ${x.hoistable ? x.name : 'this.$$.ctx.' + x.name};
-				}
-			`);
+			accessors.push({
+				type: 'MethodDefinition',
+				kind: 'get',
+				key: { type: 'Identifier', name: prop.export_name },
+				value: x`function() {
+					return ${prop.hoistable ? prop.name : x`this.$$.ctx.${prop.name}`}
+				}`
+			});
 		} else if (component.compile_options.dev) {
-			accessors.push(deindent`
-				get ${x.export_name}() {
+			accessors.push({
+				type: 'MethodDefinition',
+				kind: 'get',
+				key: { type: 'Identifier', name: prop.export_name },
+				value: x`function() {
 					throw new @_Error("<${component.tag}>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-				}
-			`);
+				}`
+			});
 		}
 
 		if (component.component_options.accessors) {
-			if (variable.writable && !renderer.readonly.has(x.name)) {
-				accessors.push(deindent`
-					set ${x.export_name}(${x.name}) {
-						this.$set({ ${x.name === x.export_name ? x.name : `${x.export_name}: ${x.name}`} });
+			if (variable.writable && !renderer.readonly.has(prop.name)) {
+				accessors.push({
+					type: 'MethodDefinition',
+					kind: 'set',
+					key: { type: 'Identifier', name: prop.export_name },
+					value: x`function(${prop.name}) {
+						this.$set({ ${prop.export_name}: ${prop.name} });
 						@flush();
-					}
-				`);
+					}`
+				});
 			} else if (component.compile_options.dev) {
-				accessors.push(deindent`
-					set ${x.export_name}(value) {
-						throw new @_Error("<${component.tag}>: Cannot set read-only property '${x.export_name}'");
-					}
-				`);
+				accessors.push({
+					type: 'MethodDefinition',
+					kind: 'set',
+					key: { type: 'Identifier', name: prop.export_name },
+					value: x`function(value) {
+						throw new @_Error("<${component.tag}>: Cannot set read-only property '${prop.export_name}'");
+					}`
+				});
 			}
 		} else if (component.compile_options.dev) {
-			accessors.push(deindent`
-				set ${x.export_name}(value) {
+			accessors.push({
+				type: 'MethodDefinition',
+				kind: 'set',
+				key: { type: 'Identifier', name: prop.export_name },
+				value: x`function(value) {
 					throw new @_Error("<${component.tag}>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-				}
-			`);
+				}`
+			});
 		}
 	});
 
@@ -204,7 +218,7 @@ export default function dom(
 					// onto the initial function call
 					const names = new Set(extract_names(assignee));
 
-					invalidate(component, scope, node, names);
+					this.replace(invalidate(component, scope, node, names));
 				}
 			}
 		});
@@ -405,7 +419,7 @@ export default function dom(
 	});
 
 	if (options.customElement) {
-		body.push(b`
+		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
@@ -428,15 +442,24 @@ export default function dom(
 						}`}
 					}
 				}
-
-				${props.length > 0 && deindent`
-				static get observedAttributes() {
-					return ${JSON.stringify(props.map(x => x.export_name))};
-				}`}
-
-				${body.length > 0 && body.join('\n\n')}
 			}
-		`);
+		`[0];
+
+		if (props.length > 0) {
+			declaration.body.body.push({
+				type: 'MethodDefinition',
+				kind: 'get',
+				static: true,
+				key: { type: 'Identifier', name: 'observedAttributes' },
+				value: x`function() {
+					return [${props.map(prop => x`"${prop.export_name}"`)}];
+				}`
+			})
+		}
+
+		declaration.body.body.push(...accessors);
+
+		body.push(declaration);
 
 		if (component.tag != null) {
 			body.push(b`
@@ -449,9 +472,7 @@ export default function dom(
 			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
 		};
 
-		// TODO add accessors
-
-		body.push(b`
+		const declaration = b`
 			class ${name} extends ${superclass} {
 				constructor(options) {
 					super(${options.dev && `options`});
@@ -462,7 +483,11 @@ export default function dom(
 					${dev_props_check}
 				}
 			}
-		`);
+		`[0];
+
+		declaration.body.body.push(...accessors);
+
+		body.push(declaration);
 	}
 
 	return flatten(body, []);

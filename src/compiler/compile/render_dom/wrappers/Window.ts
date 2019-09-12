@@ -82,13 +82,12 @@ export default class WindowWrapper extends Wrapper {
 				block.add_variable(clear_scrolling, x`() => { ${scrolling} = false }`);
 				block.add_variable(scrolling_timeout);
 
-				const condition = [
-					bindings.scrollX && `"${bindings.scrollX}" in this._state`,
-					bindings.scrollY && `"${bindings.scrollY}" in this._state`
-				].filter(Boolean).join(' || ');
+				const condition = bindings.scrollX && bindings.scrollY
+					? x`"${bindings.scrollX}" in this._state || "${bindings.scrollY}" in this._state`
+					: x`"${bindings.scrollX || bindings.scrollY}" in this._state`;
 
-				const scrollX = bindings.scrollX && `this._state.${bindings.scrollX}`;
-				const scrollY = bindings.scrollY && `this._state.${bindings.scrollY}`;
+				const scrollX = bindings.scrollX && x`this._state.${bindings.scrollX}`;
+				const scrollY = bindings.scrollY && x`this._state.${bindings.scrollY}`;
 
 				renderer.meta_bindings.push(b`
 					if (${condition}) {
@@ -98,12 +97,12 @@ export default class WindowWrapper extends Wrapper {
 					${scrollY && `${scrollY} = @_window.pageYOffset;`}
 				`);
 
-				block.event_listeners.push(b`
+				block.event_listeners.push(x`
 					@listen(@_window, "${event}", () => {
 						${scrolling} = true;
 						@_clearTimeout(${scrolling_timeout});
 						${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
-						ctx.${id}();
+						#ctx.${id}();
 					})
 				`);
 			} else {
@@ -113,8 +112,8 @@ export default class WindowWrapper extends Wrapper {
 					);
 				});
 
-				block.event_listeners.push(b`
-					@listen(@_window, "${event}", ctx.${id})
+				block.event_listeners.push(x`
+					@listen(@_window, "${event}", #ctx.${id})
 				`);
 			}
 
@@ -131,7 +130,7 @@ export default class WindowWrapper extends Wrapper {
 			`);
 
 			block.chunks.init.push(b`
-				@add_render_callback(ctx.${id});
+				@add_render_callback(#ctx.${id});
 			`);
 
 			component.has_reactive_assignments = true;
@@ -148,9 +147,9 @@ export default class WindowWrapper extends Wrapper {
 					${scrolling} = true;
 					@_clearTimeout(${scrolling_timeout});
 					@_scrollTo(${
-						bindings.scrollX ? `ctx.${bindings.scrollX}` : `@_window.pageXOffset`
+						bindings.scrollX ? `#ctx.${bindings.scrollX}` : `@_window.pageXOffset`
 					}, ${
-						bindings.scrollY ? `ctx.${bindings.scrollY}` : `@_window.pageYOffset`
+						bindings.scrollY ? `#ctx.${bindings.scrollY}` : `@_window.pageYOffset`
 					});
 					${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
 				}
@@ -175,12 +174,12 @@ export default class WindowWrapper extends Wrapper {
 			`);
 
 			block.chunks.init.push(b`
-				@add_render_callback(ctx.${id});
+				@add_render_callback(#ctx.${id});
 			`);
 
 			block.event_listeners.push(
-				`@listen(@_window, "online", ctx.${id})`,
-				`@listen(@_window, "offline", ctx.${id})`
+				x`@listen(@_window, "online", #ctx.${id})`,
+				x`@listen(@_window, "offline", #ctx.${id})`
 			);
 
 			component.has_reactive_assignments = true;

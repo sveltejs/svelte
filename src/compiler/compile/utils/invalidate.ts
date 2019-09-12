@@ -55,7 +55,10 @@ export function invalidate(component: Component, scope: Scope, node: Node, names
 			);
 
 			if (pass_value) {
-				extra_args.unshift(head);
+				extra_args.unshift({
+					type: 'Identifier',
+					name: head
+				});
 			}
 
 			return x`$$invalidate("${head}", ${node}, ${extra_args})`;

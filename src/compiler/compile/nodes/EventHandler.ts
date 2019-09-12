@@ -1,7 +1,7 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import Block from '../render_dom/Block';
 import { sanitize } from '../../utils/names';
 import { Identifier } from '../../interfaces';
@@ -63,9 +63,11 @@ export default class EventHandler extends Node {
 
 	// TODO move this? it is specific to render-dom
 	render(block: Block) {
-		if (this.expression) this.expression.manipulate(block);
+		if (this.expression) {
+			return this.expression.manipulate(block);
+		}
 
 		// this.component.add_reference(this.handler_name);
-		return `#ctx.${this.handler_name}`;
+		return x`#ctx.${this.handler_name}`;
 	}
 }

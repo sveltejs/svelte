@@ -173,7 +173,8 @@ function cjs(
 						shorthand: false,
 						computed: false,
 						key: s.imported || { type: 'Identifier', name: 'default' },
-						value: s.local
+						value: s.local,
+						kind: 'init'
 					}))
 				},
 			init: x`require("${edit_source(node.source.value, sveltePath)}")`

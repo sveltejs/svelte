@@ -912,11 +912,13 @@ export default class Component {
 										computed: false,
 										kind: 'init',
 										key: declarator.id,
-										value: {
-											type: 'AssignmentPattern',
-											left: declarator.id,
-											right: declarator.init
-										}
+										value: declarator.init
+											? {
+												type: 'AssignmentPattern',
+												left: declarator.id,
+												right: declarator.init
+											}
+											: declarator.id
 									}]
 								};
 
@@ -1228,7 +1230,7 @@ export default class Component {
 	}
 
 	qualify(name) {
-		if (name === `$$props`) return `#ctx.$$props`;
+		if (name === `$$props`) return x`#ctx.$$props`;
 
 		const variable = this.var_lookup.get(name);
 
@@ -1238,7 +1240,7 @@ export default class Component {
 
 		if (variable.hoistable) return name;
 
-		return `#ctx.${name}`;
+		return x`#ctx.${name}`;
 	}
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {

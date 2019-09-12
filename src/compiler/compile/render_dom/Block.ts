@@ -57,7 +57,7 @@ export default class Block {
 		destroy: Node[];
 	};
 
-	event_listeners: string[] = [];
+	event_listeners: Node[] = [];
 
 	maintain_context: boolean;
 	has_animation: boolean;
@@ -430,7 +430,7 @@ export default class Block {
 			} else {
 				this.chunks.hydrate.push(b`
 					${dispose} = [
-						${this.event_listeners.join(',\n')}
+						${this.event_listeners}
 					];
 				`);
 

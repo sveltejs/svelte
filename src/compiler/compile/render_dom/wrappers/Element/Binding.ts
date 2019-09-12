@@ -125,11 +125,11 @@ export default class BindingWrapper {
 				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
 
 				block.chunks.hydrate.push(
-					b`ctx.$$binding_groups[${binding_group}].push(${parent.var});`
+					b`#ctx.$$binding_groups[${binding_group}].push(${parent.var});`
 				);
 
 				block.chunks.destroy.push(
-					b`ctx.$$binding_groups[${binding_group}].splice(ctx.$$binding_groups[${binding_group}].indexOf(${parent.var}), 1);`
+					b`#ctx.$$binding_groups[${binding_group}].splice(#ctx.$$binding_groups[${binding_group}].indexOf(${parent.var}), 1);`
 				);
 				break;
 			}

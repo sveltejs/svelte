@@ -5,8 +5,8 @@ import Block from '../../Block';
 import Binding from '../../../nodes/Binding';
 import { Identifier } from '../../../../interfaces';
 
-export default function bind_this(component: Component, block: Block, binding: Binding, variable: string) {
-	const fn = component.get_unique_name(`${variable}_binding`);
+export default function bind_this(component: Component, block: Block, binding: Binding, variable: Identifier) {
+	const fn = component.get_unique_name(`${variable.name}_binding`);
 
 	component.add_var({
 		name: fn.name,
@@ -56,18 +56,18 @@ export default function bind_this(component: Component, block: Block, binding: B
 		for (const arg of contextual_dependencies) {
 			const id: Identifier = { type: 'Identifier', name: arg };
 			args.push(id);
-			block.add_variable(id, x`ctx.${id}`);
+			block.add_variable(id, x`#ctx.${id}`);
 		}
 
 		const assign = block.get_unique_name(`assign_${variable}`);
 		const unassign = block.get_unique_name(`unassign_${variable}`);
 
 		block.chunks.init.push(b`
-			const ${assign} = () => ctx.${fn}(${[variable].concat(args).join(', ')});
-			const ${unassign} = () => ctx.${fn}(${['null'].concat(args).join(', ')});
+			const ${assign} = () => #ctx.${fn}(${[variable].concat(args).join(', ')});
+			const ${unassign} = () => #ctx.${fn}(${['null'].concat(args).join(', ')});
 		`);
 
-		const condition = Array.from(contextual_dependencies).map(name => `${name} !== ctx.${name}`).join(' || ');
+		const condition = Array.from(contextual_dependencies).map(name => `${name} !== #ctx.${name}`).join(' || ');
 
 		// we push unassign and unshift assign so that references are
 		// nulled out before they're created, to avoid glitches
@@ -75,7 +75,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		block.chunks.update.push(b`
 			if (${condition}) {
 				${unassign}();
-				${args.map(a => `${a} = ctx.${a}`).join(', ')};
+				${args.map(a => `${a} = #ctx.${a}`).join(', ')};
 				${assign}();
 			}`
 		);
@@ -92,6 +92,6 @@ export default function bind_this(component: Component, block: Block, binding: B
 		}
 	`);
 
-	block.chunks.destroy.push(b`ctx.${fn}(null);`);
-	return b`ctx.${fn}(${variable});`;
+	block.chunks.destroy.push(b`#ctx.${fn}(null);`);
+	return b`#ctx.${fn}(${variable});`;
 }

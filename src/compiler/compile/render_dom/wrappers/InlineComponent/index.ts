@@ -250,14 +250,14 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		if (non_let_dependencies.length > 0) {
-			updates.push(`if (${non_let_dependencies.map(n => `changed.${n}`).join(' || ')}) ${name_changes}.$$scope = { changed, ctx };`);
+			updates.push(`if (${non_let_dependencies.map(n => `changed.${n}`).join(' || ')}) ${name_changes}.$$scope = { changed: #changed, ctx: #ctx };`);
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {
 			component.has_reactive_assignments = true;
 
 			if (binding.name === 'this') {
-				return bind_this(component, block, binding, this.var.name);
+				return bind_this(component, block, binding, this.var);
 			}
 
 			const id = component.get_unique_name(`${this.var}_${binding.name}_binding`);
@@ -306,7 +306,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				block.chunks.init.push(b`
 					function ${name}(${value}) {
-						ctx.${name}.call(null, ${value}, ctx);
+						#ctx.${name}.call(null, ${value}, #ctx);
 						${updating} = true;
 						@add_flush_callback(() => ${updating} = false);
 					}
@@ -316,7 +316,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			} else {
 				block.chunks.init.push(b`
 					function ${id}(${value}) {
-						ctx.${name}.call(null, ${value});
+						#ctx.${name}.call(null, ${value});
 						${updating} = true;
 						@add_flush_callback(() => ${updating} = false);
 					}
@@ -337,7 +337,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const munged_handlers = this.node.handlers.map(handler => {
 			let snippet = handler.render(block);
-			if (handler.modifiers.has('once')) snippet = `@once(${snippet})`;
+			if (handler.modifiers.has('once')) snippet = x`@once(${snippet})`;
 
 			return `${name}.$on("${handler.name}", ${snippet});`;
 		});
@@ -351,7 +351,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.chunks.init.push(b`
 				var ${switch_value} = ${snippet};
 
-				function ${switch_props}(ctx) {
+				function ${switch_props}(#ctx) {
 					${(this.node.attributes.length || this.node.bindings.length) && b`
 					${props && `let ${props} = ${attribute_object};`}`}
 					${statements}
@@ -359,7 +359,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 
 				if (${switch_value}) {
-					var ${name} = new ${switch_value}(${switch_props}(ctx));
+					var ${name} = new ${switch_value}(${switch_props}(#ctx));
 
 					${munged_bindings}
 					${munged_handlers}
@@ -403,7 +403,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 
 					if (${switch_value}) {
-						${name} = new ${switch_value}(${switch_props}(ctx));
+						${name} = new ${switch_value}(${switch_props}(#ctx));
 
 						${munged_bindings}
 						${munged_handlers}

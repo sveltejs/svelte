@@ -110,8 +110,8 @@ export default class SlotWrapper extends Wrapper {
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
 
 		block.chunks.init.push(b`
-			const ${slot_definition} = ctx.$$slots${quote_prop_if_necessary(slot_name)};
-			const ${slot} = @create_slot(${slot_definition}, ctx, ${get_slot_context});
+			const ${slot_definition} = #ctx.$$slots${quote_prop_if_necessary(slot_name)};
+			const ${slot} = @create_slot(${slot_definition}, #ctx, ${get_slot_context});
 		`);
 
 		const mount_before = block.chunks.mount.slice();
@@ -175,8 +175,8 @@ export default class SlotWrapper extends Wrapper {
 		block.chunks.update.push(b`
 			if (${slot} && ${slot}.p && ${update_conditions}) {
 				${slot}.p(
-					@get_slot_changes(${slot_definition}, ctx, changed, ${get_slot_changes}),
-					@get_slot_context(${slot_definition}, ctx, ${get_slot_context})
+					@get_slot_changes(${slot_definition}, #ctx, changed, ${get_slot_changes}),
+					@get_slot_context(${slot_definition}, #ctx, ${get_slot_context})
 				);
 			}
 		`);

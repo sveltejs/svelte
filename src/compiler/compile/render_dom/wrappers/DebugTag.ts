@@ -63,7 +63,7 @@ export default class DebugTagWrapper extends Wrapper {
 
 			// block.chunks.update.push(b`
 			// 	if (${condition}) {
-			// 		const { ${ctx_identifiers} } = ctx;
+			// 		const { ${ctx_identifiers} } = #ctx;
 			// 		@_console.${log}({ ${logged_identifiers} });
 			// 		debugger;
 			// 	}
@@ -71,7 +71,7 @@ export default class DebugTagWrapper extends Wrapper {
 
 			// block.chunks.create.push(b`
 			// 	{
-			// 		const { ${ctx_identifiers} } = ctx;
+			// 		const { ${ctx_identifiers} } = #ctx;
 			// 		@_console.${log}({ ${logged_identifiers} });
 			// 		debugger;
 			// 	}

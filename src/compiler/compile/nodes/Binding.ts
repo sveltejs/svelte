@@ -4,6 +4,7 @@ import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import {dimensions} from "../../utils/patterns";
+import { x } from 'code-red';
 
 // TODO this should live in a specific binding
 const read_only_media_attributes = new Set([
@@ -68,8 +69,8 @@ export default class Binding extends Node {
 			if (!this.expression.node.computed) prop = `'${prop}'`;
 			obj = `[✂${this.expression.node.object.start}-${this.expression.node.object.end}✂]`;
 		} else {
-			obj = '#ctx';
-			prop = `'${name}'`;
+			obj = x`#ctx`;
+			prop = x`'${name}'`;
 		}
 
 		this.obj = obj;
