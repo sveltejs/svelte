@@ -7,7 +7,7 @@ import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import ElseBlock from '../../nodes/ElseBlock';
 import { attach_head } from '../../utils/tail';
-import { Identifier } from '../../../interfaces';
+import { Identifier, Node } from '../../../interfaces';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -315,7 +315,7 @@ export default class EachBlockWrapper extends Wrapper {
 		block: Block;
 		parent_node: string;
 		parent_nodes: string;
-		snippet: string;
+		snippet: Node;
 		initial_anchor_node: Identifier;
 		initial_mount_node: Identifier;
 		update_anchor_node: Identifier;
@@ -424,7 +424,7 @@ export default class EachBlockWrapper extends Wrapper {
 	}: {
 		block: Block;
 		parent_nodes: string;
-		snippet: string;
+		snippet: Node;
 		initial_anchor_node: Identifier;
 		initial_mount_node: Identifier;
 		update_anchor_node: Identifier;

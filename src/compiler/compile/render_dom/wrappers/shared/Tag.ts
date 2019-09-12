@@ -40,7 +40,7 @@ export default class Tag extends Wrapper {
 				? `(${changed_check}) && ${update_cached_value}`
 				: changed_check;
 
-			block.chunks.update.push(b`if (${condition}) ${update(content)}`);
+			block.chunks.update.push(b`if (${condition}) ${update(content as Node)}`);
 		}
 
 		return { init: content };

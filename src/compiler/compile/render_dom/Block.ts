@@ -114,7 +114,7 @@ export default class Block {
 
 		this.get_unique_name = this.renderer.component.get_unique_name_maker();
 
-		this.aliases = new Map().set('ctx', this.get_unique_name('ctx'));
+		this.aliases = new Map();
 		if (this.key) this.aliases.set('key', this.get_unique_name('key'));
 	}
 
@@ -304,9 +304,9 @@ export default class Block {
 			if (this.chunks.update.length === 0 && !this.maintain_context) {
 				properties.update = noop;
 			} else {
-				const ctx = this.maintain_context ? x`new_ctx` : x`ctx`;
+				const ctx = this.maintain_context ? x`#new_ctx` : x`#ctx`;
 				properties.update = x`function update(#changed, ${ctx}) {
-					${this.maintain_context && b`ctx = ${ctx};`}
+					${this.maintain_context && b`#ctx = ${ctx};`}
 					${this.chunks.update}
 				}`;
 			}
@@ -385,7 +385,7 @@ export default class Block {
 			${dev
 				? b`
 					const block = ${return_value};
-					@dispatch_dev("SvelteRegisterBlock", { block, id: ${this.name || 'create_fragment'}.name, type: "${this.type}", source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}", ctx });
+					@dispatch_dev("SvelteRegisterBlock", { block, id: ${this.name || 'create_fragment'}.name, type: "${this.type}", source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}", ctx: #ctx });
 					return block;`
 				: b`
 					return ${return_value};`
@@ -398,7 +398,7 @@ export default class Block {
 		const key = this.key && { type: 'Identifier', name: this.get_unique_name('key') };
 
 		const id = { type: 'Identifier', name: this.name };
-		const args: any[] = [x`ctx`];
+		const args: any[] = [x`#ctx`];
 
 		if (key) args.unshift(key);
 

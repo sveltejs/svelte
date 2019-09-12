@@ -810,11 +810,11 @@ export default class Component {
 		const variable = this.var_lookup.get(name);
 
 		if (variable && (variable.subscribable && variable.reassigned)) {
-			return `$$subscribe_${name}($$invalidate('${name}', ${value || name}))`;
+			return x`$$subscribe_${name}($$invalidate('${name}', ${value || name}))`;
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
-			return `${name.slice(1)}.set(${name})`;
+			return x`${name.slice(1)}.set(${name})`;
 		}
 
 		if (
@@ -845,9 +845,7 @@ export default class Component {
 			});
 		});
 
-		return Array.from(deps)
-			.map(n => `$$invalidate('${n}', ${n})`)
-			.join(', ');
+		return Array.from(deps).map(n => x`$$invalidate('${n}', ${n})`);
 	}
 
 	rewrite_props(_get_insert: (variable: Var) => string) {

@@ -2,6 +2,7 @@ import { b } from 'code-red';
 import Block from '../../Block';
 import Action from '../../../nodes/Action';
 import Component from '../../../Component';
+import { x } from 'code-red';
 
 export default function add_actions(
 	component: Component,
@@ -28,16 +29,24 @@ export default function add_actions(
 		const fn = component.qualify(action.name);
 
 		block.chunks.mount.push(
-			b`${id} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
+			b`${id} = ${fn}.call(null, ${target}, ${snippet}) || {};`
 		);
 
 		if (dependencies && dependencies.length > 0) {
-			let conditional = `typeof ${id}.update === 'function' && `;
-			const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
-			conditional += dependencies.length > 1 ? `(${deps})` : deps;
+			let condition = x`typeof ${id}.update === 'function'`;
+
+			// TODO can this case be handled more elegantly?
+			if (dependencies.length > 0) {
+				let changed = x`#changed.${dependencies[0]}`;
+				for (let i = 1; i < dependencies.length; i += 1) {
+					changed = x`${changed} || #changed.${dependencies[i]}`;
+				}
+
+				condition = x`${condition} && ${changed}`;
+			}
 
 			block.chunks.update.push(
-				b`if (${conditional}) ${id}.update.call(null, ${snippet});`
+				b`if (${condition}) ${id}.update.call(null, ${snippet});`
 			);
 		}
 

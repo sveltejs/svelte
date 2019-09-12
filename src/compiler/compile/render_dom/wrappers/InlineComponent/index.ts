@@ -205,7 +205,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 						let value_object = value;
 						if (attr.expression.node.type !== 'ObjectExpression') {
-							value_object = `@get_spread_object(${value})`;
+							value_object = x`@get_spread_object(${value})`;
 						}
 						changes.push(condition ? `${condition} && ${value_object}` : value_object);
 					} else {

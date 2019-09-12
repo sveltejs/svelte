@@ -1,67 +1,66 @@
 import Component from '../Component';
 import { Node } from '../../interfaces';
-// import { nodes_match } from '../../utils/nodes_match';
+import { nodes_match } from '../../utils/nodes_match';
 import { Scope } from './scope';
+import { x } from 'code-red';
 
-export function invalidate(_component: Component, _scope: Scope, _node: Node, _names: Set<string>) {
-	// const [head, ...tail] = Array.from(names).filter(name => {
-	// 	const owner = scope.find_owner(name);
-	// 	if (owner && owner !== component.instance_scope) return false;
+export function invalidate(component: Component, scope: Scope, node: Node, names: Set<string>) {
+	const [head, ...tail] = Array.from(names).filter(name => {
+		const owner = scope.find_owner(name);
+		if (owner && owner !== component.instance_scope) return false;
 
-	// 	const variable = component.var_lookup.get(name);
+		const variable = component.var_lookup.get(name);
 
-	// 	return variable && (
-	// 		!variable.hoistable &&
-	// 		!variable.global &&
-	// 		!variable.module &&
-	// 		(
-	// 			variable.referenced ||
-	// 			variable.is_reactive_dependency ||
-	// 			variable.export_name ||
-	// 			variable.name[0] === '$'
-	// 		)
-	// 	);
-	// });
+		return variable && (
+			!variable.hoistable &&
+			!variable.global &&
+			!variable.module &&
+			(
+				variable.referenced ||
+				variable.is_reactive_dependency ||
+				variable.export_name ||
+				variable.name[0] === '$'
+			)
+		);
+	});
 
-	// TODO
+	if (head) {
+		component.has_reactive_assignments = true;
 
-	// if (head) {
-	// 	component.has_reactive_assignments = true;
+		if (node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
+			return component.invalidate(head);
+		} else {
 
-	// 	if (node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
-	// 		code.overwrite(node.start, node.end, component.invalidate(head));
-	// 	} else {
-	// 		let suffix = ')';
+			// TODO stores
+			// if (head[0] === '$') {
+			// 	code.prependRight(node.start, `${component.helper('set_store_value')}(${head.slice(1)}, `);
+			// } else {
+			// 	let prefix = `$$invalidate`;
 
-	// 		if (head[0] === '$') {
-	// 			code.prependRight(node.start, `${component.helper('set_store_value')}(${head.slice(1)}, `);
-	// 		} else {
-	// 			let prefix = `$$invalidate`;
+			// 	const variable = component.var_lookup.get(head);
+			// 	if (variable.subscribable && variable.reassigned) {
+			// 		prefix = `$$subscribe_${head}($$invalidate`;
+			// 		suffix += `)`;
+			// 	}
 
-	// 			const variable = component.var_lookup.get(head);
-	// 			if (variable.subscribable && variable.reassigned) {
-	// 				prefix = `$$subscribe_${head}($$invalidate`;
-	// 				suffix += `)`;
-	// 			}
+			// 	code.prependRight(node.start, `${prefix}('${head}', `);
+			// }
 
-	// 			code.prependRight(node.start, `${prefix}('${head}', `);
-	// 		}
+			const extra_args = tail.map(name => component.invalidate(name));
 
-	// 		const extra_args = tail.map(name => component.invalidate(name));
+			const pass_value = (
+				extra_args.length > 0 ||
+				(node.type === 'AssignmentExpression' && node.left.type !== 'Identifier') ||
+				(node.type === 'UpdateExpression' && !node.prefix)
+			);
 
-	// 		const pass_value = (
-	// 			extra_args.length > 0 ||
-	// 			(node.type === 'AssignmentExpression' && node.left.type !== 'Identifier') ||
-	// 			(node.type === 'UpdateExpression' && !node.prefix)
-	// 		);
+			if (pass_value) {
+				extra_args.unshift(head);
+			}
 
-	// 		if (pass_value) {
-	// 			extra_args.unshift(head);
-	// 		}
+			return x`$$invalidate("${head}", ${node}, ${extra_args})`;
+		}
+	}
 
-	// 		suffix = `${extra_args.map(arg => `, ${arg}`).join('')}${suffix}`;
-
-	// 		code.appendLeft(node.end, suffix);
-	// 	}
-	// }
+	return node;
 }

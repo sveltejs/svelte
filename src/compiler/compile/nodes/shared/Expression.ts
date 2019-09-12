@@ -4,14 +4,14 @@ import is_reference from 'is-reference';
 import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { Node } from '../../../interfaces';
-import { globals } from '../../../utils/names';
+import { globals, sanitize } from '../../../utils/names';
 import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import Block from '../../render_dom/Block';
 import { INode } from '../interfaces';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
-import { x } from 'code-red';
+import { x, b } from 'code-red';
 import { invalidate } from '../../utils/invalidate';
 
 const binary_operators: Record<string, number> = {
@@ -228,6 +228,7 @@ export default class Expression {
 			declarations,
 			scope_map: map,
 			template_scope,
+			owner,
 			is_synthetic
 		} = this;
 		let scope = this.scope;
@@ -237,11 +238,8 @@ export default class Expression {
 		let dependencies: Set<string>;
 		let contextual_dependencies: Set<string>;
 
-		// TODO this feels a lil messy
-		let return_value = this.node;
-
-		walk(this.node, {
-			enter(node: any, parent: any, key: string, index: number) {
+		const node = walk(this.node, {
+			enter(node: any, parent: any, key: string) {
 				// don't manipulate shorthand props twice
 				if (key === 'value' && parent.shorthand) return;
 
@@ -267,18 +265,7 @@ export default class Expression {
 							component.add_reference(name); // TODO is this redundant/misplaced?
 						}
 					} else if (!is_synthetic && is_contextual(component, template_scope, name)) {
-						const replaced = x`ctx.${node}`;
-
-						if (parent) {
-							if (index !== null) {
-								// TODO can this happen?
-								parent[key][index] = replaced;
-							} else {
-								parent[key] = replaced;
-							}
-						} else {
-							return_value = replaced;
-						}
+						this.replace(x`#ctx.${node}`);
 					}
 
 					this.skip();
@@ -297,78 +284,72 @@ export default class Expression {
 				}
 			},
 
-			leave(node: Node, _parent: Node) {
+			leave(node: Node) {
 				if (map.has(node)) scope = scope.parent;
 
 				if (node === function_expression) {
-					// const id = component.get_unique_name(
-					// 	sanitize(get_function_name(node, owner))
-					// );
+					const id = component.get_unique_name(
+						sanitize(get_function_name(node, owner))
+					);
 
-					// const args = contextual_dependencies.size > 0
-					// 	? [`{ ${Array.from(contextual_dependencies).join(', ')} }`]
-					// 	: [];
+					const declaration = b`const ${id} = ${node}`;
 
-					// let original_params;
+					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
+						// we can hoist this out of the component completely
+						component.fully_hoisted.push(declaration);
+						node.name = id;
 
-					// if (node.params.length > 0) {
-					// 	original_params = code.slice(node.params[0].start, node.params[node.params.length - 1].end);
-					// 	args.push(original_params);
-					// }
+						this.replace(id as any);
 
-					// const body = code.slice(node.body.start, node.body.end).trim();
+						component.add_var({
+							name: id.name,
+							internal: true,
+							hoistable: true,
+							referenced: true
+						});
+					}
 
-					// const fn = node.type === 'FunctionExpression'
-					// 	? b`${node.async ? 'async ' : ''}function${node.generator ? '*' : ''} ${id}(${args.join(', ')}) ${body}`
-					// 	: b`const ${id} = ${node.async ? 'async ' : ''}(${args.join(', ')}) => ${body};`;
+					else if (contextual_dependencies.size === 0) {
+						// function can be hoisted inside the component init
+						component.partly_hoisted.push(declaration);
+						node.name = id;
 
-					// if (dependencies.size === 0 && contextual_dependencies.size === 0) {
-					// 	// we can hoist this out of the component completely
-					// 	component.fully_hoisted.push(fn);
+						this.replace(x`#ctx.${id}` as any);
 
-					// 	// code.overwrite(node.start, node.end, id.name);
+						component.add_var({
+							name: id.name,
+							internal: true,
+							referenced: true
+						});
+					}
 
-					// 	component.add_var({
-					// 		name: id.name,
-					// 		internal: true,
-					// 		hoistable: true,
-					// 		referenced: true
-					// 	});
-					// }
+					else {
+						// we need a combo block/init recipe
+						component.partly_hoisted.push(declaration);
+						node.name = id;
 
-					// else if (contextual_dependencies.size === 0) {
-					// 	// function can be hoisted inside the component init
-					// 	component.partly_hoisted.push(fn);
-					// 	code.overwrite(node.start, node.end, `ctx.${id}`);
+						this.replace(id as any);
 
-					// 	component.add_var({
-					// 		name: id.name,
-					// 		internal: true,
-					// 		referenced: true
-					// 	});
-					// }
+						component.add_var({
+							name: id.name,
+							internal: true,
+							referenced: true
+						});
 
-					// else {
-					// 	// we need a combo block/init recipe
-					// 	component.partly_hoisted.push(fn);
-					// 	code.overwrite(node.start, node.end, id.name);
-
-					// 	component.add_var({
-					// 		name: id.name,
-					// 		internal: true,
-					// 		referenced: true
-					// 	});
-
-					// 	declarations.push(b`
-					// 		function ${id}(${original_params ? '...args' : ''}) {
-					// 			return ctx.${id}(ctx${original_params ? ', ...args' : ''});
-					// 		}
-					// 	`);
-					// }
-
-					// if (parent && parent.method) {
-					// 	code.prependRight(node.start, ': ');
-					// }
+						if (node.params.length > 0) {
+							declarations.push(b`
+								function ${id}(...args) {
+									return #ctx.${id}(#ctx, ...args);
+								}
+							`);
+						} else {
+							declarations.push(b`
+								function ${id}() {
+									return #ctx.${id}(#ctx);
+								}
+							`);
+						}
+					}
 
 					function_expression = null;
 					dependencies = null;
@@ -394,7 +375,7 @@ export default class Expression {
 						}
 					});
 
-					invalidate(component, scope, node, traced);
+					this.replace(invalidate(component, scope, node, traced));
 				}
 			}
 		});
@@ -406,21 +387,21 @@ export default class Expression {
 			});
 		}
 
-		return return_value;
+		return node;
 	}
 }
 
-// function get_function_name(_node, parent) {
-// 	if (parent.type === 'EventHandler') {
-// 		return `${parent.name}_handler`;
-// 	}
+function get_function_name(_node, parent) {
+	if (parent.type === 'EventHandler') {
+		return `${parent.name}_handler`;
+	}
 
-// 	if (parent.type === 'Action') {
-// 		return `${parent.name}_function`;
-// 	}
+	if (parent.type === 'Action') {
+		return `${parent.name}_function`;
+	}
 
-// 	return 'func';
-// }
+	return 'func';
+}
 
 function is_contextual(component: Component, scope: TemplateScope, name: string) {
 	if (name === '$$props') return true;

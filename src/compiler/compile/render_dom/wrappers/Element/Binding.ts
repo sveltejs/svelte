@@ -7,7 +7,7 @@ import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
 import EachBlock from '../../../nodes/EachBlock';
-import { Node as INode } from '../../../../interfaces';
+import { Node as INode, Identifier } from '../../../../interfaces';
 
 function get_tail(node: INode) {
 	const end = node.end;
@@ -26,7 +26,7 @@ export default class BindingWrapper {
 		contextual_dependencies: Set<string>;
 		snippet?: string;
 	};
-	snippet: string;
+	snippet: INode;
 	is_readonly: boolean;
 	needs_lock: boolean;
 
@@ -90,7 +90,7 @@ export default class BindingWrapper {
 		return this.node.is_readonly_media_attribute();
 	}
 
-	render(block: Block, lock: string) {
+	render(block: Block, lock: Identifier) {
 		if (this.is_readonly) return;
 
 		const { parent } = this;
@@ -167,14 +167,22 @@ export default class BindingWrapper {
 
 		if (update_dom) {
 			block.chunks.update.push(
-				update_conditions.length ? b`if (${update_conditions.join(' && ')}) ${update_dom}` : update_dom
+				update_conditions.length
+					? b`if (${update_conditions.join(' && ')}) {
+						${update_dom}
+					}`
+					: update_dom
 			);
+
+			console.log('update_dom', JSON.stringify(block.chunks.update, null, '  '));
 		}
 
 		if (this.node.name === 'innerHTML' || this.node.name === 'textContent') {
 			block.chunks.mount.push(b`if (${this.snippet} !== void 0) ${update_dom}`);
 		} else if (!/(currentTime|paused)/.test(this.node.name)) {
 			block.chunks.mount.push(update_dom);
+
+			console.log('update_dom', JSON.stringify(block.chunks.mount, null, '  '));
 		}
 	}
 }

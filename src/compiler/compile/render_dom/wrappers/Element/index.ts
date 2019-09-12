@@ -453,7 +453,7 @@ export default class ElementWrapper extends Wrapper {
 				add_to_set(contextual_dependencies, binding.node.expression.contextual_dependencies);
 				add_to_set(contextual_dependencies, binding.handler.contextual_dependencies);
 
-				binding.render(block, lock.name);
+				binding.render(block, lock);
 			});
 
 			// media bindings — awkward special case. The native timeupdate events

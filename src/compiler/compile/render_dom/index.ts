@@ -368,7 +368,7 @@ export default function dom(
 
 				${renderer.binding_groups.length > 0 && `const $$binding_groups = [${renderer.binding_groups.map(_ => `[]`).join(', ')}];`}
 
-				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
+				${component.partly_hoisted}
 
 				${set && b`$$self.$set = ${set};`}
 
