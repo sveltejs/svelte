@@ -209,7 +209,7 @@ export default class EachBlockWrapper extends Wrapper {
 		const initial_anchor_node: Identifier = { type: 'Identifier', name: parent_node ? 'null' : 'anchor' };
 		const initial_mount_node: Identifier = { type: 'Identifier', name: parent_node || '#target' };
 		const update_anchor_node = needs_anchor
-			? block.get_unique_name(`${this.var}_anchor`)
+			? block.get_unique_name(`${this.var.name}_anchor`)
 			: (this.next && this.next.var) || { type: 'Identifier', name: 'null' };
 		const update_mount_node: Identifier = this.get_update_mount_node((update_anchor_node as Identifier));
 
@@ -333,7 +333,7 @@ export default class EachBlockWrapper extends Wrapper {
 		} = this.vars;
 
 		const get_key = block.get_unique_name('get_key');
-		const lookup = block.get_unique_name(`${this.var}_lookup`);
+		const lookup = block.get_unique_name(`${this.var.name}_lookup`);
 
 		block.add_variable(iterations, x`[]`);
 		block.add_variable(lookup, x`new @_Map()`);
@@ -351,9 +351,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		block.chunks.init.push(b`
-			const ${get_key} = #ctx => ${
-			// @ts-ignore todo: probably error
-			this.node.key.render()};
+			const ${get_key} = #ctx => ${this.node.key.manipulate(block)};
 
 			for (let #i = 0; #i < ${data_length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(#ctx, ${this.vars.each_block_value}, #i);
@@ -395,11 +393,11 @@ export default class EachBlockWrapper extends Wrapper {
 		block.chunks.update.push(b`
 			const ${this.vars.each_block_value} = ${snippet};
 
-			${this.block.has_outros && `@group_outros();`}
-			${this.node.has_animation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
-			${iterations} = @update_keyed_each(${iterations}, changed, ${get_key}, ${dynamic ? '1' : '0'}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
-			${this.node.has_animation && `for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
-			${this.block.has_outros && `@check_outros();`}
+			${this.block.has_outros && b`@group_outros();`}
+			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
+			${iterations} = @update_keyed_each(${iterations}, #changed, ${get_key}, ${dynamic ? '1' : '0'}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
+			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
+			${this.block.has_outros && b`@check_outros();`}
 		`);
 
 		if (this.block.has_outros) {

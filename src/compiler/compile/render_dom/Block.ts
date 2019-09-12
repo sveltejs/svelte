@@ -394,7 +394,7 @@ export default class Block {
 	}
 
 	render() {
-		const key = this.key && { type: 'Identifier', name: this.get_unique_name('key') };
+		const key = this.key && this.get_unique_name('key');
 
 		const args: any[] = [x`#ctx`];
 

@@ -177,7 +177,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const needs_anchor = this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node();
 		const anchor = needs_anchor
-			? block.get_unique_name(`${name}_anchor`)
+			? block.get_unique_name(`${this.var.name}_anchor`)
 			: (this.next && this.next.var) || 'null';
 
 		const has_else = !(this.branches[this.branches.length - 1].condition);

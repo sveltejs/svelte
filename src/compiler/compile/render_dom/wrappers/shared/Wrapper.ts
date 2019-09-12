@@ -49,7 +49,7 @@ export default class Wrapper {
 		// children need to be created first
 		const needs_anchor = this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node();
 		const anchor = needs_anchor
-			? block.get_unique_name(`${this.var}_anchor`)
+			? block.get_unique_name(`${this.var.name}_anchor`)
 			: (this.next && this.next.var) || { type: 'Identifier', name: 'null' };
 
 		if (needs_anchor) {
