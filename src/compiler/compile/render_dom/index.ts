@@ -9,6 +9,7 @@ import { stringify_props } from '../utils/stringify_props';
 import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
 import { invalidate } from '../utils/invalidate';
+import Block from './Block';
 
 export default function dom(
 	component: Component,
@@ -52,7 +53,12 @@ export default function dom(
 	// TODO the deconflicted names of blocks are reversed... should set them here
 	const blocks = renderer.blocks.slice().reverse();
 
-	body.push(...blocks);
+	body.push(...blocks.map(block => {
+		// TODO this is a horrible mess — renderer.blocks
+		// contains a mixture of Blocks and Nodes
+		if ((block as Block).render) return (block as Block).render();
+		return block;
+	}));
 
 	if (options.dev && !options.hydratable) {
 		block.chunks.claim.push(
@@ -230,7 +236,7 @@ export default function dom(
 	}
 
 	body.push(b`
-		function create_fragment(ctx) {
+		function create_fragment(#ctx) {
 			${block.get_contents()}
 		}
 

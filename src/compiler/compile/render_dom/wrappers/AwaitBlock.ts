@@ -137,7 +137,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		block.maintain_context = true;
 
 		const info_props = [
-			'ctx',
+			'#ctx',
 			'current: null',
 			'token: null',
 			this.pending.block.name && `pending: ${this.pending.block.name}`,
@@ -197,7 +197,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			);
 
 			block.chunks.update.push(
-				b`${info}.ctx = ctx;`
+				b`${info}.ctx = #ctx;`
 			);
 
 			if (this.pending.block.has_update_method) {
@@ -205,7 +205,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 					if (${conditions.join(' && ')}) {
 						// nothing
 					} else {
-						${info}.block.p(changed, @assign(@assign({}, ctx), ${info}.resolved));
+						${info}.block.p(changed, @assign(@assign({}, #ctx), ${info}.resolved));
 					}
 				`);
 			} else {
@@ -216,7 +216,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		} else {
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
-					${info}.block.p(changed, @assign(@assign({}, ctx), ${info}.resolved));
+					${info}.block.p(changed, @assign(@assign({}, #ctx), ${info}.resolved));
 				`);
 			}
 		}

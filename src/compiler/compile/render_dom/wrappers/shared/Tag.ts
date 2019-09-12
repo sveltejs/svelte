@@ -1,4 +1,4 @@
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import Wrapper from './Wrapper';
 import Renderer from '../../Renderer';
 import Block from '../../Block';
@@ -29,16 +29,20 @@ export default class Tag extends Wrapper {
 		if (this.node.should_cache) block.add_variable(value, snippet); // TODO may need to coerce snippet to string
 
 		if (dependencies.length > 0) {
-			const changed_check = (
-				(block.has_outros ? `!#current || ` : '') +
-				dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')
-			);
+			let condition = x`#changed.${dependencies[0]}`;
+			for (let i = 1; i < dependencies.length; i += 1) {
+				condition = x`${condition} || #changed.${dependencies[i]}`;
+			}
 
-			const update_cached_value = `${value} !== (${value} = ${snippet} + "")`;
+			if (block.has_outros) {
+				condition = x`!#current || ${condition}`;
+			}
 
-			const condition = this.node.should_cache
-				? `(${changed_check}) && ${update_cached_value}`
-				: changed_check;
+			const update_cached_value = x`${value} !== (${value} = ${snippet} + "")`;
+
+			if (this.node.should_cache) {
+				condition = x`${condition} && ${update_cached_value}`;
+			}
 
 			block.chunks.update.push(b`if (${condition}) ${update(content as Node)}`);
 		}

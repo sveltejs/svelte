@@ -325,6 +325,16 @@ export default class Expression {
 
 					else {
 						// we need a combo block/init recipe
+						node.params.unshift({
+							type: 'ObjectPattern',
+							properties: Array.from(contextual_dependencies).map(name => ({
+								type: 'Property',
+								kind: 'init',
+								key: { type: 'Identifier', name },
+								value: { type: 'Identifier', name }
+							}))
+						});
+
 						component.partly_hoisted.push(declaration);
 						node.name = id;
 

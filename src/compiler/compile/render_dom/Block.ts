@@ -1,6 +1,5 @@
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
-import { escape } from '../utils/stringify';
 import { b, x } from 'code-red';
 import { Node, Identifier } from '../../interfaces';
 
@@ -397,16 +396,15 @@ export default class Block {
 	render() {
 		const key = this.key && { type: 'Identifier', name: this.get_unique_name('key') };
 
-		const id = { type: 'Identifier', name: this.name };
 		const args: any[] = [x`#ctx`];
 
 		if (key) args.unshift(key);
 
 		// TODO include this.comment
+		// ${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
 
 		return b`
-			${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
-			function ${id}(${args}) {
+			function ${this.name}(${args}) {
 				${this.get_contents(key)}
 			}
 		`;

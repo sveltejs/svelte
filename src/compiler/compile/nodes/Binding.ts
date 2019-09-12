@@ -68,7 +68,7 @@ export default class Binding extends Node {
 			if (!this.expression.node.computed) prop = `'${prop}'`;
 			obj = `[✂${this.expression.node.object.start}-${this.expression.node.object.end}✂]`;
 		} else {
-			obj = 'ctx';
+			obj = '#ctx';
 			prop = `'${name}'`;
 		}
 

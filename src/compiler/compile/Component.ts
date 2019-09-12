@@ -300,8 +300,13 @@ export default class Component {
 			walk(program, {
 				enter: (node) => {
 					if (node.type === 'Identifier' && node.name[0] === '@') {
-						const alias = this.helper(node.name.slice(1));
-						node.name = alias.name;
+						if (node.name[1] === '_') {
+							const alias = this.global(node.name.slice(2));
+							node.name = alias.name;
+						} else {
+							const alias = this.helper(node.name.slice(1));
+							node.name = alias.name;
+						}
 					}
 				}
 			});
@@ -1223,7 +1228,7 @@ export default class Component {
 	}
 
 	qualify(name) {
-		if (name === `$$props`) return `ctx.$$props`;
+		if (name === `$$props`) return `#ctx.$$props`;
 
 		const variable = this.var_lookup.get(name);
 
@@ -1233,7 +1238,7 @@ export default class Component {
 
 		if (variable.hoistable) return name;
 
-		return `ctx.${name}`;
+		return `#ctx.${name}`;
 	}
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {

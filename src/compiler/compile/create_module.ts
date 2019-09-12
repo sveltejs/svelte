@@ -58,10 +58,11 @@ function esm(
 		source: { type: 'Literal', value: internal_path }
 	}
 
-	const internal_globals = globals.length > 0 &&{
+	const internal_globals = globals.length > 0 && {
 		type: 'VariableDeclaration',
 		kind: 'const',
 		declarations: [{
+			type: 'VariableDeclarator',
 			id: {
 				type: 'ObjectPattern',
 				properties: globals.sort((a, b) => a.name < b.name ? -1 : 1).map(g => ({
@@ -70,10 +71,11 @@ function esm(
 					shorthand: false,
 					computed: false,
 					key: { type: 'Identifier', name: g.name },
-					value: { type: 'Identifier', name: g.alias }
+					value: g.alias,
+					kind: 'init'
 				}))
 			},
-			init: { type: 'Identifier', name: helpers.find(({ name }) => name === 'globals').alias }
+			init: helpers.find(({ name }) => name === 'globals').alias
 		}]
 	};
 
@@ -135,7 +137,7 @@ function cjs(
 		}]
 	};
 
-	const internal_globals = globals.length > 0 &&{
+	const internal_globals = globals.length > 0 && {
 		type: 'VariableDeclaration',
 		kind: 'const',
 		declarations: [{
@@ -148,10 +150,11 @@ function cjs(
 					shorthand: false,
 					computed: false,
 					key: { type: 'Identifier', name: g.name },
-					value: { type: 'Identifier', name: g.alias }
+					value: g.alias,
+					kind: 'init'
 				}))
 			},
-			init: { type: 'Identifier', name: helpers.find(({ name }) => name === 'globals').alias }
+			init: helpers.find(({ name }) => name === 'globals').alias
 		}]
 	};
 
@@ -182,7 +185,7 @@ function cjs(
 	program.body = b`
 		"use strict";
 		${internal_requires}
-		// ${internal_globals}
+		${internal_globals}
 		${user_requires}
 
 		${program.body}
