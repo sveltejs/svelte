@@ -202,11 +202,6 @@ export default class Block {
 	}
 
 	add_variable(id: Identifier, init?: Node) {
-		if (id.name[0] === '#') {
-			// TODO is this still necessary?
-			id.name = this.alias(id.name.slice(1)).name;
-		}
-
 		this.variables.forEach(v => {
 			if (v.id.name === id.name) {
 				throw new Error(
@@ -371,8 +366,7 @@ export default class Block {
 		// TODO should code-red do this automatically? probably
 		return_value.properties = return_value.properties.filter(prop => prop.value);
 
-		/* eslint-disable @typescript-eslint/indent,indent */
-		return b`
+		const body = b`
 			${Array.from(this.variables.values()).map(({ id, init }) => {
 				return init
 					? b`let ${id} = ${init}`
@@ -390,7 +384,8 @@ export default class Block {
 					return ${return_value};`
 			}
 		`;
-		/* eslint-enable @typescript-eslint/indent,indent */
+
+		return body;
 	}
 
 	render() {

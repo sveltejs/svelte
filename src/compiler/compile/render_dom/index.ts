@@ -4,7 +4,6 @@ import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
-import { stringify_props } from '../utils/stringify_props';
 import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
 import { invalidate } from '../utils/invalidate';
@@ -372,6 +371,19 @@ export default function dom(
 			`;
 		}
 
+		const return_value = {
+			type: 'ObjectExpression',
+			properties: filtered_declarations.map(name => {
+				const id = { type: 'Identifier', name };
+				return {
+					type: 'Property',
+					key: id,
+					value: id,
+					kind: 'init'
+				};
+			})
+		};
+
 		body.push(b`
 			function ${definition}(${args.join(', ')}) {
 				${reactive_store_declarations.length > 0 && `let ${reactive_store_declarations.join(', ')};`}
@@ -406,7 +418,7 @@ export default function dom(
 
 				${fixed_reactive_declarations}
 
-				return ${stringify_props(filtered_declarations)};
+				return ${return_value};
 			}
 		`);
 	}
@@ -476,9 +488,9 @@ export default function dom(
 			class ${name} extends ${superclass} {
 				constructor(options) {
 					super(${options.dev && `options`});
-					${should_add_css && `if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
+					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
 					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
-					${options.dev && `@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name}", options, id: create_fragment.name });`}
+					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}
 				}

@@ -299,6 +299,11 @@ export default class Component {
 
 			walk(program, {
 				enter: (node) => {
+					if (node.type === 'Identifier' && !('name' in node)) {
+						console.log(node);
+						throw new Error('wtf');
+					}
+
 					if (node.type === 'Identifier' && node.name[0] === '@') {
 						// TODO temp
 						if (!/@\w+$/.test(node.name)) {

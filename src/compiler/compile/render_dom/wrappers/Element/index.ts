@@ -20,6 +20,7 @@ import add_actions from '../shared/add_actions';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_context_merger } from '../shared/get_context_merger';
 import bind_this from '../shared/bind_this';
+import { changed } from '../shared/changed';
 
 const events = [
 	{
@@ -413,7 +414,7 @@ export default class ElementWrapper extends Wrapper {
 			.filter(group => group.bindings.length);
 
 		groups.forEach(group => {
-			const handler = renderer.component.get_unique_name(`${this.var}_${group.events.join('_')}_handler`);
+			const handler = renderer.component.get_unique_name(`${this.var.name}_${group.events.join('_')}_handler`);
 
 			renderer.component.add_var({
 				name: handler.name,
@@ -480,7 +481,7 @@ export default class ElementWrapper extends Wrapper {
 			this.renderer.component.partly_hoisted.push(b`
 				function ${handler}(${contextual_dependencies.size > 0 ? `{ ${Array.from(contextual_dependencies).join(', ')} }` : ``}) {
 					${group.bindings.map(b => b.handler.mutation)}
-					${Array.from(dependencies).filter(dep => dep[0] !== '$').map(dep => `${this.renderer.component.invalidate(dep)};`)}
+					${Array.from(dependencies).filter(dep => dep[0] !== '$').map(dep => b`${this.renderer.component.invalidate(dep)};`)}
 				}
 			`);
 
@@ -567,8 +568,8 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_spread_attributes(block: Block) {
-		const levels = block.get_unique_name(`${this.var}_levels`);
-		const data = block.get_unique_name(`${this.var}_data`);
+		const levels = block.get_unique_name(`${this.var.name}_levels`);
+		const data = block.get_unique_name(`${this.var.name}_data`);
 
 		const initial_props = [];
 		const updates = [];
@@ -577,7 +578,7 @@ export default class ElementWrapper extends Wrapper {
 			.filter(attr => attr.type === 'Attribute' || attr.type === 'Spread')
 			.forEach(attr => {
 				const condition = attr.dependencies.size > 0
-					? `(${[...attr.dependencies].map(d => `changed.${d}`).join(' || ')})`
+					? changed(Array.from(attr.dependencies))
 					: null;
 
 				if (attr.is_spread) {
@@ -585,19 +586,17 @@ export default class ElementWrapper extends Wrapper {
 
 					initial_props.push(snippet);
 
-					updates.push(condition ? `${condition} && ${snippet}` : snippet);
+					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
 				} else {
-					const snippet = `{ ${quote_name_if_necessary(attr.name)}: ${attr.get_value(block)} }`;
+					const snippet = x`{ ${quote_name_if_necessary(attr.name)}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
 
-					updates.push(condition ? `${condition} && ${snippet}` : snippet);
+					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
 				}
 			});
 
 		block.chunks.init.push(b`
-			var ${levels} = [
-				${initial_props.join(',\n')}
-			];
+			var ${levels} = [${initial_props}];
 
 			var ${data} = {};
 			for (var #i = 0; #i < ${levels}.length; #i += 1) {
@@ -613,7 +612,7 @@ export default class ElementWrapper extends Wrapper {
 
 		block.chunks.update.push(b`
 			${fn}(${this.var}, @get_spread_update(${levels}, [
-				${updates.join(',\n')}
+				${updates}
 			]));
 		`);
 	}
@@ -811,7 +810,10 @@ export default class ElementWrapper extends Wrapper {
 				const deps = all_dependencies.map(dependency => `changed${quote_prop_if_necessary(dependency)}`).join(' || ');
 				const condition = all_dependencies.length > 1 ? `(${deps})` : deps;
 
-				block.chunks.update.push(b`if (${condition}) ${updater}`);
+				block.chunks.update.push(b`
+					if (${condition}) {
+						${updater}
+					}`);
 			}
 		});
 	}

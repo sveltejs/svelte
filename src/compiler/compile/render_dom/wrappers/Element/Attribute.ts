@@ -2,7 +2,7 @@ import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
 import fix_attribute_casing from './fix_attribute_casing';
 import ElementWrapper from './index';
-import { stringify } from '../../../utils/stringify';
+import { string_literal } from '../../../utils/stringify';
 import { b, x } from 'code-red';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
@@ -172,8 +172,8 @@ export default class AttributeWrapper {
 				is_legacy_input_type
 					? b`@set_input_type(${element.var}, ${value});`
 					: property_name
-						? b`${element.var}.${property_name} = ${value};`
-						: b`${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
+						? b`${element.var}.${property_name} = ${value === true ? { type: 'Literal', value: true } : value};`
+						: b`${method}(${element.var}, "${name}", ${value === true ? x`""` : value});`
 			);
 
 			block.chunks.hydrate.push(statement);
@@ -207,7 +207,7 @@ export default class AttributeWrapper {
 	render_chunks() {
 		return this.node.chunks.map((chunk) => {
 			if (chunk.type === 'Text') {
-				return stringify(chunk.data);
+				return string_literal(chunk.data);
 			}
 
 			return chunk.manipulate();

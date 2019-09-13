@@ -71,7 +71,7 @@ export default class TitleWrapper extends Wrapper {
 			block.chunks.init.push(
 				b`@_document.title = ${init};`
 			);
-			const updater = `@_document.title = ${this.node.should_cache ? last : value};`;
+			const updater = b`@_document.title = ${this.node.should_cache ? last : value};`;
 
 			if (all_dependencies.size) {
 				const dependencies = Array.from(all_dependencies);

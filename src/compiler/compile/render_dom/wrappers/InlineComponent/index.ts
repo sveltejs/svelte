@@ -4,7 +4,6 @@ import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
 import FragmentWrapper from '../Fragment';
 import { quote_name_if_necessary, quote_prop_if_necessary, sanitize } from '../../../../utils/names';
-import { stringify_props } from '../../../utils/stringify_props';
 import add_to_set from '../../../utils/add_to_set';
 import { b, x } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
@@ -114,7 +113,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const name = this.var;
 
-		const component_opts = [];
+		const component_opts: any = x`{}`;
 
 		const statements: string[] = [];
 		const updates: string[] = [];
@@ -126,22 +125,56 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const slot_props = Array.from(this.slots).map(([name, slot]) => `${quote_name_if_necessary(name)}: [${slot.block.name}${slot.fn ? `, ${slot.fn}` : ''}]`);
 
-		const initial_props = slot_props.length > 0
-			? [`$$slots: ${stringify_props(slot_props)}`, `$$scope: { ctx }`]
-			: [];
+		let attribute_object;
 
-		const attribute_object = uses_spread
-			? stringify_props(initial_props)
-			: stringify_props(
-				this.node.attributes.map(attr => `${quote_name_if_necessary(attr.name)}: ${attr.get_value(block)}`).concat(initial_props)
-			);
-
-		if (this.node.attributes.length || this.node.bindings.length || initial_props.length) {
+		if (this.node.attributes.length > 0 || this.node.bindings.length > 0 || slot_props.length > 0) {
 			if (!uses_spread && this.node.bindings.length === 0) {
-				component_opts.push(`props: ${attribute_object}`);
+				const initial_props: any = x`{}`;
+
+				if (slot_props.length > 0) {
+					initial_props.properties.push({
+						type: 'Property',
+						kind: 'init',
+						key: { type: 'Identifier', name: '$$slots' },
+						value: slot_props
+					}, {
+						type: 'Property',
+						kind: 'init',
+						key: { type: 'Identifier', name: '$$scope' },
+						value: x`{ ctx: #ctx }`
+					})
+				}
+
+				if (uses_spread) {
+					attribute_object = initial_props;
+				} else {
+					attribute_object = {
+						type: 'ObjectExpression',
+						properties: this.node.attributes.map(attr => {
+							return {
+								type: 'Property',
+								kind: 'init',
+								key: { type: 'Identifier', name: attr.name },
+								value: attr.get_value(block)
+							}
+						}).concat(initial_props.properties)
+					};
+				}
+
+				component_opts.properties.push({
+					type: 'Property',
+					kind: 'init',
+					key: { type: 'Identifier', name: 'props' },
+					value: attribute_object
+				});
 			} else {
+				component_opts.properties.push({
+					type: 'Property',
+					kind: 'init',
+					key: { type: 'Identifier', name: 'props' },
+					value: props
+				});
 				props = block.get_unique_name(`${name}_props`);
-				component_opts.push(`props: ${props}`);
 			}
 		}
 
@@ -158,7 +191,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			// will complain that options.target is missing. This would
 			// work better if components had separate public and private
 			// APIs
-			component_opts.push(`$$inline: true`);
+			component_opts.properties.push({
+				type: 'Property',
+				kind: 'init',
+				key: { type: 'Identifier', name: '$$inline' },
+				value: { type: 'Literal', value: true }
+			});
 		}
 
 		const fragment_dependencies = new Set(this.fragment ? ['$$scope'] : []);
@@ -176,7 +214,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const dynamic_attributes = this.node.attributes.filter(a => a.get_dependencies().length > 0);
 
 		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || non_let_dependencies.length > 0)) {
-			updates.push(`var ${name_changes} = {};`);
+			updates.push(`const ${name_changes} = {};`);
 		}
 
 		if (this.node.attributes.length) {
@@ -217,13 +255,13 @@ export default class InlineComponentWrapper extends Wrapper {
 				});
 
 				block.chunks.init.push(b`
-					var ${levels} = [
+					const ${levels} = [
 						${initial_props.join(',\n')}
 					];
 				`);
 
 				statements.push(b`
-					for (var #i = 0; #i < ${levels}.length; #i += 1) {
+					for (let #i = 0; #i < ${levels}.length; #i += 1) {
 						${props} = @assign(${props}, ${levels}[#i]);
 					}
 				`);
@@ -231,7 +269,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				const conditions = Array.from(all_dependencies).map(dep => `changed.${dep}`).join(' || ');
 
 				updates.push(b`
-					var ${name_changes} = ${conditions ? `(${conditions}) ? @get_spread_update(${levels}, [
+					const ${name_changes} = ${conditions ? `(${conditions}) ? @get_spread_update(${levels}, [
 						${changes.join(',\n')}
 					]) : {}` : '{}'};
 				`);
@@ -355,7 +393,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					${(this.node.attributes.length || this.node.bindings.length) && b`
 					${props && `let ${props} = ${attribute_object};`}`}
 					${statements}
-					return ${stringify_props(component_opts)};
+					return ${component_opts};
 				}
 
 				if (${switch_value}) {
@@ -433,7 +471,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				b`if (${name}) @transition_out(${name}.$$.fragment, #local);`
 			);
 
-			block.chunks.destroy.push(b`if (${name}) @destroy_component(${name}${parent_node ? '' : ', detaching'});`);
+			block.chunks.destroy.push(b`if (${name}) @destroy_component(${name}, ${parent_node ? null : 'detaching'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? '__svelte:self__' // TODO conflict-proof this
@@ -441,9 +479,9 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.chunks.init.push(b`
 				${(this.node.attributes.length || this.node.bindings.length) && b`
-				${props && `let ${props} = ${attribute_object};`}`}
+				${props && b`let ${props} = ${attribute_object};`}`}
 				${statements}
-				var ${name} = new ${expression}(${stringify_props(component_opts)});
+				const ${name} = new ${expression}(${component_opts});
 
 				${munged_bindings}
 				${munged_handlers}
@@ -473,7 +511,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.chunks.destroy.push(b`
-				@destroy_component(${name}${parent_node ? '' : ', detaching'});
+				@destroy_component(${name}, ${parent_node ? null : 'detaching'});
 			`);
 
 			block.chunks.outro.push(
