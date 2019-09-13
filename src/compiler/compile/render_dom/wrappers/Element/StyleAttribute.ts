@@ -1,4 +1,4 @@
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
 import AttributeWrapper from './Attribute';
@@ -7,6 +7,7 @@ import { stringify } from '../../../utils/stringify';
 import add_to_set from '../../../utils/add_to_set';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
+import { changed } from '../shared/changed';
 
 export interface StyleProp {
 	key: string;
@@ -26,42 +27,45 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 			let value;
 
 			if (is_dynamic(prop.value)) {
-				const prop_dependencies = new Set();
+				const prop_dependencies: Set<string> = new Set();
 
-				value =
-					((prop.value.length === 1 || prop.value[0].type === 'Text') ? '' : `"" + `) +
-					prop.value
-						.map((chunk) => {
-							if (chunk.type === 'Text') {
-								return stringify(chunk.data);
-							} else {
-								const snippet = chunk.manipulate();
+				value = prop.value
+					.map(chunk => {
+						if (chunk.type === 'Text') {
+							return stringify(chunk.data);
+						} else {
+							const snippet = chunk.manipulate(block);
 
-								add_to_set(prop_dependencies, chunk.dynamic_dependencies());
-								return snippet;
-							}
-						})
-						.join(' + ');
+							add_to_set(prop_dependencies, chunk.dynamic_dependencies());
+							return snippet;
+						}
+					})
+					.reduce((lhs, rhs) => x`${lhs} + ${rhs}`)
+
+				if (prop.value.length === 1 || prop.value[0].type === 'Text') {
+					value = x`"" + ${value}`;
+				}
 
 				if (prop_dependencies.size) {
-					const dependencies = Array.from(prop_dependencies);
-					const condition = (
-						(block.has_outros ? `!#current || ` : '') +
-						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
-					);
+					let condition = changed(Array.from(prop_dependencies));
 
-					block.chunks.update.push(
-						b`if (${condition}) {
-							@set_style(${this.parent.var}, "${prop.key}", ${value}${prop.important ? ', 1' : ''});
-						}`
-					);
+					if (block.has_outros) {
+						condition = x`!#current || ${condition}`;
+					}
+
+					const update = b`
+						if (${condition}) {
+							@set_style(${this.parent.var}, "${prop.key}", ${value}, ${prop.important ? 1 : null});
+						}`;
+
+					block.chunks.update.push(update);
 				}
 			} else {
 				value = stringify((prop.value[0] as Text).data);
 			}
 
 			block.chunks.hydrate.push(
-				b`@set_style(${this.parent.var}, "${prop.key}", ${value}${prop.important ? ', 1' : ''});`
+				b`@set_style(${this.parent.var}, "${prop.key}", ${value}, ${prop.important ? 1 : ''});`
 			);
 		});
 	}

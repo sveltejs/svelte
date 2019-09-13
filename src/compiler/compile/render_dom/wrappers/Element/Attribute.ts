@@ -3,9 +3,10 @@ import Block from '../../Block';
 import fix_attribute_casing from './fix_attribute_casing';
 import ElementWrapper from './index';
 import { stringify } from '../../../utils/stringify';
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
+import { changed } from '../shared/changed';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -80,14 +81,14 @@ export default class AttributeWrapper {
 				// single {tag} — may be a non-string
 				value = (this.node.chunks[0] as Expression).manipulate(block);
 			} else {
-				// '{foo} {bar}' — treat as string concatenation
-				const prefix = this.node.chunks[0].type === 'Text' ? '' : `"" + `;
-
-				const text = this.node.name === 'class'
+				value = this.node.name === 'class'
 					? this.get_class_name_text()
-					: this.render_chunks().join(' + ');
+					: this.render_chunks().reduce((lhs, rhs) => x`${lhs} + ${rhs}`)
 
-				value = `${prefix}${text}`;
+				// '{foo} {bar}' — treat as string concatenation
+				if (this.node.chunks[0].type !== 'Text') {
+					value = x`"" + ${value}`;
+				}
 			}
 
 			const is_select_value_attribute =
@@ -96,19 +97,19 @@ export default class AttributeWrapper {
 			const should_cache = (this.node.should_cache() || is_select_value_attribute);
 
 			const last = should_cache && block.get_unique_name(
-				`${element.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
+				`${element.var.name}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
 			);
 
 			if (should_cache) block.add_variable(last);
 
 			let updater;
-			const init = should_cache ? `${last} = ${value}` : value;
+			const init = should_cache ? x`${last} = ${value}` : value;
 
 			if (is_legacy_input_type) {
 				block.chunks.hydrate.push(
 					b`@set_input_type(${element.var}, ${init});`
 				);
-				updater = `@set_input_type(${element.var}, ${should_cache ? last : value});`;
+				updater = b`@set_input_type(${element.var}, ${should_cache ? last : value});`;
 			} else if (is_select_value_attribute) {
 				// annoying special case
 				const is_multiple_select = element.node.get_static_attribute_value('multiple');
@@ -141,27 +142,29 @@ export default class AttributeWrapper {
 					b`${element.var}.${property_name} = ${init};`
 				);
 				updater = block.renderer.options.dev
-					? `@prop_dev(${element.var}, "${property_name}", ${should_cache ? last : value});`
-					: `${element.var}.${property_name} = ${should_cache ? last : value};`;
+					? b`@prop_dev(${element.var}, "${property_name}", ${should_cache ? last : value});`
+					: b`${element.var}.${property_name} = ${should_cache ? last : value};`;
 			} else {
 				block.chunks.hydrate.push(
 					b`${method}(${element.var}, "${name}", ${init});`
 				);
-				updater = `${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
+				updater = b`${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
 			}
 
-			const changed_check = (
-				(block.has_outros ? `!#current || ` : '') +
-				dependencies.map(dependency => `changed.${dependency}`).join(' || ')
-			);
+			let condition = changed(dependencies);
 
-			const update_cached_value = `${last} !== (${last} = ${value})`;
+			if (should_cache) {
+				condition = x`${condition} && (${last} !== (${last} = ${value}))`;
+			}
 
-			const condition = should_cache
-				? (dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value)
-				: changed_check;
+			if (block.has_outros) {
+				condition = x`!#current || ${condition}`;
+			}
 
-			block.chunks.update.push(b`if (${condition}) ${updater}`);
+			block.chunks.update.push(b`
+				if (${condition}) {
+					${updater}
+				}`);
 		} else {
 			const value = this.node.get_value(block);
 
@@ -195,10 +198,10 @@ export default class AttributeWrapper {
 
 		if (scoped_css && rendered.length === 2) {
 			// we have a situation like class={possiblyUndefined}
-			rendered[0] = `@null_to_empty(${rendered[0]})`;
+			rendered[0] = x`@null_to_empty(${rendered[0]})`;
 		}
 
-		return rendered.join(' + ');
+		return rendered.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 	}
 
 	render_chunks() {

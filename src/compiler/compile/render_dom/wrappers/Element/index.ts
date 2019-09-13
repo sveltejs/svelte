@@ -4,7 +4,7 @@ import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
 import { is_void, quote_prop_if_necessary, quote_name_if_necessary, sanitize } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
-import { escape_html, escape, string_literal } from '../../../utils/stringify';
+import { escape_html, string_literal } from '../../../utils/stringify';
 import TextWrapper from '../Text';
 import fix_attribute_casing from './fix_attribute_casing';
 import { b, x } from 'code-red';
@@ -294,14 +294,24 @@ export default class ElementWrapper extends Wrapper {
 					b`${node}.textContent = ${string_literal(this.fragment.nodes[0].data)};`
 				);
 			} else {
-				const inner_html = escape(
-					this.fragment.nodes
-						.map(to_html)
-						.join('')
-				);
+				const state = {
+					quasi: {
+						type: 'TemplateElement',
+						value: { raw: '' }
+					}
+				};
+
+				const literal = {
+					type: 'TemplateLiteral',
+					expressions: [],
+					quasis: []
+				};
+
+				to_html((this.fragment.nodes as unknown as (ElementWrapper | TextWrapper)[]), block, literal, state);
+				literal.quasis.push(state.quasi);
 
 				block.chunks.create.push(
-					b`${node}.innerHTML = \`${inner_html}\`;`
+					b`${node}.innerHTML = ${literal};`
 				);
 			}
 		} else {
@@ -336,36 +346,6 @@ export default class ElementWrapper extends Wrapper {
 			block.chunks.claim.push(
 				b`${nodes}.forEach(@detach);`
 			);
-		}
-
-		function to_html(wrapper: ElementWrapper | TextWrapper) {
-			if (wrapper.node.type === 'Text') {
-				if ((wrapper as TextWrapper).use_space()) return ' ';
-
-				const parent = wrapper.node.parent as Element;
-
-				const raw = parent && (
-					parent.name === 'script' ||
-					parent.name === 'style'
-				);
-
-				return (raw ? wrapper.node.data : escape_html(wrapper.node.data))
-					.replace(/\\/g, '\\\\')
-					.replace(/`/g, '\\`')
-					.replace(/\$/g, '\\$');
-			}
-
-			if (wrapper.node.name === 'noscript') return '';
-
-			let open = `<${wrapper.node.name}`;
-
-			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
-				open += ` ${fix_attribute_casing(attr.node.name)}${attr.stringify()}`;
-			});
-
-			if (is_void(wrapper.node.name)) return open + '>';
-
-			return `${open}>${(wrapper as ElementWrapper).fragment.nodes.map(to_html).join('')}</${wrapper.node.name}>`;
 		}
 
 		if (renderer.options.dev) {
@@ -835,4 +815,61 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 	}
+}
+
+function to_html(wrappers: (ElementWrapper | TextWrapper)[], block: Block, literal: any, state: any) {
+	wrappers.forEach(wrapper => {
+		if (wrapper.node.type === 'Text') {
+			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
+
+			const parent = wrapper.node.parent as Element;
+
+			const raw = parent && (
+				parent.name === 'script' ||
+				parent.name === 'style'
+			);
+
+			state.quasi.value.raw += (raw ? wrapper.node.data : escape_html(wrapper.node.data))
+				.replace(/\\/g, '\\\\')
+				.replace(/`/g, '\\`')
+				.replace(/\$/g, '\\$');
+		}
+
+		else if (wrapper.node.name === 'noscript') {
+			// do nothing
+		}
+
+		else {
+			// element
+			state.quasi.value.raw += `<${wrapper.node.name}`;
+
+			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
+				state.quasi.value.raw += ` ${fix_attribute_casing(attr.node.name)}="`;
+
+				attr.node.chunks.forEach(chunk => {
+					if (chunk.type === 'Text') {
+						state.quasi.value.raw += chunk.data;
+					} else {
+						literal.quasis.push(state.quasi);
+						literal.expressions.push(chunk.manipulate(block))
+
+						state.quasi = {
+							type: 'TemplateElement',
+							value: { raw: '' }
+						};
+					}
+				});
+
+				state.quasi.value.raw += `"`;
+			});
+
+			state.quasi.value.raw += '>';
+
+			if (!is_void(wrapper.node.name)) {
+				to_html((wrapper as ElementWrapper).fragment.nodes as (ElementWrapper | TextWrapper)[], block, literal, state);
+
+				state.quasi.value.raw += `</${wrapper.node.name}>`;
+			}
+		}
+	});
 }

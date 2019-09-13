@@ -300,6 +300,11 @@ export default class Component {
 			walk(program, {
 				enter: (node) => {
 					if (node.type === 'Identifier' && node.name[0] === '@') {
+						// TODO temp
+						if (!/@\w+$/.test(node.name)) {
+							throw new Error(`wut "${node.name}"`);
+						}
+
 						if (node.name[1] === '_') {
 							const alias = this.global(node.name.slice(2));
 							node.name = alias.name;

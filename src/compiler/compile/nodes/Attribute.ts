@@ -1,4 +1,4 @@
-import { stringify } from '../utils/stringify';
+import { stringify, string_literal } from '../utils/stringify';
 import add_to_set from '../utils/add_to_set';
 import Component from '../Component';
 import Node from './shared/Node';
@@ -82,11 +82,9 @@ export default class Attribute extends Node {
 		if (this.chunks.length === 0) return `""`;
 
 		if (this.chunks.length === 1) {
-
 			return this.chunks[0].type === 'Text'
-				? stringify((this.chunks[0] as Text).data)
-				// @ts-ignore todo: probably error
-				: this.chunks[0].render(block);
+				? string_literal((this.chunks[0] as Text).data)
+				: (this.chunks[0] as Expression).manipulate(block);
 		}
 
 		return (this.chunks[0].type === 'Text' ? '' : `"" + `) +
