@@ -15,6 +15,7 @@ import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { Identifier } from '../../../../interfaces';
+import { changed } from '../shared/changed';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
@@ -119,7 +120,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const updates: string[] = [];
 
 		let props;
-		const name_changes = block.get_unique_name(`${name}_changes`);
+		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
 
@@ -214,7 +215,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const dynamic_attributes = this.node.attributes.filter(a => a.get_dependencies().length > 0);
 
 		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || non_let_dependencies.length > 0)) {
-			updates.push(`const ${name_changes} = {};`);
+			updates.push(b`const ${name_changes} = {};`);
 		}
 
 		if (this.node.attributes.length) {
@@ -224,7 +225,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				const initial_props = [];
 				const changes = [];
 
-				const all_dependencies = new Set();
+				const all_dependencies: Set<string> = new Set();
 
 				this.node.attributes.forEach(attr => {
 					add_to_set(all_dependencies, attr.dependencies);
@@ -266,18 +267,24 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 				`);
 
-				const conditions = Array.from(all_dependencies).map(dep => `changed.${dep}`).join(' || ');
+				if (all_dependencies.size) {
+					const condition = changed(Array.from(all_dependencies));
 
-				updates.push(b`
-					const ${name_changes} = ${conditions ? `(${conditions}) ? @get_spread_update(${levels}, [
-						${changes.join(',\n')}
-					]) : {}` : '{}'};
-				`);
+					updates.push(b`
+						const ${name_changes} = ${condition} ? @get_spread_update(${levels}, [
+							${changes.join(',\n')}
+						]) : {}
+					`);
+				} else {
+					updates.push(b`
+						const ${name_changes} = {};
+					`);
+				}
 			} else {
 				dynamic_attributes.forEach((attribute: Attribute) => {
 					const dependencies = attribute.get_dependencies();
 					if (dependencies.length > 0) {
-						const condition = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
+						const condition = changed(dependencies);
 
 						updates.push(b`
 							if (${condition}) ${name_changes}${quote_prop_if_necessary(attribute.name)} = ${attribute.get_value(block)};
@@ -288,7 +295,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		if (non_let_dependencies.length > 0) {
-			updates.push(`if (${non_let_dependencies.map(n => `changed.${n}`).join(' || ')}) ${name_changes}.$$scope = { changed: #changed, ctx: #ctx };`);
+			updates.push(`if (${changed(non_let_dependencies)} ${name_changes}.$$scope = { changed: #changed, ctx: #ctx };`);
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {

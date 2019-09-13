@@ -252,7 +252,11 @@ export default class Block {
 		const noop = x`@noop`;
 
 		properties.key = key
-		properties.first = this.first;
+
+		if (this.first) {
+			properties.first = x`null`;
+			this.chunks.hydrate.push(b`this.first = ${this.first};`);
+		}
 
 		if (this.chunks.create.length === 0 && this.chunks.hydrate.length === 0) {
 			properties.create = noop;

@@ -3,12 +3,13 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import AwaitBlock from '../../nodes/AwaitBlock';
 import create_debugging_comment from './shared/create_debugging_comment';
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
 import ThenBlock from '../../nodes/ThenBlock';
 import CatchBlock from '../../nodes/CatchBlock';
 import { Identifier } from '../../../interfaces';
+import { changed } from './shared/changed';
 
 class AwaitBlockBranch extends Wrapper {
 	node: PendingBlock | ThenBlock | CatchBlock;
@@ -136,22 +137,23 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		block.maintain_context = true;
 
-		const info_props = [
-			'#ctx',
-			'current: null',
-			'token: null',
-			this.pending.block.name && `pending: ${this.pending.block.name}`,
-			this.then.block.name && `then: ${this.then.block.name}`,
-			this.catch.block.name && `catch: ${this.catch.block.name}`,
-			this.then.block.name && `value: '${this.node.value}'`,
-			this.catch.block.name && `error: '${this.node.error}'`,
-			this.pending.block.has_outro_method && `blocks: [,,,]`
-		].filter(Boolean);
+		const info_props: any = x`{
+			ctx: #ctx,
+			current: null,
+			token: null,
+			pending: ${this.pending.block.name},
+			then: ${this.then.block.name},
+			catch: ${this.catch.block.name},
+			value: ${this.then.block.name && this.node.value},
+			error: ${this.catch.block.name && this.node.error},
+			blocks: ${this.pending.block.has_outro_method && x`[,,,]`}
+		}`;
+
+		// TODO move this into code-red
+		info_props.properties = info_props.properties.filter(prop => prop.value);
 
 		block.chunks.init.push(b`
-			let ${info} = {
-				${info_props.join(',\n')}
-			};
+			let ${info} = ${info_props};
 		`);
 
 		block.chunks.init.push(b`
@@ -183,18 +185,13 @@ export default class AwaitBlockWrapper extends Wrapper {
 			block.chunks.intro.push(b`@transition_in(${info}.block);`);
 		}
 
-		const conditions = [];
 		const dependencies = this.node.expression.dynamic_dependencies();
 
 		if (dependencies.length > 0) {
-			conditions.push(
-				`(${dependencies.map(dep => `'${dep}' in changed`).join(' || ')})`
-			);
-
-			conditions.push(
-				`${promise} !== (${promise} = ${snippet})`,
-				`@handle_promise(${promise}, ${info})`
-			);
+			let condition = x`
+				${changed(dependencies)} &&
+				${promise} !== (${promise} = ${snippet}) &&
+				@handle_promise(${promise}, ${info})`;
 
 			block.chunks.update.push(
 				b`${info}.ctx = #ctx;`
@@ -202,21 +199,21 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
-					if (${conditions.join(' && ')}) {
+					if (${condition}) {
 						// nothing
 					} else {
-						${info}.block.p(changed, @assign(@assign({}, #ctx), ${info}.resolved));
+						${info}.block.p(#changed, @assign(@assign({}, #ctx), ${info}.resolved));
 					}
 				`);
 			} else {
 				block.chunks.update.push(b`
-					${conditions.join(' && ')}
+					${condition}
 				`);
 			}
 		} else {
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
-					${info}.block.p(changed, @assign(@assign({}, #ctx), ${info}.resolved));
+					${info}.block.p(#changed, @assign(@assign({}, #ctx), ${info}.resolved));
 				`);
 			}
 		}
@@ -231,7 +228,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		}
 
 		block.chunks.destroy.push(b`
-			${info}.block.d(${parent_node ? '' : 'detaching'});
+			${info}.block.d(${parent_node ? null : 'detaching'});
 			${info}.token = null;
 			${info} = null;
 		`);
