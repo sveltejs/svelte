@@ -180,7 +180,10 @@ export function set_data(text, data) {
 }
 
 export function set_input_value(input, value) {
-	if (value != null || input.value) {
+	if (value === null || value === undefined) {
+		value = "";
+	}
+	if (input.value !== value) {
 		input.value = value;
 	}
 }
