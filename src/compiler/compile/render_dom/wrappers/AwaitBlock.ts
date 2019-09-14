@@ -144,8 +144,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 			pending: ${this.pending.block.name},
 			then: ${this.then.block.name},
 			catch: ${this.catch.block.name},
-			value: ${this.then.block.name && this.node.value},
-			error: ${this.catch.block.name && this.node.error},
+			value: ${this.then.block.name && x`"${this.node.value}"`},
+			error: ${this.catch.block.name && x`"${this.node.error}"`},
 			blocks: ${this.pending.block.has_outro_method && x`[,,,]`}
 		}`;
 

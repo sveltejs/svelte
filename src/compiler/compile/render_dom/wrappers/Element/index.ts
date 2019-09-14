@@ -631,7 +631,7 @@ export default class ElementWrapper extends Wrapper {
 
 		if (intro === outro) {
 			// bidirectional transition
-			const name = block.get_unique_name(`${this.var}_transition`);
+			const name = block.get_unique_name(`${this.var.name}_transition`);
 			const snippet = intro.expression
 				? intro.expression.manipulate(block)
 				: '{}';

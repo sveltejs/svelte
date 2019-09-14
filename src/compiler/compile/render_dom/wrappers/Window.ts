@@ -6,6 +6,7 @@ import add_event_handlers from './shared/add_event_handlers';
 import Window from '../../nodes/Window';
 import add_actions from './shared/add_actions';
 import { INode } from '../../nodes/interfaces';
+import { changed } from './shared/changed';
 
 const associated_events = {
 	innerWidth: 'resize',
@@ -125,7 +126,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					${props.map(prop => `${prop.name} = @_window.${prop.value}; $$invalidate('${prop.name}', ${prop.name});`)}
+					${props.map(prop => x`$$invalidate('${prop.name}', ${prop.name} = @_window.${prop.value});`)}
 				}
 			`);
 
@@ -138,19 +139,15 @@ export default class WindowWrapper extends Wrapper {
 
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
+			const condition = changed([bindings.scrollX, bindings.scrollY].filter(Boolean));
+			const scrollX = bindings.scrollX ? x`#ctx.${bindings.scrollX}` : x`@_window.pageXOffset`;
+			const scrollY = bindings.scrollY ? x`#ctx.${bindings.scrollY}` : x`@_window.pageYOffset`;
+
 			block.chunks.update.push(b`
-				if (${
-					[bindings.scrollX, bindings.scrollY].filter(Boolean).map(
-						b => `changed.${b}`
-					).join(' || ')
-				} && !${scrolling}) {
+				if (${condition} && !${scrolling}) {
 					${scrolling} = true;
 					@_clearTimeout(${scrolling_timeout});
-					@_scrollTo(${
-						bindings.scrollX ? `#ctx.${bindings.scrollX}` : `@_window.pageXOffset`
-					}, ${
-						bindings.scrollY ? `#ctx.${bindings.scrollY}` : `@_window.pageYOffset`
-					});
+					@_scrollTo(${scrollX}, ${scrollY});
 					${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
 				}
 			`);

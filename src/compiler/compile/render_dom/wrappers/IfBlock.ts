@@ -248,7 +248,9 @@ export default class IfBlockWrapper extends Wrapper {
 	) {
 		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
 		const current_block_type = block.get_unique_name(`current_block_type`);
-		const current_block_type_and = has_else ? '' : `${current_block_type} && `;
+		const get_block = has_else
+			? x`${current_block_type} && ${current_block_type}(#ctx)`
+			: x`${current_block_type}(#ctx)`
 
 		/* eslint-disable @typescript-eslint/indent,indent */
 		if (this.needs_update) {
@@ -258,19 +260,19 @@ export default class IfBlockWrapper extends Wrapper {
 					? b`
 					${snippet && (
 						dependencies.length > 0
-							? `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`
-							: `if (${condition} == null) ${condition} = !!(${snippet})`
+							? b`if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`
+							: b`if (${condition} == null) ${condition} = !!(${snippet})`
 					)}
 					if (${condition}) return ${block.name};`
-					: `return ${block.name};`)}
+					: b`return ${block.name};`)}
 				}
 			`);
 		} else {
 			block.chunks.init.push(b`
 				function ${select_block_type}(#changed, #ctx) {
 					${this.branches.map(({ condition, snippet, block }) => condition
-					? `if (${snippet || condition}) return ${block.name};`
-					: `return ${block.name};`)}
+					? b`if (${snippet || condition}) return ${block.name};`
+					: b`return ${block.name};`)}
 				}
 			`);
 		}
@@ -278,7 +280,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		block.chunks.init.push(b`
 			let ${current_block_type} = ${select_block_type}(null, #ctx);
-			let ${name} = ${current_block_type_and}${current_block_type}(#ctx);
+			let ${name} = ${get_block};
 		`);
 
 		const initial_mount_node = parent_node || '#target';
@@ -291,11 +293,11 @@ export default class IfBlockWrapper extends Wrapper {
 			const update_mount_node = this.get_update_mount_node(anchor);
 
 			const change_block = b`
-				${if_exists_condition}${name}.d(1);
-				${name} = ${current_block_type_and}${current_block_type}(#ctx);
+				if (${if_exists_condition}) ${name}.d(1);
+				${name} = ${get_block};
 				if (${name}) {
 					${name}.c();
-					${has_transitions && `@transition_in(${name}, 1);`}
+					${has_transitions && b`@transition_in(${name}, 1);`}
 					${name}.m(${update_mount_node}, ${anchor});
 				}
 			`;
@@ -358,18 +360,18 @@ export default class IfBlockWrapper extends Wrapper {
 					function ${select_block_type}(#changed, #ctx) {
 						${this.branches.map(({ dependencies, condition, snippet }, i) => condition
 						? b`
-						${snippet && `if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
+						${snippet && b`if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
 						if (${condition}) return ${String(i)};`
-						: `return ${i};`)}
-						${!has_else && `return -1;`}
+						: b`return ${i};`)}
+						${!has_else && b`return -1;`}
 					}
 				`
 				: b`
 					function ${select_block_type}(#changed, #ctx) {
 						${this.branches.map(({ condition, snippet }, i) => condition
-						? `if (${snippet || condition}) return ${String(i)};`
-						: `return ${i};`)}
-						${!has_else && `return -1;`}
+						? b`if (${snippet || condition}) return ${String(i)};`
+						: b`return ${i};`)}
+						${!has_else && b`return -1;`}
 					}
 				`}
 		`);
@@ -412,7 +414,7 @@ export default class IfBlockWrapper extends Wrapper {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 					${name}.c();
 				}
-				${has_transitions && `@transition_in(${name}, 1);`}
+				${has_transitions && b`@transition_in(${name}, 1);`}
 				${name}.m(${update_mount_node}, ${anchor});
 			`;
 
@@ -492,11 +494,11 @@ export default class IfBlockWrapper extends Wrapper {
 				? b`
 					if (${name}) {
 						${name}.p(#changed, #ctx);
-						${has_transitions && `@transition_in(${name}, 1);`}
+						${has_transitions && b`@transition_in(${name}, 1);`}
 					} else {
 						${name} = ${branch.block.name}(#ctx);
 						${name}.c();
-						${has_transitions && `@transition_in(${name}, 1);`}
+						${has_transitions && b`@transition_in(${name}, 1);`}
 						${name}.m(${update_mount_node}, ${anchor});
 					}
 				`
@@ -504,9 +506,9 @@ export default class IfBlockWrapper extends Wrapper {
 					if (!${name}) {
 						${name} = ${branch.block.name}(#ctx);
 						${name}.c();
-						${has_transitions && `@transition_in(${name}, 1);`}
+						${has_transitions && b`@transition_in(${name}, 1);`}
 						${name}.m(${update_mount_node}, ${anchor});
-					} ${has_transitions && `else @transition_in(${name}, 1);`}
+					} ${has_transitions && b`else @transition_in(${name}, 1);`}
 				`;
 
 			if (branch.snippet) {
