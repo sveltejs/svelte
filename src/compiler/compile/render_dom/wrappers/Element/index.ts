@@ -250,7 +250,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		const node = this.var;
-		const nodes = parent_nodes && block.get_unique_name(`${this.var}_nodes`); // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
+		const nodes = parent_nodes && block.get_unique_name(`${this.var.name}_nodes`); // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
 
 		block.add_variable(node);
 		const render_statement = this.get_render_statement();
@@ -399,7 +399,7 @@ export default class ElementWrapper extends Wrapper {
 		renderer.component.has_reactive_assignments = true;
 
 		const lock = this.bindings.some(binding => binding.needs_lock) ?
-			block.get_unique_name(`${this.var}_updating`) :
+			block.get_unique_name(`${this.var.name}_updating`) :
 			null;
 
 		if (lock) block.add_variable(lock, x`false`);
@@ -442,7 +442,7 @@ export default class ElementWrapper extends Wrapper {
 			// own hands
 			let animation_frame;
 			if (group.events[0] === 'timeupdate') {
-				animation_frame = block.get_unique_name(`${this.var}_animationframe`);
+				animation_frame = block.get_unique_name(`${this.var.name}_animationframe`);
 				block.add_variable(animation_frame);
 			}
 
@@ -461,14 +461,14 @@ export default class ElementWrapper extends Wrapper {
 								${animation_frame} = @raf(${handler});
 								${needs_lock && `${lock} = true;`}
 							}
-							#ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', #ctx' : ''});
+							#ctx.${handler}.call(${this.var}, ${contextual_dependencies.size > 0 ? '#ctx' : null});
 						}
 					`);
 				} else {
 					block.chunks.init.push(b`
 						function ${handler}() {
 							${needs_lock && `${lock} = true;`}
-							#ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', #ctx' : ''});
+							#ctx.${handler}.call(${this.var}, ${contextual_dependencies.size > 0 ? '#ctx' : null});
 						}
 					`);
 				}
@@ -488,7 +488,7 @@ export default class ElementWrapper extends Wrapper {
 			group.events.forEach(name => {
 				if (name === 'resize') {
 					// special case
-					const resize_listener = block.get_unique_name(`${this.var}_resize_listener`);
+					const resize_listener = block.get_unique_name(`${this.var.name}_resize_listener`);
 					block.add_variable(resize_listener);
 
 					block.chunks.mount.push(
@@ -673,8 +673,8 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		else {
-			const intro_name = intro && block.get_unique_name(`${this.var}_intro`);
-			const outro_name = outro && block.get_unique_name(`${this.var}_outro`);
+			const intro_name = intro && block.get_unique_name(`${this.var.name}_intro`);
+			const outro_name = outro && block.get_unique_name(`${this.var.name}_outro`);
 
 			if (intro) {
 				block.add_variable(intro_name);

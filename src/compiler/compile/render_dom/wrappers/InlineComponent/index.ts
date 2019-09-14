@@ -124,20 +124,26 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
 
-		const slot_props = Array.from(this.slots).map(([name, slot]) => `${quote_name_if_necessary(name)}: [${slot.block.name}${slot.fn ? `, ${slot.fn}` : ''}]`);
-
 		let attribute_object;
 
-		if (this.node.attributes.length > 0 || this.node.bindings.length > 0 || slot_props.length > 0) {
+		if (this.node.attributes.length > 0 || this.node.bindings.length > 0 || this.slots.size > 0) {
 			if (!uses_spread && this.node.bindings.length === 0) {
 				const initial_props: any = x`{}`;
 
-				if (slot_props.length > 0) {
+				if (this.slots.size > 0) {
 					initial_props.properties.push({
 						type: 'Property',
 						kind: 'init',
 						key: { type: 'Identifier', name: '$$slots' },
-						value: slot_props
+						value: {
+							type: 'ObjectExpression',
+							properties: Array.from(this.slots).map(([name, slot]) => ({
+								type: 'Property',
+								kind: 'init',
+								key: { type: 'Identifier', name },
+								value: x`[${slot.block.name}, ${slot.fn}]`
+							}))
+						}
 					}, {
 						type: 'Property',
 						kind: 'init',
@@ -220,7 +226,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		if (this.node.attributes.length) {
 			if (uses_spread) {
-				const levels = block.get_unique_name(`${this.var}_spread_levels`);
+				const levels = block.get_unique_name(`${this.var.name}_spread_levels`);
 
 				const initial_props = [];
 				const changes = [];

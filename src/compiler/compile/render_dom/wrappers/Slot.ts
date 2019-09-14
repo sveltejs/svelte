@@ -4,7 +4,7 @@ import Block from '../Block';
 import Slot from '../../nodes/Slot';
 import FragmentWrapper from './Fragment';
 import { b } from 'code-red';
-import { sanitize, quote_prop_if_necessary } from '../../../utils/names';
+import { sanitize } from '../../../utils/names';
 import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../utils/get_slot_data';
 import { stringify_props } from '../../utils/stringify_props';
@@ -110,11 +110,9 @@ export default class SlotWrapper extends Wrapper {
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
 
 		block.chunks.init.push(b`
-			const ${slot_definition} = #ctx.$$slots${quote_prop_if_necessary(slot_name)};
+			const ${slot_definition} = #ctx.$$slots.${slot_name};
 			const ${slot} = @create_slot(${slot_definition}, #ctx, ${get_slot_context});
 		`);
-
-		const mount_before = block.chunks.mount.slice();
 
 		// block.builders.create.push_condition(`!${slot}`);
 		// block.builders.claim.push_condition(`!${slot}`);
@@ -144,12 +142,8 @@ export default class SlotWrapper extends Wrapper {
 			b`if (${slot}) ${slot}.l(${parent_nodes});`
 		);
 
-		const mount_leadin = block.chunks.mount.length !== mount_before.length
-			? `else`
-			: `if (${slot})`;
-
 		block.chunks.mount.push(b`
-			${mount_leadin} {
+			if (${slot}) {
 				${slot}.m(${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
 			}
 		`);

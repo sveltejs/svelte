@@ -142,7 +142,7 @@ export default class BindingWrapper {
 			case 'paused':
 			{
 				// this is necessary to prevent audio restarting by itself
-				const last = block.get_unique_name(`${parent.var}_is_paused`);
+				const last = block.get_unique_name(`${parent.var.name}_is_paused`);
 				block.add_variable(last, x`true`);
 
 				update_conditions.push(x`${last} !== (${last} = ${this.snippet})`);

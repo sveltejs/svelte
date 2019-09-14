@@ -248,7 +248,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		if (this.else) {
-			const each_block_else = component.get_unique_name(`${this.var}_else`);
+			const each_block_else = component.get_unique_name(`${this.var.name}_else`);
 
 			block.chunks.init.push(b`let ${each_block_else} = null;`);
 

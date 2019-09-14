@@ -393,6 +393,7 @@ export default class IfBlockWrapper extends Wrapper {
 		const initial_mount_node = parent_node || '#target';
 		const anchor_node = parent_node ? 'null' : 'anchor';
 
+		throw new Error(`womp womp`);
 		block.chunks.mount.push(
 			b`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].m(${initial_mount_node}, ${anchor_node});`
 		);
@@ -508,7 +509,9 @@ export default class IfBlockWrapper extends Wrapper {
 						${name}.c();
 						${has_transitions && b`@transition_in(${name}, 1);`}
 						${name}.m(${update_mount_node}, ${anchor});
-					} ${has_transitions && b`else @transition_in(${name}, 1);`}
+					} else {
+						${has_transitions && b`@transition_in(${name}, 1);`}
+					}
 				`;
 
 			if (branch.snippet) {
