@@ -1,7 +1,7 @@
 import Renderer from '../../Renderer';
 import Block from '../../Block';
 import { INode } from '../../../nodes/interfaces';
-import { Identifier } from '../../../../interfaces';
+import { Identifier, Node } from '../../../../interfaces';
 import { x } from 'code-red';
 
 export default class Wrapper {
@@ -44,7 +44,7 @@ export default class Wrapper {
 		if (this.parent) this.parent.cannot_use_innerhtml();
 	}
 
-	get_or_create_anchor(block: Block, parent_node: string, parent_nodes: string) {
+	get_or_create_anchor(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		// TODO use this in EachBlock and IfBlock — tricky because
 		// children need to be created first
 		const needs_anchor = this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node();
@@ -57,7 +57,7 @@ export default class Wrapper {
 				anchor,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
-				parent_node
+				parent_node as unknown as Node
 			);
 		}
 
@@ -78,7 +78,7 @@ export default class Wrapper {
 		);
 	}
 
-	render(_block: Block, _parent_node: string, _parent_nodes: string) {
+	render(_block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
 		throw Error('Wrapper class is not renderable');
 	}
 }

@@ -4,6 +4,7 @@ import Text from '../../nodes/Text';
 import Wrapper from './shared/Wrapper';
 import { Identifier } from '../../../interfaces';
 import { x } from 'code-red';
+import Node from '../../nodes/shared/Node';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
@@ -65,7 +66,7 @@ export default class TextWrapper extends Wrapper {
 		return true;
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		if (this.skip) return;
 		const use_space = this.use_space();
 
@@ -73,7 +74,7 @@ export default class TextWrapper extends Wrapper {
 			this.var,
 			use_space ? x`@space()` : x`@text("${this.data}")`,
 			parent_nodes && (use_space ? x`@claim_space(${parent_nodes})` : x`@claim_text(${parent_nodes}, "${this.data}")`),
-			parent_node
+			parent_node as unknown as Node
 		);
 	}
 }

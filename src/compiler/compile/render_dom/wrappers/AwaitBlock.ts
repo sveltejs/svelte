@@ -122,8 +122,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 	render(
 		block: Block,
-		parent_node: string,
-		parent_nodes: string
+		parent_node: Identifier,
+		parent_nodes: Identifier
 	) {
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 		const update_mount_node = this.get_update_mount_node(anchor);
@@ -234,7 +234,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		`);
 
 		[this.pending, this.then, this.catch].forEach(branch => {
-			branch.fragment.render(branch.block, null, 'nodes');
+			branch.fragment.render(branch.block, null, x`nodes` as unknown as Identifier);
 		});
 	}
 }

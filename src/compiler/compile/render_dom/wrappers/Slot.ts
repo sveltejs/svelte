@@ -52,8 +52,8 @@ export default class SlotWrapper extends Wrapper {
 
 	render(
 		block: Block,
-		parent_node: string,
-		parent_nodes: string
+		parent_node: Identifier,
+		parent_nodes: Identifier
 	) {
 		const { renderer } = this;
 

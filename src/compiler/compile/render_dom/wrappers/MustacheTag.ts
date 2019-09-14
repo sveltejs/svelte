@@ -4,7 +4,7 @@ import Tag from './shared/Tag';
 import Wrapper from './shared/Wrapper';
 import MustacheTag from '../../nodes/MustacheTag';
 import RawMustacheTag from '../../nodes/RawMustacheTag';
-import { Identifier } from '../../../interfaces';
+import { Identifier, Node } from '../../../interfaces';
 import { x } from 'code-red';
 
 export default class MustacheTagWrapper extends Tag {
@@ -15,7 +15,7 @@ export default class MustacheTagWrapper extends Tag {
 		this.cannot_use_innerhtml();
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		const { init } = this.rename_this_method(
 			block,
 			value => x`@set_data(${this.var}, ${value});`
@@ -25,7 +25,7 @@ export default class MustacheTagWrapper extends Tag {
 			this.var,
 			x`@text(${init})`,
 			parent_nodes && x`@claim_text(${parent_nodes}, ${init})`,
-			parent_node
+			parent_node as unknown as Node
 		);
 	}
 }

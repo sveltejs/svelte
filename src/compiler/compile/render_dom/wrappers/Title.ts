@@ -6,6 +6,7 @@ import Title from '../../nodes/Title';
 import { stringify } from '../../utils/stringify';
 import add_to_set from '../../utils/add_to_set';
 import Text from '../../nodes/Text';
+import { Identifier } from '../../../interfaces';
 
 export default class TitleWrapper extends Wrapper {
 	node: Title;
@@ -21,7 +22,7 @@ export default class TitleWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, _parent_node: string, _parent_nodes: string) {
+	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
 		const is_dynamic = !!this.node.children.find(node => node.type !== 'Text');
 
 		if (is_dynamic) {

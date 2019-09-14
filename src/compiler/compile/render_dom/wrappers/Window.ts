@@ -7,6 +7,7 @@ import Window from '../../nodes/Window';
 import add_actions from './shared/add_actions';
 import { INode } from '../../nodes/interfaces';
 import { changed } from './shared/changed';
+import { Identifier } from '../../../interfaces';
 
 const associated_events = {
 	innerWidth: 'resize',
@@ -38,7 +39,7 @@ export default class WindowWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, _parent_node: string, _parent_nodes: string) {
+	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
 		const { renderer } = this;
 		const { component } = renderer;
 

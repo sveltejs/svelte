@@ -10,6 +10,7 @@ import { b, x } from 'code-red';
 import { walk } from 'estree-walker';
 import { Identifier } from '../../../interfaces';
 import Node from '../../nodes/shared/Node';
+import { is_head } from './shared/is_head';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -170,8 +171,8 @@ export default class IfBlockWrapper extends Wrapper {
 
 	render(
 		block: Block,
-		parent_node: string,
-		parent_nodes: string
+		parent_node: Identifier,
+		parent_nodes: Identifier
 	) {
 		const name = this.var;
 
@@ -190,7 +191,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const vars = { name, anchor, if_exists_condition, has_else, has_transitions };
 
-		const detaching = (parent_node && parent_node !== '@_document.head') ? '' : 'detaching';
+		const detaching = is_head(parent_node) ? '' : 'detaching';
 
 		if (this.node.else) {
 			this.branches.forEach(branch => {
@@ -229,19 +230,19 @@ export default class IfBlockWrapper extends Wrapper {
 				anchor as Identifier,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
-				parent_node
+				parent_node as unknown as Node
 			);
 		}
 
 		this.branches.forEach(branch => {
-			branch.fragment.render(branch.block, null, 'nodes');
+			branch.fragment.render(branch.block, null, x`nodes` as unknown as Identifier);
 		});
 	}
 
 	render_compound(
 		block: Block,
-		parent_node: string,
-		_parent_nodes: string,
+		parent_node: Identifier,
+		_parent_nodes: Identifier,
 		dynamic,
 		{ name, anchor, has_else, if_exists_condition, has_transitions },
 		detaching
@@ -328,8 +329,8 @@ export default class IfBlockWrapper extends Wrapper {
 	// (TODO does this only apply to bidi transitions?)
 	render_compound_with_outros(
 		block: Block,
-		parent_node: string,
-		_parent_nodes: string,
+		parent_node: Identifier,
+		_parent_nodes: Identifier,
 		dynamic,
 		{ name, anchor, has_else, has_transitions },
 		detaching
@@ -467,8 +468,8 @@ export default class IfBlockWrapper extends Wrapper {
 
 	render_simple(
 		block: Block,
-		parent_node: string,
-		_parent_nodes: string,
+		parent_node: Identifier,
+		_parent_nodes: Identifier,
 		dynamic,
 		{ name, anchor, if_exists_condition, has_transitions },
 		detaching

@@ -2,6 +2,7 @@ import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
 import { Node, Identifier } from '../../interfaces';
+import { is_head } from './wrappers/shared/is_head';
 
 export interface BlockOptions {
 	parent?: Block;
@@ -167,7 +168,7 @@ export default class Block {
 		id: Identifier,
 		render_statement: Node,
 		claim_statement: Node,
-		parent_node: string,
+		parent_node: Node,
 		no_detach?: boolean
 	) {
 		this.add_variable(id);
@@ -179,7 +180,7 @@ export default class Block {
 
 		if (parent_node) {
 			this.chunks.mount.push(b`@append(${parent_node}, ${id});`);
-			if (parent_node === '@_document.head' && !no_detach) this.chunks.destroy.push(b`@detach(${id});`);
+			if (is_head(parent_node) && !no_detach) this.chunks.destroy.push(b`@detach(${id});`);
 		} else {
 			this.chunks.mount.push(b`@insert(#target, ${id}, anchor);`);
 			if (!no_detach) this.chunks.destroy.push(b`if (detaching) @detach(${id});`);

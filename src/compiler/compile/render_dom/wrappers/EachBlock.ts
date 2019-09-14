@@ -179,7 +179,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		if (this.fragment.nodes.length === 0) return;
 
 		const { renderer } = this;
@@ -207,7 +207,7 @@ export default class EachBlockWrapper extends Wrapper {
 		`);
 
 		const initial_anchor_node: Identifier = { type: 'Identifier', name: parent_node ? 'null' : 'anchor' };
-		const initial_mount_node: Identifier = { type: 'Identifier', name: parent_node || '#target' };
+		const initial_mount_node: Identifier = parent_node || { type: 'Identifier', name: '#target' };
 		const update_anchor_node = needs_anchor
 			? block.get_unique_name(`${this.var.name}_anchor`)
 			: (this.next && this.next.var) || { type: 'Identifier', name: 'null' };
@@ -243,7 +243,7 @@ export default class EachBlockWrapper extends Wrapper {
 				update_anchor_node as Identifier,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
-				parent_node
+				parent_node as unknown as Node
 			);
 		}
 
@@ -299,10 +299,10 @@ export default class EachBlockWrapper extends Wrapper {
 			`);
 		}
 
-		this.fragment.render(this.block, null, 'nodes');
+		this.fragment.render(this.block, null, x`nodes` as unknown as Identifier);
 
 		if (this.else) {
-			this.else.fragment.render(this.else.block, null, 'nodes');
+			this.else.fragment.render(this.else.block, null, x`nodes` as unknown as Identifier);
 		}
 	}
 
@@ -317,8 +317,8 @@ export default class EachBlockWrapper extends Wrapper {
 		update_mount_node
 	}: {
 		block: Block;
-		parent_node: string;
-		parent_nodes: string;
+		parent_node: Identifier;
+		parent_nodes: Identifier;
 		snippet: Node;
 		initial_anchor_node: Identifier;
 		initial_mount_node: Identifier;
@@ -425,7 +425,7 @@ export default class EachBlockWrapper extends Wrapper {
 		update_mount_node
 	}: {
 		block: Block;
-		parent_nodes: string;
+		parent_nodes: Identifier;
 		snippet: Node;
 		initial_anchor_node: Identifier;
 		initial_mount_node: Identifier;

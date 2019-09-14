@@ -106,8 +106,8 @@ export default class InlineComponentWrapper extends Wrapper {
 
 	render(
 		block: Block,
-		parent_node: string,
-		parent_nodes: string
+		parent_node: Identifier,
+		parent_nodes: Identifier
 	) {
 		const { renderer } = this;
 		const { component } = renderer;
@@ -149,7 +149,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						kind: 'init',
 						key: { type: 'Identifier', name: '$$scope' },
 						value: x`{ ctx: #ctx }`
-					})
+					});
 				}
 
 				if (uses_spread) {
@@ -189,7 +189,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const default_slot = this.slots.get('default');
 
 			this.fragment.nodes.forEach((child) => {
-				child.render(default_slot.block, null, 'nodes');
+				child.render(default_slot.block, null, x`nodes` as unknown as Identifier);
 			});
 		}
 

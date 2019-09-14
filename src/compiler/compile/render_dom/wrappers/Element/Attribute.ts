@@ -172,8 +172,8 @@ export default class AttributeWrapper {
 				is_legacy_input_type
 					? b`@set_input_type(${element.var}, ${value});`
 					: property_name
-						? b`${element.var}.${property_name} = ${value === true ? { type: 'Literal', value: true } : value};`
-						: b`${method}(${element.var}, "${name}", ${value === true ? x`""` : value});`
+						? b`${element.var}.${property_name} = ${value};`
+						: b`${method}(${element.var}, "${name}", ${value});`
 			);
 
 			block.chunks.hydrate.push(statement);

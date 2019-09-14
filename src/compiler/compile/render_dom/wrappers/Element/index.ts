@@ -21,6 +21,8 @@ import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_context_merger } from '../shared/get_context_merger';
 import bind_this from '../shared/bind_this';
 import { changed } from '../shared/changed';
+import { is_head } from '../shared/is_head';
+import { Identifier } from '../../../../interfaces';
 
 const events = [
 	{
@@ -152,7 +154,7 @@ export default class ElementWrapper extends Wrapper {
 				if (owner && owner.node.type === 'InlineComponent') {
 					const name = attribute.get_static_value() as string;
 
-					if (!(owner as InlineComponentWrapper).slots.has(name)) {
+					if (!(owner as unknown as InlineComponentWrapper).slots.has(name)) {
 						const child_block = block.child({
 							comment: create_debugging_comment(node, this.renderer.component),
 							name: this.renderer.component.get_unique_name(`create_${sanitize(name)}_slot`),
@@ -162,13 +164,13 @@ export default class ElementWrapper extends Wrapper {
 						const lets = this.node.lets;
 						const seen = new Set(lets.map(l => l.name));
 
-						(owner as InlineComponentWrapper).node.lets.forEach(l => {
+						(owner as unknown as InlineComponentWrapper).node.lets.forEach(l => {
 							if (!seen.has(l.name)) lets.push(l);
 						});
 
 						const fn = get_context_merger(lets);
 
-						(owner as InlineComponentWrapper).slots.set(name, {
+						(owner as unknown as InlineComponentWrapper).slots.set(name, {
 							block: child_block,
 							scope: this.node.scope,
 							fn
@@ -176,7 +178,7 @@ export default class ElementWrapper extends Wrapper {
 						this.renderer.blocks.push(child_block);
 					}
 
-					this.slot_block = (owner as InlineComponentWrapper).slots.get(name).block;
+					this.slot_block = (owner as unknown as InlineComponentWrapper).slots.get(name).block;
 					block = this.slot_block;
 				}
 			}
@@ -240,7 +242,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		const { renderer } = this;
 
 		if (this.node.name === 'noscript') return;
@@ -276,7 +278,7 @@ export default class ElementWrapper extends Wrapper {
 				b`@append(${parent_node}, ${node});`
 			);
 
-			if (parent_node === '@_document.head') {
+			if (is_head(parent_node)) {
 				block.chunks.destroy.push(b`@detach(${node});`);
 			}
 		} else {
@@ -320,7 +322,7 @@ export default class ElementWrapper extends Wrapper {
 				child.render(
 					block,
 					this.node.name === 'template' ? `${node}.content` : node,
-					nodes.name
+					nodes
 				);
 			});
 		}
@@ -376,7 +378,7 @@ export default class ElementWrapper extends Wrapper {
 		return x`@element("${name}")`;
 	}
 
-	get_claim_statement(nodes: string) {
+	get_claim_statement(nodes: Identifier) {
 		const attributes = this.node.attributes
 			.filter((attr) => attr.type === 'Attribute')
 			.map((attr) => `${quote_name_if_necessary(attr.name)}: true`)

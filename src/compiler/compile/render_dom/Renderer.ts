@@ -2,6 +2,7 @@ import Block from './Block';
 import { CompileOptions, Node, Identifier } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
+import { x } from 'code-red';
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
@@ -56,6 +57,6 @@ export default class Renderer {
 
 		this.block.assign_variable_names();
 
-		this.fragment.render(this.block, null, 'nodes');
+		this.fragment.render(this.block, null, x`nodes` as unknown as Identifier);
 	}
 }

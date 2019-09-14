@@ -4,6 +4,7 @@ import Block from '../Block';
 import DebugTag from '../../nodes/DebugTag';
 // import add_to_set from '../../utils/add_to_set';
 import { b } from 'code-red';
+import { Identifier } from '../../../interfaces';
 
 export default class DebugTagWrapper extends Wrapper {
 	node: DebugTag;
@@ -19,7 +20,7 @@ export default class DebugTagWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, _parent_node: string, _parent_nodes: string) {
+	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
 		const { renderer } = this;
 		// const { component } = renderer;
 
