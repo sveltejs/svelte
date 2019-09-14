@@ -2,9 +2,8 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Text from '../../nodes/Text';
 import Wrapper from './shared/Wrapper';
-import { Identifier } from '../../../interfaces';
 import { x } from 'code-red';
-import Node from '../../nodes/shared/Node';
+import { Identifier } from 'estree';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
@@ -74,7 +73,7 @@ export default class TextWrapper extends Wrapper {
 			this.var,
 			use_space ? x`@space()` : x`@text("${this.data}")`,
 			parent_nodes && (use_space ? x`@claim_space(${parent_nodes})` : x`@claim_text(${parent_nodes}, "${this.data}")`),
-			parent_node as unknown as Node
+			parent_node as Identifier
 		);
 	}
 }

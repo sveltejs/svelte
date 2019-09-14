@@ -5,7 +5,7 @@ import EachBlock from '../../nodes/EachBlock';
 export default function(node: EachBlock, renderer: Renderer, options: RenderOptions) {
 	const snippet = snip(node.expression);
 
-	const { start, end } = node.context_node;
+	const { start, end } = node.context_node as any;
 
 	const ctx = node.index
 		? `([✂${start}-${end}✂], ${node.index})`

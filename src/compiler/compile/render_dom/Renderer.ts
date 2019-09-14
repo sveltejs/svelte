@@ -1,16 +1,17 @@
 import Block from './Block';
-import { CompileOptions, Node, Identifier } from '../../interfaces';
+import { CompileOptions } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
 import { x } from 'code-red';
+import { Node, Identifier } from 'estree';
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
 	options: CompileOptions;
 
-	blocks: Array<Block | string> = [];
+	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
-	meta_bindings: Node[] = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
+	meta_bindings: (Node | Node[])[] = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
 	binding_groups: string[] = [];
 
 	block: Block;
@@ -49,14 +50,15 @@ export default class Renderer {
 			null
 		);
 
+		// TODO messy
 		this.blocks.forEach(block => {
-			if (typeof block !== 'string') {
+			if (block instanceof Block) {
 				block.assign_variable_names();
 			}
 		});
 
 		this.block.assign_variable_names();
 
-		this.fragment.render(this.block, null, x`nodes` as unknown as Identifier);
+		this.fragment.render(this.block, null, x`nodes` as Identifier);
 	}
 }

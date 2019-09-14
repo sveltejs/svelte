@@ -10,7 +10,7 @@ import get_slot_data from '../../utils/get_slot_data';
 import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
 import is_dynamic from './shared/is_dynamic';
-import { Identifier } from '../../../interfaces';
+import { Identifier } from 'estree';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;

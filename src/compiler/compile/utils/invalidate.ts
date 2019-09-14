@@ -1,8 +1,8 @@
 import Component from '../Component';
-import { Node } from '../../interfaces';
 import { nodes_match } from '../../utils/nodes_match';
 import { Scope } from './scope';
 import { x } from 'code-red';
+import { Node } from 'estree';
 
 export function invalidate(component: Component, scope: Scope, node: Node, names: Set<string>) {
 	const [head, ...tail] = Array.from(names).filter(name => {
@@ -27,7 +27,7 @@ export function invalidate(component: Component, scope: Scope, node: Node, names
 	if (head) {
 		component.has_reactive_assignments = true;
 
-		if (node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
+		if (node.type === 'AssignmentExpression' && node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
 			return component.invalidate(head);
 		} else {
 

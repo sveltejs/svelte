@@ -22,7 +22,7 @@ import { get_context_merger } from '../shared/get_context_merger';
 import bind_this from '../shared/bind_this';
 import { changed } from '../shared/changed';
 import { is_head } from '../shared/is_head';
-import { Identifier } from '../../../../interfaces';
+import { Identifier } from 'estree';
 
 const events = [
 	{
@@ -469,7 +469,7 @@ export default class ElementWrapper extends Wrapper {
 				} else {
 					block.chunks.init.push(b`
 						function ${handler}() {
-							${needs_lock && `${lock} = true;`}
+							${needs_lock && b`${lock} = true;`}
 							#ctx.${handler}.call(${this.var}, ${contextual_dependencies.size > 0 ? '#ctx' : null});
 						}
 					`);
@@ -508,8 +508,8 @@ export default class ElementWrapper extends Wrapper {
 			});
 
 			const some_initial_state_is_undefined = group.bindings
-				.map(binding => `${binding.snippet} === void 0`)
-				.join(' || ');
+				.map(binding => x`${binding.snippet} === void 0`)
+				.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
 			const should_initialise = (
 				this.node.name === 'select' ||
@@ -524,7 +524,7 @@ export default class ElementWrapper extends Wrapper {
 			);
 
 			if (should_initialise) {
-				const callback = has_local_function ? handler : `() => ${callee}.call(${this.var})`;
+				const callback = has_local_function ? handler : x`() => ${callee}.call(${this.var})`;
 				block.chunks.hydrate.push(
 					b`if (${some_initial_state_is_undefined}) @add_render_callback(${callback});`
 				);

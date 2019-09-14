@@ -6,8 +6,7 @@ import EachBlock from '../../nodes/EachBlock';
 import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import ElseBlock from '../../nodes/ElseBlock';
-import { attach_head } from '../../utils/tail';
-import { Identifier, Node } from '../../../interfaces';
+import { Identifier, Node } from 'estree';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -61,7 +60,7 @@ export default class EachBlockWrapper extends Wrapper {
 		view_length: string;
 	}
 
-	context_props: string[];
+	context_props: (Node | Node[])[];
 	index_name: Identifier;
 
 	var: Identifier = { type: 'Identifier', name: 'each' };
@@ -141,9 +140,9 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.bindings.set(prop.key.name, {
 				object: this.vars.each_block_value,
 				property: this.index_name,
-				snippet: attach_head(`${this.vars.each_block_value}[${this.index_name}]`, prop.tail),
+				snippet: prop.modifier(x`${this.vars.each_block_value}[${this.index_name}]` as Node),
 				store,
-				tail: attach_head(`[${this.index_name}]`, prop.tail)
+				tail: prop.modifier(x`[${this.index_name}]` as Node)
 			});
 		});
 
@@ -189,7 +188,7 @@ export default class EachBlockWrapper extends Wrapper {
 			? !this.next.is_dom_node() :
 			!parent_node || !this.parent.is_dom_node();
 
-		this.context_props = this.node.contexts.map(prop => b`child_ctx.${prop.key.name} = ${attach_head('list[i]', prop.tail)};`);
+		this.context_props = this.node.contexts.map(prop => b`child_ctx.${prop.key.name} = ${prop.modifier(x`list[i]`)};`);
 
 		if (this.node.has_binding) this.context_props.push(b`child_ctx.${this.vars.each_block_value} = list;`);
 		if (this.node.has_binding || this.node.index) this.context_props.push(b`child_ctx.${this.index_name} = i;`);
@@ -243,7 +242,7 @@ export default class EachBlockWrapper extends Wrapper {
 				update_anchor_node as Identifier,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
-				parent_node as unknown as Node
+				parent_node
 			);
 		}
 
@@ -299,10 +298,10 @@ export default class EachBlockWrapper extends Wrapper {
 			`);
 		}
 
-		this.fragment.render(this.block, null, x`nodes` as unknown as Identifier);
+		this.fragment.render(this.block, null, x`nodes` as Identifier);
 
 		if (this.else) {
-			this.else.fragment.render(this.else.block, null, x`nodes` as unknown as Identifier);
+			this.else.fragment.render(this.else.block, null, x`nodes` as Identifier);
 		}
 	}
 

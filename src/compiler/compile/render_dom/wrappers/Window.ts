@@ -5,9 +5,9 @@ import { b, x } from 'code-red';
 import add_event_handlers from './shared/add_event_handlers';
 import Window from '../../nodes/Window';
 import add_actions from './shared/add_actions';
-import { INode } from '../../nodes/interfaces';
 import { changed } from './shared/changed';
-import { Identifier } from '../../../interfaces';
+import { Identifier } from 'estree';
+import { TemplateNode } from '../../../interfaces';
 
 const associated_events = {
 	innerWidth: 'resize',
@@ -35,7 +35,7 @@ const readonly = new Set([
 export default class WindowWrapper extends Wrapper {
 	node: Window;
 
-	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: INode) {
+	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
 		super(renderer, block, parent, node);
 	}
 

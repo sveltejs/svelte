@@ -6,7 +6,7 @@ import Title from '../../nodes/Title';
 import { stringify } from '../../utils/stringify';
 import add_to_set from '../../utils/add_to_set';
 import Text from '../../nodes/Text';
-import { Identifier } from '../../../interfaces';
+import { Identifier } from 'estree';
 
 export default class TitleWrapper extends Wrapper {
 	node: Title;

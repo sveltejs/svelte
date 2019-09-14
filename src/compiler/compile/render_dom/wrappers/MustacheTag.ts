@@ -4,8 +4,8 @@ import Tag from './shared/Tag';
 import Wrapper from './shared/Wrapper';
 import MustacheTag from '../../nodes/MustacheTag';
 import RawMustacheTag from '../../nodes/RawMustacheTag';
-import { Identifier, Node } from '../../../interfaces';
 import { x } from 'code-red';
+import { Identifier } from 'estree';
 
 export default class MustacheTagWrapper extends Tag {
 	var: Identifier = { type: 'Identifier', name: 't' };
@@ -25,7 +25,7 @@ export default class MustacheTagWrapper extends Tag {
 			this.var,
 			x`@text(${init})`,
 			parent_nodes && x`@claim_text(${parent_nodes}, ${init})`,
-			parent_node as unknown as Node
+			parent_node
 		);
 	}
 }

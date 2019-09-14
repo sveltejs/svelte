@@ -15,7 +15,7 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import internal_exports from './internal_exports';
-import { Node, Ast, CompileOptions, Var, Warning, Identifier } from '../interfaces';
+import { Ast, CompileOptions, Var, Warning } from '../interfaces';
 import error from '../utils/error';
 import get_code_frame from '../utils/get_code_frame';
 import flatten_reference from './utils/flatten_reference';
@@ -23,9 +23,8 @@ import is_reference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
-import unwrap_parens from './utils/unwrap_parens';
 import Slot from './nodes/Slot';
-import { Node as ESTreeNode } from 'estree';
+import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, AssignmentExpression } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x } from 'code-red';
@@ -46,7 +45,7 @@ childKeys.Attribute = ['value'];
 childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
 
 function remove_node(
-	body: Node,
+	body: Node[],
 	node: Node
 ) {
 	const i = body.indexOf(node);
@@ -78,14 +77,14 @@ export default class Component {
 	vars: Var[] = [];
 	var_lookup: Map<string, Var> = new Map();
 
-	imports: Node[] = [];
+	imports: ImportDeclaration[] = [];
 	module_javascript: string;
 	javascript: string;
 
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
-	partly_hoisted: Node[] = [];
-	fully_hoisted: Node[] = [];
+	partly_hoisted: (Node | Node[])[] = [];
+	fully_hoisted: (Node | Node[])[] = [];
 	reactive_declarations: Array<{
 		assignees: Set<string>;
 		dependencies: Set<string>;
@@ -589,7 +588,7 @@ export default class Component {
 		walk(script.content, {
 			enter(node) {
 				if (node.type === 'LabeledStatement' && node.label.name === '$') {
-					component.warn(node, {
+					component.warn(node as any, {
 						code: 'module-script-reactive-declaration',
 						message: '$: has no effect in a module script',
 					});
@@ -602,23 +601,25 @@ export default class Component {
 
 		scope.declarations.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node, {
+				this.error(node as any, {
 					code: 'illegal-declaration',
 					message: `The $ prefix is reserved, and cannot be used for variable and import names`,
 				});
 			}
 
+			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
+
 			this.add_var({
 				name,
 				module: true,
 				hoistable: true,
-				writable: node.kind === 'var' || node.kind === 'let',
+				writable
 			});
 		});
 
 		globals.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node, {
+				this.error(node as any, {
 					code: 'illegal-subscription',
 					message: `Cannot reference store value inside <script context="module">`,
 				});
@@ -644,7 +645,7 @@ export default class Component {
 			if (node.type !== 'LabeledStatement') return;
 			if (node.body.type !== 'ExpressionStatement') return;
 
-			const expression = unwrap_parens(node.body.expression);
+			const { expression } = node.body;
 			if (expression.type !== 'AssignmentExpression') return;
 
 			extract_names(expression.left).forEach(name => {
@@ -662,17 +663,19 @@ export default class Component {
 
 		instance_scope.declarations.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node, {
+				this.error(node as any, {
 					code: 'illegal-declaration',
 					message: `The $ prefix is reserved, and cannot be used for variable and import names`,
 				});
 			}
 
+			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
+
 			this.add_var({
 				name,
 				initialised: instance_scope.initialised_declarations.has(name),
 				hoistable: /^Import/.test(node.type),
-				writable: node.kind === 'var' || node.kind === 'let',
+				writable
 			});
 
 			this.node_for_declaration.set(name, node);
@@ -696,7 +699,7 @@ export default class Component {
 				});
 			} else if (name[0] === '$') {
 				if (name === '$' || name[1] === '$') {
-					this.error(node, {
+					this.error(node as any, {
 						code: 'illegal-global',
 						message: `${name} is an illegal variable name`
 					});
@@ -749,20 +752,12 @@ export default class Component {
 					scope = map.get(node);
 				}
 
-				let names;
-				let deep = false;
+				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
+					const names = extract_names(assignee);
 
-				if (node.type === 'AssignmentExpression') {
-					deep = node.left.type === 'MemberExpression';
+					const deep = assignee.type === 'MemberExpression';
 
-					names = deep
-						? [get_object(node.left).name]
-						: extract_names(node.left);
-				} else if (node.type === 'UpdateExpression') {
-					names = [get_object(node.argument).name];
-				}
-
-				if (names) {
 					names.forEach(name => {
 						if (scope.find_owner(name) === instance_scope) {
 							const variable = component.var_lookup.get(name);
@@ -797,13 +792,13 @@ export default class Component {
 					node.label.name === '$' &&
 					parent.type !== 'Program'
 				) {
-					component.warn(node, {
+					component.warn(node as any, {
 						code: 'non-top-level-reactive-declaration',
 						message: '$: has no effect outside of the top-level',
 					});
 				}
 
-				if (is_reference(node as ESTreeNode, parent as ESTreeNode)) {
+				if (is_reference(node as Node, parent as Node)) {
 					const object = get_object(node);
 					const { name } = object;
 
@@ -891,7 +886,7 @@ export default class Component {
 
 									if (variable.export_name) {
 										// TODO is this still true post-#3539?
-										component.error(declarator, {
+										component.error(declarator as any, {
 											code: 'destructured-prop',
 											message: `Cannot declare props in destructured declaration`,
 										});
@@ -939,13 +934,13 @@ export default class Component {
 				}
 			},
 
-			leave(node, _parent, _key, index) {
+			leave(node, parent, _key, index) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
 
 				if (node.type === 'ExportNamedDeclaration' && node.declaration) {
-					_parent.body[index] = node.declaration;
+					(parent as Program).body[index] = node.declaration;
 				}
 			},
 		});
@@ -975,14 +970,16 @@ export default class Component {
 					if (!d.init) return false;
 					if (d.init.type !== 'Literal') return false;
 
-					const v = this.var_lookup.get(d.id.name);
+					const { name } = d.id as Identifier;
+
+					const v = this.var_lookup.get(name);
 					if (v.reassigned) return false;
 					if (v.export_name) return false;
 
-					if (this.var_lookup.get(d.id.name).reassigned) return false;
+					if (this.var_lookup.get(name).reassigned) return false;
 					if (
 						this.vars.find(
-							variable => variable.name === d.id.name && variable.module
+							variable => variable.name === name && variable.module
 						)
 					)
 						return false;
@@ -992,7 +989,7 @@ export default class Component {
 
 				if (all_hoistable) {
 					node.declarations.forEach(d => {
-						const variable = this.var_lookup.get(d.id.name);
+						const variable = this.var_lookup.get((d.id as Identifier).name);
 						variable.hoistable = true;
 					});
 
@@ -1041,7 +1038,7 @@ export default class Component {
 						scope = map.get(node);
 					}
 
-					if (is_reference(node as ESTreeNode, parent as ESTreeNode)) {
+					if (is_reference(node as Node, parent as Node)) {
 						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
 
@@ -1138,7 +1135,7 @@ export default class Component {
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
-						} else if (is_reference(node as ESTreeNode, parent as ESTreeNode)) {
+						} else if (is_reference(node as Node, parent as Node)) {
 							const identifier = get_object(node);
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
@@ -1166,9 +1163,8 @@ export default class Component {
 					},
 				});
 
-				const expression =
-					node.body.expression && unwrap_parens(node.body.expression);
-				const declaration = expression && expression.left;
+				const { expression } = node.body as ExpressionStatement;
+				const declaration = expression && (expression as AssignmentExpression).left;
 
 				unsorted_reactive_declarations.push({
 					assignees,

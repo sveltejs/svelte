@@ -1,6 +1,7 @@
 import list from '../utils/list';
-import { ModuleFormat, Node, Identifier } from '../interfaces';
+import { ModuleFormat } from '../interfaces';
 import { b, x } from 'code-red';
+import { Identifier, ImportDeclaration } from 'estree';
 
 const wrappers = { esm, cjs };
 
@@ -17,7 +18,7 @@ export default function create_module(
 	sveltePath = 'svelte',
 	helpers: Array<{ name: string; alias: Identifier }>,
 	globals: Array<{ name: string; alias: Identifier }>,
-	imports: Node[],
+	imports: ImportDeclaration[],
 	module_exports: Export[]
 ) {
 	const internal_path = `${sveltePath}/internal`;
@@ -45,7 +46,7 @@ function esm(
 	internal_path: string,
 	helpers: Array<{ name: string; alias: Identifier }>,
 	globals: Array<{ name: string; alias: Identifier }>,
-	imports: Node[],
+	imports: ImportDeclaration[],
 	module_exports: Export[]
 ) {
 	const import_declaration = {
@@ -113,7 +114,7 @@ function cjs(
 	internal_path: string,
 	helpers: Array<{ name: string; alias: Identifier }>,
 	globals: Array<{ name: string; alias: Identifier }>,
-	imports: Node[],
+	imports: ImportDeclaration[],
 	module_exports: Export[]
 ) {
 	const internal_requires = {
@@ -172,7 +173,7 @@ function cjs(
 						method: false,
 						shorthand: false,
 						computed: false,
-						key: s.imported || { type: 'Identifier', name: 'default' },
+						key: s.type === 'ImportSpecifier' ? s.imported : { type: 'Identifier', name: 'default' },
 						value: s.local,
 						kind: 'init'
 					}))

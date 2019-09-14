@@ -4,7 +4,7 @@ import Renderer from '../../Renderer';
 import Block from '../../Block';
 import MustacheTag from '../../../nodes/MustacheTag';
 import RawMustacheTag from '../../../nodes/RawMustacheTag';
-import { Node } from '../../../../interfaces';
+import { Node } from 'estree';
 
 export default class Tag extends Wrapper {
 	node: MustacheTag | RawMustacheTag;
@@ -18,7 +18,7 @@ export default class Tag extends Wrapper {
 
 	rename_this_method(
 		block: Block,
-		update: ((value: Node) => Node)
+		update: ((value: Node) => (Node | Node[]))
 	) {
 		const dependencies = this.node.expression.dynamic_dependencies();
 		const snippet = this.node.expression.manipulate(block);

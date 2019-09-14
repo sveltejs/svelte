@@ -8,9 +8,8 @@ import ElseBlock from '../../nodes/ElseBlock';
 import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import { walk } from 'estree-walker';
-import { Identifier } from '../../../interfaces';
-import Node from '../../nodes/shared/Node';
 import { is_head } from './shared/is_head';
+import { Identifier, Node } from 'estree';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -230,7 +229,7 @@ export default class IfBlockWrapper extends Wrapper {
 				anchor as Identifier,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
-				parent_node as unknown as Node
+				parent_node
 			);
 		}
 

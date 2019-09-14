@@ -1,7 +1,11 @@
-import { Node } from '../../interfaces';
+import { Node, Identifier } from 'estree';
 
 export default function flatten_reference(node: Node) {
-	if (node.type === 'Expression') throw new Error('bad');
+	// TODO temporary (#3539)
+	if ((node as any).type === 'Expression') {
+		throw new Error('bad');
+	}
+
 	const nodes = [];
 	const parts = [];
 
@@ -9,7 +13,7 @@ export default function flatten_reference(node: Node) {
 		nodes.unshift(node.property);
 
 		if (!node.computed) {
-			parts.unshift(node.property.name);
+			parts.unshift((node.property as Identifier).name);
 		}
 
 		node = node.object;
@@ -21,7 +25,7 @@ export default function flatten_reference(node: Node) {
 
 	nodes.unshift(node);
 
-	if (!node.computed) {
+	if (!(node as any).computed) {
 		parts.unshift(name);
 	}
 

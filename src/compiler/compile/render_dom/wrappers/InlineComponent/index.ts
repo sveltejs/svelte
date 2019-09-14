@@ -14,8 +14,8 @@ import EachBlock from '../../../nodes/EachBlock';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
-import { Identifier } from '../../../../interfaces';
 import { changed } from '../shared/changed';
+import { Node, Identifier } from 'estree';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
@@ -116,8 +116,8 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const component_opts: any = x`{}`;
 
-		const statements: string[] = [];
-		const updates: string[] = [];
+		const statements: (Node | Node[])[] = [];
+		const updates: (Node | Node[])[] = [];
 
 		let props;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
@@ -301,7 +301,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		if (non_let_dependencies.length > 0) {
-			updates.push(`if (${changed(non_let_dependencies)} ${name_changes}.$$scope = { changed: #changed, ctx: #ctx };`);
+			updates.push(b`if (${changed(non_let_dependencies)} ${name_changes}.$$scope = { changed: #changed, ctx: #ctx };`);
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {
@@ -339,7 +339,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
 			const dependencies = Array.from(binding.expression.dependencies);
 
-			let lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
+			let lhs = binding.expression.node;
 
 			if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
 				// bind:x={y} — we can't just do `y = x`, we need to

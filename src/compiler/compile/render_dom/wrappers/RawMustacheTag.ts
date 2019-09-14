@@ -5,8 +5,8 @@ import Tag from './shared/Tag';
 import Wrapper from './shared/Wrapper';
 import MustacheTag from '../../nodes/MustacheTag';
 import RawMustacheTag from '../../nodes/RawMustacheTag';
-import { Identifier, Node } from '../../../interfaces';
 import { is_head } from './shared/is_head';
+import { Identifier } from 'estree';
 
 export default class RawMustacheTagWrapper extends Tag {
 	var: Identifier = { type: 'Identifier', name: 'raw' };
@@ -56,7 +56,7 @@ export default class RawMustacheTagWrapper extends Tag {
 			block.chunks.mount.push(b`${html_tag}.m(${parent_node || '#target'}, ${parent_node ? null : 'anchor'});`);
 
 			if (needs_anchor) {
-				block.add_element(html_anchor, x`@empty()`, x`@empty()`, parent_node as unknown as Node);
+				block.add_element(html_anchor, x`@empty()`, x`@empty()`, parent_node);
 			}
 
 			if (!parent_node || in_head) {

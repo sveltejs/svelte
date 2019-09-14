@@ -1,7 +1,7 @@
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
-import { Node, Identifier } from '../../interfaces';
+import { Node, Identifier } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
 
 export interface BlockOptions {
@@ -14,9 +14,9 @@ export interface BlockOptions {
 	bindings?: Map<string, {
 		object: Identifier;
 		property: Identifier;
-		snippet: string;
+		snippet: Node;
 		store: string;
-		tail: string;
+		tail: Node;
 	}>;
 	dependencies?: Set<string>;
 }
@@ -38,24 +38,24 @@ export default class Block {
 	bindings: Map<string, {
 		object: Identifier;
 		property: Identifier;
-		snippet: string;
+		snippet: Node;
 		store: string;
-		tail: string
+		tail: Node;
 	}>;
 
 	chunks: {
-		init: Node[];
-		create: Node[];
-		claim: Node[];
-		hydrate: Node[];
-		mount: Node[];
-		measure: Node[];
-		fix: Node[];
-		animate: Node[];
-		intro: Node[];
-		update: Node[];
-		outro: Node[];
-		destroy: Node[];
+		init: (Node | Node[])[];
+		create: (Node | Node[])[];
+		claim: (Node | Node[])[];
+		hydrate: (Node | Node[])[];
+		mount: (Node | Node[])[];
+		measure: (Node | Node[])[];
+		fix: (Node | Node[])[];
+		animate: (Node | Node[])[];
+		intro: (Node | Node[])[];
+		update: (Node | Node[])[];
+		outro: (Node | Node[])[];
+		destroy: (Node | Node[])[];
 	};
 
 	event_listeners: Node[] = [];

@@ -3,16 +3,16 @@ import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
 import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
-import { Node } from '../../../interfaces';
 import { globals, sanitize } from '../../../utils/names';
 import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import Block from '../../render_dom/Block';
-import { INode } from '../interfaces';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
 import { x, b } from 'code-red';
 import { invalidate } from '../../utils/invalidate';
+import { Node, BinaryExpression, LogicalExpression, FunctionExpression } from 'estree';
+import { TemplateNode } from '../../../interfaces';
 
 const binary_operators: Record<string, number> = {
 	'**': 15,
@@ -53,8 +53,8 @@ const precedence: Record<string, (node?: Node) => number> = {
 	CallExpression: () => 19,
 	UpdateExpression: () => 17,
 	UnaryExpression: () => 16,
-	BinaryExpression: (node: Node) => binary_operators[node.operator],
-	LogicalExpression: (node: Node) => logical_operators[node.operator],
+	BinaryExpression: (node: BinaryExpression) => binary_operators[node.operator],
+	LogicalExpression: (node: LogicalExpression) => logical_operators[node.operator],
 	ConditionalExpression: () => 4,
 	AssignmentExpression: () => 3,
 	YieldExpression: () => 2,
@@ -62,14 +62,13 @@ const precedence: Record<string, (node?: Node) => number> = {
 	SequenceExpression: () => 0
 };
 
-type Owner = Wrapper | INode;
+type Owner = Wrapper | TemplateNode;
 
 export default class Expression {
 	type: 'Expression' = 'Expression';
 	component: Component;
 	owner: Owner;
 	node: any;
-	snippet: string;
 	references: Set<string>;
 	dependencies: Set<string> = new Set();
 	contextual_dependencies: Set<string> = new Set();
@@ -79,7 +78,7 @@ export default class Expression {
 	scope_map: WeakMap<Node, Scope>;
 
 	is_synthetic: boolean;
-	declarations: Node[] = [];
+	declarations: (Node | Node[])[] = [];
 	uses_context = false;
 
 	// todo: owner type
@@ -297,7 +296,7 @@ export default class Expression {
 					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
 						// we can hoist this out of the component completely
 						component.fully_hoisted.push(declaration);
-						node.name = id;
+						// node.name = id;
 
 						this.replace(id as any);
 
@@ -312,7 +311,7 @@ export default class Expression {
 					else if (contextual_dependencies.size === 0) {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(declaration);
-						node.name = id;
+						// node.name = id;
 
 						this.replace(x`#ctx.${id}` as any);
 
@@ -325,18 +324,21 @@ export default class Expression {
 
 					else {
 						// we need a combo block/init recipe
-						node.params.unshift({
+						(node as FunctionExpression).params.unshift({
 							type: 'ObjectPattern',
 							properties: Array.from(contextual_dependencies).map(name => ({
 								type: 'Property',
 								kind: 'init',
+								method: false,
+								shorthand: false,
+								computed: false,
 								key: { type: 'Identifier', name },
 								value: { type: 'Identifier', name }
 							}))
 						});
 
 						component.partly_hoisted.push(declaration);
-						node.name = id;
+						// node.name = id;
 
 						this.replace(id as any);
 
@@ -346,7 +348,7 @@ export default class Expression {
 							referenced: true
 						});
 
-						if (node.params.length > 0) {
+						if ((node as FunctionExpression).params.length > 0) {
 							declarations.push(b`
 								function ${id}(...args) {
 									return #ctx.${id}(#ctx, ...args);

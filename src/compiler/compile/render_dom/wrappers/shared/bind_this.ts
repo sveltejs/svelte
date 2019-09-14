@@ -3,7 +3,7 @@ import { b, x } from 'code-red';
 import Component from '../../../Component';
 import Block from '../../Block';
 import Binding from '../../../nodes/Binding';
-import { Identifier } from '../../../../interfaces';
+import { Identifier } from 'estree';
 
 export default function bind_this(component: Component, block: Block, binding: Binding, variable: Identifier) {
 	const fn = component.get_unique_name(`${variable.name}_binding`);
@@ -81,7 +81,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		);
 
 		block.chunks.destroy.push(b`${unassign}();`);
-		return `${assign}();`;
+		return b`${assign}();`;
 	}
 
 	component.partly_hoisted.push(b`

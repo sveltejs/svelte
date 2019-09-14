@@ -8,8 +8,8 @@ import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
 import ThenBlock from '../../nodes/ThenBlock';
 import CatchBlock from '../../nodes/CatchBlock';
-import { Identifier } from '../../../interfaces';
 import { changed } from './shared/changed';
+import { Identifier } from 'estree';
 
 class AwaitBlockBranch extends Wrapper {
 	node: PendingBlock | ThenBlock | CatchBlock;
@@ -234,7 +234,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		`);
 
 		[this.pending, this.then, this.catch].forEach(branch => {
-			branch.fragment.render(branch.block, null, x`nodes` as unknown as Identifier);
+			branch.fragment.render(branch.block, null, x`nodes` as Identifier);
 		});
 	}
 }

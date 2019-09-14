@@ -4,7 +4,7 @@ import Block from '../Block';
 import DebugTag from '../../nodes/DebugTag';
 // import add_to_set from '../../utils/add_to_set';
 import { b } from 'code-red';
-import { Identifier } from '../../../interfaces';
+import { Identifier } from 'estree';
 
 export default class DebugTagWrapper extends Wrapper {
 	node: DebugTag;

@@ -8,6 +8,7 @@ import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
 import { invalidate } from '../utils/invalidate';
 import Block from './Block';
+import { ClassDeclaration, FunctionExpression } from 'estree';
 
 export default function dom(
 	component: Component,
@@ -322,26 +323,26 @@ export default function dom(
 		const fixed_reactive_declarations = []; // not really 'reactive' but whatever
 
 		component.reactive_declarations
-			.forEach(d => {
-				const dependencies = Array.from(d.dependencies);
-				const uses_props = !!dependencies.find(n => n === '$$props');
+			.forEach(_d => {
+				// const dependencies = Array.from(d.dependencies);
+				// const uses_props = !!dependencies.find(n => n === '$$props');
 
-				const condition = !uses_props && dependencies
-					.filter(n => {
-						const variable = component.var_lookup.get(n);
-						return variable && (variable.writable || variable.mutated);
-					})
-					.map(n => `$$dirty.${n}`).join(' || ');
+				// const condition = !uses_props && dependencies
+				// 	.filter(n => {
+				// 		const variable = component.var_lookup.get(n);
+				// 		return variable && (variable.writable || variable.mutated);
+				// 	})
+				// 	.map(n => `$$dirty.${n}`).join(' || ');
 
 				throw new Error(`bad`);
-				let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
-				if (condition) snippet = `if (${condition}) { ${snippet} }`;
+				// let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
+				// if (condition) snippet = `if (${condition}) { ${snippet} }`;
 
-				if (condition || uses_props) {
-					reactive_declarations.push(snippet);
-				} else {
-					fixed_reactive_declarations.push(snippet);
-				}
+				// if (condition || uses_props) {
+				// 	reactive_declarations.push(snippet);
+				// } else {
+				// 	fixed_reactive_declarations.push(snippet);
+				// }
 			});
 
 		const injected = Array.from(component.injected_reactive_declaration_vars).filter(name => {
@@ -396,7 +397,7 @@ export default function dom(
 
 				${unknown_props_check}
 
-				${component.slots.size && `let { $$slots = {}, $$scope } = $$props;`}
+				${component.slots.size && x`let { $$slots = {}, $$scope } = $$props;`}
 
 				${renderer.binding_groups.length > 0 && `const $$binding_groups = [${renderer.binding_groups.map(_ => `[]`).join(', ')}];`}
 
@@ -404,9 +405,9 @@ export default function dom(
 
 				${set && b`$$self.$set = ${set};`}
 
-				${capture_state && `$$self.$capture_state = ${capture_state};`}
+				${capture_state && x`$$self.$capture_state = ${capture_state};`}
 
-				${inject_state && `$$self.$inject_state = ${inject_state};`}
+				${inject_state && x`$$self.$inject_state = ${inject_state};`}
 
 				${injected.length && `let ${injected.join(', ')};`}
 
@@ -455,17 +456,18 @@ export default function dom(
 					}
 				}
 			}
-		`[0];
+		`[0] as ClassDeclaration;
 
 		if (props.length > 0) {
 			declaration.body.body.push({
 				type: 'MethodDefinition',
 				kind: 'get',
 				static: true,
+				computed: false,
 				key: { type: 'Identifier', name: 'observedAttributes' },
 				value: x`function() {
 					return [${props.map(prop => x`"${prop.export_name}"`)}];
-				}`
+				}` as FunctionExpression
 			})
 		}
 
@@ -495,7 +497,7 @@ export default function dom(
 					${dev_props_check}
 				}
 			}
-		`[0];
+		`[0] as ClassDeclaration;
 
 		declaration.body.body.push(...accessors);
 

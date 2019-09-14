@@ -1,13 +1,13 @@
 import Renderer from '../../Renderer';
 import Block from '../../Block';
-import { INode } from '../../../nodes/interfaces';
-import { Identifier, Node } from '../../../../interfaces';
 import { x } from 'code-red';
+import { TemplateNode } from '../../../../interfaces';
+import { Identifier } from 'estree';
 
 export default class Wrapper {
 	renderer: Renderer;
 	parent: Wrapper;
-	node: INode;
+	node: TemplateNode;
 
 	prev: Wrapper | null;
 	next: Wrapper | null;
@@ -19,7 +19,7 @@ export default class Wrapper {
 		renderer: Renderer,
 		block: Block,
 		parent: Wrapper,
-		node: INode
+		node: TemplateNode
 	) {
 		this.node = node;
 
@@ -57,7 +57,7 @@ export default class Wrapper {
 				anchor,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
-				parent_node as unknown as Node
+				parent_node as Identifier
 			);
 		}
 

@@ -20,7 +20,7 @@ export default class Let extends Node {
 			walk(info.expression, {
 				enter: node => {
 					if (!applicable.has(node.type)) {
-						component.error(node, {
+						component.error(node as any, {
 							code: 'invalid-let',
 							message: `let directive value must be an identifier or an object/array pattern`
 						});

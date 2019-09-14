@@ -3,12 +3,11 @@ import Binding from '../../../nodes/Binding';
 import ElementWrapper from '../Element';
 import get_object from '../../../utils/get_object';
 import Block from '../../Block';
-import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
 import EachBlock from '../../../nodes/EachBlock';
-import { Node as INode, Identifier } from '../../../../interfaces';
 import { changed } from '../shared/changed';
+import { Node, Identifier } from 'estree';
 
 export default class BindingWrapper {
 	node: Binding;
@@ -17,11 +16,11 @@ export default class BindingWrapper {
 	object: string;
 	handler: {
 		uses_context: boolean;
-		mutation: Node;
+		mutation: (Node | Node[]);
 		contextual_dependencies: Set<string>;
 		snippet?: Node;
 	};
-	snippet: INode;
+	snippet: Node;
 	is_readonly: boolean;
 	needs_lock: boolean;
 
@@ -157,17 +156,24 @@ export default class BindingWrapper {
 		}
 
 		if (update_dom) {
-			block.chunks.update.push(
-				update_conditions.length
-					? b`if (${update_conditions.join(' && ')}) {
+			if (update_conditions.length > 0) {
+				const condition = update_conditions.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
+
+				block.chunks.update.push(b`
+					if (${condition}) {
 						${update_dom}
-					}`
-					: update_dom
-			);
+					}
+				`);
+			} else {
+				block.chunks.update.push(update_dom);
+			}
 		}
 
 		if (this.node.name === 'innerHTML' || this.node.name === 'textContent') {
-			block.chunks.mount.push(b`if (${this.snippet} !== void 0) ${update_dom}`);
+			block.chunks.mount.push(b`
+				if (${this.snippet} !== void 0) {
+					${update_dom}
+				}`);
 		} else if (!/(currentTime|paused)/.test(this.node.name)) {
 			block.chunks.mount.push(update_dom);
 		}
@@ -228,8 +234,8 @@ function get_binding_group(renderer: Renderer, value: Node) {
 
 function mutate_store(store, value, tail) {
 	return tail
-		? `${store}.update($$value => ($$value${tail} = ${value}, $$value));`
-		: `${store}.set(${value});`;
+		? b`${store}.update($$value => ($$value${tail} = ${value}, $$value));`
+		: b`${store}.set(${value});`;
 }
 
 function get_event_handler(
@@ -240,7 +246,7 @@ function get_event_handler(
 	snippet: Node
 ): {
 	uses_context: boolean;
-	mutation: Node;
+	mutation: (Node | Node[]);
 	contextual_dependencies: Set<string>;
 	snippet?: Node;
 } {
@@ -260,14 +266,14 @@ function get_event_handler(
 
 		if (binding.store) {
 			store = binding.store;
-			tail = `${binding.tail}${tail}`;
+			tail = x`${binding.tail}.${tail}`;
 		}
 
 		return {
 			uses_context: true,
 			mutation: store
 				? mutate_store(store, value, tail)
-				: b`${snippet}${tail} = ${value};`,
+				: b`${snippet}.${tail} = ${value};`,
 			contextual_dependencies: new Set([object.name, property.name])
 		};
 	}

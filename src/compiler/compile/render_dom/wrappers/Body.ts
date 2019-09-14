@@ -2,7 +2,7 @@ import Block from '../Block';
 import Wrapper from './shared/Wrapper';
 import { b } from 'code-red';
 import Body from '../../nodes/Body';
-import { Identifier } from '../../../interfaces';
+import { Identifier } from 'estree';
 
 export default class BodyWrapper extends Wrapper {
 	node: Body;

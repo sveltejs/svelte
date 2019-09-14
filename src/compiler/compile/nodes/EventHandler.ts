@@ -4,7 +4,7 @@ import Component from '../Component';
 import { b, x } from 'code-red';
 import Block from '../render_dom/Block';
 import { sanitize } from '../../utils/names';
-import { Identifier } from '../../interfaces';
+import { Identifier } from 'estree';
 
 export default class EventHandler extends Node {
 	type: 'EventHandler';
@@ -32,14 +32,16 @@ export default class EventHandler extends Node {
 			} else if (info.expression.type === 'Identifier') {
 				let node = component.node_for_declaration.get(info.expression.name);
 
-				if (node && node.type === 'VariableDeclaration') {
-					// for `const handleClick = () => {...}`, we want the [arrow] function expression node
-					const declarator = node.declarations.find(d => d.id.name === info.expression.name);
-					node = declarator && declarator.init;
-				}
+				if (node) {
+					if (node.type === 'VariableDeclaration') {
+						// for `const handleClick = () => {...}`, we want the [arrow] function expression node
+						const declarator = node.declarations.find(d => (d.id as Identifier).name === info.expression.name);
+						node = declarator && declarator.init;
+					}
 
-				if (node && /Function/.test(node.type) && node.params.length === 0) {
-					this.can_make_passive = true;
+					if ((node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') && node.params.length === 0) {
+						this.can_make_passive = true;
+					}
 				}
 			}
 		} else {
