@@ -7,6 +7,7 @@ import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import ElseBlock from '../../nodes/ElseBlock';
 import { Identifier, Node } from 'estree';
+import { changed } from './shared/changed';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -268,7 +269,7 @@ export default class EachBlockWrapper extends Wrapper {
 			if (this.else.block.has_update_method) {
 				block.chunks.update.push(b`
 					if (!${this.vars.data_length} && ${each_block_else}) {
-						${each_block_else}.p(changed, #ctx);
+						${each_block_else}.p(#changed, #ctx);
 					} else if (!${this.vars.data_length}) {
 						${each_block_else} = ${this.else.block.name}(#ctx);
 						${each_block_else}.c();
@@ -473,23 +474,13 @@ export default class EachBlockWrapper extends Wrapper {
 			all_dependencies.add(dependency);
 		});
 
-		let condition;
-		if (all_dependencies.size > 0) {
-			// TODO make this more elegant somehow?
-			const array = Array.from(all_dependencies);
-			let condition = x`#changed.${array[0]}`;
-			for (let i = 1; i < array.length; i += 1) {
-				condition = x`${condition} || #changed.${array[i]}`;
-			}
-		}
+		if (all_dependencies.size) {
+			const has_transitions = !!(this.block.has_intro_method || this.block.has_outro_method);
 
-		const has_transitions = !!(this.block.has_intro_method || this.block.has_outro_method);
-
-		if (condition) {
 			const for_loop_body = this.block.has_update_method
 				? b`
 					if (${iterations}[#i]) {
-						${iterations}[#i].p(changed, child_ctx);
+						${iterations}[#i].p(#changed, child_ctx);
 						${has_transitions && b`@transition_in(${this.vars.iterations}[#i], 1);`}
 					} else {
 						${iterations}[#i] = ${create_each_block}(child_ctx);
@@ -541,7 +532,7 @@ export default class EachBlockWrapper extends Wrapper {
 					for (${this.block.has_update_method ? `` : `#i = ${data_length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
 						${iterations}[#i].d(1);
 					}
-					${!fixed_length && `${view_length} = ${data_length};`}
+					${!fixed_length && b`${view_length} = ${data_length};`}
 				`;
 			}
 
@@ -562,7 +553,7 @@ export default class EachBlockWrapper extends Wrapper {
 			`;
 
 			block.chunks.update.push(b`
-				if (${condition}) {
+				if (${changed(Array.from(all_dependencies))}) {
 					${update}
 				}
 			`);

@@ -252,7 +252,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						if (attr.expression.node.type !== 'ObjectExpression') {
 							value_object = x`@get_spread_object(${value})`;
 						}
-						changes.push(condition ? `${condition} && ${value_object}` : value_object);
+						changes.push(condition ? x`${condition} && ${value_object}` : value_object);
 					} else {
 						const obj = x`{ ${quote_name_if_necessary(name)}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
@@ -404,7 +404,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			let snippet = handler.render(block);
 			if (handler.modifiers.has('once')) snippet = x`@once(${snippet})`;
 
-			return `${name}.$on("${handler.name}", ${snippet});`;
+			return b`${name}.$on("${handler.name}", ${snippet});`;
 		});
 
 		if (this.node.name === 'svelte:component') {
@@ -418,7 +418,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				function ${switch_props}(#ctx) {
 					${(this.node.attributes.length || this.node.bindings.length) && b`
-					${props && `let ${props} = ${attribute_object};`}`}
+					${props && b`let ${props} = ${attribute_object};`}`}
 					${statements}
 					return ${component_opts};
 				}
@@ -479,20 +479,14 @@ export default class InlineComponentWrapper extends Wrapper {
 					} else {
 						${name} = null;
 					}
+				} else if (${switch_value}) {
+					${updates.length && b`${name}.$set(${name_changes});`}
 				}
 			`);
 
 			block.chunks.intro.push(b`
 				if (${name}) @transition_in(${name}.$$.fragment, #local);
 			`);
-
-			if (updates.length) {
-				block.chunks.update.push(b`
-					else if (${switch_value}) {
-						${name}.$set(${name_changes});
-					}
-				`);
-			}
 
 			block.chunks.outro.push(
 				b`if (${name}) @transition_out(${name}.$$.fragment, #local);`
@@ -501,7 +495,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.chunks.destroy.push(b`if (${name}) @destroy_component(${name}, ${parent_node ? null : 'detaching'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
-				? '__svelte:self__' // TODO conflict-proof this
+				? component.name
 				: component.qualify(this.node.name);
 
 			block.chunks.init.push(b`

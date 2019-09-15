@@ -1,4 +1,4 @@
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
@@ -7,6 +7,7 @@ import { stringify } from '../../utils/stringify';
 import add_to_set from '../../utils/add_to_set';
 import Text from '../../nodes/Text';
 import { Identifier } from 'estree';
+import { changed } from './shared/changed';
 
 export default class TitleWrapper extends Wrapper {
 	node: Title;
@@ -28,7 +29,7 @@ export default class TitleWrapper extends Wrapper {
 		if (is_dynamic) {
 			let value;
 
-			const all_dependencies = new Set();
+			const all_dependencies: Set<string> = new Set();
 
 			// TODO some of this code is repeated in Tag.ts — would be good to
 			// DRY it out if that's possible without introducing crazy indirection
@@ -72,22 +73,26 @@ export default class TitleWrapper extends Wrapper {
 			block.chunks.init.push(
 				b`@_document.title = ${init};`
 			);
+
 			const updater = b`@_document.title = ${this.node.should_cache ? last : value};`;
 
 			if (all_dependencies.size) {
 				const dependencies = Array.from(all_dependencies);
-				const changed_check = (
-					(block.has_outros ? `!#current || ` : '') +
-					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
-				);
 
-				const update_cached_value = `${last} !== (${last} = ${value})`;
+				let condition = changed(dependencies);
 
-				const condition = this.node.should_cache ?
-					(dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value) :
-					changed_check;
+				if (block.has_outros) {
+					condition = x`!#current || ${condition}`;
+				}
 
-				block.chunks.update.push(b`if (${condition}) ${updater}`);
+				if (this.node.should_cache) {
+					condition = x`${condition} && (${last} !== (${last} = ${value}))`;
+				}
+
+				block.chunks.update.push(b`
+					if (${condition}) {
+						${updater}
+					}`);
 			}
 		} else {
 			const value = this.node.children.length > 0

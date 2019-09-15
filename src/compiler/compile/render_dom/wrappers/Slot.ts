@@ -11,6 +11,7 @@ import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
 import is_dynamic from './shared/is_dynamic';
 import { Identifier } from 'estree';
+import { changed } from './shared/changed';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
@@ -163,11 +164,8 @@ export default class SlotWrapper extends Wrapper {
 			return is_dynamic(variable);
 		});
 
-		let update_conditions = dynamic_dependencies.map(name => `changed.${name}`).join(' || ');
-		if (dynamic_dependencies.length > 1) update_conditions = `(${update_conditions})`;
-
 		block.chunks.update.push(b`
-			if (${slot} && ${slot}.p && ${update_conditions}) {
+			if (${slot} && ${slot}.p && ${changed(dynamic_dependencies)}) {
 				${slot}.p(
 					@get_slot_changes(${slot_definition}, #ctx, changed, ${get_slot_changes}),
 					@get_slot_context(${slot_definition}, #ctx, ${get_slot_context})

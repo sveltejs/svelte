@@ -10,6 +10,7 @@ import { b, x } from 'code-red';
 import { walk } from 'estree-walker';
 import { is_head } from './shared/is_head';
 import { Identifier, Node } from 'estree';
+import { changed } from './shared/changed';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -260,7 +261,7 @@ export default class IfBlockWrapper extends Wrapper {
 					? b`
 					${snippet && (
 						dependencies.length > 0
-							? b`if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`
+							? b`if ((${condition} == null) || ${changed(dependencies)}) ${condition} = !!(${snippet})`
 							: b`if (${condition} == null) ${condition} = !!(${snippet})`
 					)}
 					if (${condition}) return ${block.name};`
@@ -360,7 +361,7 @@ export default class IfBlockWrapper extends Wrapper {
 					function ${select_block_type}(#changed, #ctx) {
 						${this.branches.map(({ dependencies, condition, snippet }, i) => condition
 						? b`
-						${snippet && b`if ((${condition} == null) || ${dependencies.map(n => `changed.${n}`).join(' || ')}) ${condition} = !!(${snippet})`}
+						${snippet && b`if ((${condition} == null) || ${changed(dependencies)}) ${condition} = !!(${snippet})`}
 						if (${condition}) return ${String(i)};`
 						: b`return ${i};`)}
 						${!has_else && b`return -1;`}
@@ -516,7 +517,7 @@ export default class IfBlockWrapper extends Wrapper {
 				`;
 
 			if (branch.snippet) {
-				block.chunks.update.push(b`if (${branch.dependencies.map(n => `changed.${n}`).join(' || ')}) ${branch.condition} = ${branch.snippet}`);
+				block.chunks.update.push(b`if (${changed(branch.dependencies)}) ${branch.condition} = ${branch.snippet}`);
 			}
 
 			// no `p()` here — we don't want to update outroing nodes,

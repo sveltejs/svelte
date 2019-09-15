@@ -238,9 +238,11 @@ export default class Expression {
 		let contextual_dependencies: Set<string>;
 
 		const node = walk(this.node, {
-			enter(node: any, parent: any, key: string) {
-				// don't manipulate shorthand props twice
-				if (key === 'value' && parent.shorthand) return;
+			enter(node: any, parent: any) {
+				if (node.type === 'Property' && node.shorthand) {
+					node.value = JSON.parse(JSON.stringify(node.value));
+					node.shorthand = false;
+				}
 
 				if (map.has(node)) {
 					scope = map.get(node);
@@ -283,7 +285,7 @@ export default class Expression {
 				}
 			},
 
-			leave(node: Node) {
+			leave(node: Node, parent: Node) {
 				if (map.has(node)) scope = scope.parent;
 
 				if (node === function_expression) {
@@ -366,6 +368,10 @@ export default class Expression {
 					function_expression = null;
 					dependencies = null;
 					contextual_dependencies = null;
+
+					if (parent && parent.type === 'Property') {
+						parent.method = false;
+					}
 				}
 
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {

@@ -809,8 +809,7 @@ export default class ElementWrapper extends Wrapper {
 
 			if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
 				const all_dependencies = this.class_dependencies.concat(...dependencies);
-				const deps = all_dependencies.map(dependency => `changed${quote_prop_if_necessary(dependency)}`).join(' || ');
-				const condition = all_dependencies.length > 1 ? `(${deps})` : deps;
+				const condition = changed(all_dependencies);
 
 				block.chunks.update.push(b`
 					if (${condition}) {
