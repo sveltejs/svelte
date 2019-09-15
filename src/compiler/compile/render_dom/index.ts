@@ -1,4 +1,4 @@
-import { b, x } from 'code-red';
+import { b, x, p } from 'code-red';
 import { stringify, escape } from '../utils/stringify';
 import Component from '../Component';
 import Renderer from './Renderer';
@@ -8,7 +8,7 @@ import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
 import { invalidate } from '../utils/invalidate';
 import Block from './Block';
-import { ClassDeclaration, FunctionExpression } from 'estree';
+import { ClassDeclaration, FunctionExpression, Node } from 'estree';
 
 export default function dom(
 	component: Component,
@@ -82,12 +82,12 @@ export default function dom(
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
 		? x`
 			${$$props} => {
-				${uses_props && component.invalidate('$$props', b`$$props = @assign(@assign({}, $$props), $$new_props)`)}
+				${uses_props && component.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
 					b`if ('${prop.export_name}' in ${$$props}) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
 				${component.slots.size > 0 &&
-				b`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
+				b`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
 		: null;
@@ -261,9 +261,9 @@ export default function dom(
 
 	const filtered_declarations = component.vars
 		.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
-		.map(v => v.name);
+		.map(v => p`${v.name}`);
 
-	if (uses_props) filtered_declarations.push(`$$props: $$props = ${component.helper('exclude_internal_props')}($$props)`);
+	if (uses_props) filtered_declarations.push(p`$$props: $$props = ${component.helper('exclude_internal_props')}($$props)`);
 
 	const filtered_props = props.filter(prop => {
 		const variable = component.var_lookup.get(prop.name);
@@ -276,11 +276,11 @@ export default function dom(
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 
 	if (component.slots.size > 0) {
-		filtered_declarations.push('$$slots', '$$scope');
+		filtered_declarations.push(p`$$slots`, p`$$scope`);
 	}
 
 	if (renderer.binding_groups.length > 0) {
-		filtered_declarations.push(`$$binding_groups`);
+		filtered_declarations.push(p`$$binding_groups`);
 	}
 
 	const has_definition = (
@@ -319,31 +319,30 @@ export default function dom(
 		.map(({ name }) => `$$self.$$.on_destroy.push(() => $$unsubscribe_${name.slice(1)}());`);
 
 	if (has_definition) {
-		const reactive_declarations = [];
+		const reactive_declarations: (Node | Node[]) = [];
 		const fixed_reactive_declarations = []; // not really 'reactive' but whatever
 
-		component.reactive_declarations
-			.forEach(_d => {
-				// const dependencies = Array.from(d.dependencies);
-				// const uses_props = !!dependencies.find(n => n === '$$props');
+		component.reactive_declarations.forEach(d => {
+			const dependencies = Array.from(d.dependencies);
+			const uses_props = !!dependencies.find(n => n === '$$props');
 
-				// const condition = !uses_props && dependencies
-				// 	.filter(n => {
-				// 		const variable = component.var_lookup.get(n);
-				// 		return variable && (variable.writable || variable.mutated);
-				// 	})
-				// 	.map(n => `$$dirty.${n}`).join(' || ');
+			const condition = !uses_props && dependencies
+				.filter(n => {
+					const variable = component.var_lookup.get(n);
+					return variable && (variable.writable || variable.mutated);
+				})
+				.map(n => x`$$dirty.${n}`)
+				.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
-				throw new Error(`bad`);
-				// let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
-				// if (condition) snippet = `if (${condition}) { ${snippet} }`;
+			let statement = d.node;
+			if (condition) statement = b`if (${condition}) { ${statement} }`[0];
 
-				// if (condition || uses_props) {
-				// 	reactive_declarations.push(snippet);
-				// } else {
-				// 	fixed_reactive_declarations.push(snippet);
-				// }
-			});
+			if (condition || uses_props) {
+				reactive_declarations.push(statement);
+			} else {
+				fixed_reactive_declarations.push(statement);
+			}
+		});
 
 		const injected = Array.from(component.injected_reactive_declaration_vars).filter(name => {
 			const variable = component.var_lookup.get(name);
@@ -365,7 +364,7 @@ export default function dom(
 		let unknown_props_check;
 		if (component.compile_options.dev && !component.var_lookup.has('$$props') && writable_props.length) {
 			unknown_props_check = b`
-				const writable_props = [${writable_props.map(prop => `'${prop.export_name}'`).join(', ')}];
+				const writable_props = [${writable_props.map(prop => `'${prop.export_name}'`)}];
 				@_Object.keys($$props).forEach(key => {
 					if (!writable_props.includes(key) && !key.startsWith('$$')) @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
@@ -374,13 +373,17 @@ export default function dom(
 
 		const return_value = {
 			type: 'ObjectExpression',
-			properties: filtered_declarations.map(name => {
-				const id = { type: 'Identifier', name };
+			properties: filtered_declarations
+		};
+
+		const reactive_dependencies = {
+			type: 'ObjectPattern',
+			properties: Array.from(all_reactive_dependencies).map(name => {
 				return {
 					type: 'Property',
-					key: id,
-					value: id,
-					kind: 'init'
+					kind: 'init',
+					key: { type: 'Identifier', name },
+					value: { type: 'Literal', value: 1 }
 				};
 			})
 		};
@@ -412,7 +415,7 @@ export default function dom(
 				${injected.length && `let ${injected.join(', ')};`}
 
 				${reactive_declarations.length > 0 && b`
-				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
+				$$self.$$.update = ($$dirty = ${reactive_dependencies}) => {
 					${reactive_declarations}
 				};
 				`}

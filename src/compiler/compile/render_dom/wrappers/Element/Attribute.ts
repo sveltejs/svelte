@@ -7,6 +7,7 @@ import { b, x } from 'code-red';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
 import { changed } from '../shared/changed';
+import { Literal } from 'estree';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -173,7 +174,7 @@ export default class AttributeWrapper {
 					? b`@set_input_type(${element.var}, ${value});`
 					: property_name
 						? b`${element.var}.${property_name} = ${value};`
-						: b`${method}(${element.var}, "${name}", ${value});`
+						: b`${method}(${element.var}, "${name}", ${value.type === 'Literal' && (value as Literal).value === true ? x`""` : value});`
 			);
 
 			block.chunks.hydrate.push(statement);

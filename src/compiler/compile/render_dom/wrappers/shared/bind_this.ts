@@ -44,7 +44,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 
 	if (contextual_dependencies.length) {
 		component.partly_hoisted.push(b`
-			function ${fn}(${['$$value', ...contextual_dependencies].join(', ')}) {
+			function ${fn}(${['$$value', ...contextual_dependencies]}) {
 				if (${lhs} === $$value) return;
 				@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 					${body}
@@ -59,12 +59,12 @@ export default function bind_this(component: Component, block: Block, binding: B
 			block.add_variable(id, x`#ctx.${id}`);
 		}
 
-		const assign = block.get_unique_name(`assign_${variable}`);
-		const unassign = block.get_unique_name(`unassign_${variable}`);
+		const assign = block.get_unique_name(`assign_${variable.name}`);
+		const unassign = block.get_unique_name(`unassign_${variable.name}`);
 
 		block.chunks.init.push(b`
-			const ${assign} = () => #ctx.${fn}(${[variable].concat(args).join(', ')});
-			const ${unassign} = () => #ctx.${fn}(${['null'].concat(args).join(', ')});
+			const ${assign} = () => #ctx.${fn}(${[variable].concat(args)});
+			const ${unassign} = () => #ctx.${fn}(${['null'].concat(args)});
 		`);
 
 		const condition = Array.from(contextual_dependencies).map(name => `${name} !== #ctx.${name}`).join(' || ');
@@ -75,7 +75,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		block.chunks.update.push(b`
 			if (${condition}) {
 				${unassign}();
-				${args.map(a => `${a} = #ctx.${a}`).join(', ')};
+				${args.map(a => b`${a} = #ctx.${a}`)};
 				${assign}();
 			}`
 		);

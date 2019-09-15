@@ -341,8 +341,8 @@ export default class IfBlockWrapper extends Wrapper {
 		const if_blocks = block.get_unique_name(`if_blocks`);
 
 		const if_current_block_type_index = has_else
-			? ''
-			: `if (~${current_block_type_index}) `;
+			? nodes => nodes
+			: nodes => b`if (~${current_block_type_index}) { ${nodes} }`;
 
 		block.add_variable(current_block_type_index);
 		block.add_variable(name);
@@ -350,7 +350,7 @@ export default class IfBlockWrapper extends Wrapper {
 		/* eslint-disable @typescript-eslint/indent,indent */
 		block.chunks.init.push(b`
 			const ${if_block_creators} = [
-				${this.branches.map(branch => branch.block.name).join(',\n')}
+				${this.branches.map(branch => branch.block.name)}
 			];
 
 			const ${if_blocks} = [];
@@ -393,9 +393,10 @@ export default class IfBlockWrapper extends Wrapper {
 		const initial_mount_node = parent_node || '#target';
 		const anchor_node = parent_node ? 'null' : 'anchor';
 
-		throw new Error(`womp womp`);
 		block.chunks.mount.push(
-			b`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].m(${initial_mount_node}, ${anchor_node});`
+			if_current_block_type_index(
+				b`${if_blocks}[${current_block_type_index}].m(${initial_mount_node}, ${anchor_node});`
+			)
 		);
 
 		if (this.needs_update) {
@@ -442,7 +443,7 @@ export default class IfBlockWrapper extends Wrapper {
 					let ${previous_block_index} = ${current_block_type_index};
 					${current_block_type_index} = ${select_block_type}(#changed, #ctx);
 					if (${current_block_type_index} === ${previous_block_index}) {
-						${if_current_block_type_index}${if_blocks}[${current_block_type_index}].p(#changed, #ctx);
+						${if_current_block_type_index(b`${if_blocks}[${current_block_type_index}].p(#changed, #ctx);`)}
 					} else {
 						${change_block}
 					}
@@ -460,9 +461,9 @@ export default class IfBlockWrapper extends Wrapper {
 			block.chunks.update.push(b`${name}.p(#changed, #ctx);`);
 		}
 
-		block.chunks.destroy.push(b`
-			${if_current_block_type_index}${if_blocks}[${current_block_type_index}].d(${detaching});
-		`);
+		block.chunks.destroy.push(
+			if_current_block_type_index(b`${if_blocks}[${current_block_type_index}].d(${detaching});`)
+		);
 	}
 
 	render_simple(

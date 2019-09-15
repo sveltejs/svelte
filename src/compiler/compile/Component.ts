@@ -838,7 +838,7 @@ export default class Component {
 		}
 
 		if (value) {
-			return `$$invalidate('${name}', ${value})`;
+			return x`$$invalidate('${name}', ${value})`;
 		}
 
 		// if this is a reactive declaration, invalidate dependencies recursively
