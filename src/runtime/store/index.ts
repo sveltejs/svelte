@@ -12,6 +12,9 @@ type Updater<T> = (value: T) => T;
 /** Cleanup logic callback. */
 type Invalidator<T> = (value?: T) => void;
 
+/** Equal logic callback. */
+type Comparator<T> = (value: T, newValue: T) => boolean;
+
 /** Start and stop notification callbacks. */
 type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
 
@@ -61,18 +64,19 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
  * @param {*=}value initial value
  * @param {StartStopNotifier=}start start and stop notifications for subscriptions
  */
-export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
+export function writable<T>(value: T, start: StartStopNotifier<T> = noop, is_changed: Comparator<T> = safe_not_equal): Writable<T> {
 	let stop: Unsubscriber;
 	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
 
 	function set(new_value: T): void {
-		if (safe_not_equal(value, new_value)) {
+		if (is_changed(value, new_value)) {
+			let prev_value = value;
 			value = new_value;
 			if (stop) { // store is ready
 				const run_queue = !subscriber_queue.length;
 				for (let i = 0; i < subscribers.length; i += 1) {
 					const s = subscribers[i];
-					s[1]();
+					s[1](prev_value);
 					subscriber_queue.push(s, value);
 				}
 				if (run_queue) {
