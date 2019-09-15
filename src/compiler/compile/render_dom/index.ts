@@ -244,9 +244,9 @@ export default function dom(
 		});
 	}
 
-	const args = ['$$self'];
+	const args = [x`$$self`];
 	if (props.length > 0 || component.has_reactive_assignments || component.slots.size > 0) {
-		args.push('$$props', '$$invalidate');
+		args.push(x`$$props`, x`$$invalidate`);
 	}
 
 	body.push(b`
@@ -355,10 +355,10 @@ export default function dom(
 
 			const store = component.var_lookup.get(name);
 			if (store && store.reassigned) {
-				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => ($$unsubscribe_${name}(), $$unsubscribe_${name} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }), ${name})`;
+				return b`let ${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => ($$unsubscribe_${name}(), $$unsubscribe_${name} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }), ${name})`;
 			}
 
-			return $name;
+			return b`let ${$name};`;
 		});
 
 		let unknown_props_check;
@@ -389,8 +389,8 @@ export default function dom(
 		};
 
 		body.push(b`
-			function ${definition}(${args.join(', ')}) {
-				${reactive_store_declarations.length > 0 && `let ${reactive_store_declarations.join(', ')};`}
+			function ${definition}(${args}) {
+				${reactive_store_declarations}
 
 				${reactive_store_subscriptions}
 
@@ -400,7 +400,7 @@ export default function dom(
 
 				${unknown_props_check}
 
-				${component.slots.size && x`let { $$slots = {}, $$scope } = $$props;`}
+				${component.slots.size && b`let { $$slots = {}, $$scope } = $$props;`}
 
 				${renderer.binding_groups.length > 0 && `const $$binding_groups = [${renderer.binding_groups.map(_ => `[]`).join(', ')}];`}
 

@@ -19,7 +19,7 @@ import { Node, Identifier, Expression } from 'estree';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
-	slots: Map<string, { block: Block; scope: TemplateScope; fn?: string }> = new Map();
+	slots: Map<string, { block: Block; scope: TemplateScope; fn?: Node }> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 

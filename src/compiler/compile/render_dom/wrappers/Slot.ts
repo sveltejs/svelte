@@ -3,14 +3,13 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Slot from '../../nodes/Slot';
 import FragmentWrapper from './Fragment';
-import { b } from 'code-red';
+import { b, p, x } from 'code-red';
 import { sanitize } from '../../../utils/names';
 import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../utils/get_slot_data';
-import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
 import is_dynamic from './shared/is_dynamic';
-import { Identifier } from 'estree';
+import { Identifier, ObjectExpression } from 'estree';
 import { changed } from './shared/changed';
 
 export default class SlotWrapper extends Wrapper {
@@ -67,8 +66,8 @@ export default class SlotWrapper extends Wrapper {
 			get_slot_changes = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_changes`);
 			get_slot_context = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_context`);
 
-			const context_props = get_slot_data(this.node.values, false);
-			const changes_props = [];
+			const context = get_slot_data(this.node.values, false);
+			const changes = x`{}` as ObjectExpression;
 
 			const dependencies = new Set();
 
@@ -92,15 +91,22 @@ export default class SlotWrapper extends Wrapper {
 				});
 
 				if (dynamic_dependencies.length > 0) {
-					changes_props.push(`${attribute.name}: ${dynamic_dependencies.join(' || ')}`);
+					const expression = dynamic_dependencies
+						.map(name => ({ type: 'Identifier', name } as any))
+						.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
+
+					changes.properties.push(p`${attribute.name}: ${expression}`);
 				}
 			});
 
-			const arg = dependencies.size > 0 ? `{ ${Array.from(dependencies).join(', ')} }` : '';
+			const arg = dependencies.size > 0 && {
+				type: 'ObjectPattern',
+				properties: Array.from(dependencies).map(name => p`${name}`)
+			};
 
 			renderer.blocks.push(b`
-				const ${get_slot_changes} = (${arg}) => (${stringify_props(changes_props)});
-				const ${get_slot_context} = (${arg}) => (${stringify_props(context_props)});
+				const ${get_slot_changes} = (${arg}) => (${changes});
+				const ${get_slot_context} = (${arg}) => (${context});
 			`);
 		} else {
 			get_slot_changes = 'null';
@@ -167,7 +173,7 @@ export default class SlotWrapper extends Wrapper {
 		block.chunks.update.push(b`
 			if (${slot} && ${slot}.p && ${changed(dynamic_dependencies)}) {
 				${slot}.p(
-					@get_slot_changes(${slot_definition}, #ctx, changed, ${get_slot_changes}),
+					@get_slot_changes(${slot_definition}, #ctx, #changed, ${get_slot_changes}),
 					@get_slot_context(${slot_definition}, #ctx, ${get_slot_context})
 				);
 			}
