@@ -81,10 +81,10 @@ export default function dom(
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
-					`if ('${prop.export_name}' in ${$$props}) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.export_name}`)};`
-				)}
+			`if ('${prop.export_name}' in ${$$props}) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.export_name}`)};`
+		)}
 				${component.slots.size > 0 &&
-				`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
+			`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', `$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
 		: null;
@@ -243,7 +243,11 @@ export default function dom(
 
 	const filtered_declarations = component.vars
 		.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
-		.map(v => v.name);
+		.map(v =>
+			v.export_name && v.export_name !== v.name
+				? ` ${v.export_name} : ${v.name},  ${v.name}`
+				: v.name
+		);
 
 	if (uses_props) filtered_declarations.push(`$$props: $$props = ${component.helper('exclude_internal_props')}($$props)`);
 
