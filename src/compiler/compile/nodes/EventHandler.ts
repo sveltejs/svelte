@@ -39,7 +39,7 @@ export default class EventHandler extends Node {
 						node = declarator && declarator.init;
 					}
 
-					if ((node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') && node.params.length === 0) {
+					if (node && (node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') && node.params.length === 0) {
 						this.can_make_passive = true;
 					}
 				}
