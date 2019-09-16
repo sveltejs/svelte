@@ -44,16 +44,6 @@ childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
 childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
 
-function remove_node(
-	body: Node[],
-	node: Node
-) {
-	const i = body.indexOf(node);
-	if (i === -1) throw new Error('node not in list');
-
-	body.splice(i, 1);
-}
-
 export default class Component {
 	stats: Stats;
 	warnings: Warning[];
@@ -478,13 +468,15 @@ export default class Component {
 	}
 
 	extract_imports(content) {
-		content.body.forEach(node => {
+		let i = content.body.length;
+		while (i--) {
+			const node = content.body[i];
+
 			if (node.type === 'ImportDeclaration') {
-				// imports need to be hoisted out of the IIFE
-				remove_node(content.body, node);
+				content.body.splice(i, 1);
 				this.imports.push(node);
 			}
-		});
+		}
 	}
 
 	extract_exports(content) {

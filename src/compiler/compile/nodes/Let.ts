@@ -15,9 +15,10 @@ export default class Let extends Node {
 		super(component, parent, scope, info);
 
 		this.name = { type: 'Identifier', name: info.name };
-		this.value = info.expression.node;
 
 		if (info.expression) {
+			this.value = info.expression;
+
 			walk(info.expression, {
 				enter: node => {
 					if (!applicable.has(node.type)) {
@@ -29,6 +30,15 @@ export default class Let extends Node {
 
 					if (node.type === 'Identifier') {
 						this.names.push(node.name);
+					}
+
+					// slightly unfortunate hack
+					if (node.type === 'ArrayExpression') {
+						(node as any).type = 'ArrayPattern';
+					}
+
+					if (node.type === 'ObjectExpression') {
+						(node as any).type = 'ObjectPattern';
 					}
 				}
 			});

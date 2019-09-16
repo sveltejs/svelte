@@ -4,8 +4,6 @@ import { x } from 'code-red';
 export function get_context_merger(lets: Let[]) {
 	if (lets.length === 0) return null;
 
-	console.log(lets);
-
 	const input = {
 		type: 'ObjectPattern',
 		properties: lets.map(l => ({
