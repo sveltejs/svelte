@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix edge cases in matching selectors against elements ([#1710](https://github.com/sveltejs/svelte/issues/1710))
+
 ## 3.12.1
 
 * Escape `@` symbols in props, again ([#3545](https://github.com/sveltejs/svelte/issues/3545))
