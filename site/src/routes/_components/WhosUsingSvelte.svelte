@@ -67,6 +67,7 @@
 	<a target="_blank" rel="noopener" href="https://www.nzz.ch"><img src="organisations/nzz.svg" alt="Neue Zürcher Zeitung logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://nytimes.com"><img src="organisations/nyt.svg" alt="The New York Times logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://oberonspace.xyz"><img src="organisations/oberonspace.svg" alt="OberonSPACE logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://ofof.nl"><img src="organisations/ofof.png" alt="Ofof logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://openstate.eu"><img src="organisations/open-state-foundation.svg" alt="Open State Foundation logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://panascais.net"><img src="organisations/panascais.svg" alt="Panascais logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://pankod.com"><img src="organisations/pankod.svg" alt="Pankod logo" loading="lazy"></a>
