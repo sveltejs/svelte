@@ -27,7 +27,7 @@ export default class RawMustacheTagWrapper extends Tag {
 		const can_use_innerhtml = !in_head && parent_node && !this.prev && !this.next;
 
 		if (can_use_innerhtml) {
-			const insert = content => b`${parent_node}.innerHTML = ${content};`;
+			const insert = content => b`${parent_node}.innerHTML = ${content};`[0];
 
 			const { init } = this.rename_this_method(
 				block,

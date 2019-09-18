@@ -3,7 +3,7 @@ import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
 import AttributeWrapper from './Attribute';
 import ElementWrapper from '../Element';
-import { stringify } from '../../../utils/stringify';
+import { string_literal } from '../../../utils/stringify';
 import add_to_set from '../../../utils/add_to_set';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
@@ -32,12 +32,10 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 				value = prop.value
 					.map(chunk => {
 						if (chunk.type === 'Text') {
-							return stringify(chunk.data);
+							return string_literal(chunk.data);
 						} else {
-							const snippet = chunk.manipulate(block);
-
 							add_to_set(prop_dependencies, chunk.dynamic_dependencies());
-							return snippet;
+							return chunk.manipulate(block);
 						}
 					})
 					.reduce((lhs, rhs) => x`${lhs} + ${rhs}`)
@@ -61,11 +59,11 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 					block.chunks.update.push(update);
 				}
 			} else {
-				value = stringify((prop.value[0] as Text).data);
+				value = string_literal((prop.value[0] as Text).data);
 			}
 
 			block.chunks.hydrate.push(
-				b`@set_style(${this.parent.var}, "${prop.key}", ${value}, ${prop.important ? 1 : ''});`
+				b`@set_style(${this.parent.var}, "${prop.key}", ${value}, ${prop.important ? 1 : null});`
 			);
 		});
 	}

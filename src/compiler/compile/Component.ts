@@ -2,7 +2,7 @@
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
-import { globals, reserved } from '../utils/names';
+import { globals, reserved, is_valid } from '../utils/names';
 import { namespaces, valid_namespaces } from '../utils/namespaces';
 import create_module from './create_module';
 import {
@@ -24,7 +24,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, AssignmentExpression } from 'estree';
+import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, AssignmentExpression, Literal } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x } from 'code-red';
@@ -285,24 +285,44 @@ export default class Component {
 			const program: any = { type: 'Program', body: result };
 
 			walk(program, {
-				enter: (node) => {
+				enter: (node, parent, key) => {
 					if (node.type === 'Identifier' && !('name' in node)) {
 						console.log(node);
 						throw new Error('wtf');
 					}
 
-					if (node.type === 'Identifier' && node.name[0] === '@') {
-						// TODO temp
-						if (!/@\w+$/.test(node.name)) {
-							throw new Error(`wut "${node.name}"`);
+					if (node.type === 'Identifier') {
+						if (node.name[0] === '@') {
+							// TODO temp
+							if (!/@\w+$/.test(node.name)) {
+								throw new Error(`wut "${node.name}"`);
+							}
+
+							if (node.name[1] === '_') {
+								const alias = this.global(node.name.slice(2));
+								node.name = alias.name;
+							} else {
+								const alias = this.helper(node.name.slice(1));
+								node.name = alias.name;
+							}
 						}
 
-						if (node.name[1] === '_') {
-							const alias = this.global(node.name.slice(2));
-							node.name = alias.name;
-						} else {
-							const alias = this.helper(node.name.slice(1));
-							node.name = alias.name;
+						else if (node.name[0] !== '#' && !is_valid(node.name)) {
+							// this hack allows x`foo.${bar}` where bar could be invalid
+							const literal: Literal = { type: 'Literal', value: node.name };
+
+							if (parent.type === 'Property' && key === 'key') {
+								parent.key = literal;
+							}
+
+							else if (parent.type === 'MemberExpression' && key === 'property') {
+								parent.property = literal;
+								parent.computed = true;
+							}
+
+							else {
+								console.log(node);
+							}
 						}
 					}
 				}

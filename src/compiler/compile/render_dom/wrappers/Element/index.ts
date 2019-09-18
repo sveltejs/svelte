@@ -480,8 +480,21 @@ export default class ElementWrapper extends Wrapper {
 				callee = x`#ctx.${handler}`;
 			}
 
+			const arg = contextual_dependencies.size > 0 && {
+				type: 'ObjectPattern',
+				properties: Array.from(contextual_dependencies).map(name => {
+					const id = { type: 'Identifier', name };
+					return {
+						type: 'Property',
+						kind: 'init',
+						key: id,
+						value: id
+					};
+				})
+			};
+
 			this.renderer.component.partly_hoisted.push(b`
-				function ${handler}(${contextual_dependencies.size > 0 ? `{ ${Array.from(contextual_dependencies).join(', ')} }` : ``}) {
+				function ${handler}(${arg}) {
 					${group.bindings.map(b => b.handler.mutation)}
 					${Array.from(dependencies).filter(dep => dep[0] !== '$').map(dep => b`${this.renderer.component.invalidate(dep)};`)}
 				}
@@ -774,10 +787,10 @@ export default class ElementWrapper extends Wrapper {
 		block.chunks.fix.push(b`
 			@fix_position(${this.var});
 			${stop_animation}();
-			${outro && `@add_transform(${this.var}, ${rect});`}
+			${outro && b`@add_transform(${this.var}, ${rect});`}
 		`);
 
-		const params = this.node.animation.expression ? this.node.animation.expression.manipulate(block) : '{}';
+		const params = this.node.animation.expression ? this.node.animation.expression.manipulate(block) : x`{}`;
 
 		const name = component.qualify(this.node.animation.name);
 

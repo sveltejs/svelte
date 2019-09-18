@@ -41,8 +41,8 @@ export default function dom(
 		body.push(b`
 			function ${add_css}() {
 				var style = @element("style");
-				style.id = '${component.stylesheet.id}-style';
-				style.textContent = ${styles};
+				style.id = "${component.stylesheet.id}-style";
+				style.textContent = "${styles}";
 				@append(@_document.head, style);
 			}
 		`);
@@ -84,7 +84,7 @@ export default function dom(
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_props.map(prop =>
-					b`if ('${prop.export_name}' in ${$$props}) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.export_name}`)};`
+					b`if ('${prop.export_name}' in ${$$props}) ${component.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
 				${component.slots.size > 0 &&
 				b`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
@@ -160,7 +160,7 @@ export default function dom(
 
 		if (expected.length) {
 			dev_props_check = b`
-				const { ctx } = this.$$;
+				const { ctx: #ctx } = this.$$;
 				const props = ${options.customElement ? `this.attributes` : `options.props || {}`};
 				${expected.map(prop => b`
 				if (#ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
@@ -171,7 +171,7 @@ export default function dom(
 
 		capture_state = (uses_props || writable_props.length > 0) ? x`
 			() => {
-				return { ${component.vars.filter(prop => prop.writable).map(prop => prop.name).join(", ")} };
+				return { ${component.vars.filter(prop => prop.writable).map(prop => p`${prop.name}`)} };
 			}
 		` : x`
 			() => {
@@ -184,7 +184,7 @@ export default function dom(
 			${$$props} => {
 				${uses_props && component.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_vars.map(prop => b`
-					if ('${prop.name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.name}`)};
+					if ('${prop.name}' in $$props) ${component.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.name}`)};
 				`)}
 			}
 		` : x`
@@ -327,13 +327,14 @@ export default function dom(
 			const dependencies = Array.from(d.dependencies);
 			const uses_props = !!dependencies.find(n => n === '$$props');
 
-			const condition = !uses_props && dependencies
-				.filter(n => {
-					const variable = component.var_lookup.get(n);
-					return variable && (variable.writable || variable.mutated);
-				})
+			const writable = dependencies.filter(n => {
+				const variable = component.var_lookup.get(n);
+				return variable && (variable.writable || variable.mutated);
+			});
+
+			const condition = !uses_props && writable.length > 0 && (writable
 				.map(n => x`$$dirty.${n}`)
-				.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
+				.reduce((lhs, rhs) => x`${lhs} || ${rhs}`));
 
 			let statement = d.node;
 			if (condition) statement = b`if (${condition}) { ${statement} }`[0];
@@ -405,7 +406,7 @@ export default function dom(
 
 				${component.slots.size && b`let { $$slots = {}, $$scope } = $$props;`}
 
-				${renderer.binding_groups.length > 0 && `const $$binding_groups = [${renderer.binding_groups.map(_ => `[]`).join(', ')}];`}
+				${renderer.binding_groups.length > 0 && b`const $$binding_groups = [${renderer.binding_groups.map(_ => x`[]`)}];`}
 
 				${component.partly_hoisted}
 

@@ -25,14 +25,14 @@ export default function bind_this(component: Component, block: Block, binding: B
 		const { snippet } = block.bindings.get(name);
 		lhs = snippet;
 
-		body = `${lhs} = $$value`; // TODO we need to invalidate... something
+		body = b`${lhs} = $$value`; // TODO we need to invalidate... something
 	} else {
 		object = flatten_reference(binding.expression.node).name;
 		lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 
 		body = binding.expression.node.type === 'Identifier'
 			? b`
-				${component.invalidate(object, `${lhs} = $$value`)};
+				${component.invalidate(object, x`${lhs} = $$value`)};
 			`
 			: b`
 				${lhs} = $$value;

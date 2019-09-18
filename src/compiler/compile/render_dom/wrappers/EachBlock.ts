@@ -395,7 +395,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			${this.block.has_outros && b`@group_outros();`}
 			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
-			${iterations} = @update_keyed_each(${iterations}, #changed, ${get_key}, ${dynamic ? '1' : '0'}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
+			${iterations} = @update_keyed_each(${iterations}, #changed, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
 			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
 			${this.block.has_outros && b`@check_outros();`}
 		`);
@@ -508,7 +508,7 @@ export default class EachBlockWrapper extends Wrapper {
 						}
 					`;
 
-			const start = this.block.has_update_method ? '0' : `#old_length`;
+			const start = this.block.has_update_method ? 0 : `#old_length`;
 
 			let remove_old_blocks;
 
@@ -529,7 +529,7 @@ export default class EachBlockWrapper extends Wrapper {
 				`;
 			} else {
 				remove_old_blocks = b`
-					for (${this.block.has_update_method ? `` : x`#i = ${data_length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
+					for (${this.block.has_update_method ? null : x`#i = ${data_length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
 						${iterations}[#i].d(1);
 					}
 					${!fixed_length && b`${view_length} = ${data_length};`}
