@@ -27,6 +27,10 @@ export function onDestroy(fn) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
+export function onError(fn) {
+	get_current_component().$$.on_error.push(fn);
+}
+
 export function createEventDispatcher() {
 	const component = current_component;
 

@@ -71,11 +71,35 @@ export function flush() {
 
 function update($$) {
 	if ($$.fragment) {
-		$$.update($$.dirty);
-		run_all($$.before_update);
-		$$.fragment.p($$.dirty, $$.ctx);
-		$$.dirty = null;
+		if ($$.on_error.length == 0) {
+			exec_update($$);
+		} else {
+			try_exec_update($$);
+		}
+	}
+}
 
-		$$.after_update.forEach(add_render_callback);
+function exec_update($$) {
+	$$.update($$.dirty);
+	run_all($$.before_update);
+	$$.fragment.p($$.dirty, $$.ctx);
+	$$.dirty = null;
+
+	$$.after_update.forEach(add_render_callback);
+}
+
+function try_exec_update($$) {
+	try {
+		exec_update($$);
+	} catch (e) {
+		let handled = false;
+		for (let i = 0; i < $$.on_error.length; i += 1) {
+			const callback = $$.on_error[i];
+			const result = callback(e);
+			if (result !== false) {
+				handled = true;
+			}
+		}
+		if (!handled) throw e;
 	}
 }

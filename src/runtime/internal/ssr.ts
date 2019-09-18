@@ -77,6 +77,7 @@ export function create_ssr_component(fn) {
 
 			// these will be immediately discarded
 			on_mount: [],
+			on_error: [],
 			before_update: [],
 			after_update: [],
 			callbacks: blank_object()
