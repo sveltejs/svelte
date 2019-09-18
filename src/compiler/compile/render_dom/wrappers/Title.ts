@@ -3,11 +3,12 @@ import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Title from '../../nodes/Title';
-import { stringify } from '../../utils/stringify';
+import { stringify, string_literal } from '../../utils/stringify';
 import add_to_set from '../../utils/add_to_set';
 import Text from '../../nodes/Text';
 import { Identifier } from 'estree';
 import { changed } from './shared/changed';
+import MustacheTag from '../../nodes/MustacheTag';
 
 export default class TitleWrapper extends Wrapper {
 	node: Title;
@@ -41,25 +42,21 @@ export default class TitleWrapper extends Wrapper {
 				add_to_set(all_dependencies, expression.dependencies);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
-				value =
-					(this.node.children[0].type === 'Text' ? '' : `"" + `) +
-					this.node.children
-						.map((chunk) => {
-							if (chunk.type === 'Text') {
-								return stringify(chunk.data);
-							} else {
-								// @ts-ignore todo: check this
-								const snippet = chunk.expression.manipulate(block);
-								// @ts-ignore todo: check this
-								chunk.expression.dependencies.forEach(d => {
-									all_dependencies.add(d);
-								});
+				value = this.node.children
+					.map(chunk => {
+						if (chunk.type === 'Text') return string_literal(chunk.data);
 
-								// @ts-ignore todo: check this
-								return chunk.expression.get_precedence() <= 13 ? `(${snippet})` : snippet;
-							}
-						})
-						.join(' + ');
+						(chunk as MustacheTag).expression.dependencies.forEach(d => {
+							all_dependencies.add(d);
+						});
+
+						return (chunk as MustacheTag).expression.manipulate(block);
+					})
+					.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
+
+				if (this.node.children[0].type !== 'Text') {
+					value = x`"" + ${value}`;
+				}
 			}
 
 			const last = this.node.should_cache && block.get_unique_name(
@@ -68,7 +65,7 @@ export default class TitleWrapper extends Wrapper {
 
 			if (this.node.should_cache) block.add_variable(last);
 
-			const init = this.node.should_cache ? `${last} = ${value}` : value;
+			const init = this.node.should_cache ? x`${last} = ${value}` : value;
 
 			block.chunks.init.push(
 				b`@_document.title = ${init};`

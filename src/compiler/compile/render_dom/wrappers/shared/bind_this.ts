@@ -40,11 +40,14 @@ export default function bind_this(component: Component, block: Block, binding: B
 			`;
 	}
 
-	const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
+	const contextual_dependencies: Identifier[] = Array.from(binding.expression.contextual_dependencies).map(name => ({
+		type: 'Identifier',
+		name
+	}));
 
 	if (contextual_dependencies.length) {
 		component.partly_hoisted.push(b`
-			function ${fn}(${['$$value', ...contextual_dependencies]}) {
+			function ${fn}($$value, ${contextual_dependencies}) {
 				if (${lhs} === $$value) return;
 				@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 					${body}
@@ -53,8 +56,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		`);
 
 		const args = [];
-		for (const arg of contextual_dependencies) {
-			const id: Identifier = { type: 'Identifier', name: arg };
+		for (const id of contextual_dependencies) {
 			args.push(id);
 			block.add_variable(id, x`#ctx.${id}`);
 		}
@@ -63,11 +65,13 @@ export default function bind_this(component: Component, block: Block, binding: B
 		const unassign = block.get_unique_name(`unassign_${variable.name}`);
 
 		block.chunks.init.push(b`
-			const ${assign} = () => #ctx.${fn}(${[variable].concat(args)});
-			const ${unassign} = () => #ctx.${fn}(${['null'].concat(args)});
+			const ${assign} = () => #ctx.${fn}(${variable}, ${args});
+			const ${unassign} = () => #ctx.${fn}(null, ${args});
 		`);
 
-		const condition = Array.from(contextual_dependencies).map(name => `${name} !== #ctx.${name}`).join(' || ');
+		const condition = Array.from(contextual_dependencies)
+			.map(name => x`${name} !== #ctx.${name}`)
+			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
 		// we push unassign and unshift assign so that references are
 		// nulled out before they're created, to avoid glitches
