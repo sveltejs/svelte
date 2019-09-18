@@ -26,8 +26,8 @@ export default function dom(
 
 	const body = [];
 
-	if (component.compile_options.dev) {
-		body.push(b`const ${renderer.file_var} = ${component.file && stringify(component.file, { only_escape_at_symbol: true })};`);
+	if (component.compile_options.dev && component.file) {
+		body.push(b`const ${renderer.file_var} = "${component.file}";`);
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
@@ -364,7 +364,7 @@ export default function dom(
 		let unknown_props_check;
 		if (component.compile_options.dev && !component.var_lookup.has('$$props') && writable_props.length) {
 			unknown_props_check = b`
-				const writable_props = [${writable_props.map(prop => `'${prop.export_name}'`)}];
+				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
 				@_Object.keys($$props).forEach(key => {
 					if (!writable_props.includes(key) && !key.startsWith('$$')) @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
