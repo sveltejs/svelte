@@ -539,7 +539,7 @@ export default class EachBlockWrapper extends Wrapper {
 			// We declare `i` as block scoped here, as the `remove_old_blocks` code
 			// may rely on continuing where this iteration stopped.
 			const update = b`
-				${!this.block.has_update_method && `const #old_length = ${this.vars.each_block_value}.length;`}
+				${!this.block.has_update_method && b`const #old_length = ${this.vars.each_block_value}.length;`}
 				${this.vars.each_block_value} = ${snippet};
 
 				let #i;
