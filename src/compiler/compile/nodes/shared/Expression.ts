@@ -81,6 +81,8 @@ export default class Expression {
 	declarations: (Node | Node[])[] = [];
 	uses_context = false;
 
+	manipulated: Node;
+
 	// todo: owner type
 	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info, lazy?: boolean) {
 		// TODO revert to direct property access in prod?
@@ -222,6 +224,10 @@ export default class Expression {
 
 	// TODO move this into a render-dom wrapper?
 	manipulate(block?: Block) {
+		// TODO ideally we wouldn't end up calling this method
+		// multiple times
+		if (this.manipulated) return this.manipulated;
+
 		const {
 			component,
 			declarations,
@@ -405,7 +411,7 @@ export default class Expression {
 			});
 		}
 
-		return node;
+		return (this.manipulated = node);
 	}
 }
 
