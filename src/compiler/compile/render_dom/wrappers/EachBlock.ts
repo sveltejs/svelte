@@ -529,7 +529,7 @@ export default class EachBlockWrapper extends Wrapper {
 				`;
 			} else {
 				remove_old_blocks = b`
-					for (${this.block.has_update_method ? `` : `#i = ${data_length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
+					for (${this.block.has_update_method ? `` : x`#i = ${data_length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
 						${iterations}[#i].d(1);
 					}
 					${!fixed_length && b`${view_length} = ${data_length};`}

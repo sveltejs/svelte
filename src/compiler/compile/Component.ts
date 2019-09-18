@@ -68,8 +68,6 @@ export default class Component {
 	var_lookup: Map<string, Var> = new Map();
 
 	imports: ImportDeclaration[] = [];
-	module_javascript: string;
-	javascript: string;
 
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
@@ -530,7 +528,10 @@ export default class Component {
 	}
 
 	extract_javascript(script) {
-		const nodes_to_include = script.content.body.filter(node => {
+		if (!script) return null;
+
+		return script.content.body.filter(node => {
+			if (!node) return false;
 			if (this.hoistable_nodes.has(node)) return false;
 			if (this.reactive_declaration_nodes.has(node)) return false;
 			if (node.type === 'ImportDeclaration') return false;
@@ -538,38 +539,6 @@ export default class Component {
 				return false;
 			return true;
 		});
-
-		return nodes_to_include;
-
-		if (nodes_to_include.length === 0) return null;
-
-		let a = script.content.start;
-		while (/\s/.test(this.source[a])) a += 1;
-
-		// let b = a;
-
-		// let result = '';
-
-		// script.content.body.forEach(node => {
-		// 	if (
-		// 		this.hoistable_nodes.has(node) ||
-		// 		this.reactive_declaration_nodes.has(node)
-		// 	) {
-		// 		if (a !== b) result += `[✂${a}-${b}✂]`;
-		// 		a = node.end;
-		// 	}
-
-		// 	b = node.end;
-		// });
-
-		// while (/\s/.test(this.source[a - 1])) a -= 1;
-
-		// b = script.content.end;
-		// while (/\s/.test(this.source[b - 1])) b -= 1;
-
-		// if (a < b) result += `[✂${a}-${b}✂]`;
-
-		// return result || null;
 	}
 
 	walk_module_js() {
@@ -625,7 +594,6 @@ export default class Component {
 
 		this.extract_imports(script.content);
 		this.extract_exports(script.content);
-		this.module_javascript = this.extract_javascript(script);
 	}
 
 	walk_instance_js_pre_template() {
@@ -728,7 +696,6 @@ export default class Component {
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
 		this.extract_reactive_store_references();
-		this.javascript = this.extract_javascript(script);
 	}
 
 	// TODO merge this with other walks that are independent
@@ -812,7 +779,7 @@ export default class Component {
 		const variable = this.var_lookup.get(name);
 
 		if (variable && (variable.subscribable && variable.reassigned)) {
-			return x`$$subscribe_${name}($$invalidate('${name}', ${value || name}))`;
+			return x`${`$$subscribe_${name}`}($$invalidate('${name}', ${value || name}))`;
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
@@ -850,7 +817,7 @@ export default class Component {
 		return Array.from(deps).map(n => x`$$invalidate('${n}', ${n})`);
 	}
 
-	rewrite_props(_get_insert: (variable: Var) => string) {
+	rewrite_props(get_insert: (variable: Var) => Node[]) {
 		// TODO
 
 		const component = this;
@@ -858,7 +825,7 @@ export default class Component {
 		let scope = instance_scope;
 
 		walk(this.ast.instance.content, {
-			enter(node) {
+			enter(node, parent, key, index) {
 				if (/Function/.test(node.type)) {
 					return this.skip();
 				}
@@ -896,9 +863,11 @@ export default class Component {
 							const variable = component.var_lookup.get(name);
 
 							if (variable.export_name) {
-								// const insert = variable.subscribable
-								// 	? get_insert(variable)
-								// 	: null;
+								const insert = variable.subscribable
+									? get_insert(variable)
+									: null;
+
+								parent[key].splice(index + 1, 0, insert);
 
 								declarator.id = {
 									type: 'ObjectPattern',
@@ -920,6 +889,9 @@ export default class Component {
 								};
 
 								declarator.init = x`$$props`;
+							} else if (variable.subscribable) {
+								const insert = get_insert(variable);
+								parent[key].splice(index + 1, 0, ...insert);
 							}
 						});
 					}

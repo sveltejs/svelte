@@ -163,7 +163,7 @@ export default function dom(
 				const { ctx } = this.$$;
 				const props = ${options.customElement ? `this.attributes` : `options.props || {}`};
 				${expected.map(prop => b`
-				if (ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
+				if (#ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
 					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
 				}`)}
 			`;
@@ -182,7 +182,7 @@ export default function dom(
 		const writable_vars = component.vars.filter(variable => !variable.module && variable.writable);
 		inject_state = (uses_props || writable_vars.length > 0) ? x`
 			${$$props} => {
-				${uses_props && component.invalidate('$$props', `$$props = @assign(@assign({}, $$props), $$new_props)`)}
+				${uses_props && component.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
 				${writable_vars.map(prop => b`
 					if ('${prop.name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = ${$$props}.${prop.name}`)};
 				`)}
@@ -226,18 +226,17 @@ export default function dom(
 		component.rewrite_props(({ name, reassigned }) => {
 			const value = `$${name}`;
 
-			const callback = `$value => { ${value} = $$value; $$invalidate('${value}', ${value}) }`;
-
 			if (reassigned) {
-				return `$$subscribe_${name}()`;
+				return b`${`$$subscribe_${name}`}()`;
 			}
 
 			const component_subscribe = component.helper('component_subscribe');
+			const callback = x`$$value => { ${value} = $$value; $$invalidate('${value}', ${value}) }`;
 
-			let insert = `${component_subscribe}($$self, ${name}, $${callback})`;
+			let insert = b`${component_subscribe}($$self, ${name}, $${callback})`;
 			if (component.compile_options.dev) {
 				const validate_store = component.helper('validate_store');
-				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
+				insert = b`${validate_store}(${name}, '${name}'); ${insert}`;
 			}
 
 			return insert;
@@ -254,7 +253,7 @@ export default function dom(
 			${block.get_contents()}
 		}
 
-		${component.module_javascript}
+		${component.extract_javascript(component.ast.module)}
 
 		${component.fully_hoisted}
 	`);
@@ -283,8 +282,10 @@ export default function dom(
 		filtered_declarations.push(p`$$binding_groups`);
 	}
 
+	const instance_javascript = component.extract_javascript(component.ast.instance);
+
 	const has_definition = (
-		component.javascript ||
+		instance_javascript ||
 		filtered_props.length > 0 ||
 		uses_props ||
 		component.partly_hoisted.length > 0 ||
@@ -316,7 +317,7 @@ export default function dom(
 			const variable = component.var_lookup.get(store.name.slice(1));
 			return variable && variable.reassigned;
 		})
-		.map(({ name }) => `$$self.$$.on_destroy.push(() => $$unsubscribe_${name.slice(1)}());`);
+		.map(({ name }) => b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(1)}`}());`);
 
 	if (has_definition) {
 		const reactive_declarations: (Node | Node[]) = [];
@@ -355,7 +356,9 @@ export default function dom(
 
 			const store = component.var_lookup.get(name);
 			if (store && store.reassigned) {
-				return b`let ${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => ($$unsubscribe_${name}(), $$unsubscribe_${name} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }), ${name})`;
+				const unsubscribe = `$$unsubscribe_${name}`;
+				const subscribe = `$$subscribe_${name}`;
+				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }), ${name})`;
 			}
 
 			return b`let ${$name};`;
@@ -396,7 +399,7 @@ export default function dom(
 
 				${resubscribable_reactive_store_unsubscribers}
 
-				${component.javascript}
+				${instance_javascript}
 
 				${unknown_props_check}
 

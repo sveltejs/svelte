@@ -30,21 +30,9 @@ export function invalidate(component: Component, scope: Scope, node: Node, names
 		if (node.type === 'AssignmentExpression' && node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
 			return component.invalidate(head);
 		} else {
+			let callee = head[0] === '$' ? `@set_store_value` : `$$invalidate`;
 
-			// TODO stores
-			// if (head[0] === '$') {
-			// 	code.prependRight(node.start, `${component.helper('set_store_value')}(${head.slice(1)}, `);
-			// } else {
-			// 	let prefix = `$$invalidate`;
-
-			// 	const variable = component.var_lookup.get(head);
-			// 	if (variable.subscribable && variable.reassigned) {
-			// 		prefix = `$$subscribe_${head}($$invalidate`;
-			// 		suffix += `)`;
-			// 	}
-
-			// 	code.prependRight(node.start, `${prefix}('${head}', `);
-			// }
+			const variable = component.var_lookup.get(head);
 
 			const extra_args = tail.map(name => component.invalidate(name));
 
@@ -61,7 +49,14 @@ export function invalidate(component: Component, scope: Scope, node: Node, names
 				});
 			}
 
-			return x`$$invalidate("${head}", ${node}, ${extra_args})`;
+			let invalidate = x`${callee}("${head}", ${node}, ${extra_args})`;
+
+			if (variable.subscribable && variable.reassigned) {
+				const subscribe = `$$subscribe_${head}`;
+				invalidate = x`${subscribe}(${invalidate})}`;
+			}
+
+			return invalidate;
 		}
 	}
 

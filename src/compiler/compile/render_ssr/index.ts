@@ -41,24 +41,24 @@ export default function ssr(
 	// TODO remove this, just use component.vars everywhere
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 
-	if (component.javascript) {
-		component.rewrite_props(({ name }) => {
-			const value = `$${name}`;
+	component.rewrite_props(({ name }) => {
+		const value = `$${name}`;
 
-			const get_store_value = component.helper('get_store_value');
+		const get_store_value = component.helper('get_store_value');
 
-			let insert = `${value} = ${get_store_value}(${name})`;
-			if (component.compile_options.dev) {
-				const validate_store = component.helper('validate_store');
-				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
-			}
+		let insert = b`${value} = ${get_store_value}(${name})`;
+		if (component.compile_options.dev) {
+			const validate_store = component.helper('validate_store');
+			insert = b`${validate_store}(${name}, '${name}'); ${insert}`;
+		}
 
-			return insert;
-		});
-	}
+		return insert;
+	});
+
+	const instance_javascript = component.extract_javascript(component.ast.instance);
 
 	// TODO only do this for props with a default value
-	const parent_bindings = component.javascript
+	const parent_bindings = instance_javascript
 		? props.map(prop => {
 			return `if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
 		})
@@ -129,7 +129,7 @@ export default function ssr(
 				return name;
 			})
 			.join(', ')};`,
-		component.javascript,
+		instance_javascript,
 		parent_bindings.join('\n'),
 		css.code && `$$result.css.add(#css);`,
 		main
@@ -142,7 +142,7 @@ export default function ssr(
 			map: ${css.map ? stringify(css.map.toString()) : 'null'}
 		};`}
 
-		${component.module_javascript}
+		${component.extract_javascript(component.ast.module)}
 
 		${component.fully_hoisted}
 
