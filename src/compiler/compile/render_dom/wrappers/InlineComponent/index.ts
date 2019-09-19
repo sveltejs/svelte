@@ -3,7 +3,7 @@ import Renderer from '../../Renderer';
 import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
 import FragmentWrapper from '../Fragment';
-import { quote_name_if_necessary, sanitize } from '../../../../utils/names';
+import { sanitize } from '../../../../utils/names';
 import add_to_set from '../../../utils/add_to_set';
 import { b, x } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
@@ -254,7 +254,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						}
 						changes.push(condition ? x`${condition} && ${value_object}` : value_object);
 					} else {
-						const obj = x`{ ${quote_name_if_necessary(name)}: ${attr.get_value(block)} }`;
+						const obj = x`{ ${name}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
 
 						changes.push(condition ? x`${condition} && ${obj}` : x`${levels}[${i}]`);

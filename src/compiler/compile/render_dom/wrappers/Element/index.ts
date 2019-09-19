@@ -2,12 +2,12 @@ import Renderer from '../../Renderer';
 import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
-import { is_void, quote_prop_if_necessary, quote_name_if_necessary, sanitize } from '../../../../utils/names';
+import { is_void, sanitize } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
 import { escape_html, string_literal } from '../../../utils/stringify';
 import TextWrapper from '../Text';
 import fix_attribute_casing from './fix_attribute_casing';
-import { b, x } from 'code-red';
+import { b, x, p } from 'code-red';
 import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
@@ -381,8 +381,7 @@ export default class ElementWrapper extends Wrapper {
 	get_claim_statement(nodes: Identifier) {
 		const attributes = this.node.attributes
 			.filter((attr) => attr.type === 'Attribute')
-			.map((attr) => `${quote_name_if_necessary(attr.name)}: true`)
-			.join(', ');
+			.map((attr) => p`${attr.name}: true`);
 
 		const name = this.node.namespace
 			? this.node.name
@@ -603,7 +602,7 @@ export default class ElementWrapper extends Wrapper {
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
 				} else {
-					const snippet = x`{ ${quote_name_if_necessary(attr.name)}: ${attr.get_value(block)} }`;
+					const snippet = x`{ ${attr.name}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
@@ -813,7 +812,7 @@ export default class ElementWrapper extends Wrapper {
 				snippet = expression.manipulate(block);
 				dependencies = expression.dependencies;
 			} else {
-				snippet = `${quote_prop_if_necessary(name)}`;
+				snippet = name;
 				dependencies = new Set([name]);
 			}
 			const updater = b`@toggle_class(${this.var}, "${name}", ${snippet});`;
