@@ -77,7 +77,9 @@ export default class Expression {
 	scope: Scope;
 	scope_map: WeakMap<Node, Scope>;
 
-	is_synthetic: boolean;
+	// TODO apparently unnecessary?
+	// is_synthetic: boolean;
+
 	declarations: (Node | Node[])[] = [];
 	uses_context = false;
 
@@ -96,7 +98,7 @@ export default class Expression {
 		this.template_scope = template_scope;
 		this.owner = owner;
 		// @ts-ignore
-		this.is_synthetic = owner.is_synthetic;
+		// this.is_synthetic = owner.is_synthetic;
 
 		const { dependencies, contextual_dependencies } = this;
 
@@ -233,8 +235,7 @@ export default class Expression {
 			declarations,
 			scope_map: map,
 			template_scope,
-			owner,
-			is_synthetic
+			owner
 		} = this;
 		let scope = this.scope;
 
@@ -271,7 +272,7 @@ export default class Expression {
 							dependencies.add(name);
 							component.add_reference(name); // TODO is this redundant/misplaced?
 						}
-					} else if (!is_synthetic && is_contextual(component, template_scope, name)) {
+					} else if (is_contextual(component, template_scope, name)) {
 						this.replace(x`#ctx.${node}`);
 					}
 

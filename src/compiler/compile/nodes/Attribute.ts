@@ -20,7 +20,8 @@ export default class Attribute extends Node {
 	is_spread: boolean;
 	is_true: boolean;
 	is_static: boolean;
-	is_synthetic: boolean;
+	// TODO apparently unnecessary?
+	// is_synthetic: boolean;
 	expression?: Expression;
 	chunks: Array<Text | Expression>;
 	dependencies: Set<string>;
@@ -33,7 +34,7 @@ export default class Attribute extends Node {
 			this.name = null;
 			this.is_spread = true;
 			this.is_true = false;
-			this.is_synthetic = false;
+			// this.is_synthetic = false;
 
 			this.expression = new Expression(component, this, scope, info.expression);
 			this.dependencies = this.expression.dependencies;
@@ -46,7 +47,7 @@ export default class Attribute extends Node {
 			this.name = info.name;
 			this.is_true = info.value === true;
 			this.is_static = true;
-			this.is_synthetic = info.synthetic;
+			// this.is_synthetic = info.synthetic;
 
 			this.dependencies = new Set();
 

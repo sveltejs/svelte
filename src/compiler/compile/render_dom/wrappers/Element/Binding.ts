@@ -228,12 +228,6 @@ function get_binding_group(renderer: Renderer, value: Node) {
 	return index;
 }
 
-function mutate_store(store, value, tail) {
-	return tail
-		? b`${store}.update($$value => ($$value${tail} = ${value}, $$value));`
-		: b`${store}.set(${value});`;
-}
-
 function get_event_handler(
 	binding: BindingWrapper,
 	renderer: Renderer,
@@ -259,75 +253,26 @@ function get_event_handler(
 
 			contextual_dependencies.add(object.name);
 			contextual_dependencies.add(property.name);
-		} else {
-			// (lhs as MemberExpression).object = x`${object}[${property}]`;
 		}
+	}
+
+	let mutation = b`${lhs} = ${value}`;
+
+	const object = get_object(lhs);
+	if (object.name[0] === '$') {
+		const store = object.name.slice(1);
+
+		mutation = b`
+			${mutation}
+			${store}.set(${object.name});
+		`;
 	}
 
 	return {
 		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy
-		mutation: b`${lhs} = ${value}`,
+		mutation,
 		contextual_dependencies
 	};
-
-	// if (lhs.type === 'MemberExpression') {
-	// 	return {
-	// 		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy
-	// 		mutation: b`${lhs} = ${value}`,
-	// 		contextual_dependencies
-	// 	};
-	// } else {
-
-	// }
-
-	// const binding_info = block.bindings.get(name);
-	// console.log(binding_info);
-
-	// let store = binding.object[0] === '$' ? binding.object.slice(1) : null;
-
-	// let tail = null;
-	// if (binding.node.expression.node.type === 'MemberExpression') {
-	// 	// const { start, end } = get_tail(binding.node.expression.node);
-	// 	// tail = renderer.component.source.slice(start, end);
-	// 	tail = binding.node.expression.node.object;
-	// }
-
-	// if (binding.node.is_contextual) {
-	// 	const binding = block.bindings.get(name);
-	// 	const { object, property, snippet } = binding;
-
-	// 	if (binding.store) {
-	// 		store = binding.store;
-	// 		tail = x`${binding.tail}.${tail}`;
-	// 	}
-
-	// 	return {
-	// 		uses_context: true,
-	// 		mutation: store
-	// 			? mutate_store(store, value, tail)
-	// 			: b`${snippet} = ${value};`,
-	// 		contextual_dependencies: new Set([object.name, property.name])
-	// 	};
-	// }
-
-	// const mutation = store
-	// 	? mutate_store(store, value, tail)
-	// 	: b`${snippet} = ${value};`;
-
-	// if (binding.node.expression.node.type === 'MemberExpression') {
-	// 	return {
-	// 		uses_context: binding.node.expression.uses_context,
-	// 		mutation,
-	// 		contextual_dependencies: binding.node.expression.contextual_dependencies,
-	// 		snippet
-	// 	};
-	// }
-
-	// return {
-	// 	uses_context: false,
-	// 	mutation,
-	// 	contextual_dependencies: new Set()
-	// };
 }
 
 function get_value_from_dom(
