@@ -162,10 +162,10 @@ export default class ElementWrapper extends Wrapper {
 						});
 
 						const lets = this.node.lets;
-						const seen = new Set(lets.map(l => l.name));
+						const seen = new Set(lets.map(l => l.name.name));
 
 						(owner as unknown as InlineComponentWrapper).node.lets.forEach(l => {
-							if (!seen.has(l.name)) lets.push(l);
+							if (!seen.has(l.name.name)) lets.push(l);
 						});
 
 						const fn = get_context_merger(lets);
@@ -649,7 +649,7 @@ export default class ElementWrapper extends Wrapper {
 			const name = block.get_unique_name(`${this.var.name}_transition`);
 			const snippet = intro.expression
 				? intro.expression.manipulate(block)
-				: '{}';
+				: x`{}`;
 
 			block.add_variable(name);
 
@@ -695,7 +695,7 @@ export default class ElementWrapper extends Wrapper {
 				block.add_variable(intro_name);
 				const snippet = intro.expression
 					? intro.expression.manipulate(block)
-					: '{}';
+					: x`{}`;
 
 				const fn = component.qualify(intro.name);
 
@@ -737,7 +737,7 @@ export default class ElementWrapper extends Wrapper {
 				block.add_variable(outro_name);
 				const snippet = outro.expression
 					? outro.expression.manipulate(block)
-					: '{}';
+					: x`{}`;
 
 				const fn = component.qualify(outro.name);
 

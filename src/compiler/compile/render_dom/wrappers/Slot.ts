@@ -131,7 +131,7 @@ export default class SlotWrapper extends Wrapper {
 		const listeners = block.event_listeners;
 		block.event_listeners = [];
 		this.fragment.render(block, parent_node, parent_nodes);
-		block.render_listeners(`_${slot}`);
+		block.render_listeners(`_${slot.name}`);
 		block.event_listeners = listeners;
 
 		// block.builders.create.pop_condition();

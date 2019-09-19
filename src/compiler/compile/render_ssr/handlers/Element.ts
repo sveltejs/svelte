@@ -65,8 +65,8 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	);
 
 	const slot = node.get_static_attribute_value('slot');
-	const component = node.find_nearest(/InlineComponent/);
-	if (slot && component) {
+	const nearest_inline_component = node.find_nearest(/InlineComponent/);
+	if (slot && nearest_inline_component) {
 		const slot = node.attributes.find((attribute) => attribute.name === 'slot');
 		const slot_name = (slot.chunks[0] as Text).data;
 		const target = renderer.targets[renderer.targets.length - 1];
@@ -74,10 +74,10 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		target.slots[slot_name] = '';
 
 		const lets = node.lets;
-		const seen = new Set(lets.map(l => l.name));
+		const seen = new Set(lets.map(l => l.name.name));
 
-		component.lets.forEach(l => {
-			if (!seen.has(l.name)) lets.push(l);
+		nearest_inline_component.lets.forEach(l => {
+			if (!seen.has(l.name.name)) lets.push(l);
 		});
 
 		options.slot_scopes.set(slot_name, get_slot_scope(node.lets));

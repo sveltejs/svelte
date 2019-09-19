@@ -273,7 +273,7 @@ function get_event_handler(
 			uses_context: true,
 			mutation: store
 				? mutate_store(store, value, tail)
-				: b`${snippet}.${tail} = ${value};`,
+				: b`${snippet} = ${value};`,
 			contextual_dependencies: new Set([object.name, property.name])
 		};
 	}

@@ -2,12 +2,12 @@ import { escape, escape_template, stringify } from '../../utils/stringify';
 import { quote_name_if_necessary } from '../../../utils/names';
 import { snip } from '../../utils/snip';
 import Renderer, { RenderOptions } from '../Renderer';
-import { stringify_props } from '../../utils/stringify_props';
 import { get_slot_scope } from './shared/get_slot_scope';
 import { AppendTarget } from '../../../interfaces';
 import InlineComponent from '../../nodes/InlineComponent';
 import { INode } from '../../nodes/interfaces';
 import Text from '../../nodes/Text';
+import { p, x } from 'code-red';
 
 function stringify_attribute(chunk: INode) {
 	if (chunk.type === 'Text') {
@@ -43,8 +43,8 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		// TODO this probably won't work for contextual bindings
 		const snippet = snip(binding.expression);
 
-		binding_props.push(`${binding.name}: ${snippet}`);
-		binding_fns.push(`${binding.name}: $$value => { ${snippet} = $$value; $$settled = false }`);
+		binding_props.push(p`${binding.name}: ${snippet}`);
+		binding_fns.push(p`${binding.name}: $$value => { ${snippet} = $$value; $$settled = false }`);
 	});
 
 	const uses_spread = node.attributes.find(attr => attr.is_spread);
@@ -65,14 +65,15 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 				.join(', ')
 		})`;
 	} else {
-		props = stringify_props(
-			node.attributes
-				.map(attribute => `${quote_name_if_necessary(attribute.name)}: ${get_attribute_value(attribute)}`)
-				.concat(binding_props)
-		);
+		props = x`{
+			${node.attributes.map(attribute => p`${attribute.name}: ${get_attribute_value(attribute)}`)}
+			${binding_props}
+		}`;
 	}
 
-	const bindings = stringify_props(binding_fns);
+	const bindings = x`{
+		${binding_fns}
+	}`;
 
 	const expression = (
 		node.name === 'svelte:self'
@@ -110,7 +111,9 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		renderer.targets.pop();
 	}
 
-	const slots = stringify_props(slot_fns);
+	const slots = x`{
+		${slot_fns}
+	}`;
 
 	renderer.append(`\${@validate_component(${expression}, '${node.name}').$$render($$result, ${props}, ${bindings}, ${slots})}`);
 }

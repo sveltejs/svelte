@@ -410,7 +410,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.chunks.destroy.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].d(${parent_node ? '' : 'detaching'});
+				${iterations}[#i].d(${parent_node ? null : 'detaching'});
 			}
 		`);
 	}
