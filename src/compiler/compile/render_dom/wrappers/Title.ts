@@ -3,7 +3,7 @@ import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Title from '../../nodes/Title';
-import { stringify, string_literal } from '../../utils/stringify';
+import { string_literal } from '../../utils/stringify';
 import add_to_set from '../../utils/add_to_set';
 import Text from '../../nodes/Text';
 import { Identifier } from 'estree';
@@ -93,8 +93,8 @@ export default class TitleWrapper extends Wrapper {
 			}
 		} else {
 			const value = this.node.children.length > 0
-				? stringify((this.node.children[0] as Text).data)
-				: '""';
+				? string_literal((this.node.children[0] as Text).data)
+				: x`""`;
 
 			block.chunks.hydrate.push(b`@_document.title = ${value};`);
 		}

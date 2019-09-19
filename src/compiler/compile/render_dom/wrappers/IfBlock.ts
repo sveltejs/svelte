@@ -191,7 +191,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const vars = { name, anchor, if_exists_condition, has_else, has_transitions };
 
-		const detaching = is_head(parent_node) ? '' : 'detaching';
+		const detaching = is_head(parent_node) ? null : 'detaching';
 
 		if (this.node.else) {
 			this.branches.forEach(branch => {
@@ -322,7 +322,11 @@ export default class IfBlockWrapper extends Wrapper {
 			block.chunks.update.push(b`${name}.p(#changed, #ctx);`);
 		}
 
-		block.chunks.destroy.push(b`if (${if_exists_condition}) ${name}.d(${detaching});`);
+		block.chunks.destroy.push(b`
+			if (${if_exists_condition}) {
+				${name}.d(${detaching});
+			}
+		`);
 	}
 
 	// if any of the siblings have outros, we need to keep references to the blocks
@@ -362,7 +366,7 @@ export default class IfBlockWrapper extends Wrapper {
 						${this.branches.map(({ dependencies, condition, snippet }, i) => condition
 						? b`
 						${snippet && b`if ((${condition} == null) || ${changed(dependencies)}) ${condition} = !!(${snippet})`}
-						if (${condition}) return ${String(i)};`
+						if (${condition}) return ${i};`
 						: b`return ${i};`)}
 						${!has_else && b`return -1;`}
 					}
@@ -545,11 +549,17 @@ export default class IfBlockWrapper extends Wrapper {
 				`);
 			}
 		} else if (dynamic) {
-			block.chunks.update.push(
-				b`if (${branch.condition}) ${name}.p(#changed, #ctx);`
-			);
+			block.chunks.update.push(b`
+				if (${branch.condition}) {
+					${name}.p(#changed, #ctx);
+				}
+			`);
 		}
 
-		block.chunks.destroy.push(b`if (${if_exists_condition}) ${name}.d(${detaching});`);
+		block.chunks.destroy.push(b`
+			if (${if_exists_condition}) {
+				${name}.d(${detaching});
+			}
+		`);
 	}
 }
