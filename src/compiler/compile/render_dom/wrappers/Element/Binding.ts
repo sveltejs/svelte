@@ -244,29 +244,33 @@ function get_event_handler(
 	const contextual_dependencies = new Set(binding.node.expression.contextual_dependencies);
 
 	const context = block.bindings.get(name);
+	let set_store;
 
 	if (context) {
-		const { object, property } = context;
+		const { object, property, modifier, store } = context;
 
 		if (lhs.type === 'Identifier') {
-			lhs = x`${object}[${property}]`;
+			lhs = modifier(x`${object}[${property}]`);
 
 			contextual_dependencies.add(object.name);
 			contextual_dependencies.add(property.name);
 		}
+
+		if (store) {
+			set_store = b`${store}.set(${object.name});`;
+		}
+	} else {
+		const object = get_object(lhs);
+		if (object.name[0] === '$') {
+			const store = object.name.slice(1);
+			set_store = b`${store}.set(${object.name});`;
+		}
 	}
 
-	let mutation = b`${lhs} = ${value}`;
-
-	const object = get_object(lhs);
-	if (object.name[0] === '$') {
-		const store = object.name.slice(1);
-
-		mutation = b`
-			${mutation}
-			${store}.set(${object.name});
-		`;
-	}
+	let mutation = b`
+		${lhs} = ${value};
+		${set_store}
+	`;
 
 	return {
 		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy

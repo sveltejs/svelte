@@ -141,6 +141,7 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.bindings.set(prop.key.name, {
 				object: this.vars.each_block_value,
 				property: this.index_name,
+				modifier: prop.modifier,
 				snippet: prop.modifier(x`${this.vars.each_block_value}[${this.index_name}]` as Node),
 				store,
 				tail: prop.modifier(x`[${this.index_name}]` as Node)
