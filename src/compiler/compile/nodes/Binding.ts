@@ -4,6 +4,7 @@ import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import {dimensions} from "../../utils/patterns";
+import { Node as ESTreeNode } from 'estree';
 import { x } from 'code-red';
 
 // TODO this should live in a specific binding
@@ -18,6 +19,7 @@ export default class Binding extends Node {
 	type: 'Binding';
 	name: string;
 	expression: Expression;
+	raw_expression: ESTreeNode; // TODO exists only for bind:this — is there a more elegant solution?
 	is_contextual: boolean;
 	obj: string;
 	prop: string;
@@ -35,6 +37,7 @@ export default class Binding extends Node {
 
 		this.name = info.name;
 		this.expression = new Expression(component, this, scope, info.expression);
+		this.raw_expression = JSON.parse(JSON.stringify(info.expression));
 
 		let obj;
 		let prop;

@@ -18,19 +18,19 @@ export default function bind_this(component: Component, block: Block, binding: B
 	let object;
 	let body;
 
-	if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
+	if (binding.is_contextual && binding.raw_expression.type === 'Identifier') {
 		// bind:x={y} — we can't just do `y = x`, we need to
 		// to `array[index] = x;
-		const { name } = binding.expression.node;
+		const { name } = binding.raw_expression;
 		const { snippet } = block.bindings.get(name);
 		lhs = snippet;
 
 		body = b`${lhs} = $$value`; // TODO we need to invalidate... something
 	} else {
-		object = flatten_reference(binding.expression.node).name;
-		lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
+		object = flatten_reference(binding.raw_expression).name;
+		lhs = binding.raw_expression;
 
-		body = binding.expression.node.type === 'Identifier'
+		body = binding.raw_expression.type === 'Identifier'
 			? b`
 				${component.invalidate(object, x`${lhs} = $$value`)};
 			`

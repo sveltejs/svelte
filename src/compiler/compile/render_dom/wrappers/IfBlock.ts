@@ -191,7 +191,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const vars = { name, anchor, if_exists_condition, has_else, has_transitions };
 
-		const detaching = is_head(parent_node) ? null : 'detaching';
+		const detaching = parent_node && !is_head(parent_node) ? null : 'detaching';
 
 		if (this.node.else) {
 			this.branches.forEach(branch => {

@@ -416,7 +416,7 @@ export default function dom(
 
 				${inject_state && x`$$self.$inject_state = ${inject_state};`}
 
-				${injected.length && `let ${injected.join(', ')};`}
+				${injected.map(name => b`let ${name};`)}
 
 				${reactive_declarations.length > 0 && b`
 				$$self.$$.update = ($$dirty = ${reactive_dependencies}) => {

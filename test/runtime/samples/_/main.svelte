@@ -1,6 +1,8 @@
 <script>
-	let a = 1;
-	let b = 2;
+	export let items = ['foo', 'bar', 'baz'];
+	export let divs = [];
 </script>
 
-<p>{a} + {b} = {a + b}</p>
+{#each items as item, j}
+	<div bind:this={divs[j]}>{item}</div>
+{/each}

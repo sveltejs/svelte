@@ -7,7 +7,7 @@ import Renderer from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
 import EachBlock from '../../../nodes/EachBlock';
 import { changed } from '../shared/changed';
-import { Node, Identifier } from 'estree';
+import { Node, Identifier, MemberExpression } from 'estree';
 
 export default class BindingWrapper {
 	node: Binding;
@@ -51,12 +51,8 @@ export default class BindingWrapper {
 
 		this.object = get_object(this.node.expression.node).name;
 
-		// TODO unfortunate code is necessary because we need to use `ctx`
-		// inside the fragment, but not inside the <script>
-		const contextless_snippet = JSON.parse(JSON.stringify(this.node.expression.node));
-
 		// view to model
-		this.handler = get_event_handler(this, parent.renderer, block, this.object, contextless_snippet);
+		this.handler = get_event_handler(this, parent.renderer, block, this.object, this.node.raw_expression);
 
 		this.snippet = this.node.expression.manipulate(block);
 
@@ -243,59 +239,95 @@ function get_event_handler(
 	renderer: Renderer,
 	block: Block,
 	name: string,
-	snippet: Node
+	lhs: Node
 ): {
 	uses_context: boolean;
 	mutation: (Node | Node[]);
 	contextual_dependencies: Set<string>;
-	snippet?: Node;
+	lhs?: Node;
 } {
 	const value = get_value_from_dom(renderer, binding.parent, binding);
-	let store = binding.object[0] === '$' ? binding.object.slice(1) : null;
+	const contextual_dependencies = new Set(binding.node.expression.contextual_dependencies);
 
-	let tail = null;
-	if (binding.node.expression.node.type === 'MemberExpression') {
-		// const { start, end } = get_tail(binding.node.expression.node);
-		// tail = renderer.component.source.slice(start, end);
-		tail = binding.node.expression.node.object;
-	}
+	const context = block.bindings.get(name);
 
-	if (binding.node.is_contextual) {
-		const binding = block.bindings.get(name);
-		const { object, property, snippet } = binding;
+	if (context) {
+		const { object, property } = context;
 
-		if (binding.store) {
-			store = binding.store;
-			tail = x`${binding.tail}.${tail}`;
+		if (lhs.type === 'Identifier') {
+			lhs = x`${object}[${property}]`;
+
+			contextual_dependencies.add(object.name);
+			contextual_dependencies.add(property.name);
+		} else {
+			// (lhs as MemberExpression).object = x`${object}[${property}]`;
 		}
-
-		return {
-			uses_context: true,
-			mutation: store
-				? mutate_store(store, value, tail)
-				: b`${snippet} = ${value};`,
-			contextual_dependencies: new Set([object.name, property.name])
-		};
-	}
-
-	const mutation = store
-		? mutate_store(store, value, tail)
-		: b`${snippet} = ${value};`;
-
-	if (binding.node.expression.node.type === 'MemberExpression') {
-		return {
-			uses_context: binding.node.expression.uses_context,
-			mutation,
-			contextual_dependencies: binding.node.expression.contextual_dependencies,
-			snippet
-		};
 	}
 
 	return {
-		uses_context: false,
-		mutation,
-		contextual_dependencies: new Set()
+		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy
+		mutation: b`${lhs} = ${value}`,
+		contextual_dependencies
 	};
+
+	// if (lhs.type === 'MemberExpression') {
+	// 	return {
+	// 		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy
+	// 		mutation: b`${lhs} = ${value}`,
+	// 		contextual_dependencies
+	// 	};
+	// } else {
+
+	// }
+
+	// const binding_info = block.bindings.get(name);
+	// console.log(binding_info);
+
+	// let store = binding.object[0] === '$' ? binding.object.slice(1) : null;
+
+	// let tail = null;
+	// if (binding.node.expression.node.type === 'MemberExpression') {
+	// 	// const { start, end } = get_tail(binding.node.expression.node);
+	// 	// tail = renderer.component.source.slice(start, end);
+	// 	tail = binding.node.expression.node.object;
+	// }
+
+	// if (binding.node.is_contextual) {
+	// 	const binding = block.bindings.get(name);
+	// 	const { object, property, snippet } = binding;
+
+	// 	if (binding.store) {
+	// 		store = binding.store;
+	// 		tail = x`${binding.tail}.${tail}`;
+	// 	}
+
+	// 	return {
+	// 		uses_context: true,
+	// 		mutation: store
+	// 			? mutate_store(store, value, tail)
+	// 			: b`${snippet} = ${value};`,
+	// 		contextual_dependencies: new Set([object.name, property.name])
+	// 	};
+	// }
+
+	// const mutation = store
+	// 	? mutate_store(store, value, tail)
+	// 	: b`${snippet} = ${value};`;
+
+	// if (binding.node.expression.node.type === 'MemberExpression') {
+	// 	return {
+	// 		uses_context: binding.node.expression.uses_context,
+	// 		mutation,
+	// 		contextual_dependencies: binding.node.expression.contextual_dependencies,
+	// 		snippet
+	// 	};
+	// }
+
+	// return {
+	// 	uses_context: false,
+	// 	mutation,
+	// 	contextual_dependencies: new Set()
+	// };
 }
 
 function get_value_from_dom(
