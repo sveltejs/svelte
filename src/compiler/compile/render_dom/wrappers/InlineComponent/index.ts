@@ -342,7 +342,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
 			const dependencies = Array.from(binding.expression.dependencies);
 
-			let lhs = binding.expression.node;
+			let lhs = binding.raw_expression;
 
 			if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
 				// bind:x={y} — we can't just do `y = x`, we need to
