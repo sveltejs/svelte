@@ -61,7 +61,7 @@ export default class Component {
 
 	component_options: ComponentOptions;
 	namespace: string;
-	tag: Identifier;
+	tag: string;
 	accessors: boolean;
 
 	vars: Var[] = [];
@@ -163,12 +163,9 @@ export default class Component {
 					message: `No custom element 'tag' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>`,
 				});
 			}
-			this.tag = {
-				type: 'Identifier',
-				name: this.component_options.tag || compile_options.tag
-			};
+			this.tag = this.component_options.tag || compile_options.tag;
 		} else {
-			this.tag = this.name;
+			this.tag = this.name.name;
 		}
 
 		this.walk_module_js();
