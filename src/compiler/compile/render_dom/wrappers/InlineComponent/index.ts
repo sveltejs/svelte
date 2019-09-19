@@ -152,21 +152,17 @@ export default class InlineComponentWrapper extends Wrapper {
 					});
 				}
 
-				if (uses_spread) {
-					attribute_object = initial_props;
-				} else {
-					attribute_object = {
-						type: 'ObjectExpression',
-						properties: this.node.attributes.map(attr => {
-							return {
-								type: 'Property',
-								kind: 'init',
-								key: { type: 'Identifier', name: attr.name },
-								value: attr.get_value(block)
-							}
-						}).concat(initial_props.properties)
-					} as Expression;
-				}
+				attribute_object = {
+					type: 'ObjectExpression',
+					properties: this.node.attributes.map(attr => {
+						return {
+							type: 'Property',
+							kind: 'init',
+							key: { type: 'Identifier', name: attr.name },
+							value: attr.get_value(block)
+						}
+					}).concat(initial_props.properties)
+				} as Expression;
 
 				component_opts.properties.push({
 					type: 'Property',
