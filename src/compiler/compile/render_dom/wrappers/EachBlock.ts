@@ -300,10 +300,10 @@ export default class EachBlockWrapper extends Wrapper {
 			`);
 		}
 
-		this.fragment.render(this.block, null, x`nodes` as Identifier);
+		this.fragment.render(this.block, null, x`#nodes` as Identifier);
 
 		if (this.else) {
-			this.else.fragment.render(this.else.block, null, x`nodes` as Identifier);
+			this.else.fragment.render(this.else.block, null, x`#nodes` as Identifier);
 		}
 	}
 

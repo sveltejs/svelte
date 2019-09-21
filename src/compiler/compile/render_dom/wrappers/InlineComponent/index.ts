@@ -157,7 +157,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const default_slot = this.slots.get('default');
 
 			this.fragment.nodes.forEach((child) => {
-				child.render(default_slot.block, null, x`nodes` as unknown as Identifier);
+				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
 			});
 		}
 

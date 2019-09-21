@@ -32,6 +32,6 @@ export default class HeadWrapper extends Wrapper {
 	}
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
-		this.fragment.render(block, x`@_document.head` as unknown as Identifier, x`nodes` as unknown as Identifier);
+		this.fragment.render(block, x`@_document.head` as unknown as Identifier, x`#nodes` as unknown as Identifier);
 	}
 }

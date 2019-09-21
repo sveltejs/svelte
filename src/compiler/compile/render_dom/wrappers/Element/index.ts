@@ -264,7 +264,7 @@ export default class ElementWrapper extends Wrapper {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
 					${node} = ${this.get_claim_statement(parent_nodes)};
-					var ${nodes} = @children(${this.node.name === 'template' ? `${node}.content` : node});
+					var ${nodes} = @children(${this.node.name === 'template' ? x`${node}.content` : node});
 				`);
 			} else {
 				block.chunks.claim.push(
@@ -321,7 +321,7 @@ export default class ElementWrapper extends Wrapper {
 			this.fragment.nodes.forEach((child: Wrapper) => {
 				child.render(
 					block,
-					this.node.name === 'template' ? `${node}.content` : node,
+					this.node.name === 'template' ? x`${node}.content` : node,
 					nodes
 				);
 			});
@@ -387,9 +387,9 @@ export default class ElementWrapper extends Wrapper {
 			? this.node.name
 			: this.node.name.toUpperCase();
 
-		return x`@claim_element(${nodes}, "${name}", ${attributes
-			? x`{ ${attributes} }`
-			: x`{}`}, ${this.node.namespace === namespaces.svg ? true : false})`;
+		const svg = this.node.namespace === namespaces.svg ? 1 : null;
+
+		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
 	}
 
 	add_bindings(block: Block) {

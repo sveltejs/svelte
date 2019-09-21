@@ -59,6 +59,6 @@ export default class Renderer {
 
 		this.block.assign_variable_names();
 
-		this.fragment.render(this.block, null, x`nodes` as Identifier);
+		this.fragment.render(this.block, null, x`#nodes` as Identifier);
 	}
 }

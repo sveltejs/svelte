@@ -234,7 +234,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		`);
 
 		[this.pending, this.then, this.catch].forEach(branch => {
-			branch.fragment.render(branch.block, null, x`nodes` as Identifier);
+			branch.fragment.render(branch.block, null, x`#nodes` as Identifier);
 		});
 	}
 }

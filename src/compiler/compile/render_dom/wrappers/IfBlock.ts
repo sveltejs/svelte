@@ -235,7 +235,7 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 
 		this.branches.forEach(branch => {
-			branch.fragment.render(branch.block, null, x`nodes` as unknown as Identifier);
+			branch.fragment.render(branch.block, null, x`#nodes` as unknown as Identifier);
 		});
 	}
 

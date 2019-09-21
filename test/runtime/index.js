@@ -216,7 +216,7 @@ describe.only("runtime", () => {
 
 	fs.readdirSync("test/runtime/samples").forEach(dir => {
 		runTest(dir, false);
-		// runTest(dir, true);
+		runTest(dir, true);
 	});
 
 	async function create_component(src = '<div></div>') {
