@@ -257,7 +257,7 @@ function get_event_handler(
 		}
 
 		if (store) {
-			set_store = b`${store}.set(${object.name});`;
+			set_store = b`${store}.set(${`$${store}`});`;
 		}
 	} else {
 		const object = get_object(lhs);
