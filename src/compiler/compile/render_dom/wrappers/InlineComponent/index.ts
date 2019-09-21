@@ -5,7 +5,7 @@ import InlineComponent from '../../../nodes/InlineComponent';
 import FragmentWrapper from '../Fragment';
 import { sanitize } from '../../../../utils/names';
 import add_to_set from '../../../utils/add_to_set';
-import { b, x } from 'code-red';
+import { b, x, p } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
 import get_object from '../../../utils/get_object';
 import create_debugging_comment from '../shared/create_debugging_comment';
@@ -15,7 +15,7 @@ import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { changed } from '../shared/changed';
-import { Node, Identifier, Expression } from 'estree';
+import { Node, Identifier, Expression, ObjectExpression, Property } from 'estree';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
@@ -114,7 +114,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const name = this.var;
 
-		const component_opts: any = x`{}`;
+		const component_opts = x`{}` as ObjectExpression;
 
 		const statements: (Node | Node[])[] = [];
 		const updates: (Node | Node[])[] = [];
@@ -124,60 +124,32 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
 
-		let attribute_object = x`{}`;
+		const initial_props = this.slots.size > 0
+			? [
+				p`$$slots: {
+					${Array.from(this.slots).map(([name, slot]) => {
+						return p`${name}: [${slot.block.name}, ${slot.fn || null}]`;
+					})}
+				}`,
+				p`$$scope: {
+					ctx: #ctx
+				}`
+			]
+			: [];
 
-		if (this.node.attributes.length > 0 || this.node.bindings.length > 0 || this.slots.size > 0) {
+		const attribute_object = uses_spread
+			? x`{ ${initial_props} }`
+			: x`{
+				${this.node.attributes.map(attr => p`${attr.name}: ${attr.get_value(block)}`)},
+				${initial_props}
+			}`;
+
+		if (this.node.attributes.length || this.node.bindings.length || initial_props.length) {
 			if (!uses_spread && this.node.bindings.length === 0) {
-				const initial_props: any = x`{}`;
-
-				if (this.slots.size > 0) {
-					initial_props.properties.push({
-						type: 'Property',
-						kind: 'init',
-						key: { type: 'Identifier', name: '$$slots' },
-						value: {
-							type: 'ObjectExpression',
-							properties: Array.from(this.slots).map(([name, slot]) => ({
-								type: 'Property',
-								kind: 'init',
-								key: { type: 'Identifier', name },
-								value: x`[${slot.block.name}, ${slot.fn}]`
-							}))
-						}
-					}, {
-						type: 'Property',
-						kind: 'init',
-						key: { type: 'Identifier', name: '$$scope' },
-						value: x`{ ctx: #ctx }`
-					});
-				}
-
-				attribute_object = {
-					type: 'ObjectExpression',
-					properties: this.node.attributes.map(attr => {
-						return {
-							type: 'Property',
-							kind: 'init',
-							key: { type: 'Identifier', name: attr.name },
-							value: attr.get_value(block)
-						}
-					}).concat(initial_props.properties)
-				} as Expression;
-
-				component_opts.properties.push({
-					type: 'Property',
-					kind: 'init',
-					key: { type: 'Identifier', name: 'props' },
-					value: attribute_object
-				});
+				component_opts.properties.push(p`props: ${attribute_object}`);
 			} else {
 				props = block.get_unique_name(`${name.name}_props`);
-				component_opts.properties.push({
-					type: 'Property',
-					kind: 'init',
-					key: { type: 'Identifier', name: 'props' },
-					value: props
-				});
+				component_opts.properties.push(p`props: ${props}`);
 			}
 		}
 
@@ -194,12 +166,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			// will complain that options.target is missing. This would
 			// work better if components had separate public and private
 			// APIs
-			component_opts.properties.push({
-				type: 'Property',
-				kind: 'init',
-				key: { type: 'Identifier', name: '$$inline' },
-				value: { type: 'Literal', value: true }
-			});
+			component_opts.properties.push(p`$$inline: true`);
 		}
 
 		const fragment_dependencies = new Set(this.fragment ? ['$$scope'] : []);

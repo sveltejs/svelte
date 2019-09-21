@@ -161,7 +161,7 @@ export default function dom(
 		if (expected.length) {
 			dev_props_check = b`
 				const { ctx: #ctx } = this.$$;
-				const props = ${options.customElement ? `this.attributes` : `options.props || {}`};
+				const props = ${options.customElement ? x`this.attributes` : x`options.props || {}`};
 				${expected.map(prop => b`
 				if (#ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
 					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
