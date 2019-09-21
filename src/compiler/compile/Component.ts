@@ -893,10 +893,10 @@ export default class Component {
 									properties: [{
 										type: 'Property',
 										method: false,
-										shorthand: true,
+										shorthand: false,
 										computed: false,
 										kind: 'init',
-										key: declarator.id,
+										key: { type: 'Identifier', name: variable.export_name },
 										value: declarator.init
 											? {
 												type: 'AssignmentPattern',
