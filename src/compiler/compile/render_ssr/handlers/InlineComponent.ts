@@ -6,18 +6,7 @@ import InlineComponent from '../../nodes/InlineComponent';
 import { INode } from '../../nodes/interfaces';
 import { p, x } from 'code-red';
 
-function stringify_attribute(chunk: INode) {
-	if (chunk.type === 'Text') {
-		return string_literal(chunk.data);
-		// return escape_template(escape((chunk as Text).data));
-	}
-
-	return x`@escape(${chunk})`;
-
-	return '${@escape(' + snip(chunk) + ')}';
-}
-
-function get_attribute_value(attribute) {
+function get_prop_value(attribute) {
 	if (attribute.is_true) return x`true`;
 	if (attribute.chunks.length === 0) return x`''`;
 
@@ -54,7 +43,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 					if (attribute.is_spread) {
 						return snip(attribute.expression);
 					} else {
-						return `{ ${quote_name_if_necessary(attribute.name)}: ${get_attribute_value(attribute)} }`;
+						return `{ ${quote_name_if_necessary(attribute.name)}: ${get_prop_value(attribute)} }`;
 					}
 				})
 				.concat(binding_props.map(p => `{ ${p} }`))
@@ -62,7 +51,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		})`;
 	} else {
 		props = x`{
-			${node.attributes.map(attribute => p`${attribute.name}: ${get_attribute_value(attribute)}`)},
+			${node.attributes.map(attribute => p`${attribute.name}: ${get_prop_value(attribute)}`)},
 			${binding_props}
 		}`;
 	}

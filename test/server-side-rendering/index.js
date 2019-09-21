@@ -81,9 +81,6 @@ describe.only("ssr", () => {
 		});
 	});
 
-	// TODO re-enable SSR tests
-	return;
-
 	// duplicate client-side tests, as far as possible
 	fs.readdirSync("test/runtime/samples").forEach(dir => {
 		if (dir[0] === ".") return;
@@ -133,6 +130,8 @@ describe.only("ssr", () => {
 					showOutput(cwd, compileOptions);
 				}
 			} catch (err) {
+				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+
 				if (config.error) {
 					if (typeof config.error === 'function') {
 						config.error(assert, err);

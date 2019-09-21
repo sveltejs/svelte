@@ -1,7 +1,7 @@
 import { is_void, quote_prop_if_necessary } from '../../../utils/names';
 import Attribute from '../../nodes/Attribute';
 import Class from '../../nodes/Class';
-import { stringify_attribute, stringify_class_attribute } from '../../utils/stringify_attribute';
+import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { get_slot_scope } from './shared/get_slot_scope';
 import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
@@ -99,7 +99,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				args.push(attribute.expression.node);
 			} else {
 				if (attribute.name === 'value' && node.name === 'textarea') {
-					node_contents = stringify_attribute(attribute, true);
+					node_contents = get_attribute_value(attribute);
 				} else if (attribute.is_true) {
 					args.push(x`{ ${attribute.name}: true }`);
 				} else if (
@@ -111,9 +111,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 					args.push(x`{ ${attribute.name}: ${attribute.chunks[0].node} }`);
 				} else if (attribute.name === 'class' && class_expression) {
 					// Add class expression
-					args.push(x`{ ${attribute.name}: [${stringify_class_attribute(attribute)}, ${class_expression}}].join(' ').trim() }`);
+					args.push(x`{ ${attribute.name}: [${get_class_attribute_value(attribute)}, ${class_expression}}].join(' ').trim() }`);
 				} else {
-					args.push(x`{ ${attribute.name}: ${attribute.name === 'class' ? stringify_class_attribute(attribute) : stringify_attribute(attribute, true)} }`);
+					args.push(x`{ ${attribute.name}: ${attribute.name === 'class' ? get_class_attribute_value(attribute) : get_attribute_value(attribute, true)} }`);
 				}
 			}
 		});
@@ -124,7 +124,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			if (attribute.type !== 'Attribute') return;
 
 			if (attribute.name === 'value' && node.name === 'textarea') {
-				node_contents = stringify_attribute(attribute, true);
+				node_contents = get_attribute_value(attribute);
 			} else if (attribute.is_true) {
 				renderer.add_string(` ${attribute.name}`);
 			} else if (
@@ -133,12 +133,12 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				attribute.chunks[0].type !== 'Text'
 			) {
 				// a boolean attribute with one non-Text chunk
-				throw new Error('here');
-				renderer.add_expression(x`${attribute.chunks[0]} ? "${attribute.name}" : ""`);
+				renderer.add_string(` `);
+				renderer.add_expression(x`${attribute.chunks[0].node} ? "${attribute.name}" : ""`);
 			} else if (attribute.name === 'class' && class_expression) {
 				add_class_attribute = false;
 				renderer.add_string(` class="`);
-				renderer.add_expression(x`[${stringify_class_attribute(attribute)}, ${class_expression}].join(' ').trim()`);
+				renderer.add_expression(x`[${get_class_attribute_value(attribute)}, ${class_expression}].join(' ').trim()`);
 				renderer.add_string(`"`);
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const { name } = attribute;
@@ -146,10 +146,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				renderer.add_expression(x`@add_attribute("${name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
 			} else {
 				renderer.add_string(` ${attribute.name}="`);
-				attribute.chunks.forEach(chunk => {
-					if (chunk.type === 'Text') renderer.add_string(chunk.data);
-					else renderer.add_expression(x`@escape(${chunk.node})`);
-				});
+				renderer.add_expression(attribute.name === 'class' ? get_class_attribute_value(attribute) : get_attribute_value(attribute));
 				renderer.add_string(`"`);
 			}
 		});
