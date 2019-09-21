@@ -881,7 +881,7 @@ export default class Component {
 							const { name } = declarator.id;
 							const variable = component.var_lookup.get(name);
 
-							if (variable.export_name) {
+							if (variable.export_name && variable.writable) {
 								const insert = variable.subscribable
 									? get_insert(variable)
 									: null;
