@@ -3,7 +3,6 @@ import { quote_name_if_necessary } from '../../../utils/names';
 import Renderer, { RenderOptions } from '../Renderer';
 import { get_slot_scope } from './shared/get_slot_scope';
 import InlineComponent from '../../nodes/InlineComponent';
-import { INode } from '../../nodes/interfaces';
 import { p, x } from 'code-red';
 
 function get_prop_value(attribute) {
@@ -64,7 +63,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		node.name === 'svelte:self'
 			? '__svelte:self__' // TODO conflict-proof this
 			: node.name === 'svelte:component'
-				? `((${snip(node.expression)}) || @missing_component)`
+				? x`(${node.expression.node}) || @missing_component`
 				: node.name
 	);
 
