@@ -121,12 +121,15 @@ export default class SlotWrapper extends Wrapper {
 			const ${slot} = @create_slot(${slot_definition}, #ctx, ${get_slot_context});
 		`);
 
-		// block.builders.create.push_condition(`!${slot}`);
-		// block.builders.claim.push_condition(`!${slot}`);
-		// block.builders.hydrate.push_condition(`!${slot}`);
-		// block.builders.mount.push_condition(`!${slot}`);
-		// block.builders.update.push_condition(`!${slot}`);
-		// block.builders.destroy.push_condition(`!${slot}`);
+		// TODO this is a dreadful hack! Should probably make this nicer
+		const { create, claim, hydrate, mount, update, destroy } = block.chunks;
+
+		block.chunks.create = [];
+		block.chunks.claim = [];
+		block.chunks.hydrate = [];
+		block.chunks.mount = [];
+		block.chunks.update = [];
+		block.chunks.destroy = [];
 
 		const listeners = block.event_listeners;
 		block.event_listeners = [];
@@ -134,12 +137,19 @@ export default class SlotWrapper extends Wrapper {
 		block.render_listeners(`_${slot.name}`);
 		block.event_listeners = listeners;
 
-		// block.builders.create.pop_condition();
-		// block.builders.claim.pop_condition();
-		// block.builders.hydrate.pop_condition();
-		// block.builders.mount.pop_condition();
-		// block.builders.update.pop_condition();
-		// block.builders.destroy.pop_condition();
+		if (block.chunks.create) create.push(b`if (!${slot}) { ${block.chunks.create} }`);
+		if (block.chunks.claim) claim.push(b`if (!${slot}) { ${block.chunks.claim} }`);
+		if (block.chunks.hydrate) hydrate.push(b`if (!${slot}) { ${block.chunks.hydrate} }`);
+		if (block.chunks.mount) mount.push(b`if (!${slot}) { ${block.chunks.mount} }`);
+		if (block.chunks.update) update.push(b`if (!${slot}) { ${block.chunks.update} }`);
+		if (block.chunks.destroy) destroy.push(b`if (!${slot}) { ${block.chunks.destroy} }`);
+
+		block.chunks.create = create;
+		block.chunks.claim = claim;
+		block.chunks.hydrate = hydrate;
+		block.chunks.mount = mount;
+		block.chunks.update = update;
+		block.chunks.destroy = destroy;
 
 		block.chunks.create.push(
 			b`if (${slot}) ${slot}.c();`
