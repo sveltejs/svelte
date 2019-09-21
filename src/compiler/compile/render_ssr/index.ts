@@ -20,7 +20,7 @@ export default function ssr(
 	}, options));
 
 	// TODO put this inside the Renderer class
-	renderer.literal.quasis.push(renderer.state.quasi);
+	const literal = renderer.pop();
 
 	// TODO concatenate CSS maps
 	const css = options.customElement ?
@@ -108,7 +108,7 @@ export default function ssr(
 
 				${reactive_declarations}
 
-				$$rendered = ${renderer.literal};
+				$$rendered = ${literal};
 			} while (!$$settled);
 
 			return $$rendered;
@@ -118,7 +118,7 @@ export default function ssr(
 
 			${reactive_declarations}
 
-			return ${renderer.literal};`;
+			return ${literal};`;
 
 	const blocks = [
 		...reactive_stores.map(({ name }) => {

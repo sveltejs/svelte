@@ -13,7 +13,7 @@ import Text from './handlers/Text';
 import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
 import { INode } from '../nodes/interfaces';
-import { Expression } from 'estree';
+import { Expression, TemplateLiteral } from 'estree';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
 
@@ -45,22 +45,17 @@ export interface RenderOptions extends CompileOptions{
 export default class Renderer {
 	has_bindings = false;
 
-	state = {
-		quasi: {
-			type: 'TemplateElement',
-			value: { raw: '' }
-		}
-	};
-
-	literal = {
-		type: 'TemplateLiteral',
-		expressions: [],
-		quasis: []
-	};
+	stack: { current: { value: string }, literal: TemplateLiteral }[] = [];
+	current: { value: string };
+	literal: TemplateLiteral;
 
 	targets: AppendTarget[] = [];
 
-	append(code: string) {
+	constructor() {
+		this.push();
+	}
+
+	append() {
 		throw new Error('no more append');
 		// if (this.targets.length) {
 		// 	const target = this.targets[this.targets.length - 1];
@@ -72,17 +67,48 @@ export default class Renderer {
 	}
 
 	add_string(str: string) {
-		this.state.quasi.value.raw += str;
+		this.current.value += str;
 	}
 
 	add_expression(node: Expression) {
-		this.literal.quasis.push(this.state.quasi);
-		this.literal.expressions.push(node);
-
-		this.state.quasi = {
+		this.literal.quasis.push({
 			type: 'TemplateElement',
-			value: { raw: '' }
+			value: { raw: this.current.value, cooked: null },
+			tail: false
+		});
+
+		this.literal.expressions.push(node);
+		this.current = { value: '' };
+	}
+
+	push() {
+		const current = this.current = { value: '' };
+
+		const literal = this.literal = {
+			type: 'TemplateLiteral',
+			expressions: [],
+			quasis: []
 		};
+
+		this.stack.push({ current, literal })
+	}
+
+	pop() {
+		this.literal.quasis.push({
+			type: 'TemplateElement',
+			value: { raw: this.current.value, cooked: null },
+			tail: true
+		});
+
+		const popped = this.stack.pop();
+		const last = this.stack[this.stack.length - 1];
+
+		if (last) {
+			this.literal = last.literal;
+			this.current = last.current;
+		}
+
+		return popped.literal;
 	}
 
 	render(nodes: INode[], options: RenderOptions) {

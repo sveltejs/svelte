@@ -143,7 +143,6 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const { name } = attribute;
 				const snippet = attribute.chunks[0].node;
-				console.log(snippet);
 				renderer.add_expression(x`@add_attribute("${name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
 			} else {
 				renderer.add_string(` ${attribute.name}="`);

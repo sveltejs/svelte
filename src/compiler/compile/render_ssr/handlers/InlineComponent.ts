@@ -81,29 +81,24 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 	const slot_fns = [];
 
 	if (node.children.length) {
-		const target: AppendTarget = {
-			slots: { default: '' },
-			slot_stack: ['default']
-		};
-
-		renderer.targets.push(target);
-
 		const slot_scopes = new Map();
-		slot_scopes.set('default', get_slot_scope(node.lets));
+
+		renderer.push();
 
 		renderer.render(node.children, Object.assign({}, options, {
 			slot_scopes
 		}));
 
-		Object.keys(target.slots).forEach(name => {
-			const slot_scope = slot_scopes.get(name);
-
-			slot_fns.push(
-				`${quote_name_if_necessary(name)}: (${slot_scope}) => \`${target.slots[name]}\``
-			);
+		slot_scopes.set('default', {
+			input: get_slot_scope(node.lets),
+			output: renderer.pop()
 		});
 
-		renderer.targets.pop();
+		slot_scopes.forEach(({ input, output }, name) => {
+			slot_fns.push(
+				p`${name}: (${input}) => ${output}`
+			);
+		});
 	}
 
 	const slots = x`{
