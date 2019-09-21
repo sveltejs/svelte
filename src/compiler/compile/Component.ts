@@ -831,7 +831,9 @@ export default class Component {
 			});
 		});
 
-		return Array.from(deps).map(n => x`$$invalidate('${n}', ${n})`);
+		return Array.from(deps)
+			.map(n => x`$$invalidate('${n}', ${n})`)
+			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
 	}
 
 	rewrite_props(get_insert: (variable: Var) => Node[]) {

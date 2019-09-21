@@ -127,7 +127,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					${props.map(prop => x`$$invalidate('${prop.name}', ${prop.name} = @_window.${prop.value});`)}
+					${props.map(prop => b`$$invalidate('${prop.name}', ${prop.name} = @_window.${prop.value});`)}
 				}
 			`);
 
