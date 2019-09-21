@@ -404,7 +404,7 @@ export default function dom(
 
 				${unknown_props_check}
 
-				${component.slots.size && b`let { $$slots = {}, $$scope } = $$props;`}
+				${component.slots.size ? b`let { $$slots = {}, $$scope } = $$props;` : null}
 
 				${renderer.binding_groups.length > 0 && b`const $$binding_groups = [${renderer.binding_groups.map(_ => x`[]`)}];`}
 

@@ -4,7 +4,7 @@ import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 import Element from './Element';
-import { x } from 'code-red';
+import { x, p } from 'code-red';
 import { Node, Identifier } from 'estree';
 
 interface Context {
@@ -24,9 +24,9 @@ function unpack_destructuring(contexts: Context[], node: Node, modifier: (node: 
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
 			if (element && (element as any).type === 'RestIdentifier') {
-				unpack_destructuring(contexts, element, node => x`${node}.slice(${i})` as Node);
+				unpack_destructuring(contexts, element, node => x`${modifier(node)}.slice(${i})` as Node);
 			} else {
-				unpack_destructuring(contexts, element, node => x`${node}[${i}]` as Node);
+				unpack_destructuring(contexts, element, node => x`${modifier(node)}[${i}]` as Node);
 			}
 		});
 	} else if (node.type === 'ObjectPattern') {
@@ -37,12 +37,12 @@ function unpack_destructuring(contexts: Context[], node: Node, modifier: (node: 
 				unpack_destructuring(
 					contexts,
 					property.value,
-					node => x`@object_without_properties(${node}, ${JSON.stringify(used_properties)})` as Node
+					node => x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node
 				);
 			} else {
-				used_properties.push((property.key as Identifier).name);
+				used_properties.push(x`"${(property.key as Identifier).name}"`);
 
-				unpack_destructuring(contexts, property.value, node => x`${node}.${(property.key as Identifier).name}` as Node);
+				unpack_destructuring(contexts, property.value, node => x`${modifier(node)}.${(property.key as Identifier).name}` as Node);
 			}
 		});
 	}
