@@ -859,6 +859,8 @@ export default class Component {
 							// const next = node.declarations[i + 1];
 
 							if (declarator.id.type !== 'Identifier') {
+								const inserts = [];
+
 								extract_names(declarator.id).forEach(name => {
 									const variable = component.var_lookup.get(name);
 
@@ -871,9 +873,13 @@ export default class Component {
 									}
 
 									if (variable.subscribable) {
-										// TODO
+										inserts.push(get_insert(variable));
 									}
 								});
+
+								if (inserts.length) {
+									parent[key].splice(index + 1, 0, ...inserts);
+								}
 
 								return;
 							}
