@@ -1,8 +1,7 @@
-import { escape, escape_template, stringify, string_literal } from '../../utils/stringify';
+import { escape, escape_template, string_literal } from '../../utils/stringify';
 import { quote_name_if_necessary } from '../../../utils/names';
 import Renderer, { RenderOptions } from '../Renderer';
 import { get_slot_scope } from './shared/get_slot_scope';
-import { AppendTarget } from '../../../interfaces';
 import InlineComponent from '../../nodes/InlineComponent';
 import { INode } from '../../nodes/interfaces';
 import Text from '../../nodes/Text';
@@ -10,8 +9,11 @@ import { p, x } from 'code-red';
 
 function stringify_attribute(chunk: INode) {
 	if (chunk.type === 'Text') {
-		return escape_template(escape((chunk as Text).data));
+		return string_literal(chunk.data);
+		// return escape_template(escape((chunk as Text).data));
 	}
+
+	return x`@escape(${chunk})`;
 
 	return '${@escape(' + snip(chunk) + ')}';
 }

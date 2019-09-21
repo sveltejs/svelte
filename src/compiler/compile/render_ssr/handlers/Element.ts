@@ -1,4 +1,4 @@
-import { is_void, quote_prop_if_necessary, quote_name_if_necessary } from '../../../utils/names';
+import { is_void, quote_prop_if_necessary } from '../../../utils/names';
 import Attribute from '../../nodes/Attribute';
 import Class from '../../nodes/Class';
 import { stringify_attribute, stringify_class_attribute } from '../../utils/stringify_attribute';
@@ -183,13 +183,15 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	renderer.add_string('>');
 
 	if (node_contents !== undefined) {
-		// if (contenteditable) {
-		// 	renderer.append('${($$value => $$value === void 0 ? `');
-		// 	renderer.render(node.children, options);
-		// 	renderer.append('` : ' + value + ')(' + node_contents + ')}');
-		// } else {
-		// 	renderer.append(node_contents);
-		// }
+		if (contenteditable) {
+			renderer.push();
+			renderer.render(node.children, options);
+			const result = renderer.pop();
+
+			renderer.add_expression(x`($$value => $$value === void 0 ? ${result} : ${node_contents})`);
+		} else {
+			renderer.add_expression(node_contents);
+		}
 	} else {
 		renderer.render(node.children, options);
 	}

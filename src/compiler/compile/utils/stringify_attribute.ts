@@ -1,7 +1,8 @@
 import Attribute from '../nodes/Attribute';
-import { escape_template, escape } from './stringify';
+import { string_literal } from './stringify';
 import { snip } from './snip';
 import Text from '../nodes/Text';
+import { x } from 'code-red';
 
 export function stringify_class_attribute(attribute: Attribute) {
 	// handle special case — `class={possiblyUndefined}` with scoped CSS
@@ -16,12 +17,12 @@ export function stringify_attribute(attribute: Attribute, is_ssr: boolean) {
 	return attribute.chunks
 		.map((chunk) => {
 			if (chunk.type === 'Text') {
-				return escape_template(escape(chunk.data).replace(/"/g, '&quot;'));
+				return string_literal(chunk.data.replace(/"/g, '&quot;'));
 			}
 
 			return is_ssr
-				? '${@escape(' + snip(chunk) + ')}'
-				: '${' + snip(chunk) + '}';
+				? x`@escape(${chunk.node})`
+				: chunk.node;
 		})
-		.join('');
+		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 }
