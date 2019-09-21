@@ -1,10 +1,9 @@
-import { escape, escape_template, string_literal } from '../../utils/stringify';
+import { string_literal } from '../../utils/stringify';
 import { quote_name_if_necessary } from '../../../utils/names';
 import Renderer, { RenderOptions } from '../Renderer';
 import { get_slot_scope } from './shared/get_slot_scope';
 import InlineComponent from '../../nodes/InlineComponent';
 import { INode } from '../../nodes/interfaces';
-import Text from '../../nodes/Text';
 import { p, x } from 'code-red';
 
 function stringify_attribute(chunk: INode) {

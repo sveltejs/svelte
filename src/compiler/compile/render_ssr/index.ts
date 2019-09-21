@@ -1,7 +1,7 @@
 import { b } from 'code-red';
 import Component from '../Component';
 import { CompileOptions } from '../../interfaces';
-import { stringify } from '../utils/stringify';
+import { stringify, string_literal } from '../utils/stringify';
 import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
@@ -140,8 +140,8 @@ export default function ssr(
 	return b`
 		${css.code && b`
 		const #css = {
-			code: ${css.code ? stringify(css.code) : `''`},
-			map: ${css.map ? stringify(css.map.toString()) : 'null'}
+			code: "${css.code}",
+			map: ${css.map ? string_literal(css.map.toString()) : 'null'}
 		};`}
 
 		${component.extract_javascript(component.ast.module)}
