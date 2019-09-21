@@ -31,9 +31,9 @@ export default function dom(
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
-	const styles = component.stylesheet.has_styles && stringify(options.dev ?
-		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
-		css.code, { only_escape_at_symbol: true });
+	const styles = component.stylesheet.has_styles && options.dev
+		? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
+		: css.code;
 
 	const add_css = component.get_unique_name('add_css');
 
