@@ -197,6 +197,11 @@ describe.only("runtime", () => {
 						throw err;
 					}
 				})
+				.catch(err => {
+					// print a clickable link to open the directory
+					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+					throw err;
+				})
 				.then(() => {
 					if (config.show) {
 						showOutput(cwd, compileOptions, compile);
