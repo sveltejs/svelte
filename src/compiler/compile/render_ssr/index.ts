@@ -19,6 +19,9 @@ export default function ssr(
 		locate: component.locate
 	}, options));
 
+	// TODO put this inside the Renderer class
+	renderer.literal.quasis.push(renderer.state.quasi);
+
 	// TODO concatenate CSS maps
 	const css = options.customElement ?
 		{ code: null, map: null } :
@@ -60,7 +63,7 @@ export default function ssr(
 	// TODO only do this for props with a default value
 	const parent_bindings = instance_javascript
 		? props.map(prop => {
-			return `if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
+			return b`if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
 		})
 		: [];
 
@@ -105,7 +108,7 @@ export default function ssr(
 
 				${reactive_declarations}
 
-				$$rendered = \`${renderer.code}\`;
+				$$rendered = ${renderer.literal};
 			} while (!$$settled);
 
 			return $$rendered;
@@ -115,23 +118,22 @@ export default function ssr(
 
 			${reactive_declarations}
 
-			return \`${renderer.code}\`;`;
+			return ${renderer.literal};`;
 
 	const blocks = [
-		reactive_stores.length > 0 && `let ${reactive_stores
-			.map(({ name }) => {
-				const store_name = name.slice(1);
-				const store = component.var_lookup.get(store_name);
-				if (store && store.hoistable) {
-					const get_store_value = component.helper('get_store_value');
-					return `${name} = ${get_store_value}(${store_name})`;
-				}
-				return name;
-			})
-			.join(', ')};`,
+		...reactive_stores.map(({ name }) => {
+			const store_name = name.slice(1);
+			const store = component.var_lookup.get(store_name);
+			if (store && store.hoistable) {
+				const get_store_value = component.helper('get_store_value');
+				return b`let ${name} = ${get_store_value}(${store_name});`;
+			}
+			return b`let ${name};`;
+		}),
+
 		instance_javascript,
-		parent_bindings.join('\n'),
-		css.code && `$$result.css.add(#css);`,
+		...parent_bindings,
+		css.code && b`$$result.css.add(#css);`,
 		main
 	].filter(Boolean);
 
@@ -147,7 +149,7 @@ export default function ssr(
 		${component.fully_hoisted}
 
 		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
-			${blocks.join('\n\n')}
+			${blocks}
 		});
 	`;
 }

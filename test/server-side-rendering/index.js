@@ -20,7 +20,7 @@ function tryToReadFile(file) {
 
 const sveltePath = process.cwd().split('\\').join('/');
 
-describe("ssr", () => {
+describe.only("ssr", () => {
 	before(() => {
 		require("../../register")({
 			extensions: ['.svelte', '.html'],
@@ -75,6 +75,7 @@ describe("ssr", () => {
 				if (show) showOutput(dir, { generate: 'ssr' });
 			} catch (err) {
 				showOutput(dir, { generate: 'ssr' });
+				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
 				throw err;
 			}
 		});

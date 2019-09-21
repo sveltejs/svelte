@@ -13,6 +13,7 @@ import Text from './handlers/Text';
 import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
 import { INode } from '../nodes/interfaces';
+import { Expression } from 'estree';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
 
@@ -43,17 +44,45 @@ export interface RenderOptions extends CompileOptions{
 
 export default class Renderer {
 	has_bindings = false;
-	code = '';
+
+	state = {
+		quasi: {
+			type: 'TemplateElement',
+			value: { raw: '' }
+		}
+	};
+
+	literal = {
+		type: 'TemplateLiteral',
+		expressions: [],
+		quasis: []
+	};
+
 	targets: AppendTarget[] = [];
 
 	append(code: string) {
-		if (this.targets.length) {
-			const target = this.targets[this.targets.length - 1];
-			const slot_name = target.slot_stack[target.slot_stack.length - 1];
-			target.slots[slot_name] += code;
-		} else {
-			this.code += code;
-		}
+		throw new Error('no more append');
+		// if (this.targets.length) {
+		// 	const target = this.targets[this.targets.length - 1];
+		// 	const slot_name = target.slot_stack[target.slot_stack.length - 1];
+		// 	target.slots[slot_name] += code;
+		// } else {
+		// 	this.code += code;
+		// }
+	}
+
+	add_string(str: string) {
+		this.state.quasi.value.raw += str;
+	}
+
+	add_expression(node: Expression) {
+		this.literal.quasis.push(this.state.quasi);
+		this.literal.expressions.push(node);
+
+		this.state.quasi = {
+			type: 'TemplateElement',
+			value: { raw: '' }
+		};
 	}
 
 	render(nodes: INode[], options: RenderOptions) {

@@ -1,6 +1,5 @@
-import { escape, escape_template, stringify } from '../../utils/stringify';
+import { escape, escape_template, stringify, string_literal } from '../../utils/stringify';
 import { quote_name_if_necessary } from '../../../utils/names';
-import { snip } from '../../utils/snip';
 import Renderer, { RenderOptions } from '../Renderer';
 import { get_slot_scope } from './shared/get_slot_scope';
 import { AppendTarget } from '../../../interfaces';
@@ -18,19 +17,15 @@ function stringify_attribute(chunk: INode) {
 }
 
 function get_attribute_value(attribute) {
-	if (attribute.is_true) return `true`;
-	if (attribute.chunks.length === 0) return `''`;
+	if (attribute.is_true) return x`true`;
+	if (attribute.chunks.length === 0) return x`''`;
 
-	if (attribute.chunks.length === 1) {
-		const chunk = attribute.chunks[0];
-		if (chunk.type === 'Text') {
-			return stringify(chunk.data);
-		}
-
-		return snip(chunk);
-	}
-
-	return '`' + attribute.chunks.map(stringify_attribute).join('') + '`';
+	return attribute.chunks
+		.map(chunk => {
+			if (chunk.type === 'Text') return string_literal(chunk.data);
+			return chunk.node;
+		})
+		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 }
 
 export default function(node: InlineComponent, renderer: Renderer, options: RenderOptions) {
@@ -41,7 +36,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		renderer.has_bindings = true;
 
 		// TODO this probably won't work for contextual bindings
-		const snippet = snip(binding.expression);
+		const snippet = binding.expression.node;
 
 		binding_props.push(p`${binding.name}: ${snippet}`);
 		binding_fns.push(p`${binding.name}: $$value => { ${snippet} = $$value; $$settled = false }`);
@@ -66,7 +61,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		})`;
 	} else {
 		props = x`{
-			${node.attributes.map(attribute => p`${attribute.name}: ${get_attribute_value(attribute)}`)}
+			${node.attributes.map(attribute => p`${attribute.name}: ${get_attribute_value(attribute)}`)},
 			${binding_props}
 		}`;
 	}
@@ -115,5 +110,5 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		${slot_fns}
 	}`;
 
-	renderer.append(`\${@validate_component(${expression}, '${node.name}').$$render($$result, ${props}, ${bindings}, ${slots})}`);
+	renderer.add_expression(x`@validate_component(${expression}, "${node.name}").$$render($$result, ${props}, ${bindings}, ${slots})`);
 }

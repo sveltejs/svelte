@@ -837,7 +837,7 @@ export default class Component {
 	}
 
 	rewrite_props(get_insert: (variable: Var) => Node[]) {
-		// TODO
+		if (!this.ast.instance) return;
 
 		const component = this;
 		const { instance_scope, instance_scope_map: map } = this;

@@ -26,7 +26,7 @@ process.on('unhandledRejection', err => {
 	unhandled_rejection = err;
 });
 
-describe.only("runtime", () => {
+describe("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
