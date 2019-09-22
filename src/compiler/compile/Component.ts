@@ -1,4 +1,3 @@
-// @ts-ignore
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
@@ -368,7 +367,17 @@ export default class Component {
 				? { code: null, map: null }
 				: this.stylesheet.render(compile_options.cssOutputFilename, true);
 
-			js = print(program);
+			js = print(program, {
+				sourceMapSource: compile_options.filename
+			});
+
+			js.map.sources = [
+				compile_options.filename ? get_relative_path(compile_options.outputFilename || '', compile_options.filename) : null
+			];
+
+			js.map.sourcesContent = [
+				this.source
+			];
 		}
 
 		return {
@@ -1403,4 +1412,23 @@ function process_component_options(component: Component, nodes) {
 	}
 
 	return component_options;
+}
+
+function get_relative_path(from: string, to: string) {
+	const from_parts = from.split(/[/\\]/);
+	const to_parts = to.split(/[/\\]/);
+
+	from_parts.pop(); // get dirname
+
+	while (from_parts[0] === to_parts[0]) {
+		from_parts.shift();
+		to_parts.shift();
+	}
+
+	if (from_parts.length) {
+		let i = from_parts.length;
+		while (i--) from_parts[i] = '..';
+	}
+
+	return from_parts.concat(to_parts).join('/');
 }
