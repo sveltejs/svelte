@@ -107,14 +107,14 @@ export default class EachBlockWrapper extends Wrapper {
 		// is easy to find
 		let c = this.node.start + 2;
 		while (renderer.component.source[c] !== 'e') c += 1;
+		const start = renderer.component.locate(c);
+		start.line += 1;
+		const end = { line: start.line, column: start.column + 4 };
 		const length = {
 			type: 'Identifier',
 			name: 'length',
-			// TODO this format may be incorrect
-			start: c,
-			end: c + 4
+			loc: { start, end }
 		};
-		// renderer.component.code.overwrite(c, c + 4, 'length');
 
 		const each_block_value = renderer.component.get_unique_name(`${this.var.name}_value`);
 		const iterations = block.get_unique_name(`${this.var.name}_blocks`);
