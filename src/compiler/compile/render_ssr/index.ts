@@ -142,11 +142,11 @@ export default function ssr(
 	].filter(Boolean);
 
 	return b`
-		${css.code && b`
+		${css.code ? b`
 		const #css = {
 			code: "${css.code}",
 			map: ${css.map ? string_literal(css.map.toString()) : 'null'}
-		};`}
+		};` : null}
 
 		${component.extract_javascript(component.ast.module)}
 

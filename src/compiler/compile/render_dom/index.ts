@@ -37,7 +37,13 @@ export default function dom(
 
 	const add_css = component.get_unique_name('add_css');
 
-	if (styles && component.compile_options.css !== false && !options.customElement) {
+	const should_add_css = (
+		!options.customElement &&
+		styles.length > 0 &&
+		options.css !== false
+	);
+
+	if (should_add_css) {
 		body.push(b`
 			function ${add_css}() {
 				var style = @element("style");
@@ -64,14 +70,6 @@ export default function dom(
 			b`throw new @_Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`
 		);
 	}
-
-	// TODO injecting CSS this way is kinda dirty. Maybe it should be an
-	// explicit opt-in, or something?
-	const should_add_css = (
-		!options.customElement &&
-		component.stylesheet.has_styles &&
-		options.css !== false
-	);
 
 	const uses_props = component.var_lookup.has('$$props');
 	const $$props = uses_props ? `$$new_props` : `$$props`;
