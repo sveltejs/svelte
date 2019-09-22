@@ -5,6 +5,7 @@ import { stringify, string_literal } from '../utils/stringify';
 import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
+import { extract_names } from '../utils/scope';
 
 export default function ssr(
 	component: Component,
@@ -32,14 +33,15 @@ export default function ssr(
 		.map(({ name }) => {
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
-			if (store && store.hoistable) return;
+			if (store && store.hoistable) return null;
 
-			const assignment = `${name} = @get_store_value(${store_name});`;
+			const assignment = b`${name} = @get_store_value(${store_name});`;
 
 			return component.compile_options.dev
-				? `@validate_store(${store_name}, '${store_name}'); ${assignment}`
+				? b`@validate_store(${store_name}, '${store_name}'); ${assignment}`
 				: assignment;
-		});
+		})
+		.filter(Boolean);
 
 	// TODO remove this, just use component.vars everywhere
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
@@ -67,33 +69,35 @@ export default function ssr(
 		})
 		: [];
 
-	const reactive_declarations = component.reactive_declarations.map(_d => {
-		throw new Error('TODO');
-		// let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
+	const reactive_declarations = component.reactive_declarations.map(d => {
+		let snippet = b`${d.node}`;
 
-		// if (d.declaration) {
-		// 	const declared = extract_names(d.declaration);
-		// 	const injected = declared.filter(name => {
-		// 		return name[0] !== '$' && component.var_lookup.get(name).injected;
-		// 	});
+		if (d.declaration) {
+			const declared = extract_names(d.declaration);
+			const injected = declared.filter(name => {
+				return name[0] !== '$' && component.var_lookup.get(name).injected;
+			});
 
-		// 	const self_dependencies = injected.filter(name => d.dependencies.has(name));
+			const self_dependencies = injected.filter(name => d.dependencies.has(name));
 
-		// 	if (injected.length) {
-		// 		// in some cases we need to do `let foo; [expression]`, in
-		// 		// others we can do `let [expression]`
-		// 		const separate = (
-		// 			self_dependencies.length > 0 ||
-		// 			declared.length > injected.length
-		// 		);
+			if (injected.length) {
+				// in some cases we need to do `let foo; [expression]`, in
+				// others we can do `let [expression]`
+				const separate = (
+					self_dependencies.length > 0 ||
+					declared.length > injected.length
+				);
 
-		// 		snippet = separate
-		// 			? `let ${injected.join(', ')}; ${snippet}`
-		// 			: `let ${snippet}`;
-		// 	}
-		// }
+				snippet = separate
+					? b`
+						${injected.map(name => b`let ${name};`)}
+						${snippet}`
+					: b`
+						let ${snippet}`;
+			}
+		}
 
-		// return snippet;
+		return snippet;
 	});
 
 	const main = renderer.has_bindings

@@ -78,7 +78,7 @@ export default class Renderer {
 		});
 
 		this.literal.expressions.push(node);
-		this.current = { value: '' };
+		this.current.value = '';
 	}
 
 	push() {

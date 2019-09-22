@@ -36,17 +36,16 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 	let props;
 
 	if (uses_spread) {
-		props = `@_Object.assign(${
+		props = x`@_Object.assign(${
 			node.attributes
 				.map(attribute => {
 					if (attribute.is_spread) {
-						return snip(attribute.expression);
+						return attribute.expression.node;
 					} else {
-						return `{ ${quote_name_if_necessary(attribute.name)}: ${get_prop_value(attribute)} }`;
+						return x`{ ${attribute.name}: ${get_prop_value(attribute)} }`;
 					}
 				})
 				.concat(binding_props.map(p => `{ ${p} }`))
-				.join(', ')
 		})`;
 	} else {
 		props = x`{
@@ -61,7 +60,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 
 	const expression = (
 		node.name === 'svelte:self'
-			? '__svelte:self__' // TODO conflict-proof this
+			? options.name
 			: node.name === 'svelte:component'
 				? x`(${node.expression.node}) || @missing_component`
 				: node.name

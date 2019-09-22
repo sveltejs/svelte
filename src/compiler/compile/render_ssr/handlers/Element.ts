@@ -66,22 +66,20 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 	const slot = node.get_static_attribute_value('slot');
 	const nearest_inline_component = node.find_nearest(/InlineComponent/);
-	if (slot && nearest_inline_component) {
-		const slot = node.attributes.find((attribute) => attribute.name === 'slot');
-		const slot_name = (slot.chunks[0] as Text).data;
-		const target = renderer.targets[renderer.targets.length - 1];
-		target.slot_stack.push(slot_name);
-		target.slots[slot_name] = '';
 
-		const lets = node.lets;
-		const seen = new Set(lets.map(l => l.name.name));
+	// if (slot && nearest_inline_component) {
+	// 	const slot = node.attributes.find((attribute) => attribute.name === 'slot');
+	// 	const slot_name = (slot.chunks[0] as Text).data;
 
-		nearest_inline_component.lets.forEach(l => {
-			if (!seen.has(l.name.name)) lets.push(l);
-		});
+	// 	const lets = node.lets;
+	// 	const seen = new Set(lets.map(l => l.name.name));
 
-		options.slot_scopes.set(slot_name, get_slot_scope(node.lets));
-	}
+	// 	nearest_inline_component.lets.forEach(l => {
+	// 		if (!seen.has(l.name.name)) lets.push(l);
+	// 	});
+
+	// 	options.slot_scopes.set(slot_name, get_slot_scope(node.lets));
+	// }
 
 	const class_expression = node.classes.map((class_directive: Class) => {
 		const { expression, name } = class_directive;
@@ -189,6 +187,21 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		} else {
 			renderer.add_expression(node_contents);
 		}
+	} else if (slot && nearest_inline_component) {
+		renderer.push();
+		renderer.render(node.children, options);
+
+		const lets = node.lets;
+		const seen = new Set(lets.map(l => l.name.name));
+
+		nearest_inline_component.lets.forEach(l => {
+			if (!seen.has(l.name.name)) lets.push(l);
+		});
+
+		options.slot_scopes.set(slot, {
+			input: get_slot_scope(node.lets),
+			output: renderer.pop()
+		});
 	} else {
 		renderer.render(node.children, options);
 	}

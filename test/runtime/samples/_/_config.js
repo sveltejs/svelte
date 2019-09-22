@@ -1,20 +1,52 @@
 export default {
-	html: `<div>foo</div><div>bar</div><div>baz</div>`,
+	props: {
+		state: 'deconflicted',
+		states: [
+			'Alabama',
+			'Alaska',
+			'Arizona',
+			'Arkansas',
+			'...and some others'
+		]
+	},
+
+	html: `
+		<p>Current state: deconflicted</p>
+
+		<ul>
+			<li>Alabama</li>
+			<li>Alaska</li>
+			<li>Arizona</li>
+			<li>Arkansas</li>
+			<li>...and some others</li>
+		</ul>
+	`,
 
 	test({ assert, component, target }) {
-		let elems = target.querySelectorAll('div');
-		assert.equal(component.divs.length, 3, 'three divs are registered (unkeyed array)');
-		component.divs.forEach((e, i) => {
-			assert.equal(e, elems[i], `div ${i} is correct (unkeyed array)`);
-		});
+		component.states = [
+			'Maine',
+			'Maryland',
+			'Massachusetts',
+			'Michigan',
+			'Minnesota',
+			'Mississippi',
+			'Missouri',
+			'Montana'
+		];
 
-		component.items = ['foo', 'baz'];
-		assert.equal(component.divs.length, 3, 'the divs array is still 3 long');
-		assert.equal(component.divs[2], null, 'the last div is unregistered');
+		assert.htmlEqual( target.innerHTML, `
+			<p>Current state: deconflicted</p>
 
-		elems = target.querySelectorAll('div');
-		component.divs.forEach((e, i) => {
-			assert.equal(e, elems[i], `div ${i} is still correct`);
-		});
+			<ul>
+				<li>Maine</li>
+				<li>Maryland</li>
+				<li>Massachusetts</li>
+				<li>Michigan</li>
+				<li>Minnesota</li>
+				<li>Mississippi</li>
+				<li>Missouri</li>
+				<li>Montana</li>
+			</ul>
+		` );
 	}
 };
