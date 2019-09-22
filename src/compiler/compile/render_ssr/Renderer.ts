@@ -46,7 +46,7 @@ export default class Renderer {
 	has_bindings = false;
 
 	stack: { current: { value: string }, literal: TemplateLiteral }[] = [];
-	current: { value: string };
+	current: { value: string }; // TODO can it just be `current: string`?
 	literal: TemplateLiteral;
 
 	targets: AppendTarget[] = [];

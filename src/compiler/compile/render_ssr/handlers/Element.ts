@@ -81,11 +81,13 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	// 	options.slot_scopes.set(slot_name, get_slot_scope(node.lets));
 	// }
 
-	const class_expression = node.classes.map((class_directive: Class) => {
-		const { expression, name } = class_directive;
-		const snippet = expression ? snip(expression) : `#ctx${quote_prop_if_necessary(name)}`;
-		return `${snippet} ? "${name}" : ""`;
-	}).join(', ');
+	const class_expression = node.classes.length > 0 && node.classes
+		.map((class_directive: Class) => {
+			const { expression, name } = class_directive;
+			const snippet = expression ? expression.node : x`#ctx.${name}`;
+			return x`${snippet} ? "${name}" : ""`;
+		})
+		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
 	let add_class_attribute = class_expression ? true : false;
 
@@ -171,9 +173,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		}
 	});
 
-	// if (add_class_attribute) {
-	// 	opening_tag += `\${@add_classes([${class_expression}].join(' ').trim())}`;
-	// }
+	if (add_class_attribute) {
+		renderer.add_expression(x`@add_classes([${class_expression}].join(' ').trim())`);
+	}
 
 	renderer.add_string('>');
 

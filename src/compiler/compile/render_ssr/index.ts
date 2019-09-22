@@ -70,7 +70,7 @@ export default function ssr(
 		: [];
 
 	const reactive_declarations = component.reactive_declarations.map(d => {
-		let snippet = b`${d.node}`;
+		let statement = b`${d.node.body}`;
 
 		if (d.declaration) {
 			const declared = extract_names(d.declaration);
@@ -88,16 +88,16 @@ export default function ssr(
 					declared.length > injected.length
 				);
 
-				snippet = separate
+				statement = separate
 					? b`
 						${injected.map(name => b`let ${name};`)}
-						${snippet}`
+						${statement}`
 					: b`
-						let ${snippet}`;
+						let ${d.node.body.expression.left} = ${d.node.body.expression.right}`;
 			}
 		}
 
-		return snippet;
+		return statement;
 	});
 
 	const main = renderer.has_bindings
