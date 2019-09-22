@@ -39,7 +39,7 @@ export default function dom(
 
 	const should_add_css = (
 		!options.customElement &&
-		styles.length > 0 &&
+		!!styles &&
 		options.css !== false
 	);
 

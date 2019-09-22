@@ -6,6 +6,7 @@
 		"children": []
 	},
 	"instance": {
+		"type": "Script",
 		"start": 0,
 		"end": 146,
 		"context": "default",

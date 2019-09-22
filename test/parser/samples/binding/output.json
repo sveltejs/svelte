@@ -36,6 +36,7 @@
 		]
 	},
 	"instance": {
+		"type": "Script",
 		"start": 0,
 		"end": 29,
 		"context": "default",

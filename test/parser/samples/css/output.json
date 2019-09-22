@@ -30,6 +30,7 @@
 		]
 	},
 	"css": {
+		"type": "Style",
 		"start": 16,
 		"end": 56,
 		"attributes": [],

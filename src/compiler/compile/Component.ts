@@ -51,6 +51,7 @@ export default class Component {
 	ignore_stack: Array<Set<string>> = [];
 
 	ast: Ast;
+	original_ast: Ast;
 	source: string;
 	name: Identifier;
 	compile_options: CompileOptions;
@@ -123,6 +124,15 @@ export default class Component {
 		this.ast = ast;
 		this.source = source;
 		this.compile_options = compile_options;
+
+		// the instance JS gets mutated, so we park
+		// a copy here for later. TODO this feels gross
+		this.original_ast = {
+			html: ast.html,
+			css: ast.css,
+			instance: ast.instance && JSON.parse(JSON.stringify(ast.instance)),
+			module: ast.module
+		};
 
 		this.file =
 			compile_options.filename &&
@@ -364,7 +374,7 @@ export default class Component {
 		return {
 			js,
 			css,
-			ast: this.ast,
+			ast: this.original_ast,
 			warnings: this.warnings,
 			vars: this.vars
 				.filter(v => !v.global && !v.internal)
@@ -710,9 +720,9 @@ export default class Component {
 		const script = this.ast.instance;
 		if (!script) return;
 
+		this.warn_on_undefined_store_value_references();
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
-		this.extract_reactive_store_references();
 	}
 
 	// TODO merge this with other walks that are independent
@@ -751,7 +761,7 @@ export default class Component {
 		});
 	}
 
-	extract_reactive_store_references() {
+	warn_on_undefined_store_value_references() {
 		// TODO this pattern happens a lot... can we abstract it
 		// (or better still, do fewer AST walks)?
 		const component = this;

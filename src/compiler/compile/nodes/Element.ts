@@ -676,6 +676,7 @@ export default class Element extends Node {
 
 				if (modifier === 'passive') {
 					if (passive_events.has(handler.name)) {
+						console.log('here', handler.name, handler.can_make_passive);
 						if (handler.can_make_passive) {
 							component.warn(handler, {
 								code: 'redundant-event-modifier',
