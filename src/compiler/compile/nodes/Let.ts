@@ -16,11 +16,13 @@ export default class Let extends Node {
 
 		this.name = { type: 'Identifier', name: info.name };
 
+		const { names } = this;
+
 		if (info.expression) {
 			this.value = info.expression;
 
 			walk(info.expression, {
-				enter: node => {
+				enter(node) {
 					if (!applicable.has(node.type)) {
 						component.error(node as any, {
 							code: 'invalid-let',
@@ -29,7 +31,7 @@ export default class Let extends Node {
 					}
 
 					if (node.type === 'Identifier') {
-						this.names.push(node.name);
+						names.push(node.name);
 					}
 
 					// slightly unfortunate hack
@@ -43,7 +45,7 @@ export default class Let extends Node {
 				}
 			});
 		} else {
-			this.names.push(this.name.name);
+			names.push(this.name.name);
 		}
 	}
 }

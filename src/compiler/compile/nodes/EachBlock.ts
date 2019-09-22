@@ -5,7 +5,7 @@ import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 import Element from './Element';
 import { x, p } from 'code-red';
-import { Node, Identifier } from 'estree';
+import { Node, Identifier, RestElement } from 'estree';
 
 interface Context {
 	key: Identifier;
@@ -32,8 +32,15 @@ function unpack_destructuring(contexts: Context[], node: Node, modifier: (node: 
 	} else if (node.type === 'ObjectPattern') {
 		const used_properties = [];
 
-		node.properties.forEach((property) => {
+		node.properties.forEach((property, i) => {
 			if ((property as any).kind === 'rest') { // TODO is this right?
+				const replacement: RestElement = {
+					type: 'RestElement',
+					argument: property.key as Identifier
+				}
+
+				node.properties[i] = replacement;
+
 				unpack_destructuring(
 					contexts,
 					property.value,
