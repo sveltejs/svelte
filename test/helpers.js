@@ -47,7 +47,7 @@ export function tryToReadFile(file) {
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 
-global.window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
+const window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
 global.document = window.document;
 global.navigator = window.navigator;
 global.getComputedStyle = window.getComputedStyle;

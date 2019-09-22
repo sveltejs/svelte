@@ -14,6 +14,7 @@ import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
 import { INode } from '../nodes/interfaces';
 import { Expression, TemplateLiteral } from 'estree';
+import { escape_template } from '../utils/stringify';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
 
@@ -67,7 +68,7 @@ export default class Renderer {
 	}
 
 	add_string(str: string) {
-		this.current.value += str;
+		this.current.value += escape_template(str);
 	}
 
 	add_expression(node: Expression) {
