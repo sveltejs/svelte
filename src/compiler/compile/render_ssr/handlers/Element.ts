@@ -87,7 +87,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			const snippet = expression ? expression.node : x`#ctx.${name}`;
 			return x`${snippet} ? "${name}" : ""`;
 		})
-		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
+		.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
 
 	let add_class_attribute = class_expression ? true : false;
 

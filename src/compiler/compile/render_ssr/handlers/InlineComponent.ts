@@ -45,7 +45,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 						return x`{ ${attribute.name}: ${get_prop_value(attribute)} }`;
 					}
 				})
-				.concat(binding_props.map(p => `{ ${p} }`))
+				.concat(binding_props.map(p => x`{ ${p} }`))
 		})`;
 	} else {
 		props = x`{
