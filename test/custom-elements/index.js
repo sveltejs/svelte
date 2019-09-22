@@ -109,6 +109,11 @@ describe('custom-elements', function() {
 				console[type](...args);
 			});
 
+			page.on('error', error => {
+				console.log('>>> an error happened');
+				console.error(error);
+			});
+
 			try {
 				await page.goto('http://localhost:6789');
 

@@ -1,5 +1,5 @@
 import { b, x, p } from 'code-red';
-import { stringify, escape } from '../utils/stringify';
+import { escape } from '../utils/stringify';
 import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
@@ -26,7 +26,7 @@ export default function dom(
 
 	const body = [];
 
-	if (component.compile_options.dev && component.file) {
+	if (renderer.file_var) {
 		body.push(b`const ${renderer.file_var} = "${component.file}";`);
 	}
 
