@@ -60,7 +60,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 
 	const expression = (
 		node.name === 'svelte:self'
-			? options.name
+			? renderer.name
 			: node.name === 'svelte:component'
 				? x`(${node.expression.node}) || @missing_component`
 				: node.name

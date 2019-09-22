@@ -13,7 +13,7 @@ import Text from './handlers/Text';
 import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
 import { INode } from '../nodes/interfaces';
-import { Expression, TemplateLiteral } from 'estree';
+import { Expression, TemplateLiteral, Identifier } from 'estree';
 import { escape_template } from '../utils/stringify';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
@@ -46,13 +46,16 @@ export interface RenderOptions extends CompileOptions{
 export default class Renderer {
 	has_bindings = false;
 
+	name: Identifier;
+
 	stack: { current: { value: string }, literal: TemplateLiteral }[] = [];
 	current: { value: string }; // TODO can it just be `current: string`?
 	literal: TemplateLiteral;
 
 	targets: AppendTarget[] = [];
 
-	constructor() {
+	constructor({ name }) {
+		this.name = name;
 		this.push();
 	}
 

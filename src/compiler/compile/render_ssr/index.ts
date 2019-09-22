@@ -1,7 +1,7 @@
 import { b } from 'code-red';
 import Component from '../Component';
 import { CompileOptions } from '../../interfaces';
-import { stringify, string_literal } from '../utils/stringify';
+import { string_literal } from '../utils/stringify';
 import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
@@ -11,7 +11,9 @@ export default function ssr(
 	component: Component,
 	options: CompileOptions
 ) {
-	const renderer = new Renderer();
+	const renderer = new Renderer({
+		name: component.name
+	});
 
 	const { name } = component;
 

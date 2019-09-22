@@ -37,9 +37,7 @@ const specials = new Map([
 	],
 ]);
 
-// eslint-disable-next-line no-useless-escape
 const SELF = /^svelte:self(?=[\s\/>])/;
-// eslint-disable-next-line no-useless-escape
 const COMPONENT = /^svelte:component(?=[\s\/>])/;
 
 function parent_is_head(stack) {
