@@ -115,7 +115,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 					args.push(x`{ ${attribute.name}: ${attribute.chunks[0].node} }`);
 				} else if (attribute.name === 'class' && class_expression) {
 					// Add class expression
-					args.push(x`{ ${attribute.name}: [${get_class_attribute_value(attribute)}, ${class_expression}}].join(' ').trim() }`);
+					args.push(x`{ ${attribute.name}: [${get_class_attribute_value(attribute)}, ${class_expression}].join(' ').trim() }`);
 				} else {
 					args.push(x`{ ${attribute.name}: ${attribute.name === 'class' ? get_class_attribute_value(attribute) : get_attribute_value(attribute, true)} }`);
 				}
@@ -193,8 +193,16 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		} else {
 			renderer.add_expression(node_contents);
 		}
+
+		if (!is_void(node.name)) {
+			renderer.add_string(`</${node.name}>`);
+		}
 	} else if (slot && nearest_inline_component) {
 		renderer.render(node.children, options);
+
+		if (!is_void(node.name)) {
+			renderer.add_string(`</${node.name}>`);
+		}
 
 		const lets = node.lets;
 		const seen = new Set(lets.map(l => l.name.name));
@@ -209,9 +217,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		});
 	} else {
 		renderer.render(node.children, options);
-	}
 
-	if (!is_void(node.name)) {
-		renderer.add_string(`</${node.name}>`);
+		if (!is_void(node.name)) {
+			renderer.add_string(`</${node.name}>`);
+		}
 	}
 }
