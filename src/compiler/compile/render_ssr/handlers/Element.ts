@@ -52,8 +52,6 @@ const boolean_attributes = new Set([
 export default function(node: Element, renderer: Renderer, options: RenderOptions & {
 	slot_scopes: Map<any, any>;
 }) {
-	renderer.add_string(`<${node.name}`);
-
 	// awkward special case
 	let node_contents;
 	let value;
@@ -66,6 +64,12 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 	const slot = node.get_static_attribute_value('slot');
 	const nearest_inline_component = node.find_nearest(/InlineComponent/);
+
+	if (slot && nearest_inline_component) {
+		renderer.push();
+	}
+
+	renderer.add_string(`<${node.name}`);
 
 	// if (slot && nearest_inline_component) {
 	// 	const slot = node.attributes.find((attribute) => attribute.name === 'slot');
@@ -185,12 +189,11 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			renderer.render(node.children, options);
 			const result = renderer.pop();
 
-			renderer.add_expression(x`($$value => $$value === void 0 ? ${result} : ${node_contents})`);
+			renderer.add_expression(x`($$value => $$value === void 0 ? ${result} : $$value)(${node_contents})`);
 		} else {
 			renderer.add_expression(node_contents);
 		}
 	} else if (slot && nearest_inline_component) {
-		renderer.push();
 		renderer.render(node.children, options);
 
 		const lets = node.lets;
