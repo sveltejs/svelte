@@ -3,4 +3,5 @@
 	export let foo;
 </script>
 
-<Widget value='foo @ {foo} # foo'/>
+<Widget value='foo @ {foo} # foo'>
+</Widget>

@@ -4,7 +4,7 @@
 		let offset = null;
 
 		if (user) {
-			var url = 'apps.json';
+			let url = 'apps.json';
 			if (page.query.offset) {
 				url += `?offset=${encodeURIComponent(page.query.offset)}`;
 			}
@@ -50,9 +50,9 @@
 			<h1>Your apps</h1>
 
 			<div class="user">
-				<img class="avatar" alt="{user.name} avatar" src="{user.avatar}">
+				<img class="avatar" alt="{user.name || user.username} avatar" src="{user.avatar}">
 				<span>
-					{user.name}
+					{user.name || user.username}
 					(<a on:click|preventDefault={logout} href="auth/logout">log out</a>)
 				</span>
 			</div>
