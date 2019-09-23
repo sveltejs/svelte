@@ -250,12 +250,6 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 	return false;
 }
 
-function class_matches(node, name: string) {
-	return node.classes.some((class_directive) => {
-		return new RegExp(`\\b${name}\\b`).test(class_directive.name);
-	});
-}
-
 function unquote(value: CssNode) {
 	if (value.type === 'Identifier') return value.name;
 	const str = value.value;
