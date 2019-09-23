@@ -1,7 +1,3 @@
-export function stringify(data: string, options = {}) {
-	return JSON.stringify(escape(data, options));
-}
-
 export function string_literal(data: string) {
 	return {
 		type: 'Literal',
