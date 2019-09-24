@@ -23,6 +23,7 @@ export const globals = new Set([
 	'isNaN',
 	'JSON',
 	'localStorage',
+	'location',
 	'Map',
 	'Math',
 	'NaN',
