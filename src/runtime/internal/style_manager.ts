@@ -1,9 +1,11 @@
 import { element } from './dom';
 import { raf } from './environment';
 
-let stylesheet;
+type DocStyles = [CSSStyleSheet, Record<string, true>];
+
+let activeDocs = new Set<Document>();
+let docStyles = new WeakMap<Document, DocStyles>();
 let active = 0;
-let current_rules = {};
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function hash(str: string) {
@@ -25,14 +27,18 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 
 	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
 	const name = `__svelte_${hash(rule)}_${uid}`;
+	const doc = node.ownerDocument;
+	activeDocs.add(doc);
+	let [ stylesheet, current_rules ] = (docStyles.get(doc) || []) as DocStyles;
+	if (!stylesheet) {
+		current_rules = {};
+		const style = element('style');
+		doc.head.appendChild(style);
+		stylesheet = style.sheet as CSSStyleSheet;
+		docStyles.set(doc, [ stylesheet, current_rules ]);
+	}
 
 	if (!current_rules[name]) {
-		if (!stylesheet) {
-			const style = element('style');
-			document.head.appendChild(style);
-			stylesheet = style.sheet;
-		}
-
 		current_rules[name] = true;
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
 	}
@@ -53,14 +59,19 @@ export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string
 		)
 		.join(', ');
 
-	if (name && !--active) clear_rules();
+	active = Math.max(0, active - 1);
+	if (name && !active) clear_rules();
 }
 
 export function clear_rules() {
 	raf(() => {
 		if (active) return;
-		let i = stylesheet.cssRules.length;
-		while (i--) stylesheet.deleteRule(i);
-		current_rules = {};
+		activeDocs.forEach(doc => {
+			const [ stylesheet ] = docStyles.get(doc);
+			let i = stylesheet.cssRules.length;
+			while (i--) stylesheet.deleteRule(i);
+			docStyles.set(doc, [ stylesheet, {} ]);
+		});
+		activeDocs.clear();
 	});
 }
