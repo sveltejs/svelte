@@ -19,3 +19,4 @@ Components can also dispatch events. To do so, they must create an event dispatc
 ```
 
 > `createEventDispatcher` must be called when the component is first instantiated — you can't do it later inside e.g. a `setTimeout` callback. This links `dispatch` to the component instance.
+> `dispatch` can only be called once the component has been mounted. It is therefore not possible to call `dispatch` from the `beforeUpdate` lifecycle.
