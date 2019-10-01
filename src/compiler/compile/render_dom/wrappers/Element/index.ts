@@ -100,6 +100,12 @@ const events = [
 			node.is_media_node() &&
 			name === 'playbackRate'
 	},
+	{
+		event_names: ['seeking', 'seeked'],
+		filter: (node: Element, name: string) =>
+			node.is_media_node() &&
+			(name === 'seeking')
+	},
 
 	// details event
 	{
