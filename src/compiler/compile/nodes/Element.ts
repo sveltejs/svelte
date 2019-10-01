@@ -596,7 +596,8 @@ export default class Element extends Node {
 				name === 'seekable' ||
 				name === 'played' ||
 				name === 'volume' ||
-				name === 'playbackRate'
+				name === 'playbackRate' ||
+				name === 'seeking'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
 					component.error(binding, {
