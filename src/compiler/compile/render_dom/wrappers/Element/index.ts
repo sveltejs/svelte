@@ -62,7 +62,7 @@ const events = [
 		event_names: ['timeupdate'],
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
-			(name === 'currentTime' || name === 'played')
+			(name === 'currentTime' || name === 'played' || name === 'ended')
 	},
 	{
 		event_names: ['durationchange'],
@@ -105,6 +105,12 @@ const events = [
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
 			(name === 'seeking')
+	},
+	{
+		event_names: ['ended'],
+		filter: (node: Element, name: string) =>
+			node.is_media_node() &&
+			name === 'ended'
 	},
 
 	// details event
