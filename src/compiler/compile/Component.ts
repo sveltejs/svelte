@@ -1265,10 +1265,16 @@ export default class Component {
 						}
 
 						if (node.type === 'AssignmentExpression') {
-							extract_identifiers(get_object(node.left)).forEach(node => {
+							const left = get_object(node.left);
+
+							extract_identifiers(left).forEach(node => {
 								assignee_nodes.add(node);
 								assignees.add(node.name);
 							});
+
+							if (node.operator !== '=') {
+								dependencies.add(left.name);
+							}
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
