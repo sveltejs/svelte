@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix edge cases in matching selectors against elements ([#1710](https://github.com/sveltejs/svelte/issues/1710))
+* Fix tracking of dependencies of compound assignments in reactive statements ([#3634](https://github.com/sveltejs/svelte/issues/3634))
 
 ## 3.12.1
 
