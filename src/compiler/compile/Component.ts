@@ -46,9 +46,6 @@ childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
 childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
 
-// There is no datatype that describes only the compound operators so we create this list here
-const compoundAssignmentOperators = ["+=" , "-=" ,"*=", "/=" ,"%=" ,"**=", "<<=" ,">>=", ">>>=", "|=" ,"^=" ,"&="];
-
 function remove_node(
 	code: MagicString,
 	start: number,
@@ -1275,9 +1272,7 @@ export default class Component {
 								assignees.add(node.name);
 							});
 
-
-
-							if (compoundAssignmentOperators.findIndex(op => op === node.operator) !== -1) {
+							if (node.operator !== '=') {
 								dependencies.add(left.name);
 							}
 						} else if (node.type === 'UpdateExpression') {
