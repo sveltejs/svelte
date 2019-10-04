@@ -13,7 +13,7 @@ export default {
 		assert.equal(component.x, 2);
 		assert.htmlEqual(target.innerHTML, `
 			<button>+1</button>
-			<p>count:2</p>
+			<p>count: 2</p>
 		`);
 
 		await button.dispatchEvent(click);
@@ -21,7 +21,7 @@ export default {
 		assert.equal(component.x, 6);
 		assert.htmlEqual(target.innerHTML, `
 			<button>+1</button>
-			<p>count:6</p>
+			<p>count: 6</p>
 		`);
 	}
 };
