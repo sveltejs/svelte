@@ -31,7 +31,7 @@ export default class Selector {
 	apply(node: Node, stack: Node[]) {
 		const to_encapsulate: Node[] = [];
 
-		apply_selector(this.stylesheet, this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
+		apply_selector(this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
 
 		if (to_encapsulate.length > 0) {
 			to_encapsulate.filter((_, i) => i === 0 || i === to_encapsulate.length - 1).forEach(({ node, block }) => {
@@ -126,7 +126,7 @@ export default class Selector {
 	}
 }
 
-function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, stack: Node[], to_encapsulate: any[]): boolean {
+function apply_selector(blocks: Block[], node: Node, stack: Node[], to_encapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
@@ -176,7 +176,7 @@ function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, sta
 	if (block.combinator) {
 		if (block.combinator.type === 'WhiteSpace') {
 			while (stack.length) {
-				if (apply_selector(stylesheet, blocks.slice(), stack.pop(), stack, to_encapsulate)) {
+				if (apply_selector(blocks.slice(), stack.pop(), stack, to_encapsulate)) {
 					to_encapsulate.push({ node, block });
 					return true;
 				}
@@ -189,7 +189,7 @@ function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, sta
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			if (apply_selector(stylesheet, blocks, stack.pop(), stack, to_encapsulate)) {
+			if (apply_selector(blocks, stack.pop(), stack, to_encapsulate)) {
 				to_encapsulate.push({ node, block });
 				return true;
 			}
