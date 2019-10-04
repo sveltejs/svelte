@@ -1,7 +1,7 @@
 export default {
 	html: `
 		<button>+1</button>
-		<p>count:0</p>
+		<p>count: 0</p>
 	`,
 
 	async test({ assert, component, target, window }) {
