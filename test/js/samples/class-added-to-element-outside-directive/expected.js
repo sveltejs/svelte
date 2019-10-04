@@ -26,7 +26,7 @@ function create_if_block(ctx) {
 		c() {
 			span = element("span");
 			span.innerHTML = `<i class="svelte-1l99rp3">hello</i>`;
-			attr(span, "class", `test`);
+			attr(span, "class", "" + (`test`) + " svelte-1l99rp3");
 		},
 
 		m(target, anchor) {
