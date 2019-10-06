@@ -28,7 +28,7 @@ export function onDestroy(fn) {
 }
 
 export function createEventDispatcher() {
-	const component = current_component;
+	const component = get_current_component();
 
 	return (type, detail) => {
 		const callbacks = component.$$.callbacks[type];
