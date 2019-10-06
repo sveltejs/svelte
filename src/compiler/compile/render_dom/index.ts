@@ -221,16 +221,18 @@ export default function dom(
 			}
 		});
 
-		component.rewrite_props(({ name, reassigned }) => {
+		component.rewrite_props(({ name, reassigned, export_name }) => {
 			const value = `$${name}`;
+			
+			let insert: string;
+			if (reassigned || export_name) {
+				insert = b`${`$$subscribe_${name}`}()`;
+			} else {
+				const callback = x`$$value => $$invalidate('${value}', ${value} = $$value)`;
 
-			if (reassigned) {
-				return b`${`$$subscribe_${name}`}()`;
+				insert = b`@component_subscribe($$self, ${name}, $${callback})`;
 			}
 
-			const callback = x`$$value => $$invalidate('${value}', ${value} = $$value)`;
-
-			let insert = b`@component_subscribe($$self, ${name}, $${callback})`;
 			if (component.compile_options.dev) {
 				insert = b`@validate_store(${name}, '${name}'); ${insert}`;
 			}
@@ -311,7 +313,7 @@ export default function dom(
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable && variable.reassigned;
+			return variable && (variable.reassigned || variable.export_name);
 		})
 		.map(({ name }) => b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(1)}`}());`);
 
@@ -353,7 +355,7 @@ export default function dom(
 			const name = $name.slice(1);
 
 			const store = component.var_lookup.get(name);
-			if (store && store.reassigned) {
+			if (store && (store.reassigned || store.export_name)) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
 				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate('${$name}', ${$name} = $$value)), ${name})`;
