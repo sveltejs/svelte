@@ -21,7 +21,7 @@ export function flip(node: Element, animation: { from: DOMRect; to: DOMRect }, p
 
 	const {
 		delay = 0,
-		duration = d => Math.sqrt(d) * 120,
+		duration = (d: number) => Math.sqrt(d) * 120,
 		easing = cubicOut
 	} = params;
 
