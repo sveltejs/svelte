@@ -352,6 +352,14 @@ export default class Block {
 			}`;
 		}
 
+		if (!this.renderer.component.compile_options.dev) {
+			// allow shorthand names
+			for (const name in properties) {
+				const property = properties[name];
+				if (property) property.id = null;
+			}
+		}
+
 		const return_value: any = x`{
 			key: ${properties.key},
 			first: ${properties.first},

@@ -167,7 +167,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					${name} = @_navigator.onLine; $$invalidate('${name}', ${name});
+					$$invalidate('${name}', ${name} = @_navigator.onLine);
 				}
 			`);
 

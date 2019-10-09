@@ -10,8 +10,7 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var dispose;
-
+	let dispose;
 	add_render_callback(ctx.onlinestatuschanged);
 
 	return {
@@ -21,12 +20,10 @@ function create_fragment(ctx) {
 				listen(window, "offline", ctx.onlinestatuschanged)
 			];
 		},
-
 		m: noop,
 		p: noop,
 		i: noop,
 		o: noop,
-
 		d(detaching) {
 			run_all(dispose);
 		}
@@ -37,7 +34,7 @@ function instance($$self, $$props, $$invalidate) {
 	let online;
 
 	function onlinestatuschanged() {
-		online = navigator.onLine; $$invalidate('online', online);
+		$$invalidate("online", online = navigator.onLine);
 	}
 
 	return { online, onlinestatuschanged };

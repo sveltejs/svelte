@@ -23,6 +23,11 @@ export default function create_module(
 ) {
 	const internal_path = `${sveltePath}/internal`;
 
+	helpers.sort((a, b) => {
+		if (a.name < b.name) return -1;
+		return 1;
+	});
+
 	if (format === 'esm') {
 		return esm(program, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports);
 	}
