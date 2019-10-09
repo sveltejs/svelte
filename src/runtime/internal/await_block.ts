@@ -14,6 +14,8 @@ export function handle_promise(promise, info) {
 		const child_ctx = assign(assign({}, info.ctx), info.resolved);
 		const block = type && (info.current = type)(child_ctx);
 
+		let needs_flush = false;
+
 		if (info.block) {
 			if (info.blocks) {
 				info.blocks.forEach((block, i) => {
@@ -33,11 +35,15 @@ export function handle_promise(promise, info) {
 			transition_in(block, 1);
 			block.m(info.mount(), info.anchor);
 
-			flush();
+			needs_flush = true;
 		}
 
 		info.block = block;
 		if (info.blocks) info.blocks[index] = block;
+
+		if (needs_flush) {
+			flush();
+		}
 	}
 
 	if (is_promise(promise)) {
