@@ -294,7 +294,7 @@ export default class Component {
 				enter: (node, parent, key) => {
 					if (node.type === 'Identifier' && !('name' in node)) {
 						console.log(node);
-						throw new Error('wtf');
+						throw new Error('this should never happen'); // TODO remove once satisfied
 					}
 
 					if (node.type === 'Identifier') {
@@ -328,6 +328,7 @@ export default class Component {
 
 							else {
 								console.log(node);
+								throw new Error('this should never happen'); // TODO remove once satisfied
 							}
 						}
 					}
@@ -1246,15 +1247,20 @@ export default class Component {
 	qualify(name) {
 		if (name === `$$props`) return x`#ctx.$$props`;
 
-		const variable = this.var_lookup.get(name);
+		let [head, ...tail] = name.split('.');
 
-		if (!variable) return name;
+		const variable = this.var_lookup.get(head);
 
-		this.add_reference(name); // TODO we can probably remove most other occurrences of this
+		if (variable) {
+			this.add_reference(name); // TODO we can probably remove most other occurrences of this
 
-		if (variable.hoistable) return name;
+			if (!variable.hoistable) {
+				tail.unshift(head);
+				head = '#ctx';
+			}
+		}
 
-		return x`#ctx.${name}`;
+		return [head, ...tail].reduce((lhs, rhs) => x`${lhs}.${rhs}`);
 	}
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {

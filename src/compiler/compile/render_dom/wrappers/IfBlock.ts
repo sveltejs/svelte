@@ -374,7 +374,7 @@ export default class IfBlockWrapper extends Wrapper {
 				: b`
 					function ${select_block_type}(#changed, #ctx) {
 						${this.branches.map(({ condition, snippet }, i) => condition
-						? b`if (${snippet || condition}) return ${String(i)};`
+						? b`if (${snippet || condition}) return ${i};`
 						: b`return ${i};`)}
 						${!has_else && b`return -1;`}
 					}
