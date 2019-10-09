@@ -4,6 +4,7 @@
 
 * Fix edge cases in matching selectors against elements ([#1710](https://github.com/sveltejs/svelte/issues/1710))
 * Fix tracking of dependencies of compound assignments in reactive statements ([#3634](https://github.com/sveltejs/svelte/issues/3634))
+* Flush changes in newly attached block when using `{#await}` ([#3660](https://github.com/sveltejs/svelte/issues/3660))
 * Throw exception immediately when calling `createEventDispatcher()` after component instantiation ([#3667](https://github.com/sveltejs/svelte/pull/3667))
 
 ## 3.12.1
