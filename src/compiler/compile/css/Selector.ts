@@ -34,7 +34,7 @@ export default class Selector {
 		apply_selector(this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
 
 		if (to_encapsulate.length > 0) {
-			to_encapsulate.filter((_, i) => i === 0 || i === to_encapsulate.length - 1).forEach(({ node, block }) => {
+			to_encapsulate.forEach(({ node, block }) => {
 				this.stylesheet.nodes_with_css_class.add(node);
 				block.should_encapsulate = true;
 			});
@@ -134,39 +134,12 @@ function apply_selector(blocks: Block[], node: Node, stack: Node[], to_encapsula
 		return blocks.every(block => block.global);
 	}
 
-	let i = block.selectors.length;
-
-	while (i--) {
-		const selector = block.selectors[i];
-		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
-
-		if (selector.type === 'PseudoClassSelector' && name === 'global') {
-			// TODO shouldn't see this here... maybe we should enforce that :global(...)
-			// cannot be sandwiched between non-global selectors?
+	try {
+		if (block_might_apply_to_node(block, node) === false) {
 			return false;
 		}
-
-		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
-			continue;
-		}
-
-		if (selector.type === 'ClassSelector') {
-			if (!attribute_matches(node, 'class', name, '~=', false) && !node.classes.some(c => c.name === name)) return false;
-		}
-
-		else if (selector.type === 'IdSelector') {
-			if (!attribute_matches(node, 'id', name, '=', false)) return false;
-		}
-
-		else if (selector.type === 'AttributeSelector') {
-			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return false;
-		}
-
-		else if (selector.type === 'TypeSelector') {
-			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*') return false;
-		}
-
-		else {
+	} catch (error) {
+		if (error instanceof TypeError) {
 			// bail. TODO figure out what these could be
 			to_encapsulate.push({ node, block });
 			return true;
@@ -175,8 +148,18 @@ function apply_selector(blocks: Block[], node: Node, stack: Node[], to_encapsula
 
 	if (block.combinator) {
 		if (block.combinator.type === 'WhiteSpace') {
-			while (stack.length) {
-				if (apply_selector(blocks.slice(), stack.pop(), stack, to_encapsulate)) {
+			for (let i = 0; i < blocks.length;i++) {
+				if (blocks[i].global) {
+					continue;
+				}
+				
+				stack.forEach(node => {
+					if (block_might_apply_to_node(blocks[i], node)) {
+						to_encapsulate.push({ node, block: blocks[i] });
+					}
+				});
+
+				if (to_encapsulate.length) {
 					to_encapsulate.push({ node, block });
 					return true;
 				}
@@ -203,6 +186,47 @@ function apply_selector(blocks: Block[], node: Node, stack: Node[], to_encapsula
 	}
 
 	to_encapsulate.push({ node, block });
+	return true;
+}
+
+function block_might_apply_to_node(block, node) {
+	let i = block.selectors.length;
+
+	while (i--) {
+		const selector = block.selectors[i];
+		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
+
+		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
+			continue;
+		}
+
+		if (selector.type === 'PseudoClassSelector' && name === 'global') {
+			// TODO shouldn't see this here... maybe we should enforce that :global(...)
+			// cannot be sandwiched between non-global selectors?
+			return false;
+		}
+
+		if (selector.type === 'ClassSelector') {
+			if (!attribute_matches(node, 'class', name, '~=', false) && !node.classes.some(c => c.name === name)) return false;
+		}
+
+		else if (selector.type === 'IdSelector') {
+			if (!attribute_matches(node, 'id', name, '=', false)) return false;
+		}
+
+		else if (selector.type === 'AttributeSelector') {
+			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return false;
+		}
+
+		else if (selector.type === 'TypeSelector') {
+			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*') return false;
+		}
+
+		else {
+			throw new TypeError(`Unknown selector type ${selector.type}`);
+		}
+	}
+
 	return true;
 }
 
