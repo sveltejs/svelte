@@ -4,13 +4,13 @@
 </script>
 
 <style>
-	.root p {
+	.root :global(p) {
 		color: red;
 	}
 </style>
 
 <div class={unknown1}>
 	<section class={unknown2}>
-		<p>hello</p>
+		<!-- injected somehow -->
 	</section>
 </div>

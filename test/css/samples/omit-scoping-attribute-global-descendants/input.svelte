@@ -4,7 +4,7 @@
 </script>
 
 <style>
-	.root p {
+	:global(html) :global(body) .root p {
 		color: red;
 	}
 </style>
