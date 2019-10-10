@@ -105,8 +105,9 @@ describe('custom-elements', function() {
 
 			const page = await browser.newPage();
 
-			page.on('console', (type, ...args) => {
-				console[type](...args);
+			page.on('console', msg => {
+				for (let i = 0; i < msg.args().length; ++i)
+    				console[msg.type()](`${i}: ${msg.args()[i]}`);
 			});
 
 			try {

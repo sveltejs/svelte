@@ -407,15 +407,22 @@ export default function dom(
 					${dev_props_check}
 
 					if (options) {
+						this.$$.slotted = {};
+
 						if (options.target) {
 							@insert(options.target, this, options.anchor);
 						}
 
-						${(props.length > 0 || uses_props) && deindent`
 						if (options.props) {
+							for (const key in options.props.$$slots) {
+								const ctx = options.props.$$scope ? options.props.$$scope.ctx : {};
+								this.$$.slotted[key] = options.props.$$slots[key][0](ctx);
+								this.$$.slotted[key].c();
+							}
+							${(props.length > 0 || uses_props) && deindent`
 							this.$set(options.props);
-							@flush();
-						}`}
+							@flush();`}
+						}
 					}
 				}
 
