@@ -33,7 +33,7 @@ export default function add_actions(
 		);
 
 		if (dependencies && dependencies.length > 0) {
-			let condition = x`typeof ${id}.update === 'function'`;
+			let condition = x`@is_function(${id}.update)`;
 
 			// TODO can this case be handled more elegantly?
 			if (dependencies.length > 0) {
@@ -51,7 +51,7 @@ export default function add_actions(
 		}
 
 		block.chunks.destroy.push(
-			b`if (${id} && typeof ${id}.destroy === 'function') ${id}.destroy();`
+			b`if (${id} && @is_function(${id}.destroy)) ${id}.destroy();`
 		);
 	});
 }

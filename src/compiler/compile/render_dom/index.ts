@@ -283,7 +283,7 @@ export default function dom(
 	const instance_javascript = component.extract_javascript(component.ast.instance);
 
 	const has_definition = (
-		instance_javascript ||
+		instance_javascript.length > 0 ||
 		filtered_props.length > 0 ||
 		uses_props ||
 		component.partly_hoisted.length > 0 ||
