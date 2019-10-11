@@ -11,4 +11,6 @@
 		42 Wallaby Way<br>
 		Sydney
 	</span>
+
+	<a href="mailto:p.sherman@example.com" slot="email">p.sherman@example.com</a>
 </ContactCard>
