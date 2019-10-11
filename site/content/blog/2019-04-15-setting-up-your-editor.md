@@ -10,7 +10,25 @@ draft: true
 
 * eslint-plugin-svelte3
 * svelte-vscode
-* associating .svelte files with HTML in VSCode, Sublime, Atom, etc etc etc
+* associating .svelte files with HTML in VSCode, Sublime, etc.
+
+## Atom
+
+To treat `.svelte` files as HTML, install the *file-types* package which enables such custom mappings:
+
+```bash
+apm install file-types
+```
+
+From the toolbar, open Edit → Config... and add the following two lines to your root (`"*"`) section:
+
+```cson
+"*":
+  core:
+    …
+  "file-types":
+    "*.svelte": "text.html.basic"
+```
 
 ## Vim/Neovim
 
