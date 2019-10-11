@@ -148,14 +148,14 @@ function apply_selector(blocks: Block[], node: Node, stack: Node[], to_encapsula
 
 	if (block.combinator) {
 		if (block.combinator.type === 'WhiteSpace') {
-			for (let i = 0; i < blocks.length;i++) {
-				if (blocks[i].global) {
+			for (let ancestorBlock of blocks) {
+				if (ancestorBlock.global) {
 					continue;
 				}
 				
-				stack.forEach(node => {
-					if (block_might_apply_to_node(blocks[i], node)) {
-						to_encapsulate.push({ node, block: blocks[i] });
+				stack.forEach(stackNode => {
+					if (block_might_apply_to_node(ancestorBlock, stackNode)) {
+						to_encapsulate.push({ node: stackNode, block: ancestorBlock });
 					}
 				});
 
