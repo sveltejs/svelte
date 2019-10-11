@@ -1,8 +1,14 @@
 import { cubicOut } from 'svelte/easing';
 import { is_function } from 'svelte/internal';
-import { TransitionConfig } from 'svelte/transition';
 
-export interface AnimationConfig extends TransitionConfig {}
+// todo: same as Transition, should it be shared?
+export interface AnimationConfig {
+	delay?: number;
+	duration?: number;
+	easing?: (t: number) => number;
+	css?: (t: number, u: number) => string;
+	tick?: (t: number, u: number) => void;
+}
 
 interface FlipParams {
 	delay: number;
