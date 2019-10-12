@@ -22,7 +22,7 @@ apm install file-types
 
 From the toolbar, open Edit → Config... and add the following two lines to your root (`"*"`) section:
 
-```html
+```cson
 "*":
   core:
     …
@@ -34,18 +34,18 @@ From the toolbar, open Edit → Config... and add the following two lines to you
 
 To treat all `*.svelte` files as HTML, add the following line to your `init.vim`:
 
-```bash
+```
 au! BufNewFile,BufRead *.svelte set ft=html
 ```
 
 To temporarily turn on HTML syntax highlighting for the current buffer, use:
 
-```bash
+```
 :set ft=html
 ```
 
 To set the filetype for a single file, use a [modeline](https://vim.fandom.com/wiki/Modeline_magic):
 
-```bash
+```
 <!-- vim: set ft=html :-->
 ```
