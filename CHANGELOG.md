@@ -8,6 +8,7 @@
 * Fix tracking of dependencies of compound assignments in reactive statements ([#3634](https://github.com/sveltejs/svelte/issues/3634))
 * Flush changes in newly attached block when using `{#await}` ([#3660](https://github.com/sveltejs/svelte/issues/3660))
 * Throw exception immediately when calling `createEventDispatcher()` after component instantiation ([#3667](https://github.com/sveltejs/svelte/pull/3667))
+* Fix globals shadowing contextual template scope ([#3674](https://github.com/sveltejs/svelte/issues/3674))
 * Fix error resulting from trying to set a read-only property when spreading element attributes ([#3681](https://github.com/sveltejs/svelte/issues/3681))
 
 ## 3.12.1
