@@ -127,7 +127,7 @@ export default class Expression {
 
 					if (scope.has(name)) return;
 
-					if (globals.has(name) && !component.var_lookup.has(name)) return;
+					if (globals.has(name) && !(component.var_lookup.has(name) || template_scope.names.has(name))) return;
 
 					if (name[0] === '$' && template_scope.names.has(name.slice(1))) {
 						component.error(node, {
@@ -261,7 +261,7 @@ export default class Expression {
 					const { name, nodes } = flatten_reference(node);
 
 					if (scope.has(name)) return;
-					if (globals.has(name) && !component.var_lookup.has(name)) return;
+					if (globals.has(name) && !(component.var_lookup.has(name) || template_scope.names.has(name))) return;
 
 					if (function_expression) {
 						if (template_scope.names.has(name)) {
