@@ -128,7 +128,7 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
  */
 export function derived<T, S extends Stores>(
 	stores: S,
-	fn: (values: StoresValues<S>, set?: Subscriber<T>) => T | Unsubscriber | void,
+	fn: (values: StoresValues<S>, set: Subscriber<T>) => T | Unsubscriber | void,
 	initial_value?: T,
 ): Readable<T> {
 
