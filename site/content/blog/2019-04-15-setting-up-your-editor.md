@@ -22,7 +22,7 @@ apm install file-types
 
 From the toolbar, open Edit → Config... and add the following two lines to your root (`"*"`) section:
 
-```cson
+```html
 "*":
   core:
     …
