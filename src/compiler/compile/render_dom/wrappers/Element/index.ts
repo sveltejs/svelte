@@ -498,9 +498,9 @@ export default class ElementWrapper extends Wrapper {
 				function ${handler}(${contextual_dependencies.size > 0 ? `{ ${Array.from(contextual_dependencies).join(', ')} }` : ``}) {
 					${group.bindings.map(b => b.handler.mutation)}
 					${Array.from(dependencies)
-						.filter(dep => dep[0] !== '$')
-						.filter(dep => !contextual_dependencies.has(dep))
-						.map(dep => `${this.renderer.component.invalidate(dep)};`)}
+				.filter(dep => dep[0] !== '$')
+				.filter(dep => !contextual_dependencies.has(dep))
+				.map(dep => `${this.renderer.component.invalidate(dep)};`)}
 				}
 			`);
 
