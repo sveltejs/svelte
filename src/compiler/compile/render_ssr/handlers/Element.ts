@@ -111,7 +111,8 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 					args.push(`{ ${quote_name_if_necessary(attribute.name)}: ${snip(attribute.chunks[0])} }`);
 				} else if (attribute.name === 'class' && class_expression) {
 					// Add class expression
-					args.push(`{ ${quote_name_if_necessary(attribute.name)}: [\`${stringify_class_attribute(attribute)}\`, \`\${${class_expression}}\`].join(' ').trim() }`);
+					add_class_attribute = false;
+					args.push(`{ ${quote_name_if_necessary(attribute.name)}: [\`${stringify_class_attribute(attribute)}\`, ${class_expression}].join(' ').trim() }`);
 				} else {
 					args.push(`{ ${quote_name_if_necessary(attribute.name)}: \`${attribute.name === 'class' ? stringify_class_attribute(attribute) : stringify_attribute(attribute, true)}\` }`);
 				}
