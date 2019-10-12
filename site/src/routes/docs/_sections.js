@@ -1,11 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { SLUG_PRESERVE_UNICODE, SLUG_SEPARATOR } from '../../../config';
-import { extract_frontmatter, extract_metadata, langs, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
+import { extract_frontmatter, extract_metadata, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
 import { make_session_slug_processor } from '@sveltejs/site-kit/utils/slug';
+import { highlight } from '../../utils/highlight';
 import marked from 'marked';
-import PrismJS from 'prismjs';
-import 'prismjs/components/prism-bash';
 
 const blockTypes = [
 	'blockquote',
@@ -73,14 +72,7 @@ export default function() {
 
 				if (meta && meta.hidden) return '';
 
-				const plang = langs[lang];
-				const highlighted = PrismJS.highlight(
-					source,
-					PrismJS.languages[plang],
-					lang
-				);
-
-				const html = `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
+				const html = `<div class='${className}'>${prefix}${highlight(source, lang)}</div>`;
 
 				if (block_open) {
 					block_open = false;
