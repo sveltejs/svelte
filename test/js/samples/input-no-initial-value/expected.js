@@ -17,7 +17,7 @@ import {
 function create_fragment(ctx) {
 	let form;
 	let input;
-	let t;
+	let t0;
 	let button;
 	let dispose;
 
@@ -25,7 +25,7 @@ function create_fragment(ctx) {
 		c() {
 			form = element("form");
 			input = element("input");
-			t = space();
+			t0 = space();
 			button = element("button");
 			button.textContent = "Store";
 			attr(input, "type", "text");
@@ -40,7 +40,7 @@ function create_fragment(ctx) {
 			insert(target, form, anchor);
 			append(form, input);
 			set_input_value(input, ctx.test);
-			append(form, t);
+			append(form, t0);
 			append(form, button);
 		},
 		p(changed, ctx) {

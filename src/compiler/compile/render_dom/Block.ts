@@ -128,7 +128,7 @@ export default class Block {
 			const wrapper = this.wrappers[i];
 
 			if (!wrapper.var) continue;
-			if (wrapper.parent && wrapper.parent.can_use_innerhtml) continue;
+			// if (wrapper.parent && wrapper.parent.can_use_innerhtml) continue;
 
 			if (seen.has(wrapper.var.name)) {
 				dupes.add(wrapper.var.name);
