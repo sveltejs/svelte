@@ -119,9 +119,8 @@ export default class Block {
 	}
 
 	assign_variable_names() {
-		// TODO reimplement for #3539
-		const seen = new Set();
-		const dupes = new Set();
+		const seen: Set<string> = new Set();
+		const dupes: Set<string> = new Set();
 
 		let i = this.wrappers.length;
 
@@ -131,11 +130,11 @@ export default class Block {
 			if (!wrapper.var) continue;
 			if (wrapper.parent && wrapper.parent.can_use_innerhtml) continue;
 
-			if (seen.has(wrapper.var)) {
-				dupes.add(wrapper.var);
+			if (seen.has(wrapper.var.name)) {
+				dupes.add(wrapper.var.name);
 			}
 
-			seen.add(wrapper.var);
+			seen.add(wrapper.var.name);
 		}
 
 		const counts = new Map();
@@ -146,12 +145,10 @@ export default class Block {
 
 			if (!wrapper.var) continue;
 
-			if (dupes.has(wrapper.var)) {
-				const i = counts.get(wrapper.var) || 0;
-				counts.set(wrapper.var, i + 1);
-				wrapper.var = this.get_unique_name(wrapper.var + i);
-			} else {
-				wrapper.var = this.get_unique_name(wrapper.var.name);
+			if (dupes.has(wrapper.var.name)) {
+				const i = counts.get(wrapper.var.name) || 0;
+				counts.set(wrapper.var.name, i + 1);
+				wrapper.var.name = this.get_unique_name(wrapper.var.name + i).name;
 			}
 		}
 	}

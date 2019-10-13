@@ -89,7 +89,7 @@ export default class BindingWrapper {
 
 		const dependency_array = [...this.node.expression.dependencies];
 
-		if (dependency_array.length > 1) {
+		if (dependency_array.length > 0) {
 			update_conditions.push(changed(dependency_array));
 		}
 
@@ -153,7 +153,7 @@ export default class BindingWrapper {
 
 		if (update_dom) {
 			if (update_conditions.length > 0) {
-				const condition = update_conditions.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
+				const condition = update_conditions.reduce((lhs, rhs) => x`${lhs} && ${rhs}`);
 
 				block.chunks.update.push(b`
 					if (${condition}) {

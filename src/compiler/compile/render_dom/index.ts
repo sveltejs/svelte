@@ -27,7 +27,8 @@ export default function dom(
 	const body = [];
 
 	if (renderer.file_var) {
-		body.push(b`const ${renderer.file_var} = "${component.file}";`);
+		const file = component.file ? x`"${component.file}"` : x`undefined`;
+		body.push(b`const ${renderer.file_var} = ${file};`);
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
@@ -283,7 +284,7 @@ export default function dom(
 	const instance_javascript = component.extract_javascript(component.ast.instance);
 
 	const has_definition = (
-		instance_javascript.length > 0 ||
+		(instance_javascript && instance_javascript.length > 0) ||
 		filtered_props.length > 0 ||
 		uses_props ||
 		component.partly_hoisted.length > 0 ||

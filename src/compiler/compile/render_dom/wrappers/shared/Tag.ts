@@ -21,10 +21,12 @@ export default class Tag extends Wrapper {
 		update: ((value: Node) => (Node | Node[]))
 	) {
 		const dependencies = this.node.expression.dynamic_dependencies();
-		const snippet = this.node.expression.manipulate(block);
+		let snippet = this.node.expression.manipulate(block);
 
 		const value = this.node.should_cache && block.get_unique_name(`${this.var.name}_value`);
 		const content = this.node.should_cache ? value : snippet;
+
+		snippet = x`${snippet} + ""`;
 
 		if (this.node.should_cache) block.add_variable(value, snippet); // TODO may need to coerce snippet to string
 
@@ -38,7 +40,7 @@ export default class Tag extends Wrapper {
 				condition = x`!#current || ${condition}`;
 			}
 
-			const update_cached_value = x`${value} !== (${value} = ${snippet} + "")`;
+			const update_cached_value = x`${value} !== (${value} = ${snippet})`;
 
 			if (this.node.should_cache) {
 				condition = x`${condition} && ${update_cached_value}`;

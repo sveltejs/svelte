@@ -550,16 +550,12 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		} else if (dynamic) {
 			block.chunks.update.push(b`
-				if (${branch.condition}) {
-					${name}.p(#changed, #ctx);
-				}
+				if (${branch.condition}) ${name}.p(#changed, #ctx);
 			`);
 		}
 
 		block.chunks.destroy.push(b`
-			if (${if_exists_condition}) {
-				${name}.d(${detaching});
-			}
+			if (${if_exists_condition}) ${name}.d(${detaching});
 		`);
 	}
 }
