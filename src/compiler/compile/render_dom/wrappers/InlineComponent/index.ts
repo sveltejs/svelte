@@ -380,7 +380,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				var ${switch_value} = ${snippet};
 
 				function ${switch_props}(#ctx) {
-					${(this.node.attributes.length || this.node.bindings.length) && b`
+					${(this.node.attributes.length > 0 || this.node.bindings.length > 0) && b`
 					${props && b`let ${props} = ${attribute_object};`}`}
 					${statements}
 					return ${component_opts};
@@ -462,7 +462,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				: component.qualify(this.node.name);
 
 			block.chunks.init.push(b`
-				${(this.node.attributes.length || this.node.bindings.length) && b`
+				${(this.node.attributes.length > 0 || this.node.bindings.length > 0) && b`
 				${props && b`let ${props} = ${attribute_object};`}`}
 				${statements}
 				const ${name} = new ${expression}(${component_opts});

@@ -11,6 +11,7 @@ import {
 	transition_in,
 	transition_out
 } from "svelte/internal";
+
 import Imported from "Imported.svelte";
 
 function create_fragment(ctx) {

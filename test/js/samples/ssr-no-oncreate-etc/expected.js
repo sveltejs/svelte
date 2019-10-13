@@ -5,12 +5,12 @@ function preload(input) {
 	return output;
 }
 
-function swipe(node, callback) {
-
-}
-
 function foo() {
 	console.log("foo");
+}
+
+function swipe(node, callback) {
+
 }
 
 const Component = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {

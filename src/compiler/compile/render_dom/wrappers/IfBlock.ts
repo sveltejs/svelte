@@ -182,7 +182,7 @@ export default class IfBlockWrapper extends Wrapper {
 			: (this.next && this.next.var) || 'null';
 
 		const has_else = !(this.branches[this.branches.length - 1].condition);
-		const if_exists_condition = has_else ? x`true` : name;
+		const if_exists_condition = has_else ? null : name;
 
 		const dynamic = this.branches[0].block.has_update_method; // can use [0] as proxy for all, since they necessarily have the same value
 		const has_intros = this.branches[0].block.has_intro_method;
@@ -213,12 +213,22 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		}
 
-		block.chunks.create.push(b`if (${if_exists_condition}) ${name}.c();`);
+		if (if_exists_condition) {
+			block.chunks.create.push(b`if (${if_exists_condition}) ${name}.c();`);
+		} else {
+			block.chunks.create.push(b`${name}.c();`);
+		}
 
 		if (parent_nodes && this.renderer.options.hydratable) {
-			block.chunks.claim.push(
-				b`if (${if_exists_condition}) ${name}.l(${parent_nodes});`
-			);
+			if (if_exists_condition) {
+				block.chunks.claim.push(
+					b`if (${if_exists_condition}) ${name}.l(${parent_nodes});`
+				);
+			} else {
+				block.chunks.claim.push(
+					b`${name}.l(${parent_nodes});`
+				);
+			}
 		}
 
 		if (has_intros || has_outros) {
@@ -286,15 +296,22 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const initial_mount_node = parent_node || '#target';
 		const anchor_node = parent_node ? 'null' : 'anchor';
-		block.chunks.mount.push(
-			b`if (${if_exists_condition}) ${name}.m(${initial_mount_node}, ${anchor_node});`
-		);
+
+		if (if_exists_condition) {
+			block.chunks.mount.push(
+				b`if (${if_exists_condition}) ${name}.m(${initial_mount_node}, ${anchor_node});`
+			);
+		} else {
+			block.chunks.mount.push(
+				b`${name}.m(${initial_mount_node}, ${anchor_node});`
+			);
+		}
 
 		if (this.needs_update) {
 			const update_mount_node = this.get_update_mount_node(anchor);
 
 			const change_block = b`
-				if (${if_exists_condition}) ${name}.d(1);
+				${if_exists_condition ? b`if (${if_exists_condition}) ${name}.d(1)` : b`${name}.d(1)`};
 				${name} = ${get_block};
 				if (${name}) {
 					${name}.c();
@@ -322,11 +339,17 @@ export default class IfBlockWrapper extends Wrapper {
 			block.chunks.update.push(b`${name}.p(#changed, #ctx);`);
 		}
 
-		block.chunks.destroy.push(b`
-			if (${if_exists_condition}) {
+		if (if_exists_condition) {
+			block.chunks.destroy.push(b`
+				if (${if_exists_condition}) {
+					${name}.d(${detaching});
+				}
+			`);
+		} else {
+			block.chunks.destroy.push(b`
 				${name}.d(${detaching});
-			}
-		`);
+			`);
+		}
 	}
 
 	// if any of the siblings have outros, we need to keep references to the blocks
@@ -554,8 +577,14 @@ export default class IfBlockWrapper extends Wrapper {
 			`);
 		}
 
-		block.chunks.destroy.push(b`
-			if (${if_exists_condition}) ${name}.d(${detaching});
-		`);
+		if (if_exists_condition) {
+			block.chunks.destroy.push(b`
+				if (${if_exists_condition}) ${name}.d(${detaching});
+			`);
+		} else {
+			block.chunks.destroy.push(b`
+				${name}.d(${detaching});
+			`);
+		}
 	}
 }

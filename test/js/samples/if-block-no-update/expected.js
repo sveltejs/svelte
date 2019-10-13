@@ -67,6 +67,7 @@ function create_fragment(ctx) {
 			if (current_block_type !== (current_block_type = select_block_type(changed, ctx))) {
 				if_block.d(1);
 				if_block = current_block_type(ctx);
+
 				if (if_block) {
 					if_block.c();
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);

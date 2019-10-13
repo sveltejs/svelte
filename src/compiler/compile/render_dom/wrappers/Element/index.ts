@@ -460,7 +460,7 @@ export default class ElementWrapper extends Wrapper {
 							@_cancelAnimationFrame(${animation_frame});
 							if (!${this.var}.paused) {
 								${animation_frame} = @raf(${handler});
-								${needs_lock && `${lock} = true;`}
+								${needs_lock && b`${lock} = true;`}
 							}
 							#ctx.${handler}.call(${this.var}, ${contextual_dependencies.size > 0 ? '#ctx' : null});
 						}
