@@ -34,12 +34,12 @@ function create_fragment(ctx) {
 	};
 }
 
-function foo(node, callback) {
-
-}
-
 function handleFoo(bar) {
 	console.log(bar);
+}
+
+function foo(node, callback) {
+
 }
 
 function instance($$self, $$props, $$invalidate) {

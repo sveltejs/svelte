@@ -947,8 +947,8 @@ export default class Component {
 		const top_level_function_declarations = new Map();
 
 		const { body } = this.ast.instance.content;
-		let i = body.length;
-		while (i--) {
+
+		for (let i = 0; i < body.length; i += 1) {
 			const node = body[i];
 
 			if (node.type === 'VariableDeclaration') {
@@ -981,7 +981,7 @@ export default class Component {
 
 					hoistable_nodes.add(node);
 
-					body.splice(i, 1);
+					body.splice(i--, 1);
 					this.fully_hoisted.push(node);
 				}
 			}

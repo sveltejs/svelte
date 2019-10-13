@@ -34,6 +34,7 @@ function create_fragment(ctx) {
 			t3 = space();
 			button2 = element("button");
 			button2.textContent = "or me!";
+
 			dispose = [
 				listen(button0, "click", stop_propagation(prevent_default(handleClick))),
 				listen(button1, "click", handleClick, { once: true, capture: true }),
