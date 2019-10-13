@@ -56,13 +56,13 @@ function instance($$self, $$props, $$invalidate) {
 	let x;
 	let y;
 
-	$$self.$$.update = ($$dirty = { a: 1, b: 1 }) => {
-		if ($$dirty.a) {
-			x = a * 2;
+	$$self.$$.update = (changed = { a: 1, b: 1 }) => {
+		if (changed.a) {
+			$: x = a * 2;
 		}
 
-		if ($$dirty.b) {
-			$$invalidate("y", y = b * 2);
+		if (changed.b) {
+			$: $$invalidate("y", y = b * 2);
 		}
 	};
 

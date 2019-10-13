@@ -123,8 +123,8 @@ export default class AttributeWrapper {
 					: b`
 						if (${option}.__value === ${last}) {
 							${option}.selected = true;
-							${'break'};
-						}`; // TODO the 'break' is gross, but it's unsyntactic otherwise...
+							${{ type: 'BreakStatement' }};
+						}`; // TODO the BreakStatement is gross, but it's unsyntactic otherwise...
 
 				updater = b`
 					for (var ${i} = 0; ${i} < ${element.var}.options.length; ${i} += 1) {

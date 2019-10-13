@@ -8,7 +8,7 @@ import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
 import { invalidate } from '../utils/invalidate';
 import Block from './Block';
-import { ClassDeclaration, FunctionExpression, Node } from 'estree';
+import { ClassDeclaration, FunctionExpression, Node, LabeledStatement, Statement } from 'estree';
 
 export default function dom(
 	component: Component,
@@ -332,11 +332,12 @@ export default function dom(
 			});
 
 			const condition = !uses_props && writable.length > 0 && (writable
-				.map(n => x`$$dirty.${n}`)
+				.map(n => x`#changed.${n}`)
 				.reduce((lhs, rhs) => x`${lhs} || ${rhs}`));
 
-			let statement = d.node;
-			if (condition) statement = b`if (${condition}) { ${statement} }`[0];
+			let statement = d.node; // TODO remove label (use d.node.body) if it's not referenced
+
+			if (condition) statement = b`if (${condition}) { ${statement} }`[0] as Statement;
 
 			if (condition || uses_props) {
 				reactive_declarations.push(statement);
@@ -418,7 +419,7 @@ export default function dom(
 				${injected.map(name => b`let ${name};`)}
 
 				${reactive_declarations.length > 0 && b`
-				$$self.$$.update = ($$dirty = ${reactive_dependencies}) => {
+				$$self.$$.update = (#changed = ${reactive_dependencies}) => {
 					${reactive_declarations}
 				};
 				`}

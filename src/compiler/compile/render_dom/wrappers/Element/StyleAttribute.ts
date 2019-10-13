@@ -40,9 +40,10 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 					})
 					.reduce((lhs, rhs) => x`${lhs} + ${rhs}`)
 
-				if (prop.value.length === 1 || prop.value[0].type === 'Text') {
-					value = x`"" + ${value}`;
-				}
+				// TODO is this necessary? style.setProperty always treats value as string, no?
+				// if (prop.value.length === 1 || prop.value[0].type !== 'Text') {
+				// 	value = x`"" + ${value}`;
+				// }
 
 				if (prop_dependencies.size) {
 					let condition = changed(Array.from(prop_dependencies));

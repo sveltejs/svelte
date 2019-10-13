@@ -20,9 +20,9 @@ function instance($$self, $$props, $$invalidate) {
 		if ("b" in $$props) $$invalidate("b", b = $$props.b);
 	};
 
-	$$self.$$.update = ($$dirty = { a: 1, b: 1 }) => {
-		if ($$dirty.a || $$dirty.b) {
-			console.log("max", Math.max(a, b));
+	$$self.$$.update = (changed = { a: 1, b: 1 }) => {
+		if (changed.a || changed.b) {
+			$: console.log("max", Math.max(a, b));
 		}
 	};
 
