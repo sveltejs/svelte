@@ -23,10 +23,8 @@ export default function create_module(
 ) {
 	const internal_path = `${sveltePath}/internal`;
 
-	helpers.sort((a, b) => {
-		if (a.name < b.name) return -1;
-		return 1;
-	});
+	helpers.sort((a, b) => (a.name < b.name) ? -1 : 1);
+	globals.sort((a, b) => (a.name < b.name) ? -1 : 1);
 
 	if (format === 'esm') {
 		return esm(program, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports);
@@ -71,7 +69,7 @@ function esm(
 			type: 'VariableDeclarator',
 			id: {
 				type: 'ObjectPattern',
-				properties: globals.sort((a, b) => a.name < b.name ? -1 : 1).map(g => ({
+				properties: globals.map(g => ({
 					type: 'Property',
 					method: false,
 					shorthand: false,
@@ -129,7 +127,7 @@ function cjs(
 			type: 'VariableDeclarator',
 			id: {
 				type: 'ObjectPattern',
-				properties: helpers.sort((a, b) => a.name < b.name ? -1 : 1).map(h => ({
+				properties: helpers.map(h => ({
 					type: 'Property',
 					method: false,
 					shorthand: false,
@@ -150,7 +148,7 @@ function cjs(
 			type: 'VariableDeclarator',
 			id: {
 				type: 'ObjectPattern',
-				properties: globals.sort((a, b) => a.name < b.name ? -1 : 1).map(g => ({
+				properties: globals.map(g => ({
 					type: 'Property',
 					method: false,
 					shorthand: false,

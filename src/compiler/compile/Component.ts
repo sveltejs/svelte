@@ -260,18 +260,8 @@ export default class Component {
 
 			walk(program, {
 				enter: (node, parent, key) => {
-					if (node.type === 'Identifier' && !('name' in node)) {
-						console.log(node);
-						throw new Error('this should never happen'); // TODO remove once satisfied
-					}
-
 					if (node.type === 'Identifier') {
 						if (node.name[0] === '@') {
-							// TODO temp
-							if (!/@\w+$/.test(node.name)) {
-								throw new Error(`wut "${node.name}"`);
-							}
-
 							if (node.name[1] === '_') {
 								const alias = this.global(node.name.slice(2));
 								node.name = alias.name;
@@ -302,11 +292,6 @@ export default class Component {
 							else if (parent.type === 'MemberExpression' && key === 'property') {
 								parent.property = literal;
 								parent.computed = true;
-							}
-
-							else {
-								console.log(node);
-								throw new Error('this should never happen'); // TODO remove once satisfied
 							}
 						}
 					}
@@ -853,8 +838,6 @@ export default class Component {
 				if (node.type === 'VariableDeclaration') {
 					if (node.kind === 'var' || scope === instance_scope) {
 						node.declarations.forEach(declarator => {
-							// const next = node.declarations[i + 1];
-
 							if (declarator.id.type !== 'Identifier') {
 								const inserts = [];
 

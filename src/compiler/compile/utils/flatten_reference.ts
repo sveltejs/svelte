@@ -1,11 +1,6 @@
 import { Node, Identifier } from 'estree';
 
 export default function flatten_reference(node: Node) {
-	// TODO temporary (#3539)
-	if ((node as any).type === 'Expression') {
-		throw new Error('flatten_reference bad');
-	}
-
 	const nodes = [];
 	const parts = [];
 

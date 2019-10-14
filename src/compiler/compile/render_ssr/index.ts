@@ -46,9 +46,6 @@ export default function ssr(
 		})
 		.filter(Boolean);
 
-	// TODO remove this, just use component.vars everywhere
-	const props = component.vars.filter(variable => !variable.module && variable.export_name);
-
 	component.rewrite_props(({ name }) => {
 		const value = `$${name}`;
 
@@ -67,9 +64,11 @@ export default function ssr(
 
 	// TODO only do this for props with a default value
 	const parent_bindings = instance_javascript
-		? props.map(prop => {
-			return b`if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
-		})
+		? component.vars
+			.filter(variable => !variable.module && variable.export_name)
+			.map(prop => {
+				return b`if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
+			})
 		: [];
 
 	const reactive_declarations = component.reactive_declarations.map(d => {

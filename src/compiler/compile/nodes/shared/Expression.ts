@@ -9,7 +9,7 @@ import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import Block from '../../render_dom/Block';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
-import { x, b } from 'code-red';
+import { x, b, p } from 'code-red';
 import { invalidate } from '../../utils/invalidate';
 import { Node, FunctionExpression } from 'estree';
 import { TemplateNode } from '../../../interfaces';
@@ -29,9 +29,6 @@ export default class Expression {
 	scope: Scope;
 	scope_map: WeakMap<Node, Scope>;
 
-	// TODO apparently unnecessary?
-	// is_synthetic: boolean;
-
 	declarations: Array<(Node | Node[])> = [];
 	uses_context = false;
 
@@ -49,8 +46,6 @@ export default class Expression {
 		this.node = info;
 		this.template_scope = template_scope;
 		this.owner = owner;
-		// @ts-ignore
-		// this.is_synthetic = owner.is_synthetic;
 
 		const { dependencies, contextual_dependencies } = this;
 
@@ -253,7 +248,6 @@ export default class Expression {
 					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
 						// we can hoist this out of the component completely
 						component.fully_hoisted.push(declaration);
-						// node.name = id;
 
 						this.replace(id as any);
 
@@ -268,7 +262,6 @@ export default class Expression {
 					else if (contextual_dependencies.size === 0) {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(declaration);
-						// node.name = id;
 
 						this.replace(x`#ctx.${id}` as any);
 
@@ -283,19 +276,10 @@ export default class Expression {
 						// we need a combo block/init recipe
 						(node as FunctionExpression).params.unshift({
 							type: 'ObjectPattern',
-							properties: Array.from(contextual_dependencies).map(name => ({
-								type: 'Property',
-								kind: 'init',
-								method: false,
-								shorthand: false,
-								computed: false,
-								key: { type: 'Identifier', name },
-								value: { type: 'Identifier', name }
-							}))
+							properties: Array.from(contextual_dependencies).map(name => p`${name}` as any)
 						});
 
 						component.partly_hoisted.push(declaration);
-						// node.name = id;
 
 						this.replace(id as any);
 

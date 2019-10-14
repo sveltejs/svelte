@@ -65,7 +65,6 @@ describe("runtime", () => {
 
 			unhandled_rejection = null;
 
-			config.preserveIdentifiers = true; // TODO remove later
 			compile = (config.preserveIdentifiers ? svelte : svelte$).compile;
 
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
