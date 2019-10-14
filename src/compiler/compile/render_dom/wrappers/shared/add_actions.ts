@@ -1,8 +1,7 @@
-import { b } from 'code-red';
+import { b, x } from 'code-red';
 import Block from '../../Block';
 import Action from '../../../nodes/Action';
 import Component from '../../../Component';
-import { x } from 'code-red';
 
 export default function add_actions(
 	component: Component,

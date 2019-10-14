@@ -44,18 +44,18 @@ export default class Block {
 	}>;
 
 	chunks: {
-		init: (Node | Node[])[];
-		create: (Node | Node[])[];
-		claim: (Node | Node[])[];
-		hydrate: (Node | Node[])[];
-		mount: (Node | Node[])[];
-		measure: (Node | Node[])[];
-		fix: (Node | Node[])[];
-		animate: (Node | Node[])[];
-		intro: (Node | Node[])[];
-		update: (Node | Node[])[];
-		outro: (Node | Node[])[];
-		destroy: (Node | Node[])[];
+		init: Array<Node | Node[]>;
+		create: Array<Node | Node[]>;
+		claim: Array<Node | Node[]>;
+		hydrate: Array<Node | Node[]>;
+		mount: Array<Node | Node[]>;
+		measure: Array<Node | Node[]>;
+		fix: Array<Node | Node[]>;
+		animate: Array<Node | Node[]>;
+		intro: Array<Node | Node[]>;
+		update: Array<Node | Node[]>;
+		outro: Array<Node | Node[]>;
+		destroy: Array<Node | Node[]>;
 	};
 
 	event_listeners: Node[] = [];
@@ -69,7 +69,7 @@ export default class Block {
 	outros: number;
 
 	aliases: Map<string, Identifier>;
-	variables: Map<string, { id: Identifier, init?: Node }> = new Map();
+	variables: Map<string, { id: Identifier; init?: Node }> = new Map();
 	get_unique_name: (name: string) => Identifier;
 
 	has_update_method = false;
@@ -249,7 +249,7 @@ export default class Block {
 
 		const noop = x`@noop`;
 
-		properties.key = key
+		properties.key = key;
 
 		if (this.first) {
 			properties.first = x`null`;

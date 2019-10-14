@@ -310,7 +310,7 @@ export default class ElementWrapper extends Wrapper {
 					quasis: []
 				};
 
-				to_html((this.fragment.nodes as unknown as (ElementWrapper | TextWrapper)[]), block, literal, state);
+				to_html((this.fragment.nodes as unknown as Array<ElementWrapper | TextWrapper>), block, literal, state);
 				literal.quasis.push(state.quasi);
 
 				block.chunks.create.push(
@@ -832,7 +832,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 }
 
-function to_html(wrappers: (ElementWrapper | TextWrapper)[], block: Block, literal: any, state: any) {
+function to_html(wrappers: Array<ElementWrapper | TextWrapper>, block: Block, literal: any, state: any) {
 	wrappers.forEach(wrapper => {
 		if (wrapper.node.type === 'Text') {
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
@@ -866,7 +866,7 @@ function to_html(wrappers: (ElementWrapper | TextWrapper)[], block: Block, liter
 						state.quasi.value.raw += chunk.data;
 					} else {
 						literal.quasis.push(state.quasi);
-						literal.expressions.push(chunk.manipulate(block))
+						literal.expressions.push(chunk.manipulate(block));
 
 						state.quasi = {
 							type: 'TemplateElement',
@@ -881,7 +881,7 @@ function to_html(wrappers: (ElementWrapper | TextWrapper)[], block: Block, liter
 			state.quasi.value.raw += '>';
 
 			if (!is_void(wrapper.node.name)) {
-				to_html((wrapper as ElementWrapper).fragment.nodes as (ElementWrapper | TextWrapper)[], block, literal, state);
+				to_html((wrapper as ElementWrapper).fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
 				state.quasi.value.raw += `</${wrapper.node.name}>`;
 			}

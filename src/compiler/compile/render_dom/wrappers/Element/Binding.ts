@@ -267,7 +267,7 @@ function get_event_handler(
 		}
 	}
 
-	let mutation = b`
+	const mutation = b`
 		${lhs} = ${value};
 		${set_store}
 	`;

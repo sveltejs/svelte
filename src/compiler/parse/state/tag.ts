@@ -37,8 +37,8 @@ const specials = new Map([
 	],
 ]);
 
-const SELF = /^svelte:self(?=[\s\/>])/;
-const COMPONENT = /^svelte:component(?=[\s\/>])/;
+const SELF = /^svelte:self(?=[\s/>])/;
+const COMPONENT = /^svelte:component(?=[\s/>])/;
 
 function parent_is_head(stack) {
 	let i = stack.length;

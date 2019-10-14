@@ -62,7 +62,7 @@ function esm(
 			imported: { type: 'Identifier', name: h.name }
 		})),
 		source: { type: 'Literal', value: internal_path }
-	}
+	};
 
 	const internal_globals = globals.length > 0 && {
 		type: 'VariableDeclaration',

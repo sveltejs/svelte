@@ -1,4 +1,4 @@
-export type CssNode = {
+export interface CssNode {
 	type: string;
 	start: number;
 	end: number;

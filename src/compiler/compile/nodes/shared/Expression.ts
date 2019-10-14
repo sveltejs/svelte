@@ -32,7 +32,7 @@ export default class Expression {
 	// TODO apparently unnecessary?
 	// is_synthetic: boolean;
 
-	declarations: (Node | Node[])[] = [];
+	declarations: Array<(Node | Node[])> = [];
 	uses_context = false;
 
 	manipulated: Node;

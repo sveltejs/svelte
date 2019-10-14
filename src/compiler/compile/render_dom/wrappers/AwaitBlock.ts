@@ -188,7 +188,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const dependencies = this.node.expression.dynamic_dependencies();
 
 		if (dependencies.length > 0) {
-			let condition = x`
+			const condition = x`
 				${changed(dependencies)} &&
 				${promise} !== (${promise} = ${snippet}) &&
 				@handle_promise(${promise}, ${info})`;

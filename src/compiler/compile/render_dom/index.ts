@@ -475,7 +475,7 @@ export default function dom(
 				value: x`function() {
 					return [${props.map(prop => x`"${prop.export_name}"`)}];
 				}` as FunctionExpression
-			})
+			});
 		}
 
 		declaration.body.body.push(...accessors);

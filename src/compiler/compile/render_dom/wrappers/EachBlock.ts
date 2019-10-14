@@ -61,7 +61,7 @@ export default class EachBlockWrapper extends Wrapper {
 		view_length: string;
 	}
 
-	context_props: (Node | Node[])[];
+	context_props: Array<Node | Node[]>;
 	index_name: Identifier;
 
 	var: Identifier = { type: 'Identifier', name: 'each' };

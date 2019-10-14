@@ -261,7 +261,7 @@ export default class IfBlockWrapper extends Wrapper {
 		const current_block_type = block.get_unique_name(`current_block_type`);
 		const get_block = has_else
 			? x`${current_block_type}(#ctx)`
-			: x`${current_block_type} && ${current_block_type}(#ctx)`
+			: x`${current_block_type} && ${current_block_type}(#ctx)`;
 
 		/* eslint-disable @typescript-eslint/indent,indent */
 		if (this.needs_update) {

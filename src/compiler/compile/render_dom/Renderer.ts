@@ -11,7 +11,7 @@ export default class Renderer {
 
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
-	meta_bindings: (Node | Node[])[] = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
+	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
 	binding_groups: string[] = [];
 
 	block: Block;

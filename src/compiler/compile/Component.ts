@@ -71,8 +71,8 @@ export default class Component {
 
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
-	partly_hoisted: (Node | Node[])[] = [];
-	fully_hoisted: (Node | Node[])[] = [];
+	partly_hoisted: Array<(Node | Node[])> = [];
+	fully_hoisted: Array<(Node | Node[])> = [];
 	reactive_declarations: Array<{
 		assignees: Set<string>;
 		dependencies: Set<string>;

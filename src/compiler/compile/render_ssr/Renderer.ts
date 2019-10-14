@@ -48,7 +48,7 @@ export default class Renderer {
 
 	name: Identifier;
 
-	stack: { current: { value: string }, literal: TemplateLiteral }[] = [];
+	stack: Array<{ current: { value: string }; literal: TemplateLiteral }> = [];
 	current: { value: string }; // TODO can it just be `current: string`?
 	literal: TemplateLiteral;
 
@@ -57,17 +57,6 @@ export default class Renderer {
 	constructor({ name }) {
 		this.name = name;
 		this.push();
-	}
-
-	append() {
-		throw new Error('no more append');
-		// if (this.targets.length) {
-		// 	const target = this.targets[this.targets.length - 1];
-		// 	const slot_name = target.slot_stack[target.slot_stack.length - 1];
-		// 	target.slots[slot_name] += code;
-		// } else {
-		// 	this.code += code;
-		// }
 	}
 
 	add_string(str: string) {
@@ -94,7 +83,7 @@ export default class Renderer {
 			quasis: []
 		};
 
-		this.stack.push({ current, literal })
+		this.stack.push({ current, literal });
 	}
 
 	pop() {

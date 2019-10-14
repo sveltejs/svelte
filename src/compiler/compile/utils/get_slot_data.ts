@@ -11,7 +11,7 @@ export default function get_slot_data(values: Map<string, Attribute>, is_ssr: bo
 				const value = get_value(attribute);
 				return p`${attribute.name}: ${value}`;
 			})
-	}
+	};
 }
 
 // TODO fairly sure this is duplicated at least once

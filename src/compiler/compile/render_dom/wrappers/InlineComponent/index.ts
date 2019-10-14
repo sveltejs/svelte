@@ -116,8 +116,8 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const component_opts = x`{}` as ObjectExpression;
 
-		const statements: (Node | Node[])[] = [];
-		const updates: (Node | Node[])[] = [];
+		const statements: Array<Node | Node[]> = [];
+		const updates: Array<Node | Node[]> = [];
 
 		let props;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);

@@ -84,7 +84,7 @@ export default class AttributeWrapper {
 			} else {
 				value = this.node.name === 'class'
 					? this.get_class_name_text()
-					: this.render_chunks().reduce((lhs, rhs) => x`${lhs} + ${rhs}`)
+					: this.render_chunks().reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
 				// '{foo} {bar}' — treat as string concatenation
 				if (this.node.chunks[0].type !== 'Text') {

@@ -29,7 +29,7 @@ function get_context(parser: Parser, attributes: any[], start: number): string {
 	return value;
 }
 
-export default function read_script(parser: Parser, start: number, attributes: Node[]) : Script {
+export default function read_script(parser: Parser, start: number, attributes: Node[]): Script {
 	const script_start = parser.index;
 	const script_end = parser.template.indexOf(script_closing_tag, script_start);
 

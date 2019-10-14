@@ -67,7 +67,7 @@ export interface Parser {
 }
 
 export interface Script extends BaseNode {
-	type: 'Script',
+	type: 'Script';
 	context: string;
 	content: Program;
 }
@@ -80,7 +80,7 @@ export interface Style extends BaseNode {
 		start: number;
 		end: number;
 		styles: string;
-	}
+	};
 }
 
 export interface Ast {

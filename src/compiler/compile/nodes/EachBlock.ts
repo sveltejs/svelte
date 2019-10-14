@@ -37,7 +37,7 @@ function unpack_destructuring(contexts: Context[], node: Node, modifier: (node: 
 				const replacement: RestElement = {
 					type: 'RestElement',
 					argument: property.key as Identifier
-				}
+				};
 
 				node.properties[i] = replacement;
 
