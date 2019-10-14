@@ -4,7 +4,7 @@ import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 import Element from './Element';
-import { x, p } from 'code-red';
+import { x } from 'code-red';
 import { Node, Identifier, RestElement } from 'estree';
 
 interface Context {
@@ -39,7 +39,7 @@ function unpack_destructuring(contexts: Context[], node: Node, modifier: (node: 
 					argument: property.key as Identifier
 				};
 
-				node.properties[i] = replacement;
+				node.properties[i] = replacement as any;
 
 				unpack_destructuring(
 					contexts,

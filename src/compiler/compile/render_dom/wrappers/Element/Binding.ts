@@ -7,7 +7,7 @@ import Renderer from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
 import EachBlock from '../../../nodes/EachBlock';
 import { changed } from '../shared/changed';
-import { Node, Identifier, MemberExpression } from 'estree';
+import { Node, Identifier } from 'estree';
 
 export default class BindingWrapper {
 	node: Binding;

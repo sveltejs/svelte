@@ -117,16 +117,6 @@ export function is_valid(str: string): boolean {
 	return true;
 }
 
-export function quote_name_if_necessary(name: string) {
-	if (!is_valid(name)) return `"${name}"`;
-	return name;
-}
-
-export function quote_prop_if_necessary(name: string) {
-	if (!is_valid(name)) return `["${name}"]`;
-	return `.${name}`;
-}
-
 export function sanitize(name: string) {
 	return name
 		.replace(/[^a-zA-Z0-9_]+/g, '_')

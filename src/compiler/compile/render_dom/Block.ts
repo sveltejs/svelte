@@ -17,6 +17,7 @@ export interface BlockOptions {
 		snippet: Node;
 		store: string;
 		tail: Node;
+		modifier: (node: Node) => Node;
 	}>;
 	dependencies?: Set<string>;
 }
@@ -41,6 +42,7 @@ export default class Block {
 		snippet: Node;
 		store: string;
 		tail: Node;
+		modifier: (node: Node) => Node;
 	}>;
 
 	chunks: {

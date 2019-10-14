@@ -15,7 +15,7 @@ import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { changed } from '../shared/changed';
-import { Node, Identifier, Expression, ObjectExpression, Property } from 'estree';
+import { Node, Identifier, ObjectExpression } from 'estree';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;

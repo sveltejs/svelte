@@ -6,6 +6,7 @@ import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
 import { extract_names } from '../utils/scope';
+import { LabeledStatement, Statement, ExpressionStatement, AssignmentExpression } from 'estree';
 
 export default function ssr(
 	component: Component,
@@ -72,7 +73,9 @@ export default function ssr(
 		: [];
 
 	const reactive_declarations = component.reactive_declarations.map(d => {
-		let statement = b`${d.node.body}`;
+		const body: Statement = (d.node as LabeledStatement).body;
+
+		let statement = b`${body}`;
 
 		if (d.declaration) {
 			const declared = extract_names(d.declaration);
@@ -90,12 +93,14 @@ export default function ssr(
 					declared.length > injected.length
 				);
 
+				const { left, right } = (body as ExpressionStatement).expression as AssignmentExpression;
+
 				statement = separate
 					? b`
 						${injected.map(name => b`let ${name};`)}
 						${statement}`
 					: b`
-						let ${d.node.body.expression.left} = ${d.node.body.expression.right}`;
+						let ${left} = ${right}`;
 			}
 		}
 

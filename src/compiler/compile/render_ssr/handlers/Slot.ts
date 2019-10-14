@@ -4,7 +4,7 @@ import Slot from '../../nodes/Slot';
 import { x } from 'code-red';
 
 export default function(node: Slot, renderer: Renderer, options: RenderOptions) {
-	const slot_data = get_slot_data(node.values, true);
+	const slot_data = get_slot_data(node.values);
 
 	renderer.push();
 	renderer.render(node.children, options);

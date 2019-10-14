@@ -1,12 +1,12 @@
-import { is_void, quote_prop_if_necessary } from '../../../utils/names';
+import { is_void } from '../../../utils/names';
 import Attribute from '../../nodes/Attribute';
 import Class from '../../nodes/Class';
 import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { get_slot_scope } from './shared/get_slot_scope';
 import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
-import Text from '../../nodes/Text';
 import { x } from 'code-red';
+import Expression from '../../nodes/shared/Expression';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
 const boolean_attributes = new Set([
@@ -54,7 +54,6 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 }) {
 	// awkward special case
 	let node_contents;
-	let value;
 
 	const contenteditable = (
 		node.name !== 'textarea' &&
@@ -112,12 +111,12 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 					attribute.chunks[0].type !== 'Text'
 				) {
 					// a boolean attribute with one non-Text chunk
-					args.push(x`{ ${attribute.name}: ${attribute.chunks[0].node} }`);
+					args.push(x`{ ${attribute.name}: ${(attribute.chunks[0] as Expression).node} }`);
 				} else if (attribute.name === 'class' && class_expression) {
 					// Add class expression
 					args.push(x`{ ${attribute.name}: [${get_class_attribute_value(attribute)}, ${class_expression}].join(' ').trim() }`);
 				} else {
-					args.push(x`{ ${attribute.name}: ${attribute.name === 'class' ? get_class_attribute_value(attribute) : get_attribute_value(attribute, true)} }`);
+					args.push(x`{ ${attribute.name}: ${attribute.name === 'class' ? get_class_attribute_value(attribute) : get_attribute_value(attribute)} }`);
 				}
 			}
 		});
@@ -138,7 +137,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			) {
 				// a boolean attribute with one non-Text chunk
 				renderer.add_string(` `);
-				renderer.add_expression(x`${attribute.chunks[0].node} ? "${attribute.name}" : ""`);
+				renderer.add_expression(x`${(attribute.chunks[0] as Expression).node} ? "${attribute.name}" : ""`);
 			} else if (attribute.name === 'class' && class_expression) {
 				add_class_attribute = false;
 				renderer.add_string(` class="`);
@@ -146,7 +145,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				renderer.add_string(`"`);
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const { name } = attribute;
-				const snippet = attribute.chunks[0].node;
+				const snippet = (attribute.chunks[0] as Expression).node;
 				renderer.add_expression(x`@add_attribute("${name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
 			} else {
 				renderer.add_string(` ${attribute.name}="`);
@@ -167,7 +166,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			// TODO server-render group bindings
 		} else if (contenteditable && (name === 'textContent' || name === 'innerHTML')) {
 			node_contents = expression.node;
-			value = name === 'textContent' ? x`@escape($$value)` : x`$$value`;
+
+			// TODO where was this used?
+			// value = name === 'textContent' ? x`@escape($$value)` : x`$$value`;
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = expression.node;
 			node_contents = x`${snippet} || ""`;

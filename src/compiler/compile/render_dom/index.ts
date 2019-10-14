@@ -1,5 +1,4 @@
 import { b, x, p } from 'code-red';
-import { escape } from '../utils/stringify';
 import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
@@ -8,7 +7,7 @@ import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
 import { invalidate } from '../utils/invalidate';
 import Block from './Block';
-import { ClassDeclaration, FunctionExpression, Node, LabeledStatement, Statement } from 'estree';
+import { ClassDeclaration, FunctionExpression, Node, Statement } from 'estree';
 
 export default function dom(
 	component: Component,

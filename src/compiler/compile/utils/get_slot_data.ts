@@ -2,7 +2,7 @@ import Attribute from '../nodes/Attribute';
 import { p, x } from 'code-red';
 import { string_literal } from './stringify';
 
-export default function get_slot_data(values: Map<string, Attribute>, is_ssr: boolean) {
+export default function get_slot_data(values: Map<string, Attribute>) {
 	return {
 		type: 'ObjectExpression',
 		properties: Array.from(values.values())
