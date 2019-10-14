@@ -233,12 +233,6 @@ export default class Component {
 		return this.aliases.get(name);
 	}
 
-	helper(name: string) {
-		const alias = this.alias(name);
-		this.helpers.set(name, alias);
-		return alias;
-	}
-
 	global(name: string) {
 		const alias = this.alias(name);
 		this.globals.set(name, alias);
@@ -276,7 +270,8 @@ export default class Component {
 									}
 								}
 
-								const alias = this.helper(name);
+								const alias = this.alias(name);
+								this.helpers.set(name, alias);
 								node.name = alias.name;
 							}
 						}
@@ -303,7 +298,7 @@ export default class Component {
 				([name, alias]) => name !== alias.name && { name, alias }
 			).filter(Boolean);
 			if (referenced_globals.length) {
-				this.helper('globals');
+				this.helpers.set('globals', this.alias('globals'));
 			}
 			const imported_helpers = Array.from(this.helpers, ([name, alias]) => ({
 				name,

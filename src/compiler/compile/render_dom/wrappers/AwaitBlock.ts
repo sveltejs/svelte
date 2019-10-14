@@ -149,9 +149,6 @@ export default class AwaitBlockWrapper extends Wrapper {
 			blocks: ${this.pending.block.has_outro_method && x`[,,,]`}
 		}`;
 
-		// TODO move this into code-red
-		info_props.properties = info_props.properties.filter(prop => prop.value);
-
 		block.chunks.init.push(b`
 			let ${info} = ${info_props};
 		`);

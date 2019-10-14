@@ -49,12 +49,9 @@ export default function ssr(
 	component.rewrite_props(({ name }) => {
 		const value = `$${name}`;
 
-		const get_store_value = component.helper('get_store_value');
-
-		let insert = b`${value} = ${get_store_value}(${name})`;
+		let insert = b`${value} = @get_store_value(${name})`;
 		if (component.compile_options.dev) {
-			const validate_store = component.helper('validate_store');
-			insert = b`${validate_store}(${name}, '${name}'); ${insert}`;
+			insert = b`@validate_store(${name}, '${name}'); ${insert}`;
 		}
 
 		return insert;
@@ -135,8 +132,7 @@ export default function ssr(
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
 			if (store && store.hoistable) {
-				const get_store_value = component.helper('get_store_value');
-				return b`let ${name} = ${get_store_value}(${store_name});`;
+				return b`let ${name} = @get_store_value(${store_name});`;
 			}
 			return b`let ${name};`;
 		}),

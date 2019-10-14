@@ -228,13 +228,11 @@ export default function dom(
 				return b`${`$$subscribe_${name}`}()`;
 			}
 
-			const component_subscribe = component.helper('component_subscribe');
-			const callback = x`$$value => { ${value} = $$value; $$invalidate('${value}', ${value}) }`;
+			const callback = x`$$value => { $$invalidate('${value}', ${value} = $$value) }`;
 
-			let insert = b`${component_subscribe}($$self, ${name}, $${callback})`;
+			let insert = b`@component_subscribe($$self, ${name}, $${callback})`;
 			if (component.compile_options.dev) {
-				const validate_store = component.helper('validate_store');
-				insert = b`${validate_store}(${name}, '${name}'); ${insert}`;
+				insert = b`@validate_store(${name}, '${name}'); ${insert}`;
 			}
 
 			return insert;
@@ -260,7 +258,7 @@ export default function dom(
 		.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
 		.map(v => p`${v.name}`);
 
-	if (uses_props) filtered_declarations.push(p`$$props: $$props = ${component.helper('exclude_internal_props')}($$props)`);
+	if (uses_props) filtered_declarations.push(p`$$props: $$props = @exclude_internal_props($$props)`);
 
 	const filtered_props = props.filter(prop => {
 		const variable = component.var_lookup.get(prop.name);

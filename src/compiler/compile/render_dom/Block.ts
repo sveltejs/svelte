@@ -130,7 +130,6 @@ export default class Block {
 			const wrapper = this.wrappers[i];
 
 			if (!wrapper.var) continue;
-			// if (wrapper.parent && wrapper.parent.can_use_innerhtml) continue;
 
 			if (seen.has(wrapper.var.name)) {
 				dupes.add(wrapper.var.name);
@@ -375,9 +374,6 @@ export default class Block {
 			d: ${properties.destroy}
 		}`;
 
-		// TODO should code-red do this automatically? probably
-		return_value.properties = return_value.properties.filter(prop => prop.value);
-
 		const body = b`
 			${Array.from(this.variables.values()).map(({ id, init }) => {
 				return init
@@ -447,15 +443,4 @@ export default class Block {
 			}
 		}
 	}
-
-	// toString() {
-	// 	const local_key = this.key && this.get_unique_name('key');
-
-	// 	return deindent`
-	// 		${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
-	// 		function ${this.name}(${this.key ? `${local_key}, ` : ''}ctx) {
-	// 			${this.get_contents(local_key)}
-	// 		}
-	// 	`;
-	// }
 }

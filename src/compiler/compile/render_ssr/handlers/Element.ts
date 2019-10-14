@@ -70,20 +70,6 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 	renderer.add_string(`<${node.name}`);
 
-	// if (slot && nearest_inline_component) {
-	// 	const slot = node.attributes.find((attribute) => attribute.name === 'slot');
-	// 	const slot_name = (slot.chunks[0] as Text).data;
-
-	// 	const lets = node.lets;
-	// 	const seen = new Set(lets.map(l => l.name.name));
-
-	// 	nearest_inline_component.lets.forEach(l => {
-	// 		if (!seen.has(l.name.name)) lets.push(l);
-	// 	});
-
-	// 	options.slot_scopes.set(slot_name, get_slot_scope(node.lets));
-	// }
-
 	const class_expression = node.classes.length > 0 && node.classes
 		.map((class_directive: Class) => {
 			const { expression, name } = class_directive;
