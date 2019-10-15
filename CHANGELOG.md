@@ -18,6 +18,7 @@
 ## 3.12.0
 
 * Fire events on `document` in development to facilitate dev tooling ([#3005](https://github.com/sveltejs/svelte/pull/3005))
+* Remove old props when the keys in spread props are removed ([#2282](https://github.com/sveltejs/svelte/issues/2282))
 
 ## 3.11.0
 
