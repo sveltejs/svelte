@@ -14,9 +14,11 @@ const app = polka({
 	}
 });
 
-app.use(
-	authenticate(),
+if (process.env.PGHOST) {
+	app.use(authenticate);
+}
 
+app.use(
 	sirv('static', {
 		dev: process.env.NODE_ENV === 'development',
 		setHeaders(res) {
