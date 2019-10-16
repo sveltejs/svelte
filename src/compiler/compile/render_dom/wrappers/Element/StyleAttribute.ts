@@ -1,11 +1,13 @@
+import { b, x } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
 import AttributeWrapper from './Attribute';
 import ElementWrapper from '../Element';
-import { stringify } from '../../../utils/stringify';
+import { string_literal } from '../../../utils/stringify';
 import add_to_set from '../../../utils/add_to_set';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
+import { changed } from '../shared/changed';
 
 export interface StyleProp {
 	key: string;
@@ -25,41 +27,44 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 			let value;
 
 			if (is_dynamic(prop.value)) {
-				const prop_dependencies = new Set();
+				const prop_dependencies: Set<string> = new Set();
 
-				value =
-					((prop.value.length === 1 || prop.value[0].type === 'Text') ? '' : `"" + `) +
-					prop.value
-						.map((chunk) => {
-							if (chunk.type === 'Text') {
-								return stringify(chunk.data);
-							} else {
-								const snippet = chunk.render();
+				value = prop.value
+					.map(chunk => {
+						if (chunk.type === 'Text') {
+							return string_literal(chunk.data);
+						} else {
+							add_to_set(prop_dependencies, chunk.dynamic_dependencies());
+							return chunk.manipulate(block);
+						}
+					})
+					.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
-								add_to_set(prop_dependencies, chunk.dynamic_dependencies());
-								return chunk.get_precedence() <= 13 ? `(${snippet})` : snippet;
-							}
-						})
-						.join(' + ');
+				// TODO is this necessary? style.setProperty always treats value as string, no?
+				// if (prop.value.length === 1 || prop.value[0].type !== 'Text') {
+				// 	value = x`"" + ${value}`;
+				// }
 
 				if (prop_dependencies.size) {
-					const dependencies = Array.from(prop_dependencies);
-					const condition = (
-						(block.has_outros ? `!#current || ` : '') +
-						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
-					);
+					let condition = changed(Array.from(prop_dependencies));
 
-					block.builders.update.add_conditional(
-						condition,
-						`@set_style(${this.parent.var}, "${prop.key}", ${value}${prop.important ? ', 1' : ''});`
-					);
+					if (block.has_outros) {
+						condition = x`!#current || ${condition}`;
+					}
+
+					const update = b`
+						if (${condition}) {
+							@set_style(${this.parent.var}, "${prop.key}", ${value}, ${prop.important ? 1 : null});
+						}`;
+
+					block.chunks.update.push(update);
 				}
 			} else {
-				value = stringify((prop.value[0] as Text).data);
+				value = string_literal((prop.value[0] as Text).data);
 			}
 
-			block.builders.hydrate.add_line(
-				`@set_style(${this.parent.var}, "${prop.key}", ${value}${prop.important ? ', 1' : ''});`
+			block.chunks.hydrate.push(
+				b`@set_style(${this.parent.var}, "${prop.key}", ${value}, ${prop.important ? 1 : null});`
 			);
 		});
 	}

@@ -6,6 +6,8 @@ require('./setup');
 require('./helpers');
 require('../internal');
 
+console.clear();
+
 glob('*/index.js', { cwd: 'test' }).forEach((file) => {
 	require('./' + file);
 });

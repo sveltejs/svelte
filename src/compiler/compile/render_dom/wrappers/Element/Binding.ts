@@ -1,18 +1,13 @@
+import { b, x } from 'code-red';
 import Binding from '../../../nodes/Binding';
 import ElementWrapper from '../Element';
 import get_object from '../../../utils/get_object';
 import Block from '../../Block';
-import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
 import EachBlock from '../../../nodes/EachBlock';
-import { Node as INode } from '../../../../interfaces';
-
-function get_tail(node: INode) {
-	const end = node.end;
-	while (node.type === 'MemberExpression') node = node.object;
-	return { start: node.end, end };
-}
+import { changed } from '../shared/changed';
+import { Node, Identifier } from 'estree';
 
 export default class BindingWrapper {
 	node: Binding;
@@ -21,11 +16,11 @@ export default class BindingWrapper {
 	object: string;
 	handler: {
 		uses_context: boolean;
-		mutation: string;
+		mutation: (Node | Node[]);
 		contextual_dependencies: Set<string>;
-		snippet?: string;
+		snippet?: Node;
 	};
-	snippet: string;
+	snippet: Node;
 	is_readonly: boolean;
 	needs_lock: boolean;
 
@@ -56,14 +51,10 @@ export default class BindingWrapper {
 
 		this.object = get_object(this.node.expression.node).name;
 
-		// TODO unfortunate code is necessary because we need to use `ctx`
-		// inside the fragment, but not inside the <script>
-		const contextless_snippet = this.parent.renderer.component.source.slice(this.node.expression.node.start, this.node.expression.node.end);
-
 		// view to model
-		this.handler = get_event_handler(this, parent.renderer, block, this.object, contextless_snippet);
+		this.handler = get_event_handler(this, parent.renderer, block, this.object, this.node.raw_expression);
 
-		this.snippet = this.node.expression.render(block);
+		this.snippet = this.node.expression.manipulate(block);
 
 		this.is_readonly = this.node.is_readonly;
 
@@ -89,28 +80,24 @@ export default class BindingWrapper {
 		return this.node.is_readonly_media_attribute();
 	}
 
-	render(block: Block, lock: string) {
+	render(block: Block, lock: Identifier) {
 		if (this.is_readonly) return;
 
 		const { parent } = this;
 
-		const update_conditions: string[] = this.needs_lock ? [`!${lock}`] : [];
+		const update_conditions: any[] = this.needs_lock ? [x`!${lock}`] : [];
 
 		const dependency_array = [...this.node.expression.dependencies];
 
-		if (dependency_array.length === 1) {
-			update_conditions.push(`changed.${dependency_array[0]}`);
-		} else if (dependency_array.length > 1) {
-			update_conditions.push(
-				`(${dependency_array.map(prop => `changed.${prop}`).join(' || ')})`
-			);
+		if (dependency_array.length > 0) {
+			update_conditions.push(changed(dependency_array));
 		}
 
 		if (parent.node.name === 'input') {
 			const type = parent.node.get_static_attribute_value('type');
 
 			if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
-				update_conditions.push(`(${parent.var}.${this.node.name} !== ${this.snippet})`);
+				update_conditions.push(x`(${parent.var}.${this.node.name} !== ${this.snippet})`);
 			}
 		}
 
@@ -123,38 +110,38 @@ export default class BindingWrapper {
 			{
 				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
 
-				block.builders.hydrate.add_line(
-					`ctx.$$binding_groups[${binding_group}].push(${parent.var});`
+				block.chunks.hydrate.push(
+					b`#ctx.$$binding_groups[${binding_group}].push(${parent.var});`
 				);
 
-				block.builders.destroy.add_line(
-					`ctx.$$binding_groups[${binding_group}].splice(ctx.$$binding_groups[${binding_group}].indexOf(${parent.var}), 1);`
+				block.chunks.destroy.push(
+					b`#ctx.$$binding_groups[${binding_group}].splice(#ctx.$$binding_groups[${binding_group}].indexOf(${parent.var}), 1);`
 				);
 				break;
 			}
 
 			case 'textContent':
-				update_conditions.push(`${this.snippet} !== ${parent.var}.textContent`);
+				update_conditions.push(x`${this.snippet} !== ${parent.var}.textContent`);
 				break;
 
 			case 'innerHTML':
-				update_conditions.push(`${this.snippet} !== ${parent.var}.innerHTML`);
+				update_conditions.push(x`${this.snippet} !== ${parent.var}.innerHTML`);
 				break;
 
 			case 'currentTime':
 			case 'playbackRate':
 			case 'volume':
-				update_conditions.push(`!@_isNaN(${this.snippet})`);
+				update_conditions.push(x`!@_isNaN(${this.snippet})`);
 				break;
 
 			case 'paused':
 			{
 				// this is necessary to prevent audio restarting by itself
-				const last = block.get_unique_name(`${parent.var}_is_paused`);
-				block.add_variable(last, 'true');
+				const last = block.get_unique_name(`${parent.var.name}_is_paused`);
+				block.add_variable(last, x`true`);
 
-				update_conditions.push(`${last} !== (${last} = ${this.snippet})`);
-				update_dom = `${parent.var}[${last} ? "pause" : "play"]();`;
+				update_conditions.push(x`${last} !== (${last} = ${this.snippet})`);
+				update_dom = b`${parent.var}[${last} ? "pause" : "play"]();`;
 				break;
 			}
 
@@ -165,15 +152,26 @@ export default class BindingWrapper {
 		}
 
 		if (update_dom) {
-			block.builders.update.add_line(
-				update_conditions.length ? `if (${update_conditions.join(' && ')}) ${update_dom}` : update_dom
-			);
+			if (update_conditions.length > 0) {
+				const condition = update_conditions.reduce((lhs, rhs) => x`${lhs} && ${rhs}`);
+
+				block.chunks.update.push(b`
+					if (${condition}) {
+						${update_dom}
+					}
+				`);
+			} else {
+				block.chunks.update.push(update_dom);
+			}
 		}
 
 		if (this.node.name === 'innerHTML' || this.node.name === 'textContent') {
-			block.builders.mount.add_block(`if (${this.snippet} !== void 0) ${update_dom}`);
+			block.chunks.mount.push(b`
+				if (${this.snippet} !== void 0) {
+					${update_dom}
+				}`);
 		} else if (!/(currentTime|paused)/.test(this.node.name)) {
-			block.builders.mount.add_block(update_dom);
+			block.chunks.mount.push(update_dom);
 		}
 	}
 }
@@ -194,25 +192,25 @@ function get_dom_updater(
 
 	if (node.name === 'select') {
 		return node.get_static_attribute_value('multiple') === true ?
-			`@select_options(${element.var}, ${binding.snippet})` :
-			`@select_option(${element.var}, ${binding.snippet})`;
+			b`@select_options(${element.var}, ${binding.snippet})` :
+			b`@select_option(${element.var}, ${binding.snippet})`;
 	}
 
 	if (binding.node.name === 'group') {
 		const type = node.get_static_attribute_value('type');
 
 		const condition = type === 'checkbox'
-			? `~${binding.snippet}.indexOf(${element.var}.__value)`
-			: `${element.var}.__value === ${binding.snippet}`;
+			? x`~${binding.snippet}.indexOf(${element.var}.__value)`
+			: x`${element.var}.__value === ${binding.snippet}`;
 
-		return `${element.var}.checked = ${condition};`;
+		return b`${element.var}.checked = ${condition};`;
 	}
 
 	if (binding.node.name === 'value') {
-		return `@set_input_value(${element.var}, ${binding.snippet});`;
+		return b`@set_input_value(${element.var}, ${binding.snippet});`;
 	}
 
-	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
+	return b`${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
 function get_binding_group(renderer: Renderer, value: Node) {
@@ -230,68 +228,54 @@ function get_binding_group(renderer: Renderer, value: Node) {
 	return index;
 }
 
-function mutate_store(store, value, tail) {
-	return tail
-		? `${store}.update($$value => ($$value${tail} = ${value}, $$value));`
-		: `${store}.set(${value});`;
-}
-
 function get_event_handler(
 	binding: BindingWrapper,
 	renderer: Renderer,
 	block: Block,
 	name: string,
-	snippet: string
+	lhs: Node
 ): {
-		uses_context: boolean;
-		mutation: string;
-		contextual_dependencies: Set<string>;
-		snippet?: string;
-	} {
+	uses_context: boolean;
+	mutation: (Node | Node[]);
+	contextual_dependencies: Set<string>;
+	lhs?: Node;
+} {
 	const value = get_value_from_dom(renderer, binding.parent, binding);
-	let store = binding.object[0] === '$' ? binding.object.slice(1) : null;
+	const contextual_dependencies = new Set(binding.node.expression.contextual_dependencies);
 
-	let tail = '';
-	if (binding.node.expression.node.type === 'MemberExpression') {
-		const { start, end } = get_tail(binding.node.expression.node);
-		tail = renderer.component.source.slice(start, end);
-	}
+	const context = block.bindings.get(name);
+	let set_store;
 
-	if (binding.node.is_contextual) {
-		const binding = block.bindings.get(name);
-		const { object, property, snippet } = binding;
+	if (context) {
+		const { object, property, modifier, store } = context;
 
-		if (binding.store) {
-			store = binding.store;
-			tail = `${binding.tail}${tail}`;
+		if (lhs.type === 'Identifier') {
+			lhs = modifier(x`${object}[${property}]`);
+
+			contextual_dependencies.add(object.name);
+			contextual_dependencies.add(property.name);
 		}
 
-		return {
-			uses_context: true,
-			mutation: store
-				? mutate_store(store, value, tail)
-				: `${snippet}${tail} = ${value};`,
-			contextual_dependencies: new Set([object, property])
-		};
+		if (store) {
+			set_store = b`${store}.set(${`$${store}`});`;
+		}
+	} else {
+		const object = get_object(lhs);
+		if (object.name[0] === '$') {
+			const store = object.name.slice(1);
+			set_store = b`${store}.set(${object.name});`;
+		}
 	}
 
-	const mutation = store
-		? mutate_store(store, value, tail)
-		: `${snippet} = ${value};`;
-
-	if (binding.node.expression.node.type === 'MemberExpression') {
-		return {
-			uses_context: binding.node.expression.uses_context,
-			mutation,
-			contextual_dependencies: binding.node.expression.contextual_dependencies,
-			snippet
-		};
-	}
+	const mutation = b`
+		${lhs} = ${value};
+		${set_store}
+	`;
 
 	return {
-		uses_context: false,
+		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy
 		mutation,
-		contextual_dependencies: new Set()
+		contextual_dependencies
 	};
 }
 
@@ -304,14 +288,14 @@ function get_value_from_dom(
 	const { name } = binding.node;
 
 	if (name === 'this') {
-		return `$$node`;
+		return x`$$node`;
 	}
 
 	// <select bind:value='selected>
 	if (node.name === 'select') {
 		return node.get_static_attribute_value('multiple') === true ?
-			`@select_multiple_value(this)` :
-			`@select_value(this)`;
+			x`@select_multiple_value(this)` :
+			x`@select_value(this)`;
 	}
 
 	const type = node.get_static_attribute_value('type');
@@ -320,21 +304,21 @@ function get_value_from_dom(
 	if (name === 'group') {
 		const binding_group = get_binding_group(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			return `@get_binding_group_value($$binding_groups[${binding_group}])`;
+			return x`@get_binding_group_value($$binding_groups[${binding_group}])`;
 		}
 
-		return `this.__value`;
+		return x`this.__value`;
 	}
 
 	// <input type='range|number' bind:value>
 	if (type === 'range' || type === 'number') {
-		return `@to_number(this.${name})`;
+		return x`@to_number(this.${name})`;
 	}
 
 	if ((name === 'buffered' || name === 'seekable' || name === 'played')) {
-		return `@time_ranges_to_array(this.${name})`;
+		return x`@time_ranges_to_array(this.${name})`;
 	}
 
 	// everything else
-	return `this.${name}`;
+	return x`this.${name}`;
 }

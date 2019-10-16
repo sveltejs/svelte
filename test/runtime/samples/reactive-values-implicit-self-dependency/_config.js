@@ -1,5 +1,4 @@
 export default {
-	show: 1,
 	html: `
 		<p>1 / 1</p>
 	`,

@@ -1,12 +1,15 @@
+import { b, x } from 'code-red';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Tag from './shared/Tag';
 import Wrapper from './shared/Wrapper';
 import MustacheTag from '../../nodes/MustacheTag';
 import RawMustacheTag from '../../nodes/RawMustacheTag';
+import { is_head } from './shared/is_head';
+import { Identifier } from 'estree';
 
 export default class RawMustacheTagWrapper extends Tag {
-	var = 'raw';
+	var: Identifier = { type: 'Identifier', name: 'raw' };
 
 	constructor(
 		renderer: Renderer,
@@ -18,20 +21,20 @@ export default class RawMustacheTagWrapper extends Tag {
 		this.cannot_use_innerhtml();
 	}
 
-	render(block: Block, parent_node: string, _parent_nodes: string) {
-		const in_head = parent_node === '@_document.head';
+	render(block: Block, parent_node: Identifier, _parent_nodes: Identifier) {
+		const in_head = is_head(parent_node);
 
 		const can_use_innerhtml = !in_head && parent_node && !this.prev && !this.next;
 
 		if (can_use_innerhtml) {
-			const insert = content => `${parent_node}.innerHTML = ${content};`;
+			const insert = content => b`${parent_node}.innerHTML = ${content};`[0];
 
 			const { init } = this.rename_this_method(
 				block,
 				content => insert(content)
 			);
 
-			block.builders.mount.add_line(insert(init));
+			block.chunks.mount.push(insert(init));
 		}
 
 		else {
@@ -44,20 +47,20 @@ export default class RawMustacheTagWrapper extends Tag {
 
 			const { init } = this.rename_this_method(
 				block,
-				content => `${html_tag}.p(${content});`
+				content => x`${html_tag}.p(${content});`
 			);
 
 			const update_anchor = in_head ? 'null' : needs_anchor ? html_anchor : this.next ? this.next.var : 'null';
 
-			block.builders.hydrate.add_line(`${html_tag} = new @HtmlTag(${init}, ${update_anchor});`);
-			block.builders.mount.add_line(`${html_tag}.m(${parent_node || '#target'}${parent_node ? '' : ', anchor'});`);
+			block.chunks.hydrate.push(b`${html_tag} = new @HtmlTag(${init}, ${update_anchor});`);
+			block.chunks.mount.push(b`${html_tag}.m(${parent_node || '#target'}, ${parent_node ? null : 'anchor'});`);
 
 			if (needs_anchor) {
-				block.add_element(html_anchor, '@empty()', '@empty()', parent_node);
+				block.add_element(html_anchor, x`@empty()`, x`@empty()`, parent_node);
 			}
 
 			if (!parent_node || in_head) {
-				block.builders.destroy.add_conditional('detaching', `${html_tag}.d();`);
+				block.chunks.destroy.push(b`if (detaching) ${html_tag}.d();`);
 			}
 		}
 	}

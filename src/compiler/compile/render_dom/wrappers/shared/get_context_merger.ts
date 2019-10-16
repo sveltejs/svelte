@@ -1,9 +1,18 @@
 import Let from '../../../nodes/Let';
+import { x } from 'code-red';
 
 export function get_context_merger(lets: Let[]) {
 	if (lets.length === 0) return null;
 
-	const input = lets.map(l => l.value ? `${l.name}: ${l.value}` : l.name).join(', ');
+	const input = {
+		type: 'ObjectPattern',
+		properties: lets.map(l => ({
+			type: 'Property',
+			kind: 'init',
+			key: l.name,
+			value: l.value || l.name
+		}))
+	};
 
 	const names = new Set();
 	lets.forEach(l => {
@@ -12,7 +21,19 @@ export function get_context_merger(lets: Let[]) {
 		});
 	});
 
-	const output = Array.from(names).join(', ');
+	const output = {
+		type: 'ObjectExpression',
+		properties: Array.from(names).map(name => {
+			const id = { type: 'Identifier', name };
 
-	return `({ ${input} }) => ({ ${output} })`;
+			return {
+				type: 'Property',
+				kind: 'init',
+				key: id,
+				value: id
+			};
+		})
+	};
+
+	return x`(${input}) => (${output})`;
 }
