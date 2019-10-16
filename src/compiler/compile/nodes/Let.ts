@@ -1,38 +1,51 @@
 import Node from './shared/Node';
 import Component from '../Component';
 import { walk } from 'estree-walker';
+import { Identifier } from 'estree';
 
 const applicable = new Set(['Identifier', 'ObjectExpression', 'ArrayExpression', 'Property']);
 
 export default class Let extends Node {
 	type: 'Let';
-	name: string;
-	value: string;
+	name: Identifier;
+	value: Identifier;
 	names: string[] = [];
 
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
 
-		this.name = info.name;
-		this.value = info.expression && `[✂${info.expression.start}-${info.expression.end}✂]`;
+		this.name = { type: 'Identifier', name: info.name };
+
+		const { names } = this;
 
 		if (info.expression) {
+			this.value = info.expression;
+
 			walk(info.expression, {
-				enter: node => {
+				enter(node) {
 					if (!applicable.has(node.type)) {
-						component.error(node, {
+						component.error(node as any, {
 							code: 'invalid-let',
 							message: `let directive value must be an identifier or an object/array pattern`
 						});
 					}
 
 					if (node.type === 'Identifier') {
-						this.names.push(node.name);
+						names.push(node.name);
+					}
+
+					// slightly unfortunate hack
+					if (node.type === 'ArrayExpression') {
+						(node as any).type = 'ArrayPattern';
+					}
+
+					if (node.type === 'ObjectExpression') {
+						(node as any).type = 'ObjectPattern';
 					}
 				}
 			});
 		} else {
-			this.names.push(this.name);
+			names.push(this.name.name);
 		}
 	}
 }

@@ -1,9 +1,9 @@
 import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
-import { Node } from '../../interfaces';
-import { Node as ESTreeNode } from 'estree';
+import { Node, VariableDeclaration, ClassDeclaration, VariableDeclarator, ObjectPattern, Property, RestElement, ArrayPattern, Identifier } from 'estree';
 import get_object from './get_object';
 
+// TODO replace this with periscopic?
 export function create_scopes(expression: Node) {
 	const map = new WeakMap();
 
@@ -16,7 +16,7 @@ export function create_scopes(expression: Node) {
 				node.specifiers.forEach(specifier => {
 					scope.declarations.set(specifier.local.name, specifier);
 				});
-			} else if (/Function/.test(node.type)) {
+			} else if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') {
 				if (node.type === 'FunctionDeclaration') {
 					scope.declarations.set(node.id.name, node);
 					scope = new Scope(scope, false);
@@ -24,7 +24,9 @@ export function create_scopes(expression: Node) {
 				} else {
 					scope = new Scope(scope, false);
 					map.set(node, scope);
-					if (node.id) scope.declarations.set(node.id.name, node);
+					if (node.type === 'FunctionExpression' && node.id) {
+						scope.declarations.set(node.id.name, node);
+					}
 				}
 
 				node.params.forEach((param) => {
@@ -38,7 +40,7 @@ export function create_scopes(expression: Node) {
 			} else if (node.type === 'BlockStatement') {
 				scope = new Scope(scope, true);
 				map.set(node, scope);
-			} else if (/(Class|Variable)Declaration/.test(node.type)) {
+			} else if (node.type === 'ClassDeclaration' || node.type === 'VariableDeclaration') {
 				scope.add_declaration(node);
 			} else if (node.type === 'CatchClause') {
 				scope = new Scope(scope, true);
@@ -47,7 +49,7 @@ export function create_scopes(expression: Node) {
 				extract_names(node.param).forEach(name => {
 					scope.declarations.set(name, node.param);
 				});
-			} else if (node.type === 'Identifier' && is_reference(node as ESTreeNode, parent as ESTreeNode)) {
+			} else if (node.type === 'Identifier' && is_reference(node as Node, parent as Node)) {
 				if (!scope.has(node.name) && !globals.has(node.name)) {
 					globals.set(node.name, node);
 				}
@@ -80,16 +82,18 @@ export class Scope {
 		this.block = block;
 	}
 
-	add_declaration(node: Node) {
-		if (node.kind === 'var' && this.block && this.parent) {
-			this.parent.add_declaration(node);
-		} else if (node.type === 'VariableDeclaration') {
-			node.declarations.forEach((declarator: Node) => {
-				extract_names(declarator.id).forEach(name => {
-					this.declarations.set(name, node);
-					if (declarator.init) this.initialised_declarations.add(name);
+	add_declaration(node: VariableDeclaration | ClassDeclaration) {
+		if (node.type === 'VariableDeclaration') {
+			if (node.kind === 'var' && this.block && this.parent) {
+				this.parent.add_declaration(node);
+			} else {
+				node.declarations.forEach((declarator: VariableDeclarator) => {
+					extract_names(declarator.id).forEach(name => {
+						this.declarations.set(name, node);
+						if (declarator.init) this.initialised_declarations.add(name);
+					});
 				});
-			});
+			}
 		} else {
 			this.declarations.set(node.id.name, node);
 		}
@@ -107,12 +111,12 @@ export class Scope {
 	}
 }
 
-export function extract_names(param: Node) {
-	return extract_identifiers(param).map(node => node.name);
+export function extract_names(param: Node): string[] {
+	return extract_identifiers(param).map((node: any) => node.name);
 }
 
-export function extract_identifiers(param: Node) {
-	const nodes: Node[] = [];
+export function extract_identifiers(param: Node): Identifier[] {
+	const nodes: Identifier[] = [];
 	extractors[param.type] && extractors[param.type](nodes, param);
 	return nodes;
 }
@@ -126,8 +130,8 @@ const extractors = {
 		nodes.push(get_object(param));
 	},
 
-	ObjectPattern(nodes: Node[], param: Node) {
-		param.properties.forEach((prop: Node) => {
+	ObjectPattern(nodes: Node[], param: ObjectPattern) {
+		param.properties.forEach((prop: Property | RestElement) => {
 			if (prop.type === 'RestElement') {
 				nodes.push(prop.argument);
 			} else {
@@ -136,17 +140,17 @@ const extractors = {
 		});
 	},
 
-	ArrayPattern(nodes: Node[], param: Node) {
+	ArrayPattern(nodes: Node[], param: ArrayPattern) {
 		param.elements.forEach((element: Node) => {
 			if (element) extractors[element.type](nodes, element);
 		});
 	},
 
-	RestElement(nodes: Node[], param: Node) {
+	RestElement(nodes: Node[], param: any) {
 		extractors[param.argument.type](nodes, param.argument);
 	},
 
-	AssignmentPattern(nodes: Node[], param: Node) {
+	AssignmentPattern(nodes: Node[], param: any) {
 		extractors[param.left.type](nodes, param.left);
 	}
 };

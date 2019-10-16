@@ -3,19 +3,20 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Slot from '../../nodes/Slot';
 import FragmentWrapper from './Fragment';
-import deindent from '../../utils/deindent';
-import { sanitize, quote_prop_if_necessary } from '../../../utils/names';
+import { b, p, x } from 'code-red';
+import { sanitize } from '../../../utils/names';
 import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../utils/get_slot_data';
-import { stringify_props } from '../../utils/stringify_props';
 import Expression from '../../nodes/shared/Expression';
 import is_dynamic from './shared/is_dynamic';
+import { Identifier, ObjectExpression } from 'estree';
+import { changed } from './shared/changed';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
 	fragment: FragmentWrapper;
 
-	var = 'slot';
+	var: Identifier = { type: 'Identifier', name: 'slot' };
 	dependencies: Set<string> = new Set(['$$scope']);
 
 	constructor(
@@ -51,8 +52,8 @@ export default class SlotWrapper extends Wrapper {
 
 	render(
 		block: Block,
-		parent_node: string,
-		parent_nodes: string
+		parent_node: Identifier,
+		parent_nodes: Identifier
 	) {
 		const { renderer } = this;
 
@@ -65,8 +66,8 @@ export default class SlotWrapper extends Wrapper {
 			get_slot_changes = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_changes`);
 			get_slot_context = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_context`);
 
-			const context_props = get_slot_data(this.node.values, false);
-			const changes_props = [];
+			const context = get_slot_data(this.node.values);
+			const changes = x`{}` as ObjectExpression;
 
 			const dependencies = new Set();
 
@@ -90,15 +91,22 @@ export default class SlotWrapper extends Wrapper {
 				});
 
 				if (dynamic_dependencies.length > 0) {
-					changes_props.push(`${attribute.name}: ${dynamic_dependencies.join(' || ')}`);
+					const expression = dynamic_dependencies
+						.map(name => ({ type: 'Identifier', name } as any))
+						.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
+
+					changes.properties.push(p`${attribute.name}: ${expression}`);
 				}
 			});
 
-			const arg = dependencies.size > 0 ? `{ ${Array.from(dependencies).join(', ')} }` : '';
+			const arg = dependencies.size > 0 && {
+				type: 'ObjectPattern',
+				properties: Array.from(dependencies).map(name => p`${name}`)
+			};
 
-			renderer.blocks.push(deindent`
-				const ${get_slot_changes} = (${arg}) => (${stringify_props(changes_props)});
-				const ${get_slot_context} = (${arg}) => (${stringify_props(context_props)});
+			renderer.blocks.push(b`
+				const ${get_slot_changes} = (${arg}) => (${changes});
+				const ${get_slot_context} = (${arg}) => (${context});
 			`);
 		} else {
 			get_slot_changes = 'null';
@@ -108,57 +116,61 @@ export default class SlotWrapper extends Wrapper {
 		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
 
-		block.builders.init.add_block(deindent`
-			const ${slot_definition} = ctx.$$slots${quote_prop_if_necessary(slot_name)};
-			const ${slot} = @create_slot(${slot_definition}, ctx, ${get_slot_context});
+		block.chunks.init.push(b`
+			const ${slot_definition} = #ctx.$$slots.${slot_name};
+			const ${slot} = @create_slot(${slot_definition}, #ctx, ${get_slot_context});
 		`);
 
-		const mount_before = block.builders.mount.toString();
+		// TODO this is a dreadful hack! Should probably make this nicer
+		const { create, claim, hydrate, mount, update, destroy } = block.chunks;
 
-		block.builders.create.push_condition(`!${slot}`);
-		block.builders.claim.push_condition(`!${slot}`);
-		block.builders.hydrate.push_condition(`!${slot}`);
-		block.builders.mount.push_condition(`!${slot}`);
-		block.builders.update.push_condition(`!${slot}`);
-		block.builders.destroy.push_condition(`!${slot}`);
+		block.chunks.create = [];
+		block.chunks.claim = [];
+		block.chunks.hydrate = [];
+		block.chunks.mount = [];
+		block.chunks.update = [];
+		block.chunks.destroy = [];
 
 		const listeners = block.event_listeners;
 		block.event_listeners = [];
 		this.fragment.render(block, parent_node, parent_nodes);
-		block.render_listeners(`_${slot}`);
+		block.render_listeners(`_${slot.name}`);
 		block.event_listeners = listeners;
 
-		block.builders.create.pop_condition();
-		block.builders.claim.pop_condition();
-		block.builders.hydrate.pop_condition();
-		block.builders.mount.pop_condition();
-		block.builders.update.pop_condition();
-		block.builders.destroy.pop_condition();
+		if (block.chunks.create) create.push(b`if (!${slot}) { ${block.chunks.create} }`);
+		if (block.chunks.claim) claim.push(b`if (!${slot}) { ${block.chunks.claim} }`);
+		if (block.chunks.hydrate) hydrate.push(b`if (!${slot}) { ${block.chunks.hydrate} }`);
+		if (block.chunks.mount) mount.push(b`if (!${slot}) { ${block.chunks.mount} }`);
+		if (block.chunks.update) update.push(b`if (!${slot}) { ${block.chunks.update} }`);
+		if (block.chunks.destroy) destroy.push(b`if (!${slot}) { ${block.chunks.destroy} }`);
 
-		block.builders.create.add_line(
-			`if (${slot}) ${slot}.c();`
+		block.chunks.create = create;
+		block.chunks.claim = claim;
+		block.chunks.hydrate = hydrate;
+		block.chunks.mount = mount;
+		block.chunks.update = update;
+		block.chunks.destroy = destroy;
+
+		block.chunks.create.push(
+			b`if (${slot}) ${slot}.c();`
 		);
 
-		block.builders.claim.add_line(
-			`if (${slot}) ${slot}.l(${parent_nodes});`
+		block.chunks.claim.push(
+			b`if (${slot}) ${slot}.l(${parent_nodes});`
 		);
 
-		const mount_leadin = block.builders.mount.toString() !== mount_before
-			? `else`
-			: `if (${slot})`;
-
-		block.builders.mount.add_block(deindent`
-			${mount_leadin} {
+		block.chunks.mount.push(b`
+			if (${slot}) {
 				${slot}.m(${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
 			}
 		`);
 
-		block.builders.intro.add_line(
-			`@transition_in(${slot}, #local);`
+		block.chunks.intro.push(
+			b`@transition_in(${slot}, #local);`
 		);
 
-		block.builders.outro.add_line(
-			`@transition_out(${slot}, #local);`
+		block.chunks.outro.push(
+			b`@transition_out(${slot}, #local);`
 		);
 
 		const dynamic_dependencies = Array.from(this.dependencies).filter(name => {
@@ -168,20 +180,17 @@ export default class SlotWrapper extends Wrapper {
 			return is_dynamic(variable);
 		});
 
-		let update_conditions = dynamic_dependencies.map(name => `changed.${name}`).join(' || ');
-		if (dynamic_dependencies.length > 1) update_conditions = `(${update_conditions})`;
-
-		block.builders.update.add_block(deindent`
-			if (${slot} && ${slot}.p && ${update_conditions}) {
+		block.chunks.update.push(b`
+			if (${slot} && ${slot}.p && ${changed(dynamic_dependencies)}) {
 				${slot}.p(
-					@get_slot_changes(${slot_definition}, ctx, changed, ${get_slot_changes}),
-					@get_slot_context(${slot_definition}, ctx, ${get_slot_context})
+					@get_slot_changes(${slot_definition}, #ctx, #changed, ${get_slot_changes}),
+					@get_slot_context(${slot_definition}, #ctx, ${get_slot_context})
 				);
 			}
 		`);
 
-		block.builders.destroy.add_line(
-			`if (${slot}) ${slot}.d(detaching);`
+		block.chunks.destroy.push(
+			b`if (${slot}) ${slot}.d(detaching);`
 		);
 	}
 }

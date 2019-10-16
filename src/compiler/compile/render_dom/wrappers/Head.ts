@@ -3,6 +3,8 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Head from '../../nodes/Head';
 import FragmentWrapper from './Fragment';
+import { x } from 'code-red';
+import { Identifier } from 'estree';
 
 export default class HeadWrapper extends Wrapper {
 	fragment: FragmentWrapper;
@@ -29,7 +31,7 @@ export default class HeadWrapper extends Wrapper {
 		);
 	}
 
-	render(block: Block, _parent_node: string, _parent_nodes: string) {
-		this.fragment.render(block, '@_document.head', 'nodes');
+	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
+		this.fragment.render(block, x`@_document.head` as unknown as Identifier, x`#nodes` as unknown as Identifier);
 	}
 }

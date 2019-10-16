@@ -3,7 +3,7 @@ import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
 import { reserved } from '../utils/names';
 import full_char_code_at from '../utils/full_char_code_at';
-import { Node, Ast, ParserOptions } from '../interfaces';
+import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../interfaces';
 import error from '../utils/error';
 
 type ParserState = (parser: Parser) => (ParserState | void);
@@ -14,11 +14,11 @@ export class Parser {
 	readonly customElement: boolean;
 
 	index = 0;
-	stack: Node[] = [];
+	stack: TemplateNode[] = [];
 
-	html: Node;
-	css: Node[] = [];
-	js: Node[] = [];
+	html: Fragment;
+	css: Style[] = [];
+	js: Script[] = [];
 	meta_tags = {};
 
 	constructor(template: string, options: ParserOptions) {
@@ -207,7 +207,7 @@ export default function parse(
 ): Ast {
 	const parser = new Parser(template, options);
 
-	// TODO we way want to allow multiple <style> tags —
+	// TODO we may want to allow multiple <style> tags —
 	// one scoped, one global. for now, only allow one
 	if (parser.css.length > 1) {
 		parser.error({

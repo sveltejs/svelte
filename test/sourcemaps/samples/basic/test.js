@@ -4,7 +4,7 @@ export function test({ assert, smc, locateInSource, locateInGenerated }) {
 	let start;
 	let actual;
 
-	start = locateInGenerated( 'foo.bar.baz' );
+	start = locateInGenerated('foo.bar.baz');
 
 	actual = smc.originalPositionFor({
 		line: start.line + 1,

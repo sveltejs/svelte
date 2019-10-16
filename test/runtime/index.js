@@ -33,9 +33,7 @@ describe("runtime", () => {
 
 		require.extensions[".svelte"] = function(module, filename) {
 			const options = Object.assign({
-				filename,
-				format: 'cjs',
-				sveltePath
+				filename
 			}, compileOptions);
 
 			const { js: { code } } = compile(fs.readFileSync(filename, "utf-8"), options);
@@ -72,6 +70,7 @@ describe("runtime", () => {
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
+			compileOptions.format = 'cjs';
 			compileOptions.sveltePath = sveltePath;
 			compileOptions.hydratable = hydrate;
 			compileOptions.immutable = config.immutable;
@@ -197,6 +196,11 @@ describe("runtime", () => {
 						throw err;
 					}
 				})
+				.catch(err => {
+					// print a clickable link to open the directory
+					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+					throw err;
+				})
 				.then(() => {
 					if (config.show) {
 						showOutput(cwd, compileOptions, compile);
@@ -229,7 +233,7 @@ describe("runtime", () => {
 				}),
 				{
 					name: 'svelte-packages',
-					resolveId: (importee, importer) => {
+					resolveId: (importee) => {
 						if (importee.startsWith('svelte/')) {
 							return importee.replace('svelte', process.cwd()) + '/index.mjs';
 						}
