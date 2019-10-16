@@ -3,7 +3,9 @@ import Wrapper from './shared/Wrapper';
 import Block from '../Block';
 import DebugTag from '../../nodes/DebugTag';
 import add_to_set from '../../utils/add_to_set';
-import deindent from '../../utils/deindent';
+import { b, p } from 'code-red';
+import { Identifier, DebuggerStatement } from 'estree';
+import { changed } from './shared/changed';
 
 export default class DebugTagWrapper extends Wrapper {
 	node: DebugTag;
@@ -19,59 +21,65 @@ export default class DebugTagWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, _parent_node: string, _parent_nodes: string) {
+	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
 		const { renderer } = this;
 		const { component } = renderer;
 
 		if (!renderer.options.dev) return;
 
-		const { code, var_lookup } = component;
+		const { var_lookup } = component;
+
+		const start = component.locate(this.node.start + 1);
+		start.line += 1;
+		const end = { line: start.line, column: start.column + 6 };
+
+		const loc = { start, end };
+
+		const debug: DebuggerStatement = {
+			type: 'DebuggerStatement',
+			loc
+		};
 
 		if (this.node.expressions.length === 0) {
 			// Debug all
-			code.overwrite(this.node.start + 1, this.node.start + 7, 'debugger', {
-				storeName: true
-			});
-			const statement = `[✂${this.node.start + 1}-${this.node.start + 7}✂];`;
-
-			block.builders.create.add_line(statement);
-			block.builders.update.add_line(statement);
+			block.chunks.create.push(debug);
+			block.chunks.update.push(debug);
 		} else {
-			const { code } = component;
-			code.overwrite(this.node.start + 1, this.node.start + 7, 'log', {
-				storeName: true
-			});
-			const log = `[✂${this.node.start + 1}-${this.node.start + 7}✂]`;
+			const log: Identifier = {
+				type: 'Identifier',
+				name: 'log',
+				loc
+			};
 
-			const dependencies = new Set();
+			const dependencies: Set<string> = new Set();
 			this.node.expressions.forEach(expression => {
 				add_to_set(dependencies, expression.dependencies);
 			});
 
-			const condition = Array.from(dependencies).map(d => `changed.${d}`).join(' || ');
+			const condition = changed(Array.from(dependencies));
 
-			const ctx_identifiers = this.node.expressions
+			const contextual_identifiers = this.node.expressions
 				.filter(e => {
-					const looked_up_var = var_lookup.get(e.node.name);
-					return !(looked_up_var && looked_up_var.hoistable);
+					const variable = var_lookup.get(e.node.name);
+					return !(variable && variable.hoistable);
 				})
-				.map(e => e.node.name)
-				.join(', ');
-			const logged_identifiers = this.node.expressions.map(e => e.node.name).join(', ');
+				.map(e => p`${e.node.name}`);
 
-			block.builders.update.add_block(deindent`
+			const logged_identifiers = this.node.expressions.map(e => p`${e.node.name}`);
+
+			block.chunks.update.push(b`
 				if (${condition}) {
-					const { ${ctx_identifiers} } = ctx;
+					const { ${contextual_identifiers} } = #ctx;
 					@_console.${log}({ ${logged_identifiers} });
-					debugger;
+					${debug};
 				}
 			`);
 
-			block.builders.create.add_block(deindent`
+			block.chunks.create.push(b`
 				{
-					const { ${ctx_identifiers} } = ctx;
+					const { ${contextual_identifiers} } = #ctx;
 					@_console.${log}({ ${logged_identifiers} });
-					debugger;
+					${debug};
 				}
 			`);
 		}

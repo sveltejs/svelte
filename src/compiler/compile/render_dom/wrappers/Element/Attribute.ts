@@ -2,10 +2,12 @@ import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
 import fix_attribute_casing from './fix_attribute_casing';
 import ElementWrapper from './index';
-import { stringify } from '../../../utils/stringify';
-import deindent from '../../../utils/deindent';
+import { string_literal } from '../../../utils/stringify';
+import { b, x } from 'code-red';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
+import { changed } from '../shared/changed';
+import { Literal } from 'estree';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -78,16 +80,16 @@ export default class AttributeWrapper {
 			// DRY it out if that's possible without introducing crazy indirection
 			if (this.node.chunks.length === 1) {
 				// single {tag} — may be a non-string
-				value = (this.node.chunks[0] as Expression).render(block);
+				value = (this.node.chunks[0] as Expression).manipulate(block);
 			} else {
-				// '{foo} {bar}' — treat as string concatenation
-				const prefix = this.node.chunks[0].type === 'Text' ? '' : `"" + `;
-
-				const text = this.node.name === 'class'
+				value = this.node.name === 'class'
 					? this.get_class_name_text()
-					: this.render_chunks().join(' + ');
+					: this.render_chunks().reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
-				value = `${prefix}${text}`;
+				// '{foo} {bar}' — treat as string concatenation
+				if (this.node.chunks[0].type !== 'Text') {
+					value = x`"" + ${value}`;
+				}
 			}
 
 			const is_select_value_attribute =
@@ -96,19 +98,19 @@ export default class AttributeWrapper {
 			const should_cache = (this.node.should_cache() || is_select_value_attribute);
 
 			const last = should_cache && block.get_unique_name(
-				`${element.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
+				`${element.var.name}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
 			);
 
 			if (should_cache) block.add_variable(last);
 
 			let updater;
-			const init = should_cache ? `${last} = ${value}` : value;
+			const init = should_cache ? x`${last} = ${value}` : value;
 
 			if (is_legacy_input_type) {
-				block.builders.hydrate.add_line(
-					`@set_input_type(${element.var}, ${init});`
+				block.chunks.hydrate.push(
+					b`@set_input_type(${element.var}, ${init});`
 				);
-				updater = `@set_input_type(${element.var}, ${should_cache ? last : value});`;
+				updater = b`@set_input_type(${element.var}, ${should_cache ? last : value});`;
 			} else if (is_select_value_attribute) {
 				// annoying special case
 				const is_multiple_select = element.node.get_static_attribute_value('multiple');
@@ -116,15 +118,15 @@ export default class AttributeWrapper {
 				const option = block.get_unique_name('option');
 
 				const if_statement = is_multiple_select
-					? deindent`
+					? b`
 						${option}.selected = ~${last}.indexOf(${option}.__value);`
-					: deindent`
+					: b`
 						if (${option}.__value === ${last}) {
 							${option}.selected = true;
-							break;
-						}`;
+							${{ type: 'BreakStatement' }};
+						}`; // TODO the BreakStatement is gross, but it's unsyntactic otherwise...
 
-				updater = deindent`
+				updater = b`
 					for (var ${i} = 0; ${i} < ${element.var}.options.length; ${i} += 1) {
 						var ${option} = ${element.var}.options[${i}];
 
@@ -132,51 +134,50 @@ export default class AttributeWrapper {
 					}
 				`;
 
-				block.builders.mount.add_block(deindent`
+				block.chunks.mount.push(b`
 					${last} = ${value};
 					${updater}
 				`);
 			} else if (property_name) {
-				block.builders.hydrate.add_line(
-					`${element.var}.${property_name} = ${init};`
+				block.chunks.hydrate.push(
+					b`${element.var}.${property_name} = ${init};`
 				);
 				updater = block.renderer.options.dev
-					? `@prop_dev(${element.var}, "${property_name}", ${should_cache ? last : value});`
-					: `${element.var}.${property_name} = ${should_cache ? last : value};`;
+					? b`@prop_dev(${element.var}, "${property_name}", ${should_cache ? last : value});`
+					: b`${element.var}.${property_name} = ${should_cache ? last : value};`;
 			} else {
-				block.builders.hydrate.add_line(
-					`${method}(${element.var}, "${name}", ${init});`
+				block.chunks.hydrate.push(
+					b`${method}(${element.var}, "${name}", ${init});`
 				);
-				updater = `${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
+				updater = b`${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
 			}
 
-			const changed_check = (
-				(block.has_outros ? `!#current || ` : '') +
-				dependencies.map(dependency => `changed.${dependency}`).join(' || ')
-			);
+			let condition = changed(dependencies);
 
-			const update_cached_value = `${last} !== (${last} = ${value})`;
+			if (should_cache) {
+				condition = x`${condition} && (${last} !== (${last} = ${value}))`;
+			}
 
-			const condition = should_cache
-				? (dependencies.length ? `(${changed_check}) && ${update_cached_value}` : update_cached_value)
-				: changed_check;
+			if (block.has_outros) {
+				condition = x`!#current || ${condition}`;
+			}
 
-			block.builders.update.add_conditional(
-				condition,
-				updater
-			);
+			block.chunks.update.push(b`
+				if (${condition}) {
+					${updater}
+				}`);
 		} else {
 			const value = this.node.get_value(block);
 
 			const statement = (
 				is_legacy_input_type
-					? `@set_input_type(${element.var}, ${value});`
+					? b`@set_input_type(${element.var}, ${value});`
 					: property_name
-						? `${element.var}.${property_name} = ${value};`
-						: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
+						? b`${element.var}.${property_name} = ${value};`
+						: b`${method}(${element.var}, "${name}", ${value.type === 'Literal' && (value as Literal).value === true ? x`""` : value});`
 			);
 
-			block.builders.hydrate.add_line(statement);
+			block.chunks.hydrate.push(statement);
 
 			// special case – autofocus. has to be handled in a bit of a weird way
 			if (this.node.is_true && name === 'autofocus') {
@@ -185,10 +186,10 @@ export default class AttributeWrapper {
 		}
 
 		if (is_indirectly_bound_value) {
-			const update_value = `${element.var}.value = ${element.var}.__value;`;
+			const update_value = b`${element.var}.value = ${element.var}.__value;`;
 
-			block.builders.hydrate.add_line(update_value);
-			if (this.node.get_dependencies().length > 0) block.builders.update.add_line(update_value);
+			block.chunks.hydrate.push(update_value);
+			if (this.node.get_dependencies().length > 0) block.chunks.update.push(update_value);
 		}
 	}
 
@@ -198,22 +199,19 @@ export default class AttributeWrapper {
 
 		if (scoped_css && rendered.length === 2) {
 			// we have a situation like class={possiblyUndefined}
-			rendered[0] = `@null_to_empty(${rendered[0]})`;
+			rendered[0] = x`@null_to_empty(${rendered[0]})`;
 		}
 
-		return rendered.join(' + ');
+		return rendered.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 	}
 
 	render_chunks() {
 		return this.node.chunks.map((chunk) => {
 			if (chunk.type === 'Text') {
-				return stringify(chunk.data);
+				return string_literal(chunk.data);
 			}
 
-			const rendered = chunk.render();
-			return chunk.get_precedence() <= 13
-				? `(${rendered})`
-				: rendered;
+			return chunk.manipulate();
 		});
 	}
 
@@ -226,7 +224,7 @@ export default class AttributeWrapper {
 		return `="${value.map(chunk => {
 			return chunk.type === 'Text'
 				? chunk.data.replace(/"/g, '\\"')
-				: `\${${chunk.render()}}`;
+				: `\${${chunk.manipulate()}}`;
 		}).join('')}"`;
 	}
 }

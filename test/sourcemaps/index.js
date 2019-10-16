@@ -17,7 +17,7 @@ describe("sourcemaps", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(solo ? it.only : skip ? it.skip : it)(dir, () => {
+		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
 			const filename = path.resolve(
 				`test/sourcemaps/samples/${dir}/input.svelte`
 			);
@@ -61,10 +61,10 @@ describe("sourcemaps", () => {
 
 			const locateInSource = getLocator(input);
 
-			const smc = new SourceMapConsumer(js.map);
+			const smc = await new SourceMapConsumer(js.map);
 			const locateInGenerated = getLocator(_code);
 
-			const smcCss = css.map && new SourceMapConsumer(css.map);
+			const smcCss = css.map && await new SourceMapConsumer(css.map);
 			const locateInGeneratedCss = getLocator(css.code || '');
 
 			test({ assert, code: _code, map: js.map, smc, smcCss, locateInSource, locateInGenerated, locateInGeneratedCss });

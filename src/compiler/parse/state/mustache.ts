@@ -4,9 +4,9 @@ import { closing_tag_omitted } from '../utils/html';
 import { whitespace } from '../../utils/patterns';
 import { trim_start, trim_end } from '../../utils/trim';
 import { Parser } from '../index';
-import { Node } from '../../interfaces';
+import { TemplateNode } from '../../interfaces';
 
-function trim_whitespace(block: Node, trim_before: boolean, trim_after: boolean) {
+function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: boolean) {
 	if (!block.children || block.children.length === 0) return; // AwaitBlock
 
 	const first_child = block.children[0];
@@ -175,7 +175,7 @@ export default function mustache(parser: Parser) {
 				parser.eat('}', true);
 			}
 
-			const then_block: Node = {
+			const then_block: TemplateNode = {
 				start,
 				end: null,
 				type: 'ThenBlock',
@@ -200,7 +200,7 @@ export default function mustache(parser: Parser) {
 				parser.eat('}', true);
 			}
 
-			const catch_block: Node = {
+			const catch_block: TemplateNode = {
 				start,
 				end: null,
 				type: 'CatchBlock',
@@ -232,7 +232,7 @@ export default function mustache(parser: Parser) {
 
 		const expression = read_expression(parser);
 
-		const block: Node = type === 'AwaitBlock' ?
+		const block: TemplateNode = type === 'AwaitBlock' ?
 			{
 				start,
 				end: null,

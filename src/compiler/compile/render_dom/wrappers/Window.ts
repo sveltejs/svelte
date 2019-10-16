@@ -1,11 +1,13 @@
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Wrapper from './shared/Wrapper';
-import deindent from '../../utils/deindent';
+import { b, x } from 'code-red';
 import add_event_handlers from './shared/add_event_handlers';
 import Window from '../../nodes/Window';
 import add_actions from './shared/add_actions';
-import { INode } from '../../nodes/interfaces';
+import { changed } from './shared/changed';
+import { Identifier } from 'estree';
+import { TemplateNode } from '../../../interfaces';
 
 const associated_events = {
 	innerWidth: 'resize',
@@ -33,11 +35,11 @@ const readonly = new Set([
 export default class WindowWrapper extends Wrapper {
 	node: Window;
 
-	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: INode) {
+	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
 		super(renderer, block, parent, node);
 	}
 
-	render(block: Block, _parent_node: string, _parent_nodes: string) {
+	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
 		const { renderer } = this;
 		const { component } = renderer;
 
@@ -73,65 +75,64 @@ export default class WindowWrapper extends Wrapper {
 		const scrolling_timeout = block.get_unique_name(`scrolling_timeout`);
 
 		Object.keys(events).forEach(event => {
-			const handler_name = block.get_unique_name(`onwindow${event}`);
+			const id = block.get_unique_name(`onwindow${event}`);
 			const props = events[event];
 
 			if (event === 'scroll') {
 				// TODO other bidirectional bindings...
-				block.add_variable(scrolling, 'false');
-				block.add_variable(clear_scrolling, `() => { ${scrolling} = false }`);
+				block.add_variable(scrolling, x`false`);
+				block.add_variable(clear_scrolling, x`() => { ${scrolling} = false }`);
 				block.add_variable(scrolling_timeout);
 
-				const condition = [
-					bindings.scrollX && `"${bindings.scrollX}" in this._state`,
-					bindings.scrollY && `"${bindings.scrollY}" in this._state`
-				].filter(Boolean).join(' || ');
+				const condition = bindings.scrollX && bindings.scrollY
+					? x`"${bindings.scrollX}" in this._state || "${bindings.scrollY}" in this._state`
+					: x`"${bindings.scrollX || bindings.scrollY}" in this._state`;
 
-				const x = bindings.scrollX && `this._state.${bindings.scrollX}`;
-				const y = bindings.scrollY && `this._state.${bindings.scrollY}`;
+				const scrollX = bindings.scrollX && x`this._state.${bindings.scrollX}`;
+				const scrollY = bindings.scrollY && x`this._state.${bindings.scrollY}`;
 
-				renderer.meta_bindings.add_block(deindent`
+				renderer.meta_bindings.push(b`
 					if (${condition}) {
-						@_scrollTo(${x || '@_window.pageXOffset'}, ${y || '@_window.pageYOffset'});
+						@_scrollTo(${scrollX || '@_window.pageXOffset'}, ${scrollY || '@_window.pageYOffset'});
 					}
-					${x && `${x} = @_window.pageXOffset;`}
-					${y && `${y} = @_window.pageYOffset;`}
+					${scrollX && `${scrollX} = @_window.pageXOffset;`}
+					${scrollY && `${scrollY} = @_window.pageYOffset;`}
 				`);
 
-				block.event_listeners.push(deindent`
+				block.event_listeners.push(x`
 					@listen(@_window, "${event}", () => {
 						${scrolling} = true;
 						@_clearTimeout(${scrolling_timeout});
 						${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
-						ctx.${handler_name}();
+						#ctx.${id}();
 					})
 				`);
 			} else {
 				props.forEach(prop => {
-					renderer.meta_bindings.add_line(
-						`this._state.${prop.name} = @_window.${prop.value};`
+					renderer.meta_bindings.push(
+						b`this._state.${prop.name} = @_window.${prop.value};`
 					);
 				});
 
-				block.event_listeners.push(deindent`
-					@listen(@_window, "${event}", ctx.${handler_name})
+				block.event_listeners.push(x`
+					@listen(@_window, "${event}", #ctx.${id})
 				`);
 			}
 
 			component.add_var({
-				name: handler_name,
+				name: id.name,
 				internal: true,
 				referenced: true
 			});
 
-			component.partly_hoisted.push(deindent`
-				function ${handler_name}() {
-					${props.map(prop => `${prop.name} = @_window.${prop.value}; $$invalidate('${prop.name}', ${prop.name});`)}
+			component.partly_hoisted.push(b`
+				function ${id}() {
+					${props.map(prop => b`$$invalidate('${prop.name}', ${prop.name} = @_window.${prop.value});`)}
 				}
 			`);
 
-			block.builders.init.add_block(deindent`
-				@add_render_callback(ctx.${handler_name});
+			block.chunks.init.push(b`
+				@add_render_callback(#ctx.${id});
 			`);
 
 			component.has_reactive_assignments = true;
@@ -139,19 +140,15 @@ export default class WindowWrapper extends Wrapper {
 
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
-			block.builders.update.add_block(deindent`
-				if (${
-					[bindings.scrollX, bindings.scrollY].filter(Boolean).map(
-						b => `changed.${b}`
-					).join(' || ')
-				} && !${scrolling}) {
+			const condition = changed([bindings.scrollX, bindings.scrollY].filter(Boolean));
+			const scrollX = bindings.scrollX ? x`#ctx.${bindings.scrollX}` : x`@_window.pageXOffset`;
+			const scrollY = bindings.scrollY ? x`#ctx.${bindings.scrollY}` : x`@_window.pageYOffset`;
+
+			block.chunks.update.push(b`
+				if (${condition} && !${scrolling}) {
 					${scrolling} = true;
 					@_clearTimeout(${scrolling_timeout});
-					@_scrollTo(${
-						bindings.scrollX ? `ctx.${bindings.scrollX}` : `@_window.pageXOffset`
-					}, ${
-						bindings.scrollY ? `ctx.${bindings.scrollY}` : `@_window.pageYOffset`
-					});
+					@_scrollTo(${scrollX}, ${scrollY});
 					${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
 				}
 			`);
@@ -159,28 +156,28 @@ export default class WindowWrapper extends Wrapper {
 
 		// another special case. (I'm starting to think these are all special cases.)
 		if (bindings.online) {
-			const handler_name = block.get_unique_name(`onlinestatuschanged`);
+			const id = block.get_unique_name(`onlinestatuschanged`);
 			const name = bindings.online;
 
 			component.add_var({
-				name: handler_name,
+				name: id.name,
 				internal: true,
 				referenced: true
 			});
 
-			component.partly_hoisted.push(deindent`
-				function ${handler_name}() {
-					${name} = @_navigator.onLine; $$invalidate('${name}', ${name});
+			component.partly_hoisted.push(b`
+				function ${id}() {
+					$$invalidate('${name}', ${name} = @_navigator.onLine);
 				}
 			`);
 
-			block.builders.init.add_block(deindent`
-				@add_render_callback(ctx.${handler_name});
+			block.chunks.init.push(b`
+				@add_render_callback(#ctx.${id});
 			`);
 
 			block.event_listeners.push(
-				`@listen(@_window, "online", ctx.${handler_name})`,
-				`@listen(@_window, "offline", ctx.${handler_name})`
+				x`@listen(@_window, "online", #ctx.${id})`,
+				x`@listen(@_window, "offline", #ctx.${id})`
 			);
 
 			component.has_reactive_assignments = true;

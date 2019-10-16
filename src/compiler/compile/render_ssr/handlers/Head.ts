@@ -1,10 +1,11 @@
 import Renderer, { RenderOptions } from '../Renderer';
 import Head from '../../nodes/Head';
+import { x } from 'code-red';
 
 export default function(node: Head, renderer: Renderer, options: RenderOptions) {
-	renderer.append('${($$result.head += `');
-
+	renderer.push();
 	renderer.render(node.children, options);
+	const result = renderer.pop();
 
-	renderer.append('`, "")}');
+	renderer.add_expression(x`($$result.head += ${result}, "")`);
 }

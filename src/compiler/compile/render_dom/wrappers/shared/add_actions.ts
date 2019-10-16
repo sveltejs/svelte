@@ -1,3 +1,4 @@
+import { b, x } from 'code-red';
 import Block from '../../Block';
 import Action from '../../../nodes/Action';
 import Component from '../../../Component';
@@ -14,35 +15,42 @@ export default function add_actions(
 		let dependencies;
 
 		if (expression) {
-			snippet = expression.render(block);
+			snippet = expression.manipulate(block);
 			dependencies = expression.dynamic_dependencies();
 		}
 
-		const name = block.get_unique_name(
+		const id = block.get_unique_name(
 			`${action.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
 		);
 
-		block.add_variable(name);
+		block.add_variable(id);
 
 		const fn = component.qualify(action.name);
 
-		block.builders.mount.add_line(
-			`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
+		block.chunks.mount.push(
+			b`${id} = ${fn}.call(null, ${target}, ${snippet}) || {};`
 		);
 
 		if (dependencies && dependencies.length > 0) {
-			let conditional = `typeof ${name}.update === 'function' && `;
-			const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
-			conditional += dependencies.length > 1 ? `(${deps})` : deps;
+			let condition = x`@is_function(${id}.update)`;
 
-			block.builders.update.add_conditional(
-				conditional,
-				`${name}.update.call(null, ${snippet});`
+			// TODO can this case be handled more elegantly?
+			if (dependencies.length > 0) {
+				let changed = x`#changed.${dependencies[0]}`;
+				for (let i = 1; i < dependencies.length; i += 1) {
+					changed = x`${changed} || #changed.${dependencies[i]}`;
+				}
+
+				condition = x`${condition} && ${changed}`;
+			}
+
+			block.chunks.update.push(
+				b`if (${condition}) ${id}.update.call(null, ${snippet});`
 			);
 		}
 
-		block.builders.destroy.add_line(
-			`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy();`
+		block.chunks.destroy.push(
+			b`if (${id} && @is_function(${id}.destroy)) ${id}.destroy();`
 		);
 	});
 }

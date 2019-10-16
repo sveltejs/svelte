@@ -47,7 +47,7 @@ export function tryToReadFile(file) {
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 
-global.window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
+const window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
 global.document = window.document;
 global.navigator = window.navigator;
 global.getComputedStyle = window.getComputedStyle;
@@ -182,58 +182,21 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 	glob('**/*.svelte', { cwd }).forEach(file => {
 		if (file[0] === '_') return;
 
-		const { js } = compile(
-			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-			Object.assign(options, {
-				filename: file
-			})
-		);
-
-		console.log( // eslint-disable-line no-console
-			`\n>> ${colors.cyan().bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors.cyan().bold(file)}`
-		);
-	});
-}
-
-const start = /\n(\t+)/;
-export function deindent(strings, ...values) {
-	const indentation = start.exec(strings[0])[1];
-	const pattern = new RegExp(`^${indentation}`, 'gm');
-
-	let result = strings[0].replace(start, '').replace(pattern, '');
-
-	let trailingIndentation = getTrailingIndentation(result);
-
-	for (let i = 1; i < strings.length; i += 1) {
-		let expression = values[i - 1];
-		const string = strings[i].replace(pattern, '');
-
-		if (Array.isArray(expression)) {
-			expression = expression.length ? expression.join('\n') : null;
-		}
-
-		if (expression || expression === '') {
-			const value = String(expression).replace(
-				/\n/g,
-				`\n${trailingIndentation}`
+		try {
+			const { js } = compile(
+				fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
+				Object.assign(options, {
+					filename: file
+				})
 			);
-			result += value + string;
-		} else {
-			let c = result.length;
-			while (/\s/.test(result[c - 1])) c -= 1;
-			result = result.slice(0, c) + string;
+
+			console.log( // eslint-disable-line no-console
+				`\n>> ${colors.cyan().bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors.cyan().bold(file)}`
+			);
+		} catch (err) {
+			console.log(`failed to generate output: ${err.message}`);
 		}
-
-		trailingIndentation = getTrailingIndentation(result);
-	}
-
-	return result.trim().replace(/\t+$/gm, '');
-}
-
-function getTrailingIndentation(str) {
-	let i = str.length;
-	while (str[i - 1] === ' ' || str[i - 1] === '\t') i -= 1;
-	return str.slice(i, str.length);
+	});
 }
 
 export function spaces(i) {

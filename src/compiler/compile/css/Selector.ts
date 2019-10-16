@@ -1,17 +1,17 @@
 import MagicString from 'magic-string';
 import Stylesheet from './Stylesheet';
 import { gather_possible_values, UNKNOWN } from './gather_possible_values';
-import { Node } from '../../interfaces';
+import { CssNode } from './interfaces';
 import Component from '../Component';
 
 export default class Selector {
-	node: Node;
+	node: CssNode;
 	stylesheet: Stylesheet;
 	blocks: Block[];
 	local_blocks: Block[];
 	used: boolean;
 
-	constructor(node: Node, stylesheet: Stylesheet) {
+	constructor(node: CssNode, stylesheet: Stylesheet) {
 		this.node = node;
 		this.stylesheet = stylesheet;
 
@@ -28,8 +28,8 @@ export default class Selector {
 		this.used = this.blocks[0].global;
 	}
 
-	apply(node: Node, stack: Node[]) {
-		const to_encapsulate: Node[] = [];
+	apply(node: CssNode, stack: CssNode[]) {
+		const to_encapsulate: CssNode[] = [];
 
 		apply_selector(this.stylesheet, this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
 
@@ -126,7 +126,7 @@ export default class Selector {
 	}
 }
 
-function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, stack: Node[], to_encapsulate: any[]): boolean {
+function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: CssNode, stack: CssNode[], to_encapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
@@ -222,13 +222,13 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 	}
 }
 
-function attribute_matches(node: Node, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
+function attribute_matches(node: CssNode, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
 	const spread = node.attributes.find(attr => attr.type === 'Spread');
 	if (spread) return true;
 
-	if (node.bindings.some((binding: Node) => binding.name === name)) return true;
+	if (node.bindings.some((binding: CssNode) => binding.name === name)) return true;
 
-	const attr = node.attributes.find((attr: Node) => attr.name === name);
+	const attr = node.attributes.find((attr: CssNode) => attr.name === name);
 	if (!attr) return false;
 	if (attr.is_true) return operator === null;
 	if (attr.chunks.length > 1) return true;
@@ -250,7 +250,7 @@ function attribute_matches(node: Node, name: string, expected_value: string, ope
 	return false;
 }
 
-function unquote(value: Node) {
+function unquote(value: CssNode) {
 	if (value.type === 'Identifier') return value.name;
 	const str = value.value;
 	if (str[0] === str[str.length - 1] && str[0] === "'" || str[0] === '"') {
@@ -261,13 +261,13 @@ function unquote(value: Node) {
 
 class Block {
 	global: boolean;
-	combinator: Node;
-	selectors: Node[]
+	combinator: CssNode;
+	selectors: CssNode[]
 	start: number;
 	end: number;
 	should_encapsulate: boolean;
 
-	constructor(combinator: Node) {
+	constructor(combinator: CssNode) {
 		this.combinator = combinator;
 		this.global = false;
 		this.selectors = [];
@@ -278,7 +278,7 @@ class Block {
 		this.should_encapsulate = false;
 	}
 
-	add(selector: Node) {
+	add(selector: CssNode) {
 		if (this.selectors.length === 0) {
 			this.start = selector.start;
 			this.global = selector.type === 'PseudoClassSelector' && selector.name === 'global';
@@ -289,12 +289,12 @@ class Block {
 	}
 }
 
-function group_selectors(selector: Node) {
+function group_selectors(selector: CssNode) {
 	let block: Block = new Block(null);
 
 	const blocks = [block];
 
-	selector.children.forEach((child: Node) => {
+	selector.children.forEach((child: CssNode) => {
 		if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
 			block = new Block(child);
 			blocks.push(block);

@@ -14,20 +14,16 @@ draft: true
 
 ## Atom
 
-To treat `.svelte` files as HTML, install the *file-types* package which enables such custom mappings:
-
-```bash
-apm install file-types
-```
-
-From the toolbar, open Edit → Config... and add the following two lines to your root (`"*"`) section:
+To treat `*.svelte` files as HTML, open Edit → Config... and add the following lines to your `core` section:
 
 ```cson
 "*":
   core:
     …
-  "file-types":
-    "*.svelte": "text.html.basic"
+    customFileTypes:
+	    "text.html.basic": [
+        "svelte"
+      ]
 ```
 
 ## Vim/Neovim

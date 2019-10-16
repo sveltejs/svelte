@@ -72,9 +72,10 @@ describe("ssr", () => {
 					);
 				}
 
-				if (show) showOutput(dir, { generate: 'ssr' });
+				if (show) showOutput(dir, { generate: 'ssr', format: 'cjs' });
 			} catch (err) {
-				showOutput(dir, { generate: 'ssr' });
+				showOutput(dir, { generate: 'ssr', format: 'cjs' });
+				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
 				throw err;
 			}
 		});
@@ -104,7 +105,8 @@ describe("ssr", () => {
 			delete global.window;
 
 			const compileOptions = Object.assign({ sveltePath }, config.compileOptions, {
-				generate: 'ssr'
+				generate: 'ssr',
+				format: 'cjs'
 			});
 
 			require("../../register")(compileOptions);
@@ -129,6 +131,8 @@ describe("ssr", () => {
 					showOutput(cwd, compileOptions);
 				}
 			} catch (err) {
+				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+
 				if (config.error) {
 					if (typeof config.error === 'function') {
 						config.error(assert, err);

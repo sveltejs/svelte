@@ -22,6 +22,7 @@
 		]
 	},
 	"instance": {
+		"type": "Script",
 		"start": 0,
 		"end": 43,
 		"context": "default",
@@ -29,6 +30,16 @@
 			"type": "Program",
 			"start": 8,
 			"end": 34,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 3,
+					"column": 0
+				}
+			},
 			"body": [],
 			"sourceType": "module"
 		}

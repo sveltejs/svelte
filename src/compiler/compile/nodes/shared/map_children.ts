@@ -14,7 +14,7 @@ import Slot from '../Slot';
 import Text from '../Text';
 import Title from '../Title';
 import Window from '../Window';
-import { Node } from '../../../interfaces';
+import { TemplateNode } from '../../../interfaces';
 
 export type Children = ReturnType<typeof map_children>;
 
@@ -40,7 +40,7 @@ function get_constructor(type) {
 	}
 }
 
-export default function map_children(component, parent, scope, children: Node[]) {
+export default function map_children(component, parent, scope, children: TemplateNode[]) {
 	let last = null;
 	let ignores = [];
 

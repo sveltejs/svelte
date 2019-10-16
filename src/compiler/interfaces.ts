@@ -1,9 +1,16 @@
+import { Node, Program } from "estree";
+
 interface BaseNode {
 	start: number;
 	end: number;
 	type: string;
-	children?: Node[];
+	children?: TemplateNode[];
 	[prop_name: string]: any;
+}
+
+export interface Fragment extends BaseNode {
+	type: 'Fragment';
+	children: TemplateNode[];
 }
 
 export interface Text extends BaseNode {
@@ -27,7 +34,7 @@ export type DirectiveType = 'Action'
 
 interface BaseDirective extends BaseNode {
 	type: DirectiveType;
-	expression: null|Node;
+	expression: null | Node;
 	name: string;
 	modifiers: string[];
 }
@@ -40,7 +47,7 @@ export interface Transition extends BaseDirective{
 
 export type Directive = BaseDirective | Transition;
 
-export type Node = Text
+export type TemplateNode = Text
 | MustacheTag
 | BaseNode
 | Directive
@@ -59,11 +66,28 @@ export interface Parser {
 	meta_tags: {};
 }
 
+export interface Script extends BaseNode {
+	type: 'Script';
+	context: string;
+	content: Program;
+}
+
+export interface Style extends BaseNode {
+	type: 'Style';
+	attributes: any[]; // TODO
+	children: any[]; // TODO add CSS node types
+	content: {
+		start: number;
+		end: number;
+		styles: string;
+	};
+}
+
 export interface Ast {
-	html: Node;
-	css: Node;
-	instance: Node;
-	module: Node;
+	html: TemplateNode;
+	css: Style;
+	instance: Script;
+	module: Script;
 }
 
 export interface Warning {

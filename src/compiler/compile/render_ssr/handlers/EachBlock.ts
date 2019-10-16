@@ -1,29 +1,24 @@
-import { snip } from '../../utils/snip';
 import Renderer, { RenderOptions } from '../Renderer';
 import EachBlock from '../../nodes/EachBlock';
+import { x } from 'code-red';
 
 export default function(node: EachBlock, renderer: Renderer, options: RenderOptions) {
-	const snippet = snip(node.expression);
+	const args = [node.context_node];
+	if (node.index) args.push({ type: 'Identifier', name: node.index });
 
-	const { start, end } = node.context_node;
-
-	const ctx = node.index
-		? `([✂${start}-${end}✂], ${node.index})`
-		: `([✂${start}-${end}✂])`;
-
-	const open = `\${${node.else ? `${snippet}.length ? ` : ''}@each(${snippet}, ${ctx} => \``;
-	renderer.append(open);
-
+	renderer.push();
 	renderer.render(node.children, options);
+	const result = renderer.pop();
 
-	const close = `\`)`;
-	renderer.append(close);
+	const consequent = x`@each(${node.expression.node}, (${args}) => ${result})`;
 
 	if (node.else) {
-		renderer.append(` : \``);
+		renderer.push();
 		renderer.render(node.else.children, options);
-		renderer.append(`\``);
-	}
+		const alternate = renderer.pop();
 
-	renderer.append('}');
+		renderer.add_expression(x`${node.expression.node}.length ? ${consequent} : ${alternate}`);
+	} else {
+		renderer.add_expression(consequent);
+	}
 }

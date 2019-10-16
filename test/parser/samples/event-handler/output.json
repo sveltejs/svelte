@@ -20,6 +20,16 @@
 							"type": "ArrowFunctionExpression",
 							"start": 19,
 							"end": 43,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 19
+								},
+								"end": {
+									"line": 1,
+									"column": 43
+								}
+							},
 							"id": null,
 							"expression": true,
 							"generator": false,
@@ -29,23 +39,63 @@
 								"type": "AssignmentExpression",
 								"start": 25,
 								"end": 43,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 25
+									},
+									"end": {
+										"line": 1,
+										"column": 43
+									}
+								},
 								"operator": "=",
 								"left": {
 									"type": "Identifier",
 									"start": 25,
 									"end": 32,
+									"loc": {
+										"start": {
+											"line": 1,
+											"column": 25
+										},
+										"end": {
+											"line": 1,
+											"column": 32
+										}
+									},
 									"name": "visible"
 								},
 								"right": {
 									"type": "UnaryExpression",
 									"start": 35,
 									"end": 43,
+									"loc": {
+										"start": {
+											"line": 1,
+											"column": 35
+										},
+										"end": {
+											"line": 1,
+											"column": 43
+										}
+									},
 									"operator": "!",
 									"prefix": true,
 									"argument": {
 										"type": "Identifier",
 										"start": 36,
 										"end": 43,
+										"loc": {
+											"start": {
+												"line": 1,
+												"column": 36
+											},
+											"end": {
+												"line": 1,
+												"column": 43
+											}
+										},
 										"name": "visible"
 									}
 								}

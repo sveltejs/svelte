@@ -1,20 +1,21 @@
 import Block from '../Block';
 import Wrapper from './shared/Wrapper';
-import deindent from '../../utils/deindent';
+import { b } from 'code-red';
 import Body from '../../nodes/Body';
+import { Identifier } from 'estree';
 
 export default class BodyWrapper extends Wrapper {
 	node: Body;
 
-	render(block: Block, _parent_node: string, _parent_nodes: string) {
+	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
 		this.node.handlers.forEach(handler => {
 			const snippet = handler.render(block);
 
-			block.builders.init.add_block(deindent`
+			block.chunks.init.push(b`
 				@_document.body.addEventListener("${handler.name}", ${snippet});
 			`);
 
-			block.builders.destroy.add_block(deindent`
+			block.chunks.destroy.push(b`
 				@_document.body.removeEventListener("${handler.name}", ${snippet});
 			`);
 		});
