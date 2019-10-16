@@ -495,7 +495,10 @@ export default class ElementWrapper extends Wrapper {
 			this.renderer.component.partly_hoisted.push(b`
 				function ${handler}(${arg}) {
 					${group.bindings.map(b => b.handler.mutation)}
-					${Array.from(dependencies).filter(dep => dep[0] !== '$').map(dep => b`${this.renderer.component.invalidate(dep)};`)}
+					${Array.from(dependencies)
+						.filter(dep => dep[0] !== '$')
+						.filter(dep => !contextual_dependencies.has(dep))
+						.map(dep => b`${this.renderer.component.invalidate(dep)};`)}
 				}
 			`);
 
