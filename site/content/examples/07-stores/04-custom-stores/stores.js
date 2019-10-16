@@ -7,6 +7,7 @@ function createCount() {
 		subscribe,
 		increment: () => update(n => n + 1),
 		decrement: () => update(n => n - 1),
+		change: (parameter) => set(parameter),
 		reset: () => set(0)
 	};
 }
