@@ -133,7 +133,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 }
 
 export let SvelteElement;
-if (typeof HTMLElement !== 'undefined') {
+if (typeof HTMLElement === 'function') {
 	SvelteElement = class extends HTMLElement {
 		$$: T$$;
 		constructor() {

@@ -4,7 +4,7 @@
 		let offset = null;
 
 		if (user) {
-			var url = 'apps.json';
+			let url = 'apps.json';
 			if (page.query.offset) {
 				url += `?offset=${encodeURIComponent(page.query.offset)}`;
 			}

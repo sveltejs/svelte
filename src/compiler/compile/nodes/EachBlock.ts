@@ -1,49 +1,55 @@
-import Node from './shared/Node';
 import ElseBlock from './ElseBlock';
 import Expression from './shared/Expression';
 import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
-import { Node as INode } from '../../interfaces';
-import { new_tail } from '../utils/tail';
 import Element from './Element';
+import { x } from 'code-red';
+import { Node, Identifier, RestElement } from 'estree';
 
 interface Context {
-	key: INode;
+	key: Identifier;
 	name?: string;
-	tail: string;
+	modifier: (node: Node) => Node;
 }
 
-function unpack_destructuring(contexts: Context[], node: INode, tail: string) {
+function unpack_destructuring(contexts: Context[], node: Node, modifier: (node: Node) => Node) {
 	if (!node) return;
 
-	if (node.type === 'Identifier' || node.type === 'RestIdentifier') {
+	if (node.type === 'Identifier' || (node as any).type === 'RestIdentifier') { // TODO is this right? not RestElement?
 		contexts.push({
-			key: node,
-			tail
+			key: node as Identifier,
+			modifier
 		});
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
-			if (element && element.type === 'RestIdentifier') {
-				unpack_destructuring(contexts, element, `${tail}.slice(${i})`);
+			if (element && (element as any).type === 'RestIdentifier') {
+				unpack_destructuring(contexts, element, node => x`${modifier(node)}.slice(${i})` as Node);
 			} else {
-				unpack_destructuring(contexts, element, `${tail}[${i}]`);
+				unpack_destructuring(contexts, element, node => x`${modifier(node)}[${i}]` as Node);
 			}
 		});
 	} else if (node.type === 'ObjectPattern') {
 		const used_properties = [];
 
-		node.properties.forEach((property) => {
-			if (property.kind === 'rest') {
+		node.properties.forEach((property, i) => {
+			if ((property as any).kind === 'rest') { // TODO is this right?
+				const replacement: RestElement = {
+					type: 'RestElement',
+					argument: property.key as Identifier
+				};
+
+				node.properties[i] = replacement as any;
+
 				unpack_destructuring(
 					contexts,
 					property.value,
-					`@object_without_properties(${tail}, ${JSON.stringify(used_properties)})`
+					node => x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node
 				);
 			} else {
-				used_properties.push(property.key.name);
+				used_properties.push(x`"${(property.key as Identifier).name}"`);
 
-				unpack_destructuring(contexts, property.value,`${tail}.${property.key.name}`);
+				unpack_destructuring(contexts, property.value, node => x`${modifier(node)}.${(property.key as Identifier).name}` as Node);
 			}
 		});
 	}
@@ -77,7 +83,7 @@ export default class EachBlock extends AbstractBlock {
 		this.scope = scope.child();
 
 		this.contexts = [];
-		unpack_destructuring(this.contexts, info.context, new_tail());
+		unpack_destructuring(this.contexts, info.context, node => node);
 
 		this.contexts.forEach(context => {
 			this.scope.add(context.key.name, this.expression.dependencies, this);

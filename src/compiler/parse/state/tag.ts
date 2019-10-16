@@ -4,7 +4,7 @@ import read_style from '../read/style';
 import { decode_character_references, closing_tag_omitted } from '../utils/html';
 import { is_void } from '../../utils/names';
 import { Parser } from '../index';
-import { Directive, DirectiveType, Node, Text } from '../../interfaces';
+import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 
@@ -37,10 +37,8 @@ const specials = new Map([
 	],
 ]);
 
-// eslint-disable-next-line no-useless-escape
-const SELF = /^svelte:self(?=[\s\/>])/;
-// eslint-disable-next-line no-useless-escape
-const COMPONENT = /^svelte:component(?=[\s\/>])/;
+const SELF = /^svelte:self(?=[\s/>])/;
+const COMPONENT = /^svelte:component(?=[\s/>])/;
 
 function parent_is_head(stack) {
 	let i = stack.length;
@@ -112,7 +110,7 @@ export default function tag(parser: Parser) {
 			: name === 'title' && parent_is_head(parser.stack) ? 'Title'
 				: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
-	const element: Node = {
+	const element: TemplateNode = {
 		start,
 		end: null, // filled in later
 		type,
@@ -406,7 +404,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 				end: directive.end,
 				type: 'Identifier',
 				name: directive.name
-			};
+			} as any;
 		}
 
 		return directive;
@@ -447,7 +445,7 @@ function read_attribute_value(parser: Parser) {
 	return value;
 }
 
-function read_sequence(parser: Parser, done: () => boolean): Node[] {
+function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 	let current_chunk: Text = {
 		start: parser.index,
 		end: null,
@@ -464,7 +462,7 @@ function read_sequence(parser: Parser, done: () => boolean): Node[] {
 		}
 	}
 
-	const chunks: Node[] = [];
+	const chunks: TemplateNode[] = [];
 
 	while (parser.index < parser.template.length) {
 		const index = parser.index;

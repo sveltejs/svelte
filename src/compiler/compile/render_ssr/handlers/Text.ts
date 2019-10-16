@@ -1,4 +1,4 @@
-import { escape_html, escape_template, escape } from '../../utils/stringify';
+import { escape_html } from '../../utils/stringify';
 import Renderer, { RenderOptions } from '../Renderer';
 import Text from '../../nodes/Text';
 import Element from '../../nodes/Element';
@@ -13,5 +13,6 @@ export default function(node: Text, renderer: Renderer, _options: RenderOptions)
 		// unless this Text node is inside a <script> or <style> element, escape &,<,>
 		text = escape_html(text);
 	}
-	renderer.append(escape(escape_template(text)));
+
+	renderer.add_string(text);
 }

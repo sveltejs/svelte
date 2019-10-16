@@ -696,7 +696,7 @@ out:draw={params}
 
 Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
 
-`scale` accepts the following parameters:
+`draw` accepts the following parameters:
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `speed` (`number`, default undefined) - the speed of the animation, see below.
@@ -945,7 +945,7 @@ app.count += 1;
 
 ---
 
-Svelte components can also be compiled to custom elements (aka web components) using the `customElements: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](docs#svelte_options).
+Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](docs#svelte_options).
 
 ```html
 <svelte:options tag="my-element">

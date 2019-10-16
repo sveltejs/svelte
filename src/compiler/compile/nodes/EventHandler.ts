@@ -1,16 +1,17 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
-import deindent from '../utils/deindent';
+import { b, x } from 'code-red';
 import Block from '../render_dom/Block';
 import { sanitize } from '../../utils/names';
+import { Identifier } from 'estree';
 
 export default class EventHandler extends Node {
 	type: 'EventHandler';
 	name: string;
 	modifiers: Set<string>;
 	expression: Expression;
-	handler_name: string;
+	handler_name: Identifier;
 	uses_context = false;
 	can_make_passive = false;
 
@@ -31,40 +32,44 @@ export default class EventHandler extends Node {
 			} else if (info.expression.type === 'Identifier') {
 				let node = component.node_for_declaration.get(info.expression.name);
 
-				if (node && node.type === 'VariableDeclaration') {
-					// for `const handleClick = () => {...}`, we want the [arrow] function expression node
-					const declarator = node.declarations.find(d => d.id.name === info.expression.name);
-					node = declarator && declarator.init;
-				}
+				if (node) {
+					if (node.type === 'VariableDeclaration') {
+						// for `const handleClick = () => {...}`, we want the [arrow] function expression node
+						const declarator = node.declarations.find(d => (d.id as Identifier).name === info.expression.name);
+						node = declarator && declarator.init;
+					}
 
-				if (node && /Function/.test(node.type) && node.params.length === 0) {
-					this.can_make_passive = true;
+					if (node && (node.type === 'FunctionExpression' || node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression') && node.params.length === 0) {
+						this.can_make_passive = true;
+					}
 				}
 			}
 		} else {
-			const name = component.get_unique_name(`${sanitize(this.name)}_handler`);
+			const id = component.get_unique_name(`${sanitize(this.name)}_handler`);
 
 			component.add_var({
-				name,
+				name: id.name,
 				internal: true,
 				referenced: true
 			});
 
-			component.partly_hoisted.push(deindent`
-				function ${name}(event) {
+			component.partly_hoisted.push(b`
+				function ${id}(event) {
 					@bubble($$self, event);
 				}
 			`);
 
-			this.handler_name = name;
+			this.handler_name = id;
 		}
 	}
 
 	// TODO move this? it is specific to render-dom
 	render(block: Block) {
-		if (this.expression) return this.expression.render(block);
+		if (this.expression) {
+			return this.expression.manipulate(block);
+		}
 
 		// this.component.add_reference(this.handler_name);
-		return `ctx.${this.handler_name}`;
+		return x`#ctx.${this.handler_name}`;
 	}
 }

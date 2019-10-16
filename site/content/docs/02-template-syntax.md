@@ -1380,7 +1380,7 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 
 ---
 
-This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content exposed separately to the main `html` content.
+This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
 
 ```html
 <svelte:head>

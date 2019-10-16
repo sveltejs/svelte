@@ -1,17 +1,20 @@
-import deindent from '../utils/deindent';
+import { b } from 'code-red';
 import Component from '../Component';
 import { CompileOptions } from '../../interfaces';
-import { stringify } from '../utils/stringify';
+import { string_literal } from '../utils/stringify';
 import Renderer from './Renderer';
-import { extract_names } from '../utils/scope';
-import { INode } from '../nodes/interfaces';
+import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
+import { extract_names } from '../utils/scope';
+import { LabeledStatement, Statement, ExpressionStatement, AssignmentExpression } from 'estree';
 
 export default function ssr(
 	component: Component,
 	options: CompileOptions
 ) {
-	const renderer = new Renderer();
+	const renderer = new Renderer({
+		name: component.name
+	});
 
 	const { name } = component;
 
@@ -19,6 +22,9 @@ export default function ssr(
 	renderer.render(trim(component.fragment.children), Object.assign({
 		locate: component.locate
 	}, options));
+
+	// TODO put this inside the Renderer class
+	const literal = renderer.pop();
 
 	// TODO concatenate CSS maps
 	const css = options.customElement ?
@@ -30,43 +36,42 @@ export default function ssr(
 		.map(({ name }) => {
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
-			if (store && store.hoistable) return;
+			if (store && store.hoistable) return null;
 
-			const assignment = `${name} = @get_store_value(${store_name});`;
+			const assignment = b`${name} = @get_store_value(${store_name});`;
 
 			return component.compile_options.dev
-				? `@validate_store(${store_name}, '${store_name}'); ${assignment}`
+				? b`@validate_store(${store_name}, '${store_name}'); ${assignment}`
 				: assignment;
-		});
+		})
+		.filter(Boolean);
 
-	// TODO remove this, just use component.vars everywhere
-	const props = component.vars.filter(variable => !variable.module && variable.export_name);
+	component.rewrite_props(({ name }) => {
+		const value = `$${name}`;
 
-	if (component.javascript) {
-		component.rewrite_props(({ name }) => {
-			const value = `$${name}`;
+		let insert = b`${value} = @get_store_value(${name})`;
+		if (component.compile_options.dev) {
+			insert = b`@validate_store(${name}, '${name}'); ${insert}`;
+		}
 
-			const get_store_value = component.helper('get_store_value');
+		return insert;
+	});
 
-			let insert = `${value} = ${get_store_value}(${name})`;
-			if (component.compile_options.dev) {
-				const validate_store = component.helper('validate_store');
-				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
-			}
-
-			return insert;
-		});
-	}
+	const instance_javascript = component.extract_javascript(component.ast.instance);
 
 	// TODO only do this for props with a default value
-	const parent_bindings = component.javascript
-		? props.map(prop => {
-			return `if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
-		})
+	const parent_bindings = instance_javascript
+		? component.vars
+			.filter(variable => !variable.module && variable.export_name)
+			.map(prop => {
+				return b`if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
+			})
 		: [];
 
 	const reactive_declarations = component.reactive_declarations.map(d => {
-		let snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
+		const body: Statement = (d.node as LabeledStatement).body;
+
+		let statement = b`${body}`;
 
 		if (d.declaration) {
 			const declared = extract_names(d.declaration);
@@ -81,21 +86,25 @@ export default function ssr(
 				// others we can do `let [expression]`
 				const separate = (
 					self_dependencies.length > 0 ||
-					declared.length > injected.length ||
-					d.node.body.expression.type === 'ParenthesizedExpression'
+					declared.length > injected.length
 				);
 
-				snippet = separate
-					? `let ${injected.join(', ')}; ${snippet}`
-					: `let ${snippet}`;
+				const { left, right } = (body as ExpressionStatement).expression as AssignmentExpression;
+
+				statement = separate
+					? b`
+						${injected.map(name => b`let ${name};`)}
+						${statement}`
+					: b`
+						let ${left} = ${right}`;
 			}
 		}
 
-		return snippet;
+		return statement;
 	});
 
 	const main = renderer.has_bindings
-		? deindent`
+		? b`
 			let $$settled;
 			let $$rendered;
 
@@ -106,54 +115,52 @@ export default function ssr(
 
 				${reactive_declarations}
 
-				$$rendered = \`${renderer.code}\`;
+				$$rendered = ${literal};
 			} while (!$$settled);
 
 			return $$rendered;
 		`
-		: deindent`
+		: b`
 			${reactive_store_values}
 
 			${reactive_declarations}
 
-			return \`${renderer.code}\`;`;
+			return ${literal};`;
 
 	const blocks = [
-		reactive_stores.length > 0 && `let ${reactive_stores
-			.map(({ name }) => {
-				const store_name = name.slice(1);
-				const store = component.var_lookup.get(store_name);
-				if (store && store.hoistable) {
-					const get_store_value = component.helper('get_store_value');
-					return `${name} = ${get_store_value}(${store_name})`;
-				}
-				return name;
-			})
-			.join(', ')};`,
-		component.javascript,
-		parent_bindings.join('\n'),
-		css.code && `$$result.css.add(#css);`,
+		...reactive_stores.map(({ name }) => {
+			const store_name = name.slice(1);
+			const store = component.var_lookup.get(store_name);
+			if (store && store.hoistable) {
+				return b`let ${name} = @get_store_value(${store_name});`;
+			}
+			return b`let ${name};`;
+		}),
+
+		instance_javascript,
+		...parent_bindings,
+		css.code && b`$$result.css.add(#css);`,
 		main
 	].filter(Boolean);
 
-	return (deindent`
-		${css.code && deindent`
+	return b`
+		${css.code ? b`
 		const #css = {
-			code: ${css.code ? stringify(css.code) : `''`},
-			map: ${css.map ? stringify(css.map.toString()) : 'null'}
-		};`}
+			code: "${css.code}",
+			map: ${css.map ? string_literal(css.map.toString()) : 'null'}
+		};` : null}
 
-		${component.module_javascript}
+		${component.extract_javascript(component.ast.module)}
 
-		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
+		${component.fully_hoisted}
 
 		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
-			${blocks.join('\n\n')}
+			${blocks}
 		});
-	`).trim();
+	`;
 }
 
-function trim(nodes: INode[]) {
+function trim(nodes: TemplateNode[]) {
 	let start = 0;
 	for (; start < nodes.length; start += 1) {
 		const node = nodes[start] as Text;

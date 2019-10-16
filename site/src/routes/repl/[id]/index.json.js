@@ -95,7 +95,8 @@ export async function patch(req, res) {
 	const { user } = req;
 	if (!user) return;
 
-	let id, uid = req.params.id;
+	let id;
+	const uid = req.params.id;
 
 	try {
 		const [row] = await query(`select * from gists where uid = $1 limit 1`, [uid]);
@@ -110,7 +111,9 @@ export async function patch(req, res) {
 	try {
 		const obj = await body(req);
 		obj.updated_at = 'now()';
-		let k, cols=[], vals=[];
+		let k;
+		const cols = [];
+		const vals = [];
 		for (k in obj) {
 			cols.push(k);
 			vals.push(k === 'files' ? JSON.stringify(obj[k]) : obj[k]);

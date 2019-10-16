@@ -1,52 +1,66 @@
-import CodeBuilder from '../utils/CodeBuilder';
-import deindent from '../utils/deindent';
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
-import { stringify, escape } from '../utils/stringify';
+import { b, x } from 'code-red';
+import { Node, Identifier } from 'estree';
+import { is_head } from './wrappers/shared/is_head';
 
 export interface BlockOptions {
 	parent?: Block;
-	name: string;
+	name: Identifier;
 	type: string;
 	renderer?: Renderer;
 	comment?: string;
-	key?: string;
-	bindings?: Map<string, { object: string; property: string; snippet: string; store: string; tail: string }>;
+	key?: Identifier;
+	bindings?: Map<string, {
+		object: Identifier;
+		property: Identifier;
+		snippet: Node;
+		store: string;
+		tail: Node;
+		modifier: (node: Node) => Node;
+	}>;
 	dependencies?: Set<string>;
 }
 
 export default class Block {
 	parent?: Block;
 	renderer: Renderer;
-	name: string;
+	name: Identifier;
 	type: string;
 	comment?: string;
 
 	wrappers: Wrapper[];
 
-	key: string;
-	first: string;
+	key: Identifier;
+	first: Identifier;
 
 	dependencies: Set<string>;
 
-	bindings: Map<string, { object: string; property: string; snippet: string; store: string; tail: string }>;
+	bindings: Map<string, {
+		object: Identifier;
+		property: Identifier;
+		snippet: Node;
+		store: string;
+		tail: Node;
+		modifier: (node: Node) => Node;
+	}>;
 
-	builders: {
-		init: CodeBuilder;
-		create: CodeBuilder;
-		claim: CodeBuilder;
-		hydrate: CodeBuilder;
-		mount: CodeBuilder;
-		measure: CodeBuilder;
-		fix: CodeBuilder;
-		animate: CodeBuilder;
-		intro: CodeBuilder;
-		update: CodeBuilder;
-		outro: CodeBuilder;
-		destroy: CodeBuilder;
+	chunks: {
+		init: Array<Node | Node[]>;
+		create: Array<Node | Node[]>;
+		claim: Array<Node | Node[]>;
+		hydrate: Array<Node | Node[]>;
+		mount: Array<Node | Node[]>;
+		measure: Array<Node | Node[]>;
+		fix: Array<Node | Node[]>;
+		animate: Array<Node | Node[]>;
+		intro: Array<Node | Node[]>;
+		update: Array<Node | Node[]>;
+		outro: Array<Node | Node[]>;
+		destroy: Array<Node | Node[]>;
 	};
 
-	event_listeners: string[] = [];
+	event_listeners: Node[] = [];
 
 	maintain_context: boolean;
 	has_animation: boolean;
@@ -56,9 +70,9 @@ export default class Block {
 	has_outro_method: boolean;
 	outros: number;
 
-	aliases: Map<string, string>;
-	variables: Map<string, string>;
-	get_unique_name: (name: string) => string;
+	aliases: Map<string, Identifier>;
+	variables: Map<string, { id: Identifier; init?: Node }> = new Map();
+	get_unique_name: (name: string) => Identifier;
 
 	has_update_method = false;
 	autofocus: string;
@@ -80,19 +94,19 @@ export default class Block {
 
 		this.bindings = options.bindings;
 
-		this.builders = {
-			init: new CodeBuilder(),
-			create: new CodeBuilder(),
-			claim: new CodeBuilder(),
-			hydrate: new CodeBuilder(),
-			mount: new CodeBuilder(),
-			measure: new CodeBuilder(),
-			fix: new CodeBuilder(),
-			animate: new CodeBuilder(),
-			intro: new CodeBuilder(),
-			update: new CodeBuilder(),
-			outro: new CodeBuilder(),
-			destroy: new CodeBuilder(),
+		this.chunks = {
+			init: [],
+			create: [],
+			claim: [],
+			hydrate: [],
+			mount: [],
+			measure: [],
+			fix: [],
+			animate: [],
+			intro: [],
+			update: [],
+			outro: [],
+			destroy: [],
 		};
 
 		this.has_animation = false;
@@ -101,15 +115,14 @@ export default class Block {
 		this.outros = 0;
 
 		this.get_unique_name = this.renderer.component.get_unique_name_maker();
-		this.variables = new Map();
 
-		this.aliases = new Map().set('ctx', this.get_unique_name('ctx'));
+		this.aliases = new Map();
 		if (this.key) this.aliases.set('key', this.get_unique_name('key'));
 	}
 
 	assign_variable_names() {
-		const seen = new Set();
-		const dupes = new Set();
+		const seen: Set<string> = new Set();
+		const dupes: Set<string> = new Set();
 
 		let i = this.wrappers.length;
 
@@ -117,13 +130,12 @@ export default class Block {
 			const wrapper = this.wrappers[i];
 
 			if (!wrapper.var) continue;
-			if (wrapper.parent && wrapper.parent.can_use_innerhtml) continue;
 
-			if (seen.has(wrapper.var)) {
-				dupes.add(wrapper.var);
+			if (seen.has(wrapper.var.name)) {
+				dupes.add(wrapper.var.name);
 			}
 
-			seen.add(wrapper.var);
+			seen.add(wrapper.var.name);
 		}
 
 		const counts = new Map();
@@ -134,12 +146,10 @@ export default class Block {
 
 			if (!wrapper.var) continue;
 
-			if (dupes.has(wrapper.var)) {
-				const i = counts.get(wrapper.var) || 0;
-				counts.set(wrapper.var, i + 1);
-				wrapper.var = this.get_unique_name(wrapper.var + i);
-			} else {
-				wrapper.var = this.get_unique_name(wrapper.var);
+			if (dupes.has(wrapper.var.name)) {
+				const i = counts.get(wrapper.var.name) || 0;
+				counts.set(wrapper.var.name, i + 1);
+				wrapper.var.name = this.get_unique_name(wrapper.var.name + i).name;
 			}
 		}
 	}
@@ -153,25 +163,25 @@ export default class Block {
 	}
 
 	add_element(
-		name: string,
-		render_statement: string,
-		claim_statement: string,
-		parent_node: string,
+		id: Identifier,
+		render_statement: Node,
+		claim_statement: Node,
+		parent_node: Node,
 		no_detach?: boolean
 	) {
-		this.add_variable(name);
-		this.builders.create.add_line(`${name} = ${render_statement};`);
+		this.add_variable(id);
+		this.chunks.create.push(b`${id} = ${render_statement};`);
 
 		if (this.renderer.options.hydratable) {
-			this.builders.claim.add_line(`${name} = ${claim_statement || render_statement};`);
+			this.chunks.claim.push(b`${id} = ${claim_statement || render_statement};`);
 		}
 
 		if (parent_node) {
-			this.builders.mount.add_line(`@append(${parent_node}, ${name});`);
-			if (parent_node === '@_document.head' && !no_detach) this.builders.destroy.add_line(`@detach(${name});`);
+			this.chunks.mount.push(b`@append(${parent_node}, ${id});`);
+			if (is_head(parent_node) && !no_detach) this.chunks.destroy.push(b`@detach(${id});`);
 		} else {
-			this.builders.mount.add_line(`@insert(#target, ${name}, anchor);`);
-			if (!no_detach) this.builders.destroy.add_conditional('detaching', `@detach(${name});`);
+			this.chunks.mount.push(b`@insert(#target, ${id}, anchor);`);
+			if (!no_detach) this.chunks.destroy.push(b`if (detaching) @detach(${id});`);
 		}
 	}
 
@@ -190,18 +200,16 @@ export default class Block {
 		this.has_animation = true;
 	}
 
-	add_variable(name: string, init?: string) {
-		if (name[0] === '#') {
-			name = this.alias(name.slice(1));
-		}
+	add_variable(id: Identifier, init?: Node) {
+		this.variables.forEach(v => {
+			if (v.id.name === id.name) {
+				throw new Error(
+					`Variable '${id.name}' already initialised with a different value`
+				);
+			}
+		});
 
-		if (this.variables.has(name) && this.variables.get(name) !== init) {
-			throw new Error(
-				`Variable '${name}' already initialised with a different value`
-			);
-		}
-
-		this.variables.set(name, init);
+		this.variables.set(id.name, { id, init });
 	}
 
 	alias(name: string) {
@@ -216,215 +224,223 @@ export default class Block {
 		return new Block(Object.assign({}, this, { key: null }, options, { parent: this }));
 	}
 
-	get_contents(local_key?: string) {
+	get_contents(key?: any) {
 		const { dev } = this.renderer.options;
 
 		if (this.has_outros) {
-			this.add_variable('#current');
+			this.add_variable({ type: 'Identifier', name: '#current' });
 
-			if (!this.builders.intro.is_empty()) {
-				this.builders.intro.add_line(`#current = true;`);
-				this.builders.mount.add_line(`#current = true;`);
+			if (this.chunks.intro.length > 0) {
+				this.chunks.intro.push(b`#current = true;`);
+				this.chunks.mount.push(b`#current = true;`);
 			}
 
-			if (!this.builders.outro.is_empty()) {
-				this.builders.outro.add_line(`#current = false;`);
+			if (this.chunks.outro.length > 0) {
+				this.chunks.outro.push(b`#current = false;`);
 			}
 		}
 
 		if (this.autofocus) {
-			this.builders.mount.add_line(`${this.autofocus}.focus();`);
+			this.chunks.mount.push(b`${this.autofocus}.focus();`);
 		}
 
 		this.render_listeners();
 
-		const properties = new CodeBuilder();
+		const properties: Record<string, any> = {};
 
-		const method_name = (short: string, long: string) => dev ? `${short}: function ${this.get_unique_name(long)}` : short;
+		const noop = x`@noop`;
 
-		if (local_key) {
-			properties.add_block(`key: ${local_key},`);
-		}
+		properties.key = key;
 
 		if (this.first) {
-			properties.add_block(`first: null,`);
-			this.builders.hydrate.add_line(`this.first = ${this.first};`);
+			properties.first = x`null`;
+			this.chunks.hydrate.push(b`this.first = ${this.first};`);
 		}
 
-		if (this.builders.create.is_empty() && this.builders.hydrate.is_empty()) {
-			properties.add_line(`c: @noop,`);
+		if (this.chunks.create.length === 0 && this.chunks.hydrate.length === 0) {
+			properties.create = noop;
 		} else {
-			const hydrate = !this.builders.hydrate.is_empty() && (
+			const hydrate = this.chunks.hydrate.length > 0 && (
 				this.renderer.options.hydratable
-					? `this.h()`
-					: this.builders.hydrate
+					? b`this.h();`
+					: this.chunks.hydrate
 			);
 
-			properties.add_block(deindent`
-				${method_name('c', 'create')}() {
-					${this.builders.create}
-					${hydrate}
-				},
-			`);
+			properties.create = x`function create() {
+				${this.chunks.create}
+				${hydrate}
+			}`;
 		}
 
-		if (this.renderer.options.hydratable || !this.builders.claim.is_empty()) {
-			if (this.builders.claim.is_empty() && this.builders.hydrate.is_empty()) {
-				properties.add_line(`l: @noop,`);
+		if (this.renderer.options.hydratable || this.chunks.claim.length > 0) {
+			if (this.chunks.claim.length === 0 && this.chunks.hydrate.length === 0) {
+				properties.claim = noop;
 			} else {
-				properties.add_block(deindent`
-					${method_name('l', 'claim')}(nodes) {
-						${this.builders.claim}
-						${this.renderer.options.hydratable && !this.builders.hydrate.is_empty() && `this.h();`}
-					},
-				`);
+				properties.claim = x`function claim(#nodes) {
+					${this.chunks.claim}
+					${this.renderer.options.hydratable && this.chunks.hydrate.length > 0 && b`this.h();`}
+				}`;
 			}
 		}
 
-		if (this.renderer.options.hydratable && !this.builders.hydrate.is_empty()) {
-			properties.add_block(deindent`
-				${method_name('h', 'hydrate')}() {
-					${this.builders.hydrate}
-				},
-			`);
+		if (this.renderer.options.hydratable && this.chunks.hydrate.length > 0) {
+			properties.hydrate = x`function hydrate() {
+				${this.chunks.hydrate}
+			}`;
 		}
 
-		if (this.builders.mount.is_empty()) {
-			properties.add_line(`m: @noop,`);
+		if (this.chunks.mount.length === 0) {
+			properties.mount = noop;
 		} else {
-			properties.add_block(deindent`
-				${method_name('m', 'mount')}(#target, anchor) {
-					${this.builders.mount}
-				},
-			`);
+			properties.mount = x`function mount(#target, anchor) {
+				${this.chunks.mount}
+			}`;
 		}
 
 		if (this.has_update_method || this.maintain_context) {
-			if (this.builders.update.is_empty() && !this.maintain_context) {
-				properties.add_line(`p: @noop,`);
+			if (this.chunks.update.length === 0 && !this.maintain_context) {
+				properties.update = noop;
 			} else {
-				properties.add_block(deindent`
-					${method_name('p', 'update')}(changed, ${this.maintain_context ? 'new_ctx' : 'ctx'}) {
-						${this.maintain_context && `ctx = new_ctx;`}
-						${this.builders.update}
-					},
-				`);
+				const ctx = this.maintain_context ? x`#new_ctx` : x`#ctx`;
+				properties.update = x`function update(#changed, ${ctx}) {
+					${this.maintain_context && b`#ctx = ${ctx};`}
+					${this.chunks.update}
+				}`;
 			}
 		}
 
 		if (this.has_animation) {
-			properties.add_block(deindent`
-				${method_name('r', 'measure')}() {
-					${this.builders.measure}
-				},
+			properties.measure = x`function measure() {
+				${this.chunks.measure}
+			}`;
 
-				${method_name('f', 'fix')}() {
-					${this.builders.fix}
-				},
+			properties.fix = x`function fix() {
+				${this.chunks.fix}
+			}`;
 
-				${method_name('a', 'animate')}() {
-					${this.builders.animate}
-				},
-			`);
+			properties.animate = x`function animate() {
+				${this.chunks.animate}
+			}`;
 		}
 
 		if (this.has_intro_method || this.has_outro_method) {
-			if (this.builders.intro.is_empty()) {
-				properties.add_line(`i: @noop,`);
+			if (this.chunks.intro.length === 0) {
+				properties.intro = noop;
 			} else {
-				properties.add_block(deindent`
-					${method_name('i', 'intro')}(#local) {
-						${this.has_outros && `if (#current) return;`}
-						${this.builders.intro}
-					},
-				`);
+				properties.intro = x`function intro(#local) {
+					${this.has_outros && b`if (#current) return;`}
+					${this.chunks.intro}
+				}`;
 			}
 
-			if (this.builders.outro.is_empty()) {
-				properties.add_line(`o: @noop,`);
+			if (this.chunks.outro.length === 0) {
+				properties.outro = noop;
 			} else {
-				properties.add_block(deindent`
-					${method_name('o', 'outro')}(#local) {
-						${this.builders.outro}
-					},
-				`);
+				properties.outro = x`function outro(#local) {
+					${this.chunks.outro}
+				}`;
 			}
 		}
 
-		if (this.builders.destroy.is_empty()) {
-			properties.add_line(`d: @noop`);
+		if (this.chunks.destroy.length === 0) {
+			properties.destroy = noop;
 		} else {
-			properties.add_block(deindent`
-				${method_name('d', 'destroy')}(detaching) {
-					${this.builders.destroy}
-				}
-			`);
+			properties.destroy = x`function destroy(detaching) {
+				${this.chunks.destroy}
+			}`;
 		}
 
-		/* eslint-disable @typescript-eslint/indent,indent */
-		return deindent`
-			${this.variables.size > 0 &&
-				`var ${Array.from(this.variables.keys())
-					.map(key => {
-						const init = this.variables.get(key);
-						return init !== undefined ? `${key} = ${init}` : key;
-					})
-					.join(', ')};`}
+		if (!this.renderer.component.compile_options.dev) {
+			// allow shorthand names
+			for (const name in properties) {
+				const property = properties[name];
+				if (property) property.id = null;
+			}
+		}
 
-			${!this.builders.init.is_empty() && this.builders.init}
+		const return_value: any = x`{
+			key: ${properties.key},
+			first: ${properties.first},
+			c: ${properties.create},
+			l: ${properties.claim},
+			h: ${properties.hydrate},
+			m: ${properties.mount},
+			p: ${properties.update},
+			r: ${properties.measure},
+			f: ${properties.fix},
+			a: ${properties.animate},
+			i: ${properties.intro},
+			o: ${properties.outro},
+			d: ${properties.destroy}
+		}`;
+
+		const body = b`
+			${Array.from(this.variables.values()).map(({ id, init }) => {
+				return init
+					? b`let ${id} = ${init}`
+					: b`let ${id}`;
+			})}
+
+			${this.chunks.init}
 
 			${dev
-				? deindent`
-					const block = {
-						${properties}
-					};
-					@dispatch_dev("SvelteRegisterBlock", { block, id: ${this.name || 'create_fragment'}.name, type: "${this.type}", source: ${stringify(this.comment || '', { only_escape_at_symbol: true })}, ctx });
+				? b`
+					const block = ${return_value};
+					@dispatch_dev("SvelteRegisterBlock", { block, id: ${this.name || 'create_fragment'}.name, type: "${this.type}", source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}", ctx: #ctx });
 					return block;`
-				: deindent`
-					return {
-						${properties}
-					};`
+				: b`
+					return ${return_value};`
 			}
-		`.replace(/([^{])(#+)(\w*)/g, (_match: string, pre: string, sigil: string, name: string) => {
-			return pre + (sigil === '#' ? this.alias(name) : sigil.slice(1) + name);
-		});
-		/* eslint-enable @typescript-eslint/indent,indent */
+		`;
+
+		return body;
+	}
+
+	render() {
+		const key = this.key && this.get_unique_name('key');
+
+		const args: any[] = [x`#ctx`];
+
+		if (key) args.unshift(key);
+
+		// TODO include this.comment
+		// ${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
+
+		return b`
+			function ${this.name}(${args}) {
+				${this.get_contents(key)}
+			}
+		`;
 	}
 
 	render_listeners(chunk: string = '') {
 		if (this.event_listeners.length > 0) {
-			this.add_variable(`#dispose${chunk}`);
+			const dispose: Identifier = {
+				type: 'Identifier',
+				name: `#dispose${chunk}`
+			};
+
+			this.add_variable(dispose);
 
 			if (this.event_listeners.length === 1) {
-				this.builders.hydrate.add_line(
-					`#dispose${chunk} = ${this.event_listeners[0]};`
+				this.chunks.hydrate.push(
+					b`${dispose} = ${this.event_listeners[0]};`
 				);
 
-				this.builders.destroy.add_line(
-					`#dispose${chunk}();`
+				this.chunks.destroy.push(
+					b`${dispose}();`
 				);
 			} else {
-				this.builders.hydrate.add_block(deindent`
-					#dispose${chunk} = [
-						${this.event_listeners.join(',\n')}
+				this.chunks.hydrate.push(b`
+					${dispose} = [
+						${this.event_listeners}
 					];
 				`);
 
-				this.builders.destroy.add_line(
-					`@run_all(#dispose${chunk});`
+				this.chunks.destroy.push(
+					b`@run_all(${dispose});`
 				);
 			}
 		}
-	}
-
-	toString() {
-		const local_key = this.key && this.get_unique_name('key');
-
-		return deindent`
-			${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
-			function ${this.name}(${this.key ? `${local_key}, ` : ''}ctx) {
-				${this.get_contents(local_key)}
-			}
-		`;
 	}
 }

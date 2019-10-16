@@ -22,14 +22,7 @@ module.exports = {
 		'arrow-spacing': 2,
 		'no-inner-declarations': 0,
 		'require-atomic-updates': 'off',
-		'@typescript-eslint/indent': [
-			'error',
-			'tab',
-			{
-				SwitchCase: 1,
-				ignoredNodes: ['TemplateLiteral']
-			}
-		],
+		'@typescript-eslint/indent': 'off',
 		'@typescript-eslint/camelcase': 'off',
 		'@typescript-eslint/no-use-before-define': 'off',
 		'@typescript-eslint/array-type': ['error', 'array-simple'],

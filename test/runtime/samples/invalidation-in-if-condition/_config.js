@@ -1,5 +1,4 @@
 export default {
-	show: 1,
 	html: `<button>false 0</button>`,
 
 	async test({ assert, target, window }) {
