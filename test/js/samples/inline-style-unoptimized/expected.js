@@ -14,7 +14,6 @@ function create_fragment(ctx) {
 	let div0;
 	let t;
 	let div1;
-	let div1_style_value;
 
 	return {
 		c() {
@@ -22,7 +21,7 @@ function create_fragment(ctx) {
 			t = space();
 			div1 = element("div");
 			attr(div0, "style", ctx.style);
-			attr(div1, "style", div1_style_value = "" + (ctx.key + ": " + ctx.value));
+			attr(div1, "style", "" + (ctx.key + ": " + ctx.value));
 		},
 		m(target, anchor) {
 			insert(target, div0, anchor);
@@ -34,8 +33,8 @@ function create_fragment(ctx) {
 				attr(div0, "style", ctx.style);
 			}
 
-			if ((changed.key || changed.value) && div1_style_value !== (div1_style_value = "" + (ctx.key + ": " + ctx.value))) {
-				attr(div1, "style", div1_style_value);
+			if (changed.key || changed.value) {
+				attr(div1, "style", "" + (ctx.key + ": " + ctx.value));
 			}
 		},
 		i: noop,

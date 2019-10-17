@@ -95,7 +95,7 @@ export default class AttributeWrapper {
 			const is_select_value_attribute =
 				name === 'value' && element.node.name === 'select';
 
-			const should_cache = (this.node.should_cache() || is_select_value_attribute);
+			const should_cache = is_select_value_attribute; // TODO is this necessary?
 
 			const last = should_cache && block.get_unique_name(
 				`${element.var.name}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
