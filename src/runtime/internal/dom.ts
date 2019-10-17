@@ -86,7 +86,7 @@ export function self(fn) {
 
 export function attr(node: Element, attribute: string, value?: string) {
 	if (value == null) node.removeAttribute(attribute);
-	else node.setAttribute(attribute, value);
+	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
 }
 
 export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
