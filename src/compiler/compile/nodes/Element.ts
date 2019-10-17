@@ -11,52 +11,13 @@ import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
 import { dimensions } from '../../utils/patterns';
-import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
+import validateA11y from '../utils/validate-a11y/Element';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
-
-const aria_attributes = 'activedescendant atomic autocomplete busy checked colindex controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowindex selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
-const aria_attribute_set = new Set(aria_attributes);
-
-const aria_roles = 'alert alertdialog application article banner button cell checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document feed figure form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search searchbox section sectionhead select separator slider spinbutton status structure switch tab table tablist tabpanel term textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(' ');
-const aria_role_set = new Set(aria_roles);
-
-const a11y_required_attributes = {
-	a: ['href'],
-	area: ['alt', 'aria-label', 'aria-labelledby'],
-
-	// html-has-lang
-	html: ['lang'],
-
-	// iframe-has-title
-	iframe: ['title'],
-	img: ['alt'],
-	object: ['title', 'aria-label', 'aria-labelledby']
-};
-
-const a11y_distracting_elements = new Set([
-	'blink',
-	'marquee'
-]);
-
-const a11y_required_content = new Set([
-	// anchor-has-content
-	'a',
-
-	// heading-has-content
-	'h1',
-	'h2',
-	'h3',
-	'h4',
-	'h5',
-	'h6'
-]);
-
-const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
 	'preventDefault',
@@ -219,53 +180,7 @@ export default class Element extends Node {
 	}
 
 	validate() {
-		if (a11y_distracting_elements.has(this.name)) {
-			// no-distracting-elements
-			this.component.warn(this, {
-				code: `a11y-distracting-elements`,
-				message: `A11y: Avoid <${this.name}> elements`
-			});
-		}
-
-		if (this.name === 'figcaption') {
-			let { parent } = this;
-			let is_figure_parent = false;
-
-			while (parent) {
-				if ((parent as Element).name === 'figure') {
-					is_figure_parent = true;
-					break;
-				}
-				if (parent.type === 'Element') {
-					break;
-				}
-				parent = parent.parent;
-			}
-
-			if (!is_figure_parent) {
-				this.component.warn(this, {
-					code: `a11y-structure`,
-					message: `A11y: <figcaption> must be an immediate child of <figure>`
-				});
-			}
-		}
-
-		if (this.name === 'figure') {
-			const children = this.children.filter(node => {
-				if (node.type === 'Comment') return false;
-				if (node.type === 'Text') return /\S/.test(node.data);
-				return true;
-			});
-
-			const index = children.findIndex(child => (child as Element).name === 'figcaption');
-
-			if (index !== -1 && (index !== 0 && index !== children.length - 1)) {
-				this.component.warn(children[index], {
-					code: `a11y-structure`,
-					message: `A11y: <figcaption> must be first or last child of <figure>`
-				});
-			}
-		}
+		validateA11y(this);
 
 		this.validate_attributes();
 		this.validate_bindings();
@@ -276,103 +191,10 @@ export default class Element extends Node {
 	validate_attributes() {
 		const { component } = this;
 
-		const attribute_map = new Map();
-
 		this.attributes.forEach(attribute => {
 			if (attribute.is_spread) return;
 
 			const name = attribute.name.toLowerCase();
-
-			// aria-props
-			if (name.startsWith('aria-')) {
-				if (invisible_elements.has(this.name)) {
-					// aria-unsupported-elements
-					component.warn(attribute, {
-						code: `a11y-aria-attributes`,
-						message: `A11y: <${this.name}> should not have aria-* attributes`
-					});
-				}
-
-				const type = name.slice(5);
-				if (!aria_attribute_set.has(type)) {
-					const match = fuzzymatch(type, aria_attributes);
-					let message = `A11y: Unknown aria attribute 'aria-${type}'`;
-					if (match) message += ` (did you mean '${match}'?)`;
-
-					component.warn(attribute, {
-						code: `a11y-unknown-aria-attribute`,
-						message
-					});
-				}
-
-				if (name === 'aria-hidden' && /^h[1-6]$/.test(this.name)) {
-					component.warn(attribute, {
-						code: `a11y-hidden`,
-						message: `A11y: <${this.name}> element should not be hidden`
-					});
-				}
-			}
-
-			// aria-role
-			if (name === 'role') {
-				if (invisible_elements.has(this.name)) {
-					// aria-unsupported-elements
-					component.warn(attribute, {
-						code: `a11y-misplaced-role`,
-						message: `A11y: <${this.name}> should not have role attribute`
-					});
-				}
-
-				const value = attribute.get_static_value();
-				// @ts-ignore
-				if (value && !aria_role_set.has(value)) {
-					// @ts-ignore
-					const match = fuzzymatch(value, aria_roles);
-					let message = `A11y: Unknown role '${value}'`;
-					if (match) message += ` (did you mean '${match}'?)`;
-
-					component.warn(attribute, {
-						code: `a11y-unknown-role`,
-						message
-					});
-				}
-			}
-
-			// no-access-key
-			if (name === 'accesskey') {
-				component.warn(attribute, {
-					code: `a11y-accesskey`,
-					message: `A11y: Avoid using accesskey`
-				});
-			}
-
-			// no-autofocus
-			if (name === 'autofocus') {
-				component.warn(attribute, {
-					code: `a11y-autofocus`,
-					message: `A11y: Avoid using autofocus`
-				});
-			}
-
-			// scope
-			if (name === 'scope' && this.name !== 'th') {
-				component.warn(attribute, {
-					code: `a11y-misplaced-scope`,
-					message: `A11y: The scope attribute should only be used with <th> elements`
-				});
-			}
-
-			// tabindex-no-positive
-			if (name === 'tabindex') {
-				const value = attribute.get_static_value();
-				// @ts-ignore todo is tabindex=true correct case?
-				if (!isNaN(value) && +value > 0) {
-					component.warn(attribute, {
-						code: `a11y-positive-tabindex`,
-						message: `A11y: avoid tabindex values above zero`
-					});
-				}
-			}
 
 			if (name === 'slot') {
 				if (!attribute.is_static) {
@@ -421,53 +243,7 @@ export default class Element extends Node {
 					message: `The 'is' attribute is not supported cross-browser and should be avoided`
 				});
 			}
-
-			attribute_map.set(attribute.name, attribute);
 		});
-
-		// handle special cases
-		if (this.name === 'a') {
-			const attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
-
-			if (attribute) {
-				const value = attribute.get_static_value();
-
-				if (value === '' || value === '#') {
-					component.warn(attribute, {
-						code: `a11y-invalid-attribute`,
-						message: `A11y: '${value}' is not a valid ${attribute.name} attribute`
-					});
-				}
-			} else {
-				component.warn(this, {
-					code: `a11y-missing-attribute`,
-					message: `A11y: <a> element should have an href attribute`
-				});
-			}
-		}
-
-		else {
-			const required_attributes = a11y_required_attributes[this.name];
-			if (required_attributes) {
-				const has_attribute = required_attributes.some(name => attribute_map.has(name));
-
-				if (!has_attribute) {
-					should_have_attribute(this, required_attributes);
-				}
-			}
-
-			if (this.name === 'input') {
-				const type = attribute_map.get('type');
-				if (type && type.get_static_value() === 'image') {
-					const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
-					const has_attribute = required_attributes.some(name => attribute_map.has(name));
-
-					if (!has_attribute) {
-						should_have_attribute(this, required_attributes, 'input type="image"');
-					}
-				}
-			}
-		}
 	}
 
 	validate_bindings() {
@@ -575,7 +351,6 @@ export default class Element extends Node {
 						message: `'files' binding can only be used with <input type="file">`
 					});
 				}
-
 			} else if (name === 'open') {
 				if (this.name !== 'details') {
 					component.error(binding, {
@@ -644,16 +419,7 @@ export default class Element extends Node {
 		});
 	}
 
-	validate_content() {
-		if (!a11y_required_content.has(this.name)) return;
-
-		if (this.children.length === 0) {
-			this.component.warn(this, {
-				code: `a11y-missing-content`,
-				message: `A11y: <${this.name}> element should have child content`
-			});
-		}
-	}
+	validate_content() {}
 
 	validate_event_handlers() {
 		const { component } = this;
@@ -685,7 +451,7 @@ export default class Element extends Node {
 					} else {
 						component.warn(handler, {
 							code: 'redundant-event-modifier',
-							message: `The passive modifier only works with wheel and touch events`
+							message: `The passive modifier only works with wheel and touch events`,
 						});
 					}
 				}
@@ -738,20 +504,4 @@ export default class Element extends Node {
 			);
 		}
 	}
-}
-
-function should_have_attribute(
-	node,
-	attributes: string[],
-	name = node.name
-) {
-	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
-	const sequence = attributes.length > 1 ?
-		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
-		attributes[0];
-
-	node.component.warn(node, {
-		code: `a11y-missing-attribute`,
-		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
-	});
 }

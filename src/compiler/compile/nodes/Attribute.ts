@@ -7,6 +7,7 @@ import Text from './Text';
 import Expression from './shared/Expression';
 import TemplateScope from './shared/TemplateScope';
 import { x } from 'code-red';
+import validateA11y from '../utils/validate-a11y/Attribute';
 
 export default class Attribute extends Node {
 	type: 'Attribute';
@@ -60,6 +61,12 @@ export default class Attribute extends Node {
 					return expression;
 				});
 		}
+
+		this.validate();
+	}
+
+	validate() {
+		validateA11y(this);
 	}
 
 	get_dependencies() {
@@ -86,7 +93,11 @@ export default class Attribute extends Node {
 		}
 
 		let expression = this.chunks
-			.map(chunk => chunk.type === 'Text' ? string_literal(chunk.data) : chunk.manipulate(block))
+			.map(chunk =>
+				chunk.type === 'Text'
+					? string_literal(chunk.data)
+					: chunk.manipulate(block)
+			)
 			.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
 		if (this.chunks[0].type !== 'Text') {
@@ -102,9 +113,9 @@ export default class Attribute extends Node {
 		return this.is_true
 			? true
 			: this.chunks[0]
-				// method should be called only when `is_static = true`
-				? (this.chunks[0] as Text).data
-				: '';
+			? // method should be called only when `is_static = true`
+			  (this.chunks[0] as Text).data
+			: '';
 	}
 
 	should_cache() {
