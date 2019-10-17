@@ -224,7 +224,7 @@ export default function dom(
 		component.rewrite_props(({ name, reassigned, export_name }) => {
 			const value = `$${name}`;
 			
-			let insert: string;
+			let insert: Node[];
 			if (reassigned || export_name) {
 				insert = b`${`$$subscribe_${name}`}()`;
 			} else {
