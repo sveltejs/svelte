@@ -148,12 +148,12 @@ function apply_selector(blocks: Block[], node: CssNode, stack: CssNode[], to_enc
 
 	if (block.combinator) {
 		if (block.combinator.type === 'WhiteSpace') {
-			for (let ancestor_block of blocks) {
+			for (const ancestor_block of blocks) {
 				if (ancestor_block.global) {
 					continue;
 				}
 				
-				for (let stack_node of stack) {
+				for (const stack_node of stack) {
 					if (block_might_apply_to_node(ancestor_block, stack_node)) {
 						to_encapsulate.push({ node: stack_node, block: ancestor_block });
 					}
