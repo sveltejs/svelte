@@ -56,8 +56,6 @@ export default class DebugTagWrapper extends Wrapper {
 				add_to_set(dependencies, expression.dependencies);
 			});
 
-			const condition = changed(Array.from(dependencies));
-
 			const contextual_identifiers = this.node.expressions
 				.filter(e => {
 					const variable = var_lookup.get(e.node.name);
@@ -67,21 +65,24 @@ export default class DebugTagWrapper extends Wrapper {
 
 			const logged_identifiers = this.node.expressions.map(e => p`${e.node.name}`);
 
-			block.chunks.update.push(b`
-				if (${condition}) {
-					const { ${contextual_identifiers} } = #ctx;
-					@_console.${log}({ ${logged_identifiers} });
-					${debug};
-				}
-			`);
+			const debug_statements = b`
+				const { ${contextual_identifiers} } = #ctx;
+				@_console.${log}({ ${logged_identifiers} });
+				debugger;`;
 
-			block.chunks.create.push(b`
-				{
-					const { ${contextual_identifiers} } = #ctx;
-					@_console.${log}({ ${logged_identifiers} });
-					${debug};
-				}
-			`);
+			if (dependencies.size) {
+				const condition = changed(Array.from(dependencies));
+
+				block.chunks.update.push(b`
+					if (${condition}) {
+						${debug_statements}
+					}
+				`);
+			}
+
+			block.chunks.create.push(b`{
+				${debug_statements}
+			}`);
 		}
 	}
 }
