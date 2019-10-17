@@ -191,10 +191,12 @@ describe("runtime", () => {
 							assert.equal(config.error, err.message);
 						}
 					} else {
-						failed.add(dir);
-						showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 						throw err;
 					}
+				 }).catch(err => {
+					failed.add(dir);
+					showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
+					throw err;
 				})
 				.catch(err => {
 					// print a clickable link to open the directory
