@@ -41,7 +41,7 @@ function create_each_block(ctx) {
 			insert_dev(target, t0, anchor);
 			insert_dev(target, t1, anchor);
 		},
-		p: noop},
+		p: noop,
 		d: function destroy(detaching) {
 			if (detaching) detach_dev(t0);
 			if (detaching) detach_dev(t1);
@@ -106,6 +106,7 @@ function create_fragment(ctx) {
 				for (; i < each_blocks.length; i += 1) {
 					each_blocks[i].d(1);
 				}
+
 				each_blocks.length = each_value.length;
 			}
 		},
