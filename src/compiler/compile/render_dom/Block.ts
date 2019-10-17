@@ -146,11 +146,13 @@ export default class Block {
 
 			if (!wrapper.var) continue;
 
+			let suffix = '';
 			if (dupes.has(wrapper.var.name)) {
 				const i = counts.get(wrapper.var.name) || 0;
 				counts.set(wrapper.var.name, i + 1);
-				wrapper.var.name = this.get_unique_name(wrapper.var.name + i).name;
+				suffix = i;
 			}
+			wrapper.var.name = this.get_unique_name(wrapper.var.name + suffix).name;
 		}
 	}
 
