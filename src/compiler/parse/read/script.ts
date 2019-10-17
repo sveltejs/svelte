@@ -1,11 +1,12 @@
 import * as acorn from '../acorn';
 import repeat from '../../utils/repeat';
 import { Parser } from '../index';
-import { Node } from '../../interfaces';
+import { Script } from '../../interfaces';
+import { Node, Program } from 'estree';
 
 const script_closing_tag = '</script>';
 
-function get_context(parser: Parser, attributes: Node[], start: number) {
+function get_context(parser: Parser, attributes: any[], start: number): string {
 	const context = attributes.find(attribute => attribute.name === 'context');
 	if (!context) return 'default';
 
@@ -28,7 +29,7 @@ function get_context(parser: Parser, attributes: Node[], start: number) {
 	return value;
 }
 
-export default function read_script(parser: Parser, start: number, attributes: Node[]) {
+export default function read_script(parser: Parser, start: number, attributes: Node[]): Script {
 	const script_start = parser.index;
 	const script_end = parser.template.indexOf(script_closing_tag, script_start);
 
@@ -41,7 +42,7 @@ export default function read_script(parser: Parser, start: number, attributes: N
 		repeat(' ', script_start) + parser.template.slice(script_start, script_end);
 	parser.index = script_end + script_closing_tag.length;
 
-	let ast;
+	let ast: Program;
 
 	try {
 		ast = acorn.parse(source);
@@ -49,8 +50,11 @@ export default function read_script(parser: Parser, start: number, attributes: N
 		parser.acorn_error(err);
 	}
 
-	ast.start = script_start;
+	// TODO is this necessary?
+	(ast as any).start = script_start;
+
 	return {
+		type: 'Script',
 		start,
 		end: parser.index,
 		context: get_context(parser, attributes, start),

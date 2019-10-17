@@ -12,6 +12,16 @@
 					"type": "Identifier",
 					"start": 7,
 					"end": 12,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 7
+						},
+						"end": {
+							"line": 1,
+							"column": 12
+						}
+					},
 					"name": "todos"
 				},
 				"children": [
@@ -46,16 +56,46 @@
 					"type": "MemberExpression",
 					"start": 22,
 					"end": 29,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 22
+						},
+						"end": {
+							"line": 1,
+							"column": 29
+						}
+					},
 					"object": {
 						"type": "Identifier",
 						"start": 22,
 						"end": 26,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 22
+							},
+							"end": {
+								"line": 1,
+								"column": 26
+							}
+						},
 						"name": "todo"
 					},
 					"property": {
 						"type": "Identifier",
 						"start": 27,
 						"end": 29,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 27
+							},
+							"end": {
+								"line": 1,
+								"column": 29
+							}
+						},
 						"name": "id"
 					},
 					"computed": false

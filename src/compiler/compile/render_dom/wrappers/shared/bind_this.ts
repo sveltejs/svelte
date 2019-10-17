@@ -1,14 +1,15 @@
 import flatten_reference from '../../../utils/flatten_reference';
-import deindent from '../../../utils/deindent';
+import { b, x } from 'code-red';
 import Component from '../../../Component';
 import Block from '../../Block';
 import Binding from '../../../nodes/Binding';
+import { Identifier } from 'estree';
 
-export default function bind_this(component: Component, block: Block, binding: Binding, variable: string) {
-	const fn = component.get_unique_name(`${variable}_binding`);
+export default function bind_this(component: Component, block: Block, binding: Binding, variable: Identifier) {
+	const fn = component.get_unique_name(`${variable.name}_binding`);
 
 	component.add_var({
-		name: fn,
+		name: fn.name,
 		internal: true,
 		referenced: true
 	});
@@ -17,33 +18,36 @@ export default function bind_this(component: Component, block: Block, binding: B
 	let object;
 	let body;
 
-	if (binding.is_contextual && binding.expression.node.type === 'Identifier') {
+	if (binding.is_contextual && binding.raw_expression.type === 'Identifier') {
 		// bind:x={y} — we can't just do `y = x`, we need to
 		// to `array[index] = x;
-		const { name } = binding.expression.node;
+		const { name } = binding.raw_expression;
 		const { snippet } = block.bindings.get(name);
 		lhs = snippet;
 
-		body = `${lhs} = $$value`; // TODO we need to invalidate... something
+		body = b`${lhs} = $$value`; // TODO we need to invalidate... something
 	} else {
-		object = flatten_reference(binding.expression.node).name;
-		lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
+		object = flatten_reference(binding.raw_expression).name;
+		lhs = binding.raw_expression;
 
-		body = binding.expression.node.type === 'Identifier'
-			? deindent`
-				${component.invalidate(object, `${lhs} = $$value`)};
+		body = binding.raw_expression.type === 'Identifier'
+			? b`
+				${component.invalidate(object, x`${lhs} = $$value`)};
 			`
-			: deindent`
+			: b`
 				${lhs} = $$value;
 				${component.invalidate(object)};
 			`;
 	}
 
-	const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
+	const contextual_dependencies: Identifier[] = Array.from(binding.expression.contextual_dependencies).map(name => ({
+		type: 'Identifier',
+		name
+	}));
 
 	if (contextual_dependencies.length) {
-		component.partly_hoisted.push(deindent`
-			function ${fn}(${['$$value', ...contextual_dependencies].join(', ')}) {
+		component.partly_hoisted.push(b`
+			function ${fn}($$value, ${contextual_dependencies}) {
 				if (${lhs} === $$value) return;
 				@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 					${body}
@@ -52,37 +56,39 @@ export default function bind_this(component: Component, block: Block, binding: B
 		`);
 
 		const args = [];
-		for (const arg of contextual_dependencies) {
-			args.push(arg);
-			block.add_variable(arg, `ctx.${arg}`);
+		for (const id of contextual_dependencies) {
+			args.push(id);
+			block.add_variable(id, x`#ctx.${id}`);
 		}
 
-		const assign = block.get_unique_name(`assign_${variable}`);
-		const unassign = block.get_unique_name(`unassign_${variable}`);
+		const assign = block.get_unique_name(`assign_${variable.name}`);
+		const unassign = block.get_unique_name(`unassign_${variable.name}`);
 
-		block.builders.init.add_block(deindent`
-			const ${assign} = () => ctx.${fn}(${[variable].concat(args).join(', ')});
-			const ${unassign} = () => ctx.${fn}(${['null'].concat(args).join(', ')});
+		block.chunks.init.push(b`
+			const ${assign} = () => #ctx.${fn}(${variable}, ${args});
+			const ${unassign} = () => #ctx.${fn}(null, ${args});
 		`);
 
-		const condition = Array.from(contextual_dependencies).map(name => `${name} !== ctx.${name}`).join(' || ');
+		const condition = Array.from(contextual_dependencies)
+			.map(name => x`${name} !== #ctx.${name}`)
+			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
 		// we push unassign and unshift assign so that references are
 		// nulled out before they're created, to avoid glitches
 		// with shifting indices
-		block.builders.update.add_line(deindent`
+		block.chunks.update.push(b`
 			if (${condition}) {
 				${unassign}();
-				${args.map(a => `${a} = ctx.${a}`).join(', ')};
+				${args.map(a => b`${a} = #ctx.${a}`)};
 				${assign}();
 			}`
 		);
 
-		block.builders.destroy.add_line(`${unassign}();`);
-		return `${assign}();`;
+		block.chunks.destroy.push(b`${unassign}();`);
+		return b`${assign}();`;
 	}
 
-	component.partly_hoisted.push(deindent`
+	component.partly_hoisted.push(b`
 		function ${fn}($$value) {
 			@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 				${body}
@@ -90,6 +96,6 @@ export default function bind_this(component: Component, block: Block, binding: B
 		}
 	`);
 
-	block.builders.destroy.add_line(`ctx.${fn}(null);`);
-	return `ctx.${fn}(${variable});`;
+	block.chunks.destroy.push(b`#ctx.${fn}(null);`);
+	return b`#ctx.${fn}(${variable});`;
 }

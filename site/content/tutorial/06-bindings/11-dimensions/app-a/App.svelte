@@ -8,6 +8,7 @@
 <style>
 	input { display: block; }
 	div { display: inline-block; }
+	span { word-break: break-all; }
 </style>
 
 <input type=range bind:value={size}>

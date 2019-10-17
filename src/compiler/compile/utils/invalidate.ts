@@ -1,10 +1,10 @@
 import Component from '../Component';
-import MagicString from 'magic-string';
-import { Node } from '../../interfaces';
 import { nodes_match } from '../../utils/nodes_match';
 import { Scope } from './scope';
+import { x } from 'code-red';
+import { Node } from 'estree';
 
-export function invalidate(component: Component, scope: Scope, code: MagicString, node: Node, names: Set<string>) {
+export function invalidate(component: Component, scope: Scope, node: Node, names: Set<string>) {
 	const [head, ...tail] = Array.from(names).filter(name => {
 		const owner = scope.find_owner(name);
 		if (owner && owner !== component.instance_scope) return false;
@@ -27,24 +27,11 @@ export function invalidate(component: Component, scope: Scope, code: MagicString
 	if (head) {
 		component.has_reactive_assignments = true;
 
-		if (node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
-			code.overwrite(node.start, node.end, component.invalidate(head));
+		if (node.type === 'AssignmentExpression' && node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
+			return component.invalidate(head);
 		} else {
-			let suffix = ')';
-
-			if (head[0] === '$') {
-				code.prependRight(node.start, `${component.helper('set_store_value')}(${head.slice(1)}, `);
-			} else {
-				let prefix = `$$invalidate`;
-
-				const variable = component.var_lookup.get(head);
-				if (variable.subscribable && variable.reassigned) {
-					prefix = `$$subscribe_${head}($$invalidate`;
-					suffix += `)`;
-				}
-
-				code.prependRight(node.start, `${prefix}('${head}', `);
-			}
+			const is_store_value = head[0] === '$';
+			const variable = component.var_lookup.get(head);
 
 			const extra_args = tail.map(name => component.invalidate(name));
 
@@ -55,12 +42,23 @@ export function invalidate(component: Component, scope: Scope, code: MagicString
 			);
 
 			if (pass_value) {
-				extra_args.unshift(head);
+				extra_args.unshift({
+					type: 'Identifier',
+					name: head
+				});
 			}
 
-			suffix = `${extra_args.map(arg => `, ${arg}`).join('')}${suffix}`;
+			const callee = is_store_value ? `@set_store_value` : `$$invalidate`;
+			let invalidate = x`${callee}(${is_store_value ? head.slice(1) : x`"${head}"`}, ${node}, ${extra_args})`;
 
-			code.appendLeft(node.end, suffix);
+			if (variable.subscribable && variable.reassigned) {
+				const subscribe = `$$subscribe_${head}`;
+				invalidate = x`${subscribe}(${invalidate})}`;
+			}
+
+			return invalidate;
 		}
 	}
+
+	return node;
 }

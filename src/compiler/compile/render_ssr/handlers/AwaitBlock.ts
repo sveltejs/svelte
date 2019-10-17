@@ -1,16 +1,20 @@
 import Renderer, { RenderOptions } from '../Renderer';
-import { snip } from '../../utils/snip';
 import AwaitBlock from '../../nodes/AwaitBlock';
+import { x } from 'code-red';
 
 export default function(node: AwaitBlock, renderer: Renderer, options: RenderOptions) {
-	renderer.append('${(function(__value) { if(@is_promise(__value)) return `');
-
+	renderer.push();
 	renderer.render(node.pending.children, options);
+	const pending = renderer.pop();
 
-	renderer.append('`; return function(' + (node.value || '') + ') { return `');
-
+	renderer.push();
 	renderer.render(node.then.children, options);
+	const then = renderer.pop();
 
-	const snippet = snip(node.expression);
-	renderer.append(`\`;}(__value);}(${snippet})) }`);
+	renderer.add_expression(x`
+		(function(__value) {
+			if (@is_promise(__value)) return ${pending};
+			return (function(${node.value}) { return ${then}; }(__value));
+		}(${node.expression.node}))
+	`);
 }

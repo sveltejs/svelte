@@ -2,7 +2,8 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Text from '../../nodes/Text';
 import Wrapper from './shared/Wrapper';
-import { stringify } from '../../utils/stringify';
+import { x } from 'code-red';
+import { Identifier } from 'estree';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
@@ -33,7 +34,7 @@ export default class TextWrapper extends Wrapper {
 	node: Text;
 	data: string;
 	skip: boolean;
-	var: string;
+	var: Identifier;
 
 	constructor(
 		renderer: Renderer,
@@ -46,7 +47,7 @@ export default class TextWrapper extends Wrapper {
 
 		this.skip = should_skip(this.node);
 		this.data = data;
-		this.var = this.skip ? null : 't';
+		this.var = (this.skip ? null : x`t`) as unknown as Identifier;
 	}
 
 	use_space() {
@@ -64,15 +65,15 @@ export default class TextWrapper extends Wrapper {
 		return true;
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		if (this.skip) return;
 		const use_space = this.use_space();
 
 		block.add_element(
 			this.var,
-			use_space ? `@space()` : `@text(${stringify(this.data)})`,
-			parent_nodes && (use_space ? `@claim_space(${parent_nodes})` : `@claim_text(${parent_nodes}, ${stringify(this.data)})`),
-			parent_node
+			use_space ? x`@space()` : x`@text("${this.data}")`,
+			parent_nodes && (use_space ? x`@claim_space(${parent_nodes})` : x`@claim_text(${parent_nodes}, "${this.data}")`),
+			parent_node as Identifier
 		);
 	}
 }

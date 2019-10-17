@@ -90,10 +90,12 @@ export function attr(node: Element, attribute: string, value?: string) {
 }
 
 export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
+	// @ts-ignore
+	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
 	for (const key in attributes) {
 		if (key === 'style') {
 			node.style.cssText = attributes[key];
-		} else if (key in node) {
+		} else if (descriptors[key] && descriptors[key].set) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key]);

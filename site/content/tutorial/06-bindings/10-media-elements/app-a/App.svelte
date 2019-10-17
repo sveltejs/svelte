@@ -14,7 +14,7 @@
 		showControlsTimeout = setTimeout(() => showControls = false, 2500);
 		showControls = true;
 
-		if (e.which !== 1) return; // mouse not down
+		if (!(e.buttons & 1)) return; // mouse not down
 		if (!duration) return; // video not loaded yet
 
 		const { left, right } = this.getBoundingClientRect();

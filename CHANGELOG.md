@@ -2,7 +2,15 @@
 
 ## Unreleased
 
+* Fix `{#each}` context not shadowing outer scope when using `bind:` ([#1565](https://github.com/sveltejs/svelte/issues/1565))
 * Fix edge cases in matching selectors against elements ([#1710](https://github.com/sveltejs/svelte/issues/1710))
+* Use safer `HTMLElement` check before extending class ([#3608](https://github.com/sveltejs/svelte/issue/3608))
+* Add `location` as a known global ([#3619](https://github.com/sveltejs/svelte/pull/3619))
+* Fix tracking of dependencies of compound assignments in reactive statements ([#3634](https://github.com/sveltejs/svelte/issues/3634))
+* Flush changes in newly attached block when using `{#await}` ([#3660](https://github.com/sveltejs/svelte/issues/3660))
+* Throw exception immediately when calling `createEventDispatcher()` after component instantiation ([#3667](https://github.com/sveltejs/svelte/pull/3667))
+* Fix globals shadowing contextual template scope ([#3674](https://github.com/sveltejs/svelte/issues/3674))
+* Fix error resulting from trying to set a read-only property when spreading element attributes ([#3681](https://github.com/sveltejs/svelte/issues/3681))
 
 ## 3.12.1
 
@@ -11,6 +19,7 @@
 ## 3.12.0
 
 * Fire events on `document` in development to facilitate dev tooling ([#3005](https://github.com/sveltejs/svelte/pull/3005))
+* Remove old props when the keys in spread props are removed ([#2282](https://github.com/sveltejs/svelte/issues/2282))
 
 ## 3.11.0
 

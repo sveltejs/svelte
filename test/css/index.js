@@ -82,10 +82,24 @@ describe('css', () => {
 
 			assert.equal(dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz'), expected.css);
 
+			let ClientComponent;
+			let ServerComponent;
+
 			// we do this here, rather than in the expected.html !== null
 			// block, to verify that valid code was generated
-			const ClientComponent = create(dom.js.code);
-			const ServerComponent = create(ssr.js.code);
+			try {
+				ClientComponent = create(dom.js.code);
+			} catch (err) {
+				console.log(dom.js.code);
+				throw err;
+			}
+
+			try {
+				ServerComponent = create(ssr.js.code);
+			} catch (err) {
+				console.log(dom.js.code);
+				throw err;
+			}
 
 			// verify that the right elements have scoping selectors
 			if (expected.html !== null) {
