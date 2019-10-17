@@ -98,6 +98,8 @@ export default function ssr(
 					: b`
 						let ${left} = ${right}`;
 			}
+		} else { // TODO do not add label if it's not referenced
+			statement = b`$: { ${statement} }`;
 		}
 
 		return statement;
