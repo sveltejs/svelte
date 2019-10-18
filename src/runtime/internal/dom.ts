@@ -7,7 +7,7 @@ export function insert(target: Node, node: Node, anchor?: Node) {
 }
 
 export function detach(node: Node) {
-	node.parentNode.removeChild(node);
+	if (node.parentNode) node.parentNode.removeChild(node);
 }
 
 export function destroy_each(iterations, detaching) {
