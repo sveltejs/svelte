@@ -81,7 +81,7 @@ export default function tag(parser: Parser) {
 				parser.current().children.length
 			) {
 				parser.error({
-					code: `invalid-${name.slice(7)}-content`,
+					code: `invalid-${slug}-content`,
 					message: `<${name}> cannot have children`
 				}, parser.current().children[0].start);
 			}
