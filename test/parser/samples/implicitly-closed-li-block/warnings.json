@@ -1,0 +1,10 @@
+[
+	{
+		"code": "missing-closing-tag",
+		"fullMessage": "Missing </li> before <li> (2:1)\n1: <ul>\n2:   <li>a\n     ^\n3:   {#if true}\n4:     <li>b"
+	},
+	{
+		"code": "missing-closing-tag",
+		"fullMessage": "Missing </li> before </ul> (6:1)\n4:     <li>b\n5:   {/if}\n6:   <li>c\n     ^\n7: </ul>"
+	}
+]

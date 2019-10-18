@@ -65,7 +65,7 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	validate_options(options, warnings);
 
 	stats.start('parse');
-	const ast = parse(source, options);
+	const ast = parse(source, options, warnings);
 	stats.stop('parse');
 
 	stats.start('create component');

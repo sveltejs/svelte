@@ -1,0 +1,14 @@
+[
+	{
+		"code": "missing-closing-tag",
+		"fullMessage": "Missing </li> before <li> (2:1)\n1: <ul>\n2:   <li>a\n     ^\n3:   <li>b\n4:   <li>c"
+	},
+	{
+		"code": "missing-closing-tag",
+		"fullMessage": "Missing </li> before <li> (3:1)\n1: <ul>\n2:   <li>a\n3:   <li>b\n     ^\n4:   <li>c\n5: </ul>"
+	},
+	{
+		"code": "missing-closing-tag",
+		"fullMessage": "Missing </li> before </ul> (4:1)\n2:   <li>a\n3:   <li>b\n4:   <li>c\n     ^\n5: </ul>"
+	}
+]

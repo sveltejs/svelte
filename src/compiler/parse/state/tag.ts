@@ -142,6 +142,11 @@ export default function tag(parser: Parser) {
 			parent.end = start;
 			parser.stack.pop();
 
+			parser.warn(parent, {
+				code: `missing-closing-tag`,
+				message: `Missing </${parent.name}> before </${name}>`
+			});
+
 			parent = parser.current();
 		}
 
@@ -152,6 +157,11 @@ export default function tag(parser: Parser) {
 	} else if (closing_tag_omitted(parent.name, name)) {
 		parent.end = start;
 		parser.stack.pop();
+
+		parser.warn(parent, {
+			code: `missing-closing-tag`,
+			message: `Missing </${parent.name}> before <${name}>`
+		});
 	}
 
 	const unique_names: Set<string> = new Set();

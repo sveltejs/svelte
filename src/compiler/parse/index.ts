@@ -1,15 +1,18 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
+import { getLocator } from 'locate-character';
 import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
 import { reserved } from '../utils/names';
 import full_char_code_at from '../utils/full_char_code_at';
-import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../interfaces';
+import get_code_frame from '../utils/get_code_frame';
+import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script, Warning } from '../interfaces';
 import error from '../utils/error';
 
 type ParserState = (parser: Parser) => (ParserState | void);
 
 export class Parser {
 	readonly template: string;
+	readonly originalTemplate: string;
 	readonly filename?: string;
 	readonly customElement: boolean;
 
@@ -21,14 +24,21 @@ export class Parser {
 	js: Script[] = [];
 	meta_tags = {};
 
-	constructor(template: string, options: ParserOptions) {
+	warnings: Warning[];
+	locate: (c: number) => { line: number; column: number };
+
+	constructor(template: string, options: ParserOptions, warnings: Warning[]) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
 
+		this.originalTemplate = template;
+		this.locate = getLocator(this.originalTemplate, { offsetLine: 1 });
+
 		this.template = template.replace(/\s+$/, '');
 		this.filename = options.filename;
 		this.customElement = options.customElement;
+		this.warnings = warnings;
 
 		this.html = {
 			start: null,
@@ -87,6 +97,35 @@ export class Parser {
 			code: `parse-error`,
 			message: err.message.replace(/ \(\d+:\d+\)$/, '')
 		}, err.pos);
+	}
+
+	warn(
+		pos: {
+			start: number;
+			end: number;
+		},
+		warning: {
+			code: string;
+			message: string;
+		}
+	) {
+		const start = this.locate(pos.start);
+		const end = this.locate(pos.end);
+
+		const frame = get_code_frame(this.originalTemplate, start.line - 1, start.column);
+
+		this.warnings.push({
+			type: 'parser',
+			code: warning.code,
+			message: warning.message,
+			frame,
+			start,
+			end,
+			pos: pos.start,
+			filename: this.filename,
+			toString: () =>
+				`${warning.message} (${start.line}:${start.column})\n${frame}`,
+		});
 	}
 
 	error({ code, message }: { code: string; message: string }, index = this.index) {
@@ -203,9 +242,10 @@ export class Parser {
 
 export default function parse(
 	template: string,
-	options: ParserOptions = {}
+	options: ParserOptions = {},
+	warnings: Warning[]
 ): Ast {
-	const parser = new Parser(template, options);
+	const parser = new Parser(template, options, warnings);
 
 	// TODO we may want to allow multiple <style> tags —
 	// one scoped, one global. for now, only allow one

@@ -21,9 +21,10 @@ describe('parse', () => {
 			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '');
 			const expectedOutput = tryToLoadJson(`${__dirname}/samples/${dir}/output.json`);
 			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
+			const expectedWarnings = tryToLoadJson(`${__dirname}/samples/${dir}/warnings.json`);
 
 			try {
-				const { ast } = svelte.compile(input, Object.assign(options, {
+				const { ast, warnings } = svelte.compile(input, Object.assign(options, {
 					generate: false
 				}));
 
@@ -33,6 +34,15 @@ describe('parse', () => {
 				assert.deepEqual(ast.css, expectedOutput.css);
 				assert.deepEqual(ast.instance, expectedOutput.instance);
 				assert.deepEqual(ast.module, expectedOutput.module);
+
+				const parserWarnings = warnings
+					.filter(warning => warning.type === 'parser')
+					.map(warning => ({ code: warning.code, fullMessage: warning.toString() }));
+				if (expectedWarnings) {
+					assert.deepEqual(parserWarnings, expectedWarnings);
+				} else if (parserWarnings.length) {
+					throw new Error(`Received unexpected warnings: ${JSON.stringify(parserWarnings)}`);
+				}
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
 				if (!expectedError) throw err;
