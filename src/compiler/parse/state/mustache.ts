@@ -160,44 +160,24 @@ export default function mustache(parser: Parser) {
 
 			parser.stack.push(block.else);
 		}
-	} else if (parser.eat(':then')) {
-		// TODO DRY out this and the next section
-		const pending_block = parser.current();
-		if (pending_block.type !== 'PendingBlock') {
-			parser.error({
-				code: `invalid-then-placement`,
-				message: 'Cannot have an {:then} block outside an {#await ...} block'
-			});
-		}
-
-		pending_block.end = start;
-		parser.stack.pop();
-		const await_block = parser.current();
-
-		if (!parser.eat('}')) {
-			parser.require_whitespace();
-			await_block.value = parser.read_identifier();
-			parser.allow_whitespace();
-			parser.eat('}', true);
-		}
-
-		const then_block: TemplateNode = {
-			start,
-			end: null,
-			type: 'ThenBlock',
-			children: [],
-			skip: false
-		};
-
-		await_block.then = then_block;
-		parser.stack.push(then_block);
-	} else if (parser.eat(':catch')) {
+	} else if (parser.match(':then') || parser.match(':catch')) {
 		const block = parser.current();
-		if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
-			parser.error({
-				code: `invalid-catch-placement`,
-				message: 'Cannot have an {:catch} block outside an {#await ...} block'
-			});
+		const isThen = parser.eat(':then') || !parser.eat(':catch');
+
+		if (isThen) {
+			if (block.type !== 'PendingBlock') {
+				parser.error({
+					code: `invalid-then-placement`,
+					message: 'Cannot have an {:then} block outside an {#await ...} block'
+				});
+			}
+		} else {
+			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
+				parser.error({
+					code: `invalid-catch-placement`,
+					message: 'Cannot have an {:catch} block outside an {#await ...} block'
+				});
+			}
 		}
 
 		block.end = start;
@@ -206,21 +186,21 @@ export default function mustache(parser: Parser) {
 
 		if (!parser.eat('}')) {
 			parser.require_whitespace();
-			await_block.error = parser.read_identifier();
+			await_block[isThen ? 'value': 'error'] = parser.read_identifier();
 			parser.allow_whitespace();
 			parser.eat('}', true);
 		}
 
-		const catch_block: TemplateNode = {
+		const new_block: TemplateNode = {
 			start,
 			end: null,
-			type: 'CatchBlock',
+			type: isThen ? 'ThenBlock': 'CatchBlock',
 			children: [],
 			skip: false
 		};
 
-		await_block.catch = catch_block;
-		parser.stack.push(catch_block);
+		await_block[isThen ? 'then' : 'catch'] = new_block;
+		parser.stack.push(new_block);
 	} else if (parser.eat('#')) {
 		// {#if foo}, {#each foo} or {#await foo}
 		let type;
