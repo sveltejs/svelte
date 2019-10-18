@@ -26,7 +26,7 @@ export default function create_debugging_comment(
 	}
 
 	const start = locate(c);
-	const loc = `(${start.line + 1}:${start.column})`;
+	const loc = `(${start.line}:${start.column})`;
 
 	return `${loc} ${source.slice(c, d)}`.replace(/\s/g, ' ');
 }
