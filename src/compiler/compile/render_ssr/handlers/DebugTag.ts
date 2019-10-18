@@ -12,5 +12,5 @@ export default function(node: DebugTag, renderer: Renderer, options: RenderOptio
 		${node.expressions.map(e => p`${e.node.name}`)}
 	}`;
 
-	renderer.add_expression(x`@debug(${filename ? x`"${filename}"` : x`null`}, ${line}, ${column}, ${obj})`);
+	renderer.add_expression(x`@debug(${filename ? x`"${filename}"` : x`null`}, ${line - 1}, ${column}, ${obj})`);
 }
