@@ -7,6 +7,7 @@
 * Allow exiting a reactive block early with `break $` ([#2828](https://github.com/sveltejs/svelte/issues/2828))
 * Check attributes have changed before setting them to avoid image flicker ([#3579](https://github.com/sveltejs/svelte/pull/3579))
 * Fix generating malformed code for `{@debug}` tags with no dependencies ([#3588](https://github.com/sveltejs/svelte/issue/3588))
+* Fix `bind:this` binding to a store ([#3591](https://github.com/sveltejs/svelte/issue/3591))
 * Use safer `HTMLElement` check before extending class ([#3608](https://github.com/sveltejs/svelte/issue/3608))
 * Add `location` as a known global ([#3619](https://github.com/sveltejs/svelte/pull/3619))
 * Support `{#await}` with `{:catch}` but no `{:then}` ([#3623](https://github.com/sveltejs/svelte/issues/3623))
