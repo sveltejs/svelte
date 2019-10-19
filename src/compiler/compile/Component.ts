@@ -569,6 +569,7 @@ export default class Component {
 				this.add_var({
 					name,
 					global: true,
+					hoistable: true
 				});
 			}
 		});
@@ -661,6 +662,7 @@ export default class Component {
 				this.add_var({
 					name,
 					global: true,
+					hoistable: true
 				});
 			}
 		});
