@@ -3,7 +3,7 @@ import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
 import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
-import { globals, sanitize } from '../../../utils/names';
+import { sanitize } from '../../../utils/names';
 import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
@@ -74,8 +74,6 @@ export default class Expression {
 					const { name, nodes } = flatten_reference(node);
 
 					if (scope.has(name)) return;
-
-					if (globals.has(name) && !(component.var_lookup.has(name) || template_scope.names.has(name))) return;
 
 					if (name[0] === '$' && template_scope.names.has(name.slice(1))) {
 						component.error(node, {
@@ -202,7 +200,6 @@ export default class Expression {
 					const { name } = flatten_reference(node);
 
 					if (scope.has(name)) return;
-					if (globals.has(name) && !(component.var_lookup.has(name) || template_scope.names.has(name))) return;
 
 					if (function_expression) {
 						if (template_scope.names.has(name)) {
