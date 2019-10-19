@@ -162,9 +162,9 @@ export default function mustache(parser: Parser) {
 		}
 	} else if (parser.match(':then') || parser.match(':catch')) {
 		const block = parser.current();
-		const isThen = parser.eat(':then') || !parser.eat(':catch');
+		const is_then = parser.eat(':then') || !parser.eat(':catch');
 
-		if (isThen) {
+		if (is_then) {
 			if (block.type !== 'PendingBlock') {
 				parser.error({
 					code: `invalid-then-placement`,
@@ -186,7 +186,7 @@ export default function mustache(parser: Parser) {
 
 		if (!parser.eat('}')) {
 			parser.require_whitespace();
-			await_block[isThen ? 'value': 'error'] = parser.read_identifier();
+			await_block[is_then ? 'value': 'error'] = parser.read_identifier();
 			parser.allow_whitespace();
 			parser.eat('}', true);
 		}
@@ -194,12 +194,12 @@ export default function mustache(parser: Parser) {
 		const new_block: TemplateNode = {
 			start,
 			end: null,
-			type: isThen ? 'ThenBlock': 'CatchBlock',
+			type: is_then ? 'ThenBlock': 'CatchBlock',
 			children: [],
 			skip: false
 		};
 
-		await_block[isThen ? 'then' : 'catch'] = new_block;
+		await_block[is_then ? 'then' : 'catch'] = new_block;
 		parser.stack.push(new_block);
 	} else if (parser.eat('#')) {
 		// {#if foo}, {#each foo} or {#await foo}
