@@ -2,15 +2,15 @@ import Attribute from '../../nodes/Attribute';
 import fuzzymatch from '../../../utils/fuzzymatch';
 
 const validators = [
-	noAutoFocus,
-	unsupportedAriaElement,
-	unknownAriaAttribute,
-	noAriaHidden,
-	noMisplacedRole,
-	noUnknownRole,
-	noAccessKey,
-	noMisplacedScope,
-	tabindexNoPositive,
+	no_auto_focus,
+	unsupported_aria_element,
+	unknown_aria_attribute,
+	no_aria_hidden,
+	no_misplaced_role,
+	no_unknown_role,
+	no_access_key,
+	no_misplaced_scope,
+	tabindex_no_positive,
 ];
 
 export default function validateA11y(attribute: Attribute) {
@@ -25,7 +25,7 @@ export default function validateA11y(attribute: Attribute) {
 	}
 }
 
-function noAutoFocus(attribute: Attribute, name: string) {
+function no_auto_focus(attribute: Attribute, name: string) {
 	if (name === 'autofocus') {
 		attribute.parent.component.warn(attribute, {
 			code: `a11y-autofocus`,
@@ -35,7 +35,7 @@ function noAutoFocus(attribute: Attribute, name: string) {
 }
 
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
-function unsupportedAriaElement(attribute: Attribute, name: string) {
+function unsupported_aria_element(attribute: Attribute, name: string) {
 	if (name.startsWith('aria-')) {
 		if (invisible_elements.has(attribute.parent.name)) {
 			// aria-unsupported-elements
@@ -51,7 +51,7 @@ const aria_attributes = 'activedescendant atomic autocomplete busy checked colin
 	' '
 );
 const aria_attribute_set = new Set(aria_attributes);
-function unknownAriaAttribute(attribute: Attribute, name: string) {
+function unknown_aria_attribute(attribute: Attribute, name: string) {
 	if (name.startsWith('aria-')) {
 		const type = name.slice(5);
 		if (!aria_attribute_set.has(type)) {
@@ -67,7 +67,7 @@ function unknownAriaAttribute(attribute: Attribute, name: string) {
 	}
 }
 
-function noAriaHidden(attribute: Attribute, name: string) {
+function no_aria_hidden(attribute: Attribute, name: string) {
 	if (name === 'aria-hidden' && /^h[1-6]$/.test(attribute.parent.name)) {
 		attribute.parent.component.warn(attribute, {
 			code: `a11y-hidden`,
@@ -76,7 +76,7 @@ function noAriaHidden(attribute: Attribute, name: string) {
 	}
 }
 
-function noMisplacedRole(attribute: Attribute, name: string) {
+function no_misplaced_role(attribute: Attribute, name: string) {
 	if (name === 'role') {
 		if (invisible_elements.has(attribute.parent.name)) {
 			// aria-unsupported-elements
@@ -88,9 +88,11 @@ function noMisplacedRole(attribute: Attribute, name: string) {
 	}
 }
 
-const aria_roles = 'alert alertdialog application article banner button cell checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document feed figure form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search searchbox section sectionhead select separator slider spinbutton status structure switch tab table tablist tabpanel term textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(' ');
+const aria_roles = 'alert alertdialog application article banner button cell checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document feed figure form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search searchbox section sectionhead select separator slider spinbutton status structure switch tab table tablist tabpanel term textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(
+	' '
+);
 const aria_role_set = new Set(aria_roles);
-function noUnknownRole(attribute: Attribute, name: string) {
+function no_unknown_role(attribute: Attribute, name: string) {
 	if (name === 'role') {
 		const value = attribute.get_static_value();
 		// @ts-ignore
@@ -108,7 +110,7 @@ function noUnknownRole(attribute: Attribute, name: string) {
 	}
 }
 
-function noAccessKey(attribute: Attribute, name: string) {
+function no_access_key(attribute: Attribute, name: string) {
 	// no-access-key
 	if (name === 'accesskey') {
 		attribute.parent.component.warn(attribute, {
@@ -118,8 +120,12 @@ function noAccessKey(attribute: Attribute, name: string) {
 	}
 }
 
-function noMisplacedScope(attribute: Attribute, name: string) {
-	if (name === 'scope' && attribute.parent.type === 'Element' && attribute.parent.name !== 'th') {
+function no_misplaced_scope(attribute: Attribute, name: string) {
+	if (
+		name === 'scope' &&
+		attribute.parent.type === 'Element' &&
+		attribute.parent.name !== 'th'
+	) {
 		attribute.parent.component.warn(attribute, {
 			code: `a11y-misplaced-scope`,
 			message: `A11y: The scope attribute should only be used with <th> elements`,
@@ -127,7 +133,7 @@ function noMisplacedScope(attribute: Attribute, name: string) {
 	}
 }
 
-function tabindexNoPositive(attribute: Attribute, name: string) {
+function tabindex_no_positive(attribute: Attribute, name: string) {
 	// tabindex-no-positive
 	if (name === 'tabindex') {
 		const value = attribute.get_static_value();

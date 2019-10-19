@@ -1,10 +1,10 @@
 import Element from '../../nodes/Element';
 
 const validators = [
-	noDistractingElements,
+	no_distracting_elements,
 	structure,
-	noMissingAttribute,
-	requiredContent,
+	no_missing_attribute,
+	required_content,
 ];
 
 export default function validateA11y(element: Element) {
@@ -14,7 +14,7 @@ export default function validateA11y(element: Element) {
 }
 
 const a11y_distracting_elements = new Set(['blink', 'marquee']);
-function noDistractingElements(element: Element) {
+function no_distracting_elements(element: Element) {
 	if (a11y_distracting_elements.has(element.name)) {
 		// no-distracting-elements
 		element.component.warn(element, {
@@ -80,7 +80,7 @@ const a11y_required_attributes = {
 	object: ['title', 'aria-label', 'aria-labelledby'],
 };
 
-function noMissingAttribute(element: Element) {
+function no_missing_attribute(element: Element) {
 	const attribute_map = new Map();
 
 	element.attributes.forEach(attribute => {
@@ -164,7 +164,7 @@ const a11y_required_content = new Set([
 	'h5',
 	'h6',
 ]);
-function requiredContent(element: Element) {
+function required_content(element: Element) {
 	if (!a11y_required_content.has(element.name)) return;
 
 	if (element.children.length === 0) {
