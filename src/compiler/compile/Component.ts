@@ -764,7 +764,7 @@ export default class Component {
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
-			return x`${name.slice(1)}.set(${name})`;
+			return x`${name.slice(1)}.set(${value || name})`;
 		}
 
 		if (
