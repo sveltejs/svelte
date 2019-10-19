@@ -224,17 +224,12 @@ export default function dom(
 		component.rewrite_props(({ name, reassigned, export_name }) => {
 			const value = `$${name}`;
 			
-			let insert: Node[];
-			if (reassigned || export_name) {
-				insert = b`${`$$subscribe_${name}`}()`;
-			} else {
-				const callback = x`$$value => $$invalidate('${value}', ${value} = $$value)`;
-
-				insert = b`@component_subscribe($$self, ${name}, $${callback})`;
-			}
+			const insert = (reassigned || export_name)
+				? b`${`$$subscribe_${name}`}()`
+				: b`@component_subscribe($$self, ${name}, #value => $$invalidate('${value}', ${value} = #value))`;
 
 			if (component.compile_options.dev) {
-				insert = b`@validate_store(${name}, '${name}'); ${insert}`;
+				return b`@validate_store(${name}, '${name}'); ${insert}`;
 			}
 
 			return insert;
