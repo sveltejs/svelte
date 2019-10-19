@@ -91,7 +91,7 @@ export interface Ast {
 }
 
 export interface Warning {
-	type?: string,
+	type?: string;
 	start?: { line: number; column: number; pos?: number };
 	end?: { line: number; column: number };
 	pos?: number;
