@@ -30,7 +30,6 @@ export default class DebugTagWrapper extends Wrapper {
 		const { var_lookup } = component;
 
 		const start = component.locate(this.node.start + 1);
-		start.line += 1;
 		const end = { line: start.line, column: start.column + 6 };
 
 		const loc = { start, end };

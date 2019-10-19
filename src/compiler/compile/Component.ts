@@ -90,15 +90,6 @@ export default class Component {
 	file: string;
 	locate: (c: number) => { line: number; column: number };
 
-	// TODO this does the same as component.locate! remove one or the other
-	locator: (
-		search: number,
-		startIndex?: number
-	) => {
-		line: number;
-		column: number;
-	};
-
 	stylesheet: Stylesheet;
 
 	aliases: Map<string, Identifier> = new Map();
@@ -140,7 +131,7 @@ export default class Component {
 					.replace(process.cwd(), '')
 					.replace(/^[/\\]/, '')
 				: compile_options.filename);
-		this.locate = getLocator(this.source);
+		this.locate = getLocator(this.source, { offsetLine: 1 });
 
 		// styles
 		this.stylesheet = new Stylesheet(
@@ -438,12 +429,8 @@ export default class Component {
 			return;
 		}
 
-		if (!this.locator) {
-			this.locator = getLocator(this.source, { offsetLine: 1 });
-		}
-
-		const start = this.locator(pos.start);
-		const end = this.locator(pos.end);
+		const start = this.locate(pos.start);
+		const end = this.locate(pos.end);
 
 		const frame = get_code_frame(this.source, start.line - 1, start.column);
 
@@ -456,7 +443,7 @@ export default class Component {
 			pos: pos.start,
 			filename: this.compile_options.filename,
 			toString: () =>
-				`${warning.message} (${start.line + 1}:${start.column})\n${frame}`,
+				`${warning.message} (${start.line}:${start.column})\n${frame}`,
 		});
 	}
 

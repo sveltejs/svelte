@@ -108,7 +108,6 @@ export default class EachBlockWrapper extends Wrapper {
 		let c = this.node.start + 2;
 		while (renderer.component.source[c] !== 'e') c += 1;
 		const start = renderer.component.locate(c);
-		start.line += 1;
 		const end = { line: start.line, column: start.column + 4 };
 		const length = {
 			type: 'Identifier',
