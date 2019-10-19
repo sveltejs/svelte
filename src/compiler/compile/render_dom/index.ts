@@ -301,7 +301,7 @@ export default function dom(
 			return !variable || variable.hoistable;
 		})
 		.map(({ name }) => b`
-			${component.compile_options.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
+			${component.compile_options.dev && b`@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
 			@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate('${name}', ${name} = $$value));
 		`);
 
