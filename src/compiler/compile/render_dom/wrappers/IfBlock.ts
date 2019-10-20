@@ -271,8 +271,8 @@ export default class IfBlockWrapper extends Wrapper {
 					? b`
 					${snippet && (
 						dependencies.length > 0
-							? b`if ((${condition} == null) || ${changed(dependencies)}) ${condition} = !!(${snippet})`
-							: b`if (${condition} == null) ${condition} = !!(${snippet})`
+							? b`if (${condition} == null || ${changed(dependencies)}) ${condition} = !!${snippet}`
+							: b`if (${condition} == null) ${condition} = !!${snippet}`
 					)}
 					if (${condition}) return ${block.name};`
 					: b`return ${block.name};`)}
@@ -388,7 +388,11 @@ export default class IfBlockWrapper extends Wrapper {
 					function ${select_block_type}(#changed, #ctx) {
 						${this.branches.map(({ dependencies, condition, snippet }, i) => condition
 						? b`
-						${snippet && b`if ((${condition} == null) || ${changed(dependencies)}) ${condition} = !!(${snippet})`}
+						${snippet && (
+							dependencies.length > 0
+								? b`if (${condition} == null || ${changed(dependencies)}) ${condition} = !!${snippet}`
+								: b`if (${condition} == null) ${condition} = !!${snippet}`
+						)}
 						if (${condition}) return ${i};`
 						: b`return ${i};`)}
 						${!has_else && b`return -1;`}
