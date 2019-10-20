@@ -1,5 +1,20 @@
 [
 	{
+		"code": "a11y-click-events-have-key-events",
+		"end": {
+			"character": 152,
+			"column": 50,
+			"line": 11
+		},
+		"message": "A11y: Visible, non-interactive elements with click handlers must have at least one keyboard listener.",
+		"pos": 102,
+		"start": {
+			"character": 102,
+			"column": 0,
+			"line": 11
+		}
+	},
+	{
 		"message": "The passive modifier only works with wheel and touch events",
 		"code": "redundant-event-modifier",
 		"start": {

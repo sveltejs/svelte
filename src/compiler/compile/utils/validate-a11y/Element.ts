@@ -1,16 +1,24 @@
 import Element from '../../nodes/Element';
-
-const validators = [
-	no_distracting_elements,
-	structure,
-	no_missing_attribute,
-	required_content,
-];
+import Attribute from '../../nodes/Attribute';
+import EventHandler from '../../nodes/EventHandler';
 
 export default function validateA11y(element: Element) {
-	for (const validator of validators) {
-		validator(element);
-	}
+	const attribute_map = new Map();
+	const handler_map = new Map();
+
+	element.attributes.forEach(attribute => {
+		attribute_map.set(attribute.name, attribute);
+	});
+	element.handlers.forEach(handler => {
+		handler_map.set(handler.name, handler);
+	});
+
+	no_distracting_elements(element);
+	structure(element);
+	no_missing_attribute(element, attribute_map);
+	required_content(element);
+	no_missing_handlers(element, handler_map);
+	img_redundant_alt(element, attribute_map);
 }
 
 const a11y_distracting_elements = new Set(['blink', 'marquee']);
@@ -78,15 +86,15 @@ const a11y_required_attributes = {
 	iframe: ['title'],
 	img: ['alt'],
 	object: ['title', 'aria-label', 'aria-labelledby'],
+
+	// input
+	['input type="image"']: ['alt', 'aria-label', 'aria-labelledby'],
 };
 
-function no_missing_attribute(element: Element) {
-	const attribute_map = new Map();
-
-	element.attributes.forEach(attribute => {
-		attribute_map.set(attribute.name, attribute);
-	});
-
+function no_missing_attribute(
+	element: Element,
+	attribute_map: Map<string, Attribute>
+) {
 	if (element.name === 'a') {
 		const attribute =
 			attribute_map.get('href') || attribute_map.get('xlink:href');
@@ -107,32 +115,22 @@ function no_missing_attribute(element: Element) {
 			});
 		}
 	} else {
-		const required_attributes = a11y_required_attributes[element.name];
+		let name = element.name;
+		if (element.name === 'input') {
+			const type = attribute_map.get('type');
+			if (type && type.get_static_value() === 'image') {
+				name = 'input type="image"';
+			}
+		}
+
+		const required_attributes = a11y_required_attributes[name];
 		if (required_attributes) {
 			const has_attribute = required_attributes.some(name =>
 				attribute_map.has(name)
 			);
 
 			if (!has_attribute) {
-				should_have_attribute(element, required_attributes);
-			}
-		}
-
-		if (element.name === 'input') {
-			const type = attribute_map.get('type');
-			if (type && type.get_static_value() === 'image') {
-				const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
-				const has_attribute = required_attributes.some(name =>
-					attribute_map.has(name)
-				);
-
-				if (!has_attribute) {
-					should_have_attribute(
-						element,
-						required_attributes,
-						'input type="image"'
-					);
-				}
+				should_have_attribute(element, required_attributes, name);
 			}
 		}
 	}
@@ -172,5 +170,63 @@ function required_content(element: Element) {
 			code: `a11y-missing-content`,
 			message: `A11y: <${element.name}> element should have child content`,
 		});
+	}
+}
+
+function no_missing_handlers(
+	element: Element,
+	handler_map: Map<string, EventHandler>
+) {
+	if (
+		handler_map.has('click') &&
+		!(
+			handler_map.has('keypress') ||
+			handler_map.has('keydown') ||
+			handler_map.has('keyup')
+		)
+	) {
+		element.component.warn(element, {
+			code: `a11y-click-events-have-key-events`,
+			message: `A11y: Visible, non-interactive elements with click handlers must have at least one keyboard listener.`,
+		});
+	}
+}
+
+const a11y_redundant_alt = /image|photo|picture/i;
+function img_redundant_alt(
+	element: Element,
+	attribute_map: Map<string, Attribute>
+) {
+	if (element.name === 'img') {
+		const alt_attribute = attribute_map.get('alt');
+		if (alt_attribute && !attribute_map.has('aria-hidden')) {
+			for (const chunk of alt_attribute.chunks) {
+				if (contain_text(chunk, a11y_redundant_alt)) {
+					element.component.warn(alt_attribute, {
+						code: `a11y-img-redundant-alt`,
+						message:
+							'A11y: Redundant alt attribute. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.',
+					});
+					break;
+				}
+			}
+		}
+	}
+}
+
+function contain_text(node, regex: RegExp) {
+	switch (node.type) {
+		case 'Text':
+			return regex.test(node.data);
+		case 'Literal':
+			return regex.test(node.value);
+		case 'Expression':
+			return contain_text(node.node, regex);
+		case 'TemplateLiteral':
+			return node.quasis.some(quasi => contain_text(quasi, regex));
+		case 'TemplateElement':
+			return regex.test(node.value.cooked);
+		default:
+			return false;
 	}
 }

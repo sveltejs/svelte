@@ -1,0 +1,77 @@
+[
+	{
+		"code": "a11y-img-redundant-alt",
+		"end": {
+			"character": 286,
+			"column": 46,
+			"line": 9
+		},
+		"message": "A11y: Redundant alt attribute. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.",
+		"pos": 255,
+		"start": {
+			"character": 255,
+			"column": 15,
+			"line": 9
+		}
+	},
+	{
+		"code": "a11y-img-redundant-alt",
+		"end": {
+			"character": 332,
+			"column": 42,
+			"line": 10
+		},
+		"message": "A11y: Redundant alt attribute. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.",
+		"pos": 305,
+		"start": {
+			"character": 305,
+			"column": 15,
+			"line": 10
+		}
+	},
+	{
+		"code": "a11y-img-redundant-alt",
+		"end": {
+			"character": 385,
+			"column": 49,
+			"line": 11
+		},
+		"message": "A11y: Redundant alt attribute. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.",
+		"pos": 351,
+		"start": {
+			"character": 351,
+			"column": 15,
+			"line": 11
+		}
+	},
+	{
+		"code": "a11y-img-redundant-alt",
+		"end": {
+			"character": 430,
+			"column": 41,
+			"line": 12
+		},
+		"message": "A11y: Redundant alt attribute. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.",
+		"pos": 404,
+		"start": {
+			"character": 404,
+			"column": 15,
+			"line": 12
+		}
+	},
+	{
+		"code": "a11y-img-redundant-alt",
+		"end": {
+			"character": 484,
+			"column": 50,
+			"line": 13
+		},
+		"message": "A11y: Redundant alt attribute. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.",
+		"pos": 449,
+		"start": {
+			"character": 449,
+			"column": 15,
+			"line": 13
+		}
+	}
+]

@@ -2,14 +2,14 @@
 	{
 		"code": "a11y-click-events-have-key-events",
 		"end": {
-			"character": 173,
-			"column": 33,
-			"line": 11
+			"character": 72,
+			"column": 27,
+			"line": 5
 		},
 		"message": "A11y: Visible, non-interactive elements with click handlers must have at least one keyboard listener.",
-		"pos": 39,
+		"pos": 45,
 		"start": {
-			"character": 39,
+			"character": 45,
 			"column": 0,
 			"line": 5
 		}
