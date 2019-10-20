@@ -12,6 +12,7 @@
 * Use safer `HTMLElement` check before extending class ([#3608](https://github.com/sveltejs/svelte/issue/3608))
 * Add `location` as a known global ([#3619](https://github.com/sveltejs/svelte/pull/3619))
 * Support `{#await}` with `{:catch}` but no `{:then}` ([#3623](https://github.com/sveltejs/svelte/issues/3623))
+* Clean up dead code emitted for `<slot/>`s ([#3631](https://github.com/sveltejs/svelte/issues/3631))
 * Fix tracking of dependencies of compound assignments in reactive statements ([#3634](https://github.com/sveltejs/svelte/issues/3634))
 * Flush changes in newly attached block when using `{#await}` ([#3660](https://github.com/sveltejs/svelte/issues/3660))
 * Throw exception immediately when calling `createEventDispatcher()` after component instantiation ([#3667](https://github.com/sveltejs/svelte/pull/3667))
