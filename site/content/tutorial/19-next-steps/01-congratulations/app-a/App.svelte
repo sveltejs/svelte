@@ -16,13 +16,18 @@
 
 	onMount(() => {
 		let frame;
+		let lastUpdate = new Date();
 
 		function loop() {
 			frame = requestAnimationFrame(loop);
 
+			const now = new Date();
+			const dt = now - lastUpdate;
+			lastUpdate = now;
+
 			confetti = confetti.map(emoji => {
-				emoji.y += 0.7 * emoji.r;
-				if (emoji.y > 120) emoji.y = -20;
+				emoji.y += 0.042 * emoji.r * dt;
+				if (emoji.y > 120) emoji.y = ((emoji.y + 20) % 140) - 20;
 				return emoji;
 			});
 		}
