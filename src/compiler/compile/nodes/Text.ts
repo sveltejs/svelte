@@ -2,6 +2,7 @@ import Node from './shared/Node';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
+import validate_a11y from '../utils/validate-a11y/Text';
 
 export default class Text extends Node {
 	type: 'Text';
@@ -12,5 +13,7 @@ export default class Text extends Node {
 		super(component, parent, scope, info);
 		this.data = info.data;
 		this.synthetic = info.synthetic || false;
+
+		validate_a11y(this);
 	}
 }

@@ -1,6 +1,9 @@
 import Element from '../../nodes/Element';
 import Attribute from '../../nodes/Attribute';
 import EventHandler from '../../nodes/EventHandler';
+import emojiRegex from 'emoji-regex';
+import Text from '../../nodes/Text';
+import { array_to_string } from './utils';
 
 export default function validateA11y(element: Element) {
 	const attribute_map = new Map();
@@ -19,6 +22,7 @@ export default function validateA11y(element: Element) {
 	required_content(element);
 	no_missing_handlers(element, handler_map);
 	img_redundant_alt(element, attribute_map);
+	accessible_emoji(element, attribute_map);
 }
 
 const a11y_distracting_elements = new Set(['blink', 'marquee']);
@@ -138,11 +142,7 @@ function no_missing_attribute(
 
 function should_have_attribute(node, attributes: string[], name = node.name) {
 	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
-	const sequence =
-		attributes.length > 1
-			? attributes.slice(0, -1).join(', ') +
-			  ` or ${attributes[attributes.length - 1]}`
-			: attributes[0];
+	const sequence = array_to_string(attributes);
 
 	node.component.warn(node, {
 		code: `a11y-missing-attribute`,
@@ -210,6 +210,22 @@ function img_redundant_alt(
 					break;
 				}
 			}
+		}
+	}
+}
+
+function accessible_emoji(element: Element, attribute_map: Map<string, Attribute>) {
+	const has_emoji = element.children.some(child => contain_text(child, emojiRegex()));
+	if (has_emoji) {
+		const is_span = element.name === 'span';
+		const has_label = attribute_map.has('aria-labelledby') ||attribute_map.has('aria-label');
+		const role = attribute_map.get('role');
+		const role_value = role && role.chunks[0].type === 'Text' ? (role.chunks[0] as Text).data : null;
+		if (!has_label || role_value !== 'img' || !is_span) {
+			element.component.warn(element, {
+				code: `a11y-accessible-emoji`,
+				message: `A11y: Emojis should be wrapped in <span>, have role="img", and have an accessible description with aria-label or aria-labelledby.`,
+			});
 		}
 	}
 }

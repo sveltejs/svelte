@@ -106,16 +106,16 @@ export default class Attribute extends Node {
 
 		return expression;
 	}
-
+	
 	get_static_value() {
-		if (this.is_spread || this.dependencies.size > 0) return null;
-
-		return this.is_true
-			? true
-			: this.chunks[0]
-			? // method should be called only when `is_static = true`
-			  (this.chunks[0] as Text).data
-			: '';
+		if (this.is_spread || this.dependencies.size > 0) return undefined;
+		if (this.is_true) return true;
+		if (this.is_static) return this.chunks[0] ? (this.chunks[0] as Text).data: '';
+		if (this.chunks[0]) {
+			const expression = (this.chunks[0] as Expression).node;
+			return evaluate_value(expression);
+		}
+		return undefined;
 	}
 
 	should_cache() {
@@ -126,4 +126,26 @@ export default class Attribute extends Node {
 				? this.chunks[0].node.type !== 'Identifier' || this.scope.names.has(this.chunks[0].node.name)
 				: true;
 	}
+}
+
+function evaluate_value(node) {
+	switch (node.type) {
+		case 'Literal':
+			return node.value;
+		case 'UnaryExpression':
+			switch (node.operator) {
+				case '~':
+					return ~evaluate_value(node.argument);
+				case '!':
+					return !evaluate_value(node.argument);
+				case '+':
+					return +evaluate_value(node.argument);
+				case '-':
+					return -evaluate_value(node.argument);
+			}
+			break;
+		case 'TemplateLiteral':
+			return node.quasis[0].value.cooked;
+	}
+	return undefined;
 }

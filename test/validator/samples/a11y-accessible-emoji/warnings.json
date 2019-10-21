@@ -1,0 +1,47 @@
+[
+	{
+		"code": "a11y-accessible-emoji",
+		"end": {
+			"character": 197,
+			"column": 15,
+			"line": 6
+		},
+		"message": "A11y: Emojis should be wrapped in <span>, have role=\"img\", and have an accessible description with aria-label or aria-labelledby.",
+		"pos": 182,
+		"start": {
+			"character": 182,
+			"column": 0,
+			"line": 6
+		}
+	},
+	{
+		"code": "a11y-accessible-emoji",
+		"end": {
+			"character": 237,
+			"column": 39,
+			"line": 7
+		},
+		"message": "A11y: Emojis should be wrapped in <span>, have role=\"img\", and have an accessible description with aria-label or aria-labelledby.",
+		"pos": 198,
+		"start": {
+			"character": 198,
+			"column": 0,
+			"line": 7
+		}
+	},
+	{
+		"code": "a11y-accessible-emoji",
+		"end": {
+			"character": 240,
+			"column": 2,
+			"line": 8
+		},
+		"message": "A11y: Emojis should be wrapped in <span>, have role=\"img\", and have an accessible description with aria-label or aria-labelledby.",
+		"pos": 237,
+		"start": {
+			"character": 237,
+			"column": 39,
+			"line": 7
+		}
+	}
+]

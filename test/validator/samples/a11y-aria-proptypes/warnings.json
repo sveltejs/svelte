@@ -1,0 +1,692 @@
+[
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4259,
+			"column": 33,
+			"line": 124
+		},
+		"message": "The value for aria-activedescendant must be a string that represents a DOM element ID",
+		"pos": 4231,
+		"start": {
+			"character": 4231,
+			"column": 5,
+			"line": 124
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4285,
+			"column": 22,
+			"line": 125
+		},
+		"message": "The value for aria-hidden must be a boolean.",
+		"pos": 4268,
+		"start": {
+			"character": 4268,
+			"column": 5,
+			"line": 125
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4310,
+			"column": 21,
+			"line": 126
+		},
+		"message": "The value for aria-hidden must be a boolean.",
+		"pos": 4294,
+		"start": {
+			"character": 4294,
+			"column": 5,
+			"line": 126
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4337,
+			"column": 23,
+			"line": 127
+		},
+		"message": "The value for aria-hidden must be a boolean.",
+		"pos": 4319,
+		"start": {
+			"character": 4319,
+			"column": 5,
+			"line": 127
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4395,
+			"column": 23,
+			"line": 129
+		},
+		"message": "The value for aria-hidden must be a boolean.",
+		"pos": 4377,
+		"start": {
+			"character": 4377,
+			"column": 5,
+			"line": 129
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4414,
+			"column": 15,
+			"line": 130
+		},
+		"message": "The value for aria-label must be a string.",
+		"pos": 4404,
+		"start": {
+			"character": 4404,
+			"column": 5,
+			"line": 130
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4440,
+			"column": 22,
+			"line": 131
+		},
+		"message": "The value for aria-label must be a string.",
+		"pos": 4423,
+		"start": {
+			"character": 4423,
+			"column": 5,
+			"line": 131
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4467,
+			"column": 23,
+			"line": 132
+		},
+		"message": "The value for aria-label must be a string.",
+		"pos": 4449,
+		"start": {
+			"character": 4449,
+			"column": 5,
+			"line": 132
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4493,
+			"column": 22,
+			"line": 133
+		},
+		"message": "The value for aria-label must be a string.",
+		"pos": 4476,
+		"start": {
+			"character": 4476,
+			"column": 5,
+			"line": 133
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4520,
+			"column": 23,
+			"line": 134
+		},
+		"message": "The value for aria-label must be a string.",
+		"pos": 4502,
+		"start": {
+			"character": 4502,
+			"column": 5,
+			"line": 134
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4546,
+			"column": 22,
+			"line": 135
+		},
+		"message": "The value for aria-label must be a string.",
+		"pos": 4529,
+		"start": {
+			"character": 4529,
+			"column": 5,
+			"line": 135
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4577,
+			"column": 27,
+			"line": 136
+		},
+		"message": "The value for aria-labelledby must be a list of strings that represent DOM element IDs (idlist)",
+		"pos": 4555,
+		"start": {
+			"character": 4555,
+			"column": 5,
+			"line": 136
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4604,
+			"column": 23,
+			"line": 137
+		},
+		"message": "The value for aria-checked must be a boolean or the string \"mixed\".",
+		"pos": 4586,
+		"start": {
+			"character": 4586,
+			"column": 5,
+			"line": 137
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4630,
+			"column": 22,
+			"line": 138
+		},
+		"message": "The value for aria-checked must be a boolean or the string \"mixed\".",
+		"pos": 4613,
+		"start": {
+			"character": 4613,
+			"column": 5,
+			"line": 138
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4658,
+			"column": 24,
+			"line": 139
+		},
+		"message": "The value for aria-checked must be a boolean or the string \"mixed\".",
+		"pos": 4639,
+		"start": {
+			"character": 4639,
+			"column": 5,
+			"line": 139
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4718,
+			"column": 24,
+			"line": 141
+		},
+		"message": "The value for aria-checked must be a boolean or the string \"mixed\".",
+		"pos": 4699,
+		"start": {
+			"character": 4699,
+			"column": 5,
+			"line": 141
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4743,
+			"column": 21,
+			"line": 142
+		},
+		"message": "The value for aria-level must be a integer.",
+		"pos": 4727,
+		"start": {
+			"character": 4727,
+			"column": 5,
+			"line": 142
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4767,
+			"column": 20,
+			"line": 143
+		},
+		"message": "The value for aria-level must be a integer.",
+		"pos": 4752,
+		"start": {
+			"character": 4752,
+			"column": 5,
+			"line": 143
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4794,
+			"column": 23,
+			"line": 144
+		},
+		"message": "The value for aria-level must be a integer.",
+		"pos": 4776,
+		"start": {
+			"character": 4776,
+			"column": 5,
+			"line": 144
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4820,
+			"column": 22,
+			"line": 145
+		},
+		"message": "The value for aria-level must be a integer.",
+		"pos": 4803,
+		"start": {
+			"character": 4803,
+			"column": 5,
+			"line": 145
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4839,
+			"column": 15,
+			"line": 146
+		},
+		"message": "The value for aria-level must be a integer.",
+		"pos": 4829,
+		"start": {
+			"character": 4829,
+			"column": 5,
+			"line": 146
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4868,
+			"column": 25,
+			"line": 147
+		},
+		"message": "The value for aria-level must be a integer.",
+		"pos": 4848,
+		"start": {
+			"character": 4848,
+			"column": 5,
+			"line": 147
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4898,
+			"column": 26,
+			"line": 148
+		},
+		"message": "The value for aria-level must be a integer.",
+		"pos": 4877,
+		"start": {
+			"character": 4877,
+			"column": 5,
+			"line": 148
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4924,
+			"column": 22,
+			"line": 149
+		},
+		"message": "The value for aria-level must be a integer.",
+		"pos": 4907,
+		"start": {
+			"character": 4907,
+			"column": 5,
+			"line": 149
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4952,
+			"column": 24,
+			"line": 150
+		},
+		"message": "The value for aria-valuemax must be a number.",
+		"pos": 4933,
+		"start": {
+			"character": 4933,
+			"column": 5,
+			"line": 150
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 4979,
+			"column": 23,
+			"line": 151
+		},
+		"message": "The value for aria-valuemax must be a number.",
+		"pos": 4961,
+		"start": {
+			"character": 4961,
+			"column": 5,
+			"line": 151
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5009,
+			"column": 26,
+			"line": 152
+		},
+		"message": "The value for aria-valuemax must be a number.",
+		"pos": 4988,
+		"start": {
+			"character": 4988,
+			"column": 5,
+			"line": 152
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5038,
+			"column": 25,
+			"line": 153
+		},
+		"message": "The value for aria-valuemax must be a number.",
+		"pos": 5018,
+		"start": {
+			"character": 5018,
+			"column": 5,
+			"line": 153
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5060,
+			"column": 18,
+			"line": 154
+		},
+		"message": "The value for aria-valuemax must be a number.",
+		"pos": 5047,
+		"start": {
+			"character": 5047,
+			"column": 5,
+			"line": 154
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5092,
+			"column": 28,
+			"line": 155
+		},
+		"message": "The value for aria-valuemax must be a number.",
+		"pos": 5069,
+		"start": {
+			"character": 5069,
+			"column": 5,
+			"line": 155
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5125,
+			"column": 29,
+			"line": 156
+		},
+		"message": "The value for aria-valuemax must be a number.",
+		"pos": 5101,
+		"start": {
+			"character": 5101,
+			"column": 5,
+			"line": 156
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5154,
+			"column": 25,
+			"line": 157
+		},
+		"message": "The value for aria-valuemax must be a number.",
+		"pos": 5134,
+		"start": {
+			"character": 5134,
+			"column": 5,
+			"line": 157
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5175,
+			"column": 17,
+			"line": 158
+		},
+		"message": "The value for aria-sort must be a single token from the following: ascending, descending, none or other.",
+		"pos": 5163,
+		"start": {
+			"character": 5163,
+			"column": 5,
+			"line": 158
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5205,
+			"column": 26,
+			"line": 159
+		},
+		"message": "The value for aria-sort must be a single token from the following: ascending, descending, none or other.",
+		"pos": 5184,
+		"start": {
+			"character": 5184,
+			"column": 5,
+			"line": 159
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5223,
+			"column": 14,
+			"line": 160
+		},
+		"message": "The value for aria-sort must be a single token from the following: ascending, descending, none or other.",
+		"pos": 5214,
+		"start": {
+			"character": 5214,
+			"column": 5,
+			"line": 160
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5248,
+			"column": 21,
+			"line": 161
+		},
+		"message": "The value for aria-sort must be a single token from the following: ascending, descending, none or other.",
+		"pos": 5232,
+		"start": {
+			"character": 5232,
+			"column": 5,
+			"line": 161
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5276,
+			"column": 24,
+			"line": 162
+		},
+		"message": "The value for aria-sort must be a single token from the following: ascending, descending, none or other.",
+		"pos": 5257,
+		"start": {
+			"character": 5257,
+			"column": 5,
+			"line": 162
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5317,
+			"column": 37,
+			"line": 163
+		},
+		"message": "The value for aria-sort must be a single token from the following: ascending, descending, none or other.",
+		"pos": 5285,
+		"start": {
+			"character": 5285,
+			"column": 5,
+			"line": 163
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5342,
+			"column": 21,
+			"line": 164
+		},
+		"message": "The value for aria-relevant must be a list of one or more tokens from the following: additions, removals, text or all.",
+		"pos": 5326,
+		"start": {
+			"character": 5326,
+			"column": 5,
+			"line": 164
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5373,
+			"column": 27,
+			"line": 165
+		},
+		"message": "The value for aria-relevant must be a list of one or more tokens from the following: additions, removals, text or all.",
+		"pos": 5351,
+		"start": {
+			"character": 5351,
+			"column": 5,
+			"line": 165
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5395,
+			"column": 18,
+			"line": 166
+		},
+		"message": "The value for aria-relevant must be a list of one or more tokens from the following: additions, removals, text or all.",
+		"pos": 5382,
+		"start": {
+			"character": 5382,
+			"column": 5,
+			"line": 166
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5424,
+			"column": 25,
+			"line": 167
+		},
+		"message": "The value for aria-relevant must be a list of one or more tokens from the following: additions, removals, text or all.",
+		"pos": 5404,
+		"start": {
+			"character": 5404,
+			"column": 5,
+			"line": 167
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5456,
+			"column": 28,
+			"line": 168
+		},
+		"message": "The value for aria-relevant must be a list of one or more tokens from the following: additions, removals, text or all.",
+		"pos": 5433,
+		"start": {
+			"character": 5433,
+			"column": 5,
+			"line": 168
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5500,
+			"column": 40,
+			"line": 169
+		},
+		"message": "The value for aria-relevant must be a list of one or more tokens from the following: additions, removals, text or all.",
+		"pos": 5465,
+		"start": {
+			"character": 5465,
+			"column": 5,
+			"line": 169
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5545,
+			"column": 41,
+			"line": 170
+		},
+		"message": "The value for aria-relevant must be a list of one or more tokens from the following: additions, removals, text or all.",
+		"pos": 5509,
+		"start": {
+			"character": 5509,
+			"column": 5,
+			"line": 170
+		}
+	},
+	{
+		"code": "a11y-invalid-aria-attribute-value",
+		"end": {
+			"character": 5574,
+			"column": 25,
+			"line": 171
+		},
+		"message": "The value for aria-relevant must be a list of one or more tokens from the following: additions, removals, text or all.",
+		"pos": 5554,
+		"start": {
+			"character": 5554,
+			"column": 5,
+			"line": 171
+		}
+	}
+]

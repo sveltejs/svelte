@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y-unknown-aria-attribute",
-		"message": "A11y: Unknown aria attribute 'aria-labeledby' (did you mean 'labelledby'?)",
+		"message": "A11y: Unknown aria attribute 'aria-labeledby' (did you mean 'aria-labelledby'?)",
 		"start": {
 			"line": 1,
 			"column": 20,
