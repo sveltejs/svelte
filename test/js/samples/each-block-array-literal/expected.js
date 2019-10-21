@@ -43,7 +43,7 @@ function create_each_block(ctx) {
 }
 
 function create_fragment(ctx) {
-	let each_anchor;
+	let each_1_anchor;
 	let each_value = [ctx.a, ctx.b, ctx.c, ctx.d, ctx.e];
 	let each_blocks = [];
 
@@ -57,14 +57,14 @@ function create_fragment(ctx) {
 				each_blocks[i].c();
 			}
 
-			each_anchor = empty();
+			each_1_anchor = empty();
 		},
 		m(target, anchor) {
 			for (let i = 0; i < 5; i += 1) {
 				each_blocks[i].m(target, anchor);
 			}
 
-			insert(target, each_anchor, anchor);
+			insert(target, each_1_anchor, anchor);
 		},
 		p(changed, ctx) {
 			if (changed.a || changed.b || changed.c || changed.d || changed.e) {
@@ -79,7 +79,7 @@ function create_fragment(ctx) {
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();
-						each_blocks[i].m(each_anchor.parentNode, each_anchor);
+						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
 					}
 				}
 
@@ -92,7 +92,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			destroy_each(each_blocks, detaching);
-			if (detaching) detach(each_anchor);
+			if (detaching) detach(each_1_anchor);
 		}
 	};
 }
