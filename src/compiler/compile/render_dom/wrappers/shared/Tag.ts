@@ -4,6 +4,7 @@ import Renderer from '../../Renderer';
 import Block from '../../Block';
 import MustacheTag from '../../../nodes/MustacheTag';
 import RawMustacheTag from '../../../nodes/RawMustacheTag';
+import { is_string } from './is_string';
 import { Node } from 'estree';
 
 export default class Tag extends Wrapper {
@@ -29,14 +30,20 @@ export default class Tag extends Wrapper {
 		update: ((value: Node) => (Node | Node[]))
 	) {
 		const dependencies = this.node.expression.dynamic_dependencies();
+		const should_extract = this.node.should_cache && dependencies.length > 0;
 		let snippet = this.node.expression.manipulate(block);
+		snippet = is_string(snippet) ? snippet : x`${snippet} + ""`;
+		
+		if (should_extract) {
+			const fn_name = block.get_unique_name(`${this.var.name}_fn`);
+			block.add_variable(fn_name, x`(#ctx) => ${snippet}`);
+			snippet = x`${fn_name}(#ctx)`;
+		}
 
 		const value = this.node.should_cache && block.get_unique_name(`${this.var.name}_value`);
 		const content = this.node.should_cache ? value : snippet;
 
-		snippet = x`${snippet} + ""`;
-
-		if (this.node.should_cache) block.add_variable(value, snippet); // TODO may need to coerce snippet to string
+		if (this.node.should_cache) block.add_variable(value, snippet);
 
 		if (dependencies.length > 0) {
 			let condition = x`#changed.${dependencies[0]}`;

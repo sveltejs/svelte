@@ -7,6 +7,7 @@ import { CompileOptions, Warning } from '../interfaces';
 import Component from './Component';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_name_from_filename from './utils/get_name_from_filename';
+import optimise from '../parse/optimise/index';
 
 const valid_options = [
 	'format',
@@ -25,7 +26,8 @@ const valid_options = [
 	'tag',
 	'css',
 	'preserveComments',
-	'preserveWhitespace'
+	'preserveWhitespace',
+	'optimiseAst',
 ];
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {
@@ -57,7 +59,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = assign({ generate: 'dom', dev: false }, options);
+	options = assign({ generate: 'dom', dev: false, optimiseAst: true }, options);
 
 	const stats = new Stats();
 	const warnings = [];
@@ -67,6 +69,12 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	stats.start('parse');
 	const ast = parse(source, options);
 	stats.stop('parse');
+
+	if (options.optimiseAst) {
+		stats.start('optimise-ast');
+		optimise(ast);
+		stats.stop('optimise-ast');
+	}
 
 	stats.start('create component');
 	const component = new Component(
@@ -79,9 +87,10 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	);
 	stats.stop('create component');
 
-	const js = options.generate === false
-		? null
-		: options.generate === 'ssr'
+	const js =
+		options.generate === false
+			? null
+			: options.generate === 'ssr'
 			? render_ssr(component, options)
 			: render_dom(component, options);
 

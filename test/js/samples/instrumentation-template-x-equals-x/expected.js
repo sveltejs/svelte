@@ -18,7 +18,8 @@ function create_fragment(ctx) {
 	let t1;
 	let p;
 	let t2;
-	let t3_value = ctx.things.length + "";
+	let t3_fn = ctx => ctx.things.length + "";
+	let t3_value = t3_fn(ctx);
 	let t3;
 	let dispose;
 
@@ -40,7 +41,7 @@ function create_fragment(ctx) {
 			append(p, t3);
 		},
 		p(changed, ctx) {
-			if (changed.things && t3_value !== (t3_value = ctx.things.length + "")) set_data(t3, t3_value);
+			if (changed.things && t3_value !== (t3_value = t3_fn(ctx))) set_data(t3, t3_value);
 		},
 		i: noop,
 		o: noop,

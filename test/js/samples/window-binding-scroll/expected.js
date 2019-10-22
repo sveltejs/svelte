@@ -31,7 +31,7 @@ function create_fragment(ctx) {
 		c() {
 			p = element("p");
 			t0 = text("scrolled to ");
-			t1 = text(ctx.y);
+			t1 = text(ctx.y + "");
 
 			dispose = listen(window, "scroll", () => {
 				scrolling = true;
@@ -53,7 +53,7 @@ function create_fragment(ctx) {
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
 			}
 
-			if (changed.y) set_data(t1, ctx.y);
+			if (changed.y) set_data(t1, ctx.y + "");
 		},
 		i: noop,
 		o: noop,

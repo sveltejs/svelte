@@ -28,7 +28,7 @@ function create_fragment(ctx) {
 			t1 = space();
 			p = element("p");
 			t2 = text("x: ");
-			t3 = text(ctx.x);
+			t3 = text(ctx.x + "");
 			dispose = listen(button, "click", ctx.foo);
 		},
 		m(target, anchor) {
@@ -39,7 +39,7 @@ function create_fragment(ctx) {
 			append(p, t3);
 		},
 		p(changed, ctx) {
-			if (changed.x) set_data(t3, ctx.x);
+			if (changed.x) set_data(t3, ctx.x + "");
 		},
 		i: noop,
 		o: noop,

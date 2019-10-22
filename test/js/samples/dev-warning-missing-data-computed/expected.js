@@ -10,7 +10,6 @@ import {
 	noop,
 	safe_not_equal,
 	set_data_dev,
-	space,
 	text
 } from "svelte/internal";
 
@@ -18,17 +17,19 @@ const file = undefined;
 
 function create_fragment(ctx) {
 	let p;
-	let t0_value = Math.max(0, ctx.foo) + "";
-	let t0;
-	let t1;
-	let t2;
+
+	let t_fn = ctx => `
+	${Math.max(0, ctx.foo)}
+	${ctx.bar}
+`;
+
+	let t_value = t_fn(ctx);
+	let t;
 
 	const block = {
 		c: function create() {
 			p = element("p");
-			t0 = text(t0_value);
-			t1 = space();
-			t2 = text(ctx.bar);
+			t = text(t_value);
 			add_location(p, file, 7, 0, 67);
 		},
 		l: function claim(nodes) {
@@ -36,13 +37,10 @@ function create_fragment(ctx) {
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, p, anchor);
-			append_dev(p, t0);
-			append_dev(p, t1);
-			append_dev(p, t2);
+			append_dev(p, t);
 		},
 		p: function update(changed, ctx) {
-			if (changed.foo && t0_value !== (t0_value = Math.max(0, ctx.foo) + "")) set_data_dev(t0, t0_value);
-			if (changed.bar) set_data_dev(t2, ctx.bar);
+			if ((changed.foo || changed.bar) && t_value !== (t_value = t_fn(ctx))) set_data_dev(t, t_value);
 		},
 		i: noop,
 		o: noop,

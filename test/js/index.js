@@ -36,6 +36,10 @@ describe("js", () => {
 
 			const expected = fs.readFileSync(`${dir}/expected.js`, "utf-8");
 
+			if (process.env.UPDATE_EXPECTED) {
+				fs.writeFileSync(`${dir}/expected.js`, actual);
+			}
+
 			assert.equal(
 				actual.trim().replace(/^[ \t]+$/gm, ""),
 				expected.trim().replace(/^[ \t]+$/gm, "")

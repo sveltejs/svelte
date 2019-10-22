@@ -24,7 +24,8 @@ function get_each_context(ctx, list, i) {
 
 function create_each_block(key_1, ctx) {
 	let div;
-	let t_value = ctx.thing.name + "";
+	let t_fn = ctx => ctx.thing.name + "";
+	let t_value = t_fn(ctx);
 	let t;
 	let rect;
 	let stop_animation = noop;
@@ -42,7 +43,7 @@ function create_each_block(key_1, ctx) {
 			append(div, t);
 		},
 		p(changed, ctx) {
-			if (changed.things && t_value !== (t_value = ctx.thing.name + "")) set_data(t, t_value);
+			if (changed.things && t_value !== (t_value = t_fn(ctx))) set_data(t, t_value);
 		},
 		r() {
 			rect = div.getBoundingClientRect();

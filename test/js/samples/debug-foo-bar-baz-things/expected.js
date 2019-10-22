@@ -25,7 +25,8 @@ function get_each_context(ctx, list, i) {
 
 function create_each_block(ctx) {
 	let span;
-	let t0_value = ctx.thing.name + "";
+	let t0_fn = ctx => ctx.thing.name + "";
+	let t0_value = t0_fn(ctx);
 	let t0;
 	let t1;
 
@@ -49,7 +50,7 @@ function create_each_block(ctx) {
 			insert_dev(target, t1, anchor);
 		},
 		p: function update(changed, ctx) {
-			if (changed.things && t0_value !== (t0_value = ctx.thing.name + "")) set_data_dev(t0, t0_value);
+			if (changed.things && t0_value !== (t0_value = t0_fn(ctx))) set_data_dev(t0, t0_value);
 
 			if (changed.foo || changed.bar || changed.baz || changed.things) {
 				const { foo, bar, baz, thing } = ctx;
@@ -95,7 +96,7 @@ function create_fragment(ctx) {
 			t0 = space();
 			p = element("p");
 			t1 = text("foo: ");
-			t2 = text(ctx.foo);
+			t2 = text(ctx.foo + "");
 			add_location(p, file, 12, 0, 182);
 		},
 		l: function claim(nodes) {
@@ -135,7 +136,7 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (changed.foo) set_data_dev(t2, ctx.foo);
+			if (changed.foo) set_data_dev(t2, ctx.foo + "");
 		},
 		i: noop,
 		o: noop,

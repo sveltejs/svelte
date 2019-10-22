@@ -40,7 +40,7 @@ function create_fragment(ctx) {
 			div1 = element("div");
 			p3 = element("p");
 			t8 = text("Hello ");
-			t9 = text(ctx.world3);
+			t9 = text(ctx.world3 + "");
 		},
 		m(target, anchor) {
 			insert(target, div0, anchor);
@@ -56,7 +56,7 @@ function create_fragment(ctx) {
 			append(p3, t9);
 		},
 		p(changed, ctx) {
-			if (changed.world3) set_data(t9, ctx.world3);
+			if (changed.world3) set_data(t9, ctx.world3 + "");
 		},
 		i: noop,
 		o: noop,

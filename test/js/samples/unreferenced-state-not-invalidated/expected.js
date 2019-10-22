@@ -20,14 +20,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t = text(ctx.y);
+			t = text(ctx.y + "");
 		},
 		m(target, anchor) {
 			insert(target, p, anchor);
 			append(p, t);
 		},
 		p(changed, ctx) {
-			if (changed.y) set_data(t, ctx.y);
+			if (changed.y) set_data(t, ctx.y + "");
 		},
 		i: noop,
 		o: noop,

@@ -28,28 +28,27 @@ function create_each_block(ctx) {
 	let t0;
 	let t1;
 	let span;
-	let t2_value = ctx.comment.author + "";
+
+	let t2_fn = ctx => `
+			${ctx.comment.author} wrote ${ctx.elapsed(ctx.comment.time, ctx.time)} ago:
+		`;
+
+	let t2_value = t2_fn(ctx);
 	let t2;
 	let t3;
-	let t4_value = ctx.elapsed(ctx.comment.time, ctx.time) + "";
-	let t4;
-	let t5;
-	let t6;
 	let html_tag;
-	let raw_value = ctx.comment.html + "";
+	let raw_fn = ctx => ctx.comment.html + "";
+	let raw_value = raw_fn(ctx);
 
 	return {
 		c() {
 			div = element("div");
 			strong = element("strong");
-			t0 = text(ctx.i);
+			t0 = text(ctx.i + "");
 			t1 = space();
 			span = element("span");
 			t2 = text(t2_value);
-			t3 = text(" wrote ");
-			t4 = text(t4_value);
-			t5 = text(" ago:");
-			t6 = space();
+			t3 = space();
 			attr(span, "class", "meta");
 			html_tag = new HtmlTag(raw_value, null);
 			attr(div, "class", "comment");
@@ -61,16 +60,12 @@ function create_each_block(ctx) {
 			append(div, t1);
 			append(div, span);
 			append(span, t2);
-			append(span, t3);
-			append(span, t4);
-			append(span, t5);
-			append(div, t6);
+			append(div, t3);
 			html_tag.m(div);
 		},
 		p(changed, ctx) {
-			if (changed.comments && t2_value !== (t2_value = ctx.comment.author + "")) set_data(t2, t2_value);
-			if ((changed.elapsed || changed.comments || changed.time) && t4_value !== (t4_value = ctx.elapsed(ctx.comment.time, ctx.time) + "")) set_data(t4, t4_value);
-			if (changed.comments && raw_value !== (raw_value = ctx.comment.html + "")) html_tag.p(raw_value);
+			if ((changed.comments || changed.elapsed || changed.time) && t2_value !== (t2_value = t2_fn(ctx))) set_data(t2, t2_value);
+			if (changed.comments && raw_value !== (raw_value = raw_fn(ctx))) html_tag.p(raw_value);
 		},
 		d(detaching) {
 			if (detaching) detach(div);
@@ -97,7 +92,7 @@ function create_fragment(ctx) {
 
 			t0 = space();
 			p = element("p");
-			t1 = text(ctx.foo);
+			t1 = text(ctx.foo + "");
 		},
 		m(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -132,7 +127,7 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (changed.foo) set_data(t1, ctx.foo);
+			if (changed.foo) set_data(t1, ctx.foo + "");
 		},
 		i: noop,
 		o: noop,

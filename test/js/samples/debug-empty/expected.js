@@ -18,18 +18,16 @@ const file = undefined;
 
 function create_fragment(ctx) {
 	let h1;
+	let t0_fn = ctx => `Hello ${ctx.name}!`;
+	let t0_value = t0_fn(ctx);
 	let t0;
 	let t1;
-	let t2;
-	let t3;
 
 	const block = {
 		c: function create() {
 			h1 = element("h1");
-			t0 = text("Hello ");
-			t1 = text(ctx.name);
-			t2 = text("!");
-			t3 = space();
+			t0 = text(t0_value);
+			t1 = space();
 			debugger;
 			add_location(h1, file, 4, 0, 38);
 		},
@@ -39,19 +37,17 @@ function create_fragment(ctx) {
 		m: function mount(target, anchor) {
 			insert_dev(target, h1, anchor);
 			append_dev(h1, t0);
-			append_dev(h1, t1);
-			append_dev(h1, t2);
-			insert_dev(target, t3, anchor);
+			insert_dev(target, t1, anchor);
 		},
 		p: function update(changed, ctx) {
-			if (changed.name) set_data_dev(t1, ctx.name);
+			if (changed.name && t0_value !== (t0_value = t0_fn(ctx))) set_data_dev(t0, t0_value);
 			debugger;
 		},
 		i: noop,
 		o: noop,
 		d: function destroy(detaching) {
 			if (detaching) detach_dev(h1);
-			if (detaching) detach_dev(t3);
+			if (detaching) detach_dev(t1);
 		}
 	};
 

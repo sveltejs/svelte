@@ -1,0 +1,249 @@
+{
+	"html": {
+		"start": 27,
+		"end": 127,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 26,
+				"end": 27,
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"start": 27,
+				"end": 51,
+				"type": "Element",
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"type": "MustacheTag",
+						"expression": {
+							"type": "TemplateLiteral",
+							"expressions": [
+								{
+									"type": "Identifier",
+									"start": 39,
+									"end": 43,
+									"name": "name"
+								}
+							],
+							"quasis": [
+								{
+									"type": "TemplateElement",
+									"value": {
+										"raw": "Hello "
+									},
+									"start": 32,
+									"end": 38
+								},
+								{
+									"type": "TemplateElement",
+									"value": {
+										"raw": "!"
+									},
+									"start": 44,
+									"end": 45
+								}
+							]
+						},
+						"start": 32,
+						"end": 45
+					}
+				]
+			},
+			{
+				"start": 51,
+				"end": 52,
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"start": 52,
+				"end": 89,
+				"type": "Element",
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"start": 57,
+						"end": 63,
+						"type": "Text",
+						"raw": "Hello ",
+						"data": "Hello "
+					},
+					{
+						"start": 63,
+						"end": 82,
+						"type": "Element",
+						"name": "span",
+						"attributes": [],
+						"children": [
+							{
+								"start": 69,
+								"end": 75,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 70,
+									"end": 74,
+									"name": "name"
+								}
+							}
+						]
+					},
+					{
+						"start": 82,
+						"end": 83,
+						"type": "Text",
+						"raw": "!",
+						"data": "!"
+					}
+				]
+			},
+			{
+				"start": 89,
+				"end": 90,
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"start": 90,
+				"end": 127,
+				"type": "Element",
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"start": 95,
+						"end": 113,
+						"type": "Element",
+						"name": "span",
+						"attributes": [],
+						"children": [
+							{
+								"start": 101,
+								"end": 106,
+								"type": "Text",
+								"raw": "Hello",
+								"data": "Hello"
+							}
+						]
+					},
+					{
+						"type": "MustacheTag",
+						"expression": {
+							"type": "TemplateLiteral",
+							"expressions": [
+								{
+									"type": "Identifier",
+									"start": 115,
+									"end": 119,
+									"name": "name"
+								}
+							],
+							"quasis": [
+								{
+									"type": "TemplateElement",
+									"value": {
+										"raw": " "
+									},
+									"start": 113,
+									"end": 114
+								},
+								{
+									"type": "TemplateElement",
+									"value": {
+										"raw": "!"
+									},
+									"start": 120,
+									"end": 121
+								}
+							]
+						},
+						"start": 113,
+						"end": 121
+					}
+				]
+			}
+		]
+	},
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 26,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 17,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 1,
+					"column": 17
+				}
+			},
+			"body": [
+				{
+					"type": "VariableDeclaration",
+					"start": 8,
+					"end": 17,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 8
+						},
+						"end": {
+							"line": 1,
+							"column": 17
+						}
+					},
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 12,
+							"end": 16,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 12
+								},
+								"end": {
+									"line": 1,
+									"column": 16
+								}
+							},
+							"id": {
+								"type": "Identifier",
+								"start": 12,
+								"end": 16,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 12
+									},
+									"end": {
+										"line": 1,
+										"column": 16
+									}
+								},
+								"name": "name"
+							},
+							"init": null
+						}
+					],
+					"kind": "let"
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}

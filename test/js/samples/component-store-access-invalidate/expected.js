@@ -21,14 +21,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			h1 = element("h1");
-			t = text(ctx.$foo);
+			t = text(ctx.$foo + "");
 		},
 		m(target, anchor) {
 			insert(target, h1, anchor);
 			append(h1, t);
 		},
 		p(changed, ctx) {
-			if (changed.$foo) set_data(t, ctx.$foo);
+			if (changed.$foo) set_data(t, ctx.$foo + "");
 		},
 		i: noop,
 		o: noop,

@@ -26,7 +26,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			h1 = element("h1");
-			t0 = text(ctx.$foo);
+			t0 = text(ctx.$foo + "");
 			t1 = space();
 			button = element("button");
 			button.textContent = "reset";
@@ -39,7 +39,7 @@ function create_fragment(ctx) {
 			insert(target, button, anchor);
 		},
 		p(changed, ctx) {
-			if (changed.$foo) set_data(t0, ctx.$foo);
+			if (changed.$foo) set_data(t0, ctx.$foo + "");
 		},
 		i: noop,
 		o: noop,

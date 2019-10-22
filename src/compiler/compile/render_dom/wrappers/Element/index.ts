@@ -297,6 +297,13 @@ export default class ElementWrapper extends Wrapper {
 					 // @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
 					b`${node}.textContent = ${string_literal(this.fragment.nodes[0].data)};`
 				);
+			} else if (
+				this.fragment.nodes.length === 1 && 
+				this.fragment.nodes[0].node.type === 'MustacheTag' && 
+				this.fragment.nodes[0].node.expression.node.type === 'TemplateLiteral') {
+					block.chunks.create.push(
+						b`${node}.textContent = ${this.fragment.nodes[0].node.expression.manipulate(block)};`
+					);
 			} else {
 				const state = {
 					quasi: {
