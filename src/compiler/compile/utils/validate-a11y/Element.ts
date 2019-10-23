@@ -1,9 +1,12 @@
 import Element from '../../nodes/Element';
 import Attribute from '../../nodes/Attribute';
 import EventHandler from '../../nodes/EventHandler';
+import fuzzymatch from '../../../utils/fuzzymatch';
 import emojiRegex from 'emoji-regex';
 import Text from '../../nodes/Text';
-import { array_to_string } from './utils';
+import { array_to_string, is_hidden_from_screen_reader } from './utils';
+import { roles } from 'aria-query';
+import get_implicit_role from './implicit_role';
 
 export default function validateA11y(element: Element) {
 	const attribute_map = new Map();
@@ -23,6 +26,7 @@ export default function validateA11y(element: Element) {
 	no_missing_handlers(element, handler_map);
 	img_redundant_alt(element, attribute_map);
 	accessible_emoji(element, attribute_map);
+	no_unknown_role(element, attribute_map);
 }
 
 const a11y_distracting_elements = new Set(['blink', 'marquee']);
@@ -199,7 +203,10 @@ function img_redundant_alt(
 ) {
 	if (element.name === 'img') {
 		const alt_attribute = attribute_map.get('alt');
-		if (alt_attribute && !attribute_map.has('aria-hidden')) {
+		if (
+			alt_attribute &&
+			!is_hidden_from_screen_reader(element.name, attribute_map)
+		) {
 			for (const chunk of alt_attribute.chunks) {
 				if (contain_text(chunk, a11y_redundant_alt)) {
 					element.component.warn(alt_attribute, {
@@ -214,13 +221,22 @@ function img_redundant_alt(
 	}
 }
 
-function accessible_emoji(element: Element, attribute_map: Map<string, Attribute>) {
-	const has_emoji = element.children.some(child => contain_text(child, emojiRegex()));
+function accessible_emoji(
+	element: Element,
+	attribute_map: Map<string, Attribute>
+) {
+	const has_emoji = element.children.some(child =>
+		contain_text(child, emojiRegex())
+	);
 	if (has_emoji) {
 		const is_span = element.name === 'span';
-		const has_label = attribute_map.has('aria-labelledby') ||attribute_map.has('aria-label');
+		const has_label =
+			attribute_map.has('aria-labelledby') || attribute_map.has('aria-label');
 		const role = attribute_map.get('role');
-		const role_value = role && role.chunks[0].type === 'Text' ? (role.chunks[0] as Text).data : null;
+		const role_value =
+			role && role.chunks[0].type === 'Text'
+				? (role.chunks[0] as Text).data
+				: null;
 		if (!has_label || role_value !== 'img' || !is_span) {
 			element.component.warn(element, {
 				code: `a11y-accessible-emoji`,
@@ -244,5 +260,47 @@ function contain_text(node, regex: RegExp) {
 			return regex.test(node.value.cooked);
 		default:
 			return false;
+	}
+}
+
+const aria_role_set = new Set(roles.keys());
+const aria_roles = [...aria_role_set];
+const role_exceptions = new Map([['nav', 'navigation']]);
+function no_unknown_role(
+	element: Element,
+	attribute_map: Map<string, Attribute>
+) {
+	if (!attribute_map.has('role')) {
+		return;
+	}
+
+	const role_attribute = attribute_map.get('role');
+	const value = role_attribute.get_static_value();
+	// @ts-ignore
+	if (value && !aria_role_set.has(value)) {
+		// @ts-ignore
+		const match = fuzzymatch(value, aria_roles);
+		let message = `A11y: Unknown role '${value}'`;
+		if (match) message += ` (did you mean '${match}'?)`;
+
+		element.component.warn(role_attribute, {
+			code: `a11y-unknown-role`,
+			message,
+		});
+	}
+
+	const implicit_role = get_implicit_role(element.name, attribute_map);
+	if (implicit_role && implicit_role === value) {
+		if (
+			!(
+				role_exceptions.has(element.name) &&
+				role_exceptions.get(element.name) === value
+			)
+		) {
+			element.component.warn(role_attribute, {
+				code: `a11y-redundant-role`,
+				message: `The element '${element.name}' has an implicit role of '${implicit_role}'. Defining this explicitly is redundant and should be avoided.`,
+			});
+		}
 	}
 }

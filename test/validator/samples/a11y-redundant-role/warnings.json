@@ -1,0 +1,32 @@
+[
+	{
+		"code": "a11y-redundant-role",
+		"end": {
+			"character": 173,
+			"column": 21,
+			"line": 8
+		},
+		"message": "The element 'button' has an implicit role of 'button'. Defining this explicitly is redundant and should be avoided.",
+		"pos": 160,
+		"start": {
+			"character": 160,
+			"column": 8,
+			"line": 8
+		}
+	},
+	{
+		"code": "a11y-redundant-role",
+		"end": {
+			"character": 198,
+			"column": 21,
+			"line": 9
+		},
+		"message": "The element 'body' has an implicit role of 'document'. Defining this explicitly is redundant and should be avoided.",
+		"pos": 183,
+		"start": {
+			"character": 183,
+			"column": 6,
+			"line": 9
+		}
+	}
+]

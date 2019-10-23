@@ -1,6 +1,7 @@
 import Attribute from '../../nodes/Attribute';
 import fuzzymatch from '../../../utils/fuzzymatch';
 import { array_to_string } from './utils';
+import { aria } from 'aria-query';
 
 const validators = [
 	no_auto_focus,
@@ -8,7 +9,6 @@ const validators = [
 	invalid_aria_attribute,
 	no_aria_hidden,
 	no_misplaced_role,
-	no_unknown_role,
 	no_access_key,
 	no_misplaced_scope,
 	tabindex_no_positive,
@@ -48,322 +48,12 @@ function unsupported_aria_element(attribute: Attribute, name: string) {
 	}
 }
 
-// https://github.com/A11yance/aria-query/blob/master/src/ariaPropsMap.js
-const aria_attribute_maps = new Map([
-	['aria-details', { type: 'idlist' }],
-	[
-		'aria-activedescendant',
-		{
-			type: 'id',
-		},
-	],
-	[
-		'aria-atomic',
-		{
-			type: 'boolean',
-		},
-	],
-	[
-		'aria-autocomplete',
-		{
-			type: 'token',
-			values: new Set(['inline', 'list', 'both', 'none']),
-		},
-	],
-	[
-		'aria-busy',
-		{
-			type: 'boolean',
-		},
-	],
-	[
-		'aria-checked',
-		{
-			type: 'tristate',
-		},
-	],
-	[
-		'aria-colcount',
-		{
-			type: 'integer',
-		},
-	],
-	[
-		'aria-colindex',
-		{
-			type: 'integer',
-		},
-	],
-	[
-		'aria-colspan',
-		{
-			type: 'integer',
-		},
-	],
-	[
-		'aria-controls',
-		{
-			type: 'idlist',
-		},
-	],
-	[
-		'aria-current',
-		{
-			type: 'token',
-			values: new Set([
-				'page',
-				'step',
-				'location',
-				'date',
-				'time',
-				'true',
-				'false',
-			]),
-		},
-	],
-	[
-		'aria-describedby',
-		{
-			type: 'idlist',
-		},
-	],
-	[
-		'aria-disabled',
-		{
-			type: 'boolean',
-		},
-	],
-	[
-		'aria-dropeffect',
-		{
-			type: 'tokenlist',
-			values: new Set(['copy', 'move', 'link', 'execute', 'popup', 'none']),
-		},
-	],
-	[
-		'aria-errormessage',
-		{
-			type: 'string',
-		},
-	],
-	[
-		'aria-expanded',
-		{
-			type: 'boolean',
-			allowundefined: true,
-		},
-	],
-	[
-		'aria-flowto',
-		{
-			type: 'idlist',
-		},
-	],
-	[
-		'aria-grabbed',
-		{
-			type: 'boolean',
-			allowundefined: true,
-		},
-	],
-	[
-		'aria-haspopup',
-		{
-			type: 'token',
-			values: new Set([
-				'false',
-				'true',
-				'menu',
-				'listbox',
-				'tree',
-				'grid',
-				'dialog',
-			]),
-		},
-	],
-	[
-		'aria-hidden',
-		{
-			type: 'boolean',
-		},
-	],
-	[
-		'aria-invalid',
-		{
-			type: 'token',
-			values: new Set(['grammar', 'false', 'spelling', 'true']),
-		},
-	],
-	[
-		'aria-keyshortcuts',
-		{
-			type: 'string',
-		},
-	],
-	[
-		'aria-label',
-		{
-			type: 'string',
-		},
-	],
-	[
-		'aria-labelledby',
-		{
-			type: 'idlist',
-		},
-	],
-	[
-		'aria-level',
-		{
-			type: 'integer',
-		},
-	],
-	[
-		'aria-live',
-		{
-			type: 'token',
-			values: new Set(['off', 'polite', 'assertive']),
-		},
-	],
-	[
-		'aria-modal',
-		{
-			type: 'boolean',
-		},
-	],
-	[
-		'aria-multiline',
-		{
-			type: 'boolean',
-		},
-	],
-	[
-		'aria-multiselectable',
-		{
-			type: 'boolean',
-		},
-	],
-	[
-		'aria-orientation',
-		{
-			type: 'token',
-			values: new Set(['vertical', 'horizontal']),
-		},
-	],
-	[
-		'aria-owns',
-		{
-			type: 'idlist',
-		},
-	],
-	[
-		'aria-placeholder',
-		{
-			type: 'string',
-		},
-	],
-	[
-		'aria-posinset',
-		{
-			type: 'integer',
-		},
-	],
-	[
-		'aria-pressed',
-		{
-			type: 'tristate',
-		},
-	],
-	[
-		'aria-readonly',
-		{
-			type: 'boolean',
-		},
-	],
-	[
-		'aria-relevant',
-		{
-			type: 'tokenlist',
-			values: new Set(['additions', 'removals', 'text', 'all']),
-		},
-	],
-	[
-		'aria-required',
-		{
-			type: 'boolean',
-		},
-	],
-	[
-		'aria-roledescription',
-		{
-			type: 'string',
-		},
-	],
-	[
-		'aria-rowcount',
-		{
-			type: 'integer',
-		},
-	],
-	[
-		'aria-rowindex',
-		{
-			type: 'integer',
-		},
-	],
-	[
-		'aria-rowspan',
-		{
-			type: 'integer',
-		},
-	],
-	[
-		'aria-selected',
-		{
-			type: 'boolean',
-			allowundefined: true,
-		},
-	],
-	[
-		'aria-setsize',
-		{
-			type: 'integer',
-		},
-	],
-	[
-		'aria-sort',
-		{
-			type: 'token',
-			values: new Set(['ascending', 'descending', 'none', 'other']),
-		},
-	],
-	[
-		'aria-valuemax',
-		{
-			type: 'number',
-		},
-	],
-	[
-		'aria-valuemin',
-		{
-			type: 'number',
-		},
-	],
-	[
-		'aria-valuenow',
-		{
-			type: 'number',
-		},
-	],
-	[
-		'aria-valuetext',
-		{
-			type: 'string',
-		},
-	],
-]);
-
-const aria_attributes = [...aria_attribute_maps.keys()];
+for (const aria_key of aria.keys()) {
+	if (aria.get(aria_key).values) {
+		aria.get(aria_key).values = new Set(aria.get(aria_key).values.map(String));
+	}
+}
+const aria_attributes = [...aria.keys()];
 const aria_attribute_set = new Set(aria_attributes);
 function invalid_aria_attribute(attribute: Attribute, name: string) {
 	if (name.startsWith('aria-')) {
@@ -379,10 +69,9 @@ function invalid_aria_attribute(attribute: Attribute, name: string) {
 		} else {
 			const value = attribute.get_static_value();
 			if (value !== undefined) {
-				const {
-					type: permitted_type,
-					values: permitted_values,
-				} = aria_attribute_maps.get(name);
+				const { type: permitted_type, values: permitted_values } = aria.get(
+					name
+				);
 				if (!validate_attribute(value, permitted_type, permitted_values)) {
 					attribute.parent.component.warn(attribute, {
 						code: `a11y-invalid-aria-attribute-value`,
@@ -480,28 +169,6 @@ function no_misplaced_role(attribute: Attribute, name: string) {
 			attribute.parent.component.warn(attribute, {
 				code: `a11y-misplaced-role`,
 				message: `A11y: <${attribute.parent.name}> should not have role attribute`,
-			});
-		}
-	}
-}
-
-const aria_roles = 'alert alertdialog application article banner button cell checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document feed figure form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search searchbox section sectionhead select separator slider spinbutton status structure switch tab table tablist tabpanel term textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(
-	' '
-);
-const aria_role_set = new Set(aria_roles);
-function no_unknown_role(attribute: Attribute, name: string) {
-	if (name === 'role') {
-		const value = attribute.get_static_value();
-		// @ts-ignore
-		if (value && !aria_role_set.has(value)) {
-			// @ts-ignore
-			const match = fuzzymatch(value, aria_roles);
-			let message = `A11y: Unknown role '${value}'`;
-			if (match) message += ` (did you mean '${match}'?)`;
-
-			attribute.parent.component.warn(attribute, {
-				code: `a11y-unknown-role`,
-				message,
 			});
 		}
 	}

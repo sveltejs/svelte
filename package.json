@@ -62,6 +62,7 @@
     "@typescript-eslint/parser": "^2.1.0",
     "acorn": "^7.0.0",
     "agadoo": "^1.1.0",
+    "aria-query": "^3.0.0",
     "c8": "^5.0.1",
     "code-red": "0.0.17",
     "codecov": "^3.5.0",
