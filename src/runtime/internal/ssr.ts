@@ -13,7 +13,7 @@ export function spread(args) {
 		if (invalid_attribute_name_character.test(name)) return;
 
 		const value = attributes[name];
-		if (value === undefined) return;
+		if (value == null) return;
 		if (value === true) str += " " + name;
 
 		const escaped = String(value)
