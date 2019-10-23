@@ -93,7 +93,9 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 	// @ts-ignore
 	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
 	for (const key in attributes) {
-		if (key === 'style') {
+		if (attributes[key] == null) {
+			node.removeAttribute(key);
+		} else if (key === 'style') {
 			node.style.cssText = attributes[key];
 		} else if (descriptors[key] && descriptors[key].set) {
 			node[key] = attributes[key];
