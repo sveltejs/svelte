@@ -569,6 +569,7 @@ export default class Component {
 				this.add_var({
 					name,
 					global: true,
+					hoistable: true
 				});
 			}
 		});
@@ -661,6 +662,7 @@ export default class Component {
 				this.add_var({
 					name,
 					global: true,
+					hoistable: true
 				});
 			}
 		});
@@ -764,7 +766,7 @@ export default class Component {
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
-			return x`${name.slice(1)}.set(${name})`;
+			return x`${name.slice(1)}.set(${value || name})`;
 		}
 
 		if (

@@ -137,12 +137,12 @@ export default class SlotWrapper extends Wrapper {
 		block.render_listeners(`_${slot.name}`);
 		block.event_listeners = listeners;
 
-		if (block.chunks.create) create.push(b`if (!${slot}) { ${block.chunks.create} }`);
-		if (block.chunks.claim) claim.push(b`if (!${slot}) { ${block.chunks.claim} }`);
-		if (block.chunks.hydrate) hydrate.push(b`if (!${slot}) { ${block.chunks.hydrate} }`);
-		if (block.chunks.mount) mount.push(b`if (!${slot}) { ${block.chunks.mount} }`);
-		if (block.chunks.update) update.push(b`if (!${slot}) { ${block.chunks.update} }`);
-		if (block.chunks.destroy) destroy.push(b`if (!${slot}) { ${block.chunks.destroy} }`);
+		if (block.chunks.create.length) create.push(b`if (!${slot}) { ${block.chunks.create} }`);
+		if (block.chunks.claim.length) claim.push(b`if (!${slot}) { ${block.chunks.claim} }`);
+		if (block.chunks.hydrate.length) hydrate.push(b`if (!${slot}) { ${block.chunks.hydrate} }`);
+		if (block.chunks.mount.length) mount.push(b`if (!${slot}) { ${block.chunks.mount} }`);
+		if (block.chunks.update.length) update.push(b`if (!${slot}) { ${block.chunks.update} }`);
+		if (block.chunks.destroy.length) destroy.push(b`if (!${slot}) { ${block.chunks.destroy} }`);
 
 		block.chunks.create = create;
 		block.chunks.claim = claim;
@@ -155,9 +155,11 @@ export default class SlotWrapper extends Wrapper {
 			b`if (${slot}) ${slot}.c();`
 		);
 
-		block.chunks.claim.push(
-			b`if (${slot}) ${slot}.l(${parent_nodes});`
-		);
+		if (renderer.options.hydratable) {
+			block.chunks.claim.push(
+				b`if (${slot}) ${slot}.l(${parent_nodes});`
+			);
+		}
 
 		block.chunks.mount.push(b`
 			if (${slot}) {

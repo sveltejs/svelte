@@ -60,7 +60,7 @@ function create_each_block(ctx) {
 }
 
 function create_fragment(ctx) {
-	let each_anchor;
+	let each_1_anchor;
 	let each_value = things;
 	let each_blocks = [];
 
@@ -74,7 +74,7 @@ function create_fragment(ctx) {
 				each_blocks[i].c();
 			}
 
-			each_anchor = empty();
+			each_1_anchor = empty();
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -84,7 +84,7 @@ function create_fragment(ctx) {
 				each_blocks[i].m(target, anchor);
 			}
 
-			insert_dev(target, each_anchor, anchor);
+			insert_dev(target, each_1_anchor, anchor);
 		},
 		p: function update(changed, ctx) {
 			if (changed.things) {
@@ -99,7 +99,7 @@ function create_fragment(ctx) {
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();
-						each_blocks[i].m(each_anchor.parentNode, each_anchor);
+						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
 					}
 				}
 
@@ -114,7 +114,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d: function destroy(detaching) {
 			destroy_each(each_blocks, detaching);
-			if (detaching) detach_dev(each_anchor);
+			if (detaching) detach_dev(each_1_anchor);
 		}
 	};
 
