@@ -8,17 +8,14 @@ require('../internal');
 
 console.clear();
 
-const testFolders = glob('*/index.js', { cwd: 'test' });
-const solo = testFolders.find(folder => /\.solo/.test(folder));
+const test_folders = glob('*/index.js', { cwd: 'test' });
+const solo_folders = test_folders.filter(folder => /\.solo/.test(folder));
 
-if (solo) {
+if (solo_folders.length) {
 	if (process.env.CI) {
-		throw new Error('Forgot to remove `solo: true` from test');
+		throw new Error('Forgot to remove `.solo` from test');
 	}
-	require('./' + solo);
+	solo_folders.forEach(name => require('./' + name));
 } else {
-	testFolders.forEach(file => {
-		console.log('file', file);
-		require('./' + file);
-	});
+	test_folders.forEach(name => require('./' + name));
 }
