@@ -1,0 +1,362 @@
+[
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 359,
+			"column": 18,
+			"line": 14
+		},
+		"message": "Elements with the ARIA role \"slider\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 346,
+		"start": {
+			"character": 346,
+			"column": 5,
+			"line": 14
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 381,
+			"column": 18,
+			"line": 15
+		},
+		"message": "Elements with the ARIA role \"slider\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 368,
+		"start": {
+			"character": 368,
+			"column": 5,
+			"line": 15
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 421,
+			"column": 18,
+			"line": 16
+		},
+		"message": "Elements with the ARIA role \"slider\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 408,
+		"start": {
+			"character": 408,
+			"column": 5,
+			"line": 16
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 479,
+			"column": 18,
+			"line": 17
+		},
+		"message": "Elements with the ARIA role \"slider\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 466,
+		"start": {
+			"character": 466,
+			"column": 5,
+			"line": 17
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 537,
+			"column": 18,
+			"line": 18
+		},
+		"message": "Elements with the ARIA role \"slider\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 524,
+		"start": {
+			"character": 524,
+			"column": 5,
+			"line": 18
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 619,
+			"column": 22,
+			"line": 20
+		},
+		"message": "Elements with the ARIA role \"spinbutton\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 602,
+		"start": {
+			"character": 602,
+			"column": 5,
+			"line": 20
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 645,
+			"column": 22,
+			"line": 21
+		},
+		"message": "Elements with the ARIA role \"spinbutton\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 628,
+		"start": {
+			"character": 628,
+			"column": 5,
+			"line": 21
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 689,
+			"column": 22,
+			"line": 22
+		},
+		"message": "Elements with the ARIA role \"spinbutton\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 672,
+		"start": {
+			"character": 672,
+			"column": 5,
+			"line": 22
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 751,
+			"column": 22,
+			"line": 23
+		},
+		"message": "Elements with the ARIA role \"spinbutton\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 734,
+		"start": {
+			"character": 734,
+			"column": 5,
+			"line": 23
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 813,
+			"column": 22,
+			"line": 24
+		},
+		"message": "Elements with the ARIA role \"spinbutton\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 796,
+		"start": {
+			"character": 796,
+			"column": 5,
+			"line": 24
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 891,
+			"column": 20,
+			"line": 26
+		},
+		"message": "Elements with the ARIA role \"checkbox\" must have the following attributes defined: aria-checked.",
+		"pos": 876,
+		"start": {
+			"character": 876,
+			"column": 5,
+			"line": 26
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 915,
+			"column": 20,
+			"line": 27
+		},
+		"message": "Elements with the ARIA role \"checkbox\" must have the following attributes defined: aria-checked.",
+		"pos": 900,
+		"start": {
+			"character": 900,
+			"column": 5,
+			"line": 27
+		}
+	},
+	{
+		"code": "a11y-unknown-aria-attribute",
+		"end": {
+			"character": 959,
+			"column": 32,
+			"line": 28
+		},
+		"message": "A11y: Unknown aria attribute 'aria-chcked' (did you mean 'aria-checked'?)",
+		"pos": 948,
+		"start": {
+			"character": 948,
+			"column": 21,
+			"line": 28
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 947,
+			"column": 20,
+			"line": 28
+		},
+		"message": "Elements with the ARIA role \"checkbox\" must have the following attributes defined: aria-checked.",
+		"pos": 932,
+		"start": {
+			"character": 932,
+			"column": 5,
+			"line": 28
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 984,
+			"column": 21,
+			"line": 29
+		},
+		"message": "Elements with the ARIA role \"checkbox\" must have the following attributes defined: aria-checked.",
+		"pos": 969,
+		"start": {
+			"character": 969,
+			"column": 6,
+			"line": 29
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 1066,
+			"column": 20,
+			"line": 31
+		},
+		"message": "Elements with the ARIA role \"combobox\" must have the following attributes defined: aria-controls,aria-expanded.",
+		"pos": 1051,
+		"start": {
+			"character": 1051,
+			"column": 5,
+			"line": 31
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 1090,
+			"column": 20,
+			"line": 32
+		},
+		"message": "Elements with the ARIA role \"combobox\" must have the following attributes defined: aria-controls,aria-expanded.",
+		"pos": 1075,
+		"start": {
+			"character": 1075,
+			"column": 5,
+			"line": 32
+		}
+	},
+	{
+		"code": "a11y-unknown-aria-attribute",
+		"end": {
+			"character": 1136,
+			"column": 33,
+			"line": 33
+		},
+		"message": "A11y: Unknown aria attribute 'aria-expandd' (did you mean 'aria-expanded'?)",
+		"pos": 1124,
+		"start": {
+			"character": 1124,
+			"column": 21,
+			"line": 33
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 1123,
+			"column": 20,
+			"line": 33
+		},
+		"message": "Elements with the ARIA role \"combobox\" must have the following attributes defined: aria-controls,aria-expanded.",
+		"pos": 1108,
+		"start": {
+			"character": 1108,
+			"column": 5,
+			"line": 33
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 1180,
+			"column": 21,
+			"line": 35
+		},
+		"message": "Elements with the ARIA role \"scrollbar\" must have the following attributes defined: aria-controls,aria-orientation,aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 1164,
+		"start": {
+			"character": 1164,
+			"column": 5,
+			"line": 35
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 1205,
+			"column": 21,
+			"line": 36
+		},
+		"message": "Elements with the ARIA role \"scrollbar\" must have the following attributes defined: aria-controls,aria-orientation,aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 1189,
+		"start": {
+			"character": 1189,
+			"column": 5,
+			"line": 36
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 1248,
+			"column": 21,
+			"line": 37
+		},
+		"message": "Elements with the ARIA role \"scrollbar\" must have the following attributes defined: aria-controls,aria-orientation,aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 1232,
+		"start": {
+			"character": 1232,
+			"column": 5,
+			"line": 37
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 1309,
+			"column": 21,
+			"line": 38
+		},
+		"message": "Elements with the ARIA role \"scrollbar\" must have the following attributes defined: aria-controls,aria-orientation,aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 1293,
+		"start": {
+			"character": 1293,
+			"column": 5,
+			"line": 38
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"end": {
+			"character": 1370,
+			"column": 21,
+			"line": 39
+		},
+		"message": "Elements with the ARIA role \"scrollbar\" must have the following attributes defined: aria-controls,aria-orientation,aria-valuemax,aria-valuemin,aria-valuenow.",
+		"pos": 1354,
+		"start": {
+			"character": 1354,
+			"column": 5,
+			"line": 39
+		}
+	}
+]

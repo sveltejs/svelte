@@ -63,6 +63,7 @@
     "acorn": "^7.0.0",
     "agadoo": "^1.1.0",
     "aria-query": "^3.0.0",
+    "axobject-query": "^2.0.2",
     "c8": "^5.0.1",
     "code-red": "0.0.17",
     "codecov": "^3.5.0",

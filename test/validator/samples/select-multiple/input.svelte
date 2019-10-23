@@ -3,5 +3,5 @@
 </script>
 
 <select bind:value multiple>
-	<option>1</option>
+	<option aria-selected="false">1</option>
 </select>

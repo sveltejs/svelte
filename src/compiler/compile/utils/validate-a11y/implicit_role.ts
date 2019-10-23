@@ -18,8 +18,9 @@ function img(attribute_map: Map<string, Attribute>) {
 }
 function input(attribute_map: Map<string, Attribute>) {
 	if (attribute_map.has('type')) {
-		const value = attribute_map.get('type').get_static_value() || '';
-		switch (value.toUpperCase()) {
+		const type = attribute_map.get('type').get_static_value();
+		const value = typeof type === 'string' ? type.toUpperCase() : '';
+		switch (value) {
 			case 'BUTTON':
 			case 'IMAGE':
 			case 'RESET':

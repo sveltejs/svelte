@@ -1,0 +1,77 @@
+[
+	{
+		"code": "a11y-role-supports-aria-props",
+		"end": {
+			"character": 30,
+			"column": 30,
+			"line": 1
+		},
+		"message": "The attribute aria-checked is not supported by the role \"link\".\nThis role is implicit on the element \"a\".",
+		"pos": 18,
+		"start": {
+			"character": 18,
+			"column": 18,
+			"line": 1
+		}
+	},
+	{
+		"code": "a11y-role-supports-aria-props",
+		"end": {
+			"character": 69,
+			"column": 27,
+			"line": 2
+		},
+		"message": "The attribute aria-checked is not supported by the role \"link\".\nThis role is implicit on the element \"link\".",
+		"pos": 57,
+		"start": {
+			"character": 57,
+			"column": 15,
+			"line": 2
+		}
+	},
+	{
+		"code": "a11y-role-supports-aria-props",
+		"end": {
+			"character": 103,
+			"column": 30,
+			"line": 3
+		},
+		"message": "The attribute aria-checked is not supported by the role \"img\".\nThis role is implicit on the element \"img\".",
+		"pos": 91,
+		"start": {
+			"character": 91,
+			"column": 18,
+			"line": 3
+		}
+	},
+	{
+		"code": "a11y-role-supports-aria-props",
+		"end": {
+			"character": 140,
+			"column": 33,
+			"line": 4
+		},
+		"message": "The attribute aria-checked is not supported by the role \"toolbar\".\nThis role is implicit on the element \"menu\".",
+		"pos": 128,
+		"start": {
+			"character": 128,
+			"column": 21,
+			"line": 4
+		}
+	},
+	{
+		"code": "a11y-role-supports-aria-props",
+		"end": {
+			"character": 163,
+			"column": 19,
+			"line": 5
+		},
+		"message": "The attribute aria-checked is not supported by the role \"complementary\".\nThis role is implicit on the element \"aside\".",
+		"pos": 151,
+		"start": {
+			"character": 151,
+			"column": 7,
+			"line": 5
+		}
+	}
+]

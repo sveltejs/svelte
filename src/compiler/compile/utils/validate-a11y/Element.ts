@@ -5,8 +5,9 @@ import fuzzymatch from '../../../utils/fuzzymatch';
 import emojiRegex from 'emoji-regex';
 import Text from '../../nodes/Text';
 import { array_to_string, is_hidden_from_screen_reader } from './utils';
-import { roles } from 'aria-query';
+import { roles, aria } from 'aria-query';
 import get_implicit_role from './implicit_role';
+import is_semantic_role_element from './is_semantic_role_element';
 
 export default function validateA11y(element: Element) {
 	const attribute_map = new Map();
@@ -26,7 +27,7 @@ export default function validateA11y(element: Element) {
 	no_missing_handlers(element, handler_map);
 	img_redundant_alt(element, attribute_map);
 	accessible_emoji(element, attribute_map);
-	no_unknown_role(element, attribute_map);
+	validate_aria_role(element, attribute_map);
 }
 
 const a11y_distracting_elements = new Set(['blink', 'marquee']);
@@ -263,43 +264,83 @@ function contain_text(node, regex: RegExp) {
 	}
 }
 
-const aria_role_set = new Set(roles.keys());
-const aria_roles = [...aria_role_set];
+const aria_roles = [...roles.keys()];
 const role_exceptions = new Map([['nav', 'navigation']]);
-function no_unknown_role(
+function validate_aria_role(
 	element: Element,
 	attribute_map: Map<string, Attribute>
 ) {
-	if (!attribute_map.has('role')) {
+	const role_attribute = attribute_map.get('role');
+	const explicit_role_name = role_attribute ? role_attribute.get_static_value() : '';
+	const implicit_role_name = get_implicit_role(element.name, attribute_map);
+
+	const role_name = explicit_role_name
+		? explicit_role_name
+		: implicit_role_name;
+
+	if (!role_name) {
 		return;
 	}
 
-	const role_attribute = attribute_map.get('role');
-	const value = role_attribute.get_static_value();
-	// @ts-ignore
-	if (value && !aria_role_set.has(value)) {
+	if (!roles.has(role_name)) {
 		// @ts-ignore
-		const match = fuzzymatch(value, aria_roles);
-		let message = `A11y: Unknown role '${value}'`;
+		const match = fuzzymatch(role_name, aria_roles);
+		let message = `A11y: Unknown role '${role_name}'`;
 		if (match) message += ` (did you mean '${match}'?)`;
 
 		element.component.warn(role_attribute, {
 			code: `a11y-unknown-role`,
 			message,
 		});
+		return;
 	}
 
-	const implicit_role = get_implicit_role(element.name, attribute_map);
-	if (implicit_role && implicit_role === value) {
+	const is_implicit_role = role_name && !explicit_role_name;
+	const implicit_message = `This role is implicit on the element "${element.name}".`;
+
+	const {
+		requiredProps: requiredPropKeyValues,
+		props: propKeyValues,
+	} = roles.get(role_name);
+
+	const requiredProps = Object.keys(requiredPropKeyValues);
+	if (
+		!is_semantic_role_element(element.name, attribute_map) &&
+		requiredProps.length > 0
+	) {
+		const hasRequiredProps = requiredProps.every(prop =>
+			attribute_map.has(prop)
+		);
+
+		if (hasRequiredProps === false) {
+			element.component.warn(role_attribute || element, {
+				code: `a11y-role-has-required-aria-props`,
+				message: `Elements with the ARIA role "${role_name}" must have the following attributes defined: ${String(
+					requiredProps
+				).toLowerCase()}.${is_implicit_role ? '\n' + implicit_message : ''}`,
+			});
+		}
+	}
+
+	for (const [attribute_name, attribute] of attribute_map) {
+		if (aria.has(attribute_name) && !(attribute_name in propKeyValues)) {
+			element.component.warn(attribute, {
+				code: `a11y-role-supports-aria-props`,
+				message: `The attribute ${attribute_name} is not supported by the role "${role_name}".${is_implicit_role ? '\n' + implicit_message : ''}`,
+			});
+		}
+	}
+
+	if (implicit_role_name && implicit_role_name === explicit_role_name) {
 		if (
 			!(
 				role_exceptions.has(element.name) &&
-				role_exceptions.get(element.name) === value
+				role_exceptions.get(element.name) === role_name
 			)
 		) {
 			element.component.warn(role_attribute, {
 				code: `a11y-redundant-role`,
-				message: `The element '${element.name}' has an implicit role of '${implicit_role}'. Defining this explicitly is redundant and should be avoided.`,
+				message: `The element '${element.name}' has an implicit role of '${implicit_role_name}'. Defining this explicitly is redundant and should be avoided.`,
 			});
 		}
 	}
