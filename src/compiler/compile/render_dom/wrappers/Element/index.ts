@@ -573,8 +573,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 
-		// @ts-ignore todo:
-		if (this.node.attributes.find(attr => attr.type === 'Spread')) {
+		if (this.node.attributes.some(attr => attr.is_spread)) {
 			this.add_spread_attributes(block);
 			return;
 		}
@@ -591,21 +590,24 @@ export default class ElementWrapper extends Wrapper {
 		const initial_props = [];
 		const updates = [];
 
-		this.node.attributes
-			.filter(attr => attr.type === 'Attribute' || attr.type === 'Spread')
+		this.attributes
 			.forEach(attr => {
-				const condition = attr.dependencies.size > 0
-					? changed(Array.from(attr.dependencies))
+				const condition = attr.node.dependencies.size > 0
+					? changed(Array.from(attr.node.dependencies))
 					: null;
 
-				if (attr.is_spread) {
-					const snippet = attr.expression.manipulate(block);
+				if (attr.node.is_spread) {
+					const snippet = attr.node.expression.manipulate(block);
 
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
 				} else {
-					const snippet = x`{ ${attr.name}: ${attr.get_value(block)} }`;
+					const metadata = attr.get_metadata();
+					const snippet = x`{ ${
+						(metadata && metadata.property_name) ||
+						fix_attribute_casing(attr.node.name)
+					}: ${attr.node.get_value(block)} }`;
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
