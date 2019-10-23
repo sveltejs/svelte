@@ -14,7 +14,7 @@ const page = `
 </body>
 `;
 
-const assert = fs.readFileSync('test/custom-elements/assert.js', 'utf-8');
+const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
 describe('custom-elements', function() {
 	this.timeout(10000);
@@ -53,7 +53,7 @@ describe('custom-elements', function() {
 		await browser.close();
 	});
 
-	fs.readdirSync('test/custom-elements/samples').forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === '.') return;
 
 		const solo = /\.solo$/.test(dir);
@@ -67,7 +67,7 @@ describe('custom-elements', function() {
 			const expected_warnings = config.warnings || [];
 
 			const bundle = await rollup({
-				input: `test/custom-elements/samples/${dir}/test.js`,
+				input: `${__dirname}/samples/${dir}/test.js`,
 				plugins: [
 					{
 						resolveId(importee) {

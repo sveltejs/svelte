@@ -47,7 +47,7 @@ describe('hydration', () => {
 		}
 
 		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
-			const cwd = path.resolve(`test/hydration/samples/${dir}`);
+			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
 
@@ -96,7 +96,7 @@ describe('hydration', () => {
 		});
 	}
 
-	fs.readdirSync('test/hydration/samples').forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		runTest(dir, null);
 	});
 });

@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { svelte, tryToLoadJson } from '../helpers.js';
 
 describe('parse', () => {
-	fs.readdirSync('test/parser/samples').forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === '.') return;
 
 		// add .solo to a sample directory name to only run that test
@@ -16,18 +16,18 @@ describe('parse', () => {
 		}
 
 		(solo ? it.only : it)(dir, () => {
-			const options = tryToLoadJson(`test/parser/samples/${dir}/options.json`) || {};
+			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`) || {};
 
-			const input = fs.readFileSync(`test/parser/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '');
-			const expectedOutput = tryToLoadJson(`test/parser/samples/${dir}/output.json`);
-			const expectedError = tryToLoadJson(`test/parser/samples/${dir}/error.json`);
+			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '');
+			const expectedOutput = tryToLoadJson(`${__dirname}/samples/${dir}/output.json`);
+			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
 
 			try {
 				const { ast } = svelte.compile(input, Object.assign(options, {
 					generate: false
 				}));
 
-				fs.writeFileSync(`test/parser/samples/${dir}/_actual.json`, JSON.stringify(ast, null, '\t'));
+				fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.json`, JSON.stringify(ast, null, '\t'));
 
 				assert.deepEqual(ast.html, expectedOutput.html);
 				assert.deepEqual(ast.css, expectedOutput.css);

@@ -6,7 +6,7 @@ import { SourceMapConsumer } from "source-map";
 import { getLocator } from "locate-character";
 
 describe("sourcemaps", () => {
-	fs.readdirSync("test/sourcemaps/samples").forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === ".") return;
 
 		// add .solo to a sample directory name to only run that test
@@ -19,10 +19,10 @@ describe("sourcemaps", () => {
 
 		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
 			const filename = path.resolve(
-				`test/sourcemaps/samples/${dir}/input.svelte`
+				`${__dirname}/samples/${dir}/input.svelte`
 			);
 			const outputFilename = path.resolve(
-				`test/sourcemaps/samples/${dir}/output`
+				`${__dirname}/samples/${dir}/output`
 			);
 
 			const input = fs.readFileSync(filename, "utf-8").replace(/\s+$/, "");
