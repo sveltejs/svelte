@@ -122,16 +122,30 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
 /**
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
- * @param {Stores} stores input stores
- * @param {function(Stores=, function(*)=):*}fn function callback that aggregates the values
- * @param {*=}initial_value when used asynchronously
+ *
+ * @param stores - input stores
+ * @param fn - function callback that aggregates the values
  */
-export function derived<T, S extends Stores>(
+export function derived<S extends Stores, T>(
 	stores: S,
-	fn: (values: StoresValues<S>, set: Subscriber<T>) => T | Unsubscriber | void,
-	initial_value?: T,
-): Readable<T> {
+	fn: (values: StoresValues<S>) => T
+): Readable<T>;
 
+/**
+ * Derived value store by synchronizing one or more readable stores and
+ * applying an aggregation function over its input values.
+ *
+ * @param stores - input stores
+ * @param fn - function callback that aggregates the values
+ * @param initial_value - when used asynchronously
+ */
+export function derived<S extends Stores, T>(
+	stores: S,
+	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
+	initial_value?: T
+): Readable<T>;
+
+export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Readable<T> {
 	const single = !Array.isArray(stores);
 	const stores_array: Array<Readable<any>> = single
 		? [stores as Readable<any>]
@@ -141,7 +155,7 @@ export function derived<T, S extends Stores>(
 
 	return readable(initial_value, (set) => {
 		let inited = false;
-		const values: StoresValues<S> = [] as StoresValues<S>;
+		const values = [];
 
 		let pending = 0;
 		let cleanup = noop;
