@@ -9,7 +9,7 @@ import TemplateScope from './shared/TemplateScope';
 import { x } from 'code-red';
 
 export default class Attribute extends Node {
-	type: 'Attribute';
+	type: 'Attribute' | 'Spread';
 	start: number;
 	end: number;
 	scope: TemplateScope;
