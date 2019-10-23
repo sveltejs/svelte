@@ -4,7 +4,7 @@ import * as path from "path";
 import { loadConfig, svelte } from "../helpers.js";
 
 describe("js", () => {
-	fs.readdirSync("test/js/samples").forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === ".") return;
 
 		// add .solo to a sample directory name to only run that test
@@ -15,7 +15,7 @@ describe("js", () => {
 		}
 
 		(solo ? it.only : it)(dir, () => {
-			dir = path.resolve("test/js/samples", dir);
+			dir = path.resolve(`${__dirname}/samples`, dir);
 			const config = loadConfig(`${dir}/_config.js`);
 
 			const input = fs.readFileSync(`${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");

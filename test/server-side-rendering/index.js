@@ -30,7 +30,7 @@ describe("ssr", () => {
 		return setupHtmlEqual();
 	});
 
-	fs.readdirSync("test/server-side-rendering/samples").forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === ".") return;
 
 		// add .solo to a sample directory name to only run that test, or
@@ -43,7 +43,7 @@ describe("ssr", () => {
 		}
 
 		(solo ? it.only : it)(dir, () => {
-			dir = path.resolve("test/server-side-rendering/samples", dir);
+			dir = path.resolve(`${__dirname}/samples`, dir);
 			try {
 				const Component = require(`${dir}/main.svelte`).default;
 
