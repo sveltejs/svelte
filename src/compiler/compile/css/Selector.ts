@@ -4,6 +4,12 @@ import { gather_possible_values, UNKNOWN } from './gather_possible_values';
 import { CssNode } from './interfaces';
 import Component from '../Component';
 
+enum BlockAppliesToNode {
+	NotPossible,
+	Possible,
+	UnknownSelectorType
+}
+
 export default class Selector {
 	node: CssNode;
 	stylesheet: Stylesheet;
@@ -31,10 +37,10 @@ export default class Selector {
 	apply(node: CssNode, stack: CssNode[]) {
 		const to_encapsulate: CssNode[] = [];
 
-		apply_selector(this.stylesheet, this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
+		apply_selector(this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
 
 		if (to_encapsulate.length > 0) {
-			to_encapsulate.filter((_, i) => i === 0 || i === to_encapsulate.length - 1).forEach(({ node, block }) => {
+			to_encapsulate.forEach(({ node, block }) => {
 				this.stylesheet.nodes_with_css_class.add(node);
 				block.should_encapsulate = true;
 			});
@@ -126,7 +132,7 @@ export default class Selector {
 	}
 }
 
-function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: CssNode, stack: CssNode[], to_encapsulate: any[]): boolean {
+function apply_selector(blocks: Block[], node: CssNode, stack: CssNode[], to_encapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
@@ -134,49 +140,30 @@ function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: CssNode, 
 		return blocks.every(block => block.global);
 	}
 
-	let i = block.selectors.length;
-
-	while (i--) {
-		const selector = block.selectors[i];
-		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
-
-		if (selector.type === 'PseudoClassSelector' && name === 'global') {
-			// TODO shouldn't see this here... maybe we should enforce that :global(...)
-			// cannot be sandwiched between non-global selectors?
+	switch (block_might_apply_to_node(block, node)) {
+		case BlockAppliesToNode.NotPossible:
 			return false;
-		}
 
-		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
-			continue;
-		}
-
-		if (selector.type === 'ClassSelector') {
-			if (!attribute_matches(node, 'class', name, '~=', false) && !node.classes.some(c => c.name === name)) return false;
-		}
-
-		else if (selector.type === 'IdSelector') {
-			if (!attribute_matches(node, 'id', name, '=', false)) return false;
-		}
-
-		else if (selector.type === 'AttributeSelector') {
-			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return false;
-		}
-
-		else if (selector.type === 'TypeSelector') {
-			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*') return false;
-		}
-
-		else {
+		case BlockAppliesToNode.UnknownSelectorType:
 			// bail. TODO figure out what these could be
 			to_encapsulate.push({ node, block });
 			return true;
-		}
 	}
 
 	if (block.combinator) {
 		if (block.combinator.type === 'WhiteSpace') {
-			while (stack.length) {
-				if (apply_selector(stylesheet, blocks.slice(), stack.pop(), stack, to_encapsulate)) {
+			for (const ancestor_block of blocks) {
+				if (ancestor_block.global) {
+					continue;
+				}
+				
+				for (const stack_node of stack) {
+					if (block_might_apply_to_node(ancestor_block, stack_node) !== BlockAppliesToNode.NotPossible) {
+						to_encapsulate.push({ node: stack_node, block: ancestor_block });
+					}
+				}
+
+				if (to_encapsulate.length) {
 					to_encapsulate.push({ node, block });
 					return true;
 				}
@@ -189,7 +176,7 @@ function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: CssNode, 
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			if (apply_selector(stylesheet, blocks, stack.pop(), stack, to_encapsulate)) {
+			if (apply_selector(blocks, stack.pop(), stack, to_encapsulate)) {
 				to_encapsulate.push({ node, block });
 				return true;
 			}
@@ -204,6 +191,47 @@ function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: CssNode, 
 
 	to_encapsulate.push({ node, block });
 	return true;
+}
+
+function block_might_apply_to_node(block, node): BlockAppliesToNode {
+	let i = block.selectors.length;
+
+	while (i--) {
+		const selector = block.selectors[i];
+		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
+
+		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
+			continue;
+		}
+
+		if (selector.type === 'PseudoClassSelector' && name === 'global') {
+			// TODO shouldn't see this here... maybe we should enforce that :global(...)
+			// cannot be sandwiched between non-global selectors?
+			return BlockAppliesToNode.NotPossible;
+		}
+
+		if (selector.type === 'ClassSelector') {
+			if (!attribute_matches(node, 'class', name, '~=', false) && !node.classes.some(c => c.name === name)) return BlockAppliesToNode.NotPossible;
+		}
+
+		else if (selector.type === 'IdSelector') {
+			if (!attribute_matches(node, 'id', name, '=', false)) return BlockAppliesToNode.NotPossible;
+		}
+
+		else if (selector.type === 'AttributeSelector') {
+			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return BlockAppliesToNode.NotPossible;
+		}
+
+		else if (selector.type === 'TypeSelector') {
+			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*') return BlockAppliesToNode.NotPossible;
+		}
+
+		else {
+			return BlockAppliesToNode.UnknownSelectorType;
+		}
+	}
+
+	return BlockAppliesToNode.Possible;
 }
 
 function test_attribute(operator, expected_value, case_insensitive, value) {
