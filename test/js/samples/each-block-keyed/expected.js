@@ -48,15 +48,15 @@ function create_each_block(key_1, ctx) {
 
 function create_fragment(ctx) {
 	let each_blocks = [];
-	let each_lookup = new Map();
-	let each_anchor;
+	let each_1_lookup = new Map();
+	let each_1_anchor;
 	let each_value = ctx.things;
 	const get_key = ctx => ctx.thing.id;
 
 	for (let i = 0; i < each_value.length; i += 1) {
 		let child_ctx = get_each_context(ctx, each_value, i);
 		let key = get_key(child_ctx);
-		each_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
+		each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
 	}
 
 	return {
@@ -65,18 +65,18 @@ function create_fragment(ctx) {
 				each_blocks[i].c();
 			}
 
-			each_anchor = empty();
+			each_1_anchor = empty();
 		},
 		m(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(target, anchor);
 			}
 
-			insert(target, each_anchor, anchor);
+			insert(target, each_1_anchor, anchor);
 		},
 		p(changed, ctx) {
 			const each_value = ctx.things;
-			each_blocks = update_keyed_each(each_blocks, changed, get_key, 1, ctx, each_value, each_lookup, each_anchor.parentNode, destroy_block, create_each_block, each_anchor, get_each_context);
+			each_blocks = update_keyed_each(each_blocks, changed, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, destroy_block, create_each_block, each_1_anchor, get_each_context);
 		},
 		i: noop,
 		o: noop,
@@ -85,7 +85,7 @@ function create_fragment(ctx) {
 				each_blocks[i].d(detaching);
 			}
 
-			if (detaching) detach(each_anchor);
+			if (detaching) detach(each_1_anchor);
 		}
 	};
 }

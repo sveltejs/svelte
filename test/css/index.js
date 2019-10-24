@@ -37,7 +37,7 @@ function create(code) {
 }
 
 describe('css', () => {
-	fs.readdirSync('test/css/samples').forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === '.') return;
 
 		// add .solo to a sample directory name to only run that test
@@ -51,7 +51,7 @@ describe('css', () => {
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = try_require(`./samples/${dir}/_config.js`) || {};
 			const input = fs
-				.readFileSync(`test/css/samples/${dir}/input.svelte`, 'utf-8')
+				.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8')
 				.replace(/\s+$/, '');
 
 			const expected_warnings = (config.warnings || []).map(normalize_warning);
@@ -74,10 +74,10 @@ describe('css', () => {
 			assert.deepEqual(dom_warnings, ssr_warnings);
 			assert.deepEqual(dom_warnings.map(normalize_warning), expected_warnings);
 
-			fs.writeFileSync(`test/css/samples/${dir}/_actual.css`, dom.css.code);
+			fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.css`, dom.css.code);
 			const expected = {
-				html: read(`test/css/samples/${dir}/expected.html`),
-				css: read(`test/css/samples/${dir}/expected.css`)
+				html: read(`${__dirname}/samples/${dir}/expected.html`),
+				css: read(`${__dirname}/samples/${dir}/expected.css`)
 			};
 
 			assert.equal(dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz'), expected.css);
@@ -112,7 +112,7 @@ describe('css', () => {
 					new ClientComponent({ target, props: config.props });
 					const html = target.innerHTML;
 
-					fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
+					fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, html);
 
 					assert.equal(
 						normalizeHtml(window, html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')),

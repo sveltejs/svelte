@@ -15,7 +15,7 @@ const app = polka({
 });
 
 if (process.env.PGHOST) {
-	app.use(authenticate);
+	app.use(authenticate());
 }
 
 app.use(

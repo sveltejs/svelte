@@ -3,7 +3,7 @@ import * as assert from "assert";
 import { svelte, loadConfig, tryToLoadJson } from "../helpers.js";
 
 describe("validate", () => {
-	fs.readdirSync("test/validator/samples").forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === ".") return;
 
 		// add .solo to a sample directory name to only run that test
@@ -15,11 +15,11 @@ describe("validate", () => {
 		}
 
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
-			const config = loadConfig(`./validator/samples/${dir}/_config.js`);
+			const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 
-			const input = fs.readFileSync(`test/validator/samples/${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");
-			const expected_warnings = tryToLoadJson(`test/validator/samples/${dir}/warnings.json`) || [];
-			const expected_errors = tryToLoadJson(`test/validator/samples/${dir}/errors.json`);
+			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");
+			const expected_warnings = tryToLoadJson(`${__dirname}/samples/${dir}/warnings.json`) || [];
+			const expected_errors = tryToLoadJson(`${__dirname}/samples/${dir}/errors.json`);
 
 			let error;
 

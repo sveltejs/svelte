@@ -354,7 +354,7 @@ export default class ElementWrapper extends Wrapper {
 		if (renderer.options.dev) {
 			const loc = renderer.locate(this.node.start);
 			block.chunks.hydrate.push(
-				b`@add_location(${this.var}, ${renderer.file_var}, ${loc.line}, ${loc.column}, ${this.node.start});`
+				b`@add_location(${this.var}, ${renderer.file_var}, ${loc.line - 1}, ${loc.column}, ${this.node.start});`
 			);
 		}
 	}
@@ -573,8 +573,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 
-		// @ts-ignore todo:
-		if (this.node.attributes.find(attr => attr.type === 'Spread')) {
+		if (this.node.attributes.some(attr => attr.is_spread)) {
 			this.add_spread_attributes(block);
 			return;
 		}
@@ -591,21 +590,24 @@ export default class ElementWrapper extends Wrapper {
 		const initial_props = [];
 		const updates = [];
 
-		this.node.attributes
-			.filter(attr => attr.type === 'Attribute' || attr.type === 'Spread')
+		this.attributes
 			.forEach(attr => {
-				const condition = attr.dependencies.size > 0
-					? changed(Array.from(attr.dependencies))
+				const condition = attr.node.dependencies.size > 0
+					? changed(Array.from(attr.node.dependencies))
 					: null;
 
-				if (attr.is_spread) {
-					const snippet = attr.expression.manipulate(block);
+				if (attr.node.is_spread) {
+					const snippet = attr.node.expression.manipulate(block);
 
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
 				} else {
-					const snippet = x`{ ${attr.name}: ${attr.get_value(block)} }`;
+					const metadata = attr.get_metadata();
+					const snippet = x`{ ${
+						(metadata && metadata.property_name) ||
+						fix_attribute_casing(attr.node.name)
+					}: ${attr.node.get_value(block)} }`;
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
@@ -807,6 +809,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_classes(block: Block) {
+		const has_spread = this.node.attributes.some(attr => attr.is_spread);
 		this.node.classes.forEach(class_directive => {
 			const { expression, name } = class_directive;
 			let snippet;
@@ -822,7 +825,9 @@ export default class ElementWrapper extends Wrapper {
 
 			block.chunks.hydrate.push(updater);
 
-			if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
+			if (has_spread) {
+				block.chunks.update.push(updater);
+			} else if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
 				const all_dependencies = this.class_dependencies.concat(...dependencies);
 				const condition = changed(all_dependencies);
 

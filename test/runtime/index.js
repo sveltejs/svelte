@@ -49,7 +49,7 @@ describe("runtime", () => {
 	function runTest(dir, hydrate) {
 		if (dir[0] === ".") return;
 
-		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
+		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 
 		if (hydrate && config.skip_if_hydrate) return;
 
@@ -67,7 +67,7 @@ describe("runtime", () => {
 
 			compile = (config.preserveIdentifiers ? svelte : svelte$).compile;
 
-			const cwd = path.resolve(`test/runtime/samples/${dir}`);
+			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
 			compileOptions.format = 'cjs';
@@ -191,10 +191,12 @@ describe("runtime", () => {
 							assert.equal(config.error, err.message);
 						}
 					} else {
-						failed.add(dir);
-						showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 						throw err;
 					}
+				 }).catch(err => {
+					failed.add(dir);
+					showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
+					throw err;
 				})
 				.catch(err => {
 					// print a clickable link to open the directory
@@ -213,7 +215,7 @@ describe("runtime", () => {
 		});
 	}
 
-	fs.readdirSync("test/runtime/samples").forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		runTest(dir, false);
 		runTest(dir, true);
 	});

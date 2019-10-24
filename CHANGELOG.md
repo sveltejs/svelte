@@ -4,13 +4,22 @@
 
 * Fix `{#each}` context not shadowing outer scope when using `bind:` ([#1565](https://github.com/sveltejs/svelte/issues/1565))
 * Fix edge cases in matching selectors against elements ([#1710](https://github.com/sveltejs/svelte/issues/1710))
+* Allow exiting a reactive block early with `break $` ([#2828](https://github.com/sveltejs/svelte/issues/2828))
+* Don't lose `class:` directive classes on an element with `{...spread}` attributes when updating ([#3421](https://github.com/sveltejs/svelte/issues/3421))
+* Check attributes have changed before setting them to avoid image flicker ([#3579](https://github.com/sveltejs/svelte/pull/3579))
+* Fix generating malformed code for `{@debug}` tags with no dependencies ([#3588](https://github.com/sveltejs/svelte/issue/3588))
+* Fix generated code in specific case involving compound ifs and child components ([#3595](https://github.com/sveltejs/svelte/issue/3595))
+* Fix `bind:this` binding to a store ([#3591](https://github.com/sveltejs/svelte/issue/3591))
 * Use safer `HTMLElement` check before extending class ([#3608](https://github.com/sveltejs/svelte/issue/3608))
 * Add `location` as a known global ([#3619](https://github.com/sveltejs/svelte/pull/3619))
+* Support `{#await}` with `{:catch}` but no `{:then}` ([#3623](https://github.com/sveltejs/svelte/issues/3623))
+* Clean up dead code emitted for `<slot/>`s ([#3631](https://github.com/sveltejs/svelte/issues/3631))
 * Fix tracking of dependencies of compound assignments in reactive statements ([#3634](https://github.com/sveltejs/svelte/issues/3634))
 * Flush changes in newly attached block when using `{#await}` ([#3660](https://github.com/sveltejs/svelte/issues/3660))
 * Throw exception immediately when calling `createEventDispatcher()` after component instantiation ([#3667](https://github.com/sveltejs/svelte/pull/3667))
 * Fix globals shadowing contextual template scope ([#3674](https://github.com/sveltejs/svelte/issues/3674))
 * Fix error resulting from trying to set a read-only property when spreading element attributes ([#3681](https://github.com/sveltejs/svelte/issues/3681))
+* Fix handling of boolean attributes in presence of other spread attributes ([#3764](https://github.com/sveltejs/svelte/issues/3764))
 
 ## 3.12.1
 

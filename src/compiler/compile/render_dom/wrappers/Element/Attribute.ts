@@ -44,9 +44,7 @@ export default class AttributeWrapper {
 		const element = this.parent;
 		const name = fix_attribute_casing(this.node.name);
 
-		let metadata = element.node.namespace ? null : attribute_lookup[name];
-		if (metadata && metadata.applies_to && !~metadata.applies_to.indexOf(element.node.name))
-			metadata = null;
+		const metadata = this.get_metadata();
 
 		const is_indirectly_bound_value =
 			name === 'value' &&
@@ -95,7 +93,7 @@ export default class AttributeWrapper {
 			const is_select_value_attribute =
 				name === 'value' && element.node.name === 'select';
 
-			const should_cache = (this.node.should_cache() || is_select_value_attribute);
+			const should_cache = is_select_value_attribute; // TODO is this necessary?
 
 			const last = should_cache && block.get_unique_name(
 				`${element.var.name}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
@@ -191,6 +189,13 @@ export default class AttributeWrapper {
 			block.chunks.hydrate.push(update_value);
 			if (this.node.get_dependencies().length > 0) block.chunks.update.push(update_value);
 		}
+	}
+
+	get_metadata() {
+		if (this.parent.node.namespace) return null;
+		const metadata = attribute_lookup[fix_attribute_casing(this.node.name)];
+		if (metadata && metadata.applies_to && !metadata.applies_to.includes(this.parent.node.name)) return null;
+		return metadata;
 	}
 
 	get_class_name_text() {
