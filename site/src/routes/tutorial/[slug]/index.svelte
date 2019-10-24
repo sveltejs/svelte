@@ -225,13 +225,11 @@
 		position: relative;
 		font-size: var(--h5);
 		font-weight: 300;
-		box-shadow: 0 0 20px #444;
-		color: #fff;
-		transition: box-shadow .2s;
+		color: rgba(255,255,255,0.7);
 	}
 
 	.show:hover {
-		box-shadow: 0 0 30px 2px #333;
+		color: white;
 	}
 
 	a.next {
