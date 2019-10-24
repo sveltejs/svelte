@@ -809,6 +809,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_classes(block: Block) {
+		const has_spread = this.node.attributes.some(attr => attr.is_spread);
 		this.node.classes.forEach(class_directive => {
 			const { expression, name } = class_directive;
 			let snippet;
@@ -824,7 +825,9 @@ export default class ElementWrapper extends Wrapper {
 
 			block.chunks.hydrate.push(updater);
 
-			if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
+			if (has_spread) {
+				block.chunks.update.push(updater);
+			} else if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
 				const all_dependencies = this.class_dependencies.concat(...dependencies);
 				const condition = changed(all_dependencies);
 
