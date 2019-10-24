@@ -4,6 +4,12 @@ import { gather_possible_values, UNKNOWN } from './gather_possible_values';
 import { CssNode } from './interfaces';
 import Component from '../Component';
 
+enum BlockAppliesToNode {
+	NotPossible,
+	Possible,
+	UnknownSelectorType
+}
+
 export default class Selector {
 	node: CssNode;
 	stylesheet: Stylesheet;
@@ -134,16 +140,14 @@ function apply_selector(blocks: Block[], node: CssNode, stack: CssNode[], to_enc
 		return blocks.every(block => block.global);
 	}
 
-	try {
-		if (block_might_apply_to_node(block, node) === false) {
+	switch (block_might_apply_to_node(block, node)) {
+		case BlockAppliesToNode.NotPossible:
 			return false;
-		}
-	} catch (error) {
-		if (error instanceof TypeError) {
+
+		case BlockAppliesToNode.UnknownSelectorType:
 			// bail. TODO figure out what these could be
 			to_encapsulate.push({ node, block });
 			return true;
-		}
 	}
 
 	if (block.combinator) {
@@ -154,7 +158,7 @@ function apply_selector(blocks: Block[], node: CssNode, stack: CssNode[], to_enc
 				}
 				
 				for (const stack_node of stack) {
-					if (block_might_apply_to_node(ancestor_block, stack_node)) {
+					if (block_might_apply_to_node(ancestor_block, stack_node) !== BlockAppliesToNode.NotPossible) {
 						to_encapsulate.push({ node: stack_node, block: ancestor_block });
 					}
 				}
@@ -189,7 +193,7 @@ function apply_selector(blocks: Block[], node: CssNode, stack: CssNode[], to_enc
 	return true;
 }
 
-function block_might_apply_to_node(block, node) {
+function block_might_apply_to_node(block, node): BlockAppliesToNode {
 	let i = block.selectors.length;
 
 	while (i--) {
@@ -203,31 +207,31 @@ function block_might_apply_to_node(block, node) {
 		if (selector.type === 'PseudoClassSelector' && name === 'global') {
 			// TODO shouldn't see this here... maybe we should enforce that :global(...)
 			// cannot be sandwiched between non-global selectors?
-			return false;
+			return BlockAppliesToNode.NotPossible;
 		}
 
 		if (selector.type === 'ClassSelector') {
-			if (!attribute_matches(node, 'class', name, '~=', false) && !node.classes.some(c => c.name === name)) return false;
+			if (!attribute_matches(node, 'class', name, '~=', false) && !node.classes.some(c => c.name === name)) return BlockAppliesToNode.NotPossible;
 		}
 
 		else if (selector.type === 'IdSelector') {
-			if (!attribute_matches(node, 'id', name, '=', false)) return false;
+			if (!attribute_matches(node, 'id', name, '=', false)) return BlockAppliesToNode.NotPossible;
 		}
 
 		else if (selector.type === 'AttributeSelector') {
-			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return false;
+			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return BlockAppliesToNode.NotPossible;
 		}
 
 		else if (selector.type === 'TypeSelector') {
-			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*') return false;
+			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*') return BlockAppliesToNode.NotPossible;
 		}
 
 		else {
-			throw new TypeError(`Unknown selector type ${selector.type}`);
+			return BlockAppliesToNode.UnknownSelectorType;
 		}
 	}
 
-	return true;
+	return BlockAppliesToNode.Possible;
 }
 
 function test_attribute(operator, expected_value, case_insensitive, value) {
