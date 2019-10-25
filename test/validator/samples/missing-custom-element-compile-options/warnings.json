@@ -6,7 +6,7 @@
 			"column": 36,
 			"line": 1
 		},
-		"message": "tag name is used when compiling the compenent as a custom element. Did you forgot to add \"customElement\" for compile options?",
+		"message": "The 'tag' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?",
 		"pos": 16,
 		"start": {
 			"character": 16,
