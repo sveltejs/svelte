@@ -218,17 +218,17 @@
 	}
 
 	.show {
-		background: rgba(0,0,0,.4);
+		background: var(--prime);
 		padding: .3em .7em;
 		border-radius: var(--border-r);
 		top: .1em;
 		position: relative;
 		font-size: var(--h5);
 		font-weight: 300;
+		color: rgba(255,255,255,0.7);
 	}
 
 	.show:hover {
-		background: rgba(0,0,0,.65);
 		color: white;
 	}
 
