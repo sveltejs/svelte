@@ -2,4 +2,4 @@
 	export let blah = 'hello';
 </script>
 
-<div class='foo' class:bar={true} {...{}}>{blah}</div>
+<div class:bar={true} {...{ class: 'foo' }}>{blah}</div>
