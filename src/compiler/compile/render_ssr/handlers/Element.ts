@@ -1,5 +1,4 @@
 import { is_void } from '../../../utils/names';
-import Class from '../../nodes/Class';
 import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { get_slot_scope } from './shared/get_slot_scope';
 import Renderer, { RenderOptions } from '../Renderer';
@@ -69,15 +68,17 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 	renderer.add_string(`<${node.name}`);
 
-	const class_expression = node.classes.length > 0 && node.classes
-		.map((class_directive: Class) => {
-			const { expression, name } = class_directive;
-			const snippet = expression ? expression.node : x`#ctx.${name}`;
-			return x`${snippet} ? "${name}" : ""`;
-		})
-		.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
-
-	let add_class_attribute = class_expression ? true : false;
+	const class_expression_list = node.classes.map(class_directive => {
+		const { expression, name } = class_directive;
+		const snippet = expression ? expression.node : x`#ctx.${name}`;
+		return x`${snippet} ? "${name}" : ""`;
+	});
+	if (node.needs_manual_style_scoping) {
+		class_expression_list.push(x`"${node.component.stylesheet.id}"`);
+	}
+	const class_expression =
+		class_expression_list.length > 0 &&
+		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
 
 	if (node.attributes.some(attr => attr.is_spread)) {
 		// TODO dry this out
@@ -98,17 +99,15 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				) {
 					// a boolean attribute with one non-Text chunk
 					args.push(x`{ ${attribute.name}: ${(attribute.chunks[0] as Expression).node} || null }`);
-				} else if (name === 'class' && class_expression) {
-					// Add class expression
-					args.push(x`{ ${attribute.name}: [${get_class_attribute_value(attribute)}, ${class_expression}].join(' ').trim() }`);
 				} else {
-					args.push(x`{ ${attribute.name}: ${(name === 'class' ? get_class_attribute_value : get_attribute_value)(attribute)} }`);
+					args.push(x`{ ${attribute.name}: ${get_attribute_value(attribute)} }`);
 				}
 			}
 		});
 
-		renderer.add_expression(x`@spread([${args}])`);
+		renderer.add_expression(x`@spread([${args}], ${class_expression});`);
 	} else {
+		let add_class_attribute = !!class_expression;
 		node.attributes.forEach(attribute => {
 			const name = attribute.name.toLowerCase();
 			if (name === 'value' && node.name.toLowerCase() === 'textarea') {
@@ -137,6 +136,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				renderer.add_string(`"`);
 			}
 		});
+		if (add_class_attribute) {
+			renderer.add_expression(x`@add_classes([${class_expression}].join(' ').trim())`);
+		}
 	}
 
 	node.bindings.forEach(binding => {
@@ -161,10 +163,6 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			renderer.add_expression(x`@add_attribute("${name}", ${snippet}, 1)`);
 		}
 	});
-
-	if (add_class_attribute) {
-		renderer.add_expression(x`@add_classes([${class_expression}].join(' ').trim())`);
-	}
 
 	renderer.add_string('>');
 

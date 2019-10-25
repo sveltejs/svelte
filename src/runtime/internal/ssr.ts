@@ -5,8 +5,15 @@ export const invalid_attribute_name_character = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFF
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 
-export function spread(args) {
+export function spread(args, classes_to_add) {
 	const attributes = Object.assign({}, ...args);
+	if (classes_to_add) {
+		if (attributes.class == null) {
+			attributes.class = classes_to_add;
+		} else {
+			attributes.class += ' ' + classes_to_add;
+		}
+	}
 	let str = '';
 
 	Object.keys(attributes).forEach(name => {

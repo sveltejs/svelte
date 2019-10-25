@@ -344,6 +344,7 @@ export default class ElementWrapper extends Wrapper {
 		this.add_animation(block);
 		this.add_actions(block);
 		this.add_classes(block);
+		this.add_manual_style_scoping(block);
 
 		if (nodes && this.renderer.options.hydratable) {
 			block.chunks.claim.push(
@@ -837,6 +838,14 @@ export default class ElementWrapper extends Wrapper {
 					}`);
 			}
 		});
+	}
+
+	add_manual_style_scoping(block) {
+		if (this.node.needs_manual_style_scoping) {
+			const updater = b`@toggle_class(${this.var}, "${this.node.component.stylesheet.id}", true);`;
+			block.chunks.hydrate.push(updater);
+			block.chunks.update.push(updater);
+		}
 	}
 }
 
