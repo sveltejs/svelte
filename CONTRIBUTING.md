@@ -7,19 +7,19 @@ The [Open Source Guides](https://opensource.guide/) website has a collection of 
 * [How to Contribute to Open Source](https://opensource.guide/how-to-contribute/)
 * [Building Welcoming Communities](https://opensource.guide/building-community/)
 
-## Get Involved
+## Get involved
 
 There are many ways to contribute to Svelte, and many of them do not involve writing any code. Here's a few ideas to get started:
 
 - Simply start using Svelte. Go through the [Getting Started](https://svelte.dev/blog/the-easiest-way-to-get-started) guide. Does everything work as expected? If not, we're always looking for improvements. Let us know by [opening an issue](#reporting-new-issues).
 - Look through the [open issues](https://github.com/sveltejs/svelte/issues). Provide workarounds, ask for clarification, or suggest labels. Help [triage issues](#triaging-issues-and-pull-requests).
 - If you find an issue you would like to fix, [open a pull request](#your-first-pull-request).
-- Read through our amazing [Tutorials](https://svelte.dev/tutorial/basics). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this chapter" at the bottom left of the tutorials.
+- Read through our [tutorials](https://svelte.dev/tutorial/basics). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this chapter" at the bottom left of the tutorial page.
 - Take a look at the [features requested](https://github.com/sveltejs/svelte/labels/enhancement) by others in the community and consider opening a pull request if you see something you want to work on.
 
-Contributions are very welcome. If you think you need help planning your contribution, please ping us on Twitter at [@sveltejs](https://twitter.com/sveltejs) and let us know you are looking for a bit of help.
+Contributions are very welcome. If you think you need help planning your contribution, please ping us on Discord at [svelte.dev/chat](https://svelte.dev/chat) and let us know you are looking for a bit of help.
 
-### Triaging Issues and Pull Requests
+### Triaging issues and pull requests
 
 One great way you can contribute to the project without writing any code is to help triage issues and pull requests as they come in.
 
@@ -30,18 +30,18 @@ One great way you can contribute to the project without writing any code is to h
 
 ## Bugs
 
-We use [GitHub Issues](https://github.com/sveltejs/svelte/issues) for our public bugs. If you would like to report a problem, take a look around and see if someone already opened an issue about it. If you a are certain this is a new, unreported bug, you can submit a [bug report](#reporting-new-issues).
+We use [GitHub issues](https://github.com/sveltejs/svelte/issues) for our public bugs. If you would like to report a problem, take a look around and see if someone already opened an issue about it. If you a are certain this is a new, unreported bug, you can submit a [bug report](#reporting-new-issues).
 
-If you have questions about using Svelte, contact the Svelte Twitter account at [@sveltejs](https://twitter.com/sveltejs), and we will do our best to answer your questions.
+If you have questions about using Svelte, contact us on Discord at [svelte.dev/chat](https://svelte.dev/chat), and we will do our best to answer your questions.
 
 If you see anything you'd like to be implemented, create a [feature request issue](https://github.com/sveltejs/svelte/issues/new?template=feature_request.md)
 
-## Reporting New Issues
+## Reporting new issues
 
-When [opening a new issue](https://github.com/sveltejs/svelte/issues/new/choose), always make sure to fill out the issue template. **This step is very important!** Not doing so may result in your issue not managed in a timely fashion. Don't take this personally if this happens, and feel free to open a new issue once you've gathered all the information required by the template.
+When [opening a new issue](https://github.com/sveltejs/svelte/issues/new/choose), always make sure to fill out the issue template. **This step is very important!** Not doing so may result in your issue not being managed in a timely fashion. Don't take this personally if this happens, and feel free to open a new issue once you've gathered all the information required by the template.
 
 - **One issue, one bug:** Please report a single bug per issue.
-- **Provide reproduction steps:** List all the steps necessary to reproduce the issue. The person reading your bug report should be able to follow these steps to reproduce your issue with minimal effort.
+- **Provide reproduction steps:** List all the steps necessary to reproduce the issue. The person reading your bug report should be able to follow these steps to reproduce your issue with minimal effort. If possible, use the [REPL](https://svelte.dev/repl) to create your reproduction.
 
 ## Installation
 
@@ -50,9 +50,9 @@ When [opening a new issue](https://github.com/sveltejs/svelte/issues/new/choose)
 1. To start a development server, run `npm run dev`.
 
 
-## Pull Requests
+## Pull requests
 
-### Your First Pull Request
+### Your first pull request
 
 So you have decided to contribute code back to upstream by opening a pull request. You've invested a good chunk of time, and we appreciate it. We will do our best to work with you and get the PR looked at.
 
@@ -60,13 +60,13 @@ Working on your first Pull Request? You can learn how from this free video serie
 
 [**How to Contribute to an Open Source Project on GitHub**](https://egghead.io/courses/how-to-contribute-to-an-open-source-project-on-github)
 
-### Proposing a Change
+### Proposing a change
 
 If you would like to request a new feature or enhancement but are not yet thinking about opening a pull request, you can also file an issue with [feature template](https://github.com/sveltejs/svelte/issues/new?template=feature_request.md).
 
 If you're only fixing a bug, it's fine to submit a pull request right away but we still recommend to file an issue detailing what you're fixing. This is helpful in case we don't accept that specific fix but want to keep track of the issue.
 
-### Sending a Pull Request
+### Sending a pull request
 
 Small pull requests are much easier to review and more likely to get merged. Make sure the PR does only one thing, otherwise please split it.
 
@@ -79,25 +79,24 @@ Please make sure the following is done when submitting a pull request:
 
 All pull requests should be opened against the `master` branch.
 
-#### Test Plan
+#### Test plan
 
 A good test plan has the exact commands you ran and their output, provides screenshots or videos if the pull request changes UI.
 
 - If you've changed APIs, update the documentation.
 
-#### Writing Tests
+#### Writing tests
 
 All tests are located in `/test` folder.
 
-Tests samples are kept in `/test/xxx/samples` folder.
+Test samples are kept in `/test/xxx/samples` folder.
 
-#### Running Tests
+#### Running tests
 
 1. To run test, run `npm run test`
-1. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test invloving transitions, run `npm run test -- -g transition`.
-1. To run only 1 test sample, append the `.solo` to the test sample folder name, for example, `test/runtime/samples/action.solo`.
+1. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test involving transitions, run `npm run test -- -g transition`.
 
-#### Breaking Changes
+#### Breaking changes
 
 When adding a new breaking change, follow this template in your pull request:
 
@@ -110,15 +109,15 @@ When adding a new breaking change, follow this template in your pull request:
 - **Severity (number of people affected x effort)**:
 ```
 
-### What Happens Next?
+### What happens next?
 
 The core Svelte team will be monitoring for pull requests. Do help us by making your pull request easy to review by following the guidelines above.
 
-## Style Guide
+## Style guide
 
 [Eslint](https://eslint.org) will catch most styling issues that may exist in your code. You can check the status of your code styling by simply running `npm run lint`.
 
-### Code Conventions
+### Code conventions
 
 - `snake_case` for internal variable names and methods
 - `camelCase` for public variable names and methods.
