@@ -21,6 +21,7 @@
 * Fix globals shadowing contextual template scope ([#3674](https://github.com/sveltejs/svelte/issues/3674))
 * Fix error resulting from trying to set a read-only property when spreading element attributes ([#3681](https://github.com/sveltejs/svelte/issues/3681))
 * Fix handling of boolean attributes in presence of other spread attributes ([#3764](https://github.com/sveltejs/svelte/issues/3764))
+* Fix handling of style scoping class in presence of spread attributes ([#3790](https://github.com/sveltejs/svelte/issues/3790))
 
 ## 3.12.1
 
