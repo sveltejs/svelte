@@ -1307,6 +1307,13 @@ function process_component_options(component: Component, nodes) {
 							});
 						}
 
+						if (tag && !component.compile_options.customElement) {
+							component.warn(attribute, {
+								code: 'missing-custom-element-compile-options',
+								message: `tag name is used when compiling the compenent as a custom element. Did you forgot to add "customElement" for compile options?`
+							});
+						}
+
 						component_options.tag = tag;
 						break;
 					}
