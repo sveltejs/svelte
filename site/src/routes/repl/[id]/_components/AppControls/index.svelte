@@ -140,12 +140,12 @@
 		if (imports.length > 0) {
 			const idx = files.findIndex(({ path }) => path === 'package.json');
 			const pkg = JSON.parse(files[idx].data);
-			const deps = {};
+			const { devDependencies } = pkg;
 			imports.forEach(mod => {
 				const match = /^(@[^/]+\/)?[^@/]+/.exec(mod);
-				deps[match[0]] = 'latest';
+				devDependencies[match[0]] = 'latest';
 			});
-			pkg.dependencies = deps;
+			pkg.devDependencies = devDependencies;
 			files[idx].data = JSON.stringify(pkg, null, '  ');
 		}
 
