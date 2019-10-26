@@ -1,51 +1,11 @@
 import { is_void } from '../../../utils/names';
 import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { get_slot_scope } from './shared/get_slot_scope';
+import { boolean_attributes } from './shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
 import { x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
-
-// source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
-const boolean_attributes = new Set([
-	'async',
-	'autocomplete',
-	'autofocus',
-	'autoplay',
-	'border',
-	'challenge',
-	'checked',
-	'compact',
-	'contenteditable',
-	'controls',
-	'default',
-	'defer',
-	'disabled',
-	'formnovalidate',
-	'frameborder',
-	'hidden',
-	'indeterminate',
-	'ismap',
-	'loop',
-	'multiple',
-	'muted',
-	'nohref',
-	'noresize',
-	'noshade',
-	'novalidate',
-	'nowrap',
-	'open',
-	'readonly',
-	'required',
-	'reversed',
-	'scoped',
-	'scrolling',
-	'seamless',
-	'selected',
-	'sortable',
-	'spellcheck',
-	'translate'
-]);
 
 export default function(node: Element, renderer: Renderer, options: RenderOptions & {
 	slot_scopes: Map<any, any>;
