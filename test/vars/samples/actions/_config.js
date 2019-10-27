@@ -9,6 +9,7 @@ export default {
 				name: 'hoistable_foo',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: false
 			},
 			{
@@ -19,6 +20,7 @@ export default {
 				name: 'foo',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: true
 			}
 		]);
