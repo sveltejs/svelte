@@ -570,9 +570,10 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — four
 * `seekable` (readonly) — ditto
 * `played` (readonly) — ditto
 
-...and three *two-way* bindings:
+...and four *two-way* bindings:
 
 * `currentTime` — the current point in the video, in seconds
+* `playbackRate` — how fast to play the video, where 1 is 'normal'
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
 
