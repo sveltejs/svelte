@@ -1,24 +1,61 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onDestroy } from 'svelte';
 
 	const dispatch = createEventDispatcher();
-	
-	const handleClose = () => dispatch('close')
+	const close = () => dispatch('close');
 
-	function handleKeydown(event) {
-		if (event.key == 'Escape') {
-			handleClose()
-		} else if (event.key == 'Tab') {
-			event.preventDefault()
+	let modal;
+
+	const handle_keydown = e => {
+		if (e.key === 'Escape') {
+			close();
+			return;
 		}
+
+		if (e.key === 'Tab') {
+			// trap focus
+			const nodes = modal.querySelectorAll('*');
+			const active = document.activeElement;
+
+			const tabbable = Array.from(nodes).filter(n => n.tabIndex >= 0);
+			const first = tabbable[0];
+			const last = tabbable[tabbable.length - 1];
+
+			let index = tabbable.indexOf(document.activeElement);
+			if (index === -1 && e.shiftKey) index = 0;
+
+			index += tabbable.length + (e.shiftKey ? -1 : 1);
+			index %= tabbable.length;
+
+			tabbable[index].focus();
+			e.preventDefault();
+		}
+	};
+
+	const previously_focused = typeof document !== 'undefined' && document.activeElement;
+
+	if (previously_focused) {
+		onDestroy(() => {
+			previously_focused.focus();
+		});
 	}
-
-	let closeButton
-	onMount(() => {
-		closeButton.focus()
-	})
-
 </script>
+
+<svelte:window on:keydown={handle_keydown}/>
+
+<div class="modal-background" on:click={close}></div>
+
+<div class="modal" role="dialog" aria-modal="true" bind:this={modal}>
+	<slot name="header"></slot>
+	<hr>
+	<slot></slot>
+	<hr>
+
+	<!-- svelte-ignore a11y-autofocus -->
+	<button autofocus on:click={close}>close modal</button>
+
+	<a href="argh">argh</a>
+</div>
 
 <style>
 	.modal-background {
@@ -32,7 +69,8 @@
 
 	.modal {
 		position: absolute;
-		left: 50%;	top: 50%;
+		left: 50%;
+		top: 50%;
 		width: calc(100vw - 4em);
 		max-width: 32em;
 		max-height: calc(100vh - 4em);
@@ -47,14 +85,3 @@
 		display: block;
 	}
 </style>
-
-<div class='modal-background' on:click='{handleClose}'></div>
-
-<div class='modal'>
-	<slot name='header'></slot>
-	<hr>
-	<slot></slot>
-	<hr>
-
-	<button on:click='{() => dispatch("close")}' bind:this={closeButton}>close modal</button>
-</div>
