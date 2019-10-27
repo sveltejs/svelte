@@ -9,6 +9,7 @@ export default {
 				name: 'hoistable_foo',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: false
 			},
 			{
@@ -19,6 +20,7 @@ export default {
 				name: 'hoistable_bar',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: false
 			},
 			{
@@ -29,6 +31,7 @@ export default {
 				name: 'hoistable_baz',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: false
 			},
 			{
@@ -39,6 +42,7 @@ export default {
 				name: 'foo',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: true
 			},
 			{
@@ -49,6 +53,7 @@ export default {
 				name: 'bar',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: true
 			},
 			{
@@ -59,6 +64,7 @@ export default {
 				name: 'baz',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: true
 			}
 		]);
