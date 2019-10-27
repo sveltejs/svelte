@@ -9,6 +9,7 @@ export default {
 				name: 'Bar',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: false,
 			},
 			{
@@ -19,6 +20,7 @@ export default {
 				name: 'foo',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: true,
 			},
 			{
@@ -29,6 +31,7 @@ export default {
 				name: 'baz',
 				reassigned: false,
 				referenced: true,
+				referenced_from_script: false,
 				writable: true,
 			},
 		]);

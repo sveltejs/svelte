@@ -18,6 +18,7 @@ import { Ast, CompileOptions, Var, Warning } from '../interfaces';
 import error from '../utils/error';
 import get_code_frame from '../utils/get_code_frame';
 import flatten_reference from './utils/flatten_reference';
+import is_used_as_reference from './utils/is_used_as_reference';
 import is_reference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
@@ -168,12 +169,13 @@ export default class Component {
 			this.tag = this.name.name;
 		}
 
-		this.walk_module_js();
+		this.walk_module_js_pre_template();
 		this.walk_instance_js_pre_template();
 
 		this.fragment = new Fragment(this, ast.html);
 		this.name = this.get_unique_name(name);
 
+		this.walk_module_js_post_template();
 		this.walk_instance_js_post_template();
 
 		if (!compile_options.customElement) this.stylesheet.reify();
@@ -346,6 +348,7 @@ export default class Component {
 					reassigned: v.reassigned || false,
 					referenced: v.referenced || false,
 					writable: v.writable || false,
+					referenced_from_script: v.referenced_from_script || false,
 				})),
 			stats: this.stats.render(),
 		};
@@ -447,63 +450,64 @@ export default class Component {
 		});
 	}
 
-	extract_imports(content) {
-		for (let i = 0; i < content.body.length; i += 1) {
-			const node = content.body[i];
-
-			if (node.type === 'ImportDeclaration') {
-				content.body.splice(i--, 1);
-				this.imports.push(node);
-			}
-		}
+	extract_imports(node) {
+		this.imports.push(node);
 	}
 
-	extract_exports(content) {
-		let i = content.body.length;
-		while (i--) {
-			const node = content.body[i];
+	extract_exports(node) {
+		if (node.type === 'ExportDefaultDeclaration') {
+			this.error(node, {
+				code: `default-export`,
+				message: `A component cannot have a default export`,
+			});
+		}
 
-			if (node.type === 'ExportDefaultDeclaration') {
+		if (node.type === 'ExportNamedDeclaration') {
+			if (node.source) {
 				this.error(node, {
-					code: `default-export`,
-					message: `A component cannot have a default export`,
+					code: `not-implemented`,
+					message: `A component currently cannot have an export ... from`,
 				});
 			}
-
-			if (node.type === 'ExportNamedDeclaration') {
-				if (node.source) {
-					this.error(node, {
-						code: `not-implemented`,
-						message: `A component currently cannot have an export ... from`,
-					});
-				}
-				if (node.declaration) {
-					if (node.declaration.type === 'VariableDeclaration') {
-						node.declaration.declarations.forEach(declarator => {
-							extract_names(declarator.id).forEach(name => {
-								const variable = this.var_lookup.get(name);
-								variable.export_name = name;
-							});
+			if (node.declaration) {
+				if (node.declaration.type === 'VariableDeclaration') {
+					node.declaration.declarations.forEach(declarator => {
+						extract_names(declarator.id).forEach(name => {
+							const variable = this.var_lookup.get(name);
+							variable.export_name = name;
+							if (variable.writable && !(variable.referenced || variable.referenced_from_script)) {
+								this.warn(declarator, {
+									code: `unused-export-let`,
+									message: `${this.name.name} has unused export property '${name}'. If it is for external reference only, please consider using \`export const '${name}'\``
+								});
+							}
 						});
-					} else {
-						const { name } = node.declaration.id;
-
-						const variable = this.var_lookup.get(name);
-						variable.export_name = name;
-					}
-
-					content.body[i] = node.declaration;
-				} else {
-					node.specifiers.forEach(specifier => {
-						const variable = this.var_lookup.get(specifier.local.name);
-
-						if (variable) {
-							variable.export_name = specifier.exported.name;
-						}
 					});
+				} else {
+					const { name } = node.declaration.id;
 
-					content.body.splice(i, 1);
+					const variable = this.var_lookup.get(name);
+					variable.export_name = name;
 				}
+
+				return node.declaration;
+			} else {
+				node.specifiers.forEach(specifier => {
+					const variable = this.var_lookup.get(specifier.local.name);
+
+					if (variable) {
+						variable.export_name = specifier.exported.name;
+
+						if (variable.writable && !(variable.referenced || variable.referenced_from_script)) {
+							this.warn(specifier, {
+								code: `unused-export-let`,
+								message: `${this.name.name} has unused export property '${specifier.exported.name}'. If it is for external reference only, please consider using \`export const '${specifier.exported.name}'\``
+							});
+						}
+					}
+				});
+
+				return null;
 			}
 		}
 	}
@@ -522,7 +526,7 @@ export default class Component {
 		});
 	}
 
-	walk_module_js() {
+	walk_module_js_pre_template() {
 		const component = this;
 		const script = this.ast.module;
 		if (!script) return;
@@ -573,9 +577,6 @@ export default class Component {
 				});
 			}
 		});
-
-		this.extract_imports(script.content);
-		this.extract_exports(script.content);
 	}
 
 	walk_instance_js_pre_template() {
@@ -657,7 +658,10 @@ export default class Component {
 				this.add_reference(name.slice(1));
 
 				const variable = this.var_lookup.get(name.slice(1));
-				if (variable) variable.subscribable = true;
+				if (variable) {
+					variable.subscribable = true;
+					variable.referenced_from_script = true;
+				}
 			} else {
 				this.add_var({
 					name,
@@ -667,29 +671,115 @@ export default class Component {
 			}
 		});
 
-		this.extract_imports(script.content);
-		this.extract_exports(script.content);
-		this.track_mutations();
+		this.track_references_and_mutations();
+	}
+
+	walk_module_js_post_template() {
+		const script = this.ast.module;
+		if (!script) return;
+
+		const { body } = script.content;
+		let i = body.length;
+		while(--i >= 0) {
+			const node = body[i];
+			if (node.type === 'ImportDeclaration') {
+				this.extract_imports(node);
+				body.splice(i, 1);
+			}
+
+			if (/^Export/.test(node.type)) {
+				const replacement = this.extract_exports(node);
+				if (replacement) {
+					body[i] = replacement;
+				} else {
+					body.splice(i, 1);
+				}
+			}
+		}
 	}
 
 	walk_instance_js_post_template() {
 		const script = this.ast.instance;
 		if (!script) return;
 
-		this.warn_on_undefined_store_value_references();
+		this.post_template_walk();
+
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
 	}
 
-	// TODO merge this with other walks that are independent
-	track_mutations() {
+	post_template_walk() {
+		const script = this.ast.instance;
+		if (!script) return;
+
 		const component = this;
+		const { content } = script;
 		const { instance_scope, instance_scope_map: map } = this;
 
 		let scope = instance_scope;
 
-		walk(this.ast.instance.content, {
-			enter(node) {
+		const toRemove = [];
+		const remove = (parent, prop, index) => {
+			toRemove.unshift([parent, prop, index]);
+		}
+
+		walk(content, {
+			enter(node, parent, prop, index) {
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+
+				if (node.type === 'ImportDeclaration') {
+					component.extract_imports(node);
+					// TODO: to use actual remove
+					remove(parent, prop, index);
+					return this.skip();
+				}
+
+				if (/^Export/.test(node.type)) {
+					const replacement = component.extract_exports(node);
+					if (replacement) {
+						this.replace(replacement);
+					} else {
+						// TODO: to use actual remove
+						remove(parent, prop, index);
+					}
+					return this.skip();
+				}
+
+				component.warn_on_undefined_store_value_references(node, parent, scope);
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = scope.parent;
+				}
+			},
+		});
+
+		for(const [parent, prop, index] of toRemove) {
+			if (parent) {
+				if (index !== null) {
+					parent[prop].splice(index, 1);
+				} else {
+					delete parent[prop];
+				}
+			}
+		}
+	}
+
+	track_references_and_mutations() {
+		const script = this.ast.instance;
+		if (!script) return;
+
+		const component = this;
+		const { content } = script;
+		const { instance_scope, instance_scope_map: map } = this;
+
+		let scope = instance_scope;
+
+		walk(content, {
+			enter(node, parent) {
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
@@ -707,45 +797,12 @@ export default class Component {
 						}
 					});
 				}
-			},
 
-			leave(node) {
-				if (map.has(node)) {
-					scope = scope.parent;
-				}
-			},
-		});
-	}
-
-	warn_on_undefined_store_value_references() {
-		// TODO this pattern happens a lot... can we abstract it
-		// (or better still, do fewer AST walks)?
-		const component = this;
-		let { instance_scope: scope, instance_scope_map: map } = this;
-
-		walk(this.ast.instance.content, {
-			enter(node, parent) {
-				if (map.has(node)) {
-					scope = map.get(node);
-				}
-
-				if (
-					node.type === 'LabeledStatement' &&
-					node.label.name === '$' &&
-					parent.type !== 'Program'
-				) {
-					component.warn(node as any, {
-						code: 'non-top-level-reactive-declaration',
-						message: '$: has no effect outside of the top-level',
-					});
-				}
-
-				if (is_reference(node as Node, parent as Node)) {
+				if (is_used_as_reference(node, parent)) {
 					const object = get_object(node);
-					const { name } = object;
-
-					if (name[0] === '$' && !scope.has(name)) {
-						component.warn_if_undefined(name, object, null);
+					if (scope.find_owner(object.name) === instance_scope) {
+						const variable = component.var_lookup.get(object.name);
+						variable.referenced_from_script = true;
 					}
 				}
 			},
@@ -756,6 +813,28 @@ export default class Component {
 				}
 			},
 		});
+	}
+
+	warn_on_undefined_store_value_references(node, parent, scope) {
+		if (
+			node.type === 'LabeledStatement' &&
+			node.label.name === '$' &&
+			parent.type !== 'Program'
+		) {
+			this.warn(node as any, {
+				code: 'non-top-level-reactive-declaration',
+				message: '$: has no effect outside of the top-level',
+			});
+		}
+
+		if (is_reference(node as Node, parent as Node)) {
+			const object = get_object(node);
+			const { name } = object;
+
+			if (name[0] === '$' && !scope.has(name)) {
+				this.warn_if_undefined(name, object, null);
+			}
+		}
 	}
 
 	invalidate(name, value?) {
