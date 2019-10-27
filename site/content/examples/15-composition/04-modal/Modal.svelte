@@ -15,11 +15,7 @@
 		if (e.key === 'Tab') {
 			// trap focus
 			const nodes = modal.querySelectorAll('*');
-			const active = document.activeElement;
-
 			const tabbable = Array.from(nodes).filter(n => n.tabIndex >= 0);
-			const first = tabbable[0];
-			const last = tabbable[tabbable.length - 1];
 
 			let index = tabbable.indexOf(document.activeElement);
 			if (index === -1 && e.shiftKey) index = 0;
