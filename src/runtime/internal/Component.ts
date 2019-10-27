@@ -13,6 +13,7 @@ interface T$$ {
 	callbacks: any;
 	after_update: any[];
 	props: any;
+	renamed_props: any;
 	fragment: null|any;
 	not_equal: any;
 	before_update: any[];
@@ -23,6 +24,9 @@ interface T$$ {
 
 export function bind(component, name, callback) {
 	if (component.$$.props.indexOf(name) === -1) return;
+	if (component.$$.renamed_props && name in component.$$.renamed_props) {
+		name = component.$$.renamed_props[name];
+	}
 	component.$$.bound[name] = callback;
 	callback(component.$$.ctx[name]);
 }
@@ -70,7 +74,7 @@ function make_dirty(component, key) {
 	component.$$.dirty[key] = true;
 }
 
-export function init(component, options, instance, create_fragment, not_equal, prop_names) {
+export function init(component, options, instance, create_fragment, not_equal, prop_names, renamed_props) {
 	const parent_component = current_component;
 	set_current_component(component);
 
@@ -82,6 +86,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 		// state
 		props: prop_names,
+		renamed_props,
 		update: noop,
 		not_equal,
 		bound: blank_object(),
