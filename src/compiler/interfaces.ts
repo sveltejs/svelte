@@ -148,7 +148,8 @@ export interface Var {
 	module?: boolean;
 	mutated?: boolean;
 	reassigned?: boolean;
-	referenced?: boolean;
+	referenced?: boolean;  // referenced from template scope
+	referenced_from_script?: boolean;        // referenced from script
 	writable?: boolean;
 
 	// used internally, but not exposed

@@ -1,33 +1,23 @@
 import {
 	SvelteComponent,
-	append,
 	detach,
 	element,
 	init,
 	insert,
 	noop,
-	safe_not_equal,
-	text
+	safe_not_equal
 } from "svelte/internal";
 
 function create_fragment(ctx) {
 	let h1;
-	let t0;
-	let t1;
-	let t2;
 
 	return {
 		c() {
 			h1 = element("h1");
-			t0 = text("Hello ");
-			t1 = text(name);
-			t2 = text("!");
+			h1.innerHTML = `Hello ${name}!`;
 		},
 		m(target, anchor) {
 			insert(target, h1, anchor);
-			append(h1, t0);
-			append(h1, t1);
-			append(h1, t2);
 		},
 		p: noop,
 		i: noop,
