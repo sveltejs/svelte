@@ -15,6 +15,7 @@ export const globals = new Set([
 	'encodeURIComponent',
 	'Error',
 	'EvalError',
+	'Event',
 	'history',
 	'Infinity',
 	'InternalError',
