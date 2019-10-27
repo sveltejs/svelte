@@ -223,7 +223,7 @@ export default function dom(
 
 		component.rewrite_props(({ name, reassigned, export_name }) => {
 			const value = `$${name}`;
-			
+
 			const insert = (reassigned || export_name)
 				? b`${`$$subscribe_${name}`}()`
 				: b`@component_subscribe($$self, ${name}, #value => $$invalidate('${value}', ${value} = #value))`;
@@ -426,10 +426,14 @@ export default function dom(
 	}
 
 	const prop_names = x`[]`;
+	const renamed_prop_names = [];
 
 	// TODO find a more idiomatic way of doing this
 	props.forEach(v => {
 		(prop_names as any).elements.push({ type: 'Literal', value: v.export_name });
+		if (v.name !== v.export_name) {
+			renamed_prop_names.push(p`${v.export_name}: "${v.name}"`);
+		}
 	});
 
 	if (options.customElement) {
@@ -440,7 +444,7 @@ export default function dom(
 
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
+					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names}, ${renamed_prop_names.length > 0 && x`{ ${renamed_prop_names} }`});
 
 					${dev_props_check}
 
@@ -492,7 +496,7 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
+					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names}, ${renamed_prop_names.length > 0 && x`{ ${renamed_prop_names} }`});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}
