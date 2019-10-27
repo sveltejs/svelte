@@ -18,7 +18,7 @@
 		closeButton.focus()
 	})
 
-</cript>
+</script>
 
 <style>
 	.modal-background {
