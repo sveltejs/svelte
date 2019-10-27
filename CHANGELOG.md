@@ -10,6 +10,7 @@ Also:
 * Fix edge cases in matching selectors against elements ([#1710](https://github.com/sveltejs/svelte/issues/1710))
 * Fix several bugs related to interaction of `{...spread}` attributes with other features ([#2721](https://github.com/sveltejs/svelte/issues/2721), [#2916](https://github.com/sveltejs/svelte/issues/2916), [#3421](https://github.com/sveltejs/svelte/issues/3421), [#3681](https://github.com/sveltejs/svelte/issues/3681), [#3764](https://github.com/sveltejs/svelte/issues/3764), [#3790](https://github.com/sveltejs/svelte/issues/3790))
 * Allow exiting a reactive block early with `break $` ([#2828](https://github.com/sveltejs/svelte/issues/2828))
+* Fix binding to props that have been renamed with `export { ... as ... }` ([#3508](https://github.com/sveltejs/svelte/issues/3508))
 * Fix application of style scoping class in cases of ambiguity ([#3544](https://github.com/sveltejs/svelte/issues/3544))
 * Check attributes have changed before setting them to avoid image flicker ([#3579](https://github.com/sveltejs/svelte/pull/3579))
 * Fix generating malformed code for `{@debug}` tags with no dependencies ([#3588](https://github.com/sveltejs/svelte/issues/3588))
