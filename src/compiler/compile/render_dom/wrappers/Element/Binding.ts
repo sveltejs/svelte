@@ -140,6 +140,7 @@ export default class BindingWrapper {
 			case 'playbackRate':
 			case 'volume':
 				update_conditions.push(x`!@_isNaN(${this.snippet})`);
+				mount_conditions.push(x`!@_isNaN(${this.snippet})`);
 				break;
 
 			case 'paused':

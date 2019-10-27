@@ -58,8 +58,14 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, audio, anchor);
-			audio.volume = ctx.volume;
-			audio.playbackRate = ctx.playbackRate;
+
+			if (!isNaN(ctx.volume)) {
+				audio.volume = ctx.volume;
+			}
+
+			if (!isNaN(ctx.playbackRate)) {
+				audio.playbackRate = ctx.playbackRate;
+			}
 		},
 		p(changed, ctx) {
 			if (!audio_updating && changed.currentTime && !isNaN(ctx.currentTime)) {
