@@ -12,6 +12,7 @@ export default function is_used_as_reference(
 		return true;
 	}
 
+	/* eslint-disable no-fallthrough */
 	switch (parent.type) {
 		// disregard the `foo` in `const foo = bar`
 		case 'VariableDeclarator':

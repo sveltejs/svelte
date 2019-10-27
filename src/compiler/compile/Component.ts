@@ -680,7 +680,7 @@ export default class Component {
 
 		const { body } = script.content;
 		let i = body.length;
-		while(--i >= 0) {
+		while (--i >= 0) {
 			const node = body[i];
 			if (node.type === 'ImportDeclaration') {
 				this.extract_imports(node);
@@ -721,7 +721,7 @@ export default class Component {
 		const toRemove = [];
 		const remove = (parent, prop, index) => {
 			toRemove.unshift([parent, prop, index]);
-		}
+		};
 
 		walk(content, {
 			enter(node, parent, prop, index) {
@@ -757,7 +757,7 @@ export default class Component {
 			},
 		});
 
-		for(const [parent, prop, index] of toRemove) {
+		for (const [parent, prop, index] of toRemove) {
 			if (parent) {
 				if (index !== null) {
 					parent[prop].splice(index, 1);
