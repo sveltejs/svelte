@@ -166,7 +166,8 @@ describe("runtime", () => {
 							mod,
 							target,
 							window,
-							raf
+							raf,
+							compileOptions
 						})).then(() => {
 							component.$destroy();
 

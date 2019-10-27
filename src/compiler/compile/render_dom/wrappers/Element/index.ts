@@ -6,6 +6,7 @@ import { is_void, sanitize } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
 import { escape_html, string_literal } from '../../../utils/stringify';
 import TextWrapper from '../Text';
+import TagWrapper from '../shared/Tag';
 import fix_attribute_casing from './fix_attribute_casing';
 import { b, x, p } from 'code-red';
 import { namespaces } from '../../../../utils/namespaces';
@@ -849,7 +850,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 }
 
-function to_html(wrappers: Array<ElementWrapper | TextWrapper>, block: Block, literal: any, state: any) {
+function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, block: Block, literal: any, state: any) {
 	wrappers.forEach(wrapper => {
 		if (wrapper.node.type === 'Text') {
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
@@ -865,6 +866,15 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper>, block: Block, li
 				.replace(/\\/g, '\\\\')
 				.replace(/`/g, '\\`')
 				.replace(/\$/g, '\\$');
+		}
+
+		else if (wrapper.node.type === 'MustacheTag' || wrapper.node.type === 'RawMustacheTag' ) {
+			literal.quasis.push(state.quasi);
+			literal.expressions.push(wrapper.node.expression.manipulate(block));
+			state.quasi = {
+				type: 'TemplateElement',
+				value: { raw: '' }
+			};
 		}
 
 		else if (wrapper.node.name === 'noscript') {
