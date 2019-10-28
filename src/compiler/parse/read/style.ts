@@ -31,7 +31,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 	// tidy up AST
 	walk(ast, {
-		enter: (node: any) => { // `any` because this isn't an ESTree node
+		enter(node: any) { // `any` because this isn't an ESTree node
 			// replace `ref:a` nodes
 			if (node.type === 'Selector') {
 				for (let i = 0; i < node.children.length; i += 1) {
@@ -45,6 +45,10 @@ export default function read_style(parser: Parser, start: number, attributes: No
 						}, a.loc.start.offset);
 					}
 				}
+			}
+
+			if (node.type === 'Declaration' && node.value.type === 'Value' && node.value.children.length === 0) {
+				this.remove();
 			}
 
 			if (node.loc) {
