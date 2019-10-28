@@ -69,7 +69,7 @@
     "eslint": "^6.3.0",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-svelte3": "^2.7.3",
-    "estree-walker": "^0.9.0",
+    "estree-walker": "^0.8.1",
     "is-reference": "^1.1.4",
     "jsdom": "^15.1.1",
     "kleur": "^3.0.3",
