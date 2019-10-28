@@ -14,7 +14,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			h1 = element("h1");
-			h1.innerHTML = `Hello ${name}!`;
+			h1.textContent = `Hello ${name}!`;
 		},
 		m(target, anchor) {
 			insert(target, h1, anchor);

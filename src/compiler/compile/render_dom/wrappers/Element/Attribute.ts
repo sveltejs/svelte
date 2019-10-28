@@ -19,6 +19,7 @@ export default class AttributeWrapper {
 
 		if (node.dependencies.size > 0) {
 			parent.cannot_use_innerhtml();
+			parent.not_static_content();
 
 			block.add_dependencies(node.dependencies);
 

@@ -14,6 +14,11 @@ import {
 
 function create_fragment(ctx) {
 	let div0;
+	let p0;
+	let t1;
+	let p1;
+	let t4;
+	let p2;
 	let t7;
 	let div1;
 	let p3;
@@ -23,11 +28,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			div0 = element("div");
-
-			div0.innerHTML = `<p>Hello world</p> 
-  <p>Hello ${world1}</p> 
-  <p>Hello ${world2}</p>`;
-
+			p0 = element("p");
+			p0.textContent = "Hello world";
+			t1 = space();
+			p1 = element("p");
+			p1.textContent = `Hello ${world1}`;
+			t4 = space();
+			p2 = element("p");
+			p2.textContent = `Hello ${world2}`;
 			t7 = space();
 			div1 = element("div");
 			p3 = element("p");
@@ -36,6 +44,11 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, div0, anchor);
+			append(div0, p0);
+			append(div0, t1);
+			append(div0, p1);
+			append(div0, t4);
+			append(div0, p2);
 			insert(target, t7, anchor);
 			insert(target, div1, anchor);
 			append(div1, p3);

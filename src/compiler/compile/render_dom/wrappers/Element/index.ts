@@ -217,17 +217,17 @@ export default class ElementWrapper extends Wrapper {
 		});
 
 		if (this.parent) {
-			if (node.actions.length > 0) this.parent.cannot_use_innerhtml();
-			if (node.animation) this.parent.cannot_use_innerhtml();
-			if (node.bindings.length > 0) this.parent.cannot_use_innerhtml();
-			if (node.classes.length > 0) this.parent.cannot_use_innerhtml();
-			if (node.intro || node.outro) this.parent.cannot_use_innerhtml();
-			if (node.handlers.length > 0) this.parent.cannot_use_innerhtml();
-
-			if (this.node.name === 'option') this.parent.cannot_use_innerhtml();
-
-			if (renderer.options.dev) {
+			if (node.actions.length > 0 ||
+				node.animation ||
+				node.bindings.length > 0 ||
+				node.classes.length > 0 ||
+				node.intro || node.outro ||
+				node.handlers.length > 0 ||
+				this.node.name === 'option' ||
+				renderer.options.dev
+			) {
 				this.parent.cannot_use_innerhtml(); // need to use add_location
+				this.parent.not_static_content();
 			}
 		}
 
@@ -291,7 +291,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		// insert static children with textContent or innerHTML
-		if (!this.node.namespace && this.can_use_innerhtml && this.fragment.nodes.length > 0) {
+		if (!this.node.namespace && (this.can_use_innerhtml || this.can_use_textcontent()) && this.fragment.nodes.length > 0) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				block.chunks.create.push(
 					 // @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
@@ -315,7 +315,7 @@ export default class ElementWrapper extends Wrapper {
 				literal.quasis.push(state.quasi);
 
 				block.chunks.create.push(
-					b`${node}.innerHTML = ${literal};`
+					b`${node}.${this.can_use_innerhtml ? 'innerHTML': 'textContent'} = ${literal};`
 				);
 			}
 		} else {
@@ -359,6 +359,10 @@ export default class ElementWrapper extends Wrapper {
 				b`@add_location(${this.var}, ${renderer.file_var}, ${loc.line - 1}, ${loc.column}, ${this.node.start});`
 			);
 		}
+	}
+
+	can_use_textcontent() {
+		return this.is_static_content && this.fragment.nodes.every(node => node.node.type === 'Text' || node.node.type === 'MustacheTag');
 	}
 
 	get_render_statement() {
