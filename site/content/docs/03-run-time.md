@@ -433,6 +433,19 @@ Out of the box, Svelte will interpolate between two numbers, two arrays or two o
 
 ---
 
+If the initial value is `undefined` or `null`, the first value change will take effect immediately. This is useful when you have tweened values that are based on props, and don't want any motion when the component first renders.
+
+```js
+const size = tweened(undefined, {
+	duration: 300,
+	easing: cubicOut
+});
+
+$: $size = big ? 100 : 10;
+```
+
+---
+
 The `interpolate` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
 
 ```html
@@ -491,6 +504,15 @@ Both `set` and `update` can take a second argument — an object with `hard` or 
 		damping: 0.25
 	});
 </script>
+```
+
+---
+
+If the initial value is `undefined` or `null`, the first value change will take effect immediately, just as with `tweened` values (see above).
+
+```js
+const size = spring();
+$: $size = big ? 100 : 10;
 ```
 
 ### `svelte/transition`

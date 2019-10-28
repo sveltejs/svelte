@@ -87,9 +87,9 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 		if (value == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
 			cancel_task = true; // cancel any running animation
 			last_time = now();
-			last_value = value;
+			last_value = new_value;
 			store.set(value = target_value);
-			return new Promise(f => f()); // fulfil immediately
+			return Promise.resolve();
 		} else if (opts.soft) {
 			const rate = opts.soft === true ? .5 : +opts.soft;
 			inv_mass_recovery_rate = 1 / (rate * 60);
