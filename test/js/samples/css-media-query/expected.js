@@ -41,7 +41,7 @@ class Component extends SvelteComponent {
 	constructor(options) {
 		super();
 		if (!document.getElementById("svelte-1slhpfn-style")) add_css();
-		init(this, options, null, create_fragment, safe_not_equal, []);
+		init(this, options, null, create_fragment, safe_not_equal, {});
 	}
 }
 
