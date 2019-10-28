@@ -425,16 +425,9 @@ export default function dom(
 		`);
 	}
 
-	const prop_names = x`{}` as ObjectExpression;
-
-	// TODO find a more idiomatic way of doing this
-	props.forEach(v => {
-		prop_names.properties.push(
-			v.name === v.export_name
-				? p`${v.name}: 0`
-				: p`${v.export_name}: "${v.name}"`
-		);
-	});
+	const prop_names = x`{
+		${props.map(v => p`${v.export_name}: ${v.export_name === v.name ? 0 : x`"${v.name}"`}}`)}
+	}` as ObjectExpression;
 
 	if (options.customElement) {
 		const declaration = b`

@@ -22,7 +22,7 @@ interface T$$ {
 }
 
 export function bind(component, name, callback) {
-	if (name in component.$$.props) {
+	if (component.$$.props.hasOwnProperty(name)) {
 		name = component.$$.props[name] || name;
 		component.$$.bound[name] = callback;
 		callback(component.$$.ctx[name]);
