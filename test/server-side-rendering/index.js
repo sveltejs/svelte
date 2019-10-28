@@ -86,14 +86,15 @@ describe("ssr", () => {
 		if (dir[0] === ".") return;
 
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
+		const solo = config.solo || /\.solo/.test(dir);
 
-		if (config.solo && process.env.CI) {
+		if (solo && process.env.CI) {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
 		if (config.skip_if_ssr) return;
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
+		(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve("test/runtime/samples", dir);
 
 			Object.keys(require.cache)
