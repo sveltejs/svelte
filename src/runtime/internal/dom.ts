@@ -1,3 +1,5 @@
+import { has_prop } from "./utils";
+
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
@@ -29,7 +31,7 @@ export function object_without_properties<T, K extends keyof T>(obj: T, exclude:
 	const target = {} as Pick<T, Exclude<keyof T, K>>;
 	for (const k in obj) {
 		if (
-			Object.prototype.hasOwnProperty.call(obj, k)
+			has_prop(obj, k)
 			// @ts-ignore
 			&& exclude.indexOf(k) === -1
 		) {

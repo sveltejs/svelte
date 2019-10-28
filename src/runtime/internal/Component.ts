@@ -1,6 +1,6 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
-import { blank_object, is_function, run, run_all, noop } from './utils';
+import { blank_object, is_function, run, run_all, noop, has_prop } from './utils';
 import { children } from './dom';
 import { transition_in } from './transitions';
 
@@ -22,7 +22,7 @@ interface T$$ {
 }
 
 export function bind(component, name, callback) {
-	if (component.$$.props.hasOwnProperty(name)) {
+	if (has_prop(component.$$.props, name)) {
 		name = component.$$.props[name] || name;
 		component.$$.bound[name] = callback;
 		callback(component.$$.ctx[name]);
