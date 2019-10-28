@@ -19,6 +19,7 @@ export default class RawMustacheTagWrapper extends Tag {
 	) {
 		super(renderer, block, parent, node);
 		this.cannot_use_innerhtml();
+		this.not_static_content();
 	}
 
 	render(block: Block, parent_node: Identifier, _parent_nodes: Identifier) {

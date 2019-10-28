@@ -14,6 +14,7 @@ export default class Wrapper {
 
 	var: Identifier;
 	can_use_innerhtml: boolean;
+	is_static_content: boolean;
 
 	constructor(
 		renderer: Renderer,
@@ -35,6 +36,7 @@ export default class Wrapper {
 		});
 
 		this.can_use_innerhtml = !renderer.options.hydratable;
+		this.is_static_content = !renderer.options.hydratable;
 
 		block.wrappers.push(this);
 	}
@@ -42,6 +44,11 @@ export default class Wrapper {
 	cannot_use_innerhtml() {
 		this.can_use_innerhtml = false;
 		if (this.parent) this.parent.cannot_use_innerhtml();
+	}
+
+	not_static_content() {
+		this.is_static_content = false;
+		if (this.parent) this.parent.not_static_content();
 	}
 
 	get_or_create_anchor(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
