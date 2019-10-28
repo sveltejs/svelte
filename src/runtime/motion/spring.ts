@@ -65,7 +65,7 @@ interface Spring<T> extends Readable<T>{
 	stiffness: number;
 }
 
-export function spring<T=any>(value: T, opts: SpringOpts = {}): Spring<T> {
+export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 	const store = writable(value);
 	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
 
@@ -84,12 +84,12 @@ export function spring<T=any>(value: T, opts: SpringOpts = {}): Spring<T> {
 		target_value = new_value;
 		const token = current_token = {};
 
-		if (opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
+		if (value == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
 			cancel_task = true; // cancel any running animation
 			last_time = now();
-			last_value = value;
+			last_value = new_value;
 			store.set(value = target_value);
-			return new Promise(f => f()); // fulfil immediately
+			return Promise.resolve();
 		} else if (opts.soft) {
 			const rate = opts.soft === true ? .5 : +opts.soft;
 			inv_mass_recovery_rate = 1 / (rate * 60);
