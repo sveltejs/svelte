@@ -10,7 +10,7 @@ function foo() {
 }
 
 function swipe(node, callback) {
-
+	
 }
 
 const Component = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {

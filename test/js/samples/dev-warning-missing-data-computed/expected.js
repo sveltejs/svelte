@@ -96,7 +96,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, instance, create_fragment, safe_not_equal, ["foo"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 });
 
 		dispatch_dev("SvelteRegisterComponent", {
 			component: this,
