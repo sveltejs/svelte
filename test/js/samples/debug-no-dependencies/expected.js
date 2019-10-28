@@ -132,7 +132,7 @@ function create_fragment(ctx) {
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, null, create_fragment, safe_not_equal, []);
+		init(this, options, null, create_fragment, safe_not_equal, {});
 
 		dispatch_dev("SvelteRegisterComponent", {
 			component: this,

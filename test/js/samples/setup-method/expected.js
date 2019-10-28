@@ -20,7 +20,7 @@ function foo(bar) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, ["foo"]);
+		init(this, options, null, create_fragment, safe_not_equal, { foo: 0 });
 	}
 
 	get foo() {

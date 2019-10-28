@@ -163,7 +163,13 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["comments", "elapsed", "time", "foo"]);
+
+		init(this, options, instance, create_fragment, safe_not_equal, {
+			comments: 0,
+			elapsed: 0,
+			time: 0,
+			foo: 0
+		});
 	}
 }
 

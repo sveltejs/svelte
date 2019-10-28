@@ -7,7 +7,7 @@ import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
 import { invalidate } from '../utils/invalidate';
 import Block from './Block';
-import { ClassDeclaration, FunctionExpression, Node, Statement } from 'estree';
+import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression } from 'estree';
 
 export default function dom(
 	component: Component,
@@ -223,7 +223,7 @@ export default function dom(
 
 		component.rewrite_props(({ name, reassigned, export_name }) => {
 			const value = `$${name}`;
-			
+
 			const insert = (reassigned || export_name)
 				? b`${`$$subscribe_${name}`}()`
 				: b`@component_subscribe($$self, ${name}, #value => $$invalidate('${value}', ${value} = #value))`;
@@ -425,12 +425,9 @@ export default function dom(
 		`);
 	}
 
-	const prop_names = x`[]`;
-
-	// TODO find a more idiomatic way of doing this
-	props.forEach(v => {
-		(prop_names as any).elements.push({ type: 'Literal', value: v.export_name });
-	});
+	const prop_names = x`{
+		${props.map(v => p`${v.export_name}: ${v.export_name === v.name ? 0 : x`"${v.name}"`}}`)}
+	}` as ObjectExpression;
 
 	if (options.customElement) {
 		const declaration = b`

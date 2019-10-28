@@ -166,16 +166,16 @@ class Component extends SvelteComponent {
 	constructor(options) {
 		super();
 
-		init(this, options, instance, create_fragment, safe_not_equal, [
-			"buffered",
-			"seekable",
-			"played",
-			"currentTime",
-			"duration",
-			"paused",
-			"volume",
-			"playbackRate"
-		]);
+		init(this, options, instance, create_fragment, safe_not_equal, {
+			buffered: 0,
+			seekable: 0,
+			played: 0,
+			currentTime: 0,
+			duration: 0,
+			paused: 0,
+			volume: 0,
+			playbackRate: 0
+		});
 	}
 }
 

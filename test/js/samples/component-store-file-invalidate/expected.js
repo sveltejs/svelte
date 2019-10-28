@@ -34,7 +34,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["increment"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { increment: 0 });
 	}
 
 	get increment() {
