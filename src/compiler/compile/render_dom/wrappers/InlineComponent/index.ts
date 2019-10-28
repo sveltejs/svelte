@@ -34,6 +34,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 
 		this.cannot_use_innerhtml();
+		this.not_static_content();
 
 		if (this.node.expression) {
 			block.add_dependencies(this.node.expression.dependencies);
