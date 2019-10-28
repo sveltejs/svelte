@@ -7,7 +7,7 @@ import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
 import { invalidate } from '../utils/invalidate';
 import Block from './Block';
-import { ClassDeclaration, FunctionExpression, Node, Statement } from 'estree';
+import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression } from 'estree';
 
 export default function dom(
 	component: Component,
@@ -425,15 +425,15 @@ export default function dom(
 		`);
 	}
 
-	const prop_names = x`[]`;
-	const renamed_prop_names = [];
+	const prop_names = x`{}` as ObjectExpression;
 
 	// TODO find a more idiomatic way of doing this
 	props.forEach(v => {
-		(prop_names as any).elements.push({ type: 'Literal', value: v.export_name });
-		if (v.name !== v.export_name) {
-			renamed_prop_names.push(p`${v.export_name}: "${v.name}"`);
-		}
+		prop_names.properties.push(
+			v.name === v.export_name
+				? p`${v.name}: 0`
+				: p`${v.export_name}: "${v.name}"`
+		);
 	});
 
 	if (options.customElement) {
@@ -444,7 +444,7 @@ export default function dom(
 
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names}, ${renamed_prop_names.length > 0 && x`{ ${renamed_prop_names} }`});
+					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 
 					${dev_props_check}
 
@@ -496,7 +496,7 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names}, ${renamed_prop_names.length > 0 && x`{ ${renamed_prop_names} }`});
+					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}

@@ -12,8 +12,7 @@ interface T$$ {
 	update: () => void;
 	callbacks: any;
 	after_update: any[];
-	props: any;
-	renamed_props: any;
+	props: Record<string, 0 | string>;
 	fragment: null|any;
 	not_equal: any;
 	before_update: any[];
@@ -23,12 +22,11 @@ interface T$$ {
 }
 
 export function bind(component, name, callback) {
-	if (component.$$.props.indexOf(name) === -1) return;
-	if (component.$$.renamed_props && name in component.$$.renamed_props) {
-		name = component.$$.renamed_props[name];
+	if (name in component.$$.props) {
+		name = component.$$.props[name] || name;
+		component.$$.bound[name] = callback;
+		callback(component.$$.ctx[name]);
 	}
-	component.$$.bound[name] = callback;
-	callback(component.$$.ctx[name]);
 }
 
 export function mount_component(component, target, anchor) {
@@ -74,19 +72,18 @@ function make_dirty(component, key) {
 	component.$$.dirty[key] = true;
 }
 
-export function init(component, options, instance, create_fragment, not_equal, prop_names, renamed_props) {
+export function init(component, options, instance, create_fragment, not_equal, props) {
 	const parent_component = current_component;
 	set_current_component(component);
 
-	const props = options.props || {};
+	const prop_values = options.props || {};
 
 	const $$: T$$ = component.$$ = {
 		fragment: null,
 		ctx: null,
 
 		// state
-		props: prop_names,
-		renamed_props,
+		props,
 		update: noop,
 		not_equal,
 		bound: blank_object(),
@@ -106,14 +103,14 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	let ready = false;
 
 	$$.ctx = instance
-		? instance(component, props, (key, ret, value = ret) => {
+		? instance(component, prop_values, (key, ret, value = ret) => {
 			if ($$.ctx && not_equal($$.ctx[key], $$.ctx[key] = value)) {
 				if ($$.bound[key]) $$.bound[key](value);
 				if (ready) make_dirty(component, key);
 			}
 			return ret;
 		})
-		: props;
+		: prop_values;
 
 	$$.update();
 	ready = true;
