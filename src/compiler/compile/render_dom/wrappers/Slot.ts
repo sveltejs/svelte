@@ -29,6 +29,7 @@ export default class SlotWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 		this.cannot_use_innerhtml();
+		this.not_static_content();
 
 		this.fragment = new FragmentWrapper(
 			renderer,

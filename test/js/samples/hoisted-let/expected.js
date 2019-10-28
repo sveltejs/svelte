@@ -14,7 +14,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			b = element("b");
-			b.innerHTML = `${get_answer()}`;
+			b.textContent = `${get_answer()}`;
 		},
 		m(target, anchor) {
 			insert(target, b, anchor);

@@ -69,6 +69,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 
 		this.cannot_use_innerhtml();
+		this.not_static_content();
 
 		block.add_dependencies(this.node.expression.dependencies);
 
