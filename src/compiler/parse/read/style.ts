@@ -47,6 +47,13 @@ export default function read_style(parser: Parser, start: number, attributes: No
 				}
 			}
 
+			if (node.type === 'Declaration' && node.value.type === 'Value' && node.value.children.length === 0) {
+				parser.error({
+					code: `invalid-declaration`,
+					message: `Declaration cannot be empty`
+				}, node.start);
+			}
+
 			if (node.loc) {
 				node.start = node.loc.start.offset;
 				node.end = node.loc.end.offset;
