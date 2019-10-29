@@ -1,7 +1,7 @@
 import { b, x, p } from 'code-red';
 import Component from '../Component';
 import Renderer from './Renderer';
-import { CompileOptions } from '../../interfaces';
+import { CompileOptions, Var } from '../../interfaces';
 import { walk } from 'estree-walker';
 import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
@@ -167,27 +167,41 @@ export default function dom(
 			`;
 		}
 
-		capture_state = (uses_props || writable_props.length > 0) ? x`
-			() => {
-				return { ${component.vars.filter(prop => prop.writable).map(prop => p`${prop.name}`)} };
-			}
-		` : x`
-			() => {
-				return {};
-			}
-		`;
+		// we need to filter out store subscriptions ($x) or $inject_state will try to call .set() on them, leading
+		// to a crash if store is not writable (and probably not intended behaviour to change store value)
+		const is_not_sub = (variable: Var) => variable.name.substr(0, 1) !== '$';
 
-		const writable_vars = component.vars.filter(variable => !variable.module && variable.writable);
-		inject_state = (uses_props || writable_vars.length > 0) ? x`
-			${$$props} => {
-				${uses_props && component.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
-				${writable_vars.map(prop => b`
-					if ('${prop.name}' in $$props) ${component.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.name}`)};
-				`)}
-			}
-		` : x`
-			${$$props} => {}
-		`;
+		const capturable_vars = component.vars.filter(
+			variable => !variable.module && variable.writable && is_not_sub(variable)
+		);
+
+		if (uses_props || capturable_vars.length > 0) {
+
+			const capturable_props = writable_props.filter(is_not_sub);
+
+			const local_vars = capturable_vars.filter(variable => !variable.export_name);
+
+			const var_names = (variables: Var[]) => variables.map(prop => p`${prop.name}`);
+
+			capture_state = x`
+				({ props: $props = true, local: $local = true } = {}) => ({
+					...${x`$props && { ${var_names(capturable_props)} }`},
+					...${x`$local && { ${var_names(local_vars)} }`}
+				})
+			`;
+
+			inject_state = x`
+				${$$props} => {
+					${uses_props && component.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
+					${capturable_vars.map(prop => b`
+						if ('${prop.name}' in $$props) ${component.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.name}`)};
+					`)}
+				}
+			`;
+		} else {
+			capture_state = x`() => ({})`;
+			inject_state = x`() => {}`;
+		}
 	}
 
 	// instrument assignments

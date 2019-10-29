@@ -49,9 +49,10 @@ let kobzol = 5;
 function instance($$self) {
 	let obj = { x: 5 };
 
-	$$self.$capture_state = () => {
-		return {};
-	};
+	$$self.$capture_state = ({ props: $props = true, local: $local = true } = {}) => ({
+		...$props && ({}),
+		...$local && ({ obj, kobzol })
+	});
 
 	$$self.$inject_state = $$props => {
 		if ("obj" in $$props) $$invalidate("obj", obj = $$props.obj);
