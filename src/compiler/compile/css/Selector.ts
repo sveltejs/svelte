@@ -3,6 +3,7 @@ import Stylesheet from './Stylesheet';
 import { gather_possible_values, UNKNOWN } from './gather_possible_values';
 import { CssNode } from './interfaces';
 import Component from '../Component';
+import Element from '../nodes/Element';
 
 enum BlockAppliesToNode {
 	NotPossible,
@@ -34,8 +35,8 @@ export default class Selector {
 		this.used = this.blocks[0].global;
 	}
 
-	apply(node: CssNode, stack: CssNode[]) {
-		const to_encapsulate: CssNode[] = [];
+	apply(node: Element, stack: Element[]) {
+		const to_encapsulate: any[] = [];
 
 		apply_selector(this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
 
@@ -132,7 +133,7 @@ export default class Selector {
 	}
 }
 
-function apply_selector(blocks: Block[], node: CssNode, stack: CssNode[], to_encapsulate: any[]): boolean {
+function apply_selector(blocks: Block[], node: Element, stack: Element[], to_encapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
@@ -259,16 +260,84 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 	const attr = node.attributes.find((attr: CssNode) => attr.name === name);
 	if (!attr) return false;
 	if (attr.is_true) return operator === null;
-	if (attr.chunks.length > 1) return true;
 	if (!expected_value) return true;
 
-	const value = attr.chunks[0];
-
-	if (!value) return false;
-	if (value.type === 'Text') return test_attribute(operator, expected_value, case_insensitive, value.data);
+	if (attr.chunks.length === 1) {
+		const value = attr.chunks[0];
+		if (!value) return false;
+		if (value.type === 'Text') return test_attribute(operator, expected_value, case_insensitive, value.data);
+	}
 
 	const possible_values = new Set();
-	gather_possible_values(value.node, possible_values);
+
+	let prev_values = [];
+	for (const chunk of attr.chunks) {
+		const current_possible_values = new Set();
+		if (chunk.type === 'Text') {
+			current_possible_values.add(chunk.data);
+		} else {
+			gather_possible_values(chunk.node, current_possible_values);
+		}
+
+		// impossible to find out all combinations
+		if (current_possible_values.has(UNKNOWN)) return true;
+		
+		if (prev_values.length > 0) {
+			const start_with_space = [];
+			const remaining = [];
+			current_possible_values.forEach((current_possible_value: string) => {
+				if (/^\s/.test(current_possible_value)) {
+					start_with_space.push(current_possible_value);
+				} else {
+					remaining.push(current_possible_value);
+				}
+			});
+
+			if (remaining.length > 0) {
+				if (start_with_space.length > 0) {
+					prev_values.forEach(prev_value => possible_values.add(prev_value));
+				}
+
+				const combined = [];
+				prev_values.forEach((prev_value: string) => {
+					remaining.forEach((value: string) => {
+						combined.push(prev_value + value);
+					});
+				});
+				prev_values = combined;
+
+				start_with_space.forEach((value: string) => {
+					if (/\s$/.test(value)) {
+						possible_values.add(value);
+					} else {
+						prev_values.push(value);
+					}
+				});
+				continue;
+			} else {
+				prev_values.forEach(prev_value => possible_values.add(prev_value));
+				prev_values = [];
+			}
+		}
+
+		current_possible_values.forEach((current_possible_value: string) => {
+			if (/\s$/.test(current_possible_value)) {
+				possible_values.add(current_possible_value);
+			} else {
+				prev_values.push(current_possible_value);
+			}
+		});
+		if (prev_values.length < current_possible_values.size) {
+			prev_values.push(' ');
+		}
+
+		if (prev_values.length > 20) {
+			// might grow exponentially, bail out
+			return true;
+		}
+	}
+	prev_values.forEach(prev_value => possible_values.add(prev_value));
+
 	if (possible_values.has(UNKNOWN)) return true;
 
 	for (const value of possible_values) {
