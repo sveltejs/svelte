@@ -29,18 +29,17 @@ function optimise_text_content(children) {
 		while (end < children.length && text_like_node_type.has(children[end].type))
 			end++;
 
-		if (end > start) {
+		// based on heuristic, 
+		// require more than 2 neighouring text contents to merge yields smaller content
+		if (end > start + 2) {
 			const merged = merge_text_siblings(children.slice(start, end));
-			children.splice(start, end - start, ...merged);
-			start = end;
+			children.splice(start, end - start, merged);
 		}
+		start = end;
 	} while (start < children.length);
 }
 
 function merge_text_siblings(children: Array<Text | MustacheTag>) {
-	if (children.length < 3) {
-		return children;
-	}
 
 	const literal = {
 		type: 'TemplateLiteral',
@@ -76,10 +75,10 @@ function merge_text_siblings(children: Array<Text | MustacheTag>) {
 
 	literal.quasis.push(state.quasi);
 
-	return [{
+	return {
 		type: 'MustacheTag',
 		expression: literal,
 		start: children[0].start,
 		end: children[children.length - 1].end,
-	}];
+	};
 }
