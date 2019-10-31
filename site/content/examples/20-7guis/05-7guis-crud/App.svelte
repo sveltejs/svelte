@@ -22,13 +22,13 @@
 	let i = 0;
 
 	$: filteredPeople = prefix
-		? people.filter(person => {
+		? people.map(person => {
 			const name = `${person.last}, ${person.first}`;
-			return name.toLowerCase().startsWith(prefix.toLowerCase());
+			return { matched: name.toLowerCase().startsWith(prefix.toLowerCase()), person: person };
 		})
-		: people;
+		: people.map(person => Object({ matched: true, person: person }));
 
-	$: selected = filteredPeople[i];
+	$: selected = filteredPeople[i].person;
 
 	$: reset_inputs(selected);
 
@@ -82,8 +82,10 @@
 <input placeholder="filter prefix" bind:value={prefix}>
 
 <select bind:value={i} size={5}>
-	{#each filteredPeople as person, i}
+	{#each filteredPeople as { matched, person }, i}
+		{#if matched}
 		<option value={i}>{person.last}, {person.first}</option>
+		{/if}
 	{/each}
 </select>
 
