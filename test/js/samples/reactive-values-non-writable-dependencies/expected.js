@@ -1,15 +1,4 @@
-import { SvelteComponent, init, noop, safe_not_equal } from "svelte/internal";
-
-function create_fragment(ctx) {
-	return {
-		c: noop,
-		m: noop,
-		p: noop,
-		i: noop,
-		o: noop,
-		d: noop
-	};
-}
+import { SvelteComponent, init, safe_not_equal } from "svelte/internal";
 
 function instance($$self, $$props, $$invalidate) {
 	let { a = 1 } = $$props;
@@ -32,7 +21,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { a: 0, b: 0 });
+		init(this, options, instance, null, safe_not_equal, { a: 0, b: 0 });
 	}
 }
 
