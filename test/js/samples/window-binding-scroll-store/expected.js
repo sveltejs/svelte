@@ -111,7 +111,7 @@ function instance($$self, $$props, $$invalidate) {
 	component_subscribe($$self, y_squared, value => $$invalidate("$y_squared", $y_squared = value));
 
 	function onwindowscroll() {
-		y.set($y = window.pageYOffset);
+		y.set($y = window.pageYOffset)
 	}
 
 	return {
