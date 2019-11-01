@@ -127,7 +127,11 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					${props.map(prop => b`$$invalidate('${prop.name}', ${prop.name} = @_window.${prop.value});`)}
+					${props.map(prop =>
+						prop.name[0] === '$'
+							? b`${prop.name.slice(1)}.set(${prop.name} = @_window.${prop.value});`
+							: b`$$invalidate('${prop.name}', ${prop.name} = @_window.${prop.value});`
+					)}
 				}
 			`);
 
@@ -165,9 +169,11 @@ export default class WindowWrapper extends Wrapper {
 				referenced: true
 			});
 
+			const invalidate = name[0] === '$' ? b`${name.slice(1)}.set(${name} = @_navigator.onLine)` : b`$$invalidate('${name}', ${name} = @_navigator.onLine);`;
+
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					$$invalidate('${name}', ${name} = @_navigator.onLine);
+					${invalidate}
 				}
 			`);
 
