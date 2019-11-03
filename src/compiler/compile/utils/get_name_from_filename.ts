@@ -1,7 +1,7 @@
 export default function get_name_from_filename(filename: string) {
 	if (!filename) return null;
 	// eslint-disable-next-line no-useless-escape
-	const parts = filename.split(/[\/\\]/);
+	const parts = encodeURI(filename).split(/[\/\\]/);
 
 	if (parts.length > 1) {
 		const index_match = parts[parts.length - 1].match(/^index(\.\w+)/);
@@ -12,6 +12,7 @@ export default function get_name_from_filename(filename: string) {
 	}
 
 	const base = parts.pop()
+		.replace(/%/g, 'u')
 		.replace(/\.[^.]+$/, "")
 		.replace(/[^a-zA-Z_$0-9]+/g, '_')
 		.replace(/^_/, '')
