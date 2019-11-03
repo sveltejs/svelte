@@ -5,7 +5,6 @@
 	import flash from './flash.js';
 
 	export let todo;
-	export let toggle;
 
 	let div;
 
