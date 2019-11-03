@@ -28,6 +28,11 @@
 		})
 		: people.map(person => Object({ matched: true, person: person }));
 
+	$: if (!filteredPeople[i].matched) {
+		let newIndex = filteredPeople.findIndex(person => person.matched);
+		if (newIndex >= 0) i = newIndex;
+	}
+
 	$: selected = filteredPeople[i].person;
 
 	$: reset_inputs(selected);
