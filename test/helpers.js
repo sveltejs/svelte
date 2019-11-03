@@ -52,6 +52,7 @@ global.document = window.document;
 global.navigator = window.navigator;
 global.getComputedStyle = window.getComputedStyle;
 global.requestAnimationFrame = null; // placeholder, filled in using set_raf
+global.window = window;
 
 // add missing ecmascript globals to window
 for (const key of Object.getOwnPropertyNames(global)) {
