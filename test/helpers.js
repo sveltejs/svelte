@@ -52,11 +52,18 @@ global.document = window.document;
 global.navigator = window.navigator;
 global.getComputedStyle = window.getComputedStyle;
 global.requestAnimationFrame = null; // placeholder, filled in using set_raf
+global.window = window;
 
 // add missing ecmascript globals to window
 for (const key of Object.getOwnPropertyNames(global)) {
 	window[key] = window[key] || global[key];
 }
+
+// implement mock scroll
+window.scrollTo = function(pageXOffset, pageYOffset) {
+	window.pageXOffset = pageXOffset;
+	window.pageYOffset = pageYOffset;
+};
 
 export function env() {
 	window.document.title = '';
@@ -203,4 +210,26 @@ export function spaces(i) {
 	let result = '';
 	while (i--) result += ' ';
 	return result;
+}
+
+// fake timers
+const original_set_timeout = global.setTimeout;
+
+export function useFakeTimers() {
+	const callbacks = [];
+
+	global.setTimeout = function(fn) {
+		callbacks.push(fn);
+	};
+
+	return {
+		flush() {
+			callbacks.forEach(fn => fn());
+			callbacks.splice(0, callbacks.length);
+		},
+		removeFakeTimers() {
+			callbacks.splice(0, callbacks.length);
+			global.setTimeout = original_set_timeout;
+		}
+	};
 }

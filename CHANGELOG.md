@@ -24,6 +24,7 @@ Also:
 * Flush changes in newly attached block when using `{#await}` ([#3660](https://github.com/sveltejs/svelte/issues/3660))
 * Throw exception immediately when calling `createEventDispatcher()` after component instantiation ([#3667](https://github.com/sveltejs/svelte/pull/3667))
 * Fix globals shadowing contextual template scope ([#3674](https://github.com/sveltejs/svelte/issues/3674))
+* Fix `<svelte:window>` bindings to stores ([#3832](https://github.com/sveltejs/svelte/issues/3832))
 
 ## 3.12.1
 
