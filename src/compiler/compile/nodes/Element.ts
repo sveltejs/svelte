@@ -151,6 +151,16 @@ export default class Element extends Node {
 			}
 		}
 
+		// Binding relies on Attribute, defer its evaluation
+		const deferreds = ['Binding'];
+
+		info.attributes.sort((node1, node2) => {
+			const deferIndex1 = deferreds.indexOf(node1.type);
+			const deferIndex2 = deferreds.indexOf(node2.type);
+
+			return deferIndex1 - deferIndex2;
+		});
+
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Action':
