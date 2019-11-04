@@ -49,7 +49,7 @@ function create_fragment(ctx) {
 			if (changed.z) bar_changes.x = ctx.z;
 			bar.$set(bar_changes);
 
-			if (changed.z && input.value !== ctx.z) {
+			if (changed.z && input && input.value !== ctx.z) {
 				set_input_value(input, ctx.z);
 			}
 		},

@@ -39,7 +39,7 @@ function create_fragment(ctx) {
 		p(changed, ctx) {
 			if (changed.foo) set_data(t0, ctx.foo);
 
-			if (changed.foo && input.value !== ctx.foo) {
+			if (changed.foo && input && input.value !== ctx.foo) {
 				set_input_value(input, ctx.foo);
 			}
 		},
