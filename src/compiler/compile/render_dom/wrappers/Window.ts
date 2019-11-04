@@ -127,7 +127,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					${props.map(prop => b`$$invalidate('${prop.name}', ${prop.name} = @_window.${prop.value});`)}
+					${props.map(prop => component.invalidate(prop.name, x`${prop.name} = @_window.${prop.value}`))}
 				}
 			`);
 
@@ -167,7 +167,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					$$invalidate('${name}', ${name} = @_navigator.onLine);
+					${component.invalidate(name, x`${name} = @_navigator.onLine`)}
 				}
 			`);
 
