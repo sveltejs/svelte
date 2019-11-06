@@ -1,7 +1,7 @@
 export default function get_name_from_filename(filename: string) {
 	if (!filename) return null;
 
-	const parts = filename.split(/[\/\\]/).map(encodeURI);
+	const parts = filename.split(/[/\\]/).map(encodeURI);
 
 	if (parts.length > 1) {
 		const index_match = parts[parts.length - 1].match(/^index(\.\w+)/);
