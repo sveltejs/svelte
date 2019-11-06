@@ -376,6 +376,8 @@ export default class Block {
 			d: ${properties.destroy}
 		}`;
 
+		const block = dev && this.get_unique_name('block');
+
 		const body = b`
 			${Array.from(this.variables.values()).map(({ id, init }) => {
 				return init
@@ -387,9 +389,15 @@ export default class Block {
 
 			${dev
 				? b`
-					const block = ${return_value};
-					@dispatch_dev("SvelteRegisterBlock", { block, id: ${this.name || 'create_fragment'}.name, type: "${this.type}", source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}", ctx: #ctx });
-					return block;`
+					const ${block} = ${return_value};
+					@dispatch_dev("SvelteRegisterBlock", {
+						block: ${block},
+						id: ${this.name || 'create_fragment'}.name,
+						type: "${this.type}",
+						source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
+						ctx: #ctx
+					});
+					return ${block};`
 				: b`
 					return ${return_value};`
 			}
