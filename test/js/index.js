@@ -14,8 +14,11 @@ describe("js", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(solo ? it.only : it)(dir, () => {
-			dir = path.resolve(`${__dirname}/samples`, dir);
+		dir = path.resolve(`${__dirname}/samples`, dir);
+
+		const skip = !fs.existsSync(`${dir}/input.svelte`);
+
+		(skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const config = loadConfig(`${dir}/_config.js`);
 
 			const input = fs.readFileSync(`${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");

@@ -15,7 +15,9 @@ describe('parse', () => {
 			);
 		}
 
-		(solo ? it.only : it)(dir, () => {
+		const skip = !fs.existsSync(`${__dirname}/samples/${dir}/input.svelte`);
+
+		(skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`) || {};
 
 			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '');
