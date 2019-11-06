@@ -60,7 +60,7 @@ export default class Block {
 		destroy: Array<Node | Node[]>;
 	};
 
-	event_listeners: Array<Node> = [];
+	event_listeners: Node[] = [];
 
 	maintain_context: boolean;
 	has_animation: boolean;
