@@ -60,7 +60,8 @@ function create_fragment(ctx) {
 			insert(target, t5, anchor);
 			insert(target, button2, anchor);
 		},
-		p(changed, ctx) {
+		p(changed, new_ctx) {
+			ctx = new_ctx;
 			if (changed.number) set_data(t4, ctx.number);
 		},
 		i: noop,
