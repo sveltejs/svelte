@@ -1,5 +1,6 @@
 import {
 	SvelteComponent,
+	create_component,
 	destroy_component,
 	init,
 	mount_component,
@@ -17,7 +18,7 @@ function create_fragment(ctx) {
 
 	return {
 		c() {
-			lazyload.$$.fragment.c();
+			create_component(lazyload.$$.fragment);
 		},
 		m(target, anchor) {
 			mount_component(lazyload, target, anchor);
