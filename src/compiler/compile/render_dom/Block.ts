@@ -203,13 +203,11 @@ export default class Block {
 	}
 
 	add_variable(id: Identifier, init?: Node) {
-		this.variables.forEach(v => {
-			if (v.id.name === id.name) {
-				throw new Error(
-					`Variable '${id.name}' already initialised with a different value`
-				);
-			}
-		});
+		if (this.variables.has(id.name)) {
+			throw new Error(
+				`Variable '${id.name}' already initialised with a different value`
+			);
+		}
 
 		this.variables.set(id.name, { id, init });
 	}
