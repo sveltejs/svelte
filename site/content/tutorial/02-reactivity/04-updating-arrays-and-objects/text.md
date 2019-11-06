@@ -30,3 +30,12 @@ function addNumber() {
 	numbers[numbers.length] = numbers.length + 1;
 }
 ```
+As a rule of thumb _The name of the reactive variable must appear on the left side of the equals to react to assignments._
+
+For example, this case wouldn't work:
+```js
+const childRef = obj.foo;
+childRef.bar = "new value";
+```
+
+And to make it work it would be needed to force an update to object with `obj = obj`.
