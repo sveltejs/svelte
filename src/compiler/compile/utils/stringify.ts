@@ -12,13 +12,15 @@ export function escape(data: string, { only_escape_at_symbol = false } = {}) {
 }
 
 const escaped = {
+  '"': '&quot;',
+  "'": '&#39;',
 	'&': '&amp;',
 	'<': '&lt;',
 	'>': '&gt;',
 };
 
 export function escape_html(html) {
-	return String(html).replace(/[&<>]/g, match => escaped[match]);
+	return String(html).replace(/["'&<>]/g, match => escaped[match]);
 }
 
 export function escape_template(str) {
