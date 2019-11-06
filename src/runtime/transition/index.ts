@@ -1,4 +1,4 @@
-import { cubicOut, cubicInOut } from 'svelte/easing';
+import { cubicOut, cubicInOut, linear } from 'svelte/easing';
 import { assign, is_function } from 'svelte/internal';
 
 type EasingFunction = (t: number) => number;
@@ -43,17 +43,20 @@ export function blur(node: Element, {
 interface FadeParams {
 	delay: number;
 	duration: number;
+	easing: EasingFunction;
 }
 
 export function fade(node: Element, {
 	delay = 0,
-	duration = 400
+	duration = 400,
+	easing = linear
 }: FadeParams): TransitionConfig {
 	const o = +getComputedStyle(node).opacity;
 
 	return {
 		delay,
 		duration,
+		easing,
 		css: t => `opacity: ${t * o}`
 	};
 }
