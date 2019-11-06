@@ -406,6 +406,21 @@ export default class Block {
 		return body;
 	}
 
+	has_content() {
+		return this.renderer.options.dev ||
+			this.first ||
+			this.event_listeners.length > 0 ||
+			this.chunks.intro.length > 0 ||
+			this.chunks.outro.length > 0  ||
+			this.chunks.create.length > 0 ||
+			this.chunks.hydrate.length > 0 ||
+			this.chunks.claim.length > 0 ||
+			this.chunks.mount.length > 0 ||
+			this.chunks.update.length > 0 ||
+			this.chunks.destroy.length > 0 ||
+			this.has_animation;
+	}
+
 	render() {
 		const key = this.key && this.get_unique_name('key');
 

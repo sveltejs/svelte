@@ -396,12 +396,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.chunks.create.push(
-				b`if (${name}) ${name}.$$.fragment.c();`
+				b`if (${name}) @create_component(${name}.$$.fragment);`
 			);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
 				block.chunks.claim.push(
-					b`if (${name}) ${name}.$$.fragment.l(${parent_nodes});`
+					b`if (${name}) @claim_component(${name}.$$.fragment, ${parent_nodes});`
 				);
 			}
 
@@ -437,7 +437,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${munged_bindings}
 						${munged_handlers}
 
-						${name}.$$.fragment.c();
+						@create_component(${name}.$$.fragment);
 						@transition_in(${name}.$$.fragment, 1);
 						@mount_component(${name}, ${update_mount_node}, ${anchor});
 					} else {
@@ -472,11 +472,11 @@ export default class InlineComponentWrapper extends Wrapper {
 				${munged_handlers}
 			`);
 
-			block.chunks.create.push(b`${name}.$$.fragment.c();`);
+			block.chunks.create.push(b`@create_component(${name}.$$.fragment);`);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
 				block.chunks.claim.push(
-					b`${name}.$$.fragment.l(${parent_nodes});`
+					b`@claim_component(${name}.$$.fragment, ${parent_nodes});`
 				);
 			}
 

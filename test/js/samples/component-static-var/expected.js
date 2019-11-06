@@ -1,5 +1,6 @@
 import {
 	SvelteComponent,
+	create_component,
 	destroy_component,
 	detach,
 	element,
@@ -28,9 +29,9 @@ function create_fragment(ctx) {
 
 	return {
 		c() {
-			foo.$$.fragment.c();
+			create_component(foo.$$.fragment);
 			t0 = space();
-			bar.$$.fragment.c();
+			create_component(bar.$$.fragment);
 			t1 = space();
 			input = element("input");
 			dispose = listen(input, "input", ctx.input_input_handler);
