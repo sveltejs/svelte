@@ -1,7 +1,7 @@
 export default function get_name_from_filename(filename: string) {
 	if (!filename) return null;
-	// eslint-disable-next-line no-useless-escape
-	const parts = encodeURI(filename).split(/[\/\\]/);
+
+	const parts = filename.split(/[\/\\]/).map(encodeURI);
 
 	if (parts.length > 1) {
 		const index_match = parts[parts.length - 1].match(/^index(\.\w+)/);
