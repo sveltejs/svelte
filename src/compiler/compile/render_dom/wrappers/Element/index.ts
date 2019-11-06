@@ -894,7 +894,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 				attr.node.chunks.forEach(chunk => {
 					if (chunk.type === 'Text') {
-						state.quasi.value.raw += chunk.data;
+						state.quasi.value.raw += escape_html(chunk.data);
 					} else {
 						literal.quasis.push(state.quasi);
 						literal.expressions.push(chunk.manipulate(block));
