@@ -16,6 +16,7 @@ import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { changed } from '../shared/changed';
 import { Node, Identifier, ObjectExpression } from 'estree';
+import EventHandler from '../Element/EventHandler';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
@@ -365,7 +366,8 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {
-			let snippet = handler.render(block);
+			const event_handler = new EventHandler(handler, this);
+			let snippet = event_handler.get_snippet(block);
 			if (handler.modifiers.has('once')) snippet = x`@once(${snippet})`;
 
 			return b`${name}.$on("${handler.name}", ${snippet});`;
@@ -396,12 +398,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.chunks.create.push(
-				b`if (${name}) ${name}.$$.fragment.c();`
+				b`if (${name}) @create_component(${name}.$$.fragment);`
 			);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
 				block.chunks.claim.push(
-					b`if (${name}) ${name}.$$.fragment.l(${parent_nodes});`
+					b`if (${name}) @claim_component(${name}.$$.fragment, ${parent_nodes});`
 				);
 			}
 
@@ -437,7 +439,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${munged_bindings}
 						${munged_handlers}
 
-						${name}.$$.fragment.c();
+						@create_component(${name}.$$.fragment);
 						@transition_in(${name}.$$.fragment, 1);
 						@mount_component(${name}, ${update_mount_node}, ${anchor});
 					} else {
@@ -472,11 +474,11 @@ export default class InlineComponentWrapper extends Wrapper {
 				${munged_handlers}
 			`);
 
-			block.chunks.create.push(b`${name}.$$.fragment.c();`);
+			block.chunks.create.push(b`@create_component(${name}.$$.fragment);`);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
 				block.chunks.claim.push(
-					b`${name}.$$.fragment.l(${parent_nodes});`
+					b`@claim_component(${name}.$$.fragment, ${parent_nodes});`
 				);
 			}
 

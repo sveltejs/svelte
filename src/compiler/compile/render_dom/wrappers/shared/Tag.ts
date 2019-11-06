@@ -5,6 +5,7 @@ import Block from '../../Block';
 import MustacheTag from '../../../nodes/MustacheTag';
 import RawMustacheTag from '../../../nodes/RawMustacheTag';
 import { Node } from 'estree';
+import { changed } from './changed';
 
 export default class Tag extends Wrapper {
 	node: MustacheTag | RawMustacheTag;
@@ -39,10 +40,7 @@ export default class Tag extends Wrapper {
 		if (this.node.should_cache) block.add_variable(value, snippet); // TODO may need to coerce snippet to string
 
 		if (dependencies.length > 0) {
-			let condition = x`#changed.${dependencies[0]}`;
-			for (let i = 1; i < dependencies.length; i += 1) {
-				condition = x`${condition} || #changed.${dependencies[i]}`;
-			}
+			let condition = changed(dependencies);
 
 			if (block.has_outros) {
 				condition = x`!#current || ${condition}`;

@@ -190,7 +190,7 @@ describe("runtime", () => {
 						if (typeof config.error === 'function') {
 							config.error(assert, err);
 						} else {
-							assert.equal(config.error, err.message);
+							assert.equal(err.message, config.error);
 						}
 					} else {
 						throw err;

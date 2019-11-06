@@ -8,6 +8,7 @@ import add_actions from './shared/add_actions';
 import { changed } from './shared/changed';
 import { Identifier } from 'estree';
 import { TemplateNode } from '../../../interfaces';
+import EventHandler from './Element/EventHandler';
 
 const associated_events = {
 	innerWidth: 'resize',
@@ -34,9 +35,11 @@ const readonly = new Set([
 
 export default class WindowWrapper extends Wrapper {
 	node: Window;
+	handlers: EventHandler[];
 
 	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
 		super(renderer, block, parent, node);
+		this.handlers = this.node.handlers.map(handler => new EventHandler(handler, this));
 	}
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
@@ -47,7 +50,7 @@ export default class WindowWrapper extends Wrapper {
 		const bindings: Record<string, string> = {};
 
 		add_actions(component, block, '@_window', this.node.actions);
-		add_event_handlers(block, '@_window', this.node.handlers);
+		add_event_handlers(block, '@_window', this.handlers);
 
 		this.node.bindings.forEach(binding => {
 			// in dev mode, throw if read-only values are written to
@@ -127,7 +130,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					${props.map(prop => b`$$invalidate('${prop.name}', ${prop.name} = @_window.${prop.value});`)}
+					${props.map(prop => component.invalidate(prop.name, x`${prop.name} = @_window.${prop.value}`))}
 				}
 			`);
 
@@ -167,7 +170,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					$$invalidate('${name}', ${name} = @_navigator.onLine);
+					${component.invalidate(name, x`${name} = @_navigator.onLine`)}
 				}
 			`);
 
