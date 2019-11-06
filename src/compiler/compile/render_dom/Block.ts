@@ -203,13 +203,11 @@ export default class Block {
 	}
 
 	add_variable(id: Identifier, init?: Node) {
-		this.variables.forEach(v => {
-			if (v.id.name === id.name) {
-				throw new Error(
-					`Variable '${id.name}' already initialised with a different value`
-				);
-			}
-		});
+		if (this.variables.has(id.name)) {
+			throw new Error(
+				`Variable '${id.name}' already initialised with a different value`
+			);
+		}
 
 		this.variables.set(id.name, { id, init });
 	}
@@ -376,6 +374,8 @@ export default class Block {
 			d: ${properties.destroy}
 		}`;
 
+		const block = dev && this.get_unique_name('block');
+
 		const body = b`
 			${Array.from(this.variables.values()).map(({ id, init }) => {
 				return init
@@ -387,15 +387,36 @@ export default class Block {
 
 			${dev
 				? b`
-					const block = ${return_value};
-					@dispatch_dev("SvelteRegisterBlock", { block, id: ${this.name || 'create_fragment'}.name, type: "${this.type}", source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}", ctx: #ctx });
-					return block;`
+					const ${block} = ${return_value};
+					@dispatch_dev("SvelteRegisterBlock", {
+						block: ${block},
+						id: ${this.name || 'create_fragment'}.name,
+						type: "${this.type}",
+						source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
+						ctx: #ctx
+					});
+					return ${block};`
 				: b`
 					return ${return_value};`
 			}
 		`;
 
 		return body;
+	}
+
+	has_content() {
+		return this.renderer.options.dev ||
+			this.first ||
+			this.event_listeners.length > 0 ||
+			this.chunks.intro.length > 0 ||
+			this.chunks.outro.length > 0  ||
+			this.chunks.create.length > 0 ||
+			this.chunks.hydrate.length > 0 ||
+			this.chunks.claim.length > 0 ||
+			this.chunks.mount.length > 0 ||
+			this.chunks.update.length > 0 ||
+			this.chunks.destroy.length > 0 ||
+			this.has_animation;
 	}
 
 	render() {

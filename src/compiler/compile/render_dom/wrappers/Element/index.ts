@@ -24,6 +24,7 @@ import bind_this from '../shared/bind_this';
 import { changed } from '../shared/changed';
 import { is_head } from '../shared/is_head';
 import { Identifier } from 'estree';
+import EventHandler from './EventHandler';
 
 const events = [
 	{
@@ -113,6 +114,7 @@ export default class ElementWrapper extends Wrapper {
 	fragment: FragmentWrapper;
 	attributes: AttributeWrapper[];
 	bindings: Binding[];
+	event_handlers: EventHandler[];
 	class_dependencies: string[];
 
 	slot_block: Block;
@@ -193,6 +195,8 @@ export default class ElementWrapper extends Wrapper {
 		// the rare case where an element can have multiple bindings,
 		// e.g. <audio bind:paused bind:currentTime>
 		this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
+
+		this.event_handlers = this.node.handlers.map(event_handler => new EventHandler(event_handler, this));
 
 		if (node.intro || node.outro) {
 			if (node.intro) block.add_intro(node.intro.is_local);
@@ -643,7 +647,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_event_handlers(block: Block) {
-		add_event_handlers(block, this.var, this.node.handlers);
+		add_event_handlers(block, this.var, this.event_handlers);
 	}
 
 	add_transitions(
@@ -894,7 +898,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 				attr.node.chunks.forEach(chunk => {
 					if (chunk.type === 'Text') {
-						state.quasi.value.raw += chunk.data;
+						state.quasi.value.raw += escape_html(chunk.data);
 					} else {
 						literal.quasis.push(state.quasi);
 						literal.expressions.push(chunk.manipulate(block));

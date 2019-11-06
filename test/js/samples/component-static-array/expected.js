@@ -1,5 +1,6 @@
 import {
 	SvelteComponent,
+	create_component,
 	destroy_component,
 	init,
 	mount_component,
@@ -15,7 +16,7 @@ function create_fragment(ctx) {
 
 	return {
 		c() {
-			nested.$$.fragment.c();
+			create_component(nested.$$.fragment);
 		},
 		m(target, anchor) {
 			mount_component(nested, target, anchor);
