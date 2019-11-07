@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
-import { svelte, tryToLoadJson } from '../helpers.js';
+import { svelte, tryToLoadJson, shouldUpdateExpected } from '../helpers.js';
 
 describe('parse', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {

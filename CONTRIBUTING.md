@@ -102,6 +102,11 @@ Test samples are kept in `/test/xxx/samples` folder.
 1. To run only one test suite, rename the test suite folder to end with `.solo`. For example, to run the `test/js` test suite only, rename it to `test/js.solo`.
 1. Remember to rename the test folder back. The CI will fail if there's a solo test.
 
+##### Updating `.expected` files
+
+1. Tests suites like `css`, `js`, `server-side-rendering` asserts that the generated output has to match the content in the `.expected` file. For example, in the `js` test suites, the generated js code is compared against the content in `expected.js`.
+1. To update the content of the `.expected` file, run the test with `--update` flag. (`npm run test --update`)
+
 #### Breaking changes
 
 When adding a new breaking change, follow this template in your pull request:

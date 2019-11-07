@@ -6,7 +6,8 @@ import {
 	showOutput,
 	loadConfig,
 	setupHtmlEqual,
-	tryToLoadJson
+	tryToLoadJson,
+	shouldUpdateExpected
 } from "../helpers.js";
 
 function tryToReadFile(file) {
@@ -58,18 +59,47 @@ describe("ssr", () => {
 				fs.writeFileSync(`${dir}/_actual.html`, html);
 				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
 
-				assert.htmlEqual(html, expectedHtml);
-				assert.equal(
-					css.code.replace(/^\s+/gm, ""),
-					expectedCss.replace(/^\s+/gm, "")
-				);
+				try {
+					assert.htmlEqual(html, expectedHtml);
+				} catch (error) {
+					if (shouldUpdateExpected()) {
+						fs.writeFileSync(`${dir}/_expected.html`, html);
+						console.log(`Updated ${dir}/_expected.html.`);
+					} else {
+						throw error;
+					}
+				}
+
+				try {
+					assert.equal(
+						css.code.replace(/^\s+/gm, ""),
+						expectedCss.replace(/^\s+/gm, "")
+					);
+				} catch (error) {
+					if (shouldUpdateExpected()) {
+						fs.writeFileSync(`${dir}/_expected.css`, css.code);
+						console.log(`Updated ${dir}/_expected.css.`);
+					} else {
+						throw error;
+					}
+				}
 
 				if (fs.existsSync(`${dir}/_expected-head.html`)) {
 					fs.writeFileSync(`${dir}/_actual-head.html`, head);
-					assert.htmlEqual(
-						head,
-						fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8')
-					);
+
+					try {
+						assert.htmlEqual(
+							head,
+							fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8')
+						);
+					} catch (error) {
+						if (shouldUpdateExpected()) {
+							fs.writeFileSync(`${dir}/_expected-head.html`, head);
+							console.log(`Updated ${dir}/_expected-head.html.`);
+						} else {
+							throw error;
+						}
+					}
 				}
 
 				if (show) showOutput(dir, { generate: 'ssr', format: 'cjs' });

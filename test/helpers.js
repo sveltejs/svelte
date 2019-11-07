@@ -206,6 +206,10 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 	});
 }
 
+export function shouldUpdateExpected() {
+	return process.argv.includes('--update');
+}
+
 export function spaces(i) {
 	let result = '';
 	while (i--) result += ' ';
