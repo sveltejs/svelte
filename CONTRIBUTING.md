@@ -96,6 +96,12 @@ Test samples are kept in `/test/xxx/samples` folder.
 1. To run test, run `npm run test`
 1. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test involving transitions, run `npm run test -- -g transition`.
 
+##### Running solo test
+
+1. To run only one test, rename the test sample folder to end with `.solo`. For example, to run the `test/js/samples/action` only, rename it to `test/js/samples/action.solo`.
+1. To run only one test suite, rename the test suite folder to end with `.solo`. For example, to run the `test/js` test suite only, rename it to `test/js.solo`.
+1. Remember to rename the test folder back. The CI will fail if there's a solo test.
+
 #### Breaking changes
 
 When adding a new breaking change, follow this template in your pull request:
