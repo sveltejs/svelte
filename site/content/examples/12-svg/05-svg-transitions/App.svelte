@@ -33,7 +33,7 @@
 		font-family: 'Overpass';
 		letter-spacing: 0.12em;
 		color: #676778;
-		font-weight: 100;
+		font-weight: 600;
 	}
 
 	.centered span {
