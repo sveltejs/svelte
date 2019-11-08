@@ -617,7 +617,7 @@ export default class ElementWrapper extends Wrapper {
 					const snippet = x`{ ${
 						(metadata && metadata.property_name) ||
 						fix_attribute_casing(attr.node.name)
-					}: ${attr.node.get_value(block)} }`;
+					}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
