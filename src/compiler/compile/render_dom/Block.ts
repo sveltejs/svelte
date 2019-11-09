@@ -423,17 +423,17 @@ export default class Block {
 		const key = this.key && this.get_unique_name('key');
 
 		const args: any[] = [x`#ctx`];
-
 		if (key) args.unshift(key);
 
-		// TODO include this.comment
-		// ${this.comment && `// ${escape(this.comment, { only_escape_at_symbol: true })}`}
+		const fn = b`function ${this.name}(${args}) {
+			${this.get_contents(key)}
+		}`;
 
-		return b`
-			function ${this.name}(${args}) {
-				${this.get_contents(key)}
-			}
-		`;
+		return this.comment
+			? b`
+				// ${this.comment}
+				${fn}`
+			: fn;
 	}
 
 	render_listeners(chunk: string = '') {
