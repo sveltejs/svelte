@@ -1,16 +1,4 @@
-import { SvelteComponent, init, noop, safe_not_equal } from "svelte/internal";
-
-function create_fragment(ctx) {
-	return {
-		c: noop,
-		m: noop,
-		p: noop,
-		i: noop,
-		o: noop,
-		d: noop
-	};
-}
-
+import { SvelteComponent, init, safe_not_equal } from "svelte/internal";
 const SOME_CONSTANT = 42;
 
 function foo(bar) {
@@ -20,7 +8,7 @@ function foo(bar) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, { foo: 0 });
+		init(this, options, null, null, safe_not_equal, { foo: 0 });
 	}
 
 	get foo() {

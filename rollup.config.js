@@ -1,5 +1,5 @@
 import fs from 'fs';
-import replace from 'rollup-plugin-replace';
+import replace from '@rollup/plugin-replace';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';

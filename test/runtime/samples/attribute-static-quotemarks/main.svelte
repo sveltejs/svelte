@@ -1,1 +1,4 @@
-<span title='"foo"'>foo</span>
+<span title='"foo"'>
+  foo
+  <span title='"bar"'>bar</span>
+</span>
