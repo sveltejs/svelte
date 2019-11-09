@@ -121,6 +121,7 @@ export default class ElementWrapper extends Wrapper {
 	select_binding_dependencies?: Set<string>;
 
 	var: any;
+	void: boolean;
 
 	constructor(
 		renderer: Renderer,
@@ -135,6 +136,8 @@ export default class ElementWrapper extends Wrapper {
 			type: 'Identifier',
 			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		};
+
+		this.void = is_void(node.name);
 
 		this.class_dependencies = [];
 
@@ -258,6 +261,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const node = this.var;
 		const nodes = parent_nodes && block.get_unique_name(`${this.var.name}_nodes`); // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
+		const children = x`@children(${this.node.name === 'template' ? x`${node}.content` : node})`;
 
 		block.add_variable(node);
 		const render_statement = this.get_render_statement();
@@ -269,8 +273,13 @@ export default class ElementWrapper extends Wrapper {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
 					${node} = ${this.get_claim_statement(parent_nodes)};
-					var ${nodes} = @children(${this.node.name === 'template' ? x`${node}.content` : node});
 				`);
+
+				if (!this.void && this.node.children.length > 0) {
+					block.chunks.claim.push(b`
+						var ${nodes} = ${children};
+					`);
+				}
 			} else {
 				block.chunks.claim.push(
 					b`${node} = ${render_statement};`
@@ -351,9 +360,9 @@ export default class ElementWrapper extends Wrapper {
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
 
-		if (nodes && this.renderer.options.hydratable) {
+		if (nodes && this.renderer.options.hydratable && !this.void) {
 			block.chunks.claim.push(
-				b`${nodes}.forEach(@detach);`
+				b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`
 			);
 		}
 
@@ -915,7 +924,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 			state.quasi.value.raw += '>';
 
-			if (!is_void(wrapper.node.name)) {
+			if (!(wrapper as ElementWrapper).void) {
 				to_html((wrapper as ElementWrapper).fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
 				state.quasi.value.raw += `</${wrapper.node.name}>`;
