@@ -73,10 +73,11 @@ export default class AttributeWrapper {
 		const dependencies = this.node.get_dependencies();
 		const value = this.get_value(block);
 
+		const is_src = this.node.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
 		const is_select_value_attribute =
 			name === 'value' && element.node.name === 'select';
 
-		const should_cache = is_select_value_attribute; // TODO is this necessary?
+		const should_cache = is_src || this.node.should_cache() || is_select_value_attribute; // TODO is this necessary?
 
 		const last = should_cache && block.get_unique_name(
 			`${element.var.name}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
@@ -119,6 +120,11 @@ export default class AttributeWrapper {
 				${last} = ${value};
 				${updater}
 			`);
+		} else if (is_src) {
+			block.chunks.hydrate.push(
+				b`if (${element.var}.src !== ${init}) ${method}(${element.var}, "${name}", ${last});`
+			);
+			updater = b`${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
 		} else if (property_name) {
 			block.chunks.hydrate.push(
 				b`${element.var}.${property_name} = ${init};`
@@ -137,7 +143,9 @@ export default class AttributeWrapper {
 			let condition = changed(dependencies);
 
 			if (should_cache) {
-				condition = x`${condition} && (${last} !== (${last} = ${value}))`;
+				condition = is_src
+					? x`${condition} && (${element.var}.src !== (${last} = ${value}))`
+					: x`${condition} && (${last} !== (${last} = ${value}))`;
 			}
 
 			if (block.has_outros) {
