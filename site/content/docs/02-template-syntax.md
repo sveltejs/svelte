@@ -1146,7 +1146,7 @@ bind:property={variable}
 
 ---
 
-You can bind to component props using the same mechanism.
+You can bind to component props using the same syntax as for elements.
 
 ```html
 <Keypad bind:value={pin}/>
