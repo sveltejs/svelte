@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { loadConfig, svelte } from "../helpers.js";
 
-describe.only("js", () => {
+describe("js", () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === ".") return;
 
