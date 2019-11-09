@@ -44,7 +44,7 @@ function edit_source(source, sveltePath) {
 function esm(
 	program: any,
 	name: Identifier,
-	_banner: string,
+	banner: string,
 	sveltePath: string,
 	internal_path: string,
 	helpers: Array<{ name: string; alias: Identifier }>,
@@ -98,6 +98,8 @@ function esm(
 	};
 
 	program.body = b`
+		/* ${banner} */
+
 		${import_declaration}
 		${internal_globals}
 		${imports}
@@ -112,7 +114,7 @@ function esm(
 function cjs(
 	program: any,
 	name: Identifier,
-	_banner: string,
+	banner: string,
 	sveltePath: string,
 	internal_path: string,
 	helpers: Array<{ name: string; alias: Identifier }>,
@@ -188,6 +190,8 @@ function cjs(
 	const exports = module_exports.map(x => b`exports.${{ type: 'Identifier', name: x.as }} = ${{ type: 'Identifier', name: x.name }};`);
 
 	program.body = b`
+		/* ${banner} */
+
 		"use strict";
 		${internal_requires}
 		${internal_globals}
