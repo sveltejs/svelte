@@ -27,7 +27,7 @@ import Slot from './nodes/Slot';
 import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, AssignmentExpression, Literal } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
-import { print, x } from 'code-red';
+import { print, x, b } from 'code-red';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -722,6 +722,8 @@ export default class Component {
 			toRemove.unshift([parent, prop, index]);
 		};
 
+		const toInsert = new Map();
+
 		walk(content, {
 			enter(node, parent, prop, index) {
 				if (map.has(node)) {
@@ -747,11 +749,36 @@ export default class Component {
 				}
 
 				component.warn_on_undefined_store_value_references(node, parent, scope);
+
+				if (component.compile_options.dev) {
+					const to_insert_for_loop_protect = component.loop_protect(node, prop, index);
+					if (to_insert_for_loop_protect) {
+						if (!Array.isArray(parent[prop])) {
+							parent[prop] = {
+								type: 'BlockStatement',
+								body: [to_insert_for_loop_protect.node, node],
+							};
+						} else {
+							// can't insert directly, will screw up the index in the for-loop of estree-walker
+							if (!toInsert.has(parent)) {
+								toInsert.set(parent, []);
+							}
+							toInsert.get(parent).push(to_insert_for_loop_protect);
+						}
+					}
+				}
 			},
 
 			leave(node) {
 				if (map.has(node)) {
 					scope = scope.parent;
+				}
+				if (toInsert.has(node)) {
+					const nodes_to_insert = toInsert.get(node);
+					for (const { index, prop, node: node_to_insert } of nodes_to_insert.reverse()) {
+						node[prop].splice(index, 0, node_to_insert);
+					}
+					toInsert.delete(node);
 				}
 			},
 		});
@@ -834,6 +861,35 @@ export default class Component {
 				this.warn_if_undefined(name, object, null);
 			}
 		}
+	}
+
+	loop_protect(node, prop, index) {
+		if (node.type === 'WhileStatement' ||
+			node.type === 'ForStatement' ||
+			node.type === 'DoWhileStatement') {
+			const id = this.get_unique_name('LP');
+			this.add_var({
+				name: id.name,
+				internal: true,
+			});
+
+			const before = b`const ${id} = Date.now();`;
+			const inside = b`
+			if (Date.now() - ${id} > 100) {
+				throw new Error('Infinite loop detected');
+			}
+			`;
+			// wrap expression statement with BlockStatement
+			if (node.body.type !== 'BlockStatement') {
+				node.body = {
+					type: 'BlockStatement',
+					body: [node.body],
+				};
+			}
+			node.body.body.push(inside[0]);
+			return { index, prop, node: before[0] };
+		}
+		return null;
 	}
 
 	invalidate(name, value?) {
