@@ -3,6 +3,7 @@ import {
 	SvelteComponentDev,
 	dispatch_dev,
 	init,
+	loop_guard,
 	noop,
 	safe_not_equal
 } from "svelte/internal";
@@ -34,44 +35,32 @@ function create_fragment(ctx) {
 }
 
 function instance($$self) {
-	const LP = Date.now();
+	const guard = loop_guard();
 
 	while (true) {
 		foo();
-
-		if (Date.now() - LP > 100) {
-			throw new Error("Infinite loop detected");
-		}
+		guard();
 	}
 
-	const LP_1 = Date.now();
+	const guard_1 = loop_guard();
 
 	for (; ; ) {
 		foo();
-
-		if (Date.now() - LP_1 > 100) {
-			throw new Error("Infinite loop detected");
-		}
+		guard_1();
 	}
 
-	const LP_2 = Date.now();
+	const guard_2 = loop_guard();
 
 	while (true) {
 		foo();
-
-		if (Date.now() - LP_2 > 100) {
-			throw new Error("Infinite loop detected");
-		}
+		guard_2();
 	}
 
-	const LP_4 = Date.now();
+	const guard_4 = loop_guard();
 
 	do {
 		foo();
-
-		if (Date.now() - LP_4 > 100) {
-			throw new Error("Infinite loop detected");
-		}
+		guard_4();
 	} while (true);
 
 	$$self.$capture_state = () => {
@@ -79,30 +68,24 @@ function instance($$self) {
 	};
 
 	$$self.$inject_state = $$props => {
-		
+
 	};
 
 	$: {
-		const LP_3 = Date.now();
+		const guard_3 = loop_guard();
 
 		while (true) {
 			foo();
-
-			if (Date.now() - LP_3 > 100) {
-				throw new Error("Infinite loop detected");
-			}
+			guard_3();
 		}
 	}
 
 	$: {
-		const LP_5 = Date.now();
+		const guard_5 = loop_guard();
 
 		do {
 			foo();
-
-			if (Date.now() - LP_5 > 100) {
-				throw new Error("Infinite loop detected");
-			}
+			guard_5();
 		} while (true);
 	}
 
