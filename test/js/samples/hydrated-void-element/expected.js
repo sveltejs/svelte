@@ -16,6 +16,7 @@ import {
 
 function create_fragment(ctx) {
 	let img;
+	let img_src_value;
 	let t;
 	let div;
 
@@ -34,7 +35,7 @@ function create_fragment(ctx) {
 			this.h();
 		},
 		h() {
-			attr(img, "src", "donuts.jpg");
+			if (img.src !== (img_src_value = "donuts.jpg")) attr(img, "src", img_src_value);
 			attr(img, "alt", "donuts");
 		},
 		m(target, anchor) {

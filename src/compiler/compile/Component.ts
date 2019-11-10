@@ -27,7 +27,7 @@ import Slot from './nodes/Slot';
 import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, AssignmentExpression, Literal } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
-import { print, x } from 'code-red';
+import { print, x, b } from 'code-red';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -717,10 +717,12 @@ export default class Component {
 
 		let scope = instance_scope;
 
-		const toRemove = [];
+		const to_remove = [];
 		const remove = (parent, prop, index) => {
-			toRemove.unshift([parent, prop, index]);
+			to_remove.unshift([parent, prop, index]);
 		};
+
+		const to_insert = new Map();
 
 		walk(content, {
 			enter(node, parent, prop, index) {
@@ -747,16 +749,41 @@ export default class Component {
 				}
 
 				component.warn_on_undefined_store_value_references(node, parent, scope);
+
+				if (component.compile_options.dev) {
+					const to_insert_for_loop_protect = component.loop_protect(node, prop, index);
+					if (to_insert_for_loop_protect) {
+						if (!Array.isArray(parent[prop])) {
+							parent[prop] = {
+								type: 'BlockStatement',
+								body: [to_insert_for_loop_protect.node, node],
+							};
+						} else {
+							// can't insert directly, will screw up the index in the for-loop of estree-walker
+							if (!to_insert.has(parent)) {
+								to_insert.set(parent, []);
+							}
+							to_insert.get(parent).push(to_insert_for_loop_protect);
+						}
+					}
+				}
 			},
 
 			leave(node) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
+				if (to_insert.has(node)) {
+					const nodes_to_insert = to_insert.get(node);
+					for (const { index, prop, node: node_to_insert } of nodes_to_insert.reverse()) {
+						node[prop].splice(index, 0, node_to_insert);
+					}
+					to_insert.delete(node);
+				}
 			},
 		});
 
-		for (const [parent, prop, index] of toRemove) {
+		for (const [parent, prop, index] of to_remove) {
 			if (parent) {
 				if (index !== null) {
 					parent[prop].splice(index, 1);
@@ -834,6 +861,32 @@ export default class Component {
 				this.warn_if_undefined(name, object, null);
 			}
 		}
+	}
+
+	loop_protect(node, prop, index) {
+		if (node.type === 'WhileStatement' ||
+			node.type === 'ForStatement' ||
+			node.type === 'DoWhileStatement') {
+			const guard = this.get_unique_name('guard');
+			this.add_var({
+				name: guard.name,
+				internal: true,
+			});
+
+			const before = b`const ${guard} = @loop_guard()`;
+			const inside = b`${guard}();`;
+
+			// wrap expression statement with BlockStatement
+			if (node.body.type !== 'BlockStatement') {
+				node.body = {
+					type: 'BlockStatement',
+					body: [node.body],
+				};
+			}
+			node.body.body.push(inside[0]);
+			return { index, prop, node: before[0] };
+		}
+		return null;
 	}
 
 	invalidate(name, value?) {
