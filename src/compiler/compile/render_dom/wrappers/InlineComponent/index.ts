@@ -300,7 +300,9 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			updates.push(b`
 				if (!${updating} && ${changed(Array.from(binding.expression.dependencies))}) {
+					${updating} = true;
 					${name_changes}.${binding.name} = ${snippet};
+					@add_flush_callback(() => ${updating} = false);
 				}
 			`);
 
@@ -337,8 +339,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				block.chunks.init.push(b`
 					function ${id}(${value}) {
 						#ctx.${id}.call(null, ${value}, #ctx);
-						${updating} = true;
-						@add_flush_callback(() => ${updating} = false);
 					}
 				`);
 
@@ -347,8 +347,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				block.chunks.init.push(b`
 					function ${id}(${value}) {
 						#ctx.${id}.call(null, ${value});
-						${updating} = true;
-						@add_flush_callback(() => ${updating} = false);
 					}
 				`);
 			}
