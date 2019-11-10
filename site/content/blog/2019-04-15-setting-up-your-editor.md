@@ -45,3 +45,13 @@ To set the filetype for a single file, use a [modeline](https://vim.fandom.com/w
 ```
 <!-- vim: set ft=html :-->
 ```
+
+## Visual Studio Code
+
+To treat `*.svelte` files as HTML, add the following lines to your `settings.json` file:
+
+```cson
+  "files.associations": {
+    "*.svelte": "html"
+  }
+```
