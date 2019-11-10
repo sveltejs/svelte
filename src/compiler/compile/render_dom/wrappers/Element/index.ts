@@ -351,9 +351,9 @@ export default class ElementWrapper extends Wrapper {
 			block.maintain_context = true;
 		}
 
+		this.add_attributes(block);
 		this.add_bindings(block);
 		this.add_event_handlers(block);
-		this.add_attributes(block);
 		this.add_transitions(block);
 		this.add_animation(block);
 		this.add_actions(block);
