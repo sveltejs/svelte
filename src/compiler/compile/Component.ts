@@ -717,12 +717,12 @@ export default class Component {
 
 		let scope = instance_scope;
 
-		const toRemove = [];
+		const to_remove = [];
 		const remove = (parent, prop, index) => {
-			toRemove.unshift([parent, prop, index]);
+			to_remove.unshift([parent, prop, index]);
 		};
 
-		const toInsert = new Map();
+		const to_insert = new Map();
 
 		walk(content, {
 			enter(node, parent, prop, index) {
@@ -760,10 +760,10 @@ export default class Component {
 							};
 						} else {
 							// can't insert directly, will screw up the index in the for-loop of estree-walker
-							if (!toInsert.has(parent)) {
-								toInsert.set(parent, []);
+							if (!to_insert.has(parent)) {
+								to_insert.set(parent, []);
 							}
-							toInsert.get(parent).push(to_insert_for_loop_protect);
+							to_insert.get(parent).push(to_insert_for_loop_protect);
 						}
 					}
 				}
@@ -773,17 +773,17 @@ export default class Component {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
-				if (toInsert.has(node)) {
-					const nodes_to_insert = toInsert.get(node);
+				if (to_insert.has(node)) {
+					const nodes_to_insert = to_insert.get(node);
 					for (const { index, prop, node: node_to_insert } of nodes_to_insert.reverse()) {
 						node[prop].splice(index, 0, node_to_insert);
 					}
-					toInsert.delete(node);
+					to_insert.delete(node);
 				}
 			},
 		});
 
-		for (const [parent, prop, index] of toRemove) {
+		for (const [parent, prop, index] of to_remove) {
 			if (parent) {
 				if (index !== null) {
 					parent[prop].splice(index, 1);
@@ -867,18 +867,15 @@ export default class Component {
 		if (node.type === 'WhileStatement' ||
 			node.type === 'ForStatement' ||
 			node.type === 'DoWhileStatement') {
-			const id = this.get_unique_name('LP');
+			const guard = this.get_unique_name('guard');
 			this.add_var({
-				name: id.name,
+				name: guard.name,
 				internal: true,
 			});
 
-			const before = b`const ${id} = Date.now();`;
-			const inside = b`
-			if (Date.now() - ${id} > 100) {
-				throw new Error('Infinite loop detected');
-			}
-			`;
+			const before = b`const ${guard} = @loop_guard()`;
+			const inside = b`${guard}();`;
+
 			// wrap expression statement with BlockStatement
 			if (node.body.type !== 'BlockStatement') {
 				node.body = {

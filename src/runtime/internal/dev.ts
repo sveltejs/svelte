@@ -95,3 +95,12 @@ export class SvelteComponentDev extends SvelteComponent {
 		};
 	}
 }
+
+export function loop_guard() {
+	const start = Date.now();
+	return () => {
+		if (Date.now() - start > 100) {
+			throw new Error(`Infinite loop detected`);
+		}
+	};
+}
