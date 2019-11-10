@@ -6,7 +6,8 @@ authorURL: https://twitter.com/Rich_Harris
 draft: true
 ---
 
-*__Coming soon__*  
+*__Coming soon__*
+
 This post will walk you through setting up your editor so that recognises Svelte files:
 
 * eslint-plugin-svelte3
@@ -63,7 +64,6 @@ To treat `*.svelte` files as HTML in WebStorm, you need to create a new file typ
 
 ## Sublime Text 3
 
-Open any `.svelte` file.  
-Go to *__View →  Syntax → Open all with current extension__* and choose "HTML" from an option list.
+Open any `.svelte` file.
 
-
+Go to *__View → Syntax → Open all with current extension as... → HTML__*.
