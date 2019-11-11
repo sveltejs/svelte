@@ -57,6 +57,12 @@ const events = [
 			dimensions.test(name)
 	},
 
+	{
+		event_names: ['scroll'],
+		filter: (_node: Element, name: string) =>
+			name === 'scrollLeft' || name === 'scrollTop'
+	},
+
 	// media events
 	{
 		event_names: ['timeupdate'],
@@ -535,6 +541,32 @@ export default class ElementWrapper extends Wrapper {
 						b`${resize_listener}.cancel();`
 					);
 				} else {
+					if (name === 'scroll') {
+						// TODO some duplication between this and Window. needs a comprehensive refactor though
+						const condition = changed(group.bindings.map(g => g.object));
+						const scrolling = block.get_unique_name('scrolling');
+						const scrolling_timeout = block.get_unique_name('scrolling_timeout');
+						const clear_scrolling = block.get_unique_name('clear_scrolling');
+
+						block.add_variable(scrolling, x`false`);
+						block.add_variable(scrolling_timeout);
+						block.add_variable(clear_scrolling, x`() => ${scrolling} = false`);
+
+						block.chunks.init.push(b`
+							@add_render_callback(() => ${callee}.call(${this.var}));
+						`);
+
+						block.chunks.update.push(b`
+							if (${condition} && !${scrolling}) {
+								${scrolling} = true;
+								@_clearTimeout(${scrolling_timeout});
+								${group.bindings.map(binding => b`
+								${this.var}.${binding.node.name} = ${binding.snippet};`)}
+								${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
+							}
+						`);
+					}
+
 					block.event_listeners.push(
 						x`@listen(${this.var}, "${name}", ${callee})`
 					);
