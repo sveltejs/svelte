@@ -750,8 +750,8 @@ export default class Component {
 
 				component.warn_on_undefined_store_value_references(node, parent, scope);
 
-				if (component.compile_options.dev) {
-					const to_insert_for_loop_protect = component.loop_protect(node, prop, index);
+				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0) {
+					const to_insert_for_loop_protect = component.loop_protect(node, prop, index, component.compile_options.loopGuardTimeout);
 					if (to_insert_for_loop_protect) {
 						if (!Array.isArray(parent[prop])) {
 							parent[prop] = {
@@ -863,7 +863,7 @@ export default class Component {
 		}
 	}
 
-	loop_protect(node, prop, index) {
+	loop_protect(node, prop, index, timeout) {
 		if (node.type === 'WhileStatement' ||
 			node.type === 'ForStatement' ||
 			node.type === 'DoWhileStatement') {
@@ -873,7 +873,7 @@ export default class Component {
 				internal: true,
 			});
 
-			const before = b`const ${guard} = @loop_guard()`;
+			const before = b`const ${guard} = @loop_guard(${timeout})`;
 			const inside = b`${guard}();`;
 
 			// wrap expression statement with BlockStatement

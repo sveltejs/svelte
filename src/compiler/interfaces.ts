@@ -121,6 +121,7 @@ export interface CompileOptions {
 	customElement?: boolean;
 	tag?: string;
 	css?: boolean;
+	loopGuardTimeout?: number;
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;
