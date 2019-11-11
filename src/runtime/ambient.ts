@@ -1,4 +1,4 @@
 declare module '*.svelte' {
-	type SvelteComponent = typeof import('./internal/ComponentApi').SvelteComponentApi
-	export default SvelteComponent
+	// eslint-disable-next-line import/no-unresolved
+	export { default } from 'svelte/internal/ComponentApi';
 }
