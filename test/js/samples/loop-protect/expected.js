@@ -35,28 +35,28 @@ function create_fragment(ctx) {
 }
 
 function instance($$self) {
-	const guard = loop_guard();
+	const guard = loop_guard(100);
 
 	while (true) {
 		foo();
 		guard();
 	}
 
-	const guard_1 = loop_guard();
+	const guard_1 = loop_guard(100);
 
 	for (; ; ) {
 		foo();
 		guard_1();
 	}
 
-	const guard_2 = loop_guard();
+	const guard_2 = loop_guard(100);
 
 	while (true) {
 		foo();
 		guard_2();
 	}
 
-	const guard_4 = loop_guard();
+	const guard_4 = loop_guard(100);
 
 	do {
 		foo();
@@ -68,11 +68,11 @@ function instance($$self) {
 	};
 
 	$$self.$inject_state = $$props => {
-
+		
 	};
 
 	$: {
-		const guard_3 = loop_guard();
+		const guard_3 = loop_guard(100);
 
 		while (true) {
 			foo();
@@ -81,7 +81,7 @@ function instance($$self) {
 	}
 
 	$: {
-		const guard_5 = loop_guard();
+		const guard_5 = loop_guard(100);
 
 		do {
 			foo();
