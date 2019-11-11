@@ -24,12 +24,13 @@ const valid_options = [
 	'customElement',
 	'tag',
 	'css',
+	'loopGuardTimeout',
 	'preserveComments',
 	'preserveWhitespace'
 ];
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {
-	const { name, filename } = options;
+	const { name, filename, loopGuardTimeout, dev } = options;
 
 	Object.keys(options).forEach(key => {
 		if (valid_options.indexOf(key) === -1) {
@@ -49,6 +50,16 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 		const message = `options.name should be capitalised`;
 		warnings.push({
 			code: `options-lowercase-name`,
+			message,
+			filename,
+			toString: () => message,
+		});
+	}
+
+	if (loopGuardTimeout && !dev) {
+		const message = 'options.loopGuardTimeout is for options.dev = true only';
+		warnings.push({
+			code: `options-loop-guard-timeout`,
 			message,
 			filename,
 			toString: () => message,
