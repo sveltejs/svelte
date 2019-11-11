@@ -1,5 +1,6 @@
 export default {
 	options: {
-		dev: true
-	}
+		dev: true,
+		loopGuardTimeout: 100,
+	},
 };
