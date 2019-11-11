@@ -12,4 +12,5 @@ export * from './ssr';
 export * from './transitions';
 export * from './utils';
 export * from './Component';
+export * from './ComponentApi';
 export * from './dev';

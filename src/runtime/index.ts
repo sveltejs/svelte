@@ -8,5 +8,6 @@ export {
 	setContext,
 	getContext,
 	tick,
-	createEventDispatcher
+	createEventDispatcher,
+	SvelteComponentApi as SvelteComponent
 } from 'svelte/internal';
