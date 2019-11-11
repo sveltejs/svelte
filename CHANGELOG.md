@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 3.14.0
+
+* Add `loopGuardTimeout` option that augments `for`/`while` loops to prevent infinite loops, primarily for use in the REPL ([#3887](https://github.com/sveltejs/svelte/pull/3887))
+* Keep component bindings in sync when changed in reactive statements ([#3382](https://github.com/sveltejs/svelte/issues/3382))
+* Update attributes before bindings ([#3857](https://github.com/sveltejs/svelte/issues/3857))
+* Prevent variable naming conflict ([#3899](https://github.com/sveltejs/svelte/issues/3899))
+
+
 ## 3.13.0
 
 * New structured code generation, which eliminates a number of edge cases and obscure bugs ([#3539](https://github.com/sveltejs/svelte/pull/3539))
