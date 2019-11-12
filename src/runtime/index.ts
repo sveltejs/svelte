@@ -9,5 +9,5 @@ export {
 	getContext,
 	tick,
 	createEventDispatcher,
-	SvelteComponentApi as SvelteComponent
+	SvelteComponentDev as SvelteComponent
 } from 'svelte/internal';
