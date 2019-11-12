@@ -1,6 +1,6 @@
 <style>
 	p {
-		color: purple;
+		color: rebeccapurple;
 		font-family: 'Comic Sans MS';
 		font-size: 2em;
 	}
