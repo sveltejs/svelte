@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 3.14.1
+
+* Deconflict block method names with other variables ([#3900](https://github.com/sveltejs/svelte/issues/3900))
+* Fix entity encoding issue in text nodes with constant expressions ([#3911](https://github.com/sveltejs/svelte/issues/3911))
+* Make code for unknown prop warnings compatible with older js engines ([#3914](https://github.com/sveltejs/svelte/issues/3914))
+
 ## 3.14.0
 
 * Add `loopGuardTimeout` option that augments `for`/`while` loops to prevent infinite loops, primarily for use in the REPL ([#3887](https://github.com/sveltejs/svelte/pull/3887))
