@@ -167,7 +167,7 @@ class Component extends SvelteComponent {
 	constructor(options) {
 		super();
 
-		init(this, options, instance, create_fragment, safe_not_equal, {
+		this.exportProps = {
 			buffered: 0,
 			seekable: 0,
 			played: 0,
@@ -176,7 +176,9 @@ class Component extends SvelteComponent {
 			paused: 0,
 			volume: 0,
 			playbackRate: 0
-		});
+		};
+
+		init(this, options, instance, create_fragment, safe_not_equal, this.exportProps);
 	}
 }
 

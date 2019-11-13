@@ -9,7 +9,8 @@ function instance($$self) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, null, safe_not_equal, {});
+		this.exportProps = {};
+		init(this, options, instance, null, safe_not_equal, this.exportProps);
 	}
 }
 

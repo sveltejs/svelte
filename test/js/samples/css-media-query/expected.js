@@ -41,8 +41,9 @@ function create_fragment(ctx) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
+		this.exportProps = {};
 		if (!document.getElementById("svelte-1slhpfn-style")) add_css();
-		init(this, options, null, create_fragment, safe_not_equal, {});
+		init(this, options, null, create_fragment, safe_not_equal, this.exportProps);
 	}
 }
 

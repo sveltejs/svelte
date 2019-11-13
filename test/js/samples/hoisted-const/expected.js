@@ -38,7 +38,8 @@ function get_answer() {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, {});
+		this.exportProps = {};
+		init(this, options, null, create_fragment, safe_not_equal, this.exportProps);
 	}
 }
 

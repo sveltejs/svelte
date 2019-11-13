@@ -10,7 +10,8 @@ function foo(bar) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, null, safe_not_equal, { foo: 0 });
+		this.exportProps = { foo: 0 };
+		init(this, options, null, null, safe_not_equal, this.exportProps);
 	}
 
 	get foo() {

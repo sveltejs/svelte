@@ -56,7 +56,8 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { color: 0, x: 0, y: 0 });
+		this.exportProps = { color: 0, x: 0, y: 0 };
+		init(this, options, instance, create_fragment, safe_not_equal, this.exportProps);
 	}
 }
 
