@@ -304,7 +304,8 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		// insert static children with textContent or innerHTML
-		if (!this.node.namespace && (this.can_use_innerhtml || this.can_use_textcontent()) && this.fragment.nodes.length > 0) {
+		const can_use_textcontent = this.can_use_textcontent();
+		if (!this.node.namespace && (this.can_use_innerhtml || can_use_textcontent) && this.fragment.nodes.length > 0) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				block.chunks.create.push(
 					 // @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
@@ -324,7 +325,8 @@ export default class ElementWrapper extends Wrapper {
 					quasis: []
 				};
 
-				to_html((this.fragment.nodes as unknown as Array<ElementWrapper | TextWrapper>), block, literal, state);
+				const can_use_raw_text = !this.can_use_innerhtml && can_use_textcontent;
+				to_html((this.fragment.nodes as unknown as Array<ElementWrapper | TextWrapper>), block, literal, state, can_use_raw_text);
 				literal.quasis.push(state.quasi);
 
 				block.chunks.create.push(
@@ -867,7 +869,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 }
 
-function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, block: Block, literal: any, state: any) {
+function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
 		if (wrapper.node.type === 'Text') {
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
@@ -876,7 +878,8 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 			const raw = parent && (
 				parent.name === 'script' ||
-				parent.name === 'style'
+				parent.name === 'style' ||
+				can_use_raw_text
 			);
 
 			state.quasi.value.raw += (raw ? wrapper.node.data : escape_html(wrapper.node.data))
