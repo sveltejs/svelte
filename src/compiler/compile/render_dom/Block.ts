@@ -266,7 +266,7 @@ export default class Block {
 					: this.chunks.hydrate
 			);
 
-			properties.create = x`function create() {
+			properties.create = x`function #create() {
 				${this.chunks.create}
 				${hydrate}
 			}`;
@@ -276,7 +276,7 @@ export default class Block {
 			if (this.chunks.claim.length === 0 && this.chunks.hydrate.length === 0) {
 				properties.claim = noop;
 			} else {
-				properties.claim = x`function claim(#nodes) {
+				properties.claim = x`function #claim(#nodes) {
 					${this.chunks.claim}
 					${this.renderer.options.hydratable && this.chunks.hydrate.length > 0 && b`this.h();`}
 				}`;
@@ -284,7 +284,7 @@ export default class Block {
 		}
 
 		if (this.renderer.options.hydratable && this.chunks.hydrate.length > 0) {
-			properties.hydrate = x`function hydrate() {
+			properties.hydrate = x`function #hydrate() {
 				${this.chunks.hydrate}
 			}`;
 		}
@@ -292,7 +292,7 @@ export default class Block {
 		if (this.chunks.mount.length === 0) {
 			properties.mount = noop;
 		} else {
-			properties.mount = x`function mount(#target, anchor) {
+			properties.mount = x`function #mount(#target, anchor) {
 				${this.chunks.mount}
 			}`;
 		}
@@ -302,7 +302,7 @@ export default class Block {
 				properties.update = noop;
 			} else {
 				const ctx = this.maintain_context ? x`#new_ctx` : x`#ctx`;
-				properties.update = x`function update(#changed, ${ctx}) {
+				properties.update = x`function #update(#changed, ${ctx}) {
 					${this.maintain_context && b`#ctx = ${ctx};`}
 					${this.chunks.update}
 				}`;
@@ -310,15 +310,15 @@ export default class Block {
 		}
 
 		if (this.has_animation) {
-			properties.measure = x`function measure() {
+			properties.measure = x`function #measure() {
 				${this.chunks.measure}
 			}`;
 
-			properties.fix = x`function fix() {
+			properties.fix = x`function #fix() {
 				${this.chunks.fix}
 			}`;
 
-			properties.animate = x`function animate() {
+			properties.animate = x`function #animate() {
 				${this.chunks.animate}
 			}`;
 		}
@@ -327,7 +327,7 @@ export default class Block {
 			if (this.chunks.intro.length === 0) {
 				properties.intro = noop;
 			} else {
-				properties.intro = x`function intro(#local) {
+				properties.intro = x`function #intro(#local) {
 					${this.has_outros && b`if (#current) return;`}
 					${this.chunks.intro}
 				}`;
@@ -336,7 +336,7 @@ export default class Block {
 			if (this.chunks.outro.length === 0) {
 				properties.outro = noop;
 			} else {
-				properties.outro = x`function outro(#local) {
+				properties.outro = x`function #outro(#local) {
 					${this.chunks.outro}
 				}`;
 			}
@@ -345,7 +345,7 @@ export default class Block {
 		if (this.chunks.destroy.length === 0) {
 			properties.destroy = noop;
 		} else {
-			properties.destroy = x`function destroy(detaching) {
+			properties.destroy = x`function #destroy(detaching) {
 				${this.chunks.destroy}
 			}`;
 		}
