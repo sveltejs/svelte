@@ -22,7 +22,7 @@ describe("js", () => {
 			return;
 		}
 
-		(skip ? it.skip : solo ? it.only : it)(dir, () => {
+		(solo ? it.only : it)(dir, () => {
 			const config = loadConfig(`${dir}/_config.js`);
 
 			const input = fs.readFileSync(`${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");
