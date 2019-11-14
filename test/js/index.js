@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
+import * as kleur from "kleur";
 import { loadConfig, svelte, shouldUpdateExpected } from "../helpers.js";
 
 describe("js", () => {
@@ -16,7 +17,10 @@ describe("js", () => {
 
 		dir = path.resolve(`${__dirname}/samples`, dir);
 
-		const skip = !fs.existsSync(`${dir}/input.svelte`);
+		if (!fs.existsSync(`${dir}/input.svelte`)) {
+			console.log(colors.red().bold(`Missing file ${dir}/input.svelte. If you recently switched branches you may need to delete this directory`));
+			return;
+		}
 
 		(skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const config = loadConfig(`${dir}/_config.js`);
