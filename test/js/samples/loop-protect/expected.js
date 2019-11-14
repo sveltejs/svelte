@@ -63,11 +63,9 @@ function instance($$self) {
 		guard_4();
 	} while (true);
 
-	$$self.$capture_state = () => {
-		return {};
-	};
+	$$self.$capture_state = () => ({});
 
-	$$self.$inject_state = $$props => {
+	$$self.$inject_state = () => {
 		
 	};
 
