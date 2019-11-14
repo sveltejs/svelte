@@ -149,6 +149,10 @@ export default class BindingWrapper {
 				if (parent.node.get_static_attribute_value('type') === 'file') {
 					update_dom = null;
 				}
+
+			case 'scrollTop':
+			case 'scrollLeft':
+				update_dom = null;
 		}
 
 		if (update_dom) {
@@ -170,7 +174,7 @@ export default class BindingWrapper {
 				if (${this.snippet} !== void 0) {
 					${update_dom}
 				}`);
-		} else if (!/(currentTime|paused)/.test(this.node.name)) {
+		} else if (update_dom && !/(currentTime|paused)/.test(this.node.name)) {
 			block.chunks.mount.push(update_dom);
 		}
 	}
