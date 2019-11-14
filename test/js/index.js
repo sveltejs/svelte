@@ -1,7 +1,8 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import { loadConfig, svelte } from "../helpers.js";
+import * as kleur from "kleur";
+import { loadConfig, svelte, shouldUpdateExpected } from "../helpers.js";
 
 describe("js", () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
@@ -14,8 +15,14 @@ describe("js", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
+		dir = path.resolve(`${__dirname}/samples`, dir);
+
+		if (!fs.existsSync(`${dir}/input.svelte`)) {
+			console.log(colors.red().bold(`Missing file ${dir}/input.svelte. If you recently switched branches you may need to delete this directory`));
+			return;
+		}
+
 		(solo ? it.only : it)(dir, () => {
-			dir = path.resolve(`${__dirname}/samples`, dir);
 			const config = loadConfig(`${dir}/_config.js`);
 
 			const input = fs.readFileSync(`${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");
@@ -34,12 +41,32 @@ describe("js", () => {
 			const output = `${dir}/_actual.js`;
 			fs.writeFileSync(output, actual);
 
-			const expected = fs.readFileSync(`${dir}/expected.js`, "utf-8");
+			const expectedPath = `${dir}/expected.js`;
 
-			assert.equal(
-				actual.trim().replace(/^[ \t]+$/gm, ""),
-				expected.trim().replace(/^[ \t]+$/gm, "")
-			);
+			let expected = '';
+			try {
+				expected = fs.readFileSync(expectedPath, "utf-8");
+			} catch (error) {
+				console.log(error);
+				if (error.code === 'ENOENT') {
+					// missing expected.js
+					fs.writeFileSync(expectedPath, actual);
+				}
+			}
+
+			try {
+				assert.equal(
+					actual.trim().replace(/^[ \t]+$/gm, ""),
+					expected.trim().replace(/^[ \t]+$/gm, "")
+				);
+			} catch (error) {
+				if (shouldUpdateExpected()) {
+					fs.writeFileSync(expectedPath, actual);
+					console.log(`Updated ${expectedPath}.`);
+				} else {
+					throw error;
+				}
+			}
 		});
 	});
 });
