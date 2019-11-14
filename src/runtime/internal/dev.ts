@@ -82,18 +82,18 @@ export function set_data_dev(text, data) {
 
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
-    $set(props?: Props): void;
-    $on<T = any>(event: string, callback: (event: CustomEvent<T>) => void): () => void;
-    $destroy(): void;
-    [accessor: string]: any;
+	$set(props?: Props): void;
+	$on<T = any>(event: string, callback: (event: CustomEvent<T>) => void): () => void;
+	$destroy(): void;
+	[accessor: string]: any;
 }
 
 export class SvelteComponentDev extends SvelteComponent {
 	constructor(options: {
-        target: Element;
-        anchor?: Element;
-        props?: Props;
-        hydrate?: boolean;
+		target: Element;
+		anchor?: Element;
+		props?: Props;
+		hydrate?: boolean;
 		intro?: boolean;
 		$$inline?: boolean;
     }) {
