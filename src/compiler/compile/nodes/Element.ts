@@ -151,6 +151,10 @@ export default class Element extends Node {
 			}
 		}
 
+		// Binding relies on Attribute, defer its evaluation
+		const order = ['Binding']; // everything else is -1
+		info.attributes.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Action':

@@ -1,8 +1,6 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
-import { b, x } from 'code-red';
-import Block from '../render_dom/Block';
 import { sanitize } from '../../utils/names';
 import { Identifier } from 'estree';
 
@@ -14,6 +12,7 @@ export default class EventHandler extends Node {
 	handler_name: Identifier;
 	uses_context = false;
 	can_make_passive = false;
+	reassigned?: boolean;
 
 	constructor(component: Component, parent, template_scope, info) {
 		super(component, parent, template_scope, info);
@@ -22,7 +21,7 @@ export default class EventHandler extends Node {
 		this.modifiers = new Set(info.modifiers);
 
 		if (info.expression) {
-			this.expression = new Expression(component, this, template_scope, info.expression, true);
+			this.expression = new Expression(component, this, template_scope, info.expression);
 			this.uses_context = this.expression.uses_context;
 
 			if (/FunctionExpression/.test(info.expression.type) && info.expression.params.length === 0) {
@@ -42,34 +41,12 @@ export default class EventHandler extends Node {
 					if (node && (node.type === 'FunctionExpression' || node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression') && node.params.length === 0) {
 						this.can_make_passive = true;
 					}
+
+					this.reassigned = component.var_lookup.get(info.expression.name).reassigned;
 				}
 			}
 		} else {
-			const id = component.get_unique_name(`${sanitize(this.name)}_handler`);
-
-			component.add_var({
-				name: id.name,
-				internal: true,
-				referenced: true
-			});
-
-			component.partly_hoisted.push(b`
-				function ${id}(event) {
-					@bubble($$self, event);
-				}
-			`);
-
-			this.handler_name = id;
+			this.handler_name = component.get_unique_name(`${sanitize(this.name)}_handler`);
 		}
-	}
-
-	// TODO move this? it is specific to render-dom
-	render(block: Block) {
-		if (this.expression) {
-			return this.expression.manipulate(block);
-		}
-
-		// this.component.add_reference(this.handler_name);
-		return x`#ctx.${this.handler_name}`;
 	}
 }

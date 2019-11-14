@@ -79,8 +79,24 @@ export function set_data_dev(text, data) {
 	text.data = data;
 }
 
+
+type Props = Record<string, any>;
+export interface SvelteComponentDev {
+	$set(props?: Props): void;
+	$on<T = any>(event: string, callback: (event: CustomEvent<T>) => void): () => void;
+	$destroy(): void;
+	[accessor: string]: any;
+}
+
 export class SvelteComponentDev extends SvelteComponent {
-	constructor(options) {
+	constructor(options: {
+		target: Element;
+		anchor?: Element;
+		props?: Props;
+		hydrate?: boolean;
+		intro?: boolean;
+		$$inline?: boolean;
+    }) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error(`'target' is a required option`);
 		}
@@ -94,4 +110,13 @@ export class SvelteComponentDev extends SvelteComponent {
 			console.warn(`Component was already destroyed`); // eslint-disable-line no-console
 		};
 	}
+}
+
+export function loop_guard(timeout) {
+	const start = Date.now();
+	return () => {
+		if (Date.now() - start > timeout) {
+			throw new Error(`Infinite loop detected`);
+		}
+	};
 }

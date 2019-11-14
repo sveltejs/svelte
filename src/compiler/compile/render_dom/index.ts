@@ -241,11 +241,16 @@ export default function dom(
 		args.push(x`$$props`, x`$$invalidate`);
 	}
 
-	body.push(b`
-		function create_fragment(#ctx) {
-			${block.get_contents()}
-		}
+	const has_create_fragment = block.has_content();
+	if (has_create_fragment) {
+		body.push(b`
+			function create_fragment(#ctx) {
+				${block.get_contents()}
+			}
+		`);
+	}
 
+	body.push(b`
 		${component.extract_javascript(component.ast.module)}
 
 		${component.fully_hoisted}
@@ -364,7 +369,7 @@ export default function dom(
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
 				@_Object.keys($$props).forEach(key => {
-					if (!writable_props.includes(key) && !key.startsWith('$$')) @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
+					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$') @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
 			`;
 		}
@@ -437,7 +442,7 @@ export default function dom(
 
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
+					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_names});
 
 					${dev_props_check}
 
@@ -489,7 +494,7 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_names});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}

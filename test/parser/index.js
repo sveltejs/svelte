@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
-import { svelte, tryToLoadJson } from '../helpers.js';
+import { svelte, tryToLoadJson, shouldUpdateExpected } from '../helpers.js';
 
 describe('parse', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
@@ -15,7 +15,9 @@ describe('parse', () => {
 			);
 		}
 
-		(solo ? it.only : it)(dir, () => {
+		const skip = !fs.existsSync(`${__dirname}/samples/${dir}/input.svelte`);
+
+		(skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`) || {};
 
 			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '');

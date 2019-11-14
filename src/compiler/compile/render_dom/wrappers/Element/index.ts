@@ -24,6 +24,7 @@ import bind_this from '../shared/bind_this';
 import { changed } from '../shared/changed';
 import { is_head } from '../shared/is_head';
 import { Identifier } from 'estree';
+import EventHandler from './EventHandler';
 
 const events = [
 	{
@@ -113,12 +114,14 @@ export default class ElementWrapper extends Wrapper {
 	fragment: FragmentWrapper;
 	attributes: AttributeWrapper[];
 	bindings: Binding[];
+	event_handlers: EventHandler[];
 	class_dependencies: string[];
 
 	slot_block: Block;
 	select_binding_dependencies?: Set<string>;
 
 	var: any;
+	void: boolean;
 
 	constructor(
 		renderer: Renderer,
@@ -133,6 +136,8 @@ export default class ElementWrapper extends Wrapper {
 			type: 'Identifier',
 			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		};
+
+		this.void = is_void(node.name);
 
 		this.class_dependencies = [];
 
@@ -194,6 +199,8 @@ export default class ElementWrapper extends Wrapper {
 		// e.g. <audio bind:paused bind:currentTime>
 		this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
 
+		this.event_handlers = this.node.handlers.map(event_handler => new EventHandler(event_handler, this));
+
 		if (node.intro || node.outro) {
 			if (node.intro) block.add_intro(node.intro.is_local);
 			if (node.outro) block.add_outro(node.outro.is_local);
@@ -254,6 +261,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const node = this.var;
 		const nodes = parent_nodes && block.get_unique_name(`${this.var.name}_nodes`); // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
+		const children = x`@children(${this.node.name === 'template' ? x`${node}.content` : node})`;
 
 		block.add_variable(node);
 		const render_statement = this.get_render_statement();
@@ -265,8 +273,13 @@ export default class ElementWrapper extends Wrapper {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
 					${node} = ${this.get_claim_statement(parent_nodes)};
-					var ${nodes} = @children(${this.node.name === 'template' ? x`${node}.content` : node});
 				`);
+
+				if (!this.void && this.node.children.length > 0) {
+					block.chunks.claim.push(b`
+						var ${nodes} = ${children};
+					`);
+				}
 			} else {
 				block.chunks.claim.push(
 					b`${node} = ${render_statement};`
@@ -291,7 +304,8 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		// insert static children with textContent or innerHTML
-		if (!this.node.namespace && (this.can_use_innerhtml || this.can_use_textcontent()) && this.fragment.nodes.length > 0) {
+		const can_use_textcontent = this.can_use_textcontent();
+		if (!this.node.namespace && (this.can_use_innerhtml || can_use_textcontent) && this.fragment.nodes.length > 0) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				block.chunks.create.push(
 					 // @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
@@ -318,7 +332,8 @@ export default class ElementWrapper extends Wrapper {
 					quasis: []
 				};
 
-				to_html((this.fragment.nodes as unknown as Array<ElementWrapper | TextWrapper>), block, literal, state);
+				const can_use_raw_text = !this.can_use_innerhtml && can_use_textcontent;
+				to_html((this.fragment.nodes as unknown as Array<ElementWrapper | TextWrapper>), block, literal, state, can_use_raw_text);
 				literal.quasis.push(state.quasi);
 
 				block.chunks.create.push(
@@ -345,18 +360,18 @@ export default class ElementWrapper extends Wrapper {
 			block.maintain_context = true;
 		}
 
+		this.add_attributes(block);
 		this.add_bindings(block);
 		this.add_event_handlers(block);
-		this.add_attributes(block);
 		this.add_transitions(block);
 		this.add_animation(block);
 		this.add_actions(block);
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
 
-		if (nodes && this.renderer.options.hydratable) {
+		if (nodes && this.renderer.options.hydratable && !this.void) {
 			block.chunks.claim.push(
-				b`${nodes}.forEach(@detach);`
+				b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`
 			);
 		}
 
@@ -620,7 +635,7 @@ export default class ElementWrapper extends Wrapper {
 					const snippet = x`{ ${
 						(metadata && metadata.property_name) ||
 						fix_attribute_casing(attr.node.name)
-					}: ${attr.node.get_value(block)} }`;
+					}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
@@ -628,10 +643,10 @@ export default class ElementWrapper extends Wrapper {
 			});
 
 		block.chunks.init.push(b`
-			var ${levels} = [${initial_props}];
+			let ${levels} = [${initial_props}];
 
-			var ${data} = {};
-			for (var #i = 0; #i < ${levels}.length; #i += 1) {
+			let ${data} = {};
+			for (let #i = 0; #i < ${levels}.length; #i += 1) {
 				${data} = @assign(${data}, ${levels}[#i]);
 			}
 		`);
@@ -650,7 +665,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_event_handlers(block: Block) {
-		add_event_handlers(block, this.var, this.node.handlers);
+		add_event_handlers(block, this.var, this.event_handlers);
 	}
 
 	add_transitions(
@@ -861,7 +876,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 }
 
-function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, block: Block, literal: any, state: any) {
+function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
 		if (wrapper.node.type === 'Text') {
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
@@ -870,7 +885,8 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 			const raw = parent && (
 				parent.name === 'script' ||
-				parent.name === 'style'
+				parent.name === 'style' ||
+				can_use_raw_text
 			);
 
 			state.quasi.value.raw += (raw ? wrapper.node.data : escape_html(wrapper.node.data))
@@ -901,7 +917,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 				attr.node.chunks.forEach(chunk => {
 					if (chunk.type === 'Text') {
-						state.quasi.value.raw += chunk.data;
+						state.quasi.value.raw += escape_html(chunk.data);
 					} else {
 						literal.quasis.push(state.quasi);
 						literal.expressions.push(chunk.manipulate(block));
@@ -918,7 +934,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 			state.quasi.value.raw += '>';
 
-			if (!is_void(wrapper.node.name)) {
+			if (!(wrapper as ElementWrapper).void) {
 				to_html((wrapper as ElementWrapper).fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
 				state.quasi.value.raw += `</${wrapper.node.name}>`;
