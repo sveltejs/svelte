@@ -7,7 +7,8 @@ import {
 	loadConfig,
 	loadSvelte,
 	env,
-	setupHtmlEqual
+	setupHtmlEqual,
+	shouldUpdateExpected
 } from '../helpers.js';
 
 let compileOptions = null;
@@ -76,7 +77,16 @@ describe('hydration', () => {
 					props: config.props
 				});
 
-				assert.htmlEqual(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
+				try {
+					assert.htmlEqual(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
+				} catch (error) {
+					if (shouldUpdateExpected()) {
+						fs.writeFileSync(`${cwd}/_after.html`, target.innerHTML);
+						console.log(`Updated ${cwd}/_after.html.`);
+					} else {
+						throw error;
+					}
+				}
 
 				if (config.test) {
 					config.test(assert, target, snapshot, component, window);
