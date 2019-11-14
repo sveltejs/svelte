@@ -30,7 +30,7 @@ export function onDestroy(fn) {
 export function createEventDispatcher() {
 	const component = get_current_component();
 
-	return (type, detail) => {
+	return (type: string, detail?: any) => {
 		const callbacks = component.$$.callbacks[type];
 
 		if (callbacks) {

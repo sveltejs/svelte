@@ -1,5 +1,16 @@
 export default {
-	skip: true, // JSDOM...
+
+	ssrHtml: `
+		<select value='hullo'>
+			<option value='hullo'>Hullo</option>
+			<option value='world'>World</option>
+		</select>
+
+		<select value='world'>
+			<option value='hullo'>Hullo</option>
+			<option value='world'>World</option>
+		</select>
+	`,
 
 	html: `
 		<select>
