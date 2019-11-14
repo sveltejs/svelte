@@ -2,18 +2,9 @@
 
 <script>
 	let people = [
-		{
-			first: 'Hans',
-			last: 'Emil'
-		},
-		{
-			first: 'Max',
-			last: 'Mustermann'
-		},
-		{
-			first: 'Roman',
-			last: 'Tisch'
-		}
+		{ first: 'Hans', last: 'Emil' },
+		{ first: 'Max', last: 'Mustermann' },
+		{ first: 'Roman', last: 'Tisch' }
 	];
 
 	let prefix = '';
@@ -22,18 +13,13 @@
 	let i = 0;
 
 	$: filteredPeople = prefix
-		? people.map(person => {
+		? people.filter(person => {
 			const name = `${person.last}, ${person.first}`;
-			return { matched: name.toLowerCase().startsWith(prefix.toLowerCase()), person: person };
+			return name.toLowerCase().startsWith(prefix.toLowerCase());
 		})
-		: people.map(person => Object({ matched: true, person: person }));
+		: people;
 
-	$: if (!filteredPeople[i].matched) {
-		let newIndex = filteredPeople.findIndex(person => person.matched);
-		if (newIndex >= 0) i = newIndex;
-	}
-
-	$: selected = filteredPeople[i].person;
+	$: selected = filteredPeople[i];
 
 	$: reset_inputs(selected);
 
@@ -44,7 +30,9 @@
 	}
 
 	function update() {
-		people[i] = { first, last };
+		selected.first = first;
+		selected.last = last;
+		people = people;
 	}
 
 	function remove() {
@@ -87,10 +75,8 @@
 <input placeholder="filter prefix" bind:value={prefix}>
 
 <select bind:value={i} size={5}>
-	{#each filteredPeople as { matched, person }, i}
-		{#if matched}
+	{#each filteredPeople as person, i}
 		<option value={i}>{person.last}, {person.first}</option>
-		{/if}
 	{/each}
 </select>
 
