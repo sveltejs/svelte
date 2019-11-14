@@ -86,6 +86,7 @@ export default class BindingWrapper {
 		const { parent } = this;
 
 		const update_conditions: any[] = this.needs_lock ? [x`!${lock}`] : [];
+		const mount_conditions: any[] = [];
 
 		const dependency_array = [...this.node.expression.dependencies];
 
@@ -103,6 +104,7 @@ export default class BindingWrapper {
 
 		// model to view
 		let update_dom = get_dom_updater(parent, this);
+		let mount_dom = update_dom;
 
 		// special cases
 		switch (this.node.name) {
@@ -122,16 +124,23 @@ export default class BindingWrapper {
 
 			case 'textContent':
 				update_conditions.push(x`${this.snippet} !== ${parent.var}.textContent`);
+				mount_conditions.push(x`${this.snippet} !== void 0`);
 				break;
 
 			case 'innerHTML':
 				update_conditions.push(x`${this.snippet} !== ${parent.var}.innerHTML`);
+				mount_conditions.push(x`${this.snippet} !== void 0`);
 				break;
 
 			case 'currentTime':
+				update_conditions.push(x`!@_isNaN(${this.snippet})`);
+				mount_dom = null;
+				break;
+
 			case 'playbackRate':
 			case 'volume':
 				update_conditions.push(x`!@_isNaN(${this.snippet})`);
+				mount_conditions.push(x`!@_isNaN(${this.snippet})`);
 				break;
 
 			case 'paused':
@@ -142,12 +151,14 @@ export default class BindingWrapper {
 
 				update_conditions.push(x`${last} !== (${last} = ${this.snippet})`);
 				update_dom = b`${parent.var}[${last} ? "pause" : "play"]();`;
+				mount_dom = null;
 				break;
 			}
 
 			case 'value':
 				if (parent.node.get_static_attribute_value('type') === 'file') {
 					update_dom = null;
+					mount_dom = null;
 				}
 		}
 
@@ -165,13 +176,18 @@ export default class BindingWrapper {
 			}
 		}
 
-		if (this.node.name === 'innerHTML' || this.node.name === 'textContent') {
-			block.chunks.mount.push(b`
-				if (${this.snippet} !== void 0) {
-					${update_dom}
-				}`);
-		} else if (!/(currentTime|paused)/.test(this.node.name)) {
-			block.chunks.mount.push(update_dom);
+		if (mount_dom) {
+			if (mount_conditions.length > 0) {
+				const condition = mount_conditions.reduce((lhs, rhs) => x`${lhs} && ${rhs}`);
+
+				block.chunks.mount.push(b`
+					if (${condition}) {
+						${mount_dom}
+					}
+				`);
+			} else {
+				block.chunks.mount.push(mount_dom);
+			}
 		}
 	}
 }

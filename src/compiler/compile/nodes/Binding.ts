@@ -11,7 +11,9 @@ const read_only_media_attributes = new Set([
 	'duration',
 	'buffered',
 	'seekable',
-	'played'
+	'played',
+	'seeking',
+	'ended'
 ]);
 
 export default class Binding extends Node {
