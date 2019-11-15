@@ -31,7 +31,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
 		const snippet = expression ? expression.node : x`#ctx.${name}`;
-		return x`${snippet} ? "${name}" : ""`;
+		return x`${snippet} ? "${name}".replace(/,/g, ' ') : ""`;
 	});
 	if (node.needs_manual_style_scoping) {
 		class_expression_list.push(x`"${node.component.stylesheet.id}"`);
@@ -40,6 +40,8 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	const class_expression =
 		class_expression_list.length > 0 &&
 		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
+
+	let add_class_attribute = !!class_expression;
 
 	if (node.attributes.some(attr => attr.is_spread)) {
 		// TODO dry this out
@@ -62,6 +64,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 					args.push(x`{ ${attribute.name}: ${(attribute.chunks[0] as Expression).node} || null }`);
 				} else if (attribute.name === 'class' && class_expression) {
 					// Add class expression
+					add_class_attribute = false;
 					args.push(x`{ ${attribute.name}: [${get_attribute_value(attribute)}, ${class_expression}].join(' ').trim() }`);
 				} else {
 					args.push(x`{ ${attribute.name}: ${get_attribute_value(attribute)} }`);
@@ -69,9 +72,8 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			}
 		});
 
-		renderer.add_expression(x`@spread([${args}], ${class_expression});`);
+		renderer.add_expression(x`@spread([${args}], ${add_class_attribute && class_expression});`);
 	} else {
-		let add_class_attribute = !!class_expression;
 		node.attributes.forEach(attribute => {
 			const name = attribute.name.toLowerCase();
 			if (name === 'value' && node.name.toLowerCase() === 'textarea') {
@@ -100,9 +102,10 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				renderer.add_string(`"`);
 			}
 		});
-		if (add_class_attribute) {
-			renderer.add_expression(x`@add_classes([${class_expression}].join(' ').trim())`);
-		}
+	}
+
+	if (add_class_attribute) {
+		renderer.add_expression(x`@add_classes([${class_expression}].join(' ').trim())`);
 	}
 
 	node.bindings.forEach(binding => {
