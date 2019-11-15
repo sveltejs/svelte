@@ -1,5 +1,62 @@
 # Svelte changelog
 
+## 3.14.1
+
+* Deconflict block method names with other variables ([#3900](https://github.com/sveltejs/svelte/issues/3900))
+* Fix entity encoding issue in text nodes with constant expressions ([#3911](https://github.com/sveltejs/svelte/issues/3911))
+* Make code for unknown prop warnings compatible with older js engines ([#3914](https://github.com/sveltejs/svelte/issues/3914))
+
+## 3.14.0
+
+* Add `loopGuardTimeout` option that augments `for`/`while` loops to prevent infinite loops, primarily for use in the REPL ([#3887](https://github.com/sveltejs/svelte/pull/3887))
+* Keep component bindings in sync when changed in reactive statements ([#3382](https://github.com/sveltejs/svelte/issues/3382))
+* Update attributes before bindings ([#3857](https://github.com/sveltejs/svelte/issues/3857))
+* Prevent variable naming conflict ([#3899](https://github.com/sveltejs/svelte/issues/3899))
+
+
+## 3.13.0
+
+* New structured code generation, which eliminates a number of edge cases and obscure bugs ([#3539](https://github.com/sveltejs/svelte/pull/3539))
+
+Also:
+
+* Fix `{#each}` context not shadowing outer scope when using `bind:` ([#1565](https://github.com/sveltejs/svelte/issues/1565))
+* Fix edge cases in matching selectors against elements ([#1710](https://github.com/sveltejs/svelte/issues/1710))
+* Fix several bugs related to interaction of `{...spread}` attributes with other features ([#2721](https://github.com/sveltejs/svelte/issues/2721), [#2916](https://github.com/sveltejs/svelte/issues/2916), [#3421](https://github.com/sveltejs/svelte/issues/3421), [#3681](https://github.com/sveltejs/svelte/issues/3681), [#3764](https://github.com/sveltejs/svelte/issues/3764), [#3790](https://github.com/sveltejs/svelte/issues/3790))
+* Allow exiting a reactive block early with `break $` ([#2828](https://github.com/sveltejs/svelte/issues/2828))
+* Fix binding to props that have been renamed with `export { ... as ... }` ([#3508](https://github.com/sveltejs/svelte/issues/3508))
+* Fix application of style scoping class in cases of ambiguity ([#3544](https://github.com/sveltejs/svelte/issues/3544))
+* Check attributes have changed before setting them to avoid image flicker ([#3579](https://github.com/sveltejs/svelte/pull/3579))
+* Fix generating malformed code for `{@debug}` tags with no dependencies ([#3588](https://github.com/sveltejs/svelte/issues/3588))
+* Fix generated code in specific case involving compound ifs and child components ([#3595](https://github.com/sveltejs/svelte/issues/3595))
+* Fix `bind:this` binding to a store ([#3591](https://github.com/sveltejs/svelte/issues/3591))
+* Use safer `HTMLElement` check before extending class ([#3608](https://github.com/sveltejs/svelte/issues/3608))
+* Add `location` as a known global ([#3619](https://github.com/sveltejs/svelte/pull/3619))
+* Support `{#await}` with `{:catch}` but no `{:then}` ([#3623](https://github.com/sveltejs/svelte/issues/3623))
+* Clean up dead code emitted for `<slot/>`s ([#3631](https://github.com/sveltejs/svelte/issues/3631))
+* Fix tracking of dependencies of compound assignments in reactive statements ([#3634](https://github.com/sveltejs/svelte/issues/3634))
+* Flush changes in newly attached block when using `{#await}` ([#3660](https://github.com/sveltejs/svelte/issues/3660))
+* Throw exception immediately when calling `createEventDispatcher()` after component instantiation ([#3667](https://github.com/sveltejs/svelte/pull/3667))
+* Fix globals shadowing contextual template scope ([#3674](https://github.com/sveltejs/svelte/issues/3674))
+* Fix `<svelte:window>` bindings to stores ([#3832](https://github.com/sveltejs/svelte/issues/3832))
+* Deconflict generated var names with builtins ([#3724](https://github.com/sveltejs/svelte/issues/3724))
+* Allow spring/tweened values to be initially undefined ([#3761](https://github.com/sveltejs/svelte/issues/3761))
+* Warn if using `<svelte:options tag="...">` without `customElement: true` option ([#3782](https://github.com/sveltejs/svelte/pull/3782))
+* Add `Event` to list of known globals ([#3810](https://github.com/sveltejs/svelte/pull/3810))
+* Throw helpful error on empty CSS declaration ([#3801](https://github.com/sveltejs/svelte/issues/3801))
+* Support `easing` param on `fade` transition ([#3823](https://github.com/sveltejs/svelte/pull/3823))
+* Generate valid names from filenames with unicode characters ([#3845](https://github.com/sveltejs/svelte/issues/3845))
+* Don't generate any code for markup-less components ([#2200](https://github.com/sveltejs/svelte/issues/2200))
+* Deconflict with internal name `block` ([#3854](https://github.com/sveltejs/svelte/issues/3854))
+* Set attributes before bindings, to prevent erroneous assignments to `input.files` ([#3828](https://github.com/sveltejs/svelte/issues/3828))
+* Smarter unused CSS detection ([#3825](https://github.com/sveltejs/svelte/pull/3825))
+* Allow dynamic event handlers ([#3040](https://github.com/sveltejs/svelte/issues/3040))
+* Prevent erroneous `"undefined"` class name ([#3876](https://github.com/sveltejs/svelte/pull/3876))
+* Prevent resetting of `src` attribute unless changed ([#3579](https://github.com/sveltejs/svelte/pull/3579))
+* Prevent hydration of void element 'children' ([#3882](https://github.com/sveltejs/svelte/issues/3882))
+* Hoist globals even if mentioned in `<script>` block ([#3745](https://github.com/sveltejs/svelte/pull/3745))
+
+
 ## 3.12.1
 
 * Escape `@` symbols in props, again ([#3545](https://github.com/sveltejs/svelte/issues/3545))
@@ -7,6 +64,7 @@
 ## 3.12.0
 
 * Fire events on `document` in development to facilitate dev tooling ([#3005](https://github.com/sveltejs/svelte/pull/3005))
+* Remove old props when the keys in spread props are removed ([#2282](https://github.com/sveltejs/svelte/issues/2282))
 
 ## 3.11.0
 

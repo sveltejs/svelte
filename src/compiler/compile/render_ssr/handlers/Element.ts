@@ -1,62 +1,17 @@
-import { is_void, quote_prop_if_necessary, quote_name_if_necessary } from '../../../utils/names';
-import Attribute from '../../nodes/Attribute';
-import Class from '../../nodes/Class';
-import { snip } from '../../utils/snip';
-import { stringify_attribute, stringify_class_attribute } from '../../utils/stringify_attribute';
+import { is_void } from '../../../utils/names';
+import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { get_slot_scope } from './shared/get_slot_scope';
+import { boolean_attributes } from './shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
-import Text from '../../nodes/Text';
-
-// source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
-const boolean_attributes = new Set([
-	'async',
-	'autocomplete',
-	'autofocus',
-	'autoplay',
-	'border',
-	'challenge',
-	'checked',
-	'compact',
-	'contenteditable',
-	'controls',
-	'default',
-	'defer',
-	'disabled',
-	'formnovalidate',
-	'frameborder',
-	'hidden',
-	'indeterminate',
-	'ismap',
-	'loop',
-	'multiple',
-	'muted',
-	'nohref',
-	'noresize',
-	'noshade',
-	'novalidate',
-	'nowrap',
-	'open',
-	'readonly',
-	'required',
-	'reversed',
-	'scoped',
-	'scrolling',
-	'seamless',
-	'selected',
-	'sortable',
-	'spellcheck',
-	'translate'
-]);
+import { x } from 'code-red';
+import Expression from '../../nodes/shared/Expression';
 
 export default function(node: Element, renderer: Renderer, options: RenderOptions & {
 	slot_scopes: Map<any, any>;
 }) {
-	let opening_tag = `<${node.name}`;
-
 	// awkward special case
 	let node_contents;
-	let value;
 
 	const contenteditable = (
 		node.name !== 'textarea' &&
@@ -65,86 +20,85 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	);
 
 	const slot = node.get_static_attribute_value('slot');
-	const component = node.find_nearest(/InlineComponent/);
-	if (slot && component) {
-		const slot = node.attributes.find((attribute) => attribute.name === 'slot');
-		const slot_name = (slot.chunks[0] as Text).data;
-		const target = renderer.targets[renderer.targets.length - 1];
-		target.slot_stack.push(slot_name);
-		target.slots[slot_name] = '';
+	const nearest_inline_component = node.find_nearest(/InlineComponent/);
 
-		const lets = node.lets;
-		const seen = new Set(lets.map(l => l.name));
-
-		component.lets.forEach(l => {
-			if (!seen.has(l.name)) lets.push(l);
-		});
-
-		options.slot_scopes.set(slot_name, get_slot_scope(node.lets));
+	if (slot && nearest_inline_component) {
+		renderer.push();
 	}
 
-	const class_expression = node.classes.map((class_directive: Class) => {
+	renderer.add_string(`<${node.name}`);
+
+	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
-		const snippet = expression ? snip(expression) : `ctx${quote_prop_if_necessary(name)}`;
-		return `${snippet} ? "${name}" : ""`;
-	}).join(', ');
+		const snippet = expression ? expression.node : x`#ctx.${name}`;
+		return x`${snippet} ? "${name}" : ""`;
+	});
+	if (node.needs_manual_style_scoping) {
+		class_expression_list.push(x`"${node.component.stylesheet.id}"`);
+	}
+	const class_expression =
+		class_expression_list.length > 0 &&
+		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
 
-	let add_class_attribute = class_expression ? true : false;
-
-	if (node.attributes.find(attr => attr.is_spread)) {
+	if (node.attributes.some(attr => attr.is_spread)) {
 		// TODO dry this out
 		const args = [];
 		node.attributes.forEach(attribute => {
 			if (attribute.is_spread) {
-				args.push(snip(attribute.expression));
+				args.push(attribute.expression.node);
 			} else {
-				if (attribute.name === 'value' && node.name === 'textarea') {
-					node_contents = stringify_attribute(attribute, true);
+				const name = attribute.name.toLowerCase();
+				if (name === 'value' && node.name.toLowerCase() === 'textarea') {
+					node_contents = get_attribute_value(attribute);
 				} else if (attribute.is_true) {
-					args.push(`{ ${quote_name_if_necessary(attribute.name)}: true }`);
+					args.push(x`{ ${attribute.name}: true }`);
 				} else if (
-					boolean_attributes.has(attribute.name) &&
+					boolean_attributes.has(name) &&
 					attribute.chunks.length === 1 &&
 					attribute.chunks[0].type !== 'Text'
 				) {
 					// a boolean attribute with one non-Text chunk
-					args.push(`{ ${quote_name_if_necessary(attribute.name)}: ${snip(attribute.chunks[0])} }`);
-				} else if (attribute.name === 'class' && class_expression) {
-					// Add class expression
-					args.push(`{ ${quote_name_if_necessary(attribute.name)}: [\`${stringify_class_attribute(attribute)}\`, \`\${${class_expression}}\`].join(' ').trim() }`);
+					args.push(x`{ ${attribute.name}: ${(attribute.chunks[0] as Expression).node} || null }`);
 				} else {
-					args.push(`{ ${quote_name_if_necessary(attribute.name)}: \`${attribute.name === 'class' ? stringify_class_attribute(attribute) : stringify_attribute(attribute, true)}\` }`);
+					args.push(x`{ ${attribute.name}: ${get_attribute_value(attribute)} }`);
 				}
 			}
 		});
 
-		opening_tag += "${@spread([" + args.join(', ') + "])}";
+		renderer.add_expression(x`@spread([${args}], ${class_expression});`);
 	} else {
-		node.attributes.forEach((attribute: Attribute) => {
-			if (attribute.type !== 'Attribute') return;
-
-			if (attribute.name === 'value' && node.name === 'textarea') {
-				node_contents = stringify_attribute(attribute, true);
+		let add_class_attribute = !!class_expression;
+		node.attributes.forEach(attribute => {
+			const name = attribute.name.toLowerCase();
+			if (name === 'value' && node.name.toLowerCase() === 'textarea') {
+				node_contents = get_attribute_value(attribute);
 			} else if (attribute.is_true) {
-				opening_tag += ` ${attribute.name}`;
+				renderer.add_string(` ${attribute.name}`);
 			} else if (
-				boolean_attributes.has(attribute.name) &&
+				boolean_attributes.has(name) &&
 				attribute.chunks.length === 1 &&
 				attribute.chunks[0].type !== 'Text'
 			) {
 				// a boolean attribute with one non-Text chunk
-				opening_tag += '${' + snip(attribute.chunks[0]) + ' ? " ' + attribute.name + '" : "" }';
-			} else if (attribute.name === 'class' && class_expression) {
+				renderer.add_string(` `);
+				renderer.add_expression(x`${(attribute.chunks[0] as Expression).node} ? "${attribute.name}" : ""`);
+			} else if (name === 'class' && class_expression) {
 				add_class_attribute = false;
-				opening_tag += ` class="\${[\`${stringify_class_attribute(attribute)}\`, ${class_expression}].join(' ').trim() }"`;
+				renderer.add_string(` ${attribute.name}="`);
+				renderer.add_expression(x`[${get_class_attribute_value(attribute)}, ${class_expression}].join(' ').trim()`);
+				renderer.add_string(`"`);
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
-				const { name } = attribute;
-				const snippet = snip(attribute.chunks[0]);
-				opening_tag += '${@add_attribute("' + name + '", ' + snippet + ', ' + (boolean_attributes.has(name) ? 1 : 0) + ')}';
+				const snippet = (attribute.chunks[0] as Expression).node;
+				renderer.add_expression(x`@add_attribute("${attribute.name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
 			} else {
-				opening_tag += ` ${attribute.name}="${attribute.name === 'class' ? stringify_class_attribute(attribute) : stringify_attribute(attribute, true)}"`;
+				renderer.add_string(` ${attribute.name}="`);
+				renderer.add_expression((name === 'class' ? get_class_attribute_value : get_attribute_value)(attribute));
+				renderer.add_string(`"`);
 			}
 		});
+		if (add_class_attribute) {
+			renderer.add_expression(x`@add_classes([${class_expression}].join(' ').trim())`);
+		}
 	}
 
 	node.bindings.forEach(binding => {
@@ -157,38 +111,58 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		if (name === 'group') {
 			// TODO server-render group bindings
 		} else if (contenteditable && (name === 'textContent' || name === 'innerHTML')) {
-			node_contents = snip(expression);
-			value = name === 'textContent' ? '@escape($$value)' : '$$value';
+			node_contents = expression.node;
+
+			// TODO where was this used?
+			// value = name === 'textContent' ? x`@escape($$value)` : x`$$value`;
 		} else if (binding.name === 'value' && node.name === 'textarea') {
-			const snippet = snip(expression);
-			node_contents = '${(' + snippet + ') || ""}';
+			const snippet = expression.node;
+			node_contents = x`${snippet} || ""`;
 		} else {
-			const snippet = snip(expression);
-			opening_tag += '${@add_attribute("' + name + '", ' + snippet + ', 1)}';
+			const snippet = expression.node;
+			renderer.add_expression(x`@add_attribute("${name}", ${snippet}, 1)`);
 		}
 	});
 
-	if (add_class_attribute) {
-		opening_tag += `\${@add_classes([${class_expression}].join(' ').trim())}`;
-	}
-
-	opening_tag += '>';
-
-	renderer.append(opening_tag);
+	renderer.add_string('>');
 
 	if (node_contents !== undefined) {
 		if (contenteditable) {
-			renderer.append('${($$value => $$value === void 0 ? `');
+			renderer.push();
 			renderer.render(node.children, options);
-			renderer.append('` : ' + value + ')(' + node_contents + ')}');
+			const result = renderer.pop();
+
+			renderer.add_expression(x`($$value => $$value === void 0 ? ${result} : $$value)(${node_contents})`);
 		} else {
-			renderer.append(node_contents);
+			renderer.add_expression(node_contents);
 		}
+
+		if (!is_void(node.name)) {
+			renderer.add_string(`</${node.name}>`);
+		}
+	} else if (slot && nearest_inline_component) {
+		renderer.render(node.children, options);
+
+		if (!is_void(node.name)) {
+			renderer.add_string(`</${node.name}>`);
+		}
+
+		const lets = node.lets;
+		const seen = new Set(lets.map(l => l.name.name));
+
+		nearest_inline_component.lets.forEach(l => {
+			if (!seen.has(l.name.name)) lets.push(l);
+		});
+
+		options.slot_scopes.set(slot, {
+			input: get_slot_scope(node.lets),
+			output: renderer.pop()
+		});
 	} else {
 		renderer.render(node.children, options);
-	}
 
-	if (!is_void(node.name)) {
-		renderer.append(`</${node.name}>`);
+		if (!is_void(node.name)) {
+			renderer.add_string(`</${node.name}>`);
+		}
 	}
 }

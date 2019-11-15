@@ -15,6 +15,7 @@ export const globals = new Set([
 	'encodeURIComponent',
 	'Error',
 	'EvalError',
+	'Event',
 	'history',
 	'Infinity',
 	'InternalError',
@@ -23,6 +24,7 @@ export const globals = new Set([
 	'isNaN',
 	'JSON',
 	'localStorage',
+	'location',
 	'Map',
 	'Math',
 	'NaN',
@@ -104,7 +106,7 @@ export function is_void(name: string) {
 	return void_element_names.test(name) || name.toLowerCase() === '!doctype';
 }
 
-function is_valid(str: string): boolean {
+export function is_valid(str: string): boolean {
 	let i = 0;
 
 	while (i < str.length) {
@@ -115,16 +117,6 @@ function is_valid(str: string): boolean {
 	}
 
 	return true;
-}
-
-export function quote_name_if_necessary(name: string) {
-	if (!is_valid(name)) return `"${name}"`;
-	return name;
-}
-
-export function quote_prop_if_necessary(name: string) {
-	if (!is_valid(name)) return `["${name}"]`;
-	return `.${name}`;
 }
 
 export function sanitize(name: string) {

@@ -1,36 +1,19 @@
-import { escape, escape_template, stringify } from '../../utils/stringify';
-import { quote_name_if_necessary } from '../../../utils/names';
-import { snip } from '../../utils/snip';
+import { string_literal } from '../../utils/stringify';
 import Renderer, { RenderOptions } from '../Renderer';
-import { stringify_props } from '../../utils/stringify_props';
 import { get_slot_scope } from './shared/get_slot_scope';
-import { AppendTarget } from '../../../interfaces';
 import InlineComponent from '../../nodes/InlineComponent';
-import { INode } from '../../nodes/interfaces';
-import Text from '../../nodes/Text';
+import { p, x } from 'code-red';
 
-function stringify_attribute(chunk: INode) {
-	if (chunk.type === 'Text') {
-		return escape_template(escape((chunk as Text).data));
-	}
+function get_prop_value(attribute) {
+	if (attribute.is_true) return x`true`;
+	if (attribute.chunks.length === 0) return x`''`;
 
-	return '${@escape(' + snip(chunk) + ')}';
-}
-
-function get_attribute_value(attribute) {
-	if (attribute.is_true) return `true`;
-	if (attribute.chunks.length === 0) return `''`;
-
-	if (attribute.chunks.length === 1) {
-		const chunk = attribute.chunks[0];
-		if (chunk.type === 'Text') {
-			return stringify(chunk.data);
-		}
-
-		return snip(chunk);
-	}
-
-	return '`' + attribute.chunks.map(stringify_attribute).join('') + '`';
+	return attribute.chunks
+		.map(chunk => {
+			if (chunk.type === 'Text') return string_literal(chunk.data);
+			return chunk.node;
+		})
+		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 }
 
 export default function(node: InlineComponent, renderer: Renderer, options: RenderOptions) {
@@ -41,10 +24,10 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		renderer.has_bindings = true;
 
 		// TODO this probably won't work for contextual bindings
-		const snippet = snip(binding.expression);
+		const snippet = binding.expression.node;
 
-		binding_props.push(`${binding.name}: ${snippet}`);
-		binding_fns.push(`${binding.name}: $$value => { ${snippet} = $$value; $$settled = false }`);
+		binding_props.push(p`${binding.name}: ${snippet}`);
+		binding_fns.push(p`${binding.name}: $$value => { ${snippet} = $$value; $$settled = false }`);
 	});
 
 	const uses_spread = node.attributes.find(attr => attr.is_spread);
@@ -52,65 +35,62 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 	let props;
 
 	if (uses_spread) {
-		props = `@_Object.assign(${
+		props = x`@_Object.assign(${
 			node.attributes
 				.map(attribute => {
 					if (attribute.is_spread) {
-						return snip(attribute.expression);
+						return attribute.expression.node;
 					} else {
-						return `{ ${quote_name_if_necessary(attribute.name)}: ${get_attribute_value(attribute)} }`;
+						return x`{ ${attribute.name}: ${get_prop_value(attribute)} }`;
 					}
 				})
-				.concat(binding_props.map(p => `{ ${p} }`))
-				.join(', ')
+				.concat(binding_props.map(p => x`{ ${p} }`))
 		})`;
 	} else {
-		props = stringify_props(
-			node.attributes
-				.map(attribute => `${quote_name_if_necessary(attribute.name)}: ${get_attribute_value(attribute)}`)
-				.concat(binding_props)
-		);
+		props = x`{
+			${node.attributes.map(attribute => p`${attribute.name}: ${get_prop_value(attribute)}`)},
+			${binding_props}
+		}`;
 	}
 
-	const bindings = stringify_props(binding_fns);
+	const bindings = x`{
+		${binding_fns}
+	}`;
 
 	const expression = (
 		node.name === 'svelte:self'
-			? '__svelte:self__' // TODO conflict-proof this
+			? renderer.name
 			: node.name === 'svelte:component'
-				? `((${snip(node.expression)}) || @missing_component)`
-				: node.name
+				? x`(${node.expression.node}) || @missing_component`
+				: node.name.split('.').reduce(((lhs, rhs) => x`${lhs}.${rhs}`) as any)
 	);
 
 	const slot_fns = [];
 
 	if (node.children.length) {
-		const target: AppendTarget = {
-			slots: { default: '' },
-			slot_stack: ['default']
-		};
-
-		renderer.targets.push(target);
-
 		const slot_scopes = new Map();
-		slot_scopes.set('default', get_slot_scope(node.lets));
+
+		renderer.push();
 
 		renderer.render(node.children, Object.assign({}, options, {
 			slot_scopes
 		}));
 
-		Object.keys(target.slots).forEach(name => {
-			const slot_scope = slot_scopes.get(name);
-
-			slot_fns.push(
-				`${quote_name_if_necessary(name)}: (${slot_scope}) => \`${target.slots[name]}\``
-			);
+		slot_scopes.set('default', {
+			input: get_slot_scope(node.lets),
+			output: renderer.pop()
 		});
 
-		renderer.targets.pop();
+		slot_scopes.forEach(({ input, output }, name) => {
+			slot_fns.push(
+				p`${name}: (${input}) => ${output}`
+			);
+		});
 	}
 
-	const slots = stringify_props(slot_fns);
+	const slots = x`{
+		${slot_fns}
+	}`;
 
-	renderer.append(`\${@validate_component(${expression}, '${node.name}').$$render($$result, ${props}, ${bindings}, ${slots})}`);
+	renderer.add_expression(x`@validate_component(${expression}, "${node.name}").$$render($$result, ${props}, ${bindings}, ${slots})`);
 }

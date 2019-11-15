@@ -6,7 +6,7 @@ import { SourceMapConsumer } from "source-map";
 import { getLocator } from "locate-character";
 
 describe("sourcemaps", () => {
-	fs.readdirSync("test/sourcemaps/samples").forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === ".") return;
 
 		// add .solo to a sample directory name to only run that test
@@ -17,12 +17,12 @@ describe("sourcemaps", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(solo ? it.only : skip ? it.skip : it)(dir, () => {
+		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
 			const filename = path.resolve(
-				`test/sourcemaps/samples/${dir}/input.svelte`
+				`${__dirname}/samples/${dir}/input.svelte`
 			);
 			const outputFilename = path.resolve(
-				`test/sourcemaps/samples/${dir}/output`
+				`${__dirname}/samples/${dir}/output`
 			);
 
 			const input = fs.readFileSync(filename, "utf-8").replace(/\s+$/, "");
@@ -61,10 +61,10 @@ describe("sourcemaps", () => {
 
 			const locateInSource = getLocator(input);
 
-			const smc = new SourceMapConsumer(js.map);
+			const smc = await new SourceMapConsumer(js.map);
 			const locateInGenerated = getLocator(_code);
 
-			const smcCss = css.map && new SourceMapConsumer(css.map);
+			const smcCss = css.map && await new SourceMapConsumer(css.map);
 			const locateInGeneratedCss = getLocator(css.code || '');
 
 			test({ assert, code: _code, map: js.map, smc, smcCss, locateInSource, locateInGenerated, locateInGeneratedCss });

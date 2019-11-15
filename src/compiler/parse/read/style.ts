@@ -1,9 +1,10 @@
 import parse from 'css-tree/lib/parser/index.js';
 import { walk } from 'estree-walker';
 import { Parser } from '../index';
-import { Node } from '../../interfaces';
+import { Node } from 'estree';
+import { Style } from '../../interfaces';
 
-export default function read_style(parser: Parser, start: number, attributes: Node[]) {
+export default function read_style(parser: Parser, start: number, attributes: Node[]): Style {
 	const content_start = parser.index;
 	const styles = parser.read_until(/<\/style>/);
 	const content_end = parser.index;
@@ -30,7 +31,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 	// tidy up AST
 	walk(ast, {
-		enter: (node: Node) => {
+		enter: (node: any) => { // `any` because this isn't an ESTree node
 			// replace `ref:a` nodes
 			if (node.type === 'Selector') {
 				for (let i = 0; i < node.children.length; i += 1) {
@@ -46,6 +47,13 @@ export default function read_style(parser: Parser, start: number, attributes: No
 				}
 			}
 
+			if (node.type === 'Declaration' && node.value.type === 'Value' && node.value.children.length === 0) {
+				parser.error({
+					code: `invalid-declaration`,
+					message: `Declaration cannot be empty`
+				}, node.start);
+			}
+
 			if (node.loc) {
 				node.start = node.loc.start.offset;
 				node.end = node.loc.end.offset;
@@ -58,6 +66,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	const end = parser.index;
 
 	return {
+		type: 'Style',
 		start,
 		end,
 		attributes,
@@ -65,12 +74,12 @@ export default function read_style(parser: Parser, start: number, attributes: No
 		content: {
 			start: content_start,
 			end: content_end,
-			styles,
-		},
+			styles
+		}
 	};
 }
 
-function is_ref_selector(a: Node, b: Node) {
+function is_ref_selector(a: any, b: any) { // TODO add CSS node types
 	if (!b) return false;
 
 	return (

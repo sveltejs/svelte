@@ -570,9 +570,10 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — four
 * `seekable` (readonly) — ditto
 * `played` (readonly) — ditto
 
-...and three *two-way* bindings:
+...and four *two-way* bindings:
 
 * `currentTime` — the current point in the video, in seconds
+* `playbackRate` — how fast to play the video, where 1 is 'normal'
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
 
@@ -1145,7 +1146,7 @@ bind:property={variable}
 
 ---
 
-You can bind to component props using the same mechanism.
+You can bind to component props using the same syntax as for elements.
 
 ```html
 <Keypad bind:value={pin}/>
@@ -1380,7 +1381,7 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 
 ---
 
-This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content exposed separately to the main `html` content.
+This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
 
 ```html
 <svelte:head>

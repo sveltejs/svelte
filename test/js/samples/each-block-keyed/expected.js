@@ -23,43 +23,36 @@ function get_each_context(ctx, list, i) {
 
 // (5:0) {#each things as thing (thing.id)}
 function create_each_block(key_1, ctx) {
-	var div, t_value = ctx.thing.name + "", t;
+	let div;
+	let t_value = ctx.thing.name + "";
+	let t;
 
 	return {
 		key: key_1,
-
 		first: null,
-
 		c() {
 			div = element("div");
 			t = text(t_value);
 			this.first = div;
 		},
-
 		m(target, anchor) {
 			insert(target, div, anchor);
 			append(div, t);
 		},
-
 		p(changed, ctx) {
-			if ((changed.things) && t_value !== (t_value = ctx.thing.name + "")) {
-				set_data(t, t_value);
-			}
+			if (changed.things && t_value !== (t_value = ctx.thing.name + "")) set_data(t, t_value);
 		},
-
 		d(detaching) {
-			if (detaching) {
-				detach(div);
-			}
+			if (detaching) detach(div);
 		}
 	};
 }
 
 function create_fragment(ctx) {
-	var each_blocks = [], each_1_lookup = new Map(), each_1_anchor;
-
+	let each_blocks = [];
+	let each_1_lookup = new Map();
+	let each_1_anchor;
 	let each_value = ctx.things;
-
 	const get_key = ctx => ctx.thing.id;
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -76,7 +69,6 @@ function create_fragment(ctx) {
 
 			each_1_anchor = empty();
 		},
-
 		m(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(target, anchor);
@@ -84,23 +76,18 @@ function create_fragment(ctx) {
 
 			insert(target, each_1_anchor, anchor);
 		},
-
 		p(changed, ctx) {
 			const each_value = ctx.things;
 			each_blocks = update_keyed_each(each_blocks, changed, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, destroy_block, create_each_block, each_1_anchor, get_each_context);
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].d(detaching);
 			}
 
-			if (detaching) {
-				detach(each_1_anchor);
-			}
+			if (detaching) detach(each_1_anchor);
 		}
 	};
 }
@@ -109,7 +96,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { things } = $$props;
 
 	$$self.$set = $$props => {
-		if ('things' in $$props) $$invalidate('things', things = $$props.things);
+		if ("things" in $$props) $$invalidate("things", things = $$props.things);
 	};
 
 	return { things };
@@ -118,7 +105,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["things"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { things: 0 });
 	}
 }
 

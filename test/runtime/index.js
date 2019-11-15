@@ -33,9 +33,7 @@ describe("runtime", () => {
 
 		require.extensions[".svelte"] = function(module, filename) {
 			const options = Object.assign({
-				filename,
-				format: 'cjs',
-				sveltePath
+				filename
 			}, compileOptions);
 
 			const { js: { code } } = compile(fs.readFileSync(filename, "utf-8"), options);
@@ -51,15 +49,16 @@ describe("runtime", () => {
 	function runTest(dir, hydrate) {
 		if (dir[0] === ".") return;
 
-		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
+		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
+		const solo = config.solo || /\.solo/.test(dir);
 
 		if (hydrate && config.skip_if_hydrate) return;
 
-		if (config.solo && process.env.CI) {
+		if (solo && process.env.CI) {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, () => {
+		(config.skip ? it.skip : solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -69,9 +68,10 @@ describe("runtime", () => {
 
 			compile = (config.preserveIdentifiers ? svelte : svelte$).compile;
 
-			const cwd = path.resolve(`test/runtime/samples/${dir}`);
+			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
+			compileOptions.format = 'cjs';
 			compileOptions.sveltePath = sveltePath;
 			compileOptions.hydratable = hydrate;
 			compileOptions.immutable = config.immutable;
@@ -167,7 +167,8 @@ describe("runtime", () => {
 							mod,
 							target,
 							window,
-							raf
+							raf,
+							compileOptions
 						})).then(() => {
 							component.$destroy();
 
@@ -189,13 +190,20 @@ describe("runtime", () => {
 						if (typeof config.error === 'function') {
 							config.error(assert, err);
 						} else {
-							assert.equal(config.error, err.message);
+							assert.equal(err.message, config.error);
 						}
 					} else {
-						failed.add(dir);
-						showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 						throw err;
 					}
+				 }).catch(err => {
+					failed.add(dir);
+					showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
+					throw err;
+				})
+				.catch(err => {
+					// print a clickable link to open the directory
+					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+					throw err;
 				})
 				.then(() => {
 					if (config.show) {
@@ -209,7 +217,7 @@ describe("runtime", () => {
 		});
 	}
 
-	fs.readdirSync("test/runtime/samples").forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		runTest(dir, false);
 		runTest(dir, true);
 	});
@@ -229,7 +237,7 @@ describe("runtime", () => {
 				}),
 				{
 					name: 'svelte-packages',
-					resolveId: (importee, importer) => {
+					resolveId: (importee) => {
 						if (importee.startsWith('svelte/')) {
 							return importee.replace('svelte', process.cwd()) + '/index.mjs';
 						}

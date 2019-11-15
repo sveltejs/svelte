@@ -81,11 +81,11 @@ function update($$) {
 
 function exec_update($$) {
 	$$.update($$.dirty);
-	run_all($$.before_update);
-	$$.fragment.p($$.dirty, $$.ctx);
-	$$.dirty = null;
+  run_all($$.before_update);
+  $$.fragment && $$.fragment.p($$.dirty, $$.ctx);
+  $$.dirty = null;
 
-	$$.after_update.forEach(add_render_callback);
+  $$.after_update.forEach(add_render_callback);
 }
 
 function try_exec_update($$) {

@@ -32,9 +32,9 @@ export function onError(fn) {
 }
 
 export function createEventDispatcher() {
-	const component = current_component;
+	const component = get_current_component();
 
-	return (type, detail) => {
+	return (type: string, detail?: any) => {
 		const callbacks = component.$$.callbacks[type];
 
 		if (callbacks) {

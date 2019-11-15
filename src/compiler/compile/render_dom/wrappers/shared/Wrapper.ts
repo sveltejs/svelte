@@ -1,23 +1,26 @@
 import Renderer from '../../Renderer';
 import Block from '../../Block';
-import { INode } from '../../../nodes/interfaces';
+import { x } from 'code-red';
+import { TemplateNode } from '../../../../interfaces';
+import { Identifier } from 'estree';
 
 export default class Wrapper {
 	renderer: Renderer;
 	parent: Wrapper;
-	node: INode;
+	node: TemplateNode;
 
 	prev: Wrapper | null;
 	next: Wrapper | null;
 
-	var: string;
+	var: Identifier;
 	can_use_innerhtml: boolean;
+	is_static_content: boolean;
 
 	constructor(
 		renderer: Renderer,
 		block: Block,
 		parent: Wrapper,
-		node: INode
+		node: TemplateNode
 	) {
 		this.node = node;
 
@@ -33,6 +36,7 @@ export default class Wrapper {
 		});
 
 		this.can_use_innerhtml = !renderer.options.hydratable;
+		this.is_static_content = !renderer.options.hydratable;
 
 		block.wrappers.push(this);
 	}
@@ -42,30 +46,35 @@ export default class Wrapper {
 		if (this.parent) this.parent.cannot_use_innerhtml();
 	}
 
-	get_or_create_anchor(block: Block, parent_node: string, parent_nodes: string) {
+	not_static_content() {
+		this.is_static_content = false;
+		if (this.parent) this.parent.not_static_content();
+	}
+
+	get_or_create_anchor(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		// TODO use this in EachBlock and IfBlock — tricky because
 		// children need to be created first
 		const needs_anchor = this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node();
 		const anchor = needs_anchor
-			? block.get_unique_name(`${this.var}_anchor`)
-			: (this.next && this.next.var) || 'null';
+			? block.get_unique_name(`${this.var.name}_anchor`)
+			: (this.next && this.next.var) || { type: 'Identifier', name: 'null' };
 
 		if (needs_anchor) {
 			block.add_element(
 				anchor,
-				`@empty()`,
-				parent_nodes && `@empty()`,
-				parent_node
+				x`@empty()`,
+				parent_nodes && x`@empty()`,
+				parent_node as Identifier
 			);
 		}
 
 		return anchor;
 	}
 
-	get_update_mount_node(anchor: string) {
-		return (this.parent && this.parent.is_dom_node())
+	get_update_mount_node(anchor: Identifier): Identifier {
+		return ((this.parent && this.parent.is_dom_node())
 			? this.parent.var
-			: `${anchor}.parentNode`;
+			: x`${anchor}.parentNode`) as Identifier;
 	}
 
 	is_dom_node() {
@@ -76,7 +85,7 @@ export default class Wrapper {
 		);
 	}
 
-	render(_block: Block, _parent_node: string, _parent_nodes: string) {
+	render(_block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
 		throw Error('Wrapper class is not renderable');
 	}
 }

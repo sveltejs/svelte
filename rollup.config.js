@@ -1,5 +1,5 @@
 import fs from 'fs';
-import replace from 'rollup-plugin-replace';
+import replace from '@rollup/plugin-replace';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
@@ -20,8 +20,7 @@ const ts_plugin = is_publish
 
 const external = id => id.startsWith('svelte/');
 
-const inlined_estree = fs.readFileSync('./node_modules/estree-walker/index.d.ts', 'utf-8').replace(/declare.*\{((.|[\n\r])+)\}/m, '$1');
-fs.writeFileSync(`./compiler.d.ts`, `export { compile, parse, preprocess, VERSION } from './types/compiler/index';\n${inlined_estree}`);
+fs.writeFileSync(`./compiler.d.ts`, `export { compile, parse, preprocess, VERSION } from './types/compiler/index';`);
 
 export default [
 	/* runtime */

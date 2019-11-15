@@ -6,7 +6,8 @@ import {
 	showOutput,
 	loadConfig,
 	setupHtmlEqual,
-	tryToLoadJson
+	tryToLoadJson,
+	shouldUpdateExpected
 } from "../helpers.js";
 
 function tryToReadFile(file) {
@@ -30,7 +31,7 @@ describe("ssr", () => {
 		return setupHtmlEqual();
 	});
 
-	fs.readdirSync("test/server-side-rendering/samples").forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === ".") return;
 
 		// add .solo to a sample directory name to only run that test, or
@@ -43,7 +44,7 @@ describe("ssr", () => {
 		}
 
 		(solo ? it.only : it)(dir, () => {
-			dir = path.resolve("test/server-side-rendering/samples", dir);
+			dir = path.resolve(`${__dirname}/samples`, dir);
 			try {
 				const Component = require(`${dir}/main.svelte`).default;
 
@@ -58,23 +59,53 @@ describe("ssr", () => {
 				fs.writeFileSync(`${dir}/_actual.html`, html);
 				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
 
-				assert.htmlEqual(html, expectedHtml);
-				assert.equal(
-					css.code.replace(/^\s+/gm, ""),
-					expectedCss.replace(/^\s+/gm, "")
-				);
+				try {
+					assert.htmlEqual(html, expectedHtml);
+				} catch (error) {
+					if (shouldUpdateExpected()) {
+						fs.writeFileSync(`${dir}/_expected.html`, html);
+						console.log(`Updated ${dir}/_expected.html.`);
+					} else {
+						throw error;
+					}
+				}
+
+				try {
+					assert.equal(
+						css.code.replace(/^\s+/gm, ""),
+						expectedCss.replace(/^\s+/gm, "")
+					);
+				} catch (error) {
+					if (shouldUpdateExpected()) {
+						fs.writeFileSync(`${dir}/_expected.css`, css.code);
+						console.log(`Updated ${dir}/_expected.css.`);
+					} else {
+						throw error;
+					}
+				}
 
 				if (fs.existsSync(`${dir}/_expected-head.html`)) {
 					fs.writeFileSync(`${dir}/_actual-head.html`, head);
-					assert.htmlEqual(
-						head,
-						fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8')
-					);
+
+					try {
+						assert.htmlEqual(
+							head,
+							fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8')
+						);
+					} catch (error) {
+						if (shouldUpdateExpected()) {
+							fs.writeFileSync(`${dir}/_expected-head.html`, head);
+							console.log(`Updated ${dir}/_expected-head.html.`);
+						} else {
+							throw error;
+						}
+					}
 				}
 
-				if (show) showOutput(dir, { generate: 'ssr' });
+				if (show) showOutput(dir, { generate: 'ssr', format: 'cjs' });
 			} catch (err) {
-				showOutput(dir, { generate: 'ssr' });
+				showOutput(dir, { generate: 'ssr', format: 'cjs' });
+				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
 				throw err;
 			}
 		});
@@ -85,14 +116,15 @@ describe("ssr", () => {
 		if (dir[0] === ".") return;
 
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
+		const solo = config.solo || /\.solo/.test(dir);
 
-		if (config.solo && process.env.CI) {
+		if (solo && process.env.CI) {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
 		if (config.skip_if_ssr) return;
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
+		(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve("test/runtime/samples", dir);
 
 			Object.keys(require.cache)
@@ -104,7 +136,8 @@ describe("ssr", () => {
 			delete global.window;
 
 			const compileOptions = Object.assign({ sveltePath }, config.compileOptions, {
-				generate: 'ssr'
+				generate: 'ssr',
+				format: 'cjs'
 			});
 
 			require("../../register")(compileOptions);
@@ -129,11 +162,13 @@ describe("ssr", () => {
 					showOutput(cwd, compileOptions);
 				}
 			} catch (err) {
+				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+
 				if (config.error) {
 					if (typeof config.error === 'function') {
 						config.error(assert, err);
 					} else {
-						assert.equal(config.error, err.message);
+						assert.equal(err.message, config.error);
 					}
 				} else {
 					showOutput(cwd, compileOptions);

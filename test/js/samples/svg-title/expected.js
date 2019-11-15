@@ -12,7 +12,9 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var svg, title, t;
+	let svg;
+	let title;
+	let t;
 
 	return {
 		c() {
@@ -20,21 +22,16 @@ function create_fragment(ctx) {
 			title = svg_element("title");
 			t = text("a title");
 		},
-
 		m(target, anchor) {
 			insert(target, svg, anchor);
 			append(svg, title);
 			append(title, t);
 		},
-
 		p: noop,
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(svg);
-			}
+			if (detaching) detach(svg);
 		}
 	};
 }
@@ -42,7 +39,7 @@ function create_fragment(ctx) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, []);
+		init(this, options, null, create_fragment, safe_not_equal, {});
 	}
 }
 

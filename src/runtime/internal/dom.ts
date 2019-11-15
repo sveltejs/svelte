@@ -1,3 +1,5 @@
+import { has_prop } from "./utils";
+
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
@@ -29,7 +31,7 @@ export function object_without_properties<T, K extends keyof T>(obj: T, exclude:
 	const target = {} as Pick<T, Exclude<keyof T, K>>;
 	for (const k in obj) {
 		if (
-			Object.prototype.hasOwnProperty.call(obj, k)
+			has_prop(obj, k)
 			// @ts-ignore
 			&& exclude.indexOf(k) === -1
 		) {
@@ -86,14 +88,18 @@ export function self(fn) {
 
 export function attr(node: Element, attribute: string, value?: string) {
 	if (value == null) node.removeAttribute(attribute);
-	else node.setAttribute(attribute, value);
+	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
 }
 
 export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
+	// @ts-ignore
+	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
 	for (const key in attributes) {
-		if (key === 'style') {
+		if (attributes[key] == null) {
+			node.removeAttribute(key);
+		} else if (key === 'style') {
 			node.style.cssText = attributes[key];
-		} else if (key in node) {
+		} else if (descriptors[key] && descriptors[key].set) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key]);

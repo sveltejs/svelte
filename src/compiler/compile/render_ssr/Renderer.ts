@@ -13,6 +13,8 @@ import Text from './handlers/Text';
 import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
 import { INode } from '../nodes/interfaces';
+import { Expression, TemplateLiteral, Identifier } from 'estree';
+import { escape_template } from '../utils/stringify';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
 
@@ -43,17 +45,63 @@ export interface RenderOptions extends CompileOptions{
 
 export default class Renderer {
 	has_bindings = false;
-	code = '';
+
+	name: Identifier;
+
+	stack: Array<{ current: { value: string }; literal: TemplateLiteral }> = [];
+	current: { value: string }; // TODO can it just be `current: string`?
+	literal: TemplateLiteral;
+
 	targets: AppendTarget[] = [];
 
-	append(code: string) {
-		if (this.targets.length) {
-			const target = this.targets[this.targets.length - 1];
-			const slot_name = target.slot_stack[target.slot_stack.length - 1];
-			target.slots[slot_name] += code;
-		} else {
-			this.code += code;
+	constructor({ name }) {
+		this.name = name;
+		this.push();
+	}
+
+	add_string(str: string) {
+		this.current.value += escape_template(str);
+	}
+
+	add_expression(node: Expression) {
+		this.literal.quasis.push({
+			type: 'TemplateElement',
+			value: { raw: this.current.value, cooked: null },
+			tail: false
+		});
+
+		this.literal.expressions.push(node);
+		this.current.value = '';
+	}
+
+	push() {
+		const current = this.current = { value: '' };
+
+		const literal = this.literal = {
+			type: 'TemplateLiteral',
+			expressions: [],
+			quasis: []
+		};
+
+		this.stack.push({ current, literal });
+	}
+
+	pop() {
+		this.literal.quasis.push({
+			type: 'TemplateElement',
+			value: { raw: this.current.value, cooked: null },
+			tail: true
+		});
+
+		const popped = this.stack.pop();
+		const last = this.stack[this.stack.length - 1];
+
+		if (last) {
+			this.literal = last.literal;
+			this.current = last.current;
 		}
+
+		return popped.literal;
 	}
 
 	render(nodes: INode[], options: RenderOptions) {

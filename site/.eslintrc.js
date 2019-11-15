@@ -47,6 +47,12 @@ module.exports = {
 	},
 	settings: {
 		'import/core-modules': ['svelte'],
-		'svelte3/compiler': require('svelte/compiler')
+		'svelte3/compiler': (() => {
+			try {
+				return require('svelte/compiler');
+			} catch (e) {
+				return null;
+			}
+		})()
 	}
 };

@@ -88,6 +88,7 @@
 		background-color: #0074D9;
 		color: white;
 		border-radius: 1em 1em 0 1em;
+		word-break: break-all;
 	}
 </style>
 
