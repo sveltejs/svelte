@@ -14,7 +14,7 @@
 		showControlsTimeout = setTimeout(() => showControls = false, 2500);
 		showControls = true;
 
-		if (e.which !== 1) return; // mouse not down
+		if (!(e.buttons & 1)) return; // mouse not down
 		if (!duration) return; // video not loaded yet
 
 		const { left, right } = this.getBoundingClientRect();
@@ -109,8 +109,8 @@
 
 <div>
 	<video
-		poster="https://svelte-assets.surge.sh/caminandes-llamigos.jpg"
-		src="https://svelte-assets.surge.sh/caminandes-llamigos.mp4"
+		poster="https://sveltejs.github.io/assets/caminandes-llamigos.jpg"
+		src="https://sveltejs.github.io/assets/caminandes-llamigos.mp4"
 		on:mousemove={handleMousemove}
 		on:mousedown={handleMousedown}
 		bind:currentTime={time}

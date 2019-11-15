@@ -11,7 +11,7 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var div;
+	let div;
 
 	return {
 		c() {
@@ -19,11 +19,9 @@ function create_fragment(ctx) {
 			set_style(div, "color", ctx.color);
 			set_style(div, "transform", "translate(" + ctx.x + "px," + ctx.y + "px)");
 		},
-
 		m(target, anchor) {
 			insert(target, div, anchor);
 		},
-
 		p(changed, ctx) {
 			if (changed.color) {
 				set_style(div, "color", ctx.color);
@@ -33,25 +31,23 @@ function create_fragment(ctx) {
 				set_style(div, "transform", "translate(" + ctx.x + "px," + ctx.y + "px)");
 			}
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(div);
-			}
+			if (detaching) detach(div);
 		}
 	};
 }
 
 function instance($$self, $$props, $$invalidate) {
-	let { color, x, y } = $$props;
+	let { color } = $$props;
+	let { x } = $$props;
+	let { y } = $$props;
 
 	$$self.$set = $$props => {
-		if ('color' in $$props) $$invalidate('color', color = $$props.color);
-		if ('x' in $$props) $$invalidate('x', x = $$props.x);
-		if ('y' in $$props) $$invalidate('y', y = $$props.y);
+		if ("color" in $$props) $$invalidate("color", color = $$props.color);
+		if ("x" in $$props) $$invalidate("x", x = $$props.x);
+		if ("y" in $$props) $$invalidate("y", y = $$props.y);
 	};
 
 	return { color, x, y };
@@ -60,7 +56,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["color", "x", "y"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { color: 0, x: 0, y: 0 });
 	}
 }
 

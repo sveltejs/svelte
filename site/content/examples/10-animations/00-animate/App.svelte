@@ -109,7 +109,11 @@
 </style>
 
 <div class='board'>
-	<input class="new-todo" placeholder="what needs to be done?" on:keydown="{event => event.which === 13 && add(this)}">
+	<input
+		class="new-todo"
+		placeholder="what needs to be done?"
+		on:keydown="{event => event.which === 13 && add(event.target)}"
+	>
 
 	<div class='left'>
 		<h2>todo</h2>

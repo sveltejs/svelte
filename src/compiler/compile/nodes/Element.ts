@@ -105,6 +105,7 @@ export default class Element extends Node {
 	animation?: Animation = null;
 	children: INode[];
 	namespace: string;
+	needs_manual_style_scoping: boolean;
 
 	constructor(component, parent, scope, info: any) {
 		super(component, parent, scope, info);
@@ -149,6 +150,10 @@ export default class Element extends Node {
 				});
 			}
 		}
+
+		// Binding relies on Attribute, defer its evaluation
+		const order = ['Binding']; // everything else is -1
+		info.attributes.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
 
 		info.attributes.forEach(node => {
 			switch (node.type) {
@@ -201,7 +206,7 @@ export default class Element extends Node {
 			this.scope = scope.child();
 
 			this.lets.forEach(l => {
-				const dependencies = new Set([l.name]);
+				const dependencies = new Set([l.name.name]);
 
 				l.names.forEach(name => {
 					this.scope.add(name, dependencies, this);
@@ -622,7 +627,9 @@ export default class Element extends Node {
 				name === 'seekable' ||
 				name === 'played' ||
 				name === 'volume' ||
-				name === 'playbackRate'
+				name === 'playbackRate' ||
+				name === 'seeking' ||
+				name === 'ended'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
 					component.error(binding, {
@@ -743,6 +750,11 @@ export default class Element extends Node {
 	}
 
 	add_css_class() {
+		if (this.attributes.some(attr => attr.is_spread)) {
+			this.needs_manual_style_scoping = true;
+			return;
+		}
+
 		const { id } = this.component.stylesheet;
 
 		const class_attribute = this.attributes.find(a => a.name === 'class');

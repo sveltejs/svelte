@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import marked from 'marked';
-import PrismJS from 'prismjs';
 import send from '@polka/send';
-import { extract_frontmatter, extract_metadata, langs, link_renderer } from '@sveltejs/site-kit/utils/markdown';
+import { extract_frontmatter, extract_metadata, link_renderer } from '@sveltejs/site-kit/utils/markdown';
+import { highlight } from '../../../utils/highlight';
 
 const cache = new Map();
 
@@ -57,14 +57,7 @@ function get_tutorial(slug) {
 			}
 		}
 
-		const plang = langs[lang];
-		const highlighted = PrismJS.highlight(
-			source,
-			PrismJS.languages[plang],
-			lang
-		);
-
-		return `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
+		return `<div class='${className}'>${prefix}${highlight(source, lang)}</div>`;
 	};
 
 	let html = marked(content, { renderer });

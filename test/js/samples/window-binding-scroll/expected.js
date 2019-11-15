@@ -15,8 +15,17 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var scrolling = false, clear_scrolling = () => { scrolling = false }, scrolling_timeout, p, t0, t1, dispose;
+	let scrolling = false;
 
+	let clear_scrolling = () => {
+		scrolling = false;
+	};
+
+	let scrolling_timeout;
+	let p;
+	let t0;
+	let t1;
+	let dispose;
 	add_render_callback(ctx.onwindowscroll);
 
 	return {
@@ -24,6 +33,7 @@ function create_fragment(ctx) {
 			p = element("p");
 			t0 = text("scrolled to ");
 			t1 = text(ctx.y);
+
 			dispose = listen(window, "scroll", () => {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);
@@ -31,13 +41,11 @@ function create_fragment(ctx) {
 				ctx.onwindowscroll();
 			});
 		},
-
 		m(target, anchor) {
 			insert(target, p, anchor);
 			append(p, t0);
 			append(p, t1);
 		},
-
 		p(changed, ctx) {
 			if (changed.y && !scrolling) {
 				scrolling = true;
@@ -46,19 +54,12 @@ function create_fragment(ctx) {
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
 			}
 
-			if (changed.y) {
-				set_data(t1, ctx.y);
-			}
+			if (changed.y) set_data(t1, ctx.y);
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(p);
-			}
-
+			if (detaching) detach(p);
 			dispose();
 		}
 	};
@@ -68,11 +69,11 @@ function instance($$self, $$props, $$invalidate) {
 	let { y } = $$props;
 
 	function onwindowscroll() {
-		y = window.pageYOffset; $$invalidate('y', y);
+		$$invalidate("y", y = window.pageYOffset)
 	}
 
 	$$self.$set = $$props => {
-		if ('y' in $$props) $$invalidate('y', y = $$props.y);
+		if ("y" in $$props) $$invalidate("y", y = $$props.y);
 	};
 
 	return { y, onwindowscroll };
@@ -81,7 +82,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["y"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { y: 0 });
 	}
 }
 

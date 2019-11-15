@@ -1,6 +1,6 @@
 <p>
   <a href="https://svelte.dev">
-	<img alt="Cybernetically enhanced web apps: Svelte" src="https://svelte-assets.surge.sh/banner.png">
+	<img alt="Cybernetically enhanced web apps: Svelte" src="https://sveltejs.github.io/assets/banner.png">
   </a>
 
   <a href="https://www.npmjs.com/package/svelte">

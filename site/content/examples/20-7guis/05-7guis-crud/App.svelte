@@ -2,18 +2,9 @@
 
 <script>
 	let people = [
-		{
-			first: 'Hans',
-			last: 'Emil'
-		},
-		{
-			first: 'Max',
-			last: 'Mustermann'
-		},
-		{
-			first: 'Roman',
-			last: 'Tisch'
-		}
+		{ first: 'Hans', last: 'Emil' },
+		{ first: 'Max', last: 'Mustermann' },
+		{ first: 'Roman', last: 'Tisch' }
 	];
 
 	let prefix = '';
@@ -39,7 +30,9 @@
 	}
 
 	function update() {
-		people[i] = { first, last };
+		selected.first = first;
+		selected.last = last;
+		people = people;
 	}
 
 	function remove() {

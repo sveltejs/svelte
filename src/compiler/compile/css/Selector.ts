@@ -1,17 +1,24 @@
 import MagicString from 'magic-string';
 import Stylesheet from './Stylesheet';
 import { gather_possible_values, UNKNOWN } from './gather_possible_values';
-import { Node } from '../../interfaces';
+import { CssNode } from './interfaces';
 import Component from '../Component';
+import Element from '../nodes/Element';
+
+enum BlockAppliesToNode {
+	NotPossible,
+	Possible,
+	UnknownSelectorType
+}
 
 export default class Selector {
-	node: Node;
+	node: CssNode;
 	stylesheet: Stylesheet;
 	blocks: Block[];
 	local_blocks: Block[];
 	used: boolean;
 
-	constructor(node: Node, stylesheet: Stylesheet) {
+	constructor(node: CssNode, stylesheet: Stylesheet) {
 		this.node = node;
 		this.stylesheet = stylesheet;
 
@@ -28,13 +35,13 @@ export default class Selector {
 		this.used = this.blocks[0].global;
 	}
 
-	apply(node: Node, stack: Node[]) {
-		const to_encapsulate: Node[] = [];
+	apply(node: Element, stack: Element[]) {
+		const to_encapsulate: any[] = [];
 
-		apply_selector(this.stylesheet, this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
+		apply_selector(this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
 
 		if (to_encapsulate.length > 0) {
-			to_encapsulate.filter((_, i) => i === 0 || i === to_encapsulate.length - 1).forEach(({ node, block }) => {
+			to_encapsulate.forEach(({ node, block }) => {
 				this.stylesheet.nodes_with_css_class.add(node);
 				block.should_encapsulate = true;
 			});
@@ -126,7 +133,7 @@ export default class Selector {
 	}
 }
 
-function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, stack: Node[], to_encapsulate: any[]): boolean {
+function apply_selector(blocks: Block[], node: Element, stack: Element[], to_encapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
@@ -134,49 +141,30 @@ function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, sta
 		return blocks.every(block => block.global);
 	}
 
-	let i = block.selectors.length;
-
-	while (i--) {
-		const selector = block.selectors[i];
-
-		if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-			// TODO shouldn't see this here... maybe we should enforce that :global(...)
-			// cannot be sandwiched between non-global selectors?
+	switch (block_might_apply_to_node(block, node)) {
+		case BlockAppliesToNode.NotPossible:
 			return false;
-		}
 
-		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
-			continue;
-		}
-
-		if (selector.type === 'ClassSelector') {
-			if (!attribute_matches(node, 'class', selector.name, '~=', false) && !class_matches(node, selector.name)) return false;
-		}
-
-		else if (selector.type === 'IdSelector') {
-			if (!attribute_matches(node, 'id', selector.name, '=', false)) return false;
-		}
-
-		else if (selector.type === 'AttributeSelector') {
-			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return false;
-		}
-
-		else if (selector.type === 'TypeSelector') {
-			// remove toLowerCase() in v2, when uppercase elements will be forbidden
-			if (node.name.toLowerCase() !== selector.name.toLowerCase() && selector.name !== '*') return false;
-		}
-
-		else {
+		case BlockAppliesToNode.UnknownSelectorType:
 			// bail. TODO figure out what these could be
 			to_encapsulate.push({ node, block });
 			return true;
-		}
 	}
 
 	if (block.combinator) {
 		if (block.combinator.type === 'WhiteSpace') {
-			while (stack.length) {
-				if (apply_selector(stylesheet, blocks.slice(), stack.pop(), stack, to_encapsulate)) {
+			for (const ancestor_block of blocks) {
+				if (ancestor_block.global) {
+					continue;
+				}
+				
+				for (const stack_node of stack) {
+					if (block_might_apply_to_node(ancestor_block, stack_node) !== BlockAppliesToNode.NotPossible) {
+						to_encapsulate.push({ node: stack_node, block: ancestor_block });
+					}
+				}
+
+				if (to_encapsulate.length) {
 					to_encapsulate.push({ node, block });
 					return true;
 				}
@@ -189,7 +177,7 @@ function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, sta
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			if (apply_selector(stylesheet, blocks, stack.pop(), stack, to_encapsulate)) {
+			if (apply_selector(blocks, stack.pop(), stack, to_encapsulate)) {
 				to_encapsulate.push({ node, block });
 				return true;
 			}
@@ -206,51 +194,160 @@ function apply_selector(stylesheet: Stylesheet, blocks: Block[], node: Node, sta
 	return true;
 }
 
-const operators = {
-	'=' : (value: string, flags: string) => new RegExp(`^${value}$`, flags),
-	'~=': (value: string, flags: string) => new RegExp(`\\b${value}\\b`, flags),
-	'|=': (value: string, flags: string) => new RegExp(`^${value}(-.+)?$`, flags),
-	'^=': (value: string, flags: string) => new RegExp(`^${value}`, flags),
-	'$=': (value: string, flags: string) => new RegExp(`${value}$`, flags),
-	'*=': (value: string, flags: string) => new RegExp(value, flags)
-};
+function block_might_apply_to_node(block, node): BlockAppliesToNode {
+	let i = block.selectors.length;
 
-function attribute_matches(node: Node, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
+	while (i--) {
+		const selector = block.selectors[i];
+		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
+
+		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
+			continue;
+		}
+
+		if (selector.type === 'PseudoClassSelector' && name === 'global') {
+			// TODO shouldn't see this here... maybe we should enforce that :global(...)
+			// cannot be sandwiched between non-global selectors?
+			return BlockAppliesToNode.NotPossible;
+		}
+
+		if (selector.type === 'ClassSelector') {
+			if (!attribute_matches(node, 'class', name, '~=', false) && !node.classes.some(c => c.name === name)) return BlockAppliesToNode.NotPossible;
+		}
+
+		else if (selector.type === 'IdSelector') {
+			if (!attribute_matches(node, 'id', name, '=', false)) return BlockAppliesToNode.NotPossible;
+		}
+
+		else if (selector.type === 'AttributeSelector') {
+			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return BlockAppliesToNode.NotPossible;
+		}
+
+		else if (selector.type === 'TypeSelector') {
+			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*') return BlockAppliesToNode.NotPossible;
+		}
+
+		else {
+			return BlockAppliesToNode.UnknownSelectorType;
+		}
+	}
+
+	return BlockAppliesToNode.Possible;
+}
+
+function test_attribute(operator, expected_value, case_insensitive, value) {
+	if (case_insensitive) {
+		expected_value = expected_value.toLowerCase();
+		value = value.toLowerCase();
+	}
+	switch (operator) {
+		case '=': return value === expected_value;
+		case '~=': return ` ${value} `.includes(` ${expected_value} `);
+		case '|=': return `${value}-`.startsWith(`${expected_value}-`);
+		case '^=': return value.startsWith(expected_value);
+		case '$=': return value.endsWith(expected_value);
+		case '*=': return value.includes(expected_value);
+		default: throw new Error(`this shouldn't happen`);
+	}
+}
+
+function attribute_matches(node: CssNode, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
 	const spread = node.attributes.find(attr => attr.type === 'Spread');
 	if (spread) return true;
 
-	if (node.bindings.some((binding: Node) => binding.name === name)) return true;
+	if (node.bindings.some((binding: CssNode) => binding.name === name)) return true;
 
-	const attr = node.attributes.find((attr: Node) => attr.name === name);
+	const attr = node.attributes.find((attr: CssNode) => attr.name === name);
 	if (!attr) return false;
 	if (attr.is_true) return operator === null;
-	if (attr.chunks.length > 1) return true;
 	if (!expected_value) return true;
 
-	const pattern = operators[operator](expected_value, case_insensitive ? 'i' : '');
-	const value = attr.chunks[0];
-
-	if (!value) return false;
-	if (value.type === 'Text') return pattern.test(value.data);
+	if (attr.chunks.length === 1) {
+		const value = attr.chunks[0];
+		if (!value) return false;
+		if (value.type === 'Text') return test_attribute(operator, expected_value, case_insensitive, value.data);
+	}
 
 	const possible_values = new Set();
-	gather_possible_values(value.node, possible_values);
+
+	let prev_values = [];
+	for (const chunk of attr.chunks) {
+		const current_possible_values = new Set();
+		if (chunk.type === 'Text') {
+			current_possible_values.add(chunk.data);
+		} else {
+			gather_possible_values(chunk.node, current_possible_values);
+		}
+
+		// impossible to find out all combinations
+		if (current_possible_values.has(UNKNOWN)) return true;
+		
+		if (prev_values.length > 0) {
+			const start_with_space = [];
+			const remaining = [];
+			current_possible_values.forEach((current_possible_value: string) => {
+				if (/^\s/.test(current_possible_value)) {
+					start_with_space.push(current_possible_value);
+				} else {
+					remaining.push(current_possible_value);
+				}
+			});
+
+			if (remaining.length > 0) {
+				if (start_with_space.length > 0) {
+					prev_values.forEach(prev_value => possible_values.add(prev_value));
+				}
+
+				const combined = [];
+				prev_values.forEach((prev_value: string) => {
+					remaining.forEach((value: string) => {
+						combined.push(prev_value + value);
+					});
+				});
+				prev_values = combined;
+
+				start_with_space.forEach((value: string) => {
+					if (/\s$/.test(value)) {
+						possible_values.add(value);
+					} else {
+						prev_values.push(value);
+					}
+				});
+				continue;
+			} else {
+				prev_values.forEach(prev_value => possible_values.add(prev_value));
+				prev_values = [];
+			}
+		}
+
+		current_possible_values.forEach((current_possible_value: string) => {
+			if (/\s$/.test(current_possible_value)) {
+				possible_values.add(current_possible_value);
+			} else {
+				prev_values.push(current_possible_value);
+			}
+		});
+		if (prev_values.length < current_possible_values.size) {
+			prev_values.push(' ');
+		}
+
+		if (prev_values.length > 20) {
+			// might grow exponentially, bail out
+			return true;
+		}
+	}
+	prev_values.forEach(prev_value => possible_values.add(prev_value));
+
 	if (possible_values.has(UNKNOWN)) return true;
 
-	for (const x of Array.from(possible_values)) { // TypeScript for-of is slightly unlike JS
-		if (pattern.test(x)) return true;
+	for (const value of possible_values) {
+		if (test_attribute(operator, expected_value, case_insensitive, value)) return true;
 	}
 
 	return false;
 }
 
-function class_matches(node, name: string) {
-	return node.classes.some((class_directive) => {
-		return new RegExp(`\\b${name}\\b`).test(class_directive.name);
-	});
-}
-
-function unquote(value: Node) {
+function unquote(value: CssNode) {
 	if (value.type === 'Identifier') return value.name;
 	const str = value.value;
 	if (str[0] === str[str.length - 1] && str[0] === "'" || str[0] === '"') {
@@ -261,13 +358,13 @@ function unquote(value: Node) {
 
 class Block {
 	global: boolean;
-	combinator: Node;
-	selectors: Node[]
+	combinator: CssNode;
+	selectors: CssNode[]
 	start: number;
 	end: number;
 	should_encapsulate: boolean;
 
-	constructor(combinator: Node) {
+	constructor(combinator: CssNode) {
 		this.combinator = combinator;
 		this.global = false;
 		this.selectors = [];
@@ -278,7 +375,7 @@ class Block {
 		this.should_encapsulate = false;
 	}
 
-	add(selector: Node) {
+	add(selector: CssNode) {
 		if (this.selectors.length === 0) {
 			this.start = selector.start;
 			this.global = selector.type === 'PseudoClassSelector' && selector.name === 'global';
@@ -289,12 +386,12 @@ class Block {
 	}
 }
 
-function group_selectors(selector: Node) {
+function group_selectors(selector: CssNode) {
 	let block: Block = new Block(null);
 
 	const blocks = [block];
 
-	selector.children.forEach((child: Node) => {
+	selector.children.forEach((child: CssNode) => {
 		if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
 			block = new Block(child);
 			blocks.push(block);

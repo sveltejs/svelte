@@ -2,14 +2,40 @@ import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
 import Element from '../nodes/Element';
-import { Node, Ast } from '../../interfaces';
+import { Ast, TemplateNode } from '../../interfaces';
 import Component from '../Component';
+import { CssNode } from './interfaces';
 
 function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
 }
 
-const is_keyframes_node = (node: Node) => remove_css_prefix(node.name) === 'keyframes';
+const is_keyframes_node = (node: CssNode) =>
+	remove_css_prefix(node.name) === 'keyframes';
+
+const at_rule_has_declaration = ({ block }: CssNode): true =>
+	block &&
+	block.children &&
+	block.children.find((node: CssNode) => node.type === 'Declaration');
+
+function minify_declarations(
+	code: MagicString,
+	start: number,
+	declarations: Declaration[]
+): number {
+	let c = start;
+
+	declarations.forEach((declaration, i) => {
+		const separator = i > 0 ? ';' : '';
+		if ((declaration.node.start - c) > separator.length) {
+			code.overwrite(c, declaration.node.start, separator);
+		}
+		declaration.minify(code);
+		c = declaration.node.end;
+	});
+
+	return c;
+}
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function hash(str: string): string {
@@ -23,14 +49,14 @@ function hash(str: string): string {
 class Rule {
 	selectors: Selector[];
 	declarations: Declaration[];
-	node: Node;
+	node: CssNode;
 	parent: Atrule;
 
-	constructor(node: Node, stylesheet, parent?: Atrule) {
+	constructor(node: CssNode, stylesheet, parent?: Atrule) {
 		this.node = node;
 		this.parent = parent;
-		this.selectors = node.selector.children.map((node: Node) => new Selector(node, stylesheet));
-		this.declarations = node.block.children.map((node: Node) => new Declaration(node));
+		this.selectors = node.selector.children.map((node: CssNode) => new Selector(node, stylesheet));
+		this.declarations = node.block.children.map((node: CssNode) => new Declaration(node));
 	}
 
 	apply(node: Element, stack: Element[]) {
@@ -64,16 +90,7 @@ class Rule {
 		code.remove(c, this.node.block.start);
 
 		c = this.node.block.start + 1;
-		this.declarations.forEach((declaration, i) => {
-			const separator = i > 0 ? ';' : '';
-			if ((declaration.node.start - c) > separator.length) {
-				code.overwrite(c, declaration.node.start, separator);
-			}
-
-			declaration.minify(code);
-
-			c = declaration.node.end;
-		});
+		c = minify_declarations(code, c, this.declarations);
 
 		code.remove(c, this.node.block.end - 1);
 	}
@@ -101,16 +118,16 @@ class Rule {
 }
 
 class Declaration {
-	node: Node;
+	node: CssNode;
 
-	constructor(node: Node) {
+	constructor(node: CssNode) {
 		this.node = node;
 	}
 
 	transform(code: MagicString, keyframes: Map<string, string>) {
 		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
-			this.node.value.children.forEach((block: Node) => {
+			this.node.value.children.forEach((block: CssNode) => {
 				if (block.type === 'Identifier') {
 					const name = block.name;
 					if (keyframes.has(name)) {
@@ -139,12 +156,14 @@ class Declaration {
 }
 
 class Atrule {
-	node: Node;
+	node: CssNode;
 	children: Array<Atrule|Rule>;
+	declarations: Declaration[];
 
-	constructor(node: Node) {
+	constructor(node: CssNode) {
 		this.node = node;
 		this.children = [];
+		this.declarations = [];
 	}
 
 	apply(node: Element, stack: Element[]) {
@@ -173,31 +192,40 @@ class Atrule {
 			let c = this.node.start + (expression_char === '(' ? 6 : 7);
 			if (this.node.expression.start > c) code.remove(c, this.node.expression.start);
 
-			this.node.expression.children.forEach((query: Node) => {
+			this.node.expression.children.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
 			});
 
 			code.remove(c, this.node.block.start);
-		} else if (is_keyframes_node(this.node)) {
-			let c = this.node.start + this.node.name.length + 1;
-			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
-			c = this.node.expression.end;
-			if (this.node.block.start - c > 0) code.remove(c, this.node.block.start);
 		} else if (this.node.name === 'supports') {
 			let c = this.node.start + 9;
 			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
-			this.node.expression.children.forEach((query: Node) => {
+			this.node.expression.children.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
 			});
 			code.remove(c, this.node.block.start);
+		} else {
+			let c = this.node.start + this.node.name.length + 1;
+			if (this.node.expression) {
+				if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
+				c = this.node.expression.end;
+			}
+			if (this.node.block && this.node.block.start - c > 0) {
+				code.remove(c, this.node.block.start);
+			}
 		}
 
 		// TODO other atrules
 
 		if (this.node.block) {
 			let c = this.node.block.start + 1;
+			if (this.declarations.length) {
+				c = minify_declarations(code, c, this.declarations);
+				// if the atrule has children, leave the last declaration semicolon alone
+				if (this.children.length) c++;
+			}
 
 			this.children.forEach(child => {
 				if (child.is_used(dev)) {
@@ -213,7 +241,7 @@ class Atrule {
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>) {
 		if (is_keyframes_node(this.node)) {
-			this.node.expression.children.forEach(({ type, name, start, end }: Node) => {
+			this.node.expression.children.forEach(({ type, name, start, end }: CssNode) => {
 				if (type === 'Identifier') {
 					if (name.startsWith('-global-')) {
 						code.remove(start, start + 8);
@@ -261,7 +289,7 @@ export default class Stylesheet {
 	children: Array<Rule|Atrule> = [];
 	keyframes: Map<string, string> = new Map();
 
-	nodes_with_css_class: Set<Node> = new Set();
+	nodes_with_css_class: Set<CssNode> = new Set();
 
 	constructor(source: string, ast: Ast, filename: string, dev: boolean) {
 		this.source = source;
@@ -278,8 +306,8 @@ export default class Stylesheet {
 			let depth = 0;
 			let current_atrule: Atrule = null;
 
-			walk(ast.css, {
-				enter: (node: Node) => {
+			walk(ast.css as any, {
+				enter: (node: any) => {
 					if (node.type === 'Atrule') {
 						const atrule = new Atrule(node);
 						stack.push(atrule);
@@ -291,11 +319,16 @@ export default class Stylesheet {
 						}
 
 						if (is_keyframes_node(node)) {
-							node.expression.children.forEach((expression: Node) => {
+							node.expression.children.forEach((expression: CssNode) => {
 								if (expression.type === 'Identifier' && !expression.name.startsWith('-global-')) {
 									this.keyframes.set(expression.name, `${this.id}-${expression.name}`);
 								}
 							});
+						} else if (at_rule_has_declaration(node)) {
+							const at_rule_declarations = node.block.children
+								.filter(node => node.type === 'Declaration')
+								.map(node => new Declaration(node));
+							atrule.declarations.push(...at_rule_declarations);
 						}
 
 						current_atrule = atrule;
@@ -314,7 +347,7 @@ export default class Stylesheet {
 					depth += 1;
 				},
 
-				leave: (node: Node) => {
+				leave: (node: any) => {
 					if (node.type === 'Atrule') {
 						stack.pop();
 						current_atrule = stack[stack.length - 1];
@@ -332,7 +365,7 @@ export default class Stylesheet {
 		if (!this.has_styles) return;
 
 		const stack: Element[] = [];
-		let parent: Node = node;
+		let parent: TemplateNode = node;
 		while (parent = parent.parent) {
 			if (parent.type === 'Element') stack.unshift(parent as Element);
 		}
@@ -344,7 +377,7 @@ export default class Stylesheet {
 	}
 
 	reify() {
-		this.nodes_with_css_class.forEach((node: Node) => {
+		this.nodes_with_css_class.forEach((node: Element) => {
 			node.add_css_class();
 		});
 	}
@@ -356,8 +389,8 @@ export default class Stylesheet {
 
 		const code = new MagicString(this.source);
 
-		walk(this.ast.css, {
-			enter: (node: Node) => {
+		walk(this.ast.css as any, {
+			enter: (node: any) => {
 				code.addSourcemapLocation(node.start);
 				code.addSourcemapLocation(node.end);
 			}

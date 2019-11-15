@@ -1,13 +1,15 @@
-import { snip } from '../../utils/snip';
-import Renderer, { RenderOptions } from '../Renderer';
-export default function(node, renderer: Renderer, _options: RenderOptions) {
-	const snippet = snip(node.expression);
 
-	renderer.append(
+import Renderer, { RenderOptions } from '../Renderer';
+import { x } from 'code-red';
+
+export default function(node, renderer: Renderer, _options: RenderOptions) {
+	const snippet = node.expression.node;
+
+	renderer.add_expression(
 		node.parent &&
 		node.parent.type === 'Element' &&
 		node.parent.name === 'style'
-			? '${' + snippet + '}'
-			: '${@escape(' + snippet + ')}'
+			? snippet
+			: x`@escape(${snippet})`
 	);
 }

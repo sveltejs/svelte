@@ -184,7 +184,7 @@ dispatch: ((name: string, detail?: any) => void) = createEventDispatcher();
 
 ---
 
-Creates an event dispatcher that can be used to dispatch [component events](docs#Component_events). Event dispatchers are functions that can take two arguments: `name` and `detail`.
+Creates an event dispatcher that can be used to dispatch [component events](docs#on_component_event). Event dispatchers are functions that can take two arguments: `name` and `detail`.
 
 Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture) and are not cancellable with `event.preventDefault()`. The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
 
@@ -433,6 +433,19 @@ Out of the box, Svelte will interpolate between two numbers, two arrays or two o
 
 ---
 
+If the initial value is `undefined` or `null`, the first value change will take effect immediately. This is useful when you have tweened values that are based on props, and don't want any motion when the component first renders.
+
+```js
+const size = tweened(undefined, {
+	duration: 300,
+	easing: cubicOut
+});
+
+$: $size = big ? 100 : 10;
+```
+
+---
+
 The `interpolate` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
 
 ```html
@@ -493,6 +506,15 @@ Both `set` and `update` can take a second argument — an object with `hard` or 
 </script>
 ```
 
+---
+
+If the initial value is `undefined` or `null`, the first value change will take effect immediately, just as with `tweened` values (see above).
+
+```js
+const size = spring();
+$: $size = big ? 100 : 10;
+```
+
 ### `svelte/transition`
 
 The `svelte/transition` module exports six functions: `fade`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with svelte [`transitions`](docs#Transitions).
@@ -527,6 +549,42 @@ You can see the `fade` transition in action in the [transition tutorial](tutoria
 
 {#if condition}
 	<div transition:fade="{{delay: 250, duration: 300}}">
+		fades in and out
+	</div>
+{/if}
+```
+
+#### `blur`
+
+```sv
+transition:blur={params}
+```
+```sv
+in:blur={params}
+```
+```sv
+out:blur={params}
+```
+
+---
+
+Animates a `blur` filter alongside an element's opacity.
+
+`blur` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicInOut`) — an [easing function](docs#svelte_easing)
+* `opacity` (`number`, default 0) - the opacity value to animate out to and in from
+* `amount` (`number`, default 5) - the size of the blur in pixels
+
+```html
+<script>
+	import { blur } from 'svelte/transition';
+</script>
+
+{#if condition}
+	<div transition:blur="{{amount: 10}}">
 		fades in and out
 	</div>
 {/if}
@@ -660,7 +718,7 @@ out:draw={params}
 
 Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
 
-`scale` accepts the following parameters:
+`draw` accepts the following parameters:
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `speed` (`number`, default undefined) - the speed of the animation, see below.
@@ -909,7 +967,7 @@ app.count += 1;
 
 ---
 
-Svelte components can also be compiled to custom elements (aka web components) using the `customElements: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](docs#svelte_options).
+Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](docs#svelte_options).
 
 ```html
 <svelte:options tag="my-element">
@@ -983,8 +1041,12 @@ Unlike client-side components, server-side components don't have a lifespan afte
 
 A server-side component exposes a `render` method that can be called with optional props. It returns an object with `head`, `html`, and `css` properties, where `head` contains the contents of any `<svelte:head>` elements encountered.
 
+You can import a Svelte component directly into Node using [`svelte/register`](docs#svelte_register).
+
 ```js
-const App = require('./App.svelte');
+require('svelte/register');
+
+const App = require('./App.svelte').default;
 
 const { head, html, css } = App.render({
 	answer: 42

@@ -2,15 +2,16 @@
 import {
 	SvelteComponentDev,
 	add_location,
-	append,
+	append_dev,
 	destroy_each,
-	detach,
+	detach_dev,
+	dispatch_dev,
 	element,
 	init,
-	insert,
+	insert_dev,
 	noop,
 	safe_not_equal,
-	set_data,
+	set_data_dev,
 	space,
 	text
 } from "svelte/internal";
@@ -25,9 +26,12 @@ function get_each_context(ctx, list, i) {
 
 // (6:0) {#each things as thing}
 function create_each_block(ctx) {
-	var span, t0_value = ctx.thing.name + "", t0, t1;
+	let span;
+	let t0_value = ctx.thing.name + "";
+	let t0;
+	let t1;
 
-	return {
+	const block = {
 		c: function create() {
 			span = element("span");
 			t0 = text(t0_value);
@@ -38,19 +42,16 @@ function create_each_block(ctx) {
 				console.log({ foo });
 				debugger;
 			}
+
 			add_location(span, file, 6, 1, 82);
 		},
-
 		m: function mount(target, anchor) {
-			insert(target, span, anchor);
-			append(span, t0);
-			insert(target, t1, anchor);
+			insert_dev(target, span, anchor);
+			append_dev(span, t0);
+			insert_dev(target, t1, anchor);
 		},
-
 		p: function update(changed, ctx) {
-			if ((changed.things) && t0_value !== (t0_value = ctx.thing.name + "")) {
-				set_data(t0, t0_value);
-			}
+			if (changed.things && t0_value !== (t0_value = ctx.thing.name + "")) set_data_dev(t0, t0_value);
 
 			if (changed.foo) {
 				const { foo } = ctx;
@@ -58,30 +59,38 @@ function create_each_block(ctx) {
 				debugger;
 			}
 		},
-
 		d: function destroy(detaching) {
-			if (detaching) {
-				detach(span);
-				detach(t1);
-			}
+			if (detaching) detach_dev(span);
+			if (detaching) detach_dev(t1);
 		}
 	};
+
+	dispatch_dev("SvelteRegisterBlock", {
+		block,
+		id: create_each_block.name,
+		type: "each",
+		source: "(6:0) {#each things as thing}",
+		ctx
+	});
+
+	return block;
 }
 
 function create_fragment(ctx) {
-	var t0, p, t1, t2;
+	let t0;
+	let p;
+	let t1;
+	let t2;
+	let each_value = ctx.things;
+	let each_blocks = [];
 
-	var each_value = ctx.things;
-
-	var each_blocks = [];
-
-	for (var i = 0; i < each_value.length; i += 1) {
+	for (let i = 0; i < each_value.length; i += 1) {
 		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
 	}
 
-	return {
+	const block = {
 		c: function create() {
-			for (var i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
 			}
 
@@ -91,27 +100,25 @@ function create_fragment(ctx) {
 			t2 = text(ctx.foo);
 			add_location(p, file, 10, 0, 131);
 		},
-
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 		},
-
 		m: function mount(target, anchor) {
-			for (var i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(target, anchor);
 			}
 
-			insert(target, t0, anchor);
-			insert(target, p, anchor);
-			append(p, t1);
-			append(p, t2);
+			insert_dev(target, t0, anchor);
+			insert_dev(target, p, anchor);
+			append_dev(p, t1);
+			append_dev(p, t2);
 		},
-
 		p: function update(changed, ctx) {
 			if (changed.things) {
 				each_value = ctx.things;
+				let i;
 
-				for (var i = 0; i < each_value.length; i += 1) {
+				for (i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
@@ -126,39 +133,53 @@ function create_fragment(ctx) {
 				for (; i < each_blocks.length; i += 1) {
 					each_blocks[i].d(1);
 				}
+
 				each_blocks.length = each_value.length;
 			}
 
-			if (changed.foo) {
-				set_data(t2, ctx.foo);
-			}
+			if (changed.foo) set_data_dev(t2, ctx.foo);
 		},
-
 		i: noop,
 		o: noop,
-
 		d: function destroy(detaching) {
 			destroy_each(each_blocks, detaching);
-
-			if (detaching) {
-				detach(t0);
-				detach(p);
-			}
+			if (detaching) detach_dev(t0);
+			if (detaching) detach_dev(p);
 		}
 	};
+
+	dispatch_dev("SvelteRegisterBlock", {
+		block,
+		id: create_fragment.name,
+		type: "component",
+		source: "",
+		ctx
+	});
+
+	return block;
 }
 
 function instance($$self, $$props, $$invalidate) {
-	let { things, foo } = $$props;
+	let { things } = $$props;
+	let { foo } = $$props;
+	const writable_props = ["things", "foo"];
 
-	const writable_props = ['things', 'foo'];
 	Object.keys($$props).forEach(key => {
-		if (!writable_props.includes(key) && !key.startsWith('$$')) console.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$set = $$props => {
-		if ('things' in $$props) $$invalidate('things', things = $$props.things);
-		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ("things" in $$props) $$invalidate("things", things = $$props.things);
+		if ("foo" in $$props) $$invalidate("foo", foo = $$props.foo);
+	};
+
+	$$self.$capture_state = () => {
+		return { things, foo };
+	};
+
+	$$self.$inject_state = $$props => {
+		if ("things" in $$props) $$invalidate("things", things = $$props.things);
+		if ("foo" in $$props) $$invalidate("foo", foo = $$props.foo);
 	};
 
 	return { things, foo };
@@ -167,14 +188,23 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, instance, create_fragment, safe_not_equal, ["things", "foo"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { things: 0, foo: 0 });
+
+		dispatch_dev("SvelteRegisterComponent", {
+			component: this,
+			tagName: "Component",
+			options,
+			id: create_fragment.name
+		});
 
 		const { ctx } = this.$$;
-		const props = options.props || {};
-		if (ctx.things === undefined && !('things' in props)) {
+		const props = options.props || ({});
+
+		if (ctx.things === undefined && !("things" in props)) {
 			console.warn("<Component> was created without expected prop 'things'");
 		}
-		if (ctx.foo === undefined && !('foo' in props)) {
+
+		if (ctx.foo === undefined && !("foo" in props)) {
 			console.warn("<Component> was created without expected prop 'foo'");
 		}
 	}
