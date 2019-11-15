@@ -19,11 +19,11 @@ function create_fragment(ctx) {
 		c() {
 			div = element("div");
 			div.textContent = "some content";
-			add_render_callback(() => ctx.div_resize_handler.call(div));
+			add_render_callback(() => ctx.div_elementresize_handler.call(div));
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
-			div_resize_listener = add_resize_listener(div, ctx.div_resize_handler.bind(div));
+			div_resize_listener = add_resize_listener(div, ctx.div_elementresize_handler.bind(div));
 		},
 		p: noop,
 		i: noop,
@@ -39,7 +39,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { w } = $$props;
 	let { h } = $$props;
 
-	function div_resize_handler() {
+	function div_elementresize_handler() {
 		w = this.offsetWidth;
 		h = this.offsetHeight;
 		$$invalidate("w", w);
@@ -51,7 +51,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("h" in $$props) $$invalidate("h", h = $$props.h);
 	};
 
-	return { w, h, div_resize_handler };
+	return { w, h, div_elementresize_handler };
 }
 
 class Component extends SvelteComponent {
