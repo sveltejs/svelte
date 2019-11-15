@@ -52,7 +52,7 @@ const events = [
 	},
 
 	{
-		event_names: ['resize'],
+		event_names: ['elementresize'],
 		filter: (_node: Element, name: string) =>
 			dimensions.test(name)
 	},
@@ -111,6 +111,12 @@ const events = [
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
 			name === 'ended'
+	},
+	{
+		event_names: ['resize'],
+		filter: (node: Element, name: string) =>
+			node.is_media_node() &&
+			(name === 'videoHeight' || name === 'videoWidth')
 	},
 
 	// details event
@@ -536,7 +542,7 @@ export default class ElementWrapper extends Wrapper {
 			`);
 
 			group.events.forEach(name => {
-				if (name === 'resize') {
+				if (name === 'elementresize') {
 					// special case
 					const resize_listener = block.get_unique_name(`${this.var.name}_resize_listener`);
 					block.add_variable(resize_listener);
@@ -578,7 +584,7 @@ export default class ElementWrapper extends Wrapper {
 				);
 			}
 
-			if (group.events[0] === 'resize') {
+			if (group.events[0] === 'elementresize') {
 				block.chunks.hydrate.push(
 					b`@add_render_callback(() => ${callee}.call(${this.var}));`
 				);

@@ -606,6 +606,16 @@ export default class Element extends Node {
 						message: `'${name}' binding can only be used with <audio> or <video>`
 					});
 				}
+			} else if (
+				name === 'videoHeight' ||
+				name === 'videoWidth'
+			) {
+				if (this.name !== 'video') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${name}' binding can only be used with <video>`
+					});
+				}
 			} else if (dimensions.test(name)) {
 				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
 					component.error(binding, {
