@@ -14,7 +14,7 @@ If you get stuck at any point following this guide, the best place to ask for he
 
 ## First things first
 
-You'll be using the *command line*, also known as the terminal. On Windows, you can access it by running **Command Prompt** from the Start menu; on a Mac, hit `Cmd` and `Space` together to bring up **Spotlight**, then start typing `Terminal.app`. (This guide does not cover Linux.)
+You'll be using the *command line*, also known as the terminal. On Windows, you can access it by running **Command Prompt** from the Start menu; on a Mac, hit `Cmd` and `Space` together to bring up **Spotlight**, then start typing `Terminal.app`. On most Linux systems, `Ctrl-Alt-T` brings up the command line.
 
 The command line is a way to interact with your computer (or another computer! but that's a topic for another time) with more power and control than the GUI (graphical user interface) that most people use day-to-day.
 
@@ -34,7 +34,7 @@ cd svelte-projects
 A full introduction to the command line is out of the scope of this guide, but here are a few more useful commands:
 
 * `cd ..` — navigates to the parent of the current directory
-* `cat my-file.txt` — on macOS, lists the contents of `my-file.txt`
+* `cat my-file.txt` — on Mac/Linux, lists the contents of `my-file.txt`
 * `open .` (or `start .` on Windows) — opens the current directory in Finder or File Explorer
 
 
