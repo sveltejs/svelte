@@ -477,30 +477,30 @@ export default class Element extends Node {
 	}
 
 	validate_classes() {
-		const classAttribute = this.attributes.find(
+		const class_attribute = this.attributes.find(
 			attribute => !attribute.is_spread && attribute.name.toLowerCase() === "class"
 		);
 
 		let value: string | true = '';
 
-		if (classAttribute) {
-			value = classAttribute.get_static_value()
+		if (class_attribute) {
+			value = class_attribute.get_static_value()
 		}
 
-		const classNames = String(value).split(" ");
+		const class_names = String(value).split(" ");
 
 		this.classes.forEach(class_directive => {
 			const { name } = class_directive;
 
-			name.split(",").forEach(className => {
-				if (classNames.includes(className)) {
+			name.split(",").forEach(class_name => {
+				if (class_names.includes(class_name)) {
 					this.component.warn(this, {
 						code: `class-name-multiple-attrs`,
-						message: `Class: avoid using class name '${className}' in more than one class attribute`
+						message: `Class: avoid using class name '${class_name}' in more than one class attribute`
 					});
 
 				} else {
-					classNames.push(className);
+					class_names.push(class_name);
 				}
 			})
 		})
