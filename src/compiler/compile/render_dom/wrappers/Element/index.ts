@@ -112,6 +112,12 @@ const events = [
 			node.is_media_node() &&
 			name === 'ended'
 	},
+	{
+		event_names: ['resize'],
+		filter: (node: Element, name: string) =>
+			node.is_media_node() &&
+			(name === 'videoHeight' || name === 'videoWidth')
+	},
 
 	// details event
 	{
