@@ -106,10 +106,11 @@ export default class Element extends Node {
 	children: INode[];
 	namespace: string;
 	needs_manual_style_scoping: boolean;
+	dynamic_tag: boolean;
 
 	constructor(component, parent, scope, info: any) {
 		super(component, parent, scope, info);
-		this.name = info.name;
+		this.name = this.get_element_name(info);
 
 		this.namespace = get_namespace(parent, this, component.namespace);
 
@@ -221,6 +222,26 @@ export default class Element extends Node {
 		this.validate();
 
 		component.stylesheet.apply(this);
+	}
+
+	get_element_name(info: any) {
+		let elementName = info.name;
+
+		if (elementName === 'svelte:element') {
+			const tag_attribute = info.attributes.find(node => node.name === 'tag');
+
+			if (tag_attribute) {
+				const tagValue = tag_attribute.value[0];
+
+				if (tagValue.data) {
+					elementName = tagValue.data;
+				} else {
+					this.dynamic_tag = tagValue.expression.name;
+				}
+			}
+		}
+
+		return elementName;
 	}
 
 	validate() {

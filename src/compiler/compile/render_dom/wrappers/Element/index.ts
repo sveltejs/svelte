@@ -393,7 +393,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	get_render_statement() {
-		const { name, namespace } = this.node;
+		const { name, namespace, dynamic_tag } = this.node;
 
 		if (namespace === 'http://www.w3.org/2000/svg') {
 			return x`@svg_element("${name}")`;
@@ -406,6 +406,10 @@ export default class ElementWrapper extends Wrapper {
 		const is = this.attributes.find(attr => attr.node.name === 'is');
 		if (is) {
 			return x`@element_is("${name}", ${is.render_chunks().reduce((lhs, rhs) => x`${lhs} + ${rhs}`)});`;
+		}
+
+		if (dynamic_tag) {
+			return x`@element(#ctx.${dynamic_tag} || ${dynamic_tag})`;
 		}
 
 		return x`@element("${name}")`;
