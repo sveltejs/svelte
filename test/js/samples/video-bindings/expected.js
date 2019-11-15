@@ -2,6 +2,7 @@
 import {
 	SvelteComponent,
 	add_render_callback,
+	add_resize_listener,
 	detach,
 	element,
 	init,
@@ -16,6 +17,7 @@ import {
 function create_fragment(ctx) {
 	let video;
 	let video_updating = false;
+	let video_resize_listener;
 	let video_animationframe;
 	let dispose;
 
@@ -33,6 +35,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			video = element("video");
+			add_render_callback(() => ctx.video_elementresize_handler.call(video));
 			if (ctx.videoHeight === void 0 || ctx.videoWidth === void 0) add_render_callback(() => ctx.video_resize_handler.call(video));
 
 			dispose = [
@@ -42,6 +45,7 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, video, anchor);
+			video_resize_listener = add_resize_listener(video, ctx.video_elementresize_handler.bind(video));
 		},
 		p(changed, ctx) {
 			if (!video_updating && changed.currentTime && !isNaN(ctx.currentTime)) {
@@ -54,6 +58,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(video);
+			video_resize_listener.cancel();
 			run_all(dispose);
 		}
 	};
@@ -63,6 +68,12 @@ function instance($$self, $$props, $$invalidate) {
 	let { currentTime } = $$props;
 	let { videoHeight } = $$props;
 	let { videoWidth } = $$props;
+	let { offsetWidth } = $$props;
+
+	function video_elementresize_handler() {
+		offsetWidth = this.offsetWidth;
+		$$invalidate("offsetWidth", offsetWidth);
+	}
 
 	function video_timeupdate_handler() {
 		currentTime = this.currentTime;
@@ -80,12 +91,15 @@ function instance($$self, $$props, $$invalidate) {
 		if ("currentTime" in $$props) $$invalidate("currentTime", currentTime = $$props.currentTime);
 		if ("videoHeight" in $$props) $$invalidate("videoHeight", videoHeight = $$props.videoHeight);
 		if ("videoWidth" in $$props) $$invalidate("videoWidth", videoWidth = $$props.videoWidth);
+		if ("offsetWidth" in $$props) $$invalidate("offsetWidth", offsetWidth = $$props.offsetWidth);
 	};
 
 	return {
 		currentTime,
 		videoHeight,
 		videoWidth,
+		offsetWidth,
+		video_elementresize_handler,
 		video_timeupdate_handler,
 		video_resize_handler
 	};
@@ -98,7 +112,8 @@ class Component extends SvelteComponent {
 		init(this, options, instance, create_fragment, safe_not_equal, {
 			currentTime: 0,
 			videoHeight: 0,
-			videoWidth: 0
+			videoWidth: 0,
+			offsetWidth: 0
 		});
 	}
 }
