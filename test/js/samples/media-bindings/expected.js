@@ -35,10 +35,12 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			audio = element("audio");
-			if (ctx.played === void 0 || ctx.currentTime === void 0) add_render_callback(audio_timeupdate_handler);
+			if (ctx.played === void 0 || ctx.currentTime === void 0 || ctx.ended === void 0) add_render_callback(audio_timeupdate_handler);
 			if (ctx.duration === void 0) add_render_callback(() => ctx.audio_durationchange_handler.call(audio));
 			if (ctx.buffered === void 0) add_render_callback(() => ctx.audio_progress_handler.call(audio));
 			if (ctx.buffered === void 0 || ctx.seekable === void 0) add_render_callback(() => ctx.audio_loadedmetadata_handler.call(audio));
+			if (ctx.seeking === void 0) add_render_callback(() => ctx.audio_seeking_seeked_handler.call(audio));
+			if (ctx.ended === void 0) add_render_callback(() => ctx.audio_ended_handler.call(audio));
 
 			dispose = [
 				listen(audio, "timeupdate", audio_timeupdate_handler),
@@ -48,13 +50,22 @@ function create_fragment(ctx) {
 				listen(audio, "progress", ctx.audio_progress_handler),
 				listen(audio, "loadedmetadata", ctx.audio_loadedmetadata_handler),
 				listen(audio, "volumechange", ctx.audio_volumechange_handler),
-				listen(audio, "ratechange", ctx.audio_ratechange_handler)
+				listen(audio, "ratechange", ctx.audio_ratechange_handler),
+				listen(audio, "seeking", ctx.audio_seeking_seeked_handler),
+				listen(audio, "seeked", ctx.audio_seeking_seeked_handler),
+				listen(audio, "ended", ctx.audio_ended_handler)
 			];
 		},
 		m(target, anchor) {
 			insert(target, audio, anchor);
-			audio.volume = ctx.volume;
-			audio.playbackRate = ctx.playbackRate;
+
+			if (!isNaN(ctx.volume)) {
+				audio.volume = ctx.volume;
+			}
+
+			if (!isNaN(ctx.playbackRate)) {
+				audio.playbackRate = ctx.playbackRate;
+			}
 		},
 		p(changed, ctx) {
 			if (!audio_updating && changed.currentTime && !isNaN(ctx.currentTime)) {
@@ -93,12 +104,16 @@ function instance($$self, $$props, $$invalidate) {
 	let { paused } = $$props;
 	let { volume } = $$props;
 	let { playbackRate } = $$props;
+	let { seeking } = $$props;
+	let { ended } = $$props;
 
 	function audio_timeupdate_handler() {
 		played = time_ranges_to_array(this.played);
 		currentTime = this.currentTime;
+		ended = this.ended;
 		$$invalidate("played", played);
 		$$invalidate("currentTime", currentTime);
+		$$invalidate("ended", ended);
 	}
 
 	function audio_durationchange_handler() {
@@ -133,6 +148,16 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate("playbackRate", playbackRate);
 	}
 
+	function audio_seeking_seeked_handler() {
+		seeking = this.seeking;
+		$$invalidate("seeking", seeking);
+	}
+
+	function audio_ended_handler() {
+		ended = this.ended;
+		$$invalidate("ended", ended);
+	}
+
 	$$self.$set = $$props => {
 		if ("buffered" in $$props) $$invalidate("buffered", buffered = $$props.buffered);
 		if ("seekable" in $$props) $$invalidate("seekable", seekable = $$props.seekable);
@@ -142,6 +167,8 @@ function instance($$self, $$props, $$invalidate) {
 		if ("paused" in $$props) $$invalidate("paused", paused = $$props.paused);
 		if ("volume" in $$props) $$invalidate("volume", volume = $$props.volume);
 		if ("playbackRate" in $$props) $$invalidate("playbackRate", playbackRate = $$props.playbackRate);
+		if ("seeking" in $$props) $$invalidate("seeking", seeking = $$props.seeking);
+		if ("ended" in $$props) $$invalidate("ended", ended = $$props.ended);
 	};
 
 	return {
@@ -153,13 +180,17 @@ function instance($$self, $$props, $$invalidate) {
 		paused,
 		volume,
 		playbackRate,
+		seeking,
+		ended,
 		audio_timeupdate_handler,
 		audio_durationchange_handler,
 		audio_play_pause_handler,
 		audio_progress_handler,
 		audio_loadedmetadata_handler,
 		audio_volumechange_handler,
-		audio_ratechange_handler
+		audio_ratechange_handler,
+		audio_seeking_seeked_handler,
+		audio_ended_handler
 	};
 }
 
@@ -175,7 +206,9 @@ class Component extends SvelteComponent {
 			duration: 0,
 			paused: 0,
 			volume: 0,
-			playbackRate: 0
+			playbackRate: 0,
+			seeking: 0,
+			ended: 0
 		});
 	}
 }
