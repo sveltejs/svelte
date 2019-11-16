@@ -44,6 +44,8 @@ export default class EventHandler extends Node {
 
 					this.reassigned = component.var_lookup.get(info.expression.name).reassigned;
 				}
+			} else if (this.expression.dynamic_dependencies().length > 0) {
+				this.reassigned = true;
 			}
 		} else {
 			this.handler_name = component.get_unique_name(`${sanitize(this.name)}_handler`);
