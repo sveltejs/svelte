@@ -889,48 +889,8 @@ export default class Component {
 		return null;
 	}
 
-	invalidate(name, value?) {
-		const variable = this.var_lookup.get(name);
-
-		if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {
-			return x`${`$$subscribe_${name}`}($$invalidate('${name}', ${value || name}))`;
-		}
-
-		if (name[0] === '$' && name[1] !== '$') {
-			return x`${name.slice(1)}.set(${value || name})`;
-		}
-
-		if (
-			variable &&
-			!variable.referenced &&
-			!variable.is_reactive_dependency &&
-			!variable.export_name &&
-			!name.startsWith('$$')
-		) {
-			return value || name;
-		}
-
-		if (value) {
-			return x`$$invalidate('${name}', ${value})`;
-		}
-
-		// if this is a reactive declaration, invalidate dependencies recursively
-		const deps = new Set([name]);
-
-		deps.forEach(name => {
-			const reactive_declarations = this.reactive_declarations.filter(x =>
-				x.assignees.has(name)
-			);
-			reactive_declarations.forEach(declaration => {
-				declaration.dependencies.forEach(name => {
-					deps.add(name);
-				});
-			});
-		});
-
-		return Array.from(deps)
-			.map(n => x`$$invalidate('${n}', ${n})`)
-			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
+	invalidate(_name, _value?) {
+		throw new Error(`invalidate method now belongs to Renderer`);
 	}
 
 	rewrite_props(get_insert: (variable: Var) => Node[]) {
@@ -1325,23 +1285,8 @@ export default class Component {
 		});
 	}
 
-	qualify(name) {
-		if (name === `$$props`) return x`#ctx.$$props`;
-
-		let [head, ...tail] = name.split('.');
-
-		const variable = this.var_lookup.get(head);
-
-		if (variable) {
-			this.add_reference(name); // TODO we can probably remove most other occurrences of this
-
-			if (!variable.hoistable) {
-				tail.unshift(head);
-				head = '#ctx';
-			}
-		}
-
-		return [head, ...tail].reduce((lhs, rhs) => x`${lhs}.${rhs}`);
+	qualify(_name) {
+		throw new Error(`component.qualify is now renderer.reference`);
 	}
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {

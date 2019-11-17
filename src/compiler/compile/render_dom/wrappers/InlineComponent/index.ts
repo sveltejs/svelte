@@ -14,7 +14,6 @@ import EachBlock from '../../../nodes/EachBlock';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
-import { changed } from '../shared/changed';
 import { Node, Identifier, ObjectExpression } from 'estree';
 import EventHandler from '../Element/EventHandler';
 
@@ -206,7 +205,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					const { name, dependencies } = attr;
 
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
-						? changed(Array.from(dependencies))
+						? renderer.changed(Array.from(dependencies))
 						: null;
 
 					if (attr.is_spread) {
@@ -239,7 +238,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 
 				if (all_dependencies.size) {
-					const condition = changed(Array.from(all_dependencies));
+					const condition = renderer.changed(Array.from(all_dependencies));
 
 					updates.push(b`
 						const ${name_changes} = ${condition} ? @get_spread_update(${levels}, [
@@ -255,7 +254,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				dynamic_attributes.forEach((attribute: Attribute) => {
 					const dependencies = attribute.get_dependencies();
 					if (dependencies.length > 0) {
-						const condition = changed(dependencies);
+						const condition = renderer.changed(dependencies);
 
 						updates.push(b`
 							if (${condition}) ${name_changes}.${attribute.name} = ${attribute.get_value(block)};
@@ -267,7 +266,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		if (non_let_dependencies.length > 0) {
 			updates.push(b`
-				if (${changed(non_let_dependencies)}) {
+				if (${renderer.changed(non_let_dependencies)}) {
 					${name_changes}.$$scope = { changed: #changed, ctx: #ctx };
 				}`);
 		}
@@ -280,12 +279,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const id = component.get_unique_name(`${this.var.name}_${binding.name}_binding`);
-
-			component.add_var({
-				name: id.name,
-				internal: true,
-				referenced: true
-			});
+			const i = renderer.add_to_context(id.name);
 
 			const updating = block.get_unique_name(`updating_${binding.name}`);
 			block.add_variable(updating);
@@ -299,7 +293,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 			updates.push(b`
-				if (!${updating} && ${changed(Array.from(binding.expression.dependencies))}) {
+				if (!${updating} && ${renderer.changed(Array.from(binding.expression.dependencies))}) {
 					${updating} = true;
 					${name_changes}.${binding.name} = ${snippet};
 					@add_flush_callback(() => ${updating} = false);
@@ -338,7 +332,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				block.chunks.init.push(b`
 					function ${id}(${value}) {
-						#ctx.${id}.call(null, ${value}, #ctx);
+						#ctx[${i}].call(null, ${value}, #ctx);
 					}
 				`);
 
@@ -346,7 +340,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			} else {
 				block.chunks.init.push(b`
 					function ${id}(${value}) {
-						#ctx.${id}.call(null, ${value});
+						#ctx[${i}].call(null, ${value});
 					}
 				`);
 			}
@@ -354,7 +348,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const body = b`
 				function ${id}(${args}) {
 					${lhs} = ${value};
-					${component.invalidate(dependencies[0])};
+					${renderer.invalidate(dependencies[0])};
 				}
 			`;
 
@@ -460,7 +454,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? component.name
-				: component.qualify(this.node.name);
+				: this.renderer.reference(this.node.name);
 
 			block.chunks.init.push(b`
 				${(this.node.attributes.length > 0 || this.node.bindings.length > 0) && b`

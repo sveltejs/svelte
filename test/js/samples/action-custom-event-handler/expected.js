@@ -23,8 +23,8 @@ function create_fragment(ctx) {
 			insert(target, button, anchor);
 			foo_action = foo.call(null, button, ctx[1]) || ({});
 		},
-		p(ctx) {
-			if (is_function(foo_action.update)) foo_action.update.call(null, ctx[1]);
+		p(ctx, changed) {
+			if (is_function(foo_action.update) && changed.bar) foo_action.update.call(null, ctx[1]);
 		},
 		i: noop,
 		o: noop,

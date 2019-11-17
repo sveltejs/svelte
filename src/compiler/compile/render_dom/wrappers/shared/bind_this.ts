@@ -7,12 +7,7 @@ import { Identifier } from 'estree';
 
 export default function bind_this(component: Component, block: Block, binding: Binding, variable: Identifier) {
 	const fn = component.get_unique_name(`${variable.name}_binding`);
-
-	component.add_var({
-		name: fn.name,
-		internal: true,
-		referenced: true
-	});
+	const i = block.renderer.add_to_context(fn.name);
 
 	let lhs;
 	let object;
@@ -32,11 +27,11 @@ export default function bind_this(component: Component, block: Block, binding: B
 
 		body = binding.raw_expression.type === 'Identifier'
 			? b`
-				${component.invalidate(object, x`${lhs} = $$value`)};
+				${block.renderer.invalidate(object, x`${lhs} = $$value`)};
 			`
 			: b`
 				${lhs} = $$value;
-				${component.invalidate(object)};
+				${block.renderer.invalidate(object)};
 			`;
 	}
 
@@ -65,12 +60,12 @@ export default function bind_this(component: Component, block: Block, binding: B
 		const unassign = block.get_unique_name(`unassign_${variable.name}`);
 
 		block.chunks.init.push(b`
-			const ${assign} = () => #ctx.${fn}(${variable}, ${args});
-			const ${unassign} = () => #ctx.${fn}(null, ${args});
+			const ${assign} = () => #ctx[${i}](${variable}, ${args});
+			const ${unassign} = () => #ctx[${i}](null, ${args});
 		`);
 
 		const condition = Array.from(contextual_dependencies)
-			.map(name => x`${name} !== #ctx.${name}`)
+			.map(name => x`${name} !== #ctx.${name}`) // TODO figure out contextual deps
 			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
 		// we push unassign and unshift assign so that references are
@@ -96,6 +91,6 @@ export default function bind_this(component: Component, block: Block, binding: B
 		}
 	`);
 
-	block.chunks.destroy.push(b`#ctx.${fn}(null);`);
-	return b`#ctx.${fn}(${variable});`;
+	block.chunks.destroy.push(b`#ctx[${i}](null);`);
+	return b`#ctx[${i}](${variable});`;
 }

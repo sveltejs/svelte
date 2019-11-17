@@ -5,7 +5,6 @@ import DebugTag from '../../nodes/DebugTag';
 import add_to_set from '../../utils/add_to_set';
 import { b, p } from 'code-red';
 import { Identifier, DebuggerStatement } from 'estree';
-import { changed } from './shared/changed';
 
 export default class DebugTagWrapper extends Wrapper {
 	node: DebugTag;
@@ -70,7 +69,7 @@ export default class DebugTagWrapper extends Wrapper {
 				debugger;`;
 
 			if (dependencies.size) {
-				const condition = changed(Array.from(dependencies));
+				const condition = renderer.changed(Array.from(dependencies));
 
 				block.chunks.update.push(b`
 					if (${condition}) {

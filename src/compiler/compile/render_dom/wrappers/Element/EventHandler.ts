@@ -15,6 +15,7 @@ export default class EventHandlerWrapper {
 		this.parent = parent;
 
 		if (!node.expression) {
+			// TODO use renderer.add_to_context
 			this.parent.renderer.component.add_var({
 				name: node.handler_name.name,
 				internal: true,
@@ -22,10 +23,10 @@ export default class EventHandlerWrapper {
 			});
 
 			this.parent.renderer.component.partly_hoisted.push(b`
-        function ${node.handler_name.name}(event) {
-          @bubble($$self, event);
-        }
-      `);
+				function ${node.handler_name.name}(event) {
+					@bubble($$self, event);
+				}
+			`);
 		}
 	}
 
@@ -45,7 +46,7 @@ export default class EventHandlerWrapper {
     if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
 		if (this.node.modifiers.has('stopPropagation')) snippet = x`@stop_propagation(${snippet})`;
 		if (this.node.modifiers.has('self')) snippet = x`@self(${snippet})`;
-    
+
     const args = [];
 
     const opts = ['passive', 'once', 'capture'].filter(mod => this.node.modifiers.has(mod));

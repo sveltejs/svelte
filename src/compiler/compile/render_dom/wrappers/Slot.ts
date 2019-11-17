@@ -10,7 +10,6 @@ import get_slot_data from '../../utils/get_slot_data';
 import Expression from '../../nodes/shared/Expression';
 import is_dynamic from './shared/is_dynamic';
 import { Identifier, ObjectExpression } from 'estree';
-import { changed } from './shared/changed';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
@@ -184,10 +183,10 @@ export default class SlotWrapper extends Wrapper {
 		});
 
 		block.chunks.update.push(b`
-			if (${slot} && ${slot}.p && ${changed(dynamic_dependencies)}) {
+			if (${slot} && ${slot}.p && ${renderer.changed(dynamic_dependencies)}) {
 				${slot}.p(
-					@get_slot_changes(${slot_definition}, #ctx, #changed, ${get_slot_changes}),
-					@get_slot_context(${slot_definition}, #ctx, ${get_slot_context})
+					@get_slot_context(${slot_definition}, #ctx, ${get_slot_context}),
+					@get_slot_changes(${slot_definition}, #ctx, #changed, ${get_slot_changes})
 				);
 			}
 		`);

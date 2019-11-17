@@ -8,7 +8,6 @@ import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
 import ThenBlock from '../../nodes/ThenBlock';
 import CatchBlock from '../../nodes/CatchBlock';
-import { changed } from './shared/changed';
 import { Identifier } from 'estree';
 
 class AwaitBlockBranch extends Wrapper {
@@ -187,7 +186,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		if (dependencies.length > 0) {
 			const condition = x`
-				${changed(dependencies)} &&
+				${block.renderer.changed(dependencies)} &&
 				${promise} !== (${promise} = ${snippet}) &&
 				@handle_promise(${promise}, ${info})`;
 
@@ -200,7 +199,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 					if (${condition}) {
 						// nothing
 					} else {
-						${info}.block.p(#changed, @assign(@assign({}, #ctx), ${info}.resolved));
+						${info}.block.p(@assign(@assign({}, #ctx), ${info}.resolved), #changed);
 					}
 				`);
 			} else {
@@ -211,7 +210,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		} else {
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
-					${info}.block.p(#changed, @assign(@assign({}, #ctx), ${info}.resolved));
+					${info}.block.p(@assign(@assign({}, #ctx), ${info}.resolved), #changed);
 				`);
 			}
 		}

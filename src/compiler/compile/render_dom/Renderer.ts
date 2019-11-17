@@ -9,6 +9,8 @@ export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
 	options: CompileOptions;
 
+	context: string[] = [];
+	context_lookup: Map<string, number> = new Map();
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
@@ -26,6 +28,11 @@ export default class Renderer {
 		this.locate = component.locate; // TODO messy
 
 		this.file_var = options.dev && this.component.get_unique_name('file');
+
+		// TODO sort vars, most frequently referenced first?
+		component.vars
+			.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
+			.forEach(v => this.add_to_context(v.name));
 
 		// main block
 		this.block = new Block({
@@ -60,5 +67,94 @@ export default class Renderer {
 		this.block.assign_variable_names();
 
 		this.fragment.render(this.block, null, x`#nodes` as Identifier);
+	}
+
+	add_to_context(name: string, contextual = false) {
+		if (!this.context_lookup.has(name)) {
+			const i = this.context.length;
+
+			this.context_lookup.set(name, i);
+			this.context.push(contextual ? null : name);
+		}
+
+		return this.context_lookup.get(name);
+	}
+
+	invalidate(name: string, value?) {
+		const variable = this.component.var_lookup.get(name);
+		const i = this.context_lookup.get(name);
+
+		if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {
+			return x`${`$$subscribe_${name}`}($$invalidate(${i}, ${value || name}))`;
+		}
+
+		if (name[0] === '$' && name[1] !== '$') {
+			return x`${name.slice(1)}.set(${value || name})`;
+		}
+
+		if (
+			variable &&
+			!variable.referenced &&
+			!variable.is_reactive_dependency &&
+			!variable.export_name &&
+			!name.startsWith('$$')
+		) {
+			return value || name;
+		}
+
+		if (value) {
+			return x`$$invalidate(${i}, ${value})`;
+		}
+
+		// if this is a reactive declaration, invalidate dependencies recursively
+		const deps = new Set([name]);
+
+		deps.forEach(name => {
+			const reactive_declarations = this.component.reactive_declarations.filter(x =>
+				x.assignees.has(name)
+			);
+			reactive_declarations.forEach(declaration => {
+				declaration.dependencies.forEach(name => {
+					deps.add(name);
+				});
+			});
+		});
+
+		return Array.from(deps)
+			.map(n => x`$$invalidate(${i}, ${n})`)
+			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
+	}
+
+	changed(names) {
+		const bitmask = names.reduce((bits, name) => {
+			const bit = 1 << this.context_lookup.get(name);
+			return bits | bit;
+		}, 0);
+
+		return x`#changed & ${bitmask}`;
+	}
+
+	reference(name) {
+		const i = this.context_lookup.get(name);
+
+		if (name === `$$props`) return x`#ctx[${i}]`;
+
+		let [head, ...tail] = name.split('.');
+
+		const variable = this.component.var_lookup.get(head);
+
+		// TODO this feels woolly. might encounter false positive
+		// if each context shadows top-level var
+		if (variable) {
+			this.component.add_reference(name); // TODO we can probably remove most other occurrences of this
+
+			if (!variable.hoistable) {
+				head = x`#ctx[${i}]`;
+			}
+		} else {
+			head = x`#ctx[${i}]`;
+		}
+
+		return [head, ...tail].reduce((lhs, rhs) => x`${lhs}.${rhs}`);
 	}
 }

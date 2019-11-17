@@ -43,7 +43,7 @@ export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, li
 			block = create_each_block(key, child_ctx);
 			block.c();
 		} else if (dynamic) {
-			block.p(changed, child_ctx);
+			block.p(child_ctx, changed);
 		}
 
 		new_lookup.set(key, new_blocks[i] = block);

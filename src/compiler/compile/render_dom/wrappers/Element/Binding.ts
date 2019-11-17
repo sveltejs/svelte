@@ -6,7 +6,6 @@ import Block from '../../Block';
 import Renderer from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
 import EachBlock from '../../../nodes/EachBlock';
-import { changed } from '../shared/changed';
 import { Node, Identifier } from 'estree';
 
 export default class BindingWrapper {
@@ -91,7 +90,7 @@ export default class BindingWrapper {
 		const dependency_array = [...this.node.expression.dependencies];
 
 		if (dependency_array.length > 0) {
-			update_conditions.push(changed(dependency_array));
+			update_conditions.push(block.renderer.changed(dependency_array));
 		}
 
 		if (parent.node.name === 'input') {

@@ -302,7 +302,7 @@ export default class Block {
 				properties.update = noop;
 			} else {
 				const ctx = this.maintain_context ? x`#new_ctx` : x`#ctx`;
-				properties.update = x`function #update(#changed, ${ctx}) {
+				properties.update = x`function #update(${ctx}, #changed) {
 					${this.maintain_context && b`#ctx = ${ctx};`}
 					${this.chunks.update}
 				}`;
