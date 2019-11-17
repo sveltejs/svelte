@@ -16,6 +16,7 @@ node_modules
 /scratch/
 /coverage/
 /coverage.lcov
+/test/*/samples/_
 /test/sourcemaps/samples/*/output.js
 /test/sourcemaps/samples/*/output.js.map
 /test/sourcemaps/samples/*/output.css
