@@ -15,17 +15,17 @@ describe("js", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		dir = path.resolve(`${__dirname}/samples`, dir);
+		const resolved = path.resolve(`${__dirname}/samples`, dir);
 
-		if (!fs.existsSync(`${dir}/input.svelte`)) {
+		if (!fs.existsSync(`${resolved}/input.svelte`)) {
 			console.log(colors.red().bold(`Missing file ${dir}/input.svelte. If you recently switched branches you may need to delete this directory`));
 			return;
 		}
 
 		(solo ? it.only : it)(dir, () => {
-			const config = loadConfig(`${dir}/_config.js`);
+			const config = loadConfig(`${resolved}/_config.js`);
 
-			const input = fs.readFileSync(`${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");
+			const input = fs.readFileSync(`${resolved}/input.svelte`, "utf-8").replace(/\s+$/, "");
 
 			let actual;
 
@@ -38,10 +38,10 @@ describe("js", () => {
 				throw err;
 			}
 
-			const output = `${dir}/_actual.js`;
+			const output = `${resolved}/_actual.js`;
 			fs.writeFileSync(output, actual);
 
-			const expectedPath = `${dir}/expected.js`;
+			const expectedPath = `${resolved}/expected.js`;
 
 			let expected = '';
 			try {
