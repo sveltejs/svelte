@@ -213,8 +213,14 @@ export default class Expression {
 							component.add_reference(name); // TODO is this redundant/misplaced?
 						}
 					} else if (is_contextual(component, template_scope, name)) {
-						if (block) { // TODO not sure what's going on here — DOM only, maybe?
-							this.replace(block.renderer.reference(name));
+						const reference = block.renderer.reference(name);
+						if (node.type === 'Identifier') {
+							this.replace(reference);
+						} else {
+							while (node.object.type === 'MemberExpression') {
+								node = node.object;
+							}
+							node.object = reference;
 						}
 					}
 
