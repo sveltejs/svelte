@@ -111,12 +111,15 @@ export default class BindingWrapper {
 			{
 				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
 
+				block.renderer.add_to_context(`$$binding_groups`);
+				const reference = block.renderer.reference(`$$binding_groups`);
+
 				block.chunks.hydrate.push(
-					b`#ctx.$$binding_groups[${binding_group}].push(${parent.var});`
+					b`${reference}[${binding_group}].push(${parent.var});`
 				);
 
 				block.chunks.destroy.push(
-					b`#ctx.$$binding_groups[${binding_group}].splice(#ctx.$$binding_groups[${binding_group}].indexOf(${parent.var}), 1);`
+					b`${reference}[${binding_group}].splice(${reference}[${binding_group}].indexOf(${parent.var}), 1);`
 				);
 				break;
 			}

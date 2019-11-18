@@ -137,6 +137,9 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		block.maintain_context = true;
 
+		const value_index = this.node.value && block.renderer.add_to_context(this.node.value, true);
+		const error_index = this.node.error && block.renderer.add_to_context(this.node.error, true);
+
 		const info_props: any = x`{
 			ctx: #ctx,
 			current: null,
@@ -144,8 +147,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 			pending: ${this.pending.block.name},
 			then: ${this.then.block.name},
 			catch: ${this.catch.block.name},
-			value: ${this.then.block.name && x`"${this.node.value}"`},
-			error: ${this.catch.block.name && x`"${this.node.error}"`},
+			value: ${value_index},
+			error: ${error_index},
 			blocks: ${this.pending.block.has_outro_method && x`[,,,]`}
 		}`;
 
@@ -197,9 +200,11 @@ export default class AwaitBlockWrapper extends Wrapper {
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
 					if (${condition}) {
-						// nothing
+
 					} else {
-						${info}.block.p(@assign(@assign({}, #ctx), ${info}.resolved), #changed);
+						const #child_ctx = #ctx.slice();
+						#child_ctx[${value_index}] = ${info}.resolved;
+						${info}.block.p(#child_ctx, #changed);
 					}
 				`);
 			} else {
@@ -210,7 +215,11 @@ export default class AwaitBlockWrapper extends Wrapper {
 		} else {
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
-					${info}.block.p(@assign(@assign({}, #ctx), ${info}.resolved), #changed);
+					{
+						const #child_ctx = #ctx.slice();
+						#child_ctx[${value_index}] = ${info}.resolved;
+						${info}.block.p(#child_ctx, #changed);
+					}
 				`);
 			}
 		}
