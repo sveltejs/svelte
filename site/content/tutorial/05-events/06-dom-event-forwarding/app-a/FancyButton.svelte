@@ -1,6 +1,6 @@
 <style>
 	button {
-		font-family: 'Comic Sans MS';
+		font-family: 'Comic Sans MS', cursive;
 		font-size: 2em;
 		padding: 0.5em 1em;
 		color: royalblue;
