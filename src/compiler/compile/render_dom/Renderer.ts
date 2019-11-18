@@ -34,6 +34,11 @@ export default class Renderer {
 			.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
 			.forEach(v => this.add_to_context(v.name));
 
+		// ensure store values are included in context
+		component.vars
+			.filter(v => v.subscribable)
+			.forEach(v => this.add_to_context(`$${v.name}`));
+
 		if (component.var_lookup.has('$$props')) {
 			this.add_to_context('$$props');
 		}
@@ -145,11 +150,11 @@ export default class Renderer {
 		}, 0);
 	}
 
-	changed(names, needs_update = false) {
+	changed(names, is_reactive_declaration = false) {
 		const bitmask = this.get_bitmask(names);
 
-		return needs_update
-			? x`(#changed = $$self.$$.dirty) & ${bitmask}`
+		return is_reactive_declaration
+			? x`$$self.$$.dirty & ${bitmask}`
 			: x`#changed & ${bitmask}`;
 	}
 

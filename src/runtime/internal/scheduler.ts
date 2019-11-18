@@ -71,7 +71,7 @@ export function flush() {
 
 function update($$) {
 	if ($$.fragment !== null) {
-		$$.update($$.dirty);
+		$$.update();
 		run_all($$.before_update);
 		$$.fragment && $$.fragment.p($$.ctx, $$.dirty);
 		$$.dirty = -1;

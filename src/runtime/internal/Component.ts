@@ -24,7 +24,7 @@ interface T$$ {
 	dirty: number;
 	ctx: null|any;
 	bound: any;
-	update: (n: number) => number;
+	update: () => void;
 	callbacks: any;
 	after_update: any[];
 	props: Record<string, 0 | string>;
@@ -108,7 +108,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 		// state
 		props,
-		update: (noop as unknown as (n: number) => number),
+		update: noop,
 		not_equal,
 		bound: blank_object(),
 
@@ -136,7 +136,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		})
 		: prop_values;
 
-	$$.update(-1);
+	$$.update();
 	ready = true;
 	run_all($$.before_update);
 

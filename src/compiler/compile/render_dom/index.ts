@@ -391,7 +391,7 @@ export default function dom(
 				${injected.map(name => b`let ${name};`)}
 
 				${reactive_declarations.length > 0 && b`
-				$$self.$$.update = #changed => {
+				$$self.$$.update = () => {
 					${reactive_declarations}
 				};
 				`}
@@ -406,7 +406,7 @@ export default function dom(
 	}
 
 	const prop_indexes = x`{
-		${props.map(v => p`${v.export_name}: ${renderer.context_lookup.get(v.name)}`)}
+		${props.filter(v => !v.hoistable).map(v => p`${v.export_name}: ${renderer.context_lookup.get(v.name)}`)}
 	}` as ObjectExpression;
 
 	if (options.customElement) {
