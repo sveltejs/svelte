@@ -1,5 +1,15 @@
 # Svelte changelog
 
+## 3.15.0
+
+* Hide commented sections from preprocessors ([#3894](https://github.com/sveltejs/svelte/pull/3894))
+* Add `seeking` and `ended` bindings to media elements ([#3650](https://github.com/sveltejs/svelte/pull/3650))
+* Add `videoWidth` and `videoHeight` bindings to video elements ([#3927](https://github.com/sveltejs/svelte/pull/3927))
+* Fix for dynamic event handlers ([#3934](https://github.com/sveltejs/svelte/pull/3934))
+* Handle scale transforms when using the `flip` animation ([#3555](https://github.com/sveltejs/svelte/issues/3555))
+* Fix some code generation bugs ([#3929](https://github.com/sveltejs/svelte/issues/3929), [#3939](https://github.com/sveltejs/svelte/issues/3939))
+* Add `aria-hidden="true"` to objects generated when adding resize-listeners, to improve accessibility ([#3948](https://github.com/sveltejs/svelte/issues/3948))
+
 ## 3.14.1
 
 * Deconflict block method names with other variables ([#3900](https://github.com/sveltejs/svelte/issues/3900))

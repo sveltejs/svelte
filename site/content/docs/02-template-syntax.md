@@ -563,12 +563,14 @@ Elements with the `contenteditable` attribute support `innerHTML` and `textConte
 
 ---
 
-Media elements (`<audio>` and `<video>`) have their own set of bindings — four *readonly* ones...
+Media elements (`<audio>` and `<video>`) have their own set of bindings — six *readonly* ones...
 
 * `duration` (readonly) — the total duration of the video, in seconds
 * `buffered` (readonly) — an array of `{start, end}` objects
 * `seekable` (readonly) — ditto
 * `played` (readonly) — ditto
+* `seeking` (readonly) — boolean
+* `ended` (readonly) — boolean
 
 ...and four *two-way* bindings:
 
@@ -577,16 +579,22 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — four
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
 
+Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
+
 ```html
 <video
 	src={clip}
 	bind:duration
 	bind:buffered
 	bind:seekable
+	bind:seeking
 	bind:played
+	bind:ended
 	bind:currentTime
 	bind:paused
 	bind:volume
+	bind:videoWidth
+	bind:videoHeight
 ></video>
 ```
 
