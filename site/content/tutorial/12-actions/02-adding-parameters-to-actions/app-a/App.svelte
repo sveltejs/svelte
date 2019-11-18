@@ -12,7 +12,7 @@
 
 <button use:longpress
 	on:longpress="{() => pressed = true}"
-	on:mouseout="{() => pressed = false}"
+	on:mouseenter="{() => pressed = false}"
 >press and hold</button>
 
 {#if pressed}

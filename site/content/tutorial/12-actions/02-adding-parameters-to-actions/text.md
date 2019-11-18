@@ -10,8 +10,10 @@ We can change the action function to accept a `duration` as a second argument, a
 
 ```js
 export function longpress(node, duration) {
+	// ...
+
 	const handleMousedown = () => {
-		setTimeout(() => {
+		timer = setTimeout(() => {
 			node.dispatchEvent(
 				new CustomEvent('longpress')
 			);
@@ -37,9 +39,7 @@ return {
 	update(newDuration) {
 		duration = newDuration;
 	},
-	destroy() {
-		node.removeEventListener('mousedown', handleMousedown);
-	}
+	// ...
 };
 ```
 
