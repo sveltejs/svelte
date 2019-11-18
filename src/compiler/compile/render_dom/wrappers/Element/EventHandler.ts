@@ -15,12 +15,7 @@ export default class EventHandlerWrapper {
 		this.parent = parent;
 
 		if (!node.expression) {
-			// TODO use renderer.add_to_context
-			this.parent.renderer.component.add_var({
-				name: node.handler_name.name,
-				internal: true,
-				referenced: true,
-			});
+			this.parent.renderer.add_to_context(node.handler_name.name);
 
 			this.parent.renderer.component.partly_hoisted.push(b`
 				function ${node.handler_name.name}(event) {
@@ -30,26 +25,26 @@ export default class EventHandlerWrapper {
 		}
 	}
 
-  get_snippet(block) {
-		const snippet = this.node.expression ? this.node.expression.manipulate(block) : x`#ctx.${this.node.handler_name}`;
+	get_snippet(block) {
+		const snippet = this.node.expression ? this.node.expression.manipulate(block) : block.renderer.reference(this.node.handler_name.name);
 
 		if (this.node.reassigned) {
 			block.maintain_context = true;
 			return x`function () { ${snippet}.apply(this, arguments); }`;
 		}
 		return snippet;
-  }
+	}
 
 	render(block: Block, target: string) {
 		let snippet = this.get_snippet(block);
 
-    if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
+		if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
 		if (this.node.modifiers.has('stopPropagation')) snippet = x`@stop_propagation(${snippet})`;
 		if (this.node.modifiers.has('self')) snippet = x`@self(${snippet})`;
 
-    const args = [];
+		const args = [];
 
-    const opts = ['passive', 'once', 'capture'].filter(mod => this.node.modifiers.has(mod));
+		const opts = ['passive', 'once', 'capture'].filter(mod => this.node.modifiers.has(mod));
 		if (opts.length) {
 			args.push((opts.length === 1 && opts[0] === 'capture')
 				? TRUE
@@ -63,7 +58,7 @@ export default class EventHandlerWrapper {
 			args.push(this.node.modifiers.has('preventDefault') ? TRUE : FALSE);
 		}
 
-    block.event_listeners.push(
+		block.event_listeners.push(
 			x`@listen(${target}, "${this.node.name}", ${snippet}, ${args})`
 		);
 	}

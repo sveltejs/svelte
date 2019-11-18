@@ -36,11 +36,11 @@ interface T$$ {
 	on_destroy: any[];
 }
 
-export function bind(component, name, callback) {
+export function bind(component, name, index, callback) {
 	if (has_prop(component.$$.props, name)) {
 		name = component.$$.props[name] || name;
-		component.$$.bound[name] = callback;
-		callback(component.$$.ctx[name]);
+		component.$$.bound[index] = callback;
+		callback(component.$$.ctx[index]);
 	}
 }
 

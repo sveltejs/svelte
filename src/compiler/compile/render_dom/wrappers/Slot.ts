@@ -59,12 +59,12 @@ export default class SlotWrapper extends Wrapper {
 
 		const { slot_name } = this.node;
 
-		let get_slot_changes;
-		let get_slot_context;
+		let get_slot_changes_fn;
+		let get_slot_context_fn;
 
 		if (this.node.values.size > 0) {
-			get_slot_changes = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_changes`);
-			get_slot_context = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_context`);
+			get_slot_changes_fn = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_changes`);
+			get_slot_context_fn = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_context`);
 
 			const context = get_slot_data(this.node.values);
 			const changes = x`{}` as ObjectExpression;
@@ -105,20 +105,20 @@ export default class SlotWrapper extends Wrapper {
 			};
 
 			renderer.blocks.push(b`
-				const ${get_slot_changes} = (${arg}) => (${changes});
-				const ${get_slot_context} = (${arg}) => (${context});
+				const ${get_slot_changes_fn} = (${arg}) => (${changes});
+				const ${get_slot_context_fn} = (${arg}) => (${context});
 			`);
 		} else {
-			get_slot_changes = 'null';
-			get_slot_context = 'null';
+			get_slot_changes_fn = 'null';
+			get_slot_context_fn = 'null';
 		}
 
 		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
 
 		block.chunks.init.push(b`
-			const ${slot_definition} = #ctx.$$slots.${slot_name};
-			const ${slot} = @create_slot(${slot_definition}, #ctx, ${get_slot_context});
+			const ${slot_definition} = ${renderer.reference('$$slots')}.${slot_name};
+			const ${slot} = @create_slot(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn});
 		`);
 
 		// TODO this is a dreadful hack! Should probably make this nicer
@@ -185,8 +185,8 @@ export default class SlotWrapper extends Wrapper {
 		block.chunks.update.push(b`
 			if (${slot} && ${slot}.p && ${renderer.changed(dynamic_dependencies)}) {
 				${slot}.p(
-					@get_slot_context(${slot_definition}, #ctx, ${get_slot_context}),
-					@get_slot_changes(${slot_definition}, #ctx, #changed, ${get_slot_changes})
+					@get_slot_context(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn}),
+					@get_slot_changes(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #changed, ${get_slot_changes_fn})
 				);
 			}
 		`);

@@ -63,23 +63,23 @@ export function component_subscribe(component, store, callback) {
 	component.$$.on_destroy.push(subscribe(store, callback));
 }
 
-export function create_slot(definition, ctx, fn) {
+export function create_slot(definition, ctx, $$scope, fn) {
 	if (definition) {
-		const slot_ctx = get_slot_context(definition, ctx, fn);
+		const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
 		return definition[0](slot_ctx);
 	}
 }
 
-export function get_slot_context(definition, ctx, fn) {
+export function get_slot_context(definition, ctx, $$scope, fn) {
 	return definition[1]
-		? assign({}, assign(ctx.$$scope.ctx, definition[1](fn ? fn(ctx) : {})))
-		: ctx.$$scope.ctx;
+		? assign({}, assign($$scope.ctx, definition[1](fn ? fn(ctx) : {})))
+		: $$scope.ctx;
 }
 
-export function get_slot_changes(definition, ctx, changed, fn) {
+export function get_slot_changes(definition, ctx, $$scope, changed, fn) {
 	return definition[1]
-		? assign({}, assign(ctx.$$scope.changed || {}, definition[1](fn ? fn(changed) : {})))
-		: ctx.$$scope.changed || {};
+		? assign({}, assign($$scope.changed || {}, definition[1](fn ? fn(changed) : {})))
+		: $$scope.changed || {};
 }
 
 export function exclude_internal_props(props) {

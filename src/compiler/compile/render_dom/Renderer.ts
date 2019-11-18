@@ -34,6 +34,19 @@ export default class Renderer {
 			.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
 			.forEach(v => this.add_to_context(v.name));
 
+		if (component.var_lookup.has('$$props')) {
+			this.add_to_context('$$props');
+		}
+
+		if (component.slots.size > 0) {
+			this.add_to_context('$$slots');
+			this.add_to_context('$$scope');
+		}
+
+		if (this.binding_groups.length > 0) {
+			this.add_to_context('$$binding_groups');
+		}
+
 		// main block
 		this.block = new Block({
 			renderer: this,

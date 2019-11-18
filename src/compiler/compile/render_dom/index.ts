@@ -257,14 +257,6 @@ export default function dom(
 		${component.fully_hoisted}
 	`);
 
-	const filtered_declarations = renderer.context
-		.map(name => name ? ({
-			type: 'Identifier',
-			name
-		}) as Expression : x`null`);
-
-	if (uses_props) filtered_declarations.push(x`$$props = @exclude_internal_props($$props)`);
-
 	const filtered_props = props.filter(prop => {
 		const variable = component.var_lookup.get(prop.name);
 
@@ -275,14 +267,6 @@ export default function dom(
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 
-	if (component.slots.size > 0) {
-		filtered_declarations.push(x`$$slots`, x`$$scope`);
-	}
-
-	if (renderer.binding_groups.length > 0) {
-		filtered_declarations.push(x`$$binding_groups`);
-	}
-
 	const instance_javascript = component.extract_javascript(component.ast.instance);
 
 	const has_definition = (
@@ -290,7 +274,7 @@ export default function dom(
 		filtered_props.length > 0 ||
 		uses_props ||
 		component.partly_hoisted.length > 0 ||
-		filtered_declarations.length > 0 ||
+		renderer.context.length > 0 ||
 		component.reactive_declarations.length > 0
 	);
 
@@ -379,7 +363,11 @@ export default function dom(
 
 		const return_value = {
 			type: 'ArrayExpression',
-			elements: filtered_declarations
+			elements: renderer.context
+				.map(name => name ? ({
+					type: 'Identifier',
+					name
+				}) as Expression : x`null`)
 		};
 
 		const reactive_dependencies = {
@@ -427,6 +415,8 @@ export default function dom(
 				`}
 
 				${fixed_reactive_declarations}
+
+				${uses_props && b`$$props = @exclude_internal_props($$props);`}
 
 				return ${return_value};
 			}
