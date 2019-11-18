@@ -486,6 +486,8 @@ export default class ElementWrapper extends Wrapper {
 
 			// TODO dry this out — similar code for event handlers and component bindings
 			if (has_local_function) {
+				const args = Array.from(contextual_dependencies).map(name => renderer.reference(name));
+
 				// need to create a block-local function that calls an instance-level function
 				if (animation_frame) {
 					block.chunks.init.push(b`
@@ -495,14 +497,14 @@ export default class ElementWrapper extends Wrapper {
 								${animation_frame} = @raf(${handler});
 								${needs_lock && b`${lock} = true;`}
 							}
-							#ctx[${i}].call(${this.var}, ${contextual_dependencies.size > 0 ? '#ctx' : null});
+							#ctx[${i}].call(${this.var}, ${args});
 						}
 					`);
 				} else {
 					block.chunks.init.push(b`
 						function ${handler}() {
 							${needs_lock && b`${lock} = true;`}
-							#ctx[${i}].call(${this.var}, ${contextual_dependencies.size > 0 ? '#ctx' : null});
+							#ctx[${i}].call(${this.var}, ${args});
 						}
 					`);
 				}
@@ -512,21 +514,13 @@ export default class ElementWrapper extends Wrapper {
 				callee = x`#ctx[${i}]`;
 			}
 
-			const arg = contextual_dependencies.size > 0 && {
-				type: 'ObjectPattern',
-				properties: Array.from(contextual_dependencies).map(name => {
-					const id = { type: 'Identifier', name };
-					return {
-						type: 'Property',
-						kind: 'init',
-						key: id,
-						value: id
-					};
-				})
-			};
+			const params = Array.from(contextual_dependencies).map(name => ({
+				type: 'Identifier',
+				name
+			}));
 
 			this.renderer.component.partly_hoisted.push(b`
-				function ${handler}(${arg}) {
+				function ${handler}(${params}) {
 					${group.bindings.map(b => b.handler.mutation)}
 					${Array.from(dependencies)
 						.filter(dep => dep[0] !== '$')
