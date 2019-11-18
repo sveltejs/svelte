@@ -1,4 +1,4 @@
-import { assign, is_promise } from './utils';
+import { is_promise } from './utils';
 import { check_outros, group_outros, transition_in, transition_out } from './transitions';
 import { flush } from './scheduler';
 import { get_current_component, set_current_component } from './lifecycle';

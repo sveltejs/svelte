@@ -3,7 +3,6 @@ import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
-import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
 import { invalidate } from './invalidate';
 import Block from './Block';
@@ -282,11 +281,6 @@ export default function dom(
 		? component.alias('instance')
 		: { type: 'Literal', value: null };
 
-	const all_reactive_dependencies = new Set();
-	component.reactive_declarations.forEach(d => {
-		add_to_set(all_reactive_dependencies, d.dependencies);
-	});
-
 	const reactive_store_subscriptions = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
@@ -317,7 +311,7 @@ export default function dom(
 				return variable && (variable.writable || variable.mutated);
 			});
 
-			const condition = !uses_props && writable.length > 0 && renderer.changed(writable);
+			const condition = !uses_props && writable.length > 0 && renderer.changed(writable, true);
 
 			let statement = d.node; // TODO remove label (use d.node.body) if it's not referenced
 
@@ -370,18 +364,6 @@ export default function dom(
 				}) as Expression : x`null`)
 		};
 
-		const reactive_dependencies = {
-			type: 'ObjectPattern',
-			properties: Array.from(all_reactive_dependencies).map(name => {
-				return {
-					type: 'Property',
-					kind: 'init',
-					key: { type: 'Identifier', name },
-					value: { type: 'Literal', value: 1 }
-				};
-			})
-		};
-
 		body.push(b`
 			function ${definition}(${args}) {
 				${reactive_store_declarations}
@@ -409,7 +391,7 @@ export default function dom(
 				${injected.map(name => b`let ${name};`)}
 
 				${reactive_declarations.length > 0 && b`
-				$$self.$$.update = (#changed = ${reactive_dependencies}) => {
+				$$self.$$.update = #changed => {
 					${reactive_declarations}
 				};
 				`}

@@ -186,7 +186,7 @@ export default class SlotWrapper extends Wrapper {
 			if (${slot} && ${slot}.p && ${renderer.changed(dynamic_dependencies)}) {
 				${slot}.p(
 					@get_slot_context(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn}),
-					@get_slot_changes(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #changed, ${get_slot_changes_fn})
+					@get_slot_changes(${slot_definition}, ${renderer.reference('$$scope')}, #changed, ${get_slot_changes_fn})
 				);
 			}
 		`);
