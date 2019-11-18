@@ -1,7 +1,8 @@
 import Let from '../../../nodes/Let';
-import { x } from 'code-red';
+import { x, p } from 'code-red';
+import Renderer from '../../Renderer';
 
-export function get_context_merger(lets: Let[]) {
+export function get_context_merger(renderer: Renderer, lets: Let[]) {
 	if (lets.length === 0) return null;
 
 	const input = {
@@ -14,7 +15,7 @@ export function get_context_merger(lets: Let[]) {
 		}))
 	};
 
-	const names = new Set();
+	const names: Set<string> = new Set();
 	lets.forEach(l => {
 		l.names.forEach(name => {
 			names.add(name);
@@ -23,16 +24,7 @@ export function get_context_merger(lets: Let[]) {
 
 	const output = {
 		type: 'ObjectExpression',
-		properties: Array.from(names).map(name => {
-			const id = { type: 'Identifier', name };
-
-			return {
-				type: 'Property',
-				kind: 'init',
-				key: id,
-				value: id
-			};
-		})
+		properties: Array.from(names).map(name => p`${renderer.context_lookup.get(name)}: ${name}`)
 	};
 
 	return x`(${input}) => (${output})`;

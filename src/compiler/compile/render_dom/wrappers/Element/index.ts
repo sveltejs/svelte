@@ -191,7 +191,7 @@ export default class ElementWrapper extends Wrapper {
 							if (!seen.has(l.name.name)) lets.push(l);
 						});
 
-						const fn = get_context_merger(lets);
+						const fn = get_context_merger(this.renderer, lets);
 
 						(owner as unknown as InlineComponentWrapper).slots.set(name, {
 							block: child_block,

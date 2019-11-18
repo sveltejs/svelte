@@ -71,15 +71,15 @@ export function create_slot(definition, ctx, $$scope, fn) {
 }
 
 export function get_slot_context(definition, ctx, $$scope, fn) {
-	return definition[1]
-		? assign({}, assign($$scope.ctx, definition[1](fn ? fn(ctx) : {})))
+	return definition[1] && fn
+		? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
 		: $$scope.ctx;
 }
 
 export function get_slot_changes(definition, $$scope, changed, fn) {
-	return definition[1]
-		? assign({}, assign($$scope.changed || {}, definition[1](fn ? fn(changed) : {})))
-		: $$scope.changed || {};
+	return definition[1] && fn
+		? $$scope.changed | definition[1](fn(changed))
+		: $$scope.changed;
 }
 
 export function exclude_internal_props(props) {

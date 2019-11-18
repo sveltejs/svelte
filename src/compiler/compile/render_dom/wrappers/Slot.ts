@@ -66,7 +66,6 @@ export default class SlotWrapper extends Wrapper {
 			get_slot_changes_fn = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_changes`);
 			get_slot_context_fn = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_context`);
 
-			const context = get_slot_data(this.node.values);
 			const changes = x`{}` as ObjectExpression;
 
 			const dependencies = new Set();
@@ -99,14 +98,9 @@ export default class SlotWrapper extends Wrapper {
 				}
 			});
 
-			const arg = dependencies.size > 0 && {
-				type: 'ObjectPattern',
-				properties: Array.from(dependencies).map(name => p`${name}`)
-			};
-
 			renderer.blocks.push(b`
-				const ${get_slot_changes_fn} = (${arg}) => (${changes});
-				const ${get_slot_context_fn} = (${arg}) => (${context});
+				const ${get_slot_changes_fn} = #changes => #changes;
+				const ${get_slot_context_fn} = #ctx => ${get_slot_data(block, this.node.values)};
 			`);
 		} else {
 			get_slot_changes_fn = 'null';

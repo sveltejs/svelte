@@ -167,6 +167,10 @@ export default class Renderer {
 				head = x`#ctx[${i}]`;
 			}
 		} else {
+			if (i === undefined) {
+				throw new Error(`attempted to reference unknown value`);
+			}
+
 			head = x`#ctx[${i}]`;
 		}
 

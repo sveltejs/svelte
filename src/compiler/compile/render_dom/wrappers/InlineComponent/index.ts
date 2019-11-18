@@ -73,6 +73,10 @@ export default class InlineComponentWrapper extends Wrapper {
 		};
 
 		if (this.node.children.length) {
+			this.node.lets.forEach(l => {
+				renderer.add_to_context(l.value.name, true);
+			});
+
 			const default_slot = block.child({
 				comment: create_debugging_comment(node, renderer.component),
 				name: renderer.component.get_unique_name(`create_default_slot`),
@@ -81,7 +85,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			this.renderer.blocks.push(default_slot);
 
-			const fn = get_context_merger(this.node.lets);
+			const fn = get_context_merger(this.renderer, this.node.lets);
 
 			this.slots.set('default', {
 				block: default_slot,
