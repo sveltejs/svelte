@@ -222,7 +222,7 @@ export default function dom(
 
 		component.rewrite_props(({ name, reassigned, export_name }) => {
 			const value = `$${name}`;
-			const i = renderer.context_lookup.get(name);
+			const i = renderer.context_lookup.get(`$${name}`);
 
 			const insert = (reassigned || export_name)
 				? b`${`$$subscribe_${name}`}()`
