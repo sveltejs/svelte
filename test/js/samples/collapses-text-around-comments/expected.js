@@ -27,7 +27,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t = text(ctx.foo);
+			t = text(ctx.foo + "");
 			attr(p, "class", "svelte-1a7i8ec");
 		},
 		m(target, anchor) {
@@ -35,7 +35,7 @@ function create_fragment(ctx) {
 			append(p, t);
 		},
 		p(changed, ctx) {
-			if (changed.foo) set_data(t, ctx.foo);
+			if (changed.foo) set_data(t, ctx.foo + "");
 		},
 		i: noop,
 		o: noop,

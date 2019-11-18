@@ -25,7 +25,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t0 = text(ctx.foo);
+			t0 = text(ctx.foo + "");
 			t1 = space();
 			input = element("input");
 			dispose = listen(input, "input", ctx.input_input_handler);
@@ -38,7 +38,7 @@ function create_fragment(ctx) {
 			set_input_value(input, ctx.foo);
 		},
 		p(changed, ctx) {
-			if (changed.foo) set_data(t0, ctx.foo);
+			if (changed.foo) set_data(t0, ctx.foo + "");
 
 			if (changed.foo && input.value !== ctx.foo) {
 				set_input_value(input, ctx.foo);

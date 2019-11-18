@@ -37,7 +37,7 @@ function create_fragment(ctx) {
 			button1.textContent = "set handler 2";
 			t3 = space();
 			p1 = element("p");
-			t4 = text(ctx.number);
+			t4 = text(ctx.number + "");
 			t5 = space();
 			button2 = element("button");
 			button2.textContent = "click";
@@ -63,7 +63,7 @@ function create_fragment(ctx) {
 		},
 		p(changed, new_ctx) {
 			ctx = new_ctx;
-			if (changed.number) set_data(t4, ctx.number);
+			if (changed.number) set_data(t4, ctx.number + "");
 		},
 		i: noop,
 		o: noop,
