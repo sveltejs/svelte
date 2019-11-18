@@ -80,6 +80,9 @@ export default class WindowWrapper extends Wrapper {
 			const id = block.get_unique_name(`onwindow${event}`);
 			const props = events[event];
 
+			renderer.add_to_context(id.name);
+			const fn = renderer.reference(id.name);
+
 			if (event === 'scroll') {
 				// TODO other bidirectional bindings...
 				block.add_variable(scrolling, x`false`);
@@ -106,7 +109,7 @@ export default class WindowWrapper extends Wrapper {
 						${scrolling} = true;
 						@_clearTimeout(${scrolling_timeout});
 						${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
-						#ctx.${id}();
+						${fn}();
 					})
 				`);
 			} else {
@@ -117,7 +120,7 @@ export default class WindowWrapper extends Wrapper {
 				});
 
 				block.event_listeners.push(x`
-					@listen(@_window, "${event}", #ctx.${id})
+					@listen(@_window, "${event}", ${fn})
 				`);
 			}
 
@@ -139,8 +142,9 @@ export default class WindowWrapper extends Wrapper {
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
 			const condition = renderer.changed([bindings.scrollX, bindings.scrollY].filter(Boolean));
-			const scrollX = bindings.scrollX ? x`#ctx.${bindings.scrollX}` : x`@_window.pageXOffset`;
-			const scrollY = bindings.scrollY ? x`#ctx.${bindings.scrollY}` : x`@_window.pageYOffset`;
+
+			const scrollX = bindings.scrollX ? renderer.reference(bindings.scrollX) : x`@_window.pageXOffset`;
+			const scrollY = bindings.scrollY ? renderer.reference(bindings.scrollY) : x`@_window.pageYOffset`;
 
 			block.chunks.update.push(b`
 				if (${condition} && !${scrolling}) {

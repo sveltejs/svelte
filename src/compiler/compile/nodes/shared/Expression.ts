@@ -332,7 +332,7 @@ export default class Expression {
 						}
 					});
 
-					this.replace(invalidate(block.renderer, scope, node, traced, false));
+					this.replace(invalidate(block.renderer, scope, node, traced));
 				}
 			}
 		});

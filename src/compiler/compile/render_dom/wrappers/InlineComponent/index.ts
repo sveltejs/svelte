@@ -315,24 +315,24 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const value = block.get_unique_name('value');
-			const args: any[] = [value];
+			const params: any[] = [value];
 			if (contextual_dependencies.length > 0) {
-				args.push({
-					type: 'ObjectPattern',
-					properties: contextual_dependencies.map(name => {
-						const id = { type: 'Identifier', name };
-						return {
-							type: 'Property',
-							kind: 'init',
-							key: id,
-							value: id
-						};
-					})
+				const args = [];
+
+				contextual_dependencies.forEach(name => {
+					params.push({
+						type: 'Identifier',
+						name
+					});
+
+					renderer.add_to_context(name, true);
+					args.push(renderer.reference(name));
 				});
+
 
 				block.chunks.init.push(b`
 					function ${id}(${value}) {
-						#ctx[${i}].call(null, ${value}, #ctx);
+						#ctx[${i}].call(null, ${value}, ${args});
 					}
 				`);
 
@@ -346,7 +346,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const body = b`
-				function ${id}(${args}) {
+				function ${id}(${params}) {
 					${lhs} = ${value};
 					${renderer.invalidate(dependencies[0])};
 				}
@@ -354,7 +354,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			component.partly_hoisted.push(body);
 
-			return b`@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${renderer.context_lookup.get(binding.name)}, ${id}));`;
+			return b`@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${id}));`;
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {

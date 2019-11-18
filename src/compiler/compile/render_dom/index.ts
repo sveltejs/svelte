@@ -160,7 +160,7 @@ export default function dom(
 				const { ctx: #ctx } = this.$$;
 				const props = ${options.customElement ? x`this.attributes` : x`options.props || {}`};
 				${expected.map(prop => b`
-				if (#ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
+				if (${renderer.reference(prop.name)} === undefined && !('${prop.export_name}' in props)) {
 					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
 				}`)}
 			`;
@@ -405,8 +405,8 @@ export default function dom(
 		`);
 	}
 
-	const prop_names = x`{
-		${props.map(v => p`${v.export_name}: ${v.export_name === v.name ? 0 : x`"${v.name}"`}}`)}
+	const prop_indexes = x`{
+		${props.map(v => p`${v.export_name}: ${renderer.context_lookup.get(v.name)}`)}
 	}` as ObjectExpression;
 
 	if (options.customElement) {
@@ -417,7 +417,7 @@ export default function dom(
 
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_names});
+					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes});
 
 					${dev_props_check}
 
@@ -469,7 +469,7 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_names});
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}

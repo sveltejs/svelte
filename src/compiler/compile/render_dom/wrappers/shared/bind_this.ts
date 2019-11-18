@@ -53,7 +53,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		const args = [];
 		for (const id of contextual_dependencies) {
 			args.push(id);
-			block.add_variable(id, x`#ctx.${id}`);
+			block.add_variable(id, block.renderer.reference(id));
 		}
 
 		const assign = block.get_unique_name(`assign_${variable.name}`);
@@ -65,7 +65,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		`);
 
 		const condition = Array.from(contextual_dependencies)
-			.map(name => x`${name} !== #ctx.${name}`) // TODO figure out contextual deps
+			.map(name => x`${name} !== ${block.renderer.reference(name)}`) // TODO figure out contextual deps
 			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
 		// we push unassign and unshift assign so that references are
@@ -74,7 +74,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		block.chunks.update.push(b`
 			if (${condition}) {
 				${unassign}();
-				${args.map(a => b`${a} = #ctx.${a}`)};
+				${args.map(a => b`${a} = ${block.renderer.reference(a)}`)};
 				${assign}();
 			}`
 		);

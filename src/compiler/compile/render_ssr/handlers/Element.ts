@@ -30,7 +30,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
-		const snippet = expression ? expression.node : x`#ctx.${name}`;
+		const snippet = expression ? expression.node : x`#ctx.${name}`; // TODO is this right?
 		return x`${snippet} ? "${name}" : ""`;
 	});
 	if (node.needs_manual_style_scoping) {

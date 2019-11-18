@@ -36,9 +36,9 @@ interface T$$ {
 	on_destroy: any[];
 }
 
-export function bind(component, name, index, callback) {
-	if (has_prop(component.$$.props, name)) {
-		name = component.$$.props[name] || name;
+export function bind(component, name, callback) {
+	const index = component.$$.props[name];
+	if (index !== undefined) {
 		component.$$.bound[index] = callback;
 		callback(component.$$.ctx[index]);
 	}
