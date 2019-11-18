@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add `aria-hidden="true"` to objects generated when adding resize-listeners, to improve accessibility ([#3948](https://github.com/sveltejs/svelte/issues/3948))
+
 ## 3.14.1
 
 * Deconflict block method names with other variables ([#3900](https://github.com/sveltejs/svelte/issues/3900))
