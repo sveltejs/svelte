@@ -579,7 +579,7 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — six 
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
 
-Videos additionally have readonly `videoWidth` and `videoHeight` bindings
+Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 
 ```html
 <video
