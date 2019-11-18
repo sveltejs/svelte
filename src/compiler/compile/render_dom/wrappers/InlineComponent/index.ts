@@ -16,10 +16,41 @@ import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { Node, Identifier, ObjectExpression } from 'estree';
 import EventHandler from '../Element/EventHandler';
+import Let from '../../../nodes/Let';
+
+function get_changes_merger(renderer: Renderer, lets: Let[]) {
+	if (lets.length === 0) return null;
+
+	const input = {
+		type: 'ObjectPattern',
+		properties: lets.map(l => ({
+			type: 'Property',
+			kind: 'init',
+			key: l.name,
+			value: l.value || l.name
+		}))
+	};
+
+	const names: Set<string> = new Set();
+	lets.forEach(l => {
+		l.names.forEach(name => {
+			names.add(name);
+		});
+	});
+
+	const expressions = Array.from(names).map(name => {
+		const i = renderer.context_lookup.get(name);
+		return x`${name} ? ${1 << i} : 0`;
+	});
+
+	const output = expressions.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
+
+	return x`(${input}) => (${output})`;
+}
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
-	slots: Map<string, { block: Block; scope: TemplateScope; fn?: Node }> = new Map();
+	slots: Map<string, { block: Block; scope: TemplateScope; get_context?: Node, get_changes?: Node }> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 
@@ -74,7 +105,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		if (this.node.children.length) {
 			this.node.lets.forEach(l => {
-				renderer.add_to_context(l.value.name, true);
+				renderer.add_to_context((l.value || l.name).name, true);
 			});
 
 			const default_slot = block.child({
@@ -85,12 +116,11 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			this.renderer.blocks.push(default_slot);
 
-			const fn = get_context_merger(this.renderer, this.node.lets);
-
 			this.slots.set('default', {
 				block: default_slot,
 				scope: this.node.scope,
-				fn
+				get_context: get_context_merger(this.renderer, this.node.lets),
+				get_changes: get_changes_merger(this.renderer, this.node.lets)
 			});
 			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, strip_whitespace, next_sibling);
 
@@ -133,7 +163,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			? [
 				p`$$slots: {
 					${Array.from(this.slots).map(([name, slot]) => {
-						return p`${name}: [${slot.block.name}, ${slot.fn || null}]`;
+						return p`${name}: [${slot.block.name}, ${slot.get_context || null}, ${slot.get_changes || null}]`;
 					})}
 				}`,
 				p`$$scope: {

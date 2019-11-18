@@ -90,16 +90,13 @@ export default class SlotWrapper extends Wrapper {
 				});
 
 				if (dynamic_dependencies.length > 0) {
-					const expression = dynamic_dependencies
-						.map(name => ({ type: 'Identifier', name } as any))
-						.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
-
-					changes.properties.push(p`${attribute.name}: ${expression}`);
+					const bitmask = renderer.get_bitmask(dynamic_dependencies);
+					changes.properties.push(p`${attribute.name}: #changes & ${bitmask}`);
 				}
 			});
 
 			renderer.blocks.push(b`
-				const ${get_slot_changes_fn} = #changes => #changes;
+				const ${get_slot_changes_fn} = #changes => ${changes};
 				const ${get_slot_context_fn} = #ctx => ${get_slot_data(block, this.node.values)};
 			`);
 		} else {

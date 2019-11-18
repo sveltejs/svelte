@@ -77,8 +77,8 @@ export function get_slot_context(definition, ctx, $$scope, fn) {
 }
 
 export function get_slot_changes(definition, $$scope, changed, fn) {
-	return definition[1] && fn
-		? $$scope.changed | definition[1](fn(changed))
+	return definition[2] && fn
+		? $$scope.changed | definition[2](fn(changed))
 		: $$scope.changed;
 }
 

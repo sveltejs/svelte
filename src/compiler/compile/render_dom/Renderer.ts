@@ -138,11 +138,15 @@ export default class Renderer {
 			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
 	}
 
-	changed(names, needs_update = false) {
-		const bitmask = names.reduce((bits, name) => {
+	get_bitmask(names) {
+		return names.reduce((bits, name) => {
 			const bit = 1 << this.context_lookup.get(name);
 			return bits | bit;
 		}, 0);
+	}
+
+	changed(names, needs_update = false) {
+		const bitmask = this.get_bitmask(names);
 
 		return needs_update
 			? x`(#changed = $$self.$$.dirty) & ${bitmask}`
