@@ -34,6 +34,7 @@ interface T$$ {
 	context: Map<any, any>;
 	on_mount: any[];
 	on_destroy: any[];
+	on_error: any[];
 }
 
 export function bind(component, name, callback) {
@@ -114,6 +115,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 		// lifecycle
 		on_mount: [],
+		on_error: [],
 		on_destroy: [],
 		before_update: [],
 		after_update: [],
