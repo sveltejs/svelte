@@ -164,10 +164,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { foo } = $$props;
 	let { bar } = $$props;
 	let { baz } = $$props;
-	const writable_props = ["things", "foo", "bar", "baz"];
+	const props = ["things", "foo", "bar", "baz"];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!~props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$set = $$props => {

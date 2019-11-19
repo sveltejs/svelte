@@ -1,5 +1,5 @@
 <script>
-	export const foo = undefined;
+	export function foo() {}
 </script>
 
 <div>{foo}</div>
