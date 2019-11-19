@@ -175,11 +175,7 @@ export default class Renderer {
 			if (!variable.hoistable) {
 				head = x`#ctx[${i}]`;
 			}
-		} else {
-			if (i === undefined) {
-				throw new Error(`attempted to reference unknown value`);
-			}
-
+		} else if (i !== undefined) {
 			head = x`#ctx[${i}]`;
 		}
 
