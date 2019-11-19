@@ -27,8 +27,10 @@ function create_fragment(ctx) {
 			insert(target, details, anchor);
 			details.open = ctx[0];
 		},
-		p(ctx) {
-			details.open = ctx[0];
+		p(ctx, changed) {
+			if (changed & 1) {
+				details.open = ctx[0];
+			}
 		},
 		i: noop,
 		o: noop,
@@ -43,7 +45,8 @@ function instance($$self, $$props, $$invalidate) {
 	let { open } = $$props;
 
 	function details_toggle_handler() {
-		$$invalidate(0, open = this.open);
+		open = this.open;
+		$$invalidate(0, open);
 	}
 
 	$$self.$set = $$props => {

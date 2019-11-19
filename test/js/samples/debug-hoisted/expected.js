@@ -23,7 +23,7 @@ function create_fragment(ctx) {
 		},
 		m: noop,
 		p: function update(changed, ctx) {
-			if (changed.obj || changed.kobzol) {
+			if (changed & 3) {
 				const { obj } = ctx;
 				console.log({ obj, kobzol });
 				debugger;
@@ -45,21 +45,20 @@ function create_fragment(ctx) {
 	return block;
 }
 
-let kobzol = 5;
-
 function instance($$self) {
 	let obj = { x: 5 };
+	let kobzol = 5;
 
 	$$self.$capture_state = () => {
 		return {};
 	};
 
 	$$self.$inject_state = $$props => {
-		if ("obj" in $$props) $$invalidate("obj", obj = $$props.obj);
-		if ("kobzol" in $$props) $$invalidate("kobzol", kobzol = $$props.kobzol);
+		if ("obj" in $$props) $$invalidate(0, obj = $$props.obj);
+		if ("kobzol" in $$props) $$invalidate(1, kobzol = $$props.kobzol);
 	};
 
-	return { obj };
+	return [obj, kobzol];
 }
 
 class Component extends SvelteComponentDev {

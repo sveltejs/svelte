@@ -22,20 +22,20 @@ function create_fragment(ctx) {
 			div0 = element("div");
 			t = space();
 			div1 = element("div");
-			attr(div0, "style", ctx.style);
-			attr(div1, "style", div1_style_value = "" + (ctx.key + ": " + ctx.value));
+			attr(div0, "style", ctx[0]);
+			attr(div1, "style", div1_style_value = "" + (ctx[1] + ": " + ctx[2]));
 		},
 		m(target, anchor) {
 			insert(target, div0, anchor);
 			insert(target, t, anchor);
 			insert(target, div1, anchor);
 		},
-		p(changed, ctx) {
-			if (changed.style) {
-				attr(div0, "style", ctx.style);
+		p(ctx, changed) {
+			if (changed & 1) {
+				attr(div0, "style", ctx[0]);
 			}
 
-			if ((changed.key || changed.value) && div1_style_value !== (div1_style_value = "" + (ctx.key + ": " + ctx.value))) {
+			if (changed & 6 && div1_style_value !== (div1_style_value = "" + (ctx[1] + ": " + ctx[2]))) {
 				attr(div1, "style", div1_style_value);
 			}
 		},
@@ -55,18 +55,18 @@ function instance($$self, $$props, $$invalidate) {
 	let { value } = $$props;
 
 	$$self.$set = $$props => {
-		if ("style" in $$props) $$invalidate("style", style = $$props.style);
-		if ("key" in $$props) $$invalidate("key", key = $$props.key);
-		if ("value" in $$props) $$invalidate("value", value = $$props.value);
+		if ("style" in $$props) $$invalidate(0, style = $$props.style);
+		if ("key" in $$props) $$invalidate(1, key = $$props.key);
+		if ("value" in $$props) $$invalidate(2, value = $$props.value);
 	};
 
-	return { style, key, value };
+	return [style, key, value];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { style: 0, key: 0, value: 0 });
+		init(this, options, instance, create_fragment, safe_not_equal, { style: 0, key: 1, value: 2 });
 	}
 }
 

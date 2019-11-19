@@ -21,14 +21,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t = text(ctx.y);
+			t = text(ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, p, anchor);
 			append(p, t);
 		},
-		p(changed, ctx) {
-			if (changed.y) set_data(t, ctx.y);
+		p(ctx, changed) {
+			if (changed & 1) set_data(t, ctx[0]);
 		},
 		i: noop,
 		o: noop,
@@ -44,7 +44,7 @@ function instance($$self, $$props, $$invalidate) {
 	onMount(() => {
 		const interval = setInterval(
 			() => {
-				$$invalidate("b", b += 1);
+				$$invalidate(1, b += 1);
 				c += 1;
 				console.log(b, c);
 			},
@@ -57,17 +57,17 @@ function instance($$self, $$props, $$invalidate) {
 	let x;
 	let y;
 
-	$$self.$$.update = (changed = { a: 1, b: 1 }) => {
-		if (changed.a) {
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty === -1) {
 			$: x = a * 2;
 		}
 
-		if (changed.b) {
-			$: $$invalidate("y", y = b * 2);
+		if ($$self.$$.dirty & 2) {
+			$: $$invalidate(0, y = b * 2);
 		}
 	};
 
-	return { y };
+	return [y];
 }
 
 class Component extends SvelteComponent {

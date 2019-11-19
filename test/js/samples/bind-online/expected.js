@@ -15,10 +15,7 @@ function create_fragment(ctx) {
 
 	return {
 		c() {
-			dispose = [
-				listen(window, "online", ctx[1]),
-				listen(window, "offline", ctx[1])
-			];
+			dispose = [listen(window, "online", ctx[1]), listen(window, "offline", ctx[1])];
 		},
 		m: noop,
 		p: noop,

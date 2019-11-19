@@ -68,7 +68,7 @@ function instance($$self) {
 	};
 
 	$$self.$inject_state = $$props => {
-		
+
 	};
 
 	$: {
@@ -89,7 +89,7 @@ function instance($$self) {
 		} while (true);
 	}
 
-	return {};
+	return [];
 }
 
 class Component extends SvelteComponentDev {

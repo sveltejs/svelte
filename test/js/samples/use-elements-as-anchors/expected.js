@@ -112,11 +112,11 @@ function create_fragment(ctx) {
 	let t6;
 	let t7;
 	let if_block4_anchor;
-	let if_block0 = ctx.a && create_if_block_4(ctx);
-	let if_block1 = ctx.b && create_if_block_3(ctx);
-	let if_block2 = ctx.c && create_if_block_2(ctx);
-	let if_block3 = ctx.d && create_if_block_1(ctx);
-	let if_block4 = ctx.e && create_if_block(ctx);
+	let if_block0 = ctx[0] && create_if_block_4(ctx);
+	let if_block1 = ctx[1] && create_if_block_3(ctx);
+	let if_block2 = ctx[2] && create_if_block_2(ctx);
+	let if_block3 = ctx[3] && create_if_block_1(ctx);
+	let if_block4 = ctx[4] && create_if_block(ctx);
 
 	return {
 		c() {
@@ -155,66 +155,66 @@ function create_fragment(ctx) {
 			if (if_block4) if_block4.m(target, anchor);
 			insert(target, if_block4_anchor, anchor);
 		},
-		p(changed, ctx) {
-			if (ctx.a) {
+		p(ctx, changed) {
+			if (ctx[0]) {
 				if (!if_block0) {
 					if_block0 = create_if_block_4(ctx);
 					if_block0.c();
 					if_block0.m(div, t0);
 				} else {
-					
+
 				}
 			} else if (if_block0) {
 				if_block0.d(1);
 				if_block0 = null;
 			}
 
-			if (ctx.b) {
+			if (ctx[1]) {
 				if (!if_block1) {
 					if_block1 = create_if_block_3(ctx);
 					if_block1.c();
 					if_block1.m(div, t3);
 				} else {
-					
+
 				}
 			} else if (if_block1) {
 				if_block1.d(1);
 				if_block1 = null;
 			}
 
-			if (ctx.c) {
+			if (ctx[2]) {
 				if (!if_block2) {
 					if_block2 = create_if_block_2(ctx);
 					if_block2.c();
 					if_block2.m(div, t4);
 				} else {
-					
+
 				}
 			} else if (if_block2) {
 				if_block2.d(1);
 				if_block2 = null;
 			}
 
-			if (ctx.d) {
+			if (ctx[3]) {
 				if (!if_block3) {
 					if_block3 = create_if_block_1(ctx);
 					if_block3.c();
 					if_block3.m(div, null);
 				} else {
-					
+
 				}
 			} else if (if_block3) {
 				if_block3.d(1);
 				if_block3 = null;
 			}
 
-			if (ctx.e) {
+			if (ctx[4]) {
 				if (!if_block4) {
 					if_block4 = create_if_block(ctx);
 					if_block4.c();
 					if_block4.m(if_block4_anchor.parentNode, if_block4_anchor);
 				} else {
-					
+
 				}
 			} else if (if_block4) {
 				if_block4.d(1);
@@ -244,20 +244,20 @@ function instance($$self, $$props, $$invalidate) {
 	let { e } = $$props;
 
 	$$self.$set = $$props => {
-		if ("a" in $$props) $$invalidate("a", a = $$props.a);
-		if ("b" in $$props) $$invalidate("b", b = $$props.b);
-		if ("c" in $$props) $$invalidate("c", c = $$props.c);
-		if ("d" in $$props) $$invalidate("d", d = $$props.d);
-		if ("e" in $$props) $$invalidate("e", e = $$props.e);
+		if ("a" in $$props) $$invalidate(0, a = $$props.a);
+		if ("b" in $$props) $$invalidate(1, b = $$props.b);
+		if ("c" in $$props) $$invalidate(2, c = $$props.c);
+		if ("d" in $$props) $$invalidate(3, d = $$props.d);
+		if ("e" in $$props) $$invalidate(4, e = $$props.e);
 	};
 
-	return { a, b, c, d, e };
+	return [a, b, c, d, e];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { a: 0, b: 0, c: 0, d: 0, e: 0 });
+		init(this, options, instance, create_fragment, safe_not_equal, { a: 0, b: 1, c: 2, d: 3, e: 4 });
 	}
 }
 
