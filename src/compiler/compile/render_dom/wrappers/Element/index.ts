@@ -24,6 +24,7 @@ import bind_this from '../shared/bind_this';
 import { is_head } from '../shared/is_head';
 import { Identifier } from 'estree';
 import EventHandler from './EventHandler';
+import { extract_names } from 'periscopic';
 
 const events = [
 	{
@@ -160,7 +161,9 @@ export default class ElementWrapper extends Wrapper {
 
 		if (this.node.children.length) {
 			this.node.lets.forEach(l => {
-				renderer.add_to_context((l.value || l.name).name, true);
+				extract_names(l.value || l.name).forEach(name => {
+					renderer.add_to_context(name, true);
+				});
 			});
 		}
 

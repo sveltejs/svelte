@@ -16,6 +16,7 @@ import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { Node, Identifier, ObjectExpression } from 'estree';
 import EventHandler from '../Element/EventHandler';
+import { extract_names } from 'periscopic';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
@@ -74,7 +75,9 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		if (this.node.children.length) {
 			this.node.lets.forEach(l => {
-				renderer.add_to_context((l.value || l.name).name, true);
+				extract_names(l.value || l.name).forEach(name => {
+					renderer.add_to_context(name, true);
+				});
 			});
 
 			const default_slot = block.child({
