@@ -31,7 +31,7 @@ function create_each_block(ctx) {
 	const block = {
 		c: function create() {
 			{
-				const { index } = ctx;
+				const index = ctx[2];
 				console.log({ index });
 				debugger;
 			}

@@ -38,7 +38,7 @@ function create_each_block(ctx) {
 			t1 = space();
 
 			{
-				const { foo } = ctx;
+				const foo = ctx[1];
 				console.log({ foo });
 				debugger;
 			}
@@ -54,7 +54,7 @@ function create_each_block(ctx) {
 			if (changed & 1 && t0_value !== (t0_value = ctx[2].name + "")) set_data_dev(t0, t0_value);
 
 			if (changed & 2) {
-				const { foo } = ctx;
+				const foo = ctx[1];
 				console.log({ foo });
 				debugger;
 			}

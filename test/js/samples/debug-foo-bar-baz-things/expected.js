@@ -38,7 +38,10 @@ function create_each_block(ctx) {
 			t1 = space();
 
 			{
-				const { foo, bar, baz, thing } = ctx;
+				const foo = ctx[1];
+				const bar = ctx[2];
+				const baz = ctx[3];
+				const thing = ctx[4];
 				console.log({ foo, bar, baz, thing });
 				debugger;
 			}
@@ -54,7 +57,10 @@ function create_each_block(ctx) {
 			if (changed & 1 && t0_value !== (t0_value = ctx[4].name + "")) set_data_dev(t0, t0_value);
 
 			if (changed & 15) {
-				const { foo, bar, baz, thing } = ctx;
+				const foo = ctx[1];
+				const bar = ctx[2];
+				const baz = ctx[3];
+				const thing = ctx[4];
 				console.log({ foo, bar, baz, thing });
 				debugger;
 			}

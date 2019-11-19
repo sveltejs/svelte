@@ -1010,6 +1010,10 @@ export default class Component {
 					if (!d.init) return false;
 					if (d.init.type !== 'Literal') return false;
 
+					// everything except const values can be changed by e.g. svelte devtools
+					// which means we can't hoist it
+					if (node.kind !== 'const' && this.compile_options.dev) return false;
+
 					const { name } = d.id as Identifier;
 
 					const v = this.var_lookup.get(name);
