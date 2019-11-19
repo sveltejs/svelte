@@ -167,18 +167,6 @@ export default class Renderer {
 
 		const variable = this.component.var_lookup.get(head);
 
-		// // TODO this feels woolly. might encounter false positive
-		// // if each context shadows top-level var
-		// if (variable) {
-		// 	this.component.add_reference(name); // TODO we can probably remove most other occurrences of this
-
-		// 	if (!variable.hoistable) {
-		// 		head = x`#ctx[${i}]`;
-		// 	}
-		// } else if (i !== undefined) {
-		// 	head = x`#ctx[${i}]`;
-		// }
-
 		if (variable) {
 			this.component.add_reference(name); // TODO we can probably remove most other occurrences of this
 		}
