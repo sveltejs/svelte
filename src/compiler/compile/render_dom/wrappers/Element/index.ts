@@ -19,7 +19,7 @@ import add_to_set from '../../../utils/add_to_set';
 import add_event_handlers from '../shared/add_event_handlers';
 import add_actions from '../shared/add_actions';
 import create_debugging_comment from '../shared/create_debugging_comment';
-import { get_context_merger } from '../shared/get_context_merger';
+import { get_slot_definition } from '../shared/get_slot_definition';
 import bind_this from '../shared/bind_this';
 import { is_head } from '../shared/is_head';
 import { Identifier } from 'estree';
@@ -158,6 +158,12 @@ export default class ElementWrapper extends Wrapper {
 
 		this.class_dependencies = [];
 
+		if (this.node.children.length) {
+			this.node.lets.forEach(l => {
+				renderer.add_to_context((l.value || l.name).name, true);
+			});
+		}
+
 		this.attributes = this.node.attributes.map(attribute => {
 			if (attribute.name === 'slot') {
 				// TODO make separate subclass for this?
@@ -184,20 +190,17 @@ export default class ElementWrapper extends Wrapper {
 							type: 'slot'
 						});
 
-						const lets = this.node.lets;
+						const { scope, lets } = this.node;
 						const seen = new Set(lets.map(l => l.name.name));
 
 						(owner as unknown as InlineComponentWrapper).node.lets.forEach(l => {
 							if (!seen.has(l.name.name)) lets.push(l);
 						});
 
-						const fn = get_context_merger(this.renderer, lets);
-
-						(owner as unknown as InlineComponentWrapper).slots.set(name, {
-							block: child_block,
-							scope: this.node.scope,
-							fn
-						});
+						(owner as unknown as InlineComponentWrapper).slots.set(
+							name,
+							get_slot_definition(child_block, scope, lets)
+						);
 						this.renderer.blocks.push(child_block);
 					}
 
