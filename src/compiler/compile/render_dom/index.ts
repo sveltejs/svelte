@@ -79,7 +79,7 @@ export default function dom(
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
 		? x`
 			${$$props} => {
-				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
+				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`)}
 				${writable_props.map(prop =>
 					b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
