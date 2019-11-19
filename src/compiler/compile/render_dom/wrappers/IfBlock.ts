@@ -266,7 +266,7 @@ export default class IfBlockWrapper extends Wrapper {
 		/* eslint-disable @typescript-eslint/indent,indent */
 		if (this.needs_update) {
 			block.chunks.init.push(b`
-				function ${select_block_type}(#changed, #ctx) {
+				function ${select_block_type}(#ctx, #changed) {
 					${this.branches.map(({ dependencies, condition, snippet, block }) => condition
 					? b`
 					${snippet && (
@@ -280,7 +280,7 @@ export default class IfBlockWrapper extends Wrapper {
 			`);
 		} else {
 			block.chunks.init.push(b`
-				function ${select_block_type}(#changed, #ctx) {
+				function ${select_block_type}(#ctx, #changed) {
 					${this.branches.map(({ condition, snippet, block }) => condition
 					? b`if (${snippet || condition}) return ${block.name};`
 					: b`return ${block.name};`)}
@@ -290,7 +290,7 @@ export default class IfBlockWrapper extends Wrapper {
 		/* eslint-enable @typescript-eslint/indent,indent */
 
 		block.chunks.init.push(b`
-			let ${current_block_type} = ${select_block_type}(null, #ctx);
+			let ${current_block_type} = ${select_block_type}(#ctx, -1);
 			let ${name} = ${get_block};
 		`);
 
@@ -385,13 +385,13 @@ export default class IfBlockWrapper extends Wrapper {
 
 			${this.needs_update
 				? b`
-					function ${select_block_type}(#changed, #ctx) {
+					function ${select_block_type}(#ctx, #changed) {
 						${this.branches.map(({ dependencies, condition, snippet }, i) => condition
 						? b`
 						${snippet && (
 							dependencies.length > 0
-								? b`if (${condition} == null || ${block.renderer.changed(dependencies)}) ${condition} = !!${snippet}`
-								: b`if (${condition} == null) ${condition} = !!${snippet}`
+								? b`if (${block.renderer.changed(dependencies)}) ${condition} = !!${snippet}`
+								: b`if (${condition} == -1) ${condition} = !!${snippet}`
 						)}
 						if (${condition}) return ${i};`
 						: b`return ${i};`)}
@@ -411,12 +411,12 @@ export default class IfBlockWrapper extends Wrapper {
 
 		if (has_else) {
 			block.chunks.init.push(b`
-				${current_block_type_index} = ${select_block_type}(null, #ctx);
+				${current_block_type_index} = ${select_block_type}(#ctx, -1);
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 			`);
 		} else {
 			block.chunks.init.push(b`
-				if (~(${current_block_type_index} = ${select_block_type}(null, #ctx))) {
+				if (~(${current_block_type_index} = ${select_block_type}(#ctx, -1))) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 				}
 			`);
@@ -473,7 +473,7 @@ export default class IfBlockWrapper extends Wrapper {
 			if (dynamic) {
 				block.chunks.update.push(b`
 					let ${previous_block_index} = ${current_block_type_index};
-					${current_block_type_index} = ${select_block_type}(#changed, #ctx);
+					${current_block_type_index} = ${select_block_type}(#ctx, #changed);
 					if (${current_block_type_index} === ${previous_block_index}) {
 						${if_current_block_type_index(b`${if_blocks}[${current_block_type_index}].p(#ctx, #changed);`)}
 					} else {
@@ -483,7 +483,7 @@ export default class IfBlockWrapper extends Wrapper {
 			} else {
 				block.chunks.update.push(b`
 					let ${previous_block_index} = ${current_block_type_index};
-					${current_block_type_index} = ${select_block_type}(#changed, #ctx);
+					${current_block_type_index} = ${select_block_type}(#ctx, #changed);
 					if (${current_block_type_index} !== ${previous_block_index}) {
 						${change_block}
 					}
