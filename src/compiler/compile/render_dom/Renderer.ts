@@ -139,7 +139,7 @@ export default class Renderer {
 		});
 
 		return Array.from(deps)
-			.map(n => x`$$invalidate(${i}, ${n})`)
+			.map(n => x`$$invalidate(${this.context_lookup.get(n)}, ${n})`)
 			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
 	}
 

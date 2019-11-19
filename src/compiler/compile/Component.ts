@@ -889,10 +889,6 @@ export default class Component {
 		return null;
 	}
 
-	invalidate(_name, _value?) {
-		throw new Error(`invalidate method now belongs to Renderer`);
-	}
-
 	rewrite_props(get_insert: (variable: Var) => Node[]) {
 		if (!this.ast.instance) return;
 
@@ -1283,10 +1279,6 @@ export default class Component {
 			seen = new Set();
 			add_declaration(declaration);
 		});
-	}
-
-	qualify(_name) {
-		throw new Error(`component.qualify is now renderer.reference`);
 	}
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
