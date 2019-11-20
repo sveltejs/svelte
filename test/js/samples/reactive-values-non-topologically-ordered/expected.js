@@ -12,10 +12,10 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & 1) {
-			$: $$invalidate("b", b = x);
+			$: $$invalidate(2, b = x);
 		}
 
-		if ($$self.$$.dirty & 2) {
+		if ($$self.$$.dirty & 4) {
 			$: a = b;
 		}
 	};

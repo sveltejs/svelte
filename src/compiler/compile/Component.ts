@@ -209,7 +209,7 @@ export default class Component {
 			});
 
 			const subscribable_name = name.slice(1);
-			this.add_reference(subscribable_name);
+			// this.add_reference(subscribable_name);
 
 			const variable = this.var_lookup.get(subscribable_name);
 			if (variable) variable.subscribable = true;

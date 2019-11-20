@@ -22,14 +22,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			h1 = element("h1");
-			t = text(ctx[1]);
+			t = text(ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, h1, anchor);
 			append(h1, t);
 		},
 		p(ctx, changed) {
-			if (changed & 2) set_data(t, ctx[1]);
+			if (changed & 1) set_data(t, ctx[0]);
 		},
 		i: noop,
 		o: noop,
@@ -42,8 +42,8 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let $foo;
 	const foo = writable(0);
-	component_subscribe($$self, foo, value => $$invalidate(1, $foo = value));
-	return [foo, $foo];
+	component_subscribe($$self, foo, value => $$invalidate(0, $foo = value));
+	return [$foo];
 }
 
 class Component extends SvelteComponent {

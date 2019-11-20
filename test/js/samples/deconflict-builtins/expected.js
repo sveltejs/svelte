@@ -108,7 +108,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("createElement" in $$props) $$invalidate(0, createElement = $$props.createElement);
 	};
 
-	return [createElement, null, null, null];
+	return [createElement];
 }
 
 class Component extends SvelteComponent {

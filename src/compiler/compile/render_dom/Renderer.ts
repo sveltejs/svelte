@@ -1,17 +1,26 @@
 import Block from './Block';
-import { CompileOptions } from '../../interfaces';
+import { CompileOptions, Var } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
 import { x } from 'code-red';
-import { Node, Identifier, MemberExpression } from 'estree';
+import { Node, Identifier, MemberExpression, Literal } from 'estree';
 import flatten_reference from '../utils/flatten_reference';
+
+type ContextMember = {
+	name: string;
+	index: Literal;
+	is_contextual: boolean;
+	is_non_contextual: boolean;
+	variable: Var;
+	priority: number;
+};
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
 	options: CompileOptions;
 
-	context: string[] = [];
-	context_lookup: Map<string, number> = new Map();
+	context: ContextMember[] = [];
+	context_lookup: Map<string, ContextMember> = new Map();
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
@@ -31,22 +40,18 @@ export default class Renderer {
 		this.file_var = options.dev && this.component.get_unique_name('file');
 
 		// TODO sort vars, most frequently referenced first?
-		component.vars
-			.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
-			.forEach(v => this.add_to_context(v.name));
+		component.vars.filter(v => !v.hoistable || (v.export_name && !v.module)).forEach(v => this.add_to_context(v.name));
 
 		// ensure store values are included in context
-		component.vars
-			.filter(v => v.subscribable)
-			.forEach(v => this.add_to_context(`$${v.name}`));
+		component.vars.filter(v => v.subscribable).forEach(v => this.add_to_context(`$${v.name}`));
 
 		if (component.var_lookup.has('$$props')) {
 			this.add_to_context('$$props');
 		}
 
 		if (component.slots.size > 0) {
-			this.add_to_context('$$slots');
 			this.add_to_context('$$scope');
+			this.add_to_context('$$slots');
 		}
 
 		if (this.binding_groups.length > 0) {
@@ -86,25 +91,62 @@ export default class Renderer {
 		this.block.assign_variable_names();
 
 		this.fragment.render(this.block, null, x`#nodes` as Identifier);
+
+		this.context.forEach(member => {
+			const { variable } = member;
+			if (variable) {
+				member.priority += 2;
+				if (variable.mutated || variable.reassigned) member.priority += 4;
+
+				// these determine whether variable is included in initial context
+				// array, so must have the highest priority
+				if (variable.export_name) member.priority += 8;
+				if (variable.referenced) member.priority += 16;
+			}
+
+			if (!member.is_contextual) {
+				member.priority += 1;
+			}
+		});
+
+		this.context.sort((a, b) => b.priority - a.priority);
+		this.context.forEach((member, i) => member.index.value = i);
 	}
 
 	add_to_context(name: string, contextual = false) {
 		if (!this.context_lookup.has(name)) {
-			const i = this.context.length;
+			const member: ContextMember = {
+				name,
+				index: { type: 'Literal', value: -1 }, // set later
+				is_contextual: false,
+				is_non_contextual: false, // shadowed vars could be contextual and non-contextual
+				variable: null,
+				priority: 0
+			};
 
-			this.context_lookup.set(name, i);
-			this.context.push(contextual ? null : name);
+			this.context_lookup.set(name, member);
+			this.context.push(member);
 		}
 
-		return this.context_lookup.get(name);
+		const member = this.context_lookup.get(name);
+
+		if (contextual) {
+			member.is_contextual = true;
+		} else {
+			member.is_non_contextual = true;
+			const variable = this.component.var_lookup.get(name);
+			member.variable = variable;
+		}
+
+		return member;
 	}
 
 	invalidate(name: string, value?) {
 		const variable = this.component.var_lookup.get(name);
-		const i = this.context_lookup.get(name);
+		const member = this.context_lookup.get(name);
 
 		if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {
-			return x`${`$$subscribe_${name}`}($$invalidate(${i}, ${value || name}))`;
+			return x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${value || name}))`;
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
@@ -122,7 +164,7 @@ export default class Renderer {
 		}
 
 		if (value) {
-			return x`$$invalidate(${i}, ${value})`;
+			return x`$$invalidate(${member.index}, ${value})`;
 		}
 
 		// if this is a reactive declaration, invalidate dependencies recursively
@@ -140,15 +182,46 @@ export default class Renderer {
 		});
 
 		return Array.from(deps)
-			.map(n => x`$$invalidate(${this.context_lookup.get(n)}, ${n})`)
+			.map(n => x`$$invalidate(${this.context_lookup.get(n).index}, ${n})`)
 			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
 	}
 
 	get_bitmask(names) {
-		return names.reduce((bits, name) => {
-			const bit = 1 << this.context_lookup.get(name);
-			return bits | bit;
-		}, 0);
+		const { context_lookup } = this;
+
+		// names.forEach(name => {
+		// 	if (!context_lookup.has(name)) {
+		// 		console.log({ names });
+		// 		throw new Error(`wut ${name}`);
+		// 	}
+		// });
+
+		return {
+			type: 'Literal',
+
+			// we need to use a getter so that bitmasks can be determined
+			// lazily, once context has fully shaken out. TODO would be nice
+			// to do everything in a different order so that this isn't necessary
+			get value() {
+				return names.reduce((bits, name) => {
+					const member = context_lookup.get(name);
+
+					if (!member) return bits;
+
+					if (member.index.value === -1) {
+						throw new Error(`unset index`);
+					}
+
+					// if (!member) {
+					// 	console.log({ names });
+					// 	throw new Error(`wut ${name}`);
+					// }
+
+					const bit = 1 << (member.index.value as number);
+					return bits | bit;
+				}, 0);
+			}
+		};
 	}
 
 	changed(names, is_reactive_declaration = false) {
@@ -165,17 +238,17 @@ export default class Renderer {
 		}
 
 		const { name, nodes } = flatten_reference(node);
-		const i = this.context_lookup.get(name);
+		const member = this.context_lookup.get(name);
 
 		// TODO is this correct?
 		if (this.component.var_lookup.get(name)) {
 			this.component.add_reference(name);
 		}
 
-		if (i !== undefined) {
-			const replacement = x`#ctx[${i}]` as MemberExpression;
+		if (member !== undefined) {
+			const replacement = x`#ctx[${member.index}]` as MemberExpression;
 
-			replacement.object.loc = nodes[0].loc;
+			if (nodes[0].loc) replacement.object.loc = nodes[0].loc;
 			nodes[0] = replacement;
 
 			return nodes.reduce((lhs, rhs) => x`${lhs}.${rhs}`);

@@ -118,6 +118,9 @@ export default class AwaitBlockWrapper extends Wrapper {
 		if (has_outros) {
 			block.add_outro();
 		}
+
+		if (this.node.value) block.renderer.add_to_context(this.node.value, true);
+		if (this.node.error) block.renderer.add_to_context(this.node.error, true);
 	}
 
 	render(
@@ -137,8 +140,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		block.maintain_context = true;
 
-		const value_index = this.node.value && block.renderer.add_to_context(this.node.value, true);
-		const error_index = this.node.error && block.renderer.add_to_context(this.node.error, true);
+		const value_index = this.node.value && block.renderer.context_lookup.get(this.node.value).index;
+		const error_index = this.node.error && block.renderer.context_lookup.get(this.node.error).index;
 
 		const info_props: any = x`{
 			ctx: #ctx,

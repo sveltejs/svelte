@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 
-	let a, b, c;
+	let a = 1, b = 2, c = 3;
 
 	onMount(() => {
 		const interval = setInterval(() => {

@@ -104,7 +104,7 @@ export default function dom(
 				kind: 'get',
 				key: { type: 'Identifier', name: prop.export_name },
 				value: x`function() {
-					return ${prop.hoistable ? prop.name : x`this.$$.ctx[${renderer.context_lookup.get(prop.name)}]`}
+					return ${prop.hoistable ? prop.name : x`this.$$.ctx[${renderer.context_lookup.get(prop.name).index}]`}
 				}`
 			});
 		} else if (component.compile_options.dev) {
@@ -222,7 +222,7 @@ export default function dom(
 
 		component.rewrite_props(({ name, reassigned, export_name }) => {
 			const value = `$${name}`;
-			const i = renderer.context_lookup.get(`$${name}`);
+			const i = renderer.context_lookup.get(`$${name}`).index;
 
 			const insert = (reassigned || export_name)
 				? b`${`$$subscribe_${name}`}()`
@@ -268,12 +268,31 @@ export default function dom(
 
 	const instance_javascript = component.extract_javascript(component.ast.instance);
 
+	let i = renderer.context.length;
+	while (i--) {
+		const member = renderer.context[i];
+		if (member.variable) {
+			if (member.variable.referenced || member.variable.export_name) break;
+		} else if (member.is_non_contextual) {
+			break;
+		}
+	}
+	const initial_context = renderer.context.slice(0, i + 1);
+
+	// const initial_context = renderer.context.filter(member => {
+	// 	// return member.variable
+	// 	// 	? (member.variable.referenced || member.variable.export_name)
+	// 	// 	: !member.is_contextual;
+
+	// 	return member.variable || !member.is_contextual;
+	// });
+
 	const has_definition = (
 		(instance_javascript && instance_javascript.length > 0) ||
 		filtered_props.length > 0 ||
 		uses_props ||
 		component.partly_hoisted.length > 0 ||
-		renderer.context.length > 0 ||
+		initial_context.length > 0 ||
 		component.reactive_declarations.length > 0
 	);
 
@@ -288,7 +307,7 @@ export default function dom(
 		})
 		.map(({ name }) => b`
 			${component.compile_options.dev && b`@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
-			@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate(${renderer.context_lookup.get(name)}, ${name} = $$value));
+			@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate(${renderer.context_lookup.get(name).index}, ${name} = $$value));
 		`);
 
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
@@ -308,7 +327,7 @@ export default function dom(
 
 			const writable = dependencies.filter(n => {
 				const variable = component.var_lookup.get(n);
-				return variable && (variable.writable || variable.mutated);
+				return variable && (variable.export_name || variable.mutated || variable.reassigned);
 			});
 
 			const condition = !uses_props && writable.length > 0 && renderer.changed(writable, true);
@@ -337,7 +356,7 @@ export default function dom(
 			if (store && (store.reassigned || store.export_name)) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
-				const i = renderer.context_lookup.get($name);
+				const i = renderer.context_lookup.get($name).index;
 
 				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate(${i}, ${$name} = $$value)), ${name})`;
 			}
@@ -357,11 +376,10 @@ export default function dom(
 
 		const return_value = {
 			type: 'ArrayExpression',
-			elements: renderer.context
-				.map(name => name ? ({
-					type: 'Identifier',
-					name
-				}) as Expression : x`null`)
+			elements: initial_context.map(member => ({
+				type: 'Identifier',
+				name: member.name
+			}) as Expression)
 		};
 
 		body.push(b`
@@ -406,7 +424,7 @@ export default function dom(
 	}
 
 	const prop_indexes = x`{
-		${props.filter(v => !v.hoistable).map(v => p`${v.export_name}: ${renderer.context_lookup.get(v.name)}`)}
+		${props.filter(v => v.export_name && !v.module).map(v => p`${v.export_name}: ${renderer.context_lookup.get(v.name).index}`)}
 	}` as ObjectExpression;
 
 	if (options.customElement) {

@@ -83,7 +83,7 @@ export function destroy_component(component, detaching) {
 		// TODO null out other refs, including component.$$ (but need to
 		// preserve final state?)
 		$$.on_destroy = $$.fragment = null;
-		$$.ctx = {};
+		$$.ctx = [];
 	}
 }
 
@@ -134,7 +134,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 			}
 			return ret;
 		})
-		: prop_values;
+		: [];
 
 	$$.update();
 	ready = true;

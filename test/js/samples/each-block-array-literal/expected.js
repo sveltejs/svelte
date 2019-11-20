@@ -114,7 +114,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("e" in $$props) $$invalidate(4, e = $$props.e);
 	};
 
-	return [a, b, c, d, e, null, null, null];
+	return [a, b, c, d, e];
 }
 
 class Component extends SvelteComponent {

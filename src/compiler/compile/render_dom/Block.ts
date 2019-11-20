@@ -34,7 +34,7 @@ export default class Block {
 	key: Identifier;
 	first: Identifier;
 
-	dependencies: Set<string>;
+	dependencies: Set<string> = new Set();
 
 	bindings: Map<string, {
 		object: Identifier;
@@ -89,8 +89,6 @@ export default class Block {
 		// for keyed each blocks
 		this.key = options.key;
 		this.first = null;
-
-		this.dependencies = new Set();
 
 		this.bindings = options.bindings;
 

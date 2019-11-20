@@ -39,7 +39,7 @@ function create_fragment(ctx) {
 }
 
 function instance($$self, $$props, $$invalidate) {
-	let a, b, c;
+	let a = 1, b = 2, c = 3;
 
 	onMount(() => {
 		const interval = setInterval(
@@ -58,15 +58,12 @@ function instance($$self, $$props, $$invalidate) {
 	let y;
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty === -1) {
-			$: x = a * 2;
-		}
-
 		if ($$self.$$.dirty & 2) {
 			$: $$invalidate(0, y = b * 2);
 		}
 	};
 
+	$: x = a * 2;
 	return [y];
 }
 

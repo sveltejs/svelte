@@ -52,7 +52,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 
 			let invalidate = is_store_value
 				? x`@set_store_value(${head.slice(1)}, ${node}, ${extra_args})`
-				: x`$$invalidate(${renderer.context_lookup.get(head)}, ${node}, ${extra_args})`;
+				: x`$$invalidate(${renderer.context_lookup.get(head).index}, ${node}, ${extra_args})`;
 
 			if (variable.subscribable && variable.reassigned) {
 				const subscribe = `$$subscribe_${head}`;

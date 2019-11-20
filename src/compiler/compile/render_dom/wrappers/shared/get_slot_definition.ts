@@ -25,13 +25,22 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 
 	const context = {
 		type: 'ObjectExpression',
-		properties: Array.from(names).map(name => p`${block.renderer.context_lookup.get(name)}: ${name}`)
+		properties: Array.from(names).map(name => p`${block.renderer.context_lookup.get(name).index}: ${name}`)
 	};
 
 	const changes = Array.from(names)
 		.map(name => {
-			const i = block.renderer.context_lookup.get(name);
-			return x`${name} ? ${1 << i} : 0`;
+			const { context_lookup } = block.renderer;
+
+			const literal = {
+				type: 'Literal',
+				get value() {
+					const i = context_lookup.get(name).index.value;
+					return 1 << i;
+				}
+			};
+
+			return x`${name} ? ${literal} : 0`;
 		})
 		.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
 

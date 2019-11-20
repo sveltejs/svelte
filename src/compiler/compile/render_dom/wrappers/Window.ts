@@ -124,9 +124,6 @@ export default class WindowWrapper extends Wrapper {
 				`);
 			}
 
-			renderer.add_to_context(id.name);
-			const reference = renderer.reference(id.name);
-
 			component.partly_hoisted.push(b`
 				function ${id}() {
 					${props.map(prop => renderer.invalidate(prop.name, x`${prop.name} = @_window.${prop.value}`))}
@@ -134,7 +131,7 @@ export default class WindowWrapper extends Wrapper {
 			`);
 
 			block.chunks.init.push(b`
-				@add_render_callback(${reference});
+				@add_render_callback(${fn});
 			`);
 
 			component.has_reactive_assignments = true;

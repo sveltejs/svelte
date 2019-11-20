@@ -196,10 +196,10 @@ export default class EachBlockWrapper extends Wrapper {
 			? !this.next.is_dom_node() :
 			!parent_node || !this.parent.is_dom_node();
 
-		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name)}] = ${prop.modifier(x`list[i]`)};`);
+		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.modifier(x`list[i]`)};`);
 
-		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name)}] = list;`);
-		if (this.node.has_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name)}] = i;`);
+		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`);
+		if (this.node.has_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);
 
 		const snippet = this.node.expression.manipulate(block);
 
@@ -476,9 +476,8 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		`);
 
-		const all_dependencies = new Set(this.block.dependencies);
-		const { dependencies } = this.node.expression;
-		dependencies.forEach((dependency: string) => {
+		const all_dependencies = new Set(this.block.dependencies); // TODO should be dynamic deps only
+		this.node.expression.dynamic_dependencies().forEach((dependency: string) => {
 			all_dependencies.add(dependency);
 		});
 

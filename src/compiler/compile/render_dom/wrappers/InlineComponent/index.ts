@@ -156,6 +156,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		if (this.fragment) {
+			this.renderer.add_to_context('$$scope', true);
 			const default_slot = this.slots.get('default');
 
 			this.fragment.nodes.forEach((child) => {
