@@ -130,6 +130,23 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 
 ---
 
+To avoid infinite loops, reactive statements can be configured to run only when certain values have changed.
+
+```html
+<script>
+	export let x, y, z;
+	
+	function dosomething() {
+	    z = x + y;
+	}
+	// this will execute `dosomething()` whenever
+	// `x` or `y` prop changes, but not `z`
+	$: x, y, dosomething();
+</script>
+```
+
+---
+
 If a statement consists entirely of an assignment to an undeclared variable, Svelte will inject a `let` declaration on your behalf.
 
 ```html
