@@ -124,7 +124,8 @@ export default class WindowWrapper extends Wrapper {
 				`);
 			}
 
-			const i = renderer.add_to_context(id.name);
+			renderer.add_to_context(id.name);
+			const reference = renderer.reference(id.name);
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
@@ -133,7 +134,7 @@ export default class WindowWrapper extends Wrapper {
 			`);
 
 			block.chunks.init.push(b`
-				@add_render_callback(#ctx[${i}]);
+				@add_render_callback(${reference});
 			`);
 
 			component.has_reactive_assignments = true;
@@ -161,7 +162,8 @@ export default class WindowWrapper extends Wrapper {
 			const id = block.get_unique_name(`onlinestatuschanged`);
 			const name = bindings.online;
 
-			const i = renderer.add_to_context(id.name);
+			renderer.add_to_context(id.name);
+			const reference = renderer.reference(id.name);
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
@@ -170,12 +172,12 @@ export default class WindowWrapper extends Wrapper {
 			`);
 
 			block.chunks.init.push(b`
-				@add_render_callback(#ctx[${i}]);
+				@add_render_callback(${reference});
 			`);
 
 			block.event_listeners.push(
-				x`@listen(@_window, "online", #ctx[${i}])`,
-				x`@listen(@_window, "offline", #ctx[${i}])`
+				x`@listen(@_window, "online", ${reference})`,
+				x`@listen(@_window, "offline", ${reference})`
 			);
 
 			component.has_reactive_assignments = true;

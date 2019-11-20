@@ -268,8 +268,8 @@ export default class Expression {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(declaration);
 
-						const i = block.renderer.add_to_context(id.name);
-						this.replace(x`#ctx[${i}]` as any);
+						block.renderer.add_to_context(id.name);
+						this.replace(block.renderer.reference(id.name));
 					}
 
 					else {
@@ -285,20 +285,21 @@ export default class Expression {
 
 						component.partly_hoisted.push(declaration);
 
-						const i = block.renderer.add_to_context(id.name);
+						block.renderer.add_to_context(id.name);
+						const callee = block.renderer.reference(id.name);
 
 						this.replace(id as any);
 
 						if ((node as FunctionExpression).params.length > 0) {
 							declarations.push(b`
 								function ${id}(...args) {
-									return #ctx[${i}](${context_args}, ...args);
+									return ${callee}(${context_args}, ...args);
 								}
 							`);
 						} else {
 							declarations.push(b`
 								function ${id}() {
-									return #ctx[${i}](${context_args});
+									return ${callee}(${context_args});
 								}
 							`);
 						}

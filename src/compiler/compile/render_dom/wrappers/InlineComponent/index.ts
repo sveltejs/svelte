@@ -280,7 +280,8 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const id = component.get_unique_name(`${this.var.name}_${binding.name}_binding`);
-			const i = renderer.add_to_context(id.name);
+			renderer.add_to_context(id.name);
+			const callee = renderer.reference(id.name);
 
 			const updating = block.get_unique_name(`updating_${binding.name}`);
 			block.add_variable(updating);
@@ -333,7 +334,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				block.chunks.init.push(b`
 					function ${id}(${value}) {
-						#ctx[${i}].call(null, ${value}, ${args});
+						${callee}.call(null, ${value}, ${args});
 					}
 				`);
 
@@ -341,7 +342,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			} else {
 				block.chunks.init.push(b`
 					function ${id}(${value}) {
-						#ctx[${i}].call(null, ${value});
+						${callee}.call(null, ${value});
 					}
 				`);
 			}

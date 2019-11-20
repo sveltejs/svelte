@@ -7,7 +7,9 @@ import { Identifier } from 'estree';
 
 export default function bind_this(component: Component, block: Block, binding: Binding, variable: Identifier) {
 	const fn = component.get_unique_name(`${variable.name}_binding`);
-	const i = block.renderer.add_to_context(fn.name);
+
+	block.renderer.add_to_context(fn.name);
+	const callee = block.renderer.reference(fn.name);
 
 	let lhs;
 	let object;
@@ -60,8 +62,8 @@ export default function bind_this(component: Component, block: Block, binding: B
 		const unassign = block.get_unique_name(`unassign_${variable.name}`);
 
 		block.chunks.init.push(b`
-			const ${assign} = () => #ctx[${i}](${variable}, ${args});
-			const ${unassign} = () => #ctx[${i}](null, ${args});
+			const ${assign} = () => ${callee}(${variable}, ${args});
+			const ${unassign} = () => ${callee}(null, ${args});
 		`);
 
 		const condition = Array.from(contextual_dependencies)
@@ -91,6 +93,6 @@ export default function bind_this(component: Component, block: Block, binding: B
 		}
 	`);
 
-	block.chunks.destroy.push(b`#ctx[${i}](null);`);
-	return b`#ctx[${i}](${variable});`;
+	block.chunks.destroy.push(b`${callee}(null);`);
+	return b`${callee}(${variable});`;
 }

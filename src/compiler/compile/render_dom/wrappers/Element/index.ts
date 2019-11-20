@@ -460,7 +460,7 @@ export default class ElementWrapper extends Wrapper {
 
 		groups.forEach(group => {
 			const handler = renderer.component.get_unique_name(`${this.var.name}_${group.events.join('_')}_handler`);
-			const i = renderer.add_to_context(handler.name);
+			renderer.add_to_context(handler.name);
 
 			// TODO figure out how to handle locks
 			const needs_lock = group.bindings.some(binding => binding.needs_lock);
@@ -488,7 +488,7 @@ export default class ElementWrapper extends Wrapper {
 
 			const has_local_function = contextual_dependencies.size > 0 || needs_lock || animation_frame;
 
-			let callee;
+			let callee = renderer.reference(handler.name);
 
 			// TODO dry this out — similar code for event handlers and component bindings
 			if (has_local_function) {
@@ -503,21 +503,19 @@ export default class ElementWrapper extends Wrapper {
 								${animation_frame} = @raf(${handler});
 								${needs_lock && b`${lock} = true;`}
 							}
-							#ctx[${i}].call(${this.var}, ${args});
+							${callee}.call(${this.var}, ${args});
 						}
 					`);
 				} else {
 					block.chunks.init.push(b`
 						function ${handler}() {
 							${needs_lock && b`${lock} = true;`}
-							#ctx[${i}].call(${this.var}, ${args});
+							${callee}.call(${this.var}, ${args});
 						}
 					`);
 				}
 
 				callee = handler;
-			} else {
-				callee = x`#ctx[${i}]`;
 			}
 
 			const params = Array.from(contextual_dependencies).map(name => ({
