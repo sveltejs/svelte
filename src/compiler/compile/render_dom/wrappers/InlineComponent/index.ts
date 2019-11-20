@@ -281,7 +281,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const id = component.get_unique_name(`${this.var.name}_${binding.name}_binding`);
 			renderer.add_to_context(id.name);
-			const callee = renderer.reference(id.name);
+			const callee = renderer.reference(id);
 
 			const updating = block.get_unique_name(`updating_${binding.name}`);
 			block.add_variable(updating);

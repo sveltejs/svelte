@@ -213,15 +213,8 @@ export default class Expression {
 							component.add_reference(name); // TODO is this redundant/misplaced?
 						}
 					} else if (is_contextual(component, template_scope, name)) {
-						const reference = block.renderer.reference(name);
-						if (node.type === 'Identifier') {
-							this.replace(reference);
-						} else {
-							while (node.object.type === 'MemberExpression') {
-								node = node.object;
-							}
-							node.object = reference;
-						}
+						const reference = block.renderer.reference(node);
+						this.replace(reference);
 					}
 
 					this.skip();
@@ -269,7 +262,7 @@ export default class Expression {
 						component.partly_hoisted.push(declaration);
 
 						block.renderer.add_to_context(id.name);
-						this.replace(block.renderer.reference(id.name));
+						this.replace(block.renderer.reference(id));
 					}
 
 					else {
@@ -286,7 +279,7 @@ export default class Expression {
 						component.partly_hoisted.push(declaration);
 
 						block.renderer.add_to_context(id.name);
-						const callee = block.renderer.reference(id.name);
+						const callee = block.renderer.reference(id);
 
 						this.replace(id as any);
 

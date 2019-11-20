@@ -3,7 +3,8 @@ import { CompileOptions } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
 import { x } from 'code-red';
-import { Node, Identifier } from 'estree';
+import { Node, Identifier, MemberExpression } from 'estree';
+import flatten_reference from '../utils/flatten_reference';
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
@@ -158,23 +159,28 @@ export default class Renderer {
 			: x`#changed & ${bitmask}`;
 	}
 
-	reference(name) {
+	reference(node: string | Identifier | MemberExpression) {
+		if (typeof node === 'string') {
+			node = { type: 'Identifier', name: node };
+		}
+
+		const { name, nodes } = flatten_reference(node);
 		const i = this.context_lookup.get(name);
 
-		if (name === `$$props`) return x`#ctx[${i}]`;
-
-		let [head, ...tail] = name.split('.');
-
-		const variable = this.component.var_lookup.get(head);
-
-		if (variable) {
-			this.component.add_reference(name); // TODO we can probably remove most other occurrences of this
+		// TODO is this correct?
+		if (this.component.var_lookup.get(name)) {
+			this.component.add_reference(name);
 		}
 
 		if (i !== undefined) {
-			head = x`#ctx[${i}]`;
+			const replacement = x`#ctx[${i}]` as MemberExpression;
+
+			replacement.object.loc = nodes[0].loc;
+			nodes[0] = replacement;
+
+			return nodes.reduce((lhs, rhs) => x`${lhs}.${rhs}`);
 		}
 
-		return [head, ...tail].reduce((lhs, rhs) => x`${lhs}.${rhs}`);
+		return node;
 	}
 }

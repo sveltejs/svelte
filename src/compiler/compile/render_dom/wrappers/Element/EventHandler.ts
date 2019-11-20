@@ -26,7 +26,7 @@ export default class EventHandlerWrapper {
 	}
 
 	get_snippet(block) {
-		const snippet = this.node.expression ? this.node.expression.manipulate(block) : block.renderer.reference(this.node.handler_name.name);
+		const snippet = this.node.expression ? this.node.expression.manipulate(block) : block.renderer.reference(this.node.handler_name);
 
 		if (this.node.reassigned) {
 			block.maintain_context = true;

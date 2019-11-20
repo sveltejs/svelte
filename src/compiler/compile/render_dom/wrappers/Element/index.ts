@@ -488,7 +488,7 @@ export default class ElementWrapper extends Wrapper {
 
 			const has_local_function = contextual_dependencies.size > 0 || needs_lock || animation_frame;
 
-			let callee = renderer.reference(handler.name);
+			let callee = renderer.reference(handler);
 
 			// TODO dry this out — similar code for event handlers and component bindings
 			if (has_local_function) {
