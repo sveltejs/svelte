@@ -2,6 +2,10 @@
 	let yes = false;
 </script>
 
+<style>
+	button[disabled] { color: #aaa }
+</style>
+
 <label>
 	<input type=checkbox checked={yes}>
 	Yes! Send me regular email spam
