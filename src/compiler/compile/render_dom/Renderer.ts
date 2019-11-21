@@ -108,7 +108,7 @@ export default class Renderer {
 			}
 		});
 
-		this.context.sort((a, b) => (b.priority - a.priority) || (a.name < b.name ? -1 : 1));
+		this.context.sort((a, b) => (b.priority - a.priority) || ((a.index.value as number) - (b.index.value as number)));
 		this.context.forEach((member, i) => member.index.value = i);
 	}
 
@@ -116,7 +116,7 @@ export default class Renderer {
 		if (!this.context_lookup.has(name)) {
 			const member: ContextMember = {
 				name,
-				index: { type: 'Literal', value: -1 }, // set later
+				index: { type: 'Literal', value: this.context.length }, // index is updated later, but set here to preserve order within groups
 				is_contextual: false,
 				is_non_contextual: false, // shadowed vars could be contextual and non-contextual
 				variable: null,
