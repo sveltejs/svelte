@@ -205,7 +205,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.chunks.init.push(b`let ${this.vars.each_block_value} = ${snippet};`);
 
-		// TODO which is better — Object.create(array) or array.slice()?
+		// TODO which is better — Object.create(array) or array.slice()?
 		renderer.blocks.push(b`
 			function ${this.vars.get_each_context}(#ctx, list, i) {
 				const child_ctx = #ctx.slice();

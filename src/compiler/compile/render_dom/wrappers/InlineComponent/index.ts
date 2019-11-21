@@ -20,7 +20,7 @@ import { extract_names } from 'periscopic';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
-	slots: Map<string, { block: Block; scope: TemplateScope; get_context?: Node, get_changes?: Node }> = new Map();
+	slots: Map<string, { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node }> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 

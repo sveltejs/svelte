@@ -9,7 +9,7 @@ import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import Block from '../../render_dom/Block';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
-import { x, b } from 'code-red';
+import { b } from 'code-red';
 import { invalidate } from '../../render_dom/invalidate';
 import { Node, FunctionExpression, Identifier } from 'estree';
 import { TemplateNode } from '../../../interfaces';

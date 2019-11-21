@@ -1,6 +1,6 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
-import { blank_object, is_function, run, run_all, noop, has_prop } from './utils';
+import { blank_object, is_function, run, run_all, noop } from './utils';
 import { children } from './dom';
 import { transition_in } from './transitions';
 

@@ -6,14 +6,14 @@ import { x } from 'code-red';
 import { Node, Identifier, MemberExpression, Literal } from 'estree';
 import flatten_reference from '../utils/flatten_reference';
 
-type ContextMember = {
+interface ContextMember {
 	name: string;
 	index: Literal;
 	is_contextual: boolean;
 	is_non_contextual: boolean;
 	variable: Var;
 	priority: number;
-};
+}
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?

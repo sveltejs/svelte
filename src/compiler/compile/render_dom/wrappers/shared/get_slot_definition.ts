@@ -35,7 +35,7 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 			const literal = {
 				type: 'Literal',
 				get value() {
-					const i = context_lookup.get(name).index.value;
+					const i = context_lookup.get(name).index.value as number;
 					return 1 << i;
 				}
 			};
