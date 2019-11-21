@@ -181,7 +181,11 @@ export default class Renderer {
 			});
 		});
 
-		return Array.from(deps)
+		// TODO ideally globals etc wouldn't be here in the first place
+		const filtered = Array.from(deps).filter(n => this.context_lookup.has(n));
+		if (!filtered.length) return null;
+
+		return filtered
 			.map(n => x`$$invalidate(${this.context_lookup.get(n).index}, ${n})`)
 			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
 	}

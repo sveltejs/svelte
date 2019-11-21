@@ -19,6 +19,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 			!variable.module &&
 			(
 				variable.referenced ||
+				variable.subscribable ||
 				variable.is_reactive_dependency ||
 				variable.export_name ||
 				variable.name[0] === '$'
