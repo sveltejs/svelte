@@ -9,6 +9,7 @@ First, you'll need to integrate Svelte with a build tool. Popular choices are:
 * [Rollup](https://rollupjs.org) / [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte)
 * [webpack](https://webpack.js.org/) / [svelte-loader](https://github.com/sveltejs/svelte-loader)
 * [Parcel](https://parceljs.org/) / [parcel-plugin-svelte](https://github.com/DeMoorJasper/parcel-plugin-svelte)
+* [Meteor](https://www.meteor.com/) / [meteor-svelte](https://github.com/meteor-svelte/meteor-svelte)
 
 Don't worry if you're relatively new to web development and haven't used these tools before. We've prepared a simple step-by-step guide, [Svelte for new developers](blog/svelte-for-new-developers), which walks you through the process.
 
