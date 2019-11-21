@@ -44,6 +44,8 @@ export default {
 	`,
 
 	test({ assert, component, target }) {
+		component.reads = {};
+
 		component._0 = 'a';
 		component._30 = 'b';
 		component._31 = 'c';
@@ -93,5 +95,13 @@ export default {
 			<p>39</p>
 			<p>e</p>
 		`);
+
+		assert.deepEqual(component.reads, {
+			_0: 1,
+			_30: 1,
+			_31: 1,
+			_32: 1,
+			_40: 1
+		});
 	}
 };
