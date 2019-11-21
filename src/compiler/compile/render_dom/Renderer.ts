@@ -39,7 +39,6 @@ export default class Renderer {
 
 		this.file_var = options.dev && this.component.get_unique_name('file');
 
-		// TODO sort vars, most frequently referenced first?
 		component.vars.filter(v => !v.hoistable || (v.export_name && !v.module)).forEach(v => this.add_to_context(v.name));
 
 		// ensure store values are included in context
@@ -109,7 +108,7 @@ export default class Renderer {
 			}
 		});
 
-		this.context.sort((a, b) => b.priority - a.priority);
+		this.context.sort((a, b) => (b.priority - a.priority) || (a.name < b.name ? -1 : 1));
 		this.context.forEach((member, i) => member.index.value = i);
 	}
 
