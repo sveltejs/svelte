@@ -236,7 +236,7 @@ export default class Renderer {
 						.map((bits, i) => ({ bits, i }))
 						.filter(({ bits }) => bits)
 						.map(({ bits, i }) => x`${dirty}[${i}] & ${bits}`)
-						.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
+						.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
 
 					({ operator, left, right } = expression);
 				} else {

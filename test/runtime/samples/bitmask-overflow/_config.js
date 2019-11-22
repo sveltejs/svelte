@@ -109,12 +109,12 @@ export default {
 
 		assert.deepEqual(component.reads, {
 			_0: 1,
-			_5: 2,
+			_5: 3,
 			_6: 3,
 			_30: 1,
 			_31: 1,
 			_32: 1,
-			_36: 2,
+			_36: 3,
 			_37: 3,
 			_40: 1
 		});
