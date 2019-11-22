@@ -303,7 +303,7 @@ export default class Block {
 
 				let changed: Identifier | ArrayPattern = { type: 'Identifier', name: '#changed' };
 				if (!this.renderer.context_overflow && !this.parent) {
-					changed = { type: 'ArrayPattern', elements: [changed] }
+					changed = { type: 'ArrayPattern', elements: [changed] };
 				}
 
 				properties.update = x`function #update(${ctx}, ${changed}) {

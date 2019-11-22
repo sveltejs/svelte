@@ -195,7 +195,7 @@ export default class Renderer {
 	changed(names, is_reactive_declaration = false): Expression {
 		const renderer = this;
 
-		let changed = (is_reactive_declaration
+		const changed = (is_reactive_declaration
 			? x`$$self.$$.dirty`
 			: x`#changed`) as Identifier | MemberExpression;
 
