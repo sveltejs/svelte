@@ -11,11 +11,11 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & 1) {
+		if ($$self.$$.dirty & /* _id9uocqrtmw00_1_ */ 1) {
 			$: $$invalidate(2, b = x);
 		}
 
-		if ($$self.$$.dirty & 4) {
+		if ($$self.$$.dirty & /* _id9uocqrtmw00_1_ */ 4) {
 			$: a = b;
 		}
 	};

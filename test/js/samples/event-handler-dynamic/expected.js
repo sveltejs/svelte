@@ -63,7 +63,7 @@ function create_fragment(ctx) {
 		},
 		p(new_ctx, [dirty]) {
 			ctx = new_ctx;
-			if (dirty & 2) set_data(t4, ctx[1]);
+			if (dirty & /* _id9uocqrtmw00_1_ */ 2) set_data(t4, ctx[1]);
 		},
 		i: noop,
 		o: noop,

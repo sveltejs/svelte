@@ -47,14 +47,14 @@ function create_fragment(ctx) {
 			append(p, t1);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & 1 && !scrolling) {
+			if (dirty & /* _id9uocqrtmw00_1_ */ 1 && !scrolling) {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);
 				scrollTo(window.pageXOffset, ctx[0]);
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
 			}
 
-			if (dirty & 1) set_data(t1, ctx[0]);
+			if (dirty & /* _id9uocqrtmw00_1_ */ 1) set_data(t1, ctx[0]);
 		},
 		i: noop,
 		o: noop,

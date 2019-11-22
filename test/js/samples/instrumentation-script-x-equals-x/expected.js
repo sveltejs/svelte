@@ -41,7 +41,7 @@ function create_fragment(ctx) {
 			append(p, t3);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & 1 && t3_value !== (t3_value = ctx[0].length + "")) set_data(t3, t3_value);
+			if (dirty & /* _id9uocqrtmw00_1_ */ 1 && t3_value !== (t3_value = ctx[0].length + "")) set_data(t3, t3_value);
 		},
 		i: noop,
 		o: noop,

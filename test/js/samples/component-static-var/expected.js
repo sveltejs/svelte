@@ -48,10 +48,10 @@ function create_fragment(ctx) {
 		},
 		p(ctx, [dirty]) {
 			const bar_changes = {};
-			if (dirty & 1) bar_changes.x = ctx[0];
+			if (dirty & /* _id9uocqrtmw00_1_ */ 1) bar_changes.x = ctx[0];
 			bar.$set(bar_changes);
 
-			if (dirty & 1 && input.value !== ctx[0]) {
+			if (dirty & /* _id9uocqrtmw00_1_ */ 1 && input.value !== ctx[0]) {
 				set_input_value(input, ctx[0]);
 			}
 		},

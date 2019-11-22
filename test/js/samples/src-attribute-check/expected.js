@@ -45,11 +45,11 @@ function create_fragment(ctx) {
 			insert(target, img1, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & 1 && img0.src !== (img0_src_value = ctx[0])) {
+			if (dirty & /* _id9uocqrtmw00_1_ */ 1 && img0.src !== (img0_src_value = ctx[0])) {
 				attr(img0, "src", img0_src_value);
 			}
 
-			if (dirty & 2 && img1.src !== (img1_src_value = "" + (ctx[1] + ".jpg"))) {
+			if (dirty & /* _id9uocqrtmw00_1_ */ 2 && img1.src !== (img1_src_value = "" + (ctx[1] + ".jpg"))) {
 				attr(img1, "src", img1_src_value);
 			}
 		},

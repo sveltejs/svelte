@@ -44,7 +44,7 @@ function create_each_block(key_1, ctx) {
 			append(div, t);
 		},
 		p(ctx, dirty) {
-			if (dirty & 1 && t_value !== (t_value = ctx[1].name + "")) set_data(t, t_value);
+			if (dirty & /* _id9uocqrtmw00_1_ */ 1 && t_value !== (t_value = ctx[1].name + "")) set_data(t, t_value);
 		},
 		r() {
 			rect = div.getBoundingClientRect();

@@ -40,7 +40,7 @@ function create_fragment(ctx) {
 			insert(target, button, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & 2) set_data(t0, ctx[1]);
+			if (dirty & /* _id9uocqrtmw00_1_ */ 2) set_data(t0, ctx[1]);
 		},
 		i: noop,
 		o: noop,

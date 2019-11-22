@@ -9,7 +9,7 @@ function create_fragment(ctx) {
 		c: noop,
 		m: noop,
 		p(ctx, [dirty]) {
-			if (dirty & 1 && title_value !== (title_value = "a " + ctx[0] + " title")) {
+			if (dirty & /* _id9uocqrtmw00_1_ */ 1 && title_value !== (title_value = "a " + ctx[0] + " title")) {
 				document.title = title_value;
 			}
 		},

@@ -31,11 +31,11 @@ function create_fragment(ctx) {
 			insert(target, div1, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & 1) {
+			if (dirty & /* _id9uocqrtmw00_1_ */ 1) {
 				attr(div0, "style", ctx[0]);
 			}
 
-			if (dirty & 6 && div1_style_value !== (div1_style_value = "" + (ctx[1] + ": " + ctx[2]))) {
+			if (dirty & /* _id9uocqrtmw00_1_ */ 6 && div1_style_value !== (div1_style_value = "" + (ctx[1] + ": " + ctx[2]))) {
 				attr(div1, "style", div1_style_value);
 			}
 		},
