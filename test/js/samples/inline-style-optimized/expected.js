@@ -16,14 +16,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			div = element("div");
-			set_style(div, "color", ctx[0]);
+			set_style(div, "color", /*color*/ ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* color */ 1) {
-				set_style(div, "color", ctx[0]);
+			if (dirty & /*color*/ 1) {
+				set_style(div, "color", /*color*/ ctx[0]);
 			}
 		},
 		i: noop,

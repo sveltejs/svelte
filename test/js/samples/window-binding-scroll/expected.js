@@ -26,19 +26,19 @@ function create_fragment(ctx) {
 	let t0;
 	let t1;
 	let dispose;
-	add_render_callback(ctx[1]);
+	add_render_callback(/*onwindowscroll*/ ctx[1]);
 
 	return {
 		c() {
 			p = element("p");
 			t0 = text("scrolled to ");
-			t1 = text(ctx[0]);
+			t1 = text(/*y*/ ctx[0]);
 
 			dispose = listen(window, "scroll", () => {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
-				ctx[1]();
+				/*onwindowscroll*/ ctx[1]();
 			});
 		},
 		m(target, anchor) {
@@ -47,14 +47,14 @@ function create_fragment(ctx) {
 			append(p, t1);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* y */ 1 && !scrolling) {
+			if (dirty & /*y*/ 1 && !scrolling) {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);
-				scrollTo(window.pageXOffset, ctx[0]);
+				scrollTo(window.pageXOffset, /*y*/ ctx[0]);
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
 			}
 
-			if (dirty & /* y */ 1) set_data(t1, ctx[0]);
+			if (dirty & /*y*/ 1) set_data(t1, /*y*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,

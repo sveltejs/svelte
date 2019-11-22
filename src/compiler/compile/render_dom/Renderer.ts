@@ -238,12 +238,12 @@ export default class Renderer {
 					const expression = bitmask
 						.map((b, i) => ({ b, i }))
 						.filter(({ b }) => b)
-						.map(({ b, i }) => x`${dirty}[${i}] & /* ${b.names.join(', ')} */ ${b.n}`)
+						.map(({ b, i }) => x`${dirty}[${i}] & /*${b.names.join(', ')}*/ ${b.n}`)
 						.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
 
 					({ operator, left, right } = expression);
 				} else {
-					({ operator, left, right } = x`${dirty} & /* ${names.join(', ')} */ ${bitmask[0] ? bitmask[0].n : 0}` as BinaryExpression); // TODO the `: 0` case should never apply
+					({ operator, left, right } = x`${dirty} & /*${names.join(', ')}*/ ${bitmask[0] ? bitmask[0].n : 0}` as BinaryExpression); // TODO the `: 0` case should never apply
 				}
 
 				return 'BinaryExpression';
@@ -274,7 +274,7 @@ export default class Renderer {
 		}
 
 		if (member !== undefined) {
-			const replacement = x`#ctx[${member.index}]` as MemberExpression;
+			const replacement = x`/*${member.name}*/ #ctx[${member.index}]` as MemberExpression;
 
 			if (nodes[0].loc) replacement.object.loc = nodes[0].loc;
 			nodes[0] = replacement;

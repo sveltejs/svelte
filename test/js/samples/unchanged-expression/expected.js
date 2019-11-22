@@ -41,7 +41,7 @@ function create_fragment(ctx) {
 			div1 = element("div");
 			p3 = element("p");
 			t8 = text("Hello ");
-			t9 = text(ctx[0]);
+			t9 = text(/*world3*/ ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, div0, anchor);
@@ -57,7 +57,7 @@ function create_fragment(ctx) {
 			append(p3, t9);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* world3 */ 1) set_data(t9, ctx[0]);
+			if (dirty & /*world3*/ 1) set_data(t9, /*world3*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,

@@ -27,11 +27,11 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			h1 = element("h1");
-			t0 = text(ctx[1]);
+			t0 = text(/*$foo*/ ctx[1]);
 			t1 = space();
 			button = element("button");
 			button.textContent = "reset";
-			dispose = listen(button, "click", ctx[2]);
+			dispose = listen(button, "click", /*click_handler*/ ctx[2]);
 		},
 		m(target, anchor) {
 			insert(target, h1, anchor);
@@ -40,7 +40,7 @@ function create_fragment(ctx) {
 			insert(target, button, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* $foo */ 2) set_data(t0, ctx[1]);
+			if (dirty & /*$foo*/ 2) set_data(t0, /*$foo*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,

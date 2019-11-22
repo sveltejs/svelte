@@ -31,18 +31,22 @@ function create_fragment(ctx) {
 			button.textContent = "Store";
 			attr(input, "type", "text");
 			input.required = true;
-			dispose = [listen(input, "input", ctx[2]), listen(form, "submit", ctx[1])];
+
+			dispose = [
+				listen(input, "input", /*input_input_handler*/ ctx[2]),
+				listen(form, "submit", /*handleSubmit*/ ctx[1])
+			];
 		},
 		m(target, anchor) {
 			insert(target, form, anchor);
 			append(form, input);
-			set_input_value(input, ctx[0]);
+			set_input_value(input, /*test*/ ctx[0]);
 			append(form, t0);
 			append(form, button);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* test */ 1 && input.value !== ctx[0]) {
-				set_input_value(input, ctx[0]);
+			if (dirty & /*test*/ 1 && input.value !== /*test*/ ctx[0]) {
+				set_input_value(input, /*test*/ ctx[0]);
 			}
 		},
 		i: noop,

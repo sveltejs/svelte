@@ -22,14 +22,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			h1 = element("h1");
-			t = text(ctx[0]);
+			t = text(/*$foo*/ ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, h1, anchor);
 			append(h1, t);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* $foo */ 1) set_data(t, ctx[0]);
+			if (dirty & /*$foo*/ 1) set_data(t, /*$foo*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,

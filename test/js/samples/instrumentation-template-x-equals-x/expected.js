@@ -19,7 +19,7 @@ function create_fragment(ctx) {
 	let t1;
 	let p;
 	let t2;
-	let t3_value = ctx[0].length + "";
+	let t3_value = /*things*/ ctx[0].length + "";
 	let t3;
 	let dispose;
 
@@ -31,7 +31,7 @@ function create_fragment(ctx) {
 			p = element("p");
 			t2 = text("number of things: ");
 			t3 = text(t3_value);
-			dispose = listen(button, "click", ctx[1]);
+			dispose = listen(button, "click", /*click_handler*/ ctx[1]);
 		},
 		m(target, anchor) {
 			insert(target, button, anchor);
@@ -41,7 +41,7 @@ function create_fragment(ctx) {
 			append(p, t3);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* things */ 1 && t3_value !== (t3_value = ctx[0].length + "")) set_data(t3, t3_value);
+			if (dirty & /*things*/ 1 && t3_value !== (t3_value = /*things*/ ctx[0].length + "")) set_data(t3, t3_value);
 		},
 		i: noop,
 		o: noop,

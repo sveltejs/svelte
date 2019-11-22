@@ -13,8 +13,8 @@ function create_fragment(ctx) {
 	const block = {
 		c: function create() {
 			{
-				const obj = ctx[0];
-				const kobzol = ctx[1];
+				const obj = /*obj*/ ctx[0];
+				const kobzol = /*kobzol*/ ctx[1];
 				console.log({ obj, kobzol });
 				debugger;
 			}
@@ -24,9 +24,9 @@ function create_fragment(ctx) {
 		},
 		m: noop,
 		p: function update(ctx, [dirty]) {
-			if (dirty & /* obj, kobzol */ 3) {
-				const obj = ctx[0];
-				const kobzol = ctx[1];
+			if (dirty & /*obj, kobzol*/ 3) {
+				const obj = /*obj*/ ctx[0];
+				const kobzol = /*kobzol*/ ctx[1];
 				console.log({ obj, kobzol });
 				debugger;
 			}

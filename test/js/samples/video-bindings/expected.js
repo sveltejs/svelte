@@ -29,27 +29,27 @@ function create_fragment(ctx) {
 			video_updating = true;
 		}
 
-		ctx[5].call(video);
+		/*video_timeupdate_handler*/ ctx[5].call(video);
 	}
 
 	return {
 		c() {
 			video = element("video");
-			add_render_callback(() => ctx[4].call(video));
-			if (ctx[1] === void 0 || ctx[2] === void 0) add_render_callback(() => ctx[6].call(video));
+			add_render_callback(() => /*video_elementresize_handler*/ ctx[4].call(video));
+			if (/*videoHeight*/ ctx[1] === void 0 || /*videoWidth*/ ctx[2] === void 0) add_render_callback(() => /*video_resize_handler*/ ctx[6].call(video));
 
 			dispose = [
 				listen(video, "timeupdate", video_timeupdate_handler),
-				listen(video, "resize", ctx[6])
+				listen(video, "resize", /*video_resize_handler*/ ctx[6])
 			];
 		},
 		m(target, anchor) {
 			insert(target, video, anchor);
-			video_resize_listener = add_resize_listener(video, ctx[4].bind(video));
+			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[4].bind(video));
 		},
 		p(ctx, [dirty]) {
-			if (!video_updating && dirty & /* currentTime */ 1 && !isNaN(ctx[0])) {
-				video.currentTime = ctx[0];
+			if (!video_updating && dirty & /*currentTime*/ 1 && !isNaN(/*currentTime*/ ctx[0])) {
+				video.currentTime = /*currentTime*/ ctx[0];
 			}
 
 			video_updating = false;

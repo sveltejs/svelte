@@ -29,7 +29,7 @@ function create_if_block(ctx) {
 }
 
 function create_fragment(ctx) {
-	let show_if = ctx[0].divider && ctx[0].divider.includes(1);
+	let show_if = /*item*/ ctx[0].divider && /*item*/ ctx[0].divider.includes(1);
 	let if_block_anchor;
 	let if_block = show_if && create_if_block(ctx);
 

@@ -28,7 +28,7 @@ function create_fragment(ctx) {
 		c: function create() {
 			h1 = element("h1");
 			t0 = text("Hello ");
-			t1 = text(ctx[0]);
+			t1 = text(/*name*/ ctx[0]);
 			t2 = text("!");
 			t3 = space();
 			debugger;
@@ -45,7 +45,7 @@ function create_fragment(ctx) {
 			insert_dev(target, t3, anchor);
 		},
 		p: function update(ctx, [dirty]) {
-			if (dirty & /* name */ 1) set_data_dev(t1, ctx[0]);
+			if (dirty & /*name*/ 1) set_data_dev(t1, /*name*/ ctx[0]);
 			debugger;
 		},
 		i: noop,
@@ -105,7 +105,7 @@ class Component extends SvelteComponentDev {
 		const { ctx } = this.$$;
 		const props = options.props || ({});
 
-		if (ctx[0] === undefined && !("name" in props)) {
+		if (/*name*/ ctx[0] === undefined && !("name" in props)) {
 			console.warn("<Component> was created without expected prop 'name'");
 		}
 	}

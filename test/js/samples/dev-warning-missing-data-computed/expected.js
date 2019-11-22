@@ -19,7 +19,7 @@ const file = undefined;
 
 function create_fragment(ctx) {
 	let p;
-	let t0_value = Math.max(0, ctx[0]) + "";
+	let t0_value = Math.max(0, /*foo*/ ctx[0]) + "";
 	let t0;
 	let t1;
 	let t2;
@@ -29,7 +29,7 @@ function create_fragment(ctx) {
 			p = element("p");
 			t0 = text(t0_value);
 			t1 = space();
-			t2 = text(ctx[1]);
+			t2 = text(/*bar*/ ctx[1]);
 			add_location(p, file, 7, 0, 67);
 		},
 		l: function claim(nodes) {
@@ -42,8 +42,8 @@ function create_fragment(ctx) {
 			append_dev(p, t2);
 		},
 		p: function update(ctx, [dirty]) {
-			if (dirty & /* foo */ 1 && t0_value !== (t0_value = Math.max(0, ctx[0]) + "")) set_data_dev(t0, t0_value);
-			if (dirty & /* bar */ 2) set_data_dev(t2, ctx[1]);
+			if (dirty & /*foo*/ 1 && t0_value !== (t0_value = Math.max(0, /*foo*/ ctx[0]) + "")) set_data_dev(t0, t0_value);
+			if (dirty & /*bar*/ 2) set_data_dev(t2, /*bar*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,
@@ -86,7 +86,7 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /* foo */ 1) {
+		if ($$self.$$.dirty & /*foo*/ 1) {
 			$: $$invalidate(1, bar = foo * 2);
 		}
 	};
@@ -109,7 +109,7 @@ class Component extends SvelteComponentDev {
 		const { ctx } = this.$$;
 		const props = options.props || ({});
 
-		if (ctx[0] === undefined && !("foo" in props)) {
+		if (/*foo*/ ctx[0] === undefined && !("foo" in props)) {
 			console.warn("<Component> was created without expected prop 'foo'");
 		}
 	}

@@ -21,14 +21,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t = text(ctx[0]);
+			t = text(/*y*/ ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, p, anchor);
 			append(p, t);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* y */ 1) set_data(t, ctx[0]);
+			if (dirty & /*y*/ 1) set_data(t, /*y*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,
@@ -58,7 +58,7 @@ function instance($$self, $$props, $$invalidate) {
 	let y;
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /* b */ 2) {
+		if ($$self.$$.dirty & /*b*/ 2) {
 			$: $$invalidate(0, y = b * 2);
 		}
 	};

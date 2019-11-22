@@ -15,7 +15,7 @@ import {
 
 function create_if_block(ctx) {
 	let if_block_anchor;
-	let if_block = ctx[1] && create_if_block_1(ctx);
+	let if_block = /*y*/ ctx[1] && create_if_block_1(ctx);
 
 	return {
 		c() {
@@ -27,7 +27,7 @@ function create_if_block(ctx) {
 			insert(target, if_block_anchor, anchor);
 		},
 		p(ctx, dirty) {
-			if (ctx[1]) {
+			if (/*y*/ ctx[1]) {
 				if (!if_block) {
 					if_block = create_if_block_1(ctx);
 					if_block.c();
@@ -80,7 +80,7 @@ function create_if_block_1(ctx) {
 
 function create_fragment(ctx) {
 	let if_block_anchor;
-	let if_block = ctx[0] && create_if_block(ctx);
+	let if_block = /*x*/ ctx[0] && create_if_block(ctx);
 
 	return {
 		c() {
@@ -92,7 +92,7 @@ function create_fragment(ctx) {
 			insert(target, if_block_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (ctx[0]) {
+			if (/*x*/ ctx[0]) {
 				if (if_block) {
 					if_block.p(ctx, dirty);
 				} else {

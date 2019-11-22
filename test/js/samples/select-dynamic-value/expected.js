@@ -32,7 +32,7 @@ function create_fragment(ctx) {
 			insert(target, select, anchor);
 			append(select, option0);
 			append(select, option1);
-			select_value_value = ctx[0];
+			select_value_value = /*current*/ ctx[0];
 
 			for (var i = 0; i < select.options.length; i += 1) {
 				var option = select.options[i];
@@ -44,7 +44,7 @@ function create_fragment(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* current */ 1 && select_value_value !== (select_value_value = ctx[0])) {
+			if (dirty & /*current*/ 1 && select_value_value !== (select_value_value = /*current*/ ctx[0])) {
 				for (var i = 0; i < select.options.length; i += 1) {
 					var option = select.options[i];
 

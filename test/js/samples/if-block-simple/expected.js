@@ -29,7 +29,7 @@ function create_if_block(ctx) {
 
 function create_fragment(ctx) {
 	let if_block_anchor;
-	let if_block = ctx[0] && create_if_block(ctx);
+	let if_block = /*foo*/ ctx[0] && create_if_block(ctx);
 
 	return {
 		c() {
@@ -41,7 +41,7 @@ function create_fragment(ctx) {
 			insert(target, if_block_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (ctx[0]) {
+			if (/*foo*/ ctx[0]) {
 				if (!if_block) {
 					if_block = create_if_block(ctx);
 					if_block.c();

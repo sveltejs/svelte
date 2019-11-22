@@ -26,7 +26,11 @@ function create_fragment(ctx) {
 			input1 = element("input");
 			attr(input0, "type", "file");
 			attr(input1, "type", "file");
-			dispose = [listen(input0, "change", ctx[1]), listen(input1, "change", ctx[2])];
+
+			dispose = [
+				listen(input0, "change", /*input0_change_handler*/ ctx[1]),
+				listen(input1, "change", /*input1_change_handler*/ ctx[2])
+			];
 		},
 		m(target, anchor) {
 			insert(target, input0, anchor);

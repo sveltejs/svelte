@@ -3,13 +3,13 @@ import { SvelteComponent, init, noop, safe_not_equal } from "svelte/internal";
 
 function create_fragment(ctx) {
 	let title_value;
-	document.title = title_value = "a " + ctx[0] + " title";
+	document.title = title_value = "a " + /*custom*/ ctx[0] + " title";
 
 	return {
 		c: noop,
 		m: noop,
 		p(ctx, [dirty]) {
-			if (dirty & /* custom */ 1 && title_value !== (title_value = "a " + ctx[0] + " title")) {
+			if (dirty & /*custom*/ 1 && title_value !== (title_value = "a " + /*custom*/ ctx[0] + " title")) {
 				document.title = title_value;
 			}
 		},

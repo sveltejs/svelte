@@ -25,13 +25,13 @@ function get_each_context(ctx, list, i) {
 // (4:0) {#each things as thing, index}
 function create_each_block(ctx) {
 	let t0;
-	let t1_value = ctx[0] + "";
+	let t1_value = /*thing*/ ctx[0] + "";
 	let t1;
 
 	const block = {
 		c: function create() {
 			{
-				const index = ctx[2];
+				const index = /*index*/ ctx[2];
 				console.log({ index });
 				debugger;
 			}
@@ -89,7 +89,7 @@ function create_fragment(ctx) {
 			insert_dev(target, each_1_anchor, anchor);
 		},
 		p: function update(ctx, [dirty]) {
-			if (dirty & /* things */ 0) {
+			if (dirty & /*things*/ 0) {
 				each_value = things;
 				let i;
 

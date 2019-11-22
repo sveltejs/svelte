@@ -22,7 +22,7 @@ function create_fragment(ctx) {
 			t = space();
 			div1 = element("div");
 			attr(div0, "data-foo", "bar");
-			attr(div1, "data-foo", ctx[0]);
+			attr(div1, "data-foo", /*bar*/ ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, div0, anchor);
@@ -30,8 +30,8 @@ function create_fragment(ctx) {
 			insert(target, div1, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* bar */ 1) {
-				attr(div1, "data-foo", ctx[0]);
+			if (dirty & /*bar*/ 1) {
+				attr(div1, "data-foo", /*bar*/ ctx[0]);
 			}
 		},
 		i: noop,

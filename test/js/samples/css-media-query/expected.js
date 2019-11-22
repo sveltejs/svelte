@@ -2,7 +2,6 @@
 import {
 	SvelteComponent,
 	append,
-	attr,
 	detach,
 	element,
 	init,
@@ -14,7 +13,7 @@ import {
 function add_css() {
 	var style = element("style");
 	style.id = "svelte-1slhpfn-style";
-	style.textContent = "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}";
+	style.textContent = "@media(min-width: 1px){}";
 	append(document.head, style);
 }
 
@@ -24,7 +23,6 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			div = element("div");
-			attr(div, "class", "svelte-1slhpfn");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);

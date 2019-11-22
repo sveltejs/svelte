@@ -29,59 +29,59 @@ function create_fragment(ctx) {
 			audio_updating = true;
 		}
 
-		ctx[10].call(audio);
+		/*audio_timeupdate_handler*/ ctx[10].call(audio);
 	}
 
 	return {
 		c() {
 			audio = element("audio");
-			if (ctx[2] === void 0 || ctx[3] === void 0 || ctx[9] === void 0) add_render_callback(audio_timeupdate_handler);
-			if (ctx[4] === void 0) add_render_callback(() => ctx[11].call(audio));
-			if (ctx[0] === void 0) add_render_callback(() => ctx[13].call(audio));
-			if (ctx[0] === void 0 || ctx[1] === void 0) add_render_callback(() => ctx[14].call(audio));
-			if (ctx[8] === void 0) add_render_callback(() => ctx[17].call(audio));
-			if (ctx[9] === void 0) add_render_callback(() => ctx[18].call(audio));
+			if (/*played*/ ctx[2] === void 0 || /*currentTime*/ ctx[3] === void 0 || /*ended*/ ctx[9] === void 0) add_render_callback(audio_timeupdate_handler);
+			if (/*duration*/ ctx[4] === void 0) add_render_callback(() => /*audio_durationchange_handler*/ ctx[11].call(audio));
+			if (/*buffered*/ ctx[0] === void 0) add_render_callback(() => /*audio_progress_handler*/ ctx[13].call(audio));
+			if (/*buffered*/ ctx[0] === void 0 || /*seekable*/ ctx[1] === void 0) add_render_callback(() => /*audio_loadedmetadata_handler*/ ctx[14].call(audio));
+			if (/*seeking*/ ctx[8] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[17].call(audio));
+			if (/*ended*/ ctx[9] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[18].call(audio));
 
 			dispose = [
 				listen(audio, "timeupdate", audio_timeupdate_handler),
-				listen(audio, "durationchange", ctx[11]),
-				listen(audio, "play", ctx[12]),
-				listen(audio, "pause", ctx[12]),
-				listen(audio, "progress", ctx[13]),
-				listen(audio, "loadedmetadata", ctx[14]),
-				listen(audio, "volumechange", ctx[15]),
-				listen(audio, "ratechange", ctx[16]),
-				listen(audio, "seeking", ctx[17]),
-				listen(audio, "seeked", ctx[17]),
-				listen(audio, "ended", ctx[18])
+				listen(audio, "durationchange", /*audio_durationchange_handler*/ ctx[11]),
+				listen(audio, "play", /*audio_play_pause_handler*/ ctx[12]),
+				listen(audio, "pause", /*audio_play_pause_handler*/ ctx[12]),
+				listen(audio, "progress", /*audio_progress_handler*/ ctx[13]),
+				listen(audio, "loadedmetadata", /*audio_loadedmetadata_handler*/ ctx[14]),
+				listen(audio, "volumechange", /*audio_volumechange_handler*/ ctx[15]),
+				listen(audio, "ratechange", /*audio_ratechange_handler*/ ctx[16]),
+				listen(audio, "seeking", /*audio_seeking_seeked_handler*/ ctx[17]),
+				listen(audio, "seeked", /*audio_seeking_seeked_handler*/ ctx[17]),
+				listen(audio, "ended", /*audio_ended_handler*/ ctx[18])
 			];
 		},
 		m(target, anchor) {
 			insert(target, audio, anchor);
 
-			if (!isNaN(ctx[6])) {
-				audio.volume = ctx[6];
+			if (!isNaN(/*volume*/ ctx[6])) {
+				audio.volume = /*volume*/ ctx[6];
 			}
 
-			if (!isNaN(ctx[7])) {
-				audio.playbackRate = ctx[7];
+			if (!isNaN(/*playbackRate*/ ctx[7])) {
+				audio.playbackRate = /*playbackRate*/ ctx[7];
 			}
 		},
 		p(ctx, [dirty]) {
-			if (!audio_updating && dirty & /* currentTime */ 8 && !isNaN(ctx[3])) {
-				audio.currentTime = ctx[3];
+			if (!audio_updating && dirty & /*currentTime*/ 8 && !isNaN(/*currentTime*/ ctx[3])) {
+				audio.currentTime = /*currentTime*/ ctx[3];
 			}
 
-			if (dirty & /* paused */ 32 && audio_is_paused !== (audio_is_paused = ctx[5])) {
+			if (dirty & /*paused*/ 32 && audio_is_paused !== (audio_is_paused = /*paused*/ ctx[5])) {
 				audio[audio_is_paused ? "pause" : "play"]();
 			}
 
-			if (dirty & /* volume */ 64 && !isNaN(ctx[6])) {
-				audio.volume = ctx[6];
+			if (dirty & /*volume*/ 64 && !isNaN(/*volume*/ ctx[6])) {
+				audio.volume = /*volume*/ ctx[6];
 			}
 
-			if (dirty & /* playbackRate */ 128 && !isNaN(ctx[7])) {
-				audio.playbackRate = ctx[7];
+			if (dirty & /*playbackRate*/ 128 && !isNaN(/*playbackRate*/ ctx[7])) {
+				audio.playbackRate = /*playbackRate*/ ctx[7];
 			}
 
 			audio_updating = false;

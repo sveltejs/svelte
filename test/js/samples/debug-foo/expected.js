@@ -27,7 +27,7 @@ function get_each_context(ctx, list, i) {
 // (6:0) {#each things as thing}
 function create_each_block(ctx) {
 	let span;
-	let t0_value = ctx[2].name + "";
+	let t0_value = /*thing*/ ctx[2].name + "";
 	let t0;
 	let t1;
 
@@ -38,7 +38,7 @@ function create_each_block(ctx) {
 			t1 = space();
 
 			{
-				const foo = ctx[1];
+				const foo = /*foo*/ ctx[1];
 				console.log({ foo });
 				debugger;
 			}
@@ -51,10 +51,10 @@ function create_each_block(ctx) {
 			insert_dev(target, t1, anchor);
 		},
 		p: function update(ctx, dirty) {
-			if (dirty & /* things */ 1 && t0_value !== (t0_value = ctx[2].name + "")) set_data_dev(t0, t0_value);
+			if (dirty & /*things*/ 1 && t0_value !== (t0_value = /*thing*/ ctx[2].name + "")) set_data_dev(t0, t0_value);
 
-			if (dirty & /* foo */ 2) {
-				const foo = ctx[1];
+			if (dirty & /*foo*/ 2) {
+				const foo = /*foo*/ ctx[1];
 				console.log({ foo });
 				debugger;
 			}
@@ -81,7 +81,7 @@ function create_fragment(ctx) {
 	let p;
 	let t1;
 	let t2;
-	let each_value = ctx[0];
+	let each_value = /*things*/ ctx[0];
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -97,7 +97,7 @@ function create_fragment(ctx) {
 			t0 = space();
 			p = element("p");
 			t1 = text("foo: ");
-			t2 = text(ctx[1]);
+			t2 = text(/*foo*/ ctx[1]);
 			add_location(p, file, 10, 0, 131);
 		},
 		l: function claim(nodes) {
@@ -114,8 +114,8 @@ function create_fragment(ctx) {
 			append_dev(p, t2);
 		},
 		p: function update(ctx, [dirty]) {
-			if (dirty & /* things */ 1) {
-				each_value = ctx[0];
+			if (dirty & /*things*/ 1) {
+				each_value = /*things*/ ctx[0];
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -137,7 +137,7 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (dirty & /* foo */ 2) set_data_dev(t2, ctx[1]);
+			if (dirty & /*foo*/ 2) set_data_dev(t2, /*foo*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,
@@ -200,11 +200,11 @@ class Component extends SvelteComponentDev {
 		const { ctx } = this.$$;
 		const props = options.props || ({});
 
-		if (ctx[0] === undefined && !("things" in props)) {
+		if (/*things*/ ctx[0] === undefined && !("things" in props)) {
 			console.warn("<Component> was created without expected prop 'things'");
 		}
 
-		if (ctx[1] === undefined && !("foo" in props)) {
+		if (/*foo*/ ctx[1] === undefined && !("foo" in props)) {
 			console.warn("<Component> was created without expected prop 'foo'");
 		}
 	}

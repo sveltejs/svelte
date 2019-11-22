@@ -23,7 +23,7 @@ function get_each_context(ctx, list, i) {
 // (9:0) {#each [a, b, c, d, e] as num}
 function create_each_block(ctx) {
 	let span;
-	let t_value = ctx[5] + "";
+	let t_value = /*num*/ ctx[5] + "";
 	let t;
 
 	return {
@@ -36,7 +36,7 @@ function create_each_block(ctx) {
 			append(span, t);
 		},
 		p(ctx, dirty) {
-			if (dirty & /* a, b, c, d, e */ 31 && t_value !== (t_value = ctx[5] + "")) set_data(t, t_value);
+			if (dirty & /*a, b, c, d, e*/ 31 && t_value !== (t_value = /*num*/ ctx[5] + "")) set_data(t, t_value);
 		},
 		d(detaching) {
 			if (detaching) detach(span);
@@ -46,7 +46,7 @@ function create_each_block(ctx) {
 
 function create_fragment(ctx) {
 	let each_1_anchor;
-	let each_value = [ctx[0], ctx[1], ctx[2], ctx[3], ctx[4]];
+	let each_value = [/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]];
 	let each_blocks = [];
 
 	for (let i = 0; i < 5; i += 1) {
@@ -69,8 +69,8 @@ function create_fragment(ctx) {
 			insert(target, each_1_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* a, b, c, d, e */ 31) {
-				each_value = [ctx[0], ctx[1], ctx[2], ctx[3], ctx[4]];
+			if (dirty & /*a, b, c, d, e*/ 31) {
+				each_value = [/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]];
 				let i;
 
 				for (i = 0; i < 5; i += 1) {

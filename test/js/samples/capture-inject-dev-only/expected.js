@@ -25,23 +25,23 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t0 = text(ctx[0]);
+			t0 = text(/*foo*/ ctx[0]);
 			t1 = space();
 			input = element("input");
-			dispose = listen(input, "input", ctx[1]);
+			dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
 		},
 		m(target, anchor) {
 			insert(target, p, anchor);
 			append(p, t0);
 			insert(target, t1, anchor);
 			insert(target, input, anchor);
-			set_input_value(input, ctx[0]);
+			set_input_value(input, /*foo*/ ctx[0]);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* foo */ 1) set_data(t0, ctx[0]);
+			if (dirty & /*foo*/ 1) set_data(t0, /*foo*/ ctx[0]);
 
-			if (dirty & /* foo */ 1 && input.value !== ctx[0]) {
-				set_input_value(input, ctx[0]);
+			if (dirty & /*foo*/ 1 && input.value !== /*foo*/ ctx[0]) {
+				set_input_value(input, /*foo*/ ctx[0]);
 			}
 		},
 		i: noop,

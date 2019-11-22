@@ -49,7 +49,7 @@ function create_fragment(ctx) {
 	let if_block_anchor;
 
 	function select_block_type(ctx, dirty) {
-		if (ctx[0]) return create_if_block;
+		if (/*foo*/ ctx[0]) return create_if_block;
 		return create_else_block;
 	}
 

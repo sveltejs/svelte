@@ -21,10 +21,10 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, button, anchor);
-			foo_action = foo.call(null, button, ctx[1]) || ({});
+			foo_action = foo.call(null, button, /*foo_function*/ ctx[1]) || ({});
 		},
 		p(ctx, [dirty]) {
-			if (is_function(foo_action.update) && dirty & /* bar */ 1) foo_action.update.call(null, ctx[1]);
+			if (is_function(foo_action.update) && dirty & /*bar*/ 1) foo_action.update.call(null, /*foo_function*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,

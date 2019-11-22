@@ -33,7 +33,11 @@ function create_fragment(ctx) {
 class Component extends SvelteElement {
 	constructor(options) {
 		super();
-		this.shadowRoot.innerHTML = `<style>div{animation:foo 1s}@keyframes foo{0%{opacity:0}100%{opacity:1}}</style>`;
+
+		this.shadowRoot.innerHTML = `<style>div{
+		animation: foo 1s;
+	}@keyframes foo{}</style>`;
+
 		init(this, { target: this.shadowRoot }, null, create_fragment, safe_not_equal, {});
 
 		if (options) {

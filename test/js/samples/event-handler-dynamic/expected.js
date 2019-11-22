@@ -37,16 +37,16 @@ function create_fragment(ctx) {
 			button1.textContent = "set handler 2";
 			t3 = space();
 			p1 = element("p");
-			t4 = text(ctx[1]);
+			t4 = text(/*number*/ ctx[1]);
 			t5 = space();
 			button2 = element("button");
 			button2.textContent = "click";
 
 			dispose = [
-				listen(button0, "click", ctx[2]),
-				listen(button1, "click", ctx[3]),
+				listen(button0, "click", /*updateHandler1*/ ctx[2]),
+				listen(button1, "click", /*updateHandler2*/ ctx[3]),
 				listen(button2, "click", function () {
-					ctx[0].apply(this, arguments);
+					/*clickHandler*/ ctx[0].apply(this, arguments);
 				})
 			];
 		},
@@ -63,7 +63,7 @@ function create_fragment(ctx) {
 		},
 		p(new_ctx, [dirty]) {
 			ctx = new_ctx;
-			if (dirty & /* number */ 2) set_data(t4, ctx[1]);
+			if (dirty & /*number*/ 2) set_data(t4, /*number*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,

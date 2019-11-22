@@ -11,11 +11,14 @@ import {
 
 function create_fragment(ctx) {
 	let dispose;
-	add_render_callback(ctx[1]);
+	add_render_callback(/*onlinestatuschanged*/ ctx[1]);
 
 	return {
 		c() {
-			dispose = [listen(window, "online", ctx[1]), listen(window, "offline", ctx[1])];
+			dispose = [
+				listen(window, "online", /*onlinestatuschanged*/ ctx[1]),
+				listen(window, "offline", /*onlinestatuschanged*/ ctx[1])
+			];
 		},
 		m: noop,
 		p: noop,

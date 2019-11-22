@@ -16,7 +16,7 @@ import {
 function add_css() {
 	var style = element("style");
 	style.id = "svelte-1a7i8ec-style";
-	style.textContent = "p.svelte-1a7i8ec{color:red}";
+	style.textContent = "p.svelte-1a7i8ec{\n\t\tcolor: red;\n\t}";
 	append(document.head, style);
 }
 
@@ -27,7 +27,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t = text(ctx[0]);
+			t = text(/*foo*/ ctx[0]);
 			attr(p, "class", "svelte-1a7i8ec");
 		},
 		m(target, anchor) {
@@ -35,7 +35,7 @@ function create_fragment(ctx) {
 			append(p, t);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* foo */ 1) set_data(t, ctx[0]);
+			if (dirty & /*foo*/ 1) set_data(t, /*foo*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,

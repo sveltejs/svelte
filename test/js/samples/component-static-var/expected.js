@@ -26,7 +26,7 @@ function create_fragment(ctx) {
 	let current;
 	let dispose;
 	const foo = new Foo({ props: { x: y } });
-	const bar = new Bar({ props: { x: ctx[0] } });
+	const bar = new Bar({ props: { x: /*z*/ ctx[0] } });
 
 	return {
 		c() {
@@ -35,7 +35,7 @@ function create_fragment(ctx) {
 			create_component(bar.$$.fragment);
 			t1 = space();
 			input = element("input");
-			dispose = listen(input, "input", ctx[1]);
+			dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
 		},
 		m(target, anchor) {
 			mount_component(foo, target, anchor);
@@ -43,16 +43,16 @@ function create_fragment(ctx) {
 			mount_component(bar, target, anchor);
 			insert(target, t1, anchor);
 			insert(target, input, anchor);
-			set_input_value(input, ctx[0]);
+			set_input_value(input, /*z*/ ctx[0]);
 			current = true;
 		},
 		p(ctx, [dirty]) {
 			const bar_changes = {};
-			if (dirty & /* z */ 1) bar_changes.x = ctx[0];
+			if (dirty & /*z*/ 1) bar_changes.x = /*z*/ ctx[0];
 			bar.$set(bar_changes);
 
-			if (dirty & /* z */ 1 && input.value !== ctx[0]) {
-				set_input_value(input, ctx[0]);
+			if (dirty & /*z*/ 1 && input.value !== /*z*/ ctx[0]) {
+				set_input_value(input, /*z*/ ctx[0]);
 			}
 		},
 		i(local) {

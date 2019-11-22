@@ -19,11 +19,11 @@ function create_fragment(ctx) {
 		c() {
 			div = element("div");
 			div.textContent = "some content";
-			add_render_callback(() => ctx[2].call(div));
+			add_render_callback(() => /*div_elementresize_handler*/ ctx[2].call(div));
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
-			div_resize_listener = add_resize_listener(div, ctx[2].bind(div));
+			div_resize_listener = add_resize_listener(div, /*div_elementresize_handler*/ ctx[2].bind(div));
 		},
 		p: noop,
 		i: noop,

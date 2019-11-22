@@ -13,7 +13,7 @@ import {
 
 function create_fragment(ctx) {
 	let current;
-	const nested = new ctx[0]({ props: { foo: [1, 2, 3] } });
+	const nested = new /*Nested*/ ctx[0]({ props: { foo: [1, 2, 3] } });
 
 	return {
 		c() {
