@@ -35,8 +35,8 @@ function create_each_block(ctx) {
 			insert(target, span, anchor);
 			append(span, t);
 		},
-		p(ctx, changed) {
-			if (changed & 31 && t_value !== (t_value = ctx[5] + "")) set_data(t, t_value);
+		p(ctx, dirty) {
+			if (dirty & 31 && t_value !== (t_value = ctx[5] + "")) set_data(t, t_value);
 		},
 		d(detaching) {
 			if (detaching) detach(span);
@@ -68,8 +68,8 @@ function create_fragment(ctx) {
 
 			insert(target, each_1_anchor, anchor);
 		},
-		p(ctx, [changed]) {
-			if (changed & 31) {
+		p(ctx, [dirty]) {
+			if (dirty & 31) {
 				each_value = [ctx[0], ctx[1], ctx[2], ctx[3], ctx[4]];
 				let i;
 
@@ -77,7 +77,7 @@ function create_fragment(ctx) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(child_ctx, changed);
+						each_blocks[i].p(child_ctx, dirty);
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();

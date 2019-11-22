@@ -30,12 +30,12 @@ function create_fragment(ctx) {
 			insert(target, t, anchor);
 			insert(target, div1, anchor);
 		},
-		p(ctx, [changed]) {
-			if (changed & 1) {
+		p(ctx, [dirty]) {
+			if (dirty & 1) {
 				attr(div0, "style", ctx[0]);
 			}
 
-			if (changed & 6 && div1_style_value !== (div1_style_value = "" + (ctx[1] + ": " + ctx[2]))) {
+			if (dirty & 6 && div1_style_value !== (div1_style_value = "" + (ctx[1] + ": " + ctx[2]))) {
 				attr(div1, "style", div1_style_value);
 			}
 		},

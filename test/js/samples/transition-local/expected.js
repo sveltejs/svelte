@@ -26,7 +26,7 @@ function create_if_block(ctx) {
 			if (if_block) if_block.m(target, anchor);
 			insert(target, if_block_anchor, anchor);
 		},
-		p(ctx, changed) {
+		p(ctx, dirty) {
 			if (ctx[1]) {
 				if (!if_block) {
 					if_block = create_if_block_1(ctx);
@@ -91,10 +91,10 @@ function create_fragment(ctx) {
 			if (if_block) if_block.m(target, anchor);
 			insert(target, if_block_anchor, anchor);
 		},
-		p(ctx, [changed]) {
+		p(ctx, [dirty]) {
 			if (ctx[0]) {
 				if (if_block) {
-					if_block.p(ctx, changed);
+					if_block.p(ctx, dirty);
 				} else {
 					if_block = create_if_block(ctx);
 					if_block.c();

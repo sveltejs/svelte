@@ -21,8 +21,8 @@ function create_fragment(ctx) {
 		m(target, anchor) {
 			insert(target, div, anchor);
 		},
-		p(ctx, [changed]) {
-			if (changed & 1) {
+		p(ctx, [dirty]) {
+			if (dirty & 1) {
 				set_style(div, "background", "url(data:image/png;base64," + ctx[0] + ")");
 			}
 		},

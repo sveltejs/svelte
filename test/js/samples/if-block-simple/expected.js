@@ -40,7 +40,7 @@ function create_fragment(ctx) {
 			if (if_block) if_block.m(target, anchor);
 			insert(target, if_block_anchor, anchor);
 		},
-		p(ctx, [changed]) {
+		p(ctx, [dirty]) {
 			if (ctx[0]) {
 				if (!if_block) {
 					if_block = create_if_block(ctx);

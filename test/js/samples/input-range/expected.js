@@ -28,8 +28,8 @@ function create_fragment(ctx) {
 			insert(target, input, anchor);
 			set_input_value(input, ctx[0]);
 		},
-		p(ctx, [changed]) {
-			if (changed & 1) {
+		p(ctx, [dirty]) {
+			if (dirty & 1) {
 				set_input_value(input, ctx[0]);
 			}
 		},

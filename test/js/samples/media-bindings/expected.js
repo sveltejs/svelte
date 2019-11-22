@@ -67,20 +67,20 @@ function create_fragment(ctx) {
 				audio.playbackRate = ctx[7];
 			}
 		},
-		p(ctx, [changed]) {
-			if (!audio_updating && changed & 8 && !isNaN(ctx[3])) {
+		p(ctx, [dirty]) {
+			if (!audio_updating && dirty & 8 && !isNaN(ctx[3])) {
 				audio.currentTime = ctx[3];
 			}
 
-			if (changed & 32 && audio_is_paused !== (audio_is_paused = ctx[5])) {
+			if (dirty & 32 && audio_is_paused !== (audio_is_paused = ctx[5])) {
 				audio[audio_is_paused ? "pause" : "play"]();
 			}
 
-			if (changed & 64 && !isNaN(ctx[6])) {
+			if (dirty & 64 && !isNaN(ctx[6])) {
 				audio.volume = ctx[6];
 			}
 
-			if (changed & 128 && !isNaN(ctx[7])) {
+			if (dirty & 128 && !isNaN(ctx[7])) {
 				audio.playbackRate = ctx[7];
 			}
 

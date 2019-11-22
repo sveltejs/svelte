@@ -37,10 +37,10 @@ function create_fragment(ctx) {
 			insert(target, input, anchor);
 			set_input_value(input, ctx[0]);
 		},
-		p(ctx, [changed]) {
-			if (changed & 1) set_data(t0, ctx[0]);
+		p(ctx, [dirty]) {
+			if (dirty & 1) set_data(t0, ctx[0]);
 
-			if (changed & 1 && input.value !== ctx[0]) {
+			if (dirty & 1 && input.value !== ctx[0]) {
 				set_input_value(input, ctx[0]);
 			}
 		},

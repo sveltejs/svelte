@@ -46,15 +46,15 @@ function create_fragment(ctx) {
 			append(p, t0);
 			append(p, t1);
 		},
-		p(ctx, [changed]) {
-			if (changed & 1 && !scrolling) {
+		p(ctx, [dirty]) {
+			if (dirty & 1 && !scrolling) {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);
 				scrollTo(window.pageXOffset, ctx[0]);
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
 			}
 
-			if (changed & 1) set_data(t1, ctx[0]);
+			if (dirty & 1) set_data(t1, ctx[0]);
 		},
 		i: noop,
 		o: noop,

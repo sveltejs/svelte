@@ -69,10 +69,10 @@ function create_each_block(ctx) {
 			append(div, t6);
 			html_tag.m(div);
 		},
-		p(ctx, changed) {
-			if (changed & 1 && t2_value !== (t2_value = ctx[4].author + "")) set_data(t2, t2_value);
-			if (changed & 7 && t4_value !== (t4_value = ctx[1](ctx[4].time, ctx[2]) + "")) set_data(t4, t4_value);
-			if (changed & 1 && raw_value !== (raw_value = ctx[4].html + "")) html_tag.p(raw_value);
+		p(ctx, dirty) {
+			if (dirty & 1 && t2_value !== (t2_value = ctx[4].author + "")) set_data(t2, t2_value);
+			if (dirty & 7 && t4_value !== (t4_value = ctx[1](ctx[4].time, ctx[2]) + "")) set_data(t4, t4_value);
+			if (dirty & 1 && raw_value !== (raw_value = ctx[4].html + "")) html_tag.p(raw_value);
 		},
 		d(detaching) {
 			if (detaching) detach(div);
@@ -110,8 +110,8 @@ function create_fragment(ctx) {
 			insert(target, p, anchor);
 			append(p, t1);
 		},
-		p(ctx, [changed]) {
-			if (changed & 7) {
+		p(ctx, [dirty]) {
+			if (dirty & 7) {
 				each_value = ctx[0];
 				let i;
 
@@ -119,7 +119,7 @@ function create_fragment(ctx) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(child_ctx, changed);
+						each_blocks[i].p(child_ctx, dirty);
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();
@@ -134,7 +134,7 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (changed & 8) set_data(t1, ctx[3]);
+			if (dirty & 8) set_data(t1, ctx[3]);
 		},
 		i: noop,
 		o: noop,

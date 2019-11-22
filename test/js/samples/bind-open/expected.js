@@ -27,8 +27,8 @@ function create_fragment(ctx) {
 			insert(target, details, anchor);
 			details.open = ctx[0];
 		},
-		p(ctx, [changed]) {
-			if (changed & 1) {
+		p(ctx, [dirty]) {
+			if (dirty & 1) {
 				details.open = ctx[0];
 			}
 		},

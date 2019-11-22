@@ -53,10 +53,10 @@ function create_each_block(ctx) {
 			append_dev(span, t0);
 			insert_dev(target, t1, anchor);
 		},
-		p: function update(ctx, changed) {
-			if (changed & 1 && t0_value !== (t0_value = ctx[4].name + "")) set_data_dev(t0, t0_value);
+		p: function update(ctx, dirty) {
+			if (dirty & 1 && t0_value !== (t0_value = ctx[4].name + "")) set_data_dev(t0, t0_value);
 
-			if (changed & 15) {
+			if (dirty & 15) {
 				const foo = ctx[1];
 				const bar = ctx[2];
 				const baz = ctx[3];
@@ -119,8 +119,8 @@ function create_fragment(ctx) {
 			append_dev(p, t1);
 			append_dev(p, t2);
 		},
-		p: function update(ctx, [changed]) {
-			if (changed & 1) {
+		p: function update(ctx, [dirty]) {
+			if (dirty & 1) {
 				each_value = ctx[0];
 				let i;
 
@@ -128,7 +128,7 @@ function create_fragment(ctx) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(child_ctx, changed);
+						each_blocks[i].p(child_ctx, dirty);
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();
@@ -143,7 +143,7 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (changed & 2) set_data_dev(t2, ctx[1]);
+			if (dirty & 2) set_data_dev(t2, ctx[1]);
 		},
 		i: noop,
 		o: noop,

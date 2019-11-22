@@ -43,8 +43,8 @@ function create_each_block(key_1, ctx) {
 			insert(target, div, anchor);
 			append(div, t);
 		},
-		p(ctx, changed) {
-			if (changed & 1 && t_value !== (t_value = ctx[1].name + "")) set_data(t, t_value);
+		p(ctx, dirty) {
+			if (dirty & 1 && t_value !== (t_value = ctx[1].name + "")) set_data(t, t_value);
 		},
 		r() {
 			rect = div.getBoundingClientRect();
@@ -91,10 +91,10 @@ function create_fragment(ctx) {
 
 			insert(target, each_1_anchor, anchor);
 		},
-		p(ctx, [changed]) {
+		p(ctx, [dirty]) {
 			const each_value = ctx[0];
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
-			each_blocks = update_keyed_each(each_blocks, changed, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
+			each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].a();
 		},
 		i: noop,

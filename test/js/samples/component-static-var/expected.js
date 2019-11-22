@@ -46,12 +46,12 @@ function create_fragment(ctx) {
 			set_input_value(input, ctx[0]);
 			current = true;
 		},
-		p(ctx, [changed]) {
+		p(ctx, [dirty]) {
 			const bar_changes = {};
-			if (changed & 1) bar_changes.x = ctx[0];
+			if (dirty & 1) bar_changes.x = ctx[0];
 			bar.$set(bar_changes);
 
-			if (changed & 1 && input.value !== ctx[0]) {
+			if (dirty & 1 && input.value !== ctx[0]) {
 				set_input_value(input, ctx[0]);
 			}
 		},
