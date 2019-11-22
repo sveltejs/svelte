@@ -48,7 +48,7 @@ function create_fragment(ctx) {
 			video_resize_listener = add_resize_listener(video, ctx[4].bind(video));
 		},
 		p(ctx, [dirty]) {
-			if (!video_updating && dirty & /* _id9uocqrtmw00_1_ */ 1 && !isNaN(ctx[0])) {
+			if (!video_updating && dirty & /* currentTime */ 1 && !isNaN(ctx[0])) {
 				video.currentTime = ctx[0];
 			}
 

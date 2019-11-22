@@ -28,7 +28,7 @@ function create_fragment(ctx) {
 			details.open = ctx[0];
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 1) {
+			if (dirty & /* open */ 1) {
 				details.open = ctx[0];
 			}
 		},

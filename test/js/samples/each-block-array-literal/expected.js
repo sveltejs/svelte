@@ -36,7 +36,7 @@ function create_each_block(ctx) {
 			append(span, t);
 		},
 		p(ctx, dirty) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 31 && t_value !== (t_value = ctx[5] + "")) set_data(t, t_value);
+			if (dirty & /* a, b, c, d, e */ 31 && t_value !== (t_value = ctx[5] + "")) set_data(t, t_value);
 		},
 		d(detaching) {
 			if (detaching) detach(span);
@@ -69,7 +69,7 @@ function create_fragment(ctx) {
 			insert(target, each_1_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 31) {
+			if (dirty & /* a, b, c, d, e */ 31) {
 				each_value = [ctx[0], ctx[1], ctx[2], ctx[3], ctx[4]];
 				let i;
 

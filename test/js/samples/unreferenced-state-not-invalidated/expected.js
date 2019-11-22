@@ -28,7 +28,7 @@ function create_fragment(ctx) {
 			append(p, t);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 1) set_data(t, ctx[0]);
+			if (dirty & /* y */ 1) set_data(t, ctx[0]);
 		},
 		i: noop,
 		o: noop,
@@ -58,7 +58,7 @@ function instance($$self, $$props, $$invalidate) {
 	let y;
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /* _id9uocqrtmw00_1_ */ 2) {
+		if ($$self.$$.dirty & /* b */ 2) {
 			$: $$invalidate(0, y = b * 2);
 		}
 	};

@@ -24,7 +24,7 @@ function create_fragment(ctx) {
 			foo_action = foo.call(null, button, ctx[1]) || ({});
 		},
 		p(ctx, [dirty]) {
-			if (is_function(foo_action.update) && dirty & /* _id9uocqrtmw00_1_ */ 1) foo_action.update.call(null, ctx[1]);
+			if (is_function(foo_action.update) && dirty & /* bar */ 1) foo_action.update.call(null, ctx[1]);
 		},
 		i: noop,
 		o: noop,

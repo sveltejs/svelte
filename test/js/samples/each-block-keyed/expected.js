@@ -40,7 +40,7 @@ function create_each_block(key_1, ctx) {
 			append(div, t);
 		},
 		p(ctx, dirty) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 1 && t_value !== (t_value = ctx[1].name + "")) set_data(t, t_value);
+			if (dirty & /* things */ 1 && t_value !== (t_value = ctx[1].name + "")) set_data(t, t_value);
 		},
 		d(detaching) {
 			if (detaching) detach(div);

@@ -68,19 +68,19 @@ function create_fragment(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
-			if (!audio_updating && dirty & /* _id9uocqrtmw00_1_ */ 8 && !isNaN(ctx[3])) {
+			if (!audio_updating && dirty & /* currentTime */ 8 && !isNaN(ctx[3])) {
 				audio.currentTime = ctx[3];
 			}
 
-			if (dirty & /* _id9uocqrtmw00_1_ */ 32 && audio_is_paused !== (audio_is_paused = ctx[5])) {
+			if (dirty & /* paused */ 32 && audio_is_paused !== (audio_is_paused = ctx[5])) {
 				audio[audio_is_paused ? "pause" : "play"]();
 			}
 
-			if (dirty & /* _id9uocqrtmw00_1_ */ 64 && !isNaN(ctx[6])) {
+			if (dirty & /* volume */ 64 && !isNaN(ctx[6])) {
 				audio.volume = ctx[6];
 			}
 
-			if (dirty & /* _id9uocqrtmw00_1_ */ 128 && !isNaN(ctx[7])) {
+			if (dirty & /* playbackRate */ 128 && !isNaN(ctx[7])) {
 				audio.playbackRate = ctx[7];
 			}
 

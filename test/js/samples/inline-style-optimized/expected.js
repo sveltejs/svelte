@@ -22,7 +22,7 @@ function create_fragment(ctx) {
 			insert(target, div, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 1) {
+			if (dirty & /* color */ 1) {
 				set_style(div, "color", ctx[0]);
 			}
 		},

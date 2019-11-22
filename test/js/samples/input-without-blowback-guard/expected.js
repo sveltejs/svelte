@@ -26,7 +26,7 @@ function create_fragment(ctx) {
 			input.checked = ctx[0];
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 1) {
+			if (dirty & /* foo */ 1) {
 				input.checked = ctx[0];
 			}
 		},

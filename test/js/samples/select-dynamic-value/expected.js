@@ -44,7 +44,7 @@ function create_fragment(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 1 && select_value_value !== (select_value_value = ctx[0])) {
+			if (dirty & /* current */ 1 && select_value_value !== (select_value_value = ctx[0])) {
 				for (var i = 0; i < select.options.length; i += 1) {
 					var option = select.options[i];
 

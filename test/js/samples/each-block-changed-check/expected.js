@@ -70,9 +70,9 @@ function create_each_block(ctx) {
 			html_tag.m(div);
 		},
 		p(ctx, dirty) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 1 && t2_value !== (t2_value = ctx[4].author + "")) set_data(t2, t2_value);
-			if (dirty & /* _id9uocqrtmw00_1_ */ 7 && t4_value !== (t4_value = ctx[1](ctx[4].time, ctx[2]) + "")) set_data(t4, t4_value);
-			if (dirty & /* _id9uocqrtmw00_1_ */ 1 && raw_value !== (raw_value = ctx[4].html + "")) html_tag.p(raw_value);
+			if (dirty & /* comments */ 1 && t2_value !== (t2_value = ctx[4].author + "")) set_data(t2, t2_value);
+			if (dirty & /* elapsed, comments, time */ 7 && t4_value !== (t4_value = ctx[1](ctx[4].time, ctx[2]) + "")) set_data(t4, t4_value);
+			if (dirty & /* comments */ 1 && raw_value !== (raw_value = ctx[4].html + "")) html_tag.p(raw_value);
 		},
 		d(detaching) {
 			if (detaching) detach(div);
@@ -111,7 +111,7 @@ function create_fragment(ctx) {
 			append(p, t1);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 7) {
+			if (dirty & /* comments, elapsed, time */ 7) {
 				each_value = ctx[0];
 				let i;
 
@@ -134,7 +134,7 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (dirty & /* _id9uocqrtmw00_1_ */ 8) set_data(t1, ctx[3]);
+			if (dirty & /* foo */ 8) set_data(t1, ctx[3]);
 		},
 		i: noop,
 		o: noop,

@@ -29,7 +29,7 @@ function create_fragment(ctx) {
 			set_input_value(input, ctx[0]);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 1) {
+			if (dirty & /* value */ 1) {
 				set_input_value(input, ctx[0]);
 			}
 		},

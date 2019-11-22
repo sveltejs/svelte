@@ -24,7 +24,7 @@ function create_fragment(ctx) {
 		},
 		m: noop,
 		p: function update(ctx, [dirty]) {
-			if (dirty & /* _id9uocqrtmw00_1_ */ 3) {
+			if (dirty & /* obj, kobzol */ 3) {
 				const obj = ctx[0];
 				const kobzol = ctx[1];
 				console.log({ obj, kobzol });
