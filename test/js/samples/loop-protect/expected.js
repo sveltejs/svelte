@@ -68,7 +68,7 @@ function instance($$self) {
 	};
 
 	$$self.$inject_state = $$props => {
-
+		
 	};
 
 	$: {

@@ -43,7 +43,7 @@ function create_fragment(ctx) {
 				}
 			}
 		},
-		p(ctx, changed) {
+		p(ctx, [changed]) {
 			if (changed & 1 && select_value_value !== (select_value_value = ctx[0])) {
 				for (var i = 0; i < select.options.length; i += 1) {
 					var option = select.options[i];

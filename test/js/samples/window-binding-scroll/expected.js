@@ -46,7 +46,7 @@ function create_fragment(ctx) {
 			append(p, t0);
 			append(p, t1);
 		},
-		p(ctx, changed) {
+		p(ctx, [changed]) {
 			if (changed & 1 && !scrolling) {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);

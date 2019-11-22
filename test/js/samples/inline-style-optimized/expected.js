@@ -21,7 +21,7 @@ function create_fragment(ctx) {
 		m(target, anchor) {
 			insert(target, div, anchor);
 		},
-		p(ctx, changed) {
+		p(ctx, [changed]) {
 			if (changed & 1) {
 				set_style(div, "color", ctx[0]);
 			}

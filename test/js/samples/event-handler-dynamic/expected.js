@@ -61,7 +61,7 @@ function create_fragment(ctx) {
 			insert(target, t5, anchor);
 			insert(target, button2, anchor);
 		},
-		p(new_ctx, changed) {
+		p(new_ctx, [changed]) {
 			ctx = new_ctx;
 			if (changed & 2) set_data(t4, ctx[1]);
 		},

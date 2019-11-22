@@ -110,7 +110,7 @@ function create_fragment(ctx) {
 			insert(target, p, anchor);
 			append(p, t1);
 		},
-		p(ctx, changed) {
+		p(ctx, [changed]) {
 			if (changed & 7) {
 				each_value = ctx[0];
 				let i;

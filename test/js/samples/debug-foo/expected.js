@@ -113,7 +113,7 @@ function create_fragment(ctx) {
 			append_dev(p, t1);
 			append_dev(p, t2);
 		},
-		p: function update(ctx, changed) {
+		p: function update(ctx, [changed]) {
 			if (changed & 1) {
 				each_value = ctx[0];
 				let i;

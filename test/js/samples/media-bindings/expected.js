@@ -67,7 +67,7 @@ function create_fragment(ctx) {
 				audio.playbackRate = ctx[7];
 			}
 		},
-		p(ctx, changed) {
+		p(ctx, [changed]) {
 			if (!audio_updating && changed & 8 && !isNaN(ctx[3])) {
 				audio.currentTime = ctx[3];
 			}

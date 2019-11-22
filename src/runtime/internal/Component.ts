@@ -21,7 +21,7 @@ interface Fragment {
 }
 // eslint-disable-next-line @typescript-eslint/class-name-casing
 interface T$$ {
-	dirty: number;
+	dirty: number[];
 	ctx: null|any;
 	bound: any;
 	update: () => void;
@@ -88,15 +88,15 @@ export function destroy_component(component, detaching) {
 }
 
 function make_dirty(component, i) {
-	if (component.$$.dirty === -1) {
+	if (component.$$.dirty[0] === -1) {
 		dirty_components.push(component);
 		schedule_update();
-		component.$$.dirty = 0;
+		component.$$.dirty.fill(0);
 	}
-	component.$$.dirty |= (1 << i);
+	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
-export function init(component, options, instance, create_fragment, not_equal, props) {
+export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
 	const parent_component = current_component;
 	set_current_component(component);
 
@@ -121,7 +121,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 		// everything else
 		callbacks: blank_object(),
-		dirty: -1
+		dirty
 	};
 
 	let ready = false;

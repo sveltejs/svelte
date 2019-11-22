@@ -41,6 +41,9 @@ export default {
 		<p>38</p>
 		<p>39</p>
 		<p>40</p>
+		<p>5:36</p>
+		<p>6:37</p>
+		<p>38</p>
 	`,
 
 	test({ assert, component, target }) {
@@ -52,14 +55,19 @@ export default {
 		component._32 = 'd';
 		component._40 = 'e';
 
+		component._5 = 'f';
+		component._6 = 'g';
+		component._36 = 'h';
+		component._37 = 'i';
+
 		assert.htmlEqual(target.innerHTML, `
 			<p>a</p>
 			<p>1</p>
 			<p>2</p>
 			<p>3</p>
 			<p>4</p>
-			<p>5</p>
-			<p>6</p>
+			<p>f</p>
+			<p>g</p>
 			<p>7</p>
 			<p>8</p>
 			<p>9</p>
@@ -89,18 +97,25 @@ export default {
 			<p>33</p>
 			<p>34</p>
 			<p>35</p>
-			<p>36</p>
-			<p>37</p>
+			<p>h</p>
+			<p>i</p>
 			<p>38</p>
 			<p>39</p>
 			<p>e</p>
+			<p>f:h</p>
+			<p>g:i</p>
+			<p>38</p>
 		`);
 
 		assert.deepEqual(component.reads, {
 			_0: 1,
+			_5: 2,
+			_6: 3,
 			_30: 1,
 			_31: 1,
 			_32: 1,
+			_36: 2,
+			_37: 3,
 			_40: 1
 		});
 	}

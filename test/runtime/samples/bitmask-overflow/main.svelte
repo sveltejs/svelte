@@ -43,6 +43,9 @@
 	export let _39 = '39';
 	export let _40 = '40';
 
+	$: foo = read(_6, '_6') + ':' + read(_37, '_37');
+	$: bar = read(_38, '_38');
+
 	const read = (value, label) => {
 		if (!reads[label]) reads[label] = 0;
 		reads[label] += 1;
@@ -92,3 +95,7 @@
 <p>{read(_38, '_38')}</p>
 <p>{read(_39, '_39')}</p>
 <p>{read(_40, '_40')}</p>
+
+<p>{read(_5, '_5') + ':' + read(_36, '_36')}</p>
+<p>{foo}</p>
+<p>{bar}</p>

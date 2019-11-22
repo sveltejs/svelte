@@ -3,7 +3,7 @@ import { CompileOptions, Var } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
 import { x } from 'code-red';
-import { Node, Identifier, MemberExpression, Literal } from 'estree';
+import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression } from 'estree';
 import flatten_reference from '../utils/flatten_reference';
 
 interface ContextMember {
@@ -21,6 +21,7 @@ export default class Renderer {
 
 	context: ContextMember[] = [];
 	context_lookup: Map<string, ContextMember> = new Map();
+	context_overflow: boolean;
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
@@ -79,6 +80,8 @@ export default class Renderer {
 			true,
 			null
 		);
+
+		this.context_overflow = this.context.length > 31;
 
 		// TODO messy
 		this.blocks.forEach(block => {
@@ -189,50 +192,67 @@ export default class Renderer {
 			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
 	}
 
-	get_bitmask(names) {
-		const { context_lookup } = this;
+	changed(names, is_reactive_declaration = false): Expression {
+		const renderer = this;
 
-		// names.forEach(name => {
-		// 	if (!context_lookup.has(name)) {
-		// 		console.log({ names });
-		// 		throw new Error(`wut ${name}`);
-		// 	}
-		// });
+		let changed = (is_reactive_declaration
+			? x`$$self.$$.dirty`
+			: x`#changed`) as Identifier | MemberExpression;
+
+		const get_bitmask = () => names.reduce((bits, name) => {
+			const member = renderer.context_lookup.get(name);
+
+			if (!member) return bits;
+
+			if (member.index.value === -1) {
+				throw new Error(`unset index`);
+			}
+
+			const value = member.index.value as number;
+			const i = (value / 31) | 0;
+			const j = 1 << (value % 31);
+
+			bits[i] |= j;
+
+			return bits;
+		}, Array((this.context.length / 31) | 0).fill(0));
+
+		let operator;
+		let left;
+		let right;
 
 		return {
-			type: 'Literal',
+			get type() {
+				// we make the type a getter, even though it's always
+				// a BinaryExpression, because it gives us an opportunity
+				// to lazily create the node
 
-			// we need to use a getter so that bitmasks can be determined
-			// lazily, once context has fully shaken out. TODO would be nice
-			// to do everything in a different order so that this isn't necessary
-			get value() {
-				return names.reduce((bits, name) => {
-					const member = context_lookup.get(name);
+				const bitmask = get_bitmask();
 
-					if (!member) return bits;
+				if (renderer.context_overflow) {
+					const expression = bitmask
+						.map((bits, i) => ({ bits, i }))
+						.filter(({ bits }) => bits)
+						.map(({ bits, i }) => x`${changed}[${i}] & ${bits}`)
+						.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
-					if (member.index.value === -1) {
-						throw new Error(`unset index`);
-					}
+					({ operator, left, right } = expression);
+				} else {
+					({ operator, left, right } = x`${changed} & ${bitmask[0] || 0}` as BinaryExpression); // TODO the `|| 0` case should never apply
+				}
 
-					// if (!member) {
-					// 	console.log({ names });
-					// 	throw new Error(`wut ${name}`);
-					// }
-
-					const bit = 1 << (member.index.value as number);
-					return bits | bit;
-				}, 0);
+				return 'BinaryExpression';
+			},
+			get operator() {
+				return operator;
+			},
+			get left() {
+				return left;
+			},
+			get right() {
+				return right;
 			}
-		};
-	}
-
-	changed(names, is_reactive_declaration = false) {
-		const bitmask = this.get_bitmask(names);
-
-		return is_reactive_declaration
-			? x`$$self.$$.dirty & ${bitmask}`
-			: x`#changed & ${bitmask}`;
+		} as Expression;
 	}
 
 	reference(node: string | Identifier | MemberExpression) {

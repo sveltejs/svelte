@@ -119,13 +119,12 @@ export default class SlotWrapper extends Wrapper {
 				});
 
 				if (dynamic_dependencies.length > 0) {
-					const bitmask = renderer.get_bitmask(dynamic_dependencies);
-					changes.properties.push(p`${attribute.name}: #changes & ${bitmask}`);
+					changes.properties.push(p`${attribute.name}: ${renderer.changed(dynamic_dependencies)}`);
 				}
 			});
 
 			renderer.blocks.push(b`
-				const ${get_slot_changes_fn} = #changes => ${changes};
+				const ${get_slot_changes_fn} = #changed => ${changes};
 				const ${get_slot_context_fn} = #ctx => ${get_slot_data(block, this.node.values)};
 			`);
 		} else {

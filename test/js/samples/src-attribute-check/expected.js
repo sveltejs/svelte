@@ -44,7 +44,7 @@ function create_fragment(ctx) {
 			insert(target, t, anchor);
 			insert(target, img1, anchor);
 		},
-		p(ctx, changed) {
+		p(ctx, [changed]) {
 			if (changed & 1 && img0.src !== (img0_src_value = ctx[0])) {
 				attr(img0, "src", img0_src_value);
 			}

@@ -44,7 +44,7 @@ function create_fragment(ctx) {
 			append_dev(h1, t2);
 			insert_dev(target, t3, anchor);
 		},
-		p: function update(ctx, changed) {
+		p: function update(ctx, [changed]) {
 			if (changed & 1) set_data_dev(t1, ctx[0]);
 			debugger;
 		},

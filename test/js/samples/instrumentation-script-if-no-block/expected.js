@@ -39,7 +39,7 @@ function create_fragment(ctx) {
 			append(p, t2);
 			append(p, t3);
 		},
-		p(ctx, changed) {
+		p(ctx, [changed]) {
 			if (changed & 1) set_data(t3, ctx[0]);
 		},
 		i: noop,

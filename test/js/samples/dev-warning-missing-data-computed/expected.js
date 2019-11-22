@@ -41,7 +41,7 @@ function create_fragment(ctx) {
 			append_dev(p, t1);
 			append_dev(p, t2);
 		},
-		p: function update(ctx, changed) {
+		p: function update(ctx, [changed]) {
 			if (changed & 1 && t0_value !== (t0_value = Math.max(0, ctx[0]) + "")) set_data_dev(t0, t0_value);
 			if (changed & 2) set_data_dev(t2, ctx[1]);
 		},

@@ -23,7 +23,7 @@ function create_fragment(ctx) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 		},
 		m: noop,
-		p: function update(ctx, changed) {
+		p: function update(ctx, [changed]) {
 			if (changed & 3) {
 				const obj = ctx[0];
 				const kobzol = ctx[1];

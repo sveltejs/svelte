@@ -68,7 +68,7 @@ function create_fragment(ctx) {
 
 			insert(target, each_1_anchor, anchor);
 		},
-		p(ctx, changed) {
+		p(ctx, [changed]) {
 			if (changed & 1) {
 				each_value = ctx[0];
 				let i;

@@ -76,7 +76,7 @@ function create_fragment(ctx) {
 
 			insert(target, each_1_anchor, anchor);
 		},
-		p(ctx, changed) {
+		p(ctx, [changed]) {
 			const each_value = ctx[0];
 			each_blocks = update_keyed_each(each_blocks, changed, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, destroy_block, create_each_block, each_1_anchor, get_each_context);
 		},
