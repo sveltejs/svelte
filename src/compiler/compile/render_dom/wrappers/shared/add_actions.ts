@@ -33,7 +33,7 @@ export default function add_actions(
 			let condition = x`@is_function(${id}.update)`;
 
 			if (dependencies.length > 0) {
-				condition = x`${condition} && ${block.renderer.changed(dependencies)}`;
+				condition = x`${condition} && ${block.renderer.dirty(dependencies)}`;
 			}
 
 			block.chunks.update.push(

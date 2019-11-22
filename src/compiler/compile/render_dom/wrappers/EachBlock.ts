@@ -277,7 +277,7 @@ export default class EachBlockWrapper extends Wrapper {
 			if (this.else.block.has_update_method) {
 				block.chunks.update.push(b`
 					if (!${this.vars.data_length} && ${each_block_else}) {
-						${each_block_else}.p(#ctx, #changed);
+						${each_block_else}.p(#ctx, #dirty);
 					} else if (!${this.vars.data_length}) {
 						${each_block_else} = ${this.else.block.name}(#ctx);
 						${each_block_else}.c();
@@ -403,7 +403,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			${this.block.has_outros && b`@group_outros();`}
 			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
-			${iterations} = @update_keyed_each(${iterations}, #changed, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
+			${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
 			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
 			${this.block.has_outros && b`@check_outros();`}
 		`);
@@ -487,7 +487,7 @@ export default class EachBlockWrapper extends Wrapper {
 			const for_loop_body = this.block.has_update_method
 				? b`
 					if (${iterations}[#i]) {
-						${iterations}[#i].p(child_ctx, #changed);
+						${iterations}[#i].p(child_ctx, #dirty);
 						${has_transitions && b`@transition_in(${this.vars.iterations}[#i], 1);`}
 					} else {
 						${iterations}[#i] = ${create_each_block}(child_ctx);
@@ -560,7 +560,7 @@ export default class EachBlockWrapper extends Wrapper {
 			`;
 
 			block.chunks.update.push(b`
-				if (${block.renderer.changed(Array.from(all_dependencies))}) {
+				if (${block.renderer.dirty(Array.from(all_dependencies))}) {
 					${update}
 				}
 			`);

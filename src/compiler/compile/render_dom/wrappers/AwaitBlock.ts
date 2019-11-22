@@ -192,7 +192,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		if (dependencies.length > 0) {
 			const condition = x`
-				${block.renderer.changed(dependencies)} &&
+				${block.renderer.dirty(dependencies)} &&
 				${promise} !== (${promise} = ${snippet}) &&
 				@handle_promise(${promise}, ${info})`;
 
@@ -207,7 +207,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 					} else {
 						const #child_ctx = #ctx.slice();
 						#child_ctx[${value_index}] = ${info}.resolved;
-						${info}.block.p(#child_ctx, #changed);
+						${info}.block.p(#child_ctx, #dirty);
 					}
 				`);
 			} else {
@@ -221,7 +221,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 					{
 						const #child_ctx = #ctx.slice();
 						#child_ctx[${value_index}] = ${info}.resolved;
-						${info}.block.p(#child_ctx, #changed);
+						${info}.block.p(#child_ctx, #dirty);
 					}
 				`);
 			}

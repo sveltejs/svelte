@@ -39,7 +39,7 @@ export default class Tag extends Wrapper {
 		if (this.node.should_cache) block.add_variable(value, snippet); // TODO may need to coerce snippet to string
 
 		if (dependencies.length > 0) {
-			let condition = block.renderer.changed(dependencies);
+			let condition = block.renderer.dirty(dependencies);
 
 			if (block.has_outros) {
 				condition = x`!#current || ${condition}`;

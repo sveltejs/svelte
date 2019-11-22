@@ -301,12 +301,12 @@ export default class Block {
 			} else {
 				const ctx = this.maintain_context ? x`#new_ctx` : x`#ctx`;
 
-				let changed: Identifier | ArrayPattern = { type: 'Identifier', name: '#changed' };
+				let dirty: Identifier | ArrayPattern = { type: 'Identifier', name: '#dirty' };
 				if (!this.renderer.context_overflow && !this.parent) {
-					changed = { type: 'ArrayPattern', elements: [changed] };
+					dirty = { type: 'ArrayPattern', elements: [dirty] };
 				}
 
-				properties.update = x`function #update(${ctx}, ${changed}) {
+				properties.update = x`function #update(${ctx}, ${dirty}) {
 					${this.maintain_context && b`#ctx = ${ctx};`}
 					${this.chunks.update}
 				}`;

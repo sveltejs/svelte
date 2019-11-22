@@ -75,7 +75,7 @@ export default class TitleWrapper extends Wrapper {
 			if (all_dependencies.size) {
 				const dependencies = Array.from(all_dependencies);
 
-				let condition = block.renderer.changed(dependencies);
+				let condition = block.renderer.dirty(dependencies);
 
 				if (block.has_outros) {
 					condition = x`!#current || ${condition}`;

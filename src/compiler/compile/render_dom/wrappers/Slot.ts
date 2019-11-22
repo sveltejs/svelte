@@ -119,12 +119,12 @@ export default class SlotWrapper extends Wrapper {
 				});
 
 				if (dynamic_dependencies.length > 0) {
-					changes.properties.push(p`${attribute.name}: ${renderer.changed(dynamic_dependencies)}`);
+					changes.properties.push(p`${attribute.name}: ${renderer.dirty(dynamic_dependencies)}`);
 				}
 			});
 
 			renderer.blocks.push(b`
-				const ${get_slot_changes_fn} = #changed => ${changes};
+				const ${get_slot_changes_fn} = #dirty => ${changes};
 				const ${get_slot_context_fn} = #ctx => ${get_slot_data(block, this.node.values)};
 			`);
 		} else {
@@ -202,10 +202,10 @@ export default class SlotWrapper extends Wrapper {
 		});
 
 		block.chunks.update.push(b`
-			if (${slot} && ${slot}.p && ${renderer.changed(dynamic_dependencies)}) {
+			if (${slot} && ${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
 				${slot}.p(
 					@get_slot_context(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn}),
-					@get_slot_changes(${slot_definition}, ${renderer.reference('$$scope')}, #changed, ${get_slot_changes_fn})
+					@get_slot_changes(${slot_definition}, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn})
 				);
 			}
 		`);

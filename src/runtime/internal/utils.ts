@@ -76,10 +76,10 @@ export function get_slot_context(definition, ctx, $$scope, fn) {
 		: $$scope.ctx;
 }
 
-export function get_slot_changes(definition, $$scope, changed, fn) {
+export function get_slot_changes(definition, $$scope, dirty, fn) {
 	return definition[2] && fn
-		? $$scope.changed | definition[2](fn(changed))
-		: $$scope.changed;
+		? $$scope.dirty | definition[2](fn(dirty))
+		: $$scope.dirty;
 }
 
 export function exclude_internal_props(props) {

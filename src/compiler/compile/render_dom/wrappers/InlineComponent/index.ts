@@ -207,7 +207,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					const { name, dependencies } = attr;
 
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
-						? renderer.changed(Array.from(dependencies))
+						? renderer.dirty(Array.from(dependencies))
 						: null;
 
 					if (attr.is_spread) {
@@ -240,7 +240,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 
 				if (all_dependencies.size) {
-					const condition = renderer.changed(Array.from(all_dependencies));
+					const condition = renderer.dirty(Array.from(all_dependencies));
 
 					updates.push(b`
 						const ${name_changes} = ${condition} ? @get_spread_update(${levels}, [
@@ -256,7 +256,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				dynamic_attributes.forEach((attribute: Attribute) => {
 					const dependencies = attribute.get_dependencies();
 					if (dependencies.length > 0) {
-						const condition = renderer.changed(dependencies);
+						const condition = renderer.dirty(dependencies);
 
 						updates.push(b`
 							if (${condition}) ${name_changes}.${attribute.name} = ${attribute.get_value(block)};
@@ -268,8 +268,8 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		if (non_let_dependencies.length > 0) {
 			updates.push(b`
-				if (${renderer.changed(non_let_dependencies)}) {
-					${name_changes}.$$scope = { changed: #changed, ctx: #ctx };
+				if (${renderer.dirty(non_let_dependencies)}) {
+					${name_changes}.$$scope = { dirty: #dirty, ctx: #ctx };
 				}`);
 		}
 
@@ -296,7 +296,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 			updates.push(b`
-				if (!${updating} && ${renderer.changed(Array.from(binding.expression.dependencies))}) {
+				if (!${updating} && ${renderer.dirty(Array.from(binding.expression.dependencies))}) {
 					${updating} = true;
 					${name_changes}.${binding.name} = ${snippet};
 					@add_flush_callback(() => ${updating} = false);

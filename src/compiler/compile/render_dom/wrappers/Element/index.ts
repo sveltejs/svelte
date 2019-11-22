@@ -624,7 +624,7 @@ export default class ElementWrapper extends Wrapper {
 		this.attributes
 			.forEach(attr => {
 				const condition = attr.node.dependencies.size > 0
-					? block.renderer.changed(Array.from(attr.node.dependencies))
+					? block.renderer.dirty(Array.from(attr.node.dependencies))
 					: null;
 
 				if (attr.node.is_spread) {
@@ -857,7 +857,7 @@ export default class ElementWrapper extends Wrapper {
 				block.chunks.update.push(updater);
 			} else if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
 				const all_dependencies = this.class_dependencies.concat(...dependencies);
-				const condition = block.renderer.changed(all_dependencies);
+				const condition = block.renderer.dirty(all_dependencies);
 
 				block.chunks.update.push(b`
 					if (${condition}) {

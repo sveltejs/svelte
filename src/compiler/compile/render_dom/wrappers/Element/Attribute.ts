@@ -139,7 +139,7 @@ export default class AttributeWrapper {
 		}
 
 		if (dependencies.length > 0) {
-			let condition = block.renderer.changed(dependencies);
+			let condition = block.renderer.dirty(dependencies);
 
 			if (should_cache) {
 				condition = is_src

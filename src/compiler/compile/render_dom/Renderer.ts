@@ -192,12 +192,12 @@ export default class Renderer {
 			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
 	}
 
-	changed(names, is_reactive_declaration = false): Expression {
+	dirty(names, is_reactive_declaration = false): Expression {
 		const renderer = this;
 
-		const changed = (is_reactive_declaration
+		const dirty = (is_reactive_declaration
 			? x`$$self.$$.dirty`
-			: x`#changed`) as Identifier | MemberExpression;
+			: x`#dirty`) as Identifier | MemberExpression;
 
 		const get_bitmask = () => names.reduce((bits, name) => {
 			const member = renderer.context_lookup.get(name);
@@ -225,7 +225,9 @@ export default class Renderer {
 			get type() {
 				// we make the type a getter, even though it's always
 				// a BinaryExpression, because it gives us an opportunity
-				// to lazily create the node
+				// to lazily create the node. TODO would be better if
+				// context was determined before rendering, so that
+				// this indirection was unnecessary
 
 				const bitmask = get_bitmask();
 
@@ -233,12 +235,12 @@ export default class Renderer {
 					const expression = bitmask
 						.map((bits, i) => ({ bits, i }))
 						.filter(({ bits }) => bits)
-						.map(({ bits, i }) => x`${changed}[${i}] & ${bits}`)
+						.map(({ bits, i }) => x`${dirty}[${i}] & ${bits}`)
 						.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
 					({ operator, left, right } = expression);
 				} else {
-					({ operator, left, right } = x`${changed} & ${bitmask[0] || 0}` as BinaryExpression); // TODO the `|| 0` case should never apply
+					({ operator, left, right } = x`${dirty} & ${bitmask[0] || 0}` as BinaryExpression); // TODO the `|| 0` case should never apply
 				}
 
 				return 'BinaryExpression';

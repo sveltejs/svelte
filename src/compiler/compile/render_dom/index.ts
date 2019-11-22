@@ -279,14 +279,6 @@ export default function dom(
 	}
 	const initial_context = renderer.context.slice(0, i + 1);
 
-	// const initial_context = renderer.context.filter(member => {
-	// 	// return member.variable
-	// 	// 	? (member.variable.referenced || member.variable.export_name)
-	// 	// 	: !member.is_contextual;
-
-	// 	return member.variable || !member.is_contextual;
-	// });
-
 	const has_definition = (
 		(instance_javascript && instance_javascript.length > 0) ||
 		filtered_props.length > 0 ||
@@ -330,7 +322,7 @@ export default function dom(
 				return variable && (variable.export_name || variable.mutated || variable.reassigned);
 			});
 
-			const condition = !uses_props && writable.length > 0 && renderer.changed(writable, true);
+			const condition = !uses_props && writable.length > 0 && renderer.dirty(writable, true);
 
 			let statement = d.node; // TODO remove label (use d.node.body) if it's not referenced
 

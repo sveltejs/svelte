@@ -90,7 +90,7 @@ export default class BindingWrapper {
 		const dependency_array = [...this.node.expression.dependencies];
 
 		if (dependency_array.length > 0) {
-			update_conditions.push(block.renderer.changed(dependency_array));
+			update_conditions.push(block.renderer.dirty(dependency_array));
 		}
 
 		if (parent.node.name === 'input') {

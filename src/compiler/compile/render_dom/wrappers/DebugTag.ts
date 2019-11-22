@@ -69,7 +69,7 @@ export default class DebugTagWrapper extends Wrapper {
 				debugger;`;
 
 			if (dependencies.size) {
-				const condition = renderer.changed(Array.from(dependencies));
+				const condition = renderer.dirty(Array.from(dependencies));
 
 				block.chunks.update.push(b`
 					if (${condition}) {

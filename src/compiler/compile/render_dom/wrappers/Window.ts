@@ -139,7 +139,7 @@ export default class WindowWrapper extends Wrapper {
 
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
-			const condition = renderer.changed([bindings.scrollX, bindings.scrollY].filter(Boolean));
+			const condition = renderer.dirty([bindings.scrollX, bindings.scrollY].filter(Boolean));
 
 			const scrollX = bindings.scrollX ? renderer.reference(bindings.scrollX) : x`@_window.pageXOffset`;
 			const scrollY = bindings.scrollY ? renderer.reference(bindings.scrollY) : x`@_window.pageYOffset`;
