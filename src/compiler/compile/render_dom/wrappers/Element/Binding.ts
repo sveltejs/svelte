@@ -6,7 +6,6 @@ import Block from '../../Block';
 import Renderer from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
 import EachBlock from '../../../nodes/EachBlock';
-import { changed } from '../shared/changed';
 import { Node, Identifier } from 'estree';
 
 export default class BindingWrapper {
@@ -91,7 +90,7 @@ export default class BindingWrapper {
 		const dependency_array = [...this.node.expression.dependencies];
 
 		if (dependency_array.length > 0) {
-			update_conditions.push(changed(dependency_array));
+			update_conditions.push(block.renderer.dirty(dependency_array));
 		}
 
 		if (parent.node.name === 'input') {
@@ -112,12 +111,15 @@ export default class BindingWrapper {
 			{
 				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
 
+				block.renderer.add_to_context(`$$binding_groups`);
+				const reference = block.renderer.reference(`$$binding_groups`);
+
 				block.chunks.hydrate.push(
-					b`#ctx.$$binding_groups[${binding_group}].push(${parent.var});`
+					b`${reference}[${binding_group}].push(${parent.var});`
 				);
 
 				block.chunks.destroy.push(
-					b`#ctx.$$binding_groups[${binding_group}].splice(#ctx.$$binding_groups[${binding_group}].indexOf(${parent.var}), 1);`
+					b`${reference}[${binding_group}].splice(${reference}[${binding_group}].indexOf(${parent.var}), 1);`
 				);
 				break;
 			}

@@ -27,15 +27,15 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t = text(ctx.foo);
+			t = text(/*foo*/ ctx[0]);
 			attr(p, "class", "svelte-1a7i8ec");
 		},
 		m(target, anchor) {
 			insert(target, p, anchor);
 			append(p, t);
 		},
-		p(changed, ctx) {
-			if (changed.foo) set_data(t, ctx.foo);
+		p(ctx, [dirty]) {
+			if (dirty & /*foo*/ 1) set_data(t, /*foo*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,
@@ -49,10 +49,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { foo = 42 } = $$props;
 
 	$$self.$set = $$props => {
-		if ("foo" in $$props) $$invalidate("foo", foo = $$props.foo);
+		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
 	};
 
-	return { foo };
+	return [foo];
 }
 
 class Component extends SvelteComponent {

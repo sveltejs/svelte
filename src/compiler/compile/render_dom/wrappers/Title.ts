@@ -7,7 +7,6 @@ import { string_literal } from '../../utils/stringify';
 import add_to_set from '../../utils/add_to_set';
 import Text from '../../nodes/Text';
 import { Identifier } from 'estree';
-import { changed } from './shared/changed';
 import MustacheTag from '../../nodes/MustacheTag';
 
 export default class TitleWrapper extends Wrapper {
@@ -76,7 +75,7 @@ export default class TitleWrapper extends Wrapper {
 			if (all_dependencies.size) {
 				const dependencies = Array.from(all_dependencies);
 
-				let condition = changed(dependencies);
+				let condition = block.renderer.dirty(dependencies);
 
 				if (block.has_outros) {
 					condition = x`!#current || ${condition}`;

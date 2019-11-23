@@ -6,7 +6,6 @@ import { string_literal } from '../../../utils/stringify';
 import { b, x } from 'code-red';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
-import { changed } from '../shared/changed';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -140,7 +139,7 @@ export default class AttributeWrapper {
 		}
 
 		if (dependencies.length > 0) {
-			let condition = changed(dependencies);
+			let condition = block.renderer.dirty(dependencies);
 
 			if (should_cache) {
 				condition = is_src
@@ -197,8 +196,8 @@ export default class AttributeWrapper {
 		}
 
 		let value = this.node.name === 'class'
-			? this.get_class_name_text()
-			: this.render_chunks().reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
+			? this.get_class_name_text(block)
+			: this.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
 		// '{foo} {bar}' — treat as string concatenation
 		if (this.node.chunks[0].type !== 'Text') {
@@ -208,9 +207,9 @@ export default class AttributeWrapper {
 		return value;
 	}
 
-	get_class_name_text() {
+	get_class_name_text(block) {
 		const scoped_css = this.node.chunks.some((chunk: Text) => chunk.synthetic);
-		const rendered = this.render_chunks();
+		const rendered = this.render_chunks(block);
 
 		if (scoped_css && rendered.length === 2) {
 			// we have a situation like class={possiblyUndefined}
@@ -220,13 +219,13 @@ export default class AttributeWrapper {
 		return rendered.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 	}
 
-	render_chunks() {
+	render_chunks(block: Block) {
 		return this.node.chunks.map((chunk) => {
 			if (chunk.type === 'Text') {
 				return string_literal(chunk.data);
 			}
 
-			return chunk.manipulate();
+			return chunk.manipulate(block);
 		});
 	}
 

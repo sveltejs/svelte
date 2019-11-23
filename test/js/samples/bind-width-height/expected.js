@@ -19,11 +19,11 @@ function create_fragment(ctx) {
 		c() {
 			div = element("div");
 			div.textContent = "some content";
-			add_render_callback(() => ctx.div_elementresize_handler.call(div));
+			add_render_callback(() => /*div_elementresize_handler*/ ctx[2].call(div));
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
-			div_resize_listener = add_resize_listener(div, ctx.div_elementresize_handler.bind(div));
+			div_resize_listener = add_resize_listener(div, /*div_elementresize_handler*/ ctx[2].bind(div));
 		},
 		p: noop,
 		i: noop,
@@ -42,22 +42,22 @@ function instance($$self, $$props, $$invalidate) {
 	function div_elementresize_handler() {
 		w = this.offsetWidth;
 		h = this.offsetHeight;
-		$$invalidate("w", w);
-		$$invalidate("h", h);
+		$$invalidate(0, w);
+		$$invalidate(1, h);
 	}
 
 	$$self.$set = $$props => {
-		if ("w" in $$props) $$invalidate("w", w = $$props.w);
-		if ("h" in $$props) $$invalidate("h", h = $$props.h);
+		if ("w" in $$props) $$invalidate(0, w = $$props.w);
+		if ("h" in $$props) $$invalidate(1, h = $$props.h);
 	};
 
-	return { w, h, div_elementresize_handler };
+	return [w, h, div_elementresize_handler];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { w: 0, h: 0 });
+		init(this, options, instance, create_fragment, safe_not_equal, { w: 0, h: 1 });
 	}
 }
 

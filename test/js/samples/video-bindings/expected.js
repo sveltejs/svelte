@@ -29,27 +29,27 @@ function create_fragment(ctx) {
 			video_updating = true;
 		}
 
-		ctx.video_timeupdate_handler.call(video);
+		/*video_timeupdate_handler*/ ctx[5].call(video);
 	}
 
 	return {
 		c() {
 			video = element("video");
-			add_render_callback(() => ctx.video_elementresize_handler.call(video));
-			if (ctx.videoHeight === void 0 || ctx.videoWidth === void 0) add_render_callback(() => ctx.video_resize_handler.call(video));
+			add_render_callback(() => /*video_elementresize_handler*/ ctx[4].call(video));
+			if (/*videoHeight*/ ctx[1] === void 0 || /*videoWidth*/ ctx[2] === void 0) add_render_callback(() => /*video_resize_handler*/ ctx[6].call(video));
 
 			dispose = [
 				listen(video, "timeupdate", video_timeupdate_handler),
-				listen(video, "resize", ctx.video_resize_handler)
+				listen(video, "resize", /*video_resize_handler*/ ctx[6])
 			];
 		},
 		m(target, anchor) {
 			insert(target, video, anchor);
-			video_resize_listener = add_resize_listener(video, ctx.video_elementresize_handler.bind(video));
+			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[4].bind(video));
 		},
-		p(changed, ctx) {
-			if (!video_updating && changed.currentTime && !isNaN(ctx.currentTime)) {
-				video.currentTime = ctx.currentTime;
+		p(ctx, [dirty]) {
+			if (!video_updating && dirty & /*currentTime*/ 1 && !isNaN(/*currentTime*/ ctx[0])) {
+				video.currentTime = /*currentTime*/ ctx[0];
 			}
 
 			video_updating = false;
@@ -72,29 +72,29 @@ function instance($$self, $$props, $$invalidate) {
 
 	function video_elementresize_handler() {
 		offsetWidth = this.offsetWidth;
-		$$invalidate("offsetWidth", offsetWidth);
+		$$invalidate(3, offsetWidth);
 	}
 
 	function video_timeupdate_handler() {
 		currentTime = this.currentTime;
-		$$invalidate("currentTime", currentTime);
+		$$invalidate(0, currentTime);
 	}
 
 	function video_resize_handler() {
 		videoHeight = this.videoHeight;
 		videoWidth = this.videoWidth;
-		$$invalidate("videoHeight", videoHeight);
-		$$invalidate("videoWidth", videoWidth);
+		$$invalidate(1, videoHeight);
+		$$invalidate(2, videoWidth);
 	}
 
 	$$self.$set = $$props => {
-		if ("currentTime" in $$props) $$invalidate("currentTime", currentTime = $$props.currentTime);
-		if ("videoHeight" in $$props) $$invalidate("videoHeight", videoHeight = $$props.videoHeight);
-		if ("videoWidth" in $$props) $$invalidate("videoWidth", videoWidth = $$props.videoWidth);
-		if ("offsetWidth" in $$props) $$invalidate("offsetWidth", offsetWidth = $$props.offsetWidth);
+		if ("currentTime" in $$props) $$invalidate(0, currentTime = $$props.currentTime);
+		if ("videoHeight" in $$props) $$invalidate(1, videoHeight = $$props.videoHeight);
+		if ("videoWidth" in $$props) $$invalidate(2, videoWidth = $$props.videoWidth);
+		if ("offsetWidth" in $$props) $$invalidate(3, offsetWidth = $$props.offsetWidth);
 	};
 
-	return {
+	return [
 		currentTime,
 		videoHeight,
 		videoWidth,
@@ -102,7 +102,7 @@ function instance($$self, $$props, $$invalidate) {
 		video_elementresize_handler,
 		video_timeupdate_handler,
 		video_resize_handler
-	};
+	];
 }
 
 class Component extends SvelteComponent {
@@ -111,9 +111,9 @@ class Component extends SvelteComponent {
 
 		init(this, options, instance, create_fragment, safe_not_equal, {
 			currentTime: 0,
-			videoHeight: 0,
-			videoWidth: 0,
-			offsetWidth: 0
+			videoHeight: 1,
+			videoWidth: 2,
+			offsetWidth: 3
 		});
 	}
 }

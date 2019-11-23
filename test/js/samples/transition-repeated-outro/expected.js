@@ -49,7 +49,7 @@ function create_if_block(ctx) {
 function create_fragment(ctx) {
 	let if_block_anchor;
 	let current;
-	let if_block = ctx.num < 5 && create_if_block(ctx);
+	let if_block = /*num*/ ctx[0] < 5 && create_if_block(ctx);
 
 	return {
 		c() {
@@ -61,8 +61,8 @@ function create_fragment(ctx) {
 			insert(target, if_block_anchor, anchor);
 			current = true;
 		},
-		p(changed, ctx) {
-			if (ctx.num < 5) {
+		p(ctx, [dirty]) {
+			if (/*num*/ ctx[0] < 5) {
 				if (!if_block) {
 					if_block = create_if_block(ctx);
 					if_block.c();
@@ -101,10 +101,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { num = 1 } = $$props;
 
 	$$self.$set = $$props => {
-		if ("num" in $$props) $$invalidate("num", num = $$props.num);
+		if ("num" in $$props) $$invalidate(0, num = $$props.num);
 	};
 
-	return { num };
+	return [num];
 }
 
 class Component extends SvelteComponent {

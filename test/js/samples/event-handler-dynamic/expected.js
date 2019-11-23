@@ -37,16 +37,16 @@ function create_fragment(ctx) {
 			button1.textContent = "set handler 2";
 			t3 = space();
 			p1 = element("p");
-			t4 = text(ctx.number);
+			t4 = text(/*number*/ ctx[1]);
 			t5 = space();
 			button2 = element("button");
 			button2.textContent = "click";
 
 			dispose = [
-				listen(button0, "click", ctx.updateHandler1),
-				listen(button1, "click", ctx.updateHandler2),
+				listen(button0, "click", /*updateHandler1*/ ctx[2]),
+				listen(button1, "click", /*updateHandler2*/ ctx[3]),
 				listen(button2, "click", function () {
-					ctx.clickHandler.apply(this, arguments);
+					/*clickHandler*/ ctx[0].apply(this, arguments);
 				})
 			];
 		},
@@ -61,9 +61,9 @@ function create_fragment(ctx) {
 			insert(target, t5, anchor);
 			insert(target, button2, anchor);
 		},
-		p(changed, new_ctx) {
+		p(new_ctx, [dirty]) {
 			ctx = new_ctx;
-			if (changed.number) set_data(t4, ctx.number);
+			if (dirty & /*number*/ 2) set_data(t4, /*number*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,
@@ -83,19 +83,14 @@ function instance($$self, $$props, $$invalidate) {
 	let number = 0;
 
 	function updateHandler1() {
-		$$invalidate("clickHandler", clickHandler = () => $$invalidate("number", number = 1));
+		$$invalidate(0, clickHandler = () => $$invalidate(1, number = 1));
 	}
 
 	function updateHandler2() {
-		$$invalidate("clickHandler", clickHandler = () => $$invalidate("number", number = 2));
+		$$invalidate(0, clickHandler = () => $$invalidate(1, number = 2));
 	}
 
-	return {
-		clickHandler,
-		number,
-		updateHandler1,
-		updateHandler2
-	};
+	return [clickHandler, number, updateHandler1, updateHandler2];
 }
 
 class Component extends SvelteComponent {

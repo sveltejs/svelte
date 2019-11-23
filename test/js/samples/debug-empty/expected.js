@@ -28,7 +28,7 @@ function create_fragment(ctx) {
 		c: function create() {
 			h1 = element("h1");
 			t0 = text("Hello ");
-			t1 = text(ctx.name);
+			t1 = text(/*name*/ ctx[0]);
 			t2 = text("!");
 			t3 = space();
 			debugger;
@@ -44,8 +44,8 @@ function create_fragment(ctx) {
 			append_dev(h1, t2);
 			insert_dev(target, t3, anchor);
 		},
-		p: function update(changed, ctx) {
-			if (changed.name) set_data_dev(t1, ctx.name);
+		p: function update(ctx, [dirty]) {
+			if (dirty & /*name*/ 1) set_data_dev(t1, /*name*/ ctx[0]);
 			debugger;
 		},
 		i: noop,
@@ -76,7 +76,7 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$set = $$props => {
-		if ("name" in $$props) $$invalidate("name", name = $$props.name);
+		if ("name" in $$props) $$invalidate(0, name = $$props.name);
 	};
 
 	$$self.$capture_state = () => {
@@ -84,10 +84,10 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$inject_state = $$props => {
-		if ("name" in $$props) $$invalidate("name", name = $$props.name);
+		if ("name" in $$props) $$invalidate(0, name = $$props.name);
 	};
 
-	return { name };
+	return [name];
 }
 
 class Component extends SvelteComponentDev {
@@ -105,7 +105,7 @@ class Component extends SvelteComponentDev {
 		const { ctx } = this.$$;
 		const props = options.props || ({});
 
-		if (ctx.name === undefined && !("name" in props)) {
+		if (/*name*/ ctx[0] === undefined && !("name" in props)) {
 			console.warn("<Component> was created without expected prop 'name'");
 		}
 	}

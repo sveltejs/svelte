@@ -1,7 +1,7 @@
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
-import { Node, Identifier } from 'estree';
+import { Node, Identifier, ArrayPattern } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
 
 export interface BlockOptions {
@@ -34,7 +34,7 @@ export default class Block {
 	key: Identifier;
 	first: Identifier;
 
-	dependencies: Set<string>;
+	dependencies: Set<string> = new Set();
 
 	bindings: Map<string, {
 		object: Identifier;
@@ -89,8 +89,6 @@ export default class Block {
 		// for keyed each blocks
 		this.key = options.key;
 		this.first = null;
-
-		this.dependencies = new Set();
 
 		this.bindings = options.bindings;
 
@@ -302,7 +300,13 @@ export default class Block {
 				properties.update = noop;
 			} else {
 				const ctx = this.maintain_context ? x`#new_ctx` : x`#ctx`;
-				properties.update = x`function #update(#changed, ${ctx}) {
+
+				let dirty: Identifier | ArrayPattern = { type: 'Identifier', name: '#dirty' };
+				if (!this.renderer.context_overflow && !this.parent) {
+					dirty = { type: 'ArrayPattern', elements: [dirty] };
+				}
+
+				properties.update = x`function #update(${ctx}, ${dirty}) {
 					${this.maintain_context && b`#ctx = ${ctx};`}
 					${this.chunks.update}
 				}`;

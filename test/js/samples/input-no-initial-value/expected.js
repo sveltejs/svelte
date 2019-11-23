@@ -33,20 +33,20 @@ function create_fragment(ctx) {
 			input.required = true;
 
 			dispose = [
-				listen(input, "input", ctx.input_input_handler),
-				listen(form, "submit", ctx.handleSubmit)
+				listen(input, "input", /*input_input_handler*/ ctx[2]),
+				listen(form, "submit", /*handleSubmit*/ ctx[1])
 			];
 		},
 		m(target, anchor) {
 			insert(target, form, anchor);
 			append(form, input);
-			set_input_value(input, ctx.test);
+			set_input_value(input, /*test*/ ctx[0]);
 			append(form, t0);
 			append(form, button);
 		},
-		p(changed, ctx) {
-			if (changed.test && input.value !== ctx.test) {
-				set_input_value(input, ctx.test);
+		p(ctx, [dirty]) {
+			if (dirty & /*test*/ 1 && input.value !== /*test*/ ctx[0]) {
+				set_input_value(input, /*test*/ ctx[0]);
 			}
 		},
 		i: noop,
@@ -68,10 +68,10 @@ function instance($$self, $$props, $$invalidate) {
 
 	function input_input_handler() {
 		test = this.value;
-		$$invalidate("test", test);
+		$$invalidate(0, test);
 	}
 
-	return { test, handleSubmit, input_input_handler };
+	return [test, handleSubmit, input_input_handler];
 }
 
 class Component extends SvelteComponent {

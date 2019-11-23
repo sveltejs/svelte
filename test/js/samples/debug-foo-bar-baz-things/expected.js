@@ -19,15 +19,15 @@ import {
 const file = undefined;
 
 function get_each_context(ctx, list, i) {
-	const child_ctx = Object.create(ctx);
-	child_ctx.thing = list[i];
+	const child_ctx = ctx.slice();
+	child_ctx[4] = list[i];
 	return child_ctx;
 }
 
 // (8:0) {#each things as thing}
 function create_each_block(ctx) {
 	let span;
-	let t0_value = ctx.thing.name + "";
+	let t0_value = /*thing*/ ctx[4].name + "";
 	let t0;
 	let t1;
 
@@ -38,7 +38,10 @@ function create_each_block(ctx) {
 			t1 = space();
 
 			{
-				const { foo, bar, baz, thing } = ctx;
+				const foo = /*foo*/ ctx[1];
+				const bar = /*bar*/ ctx[2];
+				const baz = /*baz*/ ctx[3];
+				const thing = /*thing*/ ctx[4];
 				console.log({ foo, bar, baz, thing });
 				debugger;
 			}
@@ -50,11 +53,14 @@ function create_each_block(ctx) {
 			append_dev(span, t0);
 			insert_dev(target, t1, anchor);
 		},
-		p: function update(changed, ctx) {
-			if (changed.things && t0_value !== (t0_value = ctx.thing.name + "")) set_data_dev(t0, t0_value);
+		p: function update(ctx, dirty) {
+			if (dirty & /*things*/ 1 && t0_value !== (t0_value = /*thing*/ ctx[4].name + "")) set_data_dev(t0, t0_value);
 
-			if (changed.foo || changed.bar || changed.baz || changed.things) {
-				const { foo, bar, baz, thing } = ctx;
+			if (dirty & /*foo, bar, baz, things*/ 15) {
+				const foo = /*foo*/ ctx[1];
+				const bar = /*bar*/ ctx[2];
+				const baz = /*baz*/ ctx[3];
+				const thing = /*thing*/ ctx[4];
 				console.log({ foo, bar, baz, thing });
 				debugger;
 			}
@@ -81,7 +87,7 @@ function create_fragment(ctx) {
 	let p;
 	let t1;
 	let t2;
-	let each_value = ctx.things;
+	let each_value = /*things*/ ctx[0];
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -97,7 +103,7 @@ function create_fragment(ctx) {
 			t0 = space();
 			p = element("p");
 			t1 = text("foo: ");
-			t2 = text(ctx.foo);
+			t2 = text(/*foo*/ ctx[1]);
 			add_location(p, file, 12, 0, 182);
 		},
 		l: function claim(nodes) {
@@ -113,16 +119,16 @@ function create_fragment(ctx) {
 			append_dev(p, t1);
 			append_dev(p, t2);
 		},
-		p: function update(changed, ctx) {
-			if (changed.things) {
-				each_value = ctx.things;
+		p: function update(ctx, [dirty]) {
+			if (dirty & /*things*/ 1) {
+				each_value = /*things*/ ctx[0];
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(changed, child_ctx);
+						each_blocks[i].p(child_ctx, dirty);
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();
@@ -137,7 +143,7 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (changed.foo) set_data_dev(t2, ctx.foo);
+			if (dirty & /*foo*/ 2) set_data_dev(t2, /*foo*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,
@@ -171,10 +177,10 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$set = $$props => {
-		if ("things" in $$props) $$invalidate("things", things = $$props.things);
-		if ("foo" in $$props) $$invalidate("foo", foo = $$props.foo);
-		if ("bar" in $$props) $$invalidate("bar", bar = $$props.bar);
-		if ("baz" in $$props) $$invalidate("baz", baz = $$props.baz);
+		if ("things" in $$props) $$invalidate(0, things = $$props.things);
+		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
+		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);
+		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
 	};
 
 	$$self.$capture_state = () => {
@@ -182,19 +188,19 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$inject_state = $$props => {
-		if ("things" in $$props) $$invalidate("things", things = $$props.things);
-		if ("foo" in $$props) $$invalidate("foo", foo = $$props.foo);
-		if ("bar" in $$props) $$invalidate("bar", bar = $$props.bar);
-		if ("baz" in $$props) $$invalidate("baz", baz = $$props.baz);
+		if ("things" in $$props) $$invalidate(0, things = $$props.things);
+		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
+		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);
+		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
 	};
 
-	return { things, foo, bar, baz };
+	return [things, foo, bar, baz];
 }
 
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, instance, create_fragment, safe_not_equal, { things: 0, foo: 0, bar: 0, baz: 0 });
+		init(this, options, instance, create_fragment, safe_not_equal, { things: 0, foo: 1, bar: 2, baz: 3 });
 
 		dispatch_dev("SvelteRegisterComponent", {
 			component: this,
@@ -206,19 +212,19 @@ class Component extends SvelteComponentDev {
 		const { ctx } = this.$$;
 		const props = options.props || ({});
 
-		if (ctx.things === undefined && !("things" in props)) {
+		if (/*things*/ ctx[0] === undefined && !("things" in props)) {
 			console.warn("<Component> was created without expected prop 'things'");
 		}
 
-		if (ctx.foo === undefined && !("foo" in props)) {
+		if (/*foo*/ ctx[1] === undefined && !("foo" in props)) {
 			console.warn("<Component> was created without expected prop 'foo'");
 		}
 
-		if (ctx.bar === undefined && !("bar" in props)) {
+		if (/*bar*/ ctx[2] === undefined && !("bar" in props)) {
 			console.warn("<Component> was created without expected prop 'bar'");
 		}
 
-		if (ctx.baz === undefined && !("baz" in props)) {
+		if (/*baz*/ ctx[3] === undefined && !("baz" in props)) {
 			console.warn("<Component> was created without expected prop 'baz'");
 		}
 	}

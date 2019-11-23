@@ -8,7 +8,7 @@ export default {
 				module: false,
 				mutated: false,
 				reassigned: false,
-				referenced: true,
+				referenced: false,
 				referenced_from_script: false,
 				writable: true
 			},

@@ -7,10 +7,14 @@ function foo(bar) {
 	console.log(bar);
 }
 
+function instance($$self, $$props, $$invalidate) {
+	return [foo];
+}
+
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, null, safe_not_equal, { foo: 0 });
+		init(this, options, instance, null, safe_not_equal, { foo: 0 });
 	}
 
 	get foo() {

@@ -9,9 +9,9 @@ import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import Block from '../../render_dom/Block';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
-import { x, b, p } from 'code-red';
-import { invalidate } from '../../utils/invalidate';
-import { Node, FunctionExpression } from 'estree';
+import { b } from 'code-red';
+import { invalidate } from '../../render_dom/invalidate';
+import { Node, FunctionExpression, Identifier } from 'estree';
 import { TemplateNode } from '../../../interfaces';
 
 type Owner = Wrapper | TemplateNode;
@@ -213,7 +213,8 @@ export default class Expression {
 							component.add_reference(name); // TODO is this redundant/misplaced?
 						}
 					} else if (is_contextual(component, template_scope, name)) {
-						this.replace(x`#ctx.${node}`);
+						const reference = block.renderer.reference(node);
+						this.replace(reference);
 					}
 
 					this.skip();
@@ -260,42 +261,38 @@ export default class Expression {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(declaration);
 
-						this.replace(x`#ctx.${id}` as any);
-
-						component.add_var({
-							name: id.name,
-							internal: true,
-							referenced: true
-						});
+						block.renderer.add_to_context(id.name);
+						this.replace(block.renderer.reference(id));
 					}
 
 					else {
 						// we need a combo block/init recipe
-						(node as FunctionExpression).params.unshift({
-							type: 'ObjectPattern',
-							properties: Array.from(contextual_dependencies).map(name => p`${name}` as any)
-						});
+						const deps = Array.from(contextual_dependencies);
+
+						(node as FunctionExpression).params = [
+							...deps.map(name => ({ type: 'Identifier', name } as Identifier)),
+							...(node as FunctionExpression).params
+						];
+
+						const context_args = deps.map(name => block.renderer.reference(name));
 
 						component.partly_hoisted.push(declaration);
 
-						this.replace(id as any);
+						block.renderer.add_to_context(id.name);
+						const callee = block.renderer.reference(id);
 
-						component.add_var({
-							name: id.name,
-							internal: true,
-							referenced: true
-						});
+						this.replace(id as any);
 
 						if ((node as FunctionExpression).params.length > 0) {
 							declarations.push(b`
 								function ${id}(...args) {
-									return #ctx.${id}(#ctx, ...args);
+									return ${callee}(${context_args}, ...args);
 								}
 							`);
 						} else {
 							declarations.push(b`
 								function ${id}() {
-									return #ctx.${id}(#ctx);
+									return ${callee}(${context_args});
 								}
 							`);
 						}
@@ -329,7 +326,7 @@ export default class Expression {
 						}
 					});
 
-					this.replace(invalidate(component, scope, node, traced));
+					this.replace(invalidate(block.renderer, scope, node, traced));
 				}
 			}
 		});

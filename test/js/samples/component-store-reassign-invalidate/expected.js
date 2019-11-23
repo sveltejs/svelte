@@ -27,11 +27,11 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			h1 = element("h1");
-			t0 = text(ctx.$foo);
+			t0 = text(/*$foo*/ ctx[1]);
 			t1 = space();
 			button = element("button");
 			button.textContent = "reset";
-			dispose = listen(button, "click", ctx.click_handler);
+			dispose = listen(button, "click", /*click_handler*/ ctx[2]);
 		},
 		m(target, anchor) {
 			insert(target, h1, anchor);
@@ -39,8 +39,8 @@ function create_fragment(ctx) {
 			insert(target, t1, anchor);
 			insert(target, button, anchor);
 		},
-		p(changed, ctx) {
-			if (changed.$foo) set_data(t0, ctx.$foo);
+		p(ctx, [dirty]) {
+			if (dirty & /*$foo*/ 2) set_data(t0, /*$foo*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,
@@ -56,13 +56,13 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let $foo,
 		$$unsubscribe_foo = noop,
-		$$subscribe_foo = () => ($$unsubscribe_foo(), $$unsubscribe_foo = subscribe(foo, $$value => $$invalidate("$foo", $foo = $$value)), foo);
+		$$subscribe_foo = () => ($$unsubscribe_foo(), $$unsubscribe_foo = subscribe(foo, $$value => $$invalidate(1, $foo = $$value)), foo);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_foo());
 	let foo = writable(0);
 	$$subscribe_foo();
-	const click_handler = () => $$subscribe_foo($$invalidate("foo", foo = writable(0)));
-	return { foo, $foo, click_handler };
+	const click_handler = () => $$subscribe_foo($$invalidate(0, foo = writable(0)));
+	return [foo, $foo, click_handler];
 }
 
 class Component extends SvelteComponent {

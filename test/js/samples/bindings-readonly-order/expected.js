@@ -28,8 +28,8 @@ function create_fragment(ctx) {
 			attr(input1, "type", "file");
 
 			dispose = [
-				listen(input0, "change", ctx.input0_change_handler),
-				listen(input1, "change", ctx.input1_change_handler)
+				listen(input0, "change", /*input0_change_handler*/ ctx[1]),
+				listen(input1, "change", /*input1_change_handler*/ ctx[2])
 			];
 		},
 		m(target, anchor) {
@@ -54,23 +54,19 @@ function instance($$self, $$props, $$invalidate) {
 
 	function input0_change_handler() {
 		files = this.files;
-		$$invalidate("files", files);
+		$$invalidate(0, files);
 	}
 
 	function input1_change_handler() {
 		files = this.files;
-		$$invalidate("files", files);
+		$$invalidate(0, files);
 	}
 
 	$$self.$set = $$props => {
-		if ("files" in $$props) $$invalidate("files", files = $$props.files);
+		if ("files" in $$props) $$invalidate(0, files = $$props.files);
 	};
 
-	return {
-		files,
-		input0_change_handler,
-		input1_change_handler
-	};
+	return [files, input0_change_handler, input1_change_handler];
 }
 
 class Component extends SvelteComponent {

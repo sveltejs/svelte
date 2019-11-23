@@ -3,13 +3,13 @@ import { SvelteComponent, init, noop, safe_not_equal } from "svelte/internal";
 
 function create_fragment(ctx) {
 	let title_value;
-	document.title = title_value = "a " + ctx.custom + " title";
+	document.title = title_value = "a " + /*custom*/ ctx[0] + " title";
 
 	return {
 		c: noop,
 		m: noop,
-		p(changed, ctx) {
-			if (changed.custom && title_value !== (title_value = "a " + ctx.custom + " title")) {
+		p(ctx, [dirty]) {
+			if (dirty & /*custom*/ 1 && title_value !== (title_value = "a " + /*custom*/ ctx[0] + " title")) {
 				document.title = title_value;
 			}
 		},
@@ -23,10 +23,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { custom } = $$props;
 
 	$$self.$set = $$props => {
-		if ("custom" in $$props) $$invalidate("custom", custom = $$props.custom);
+		if ("custom" in $$props) $$invalidate(0, custom = $$props.custom);
 	};
 
-	return { custom };
+	return [custom];
 }
 
 class Component extends SvelteComponent {

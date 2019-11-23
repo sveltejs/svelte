@@ -19,12 +19,12 @@ import add_to_set from '../../../utils/add_to_set';
 import add_event_handlers from '../shared/add_event_handlers';
 import add_actions from '../shared/add_actions';
 import create_debugging_comment from '../shared/create_debugging_comment';
-import { get_context_merger } from '../shared/get_context_merger';
+import { get_slot_definition } from '../shared/get_slot_definition';
 import bind_this from '../shared/bind_this';
-import { changed } from '../shared/changed';
 import { is_head } from '../shared/is_head';
 import { Identifier } from 'estree';
 import EventHandler from './EventHandler';
+import { extract_names } from 'periscopic';
 
 const events = [
 	{
@@ -159,6 +159,14 @@ export default class ElementWrapper extends Wrapper {
 
 		this.class_dependencies = [];
 
+		if (this.node.children.length) {
+			this.node.lets.forEach(l => {
+				extract_names(l.value || l.name).forEach(name => {
+					renderer.add_to_context(name, true);
+				});
+			});
+		}
+
 		this.attributes = this.node.attributes.map(attribute => {
 			if (attribute.name === 'slot') {
 				// TODO make separate subclass for this?
@@ -185,20 +193,17 @@ export default class ElementWrapper extends Wrapper {
 							type: 'slot'
 						});
 
-						const lets = this.node.lets;
+						const { scope, lets } = this.node;
 						const seen = new Set(lets.map(l => l.name.name));
 
 						(owner as unknown as InlineComponentWrapper).node.lets.forEach(l => {
 							if (!seen.has(l.name.name)) lets.push(l);
 						});
 
-						const fn = get_context_merger(lets);
-
-						(owner as unknown as InlineComponentWrapper).slots.set(name, {
-							block: child_block,
-							scope: this.node.scope,
-							fn
-						});
+						(owner as unknown as InlineComponentWrapper).slots.set(
+							name,
+							get_slot_definition(child_block, scope, lets)
+						);
 						this.renderer.blocks.push(child_block);
 					}
 
@@ -282,7 +287,7 @@ export default class ElementWrapper extends Wrapper {
 		const children = x`@children(${this.node.name === 'template' ? x`${node}.content` : node})`;
 
 		block.add_variable(node);
-		const render_statement = this.get_render_statement();
+		const render_statement = this.get_render_statement(block);
 		block.chunks.create.push(
 			b`${node} = ${render_statement};`
 		);
@@ -398,7 +403,7 @@ export default class ElementWrapper extends Wrapper {
 		return this.is_static_content && this.fragment.nodes.every(node => node.node.type === 'Text' || node.node.type === 'MustacheTag');
 	}
 
-	get_render_statement() {
+	get_render_statement(block: Block) {
 		const { name, namespace } = this.node;
 
 		if (namespace === 'http://www.w3.org/2000/svg') {
@@ -411,7 +416,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const is = this.attributes.find(attr => attr.node.name === 'is');
 		if (is) {
-			return x`@element_is("${name}", ${is.render_chunks().reduce((lhs, rhs) => x`${lhs} + ${rhs}`)});`;
+			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)});`;
 		}
 
 		return x`@element("${name}")`;
@@ -455,18 +460,13 @@ export default class ElementWrapper extends Wrapper {
 
 		groups.forEach(group => {
 			const handler = renderer.component.get_unique_name(`${this.var.name}_${group.events.join('_')}_handler`);
-
-			renderer.component.add_var({
-				name: handler.name,
-				internal: true,
-				referenced: true
-			});
+			renderer.add_to_context(handler.name);
 
 			// TODO figure out how to handle locks
 			const needs_lock = group.bindings.some(binding => binding.needs_lock);
 
-			const dependencies = new Set();
-			const contextual_dependencies = new Set();
+			const dependencies: Set<string> = new Set();
+			const contextual_dependencies: Set<string> = new Set();
 
 			group.bindings.forEach(binding => {
 				// TODO this is a mess
@@ -488,10 +488,12 @@ export default class ElementWrapper extends Wrapper {
 
 			const has_local_function = contextual_dependencies.size > 0 || needs_lock || animation_frame;
 
-			let callee;
+			let callee = renderer.reference(handler);
 
 			// TODO dry this out — similar code for event handlers and component bindings
 			if (has_local_function) {
+				const args = Array.from(contextual_dependencies).map(name => renderer.reference(name));
+
 				// need to create a block-local function that calls an instance-level function
 				if (animation_frame) {
 					block.chunks.init.push(b`
@@ -501,43 +503,33 @@ export default class ElementWrapper extends Wrapper {
 								${animation_frame} = @raf(${handler});
 								${needs_lock && b`${lock} = true;`}
 							}
-							#ctx.${handler}.call(${this.var}, ${contextual_dependencies.size > 0 ? '#ctx' : null});
+							${callee}.call(${this.var}, ${args});
 						}
 					`);
 				} else {
 					block.chunks.init.push(b`
 						function ${handler}() {
 							${needs_lock && b`${lock} = true;`}
-							#ctx.${handler}.call(${this.var}, ${contextual_dependencies.size > 0 ? '#ctx' : null});
+							${callee}.call(${this.var}, ${args});
 						}
 					`);
 				}
 
 				callee = handler;
-			} else {
-				callee = x`#ctx.${handler}`;
 			}
 
-			const arg = contextual_dependencies.size > 0 && {
-				type: 'ObjectPattern',
-				properties: Array.from(contextual_dependencies).map(name => {
-					const id = { type: 'Identifier', name };
-					return {
-						type: 'Property',
-						kind: 'init',
-						key: id,
-						value: id
-					};
-				})
-			};
+			const params = Array.from(contextual_dependencies).map(name => ({
+				type: 'Identifier',
+				name
+			}));
 
 			this.renderer.component.partly_hoisted.push(b`
-				function ${handler}(${arg}) {
+				function ${handler}(${params}) {
 					${group.bindings.map(b => b.handler.mutation)}
 					${Array.from(dependencies)
 						.filter(dep => dep[0] !== '$')
 						.filter(dep => !contextual_dependencies.has(dep))
-						.map(dep => b`${this.renderer.component.invalidate(dep)};`)}
+						.map(dep => b`${this.renderer.invalidate(dep)};`)}
 				}
 			`);
 
@@ -632,7 +624,7 @@ export default class ElementWrapper extends Wrapper {
 		this.attributes
 			.forEach(attr => {
 				const condition = attr.node.dependencies.size > 0
-					? changed(Array.from(attr.node.dependencies))
+					? block.renderer.dirty(Array.from(attr.node.dependencies))
 					: null;
 
 				if (attr.node.is_spread) {
@@ -685,8 +677,6 @@ export default class ElementWrapper extends Wrapper {
 		const { intro, outro } = this.node;
 		if (!intro && !outro) return;
 
-		const { component } = this.renderer;
-
 		if (intro === outro) {
 			// bidirectional transition
 			const name = block.get_unique_name(`${this.var.name}_transition`);
@@ -696,7 +686,7 @@ export default class ElementWrapper extends Wrapper {
 
 			block.add_variable(name);
 
-			const fn = component.qualify(intro.name);
+			const fn = this.renderer.reference(intro.name);
 
 			const intro_block = b`
 				@add_render_callback(() => {
@@ -740,7 +730,7 @@ export default class ElementWrapper extends Wrapper {
 					? intro.expression.manipulate(block)
 					: x`{}`;
 
-				const fn = component.qualify(intro.name);
+				const fn = this.renderer.reference(intro.name);
 
 				let intro_block;
 
@@ -782,7 +772,7 @@ export default class ElementWrapper extends Wrapper {
 					? outro.expression.manipulate(block)
 					: x`{}`;
 
-				const fn = component.qualify(outro.name);
+				const fn = this.renderer.reference(outro.name);
 
 				if (!intro) {
 					block.chunks.intro.push(b`
@@ -814,7 +804,6 @@ export default class ElementWrapper extends Wrapper {
 	add_animation(block: Block) {
 		if (!this.node.animation) return;
 
-		const { component } = this.renderer;
 		const { outro } = this.node;
 
 		const rect = block.get_unique_name('rect');
@@ -835,7 +824,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const params = this.node.animation.expression ? this.node.animation.expression.manipulate(block) : x`{}`;
 
-		const name = component.qualify(this.node.animation.name);
+		const name = this.renderer.reference(this.node.animation.name);
 
 		block.chunks.animate.push(b`
 			${stop_animation}();
@@ -844,7 +833,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_actions(block: Block) {
-		add_actions(this.renderer.component, block, this.var, this.node.actions);
+		add_actions(block, this.var, this.node.actions);
 	}
 
 	add_classes(block: Block) {
@@ -868,7 +857,7 @@ export default class ElementWrapper extends Wrapper {
 				block.chunks.update.push(updater);
 			} else if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
 				const all_dependencies = this.class_dependencies.concat(...dependencies);
-				const condition = changed(all_dependencies);
+				const condition = block.renderer.dirty(all_dependencies);
 
 				block.chunks.update.push(b`
 					if (${condition}) {

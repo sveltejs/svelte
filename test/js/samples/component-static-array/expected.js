@@ -13,7 +13,7 @@ import {
 
 function create_fragment(ctx) {
 	let current;
-	const nested = new ctx.Nested({ props: { foo: [1, 2, 3] } });
+	const nested = new /*Nested*/ ctx[0]({ props: { foo: [1, 2, 3] } });
 
 	return {
 		c() {
@@ -41,7 +41,7 @@ function create_fragment(ctx) {
 
 function instance($$self) {
 	const Nested = window.Nested;
-	return { Nested };
+	return [Nested];
 }
 
 class Component extends SvelteComponent {
