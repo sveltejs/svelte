@@ -1,4 +1,4 @@
-import { walk, childKeys } from 'estree-walker';
+import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
 import { globals, reserved, is_valid } from '../utils/names';
@@ -36,13 +36,6 @@ interface ComponentOptions {
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
 }
-
-// We need to tell estree-walker that it should always
-// look for an `else` block, otherwise it might get
-// the wrong idea about the shape of each/if blocks
-childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
-childKeys.Attribute = ['value'];
-childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
 
 export default class Component {
 	stats: Stats;
