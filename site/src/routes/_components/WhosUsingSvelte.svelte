@@ -63,6 +63,7 @@
 	<a target="_blank" rel="noopener" href="http://healthtree.org/"><img src="organisations/healthtree.png" alt="HealthTree logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://itslearning.com"><img src="organisations/itslearning.svg" alt="itslearning logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://jacoux.com"><img src="organisations/jacoux.png" alt="Jacoux logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://www.mentorcv.com"><img src="organisations/mentorcv.png" alt="Mentor CV logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://www.metrovias.com.ar/"><img src="organisations/metrovias.svg" alt="Metrovias logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="http://mustlab.ru"><img src="organisations/mustlab.png" alt="Mustlab logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://www.nesta.org.uk"><img src="organisations/nesta.svg" alt="Nesta logo" loading="lazy"></a>
