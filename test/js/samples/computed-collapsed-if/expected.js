@@ -13,24 +13,24 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	$$self.$set = $$props => {
-		if ("x" in $$props) $$invalidate("x", x = $$props.x);
+		if ("x" in $$props) $$invalidate(0, x = $$props.x);
 	};
 
-	return { x, a, b };
+	return [x, a, b];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, null, safe_not_equal, { x: 0, a: 0, b: 0 });
+		init(this, options, instance, null, safe_not_equal, { x: 0, a: 1, b: 2 });
 	}
 
 	get a() {
-		return this.$$.ctx.a;
+		return this.$$.ctx[1];
 	}
 
 	get b() {
-		return this.$$.ctx.b;
+		return this.$$.ctx[2];
 	}
 }
 

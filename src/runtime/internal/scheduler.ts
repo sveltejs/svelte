@@ -71,10 +71,10 @@ export function flush() {
 
 function update($$) {
 	if ($$.fragment !== null) {
-		$$.update($$.dirty);
+		$$.update();
 		run_all($$.before_update);
-		$$.fragment && $$.fragment.p($$.dirty, $$.ctx);
-		$$.dirty = null;
+		$$.fragment && $$.fragment.p($$.ctx, $$.dirty);
+		$$.dirty = [-1];
 
 		$$.after_update.forEach(add_render_callback);
 	}

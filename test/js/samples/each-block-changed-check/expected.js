@@ -17,9 +17,9 @@ import {
 } from "svelte/internal";
 
 function get_each_context(ctx, list, i) {
-	const child_ctx = Object.create(ctx);
-	child_ctx.comment = list[i];
-	child_ctx.i = i;
+	const child_ctx = ctx.slice();
+	child_ctx[4] = list[i];
+	child_ctx[6] = i;
 	return child_ctx;
 }
 
@@ -30,21 +30,21 @@ function create_each_block(ctx) {
 	let t0;
 	let t1;
 	let span;
-	let t2_value = ctx.comment.author + "";
+	let t2_value = /*comment*/ ctx[4].author + "";
 	let t2;
 	let t3;
-	let t4_value = ctx.elapsed(ctx.comment.time, ctx.time) + "";
+	let t4_value = /*elapsed*/ ctx[1](/*comment*/ ctx[4].time, /*time*/ ctx[2]) + "";
 	let t4;
 	let t5;
 	let t6;
 	let html_tag;
-	let raw_value = ctx.comment.html + "";
+	let raw_value = /*comment*/ ctx[4].html + "";
 
 	return {
 		c() {
 			div = element("div");
 			strong = element("strong");
-			t0 = text(ctx.i);
+			t0 = text(/*i*/ ctx[6]);
 			t1 = space();
 			span = element("span");
 			t2 = text(t2_value);
@@ -69,10 +69,10 @@ function create_each_block(ctx) {
 			append(div, t6);
 			html_tag.m(div);
 		},
-		p(changed, ctx) {
-			if (changed.comments && t2_value !== (t2_value = ctx.comment.author + "")) set_data(t2, t2_value);
-			if ((changed.elapsed || changed.comments || changed.time) && t4_value !== (t4_value = ctx.elapsed(ctx.comment.time, ctx.time) + "")) set_data(t4, t4_value);
-			if (changed.comments && raw_value !== (raw_value = ctx.comment.html + "")) html_tag.p(raw_value);
+		p(ctx, dirty) {
+			if (dirty & /*comments*/ 1 && t2_value !== (t2_value = /*comment*/ ctx[4].author + "")) set_data(t2, t2_value);
+			if (dirty & /*elapsed, comments, time*/ 7 && t4_value !== (t4_value = /*elapsed*/ ctx[1](/*comment*/ ctx[4].time, /*time*/ ctx[2]) + "")) set_data(t4, t4_value);
+			if (dirty & /*comments*/ 1 && raw_value !== (raw_value = /*comment*/ ctx[4].html + "")) html_tag.p(raw_value);
 		},
 		d(detaching) {
 			if (detaching) detach(div);
@@ -84,7 +84,7 @@ function create_fragment(ctx) {
 	let t0;
 	let p;
 	let t1;
-	let each_value = ctx.comments;
+	let each_value = /*comments*/ ctx[0];
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -99,7 +99,7 @@ function create_fragment(ctx) {
 
 			t0 = space();
 			p = element("p");
-			t1 = text(ctx.foo);
+			t1 = text(/*foo*/ ctx[3]);
 		},
 		m(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -110,16 +110,16 @@ function create_fragment(ctx) {
 			insert(target, p, anchor);
 			append(p, t1);
 		},
-		p(changed, ctx) {
-			if (changed.comments || changed.elapsed || changed.time) {
-				each_value = ctx.comments;
+		p(ctx, [dirty]) {
+			if (dirty & /*comments, elapsed, time*/ 7) {
+				each_value = /*comments*/ ctx[0];
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(changed, child_ctx);
+						each_blocks[i].p(child_ctx, dirty);
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();
@@ -134,7 +134,7 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (changed.foo) set_data(t1, ctx.foo);
+			if (dirty & /*foo*/ 8) set_data(t1, /*foo*/ ctx[3]);
 		},
 		i: noop,
 		o: noop,
@@ -153,19 +153,19 @@ function instance($$self, $$props, $$invalidate) {
 	let { foo } = $$props;
 
 	$$self.$set = $$props => {
-		if ("comments" in $$props) $$invalidate("comments", comments = $$props.comments);
-		if ("elapsed" in $$props) $$invalidate("elapsed", elapsed = $$props.elapsed);
-		if ("time" in $$props) $$invalidate("time", time = $$props.time);
-		if ("foo" in $$props) $$invalidate("foo", foo = $$props.foo);
+		if ("comments" in $$props) $$invalidate(0, comments = $$props.comments);
+		if ("elapsed" in $$props) $$invalidate(1, elapsed = $$props.elapsed);
+		if ("time" in $$props) $$invalidate(2, time = $$props.time);
+		if ("foo" in $$props) $$invalidate(3, foo = $$props.foo);
 	};
 
-	return { comments, elapsed, time, foo };
+	return [comments, elapsed, time, foo];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { comments: 0, elapsed: 0, time: 0, foo: 0 });
+		init(this, options, instance, create_fragment, safe_not_equal, { comments: 0, elapsed: 1, time: 2, foo: 3 });
 	}
 }
 

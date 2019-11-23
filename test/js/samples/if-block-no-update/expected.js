@@ -48,12 +48,12 @@ function create_if_block(ctx) {
 function create_fragment(ctx) {
 	let if_block_anchor;
 
-	function select_block_type(changed, ctx) {
-		if (ctx.foo) return create_if_block;
+	function select_block_type(ctx, dirty) {
+		if (/*foo*/ ctx[0]) return create_if_block;
 		return create_else_block;
 	}
 
-	let current_block_type = select_block_type(null, ctx);
+	let current_block_type = select_block_type(ctx, -1);
 	let if_block = current_block_type(ctx);
 
 	return {
@@ -65,8 +65,8 @@ function create_fragment(ctx) {
 			if_block.m(target, anchor);
 			insert(target, if_block_anchor, anchor);
 		},
-		p(changed, ctx) {
-			if (current_block_type !== (current_block_type = select_block_type(changed, ctx))) {
+		p(ctx, [dirty]) {
+			if (current_block_type !== (current_block_type = select_block_type(ctx, dirty))) {
 				if_block.d(1);
 				if_block = current_block_type(ctx);
 
@@ -89,10 +89,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { foo } = $$props;
 
 	$$self.$set = $$props => {
-		if ("foo" in $$props) $$invalidate("foo", foo = $$props.foo);
+		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
 	};
 
-	return { foo };
+	return [foo];
 }
 
 class Component extends SvelteComponent {

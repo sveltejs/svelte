@@ -15,15 +15,15 @@ import {
 } from "svelte/internal";
 
 function get_each_context(ctx, list, i) {
-	const child_ctx = Object.create(ctx);
-	child_ctx.num = list[i];
+	const child_ctx = ctx.slice();
+	child_ctx[5] = list[i];
 	return child_ctx;
 }
 
 // (9:0) {#each [a, b, c, d, e] as num}
 function create_each_block(ctx) {
 	let span;
-	let t_value = ctx.num + "";
+	let t_value = /*num*/ ctx[5] + "";
 	let t;
 
 	return {
@@ -35,8 +35,8 @@ function create_each_block(ctx) {
 			insert(target, span, anchor);
 			append(span, t);
 		},
-		p(changed, ctx) {
-			if ((changed.a || changed.b || changed.c || changed.d || changed.e) && t_value !== (t_value = ctx.num + "")) set_data(t, t_value);
+		p(ctx, dirty) {
+			if (dirty & /*a, b, c, d, e*/ 31 && t_value !== (t_value = /*num*/ ctx[5] + "")) set_data(t, t_value);
 		},
 		d(detaching) {
 			if (detaching) detach(span);
@@ -46,7 +46,7 @@ function create_each_block(ctx) {
 
 function create_fragment(ctx) {
 	let each_1_anchor;
-	let each_value = [ctx.a, ctx.b, ctx.c, ctx.d, ctx.e];
+	let each_value = [/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]];
 	let each_blocks = [];
 
 	for (let i = 0; i < 5; i += 1) {
@@ -68,16 +68,16 @@ function create_fragment(ctx) {
 
 			insert(target, each_1_anchor, anchor);
 		},
-		p(changed, ctx) {
-			if (changed.a || changed.b || changed.c || changed.d || changed.e) {
-				each_value = [ctx.a, ctx.b, ctx.c, ctx.d, ctx.e];
+		p(ctx, [dirty]) {
+			if (dirty & /*a, b, c, d, e*/ 31) {
+				each_value = [/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]];
 				let i;
 
 				for (i = 0; i < 5; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(changed, child_ctx);
+						each_blocks[i].p(child_ctx, dirty);
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();
@@ -107,20 +107,20 @@ function instance($$self, $$props, $$invalidate) {
 	let { e } = $$props;
 
 	$$self.$set = $$props => {
-		if ("a" in $$props) $$invalidate("a", a = $$props.a);
-		if ("b" in $$props) $$invalidate("b", b = $$props.b);
-		if ("c" in $$props) $$invalidate("c", c = $$props.c);
-		if ("d" in $$props) $$invalidate("d", d = $$props.d);
-		if ("e" in $$props) $$invalidate("e", e = $$props.e);
+		if ("a" in $$props) $$invalidate(0, a = $$props.a);
+		if ("b" in $$props) $$invalidate(1, b = $$props.b);
+		if ("c" in $$props) $$invalidate(2, c = $$props.c);
+		if ("d" in $$props) $$invalidate(3, d = $$props.d);
+		if ("e" in $$props) $$invalidate(4, e = $$props.e);
 	};
 
-	return { a, b, c, d, e };
+	return [a, b, c, d, e];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { a: 0, b: 0, c: 0, d: 0, e: 0 });
+		init(this, options, instance, create_fragment, safe_not_equal, { a: 0, b: 1, c: 2, d: 3, e: 4 });
 	}
 }
 

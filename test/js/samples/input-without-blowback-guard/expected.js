@@ -19,15 +19,15 @@ function create_fragment(ctx) {
 		c() {
 			input = element("input");
 			attr(input, "type", "checkbox");
-			dispose = listen(input, "change", ctx.input_change_handler);
+			dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
 		},
 		m(target, anchor) {
 			insert(target, input, anchor);
-			input.checked = ctx.foo;
+			input.checked = /*foo*/ ctx[0];
 		},
-		p(changed, ctx) {
-			if (changed.foo) {
-				input.checked = ctx.foo;
+		p(ctx, [dirty]) {
+			if (dirty & /*foo*/ 1) {
+				input.checked = /*foo*/ ctx[0];
 			}
 		},
 		i: noop,
@@ -44,14 +44,14 @@ function instance($$self, $$props, $$invalidate) {
 
 	function input_change_handler() {
 		foo = this.checked;
-		$$invalidate("foo", foo);
+		$$invalidate(0, foo);
 	}
 
 	$$self.$set = $$props => {
-		if ("foo" in $$props) $$invalidate("foo", foo = $$props.foo);
+		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
 	};
 
-	return { foo, input_change_handler };
+	return [foo, input_change_handler];
 }
 
 class Component extends SvelteComponent {

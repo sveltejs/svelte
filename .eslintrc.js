@@ -35,12 +35,7 @@ module.exports = {
 				argsIgnorePattern: '^_'
 			}
 		],
-		'@typescript-eslint/no-object-literal-type-assertion': [
-			'error',
-			{
-				allowAsParameter: true
-			}
-		],
+		'@typescript-eslint/no-object-literal-type-assertion': 'off',
 		'@typescript-eslint/no-unused-vars': 'off'
 	},
 	globals: {

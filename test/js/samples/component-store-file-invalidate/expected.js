@@ -11,13 +11,13 @@ import { count } from "./store.js";
 
 function instance($$self, $$props, $$invalidate) {
 	let $count;
-	component_subscribe($$self, count, $$value => $$invalidate("$count", $count = $$value));
+	component_subscribe($$self, count, $$value => $$invalidate(1, $count = $$value));
 
 	function increment() {
 		set_store_value(count, $count++, $count);
 	}
 
-	return { increment };
+	return [increment];
 }
 
 class Component extends SvelteComponent {
@@ -27,7 +27,7 @@ class Component extends SvelteComponent {
 	}
 
 	get increment() {
-		return this.$$.ctx.increment;
+		return this.$$.ctx[0];
 	}
 }
 

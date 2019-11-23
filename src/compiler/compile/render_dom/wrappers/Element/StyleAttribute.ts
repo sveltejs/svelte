@@ -7,7 +7,6 @@ import { string_literal } from '../../../utils/stringify';
 import add_to_set from '../../../utils/add_to_set';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
-import { changed } from '../shared/changed';
 
 export interface StyleProp {
 	key: string;
@@ -46,7 +45,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 				// }
 
 				if (prop_dependencies.size) {
-					let condition = changed(Array.from(prop_dependencies));
+					let condition = block.renderer.dirty(Array.from(prop_dependencies));
 
 					if (block.has_outros) {
 						condition = x`!#current || ${condition}`;

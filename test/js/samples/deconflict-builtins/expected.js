@@ -15,15 +15,15 @@ import {
 } from "svelte/internal";
 
 function get_each_context(ctx, list, i) {
-	const child_ctx = Object.create(ctx);
-	child_ctx.node = list[i];
+	const child_ctx = ctx.slice();
+	child_ctx[1] = list[i];
 	return child_ctx;
 }
 
 // (5:0) {#each createElement as node}
 function create_each_block(ctx) {
 	let span;
-	let t_value = ctx.node + "";
+	let t_value = /*node*/ ctx[1] + "";
 	let t;
 
 	return {
@@ -35,8 +35,8 @@ function create_each_block(ctx) {
 			insert(target, span, anchor);
 			append(span, t);
 		},
-		p(changed, ctx) {
-			if (changed.createElement && t_value !== (t_value = ctx.node + "")) set_data(t, t_value);
+		p(ctx, dirty) {
+			if (dirty & /*createElement*/ 1 && t_value !== (t_value = /*node*/ ctx[1] + "")) set_data(t, t_value);
 		},
 		d(detaching) {
 			if (detaching) detach(span);
@@ -46,7 +46,7 @@ function create_each_block(ctx) {
 
 function create_fragment(ctx) {
 	let each_1_anchor;
-	let each_value = ctx.createElement;
+	let each_value = /*createElement*/ ctx[0];
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -68,16 +68,16 @@ function create_fragment(ctx) {
 
 			insert(target, each_1_anchor, anchor);
 		},
-		p(changed, ctx) {
-			if (changed.createElement) {
-				each_value = ctx.createElement;
+		p(ctx, [dirty]) {
+			if (dirty & /*createElement*/ 1) {
+				each_value = /*createElement*/ ctx[0];
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(changed, child_ctx);
+						each_blocks[i].p(child_ctx, dirty);
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();
@@ -105,10 +105,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { createElement } = $$props;
 
 	$$self.$set = $$props => {
-		if ("createElement" in $$props) $$invalidate("createElement", createElement = $$props.createElement);
+		if ("createElement" in $$props) $$invalidate(0, createElement = $$props.createElement);
 	};
 
-	return { createElement };
+	return [createElement];
 }
 
 class Component extends SvelteComponent {

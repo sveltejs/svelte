@@ -32,7 +32,7 @@ function create_fragment(ctx) {
 			insert(target, select, anchor);
 			append(select, option0);
 			append(select, option1);
-			select_value_value = ctx.current;
+			select_value_value = /*current*/ ctx[0];
 
 			for (var i = 0; i < select.options.length; i += 1) {
 				var option = select.options[i];
@@ -43,8 +43,8 @@ function create_fragment(ctx) {
 				}
 			}
 		},
-		p(changed, ctx) {
-			if (changed.current && select_value_value !== (select_value_value = ctx.current)) {
+		p(ctx, [dirty]) {
+			if (dirty & /*current*/ 1 && select_value_value !== (select_value_value = /*current*/ ctx[0])) {
 				for (var i = 0; i < select.options.length; i += 1) {
 					var option = select.options[i];
 
@@ -67,10 +67,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { current } = $$props;
 
 	$$self.$set = $$props => {
-		if ("current" in $$props) $$invalidate("current", current = $$props.current);
+		if ("current" in $$props) $$invalidate(0, current = $$props.current);
 	};
 
-	return { current };
+	return [current];
 }
 
 class Component extends SvelteComponent {

@@ -41,7 +41,7 @@ function create_fragment(ctx) {
 			div1 = element("div");
 			p3 = element("p");
 			t8 = text("Hello ");
-			t9 = text(ctx.world3);
+			t9 = text(/*world3*/ ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, div0, anchor);
@@ -56,8 +56,8 @@ function create_fragment(ctx) {
 			append(p3, t8);
 			append(p3, t9);
 		},
-		p(changed, ctx) {
-			if (changed.world3) set_data(t9, ctx.world3);
+		p(ctx, [dirty]) {
+			if (dirty & /*world3*/ 1) set_data(t9, /*world3*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,
@@ -76,10 +76,10 @@ function instance($$self, $$props, $$invalidate) {
 	const world3 = "world";
 
 	function foo() {
-		$$invalidate("world3", world3 = "svelte");
+		$$invalidate(0, world3 = "svelte");
 	}
 
-	return { world3 };
+	return [world3];
 }
 
 class Component extends SvelteComponent {

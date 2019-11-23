@@ -16,22 +16,22 @@ import {
 const file = undefined;
 
 function get_each_context(ctx, list, i) {
-	const child_ctx = Object.create(ctx);
-	child_ctx.thing = list[i];
-	child_ctx.index = i;
+	const child_ctx = ctx.slice();
+	child_ctx[0] = list[i];
+	child_ctx[2] = i;
 	return child_ctx;
 }
 
 // (4:0) {#each things as thing, index}
 function create_each_block(ctx) {
 	let t0;
-	let t1_value = ctx.thing + "";
+	let t1_value = /*thing*/ ctx[0] + "";
 	let t1;
 
 	const block = {
 		c: function create() {
 			{
-				const { index } = ctx;
+				const index = /*index*/ ctx[2];
 				console.log({ index });
 				debugger;
 			}
@@ -88,8 +88,8 @@ function create_fragment(ctx) {
 
 			insert_dev(target, each_1_anchor, anchor);
 		},
-		p: function update(changed, ctx) {
-			if (changed.things) {
+		p: function update(ctx, [dirty]) {
+			if (dirty & /*things*/ 0) {
 				each_value = things;
 				let i;
 
@@ -97,7 +97,7 @@ function create_fragment(ctx) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(changed, child_ctx);
+						each_blocks[i].p(child_ctx, dirty);
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();

@@ -89,7 +89,7 @@ function instance($$self) {
 		} while (true);
 	}
 
-	return {};
+	return [];
 }
 
 class Component extends SvelteComponentDev {

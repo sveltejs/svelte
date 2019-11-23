@@ -35,21 +35,21 @@ function create_fragment(ctx) {
 		},
 		h() {
 			attr(img0, "alt", "potato");
-			if (img0.src !== (img0_src_value = ctx.url)) attr(img0, "src", img0_src_value);
+			if (img0.src !== (img0_src_value = /*url*/ ctx[0])) attr(img0, "src", img0_src_value);
 			attr(img1, "alt", "potato");
-			if (img1.src !== (img1_src_value = "" + (ctx.slug + ".jpg"))) attr(img1, "src", img1_src_value);
+			if (img1.src !== (img1_src_value = "" + (/*slug*/ ctx[1] + ".jpg"))) attr(img1, "src", img1_src_value);
 		},
 		m(target, anchor) {
 			insert(target, img0, anchor);
 			insert(target, t, anchor);
 			insert(target, img1, anchor);
 		},
-		p(changed, ctx) {
-			if (changed.url && img0.src !== (img0_src_value = ctx.url)) {
+		p(ctx, [dirty]) {
+			if (dirty & /*url*/ 1 && img0.src !== (img0_src_value = /*url*/ ctx[0])) {
 				attr(img0, "src", img0_src_value);
 			}
 
-			if (changed.slug && img1.src !== (img1_src_value = "" + (ctx.slug + ".jpg"))) {
+			if (dirty & /*slug*/ 2 && img1.src !== (img1_src_value = "" + (/*slug*/ ctx[1] + ".jpg"))) {
 				attr(img1, "src", img1_src_value);
 			}
 		},
@@ -68,17 +68,17 @@ function instance($$self, $$props, $$invalidate) {
 	let { slug } = $$props;
 
 	$$self.$set = $$props => {
-		if ("url" in $$props) $$invalidate("url", url = $$props.url);
-		if ("slug" in $$props) $$invalidate("slug", slug = $$props.slug);
+		if ("url" in $$props) $$invalidate(0, url = $$props.url);
+		if ("slug" in $$props) $$invalidate(1, slug = $$props.slug);
 	};
 
-	return { url, slug };
+	return [url, slug];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { url: 0, slug: 0 });
+		init(this, options, instance, create_fragment, safe_not_equal, { url: 0, slug: 1 });
 	}
 }
 

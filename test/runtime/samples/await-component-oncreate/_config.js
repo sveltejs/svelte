@@ -5,7 +5,7 @@ export default {
 		promise
 	},
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		return promise.then(() => {
 			assert.htmlEqual(target.innerHTML, `
 				<p>42</p>

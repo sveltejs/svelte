@@ -1,6 +1,6 @@
 <script>
 	import Widget from './Widget.svelte';
-	let promise = Promise.resolve(['a', 'b']);
+	export let promise = Promise.resolve(['a', 'b']);
 	let value;
 </script>
 

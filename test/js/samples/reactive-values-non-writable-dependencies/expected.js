@@ -6,23 +6,23 @@ function instance($$self, $$props, $$invalidate) {
 	let { b = 2 } = $$props;
 
 	$$self.$set = $$props => {
-		if ("a" in $$props) $$invalidate("a", a = $$props.a);
-		if ("b" in $$props) $$invalidate("b", b = $$props.b);
+		if ("a" in $$props) $$invalidate(0, a = $$props.a);
+		if ("b" in $$props) $$invalidate(1, b = $$props.b);
 	};
 
-	$$self.$$.update = (changed = { a: 1, b: 1 }) => {
-		if (changed.a || changed.b) {
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty & /*a, b*/ 3) {
 			$: console.log("max", Math.max(a, b));
 		}
 	};
 
-	return { a, b };
+	return [a, b];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, null, safe_not_equal, { a: 0, b: 0 });
+		init(this, options, instance, null, safe_not_equal, { a: 0, b: 1 });
 	}
 }
 

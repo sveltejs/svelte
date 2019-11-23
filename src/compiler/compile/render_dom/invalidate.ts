@@ -1,10 +1,12 @@
-import Component from '../Component';
 import { nodes_match } from '../../utils/nodes_match';
-import { Scope } from './scope';
+import { Scope } from '../utils/scope';
 import { x } from 'code-red';
 import { Node } from 'estree';
+import Renderer from './Renderer';
 
-export function invalidate(component: Component, scope: Scope, node: Node, names: Set<string>) {
+export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: Set<string>) {
+	const { component } = renderer;
+
 	const [head, ...tail] = Array.from(names).filter(name => {
 		const owner = scope.find_owner(name);
 		if (owner && owner !== component.instance_scope) return false;
@@ -17,6 +19,7 @@ export function invalidate(component: Component, scope: Scope, node: Node, names
 			!variable.module &&
 			(
 				variable.referenced ||
+				variable.subscribable ||
 				variable.is_reactive_dependency ||
 				variable.export_name ||
 				variable.name[0] === '$'
@@ -28,12 +31,12 @@ export function invalidate(component: Component, scope: Scope, node: Node, names
 		component.has_reactive_assignments = true;
 
 		if (node.type === 'AssignmentExpression' && node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
-			return component.invalidate(head);
+			return renderer.invalidate(head);
 		} else {
 			const is_store_value = head[0] === '$';
 			const variable = component.var_lookup.get(head);
 
-			const extra_args = tail.map(name => component.invalidate(name));
+			const extra_args = tail.map(name => renderer.invalidate(name));
 
 			const pass_value = (
 				extra_args.length > 0 ||
@@ -48,8 +51,9 @@ export function invalidate(component: Component, scope: Scope, node: Node, names
 				});
 			}
 
-			const callee = is_store_value ? `@set_store_value` : `$$invalidate`;
-			let invalidate = x`${callee}(${is_store_value ? head.slice(1) : x`"${head}"`}, ${node}, ${extra_args})`;
+			let invalidate = is_store_value
+				? x`@set_store_value(${head.slice(1)}, ${node}, ${extra_args})`
+				: x`$$invalidate(${renderer.context_lookup.get(head).index}, ${node}, ${extra_args})`;
 
 			if (variable.subscribable && variable.reassigned) {
 				const subscribe = `$$subscribe_${head}`;
