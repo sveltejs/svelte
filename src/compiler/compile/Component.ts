@@ -43,6 +43,7 @@ interface ComponentOptions {
 childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
 childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
+childKeys.Block = ['children'];
 
 export default class Component {
 	stats: Stats;
