@@ -139,13 +139,19 @@ export default class WindowWrapper extends Wrapper {
 
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
-			const condition = renderer.dirty([bindings.scrollX, bindings.scrollY].filter(Boolean));
-
 			const scrollX = bindings.scrollX ? renderer.reference(bindings.scrollX) : x`@_window.pageXOffset`;
 			const scrollY = bindings.scrollY ? renderer.reference(bindings.scrollY) : x`@_window.pageYOffset`;
 
+			let condition = x`
+				${renderer.dirty([bindings.scrollX, bindings.scrollY].filter(Boolean))} &&
+				!${scrolling}
+			`;
+
+			if (bindings.scrollX) condition = x`${condition} && !isNaN(${scrollX})`;
+			if (bindings.scrollY) condition = x`${condition} && !isNaN(${scrollY})`;
+
 			block.chunks.update.push(b`
-				if (${condition} && !${scrolling}) {
+				if (${condition}) {
 					${scrolling} = true;
 					@_clearTimeout(${scrolling_timeout});
 					@_scrollTo(${scrollX}, ${scrollY});

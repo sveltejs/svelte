@@ -31,12 +31,16 @@ export default class Tag extends Wrapper {
 		const dependencies = this.node.expression.dynamic_dependencies();
 		let snippet = this.node.expression.manipulate(block);
 
-		const value = this.node.should_cache && block.get_unique_name(`${this.var.name}_value`);
+		const value = block.get_unique_name(`${this.var.name}_value`);
 		const content = this.node.should_cache ? value : snippet;
 
 		snippet = x`${snippet} + ""`;
 
-		if (this.node.should_cache) block.add_variable(value, snippet); // TODO may need to coerce snippet to string
+		if (dependencies.length > 0) {
+			block.add_variable(value);
+		} else {
+			block.add_variable(value, snippet);
+		}
 
 		if (dependencies.length > 0) {
 			let condition = block.renderer.dirty(dependencies);
@@ -54,6 +58,8 @@ export default class Tag extends Wrapper {
 			block.chunks.update.push(b`if (${condition}) ${update(content as Node)}`);
 		}
 
-		return { init: content };
+		return {
+			init: value
+		};
 	}
 }

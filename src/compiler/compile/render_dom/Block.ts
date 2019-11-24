@@ -287,11 +287,18 @@ export default class Block {
 			}`;
 		}
 
-		if (this.chunks.mount.length === 0) {
+		const needs_update_method = this.maintain_context || (this.chunks.update.length > 0 && this.has_update_method);
+
+		if (this.chunks.mount.length === 0 && this.chunks.update.length === 0) {
 			properties.mount = noop;
 		} else {
+			const dirty = this.renderer.context_overflow
+				? x`TODO` // this.renderer.dirty_expression
+				: this.parent ? x`-1` : x`[-1]`;
+
 			properties.mount = x`function #mount(#target, anchor) {
 				${this.chunks.mount}
+				${needs_update_method && b`this.p(#ctx, ${dirty});`}
 			}`;
 		}
 

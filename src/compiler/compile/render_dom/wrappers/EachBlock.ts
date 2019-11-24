@@ -203,7 +203,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const snippet = this.node.expression.manipulate(block);
 
-		block.chunks.init.push(b`let ${this.vars.each_block_value} = ${snippet};`);
+		block.chunks.init.push(b`let ${this.vars.each_block_value} = [];`);
 
 		// TODO which is better — Object.create(array) or array.slice()?
 		renderer.blocks.push(b`
@@ -261,12 +261,12 @@ export default class EachBlockWrapper extends Wrapper {
 			block.chunks.init.push(b`let ${each_block_else} = null;`);
 
 			// TODO neaten this up... will end up with an empty line in the block
-			block.chunks.init.push(b`
-				if (!${this.vars.data_length}) {
-					${each_block_else} = ${this.else.block.name}(#ctx);
-					${each_block_else}.c();
-				}
-			`);
+			// block.chunks.init.push(b`
+			// 	if (!${this.vars.data_length}) {
+			// 		${each_block_else} = ${this.else.block.name}(#ctx);
+			// 		${each_block_else}.c();
+			// 	}
+			// `);
 
 			block.chunks.mount.push(b`
 				if (${each_block_else}) {
@@ -336,7 +336,6 @@ export default class EachBlockWrapper extends Wrapper {
 		const {
 			create_each_block,
 			iterations,
-			data_length,
 			view_length
 		} = this.vars;
 
@@ -360,12 +359,6 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.chunks.init.push(b`
 			const ${get_key} = #ctx => ${this.node.key.manipulate(block)};
-
-			for (let #i = 0; #i < ${data_length}; #i += 1) {
-				let child_ctx = ${this.vars.get_each_context}(#ctx, ${this.vars.each_block_value}, #i);
-				let key = ${get_key}(child_ctx);
-				${lookup}.set(key, ${iterations}[#i] = ${create_each_block}(key, child_ctx));
-			}
 		`);
 
 		block.chunks.create.push(b`
@@ -450,10 +443,6 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.chunks.init.push(b`
 			let ${iterations} = [];
-
-			for (let #i = 0; #i < ${data_length}; #i += 1) {
-				${iterations}[#i] = ${create_each_block}(${this.vars.get_each_context}(#ctx, ${this.vars.each_block_value}, #i));
-			}
 		`);
 
 		block.chunks.create.push(b`
