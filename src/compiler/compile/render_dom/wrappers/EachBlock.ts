@@ -59,7 +59,7 @@ export default class EachBlockWrapper extends Wrapper {
 		data_length: string;
 		view_length: string;
 	}
-
+	dependencies: string[];
 	context_props: Array<Node | Node[]>;
 	index_name: Identifier;
 
@@ -77,8 +77,8 @@ export default class EachBlockWrapper extends Wrapper {
 		this.cannot_use_innerhtml();
 		this.not_static_content();
 
-		const { dependencies } = node.expression;
-		block.add_dependencies(dependencies);
+		this.dependencies = node.expression.dynamic_dependencies();
+		block.add_dependencies(new Set(this.dependencies)); // TODO awkward
 
 		this.node.contexts.forEach(context => {
 			renderer.add_to_context(context.key.name, true);
@@ -203,7 +203,8 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const snippet = this.node.expression.manipulate(block);
 
-		block.chunks.init.push(b`let ${this.vars.each_block_value} = [];`);
+		const initial_value = this.dependencies.length > 0 ? x`[]` : snippet;
+		block.chunks.init.push(b`let ${this.vars.each_block_value} = ${initial_value};`);
 
 		// TODO which is better — Object.create(array) or array.slice()?
 		renderer.blocks.push(b`
@@ -392,7 +393,7 @@ export default class EachBlockWrapper extends Wrapper {
 				: `@destroy_block`;
 
 		block.chunks.update.push(b`
-			const ${this.vars.each_block_value} = ${snippet};
+			${this.dependencies.length > 0 && b`const ${this.vars.each_block_value} = ${snippet};`}
 
 			${this.block.has_outros && b`@group_outros();`}
 			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
@@ -435,6 +436,7 @@ export default class EachBlockWrapper extends Wrapper {
 	}) {
 		const {
 			create_each_block,
+			get_each_context,
 			iterations,
 			fixed_length,
 			data_length,
@@ -444,6 +446,15 @@ export default class EachBlockWrapper extends Wrapper {
 		block.chunks.init.push(b`
 			let ${iterations} = [];
 		`);
+
+		if (fixed_length) {
+			block.chunks.init.push(b`
+				for (let #i = 0; #i < ${view_length}; #i += 1) {
+					const child_ctx = ${get_each_context}(#ctx, ${this.vars.each_block_value}, #i);
+					${iterations}[#i] = ${create_each_block}(child_ctx);
+				}
+			`);
+		}
 
 		block.chunks.create.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
@@ -516,7 +527,7 @@ export default class EachBlockWrapper extends Wrapper {
 						${iterations}[i] = null;
 					});
 				`);
-				remove_old_blocks = b`
+				remove_old_blocks = data_length !== view_length && b`
 					@group_outros();
 					for (#i = ${data_length}; #i < ${view_length}; #i += 1) {
 						${out}(#i);
@@ -536,7 +547,7 @@ export default class EachBlockWrapper extends Wrapper {
 			// may rely on continuing where this iteration stopped.
 			const update = b`
 				${!this.block.has_update_method && b`const #old_length = ${this.vars.each_block_value}.length;`}
-				${this.vars.each_block_value} = ${snippet};
+				${this.dependencies.length > 0 && b`${this.vars.each_block_value} = ${snippet};`}
 
 				let #i;
 				for (#i = ${start}; #i < ${data_length}; #i += 1) {
