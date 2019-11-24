@@ -153,7 +153,7 @@ export default function dom(
 
 	if (component.compile_options.dev) {
 		// checking that expected ones were passed
-		const expected = props.filter(prop => !prop.initialised);
+		const expected = props.filter(prop => prop.writable && !prop.initialised);
 
 		if (expected.length) {
 			dev_props_check = b`
