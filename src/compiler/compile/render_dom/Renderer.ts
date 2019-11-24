@@ -22,6 +22,7 @@ export default class Renderer {
 	context: ContextMember[] = [];
 	context_lookup: Map<string, ContextMember> = new Map();
 	context_overflow: boolean;
+	is_update: Node;
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
@@ -82,6 +83,9 @@ export default class Renderer {
 		);
 
 		this.context_overflow = this.context.length > 31;
+		this.is_update = this.context_overflow
+			? x`#dirty[0] !== -1`
+			: x`#dirty !== -1`;
 
 		// TODO messy
 		this.blocks.forEach(block => {

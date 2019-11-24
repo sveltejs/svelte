@@ -125,12 +125,8 @@ export default class BindingWrapper {
 			}
 
 			case 'textContent':
-				update_conditions.push(x`${this.snippet} !== ${parent.var}.textContent`);
-				mount_conditions.push(x`${this.snippet} !== void 0`);
-				break;
-
 			case 'innerHTML':
-				update_conditions.push(x`${this.snippet} !== ${parent.var}.innerHTML`);
+				update_conditions.push(x`${this.parent.renderer.is_update} && ${this.snippet} !== ${parent.var}.${this.node.name}`);
 				mount_conditions.push(x`${this.snippet} !== void 0`);
 				break;
 

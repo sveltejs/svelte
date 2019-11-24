@@ -500,7 +500,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 	render_simple(
 		block: Block,
-		_parent_node: Identifier,
+		parent_node: Identifier,
 		_parent_nodes: Identifier,
 		dynamic,
 		{ name, anchor, if_exists_condition, has_transitions },
@@ -509,7 +509,8 @@ export default class IfBlockWrapper extends Wrapper {
 		const branch = this.branches[0];
 
 		if (branch.snippet) block.add_variable(branch.condition, branch.snippet);
-		block.add_variable(name);
+
+		let initial = null;
 
 		if (branch.dependencies.length > 0) {
 			const update_mount_node = this.get_update_mount_node(anchor);
@@ -569,7 +570,18 @@ export default class IfBlockWrapper extends Wrapper {
 			block.chunks.update.push(b`
 				if (${branch.condition}) ${name}.p(#ctx, #dirty);
 			`);
+		} else {
+			initial = x`${branch.block.name}(#ctx)`;
+
+			const initial_mount_node = parent_node || '#target';
+			const anchor_node = parent_node ? 'null' : 'anchor';
+
+			block.chunks.mount.push(
+				b`if (${name}) ${name}.m(${initial_mount_node}, ${anchor_node});`
+			);
 		}
+
+		block.add_variable(name, initial);
 
 		if (if_exists_condition) {
 			block.chunks.destroy.push(b`
