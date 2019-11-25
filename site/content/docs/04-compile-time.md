@@ -4,7 +4,7 @@ title: Compile time
 
 Typically, you won't interact with the Svelte compiler directly, but will instead integrate it into your build system using a bundler plugin:
 
-* [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) for users of [Rollup](https://rollupjs.org)
+* [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) for users of [Rollup](https://rollupjs.org)
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) for users of [webpack](https://webpack.js.org)
 * or one of the [community-maintained plugins](https://github.com/sveltejs/integrations#bundler-plugins)
 
@@ -237,7 +237,7 @@ const { code } = svelte.preprocess(source, {
 
 The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively. In addition to `filename`, they get an object of the element's attributes.
 
-If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
+If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 
 ```js
 const svelte = require('svelte/compiler');
