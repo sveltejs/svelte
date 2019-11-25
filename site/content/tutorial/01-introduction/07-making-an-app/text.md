@@ -6,7 +6,7 @@ This tutorial is designed to get you familiar with the process of writing compon
 
 First, you'll need to integrate Svelte with a build tool. There are officially maintained plugins for [Rollup](https://rollupjs.org) and [webpack](https://webpack.js.org/)...
 
-* [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte)
+* [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte)
 * [svelte-loader](https://github.com/sveltejs/svelte-loader)
 
 ...and a variety of [community-maintained ones](https://github.com/sveltejs/integrations#bundler-plugins).
