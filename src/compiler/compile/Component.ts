@@ -162,13 +162,12 @@ export default class Component {
 			this.tag = this.name.name;
 		}
 
-		this.walk_module_js_pre_template();
+		this.walk_module_js();
 		this.walk_instance_js_pre_template();
 
 		this.fragment = new Fragment(this, ast.html);
 		this.name = this.get_unique_name(name);
 
-		this.walk_module_js_post_template();
 		this.walk_instance_js_post_template();
 
 		if (!compile_options.customElement) this.stylesheet.reify();
@@ -517,7 +516,7 @@ export default class Component {
 		});
 	}
 
-	walk_module_js_pre_template() {
+	walk_module_js() {
 		const component = this;
 		const script = this.ast.module;
 		if (!script) return;
@@ -568,6 +567,25 @@ export default class Component {
 				});
 			}
 		});
+
+		const { body } = script.content;
+		let i = body.length;
+		while (--i >= 0) {
+			const node = body[i];
+			if (node.type === 'ImportDeclaration') {
+				this.extract_imports(node);
+				body.splice(i, 1);
+			}
+
+			if (/^Export/.test(node.type)) {
+				const replacement = this.extract_exports(node);
+				if (replacement) {
+					body[i] = replacement;
+				} else {
+					body.splice(i, 1);
+				}
+			}
+		}
 	}
 
 	walk_instance_js_pre_template() {
@@ -663,30 +681,6 @@ export default class Component {
 		});
 
 		this.track_references_and_mutations();
-	}
-
-	walk_module_js_post_template() {
-		const script = this.ast.module;
-		if (!script) return;
-
-		const { body } = script.content;
-		let i = body.length;
-		while (--i >= 0) {
-			const node = body[i];
-			if (node.type === 'ImportDeclaration') {
-				this.extract_imports(node);
-				body.splice(i, 1);
-			}
-
-			if (/^Export/.test(node.type)) {
-				const replacement = this.extract_exports(node);
-				if (replacement) {
-					body[i] = replacement;
-				} else {
-					body.splice(i, 1);
-				}
-			}
-		}
 	}
 
 	walk_instance_js_post_template() {
