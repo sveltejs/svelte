@@ -723,7 +723,7 @@ export default class Component {
 						if (arg.type == 'Identifier') {
 							function_args.add(arg.name);
 						}
-					})
+					});
 				}
 
 				if (node.type === 'ImportDeclaration') {
