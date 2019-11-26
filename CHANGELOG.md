@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## Unreleased
+
+* Use bitmasks to track changes ([#3945](https://github.com/sveltejs/svelte/pull/3945))
+* Fix heisenbug with component styles ([#3977](https://github.com/sveltejs/svelte/issues/3977))
+* Do not warn about missing expected props for `export function foo() {}` ([#3954](https://github.com/sveltejs/svelte/issues/3954))
+* Fix `context="module"` exports with the same name as an instance variable ([#3983](https://github.com/sveltejs/svelte/issues/3983))
+
 ## 3.15.0
 
 * Hide commented sections from preprocessors ([#3894](https://github.com/sveltejs/svelte/pull/3894))
