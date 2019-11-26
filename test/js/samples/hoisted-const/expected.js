@@ -15,7 +15,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			b = element("b");
-			b.textContent = `${get_answer()}`;
+			b.textContent = `${/*get_answer*/ ctx[0]()}`;
 		},
 		m(target, anchor) {
 			insert(target, b, anchor);
@@ -31,14 +31,18 @@ function create_fragment(ctx) {
 
 const ANSWER = 42;
 
-function get_answer() {
-	return ANSWER;
+function instance($$self) {
+	function get_answer() {
+		return ANSWER;
+	}
+
+	return [get_answer];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, {});
+		init(this, options, instance, create_fragment, safe_not_equal, {});
 	}
 }
 

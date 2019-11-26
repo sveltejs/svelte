@@ -3,11 +3,11 @@ import { SvelteComponent, init, safe_not_equal } from "svelte/internal";
 
 const SOME_CONSTANT = 42;
 
-function foo(bar) {
-	console.log(bar);
-}
-
 function instance($$self, $$props, $$invalidate) {
+	function foo(bar) {
+		console.log(bar);
+	}
+
 	return [foo];
 }
 
@@ -18,7 +18,7 @@ class Component extends SvelteComponent {
 	}
 
 	get foo() {
-		return foo;
+		return this.$$.ctx[0];
 	}
 }
 

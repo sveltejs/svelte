@@ -17,7 +17,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			input = element("input");
-			dispose = listen(input, "input", make_uppercase);
+			dispose = listen(input, "input", /*make_uppercase*/ ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, input, anchor);
@@ -32,14 +32,18 @@ function create_fragment(ctx) {
 	};
 }
 
-function make_uppercase() {
-	this.value = this.value.toUpperCase();
+function instance($$self) {
+	function make_uppercase() {
+		this.value = this.value.toUpperCase();
+	}
+
+	return [make_uppercase];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, {});
+		init(this, options, instance, create_fragment, safe_not_equal, {});
 	}
 }
 

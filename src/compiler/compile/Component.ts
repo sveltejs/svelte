@@ -63,8 +63,6 @@ export default class Component {
 
 	imports: ImportDeclaration[] = [];
 
-	function_args: Set<string> = new Set();
-
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
 	partly_hoisted: Array<(Node | Node[])> = [];
@@ -701,7 +699,7 @@ export default class Component {
 
 		const component = this;
 		const { content } = script;
-		const { function_args, instance_scope, instance_scope_map: map } = this;
+		const { instance_scope, instance_scope_map: map } = this;
 
 		let scope = instance_scope;
 
@@ -716,14 +714,6 @@ export default class Component {
 			enter(node, parent, prop, index) {
 				if (map.has(node)) {
 					scope = map.get(node);
-				}
-
-				if (node.type === 'CallExpression') {
-					node.arguments.forEach(arg => {
-						if (arg.type == 'Identifier') {
-							function_args.add(arg.name);
-						}
-					});
 				}
 
 				if (node.type === 'ImportDeclaration') {
@@ -804,6 +794,17 @@ export default class Component {
 			enter(node, parent) {
 				if (map.has(node)) {
 					scope = map.get(node);
+				}
+
+				// @ts-ignore
+				if (node.type === 'ExpressionStatement' && node.expression && node.expression.arguments) {
+					// @ts-ignore
+					node.expression.arguments.forEach(({ name }) => {
+						if (scope.find_owner(name) === instance_scope) {
+							const variable = component.var_lookup.get(name);
+							variable['argument'] = true;
+						}
+					});
 				}
 
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
@@ -1064,7 +1065,6 @@ export default class Component {
 			const instance_scope = this.instance_scope;
 			let scope = this.instance_scope;
 			const map = this.instance_scope_map;
-			const function_args = this.function_args;
 
 			let hoistable = true;
 
@@ -1082,10 +1082,8 @@ export default class Component {
 					if (is_reference(node as Node, parent as Node)) {
 						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
-						
-						if (function_args.has(name)) {
-							hoistable = false;
-						} else if (injected_reactive_declaration_vars.has(name)) {
+
+						if (injected_reactive_declaration_vars.has(name)) {
 							hoistable = false;
 						} else if (name[0] === '$' && !owner) {
 							hoistable = false;
@@ -1138,12 +1136,14 @@ export default class Component {
 		for (const [name, node] of top_level_function_declarations) {
 			if (is_hoistable(node)) {
 				const variable = this.var_lookup.get(name);
-				variable.hoistable = true;
-				hoistable_nodes.add(node);
+				if ('argument' in variable && !variable.argument) {
+					variable.hoistable = true;
+					hoistable_nodes.add(node);
 
-				const i = body.indexOf(node);
-				body.splice(i, 1);
-				this.fully_hoisted.push(node);
+					const i = body.indexOf(node);
+					body.splice(i, 1);
+					this.fully_hoisted.push(node);
+				}
 			}
 		}
 	}

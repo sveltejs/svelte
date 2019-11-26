@@ -21,10 +21,10 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, button, anchor);
-			foo_action = foo.call(null, button, /*foo_function*/ ctx[2]) || ({});
+			foo_action = /*foo*/ ctx[2].call(null, button, /*foo_function*/ ctx[3]) || ({});
 		},
 		p(ctx, [dirty]) {
-			if (is_function(foo_action.update) && dirty & /*bar*/ 1) foo_action.update.call(null, /*foo_function*/ ctx[2]);
+			if (is_function(foo_action.update) && dirty & /*bar*/ 1) foo_action.update.call(null, /*foo_function*/ ctx[3]);
 		},
 		i: noop,
 		o: noop,
@@ -35,15 +35,15 @@ function create_fragment(ctx) {
 	};
 }
 
-function foo(node, callback) {
-	
-}
-
 function instance($$self, $$props, $$invalidate) {
 	let { bar } = $$props;
 
 	function handleFoo(bar) {
 		console.log(bar);
+	}
+
+	function foo(node, callback) {
+		
 	}
 
 	const foo_function = () => handleFoo(bar);
@@ -52,7 +52,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("bar" in $$props) $$invalidate(0, bar = $$props.bar);
 	};
 
-	return [bar, handleFoo, foo_function];
+	return [bar, handleFoo, foo, foo_function];
 }
 
 class Component extends SvelteComponent {
