@@ -1137,7 +1137,7 @@ export default class Component {
 		for (const [name, node] of top_level_function_declarations) {
 			if (is_hoistable(node)) {
 				const variable = this.var_lookup.get(name);
-				if ('argument' in variable && !variable.argument) {
+				if (!('argument' in variable && variable.argument)) {
 					variable.hoistable = true;
 					hoistable_nodes.add(node);
 

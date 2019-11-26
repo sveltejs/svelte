@@ -7,6 +7,14 @@ function preload(input) {
 	return output;
 }
 
+function foo() {
+	console.log("foo");
+}
+
+function swipe(node, callback) {
+	
+}
+
 const Component = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	onMount(() => {
 		console.log("onMount");
@@ -15,14 +23,6 @@ const Component = create_ssr_component(($$result, $$props, $$bindings, $$slots) 
 	onDestroy(() => {
 		console.log("onDestroy");
 	});
-
-	function foo() {
-		console.log("foo");
-	}
-
-	function swipe(node, callback) {
-		
-	}
 
 	return ``;
 });

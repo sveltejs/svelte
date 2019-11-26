@@ -65,7 +65,7 @@ function create_if_block_1(ctx) {
 			if (local) {
 				if (!div_intro) {
 					add_render_callback(() => {
-						div_intro = create_in_transition(div, /*foo*/ ctx[2], {});
+						div_intro = create_in_transition(div, foo, {});
 						div_intro.start();
 					});
 				}
@@ -114,20 +114,20 @@ function create_fragment(ctx) {
 	};
 }
 
+function foo() {
+	
+}
+
 function instance($$self, $$props, $$invalidate) {
 	let { x } = $$props;
 	let { y } = $$props;
-
-	function foo() {
-		
-	}
 
 	$$self.$set = $$props => {
 		if ("x" in $$props) $$invalidate(0, x = $$props.x);
 		if ("y" in $$props) $$invalidate(1, y = $$props.y);
 	};
 
-	return [x, y, foo];
+	return [x, y];
 }
 
 class Component extends SvelteComponent {
