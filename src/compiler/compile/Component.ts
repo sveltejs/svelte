@@ -796,13 +796,14 @@ export default class Component {
 					scope = map.get(node);
 				}
 
-				// @ts-ignore
-				if (node.type === 'ExpressionStatement' && node.expression && node.expression.arguments) {
-					// @ts-ignore
-					node.expression.arguments.forEach(({ name }) => {
-						if (scope.find_owner(name) === instance_scope) {
-							const variable = component.var_lookup.get(name);
-							variable['argument'] = true;
+				if (node.type === 'ExpressionStatement' && node.expression.type === 'CallExpression') {
+					node.expression.arguments.forEach(arg => {
+						if (arg.type === 'Identifier') {
+							const { name } = arg;
+							if (scope.find_owner(name) === instance_scope) {
+								const variable = component.var_lookup.get(name);
+								variable['argument'] = true;
+							}
 						}
 					});
 				}
