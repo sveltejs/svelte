@@ -23,7 +23,7 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, a, anchor);
-			link_action = link.call(null, a) || ({});
+			link_action = /*link*/ ctx[0].call(null, a) || ({});
 		},
 		p: noop,
 		i: noop,
@@ -35,25 +35,29 @@ function create_fragment(ctx) {
 	};
 }
 
-function link(node) {
-	function onClick(event) {
-		event.preventDefault();
-		history.pushState(null, null, event.target.href);
+function instance($$self) {
+	function link(node) {
+		function onClick(event) {
+			event.preventDefault();
+			history.pushState(null, null, event.target.href);
+		}
+
+		node.addEventListener("click", onClick);
+
+		return {
+			destroy() {
+				node.removeEventListener("click", onClick);
+			}
+		};
 	}
 
-	node.addEventListener("click", onClick);
-
-	return {
-		destroy() {
-			node.removeEventListener("click", onClick);
-		}
-	};
+	return [link];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, {});
+		init(this, options, instance, create_fragment, safe_not_equal, {});
 	}
 }
 
