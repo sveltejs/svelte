@@ -802,7 +802,7 @@ export default class Component {
 							const { name } = arg;
 							if (scope.find_owner(name) === instance_scope) {
 								const variable = component.var_lookup.get(name);
-								variable['argument'] = true;
+								variable.aliased = true;
 							}
 						}
 					});
@@ -1137,7 +1137,7 @@ export default class Component {
 		for (const [name, node] of top_level_function_declarations) {
 			if (is_hoistable(node)) {
 				const variable = this.var_lookup.get(name);
-				if (!('argument' in variable && variable.argument)) {
+				if (!variable.aliased) {
 					variable.hoistable = true;
 					hoistable_nodes.add(node);
 

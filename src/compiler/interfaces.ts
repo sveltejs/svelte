@@ -160,5 +160,5 @@ export interface Var {
 	hoistable?: boolean;
 	subscribable?: boolean;
 	is_reactive_dependency?: boolean;
-	argument?: boolean;
+	aliased?: boolean;
 }
