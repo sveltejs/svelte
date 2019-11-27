@@ -803,12 +803,9 @@ export default class Component {
 
 				if (node.type === 'CallExpression') {
 					node.arguments.forEach(arg => {
-						if (arg.type === 'Identifier') {
-							const { name } = arg;
-							if (scope.find_owner(name) === instance_scope) {
-								const variable = component.var_lookup.get(name);
-								variable.aliased = true;
-							}
+						if (arg.type === 'Identifier' && scope.find_owner(arg.name) === instance_scope) {
+							const variable = component.var_lookup.get(arg.name);
+							variable.aliased = true;
 						}
 					});
 				}
