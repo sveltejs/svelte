@@ -45,7 +45,7 @@ async function replace_async(str: string, re: RegExp, func: (...any) => Promise<
 	str.replace(re, (...args) => {
 		replacements.push(
 			func(...args).then(
-				res => // eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
+				res =>
 					({
 						offset: args[args.length - 2],
 						length: args[0].length,
