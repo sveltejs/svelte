@@ -1,5 +1,4 @@
 import * as acorn from '../acorn';
-import repeat from '../../utils/repeat';
 import { Parser } from '../index';
 import { Script } from '../../interfaces';
 import { Node, Program } from 'estree';
@@ -38,8 +37,7 @@ export default function read_script(parser: Parser, start: number, attributes: N
 		message: `<script> must have a closing tag`
 	});
 
-	const source =
-		repeat(' ', script_start) + parser.template.slice(script_start, script_end);
+	const source = ' '.repeat(script_start) + parser.template.slice(script_start, script_end);
 	parser.index = script_end + script_closing_tag.length;
 
 	let ast: Program;
