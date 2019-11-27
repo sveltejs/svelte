@@ -796,6 +796,11 @@ export default class Component {
 					scope = map.get(node);
 				}
 
+				if (node.type === 'VariableDeclarator' && node.id.type === 'Identifier' && node.init.type === 'Identifier') {
+					const variable = component.var_lookup.get(node.init.name);
+					variable.aliased = true;
+				}
+
 				if (node.type === 'ExpressionStatement' && node.expression.type === 'CallExpression') {
 					node.expression.arguments.forEach(arg => {
 						if (arg.type === 'Identifier') {
