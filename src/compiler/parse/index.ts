@@ -65,10 +65,10 @@ export class Parser {
 		}
 
 		if (this.html.children.length) {
-			let start = this.html.children[0] && this.html.children[0].start;
+			let start = this.html.children[0].start;
 			while (whitespace.test(template[start])) start += 1;
 
-			let end = this.html.children[this.html.children.length - 1] && this.html.children[this.html.children.length - 1].end;
+			let end = this.html.children[this.html.children.length - 1].end;
 			while (whitespace.test(template[end - 1])) end -= 1;
 
 			this.html.start = start;
