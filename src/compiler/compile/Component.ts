@@ -1096,7 +1096,7 @@ export default class Component {
 						} else if (owner === instance_scope) {
 							const variable = var_lookup.get(name);
 
-							if (variable.reassigned || variable.mutated) hoistable = false;
+							if (variable.reassigned || variable.mutated || variable.aliased) hoistable = false;
 
 							if (name === fn_declaration.id.name) return;
 
@@ -1142,14 +1142,12 @@ export default class Component {
 		for (const [name, node] of top_level_function_declarations) {
 			if (is_hoistable(node)) {
 				const variable = this.var_lookup.get(name);
-				if (!variable.aliased) {
-					variable.hoistable = true;
-					hoistable_nodes.add(node);
+				variable.hoistable = true;
+				hoistable_nodes.add(node);
 
-					const i = body.indexOf(node);
-					body.splice(i, 1);
-					this.fully_hoisted.push(node);
-				}
+				const i = body.indexOf(node);
+				body.splice(i, 1);
+				this.fully_hoisted.push(node);
 			}
 		}
 	}
