@@ -796,7 +796,7 @@ export default class Component {
 					scope = map.get(node);
 				}
 
-				if (node.type === 'VariableDeclarator' && node.id !== null && node.id.type === 'Identifier' && node.init !== null && node.init.type === 'Identifier') {
+				if (node.type === 'VariableDeclarator' && node.init !== null && node.init.type === 'Identifier') {
 					const variable = component.var_lookup.get(node.init.name);
 					variable.aliased = true;
 				}
