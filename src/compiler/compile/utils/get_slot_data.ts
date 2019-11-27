@@ -9,13 +9,13 @@ export default function get_slot_data(values: Map<string, Attribute>, block: Blo
 		properties: Array.from(values.values())
 			.filter(attribute => attribute.name !== 'name')
 			.map(attribute => {
-				const value = get_value(attribute, block);
+				const value = get_value(block, attribute);
 				return p`${attribute.name}: ${value}`;
 			})
 	};
 }
 
-function get_value(attribute: Attribute, block: Block = null) {
+function get_value(block: Block, attribute: Attribute) {
 	if (attribute.is_true) return x`true`;
 	if (attribute.chunks.length === 0) return x`""`;
 
