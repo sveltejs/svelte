@@ -801,8 +801,8 @@ export default class Component {
 					variable.aliased = true;
 				}
 
-				if (node.type === 'ExpressionStatement' && node.expression.type === 'CallExpression') {
-					node.expression.arguments.forEach(arg => {
+				if (node.type === 'CallExpression') {
+					node.arguments.forEach(arg => {
 						if (arg.type === 'Identifier') {
 							const { name } = arg;
 							if (scope.find_owner(name) === instance_scope) {
