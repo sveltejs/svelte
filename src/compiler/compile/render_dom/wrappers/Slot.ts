@@ -96,7 +96,7 @@ export default class SlotWrapper extends Wrapper {
 
 			renderer.blocks.push(b`
 				const ${get_slot_changes_fn} = #dirty => ${changes};
-				const ${get_slot_context_fn} = #ctx => ${get_slot_data(block, this.node.values)};
+				const ${get_slot_context_fn} = #ctx => ${get_slot_data(this.node.values, block)};
 			`);
 		} else {
 			get_slot_changes_fn = 'null';
