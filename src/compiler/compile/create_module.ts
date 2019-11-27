@@ -41,6 +41,32 @@ function edit_source(source, sveltePath) {
 		: source;
 }
 
+function get_internal_globals(
+	globals: Array<{ name: string; alias: Identifier }>, 
+	helpers: Array<{ name: string; alias: Identifier }>
+) {
+	return globals.length > 0 && {
+		type: 'VariableDeclaration',
+		kind: 'const',
+		declarations: [{
+			type: 'VariableDeclarator',
+			id: {
+				type: 'ObjectPattern',
+				properties: globals.map(g => ({
+					type: 'Property',
+					method: false,
+					shorthand: false,
+					computed: false,
+					key: { type: 'Identifier', name: g.name },
+					value: g.alias,
+					kind: 'init'
+				}))
+			},
+			init: helpers.find(({ name }) => name === 'globals').alias
+		}]
+	};
+} 
+
 function esm(
 	program: any,
 	name: Identifier,
@@ -62,26 +88,7 @@ function esm(
 		source: { type: 'Literal', value: internal_path }
 	};
 
-	const internal_globals = globals.length > 0 && {
-		type: 'VariableDeclaration',
-		kind: 'const',
-		declarations: [{
-			type: 'VariableDeclarator',
-			id: {
-				type: 'ObjectPattern',
-				properties: globals.map(g => ({
-					type: 'Property',
-					method: false,
-					shorthand: false,
-					computed: false,
-					key: { type: 'Identifier', name: g.name },
-					value: g.alias,
-					kind: 'init'
-				}))
-			},
-			init: helpers.find(({ name }) => name === 'globals').alias
-		}]
-	};
+	const internal_globals = get_internal_globals(globals, helpers);
 
 	// edit user imports
 	imports.forEach(node => {
@@ -143,26 +150,7 @@ function cjs(
 		}]
 	};
 
-	const internal_globals = globals.length > 0 && {
-		type: 'VariableDeclaration',
-		kind: 'const',
-		declarations: [{
-			type: 'VariableDeclarator',
-			id: {
-				type: 'ObjectPattern',
-				properties: globals.map(g => ({
-					type: 'Property',
-					method: false,
-					shorthand: false,
-					computed: false,
-					key: { type: 'Identifier', name: g.name },
-					value: g.alias,
-					kind: 'init'
-				}))
-			},
-			init: helpers.find(({ name }) => name === 'globals').alias
-		}]
-	};
+	const internal_globals = get_internal_globals(globals, helpers);
 
 	const user_requires = imports.map(node => ({
 		type: 'VariableDeclaration',
