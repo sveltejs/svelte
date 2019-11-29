@@ -54,8 +54,8 @@ export default class EventHandlerWrapper {
 		}
 
 		if (block.renderer.options.dev) {
-			args.push(this.node.modifiers.has('stopPropagation') ? TRUE : FALSE);
 			args.push(this.node.modifiers.has('preventDefault') ? TRUE : FALSE);
+			args.push(this.node.modifiers.has('stopPropagation') ? TRUE : FALSE);
 		}
 
 		block.event_listeners.push(
