@@ -263,7 +263,6 @@ export default class IfBlockWrapper extends Wrapper {
 			? x`${current_block_type}(#ctx)`
 			: x`${current_block_type} && ${current_block_type}(#ctx)`;
 
-		/* eslint-disable @typescript-eslint/indent,indent */
 		if (this.needs_update) {
 			block.chunks.init.push(b`
 				function ${select_block_type}(#ctx, #dirty) {
@@ -287,7 +286,6 @@ export default class IfBlockWrapper extends Wrapper {
 				}
 			`);
 		}
-		/* eslint-enable @typescript-eslint/indent,indent */
 
 		block.chunks.init.push(b`
 			let ${current_block_type} = ${select_block_type}(#ctx, -1);
@@ -375,7 +373,6 @@ export default class IfBlockWrapper extends Wrapper {
 		block.add_variable(current_block_type_index);
 		block.add_variable(name);
 
-		/* eslint-disable @typescript-eslint/indent,indent */
 		block.chunks.init.push(b`
 			const ${if_block_creators} = [
 				${this.branches.map(branch => branch.block.name)}
@@ -407,7 +404,6 @@ export default class IfBlockWrapper extends Wrapper {
 					}
 				`}
 		`);
-		/* eslint-enable @typescript-eslint/indent,indent */
 
 		if (has_else) {
 			block.chunks.init.push(b`
