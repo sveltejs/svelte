@@ -1,12 +1,14 @@
 # Svelte changelog
 
-## Unreleased
+## 3.16.0
 
 * Use bitmasks to track changes ([#3945](https://github.com/sveltejs/svelte/pull/3945))
 * Fix heisenbug with component styles ([#3977](https://github.com/sveltejs/svelte/issues/3977))
 * Do not warn about missing expected props for `export function foo() {}` ([#3954](https://github.com/sveltejs/svelte/issues/3954))
 * Fix `context="module"` exports with the same name as an instance variable ([#3983](https://github.com/sveltejs/svelte/issues/3983))
 * Fix binding to contextual values from `{#each}` blocks referring to global variables ([#3992](https://github.com/sveltejs/svelte/issues/3992))
+* Use `requestAnimationFrame` callback argument for smoother transitions ([#4014](https://github.com/sveltejs/svelte/pull/4014))
+* Fix `listen_dev` argument order ([#4016](https://github.com/sveltejs/svelte/pull/4016))
 
 ## 3.15.0
 
