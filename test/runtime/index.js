@@ -107,7 +107,7 @@ describe("runtime", () => {
 					set_raf(cb => {
 						raf.callback = () => {
 							raf.callback = null;
-							cb();
+							cb(raf.time);
 							flush();
 						};
 					});
