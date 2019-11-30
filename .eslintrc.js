@@ -36,7 +36,8 @@ module.exports = {
 			}
 		],
 		'@typescript-eslint/no-object-literal-type-assertion': 'off',
-		'@typescript-eslint/no-unused-vars': 'off'
+		'@typescript-eslint/no-unused-vars': 'off',
+		'@typescript-eslint/prefer-interface': 'off'
 	},
 	globals: {
 		globalThis: false
