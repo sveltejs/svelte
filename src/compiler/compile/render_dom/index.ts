@@ -75,7 +75,6 @@ export default function dom(
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	/* eslint-disable @typescript-eslint/indent,indent */
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
 		? x`
 			${$$props} => {
@@ -88,7 +87,6 @@ export default function dom(
 			}
 		`
 		: null;
-	/* eslint-enable @typescript-eslint/indent,indent */
 
 	const accessors = [];
 

@@ -79,7 +79,6 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 	let inv_mass_recovery_rate = 0;
 	let cancel_task = false;
 
-	/* eslint-disable @typescript-eslint/no-use-before-define */
 	function set(new_value: T, opts: SpringUpdateOpts={}): Promise<void> {
 		target_value = new_value;
 		const token = current_token = {};
@@ -134,7 +133,6 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 			});
 		});
 	}
-	/* eslint-enable @typescript-eslint/no-use-before-define */
 
 	const spring: Spring<T> = {
 		set,
