@@ -206,7 +206,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 					} else {
 						const #child_ctx = #ctx.slice();
-						#child_ctx[${value_index}] = ${info}.resolved;
+						${this.node.value && x`#child_ctx[${value_index}] = ${info}.resolved;`}
 						${info}.block.p(#child_ctx, #dirty);
 					}
 				`);
@@ -220,7 +220,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 				block.chunks.update.push(b`
 					{
 						const #child_ctx = #ctx.slice();
-						#child_ctx[${value_index}] = ${info}.resolved;
+						${this.node.value && x`#child_ctx[${value_index}] = ${info}.resolved;`}
 						${info}.block.p(#child_ctx, #dirty);
 					}
 				`);
