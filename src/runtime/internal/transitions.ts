@@ -67,10 +67,15 @@ export function transition_out(block, local: 0 | 1, detach: 0 | 1, callback) {
 
 const null_transition: TransitionConfig = { duration: 0 };
 
-type TransitionFn = (node: Element, params: any) => TransitionConfig;
+type TransitionParams = { direction: 'in' | 'out' | 'both' };
+type TransitionGenerator = (transition: TransitionParams) => TransitionConfig;
+type TransitionFn = (node: Element, params: any, transition: TransitionParams)
+	=> TransitionConfig | TransitionGenerator;
 
 export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
-	let config = fn(node, params);
+	let config = fn(node, params, { direction: 'in' }) as TransitionConfig;
+	const generator = is_function(config) ? config : null;
+
 	let running = false;
 	let animation_name;
 	let task;
@@ -129,8 +134,8 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 
 			delete_rule(node);
 
-			if (is_function(config)) {
-				config = config();
+			if (generator) {
+				config = generator({ direction: 'in' });
 				wait().then(go);
 			} else {
 				go();
@@ -151,7 +156,9 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 }
 
 export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
-	let config = fn(node, params);
+	let config = fn(node, params, { direction: 'out' }) as TransitionConfig;
+	const generator = is_function(config) ? config : null;
+
 	let running = true;
 	let animation_name;
 
@@ -201,10 +208,9 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 		});
 	}
 
-	if (is_function(config)) {
+	if (generator) {
 		wait().then(() => {
-			// @ts-ignore
-			config = config();
+			config = generator({ direction: 'out' });
 			go();
 		});
 	} else {
@@ -226,7 +232,8 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 }
 
 export function create_bidirectional_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any, intro: boolean) {
-	let config = fn(node, params);
+	let config = fn(node, params, { direction: 'both' }) as TransitionConfig;
+	const generator = is_function(config) ? config : null;
 
 	let t = intro ? 0 : 1;
 
@@ -334,10 +341,9 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 
 	return {
 		run(b) {
-			if (is_function(config)) {
+			if (generator) {
 				wait().then(() => {
-					// @ts-ignore
-					config = config();
+					config = generator({ direction: b ? 'in' : 'out' });
 					go(b);
 				});
 			} else {
