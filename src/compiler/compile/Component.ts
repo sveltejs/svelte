@@ -465,7 +465,7 @@ export default class Component {
 						extract_names(declarator.id).forEach(name => {
 							const variable = this.var_lookup.get(name);
 							variable.export_name = name;
-							if (variable.writable && !(variable.referenced || variable.referenced_from_script)) {
+							if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
 								this.warn(declarator, {
 									code: `unused-export-let`,
 									message: `${this.name.name} has unused export property '${name}'. If it is for external reference only, please consider using \`export const '${name}'\``
@@ -488,7 +488,7 @@ export default class Component {
 					if (variable) {
 						variable.export_name = specifier.exported.name;
 
-						if (variable.writable && !(variable.referenced || variable.referenced_from_script)) {
+						if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
 							this.warn(specifier, {
 								code: `unused-export-let`,
 								message: `${this.name.name} has unused export property '${specifier.exported.name}'. If it is for external reference only, please consider using \`export const '${specifier.exported.name}'\``
