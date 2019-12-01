@@ -193,14 +193,18 @@ Content that is conditionally rendered can be wrapped in an if block.
 Additional conditions can be added with `{:else if expression}`, optionally ending in an `{:else}` clause.
 
 ```sv
-{#if porridge.temperature > 100}
-	<p>too hot!</p>
-{:else if 80 > porridge.temperature}
-	<p>too cold!</p>
-{:else}
-	<p>just right!</p>
-{/if}
+<p>
+	{#if porridge.temperature > 100}
+		too hot!
+	{:else if 80 > porridge.temperature}
+		too cold!
+	{:else}
+		just right!
+	{/if}
+</p>
 ```
+
+(Blocks don't have to wrap elements, they can also wrap text within elements!)
 
 
 ### {#each ...}
