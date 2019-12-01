@@ -18,4 +18,8 @@
   function foo() {
     return m + n + o;
   }
+  export let p;
+  export let q;
+  $p;
 </script>
+{$q}
