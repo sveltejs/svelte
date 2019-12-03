@@ -51,9 +51,9 @@ function instance($$self) {
 	let obj = { x: 5 };
 	let kobzol = 5;
 
-	$$self.$capture_state = ({ props: $props = true, local: $local = true } = {}) => ({
-		...$props && ({}),
-		...$local && ({ obj, kobzol })
+	$$self.$capture_state = ({ props: $p = true, local: $l = true } = {}) => ({
+		...$p && ({}),
+		...$l && ({ obj, kobzol })
 	});
 
 	$$self.$inject_state = $$props => {

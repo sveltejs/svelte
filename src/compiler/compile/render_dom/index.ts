@@ -181,9 +181,9 @@ export default function dom(
 			const var_names = (variables: Var[]) => variables.map(prop => p`${prop.name}`);
 
 			capture_state = x`
-				({ props: $props = true, local: $local = true } = {}) => ({
-					...${x`$props && { ${var_names(capturable_props)} }`},
-					...${x`$local && { ${var_names(local_vars)} }`}
+				({ props: $p = true, local: $l = true } = {}) => ({
+					...${x`$p && { ${var_names(capturable_props)} }`},
+					...${x`$l && { ${var_names(local_vars)} }`}
 				})
 			`;
 
