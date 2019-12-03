@@ -91,7 +91,7 @@ export default function dom(
 	const accessors = [];
 
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-	let dev_props_check; let inject_state; let capture_state;
+	let dev_props_check; let inject_state: Expression; let capture_state: Expression;
 
 	props.forEach(prop => {
 		const variable = component.var_lookup.get(prop.name);
