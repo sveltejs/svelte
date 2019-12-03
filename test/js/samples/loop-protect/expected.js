@@ -89,7 +89,7 @@ function instance($$self) {
 		} while (true);
 	}
 
-	$$self.ctx_names = [];
+	$$self.$$.ctx_names = [];
 	return [];
 }
 

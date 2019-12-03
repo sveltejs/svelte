@@ -91,7 +91,7 @@ function instance($$self, $$props, $$invalidate) {
 		}
 	};
 
-	$$self.ctx_names = ["foo", "bar"];
+	$$self.$$.ctx_names = ["foo", "bar"];
 	return [foo, bar];
 }
 

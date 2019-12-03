@@ -416,7 +416,7 @@ export default function dom(
 
 				${uses_props && b`$$props = @exclude_internal_props($$props);`}
 
-				${ctx_names && x`$$self.ctx_names = ${ctx_names};`}
+				${ctx_names && x`$$self.$$.ctx_names = ${ctx_names};`}
 
 				return ${return_value};
 			}
