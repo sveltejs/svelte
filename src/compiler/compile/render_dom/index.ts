@@ -372,6 +372,14 @@ export default function dom(
 			}) as Expression)
 		};
 
+		const ctx_names = component.compile_options.dev && {
+			type: 'ArrayExpression',
+			elements: initial_context.map(member => ({
+				type: 'Literal',
+				value: member.name
+			}) as Expression)
+		};
+
 		body.push(b`
 			function ${definition}(${args}) {
 				${reactive_store_declarations}
@@ -407,6 +415,8 @@ export default function dom(
 				${fixed_reactive_declarations}
 
 				${uses_props && b`$$props = @exclude_internal_props($$props);`}
+
+				${ctx_names && x`$$self.ctx_names = ${ctx_names};`}
 
 				return ${return_value};
 			}

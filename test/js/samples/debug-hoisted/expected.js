@@ -60,6 +60,7 @@ function instance($$self) {
 		if ("kobzol" in $$props) $$invalidate(1, kobzol = $$props.kobzol);
 	};
 
+	$$self.ctx_names = ["obj", "kobzol"];
 	return [obj, kobzol];
 }
 

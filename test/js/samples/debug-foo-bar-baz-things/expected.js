@@ -194,6 +194,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
 	};
 
+	$$self.ctx_names = ["things", "foo", "bar", "baz"];
 	return [things, foo, bar, baz];
 }
 

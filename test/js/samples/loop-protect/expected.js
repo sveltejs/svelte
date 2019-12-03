@@ -89,6 +89,7 @@ function instance($$self) {
 		} while (true);
 	}
 
+	$$self.ctx_names = [];
 	return [];
 }
 

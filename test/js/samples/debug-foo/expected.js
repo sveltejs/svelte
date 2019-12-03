@@ -182,6 +182,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
 	};
 
+	$$self.ctx_names = ["things", "foo"];
 	return [things, foo];
 }
 
