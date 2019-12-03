@@ -7,7 +7,6 @@ import { string_literal } from '../../../utils/stringify';
 import add_to_set from '../../../utils/add_to_set';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
-import { changed } from '../shared/changed';
 
 export interface StyleProp {
 	key: string;
@@ -46,7 +45,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 				// }
 
 				if (prop_dependencies.size) {
-					let condition = changed(Array.from(prop_dependencies));
+					let condition = block.renderer.dirty(Array.from(prop_dependencies));
 
 					if (block.has_outros) {
 						condition = x`!#current || ${condition}`;
@@ -88,14 +87,12 @@ function optimize_style(value: Array<Text|Expression>) {
 		const remaining_data = chunk.data.slice(offset);
 
 		if (remaining_data) {
-			/* eslint-disable @typescript-eslint/no-object-literal-type-assertion */
 			chunks[0] = {
 				start: chunk.start + offset,
 				end: chunk.end,
 				type: 'Text',
 				data: remaining_data
 			} as Text;
-			/* eslint-enable @typescript-eslint/no-object-literal-type-assertion */
 		} else {
 			chunks.shift();
 		}

@@ -151,6 +151,10 @@ export default class Element extends Node {
 			}
 		}
 
+		// Binding relies on Attribute, defer its evaluation
+		const order = ['Binding']; // everything else is -1
+		info.attributes.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Action':
@@ -592,12 +596,24 @@ export default class Element extends Node {
 				name === 'seekable' ||
 				name === 'played' ||
 				name === 'volume' ||
-				name === 'playbackRate'
+				name === 'playbackRate' ||
+				name === 'seeking' ||
+				name === 'ended'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
 					component.error(binding, {
 						code: `invalid-binding`,
 						message: `'${name}' binding can only be used with <audio> or <video>`
+					});
+				}
+			} else if (
+				name === 'videoHeight' ||
+				name === 'videoWidth'
+			) {
+				if (this.name !== 'video') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${name}' binding can only be used with <video>`
 					});
 				}
 			} else if (dimensions.test(name)) {

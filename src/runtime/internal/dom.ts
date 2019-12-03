@@ -27,7 +27,6 @@ export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: s
 }
 
 export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
-	// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
 	const target = {} as Pick<T, Exclude<keyof T, K>>;
 	for (const k in obj) {
 		if (
@@ -237,6 +236,7 @@ export function add_resize_listener(element, fn) {
 
 	const object = document.createElement('object');
 	object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
+	object.setAttribute('aria-hidden', 'true');
 	object.type = 'text/html';
 	object.tabIndex = -1;
 

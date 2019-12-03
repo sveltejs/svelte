@@ -5,9 +5,9 @@ import { b, x } from 'code-red';
 import add_event_handlers from './shared/add_event_handlers';
 import Window from '../../nodes/Window';
 import add_actions from './shared/add_actions';
-import { changed } from './shared/changed';
 import { Identifier } from 'estree';
 import { TemplateNode } from '../../../interfaces';
+import EventHandler from './Element/EventHandler';
 
 const associated_events = {
 	innerWidth: 'resize',
@@ -34,9 +34,11 @@ const readonly = new Set([
 
 export default class WindowWrapper extends Wrapper {
 	node: Window;
+	handlers: EventHandler[];
 
 	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
 		super(renderer, block, parent, node);
+		this.handlers = this.node.handlers.map(handler => new EventHandler(handler, this));
 	}
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
@@ -46,8 +48,8 @@ export default class WindowWrapper extends Wrapper {
 		const events = {};
 		const bindings: Record<string, string> = {};
 
-		add_actions(component, block, '@_window', this.node.actions);
-		add_event_handlers(block, '@_window', this.node.handlers);
+		add_actions(block, '@_window', this.node.actions);
+		add_event_handlers(block, '@_window', this.handlers);
 
 		this.node.bindings.forEach(binding => {
 			// in dev mode, throw if read-only values are written to
@@ -78,6 +80,9 @@ export default class WindowWrapper extends Wrapper {
 			const id = block.get_unique_name(`onwindow${event}`);
 			const props = events[event];
 
+			renderer.add_to_context(id.name);
+			const fn = renderer.reference(id.name);
+
 			if (event === 'scroll') {
 				// TODO other bidirectional bindings...
 				block.add_variable(scrolling, x`false`);
@@ -104,7 +109,7 @@ export default class WindowWrapper extends Wrapper {
 						${scrolling} = true;
 						@_clearTimeout(${scrolling_timeout});
 						${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
-						#ctx.${id}();
+						${fn}();
 					})
 				`);
 			} else {
@@ -115,24 +120,18 @@ export default class WindowWrapper extends Wrapper {
 				});
 
 				block.event_listeners.push(x`
-					@listen(@_window, "${event}", #ctx.${id})
+					@listen(@_window, "${event}", ${fn})
 				`);
 			}
 
-			component.add_var({
-				name: id.name,
-				internal: true,
-				referenced: true
-			});
-
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					${props.map(prop => component.invalidate(prop.name, x`${prop.name} = @_window.${prop.value}`))}
+					${props.map(prop => renderer.invalidate(prop.name, x`${prop.name} = @_window.${prop.value}`))}
 				}
 			`);
 
 			block.chunks.init.push(b`
-				@add_render_callback(#ctx.${id});
+				@add_render_callback(${fn});
 			`);
 
 			component.has_reactive_assignments = true;
@@ -140,9 +139,10 @@ export default class WindowWrapper extends Wrapper {
 
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
-			const condition = changed([bindings.scrollX, bindings.scrollY].filter(Boolean));
-			const scrollX = bindings.scrollX ? x`#ctx.${bindings.scrollX}` : x`@_window.pageXOffset`;
-			const scrollY = bindings.scrollY ? x`#ctx.${bindings.scrollY}` : x`@_window.pageYOffset`;
+			const condition = renderer.dirty([bindings.scrollX, bindings.scrollY].filter(Boolean));
+
+			const scrollX = bindings.scrollX ? renderer.reference(bindings.scrollX) : x`@_window.pageXOffset`;
+			const scrollY = bindings.scrollY ? renderer.reference(bindings.scrollY) : x`@_window.pageYOffset`;
 
 			block.chunks.update.push(b`
 				if (${condition} && !${scrolling}) {
@@ -159,25 +159,22 @@ export default class WindowWrapper extends Wrapper {
 			const id = block.get_unique_name(`onlinestatuschanged`);
 			const name = bindings.online;
 
-			component.add_var({
-				name: id.name,
-				internal: true,
-				referenced: true
-			});
+			renderer.add_to_context(id.name);
+			const reference = renderer.reference(id.name);
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					${component.invalidate(name, x`${name} = @_navigator.onLine`)}
+					${renderer.invalidate(name, x`${name} = @_navigator.onLine`)}
 				}
 			`);
 
 			block.chunks.init.push(b`
-				@add_render_callback(#ctx.${id});
+				@add_render_callback(${reference});
 			`);
 
 			block.event_listeners.push(
-				x`@listen(@_window, "online", #ctx.${id})`,
-				x`@listen(@_window, "offline", #ctx.${id})`
+				x`@listen(@_window, "online", ${reference})`,
+				x`@listen(@_window, "offline", ${reference})`
 			);
 
 			component.has_reactive_assignments = true;

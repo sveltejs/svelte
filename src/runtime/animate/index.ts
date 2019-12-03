@@ -19,9 +19,11 @@ interface FlipParams {
 export function flip(node: Element, animation: { from: DOMRect; to: DOMRect }, params: FlipParams): AnimationConfig {
 	const style = getComputedStyle(node);
 	const transform = style.transform === 'none' ? '' : style.transform;
+	const scaleX = animation.from.width / node.clientWidth;
+	const scaleY = animation.from.height / node.clientHeight;
 
-	const dx = animation.from.left - animation.to.left;
-	const dy = animation.from.top - animation.to.top;
+	const dx = (animation.from.left - animation.to.left) / scaleX;
+	const dy = (animation.from.top - animation.to.top) / scaleY;
 
 	const d = Math.sqrt(dx * dx + dy * dy);
 

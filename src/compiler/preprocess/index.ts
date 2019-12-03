@@ -45,7 +45,7 @@ async function replace_async(str: string, re: RegExp, func: (...any) => Promise<
 	str.replace(re, (...args) => {
 		replacements.push(
 			func(...args).then(
-				res => // eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
+				res =>
 					({
 						offset: args[args.length - 2],
 						length: args[0].length,
@@ -94,8 +94,12 @@ export default async function preprocess(
 	for (const fn of script) {
 		source = await replace_async(
 			source,
-			/<script(\s[^]*?)?>([^]*?)<\/script>/gi,
+			/<!--[^]*?-->|<script(\s[^]*?)?>([^]*?)<\/script>/gi,
 			async (match, attributes = '', content) => {
+				if (!attributes && !content) {
+					return match;
+				}
+				attributes = attributes || '';
 				const processed = await fn({
 					content,
 					attributes: parse_attributes(attributes),
@@ -110,8 +114,11 @@ export default async function preprocess(
 	for (const fn of style) {
 		source = await replace_async(
 			source,
-			/<style(\s[^]*?)?>([^]*?)<\/style>/gi,
+			/<!--[^]*?-->|<style(\s[^]*?)?>([^]*?)<\/style>/gi,
 			async (match, attributes = '', content) => {
+				if (!attributes && !content) {
+					return match;
+				}
 				const processed: Processed = await fn({
 					content,
 					attributes: parse_attributes(attributes),

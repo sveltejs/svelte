@@ -19,11 +19,12 @@ import add_to_set from '../../../utils/add_to_set';
 import add_event_handlers from '../shared/add_event_handlers';
 import add_actions from '../shared/add_actions';
 import create_debugging_comment from '../shared/create_debugging_comment';
-import { get_context_merger } from '../shared/get_context_merger';
+import { get_slot_definition } from '../shared/get_slot_definition';
 import bind_this from '../shared/bind_this';
-import { changed } from '../shared/changed';
 import { is_head } from '../shared/is_head';
 import { Identifier } from 'estree';
+import EventHandler from './EventHandler';
+import { extract_names } from 'periscopic';
 
 const events = [
 	{
@@ -51,7 +52,7 @@ const events = [
 	},
 
 	{
-		event_names: ['resize'],
+		event_names: ['elementresize'],
 		filter: (_node: Element, name: string) =>
 			dimensions.test(name)
 	},
@@ -61,7 +62,7 @@ const events = [
 		event_names: ['timeupdate'],
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
-			(name === 'currentTime' || name === 'played')
+			(name === 'currentTime' || name === 'played' || name === 'ended')
 	},
 	{
 		event_names: ['durationchange'],
@@ -99,6 +100,24 @@ const events = [
 			node.is_media_node() &&
 			name === 'playbackRate'
 	},
+	{
+		event_names: ['seeking', 'seeked'],
+		filter: (node: Element, name: string) =>
+			node.is_media_node() &&
+			(name === 'seeking')
+	},
+	{
+		event_names: ['ended'],
+		filter: (node: Element, name: string) =>
+			node.is_media_node() &&
+			name === 'ended'
+	},
+	{
+		event_names: ['resize'],
+		filter: (node: Element, name: string) =>
+			node.is_media_node() &&
+			(name === 'videoHeight' || name === 'videoWidth')
+	},
 
 	// details event
 	{
@@ -113,12 +132,14 @@ export default class ElementWrapper extends Wrapper {
 	fragment: FragmentWrapper;
 	attributes: AttributeWrapper[];
 	bindings: Binding[];
+	event_handlers: EventHandler[];
 	class_dependencies: string[];
 
 	slot_block: Block;
 	select_binding_dependencies?: Set<string>;
 
 	var: any;
+	void: boolean;
 
 	constructor(
 		renderer: Renderer,
@@ -134,7 +155,17 @@ export default class ElementWrapper extends Wrapper {
 			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		};
 
+		this.void = is_void(node.name);
+
 		this.class_dependencies = [];
+
+		if (this.node.children.length) {
+			this.node.lets.forEach(l => {
+				extract_names(l.value || l.name).forEach(name => {
+					renderer.add_to_context(name, true);
+				});
+			});
+		}
 
 		this.attributes = this.node.attributes.map(attribute => {
 			if (attribute.name === 'slot') {
@@ -162,20 +193,17 @@ export default class ElementWrapper extends Wrapper {
 							type: 'slot'
 						});
 
-						const lets = this.node.lets;
+						const { scope, lets } = this.node;
 						const seen = new Set(lets.map(l => l.name.name));
 
 						(owner as unknown as InlineComponentWrapper).node.lets.forEach(l => {
 							if (!seen.has(l.name.name)) lets.push(l);
 						});
 
-						const fn = get_context_merger(lets);
-
-						(owner as unknown as InlineComponentWrapper).slots.set(name, {
-							block: child_block,
-							scope: this.node.scope,
-							fn
-						});
+						(owner as unknown as InlineComponentWrapper).slots.set(
+							name,
+							get_slot_definition(child_block, scope, lets)
+						);
 						this.renderer.blocks.push(child_block);
 					}
 
@@ -193,6 +221,8 @@ export default class ElementWrapper extends Wrapper {
 		// the rare case where an element can have multiple bindings,
 		// e.g. <audio bind:paused bind:currentTime>
 		this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
+
+		this.event_handlers = this.node.handlers.map(event_handler => new EventHandler(event_handler, this));
 
 		if (node.intro || node.outro) {
 			if (node.intro) block.add_intro(node.intro.is_local);
@@ -254,9 +284,10 @@ export default class ElementWrapper extends Wrapper {
 
 		const node = this.var;
 		const nodes = parent_nodes && block.get_unique_name(`${this.var.name}_nodes`); // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
+		const children = x`@children(${this.node.name === 'template' ? x`${node}.content` : node})`;
 
 		block.add_variable(node);
-		const render_statement = this.get_render_statement();
+		const render_statement = this.get_render_statement(block);
 		block.chunks.create.push(
 			b`${node} = ${render_statement};`
 		);
@@ -265,8 +296,13 @@ export default class ElementWrapper extends Wrapper {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
 					${node} = ${this.get_claim_statement(parent_nodes)};
-					var ${nodes} = @children(${this.node.name === 'template' ? x`${node}.content` : node});
 				`);
+
+				if (!this.void && this.node.children.length > 0) {
+					block.chunks.claim.push(b`
+						var ${nodes} = ${children};
+					`);
+				}
 			} else {
 				block.chunks.claim.push(
 					b`${node} = ${render_statement};`
@@ -291,7 +327,8 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		// insert static children with textContent or innerHTML
-		if (!this.node.namespace && (this.can_use_innerhtml || this.can_use_textcontent()) && this.fragment.nodes.length > 0) {
+		const can_use_textcontent = this.can_use_textcontent();
+		if (!this.node.namespace && (this.can_use_innerhtml || can_use_textcontent) && this.fragment.nodes.length > 0) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				block.chunks.create.push(
 					 // @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
@@ -311,7 +348,8 @@ export default class ElementWrapper extends Wrapper {
 					quasis: []
 				};
 
-				to_html((this.fragment.nodes as unknown as Array<ElementWrapper | TextWrapper>), block, literal, state);
+				const can_use_raw_text = !this.can_use_innerhtml && can_use_textcontent;
+				to_html((this.fragment.nodes as unknown as Array<ElementWrapper | TextWrapper>), block, literal, state, can_use_raw_text);
 				literal.quasis.push(state.quasi);
 
 				block.chunks.create.push(
@@ -338,18 +376,18 @@ export default class ElementWrapper extends Wrapper {
 			block.maintain_context = true;
 		}
 
+		this.add_attributes(block);
 		this.add_bindings(block);
 		this.add_event_handlers(block);
-		this.add_attributes(block);
 		this.add_transitions(block);
 		this.add_animation(block);
 		this.add_actions(block);
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
 
-		if (nodes && this.renderer.options.hydratable) {
+		if (nodes && this.renderer.options.hydratable && !this.void) {
 			block.chunks.claim.push(
-				b`${nodes}.forEach(@detach);`
+				b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`
 			);
 		}
 
@@ -365,7 +403,7 @@ export default class ElementWrapper extends Wrapper {
 		return this.is_static_content && this.fragment.nodes.every(node => node.node.type === 'Text' || node.node.type === 'MustacheTag');
 	}
 
-	get_render_statement() {
+	get_render_statement(block: Block) {
 		const { name, namespace } = this.node;
 
 		if (namespace === 'http://www.w3.org/2000/svg') {
@@ -378,7 +416,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const is = this.attributes.find(attr => attr.node.name === 'is');
 		if (is) {
-			return x`@element_is("${name}", ${is.render_chunks().reduce((lhs, rhs) => x`${lhs} + ${rhs}`)});`;
+			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)});`;
 		}
 
 		return x`@element("${name}")`;
@@ -422,18 +460,13 @@ export default class ElementWrapper extends Wrapper {
 
 		groups.forEach(group => {
 			const handler = renderer.component.get_unique_name(`${this.var.name}_${group.events.join('_')}_handler`);
-
-			renderer.component.add_var({
-				name: handler.name,
-				internal: true,
-				referenced: true
-			});
+			renderer.add_to_context(handler.name);
 
 			// TODO figure out how to handle locks
 			const needs_lock = group.bindings.some(binding => binding.needs_lock);
 
-			const dependencies = new Set();
-			const contextual_dependencies = new Set();
+			const dependencies: Set<string> = new Set();
+			const contextual_dependencies: Set<string> = new Set();
 
 			group.bindings.forEach(binding => {
 				// TODO this is a mess
@@ -455,10 +488,12 @@ export default class ElementWrapper extends Wrapper {
 
 			const has_local_function = contextual_dependencies.size > 0 || needs_lock || animation_frame;
 
-			let callee;
+			let callee = renderer.reference(handler);
 
 			// TODO dry this out — similar code for event handlers and component bindings
 			if (has_local_function) {
+				const args = Array.from(contextual_dependencies).map(name => renderer.reference(name));
+
 				// need to create a block-local function that calls an instance-level function
 				if (animation_frame) {
 					block.chunks.init.push(b`
@@ -468,48 +503,38 @@ export default class ElementWrapper extends Wrapper {
 								${animation_frame} = @raf(${handler});
 								${needs_lock && b`${lock} = true;`}
 							}
-							#ctx.${handler}.call(${this.var}, ${contextual_dependencies.size > 0 ? '#ctx' : null});
+							${callee}.call(${this.var}, ${args});
 						}
 					`);
 				} else {
 					block.chunks.init.push(b`
 						function ${handler}() {
 							${needs_lock && b`${lock} = true;`}
-							#ctx.${handler}.call(${this.var}, ${contextual_dependencies.size > 0 ? '#ctx' : null});
+							${callee}.call(${this.var}, ${args});
 						}
 					`);
 				}
 
 				callee = handler;
-			} else {
-				callee = x`#ctx.${handler}`;
 			}
 
-			const arg = contextual_dependencies.size > 0 && {
-				type: 'ObjectPattern',
-				properties: Array.from(contextual_dependencies).map(name => {
-					const id = { type: 'Identifier', name };
-					return {
-						type: 'Property',
-						kind: 'init',
-						key: id,
-						value: id
-					};
-				})
-			};
+			const params = Array.from(contextual_dependencies).map(name => ({
+				type: 'Identifier',
+				name
+			}));
 
 			this.renderer.component.partly_hoisted.push(b`
-				function ${handler}(${arg}) {
+				function ${handler}(${params}) {
 					${group.bindings.map(b => b.handler.mutation)}
 					${Array.from(dependencies)
 						.filter(dep => dep[0] !== '$')
 						.filter(dep => !contextual_dependencies.has(dep))
-						.map(dep => b`${this.renderer.component.invalidate(dep)};`)}
+						.map(dep => b`${this.renderer.invalidate(dep)};`)}
 				}
 			`);
 
 			group.events.forEach(name => {
-				if (name === 'resize') {
+				if (name === 'elementresize') {
 					// special case
 					const resize_listener = block.get_unique_name(`${this.var.name}_resize_listener`);
 					block.add_variable(resize_listener);
@@ -551,7 +576,7 @@ export default class ElementWrapper extends Wrapper {
 				);
 			}
 
-			if (group.events[0] === 'resize') {
+			if (group.events[0] === 'elementresize') {
 				block.chunks.hydrate.push(
 					b`@add_render_callback(() => ${callee}.call(${this.var}));`
 				);
@@ -599,7 +624,7 @@ export default class ElementWrapper extends Wrapper {
 		this.attributes
 			.forEach(attr => {
 				const condition = attr.node.dependencies.size > 0
-					? changed(Array.from(attr.node.dependencies))
+					? block.renderer.dirty(Array.from(attr.node.dependencies))
 					: null;
 
 				if (attr.node.is_spread) {
@@ -613,7 +638,7 @@ export default class ElementWrapper extends Wrapper {
 					const snippet = x`{ ${
 						(metadata && metadata.property_name) ||
 						fix_attribute_casing(attr.node.name)
-					}: ${attr.node.get_value(block)} }`;
+					}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
@@ -621,10 +646,10 @@ export default class ElementWrapper extends Wrapper {
 			});
 
 		block.chunks.init.push(b`
-			var ${levels} = [${initial_props}];
+			let ${levels} = [${initial_props}];
 
-			var ${data} = {};
-			for (var #i = 0; #i < ${levels}.length; #i += 1) {
+			let ${data} = {};
+			for (let #i = 0; #i < ${levels}.length; #i += 1) {
 				${data} = @assign(${data}, ${levels}[#i]);
 			}
 		`);
@@ -643,7 +668,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_event_handlers(block: Block) {
-		add_event_handlers(block, this.var, this.node.handlers);
+		add_event_handlers(block, this.var, this.event_handlers);
 	}
 
 	add_transitions(
@@ -651,8 +676,6 @@ export default class ElementWrapper extends Wrapper {
 	) {
 		const { intro, outro } = this.node;
 		if (!intro && !outro) return;
-
-		const { component } = this.renderer;
 
 		if (intro === outro) {
 			// bidirectional transition
@@ -663,7 +686,7 @@ export default class ElementWrapper extends Wrapper {
 
 			block.add_variable(name);
 
-			const fn = component.qualify(intro.name);
+			const fn = this.renderer.reference(intro.name);
 
 			const intro_block = b`
 				@add_render_callback(() => {
@@ -707,7 +730,7 @@ export default class ElementWrapper extends Wrapper {
 					? intro.expression.manipulate(block)
 					: x`{}`;
 
-				const fn = component.qualify(intro.name);
+				const fn = this.renderer.reference(intro.name);
 
 				let intro_block;
 
@@ -749,7 +772,7 @@ export default class ElementWrapper extends Wrapper {
 					? outro.expression.manipulate(block)
 					: x`{}`;
 
-				const fn = component.qualify(outro.name);
+				const fn = this.renderer.reference(outro.name);
 
 				if (!intro) {
 					block.chunks.intro.push(b`
@@ -781,7 +804,6 @@ export default class ElementWrapper extends Wrapper {
 	add_animation(block: Block) {
 		if (!this.node.animation) return;
 
-		const { component } = this.renderer;
 		const { outro } = this.node;
 
 		const rect = block.get_unique_name('rect');
@@ -802,7 +824,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const params = this.node.animation.expression ? this.node.animation.expression.manipulate(block) : x`{}`;
 
-		const name = component.qualify(this.node.animation.name);
+		const name = this.renderer.reference(this.node.animation.name);
 
 		block.chunks.animate.push(b`
 			${stop_animation}();
@@ -811,7 +833,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_actions(block: Block) {
-		add_actions(this.renderer.component, block, this.var, this.node.actions);
+		add_actions(block, this.var, this.node.actions);
 	}
 
 	add_classes(block: Block) {
@@ -835,7 +857,7 @@ export default class ElementWrapper extends Wrapper {
 				block.chunks.update.push(updater);
 			} else if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
 				const all_dependencies = this.class_dependencies.concat(...dependencies);
-				const condition = changed(all_dependencies);
+				const condition = block.renderer.dirty(all_dependencies);
 
 				block.chunks.update.push(b`
 					if (${condition}) {
@@ -854,7 +876,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 }
 
-function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, block: Block, literal: any, state: any) {
+function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
 		if (wrapper.node.type === 'Text') {
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
@@ -863,7 +885,8 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 			const raw = parent && (
 				parent.name === 'script' ||
-				parent.name === 'style'
+				parent.name === 'style' ||
+				can_use_raw_text
 			);
 
 			state.quasi.value.raw += (raw ? wrapper.node.data : escape_html(wrapper.node.data))
@@ -894,7 +917,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 				attr.node.chunks.forEach(chunk => {
 					if (chunk.type === 'Text') {
-						state.quasi.value.raw += chunk.data;
+						state.quasi.value.raw += escape_html(chunk.data);
 					} else {
 						literal.quasis.push(state.quasi);
 						literal.expressions.push(chunk.manipulate(block));
@@ -911,7 +934,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 			state.quasi.value.raw += '>';
 
-			if (!is_void(wrapper.node.name)) {
+			if (!(wrapper as ElementWrapper).void) {
 				to_html((wrapper as ElementWrapper).fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
 				state.quasi.value.raw += `</${wrapper.node.name}>`;

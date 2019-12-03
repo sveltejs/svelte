@@ -8,7 +8,7 @@ Just like in HTML, you can add a `<style>` tag to your component. Let's add some
 <style>
 	p {
 		color: purple;
-		font-family: 'Comic Sans MS';
+		font-family: 'Comic Sans MS', cursive;
 		font-size: 2em;
 	}
 </style>

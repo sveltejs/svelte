@@ -3,11 +3,10 @@ import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions, Var } from '../../interfaces';
 import { walk } from 'estree-walker';
-import add_to_set from '../utils/add_to_set';
 import { extract_names } from '../utils/scope';
-import { invalidate } from '../utils/invalidate';
+import { invalidate } from './invalidate';
 import Block from './Block';
-import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression } from 'estree';
+import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
 
 export default function dom(
 	component: Component,
@@ -76,20 +75,18 @@ export default function dom(
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	/* eslint-disable @typescript-eslint/indent,indent */
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
 		? x`
 			${$$props} => {
-				${uses_props && component.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
+				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`)}
 				${writable_props.map(prop =>
-					b`if ('${prop.export_name}' in ${$$props}) ${component.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
+					b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
 				${component.slots.size > 0 &&
-				b`if ('$$scope' in ${$$props}) ${component.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
+				b`if ('$$scope' in ${$$props}) ${renderer.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
 		: null;
-	/* eslint-enable @typescript-eslint/indent,indent */
 
 	const accessors = [];
 
@@ -105,7 +102,7 @@ export default function dom(
 				kind: 'get',
 				key: { type: 'Identifier', name: prop.export_name },
 				value: x`function() {
-					return ${prop.hoistable ? prop.name : x`this.$$.ctx.${prop.name}`}
+					return ${prop.hoistable ? prop.name : x`this.$$.ctx[${renderer.context_lookup.get(prop.name).index}]`}
 				}`
 			});
 		} else if (component.compile_options.dev) {
@@ -154,14 +151,14 @@ export default function dom(
 
 	if (component.compile_options.dev) {
 		// checking that expected ones were passed
-		const expected = props.filter(prop => !prop.initialised);
+		const expected = props.filter(prop => prop.writable && !prop.initialised);
 
 		if (expected.length) {
 			dev_props_check = b`
 				const { ctx: #ctx } = this.$$;
 				const props = ${options.customElement ? x`this.attributes` : x`options.props || {}`};
 				${expected.map(prop => b`
-				if (#ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
+				if (${renderer.reference(prop.name)} === undefined && !('${prop.export_name}' in props)) {
 					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
 				}`)}
 			`;
@@ -192,9 +189,9 @@ export default function dom(
 
 			inject_state = x`
 				${$$props} => {
-					${uses_props && component.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
+					${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
 					${capturable_vars.map(prop => b`
-						if ('${prop.name}' in $$props) ${component.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.name}`)};
+						if ('${prop.name}' in $$props) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.name}`)};
 					`)}
 				}
 			`;
@@ -230,17 +227,18 @@ export default function dom(
 					// onto the initial function call
 					const names = new Set(extract_names(assignee));
 
-					this.replace(invalidate(component, scope, node, names));
+					this.replace(invalidate(renderer, scope, node, names));
 				}
 			}
 		});
 
 		component.rewrite_props(({ name, reassigned, export_name }) => {
 			const value = `$${name}`;
+			const i = renderer.context_lookup.get(`$${name}`).index;
 
 			const insert = (reassigned || export_name)
 				? b`${`$$subscribe_${name}`}()`
-				: b`@component_subscribe($$self, ${name}, #value => $$invalidate('${value}', ${value} = #value))`;
+				: b`@component_subscribe($$self, ${name}, #value => $$invalidate(${i}, ${value} = #value))`;
 
 			if (component.compile_options.dev) {
 				return b`@validate_store(${name}, '${name}'); ${insert}`;
@@ -255,21 +253,20 @@ export default function dom(
 		args.push(x`$$props`, x`$$invalidate`);
 	}
 
-	body.push(b`
-		function create_fragment(#ctx) {
-			${block.get_contents()}
-		}
+	const has_create_fragment = block.has_content();
+	if (has_create_fragment) {
+		body.push(b`
+			function create_fragment(#ctx) {
+				${block.get_contents()}
+			}
+		`);
+	}
 
+	body.push(b`
 		${component.extract_javascript(component.ast.module)}
 
 		${component.fully_hoisted}
 	`);
-
-	const filtered_declarations = component.vars
-		.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
-		.map(v => p`${v.name}`);
-
-	if (uses_props) filtered_declarations.push(p`$$props: $$props = @exclude_internal_props($$props)`);
 
 	const filtered_props = props.filter(prop => {
 		const variable = component.var_lookup.get(prop.name);
@@ -281,33 +278,31 @@ export default function dom(
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 
-	if (component.slots.size > 0) {
-		filtered_declarations.push(p`$$slots`, p`$$scope`);
-	}
-
-	if (renderer.binding_groups.length > 0) {
-		filtered_declarations.push(p`$$binding_groups`);
-	}
-
 	const instance_javascript = component.extract_javascript(component.ast.instance);
+
+	let i = renderer.context.length;
+	while (i--) {
+		const member = renderer.context[i];
+		if (member.variable) {
+			if (member.variable.referenced || member.variable.export_name) break;
+		} else if (member.is_non_contextual) {
+			break;
+		}
+	}
+	const initial_context = renderer.context.slice(0, i + 1);
 
 	const has_definition = (
 		(instance_javascript && instance_javascript.length > 0) ||
 		filtered_props.length > 0 ||
 		uses_props ||
 		component.partly_hoisted.length > 0 ||
-		filtered_declarations.length > 0 ||
+		initial_context.length > 0 ||
 		component.reactive_declarations.length > 0
 	);
 
 	const definition = has_definition
 		? component.alias('instance')
 		: { type: 'Literal', value: null };
-
-	const all_reactive_dependencies = new Set();
-	component.reactive_declarations.forEach(d => {
-		add_to_set(all_reactive_dependencies, d.dependencies);
-	});
 
 	const reactive_store_subscriptions = reactive_stores
 		.filter(store => {
@@ -316,7 +311,7 @@ export default function dom(
 		})
 		.map(({ name }) => b`
 			${component.compile_options.dev && b`@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
-			@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate('${name}', ${name} = $$value));
+			@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate(${renderer.context_lookup.get(name).index}, ${name} = $$value));
 		`);
 
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
@@ -336,12 +331,10 @@ export default function dom(
 
 			const writable = dependencies.filter(n => {
 				const variable = component.var_lookup.get(n);
-				return variable && (variable.writable || variable.mutated);
+				return variable && (variable.export_name || variable.mutated || variable.reassigned);
 			});
 
-			const condition = !uses_props && writable.length > 0 && (writable
-				.map(n => x`#changed.${n}`)
-				.reduce((lhs, rhs) => x`${lhs} || ${rhs}`));
+			const condition = !uses_props && writable.length > 0 && renderer.dirty(writable, true);
 
 			let statement = d.node; // TODO remove label (use d.node.body) if it's not referenced
 
@@ -367,7 +360,9 @@ export default function dom(
 			if (store && (store.reassigned || store.export_name)) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
-				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate('${$name}', ${$name} = $$value)), ${name})`;
+				const i = renderer.context_lookup.get($name).index;
+
+				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate(${i}, ${$name} = $$value)), ${name})`;
 			}
 
 			return b`let ${$name};`;
@@ -378,26 +373,17 @@ export default function dom(
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
 				@_Object.keys($$props).forEach(key => {
-					if (!writable_props.includes(key) && !key.startsWith('$$')) @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
+					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$') @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
 			`;
 		}
 
 		const return_value = {
-			type: 'ObjectExpression',
-			properties: filtered_declarations
-		};
-
-		const reactive_dependencies = {
-			type: 'ObjectPattern',
-			properties: Array.from(all_reactive_dependencies).map(name => {
-				return {
-					type: 'Property',
-					kind: 'init',
-					key: { type: 'Identifier', name },
-					value: { type: 'Literal', value: 1 }
-				};
-			})
+			type: 'ArrayExpression',
+			elements: initial_context.map(member => ({
+				type: 'Identifier',
+				name: member.name
+			}) as Expression)
 		};
 
 		body.push(b`
@@ -427,21 +413,31 @@ export default function dom(
 				${injected.map(name => b`let ${name};`)}
 
 				${reactive_declarations.length > 0 && b`
-				$$self.$$.update = (#changed = ${reactive_dependencies}) => {
+				$$self.$$.update = () => {
 					${reactive_declarations}
 				};
 				`}
 
 				${fixed_reactive_declarations}
 
+				${uses_props && b`$$props = @exclude_internal_props($$props);`}
+
 				return ${return_value};
 			}
 		`);
 	}
 
-	const prop_names = x`{
-		${props.map(v => p`${v.export_name}: ${v.export_name === v.name ? 0 : x`"${v.name}"`}}`)}
+	const prop_indexes = x`{
+		${props.filter(v => v.export_name && !v.module).map(v => p`${v.export_name}: ${renderer.context_lookup.get(v.name).index}`)}
 	}` as ObjectExpression;
+
+	let dirty;
+	if (renderer.context_overflow) {
+		dirty = x`[]`;
+		for (let i = 0; i < renderer.context.length; i += 31) {
+			dirty.elements.push(x`-1`);
+		}
+	}
 
 	if (options.customElement) {
 		const declaration = b`
@@ -451,7 +447,7 @@ export default function dom(
 
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal}, ${prop_names});
+					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 
 					${dev_props_check}
 
@@ -503,7 +499,7 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, create_fragment, ${not_equal}, ${prop_names});
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}

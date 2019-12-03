@@ -4,9 +4,9 @@ title: Compile time
 
 Typically, you won't interact with the Svelte compiler directly, but will instead integrate it into your build system using a bundler plugin:
 
-* [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) for users of [Rollup](https://rollupjs.org)
+* [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) for users of [Rollup](https://rollupjs.org)
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) for users of [webpack](https://webpack.js.org)
-* [parcel-plugin-svelte](https://github.com/DeMoorJasper/parcel-plugin-svelte) for users of [Parcel](https://parceljs.org/)
+* or one of the [community-maintained plugins](https://github.com/sveltejs/integrations#bundler-plugins)
 
 Nonetheless, it's useful to understand how to use the compiler, since bundler plugins generally expose compiler options to you.
 
@@ -53,6 +53,7 @@ The following options can be passed to the compiler. None are required:
 | `tag` | string | null
 | `accessors` | boolean | `false`
 | `css` | boolean | `true`
+| `loopGuardTimeout` | number | 0
 | `preserveComments` | boolean | `false`
 | `preserveWhitespace` | boolean | `false`
 | `outputFilename` | string | `null`
@@ -73,6 +74,7 @@ The following options can be passed to the compiler. None are required:
 | `customElement` | `false` | If `true`, tells the compiler to generate a custom element constructor instead of a regular Svelte component.
 | `tag` | `null` | A `string` that tells Svelte what tag name to register the custom element with. It must be a lowercase alphanumeric string with at least one hyphen, e.g. `"my-element"`.
 | `css` | `true` | If `true`, styles will be included in the JavaScript class and injected at runtime. It's recommended that you set this to `false` and use the CSS that is statically generated, as it will result in smaller JavaScript bundles and better performance.
+| `loopGuardTimeout` | 0 | A `number` that tells Svelte to break the loop if it blocks the thread for more than `loopGuardTimeout` ms. This is useful to prevent infinite loops. **Only available when `dev: true`**
 | `preserveComments` | `false` | If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
 | `preserveWhitespace` | `false` | If `true`, whitespace inside and between elements is kept as you typed it, rather than optimised by Svelte.
 | `outputFilename` | `null` | A `string` used for your JavaScript sourcemap.
@@ -235,7 +237,7 @@ const { code } = svelte.preprocess(source, {
 
 The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively. In addition to `filename`, they get an object of the element's attributes.
 
-If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
+If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 
 ```js
 const svelte = require('svelte/compiler');

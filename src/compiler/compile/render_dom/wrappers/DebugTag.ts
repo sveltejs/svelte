@@ -5,7 +5,6 @@ import DebugTag from '../../nodes/DebugTag';
 import add_to_set from '../../utils/add_to_set';
 import { b, p } from 'code-red';
 import { Identifier, DebuggerStatement } from 'estree';
-import { changed } from './shared/changed';
 
 export default class DebugTagWrapper extends Wrapper {
 	node: DebugTag;
@@ -60,17 +59,17 @@ export default class DebugTagWrapper extends Wrapper {
 					const variable = var_lookup.get(e.node.name);
 					return !(variable && variable.hoistable);
 				})
-				.map(e => p`${e.node.name}`);
+				.map(e => e.node.name);
 
 			const logged_identifiers = this.node.expressions.map(e => p`${e.node.name}`);
 
 			const debug_statements = b`
-				const { ${contextual_identifiers} } = #ctx;
+				${contextual_identifiers.map(name => b`const ${name} = ${renderer.reference(name)};`)}
 				@_console.${log}({ ${logged_identifiers} });
 				debugger;`;
 
 			if (dependencies.size) {
-				const condition = changed(Array.from(dependencies));
+				const condition = renderer.dirty(Array.from(dependencies));
 
 				block.chunks.update.push(b`
 					if (${condition}) {

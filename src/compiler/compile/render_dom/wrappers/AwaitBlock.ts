@@ -8,7 +8,6 @@ import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
 import ThenBlock from '../../nodes/ThenBlock';
 import CatchBlock from '../../nodes/CatchBlock';
-import { changed } from './shared/changed';
 import { Identifier } from 'estree';
 
 class AwaitBlockBranch extends Wrapper {
@@ -119,6 +118,9 @@ export default class AwaitBlockWrapper extends Wrapper {
 		if (has_outros) {
 			block.add_outro();
 		}
+
+		if (this.node.value) block.renderer.add_to_context(this.node.value, true);
+		if (this.node.error) block.renderer.add_to_context(this.node.error, true);
 	}
 
 	render(
@@ -138,6 +140,9 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		block.maintain_context = true;
 
+		const value_index = this.node.value && block.renderer.context_lookup.get(this.node.value).index;
+		const error_index = this.node.error && block.renderer.context_lookup.get(this.node.error).index;
+
 		const info_props: any = x`{
 			ctx: #ctx,
 			current: null,
@@ -145,8 +150,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 			pending: ${this.pending.block.name},
 			then: ${this.then.block.name},
 			catch: ${this.catch.block.name},
-			value: ${this.then.block.name && x`"${this.node.value}"`},
-			error: ${this.catch.block.name && x`"${this.node.error}"`},
+			value: ${value_index},
+			error: ${error_index},
 			blocks: ${this.pending.block.has_outro_method && x`[,,,]`}
 		}`;
 
@@ -187,7 +192,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		if (dependencies.length > 0) {
 			const condition = x`
-				${changed(dependencies)} &&
+				${block.renderer.dirty(dependencies)} &&
 				${promise} !== (${promise} = ${snippet}) &&
 				@handle_promise(${promise}, ${info})`;
 
@@ -198,9 +203,11 @@ export default class AwaitBlockWrapper extends Wrapper {
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
 					if (${condition}) {
-						// nothing
+
 					} else {
-						${info}.block.p(#changed, @assign(@assign({}, #ctx), ${info}.resolved));
+						const #child_ctx = #ctx.slice();
+						#child_ctx[${value_index}] = ${info}.resolved;
+						${info}.block.p(#child_ctx, #dirty);
 					}
 				`);
 			} else {
@@ -211,7 +218,11 @@ export default class AwaitBlockWrapper extends Wrapper {
 		} else {
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
-					${info}.block.p(#changed, @assign(@assign({}, #ctx), ${info}.resolved));
+					{
+						const #child_ctx = #ctx.slice();
+						#child_ctx[${value_index}] = ${info}.resolved;
+						${info}.block.p(#child_ctx, #dirty);
+					}
 				`);
 			}
 		}

@@ -6,8 +6,6 @@ import { string_literal } from '../../../utils/stringify';
 import { b, x } from 'code-red';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
-import { changed } from '../shared/changed';
-import { Literal } from 'estree';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -72,89 +70,81 @@ export default class AttributeWrapper {
 		const is_legacy_input_type = element.renderer.component.compile_options.legacy && name === 'type' && this.parent.node.name === 'input';
 
 		const dependencies = this.node.get_dependencies();
-		if (dependencies.length > 0) {
-			let value;
+		const value = this.get_value(block);
 
-			// TODO some of this code is repeated in Tag.ts — would be good to
-			// DRY it out if that's possible without introducing crazy indirection
-			if (this.node.chunks.length === 1) {
-				// single {tag} — may be a non-string
-				value = (this.node.chunks[0] as Expression).manipulate(block);
-			} else {
-				value = this.node.name === 'class'
-					? this.get_class_name_text()
-					: this.render_chunks().reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
+		const is_src = this.node.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
+		const is_select_value_attribute =
+			name === 'value' && element.node.name === 'select';
 
-				// '{foo} {bar}' — treat as string concatenation
-				if (this.node.chunks[0].type !== 'Text') {
-					value = x`"" + ${value}`;
-				}
-			}
+		const should_cache = is_src || this.node.should_cache() || is_select_value_attribute; // TODO is this necessary?
 
-			const is_select_value_attribute =
-				name === 'value' && element.node.name === 'select';
+		const last = should_cache && block.get_unique_name(
+			`${element.var.name}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
+		);
 
-			const should_cache = is_select_value_attribute; // TODO is this necessary?
+		if (should_cache) block.add_variable(last);
 
-			const last = should_cache && block.get_unique_name(
-				`${element.var.name}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
+		let updater;
+		const init = should_cache ? x`${last} = ${value}` : value;
+
+		if (is_legacy_input_type) {
+			block.chunks.hydrate.push(
+				b`@set_input_type(${element.var}, ${init});`
 			);
+			updater = b`@set_input_type(${element.var}, ${should_cache ? last : value});`;
+		} else if (is_select_value_attribute) {
+			// annoying special case
+			const is_multiple_select = element.node.get_static_attribute_value('multiple');
+			const i = block.get_unique_name('i');
+			const option = block.get_unique_name('option');
 
-			if (should_cache) block.add_variable(last);
+			const if_statement = is_multiple_select
+				? b`
+					${option}.selected = ~${last}.indexOf(${option}.__value);`
+				: b`
+					if (${option}.__value === ${last}) {
+						${option}.selected = true;
+						${{ type: 'BreakStatement' }};
+					}`; // TODO the BreakStatement is gross, but it's unsyntactic otherwise...
 
-			let updater;
-			const init = should_cache ? x`${last} = ${value}` : value;
+			updater = b`
+				for (var ${i} = 0; ${i} < ${element.var}.options.length; ${i} += 1) {
+					var ${option} = ${element.var}.options[${i}];
 
-			if (is_legacy_input_type) {
-				block.chunks.hydrate.push(
-					b`@set_input_type(${element.var}, ${init});`
-				);
-				updater = b`@set_input_type(${element.var}, ${should_cache ? last : value});`;
-			} else if (is_select_value_attribute) {
-				// annoying special case
-				const is_multiple_select = element.node.get_static_attribute_value('multiple');
-				const i = block.get_unique_name('i');
-				const option = block.get_unique_name('option');
+					${if_statement}
+				}
+			`;
 
-				const if_statement = is_multiple_select
-					? b`
-						${option}.selected = ~${last}.indexOf(${option}.__value);`
-					: b`
-						if (${option}.__value === ${last}) {
-							${option}.selected = true;
-							${{ type: 'BreakStatement' }};
-						}`; // TODO the BreakStatement is gross, but it's unsyntactic otherwise...
+			block.chunks.mount.push(b`
+				${last} = ${value};
+				${updater}
+			`);
+		} else if (is_src) {
+			block.chunks.hydrate.push(
+				b`if (${element.var}.src !== ${init}) ${method}(${element.var}, "${name}", ${last});`
+			);
+			updater = b`${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
+		} else if (property_name) {
+			block.chunks.hydrate.push(
+				b`${element.var}.${property_name} = ${init};`
+			);
+			updater = block.renderer.options.dev
+				? b`@prop_dev(${element.var}, "${property_name}", ${should_cache ? last : value});`
+				: b`${element.var}.${property_name} = ${should_cache ? last : value};`;
+		} else {
+			block.chunks.hydrate.push(
+				b`${method}(${element.var}, "${name}", ${init});`
+			);
+			updater = b`${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
+		}
 
-				updater = b`
-					for (var ${i} = 0; ${i} < ${element.var}.options.length; ${i} += 1) {
-						var ${option} = ${element.var}.options[${i}];
-
-						${if_statement}
-					}
-				`;
-
-				block.chunks.mount.push(b`
-					${last} = ${value};
-					${updater}
-				`);
-			} else if (property_name) {
-				block.chunks.hydrate.push(
-					b`${element.var}.${property_name} = ${init};`
-				);
-				updater = block.renderer.options.dev
-					? b`@prop_dev(${element.var}, "${property_name}", ${should_cache ? last : value});`
-					: b`${element.var}.${property_name} = ${should_cache ? last : value};`;
-			} else {
-				block.chunks.hydrate.push(
-					b`${method}(${element.var}, "${name}", ${init});`
-				);
-				updater = b`${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
-			}
-
-			let condition = changed(dependencies);
+		if (dependencies.length > 0) {
+			let condition = block.renderer.dirty(dependencies);
 
 			if (should_cache) {
-				condition = x`${condition} && (${last} !== (${last} = ${value}))`;
+				condition = is_src
+					? x`${condition} && (${element.var}.src !== (${last} = ${value}))`
+					: x`${condition} && (${last} !== (${last} = ${value}))`;
 			}
 
 			if (block.has_outros) {
@@ -165,23 +155,11 @@ export default class AttributeWrapper {
 				if (${condition}) {
 					${updater}
 				}`);
-		} else {
-			const value = this.node.get_value(block);
+		}
 
-			const statement = (
-				is_legacy_input_type
-					? b`@set_input_type(${element.var}, ${value});`
-					: property_name
-						? b`${element.var}.${property_name} = ${value};`
-						: b`${method}(${element.var}, "${name}", ${value.type === 'Literal' && (value as Literal).value === true ? x`""` : value});`
-			);
-
-			block.chunks.hydrate.push(statement);
-
-			// special case – autofocus. has to be handled in a bit of a weird way
-			if (this.node.is_true && name === 'autofocus') {
-				block.autofocus = element.var;
-			}
+		// special case – autofocus. has to be handled in a bit of a weird way
+		if (this.node.is_true && name === 'autofocus') {
+			block.autofocus = element.var;
 		}
 
 		if (is_indirectly_bound_value) {
@@ -199,9 +177,39 @@ export default class AttributeWrapper {
 		return metadata;
 	}
 
-	get_class_name_text() {
+	get_value(block) {
+		if (this.node.is_true) {
+			const metadata = this.get_metadata();
+			if (metadata && boolean_attribute.has(metadata.property_name.toLowerCase())) {
+				return x`true`;
+			}
+			return x`""`;
+		}
+		if (this.node.chunks.length === 0) return x`""`;
+
+		// TODO some of this code is repeated in Tag.ts — would be good to
+		// DRY it out if that's possible without introducing crazy indirection
+		if (this.node.chunks.length === 1) {
+			return this.node.chunks[0].type === 'Text'
+				? string_literal((this.node.chunks[0] as Text).data)
+				: (this.node.chunks[0] as Expression).manipulate(block);
+		}
+
+		let value = this.node.name === 'class'
+			? this.get_class_name_text(block)
+			: this.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
+
+		// '{foo} {bar}' — treat as string concatenation
+		if (this.node.chunks[0].type !== 'Text') {
+			value = x`"" + ${value}`;
+		}
+
+		return value;
+	}
+
+	get_class_name_text(block) {
 		const scoped_css = this.node.chunks.some((chunk: Text) => chunk.synthetic);
-		const rendered = this.render_chunks();
+		const rendered = this.render_chunks(block);
 
 		if (scoped_css && rendered.length === 2) {
 			// we have a situation like class={possiblyUndefined}
@@ -211,13 +219,13 @@ export default class AttributeWrapper {
 		return rendered.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 	}
 
-	render_chunks() {
+	render_chunks(block: Block) {
 		return this.node.chunks.map((chunk) => {
 			if (chunk.type === 'Text') {
 				return string_literal(chunk.data);
 			}
 
-			return chunk.manipulate();
+			return chunk.manipulate(block);
 		});
 	}
 
@@ -292,3 +300,32 @@ Object.keys(attribute_lookup).forEach(name => {
 	const metadata = attribute_lookup[name];
 	if (!metadata.property_name) metadata.property_name = name;
 });
+
+// source: https://html.spec.whatwg.org/multipage/indices.html
+const boolean_attribute = new Set([
+	'allowfullscreen',
+	'allowpaymentrequest',
+	'async',
+	'autofocus',
+	'autoplay',
+	'checked',
+	'controls',
+	'default',
+	'defer',
+	'disabled',
+	'formnovalidate',
+	'hidden',
+	'ismap',
+	'itemscope',
+	'loop',
+	'multiple',
+	'muted',
+	'nomodule',
+	'novalidate',
+	'open',
+	'playsinline',
+	'readonly',
+	'required',
+	'reversed',
+	'selected'
+]);

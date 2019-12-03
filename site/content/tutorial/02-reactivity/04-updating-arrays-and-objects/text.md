@@ -30,3 +30,12 @@ function addNumber() {
 	numbers[numbers.length] = numbers.length + 1;
 }
 ```
+
+A simple rule of thumb: the name of the updated variable must appear on the left hand side of the assignment. For example this...
+
+```js
+const foo = obj.foo;
+foo.bar = 'baz';
+```
+
+...won't update references to `obj.foo.bar`, unless you follow it up with `obj = obj`.
