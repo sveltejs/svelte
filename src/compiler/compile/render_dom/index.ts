@@ -1,7 +1,7 @@
 import { b, x, p } from 'code-red';
 import Component from '../Component';
 import Renderer from './Renderer';
-import { CompileOptions, Var } from '../../interfaces';
+import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
 import { extract_names } from '../utils/scope';
 import { invalidate } from './invalidate';
