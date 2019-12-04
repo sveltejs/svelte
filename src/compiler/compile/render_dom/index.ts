@@ -164,28 +164,12 @@ export default function dom(
 			`;
 		}
 
-		// we need to filter out store subscriptions ($x) or $inject_state will try to call .set() on them, leading
-		// to a crash if store is not writable (and probably not intended behaviour to change store value)
-		const is_not_sub = (variable: Var) => variable.name.substr(0, 1) !== '$';
-
 		const capturable_vars = component.vars.filter(
-			variable => !variable.module && variable.writable && is_not_sub(variable)
+			variable => variable.writable && !(variable.injected || variable.name[0] === '$')
 		);
 
 		if (uses_props || capturable_vars.length > 0) {
-
-			const capturable_props = writable_props.filter(is_not_sub);
-
-			const local_vars = capturable_vars.filter(variable => !variable.export_name);
-
-			const var_names = (variables: Var[]) => variables.map(prop => p`${prop.name}`);
-
-			capture_state = x`
-				({ props: $p = true, local: $l = true } = {}) => ({
-					...${x`$p && { ${var_names(capturable_props)} }`},
-					...${x`$l && { ${var_names(local_vars)} }`}
-				})
-			`;
+			capture_state = x`() => ({ ${capturable_vars.map(prop => p`${prop.name}`)} }) `;
 
 			inject_state = x`
 				${$$props} => {

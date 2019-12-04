@@ -50,11 +50,7 @@ function create_fragment(ctx) {
 function instance($$self) {
 	let obj = { x: 5 };
 	let kobzol = 5;
-
-	$$self.$capture_state = ({ props: $p = true, local: $l = true } = {}) => ({
-		...$p && ({}),
-		...$l && ({ obj, kobzol })
-	});
+	$$self.$capture_state = () => ({ obj, kobzol });
 
 	$$self.$inject_state = $$props => {
 		if ("obj" in $$props) $$invalidate(0, obj = $$props.obj);

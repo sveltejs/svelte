@@ -39,7 +39,7 @@ function create_fragment(ctx) {
 			t4 = text(/*local*/ ctx[2]);
 			t5 = space();
 			t6 = text(priv);
-			add_location(p, file, 11, 0, 204);
+			add_location(p, file, 13, 0, 232);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -100,10 +100,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("alias" in $$props) $$invalidate(0, realName = $$props.alias);
 	};
 
-	$$self.$capture_state = ({ props: $p = true, local: $l = true } = {}) => ({
-		...$p && ({ prop, realName }),
-		...$l && ({ local })
-	});
+	$$self.$capture_state = () => ({ prop, realName, local });
 
 	$$self.$inject_state = $$props => {
 		if ("prop" in $$props) $$subscribe_prop($$invalidate(3, prop = $$props.prop));
@@ -111,6 +108,8 @@ function instance($$self, $$props, $$invalidate) {
 		if ("local" in $$props) $$invalidate(2, local = $$props.local);
 	};
 
+	let computed;
+	$: computed = local * 2;
 	return [realName, $prop, local, prop];
 }
 
