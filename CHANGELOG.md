@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix unused export warning for props used as stores ([#4021](https://github.com/sveltejs/svelte/issues/4021))
+* Fix `{:then}` without resolved value containing `{#each}` ([#4022](https://github.com/sveltejs/svelte/issues/4022))
+* Fix bare `import`s in `format: 'cjs'` output mode ([#4055](https://github.com/sveltejs/svelte/issues/4050))
+
 ## 3.16.0
 
 * Use bitmasks to track changes ([#3945](https://github.com/sveltejs/svelte/pull/3945))
