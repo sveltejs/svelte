@@ -168,7 +168,7 @@ export default function dom(
 			variable => variable.writable && (!variable.injected || variable.name[0] === '$')
 		);
 
-		const injectable_vars = capturable_vars.filter(variable => variable.name[0] !== '$')
+		const injectable_vars = capturable_vars.filter(variable => variable.name[0] !== '$');
 
 		capture_state = x`() => ({ ${capturable_vars.map(prop => p`${prop.name}`)} }) `;
 
