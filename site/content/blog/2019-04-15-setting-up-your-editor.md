@@ -60,7 +60,7 @@ To treat `*.svelte` files as HTML, add the following lines to your `settings.jso
 
 ## JetBrains WebStorm
 
-To treat `*.svelte` files as HTML in WebStorm, you need to create a new file type association. Please refer to the [JetBrains website](https://www.jetbrains.com/help/webstorm/creating-and-registering-file-types.html) to see how.
+To get Svelte integration in WebStorm or other Jetbrains IDEs, you can use [Svelte framework plugin](https://plugins.jetbrains.com/plugin/12375-svelte/). Visit WebStorm [plugin installation guide](https://www.jetbrains.com/help/webstorm/managing-plugins.html) for more details.
 
 ## Sublime Text 3
 
