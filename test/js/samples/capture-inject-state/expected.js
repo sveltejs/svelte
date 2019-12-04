@@ -100,7 +100,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("alias" in $$props) $$invalidate(0, realName = $$props.alias);
 	};
 
-	$$self.$capture_state = () => ({ prop, realName, local });
+	$$self.$capture_state = () => ({ prop, realName, local, $prop });
 
 	$$self.$inject_state = $$props => {
 		if ("prop" in $$props) $$subscribe_prop($$invalidate(3, prop = $$props.prop));

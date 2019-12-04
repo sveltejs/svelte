@@ -165,24 +165,21 @@ export default function dom(
 		}
 
 		const capturable_vars = component.vars.filter(
-			variable => variable.writable && !(variable.injected || variable.name[0] === '$')
+			variable => variable.writable && (!variable.injected || variable.name[0] === '$')
 		);
 
-		if (uses_props || capturable_vars.length > 0) {
-			capture_state = x`() => ({ ${capturable_vars.map(prop => p`${prop.name}`)} }) `;
+		const injectable_vars = capturable_vars.filter(variable => variable.name[0] !== '$')
 
-			inject_state = x`
-				${$$props} => {
-					${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
-					${capturable_vars.map(prop => b`
-						if ('${prop.name}' in $$props) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.name}`)};
-					`)}
-				}
-			`;
-		} else {
-			capture_state = x`() => ({})`;
-			inject_state = x`() => {}`;
-		}
+		capture_state = x`() => ({ ${capturable_vars.map(prop => p`${prop.name}`)} }) `;
+
+		inject_state = x`
+			${(uses_props || injectable_vars.length > 0) && $$props} => {
+				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
+				${injectable_vars.map(prop => b`
+					if ('${prop.name}' in $$props) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.name}`)};
+				`)}
+			}
+		`;
 	}
 
 	// instrument assignments
