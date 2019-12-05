@@ -88,5 +88,6 @@
 	<a target="_blank" rel="noopener" href="https://m.tokopedia.com"><img src="organisations/tokopedia.svg" alt="Tokopedia logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://webdesq.net"><img src="organisations/webdesq.svg" alt="Webdesq logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://zevvle.com/"><img src="organisations/zevvle.svg" alt="Zevvle logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://cashfree.com/"><img src="organisations/cashfree.svg" alt="Cashfree logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
 </div>
