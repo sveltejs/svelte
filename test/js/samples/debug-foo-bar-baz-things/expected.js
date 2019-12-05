@@ -192,6 +192,10 @@ function instance($$self, $$props, $$invalidate) {
 		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
 	};
 
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
+
 	return [things, foo, bar, baz];
 }
 

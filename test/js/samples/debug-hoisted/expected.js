@@ -47,7 +47,7 @@ function create_fragment(ctx) {
 	return block;
 }
 
-function instance($$self) {
+function instance($$self, $$props, $$invalidate) {
 	let obj = { x: 5 };
 	let kobzol = 5;
 	$$self.$capture_state = () => ({ obj, kobzol });
@@ -56,6 +56,10 @@ function instance($$self) {
 		if ("obj" in $$props) $$invalidate(0, obj = $$props.obj);
 		if ("kobzol" in $$props) $$invalidate(1, kobzol = $$props.kobzol);
 	};
+
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
 
 	return [obj, kobzol];
 }

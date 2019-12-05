@@ -180,6 +180,10 @@ function instance($$self, $$props, $$invalidate) {
 		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
 	};
 
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
+
 	return [things, foo];
 }
 

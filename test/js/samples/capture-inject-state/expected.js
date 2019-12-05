@@ -28,18 +28,26 @@ function create_fragment(ctx) {
 	let t4;
 	let t5;
 	let t6;
+	let t7;
+	let t8;
+	let t9;
+	let t10;
 
 	const block = {
 		c: function create() {
 			p = element("p");
-			t0 = text(/*$prop*/ ctx[1]);
+			t0 = text(/*prop*/ ctx[0]);
 			t1 = space();
-			t2 = text(/*realName*/ ctx[0]);
+			t2 = text(/*realName*/ ctx[1]);
 			t3 = space();
-			t4 = text(/*local*/ ctx[2]);
+			t4 = text(/*local*/ ctx[3]);
 			t5 = space();
 			t6 = text(priv);
-			add_location(p, file, 13, 0, 232);
+			t7 = space();
+			t8 = text(/*$prop*/ ctx[2]);
+			t9 = space();
+			t10 = text(/*shadowedByModule*/ ctx[4]);
+			add_location(p, file, 22, 0, 430);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -53,10 +61,15 @@ function create_fragment(ctx) {
 			append_dev(p, t4);
 			append_dev(p, t5);
 			append_dev(p, t6);
+			append_dev(p, t7);
+			append_dev(p, t8);
+			append_dev(p, t9);
+			append_dev(p, t10);
 		},
 		p: function update(ctx, [dirty]) {
-			if (dirty & /*$prop*/ 2) set_data_dev(t0, /*$prop*/ ctx[1]);
-			if (dirty & /*realName*/ 1) set_data_dev(t2, /*realName*/ ctx[0]);
+			if (dirty & /*prop*/ 1) set_data_dev(t0, /*prop*/ ctx[0]);
+			if (dirty & /*realName*/ 2) set_data_dev(t2, /*realName*/ ctx[1]);
+			if (dirty & /*$prop*/ 4) set_data_dev(t8, /*$prop*/ ctx[2]);
 		},
 		i: noop,
 		o: noop,
@@ -76,12 +89,17 @@ function create_fragment(ctx) {
 	return block;
 }
 
+let moduleLiveBinding;
+const moduleContantProps = 4;
+let moduleLet;
+const moduleConst = 2;
+let shadowedByModule;
 const priv = "priv";
 
 function instance($$self, $$props, $$invalidate) {
 	let $prop,
 		$$unsubscribe_prop = noop,
-		$$subscribe_prop = () => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe(prop, $$value => $$invalidate(1, $prop = $$value)), prop);
+		$$subscribe_prop = () => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe(prop, $$value => $$invalidate(2, $prop = $$value)), prop);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_prop());
 	let { prop } = $$props;
@@ -89,6 +107,7 @@ function instance($$self, $$props, $$invalidate) {
 	$$subscribe_prop();
 	let { alias: realName } = $$props;
 	let local;
+	let shadowedByModule;
 	const writable_props = ["prop", "alias"];
 
 	Object.keys($$props).forEach(key => {
@@ -96,27 +115,47 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$set = $$props => {
-		if ("prop" in $$props) $$subscribe_prop($$invalidate(3, prop = $$props.prop));
-		if ("alias" in $$props) $$invalidate(0, realName = $$props.alias);
+		if ("prop" in $$props) $$subscribe_prop($$invalidate(0, prop = $$props.prop));
+		if ("alias" in $$props) $$invalidate(1, realName = $$props.alias);
 	};
 
-	$$self.$capture_state = () => ({ prop, realName, local, $prop });
+	$$self.$capture_state = () => ({
+		moduleLiveBinding,
+		moduleContantProps,
+		moduleLet,
+		moduleConst,
+		shadowedByModule,
+		prop,
+		realName,
+		local,
+		priv,
+		shadowedByModule,
+		computed,
+		$prop
+	});
 
 	$$self.$inject_state = $$props => {
-		if ("prop" in $$props) $$subscribe_prop($$invalidate(3, prop = $$props.prop));
-		if ("realName" in $$props) $$invalidate(0, realName = $$props.realName);
-		if ("local" in $$props) $$invalidate(2, local = $$props.local);
+		if ("prop" in $$props) $$subscribe_prop($$invalidate(0, prop = $$props.prop));
+		if ("realName" in $$props) $$invalidate(1, realName = $$props.realName);
+		if ("local" in $$props) $$invalidate(3, local = $$props.local);
+		if ("shadowedByModule" in $$props) $$invalidate(4, shadowedByModule = $$props.shadowedByModule);
+		if ("computed" in $$props) computed = $$props.computed;
 	};
 
 	let computed;
+
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
+
 	$: computed = local * 2;
-	return [realName, $prop, local, prop];
+	return [prop, realName, $prop, local, shadowedByModule];
 }
 
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, instance, create_fragment, safe_not_equal, { prop: 3, alias: 0 });
+		init(this, options, instance, create_fragment, safe_not_equal, { prop: 0, alias: 1 });
 
 		dispatch_dev("SvelteRegisterComponent", {
 			component: this,
@@ -128,11 +167,11 @@ class Component extends SvelteComponentDev {
 		const { ctx } = this.$$;
 		const props = options.props || ({});
 
-		if (/*prop*/ ctx[3] === undefined && !("prop" in props)) {
+		if (/*prop*/ ctx[0] === undefined && !("prop" in props)) {
 			console.warn("<Component> was created without expected prop 'prop'");
 		}
 
-		if (/*realName*/ ctx[0] === undefined && !("alias" in props)) {
+		if (/*realName*/ ctx[1] === undefined && !("alias" in props)) {
 			console.warn("<Component> was created without expected prop 'alias'");
 		}
 	}
@@ -155,3 +194,4 @@ class Component extends SvelteComponentDev {
 }
 
 export default Component;
+export { moduleLiveBinding, moduleContantProps };

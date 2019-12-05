@@ -83,6 +83,10 @@ function instance($$self, $$props, $$invalidate) {
 		if ("bar" in $$props) $$invalidate(1, bar = $$props.bar);
 	};
 
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
+
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*foo*/ 1) {
 			$: $$invalidate(1, bar = foo * 2);

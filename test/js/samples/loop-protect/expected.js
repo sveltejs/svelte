@@ -34,7 +34,7 @@ function create_fragment(ctx) {
 	return block;
 }
 
-function instance($$self) {
+function instance($$self, $$props, $$invalidate) {
 	const guard = loop_guard(100);
 
 	while (true) {
@@ -63,11 +63,8 @@ function instance($$self) {
 		guard_4();
 	} while (true);
 
-	$$self.$capture_state = () => ({});
-
-	$$self.$inject_state = () => {
-		
-	};
+	$$self.$capture_state = () => ({ foo });
+	$$self.$inject_state = noop;
 
 	$: {
 		const guard_3 = loop_guard(100);

@@ -85,6 +85,10 @@ function instance($$self, $$props, $$invalidate) {
 		if ("name" in $$props) $$invalidate(0, name = $$props.name);
 	};
 
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
+
 	return [name];
 }
 
