@@ -45,6 +45,7 @@
 </style>
 
 <div class="logos">
+	<a target="_blank" rel="noopener" href="https://absoluteweb.com"><img src="organisations/absoluteweb.svg" alt="Absolute Web logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://bekchy.com"><img src="organisations/bekchy.png" alt="Bekchy logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://beyonk.com"><img src="organisations/beyonk.svg" alt="Beyonk logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://buydotstar.com"><img src="organisations/buydotstar.svg" alt="buy.* logo" loading="lazy"></a>
