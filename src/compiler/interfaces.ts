@@ -222,6 +222,7 @@ export interface Var {
 	subscribable?: boolean;
 	is_reactive_dependency?: boolean;
 	imported?: boolean;
+	is_reactive_static?: boolean;
 }
 
 export interface CssResult {
