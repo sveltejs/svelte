@@ -344,7 +344,7 @@ export default class Component {
 		};
 	}
 
-	get_unique_name(name: string): Identifier {
+	get_unique_name(name: string, scope?: Scope): Identifier {
 		if (test) name = `${name}$`;
 		let alias = name;
 		for (
@@ -352,7 +352,8 @@ export default class Component {
 			reserved.has(alias) ||
 			this.var_lookup.has(alias) ||
 			this.used_names.has(alias) ||
-			this.globally_used_names.has(alias);
+			this.globally_used_names.has(alias) ||
+			(scope && scope.has(alias));
 			alias = `${name}_${i++}`
 		);
 		this.used_names.add(alias);
@@ -707,8 +708,7 @@ export default class Component {
 		const remove = (parent, prop, index) => {
 			to_remove.unshift([parent, prop, index]);
 		};
-
-		const to_insert = new Map();
+		let scope_updated = false;
 
 		walk(content, {
 			enter(node, parent, prop, index) {
@@ -735,37 +735,21 @@ export default class Component {
 				}
 
 				component.warn_on_undefined_store_value_references(node, parent, scope);
-
-				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0) {
-					const to_insert_for_loop_protect = component.loop_protect(node, prop, index, component.compile_options.loopGuardTimeout);
-					if (to_insert_for_loop_protect) {
-						if (!Array.isArray(parent[prop])) {
-							parent[prop] = {
-								type: 'BlockStatement',
-								body: [to_insert_for_loop_protect.node, node],
-							};
-						} else {
-							// can't insert directly, will screw up the index in the for-loop of estree-walker
-							if (!to_insert.has(parent)) {
-								to_insert.set(parent, []);
-							}
-							to_insert.get(parent).push(to_insert_for_loop_protect);
-						}
-					}
-				}
 			},
 
 			leave(node) {
+				// do it on leave, to prevent infinite loop
+				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0) {
+					const to_replace_for_loop_protect = component.loop_protect(node, scope, component.compile_options.loopGuardTimeout);
+					if (to_replace_for_loop_protect) {
+						this.replace(to_replace_for_loop_protect);
+						scope_updated = true;
+					}
+				}
+
 				if (map.has(node)) {
 					scope = scope.parent;
-				}
-				if (to_insert.has(node)) {
-					const nodes_to_insert = to_insert.get(node);
-					for (const { index, prop, node: node_to_insert } of nodes_to_insert.reverse()) {
-						node[prop].splice(index, 0, node_to_insert);
-					}
-					to_insert.delete(node);
-				}
+				}				
 			},
 		});
 
@@ -777,6 +761,12 @@ export default class Component {
 					delete parent[prop];
 				}
 			}
+		}
+
+		if (scope_updated) {
+			const { scope, map } = create_scopes(script.content);
+			this.instance_scope = scope;
+			this.instance_scope_map = map;
 		}
 	}
 
@@ -849,15 +839,12 @@ export default class Component {
 		}
 	}
 
-	loop_protect(node, prop, index, timeout) {
+	loop_protect(node, scope: Scope, timeout: number): Node | null {
 		if (node.type === 'WhileStatement' ||
 			node.type === 'ForStatement' ||
 			node.type === 'DoWhileStatement') {
-			const guard = this.get_unique_name('guard');
-			this.add_var({
-				name: guard.name,
-				internal: true,
-			});
+			const guard = this.get_unique_name('guard', scope);
+			this.used_names.add(guard.name);
 
 			const before = b`const ${guard} = @loop_guard(${timeout})`;
 			const inside = b`${guard}();`;
@@ -870,7 +857,14 @@ export default class Component {
 				};
 			}
 			node.body.body.push(inside[0]);
-			return { index, prop, node: before[0] };
+
+			return {
+				type: 'BlockStatement',
+				body: [
+					before[0],
+					node,
+				],
+			};
 		}
 		return null;
 	}
