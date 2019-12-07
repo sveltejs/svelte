@@ -71,6 +71,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 		this.not_static_content();
 
 		block.add_dependencies(this.node.expression.dependencies);
+		if (this.node.value) block.renderer.add_to_context(this.node.value, true);
+		if (this.node.error) block.renderer.add_to_context(this.node.error, true);
 
 		let is_dynamic = false;
 		let has_intros = false;
@@ -118,9 +120,6 @@ export default class AwaitBlockWrapper extends Wrapper {
 		if (has_outros) {
 			block.add_outro();
 		}
-
-		if (this.node.value) block.renderer.add_to_context(this.node.value, true);
-		if (this.node.error) block.renderer.add_to_context(this.node.error, true);
 	}
 
 	render(
