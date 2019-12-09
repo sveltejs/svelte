@@ -80,9 +80,17 @@ export function get_slot_changes(definition, $$scope, dirty, fn) {
 	if (definition[2] && fn) {
 		const lets = definition[2](fn(dirty));
 
-		return typeof $$scope.dirty === 'object'
-			? $$scope.dirty.map((n, i) => n | lets[i])
-			: $$scope.dirty | lets;
+		if (typeof $$scope.dirty === 'object') {
+			const merged = [];
+			const len = Math.max($$scope.dirty.length, lets.length);
+			for (let i = 0; i < len; i += 1) {
+				merged[i] = $$scope.dirty[i] | lets[i];
+			}
+
+			return merged;
+		}
+
+		return $$scope.dirty | lets;
 	}
 
 	return $$scope.dirty;
