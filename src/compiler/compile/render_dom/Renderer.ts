@@ -15,6 +15,11 @@ interface ContextMember {
 	priority: number;
 }
 
+type BitMasks = Array<{
+	n: number;
+	names: string[];
+}>;
+
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
 	options: CompileOptions;
@@ -199,26 +204,29 @@ export default class Renderer {
 			? x`$$self.$$.dirty`
 			: x`#dirty`) as Identifier | MemberExpression;
 
-		const get_bitmask = () => names.reduce((bitmask, name) => {
-			const member = renderer.context_lookup.get(name);
+		let bitmask;
+		const get_bitmask = () => {
+			const bitmask: BitMasks = [];
+			names.forEach((name) => {
+				const member = renderer.context_lookup.get(name);
 
-			if (!member) return bitmask;
+				if (!member) return;
 
-			if (member.index.value === -1) {
-				throw new Error(`unset index`);
-			}
+				if (member.index.value === -1) {
+					throw new Error(`unset index`);
+				}
 
-			const value = member.index.value as number;
-			const i = (value / 31) | 0;
-			const n = 1 << (value % 31);
+				const value = member.index.value as number;
+				const i = (value / 31) | 0;
+				const n = 1 << (value % 31);
 
-			if (!bitmask[i]) bitmask[i] = { n: 0, names: [] };
+				if (!bitmask[i]) bitmask[i] = { n: 0, names: [] };
 
-			bitmask[i].n |= n;
-			bitmask[i].names.push(name);
-
+				bitmask[i].n |= n;
+				bitmask[i].names.push(name);
+			});
 			return bitmask;
-		}, Array((this.context.length / 31) | 0).fill(null));
+		};
 
 		let operator;
 		let left;
@@ -231,20 +239,24 @@ export default class Renderer {
 				// to lazily create the node. TODO would be better if
 				// context was determined before rendering, so that
 				// this indirection was unnecessary
+				if (!bitmask) {
+					bitmask = get_bitmask();
 
-				const bitmask = get_bitmask();
+					if (!bitmask.length) {
+						({ operator, left, right } = x`${dirty} & /*${names.join(', ')}*/ 0` as BinaryExpression);
+					} else if (renderer.context_overflow) {
+						const expression = bitmask
+							.map((b, i) => ({ b, i }))
+							.filter(({ b }) => b)
+							.map(({ b, i }) => x`${dirty}[${i}] & /*${b.names.join(', ')}*/ ${b.n}`)
+							.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
 
-				if (renderer.context_overflow) {
-					const expression = bitmask
-						.map((b, i) => ({ b, i }))
-						.filter(({ b }) => b)
-						.map(({ b, i }) => x`${dirty}[${i}] & /*${b.names.join(', ')}*/ ${b.n}`)
-						.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
-
-					({ operator, left, right } = expression);
-				} else {
-					({ operator, left, right } = x`${dirty} & /*${names.join(', ')}*/ ${bitmask[0] ? bitmask[0].n : 0}` as BinaryExpression); // TODO the `: 0` case should never apply
+						({ operator, left, right } = expression as BinaryExpression);
+					} else {
+						({ operator, left, right } = x`${dirty} & /*${names.join(', ')}*/ ${bitmask[0].n}` as BinaryExpression);
+					}
 				}
+
 
 				return 'BinaryExpression';
 			},
