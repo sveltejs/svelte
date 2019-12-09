@@ -4,7 +4,10 @@
 
 * Fix unused export warning for props used as stores ([#4021](https://github.com/sveltejs/svelte/issues/4021))
 * Fix `{:then}` without resolved value containing `{#each}` ([#4022](https://github.com/sveltejs/svelte/issues/4022))
+* Fix incorrect code generated with `loopGuardTimeout` ([#4034](https://github.com/sveltejs/svelte/issues/4034))
+* Fix `{:then}` containing `{#if}` ([#4044](https://github.com/sveltejs/svelte/issues/4044))
 * Fix bare `import`s in `format: 'cjs'` output mode ([#4055](https://github.com/sveltejs/svelte/issues/4050))
+* Warn when using a known global as a component name ([#4070](https://github.com/sveltejs/svelte/issues/4070))
 
 ## 3.16.0
 
