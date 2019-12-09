@@ -31,62 +31,45 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 
 	const { context_lookup } = block.renderer;
 
-	let expression;
-
 	// i am well aware that this code is gross
 	// TODO make it less gross
 	const changes = {
-		get type() {
-			if (block.renderer.context_overflow) return 'ArrayExpression';
+		type: 'ParenthesizedExpression',
+		get expression() {
+			if (block.renderer.context_overflow) {
+				const grouped = [];
 
-			expression = Array.from(names)
+				Array.from(names).forEach(name => {
+					const i = context_lookup.get(name).index.value as number;
+					const g = Math.floor(i / 31);
+
+					if (!grouped[g]) grouped[g] = [];
+					grouped[g].push({ name, n: i % 31 });
+				});
+
+				const elements = [];
+
+				for (let g = 0; g < grouped.length; g += 1) {
+					elements[g] = grouped[g]
+						? grouped[g]
+							.map(({ name, n }) => x`${name} ? ${1 << n} : 0`)
+							.reduce((lhs, rhs) => x`${lhs} | ${rhs}`)
+						: x`0`;
+				}
+
+				return {
+					type: 'ArrayExpression',
+					elements
+				};
+			}
+
+			return Array.from(names)
 				.map(name => {
 					const i = context_lookup.get(name).index.value as number;
 					return x`${name} ? ${1 << i} : 0`;
 				})
 				.reduce((lhs, rhs) => x`${lhs} | ${rhs}`) as BinaryExpression;
-
-			return expression.type;
-		},
-		get elements() {
-			const grouped = [];
-
-			Array.from(names).forEach(name => {
-				const i = context_lookup.get(name).index.value as number;
-				const g = Math.floor(i / 31);
-
-				if (!grouped[g]) grouped[g] = [];
-				grouped[g].push({ name, n: i % 31 });
-			});
-
-			const elements = [];
-
-			for (let g = 0; g < grouped.length; g += 1) {
-				elements[g] = grouped[g]
-					? grouped[g]
-						.map(({ name, n }) => x`${name} ? ${1 << n} : 0`)
-						.reduce((lhs, rhs) => x`${lhs} | ${rhs}`)
-					: x`0`;
-			}
-
-			return elements;
-		},
-		get test() {
-			return expression.test;
-		},
-		get consequent() {
-			return expression.consequent;
-		},
-		get alternate() {
-			return expression.alternate;
-		},
-		get left() {
-			return expression.left;
-		},
-		get right() {
-			return expression.right;
-		},
-		operator: '|'
+		}
 	};
 
 	return {
