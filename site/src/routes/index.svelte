@@ -85,7 +85,8 @@
 
 	<div style="grid-area: start; display: flex; flex-direction: column; min-width: 0" slot="how">
 		<pre class="language-bash" style="margin: 0 0 1em 0; min-width: 0; min-height: 0">
-npx degit sveltejs/template my-svelte-project
+npx degit <a href="https://github.com/sveltejs/template">sveltejs/template</a> my-svelte-project
+<span class="token comment"># or download and extract <a href="https://github.com/sveltejs/template/archive/master.zip">this .zip file</a></span>
 cd my-svelte-project
 
 npm install
