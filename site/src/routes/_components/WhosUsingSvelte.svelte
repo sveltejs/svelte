@@ -48,6 +48,7 @@
 	<a target="_blank" rel="noopener" href="https://bekchy.com"><img src="organisations/bekchy.png" alt="Bekchy logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://beyonk.com"><img src="organisations/beyonk.svg" alt="Beyonk logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://buydotstar.com"><img src="organisations/buydotstar.svg" alt="buy.* logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://cashfree.com/"><img src="organisations/cashfree.svg" alt="Cashfree logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://chess.com" style="background-color: rgb(49,46,43);"><img src="organisations/chess.svg" alt="Chess.com logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://comigosaude.com.br"><img src="organisations/comigo.svg" alt="Comigo logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://datawrapper.de"><img src="organisations/datawrapper.svg" alt="Datawrapper logo" loading="lazy"></a>
@@ -88,6 +89,5 @@
 	<a target="_blank" rel="noopener" href="https://m.tokopedia.com"><img src="organisations/tokopedia.svg" alt="Tokopedia logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://webdesq.net"><img src="organisations/webdesq.svg" alt="Webdesq logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://zevvle.com/"><img src="organisations/zevvle.svg" alt="Zevvle logo" loading="lazy"></a>
-	<a target="_blank" rel="noopener" href="https://cashfree.com/"><img src="organisations/cashfree.svg" alt="Cashfree logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://github.com/sveltejs/svelte/blob/master/site/src/routes/_components/WhosUsingSvelte.svelte" class="add-yourself"><span>+ your company?</span></a>
 </div>
