@@ -225,6 +225,7 @@ export default class Renderer {
 				bitmask[i].n |= n;
 				bitmask[i].names.push(name);
 			});
+			return bitmask;
 		};
 
 		let operator;
