@@ -426,14 +426,19 @@ export default function dom(
 	}
 
 	if (options.customElement) {
+		const lightDom = options.shadowDom === 'none';
 		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
+					
+					${!lightDom && b`
+						this.attachShadow({ mode: '${options.shadowDom}' });
+					`}
 
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, { target: ${lightDom ? 'this' : 'this.shadowRoot'} }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 
 					${dev_props_check}
 

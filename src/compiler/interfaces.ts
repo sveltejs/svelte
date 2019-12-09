@@ -119,6 +119,7 @@ export interface CompileOptions {
 	hydratable?: boolean;
 	legacy?: boolean;
 	customElement?: boolean;
+	shadowDom?: ShadowDomMode;
 	tag?: string;
 	css?: boolean;
 	loopGuardTimeout?: number;
@@ -161,3 +162,7 @@ export interface Var {
 	subscribable?: boolean;
 	is_reactive_dependency?: boolean;
 }
+
+export type ShadowDomMode = 'none'
+	| 'open'
+	| 'closed'

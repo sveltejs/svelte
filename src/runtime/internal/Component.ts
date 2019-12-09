@@ -166,7 +166,6 @@ if (typeof HTMLElement === 'function') {
 		$$: T$$;
 		constructor() {
 			super();
-			this.attachShadow({ mode: 'open' });
 		}
 
 		connectedCallback() {

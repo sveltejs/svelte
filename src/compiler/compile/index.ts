@@ -22,6 +22,7 @@ const valid_options = [
 	'hydratable',
 	'legacy',
 	'customElement',
+	'shadowDom',
 	'tag',
 	'css',
 	'loopGuardTimeout',
