@@ -1283,7 +1283,7 @@ export default class Component {
 
 		if (this.var_lookup.has(name) && !this.var_lookup.get(name).global) return;
 		if (template_scope && template_scope.names.has(name)) return;
-		if (globals.has(name)) return;
+		if (globals.has(name) && node.type !== 'InlineComponent') return;
 
 		let message = `'${name}' is not defined`;
 		if (!this.ast.instance)
