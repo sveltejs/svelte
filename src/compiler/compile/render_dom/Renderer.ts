@@ -210,7 +210,7 @@ export default class Renderer {
 			names.forEach((name) => {
 				const member = renderer.context_lookup.get(name);
 
-				if (!member) return bitmask;
+				if (!member) return;
 
 				if (member.index.value === -1) {
 					throw new Error(`unset index`);
