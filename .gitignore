@@ -23,6 +23,7 @@ node_modules
 /test/sourcemaps/samples/*/output.css.map
 /yarn-error.log
 _actual*.*
+_output
 /types
 
 /site/cypress/screenshots/
