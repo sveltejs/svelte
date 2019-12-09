@@ -77,9 +77,15 @@ export function get_slot_context(definition, ctx, $$scope, fn) {
 }
 
 export function get_slot_changes(definition, $$scope, dirty, fn) {
-	return definition[2] && fn
-		? $$scope.dirty | definition[2](fn(dirty))
-		: $$scope.dirty;
+	if (definition[2] && fn) {
+		const lets = definition[2](fn(dirty));
+
+		return typeof $$scope.dirty === 'object'
+			? $$scope.dirty.map((n, i) => n | lets[i])
+			: $$scope.dirty | lets;
+	}
+
+	return $$scope.dirty;
 }
 
 export function exclude_internal_props(props) {
