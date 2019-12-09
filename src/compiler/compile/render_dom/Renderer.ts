@@ -225,7 +225,6 @@ export default class Renderer {
 				bitmask[i].n |= n;
 				bitmask[i].names.push(name);
 			});
-			return bitmask;
 		};
 
 		let operator;
@@ -241,7 +240,7 @@ export default class Renderer {
 				// this indirection was unnecessary
 				if (!bitmask) {
 					bitmask = get_bitmask();
-	
+
 					if (!bitmask.length) {
 						({ operator, left, right } = x`${dirty} & /*${names.join(', ')}*/ 0` as BinaryExpression);
 					} else if (renderer.context_overflow) {
@@ -250,7 +249,7 @@ export default class Renderer {
 							.filter(({ b }) => b)
 							.map(({ b, i }) => x`${dirty}[${i}] & /*${b.names.join(', ')}*/ ${b.n}`)
 							.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
-	
+
 						({ operator, left, right } = expression as BinaryExpression);
 					} else {
 						({ operator, left, right } = x`${dirty} & /*${names.join(', ')}*/ ${bitmask[0].n}` as BinaryExpression);
