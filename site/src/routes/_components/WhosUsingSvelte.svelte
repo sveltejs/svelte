@@ -45,9 +45,11 @@
 </style>
 
 <div class="logos">
+	<a target="_blank" rel="noopener" href="https://absoluteweb.com"><img src="organisations/absoluteweb.svg" alt="Absolute Web logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://bekchy.com"><img src="organisations/bekchy.png" alt="Bekchy logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://beyonk.com"><img src="organisations/beyonk.svg" alt="Beyonk logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://buydotstar.com"><img src="organisations/buydotstar.svg" alt="buy.* logo" loading="lazy"></a>
+	<a target="_blank" rel="noopener" href="https://cashfree.com/"><img src="organisations/cashfree.svg" alt="Cashfree logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://chess.com" style="background-color: rgb(49,46,43);"><img src="organisations/chess.svg" alt="Chess.com logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://comigosaude.com.br"><img src="organisations/comigo.svg" alt="Comigo logo" loading="lazy"></a>
 	<a target="_blank" rel="noopener" href="https://datawrapper.de"><img src="organisations/datawrapper.svg" alt="Datawrapper logo" loading="lazy"></a>
