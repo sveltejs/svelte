@@ -1,6 +1,7 @@
 import * as jsdom from 'jsdom';
 import * as assert from 'assert';
 import * as glob from 'tiny-glob/sync.js';
+import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
 
@@ -236,4 +237,17 @@ export function useFakeTimers() {
 			global.setTimeout = original_set_timeout;
 		}
 	};
+}
+
+export function mkdirp(dir) {
+	const parent = path.dirname(dir);
+	if (parent === dir) return;
+
+	mkdirp(parent);
+
+	try {
+		fs.mkdirSync(dir);
+	} catch (err) {
+		// do nothing
+	}
 }
