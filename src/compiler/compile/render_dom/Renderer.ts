@@ -220,7 +220,11 @@ export default class Renderer {
 				const i = (value / 31) | 0;
 				const n = 1 << (value % 31);
 
-				if (!bitmask[i]) bitmask[i] = { n: 0, names: [] };
+				if (bitmask.length <= i) {
+					for (let j = bitmask.length; j <= i; j++) {
+						bitmask[j] = { n: 0, names: [] };
+					}
+				}
 
 				bitmask[i].n |= n;
 				bitmask[i].names.push(name);
