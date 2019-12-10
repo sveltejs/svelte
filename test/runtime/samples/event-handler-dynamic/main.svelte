@@ -1,5 +1,5 @@
 <script>
-	let clickHandler;
+	let clickHandler = () => void(0); // no-op handler
 	let number = 0;
 	
 	function updateHandler1(){
