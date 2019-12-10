@@ -28,6 +28,7 @@ import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, Assi
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
+import is_dynamic from './render_dom/wrappers/shared/is_dynamic';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -1138,9 +1139,9 @@ export default class Component {
 			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 
-				const assignees = new Set();
+				const assignees = new Set<string>();
 				const assignee_nodes = new Set();
-				const dependencies = new Set();
+				const dependencies = new Set<string>();
 
 				let scope = this.instance_scope;
 				const map = this.instance_scope_map;
@@ -1172,11 +1173,10 @@ export default class Component {
 								const owner = scope.find_owner(name);
 								const variable = component.var_lookup.get(name);
 								if (variable) variable.is_reactive_dependency = true;
-								const is_writable_or_mutated =
-									variable && (variable.writable || variable.mutated);
+
 								if (
 									(!owner || owner === component.instance_scope) &&
-									(name[0] === '$' || is_writable_or_mutated)
+									(name[0] === '$' || variable)
 								) {
 									dependencies.add(name);
 								}
@@ -1195,6 +1195,17 @@ export default class Component {
 
 				const { expression } = node.body as ExpressionStatement;
 				const declaration = expression && (expression as AssignmentExpression).left;
+
+				const is_dependency_static = Array.from(dependencies).every(dependency => dependency !== '$$props' && !is_dynamic(this.var_lookup.get(dependency)));
+
+				if (is_dependency_static) {
+					assignees.forEach(assignee => {
+						const variable = component.var_lookup.get(assignee);
+						if (variable) {
+							variable.is_reactive_static = true;
+						}
+					});
+				}
 
 				unsorted_reactive_declarations.push({
 					assignees,
