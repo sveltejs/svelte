@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 3.16.3
+
+* Fix bitmask overflow when using slotted components ([#4077](https://github.com/sveltejs/svelte/issues/4077))
+* Remove unnecessary `$$invalidate` calls from init block ([#4018](https://github.com/sveltejs/svelte/issues/4018))
+
 ## 3.16.2
 
 * Handle slot updates when parent component has a bitmask overflow  ([#4078](https://github.com/sveltejs/svelte/pull/4078))
