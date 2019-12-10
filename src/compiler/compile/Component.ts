@@ -203,8 +203,7 @@ export default class Component {
 			const subscribable_name = name.slice(1);
 
 			const variable = this.var_lookup.get(subscribable_name);
-			if (variable)
-			{
+			if (variable) {
 				variable.referenced   = true;
 				variable.subscribable = true;
 			}
