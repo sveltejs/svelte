@@ -3,6 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
 import * as virtual from 'rollup-plugin-virtual';
+import * as glob from 'tiny-glob/sync.js';
 import { clear_loops, flush, set_now, set_raf } from "../../internal";
 
 import {
@@ -10,7 +11,8 @@ import {
 	loadConfig,
 	loadSvelte,
 	env,
-	setupHtmlEqual
+	setupHtmlEqual,
+	mkdirp
 } from "../helpers.js";
 
 let svelte$;
@@ -89,6 +91,33 @@ describe("runtime", () => {
 			let unintendedError = null;
 
 			const window = env();
+
+			glob('**/*.svelte', { cwd }).forEach(file => {
+				if (file[0] === '_') return;
+
+				const dir  = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
+				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
+
+				if (fs.existsSync(out)) {
+					fs.unlinkSync(out);
+				}
+
+				mkdirp(dir);
+
+				try {
+					const { js } = compile(
+						fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
+						{
+							...compileOptions,
+							filename: file
+						}
+					);
+
+					fs.writeFileSync(out, js.code);
+				} catch (err) {
+					// do nothing
+				}
+			});
 
 			return Promise.resolve()
 				.then(() => {
@@ -195,7 +224,7 @@ describe("runtime", () => {
 					} else {
 						throw err;
 					}
-				 }).catch(err => {
+				}).catch(err => {
 					failed.add(dir);
 					showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 					throw err;

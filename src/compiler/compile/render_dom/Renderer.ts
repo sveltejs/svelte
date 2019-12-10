@@ -204,7 +204,6 @@ export default class Renderer {
 			? x`$$self.$$.dirty`
 			: x`#dirty`) as Identifier | MemberExpression;
 
-		let bitmask;
 		const get_bitmask = () => {
 			const bitmask: BitMasks = [];
 			names.forEach((name) => {
@@ -228,48 +227,30 @@ export default class Renderer {
 			return bitmask;
 		};
 
-		let operator;
-		let left;
-		let right;
-
 		return {
-			get type() {
-				// we make the type a getter, even though it's always
-				// a BinaryExpression, because it gives us an opportunity
-				// to lazily create the node. TODO would be better if
-				// context was determined before rendering, so that
-				// this indirection was unnecessary
-				if (!bitmask) {
-					bitmask = get_bitmask();
+			// Using a ParenthesizedExpression allows us to create
+			// the expression lazily. TODO would be better if
+			// context was determined before rendering, so that
+			// this indirection was unnecessary
+			type: 'ParenthesizedExpression',
+			get expression() {
+				const bitmask = get_bitmask();
 
-					if (!bitmask.length) {
-						({ operator, left, right } = x`${dirty} & /*${names.join(', ')}*/ 0` as BinaryExpression);
-					} else if (renderer.context_overflow) {
-						const expression = bitmask
-							.map((b, i) => ({ b, i }))
-							.filter(({ b }) => b)
-							.map(({ b, i }) => x`${dirty}[${i}] & /*${b.names.join(', ')}*/ ${b.n}`)
-							.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
-
-						({ operator, left, right } = expression as BinaryExpression);
-					} else {
-						({ operator, left, right } = x`${dirty} & /*${names.join(', ')}*/ ${bitmask[0].n}` as BinaryExpression);
-					}
+				if (!bitmask.length) {
+					return x`${dirty} & /*${names.join(', ')}*/ 0` as BinaryExpression;
 				}
 
+				if (renderer.context_overflow) {
+					return bitmask
+						.map((b, i) => ({ b, i }))
+						.filter(({ b }) => b)
+						.map(({ b, i }) => x`${dirty}[${i}] & /*${b.names.join(', ')}*/ ${b.n}`)
+						.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
+				}
 
-				return 'BinaryExpression';
-			},
-			get operator() {
-				return operator;
-			},
-			get left() {
-				return left;
-			},
-			get right() {
-				return right;
+				return x`${dirty} & /*${names.join(', ')}*/ ${bitmask[0].n}` as BinaryExpression;
 			}
-		} as Expression;
+		} as any;
 	}
 
 	reference(node: string | Identifier | MemberExpression) {
