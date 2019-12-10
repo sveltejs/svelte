@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.16.2
+
+* Handle slot updates when parent component has a bitmask overflow  ([#4078](https://github.com/sveltejs/svelte/pull/4078))
+
 ## 3.16.1
 
 * Fix unused export warning for props used as stores ([#4021](https://github.com/sveltejs/svelte/issues/4021))
