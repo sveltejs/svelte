@@ -182,11 +182,9 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 		});
 
-		const non_let_dependencies = Array.from(fragment_dependencies).filter(name => !this.node.scope.is_let(name));
-
 		const dynamic_attributes = this.node.attributes.filter(a => a.get_dependencies().length > 0);
 
-		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || non_let_dependencies.length > 0)) {
+		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || fragment_dependencies.size > 0)) {
 			updates.push(b`const ${name_changes} = {};`);
 		}
 
@@ -266,9 +264,9 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 		}
 
-		if (non_let_dependencies.length > 0) {
+		if (fragment_dependencies.size > 0) {
 			updates.push(b`
-				if (${renderer.dirty(non_let_dependencies)}) {
+				if (${renderer.dirty(Array.from(fragment_dependencies))}) {
 					${name_changes}.$$scope = { dirty: #dirty, ctx: #ctx };
 				}`);
 		}
