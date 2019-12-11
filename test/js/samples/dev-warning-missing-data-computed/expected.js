@@ -41,9 +41,9 @@ function create_fragment(ctx) {
 			append_dev(p, t1);
 			append_dev(p, t2);
 		},
-		p: function update(ctx, [dirty]) {
-			if (dirty & /*foo*/ 1 && t0_value !== (t0_value = Math.max(0, /*foo*/ ctx[0]) + "")) set_data_dev(t0, t0_value);
-			if (dirty & /*bar*/ 2) set_data_dev(t2, /*bar*/ ctx[1]);
+		p: function update(ctx, dirty) {
+			if (dirty[0] & /*foo*/ 1 && t0_value !== (t0_value = Math.max(0, /*foo*/ ctx[0]) + "")) set_data_dev(t0, t0_value);
+			if (dirty[0] & /*bar*/ 2) set_data_dev(t2, /*bar*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,
@@ -86,7 +86,7 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*foo*/ 1) {
+		if ($$self.$$.dirty[0] & /*foo*/ 1) {
 			$: $$invalidate(1, bar = foo * 2);
 		}
 	};

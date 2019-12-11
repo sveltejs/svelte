@@ -1,7 +1,7 @@
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
-import { Node, Identifier, ArrayPattern } from 'estree';
+import { Node, Identifier } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
 
 export interface BlockOptions {
@@ -301,12 +301,7 @@ export default class Block {
 			} else {
 				const ctx = this.maintain_context ? x`#new_ctx` : x`#ctx`;
 
-				let dirty: Identifier | ArrayPattern = { type: 'Identifier', name: '#dirty' };
-				if (!this.renderer.context_overflow && !this.parent) {
-					dirty = { type: 'ArrayPattern', elements: [dirty] };
-				}
-
-				properties.update = x`function #update(${ctx}, ${dirty}) {
+				properties.update = x`function #update(${ctx}, #dirty) {
 					${this.maintain_context && b`#ctx = ${ctx};`}
 					${this.chunks.update}
 				}`;

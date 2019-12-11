@@ -51,9 +51,9 @@ function create_each_block(ctx) {
 			insert_dev(target, t1, anchor);
 		},
 		p: function update(ctx, dirty) {
-			if (dirty & /*things*/ 1 && t0_value !== (t0_value = /*thing*/ ctx[2].name + "")) set_data_dev(t0, t0_value);
+			if (dirty[0] & /*things*/ 1 && t0_value !== (t0_value = /*thing*/ ctx[2].name + "")) set_data_dev(t0, t0_value);
 
-			if (dirty & /*foo*/ 2) {
+			if (dirty[0] & /*foo*/ 2) {
 				const foo = /*foo*/ ctx[1];
 				console.log({ foo });
 				debugger;
@@ -113,8 +113,8 @@ function create_fragment(ctx) {
 			append_dev(p, t1);
 			append_dev(p, t2);
 		},
-		p: function update(ctx, [dirty]) {
-			if (dirty & /*things*/ 1) {
+		p: function update(ctx, dirty) {
+			if (dirty[0] & /*things*/ 1) {
 				each_value = /*things*/ ctx[0];
 				let i;
 
@@ -137,7 +137,7 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (dirty & /*foo*/ 2) set_data_dev(t2, /*foo*/ ctx[1]);
+			if (dirty[0] & /*foo*/ 2) set_data_dev(t2, /*foo*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,

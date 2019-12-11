@@ -22,12 +22,12 @@ function create_fragment(ctx) {
 		m(target, anchor) {
 			insert(target, div, anchor);
 		},
-		p(ctx, [dirty]) {
-			if (dirty & /*color*/ 1) {
+		p(ctx, dirty) {
+			if (dirty[0] & /*color*/ 1) {
 				set_style(div, "color", /*color*/ ctx[0]);
 			}
 
-			if (dirty & /*x, y*/ 6) {
+			if (dirty[0] & /*x, y*/ 6) {
 				set_style(div, "transform", "translate(" + /*x*/ ctx[1] + "px," + /*y*/ ctx[2] + "px)");
 			}
 		},

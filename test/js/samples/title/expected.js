@@ -8,8 +8,8 @@ function create_fragment(ctx) {
 	return {
 		c: noop,
 		m: noop,
-		p(ctx, [dirty]) {
-			if (dirty & /*custom*/ 1 && title_value !== (title_value = "a " + /*custom*/ ctx[0] + " title")) {
+		p(ctx, dirty) {
+			if (dirty[0] & /*custom*/ 1 && title_value !== (title_value = "a " + /*custom*/ ctx[0] + " title")) {
 				document.title = title_value;
 			}
 		},
