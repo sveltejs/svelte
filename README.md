@@ -12,7 +12,7 @@
   </a>
 
   <a href="https://github.com/sveltejs/svelte/actions">
-    <img src="https://github.com/sveltejs/svelte/workflows/CI/badge.svg"
+    <img src="https://github.com/sveltejs/svelte/workflows/CI/badge.svg?branch=master"
          alt="build status">
   </a>
 
