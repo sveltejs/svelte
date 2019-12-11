@@ -429,7 +429,7 @@ export default function dom(
 	}` as ObjectExpression;
 
 	let dirty;
-	if (renderer.context_overflow) {
+	if (renderer.context.length > 31) {
 		dirty = x`[]`;
 		for (let i = 0; i < renderer.context.length; i += 31) {
 			dirty.elements.push(x`-1`);
