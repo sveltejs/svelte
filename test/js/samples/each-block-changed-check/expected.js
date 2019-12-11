@@ -70,9 +70,9 @@ function create_each_block(ctx) {
 			html_tag.m(div);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*comments*/ 1 && t2_value !== (t2_value = /*comment*/ ctx[4].author + "")) set_data(t2, t2_value);
-			if (dirty & /*elapsed, comments, time*/ 7 && t4_value !== (t4_value = /*elapsed*/ ctx[1](/*comment*/ ctx[4].time, /*time*/ ctx[2]) + "")) set_data(t4, t4_value);
-			if (dirty & /*comments*/ 1 && raw_value !== (raw_value = /*comment*/ ctx[4].html + "")) html_tag.p(raw_value);
+			if (dirty[0] & /*comments*/ 1 && t2_value !== (t2_value = /*comment*/ ctx[4].author + "")) set_data(t2, t2_value);
+			if (dirty[0] & /*elapsed, comments, time*/ 7 && t4_value !== (t4_value = /*elapsed*/ ctx[1](/*comment*/ ctx[4].time, /*time*/ ctx[2]) + "")) set_data(t4, t4_value);
+			if (dirty[0] & /*comments*/ 1 && raw_value !== (raw_value = /*comment*/ ctx[4].html + "")) html_tag.p(raw_value);
 		},
 		d(detaching) {
 			if (detaching) detach(div);
@@ -110,8 +110,8 @@ function create_fragment(ctx) {
 			insert(target, p, anchor);
 			append(p, t1);
 		},
-		p(ctx, [dirty]) {
-			if (dirty & /*comments, elapsed, time*/ 7) {
+		p(ctx, dirty) {
+			if (dirty[0] & /*comments, elapsed, time*/ 7) {
 				each_value = /*comments*/ ctx[0];
 				let i;
 
@@ -134,7 +134,7 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (dirty & /*foo*/ 8) set_data(t1, /*foo*/ ctx[3]);
+			if (dirty[0] & /*foo*/ 8) set_data(t1, /*foo*/ ctx[3]);
 		},
 		i: noop,
 		o: noop,

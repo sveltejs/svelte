@@ -56,8 +56,8 @@ function create_fragment(ctx) {
 			append(p3, t8);
 			append(p3, t9);
 		},
-		p(ctx, [dirty]) {
-			if (dirty & /*world3*/ 1) set_data(t9, /*world3*/ ctx[0]);
+		p(ctx, dirty) {
+			if (dirty[0] & /*world3*/ 1) set_data(t9, /*world3*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,

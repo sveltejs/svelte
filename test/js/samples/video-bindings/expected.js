@@ -47,8 +47,8 @@ function create_fragment(ctx) {
 			insert(target, video, anchor);
 			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[4].bind(video));
 		},
-		p(ctx, [dirty]) {
-			if (!video_updating && dirty & /*currentTime*/ 1 && !isNaN(/*currentTime*/ ctx[0])) {
+		p(ctx, dirty) {
+			if (!video_updating && dirty[0] & /*currentTime*/ 1 && !isNaN(/*currentTime*/ ctx[0])) {
 				video.currentTime = /*currentTime*/ ctx[0];
 			}
 
