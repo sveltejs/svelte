@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 3.16.4
+
+* Fix slots with props not propagating through to inner slots ([#4061](https://github.com/sveltejs/svelte/issues/4061))
+* Fix noting autosubscribed stores as `referenced` in `vars` for tooling ([#4081](https://github.com/sveltejs/svelte/issues/4081))
+* Fix cascading invalidations in certain situations ([#4094](https://github.com/sveltejs/svelte/issues/4094))
+
 ## 3.16.3
 
 * Fix bitmask overflow when using slotted components ([#4077](https://github.com/sveltejs/svelte/issues/4077))
