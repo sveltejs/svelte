@@ -248,7 +248,7 @@ export default class Renderer {
 						.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
 				}
 
-				return x`${dirty} & /*${names.join(', ')}*/ ${bitmask[0].n}` as BinaryExpression;
+				return x`${dirty}[0] & /*${names.join(', ')}*/ ${bitmask[0].n}` as BinaryExpression;
 			}
 		} as any;
 	}

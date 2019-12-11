@@ -302,9 +302,6 @@ export default class Block {
 				const ctx = this.maintain_context ? x`#new_ctx` : x`#ctx`;
 
 				let dirty: Identifier | ArrayPattern = { type: 'Identifier', name: '#dirty' };
-				if (!this.renderer.context_overflow && !this.parent) {
-					dirty = { type: 'ArrayPattern', elements: [dirty] };
-				}
 
 				properties.update = x`function #update(${ctx}, ${dirty}) {
 					${this.maintain_context && b`#ctx = ${ctx};`}
