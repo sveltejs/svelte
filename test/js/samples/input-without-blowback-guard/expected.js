@@ -25,8 +25,8 @@ function create_fragment(ctx) {
 			insert(target, input, anchor);
 			input.checked = /*foo*/ ctx[0];
 		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*foo*/ 1) {
+		p(ctx, [dirty]) {
+			if (dirty & /*foo*/ 1) {
 				input.checked = /*foo*/ ctx[0];
 			}
 		},

@@ -40,8 +40,8 @@ function create_fragment(ctx) {
 			append(p, t2);
 			append(p, t3);
 		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*things*/ 1 && t3_value !== (t3_value = /*things*/ ctx[0].length + "")) set_data(t3, t3_value);
+		p(ctx, [dirty]) {
+			if (dirty & /*things*/ 1 && t3_value !== (t3_value = /*things*/ ctx[0].length + "")) set_data(t3, t3_value);
 		},
 		i: noop,
 		o: noop,

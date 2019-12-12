@@ -26,6 +26,7 @@ export default class Renderer {
 
 	context: ContextMember[] = [];
 	context_lookup: Map<string, ContextMember> = new Map();
+	context_overflow: boolean;
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
@@ -95,6 +96,8 @@ export default class Renderer {
 		this.block.assign_variable_names();
 
 		this.fragment.render(this.block, null, x`#nodes` as Identifier);
+
+		this.context_overflow = this.context.length > 31;
 
 		this.context.forEach(member => {
 			const { variable } = member;
@@ -237,11 +240,15 @@ export default class Renderer {
 					return x`${dirty} & /*${names.join(', ')}*/ 0` as BinaryExpression;
 				}
 
-				return bitmask
-					.map((b, i) => ({ b, i }))
-					.filter(({ b }) => b)
-					.map(({ b, i }) => x`${dirty}[${i}] & /*${b.names.join(', ')}*/ ${b.n}`)
-					.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
+				if (renderer.context_overflow) {
+					return bitmask
+						.map((b, i) => ({ b, i }))
+						.filter(({ b }) => b)
+						.map(({ b, i }) => x`${dirty}[${i}] & /*${b.names.join(', ')}*/ ${b.n}`)
+						.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
+				}
+
+				return x`${dirty} & /*${names.join(', ')}*/ ${bitmask[0].n}` as BinaryExpression;
 			}
 		} as any;
 	}

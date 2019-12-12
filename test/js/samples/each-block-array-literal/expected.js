@@ -36,7 +36,7 @@ function create_each_block(ctx) {
 			append(span, t);
 		},
 		p(ctx, dirty) {
-			if (dirty[0] & /*a, b, c, d, e*/ 31 && t_value !== (t_value = /*num*/ ctx[5] + "")) set_data(t, t_value);
+			if (dirty & /*a, b, c, d, e*/ 31 && t_value !== (t_value = /*num*/ ctx[5] + "")) set_data(t, t_value);
 		},
 		d(detaching) {
 			if (detaching) detach(span);
@@ -68,8 +68,8 @@ function create_fragment(ctx) {
 
 			insert(target, each_1_anchor, anchor);
 		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*a, b, c, d, e*/ 31) {
+		p(ctx, [dirty]) {
+			if (dirty & /*a, b, c, d, e*/ 31) {
 				each_value = [/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]];
 				let i;
 

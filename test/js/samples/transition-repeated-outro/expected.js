@@ -61,7 +61,7 @@ function create_fragment(ctx) {
 			insert(target, if_block_anchor, anchor);
 			current = true;
 		},
-		p(ctx, dirty) {
+		p(ctx, [dirty]) {
 			if (/*num*/ ctx[0] < 5) {
 				if (!if_block) {
 					if_block = create_if_block(ctx);

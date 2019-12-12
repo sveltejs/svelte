@@ -28,8 +28,8 @@ function create_fragment(ctx) {
 			insert(target, h1, anchor);
 			append(h1, t);
 		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*$foo*/ 1) set_data(t, /*$foo*/ ctx[0]);
+		p(ctx, [dirty]) {
+			if (dirty & /*$foo*/ 1) set_data(t, /*$foo*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,

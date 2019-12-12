@@ -43,8 +43,8 @@ function create_fragment(ctx) {
 				}
 			}
 		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*current*/ 1 && select_value_value !== (select_value_value = /*current*/ ctx[0])) {
+		p(ctx, [dirty]) {
+			if (dirty & /*current*/ 1 && select_value_value !== (select_value_value = /*current*/ ctx[0])) {
 				for (var i = 0; i < select.options.length; i += 1) {
 					var option = select.options[i];
 
