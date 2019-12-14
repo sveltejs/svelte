@@ -138,7 +138,7 @@ interface ScaleParams {
 	easing: EasingFunction;
 	x: boolean;
 	y: boolean;
-	start: number | {x: number, y:number};
+	start: number | {x: number; y: number};
 	opacity: number;
 }
 
