@@ -136,7 +136,9 @@ interface ScaleParams {
 	delay: number;
 	duration: number;
 	easing: EasingFunction;
-	start: number;
+	x: boolean;
+	y: boolean;
+	start: number | {x: number, y:number};
 	opacity: number;
 }
 
@@ -144,14 +146,21 @@ export function scale(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut,
-	start = 0,
+	x = true,
+	y = true,
+	start = {x: 0, y: 0},
 	opacity = 0
 }: ScaleParams): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
 
-	const sd = 1 - start;
+	if (typeof start === "number") {
+		start = {x: start, y: start};
+	}
+	const sdx = 1 - start.x;
+	const sdy = 1 - start.y;
+
 	const od = target_opacity * (1 - opacity);
 
 	return {
@@ -159,7 +168,7 @@ export function scale(node: Element, {
 		duration,
 		easing,
 		css: (_t, u) => `
-			transform: ${transform} scale(${1 - (sd * u)});
+			transform: ${transform} scale(${x ? 1 - (sdx * u) : 1}, ${y ? 1 - (sdy * u) : 1});
 			opacity: ${target_opacity - (od * u)}
 		`
 	};
