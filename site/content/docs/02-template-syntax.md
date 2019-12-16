@@ -205,6 +205,8 @@ Iterating over lists of values can be done with an each block.
 </ul>
 ```
 
+You can use each blocks to iterate over any value with a `length` property.
+
 ---
 
 An each block can also specify an *index*, equivalent to the second argument in an `array.map(...)` callback:
