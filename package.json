@@ -75,6 +75,7 @@
     "is-reference": "^1.1.4",
     "jsdom": "^15.1.1",
     "kleur": "^3.0.3",
+    "lint-staged": "^9.5.0",
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.3",
     "mocha": "^6.2.0",
