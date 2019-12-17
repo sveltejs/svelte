@@ -71,6 +71,7 @@
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-svelte3": "^2.7.3",
     "estree-walker": "^1.0.0",
+    "husky": "^3.1.0",
     "is-reference": "^1.1.4",
     "jsdom": "^15.1.1",
     "kleur": "^3.0.3",
