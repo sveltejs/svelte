@@ -39,6 +39,14 @@
     "tsd": "tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\""
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*{src,test}/**/*.{ts,js}": "npm run lint"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/sveltejs/svelte.git"
