@@ -4,6 +4,7 @@
 	let a = (writable({}));
 	let b = () => true;
 </script>
+<!-- if (reactive && non-reactive) -->
 {#if $a || b() }
 		<Widget></Widget>
 {:else}
