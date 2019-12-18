@@ -11,7 +11,7 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty[0] & /*a, b*/ 3) {
+		if ($$self.$$.dirty & /*a, b*/ 3) {
 			$: console.log("max", Math.max(a, b));
 		}
 	};
