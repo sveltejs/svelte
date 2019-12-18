@@ -268,6 +268,9 @@ export function toggle_class(element, name, toggle) {
 }
 
 export function custom_event<T=any>(type: string, detail?: T) {
+        // is compile target customElement?
+        // is event not a Svelte event?
+        // use new CustomEvent with bubbles/composed = true for non, svelte event
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, false, false, detail);
 	return e;
