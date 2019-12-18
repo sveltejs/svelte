@@ -33,7 +33,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 	const { name, filename, loopGuardTimeout, dev } = options;
 
 	Object.keys(options).forEach(key => {
-		if (valid_options.indexOf(key) === -1) {
+		if (!valid_options.includes(key)) {
 			const match = fuzzymatch(key, valid_options);
 			let message = `Unrecognized option '${key}'`;
 			if (match) message += ` (did you mean '${match}'?)`;
