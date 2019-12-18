@@ -1245,15 +1245,15 @@ The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}
 
 ```html
 <!-- App.svelte -->
-<FancyList {items} let:item={item}>
-	<div>{item.text}</div>
+<FancyList {items} let:prop={thing}>
+	<div>{thing.text}</div>
 </FancyList>
 
 <!-- FancyList.svelte -->
 <ul>
 	{#each items as item}
 		<li class="fancy">
-			<slot item={item}></slot>
+			<slot prop={item}></slot>
 		</li>
 	{/each}
 </ul>
@@ -1266,7 +1266,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 ```html
 <!-- App.svelte -->
 <FancyList {items}>
-	<div slot="item" let:item={item}>{item.text}</div>
+	<div slot="item" let:item>{item.text}</div>
 	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
 </FancyList>
 
@@ -1274,7 +1274,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 <ul>
 	{#each items as item}
 		<li class="fancy">
-			<slot name="item" item={item}></slot>
+			<slot name="item" {item}></slot>
 		</li>
 	{/each}
 </ul>
