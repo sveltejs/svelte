@@ -65,7 +65,7 @@ function create_fragment(ctx) {
 			if_block.m(target, anchor);
 			insert(target, if_block_anchor, anchor);
 		},
-		p(ctx, dirty) {
+		p(ctx, [dirty]) {
 			if (current_block_type !== (current_block_type = select_block_type(ctx, dirty))) {
 				if_block.d(1);
 				if_block = current_block_type(ctx);

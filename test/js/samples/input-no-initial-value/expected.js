@@ -44,8 +44,8 @@ function create_fragment(ctx) {
 			append(form, t0);
 			append(form, button);
 		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*test*/ 1 && input.value !== /*test*/ ctx[0]) {
+		p(ctx, [dirty]) {
+			if (dirty & /*test*/ 1 && input.value !== /*test*/ ctx[0]) {
 				set_input_value(input, /*test*/ ctx[0]);
 			}
 		},

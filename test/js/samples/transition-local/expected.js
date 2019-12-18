@@ -91,7 +91,7 @@ function create_fragment(ctx) {
 			if (if_block) if_block.m(target, anchor);
 			insert(target, if_block_anchor, anchor);
 		},
-		p(ctx, dirty) {
+		p(ctx, [dirty]) {
 			if (/*x*/ ctx[0]) {
 				if (if_block) {
 					if_block.p(ctx, dirty);

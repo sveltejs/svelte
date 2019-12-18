@@ -88,7 +88,7 @@ function create_fragment(ctx) {
 
 			insert_dev(target, each_1_anchor, anchor);
 		},
-		p: function update(ctx, dirty) {
+		p: function update(ctx, [dirty]) {
 			if (dirty & /*things*/ 0) {
 				each_value = things;
 				let i;
