@@ -2,7 +2,6 @@
 import {
 	SvelteComponent,
 	append,
-	component_subscribe,
 	detach,
 	element,
 	init,
@@ -13,37 +12,57 @@ import {
 	text
 } from "svelte/internal";
 
-import { writable } from "svelte/store";
-
 function create_fragment(ctx) {
-	let h1;
-	let t;
+	let p;
+	let t0;
+	let t1;
 
 	return {
 		c() {
-			h1 = element("h1");
-			t = text(/*$foo*/ ctx[0]);
+			p = element("p");
+			t0 = text("x: ");
+			t1 = text(/*x*/ ctx[0]);
 		},
 		m(target, anchor) {
-			insert(target, h1, anchor);
-			append(h1, t);
+			insert(target, p, anchor);
+			append(p, t0);
+			append(p, t1);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*$foo*/ 1) set_data(t, /*$foo*/ ctx[0]);
+			if (dirty & /*x*/ 1) set_data(t1, /*x*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(h1);
+			if (detaching) detach(p);
 		}
 	};
 }
 
 function instance($$self, $$props, $$invalidate) {
-	let $foo;
-	const foo = writable(0);
-	component_subscribe($$self, foo, value => $$invalidate(0, $foo = value));
-	return [$foo, foo];
+	let x = 0;
+	let y = 1;
+	x += 1;
+
+	{
+		x += 2;
+	}
+
+	setTimeout(
+		function foo() {
+			$$invalidate(0, x += 10);
+			$$invalidate(1, y += 20);
+		},
+		1000
+	);
+
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty & /*x, y*/ 3) {
+			$: $$invalidate(0, x += y);
+		}
+	};
+
+	return [x];
 }
 
 class Component extends SvelteComponent {

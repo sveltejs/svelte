@@ -1,10 +1,30 @@
 # Svelte changelog
 
-## Unreleased
+## 3.16.5
+
+* Better fix for cascading invalidations and fix some regressions ([#4098](https://github.com/sveltejs/svelte/issues/4098), [#4114](https://github.com/sveltejs/svelte/issues/4114), [#4120](https://github.com/sveltejs/svelte/issues/4120))
+
+## 3.16.4
+
+* Fix slots with props not propagating through to inner slots ([#4061](https://github.com/sveltejs/svelte/issues/4061))
+* Fix noting autosubscribed stores as `referenced` in `vars` for tooling ([#4081](https://github.com/sveltejs/svelte/issues/4081))
+* Fix cascading invalidations in certain situations ([#4094](https://github.com/sveltejs/svelte/issues/4094))
+
+## 3.16.3
+
+* Fix bitmask overflow when using slotted components ([#4077](https://github.com/sveltejs/svelte/issues/4077))
+* Remove unnecessary `$$invalidate` calls from init block ([#4018](https://github.com/sveltejs/svelte/issues/4018))
+
+## 3.16.2
+
+* Handle slot updates when parent component has a bitmask overflow  ([#4078](https://github.com/sveltejs/svelte/pull/4078))
+
+## 3.16.1
 
 * Fix unused export warning for props used as stores ([#4021](https://github.com/sveltejs/svelte/issues/4021))
 * Fix `{:then}` without resolved value containing `{#each}` ([#4022](https://github.com/sveltejs/svelte/issues/4022))
 * Fix incorrect code generated with `loopGuardTimeout` ([#4034](https://github.com/sveltejs/svelte/issues/4034))
+* Fix handling of bitmask overflow and globals ([#4037](https://github.com/sveltejs/svelte/issues/4037))
 * Fix `{:then}` containing `{#if}` ([#4044](https://github.com/sveltejs/svelte/issues/4044))
 * Fix bare `import`s in `format: 'cjs'` output mode ([#4055](https://github.com/sveltejs/svelte/issues/4050))
 * Warn when using a known global as a component name ([#4070](https://github.com/sveltejs/svelte/issues/4070))
