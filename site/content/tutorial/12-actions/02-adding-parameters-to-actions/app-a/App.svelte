@@ -11,7 +11,7 @@
 </label>
 
 <button use:longpress
-	on:longpress="{() => pressed = true}"
+	on:mouseup="{() => pressed = true}"
 	on:mouseenter="{() => pressed = false}"
 >press and hold</button>
 
