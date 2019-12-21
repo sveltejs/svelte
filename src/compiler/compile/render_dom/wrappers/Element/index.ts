@@ -205,6 +205,14 @@ export default class ElementWrapper extends Wrapper {
 							get_slot_definition(child_block, scope, lets)
 						);
 						this.renderer.blocks.push(child_block);
+					} else {
+						const { lets } = this.node;
+						const seen = new Set(lets.map(l => l.name.name));
+
+						(owner as InlineComponentWrapper).node.lets.forEach(l => {
+							if (!seen.has(l.name.name)) lets.push(l);
+						});
+						(owner as InlineComponentWrapper).slots.get(name).add_let_binding(lets);
 					}
 
 					this.slot_block = (owner as unknown as InlineComponentWrapper).slots.get(name).block;

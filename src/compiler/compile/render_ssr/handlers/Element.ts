@@ -1,14 +1,14 @@
 import { is_void } from '../../../utils/names';
 import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
-import { get_slot_scope } from './shared/get_slot_scope';
 import { boolean_attributes } from './shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
 import { x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
+import { SlotDefinition } from './shared/get_slot_definition';
 
 export default function(node: Element, renderer: Renderer, options: RenderOptions & {
-	slot_scopes: Map<any, any>;
+	slot_scopes: Map<string, SlotDefinition>;
 }) {
 	// awkward special case
 	let node_contents;
@@ -154,10 +154,11 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			if (!seen.has(l.name.name)) lets.push(l);
 		});
 
-		options.slot_scopes.set(slot, {
-			input: get_slot_scope(node.lets),
-			output: renderer.pop()
-		});
+		if (options.slot_scopes.has(slot as string)) {
+			options.slot_scopes.get(slot as string).add(node.lets, renderer.pop());
+		} else {
+			options.slot_scopes.set(slot as string, new SlotDefinition(node.lets, renderer.pop()));
+		}
 	} else {
 		renderer.render(node.children, options);
 

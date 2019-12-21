@@ -9,9 +9,8 @@ import { b, x, p } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
 import get_object from '../../../utils/get_object';
 import create_debugging_comment from '../shared/create_debugging_comment';
-import { get_slot_definition } from '../shared/get_slot_definition';
+import { get_slot_definition, SlotDefinition } from '../shared/get_slot_definition';
 import EachBlock from '../../../nodes/EachBlock';
-import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { Node, Identifier, ObjectExpression } from 'estree';
@@ -20,7 +19,7 @@ import { extract_names } from 'periscopic';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
-	slots: Map<string, { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node }> = new Map();
+	slots: Map<string, SlotDefinition> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 
@@ -130,7 +129,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			? [
 				p`$$slots: {
 					${Array.from(this.slots).map(([name, slot]) => {
-						return p`${name}: [${slot.block.name}, ${slot.get_context || null}, ${slot.get_changes || null}]`;
+						return p`${name}: ${slot.render()}`;
 					})}
 				}`,
 				p`$$scope: {
