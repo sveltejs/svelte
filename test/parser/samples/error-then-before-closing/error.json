@@ -1,0 +1,6 @@
+{
+	"code": "unclosed-open-tag",
+	"message": "Expect to close <li> tag before {:then} block",
+	"start": { "line": 3, "column": 8, "character": 29 },
+	"pos": 29
+}

@@ -1,0 +1,6 @@
+{
+	"code": "unclosed-open-tag",
+	"message": "Expect to close {#each} block before {:catch} block",
+	"start": { "line": 3, "column": 9, "character": 44 },
+	"pos": 44
+}

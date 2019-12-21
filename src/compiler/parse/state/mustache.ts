@@ -3,6 +3,7 @@ import read_expression from '../read/expression';
 import { closing_tag_omitted } from '../utils/html';
 import { whitespace } from '../../utils/patterns';
 import { trim_start, trim_end } from '../../utils/trim';
+import { to_string } from '../utils/node';
 import { Parser } from '../index';
 import { TemplateNode } from '../../interfaces';
 
@@ -106,11 +107,19 @@ export default function mustache(parser: Parser) {
 		// :else if
 		if (parser.eat('if')) {
 			const block = parser.current();
-			if (block.type !== 'IfBlock')
+			if (block.type !== 'IfBlock') {
+				if (parser.find_in_stack(block => block.type === 'IfBlock')) {
+					parser.error({
+						code: 'unclosed-open-tag',
+						message: `Expect to close ${to_string(block)} before {:else if ...} block`
+					});
+				}
+
 				parser.error({
 					code: `invalid-elseif-placement`,
 					message: 'Cannot have an {:else if ...} block outside an {#if ...} block'
 				});
+			}
 
 			parser.require_whitespace();
 
@@ -142,6 +151,13 @@ export default function mustache(parser: Parser) {
 		else {
 			const block = parser.current();
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
+				if (parser.find_in_stack(block => block.type === 'IfBlock' || block.type === 'EachBlock')) {
+					parser.error({
+						code: 'unclosed-open-tag',
+						message: `Expect to close ${to_string(block)} before {:else} block`
+					});
+				}
+
 				parser.error({
 					code: `invalid-else-placement`,
 					message: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
@@ -166,6 +182,12 @@ export default function mustache(parser: Parser) {
 
 		if (is_then) {
 			if (block.type !== 'PendingBlock') {
+				if (parser.find_in_stack(block => block.type === 'PendingBlock')) {
+					parser.error({
+						code: 'unclosed-open-tag',
+						message: `Expect to close ${to_string(block)} before {:then} block`
+					});
+				}
 				parser.error({
 					code: `invalid-then-placement`,
 					message: 'Cannot have an {:then} block outside an {#await ...} block'
@@ -173,6 +195,12 @@ export default function mustache(parser: Parser) {
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
+				if (parser.find_in_stack(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')) {
+					parser.error({
+						code: 'unclosed-open-tag',
+						message: `Expect to close ${to_string(block)} before {:catch} block`
+					});
+				}
 				parser.error({
 					code: `invalid-catch-placement`,
 					message: 'Cannot have an {:catch} block outside an {#await ...} block'
