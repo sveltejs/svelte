@@ -28,8 +28,6 @@ export function onDestroy(fn) {
 }
 
 export function createEventDispatcher() {
-        // is compile target customElement?
-        // always dispatch!
 	const component = get_current_component();
 
 	return (type: string, detail?: any) => {
@@ -42,6 +40,11 @@ export function createEventDispatcher() {
 			callbacks.slice().forEach(fn => {
 				fn.call(component, event);
 			});
+		}
+
+		if (component.shadowRoot) {
+			const event = custom_event(type, detail);
+			component.dispatchEvent(event);
 		}
 	};
 }
