@@ -90,11 +90,11 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	);
 	stats.stop('create component');
 
-	const js = options.generate === false
+	const result = options.generate === false
 		? null
 		: options.generate === 'ssr'
 			? render_ssr(component, options)
 			: render_dom(component, options);
 
-	return component.generate(js);
+	return component.generate(result);
 }
