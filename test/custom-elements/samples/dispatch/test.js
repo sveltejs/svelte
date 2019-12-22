@@ -1,23 +1,24 @@
 import * as assert from 'assert';
 import './main.svelte';
 
-console.log('console.log');
-
 export default async function(target) {
 	target.innerHTML = '<custom-element></custom-element>';
 	const el = target.querySelector('custom-element');
-	const label = el.shadowRoot.querySelector('label');
-	const input = el.shadowRoot.querySelector('input');
+	const button = el.shadowRoot.querySelector('button');
 
-	return new Promise(resolve => {
-		el.addEventListener('change', function changeHandler(evt) {
-			el.removeEventListener('change', changeHandler);
+	return new Promise((resolve, reject) => {
+		el.addEventListener('message', function changeHandler(evt) {
+			el.removeEventListener('message', changeHandler);
 
-			assert.equal(evt.target, el);
-			assert.equal(input.checked, true);
-			resolve();
+      try {
+        assert.equal(evt.target, el);
+        assert.equal(evt.detail.text, 'Hello!');
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
 		});
 
-		label.dispatchEvent(new MouseEvent('click'));
+		button.dispatchEvent(new MouseEvent('click'));
 	});
 }
