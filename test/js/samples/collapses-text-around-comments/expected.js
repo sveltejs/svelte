@@ -16,7 +16,7 @@ import {
 function add_css() {
 	var style = element("style");
 	style.id = "svelte-1a7i8ec-style";
-	style.textContent = "p.svelte-1a7i8ec.svelte-1a7i8ec{color:red}";
+	style.textContent = "p.svelte-1a7i8ec{color:red}";
 	append(document.head, style);
 }
 
