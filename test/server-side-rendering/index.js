@@ -1,13 +1,16 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
+import * as glob from 'tiny-glob/sync.js';
 
 import {
 	showOutput,
 	loadConfig,
+	loadSvelte,
 	setupHtmlEqual,
 	tryToLoadJson,
-	shouldUpdateExpected
+	shouldUpdateExpected,
+	mkdirp
 } from "../helpers.js";
 
 function tryToReadFile(file) {
@@ -20,6 +23,7 @@ function tryToReadFile(file) {
 }
 
 const sveltePath = process.cwd().split('\\').join('/');
+let compile = null;
 
 describe("ssr", () => {
 	before(() => {
@@ -27,6 +31,8 @@ describe("ssr", () => {
 			extensions: ['.svelte', '.html'],
 			sveltePath
 		});
+
+		compile = loadSvelte(true).compile;
 
 		return setupHtmlEqual();
 	});
@@ -141,6 +147,33 @@ describe("ssr", () => {
 			});
 
 			require("../../register")(compileOptions);
+
+			glob('**/*.svelte', { cwd }).forEach(file => {
+				if (file[0] === '_') return;
+
+				const dir  = `${cwd}/_output/ssr`;
+				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
+
+				if (fs.existsSync(out)) {
+					fs.unlinkSync(out);
+				}
+
+				mkdirp(dir);
+
+				try {
+					const { js } = compile(
+						fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
+						{
+							...compileOptions,
+							filename: file
+						}
+					);
+
+					fs.writeFileSync(out, js.code);
+				} catch (err) {
+					// do nothing
+				}
+			});
 
 			try {
 				if (config.before_test) config.before_test();
