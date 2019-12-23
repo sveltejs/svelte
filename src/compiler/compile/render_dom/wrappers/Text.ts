@@ -27,6 +27,11 @@ function should_skip(node: Text) {
 	if (parent_element.type === 'Head') return true;
 	if (parent_element.type === 'InlineComponent') return parent_element.children.length === 1 && node === parent_element.children[0];
 
+	// svg namespace exclusions
+	if (/svg$/.test(parent_element.namespace)) {
+		if (node.prev && node.prev.type === "Element" && node.prev.name === "tspan") return false;
+	}
+
 	return parent_element.namespace || elements_without_text.has(parent_element.name);
 }
 
