@@ -1,7 +1,7 @@
 import { b, x, p } from 'code-red';
 import Component from '../Component';
 import Renderer from './Renderer';
-import { CompileOptions } from '../../interfaces';
+import { CompileOptions, CssResult } from '../../interfaces';
 import { walk } from 'estree-walker';
 import { extract_names, Scope } from '../utils/scope';
 import { invalidate } from './invalidate';
@@ -11,7 +11,7 @@ import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression
 export default function dom(
 	component: Component,
 	options: CompileOptions
-) {
+): { js: Node[]; css: CssResult } {
 	const { name } = component;
 
 	const renderer = new Renderer(component, options);
@@ -509,7 +509,7 @@ export default function dom(
 		body.push(declaration);
 	}
 
-	return flatten(body, []);
+	return { js: flatten(body, []), css };
 }
 
 function flatten(nodes: any[], target: any[]) {

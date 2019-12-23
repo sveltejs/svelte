@@ -1,4 +1,5 @@
 import { Node, Program } from "estree";
+import { SourceMap } from 'magic-string';
 
 interface BaseNode {
 	start: number;
@@ -160,4 +161,9 @@ export interface Var {
 	hoistable?: boolean;
 	subscribable?: boolean;
 	is_reactive_dependency?: boolean;
+}
+
+export interface CssResult { 
+	code: string;
+	map: SourceMap;
 }
