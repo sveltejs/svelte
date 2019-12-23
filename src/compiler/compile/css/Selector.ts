@@ -63,30 +63,26 @@ export default class Selector {
 		});
 	}
 
-	transform(code: MagicString, attr: string) {
-		const should_double_up_attr = this.blocks.filter(block => block.should_encapsulate).length === 1;
+	transform(code: MagicString, attr: string, max_amount_class_specificity_increased: number) {
+		const amount_class_specificity_to_increase = max_amount_class_specificity_increased - this.blocks.filter(block => block.should_encapsulate).length;
+		attr = attr.repeat(amount_class_specificity_to_increase + 1);
 
 		function encapsulate_block(block: Block) {
 			let i = block.selectors.length;
-			let encapsulationAttr = attr;
-
-			if (should_double_up_attr) {
-				encapsulationAttr = attr + attr;
-			}
 
 			while (i--) {
 				const selector = block.selectors[i];
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
 					if (selector.name !== 'root') {
-						if (i === 0) code.prependRight(selector.start, encapsulationAttr);
+						if (i === 0) code.prependRight(selector.start, attr);
 					}
 					continue;
 				}
 
 				if (selector.type === 'TypeSelector' && selector.name === '*') {
-					code.overwrite(selector.start, selector.end, encapsulationAttr);
+					code.overwrite(selector.start, selector.end, attr);
 				} else {
-					code.appendLeft(selector.end, encapsulationAttr);
+					code.appendLeft(selector.end, attr);
 				}
 
 				break;
@@ -138,6 +134,16 @@ export default class Selector {
 				});
 			}
 		}
+	}
+
+	get_amount_class_specificity_increased() {
+		let count = 0;
+		for (const block of this.blocks) {
+			if (block.should_encapsulate) {
+				count ++;
+			}
+		}
+		return count;
 	}
 }
 
