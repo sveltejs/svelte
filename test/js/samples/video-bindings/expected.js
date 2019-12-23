@@ -17,8 +17,8 @@ import {
 function create_fragment(ctx) {
 	let video;
 	let video_updating = false;
-	let video_resize_listener;
 	let video_animationframe;
+	let video_resize_listener;
 	let dispose;
 
 	function video_timeupdate_handler() {
@@ -29,23 +29,23 @@ function create_fragment(ctx) {
 			video_updating = true;
 		}
 
-		/*video_timeupdate_handler*/ ctx[5].call(video);
+		/*video_timeupdate_handler*/ ctx[4].call(video);
 	}
 
 	return {
 		c() {
 			video = element("video");
-			add_render_callback(() => /*video_elementresize_handler*/ ctx[4].call(video));
-			if (/*videoHeight*/ ctx[1] === void 0 || /*videoWidth*/ ctx[2] === void 0) add_render_callback(() => /*video_resize_handler*/ ctx[6].call(video));
+			if (/*videoHeight*/ ctx[1] === void 0 || /*videoWidth*/ ctx[2] === void 0) add_render_callback(() => /*video_resize_handler*/ ctx[5].call(video));
+			add_render_callback(() => /*video_elementresize_handler*/ ctx[6].call(video));
 
 			dispose = [
 				listen(video, "timeupdate", video_timeupdate_handler),
-				listen(video, "resize", /*video_resize_handler*/ ctx[6])
+				listen(video, "resize", /*video_resize_handler*/ ctx[5])
 			];
 		},
 		m(target, anchor) {
 			insert(target, video, anchor);
-			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[4].bind(video));
+			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[6].bind(video));
 		},
 		p(ctx, [dirty]) {
 			if (!video_updating && dirty & /*currentTime*/ 1 && !isNaN(/*currentTime*/ ctx[0])) {
@@ -70,11 +70,6 @@ function instance($$self, $$props, $$invalidate) {
 	let { videoWidth } = $$props;
 	let { offsetWidth } = $$props;
 
-	function video_elementresize_handler() {
-		offsetWidth = this.offsetWidth;
-		$$invalidate(3, offsetWidth);
-	}
-
 	function video_timeupdate_handler() {
 		currentTime = this.currentTime;
 		$$invalidate(0, currentTime);
@@ -85,6 +80,11 @@ function instance($$self, $$props, $$invalidate) {
 		videoWidth = this.videoWidth;
 		$$invalidate(1, videoHeight);
 		$$invalidate(2, videoWidth);
+	}
+
+	function video_elementresize_handler() {
+		offsetWidth = this.offsetWidth;
+		$$invalidate(3, offsetWidth);
 	}
 
 	$$self.$set = $$props => {
@@ -99,9 +99,9 @@ function instance($$self, $$props, $$invalidate) {
 		videoHeight,
 		videoWidth,
 		offsetWidth,
-		video_elementresize_handler,
 		video_timeupdate_handler,
-		video_resize_handler
+		video_resize_handler,
+		video_elementresize_handler
 	];
 }
 

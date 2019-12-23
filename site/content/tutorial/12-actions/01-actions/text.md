@@ -23,7 +23,9 @@ import { pannable } from './pannable.js';
 	on:panstart={handlePanStart}
 	on:panmove={handlePanMove}
 	on:panend={handlePanEnd}
-	style="transform: translate({$coords.x}px,{$coords.y}px)"
+	style="transform:
+		translate({$coords.x}px,{$coords.y}px)
+		rotate({$coords.x * 0.2}deg)"
 ></div>
 ```
 

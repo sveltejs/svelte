@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 3.16.6
+
+* Fix CSS specificity bug when encapsulating styles ([#1277](https://github.com/sveltejs/svelte/issues/1277))
+* Apply directives in the order they're given ([#2446](https://github.com/sveltejs/svelte/issues/2446))
+* Fix destructuring in `let:` directives ([#2751](https://github.com/sveltejs/svelte/issues/2751))
+* Preserve whitespace around `<tspan>`s in `<svg>`s ([#3998](https://github.com/sveltejs/svelte/issues/3998))
+
 ## 3.16.5
 
 * Better fix for cascading invalidations and fix some regressions ([#4098](https://github.com/sveltejs/svelte/issues/4098), [#4114](https://github.com/sveltejs/svelte/issues/4114), [#4120](https://github.com/sveltejs/svelte/issues/4120))
