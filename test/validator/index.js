@@ -27,7 +27,8 @@ describe("validate", () => {
 				const { warnings } = svelte.compile(input, {
 					dev: config.dev,
 					legacy: config.legacy,
-					generate: false
+					generate: false,
+					customElement: config.customElement
 				});
 
 				assert.deepEqual(warnings.map(w => ({
