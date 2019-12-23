@@ -7,7 +7,7 @@ import { BinaryExpression } from 'estree';
 export function get_slot_definition(block: Block, scope: TemplateScope, lets: Let[]) {
 	if (lets.length === 0) return { block, scope };
 
-	const input = {
+	const context_input = {
 		type: 'ObjectPattern',
 		properties: lets.map(l => ({
 			type: 'Property',
@@ -17,10 +17,41 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 		}))
 	};
 
+	const properties = [];
+	const value_map = new Map();
+
+	lets.forEach(l => {
+		let value;
+		if (l.names.length > 1) {
+			// more than one, probably destructuring
+			const unique_name = block.get_unique_name(l.names.join('_')).name;
+			value_map.set(l.value, unique_name);
+			value = { type: 'Identifier', name: unique_name };
+		} else {
+			value = l.value || l.name;
+		}
+		properties.push({
+			type: 'Property',
+			kind: 'init',
+			key: l.name,
+			value,
+		});
+	});
+
+	const changes_input = {
+		type: 'ObjectPattern',
+		properties,
+	};
+
 	const names: Set<string> = new Set();
+	const names_lookup: Map<string, string> = new Map();
+
 	lets.forEach(l => {
 		l.names.forEach(name => {
 			names.add(name);
+			if (value_map.has(l.value)) {
+				names_lookup.set(name, value_map.get(l.value));
+			}
 		});
 	});
 
@@ -43,8 +74,10 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 					const i = context_lookup.get(name).index.value as number;
 					const g = Math.floor(i / 31);
 
+					const lookup_name = names_lookup.has(name) ? names_lookup.get(name) : name;
+
 					if (!grouped[g]) grouped[g] = [];
-					grouped[g].push({ name, n: i % 31 });
+					grouped[g].push({ name: lookup_name, n: i % 31 });
 				});
 
 				const elements = [];
@@ -65,8 +98,9 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 
 			return Array.from(names)
 				.map(name => {
+					const lookup_name = names_lookup.has(name) ? names_lookup.get(name) : name;
 					const i = context_lookup.get(name).index.value as number;
-					return x`${name} ? ${1 << i} : 0`;
+					return x`${lookup_name} ? ${1 << i} : 0`;
 				})
 				.reduce((lhs, rhs) => x`${lhs} | ${rhs}`) as BinaryExpression;
 		}
@@ -75,7 +109,7 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 	return {
 		block,
 		scope,
-		get_context: x`${input} => ${context}`,
-		get_changes: x`${input} => ${changes}`
+		get_context: x`${context_input} => ${context}`,
+		get_changes: x`${changes_input} => ${changes}`
 	};
 }
