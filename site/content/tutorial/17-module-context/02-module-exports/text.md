@@ -16,7 +16,7 @@ Anything exported from a `context="module"` script block becomes an export from 
 </script>
 ```
 
-...we can then import it from `App.svelte`...
+...we can then import it in `App.svelte`...
 
 ```html
 <script>
