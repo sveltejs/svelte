@@ -28,7 +28,7 @@ describe("validate", () => {
 					dev: config.dev,
 					legacy: config.legacy,
 					generate: false,
-					customElement : config.customElement || false
+					customElement: config.customElement
 				});
 
 				assert.deepEqual(warnings.map(w => ({
