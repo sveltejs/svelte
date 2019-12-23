@@ -3,8 +3,11 @@
 	import { stores } from '@sapper/app';
 	import { Icon, Icons, Nav, NavItem } from '@sveltejs/site-kit';
 	import PreloadingIndicator from '../components/PreloadingIndicator.svelte';
+	import SiteSearch from '../components/SiteSearch.svelte';
 
 	export let segment;
+
+	let showingSearch = false;
 
 	const { page, preloading, session } = stores();
 
@@ -53,7 +56,15 @@
 		<NavItem external="https://github.com/sveltejs/svelte" title="GitHub Repo">
 			<Icon name="github"/>
 		</NavItem>
+
+		<NavItem active={showingSearch} title="Search Site">
+			<span on:click={() => showingSearch = true}>
+				<Icon name="github"/>
+			</span>
+		</NavItem>
 	</Nav>
+
+	<SiteSearch bind:showing={showingSearch}/>
 {/if}
 
 <main>
