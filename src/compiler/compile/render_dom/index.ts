@@ -11,7 +11,7 @@ import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression
 export default function dom(
 	component: Component,
 	options: CompileOptions
-): {js: Node[]; css: CssResult} {
+): { js: Node[]; css: CssResult } {
 	const { name } = component;
 
 	const renderer = new Renderer(component, options);
@@ -509,7 +509,7 @@ export default function dom(
 		body.push(declaration);
 	}
 
-	return {js:flatten(body, []), css};
+	return { js: flatten(body, []), css };
 }
 
 function flatten(nodes: any[], target: any[]) {

@@ -226,7 +226,7 @@ export default class Component {
 		return alias;
 	}
 
-	generate(result?: {js: Node[]; css: CssResult}) {
+	generate(result?: { js: Node[]; css: CssResult }) {
 		let js = null;
 		let css = null;
 
@@ -752,7 +752,7 @@ export default class Component {
 
 				if (map.has(node)) {
 					scope = scope.parent;
-				}				
+				}
 			},
 		});
 
