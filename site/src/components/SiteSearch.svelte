@@ -45,6 +45,7 @@
 	import { writable } from 'svelte/store';
 	import { fade, fly} from 'svelte/transition';
 	import SearchBar from './SearchBar.svelte';
+	import SearchResult from './SearchResult.svelte';
 	import { onMount } from 'svelte';
 
 	export let showing = false;
@@ -86,11 +87,16 @@
 	<div class="cover search" transition:fly={{x: 400}}>
 		<SearchBar bind:query on:close={() => showing = false} />
 		<div class="divider" />
-		{#if results.length}
-			reuslts
+		{#each results as result}
+			<SearchResult
+				title={result.bareTitle}
+				slug={result.slug}
+				{query}
+				on:navigate={() => showing = false}
+			/>
 		{:else}
 			<img src="/icons/svelte-search.svg" alt="Search Icon">
-		{/if}
+		{/each}
 
 		{#if loading}
 			<p class="message">Loading...</p>
