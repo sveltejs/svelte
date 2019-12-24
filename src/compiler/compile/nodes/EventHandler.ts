@@ -12,7 +12,6 @@ export default class EventHandler extends Node {
 	handler_name: Identifier;
 	uses_context = false;
 	can_make_passive = false;
-	reassigned?: boolean;
 
 	constructor(component: Component, parent, template_scope, info) {
 		super(component, parent, template_scope, info);
@@ -41,14 +40,30 @@ export default class EventHandler extends Node {
 					if (node && (node.type === 'FunctionExpression' || node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression') && node.params.length === 0) {
 						this.can_make_passive = true;
 					}
-
-					this.reassigned = component.var_lookup.get(info.expression.name).reassigned;
 				}
-			} else if (this.expression.dynamic_dependencies().length > 0) {
-				this.reassigned = true;
 			}
 		} else {
 			this.handler_name = component.get_unique_name(`${sanitize(this.name)}_handler`);
 		}
+	}
+
+	get reassigned(): boolean {
+		if (!this.expression) {
+			return false;
+		}
+		const node = this.expression.node;
+
+		if (node.type === 'Identifier') {
+			return (
+				this.component.node_for_declaration.get(node.name) &&
+				this.component.var_lookup.get(node.name).reassigned
+			);
+		}
+
+		if (/FunctionExpression/.test(node.type)) {
+			return false;
+		}
+
+		return this.expression.dynamic_dependencies().length > 0;
 	}
 }
