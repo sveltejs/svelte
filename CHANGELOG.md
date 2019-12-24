@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 3.16.7
+
+* Also apply actions in the order they're given along with other directives ([#2446](https://github.com/sveltejs/svelte/issues/2446), [#4156](https://github.com/sveltejs/svelte/pull/4156))
+* Check whether a dynamic event handler is a function before calling it ([#4090](https://github.com/sveltejs/svelte/issues/4090))
+* Correctly mark event handlers as dynamic when they involve an expression used in a `bind:` elsewhere ([#4155](https://github.com/sveltejs/svelte/pull/4155))
+
 ## 3.16.6
 
 * Fix CSS specificity bug when encapsulating styles ([#1277](https://github.com/sveltejs/svelte/issues/1277))
