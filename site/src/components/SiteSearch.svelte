@@ -60,6 +60,8 @@
 	let loading = true;
 	let error = null;
 
+	let innerWidth;
+
 	onMount(async () => {
 		const gotResults = await tryLoad(3);
 		if (gotResults) error = null;
@@ -89,9 +91,11 @@
 	$: results = (loading || error || !query.length) ? [] : search(query);
 </script>
 
+<svelte:window bind:innerWidth/>
+
 {#if showing}
 	<div class="cover background" on:click={() => showing = false} transition:fade></div>
-	<div class="cover search" transition:fly={{x: 400}}>
+	<div class="cover search" transition:fly={{x: 400}} style="width: {innerWidth > 400 ? '385px' : '100%'}">
 		<SearchBar bind:query on:close={() => showing = false} />
 		<div class="divider" />
 		{#each results as result}
@@ -128,11 +132,10 @@
 		z-index: 100;
 	}
 	.background {
-		background: rgba(0, 0, 0, 0.6);
+		background: rgba(225, 225, 225, 0.9);
 	}
 	.search {
 		left:unset;
-		width: 385px;
 		background: var(--back);
 	}
 	.divider {
