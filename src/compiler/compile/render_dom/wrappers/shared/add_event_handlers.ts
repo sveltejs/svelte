@@ -6,5 +6,13 @@ export default function add_event_handlers(
 	target: string,
 	handlers: EventHandler[]
 ) {
-	handlers.forEach(handler => handler.render(block, target));
+	handlers.forEach(handler => add_event_handler(block, target, handler));
+}
+
+export function add_event_handler(
+	block: Block,
+	target: string,
+	handler: EventHandler
+) {
+	handler.render(block, target);
 }
