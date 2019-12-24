@@ -36,8 +36,8 @@
 		return ~a.indexOf(b) || ~b.indexOf(a);
 	}
 
-	function search(query) {
-		return orderedSections.filter(section => doesMatch(section.bareTitle, query))
+	function search(query, maxResults = 10) {
+		return orderedSections.filter(section => doesMatch(section.bareTitle, query)).slice(0, maxResults);
 	}
 </script>
 
