@@ -33,7 +33,14 @@
 	}
 
 	function doesMatch(a, b) {
-		return ~a.indexOf(b) || ~b.indexOf(a);
+		function oneWay(a, b) {
+			a = a.trim();
+			b = b.trim();
+
+			return ~a.indexOf(b);
+		}
+
+		return oneWay(a, b) || oneWay(b, a);
 	}
 
 	function search(query, maxResults = 10) {
