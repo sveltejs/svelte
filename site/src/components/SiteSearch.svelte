@@ -1,12 +1,84 @@
+<script context="module">
+	let orderedSections = null;
+
+	async function getSections() {
+		const res = await fetch('/docsd.json');
+		const rawSections = await res.json();
+
+		const sections = rawSections.map(section => ({
+			level: 1,
+			slug: section.slug,
+			title: section.metadata.title,
+			bareTitle: removeFormatting(section.metadata.title),
+		}));
+
+		rawSections.forEach(({ subsections }) => {
+			sections.push(
+				...subsections.map(subsection => ({
+					...subsection,
+					bareTitle: removeFormatting(subsection.title)
+				})),
+			);
+		})
+
+		orderedSections = sections.sort((a, b) => a.level - b.level);
+	}
+
+	function removeFormatting(title) {
+		return title
+			.replace(/&lt;/g, `<`)
+			.replace(/&gt;/g, `>`)
+			.replace(/<\/?em>/g, ``)
+			.replace(/&quot;/g, `"`)
+	}
+
+	function doesMatch(a, b) {
+		return ~a.indexOf(b) || ~b.indexOf(a);
+	}
+
+	function search(query) {
+		return orderedSections.filter(section => doesMatch(section.bareTitle, query))
+	}
+</script>
+
 <script>
 	import { writable } from 'svelte/store';
 	import { fade, fly} from 'svelte/transition';
 	import SearchBar from './SearchBar.svelte';
+	import { onMount } from 'svelte';
 
 	export let showing = false;
 	let query = '';
+	let loading = true;
+	let error = null;
 
-	let results = [];
+	onMount(async () => {
+		const gotResults = await tryLoad(3);
+		if (gotResults) error = null;
+
+		loading = false;
+	});
+
+	async function tryLoad(maxTimes) {
+		let got = false;
+
+		for	(let i = 0; i < maxTimes; i++) {
+			try {
+				await getSections();
+
+				if (orderedSections) {
+					got = true;
+					break;
+				}
+			} catch (e) {
+				error = e;
+			}
+		}
+
+		return got;
+	}
+
+	$: results = (loading || error || !query.length) ? [] : search(query);
 </script>
 
 {#if showing}
@@ -20,8 +92,15 @@
 			<img src="/icons/svelte-search.svg" alt="Search Icon">
 		{/if}
 
-		{#if query.length && !results.length}
-			<p class="no-results">Couldn't find any results for "{query}"</p>
+		{#if loading}
+			<p class="message">Loading...</p>
+		{:else if error}
+			<p class="message">
+				<span class="error">{error && error.message}</span>
+			</p>
+			<p>If the error persists, please drop by <a href="/chat">Discord chatroom</a> and let us know, or raise an issue on <a href="https://github.com/sveltejs/svelte">GitHub</a>. Thanks!</p>
+		{:else if query.length && !results.length}
+			<p class="message">Couldn't find any results for "{query}"</p>
 		{/if}
 	</div>
 {/if}
@@ -53,10 +132,17 @@
 		display: block;
 		margin: calc(50vh - 160px) auto 0 auto;
 	}
-	.no-results {
+	p {
 		font-size: 14px;
-		font-weight: bold;
 		text-align: center;
 		padding: 0 16px;
+	}
+	.message {
+		font-weight: bold;
+	}
+	.error {
+		color: white;
+		padding: 10px;
+		background: #da106e;
 	}
 </style>
