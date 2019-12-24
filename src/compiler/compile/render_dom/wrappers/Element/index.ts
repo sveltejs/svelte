@@ -16,8 +16,8 @@ import { dimensions } from '../../../../utils/patterns';
 import Binding from './Binding';
 import InlineComponentWrapper from '../InlineComponent';
 import add_to_set from '../../../utils/add_to_set';
-import add_event_handlers from '../shared/add_event_handlers';
-import add_actions from '../shared/add_actions';
+import { add_event_handler } from '../shared/add_event_handlers';
+import { add_action } from '../shared/add_actions';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_slot_definition } from '../shared/get_slot_definition';
 import bind_this from '../shared/bind_this';
@@ -25,6 +25,7 @@ import { is_head } from '../shared/is_head';
 import { Identifier } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
+import Action from '../../../nodes/Action';
 
 const events = [
 	{
@@ -380,7 +381,6 @@ export default class ElementWrapper extends Wrapper {
 		this.add_directives_in_order(block);
 		this.add_transitions(block);
 		this.add_animation(block);
-		this.add_actions(block);
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
 
@@ -441,6 +441,8 @@ export default class ElementWrapper extends Wrapper {
 			bindings: Binding[];
 		}
 
+		type OrderedAttribute = EventHandler | BindingGroup | Binding | Action;
+
 		const bindingGroups = events
 			.map(event => ({
 				events: event.event_names,
@@ -452,29 +454,37 @@ export default class ElementWrapper extends Wrapper {
 
 		const this_binding = this.bindings.find(b => b.node.name === 'this');
 
-		function getOrder (item: EventHandler | BindingGroup | Binding) {
+		function getOrder (item: OrderedAttribute) {
 			if (item instanceof EventHandler) {
 				return item.node.start;
 			} else if (item instanceof Binding) {
 				return item.node.start;
+			} else if (item instanceof Action) {
+				return item.start;
 			} else {
 				return item.bindings[0].node.start;
 			}
 		}
 
-		const ordered: Array<EventHandler | BindingGroup | Binding> = [].concat(bindingGroups, this.event_handlers, this_binding).filter(Boolean);
-
-		ordered.sort((a, b) => getOrder(a) - getOrder(b));
-
-		ordered.forEach(bindingGroupOrEventHandler => {
-			if (bindingGroupOrEventHandler instanceof EventHandler) {
-				add_event_handlers(block, this.var, [bindingGroupOrEventHandler]);
-			} else if (bindingGroupOrEventHandler instanceof Binding) {
-				this.add_this_binding(block, bindingGroupOrEventHandler);
-			} else {
-				this.add_bindings(block, bindingGroupOrEventHandler);
-			}
-		});
+		([
+			...bindingGroups,
+			...this.event_handlers,
+			this_binding,
+			...this.node.actions
+		] as OrderedAttribute[])
+			.filter(Boolean)
+			.sort((a, b) => getOrder(a) - getOrder(b))
+			.forEach(item => {
+				if (item instanceof EventHandler) {
+					add_event_handler(block, this.var, item);
+				} else if (item instanceof Binding) {
+					this.add_this_binding(block, item);
+				} else if (item instanceof Action) {
+					add_action(block, this.var, item);
+				} else {
+					this.add_bindings(block, item);
+				}
+			});
 	}
 
 	add_bindings(block: Block, bindingGroup) {
@@ -701,10 +711,6 @@ export default class ElementWrapper extends Wrapper {
 		`);
 	}
 
-	add_event_handlers(block: Block) {
-		add_event_handlers(block, this.var, this.event_handlers);
-	}
-
 	add_transitions(
 		block: Block
 	) {
@@ -864,10 +870,6 @@ export default class ElementWrapper extends Wrapper {
 			${stop_animation}();
 			${stop_animation} = @create_animation(${this.var}, ${rect}, ${name}, ${params});
 		`);
-	}
-
-	add_actions(block: Block) {
-		add_actions(block, this.var, this.node.actions);
 	}
 
 	add_classes(block: Block) {

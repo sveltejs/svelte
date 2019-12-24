@@ -121,3 +121,11 @@ export function set_store_value(store, ret, value = ret) {
 }
 
 export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
+
+export function destroy_action(action_result) {
+	return () => {
+		if (action_result && is_function(action_result.destroy)) {
+			return action_result.destroy();
+		}
+	};
+}

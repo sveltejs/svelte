@@ -2,11 +2,11 @@
 import {
 	SvelteComponent,
 	attr,
+	destroy_action,
 	detach,
 	element,
 	init,
 	insert,
-	is_function,
 	noop,
 	safe_not_equal
 } from "svelte/internal";
@@ -14,23 +14,24 @@ import {
 function create_fragment(ctx) {
 	let a;
 	let link_action;
+	let dispose;
 
 	return {
 		c() {
 			a = element("a");
 			a.textContent = "Test";
 			attr(a, "href", "#");
+			dispose = destroy_action(link_action = link.call(null, a));
 		},
 		m(target, anchor) {
 			insert(target, a, anchor);
-			link_action = link.call(null, a) || ({});
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(a);
-			if (link_action && is_function(link_action.destroy)) link_action.destroy();
+			dispose();
 		}
 	};
 }
