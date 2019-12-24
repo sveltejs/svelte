@@ -29,7 +29,7 @@ export function add_action(block: Block, target: string, action: Action) {
 	const fn = block.renderer.reference(action.name);
 
 	block.event_listeners.push(
-		x`@destroy_action(${id} = ${fn}.call(null, ${target}, ${snippet}))`
+		x`@action_destroyer(${id} = ${fn}.call(null, ${target}, ${snippet}))`
 	);
 
 	if (dependencies && dependencies.length > 0) {
