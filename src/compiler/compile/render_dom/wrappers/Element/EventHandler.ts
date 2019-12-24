@@ -30,7 +30,7 @@ export default class EventHandlerWrapper {
 
 		if (this.node.reassigned) {
 			block.maintain_context = true;
-			return x`function () { ${snippet}.apply(this, arguments); }`;
+			return x`function () { if (@is_function(${snippet})) ${snippet}.apply(this, arguments); }`;
 		}
 		return snippet;
 	}
