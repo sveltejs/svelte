@@ -2,7 +2,7 @@
 	let orderedSections = null;
 
 	async function getSections() {
-		const res = await fetch('/docsd.json');
+		const res = await fetch('/docs.json');
 		const rawSections = await res.json();
 
 		const sections = rawSections.map(section => ({
