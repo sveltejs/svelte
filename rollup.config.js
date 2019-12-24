@@ -60,6 +60,9 @@ export default [
 			],
 			external,
 			plugins: [
+				replace({
+					__VERSION__: pkg.version
+				}),
 				ts_plugin,
 				{
 					writeBundle(bundle) {
