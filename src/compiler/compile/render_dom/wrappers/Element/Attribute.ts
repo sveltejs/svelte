@@ -75,6 +75,7 @@ export default class AttributeWrapper {
 		const is_src = this.node.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
 		const is_select_value_attribute =
 			name === 'value' && element.node.name === 'select';
+		const is_update_input_value = (name === 'value') && (element.node.name === 'input' || element.node.name === 'textarea');
 
 		const should_cache = is_src || this.node.should_cache() || is_select_value_attribute; // TODO is this necessary?
 
@@ -136,6 +137,15 @@ export default class AttributeWrapper {
 				b`${method}(${element.var}, "${name}", ${init});`
 			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
+		}
+
+		if (is_update_input_value) {
+			const selection = block.get_unique_name(`${element.var.name}_cursor_selection`);
+			updater = b`
+				const ${selection} = @save_input_selection(${element.var});
+				${updater}
+				@restore_input_selection(${element.var}, ${selection});
+			`;
 		}
 
 		if (dependencies.length > 0) {

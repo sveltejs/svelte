@@ -3,6 +3,7 @@ export * from './await_block';
 export * from './dom';
 export * from './environment';
 export * from './globals';
+export * from './input';
 export * from './keyed_each';
 export * from './lifecycle';
 export * from './loop';
