@@ -1,9 +1,9 @@
 <script>
 	import { Blurb, Hero, Section } from '@sveltejs/site-kit';
+	import Contributors from './_components/Contributors.svelte';
 	import Example from './_components/Example.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte.svelte';
 	// import Lazy from '../components/Lazy.svelte';
-	import contributors from './_contributors.js';
 
 	// TODO this causes a Sapper CSS bug...
 	// function loadReplWidget() {
@@ -23,18 +23,6 @@
 		background: var(--second);
 		color: white;
 		overflow: hidden;
-	}
-
-	.contributor {
-		width: 2.4em;
-		height: 2.4em;
-		border-radius: 50%;
-		text-indent: -9999px;
-		display: inline-block;
-		background: no-repeat url(/contributors.jpg);
-		background-size: auto 102%;
-		margin: 0 0.5em 0.5em 0;
-		border: 2px solid var(--second);
 	}
 </style>
 
@@ -128,11 +116,5 @@ npm run dev
 
 	<p>Svelte is free and open source software, made possible by the work of dozens of volunteers. <a href="https://github.com/sveltejs/svelte">Join us!</a></p>
 
-	{#each contributors as contributor, i}
-		<a
-			class="contributor"
-			style="background-position: {100 * i / (contributors.length - 1)}% 0"
-			href="https://github.com/{contributor}"
-		>{contributor}</a>
-	{/each}
+	<Contributors/>
 </Section>
