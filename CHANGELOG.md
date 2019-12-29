@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Prevent text input cursor jumping in Safari with one-way binding ([#3449](https://github.com/sveltejs/svelte/issues/3449))
+
 ## 3.16.7
 
 * Also apply actions in the order they're given along with other directives ([#2446](https://github.com/sveltejs/svelte/issues/2446), [#4156](https://github.com/sveltejs/svelte/pull/4156))
