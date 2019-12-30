@@ -72,26 +72,41 @@ function instance($$self, $$props, $$invalidate) {
 
 	function video_timeupdate_handler() {
 		currentTime = this.currentTime;
-		$$invalidate(0, currentTime);
+		$$invalidate({ i: 0, ret: currentTime });
 	}
 
 	function video_resize_handler() {
 		videoHeight = this.videoHeight;
 		videoWidth = this.videoWidth;
-		$$invalidate(1, videoHeight);
-		$$invalidate(2, videoWidth);
+		$$invalidate({ i: 1, ret: videoHeight });
+		$$invalidate({ i: 2, ret: videoWidth });
 	}
 
 	function video_elementresize_handler() {
 		offsetWidth = this.offsetWidth;
-		$$invalidate(3, offsetWidth);
+		$$invalidate({ i: 3, ret: offsetWidth });
 	}
 
 	$$self.$set = $$props => {
-		if ("currentTime" in $$props) $$invalidate(0, currentTime = $$props.currentTime);
-		if ("videoHeight" in $$props) $$invalidate(1, videoHeight = $$props.videoHeight);
-		if ("videoWidth" in $$props) $$invalidate(2, videoWidth = $$props.videoWidth);
-		if ("offsetWidth" in $$props) $$invalidate(3, offsetWidth = $$props.offsetWidth);
+		if ("currentTime" in $$props) $$invalidate({
+			i: 0,
+			ret: currentTime = $$props.currentTime
+		});
+
+		if ("videoHeight" in $$props) $$invalidate({
+			i: 1,
+			ret: videoHeight = $$props.videoHeight
+		});
+
+		if ("videoWidth" in $$props) $$invalidate({
+			i: 2,
+			ret: videoWidth = $$props.videoWidth
+		});
+
+		if ("offsetWidth" in $$props) $$invalidate({
+			i: 3,
+			ret: offsetWidth = $$props.offsetWidth
+		});
 	};
 
 	return [

@@ -46,11 +46,11 @@ function instance($$self, $$props, $$invalidate) {
 
 	function details_toggle_handler() {
 		open = this.open;
-		$$invalidate(0, open);
+		$$invalidate({ i: 0, ret: open });
 	}
 
 	$$self.$set = $$props => {
-		if ("open" in $$props) $$invalidate(0, open = $$props.open);
+		if ("open" in $$props) $$invalidate({ i: 0, ret: open = $$props.open });
 	};
 
 	return [open, details_toggle_handler];

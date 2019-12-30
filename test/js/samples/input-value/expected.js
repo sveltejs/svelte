@@ -61,7 +61,7 @@ function instance($$self, $$props, $$invalidate) {
 	let name = "change me";
 
 	function onInput(event) {
-		$$invalidate(0, name = event.target.value);
+		$$invalidate({ i: 0, ret: name = event.target.value });
 	}
 
 	return [name, onInput];

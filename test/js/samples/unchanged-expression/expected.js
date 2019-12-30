@@ -76,7 +76,7 @@ function instance($$self, $$props, $$invalidate) {
 	const world3 = "world";
 
 	function foo() {
-		$$invalidate(0, world3 = "svelte");
+		$$invalidate({ i: 0, ret: world3 = "svelte" });
 	}
 
 	return [world3];

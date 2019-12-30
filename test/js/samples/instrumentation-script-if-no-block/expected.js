@@ -57,7 +57,7 @@ function instance($$self, $$props, $$invalidate) {
 	let x = 0;
 
 	function foo() {
-		if (true) $$invalidate(0, x += 1);
+		if (true) $$invalidate({ i: 0, ret: x += 1 });
 	}
 
 	return [x, foo];

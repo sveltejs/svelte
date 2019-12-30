@@ -60,7 +60,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	function input_input_handler() {
 		foo = this.value;
-		$$invalidate(0, foo);
+		$$invalidate({ i: 0, ret: foo });
 	}
 
 	return [foo, input_input_handler];

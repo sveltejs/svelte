@@ -59,7 +59,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	function foo() {
 		things.push(1);
-		$$invalidate(0, things);
+		$$invalidate({ i: 0, ret: things });
 	}
 
 	return [things, foo];

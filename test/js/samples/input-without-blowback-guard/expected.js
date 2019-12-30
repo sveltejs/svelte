@@ -44,11 +44,11 @@ function instance($$self, $$props, $$invalidate) {
 
 	function input_change_handler() {
 		foo = this.checked;
-		$$invalidate(0, foo);
+		$$invalidate({ i: 0, ret: foo });
 	}
 
 	$$self.$set = $$props => {
-		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
+		if ("foo" in $$props) $$invalidate({ i: 0, ret: foo = $$props.foo });
 	};
 
 	return [foo, input_change_handler];

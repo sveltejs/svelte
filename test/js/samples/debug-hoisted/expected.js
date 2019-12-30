@@ -56,8 +56,8 @@ function instance($$self) {
 	};
 
 	$$self.$inject_state = $$props => {
-		if ("obj" in $$props) $$invalidate(0, obj = $$props.obj);
-		if ("kobzol" in $$props) $$invalidate(1, kobzol = $$props.kobzol);
+		if ("obj" in $$props) $$invalidate({ i: 0, ret: obj = $$props.obj });
+		if ("kobzol" in $$props) $$invalidate({ i: 1, ret: kobzol = $$props.kobzol });
 	};
 
 	return [obj, kobzol];

@@ -51,11 +51,11 @@ function instance($$self, $$props, $$invalidate) {
 
 	function input_change_input_handler() {
 		value = to_number(this.value);
-		$$invalidate(0, value);
+		$$invalidate({ i: 0, ret: value });
 	}
 
 	$$self.$set = $$props => {
-		if ("value" in $$props) $$invalidate(0, value = $$props.value);
+		if ("value" in $$props) $$invalidate({ i: 0, ret: value = $$props.value });
 	};
 
 	return [value, input_change_input_handler];

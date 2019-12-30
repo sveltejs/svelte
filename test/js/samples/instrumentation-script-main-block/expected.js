@@ -50,15 +50,15 @@ function instance($$self, $$props, $$invalidate) {
 
 	setTimeout(
 		function foo() {
-			$$invalidate(0, x += 10);
-			$$invalidate(1, y += 20);
+			$$invalidate({ i: 0, ret: x += 10 });
+			$$invalidate({ i: 1, ret: y += 20 });
 		},
 		1000
 	);
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*x, y*/ 3) {
-			$: $$invalidate(0, x += y);
+			$: $$invalidate({ i: 0, ret: x += y });
 		}
 	};
 

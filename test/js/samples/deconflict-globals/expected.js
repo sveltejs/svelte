@@ -11,7 +11,7 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$set = $$props => {
-		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
+		if ("foo" in $$props) $$invalidate({ i: 0, ret: foo = $$props.foo });
 	};
 
 	return [foo];

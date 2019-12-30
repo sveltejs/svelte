@@ -177,10 +177,10 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$set = $$props => {
-		if ("things" in $$props) $$invalidate(0, things = $$props.things);
-		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
-		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);
-		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
+		if ("things" in $$props) $$invalidate({ i: 0, ret: things = $$props.things });
+		if ("foo" in $$props) $$invalidate({ i: 1, ret: foo = $$props.foo });
+		if ("bar" in $$props) $$invalidate({ i: 2, ret: bar = $$props.bar });
+		if ("baz" in $$props) $$invalidate({ i: 3, ret: baz = $$props.baz });
 	};
 
 	$$self.$capture_state = () => {
@@ -188,10 +188,10 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$inject_state = $$props => {
-		if ("things" in $$props) $$invalidate(0, things = $$props.things);
-		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
-		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);
-		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
+		if ("things" in $$props) $$invalidate({ i: 0, ret: things = $$props.things });
+		if ("foo" in $$props) $$invalidate({ i: 1, ret: foo = $$props.foo });
+		if ("bar" in $$props) $$invalidate({ i: 2, ret: bar = $$props.bar });
+		if ("baz" in $$props) $$invalidate({ i: 3, ret: baz = $$props.baz });
 	};
 
 	return [things, foo, bar, baz];

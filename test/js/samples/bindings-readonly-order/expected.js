@@ -54,16 +54,16 @@ function instance($$self, $$props, $$invalidate) {
 
 	function input0_change_handler() {
 		files = this.files;
-		$$invalidate(0, files);
+		$$invalidate({ i: 0, ret: files });
 	}
 
 	function input1_change_handler() {
 		files = this.files;
-		$$invalidate(0, files);
+		$$invalidate({ i: 0, ret: files });
 	}
 
 	$$self.$set = $$props => {
-		if ("files" in $$props) $$invalidate(0, files = $$props.files);
+		if ("files" in $$props) $$invalidate({ i: 0, ret: files = $$props.files });
 	};
 
 	return [files, input0_change_handler, input1_change_handler];

@@ -7,12 +7,12 @@ function instance($$self, $$props, $$invalidate) {
 	let b;
 
 	$$self.$set = $$props => {
-		if ("x" in $$props) $$invalidate(0, x = $$props.x);
+		if ("x" in $$props) $$invalidate({ i: 0, ret: x = $$props.x });
 	};
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*x*/ 1) {
-			$: $$invalidate(2, b = x);
+			$: $$invalidate({ i: 2, ret: b = x });
 		}
 
 		if ($$self.$$.dirty & /*b*/ 4) {

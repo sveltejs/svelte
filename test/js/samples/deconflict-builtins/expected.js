@@ -105,7 +105,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { createElement } = $$props;
 
 	$$self.$set = $$props => {
-		if ("createElement" in $$props) $$invalidate(0, createElement = $$props.createElement);
+		if ("createElement" in $$props) $$invalidate({
+			i: 0,
+			ret: createElement = $$props.createElement
+		});
 	};
 
 	return [createElement];

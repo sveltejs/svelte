@@ -11,7 +11,7 @@ import { count } from "./store.js";
 
 function instance($$self, $$props, $$invalidate) {
 	let $count;
-	component_subscribe($$self, count, $$value => $$invalidate(1, $count = $$value));
+	component_subscribe($$self, count, $$value => $$invalidate({ i: 1, ret: $count = $$value }));
 
 	function increment() {
 		set_store_value(count, $count++, $count);

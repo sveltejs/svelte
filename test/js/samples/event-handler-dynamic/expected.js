@@ -84,11 +84,17 @@ function instance($$self, $$props, $$invalidate) {
 	let number = 0;
 
 	function updateHandler1() {
-		$$invalidate(0, clickHandler = () => $$invalidate(1, number = 1));
+		$$invalidate({
+			i: 0,
+			ret: clickHandler = () => $$invalidate({ i: 1, ret: number = 1 })
+		});
 	}
 
 	function updateHandler2() {
-		$$invalidate(0, clickHandler = () => $$invalidate(1, number = 2));
+		$$invalidate({
+			i: 0,
+			ret: clickHandler = () => $$invalidate({ i: 1, ret: number = 2 })
+		});
 	}
 
 	return [clickHandler, number, updateHandler1, updateHandler2];

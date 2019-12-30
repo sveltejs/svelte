@@ -101,7 +101,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { num = 1 } = $$props;
 
 	$$self.$set = $$props => {
-		if ("num" in $$props) $$invalidate(0, num = $$props.num);
+		if ("num" in $$props) $$invalidate({ i: 0, ret: num = $$props.num });
 	};
 
 	return [num];

@@ -42,13 +42,13 @@ function instance($$self, $$props, $$invalidate) {
 	function div_elementresize_handler() {
 		w = this.offsetWidth;
 		h = this.offsetHeight;
-		$$invalidate(0, w);
-		$$invalidate(1, h);
+		$$invalidate({ i: 0, ret: w });
+		$$invalidate({ i: 1, ret: h });
 	}
 
 	$$self.$set = $$props => {
-		if ("w" in $$props) $$invalidate(0, w = $$props.w);
-		if ("h" in $$props) $$invalidate(1, h = $$props.h);
+		if ("w" in $$props) $$invalidate({ i: 0, ret: w = $$props.w });
+		if ("h" in $$props) $$invalidate({ i: 1, ret: h = $$props.h });
 	};
 
 	return [w, h, div_elementresize_handler];

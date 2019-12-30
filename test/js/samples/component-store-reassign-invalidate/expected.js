@@ -56,12 +56,12 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let $foo,
 		$$unsubscribe_foo = noop,
-		$$subscribe_foo = () => ($$unsubscribe_foo(), $$unsubscribe_foo = subscribe(foo, $$value => $$invalidate(1, $foo = $$value)), foo);
+		$$subscribe_foo = () => ($$unsubscribe_foo(), $$unsubscribe_foo = subscribe(foo, $$value => $$invalidate({ i: 1, ret: $foo = $$value })), foo);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_foo());
 	let foo = writable(0);
 	$$subscribe_foo();
-	const click_handler = () => $$subscribe_foo($$invalidate(0, foo = writable(0)));
+	const click_handler = () => $$subscribe_foo($$invalidate({ i: 0, ret: foo = writable(0) }));
 	return [foo, $foo, click_handler];
 }
 

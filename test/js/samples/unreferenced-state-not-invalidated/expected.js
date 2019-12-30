@@ -44,7 +44,7 @@ function instance($$self, $$props, $$invalidate) {
 	onMount(() => {
 		const interval = setInterval(
 			() => {
-				$$invalidate(1, b += 1);
+				$$invalidate({ i: 1, ret: b += 1 });
 				c += 1;
 				console.log(b, c);
 			},
@@ -59,7 +59,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*b*/ 2) {
-			$: $$invalidate(0, y = b * 2);
+			$: $$invalidate({ i: 0, ret: y = b * 2 });
 		}
 	};
 

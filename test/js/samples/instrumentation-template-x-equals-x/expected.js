@@ -59,7 +59,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	const click_handler = () => {
 		things.push(1);
-		$$invalidate(0, things);
+		$$invalidate({ i: 0, ret: things });
 	};
 
 	return [things, click_handler];

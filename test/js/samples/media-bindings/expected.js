@@ -109,66 +109,76 @@ function instance($$self, $$props, $$invalidate) {
 
 	function audio_progress_handler() {
 		buffered = time_ranges_to_array(this.buffered);
-		$$invalidate(0, buffered);
+		$$invalidate({ i: 0, ret: buffered });
 	}
 
 	function audio_loadedmetadata_handler() {
 		buffered = time_ranges_to_array(this.buffered);
 		seekable = time_ranges_to_array(this.seekable);
-		$$invalidate(0, buffered);
-		$$invalidate(1, seekable);
+		$$invalidate({ i: 0, ret: buffered });
+		$$invalidate({ i: 1, ret: seekable });
 	}
 
 	function audio_timeupdate_handler() {
 		played = time_ranges_to_array(this.played);
 		currentTime = this.currentTime;
 		ended = this.ended;
-		$$invalidate(2, played);
-		$$invalidate(3, currentTime);
-		$$invalidate(9, ended);
+		$$invalidate({ i: 2, ret: played });
+		$$invalidate({ i: 3, ret: currentTime });
+		$$invalidate({ i: 9, ret: ended });
 	}
 
 	function audio_durationchange_handler() {
 		duration = this.duration;
-		$$invalidate(4, duration);
+		$$invalidate({ i: 4, ret: duration });
 	}
 
 	function audio_play_pause_handler() {
 		paused = this.paused;
-		$$invalidate(5, paused);
+		$$invalidate({ i: 5, ret: paused });
 	}
 
 	function audio_volumechange_handler() {
 		volume = this.volume;
-		$$invalidate(6, volume);
+		$$invalidate({ i: 6, ret: volume });
 	}
 
 	function audio_ratechange_handler() {
 		playbackRate = this.playbackRate;
-		$$invalidate(7, playbackRate);
+		$$invalidate({ i: 7, ret: playbackRate });
 	}
 
 	function audio_seeking_seeked_handler() {
 		seeking = this.seeking;
-		$$invalidate(8, seeking);
+		$$invalidate({ i: 8, ret: seeking });
 	}
 
 	function audio_ended_handler() {
 		ended = this.ended;
-		$$invalidate(9, ended);
+		$$invalidate({ i: 9, ret: ended });
 	}
 
 	$$self.$set = $$props => {
-		if ("buffered" in $$props) $$invalidate(0, buffered = $$props.buffered);
-		if ("seekable" in $$props) $$invalidate(1, seekable = $$props.seekable);
-		if ("played" in $$props) $$invalidate(2, played = $$props.played);
-		if ("currentTime" in $$props) $$invalidate(3, currentTime = $$props.currentTime);
-		if ("duration" in $$props) $$invalidate(4, duration = $$props.duration);
-		if ("paused" in $$props) $$invalidate(5, paused = $$props.paused);
-		if ("volume" in $$props) $$invalidate(6, volume = $$props.volume);
-		if ("playbackRate" in $$props) $$invalidate(7, playbackRate = $$props.playbackRate);
-		if ("seeking" in $$props) $$invalidate(8, seeking = $$props.seeking);
-		if ("ended" in $$props) $$invalidate(9, ended = $$props.ended);
+		if ("buffered" in $$props) $$invalidate({ i: 0, ret: buffered = $$props.buffered });
+		if ("seekable" in $$props) $$invalidate({ i: 1, ret: seekable = $$props.seekable });
+		if ("played" in $$props) $$invalidate({ i: 2, ret: played = $$props.played });
+
+		if ("currentTime" in $$props) $$invalidate({
+			i: 3,
+			ret: currentTime = $$props.currentTime
+		});
+
+		if ("duration" in $$props) $$invalidate({ i: 4, ret: duration = $$props.duration });
+		if ("paused" in $$props) $$invalidate({ i: 5, ret: paused = $$props.paused });
+		if ("volume" in $$props) $$invalidate({ i: 6, ret: volume = $$props.volume });
+
+		if ("playbackRate" in $$props) $$invalidate({
+			i: 7,
+			ret: playbackRate = $$props.playbackRate
+		});
+
+		if ("seeking" in $$props) $$invalidate({ i: 8, ret: seeking = $$props.seeking });
+		if ("ended" in $$props) $$invalidate({ i: 9, ret: ended = $$props.ended });
 	};
 
 	return [

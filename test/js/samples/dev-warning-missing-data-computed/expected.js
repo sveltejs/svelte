@@ -73,7 +73,7 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$set = $$props => {
-		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
+		if ("foo" in $$props) $$invalidate({ i: 0, ret: foo = $$props.foo });
 	};
 
 	$$self.$capture_state = () => {
@@ -81,13 +81,13 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$inject_state = $$props => {
-		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
-		if ("bar" in $$props) $$invalidate(1, bar = $$props.bar);
+		if ("foo" in $$props) $$invalidate({ i: 0, ret: foo = $$props.foo });
+		if ("bar" in $$props) $$invalidate({ i: 1, ret: bar = $$props.bar });
 	};
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*foo*/ 1) {
-			$: $$invalidate(1, bar = foo * 2);
+			$: $$invalidate({ i: 1, ret: bar = foo * 2 });
 		}
 	};
 
