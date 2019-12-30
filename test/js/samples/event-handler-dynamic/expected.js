@@ -6,6 +6,7 @@ import {
 	element,
 	init,
 	insert,
+	is_function,
 	listen,
 	noop,
 	run_all,
@@ -46,7 +47,7 @@ function create_fragment(ctx) {
 				listen(button0, "click", /*updateHandler1*/ ctx[2]),
 				listen(button1, "click", /*updateHandler2*/ ctx[3]),
 				listen(button2, "click", function () {
-					/*clickHandler*/ ctx[0].apply(this, arguments);
+					if (is_function(/*clickHandler*/ ctx[0])) /*clickHandler*/ ctx[0].apply(this, arguments);
 				})
 			];
 		},
