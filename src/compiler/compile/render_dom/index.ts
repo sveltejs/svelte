@@ -235,7 +235,7 @@ export default function dom(
 
 			const insert = (reassigned || export_name)
 				? b`${`$$subscribe_${name}`}()`
-				: b`@component_subscribe($$self, ${name}, #value => $$invalidate(${i}, ${value} = #value))`;
+				: b`@component_subscribe($$self, ${name}, #value => $$invalidate({ i: ${i}, ret: ${value} = #value }))`;
 
 			if (component.compile_options.dev) {
 				return b`@validate_store(${name}, '${name}'); ${insert}`;
@@ -308,7 +308,7 @@ export default function dom(
 		})
 		.map(({ name }) => b`
 			${component.compile_options.dev && b`@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
-			@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate(${renderer.context_lookup.get(name).index}, ${name} = $$value));
+			@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate({ i: ${renderer.context_lookup.get(name).index}, ret: ${name} = $$value }));
 		`);
 
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
@@ -359,7 +359,7 @@ export default function dom(
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
 
-				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate(${i}, ${$name} = $$value)), ${name})`;
+				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate({ i: ${i}, ret: ${$name} = $$value })), ${name})`;
 			}
 
 			return b`let ${$name};`;

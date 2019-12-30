@@ -62,7 +62,11 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 			let invalidate = is_store_value
 				? x`@set_store_value(${head.name.slice(1)}, ${node}, ${extra_args})`
 				: !main_execution_context
-					? x`$$invalidate(${renderer.context_lookup.get(head.name).index}, ${node}, ${extra_args})`
+					? x`$$invalidate({
+							i: ${renderer.context_lookup.get(head.name).index},
+							ret: ${node},
+							value: ${extra_args[0]}
+						}, ${extra_args.slice(1)})`
 					: node;
 
 			if (head.subscribable && head.reassigned) {

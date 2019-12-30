@@ -153,7 +153,7 @@ export default class Renderer {
 		const member = this.context_lookup.get(name);
 
 		if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {
-			return x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${value || name}))`;
+			return x`${`$$subscribe_${name}`}($$invalidate({ i: ${member.index}, ret: ${value || name} }))`;
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
@@ -171,7 +171,7 @@ export default class Renderer {
 		}
 
 		if (value) {
-			return x`$$invalidate(${member.index}, ${value})`;
+			return x`$$invalidate({ i: ${member.index}, ret: ${value} })`;
 		}
 
 		// if this is a reactive declaration, invalidate dependencies recursively
@@ -193,7 +193,7 @@ export default class Renderer {
 		if (!filtered.length) return null;
 
 		return filtered
-			.map(n => x`$$invalidate(${this.context_lookup.get(n).index}, ${n})`)
+			.map(n => x`$$invalidate({ i: ${this.context_lookup.get(n).index}, ret: ${n} })`)
 			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
 	}
 

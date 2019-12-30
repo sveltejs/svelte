@@ -127,12 +127,29 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	let ready = false;
 
 	$$.ctx = instance
-		? instance(component, prop_values, (i, ret, value = ret) => {
-			if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
-				if ($$.bound[i]) $$.bound[i](value);
-				if (ready) make_dirty(component, i);
+		? instance(component, prop_values, (args) => {
+			let { i, ret, value } = args;
+			const isValuePassed = !!Object.keys(args).find(e => e === 'value');
+
+			const assign = () => {
+				if (not_equal($$.ctx[i], ($$.ctx[i] = value))) {
+					if ($$.bound[i]) $$.bound[i](value);
+					if (ready) make_dirty(component, i);
+				}
+			};
+
+			if ($$.ctx) {
+				if (!isValuePassed && typeof $$.ctx[i] === 'undefined') {
+					assign();
+					return ret;
+				}
+
+				value = isValuePassed ? value : (value || ret);
+				assign();
 			}
+
 			return ret;
+
 		})
 		: [];
 
