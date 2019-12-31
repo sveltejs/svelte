@@ -145,6 +145,8 @@ export default function ssr(
 		main
 	].filter(Boolean);
 
+	remove_unused_import(component);
+
 	const js = b`
 		${css.code ? b`
 		const #css = {
@@ -184,4 +186,9 @@ function trim(nodes: TemplateNode[]) {
 	}
 
 	return nodes.slice(start, end);
+}
+
+const unused_import = new Set<any>(['svelte/transition']);
+function remove_unused_import(component: Component) {
+	component.imports = component.imports.filter(decl => !unused_import.has(decl.source.value));
 }
