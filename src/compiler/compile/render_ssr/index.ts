@@ -46,16 +46,8 @@ export default function ssr(
 		})
 		.filter(Boolean);
 
-	component.rewrite_props(({ name }) => {
-		const value = `$${name}`;
-
-		let insert = b`${value} = @get_store_value(${name})`;
-		if (component.compile_options.dev) {
-			insert = b`@validate_store(${name}, '${name}'); ${insert}`;
-		}
-
-		return insert;
-	});
+	// handled by `reactive_store_values`
+	component.rewrite_props(() => b``);
 
 	const instance_javascript = component.extract_javascript(component.ast.instance);
 
