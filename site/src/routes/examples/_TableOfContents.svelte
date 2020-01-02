@@ -59,6 +59,7 @@
 		font-size: 1.6rem;
 		align-items: center;
 		justify-content: start;
+		padding: 0;
 	}
 
 	a:hover {
