@@ -1202,14 +1202,16 @@ The content is exposed in the child component using the `<slot>` element, which 
 
 ```html
 <!-- App.svelte -->
+<Widget></Widget>
+
 <Widget>
-	<p>this is some child content</p>
+	<p>this is some child content that will overwrite the default slot content</p>
 </Widget>
 
 <!-- Widget.svelte -->
 <div>
 	<slot>
-		this will be rendered if someone does <Widget/>
+		this fallback content will be rendered when no content is provided, like in the first example
 	</slot>
 </div>
 ```
