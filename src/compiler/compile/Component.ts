@@ -603,6 +603,7 @@ export default class Component {
 
 			const { expression } = node.body;
 			if (expression.type !== 'AssignmentExpression') return;
+			if (expression.left.type === 'MemberExpression') return;
 
 			extract_names(expression.left).forEach(name => {
 				if (!this.var_lookup.has(name) && name[0] !== '$') {
