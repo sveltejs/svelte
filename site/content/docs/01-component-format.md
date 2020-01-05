@@ -119,7 +119,9 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 
 	// this will update `document.title` whenever
 	// the `title` prop changes
-	$: document.title = title;
+	$: {
+    document.title = title;
+  }
 
 	$: {
 		console.log(`multiple statements can be combined`);
