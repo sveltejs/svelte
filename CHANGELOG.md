@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Prevent text input cursor jumping in Safari with one-way binding ([#3449](https://github.com/sveltejs/svelte/issues/3449))
+* Expose compiler version in dev events ([#4047](https://github.com/sveltejs/svelte/issues/4047))
 
 ## 3.16.7
 
