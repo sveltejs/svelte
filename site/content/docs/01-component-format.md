@@ -186,22 +186,11 @@ You can create your own stores without relying on [`svelte/store`](docs#svelte_s
 
 const subscriptions = [];
 
-let lastHash;
-
-const callSubscriptions = () => {
-	if (location.hash !== lastHash) {
-		lastHash = location.hash;
-		for (const subscription of subscriptions) {
-			subscription(location.hash);
-		}
-	}
-};
-
-window.addEventListener('hashchange', callSubscriptions);
+let storeValue = location.hash; // Set initial value
 
 const hashStore = {
 	subscribe(subscription) {
-		subscription(location.hash); // Call subscription with current value
+		subscription(storeValue); // Call subscription with current value
 		subscriptions.push(subscription); // Subscribe to future values
 		return () => { // Return an "unsubscribe" function
 			const index = subscriptions.indexOf(subscription);
@@ -211,10 +200,21 @@ const hashStore = {
 		};
 	},
 	set(hash) {
-		location.hash = hash; // Set the value
-		callSubscriptions(); // Synchronously notify all subscriptions
+		storeValue = hash; // Set the value
+		location.hash = hash; // Update location.hash
+		for (const subscription of subscriptions) {
+			// Call all subscriptions
+			subscription(storeValue);
+		}
 	}
 };
+
+// Event listener to stay in sync with external changes
+window.addEventListener('hashchange', () => {
+	if (location.hash !== storeValue) {
+		hashStore.set(location.hash);
+	}
+});
 
 
 ```
