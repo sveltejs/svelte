@@ -80,7 +80,7 @@ async function process_markup(
 
 	return {
 		source: processed ? processed.code : source,
-		dependencies: processed.dependencies,
+		dependencies: processed.dependencies
 	};
 }
 
@@ -91,28 +91,29 @@ async function process_script(
 ) {
 	const dependencies = [];
 
-	const s = await replace_async(
-			source,
-			/<!--[^]*?-->|<script(\s[^]*?)?>([^]*?)<\/script>/gi,
-			async (match, attributes = '', content) => {
-				if (!attributes && !content) {
-					return match;
-				}
-				attributes = attributes || '';
-				const processed: Processed = await func({
-					content,
-					attributes: parse_attributes(attributes),
-					filename
-				});
-				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
-				return processed ? `<script${attributes}>${processed.code}</script>` : match;
+	source = await replace_async(
+		source,
+		/<!--[^]*?-->|<script(\s[^]*?)?>([^]*?)<\/script>/gi,
+		async (match, attributes = '', content) => {
+			if (!attributes && !content) {
+				return match;
 			}
-		);
+			attributes = attributes || '';
+			const processed: Processed = await func({
+				content,
+				attributes: parse_attributes(attributes),
+				filename
+			});
+			if (processed && processed.dependencies) {
+				dependencies.push(...processed.dependencies);
+			}
 
-		console.log(s, 'RETURREND');
+			return processed ? `<script${attributes}>${processed.code}</script>` : match;
+		}
+	);
 
 	return {
-		source: s,
+		source,
 		dependencies,
 	};
 }
@@ -124,7 +125,7 @@ async function process_style(
 ) {
 	const dependencies = [];
 
-	const s = await replace_async(
+	source = await replace_async(
 		source,
 		/<!--[^]*?-->|<style(\s[^]*?)?>([^]*?)<\/style>/gi,
 		async (match, attributes = '', content) => {
@@ -137,25 +138,25 @@ async function process_style(
 				filename
 			});
 
-			if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
+			if (processed && processed.dependencies) {
+				dependencies.push(...processed.dependencies);
+			}
+
 			return processed ? `<style${attributes}>${processed.code}</style>` : match;
 		}
 	);
 
 	return {
-		source: s,
+		source,
 		dependencies,
 	};
 }
 
-async function asyncForEach(array, callback) {
-  // eslint-disable-next-line
+async function async_for_each(array, callback) {
   for (let index = 0; index < array.length; index++) {
-    // eslint-disable-next-line
     await callback(array[index], index, array);
   }
 }
-
 
 export default async function preprocess(
 	source: string,
@@ -164,11 +165,12 @@ export default async function preprocess(
 ) {
 	// @ts-ignore todo: doublecheck
 	const filename = (options && options.filename) || preprocessor.filename; // legacy
+	const strictOrder = options && options.strictOrder;
 	const dependencies = [];
 
 	const preprocessors = Array.isArray(preprocessor) ? preprocessor : [preprocessor];
 
-	const order = options.strictOrder
+	const order = strictOrder
 		? preprocessors
 		: [
 		...preprocessors.map(({ markup }) => ({ markup })),
@@ -176,27 +178,25 @@ export default async function preprocess(
 		...preprocessors.map(({ style }) => ({ style })),
 	];
 
-	console.log(preprocessors);
-
-	await asyncForEach(order, async p => {
+	await async_for_each(order, async p => {
 		let processed;
 
 		if (p.markup) {
 			processed = await process_markup(source, p.markup, filename);
 			source = processed.source;
-			dependencies.push(processed.dependencies);
+			if (processed.dependencies.length) dependencies.push(...processed.dependencies);
 		}
 
 		if (p.script) {
 			processed = await process_script(source, p.script, filename);
 			source = processed.source;
-			dependencies.push(processed.dependencies);
+			if (processed.dependencies.length) dependencies.push(...processed.dependencies);
 		}
 
 		if (p.style) {
 			processed = await process_style(source, p.style, filename);
 			source = processed.source;
-			dependencies.push(processed.dependencies);
+			if (processed.dependencies.length) dependencies.push(...processed.dependencies);
 		}
 	});
 
