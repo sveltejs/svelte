@@ -203,6 +203,7 @@ result: {
 	}>,
 	options?: {
 		filename?: string
+		strictOrder?: boolean
 	}
 )
 ```
