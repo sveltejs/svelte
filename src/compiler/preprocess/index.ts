@@ -184,19 +184,25 @@ export default async function preprocess(
 		if (p.markup) {
 			processed = await process_markup(source, p.markup, filename);
 			source = processed.source;
-			if (processed.dependencies.length) dependencies.push(...processed.dependencies);
+			if (processed.dependencies && processed.dependencies.length) {
+				dependencies.push(...processed.dependencies);
+			}
 		}
 
 		if (p.script) {
 			processed = await process_script(source, p.script, filename);
 			source = processed.source;
-			if (processed.dependencies.length) dependencies.push(...processed.dependencies);
+			if (processed.dependencies && processed.dependencies.length) {
+				dependencies.push(...processed.dependencies);
+			}
 		}
 
 		if (p.style) {
 			processed = await process_style(source, p.style, filename);
 			source = processed.source;
-			if (processed.dependencies.length) dependencies.push(...processed.dependencies);
+			if (processed.dependencies && processed.dependencies.length) {
+				dependencies.push(...processed.dependencies);
+			}
 		}
 	});
 
