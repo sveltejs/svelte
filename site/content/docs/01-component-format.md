@@ -184,33 +184,31 @@ You can create your own stores without relying on [`svelte/store`](docs#svelte_s
 
 /* Example: a custom writable store for `location.hash` */
 
-const subscriptions = [];
-
 let storeValue = location.hash; // Set initial value
+
+const subscriptions = new Set();
 
 const hashStore = {
 	subscribe(subscription) {
 		subscription(storeValue); // Call subscription with current value
-		subscriptions.push(subscription); // Subscribe to future values
+		const item = {subscription};
+		subscriptions.add(item); // Subscribe to future values
 		return () => { // Return an "unsubscribe" function
-			const index = subscriptions.indexOf(subscription);
-			if (index !== -1) {
-				subscriptions.splice(index, 1); // Remove the subscription
-			}
+			subscriptions.delete(item); // Remove the subscription
 		};
 	},
 	set(hash) {
-		storeValue = hash; // Set the value
 		location.hash = hash; // Update location.hash
-		for (const subscription of subscriptions) {
+		storeValue = location.hash; // Set the value
+		for (const {subscription} of subscriptions) {
 			// Call all subscriptions
 			subscription(storeValue);
 		}
 	}
 };
 
-// Event listener to stay in sync with external changes
 window.addEventListener('hashchange', () => {
+	// Keep the store in sync with external changes
 	if (location.hash !== storeValue) {
 		hashStore.set(location.hash);
 	}
