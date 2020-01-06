@@ -216,7 +216,7 @@ Events dispatched from child components can be listened to in their parent. Any 
 
 The `svelte/store` module exports functions for creating [readable](docs#readable), [writable](docs#writable) and [derived](docs#derived) stores.
 
-Keep in mind that you don't *have* to use these functions to enjoy the [reactive `$store` syntax](docs#4_Prefix_stores_with_$_to_access_their_values) in your components. Any object that correctly implements `subscribe`/`unsubscribe` and (optionally) `set` is a valid store, and will work both with the special syntax, and with Svelte's built in [`derived` stores](docs#derived).
+Keep in mind that you don't *have* to use these functions to enjoy the [reactive `$store` syntax](docs#4_Prefix_stores_with_$_to_access_their_values) in your components. Any object that correctly implements `.subscribe`, unsubscribe, and (optionally) `.set` is a valid store, and will work both with the special syntax, and with Svelte's built-in [`derived` stores](docs#derived).
 
 This makes it possible to wrap almost any other reactive state handling library for use in Svelte. Read more about the [store contract](docs#4_Prefix_stores_with_$_to_access_their_values) to see what a correct implementation looks like.
 
