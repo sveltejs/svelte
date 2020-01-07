@@ -1,6 +1,7 @@
 export default {
+	solo: true,
 	options: {
-		strictOrder: true,
+		strictOrder: false,
 	},
 	preprocess: [
 		{
