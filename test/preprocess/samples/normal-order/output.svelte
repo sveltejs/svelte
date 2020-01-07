@@ -1,7 +1,7 @@
 <p>one</p>
 
 <style>
-	.three {
+	.two {
 		color: red;
 	}
 </style>
