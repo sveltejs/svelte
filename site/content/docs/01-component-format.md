@@ -147,24 +147,7 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 
 ---
 
-A *store* is any object that allows reactive access to a value via a simple *store contract*.
-
-The [`svelte/store` module](docs#svelte_store) contains minimal store implementations which fulfil this contract. You can use these as the basis for your own stores, or you can implement your stores from scratch.
-
-A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes. The `.subscribe` method must also return an unsubscription function. Calling an unsubscription function must stop its subscription, and its corresponding subscription function must not be called again by the store.
-
-A store may optionally contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a *writable store*.
-
-```js
-const unsubscribe = store.subscribe(value => {
-	console.log(value);
-}); // logs `value`
-
-// later...
-unsubscribe();
-```
-
----
+A *store* is an object that allows reactive access to a value via a simple *store contract*. The [`svelte/store` module](docs#svelte_store) contains minimal store implementations which fulfil this contract.
 
 Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, and set up a store subscription that will be unsubscribed when appropriate.
 
@@ -188,6 +171,18 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 	console.log($count); // logs 2
 </script>
 ```
+
+##### Store contract
+
+```js
+store = { subscribe: (subscription: (value: any) => void) => () => void, set?: (value: any) => void }
+```
+
+You can create your own stores without relying on [`svelte/store`](docs#svelte_store), by implementing the *store contract*:
+
+1. A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes.
+2. The `.subscribe` method must return an unsubscribe function. Calling an unsubscribe function must stop its subscription, and its corresponding subscription function must not be called again by the store.
+3. A store may *optionally* contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a *writable store*.
 
 
 ### &lt;script context="module"&gt;
