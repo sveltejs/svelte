@@ -1018,7 +1018,7 @@ DOMRect {
 	​top: number,
 	width: number,
 	x: number,
-	y:number
+	y: number
 }
 ```
 
