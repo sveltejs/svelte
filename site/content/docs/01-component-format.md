@@ -172,58 +172,17 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 </script>
 ```
 
----
-
 ##### Store contract
 
 ```js
 store = { subscribe: (subscription: (value: any) => void) => () => void, set?: (value: any) => void }
 ```
 
----
-
 You can create your own stores without relying on [`svelte/store`](docs#svelte_store), by implementing the *store contract*:
 
 1. A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes.
 2. The `.subscribe` method must return an unsubscribe function. Calling an unsubscribe function must stop its subscription, and its corresponding subscription function must not be called again by the store.
 3. A store may *optionally* contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a *writable store*.
-
-```js
-
-/* Example: a custom writable store for `location.hash` */
-
-let storeValue = location.hash; // Set initial value
-
-const subscriptions = new Set();
-
-const hashStore = {
-	subscribe(subscription) {
-		subscription(storeValue); // Call subscription with current value
-		const item = {subscription};
-		subscriptions.add(item); // Subscribe to future values
-		return () => { // Return an "unsubscribe" function
-			subscriptions.delete(item); // Remove the subscription
-		};
-	},
-	set(hash) {
-		location.hash = hash; // Update location.hash
-		storeValue = location.hash; // Set the value
-		for (const {subscription} of subscriptions) {
-			// Call all subscriptions
-			subscription(storeValue);
-		}
-	}
-};
-
-window.addEventListener('hashchange', () => {
-	// Keep the store in sync with external changes
-	if (location.hash !== storeValue) {
-		hashStore.set(location.hash);
-	}
-});
-
-
-```
 
 
 ### &lt;script context="module"&gt;
