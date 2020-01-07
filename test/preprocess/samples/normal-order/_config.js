@@ -1,5 +1,4 @@
 export default {
-	solo: true,
 	options: {
 		strictOrder: false,
 	},
