@@ -254,6 +254,8 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 </style>
 ```
 
+---
+
 If you want to make @keyframes that are accesible globally you need to prepend your keyframe names with `-global-`.
 
 ```html
