@@ -264,4 +264,4 @@ If you want to make @keyframes that are accesible globally you need to prepend y
 </style>
 ```
 
-The `-global-` part will be remove when compiled and the keyframe then be referenced using just `my-animation-name` elsewhere in your code.
+The `-global-` part will be removed when compiled and the keyframe then be referenced using just `my-animation-name` elsewhere in your code.
