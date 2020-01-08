@@ -253,3 +253,13 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 	}
 </style>
 ```
+
+If you want to make @keyframes that are accesible globally you need to prepend your keyframe names with `-global-`.
+
+```html
+<style>
+	@keyframes -global-my-animation-name {...}
+</style>
+```
+
+The `-global-` part will be remove when compiled and the keyframe then be referenced using just `my-animation-name` elsewhere in your code.
