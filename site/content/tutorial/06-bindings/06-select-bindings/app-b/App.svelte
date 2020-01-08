@@ -23,7 +23,7 @@
 <form on:submit|preventDefault={handleSubmit}>
 	<select bind:value={selected} on:change="{() => answer = ''}">
 		{#each questions as question}
-			<option value={question}>
+			<option value={question} selected={selected === question}>
 				{question.text}
 			</option>
 		{/each}
