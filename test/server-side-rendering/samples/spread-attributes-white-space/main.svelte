@@ -5,3 +5,8 @@
 </script>
 
 <input {...props} />
+
+<input class="
+	white
+	space
+" {...({})}>
