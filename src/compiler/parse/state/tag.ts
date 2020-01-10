@@ -439,13 +439,13 @@ function read_attribute_value(parser: Parser) {
 				/(\/>|[\s"'=<>`])/
 	);
 
-	const value = read_sequence(parser, () => !!parser.match_regex(regex));
+	const value = read_sequence(parser, () => !!parser.match_regex(regex), true);
 
 	if (quote_mark) parser.index += 1;
 	return value;
 }
 
-function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
+function read_sequence(parser: Parser, done: () => boolean, is_attribute_value: boolean = false): TemplateNode[] {
 	let current_chunk: Text = {
 		start: parser.index,
 		end: null,
@@ -454,9 +454,13 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 		data: null
 	};
 
+	let is_text_attribute_value = false;
+
 	function flush() {
 		if (current_chunk.raw) {
-			current_chunk.data = decode_character_references(current_chunk.raw);
+			current_chunk.data = (is_text_attribute_value) ?
+				decode_character_references(current_chunk.raw.trim()) :
+				decode_character_references(current_chunk.raw);
 			current_chunk.end = parser.index;
 			chunks.push(current_chunk);
 		}
@@ -493,7 +497,20 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 				data: null
 			};
 		} else {
-			current_chunk.raw += parser.template[parser.index++];
+			let char: string = parser.template[parser.index++];
+
+			// remove newlines and tabs
+			if (is_attribute_value && ['\n', '\r', '\t'].includes(char)) {
+				is_text_attribute_value = true;
+				const previous_char_position = current_chunk.raw.length - 1;
+				const previous_char = current_chunk.raw[previous_char_position];
+
+				// prevent two spaces after each other
+				if (previous_char && previous_char !== ' ') char = ' ';
+				else char = '';
+			}
+
+			current_chunk.raw += char;
 		}
 	}
 
