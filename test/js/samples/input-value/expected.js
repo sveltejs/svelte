@@ -30,7 +30,6 @@ function create_fragment(ctx) {
 			t1 = text(/*name*/ ctx[0]);
 			t2 = text("!");
 			input.value = /*name*/ ctx[0];
-			dispose = listen(input, "input", /*onInput*/ ctx[1]);
 		},
 		m(target, anchor) {
 			insert(target, input, anchor);
@@ -38,6 +37,7 @@ function create_fragment(ctx) {
 			insert(target, h1, anchor);
 			append(h1, t1);
 			append(h1, t2);
+			dispose = listen(input, "input", /*onInput*/ ctx[1]);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*name*/ 1 && input.value !== /*name*/ ctx[0]) {

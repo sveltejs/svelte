@@ -21,10 +21,10 @@ function create_fragment(ctx) {
 			a = element("a");
 			a.textContent = "Test";
 			attr(a, "href", "#");
-			dispose = action_destroyer(link_action = link.call(null, a));
 		},
 		m(target, anchor) {
 			insert(target, a, anchor);
+			dispose = action_destroyer(link_action = link.call(null, a));
 		},
 		p: noop,
 		i: noop,
