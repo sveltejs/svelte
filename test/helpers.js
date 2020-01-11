@@ -68,6 +68,7 @@ window.scrollTo = function(pageXOffset, pageYOffset) {
 
 export function env() {
 	window.document.title = '';
+	window.document.head.innerHTML = '';
 	window.document.body.innerHTML = '<main></main>';
 
 	return window;
