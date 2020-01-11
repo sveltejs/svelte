@@ -20,12 +20,11 @@ function create_fragment(ctx) {
 
 			details.innerHTML = `<summary>summary</summary>content
 `;
-
-			dispose = listen(details, "toggle", /*details_toggle_handler*/ ctx[1]);
 		},
 		m(target, anchor) {
 			insert(target, details, anchor);
 			details.open = /*open*/ ctx[0];
+			dispose = listen(details, "toggle", /*details_toggle_handler*/ ctx[1]);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*open*/ 1) {
