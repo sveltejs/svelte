@@ -41,6 +41,17 @@ function create_fragment(ctx) {
 			if (/*duration*/ ctx[4] === void 0) add_render_callback(() => /*audio_durationchange_handler*/ ctx[13].call(audio));
 			if (/*seeking*/ ctx[8] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[17].call(audio));
 			if (/*ended*/ ctx[9] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[18].call(audio));
+		},
+		m(target, anchor) {
+			insert(target, audio, anchor);
+
+			if (!isNaN(/*volume*/ ctx[6])) {
+				audio.volume = /*volume*/ ctx[6];
+			}
+
+			if (!isNaN(/*playbackRate*/ ctx[7])) {
+				audio.playbackRate = /*playbackRate*/ ctx[7];
+			}
 
 			dispose = [
 				listen(audio, "progress", /*audio_progress_handler*/ ctx[10]),
@@ -55,17 +66,6 @@ function create_fragment(ctx) {
 				listen(audio, "seeked", /*audio_seeking_seeked_handler*/ ctx[17]),
 				listen(audio, "ended", /*audio_ended_handler*/ ctx[18])
 			];
-		},
-		m(target, anchor) {
-			insert(target, audio, anchor);
-
-			if (!isNaN(/*volume*/ ctx[6])) {
-				audio.volume = /*volume*/ ctx[6];
-			}
-
-			if (!isNaN(/*playbackRate*/ ctx[7])) {
-				audio.playbackRate = /*playbackRate*/ ctx[7];
-			}
 		},
 		p(ctx, [dirty]) {
 			if (!audio_updating && dirty & /*currentTime*/ 8 && !isNaN(/*currentTime*/ ctx[3])) {

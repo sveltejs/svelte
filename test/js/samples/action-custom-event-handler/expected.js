@@ -20,10 +20,10 @@ function create_fragment(ctx) {
 		c() {
 			button = element("button");
 			button.textContent = "foo";
-			dispose = action_destroyer(foo_action = foo.call(null, button, /*foo_function*/ ctx[1]));
 		},
 		m(target, anchor) {
 			insert(target, button, anchor);
+			dispose = action_destroyer(foo_action = foo.call(null, button, /*foo_function*/ ctx[1]));
 		},
 		p(ctx, [dirty]) {
 			if (foo_action && is_function(foo_action.update) && dirty & /*bar*/ 1) foo_action.update.call(null, /*foo_function*/ ctx[1]);
@@ -42,7 +42,7 @@ function handleFoo(bar) {
 }
 
 function foo(node, callback) {
-
+	
 }
 
 function instance($$self, $$props, $$invalidate) {
