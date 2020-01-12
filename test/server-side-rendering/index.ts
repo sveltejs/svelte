@@ -1,17 +1,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import glob from 'tiny-glob/sync.js';
+import * as register from '../register';
 
 import {
 	assert,
-	showOutput,
 	loadConfig,
 	loadSvelte,
 	setupHtmlEqual,
 	tryToLoadJson,
 	cleanRequireCache,
-	shouldUpdateExpected,
-	mkdirp
+	shouldUpdateExpected
 } from '../helpers';
 import { set_current_component } from '../../internal';
 
@@ -25,11 +23,14 @@ function tryToReadFile(file) {
 }
 
 const sveltePath = process.cwd().split('\\').join('/');
-let compile = null;
 
 describe('ssr', () => {
 	before(() => {
-		compile = loadSvelte(true).compile;
+		register.setCompileOptions({
+			generate: 'ssr'
+		});
+		register.setCompile(loadSvelte(true).compile);
+		register.setOutputFolderName('ssr');
 
 		return setupHtmlEqual();
 	});
@@ -46,7 +47,6 @@ describe('ssr', () => {
 		// add .solo to a sample directory name to only run that test, or
 		// .show to always show the output. or both
 		const solo = config.solo || /\.solo/.test(dir);
-		const show = /\.show/.test(dir);
 
 		if (solo && process.env.CI) {
 			throw new Error('Forgot to remove `solo: true` from test');
@@ -131,10 +131,8 @@ describe('ssr', () => {
 					}
 				}
 
-				if (show) showOutput(dir, { generate: 'ssr', format: 'cjs' });
 				done();
 			} catch (err) {
-				showOutput(dir, { generate: 'ssr', format: 'cjs' });
 				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
 				done(err);
 			} finally {
@@ -163,45 +161,16 @@ describe('ssr', () => {
 			(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
 				const cwd = path.resolve(`test/${suite}/samples`, dir);
 
-				cleanRequireCache();
-
 				delete global.window;
-
-				const compileOptions = {
+				register.clearRequireCache();
+				register.setCompileOptions({
 					sveltePath,
 					...config.compileOptions,
 					generate: 'ssr',
 					format: 'cjs'
-				};
-
-				require('../../register')(compileOptions);
-
-				glob('**/*.svelte', { cwd }).forEach(file => {
-					if (file[0] === '_') return;
-
-					const dir  = `${cwd}/_output/ssr`;
-					const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
-
-					if (fs.existsSync(out)) {
-						fs.unlinkSync(out);
-					}
-
-					mkdirp(dir);
-
-					try {
-						const { js } = compile(
-							fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-							{
-								...compileOptions,
-								filename: file
-							}
-						);
-
-						fs.writeFileSync(out, js.code);
-					} catch (err) {
-						// do nothing
-					}
 				});
+
+				register.setOutputFolderName('ssr');
 
 				try {
 					if (config.before_test) config.before_test();
@@ -222,10 +191,6 @@ describe('ssr', () => {
 					}
 
 					if (config.after_test) config.after_test();
-
-					if (config.show) {
-						showOutput(cwd, compileOptions);
-					}
 				} catch (err) {
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
 
@@ -236,7 +201,6 @@ describe('ssr', () => {
 							assert.equal(err.message, config.error);
 						}
 					} else {
-						showOutput(cwd, compileOptions);
 						throw err;
 					}
 				} finally {
