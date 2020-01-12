@@ -264,9 +264,22 @@ export default class EachBlockWrapper extends Wrapper {
 			block.chunks.init.push(b`
 				if (!${this.vars.data_length}) {
 					${each_block_else} = ${this.else.block.name}(#ctx);
+				}
+			`);
+
+			block.chunks.create.push(b`
+				if (${each_block_else}) {
 					${each_block_else}.c();
 				}
 			`);
+
+			if (this.renderer.options.hydratable) {
+				block.chunks.claim.push(b`
+					if (${each_block_else}) {
+						${each_block_else}.l(${parent_nodes});
+					}
+				`);
+			}
 
 			block.chunks.mount.push(b`
 				if (${each_block_else}) {

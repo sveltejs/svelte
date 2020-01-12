@@ -6,6 +6,7 @@
 * Expose compiler version in dev events ([#4047](https://github.com/sveltejs/svelte/issues/4047))
 * Don't run actions before their element is in the document ([#4166](https://github.com/sveltejs/svelte/issues/4166))
 * Fix reactive assignments with destructuring and stores where the destructured value should be undefined ([#4170](https://github.com/sveltejs/svelte/issues/4170))
+* Fix hydrating `{:else}` in `{#each}` ([#4202](https://github.com/sveltejs/svelte/issues/4202))
 * Do not automatically declare variables in reactive declarations when assigning to a member expression ([#4212](https://github.com/sveltejs/svelte/issues/4212))
 
 ## 3.16.7
