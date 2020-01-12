@@ -273,7 +273,7 @@ export default class EachBlockWrapper extends Wrapper {
 				}
 			`);
 
-			if (component.compile_options.hydratable) {
+			if (this.renderer.options.hydratable) {
 				block.chunks.claim.push(b`
 					if (${each_block_else}) {
 						${each_block_else}.l(${parent_nodes});
