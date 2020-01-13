@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.17.0
 
 * Remove old `<head>` elements during hydration so they aren't duplicated ([#1607](https://github.com/sveltejs/svelte/issues/1607))
 * Prevent text input cursor jumping in Safari with one-way binding ([#3449](https://github.com/sveltejs/svelte/issues/3449))
