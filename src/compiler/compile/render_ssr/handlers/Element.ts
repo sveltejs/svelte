@@ -124,6 +124,10 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		}
 	});
 
+	if (options.head_id) {
+		renderer.add_string(` data-svelte="${options.head_id}"`);
+	}
+
 	renderer.add_string('>');
 
 	if (node_contents !== undefined) {

@@ -5,6 +5,7 @@ import Element from '../nodes/Element';
 import { Ast, TemplateNode } from '../../interfaces';
 import Component from '../Component';
 import { CssNode } from './interfaces';
+import hash from "../utils/hash";
 
 function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
@@ -35,15 +36,6 @@ function minify_declarations(
 	});
 
 	return c;
-}
-
-// https://github.com/darkskyapp/string-hash/blob/master/index.js
-function hash(str: string): string {
-	let hash = 5381;
-	let i = str.length;
-
-	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
-	return (hash >>> 0).toString(36);
 }
 
 class Rule {
