@@ -5,7 +5,7 @@ import { x } from 'code-red';
 export default function(node: Title, renderer: Renderer, options: RenderOptions) {
 	renderer.push();
 
-	renderer.add_string(`<title>`);
+	renderer.add_string(`<title data-svelte="${options.head_id}">`);
 
 	renderer.render(node.children, options);
 
