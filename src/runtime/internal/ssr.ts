@@ -103,12 +103,13 @@ export function create_ssr_component(fn) {
 			on_destroy = [];
 
 			const result: {
+				title: string;
 				head: string;
 				css: Set<{
 					map: null;
 					code: string;
 				}>;
-			} = { head: '', css: new Set() };
+			} = { title: '', head: '', css: new Set() };
 
 			const html = $$render(result, props, {}, options);
 
@@ -120,7 +121,7 @@ export function create_ssr_component(fn) {
 					code: Array.from(result.css).map(css => css.code).join('\n'),
 					map: null // TODO
 				},
-				head: result.head
+				head: result.title + result.head
 			};
 		},
 
