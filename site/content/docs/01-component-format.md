@@ -159,7 +159,7 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 
 ```html
 <script>
-	import { writable } from 'svelte/store';
+	import { writeable } from 'svelte/store';
 
 	const count = writable(0);
 	console.log($count); // logs 0
