@@ -25,14 +25,7 @@ export function spread(args, classes_to_add) {
 		else if (boolean_attributes.has(name.toLowerCase())) {
 			if (value) str += " " + name;
 		} else if (value != null) {
-			str +=
-				' ' +
-				name +
-				'="' +
-				String(value)
-					.replace(/"/g, '&#34;')
-					.replace(/'/g, '&#39;') +
-				'"';
+			str += ` ${name}="${String(value).replace(/"/g, '&#34;').replace(/'/g, '&#39;')}"`;
 		}
 	});
 
