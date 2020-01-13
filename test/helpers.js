@@ -186,27 +186,6 @@ export function addLineNumbers(code) {
 		.join('\n');
 }
 
-export function showOutput(cwd, options = {}, compile = svelte.compile) {
-	glob('**/*.svelte', { cwd }).forEach(file => {
-		if (file[0] === '_') return;
-
-		try {
-			const { js } = compile(
-				fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-				Object.assign(options, {
-					filename: file
-				})
-			);
-
-			console.log( // eslint-disable-line no-console
-				`\n>> ${colors.cyan().bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors.cyan().bold(file)}`
-			);
-		} catch (err) {
-			console.log(`failed to generate output: ${err.message}`);
-		}
-	});
-}
-
 export function shouldUpdateExpected() {
 	return process.argv.includes('--update');
 }

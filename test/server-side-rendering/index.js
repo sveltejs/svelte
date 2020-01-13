@@ -1,16 +1,14 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import * as glob from 'tiny-glob/sync.js';
+import * as register from '../register';
 
 import {
-	showOutput,
 	loadConfig,
 	loadSvelte,
 	setupHtmlEqual,
 	tryToLoadJson,
 	shouldUpdateExpected,
-	mkdirp
 } from "../helpers.js";
 
 function tryToReadFile(file) {
@@ -23,16 +21,16 @@ function tryToReadFile(file) {
 }
 
 const sveltePath = process.cwd().split('\\').join('/');
-let compile = null;
+const compile = null;
 
 describe("ssr", () => {
 	before(() => {
-		require("../../register")({
-			extensions: ['.svelte', '.html'],
-			sveltePath
-		});
 
-		compile = loadSvelte(true).compile;
+		register.setCompileOptions({
+			generate: 'ssr',
+		});
+		register.setCompile(loadSvelte(true).compile);
+		register.setOutputFolderName('ssr');
 
 		return setupHtmlEqual();
 	});
@@ -51,6 +49,7 @@ describe("ssr", () => {
 
 		(solo ? it.only : it)(dir, () => {
 			dir = path.resolve(`${__dirname}/samples`, dir);
+
 			try {
 				const Component = require(`${dir}/main.svelte`).default;
 
@@ -107,10 +106,7 @@ describe("ssr", () => {
 						}
 					}
 				}
-
-				if (show) showOutput(dir, { generate: 'ssr', format: 'cjs' });
 			} catch (err) {
-				showOutput(dir, { generate: 'ssr', format: 'cjs' });
 				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
 				throw err;
 			}
@@ -133,47 +129,14 @@ describe("ssr", () => {
 		(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve("test/runtime/samples", dir);
 
-			Object.keys(require.cache)
-				.filter(x => x.endsWith('.svelte'))
-				.forEach(file => {
-					delete require.cache[file];
-				});
-
 			delete global.window;
-
-			const compileOptions = Object.assign({ sveltePath }, config.compileOptions, {
+			
+			register.clearRequireCache();
+			register.setCompileOptions({
+				...config.compileOptions,
 				generate: 'ssr',
-				format: 'cjs'
 			});
-
-			require("../../register")(compileOptions);
-
-			glob('**/*.svelte', { cwd }).forEach(file => {
-				if (file[0] === '_') return;
-
-				const dir  = `${cwd}/_output/ssr`;
-				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
-
-				if (fs.existsSync(out)) {
-					fs.unlinkSync(out);
-				}
-
-				mkdirp(dir);
-
-				try {
-					const { js } = compile(
-						fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-						{
-							...compileOptions,
-							filename: file
-						}
-					);
-
-					fs.writeFileSync(out, js.code);
-				} catch (err) {
-					// do nothing
-				}
-			});
+			register.setOutputFolderName('ssr');
 
 			try {
 				if (config.before_test) config.before_test();
@@ -190,10 +153,6 @@ describe("ssr", () => {
 				}
 
 				if (config.after_test) config.after_test();
-
-				if (config.show) {
-					showOutput(cwd, compileOptions);
-				}
 			} catch (err) {
 				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
 
@@ -204,7 +163,6 @@ describe("ssr", () => {
 						assert.equal(err.message, config.error);
 					}
 				} else {
-					showOutput(cwd, compileOptions);
 					throw err;
 				}
 			}
