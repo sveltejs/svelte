@@ -35,7 +35,6 @@ function create_fragment(ctx) {
 			create_component(bar.$$.fragment);
 			t1 = space();
 			input = element("input");
-			dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
 		},
 		m(target, anchor) {
 			mount_component(foo, target, anchor);
@@ -45,6 +44,7 @@ function create_fragment(ctx) {
 			insert(target, input, anchor);
 			set_input_value(input, /*z*/ ctx[0]);
 			current = true;
+			dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
 		},
 		p(ctx, [dirty]) {
 			const bar_changes = {};
