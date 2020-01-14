@@ -10,6 +10,7 @@ import {
 	showOutput,
 	loadConfig,
 	loadSvelte,
+	cleanRequireCache,
 	env,
 	setupHtmlEqual,
 	mkdirp
@@ -79,11 +80,7 @@ describe("runtime", () => {
 			compileOptions.immutable = config.immutable;
 			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
 
-			Object.keys(require.cache)
-				.filter(x => x.endsWith('.svelte'))
-				.forEach(file => {
-					delete require.cache[file];
-				});
+			cleanRequireCache();
 
 			let mod;
 			let SvelteComponent;

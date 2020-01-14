@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Only attach SSR mode markers to a component's `<head>` elements when compiling with `hydratable: true` ([#4258](https://github.com/sveltejs/svelte/issues/4258))
+
 ## 3.17.0
 
 * Remove old `<head>` elements during hydration so they aren't duplicated ([#1607](https://github.com/sveltejs/svelte/issues/1607))
