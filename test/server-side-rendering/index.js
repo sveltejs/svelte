@@ -52,7 +52,12 @@ describe("ssr", () => {
 
 			cleanRequireCache();
 
-			const compileOptions = { sveltePath, ...config.compileOptions };
+			const compileOptions = {
+				sveltePath,
+				...config.compileOptions,
+				generate: 'ssr',
+				format: 'cjs'
+			};
 
 			require("../../register")(compileOptions);
 
@@ -142,7 +147,12 @@ describe("ssr", () => {
 
 			delete global.window;
 
-			const compileOptions = { sveltePath, ...config.compileOptions };
+			const compileOptions = {
+				sveltePath,
+				...config.compileOptions,
+				generate: 'ssr',
+				format: 'cjs'
+			};
 
 			require("../../register")(compileOptions);
 
