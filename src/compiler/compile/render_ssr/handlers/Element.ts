@@ -124,7 +124,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		}
 	});
 
-	if (options.head_id) {
+	if (options.hydratable && options.head_id) {
 		renderer.add_string(` data-svelte="${options.head_id}"`);
 	}
 
