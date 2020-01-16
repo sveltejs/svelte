@@ -151,7 +151,7 @@ export default class Element extends Node {
 			}
 		}
 
-		const has_let = !!info.attributes.find(node => node.type === 'Let');
+		const has_let = info.attributes.some(node => node.type === 'Let');
 		if (has_let) {
 			scope = scope.child();
 		}
