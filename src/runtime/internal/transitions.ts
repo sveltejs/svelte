@@ -160,13 +160,13 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 
 	group.r += 1;
 
-	function started(){
+	function started() {
 		add_render_callback(() => dispatch(node, false, 'start'));
 	}
 
-	function ended(){
+	function ended() {
 		dispatch(node, false, 'end');
-		if (!--group.r){ 
+		if (!--group.r) {
 			// this will result in `end()` being called,
 			// so we don't need to clean up here
 			run_all(group.c);
@@ -217,7 +217,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 		});
 	} else if (config && 'then' in config) {
 		started();
-		config.then(ended).catch(ended)
+		config.then(ended).catch(ended);
 	} else {
 		go();
 	}
