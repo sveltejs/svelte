@@ -68,6 +68,7 @@ export function transition_out(block, local: 0 | 1, detach: 0 | 1, callback) {
 const null_transition: TransitionConfig = { duration: 0 };
 
 type TransitionFn = (node: Element, params: any) => TransitionConfig;
+type PromiseFn = (node: Element, params: any) => Promise<any>
 
 export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
 	let config = fn(node, params);
@@ -150,7 +151,7 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 	};
 }
 
-export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
+export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn | PromiseFn, params: any) {
 	let config = fn(node, params);
 	let running = true;
 	let animation_name;
@@ -179,7 +180,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 			easing = linear,
 			tick = noop,
 			css
-		} = config || null_transition;
+		} = config as TransitionConfig || null_transition;
 
 		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
 
@@ -214,7 +215,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 			config = config();
 			go();
 		});
-	} else if (config && config.then) {
+	} else if (config && 'then' in config) {
 		started();
 		config.then(ended).catch(ended)
 	} else {
@@ -223,7 +224,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 
 	return {
 		end(reset) {
-			if (reset && config.tick) {
+			if (reset && 'tick' in config) {
 				config.tick(1, 0);
 			}
 

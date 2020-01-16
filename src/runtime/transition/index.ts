@@ -4,7 +4,6 @@ import { assign, is_function } from 'svelte/internal';
 type EasingFunction = (t: number) => number;
 
 export interface TransitionConfig {
-	then?: Promise<any>['then'];
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
