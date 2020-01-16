@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Allow access to `let:` variables in sibling attributes on slot root ([#4173](https://github.com/sveltejs/svelte/issues/4173))
+
 ## 3.17.1
 
 * Only attach SSR mode markers to a component's `<head>` elements when compiling with `hydratable: true` ([#4258](https://github.com/sveltejs/svelte/issues/4258))
