@@ -207,6 +207,12 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 			config = config();
 			go();
 		});
+	} else if (config && config.then) {
+		add_render_callback(() => dispatch(node, false, 'start'));
+		config.then(() => {
+			dispatch(node, false, 'end');
+			if (!--group.r) run_all(group.c);
+		});
 	} else {
 		go();
 	}
