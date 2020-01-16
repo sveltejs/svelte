@@ -159,6 +159,19 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 
 	group.r += 1;
 
+	function started(){
+		add_render_callback(() => dispatch(node, false, 'start'));
+	}
+
+	function ended(){
+		dispatch(node, false, 'end');
+		if (!--group.r){ 
+			// this will result in `end()` being called,
+			// so we don't need to clean up here
+			run_all(group.c);
+		}
+	}
+
 	function go() {
 		const {
 			delay = 0,
@@ -173,20 +186,14 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 		const start_time = now() + delay;
 		const end_time = start_time + duration;
 
-		add_render_callback(() => dispatch(node, false, 'start'));
+		started();
 
 		loop(now => {
 			if (running) {
 				if (now >= end_time) {
 					tick(0, 1);
 
-					dispatch(node, false, 'end');
-
-					if (!--group.r) {
-						// this will result in `end()` being called,
-						// so we don't need to clean up here
-						run_all(group.c);
-					}
+					ended();
 
 					return false;
 				}
@@ -208,11 +215,8 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 			go();
 		});
 	} else if (config && config.then) {
-		add_render_callback(() => dispatch(node, false, 'start'));
-		config.then(() => {
-			dispatch(node, false, 'end');
-			if (!--group.r) run_all(group.c);
-		});
+		started();
+		config.then(ended).catch(ended)
 	} else {
 		go();
 	}
