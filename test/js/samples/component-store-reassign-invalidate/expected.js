@@ -31,13 +31,13 @@ function create_fragment(ctx) {
 			t1 = space();
 			button = element("button");
 			button.textContent = "reset";
-			dispose = listen(button, "click", /*click_handler*/ ctx[2]);
 		},
 		m(target, anchor) {
 			insert(target, h1, anchor);
 			append(h1, t0);
 			insert(target, t1, anchor);
 			insert(target, button, anchor);
+			dispose = listen(button, "click", /*click_handler*/ ctx[2]);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*$foo*/ 2) set_data(t0, /*$foo*/ ctx[1]);

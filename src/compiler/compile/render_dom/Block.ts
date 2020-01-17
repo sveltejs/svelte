@@ -450,7 +450,7 @@ export default class Block {
 			this.add_variable(dispose);
 
 			if (this.event_listeners.length === 1) {
-				this.chunks.hydrate.push(
+				this.chunks.mount.push(
 					b`${dispose} = ${this.event_listeners[0]};`
 				);
 
@@ -458,7 +458,7 @@ export default class Block {
 					b`${dispose}();`
 				);
 			} else {
-				this.chunks.hydrate.push(b`
+				this.chunks.mount.push(b`
 					${dispose} = [
 						${this.event_listeners}
 					];

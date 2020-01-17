@@ -14,13 +14,13 @@ function create_fragment(ctx) {
 	add_render_callback(/*onlinestatuschanged*/ ctx[1]);
 
 	return {
-		c() {
+		c: noop,
+		m(target, anchor) {
 			dispose = [
 				listen(window, "online", /*onlinestatuschanged*/ ctx[1]),
 				listen(window, "offline", /*onlinestatuschanged*/ ctx[1])
 			];
 		},
-		m: noop,
 		p: noop,
 		i: noop,
 		o: noop,

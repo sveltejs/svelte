@@ -273,6 +273,10 @@ export function custom_event<T=any>(type: string, detail?: T) {
 	return e;
 }
 
+export function query_selector_all(selector: string, parent: HTMLElement = document.body) {
+	return Array.from(parent.querySelectorAll(selector));
+}
+
 export class HtmlTag {
 	e: HTMLElement;
 	n: ChildNode[];
