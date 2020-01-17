@@ -42,4 +42,9 @@ export default class TemplateScope {
 		const owner = this.get_owner(name);
 		return owner && (owner.type === 'Element' || owner.type === 'InlineComponent');
 	}
+
+	is_await(name: string) {
+		const owner = this.get_owner(name);
+		return owner && (owner.type === 'ThenBlock' || owner.type === 'CatchBlock');
+	}
 }
