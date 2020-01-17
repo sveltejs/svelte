@@ -5,6 +5,7 @@
 * Disallow two-way binding to a variable declared by an `{#await}` block ([#4012](https://github.com/sveltejs/svelte/issues/4012))
 * Allow access to `let:` variables in sibling attributes on slot root ([#4173](https://github.com/sveltejs/svelte/issues/4173))
 * Add some more known globals ([#4276](https://github.com/sveltejs/svelte/pull/4276))
+* Correctly apply event modifiers to `<svelte:body>` events ([#4278](https://github.com/sveltejs/svelte/issues/4278))
 
 ## 3.17.1
 
