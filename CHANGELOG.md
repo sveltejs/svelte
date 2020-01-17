@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Allow access to `let:` variables in sibling attributes on slot root ([#4173](https://github.com/sveltejs/svelte/issues/4173))
+* Add some more known globals ([#4276](https://github.com/sveltejs/svelte/pull/4276))
 
 ## 3.17.1
 
