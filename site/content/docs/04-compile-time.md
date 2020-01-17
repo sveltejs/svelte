@@ -203,6 +203,7 @@ result: {
 	}>,
 	options?: {
 		filename?: string
+		strictOrder?: boolean
 	}
 )
 ```
@@ -302,6 +303,30 @@ const { code } = svelte.preprocess(source, [
 	}
 ], {
 	filename: 'App.svelte'
+});
+```
+
+---
+
+User may override default preprocessor order by passing `strictOrder` option.
+
+```js
+const svelte = require('svelte/compiler');
+
+const { code } = svelte.preprocess(source, [
+	{
+		style: () => {
+			console.log('this runs first');
+		}
+	},
+	{
+		markup: () => {
+			console.log('this runs second');
+		}
+	}
+], {
+	filename: 'App.svelte',
+	strictOrder: true
 });
 ```
 
