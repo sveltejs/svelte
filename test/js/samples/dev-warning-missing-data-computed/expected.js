@@ -107,7 +107,7 @@ class Component extends SvelteComponentDev {
 		});
 
 		const { ctx } = this.$$;
-		const props = options.props || ({});
+		const props = options.props || {};
 
 		if (/*foo*/ ctx[0] === undefined && !("foo" in props)) {
 			console.warn("<Component> was created without expected prop 'foo'");
