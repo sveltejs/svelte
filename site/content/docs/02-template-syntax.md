@@ -979,6 +979,8 @@ Similar to `transition:`, but only applies to elements entering (`in:`) or leavi
 
 Unlike with `transition:`, transitions applied with `in:` and `out:` are not bidirectional — an in transition will continue to 'play' alongside the out transition, rather than reversing, if the block is outroed while the transition is in progress. If an out transition is aborted, transitions will restart from scratch.
 
+If an `out:` custom transition function returns a promise instead of a transition object, svelte will simply await its completion before unmounting the node.
+
 ```html
 {#if visible}
 	<div in:fly out:fade>
