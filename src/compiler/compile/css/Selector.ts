@@ -171,7 +171,7 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 				if (ancestor_block.global) {
 					continue;
 				}
-				
+
 				for (const stack_node of stack) {
 					if (block_might_apply_to_node(ancestor_block, stack_node) !== BlockAppliesToNode.NotPossible) {
 						to_encapsulate.push({ node: stack_node, block: ancestor_block });
@@ -256,7 +256,7 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 	}
 	switch (operator) {
 		case '=': return value === expected_value;
-		case '~=': return ` ${value} `.includes(` ${expected_value} `);
+		case '~=': return value.split(/\s/).includes(expected_value);
 		case '|=': return `${value}-`.startsWith(`${expected_value}-`);
 		case '^=': return value.startsWith(expected_value);
 		case '$=': return value.endsWith(expected_value);
@@ -295,7 +295,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 
 		// impossible to find out all combinations
 		if (current_possible_values.has(UNKNOWN)) return true;
-		
+
 		if (prev_values.length > 0) {
 			const start_with_space = [];
 			const remaining = [];
