@@ -1,5 +1,5 @@
 import { is_void } from '../../../utils/names';
-import isContenteditable, { isBindingContenteditable } from '../../utils/contenteditable';
+import { isBindingContenteditable, isContenteditable } from '../../utils/contenteditable';
 import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { boolean_attributes } from './shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';

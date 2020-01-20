@@ -1,11 +1,12 @@
 import * as assert from 'assert';
 import get_name_from_filename from './get_name_from_filename';
 import {
-	default as isContenteditable,
+	isContenteditable,
 	isInputOrTextarea,
 	isAttrContentEditable,
 	hasContentEditableAttr,
 	isBindingContenteditable,
+	getContenteditableAttr,
 	CONTENTEDITABLE_ATTR,
 	CONTENTEDITABLE_BINDINGS,
 } from './contenteditable';
@@ -97,6 +98,18 @@ describe('contenteditable', () => {
 		it('returns false if attribute is not contenteditable type', () => {
 			const binding = { name: 'value' } as Binding;
 			assert.equal(isBindingContenteditable(binding), false);
+		});
+	});
+	
+	describe('getContenteditableAttr', () => {
+		it('returns the contenteditable Attribute if it exists', () => {
+			const attr = { name: CONTENTEDITABLE_ATTR } as Attribute;
+			const node = { name: 'div', attributes: [attr] } as Element;
+			assert.equal(getContenteditableAttr(node), attr);
+		});
+		it('returns undefined if contenteditable attribute cannot be found', () => {
+			const node = { name: 'div', attributes: [] } as Element;
+			assert.equal(getContenteditableAttr(node), undefined);
 		});
 	});
 

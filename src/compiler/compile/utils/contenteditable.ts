@@ -14,7 +14,7 @@ export const CONTENTEDITABLE_BINDINGS = [
 
 /**
  * Returns true if node is an 'input' or 'textarea'
- * @param node The element to be checked
+ * @param {Element} node The element to be checked
  */
 export function isInputOrTextarea(node: Element): boolean {
   return node.name === 'textarea' || node.name === 'input';
@@ -22,7 +22,7 @@ export function isInputOrTextarea(node: Element): boolean {
 
 /**
  * Check if a given attribute is 'contenteditable'
- * @param attribute A node.attribute
+ * @param {Attribute} attribute A node.attribute
  */
 export function isAttrContentEditable(attribute: Attribute): boolean {
   return attribute.name === CONTENTEDITABLE_ATTR;
@@ -30,7 +30,7 @@ export function isAttrContentEditable(attribute: Attribute): boolean {
 
 /**
  * Check if any of a node's attributes are 'contentenditable'
- * @param node The element to be checked
+ * @param {Element} node The element to be checked
  */
 export function hasContentEditableAttr(node: Element): boolean {
   return node.attributes.some(isAttrContentEditable);
@@ -38,17 +38,26 @@ export function hasContentEditableAttr(node: Element): boolean {
 
 /**
  * Returns true if node is not textarea or input, but has 'contenteditable' attribute
- * @param node The element to be tested
+ * @param {Element} node The element to be tested
  */
-export default function isContenteditable(node: Element): boolean {
+export function isContenteditable(node: Element): boolean {
   return !isInputOrTextarea(node) && hasContentEditableAttr(node);
 }
 
 /**
  * Returns true if a given bindings should be contenteditable
  * 
- * @param binding A node's binding to be checked
+ * @param {Binding} binding A node's binding to be checked
  */
-export function isBindingContenteditable(binding: Binding) {
+export function isBindingContenteditable(binding: Binding): boolean {
   return CONTENTEDITABLE_BINDINGS.includes(binding.name);
+}
+
+/**
+ * Returns the contenteditable attribute from the node (if it exists)
+ * 
+ * @param {Element} node The element to get the attribute from
+ */
+export function getContenteditableAttr(node: Element): Attribute | undefined {
+  return node.attributes.find(isAttrContentEditable);
 }
