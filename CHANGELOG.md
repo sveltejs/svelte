@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix removing attributes during hydration ([#1733](https://github.com/sveltejs/svelte/issues/1733))
 * Disallow two-way binding to a variable declared by an `{#await}` block ([#4012](https://github.com/sveltejs/svelte/issues/4012))
 * Allow access to `let:` variables in sibling attributes on slot root ([#4173](https://github.com/sveltejs/svelte/issues/4173))
 * Fix `~=` and class selector matching against values separated by any whitespace characters ([#4242](https://github.com/sveltejs/svelte/issues/4242))
