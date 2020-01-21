@@ -134,7 +134,15 @@
 					"kind": "let"
 				}
 			],
-			"sourceType": "module"
+			"sourceType": "module",
+			"trailingComments": [
+				{
+					"type": "Block",
+					"value": "\n\ttrailing multiline comment\n",
+					"start": 32,
+					"end": 67
+				}
+			]
 		}
 	}
 }
