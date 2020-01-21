@@ -10,10 +10,12 @@ import get_slot_data from '../../utils/get_slot_data';
 import Expression from '../../nodes/shared/Expression';
 import is_dynamic from './shared/is_dynamic';
 import { Identifier, ObjectExpression } from 'estree';
+import create_slot_block from './Element/create_slot_block';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
 	fragment: FragmentWrapper;
+	slot_block: Block;
 
 	var: Identifier = { type: 'Identifier', name: 'slot' };
 	dependencies: Set<string> = new Set(['$$scope']);
@@ -29,6 +31,10 @@ export default class SlotWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 		this.cannot_use_innerhtml();
 		this.not_static_content();
+
+		if (this.node.values.has('slot')) {
+			block = create_slot_block(this.node.values.get('slot'), this, block);
+		}
 
 		this.fragment = new FragmentWrapper(
 			renderer,
@@ -58,6 +64,10 @@ export default class SlotWrapper extends Wrapper {
 		const { renderer } = this;
 
 		const { slot_name } = this.node;
+
+		if (this.slot_block) {
+			block = this.slot_block;
+		}
 
 		let get_slot_changes_fn;
 		let get_slot_context_fn;
