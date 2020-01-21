@@ -35,7 +35,7 @@ export default class Wrapper {
 			}
 		});
 
-		this.can_use_innerhtml = !renderer.options.hydratable;
+		this.can_use_innerhtml = true;
 		this.is_static_content = !renderer.options.hydratable;
 
 		block.wrappers.push(this);

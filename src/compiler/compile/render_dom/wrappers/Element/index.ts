@@ -384,7 +384,7 @@ export default class ElementWrapper extends Wrapper {
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
 
-		if (nodes && this.renderer.options.hydratable && !this.void) {
+		if (nodes && this.renderer.options.hydratable && !this.void && !this.can_use_innerhtml) {
 			block.chunks.claim.push(
 				b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`
 			);
