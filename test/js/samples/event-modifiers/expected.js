@@ -63,11 +63,11 @@ function create_fragment(ctx) {
 
 function handleTouchstart() {
 	
-}
+} // ...
 
 function handleClick() {
 	
-}
+} // ...
 
 class Component extends SvelteComponent {
 	constructor(options) {

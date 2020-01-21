@@ -134,7 +134,15 @@
 					"kind": "let"
 				}
 			],
-			"sourceType": "module"
+			"sourceType": "module",
+			"trailingComments": [
+				{
+					"type": "Line",
+					"value": " trailing line comment",
+					"start": 32,
+					"end": 56
+				}
+			]
 		}
 	}
 }
