@@ -6,7 +6,7 @@
 
 	let count_value;
 
-	const unsubscribe = count.subscribe(value => {
+	const subscribe = count.subscribe(value => {
 		count_value = value;
 	});
 </script>
