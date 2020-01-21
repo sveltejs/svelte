@@ -1,5 +1,5 @@
 import { is_void } from '../../../utils/names';
-import { isBindingContenteditable, isContenteditable } from '../../utils/contenteditable';
+import { isNameContenteditable, isContenteditable } from '../../utils/contenteditable';
 import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { boolean_attributes } from './shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';
@@ -102,7 +102,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 		if (name === 'group') {
 			// TODO server-render group bindings
-		} else if (contenteditable && isBindingContenteditable(binding)) {
+		} else if (contenteditable && isNameContenteditable(name)) {
 			node_contents = expression.node;
 
 			// TODO where was this used?

@@ -10,7 +10,7 @@ import Class from './Class';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { isBindingContenteditable, getContenteditableAttr } from '../utils/contenteditable';
+import { isNameContenteditable, getContenteditableAttr } from '../utils/contenteditable';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
@@ -770,7 +770,7 @@ export default class Element extends Node {
 					});
 				}
 			} else if (
-				isBindingContenteditable(binding)
+				isNameContenteditable(name)
 			) {
 				const contenteditable = getContenteditableAttr(this);
 				if (!contenteditable) {

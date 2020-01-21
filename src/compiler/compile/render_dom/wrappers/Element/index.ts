@@ -26,6 +26,7 @@ import Action from '../../../nodes/Action';
 import MustacheTagWrapper from '../MustacheTag';
 import RawMustacheTagWrapper from '../RawMustacheTag';
 import is_dynamic from '../shared/is_dynamic';
+import { isNameContenteditable, hasContentEditableAttr } from '../../../utils/contenteditable';
 
 interface BindingGroup {
 	events: string[];
@@ -42,8 +43,8 @@ const events = [
 	{
 		event_names: ['input'],
 		filter: (node: Element, name: string) =>
-			(name === 'textContent' || name === 'innerHTML') &&
-			node.attributes.some(attribute => attribute.name === 'contenteditable')
+			isNameContenteditable(name) &&
+			hasContentEditableAttr(node)
 	},
 	{
 		event_names: ['change'],
@@ -544,14 +545,11 @@ export default class ElementWrapper extends Wrapper {
 
 		const should_initialise = (
 			this.node.name === 'select' ||
-			binding_group.bindings.find(binding => {
-				return (
-					binding.node.name === 'indeterminate' ||
-					binding.node.name === 'textContent' ||
-					binding.node.name === 'innerHTML' ||
-					binding.is_readonly_media_attribute()
-				);
-			})
+			binding_group.bindings.find(binding => (
+				binding.node.name === 'indeterminate' ||
+				isNameContenteditable(binding.node.name) ||
+				binding.is_readonly_media_attribute()
+			))
 		);
 
 		if (should_initialise) {

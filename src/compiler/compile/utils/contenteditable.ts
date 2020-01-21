@@ -1,6 +1,5 @@
 // Utilities for managing contenteditable nodes 
 import Attribute from '../nodes/Attribute';
-import Binding from '../nodes/Binding';
 import Element from '../nodes/Element';
 
 
@@ -13,7 +12,7 @@ export const CONTENTEDITABLE_BINDINGS = [
 ];
 
 /**
- * Returns true if node is an 'input' or 'textarea'
+ * Returns true if node is an 'input' or 'textarea'.
  * @param {Element} node The element to be checked
  */
 export function isInputOrTextarea(node: Element): boolean {
@@ -21,7 +20,7 @@ export function isInputOrTextarea(node: Element): boolean {
 }
 
 /**
- * Check if a given attribute is 'contenteditable'
+ * Check if a given attribute is 'contenteditable'.
  * @param {Attribute} attribute A node.attribute
  */
 export function isAttrContentEditable(attribute: Attribute): boolean {
@@ -29,7 +28,7 @@ export function isAttrContentEditable(attribute: Attribute): boolean {
 }
 
 /**
- * Check if any of a node's attributes are 'contentenditable'
+ * Check if any of a node's attributes are 'contentenditable'.
  * @param {Element} node The element to be checked
  */
 export function hasContentEditableAttr(node: Element): boolean {
@@ -37,7 +36,7 @@ export function hasContentEditableAttr(node: Element): boolean {
 }
 
 /**
- * Returns true if node is not textarea or input, but has 'contenteditable' attribute
+ * Returns true if node is not textarea or input, but has 'contenteditable' attribute.
  * @param {Element} node The element to be tested
  */
 export function isContenteditable(node: Element): boolean {
@@ -45,17 +44,15 @@ export function isContenteditable(node: Element): boolean {
 }
 
 /**
- * Returns true if a given bindings should be contenteditable
- * 
- * @param {Binding} binding A node's binding to be checked
+ * Returns true if a given binding/node is contenteditable.
+ * @param {string} name A binding or node name to be checked
  */
-export function isBindingContenteditable(binding: Binding): boolean {
-  return CONTENTEDITABLE_BINDINGS.includes(binding.name);
+export function isNameContenteditable(name: string): boolean {
+  return CONTENTEDITABLE_BINDINGS.includes(name);
 }
 
 /**
- * Returns the contenteditable attribute from the node (if it exists)
- * 
+ * Returns the contenteditable attribute from the node (if it exists).
  * @param {Element} node The element to get the attribute from
  */
 export function getContenteditableAttr(node: Element): Attribute | undefined {
