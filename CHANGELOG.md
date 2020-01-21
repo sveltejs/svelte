@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.17.2
 
 * Fix removing attributes during hydration ([#1733](https://github.com/sveltejs/svelte/issues/1733))
 * Disallow two-way binding to a variable declared by an `{#await}` block ([#4012](https://github.com/sveltejs/svelte/issues/4012))
