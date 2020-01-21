@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix using RxJS observables in `derived` stores ([#4298](https://github.com/sveltejs/svelte/issues/4298))
+
 ## 3.17.2
 
 * Fix removing attributes during hydration ([#1733](https://github.com/sveltejs/svelte/issues/1733))
