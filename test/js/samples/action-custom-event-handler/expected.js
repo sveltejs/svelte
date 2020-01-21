@@ -43,7 +43,7 @@ function handleFoo(bar) {
 
 function foo(node, callback) {
 	
-}
+} // code goes here
 
 function instance($$self, $$props, $$invalidate) {
 	let { bar } = $$props;
