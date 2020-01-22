@@ -28,10 +28,10 @@ function create_fragment(ctx) {
 			this.h();
 		},
 		l(nodes) {
-			img = claim_element(nodes, "IMG", { src: true, alt: true });
+			img = claim_element(nodes, "IMG", null);
 			t = claim_space(nodes);
-			div = claim_element(nodes, "DIV", {});
-			children(div).forEach(detach);
+			div = claim_element(nodes, "DIV", null);
+			children(div).children.forEach(detach);
 			this.h();
 		},
 		h() {

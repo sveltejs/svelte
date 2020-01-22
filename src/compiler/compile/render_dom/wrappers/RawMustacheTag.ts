@@ -22,7 +22,7 @@ export default class RawMustacheTagWrapper extends Tag {
 		this.not_static_content();
 	}
 
-	render(block: Block, parent_node: Identifier, _parent_nodes: Identifier) {
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		const in_head = is_head(parent_node);
 
 		const can_use_innerhtml = !in_head && parent_node && !this.prev && !this.next;
@@ -53,11 +53,20 @@ export default class RawMustacheTagWrapper extends Tag {
 
 			const update_anchor = in_head ? 'null' : needs_anchor ? html_anchor : this.next ? this.next.var : 'null';
 
-			block.chunks.hydrate.push(b`${html_tag} = new @HtmlTag(${init}, ${update_anchor});`);
+			block.chunks.hydrate.push(b`${html_tag}.a = ${update_anchor};`);
 			block.chunks.mount.push(b`${html_tag}.m(${parent_node || '#target'}, ${parent_node ? null : 'anchor'});`);
 
+
+			block.chunks.create.push(b`${html_tag} = new @HtmlTag(${init});`);
+			if (this.renderer.options.hydratable) {
+				block.chunks.claim.push(b`${html_tag} = new @HtmlTag(${init});`);
+				block.chunks.claim.push(
+					b`${html_tag}.l(${parent_nodes});`
+				);
+			}
+
 			if (needs_anchor) {
-				block.add_element(html_anchor, x`@empty()`, x`@empty()`, parent_node);
+				block.add_element(html_anchor, x`@empty()`, x`@claim_text(${parent_nodes}, '')`, parent_node);
 			}
 
 			if (!parent_node || in_head) {

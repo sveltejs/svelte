@@ -1,7 +1,7 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_function, run, run_all, noop } from './utils';
-import { children } from './dom';
+import { children, update_hydrating } from './dom';
 import { transition_in } from './transitions';
 
 interface Fragment {
@@ -146,6 +146,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	if (options.target) {
 		if (options.hydrate) {
+			update_hydrating(true);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			$$.fragment && $$.fragment!.l(children(options.target));
 		} else {
@@ -155,6 +156,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 		if (options.intro) transition_in(component.$$.fragment);
 		mount_component(component, options.target, options.anchor);
+		update_hydrating(false);
 		flush();
 	}
 
