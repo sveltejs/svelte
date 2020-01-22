@@ -1,11 +1,21 @@
 import { has_prop } from "./utils";
 
+let is_hydrating = false;
+
+export function update_hydrating(val: boolean) {
+	is_hydrating = val;
+}
+
 export function append(target: Node, node: Node) {
-	target.appendChild(node);
+	if (!is_hydrating || node.parentNode !== target) {
+		target.appendChild(node);
+	}
 }
 
 export function insert(target: Node, node: Node, anchor?: Node) {
-	target.insertBefore(node, anchor || null);
+	if (!is_hydrating || node.parentNode !== target) {
+		target.insertBefore(node, anchor || null);
+	}
 }
 
 export function detach(node: Node) {
@@ -144,35 +154,48 @@ export function time_ranges_to_array(ranges) {
 	return array;
 }
 
-export function children(element) {
-	return Array.from(element.childNodes);
+export function children(element: HTMLElement) {
+	const children = Array.from(element.childNodes);
+	return {
+		children,
+		element,
+		next: children[0] || null,
+		last: children.length ? children[children.length - 1].nextSibling : null,
+	};
 }
 
-export function claim_element(nodes, name, attributes, svg) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (node.nodeName === name) {
-			for (let j = 0; j < node.attributes.length; j += 1) {
-				const attribute = node.attributes[j];
-				if (!attributes[attribute.name]) node.removeAttribute(attribute.name);
+export function claim_element(nodes, name, fallback, svg) {
+	for (let i = 0; i < nodes.children.length; i += 1) {
+		const node = nodes.children[i];
+		if (node.nodeType !== 3) {
+			if (node.nodeName === name) {
+				nodes.children.splice(0,i + 1);
+				nodes.next = nodes.children[0];
+				return node;
+			} else {
+				nodes.next = nodes.last;
+				nodes.children.forEach(detach);
+				nodes.children.length = 0;
+				break;
 			}
-			return nodes.splice(i, 1)[0]; // TODO strip unwanted attributes
 		}
 	}
-
-	return svg ? svg_element(name) : element(name);
+	const node = fallback || (svg ? svg_element(name) : element(name));
+	insert(nodes.element, node, nodes.next);
+	return node;
 }
 
 export function claim_text(nodes, data) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (node.nodeType === 3) {
-			node.data = '' + data;
-			return nodes.splice(i, 1)[0];
-		}
+	if (nodes.children.length && nodes.children[0].nodeType === 3) {
+		const node = nodes.children.shift();
+		node.data = '' + data;
+		nodes.next = nodes.children[0];
+		return node;
+	} else {
+		const node = text(data);
+		insert(nodes.element, node, nodes.next);
+		return node;
 	}
-
-	return text(data);
 }
 
 export function claim_space(nodes) {
@@ -274,7 +297,13 @@ export function custom_event<T=any>(type: string, detail?: T) {
 }
 
 export function query_selector_all(selector: string, parent: HTMLElement = document.body) {
-	return Array.from(parent.querySelectorAll(selector));
+	const children = Array.from(parent.querySelectorAll(selector));
+	return {
+		children,
+		element: parent,
+		next: children[0] || null,
+		last: children.length ? children[children.length - 1].nextSibling : null
+	};
 }
 
 export class HtmlTag {
@@ -283,9 +312,8 @@ export class HtmlTag {
 	t: HTMLElement;
 	a: HTMLElement;
 
-	constructor(html: string, anchor: HTMLElement = null) {
+	constructor(html: string) {
 		this.e = element('div');
-		this.a = anchor;
 		this.u(html);
 	}
 
@@ -301,6 +329,16 @@ export class HtmlTag {
 		this.e.innerHTML = html;
 		this.n = Array.from(this.e.childNodes);
 	}
+
+	l(nodes: any) {
+		this.n = this.n.map(n => {
+			if (n.nodeType === 3) {
+				return claim_text(nodes, (n as Text).data);
+			 } else {
+				return claim_element(nodes, n.nodeName, n, n.namespaceURI !== 'http://www.w3.org/1999/xhtml');
+			 }
+		});
+	} 
 
 	p(html: string) {
 		this.d();

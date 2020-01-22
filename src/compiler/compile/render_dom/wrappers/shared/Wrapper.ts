@@ -63,7 +63,7 @@ export default class Wrapper {
 			block.add_element(
 				anchor,
 				x`@empty()`,
-				parent_nodes && x`@empty()`,
+				parent_nodes && x`@claim_text(${parent_nodes}, '')`,
 				parent_node as Identifier
 			);
 		}
