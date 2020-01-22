@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix updating a `<slot>` inside an `{#if}` or other block ([#4292](https://github.com/sveltejs/svelte/issues/4292))
+* Fix using RxJS observables in `derived` stores ([#4298](https://github.com/sveltejs/svelte/issues/4298))
 
 ## 3.17.2
 
