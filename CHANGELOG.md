@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix updating a `<slot>` inside an `{#if}` or other block ([#4292](https://github.com/sveltejs/svelte/issues/4292))
+
 ## 3.17.2
 
 * Fix removing attributes during hydration ([#1733](https://github.com/sveltejs/svelte/issues/1733))
