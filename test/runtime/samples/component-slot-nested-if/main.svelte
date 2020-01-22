@@ -4,7 +4,7 @@
 </script>
 
 <Input let:val={foo}>
-  {#if foo}
+	{#if foo}
 		<Display>{foo}</Display>
-  {/if}
+	{/if}
 </Input>
