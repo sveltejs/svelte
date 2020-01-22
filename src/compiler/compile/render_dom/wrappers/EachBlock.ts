@@ -374,6 +374,7 @@ export default class EachBlockWrapper extends Wrapper {
 		block.chunks.init.push(b`
 			const ${get_key} = #ctx => ${this.node.key.manipulate(block)};
 
+			${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
 			for (let #i = 0; #i < ${data_length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(#ctx, ${this.vars.each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
@@ -416,6 +417,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			${this.block.has_outros && b`@group_outros();`}
 			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
+			${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
 			${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
 			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
 			${this.block.has_outros && b`@check_outros();`}
