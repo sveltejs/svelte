@@ -48,8 +48,8 @@ export function validate_store(store, name) {
 	}
 }
 
-export function subscribe(store, callback) {
-	const unsub = store.subscribe(callback);
+export function subscribe(store, ...callbacks) {
+	const unsub = store.subscribe(...callbacks);
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
