@@ -160,6 +160,9 @@ export default class Block {
 		});
 
 		this.has_update_method = true;
+		if (this.parent) {
+			this.parent.add_dependencies(dependencies);
+		}
 	}
 
 	add_element(
