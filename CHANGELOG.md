@@ -5,6 +5,7 @@
 * Fix updating a `<slot>` inside an `{#if}` or other block ([#4292](https://github.com/sveltejs/svelte/issues/4292))
 * Fix using RxJS observables in `derived` stores ([#4298](https://github.com/sveltejs/svelte/issues/4298))
 * Add dev mode check to disallow duplicate keys in a keyed `{#each}` ([#4301](https://github.com/sveltejs/svelte/issues/4301))
+* Fix hydration of `<title>` when starting from SSR-generated code with `hydratable: true` ([#4310](https://github.com/sveltejs/svelte/issues/4310))
 
 ## 3.17.2
 
