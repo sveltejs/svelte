@@ -3,6 +3,8 @@ export default {
 		clicked: false
 	},
 
+	skip: true,
+
 	snapshot(target) {
 		const button = target.querySelector('button');
 
