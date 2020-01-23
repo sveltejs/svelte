@@ -3,6 +3,8 @@ export default {
 		name: 'world'
 	},
 
+	skip: true,
+
 	snapshot(target) {
 		return {
 			input: target.querySelector('input'),
