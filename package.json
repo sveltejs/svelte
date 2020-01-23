@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.17.1",
+  "version": "3.17.2",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -70,7 +70,7 @@
     "acorn": "^7.1.0",
     "agadoo": "^1.1.0",
     "c8": "^5.0.1",
-    "code-red": "0.0.30",
+    "code-red": "0.0.31",
     "codecov": "^3.5.0",
     "css-tree": "1.0.0-alpha22",
     "eslint": "^6.3.0",
