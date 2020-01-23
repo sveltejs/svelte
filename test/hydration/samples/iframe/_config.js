@@ -42,13 +42,10 @@ export default {
 		await snapshot.trigger;
 		snapshot.mutationObserver.disconnect();
 
-		console.log(snapshot.mutationRecords);
-
 		const iframeMutations = snapshot.mutationRecords.filter(({addedNodes, removedNodes}) => {
-			console.log({addedNodes, removedNodes});
 			return addedNodes.includes('IFRAME')|| removedNodes.includes('IFRAME');
 		});
-		console.log({iframeMutations});
+
 		assert(iframeMutations.length === 0, 'iframe added/removed');
 		// assert(false, 'test')
 
