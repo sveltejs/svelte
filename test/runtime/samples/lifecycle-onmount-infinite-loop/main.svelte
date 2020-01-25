@@ -8,7 +8,7 @@
 	onMount(() => {
 		if (count < 5) {
 			count++;
-			const child = new Child({ target:root });
+			new Child({ target: root });
 		}
 	});
 </script>
