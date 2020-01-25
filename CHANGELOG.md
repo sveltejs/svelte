@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix infinite loop when instantiating another component during `onMount` ([#3218](https://github.com/sveltejs/svelte/issues/3218))
 * Make autosubscribing to a nullish store a no-op ([#2181](https://github.com/sveltejs/svelte/issues/2181))
 
 ## 3.17.3
