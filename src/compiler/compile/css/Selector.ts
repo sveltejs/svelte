@@ -32,7 +32,7 @@ export default class Selector {
 		}
 
 		this.local_blocks = this.blocks.slice(0, i);
-		this.used = this.blocks[0].global;
+		this.used = this.blocks.every(block => block.global);
 	}
 
 	apply(node: Element, stack: Element[]) {
