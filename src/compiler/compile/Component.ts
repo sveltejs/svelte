@@ -170,6 +170,8 @@ export default class Component {
 
 		this.walk_instance_js_post_template();
 
+		this.stylesheet.recompute_stylesheet_hash(this);
+
 		if (!compile_options.customElement) this.stylesheet.reify();
 
 		this.stylesheet.warn_on_unused_selectors(this);

@@ -376,6 +376,35 @@ export default class Stylesheet {
 		}
 	}
 
+	recompute_stylesheet_hash(component: Component) {
+		const collectIf = (test_function) => (acc, child) => {
+			if (child instanceof Atrule) {
+				child.children.forEach(rule => {
+					if (test_function(rule)) {
+						acc.push(rule);
+					}
+				});
+			} else {
+				if (test_function(child)) {
+					acc.push(child);
+				}
+			}
+			return acc;
+		};
+
+		const used_rules = this.children.reduce(collectIf(rule => rule.is_used(component.compile_options.dev)), []);
+		const unused_rules = this.children.reduce(collectIf(rule => !rule.is_used(component.compile_options.dev)), []);
+		if (unused_rules.length > 0) {
+			const new_hash = hash(used_rules.reduce((acc, rule: Rule) => {
+				for (let i = rule.node.start; i < rule.node.end; i++) {
+					acc += component.source.charAt(i);
+				}
+				return acc;
+			}, ''));
+			this.id = `svelte-${new_hash}`;
+		}
+	}
+
 	reify() {
 		this.nodes_with_css_class.forEach((node: Element) => {
 			node.add_css_class();
