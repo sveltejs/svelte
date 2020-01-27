@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix code generation error with adjacent inline and block comments ([#4312](https://github.com/sveltejs/svelte/issues/4312))
+
 ## 3.18.0
 
 * Fix infinite loop when instantiating another component during `onMount` ([#3218](https://github.com/sveltejs/svelte/issues/3218))
