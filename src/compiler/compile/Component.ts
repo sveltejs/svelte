@@ -14,7 +14,7 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import internal_exports from './internal_exports';
-import { Ast, CompileOptions, Var, Warning, CssResult } from '../interfaces';
+import { Ast, CompileOptions, Var, Warning, CssResult, ShadowDomMode } from '../interfaces';
 import error from '../utils/error';
 import get_code_frame from '../utils/get_code_frame';
 import flatten_reference from './utils/flatten_reference';
@@ -30,6 +30,7 @@ import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
 
 interface ComponentOptions {
+	shadowdom?: ShadowDomMode;
 	namespace?: string;
 	tag?: string;
 	immutable?: boolean;
@@ -158,6 +159,7 @@ export default class Component {
 				});
 			}
 			this.tag = this.component_options.tag || compile_options.tag;
+			this.compile_options.shadowDom = this.component_options.shadowdom || "open";
 		} else {
 			this.tag = this.name.name;
 		}
@@ -170,7 +172,7 @@ export default class Component {
 
 		this.walk_instance_js_post_template();
 
-		if (!compile_options.customElement) this.stylesheet.reify();
+		if (!compile_options.customElement || compile_options.shadowDom=="none") this.stylesheet.reify();
 
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
@@ -1414,7 +1416,16 @@ function process_component_options(component: Component, nodes) {
 						component_options[name] = value;
 						break;
 					}
+					case 'shadowdom':{
+						const code = 'invalid-shadowdom-attribute';
+						const message = `'shadowdom' must be set to 'open', 'closed or 'none'`;
+						const value = get_value(attribute, code, message)
+						if(value != "open" && value != "none" && value != "closed")
+							component.error(attribute, { code, message });
 
+						component_options[name] = value;
+						break;
+					}
 					default:
 						component.error(attribute, {
 							code: `invalid-options-attribute`,

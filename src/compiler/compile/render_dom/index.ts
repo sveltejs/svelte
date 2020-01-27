@@ -20,7 +20,7 @@ export default function dom(
 	block.has_outro_method = true;
 
 	// prevent fragment being created twice (#1063)
-	if (options.customElement) block.chunks.create.push(b`this.c = @noop;`);
+	if (options.customElement && options.shadowDom !== "none") block.chunks.create.push(b`this.c = @noop;`);
 
 	const body = [];
 
@@ -29,7 +29,7 @@ export default function dom(
 		body.push(b`const ${renderer.file_var} = ${file};`);
 	}
 
-	const css = component.stylesheet.render(options.filename, !options.customElement);
+	const css = component.stylesheet.render(options.filename, (!options.customElement || options.shadowDom === "none"));
 	const styles = component.stylesheet.has_styles && options.dev
 		? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
 		: css.code;
@@ -37,9 +37,9 @@ export default function dom(
 	const add_css = component.get_unique_name('add_css');
 
 	const should_add_css = (
-		!options.customElement &&
+		(!options.customElement  &&
 		!!styles &&
-		options.css !== false
+		options.css !== false ) || options.shadowDom === "none"
 	);
 
 	if (should_add_css) {
@@ -437,14 +437,19 @@ export default function dom(
 	}
 
 	if (options.customElement) {
+		const lightDom = options.shadowDom === 'none';
 		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
+					${!lightDom && b`
+						this._root =this.attachShadow({ mode: '${options.shadowDom}' });
+					`}
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && !lightDom && b`this._root.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${should_add_css && lightDom && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, { target: ${lightDom ? 'this' : 'this._root'} }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 
 					${dev_props_check}
 
