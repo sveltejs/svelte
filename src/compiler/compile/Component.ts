@@ -1416,11 +1416,11 @@ function process_component_options(component: Component, nodes) {
 						component_options[name] = value;
 						break;
 					}
-					case 'shadowdom':{
+					case 'shadowdom': {
 						const code = 'invalid-shadowdom-attribute';
 						const message = `'shadowdom' must be set to 'open', 'closed or 'none'`;
-						const value = get_value(attribute, code, message)
-						if(value != "open" && value != "none" && value != "closed")
+						const value = get_value(attribute, code, message);
+						if (value != "open" && value != "none" && value != "closed")
 							component.error(attribute, { code, message });
 
 						component_options[name] = value;
