@@ -10,7 +10,7 @@ import Class from './Class';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { isNameContenteditable, getContenteditableAttr } from '../utils/contenteditable';
+import { is_name_contenteditable, get_contenteditable_attr } from '../utils/contenteditable';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
@@ -769,10 +769,8 @@ export default class Element extends Node {
 						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`
 					});
 				}
-			} else if (
-				isNameContenteditable(name)
-			) {
-				const contenteditable = getContenteditableAttr(this);
+			} else if (is_name_contenteditable(name)) {
+				const contenteditable = get_contenteditable_attr(this);
 				if (!contenteditable) {
 					component.error(binding, {
 						code: 'missing-contenteditable-attribute',

@@ -1,5 +1,5 @@
 import { is_void } from '../../../utils/names';
-import { isNameContenteditable, isContenteditable } from '../../utils/contenteditable';
+import { is_name_contenteditable, is_contenteditable } from '../../utils/contenteditable';
 import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { boolean_attributes } from './shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';
@@ -16,7 +16,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	// awkward special case
 	let node_contents;
 
-	const contenteditable = isContenteditable(node);
+	const contenteditable = is_contenteditable(node);
 
 	renderer.add_string(`<${node.name}`);
 
@@ -102,7 +102,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 		if (name === 'group') {
 			// TODO server-render group bindings
-		} else if (contenteditable && isNameContenteditable(name)) {
+		} else if (contenteditable && is_name_contenteditable(name)) {
 			node_contents = expression.node;
 
 			// TODO where was this used?
