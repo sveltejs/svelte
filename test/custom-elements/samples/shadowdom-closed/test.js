@@ -8,6 +8,6 @@ export default function (target) {
 	assert.equal(el.name, 'world');
 
 	const h1 = el._root.querySelector('h1');
-  assert.equal(h1.textContent, 'Hello world');
+  assert.equal(h1.textContent, 'Hello world!');
   assert.equal(el.shadowRoot, null);
 }
