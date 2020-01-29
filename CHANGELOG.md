@@ -1,10 +1,21 @@
 # Svelte changelog
 
-## Unreleased
+## 3.18.1
+
+* Fix code generation error with adjacent inline and block comments ([#4312](https://github.com/sveltejs/svelte/issues/4312))
+* Fix detection of unused CSS selectors that begin with a `:global()` but contain a scoped portion ([#4314](https://github.com/sveltejs/svelte/issues/4314))
+
+## 3.18.0
+
+* Fix infinite loop when instantiating another component during `onMount` ([#3218](https://github.com/sveltejs/svelte/issues/3218))
+* Make autosubscribing to a nullish store a no-op ([#2181](https://github.com/sveltejs/svelte/issues/2181))
+
+## 3.17.3
 
 * Fix updating a `<slot>` inside an `{#if}` or other block ([#4292](https://github.com/sveltejs/svelte/issues/4292))
 * Fix using RxJS observables in `derived` stores ([#4298](https://github.com/sveltejs/svelte/issues/4298))
 * Add dev mode check to disallow duplicate keys in a keyed `{#each}` ([#4301](https://github.com/sveltejs/svelte/issues/4301))
+* Fix hydration of `<title>` when starting from SSR-generated code with `hydratable: true` ([#4310](https://github.com/sveltejs/svelte/issues/4310))
 
 ## 3.17.2
 
