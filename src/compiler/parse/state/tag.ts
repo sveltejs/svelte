@@ -288,6 +288,16 @@ function read_tag_name(parser: Parser) {
 function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const start = parser.index;
 
+	function check_unique(name: string) {
+		if (unique_names.has(name)) {
+			parser.error({
+				code: `duplicate-attribute`,
+				message: 'Attributes need to be unique'
+			}, start);
+		}
+		unique_names.add(name);
+	}
+
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
 
@@ -309,6 +319,8 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			const name = parser.read_identifier();
 			parser.allow_whitespace();
 			parser.eat('}', true);
+
+			check_unique(name);
 
 			return {
 				start,
@@ -341,17 +353,6 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	if (unique_names.has(name)) {
-		parser.error({
-			code: `duplicate-attribute`,
-			message: 'Attributes need to be unique'
-		}, start);
-	}
-
-	if (type !== "EventHandler") {
-		unique_names.add(name);
-	}
-
 	let value: any[] | true = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
@@ -366,6 +367,12 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
+
+		if (type === 'Binding' && directive_name !== 'this') {
+			check_unique(directive_name);
+		} else if (type !== 'EventHandler') {
+			check_unique(name);
+		}
 
 		if (type === 'Ref') {
 			parser.error({
@@ -409,6 +416,8 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 		return directive;
 	}
+
+	check_unique(name);
 
 	return {
 		start,
