@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Disallow attribute/prop names from matching two-way-bound names or `{shorthand}` attribute/prop names ([#4325](https://github.com/sveltejs/svelte/issues/4325))
+
 ## 3.18.1
 
 * Fix code generation error with adjacent inline and block comments ([#4312](https://github.com/sveltejs/svelte/issues/4312))
