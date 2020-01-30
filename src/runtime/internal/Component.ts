@@ -165,15 +165,36 @@ export let SvelteElement;
 if (typeof HTMLElement === 'function') {
 	SvelteElement = class extends HTMLElement {
 		$$: T$$;
+		private _content;
 		constructor() {
 			super();
+			this._copycontent()
 		}
 
 		connectedCallback() {
+			this._slotcontent()
 			// @ts-ignore todo: improve typings
 			for (const key in this.$$.slotted) {
 				// @ts-ignore todo: improve typings
 				this.appendChild(this.$$.slotted[key]);
+			}
+		}
+
+		_copycontent(){
+			if(this.children){
+				this._content = document.createElement("div")
+				while(this.childNodes.length > 0){
+					this._content.appendChild(this.childNodes[0])
+				}
+			}
+		}
+
+		_slotcontent(){
+			if(this._content){
+				const slot = this.querySelector("slot")
+				while(this._content.childNodes.length > 0){
+					slot.appendChild(this._content.childNodes[0])
+				}
 			}
 		}
 

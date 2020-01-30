@@ -160,6 +160,9 @@ export default class Component {
 			}
 			this.tag = this.component_options.tag || compile_options.tag;
 			this.compile_options.shadowDom = this.component_options.shadowdom || "open";
+			if(this.compile_options.shadowDom === "none"){
+				// handle slots here?
+			}
 		} else {
 			this.tag = this.name.name;
 		}
