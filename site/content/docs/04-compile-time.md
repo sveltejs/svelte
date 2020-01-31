@@ -76,7 +76,7 @@ The following options can be passed to the compiler. None are required:
 | `css` | `true` | If `true`, styles will be included in the JavaScript class and injected at runtime. It's recommended that you set this to `false` and use the CSS that is statically generated, as it will result in smaller JavaScript bundles and better performance.
 | `loopGuardTimeout` | 0 | A `number` that tells Svelte to break the loop if it blocks the thread for more than `loopGuardTimeout` ms. This is useful to prevent infinite loops. **Only available when `dev: true`**
 | `preserveComments` | `false` | If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
-| `preserveWhitespace` | `false` | If `true`, whitespace inside and between elements is kept as you typed it, rather than optimised by Svelte.
+| `preserveWhitespace` | `false` | If `true`, whitespace inside and between elements is kept as you typed it, rather than removed or collapsed to a single space where possible.
 | `outputFilename` | `null` | A `string` used for your JavaScript sourcemap.
 | `cssOutputFilename` | `null` | A `string` used for your CSS sourcemap.
 | `sveltePath` | `"svelte"` | The location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.
