@@ -1,9 +1,9 @@
 import { b, x, p } from 'code-red';
 import Component from '../Component';
 import Renderer from './Renderer';
-import { CompileOptions } from '../../interfaces';
+import { CompileOptions, CssResult } from '../../interfaces';
 import { walk } from 'estree-walker';
-import { extract_names } from '../utils/scope';
+import { extract_names, Scope } from '../utils/scope';
 import { invalidate } from './invalidate';
 import Block from './Block';
 import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
@@ -11,7 +11,7 @@ import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression
 export default function dom(
 	component: Component,
 	options: CompileOptions
-) {
+): { js: Node[]; css: CssResult } {
 	const { name } = component;
 
 	const renderer = new Renderer(component, options);
@@ -75,7 +75,6 @@ export default function dom(
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	/* eslint-disable @typescript-eslint/indent,indent */
 	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
 		? x`
 			${$$props} => {
@@ -88,7 +87,6 @@ export default function dom(
 			}
 		`
 		: null;
-	/* eslint-enable @typescript-eslint/indent,indent */
 
 	const accessors = [];
 
@@ -193,17 +191,28 @@ export default function dom(
 	if (component.ast.instance) {
 		let scope = component.instance_scope;
 		const map = component.instance_scope_map;
+		let execution_context: Node | null = null;
 
 		walk(component.ast.instance.content, {
-			enter: (node) => {
+			enter(node) {
 				if (map.has(node)) {
-					scope = map.get(node);
+					scope = map.get(node) as Scope;
+
+					if (!execution_context && !scope.block) {
+						execution_context = node;
+					}
+				} else if (!execution_context && node.type === 'LabeledStatement' && node.label.name === '$') {
+					execution_context = node;
 				}
 			},
 
 			leave(node) {
 				if (map.has(node)) {
 					scope = scope.parent;
+				}
+
+				if (execution_context === node) {
+					execution_context = null;
 				}
 
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
@@ -215,7 +224,7 @@ export default function dom(
 					// onto the initial function call
 					const names = new Set(extract_names(assignee));
 
-					this.replace(invalidate(renderer, scope, node, names));
+					this.replace(invalidate(renderer, scope, node, names, execution_context === null));
 				}
 			}
 		});
@@ -500,7 +509,7 @@ export default function dom(
 		body.push(declaration);
 	}
 
-	return flatten(body, []);
+	return { js: flatten(body, []), css };
 }
 
 function flatten(nodes: any[], target: any[]) {

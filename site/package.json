@@ -7,7 +7,7 @@
     "copy-workers": "rm -rf static/workers && cp -r node_modules/@sveltejs/svelte-repl/workers static",
     "migrate": "node-pg-migrate -r dotenv/config",
     "sapper": "npm run copy-workers && sapper build --legacy",
-    "update": "node scripts/update_template.js && node scripts/get-contributors.js",
+    "update": "node scripts/update_template.js && node scripts/get-contributors.js && node scripts/update_whos_using.js",
     "start": "node __sapper__/build",
     "test": "mocha -r esm test/**",
     "deploy": "make deploy"

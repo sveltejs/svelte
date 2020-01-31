@@ -53,7 +53,7 @@ What happens if we use the new model as a starting point?
 
 The same 'hello world' app that took 204kb with React and Next weighs just 7kb with Sapper. That number is likely to fall further in the future as we explore the space of optimisation possibilities, such as not shipping any JavaScript *at all* for pages that aren't interactive, beyond the tiny Sapper runtime that handles client-side routing.
 
-What about a more 'real world' example? Conveniently, the [RealWorld](https://github.com/gothinkster/realworld) project, which challenges frameworks to develop an implementation of a Medium clone, gives us a way to find out. The [Sapper implementation](http://svelte-realworld.now.sh/) takes 39.6kb (11.8kb zipped) to render an interactive homepage.
+What about a more 'real world' example? Conveniently, the [RealWorld](https://github.com/gothinkster/realworld) project, which challenges frameworks to develop an implementation of a Medium clone, gives us a way to find out. The [Sapper implementation](https://github.com/sveltejs/realworld) takes 39.6kb (11.8kb zipped) to render an interactive homepage.
 
 <aside><p>Code-splitting isn't free — if the reference implementation used code-splitting, it would be larger still</p></aside>
 

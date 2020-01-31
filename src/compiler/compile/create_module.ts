@@ -41,6 +41,32 @@ function edit_source(source, sveltePath) {
 		: source;
 }
 
+function get_internal_globals(
+	globals: Array<{ name: string; alias: Identifier }>, 
+	helpers: Array<{ name: string; alias: Identifier }>
+) {
+	return globals.length > 0 && {
+		type: 'VariableDeclaration',
+		kind: 'const',
+		declarations: [{
+			type: 'VariableDeclarator',
+			id: {
+				type: 'ObjectPattern',
+				properties: globals.map(g => ({
+					type: 'Property',
+					method: false,
+					shorthand: false,
+					computed: false,
+					key: { type: 'Identifier', name: g.name },
+					value: g.alias,
+					kind: 'init'
+				}))
+			},
+			init: helpers.find(({ name }) => name === 'globals').alias
+		}]
+	};
+} 
+
 function esm(
 	program: any,
 	name: Identifier,
@@ -62,26 +88,7 @@ function esm(
 		source: { type: 'Literal', value: internal_path }
 	};
 
-	const internal_globals = globals.length > 0 && {
-		type: 'VariableDeclaration',
-		kind: 'const',
-		declarations: [{
-			type: 'VariableDeclarator',
-			id: {
-				type: 'ObjectPattern',
-				properties: globals.map(g => ({
-					type: 'Property',
-					method: false,
-					shorthand: false,
-					computed: false,
-					key: { type: 'Identifier', name: g.name },
-					value: g.alias,
-					kind: 'init'
-				}))
-			},
-			init: helpers.find(({ name }) => name === 'globals').alias
-		}]
-	};
+	const internal_globals = get_internal_globals(globals, helpers);
 
 	// edit user imports
 	imports.forEach(node => {
@@ -143,49 +150,36 @@ function cjs(
 		}]
 	};
 
-	const internal_globals = globals.length > 0 && {
-		type: 'VariableDeclaration',
-		kind: 'const',
-		declarations: [{
-			type: 'VariableDeclarator',
-			id: {
-				type: 'ObjectPattern',
-				properties: globals.map(g => ({
-					type: 'Property',
-					method: false,
-					shorthand: false,
-					computed: false,
-					key: { type: 'Identifier', name: g.name },
-					value: g.alias,
-					kind: 'init'
-				}))
-			},
-			init: helpers.find(({ name }) => name === 'globals').alias
-		}]
-	};
+	const internal_globals = get_internal_globals(globals, helpers);
 
-	const user_requires = imports.map(node => ({
-		type: 'VariableDeclaration',
-		kind: 'const',
-		declarations: [{
-			type: 'VariableDeclarator',
-			id: node.specifiers[0].type === 'ImportNamespaceSpecifier'
-				? { type: 'Identifier', name: node.specifiers[0].local.name }
-				: {
-					type: 'ObjectPattern',
-					properties: node.specifiers.map(s => ({
-						type: 'Property',
-						method: false,
-						shorthand: false,
-						computed: false,
-						key: s.type === 'ImportSpecifier' ? s.imported : { type: 'Identifier', name: 'default' },
-						value: s.local,
-						kind: 'init'
-					}))
-				},
-			init: x`require("${edit_source(node.source.value, sveltePath)}")`
-		}]
-	}));
+	const user_requires = imports.map(node => {
+		const init = x`require("${edit_source(node.source.value, sveltePath)}")`;
+		if (node.specifiers.length === 0) {
+			return b`${init};`;
+		}
+		return {
+			type: 'VariableDeclaration',
+			kind: 'const',
+			declarations: [{
+				type: 'VariableDeclarator',
+				id: node.specifiers[0].type === 'ImportNamespaceSpecifier'
+					? { type: 'Identifier', name: node.specifiers[0].local.name }
+					: {
+						type: 'ObjectPattern',
+						properties: node.specifiers.map(s => ({
+							type: 'Property',
+							method: false,
+							shorthand: false,
+							computed: false,
+							key: s.type === 'ImportSpecifier' ? s.imported : { type: 'Identifier', name: 'default' },
+							value: s.local,
+							kind: 'init'
+						}))
+					},
+				init
+			}]
+		};
+	});
 
 	const exports = module_exports.map(x => b`exports.${{ type: 'Identifier', name: x.as }} = ${{ type: 'Identifier', name: x.name }};`);
 

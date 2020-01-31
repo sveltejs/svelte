@@ -6,7 +6,7 @@
 			"column": 12,
 			"line": 8
 		},
-		"message": "Component has unused export property 'd'. If it is for external reference only, please consider using `export const 'd'`",
+		"message": "Component has unused export property 'd'. If it is for external reference only, please consider using `export const d`",
 		"pos": 102,
 		"start": {
 			"character": 102,
@@ -21,7 +21,7 @@
 			"column": 15,
 			"line": 8
 		},
-		"message": "Component has unused export property 'e'. If it is for external reference only, please consider using `export const 'e'`",
+		"message": "Component has unused export property 'e'. If it is for external reference only, please consider using `export const e`",
 		"pos": 105,
 		"start": {
 			"character": 105,
@@ -36,7 +36,7 @@
 			"column": 18,
 			"line": 9
 		},
-		"message": "Component has unused export property 'g'. If it is for external reference only, please consider using `export const 'g'`",
+		"message": "Component has unused export property 'g'. If it is for external reference only, please consider using `export const g`",
 		"pos": 125,
 		"start": {
 			"character": 125,
@@ -51,7 +51,7 @@
 			"column": 18,
 			"line": 10
 		},
-		"message": "Component has unused export property 'h'. If it is for external reference only, please consider using `export const 'h'`",
+		"message": "Component has unused export property 'h'. If it is for external reference only, please consider using `export const h`",
 		"pos": 145,
 		"start": {
 			"character": 145,
@@ -66,7 +66,7 @@
 			"column": 25,
 			"line": 12
 		},
-		"message": "Component has unused export property 'j'. If it is for external reference only, please consider using `export const 'j'`",
+		"message": "Component has unused export property 'j'. If it is for external reference only, please consider using `export const j`",
 		"pos": 187,
 		"start": {
 			"character": 187,

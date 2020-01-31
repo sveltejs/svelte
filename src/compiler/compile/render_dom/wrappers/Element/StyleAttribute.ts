@@ -87,14 +87,12 @@ function optimize_style(value: Array<Text|Expression>) {
 		const remaining_data = chunk.data.slice(offset);
 
 		if (remaining_data) {
-			/* eslint-disable @typescript-eslint/no-object-literal-type-assertion */
 			chunks[0] = {
 				start: chunk.start + offset,
 				end: chunk.end,
 				type: 'Text',
 				data: remaining_data
 			} as Text;
-			/* eslint-enable @typescript-eslint/no-object-literal-type-assertion */
 		} else {
 			chunks.shift();
 		}

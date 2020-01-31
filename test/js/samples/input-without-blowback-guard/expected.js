@@ -19,11 +19,11 @@ function create_fragment(ctx) {
 		c() {
 			input = element("input");
 			attr(input, "type", "checkbox");
-			dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
 		},
 		m(target, anchor) {
 			insert(target, input, anchor);
 			input.checked = /*foo*/ ctx[0];
+			dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*foo*/ 1) {

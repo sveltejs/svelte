@@ -43,7 +43,7 @@ function instance($$self, $$props, $$invalidate) {
 	let $foo;
 	const foo = writable(0);
 	component_subscribe($$self, foo, value => $$invalidate(0, $foo = value));
-	return [$foo];
+	return [$foo, foo];
 }
 
 class Component extends SvelteComponent {

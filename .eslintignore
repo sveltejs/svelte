@@ -1,5 +1,6 @@
 **/_actual.js
 **/expected.js
+_output
 test/*/samples/*/output.js
 node_modules
 

@@ -7,12 +7,8 @@
     <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
   </a>
 
-  <a href="https://packagephobia.now.sh/result?p=svelte">
-    <img src="https://packagephobia.now.sh/badge?p=svelte" alt="install size">
-  </a>
-
-  <a href="https://travis-ci.org/sveltejs/svelte">
-    <img src="https://api.travis-ci.org/sveltejs/svelte.svg?branch=master"
+  <a href="https://github.com/sveltejs/svelte/actions">
+    <img src="https://github.com/sveltejs/svelte/workflows/CI/badge.svg?branch=master"
          alt="build status">
   </a>
 

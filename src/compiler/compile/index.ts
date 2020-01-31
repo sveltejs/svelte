@@ -33,7 +33,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 	const { name, filename, loopGuardTimeout, dev } = options;
 
 	Object.keys(options).forEach(key => {
-		if (valid_options.indexOf(key) === -1) {
+		if (!valid_options.includes(key)) {
 			const match = fuzzymatch(key, valid_options);
 			let message = `Unrecognized option '${key}'`;
 			if (match) message += ` (did you mean '${match}'?)`;
@@ -90,11 +90,11 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	);
 	stats.stop('create component');
 
-	const js = options.generate === false
+	const result = options.generate === false
 		? null
 		: options.generate === 'ssr'
 			? render_ssr(component, options)
 			: render_dom(component, options);
 
-	return component.generate(js);
+	return component.generate(result);
 }
