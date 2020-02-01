@@ -151,6 +151,11 @@ export default class Element extends Node {
 			}
 		}
 
+		const has_let = info.attributes.some(node => node.type === 'Let');
+		if (has_let) {
+			scope = scope.child();
+		}
+
 		// Binding relies on Attribute, defer its evaluation
 		const order = ['Binding']; // everything else is -1
 		info.attributes.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
@@ -181,9 +186,16 @@ export default class Element extends Node {
 					this.handlers.push(new EventHandler(component, this, scope, node));
 					break;
 
-				case 'Let':
-					this.lets.push(new Let(component, this, scope, node));
+				case 'Let': {
+					const l = new Let(component, this, scope, node);
+					this.lets.push(l);
+					const dependencies = new Set([l.name.name]);
+
+					l.names.forEach(name => {
+						scope.add(name, dependencies, this);
+					});
 					break;
+				}
 
 				case 'Transition':
 				{
@@ -202,20 +214,7 @@ export default class Element extends Node {
 			}
 		});
 
-		if (this.lets.length > 0) {
-			this.scope = scope.child();
-
-			this.lets.forEach(l => {
-				const dependencies = new Set([l.name.name]);
-
-				l.names.forEach(name => {
-					this.scope.add(name, dependencies, this);
-				});
-			});
-		} else {
-			this.scope = scope;
-		}
-
+		this.scope = scope;
 		this.children = map_children(component, this, this.scope, info.children);
 
 		this.validate();

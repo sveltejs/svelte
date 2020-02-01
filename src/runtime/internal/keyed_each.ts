@@ -108,9 +108,13 @@ export function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list
 	return new_blocks;
 }
 
-export function measure(blocks) {
-	const rects = {};
-	let i = blocks.length;
-	while (i--) rects[blocks[i].key] = blocks[i].node.getBoundingClientRect();
-	return rects;
+export function validate_each_keys(ctx, list, get_context, get_key) {
+	const keys = new Set();
+	for (let i = 0; i < list.length; i++) {
+		const key = get_key(get_context(ctx, list, i));
+		if (keys.has(key)) {
+			throw new Error(`Cannot have duplicate keys in a keyed each`);
+		}
+		keys.add(key);
+	}
 }

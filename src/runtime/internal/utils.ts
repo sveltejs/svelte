@@ -43,13 +43,16 @@ export function not_equal(a, b) {
 }
 
 export function validate_store(store, name) {
-	if (!store || typeof store.subscribe !== 'function') {
+	if (store != null && typeof store.subscribe !== 'function') {
 		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
 	}
 }
 
-export function subscribe(store, callback) {
-	const unsub = store.subscribe(callback);
+export function subscribe(store, ...callbacks) {
+	if (store == null) {
+		return noop;
+	}
+	const unsub = store.subscribe(...callbacks);
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 

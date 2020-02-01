@@ -1,5 +1,37 @@
 # Svelte changelog
 
+## Unreleased
+
+* Disallow attribute/prop names from matching two-way-bound names or `{shorthand}` attribute/prop names ([#4325](https://github.com/sveltejs/svelte/issues/4325))
+
+## 3.18.1
+
+* Fix code generation error with adjacent inline and block comments ([#4312](https://github.com/sveltejs/svelte/issues/4312))
+* Fix detection of unused CSS selectors that begin with a `:global()` but contain a scoped portion ([#4314](https://github.com/sveltejs/svelte/issues/4314))
+
+## 3.18.0
+
+* Fix infinite loop when instantiating another component during `onMount` ([#3218](https://github.com/sveltejs/svelte/issues/3218))
+* Make autosubscribing to a nullish store a no-op ([#2181](https://github.com/sveltejs/svelte/issues/2181))
+
+## 3.17.3
+
+* Fix updating a `<slot>` inside an `{#if}` or other block ([#4292](https://github.com/sveltejs/svelte/issues/4292))
+* Fix using RxJS observables in `derived` stores ([#4298](https://github.com/sveltejs/svelte/issues/4298))
+* Add dev mode check to disallow duplicate keys in a keyed `{#each}` ([#4301](https://github.com/sveltejs/svelte/issues/4301))
+* Fix hydration of `<title>` when starting from SSR-generated code with `hydratable: true` ([#4310](https://github.com/sveltejs/svelte/issues/4310))
+
+## 3.17.2
+
+* Fix removing attributes during hydration ([#1733](https://github.com/sveltejs/svelte/issues/1733))
+* Disallow two-way binding to a variable declared by an `{#await}` block ([#4012](https://github.com/sveltejs/svelte/issues/4012))
+* Allow access to `let:` variables in sibling attributes on slot root ([#4173](https://github.com/sveltejs/svelte/issues/4173))
+* Fix `~=` and class selector matching against values separated by any whitespace characters ([#4242](https://github.com/sveltejs/svelte/issues/4242))
+* Fix code generation for `await`ed expressions that need parentheses ([#4267](https://github.com/sveltejs/svelte/issues/4267))
+* Preserve JavaScript comments from the original component source where possible ([#4268](https://github.com/sveltejs/svelte/issues/4268))
+* Add some more known globals ([#4276](https://github.com/sveltejs/svelte/pull/4276))
+* Correctly apply event modifiers to `<svelte:body>` events ([#4278](https://github.com/sveltejs/svelte/issues/4278))
+
 ## 3.17.1
 
 * Only attach SSR mode markers to a component's `<head>` elements when compiling with `hydratable: true` ([#4258](https://github.com/sveltejs/svelte/issues/4258))

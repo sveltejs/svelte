@@ -31,8 +31,8 @@ export function add_flush_callback(fn) {
 	flush_callbacks.push(fn);
 }
 
+const seen_callbacks = new Set();
 export function flush() {
-	const seen_callbacks = new Set();
 
 	do {
 		// first, call beforeUpdate functions
@@ -52,10 +52,10 @@ export function flush() {
 			const callback = render_callbacks[i];
 
 			if (!seen_callbacks.has(callback)) {
-				callback();
-
 				// ...so guard against infinite loops
 				seen_callbacks.add(callback);
+
+				callback();
 			}
 		}
 
@@ -67,6 +67,7 @@ export function flush() {
 	}
 
 	update_scheduled = false;
+	seen_callbacks.clear();
 }
 
 function update($$) {
