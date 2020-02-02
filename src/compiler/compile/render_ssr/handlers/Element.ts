@@ -30,8 +30,22 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
-		const snippet = expression ? expression.node : x`#ctx.${name}`; // TODO is this right?
-		return x`${snippet} ? "${name}" : ""`;
+
+		const name_has_separator = name.includes(options.classSeparator);
+
+		let parsed_name = name;
+		if (name_has_separator) {
+			parsed_name = `"${name.split(",").join(' ')}"`;
+		}
+
+		if (name_has_separator && expression) {
+			// TODO: we have a wrong scenario here, "class:one,two". We should treat this case, showing error?
+			return parsed_name;
+		}
+
+		const snippet = expression ? expression.node : x`#ctx.${name}`;
+
+		return x`${snippet} ? "${parsed_name}" : ""`;
 	});
 	if (node.needs_manual_style_scoping) {
 		class_expression_list.push(x`"${node.component.stylesheet.id}"`);

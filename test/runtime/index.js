@@ -79,6 +79,7 @@ describe("runtime", () => {
 			compileOptions.hydratable = hydrate;
 			compileOptions.immutable = config.immutable;
 			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
+			compileOptions.classSeparator = 'classSeparator' in config ? config.classSeparator : undefined;
 
 			cleanRequireCache();
 

@@ -26,6 +26,7 @@ import { Identifier } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
+import Expression from '../../../nodes/shared/Expression';
 
 const events = [
 	{
@@ -876,31 +877,38 @@ export default class ElementWrapper extends Wrapper {
 		const has_spread = this.node.attributes.some(attr => attr.is_spread);
 		this.node.classes.forEach(class_directive => {
 			const { expression, name } = class_directive;
-			let snippet;
-			let dependencies;
-			if (expression) {
-				snippet = expression.manipulate(block);
-				dependencies = expression.dependencies;
-			} else {
-				snippet = name;
-				dependencies = new Set([name]);
-			}
-			const updater = b`@toggle_class(${this.var}, "${name}", ${snippet});`;
 
-			block.chunks.hydrate.push(updater);
-
-			if (has_spread) {
-				block.chunks.update.push(updater);
-			} else if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
-				const all_dependencies = this.class_dependencies.concat(...dependencies);
-				const condition = block.renderer.dirty(all_dependencies);
-
-				block.chunks.update.push(b`
-					if (${condition}) {
-						${updater}
-					}`);
-			}
+			name.split(this.renderer.options.classSeparator).forEach((split_name: string) => {
+				this.add_class(block, expression, split_name, has_spread);
+			});	
 		});
+	}
+
+	add_class(block: Block, expression: Expression, name: string, has_spread: boolean) {
+		let snippet;
+		let dependencies;
+		if (expression) {
+			snippet = expression.manipulate(block);
+			dependencies = expression.dependencies;
+		} else {
+			snippet = name;
+			dependencies = new Set([name]);
+		}
+		const updater = b`@toggle_class(${this.var}, "${name}", ${snippet});`;
+
+		block.chunks.hydrate.push(updater);
+
+		if (has_spread) {
+			block.chunks.update.push(updater);
+		} else if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
+			const all_dependencies = this.class_dependencies.concat(...dependencies);
+			const condition = block.renderer.dirty(all_dependencies);
+
+			block.chunks.update.push(b`
+				if (${condition}) {
+					${updater}
+				}`);
+		}
 	}
 
 	add_manual_style_scoping(block) {

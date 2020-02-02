@@ -1348,29 +1348,32 @@ function process_component_options(component: Component, nodes) {
 				const { name } = attribute;
 
 				switch (name) {
+					case 'classSeparator':
 					case 'tag': {
 						const code = 'invalid-tag-attribute';
-						const message = `'tag' must be a string literal`;
-						const tag = get_value(attribute, code, message);
+						const message = `'${name}' must be a string literal`;
+						const value = get_value(attribute, code, message);
 
-						if (typeof tag !== 'string' && tag !== null)
+						if (typeof value !== 'string' && value !== null)
 							component.error(attribute, { code, message });
 
-						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
-							component.error(attribute, {
-								code: `invalid-tag-property`,
-								message: `tag name must be two or more words joined by the '-' character`,
-							});
+						if (value === 'tag') {
+							if (value && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(value)) {
+								component.error(attribute, {
+									code: `invalid-tag-property`,
+									message: `tag name must be two or more words joined by the '-' character`,
+								});
+							}
+
+							if (value && !component.compile_options.customElement) {
+								component.warn(attribute, {
+									code: 'missing-custom-element-compile-options',
+									message: `The 'tag' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?`
+								});
+							}
 						}
 
-						if (tag && !component.compile_options.customElement) {
-							component.warn(attribute, {
-								code: 'missing-custom-element-compile-options',
-								message: `The 'tag' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?`
-							});
-						}
-
-						component_options.tag = tag;
+						component_options[name] = value;
 						break;
 					}
 
