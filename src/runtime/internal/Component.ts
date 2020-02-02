@@ -165,14 +165,13 @@ export let SvelteElement;
 if (typeof HTMLElement === 'function') {
 	SvelteElement = class extends HTMLElement {
 		$$: T$$;
-		private _content;
+		protected _content;
+		slotting;
 		constructor() {
 			super();
-			this._copycontent()
 		}
 
 		connectedCallback() {
-			this._slotcontent()
 			// @ts-ignore todo: improve typings
 			for (const key in this.$$.slotted) {
 				// @ts-ignore todo: improve typings
@@ -182,20 +181,47 @@ if (typeof HTMLElement === 'function') {
 
 		_copycontent(){
 			if(this.children){
-				this._content = document.createElement("div")
-				while(this.childNodes.length > 0){
-					this._content.appendChild(this.childNodes[0])
+				this._content = Array.from(this.childNodes)
+				while (this.firstChild) {
+					this.removeChild(this.firstChild)
 				}
 			}
 		}
 
 		_slotcontent(){
+			if(this.slotting) return;
+			this.slotting = true;
 			if(this._content){
-				const slot = this.querySelector("slot")
-				while(this._content.childNodes.length > 0){
-					slot.appendChild(this._content.childNodes[0])
-				}
+				let namedslots = Array.from(this.querySelectorAll("slot[name]"))
+				let defaultslot = this.querySelector("slot:not([name])")
+				let named = {}
+				if(!namedslots.length && !defaultslot) return(this.slotting=false);
+				let slotted = []
+				this._content.filter((node : HTMLElement)=> node.slot ).forEach((node : HTMLElement)=> named[node.slot] = node )
+				namedslots.forEach(slot =>{
+					this._content.forEach(node =>{ //append all named slots
+						if(named[node.slot] && slot.getAttribute("name")==node.slot){
+							if(!slot.hasAttribute("hasupdated")){
+								slot.appendChild(named[node.slot]);
+								slot.setAttribute("hasupdated","")
+							}
+							slotted.push(node)
+						}
+					})
+				})
+				if(!defaultslot) return(this.slotting=false);
+				// put what evers left info default slot
+				this._content
+				  .filter(node => slotted.indexOf(node)==-1)
+				  .forEach(node => {
+						if(!defaultslot.hasAttribute("hasupdated")){
+							
+							defaultslot.appendChild(node)
+						}
+					})
+					defaultslot.setAttribute("hasupdated","")
 			}
+			this.slotting = false
 		}
 
 		attributeChangedCallback(attr, _oldValue, newValue) {

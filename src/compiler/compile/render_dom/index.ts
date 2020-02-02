@@ -444,8 +444,11 @@ export default function dom(
 					super();
 					${!lightDom && b`
 						this._root =this.attachShadow({ mode: '${options.shadowDom}' });
+					` || b`
+						this._copycontent();
+						const observer = new MutationObserver(() => this._slotcontent());
+						observer.observe(this, {childList: true, subtree: true});
 					`}
-
 					${css.code && !lightDom && b`this._root.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 					${should_add_css && lightDom && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
 
