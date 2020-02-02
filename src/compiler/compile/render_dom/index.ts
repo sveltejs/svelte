@@ -484,7 +484,7 @@ export default function dom(
 			});
 		}
 
-		if(lightDom){
+		if (lightDom) {
 			declaration.body.body.push({
 				type: 'MethodDefinition',
 				kind: 'method',
