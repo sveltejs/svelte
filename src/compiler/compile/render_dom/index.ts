@@ -521,24 +521,27 @@ export default function dom(
 								this._content.forEach(node =>{ //append all named slots
 									if(named[node.slot] && slot.getAttribute("name") == node.slot){
 										if(!slot.hasAttribute("hasupdated")){
+											while (slot.firstChild) {
+												slot.removeChild(slot.firstChild)
+											}
 											slot.appendChild(named[node.slot]);
-											slot.setAttribute("hasupdated","")
 										}
+										slot.setAttribute("hasupdated","")
 										slotted.push(node)
 									}
 								})
 							})
 							if(!defaultslot) return(this.slotting=false);
 							// put what evers left info default slot
-							this._content
-								.filter(node => slotted.indexOf(node)==-1)
-								.forEach(node => {
-									if(!defaultslot.hasAttribute("hasupdated")){
-										
-										defaultslot.appendChild(node)
-									}
-								})
-								defaultslot.setAttribute("hasupdated","")
+							let toAppend = this._content.filter(node => slotted.indexOf(node)==-1)
+							// remove default
+							if(!defaultslot.hasAttribute("hasupdated") && toAppend.length){
+								while (defaultslot.firstChild) {
+									defaultslot.removeChild(defaultslot.firstChild)
+								}
+							}
+							toAppend.forEach(node => !defaultslot.hasAttribute("hasupdated") && defaultslot.appendChild(node) )
+							defaultslot.setAttribute("hasupdated","")
 						}
 						this.slotting = false
 					}
