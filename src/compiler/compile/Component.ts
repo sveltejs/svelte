@@ -1357,7 +1357,7 @@ function process_component_options(component: Component, nodes) {
 						if (typeof value !== 'string' && value !== null)
 							component.error(attribute, { code, message });
 
-						if (value === 'tag') {
+						if (name === 'tag') {
 							if (value && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(value)) {
 								component.error(attribute, {
 									code: `invalid-tag-property`,
