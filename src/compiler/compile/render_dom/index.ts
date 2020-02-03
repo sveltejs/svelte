@@ -532,8 +532,8 @@ export default function dom(
 								})
 							})
 							if(!defaultslot) return(this.slotting=false);
-							// put what evers left info default slot
-							let toAppend = this._content.filter(node => slotted.indexOf(node)==-1)
+							// get all nodes without a slot attribute
+							let toAppend = this._content.filter(node => node.hasAttribute && !node.hasAttribute("slot"))
 							// remove default
 							if(!defaultslot.hasAttribute("hasupdated") && toAppend.length){
 								while (defaultslot.firstChild) {
