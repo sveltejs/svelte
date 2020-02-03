@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix binding to module-level variables ([#4086](https://github.com/sveltejs/svelte/issues/4086))
 * Disallow attribute/prop names from matching two-way-bound names or `{shorthand}` attribute/prop names ([#4325](https://github.com/sveltejs/svelte/issues/4325))
 
 ## 3.18.1
