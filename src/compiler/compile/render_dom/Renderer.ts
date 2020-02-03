@@ -161,11 +161,14 @@ export default class Renderer {
 		}
 
 		if (
-			variable &&
-			!variable.referenced &&
-			!variable.is_reactive_dependency &&
-			!variable.export_name &&
-			!name.startsWith('$$')
+			variable && (
+				variable.module || (
+					!variable.referenced &&
+					!variable.is_reactive_dependency &&
+					!variable.export_name &&
+					!name.startsWith('$$')
+				)
+			)
 		) {
 			return value || name;
 		}
