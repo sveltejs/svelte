@@ -132,7 +132,8 @@ export default class Component {
 			source,
 			ast,
 			compile_options.filename,
-			compile_options.dev
+			compile_options.dev,
+			compile_options.cssPrefix
 		);
 		this.stylesheet.validate(this);
 

@@ -126,6 +126,7 @@ export interface CompileOptions {
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;
+	cssPrefix?: string;
 }
 
 export interface ParserOptions {

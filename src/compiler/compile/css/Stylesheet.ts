@@ -291,14 +291,14 @@ export default class Stylesheet {
 
 	nodes_with_css_class: Set<CssNode> = new Set();
 
-	constructor(source: string, ast: Ast, filename: string, dev: boolean) {
+	constructor(source: string, ast: Ast, filename: string, dev: boolean, cssPrefix: string) {
 		this.source = source;
 		this.ast = ast;
 		this.filename = filename;
 		this.dev = dev;
 
 		if (ast.css && ast.css.children.length) {
-			this.id = `svelte-${hash(ast.css.content.styles)}`;
+			this.id = `${cssPrefix}-${hash(ast.css.content.styles)}`;
 
 			this.has_styles = true;
 

@@ -26,7 +26,8 @@ const valid_options = [
 	'css',
 	'loopGuardTimeout',
 	'preserveComments',
-	'preserveWhitespace'
+	'preserveWhitespace',
+	'cssPrefix'
 ];
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {
@@ -68,7 +69,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = assign({ generate: 'dom', dev: false }, options);
+	options = assign({ generate: 'dom', dev: false, cssPrefix: 'svelte' }, options);
 
 	const stats = new Stats();
 	const warnings = [];
