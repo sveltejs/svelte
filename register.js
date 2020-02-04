@@ -40,12 +40,11 @@ function registerExtension(extension) {
 		
 		if (options.dev) {
 			warnings.forEach(warning => {
-				console.log(`\nSvelte Warning in ${warning.filename}:`);
-				console.log(warning.message);
-				console.log(warning.frame);
+				console.warn(`\nSvelte Warning in ${warning.filename}:`);
+				console.warn(warning.message);
+				console.warn(warning.frame);
 			})
 		}
-
 
 		return module._compile(js.code, filename);
 	};
