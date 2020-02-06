@@ -74,16 +74,12 @@
     "codecov": "^3.5.0",
     "css-tree": "1.0.0-alpha22",
     "eslint": "^6.3.0",
-    "eslint-config-prettier": "^6.10.0",
     "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-prettier": "^3.1.2",
     "eslint-plugin-svelte3": "^2.7.3",
     "estree-walker": "^1.0.0",
-    "husky": "^4.2.1",
     "is-reference": "^1.1.4",
     "jsdom": "^15.1.1",
     "kleur": "^3.0.3",
-    "lint-staged": "^10.0.7",
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.3",
     "mocha": "^6.2.0",
@@ -104,16 +100,5 @@
     ],
     "sourceMap": true,
     "instrument": true
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{ts,js}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
   }
 }
