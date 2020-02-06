@@ -32,57 +32,59 @@ module.exports = {
 		'@typescript-eslint/no-unused-vars': [
 			'error',
 			{
-				argsIgnorePattern: '^_'
-			}
+				argsIgnorePattern: '^_',
+			},
 		],
 		'@typescript-eslint/no-object-literal-type-assertion': 'off',
 		'@typescript-eslint/no-unused-vars': 'off',
-		'@typescript-eslint/prefer-interface': 'off'
+		'@typescript-eslint/prefer-interface': 'off',
+		'prettier/prettier': 'error',
 	},
 	globals: {
-		globalThis: false
+		globalThis: false,
 	},
 	env: {
 		es6: true,
 		browser: true,
 		node: true,
-		mocha: true
+		mocha: true,
 	},
 	extends: [
 		'eslint:recommended',
 		'plugin:import/errors',
 		'plugin:import/warnings',
 		'plugin:import/typescript',
-		'plugin:@typescript-eslint/recommended'
+		'plugin:@typescript-eslint/recommended',
+		'plugin:prettier/recommended',
 	],
 	parserOptions: {
 		ecmaVersion: 9,
-		sourceType: 'module'
+		sourceType: 'module',
 	},
-	plugins: ['svelte3'],
+	plugins: ['prettier', 'svelte3'],
 	settings: {
 		'import/core-modules': [
 			'svelte',
 			'svelte/internal',
 			'svelte/store',
 			'svelte/easing',
-			'estree'
+			'estree',
 		],
-		'svelte3/compiler': require('./compiler')
+		'svelte3/compiler': require('./compiler'),
 	},
 	overrides: [
 		{
 			files: ['*.js'],
 			rules: {
-				'@typescript-eslint/no-var-requires': 'off'
-			}
+				'@typescript-eslint/no-var-requires': 'off',
+			},
 		},
 		{
 			files: ['*.svelte'],
 			processor: 'svelte3/svelte3',
 			rules: {
-				'@typescript-eslint/indent': 'off'
-			}
-		}
-	]
+				'@typescript-eslint/indent': 'off',
+			},
+		},
+	],
 };
