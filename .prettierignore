@@ -1,2 +1,3 @@
 package.json
 test/**/samples/**/*.js
+internal_exports.ts
