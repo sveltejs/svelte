@@ -104,6 +104,12 @@ export interface Warning {
 
 export type ModuleFormat = 'esm' | 'cjs';
 
+
+export type CssScopeClassGetter = (args: {
+	filename: string;
+	hash: string;
+}) => string;
+
 export interface CompileOptions {
 	format?: ModuleFormat;
 	name?: string;
@@ -125,6 +131,7 @@ export interface CompileOptions {
 	css?: boolean;
 	loopGuardTimeout?: number;
 	namespace?: string;
+	scopeClass?: CssScopeClassGetter;
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;
@@ -166,7 +173,7 @@ export interface Var {
 	imported?: boolean;
 }
 
-export interface CssResult { 
+export interface CssResult {
 	code: string;
 	map: SourceMap;
 }

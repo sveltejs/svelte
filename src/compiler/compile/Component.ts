@@ -133,12 +133,15 @@ export default class Component {
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
 		// styles
-		this.stylesheet = new Stylesheet(
+		this.stylesheet = new Stylesheet({
 			source,
 			ast,
-			compile_options.filename,
-			compile_options.dev
-		);
+			filename: compile_options.filename,
+			options: {
+				dev: compile_options.dev,
+				scope_class_getter: compile_options.scopeClass
+			}
+		});
 		this.stylesheet.validate(this);
 
 		this.component_options = process_component_options(
