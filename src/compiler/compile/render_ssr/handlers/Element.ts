@@ -65,7 +65,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			}
 		});
 
-		renderer.add_expression(x`@spread([${args}], ${class_expression});`);
+		renderer.add_expression(x`@spread([${args}], ${class_expression})`);
 	} else {
 		let add_class_attribute = !!class_expression;
 		node.attributes.forEach(attribute => {
