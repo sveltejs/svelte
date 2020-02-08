@@ -14,7 +14,7 @@ If you get stuck at any point following this guide, the best place to ask for he
 
 ## First things first
 
-You'll be using the *command line*, also known as the terminal. On Windows, you can access it by running **Command Prompt** from the Start menu; on a Mac, hit `Cmd` and `Space` together to bring up **Spotlight**, then start typing `Terminal.app`. On most Linux systems, `Ctrl-Alt-T` brings up the command line.
+You'll be using the *command line*, also known as the terminal. On Windows, you can access it by running **PowerShell** from the Start menu (or **Command Prompt** if you have a version of Windows lower than 7, but in this case you will have to adjust the following commands); on a Mac, hit `Cmd` and `Space` together to bring up **Spotlight**, then start typing `Terminal.app`. On most Linux systems, `Ctrl-Alt-T` brings up the command line.
 
 The command line is a way to interact with your computer (or another computer! but that's a topic for another time) with more power and control than the GUI (graphical user interface) that most people use day-to-day.
 
