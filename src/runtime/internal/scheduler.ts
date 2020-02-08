@@ -31,17 +31,22 @@ export function add_flush_callback(fn) {
 	flush_callbacks.push(fn);
 }
 
+let flushing = false;
 const seen_callbacks = new Set();
 export function flush() {
+	if (flushing) return;
+	flushing = true;
 
 	do {
 		// first, call beforeUpdate functions
 		// and update components
-		while (dirty_components.length) {
-			const component = dirty_components.shift();
+		for (let i = 0; i < dirty_components.length; i += 1) {
+			const component = dirty_components[i];
 			set_current_component(component);
 			update(component.$$);
 		}
+
+		dirty_components.length = 0;
 
 		while (binding_callbacks.length) binding_callbacks.pop()();
 
@@ -67,6 +72,7 @@ export function flush() {
 	}
 
 	update_scheduled = false;
+	flushing = false;
 	seen_callbacks.clear();
 }
 
