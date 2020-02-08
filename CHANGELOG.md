@@ -4,6 +4,7 @@
 
 * Fix binding to module-level variables ([#4086](https://github.com/sveltejs/svelte/issues/4086))
 * Disallow attribute/prop names from matching two-way-bound names or `{shorthand}` attribute/prop names ([#4325](https://github.com/sveltejs/svelte/issues/4325))
+* Fix code generation error with precedence of arrow functions ([#4384](https://github.com/sveltejs/svelte/issues/4384))
 
 ## 3.18.1
 
