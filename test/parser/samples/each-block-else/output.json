@@ -40,6 +40,16 @@
 									"type": "Identifier",
 									"start": 31,
 									"end": 37,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 5
+										},
+										"end": {
+											"line": 2,
+											"column": 11
+										}
+									},
 									"name": "animal"
 								}
 							}
