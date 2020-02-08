@@ -12,5 +12,5 @@ export default function(node: Title, renderer: Renderer, options: RenderOptions)
 	renderer.add_string(`</title>`);
 	const result = renderer.pop();
 
-	renderer.add_expression(x`($$result.title = ${result}, "")`);
+	renderer.add_expression(x`$$result.title = ${result}, ""`);
 }
