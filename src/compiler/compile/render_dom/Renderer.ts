@@ -197,7 +197,7 @@ export default class Renderer {
 
 		return filtered
 			.map(n => x`$$invalidate(${this.context_lookup.get(n).index}, ${n})`)
-			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
+			.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
 	}
 
 	dirty(names, is_reactive_declaration = false): Expression {

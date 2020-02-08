@@ -403,9 +403,9 @@ export default function dom(
 
 				${set && b`$$self.$set = ${set};`}
 
-				${capture_state && x`$$self.$capture_state = ${capture_state};`}
+				${capture_state && b`$$self.$capture_state = ${capture_state};`}
 
-				${inject_state && x`$$self.$inject_state = ${inject_state};`}
+				${inject_state && b`$$self.$inject_state = ${inject_state};`}
 
 				${injected.map(name => b`let ${name};`)}
 
