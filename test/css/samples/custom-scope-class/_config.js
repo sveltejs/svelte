@@ -1,7 +1,12 @@
 export default {
 	compileOptions: {
-		scopeClass({ hash }) {
-			return `sv-${hash}`;
-		}
+		filename: 'src/components/FooSwitcher.svelte',
+		scopeClass({ hash, name, filename }) {
+			const minFilename = filename
+				.split('/')
+				.map(i => i.charAt(0).toLowerCase())
+				.join('');
+			return `sv-${name}-${minFilename}-${hash}`;
+		},
 	},
 };

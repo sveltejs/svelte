@@ -136,8 +136,9 @@ export default class Component {
 		this.stylesheet = new Stylesheet({
 			source,
 			ast,
-			filename: compile_options.filename,
 			options: {
+				filename: compile_options.filename,
+				component_name: name,
 				dev: compile_options.dev,
 				scope_class_getter: compile_options.scopeClass
 			}

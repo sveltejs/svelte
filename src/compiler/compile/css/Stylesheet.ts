@@ -296,13 +296,18 @@ export default class Stylesheet {
 	constructor({
 		source,
 		ast,
-		filename,
-		options: { dev, scope_class_getter = getDefaultScopeClass },
+		options: {
+			component_name,
+			filename,
+			dev,
+			scope_class_getter = getDefaultScopeClass,
+		},
 	}: {
 		source: string;
 		ast: Ast;
-		filename: string;
 		options: {
+			filename: string | undefined;
+			component_name: string | undefined;
 			dev: boolean;
 			scope_class_getter: CssScopeClassGetter;
 		};
@@ -313,7 +318,11 @@ export default class Stylesheet {
 		this.dev = dev;
 
 		if (ast.css && ast.css.children.length) {
-			this.id = scope_class_getter({ filename, hash: hash(ast.css.content.styles) });
+			this.id = scope_class_getter({
+				filename,
+				name: component_name,
+				hash: hash(ast.css.content.styles),
+			});
 
 			this.has_styles = true;
 

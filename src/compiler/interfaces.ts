@@ -104,9 +104,9 @@ export interface Warning {
 
 export type ModuleFormat = 'esm' | 'cjs';
 
-
 export type CssScopeClassGetter = (args: {
-	filename: string;
+	name: string | undefined;
+	filename: string | undefined;
 	hash: string;
 }) => string;
 
