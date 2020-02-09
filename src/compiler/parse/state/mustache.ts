@@ -108,16 +108,11 @@ export default function mustache(parser: Parser) {
 		if (parser.eat('if')) {
 			const block = parser.current();
 			if (block.type !== 'IfBlock') {
-				if (parser.stack.some(block => block.type === 'IfBlock')) {
-					parser.error({
-						code: 'unclosed-open-tag',
-						message: `Expect to close ${to_string(block)} before {:else if ...} block`
-					});
-				}
-
 				parser.error({
 					code: `invalid-elseif-placement`,
-					message: 'Cannot have an {:else if ...} block outside an {#if ...} block'
+					message: parser.stack.some(block => block.type === 'IfBlock')
+						? `Expected to close ${to_string(block)} before seeing {:else if ...} block`
+						: `Cannot have an {:else if ...} block outside an {#if ...} block`
 				});
 			}
 
@@ -151,16 +146,11 @@ export default function mustache(parser: Parser) {
 		else {
 			const block = parser.current();
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
-				if (parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')) {
-					parser.error({
-						code: 'unclosed-open-tag',
-						message: `Expect to close ${to_string(block)} before {:else} block`
-					});
-				}
-
 				parser.error({
 					code: `invalid-else-placement`,
-					message: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
+					message: parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
+						? `Expected to close ${to_string(block)} before seeing {:else} block`
+						: `Cannot have an {:else} block outside an {#if ...} or {#each ...} block`
 				});
 			}
 
@@ -182,28 +172,20 @@ export default function mustache(parser: Parser) {
 
 		if (is_then) {
 			if (block.type !== 'PendingBlock') {
-				if (parser.stack.some(block => block.type === 'PendingBlock')) {
-					parser.error({
-						code: 'unclosed-open-tag',
-						message: `Expect to close ${to_string(block)} before {:then} block`
-					});
-				}
 				parser.error({
 					code: `invalid-then-placement`,
-					message: 'Cannot have an {:then} block outside an {#await ...} block'
+					message: parser.stack.some(block => block.type === 'PendingBlock')
+						? `Expected to close ${to_string(block)} before seeing {:then} block`
+						: `Cannot have an {:then} block outside an {#await ...} block`
 				});
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
-				if (parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')) {
-					parser.error({
-						code: 'unclosed-open-tag',
-						message: `Expect to close ${to_string(block)} before {:catch} block`
-					});
-				}
 				parser.error({
 					code: `invalid-catch-placement`,
-					message: 'Cannot have an {:catch} block outside an {#await ...} block'
+					message: parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
+						? `Expected to close ${to_string(block)} before seeing {:catch} block`
+						: `Cannot have an {:catch} block outside an {#await ...} block`
 				});
 			}
 		}
