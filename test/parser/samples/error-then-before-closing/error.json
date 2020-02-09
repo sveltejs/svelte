@@ -1,6 +1,6 @@
 {
-	"code": "unclosed-open-tag",
-	"message": "Expect to close <li> tag before {:then} block",
-	"start": { "line": 3, "column": 8, "character": 29 },
-	"pos": 29
+	"code": "invalid-then-placement",
+	"message": "Expected to close <li> tag before seeing {:then} block",
+	"start": { "line": 3, "column": 6, "character": 26 },
+	"pos": 26
 }

@@ -1,6 +1,6 @@
 {
-	"code": "unclosed-open-tag",
-	"message": "Expect to close <p> tag before {:else if ...} block",
-	"start": { "line": 3, "column": 11, "character": 28 },
-	"pos": 28
+	"code": "invalid-elseif-placement",
+	"message": "Expected to close <p> tag before seeing {:else if ...} block",
+	"start": { "line": 3, "column": 9, "character": 25 },
+	"pos": 25
 }

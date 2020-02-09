@@ -1,6 +1,6 @@
 {
-	"code": "unclosed-open-tag",
-	"message": "Expect to close {#each} block before {:catch} block",
-	"start": { "line": 3, "column": 9, "character": 44 },
-	"pos": 44
+	"code": "invalid-catch-placement",
+	"message": "Expected to close {#each} block before seeing {:catch} block",
+	"start": { "line": 3, "column": 7, "character": 41 },
+	"pos": 41
 }

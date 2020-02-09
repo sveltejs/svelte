@@ -1,6 +1,6 @@
 {
-	"code": "unclosed-open-tag",
-	"message": "Expect to close {#await} block before {:else} block",
-	"start": { "line": 3, "column": 8, "character": 32 },
-	"pos": 32
+	"code": "invalid-else-placement",
+	"message": "Expected to close {#await} block before seeing {:else} block",
+	"start": { "line": 3, "column": 6, "character": 29 },
+	"pos": 29
 }
