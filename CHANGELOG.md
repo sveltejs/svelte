@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.18.2
 
 * Fix binding to module-level variables ([#4086](https://github.com/sveltejs/svelte/issues/4086))
 * Improve parsing error messages when there is a pending unclosed tag ([#4131](https://github.com/sveltejs/svelte/issues/4131))
