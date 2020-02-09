@@ -141,7 +141,7 @@ export class Parser {
 		return result;
 	}
 
-	read_identifier() {
+	read_identifier(allow_reserved = false) {
 		const start = this.index;
 
 		let i = this.index;
@@ -160,7 +160,7 @@ export class Parser {
 
 		const identifier = this.template.slice(this.index, this.index = i);
 
-		if (reserved.has(identifier)) {
+		if (!allow_reserved && reserved.has(identifier)) {
 			this.error({
 				code: `unexpected-reserved-word`,
 				message: `'${identifier}' is a reserved word in JavaScript and cannot be used here`
