@@ -161,11 +161,14 @@ export default class Renderer {
 		}
 
 		if (
-			variable &&
-			!variable.referenced &&
-			!variable.is_reactive_dependency &&
-			!variable.export_name &&
-			!name.startsWith('$$')
+			variable && (
+				variable.module || (
+					!variable.referenced &&
+					!variable.is_reactive_dependency &&
+					!variable.export_name &&
+					!name.startsWith('$$')
+				)
+			)
 		) {
 			return value || name;
 		}
@@ -194,7 +197,7 @@ export default class Renderer {
 
 		return filtered
 			.map(n => x`$$invalidate(${this.context_lookup.get(n).index}, ${n})`)
-			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
+			.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
 	}
 
 	dirty(names, is_reactive_declaration = false): Expression {

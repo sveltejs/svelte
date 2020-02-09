@@ -33,5 +33,8 @@ _output
 /site/static/svelte-app.json
 /site/static/contributors.jpg
 /site/static/workers
+/site/static/organisations
 /site/scripts/svelte-app
+/site/scripts/community
 /site/src/routes/_contributors.js
+/site/src/routes/_components/WhosUsingSvelte.svelte

@@ -76,6 +76,8 @@ export default class AttributeWrapper {
 		const is_select_value_attribute =
 			name === 'value' && element.node.name === 'select';
 
+		const is_input_value = name === 'value' && element.node.name === 'input';
+
 		const should_cache = is_src || this.node.should_cache() || is_select_value_attribute; // TODO is this necessary?
 
 		const last = should_cache && block.get_unique_name(
@@ -145,6 +147,14 @@ export default class AttributeWrapper {
 				condition = is_src
 					? x`${condition} && (${element.var}.src !== (${last} = ${value}))`
 					: x`${condition} && (${last} !== (${last} = ${value}))`;
+			}
+
+			if (is_input_value) {
+				const type = element.node.get_static_attribute_value('type');
+
+				if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
+					condition = x`${condition} && ${element.var}.${property_name} !== ${should_cache ? last : value}`;
+				}
 			}
 
 			if (block.has_outros) {

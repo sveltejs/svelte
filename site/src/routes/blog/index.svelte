@@ -11,7 +11,7 @@
 
 <svelte:head>
 	<title>Blog • Svelte</title>
-	<link rel="alternate" type="application/rss+xml" title="Svelte blog" href="blog/rss.xml">
+	<link rel="alternate" type="application/rss+xml" title="Svelte blog" href="https://svelte.dev/blog/rss.xml">
 
 	<meta name="twitter:title" content="Svelte blog">
 	<meta name="twitter:description" content="Articles about Svelte and UI development">

@@ -67,7 +67,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 
 			if (head.subscribable && head.reassigned) {
 				const subscribe = `$$subscribe_${head.name}`;
-				invalidate = x`${subscribe}(${invalidate})}`;
+				invalidate = x`${subscribe}(${invalidate})`;
 			}
 
 			return invalidate;

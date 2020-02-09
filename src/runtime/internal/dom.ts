@@ -152,11 +152,16 @@ export function claim_element(nodes, name, attributes, svg) {
 	for (let i = 0; i < nodes.length; i += 1) {
 		const node = nodes[i];
 		if (node.nodeName === name) {
-			for (let j = 0; j < node.attributes.length; j += 1) {
+			let j = 0;
+			while (j < node.attributes.length) {
 				const attribute = node.attributes[j];
-				if (!attributes[attribute.name]) node.removeAttribute(attribute.name);
+				if (attributes[attribute.name]) {
+					j++;
+				} else {
+					node.removeAttribute(attribute.name);
+				}
 			}
-			return nodes.splice(i, 1)[0]; // TODO strip unwanted attributes
+			return nodes.splice(i, 1)[0];
 		}
 	}
 
@@ -271,6 +276,10 @@ export function custom_event<T=any>(type: string, detail?: T) {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, false, false, detail);
 	return e;
+}
+
+export function query_selector_all(selector: string, parent: HTMLElement = document.body) {
+	return Array.from(parent.querySelectorAll(selector));
 }
 
 export class HtmlTag {

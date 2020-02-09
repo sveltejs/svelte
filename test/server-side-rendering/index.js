@@ -9,6 +9,7 @@ import {
 	loadSvelte,
 	setupHtmlEqual,
 	tryToLoadJson,
+	cleanRequireCache,
 	shouldUpdateExpected,
 	mkdirp
 } from "../helpers.js";
@@ -27,11 +28,6 @@ let compile = null;
 
 describe("ssr", () => {
 	before(() => {
-		require("../../register")({
-			extensions: ['.svelte', '.html'],
-			sveltePath
-		});
-
 		compile = loadSvelte(true).compile;
 
 		return setupHtmlEqual();
@@ -40,9 +36,11 @@ describe("ssr", () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === ".") return;
 
+		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
+
 		// add .solo to a sample directory name to only run that test, or
 		// .show to always show the output. or both
-		const solo = /\.solo/.test(dir);
+		const solo = config.solo || /\.solo/.test(dir);
 		const show = /\.show/.test(dir);
 
 		if (solo && process.env.CI) {
@@ -51,6 +49,18 @@ describe("ssr", () => {
 
 		(solo ? it.only : it)(dir, () => {
 			dir = path.resolve(`${__dirname}/samples`, dir);
+
+			cleanRequireCache();
+
+			const compileOptions = {
+				sveltePath,
+				...config.compileOptions,
+				generate: 'ssr',
+				format: 'cjs'
+			};
+
+			require("../../register")(compileOptions);
+
 			try {
 				const Component = require(`${dir}/main.svelte`).default;
 
@@ -133,18 +143,16 @@ describe("ssr", () => {
 		(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve("test/runtime/samples", dir);
 
-			Object.keys(require.cache)
-				.filter(x => x.endsWith('.svelte'))
-				.forEach(file => {
-					delete require.cache[file];
-				});
+			cleanRequireCache();
 
 			delete global.window;
 
-			const compileOptions = Object.assign({ sveltePath }, config.compileOptions, {
+			const compileOptions = {
+				sveltePath,
+				...config.compileOptions,
 				generate: 'ssr',
 				format: 'cjs'
-			});
+			};
 
 			require("../../register")(compileOptions);
 

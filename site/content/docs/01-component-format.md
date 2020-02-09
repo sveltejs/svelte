@@ -147,24 +147,7 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 
 ---
 
-A *store* is any object that allows reactive access to a value via a simple *store contract*.
-
-The [`svelte/store` module](docs#svelte_store) contains minimal store implementations which fulfil this contract. You can use these as the basis for your own stores, or you can implement your stores from scratch.
-
-A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes. The `.subscribe` method must also return an unsubscription function. Calling an unsubscription function must stop its subscription, and its corresponding subscription function must not be called again by the store.
-
-A store may optionally contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a *writable store*.
-
-```js
-const unsubscribe = store.subscribe(value => {
-	console.log(value);
-}); // logs `value`
-
-// later...
-unsubscribe();
-```
-
----
+A *store* is an object that allows reactive access to a value via a simple *store contract*. The [`svelte/store` module](docs#svelte_store) contains minimal store implementations which fulfil this contract.
 
 Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, and set up a store subscription that will be unsubscribed when appropriate.
 
@@ -189,6 +172,20 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 </script>
 ```
 
+##### Store contract
+
+```js
+store = { subscribe: (subscription: (value: any) => void) => () => void, set?: (value: any) => void }
+```
+
+You can create your own stores without relying on [`svelte/store`](docs#svelte_store), by implementing the *store contract*:
+
+1. A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes.
+2. The `.subscribe` method must return an unsubscribe function. Calling an unsubscribe function must stop its subscription, and its corresponding subscription function must not be called again by the store.
+3. A store may *optionally* contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a *writable store*.
+
+For interoperability with RxJS Observables, the `.subscribe` method is also allowed to return an object with an `.unsubscribe` method, rather than return the unsubscription function directly. Note however that unless `.subscribe` synchronously calls the subscription (which is not required by the Observable spec), Svelte will see the value of the store as `undefined` until it does.
+
 
 ### &lt;script context="module"&gt;
 
@@ -200,7 +197,7 @@ You can `export` bindings from this block, and they will become exports of the c
 
 You cannot `export default`, since the default export is the component itself.
 
-> Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](https://svelte.dev/docs#svelte_store).
+> Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](docs#svelte_store).
 
 ```html
 <script context="module">
@@ -254,5 +251,17 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 			 to this component */
 		color: goldenrod;
 	}
+</style>
+```
+
+---
+
+If you want to make @keyframes that are accessible globally, you need to prepend your keyframe names with `-global-`.
+
+The `-global-` part will be removed when compiled, and the keyframe then be referenced using just `my-animation-name` elsewhere in your code.
+
+```html
+<style>
+	@keyframes -global-my-animation-name {...}
 </style>
 ```
