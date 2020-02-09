@@ -108,7 +108,7 @@ export default function mustache(parser: Parser) {
 		if (parser.eat('if')) {
 			const block = parser.current();
 			if (block.type !== 'IfBlock') {
-				if (parser.find_in_stack(block => block.type === 'IfBlock')) {
+				if (parser.stack.some(block => block.type === 'IfBlock')) {
 					parser.error({
 						code: 'unclosed-open-tag',
 						message: `Expect to close ${to_string(block)} before {:else if ...} block`
@@ -151,7 +151,7 @@ export default function mustache(parser: Parser) {
 		else {
 			const block = parser.current();
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
-				if (parser.find_in_stack(block => block.type === 'IfBlock' || block.type === 'EachBlock')) {
+				if (parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')) {
 					parser.error({
 						code: 'unclosed-open-tag',
 						message: `Expect to close ${to_string(block)} before {:else} block`
@@ -182,7 +182,7 @@ export default function mustache(parser: Parser) {
 
 		if (is_then) {
 			if (block.type !== 'PendingBlock') {
-				if (parser.find_in_stack(block => block.type === 'PendingBlock')) {
+				if (parser.stack.some(block => block.type === 'PendingBlock')) {
 					parser.error({
 						code: 'unclosed-open-tag',
 						message: `Expect to close ${to_string(block)} before {:then} block`
@@ -195,7 +195,7 @@ export default function mustache(parser: Parser) {
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
-				if (parser.find_in_stack(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')) {
+				if (parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')) {
 					parser.error({
 						code: 'unclosed-open-tag',
 						message: `Expect to close ${to_string(block)} before {:catch} block`

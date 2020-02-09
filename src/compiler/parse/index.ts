@@ -82,15 +82,6 @@ export class Parser {
 		return this.stack[this.stack.length - 1];
 	}
 
-	find_in_stack(fn) {
-		for (let i=this.stack.length -1; i>=0; i--) {
-			if (fn(this.stack[i])) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	acorn_error(err: any) {
 		this.error({
 			code: `parse-error`,
