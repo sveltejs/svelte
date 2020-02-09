@@ -1,4 +1,4 @@
 {#if true}
-  <p>
-  {:else if false}
+	<p>
+{:else if false}
 {/if}

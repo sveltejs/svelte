@@ -1,4 +1,4 @@
 {#await true}
-  <li>
-  {:then f}
+	<li>
+{:then f}
 {/await}

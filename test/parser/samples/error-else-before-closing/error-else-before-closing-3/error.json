@@ -1,6 +1,0 @@
-{
-	"code": "invalid-else-placement",
-	"message": "Cannot have an {:else} block outside an {#if ...} or {#each ...} block",
-	"start": { "line": 2, "column": 6, "character": 11 },
-	"pos": 11
-}

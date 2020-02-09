@@ -1,4 +1,4 @@
 {#await foo}
 {:then bar}
-  {:else if}
+	{:else if}
 {/await}

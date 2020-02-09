@@ -1,4 +1,4 @@
 {#if true}
-  <li>
-  {:else}
+	<li>
+{:else}
 {/if}

@@ -1,4 +1,4 @@
 {#if true}
-  {#await p}
-  {:else}
+	{#await p}
+{:else}
 {/if}

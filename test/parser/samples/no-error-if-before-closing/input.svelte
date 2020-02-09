@@ -1,19 +1,19 @@
 {#if true}
-<input >
+	<input>
 {:else}
 {/if}
 
 {#if true}
-<br >
+	<br>
 {:else}
 {/if}
 
 {#await true}
-<input >
+	<input>
 {:then f}
 {/await}
 
 {#await true}
-<br >
+	<br>
 {:then f}
 {/await}
