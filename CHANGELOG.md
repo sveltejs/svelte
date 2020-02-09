@@ -10,6 +10,7 @@
 * Disallow reserved keywords in `{expressions}` ([#4372](https://github.com/sveltejs/svelte/issues/4372))
 * Fix code generation error with precedence of arrow functions ([#4384](https://github.com/sveltejs/svelte/issues/4384))
 * Fix event handlers that are dynamic via reactive declarations or stores ([#4388](https://github.com/sveltejs/svelte/issues/4388))
+* Fix invalidation in expressions like `++foo.bar` ([#4393](https://github.com/sveltejs/svelte/issues/4393))
 
 ## 3.18.1
 
