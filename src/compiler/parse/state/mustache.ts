@@ -3,6 +3,7 @@ import read_expression from '../read/expression';
 import { closing_tag_omitted } from '../utils/html';
 import { whitespace } from '../../utils/patterns';
 import { trim_start, trim_end } from '../../utils/trim';
+import { to_string } from '../utils/node';
 import { Parser } from '../index';
 import { TemplateNode } from '../../interfaces';
 
@@ -106,11 +107,14 @@ export default function mustache(parser: Parser) {
 		// :else if
 		if (parser.eat('if')) {
 			const block = parser.current();
-			if (block.type !== 'IfBlock')
+			if (block.type !== 'IfBlock') {
 				parser.error({
 					code: `invalid-elseif-placement`,
-					message: 'Cannot have an {:else if ...} block outside an {#if ...} block'
+					message: parser.stack.some(block => block.type === 'IfBlock')
+						? `Expected to close ${to_string(block)} before seeing {:else if ...} block`
+						: `Cannot have an {:else if ...} block outside an {#if ...} block`
 				});
+			}
 
 			parser.require_whitespace();
 
@@ -144,7 +148,9 @@ export default function mustache(parser: Parser) {
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 				parser.error({
 					code: `invalid-else-placement`,
-					message: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
+					message: parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
+						? `Expected to close ${to_string(block)} before seeing {:else} block`
+						: `Cannot have an {:else} block outside an {#if ...} or {#each ...} block`
 				});
 			}
 
@@ -168,14 +174,18 @@ export default function mustache(parser: Parser) {
 			if (block.type !== 'PendingBlock') {
 				parser.error({
 					code: `invalid-then-placement`,
-					message: 'Cannot have an {:then} block outside an {#await ...} block'
+					message: parser.stack.some(block => block.type === 'PendingBlock')
+						? `Expected to close ${to_string(block)} before seeing {:then} block`
+						: `Cannot have an {:then} block outside an {#await ...} block`
 				});
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
 				parser.error({
 					code: `invalid-catch-placement`,
-					message: 'Cannot have an {:catch} block outside an {#await ...} block'
+					message: parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
+						? `Expected to close ${to_string(block)} before seeing {:catch} block`
+						: `Cannot have an {:catch} block outside an {#await ...} block`
 				});
 			}
 		}
