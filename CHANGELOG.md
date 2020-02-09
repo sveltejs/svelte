@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix binding to module-level variables ([#4086](https://github.com/sveltejs/svelte/issues/4086))
+* Improve parsing error messages when there is a pending unclosed tag ([#4131](https://github.com/sveltejs/svelte/issues/4131))
 * Disallow attribute/prop names from matching two-way-bound names or `{shorthand}` attribute/prop names ([#4325](https://github.com/sveltejs/svelte/issues/4325))
 * Improve performance of `flush()` by not using `.shift()` ([#4356](https://github.com/sveltejs/svelte/pull/4356))
 * Fix code generation error with precedence of arrow functions ([#4384](https://github.com/sveltejs/svelte/issues/4384))
