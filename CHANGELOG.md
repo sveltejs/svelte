@@ -9,6 +9,7 @@
 * Permit reserved keywords as destructuring keys in `{#each}` ([#4372](https://github.com/sveltejs/svelte/issues/4372))
 * Disallow reserved keywords in `{expressions}` ([#4372](https://github.com/sveltejs/svelte/issues/4372))
 * Fix code generation error with precedence of arrow functions ([#4384](https://github.com/sveltejs/svelte/issues/4384))
+* Fix invalidation in expressions like `++foo.bar` ([#4393](https://github.com/sveltejs/svelte/issues/4393))
 
 ## 3.18.1
 
