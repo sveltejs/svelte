@@ -136,12 +136,10 @@ export default class Component {
 		this.stylesheet = new Stylesheet({
 			source,
 			ast,
-			options: {
-				filename: compile_options.filename,
-				component_name: name,
-				dev: compile_options.dev,
-				scope_class_getter: compile_options.scopeClass
-			}
+			filename: compile_options.filename,
+			component_name: name,
+			dev: compile_options.dev,
+			scope_class_getter: compile_options.scopeClass
 		});
 		this.stylesheet.validate(this);
 

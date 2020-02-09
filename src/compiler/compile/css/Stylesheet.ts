@@ -296,21 +296,17 @@ export default class Stylesheet {
 	constructor({
 		source,
 		ast,
-		options: {
-			component_name,
-			filename,
-			dev,
-			scope_class_getter = getDefaultScopeClass,
-		},
+		component_name,
+		filename,
+		dev,
+		scope_class_getter = getDefaultScopeClass,
 	}: {
 		source: string;
 		ast: Ast;
-		options: {
-			filename: string | undefined;
-			component_name: string | undefined;
-			dev: boolean;
-			scope_class_getter: CssScopeClassGetter;
-		};
+		filename: string | undefined;
+		component_name: string | undefined;
+		dev: boolean;
+		scope_class_getter: CssScopeClassGetter;
 	}) {
 		this.source = source;
 		this.ast = ast;
