@@ -239,7 +239,7 @@ export default class IfBlockWrapper extends Wrapper {
 			block.add_element(
 				anchor as Identifier,
 				x`@empty()`,
-				parent_nodes && x`@claim_text(${parent_nodes}, '')/*IF242*/`,
+				parent_nodes && x`@claim_text(${parent_nodes}, '')`,
 				parent_node
 			);
 		}
