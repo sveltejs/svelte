@@ -39,20 +39,25 @@ export default class AttributeWrapper {
 		}
 	}
 
+	is_indirectly_bound_value() {
+		const element = this.parent;
+		const name = fix_attribute_casing(this.node.name);
+		return name === 'value' &&
+			(element.node.name === 'option' || // TODO check it's actually bound
+				(element.node.name === 'input' &&
+					element.node.bindings.some(
+						(binding) =>
+							/checked|group/.test(binding.name)
+					)));
+	}
+
 	render(block: Block) {
 		const element = this.parent;
 		const name = fix_attribute_casing(this.node.name);
 
 		const metadata = this.get_metadata();
 
-		const is_indirectly_bound_value =
-			name === 'value' &&
-			(element.node.name === 'option' || // TODO check it's actually bound
-				(element.node.name === 'input' &&
-					element.node.bindings.find(
-						(binding) =>
-							/checked|group/.test(binding.name)
-					)));
+		const is_indirectly_bound_value = this.is_indirectly_bound_value();
 
 		const property_name = is_indirectly_bound_value
 			? '__value'

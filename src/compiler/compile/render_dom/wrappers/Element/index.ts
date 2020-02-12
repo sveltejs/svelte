@@ -679,10 +679,10 @@ export default class ElementWrapper extends Wrapper {
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
 				} else {
 					const metadata = attr.get_metadata();
-					const snippet = x`{ ${
-						(metadata && metadata.property_name) ||
-						fix_attribute_casing(attr.node.name)
-					}: ${attr.get_value(block)} }`;
+					const name = attr.is_indirectly_bound_value()
+						? '__value'
+						: (metadata && metadata.property_name) || fix_attribute_casing(attr.node.name);
+					const snippet = x`{ ${name}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
