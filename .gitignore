@@ -13,6 +13,7 @@ node_modules
 /motion
 /transition
 /animate
+/slot
 /scratch/
 /coverage/
 /coverage.lcov

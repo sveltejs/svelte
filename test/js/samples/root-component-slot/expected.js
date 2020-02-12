@@ -2,7 +2,6 @@
 import {
 	SvelteComponent,
 	append,
-	create_root_component_slots,
 	create_slot,
 	detach,
 	element,
@@ -91,13 +90,6 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-
-		if (options.slots) {
-			options.props = options.props || {};
-			options.props.$$scope = {};
-			options.props.$$slots = create_root_component_slots(options.slots);
-		}
-
 		init(this, options, instance, create_fragment, safe_not_equal, {});
 	}
 }

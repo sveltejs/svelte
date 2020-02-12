@@ -1,3 +1,5 @@
+import { createSlot } from 'svelte/slot';
+
 export default {
 	options(window) {
 		const default_el = window.document.createElement('div');
@@ -11,12 +13,12 @@ export default {
 		const conditional_slot_el = window.document.createElement('div');
 		conditional_slot_el.innerHTML = 'conditional slot';
 		return {
-			slots: {
+			slots: createSlot({
 				default: default_el,
 				'my-slot': my_slot_els,
 				'another-slot-with-content': another_slot_el,
 				'conditional-slot': conditional_slot_el,
-			},
+			}),
 		};
 	},
 
