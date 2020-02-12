@@ -185,7 +185,7 @@ const ast = svelte.parse(source, { filename: 'App.svelte' });
 result: {
 	code: string,
 	dependencies: Array<string>
-} = svelte.preprocess(
+} = await svelte.preprocess(
 	source: string,
 	preprocessors: Array<{
 		markup?: (input: { content: string, filename: string }) => Promise<{
@@ -222,7 +222,7 @@ The `markup` function receives the entire component source text, along with the 
 ```js
 const svelte = require('svelte/compiler');
 
-const { code } = svelte.preprocess(source, {
+const { code } = await svelte.preprocess(source, {
 	markup: ({ content, filename }) => {
 		return {
 			code: content.replace(/foo/g, 'bar')
@@ -244,7 +244,7 @@ const svelte = require('svelte/compiler');
 const sass = require('node-sass');
 const { dirname } = require('path');
 
-const { code, dependencies } = svelte.preprocess(source, {
+const { code, dependencies } = await svelte.preprocess(source, {
 	style: async ({ content, attributes, filename }) => {
 		// only process <style lang="sass">
 		if (attributes.lang !== 'sass') return;
@@ -277,7 +277,7 @@ Multiple preprocessors can be used together. The output of the first becomes the
 ```js
 const svelte = require('svelte/compiler');
 
-const { code } = svelte.preprocess(source, [
+const { code } = await svelte.preprocess(source, [
 	{
 		markup: () => {
 			console.log('this runs first');
