@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix indirect bindings involving elements with spreads ([#3680](https://github.com/sveltejs/svelte/issues/3680))
+
 ## 3.18.2
 
 * Fix binding to module-level variables ([#4086](https://github.com/sveltejs/svelte/issues/4086))
