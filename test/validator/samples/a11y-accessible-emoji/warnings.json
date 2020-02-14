@@ -1,0 +1,92 @@
+[
+	{
+		"code": "a11y-accessible-emoji",
+		"message": "A11y: Emojis should be wrapped in <span>, have role=\"img\", and have an accessible description with aria-label or aria-labelledby. ",
+		"start": {
+			"line": 13,
+			"column": 0,
+			"character": 424
+		},
+		"end": {
+			"line": 13,
+			"column": 15,
+			"character": 439
+		},
+		"pos": 424
+	},
+	{
+		"code": "a11y-accessible-emoji",
+		"message": "A11y: Emojis should be wrapped in <span>, have role=\"img\", and have an accessible description with aria-label or aria-labelledby. ",
+		"start": {
+			"line": 14,
+			"column": 0,
+			"character": 440
+		},
+		"end": {
+			"line": 14,
+			"column": 21,
+			"character": 461
+		},
+		"pos": 440
+	},
+	{
+		"code": "a11y-accessible-emoji",
+		"message": "A11y: Emojis should be wrapped in <span>, have role=\"img\", and have an accessible description with aria-label or aria-labelledby. ",
+		"start": {
+			"line": 15,
+			"column": 0,
+			"character": 462
+		},
+		"end": {
+			"line": 15,
+			"column": 23,
+			"character": 485
+		},
+		"pos": 462
+	},
+	{
+		"code": "a11y-accessible-emoji",
+		"message": "A11y: Emojis should be wrapped in <span>, have role=\"img\", and have an accessible description with aria-label or aria-labelledby. ",
+		"start": {
+			"line": 16,
+			"column": 0,
+			"character": 486
+		},
+		"end": {
+			"line": 16,
+			"column": 44,
+			"character": 530
+		},
+		"pos": 486
+	},
+	{
+		"code": "a11y-accessible-emoji",
+		"message": "A11y: Emojis should be wrapped in <span>, have role=\"img\", and have an accessible description with aria-label or aria-labelledby. ",
+		"start": {
+			"line": 17,
+			"column": 0,
+			"character": 531
+		},
+		"end": {
+			"line": 17,
+			"column": 42,
+			"character": 573
+		},
+		"pos": 531
+	},
+	{
+		"code": "a11y-accessible-emoji",
+		"message": "A11y: Emojis should be wrapped in <span>, have role=\"img\", and have an accessible description with aria-label or aria-labelledby. ",
+		"start": {
+			"line": 18,
+			"column": 0,
+			"character": 574
+		},
+		"end": {
+			"line": 18,
+			"column": 35,
+			"character": 609
+		},
+		"pos": 574
+	}
+]

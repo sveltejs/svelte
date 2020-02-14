@@ -73,6 +73,7 @@
     "code-red": "0.1.1",
     "codecov": "^3.5.0",
     "css-tree": "1.0.0-alpha22",
+    "emoji-regex": "^8.0.0",
     "eslint": "^6.3.0",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-svelte3": "^2.7.3",

@@ -1,3 +1,4 @@
+import emojiRegex from 'emoji-regex';
 import { is_void } from '../../utils/names';
 import Node from './shared/Node';
 import Attribute from './Attribute';
@@ -274,6 +275,7 @@ export default class Element extends Node {
 		this.validate_attributes();
 		this.validate_bindings();
 		this.validate_content();
+		this.validate_emoji();
 		this.validate_event_handlers();
 	}
 
@@ -668,6 +670,36 @@ export default class Element extends Node {
 				code: `a11y-missing-content`,
 				message: `A11y: <${this.name}> element should have child content`
 			});
+		}
+	}
+
+	validate_emoji() {
+		if (this.children.length === 1) {
+			const child = this.children[0];
+			if (child.type === 'Text' && emojiRegex().test(child.data)) {
+
+				const isHidden = this.attributes.find(
+					(attribute: Attribute) => attribute.name === 'aria-hidden'
+				);
+				if (isHidden && (isHidden.is_true || isHidden.get_static_value() === "true")) {
+					return; // emoji is decorative
+				}
+
+				const hasLabel = this.attributes.find(
+					(attribute: Attribute) => attribute.name === 'aria-label' || attribute.name === 'aria-labelledby'
+				);
+				const role = this.attributes.find(
+					(attribute: Attribute) => attribute.name === 'role'
+				);
+				const isSpan = this.name === 'span';
+
+				if (!hasLabel || role.get_static_value() !== 'img' || isSpan === false) {
+					this.component.warn(this, {
+						code: `a11y-accessible-emoji`,
+						message: `A11y: Emojis should be wrapped in <span>, have role="img", and have an accessible description with aria-label or aria-labelledby. `
+					});
+				}
+			}
 		}
 	}
 
