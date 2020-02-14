@@ -92,10 +92,12 @@ function create_fragment(ctx) {
 			insert(target, each_1_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
-			const each_value = /*things*/ ctx[0];
-			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
-			each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
-			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].a();
+			if (dirty & /*things*/ 1) {
+				const each_value = /*things*/ ctx[0];
+				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
+				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
+				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].a();
+			}
 		},
 		i: noop,
 		o: noop,
