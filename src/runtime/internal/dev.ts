@@ -79,6 +79,17 @@ export function set_data_dev(text, data) {
 	text.data = data;
 }
 
+export function validate_each_argument(arg) {
+	if (arg instanceof Set || arg instanceof Map) {
+		throw new Error(`Svelte does not allow Sets or Maps in an {#each} block. Use [...arg.values()] instead.`);
+	} 
+	if (arg.length === undefined) {
+		throw new Error(
+			`Svelte needs an array-like value for the {#each} block. You can spread your iterable into an array instead, e.g. [...iterable]`
+		);
+	}
+}
+
 
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
