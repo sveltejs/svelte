@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix indirect bindings involving elements with spreads ([#3680](https://github.com/sveltejs/svelte/issues/3680))
+* Fix unneeded updating of keyed each blocks ([#4373](https://github.com/sveltejs/svelte/issues/4373))
 
 ## 3.18.2
 
