@@ -18,7 +18,7 @@ You'll be using the *command line*, also known as the terminal. On Windows, you 
 
 The command line is a way to interact with your computer (or another computer! but that's a topic for another time) with more power and control than the GUI (graphical user interface) that most people use day-to-day.
 
-Once on the command line, you can navigate the filesystem using `ls` to list the contents of your current directory, and `cd` to change the current directory. For example, if you had a `Development` directory of your projects inside your home directory, you would type
+Once on the command line, you can navigate the filesystem using `ls` (`dir` on Windows) to list the contents of your current directory, and `cd` to change the current directory. For example, if you had a `Development` directory of your projects inside your home directory, you would type
 
 ```bash
 cd Development
@@ -34,7 +34,7 @@ cd svelte-projects
 A full introduction to the command line is out of the scope of this guide, but here are a few more useful commands:
 
 * `cd ..` — navigates to the parent of the current directory
-* `cat my-file.txt` — on Mac/Linux, lists the contents of `my-file.txt`
+* `cat my-file.txt` — on Mac/Linux (`type my-file.txt` on Windows), lists the contents of `my-file.txt`
 * `open .` (or `start .` on Windows) — opens the current directory in Finder or File Explorer
 
 
