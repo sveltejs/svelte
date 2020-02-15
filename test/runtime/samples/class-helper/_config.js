@@ -5,7 +5,7 @@ export default {
 
 	html: `<div class="active"></div>`,
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, target }) {
 		component.user = { active: false };
 
 		assert.htmlEqual(target.innerHTML, `

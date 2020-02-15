@@ -9,7 +9,7 @@ export function get(req, res) {
 	setTimeout(() => {
 		// fail sometimes
 		if (Math.random() < 0.333) {
-			res.statusCode = 500;
+			res.statusCode = 400;
 			res.end(`Failed to generate random number. Please try again`);
 			return;
 		}

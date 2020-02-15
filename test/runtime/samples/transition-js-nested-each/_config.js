@@ -4,7 +4,7 @@ export default {
 		things: ['a']
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.x = true;
 
 		const div = target.querySelector('div');

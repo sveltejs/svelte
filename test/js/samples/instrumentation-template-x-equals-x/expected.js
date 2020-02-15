@@ -15,7 +15,13 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var button, t1, p, t2, t3_value = ctx.things.length, t3, dispose;
+	let button;
+	let t1;
+	let p;
+	let t2;
+	let t3_value = /*things*/ ctx[0].length + "";
+	let t3;
+	let dispose;
 
 	return {
 		c() {
@@ -25,33 +31,24 @@ function create_fragment(ctx) {
 			p = element("p");
 			t2 = text("number of things: ");
 			t3 = text(t3_value);
-			dispose = listen(button, "click", ctx.click_handler);
 		},
-
 		m(target, anchor) {
 			insert(target, button, anchor);
 			insert(target, t1, anchor);
 			insert(target, p, anchor);
 			append(p, t2);
 			append(p, t3);
+			dispose = listen(button, "click", /*click_handler*/ ctx[1]);
 		},
-
-		p(changed, ctx) {
-			if ((changed.things) && t3_value !== (t3_value = ctx.things.length)) {
-				set_data(t3, t3_value);
-			}
+		p(ctx, [dirty]) {
+			if (dirty & /*things*/ 1 && t3_value !== (t3_value = /*things*/ ctx[0].length + "")) set_data(t3, t3_value);
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(button);
-				detach(t1);
-				detach(p);
-			}
-
+			if (detaching) detach(button);
+			if (detaching) detach(t1);
+			if (detaching) detach(p);
 			dispose();
 		}
 	};
@@ -60,15 +57,18 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let things = [];
 
-	function click_handler() { things.push(1); $$invalidate('things', things) }
+	const click_handler = () => {
+		things.push(1);
+		$$invalidate(0, things);
+	};
 
-	return { things, click_handler };
+	return [things, click_handler];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, []);
+		init(this, options, instance, create_fragment, safe_not_equal, {});
 	}
 }
 

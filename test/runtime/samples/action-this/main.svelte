@@ -4,7 +4,7 @@
 	function foo(node) {
 		const handler = () => {
 			x += 1;
-		}
+		};
 
 		node.addEventListener('click', handler);
 		handler();

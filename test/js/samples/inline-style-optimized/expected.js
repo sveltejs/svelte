@@ -11,31 +11,25 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var div;
+	let div;
 
 	return {
 		c() {
 			div = element("div");
-			set_style(div, "color", ctx.color);
+			set_style(div, "color", /*color*/ ctx[0]);
 		},
-
 		m(target, anchor) {
 			insert(target, div, anchor);
 		},
-
-		p(changed, ctx) {
-			if (changed.color) {
-				set_style(div, "color", ctx.color);
+		p(ctx, [dirty]) {
+			if (dirty & /*color*/ 1) {
+				set_style(div, "color", /*color*/ ctx[0]);
 			}
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(div);
-			}
+			if (detaching) detach(div);
 		}
 	};
 }
@@ -44,16 +38,16 @@ function instance($$self, $$props, $$invalidate) {
 	let { color } = $$props;
 
 	$$self.$set = $$props => {
-		if ('color' in $$props) $$invalidate('color', color = $$props.color);
+		if ("color" in $$props) $$invalidate(0, color = $$props.color);
 	};
 
-	return { color };
+	return [color];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["color"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { color: 0 });
 	}
 }
 

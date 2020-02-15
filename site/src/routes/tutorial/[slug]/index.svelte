@@ -18,7 +18,6 @@
 	import { getContext } from 'svelte';
 
 	import ScreenToggle from '../../../components/ScreenToggle.svelte';
-	import Icon from '../../../components/Icon.svelte';
 	import TableOfContents from './_TableOfContents.svelte';
 
 	import {
@@ -151,7 +150,7 @@
 		height: 100%;
 		border-right: 1px solid var(--second);
 		background-color: var(--second);
-		color: white;
+		color: var(--sidebar-text);
 	}
 
 	.chapter-markup {
@@ -165,6 +164,7 @@
 		margin: 4rem 0 1.6rem 0;
 		font-size: var(--h3);
 		line-height: 1;
+		font-weight: 400;
 		color: white;
 	}
 
@@ -173,16 +173,21 @@
 	}
 
 	.chapter-markup :global(a) {
+		color: var(--sidebar-text);
+	}
+
+	.chapter-markup :global(a:hover) {
 		color: white;
 	}
+
 
 	.chapter-markup :global(ul) {
 		padding: 0 0 0 2em;
 	}
 
 	.chapter-markup :global(blockquote) {
-		background-color: rgba(255,255,255,.1);
-		color: white;
+		background-color: rgba(0,0,0,.17);
+		color: var(--sidebar-text);
 	}
 
 	.chapter-markup::-webkit-scrollbar {
@@ -198,45 +203,40 @@
 
 	.chapter-markup :global(p) > :global(code),
 	.chapter-markup :global(ul) :global(code) {
-		color: white;
-		background: rgba(255,255,255,.1);
-		padding: .2em .4em;
+		color: var(--sidebar-text);
+		background: rgba(0,0,0,.12);
+		padding: .2em .4em .3em;
 		white-space: nowrap;
 		position: relative;
 		top: -0.1em;
 	}
 
 	.controls {
-		border-top: 1px solid rgba(255,255,255,.1);
+		border-top: 1px solid rgba(255,255,255,.15);
 		padding: 1em 0 0 0;
 		display: flex;
 	}
 
 	.show {
-		background: rgba(255,255,255,.1);
-		padding: .2em .7em .3em;
+		background: var(--prime);
+		padding: .3em .7em;
 		border-radius: var(--border-r);
 		top: .1em;
 		position: relative;
 		font-size: var(--h5);
 		font-weight: 300;
+		color: rgba(255,255,255,0.7);
 	}
 
 	.show:hover {
-		background: rgba(255,255,255,.2);
+		color: white;
 	}
 
 	a.next {
-		/* border-bottom: none; */
 		padding-right: 1.2em;
 		background: no-repeat 100% 50% url(/icons/arrow-right.svg);
 		background-size: 1em 1em;
 		margin-left: auto;
-	}
-
-	a.next:hover {
-		/* border-bottom: 2px solid currentColor; */
-		/* text-decoration: underline; */
 	}
 
 	.improve-chapter {
@@ -301,6 +301,7 @@
 		<div class="tutorial-repl">
 			<Repl
 				bind:this={repl}
+				workersUrl="workers"
 				{svelteUrl}
 				{rollupUrl}
 				orientation={mobile ? 'columns' : 'rows'}

@@ -1,6 +1,7 @@
 <script>
 	export let sections = [];
 	export let active_section = null;
+	export let isLoading = false;
 </script>
 
 <style>
@@ -21,33 +22,55 @@
 
 	.section-title {
 		display: block;
-		padding: 0 0 .8rem 0;
+		padding: 0 0 0.8rem 0;
 		font: 400 var(--h6) var(--font);
 		text-transform: uppercase;
 		letter-spacing: 0.12em;
 		font-weight: 700;
 	}
 
-	a {
+	div {
 		display: flex;
-		position: relative;
-		color: white;
-		border-bottom: none;
+		flex-direction: row;
 		padding: 0.2rem 3rem;
 		margin: 0 -3rem;
+	}
+
+	div.active {
+		background: rgba(0, 0, 0, 0.15) calc(100% - 3rem) 47% no-repeat
+			url(/icons/arrow-right.svg);
+		background-size: 1em 1em;
+		color: white;
+	}
+
+	div.active.loading {
+		background: rgba(0, 0, 0, 0.1) calc(100% - 3rem) 47% no-repeat
+			url(/icons/loading.svg);
+		background-size: 1em 1em;
+		color: white;
+	}
+
+	a {
+		display: flex;
+		flex: 1 1 auto;
+		position: relative;
+		color: var(--sidebar-text);
+		border-bottom: none;
 		font-size: 1.6rem;
 		align-items: center;
 		justify-content: start;
+		padding: 0;
 	}
 
 	a:hover {
-		color: var(--flash);
+		color: white;
 	}
 
-	a.active {
-		background: rgba(255, 255, 255, 0.1) calc(100% - 3rem) 50% no-repeat url(/icons/arrow-right.svg);
-		background-size: 1em 1em;
-		color: white;
+	.repl-link {
+		flex: 0 1 auto;
+		font-size: 1.2rem;
+		font-weight: 700;
+		margin-right: 2.5rem;
 	}
 
 	.thumbnail {
@@ -56,7 +79,7 @@
 		width: 5rem;
 		height: 5rem;
 		border-radius: 2px;
-		box-shadow: 1px 1px 3px rgba(0,0,0,0.13);
+		box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.13);
 		margin: 0.2em 0.5em 0.2em 0;
 	}
 </style>
@@ -64,24 +87,29 @@
 <ul class="examples-toc">
 	{#each sections as section}
 		<li>
-			<span class="section-title">
-				{section.title}
-			</span>
+			<span class="section-title">{section.title}</span>
 
 			{#each section.examples as example}
-				<a
-					href="examples#{example.slug}"
+				<div
 					class="row"
-					class:active="{example.slug === active_section}"
-				>
-					<img
-						class="thumbnail"
-						alt="{example.title} thumbnail"
-						src="examples/thumbnails/{example.slug}.jpg"
-					>
+					class:active={example.slug === active_section}
+					class:loading={isLoading}>
+					<a
+						href="examples#{example.slug}"
+						class="row"
+						class:active={example.slug === active_section}
+						class:loading={isLoading}>
+						<img
+							class="thumbnail"
+							alt="{example.title} thumbnail"
+							src="examples/thumbnails/{example.slug}.jpg" />
 
-					<span>{example.title}</span>
-				</a>
+						<span>{example.title}</span>
+					</a>
+					{#if example.slug === active_section}
+						<a href="repl/{example.slug}" class="repl-link">REPL</a>
+					{/if}
+				</div>
 			{/each}
 		</li>
 	{/each}

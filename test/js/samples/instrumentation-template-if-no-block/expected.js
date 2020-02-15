@@ -15,7 +15,12 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var button, t1, p, t2, t3, dispose;
+	let button;
+	let t1;
+	let p;
+	let t2;
+	let t3;
+	let dispose;
 
 	return {
 		c() {
@@ -24,34 +29,25 @@ function create_fragment(ctx) {
 			t1 = space();
 			p = element("p");
 			t2 = text("x: ");
-			t3 = text(ctx.x);
-			dispose = listen(button, "click", ctx.click_handler);
+			t3 = text(/*x*/ ctx[0]);
 		},
-
 		m(target, anchor) {
 			insert(target, button, anchor);
 			insert(target, t1, anchor);
 			insert(target, p, anchor);
 			append(p, t2);
 			append(p, t3);
+			dispose = listen(button, "click", /*click_handler*/ ctx[1]);
 		},
-
-		p(changed, ctx) {
-			if (changed.x) {
-				set_data(t3, ctx.x);
-			}
+		p(ctx, [dirty]) {
+			if (dirty & /*x*/ 1) set_data(t3, /*x*/ ctx[0]);
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(button);
-				detach(t1);
-				detach(p);
-			}
-
+			if (detaching) detach(button);
+			if (detaching) detach(t1);
+			if (detaching) detach(p);
 			dispose();
 		}
 	};
@@ -60,17 +56,17 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let x = 0;
 
-	function click_handler() {
-		if (true) { x += 1; $$invalidate('x', x); }
-	}
+	const click_handler = () => {
+		if (true) $$invalidate(0, x += 1);
+	};
 
-	return { x, click_handler };
+	return [x, click_handler];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, []);
+		init(this, options, instance, create_fragment, safe_not_equal, {});
 	}
 }
 

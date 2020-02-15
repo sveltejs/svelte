@@ -15,6 +15,7 @@
 						"start": 3,
 						"end": 4,
 						"type": "Text",
+						"raw": " ",
 						"data": " "
 					},
 					{
@@ -25,6 +26,16 @@
 							"type": "Identifier",
 							"start": 11,
 							"end": 15,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 11
+								},
+								"end": {
+									"line": 1,
+									"column": 15
+								}
+							},
 							"name": "raw1"
 						}
 					},
@@ -32,6 +43,7 @@
 						"start": 16,
 						"end": 17,
 						"type": "Text",
+						"raw": " ",
 						"data": " "
 					},
 					{
@@ -42,6 +54,16 @@
 							"type": "Identifier",
 							"start": 24,
 							"end": 28,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 24
+								},
+								"end": {
+									"line": 1,
+									"column": 28
+								}
+							},
 							"name": "raw2"
 						}
 					},
@@ -49,13 +71,11 @@
 						"start": 29,
 						"end": 30,
 						"type": "Text",
+						"raw": " ",
 						"data": " "
 					}
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

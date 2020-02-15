@@ -1,28 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { SLUG_PRESERVE_UNICODE } from '../../../config';
-import { extract_frontmatter, extract_metadata, langs, link_renderer } from '../../utils/markdown.js';
-import { makeSessionSlugProcessor } from '../../utils/slug';
+import { SLUG_PRESERVE_UNICODE, SLUG_SEPARATOR } from '../../../config';
+import { extract_frontmatter, extract_metadata, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
+import { make_session_slug_processor } from '@sveltejs/site-kit/utils/slug';
+import { highlight } from '../../utils/highlight';
 import marked from 'marked';
-import PrismJS from 'prismjs';
-import 'prismjs/components/prism-bash';
-
-const escaped = {
-	'"': '&quot;',
-	"'": '&#39;',
-	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;',
-};
-
-const unescaped = Object.keys(escaped).reduce(
-	(unescaped, key) => ((unescaped[escaped[key]] = key), unescaped),
-	{}
-);
-
-function unescape(str) {
-	return String(str).replace(/&.+?;/g, match => unescaped[match] || match);
-}
 
 const blockTypes = [
 	'blockquote',
@@ -38,7 +20,10 @@ const blockTypes = [
 ];
 
 export default function() {
-	const makeSlug = makeSessionSlugProcessor(SLUG_PRESERVE_UNICODE);
+	const make_slug = make_session_slug_processor({
+		preserve_unicode: SLUG_PRESERVE_UNICODE,
+		separator: SLUG_SEPARATOR
+	});
 
 	return fs
 		.readdirSync(`content/docs`)
@@ -48,7 +33,7 @@ export default function() {
 
 			const { content, metadata } = extract_frontmatter(markdown);
 
-			const sectionSlug = makeSlug(metadata.title);
+			const section_slug = make_slug(metadata.title);
 
 			const subsections = [];
 
@@ -58,7 +43,7 @@ export default function() {
 
 			renderer.link = link_renderer;
 
-			renderer.hr = (...args) => {
+			renderer.hr = () => {
 				block_open = true;
 
 				return '<div class="side-by-side"><div class="copy">';
@@ -87,14 +72,7 @@ export default function() {
 
 				if (meta && meta.hidden) return '';
 
-				const plang = langs[lang];
-				const highlighted = PrismJS.highlight(
-					source,
-					PrismJS.languages[plang],
-					lang
-				);
-
-				let html = `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
+				const html = `<div class='${className}'>${prefix}${highlight(source, lang)}</div>`;
 
 				if (block_open) {
 					block_open = false;
@@ -105,18 +83,24 @@ export default function() {
 			};
 
 			renderer.heading = (text, level, rawtext) => {
-				const slug = makeSlug(rawtext);
+				let slug;
+
+				const match = /<a href="([^"]+)">(.+)<\/a>/.exec(text);
+				if (match) {
+					slug = match[1];
+					text = match[2];
+				} else {
+					slug = make_slug(rawtext);
+				}
 
 				if (level === 3 || level === 4) {
-					const title = unescape(
-						text
-							.replace(/<\/?code>/g, '')
-							.replace(/\.(\w+)(\((.+)?\))?/, (m, $1, $2, $3) => {
-								if ($3) return `.${$1}(...)`;
-								if ($2) return `.${$1}()`;
-								return `.${$1}`;
-							})
-					);
+					const title = text
+						.replace(/<\/?code>/g, '')
+						.replace(/\.(\w+)(\((.+)?\))?/, (m, $1, $2, $3) => {
+							if ($3) return `.${$1}(...)`;
+							if ($2) return `.${$1}()`;
+							return `.${$1}`;
+						});
 
 					subsections.push({ slug, title, level });
 				}
@@ -144,7 +128,7 @@ export default function() {
 				html: html.replace(/@@(\d+)/g, (m, id) => hashes[id] || m),
 				metadata,
 				subsections,
-				slug: sectionSlug,
+				slug: section_slug,
 				file,
 			};
 		});

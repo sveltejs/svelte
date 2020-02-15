@@ -7,7 +7,7 @@
 	// we don't want to use <svelte:window bind:online> here,
 	// because we only care about the online state when
 	// the page first loads
-	let online = typeof navigator !== 'undefined'
+	const online = typeof navigator !== 'undefined'
 		? navigator.onLine
 		: true;
 </script>
@@ -61,7 +61,7 @@
 				<p>Please try reloading the page.</p>
 			{/if}
 
-			<p>If the error persists, please drop by <a href="https://discord.gg/yy75DKs">Discord chatroom</a> and let us know, or raise an issue on <a href="https://github.com/sveltejs/svelte">GitHub</a>. Thanks!</p>
+			<p>If the error persists, please drop by <a href="chat">Discord chatroom</a> and let us know, or raise an issue on <a href="https://github.com/sveltejs/svelte">GitHub</a>. Thanks!</p>
 		{/if}
 	{:else}
 		<h1>It looks like you're offline</h1>

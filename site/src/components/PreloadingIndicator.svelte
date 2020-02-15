@@ -4,11 +4,7 @@
 	let p = 0;
 	let visible = false;
 
-	const sleep = ms => new Promise(f => setTimeout(f, ms));
-
 	onMount(() => {
-		let running = true;
-
 		function next() {
 			visible = true;
 			p += 0.1;
@@ -18,10 +14,6 @@
 		}
 
 		setTimeout(next, 250);
-
-		return () => {
-			running = false;
-		};
 	});
 </script>
 

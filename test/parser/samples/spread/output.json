@@ -18,6 +18,16 @@
 							"type": "Identifier",
 							"start": 9,
 							"end": 14,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 9
+								},
+								"end": {
+									"line": 1,
+									"column": 14
+								}
+							},
 							"name": "props"
 						}
 					}
@@ -25,8 +35,5 @@
 				"children": []
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

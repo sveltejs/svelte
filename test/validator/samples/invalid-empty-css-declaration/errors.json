@@ -1,0 +1,12 @@
+[{
+	"code": "invalid-declaration",
+	"message": "Declaration cannot be empty",
+	"start": {
+		"line": 11, "column": 0, "character": 93
+	},
+  	"end": {
+		"line": 11, "column": 0, "character": 93
+	},
+	"pos": 93,
+	"frame": " 9:     color: blue;\n10:   }\n11: </style>\n    ^"
+}]

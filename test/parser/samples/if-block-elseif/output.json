@@ -12,10 +12,30 @@
 					"type": "BinaryExpression",
 					"start": 5,
 					"end": 11,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 5
+						},
+						"end": {
+							"line": 1,
+							"column": 11
+						}
+					},
 					"left": {
 						"type": "Identifier",
 						"start": 5,
 						"end": 6,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 5
+							},
+							"end": {
+								"line": 1,
+								"column": 6
+							}
+						},
 						"name": "x"
 					},
 					"operator": ">",
@@ -23,6 +43,16 @@
 						"type": "Literal",
 						"start": 9,
 						"end": 11,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 9
+							},
+							"end": {
+								"line": 1,
+								"column": 11
+							}
+						},
 						"value": 10,
 						"raw": "10"
 					}
@@ -39,6 +69,7 @@
 								"start": 17,
 								"end": 37,
 								"type": "Text",
+								"raw": "x is greater than 10",
 								"data": "x is greater than 10"
 							}
 						]
@@ -58,10 +89,30 @@
 								"type": "BinaryExpression",
 								"start": 52,
 								"end": 57,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 10
+									},
+									"end": {
+										"line": 3,
+										"column": 15
+									}
+								},
 								"left": {
 									"type": "Identifier",
 									"start": 52,
 									"end": 53,
+									"loc": {
+										"start": {
+											"line": 3,
+											"column": 10
+										},
+										"end": {
+											"line": 3,
+											"column": 11
+										}
+									},
 									"name": "x"
 								},
 								"operator": "<",
@@ -69,6 +120,16 @@
 									"type": "Literal",
 									"start": 56,
 									"end": 57,
+									"loc": {
+										"start": {
+											"line": 3,
+											"column": 14
+										},
+										"end": {
+											"line": 3,
+											"column": 15
+										}
+									},
 									"value": 5,
 									"raw": "5"
 								}
@@ -85,6 +146,7 @@
 											"start": 63,
 											"end": 79,
 											"type": "Text",
+											"raw": "x is less than 5",
 											"data": "x is less than 5"
 										}
 									]
