@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix indirect bindings involving elements with spreads ([#3680](https://github.com/sveltejs/svelte/issues/3680))
+* Display warning when using `<Foo/>` but `Foo` might change ([#4331](https://github.com/sveltejs/svelte/issues/4331))
 
 ## 3.18.2
 
