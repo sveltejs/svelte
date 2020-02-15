@@ -2,9 +2,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
 import { rollup } from 'rollup';
-import * as virtual from 'rollup-plugin-virtual';
+import * as virtual from '@rollup/plugin-virtual';
 import * as puppeteer from 'puppeteer';
 import { addLineNumbers, loadConfig, loadSvelte } from "../helpers.js";
+import { deepEqual } from 'assert';
 
 const page = `
 <body>
@@ -13,7 +14,7 @@ const page = `
 </body>
 `;
 
-const assert = fs.readFileSync('test/custom-elements/assert.js', 'utf-8');
+const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
 describe('custom-elements', function() {
 	this.timeout(10000);
@@ -52,23 +53,25 @@ describe('custom-elements', function() {
 		await browser.close();
 	});
 
-	fs.readdirSync('test/custom-elements/samples').forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === '.') return;
 
 		const solo = /\.solo$/.test(dir);
 		const skip = /\.skip$/.test(dir);
-		const internal = path.resolve('internal.mjs');
+		const internal = path.resolve('internal/index.mjs');
 		const index = path.resolve('index.mjs');
+		const warnings = [];
 
 		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
 			const config = loadConfig(`./custom-elements/samples/${dir}/_config.js`);
+			const expected_warnings = config.warnings || [];
 
 			const bundle = await rollup({
-				input: `test/custom-elements/samples/${dir}/test.js`,
+				input: `${__dirname}/samples/${dir}/test.js`,
 				plugins: [
 					{
 						resolveId(importee) {
-							if (importee === 'svelte/internal') {
+							if (importee === 'svelte/internal' || importee === './internal') {
 								return internal;
 							}
 
@@ -83,6 +86,8 @@ describe('custom-elements', function() {
 									customElement: true,
 									dev: config.dev
 								});
+
+								compiled.warnings.forEach(w => warnings.push(w));
 
 								return compiled.js;
 							}
@@ -104,6 +109,11 @@ describe('custom-elements', function() {
 				console[type](...args);
 			});
 
+			page.on('error', error => {
+				console.log('>>> an error happened');
+				console.error(error);
+			});
+
 			try {
 				await page.goto('http://localhost:6789');
 
@@ -112,6 +122,16 @@ describe('custom-elements', function() {
 			} catch (err) {
 				console.log(addLineNumbers(code));
 				throw err;
+			} finally {
+				if (expected_warnings) {
+					deepEqual(warnings.map(w => ({
+						code: w.code,
+						message: w.message,
+						pos: w.pos,
+						start: w.start,
+						end: w.end
+					})), expected_warnings);
+				}
 			}
 		});
 	});

@@ -1,6 +1,7 @@
 import * as jsdom from 'jsdom';
 import * as assert from 'assert';
 import * as glob from 'tiny-glob/sync.js';
+import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
 
@@ -28,7 +29,7 @@ export function exists(path) {
 
 export function tryToLoadJson(file) {
 	try {
-		return JSON.parse(fs.readFileSync(file));
+		return JSON.parse(fs.readFileSync(file, 'utf-8'));
 	} catch (err) {
 		if (err.code !== 'ENOENT') throw err;
 		return null;
@@ -44,14 +45,36 @@ export function tryToReadFile(file) {
 	}
 }
 
-export const virtualConsole = new jsdom.VirtualConsole();
-const { window } = new jsdom.JSDOM('<main></main>', {virtualConsole});
+export function cleanRequireCache() {
+	Object.keys(require.cache)
+		.filter(x => x.endsWith('.svelte'))
+		.forEach(file => delete require.cache[file]);
+}
+
+const virtualConsole = new jsdom.VirtualConsole();
+virtualConsole.sendTo(console);
+
+const window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
 global.document = window.document;
+global.navigator = window.navigator;
 global.getComputedStyle = window.getComputedStyle;
-global.navigator = {userAgent: 'fake'};
+global.requestAnimationFrame = null; // placeholder, filled in using set_raf
+global.window = window;
+
+// add missing ecmascript globals to window
+for (const key of Object.getOwnPropertyNames(global)) {
+	window[key] = window[key] || global[key];
+}
+
+// implement mock scroll
+window.scrollTo = function(pageXOffset, pageYOffset) {
+	window.pageXOffset = pageXOffset;
+	window.pageYOffset = pageYOffset;
+};
 
 export function env() {
-	window._svelteTransitionManager = null;
+	window.document.title = '';
+	window.document.head.innerHTML = '';
 	window.document.body.innerHTML = '<main></main>';
 
 	return window;
@@ -120,7 +143,7 @@ export function normalizeHtml(window, html) {
 			.replace(/<!--.*?-->/g, '')
 			.replace(/>[\s\r\n]+</g, '><')
 			.trim();
-		cleanChildren(node, '');
+		cleanChildren(node);
 		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
 	} catch (err) {
 		throw new Error(`Failed to normalize HTML:\n${html}`);
@@ -174,62 +197,64 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 	glob('**/*.svelte', { cwd }).forEach(file => {
 		if (file[0] === '_') return;
 
-		const { js } = compile(
-			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-			Object.assign(options, {
-				filename: file
-			})
-		);
+		try {
+			const { js } = compile(
+				fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
+				Object.assign(options, {
+					filename: file
+				})
+			);
 
-		console.log( // eslint-disable-line no-console
-			`\n>> ${colors.cyan().bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors.cyan().bold(file)}`
-		);
+			console.log( // eslint-disable-line no-console
+				`\n>> ${colors.cyan().bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors.cyan().bold(file)}`
+			);
+		} catch (err) {
+			console.log(`failed to generate output: ${err.message}`);
+		}
 	});
 }
 
-const start = /\n(\t+)/;
-export function deindent(strings, ...values) {
-	const indentation = start.exec(strings[0])[1];
-	const pattern = new RegExp(`^${indentation}`, 'gm');
-
-	let result = strings[0].replace(start, '').replace(pattern, '');
-
-	let trailingIndentation = getTrailingIndentation(result);
-
-	for (let i = 1; i < strings.length; i += 1) {
-		let expression = values[i - 1];
-		const string = strings[i].replace(pattern, '');
-
-		if (Array.isArray(expression)) {
-			expression = expression.length ? expression.join('\n') : null;
-		}
-
-		if (expression || expression === '') {
-			const value = String(expression).replace(
-				/\n/g,
-				`\n${trailingIndentation}`
-			);
-			result += value + string;
-		} else {
-			let c = result.length;
-			while (/\s/.test(result[c - 1])) c -= 1;
-			result = result.slice(0, c) + string;
-		}
-
-		trailingIndentation = getTrailingIndentation(result);
-	}
-
-	return result.trim().replace(/\t+$/gm, '');
-}
-
-function getTrailingIndentation(str) {
-	let i = str.length;
-	while (str[i - 1] === ' ' || str[i - 1] === '\t') i -= 1;
-	return str.slice(i, str.length);
+export function shouldUpdateExpected() {
+	return process.argv.includes('--update');
 }
 
 export function spaces(i) {
 	let result = '';
 	while (i--) result += ' ';
 	return result;
+}
+
+// fake timers
+const original_set_timeout = global.setTimeout;
+
+export function useFakeTimers() {
+	const callbacks = [];
+
+	global.setTimeout = function(fn) {
+		callbacks.push(fn);
+	};
+
+	return {
+		flush() {
+			callbacks.forEach(fn => fn());
+			callbacks.splice(0, callbacks.length);
+		},
+		removeFakeTimers() {
+			callbacks.splice(0, callbacks.length);
+			global.setTimeout = original_set_timeout;
+		}
+	};
+}
+
+export function mkdirp(dir) {
+	const parent = path.dirname(dir);
+	if (parent === dir) return;
+
+	mkdirp(parent);
+
+	try {
+		fs.mkdirSync(dir);
+	} catch (err) {
+		// do nothing
+	}
 }

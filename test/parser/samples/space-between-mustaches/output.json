@@ -15,6 +15,7 @@
 						"start": 3,
 						"end": 4,
 						"type": "Text",
+						"raw": " ",
 						"data": " "
 					},
 					{
@@ -25,6 +26,16 @@
 							"type": "Identifier",
 							"start": 5,
 							"end": 6,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 5
+								},
+								"end": {
+									"line": 1,
+									"column": 6
+								}
+							},
 							"name": "a"
 						}
 					},
@@ -32,6 +43,7 @@
 						"start": 7,
 						"end": 8,
 						"type": "Text",
+						"raw": " ",
 						"data": " "
 					},
 					{
@@ -42,6 +54,16 @@
 							"type": "Identifier",
 							"start": 9,
 							"end": 10,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 9
+								},
+								"end": {
+									"line": 1,
+									"column": 10
+								}
+							},
 							"name": "b"
 						}
 					},
@@ -49,6 +71,7 @@
 						"start": 11,
 						"end": 14,
 						"type": "Text",
+						"raw": " : ",
 						"data": " : "
 					},
 					{
@@ -59,6 +82,16 @@
 							"type": "Identifier",
 							"start": 15,
 							"end": 16,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 15
+								},
+								"end": {
+									"line": 1,
+									"column": 16
+								}
+							},
 							"name": "c"
 						}
 					},
@@ -66,13 +99,11 @@
 						"start": 17,
 						"end": 20,
 						"type": "Text",
+						"raw": " : ",
 						"data": " : "
 					}
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

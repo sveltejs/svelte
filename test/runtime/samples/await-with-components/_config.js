@@ -1,6 +1,7 @@
 export default {
 	async test({ assert, component, target }) {
-		let resolve, reject;
+		let resolve;
+		let reject;
 		let promise = new Promise(ok => resolve = ok);
 
 		component.promise = promise;

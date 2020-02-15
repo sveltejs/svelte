@@ -2,7 +2,9 @@
 	({animal})
 {/each}
 
+({animal})
+
 <script>
-	let animal = 'lemur';
-	let animals = ['alpaca', 'baboon', 'capybara'];
+	export let animal = 'lemur';
+	export let animals = ['alpaca', 'baboon', 'capybara'];
 </script>

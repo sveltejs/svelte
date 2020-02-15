@@ -1,10 +1,11 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import { loadConfig, svelte } from "../helpers.js";
+import * as colors from "kleur";
+import { loadConfig, svelte, shouldUpdateExpected } from "../helpers.js";
 
 describe("js", () => {
-	fs.readdirSync("test/js/samples").forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === ".") return;
 
 		// add .solo to a sample directory name to only run that test
@@ -14,11 +15,17 @@ describe("js", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(solo ? it.only : it)(dir, () => {
-			dir = path.resolve("test/js/samples", dir);
-			const config = loadConfig(`${dir}/_config.js`);
+		const resolved = path.resolve(`${__dirname}/samples`, dir);
 
-			const input = fs.readFileSync(`${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");
+		if (!fs.existsSync(`${resolved}/input.svelte`)) {
+			console.log(colors.red().bold(`Missing file ${dir}/input.svelte. If you recently switched branches you may need to delete this directory`));
+			return;
+		}
+
+		(solo ? it.only : it)(dir, () => {
+			const config = loadConfig(`${resolved}/_config.js`);
+
+			const input = fs.readFileSync(`${resolved}/input.svelte`, "utf-8").replace(/\s+$/, "");
 
 			let actual;
 
@@ -31,15 +38,35 @@ describe("js", () => {
 				throw err;
 			}
 
-			const output = `${dir}/_actual.js`;
+			const output = `${resolved}/_actual.js`;
 			fs.writeFileSync(output, actual);
 
-			const expected = fs.readFileSync(`${dir}/expected.js`, "utf-8");
+			const expectedPath = `${resolved}/expected.js`;
 
-			assert.equal(
-				actual.trim().replace(/^[ \t]+$/gm, ""),
-				expected.trim().replace(/^[ \t]+$/gm, "")
-			);
+			let expected = '';
+			try {
+				expected = fs.readFileSync(expectedPath, "utf-8");
+			} catch (error) {
+				console.log(error);
+				if (error.code === 'ENOENT') {
+					// missing expected.js
+					fs.writeFileSync(expectedPath, actual);
+				}
+			}
+
+			try {
+				assert.equal(
+					actual.trim().replace(/^[ \t]+$/gm, ""),
+					expected.trim().replace(/^[ \t]+$/gm, "")
+				);
+			} catch (error) {
+				if (shouldUpdateExpected()) {
+					fs.writeFileSync(expectedPath, actual);
+					console.log(`Updated ${expectedPath}.`);
+				} else {
+					throw error;
+				}
+			}
 		});
 	});
 });

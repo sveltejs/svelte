@@ -9,6 +9,6 @@ export default {
 		<span>A</span>
 		<span>€</span>
 
-		<span>&notanentity;</span>
+		<span>&amp;notanentity;</span>
 	`
 };

@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { readable, writable, derived, get } from '../../store.js';
+import { readable, writable, derived, get } from '../../store';
 
 describe('store', () => {
 	describe('writable', () => {
@@ -30,10 +30,10 @@ describe('store', () => {
 				return () => called -= 1;
 			});
 
-			const unsubscribe1 = store.subscribe(() => {});
+			const unsubscribe1 = store.subscribe(() => { });
 			assert.equal(called, 1);
 
-			const unsubscribe2 = store.subscribe(() => {});
+			const unsubscribe2 = store.subscribe(() => { });
 			assert.equal(called, 1);
 
 			unsubscribe1();
@@ -49,7 +49,7 @@ describe('store', () => {
 
 			const store = writable(obj);
 
-			store.subscribe(value => {
+			store.subscribe(() => {
 				called += 1;
 			});
 
@@ -58,6 +58,22 @@ describe('store', () => {
 
 			store.update(obj => obj);
 			assert.equal(called, 3);
+		});
+
+		it('only calls subscriber once initially, including on resubscriptions', () => {
+			let num = 0;
+			const store = writable(num, set => set(num += 1));
+
+			let count1 = 0;
+			let count2 = 0;
+
+			store.subscribe(() => count1 += 1)();
+			assert.equal(count1, 1);
+
+			const unsubscribe = store.subscribe(() => count2 += 1);
+			assert.equal(count2, 1);
+
+			unsubscribe();
 		});
 	});
 
@@ -73,7 +89,7 @@ describe('store', () => {
 				set(0);
 
 				return () => {
-					tick = () => {};
+					tick = () => { };
 					running = false;
 				};
 			});
@@ -99,6 +115,15 @@ describe('store', () => {
 			assert.deepEqual(values, [0, 1, 2]);
 		});
 	});
+
+	const fake_observable = {
+		subscribe(fn) {
+			fn(42);
+			return {
+				unsubscribe: () => {}
+			};
+		}
+	};
 
 	describe('derived', () => {
 		it('maps a single store', () => {
@@ -188,12 +213,163 @@ describe('store', () => {
 
 			unsubscribe();
 		});
+
+		it('prevents diamond dependency problem', () => {
+			const count = writable(0);
+			const values = [];
+
+			const a = derived(count, $count => {
+				return 'a' + $count;
+			});
+
+			const b = derived(count, $count => {
+				return 'b' + $count;
+			});
+
+			const combined = derived([a, b], ([a, b]) => {
+				return a + b;
+			});
+
+			const unsubscribe = combined.subscribe(v => {
+				values.push(v);
+			});
+
+			assert.deepEqual(values, ['a0b0']);
+
+			count.set(1);
+			assert.deepEqual(values, ['a0b0', 'a1b1']);
+
+			unsubscribe();
+		});
+
+		it('derived dependency does not update and shared ancestor updates', () => {
+			const root = writable({ a: 0, b:0 });
+			const values = [];
+
+			const a = derived(root, $root => {
+				return 'a' + $root.a;
+			});
+
+			const b = derived([a, root], ([$a, $root]) => {
+				return 'b' + $root.b + $a;
+			});
+
+			const unsubscribe = b.subscribe(v => {
+				values.push(v);
+			});
+
+			assert.deepEqual(values, ['b0a0']);
+
+			root.set({ a: 0, b: 1 });
+			assert.deepEqual(values, ['b0a0', 'b1a0']);
+
+			unsubscribe();
+		});
+
+		it('is updated with safe_not_equal logic', () => {
+			const arr = [0];
+
+			const number = writable(1);
+			const numbers = derived(number, $number => {
+				arr[0] = $number;
+				return arr;
+			});
+
+			const concatenated = [];
+
+			const unsubscribe = numbers.subscribe(value => {
+				concatenated.push(...value);
+			});
+
+			number.set(2);
+			number.set(3);
+
+			assert.deepEqual(concatenated, [1, 2, 3]);
+
+			unsubscribe();
+		});
+
+		it('calls a cleanup function', () => {
+			const num = writable(1);
+
+			const values = [];
+			const cleaned_up = [];
+
+			const d = derived(num, ($num, set) => {
+				set($num * 2);
+
+				return function cleanup() {
+					cleaned_up.push($num);
+				};
+			});
+
+			num.set(2);
+
+			const unsubscribe = d.subscribe(value => {
+				values.push(value);
+			});
+
+			num.set(3);
+			num.set(4);
+
+			assert.deepEqual(values, [4, 6, 8]);
+			assert.deepEqual(cleaned_up, [2, 3]);
+
+			unsubscribe();
+
+			assert.deepEqual(cleaned_up, [2, 3, 4]);
+		});
+
+		it('discards non-function return values', () => {
+			const num = writable(1);
+
+			const values = [];
+
+			const d = derived(num, ($num, set) => {
+				set($num * 2);
+				return {};
+			});
+
+			num.set(2);
+
+			const unsubscribe = d.subscribe(value => {
+				values.push(value);
+			});
+
+			num.set(3);
+			num.set(4);
+
+			assert.deepEqual(values, [4, 6, 8]);
+
+			unsubscribe();
+		});
+
+		it('allows derived with different types', () => {
+			const a = writable('one');
+			const b = writable(1);
+			const c = derived([a, b], ([a, b]) => `${a} ${b}`);
+
+			assert.deepEqual(get(c), 'one 1');
+
+			a.set('two');
+			b.set(2);
+			assert.deepEqual(get(c), 'two 2');
+		});
+
+		it('works with RxJS-style observables', () => {
+			const d = derived(fake_observable, _ => _);
+			assert.equal(get(d), 42);
+		});
 	});
 
 	describe('get', () => {
 		it('gets the current value of a store', () => {
-			const store = readable(42, () => {});
+			const store = readable(42, () => { });
 			assert.equal(get(store), 42);
+		});
+
+		it('works with RxJS-style observables', () => {
+			assert.equal(get(fake_observable), 42);
 		});
 	});
 });

@@ -42,7 +42,7 @@ Reducing the amount of code you have to write is an explicit goal of Svelte. To 
 <div class="max">
 	<iframe
 		title="Simple component example"
-		src="/repl/embed?gist=6b573f1819d12defc441098236fb9abe"
+		src="/repl/embed?example=blog-write-less-code"
 		scrolling="no"
 	></iframe>
 </div>
@@ -159,6 +159,6 @@ In Vue, meanwhile, we have a default export with a `data` function that returns 
 
 ## Death to boilerplate
 
-These are just some of the ways that Svelte helps you build user interfaces with a minimum of fuss. There are plenty of others — for example, [reactive declarations](https://svelte.dev/tutorial/reactive-declarations) essentially do the work of React's `useMemo`, `useCallback` and `useEffect` without the boilerplate (or indeed the garbage collection overhead of creating inline functions and arrays on each state change).
+These are just some of the ways that Svelte helps you build user interfaces with a minimum of fuss. There are plenty of others — for example, [reactive declarations](tutorial/reactive-declarations) essentially do the work of React's `useMemo`, `useCallback` and `useEffect` without the boilerplate (or indeed the garbage collection overhead of creating inline functions and arrays on each state change).
 
 How? By choosing a different set of constraints. Because [Svelte is a compiler](blog/frameworks-without-the-framework), we're not bound to the peculiarities of JavaScript: we can *design* a component authoring experience, rather than having to fit it around the semantics of the language. Paradoxically, this results in *more* idiomatic code — for example using variables naturally rather than via proxies or hooks — while delivering significantly more performant apps.

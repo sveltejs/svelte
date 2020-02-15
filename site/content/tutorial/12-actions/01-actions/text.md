@@ -23,11 +23,13 @@ import { pannable } from './pannable.js';
 	on:panstart={handlePanStart}
 	on:panmove={handlePanMove}
 	on:panend={handlePanEnd}
-	style="transform: translate({$coords.x}px,{$coords.y}px)"
+	style="transform:
+		translate({$coords.x}px,{$coords.y}px)
+		rotate({$coords.x * 0.2}deg)"
 ></div>
 ```
 
-Open the `pannable.js` file. Like transition functions, an action function receives a `node` and some optional parameters, and returns an action object. That object must have a `destroy` function, which is called when the element is unmounted.
+Open the `pannable.js` file. Like transition functions, an action function receives a `node` and some optional parameters, and returns an action object. That object can have a `destroy` function, which is called when the element is unmounted.
 
 We want to fire `panstart` event when the user mouses down on the element, `panmove` events (with `dx` and `dy` properties showing how far the mouse moved) when they drag it, and `panend` events when they mouse up. One possible implementation looks like this:
 
@@ -84,4 +86,3 @@ export function pannable(node) {
 Update the `pannable` function and try moving the box around.
 
 > This implementation is for demonstration purposes — a more complete one would also consider touch events.
-

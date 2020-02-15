@@ -1,0 +1,7 @@
+<style>
+	@font-face {
+		font-family: MyHelvetica;
+		src: local('Helvetica Neue Bold'), local('HelveticaNeue-Bold'), url(MgOpenModernaBold.ttf);
+		font-weight: bold;
+	}
+</style>

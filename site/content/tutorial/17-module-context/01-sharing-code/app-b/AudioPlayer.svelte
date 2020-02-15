@@ -1,10 +1,8 @@
 <script context="module">
-	const elements = new Set();
+	let current;
 </script>
 
 <script>
-	import { onMount } from 'svelte';
-
 	export let src;
 	export let title;
 	export let composer;
@@ -13,15 +11,9 @@
 	let audio;
 	let paused = true;
 
-	onMount(() => {
-		elements.add(audio);
-		return () => elements.delete(audio);
-	});
-
 	function stopOthers() {
-		elements.forEach(element => {
-			if (element !== audio) element.pause();
-		});
+		if (current && current !== audio) current.pause();
+		current = audio;
 	}
 </script>
 

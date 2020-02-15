@@ -10,92 +10,77 @@ import {
 	safe_not_equal
 } from "svelte/internal";
 
-// (7:0) {:else}
 function create_else_block(ctx) {
-	var p;
+	let p;
 
 	return {
 		c() {
 			p = element("p");
 			p.textContent = "not foo!";
 		},
-
 		m(target, anchor) {
 			insert(target, p, anchor);
 		},
-
 		d(detaching) {
-			if (detaching) {
-				detach(p);
-			}
+			if (detaching) detach(p);
 		}
 	};
 }
 
 // (5:0) {#if foo}
 function create_if_block(ctx) {
-	var p;
+	let p;
 
 	return {
 		c() {
 			p = element("p");
 			p.textContent = "foo!";
 		},
-
 		m(target, anchor) {
 			insert(target, p, anchor);
 		},
-
 		d(detaching) {
-			if (detaching) {
-				detach(p);
-			}
+			if (detaching) detach(p);
 		}
 	};
 }
 
 function create_fragment(ctx) {
-	var if_block_anchor;
+	let if_block_anchor;
 
-	function select_block_type(ctx) {
-		if (ctx.foo) return create_if_block;
+	function select_block_type(ctx, dirty) {
+		if (/*foo*/ ctx[0]) return create_if_block;
 		return create_else_block;
 	}
 
-	var current_block_type = select_block_type(ctx);
-	var if_block = current_block_type(ctx);
+	let current_block_type = select_block_type(ctx, -1);
+	let if_block = current_block_type(ctx);
 
 	return {
 		c() {
 			if_block.c();
 			if_block_anchor = empty();
 		},
-
 		m(target, anchor) {
 			if_block.m(target, anchor);
 			insert(target, if_block_anchor, anchor);
 		},
-
-		p(changed, ctx) {
-			if (current_block_type !== (current_block_type = select_block_type(ctx))) {
+		p(ctx, [dirty]) {
+			if (current_block_type !== (current_block_type = select_block_type(ctx, dirty))) {
 				if_block.d(1);
 				if_block = current_block_type(ctx);
+
 				if (if_block) {
 					if_block.c();
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
 				}
 			}
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
 			if_block.d(detaching);
-
-			if (detaching) {
-				detach(if_block_anchor);
-			}
+			if (detaching) detach(if_block_anchor);
 		}
 	};
 }
@@ -104,16 +89,16 @@ function instance($$self, $$props, $$invalidate) {
 	let { foo } = $$props;
 
 	$$self.$set = $$props => {
-		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
 	};
 
-	return { foo };
+	return [foo];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["foo"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 });
 	}
 }
 

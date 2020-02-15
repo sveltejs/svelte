@@ -1,14 +1,20 @@
-import limax from 'limax';
-import {SLUG_LANG, SLUG_SEPARATOR} from '../../config';
+import slugify from '@sindresorhus/slugify';
+import {SLUG_SEPARATOR} from '../../config';
 
-/* latinizer processor */
+/* url-safe processor */
 
-export const limaxProcessor = (string, lang = SLUG_LANG) => limax(string, {
-	custom: ['$'],
-	separator: SLUG_SEPARATOR,
-	maintainCase: true,
-	lang
-});
+export const urlsafeSlugProcessor = string =>
+	slugify(string, {
+		customReplacements: [	// runs before any other transformations
+			['$', 'DOLLAR'], // `$destroy` & co
+			['-', 'DASH'], // conflicts with `separator`
+		],
+		separator: SLUG_SEPARATOR,
+		decamelize: false,
+		lowercase: false
+	})
+		.replace(/DOLLAR/g, '$')
+		.replace(/DASH/g, '-');
 
 /* unicode-preserver processor */
 
@@ -19,40 +25,46 @@ const isNonAlphaNumUnicode =
 
 export const unicodeSafeProcessor = string =>
 	string.split('')
-	.reduce((accum, char, index, array) => {
-		const type = isNonAlphaNumUnicode(char) ? 'pass' : 'process';
+		.reduce((accum, char, index, array) => {
+			const type = isNonAlphaNumUnicode(char) ? 'pass' : 'process';
 
-		if (index === 0) {
-			accum.current = {type, string: char};
-		} else if (type === accum.current.type) {
-			accum.current.string += char;
-		} else {
-			accum.chunks.push(accum.current);
-			accum.current = {type, string: char}
-		}
+			if (index === 0) {
+				accum.current = {type, string: char};
+			} else if (type === accum.current.type) {
+				accum.current.string += char;
+			} else {
+				accum.chunks.push(accum.current);
+				accum.current = {type, string: char};
+			}
 
-		if (index === array.length - 1) {
-			accum.chunks.push(accum.current);
-		}
+			if (index === array.length - 1) {
+				accum.chunks.push(accum.current);
+			}
 
-		return accum;
-	}, {chunks: [], current: {type: '', string: ''}})
-	.chunks
-	.reduce((accum, chunk) => {
-		const processed = chunk.type === 'process'
-			? limaxProcessor(chunk.string)
-			: chunk.string;
+			return accum;
+		}, {chunks: [], current: {type: '', string: ''}})
+		.chunks
+		.reduce((accum, chunk) => {
+			const processed = chunk.type === 'process'
+				? urlsafeSlugProcessor(chunk.string)
+				: chunk.string;
 
-		processed.length > 0 && accum.push(processed);
+			processed.length > 0 && accum.push(processed);
 
-		return accum;
-	}, [])
-	.join(SLUG_SEPARATOR);
+			return accum;
+		}, [])
+		.join(SLUG_SEPARATOR);
+
+/* processor */
+
+export const makeSlugProcessor = (preserveUnicode = false) => preserveUnicode
+	? unicodeSafeProcessor
+	: urlsafeSlugProcessor;
 
 /* session processor */
 
 export const makeSessionSlugProcessor = (preserveUnicode = false) => {
-	const processor = preserveUnicode ? unicodeSafeProcessor : limaxProcessor;
+	const processor = makeSlugProcessor(preserveUnicode);
 	const seen = new Set();
 
 	return string => {
@@ -62,5 +74,5 @@ export const makeSessionSlugProcessor = (preserveUnicode = false) => {
 		seen.add(slug);
 
 		return slug;
-	}
-}
+	};
+};

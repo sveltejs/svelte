@@ -2,6 +2,7 @@
 import {
 	SvelteComponent,
 	append,
+	attr,
 	detach,
 	element,
 	init,
@@ -14,39 +15,32 @@ import {
 
 function add_css() {
 	var style = element("style");
-	style.id = 'svelte-1a7i8ec-style';
+	style.id = "svelte-1a7i8ec-style";
 	style.textContent = "p.svelte-1a7i8ec{color:red}";
 	append(document.head, style);
 }
 
 function create_fragment(ctx) {
-	var p, t;
+	let p;
+	let t;
 
 	return {
 		c() {
 			p = element("p");
-			t = text(ctx.foo);
-			p.className = "svelte-1a7i8ec";
+			t = text(/*foo*/ ctx[0]);
+			attr(p, "class", "svelte-1a7i8ec");
 		},
-
 		m(target, anchor) {
 			insert(target, p, anchor);
 			append(p, t);
 		},
-
-		p(changed, ctx) {
-			if (changed.foo) {
-				set_data(t, ctx.foo);
-			}
+		p(ctx, [dirty]) {
+			if (dirty & /*foo*/ 1) set_data(t, /*foo*/ ctx[0]);
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(p);
-			}
+			if (detaching) detach(p);
 		}
 	};
 }
@@ -55,17 +49,17 @@ function instance($$self, $$props, $$invalidate) {
 	let { foo = 42 } = $$props;
 
 	$$self.$set = $$props => {
-		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
 	};
 
-	return { foo };
+	return [foo];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
 		if (!document.getElementById("svelte-1a7i8ec-style")) add_css();
-		init(this, options, instance, create_fragment, safe_not_equal, ["foo"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 });
 	}
 }
 

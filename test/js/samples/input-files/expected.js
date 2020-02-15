@@ -12,29 +12,24 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var input, dispose;
+	let input;
+	let dispose;
 
 	return {
 		c() {
 			input = element("input");
 			attr(input, "type", "file");
 			input.multiple = true;
-			dispose = listen(input, "input", ctx.input_input_handler);
 		},
-
 		m(target, anchor) {
 			insert(target, input, anchor);
+			dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
 		},
-
 		p: noop,
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(input);
-			}
-
+			if (detaching) detach(input);
 			dispose();
 		}
 	};
@@ -43,22 +38,22 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { files } = $$props;
 
-	function input_input_handler() {
+	function input_change_handler() {
 		files = this.files;
-		$$invalidate('files', files);
+		$$invalidate(0, files);
 	}
 
 	$$self.$set = $$props => {
-		if ('files' in $$props) $$invalidate('files', files = $$props.files);
+		if ("files" in $$props) $$invalidate(0, files = $$props.files);
 	};
 
-	return { files, input_input_handler };
+	return [files, input_change_handler];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["files"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { files: 0 });
 	}
 }
 

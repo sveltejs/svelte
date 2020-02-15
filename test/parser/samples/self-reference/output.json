@@ -12,10 +12,30 @@
 					"type": "BinaryExpression",
 					"start": 5,
 					"end": 14,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 5
+						},
+						"end": {
+							"line": 1,
+							"column": 14
+						}
+					},
 					"left": {
 						"type": "Identifier",
 						"start": 5,
 						"end": 10,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 5
+							},
+							"end": {
+								"line": 1,
+								"column": 10
+							}
+						},
 						"name": "depth"
 					},
 					"operator": ">",
@@ -23,6 +43,16 @@
 						"type": "Literal",
 						"start": 13,
 						"end": 14,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 13
+							},
+							"end": {
+								"line": 1,
+								"column": 14
+							}
+						},
 						"value": 1,
 						"raw": "1"
 					}
@@ -48,10 +78,30 @@
 											"type": "BinaryExpression",
 											"start": 38,
 											"end": 47,
+											"loc": {
+												"start": {
+													"line": 2,
+													"column": 22
+												},
+												"end": {
+													"line": 2,
+													"column": 31
+												}
+											},
 											"left": {
 												"type": "Identifier",
 												"start": 38,
 												"end": 43,
+												"loc": {
+													"start": {
+														"line": 2,
+														"column": 22
+													},
+													"end": {
+														"line": 2,
+														"column": 27
+													}
+												},
 												"name": "depth"
 											},
 											"operator": "-",
@@ -59,6 +109,16 @@
 												"type": "Literal",
 												"start": 46,
 												"end": 47,
+												"loc": {
+													"start": {
+														"line": 2,
+														"column": 30
+													},
+													"end": {
+														"line": 2,
+														"column": 31
+													}
+												},
 												"value": 1,
 												"raw": "1"
 											}
@@ -72,8 +132,5 @@
 				]
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

@@ -12,6 +12,16 @@
 					"type": "Identifier",
 					"start": 8,
 					"end": 18,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 8
+						},
+						"end": {
+							"line": 1,
+							"column": 18
+						}
+					},
 					"name": "thePromise"
 				},
 				"value": "theValue",
@@ -25,6 +35,7 @@
 							"start": 19,
 							"end": 21,
 							"type": "Text",
+							"raw": "\n\t",
 							"data": "\n\t"
 						},
 						{
@@ -38,6 +49,7 @@
 									"start": 24,
 									"end": 34,
 									"type": "Text",
+									"raw": "loading...",
 									"data": "loading..."
 								}
 							]
@@ -46,9 +58,11 @@
 							"start": 38,
 							"end": 39,
 							"type": "Text",
+							"raw": "\n",
 							"data": "\n"
 						}
-					]
+					],
+					"skip": false
 				},
 				"then": {
 					"start": 39,
@@ -59,6 +73,7 @@
 							"start": 55,
 							"end": 57,
 							"type": "Text",
+							"raw": "\n\t",
 							"data": "\n\t"
 						},
 						{
@@ -72,6 +87,7 @@
 									"start": 60,
 									"end": 73,
 									"type": "Text",
+									"raw": "the value is ",
 									"data": "the value is "
 								},
 								{
@@ -82,6 +98,16 @@
 										"type": "Identifier",
 										"start": 74,
 										"end": 82,
+										"loc": {
+											"start": {
+												"line": 4,
+												"column": 18
+											},
+											"end": {
+												"line": 4,
+												"column": 26
+											}
+										},
 										"name": "theValue"
 									}
 								}
@@ -91,9 +117,11 @@
 							"start": 87,
 							"end": 88,
 							"type": "Text",
+							"raw": "\n",
 							"data": "\n"
 						}
-					]
+					],
+					"skip": false
 				},
 				"catch": {
 					"start": 88,
@@ -104,6 +132,7 @@
 							"start": 105,
 							"end": 107,
 							"type": "Text",
+							"raw": "\n\t",
 							"data": "\n\t"
 						},
 						{
@@ -117,6 +146,7 @@
 									"start": 110,
 									"end": 117,
 									"type": "Text",
+									"raw": "oh no! ",
 									"data": "oh no! "
 								},
 								{
@@ -127,16 +157,46 @@
 										"type": "MemberExpression",
 										"start": 118,
 										"end": 134,
+										"loc": {
+											"start": {
+												"line": 6,
+												"column": 12
+											},
+											"end": {
+												"line": 6,
+												"column": 28
+											}
+										},
 										"object": {
 											"type": "Identifier",
 											"start": 118,
 											"end": 126,
+											"loc": {
+												"start": {
+													"line": 6,
+													"column": 12
+												},
+												"end": {
+													"line": 6,
+													"column": 20
+												}
+											},
 											"name": "theError"
 										},
 										"property": {
 											"type": "Identifier",
 											"start": 127,
 											"end": 134,
+											"loc": {
+												"start": {
+													"line": 6,
+													"column": 21
+												},
+												"end": {
+													"line": 6,
+													"column": 28
+												}
+											},
 											"name": "message"
 										},
 										"computed": false
@@ -148,14 +208,13 @@
 							"start": 139,
 							"end": 140,
 							"type": "Text",
+							"raw": "\n",
 							"data": "\n"
 						}
-					]
+					],
+					"skip": false
 				}
 			}
 		]
-	},
-	"css": null,
-	"instance": null,
-	"module": null
+	}
 }

@@ -2,14 +2,15 @@
 import {
 	SvelteComponentDev,
 	add_location,
-	append,
-	detach,
+	append_dev,
+	detach_dev,
+	dispatch_dev,
 	element,
 	init,
-	insert,
+	insert_dev,
 	noop,
 	safe_not_equal,
-	set_data,
+	set_data_dev,
 	space,
 	text
 } from "svelte/internal";
@@ -17,73 +18,98 @@ import {
 const file = undefined;
 
 function create_fragment(ctx) {
-	var p, t0_value = Math.max(0, ctx.foo), t0, t1, t2;
+	let p;
+	let t0_value = Math.max(0, /*foo*/ ctx[0]) + "";
+	let t0;
+	let t1;
+	let t2;
 
-	return {
+	const block = {
 		c: function create() {
 			p = element("p");
 			t0 = text(t0_value);
 			t1 = space();
-			t2 = text(ctx.bar);
+			t2 = text(/*bar*/ ctx[1]);
 			add_location(p, file, 7, 0, 67);
 		},
-
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 		},
-
 		m: function mount(target, anchor) {
-			insert(target, p, anchor);
-			append(p, t0);
-			append(p, t1);
-			append(p, t2);
+			insert_dev(target, p, anchor);
+			append_dev(p, t0);
+			append_dev(p, t1);
+			append_dev(p, t2);
 		},
-
-		p: function update(changed, ctx) {
-			if ((changed.foo) && t0_value !== (t0_value = Math.max(0, ctx.foo))) {
-				set_data(t0, t0_value);
-			}
-
-			if (changed.bar) {
-				set_data(t2, ctx.bar);
-			}
+		p: function update(ctx, [dirty]) {
+			if (dirty & /*foo*/ 1 && t0_value !== (t0_value = Math.max(0, /*foo*/ ctx[0]) + "")) set_data_dev(t0, t0_value);
+			if (dirty & /*bar*/ 2) set_data_dev(t2, /*bar*/ ctx[1]);
 		},
-
 		i: noop,
 		o: noop,
-
 		d: function destroy(detaching) {
-			if (detaching) {
-				detach(p);
-			}
+			if (detaching) detach_dev(p);
 		}
 	};
+
+	dispatch_dev("SvelteRegisterBlock", {
+		block,
+		id: create_fragment.name,
+		type: "component",
+		source: "",
+		ctx
+	});
+
+	return block;
 }
 
 function instance($$self, $$props, $$invalidate) {
 	let { foo } = $$props;
-
 	let bar;
+	const writable_props = ["foo"];
+
+	Object.keys($$props).forEach(key => {
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
+	});
 
 	$$self.$set = $$props => {
-		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
 	};
 
-	$$self.$$.update = ($$dirty = { foo: 1 }) => {
-		if ($$dirty.foo) { $$invalidate('bar', bar = foo * 2); }
+	$$self.$capture_state = () => {
+		return { foo, bar };
 	};
 
-	return { foo, bar };
+	$$self.$inject_state = $$props => {
+		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
+		if ("bar" in $$props) $$invalidate(1, bar = $$props.bar);
+	};
+
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty & /*foo*/ 1) {
+			$: $$invalidate(1, bar = foo * 2);
+		}
+	};
+
+	return [foo, bar];
 }
 
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, instance, create_fragment, safe_not_equal, ["foo"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 });
+
+		dispatch_dev("SvelteRegisterComponent", {
+			component: this,
+			tagName: "Component",
+			options,
+			id: create_fragment.name
+		});
 
 		const { ctx } = this.$$;
 		const props = options.props || {};
-		if (ctx.foo === undefined && !('foo' in props)) {
+
+		if (/*foo*/ ctx[0] === undefined && !("foo" in props)) {
 			console.warn("<Component> was created without expected prop 'foo'");
 		}
 	}

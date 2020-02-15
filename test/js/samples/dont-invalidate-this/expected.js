@@ -11,27 +11,22 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var input, dispose;
+	let input;
+	let dispose;
 
 	return {
 		c() {
 			input = element("input");
-			dispose = listen(input, "input", make_uppercase);
 		},
-
 		m(target, anchor) {
 			insert(target, input, anchor);
+			dispose = listen(input, "input", make_uppercase);
 		},
-
 		p: noop,
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(input);
-			}
-
+			if (detaching) detach(input);
 			dispose();
 		}
 	};
@@ -44,7 +39,7 @@ function make_uppercase() {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, []);
+		init(this, options, null, create_fragment, safe_not_equal, {});
 	}
 }
 

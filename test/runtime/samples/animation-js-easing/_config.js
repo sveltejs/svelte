@@ -29,9 +29,9 @@ export default {
 					right: 100,
 					top,
 					bottom: top + 20
-				}
+				};
 			};
-		})
+		});
 
 		component.things = [
 			{ id: 5, name: 'e' },

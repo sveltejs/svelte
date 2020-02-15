@@ -1,12 +1,9 @@
 <script>
-	import Blurb from './_components/Blurb.svelte';
+	import { Blurb, Hero, Section } from '@sveltejs/site-kit';
+	import Contributors from './_components/Contributors.svelte';
+	import Example from './_components/Example.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte.svelte';
-	import IntersectionObserver from '../components/IntersectionObserver.svelte';
 	// import Lazy from '../components/Lazy.svelte';
-	import ReplWidget from '../components/Repl/ReplWidget.svelte';
-	import contributors from './_contributors.js';
-
-	let sy = 0;
 
 	// TODO this causes a Sapper CSS bug...
 	// function loadReplWidget() {
@@ -16,126 +13,16 @@
 </script>
 
 <style>
-	.container {
-		position: relative;
-		margin: 10rem auto;
-		padding: 0 var(--side-nav);
-		max-width: 120rem;
-	}
-
-	.container h3 { color: var(--text) }
-	.container ul { list-style: none }
-
-	/* max line-length ~60 chars */
-	li:not(.box) > p {
-		max-width: var(--linemax)
-	}
-
-	/* darken text for accesibility */
+	/* darken text for accessibility */
+	/* TODO does this belong elsewhere? */
 	:global(.back-light) {
 		--text: hsl(36, 3%, 44%);
-	}
-
-	.hero {
-		margin: 10rem auto;
-	}
-
-	.hero h3, .logotype {
-		position: relative;
-		left: 1.6rem;
-	}
-
-	.hero h3 {
-		font-size: 2rem;
-	}
-
-	.logotype {
-		height: 4rem;
-	}
-
-	.logo {
-		position: absolute;
-		top: -4rem;
-		right: 0rem;
-		width: 52rem;
-		will-change: transform;
-		display: none;
 	}
 
 	.examples {
 		background: var(--second);
 		color: white;
 		overflow: hidden;
-	}
-
-	.example {
-		width: 100%;
-	}
-
-	.example a {
-		color: inherit;
-	}
-
-	.example > p {
-		margin: 4.4rem 2.4rem 2.4rem 0;
-	}
-
-	.repl-container {
-		width: 100%;
-		height: 420px;
-		border-radius: var(--border-r);
-		overflow: hidden;
-	}
-
-	.contributor {
-		width: 2.4em;
-		height: 2.4em;
-		border-radius: 50%;
-		text-indent: -9999px;
-		display: inline-block;
-		background: no-repeat url(/contributors.jpg);
-		background-size: auto 102%;
-		margin: 0 0.5em 0.5em 0;
-		border: 2px solid var(--second);
-	}
-
-	@media (min-width: 640px) {
-		.logotype {
-			height: 6rem;
-		}
-
-		.hero h3 {
-			font-size: var(--h3);
-		}
-	}
-
-	@media (min-width: 800px) {
-		.logo {
-			display: block;
-		}
-
-		.hero {
-			margin: 15rem auto;
-		}
-
-		.hero h3, .logotype {
-			left: 3rem;
-		}
-	}
-
-	@media (min-width: 920px) {
-		.example {
-			display: grid;
-			grid-template-columns: 1fr 3fr;
-			grid-gap: 0.5em;
-			align-items: start;
-		}
-	}
-
-	@media (min-width: 1200px) {
-		.logo {
-			right: calc(50vw - 60rem);
-		}
 	}
 </style>
 
@@ -147,87 +34,87 @@
 	<meta name="Description" content="Cybernetically enhanced web apps">
 </svelte:head>
 
-<svelte:window bind:scrollY={sy}/>
+<Hero
+	title="Svelte"
+	tagline="Cybernetically enhanced web apps"
+	outline="svelte-logo-outline.svg"
+	logotype="svelte-logotype.svg"
+/>
 
-<img alt="Svelte logo" class="logo" src="svelte-logo-outline.svg" style="transform: translate(0, {sy * .2}px)">
+<Blurb>
+	<a href="blog/write-less-code" slot="one">
+		<h2>Write less code</h2>
+		<p>Build boilerplate-free components using languages you already know — HTML, CSS and JavaScript</p>
 
-<section class="hero container">
-	<img alt="Svelte logotype" class="logotype" src="svelte-logotype.svg">
-	<h3>Cybernetically enhanced web apps</h3>
-</section>
+		<span class="learn-more">learn more</span>
+	</a>
 
-<Blurb/>
+	<a href="blog/virtual-dom-is-pure-overhead" slot="two">
+		<h2>No virtual DOM</h2>
+		<p>Svelte compiles your code to tiny, framework-less vanilla JS — your app starts fast and stays fast</p>
+
+		<span class="learn-more">learn more</span>
+	</a>
+
+	<a href="blog/svelte-3-rethinking-reactivity" slot="three">
+		<h2>Truly reactive</h2>
+		<p>No more complex state management libraries — Svelte brings reactivity to JavaScript itself</p>
+
+		<span class="learn-more">learn more</span>
+	</a>
+
+	<div class="description" slot="what">
+		<p>Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the <em>browser</em>, Svelte shifts that work into a <em>compile step</em> that happens when you build your app.</p>
+
+		<p>Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.</p>
+
+		<p><a href="blog/svelte-3-rethinking-reactivity">Read the introductory blog post</a> to learn more.</p>
+	</div>
+
+	<div style="grid-area: start; display: flex; flex-direction: column; min-width: 0" slot="how">
+		<pre class="language-bash" style="margin: 0 0 1em 0; min-width: 0; min-height: 0">
+npx degit <a href="https://github.com/sveltejs/template" style="user-select: initial;">sveltejs/template</a> my-svelte-project
+<span class="token comment"># or download and extract <a href="https://github.com/sveltejs/template/archive/master.zip">this .zip file</a></span>
+cd my-svelte-project
+
+npm install
+npm run dev
+		</pre>
+
+		<p style="flex: 1">See the <a href="blog/the-easiest-way-to-get-started">quickstart guide</a> for more information.</p>
+
+		<p class="cta"><a rel="prefetch" href="tutorial">Learn Svelte</a></p>
+	</div>
+</Blurb>
 
 <div class="examples">
-	<section class="container example">
+	<Example id="hello-world">
 		<p>Svelte components are built on top of HTML. Just add data.</p>
+	</Example>
 
-		<div class="repl-container">
-			<IntersectionObserver once let:intersecting top={400}>
-				{#if intersecting}
-					<!-- <Lazy this={loadReplWidget} example="hello-world"/> -->
-					<ReplWidget example="hello-world"/>
-				{/if}
-			</IntersectionObserver>
-		</div>
-	</section>
-
-	<section class="container example">
+	<Example id="nested-components">
 		<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="/blog/svelte-css-in-js">use your favourite CSS-in-JS library</a>.</p>
+	</Example>
 
-		<div class="repl-container">
-			<IntersectionObserver once let:intersecting top={400}>
-				{#if intersecting}
-					<!-- <Lazy this={loadReplWidget} example="nested-components"/> -->
-					<ReplWidget example="nested-components"/>
-				{/if}
-			</IntersectionObserver>
-		</div>
-	</section>
-
-	<section class="container example">
+	<Example id="reactive-assignments">
 		<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
+	</Example>
 
-		<div class="repl-container">
-			<IntersectionObserver once let:intersecting top={400}>
-				{#if intersecting}
-					<!-- <Lazy this={loadReplWidget} example="reactive-assignments"/> -->
-					<ReplWidget example="reactive-assignments"/>
-				{/if}
-			</IntersectionObserver>
-		</div>
-	</section>
-
-	<section class="container example">
+	<Example id="svg-transitions">
 		<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
-
-		<div class="repl-container">
-			<IntersectionObserver once let:intersecting top={400}>
-				{#if intersecting}
-					<!-- <Lazy this={loadReplWidget} example="svg-transitions"/> -->
-					<ReplWidget example="svg-transitions"/>
-				{/if}
-			</IntersectionObserver>
-		</div>
-	</section>
+	</Example>
 </div>
 
-<section class="container">
+<Section>
 	<h3>Who's using Svelte?</h3>
 
 	<WhosUsingSvelte/>
-</section>
+</Section>
 
-<section class="container">
+<Section>
 	<h3>Contributors</h3>
 
 	<p>Svelte is free and open source software, made possible by the work of dozens of volunteers. <a href="https://github.com/sveltejs/svelte">Join us!</a></p>
 
-	{#each contributors as contributor, i}
-		<a
-			class="contributor"
-			style="background-position: {100 * i / (contributors.length - 1)}% 0"
-			href="https://github.com/{contributor}"
-		>{contributor}</a>
-	{/each}
-</section>
+	<Contributors/>
+</Section>
