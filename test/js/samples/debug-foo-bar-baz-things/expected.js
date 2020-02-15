@@ -13,7 +13,8 @@ import {
 	safe_not_equal,
 	set_data_dev,
 	space,
-	text
+	text,
+	validate_each_argument
 } from "svelte/internal";
 
 const file = undefined;
@@ -54,7 +55,11 @@ function create_each_block(ctx) {
 			insert_dev(target, t1, anchor);
 		},
 		p: function update(ctx, dirty) {
-			if (dirty & /*things*/ 1 && t0_value !== (t0_value = /*thing*/ ctx[4].name + "")) set_data_dev(t0, t0_value);
+			if (
+				dirty & /*things*/ 1 &&
+				t0_value !== (t0_value = /*thing*/ ctx[4].name + "")
+			)
+				set_data_dev(t0, t0_value);
 
 			if (dirty & /*foo, bar, baz, things*/ 15) {
 				const foo = /*foo*/ ctx[1];
@@ -88,6 +93,7 @@ function create_fragment(ctx) {
 	let t1;
 	let t2;
 	let each_value = /*things*/ ctx[0];
+	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -107,7 +113,9 @@ function create_fragment(ctx) {
 			add_location(p, file, 12, 0, 182);
 		},
 		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+			throw new Error(
+				"options.hydrate only works if the component was compiled with the `hydratable: true` option"
+			);
 		},
 		m: function mount(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -173,14 +181,15 @@ function instance($$self, $$props, $$invalidate) {
 	const writable_props = ["things", "foo", "bar", "baz"];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$")
+			console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$set = $$props => {
-		if ("things" in $$props) $$invalidate(0, things = $$props.things);
-		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
-		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);
-		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
+		if ("things" in $$props) $$invalidate(0, (things = $$props.things));
+		if ("foo" in $$props) $$invalidate(1, (foo = $$props.foo));
+		if ("bar" in $$props) $$invalidate(2, (bar = $$props.bar));
+		if ("baz" in $$props) $$invalidate(3, (baz = $$props.baz));
 	};
 
 	$$self.$capture_state = () => {
@@ -188,10 +197,10 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$$self.$inject_state = $$props => {
-		if ("things" in $$props) $$invalidate(0, things = $$props.things);
-		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
-		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);
-		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
+		if ("things" in $$props) $$invalidate(0, (things = $$props.things));
+		if ("foo" in $$props) $$invalidate(1, (foo = $$props.foo));
+		if ("bar" in $$props) $$invalidate(2, (bar = $$props.bar));
+		if ("baz" in $$props) $$invalidate(3, (baz = $$props.baz));
 	};
 
 	return [things, foo, bar, baz];
@@ -200,7 +209,12 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, instance, create_fragment, safe_not_equal, { things: 0, foo: 1, bar: 2, baz: 3 });
+		init(this, options, instance, create_fragment, safe_not_equal, {
+			things: 0,
+			foo: 1,
+			bar: 2,
+			baz: 3
+		});
 
 		dispatch_dev("SvelteRegisterComponent", {
 			component: this,
@@ -230,35 +244,51 @@ class Component extends SvelteComponentDev {
 	}
 
 	get things() {
-		throw new Error("<Component>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		throw new Error(
+			"<Component>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'"
+		);
 	}
 
 	set things(value) {
-		throw new Error("<Component>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		throw new Error(
+			"<Component>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'"
+		);
 	}
 
 	get foo() {
-		throw new Error("<Component>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		throw new Error(
+			"<Component>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'"
+		);
 	}
 
 	set foo(value) {
-		throw new Error("<Component>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		throw new Error(
+			"<Component>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'"
+		);
 	}
 
 	get bar() {
-		throw new Error("<Component>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		throw new Error(
+			"<Component>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'"
+		);
 	}
 
 	set bar(value) {
-		throw new Error("<Component>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		throw new Error(
+			"<Component>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'"
+		);
 	}
 
 	get baz() {
-		throw new Error("<Component>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		throw new Error(
+			"<Component>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'"
+		);
 	}
 
 	set baz(value) {
-		throw new Error("<Component>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		throw new Error(
+			"<Component>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'"
+		);
 	}
 }
 

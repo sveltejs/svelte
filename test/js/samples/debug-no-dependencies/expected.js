@@ -10,7 +10,8 @@ import {
 	noop,
 	safe_not_equal,
 	space,
-	text
+	text,
+	validate_each_argument
 } from "svelte/internal";
 
 const file = undefined;
@@ -64,6 +65,7 @@ function create_each_block(ctx) {
 function create_fragment(ctx) {
 	let each_1_anchor;
 	let each_value = things;
+	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -79,7 +81,9 @@ function create_fragment(ctx) {
 			each_1_anchor = empty();
 		},
 		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+			throw new Error(
+				"options.hydrate only works if the component was compiled with the `hydratable: true` option"
+			);
 		},
 		m: function mount(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
