@@ -81,9 +81,7 @@ function create_fragment(ctx) {
 			each_1_anchor = empty();
 		},
 		l: function claim(nodes) {
-			throw new Error(
-				"options.hydrate only works if the component was compiled with the `hydratable: true` option"
-			);
+			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 		},
 		m: function mount(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {

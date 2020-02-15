@@ -377,12 +377,9 @@ export default class EachBlockWrapper extends Wrapper {
 		block.chunks.init.push(b`
 			const ${get_key} = #ctx => ${this.node.key.manipulate(block)};
 
-			${this.renderer.options.dev &&
-				b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
+			${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
 			for (let #i = 0; #i < ${data_length}; #i += 1) {
-				let child_ctx = ${this.vars.get_each_context}(#ctx, ${
-			this.vars.each_block_value
-		}, #i);
+				let child_ctx = ${this.vars.get_each_context}(#ctx, ${this.vars.each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
 				${lookup}.set(key, ${iterations}[#i] = ${create_each_block}(key, child_ctx));
 			}
