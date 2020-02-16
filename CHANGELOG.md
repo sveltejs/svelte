@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix indirect bindings involving elements with spreads ([#3680](https://github.com/sveltejs/svelte/issues/3680))
+* Warn when using `<Foo/>` and `Foo` is dynamic ([#4331](https://github.com/sveltejs/svelte/issues/4331))
+* Fix unneeded updating of keyed each blocks ([#4373](https://github.com/sveltejs/svelte/issues/4373))
+
 ## 3.18.2
 
 * Fix binding to module-level variables ([#4086](https://github.com/sveltejs/svelte/issues/4086))

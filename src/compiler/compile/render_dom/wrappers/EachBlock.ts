@@ -412,16 +412,25 @@ export default class EachBlockWrapper extends Wrapper {
 				? `@outro_and_destroy_block`
 				: `@destroy_block`;
 
-		block.chunks.update.push(b`
-			const ${this.vars.each_block_value} = ${snippet};
+		const all_dependencies = new Set(this.block.dependencies); // TODO should be dynamic deps only
+		this.node.expression.dynamic_dependencies().forEach((dependency: string) => {
+			all_dependencies.add(dependency);
+		});
 
-			${this.block.has_outros && b`@group_outros();`}
-			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
-			${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
-			${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
-			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
-			${this.block.has_outros && b`@check_outros();`}
-		`);
+		if (all_dependencies.size) {
+			block.chunks.update.push(b`
+				if (${block.renderer.dirty(Array.from(all_dependencies))}) {
+					const ${this.vars.each_block_value} = ${snippet};
+
+					${this.block.has_outros && b`@group_outros();`}
+					${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
+					${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
+					${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
+					${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
+					${this.block.has_outros && b`@check_outros();`}
+				}
+			`);
+		}
 
 		if (this.block.has_outros) {
 			block.chunks.outro.push(b`

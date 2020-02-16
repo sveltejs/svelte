@@ -106,11 +106,28 @@ export default class InlineComponentWrapper extends Wrapper {
 		block.add_outro();
 	}
 
+	warn_if_reactive() {
+		const { name } = this.node;
+		const variable = this.renderer.component.var_lookup.get(name);
+		if (!variable) {
+			return;
+		}
+
+		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
+			this.renderer.component.warn(this.node, {
+				code: 'reactive-component',
+				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`,
+			});
+		}
+	}
+
 	render(
 		block: Block,
 		parent_node: Identifier,
 		parent_nodes: Identifier
 	) {
+		this.warn_if_reactive();
+
 		const { renderer } = this;
 		const { component } = renderer;
 
