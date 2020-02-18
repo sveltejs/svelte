@@ -5,6 +5,8 @@ export const globals = new Set([
 	'alert',
 	'Array',
 	'Boolean',
+	'clearInterval',
+	'clearTimeout',
 	'confirm',
 	'console',
 	'Date',
@@ -16,6 +18,9 @@ export const globals = new Set([
 	'Error',
 	'EvalError',
 	'Event',
+	'fetch',
+	'global',
+	'globalThis',
 	'history',
 	'Infinity',
 	'InternalError',
@@ -41,11 +46,14 @@ export const globals = new Set([
 	'RegExp',
 	'sessionStorage',
 	'Set',
+	'setInterval',
+	'setTimeout',
 	'String',
 	'SyntaxError',
 	'TypeError',
 	'undefined',
 	'URIError',
+	'URL',
 	'window'
 ]);
 

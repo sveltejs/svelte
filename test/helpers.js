@@ -45,6 +45,12 @@ export function tryToReadFile(file) {
 	}
 }
 
+export function cleanRequireCache() {
+	Object.keys(require.cache)
+		.filter(x => x.endsWith('.svelte'))
+		.forEach(file => delete require.cache[file]);
+}
+
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 
@@ -68,6 +74,7 @@ window.scrollTo = function(pageXOffset, pageYOffset) {
 
 export function env() {
 	window.document.title = '';
+	window.document.head.innerHTML = '';
 	window.document.body.innerHTML = '<main></main>';
 
 	return window;

@@ -42,14 +42,6 @@ function create_fragment(ctx) {
 			t5 = space();
 			button2 = element("button");
 			button2.textContent = "click";
-
-			dispose = [
-				listen(button0, "click", /*updateHandler1*/ ctx[2]),
-				listen(button1, "click", /*updateHandler2*/ ctx[3]),
-				listen(button2, "click", function () {
-					if (is_function(/*clickHandler*/ ctx[0])) /*clickHandler*/ ctx[0].apply(this, arguments);
-				})
-			];
 		},
 		m(target, anchor) {
 			insert(target, p0, anchor);
@@ -61,6 +53,14 @@ function create_fragment(ctx) {
 			append(p1, t4);
 			insert(target, t5, anchor);
 			insert(target, button2, anchor);
+
+			dispose = [
+				listen(button0, "click", /*updateHandler1*/ ctx[2]),
+				listen(button1, "click", /*updateHandler2*/ ctx[3]),
+				listen(button2, "click", function () {
+					if (is_function(/*clickHandler*/ ctx[0])) /*clickHandler*/ ctx[0].apply(this, arguments);
+				})
+			];
 		},
 		p(new_ctx, [dirty]) {
 			ctx = new_ctx;

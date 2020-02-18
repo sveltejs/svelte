@@ -415,7 +415,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const is = this.attributes.find(attr => attr.node.name === 'is');
 		if (is) {
-			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)});`;
+			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)})`;
 		}
 
 		return x`@element("${name}")`;
@@ -632,7 +632,7 @@ export default class ElementWrapper extends Wrapper {
 
 	add_this_binding(block: Block, this_binding: Binding) {
 		const { renderer } = this;
-		
+
 		renderer.component.has_reactive_assignments = true;
 
 		const binding_callback = bind_this(renderer.component, block, this_binding.node, this.var);
@@ -679,10 +679,10 @@ export default class ElementWrapper extends Wrapper {
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
 				} else {
 					const metadata = attr.get_metadata();
-					const snippet = x`{ ${
-						(metadata && metadata.property_name) ||
-						fix_attribute_casing(attr.node.name)
-					}: ${attr.get_value(block)} }`;
+					const name = attr.is_indirectly_bound_value()
+						? '__value'
+						: (metadata && metadata.property_name) || fix_attribute_casing(attr.node.name);
+					const snippet = x`{ ${name}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);

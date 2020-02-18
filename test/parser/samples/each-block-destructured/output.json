@@ -40,6 +40,16 @@
 									"type": "Identifier",
 									"start": 46,
 									"end": 49,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 5
+										},
+										"end": {
+											"line": 2,
+											"column": 8
+										}
+									},
 									"name": "key"
 								}
 							},
@@ -58,6 +68,16 @@
 									"type": "Identifier",
 									"start": 53,
 									"end": 58,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 12
+										},
+										"end": {
+											"line": 2,
+											"column": 17
+										}
+									},
 									"name": "value"
 								}
 							}

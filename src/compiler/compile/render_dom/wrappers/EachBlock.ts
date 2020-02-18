@@ -204,6 +204,9 @@ export default class EachBlockWrapper extends Wrapper {
 		const snippet = this.node.expression.manipulate(block);
 
 		block.chunks.init.push(b`let ${this.vars.each_block_value} = ${snippet};`);
+		if (this.renderer.options.dev) {
+			block.chunks.init.push(b`@validate_each_argument(${this.vars.each_block_value});`);
+		}
 
 		// TODO which is better — Object.create(array) or array.slice()?
 		renderer.blocks.push(b`
@@ -264,9 +267,22 @@ export default class EachBlockWrapper extends Wrapper {
 			block.chunks.init.push(b`
 				if (!${this.vars.data_length}) {
 					${each_block_else} = ${this.else.block.name}(#ctx);
+				}
+			`);
+
+			block.chunks.create.push(b`
+				if (${each_block_else}) {
 					${each_block_else}.c();
 				}
 			`);
+
+			if (this.renderer.options.hydratable) {
+				block.chunks.claim.push(b`
+					if (${each_block_else}) {
+						${each_block_else}.l(${parent_nodes});
+					}
+				`);
+			}
 
 			block.chunks.mount.push(b`
 				if (${each_block_else}) {
@@ -361,6 +377,7 @@ export default class EachBlockWrapper extends Wrapper {
 		block.chunks.init.push(b`
 			const ${get_key} = #ctx => ${this.node.key.manipulate(block)};
 
+			${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
 			for (let #i = 0; #i < ${data_length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(#ctx, ${this.vars.each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
@@ -398,15 +415,26 @@ export default class EachBlockWrapper extends Wrapper {
 				? `@outro_and_destroy_block`
 				: `@destroy_block`;
 
-		block.chunks.update.push(b`
-			const ${this.vars.each_block_value} = ${snippet};
+		const all_dependencies = new Set(this.block.dependencies); // TODO should be dynamic deps only
+		this.node.expression.dynamic_dependencies().forEach((dependency: string) => {
+			all_dependencies.add(dependency);
+		});
 
-			${this.block.has_outros && b`@group_outros();`}
-			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
-			${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
-			${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
-			${this.block.has_outros && b`@check_outros();`}
-		`);
+		if (all_dependencies.size) {
+			block.chunks.update.push(b`
+				if (${block.renderer.dirty(Array.from(all_dependencies))}) {
+					const ${this.vars.each_block_value} = ${snippet};
+					${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
+
+					${this.block.has_outros && b`@group_outros();`}
+					${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
+					${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
+					${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
+					${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
+					${this.block.has_outros && b`@check_outros();`}
+				}
+			`);
+		}
 
 		if (this.block.has_outros) {
 			block.chunks.outro.push(b`
@@ -548,6 +576,7 @@ export default class EachBlockWrapper extends Wrapper {
 			const update = b`
 				${!this.block.has_update_method && b`const #old_length = ${this.vars.each_block_value}.length;`}
 				${this.vars.each_block_value} = ${snippet};
+				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 
 				let #i;
 				for (#i = ${start}; #i < ${data_length}; #i += 1) {

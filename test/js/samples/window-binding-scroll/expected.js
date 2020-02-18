@@ -33,6 +33,11 @@ function create_fragment(ctx) {
 			p = element("p");
 			t0 = text("scrolled to ");
 			t1 = text(/*y*/ ctx[0]);
+		},
+		m(target, anchor) {
+			insert(target, p, anchor);
+			append(p, t0);
+			append(p, t1);
 
 			dispose = listen(window, "scroll", () => {
 				scrolling = true;
@@ -40,11 +45,6 @@ function create_fragment(ctx) {
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
 				/*onwindowscroll*/ ctx[1]();
 			});
-		},
-		m(target, anchor) {
-			insert(target, p, anchor);
-			append(p, t0);
-			append(p, t1);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*y*/ 1 && !scrolling) {

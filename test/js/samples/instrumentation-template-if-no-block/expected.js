@@ -30,7 +30,6 @@ function create_fragment(ctx) {
 			p = element("p");
 			t2 = text("x: ");
 			t3 = text(/*x*/ ctx[0]);
-			dispose = listen(button, "click", /*click_handler*/ ctx[1]);
 		},
 		m(target, anchor) {
 			insert(target, button, anchor);
@@ -38,6 +37,7 @@ function create_fragment(ctx) {
 			insert(target, p, anchor);
 			append(p, t2);
 			append(p, t3);
+			dispose = listen(button, "click", /*click_handler*/ ctx[1]);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*x*/ 1) set_data(t3, /*x*/ ctx[0]);

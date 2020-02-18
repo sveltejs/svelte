@@ -205,6 +205,8 @@ Iterating over lists of values can be done with an each block.
 </ul>
 ```
 
+You can use each blocks to iterate over any array or array-like value — that is, any object with a `length` property.
+
 ---
 
 An each block can also specify an *index*, equivalent to the second argument in an `array.map(...)` callback:
@@ -1016,7 +1018,7 @@ DOMRect {
 	​top: number,
 	width: number,
 	x: number,
-	y:number
+	y: number
 }
 ```
 
@@ -1202,14 +1204,16 @@ The content is exposed in the child component using the `<slot>` element, which 
 
 ```html
 <!-- App.svelte -->
+<Widget></Widget>
+
 <Widget>
-	<p>this is some child content</p>
+	<p>this is some child content that will overwrite the default slot content</p>
 </Widget>
 
 <!-- Widget.svelte -->
 <div>
 	<slot>
-		this will be rendered if someone does <Widget/>
+		this fallback content will be rendered when no content is provided, like in the first example
 	</slot>
 </div>
 ```

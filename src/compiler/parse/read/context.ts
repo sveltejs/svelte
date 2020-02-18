@@ -1,4 +1,5 @@
 import { Parser } from '../index';
+import { reserved } from '../../utils/names';
 
 interface Identifier {
 	start: number;
@@ -116,8 +117,11 @@ export default function read_context(parser: Parser) {
 				break;
 			}
 
+			// TODO: DRY this out somehow
+			// We don't know whether we want to allow reserved words until we see whether there's a ':' after it
+			// Probably ideally we'd use Acorn to do all of this
 			const start = parser.index;
-			const name = parser.read_identifier();
+			const name = parser.read_identifier(true);
 			const key: Identifier = {
 				start,
 				end: parser.index,
@@ -126,9 +130,19 @@ export default function read_context(parser: Parser) {
 			};
 			parser.allow_whitespace();
 
-			const value = parser.eat(':')
-				? (parser.allow_whitespace(), read_context(parser))
-				: key;
+			let value: Context;
+			if (parser.eat(':')) {
+				parser.allow_whitespace();
+				value = read_context(parser);
+			} else {
+				if (reserved.has(name)) {
+					parser.error({
+						code: `unexpected-reserved-word`,
+						message: `'${name}' is a reserved word in JavaScript and cannot be used here`
+					}, start);
+				}
+				value = key;
+			}
 
 			const property: Property = {
 				start,

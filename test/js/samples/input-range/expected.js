@@ -22,15 +22,15 @@ function create_fragment(ctx) {
 		c() {
 			input = element("input");
 			attr(input, "type", "range");
+		},
+		m(target, anchor) {
+			insert(target, input, anchor);
+			set_input_value(input, /*value*/ ctx[0]);
 
 			dispose = [
 				listen(input, "change", /*input_change_input_handler*/ ctx[1]),
 				listen(input, "input", /*input_change_input_handler*/ ctx[1])
 			];
-		},
-		m(target, anchor) {
-			insert(target, input, anchor);
-			set_input_value(input, /*value*/ ctx[0]);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*value*/ 1) {
