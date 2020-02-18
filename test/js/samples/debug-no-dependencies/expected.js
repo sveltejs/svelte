@@ -10,7 +10,8 @@ import {
 	noop,
 	safe_not_equal,
 	space,
-	text
+	text,
+	validate_each_argument
 } from "svelte/internal";
 
 const file = undefined;
@@ -64,6 +65,7 @@ function create_each_block(ctx) {
 function create_fragment(ctx) {
 	let each_1_anchor;
 	let each_value = things;
+	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -91,6 +93,7 @@ function create_fragment(ctx) {
 		p: function update(ctx, [dirty]) {
 			if (dirty & /*things*/ 0) {
 				each_value = things;
+				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
