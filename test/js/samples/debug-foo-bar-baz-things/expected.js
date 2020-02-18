@@ -13,7 +13,8 @@ import {
 	safe_not_equal,
 	set_data_dev,
 	space,
-	text
+	text,
+	validate_each_argument
 } from "svelte/internal";
 
 const file = undefined;
@@ -88,6 +89,7 @@ function create_fragment(ctx) {
 	let t1;
 	let t2;
 	let each_value = /*things*/ ctx[0];
+	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -122,6 +124,7 @@ function create_fragment(ctx) {
 		p: function update(ctx, [dirty]) {
 			if (dirty & /*things*/ 1) {
 				each_value = /*things*/ ctx[0];
+				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
