@@ -167,19 +167,15 @@ export default function dom(
 			`;
 		}
 
-		const capturable_vars = component.vars.filter(
-			v => !v.internal && v.name != null && !(v.name[0] === '$' && v.name[1] === '$')
-		);
-
-		const injectable_vars = capturable_vars.filter(
-			v => !v.module && v.writable && v.name[0] !== '$'
-		);
+		const capturable_vars = component.vars.filter(v => !v.internal && !v.name.startsWith('$$'));
 
 		capture_state = capturable_vars.length > 0
 			? x`() => ({ ${capturable_vars.map(prop => p`${prop.name}`)} })`
 			: x`@noop`;
 
-		if (uses_props || injectable_vars.length > 0) {
+		const injectable_vars = capturable_vars.filter(v => !v.module && v.writable && v.name[0] !== '$');
+
+			if (uses_props || injectable_vars.length > 0) {
 			inject_state = x`
 				${$$props} => {
 					${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
