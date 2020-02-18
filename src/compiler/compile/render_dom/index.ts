@@ -175,7 +175,7 @@ export default function dom(
 
 		const injectable_vars = capturable_vars.filter(v => !v.module && v.writable && v.name[0] !== '$');
 
-			if (uses_props || injectable_vars.length > 0) {
+		if (uses_props || injectable_vars.length > 0) {
 			inject_state = x`
 				${$$props} => {
 					${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
