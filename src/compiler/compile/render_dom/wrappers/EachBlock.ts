@@ -424,6 +424,7 @@ export default class EachBlockWrapper extends Wrapper {
 			block.chunks.update.push(b`
 				if (${block.renderer.dirty(Array.from(all_dependencies))}) {
 					const ${this.vars.each_block_value} = ${snippet};
+					${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 
 					${this.block.has_outros && b`@group_outros();`}
 					${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
@@ -575,6 +576,7 @@ export default class EachBlockWrapper extends Wrapper {
 			const update = b`
 				${!this.block.has_update_method && b`const #old_length = ${this.vars.each_block_value}.length;`}
 				${this.vars.each_block_value} = ${snippet};
+				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 
 				let #i;
 				for (#i = ${start}; #i < ${data_length}; #i += 1) {
