@@ -2,5 +2,5 @@ export default {
 	compileOptions: {
 		dev: true
 	},
-	error: `Svelte does not allow Sets or Maps in an {#each} block. Use [...arg.values()] or [...arg.entries()] instead.`
+	error: `{#each} only iterates over array-like objects. You can use a spread to convert this iterable into an array.`
 };

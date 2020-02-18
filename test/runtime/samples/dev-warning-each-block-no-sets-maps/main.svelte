@@ -1,5 +1,5 @@
 <script>
-	const foo = new Set([1,2,3])
+	const foo = new Set([1, 2, 3]);
 </script>
 
 {#each foo as item}
