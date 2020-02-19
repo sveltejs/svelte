@@ -134,16 +134,10 @@ function create_fragment(ctx) {
 	return block;
 }
 
-function instance($$self, $$props, $$invalidate) {
-	$$self.$capture_state = noop;
-	$$self.$inject_state = noop;
-	return [];
-}
-
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, instance, create_fragment, safe_not_equal, {});
+		init(this, options, null, create_fragment, safe_not_equal, {});
 
 		dispatch_dev("SvelteRegisterComponent", {
 			component: this,

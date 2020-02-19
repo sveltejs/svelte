@@ -169,9 +169,9 @@ export default function dom(
 
 		const capturable_vars = component.vars.filter(v => !v.internal && !v.name.startsWith('$$'));
 
-		capture_state = capturable_vars.length > 0
-			? x`() => ({ ${capturable_vars.map(prop => p`${prop.name}`)} })`
-			: x`@noop`;
+		if (capturable_vars.length > 0) {
+			capture_state = x`() => ({ ${capturable_vars.map(prop => p`${prop.name}`)} })`;
+		}
 
 		const injectable_vars = capturable_vars.filter(v => !v.module && v.writable && v.name[0] !== '$');
 
@@ -190,8 +190,6 @@ export default function dom(
 					$$self.$inject_state($$props.$$inject);
 				}
 			`;
-		} else {
-			inject_state = x`@noop`;
 		}
 	}
 
