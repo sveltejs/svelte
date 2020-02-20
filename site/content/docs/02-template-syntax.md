@@ -795,7 +795,7 @@ transition = (node: HTMLElement, params: any) => {
 
 A transition is triggered by an element entering or leaving the DOM as a result of a state change.
 
-Elements inside an *outroing* block are kept in the DOM until all current transitions have completed.
+When a block is transitioning out, elements inside the block are kept in the DOM until all current transitions have completed.
 
 The `transition:` directive indicates a *bidirectional* transition, which means it can be smoothly reversed while the transition is in progress.
 
