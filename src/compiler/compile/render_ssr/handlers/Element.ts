@@ -6,6 +6,7 @@ import Element from '../../nodes/Element';
 import { x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
 import remove_whitespace_children from './utils/remove_whitespace_children';
+import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 
 export default function(node: Element, renderer: Renderer, options: RenderOptions) {
 
@@ -45,16 +46,16 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				if (name === 'value' && node.name.toLowerCase() === 'textarea') {
 					node_contents = get_attribute_value(attribute);
 				} else if (attribute.is_true) {
-					args.push(x`{ ${attribute.name}: true }`);
+					args.push(x`{ ${fix_attribute_casing(attribute.name)}: true }`);
 				} else if (
 					boolean_attributes.has(name) &&
 					attribute.chunks.length === 1 &&
 					attribute.chunks[0].type !== 'Text'
 				) {
 					// a boolean attribute with one non-Text chunk
-					args.push(x`{ ${attribute.name}: ${(attribute.chunks[0] as Expression).node} || null }`);
+					args.push(x`{ ${fix_attribute_casing(attribute.name)}: ${(attribute.chunks[0] as Expression).node} || null }`);
 				} else {
-					args.push(x`{ ${attribute.name}: ${get_attribute_value(attribute)} }`);
+					args.push(x`{ ${fix_attribute_casing(attribute.name)}: ${get_attribute_value(attribute)} }`);
 				}
 			}
 		});
@@ -67,7 +68,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			if (name === 'value' && node.name.toLowerCase() === 'textarea') {
 				node_contents = get_attribute_value(attribute);
 			} else if (attribute.is_true) {
-				renderer.add_string(` ${attribute.name}`);
+				renderer.add_string(` ${fix_attribute_casing(attribute.name)}`);
 			} else if (
 				boolean_attributes.has(name) &&
 				attribute.chunks.length === 1 &&
@@ -75,17 +76,17 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			) {
 				// a boolean attribute with one non-Text chunk
 				renderer.add_string(' ');
-				renderer.add_expression(x`${(attribute.chunks[0] as Expression).node} ? "${attribute.name}" : ""`);
+				renderer.add_expression(x`${(attribute.chunks[0] as Expression).node} ? "${fix_attribute_casing(attribute.name)}" : ""`);
 			} else if (name === 'class' && class_expression) {
 				add_class_attribute = false;
-				renderer.add_string(` ${attribute.name}="`);
+				renderer.add_string(` ${fix_attribute_casing(attribute.name)}="`);
 				renderer.add_expression(x`[${get_class_attribute_value(attribute)}, ${class_expression}].join(' ').trim()`);
 				renderer.add_string('"');
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const snippet = (attribute.chunks[0] as Expression).node;
-				renderer.add_expression(x`@add_attribute("${attribute.name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
+				renderer.add_expression(x`@add_attribute("${fix_attribute_casing(attribute.name)}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
 			} else {
-				renderer.add_string(` ${attribute.name}="`);
+				renderer.add_string(` ${fix_attribute_casing(attribute.name)}="`);
 				renderer.add_expression((name === 'class' ? get_class_attribute_value : get_attribute_value)(attribute));
 				renderer.add_string('"');
 			}

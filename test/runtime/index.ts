@@ -153,6 +153,17 @@ describe('runtime', () => {
 
 					const target = window.document.querySelector('main');
 
+					if (hydrate) {
+						// ssr into target
+						compileOptions.generate = 'ssr';
+						cleanRequireCache();
+						const SsrSvelteComponent = require(`./samples/${dir}/main.svelte`).default;
+						const { html } = SsrSvelteComponent.render(config.props);
+						target.innerHTML = html;
+
+						delete compileOptions.generate;
+					}
+
 					const warnings = [];
 					const warn = console.warn;
 					console.warn = warning => {
@@ -182,7 +193,9 @@ describe('runtime', () => {
 						throw new Error('Received unexpected warnings');
 					}
 
-					if (config.html) {
+					if (hydrate && config.ssrHtml) {
+						assert.htmlEqual(target.innerHTML, config.ssrHtml);
+					} else if (config.html) {
 						assert.htmlEqual(target.innerHTML, config.html);
 					}
 

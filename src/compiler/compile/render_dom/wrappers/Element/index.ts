@@ -374,7 +374,7 @@ export default class ElementWrapper extends Wrapper {
 	get_claim_statement(nodes: Identifier) {
 		const attributes = this.node.attributes
 			.filter((attr) => attr.type === 'Attribute')
-			.map((attr) => p`${attr.name}: true`);
+			.map((attr) => p`${fix_attribute_casing(attr.name)}: true`);
 
 		const name = this.node.namespace
 			? this.node.name
