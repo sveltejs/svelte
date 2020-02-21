@@ -7,11 +7,6 @@
     <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
   </a>
 
-  <a href="https://github.com/sveltejs/svelte/actions">
-    <img src="https://github.com/sveltejs/svelte/workflows/CI/badge.svg?branch=master"
-         alt="build status">
-  </a>
-
   <a href="https://github.com/sveltejs/svelte/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
   </a>
