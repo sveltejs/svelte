@@ -1,4 +1,8 @@
 export default {
-	html: `<text>hello world</text>`,
+	html: `
+		<svg>
+			<text>hello world</text>
+		</svg>
+	`,
 	preserveIdentifiers: true,
 };

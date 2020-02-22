@@ -184,6 +184,33 @@ export function claim_space(nodes) {
 	return claim_text(nodes, ' ');
 }
 
+export function claim_noscript(nodes) {
+	detach(claim_element(nodes, 'NOSCRIPT', {}, false));
+}
+
+function find_comment(nodes, text, start) {
+	for (let i = start; i < nodes.length; i += 1) {
+		const node = nodes[i];
+		if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === text) {
+			return i;
+		}
+	}
+	return nodes.length;
+}
+
+export function claim_html_tag(html: string, nodes) {
+	// find html opening tag
+	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
+	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
+	if (start_index === end_index) {
+		return new HtmlTag(html);
+	}
+	const html_tag_nodes = nodes.splice(start_index, end_index + 1);
+	detach(html_tag_nodes[0]);
+	detach(html_tag_nodes[html_tag_nodes.length - 1]);
+	return new HtmlTag(html_tag_nodes.slice(1, html_tag_nodes.length - 1));
+}
+
 export function set_data(text, data) {
 	data = '' + data;
 	if (text.data !== data) text.data = data;
@@ -288,10 +315,17 @@ export class HtmlTag {
 	t: HTMLElement;
 	a: HTMLElement;
 
-	constructor(html: string, anchor: HTMLElement = null) {
+	constructor(html: string | ChildNode[]) {
 		this.e = element('div');
+		if (Array.isArray(html)) {
+			this.n = html;
+		} else {
+			this.u(html);
+		}
+	}
+
+	b(anchor: HTMLElement = null) {
 		this.a = anchor;
-		this.u(html);
 	}
 
 	m(target: HTMLElement, anchor: HTMLElement = null) {
