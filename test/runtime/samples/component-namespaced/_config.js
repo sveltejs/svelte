@@ -9,10 +9,6 @@ export default {
 		<p>foo 1</p>
 	`,
 
-	before_test() {
-		delete require.cache[path.resolve(__dirname, 'components.js')];
-	},
-
 	test({ assert, component, target }) {
 		component.a = 2;
 		assert.htmlEqual(target.innerHTML, `
