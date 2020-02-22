@@ -2,7 +2,6 @@
 import {
 	SvelteComponent,
 	attr,
-	children,
 	claim_element,
 	claim_space,
 	detach,
@@ -31,7 +30,6 @@ function create_fragment(ctx) {
 			img = claim_element(nodes, "IMG", { src: true, alt: true });
 			t = claim_space(nodes);
 			div = claim_element(nodes, "DIV", {});
-			children(div).forEach(detach);
 			this.h();
 		},
 		h() {
