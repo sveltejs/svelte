@@ -146,8 +146,6 @@ describe('runtime', () => {
 						throw err;
 					}
 
-					if (config.before_test) config.before_test();
-
 					// Put things we need on window for testing
 					window.SvelteComponent = SvelteComponent;
 
@@ -160,9 +158,10 @@ describe('runtime', () => {
 						const SsrSvelteComponent = require(`./samples/${dir}/main.svelte`).default;
 						const { html } = SsrSvelteComponent.render(config.props);
 						target.innerHTML = html;
-
 						delete compileOptions.generate;
 					}
+
+					if (config.before_test) config.before_test();
 
 					const warnings = [];
 					const warn = console.warn;
@@ -193,9 +192,7 @@ describe('runtime', () => {
 						throw new Error('Received unexpected warnings');
 					}
 
-					if (hydrate && config.ssrHtml) {
-						assert.htmlEqual(target.innerHTML, config.ssrHtml);
-					} else if (config.html) {
+					if (config.html) {
 						assert.htmlEqual(target.innerHTML, config.html);
 					}
 
