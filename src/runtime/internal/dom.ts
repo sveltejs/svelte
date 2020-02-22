@@ -191,10 +191,6 @@ export function claim_space(nodes) {
 	return claim_text(nodes, ' ');
 }
 
-export function claim_noscript(nodes) {
-	detach(claim_element(nodes, 'NOSCRIPT', {}, false));
-}
-
 function find_comment(nodes, text, start) {
 	for (let i = start; i < nodes.length; i += 1) {
 		const node = nodes[i];

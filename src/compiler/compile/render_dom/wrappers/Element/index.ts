@@ -232,12 +232,7 @@ export default class ElementWrapper extends Wrapper {
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		const { renderer } = this;
 
-		if (this.node.name === 'noscript') {
-			if (renderer.options.hydratable) {
-				block.chunks.claim.push(b`@claim_noscript(${parent_nodes});`);
-			}
-			return;
-		}
+		if (this.node.name === 'noscript') return;
 
 		const node = this.var;
 		const nodes = parent_nodes && block.get_unique_name(`${this.var.name}_nodes`); // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
