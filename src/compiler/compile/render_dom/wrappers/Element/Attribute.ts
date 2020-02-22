@@ -55,13 +55,9 @@ export default class AttributeWrapper {
 		const element = this.parent;
 		const name = fix_attribute_casing(this.node.name);
 
-		const metadata = this.get_metadata();
-
 		const is_indirectly_bound_value = this.is_indirectly_bound_value();
 
-		const property_name = is_indirectly_bound_value
-			? '__value'
-			: metadata && metadata.property_name;
+		const property_name = this.get_property_name();
 
 		// xlink is a special case... we could maybe extend this to generic
 		// namespaced attributes but I'm not sure that's applicable in
@@ -183,6 +179,14 @@ export default class AttributeWrapper {
 			block.chunks.hydrate.push(update_value);
 			if (this.node.get_dependencies().length > 0) block.chunks.update.push(update_value);
 		}
+	}
+
+	get_property_name() {
+		const metadata = this.get_metadata();
+		const is_indirectly_bound_value = this.is_indirectly_bound_value();
+		return is_indirectly_bound_value
+			? '__value'
+			: metadata && metadata.property_name;
 	}
 
 	get_metadata() {
