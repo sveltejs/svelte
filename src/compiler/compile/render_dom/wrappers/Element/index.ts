@@ -277,12 +277,7 @@ export default class ElementWrapper extends Wrapper {
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		const { renderer } = this;
 
-		if (this.node.name === 'noscript') {
-			if (renderer.options.hydratable) {
-				block.chunks.claim.push(b`@claim_noscript(${parent_nodes});`);
-			}
-			return;
-		}
+		if (this.node.name === 'noscript') return;
 
 		if (this.slot_block) {
 			block = this.slot_block;
