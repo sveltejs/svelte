@@ -27,7 +27,7 @@ We can use curly braces *inside* attributes. Try changing it to `"{name} dances.
 
 ## Shorthand attributes
 
-It's not uncommon to have an attribute where the name and value are the same, like `src={src}`. Svelte gives us a convenient shorthand for these cases:
+It's common to have an attribute where the name and value are the same, like `src={src}`. Svelte gives us a convenient shorthand for these cases:
 
 ```html
 <img {src} alt="A man dances.">
