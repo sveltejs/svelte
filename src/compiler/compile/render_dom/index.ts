@@ -91,7 +91,10 @@ export default function dom(
 	const accessors = [];
 
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-	let dev_props_check; let inject_state; let capture_state;
+	let dev_props_check: Node[] | Node;
+	let inject_state: Expression;
+	let capture_state: Expression;
+	let props_inject: Node[] | Node;
 
 	props.forEach(prop => {
 		const variable = component.var_lookup.get(prop.name);
@@ -164,27 +167,30 @@ export default function dom(
 			`;
 		}
 
-		capture_state = (uses_props || writable_props.length > 0) ? x`
-			() => {
-				return { ${component.vars.filter(prop => prop.writable).map(prop => p`${prop.name}`)} };
-			}
-		` : x`
-			() => {
-				return {};
-			}
-		`;
+		const capturable_vars = component.vars.filter(v => !v.internal && !v.name.startsWith('$$'));
 
-		const writable_vars = component.vars.filter(variable => !variable.module && variable.writable);
-		inject_state = (uses_props || writable_vars.length > 0) ? x`
-			${$$props} => {
-				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
-				${writable_vars.map(prop => b`
-					if ('${prop.name}' in $$props) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.name}`)};
-				`)}
-			}
-		` : x`
-			${$$props} => {}
-		`;
+		if (capturable_vars.length > 0) {
+			capture_state = x`() => ({ ${capturable_vars.map(prop => p`${prop.name}`)} })`;
+		}
+
+		const injectable_vars = capturable_vars.filter(v => !v.module && v.writable && v.name[0] !== '$');
+
+		if (uses_props || injectable_vars.length > 0) {
+			inject_state = x`
+				${$$props} => {
+					${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
+					${injectable_vars.map(
+						v => b`if ('${v.name}' in $$props) ${renderer.invalidate(v.name, x`${v.name} = ${$$props}.${v.name}`)};`
+					)}
+				}
+			`;
+
+			props_inject = b`
+				if ($$props && "$$inject" in $$props) {
+					$$self.$inject_state($$props.$$inject);
+				}
+			`;
+		}
 	}
 
 	// instrument assignments
@@ -246,7 +252,12 @@ export default function dom(
 	}
 
 	const args = [x`$$self`];
-	if (props.length > 0 || component.has_reactive_assignments || component.slots.size > 0) {
+	const has_invalidate = props.length > 0 ||
+		component.has_reactive_assignments ||
+		component.slots.size > 0 ||
+		capture_state ||
+		inject_state;
+	if (has_invalidate) {
 		args.push(x`$$props`, x`$$invalidate`);
 	}
 
@@ -294,7 +305,9 @@ export default function dom(
 		uses_props ||
 		component.partly_hoisted.length > 0 ||
 		initial_context.length > 0 ||
-		component.reactive_declarations.length > 0
+		component.reactive_declarations.length > 0 ||
+		capture_state ||
+		inject_state
 	);
 
 	const definition = has_definition
@@ -408,6 +421,8 @@ export default function dom(
 				${inject_state && b`$$self.$inject_state = ${inject_state};`}
 
 				${injected.map(name => b`let ${name};`)}
+
+				${/* before reactive declarations */ props_inject}
 
 				${reactive_declarations.length > 0 && b`
 				$$self.$$.update = () => {
