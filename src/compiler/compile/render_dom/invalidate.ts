@@ -43,7 +43,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 		if (node.type === 'AssignmentExpression' && node.operator === '=' && nodes_match(node.left, node.right) && tail.length === 0) {
 			return get_invalidated(head, node);
 		} else {
-			const is_store_value = head.name[0] === '$';
+			const is_store_value = head.name[0] === '$' && head.name[1] !== '$';
 			const extra_args = tail.map(variable => get_invalidated(variable));
 
 			const pass_value = (
