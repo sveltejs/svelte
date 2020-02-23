@@ -120,6 +120,10 @@ export class SvelteComponentDev extends SvelteComponent {
 			console.warn(`Component was already destroyed`); // eslint-disable-line no-console
 		};
 	}
+
+	$capture_state() {}
+
+	$inject_state() {}
 }
 
 export function loop_guard(timeout) {
