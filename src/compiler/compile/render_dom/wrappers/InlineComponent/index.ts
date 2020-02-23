@@ -332,8 +332,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				contextual_dependencies.push(object.name, property.name);
 			}
 
-			const value = block.get_unique_name('value');
-			const params: any[] = [value];
+			const params = [x`#value`];
 			if (contextual_dependencies.length > 0) {
 				const args = [];
 
@@ -349,23 +348,23 @@ export default class InlineComponentWrapper extends Wrapper {
 
 
 				block.chunks.init.push(b`
-					function ${id}(${value}) {
-						${callee}.call(null, ${value}, ${args});
+					function ${id}(#value) {
+						${callee}.call(null, #value, ${args});
 					}
 				`);
 
 				block.maintain_context = true; // TODO put this somewhere more logical
 			} else {
 				block.chunks.init.push(b`
-					function ${id}(${value}) {
-						${callee}.call(null, ${value});
+					function ${id}(#value) {
+						${callee}.call(null, #value);
 					}
 				`);
 			}
 
 			const body = b`
 				function ${id}(${params}) {
-					${lhs} = ${value};
+					${lhs} = #value;
 					${renderer.invalidate(dependencies[0])};
 				}
 			`;
