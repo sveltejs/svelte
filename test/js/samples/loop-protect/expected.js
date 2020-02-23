@@ -108,13 +108,15 @@ function instance($$self, $$props, $$invalidate) {
 		});
 	}
 
-	$$self.$capture_state = () => {
-		return {};
-	};
+	$$self.$capture_state = () => ({ node, foo, console });
 
 	$$self.$inject_state = $$props => {
 		if ("node" in $$props) $$invalidate(0, node = $$props.node);
 	};
+
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
 
 	$: {
 		const guard_4 = loop_guard(100);
