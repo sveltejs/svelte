@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Deconflict `value` parameter named used in contextual bindings ([#4445](https://github.com/sveltejs/svelte/issues/4445))
+* Deconflict `value` parameter name used in contextual bindings ([#4445](https://github.com/sveltejs/svelte/issues/4445))
 * Fix dev mode validation of `{#each}` blocks using strings ([#4450](https://github.com/sveltejs/svelte/issues/4450))
 
 ## 3.19.0
