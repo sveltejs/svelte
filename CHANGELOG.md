@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix dev mode validation of `{#each}` blocks using strings ([#4450](https://github.com/sveltejs/svelte/issues/4450))
+
 ## 3.19.0
 
 * Fix indirect bindings involving elements with spreads ([#3680](https://github.com/sveltejs/svelte/issues/3680))
