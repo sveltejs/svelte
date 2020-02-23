@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.19.0
 
 * Fix indirect bindings involving elements with spreads ([#3680](https://github.com/sveltejs/svelte/issues/3680))
 * `$capture_state`/`$inject_state` now act on the component's entire state, rather than its props ([#3822](https://github.com/sveltejs/svelte/pull/3822))
