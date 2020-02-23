@@ -332,7 +332,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				contextual_dependencies.push(object.name, property.name);
 			}
 
-			const params: any[] = [x`#value`];
+			const params = [x`#value`];
 			if (contextual_dependencies.length > 0) {
 				const args = [];
 
