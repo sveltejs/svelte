@@ -379,7 +379,7 @@ export default function dom(
 		});
 
 		let unknown_props_check;
-		if (component.compile_options.dev && !component.var_lookup.has('$$props') && writable_props.length) {
+		if (component.compile_options.dev && !component.var_lookup.has('$$props')) {
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
 				@_Object.keys($$props).forEach(key => {
