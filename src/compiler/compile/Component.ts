@@ -803,7 +803,7 @@ export default class Component {
 								const variable = component.var_lookup.get(name);
 								variable[deep ? 'mutated' : 'reassigned'] = true;
 							}
-						} else if (module_scope.has(name)) {
+						} else if (module_scope && module_scope.has(name)) {
 							const variable = component.var_lookup.get(name);
 							variable[deep ? 'mutated' : 'reassigned'] = true;
 						}
