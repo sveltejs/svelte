@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Exclude global variables from `$capture_state` ([#4463](https://github.com/sveltejs/svelte/issues/4463))
+
 ## 3.19.1
 
 * Do not treat modifications to `$$props` as updates to a store called `$props` ([#4368](https://github.com/sveltejs/svelte/issues/4368))
