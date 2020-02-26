@@ -108,7 +108,7 @@ function instance($$self, $$props, $$invalidate) {
 		});
 	}
 
-	$$self.$capture_state = () => ({ node, foo, console });
+	$$self.$capture_state = () => ({ node, foo });
 
 	$$self.$inject_state = $$props => {
 		if ("node" in $$props) $$invalidate(0, node = $$props.node);
