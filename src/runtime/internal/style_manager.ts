@@ -55,8 +55,7 @@ export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string
 		)
 		.join(', ');
 
-	active = Math.max(0, active - 1);
-	if (name && !active) clear_rules();
+	if (name && !--active) clear_rules();
 }
 
 export function clear_rules() {
