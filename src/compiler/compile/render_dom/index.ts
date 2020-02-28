@@ -200,7 +200,7 @@ export default function dom(
 		let execution_context: Node | null = null;
 
 		walk(component.ast.instance.content, {
-			enter(node) {
+			enter(node: Node) {
 				if (map.has(node)) {
 					scope = map.get(node) as Scope;
 
@@ -212,7 +212,7 @@ export default function dom(
 				}
 			},
 
-			leave(node) {
+			leave(node: Node) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}

@@ -1,7 +1,7 @@
 import Node from './shared/Node';
 import Component from '../Component';
 import { walk } from 'estree-walker';
-import { Identifier } from 'estree';
+import { BasePattern, Identifier } from 'estree';
 
 const applicable = new Set(['Identifier', 'ObjectExpression', 'ArrayExpression', 'Property']);
 
@@ -22,7 +22,7 @@ export default class Let extends Node {
 			this.value = info.expression;
 
 			walk(info.expression, {
-				enter(node) {
+				enter(node: Identifier|BasePattern) {
 					if (!applicable.has(node.type)) {
 						component.error(node as any, {
 							code: 'invalid-let',
@@ -31,16 +31,16 @@ export default class Let extends Node {
 					}
 
 					if (node.type === 'Identifier') {
-						names.push(node.name);
+						names.push((node as Identifier).name);
 					}
 
 					// slightly unfortunate hack
 					if (node.type === 'ArrayExpression') {
-						(node as any).type = 'ArrayPattern';
+						node.type = 'ArrayPattern';
 					}
 
 					if (node.type === 'ObjectExpression') {
-						(node as any).type = 'ObjectPattern';
+						node.type = 'ObjectPattern';
 					}
 				}
 			});
