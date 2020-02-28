@@ -32,6 +32,8 @@ cd svelte
 npm install
 ```
 
+Note: Do not use `yarn` to install the dependencies, as specific package versions in `package-lock.json` are used to build & test svelte.
+
 > Many tests depend on newlines being preserved as `<LF>`. On Windows, you can ensure this by cloning with:
 > ```bash
 > git -c core.autocrlf=false clone https://github.com/sveltejs/svelte.git
