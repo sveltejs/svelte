@@ -11,7 +11,10 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var select, option0, option1, select_value_value;
+	let select;
+	let option0;
+	let option1;
+	let select_value_value;
 
 	return {
 		c() {
@@ -25,13 +28,12 @@ function create_fragment(ctx) {
 			option1.__value = "2";
 			option1.value = option1.__value;
 		},
-
 		m(target, anchor) {
 			insert(target, select, anchor);
 			append(select, option0);
 			append(select, option1);
+			select_value_value = /*current*/ ctx[0];
 
-			select_value_value = ctx.current;
 			for (var i = 0; i < select.options.length; i += 1) {
 				var option = select.options[i];
 
@@ -41,9 +43,8 @@ function create_fragment(ctx) {
 				}
 			}
 		},
-
-		p(changed, ctx) {
-			if ((changed.current) && select_value_value !== (select_value_value = ctx.current)) {
+		p(ctx, [dirty]) {
+			if (dirty & /*current*/ 1 && select_value_value !== (select_value_value = /*current*/ ctx[0])) {
 				for (var i = 0; i < select.options.length; i += 1) {
 					var option = select.options[i];
 
@@ -54,14 +55,10 @@ function create_fragment(ctx) {
 				}
 			}
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(select);
-			}
+			if (detaching) detach(select);
 		}
 	};
 }
@@ -70,16 +67,16 @@ function instance($$self, $$props, $$invalidate) {
 	let { current } = $$props;
 
 	$$self.$set = $$props => {
-		if ('current' in $$props) $$invalidate('current', current = $$props.current);
+		if ("current" in $$props) $$invalidate(0, current = $$props.current);
 	};
 
-	return { current };
+	return [current];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["current"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { current: 0 });
 	}
 }
 

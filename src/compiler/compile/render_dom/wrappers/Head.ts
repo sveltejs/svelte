@@ -3,9 +3,12 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Head from '../../nodes/Head';
 import FragmentWrapper from './Fragment';
+import { x, b } from 'code-red';
+import { Identifier } from 'estree';
 
 export default class HeadWrapper extends Wrapper {
 	fragment: FragmentWrapper;
+	node: Head;
 
 	constructor(
 		renderer: Renderer,
@@ -29,7 +32,19 @@ export default class HeadWrapper extends Wrapper {
 		);
 	}
 
-	render(block: Block, _parent_node: string, _parent_nodes: string) {
-		this.fragment.render(block, '@_document.head', 'nodes');
+	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
+		let nodes;
+		if (this.renderer.options.hydratable && this.fragment.nodes.length) {
+			nodes = block.get_unique_name('head_nodes');
+			block.chunks.claim.push(b`const ${nodes} = @query_selector_all('[data-svelte="${this.node.id}"]', @_document.head);`);
+		}
+
+		this.fragment.render(block, x`@_document.head` as unknown as Identifier, nodes);
+
+		if (nodes && this.renderer.options.hydratable) {
+			block.chunks.claim.push(
+				b`${nodes}.forEach(@detach);`
+			);
+		}
 	}
 }

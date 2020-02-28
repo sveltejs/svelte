@@ -4,7 +4,7 @@ import read_style from '../read/style';
 import { decode_character_references, closing_tag_omitted } from '../utils/html';
 import { is_void } from '../../utils/names';
 import { Parser } from '../index';
-import { Directive, DirectiveType, Node, Text } from '../../interfaces';
+import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 
@@ -37,10 +37,8 @@ const specials = new Map([
 	],
 ]);
 
-// eslint-disable-next-line no-useless-escape
-const SELF = /^svelte:self(?=[\s\/>])/;
-// eslint-disable-next-line no-useless-escape
-const COMPONENT = /^svelte:component(?=[\s\/>])/;
+const SELF = /^svelte:self(?=[\s/>])/;
+const COMPONENT = /^svelte:component(?=[\s/>])/;
 
 function parent_is_head(stack) {
 	let i = stack.length;
@@ -83,7 +81,7 @@ export default function tag(parser: Parser) {
 				parser.current().children.length
 			) {
 				parser.error({
-					code: `invalid-${name.slice(7)}-content`,
+					code: `invalid-${slug}-content`,
 					message: `<${name}> cannot have children`
 				}, parser.current().children[0].start);
 			}
@@ -112,7 +110,7 @@ export default function tag(parser: Parser) {
 			: name === 'title' && parent_is_head(parser.stack) ? 'Title'
 				: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
-	const element: Node = {
+	const element: TemplateNode = {
 		start,
 		end: null, // filled in later
 		type,
@@ -290,6 +288,16 @@ function read_tag_name(parser: Parser) {
 function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const start = parser.index;
 
+	function check_unique(name: string) {
+		if (unique_names.has(name)) {
+			parser.error({
+				code: `duplicate-attribute`,
+				message: 'Attributes need to be unique'
+			}, start);
+		}
+		unique_names.add(name);
+	}
+
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
 
@@ -311,6 +319,8 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			const name = parser.read_identifier();
 			parser.allow_whitespace();
 			parser.eat('}', true);
+
+			check_unique(name);
 
 			return {
 				start,
@@ -343,17 +353,6 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	if (unique_names.has(name)) {
-		parser.error({
-			code: `duplicate-attribute`,
-			message: 'Attributes need to be unique'
-		}, start);
-	}
-
-	if (type !== "EventHandler") {
-		unique_names.add(name);
-	}
-
 	let value: any[] | true = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
@@ -368,6 +367,12 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
+
+		if (type === 'Binding' && directive_name !== 'this') {
+			check_unique(directive_name);
+		} else if (type !== 'EventHandler') {
+			check_unique(name);
+		}
 
 		if (type === 'Ref') {
 			parser.error({
@@ -406,11 +411,13 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 				end: directive.end,
 				type: 'Identifier',
 				name: directive.name
-			};
+			} as any;
 		}
 
 		return directive;
 	}
+
+	check_unique(name);
 
 	return {
 		start,
@@ -447,7 +454,7 @@ function read_attribute_value(parser: Parser) {
 	return value;
 }
 
-function read_sequence(parser: Parser, done: () => boolean): Node[] {
+function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 	let current_chunk: Text = {
 		start: parser.index,
 		end: null,
@@ -464,7 +471,7 @@ function read_sequence(parser: Parser, done: () => boolean): Node[] {
 		}
 	}
 
-	const chunks: Node[] = [];
+	const chunks: TemplateNode[] = [];
 
 	while (parser.index < parser.template.length) {
 		const index = parser.index;

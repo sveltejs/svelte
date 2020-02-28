@@ -16,7 +16,6 @@ export default {
 
 	async test({ assert, component, target, window }) {
 		const inputs = [...target.querySelectorAll('input')];
-		const items = component.items;
 		const event = new window.Event('input');
 
 		assert.equal(inputs[0].value, 'a');

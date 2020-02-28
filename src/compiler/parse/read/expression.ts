@@ -1,41 +1,35 @@
 import { parse_expression_at } from '../acorn';
 import { Parser } from '../index';
-import { Identifier, Node, SimpleLiteral } from 'estree';
-
-const literals = new Map([['true', true], ['false', false], ['null', null]]);
+import { Node } from 'estree';
+import { whitespace } from '../../utils/patterns';
 
 export default function read_expression(parser: Parser): Node {
-	const start = parser.index;
-
-	const name = parser.read_until(/\s*}/);
-	if (name && /^[a-z]+$/.test(name)) {
-		const end = start + name.length;
-
-		if (literals.has(name)) {
-			// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
-			return {
-				type: 'Literal',
-				start,
-				end,
-				value: literals.get(name),
-				raw: name,
-			} as SimpleLiteral;
-		}
-
-		// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
-		return {
-			type: 'Identifier',
-			start,
-			end: start + name.length,
-			name,
-		} as Identifier;
-	}
-
-	parser.index = start;
-
 	try {
 		const node = parse_expression_at(parser.template, parser.index);
-		parser.index = node.end;
+
+		let num_parens = 0;
+
+		for (let i = parser.index; i < node.start; i += 1) {
+			if (parser.template[i] === '(') num_parens += 1;
+		}
+
+		let index = node.end;
+		while (num_parens > 0) {
+			const char = parser.template[index];
+
+			if (char === ')') {
+				num_parens -= 1;
+			} else if (!whitespace.test(char)) {
+				parser.error({
+					code: 'unexpected-token',
+					message: 'Expected )'
+				}, index);
+			}
+
+			index += 1;
+		}
+
+		parser.index = index;
 
 		return node as Node;
 	} catch (err) {

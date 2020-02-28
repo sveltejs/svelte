@@ -1,8 +1,7 @@
 import { Pool } from 'pg';
 
-export const DB = new Pool({
-	connectionString: process.env.DATABASE_URL
-});
+// Uses `PG*` ENV vars
+export const DB = process.env.PGHOST ? new Pool() : null;
 
 export function query(text, values=[]) {
 	return DB.query(text, values).then(r => r.rows);

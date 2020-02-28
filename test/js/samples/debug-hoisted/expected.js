@@ -13,56 +13,68 @@ function create_fragment(ctx) {
 	const block = {
 		c: function create() {
 			{
-				const { obj } = ctx;
+				const obj = /*obj*/ ctx[0];
+				const kobzol = /*kobzol*/ ctx[1];
 				console.log({ obj, kobzol });
 				debugger;
 			}
 		},
-
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 		},
-
 		m: noop,
-
-		p: function update(changed, ctx) {
-			if (changed.obj || changed.kobzol) {
-				const { obj } = ctx;
+		p: function update(ctx, [dirty]) {
+			if (dirty & /*obj, kobzol*/ 3) {
+				const obj = /*obj*/ ctx[0];
+				const kobzol = /*kobzol*/ ctx[1];
 				console.log({ obj, kobzol });
 				debugger;
 			}
 		},
-
 		i: noop,
 		o: noop,
 		d: noop
 	};
-	dispatch_dev("SvelteRegisterBlock", { block, id: create_fragment.name, type: "component", source: "", ctx });
+
+	dispatch_dev("SvelteRegisterBlock", {
+		block,
+		id: create_fragment.name,
+		type: "component",
+		source: "",
+		ctx
+	});
+
 	return block;
 }
 
-let kobzol = 5;
-
-function instance($$self) {
+function instance($$self, $$props, $$invalidate) {
 	let obj = { x: 5 };
-
-	$$self.$capture_state = () => {
-		return {};
-	};
+	let kobzol = 5;
+	$$self.$capture_state = () => ({ obj, kobzol });
 
 	$$self.$inject_state = $$props => {
-		if ('obj' in $$props) $$invalidate('obj', obj = $$props.obj);
-		if ('kobzol' in $$props) $$invalidate('kobzol', kobzol = $$props.kobzol);
+		if ("obj" in $$props) $$invalidate(0, obj = $$props.obj);
+		if ("kobzol" in $$props) $$invalidate(1, kobzol = $$props.kobzol);
 	};
 
-	return { obj };
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
+
+	return [obj, kobzol];
 }
 
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, instance, create_fragment, safe_not_equal, []);
-		dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "Component", options, id: create_fragment.name });
+		init(this, options, instance, create_fragment, safe_not_equal, {});
+
+		dispatch_dev("SvelteRegisterComponent", {
+			component: this,
+			tagName: "Component",
+			options,
+			id: create_fragment.name
+		});
 	}
 }
 

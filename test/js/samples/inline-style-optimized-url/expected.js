@@ -11,31 +11,25 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var div;
+	let div;
 
 	return {
 		c() {
 			div = element("div");
-			set_style(div, "background", "url(data:image/png;base64," + ctx.data + ")");
+			set_style(div, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
 		},
-
 		m(target, anchor) {
 			insert(target, div, anchor);
 		},
-
-		p(changed, ctx) {
-			if (changed.data) {
-				set_style(div, "background", "url(data:image/png;base64," + ctx.data + ")");
+		p(ctx, [dirty]) {
+			if (dirty & /*data*/ 1) {
+				set_style(div, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
 			}
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(div);
-			}
+			if (detaching) detach(div);
 		}
 	};
 }
@@ -44,16 +38,16 @@ function instance($$self, $$props, $$invalidate) {
 	let { data } = $$props;
 
 	$$self.$set = $$props => {
-		if ('data' in $$props) $$invalidate('data', data = $$props.data);
+		if ("data" in $$props) $$invalidate(0, data = $$props.data);
 	};
 
-	return { data };
+	return [data];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["data"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { data: 0 });
 	}
 }
 

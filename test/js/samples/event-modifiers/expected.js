@@ -16,7 +16,13 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var div, button0, t1, button1, t3, button2, dispose;
+	let div;
+	let button0;
+	let t1;
+	let button1;
+	let t3;
+	let button2;
+	let dispose;
 
 	return {
 		c() {
@@ -29,14 +35,7 @@ function create_fragment(ctx) {
 			t3 = space();
 			button2 = element("button");
 			button2.textContent = "or me!";
-			dispose = [
-				listen(button0, "click", stop_propagation(prevent_default(handleClick))),
-				listen(button1, "click", handleClick, { once: true, capture: true }),
-				listen(button2, "click", handleClick, true),
-				listen(div, "touchstart", handleTouchstart, { passive: true })
-			];
 		},
-
 		m(target, anchor) {
 			insert(target, div, anchor);
 			append(div, button0);
@@ -44,34 +43,36 @@ function create_fragment(ctx) {
 			append(div, button1);
 			append(div, t3);
 			append(div, button2);
-		},
 
+			dispose = [
+				listen(button0, "click", stop_propagation(prevent_default(handleClick))),
+				listen(button1, "click", handleClick, { once: true, capture: true }),
+				listen(button2, "click", handleClick, true),
+				listen(div, "touchstart", handleTouchstart, { passive: true })
+			];
+		},
 		p: noop,
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(div);
-			}
-
+			if (detaching) detach(div);
 			run_all(dispose);
 		}
 	};
 }
 
 function handleTouchstart() {
-	// ...
-}
+	
+} // ...
 
 function handleClick() {
-	// ...
-}
+	
+} // ...
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, []);
+		init(this, options, null, create_fragment, safe_not_equal, {});
 	}
 }
 

@@ -3,7 +3,7 @@ import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
 import { reserved } from '../utils/names';
 import full_char_code_at from '../utils/full_char_code_at';
-import { Node, Ast, ParserOptions } from '../interfaces';
+import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../interfaces';
 import error from '../utils/error';
 
 type ParserState = (parser: Parser) => (ParserState | void);
@@ -14,11 +14,11 @@ export class Parser {
 	readonly customElement: boolean;
 
 	index = 0;
-	stack: Node[] = [];
+	stack: TemplateNode[] = [];
 
-	html: Node;
-	css: Node[] = [];
-	js: Node[] = [];
+	html: Fragment;
+	css: Style[] = [];
+	js: Script[] = [];
 	meta_tags = {};
 
 	constructor(template: string, options: ParserOptions) {
@@ -65,11 +65,11 @@ export class Parser {
 		}
 
 		if (this.html.children.length) {
-			let start = this.html.children[0] && this.html.children[0].start;
-			while (/\s/.test(template[start])) start += 1;
+			let start = this.html.children[0].start;
+			while (whitespace.test(template[start])) start += 1;
 
-			let end = this.html.children[this.html.children.length - 1] && this.html.children[this.html.children.length - 1].end;
-			while (/\s/.test(template[end - 1])) end -= 1;
+			let end = this.html.children[this.html.children.length - 1].end;
+			while (whitespace.test(template[end - 1])) end -= 1;
 
 			this.html.start = start;
 			this.html.end = end;
@@ -141,7 +141,7 @@ export class Parser {
 		return result;
 	}
 
-	read_identifier() {
+	read_identifier(allow_reserved = false) {
 		const start = this.index;
 
 		let i = this.index;
@@ -160,7 +160,7 @@ export class Parser {
 
 		const identifier = this.template.slice(this.index, this.index = i);
 
-		if (reserved.has(identifier)) {
+		if (!allow_reserved && reserved.has(identifier)) {
 			this.error({
 				code: `unexpected-reserved-word`,
 				message: `'${identifier}' is a reserved word in JavaScript and cannot be used here`
@@ -207,7 +207,7 @@ export default function parse(
 ): Ast {
 	const parser = new Parser(template, options);
 
-	// TODO we way want to allow multiple <style> tags —
+	// TODO we may want to allow multiple <style> tags —
 	// one scoped, one global. for now, only allow one
 	if (parser.css.length > 1) {
 		parser.error({

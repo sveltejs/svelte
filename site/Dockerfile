@@ -1,3 +1,6 @@
+# IMPORTANT: Don't use this Dockerfile in your own Sapper projects without also looking at the .dockerignore file.
+# Without an appropriate .dockerignore, this Dockerfile will copy a large number of unneeded files into your image.
+
 FROM mhart/alpine-node:12
 
 # install dependencies

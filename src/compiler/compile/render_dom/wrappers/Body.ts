@@ -1,22 +1,23 @@
 import Block from '../Block';
 import Wrapper from './shared/Wrapper';
-import deindent from '../../utils/deindent';
+import { x } from 'code-red';
 import Body from '../../nodes/Body';
+import { Identifier } from 'estree';
+import EventHandler from './Element/EventHandler';
+import add_event_handlers from './shared/add_event_handlers';
+import { TemplateNode } from '../../../interfaces';
+import Renderer from '../Renderer';
 
 export default class BodyWrapper extends Wrapper {
 	node: Body;
+	handlers: EventHandler[];
 
-	render(block: Block, _parent_node: string, _parent_nodes: string) {
-		this.node.handlers.forEach(handler => {
-			const snippet = handler.render(block);
+	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
+		super(renderer, block, parent, node);
+		this.handlers = this.node.handlers.map(handler => new EventHandler(handler, this));
+	}
 
-			block.builders.init.add_block(deindent`
-				@_document.body.addEventListener("${handler.name}", ${snippet});
-			`);
-
-			block.builders.destroy.add_block(deindent`
-				@_document.body.removeEventListener("${handler.name}", ${snippet});
-			`);
-		});
+	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
+		add_event_handlers(block, x`@_document.body`, this.handlers);
 	}
 }

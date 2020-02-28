@@ -13,6 +13,19 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - run: 'npm i && npm test'
+    - run: npm install
+    - run: npm test
       env:
         CI: true
+  Lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+    - run: 'npm i && npm run lint'
+  Unit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+    - run: 'npm i && npm run test:unit'

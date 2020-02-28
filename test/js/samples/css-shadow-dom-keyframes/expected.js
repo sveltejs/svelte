@@ -10,7 +10,7 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var div;
+	let div;
 
 	return {
 		c() {
@@ -18,19 +18,14 @@ function create_fragment(ctx) {
 			div.textContent = "fades in";
 			this.c = noop;
 		},
-
 		m(target, anchor) {
 			insert(target, div, anchor);
 		},
-
 		p: noop,
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(div);
-			}
+			if (detaching) detach(div);
 		}
 	};
 }
@@ -38,10 +33,8 @@ function create_fragment(ctx) {
 class Component extends SvelteElement {
 	constructor(options) {
 		super();
-
 		this.shadowRoot.innerHTML = `<style>div{animation:foo 1s}@keyframes foo{0%{opacity:0}100%{opacity:1}}</style>`;
-
-		init(this, { target: this.shadowRoot }, null, create_fragment, safe_not_equal, []);
+		init(this, { target: this.shadowRoot }, null, create_fragment, safe_not_equal, {});
 
 		if (options) {
 			if (options.target) {
@@ -52,5 +45,4 @@ class Component extends SvelteElement {
 }
 
 customElements.define("custom-element", Component);
-
 export default Component;

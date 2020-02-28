@@ -3,10 +3,11 @@ import read_expression from '../read/expression';
 import { closing_tag_omitted } from '../utils/html';
 import { whitespace } from '../../utils/patterns';
 import { trim_start, trim_end } from '../../utils/trim';
+import { to_string } from '../utils/node';
 import { Parser } from '../index';
-import { Node } from '../../interfaces';
+import { TemplateNode } from '../../interfaces';
 
-function trim_whitespace(block: Node, trim_before: boolean, trim_after: boolean) {
+function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: boolean) {
 	if (!block.children || block.children.length === 0) return; // AwaitBlock
 
 	const first_child = block.children[0];
@@ -106,11 +107,14 @@ export default function mustache(parser: Parser) {
 		// :else if
 		if (parser.eat('if')) {
 			const block = parser.current();
-			if (block.type !== 'IfBlock')
+			if (block.type !== 'IfBlock') {
 				parser.error({
 					code: `invalid-elseif-placement`,
-					message: 'Cannot have an {:else if ...} block outside an {#if ...} block'
+					message: parser.stack.some(block => block.type === 'IfBlock')
+						? `Expected to close ${to_string(block)} before seeing {:else if ...} block`
+						: `Cannot have an {:else if ...} block outside an {#if ...} block`
 				});
+			}
 
 			parser.require_whitespace();
 
@@ -144,7 +148,9 @@ export default function mustache(parser: Parser) {
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 				parser.error({
 					code: `invalid-else-placement`,
-					message: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
+					message: parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
+						? `Expected to close ${to_string(block)} before seeing {:else} block`
+						: `Cannot have an {:else} block outside an {#if ...} or {#each ...} block`
 				});
 			}
 
@@ -160,57 +166,51 @@ export default function mustache(parser: Parser) {
 
 			parser.stack.push(block.else);
 		}
-	} else if (parser.eat(':then')) {
-		// TODO DRY out this and the next section
-		const pending_block = parser.current();
-		if (pending_block.type === 'PendingBlock') {
-			pending_block.end = start;
-			parser.stack.pop();
-			const await_block = parser.current();
+	} else if (parser.match(':then') || parser.match(':catch')) {
+		const block = parser.current();
+		const is_then = parser.eat(':then') || !parser.eat(':catch');
 
-			if (!parser.eat('}')) {
-				parser.require_whitespace();
-				await_block.value = parser.read_identifier();
-				parser.allow_whitespace();
-				parser.eat('}', true);
+		if (is_then) {
+			if (block.type !== 'PendingBlock') {
+				parser.error({
+					code: `invalid-then-placement`,
+					message: parser.stack.some(block => block.type === 'PendingBlock')
+						? `Expected to close ${to_string(block)} before seeing {:then} block`
+						: `Cannot have an {:then} block outside an {#await ...} block`
+				});
 			}
-
-			const then_block: Node = {
-				start,
-				end: null,
-				type: 'ThenBlock',
-				children: [],
-				skip: false
-			};
-
-			await_block.then = then_block;
-			parser.stack.push(then_block);
-		}
-	} else if (parser.eat(':catch')) {
-		const then_block = parser.current();
-		if (then_block.type === 'ThenBlock') {
-			then_block.end = start;
-			parser.stack.pop();
-			const await_block = parser.current();
-
-			if (!parser.eat('}')) {
-				parser.require_whitespace();
-				await_block.error = parser.read_identifier();
-				parser.allow_whitespace();
-				parser.eat('}', true);
+		} else {
+			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
+				parser.error({
+					code: `invalid-catch-placement`,
+					message: parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
+						? `Expected to close ${to_string(block)} before seeing {:catch} block`
+						: `Cannot have an {:catch} block outside an {#await ...} block`
+				});
 			}
-
-			const catch_block: Node = {
-				start,
-				end: null,
-				type: 'CatchBlock',
-				children: [],
-				skip: false
-			};
-
-			await_block.catch = catch_block;
-			parser.stack.push(catch_block);
 		}
+
+		block.end = start;
+		parser.stack.pop();
+		const await_block = parser.current();
+
+		if (!parser.eat('}')) {
+			parser.require_whitespace();
+			await_block[is_then ? 'value': 'error'] = parser.read_identifier();
+			parser.allow_whitespace();
+			parser.eat('}', true);
+		}
+
+		const new_block: TemplateNode = {
+			start,
+			end: null,
+			type: is_then ? 'ThenBlock': 'CatchBlock',
+			children: [],
+			skip: false
+		};
+
+		await_block[is_then ? 'then' : 'catch'] = new_block;
+		parser.stack.push(new_block);
 	} else if (parser.eat('#')) {
 		// {#if foo}, {#each foo} or {#await foo}
 		let type;
@@ -232,7 +232,7 @@ export default function mustache(parser: Parser) {
 
 		const expression = read_expression(parser);
 
-		const block: Node = type === 'AwaitBlock' ?
+		const block: TemplateNode = type === 'AwaitBlock' ?
 			{
 				start,
 				end: null,

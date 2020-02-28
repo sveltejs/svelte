@@ -12,7 +12,9 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	var div0, t, div1;
+	let div0;
+	let t;
+	let div1;
 
 	return {
 		c() {
@@ -20,30 +22,24 @@ function create_fragment(ctx) {
 			t = space();
 			div1 = element("div");
 			attr(div0, "data-foo", "bar");
-			attr(div1, "data-foo", ctx.bar);
+			attr(div1, "data-foo", /*bar*/ ctx[0]);
 		},
-
 		m(target, anchor) {
 			insert(target, div0, anchor);
 			insert(target, t, anchor);
 			insert(target, div1, anchor);
 		},
-
-		p(changed, ctx) {
-			if (changed.bar) {
-				attr(div1, "data-foo", ctx.bar);
+		p(ctx, [dirty]) {
+			if (dirty & /*bar*/ 1) {
+				attr(div1, "data-foo", /*bar*/ ctx[0]);
 			}
 		},
-
 		i: noop,
 		o: noop,
-
 		d(detaching) {
-			if (detaching) {
-				detach(div0);
-				detach(t);
-				detach(div1);
-			}
+			if (detaching) detach(div0);
+			if (detaching) detach(t);
+			if (detaching) detach(div1);
 		}
 	};
 }
@@ -52,16 +48,16 @@ function instance($$self, $$props, $$invalidate) {
 	let { bar } = $$props;
 
 	$$self.$set = $$props => {
-		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);
+		if ("bar" in $$props) $$invalidate(0, bar = $$props.bar);
 	};
 
-	return { bar };
+	return [bar];
 }
 
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, ["bar"]);
+		init(this, options, instance, create_fragment, safe_not_equal, { bar: 0 });
 	}
 }
 

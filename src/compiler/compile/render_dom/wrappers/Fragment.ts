@@ -17,6 +17,7 @@ import { INode } from '../../nodes/interfaces';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import { trim_start, trim_end } from '../../../utils/trim';
+import { Identifier } from 'estree';
 
 const wrappers = {
 	AwaitBlock,
@@ -145,7 +146,7 @@ export default class FragmentWrapper {
 		}
 	}
 
-	render(block: Block, parent_node: string, parent_nodes: string) {
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		for (let i = 0; i < this.nodes.length; i += 1) {
 			this.nodes[i].render(block, parent_node, parent_nodes);
 		}
