@@ -42,13 +42,13 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 
 ---
 
-You can specify a default value, which will be used if the component's consumer doesn't specify a prop.
+You can specify a default initial value for a prop. It will be used if the component's consumer doesn't specify the prop on the component (or if its initial value is `undefined`) when instantiating the component. Note that whenever a prop is removed by the consumer, its value is set to `undefined` rather than the initial value.
 
-In development mode (see the [compiler options](docs#svelte_compile)), a warning will be printed if no default is provided and the consumer does not specify a value. To squelch this warning, ensure that a default is specified, even if it is `undefined`.
+In development mode (see the [compiler options](docs#svelte_compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
 
 ```html
 <script>
-	export let bar = 'optional default value';
+	export let bar = 'optional default initial value';
 	export let baz = undefined;
 </script>
 ```
