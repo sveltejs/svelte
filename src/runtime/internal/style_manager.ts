@@ -3,8 +3,8 @@ import { raf } from './environment';
 
 type DocStyles = [CSSStyleSheet, Record<string, true>];
 
-let active_docs = new Set<Document>();
-let doc_styles = new Map<Document, DocStyles>();
+const active_docs = new Set<Document>();
+const doc_styles = new Map<Document, DocStyles>();
 let active = 0;
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
