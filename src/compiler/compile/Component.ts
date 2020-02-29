@@ -780,7 +780,7 @@ export default class Component {
 
 		const component = this;
 		const { content } = script;
-		const { instance_scope, instance_scope_map: map } = this;
+		const { instance_scope, module_scope, instance_scope_map: map } = this;
 
 		let scope = instance_scope;
 
@@ -797,7 +797,12 @@ export default class Component {
 					const deep = assignee.type === 'MemberExpression';
 
 					names.forEach(name => {
-						if (scope.find_owner(name) === instance_scope) {
+						const scope_owner = scope.find_owner(name);
+						if (
+							scope_owner !== null
+								? scope_owner === instance_scope
+								: module_scope && module_scope.has(name)
+						) {
 							const variable = component.var_lookup.get(name);
 							variable[deep ? 'mutated' : 'reassigned'] = true;
 						}

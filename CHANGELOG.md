@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* In `vars` array, correctly indicate whether `module` variables are `mutated` or `reassigned` ([#3215](https://github.com/sveltejs/svelte/issues/3215))
 * Exclude global variables from `$capture_state` ([#4463](https://github.com/sveltejs/svelte/issues/4463))
 
 ## 3.19.1
