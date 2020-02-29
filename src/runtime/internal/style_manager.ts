@@ -1,10 +1,12 @@
 import { element } from './dom';
 import { raf } from './environment';
 
-type DocStyles = [CSSStyleSheet, Record<string, true>];
+interface ExtendedDoc extends Document {
+	__svelte_stylesheet: CSSStyleSheet;
+	__svelte_rules: Record<string, true>;
+}
 
-const active_docs = new Set<Document>();
-const doc_styles = new Map<Document, DocStyles>();
+const active_docs = new Set<ExtendedDoc>();
 let active = 0;
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
@@ -27,12 +29,10 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 
 	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
 	const name = `__svelte_${hash(rule)}_${uid}`;
-	const doc = node.ownerDocument;
+	const doc = node.ownerDocument as ExtendedDoc;
 	active_docs.add(doc);
-	const [ stylesheet, current_rules ] = (doc_styles.has(doc) ? doc_styles : doc_styles.set(doc, [
-		(doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet),
-		{}
-	])).get(doc) as DocStyles;
+	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet);
+	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
 
 	if (!current_rules[name]) {
 		current_rules[name] = true;
@@ -47,25 +47,27 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 }
 
 export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string) {
-	node.style.animation = (node.style.animation || '')
-		.split(', ')
-		.filter(name
-			? anim => anim.indexOf(name) < 0 // remove specific animation
-			: anim => anim.indexOf('__svelte') === -1 // remove all Svelte animations
-		)
-		.join(', ');
-
-	if (name && !--active) clear_rules();
+	const previous = (node.style.animation || '').split(', ');
+	const next = previous.filter(name
+		? anim => anim.indexOf(name) < 0 // remove specific animation
+		: anim => anim.indexOf('__svelte') === -1 // remove all Svelte animations
+	);
+	const deleted = previous.length - next.length;
+	if (deleted) {
+		node.style.animation = next.join(', ');
+		active -= deleted;
+		if (!active) clear_rules();
+	}
 }
 
 export function clear_rules() {
 	raf(() => {
 		if (active) return;
 		active_docs.forEach(doc => {
-			const [ stylesheet ] = doc_styles.get(doc);
+			const stylesheet = doc.__svelte_stylesheet;
 			let i = stylesheet.cssRules.length;
 			while (i--) stylesheet.deleteRule(i);
-			doc_styles.set(doc, [ stylesheet, {} ]);
+			doc.__svelte_rules = {};
 		});
 		active_docs.clear();
 	});
