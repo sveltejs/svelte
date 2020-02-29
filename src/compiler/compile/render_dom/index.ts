@@ -259,6 +259,9 @@ export default function dom(
 		inject_state;
 	if (has_invalidate) {
 		args.push(x`$$props`, x`$$invalidate`);
+	} else if (component.compile_options.dev) {
+		// $$props arg is still needed for unknown prop check
+		args.push(x`$$props`);
 	}
 
 	const has_create_fragment = block.has_content();
