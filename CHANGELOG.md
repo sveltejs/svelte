@@ -4,6 +4,7 @@
 
 * In `vars` array, correctly indicate whether `module` variables are `mutated` or `reassigned` ([#3215](https://github.com/sveltejs/svelte/issues/3215))
 * Exclude global variables from `$capture_state` ([#4463](https://github.com/sveltejs/svelte/issues/4463))
+* Fix bitmask overflow for slots ([#4481](https://github.com/sveltejs/svelte/issues/4481))
 
 ## 3.19.1
 
