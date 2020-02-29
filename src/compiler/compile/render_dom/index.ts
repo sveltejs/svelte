@@ -167,7 +167,7 @@ export default function dom(
 			`;
 		}
 
-		const capturable_vars = component.vars.filter(v => !v.internal && !v.name.startsWith('$$'));
+		const capturable_vars = component.vars.filter(v => !v.internal && !v.global && !v.name.startsWith('$$'));
 
 		if (capturable_vars.length > 0) {
 			capture_state = x`() => ({ ${capturable_vars.map(prop => p`${prop.name}`)} })`;
