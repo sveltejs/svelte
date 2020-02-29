@@ -804,7 +804,7 @@ export default class Component {
 								: module_scope && module_scope.has(name)
 						) {
 							const variable = component.var_lookup.get(name);
-							variable[deep ? "mutated" : "reassigned"] = true;
+							variable[deep ? 'mutated' : 'reassigned'] = true;
 						}
 					});
 				}
