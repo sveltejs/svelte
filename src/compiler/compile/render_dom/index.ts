@@ -303,6 +303,7 @@ export default function dom(
 	const initial_context = renderer.context.slice(0, i + 1);
 
 	const has_definition = (
+		component.compile_options.dev ||
 		(instance_javascript && instance_javascript.length > 0) ||
 		filtered_props.length > 0 ||
 		uses_props ||
