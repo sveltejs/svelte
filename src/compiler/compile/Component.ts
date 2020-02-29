@@ -798,14 +798,13 @@ export default class Component {
 
 					names.forEach(name => {
 						const scope_owner = scope.find_owner(name);
-						if (scope_owner !== null) {
-							if (scope_owner === instance_scope) {
-								const variable = component.var_lookup.get(name);
-								variable[deep ? 'mutated' : 'reassigned'] = true;
-							}
-						} else if (module_scope && module_scope.has(name)) {
+						if (
+							scope_owner !== null
+								? scope_owner === instance_scope
+								: module_scope && module_scope.has(name)
+						) {
 							const variable = component.var_lookup.get(name);
-							variable[deep ? 'mutated' : 'reassigned'] = true;
+							variable[deep ? "mutated" : "reassigned"] = true;
 						}
 					});
 				}
