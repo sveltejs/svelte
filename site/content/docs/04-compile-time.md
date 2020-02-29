@@ -113,7 +113,8 @@ const {
 	* `module` is `true` if the value is declared in a `context="module"` script
 	* `mutated` is `true` if the value's properties are assigned to inside the component
 	* `reassigned` is `true` if the value is reassigned inside the component
-	* `referenced` is `true` if the value is used outside the declaration
+	* `referenced` is `true` if the value is used in the template
+	* `referenced_from_script` is `true` if the value is used in the `<script>` outside the declaration
 	* `writable` is `true` if the value was declared with `let` or `var` (but not `const`, `class` or `function`)
 * `stats` is an object used by the Svelte developer team for diagnosing the compiler. Avoid relying on it to stay the same!
 
@@ -144,6 +145,7 @@ compiled: {
 		mutated: boolean,
 		reassigned: boolean,
 		referenced: boolean,
+		referenced_from_script: boolean,
 		writable: boolean
 	}>,
 	stats: {
