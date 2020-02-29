@@ -143,7 +143,7 @@ export default class Expression {
 				}
 			},
 
-			leave(node) {
+			leave(node: Node) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
@@ -338,7 +338,7 @@ export default class Expression {
 			});
 		}
 
-		return (this.manipulated = node);
+		return (this.manipulated = node as Node);
 	}
 }
 
