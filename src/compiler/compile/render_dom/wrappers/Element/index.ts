@@ -60,7 +60,7 @@ const events = [
 
 	// media events
 	{
-		event_names: ['timeupdate'],
+		event_names: ['timeupdate', 'play', 'seeking'],
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
 			(name === 'currentTime' || name === 'played' || name === 'ended')
@@ -445,7 +445,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const bindingGroups = events
 			.map(event => ({
-				events: event.event_names,
+				events: [...event.event_names],
 				bindings: this.bindings
 					.filter(binding => binding.node.name !== 'this')
 					.filter(binding => event.filter(this.node, binding.node.name))
@@ -523,7 +523,8 @@ export default class ElementWrapper extends Wrapper {
 			// fire too infrequently, so we need to take matters into our
 			// own hands
 			let animation_frame;
-			if (group.events[0] === 'timeupdate') {
+      if (group.events[0] === 'timeupdate') {
+        group.events.shift();
 				animation_frame = block.get_unique_name(`${this.var.name}_animationframe`);
 				block.add_variable(animation_frame);
 			}

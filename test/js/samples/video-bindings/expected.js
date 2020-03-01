@@ -21,15 +21,15 @@ function create_fragment(ctx) {
 	let video_resize_listener;
 	let dispose;
 
-	function video_timeupdate_handler() {
+	function video_timeupdate_play_seeking_handler() {
 		cancelAnimationFrame(video_animationframe);
 
 		if (!video.paused) {
-			video_animationframe = raf(video_timeupdate_handler);
+			video_animationframe = raf(video_timeupdate_play_seeking_handler);
 			video_updating = true;
 		}
 
-		/*video_timeupdate_handler*/ ctx[4].call(video);
+		/*video_timeupdate_play_seeking_handler*/ ctx[4].call(video);
 	}
 
 	return {
@@ -43,7 +43,8 @@ function create_fragment(ctx) {
 			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[6].bind(video));
 
 			dispose = [
-				listen(video, "timeupdate", video_timeupdate_handler),
+				listen(video, "play", video_timeupdate_play_seeking_handler),
+				listen(video, "seeking", video_timeupdate_play_seeking_handler),
 				listen(video, "resize", /*video_resize_handler*/ ctx[5])
 			];
 		},
@@ -70,7 +71,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { videoWidth } = $$props;
 	let { offsetWidth } = $$props;
 
-	function video_timeupdate_handler() {
+	function video_timeupdate_play_seeking_handler() {
 		currentTime = this.currentTime;
 		$$invalidate(0, currentTime);
 	}
@@ -99,7 +100,7 @@ function instance($$self, $$props, $$invalidate) {
 		videoHeight,
 		videoWidth,
 		offsetWidth,
-		video_timeupdate_handler,
+		video_timeupdate_play_seeking_handler,
 		video_resize_handler,
 		video_elementresize_handler
 	];
