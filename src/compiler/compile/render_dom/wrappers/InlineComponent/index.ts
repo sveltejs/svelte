@@ -224,7 +224,9 @@ export default class InlineComponentWrapper extends Wrapper {
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
 						? renderer.dirty(Array.from(dependencies))
 						: null;
+					const unchanged = dependencies.size === 0;
 
+					let change_object;
 					if (attr.is_spread) {
 						const value = attr.expression.manipulate(block);
 						initial_props.push(value);
@@ -233,13 +235,20 @@ export default class InlineComponentWrapper extends Wrapper {
 						if (attr.expression.node.type !== 'ObjectExpression') {
 							value_object = x`@get_spread_object(${value})`;
 						}
-						changes.push(condition ? x`${condition} && ${value_object}` : value_object);
+						change_object = value_object;
 					} else {
 						const obj = x`{ ${name}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
-
-						changes.push(condition ? x`${condition} && ${obj}` : x`${levels}[${i}]`);
+						change_object = obj;
 					}
+
+					changes.push(
+						unchanged
+							? x`${levels}[${i}]`
+							: condition
+							? x`${condition} && ${change_object}`
+							: change_object
+					);
 				});
 
 				block.chunks.init.push(b`
