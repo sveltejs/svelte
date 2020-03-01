@@ -5,6 +5,7 @@ import FragmentWrapper from './wrappers/Fragment';
 import { x } from 'code-red';
 import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression } from 'estree';
 import flatten_reference from '../utils/flatten_reference';
+import { reserved_keywords } from '../utils/reserved_keywords';
 
 interface ContextMember {
 	name: string;
@@ -50,9 +51,11 @@ export default class Renderer {
 		// ensure store values are included in context
 		component.vars.filter(v => v.subscribable).forEach(v => this.add_to_context(`$${v.name}`));
 
-		if (component.var_lookup.has('$$props')) {
-			this.add_to_context('$$props');
-		}
+		reserved_keywords.forEach(keyword => {
+			if (component.var_lookup.has(keyword)) {
+				this.add_to_context(keyword);
+			}
+		});
 
 		if (component.slots.size > 0) {
 			this.add_to_context('$$scope');
