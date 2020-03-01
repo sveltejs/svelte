@@ -114,16 +114,14 @@ export default class Expression {
 				let names;
 				let deep = false;
 
-				if (function_expression) {
-					if (node.type === 'AssignmentExpression') {
-						deep = node.left.type === 'MemberExpression';
-						names = deep
-							? [get_object(node.left).name]
-							: extract_names(node.left);
-					} else if (node.type === 'UpdateExpression') {
-						const { name } = get_object(node.argument);
-						names = [name];
-					}
+				if (node.type === 'AssignmentExpression') {
+					deep = node.left.type === 'MemberExpression';
+					names = deep
+						? [get_object(node.left).name]
+						: extract_names(node.left);
+				} else if (node.type === 'UpdateExpression') {
+					const { name } = get_object(node.argument);
+					names = [name];
 				}
 
 				if (names) {
