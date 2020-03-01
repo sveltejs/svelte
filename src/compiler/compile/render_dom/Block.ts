@@ -293,7 +293,7 @@ export default class Block {
 		if (this.chunks.mount.length === 0) {
 			properties.mount = noop;
 		} else {
-			properties.mount = x`function #mount(#target, anchor) {
+			properties.mount = x`function #mount(#target, anchor, #remount) {
 				${this.chunks.mount}
 			}`;
 		}
@@ -454,7 +454,10 @@ export default class Block {
 
 			if (this.event_listeners.length === 1) {
 				this.chunks.mount.push(
-					b`${dispose} = ${this.event_listeners[0]};`
+					b`
+						if (#remount) ${dispose}();
+						${dispose} = ${this.event_listeners[0]};
+					`
 				);
 
 				this.chunks.destroy.push(
@@ -462,6 +465,7 @@ export default class Block {
 				);
 			} else {
 				this.chunks.mount.push(b`
+					if (#remount) @run_all(${dispose});
 					${dispose} = [
 						${this.event_listeners}
 					];
