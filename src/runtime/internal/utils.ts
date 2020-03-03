@@ -113,7 +113,7 @@ export function compute_rest_props(props, keys) {
 	const rest = {};
 	keys = new Set(keys);
 	for (const k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
-	return Object.freeze(rest);
+	return rest;
 }
 
 export function once(fn) {
