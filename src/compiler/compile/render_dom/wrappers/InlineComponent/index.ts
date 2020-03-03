@@ -138,10 +138,26 @@ export default class InlineComponentWrapper extends Wrapper {
 		const statements: Array<Node | Node[]> = [];
 		const updates: Array<Node | Node[]> = [];
 
+		if (this.fragment) {
+			this.renderer.add_to_context('$$scope', true);
+			const default_slot = this.slots.get('default');
+
+			this.fragment.nodes.forEach((child) => {
+				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
+			});
+		}
+
 		let props;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
+
+		// removing empty slot
+		for (const slot of this.slots.keys()) {
+			if (!this.slots.get(slot).block.has_content()) {
+				this.slots.delete(slot);
+			}
+		}
 
 		const initial_props = this.slots.size > 0
 			? [
@@ -170,15 +186,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				props = block.get_unique_name(`${name.name}_props`);
 				component_opts.properties.push(p`props: ${props}`);
 			}
-		}
-
-		if (this.fragment) {
-			this.renderer.add_to_context('$$scope', true);
-			const default_slot = this.slots.get('default');
-
-			this.fragment.nodes.forEach((child) => {
-				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
-			});
 		}
 
 		if (component.compile_options.dev) {
