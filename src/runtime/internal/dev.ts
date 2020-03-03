@@ -89,6 +89,14 @@ export function validate_each_argument(arg) {
 	}
 }
 
+export function validate_slot(slot, keys) {
+	keys = new Set(keys);
+	for (const slot_key of Object.keys(slot)) {
+		if (!keys.has(slot_key)) {
+			console.warn(`Received unexpected slot named "${slot_key}"`);
+		}
+	}
+}
 
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
