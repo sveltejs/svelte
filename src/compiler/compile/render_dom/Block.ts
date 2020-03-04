@@ -411,8 +411,8 @@ export default class Block {
 		return body;
 	}
 
-	has_content() {
-		return this.renderer.options.dev ||
+	has_content(ignore_dev?: boolean) {
+		return (!ignore_dev && this.renderer.options.dev) ||
 			this.first ||
 			this.event_listeners.length > 0 ||
 			this.chunks.intro.length > 0 ||
