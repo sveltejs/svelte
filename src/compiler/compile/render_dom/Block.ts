@@ -412,8 +412,7 @@ export default class Block {
 	}
 
 	has_content() {
-		return this.renderer.options.dev ||
-			this.first ||
+		return this.first ||
 			this.event_listeners.length > 0 ||
 			this.chunks.intro.length > 0 ||
 			this.chunks.outro.length > 0  ||
