@@ -89,11 +89,10 @@ export function validate_each_argument(arg) {
 	}
 }
 
-export function validate_slot(slot, keys) {
-	keys = new Set(keys);
+export function validate_slots(name, slot, keys) {
 	for (const slot_key of Object.keys(slot)) {
-		if (!keys.has(slot_key)) {
-			console.warn(`Received unexpected slot named "${slot_key}"`);
+		if (!~keys.indexOf(slot_key)) {
+			console.warn(`<${name}> received an unexpected slot "${slot_key}".`);
 		}
 	}
 }

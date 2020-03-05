@@ -413,7 +413,7 @@ export default function dom(
 				${unknown_props_check}
 
 				${component.slots.size || component.compile_options.dev ? b`let { $$slots = {}, $$scope } = $$props;` : null}
-				${component.compile_options.dev && b`@validate_slot($$slots, [${Array.from(component.slots.keys()).map(key => `"${key}"`).join(',')}]);`}
+				${component.compile_options.dev && b`@validate_slots('${component.tag}', $$slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
 
 				${renderer.binding_groups.length > 0 && b`const $$binding_groups = [${renderer.binding_groups.map(_ => x`[]`)}];`}
 
