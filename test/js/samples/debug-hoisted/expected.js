@@ -5,7 +5,7 @@ import {
 	init,
 	noop,
 	safe_not_equal,
-	validate_slot
+	validate_slots
 } from "svelte/internal";
 
 const file = undefined;
@@ -58,7 +58,7 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	let { $$slots = {}, $$scope } = $$props;
-	validate_slot($$slots, []);
+	validate_slots("Component", $$slots, []);
 	$$self.$capture_state = () => ({ obj, kobzol });
 
 	$$self.$inject_state = $$props => {

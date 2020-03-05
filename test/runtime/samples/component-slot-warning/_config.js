@@ -3,7 +3,7 @@ export default {
 		dev: true
 	},
 	warnings: [
-		'Received unexpected slot named "default"',
-		'Received unexpected slot named "slot1"'
+		'<Nested> received an unexpected slot "default".',
+		'<Nested> received an unexpected slot "slot1".'
 	]
 };

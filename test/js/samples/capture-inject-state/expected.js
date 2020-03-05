@@ -14,7 +14,7 @@ import {
 	space,
 	subscribe,
 	text,
-	validate_slot,
+	validate_slots,
 	validate_store
 } from "svelte/internal";
 
@@ -116,7 +116,7 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	let { $$slots = {}, $$scope } = $$props;
-	validate_slot($$slots, []);
+	validate_slots("Component", $$slots, []);
 
 	$$self.$set = $$props => {
 		if ("prop" in $$props) $$subscribe_prop($$invalidate(0, prop = $$props.prop));

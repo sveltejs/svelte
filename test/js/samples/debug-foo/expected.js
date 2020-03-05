@@ -15,7 +15,7 @@ import {
 	space,
 	text,
 	validate_each_argument,
-	validate_slot
+	validate_slots
 } from "svelte/internal";
 
 const file = undefined;
@@ -173,7 +173,7 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	let { $$slots = {}, $$scope } = $$props;
-	validate_slot($$slots, []);
+	validate_slots("Component", $$slots, []);
 
 	$$self.$set = $$props => {
 		if ("things" in $$props) $$invalidate(0, things = $$props.things);

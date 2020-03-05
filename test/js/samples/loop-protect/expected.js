@@ -12,7 +12,7 @@ import {
 	loop_guard,
 	noop,
 	safe_not_equal,
-	validate_slot
+	validate_slots
 } from "svelte/internal";
 
 const { console: console_1 } = globals;
@@ -112,7 +112,7 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	let { $$slots = {}, $$scope } = $$props;
-	validate_slot($$slots, []);
+	validate_slots("Component", $$slots, []);
 
 	function div_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
