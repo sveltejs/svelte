@@ -9,7 +9,7 @@ import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import { walk } from 'estree-walker';
 import { is_head } from './shared/is_head';
-import { Identifier, Node } from 'estree';
+import { Identifier, Node, UnaryExpression } from 'estree';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -591,14 +591,17 @@ export default class IfBlockWrapper extends Wrapper {
 	get_initial_dirty_bit() {
 		const _this = this;
 		// TODO: context-overflow make it less gross
-
-		const val = x`-1`;
+		const val: UnaryExpression = x`-1` as UnaryExpression;
 		return {
-			...val,
-			elements: [val],
 			get type() {
 				return _this.renderer.context_overflow ? 'ArrayExpression' : 'UnaryExpression';
 			},
+			// as [-1]
+			elements: [val],
+			// as -1
+			operator: val.operator,
+			prefix: val.prefix,
+			argument: val.argument,
 		};
 	}
 }
