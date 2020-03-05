@@ -278,7 +278,7 @@ export default class Element extends Node {
 	}
 
 	validate_attributes() {
-		const { component } = this;
+		const { component, parent } = this;
 
 		const attribute_map = new Map();
 
@@ -395,26 +395,20 @@ export default class Element extends Node {
 					component.slot_outlets.add(name);
 				}
 
-				let ancestor = this.parent;
-				do {
-					if (ancestor.type === 'InlineComponent') break;
-					if (ancestor.type === 'Element' && /-/.test(ancestor.name)) break;
+				if (parent.type === 'IfBlock' || parent.type === 'EachBlock') {
+					const type = parent.type === 'IfBlock' ? 'if' : 'each';
+					const message = `Cannot place slotted elements inside an ${type}-block`;
 
-					if (ancestor.type === 'IfBlock' || ancestor.type === 'EachBlock') {
-						const type = ancestor.type === 'IfBlock' ? 'if' : 'each';
-						const message = `Cannot place slotted elements inside an ${type}-block`;
-
-						component.error(attribute, {
-							code: `invalid-slotted-content`,
-							message
-						});
-					}
-				} while (ancestor = ancestor.parent);
-
-				if (!ancestor) {
 					component.error(attribute, {
 						code: `invalid-slotted-content`,
-						message: `Element with a slot='...' attribute must be a descendant of a component or custom element`
+						message
+					});
+				}
+
+				if (!(parent.type === 'InlineComponent' || (parent.type === 'Element' && /-/.test(parent.name)))) {
+					component.error(attribute, {
+						code: `invalid-slotted-content`,
+						message: `Element with a slot='...' attribute must be a direct descendant of a component or custom element`,
 					});
 				}
 			}
@@ -425,7 +419,7 @@ export default class Element extends Node {
 					message: `The 'is' attribute is not supported cross-browser and should be avoided`
 				});
 			}
-
+      
 			attribute_map.set(attribute.name, attribute);
 		});
 
