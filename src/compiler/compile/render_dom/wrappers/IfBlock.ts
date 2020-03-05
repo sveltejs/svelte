@@ -288,7 +288,7 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 
 		block.chunks.init.push(b`
-			let ${current_block_type} = ${select_block_type}(#ctx, -1);
+			let ${current_block_type} = ${select_block_type}(#ctx, ${this.get_initial_dirty_bit()});
 			let ${name} = ${get_block};
 		`);
 
@@ -407,12 +407,12 @@ export default class IfBlockWrapper extends Wrapper {
 
 		if (has_else) {
 			block.chunks.init.push(b`
-				${current_block_type_index} = ${select_block_type}(#ctx, -1);
+				${current_block_type_index} = ${select_block_type}(#ctx, ${this.get_initial_dirty_bit()});
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 			`);
 		} else {
 			block.chunks.init.push(b`
-				if (~(${current_block_type_index} = ${select_block_type}(#ctx, -1))) {
+				if (~(${current_block_type_index} = ${select_block_type}(#ctx, ${this.get_initial_dirty_bit()}))) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 				}
 			`);
@@ -586,5 +586,19 @@ export default class IfBlockWrapper extends Wrapper {
 				${name}.d(${detaching});
 			`);
 		}
+	}
+
+	get_initial_dirty_bit() {
+		const _this = this;
+		// TODO: context-overflow make it less gross
+
+		const val = x`-1`;
+		return {
+			...val,
+			elements: [val],
+			get type() {
+				return _this.renderer.context_overflow ? 'ArrayExpression' : 'UnaryExpression';
+			},
+		};
 	}
 }
