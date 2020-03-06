@@ -16,8 +16,16 @@ export default function create_debugging_comment(
 	let d;
 
 	if (node.type === 'InlineComponent' || node.type === 'Element') {
-		d = node.children.length ? node.children[0].start : node.start;
-		while (source[d - 1] !== '>') d -= 1;
+		if (node.children.length) {
+			d = node.children[0].start;
+			while (source[d - 1] !== '>') d -= 1;
+		} else {
+			d = node.start;
+			while (source[d] !== '>') d += 1;
+			d += 1;
+		}
+	} else if (node.type === 'Text') {
+		d = node.end;
 	} else {
 		// @ts-ignore
 		d = node.expression ? node.expression.node.end : c;
