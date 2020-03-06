@@ -2,7 +2,7 @@ import * as assert from "assert";
 import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
-import * as virtual from 'rollup-plugin-virtual';
+import * as virtual from '@rollup/plugin-virtual';
 import * as glob from 'tiny-glob/sync.js';
 import { clear_loops, flush, set_now, set_raf } from "../../internal";
 
@@ -10,6 +10,7 @@ import {
 	showOutput,
 	loadConfig,
 	loadSvelte,
+	cleanRequireCache,
 	env,
 	setupHtmlEqual,
 	mkdirp
@@ -79,11 +80,7 @@ describe("runtime", () => {
 			compileOptions.immutable = config.immutable;
 			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
 
-			Object.keys(require.cache)
-				.filter(x => x.endsWith('.svelte'))
-				.forEach(file => {
-					delete require.cache[file];
-				});
+			cleanRequireCache();
 
 			let mod;
 			let SvelteComponent;

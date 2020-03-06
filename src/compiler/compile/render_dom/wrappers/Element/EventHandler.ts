@@ -2,6 +2,7 @@ import EventHandler from '../../../nodes/EventHandler';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
 import { b, x, p } from 'code-red';
+import { Expression } from 'estree';
 
 const TRUE = x`true`;
 const FALSE = x`false`;
@@ -30,12 +31,12 @@ export default class EventHandlerWrapper {
 
 		if (this.node.reassigned) {
 			block.maintain_context = true;
-			return x`function () { ${snippet}.apply(this, arguments); }`;
+			return x`function () { if (@is_function(${snippet})) ${snippet}.apply(this, arguments); }`;
 		}
 		return snippet;
 	}
 
-	render(block: Block, target: string) {
+	render(block: Block, target: string | Expression) {
 		let snippet = this.get_snippet(block);
 
 		if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;

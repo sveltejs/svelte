@@ -67,7 +67,15 @@ describe('hydration', () => {
 				}
 
 				const target = window.document.body;
+				const head = window.document.head;
+
 				target.innerHTML = fs.readFileSync(`${cwd}/_before.html`, 'utf-8');
+
+				let before_head;
+				try {
+					before_head = fs.readFileSync(`${cwd}/_before_head.html`, 'utf-8');
+					head.innerHTML = before_head;
+				} catch (err) {}
 
 				const snapshot = config.snapshot ? config.snapshot(target) : {};
 
@@ -85,6 +93,19 @@ describe('hydration', () => {
 						console.log(`Updated ${cwd}/_after.html.`);
 					} else {
 						throw error;
+					}
+				}
+
+				if (before_head) {
+					try {
+						assert.htmlEqual(head.innerHTML, fs.readFileSync(`${cwd}/_after_head.html`, 'utf-8'));
+					} catch (error) {
+						if (shouldUpdateExpected()) {
+							fs.writeFileSync(`${cwd}/_after_head.html`, head.innerHTML);
+							console.log(`Updated ${cwd}/_after_head.html.`);
+						} else {
+							throw error;
+						}
 					}
 				}
 

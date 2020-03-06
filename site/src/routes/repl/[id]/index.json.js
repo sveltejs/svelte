@@ -73,6 +73,18 @@ export async function get(req, res) {
 		});
 	}
 
+	if (process.env.NODE_ENV === 'development') {
+		// In dev, proxy requests to load particular REPLs to the real server.
+		// This avoids needing to connect to the real database server.
+		req.pipe(
+			require('https').request({ host: 'svelte.dev', path: req.url })
+		).once('response', res_proxy => {
+			res_proxy.pipe(res);
+			res.writeHead(res_proxy.statusCode, res_proxy.headers);
+		}).once('error', () => res.end());
+		return;
+	}
+
 	const [row] = await query(`
 		select g.*, u.uid as owner from gists g
 		left join users u on g.user_id = u.id

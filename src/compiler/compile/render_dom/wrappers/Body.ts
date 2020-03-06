@@ -1,26 +1,23 @@
 import Block from '../Block';
 import Wrapper from './shared/Wrapper';
-import { b } from 'code-red';
+import { x } from 'code-red';
 import Body from '../../nodes/Body';
 import { Identifier } from 'estree';
 import EventHandler from './Element/EventHandler';
+import add_event_handlers from './shared/add_event_handlers';
+import { TemplateNode } from '../../../interfaces';
+import Renderer from '../Renderer';
 
 export default class BodyWrapper extends Wrapper {
 	node: Body;
+	handlers: EventHandler[];
+
+	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
+		super(renderer, block, parent, node);
+		this.handlers = this.node.handlers.map(handler => new EventHandler(handler, this));
+	}
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
-		this.node.handlers
-			.map(handler => new EventHandler(handler, this))
-			.forEach(handler => {
-				const snippet = handler.get_snippet(block);
-
-				block.chunks.init.push(b`
-					@_document.body.addEventListener("${handler.node.name}", ${snippet});
-				`);
-
-				block.chunks.destroy.push(b`
-					@_document.body.removeEventListener("${handler.node.name}", ${snippet});
-				`);
-			});
+		add_event_handlers(block, x`@_document.body`, this.handlers);
 	}
 }

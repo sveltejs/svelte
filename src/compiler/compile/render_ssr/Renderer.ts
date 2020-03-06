@@ -41,6 +41,7 @@ const handlers: Record<string, Handler> = {
 
 export interface RenderOptions extends CompileOptions{
 	locate: (c: number) => { line: number; column: number };
+	head_id?: string;
 }
 
 export default class Renderer {

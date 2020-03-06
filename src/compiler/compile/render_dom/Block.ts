@@ -160,6 +160,9 @@ export default class Block {
 		});
 
 		this.has_update_method = true;
+		if (this.parent) {
+			this.parent.add_dependencies(dependencies);
+		}
 	}
 
 	add_element(
@@ -409,8 +412,7 @@ export default class Block {
 	}
 
 	has_content() {
-		return this.renderer.options.dev ||
-			this.first ||
+		return this.first ||
 			this.event_listeners.length > 0 ||
 			this.chunks.intro.length > 0 ||
 			this.chunks.outro.length > 0  ||
@@ -450,7 +452,7 @@ export default class Block {
 			this.add_variable(dispose);
 
 			if (this.event_listeners.length === 1) {
-				this.chunks.hydrate.push(
+				this.chunks.mount.push(
 					b`${dispose} = ${this.event_listeners[0]};`
 				);
 
@@ -458,7 +460,7 @@ export default class Block {
 					b`${dispose}();`
 				);
 			} else {
-				this.chunks.hydrate.push(b`
+				this.chunks.mount.push(b`
 					${dispose} = [
 						${this.event_listeners}
 					];

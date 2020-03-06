@@ -17,10 +17,10 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			input = element("input");
-			dispose = listen(input, "input", make_uppercase);
 		},
 		m(target, anchor) {
 			insert(target, input, anchor);
+			dispose = listen(input, "input", make_uppercase);
 		},
 		p: noop,
 		i: noop,

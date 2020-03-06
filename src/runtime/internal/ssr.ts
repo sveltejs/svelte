@@ -25,9 +25,7 @@ export function spread(args, classes_to_add) {
 		else if (boolean_attributes.has(name.toLowerCase())) {
 			if (value) str += " " + name;
 		} else if (value != null) {
-			str += " " + name + "=" + JSON.stringify(String(value)
-				.replace(/"/g, '&#34;')
-				.replace(/'/g, '&#39;'));
+			str += ` ${name}="${String(value).replace(/"/g, '&#34;').replace(/'/g, '&#39;')}"`;
 		}
 	});
 
@@ -103,12 +101,13 @@ export function create_ssr_component(fn) {
 			on_destroy = [];
 
 			const result: {
+				title: string;
 				head: string;
 				css: Set<{
 					map: null;
 					code: string;
 				}>;
-			} = { head: '', css: new Set() };
+			} = { title: '', head: '', css: new Set() };
 
 			const html = $$render(result, props, {}, options);
 
@@ -120,7 +119,7 @@ export function create_ssr_component(fn) {
 					code: Array.from(result.css).map(css => css.code).join('\n'),
 					map: null // TODO
 				},
-				head: result.head
+				head: result.title + result.head
 			};
 		},
 

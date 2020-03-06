@@ -20,6 +20,7 @@ describe("validate", () => {
 			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");
 			const expected_warnings = tryToLoadJson(`${__dirname}/samples/${dir}/warnings.json`) || [];
 			const expected_errors = tryToLoadJson(`${__dirname}/samples/${dir}/errors.json`);
+			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`);
 
 			let error;
 
@@ -27,7 +28,9 @@ describe("validate", () => {
 				const { warnings } = svelte.compile(input, {
 					dev: config.dev,
 					legacy: config.legacy,
-					generate: false
+					generate: false,
+					customElement: config.customElement,
+					...options,
 				});
 
 				assert.deepEqual(warnings.map(w => ({

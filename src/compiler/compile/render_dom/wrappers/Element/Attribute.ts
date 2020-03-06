@@ -39,20 +39,25 @@ export default class AttributeWrapper {
 		}
 	}
 
+	is_indirectly_bound_value() {
+		const element = this.parent;
+		const name = fix_attribute_casing(this.node.name);
+		return name === 'value' &&
+			(element.node.name === 'option' || // TODO check it's actually bound
+				(element.node.name === 'input' &&
+					element.node.bindings.some(
+						(binding) =>
+							/checked|group/.test(binding.name)
+					)));
+	}
+
 	render(block: Block) {
 		const element = this.parent;
 		const name = fix_attribute_casing(this.node.name);
 
 		const metadata = this.get_metadata();
 
-		const is_indirectly_bound_value =
-			name === 'value' &&
-			(element.node.name === 'option' || // TODO check it's actually bound
-				(element.node.name === 'input' &&
-					element.node.bindings.find(
-						(binding) =>
-							/checked|group/.test(binding.name)
-					)));
+		const is_indirectly_bound_value = this.is_indirectly_bound_value();
 
 		const property_name = is_indirectly_bound_value
 			? '__value'
@@ -75,6 +80,8 @@ export default class AttributeWrapper {
 		const is_src = this.node.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
 		const is_select_value_attribute =
 			name === 'value' && element.node.name === 'select';
+
+		const is_input_value = name === 'value' && element.node.name === 'input';
 
 		const should_cache = is_src || this.node.should_cache() || is_select_value_attribute; // TODO is this necessary?
 
@@ -145,6 +152,14 @@ export default class AttributeWrapper {
 				condition = is_src
 					? x`${condition} && (${element.var}.src !== (${last} = ${value}))`
 					: x`${condition} && (${last} !== (${last} = ${value}))`;
+			}
+
+			if (is_input_value) {
+				const type = element.node.get_static_attribute_value('type');
+
+				if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
+					condition = x`${condition} && ${element.var}.${property_name} !== ${should_cache ? last : value}`;
+				}
 			}
 
 			if (block.has_outros) {

@@ -161,11 +161,14 @@ export default class Renderer {
 		}
 
 		if (
-			variable &&
-			!variable.referenced &&
-			!variable.is_reactive_dependency &&
-			!variable.export_name &&
-			!name.startsWith('$$')
+			variable && (
+				variable.module || (
+					!variable.referenced &&
+					!variable.is_reactive_dependency &&
+					!variable.export_name &&
+					!name.startsWith('$$')
+				)
+			)
 		) {
 			return value || name;
 		}
@@ -194,7 +197,7 @@ export default class Renderer {
 
 		return filtered
 			.map(n => x`$$invalidate(${this.context_lookup.get(n).index}, ${n})`)
-			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
+			.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
 	}
 
 	dirty(names, is_reactive_declaration = false): Expression {
@@ -227,6 +230,7 @@ export default class Renderer {
 			return bitmask;
 		};
 
+		// TODO: context-overflow make it less gross
 		return {
 			// Using a ParenthesizedExpression allows us to create
 			// the expression lazily. TODO would be better if

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
 import { rollup } from 'rollup';
-import * as virtual from 'rollup-plugin-virtual';
+import * as virtual from '@rollup/plugin-virtual';
 import * as puppeteer from 'puppeteer';
 import { addLineNumbers, loadConfig, loadSvelte } from "../helpers.js";
 import { deepEqual } from 'assert';

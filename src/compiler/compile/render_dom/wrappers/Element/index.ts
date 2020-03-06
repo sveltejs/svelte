@@ -16,8 +16,8 @@ import { dimensions } from '../../../../utils/patterns';
 import Binding from './Binding';
 import InlineComponentWrapper from '../InlineComponent';
 import add_to_set from '../../../utils/add_to_set';
-import add_event_handlers from '../shared/add_event_handlers';
-import add_actions from '../shared/add_actions';
+import { add_event_handler } from '../shared/add_event_handlers';
+import { add_action } from '../shared/add_actions';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_slot_definition } from '../shared/get_slot_definition';
 import bind_this from '../shared/bind_this';
@@ -25,6 +25,7 @@ import { is_head } from '../shared/is_head';
 import { Identifier } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
+import Action from '../../../nodes/Action';
 
 const events = [
 	{
@@ -377,11 +378,9 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		this.add_attributes(block);
-		this.add_bindings(block);
-		this.add_event_handlers(block);
+		this.add_directives_in_order(block);
 		this.add_transitions(block);
 		this.add_animation(block);
-		this.add_actions(block);
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
 
@@ -416,7 +415,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const is = this.attributes.find(attr => attr.node.name === 'is');
 		if (is) {
-			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)});`;
+			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)})`;
 		}
 
 		return x`@element("${name}")`;
@@ -436,20 +435,15 @@ export default class ElementWrapper extends Wrapper {
 		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
 	}
 
-	add_bindings(block: Block) {
-		const { renderer } = this;
+	add_directives_in_order (block: Block) {
+		interface BindingGroup {
+			events: string[];
+			bindings: Binding[];
+		}
 
-		if (this.bindings.length === 0) return;
+		type OrderedAttribute = EventHandler | BindingGroup | Binding | Action;
 
-		renderer.component.has_reactive_assignments = true;
-
-		const lock = this.bindings.some(binding => binding.needs_lock) ?
-			block.get_unique_name(`${this.var.name}_updating`) :
-			null;
-
-		if (lock) block.add_variable(lock, x`false`);
-
-		const groups = events
+		const bindingGroups = events
 			.map(event => ({
 				events: event.event_names,
 				bindings: this.bindings
@@ -458,7 +452,55 @@ export default class ElementWrapper extends Wrapper {
 			}))
 			.filter(group => group.bindings.length);
 
-		groups.forEach(group => {
+		const this_binding = this.bindings.find(b => b.node.name === 'this');
+
+		function getOrder (item: OrderedAttribute) {
+			if (item instanceof EventHandler) {
+				return item.node.start;
+			} else if (item instanceof Binding) {
+				return item.node.start;
+			} else if (item instanceof Action) {
+				return item.start;
+			} else {
+				return item.bindings[0].node.start;
+			}
+		}
+
+		([
+			...bindingGroups,
+			...this.event_handlers,
+			this_binding,
+			...this.node.actions
+		] as OrderedAttribute[])
+			.filter(Boolean)
+			.sort((a, b) => getOrder(a) - getOrder(b))
+			.forEach(item => {
+				if (item instanceof EventHandler) {
+					add_event_handler(block, this.var, item);
+				} else if (item instanceof Binding) {
+					this.add_this_binding(block, item);
+				} else if (item instanceof Action) {
+					add_action(block, this.var, item);
+				} else {
+					this.add_bindings(block, item);
+				}
+			});
+	}
+
+	add_bindings(block: Block, bindingGroup) {
+		const { renderer } = this;
+
+		if (bindingGroup.bindings.length === 0) return;
+
+		renderer.component.has_reactive_assignments = true;
+
+		const lock = bindingGroup.bindings.some(binding => binding.needs_lock) ?
+			block.get_unique_name(`${this.var.name}_updating`) :
+			null;
+
+		if (lock) block.add_variable(lock, x`false`);
+
+		[bindingGroup].forEach(group => {
 			const handler = renderer.component.get_unique_name(`${this.var.name}_${group.events.join('_')}_handler`);
 			renderer.add_to_context(handler.name);
 
@@ -586,13 +628,15 @@ export default class ElementWrapper extends Wrapper {
 		if (lock) {
 			block.chunks.update.push(b`${lock} = false;`);
 		}
+	}
 
-		const this_binding = this.bindings.find(b => b.node.name === 'this');
-		if (this_binding) {
-			const binding_callback = bind_this(renderer.component, block, this_binding.node, this.var);
+	add_this_binding(block: Block, this_binding: Binding) {
+		const { renderer } = this;
 
-			block.chunks.mount.push(binding_callback);
-		}
+		renderer.component.has_reactive_assignments = true;
+
+		const binding_callback = bind_this(renderer.component, block, this_binding.node, this.var);
+		block.chunks.mount.push(binding_callback);
 	}
 
 	add_attributes(block: Block) {
@@ -635,10 +679,10 @@ export default class ElementWrapper extends Wrapper {
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
 				} else {
 					const metadata = attr.get_metadata();
-					const snippet = x`{ ${
-						(metadata && metadata.property_name) ||
-						fix_attribute_casing(attr.node.name)
-					}: ${attr.get_value(block)} }`;
+					const name = attr.is_indirectly_bound_value()
+						? '__value'
+						: (metadata && metadata.property_name) || fix_attribute_casing(attr.node.name);
+					const snippet = x`{ ${name}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
@@ -665,10 +709,6 @@ export default class ElementWrapper extends Wrapper {
 				${updates}
 			]));
 		`);
-	}
-
-	add_event_handlers(block: Block) {
-		add_event_handlers(block, this.var, this.event_handlers);
 	}
 
 	add_transitions(
@@ -830,10 +870,6 @@ export default class ElementWrapper extends Wrapper {
 			${stop_animation}();
 			${stop_animation} = @create_animation(${this.var}, ${rect}, ${name}, ${params});
 		`);
-	}
-
-	add_actions(block: Block) {
-		add_actions(block, this.var, this.node.actions);
 	}
 
 	add_classes(block: Block) {

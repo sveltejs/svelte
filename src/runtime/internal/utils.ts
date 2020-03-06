@@ -43,13 +43,16 @@ export function not_equal(a, b) {
 }
 
 export function validate_store(store, name) {
-	if (!store || typeof store.subscribe !== 'function') {
+	if (store != null && typeof store.subscribe !== 'function') {
 		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
 	}
 }
 
-export function subscribe(store, callback) {
-	const unsub = store.subscribe(callback);
+export function subscribe(store, ...callbacks) {
+	if (store == null) {
+		return noop;
+	}
+	const unsub = store.subscribe(...callbacks);
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
@@ -80,7 +83,11 @@ export function get_slot_changes(definition, $$scope, dirty, fn) {
 	if (definition[2] && fn) {
 		const lets = definition[2](fn(dirty));
 
-		if (typeof $$scope.dirty === 'object') {
+		if ($$scope.dirty === undefined) {
+			return lets;
+		}
+
+		if (typeof lets === 'object') {
 			const merged = [];
 			const len = Math.max($$scope.dirty.length, lets.length);
 			for (let i = 0; i < len; i += 1) {
@@ -121,3 +128,7 @@ export function set_store_value(store, ret, value = ret) {
 }
 
 export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
+
+export function action_destroyer(action_result) {
+	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
+}

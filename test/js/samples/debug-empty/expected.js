@@ -12,7 +12,8 @@ import {
 	safe_not_equal,
 	set_data_dev,
 	space,
-	text
+	text,
+	validate_slots
 } from "svelte/internal";
 
 const file = undefined;
@@ -75,17 +76,22 @@ function instance($$self, $$props, $$invalidate) {
 		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
+	let { $$slots = {}, $$scope } = $$props;
+	validate_slots("Component", $$slots, []);
+
 	$$self.$set = $$props => {
 		if ("name" in $$props) $$invalidate(0, name = $$props.name);
 	};
 
-	$$self.$capture_state = () => {
-		return { name };
-	};
+	$$self.$capture_state = () => ({ name });
 
 	$$self.$inject_state = $$props => {
 		if ("name" in $$props) $$invalidate(0, name = $$props.name);
 	};
+
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
 
 	return [name];
 }
@@ -103,7 +109,7 @@ class Component extends SvelteComponentDev {
 		});
 
 		const { ctx } = this.$$;
-		const props = options.props || ({});
+		const props = options.props || {};
 
 		if (/*name*/ ctx[0] === undefined && !("name" in props)) {
 			console.warn("<Component> was created without expected prop 'name'");
