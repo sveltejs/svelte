@@ -184,6 +184,10 @@ if (typeof HTMLElement === 'function') {
 			this[attr] = newValue;
 		}
 
+		disconnectedCallback() {
+			this.$destroy();
+		}
+
 		$destroy() {
 			destroy_component(this, 1);
 			this.$destroy = noop;
