@@ -185,7 +185,7 @@ if (typeof HTMLElement === 'function') {
 		}
 
 		disconnectedCallback() {
-			this.$destroy();
+			run_all(this.$$.on_destroy);
 		}
 
 		$destroy() {
