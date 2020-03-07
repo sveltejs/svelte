@@ -28,8 +28,6 @@ export function onDestroy(fn) {
 }
 
 export function createEventDispatcher() {
-        // is compile target customElement?
-        // always dispatch!
 	const component = get_current_component();
 
 	return (type: string, detail?: any) => {
