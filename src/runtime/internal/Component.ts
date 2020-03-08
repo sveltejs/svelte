@@ -56,6 +56,9 @@ export function mount_component(component, target, anchor) {
 	const { fragment, on_mount, on_destroy, after_update } = component.$$;
 
 	fragment && fragment.m(target, anchor);
+	
+	// custom element: call onMount in connectedCallback instead
+	if (component.shadowRoot) return;
 
 	// onMount happens before the initial afterUpdate
 	add_render_callback(() => {
@@ -176,6 +179,9 @@ if (typeof HTMLElement === 'function') {
 				// @ts-ignore todo: improve typings
 				this.appendChild(this.$$.slotted[key]);
 			}
+
+			const new_on_destroy = this.$$.on_mount.map(run).filter(is_function);
+			this.$$.on_destroy.push(...new_on_destroy);
 		}
 
 		attributeChangedCallback(attr, _oldValue, newValue) {
