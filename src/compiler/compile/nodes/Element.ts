@@ -408,7 +408,7 @@ export default class Element extends Node {
 				if (!(parent.type === 'InlineComponent' || (parent.type === 'Element' && /-/.test(parent.name)))) {
 					component.error(attribute, {
 						code: `invalid-slotted-content`,
-						message: `Element with a slot='...' attribute must be a direct descendant of a component or custom element`,
+						message: `Element with a slot='...' attribute must be a child of a component or custom element`,
 					});
 				}
 			}
@@ -419,7 +419,7 @@ export default class Element extends Node {
 					message: `The 'is' attribute is not supported cross-browser and should be avoided`
 				});
 			}
-      
+
 			attribute_map.set(attribute.name, attribute);
 		});
 

@@ -1,9 +1,9 @@
 <script>
-  import Nested from "./Nested.svelte";
+	import Nested from "./Nested.svelte";
 </script>
 
 <Nested>
-  <div slot="slot1">
-    <div slot="slot2" />
-  </div>
+	<div slot="slot1">
+		<div slot="slot2" />
+	</div>
 </Nested>
