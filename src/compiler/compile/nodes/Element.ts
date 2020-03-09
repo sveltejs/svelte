@@ -395,16 +395,6 @@ export default class Element extends Node {
 					component.slot_outlets.add(name);
 				}
 
-				if (parent.type === 'IfBlock' || parent.type === 'EachBlock') {
-					const type = parent.type === 'IfBlock' ? 'if' : 'each';
-					const message = `Cannot place slotted elements inside an ${type}-block`;
-
-					component.error(attribute, {
-						code: `invalid-slotted-content`,
-						message
-					});
-				}
-
 				if (!(parent.type === 'InlineComponent' || (parent.type === 'Element' && /-/.test(parent.name)))) {
 					component.error(attribute, {
 						code: `invalid-slotted-content`,
