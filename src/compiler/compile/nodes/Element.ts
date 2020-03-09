@@ -395,7 +395,7 @@ export default class Element extends Node {
 					component.slot_outlets.add(name);
 				}
 
-				if (!(parent.type === 'InlineComponent' || (parent.type === 'Element' && /-/.test(parent.name)))) {
+				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
 					component.error(attribute, {
 						code: `invalid-slotted-content`,
 						message: `Element with a slot='...' attribute must be a child of a component or custom element`,
@@ -759,4 +759,13 @@ function should_have_attribute(
 		code: `a11y-missing-attribute`,
 		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
 	});
+}
+
+function within_custom_element(parent: INode) {
+	while (parent) {
+		if (parent.type === 'InlineComponent') return false;
+		if (parent.type === 'Element' && /-/.test(parent.name)) return true;
+		parent = parent.parent;
+	}
+	return false;
 }
