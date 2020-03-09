@@ -4,4 +4,4 @@
 </script>
 
 <div>{foo}</div>
-<div>{JSON.stringify($$rest)}</div>
+<div>{JSON.stringify($$restProps)}</div>

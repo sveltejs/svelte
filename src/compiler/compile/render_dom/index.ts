@@ -71,7 +71,7 @@ export default function dom(
 	}
 
 	const uses_props = component.var_lookup.has('$$props');
-	const uses_rest = component.var_lookup.has('$$rest');
+	const uses_rest = component.var_lookup.has('$$restProps');
 	const $$props = uses_props || uses_rest ? `$$new_props` : `$$props`;
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
@@ -80,7 +80,7 @@ export default function dom(
 	const compute_rest = x`@compute_rest_props($$props, ${omit_props_names.name})`;
 	const rest = uses_rest ? b`
 		const ${omit_props_names.name} = [${props.map(prop => `"${prop.export_name}"`).join(',')}];
-		let $$rest = ${compute_rest};
+		let $$restProps = ${compute_rest};
 	` : null;
 
 	const set = (uses_props || uses_rest || writable_props.length > 0 || component.slots.size > 0)
@@ -88,7 +88,7 @@ export default function dom(
 			${$$props} => {
 				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`)}
 				${uses_rest && !uses_props && x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`}
-				${uses_rest && renderer.invalidate('$$rest', x`$$rest = ${compute_rest}`)}
+				${uses_rest && renderer.invalidate('$$restProps', x`$$restProps = ${compute_rest}`)}
 				${writable_props.map(prop =>
 					b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
@@ -351,7 +351,7 @@ export default function dom(
 
 		component.reactive_declarations.forEach(d => {
 			const dependencies = Array.from(d.dependencies);
-			const uses_rest_or_props = !!dependencies.find(n => n === '$$props' || n === '$$rest');
+			const uses_rest_or_props = !!dependencies.find(n => n === '$$props' || n === '$$restProps');
 
 			const writable = dependencies.filter(n => {
 				const variable = component.var_lookup.get(n);

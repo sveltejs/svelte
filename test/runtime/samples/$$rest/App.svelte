@@ -3,11 +3,11 @@
   export function b() {}
   export let c = 1;
 
-  $: length = Object.keys($$rest).length;
-  $: values = Object.values($$rest);
+  $: length = Object.keys($$restProps).length;
+  $: values = Object.values($$restProps);
 </script>
 <div>Length: {length}</div>
 <div>Values: {values.join(',')}</div>
 
-<div {...$$rest} />
+<div {...$$restProps} />
 <div {...$$props} />
