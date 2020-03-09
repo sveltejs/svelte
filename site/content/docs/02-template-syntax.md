@@ -113,6 +113,9 @@ An element or component can have multiple spread attributes, interspersed with r
 <Widget {...$$props}/>
 ```
 
+---
+
+*`$$restProps`* references to props that are passed to a component which are not declared with `export`. It is useful for passing down attributes that are not expected as props.
 
 ### Text expressions
 
