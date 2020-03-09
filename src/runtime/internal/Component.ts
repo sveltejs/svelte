@@ -182,6 +182,7 @@ if (typeof HTMLElement === 'function') {
 
 			const new_on_destroy = this.$$.on_mount.map(run).filter(is_function);
 			this.$$.on_destroy.push(...new_on_destroy);
+			// don't reset on_mount array to not infer with reinsertion?
 		}
 
 		attributeChangedCallback(attr, _oldValue, newValue) {
