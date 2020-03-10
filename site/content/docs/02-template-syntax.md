@@ -115,7 +115,13 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ---
 
-*`$$restProps`* references to props that are passed to a component which are not declared with `export`. It is useful for passing down attributes that are not expected as props.
+*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component.
+
+```html
+<input {...$$restProps}>
+```
+
+---
 
 ### Text expressions
 
