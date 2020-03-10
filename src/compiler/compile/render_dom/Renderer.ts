@@ -233,6 +233,7 @@ export default class Renderer {
 			return bitmask;
 		};
 
+		// TODO: context-overflow make it less gross
 		return {
 			// Using a ParenthesizedExpression allows us to create
 			// the expression lazily. TODO would be better if
