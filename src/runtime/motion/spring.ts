@@ -1,5 +1,5 @@
 import { Readable, writable } from 'svelte/store';
-import { loop, now, Task } from 'svelte/internal';
+import { loop, Task } from 'svelte/internal';
 import { is_date } from './utils';
 
 interface TickContext<T> {
@@ -85,7 +85,7 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 
 		if (value == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
 			cancel_task = true; // cancel any running animation
-			last_time = now();
+			last_time = null;
 			last_value = new_value;
 			store.set(value = target_value);
 			return Promise.resolve();
@@ -96,10 +96,12 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 		}
 
 		if (!task) {
-			last_time = now();
+			last_time = null;
 			cancel_task = false;
 
 			task = loop(now => {
+
+				if (last_time === null) last_time = now;
 
 				if (cancel_task) {
 					cancel_task = false;
