@@ -13,6 +13,7 @@ import { b } from 'code-red';
 import { invalidate } from '../../render_dom/invalidate';
 import { Node, FunctionExpression, Identifier } from 'estree';
 import { TemplateNode } from '../../../interfaces';
+import { is_reserved_keyword } from '../../utils/reserved_keywords';
 
 type Owner = Wrapper | TemplateNode;
 
@@ -158,7 +159,7 @@ export default class Expression {
 	dynamic_dependencies() {
 		return Array.from(this.dependencies).filter(name => {
 			if (this.template_scope.is_let(name)) return true;
-			if (name === '$$props') return true;
+			if (is_reserved_keyword(name)) return true;
 
 			const variable = this.component.var_lookup.get(name);
 			return is_dynamic(variable);
@@ -355,7 +356,7 @@ function get_function_name(_node, parent) {
 }
 
 function is_contextual(component: Component, scope: TemplateScope, name: string) {
-	if (name === '$$props') return true;
+	if (is_reserved_keyword(name)) return true;
 
 	// if it's a name below root scope, it's contextual
 	if (!scope.is_top_level(name)) return true;
