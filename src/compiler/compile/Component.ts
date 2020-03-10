@@ -187,6 +187,9 @@ export default class Component {
 		if (variable) {
 			variable.referenced = true;
 		} else if (is_reserved_keyword(name)) {
+			if (name === '$$host' && !this.compile_options.customElement) {
+				throw new Error(`$$host is for custom element. Did you forget the 'customElement: true' compile option?`);
+			}
 			this.add_var({
 				name,
 				injected: true,
@@ -655,6 +658,12 @@ export default class Component {
 					name,
 					injected: true,
 				});
+				if (name === '$$host' && !this.compile_options.customElement) {
+					this.error(node as any, {
+						code: 'illegal-host',
+						message: `$$host is for custom element. Did you forget the 'customElement: true' compile option?`
+					});
+				}
 			} else if (name[0] === '$') {
 				if (name === '$' || name[1] === '$') {
 					this.error(node as any, {

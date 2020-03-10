@@ -412,6 +412,7 @@ export default function dom(
 
 		body.push(b`
 			function ${definition}(${args}) {
+				${component.var_lookup.has('$$host') ? 'const $$host = $$self' : null}
 				${rest}
 
 				${reactive_store_declarations}

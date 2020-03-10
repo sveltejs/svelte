@@ -105,7 +105,11 @@ describe('custom-elements', function() {
 
 			const page = await browser.newPage();
 
-			page.on('console', (type, ...args) => {
+			page.on('console', async (consoleMessage) => {
+				const type = consoleMessage.type();
+				const args = await Promise.all(
+					consoleMessage.args().map(arg => arg.jsonValue())
+				)
 				console[type](...args);
 			});
 
