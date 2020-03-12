@@ -250,7 +250,7 @@ function read_tag_name(parser: Parser) {
 		if (!legal) {
 			parser.error({
 				code: `invalid-self-placement`,
-				message: `<svelte:self> components can only exist inside if-blocks, each-blocks or within a component`
+				message: `<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, or slots passed to components`
 			}, start);
 		}
 
