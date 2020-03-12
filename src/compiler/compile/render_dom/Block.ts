@@ -46,6 +46,7 @@ export default class Block {
 	}>;
 
 	chunks: {
+		declarations: Array<Node | Node[]>;
 		init: Array<Node | Node[]>;
 		create: Array<Node | Node[]>;
 		claim: Array<Node | Node[]>;
@@ -93,6 +94,7 @@ export default class Block {
 		this.bindings = options.bindings;
 
 		this.chunks = {
+			declarations: [],
 			init: [],
 			create: [],
 			claim: [],
@@ -384,6 +386,8 @@ export default class Block {
 		const block = dev && this.get_unique_name('block');
 
 		const body = b`
+			${this.chunks.declarations}
+
 			${Array.from(this.variables.values()).map(({ id, init }) => {
 				return init
 					? b`let ${id} = ${init}`

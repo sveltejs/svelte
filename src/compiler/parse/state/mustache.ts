@@ -196,7 +196,7 @@ export default function mustache(parser: Parser) {
 
 		if (!parser.eat('}')) {
 			parser.require_whitespace();
-			await_block[is_then ? 'value': 'error'] = parser.read_identifier();
+			await_block[is_then ? 'value': 'error'] = parser.read_destructure_pattern();
 			parser.allow_whitespace();
 			parser.eat('}', true);
 		}

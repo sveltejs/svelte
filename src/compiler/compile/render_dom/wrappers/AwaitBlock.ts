@@ -8,7 +8,7 @@ import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
 import ThenBlock from '../../nodes/ThenBlock';
 import CatchBlock from '../../nodes/CatchBlock';
-import { Identifier } from 'estree';
+import { Identifier, Pattern } from 'estree';
 
 class AwaitBlockBranch extends Wrapper {
 	node: PendingBlock | ThenBlock | CatchBlock;
@@ -46,6 +46,20 @@ class AwaitBlockBranch extends Wrapper {
 
 		this.is_dynamic = this.block.dependencies.size > 0;
 	}
+
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+		this.fragment.render(block, parent_node, parent_nodes);
+	}
+
+	render_destructure(block: Block, value, node, index) {
+		if (value && node.pattern.type !== 'Identifier') {
+			replace_context(block, node.pattern);
+			this.block.chunks.declarations.push(b`(${node.pattern} = #ctx[${index}])`);
+			if (this.block.has_update_method) {
+				this.block.chunks.update.push(b`(${node.pattern} = #ctx[${index}])`);
+			}
+		}
+	}
 }
 
 export default class AwaitBlockWrapper extends Wrapper {
@@ -54,6 +68,9 @@ export default class AwaitBlockWrapper extends Wrapper {
 	pending: AwaitBlockBranch;
 	then: AwaitBlockBranch;
 	catch: AwaitBlockBranch;
+
+	value: string;
+	error: string;
 
 	var: Identifier = { type: 'Identifier', name: 'await_block' };
 
@@ -71,8 +88,20 @@ export default class AwaitBlockWrapper extends Wrapper {
 		this.not_static_content();
 
 		block.add_dependencies(this.node.expression.dependencies);
-		if (this.node.value) block.renderer.add_to_context(this.node.value, true);
-		if (this.node.error) block.renderer.add_to_context(this.node.error, true);
+		if (this.node.value) {
+			for (const ctx of this.node.value.expressions) {
+				block.renderer.add_to_context(ctx, true);
+			}
+			this.value = this.node.value.identifier_name || block.get_unique_name('value').name;
+			block.renderer.add_to_context(this.value, true);
+		}
+		if (this.node.error) {
+			for (const ctx of this.node.error.expressions) {
+				block.renderer.add_to_context(ctx, true);
+			}
+			this.error = this.node.error.identifier_name || block.get_unique_name('error').name;
+			block.renderer.add_to_context(this.error, true);
+		}
 
 		let is_dynamic = false;
 		let has_intros = false;
@@ -105,17 +134,11 @@ export default class AwaitBlockWrapper extends Wrapper {
 			this[status] = branch;
 		});
 
-		this.pending.block.has_update_method = is_dynamic;
-		this.then.block.has_update_method = is_dynamic;
-		this.catch.block.has_update_method = is_dynamic;
-
-		this.pending.block.has_intro_method = has_intros;
-		this.then.block.has_intro_method = has_intros;
-		this.catch.block.has_intro_method = has_intros;
-
-		this.pending.block.has_outro_method = has_outros;
-		this.then.block.has_outro_method = has_outros;
-		this.catch.block.has_outro_method = has_outros;
+		['pending', 'then', 'catch'].forEach(status => {
+			this[status].block.has_update_method = is_dynamic;
+			this[status].block.has_intro_method = has_intros;
+			this[status].block.has_outro_method = has_outros;
+		});
 
 		if (has_outros) {
 			block.add_outro();
@@ -139,8 +162,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		block.maintain_context = true;
 
-		const value_index = this.node.value && block.renderer.context_lookup.get(this.node.value).index;
-		const error_index = this.node.error && block.renderer.context_lookup.get(this.node.error).index;
+		const value_index = this.value && block.renderer.context_lookup.get(this.value).index;
+		const error_index = this.error && block.renderer.context_lookup.get(this.error).index;
 
 		const info_props: any = x`{
 			ctx: #ctx,
@@ -205,7 +228,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 					} else {
 						const #child_ctx = #ctx.slice();
-						${this.node.value && b`#child_ctx[${value_index}] = ${info}.resolved;`}
+						${this.value && b`#child_ctx[${value_index}] = ${info}.resolved;`}
 						${info}.block.p(#child_ctx, #dirty);
 					}
 				`);
@@ -219,7 +242,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 				block.chunks.update.push(b`
 					{
 						const #child_ctx = #ctx.slice();
-						${this.node.value && b`#child_ctx[${value_index}] = ${info}.resolved;`}
+						${this.value && b`#child_ctx[${value_index}] = ${info}.resolved;`}
 						${info}.block.p(#child_ctx, #dirty);
 					}
 				`);
@@ -242,7 +265,53 @@ export default class AwaitBlockWrapper extends Wrapper {
 		`);
 
 		[this.pending, this.then, this.catch].forEach(branch => {
-			branch.fragment.render(branch.block, null, x`#nodes` as Identifier);
+			branch.render(branch.block, null, x`#nodes` as Identifier);
 		});
+		this.then.render_destructure(block, this.value, this.node.value, value_index);
+		this.catch.render_destructure(block, this.error, this.node.error, error_index);
+	}
+}
+
+function replace_context(block: Block, pattern: Pattern) {
+	if (pattern.type === 'ObjectPattern') {
+		for (const property of pattern.properties) {
+			if (property.value.type === 'Identifier') {
+				// @ts-ignore
+				property.value = x`#ctx[${block.renderer.context_lookup.get(property.value.name).index}]`;
+			} else {
+				replace_context(block, property.value);
+			}
+		}
+	} else if (pattern.type === 'ArrayPattern') {
+		for (let i=0; i<pattern.elements.length; i++) {
+			const element = pattern.elements[i];
+			if (element.type === 'Identifier') {
+				// @ts-ignore
+				pattern.elements[i] = x`#ctx[${block.renderer.context_lookup.get(element.name).index}]`;
+			} else {
+				replace_context(block, element);
+			}
+		}
+	} else if (pattern.type === 'RestElement') {
+		if (pattern.argument.type === 'Identifier') {
+			// @ts-ignore
+			pattern.argument = x`#ctx[${block.renderer.context_lookup.get(pattern.argument.name).index}]`;
+		} else {
+			replace_context(block, pattern.argument);
+		}
+	} else if (pattern.type === 'AssignmentPattern') {
+		if (pattern.left.type === 'Identifier') {
+			// @ts-ignore
+			pattern.left = x`#ctx[${block.renderer.context_lookup.get(pattern.left.name).index}]`;
+		} else {
+			replace_context(block, pattern.left);
+		}
+	} else if (pattern.type === 'MemberExpression') {
+		if (pattern.object.type === 'Identifier') {
+			pattern.object = x`#ctx[${block.renderer.context_lookup.get(pattern.object.name).index}]`;
+		} else {
+			// @ts-ignore
+			replace_context(block, pattern.object);
+		}
 	}
 }
