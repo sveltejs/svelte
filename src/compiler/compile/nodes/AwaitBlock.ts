@@ -56,7 +56,11 @@ function get_context_from_expression(node: Pattern, result: string[]): string[] 
 			return result;
 		case 'ObjectPattern':
 			for (const property of node.properties) {
-				get_context_from_expression(property.value, result);
+				if (property.type === 'Property') {
+					get_context_from_expression(property.value, result);
+				} else {
+					get_context_from_expression(property, result);
+				}
 			}
 			return result;
 		case 'MemberExpression':

@@ -275,11 +275,16 @@ export default class AwaitBlockWrapper extends Wrapper {
 function replace_context(block: Block, pattern: Pattern) {
 	if (pattern.type === 'ObjectPattern') {
 		for (const property of pattern.properties) {
-			if (property.value.type === 'Identifier') {
-				// @ts-ignore
-				property.value = x`#ctx[${block.renderer.context_lookup.get(property.value.name).index}]`;
+			if (property.type === 'Property') {
+				if (property.value.type === 'Identifier') {
+					// @ts-ignore
+					property.value = x`#ctx[${block.renderer.context_lookup.get(property.value.name).index}]`;
+				} else {
+					replace_context(block, property.value);
+				}
 			} else {
-				replace_context(block, property.value);
+				// @ts-ignore
+				replace_context(block, property);
 			}
 		}
 	} else if (pattern.type === 'ArrayPattern') {

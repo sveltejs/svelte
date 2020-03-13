@@ -1,6 +1,6 @@
 export default {
 	props: {
-		thePromise: new Promise(resolve => {}),
+		thePromise: new Promise(resolve => {})
 	},
 
 	html: `
@@ -8,20 +8,56 @@ export default {
 	`,
 
 	async test({ assert, component, target }) {
-		let promise = Promise.resolve({ error: 'error message' });
-		component.thePromise = promise;
+		await (component.thePromise = Promise.resolve({ error: "error message" }));
 
-		await promise;
-		assert.htmlEqual(target.innerHTML, `
-			<p>error: error message</p>
-		`);
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<p>error: error message</p>
+				<p>result: undefined</p>
+			`
+		);
 
-		promise = Promise.resolve({ result: '42' });
-		component.thePromise = promise;
+		await (component.thePromise = Promise.resolve({ result: "42" }));
 
-		await promise;
-		assert.htmlEqual(target.innerHTML, `
-			<p>result: 42</p>
-		`);	
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<p>error: undefined</p>
+				<p>result: 42</p>
+			`
+		);
+
+		try {
+			await (component.thePromise = Promise.reject({
+				error: { message: "oops", code: "123" }
+			}));
+		} catch {
+			// do nothing
+		}
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<p>message: oops</p>
+				<p>code: 123</p>
+			`
+		);
+
+		try {
+			await (component.thePromise = Promise.reject({
+				error: { message: "timeout", code: "456" }
+			}));
+		} catch {
+			// do nothing
+		}
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<p>message: timeout</p>
+				<p>code: 456</p>
+			`
+		);
 	}
 };

@@ -5,9 +5,9 @@
 {#await thePromise}
 	loading...
 {:then { result, error }}
-	{#if error}
-		<p>error: { error }</p>
-	{:else}
-		<p>result: {result}</p>
-	{/if}
+	<p>error: {error}</p>
+	<p>result: {result}</p>
+{:catch { error: { message, code } }}
+	<p>message: {message}</p>
+	<p>code: {code}</p>
 {/await}

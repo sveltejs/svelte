@@ -1,6 +1,6 @@
 export default {
 	props: {
-		thePromise: new Promise(resolve => {}),
+		thePromise: new Promise(resolve => {})
 	},
 
 	html: `
@@ -8,22 +8,54 @@ export default {
 	`,
 
 	async test({ assert, component, target }) {
-		let promise = Promise.resolve([1, 2]);
-		component.thePromise = promise;
+		await (component.thePromise = Promise.resolve([1, 2]));
 
-		await promise;
-		assert.htmlEqual(target.innerHTML, `
-			<p>a: 1</p>
-			<p>b: 2</p>
-		`);
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<p>a: 1</p>
+				<p>b: 2</p>
+			`
+		);
 
-		promise = Promise.resolve([4, 5]);
-		component.thePromise = promise;
+		await (component.thePromise = Promise.resolve([4, 5]));
 
-		await promise;
-		assert.htmlEqual(target.innerHTML, `
-			<p>a: 4</p>
-			<p>b: 5</p>
-		`);	
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<p>a: 4</p>
+				<p>b: 5</p>
+			`
+		);
+
+		try {
+			await (component.thePromise = Promise.reject(['a', [6, 7]]));
+		} catch {
+			// do nothing
+		}
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<p>c: a</p>
+				<p>d: 6</p>
+				<p>e: 7</p>
+			`
+		);
+
+		try {
+			await (component.thePromise = Promise.reject(['b', [8, 9]]));
+		} catch {
+			// do nothing
+		}
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<p>c: b</p>
+				<p>d: 8</p>
+				<p>e: 9</p>
+			`
+		);
 	}
 };
