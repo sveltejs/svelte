@@ -92,7 +92,7 @@ export class Parser {
 		}, err.pos);
 	}
 
-	error({ code, message }: { code: string; message: string }, index = this.index): never {
+	error({ code, message }: { code: string; message: string }, index = this.index) {
 		error(message, {
 			name: 'ParseError',
 			code,

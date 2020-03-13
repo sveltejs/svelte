@@ -7,7 +7,7 @@ import { Pattern } from 'estree';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { TemplateNode } from '../../interfaces';
-import get_object from '../utils/get_object';
+import traverse_destructure_pattern from '../utils/traverse_destructure_pattern';
 
 export default class AwaitBlock extends Node {
 	type: 'AwaitBlock';
@@ -40,38 +40,8 @@ export class DestructurePattern {
 
 	constructor(pattern: Pattern) {
 		this.pattern = pattern;
-		this.expressions = get_context_from_expression(this.pattern, []);
+		this.expressions = [];
+		traverse_destructure_pattern(pattern, (node) => this.expressions.push(node.name));
 		this.identifier_name = this.pattern.type === 'Identifier' ? this.pattern.name : undefined;
 	}
 }
-function get_context_from_expression(node: Pattern, result: string[]): string[] {
-	switch (node.type) {
-		case 'Identifier':
-			result.push(node.name);
-			return result;
-		case 'ArrayPattern':
-			for (const element of node.elements) {
-				get_context_from_expression(element, result);
-			}
-			return result;
-		case 'ObjectPattern':
-			for (const property of node.properties) {
-				if (property.type === 'Property') {
-					get_context_from_expression(property.value, result);
-				} else {
-					get_context_from_expression(property, result);
-				}
-			}
-			return result;
-		case 'MemberExpression':
-			get_context_from_expression(get_object(node), result);
-			return result;
-		case 'RestElement':
-			get_context_from_expression(node.argument, result);
-			return result;
-		case 'AssignmentPattern':
-			get_context_from_expression(node.left, result);
-			return result;
-	}
-}
-

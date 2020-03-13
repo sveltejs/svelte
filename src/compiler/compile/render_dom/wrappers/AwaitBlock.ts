@@ -8,7 +8,8 @@ import FragmentWrapper from './Fragment';
 import PendingBlock from '../../nodes/PendingBlock';
 import ThenBlock from '../../nodes/ThenBlock';
 import CatchBlock from '../../nodes/CatchBlock';
-import { Identifier, Pattern } from 'estree';
+import { Identifier } from 'estree';
+import traverse_destructure_pattern from '../../utils/traverse_destructure_pattern';
 
 class AwaitBlockBranch extends Wrapper {
 	node: PendingBlock | ThenBlock | CatchBlock;
@@ -53,7 +54,10 @@ class AwaitBlockBranch extends Wrapper {
 
 	render_destructure(block: Block, value, node, index) {
 		if (value && node.pattern.type !== 'Identifier') {
-			replace_context(block, node.pattern);
+			traverse_destructure_pattern(node.pattern, (node, parent, index) => {
+				parent[index] = x`#ctx[${block.renderer.context_lookup.get(node.name).index}]`;
+			});
+
 			this.block.chunks.declarations.push(b`(${node.pattern} = #ctx[${index}])`);
 			if (this.block.has_update_method) {
 				this.block.chunks.update.push(b`(${node.pattern} = #ctx[${index}])`);
@@ -269,54 +273,5 @@ export default class AwaitBlockWrapper extends Wrapper {
 		});
 		this.then.render_destructure(block, this.value, this.node.value, value_index);
 		this.catch.render_destructure(block, this.error, this.node.error, error_index);
-	}
-}
-
-function replace_context(block: Block, pattern: Pattern) {
-	if (pattern.type === 'ObjectPattern') {
-		for (const property of pattern.properties) {
-			if (property.type === 'Property') {
-				if (property.value.type === 'Identifier') {
-					// @ts-ignore
-					property.value = x`#ctx[${block.renderer.context_lookup.get(property.value.name).index}]`;
-				} else {
-					replace_context(block, property.value);
-				}
-			} else {
-				// @ts-ignore
-				replace_context(block, property);
-			}
-		}
-	} else if (pattern.type === 'ArrayPattern') {
-		for (let i=0; i<pattern.elements.length; i++) {
-			const element = pattern.elements[i];
-			if (element.type === 'Identifier') {
-				// @ts-ignore
-				pattern.elements[i] = x`#ctx[${block.renderer.context_lookup.get(element.name).index}]`;
-			} else {
-				replace_context(block, element);
-			}
-		}
-	} else if (pattern.type === 'RestElement') {
-		if (pattern.argument.type === 'Identifier') {
-			// @ts-ignore
-			pattern.argument = x`#ctx[${block.renderer.context_lookup.get(pattern.argument.name).index}]`;
-		} else {
-			replace_context(block, pattern.argument);
-		}
-	} else if (pattern.type === 'AssignmentPattern') {
-		if (pattern.left.type === 'Identifier') {
-			// @ts-ignore
-			pattern.left = x`#ctx[${block.renderer.context_lookup.get(pattern.left.name).index}]`;
-		} else {
-			replace_context(block, pattern.left);
-		}
-	} else if (pattern.type === 'MemberExpression') {
-		if (pattern.object.type === 'Identifier') {
-			pattern.object = x`#ctx[${block.renderer.context_lookup.get(pattern.object.name).index}]`;
-		} else {
-			// @ts-ignore
-			replace_context(block, pattern.object);
-		}
 	}
 }
