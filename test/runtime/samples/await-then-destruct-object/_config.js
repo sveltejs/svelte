@@ -32,7 +32,7 @@ export default {
 			await (component.thePromise = Promise.reject({
 				error: { message: "oops", code: "123" }
 			}));
-		} catch {
+		} catch (e) {
 			// do nothing
 		}
 
@@ -48,7 +48,7 @@ export default {
 			await (component.thePromise = Promise.reject({
 				error: { message: "timeout", code: "456" }
 			}));
-		} catch {
+		} catch (e) {
 			// do nothing
 		}
 

@@ -30,7 +30,7 @@ export default {
 
 		try {
 			await (component.thePromise = Promise.reject(['a', [6, 7]]));
-		} catch {
+		} catch (e) {
 			// do nothing
 		}
 
@@ -45,7 +45,7 @@ export default {
 
 		try {
 			await (component.thePromise = Promise.reject(['b', [8, 9]]));
-		} catch {
+		} catch (e) {
 			// do nothing
 		}
 
