@@ -128,7 +128,7 @@ export function create_ssr_component(fn) {
 }
 
 export function add_attribute(name, value, boolean) {
-	if (value == null || (boolean && !value)) return '';
+	if (value == null || (boolean && !value && value !== 0)) return '';
 	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value)) : `"${value}"`}`}`;
 }
 
