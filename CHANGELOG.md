@@ -4,6 +4,7 @@
 
 * Allow `<svelte:self>` to be used in a slot ([#2798](https://github.com/sveltejs/svelte/issues/2798))
 * Expose object of unknown props in `$$restProps` ([#2930](https://github.com/sveltejs/svelte/issues/2930))
+* Disallow binding directly to `const` variables ([#4479](https://github.com/sveltejs/svelte/issues/4479))
 * Fix updating keyed `{#each}` blocks with `{:else}` ([#4536](https://github.com/sveltejs/svelte/issues/4536), [#4549](https://github.com/sveltejs/svelte/issues/4549))
 * Fix hydration of top-level content ([#4542](https://github.com/sveltejs/svelte/issues/4542))
 
