@@ -4,6 +4,7 @@
 
 * Allow `<svelte:self>` to be used in a slot ([#2798](https://github.com/sveltejs/svelte/issues/2798))
 * Expose object of unknown props in `$$restProps` ([#2930](https://github.com/sveltejs/svelte/issues/2930))
+* Fix hydration of top-level content ([#4542](https://github.com/sveltejs/svelte/issues/4542))
 
 ## 3.19.2
 
