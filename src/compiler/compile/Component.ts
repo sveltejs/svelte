@@ -28,6 +28,7 @@ import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, Assi
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
+import { is_reserved_keyword } from './utils/reserved_keywords';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -185,7 +186,7 @@ export default class Component {
 
 		if (variable) {
 			variable.referenced = true;
-		} else if (name === '$$props') {
+		} else if (is_reserved_keyword(name)) {
 			this.add_var({
 				name,
 				injected: true,
@@ -239,7 +240,7 @@ export default class Component {
 			const program: any = { type: 'Program', body: result.js };
 
 			walk(program, {
-				enter: (node, parent, key) => {
+				enter: (node: Node, parent: Node, key) => {
 					if (node.type === 'Identifier') {
 						if (node.name[0] === '@') {
 							if (node.name[1] === '_') {
@@ -526,7 +527,7 @@ export default class Component {
 		if (!script) return;
 
 		walk(script.content, {
-			enter(node) {
+			enter(node: Node) {
 				if (node.type === 'LabeledStatement' && node.label.name === '$') {
 					component.warn(node as any, {
 						code: 'module-script-reactive-declaration',
@@ -649,7 +650,7 @@ export default class Component {
 					reassigned: true,
 					initialised: true,
 				});
-			} else if (name === '$$props') {
+			} else if (is_reserved_keyword(name)) {
 				this.add_var({
 					name,
 					injected: true,
@@ -715,7 +716,7 @@ export default class Component {
 		let scope_updated = false;
 
 		walk(content, {
-			enter(node, parent, prop, index) {
+			enter(node: Node, parent, prop, index) {
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
@@ -741,7 +742,7 @@ export default class Component {
 				component.warn_on_undefined_store_value_references(node, parent, scope);
 			},
 
-			leave(node) {
+			leave(node: Node) {
 				// do it on leave, to prevent infinite loop
 				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0) {
 					const to_replace_for_loop_protect = component.loop_protect(node, scope, component.compile_options.loopGuardTimeout);
@@ -780,12 +781,12 @@ export default class Component {
 
 		const component = this;
 		const { content } = script;
-		const { instance_scope, instance_scope_map: map } = this;
+		const { instance_scope, module_scope, instance_scope_map: map } = this;
 
 		let scope = instance_scope;
 
 		walk(content, {
-			enter(node, parent) {
+			enter(node: Node, parent: Node) {
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
@@ -797,7 +798,12 @@ export default class Component {
 					const deep = assignee.type === 'MemberExpression';
 
 					names.forEach(name => {
-						if (scope.find_owner(name) === instance_scope) {
+						const scope_owner = scope.find_owner(name);
+						if (
+							scope_owner !== null
+								? scope_owner === instance_scope
+								: module_scope && module_scope.has(name)
+						) {
 							const variable = component.var_lookup.get(name);
 							variable[deep ? 'mutated' : 'reassigned'] = true;
 						}
@@ -813,7 +819,7 @@ export default class Component {
 				}
 			},
 
-			leave(node) {
+			leave(node: Node) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
@@ -881,7 +887,7 @@ export default class Component {
 		let scope = instance_scope;
 
 		walk(this.ast.instance.content, {
-			enter(node, parent, key, index) {
+			enter(node: Node, parent, key, index) {
 				if (/Function/.test(node.type)) {
 					return this.skip();
 				}
@@ -958,7 +964,7 @@ export default class Component {
 				}
 			},
 
-			leave(node, parent, _key, index) {
+			leave(node: Node, parent, _key, index) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
@@ -1059,7 +1065,7 @@ export default class Component {
 			walking.add(fn_declaration);
 
 			walk(fn_declaration, {
-				enter(node, parent) {
+				enter(node: Node, parent) {
 					if (!hoistable) return this.skip();
 
 					if (map.has(node)) {
@@ -1107,7 +1113,7 @@ export default class Component {
 					}
 				},
 
-				leave(node) {
+				leave(node: Node) {
 					if (map.has(node)) {
 						scope = scope.parent;
 					}
@@ -1150,7 +1156,7 @@ export default class Component {
 				const map = this.instance_scope_map;
 
 				walk(node.body, {
-					enter(node, parent) {
+					enter(node: Node, parent) {
 						if (map.has(node)) {
 							scope = map.get(node);
 						}
@@ -1190,7 +1196,7 @@ export default class Component {
 						}
 					},
 
-					leave(node) {
+					leave(node: Node) {
 						if (map.has(node)) {
 							scope = scope.parent;
 						}
@@ -1271,7 +1277,7 @@ export default class Component {
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
-			if (name === '$' || name[1] === '$' && name !== '$$props') {
+			if (name === '$' || name[1] === '$' && !is_reserved_keyword(name)) {
 				this.error(node, {
 					code: 'illegal-global',
 					message: `${name} is an illegal variable name`
@@ -1280,7 +1286,7 @@ export default class Component {
 
 			this.has_reactive_assignments = true; // TODO does this belong here?
 
-			if (name === '$$props') return;
+			if (is_reserved_keyword(name)) return;
 
 			name = name.slice(1);
 		}

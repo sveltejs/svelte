@@ -138,10 +138,26 @@ export default class InlineComponentWrapper extends Wrapper {
 		const statements: Array<Node | Node[]> = [];
 		const updates: Array<Node | Node[]> = [];
 
+		if (this.fragment) {
+			this.renderer.add_to_context('$$scope', true);
+			const default_slot = this.slots.get('default');
+
+			this.fragment.nodes.forEach((child) => {
+				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
+			});
+		}
+
 		let props;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
+
+		// removing empty slot
+		for (const slot of this.slots.keys()) {
+			if (!this.slots.get(slot).block.has_content()) {
+				this.slots.delete(slot);
+			}
+		}
 
 		const initial_props = this.slots.size > 0
 			? [
@@ -170,15 +186,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				props = block.get_unique_name(`${name.name}_props`);
 				component_opts.properties.push(p`props: ${props}`);
 			}
-		}
-
-		if (this.fragment) {
-			this.renderer.add_to_context('$$scope', true);
-			const default_slot = this.slots.get('default');
-
-			this.fragment.nodes.forEach((child) => {
-				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
-			});
 		}
 
 		if (component.compile_options.dev) {
@@ -224,7 +231,9 @@ export default class InlineComponentWrapper extends Wrapper {
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
 						? renderer.dirty(Array.from(dependencies))
 						: null;
+					const unchanged = dependencies.size === 0;
 
+					let change_object;
 					if (attr.is_spread) {
 						const value = attr.expression.manipulate(block);
 						initial_props.push(value);
@@ -233,13 +242,20 @@ export default class InlineComponentWrapper extends Wrapper {
 						if (attr.expression.node.type !== 'ObjectExpression') {
 							value_object = x`@get_spread_object(${value})`;
 						}
-						changes.push(condition ? x`${condition} && ${value_object}` : value_object);
+						change_object = value_object;
 					} else {
 						const obj = x`{ ${name}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
-
-						changes.push(condition ? x`${condition} && ${obj}` : x`${levels}[${i}]`);
+						change_object = obj;
 					}
+
+					changes.push(
+						unchanged
+							? x`${levels}[${i}]`
+							: condition
+							? x`${condition} && ${change_object}`
+							: change_object
+					);
 				});
 
 				block.chunks.init.push(b`

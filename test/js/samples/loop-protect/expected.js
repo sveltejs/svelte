@@ -6,13 +6,16 @@ import {
 	detach_dev,
 	dispatch_dev,
 	element,
+	globals,
 	init,
 	insert_dev,
 	loop_guard,
 	noop,
-	safe_not_equal
+	safe_not_equal,
+	validate_slots
 } from "svelte/internal";
 
+const { console: console_1 } = globals;
 const file = undefined;
 
 function create_fragment(ctx) {
@@ -101,6 +104,15 @@ function instance($$self, $$props, $$invalidate) {
 			guard_5();
 		} while (true);
 	}
+
+	const writable_props = [];
+
+	Object.keys($$props).forEach(key => {
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<Component> was created with unknown prop '${key}'`);
+	});
+
+	let { $$slots = {}, $$scope } = $$props;
+	validate_slots("Component", $$slots, []);
 
 	function div_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
