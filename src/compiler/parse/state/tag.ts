@@ -18,7 +18,7 @@ const meta_tags = new Map([
 	['svelte:body', 'Body']
 ]);
 
-const valid_meta_tags = Array.from(meta_tags.keys()).concat('svelte:self', 'svelte:component');
+const valid_meta_tags = Array.from(meta_tags.keys()).concat('svelte:self', 'svelte:component', 'svelte:fragment');
 
 const specials = new Map([
 	[
@@ -39,6 +39,7 @@ const specials = new Map([
 
 const SELF = /^svelte:self(?=[\s/>])/;
 const COMPONENT = /^svelte:component(?=[\s/>])/;
+const SLOT = /^svelte:fragment(?=[\s/>])/;
 
 function parent_is_head(stack) {
 	let i = stack.length;
@@ -107,8 +108,9 @@ export default function tag(parser: Parser) {
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
 		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
-			: name === 'title' && parent_is_head(parser.stack) ? 'Title'
-				: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+			: name === 'svelte:fragment' ? 'SlotTemplate'
+				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
+					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
 	const element: TemplateNode = {
 		start,
@@ -264,6 +266,8 @@ function read_tag_name(parser: Parser) {
 	}
 
 	if (parser.read(COMPONENT)) return 'svelte:component';
+
+	if (parser.read(SLOT)) return 'svelte:fragment';
 
 	const name = parser.read_until(/(\s|\/|>)/);
 
