@@ -10,10 +10,12 @@ import get_slot_data from '../../utils/get_slot_data';
 import Expression from '../../nodes/shared/Expression';
 import is_dynamic from './shared/is_dynamic';
 import { Identifier, ObjectExpression } from 'estree';
+import create_debugging_comment from './shared/create_debugging_comment';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
 	fragment: FragmentWrapper;
+	fallback: Block | null = null;
 
 	var: Identifier = { type: 'Identifier', name: 'slot' };
 	dependencies: Set<string> = new Set(['$$scope']);
@@ -30,9 +32,17 @@ export default class SlotWrapper extends Wrapper {
 		this.cannot_use_innerhtml();
 		this.not_static_content();
 
+		if (this.node.children.length) {
+			this.fallback = block.child({
+				comment: create_debugging_comment(this.node.children[0], this.renderer.component),
+				name: this.renderer.component.get_unique_name(`fallback_block`),
+				type: 'fallback'
+			});
+		}
+
 		this.fragment = new FragmentWrapper(
 			renderer,
-			block,
+			this.fallback,
 			node.children,
 			parent,
 			strip_whitespace,
@@ -103,86 +113,90 @@ export default class SlotWrapper extends Wrapper {
 			get_slot_context_fn = 'null';
 		}
 
+		if (this.fallback) {
+			this.fragment.render(this.fallback, null, x`#nodes` as Identifier);
+			renderer.blocks.push(this.fallback);
+		}
+
 		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
+		const slot_or_fallback = this.fallback ? block.get_unique_name(`${sanitize(slot_name)}_slot_or_fallback`) : slot;
 
 		block.chunks.init.push(b`
 			const ${slot_definition} = ${renderer.reference('$$slots')}.${slot_name};
 			const ${slot} = @create_slot(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn});
+			${this.fallback ? b`const ${slot_or_fallback} = ${slot} || ${this.fallback.name}(#ctx);` : null}
 		`);
 
-		// TODO this is a dreadful hack! Should probably make this nicer
-		const { create, claim, hydrate, mount, update, destroy } = block.chunks;
-
-		block.chunks.create = [];
-		block.chunks.claim = [];
-		block.chunks.hydrate = [];
-		block.chunks.mount = [];
-		block.chunks.update = [];
-		block.chunks.destroy = [];
-
-		const listeners = block.event_listeners;
-		block.event_listeners = [];
-		this.fragment.render(block, parent_node, parent_nodes);
-		block.render_listeners(`_${slot.name}`);
-		block.event_listeners = listeners;
-
-		if (block.chunks.create.length) create.push(b`if (!${slot}) { ${block.chunks.create} }`);
-		if (block.chunks.claim.length) claim.push(b`if (!${slot}) { ${block.chunks.claim} }`);
-		if (block.chunks.hydrate.length) hydrate.push(b`if (!${slot}) { ${block.chunks.hydrate} }`);
-		if (block.chunks.mount.length) mount.push(b`if (!${slot}) { ${block.chunks.mount} }`);
-		if (block.chunks.update.length) update.push(b`if (!${slot}) { ${block.chunks.update} }`);
-		if (block.chunks.destroy.length) destroy.push(b`if (!${slot}) { ${block.chunks.destroy} }`);
-
-		block.chunks.create = create;
-		block.chunks.claim = claim;
-		block.chunks.hydrate = hydrate;
-		block.chunks.mount = mount;
-		block.chunks.update = update;
-		block.chunks.destroy = destroy;
-
 		block.chunks.create.push(
-			b`if (${slot}) ${slot}.c();`
+			b`if (${slot_or_fallback}) ${slot_or_fallback}.c();`
 		);
 
 		if (renderer.options.hydratable) {
 			block.chunks.claim.push(
-				b`if (${slot}) ${slot}.l(${parent_nodes});`
+				b`if (${slot_or_fallback}) ${slot_or_fallback}.l(${parent_nodes});`
 			);
 		}
 
 		block.chunks.mount.push(b`
-			if (${slot}) {
-				${slot}.m(${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
+			if (${slot_or_fallback}) {
+				${slot_or_fallback}.m(${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
 			}
 		`);
 
 		block.chunks.intro.push(
-			b`@transition_in(${slot}, #local);`
+			b`@transition_in(${slot_or_fallback}, #local);`
 		);
 
 		block.chunks.outro.push(
-			b`@transition_out(${slot}, #local);`
+			b`@transition_out(${slot_or_fallback}, #local);`
 		);
 
-		const dynamic_dependencies = Array.from(this.dependencies).filter(name => {
+		const is_dependency_dynamic = name => {
 			if (name === '$$scope') return true;
 			if (this.node.scope.is_let(name)) return true;
 			const variable = renderer.component.var_lookup.get(name);
 			return is_dynamic(variable);
-		});
+		};
 
-		block.chunks.update.push(b`
-			if (${slot} && ${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
+		const dynamic_dependencies = Array.from(this.dependencies).filter(is_dependency_dynamic);
+
+		const fallback_dynamic_dependencies = this.fallback
+			? Array.from(this.fallback.dependencies).filter(is_dependency_dynamic)
+			: [];
+
+		const slot_update = b`
+			if (${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
 				${slot}.p(
 					@get_slot_context(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn}),
 					@get_slot_changes(${slot_definition}, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn})
 				);
 			}
-		`);
+		`;
+		const fallback_update = this.fallback && fallback_dynamic_dependencies.length > 0 && b`
+			if (${slot_or_fallback} && ${slot_or_fallback}.p && ${renderer.dirty(fallback_dynamic_dependencies)}) {
+				${slot_or_fallback}.p(#ctx, #dirty);
+			}
+		`;
+
+		if (fallback_update) {
+			block.chunks.update.push(b`
+				if (${slot}) {
+					${slot_update}
+				} else {
+					${fallback_update}
+				}
+			`);
+		} else {
+			block.chunks.update.push(b`
+				if (${slot}) {
+					${slot_update}
+				}
+			`);
+		}
 
 		block.chunks.destroy.push(
-			b`if (${slot}) ${slot}.d(detaching);`
+			b`if (${slot_or_fallback}) ${slot_or_fallback}.d(detaching);`
 		);
 	}
 }
