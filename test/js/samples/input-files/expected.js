@@ -21,8 +21,9 @@ function create_fragment(ctx) {
 			attr(input, "type", "file");
 			input.multiple = true;
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, input, anchor);
+			if (remount) dispose();
 			dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
 		},
 		p: noop,

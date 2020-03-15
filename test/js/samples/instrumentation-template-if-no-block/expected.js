@@ -31,12 +31,13 @@ function create_fragment(ctx) {
 			t2 = text("x: ");
 			t3 = text(/*x*/ ctx[0]);
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, button, anchor);
 			insert(target, t1, anchor);
 			insert(target, p, anchor);
 			append(p, t2);
 			append(p, t3);
+			if (remount) dispose();
 			dispose = listen(button, "click", /*click_handler*/ ctx[1]);
 		},
 		p(ctx, [dirty]) {

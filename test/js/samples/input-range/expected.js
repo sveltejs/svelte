@@ -23,9 +23,10 @@ function create_fragment(ctx) {
 			input = element("input");
 			attr(input, "type", "range");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, input, anchor);
 			set_input_value(input, /*value*/ ctx[0]);
+			if (remount) run_all(dispose);
 
 			dispose = [
 				listen(input, "change", /*input_change_input_handler*/ ctx[1]),

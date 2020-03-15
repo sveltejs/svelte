@@ -27,10 +27,11 @@ function create_fragment(ctx) {
 			attr(input0, "type", "file");
 			attr(input1, "type", "file");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, input0, anchor);
 			insert(target, t, anchor);
 			insert(target, input1, anchor);
+			if (remount) run_all(dispose);
 
 			dispose = [
 				listen(input0, "change", /*input0_change_handler*/ ctx[1]),
