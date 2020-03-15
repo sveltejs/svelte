@@ -278,7 +278,7 @@ export default class Element extends Node {
 	}
 
 	validate_attributes() {
-		const { component } = this;
+		const { component, parent } = this;
 
 		const attribute_map = new Map();
 
@@ -395,26 +395,10 @@ export default class Element extends Node {
 					component.slot_outlets.add(name);
 				}
 
-				let ancestor = this.parent;
-				do {
-					if (ancestor.type === 'InlineComponent') break;
-					if (ancestor.type === 'Element' && /-/.test(ancestor.name)) break;
-
-					if (ancestor.type === 'IfBlock' || ancestor.type === 'EachBlock') {
-						const type = ancestor.type === 'IfBlock' ? 'if' : 'each';
-						const message = `Cannot place slotted elements inside an ${type}-block`;
-
-						component.error(attribute, {
-							code: `invalid-slotted-content`,
-							message
-						});
-					}
-				} while (ancestor = ancestor.parent);
-
-				if (!ancestor) {
+				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
 					component.error(attribute, {
 						code: `invalid-slotted-content`,
-						message: `Element with a slot='...' attribute must be a descendant of a component or custom element`
+						message: `Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`,
 					});
 				}
 			}
@@ -775,4 +759,13 @@ function should_have_attribute(
 		code: `a11y-missing-attribute`,
 		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
 	});
+}
+
+function within_custom_element(parent: INode) {
+	while (parent) {
+		if (parent.type === 'InlineComponent') return false;
+		if (parent.type === 'Element' && /-/.test(parent.name)) return true;
+		parent = parent.parent;
+	}
+	return false;
 }

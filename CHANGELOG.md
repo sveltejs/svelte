@@ -2,7 +2,14 @@
 
 ## Unreleased
 
+* Allow `<svelte:self>` to be used in a slot ([#2798](https://github.com/sveltejs/svelte/issues/2798))
 * Expose object of unknown props in `$$restProps` ([#2930](https://github.com/sveltejs/svelte/issues/2930))
+* Prevent passing named slots other than from the top level within a component ([#3385](https://github.com/sveltejs/svelte/issues/3385))
+* Allow transitions and animations to work within iframes ([#3624](https://github.com/sveltejs/svelte/issues/3624))
+* Fix initialising slot fallbacks when unnecessary ([#3763](https://github.com/sveltejs/svelte/issues/3763))
+* Disallow binding directly to `const` variables ([#4479](https://github.com/sveltejs/svelte/issues/4479))
+* Fix updating keyed `{#each}` blocks with `{:else}` ([#4536](https://github.com/sveltejs/svelte/issues/4536), [#4549](https://github.com/sveltejs/svelte/issues/4549))
+* Fix hydration of top-level content ([#4542](https://github.com/sveltejs/svelte/issues/4542))
 
 ## 3.19.2
 
