@@ -110,7 +110,16 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		}
 
 		if (name === 'group') {
-			// TODO server-render group bindings
+			const value_attribute = node.attributes.find(({ name }) => name === 'value');
+			if (value_attribute && value_attribute.chunks.length === 1) {
+				const value = get_attribute_value(value_attribute);
+				const bound = expression.node;
+				renderer.add_expression(x`
+					${value} === ${bound} || Array.isArray(${bound}) && ${bound}.includes(${value})
+						? @add_attribute("checked", true, 1)
+						: ""
+				`);
+			}
 		} else if (contenteditable && (name === 'textContent' || name === 'innerHTML')) {
 			node_contents = expression.node;
 
