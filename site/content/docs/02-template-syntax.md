@@ -58,6 +58,17 @@ Or they can *be* JavaScript expressions.
 
 ---
 
+Boolean attributes are included on the element if their value is [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) and excluded if it's [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy).
+
+All other attributes are included unless their value is [nullish](https://developer.mozilla.org/en-US/docs/Glossary/Nullish) (`null` or `undefined`).
+
+```html
+<input required={false} placeholder="This input field is not required">
+<div title={null}>This div has no title attribute</div>
+```
+
+---
+
 An expression might include characters that would cause syntax highlighting to fail in regular HTML, so quoting the value is permitted. The quotes do not affect how the value is parsed:
 
 ```html
@@ -102,6 +113,15 @@ An element or component can have multiple spread attributes, interspersed with r
 <Widget {...$$props}/>
 ```
 
+---
+
+*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component.
+
+```html
+<input {...$$restProps}>
+```
+
+---
 
 ### Text expressions
 

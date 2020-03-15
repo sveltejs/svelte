@@ -71,14 +71,24 @@ export default function dom(
 	}
 
 	const uses_props = component.var_lookup.has('$$props');
-	const $$props = uses_props ? `$$new_props` : `$$props`;
+	const uses_rest = component.var_lookup.has('$$restProps');
+	const $$props = uses_props || uses_rest ? `$$new_props` : `$$props`;
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
+	const omit_props_names = component.get_unique_name('omit_props_names');
+	const compute_rest = x`@compute_rest_props($$props, ${omit_props_names.name})`;
+	const rest = uses_rest ? b`
+		const ${omit_props_names.name} = [${props.map(prop => `"${prop.export_name}"`).join(',')}];
+		let $$restProps = ${compute_rest};
+	` : null;
+
+	const set = (uses_props || uses_rest || writable_props.length > 0 || component.slots.size > 0)
 		? x`
 			${$$props} => {
 				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`)}
+				${uses_rest && !uses_props && x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`}
+				${uses_rest && renderer.invalidate('$$restProps', x`$$restProps = ${compute_rest}`)}
 				${writable_props.map(prop =>
 					b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
@@ -264,7 +274,7 @@ export default function dom(
 		args.push(x`$$props`);
 	}
 
-	const has_create_fragment = block.has_content();
+	const has_create_fragment = component.compile_options.dev || block.has_content();
 	if (has_create_fragment) {
 		body.push(b`
 			function create_fragment(#ctx) {
@@ -341,20 +351,20 @@ export default function dom(
 
 		component.reactive_declarations.forEach(d => {
 			const dependencies = Array.from(d.dependencies);
-			const uses_props = !!dependencies.find(n => n === '$$props');
+			const uses_rest_or_props = !!dependencies.find(n => n === '$$props' || n === '$$restProps');
 
 			const writable = dependencies.filter(n => {
 				const variable = component.var_lookup.get(n);
 				return variable && (variable.export_name || variable.mutated || variable.reassigned);
 			});
 
-			const condition = !uses_props && writable.length > 0 && renderer.dirty(writable, true);
+			const condition = !uses_rest_or_props && writable.length > 0 && renderer.dirty(writable, true);
 
 			let statement = d.node; // TODO remove label (use d.node.body) if it's not referenced
 
 			if (condition) statement = b`if (${condition}) { ${statement} }`[0] as Statement;
 
-			if (condition || uses_props) {
+			if (condition || uses_rest_or_props) {
 				reactive_declarations.push(statement);
 			} else {
 				fixed_reactive_declarations.push(statement);
@@ -383,7 +393,7 @@ export default function dom(
 		});
 
 		let unknown_props_check;
-		if (component.compile_options.dev && !component.var_lookup.has('$$props')) {
+		if (component.compile_options.dev && !(uses_props || uses_rest)) {
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
 				@_Object.keys($$props).forEach(key => {
@@ -402,6 +412,8 @@ export default function dom(
 
 		body.push(b`
 			function ${definition}(${args}) {
+				${rest}
+
 				${reactive_store_declarations}
 
 				${reactive_store_subscriptions}
@@ -412,7 +424,8 @@ export default function dom(
 
 				${unknown_props_check}
 
-				${component.slots.size ? b`let { $$slots = {}, $$scope } = $$props;` : null}
+				${component.slots.size || component.compile_options.dev ? b`let { $$slots = {}, $$scope } = $$props;` : null}
+				${component.compile_options.dev && b`@validate_slots('${component.tag}', $$slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
 
 				${renderer.binding_groups.length > 0 && b`const $$binding_groups = [${renderer.binding_groups.map(_ => x`[]`)}];`}
 
@@ -472,7 +485,7 @@ export default function dom(
 							@insert(options.target, this, options.anchor);
 						}
 
-						${(props.length > 0 || uses_props) && b`
+						${(props.length > 0 || uses_props || uses_rest) && b`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();

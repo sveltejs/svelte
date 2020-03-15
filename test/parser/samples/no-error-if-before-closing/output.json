@@ -115,7 +115,10 @@
 					"value": true,
 					"raw": "true"
 				},
-				"value": "f",
+				"value": {
+					"type": "Identifier",
+					"name": "f"
+				},
 				"error": null,
 				"pending": {
 					"start": 80,
@@ -198,7 +201,10 @@
 					"value": true,
 					"raw": "true"
 				},
-				"value": "f",
+				"value": {
+					"type": "Identifier",
+					"name": "f"
+				},
 				"error": null,
 				"pending": {
 					"start": 123,

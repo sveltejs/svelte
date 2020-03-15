@@ -6,10 +6,14 @@ import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
 import { x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
+import remove_whitespace_children from './utils/remove_whitespace_children';
 
 export default function(node: Element, renderer: Renderer, options: RenderOptions & {
 	slot_scopes: Map<any, any>;
 }) {
+
+	const children = remove_whitespace_children(node.children, node.next);
+
 	// awkward special case
 	let node_contents;
 
@@ -133,7 +137,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	if (node_contents !== undefined) {
 		if (contenteditable) {
 			renderer.push();
-			renderer.render(node.children, options);
+			renderer.render(children, options);
 			const result = renderer.pop();
 
 			renderer.add_expression(x`($$value => $$value === void 0 ? ${result} : $$value)(${node_contents})`);
@@ -145,7 +149,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			renderer.add_string(`</${node.name}>`);
 		}
 	} else if (slot && nearest_inline_component) {
-		renderer.render(node.children, options);
+		renderer.render(children, options);
 
 		if (!is_void(node.name)) {
 			renderer.add_string(`</${node.name}>`);
@@ -163,10 +167,11 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			output: renderer.pop()
 		});
 	} else {
-		renderer.render(node.children, options);
+		renderer.render(children, options);
 
 		if (!is_void(node.name)) {
 			renderer.add_string(`</${node.name}>`);
 		}
 	}
 }
+
