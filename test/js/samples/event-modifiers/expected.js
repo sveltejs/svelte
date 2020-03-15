@@ -36,13 +36,14 @@ function create_fragment(ctx) {
 			button2 = element("button");
 			button2.textContent = "or me!";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 			append(div, button0);
 			append(div, t1);
 			append(div, button1);
 			append(div, t3);
 			append(div, button2);
+			if (remount) run_all(dispose);
 
 			dispose = [
 				listen(button0, "click", stop_propagation(prevent_default(handleClick))),

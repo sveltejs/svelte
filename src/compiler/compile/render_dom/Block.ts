@@ -292,6 +292,10 @@ export default class Block {
 
 		if (this.chunks.mount.length === 0) {
 			properties.mount = noop;
+		} else if (this.event_listeners.length === 0) {
+			properties.mount = x`function #mount(#target, anchor) {
+				${this.chunks.mount}
+			}`;
 		} else {
 			properties.mount = x`function #mount(#target, anchor, #remount) {
 				${this.chunks.mount}
