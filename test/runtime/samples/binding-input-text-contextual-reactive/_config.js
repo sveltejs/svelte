@@ -26,7 +26,7 @@ export default {
 
 	ssrHtml: `
 		<div>
-			<input type="checkbox">
+			<input type="checkbox" checked="false">
 			<input type="text" value=one><p>one</p>
 		</div>
 		<div>
@@ -34,7 +34,7 @@ export default {
 			<input type="text" value=two><p>two</p>
 		</div>
 		<div>
-			<input type="checkbox">
+			<input type="checkbox" checked="false">
 			<input type="text" value=three><p>three</p>
 		</div>
 

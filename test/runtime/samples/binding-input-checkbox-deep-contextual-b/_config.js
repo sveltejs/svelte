@@ -13,13 +13,13 @@ export default {
 
 	ssrHtml: `
 		<div>
-			<input type="checkbox"><p>one</p>
+			<input type="checkbox" checked="false"><p>one</p>
 		</div>
 		<div>
-			<input type="checkbox"><p>two</p>
+			<input type="checkbox" checked="false"><p>two</p>
 		</div>
 		<div>
-			<input type="checkbox"><p>three</p>
+			<input type="checkbox" checked="false"><p>three</p>
 		</div>
 	`,
 

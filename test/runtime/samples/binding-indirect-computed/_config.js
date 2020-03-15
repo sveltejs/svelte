@@ -11,6 +11,14 @@ export default {
 		</select>
 	`,
 
+	ssrHtml: `
+		<select value="">
+			<option value='A'>A</option>
+			<option value='B'>B</option>
+			<option value='C'>C</option>
+		</select>
+	`,
+
 	async test({ assert, component, target, window }) {
 		const select = target.querySelector('select');
 		const options = target.querySelectorAll('option');
