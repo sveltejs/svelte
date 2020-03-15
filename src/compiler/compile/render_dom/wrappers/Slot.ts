@@ -15,7 +15,7 @@ import create_debugging_comment from './shared/create_debugging_comment';
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
 	fragment: FragmentWrapper;
-	fallback: Block | null;
+	fallback: Block | null = null;
 
 	var: Identifier = { type: 'Identifier', name: 'slot' };
 	dependencies: Set<string> = new Set(['$$scope']);
@@ -32,7 +32,6 @@ export default class SlotWrapper extends Wrapper {
 		this.cannot_use_innerhtml();
 		this.not_static_content();
 
-		this.fallback = null;
 		if (this.node.children.length) {
 			this.fallback = block.child({
 				comment: create_debugging_comment(this.node.children[0], this.renderer.component),
@@ -153,19 +152,18 @@ export default class SlotWrapper extends Wrapper {
 			b`@transition_out(${slot_or_fallback}, #local);`
 		);
 
-		const dynamic_dependencies = Array.from(this.dependencies).filter(name => {
+		const is_dependency_dynamic = name => {
 			if (name === '$$scope') return true;
 			if (this.node.scope.is_let(name)) return true;
 			const variable = renderer.component.var_lookup.get(name);
 			return is_dynamic(variable);
-		});
+		};
 
-		const fallback_dynamic_dependencies = this.fallback ? Array.from(this.fallback.dependencies).filter(name => {
-			if (name === '$$scope') return true;
-			if (this.node.scope.is_let(name)) return true;
-			const variable = renderer.component.var_lookup.get(name);
-			return is_dynamic(variable);
-		}) : [];
+		const dynamic_dependencies = Array.from(this.dependencies).filter(is_dependency_dynamic);
+
+		const fallback_dynamic_dependencies = this.fallback
+			? Array.from(this.fallback.dependencies).filter(is_dependency_dynamic)
+			: [];
 
 		const slot_update = b`
 			if (${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {

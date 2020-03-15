@@ -1,16 +1,16 @@
 <script context="module">
   let value = 'Blub';
   let count = 0;
-  let subscribers = new Set();
+  const subscribers = new Set();
   export const model = {
     subscribe(fn) {
       subscribers.add(fn);
       count ++;
       fn(value);
       return () => {
-        count --;
+        count--;
         subscribers.delete(fn);
-      }
+      };
     },
     set(v) {
       value = v;
@@ -19,5 +19,5 @@
     getCount() {
       return count;
     }
-  }
+  };
 </script>
