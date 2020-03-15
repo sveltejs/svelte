@@ -62,6 +62,8 @@ export default class EachBlockWrapper extends Wrapper {
 
 	context_props: Array<Node | Node[]>;
 	index_name: Identifier;
+	updates: Array<Node | Node[]> = [];
+	dependencies: Set<string>;
 
 	var: Identifier = { type: 'Identifier', name: 'each' };
 
@@ -235,6 +237,12 @@ export default class EachBlockWrapper extends Wrapper {
 			update_mount_node
 		};
 
+		const all_dependencies = new Set(this.block.dependencies); // TODO should be dynamic deps only
+		this.node.expression.dynamic_dependencies().forEach((dependency: string) => {
+			all_dependencies.add(dependency);
+		});
+		this.dependencies = all_dependencies;
+
 		if (this.node.key) {
 			this.render_keyed(args);
 		} else {
@@ -291,7 +299,7 @@ export default class EachBlockWrapper extends Wrapper {
 			`);
 
 			if (this.else.block.has_update_method) {
-				block.chunks.update.push(b`
+				this.updates.push(b`
 					if (!${this.vars.data_length} && ${each_block_else}) {
 						${each_block_else}.p(#ctx, #dirty);
 					} else if (!${this.vars.data_length}) {
@@ -304,7 +312,7 @@ export default class EachBlockWrapper extends Wrapper {
 					}
 				`);
 			} else {
-				block.chunks.update.push(b`
+				this.updates.push(b`
 					if (${this.vars.data_length}) {
 						if (${each_block_else}) {
 							${each_block_else}.d(1);
@@ -320,6 +328,14 @@ export default class EachBlockWrapper extends Wrapper {
 
 			block.chunks.destroy.push(b`
 				if (${each_block_else}) ${each_block_else}.d(${parent_node ? '' : 'detaching'});
+			`);
+		}
+
+		if (this.updates.length) {
+			block.chunks.update.push(b`
+				if (${block.renderer.dirty(Array.from(all_dependencies))}) {
+					${this.updates}
+				}
 			`);
 		}
 
@@ -415,24 +431,17 @@ export default class EachBlockWrapper extends Wrapper {
 				? `@outro_and_destroy_block`
 				: `@destroy_block`;
 
-		const all_dependencies = new Set(this.block.dependencies); // TODO should be dynamic deps only
-		this.node.expression.dynamic_dependencies().forEach((dependency: string) => {
-			all_dependencies.add(dependency);
-		});
+		if (this.dependencies.size) {
+			this.updates.push(b`
+				const ${this.vars.each_block_value} = ${snippet};
+				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 
-		if (all_dependencies.size) {
-			block.chunks.update.push(b`
-				if (${block.renderer.dirty(Array.from(all_dependencies))}) {
-					const ${this.vars.each_block_value} = ${snippet};
-					${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
-
-					${this.block.has_outros && b`@group_outros();`}
-					${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
-					${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
-					${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
-					${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
-					${this.block.has_outros && b`@check_outros();`}
-				}
+				${this.block.has_outros && b`@group_outros();`}
+				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
+				${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
+				${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
+				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
+				${this.block.has_outros && b`@check_outros();`}
 			`);
 		}
 
@@ -504,12 +513,7 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		`);
 
-		const all_dependencies = new Set(this.block.dependencies); // TODO should be dynamic deps only
-		this.node.expression.dynamic_dependencies().forEach((dependency: string) => {
-			all_dependencies.add(dependency);
-		});
-
-		if (all_dependencies.size) {
+		if (this.dependencies.size) {
 			const has_transitions = !!(this.block.has_intro_method || this.block.has_outro_method);
 
 			const for_loop_body = this.block.has_update_method
@@ -588,11 +592,7 @@ export default class EachBlockWrapper extends Wrapper {
 				${remove_old_blocks}
 			`;
 
-			block.chunks.update.push(b`
-				if (${block.renderer.dirty(Array.from(all_dependencies))}) {
-					${update}
-				}
-			`);
+			this.updates.push(update);
 		}
 
 		if (this.block.has_outros) {

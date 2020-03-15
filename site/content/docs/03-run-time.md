@@ -974,7 +974,7 @@ app.count += 1;
 Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](docs#svelte_options).
 
 ```html
-<svelte:options tag="my-element">
+<svelte:options tag="my-element" />
 
 <script>
 	export let name = 'world';
