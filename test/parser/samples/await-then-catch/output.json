@@ -24,8 +24,14 @@
 					},
 					"name": "thePromise"
 				},
-				"value": "theValue",
-				"error": "theError",
+				"value": {
+					"type": "Identifier",
+					"name": "theValue"
+				},
+				"error": {
+					"type": "Identifier",
+					"name": "theError"
+				},
 				"pending": {
 					"start": 19,
 					"end": 39,
