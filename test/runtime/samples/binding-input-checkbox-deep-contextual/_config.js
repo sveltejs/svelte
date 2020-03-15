@@ -25,10 +25,10 @@ export default {
 			<input type="checkbox" checked><p>one</p>
 		</div>
 		<div>
-			<input type="checkbox" checked="false"><p>two</p>
+			<input type="checkbox"><p>two</p>
 		</div>
 		<div>
-			<input type="checkbox" checked="false"><p>three</p>
+			<input type="checkbox"><p>three</p>
 		</div>
 		<p>1 completed</p>
 	`,

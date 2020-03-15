@@ -124,7 +124,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			node_contents = x`${snippet} || ""`;
 		} else {
 			const snippet = expression.node;
-			renderer.add_expression(x`@add_attribute("${name}", ${snippet}, 0)`);
+			renderer.add_expression(x`@add_attribute("${name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
 		}
 	});
 

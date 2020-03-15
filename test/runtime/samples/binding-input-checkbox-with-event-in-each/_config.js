@@ -17,11 +17,6 @@ export default {
 		<input type="checkbox">
 	`,
 
-	ssrHtml: `
-		<input type="checkbox" checked="false">
-		<input type="checkbox" checked="false">
-	`,
-
 	test({ assert, component, target, window }) {
 		const { cats } = component;
 		const newCats = cats.slice();

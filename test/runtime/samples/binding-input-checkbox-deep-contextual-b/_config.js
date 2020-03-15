@@ -11,18 +11,6 @@ export default {
 		</div>
 	`,
 
-	ssrHtml: `
-		<div>
-			<input type="checkbox" checked="false"><p>one</p>
-		</div>
-		<div>
-			<input type="checkbox" checked="false"><p>two</p>
-		</div>
-		<div>
-			<input type="checkbox" checked="false"><p>three</p>
-		</div>
-	`,
-
 	async test({ assert, component, target, window }) {
 		const inputs = [ ...target.querySelectorAll('input') ];
 

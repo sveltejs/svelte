@@ -28,7 +28,7 @@ export default {
 		</div>
 
 		<div class="todo ">
-			<input type="checkbox" checked="false">
+			<input type="checkbox">
 			<input type="text" value="Find life's true purpose">
 		</div>
 	`,
