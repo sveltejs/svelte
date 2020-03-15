@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.20.0
 
 * Allow destructuring in `{#await}` blocks ([#1851](https://github.com/sveltejs/svelte/issues/1851))
 * Allow `<svelte:self>` to be used in a slot ([#2798](https://github.com/sveltejs/svelte/issues/2798))
