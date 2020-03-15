@@ -398,7 +398,7 @@ export default class Element extends Node {
 				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
 					component.error(attribute, {
 						code: `invalid-slotted-content`,
-						message: `Element with a slot='...' attribute must be a child of a component or custom element`,
+						message: `Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`,
 					});
 				}
 			}
