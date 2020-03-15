@@ -18,8 +18,9 @@ function create_fragment(ctx) {
 		c() {
 			input = element("input");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, input, anchor);
+			if (remount) dispose();
 			dispose = listen(input, "input", make_uppercase);
 		},
 		p: noop,

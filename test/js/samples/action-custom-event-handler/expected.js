@@ -21,8 +21,9 @@ function create_fragment(ctx) {
 			button = element("button");
 			button.textContent = "foo";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, button, anchor);
+			if (remount) dispose();
 			dispose = action_destroyer(foo_action = foo.call(null, button, /*foo_function*/ ctx[1]));
 		},
 		p(ctx, [dirty]) {

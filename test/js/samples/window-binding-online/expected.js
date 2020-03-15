@@ -15,7 +15,9 @@ function create_fragment(ctx) {
 
 	return {
 		c: noop,
-		m(target, anchor) {
+		m(target, anchor, remount) {
+			if (remount) run_all(dispose);
+
 			dispose = [
 				listen(window, "online", /*onlinestatuschanged*/ ctx[1]),
 				listen(window, "offline", /*onlinestatuschanged*/ ctx[1])

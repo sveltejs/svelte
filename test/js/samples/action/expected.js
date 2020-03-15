@@ -22,8 +22,9 @@ function create_fragment(ctx) {
 			a.textContent = "Test";
 			attr(a, "href", "#");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, a, anchor);
+			if (remount) dispose();
 			dispose = action_destroyer(link_action = link.call(null, a));
 		},
 		p: noop,
