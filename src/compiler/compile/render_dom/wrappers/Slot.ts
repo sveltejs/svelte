@@ -38,6 +38,7 @@ export default class SlotWrapper extends Wrapper {
 				name: this.renderer.component.get_unique_name(`fallback_block`),
 				type: 'fallback'
 			});
+			renderer.blocks.push(this.fallback);
 		}
 
 		this.fragment = new FragmentWrapper(
@@ -115,7 +116,6 @@ export default class SlotWrapper extends Wrapper {
 
 		if (this.fallback) {
 			this.fragment.render(this.fallback, null, x`#nodes` as Identifier);
-			renderer.blocks.push(this.fallback);
 		}
 
 		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
