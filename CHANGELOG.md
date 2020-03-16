@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.20.1
+
+* Fix compiler regression with slots ([#4562](https://github.com/sveltejs/svelte/issues/4562))
+
 ## 3.20.0
 
 * Allow destructuring in `{#await}` blocks ([#1851](https://github.com/sveltejs/svelte/issues/1851))
