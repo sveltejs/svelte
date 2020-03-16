@@ -43,14 +43,24 @@ describe('custom-elements', function() {
 	}
 
 	before(async () => {
-		svelte = loadSvelte();
-		server = await create_server();
-		browser = await puppeteer.launch();
+		try {
+			svelte = loadSvelte();
+			server = await create_server();
+			browser = await puppeteer.launch();
+			console.log('Success!');
+		} catch (error) {
+			console.log('Error', error);
+		}
 	});
 
 	after(async () => {
-		server.close();
-		await browser.close();
+		try {
+			server.close();
+			await browser.close();
+			console.log('Success!');
+		} catch (error) {
+			console.log('Error', error);
+		}
 	});
 
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
