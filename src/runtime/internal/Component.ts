@@ -56,7 +56,7 @@ export function mount_component(component, target, anchor) {
 	const { fragment, on_mount, on_destroy, after_update } = component.$$;
 
 	fragment && fragment.m(target, anchor);
-	
+
 	// custom element: call onMount in connectedCallback instead
 	if (component.shadowRoot) return;
 
@@ -182,7 +182,7 @@ if (typeof HTMLElement === 'function') {
 
 			const new_on_destroy = this.$$.on_mount.map(run).filter(is_function);
 			this.$$.on_destroy.push(...new_on_destroy);
-			// don't reset on_mount array to not infer with reinsertion?
+			// don't reset on_mount array as not to interfere with reinsertion
 		}
 
 		attributeChangedCallback(attr, _oldValue, newValue) {
