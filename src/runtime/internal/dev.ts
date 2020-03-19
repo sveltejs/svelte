@@ -98,18 +98,18 @@ export function validate_slots(name, slot, keys) {
 }
 
 type Props = Record<string, any>;
-export interface SvelteComponentDev {
-	$set(props?: Props): void;
+export interface SvelteComponentDev<P = Props> {
+	$set(props?: P): void;
 	$on<T = any>(event: string, callback: (event: CustomEvent<T>) => void): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
 
-export class SvelteComponentDev extends SvelteComponent {
+export class SvelteComponentDev<P = Props> extends SvelteComponent {
 	constructor(options: {
 		target: Element;
 		anchor?: Element;
-		props?: Props;
+		props?: P;
 		hydrate?: boolean;
 		intro?: boolean;
 		$$inline?: boolean;
