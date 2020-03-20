@@ -1,0 +1,20 @@
+image:
+  file: .gitpod.Dockerfile
+tasks:
+  - init: >
+      cd site &&
+      npm install &&
+      sed -ri "s/http:\/\/\\\$\\{window\.location\.hostname\\}:\\\$\\{port\\}\/__sapper__/$(gp url 10000 | sed "s_/_\\\\/_g")\/__sapper__/" ./node_modules/sapper/sapper-dev-client.js &&
+      npm run update 
+    command: npm run dev
+  - init: npm install
+    command: npm run dev
+ports:
+  - port: 3000
+    onOpen: open-preview
+  - port: 10000
+    onOpen: ignore
+
+vscode:
+  extensions:
+    - JamesBirtles.svelte-vscode@0.4.0:aicIqbjKmEBw3n8OhIUmwA==

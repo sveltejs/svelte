@@ -3,6 +3,10 @@
 	<img alt="Cybernetically enhanced web apps: Svelte" src="https://sveltejs.github.io/assets/banner.png">
   </a>
 
+  <a href="https://gitpod.io/#https://github.com/sveltejs/svelte">
+	<img alt="Gitpod Ready-to-Code" src="https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod">
+  </a>
+
   <a href="https://www.npmjs.com/package/svelte">
     <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
   </a>
@@ -50,6 +54,16 @@ To watch for changes and continually rebuild the package (this is useful if you'
 ```bash
 npm run dev
 ```
+
+### Online setup with one-click
+
+You can use Gitpod (a free online VS Code like-IDE) for the online setup. With a single click it will launch a workspace and automatically:
+
+- clone the svelte repo.
+- install the dependencies.
+- run `npm run dev` in `/` and `/site`.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/sveltejs/svelte)
 
 The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/) you may need to install a plugin in order to get syntax highlighting and code hints etc.
 

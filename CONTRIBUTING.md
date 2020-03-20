@@ -49,6 +49,16 @@ When [opening a new issue](https://github.com/sveltejs/svelte/issues/new/choose)
 1. After cloning the repository, run `npm install` in the root of the repository.
 1. To start a development server, run `npm run dev`.
 
+## Online one-click setup for contributing
+
+You can use Gitpod (a free online VS Code like-IDE) for contributing. With a single click it will launch a workspace and automatically:
+
+- clone the svelte repo.
+- install the dependencies.
+- run `npm run dev` in `/` and `/site`.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/sveltejs/svelte)
+
 
 ## Pull requests
 
