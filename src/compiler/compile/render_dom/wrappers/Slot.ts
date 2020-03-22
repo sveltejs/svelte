@@ -114,18 +114,23 @@ export default class SlotWrapper extends Wrapper {
 			get_slot_context_fn = 'null';
 		}
 
+		let has_fallback = !!this.fallback;
 		if (this.fallback) {
 			this.fragment.render(this.fallback, null, x`#nodes` as Identifier);
+			has_fallback = this.fallback.has_content();
+			if (!has_fallback) {
+				renderer.remove_block(this.fallback);
+			}
 		}
 
 		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
-		const slot_or_fallback = this.fallback ? block.get_unique_name(`${sanitize(slot_name)}_slot_or_fallback`) : slot;
+		const slot_or_fallback = has_fallback ? block.get_unique_name(`${sanitize(slot_name)}_slot_or_fallback`) : slot;
 
 		block.chunks.init.push(b`
 			const ${slot_definition} = ${renderer.reference('$$slots')}.${slot_name};
 			const ${slot} = @create_slot(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn});
-			${this.fallback ? b`const ${slot_or_fallback} = ${slot} || ${this.fallback.name}(#ctx);` : null}
+			${has_fallback ? b`const ${slot_or_fallback} = ${slot} || ${this.fallback.name}(#ctx);` : null}
 		`);
 
 		block.chunks.create.push(
@@ -161,7 +166,7 @@ export default class SlotWrapper extends Wrapper {
 
 		const dynamic_dependencies = Array.from(this.dependencies).filter(is_dependency_dynamic);
 
-		const fallback_dynamic_dependencies = this.fallback
+		const fallback_dynamic_dependencies = has_fallback
 			? Array.from(this.fallback.dependencies).filter(is_dependency_dynamic)
 			: [];
 
@@ -173,7 +178,7 @@ export default class SlotWrapper extends Wrapper {
 				);
 			}
 		`;
-		const fallback_update = this.fallback && fallback_dynamic_dependencies.length > 0 && b`
+		const fallback_update = has_fallback && fallback_dynamic_dependencies.length > 0 && b`
 			if (${slot_or_fallback} && ${slot_or_fallback}.p && ${renderer.dirty(fallback_dynamic_dependencies)}) {
 				${slot_or_fallback}.p(#ctx, #dirty);
 			}

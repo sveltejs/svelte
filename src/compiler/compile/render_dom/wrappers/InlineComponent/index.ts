@@ -155,6 +155,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		// removing empty slot
 		for (const slot of this.slots.keys()) {
 			if (!this.slots.get(slot).block.has_content()) {
+				this.renderer.remove_block(this.slots.get(slot).block);
 				this.slots.delete(slot);
 			}
 		}
