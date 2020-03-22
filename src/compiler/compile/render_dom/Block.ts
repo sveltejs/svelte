@@ -419,8 +419,8 @@ export default class Block {
 		return body;
 	}
 
-	has_content() {
-		return this.first ||
+	has_content(): boolean {
+		return !!this.first ||
 			this.event_listeners.length > 0 ||
 			this.chunks.intro.length > 0 ||
 			this.chunks.outro.length > 0  ||

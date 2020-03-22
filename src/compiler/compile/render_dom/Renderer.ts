@@ -284,4 +284,8 @@ export default class Renderer {
 
 		return node;
 	}
+
+	remove_block(block: Block | Node | Node[]) {
+		this.blocks.splice(this.blocks.indexOf(block), 1);
+	}
 }
