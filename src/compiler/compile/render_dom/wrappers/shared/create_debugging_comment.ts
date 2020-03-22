@@ -24,7 +24,7 @@ export default function create_debugging_comment(
 			while (source[d] !== '>') d += 1;
 			d += 1;
 		}
-	} else if (node.type === 'Text') {
+	} else if (node.type === 'Text' || node.type === 'Comment') {
 		d = node.end;
 	} else {
 		// @ts-ignore
