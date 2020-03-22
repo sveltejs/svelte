@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix attaching of JS debugging comments to HTML comments ([#4565](https://github.com/sveltejs/svelte/issues/4565))
+
 ## 3.20.1
 
 * Fix compiler regression with slots ([#4562](https://github.com/sveltejs/svelte/issues/4562))
