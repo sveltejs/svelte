@@ -18,13 +18,21 @@ interface Property {
 	value: Context;
 }
 
+interface RestElement {
+	start: number;
+	end: number;
+	type: 'RestElement';
+	argument: Identifier;
+}
+
 interface Context {
 	start: number;
 	end: number;
-	type: 'Identifier' | 'ArrayPattern' | 'ObjectPattern' | 'RestIdentifier';
+	type: 'Identifier' | 'ArrayPattern' | 'ObjectPattern' | 'RestElement';
 	name?: string;
+	argument?: Context;
 	elements?: Context[];
-	properties?: Property[];
+	properties?: Array<Property|RestElement>;
 }
 
 function error_on_assignment_pattern(parser: Parser) {
@@ -58,7 +66,7 @@ export default function read_context(parser: Parser) {
 			parser.allow_whitespace();
 
 			const lastContext = context.elements[context.elements.length - 1];
-			if (lastContext && lastContext.type === 'RestIdentifier') {
+			if (lastContext && lastContext.type === 'RestElement') {
 				error_on_rest_pattern_not_last(parser);
 			}
 
@@ -93,14 +101,11 @@ export default function read_context(parser: Parser) {
 					type: 'Identifier',
 					name
 				};
-				const property: Property = {
+				const property: RestElement = {
 					start,
 					end: parser.index,
-					type: 'Property',
-					kind: 'rest',
-					shorthand: true,
-					key,
-					value: key
+					type: 'RestElement',
+					argument: key,
 				};
 
 				context.properties.push(property);
@@ -167,9 +172,14 @@ export default function read_context(parser: Parser) {
 	else if (parser.eat('...')) {
 		const name = parser.read_identifier();
 		if (name) {
-			context.type = 'RestIdentifier';
+			context.type = 'RestElement';
 			context.end = parser.index;
-			context.name = name;
+			context.argument = {
+				type: 'Identifier',
+				start: context.start + 3,
+				end: parser.index,
+				name,
+			};
 		}
 
 		else {

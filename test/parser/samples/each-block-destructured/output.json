@@ -104,8 +104,13 @@
 						{
 							"start": 31,
 							"end": 38,
-							"type": "RestIdentifier",
-							"name": "rest"
+							"type": "RestElement",
+							"argument": {
+								"type": "Identifier",
+								"start": 34,
+								"end": 38,
+								"name": "rest"
+							}
 						}
 					]
 				}

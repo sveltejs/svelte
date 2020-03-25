@@ -1,4 +1,5 @@
 export default {
+	skip: true,
 	async test({ assert, component, target }) {
 		await Promise.resolve();
 
