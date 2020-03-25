@@ -2,7 +2,7 @@
 title: Default values
 ---
 
-We can easily specify default values for props:
+We can easily specify default values for props inside Nested.svelte:
 
 ```html
 <script>
