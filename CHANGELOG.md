@@ -2,9 +2,50 @@
 
 ## Unreleased
 
+* Fix attaching of JS debugging comments to HTML comments ([#4565](https://github.com/sveltejs/svelte/issues/4565))
+
+## 3.20.1
+
+* Fix compiler regression with slots ([#4562](https://github.com/sveltejs/svelte/issues/4562))
+
+## 3.20.0
+
+* Allow destructuring in `{#await}` blocks ([#1851](https://github.com/sveltejs/svelte/issues/1851))
+* Allow `<svelte:self>` to be used in a slot ([#2798](https://github.com/sveltejs/svelte/issues/2798))
+* Expose object of unknown props in `$$restProps` ([#2930](https://github.com/sveltejs/svelte/issues/2930))
+* Prevent passing named slots other than from the top level within a component ([#3385](https://github.com/sveltejs/svelte/issues/3385))
+* Allow transitions and animations to work within iframes ([#3624](https://github.com/sveltejs/svelte/issues/3624))
+* Fix initialising slot fallbacks when unnecessary ([#3763](https://github.com/sveltejs/svelte/issues/3763))
+* Disallow binding directly to `const` variables ([#4479](https://github.com/sveltejs/svelte/issues/4479))
+* Fix re-attaching event handlers on keyed `{#each}` blocks ([#4491](https://github.com/sveltejs/svelte/issues/4491))
+* Fix updating keyed `{#each}` blocks with `{:else}` ([#4536](https://github.com/sveltejs/svelte/issues/4536), [#4549](https://github.com/sveltejs/svelte/issues/4549))
+* Fix hydration of top-level content ([#4542](https://github.com/sveltejs/svelte/issues/4542))
+
+## 3.19.2
+
+* In `dev` mode, display a runtime warning when a component is passed an unexpected slot ([#1020](https://github.com/sveltejs/svelte/issues/1020), [#1447](https://github.com/sveltejs/svelte/issues/1447))
+* In `vars` array, correctly indicate whether `module` variables are `mutated` or `reassigned` ([#3215](https://github.com/sveltejs/svelte/issues/3215))
+* Fix spread props not updating in certain situations ([#3521](https://github.com/sveltejs/svelte/issues/3521), [#4480](https://github.com/sveltejs/svelte/issues/4480))
+* Use the fallback content for slots if they are passed only whitespace ([#4092](https://github.com/sveltejs/svelte/issues/4092))
+* Fix bitmask overflow for `{#if}` blocks ([#4263](https://github.com/sveltejs/svelte/issues/4263))
+* In `dev` mode, check for unknown props even if the component has no writable props ([#4323](https://github.com/sveltejs/svelte/issues/4323))
+* Exclude global variables from `$capture_state` ([#4463](https://github.com/sveltejs/svelte/issues/4463))
+* Fix bitmask overflow for slots ([#4481](https://github.com/sveltejs/svelte/issues/4481))
+
+## 3.19.1
+
+* Do not treat modifications to `$$props` as updates to a store called `$props` ([#4368](https://github.com/sveltejs/svelte/issues/4368))
+* Deconflict `value` parameter name used in contextual bindings ([#4445](https://github.com/sveltejs/svelte/issues/4445))
+* Fix dev mode validation of `{#each}` blocks using strings ([#4450](https://github.com/sveltejs/svelte/issues/4450))
+
+## 3.19.0
+
 * Fix indirect bindings involving elements with spreads ([#3680](https://github.com/sveltejs/svelte/issues/3680))
+* `$capture_state`/`$inject_state` now act on the component's entire state, rather than its props ([#3822](https://github.com/sveltejs/svelte/pull/3822))
 * Warn when using `<Foo/>` and `Foo` is dynamic ([#4331](https://github.com/sveltejs/svelte/issues/4331))
+* Display compilation warnings in `svelte/register` in dev mode ([#4364](https://github.com/sveltejs/svelte/issues/4364))
 * Fix unneeded updating of keyed each blocks ([#4373](https://github.com/sveltejs/svelte/issues/4373))
+* Throw runtime error in dev mode for non-array-like values in `{#each}` blocks ([#4408](https://github.com/sveltejs/svelte/issues/4408))
 
 ## 3.18.2
 

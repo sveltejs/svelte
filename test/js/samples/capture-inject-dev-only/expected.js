@@ -29,12 +29,13 @@ function create_fragment(ctx) {
 			t1 = space();
 			input = element("input");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 			append(p, t0);
 			insert(target, t1, anchor);
 			insert(target, input, anchor);
 			set_input_value(input, /*foo*/ ctx[0]);
+			if (remount) dispose();
 			dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
 		},
 		p(ctx, [dirty]) {

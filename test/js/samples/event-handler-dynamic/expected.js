@@ -43,7 +43,7 @@ function create_fragment(ctx) {
 			button2 = element("button");
 			button2.textContent = "click";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p0, anchor);
 			append(p0, button0);
 			append(p0, t1);
@@ -53,6 +53,7 @@ function create_fragment(ctx) {
 			append(p1, t4);
 			insert(target, t5, anchor);
 			insert(target, button2, anchor);
+			if (remount) run_all(dispose);
 
 			dispose = [
 				listen(button0, "click", /*updateHandler1*/ ctx[2]),

@@ -21,8 +21,9 @@ function create_fragment(ctx) {
 			a.textContent = "this should not navigate to example.com";
 			attr(a, "href", "https://example.com");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, a, anchor);
+			if (remount) dispose();
 			dispose = listen(a, "touchstart", touchstart_handler);
 		},
 		p: noop,

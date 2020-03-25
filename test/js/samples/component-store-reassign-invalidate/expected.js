@@ -32,11 +32,12 @@ function create_fragment(ctx) {
 			button = element("button");
 			button.textContent = "reset";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, h1, anchor);
 			append(h1, t0);
 			insert(target, t1, anchor);
 			insert(target, button, anchor);
+			if (remount) dispose();
 			dispose = listen(button, "click", /*click_handler*/ ctx[2]);
 		},
 		p(ctx, [dirty]) {
