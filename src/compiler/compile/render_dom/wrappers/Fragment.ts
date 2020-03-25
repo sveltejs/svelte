@@ -13,6 +13,7 @@ import Slot from './Slot';
 import Text from './Text';
 import Title from './Title';
 import Window from './Window';
+import WithBlock from './WithBlock';
 import { INode } from '../../nodes/interfaces';
 import Renderer from '../Renderer';
 import Block from '../Block';
@@ -36,7 +37,8 @@ const wrappers = {
 	Slot,
 	Text,
 	Title,
-	Window
+	Window,
+	WithBlock
 };
 
 function trimmable_at(child: INode, next_sibling: Wrapper): boolean {

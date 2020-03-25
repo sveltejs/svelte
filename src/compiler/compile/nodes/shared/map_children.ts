@@ -14,6 +14,7 @@ import Slot from '../Slot';
 import Text from '../Text';
 import Title from '../Title';
 import Window from '../Window';
+import WithBlock from '../WithBlock';
 import { TemplateNode } from '../../../interfaces';
 
 export type Children = ReturnType<typeof map_children>;
@@ -36,6 +37,7 @@ function get_constructor(type) {
 		case 'Text': return Text;
 		case 'Title': return Title;
 		case 'Window': return Window;
+		case 'WithBlock': return WithBlock;
 		default: throw new Error(`Not implemented: ${type}`);
 	}
 }

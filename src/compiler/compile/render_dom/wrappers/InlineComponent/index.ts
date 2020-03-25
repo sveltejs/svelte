@@ -346,7 +346,9 @@ export default class InlineComponentWrapper extends Wrapper {
 				const { name } = binding.expression.node;
 				const { object, property, snippet } = block.bindings.get(name);
 				lhs = snippet;
-				contextual_dependencies.push(object.name, property.name);
+				contextual_dependencies.push(object.name);
+				if (property !== undefined)
+					contextual_dependencies.push(property.name);
 			}
 
 			const params = [x`#value`];

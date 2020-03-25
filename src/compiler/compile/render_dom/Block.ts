@@ -13,10 +13,10 @@ export interface BlockOptions {
 	key?: Identifier;
 	bindings?: Map<string, {
 		object: Identifier;
-		property: Identifier;
+		property?: Identifier;
 		snippet: Node;
 		store: string;
-		tail: Node;
+		tail?: Node;
 		modifier: (node: Node) => Node;
 	}>;
 	dependencies?: Set<string>;
@@ -38,10 +38,10 @@ export default class Block {
 
 	bindings: Map<string, {
 		object: Identifier;
-		property: Identifier;
+		property?: Identifier;
 		snippet: Node;
 		store: string;
-		tail: Node;
+		tail?: Node;
 		modifier: (node: Node) => Node;
 	}>;
 

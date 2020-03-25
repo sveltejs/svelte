@@ -280,10 +280,13 @@ function get_event_handler(
 		const { object, property, modifier, store } = context;
 
 		if (lhs.type === 'Identifier') {
-			lhs = modifier(x`${object}[${property}]`);
-
 			contextual_dependencies.add(object.name);
-			contextual_dependencies.add(property.name);
+			if (property === undefined) {
+				lhs = modifier(b`${object}`[0]);
+			} else {
+				lhs = modifier(x`${object}[${property}]`);
+				contextual_dependencies.add(property.name);
+			}
 		}
 
 		if (store) {

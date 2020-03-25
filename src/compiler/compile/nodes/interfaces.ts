@@ -29,6 +29,7 @@ import ThenBlock from './ThenBlock';
 import Title from './Title';
 import Transition from './Transition';
 import Window from './Window';
+import WithBlock from './WithBlock';
 
 // note: to write less types each of types in union below should have type defined as literal
 // https://www.typescriptlang.org/docs/handbook/advanced-types.html#discriminated-unions
@@ -61,4 +62,5 @@ export type INode = Action
 | ThenBlock
 | Title
 | Transition
-| Window;
+| Window
+| WithBlock;

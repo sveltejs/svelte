@@ -38,7 +38,7 @@ export default function mustache(parser: Parser) {
 
 	parser.allow_whitespace();
 
-	// {/if}, {/each} or {/await}
+	// {/if}, {/each}, {/await}, or {/with}
 	if (parser.eat('/')) {
 		let block = parser.current();
 		let expected;
@@ -63,6 +63,8 @@ export default function mustache(parser: Parser) {
 			expected = 'each';
 		} else if (block.type === 'AwaitBlock') {
 			expected = 'await';
+		} else if (block.type === 'WithBlock') {
+			expected = 'with';
 		} else {
 			parser.error({
 				code: `unexpected-block-close`,
@@ -212,7 +214,7 @@ export default function mustache(parser: Parser) {
 		await_block[is_then ? 'then' : 'catch'] = new_block;
 		parser.stack.push(new_block);
 	} else if (parser.eat('#')) {
-		// {#if foo}, {#each foo} or {#await foo}
+		// {#if foo}, {#each foo}, {#await foo}, or {#with foo}
 		let type;
 
 		if (parser.eat('if')) {
@@ -221,10 +223,12 @@ export default function mustache(parser: Parser) {
 			type = 'EachBlock';
 		} else if (parser.eat('await')) {
 			type = 'AwaitBlock';
+		} else if (parser.eat('with')) {
+			type = 'WithBlock';
 		} else {
 			parser.error({
 				code: `expected-block-type`,
-				message: `Expected if, each or await`
+				message: `Expected if, each, await, or with`
 			});
 		}
 
@@ -272,8 +276,8 @@ export default function mustache(parser: Parser) {
 
 		parser.allow_whitespace();
 
-		// {#each} blocks must declare a context – {#each list as item}
-		if (type === 'EachBlock') {
+		// {#each} and {#with} blocks must declare a context – {#each list as item}
+		if (type === 'EachBlock' || type === 'WithBlock') {
 			parser.eat('as', true);
 			parser.require_whitespace();
 
