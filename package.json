@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.20.1",
+  "version": "3.18.2",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -90,7 +90,7 @@
     "source-map-support": "^0.5.13",
     "tiny-glob": "^0.2.6",
     "tslib": "^1.10.0",
-    "typescript": "^3.7.0"
+    "typescript": "^3.5.3"
   },
   "nyc": {
     "include": [
