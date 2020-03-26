@@ -71,10 +71,16 @@ export default function dom(
 	}
 
 	const uses_slots = component.var_lookup.has('$$slots');
-	let slots = null
+	let slots = null;
+	let slots_update = null;
 
 	if (uses_slots) {
-		slots = b`let { $$slots, update: #update_$$slots } = @create_slots_accessor(#slots, $$scope)`
+		slots = b`let { $$slots, update: #update_$$slots } = @create_slots_accessor(#slots, $$scope)`;
+		slots_update = b`
+			if (${renderer.dirty(['$$scope'], true)}) {
+				#update_$$slots($$scope)
+			}
+		`;
 		renderer.add_to_context('$$scope');
 	}
 
@@ -454,9 +460,7 @@ export default function dom(
 
 				${(reactive_declarations.length > 0 || uses_slots) && b`
 				$$self.$$.update = () => {
-					if (${renderer.dirty(['$$scope'], true)}) {
-						#update_$$slots($$scope)
-					}
+					${slots_update}
 
 					${reactive_declarations}
 				};
