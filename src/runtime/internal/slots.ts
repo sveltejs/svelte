@@ -69,7 +69,12 @@ export function create_slots_accessor(slots, scope) {
 					scope,
 					() => assign(ctx, props),
 					() => Object.keys(props).reduce((o, k) => (o[k] = true, o), {})
-				)
+				),
+				destroy: () => {
+					slot.d();
+					const i = update_list.indexOf(local_update);
+					if (i !== -1) update_list.splice(i, 1);
+				}
 			};
 		};
 	}
