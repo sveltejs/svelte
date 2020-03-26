@@ -455,7 +455,7 @@ export default function dom(
 				${(reactive_declarations.length > 0 || uses_slots) && b`
 				$$self.$$.update = () => {
 					if (${renderer.dirty(['$$scope'], true)}) {
-						#update_$$slots($$scope, $$self.$$.dirty)
+						#update_$$slots($$scope)
 					}
 
 					${reactive_declarations}
