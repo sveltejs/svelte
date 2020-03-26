@@ -282,7 +282,7 @@ function get_event_handler(
 		if (lhs.type === 'Identifier') {
 			contextual_dependencies.add(object.name);
 			if (property === undefined) {
-				lhs = modifier(b`${object}`[0]);
+				lhs = modifier(object);
 			} else {
 				lhs = modifier(x`${object}[${property}]`);
 				contextual_dependencies.add(property.name);
