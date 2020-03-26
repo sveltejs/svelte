@@ -59,7 +59,7 @@ export default class Renderer {
 
 		if (component.slots.size > 0) {
 			this.add_to_context('$$scope');
-			this.add_to_context('$$slots');
+			this.add_to_context('#slots');
 		}
 
 		if (this.binding_groups.length > 0) {

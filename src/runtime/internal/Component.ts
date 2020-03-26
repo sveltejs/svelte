@@ -7,7 +7,7 @@ import { transition_in } from './transitions';
 interface Fragment {
 	key: string|null;
 	first: null;
-	/* create  */ c: () => void;
+	/* create  */ c: () => void|any[];
 	/* claim   */ l: (nodes: any) => void;
 	/* hydrate */ h: () => void;
 	/* mount   */ m: (target: HTMLElement, anchor: any) => void;

@@ -70,6 +70,14 @@ export default function dom(
 		);
 	}
 
+	const uses_slots = component.var_lookup.has('$$slots');
+	let slots = null
+
+	if (uses_slots) {
+		slots = b`let { $$slots, update: #update_$$slots } = @create_slots_accessor(#slots, $$scope)`
+		renderer.add_to_context('$$scope');
+	}
+
 	const uses_props = component.var_lookup.has('$$props');
 	const uses_rest = component.var_lookup.has('$$restProps');
 	const $$props = uses_props || uses_rest ? `$$new_props` : `$$props`;
@@ -83,7 +91,7 @@ export default function dom(
 		let $$restProps = ${compute_rest};
 	` : null;
 
-	const set = (uses_props || uses_rest || writable_props.length > 0 || component.slots.size > 0)
+	const set = (uses_props || uses_rest || writable_props.length > 0 || component.slots.size > 0 || uses_slots)
 		? x`
 			${$$props} => {
 				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`)}
@@ -92,7 +100,7 @@ export default function dom(
 				${writable_props.map(prop =>
 					b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
-				${component.slots.size > 0 &&
+				${(component.slots.size > 0 || uses_slots) &&
 				b`if ('$$scope' in ${$$props}) ${renderer.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
@@ -420,12 +428,15 @@ export default function dom(
 
 				${resubscribable_reactive_store_unsubscribers}
 
+				${component.slots.size || uses_slots || component.compile_options.dev ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
+
+				${slots}
+
 				${instance_javascript}
 
 				${unknown_props_check}
 
-				${component.slots.size || component.compile_options.dev ? b`let { $$slots = {}, $$scope } = $$props;` : null}
-				${component.compile_options.dev && b`@validate_slots('${component.tag}', $$slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
+				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
 
 				${renderer.binding_groups.length > 0 && b`const $$binding_groups = [${renderer.binding_groups.map(_ => x`[]`)}];`}
 
@@ -441,8 +452,12 @@ export default function dom(
 
 				${/* before reactive declarations */ props_inject}
 
-				${reactive_declarations.length > 0 && b`
+				${(reactive_declarations.length > 0 || uses_slots) && b`
 				$$self.$$.update = () => {
+					if (${renderer.dirty(['$$scope'], true)}) {
+						#update_$$slots($$scope, $$self.$$.dirty)
+					}
+
 					${reactive_declarations}
 				};
 				`}

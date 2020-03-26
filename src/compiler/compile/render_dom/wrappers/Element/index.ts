@@ -320,6 +320,7 @@ export default class ElementWrapper extends Wrapper {
 				block.chunks.destroy.push(b`@detach(${node});`);
 			}
 		} else {
+			block.root_nodes.push(node);
 			block.chunks.mount.push(b`@insert(#target, ${node}, anchor);`);
 
 			// TODO we eventually need to consider what happens to elements
