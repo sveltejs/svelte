@@ -34,6 +34,9 @@ export default function ssr(
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const rest = uses_rest ? b`let $$restProps = @compute_rest_props($$props, [${props.map(prop => `"${prop.export_name}"`).join(',')}]);` : null;
 
+	const uses_slots = component.var_lookup.has('$$slots');
+	const slots = uses_slots ? b`let $$slots = @compute_slots(#slots);` : null;
+
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 	const reactive_store_values = reactive_stores
 		.map(({ name }) => {
@@ -118,6 +121,7 @@ export default function ssr(
 
 	const blocks = [
 		rest,
+		slots,
 		...reactive_stores.map(({ name }) => {
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
@@ -144,7 +148,7 @@ export default function ssr(
 
 		${component.fully_hoisted}
 
-		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, #slots) => {
 			${blocks}
 		});
 	`;
