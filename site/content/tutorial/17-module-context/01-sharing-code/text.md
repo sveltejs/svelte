@@ -22,3 +22,6 @@ function stopOthers() {
 	current = audio;
 }
 ```
+``I was bit confused about this lesson - have to console.log(current - audio) to see difference.`` I press Play for 1st time (current is set to corresponding audio tag, e.g current = "Danube waltz").
+Then I cick play on other track (audio = Mars) which, triggers "stopOthers" function. That checks if there's some track playing (current is "set" - not null) ``and now the part that was bit magic at 1st`` and whether the 'active' audio tag (Mars) I just clicked !== current (currently playing Waltz). 
+The statement is true => currently playing Waltz is paused, "active" Mars starts playing and current = "Mars".
