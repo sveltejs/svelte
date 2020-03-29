@@ -25,3 +25,5 @@ function reset() {
 	count.set(0);
 }
 ```
+
+In the particuliar case of Single Page Application, different routes as usually rendered as components. One could be tempted to use store to keep a global application state. Bear in mind that in practice, if users reload from their browser, store variables will be erased. 
