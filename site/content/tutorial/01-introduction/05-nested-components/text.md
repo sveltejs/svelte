@@ -21,7 +21,7 @@ Add a `<script>` tag that imports `Nested.svelte`...
 
 Notice that even though `Nested.svelte` has a `<p>` element, the styles from `App.svelte` don't leak in.
 
-**NOTE**: The component variable names (such as `Nested`) should be Capitalized
+Notice that the component name `Nested` is capitalized. This format has been adopted to provide a differentiation between user-defined components and regular HTML tags.
 
 - `when?`: When used as tags in markup.
 
