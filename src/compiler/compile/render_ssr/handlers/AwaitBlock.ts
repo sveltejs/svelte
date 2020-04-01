@@ -14,7 +14,7 @@ export default function(node: AwaitBlock, renderer: Renderer, options: RenderOpt
 	renderer.add_expression(x`
 		function(__value) {
 			if (@is_promise(__value)) return ${pending};
-			return (function(${node.value}) { return ${then}; }(__value));
+			return (function(${node.value ? node.value.pattern : ''}) { return ${then}; }(__value));
 		}(${node.expression.node})
 	`);
 }

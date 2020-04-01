@@ -42,7 +42,7 @@ function create_fragment(ctx) {
 			if (/*seeking*/ ctx[8] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[17].call(audio));
 			if (/*ended*/ ctx[9] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[18].call(audio));
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, audio, anchor);
 
 			if (!isNaN(/*volume*/ ctx[6])) {
@@ -52,6 +52,8 @@ function create_fragment(ctx) {
 			if (!isNaN(/*playbackRate*/ ctx[7])) {
 				audio.playbackRate = /*playbackRate*/ ctx[7];
 			}
+
+			if (remount) run_all(dispose);
 
 			dispose = [
 				listen(audio, "progress", /*audio_progress_handler*/ ctx[10]),

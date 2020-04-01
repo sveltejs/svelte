@@ -28,6 +28,7 @@ import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, Assi
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
+import { is_reserved_keyword } from './utils/reserved_keywords';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -185,7 +186,7 @@ export default class Component {
 
 		if (variable) {
 			variable.referenced = true;
-		} else if (name === '$$props') {
+		} else if (is_reserved_keyword(name)) {
 			this.add_var({
 				name,
 				injected: true,
@@ -649,7 +650,7 @@ export default class Component {
 					reassigned: true,
 					initialised: true,
 				});
-			} else if (name === '$$props') {
+			} else if (is_reserved_keyword(name)) {
 				this.add_var({
 					name,
 					injected: true,
@@ -1276,7 +1277,7 @@ export default class Component {
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
-			if (name === '$' || name[1] === '$' && name !== '$$props') {
+			if (name === '$' || name[1] === '$' && !is_reserved_keyword(name)) {
 				this.error(node, {
 					code: 'illegal-global',
 					message: `${name} is an illegal variable name`
@@ -1285,7 +1286,7 @@ export default class Component {
 
 			this.has_reactive_assignments = true; // TODO does this belong here?
 
-			if (name === '$$props') return;
+			if (is_reserved_keyword(name)) return;
 
 			name = name.slice(1);
 		}

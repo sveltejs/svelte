@@ -4,7 +4,8 @@ import {
 	dispatch_dev,
 	init,
 	noop,
-	safe_not_equal
+	safe_not_equal,
+	validate_slots
 } from "svelte/internal";
 
 const file = undefined;
@@ -56,6 +57,8 @@ function instance($$self, $$props, $$invalidate) {
 		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
+	let { $$slots = {}, $$scope } = $$props;
+	validate_slots("Component", $$slots, []);
 	$$self.$capture_state = () => ({ obj, kobzol });
 
 	$$self.$inject_state = $$props => {

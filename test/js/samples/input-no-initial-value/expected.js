@@ -32,12 +32,13 @@ function create_fragment(ctx) {
 			attr(input, "type", "text");
 			input.required = true;
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, form, anchor);
 			append(form, input);
 			set_input_value(input, /*test*/ ctx[0]);
 			append(form, t0);
 			append(form, button);
+			if (remount) run_all(dispose);
 
 			dispose = [
 				listen(input, "input", /*input_input_handler*/ ctx[2]),
