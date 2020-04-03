@@ -60,7 +60,7 @@ class AwaitBlockBranch extends Wrapper {
 
 			this.block.chunks.declarations.push(b`(${node.pattern} = #ctx[${index}])`);
 			if (this.block.has_update_method) {
-				this.block.chunks.update.push(b`(${node.pattern} = #ctx[${index}])`);
+				this.block.chunks.update.unshift(b`(${node.pattern} = #ctx[${index}])`);
 			}
 		}
 	}
