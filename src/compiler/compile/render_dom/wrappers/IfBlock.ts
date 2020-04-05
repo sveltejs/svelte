@@ -526,9 +526,11 @@ export default class IfBlockWrapper extends Wrapper {
 						${name}.c();
 						${has_transitions && b`@transition_in(${name}, 1);`}
 						${name}.m(${update_mount_node}, ${anchor});
-					} else if (${block.renderer.dirty(branch.dependencies)}) {
+					} else {
 						${dynamic && b`${name}.p(#ctx, #dirty);`}
-						${has_transitions && b`@transition_in(${name}, 1);`}
+						if (${block.renderer.dirty(branch.dependencies)}) {
+							${has_transitions && b`@transition_in(${name}, 1);`}
+						}
 					}
 				`;
 
