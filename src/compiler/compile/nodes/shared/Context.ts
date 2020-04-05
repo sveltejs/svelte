@@ -22,8 +22,10 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 		});
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
-			if (element && (element as any).type === 'RestElement') {
+			if (element && element.type === 'RestElement') {
 				unpack_destructuring(contexts, element, node => x`${modifier(node)}.slice(${i})` as Node);
+			} else if (element && element.type === 'AssignmentPattern') {
+				unpack_destructuring(contexts, element.left, node => x`${modifier(node)}[${i}] !== undefined ? ${modifier(node)}[${i}] : ${element.right}` as Node);
 			} else {
 				unpack_destructuring(contexts, element, node => x`${modifier(node)}[${i}]` as Node);
 			}
@@ -41,9 +43,15 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 					node => x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node
 				);
 			} else {
-				used_properties.push(x`"${(property.key as Identifier).name}"`);
+				const key = property.key as Identifier;
+				const value = property.value;
 
-				unpack_destructuring(contexts, property.value, node => x`${modifier(node)}.${(property.key as Identifier).name}` as Node);
+				used_properties.push(x`"${(key as Identifier).name}"`);
+				if (value.type === 'AssignmentPattern') {
+					unpack_destructuring(contexts, value.left, node => x`${modifier(node)}.${key.name} !== undefined ? ${modifier(node)}.${key.name} : ${value.right}` as Node);
+				} else {
+					unpack_destructuring(contexts, value, node => x`${modifier(node)}.${key.name}` as Node);
+				}
 			}
 		});
 	}
