@@ -334,7 +334,11 @@ export default class IfBlockWrapper extends Wrapper {
 				`);
 			}
 		} else if (dynamic) {
-			block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+			if (if_exists_condition) {
+				block.chunks.update.push(b`if (${if_exists_condition}) ${name}.p(#ctx, #dirty);`);
+			} else {
+				block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+			}
 		}
 
 		if (if_exists_condition) {
