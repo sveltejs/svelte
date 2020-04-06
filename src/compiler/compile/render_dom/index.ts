@@ -405,8 +405,8 @@ export default function dom(
 		if (component.compile_options.dev && fixed_reactive_declarations.length) {
 			fixed_reactive_declarations.forEach((v) =>
 				component.warn(v, {
-					code: "one-time-reactive-declaration",
-					message: `${component.name.name} includes a one-time reactive declaration, consider making it a part of the static top level statements instead.`,
+					code: "declaration-not-reactive",
+					message: `A reactive declaration whose dependencies are static will only run once on init, consider making it a part of the static top level script instead.`,
 				})
 			);
 		}
