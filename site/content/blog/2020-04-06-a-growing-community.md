@@ -15,6 +15,9 @@ If you like Svelte and want to support it - give it a star [here](https://github
 
 * Right after the last post, Rich's talk [Rethinking Reactivity](https://www.youtube.com/watch?v=AdNJ3fydeao) got a lot of people excited about Svelte. He followed this talk up with [Computer, build me an app](https://www.youtube.com/watch?v=qqt6YxAZoOc) and [The return of write less, do more](https://www.youtube.com/watch?v=BzX4aTRPzno).
 * Near the end of last year, Svelte was a rising star in 2019's [State of JS](https://2019.stateofjs.com/front-end-frameworks/).
+* Some noteworthy community projects:
+    * UI libraries such as [Svelte Material UI](https://github.com/hperrin/svelte-material-ui), [Svelma](https://github.com/c0bra/svelma) (based on Bulma), and [SvelteStrap](https://github.com/bestguy/sveltestrap) (based on Bootstrap 4)
+    * [Pancake](https://pancake-charts.surge.sh/) - responsive charts for Svelte apps
 * Multiple events have been coordinated under the Svelte Society banner. There's been 4 events in New York, an event in Stockholm, two in Amsterdam and an event in Russia (with over 100 people!).
   * A lot of these have videos of the talks, which you can find on the Svelte Society's [Twitter](https://twitter.com/sveltesociety) page.
   * Sadly, some events had to be cancelled in recent weeks due to COVID-19.
