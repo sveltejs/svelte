@@ -1250,7 +1250,7 @@ export default class Component {
 		}
 
 		const add_declaration = declaration => {
-			if (!~this.reactive_declarations.indexOf(declaration)) return;
+			if (this.reactive_declarations.includes(declaration)) return;
 			
 			declaration.dependencies.forEach(name => {
 				if (declaration.assignees.has(name)) return;
