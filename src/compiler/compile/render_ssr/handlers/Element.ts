@@ -111,7 +111,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 		if (name === 'group') {
 			const value_attribute = node.attributes.find(({ name }) => name === 'value');
-			if (value_attribute && value_attribute.chunks.length === 1) {
+			if (value_attribute) {
 				const value = get_attribute_value(value_attribute);
 				const bound = expression.node;
 				renderer.add_expression(x`
