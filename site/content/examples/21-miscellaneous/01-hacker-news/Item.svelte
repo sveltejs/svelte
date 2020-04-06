@@ -26,7 +26,9 @@
 <article>
 	<a href="{item.url}">
 		<h1>{item.title}</h1>
-		<small>{item.domain}</small>
+		{#if item.domain != null}
+			<small>{item.domain}</small>
+		{/if}
 	</a>
 
 	<p class="meta">submitted by {item.user} {item.time_ago}
