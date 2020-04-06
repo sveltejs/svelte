@@ -7,6 +7,14 @@
 		const c = item.comments_count;
 		return `${c} ${c === 1 ? 'comment' : 'comments'}`;
 	}
+	
+	function item_url() {
+		const { url, type } = item;
+		if (type === "ask") {
+			return `https://news.ycombinator.com/${url}`;
+		}
+		return url;
+	}
 </script>
 
 <style>
@@ -33,6 +41,6 @@
 
 <article>
 	<span>{i + offset + 1}</span>
-	<h2><a target="_blank" href={item.url}>{item.title}</a></h2>
+	<h2><a target="_blank" href={item_url()}>{item.title}</a></h2>
 	<p class="meta"><a href="#/item/{item.id}">{comment_text()}</a> by {item.user} {item.time_ago}</p>
 </article>
