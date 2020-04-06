@@ -10,13 +10,20 @@ import {
 import { parse_expression_at } from "../acorn";
 import { Pattern } from "estree";
 
-export default function read_context(parser: Parser): Pattern {
+export default function read_context(
+	parser: Parser
+): Pattern & { start: number; end: number } {
 	const start = parser.index;
 	let i = parser.index;
 
 	const code = full_char_code_at(parser.template, i);
 	if (isIdentifierStart(code, true)) {
-		return { type: "Identifier", name: parser.read_identifier() };
+		return {
+			type: "Identifier",
+			name: parser.read_identifier(),
+			start,
+			end: parser.index
+		};
 	}
 
 	if (!is_bracket_open(code)) {
@@ -54,6 +61,12 @@ export default function read_context(parser: Parser): Pattern {
 	parser.index = i;
 
 	const pattern_string = parser.template.slice(start, i);
-	return (parse_expression_at(`${' '.repeat(start - 1)}(${pattern_string} = 1)`, start - 1) as any)
-		.left as Pattern;
+	try {
+		return (parse_expression_at(
+			`${" ".repeat(start - 1)}(${pattern_string} = 1)`,
+			start - 1
+		) as any).left;
+	} catch (error) {
+		parser.acorn_error(error);
+	}
 }

@@ -85,30 +85,80 @@
 					}
 				],
 				"context": {
+					"type": "ArrayPattern",
 					"start": 18,
 					"end": 39,
-					"type": "ArrayPattern",
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 18
+						},
+						"end": {
+							"line": 1,
+							"column": 39
+						}
+					},
 					"elements": [
 						{
+							"type": "Identifier",
 							"start": 19,
 							"end": 22,
-							"type": "Identifier",
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 19
+								},
+								"end": {
+									"line": 1,
+									"column": 22
+								}
+							},
 							"name": "key"
 						},
 						{
+							"type": "Identifier",
 							"start": 24,
 							"end": 29,
-							"type": "Identifier",
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 24
+								},
+								"end": {
+									"line": 1,
+									"column": 29
+								}
+							},
 							"name": "value"
 						},
 						{
+							"type": "RestElement",
 							"start": 31,
 							"end": 38,
-							"type": "RestElement",
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 31
+								},
+								"end": {
+									"line": 1,
+									"column": 38
+								}
+							},
 							"argument": {
 								"type": "Identifier",
 								"start": 34,
 								"end": 38,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 34
+									},
+									"end": {
+										"line": 1,
+										"column": 38
+									}
+								},
 								"name": "rest"
 							}
 						}
