@@ -1216,7 +1216,6 @@ export default class Component {
 		});
 
 		const lookup = new Map();
-		let seen;
 
 		unsorted_reactive_declarations.forEach(declaration => {
 			declaration.assignees.forEach(name => {
@@ -1251,28 +1250,19 @@ export default class Component {
 		}
 
 		const add_declaration = declaration => {
-			if (this.reactive_declarations.indexOf(declaration) !== -1) {
-				return;
-			}
-
-			seen.add(declaration);
-
+			if (this.reactive_declarations.includes(declaration)) return;
+			
 			declaration.dependencies.forEach(name => {
 				if (declaration.assignees.has(name)) return;
 				const earlier_declarations = lookup.get(name);
 				if (earlier_declarations)
-					earlier_declarations.forEach(declaration => {
-						add_declaration(declaration);
-					});
+					earlier_declarations.forEach(add_declaration);
 			});
 
 			this.reactive_declarations.push(declaration);
 		};
 
-		unsorted_reactive_declarations.forEach(declaration => {
-			seen = new Set();
-			add_declaration(declaration);
-		});
+		unsorted_reactive_declarations.forEach(add_declaration);
 	}
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
