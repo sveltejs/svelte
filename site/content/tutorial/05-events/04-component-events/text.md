@@ -24,4 +24,4 @@ Notice that the `App` component is listening to the messages dispatched by `Inne
 
 Without this attribute, messages would still be dispatched, but the App would not react to it. You can try removing the `on:message` attribute and pressing the button again.
 
-> You can also try changing the event name to anything you like. For instance, change `dispatch('message')` to `dispatch('myevent')` in `Inner.svelte` and change the attribute name from `on:message` to `on:myevent` in the `App.svelte` component. This still works!
+> You can also try changing the event name to something else. For instance, change `dispatch('message')` to `dispatch('myevent')` in `Inner.svelte` and change the attribute name from `on:message` to `on:myevent` in the `App.svelte` component.
