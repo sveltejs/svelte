@@ -26,7 +26,7 @@
 <article>
 	<a href="{item.url}">
 		<h1>{item.title}</h1>
-		{#if item.domain != null}
+		{#if item.domain}
 			<small>{item.domain}</small>
 		{/if}
 	</a>
