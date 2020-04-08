@@ -379,7 +379,7 @@ export default class Element extends Node {
 			}
 
 
-			if (/[{}]/.test(name)) {
+			if (/(^[0-9-.])|[\^$@%&#?!|()\[\]{}^*+~;]/.test(name)) {
 				component.error(attribute, {
 					code: `illegal-attribute`,
 					message: `'${name}' is not a valid attribute name`,

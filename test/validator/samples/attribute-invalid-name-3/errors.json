@@ -1,7 +1,6 @@
-[
-{
+[{
 	"code": "illegal-attribute",
-	"message": "'a{a' is not a valid attribute name",
+	"message": "'a*a' is not a valid attribute name",
 	"start": {
 		"line": 1,
 		"column": 3,

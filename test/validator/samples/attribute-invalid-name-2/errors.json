@@ -1,6 +1,6 @@
 [{
 	"code": "illegal-attribute",
-	"message": "'a}a' is not a valid attribute name",
+	"message": "'3aa' is not a valid attribute name",
 	"start": {
 		"line": 1,
 		"column": 3,
@@ -8,8 +8,8 @@
 	},
 	"end": {
 		"line": 1,
-		"column": 6,
-		"character": 6
+		"column": 12,
+		"character": 12
 	},
 	"pos": 3
 }]

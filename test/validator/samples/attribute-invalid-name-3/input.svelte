@@ -1,1 +1,1 @@
-<p a{a>Test</p>
+<p a*a>Test</p>
