@@ -56,6 +56,9 @@
 						return a.name < b.name ? -1 : 1;
 					});
 
+				// mark entry file
+				components.find(component => component.name === 'App').is_entry = true;
+
 				repl.set({ components });
 			});
 		} else if (example) {
