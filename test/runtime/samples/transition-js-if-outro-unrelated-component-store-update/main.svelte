@@ -1,7 +1,7 @@
 <script>
   import { writable } from "svelte/store";
   import Component from "./Component.svelte";
-  let condition = writable(true);
+  export let condition = writable(true);
 </script>
 
 {#if $condition}
