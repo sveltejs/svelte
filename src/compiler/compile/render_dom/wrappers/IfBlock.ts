@@ -526,9 +526,7 @@ export default class IfBlockWrapper extends Wrapper {
 						${name}.c();
 						${has_transitions && b`@transition_in(${name}, 1);`}
 						${name}.m(${update_mount_node}, ${anchor});
-					}${
-						(dynamic || has_transitions) &&
-						`else {
+					} else {
 						${dynamic && b`${name}.p(#ctx, #dirty);`}
 						${
 							has_transitions &&
@@ -536,7 +534,6 @@ export default class IfBlockWrapper extends Wrapper {
 							@transition_in(${name}, 1);
 						}`
 						}
-					}`
 					}
 				`;
 
