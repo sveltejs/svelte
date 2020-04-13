@@ -66,46 +66,37 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
 
 	function set(new_value: T): void {
-		if (safe_not_equal(value, new_value)) {
-			value = new_value;
-			if (stop) { // store is ready
-				const run_queue = !subscriber_queue.length;
-				for (let i = 0; i < subscribers.length; i += 1) {
-					const s = subscribers[i];
-					s[1]();
-					subscriber_queue.push(s, value);
-				}
-				if (run_queue) {
-					for (let i = 0; i < subscriber_queue.length; i += 2) {
-						subscriber_queue[i][0](subscriber_queue[i + 1]);
-					}
-					subscriber_queue.length = 0;
-				}
-			}
+		if (!safe_not_equal(value, new_value)) return;
+		value = new_value;
+		if (!stop) return;
+		const run_queue = !subscriber_queue.length;
+		for (let i = 0, s; i < subscribers.length; i++) {
+			(s = subscribers[i])[1]();
+			subscriber_queue.push(s, value);
 		}
+		if (!run_queue) return;
+		for (let i = 0; i < subscriber_queue.length; i++) {
+			subscriber_queue[i][0](subscriber_queue[++i]);
+		}
+		subscriber_queue.length = 0;
 	}
 
 	function update(fn: Updater<T>): void {
 		set(fn(value));
 	}
 
-	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
+	function subscribe(
+		run: Subscriber<T>,
+		invalidate: Invalidator<T> = noop
+	): Unsubscriber {
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
+		if (!subscribers.length) stop = start(set) || noop;
 		subscribers.push(subscriber);
-		if (subscribers.length === 1) {
-			stop = start(set) || noop;
-		}
 		run(value);
-
 		return () => {
 			const index = subscribers.indexOf(subscriber);
-			if (index !== -1) {
-				subscribers.splice(index, 1);
-			}
-			if (subscribers.length === 0) {
-				stop();
-				stop = null;
-			}
+			if (~index) subscribers.splice(index, 1);
+			if (!subscribers.length) stop(), (stop = null);
 		};
 	}
 
@@ -161,9 +152,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 		let cleanup = noop;
 
 		const sync = () => {
-			if (pending) {
-				return;
-			}
+			if (pending) return;
 			cleanup();
 			const result = fn(single ? values[0] : values, set);
 			if (auto) {
@@ -173,18 +162,18 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			}
 		};
 
-		const unsubscribers = stores_array.map((store, i) => subscribe(
-			store,
-			(value) => {
-				values[i] = value;
-				pending &= ~(1 << i);
-				if (inited) {
-					sync();
+		const unsubscribers = stores_array.map((store, i) =>
+			subscribe(
+				store,
+				(value) => {
+					values[i] = value;
+					pending &= ~(1 << i);
+					if (inited) sync();
+				},
+				() => {
+					pending |= 1 << i;
 				}
-			},
-			() => {
-				pending |= (1 << i);
-			}),
+			)
 		);
 
 		inited = true;
