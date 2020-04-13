@@ -90,8 +90,8 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 		invalidate: Invalidator<T> = noop
 	): Unsubscriber {
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
-		if (!subscribers.length) stop = start(set) || noop;
 		subscribers.push(subscriber);
+		if (subscribers.length === 1) stop = start(set) || noop;
 		run(value);
 		return () => {
 			const index = subscribers.indexOf(subscriber);
