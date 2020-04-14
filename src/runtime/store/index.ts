@@ -3,26 +3,33 @@ import { subscribe, noop, safe_not_equal, get_store_value } from 'svelte/interna
 /** Sets the value of a store. */
 type Setter<T> = (value: T) => void;
 
-/** Callback called on last removed subscriber */
+/** Called on last removed subscriber */
 type StopCallback = () => void;
-
 /** Function called on first added subscriber
  * 	If a callback is returned it will be called on last removed subscriber */
 type StartStopNotifier<T> = (set: Setter<T>) => StopCallback | void;
-
-/** Callback to inform of a value updates. */
 type Subscriber<T> = (value: T) => void;
-
-/** Unsubscribes from value updates. */
 type Unsubscriber = () => void;
-
-/** Callback to update a value. */
-type Updater<T> = (value: T) => any;
-
-/** Cleanup logic callback. */
+type Updater<T> = (value: T) => T;
+/** Internal callback, invalidates every store before updating */
 type Invalidator = () => void;
+type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator];
+type Store<T> = Writable<T> | Readable<T>;
+type ValuesOf<T> = { [K in keyof T]: T[K] extends Store<infer U> ? U : never };
+type ValueOf<T> = T extends Store<infer U> ? U : never;
+type StoreValues<T> = T extends Store<any> ? ValueOf<T> : ValuesOf<T>;
+/** The value of the derived store is the value returned by the function */
+type AutoDeriver<S, T> = (values: StoreValues<S>) => T;
+/** The value of the derived store is set manually through Setter calls */
+type ManualDeriver<S, T> = (values: StoreValues<S>, set: Setter<T>) => Unsubscriber | void;
+/** Type of derivation function, is decided by the number of arguments */
+type Deriver<S, T> = AutoDeriver<S, T> | ManualDeriver<S, T>;
+type DerivedValue<T> = T extends Deriver<T, infer U> ? U : never;
+type DeriverController = {
+	update<S, T>(values: StoreValues<S>, set: Setter<T>): void;
+	cleanup?(): void;
+};
 
-/** Readable interface for subscribing. */
 export interface Readable<T> {
 	/**
 	 * Subscribe on value changes.
@@ -31,8 +38,6 @@ export interface Readable<T> {
 	 */
 	subscribe(run: Subscriber<T>, invalidate?: Invalidator): Unsubscriber;
 }
-
-/** Writable interface for both updating and subscribing. */
 export interface Writable<T> extends Readable<T> {
 	/**
 	 * Set value and inform subscribers.
@@ -47,9 +52,6 @@ export interface Writable<T> extends Readable<T> {
 	update(updater: Updater<T>): void;
 }
 
-/** Pair of subscriber and invalidator. */
-type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator];
-
 const subscriber_queue = [];
 
 /**
@@ -58,9 +60,7 @@ const subscriber_queue = [];
  * @param {StartStopNotifier}start start and stop notifications for subscriptions
  */
 export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
-	return {
-		subscribe: writable(value, start).subscribe,
-	};
+	return { subscribe: writable(value, start).subscribe };
 }
 
 /**
@@ -70,7 +70,7 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
  */
 export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
-	const subscribers: SubscribeInvalidateTuple<T>[] = [];
+	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
 
 	function set(new_value: T): void {
 		if (!safe_not_equal(value, new_value)) return;
@@ -106,22 +106,6 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 
 	return { set, update, subscribe };
 }
-
-type Store<T> = Writable<T> | Readable<T>;
-
-type ValuesOf<T> = { [K in keyof T]: T[K] extends Store<infer U> ? U : never };
-type ValueOf<T> = T extends Store<infer U> ? U : never;
-type StoreValues<T> = T extends Store<any> ? ValueOf<T> : ValuesOf<T>;
-
-type AutoDeriver<S, T> = (values: StoreValues<S>) => T;
-type ManualDeriver<S, T> = (values: StoreValues<S>, set: Setter<T>) => Unsubscriber | void;
-type Deriver<S, T> = AutoDeriver<S, T> | ManualDeriver<S, T>;
-type DerivedValue<T> = T extends Deriver<T, infer U> ? U : never;
-
-type DeriverController = {
-	update<S, T>(values: StoreValues<S>, set: Setter<T>): void;
-	cleanup?(): void;
-};
 /**
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
@@ -130,28 +114,30 @@ type DeriverController = {
  * @param fn - function callback that aggregates the values
  * @param initial_value - when used asynchronously
  */
-export function derived<S extends Store<any> | Store<any>[], F extends Deriver<S, T>, T = DerivedValue<F>>(
+export function derived<S extends Store<any> | Array<Store<any>>, F extends Deriver<S, T | any>, T = DerivedValue<F>>(
 	stores: S,
 	fn: F,
 	initial_value?: T
 ) {
 	const mode = fn.length < 2 ? auto(fn as AutoDeriver<S, T>) : manual(fn as ManualDeriver<S, T>);
-	const deriver = Array.isArray(stores) ? multiple(stores as Store<any>[], mode) : single(stores as Store<any>, mode);
+	const deriver = Array.isArray(stores)
+		? multiple(stores as Array<Store<any>>, mode)
+		: single(stores as Store<any>, mode);
 	return readable(initial_value, deriver) as Readable<T>;
 }
 
 function single<S, T>(store: S, controller: DeriverController): StartStopNotifier<T> {
 	return set => {
-		const unsub = subscribe(store, (value: ValueOf<S>) => controller.update(value, set));
+		const unsub = subscribe(store, value => controller.update(value, set));
 		return function stop() {
 			unsub(), controller.cleanup();
 		};
 	};
 }
-function multiple<S extends Store<any>[], T>(stores: S, controller: DeriverController): StartStopNotifier<T> {
+function multiple<S extends Array<Store<any>>, T>(stores: S, controller: DeriverController): StartStopNotifier<T> {
 	return set => {
-		let inited = false,
-			pending = 0;
+		let inited = false;
+		let pending = 0;
 		const values = new Array(stores.length) as StoreValues<S>;
 		function sync() {
 			if (inited && !pending) {
