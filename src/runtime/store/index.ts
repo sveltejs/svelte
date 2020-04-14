@@ -168,6 +168,7 @@ function auto(fn): DeriverController {
 		update(payload, set) {
 			set(fn(payload));
 		},
+		cleanup: noop,
 	};
 }
 function manual(fn): DeriverController {
