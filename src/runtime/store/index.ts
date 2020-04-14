@@ -1,4 +1,14 @@
-import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
+import { subscribe, noop, safe_not_equal, get_store_value } from 'svelte/internal';
+
+/** Sets the value of a store. */
+type Setter<T> = (value: T) => void;
+
+/** Callback called on last removed subscriber */
+type StopCallback = () => void;
+
+/** Function called on first added subscriber
+ * 	If a callback is returned it will be called on last removed subscriber */
+type StartStopNotifier<T> = (set: Setter<T>) => StopCallback | void;
 
 /** Callback to inform of a value updates. */
 type Subscriber<T> = (value: T) => void;
@@ -7,13 +17,10 @@ type Subscriber<T> = (value: T) => void;
 type Unsubscriber = () => void;
 
 /** Callback to update a value. */
-type Updater<T> = (value: T) => T;
+type Updater<T> = (value: T) => any;
 
 /** Cleanup logic callback. */
-type Invalidator<T> = (value?: T) => void;
-
-/** Start and stop notification callbacks. */
-type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
+type Invalidator = () => void;
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
@@ -22,7 +29,7 @@ export interface Readable<T> {
 	 * @param run subscription callback
 	 * @param invalidate cleanup callback
 	 */
-	subscribe(run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+	subscribe(run: Subscriber<T>, invalidate?: Invalidator): Unsubscriber;
 }
 
 /** Writable interface for both updating and subscribing. */
@@ -41,7 +48,7 @@ export interface Writable<T> extends Readable<T> {
 }
 
 /** Pair of subscriber and invalidator. */
-type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
+type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator];
 
 const subscriber_queue = [];
 
@@ -63,7 +70,7 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
  */
 export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
-	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
+	const subscribers: SubscribeInvalidateTuple<T>[] = [];
 
 	function set(new_value: T): void {
 		if (!safe_not_equal(value, new_value)) return;
@@ -85,10 +92,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 		set(fn(value));
 	}
 
-	function subscribe(
-		run: Subscriber<T>,
-		invalidate: Invalidator<T> = noop
-	): Unsubscriber {
+	function subscribe(run: Subscriber<T>, invalidate: Invalidator = noop): Unsubscriber {
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
 		subscribers.push(subscriber);
 		if (subscribers.length === 1) stop = start(set) || noop;
@@ -103,25 +107,21 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 	return { set, update, subscribe };
 }
 
-/** One or more `Readable`s. */
-type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>];
+type Store<T> = Writable<T> | Readable<T>;
 
-/** One or more values from `Readable` stores. */
-type StoresValues<T> = T extends Readable<infer U> ? U :
-	{ [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
+type ValuesOf<T> = { [K in keyof T]: T[K] extends Store<infer U> ? U : never };
+type ValueOf<T> = T extends Store<infer U> ? U : never;
+type StoreValues<T> = T extends Store<any> ? ValueOf<T> : ValuesOf<T>;
 
-/**
- * Derived value store by synchronizing one or more readable stores and
- * applying an aggregation function over its input values.
- *
- * @param stores - input stores
- * @param fn - function callback that aggregates the values
- */
-export function derived<S extends Stores, T>(
-	stores: S,
-	fn: (values: StoresValues<S>) => T
-): Readable<T>;
+type AutoDeriver<S, T> = (values: StoreValues<S>) => T;
+type ManualDeriver<S, T> = (values: StoreValues<S>, set: Setter<T>) => Unsubscriber | void;
+type Deriver<S, T> = AutoDeriver<S, T> | ManualDeriver<S, T>;
+type DerivedValue<T> = T extends Deriver<T, infer U> ? U : never;
 
+type DeriverController = {
+	update<S, T>(values: StoreValues<S>, set: Setter<T>): void;
+	cleanup?(): void;
+};
 /**
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
@@ -130,62 +130,70 @@ export function derived<S extends Stores, T>(
  * @param fn - function callback that aggregates the values
  * @param initial_value - when used asynchronously
  */
-export function derived<S extends Stores, T>(
+export function derived<S extends Store<any> | Store<any>[], F extends Deriver<S, T>, T = DerivedValue<F>>(
 	stores: S,
-	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
+	fn: F,
 	initial_value?: T
-): Readable<T>;
+) {
+	const mode = fn.length < 2 ? auto(fn as AutoDeriver<S, T>) : manual(fn as ManualDeriver<S, T>);
+	const deriver = Array.isArray(stores) ? multiple(stores as Store<any>[], mode) : single(stores as Store<any>, mode);
+	return readable(initial_value, deriver) as Readable<T>;
+}
 
-export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Readable<T> {
-	const single = !Array.isArray(stores);
-	const stores_array: Array<Readable<any>> = single
-		? [stores as Readable<any>]
-		: stores as Array<Readable<any>>;
-
-	const auto = fn.length < 2;
-
-	return readable(initial_value, (set) => {
-		let inited = false;
-		const values = [];
-
-		let pending = 0;
-		let cleanup = noop;
-
-		const sync = () => {
-			if (pending) return;
-			cleanup();
-			const result = fn(single ? values[0] : values, set);
-			if (auto) {
-				set(result as T);
-			} else {
-				cleanup = is_function(result) ? result as Unsubscriber : noop;
-			}
+function single<S, T>(store: S, controller: DeriverController): StartStopNotifier<T> {
+	return set => {
+		const unsub = subscribe(store, (value: ValueOf<S>) => controller.update(value, set));
+		return function stop() {
+			unsub(), controller.cleanup();
 		};
-
-		const unsubscribers = stores_array.map((store, i) =>
+	};
+}
+function multiple<S extends Store<any>[], T>(stores: S, controller: DeriverController): StartStopNotifier<T> {
+	return set => {
+		let inited = false,
+			pending = 0;
+		const values = new Array(stores.length) as StoreValues<S>;
+		function sync() {
+			if (inited && !pending) {
+				controller.update(values, set);
+			}
+		}
+		const unsubs = stores.map((store, index) =>
 			subscribe(
 				store,
-				(value) => {
-					values[i] = value;
-					pending &= ~(1 << i);
-					if (inited) sync();
+				value => {
+					values[index] = value;
+					pending &= ~(1 << index);
+					sync();
 				},
 				() => {
-					pending |= 1 << i;
+					pending |= 1 << index;
 				}
 			)
 		);
-
-		inited = true;
-		sync();
-
+		(inited = true), sync();
 		return function stop() {
-			run_all(unsubscribers);
-			cleanup();
+			unsubs.forEach(v => v()), controller.cleanup();
 		};
-	});
+	};
 }
-
+function auto(fn): DeriverController {
+	return {
+		update(payload, set) {
+			set(fn(payload));
+		},
+	};
+}
+function manual(fn): DeriverController {
+	return {
+		update(payload, set) {
+			this.cleanup();
+			this.cleanup = fn(payload, set) as Unsubscriber;
+			if (typeof this.cleanup !== 'function') this.cleanup = noop;
+		},
+		cleanup: noop,
+	};
+}
 /**
  * Get the current value from a store by subscribing and immediately unsubscribing.
  * @param store readable
