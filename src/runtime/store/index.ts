@@ -1,4 +1,10 @@
-import { subscribe, noop, safe_not_equal, get_store_value } from 'svelte/internal';
+import { subscribe, noop, safe_not_equal, get_store_value } from '../internal/utils';
+
+/**
+ * Get the current value from a store by subscribing and immediately unsubscribing.
+ * @param store readable
+ */
+export { get_store_value as get };
 
 /** Sets the value of a store. */
 type Setter<T> = (value: T) => void;
@@ -9,15 +15,17 @@ type StopCallback = () => void;
  * 	If a callback is returned it will be called on last removed subscriber */
 type StartStopNotifier<T> = (set: Setter<T>) => StopCallback | void;
 type Subscriber<T> = (value: T) => void;
-type Unsubscriber = () => void;
+export type Unsubscriber = () => void;
 type Updater<T> = (value: T) => T;
-/** Internal callback, invalidates every store before updating */
+/** Internal callback, used to invalidate every store before updating */
 type Invalidator = () => void;
 type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator];
-type Store<T> = Writable<T> | Readable<T>;
+export type Store<T> = Writable<T> | Readable<T>;
+type ArrayStore = Array<Store<any>>;
+type SingleStore = Store<any>;
 type ValuesOf<T> = { [K in keyof T]: T[K] extends Store<infer U> ? U : never };
 type ValueOf<T> = T extends Store<infer U> ? U : never;
-type StoreValues<T> = T extends Store<any> ? ValueOf<T> : ValuesOf<T>;
+type StoreValues<T> = T extends Store<any> ? ValueOf<T> : T extends ArrayStore ? ValuesOf<T> : T;
 /** The value of the derived store is the value returned by the function */
 type AutoDeriver<S, T> = (values: StoreValues<S>) => T;
 /** The value of the derived store is set manually through Setter calls */
@@ -106,6 +114,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 
 	return { set, update, subscribe };
 }
+
 /**
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
@@ -114,75 +123,86 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
  * @param fn - function callback that aggregates the values
  * @param initial_value - when used asynchronously
  */
-export function derived<S extends Store<any> | Array<Store<any>>, F extends Deriver<S, T | any>, T = DerivedValue<F>>(
+export function derived<S extends SingleStore | ArrayStore, F extends Deriver<S, T | any>, T = DerivedValue<F>>(
 	stores: S,
 	fn: F,
 	initial_value?: T
 ) {
-	const mode = fn.length < 2 ? auto(fn as AutoDeriver<S, T>) : manual(fn as ManualDeriver<S, T>);
-	const deriver = Array.isArray(stores)
-		? multiple(stores as Array<Store<any>>, mode)
-		: single(stores as Store<any>, mode);
+	const mode: DeriverController = fn.length < 2 ? auto(fn as AutoDeriver<S, T>) : manual(fn as ManualDeriver<S, T>);
+	const deriver = Array.isArray(stores) ? multiple(stores as ArrayStore, mode) : single(stores as SingleStore, mode);
 	return readable(initial_value, deriver) as Readable<T>;
 }
 
-function single<S, T>(store: S, controller: DeriverController): StartStopNotifier<T> {
-	return set => {
-		const unsub = subscribe(store, value => controller.update(value, set));
-		return function stop() {
-			unsub(), controller.cleanup();
-		};
-	};
-}
-function multiple<S extends Array<Store<any>>, T>(stores: S, controller: DeriverController): StartStopNotifier<T> {
-	return set => {
-		let inited = false;
-		let pending = 0;
-		const values = new Array(stores.length) as StoreValues<S>;
-		function sync() {
-			if (inited && !pending) {
-				controller.update(values, set);
-			}
-		}
-		const unsubs = stores.map((store, index) =>
-			subscribe(
-				store,
-				value => {
-					values[index] = value;
-					pending &= ~(1 << index);
-					sync();
-				},
-				() => {
-					pending |= 1 << index;
-				}
-			)
-		);
-		(inited = true), sync();
-		return function stop() {
-			unsubs.forEach(v => v()), controller.cleanup();
-		};
-	};
-}
-function auto(fn): DeriverController {
-	return {
-		update(payload, set) {
-			set(fn(payload));
-		},
-		cleanup: noop,
-	};
-}
-function manual(fn): DeriverController {
-	return {
-		update(payload, set) {
-			this.cleanup();
-			this.cleanup = fn(payload, set) as Unsubscriber;
-			if (typeof this.cleanup !== 'function') this.cleanup = noop;
-		},
-		cleanup: noop,
-	};
-}
+/** DERIVING LOGIC */
+
 /**
- * Get the current value from a store by subscribing and immediately unsubscribing.
- * @param store readable
+ * derived from a single store
+ *
+ * derived store StartStopNotifier function when given a single store
+ * */
+const single = <T>(store: SingleStore, controller: DeriverController): StartStopNotifier<T> => set => {
+	const unsub = subscribe(store, value => controller.update(value, set));
+	return function stop() {
+		unsub(), controller.cleanup();
+	};
+};
+
+/** derived store StartStopNotifier function when given an array of stores */
+const multiple = <T>(stores: ArrayStore, controller: DeriverController): StartStopNotifier<T> => set => {
+	const values = new Array(stores.length);
+
+	let inited = false;
+	let pending = 0;
+
+	const sync = () => inited && !pending && controller.update(values, set);
+	const unsubs = stores.map((store, index) =>
+		subscribe(
+			store,
+			value => {
+				values[index] = value;
+				pending &= ~(1 << index);
+				sync();
+			},
+			() => {
+				pending |= 1 << index;
+			}
+		)
+	);
+
+	(inited = true), sync();
+	return function stop() {
+		unsubs.forEach(v => v()), controller.cleanup();
+	};
+};
+
+/** UPDATE/CLEANUP CONTROLLERS */
+
+/**
+ *  mode "auto" : function has <2 arguments
+ *
+ *  derived value = value returned by the function
+ *
  */
-export { get_store_value as get };
+const auto = (fn: AutoDeriver<any, any>): DeriverController => ({
+	update(payload, set) {
+		set(fn(payload));
+	},
+	cleanup: noop,
+});
+
+/**
+ *  mode "manual" : function has >1 arguments
+ *
+ *  derived value = value set manually
+ *  before each update => callback returned by the function
+ *
+ *  note :  [(...args) does not count as an argument]
+ */
+const manual = (fn: ManualDeriver<any, any>): DeriverController => ({
+	update(payload, set) {
+		this.cleanup();
+		this.cleanup = fn(payload, set) as Unsubscriber;
+		if (typeof this.cleanup !== 'function') this.cleanup = noop;
+	},
+	cleanup: noop,
+});

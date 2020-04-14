@@ -1,3 +1,5 @@
+import { Store, Unsubscriber } from '../store';
+
 export function noop() {}
 
 export const identity = x => x;
@@ -14,7 +16,7 @@ export function is_promise<T = any>(value: any): value is PromiseLike<T> {
 
 export function add_location(element, file, line, column, char) {
 	element.__svelte_meta = {
-		loc: { file, line, column, char }
+		loc: { file, line, column, char },
 	};
 }
 
@@ -35,7 +37,7 @@ export function is_function(thing: any): thing is Function {
 }
 
 export function safe_not_equal(a, b) {
-	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+	return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 
 export function not_equal(a, b) {
@@ -48,17 +50,16 @@ export function validate_store(store, name) {
 	}
 }
 
-export function subscribe(store, ...callbacks) {
-	if (store == null) {
-		return noop;
-	}
+export function subscribe<T>(store: Store<T>, ...callbacks: Parameters<Store<T>['subscribe']>): Unsubscriber {
+	if (store == null) return noop;
 	const unsub = store.subscribe(...callbacks);
+	// @ts-ignore
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
 export function get_store_value(store) {
 	let value;
-	subscribe(store, _ => value = _)();
+	subscribe(store, _ => (value = _))();
 	return value;
 }
 
@@ -74,9 +75,7 @@ export function create_slot(definition, ctx, $$scope, fn) {
 }
 
 export function get_slot_context(definition, ctx, $$scope, fn) {
-	return definition[1] && fn
-		? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
-		: $$scope.ctx;
+	return definition[1] && fn ? assign($$scope.ctx.slice(), definition[1](fn(ctx))) : $$scope.ctx;
 }
 
 export function get_slot_changes(definition, $$scope, dirty, fn) {
@@ -118,7 +117,7 @@ export function compute_rest_props(props, keys) {
 
 export function once(fn) {
 	let ran = false;
-	return function(this: any, ...args) {
+	return function (this: any, ...args) {
 		if (ran) return;
 		ran = true;
 		fn.call(this, ...args);
