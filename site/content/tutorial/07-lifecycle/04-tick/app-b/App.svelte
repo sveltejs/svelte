@@ -6,8 +6,6 @@
 	async function handleKeydown(event) {
 		if (event.which !== 9) return;
 
-		event.preventDefault();
-
 		const { selectionStart, selectionEnd, value } = this;
 		const selection = value.slice(selectionStart, selectionEnd);
 
@@ -34,4 +32,4 @@
 	}
 </style>
 
-<textarea value={text} on:keydown={handleKeydown}></textarea>
+<textarea value={text} on:keydown|preventDefault={handleKeydown}></textarea>
