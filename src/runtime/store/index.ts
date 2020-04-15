@@ -8,9 +8,9 @@ export { get_store_value as get };
 
 /** Sets the value of a store. */
 type Setter<T> = (value: T) => void;
-
 /** Called on last removed subscriber */
 type StopCallback = () => void;
+type CleanupCallback = () => void;
 /** Function called on first added subscriber
  * 	If a callback is returned it will be called on last removed subscriber */
 type StartStopNotifier<T> = (set: Setter<T>) => StopCallback | void;
@@ -21,42 +21,17 @@ type Updater<T> = (value: T) => T;
 type Invalidator = () => void;
 type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator];
 export type Store<T> = Writable<T> | Readable<T>;
-type ArrayStore = Array<Store<any>>;
 type SingleStore = Store<any>;
+type ArrayStore = SingleStore[];
 type ValuesOf<T> = { [K in keyof T]: T[K] extends Store<infer U> ? U : never };
 type ValueOf<T> = T extends Store<infer U> ? U : never;
-type StoreValues<T> = T extends Store<any> ? ValueOf<T> : T extends ArrayStore ? ValuesOf<T> : T;
-/** The value of the derived store is the value returned by the function */
-type AutoDeriver<S, T> = (values: StoreValues<S>) => T;
-/** The value of the derived store is set manually through Setter calls */
-type ManualDeriver<S, T> = (values: StoreValues<S>, set: Setter<T>) => Unsubscriber | void;
-/** Type of derivation function, is decided by the number of arguments */
-type Deriver<S, T> = AutoDeriver<S, T> | ManualDeriver<S, T>;
-type DerivedValue<T> = T extends Deriver<T, infer U> ? U : never;
-type DeriverController = {
-	update<S, T>(values: StoreValues<S>, set: Setter<T>): void;
-	cleanup?(): void;
-};
+type StoreValues<T> = T extends SingleStore ? ValueOf<T> : T extends ArrayStore ? ValuesOf<T> : T;
 
 export interface Readable<T> {
-	/**
-	 * Subscribe on value changes.
-	 * @param run subscription callback
-	 * @param invalidate cleanup callback
-	 */
 	subscribe(run: Subscriber<T>, invalidate?: Invalidator): Unsubscriber;
 }
 export interface Writable<T> extends Readable<T> {
-	/**
-	 * Set value and inform subscribers.
-	 * @param value to set
-	 */
-	set(value: T): void;
-
-	/**
-	 * Update value using callback and inform subscribers.
-	 * @param updater callback
-	 */
+	set: Setter<T>;
 	update(updater: Updater<T>): void;
 }
 
@@ -65,16 +40,16 @@ const subscriber_queue = [];
 /**
  * Creates a `Readable` store that allows reading by subscription.
  * @param value initial value
- * @param {StartStopNotifier}start start and stop notifications for subscriptions
+ * @param start start and stop notifications for subscriptions
  */
 export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
 	return { subscribe: writable(value, start).subscribe };
 }
 
 /**
- * Create a `Writable` store that allows both updating and reading by subscription.
- * @param {*=}value initial value
- * @param {StartStopNotifier=}start start and stop notifications for subscriptions
+ * Creates a `Writable` store that allows both updating and reading by subscription.
+ * @param value initial value
+ * @param start start and stop notifications for subscriptions
  */
 export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
@@ -116,85 +91,99 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 }
 
 /**
- * Derived value store by synchronizing one or more readable stores and
- * applying an aggregation function over its input values.
+ * Creates a `Readable` store whose value depends on other stores.
  *
- * @param stores - input stores
+ * @param stores - input store(s)
  * @param fn - function callback that aggregates the values
- * @param initial_value - when used asynchronously
+ * @param initial_value - initial value
  */
-export function derived<S extends SingleStore | ArrayStore, F extends Deriver<S, T | any>, T = DerivedValue<F>>(
+export function derived<S extends SingleStore | ArrayStore, F extends Deriver<S, T>, T>(
 	stores: S,
 	fn: F,
 	initial_value?: T
-) {
-	const mode: DeriverController = fn.length < 2 ? auto(fn as AutoDeriver<S, T>) : manual(fn as ManualDeriver<S, T>);
-	const deriver = Array.isArray(stores) ? multiple(stores as ArrayStore, mode) : single(stores as SingleStore, mode);
-	return readable(initial_value, deriver) as Readable<T>;
+): Readable<T> {
+	const mode = fn.length < 2 ? auto(fn as AutoDeriver<S, T>) : manual(fn as ManualDeriver<S, T>);
+	const deriver = Array.isArray(stores) ? multiple(stores, mode) : single(stores as SingleStore, mode);
+	return readable(initial_value, deriver);
 }
 
-/** DERIVING LOGIC */
-
-/** derived StartStopNotifier when given a single store */
-const single = <T>(store: SingleStore, controller: DeriverController): StartStopNotifier<T> => set => {
-	const unsub = subscribe(store, value => controller.update(value, set));
-	return function stop() {
-		unsub(), controller.cleanup();
+/** StartStopNotifier when deriving a single store */
+const single = <S extends SingleStore, T>(store: S, { derive, cleanup }: Controller<S, T>): StartStopNotifier<T> =>
+	function StartStopSingle(set) {
+		const unsub = subscribe(store, value => {
+			derive(value, set);
+		});
+		return function stop() {
+			unsub(), cleanup();
+		};
 	};
-};
 
-/** derived StartStopNotifier when given an array of stores */
-const multiple = <T>(stores: ArrayStore, controller: DeriverController): StartStopNotifier<T> => set => {
-	const values = new Array(stores.length);
-	let pending = 1 << stores.length;
+/** StartStopNotifier when deriving an array of stores */
+const multiple = <S extends ArrayStore, T>(stores: S, { derive, cleanup }: Controller<S, T>): StartStopNotifier<T> =>
+	function StartStopMultiple(set) {
+		const values = new Array(stores.length) as StoreValues<S>;
+		let pending = 1 << stores.length;
 
-	const unsubs = stores.map((store, index) =>
-		subscribe(
-			store,
-			value => {
-				values[index] = value;
-				pending &= ~(1 << index);
-				if (!pending) controller.update(values, set);
-			},
-			() => {
-				pending |= 1 << index;
-			}
-		)
-	);
+		const unsubs = stores.map((store, index) =>
+			subscribe(
+				store,
+				value => {
+					values[index] = value;
+					pending &= ~(1 << index);
+					if (!pending) derive(values, set);
+				},
+				() => {
+					pending |= 1 << index;
+				}
+			)
+		);
 
-	pending &= ~(1 << stores.length);
-	controller.update(values, set);
+		pending &= ~(1 << stores.length);
+		derive(values, set);
 
-	return function stop() {
-		unsubs.forEach(v => v()), controller.cleanup();
+		return function stop() {
+			unsubs.forEach(v => v());
+			cleanup();
+		};
 	};
-};
 
+type Deriver<S, T> = AutoDeriver<S, T> | ManualDeriver<S, T>;
+
+interface Controller<S, T> {
+	derive(payload: StoreValues<S>, set: Setter<T>): void;
+	cleanup(): void;
+}
 /** UPDATE/CLEANUP CONTROLLERS */
 
 /**
- *  mode "auto" : function has <2 arguments
+ *  mode "auto" : deriving function has <2 arguments
  *  the derived value is the value returned by the function
  */
-const auto = (fn: AutoDeriver<any, any>): DeriverController => ({
-	update(payload, set) {
+type AutoDeriver<S, T> = (values: StoreValues<S>) => T;
+function auto<S, T>(fn: AutoDeriver<S, T>) {
+	function derive(payload: StoreValues<S>, set: Setter<T>) {
 		set(fn(payload));
-	},
-	cleanup: noop,
-});
+	}
+	return { derive, cleanup: noop };
+}
 
 /**
- *  mode "manual" : function has >1 arguments
+ *  mode "manual" : deriving function has >1 arguments
  *  [(...args) does not count as an argument]
  *
- *  derived value is a value set() manually
- *  if a callback is returned it is called on next update
+ *  derived value is set() manually
+ *  if a callback is returned it is called on before next update
  */
-const manual = (fn: ManualDeriver<any, any>): DeriverController => ({
-	update(payload, set) {
-		this.cleanup();
-		this.cleanup = fn(payload, set) as Unsubscriber;
-		if (typeof this.cleanup !== 'function') this.cleanup = noop;
-	},
-	cleanup: noop,
-});
+type ManualDeriver<S, T> = (values: StoreValues<S>, set: Setter<T>) => CleanupCallback | void;
+function manual<S, T>(fn: ManualDeriver<S, T>) {
+	let callback = noop;
+	function derive(payload: StoreValues<S>, set: Setter<T>) {
+		callback();
+		callback = fn(payload, set) as CleanupCallback;
+		if (typeof callback !== 'function') callback = noop;
+	}
+	function cleanup() {
+		callback();
+	}
+	return { derive, cleanup };
+}
