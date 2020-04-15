@@ -135,11 +135,7 @@ export function derived<S extends SingleStore | ArrayStore, F extends Deriver<S,
 
 /** DERIVING LOGIC */
 
-/**
- * derived from a single store
- *
- * derived store StartStopNotifier function when given a single store
- * */
+/** derived StartStopNotifier when given a single store */
 const single = <T>(store: SingleStore, controller: DeriverController): StartStopNotifier<T> => set => {
 	const unsub = subscribe(store, value => controller.update(value, set));
 	return function stop() {
@@ -147,7 +143,7 @@ const single = <T>(store: SingleStore, controller: DeriverController): StartStop
 	};
 };
 
-/** derived store StartStopNotifier function when given an array of stores */
+/** derived StartStopNotifier when given an array of stores */
 const multiple = <T>(stores: ArrayStore, controller: DeriverController): StartStopNotifier<T> => set => {
 	const values = new Array(stores.length);
 	let pending = 1 << stores.length;
@@ -178,9 +174,7 @@ const multiple = <T>(stores: ArrayStore, controller: DeriverController): StartSt
 
 /**
  *  mode "auto" : function has <2 arguments
- *
- *  derived value = value returned by the function
- *
+ *  the derived value is the value returned by the function
  */
 const auto = (fn: AutoDeriver<any, any>): DeriverController => ({
 	update(payload, set) {
@@ -191,11 +185,10 @@ const auto = (fn: AutoDeriver<any, any>): DeriverController => ({
 
 /**
  *  mode "manual" : function has >1 arguments
+ *  [(...args) does not count as an argument]
  *
- *  derived value = value set manually
- *  before each update => callback returned by the function
- *
- *  note :  [(...args) does not count as an argument]
+ *  derived value is a value set() manually
+ *  if a callback is returned it is called on next update
  */
 const manual = (fn: ManualDeriver<any, any>): DeriverController => ({
 	update(payload, set) {
