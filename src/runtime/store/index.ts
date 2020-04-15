@@ -150,18 +150,15 @@ const single = <T>(store: SingleStore, controller: DeriverController): StartStop
 /** derived store StartStopNotifier function when given an array of stores */
 const multiple = <T>(stores: ArrayStore, controller: DeriverController): StartStopNotifier<T> => set => {
 	const values = new Array(stores.length);
+	let pending = 1 << stores.length;
 
-	let inited = false;
-	let pending = 0;
-
-	const sync = () => inited && !pending && controller.update(values, set);
 	const unsubs = stores.map((store, index) =>
 		subscribe(
 			store,
 			value => {
 				values[index] = value;
 				pending &= ~(1 << index);
-				sync();
+				if (!pending) controller.update(values, set);
 			},
 			() => {
 				pending |= 1 << index;
@@ -169,7 +166,9 @@ const multiple = <T>(stores: ArrayStore, controller: DeriverController): StartSt
 		)
 	);
 
-	(inited = true), sync();
+	pending &= ~(1 << stores.length);
+	controller.update(values, set);
+
 	return function stop() {
 		unsubs.forEach(v => v()), controller.cleanup();
 	};
