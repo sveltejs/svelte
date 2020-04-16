@@ -1,4 +1,4 @@
-import { subscribe, noop, safe_not_equal, get_store_value } from '../internal/utils';
+import { subscribe, noop, safe_not_equal, get_store_value } from 'svelte/internal';
 
 /**
  * Get the current value from a store by subscribing and immediately unsubscribing.
@@ -108,10 +108,10 @@ export function derived<S extends SingleStore | ArrayStore, F extends Deriver<S,
 }
 
 /** StartStopNotifier when deriving a single store */
-const single = <S extends SingleStore, T>(store: S, { derive, cleanup }: Controller<S, T>): StartStopNotifier<T> =>
+const single = <S extends SingleStore, T>(store: S, { update, cleanup }: Controller<S, T>): StartStopNotifier<T> =>
 	function StartStopSingle(set) {
 		const unsub = subscribe(store, value => {
-			derive(value, set);
+			update(value, set);
 		});
 		return function stop() {
 			unsub(), cleanup();
@@ -119,7 +119,7 @@ const single = <S extends SingleStore, T>(store: S, { derive, cleanup }: Control
 	};
 
 /** StartStopNotifier when deriving an array of stores */
-const multiple = <S extends ArrayStore, T>(stores: S, { derive, cleanup }: Controller<S, T>): StartStopNotifier<T> =>
+const multiple = <S extends ArrayStore, T>(stores: S, { update, cleanup }: Controller<S, T>): StartStopNotifier<T> =>
 	function StartStopMultiple(set) {
 		const values = new Array(stores.length) as StoreValues<S>;
 		let pending = 1 << stores.length;
@@ -130,7 +130,7 @@ const multiple = <S extends ArrayStore, T>(stores: S, { derive, cleanup }: Contr
 				value => {
 					values[index] = value;
 					pending &= ~(1 << index);
-					if (!pending) derive(values, set);
+					if (!pending) update(values, set);
 				},
 				() => {
 					pending |= 1 << index;
@@ -139,7 +139,7 @@ const multiple = <S extends ArrayStore, T>(stores: S, { derive, cleanup }: Contr
 		);
 
 		pending &= ~(1 << stores.length);
-		derive(values, set);
+		update(values, set);
 
 		return function stop() {
 			unsubs.forEach(v => v());
@@ -150,7 +150,7 @@ const multiple = <S extends ArrayStore, T>(stores: S, { derive, cleanup }: Contr
 type Deriver<S, T> = AutoDeriver<S, T> | ManualDeriver<S, T>;
 
 interface Controller<S, T> {
-	derive(payload: StoreValues<S>, set: Setter<T>): void;
+	update(payload: StoreValues<S>, set: Setter<T>): void;
 	cleanup(): void;
 }
 /** UPDATE/CLEANUP CONTROLLERS */
@@ -161,10 +161,10 @@ interface Controller<S, T> {
  */
 type AutoDeriver<S, T> = (values: StoreValues<S>) => T;
 function auto<S, T>(fn: AutoDeriver<S, T>) {
-	function derive(payload: StoreValues<S>, set: Setter<T>) {
+	function update(payload: StoreValues<S>, set: Setter<T>) {
 		set(fn(payload));
 	}
-	return { derive, cleanup: noop };
+	return { update, cleanup: noop };
 }
 
 /**
@@ -177,7 +177,7 @@ function auto<S, T>(fn: AutoDeriver<S, T>) {
 type ManualDeriver<S, T> = (values: StoreValues<S>, set: Setter<T>) => CleanupCallback | void;
 function manual<S, T>(fn: ManualDeriver<S, T>) {
 	let callback = noop;
-	function derive(payload: StoreValues<S>, set: Setter<T>) {
+	function update(payload: StoreValues<S>, set: Setter<T>) {
 		callback();
 		callback = fn(payload, set) as CleanupCallback;
 		if (typeof callback !== 'function') callback = noop;
@@ -185,5 +185,5 @@ function manual<S, T>(fn: ManualDeriver<S, T>) {
 	function cleanup() {
 		callback();
 	}
-	return { derive, cleanup };
+	return { update, cleanup };
 }
