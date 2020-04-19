@@ -18,6 +18,7 @@ export default class Attribute extends Node {
 	parent: Element;
 	name: string;
 	is_spread: boolean;
+	is_boolean: boolean;
 	is_true: boolean;
 	is_static: boolean;
 	expression?: Expression;
@@ -31,7 +32,7 @@ export default class Attribute extends Node {
 		if (info.type === 'Spread') {
 			this.name = null;
 			this.is_spread = true;
-			this.is_true = false;
+			this.is_boolean = false;
 
 			this.expression = new Expression(component, this, scope, info.expression);
 			this.dependencies = this.expression.dependencies;
@@ -42,12 +43,13 @@ export default class Attribute extends Node {
 
 		else {
 			this.name = info.name;
-			this.is_true = info.value === true;
+			this.is_boolean = typeof (info.value) === 'boolean';
+			if (this.is_boolean) this.is_true = info.value === true;
 			this.is_static = true;
 
 			this.dependencies = new Set();
 
-			this.chunks = this.is_true
+			this.chunks = this.is_boolean
 				? []
 				: info.value.map(node => {
 					if (node.type === 'Text') return node;
@@ -76,7 +78,7 @@ export default class Attribute extends Node {
 	}
 
 	get_value(block) {
-		if (this.is_true) return x`true`;
+		if (this.is_boolean) return this.is_true ? x`true` : x`false`;
 		if (this.chunks.length === 0) return x`""`;
 
 		if (this.chunks.length === 1) {
@@ -99,8 +101,8 @@ export default class Attribute extends Node {
 	get_static_value() {
 		if (this.is_spread || this.dependencies.size > 0) return null;
 
-		return this.is_true
-			? true
+		return this.is_boolean
+			? this.is_true
 			: this.chunks[0]
 				// method should be called only when `is_static = true`
 				? (this.chunks[0] as Text).data

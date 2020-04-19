@@ -6,7 +6,7 @@ import remove_whitespace_children from './utils/remove_whitespace_children';
 import { p, x } from 'code-red';
 
 function get_prop_value(attribute) {
-	if (attribute.is_true) return x`true`;
+	if (attribute.is_boolean) return attribute.is_true ? x`true` : x`false`;
 	if (attribute.chunks.length === 0) return x`''`;
 
 	return attribute.chunks

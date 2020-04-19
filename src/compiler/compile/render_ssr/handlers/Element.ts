@@ -54,8 +54,8 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				const name = attribute.name.toLowerCase();
 				if (name === 'value' && node.name.toLowerCase() === 'textarea') {
 					node_contents = get_attribute_value(attribute);
-				} else if (attribute.is_true) {
-					args.push(x`{ ${attribute.name}: true }`);
+				} else if (attribute.is_boolean) {
+					args.push(attribute.is_true ? x`{ ${attribute.name}: true }` : x`{ ${attribute.name}: false }` );
 				} else if (
 					boolean_attributes.has(name) &&
 					attribute.chunks.length === 1 &&
@@ -76,8 +76,12 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			const name = attribute.name.toLowerCase();
 			if (name === 'value' && node.name.toLowerCase() === 'textarea') {
 				node_contents = get_attribute_value(attribute);
-			} else if (attribute.is_true) {
-				renderer.add_string(` ${attribute.name}`);
+			} else if (attribute.is_boolean) {
+				if (attribute.is_true) {
+					renderer.add_string(` ${attribute.name}`);
+				} else {
+					renderer.add_string(` !${attribute.name}`);
+				}
 			} else if (
 				boolean_attributes.has(name) &&
 				attribute.chunks.length === 1 &&

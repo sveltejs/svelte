@@ -193,10 +193,10 @@ export default class AttributeWrapper {
 	}
 
 	get_value(block) {
-		if (this.node.is_true) {
+		if (this.node.is_boolean) {
 			const metadata = this.get_metadata();
 			if (metadata && boolean_attribute.has(metadata.property_name.toLowerCase())) {
-				return x`true`;
+				return this.node.is_true ? x`true` : x`false`;
 			}
 			return x`""`;
 		}
@@ -245,7 +245,7 @@ export default class AttributeWrapper {
 	}
 
 	stringify() {
-		if (this.node.is_true) return '';
+		if (this.node.is_boolean) return '';
 
 		const value = this.node.chunks;
 		if (value.length === 0) return `=""`;

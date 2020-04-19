@@ -16,7 +16,9 @@ export default function get_slot_data(values: Map<string, Attribute>, block: Blo
 }
 
 function get_value(block: Block, attribute: Attribute) {
-	if (attribute.is_true) return x`true`;
+	if (attribute.is_boolean) {
+		return attribute.is_true ? x`true` : x`false`;
+	}
 	if (attribute.chunks.length === 0) return x`""`;
 
 	let value = attribute.chunks

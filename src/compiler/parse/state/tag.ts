@@ -343,7 +343,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	}
 
 	// eslint-disable-next-line no-useless-escape
-	const name = parser.read_until(/[\s=\/>"']/);
+	let name = parser.read_until(/[\s=\/>"']/);
 	if (!name) return null;
 
 	let end = parser.index;
@@ -353,8 +353,12 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	let value: any[] | true = true;
-	if (parser.eat('=')) {
+	let value: any[] | boolean = true ;
+
+	if (name.startsWith('!')) {
+		value = false;
+		name = name.slice(1);
+	} else if (parser.eat('=')) {
 		parser.allow_whitespace();
 		value = read_attribute_value(parser);
 		end = parser.index;
