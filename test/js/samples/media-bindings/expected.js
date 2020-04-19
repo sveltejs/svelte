@@ -29,18 +29,18 @@ function create_fragment(ctx) {
 			audio_updating = true;
 		}
 
-		/*audio_timeupdate_handler*/ ctx[12].call(audio);
+		/*audio_timeupdate_handler*/ ctx[13].call(audio);
 	}
 
 	return {
 		c() {
 			audio = element("audio");
-			if (/*buffered*/ ctx[0] === void 0) add_render_callback(() => /*audio_progress_handler*/ ctx[10].call(audio));
-			if (/*buffered*/ ctx[0] === void 0 || /*seekable*/ ctx[1] === void 0) add_render_callback(() => /*audio_loadedmetadata_handler*/ ctx[11].call(audio));
-			if (/*played*/ ctx[2] === void 0 || /*currentTime*/ ctx[3] === void 0 || /*ended*/ ctx[9] === void 0) add_render_callback(audio_timeupdate_handler);
-			if (/*duration*/ ctx[4] === void 0) add_render_callback(() => /*audio_durationchange_handler*/ ctx[13].call(audio));
-			if (/*seeking*/ ctx[8] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[17].call(audio));
-			if (/*ended*/ ctx[9] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[18].call(audio));
+			if (/*buffered*/ ctx[0] === void 0) add_render_callback(() => /*audio_progress_handler*/ ctx[11].call(audio));
+			if (/*buffered*/ ctx[0] === void 0 || /*seekable*/ ctx[1] === void 0) add_render_callback(() => /*audio_loadedmetadata_handler*/ ctx[12].call(audio));
+			if (/*played*/ ctx[2] === void 0 || /*currentTime*/ ctx[3] === void 0 || /*ended*/ ctx[10] === void 0) add_render_callback(audio_timeupdate_handler);
+			if (/*duration*/ ctx[4] === void 0) add_render_callback(() => /*audio_durationchange_handler*/ ctx[14].call(audio));
+			if (/*seeking*/ ctx[9] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[18].call(audio));
+			if (/*ended*/ ctx[10] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[19].call(audio));
 		},
 		m(target, anchor, remount) {
 			insert(target, audio, anchor);
@@ -49,28 +49,32 @@ function create_fragment(ctx) {
 				audio.volume = /*volume*/ ctx[6];
 			}
 
-			if (!isNaN(/*playbackRate*/ ctx[7])) {
-				audio.playbackRate = /*playbackRate*/ ctx[7];
+			if (!isNaN(/*muted*/ ctx[7])) {
+				audio.muted = /*muted*/ ctx[7];
+			}
+
+			if (!isNaN(/*playbackRate*/ ctx[8])) {
+				audio.playbackRate = /*playbackRate*/ ctx[8];
 			}
 
 			if (remount) run_all(dispose);
 
 			dispose = [
-				listen(audio, "progress", /*audio_progress_handler*/ ctx[10]),
-				listen(audio, "loadedmetadata", /*audio_loadedmetadata_handler*/ ctx[11]),
+				listen(audio, "progress", /*audio_progress_handler*/ ctx[11]),
+				listen(audio, "loadedmetadata", /*audio_loadedmetadata_handler*/ ctx[12]),
 				listen(audio, "timeupdate", audio_timeupdate_handler),
-				listen(audio, "durationchange", /*audio_durationchange_handler*/ ctx[13]),
-				listen(audio, "play", /*audio_play_pause_handler*/ ctx[14]),
-				listen(audio, "pause", /*audio_play_pause_handler*/ ctx[14]),
-				listen(audio, "volumechange", /*audio_volumechange_handler*/ ctx[15]),
-				listen(audio, "ratechange", /*audio_ratechange_handler*/ ctx[16]),
-				listen(audio, "seeking", /*audio_seeking_seeked_handler*/ ctx[17]),
-				listen(audio, "seeked", /*audio_seeking_seeked_handler*/ ctx[17]),
-				listen(audio, "ended", /*audio_ended_handler*/ ctx[18])
+				listen(audio, "durationchange", /*audio_durationchange_handler*/ ctx[14]),
+				listen(audio, "play", /*audio_play_pause_handler*/ ctx[15]),
+				listen(audio, "pause", /*audio_play_pause_handler*/ ctx[15]),
+				listen(audio, "volumechange", /*audio_volumechange_handler*/ ctx[16]),
+				listen(audio, "ratechange", /*audio_ratechange_handler*/ ctx[17]),
+				listen(audio, "seeking", /*audio_seeking_seeked_handler*/ ctx[18]),
+				listen(audio, "seeked", /*audio_seeking_seeked_handler*/ ctx[18]),
+				listen(audio, "ended", /*audio_ended_handler*/ ctx[19])
 			];
 		},
 		p(ctx, [dirty]) {
-			if (!audio_updating && dirty & /*currentTime*/ 8 && !isNaN(/*currentTime*/ ctx[3])) {
+			if (!audio_updating && dirty & /*currentTime*/ 9 && !isNaN(/*currentTime*/ ctx[3])) {
 				audio.currentTime = /*currentTime*/ ctx[3];
 			}
 
@@ -84,8 +88,12 @@ function create_fragment(ctx) {
 				audio.volume = /*volume*/ ctx[6];
 			}
 
-			if (dirty & /*playbackRate*/ 128 && !isNaN(/*playbackRate*/ ctx[7])) {
-				audio.playbackRate = /*playbackRate*/ ctx[7];
+			if (dirty & /*muted*/ 128 && !isNaN(/*muted*/ ctx[7])) {
+				audio.muted = /*muted*/ ctx[7];
+			}
+
+			if (dirty & /*playbackRate*/ 256 && !isNaN(/*playbackRate*/ ctx[8])) {
+				audio.playbackRate = /*playbackRate*/ ctx[8];
 			}
 		},
 		i: noop,
@@ -105,6 +113,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { duration } = $$props;
 	let { paused } = $$props;
 	let { volume } = $$props;
+	let { muted } = $$props;
 	let { playbackRate } = $$props;
 	let { seeking } = $$props;
 	let { ended } = $$props;
@@ -127,7 +136,7 @@ function instance($$self, $$props, $$invalidate) {
 		ended = this.ended;
 		$$invalidate(2, played);
 		$$invalidate(3, currentTime);
-		$$invalidate(9, ended);
+		$$invalidate(10, ended);
 	}
 
 	function audio_durationchange_handler() {
@@ -142,22 +151,24 @@ function instance($$self, $$props, $$invalidate) {
 
 	function audio_volumechange_handler() {
 		volume = this.volume;
+		muted = this.muted;
 		$$invalidate(6, volume);
+		$$invalidate(7, muted);
 	}
 
 	function audio_ratechange_handler() {
 		playbackRate = this.playbackRate;
-		$$invalidate(7, playbackRate);
+		$$invalidate(8, playbackRate);
 	}
 
 	function audio_seeking_seeked_handler() {
 		seeking = this.seeking;
-		$$invalidate(8, seeking);
+		$$invalidate(9, seeking);
 	}
 
 	function audio_ended_handler() {
 		ended = this.ended;
-		$$invalidate(9, ended);
+		$$invalidate(10, ended);
 	}
 
 	$$self.$set = $$props => {
@@ -168,9 +179,10 @@ function instance($$self, $$props, $$invalidate) {
 		if ("duration" in $$props) $$invalidate(4, duration = $$props.duration);
 		if ("paused" in $$props) $$invalidate(5, paused = $$props.paused);
 		if ("volume" in $$props) $$invalidate(6, volume = $$props.volume);
-		if ("playbackRate" in $$props) $$invalidate(7, playbackRate = $$props.playbackRate);
-		if ("seeking" in $$props) $$invalidate(8, seeking = $$props.seeking);
-		if ("ended" in $$props) $$invalidate(9, ended = $$props.ended);
+		if ("muted" in $$props) $$invalidate(7, muted = $$props.muted);
+		if ("playbackRate" in $$props) $$invalidate(8, playbackRate = $$props.playbackRate);
+		if ("seeking" in $$props) $$invalidate(9, seeking = $$props.seeking);
+		if ("ended" in $$props) $$invalidate(10, ended = $$props.ended);
 	};
 
 	return [
@@ -181,6 +193,7 @@ function instance($$self, $$props, $$invalidate) {
 		duration,
 		paused,
 		volume,
+		muted,
 		playbackRate,
 		seeking,
 		ended,
@@ -208,9 +221,10 @@ class Component extends SvelteComponent {
 			duration: 4,
 			paused: 5,
 			volume: 6,
-			playbackRate: 7,
-			seeking: 8,
-			ended: 9
+			muted: 7,
+			playbackRate: 8,
+			seeking: 9,
+			ended: 10
 		});
 	}
 }

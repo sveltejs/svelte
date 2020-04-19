@@ -145,6 +145,10 @@ export default class BindingWrapper {
 				mount_conditions.push(x`!@_isNaN(${this.snippet})`);
 				break;
 
+			case 'muted':
+				update_dom = b`${parent.var}.${this.node.name} = !!${this.snippet};`;
+				break;
+
 			case 'paused':
 			{
 				// this is necessary to prevent audio restarting by itself
