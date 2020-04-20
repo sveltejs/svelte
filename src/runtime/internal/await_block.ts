@@ -1,4 +1,4 @@
-import { assign, is_promise } from './utils';
+import { is_promise } from './utils';
 import { check_outros, group_outros, transition_in, transition_out } from './transitions';
 import { flush } from './scheduler';
 import { get_current_component, set_current_component } from './lifecycle';
@@ -9,9 +9,15 @@ export function handle_promise(promise, info) {
 	function update(type, index, key?, value?) {
 		if (info.token !== token) return;
 
-		info.resolved = key && { [key]: value };
+		info.resolved = value;
 
-		const child_ctx = assign(assign({}, info.ctx), info.resolved);
+		let child_ctx = info.ctx;
+
+		if (key !== undefined) {
+			child_ctx = child_ctx.slice();
+			child_ctx[key] = value;
+		}
+
 		const block = type && (info.current = type)(child_ctx);
 
 		let needs_flush = false;
@@ -69,6 +75,6 @@ export function handle_promise(promise, info) {
 			return true;
 		}
 
-		info.resolved = { [info.value]: promise };
+		info.resolved = promise;
 	}
 }

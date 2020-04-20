@@ -7,7 +7,8 @@ import {
 	loadConfig,
 	loadSvelte,
 	env,
-	setupHtmlEqual
+	setupHtmlEqual,
+	shouldUpdateExpected
 } from '../helpers.js';
 
 let compileOptions = null;
@@ -41,13 +42,14 @@ describe('hydration', () => {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`./hydration/samples/${dir}/_config.js`);
+		const solo = config.solo || /\.solo/.test(dir);
 
-		if (config.solo && process.env.CI) {
+		if (solo && process.env.CI) {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
-			const cwd = path.resolve(`test/hydration/samples/${dir}`);
+		(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
+			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
 
@@ -65,7 +67,15 @@ describe('hydration', () => {
 				}
 
 				const target = window.document.body;
+				const head = window.document.head;
+
 				target.innerHTML = fs.readFileSync(`${cwd}/_before.html`, 'utf-8');
+
+				let before_head;
+				try {
+					before_head = fs.readFileSync(`${cwd}/_before_head.html`, 'utf-8');
+					head.innerHTML = before_head;
+				} catch (err) {}
 
 				const snapshot = config.snapshot ? config.snapshot(target) : {};
 
@@ -75,7 +85,29 @@ describe('hydration', () => {
 					props: config.props
 				});
 
-				assert.htmlEqual(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
+				try {
+					assert.htmlEqual(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
+				} catch (error) {
+					if (shouldUpdateExpected()) {
+						fs.writeFileSync(`${cwd}/_after.html`, target.innerHTML);
+						console.log(`Updated ${cwd}/_after.html.`);
+					} else {
+						throw error;
+					}
+				}
+
+				if (before_head) {
+					try {
+						assert.htmlEqual(head.innerHTML, fs.readFileSync(`${cwd}/_after_head.html`, 'utf-8'));
+					} catch (error) {
+						if (shouldUpdateExpected()) {
+							fs.writeFileSync(`${cwd}/_after_head.html`, head.innerHTML);
+							console.log(`Updated ${cwd}/_after_head.html.`);
+						} else {
+							throw error;
+						}
+					}
+				}
 
 				if (config.test) {
 					config.test(assert, target, snapshot, component, window);
@@ -96,7 +128,7 @@ describe('hydration', () => {
 		});
 	}
 
-	fs.readdirSync('test/hydration/samples').forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		runTest(dir, null);
 	});
 });

@@ -7,15 +7,6 @@
     <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
   </a>
 
-  <a href="https://packagephobia.now.sh/result?p=svelte">
-    <img src="https://packagephobia.now.sh/badge?p=svelte" alt="install size">
-  </a>
-
-  <a href="https://travis-ci.org/sveltejs/svelte">
-    <img src="https://api.travis-ci.org/sveltejs/svelte.svg?branch=master"
-         alt="build status">
-  </a>
-
   <a href="https://github.com/sveltejs/svelte/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
   </a>
@@ -40,6 +31,8 @@ git clone https://github.com/sveltejs/svelte.git
 cd svelte
 npm install
 ```
+
+> Do not use Yarn to install the dependencies, as the specific package versions in `package-lock.json` are used to build and test Svelte.
 
 > Many tests depend on newlines being preserved as `<LF>`. On Windows, you can ensure this by cloning with:
 > ```bash

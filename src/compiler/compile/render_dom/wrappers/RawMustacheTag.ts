@@ -19,6 +19,7 @@ export default class RawMustacheTagWrapper extends Tag {
 	) {
 		super(renderer, block, parent, node);
 		this.cannot_use_innerhtml();
+		this.not_static_content();
 	}
 
 	render(block: Block, parent_node: Identifier, _parent_nodes: Identifier) {
@@ -47,7 +48,7 @@ export default class RawMustacheTagWrapper extends Tag {
 
 			const { init } = this.rename_this_method(
 				block,
-				content => x`${html_tag}.p(${content});`
+				content => x`${html_tag}.p(${content})`
 			);
 
 			const update_anchor = in_head ? 'null' : needs_anchor ? html_anchor : this.next ? this.next.var : 'null';

@@ -11,7 +11,11 @@ const read_only_media_attributes = new Set([
 	'duration',
 	'buffered',
 	'seekable',
-	'played'
+	'played',
+	'seeking',
+	'ended',
+	'videoHeight',
+	'videoWidth'
 ]);
 
 export default class Binding extends Node {
@@ -46,9 +50,18 @@ export default class Binding extends Node {
 				message: 'Cannot bind to a variable declared with the let: directive'
 			});
 		} else if (this.is_contextual) {
+			if (scope.is_await(name)) {
+				component.error(this, {
+					code: 'invalid-binding',
+					message: 'Cannot bind to a variable declared with {#await ... then} or {:catch} blocks'
+				});
+			}
+
 			scope.dependencies_for_name.get(name).forEach(name => {
 				const variable = component.var_lookup.get(name);
-				variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
+				if (variable) {
+					variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
+				}
 			});
 		} else {
 			const variable = component.var_lookup.get(name);
@@ -59,6 +72,11 @@ export default class Binding extends Node {
 			});
 
 			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
+
+			if (info.expression.type === 'Identifier' && !variable.writable) component.error(this.expression.node, {
+				code: 'invalid-binding',
+				message: 'Cannot bind to a variable which is not writable',
+			});
 		}
 
 		const type = parent.get_static_attribute_value('type');

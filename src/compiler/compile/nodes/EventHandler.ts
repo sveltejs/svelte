@@ -1,8 +1,6 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
-import { b, x } from 'code-red';
-import Block from '../render_dom/Block';
 import { sanitize } from '../../utils/names';
 import { Identifier } from 'estree';
 
@@ -22,7 +20,7 @@ export default class EventHandler extends Node {
 		this.modifiers = new Set(info.modifiers);
 
 		if (info.expression) {
-			this.expression = new Expression(component, this, template_scope, info.expression, true);
+			this.expression = new Expression(component, this, template_scope, info.expression);
 			this.uses_context = this.expression.uses_context;
 
 			if (/FunctionExpression/.test(info.expression.type) && info.expression.params.length === 0) {
@@ -45,31 +43,20 @@ export default class EventHandler extends Node {
 				}
 			}
 		} else {
-			const id = component.get_unique_name(`${sanitize(this.name)}_handler`);
-
-			component.add_var({
-				name: id.name,
-				internal: true,
-				referenced: true
-			});
-
-			component.partly_hoisted.push(b`
-				function ${id}(event) {
-					@bubble($$self, event);
-				}
-			`);
-
-			this.handler_name = id;
+			this.handler_name = component.get_unique_name(`${sanitize(this.name)}_handler`);
 		}
 	}
 
-	// TODO move this? it is specific to render-dom
-	render(block: Block) {
-		if (this.expression) {
-			return this.expression.manipulate(block);
+	get reassigned(): boolean {
+		if (!this.expression) {
+			return false;
+		}
+		const node = this.expression.node;
+
+		if (/FunctionExpression/.test(node.type)) {
+			return false;
 		}
 
-		// this.component.add_reference(this.handler_name);
-		return x`#ctx.${this.handler_name}`;
+		return this.expression.dynamic_dependencies().length > 0;
 	}
 }

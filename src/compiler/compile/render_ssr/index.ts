@@ -1,17 +1,17 @@
 import { b } from 'code-red';
 import Component from '../Component';
-import { CompileOptions } from '../../interfaces';
+import { CompileOptions, CssResult } from '../../interfaces';
 import { string_literal } from '../utils/stringify';
 import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
 import { extract_names } from '../utils/scope';
-import { LabeledStatement, Statement, ExpressionStatement, AssignmentExpression } from 'estree';
+import { LabeledStatement, Statement, ExpressionStatement, AssignmentExpression, Node } from 'estree';
 
 export default function ssr(
 	component: Component,
 	options: CompileOptions
-) {
+): {js: Node[]; css: CssResult} {
 	const renderer = new Renderer({
 		name: component.name
 	});
@@ -30,6 +30,10 @@ export default function ssr(
 	const css = options.customElement ?
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
+
+	const uses_rest = component.var_lookup.has('$$restProps');
+	const props = component.vars.filter(variable => !variable.module && variable.export_name);
+	const rest = uses_rest ? b`let $$restProps = @compute_rest_props($$props, [${props.map(prop => `"${prop.export_name}"`).join(',')}]);` : null;
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 	const reactive_store_values = reactive_stores
@@ -130,6 +134,7 @@ export default function ssr(
 			return ${literal};`;
 
 	const blocks = [
+		rest,
 		...reactive_stores.map(({ name }) => {
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
@@ -145,7 +150,7 @@ export default function ssr(
 		main
 	].filter(Boolean);
 
-	return b`
+	const js = b`
 		${css.code ? b`
 		const #css = {
 			code: "${css.code}",
@@ -160,6 +165,8 @@ export default function ssr(
 			${blocks}
 		});
 	`;
+
+	return {js, css};
 }
 
 function trim(nodes: TemplateNode[]) {

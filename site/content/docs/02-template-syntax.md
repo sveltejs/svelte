@@ -58,6 +58,17 @@ Or they can *be* JavaScript expressions.
 
 ---
 
+Boolean attributes are included on the element if their value is [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) and excluded if it's [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy).
+
+All other attributes are included unless their value is [nullish](https://developer.mozilla.org/en-US/docs/Glossary/Nullish) (`null` or `undefined`).
+
+```html
+<input required={false} placeholder="This input field is not required">
+<div title={null}>This div has no title attribute</div>
+```
+
+---
+
 An expression might include characters that would cause syntax highlighting to fail in regular HTML, so quoting the value is permitted. The quotes do not affect how the value is parsed:
 
 ```html
@@ -102,6 +113,15 @@ An element or component can have multiple spread attributes, interspersed with r
 <Widget {...$$props}/>
 ```
 
+---
+
+*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component.
+
+```html
+<input {...$$restProps}>
+```
+
+---
 
 ### Text expressions
 
@@ -204,6 +224,8 @@ Iterating over lists of values can be done with an each block.
 	{/each}
 </ul>
 ```
+
+You can use each blocks to iterate over any array or array-like value — that is, any object with a `length` property.
 
 ---
 
@@ -563,18 +585,23 @@ Elements with the `contenteditable` attribute support `innerHTML` and `textConte
 
 ---
 
-Media elements (`<audio>` and `<video>`) have their own set of bindings — four *readonly* ones...
+Media elements (`<audio>` and `<video>`) have their own set of bindings — six *readonly* ones...
 
 * `duration` (readonly) — the total duration of the video, in seconds
 * `buffered` (readonly) — an array of `{start, end}` objects
 * `seekable` (readonly) — ditto
 * `played` (readonly) — ditto
+* `seeking` (readonly) — boolean
+* `ended` (readonly) — boolean
 
-...and three *two-way* bindings:
+...and four *two-way* bindings:
 
 * `currentTime` — the current point in the video, in seconds
+* `playbackRate` — how fast to play the video, where 1 is 'normal'
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
+
+Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 
 ```html
 <video
@@ -582,10 +609,14 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — four
 	bind:duration
 	bind:buffered
 	bind:seekable
+	bind:seeking
 	bind:played
+	bind:ended
 	bind:currentTime
 	bind:paused
 	bind:volume
+	bind:videoWidth
+	bind:videoHeight
 ></video>
 ```
 
@@ -784,7 +815,7 @@ transition = (node: HTMLElement, params: any) => {
 
 A transition is triggered by an element entering or leaving the DOM as a result of a state change.
 
-Elements inside an *outroing* block are kept in the DOM until all current transitions have completed.
+When a block is transitioning out, elements inside the block are kept in the DOM until all current transitions have completed.
 
 The `transition:` directive indicates a *bidirectional* transition, which means it can be smoothly reversed while the transition is in progress.
 
@@ -862,7 +893,7 @@ A custom transition function can also return a `tick` function, which is called 
 	function typewriter(node, { speed = 50 }) {
 		const valid = (
 			node.childNodes.length === 1 &&
-			node.childNodes[0].nodeType === 3
+			node.childNodes[0].nodeType === Node.TEXT_NODE
 		);
 
 		if (!valid) return {};
@@ -1007,7 +1038,7 @@ DOMRect {
 	​top: number,
 	width: number,
 	x: number,
-	y:number
+	y: number
 }
 ```
 
@@ -1145,7 +1176,7 @@ bind:property={variable}
 
 ---
 
-You can bind to component props using the same mechanism.
+You can bind to component props using the same syntax as for elements.
 
 ```html
 <Keypad bind:value={pin}/>
@@ -1193,14 +1224,16 @@ The content is exposed in the child component using the `<slot>` element, which 
 
 ```html
 <!-- App.svelte -->
+<Widget></Widget>
+
 <Widget>
-	<p>this is some child content</p>
+	<p>this is some child content that will overwrite the default slot content</p>
 </Widget>
 
 <!-- Widget.svelte -->
 <div>
 	<slot>
-		this will be rendered if someone does <Widget/>
+		this fallback content will be rendered when no content is provided, like in the first example
 	</slot>
 </div>
 ```
@@ -1236,15 +1269,15 @@ The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}
 
 ```html
 <!-- App.svelte -->
-<FancyList {items} let:item={item}>
-	<div>{item.text}</div>
+<FancyList {items} let:prop={thing}>
+	<div>{thing.text}</div>
 </FancyList>
 
 <!-- FancyList.svelte -->
 <ul>
 	{#each items as item}
 		<li class="fancy">
-			<slot item={item}></slot>
+			<slot prop={item}></slot>
 		</li>
 	{/each}
 </ul>
@@ -1257,7 +1290,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 ```html
 <!-- App.svelte -->
 <FancyList {items}>
-	<div slot="item" let:item={item}>{item.text}</div>
+	<div slot="item" let:item>{item.text}</div>
 	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
 </FancyList>
 
@@ -1265,7 +1298,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 <ul>
 	{#each items as item}
 		<li class="fancy">
-			<slot name="item" item={item}></slot>
+			<slot name="item" {item}></slot>
 		</li>
 	{/each}
 </ul>

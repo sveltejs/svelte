@@ -1,6 +1,7 @@
 import * as jsdom from 'jsdom';
 import * as assert from 'assert';
 import * as glob from 'tiny-glob/sync.js';
+import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
 
@@ -44,6 +45,12 @@ export function tryToReadFile(file) {
 	}
 }
 
+export function cleanRequireCache() {
+	Object.keys(require.cache)
+		.filter(x => x.endsWith('.svelte'))
+		.forEach(file => delete require.cache[file]);
+}
+
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 
@@ -52,14 +59,22 @@ global.document = window.document;
 global.navigator = window.navigator;
 global.getComputedStyle = window.getComputedStyle;
 global.requestAnimationFrame = null; // placeholder, filled in using set_raf
+global.window = window;
 
 // add missing ecmascript globals to window
 for (const key of Object.getOwnPropertyNames(global)) {
 	window[key] = window[key] || global[key];
 }
 
+// implement mock scroll
+window.scrollTo = function(pageXOffset, pageYOffset) {
+	window.pageXOffset = pageXOffset;
+	window.pageYOffset = pageYOffset;
+};
+
 export function env() {
 	window.document.title = '';
+	window.document.head.innerHTML = '';
 	window.document.body.innerHTML = '<main></main>';
 
 	return window;
@@ -199,8 +214,47 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 	});
 }
 
+export function shouldUpdateExpected() {
+	return process.argv.includes('--update');
+}
+
 export function spaces(i) {
 	let result = '';
 	while (i--) result += ' ';
 	return result;
+}
+
+// fake timers
+const original_set_timeout = global.setTimeout;
+
+export function useFakeTimers() {
+	const callbacks = [];
+
+	global.setTimeout = function(fn) {
+		callbacks.push(fn);
+	};
+
+	return {
+		flush() {
+			callbacks.forEach(fn => fn());
+			callbacks.splice(0, callbacks.length);
+		},
+		removeFakeTimers() {
+			callbacks.splice(0, callbacks.length);
+			global.setTimeout = original_set_timeout;
+		}
+	};
+}
+
+export function mkdirp(dir) {
+	const parent = path.dirname(dir);
+	if (parent === dir) return;
+
+	mkdirp(parent);
+
+	try {
+		fs.mkdirSync(dir);
+	} catch (err) {
+		// do nothing
+	}
 }

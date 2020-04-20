@@ -43,13 +43,16 @@ export function not_equal(a, b) {
 }
 
 export function validate_store(store, name) {
-	if (!store || typeof store.subscribe !== 'function') {
+	if (store != null && typeof store.subscribe !== 'function') {
 		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
 	}
 }
 
-export function subscribe(store, callback) {
-	const unsub = store.subscribe(callback);
+export function subscribe(store, ...callbacks) {
+	if (store == null) {
+		return noop;
+	}
+	const unsub = store.subscribe(...callbacks);
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
@@ -63,29 +66,54 @@ export function component_subscribe(component, store, callback) {
 	component.$$.on_destroy.push(subscribe(store, callback));
 }
 
-export function create_slot(definition, ctx, fn) {
+export function create_slot(definition, ctx, $$scope, fn) {
 	if (definition) {
-		const slot_ctx = get_slot_context(definition, ctx, fn);
+		const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
 		return definition[0](slot_ctx);
 	}
 }
 
-export function get_slot_context(definition, ctx, fn) {
-	return definition[1]
-		? assign({}, assign(ctx.$$scope.ctx, definition[1](fn ? fn(ctx) : {})))
-		: ctx.$$scope.ctx;
+export function get_slot_context(definition, ctx, $$scope, fn) {
+	return definition[1] && fn
+		? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
+		: $$scope.ctx;
 }
 
-export function get_slot_changes(definition, ctx, changed, fn) {
-	return definition[1]
-		? assign({}, assign(ctx.$$scope.changed || {}, definition[1](fn ? fn(changed) : {})))
-		: ctx.$$scope.changed || {};
+export function get_slot_changes(definition, $$scope, dirty, fn) {
+	if (definition[2] && fn) {
+		const lets = definition[2](fn(dirty));
+
+		if ($$scope.dirty === undefined) {
+			return lets;
+		}
+
+		if (typeof lets === 'object') {
+			const merged = [];
+			const len = Math.max($$scope.dirty.length, lets.length);
+			for (let i = 0; i < len; i += 1) {
+				merged[i] = $$scope.dirty[i] | lets[i];
+			}
+
+			return merged;
+		}
+
+		return $$scope.dirty | lets;
+	}
+
+	return $$scope.dirty;
 }
 
 export function exclude_internal_props(props) {
 	const result = {};
 	for (const k in props) if (k[0] !== '$') result[k] = props[k];
 	return result;
+}
+
+export function compute_rest_props(props, keys) {
+	const rest = {};
+	keys = new Set(keys);
+	for (const k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
+	return rest;
 }
 
 export function once(fn) {
@@ -104,4 +132,10 @@ export function null_to_empty(value) {
 export function set_store_value(store, ret, value = ret) {
 	store.set(value);
 	return ret;
+}
+
+export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
+
+export function action_destroyer(action_result) {
+	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }

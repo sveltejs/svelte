@@ -21,7 +21,7 @@ export function fix_and_outro_and_destroy_block(block, lookup) {
 	outro_and_destroy_block(block, lookup);
 }
 
-export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
+export function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
 	let o = old_blocks.length;
 	let n = list.length;
 
@@ -43,7 +43,7 @@ export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, li
 			block = create_each_block(key, child_ctx);
 			block.c();
 		} else if (dynamic) {
-			block.p(changed, child_ctx);
+			block.p(child_ctx, dirty);
 		}
 
 		new_lookup.set(key, new_blocks[i] = block);
@@ -56,7 +56,7 @@ export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, li
 
 	function insert(block) {
 		transition_in(block, 1);
-		block.m(node, next);
+		block.m(node, next, lookup.has(block.key));
 		lookup.set(block.key, block);
 		next = block.first;
 		n--;
@@ -108,9 +108,13 @@ export function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, li
 	return new_blocks;
 }
 
-export function measure(blocks) {
-	const rects = {};
-	let i = blocks.length;
-	while (i--) rects[blocks[i].key] = blocks[i].node.getBoundingClientRect();
-	return rects;
+export function validate_each_keys(ctx, list, get_context, get_key) {
+	const keys = new Set();
+	for (let i = 0; i < list.length; i++) {
+		const key = get_key(get_context(ctx, list, i));
+		if (keys.has(key)) {
+			throw new Error(`Cannot have duplicate keys in a keyed each`);
+		}
+		keys.add(key);
+	}
 }

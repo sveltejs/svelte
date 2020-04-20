@@ -3,16 +3,17 @@ import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
 import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
-import { globals, sanitize } from '../../../utils/names';
+import { sanitize } from '../../../utils/names';
 import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import Block from '../../render_dom/Block';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
-import { x, b, p } from 'code-red';
-import { invalidate } from '../../utils/invalidate';
-import { Node, FunctionExpression } from 'estree';
+import { b } from 'code-red';
+import { invalidate } from '../../render_dom/invalidate';
+import { Node, FunctionExpression, Identifier } from 'estree';
 import { TemplateNode } from '../../../interfaces';
+import { is_reserved_keyword } from '../../utils/reserved_keywords';
 
 type Owner = Wrapper | TemplateNode;
 
@@ -74,8 +75,6 @@ export default class Expression {
 					const { name, nodes } = flatten_reference(node);
 
 					if (scope.has(name)) return;
-
-					if (globals.has(name) && !(component.var_lookup.has(name) || template_scope.names.has(name))) return;
 
 					if (name[0] === '$' && template_scope.names.has(name.slice(1))) {
 						component.error(node, {
@@ -145,7 +144,7 @@ export default class Expression {
 				}
 			},
 
-			leave(node) {
+			leave(node: Node) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
@@ -160,7 +159,7 @@ export default class Expression {
 	dynamic_dependencies() {
 		return Array.from(this.dependencies).filter(name => {
 			if (this.template_scope.is_let(name)) return true;
-			if (name === '$$props') return true;
+			if (is_reserved_keyword(name)) return true;
 
 			const variable = this.component.var_lookup.get(name);
 			return is_dynamic(variable);
@@ -202,7 +201,6 @@ export default class Expression {
 					const { name } = flatten_reference(node);
 
 					if (scope.has(name)) return;
-					if (globals.has(name) && !(component.var_lookup.has(name) || template_scope.names.has(name))) return;
 
 					if (function_expression) {
 						if (template_scope.names.has(name)) {
@@ -216,7 +214,8 @@ export default class Expression {
 							component.add_reference(name); // TODO is this redundant/misplaced?
 						}
 					} else if (is_contextual(component, template_scope, name)) {
-						this.replace(x`#ctx.${node}`);
+						const reference = block.renderer.reference(node);
+						this.replace(reference);
 					}
 
 					this.skip();
@@ -263,42 +262,38 @@ export default class Expression {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(declaration);
 
-						this.replace(x`#ctx.${id}` as any);
-
-						component.add_var({
-							name: id.name,
-							internal: true,
-							referenced: true
-						});
+						block.renderer.add_to_context(id.name);
+						this.replace(block.renderer.reference(id));
 					}
 
 					else {
 						// we need a combo block/init recipe
-						(node as FunctionExpression).params.unshift({
-							type: 'ObjectPattern',
-							properties: Array.from(contextual_dependencies).map(name => p`${name}` as any)
-						});
+						const deps = Array.from(contextual_dependencies);
+
+						(node as FunctionExpression).params = [
+							...deps.map(name => ({ type: 'Identifier', name } as Identifier)),
+							...(node as FunctionExpression).params
+						];
+
+						const context_args = deps.map(name => block.renderer.reference(name));
 
 						component.partly_hoisted.push(declaration);
 
-						this.replace(id as any);
+						block.renderer.add_to_context(id.name);
+						const callee = block.renderer.reference(id);
 
-						component.add_var({
-							name: id.name,
-							internal: true,
-							referenced: true
-						});
+						this.replace(id as any);
 
 						if ((node as FunctionExpression).params.length > 0) {
 							declarations.push(b`
 								function ${id}(...args) {
-									return #ctx.${id}(#ctx, ...args);
+									return ${callee}(${context_args}, ...args);
 								}
 							`);
 						} else {
 							declarations.push(b`
 								function ${id}() {
-									return #ctx.${id}(#ctx);
+									return ${callee}(${context_args});
 								}
 							`);
 						}
@@ -332,7 +327,7 @@ export default class Expression {
 						}
 					});
 
-					this.replace(invalidate(component, scope, node, traced));
+					this.replace(invalidate(block.renderer, scope, node, traced));
 				}
 			}
 		});
@@ -344,7 +339,7 @@ export default class Expression {
 			});
 		}
 
-		return (this.manipulated = node);
+		return (this.manipulated = node as Node);
 	}
 }
 
@@ -361,7 +356,7 @@ function get_function_name(_node, parent) {
 }
 
 function is_contextual(component: Component, scope: TemplateScope, name: string) {
-	if (name === '$$props') return true;
+	if (is_reserved_keyword(name)) return true;
 
 	// if it's a name below root scope, it's contextual
 	if (!scope.is_top_level(name)) return true;

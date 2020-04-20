@@ -11,7 +11,7 @@ export const title = css`
 `;
 
 export const comicSans = css`
-	font-family: 'Comic Sans MS';
+	font-family: 'Comic Sans MS', cursive;
 `;
 
 export const box = css`

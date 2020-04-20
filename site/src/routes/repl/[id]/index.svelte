@@ -57,7 +57,10 @@
 					is_relaxed_gist = data.relaxed;
 
 					const components = data.files.map(file => {
-						let [name, type] = file.name.split('.');
+						const dot = file.name.lastIndexOf(".");
+						let name = file.name.slice(0, dot);
+						let type = file.name.slice(dot + 1);
+
 						if (type === 'html') type = 'svelte'; // TODO do this on the server
 						return { name, type, source: file.source };
 					});

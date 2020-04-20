@@ -69,13 +69,18 @@ interface Tweened<T> extends Readable<T> {
 	update(updater: Updater<T>, opts: Options<T>): Promise<void>;
 }
 
-export function tweened<T>(value: T, defaults: Options<T> = {}): Tweened<T> {
+export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 	const store = writable(value);
 
 	let task: Task;
 	let target_value = value;
 
 	function set(new_value: T, opts: Options<T>) {
+		if (value == null) {
+			store.set(value = new_value);
+			return Promise.resolve();
+		}
+
 		target_value = new_value;
 
 		let previous_task = task;

@@ -1,0 +1,9 @@
+[
+	{
+		"code": "invalid-binding",
+		"message": "Cannot bind to a variable declared with {#await ... then} or {:catch} blocks",
+		"pos": 75,
+		"start": { "line": 5, "column": 9, "character": 75 },
+		"end": { "line": 5, "column": 19, "character": 85 }
+	}
+]

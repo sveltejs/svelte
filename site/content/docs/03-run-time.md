@@ -184,7 +184,7 @@ dispatch: ((name: string, detail?: any) => void) = createEventDispatcher();
 
 ---
 
-Creates an event dispatcher that can be used to dispatch [component events](docs#Component_events). Event dispatchers are functions that can take two arguments: `name` and `detail`.
+Creates an event dispatcher that can be used to dispatch [component events](docs#on_component_event). Event dispatchers are functions that can take two arguments: `name` and `detail`.
 
 Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture) and are not cancellable with `event.preventDefault()`. The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
 
@@ -214,7 +214,11 @@ Events dispatched from child components can be listened to in their parent. Any 
 
 ### `svelte/store`
 
-The `svelte/store` module exports functions for creating [stores](docs#4_Prefix_stores_with_$_to_access_their_values).
+The `svelte/store` module exports functions for creating [readable](docs#readable), [writable](docs#writable) and [derived](docs#derived) stores.
+
+Keep in mind that you don't *have* to use these functions to enjoy the [reactive `$store` syntax](docs#4_Prefix_stores_with_$_to_access_their_values) in your components. Any object that correctly implements `.subscribe`, unsubscribe, and (optionally) `.set` is a valid store, and will work both with the special syntax, and with Svelte's built-in [`derived` stores](docs#derived).
+
+This makes it possible to wrap almost any other reactive state handling library for use in Svelte. Read more about the [store contract](docs#Store_contract) to see what a correct implementation looks like.
 
 #### `writable`
 
@@ -433,6 +437,19 @@ Out of the box, Svelte will interpolate between two numbers, two arrays or two o
 
 ---
 
+If the initial value is `undefined` or `null`, the first value change will take effect immediately. This is useful when you have tweened values that are based on props, and don't want any motion when the component first renders.
+
+```js
+const size = tweened(undefined, {
+	duration: 300,
+	easing: cubicOut
+});
+
+$: $size = big ? 100 : 10;
+```
+
+---
+
 The `interpolate` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
 
 ```html
@@ -476,7 +493,7 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 
 ---
 
-As with [`tweened`](#tweened) stores, `set` and `update` return a Promise that resolves if the spring settles. The `store.stiffness` and `store.damping` properties can be changed while the spring is in motion, and will take immediate effect.
+As with [`tweened`](docs#tweened) stores, `set` and `update` return a Promise that resolves if the spring settles. The `store.stiffness` and `store.damping` properties can be changed while the spring is in motion, and will take immediate effect.
 
 Both `set` and `update` can take a second argument — an object with `hard` or `soft` properties. `{ hard: true }` sets the target value immediately; `{ soft: n }` preserves existing momentum for `n` seconds before settling. `{ soft: true }` is equivalent to `{ soft: 0.5 }`.
 
@@ -491,6 +508,15 @@ Both `set` and `update` can take a second argument — an object with `hard` or 
 		damping: 0.25
 	});
 </script>
+```
+
+---
+
+If the initial value is `undefined` or `null`, the first value change will take effect immediately, just as with `tweened` values (see above).
+
+```js
+const size = spring();
+$: $size = big ? 100 : 10;
 ```
 
 ### `svelte/transition`
@@ -778,7 +804,7 @@ You can see a full example on the [animations tutorial](tutorial/animate)
 
 ### `svelte/easing`
 
-Easing functions specificy the rate of change over time and are useful when working with Svelte's built-in transitions and animations as well as the tweened and spring utilities. `svelte/easing` contains 31 named exports, a `linear` ease and 3 variants of 10 different easing functions: `in`, `out` and `inOut`.
+Easing functions specify the rate of change over time and are useful when working with Svelte's built-in transitions and animations as well as the tweened and spring utilities. `svelte/easing` contains 31 named exports, a `linear` ease and 3 variants of 10 different easing functions: `in`, `out` and `inOut`.
 
 You can explore the various eases using the [ease visualiser](examples#easing) in the [examples section](examples).
 
@@ -861,7 +887,7 @@ Existing children of `target` are left where they are.
 
 ---
 
-The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the [`hydratable: true` option](docs#svelte_compile).
+The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the [`hydratable: true` option](docs#svelte_compile). Hydration of `<head>` elements only works properly if the server-side rendering code was also compiled with `hydratable: true`, which adds a marker to each element in the `<head>` so that the component knows which elements it's responsible for removing during hydration.
 
 Whereas children of `target` are normally left alone, `hydrate: true` will cause any children to be removed. For that reason, the `anchor` option cannot be used alongside `hydrate: true`.
 
@@ -948,7 +974,7 @@ app.count += 1;
 Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](docs#svelte_options).
 
 ```html
-<svelte:options tag="my-element">
+<svelte:options tag="my-element" />
 
 <script>
 	export let name = 'world';
@@ -1019,8 +1045,12 @@ Unlike client-side components, server-side components don't have a lifespan afte
 
 A server-side component exposes a `render` method that can be called with optional props. It returns an object with `head`, `html`, and `css` properties, where `head` contains the contents of any `<svelte:head>` elements encountered.
 
+You can import a Svelte component directly into Node using [`svelte/register`](docs#svelte_register).
+
 ```js
-const App = require('./App.svelte');
+require('svelte/register');
+
+const App = require('./App.svelte').default;
 
 const { head, html, css } = App.render({
 	answer: 42

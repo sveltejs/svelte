@@ -9,17 +9,18 @@ import { b, x, p } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
 import get_object from '../../../utils/get_object';
 import create_debugging_comment from '../shared/create_debugging_comment';
-import { get_context_merger } from '../shared/get_context_merger';
+import { get_slot_definition } from '../shared/get_slot_definition';
 import EachBlock from '../../../nodes/EachBlock';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
-import { changed } from '../shared/changed';
 import { Node, Identifier, ObjectExpression } from 'estree';
+import EventHandler from '../Element/EventHandler';
+import { extract_names } from 'periscopic';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
-	slots: Map<string, { block: Block; scope: TemplateScope; fn?: Node }> = new Map();
+	slots: Map<string, { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node }> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 
@@ -34,6 +35,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 
 		this.cannot_use_innerhtml();
+		this.not_static_content();
 
 		if (this.node.expression) {
 			block.add_dependencies(this.node.expression.dependencies);
@@ -72,6 +74,12 @@ export default class InlineComponentWrapper extends Wrapper {
 		};
 
 		if (this.node.children.length) {
+			this.node.lets.forEach(l => {
+				extract_names(l.value || l.name).forEach(name => {
+					renderer.add_to_context(name, true);
+				});
+			});
+
 			const default_slot = block.child({
 				comment: create_debugging_comment(node, renderer.component),
 				name: renderer.component.get_unique_name(`create_default_slot`),
@@ -80,13 +88,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			this.renderer.blocks.push(default_slot);
 
-			const fn = get_context_merger(this.node.lets);
-
-			this.slots.set('default', {
-				block: default_slot,
-				scope: this.node.scope,
-				fn
-			});
+			this.slots.set('default', get_slot_definition(default_slot, this.node.scope, this.node.lets));
 			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, strip_whitespace, next_sibling);
 
 			const dependencies: Set<string> = new Set();
@@ -104,11 +106,28 @@ export default class InlineComponentWrapper extends Wrapper {
 		block.add_outro();
 	}
 
+	warn_if_reactive() {
+		const { name } = this.node;
+		const variable = this.renderer.component.var_lookup.get(name);
+		if (!variable) {
+			return;
+		}
+
+		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
+			this.renderer.component.warn(this.node, {
+				code: 'reactive-component',
+				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`,
+			});
+		}
+	}
+
 	render(
 		block: Block,
 		parent_node: Identifier,
 		parent_nodes: Identifier
 	) {
+		this.warn_if_reactive();
+
 		const { renderer } = this;
 		const { component } = renderer;
 
@@ -119,16 +138,33 @@ export default class InlineComponentWrapper extends Wrapper {
 		const statements: Array<Node | Node[]> = [];
 		const updates: Array<Node | Node[]> = [];
 
+		if (this.fragment) {
+			this.renderer.add_to_context('$$scope', true);
+			const default_slot = this.slots.get('default');
+
+			this.fragment.nodes.forEach((child) => {
+				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
+			});
+		}
+
 		let props;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
 
+		// removing empty slot
+		for (const slot of this.slots.keys()) {
+			if (!this.slots.get(slot).block.has_content()) {
+				this.renderer.remove_block(this.slots.get(slot).block);
+				this.slots.delete(slot);
+			}
+		}
+
 		const initial_props = this.slots.size > 0
 			? [
 				p`$$slots: {
 					${Array.from(this.slots).map(([name, slot]) => {
-						return p`${name}: [${slot.block.name}, ${slot.fn || null}]`;
+						return p`${name}: [${slot.block.name}, ${slot.get_context || null}, ${slot.get_changes || null}]`;
 					})}
 				}`,
 				p`$$scope: {
@@ -153,14 +189,6 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 		}
 
-		if (this.fragment) {
-			const default_slot = this.slots.get('default');
-
-			this.fragment.nodes.forEach((child) => {
-				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
-			});
-		}
-
 		if (component.compile_options.dev) {
 			// TODO this is a terrible hack, but without it the component
 			// will complain that options.target is missing. This would
@@ -179,11 +207,9 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 		});
 
-		const non_let_dependencies = Array.from(fragment_dependencies).filter(name => !this.node.scope.is_let(name));
-
 		const dynamic_attributes = this.node.attributes.filter(a => a.get_dependencies().length > 0);
 
-		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || non_let_dependencies.length > 0)) {
+		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || fragment_dependencies.size > 0)) {
 			updates.push(b`const ${name_changes} = {};`);
 		}
 
@@ -204,9 +230,11 @@ export default class InlineComponentWrapper extends Wrapper {
 					const { name, dependencies } = attr;
 
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
-						? changed(Array.from(dependencies))
+						? renderer.dirty(Array.from(dependencies))
 						: null;
+					const unchanged = dependencies.size === 0;
 
+					let change_object;
 					if (attr.is_spread) {
 						const value = attr.expression.manipulate(block);
 						initial_props.push(value);
@@ -215,13 +243,20 @@ export default class InlineComponentWrapper extends Wrapper {
 						if (attr.expression.node.type !== 'ObjectExpression') {
 							value_object = x`@get_spread_object(${value})`;
 						}
-						changes.push(condition ? x`${condition} && ${value_object}` : value_object);
+						change_object = value_object;
 					} else {
 						const obj = x`{ ${name}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
-
-						changes.push(condition ? x`${condition} && ${obj}` : x`${levels}[${i}]`);
+						change_object = obj;
 					}
+
+					changes.push(
+						unchanged
+							? x`${levels}[${i}]`
+							: condition
+							? x`${condition} && ${change_object}`
+							: change_object
+					);
 				});
 
 				block.chunks.init.push(b`
@@ -237,7 +272,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 
 				if (all_dependencies.size) {
-					const condition = changed(Array.from(all_dependencies));
+					const condition = renderer.dirty(Array.from(all_dependencies));
 
 					updates.push(b`
 						const ${name_changes} = ${condition} ? @get_spread_update(${levels}, [
@@ -253,7 +288,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				dynamic_attributes.forEach((attribute: Attribute) => {
 					const dependencies = attribute.get_dependencies();
 					if (dependencies.length > 0) {
-						const condition = changed(dependencies);
+						const condition = renderer.dirty(dependencies);
 
 						updates.push(b`
 							if (${condition}) ${name_changes}.${attribute.name} = ${attribute.get_value(block)};
@@ -263,10 +298,10 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 		}
 
-		if (non_let_dependencies.length > 0) {
+		if (fragment_dependencies.size > 0) {
 			updates.push(b`
-				if (${changed(non_let_dependencies)}) {
-					${name_changes}.$$scope = { changed: #changed, ctx: #ctx };
+				if (${renderer.dirty(Array.from(fragment_dependencies))}) {
+					${name_changes}.$$scope = { dirty: #dirty, ctx: #ctx };
 				}`);
 		}
 
@@ -278,12 +313,8 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const id = component.get_unique_name(`${this.var.name}_${binding.name}_binding`);
-
-			component.add_var({
-				name: id.name,
-				internal: true,
-				referenced: true
-			});
+			renderer.add_to_context(id.name);
+			const callee = renderer.reference(id);
 
 			const updating = block.get_unique_name(`updating_${binding.name}`);
 			block.add_variable(updating);
@@ -297,8 +328,10 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 			updates.push(b`
-				if (!${updating} && ${changed(Array.from(binding.expression.dependencies))}) {
+				if (!${updating} && ${renderer.dirty(Array.from(binding.expression.dependencies))}) {
+					${updating} = true;
 					${name_changes}.${binding.name} = ${snippet};
+					@add_flush_callback(() => ${updating} = false);
 				}
 			`);
 
@@ -316,45 +349,40 @@ export default class InlineComponentWrapper extends Wrapper {
 				contextual_dependencies.push(object.name, property.name);
 			}
 
-			const value = block.get_unique_name('value');
-			const args: any[] = [value];
+			const params = [x`#value`];
 			if (contextual_dependencies.length > 0) {
-				args.push({
-					type: 'ObjectPattern',
-					properties: contextual_dependencies.map(name => {
-						const id = { type: 'Identifier', name };
-						return {
-							type: 'Property',
-							kind: 'init',
-							key: id,
-							value: id
-						};
-					})
+				const args = [];
+
+				contextual_dependencies.forEach(name => {
+					params.push({
+						type: 'Identifier',
+						name
+					});
+
+					renderer.add_to_context(name, true);
+					args.push(renderer.reference(name));
 				});
 
+
 				block.chunks.init.push(b`
-					function ${id}(${value}) {
-						#ctx.${id}.call(null, ${value}, #ctx);
-						${updating} = true;
-						@add_flush_callback(() => ${updating} = false);
+					function ${id}(#value) {
+						${callee}.call(null, #value, ${args});
 					}
 				`);
 
 				block.maintain_context = true; // TODO put this somewhere more logical
 			} else {
 				block.chunks.init.push(b`
-					function ${id}(${value}) {
-						#ctx.${id}.call(null, ${value});
-						${updating} = true;
-						@add_flush_callback(() => ${updating} = false);
+					function ${id}(#value) {
+						${callee}.call(null, #value);
 					}
 				`);
 			}
 
 			const body = b`
-				function ${id}(${args}) {
-					${lhs} = ${value};
-					${component.invalidate(dependencies[0])};
+				function ${id}(${params}) {
+					${lhs} = #value;
+					${renderer.invalidate(dependencies[0])};
 				}
 			`;
 
@@ -364,7 +392,8 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {
-			let snippet = handler.render(block);
+			const event_handler = new EventHandler(handler, this);
+			let snippet = event_handler.get_snippet(block);
 			if (handler.modifiers.has('once')) snippet = x`@once(${snippet})`;
 
 			return b`${name}.$on("${handler.name}", ${snippet});`;
@@ -395,12 +424,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.chunks.create.push(
-				b`if (${name}) ${name}.$$.fragment.c();`
+				b`if (${name}) @create_component(${name}.$$.fragment);`
 			);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
 				block.chunks.claim.push(
-					b`if (${name}) ${name}.$$.fragment.l(${parent_nodes});`
+					b`if (${name}) @claim_component(${name}.$$.fragment, ${parent_nodes});`
 				);
 			}
 
@@ -436,7 +465,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${munged_bindings}
 						${munged_handlers}
 
-						${name}.$$.fragment.c();
+						@create_component(${name}.$$.fragment);
 						@transition_in(${name}.$$.fragment, 1);
 						@mount_component(${name}, ${update_mount_node}, ${anchor});
 					} else {
@@ -459,7 +488,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? component.name
-				: component.qualify(this.node.name);
+				: this.renderer.reference(this.node.name);
 
 			block.chunks.init.push(b`
 				${(this.node.attributes.length > 0 || this.node.bindings.length > 0) && b`
@@ -471,11 +500,11 @@ export default class InlineComponentWrapper extends Wrapper {
 				${munged_handlers}
 			`);
 
-			block.chunks.create.push(b`${name}.$$.fragment.c();`);
+			block.chunks.create.push(b`@create_component(${name}.$$.fragment);`);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
 				block.chunks.claim.push(
-					b`${name}.$$.fragment.l(${parent_nodes});`
+					b`@claim_component(${name}.$$.fragment, ${parent_nodes});`
 				);
 			}
 

@@ -2,15 +2,18 @@ import * as assert from "assert";
 import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
-import * as virtual from 'rollup-plugin-virtual';
+import * as virtual from '@rollup/plugin-virtual';
+import * as glob from 'tiny-glob/sync.js';
 import { clear_loops, flush, set_now, set_raf } from "../../internal";
 
 import {
 	showOutput,
 	loadConfig,
 	loadSvelte,
+	cleanRequireCache,
 	env,
-	setupHtmlEqual
+	setupHtmlEqual,
+	mkdirp
 } from "../helpers.js";
 
 let svelte$;
@@ -49,15 +52,16 @@ describe("runtime", () => {
 	function runTest(dir, hydrate) {
 		if (dir[0] === ".") return;
 
-		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
+		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
+		const solo = config.solo || /\.solo/.test(dir);
 
 		if (hydrate && config.skip_if_hydrate) return;
 
-		if (config.solo && process.env.CI) {
+		if (solo && process.env.CI) {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, () => {
+		(config.skip ? it.skip : solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -67,7 +71,7 @@ describe("runtime", () => {
 
 			compile = (config.preserveIdentifiers ? svelte : svelte$).compile;
 
-			const cwd = path.resolve(`test/runtime/samples/${dir}`);
+			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
 			compileOptions.format = 'cjs';
@@ -76,11 +80,7 @@ describe("runtime", () => {
 			compileOptions.immutable = config.immutable;
 			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
 
-			Object.keys(require.cache)
-				.filter(x => x.endsWith('.svelte'))
-				.forEach(file => {
-					delete require.cache[file];
-				});
+			cleanRequireCache();
 
 			let mod;
 			let SvelteComponent;
@@ -88,6 +88,33 @@ describe("runtime", () => {
 			let unintendedError = null;
 
 			const window = env();
+
+			glob('**/*.svelte', { cwd }).forEach(file => {
+				if (file[0] === '_') return;
+
+				const dir  = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
+				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
+
+				if (fs.existsSync(out)) {
+					fs.unlinkSync(out);
+				}
+
+				mkdirp(dir);
+
+				try {
+					const { js } = compile(
+						fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
+						{
+							...compileOptions,
+							filename: file
+						}
+					);
+
+					fs.writeFileSync(out, js.code);
+				} catch (err) {
+					// do nothing
+				}
+			});
 
 			return Promise.resolve()
 				.then(() => {
@@ -106,7 +133,7 @@ describe("runtime", () => {
 					set_raf(cb => {
 						raf.callback = () => {
 							raf.callback = null;
-							cb();
+							cb(raf.time);
 							flush();
 						};
 					});
@@ -166,7 +193,8 @@ describe("runtime", () => {
 							mod,
 							target,
 							window,
-							raf
+							raf,
+							compileOptions
 						})).then(() => {
 							component.$destroy();
 
@@ -188,12 +216,12 @@ describe("runtime", () => {
 						if (typeof config.error === 'function') {
 							config.error(assert, err);
 						} else {
-							assert.equal(config.error, err.message);
+							assert.equal(err.message, config.error);
 						}
 					} else {
 						throw err;
 					}
-				 }).catch(err => {
+				}).catch(err => {
 					failed.add(dir);
 					showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 					throw err;
@@ -215,7 +243,7 @@ describe("runtime", () => {
 		});
 	}
 
-	fs.readdirSync("test/runtime/samples").forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		runTest(dir, false);
 		runTest(dir, true);
 	});

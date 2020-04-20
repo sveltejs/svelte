@@ -1,39 +1,42 @@
-import { now, raf } from './environment';
+import { raf } from './environment';
 
 export interface Task { abort(): void; promise: Promise<void> }
 
-const tasks = new Set();
-let running = false;
+type TaskCallback = (now: number) => boolean | void;
+type TaskEntry = { c: TaskCallback; f: () => void };
 
-function run_tasks() {
+const tasks = new Set<TaskEntry>();
+
+function run_tasks(now: number) {
 	tasks.forEach(task => {
-		if (!task[0](now())) {
+		if (!task.c(now)) {
 			tasks.delete(task);
-			task[1]();
+			task.f();
 		}
 	});
 
-	running = tasks.size > 0;
-	if (running) raf(run_tasks);
+	if (tasks.size !== 0) raf(run_tasks);
 }
 
+/**
+ * For testing purposes only!
+ */
 export function clear_loops() {
-	// for testing...
-	tasks.forEach(task => tasks.delete(task));
-	running = false;
+	tasks.clear();
 }
 
-export function loop(fn: (number) => void): Task {
-	let task;
+/**
+ * Creates a new task that runs on each raf frame
+ * until it returns a falsy value or is aborted
+ */
+export function loop(callback: TaskCallback): Task {
+	let task: TaskEntry;
 
-	if (!running) {
-		running = true;
-		raf(run_tasks);
-	}
+	if (tasks.size === 0) raf(run_tasks);
 
 	return {
-		promise: new Promise<void>(fulfil => {
-			tasks.add(task = [fn, fulfil]);
+		promise: new Promise(fulfill => {
+			tasks.add(task = { c: callback, f: fulfill });
 		}),
 		abort() {
 			tasks.delete(task);

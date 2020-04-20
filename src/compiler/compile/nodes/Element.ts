@@ -105,6 +105,7 @@ export default class Element extends Node {
 	animation?: Animation = null;
 	children: INode[];
 	namespace: string;
+	needs_manual_style_scoping: boolean;
 
 	constructor(component, parent, scope, info: any) {
 		super(component, parent, scope, info);
@@ -150,6 +151,15 @@ export default class Element extends Node {
 			}
 		}
 
+		const has_let = info.attributes.some(node => node.type === 'Let');
+		if (has_let) {
+			scope = scope.child();
+		}
+
+		// Binding relies on Attribute, defer its evaluation
+		const order = ['Binding']; // everything else is -1
+		info.attributes.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Action':
@@ -176,9 +186,16 @@ export default class Element extends Node {
 					this.handlers.push(new EventHandler(component, this, scope, node));
 					break;
 
-				case 'Let':
-					this.lets.push(new Let(component, this, scope, node));
+				case 'Let': {
+					const l = new Let(component, this, scope, node);
+					this.lets.push(l);
+					const dependencies = new Set([l.name.name]);
+
+					l.names.forEach(name => {
+						scope.add(name, dependencies, this);
+					});
 					break;
+				}
 
 				case 'Transition':
 				{
@@ -197,20 +214,7 @@ export default class Element extends Node {
 			}
 		});
 
-		if (this.lets.length > 0) {
-			this.scope = scope.child();
-
-			this.lets.forEach(l => {
-				const dependencies = new Set([l.name.name]);
-
-				l.names.forEach(name => {
-					this.scope.add(name, dependencies, this);
-				});
-			});
-		} else {
-			this.scope = scope;
-		}
-
+		this.scope = scope;
 		this.children = map_children(component, this, this.scope, info.children);
 
 		this.validate();
@@ -274,7 +278,7 @@ export default class Element extends Node {
 	}
 
 	validate_attributes() {
-		const { component } = this;
+		const { component, parent } = this;
 
 		const attribute_map = new Map();
 
@@ -391,26 +395,10 @@ export default class Element extends Node {
 					component.slot_outlets.add(name);
 				}
 
-				let ancestor = this.parent;
-				do {
-					if (ancestor.type === 'InlineComponent') break;
-					if (ancestor.type === 'Element' && /-/.test(ancestor.name)) break;
-
-					if (ancestor.type === 'IfBlock' || ancestor.type === 'EachBlock') {
-						const type = ancestor.type === 'IfBlock' ? 'if' : 'each';
-						const message = `Cannot place slotted elements inside an ${type}-block`;
-
-						component.error(attribute, {
-							code: `invalid-slotted-content`,
-							message
-						});
-					}
-				} while (ancestor = ancestor.parent);
-
-				if (!ancestor) {
+				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
 					component.error(attribute, {
 						code: `invalid-slotted-content`,
-						message: `Element with a slot='...' attribute must be a descendant of a component or custom element`
+						message: `Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`,
 					});
 				}
 			}
@@ -591,12 +579,24 @@ export default class Element extends Node {
 				name === 'seekable' ||
 				name === 'played' ||
 				name === 'volume' ||
-				name === 'playbackRate'
+				name === 'playbackRate' ||
+				name === 'seeking' ||
+				name === 'ended'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
 					component.error(binding, {
 						code: `invalid-binding`,
 						message: `'${name}' binding can only be used with <audio> or <video>`
+					});
+				}
+			} else if (
+				name === 'videoHeight' ||
+				name === 'videoWidth'
+			) {
+				if (this.name !== 'video') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${name}' binding can only be used with <video>`
 					});
 				}
 			} else if (dimensions.test(name)) {
@@ -712,6 +712,11 @@ export default class Element extends Node {
 	}
 
 	add_css_class() {
+		if (this.attributes.some(attr => attr.is_spread)) {
+			this.needs_manual_style_scoping = true;
+			return;
+		}
+
 		const { id } = this.component.stylesheet;
 
 		const class_attribute = this.attributes.find(a => a.name === 'class');
@@ -754,4 +759,13 @@ function should_have_attribute(
 		code: `a11y-missing-attribute`,
 		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
 	});
+}
+
+function within_custom_element(parent: INode) {
+	while (parent) {
+		if (parent.type === 'InlineComponent') return false;
+		if (parent.type === 'Element' && /-/.test(parent.name)) return true;
+		parent = parent.parent;
+	}
+	return false;
 }

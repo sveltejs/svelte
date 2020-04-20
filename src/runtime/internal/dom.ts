@@ -1,3 +1,5 @@
+import { has_prop } from "./utils";
+
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
@@ -25,11 +27,10 @@ export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: s
 }
 
 export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
-	// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
 	const target = {} as Pick<T, Exclude<keyof T, K>>;
 	for (const k in obj) {
 		if (
-			Object.prototype.hasOwnProperty.call(obj, k)
+			has_prop(obj, k)
 			// @ts-ignore
 			&& exclude.indexOf(k) === -1
 		) {
@@ -93,9 +94,11 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 	// @ts-ignore
 	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
 	for (const key in attributes) {
-		if (key === 'style') {
+		if (attributes[key] == null) {
+			node.removeAttribute(key);
+		} else if (key === 'style') {
 			node.style.cssText = attributes[key];
-		} else if (descriptors[key] && descriptors[key].set) {
+		} else if (key === '__value' || descriptors[key] && descriptors[key].set) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key]);
@@ -149,11 +152,16 @@ export function claim_element(nodes, name, attributes, svg) {
 	for (let i = 0; i < nodes.length; i += 1) {
 		const node = nodes[i];
 		if (node.nodeName === name) {
-			for (let j = 0; j < node.attributes.length; j += 1) {
+			let j = 0;
+			while (j < node.attributes.length) {
 				const attribute = node.attributes[j];
-				if (!attributes[attribute.name]) node.removeAttribute(attribute.name);
+				if (attributes[attribute.name]) {
+					j++;
+				} else {
+					node.removeAttribute(attribute.name);
+				}
 			}
-			return nodes.splice(i, 1)[0]; // TODO strip unwanted attributes
+			return nodes.splice(i, 1)[0];
 		}
 	}
 
@@ -290,6 +298,10 @@ export function custom_event<T=any>(type: string, detail?: T) {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, false, false, detail);
 	return e;
+}
+
+export function query_selector_all(selector: string, parent: HTMLElement = document.body) {
+	return Array.from(parent.querySelectorAll(selector));
 }
 
 export class HtmlTag {

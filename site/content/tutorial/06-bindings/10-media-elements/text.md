@@ -24,12 +24,14 @@ Now, when you click on the video, it will update `time`, `duration` and `paused`
 
 > Ordinarily on the web, you would track `currentTime` by listening for `timeupdate` events. But these events fire too infrequently, resulting in choppy UI. Svelte does better — it checks `currentTime` using `requestAnimationFrame`.
 
-The complete set of bindings for `<audio>` and `<video>` is as follows — four *readonly* bindings...
+The complete set of bindings for `<audio>` and `<video>` is as follows — six *readonly* bindings...
 
 * `duration` (readonly) — the total duration of the video, in seconds
 * `buffered` (readonly) — an array of `{start, end}` objects
 * `seekable` (readonly) — ditto
 * `played` (readonly) — ditto
+* `seeking` (readonly) — boolean
+* `ended` (readonly) — boolean
 
 ...and four *two-way* bindings:
 
@@ -37,3 +39,5 @@ The complete set of bindings for `<audio>` and `<video>` is as follows — four 
 * `playbackRate` — how fast to play the video, where `1` is 'normal'
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
+
+Videos additionally have readonly `videoWidth` and `videoHeight` bindings.

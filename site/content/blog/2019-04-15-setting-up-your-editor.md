@@ -6,7 +6,9 @@ authorURL: https://twitter.com/Rich_Harris
 draft: true
 ---
 
-*Coming soon* This post will walk you through setting up your editor so that recognises Svelte files:
+*__Coming soon__*
+
+This post will walk you through setting up your editor so that recognises Svelte files:
 
 * eslint-plugin-svelte3
 * svelte-vscode
@@ -14,7 +16,7 @@ draft: true
 
 ## Atom
 
-To treat `*.svelte` files as HTML, open Edit → Config... and add the following lines to your `core` section:
+To treat `*.svelte` files as HTML, open *__Edit → Config...__* and add the following lines to your `core` section:
 
 ```cson
 "*":
@@ -45,3 +47,23 @@ To set the filetype for a single file, use a [modeline](https://vim.fandom.com/w
 ```
 <!-- vim: set ft=html :-->
 ```
+
+## Visual Studio Code
+
+To treat `*.svelte` files as HTML, add the following lines to your `settings.json` file:
+
+```cson
+  "files.associations": {
+    "*.svelte": "html"
+  }
+```
+
+## JetBrains WebStorm
+
+The [Svelte Framework Integration](https://plugins.jetbrains.com/plugin/12375-svelte/) can be used to add support for Svelte to WebStorm, or other Jetbrains IDEs. Consult the [WebStorm plugin installation guide](https://www.jetbrains.com/help/webstorm/managing-plugins.html) on the JetBrains website for more details.
+
+## Sublime Text 3
+
+Open any `.svelte` file.
+
+Go to *__View → Syntax → Open all with current extension as... → HTML__*.
