@@ -586,7 +586,7 @@ export default class ElementWrapper extends Wrapper {
 					);
 
 					block.chunks.destroy.push(
-						b`${resize_listener}.cancel();`
+						b`${resize_listener}();`
 					);
 				} else {
 					block.event_listeners.push(
