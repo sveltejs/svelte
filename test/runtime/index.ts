@@ -49,7 +49,7 @@ describe('runtime', () => {
 
 	const failed = new Set();
 
-	function runTest(dir, hydrate) {
+	function runTest(dir, hydrate, from_ssr_html) {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
@@ -61,7 +61,8 @@ describe('runtime', () => {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		(config.skip ? it.skip : solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, () => {
+		const testName = `${dir} ${hydrate ? `(with hydration ${from_ssr_html ? 'from ssr rendered html' : ''})` : ''}`;
+		(config.skip ? it.skip : solo ? it.only : it)(testName, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -151,7 +152,7 @@ describe('runtime', () => {
 
 					const target = window.document.querySelector('main');
 
-					if (hydrate) {
+					if (hydrate && from_ssr_html) {
 						// ssr into target
 						compileOptions.generate = 'ssr';
 						cleanRequireCache();
@@ -255,7 +256,8 @@ describe('runtime', () => {
 
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		runTest(dir, false);
-		runTest(dir, true);
+		runTest(dir, true, false);
+		runTest(dir, true, true);
 	});
 
 	async function create_component(src = '<div></div>') {
