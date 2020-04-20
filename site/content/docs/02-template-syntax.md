@@ -893,7 +893,7 @@ A custom transition function can also return a `tick` function, which is called 
 	function typewriter(node, { speed = 50 }) {
 		const valid = (
 			node.childNodes.length === 1 &&
-			node.childNodes[0].nodeType === 3
+			node.childNodes[0].nodeType === Node.TEXT_NODE
 		);
 
 		if (!valid) return {};
