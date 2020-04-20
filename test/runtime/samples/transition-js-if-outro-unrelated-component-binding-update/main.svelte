@@ -1,8 +1,8 @@
 <script>
-  import Component from "./Component.svelte";
-  let condition = true;
+	import Component from "./Component.svelte";
+	let condition = true;
 </script>
 
 {#if condition}
-  <Component bind:condition />
+	<Component bind:condition />
 {/if}
