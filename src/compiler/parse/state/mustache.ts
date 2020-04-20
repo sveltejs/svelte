@@ -309,6 +309,13 @@ export default function mustache(parser: Parser) {
 			parser.allow_whitespace();
 		}
 
+		const await_block_catch_shorthand = !await_block_shorthand && type === 'AwaitBlock' && parser.eat('catch');
+		if (await_block_catch_shorthand) {
+			parser.require_whitespace();
+			block.error = parser.read_destructure_pattern();
+			parser.allow_whitespace();
+		}
+
 		parser.eat('}', true);
 
 		parser.current().children.push(block);
@@ -319,6 +326,9 @@ export default function mustache(parser: Parser) {
 			if (await_block_shorthand) {
 				block.then.skip = false;
 				child_block = block.then;
+			} else if (await_block_catch_shorthand) {
+				block.catch.skip = false;
+				child_block = block.catch;
 			} else {
 				block.pending.skip = false;
 				child_block = block.pending;
