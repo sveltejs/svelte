@@ -267,6 +267,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 		`display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; ` +
 		`overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: ${z_index};`
 	);
+	iframe.setAttribute('aria-hidden', 'true');
 	iframe.tabIndex = -1;
 
 	let unsubscribe: () => void;
