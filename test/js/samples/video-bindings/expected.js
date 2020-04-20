@@ -59,7 +59,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(video);
-			video_resize_listener.cancel();
+			video_resize_listener();
 			run_all(dispose);
 		}
 	};
