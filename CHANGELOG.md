@@ -4,6 +4,7 @@
 
 * Support dimension bindings in cross-origin environments ([#2147](https://github.com/sveltejs/svelte/issues/2147))
 * Try using `globalThis` rather than `globals` for the benefit of non-Node servers and web workers ([#3561](https://github.com/sveltejs/svelte/issues/3561), [#4545](https://github.com/sveltejs/svelte/issues/4545))
+* Support `{#await ... catch ...}` syntax shorthand ([#3623](https://github.com/sveltejs/svelte/issues/3623))
 * Fix attaching of JS debugging comments to HTML comments ([#4565](https://github.com/sveltejs/svelte/issues/4565))
 
 ## 3.20.1
