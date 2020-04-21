@@ -520,51 +520,36 @@ export default class IfBlockWrapper extends Wrapper {
 		if (branch.dependencies.length > 0) {
 			const update_mount_node = this.get_update_mount_node(anchor);
 
-			const enter = b`
+			if (branch.snippet) {
+				block.chunks.update.push(
+					b`if (${block.renderer.dirty(branch.dependencies)}) ${
+						branch.condition
+					} = ${branch.snippet}`
+				);
+			}
+			const outro =
+				branch.block.has_outro_method &&
+				b`@group_outros();
+				@transition_out(${name}, 1, 1, () => { ${name} = null; });
+				@check_outros();`;
+
+			block.chunks.update.push(b`
 				if (${name}) {
-					${
-						has_transitions &&
-						b`if (${block.renderer.dirty(branch.dependencies)}) {
-							@transition_in(${name}, 1);
-						}`
-					}
 					${dynamic && b`${name}.p(#ctx, #dirty);`}
+					if (${branch.condition}) {
+						${
+							has_transitions &&
+							b`if (${block.renderer.dirty(branch.dependencies)}) {
+								@transition_in(${name}, 1);
+							}`
+						}
+					} else {${outro ? outro : b`${name}.d(1);${name} = null;`}}
 				} else {
 					${name} = ${branch.block.name}(#ctx);
 					${name}.c();
 					${has_transitions && b`@transition_in(${name}, 1);`}
 					${name}.m(${update_mount_node}, ${anchor});
-				}
-			`;
-
-			if (branch.snippet) {
-				block.chunks.update.push(b`if (${block.renderer.dirty(branch.dependencies)}) ${branch.condition} = ${branch.snippet}`);
-			}
-
-			// no `p()` here — we don't want to update outroing nodes,
-			// as that will typically result in glitching
-			if (branch.block.has_outro_method) {
-				block.chunks.update.push(b`
-					if (${branch.condition}) {
-						${enter}
-					} else if (${name}) {
-						@group_outros();
-						@transition_out(${name}, 1, 1, () => {
-							${name} = null;
-						});
-						@check_outros();
-					}
-				`);
-			} else {
-				block.chunks.update.push(b`
-					if (${branch.condition}) {
-						${enter}
-					} else if (${name}) {
-						${name}.d(1);
-						${name} = null;
-					}
-				`);
-			}
+				}`);
 		} else if (dynamic) {
 			block.chunks.update.push(b`
 				if (${branch.condition}) ${name}.p(#ctx, #dirty);
