@@ -522,13 +522,13 @@ export default class IfBlockWrapper extends Wrapper {
 
 			const enter = b`
 				if (${name}) {
+					${dynamic && b`${name}.p(#ctx, #dirty);`}
 					${
 						has_transitions &&
 						b`if (${block.renderer.dirty(branch.dependencies)}) {
 							@transition_in(${name}, 1);
 						}`
 					}
-					${dynamic && b`${name}.p(#ctx, #dirty);`}
 				} else {
 					${name} = ${branch.block.name}(#ctx);
 					${name}.c();
