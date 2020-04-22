@@ -45,7 +45,7 @@ export default class SlotWrapper extends Wrapper {
 			renderer,
 			this.fallback,
 			node.children,
-			parent,
+			this,
 			strip_whitespace,
 			next_sibling
 		);
