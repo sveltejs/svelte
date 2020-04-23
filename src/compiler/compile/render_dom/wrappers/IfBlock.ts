@@ -334,7 +334,11 @@ export default class IfBlockWrapper extends Wrapper {
 				`);
 			}
 		} else if (dynamic) {
-			block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+			if (if_exists_condition) {
+				block.chunks.update.push(b`if (${if_exists_condition}) ${name}.p(#ctx, #dirty);`);
+			} else {
+				block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+			}
 		}
 
 		if (if_exists_condition) {
@@ -357,7 +361,7 @@ export default class IfBlockWrapper extends Wrapper {
 		parent_node: Identifier,
 		_parent_nodes: Identifier,
 		dynamic,
-		{ name, anchor, has_else, has_transitions },
+		{ name, anchor, has_else, has_transitions, if_exists_condition },
 		detaching
 	) {
 		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
@@ -486,7 +490,11 @@ export default class IfBlockWrapper extends Wrapper {
 				`);
 			}
 		} else if (dynamic) {
-			block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+			if (if_exists_condition) {
+				block.chunks.update.push(b`if (${if_exists_condition}) ${name}.p(#ctx, #dirty);`);
+			} else {
+				block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+			}
 		}
 
 		block.chunks.destroy.push(
