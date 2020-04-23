@@ -1,9 +1,9 @@
 <script>
-  export let enabled = false;
+	export let enabled = false;
 </script>
 
 <span>
-  <slot>
-    {#if enabled}enabled{/if}
-  </slot>
+	<slot>
+		{#if enabled}enabled{/if}
+	</slot>
 </span>
