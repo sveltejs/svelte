@@ -378,6 +378,14 @@ export default class Element extends Node {
 				}
 			}
 
+
+			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
+				component.error(attribute, {
+					code: `illegal-attribute`,
+					message: `'${name}' is not a valid attribute name`,
+				});
+			}
+
 			if (name === 'slot') {
 				if (!attribute.is_static) {
 					component.error(attribute, {
