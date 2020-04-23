@@ -462,6 +462,7 @@ The following modifiers are available:
 * `passive` — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
+* `self` — only trigger handler if event.target is the element itself
 
 Modifiers can be chained together, e.g. `on:click|once|capture={...}`.
 
