@@ -6,6 +6,7 @@
 * Try using `globalThis` rather than `globals` for the benefit of non-Node servers and web workers ([#3561](https://github.com/sveltejs/svelte/issues/3561), [#4545](https://github.com/sveltejs/svelte/issues/4545))
 * Support `{#await ... catch ...}` syntax shorthand ([#3623](https://github.com/sveltejs/svelte/issues/3623))
 * Fix attaching of JS debugging comments to HTML comments ([#4565](https://github.com/sveltejs/svelte/issues/4565))
+* Fix `<svelte:component/>` within `<slot/>` ([#4597](https://github.com/sveltejs/svelte/issues/4597))
 * Fix issues with `<input type="number">` updates ([#4631](https://github.com/sveltejs/svelte/issues/4631), [#4687](https://github.com/sveltejs/svelte/issues/4687))
 * Prevent illegal attribute names ([#4648](https://github.com/sveltejs/svelte/issues/4648))
 * Fix `{#if}` block directly within `<slot/>` ([#4703](https://github.com/sveltejs/svelte/issues/4703))
