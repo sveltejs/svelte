@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix reactivity with imported values that are then mutated ([#4555](https://github.com/sveltejs/svelte/issues/4555))
+
 ## 3.21.0
 
 * Support dimension bindings in cross-origin environments ([#2147](https://github.com/sveltejs/svelte/issues/2147))

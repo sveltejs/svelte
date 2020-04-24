@@ -632,7 +632,6 @@ export default class Component {
 			this.add_var({
 				name,
 				initialised: instance_scope.initialised_declarations.has(name),
-				hoistable: /^Import/.test(node.type),
 				writable
 			});
 
@@ -986,6 +985,7 @@ export default class Component {
 			hoistable_nodes,
 			var_lookup,
 			injected_reactive_declaration_vars,
+			imports,
 		} = this;
 
 		const top_level_function_declarations = new Map();
@@ -1135,6 +1135,14 @@ export default class Component {
 				const i = body.indexOf(node);
 				body.splice(i, 1);
 				this.fully_hoisted.push(node);
+			}
+		}
+
+		for (const { specifiers } of imports) {
+			for (const specifier of specifiers) {
+				const variable = var_lookup.get(specifier.local.name);
+
+				if (!variable.mutated) variable.hoistable = true;
 			}
 		}
 	}
