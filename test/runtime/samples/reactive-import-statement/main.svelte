@@ -1,5 +1,5 @@
 <script>
-	import {numbers, foo} from './data.js'
+	import { numbers } from './data.js';
 	const local_numbers = [1, 2, 3, 4];
 
 	function addNumber() {
