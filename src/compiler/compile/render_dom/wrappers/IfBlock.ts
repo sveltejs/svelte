@@ -334,7 +334,11 @@ export default class IfBlockWrapper extends Wrapper {
 				`);
 			}
 		} else if (dynamic) {
-			block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+			if (if_exists_condition) {
+				block.chunks.update.push(b`if (${if_exists_condition}) ${name}.p(#ctx, #dirty);`);
+			} else {
+				block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+			}
 		}
 
 		if (if_exists_condition) {
@@ -357,7 +361,7 @@ export default class IfBlockWrapper extends Wrapper {
 		parent_node: Identifier,
 		_parent_nodes: Identifier,
 		dynamic,
-		{ name, anchor, has_else, has_transitions },
+		{ name, anchor, has_else, has_transitions, if_exists_condition },
 		detaching
 	) {
 		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
@@ -486,7 +490,11 @@ export default class IfBlockWrapper extends Wrapper {
 				`);
 			}
 		} else if (dynamic) {
-			block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+			if (if_exists_condition) {
+				block.chunks.update.push(b`if (${if_exists_condition}) ${name}.p(#ctx, #dirty);`);
+			} else {
+				block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+			}
 		}
 
 		block.chunks.destroy.push(
@@ -520,28 +528,22 @@ export default class IfBlockWrapper extends Wrapper {
 		if (branch.dependencies.length > 0) {
 			const update_mount_node = this.get_update_mount_node(anchor);
 
-			const enter = dynamic
-				? b`
-					if (${name}) {
-						${name}.p(#ctx, #dirty);
-						${has_transitions && b`@transition_in(${name}, 1);`}
-					} else {
-						${name} = ${branch.block.name}(#ctx);
-						${name}.c();
-						${has_transitions && b`@transition_in(${name}, 1);`}
-						${name}.m(${update_mount_node}, ${anchor});
+			const enter = b`
+				if (${name}) {
+					${dynamic && b`${name}.p(#ctx, #dirty);`}
+					${
+						has_transitions &&
+						b`if (${block.renderer.dirty(branch.dependencies)}) {
+							@transition_in(${name}, 1);
+						}`
 					}
-				`
-				: b`
-					if (!${name}) {
-						${name} = ${branch.block.name}(#ctx);
-						${name}.c();
-						${has_transitions && b`@transition_in(${name}, 1);`}
-						${name}.m(${update_mount_node}, ${anchor});
-					} else {
-						${has_transitions && b`@transition_in(${name}, 1);`}
-					}
-				`;
+				} else {
+					${name} = ${branch.block.name}(#ctx);
+					${name}.c();
+					${has_transitions && b`@transition_in(${name}, 1);`}
+					${name}.m(${update_mount_node}, ${anchor});
+				}
+			`;
 
 			if (branch.snippet) {
 				block.chunks.update.push(b`if (${block.renderer.dirty(branch.dependencies)}) ${branch.condition} = ${branch.snippet}`);
