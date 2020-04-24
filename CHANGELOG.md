@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.21.0
 
 * Support dimension bindings in cross-origin environments ([#2147](https://github.com/sveltejs/svelte/issues/2147))
 * Fix several related outro bugs ([#3202](https://github.com/sveltejs/svelte/issues/3202), [#3410](https://github.com/sveltejs/svelte/issues/3410), [#3685](https://github.com/sveltejs/svelte/issues/3685), [#4620](https://github.com/sveltejs/svelte/issues/4620), [#4630](https://github.com/sveltejs/svelte/issues/4630))
