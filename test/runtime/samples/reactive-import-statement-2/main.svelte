@@ -1,8 +1,8 @@
 <script>
-  import { obj } from './data.js'
-	
-	$: prop = obj.prop
-  obj.foo = 'uncomment this line to break the example'
+	import { obj } from './data.js';
+
+	$: prop = obj.prop;
+	obj.foo = 'a different prop';
 </script>
 
-{prop}
+<p>{prop}</p>

@@ -1,5 +1,3 @@
 export default {
-	html: `
-		Im a prop
-	`,
+	html: `<p>prop value</p>`
 };
