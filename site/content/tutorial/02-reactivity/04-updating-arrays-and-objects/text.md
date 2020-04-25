@@ -31,7 +31,7 @@ function addNumber() {
 }
 ```
 
-A simple rule of thumb: the name of the updated variable must appear on the left hand side of the assignment. For example this...
+A simple rule: the name of the updated variable must appear on the left hand side of the assignment. For example this...
 
 ```js
 const foo = obj.foo;
