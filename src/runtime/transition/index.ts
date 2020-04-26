@@ -128,7 +128,12 @@ export function slide(node: Element, {
 			`margin-top: ${t * margin_top}px;` +
 			`margin-bottom: ${t * margin_bottom}px;` +
 			`border-top-width: ${t * border_top_width}px;` +
-			`border-bottom-width: ${t * border_bottom_width}px;`
+			`border-bottom-width: ${t * border_bottom_width}px;` +
+			// fixes #4712
+			// Safari has bug that when element is transitioning, it'll ignore overflow: hidden property,
+			// adding this property seems to work. see https://gist.github.com/ayamflow/b602ab436ac9f05660d9c15190f4fd7b
+			// for more details. 
+			`-webkit-mask-image: -webkit-radial-gradient(white, black);`,
 	};
 }
 
