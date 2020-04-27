@@ -43,5 +43,20 @@
 			"character": 61
 		},
 		"pos": 53
+	},
+	{
+		"code": "a11y-invalid-attribute",
+		"message": "A11y: 'javascript:void(0)' is not a valid href attribute",
+		"start": {
+			"line": 4,
+			"column": 3,
+			"character": 77
+		},
+		"end": {
+			"line": 4,
+			"column": 28,
+			"character": 102
+		},
+		"pos": 77
 	}
 ]
