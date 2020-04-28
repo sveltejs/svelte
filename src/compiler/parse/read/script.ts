@@ -37,7 +37,8 @@ export default function read_script(parser: Parser, start: number, attributes: N
 		message: `<script> must have a closing tag`
 	});
 
-	const source = ' '.repeat(script_start) + parser.template.slice(script_start, script_end);
+	const source = parser.template.slice(0, script_start).replace(/[^\n]/g, ' ') +
+		parser.template.slice(script_start, script_end);
 	parser.index = script_end + script_closing_tag.length;
 
 	let ast: Program;
