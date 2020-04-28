@@ -29,6 +29,7 @@ import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
+import get_prefix from './utils/get_prefix';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -133,7 +134,8 @@ export default class Component {
 			source,
 			ast,
 			compile_options.filename,
-			compile_options.dev
+			compile_options.dev,
+			get_prefix(compile_options.prefix),
 		);
 		this.stylesheet.validate(this);
 

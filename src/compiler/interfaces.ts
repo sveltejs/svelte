@@ -123,6 +123,7 @@ export interface CompileOptions {
 	tag?: string;
 	css?: boolean;
 	loopGuardTimeout?: number;
+	prefix?: string;
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;

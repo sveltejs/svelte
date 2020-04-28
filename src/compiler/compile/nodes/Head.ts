@@ -1,6 +1,7 @@
 import Node from './shared/Node';
 import map_children from './shared/map_children';
 import hash from '../utils/hash';
+import get_prefix from '../utils/get_prefix';
 
 export default class Head extends Node {
 	type: 'Head';
@@ -22,7 +23,7 @@ export default class Head extends Node {
 		}));
 
 		if (this.children.length > 0) {
-			this.id = `svelte-${hash(this.component.source.slice(this.start, this.end))}`;
+			this.id = `${get_prefix(this.component.compile_options.prefix)}${hash(this.component.source.slice(this.start, this.end))}`;
 		}
 	}
 }
