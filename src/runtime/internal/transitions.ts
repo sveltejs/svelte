@@ -1,26 +1,14 @@
-import { identity as linear, is_function, noop, run_all } from './utils';
-import { now } from "./environment";
-import { loop } from './loop';
-import { create_rule, delete_rule } from './style_manager';
+import { identity as linear, run_all, is_function } from './utils';
+import { now } from './environment';
+import { raf_timeout, loopThen } from './loop';
+import { generate_rule } from './style_manager';
 import { custom_event } from './dom';
-import { add_render_callback } from './scheduler';
 import { TransitionConfig } from '../transition';
+import { add_render_callback } from './scheduler';
 
-let promise: Promise<void>|null;
-
-function wait() {
-	if (!promise) {
-		promise = Promise.resolve();
-		promise.then(() => {
-			promise = null;
-		});
-	}
-
-	return promise;
-}
-
-function dispatch(node: Element, direction: boolean, kind: 'start' | 'end') {
-	node.dispatchEvent(custom_event(`${direction ? 'intro' : 'outro'}${kind}`));
+function startStopDispatcher(node: Element, direction: boolean) {
+	add_render_callback(() => node.dispatchEvent(custom_event(`${direction ? 'intro' : 'outro'}start`)));
+	return () => node.dispatchEvent(custom_event(`${!direction ? 'intro' : 'outro'}end`));
 }
 
 const outroing = new Set();
@@ -28,326 +16,95 @@ let outros;
 
 export function group_outros() {
 	outros = {
-		r: 0,     // remaining outros
-		c: [],    // callbacks
-		p: outros // parent group
+		/* parent group */ p: outros,
+		/* remaining outros */ r: 0,
+		/* callbacks */ c: [],
 	};
 }
 
 export function check_outros() {
-	if (!outros.r) {
-		run_all(outros.c);
-	}
+	if (!outros.r) run_all(outros.c);
 	outros = outros.p;
 }
 
 export function transition_in(block, local?: 0 | 1) {
-	if (block && block.i) {
-		outroing.delete(block);
-		block.i(local);
-	}
+	if (!block || !block.i) return;
+	outroing.delete(block);
+	block.i(local);
 }
 
-export function transition_out(block, local: 0 | 1, detach: 0 | 1, callback) {
-	if (block && block.o) {
-		if (outroing.has(block)) return;
-		outroing.add(block);
-
-		outros.c.push(() => {
-			outroing.delete(block);
-			if (callback) {
-				if (detach) block.d(1);
-				callback();
-			}
-		});
-
-		block.o(local);
-	}
+export function transition_out(block, local?: 0 | 1, detach?: 0 | 1, callback?: () => void) {
+	if (!block || !block.o || outroing.has(block)) return;
+	outroing.add(block);
+	outros.c.push(() => {
+		outroing.delete(block);
+		if (!callback) return;
+		if (detach) block.d(1);
+		callback();
+	});
+	block.o(local);
 }
 
 const null_transition: TransitionConfig = { duration: 0 };
 
-type TransitionFn = (node: Element, params: any) => TransitionConfig;
-
-export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
-	let config = fn(node, params);
-	let running = false;
-	let animation_name;
-	let task;
-	let uid = 0;
-
-	function cleanup() {
-		if (animation_name) delete_rule(node, animation_name);
-	}
-
-	function go() {
-		const {
-			delay = 0,
-			duration = 300,
-			easing = linear,
-			tick = noop,
-			css
-		} = config || null_transition;
-
-		if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
-		tick(0, 1);
-
-		const start_time = now() + delay;
-		const end_time = start_time + duration;
-
-		if (task) task.abort();
-		running = true;
-
-		add_render_callback(() => dispatch(node, true, 'start'));
-
-		task = loop(now => {
-			if (running) {
-				if (now >= end_time) {
-					tick(1, 0);
-
-					dispatch(node, true, 'end');
-
-					cleanup();
-					return running = false;
-				}
-
-				if (now >= start_time) {
-					const t = easing((now - start_time) / duration);
-					tick(t, 1 - t);
-				}
-			}
-
-			return running;
-		});
-	}
-
-	let started = false;
-
-	return {
-		start() {
-			if (started) return;
-
-			delete_rule(node);
-
-			if (is_function(config)) {
-				config = config();
-				wait().then(go);
-			} else {
-				go();
-			}
-		},
-
-		invalidate() {
-			started = false;
-		},
-
-		end() {
-			if (running) {
-				cleanup();
-				running = false;
-			}
-		}
-	};
-}
-
-export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
+type TransitionFn = (node: HTMLElement, params: any) => TransitionConfig;
+export function run_transition(
+	node: HTMLElement,
+	fn: TransitionFn,
+	is_intro: boolean,
+	params?: any,
+	reversed_from?: number
+): StopResetReverse {
 	let config = fn(node, params);
 	let running = true;
-	let animation_name;
+
+	let cancel_css;
+	let cancel_raf;
+	let dispatch_end;
+	let start_time;
 
 	const group = outros;
+	if (!is_intro) group.r++;
 
-	group.r += 1;
-
-	function go() {
-		const {
-			delay = 0,
-			duration = 300,
-			easing = linear,
-			tick = noop,
-			css
-		} = config || null_transition;
-
-		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
-
-		const start_time = now() + delay;
+	function start({ delay = 0, duration = 300, easing = linear, tick, css } = null_transition) {
+		if (!running) return;
+		const run = tick && (is_intro ? tick : (a, b) => tick(b, a));
+		if (reversed_from) delay += duration - (now() - reversed_from);
+		start_time = now() + delay;
 		const end_time = start_time + duration;
-
-		add_render_callback(() => dispatch(node, false, 'start'));
-
-		loop(now => {
-			if (running) {
-				if (now >= end_time) {
-					tick(0, 1);
-
-					dispatch(node, false, 'end');
-
-					if (!--group.r) {
-						// this will result in `end()` being called,
-						// so we don't need to clean up here
-						run_all(group.c);
-					}
-
-					return false;
-				}
-
-				if (now >= start_time) {
-					const t = easing((now - start_time) / duration);
-					tick(1 - t, t);
-				}
-			}
-
-			return running;
-		});
+		cancel_css = css && generate_rule(node, +!is_intro, +is_intro, duration, delay, easing, css);
+		dispatch_end = startStopDispatcher(node, is_intro);
+		cancel_raf = cancel_raf = !run
+			? raf_timeout(stop, end_time)
+			: loopThen(
+					delay,
+					(t) => ((t = easing((t - start_time) / duration)), run(t, 1 - t)),
+					() => (run(1, 0), stop()),
+					end_time
+			  );
 	}
 
-	if (is_function(config)) {
-		wait().then(() => {
-			// @ts-ignore
-			config = config();
-			go();
-		});
-	} else {
-		go();
+	function stop(reset_reverse?: 1 | 2) {
+		if (!is_intro && reset_reverse === 1 && config && 'tick' in config) config.tick(1, 0);
+		if (!running) return;
+		else running = false;
+		if (cancel_css) cancel_css();
+		if (cancel_raf) cancel_raf();
+		if (dispatch_end) dispatch_end();
+		if (!is_intro && !--group.r) run_all(group.c);
+		if (reset_reverse === 2) return run_transition(node, fn, !is_intro, params, start_time);
+		else if (!~reversed_from) running_bidi.delete(node);
 	}
-
-	return {
-		end(reset) {
-			if (reset && config.tick) {
-				config.tick(1, 0);
-			}
-
-			if (running) {
-				if (animation_name) delete_rule(node, animation_name);
-				running = false;
-			}
-		}
-	};
+	if (is_function(config)) add_render_callback(() => start((config = config())));
+	else start(config);
+	return stop;
 }
-
-export function create_bidirectional_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any, intro: boolean) {
-	let config = fn(node, params);
-
-	let t = intro ? 0 : 1;
-
-	let running_program = null;
-	let pending_program = null;
-	let animation_name = null;
-
-	function clear_animation() {
-		if (animation_name) delete_rule(node, animation_name);
+export type StopResetReverse = (reset_reverse?: 1 | 2) => StopResetReverse;
+const running_bidi: Map<HTMLElement, StopResetReverse> = new Map();
+export function run_bidirectional_transition(node: HTMLElement, fn: TransitionFn, is_intro: boolean, params: any) {
+	if (running_bidi.has(node)) {
+		running_bidi.set(node, running_bidi.get(node)(2));
+	} else {
+		running_bidi.set(node, run_transition(node, fn, is_intro, params, -1));
 	}
-
-	function init(program, duration) {
-		const d = program.b - t;
-		duration *= Math.abs(d);
-
-		return {
-			a: t,
-			b: program.b,
-			d,
-			duration,
-			start: program.start,
-			end: program.start + duration,
-			group: program.group
-		};
-	}
-
-	function go(b) {
-		const {
-			delay = 0,
-			duration = 300,
-			easing = linear,
-			tick = noop,
-			css
-		} = config || null_transition;
-
-		const program = {
-			start: now() + delay,
-			b
-		};
-
-		if (!b) {
-			// @ts-ignore todo: improve typings
-			program.group = outros;
-			outros.r += 1;
-		}
-
-		if (running_program) {
-			pending_program = program;
-		} else {
-			// if this is an intro, and there's a delay, we need to do
-			// an initial tick and/or apply CSS animation immediately
-			if (css) {
-				clear_animation();
-				animation_name = create_rule(node, t, b, duration, delay, easing, css);
-			}
-
-			if (b) tick(0, 1);
-
-			running_program = init(program, duration);
-			add_render_callback(() => dispatch(node, b, 'start'));
-
-			loop(now => {
-				if (pending_program && now > pending_program.start) {
-					running_program = init(pending_program, duration);
-					pending_program = null;
-
-					dispatch(node, running_program.b, 'start');
-
-					if (css) {
-						clear_animation();
-						animation_name = create_rule(node, t, running_program.b, running_program.duration, 0, easing, config.css);
-					}
-				}
-
-				if (running_program) {
-					if (now >= running_program.end) {
-						tick(t = running_program.b, 1 - t);
-						dispatch(node, running_program.b, 'end');
-
-						if (!pending_program) {
-							// we're done
-							if (running_program.b) {
-								// intro — we can tidy up immediately
-								clear_animation();
-							} else {
-								// outro — needs to be coordinated
-								if (!--running_program.group.r) run_all(running_program.group.c);
-							}
-						}
-
-						running_program = null;
-					}
-
-					else if (now >= running_program.start) {
-						const p = now - running_program.start;
-						t = running_program.a + running_program.d * easing(p / running_program.duration);
-						tick(t, 1 - t);
-					}
-				}
-
-				return !!(running_program || pending_program);
-			});
-		}
-	}
-
-	return {
-		run(b) {
-			if (is_function(config)) {
-				wait().then(() => {
-					// @ts-ignore
-					config = config();
-					go(b);
-				});
-			} else {
-				go(b);
-			}
-		},
-
-		end() {
-			clear_animation();
-			running_program = pending_program = null;
-		}
-	};
 }

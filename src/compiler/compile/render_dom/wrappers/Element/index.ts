@@ -26,105 +26,85 @@ import { Identifier } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
+import Transition from '../../../nodes/Transition';
 
 const events = [
 	{
 		event_names: ['input'],
 		filter: (node: Element, _name: string) =>
 			node.name === 'textarea' ||
-			node.name === 'input' && !/radio|checkbox|range|file/.test(node.get_static_attribute_value('type') as string)
+			(node.name === 'input' && !/radio|checkbox|range|file/.test(node.get_static_attribute_value('type') as string)),
 	},
 	{
 		event_names: ['input'],
 		filter: (node: Element, name: string) =>
 			(name === 'textContent' || name === 'innerHTML') &&
-			node.attributes.some(attribute => attribute.name === 'contenteditable')
+			node.attributes.some((attribute) => attribute.name === 'contenteditable'),
 	},
 	{
 		event_names: ['change'],
 		filter: (node: Element, _name: string) =>
 			node.name === 'select' ||
-			node.name === 'input' && /radio|checkbox|file/.test(node.get_static_attribute_value('type') as string)
+			(node.name === 'input' && /radio|checkbox|file/.test(node.get_static_attribute_value('type') as string)),
 	},
 	{
 		event_names: ['change', 'input'],
 		filter: (node: Element, _name: string) =>
-			node.name === 'input' && node.get_static_attribute_value('type') === 'range'
+			node.name === 'input' && node.get_static_attribute_value('type') === 'range',
 	},
 
 	{
 		event_names: ['elementresize'],
-		filter: (_node: Element, name: string) =>
-			dimensions.test(name)
+		filter: (_node: Element, name: string) => dimensions.test(name),
 	},
 
 	// media events
 	{
 		event_names: ['timeupdate'],
 		filter: (node: Element, name: string) =>
-			node.is_media_node() &&
-			(name === 'currentTime' || name === 'played' || name === 'ended')
+			node.is_media_node() && (name === 'currentTime' || name === 'played' || name === 'ended'),
 	},
 	{
 		event_names: ['durationchange'],
-		filter: (node: Element, name: string) =>
-			node.is_media_node() &&
-			name === 'duration'
+		filter: (node: Element, name: string) => node.is_media_node() && name === 'duration',
 	},
 	{
 		event_names: ['play', 'pause'],
-		filter: (node: Element, name: string) =>
-			node.is_media_node() &&
-			name === 'paused'
+		filter: (node: Element, name: string) => node.is_media_node() && name === 'paused',
 	},
 	{
 		event_names: ['progress'],
-		filter: (node: Element, name: string) =>
-			node.is_media_node() &&
-			name === 'buffered'
+		filter: (node: Element, name: string) => node.is_media_node() && name === 'buffered',
 	},
 	{
 		event_names: ['loadedmetadata'],
-		filter: (node: Element, name: string) =>
-			node.is_media_node() &&
-			(name === 'buffered' || name === 'seekable')
+		filter: (node: Element, name: string) => node.is_media_node() && (name === 'buffered' || name === 'seekable'),
 	},
 	{
 		event_names: ['volumechange'],
-		filter: (node: Element, name: string) =>
-			node.is_media_node() &&
-			name === 'volume'
+		filter: (node: Element, name: string) => node.is_media_node() && name === 'volume',
 	},
 	{
 		event_names: ['ratechange'],
-		filter: (node: Element, name: string) =>
-			node.is_media_node() &&
-			name === 'playbackRate'
+		filter: (node: Element, name: string) => node.is_media_node() && name === 'playbackRate',
 	},
 	{
 		event_names: ['seeking', 'seeked'],
-		filter: (node: Element, name: string) =>
-			node.is_media_node() &&
-			(name === 'seeking')
+		filter: (node: Element, name: string) => node.is_media_node() && name === 'seeking',
 	},
 	{
 		event_names: ['ended'],
-		filter: (node: Element, name: string) =>
-			node.is_media_node() &&
-			name === 'ended'
+		filter: (node: Element, name: string) => node.is_media_node() && name === 'ended',
 	},
 	{
 		event_names: ['resize'],
-		filter: (node: Element, name: string) =>
-			node.is_media_node() &&
-			(name === 'videoHeight' || name === 'videoWidth')
+		filter: (node: Element, name: string) => node.is_media_node() && (name === 'videoHeight' || name === 'videoWidth'),
 	},
 
 	// details event
 	{
 		event_names: ['toggle'],
-		filter: (node: Element, _name: string) =>
-			node.name === 'details'
+		filter: (node: Element, _name: string) => node.name === 'details',
 	},
 ];
 
@@ -153,7 +133,7 @@ export default class ElementWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 		this.var = {
 			type: 'Identifier',
-			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_'),
 		};
 
 		this.void = is_void(node.name);
@@ -161,14 +141,14 @@ export default class ElementWrapper extends Wrapper {
 		this.class_dependencies = [];
 
 		if (this.node.children.length) {
-			this.node.lets.forEach(l => {
-				extract_names(l.value || l.name).forEach(name => {
+			this.node.lets.forEach((l) => {
+				extract_names(l.value || l.name).forEach((name) => {
 					renderer.add_to_context(name, true);
 				});
 			});
 		}
 
-		this.attributes = this.node.attributes.map(attribute => {
+		this.attributes = this.node.attributes.map((attribute) => {
 			if (attribute.name === 'slot') {
 				// TODO make separate subclass for this?
 				let owner = this.parent;
@@ -187,28 +167,28 @@ export default class ElementWrapper extends Wrapper {
 				if (owner && owner.node.type === 'InlineComponent') {
 					const name = attribute.get_static_value() as string;
 
-					if (!(owner as unknown as InlineComponentWrapper).slots.has(name)) {
+					if (!((owner as unknown) as InlineComponentWrapper).slots.has(name)) {
 						const child_block = block.child({
 							comment: create_debugging_comment(node, this.renderer.component),
 							name: this.renderer.component.get_unique_name(`create_${sanitize(name)}_slot`),
-							type: 'slot'
+							type: 'slot',
 						});
 
 						const { scope, lets } = this.node;
-						const seen = new Set(lets.map(l => l.name.name));
+						const seen = new Set(lets.map((l) => l.name.name));
 
-						(owner as unknown as InlineComponentWrapper).node.lets.forEach(l => {
+						((owner as unknown) as InlineComponentWrapper).node.lets.forEach((l) => {
 							if (!seen.has(l.name.name)) lets.push(l);
 						});
 
-						(owner as unknown as InlineComponentWrapper).slots.set(
+						((owner as unknown) as InlineComponentWrapper).slots.set(
 							name,
 							get_slot_definition(child_block, scope, lets)
 						);
 						this.renderer.blocks.push(child_block);
 					}
 
-					this.slot_block = (owner as unknown as InlineComponentWrapper).slots.get(name).block;
+					this.slot_block = ((owner as unknown) as InlineComponentWrapper).slots.get(name).block;
 					block = this.slot_block;
 				}
 			}
@@ -221,9 +201,9 @@ export default class ElementWrapper extends Wrapper {
 		// ordinarily, there'll only be one... but we need to handle
 		// the rare case where an element can have multiple bindings,
 		// e.g. <audio bind:paused bind:currentTime>
-		this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
+		this.bindings = this.node.bindings.map((binding) => new Binding(block, binding, this));
 
-		this.event_handlers = this.node.handlers.map(event_handler => new EventHandler(event_handler, this));
+		this.event_handlers = this.node.handlers.map((event_handler) => new EventHandler(event_handler, this));
 
 		if (node.intro || node.outro) {
 			if (node.intro) block.add_intro(node.intro.is_local);
@@ -235,27 +215,29 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		// add directive and handler dependencies
-		[node.animation, node.outro, ...node.actions, ...node.classes].forEach(directive => {
+		[node.animation, node.outro, ...node.actions, ...node.classes].forEach((directive) => {
 			if (directive && directive.expression) {
 				block.add_dependencies(directive.expression.dependencies);
 			}
 		});
 
-		node.handlers.forEach(handler => {
+		node.handlers.forEach((handler) => {
 			if (handler.expression) {
 				block.add_dependencies(handler.expression.dependencies);
 			}
 		});
 
 		if (this.parent) {
-			if (node.actions.length > 0 ||
+			if (
+				renderer.options.dev ||
+				node.actions.length ||
+				node.bindings.length ||
+				node.handlers.length ||
+				node.classes.length ||
+				node.intro ||
+				node.outro ||
 				node.animation ||
-				node.bindings.length > 0 ||
-				node.classes.length > 0 ||
-				node.intro || node.outro ||
-				node.handlers.length > 0 ||
-				this.node.name === 'option' ||
-				renderer.options.dev
+				this.node.name === 'option'
 			) {
 				this.parent.cannot_use_innerhtml(); // need to use add_location
 				this.parent.not_static_content();
@@ -289,32 +271,22 @@ export default class ElementWrapper extends Wrapper {
 
 		block.add_variable(node);
 		const render_statement = this.get_render_statement(block);
-		block.chunks.create.push(
-			b`${node} = ${render_statement};`
-		);
+		block.chunks.create.push(b`${node} = ${render_statement};`);
 
 		if (renderer.options.hydratable) {
 			if (parent_nodes) {
-				block.chunks.claim.push(b`
-					${node} = ${this.get_claim_statement(parent_nodes)};
-				`);
+				block.chunks.claim.push(b`${node} = ${this.get_claim_statement(parent_nodes)};`);
 
 				if (!this.void && this.node.children.length > 0) {
-					block.chunks.claim.push(b`
-						var ${nodes} = ${children};
-					`);
+					block.chunks.claim.push(b`var ${nodes} = ${children};`);
 				}
 			} else {
-				block.chunks.claim.push(
-					b`${node} = ${render_statement};`
-				);
+				block.chunks.claim.push(b`${node} = ${render_statement};`);
 			}
 		}
 
 		if (parent_node) {
-			block.chunks.mount.push(
-				b`@append(${parent_node}, ${node});`
-			);
+			block.chunks.mount.push(b`@append(${parent_node}, ${node});`);
 
 			if (is_head(parent_node)) {
 				block.chunks.destroy.push(b`@detach(${node});`);
@@ -332,46 +304,45 @@ export default class ElementWrapper extends Wrapper {
 		if (!this.node.namespace && (this.can_use_innerhtml || can_use_textcontent) && this.fragment.nodes.length > 0) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				block.chunks.create.push(
-					 // @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
+					// @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
 					b`${node}.textContent = ${string_literal(this.fragment.nodes[0].data)};`
 				);
 			} else {
 				const state = {
 					quasi: {
 						type: 'TemplateElement',
-						value: { raw: '' }
-					}
+						value: { raw: '' },
+					},
 				};
 
 				const literal = {
 					type: 'TemplateLiteral',
 					expressions: [],
-					quasis: []
+					quasis: [],
 				};
 
 				const can_use_raw_text = !this.can_use_innerhtml && can_use_textcontent;
-				to_html((this.fragment.nodes as unknown as Array<ElementWrapper | TextWrapper>), block, literal, state, can_use_raw_text);
+				to_html(
+					(this.fragment.nodes as unknown) as Array<ElementWrapper | TextWrapper>,
+					block,
+					literal,
+					state,
+					can_use_raw_text
+				);
 				literal.quasis.push(state.quasi);
 
-				block.chunks.create.push(
-					b`${node}.${this.can_use_innerhtml ? 'innerHTML': 'textContent'} = ${literal};`
-				);
+				block.chunks.create.push(b`${node}.${this.can_use_innerhtml ? 'innerHTML' : 'textContent'} = ${literal};`);
 			}
 		} else {
 			this.fragment.nodes.forEach((child: Wrapper) => {
-				child.render(
-					block,
-					this.node.name === 'template' ? x`${node}.content` : node,
-					nodes
-				);
+				child.render(block, this.node.name === 'template' ? x`${node}.content` : node, nodes);
 			});
 		}
 
-		const event_handler_or_binding_uses_context = (
-			this.bindings.some(binding => binding.handler.uses_context) ||
-			this.node.handlers.some(handler => handler.uses_context) ||
-			this.node.actions.some(action => action.uses_context)
-		);
+		const event_handler_or_binding_uses_context =
+			this.bindings.some((binding) => binding.handler.uses_context) ||
+			this.node.handlers.some((handler) => handler.uses_context) ||
+			this.node.actions.some((action) => action.uses_context);
 
 		if (event_handler_or_binding_uses_context) {
 			block.maintain_context = true;
@@ -379,15 +350,23 @@ export default class ElementWrapper extends Wrapper {
 
 		this.add_attributes(block);
 		this.add_directives_in_order(block);
-		this.add_transitions(block);
-		this.add_animation(block);
+		const { intro, outro } = this.node;
+		if (intro || outro) {
+			if (intro === outro) {
+				this.add_bidi_transition(block, intro);
+			} else {
+				this.add_intro(block, intro, outro);
+				this.add_outro(block, intro, outro);
+			}
+		}
+		if (this.node.animation) {
+			this.add_animation(block, intro, outro);
+		}
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
 
 		if (nodes && this.renderer.options.hydratable && !this.void) {
-			block.chunks.claim.push(
-				b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`
-			);
+			block.chunks.claim.push(b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`);
 		}
 
 		if (renderer.options.dev) {
@@ -399,7 +378,10 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	can_use_textcontent() {
-		return this.is_static_content && this.fragment.nodes.every(node => node.node.type === 'Text' || node.node.type === 'MustacheTag');
+		return (
+			this.is_static_content &&
+			this.fragment.nodes.every((node) => node.node.type === 'Text' || node.node.type === 'MustacheTag')
+		);
 	}
 
 	get_render_statement(block: Block) {
@@ -413,7 +395,7 @@ export default class ElementWrapper extends Wrapper {
 			return x`@_document.createElementNS("${namespace}", "${name}")`;
 		}
 
-		const is = this.attributes.find(attr => attr.node.name === 'is');
+		const is = this.attributes.find((attr) => attr.node.name === 'is');
 		if (is) {
 			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)})`;
 		}
@@ -426,16 +408,14 @@ export default class ElementWrapper extends Wrapper {
 			.filter((attr) => attr.type === 'Attribute')
 			.map((attr) => p`${attr.name}: true`);
 
-		const name = this.node.namespace
-			? this.node.name
-			: this.node.name.toUpperCase();
+		const name = this.node.namespace ? this.node.name : this.node.name.toUpperCase();
 
 		const svg = this.node.namespace === namespaces.svg ? 1 : null;
 
 		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
 	}
 
-	add_directives_in_order (block: Block) {
+	add_directives_in_order(block: Block) {
 		interface BindingGroup {
 			events: string[];
 			bindings: Binding[];
@@ -444,17 +424,17 @@ export default class ElementWrapper extends Wrapper {
 		type OrderedAttribute = EventHandler | BindingGroup | Binding | Action;
 
 		const bindingGroups = events
-			.map(event => ({
+			.map((event) => ({
 				events: event.event_names,
 				bindings: this.bindings
-					.filter(binding => binding.node.name !== 'this')
-					.filter(binding => event.filter(this.node, binding.node.name))
+					.filter((binding) => binding.node.name !== 'this')
+					.filter((binding) => event.filter(this.node, binding.node.name)),
 			}))
-			.filter(group => group.bindings.length);
+			.filter((group) => group.bindings.length);
 
-		const this_binding = this.bindings.find(b => b.node.name === 'this');
+		const this_binding = this.bindings.find((b) => b.node.name === 'this');
 
-		function getOrder (item: OrderedAttribute) {
+		function getOrder(item: OrderedAttribute) {
 			if (item instanceof EventHandler) {
 				return item.node.start;
 			} else if (item instanceof Binding) {
@@ -466,15 +446,10 @@ export default class ElementWrapper extends Wrapper {
 			}
 		}
 
-		([
-			...bindingGroups,
-			...this.event_handlers,
-			this_binding,
-			...this.node.actions
-		] as OrderedAttribute[])
+		([...bindingGroups, ...this.event_handlers, this_binding, ...this.node.actions] as OrderedAttribute[])
 			.filter(Boolean)
 			.sort((a, b) => getOrder(a) - getOrder(b))
-			.forEach(item => {
+			.forEach((item) => {
 				if (item instanceof EventHandler) {
 					add_event_handler(block, this.var, item);
 				} else if (item instanceof Binding) {
@@ -494,23 +469,23 @@ export default class ElementWrapper extends Wrapper {
 
 		renderer.component.has_reactive_assignments = true;
 
-		const lock = bindingGroup.bindings.some(binding => binding.needs_lock) ?
-			block.get_unique_name(`${this.var.name}_updating`) :
-			null;
+		const lock = bindingGroup.bindings.some((binding) => binding.needs_lock)
+			? block.get_unique_name(`${this.var.name}_updating`)
+			: null;
 
 		if (lock) block.add_variable(lock, x`false`);
 
-		[bindingGroup].forEach(group => {
+		[bindingGroup].forEach((group) => {
 			const handler = renderer.component.get_unique_name(`${this.var.name}_${group.events.join('_')}_handler`);
 			renderer.add_to_context(handler.name);
 
 			// TODO figure out how to handle locks
-			const needs_lock = group.bindings.some(binding => binding.needs_lock);
+			const needs_lock = group.bindings.some((binding) => binding.needs_lock);
 
 			const dependencies: Set<string> = new Set();
 			const contextual_dependencies: Set<string> = new Set();
 
-			group.bindings.forEach(binding => {
+			group.bindings.forEach((binding) => {
 				// TODO this is a mess
 				add_to_set(dependencies, binding.get_dependencies());
 				add_to_set(contextual_dependencies, binding.node.expression.contextual_dependencies);
@@ -534,7 +509,7 @@ export default class ElementWrapper extends Wrapper {
 
 			// TODO dry this out — similar code for event handlers and component bindings
 			if (has_local_function) {
-				const args = Array.from(contextual_dependencies).map(name => renderer.reference(name));
+				const args = Array.from(contextual_dependencies).map((name) => renderer.reference(name));
 
 				// need to create a block-local function that calls an instance-level function
 				if (animation_frame) {
@@ -560,22 +535,22 @@ export default class ElementWrapper extends Wrapper {
 				callee = handler;
 			}
 
-			const params = Array.from(contextual_dependencies).map(name => ({
+			const params = Array.from(contextual_dependencies).map((name) => ({
 				type: 'Identifier',
-				name
+				name,
 			}));
 
 			this.renderer.component.partly_hoisted.push(b`
 				function ${handler}(${params}) {
-					${group.bindings.map(b => b.handler.mutation)}
+					${group.bindings.map((b) => b.handler.mutation)}
 					${Array.from(dependencies)
-						.filter(dep => dep[0] !== '$')
-						.filter(dep => !contextual_dependencies.has(dep))
-						.map(dep => b`${this.renderer.invalidate(dep)};`)}
+						.filter((dep) => dep[0] !== '$')
+						.filter((dep) => !contextual_dependencies.has(dep))
+						.map((dep) => b`${this.renderer.invalidate(dep)};`)}
 				}
 			`);
 
-			group.events.forEach(name => {
+			group.events.forEach((name) => {
 				if (name === 'elementresize') {
 					// special case
 					const resize_listener = block.get_unique_name(`${this.var.name}_resize_listener`);
@@ -585,43 +560,34 @@ export default class ElementWrapper extends Wrapper {
 						b`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
 					);
 
-					block.chunks.destroy.push(
-						b`${resize_listener}();`
-					);
+					block.chunks.destroy.push(b`${resize_listener}();`);
 				} else {
-					block.event_listeners.push(
-						x`@listen(${this.var}, "${name}", ${callee})`
-					);
+					block.event_listeners.push(x`@listen(${this.var}, "${name}", ${callee})`);
 				}
 			});
 
 			const some_initial_state_is_undefined = group.bindings
-				.map(binding => x`${binding.snippet} === void 0`)
+				.map((binding) => x`${binding.snippet} === void 0`)
 				.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
-			const should_initialise = (
+			const should_initialise =
 				this.node.name === 'select' ||
-				group.bindings.find(binding => {
+				group.bindings.find((binding) => {
 					return (
 						binding.node.name === 'indeterminate' ||
 						binding.node.name === 'textContent' ||
 						binding.node.name === 'innerHTML' ||
 						binding.is_readonly_media_attribute()
 					);
-				})
-			);
+				});
 
 			if (should_initialise) {
 				const callback = has_local_function ? handler : x`() => ${callee}.call(${this.var})`;
-				block.chunks.hydrate.push(
-					b`if (${some_initial_state_is_undefined}) @add_render_callback(${callback});`
-				);
+				block.chunks.hydrate.push(b`if (${some_initial_state_is_undefined}) @add_render_callback(${callback});`);
 			}
 
 			if (group.events[0] === 'elementresize') {
-				block.chunks.hydrate.push(
-					b`@add_render_callback(() => ${callee}.call(${this.var}));`
-				);
+				block.chunks.hydrate.push(b`@add_render_callback(() => ${callee}.call(${this.var}));`);
 			}
 		});
 
@@ -648,7 +614,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 
-		if (this.node.attributes.some(attr => attr.is_spread)) {
+		if (this.node.attributes.some((attr) => attr.is_spread)) {
 			this.add_spread_attributes(block);
 			return;
 		}
@@ -665,29 +631,27 @@ export default class ElementWrapper extends Wrapper {
 		const initial_props = [];
 		const updates = [];
 
-		this.attributes
-			.forEach(attr => {
-				const condition = attr.node.dependencies.size > 0
-					? block.renderer.dirty(Array.from(attr.node.dependencies))
-					: null;
+		this.attributes.forEach((attr) => {
+			const condition =
+				attr.node.dependencies.size > 0 ? block.renderer.dirty(Array.from(attr.node.dependencies)) : null;
 
-				if (attr.node.is_spread) {
-					const snippet = attr.node.expression.manipulate(block);
+			if (attr.node.is_spread) {
+				const snippet = attr.node.expression.manipulate(block);
 
-					initial_props.push(snippet);
+				initial_props.push(snippet);
 
-					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
-				} else {
-					const metadata = attr.get_metadata();
-					const name = attr.is_indirectly_bound_value()
-						? '__value'
-						: (metadata && metadata.property_name) || fix_attribute_casing(attr.node.name);
-					const snippet = x`{ ${name}: ${attr.get_value(block)} }`;
-					initial_props.push(snippet);
+				updates.push(condition ? x`${condition} && ${snippet}` : snippet);
+			} else {
+				const metadata = attr.get_metadata();
+				const name = attr.is_indirectly_bound_value()
+					? '__value'
+					: (metadata && metadata.property_name) || fix_attribute_casing(attr.node.name);
+				const snippet = x`{ ${name}: ${attr.get_value(block)} }`;
+				initial_props.push(snippet);
 
-					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
-				}
-			});
+				updates.push(condition ? x`${condition} && ${snippet}` : snippet);
+			}
+		});
 
 		block.chunks.init.push(b`
 			let ${levels} = [${initial_props}];
@@ -700,181 +664,114 @@ export default class ElementWrapper extends Wrapper {
 
 		const fn = this.node.namespace === namespaces.svg ? x`@set_svg_attributes` : x`@set_attributes`;
 
-		block.chunks.hydrate.push(
-			b`${fn}(${this.var}, ${data});`
-		);
+		block.chunks.hydrate.push(b`${fn}(${this.var}, ${data});`);
 
-		block.chunks.update.push(b`
-			${fn}(${this.var}, @get_spread_update(${levels}, [
-				${updates}
-			]));
-		`);
+		block.chunks.update.push(b`${fn}(${this.var}, @get_spread_update(${levels}, [${updates}]));`);
 	}
+	add_bidi_transition(block: Block, intro: Transition) {
+		const name = block.get_unique_name(`${this.var.name}_bidi_transition`);
+		const snippet = intro.expression ? intro.expression.manipulate(block) : x`{}`;
 
-	add_transitions(
-		block: Block
-	) {
-		const { intro, outro } = this.node;
-		if (!intro && !outro) return;
+		block.add_variable(name);
 
-		if (intro === outro) {
-			// bidirectional transition
-			const name = block.get_unique_name(`${this.var.name}_transition`);
-			const snippet = intro.expression
-				? intro.expression.manipulate(block)
-				: x`{}`;
+		const fn = this.renderer.reference(intro.name);
 
-			block.add_variable(name);
+		let intro_block = b`${name} = @run_bidirectional_transition(${this.var}, ${fn}, true, ${snippet});`;
 
-			const fn = this.renderer.reference(intro.name);
+		let outro_block = b`${name} = @run_bidirectional_transition(${this.var}, ${fn}, false, ${snippet});`;
 
-			const intro_block = b`
-				@add_render_callback(() => {
-					if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, true);
-					${name}.run(1);
-				});
-			`;
+		if (intro.is_local) {
+			intro_block = b`if (#local) {${intro_block}}`;
+			outro_block = b`if (#local) {${outro_block}}`;
+		}
+		block.chunks.intro.push(intro_block);
+		block.chunks.outro.push(outro_block);
 
-			const outro_block = b`
-				if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, false);
-				${name}.run(0);
-			`;
-
-			if (intro.is_local) {
+		block.chunks.destroy.push(b`if (detaching && ${name}) ${name}();`);
+	}
+	add_intro(block: Block, intro: Transition, outro: Transition) {
+		if (outro) {
+			const outro_var = block.alias(`${this.var.name}_outro`);
+			if (this.node.animation) {
+				const [unfreeze_var, rect_var, stop_animation_var, animationFn, params] = run_animation(this, block);
 				block.chunks.intro.push(b`
-					if (#local) {
-						${intro_block}
-					}
-				`);
-
-				block.chunks.outro.push(b`
-					if (#local) {
-						${outro_block}
+					if (${outro_var}){ 
+						${outro_var}(1);
+						if (${unfreeze_var}) {
+							${unfreeze_var}(), (unfreeze = undefined);
+							${stop_animation_var} = @run_animation(${this.var}, ${rect_var}, ${animationFn}, ${params});
+						}
 					}
 				`);
 			} else {
-				block.chunks.intro.push(intro_block);
-				block.chunks.outro.push(outro_block);
-			}
-
-			block.chunks.destroy.push(b`if (detaching && ${name}) ${name}.end();`);
-		}
-
-		else {
-			const intro_name = intro && block.get_unique_name(`${this.var.name}_intro`);
-			const outro_name = outro && block.get_unique_name(`${this.var.name}_outro`);
-
-			if (intro) {
-				block.add_variable(intro_name);
-				const snippet = intro.expression
-					? intro.expression.manipulate(block)
-					: x`{}`;
-
-				const fn = this.renderer.reference(intro.name);
-
-				let intro_block;
-
-				if (outro) {
-					intro_block = b`
-						@add_render_callback(() => {
-							if (${outro_name}) ${outro_name}.end(1);
-							if (!${intro_name}) ${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
-							${intro_name}.start();
-						});
-					`;
-
-					block.chunks.outro.push(b`if (${intro_name}) ${intro_name}.invalidate();`);
-				} else {
-					intro_block = b`
-						if (!${intro_name}) {
-							@add_render_callback(() => {
-								${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
-								${intro_name}.start();
-							});
-						}
-					`;
-				}
-
-				if (intro.is_local) {
-					intro_block = b`
-						if (#local) {
-							${intro_block}
-						}
-					`;
-				}
-
-				block.chunks.intro.push(intro_block);
-			}
-
-			if (outro) {
-				block.add_variable(outro_name);
-				const snippet = outro.expression
-					? outro.expression.manipulate(block)
-					: x`{}`;
-
-				const fn = this.renderer.reference(outro.name);
-
-				if (!intro) {
-					block.chunks.intro.push(b`
-						if (${outro_name}) ${outro_name}.end(1);
-					`);
-				}
-
-				// TODO hide elements that have outro'd (unless they belong to a still-outroing
-				// group) prior to their removal from the DOM
-				let outro_block = b`
-					${outro_name} = @create_out_transition(${this.var}, ${fn}, ${snippet});
-				`;
-
-				if (outro.is_local) {
-					outro_block = b`
-						if (#local) {
-							${outro_block}
-						}
-					`;
-				}
-
-				block.chunks.outro.push(outro_block);
-
-				block.chunks.destroy.push(b`if (detaching && ${outro_name}) ${outro_name}.end();`);
+				block.chunks.intro.push(b`
+					if (${outro_var}){ 
+						${outro_var}(1);
+					}
+				`);
 			}
 		}
+		if (!intro) return;
+
+		const [intro_var, node, transitionFn, params] = run_transition(this, block, intro, `intro`);
+		block.add_variable(intro_var);
+
+		let start_intro = b`@add_render_callback(()=>{${intro_var} = @run_transition(${node}, ${transitionFn}, true, ${params});})`;
+		if (intro.is_local) start_intro = b`if (#local) ${start_intro};`;
+		block.chunks.intro.push(start_intro);
+	}
+	// TODO
+	// hide elements that have outro'd prior to their removal from the DOM
+	// ( ...unless they belong to a still-outroing group )
+	add_outro(block: Block, intro: Transition, outro: Transition) {
+		if (intro) {
+			const intro_var = block.alias(`${this.var.name}_intro`);
+			block.chunks.outro.push(b`if (${intro_var}) ${intro_var}();`);
+		}
+		if (!outro) return;
+
+		const [outro_var, node, transitionFn, params] = run_transition(this, block, outro, `outro`);
+		block.add_variable(outro_var);
+
+		let start_outro = b`${outro_var} = @run_transition(${node}, ${transitionFn}, false, ${params});`;
+		if (intro.is_local) start_outro = b`if (#local) ${start_outro};`;
+		block.chunks.outro.push(start_outro);
+
+		block.chunks.destroy.push(b`if (detaching && ${outro_var}) ${outro_var}();`);
 	}
 
-	add_animation(block: Block) {
-		if (!this.node.animation) return;
+	add_animation(block: Block, intro: Transition, outro: Transition) {
+		const intro_var = intro && block.alias(`${this.var.name}_intro`);
 
-		const { outro } = this.node;
+		const [unfreeze_var, rect_var, stop_animation_var, name_var, params_var] = run_animation(this, block);
 
-		const rect = block.get_unique_name('rect');
-		const stop_animation = block.get_unique_name('stop_animation');
-
-		block.add_variable(rect);
-		block.add_variable(stop_animation, x`@noop`);
+		block.add_variable(unfreeze_var);
+		block.add_variable(rect_var);
+		block.add_variable(stop_animation_var, x`@noop`);
 
 		block.chunks.measure.push(b`
-			${rect} = ${this.var}.getBoundingClientRect();
+			${rect_var} = ${this.var}.getBoundingClientRect();
+			${intro && b`if(${intro_var}) ${intro_var}();`}
 		`);
 
 		block.chunks.fix.push(b`
-			@fix_position(${this.var});
-			${stop_animation}();
-			${outro && b`@add_transform(${this.var}, ${rect});`}
+			${unfreeze_var} = @fix_position(${this.var});
+			${stop_animation_var}();
+			${outro && b`@add_transform(${this.var}, ${rect_var});`}
 		`);
-
-		const params = this.node.animation.expression ? this.node.animation.expression.manipulate(block) : x`{}`;
-
-		const name = this.renderer.reference(this.node.animation.name);
 
 		block.chunks.animate.push(b`
-			${stop_animation}();
-			${stop_animation} = @create_animation(${this.var}, ${rect}, ${name}, ${params});
+			if(${unfreeze_var}) return
+			${stop_animation_var}();
+			@add_render_callback(()=>{${stop_animation_var} = @run_animation(${this.var}, ${rect_var}, ${name_var}, ${params_var});});
 		`);
+
+		block.chunks.destroy.push(b`${unfreeze_var} = undefined;`);
 	}
 
 	add_classes(block: Block) {
-		const has_spread = this.node.attributes.some(attr => attr.is_spread);
-		this.node.classes.forEach(class_directive => {
+		const has_spread = this.node.attributes.some((attr) => attr.is_spread);
+		this.node.classes.forEach((class_directive) => {
 			const { expression, name } = class_directive;
 			let snippet;
 			let dependencies;
@@ -912,46 +809,42 @@ export default class ElementWrapper extends Wrapper {
 	}
 }
 
-function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
-	wrappers.forEach(wrapper => {
+function to_html(
+	wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>,
+	block: Block,
+	literal: any,
+	state: any,
+	can_use_raw_text?: boolean
+) {
+	wrappers.forEach((wrapper) => {
 		if (wrapper.node.type === 'Text') {
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
 
 			const parent = wrapper.node.parent as Element;
 
-			const raw = parent && (
-				parent.name === 'script' ||
-				parent.name === 'style' ||
-				can_use_raw_text
-			);
+			const raw = parent && (parent.name === 'script' || parent.name === 'style' || can_use_raw_text);
 
 			state.quasi.value.raw += (raw ? wrapper.node.data : escape_html(wrapper.node.data))
 				.replace(/\\/g, '\\\\')
 				.replace(/`/g, '\\`')
 				.replace(/\$/g, '\\$');
-		}
-
-		else if (wrapper.node.type === 'MustacheTag' || wrapper.node.type === 'RawMustacheTag' ) {
+		} else if (wrapper.node.type === 'MustacheTag' || wrapper.node.type === 'RawMustacheTag') {
 			literal.quasis.push(state.quasi);
 			literal.expressions.push(wrapper.node.expression.manipulate(block));
 			state.quasi = {
 				type: 'TemplateElement',
-				value: { raw: '' }
+				value: { raw: '' },
 			};
-		}
-
-		else if (wrapper.node.name === 'noscript') {
+		} else if (wrapper.node.name === 'noscript') {
 			// do nothing
-		}
-
-		else {
+		} else {
 			// element
 			state.quasi.value.raw += `<${wrapper.node.name}`;
 
 			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
 				state.quasi.value.raw += ` ${fix_attribute_casing(attr.node.name)}="`;
 
-				attr.node.chunks.forEach(chunk => {
+				attr.node.chunks.forEach((chunk) => {
 					if (chunk.type === 'Text') {
 						state.quasi.value.raw += escape_html(chunk.data);
 					} else {
@@ -960,7 +853,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 						state.quasi = {
 							type: 'TemplateElement',
-							value: { raw: '' }
+							value: { raw: '' },
 						};
 					}
 				});
@@ -971,10 +864,36 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 			state.quasi.value.raw += '>';
 
 			if (!(wrapper as ElementWrapper).void) {
-				to_html((wrapper as ElementWrapper).fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
+				to_html(
+					(wrapper as ElementWrapper).fragment.nodes as Array<ElementWrapper | TextWrapper>,
+					block,
+					literal,
+					state
+				);
 
 				state.quasi.value.raw += `</${wrapper.node.name}>`;
 			}
 		}
 	});
+}
+function run_animation(element: ElementWrapper, block: Block) {
+	return [
+		block.alias('unfreeze'),
+		block.alias('rect'),
+		block.alias('stop_animation'),
+		element.renderer.reference(element.node.animation.name),
+		element.node.animation.expression ? element.node.animation.expression.manipulate(block) : x`{}`,
+	];
+}
+function run_transition(element: ElementWrapper, block: Block, transition: Transition, type: string) {
+	// const run = b`
+	// 0 = @run_transition(1, `2`, ${
+	// 	type === 'intro' ? `true` : `false`
+	// }, ${params});
+	return [
+		/* node_intro */ block.alias(`${element.var.name}_${type}`),
+		/* node */ element.var,
+		/* transitionFn */ element.renderer.reference(transition.name),
+		/* params */ transition.expression ? transition.expression.manipulate(block) : x`{}`,
+	];
 }

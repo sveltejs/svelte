@@ -1,14 +1,29 @@
 import { element } from './dom';
-import { raf } from './environment';
+import { next_frame } from './loop';
+
+const svelte_rule = `__svelte_`;
 
 interface ExtendedDoc extends Document {
 	__svelte_stylesheet: CSSStyleSheet;
-	__svelte_rules: Record<string, true>;
+	__svelte_rules: Set<string>;
 }
 
-const active_docs = new Set<ExtendedDoc>();
-let active = 0;
+const active_documents = new Set<ExtendedDoc>();
+let running_animations = 0;
 
+function rulesheet({ ownerDocument }): [CSSStyleSheet, Set<string>] {
+	const doc = ownerDocument as ExtendedDoc;
+	if (!active_documents.has(doc)) {
+		active_documents.add(doc);
+		if (!doc.__svelte_stylesheet) {
+			doc.__svelte_stylesheet = doc.head.appendChild(element('style')).sheet as CSSStyleSheet;
+		}
+		if (!doc.__svelte_rules) {
+			doc.__svelte_rules = new Set();
+		}
+	}
+	return [doc.__svelte_stylesheet, doc.__svelte_rules];
+}
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function hash(str: string) {
 	let hash = 5381;
@@ -17,58 +32,56 @@ function hash(str: string) {
 	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
 	return hash >>> 0;
 }
-
-export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
-	const step = 16.666 / duration;
-	let keyframes = '{\n';
-
-	for (let p = 0; p <= 1; p += step) {
-		const t = a + (b - a) * ease(p);
-		keyframes += p * 100 + `%{${fn(t, 1 - t)}}\n`;
+export function generate_rule(
+	node: HTMLElement,
+	a: number,
+	b: number,
+	duration: number,
+	delay: number,
+	ease: (t: number) => number,
+	fn: (t: number, u: number) => string
+) {
+	const step = 16.6667 / duration;
+	let rule = '{\n';
+	for (let p = 0, t = 0; p <= 1; p += step) {
+		t = a + (b - a) * ease(p);
+		rule += p * 100 + `%{${fn(t, 1 - t)}}\n`;
 	}
-
-	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
-	const name = `__svelte_${hash(rule)}_${uid}`;
-	const doc = node.ownerDocument as ExtendedDoc;
-	active_docs.add(doc);
-	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet);
-	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
-
-	if (!current_rules[name]) {
-		current_rules[name] = true;
+	rule += `100% {${fn(b, 1 - b)}}\n}`;
+	const name = `${svelte_rule}${hash(rule)}`;
+	const [stylesheet, rules] = rulesheet(node);
+	if (!rules.has(name)) {
+		rules.add(name);
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
 	}
-
-	const animation = node.style.animation || '';
-	node.style.animation = `${animation ? `${animation}, ` : ``}${name} ${duration}ms linear ${delay}ms 1 both`;
-
-	active += 1;
-	return name;
+	const previous = node.style.animation || '';
+	node.style.animation = `${previous ? `${previous}, ` : ``}${name} ${duration}ms linear ${delay}ms 1 both`;
+	running_animations++;
+	return () => {
+		const prev = (node.style.animation || '').split(', ');
+		const next = prev.filter((anim) => !anim.includes(name));
+		if (prev.length === next.length) return;
+		node.style.animation = next.join(', ');
+		if (--running_animations) return;
+		active_documents.forEach(({ __svelte_stylesheet, __svelte_rules }) => {
+			let i = __svelte_stylesheet.cssRules.length;
+			while (i--) __svelte_stylesheet.deleteRule(i);
+			__svelte_rules.clear();
+		});
+		active_documents.clear();
+	};
 }
-
-export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string) {
+export function delete_rule(node: HTMLElement, name?: string) {
 	const previous = (node.style.animation || '').split(', ');
-	const next = previous.filter(name
-		? anim => anim.indexOf(name) < 0 // remove specific animation
-		: anim => anim.indexOf('__svelte') === -1 // remove all Svelte animations
+	const next = previous.filter(
+		name
+			? (anim) => anim.indexOf(name) < 0 // remove specific animation
+			: (anim) => anim.indexOf('__svelte') === -1 // remove all Svelte animations
 	);
 	const deleted = previous.length - next.length;
 	if (deleted) {
 		node.style.animation = next.join(', ');
-		active -= deleted;
-		if (!active) clear_rules();
+		running_animations -= deleted;
+		if (!active_documents) active_documents.clear();
 	}
-}
-
-export function clear_rules() {
-	raf(() => {
-		if (active) return;
-		active_docs.forEach(doc => {
-			const stylesheet = doc.__svelte_stylesheet;
-			let i = stylesheet.cssRules.length;
-			while (i--) stylesheet.deleteRule(i);
-			doc.__svelte_rules = {};
-		});
-		active_docs.clear();
-	});
 }
