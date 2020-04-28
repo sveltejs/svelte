@@ -4,8 +4,9 @@
         <p> Some text </p>
     </div>
     <select>
-        <option value="1">1</option>
-        <option value="2">2</option>
+{#each [1, 2] as value}
+        <option>{value}</option>
+{/each}
     </select>
 </div>
 
