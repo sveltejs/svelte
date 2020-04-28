@@ -51,7 +51,10 @@ function add(c) {
 }
 
 const timed_tasks = [];
-// callback on 1st frame after timestamp
+
+/**
+ * Callback on 1st frame after timestamp
+ */
 export function raf_timeout(callback: () => void, timestamp: number) {
 	let i = timed_tasks.length;
 	let v;
@@ -70,14 +73,12 @@ export function raf_timeout(callback: () => void, timestamp: number) {
 				// pop() until now < task.timestamp
 				timed_tasks.pop().c(now);
 			}
-			console.log(i, timed_tasks, now);
 			return timed_tasks.length;
 		});
 	}
 	return () => {
 		const index = timed_tasks.indexOf(task);
 		if (~index) timed_tasks.splice(index, 1);
-		console.log(timed_tasks);
 	};
 }
 export function loopThen(delay: number, run: (now: number) => void, stop: () => void, end_time: number) {
@@ -87,7 +88,4 @@ export function loopThen(delay: number, run: (now: number) => void, stop: () => 
 		let cancel = raf_timeout(() => (cancel = fn()), now() + delay - 16.6667);
 		return () => cancel();
 	}
-}
-export function next_frame(callback) {
-	return add(() => (callback(), false));
 }

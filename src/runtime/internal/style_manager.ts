@@ -1,5 +1,4 @@
 import { element } from './dom';
-import { next_frame } from './loop';
 
 const svelte_rule = `__svelte_`;
 

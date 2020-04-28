@@ -4,7 +4,7 @@ import { raf_timeout, loopThen } from './loop';
 import { generate_rule } from './style_manager';
 import { custom_event } from './dom';
 import { TransitionConfig } from '../transition';
-import { add_render_callback } from './scheduler';
+import { add_render_callback, add_flush_callback } from './scheduler';
 
 function startStopDispatcher(node: Element, direction: boolean) {
 	add_render_callback(() => node.dispatchEvent(custom_event(`${direction ? 'intro' : 'outro'}start`)));
@@ -37,6 +37,7 @@ export function transition_out(block, local?: 0 | 1, detach?: 0 | 1, callback?: 
 	if (!block || !block.o || outroing.has(block)) return;
 	outroing.add(block);
 	outros.c.push(() => {
+		if (!outroing.has(block)) return;
 		outroing.delete(block);
 		if (!callback) return;
 		if (detach) block.d(1);
@@ -95,7 +96,8 @@ export function run_transition(
 		if (reset_reverse === 2) return run_transition(node, fn, !is_intro, params, start_time);
 		else if (!~reversed_from) running_bidi.delete(node);
 	}
-	if (is_function(config)) add_render_callback(() => start((config = config())));
+	// @ts-ignore
+	if (is_function(config)) add_flush_callback(() => start((config = config())));
 	else start(config);
 	return stop;
 }
