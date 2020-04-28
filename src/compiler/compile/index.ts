@@ -26,7 +26,8 @@ const valid_options = [
 	'css',
 	'loopGuardTimeout',
 	'preserveComments',
-	'preserveWhitespace'
+	'preserveWhitespace',
+	'prefix',
 ];
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {
