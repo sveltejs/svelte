@@ -68,7 +68,11 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 
 	const slot_fns = [];
 
-	const children = remove_whitespace_children(node.children, node.next);
+	const children = (
+		options.preserveWhitespace
+			? node.children
+			: remove_whitespace_children(node.children, node.next)
+	);
 
 	if (children.length) {
 		const slot_scopes = new Map();

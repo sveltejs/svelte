@@ -12,7 +12,11 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	slot_scopes: Map<any, any>;
 }) {
 
-	const children = remove_whitespace_children(node.children, node.next);
+	const children = (
+		options.preserveWhitespace
+			? node.children
+			: remove_whitespace_children(node.children, node.next)
+	);
 
 	// awkward special case
 	let node_contents;

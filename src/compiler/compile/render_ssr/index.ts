@@ -18,8 +18,14 @@ export default function ssr(
 
 	const { name } = component;
 
+	const children = (
+		options.preserveWhitespace
+			? component.fragment.children
+			: trim(component.fragment.children)
+	);
+
 	// create $$render function
-	renderer.render(trim(component.fragment.children), Object.assign({
+	renderer.render(children, Object.assign({
 		locate: component.locate
 	}, options));
 
