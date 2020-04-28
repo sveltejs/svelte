@@ -31,13 +31,16 @@ function get_context(parser: Parser, attributes: any[], start: number): string {
 export default function read_script(parser: Parser, start: number, attributes: Node[]): Script {
 	const script_start = parser.index;
 	const script_end = parser.template.indexOf(script_closing_tag, script_start);
+	const script_start_line = parser.template.slice(0, script_start).split('\n').length - 1;
 
 	if (script_end === -1) parser.error({
 		code: `unclosed-script`,
 		message: `<script> must have a closing tag`
 	});
 
-	const source = ' '.repeat(script_start) + parser.template.slice(script_start, script_end);
+	const source = '\n'.repeat(script_start_line) + ' '.repeat(script_start - script_start_line) +
+		parser.template.slice(script_start, script_end);
+
 	parser.index = script_end + script_closing_tag.length;
 
 	let ast: Program;
