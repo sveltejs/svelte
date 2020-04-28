@@ -430,7 +430,7 @@ export default class Element extends Node {
 			if (href_attribute) {
 				const href_value = href_attribute.get_static_value();
 				
-				if (href_value === '' || href_value === '#') {
+				if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
 					component.warn(href_attribute, {
 						code: `a11y-invalid-attribute`,
 						message: `A11y: '${href_value}' is not a valid ${href_attribute.name} attribute`
