@@ -440,7 +440,7 @@ export default class Element extends Node {
 				const id_attribute_valid = id_attribute && id_attribute.get_static_value() !== '';
 				const name_attribute_valid = name_attribute && name_attribute.get_static_value() !== '';
 
-				if(!id_attribute_valid && !name_attribute_valid){
+				if (!id_attribute_valid && !name_attribute_valid) {
 					component.warn(this, {
 						code: `a11y-missing-attribute`,
 						message: `A11y: <a> element should have an href attribute`
