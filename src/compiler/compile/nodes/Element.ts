@@ -428,7 +428,7 @@ export default class Element extends Node {
 			if (attribute) {
 				const value = attribute.get_static_value();
 
-				if (value === '' || value === '#') {
+				if (value === '' || value === '#' || /^\W*javascript:/i.test(value)) {
 					component.warn(attribute, {
 						code: `a11y-invalid-attribute`,
 						message: `A11y: '${value}' is not a valid ${attribute.name} attribute`
