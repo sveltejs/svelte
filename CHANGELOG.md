@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix misaligned line numbers in source maps ([#3906](https://github.com/sveltejs/svelte/issues/3906))
 * Fix reactivity with imported values that are then mutated ([#4555](https://github.com/sveltejs/svelte/issues/4555))
 
 ## 3.21.0
