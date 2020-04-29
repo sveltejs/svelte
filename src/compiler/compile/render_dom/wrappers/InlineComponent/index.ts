@@ -152,6 +152,13 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
 
+		const uses_classes = this.node.classes.length > 0
+
+		const classNames: Identifier = {
+			type: 'Identifier',
+			name: '#classNames'
+		};
+
 		// removing empty slot
 		for (const slot of this.slots.keys()) {
 			if (!this.slots.get(slot).block.has_content()) {
@@ -173,14 +180,19 @@ export default class InlineComponentWrapper extends Wrapper {
 			]
 			: [];
 
+		const attributes = uses_classes
+			? this.node.attributes.filter(a => a.name !== 'class')
+			: this.node.attributes
+
 		const attribute_object = uses_spread
 			? x`{ ${initial_props} }`
 			: x`{
-				${this.node.attributes.map(attr => p`${attr.name}: ${attr.get_value(block)}`)},
+				${attributes.map(attr => p`${attr.name}: ${attr.get_value(block)}`)},
+				${uses_classes ? p`class: @component_classnames(${classNames})` : null},
 				${initial_props}
 			}`;
 
-		if (this.node.attributes.length || this.node.bindings.length || initial_props.length) {
+		if (this.node.attributes.length || this.node.bindings.length || initial_props.length || uses_classes) {
 			if (!uses_spread && this.node.bindings.length === 0) {
 				component_opts.properties.push(p`props: ${attribute_object}`);
 			} else {
@@ -207,9 +219,9 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 		});
 
-		const dynamic_attributes = this.node.attributes.filter(a => a.get_dependencies().length > 0);
+		const dynamic_attributes = attributes.filter(a => a.get_dependencies().length > 0);
 
-		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || fragment_dependencies.size > 0)) {
+		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || fragment_dependencies.size > 0 || uses_classes)) {
 			updates.push(b`const ${name_changes} = {};`);
 		}
 
@@ -296,6 +308,73 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 				});
 			}
+		}
+
+		if (uses_classes) {
+			const initial_class_values = [];
+			const all_dependencies = [];
+			this.node.classes.forEach(class_directive => {
+				const { expression, name } = class_directive;
+				let snippet;
+				let dependencies;
+				if (expression) {
+					snippet = expression.manipulate(block);
+					dependencies = expression.dependencies;
+				} else {
+					snippet = name;
+					dependencies = new Set([name]);
+				}
+
+				initial_class_values.push(p`${name}: ${snippet}`);
+
+				if ((dependencies && dependencies.size > 0)) {
+					all_dependencies.push(...dependencies);
+					const condition = block.renderer.dirty(Array.from(dependencies));
+					updates.push(b`
+						if (${condition}) {
+							${classNames}.${name} = ${snippet};
+						}`);
+				}
+			});
+
+			const attribute = this.node.attributes.find((a) => a.name === 'class');
+			if (attribute) {
+				const dependencies = attribute.get_dependencies();
+				const condition = block.renderer.dirty(Array.from(dependencies));
+				const value = attribute.get_value(block)
+				updates.push(b`if (${condition}) {
+					${classNames}.$$class = ${value};
+				}`)
+
+				all_dependencies.push(...dependencies);
+				initial_class_values.push(p`$$class: ${value}`);
+			}
+
+			if (uses_spread) {
+				statements.push(b`
+					if (${props}.class) {
+						${classNames}.$$class = ${props}.class;
+					}
+
+					${props}.class = @component_classnames(${classNames});
+				`);
+
+				updates.push(b`
+					if (${name_changes}.class) {
+						${classNames}.$$class = ${name_changes}.class
+					}
+
+					${name_changes}.class = @component_classnames(${classNames});
+				`);
+			} else if (all_dependencies.length > 0) {
+				const condition = block.renderer.dirty(all_dependencies);
+				updates.push(b`
+					if (${condition}) {
+						${name_changes}.class = @component_classnames(${classNames});
+					}`);
+			}
+
+			block.add_variable(classNames, x`{${initial_class_values}}`);
 		}
 
 		if (fragment_dependencies.size > 0) {

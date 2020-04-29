@@ -35,21 +35,39 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 
 	let props;
 
+	let attributes = node.attributes
+	let classProp
+	if (node.classes.length > 0) {
+		const index = attributes.findIndex(a => a.name === 'class')
+		const attr = attributes[index]
+		attributes.splice(index, 1)
+		classProp = p`
+			class: @component_classnames({
+				${node.classes.map(class_directive => {
+					const { expression, name } = class_directive;
+					const snippet = expression ? expression.node : x`#ctx.${name}`; // TODO is this right?
+					return p`${name}: ${snippet}`;
+				})},
+				${attr ? p`$$class: ${get_prop_value(attr)}` : null}
+			})
+		`
+	}
+
 	if (uses_spread) {
 		props = x`@_Object.assign(${
-			node.attributes
-				.map(attribute => {
-					if (attribute.is_spread) {
-						return attribute.expression.node;
-					} else {
-						return x`{ ${attribute.name}: ${get_prop_value(attribute)} }`;
-					}
-				})
-				.concat(binding_props.map(p => x`{ ${p} }`))
-		})`;
+			attributes
+				.map(attribute => attribute.is_spread
+					? attribute.expression.node
+					: x`{ ${attribute.name}: ${get_prop_value(attribute)} }`
+				)
+			},
+			${classProp ? x`{ ${classProp} }` : null},
+			${binding_props.map(p => x`{ ${p} }`)}
+		)`;
 	} else {
 		props = x`{
-			${node.attributes.map(attribute => p`${attribute.name}: ${get_prop_value(attribute)}`)},
+			${attributes.map(attribute => p`${attribute.name}: ${get_prop_value(attribute)}`)},
+			${classProp},
 			${binding_props}
 		}`;
 	}

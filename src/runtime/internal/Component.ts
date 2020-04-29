@@ -44,6 +44,16 @@ export function bind(component, name, callback) {
 	}
 }
 
+export function component_classnames (classNames) {
+	let str = classNames.$$class || '';
+	for (const name in classNames) {
+		if (name == '$$class') continue;
+		if (classNames[name]) str += ' ' + name;
+	}
+
+	return str.trim();
+}
+
 export function create_component(block) {
 	block && block.c();
 }

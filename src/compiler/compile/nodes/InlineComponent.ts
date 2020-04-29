@@ -6,6 +6,7 @@ import EventHandler from './EventHandler';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import Let from './Let';
+import Class from './Class';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 
@@ -15,6 +16,7 @@ export default class InlineComponent extends Node {
 	expression: Expression;
 	attributes: Attribute[] = [];
 	bindings: Binding[] = [];
+	classes: Class[] = [];
 	handlers: EventHandler[] = [];
 	lets: Let[] = [];
 	children: INode[];
@@ -61,10 +63,8 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Class':
-					component.error(node, {
-						code: `invalid-class`,
-						message: `Classes can only be applied to DOM elements, not components`
-					});
+					this.classes.push(new Class(component, this, scope, node));
+					break;
 
 				case 'EventHandler':
 					this.handlers.push(new EventHandler(component, this, scope, node));
