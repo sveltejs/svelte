@@ -203,10 +203,10 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 {#each expression as name}...{/each}
 ```
 ```sv
-{#each expression as name (key)}...{/each}
+{#each expression as name, index}...{/each}
 ```
 ```sv
-{#each expression as name, index}...{/each}
+{#each expression as name (key)}...{/each}
 ```
 ```sv
 {#each expression as name, index (key)}...{/each}
