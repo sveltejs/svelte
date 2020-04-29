@@ -423,22 +423,29 @@ export default class Element extends Node {
 
 		// handle special cases
 		if (this.name === 'a') {
-			const attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
+			const href_attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
+			const id_attribute = attribute_map.get('id');
+			const name_attribute = attribute_map.get('name');
 
-			if (attribute) {
-				const value = attribute.get_static_value();
-
-				if (value === '' || value === '#' || /^\W*javascript:/i.test(value)) {
-					component.warn(attribute, {
+			if (href_attribute) {
+				const href_value = href_attribute.get_static_value();
+				
+				if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
+					component.warn(href_attribute, {
 						code: `a11y-invalid-attribute`,
-						message: `A11y: '${value}' is not a valid ${attribute.name} attribute`
+						message: `A11y: '${href_value}' is not a valid ${href_attribute.name} attribute`
 					});
 				}
 			} else {
-				component.warn(this, {
-					code: `a11y-missing-attribute`,
-					message: `A11y: <a> element should have an href attribute`
-				});
+				const id_attribute_valid = id_attribute && id_attribute.get_static_value() !== '';
+				const name_attribute_valid = name_attribute && name_attribute.get_static_value() !== '';
+
+				if (!id_attribute_valid && !name_attribute_valid) {
+					component.warn(this, {
+						code: `a11y-missing-attribute`,
+						message: `A11y: <a> element should have an href attribute`
+					});
+				}
 			}
 		}
 
