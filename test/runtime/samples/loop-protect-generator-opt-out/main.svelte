@@ -1,14 +1,14 @@
 <script>
-  let it = gen();
-  it.next();
-  
-  setTimeout(() => {
-    it.next();
-  }, 20)
+	const it = gen();
+	it.next();
 
-  function* gen() {
-    while (true) {
-      yield;
-    }
-  }
+	setTimeout(() => {
+		it.next();
+	}, 20)
+
+	function* gen() {
+		while (true) {
+			yield;
+		}
+	}
 </script>
