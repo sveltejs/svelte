@@ -152,7 +152,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
 
-		const uses_classes = this.node.classes.length > 0
+		const uses_classes = this.node.classes.length > 0;
 
 		const classNames: Identifier = {
 			type: 'Identifier',
@@ -182,7 +182,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const attributes = uses_classes
 			? this.node.attributes.filter(a => a.name !== 'class')
-			: this.node.attributes
+			: this.node.attributes;
 
 		const attribute_object = uses_spread
 			? x`{ ${initial_props} }`
@@ -341,10 +341,10 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (attribute) {
 				const dependencies = attribute.get_dependencies();
 				const condition = block.renderer.dirty(Array.from(dependencies));
-				const value = attribute.get_value(block)
+				const value = attribute.get_value(block);
 				updates.push(b`if (${condition}) {
 					${classNames}.$$class = ${value};
-				}`)
+				}`);
 
 				all_dependencies.push(...dependencies);
 				initial_class_values.push(p`$$class: ${value}`);

@@ -35,12 +35,17 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 
 	let props;
 
-	let attributes = node.attributes
-	let classProp
+	let attributes = node.attributes;
+	let classProp;
 	if (node.classes.length > 0) {
-		const index = attributes.findIndex(a => a.name === 'class')
-		const attr = attributes[index]
-		attributes.splice(index, 1)
+		let attr;
+		attributes = attributes.filter(a => {
+			if (a.name === 'class') {
+				attr = a;
+				return false;
+			}
+			return true;
+		});
 		classProp = p`
 			class: @component_classnames({
 				${node.classes.map(class_directive => {
@@ -50,7 +55,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 				})},
 				${attr ? p`$$class: ${get_prop_value(attr)}` : null}
 			})
-		`
+		`;
 	}
 
 	if (uses_spread) {
