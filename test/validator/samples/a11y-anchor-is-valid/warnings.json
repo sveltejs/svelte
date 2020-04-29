@@ -58,5 +58,35 @@
 			"character": 102
 		},
 		"pos": 77
+	},
+	{
+		"code": "a11y-missing-attribute",
+		"message": "A11y: <a> element should have an href attribute",
+		"start": {
+			"line": 5,
+			"column": 0,
+			"character": 115
+		},
+		"end": {
+			"line": 5,
+			"column": 22,
+			"character": 137
+		},
+		"pos": 115
+	},
+	{
+		"code": "a11y-missing-attribute",
+		"message": "A11y: <a> element should have an href attribute",
+		"start": {
+			"line": 6,
+			"column": 0,
+			"character": 138
+		},
+		"end": {
+			"line": 6,
+			"column": 20,
+			"character": 158
+		},
+		"pos": 138
 	}
 ]
