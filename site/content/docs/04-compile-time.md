@@ -58,7 +58,8 @@ The following options can be passed to the compiler. None are required:
 | `preserveWhitespace` | boolean | `false`
 | `outputFilename` | string | `null`
 | `cssOutputFilename` | string | `null`
-| `sveltePath` | string | `"svelte"` -->
+| `sveltePath` | string | `"svelte"`
+| `prefix` | string | `"svelte-"` -->
 
 | option | default | description |
 | --- | --- | --- |
@@ -80,7 +81,7 @@ The following options can be passed to the compiler. None are required:
 | `outputFilename` | `null` | A `string` used for your JavaScript sourcemap.
 | `cssOutputFilename` | `null` | A `string` used for your CSS sourcemap.
 | `sveltePath` | `"svelte"` | The location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.
-
+| `prefix` | `"svelte-"` | The prefix that will be used for scoping of css classes. It has to start with a `letter`, `-` or `_` and can be followed by `alphanumerics`, `-` or `_`.
 
 ---
 
