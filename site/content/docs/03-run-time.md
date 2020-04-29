@@ -521,7 +521,7 @@ $: $size = big ? 100 : 10;
 
 ### `svelte/transition`
 
-The `svelte/transition` module exports six functions: `fade`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with svelte [`transitions`](docs#Transitions).
+The `svelte/transition` module exports six functions: `fade`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with Svelte [`transitions`](docs#transition_fn).
 
 #### `fade`
 
