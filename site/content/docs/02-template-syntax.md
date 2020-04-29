@@ -206,6 +206,9 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 {#each expression as name, index}...{/each}
 ```
 ```sv
+{#each expression as name (key)}...{/each}
+```
+```sv
 {#each expression as name, index (key)}...{/each}
 ```
 ```sv
@@ -242,6 +245,11 @@ An each block can also specify an *index*, equivalent to the second argument in 
 If a *key* expression is provided — which must uniquely identify each list item — Svelte will use it to diff the list when data changes, rather than adding or removing items at the end. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
 
 ```html
+{#each items as item (item.id)}
+	<li>{item.name} x {item.qty}</li>
+{/each}
+
+<!-- or with additional index value -->
 {#each items as item, i (item.id)}
 	<li>{i + 1}: {item.name} x {item.qty}</li>
 {/each}
