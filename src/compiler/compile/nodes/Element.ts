@@ -488,7 +488,7 @@ export default class Element extends Node {
 			if (alt_attribute && !aria_hidden_exist) {
 				const alt_value = alt_attribute.get_static_value();
 
-				if (alt_value.toLowerCase().match(/\b(image|picture|photo)\b/g)) {
+				if (alt_value.match(/\b(image|picture|photo)\b/i)) {
 					component.warn(this, {
 						code: `a11y-img-redundant-alt`,
 						message: `A11y: Screenreaders already announce <img> elements as an image.`
