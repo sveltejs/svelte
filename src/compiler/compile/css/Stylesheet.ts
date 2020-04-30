@@ -298,7 +298,7 @@ export default class Stylesheet {
 		this.dev = dev;
 
 		if (ast.css && ast.css.children.length) {
-			this.id = `${prefix}${hash(ast.css.content.styles)}`;
+			this.id = `${prefix}-${hash(ast.css.content.styles)}`;
 
 			this.has_styles = true;
 

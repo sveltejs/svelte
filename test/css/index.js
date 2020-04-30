@@ -84,7 +84,13 @@ describe('css', () => {
 				css: read(`${__dirname}/samples/${dir}/expected.css`)
 			};
 
-			const actual_css = dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz');
+			const replacement = ((config.compileOptions || {}).prefix)
+				? '-xyz{'
+				: 'svelte-xyz';
+			const regex = ((config.compileOptions || {}).prefix)
+				? /(-ref)?-[a-z0-9]+\{/g
+				: /svelte(-ref)?-[a-z0-9]+/g;
+			const actual_css = dom.css.code.replace(regex, (m, $1) => $1 ? m : replacement);
 			try {
 				assert.equal(actual_css, expected.css);
 			} catch (error) {

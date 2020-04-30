@@ -1,5 +1,5 @@
 export default {
 	compileOptions: {
-		prefix: '0me-'
+		prefix: '0me'
 	}
 };
