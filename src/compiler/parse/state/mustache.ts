@@ -284,7 +284,9 @@ export default function mustache(parser: Parser) {
 			block.context = read_context(parser);
 
 			parser.allow_whitespace();
+		}
 
+		if (type == 'EachBlock') {
 			if (parser.eat(',')) {
 				parser.allow_whitespace();
 				block.index = parser.read_identifier();
