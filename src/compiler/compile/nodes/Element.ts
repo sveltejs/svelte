@@ -425,7 +425,7 @@ export default class Element extends Node {
 
 	validate_special_cases() {
 		const { component,attributes } = this;
-		let attribute_map = new Map();
+		const attribute_map = new Map();
 
 		attributes.forEach(attribute => (
 			attribute_map.set(attribute.name, attribute)
