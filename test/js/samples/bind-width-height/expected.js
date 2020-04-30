@@ -29,8 +29,8 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(div);
 			div_resize_listener();
+			if (detaching) detach(div);
 		}
 	};
 }
