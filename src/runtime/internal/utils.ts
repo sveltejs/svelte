@@ -1,6 +1,6 @@
 export function noop() {}
 
-export const identity = x => x;
+export const identity = (x) => x;
 
 export function assign<T, S>(tar: T, src: S): T & S {
 	// @ts-ignore
@@ -14,7 +14,7 @@ export function is_promise<T = any>(value: any): value is PromiseLike<T> {
 
 export function add_location(element, file, line, column, char) {
 	element.__svelte_meta = {
-		loc: { file, line, column, char }
+		loc: { file, line, column, char },
 	};
 }
 
@@ -35,7 +35,7 @@ export function is_function(thing: any): thing is Function {
 }
 
 export function safe_not_equal(a, b) {
-	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+	return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 
 export function not_equal(a, b) {
@@ -49,16 +49,14 @@ export function validate_store(store, name) {
 }
 
 export function subscribe(store, ...callbacks) {
-	if (store == null) {
-		return noop;
-	}
+	if (store == null) return noop;
 	const unsub = store.subscribe(...callbacks);
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
 export function get_store_value(store) {
 	let value;
-	subscribe(store, _ => value = _)();
+	subscribe(store, (_) => (value = _))();
 	return value;
 }
 
@@ -74,9 +72,7 @@ export function create_slot(definition, ctx, $$scope, fn) {
 }
 
 export function get_slot_context(definition, ctx, $$scope, fn) {
-	return definition[1] && fn
-		? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
-		: $$scope.ctx;
+	return definition[1] && fn ? assign($$scope.ctx.slice(), definition[1](fn(ctx))) : $$scope.ctx;
 }
 
 export function get_slot_changes(definition, $$scope, dirty, fn) {
@@ -112,13 +108,14 @@ export function exclude_internal_props(props) {
 export function compute_rest_props(props, keys) {
 	const rest = {};
 	keys = new Set(keys);
-	for (const k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
+	let k: string;
+	for (k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
 	return rest;
 }
 
 export function once(fn) {
 	let ran = false;
-	return function(this: any, ...args) {
+	return function (this: any, ...args) {
 		if (ran) return;
 		ran = true;
 		fn.call(this, ...args);
@@ -139,3 +136,5 @@ export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj,
 export function action_destroyer(action_result) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }
+
+export const minmax = (min: number, max: number) => (v: number) => (v > min ? (v > max ? max : v) : min);

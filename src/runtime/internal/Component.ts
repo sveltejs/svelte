@@ -1,22 +1,32 @@
-import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
+import { add_render_callback, flush, schedule_update } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
-import { blank_object, is_function, run, run_all, noop } from './utils';
+import { blank_object, is_function, run_all, noop } from './utils';
 import { children, detach } from './dom';
 import { transition_in } from './transitions';
 
-interface Fragment {
+export interface Fragment {
 	key: string | null;
 	first: null;
-	/* create  */ c: () => void;
-	/* claim   */ l: (nodes: any) => void;
+	/**
+	 * create
+	 * run once
+	 * runs hydrate if exists
+	 */
+	c: () => void;
+	/**
+	 *  claim
+	 *	runs hydrate if exists
+	 * */
+
+	l: (nodes: any) => void;
 	/* hydrate */ h: () => void;
-	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
+	/* mount   */ m: (target: HTMLElement, anchor: any, is_remount: boolean) => void;
 	/* update  */ p: (ctx: any, dirty: any) => void;
 	/* measure */ r: () => void;
 	/* fix     */ f: () => void;
 	/* animate */ a: () => void;
-	/* intro   */ i: (local: any) => void;
-	/* outro   */ o: (local: any) => void;
+	/* intro   */ i: (local: 0 | 1) => void;
+	/* outro   */ o: (local: 0 | 1) => void;
 	/* destroy */ d: (detaching: 0 | 1) => void;
 }
 // eslint-disable-next-line @typescript-eslint/class-name-casing
@@ -36,43 +46,25 @@ interface T$$ {
 	on_destroy: any[];
 }
 
-export function bind(component, name, callback) {
-	const index = component.$$.props[name];
-	if (index === undefined) return;
-	component.$$.bound[index] = callback;
-	callback(component.$$.ctx[index]);
+export function bind({ $$: { props, bound, ctx } }, name: string, callback: (prop: any) => void) {
+	if (!(name in props)) return;
+	const index = props[name];
+	bound[index] = callback;
+	callback(ctx[index]);
 }
-
-export function create_component(block) {
-	if (block) block.c();
-}
-
-export function claim_component(block, parent_nodes) {
-	if (block) block.l(parent_nodes);
-}
-
-export function mount_component(component, target, anchor) {
-	const { fragment, on_mount, on_destroy, after_update } = component.$$;
-
+export function mount_component({ $$: { fragment, on_mount, on_destroy, after_update } }, target, anchor) {
 	if (fragment) fragment.m(target, anchor);
-
-	// onMount happens before the initial afterUpdate
 	add_render_callback(() => {
-		const new_on_destroy = on_mount.map(run).filter(is_function);
-		if (on_destroy) {
-			on_destroy.push(...new_on_destroy);
-		} else {
-			// Edge case - component was destroyed immediately,
-			// most likely as a result of a binding initialising
-			run_all(new_on_destroy);
-		}
-		component.$$.on_mount = [];
+		for (let i = 0, res; i < on_mount.length; i++)
+			if (is_function((res = on_mount[i]())))
+				if (on_destroy) on_destroy.push(res);
+				else res(); // component already destroyed
+		on_mount.length = 0;
+		for (let i = 0; i < after_update.length; i++) after_update[i]();
 	});
-
-	after_update.forEach(add_render_callback);
 }
 
-export function destroy_component({ $$ }, detaching) {
+export function destroy_component({ $$ }, detaching: 0 | 1) {
 	if ($$.fragment === null) return;
 
 	run_all($$.on_destroy);
@@ -84,17 +76,8 @@ export function destroy_component({ $$ }, detaching) {
 	$$.ctx = [];
 }
 
-function make_dirty(component, i) {
-	if (component.$$.dirty[0] === -1) {
-		dirty_components.push(component);
-		schedule_update();
-		component.$$.dirty.fill(0);
-	}
-	component.$$.dirty[(i / 31) | 0] |= 1 << i % 31;
-}
-
 export function init(
-	component,
+	component: SvelteComponent,
 	{ props: prop_values = {}, target, hydrate, intro, anchor },
 	instance,
 	create_fragment,
@@ -131,8 +114,14 @@ export function init(
 	$$.ctx = instance
 		? instance(component, prop_values, (i, res, val = res) => {
 				if ($$.ctx && not_equal($$.ctx[i], ($$.ctx[i] = val))) {
-					if ($$.bound[i]) $$.bound[i](val);
-					if (ready) make_dirty(component, i);
+					if (i in $$.bound) $$.bound[i](val);
+					if (ready) {
+						if (!~$$.dirty) {
+							schedule_update(component);
+							$$.dirty.fill(0);
+						}
+						$$.dirty[(i / 31) | 0] |= 1 << i % 31;
+					}
 				}
 				return res;
 		  })
@@ -144,18 +133,24 @@ export function init(
 
 	run_all($$.before_update);
 
-	// false when empty fragment
+	// false when empty
 	$$.fragment = create_fragment ? create_fragment($$.ctx) : false;
 
 	if (target) {
-		if (hydrate) {
-			const nodes = children(target);
-			if ($$.fragment) $$.fragment.l(nodes);
-			nodes.forEach(detach);
-		} else {
-			if ($$.fragment) $$.fragment.c();
+		if ($$.fragment) {
+			if (hydrate) {
+				const nodes = children(target);
+				$$.fragment.l(nodes);
+				nodes.forEach(detach);
+			} else {
+				$$.fragment.c();
+			}
+			if (intro) {
+				transition_in($$.fragment);
+			}
+		} else if (hydrate) {
+			children(target).forEach(detach);
 		}
-		if (intro) transition_in(component.$$.fragment);
 		mount_component(component, target, anchor);
 		flush();
 	}

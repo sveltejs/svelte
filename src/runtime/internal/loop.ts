@@ -43,37 +43,35 @@ export function loop(callback: TaskCallback): Task {
 	};
 }
 
-function add(c) {
+function add(c: TaskCallback) {
 	const task = { c, f: noop };
 	if (!tasks.size) raf(run_tasks);
 	tasks.add(task);
 	return () => tasks.delete(task);
 }
 
-const timed_tasks = [];
+type TimeoutTask = { t: number; c: (now: number) => void };
+
+// sorted descending
+const timed_tasks: Array<TimeoutTask> = [];
 
 /**
- * Callback on 1st frame after timestamp
+ * basically
+ * (fn, t) => setTimeout( () => raf(fn), t )
  */
-export function raf_timeout(callback: () => void, timestamp: number) {
+export function setAnimationTimeout(callback: () => void, timestamp: number) {
 	let i = timed_tasks.length;
 	let v;
 	const task = { c: callback, t: timestamp };
 	if (i) {
-		while (i > 0 && timestamp > (v = timed_tasks[i - 1]).t) {
-			// bubble sort descending until timestamp < task.timestamp
-			timed_tasks[i--] = v;
-		}
+		while (i > 0 && timestamp > (v = timed_tasks[i - 1]).t) timed_tasks[i--] = v;
 		timed_tasks[i] = task;
 	} else {
 		timed_tasks.push(task);
 		add((now) => {
 			let i = timed_tasks.length;
-			while (i > 0 && now >= timed_tasks[--i].t) {
-				// pop() until now < task.timestamp
-				timed_tasks.pop().c(now);
-			}
-			return timed_tasks.length;
+			while (i > 0 && now >= timed_tasks[--i].t) timed_tasks.pop().c(now);
+			return !!timed_tasks.length;
 		});
 	}
 	return () => {
@@ -81,11 +79,10 @@ export function raf_timeout(callback: () => void, timestamp: number) {
 		if (~index) timed_tasks.splice(index, 1);
 	};
 }
-export function loopThen(delay: number, run: (now: number) => void, stop: () => void, end_time: number) {
-	const fn = () => add((now) => (now < end_time ? (run(now), true) : (stop(), false)));
-	if (delay < 16) return fn();
-	else {
-		let cancel = raf_timeout(() => (cancel = fn()), now() + delay - 16.6667);
-		return () => cancel();
-	}
-}
+export const loopThen = (run: (now: number) => void, stop: () => void, duration: number, end_time: number) =>
+	add((t) => {
+		t = (end_time - t) / duration;
+		if (t >= 1) return void run(1), stop();
+		else if (t >= 0) run(t);
+		return true;
+	});

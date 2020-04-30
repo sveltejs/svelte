@@ -1,4 +1,4 @@
-import { has_prop } from "./utils";
+import { has_prop } from './utils';
 
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
@@ -25,14 +25,13 @@ export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
 export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: string) {
 	return document.createElement<K>(name, { is });
 }
-
 export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
 	const target = {} as Pick<T, Exclude<keyof T, K>>;
 	for (const k in obj) {
 		if (
-			has_prop(obj, k)
+			has_prop(obj, k) &&
 			// @ts-ignore
-			&& exclude.indexOf(k) === -1
+			exclude.indexOf(k) === -1
 		) {
 			// @ts-ignore
 			target[k] = obj[k];
@@ -57,13 +56,18 @@ export function empty() {
 	return text('');
 }
 
-export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
+export function listen(
+	node: EventTarget,
+	event: string,
+	handler: EventListenerOrEventListenerObject,
+	options?: boolean | AddEventListenerOptions | EventListenerOptions
+) {
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
 }
 
 export function prevent_default(fn) {
-	return function(event) {
+	return function (event) {
 		event.preventDefault();
 		// @ts-ignore
 		return fn.call(this, event);
@@ -71,7 +75,7 @@ export function prevent_default(fn) {
 }
 
 export function stop_propagation(fn) {
-	return function(event) {
+	return function (event) {
 		event.stopPropagation();
 		// @ts-ignore
 		return fn.call(this, event);
@@ -79,7 +83,7 @@ export function stop_propagation(fn) {
 }
 
 export function self(fn) {
-	return function(event) {
+	return function (event) {
 		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
 	};
@@ -98,7 +102,7 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 			node.removeAttribute(key);
 		} else if (key === 'style') {
 			node.style.cssText = attributes[key];
-		} else if (key === '__value' || descriptors[key] && descriptors[key].set) {
+		} else if (key === '__value' || (descriptors[key] && descriptors[key].set)) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key]);
@@ -144,9 +148,7 @@ export function time_ranges_to_array(ranges) {
 	return array;
 }
 
-export function children(element) {
-	return Array.from(element.childNodes);
-}
+export const children = (element: HTMLElement) => Array.from(element.childNodes);
 
 export function claim_element(nodes, name, attributes, svg) {
 	for (let i = 0; i < nodes.length; i += 1) {
@@ -231,7 +233,7 @@ export function select_value(select) {
 }
 
 export function select_multiple_value(select) {
-	return [].map.call(select.querySelectorAll(':checked'), option => option.__value);
+	return [].map.call(select.querySelectorAll(':checked'), (option) => option.__value);
 }
 
 // unfortunately this can't be a constant as that wouldn't be tree-shakeable
@@ -263,9 +265,10 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	}
 
 	const iframe = element('iframe');
-	iframe.setAttribute('style',
+	iframe.setAttribute(
+		'style',
 		`display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; ` +
-		`overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: ${z_index};`
+			`overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: ${z_index};`
 	);
 	iframe.setAttribute('aria-hidden', 'true');
 	iframe.tabIndex = -1;
@@ -296,7 +299,7 @@ export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event<T=any>(type: string, detail?: T) {
+export function custom_event<T = any>(type: string, detail?: T) {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, false, false, detail);
 	return e;

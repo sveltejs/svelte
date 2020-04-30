@@ -2,9 +2,7 @@ import { custom_event } from './dom';
 
 export let current_component;
 
-export function set_current_component(component) {
-	current_component = component;
-}
+export const set_current_component = (component) => (current_component = component);
 
 export function get_current_component() {
 	if (!current_component) throw new Error(`Function called outside component initialization`);
@@ -32,15 +30,13 @@ export function createEventDispatcher() {
 
 	return (type: string, detail?: any) => {
 		const callbacks = component.$$.callbacks[type];
-
-		if (callbacks) {
-			// TODO are there situations where events could be dispatched
-			// in a server (non-DOM) environment?
-			const event = custom_event(type, detail);
-			callbacks.slice().forEach(fn => {
-				fn.call(component, event);
-			});
-		}
+		if (!callbacks) return;
+		// TODO are there situations where events could be dispatched
+		// in a server (non-DOM) environment?
+		const event = custom_event(type, detail);
+		callbacks.forEach((fn) => {
+			fn.call(component, event);
+		});
 	};
 }
 
@@ -59,6 +55,6 @@ export function bubble(component, event) {
 	const callbacks = component.$$.callbacks[event.type];
 
 	if (callbacks) {
-		callbacks.slice().forEach(fn => fn(event));
+		callbacks.slice().forEach((fn) => fn(event));
 	}
 }

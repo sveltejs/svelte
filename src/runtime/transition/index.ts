@@ -1,5 +1,4 @@
 import { cubicOut, cubicInOut, linear } from 'svelte/easing';
-import { is_function } from 'svelte/internal';
 
 type EasingFunction = (t: number) => number;
 
@@ -7,8 +6,8 @@ export interface TransitionConfig {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
-	css?: (t: number, u: number) => string;
-	tick?: (t: number, u: number) => void;
+	css?: (t: number, u?: number) => string;
+	tick?: (t: number, u?: number) => void;
 }
 
 interface BlurParams {
@@ -96,21 +95,20 @@ export function slide(node: Element, { delay = 0, duration = 400, easing = cubic
 	const margin_bottom = parseFloat(style.marginBottom);
 	const border_top_width = parseFloat(style.borderTopWidth);
 	const border_bottom_width = parseFloat(style.borderBottomWidth);
-
 	return {
 		delay,
 		duration,
 		easing,
-		css: (t) =>
-			`overflow: hidden;` +
-			`opacity: ${Math.min(t * 20, 1) * opacity};` +
-			`height: ${t * height}px;` +
-			`padding-top: ${t * padding_top}px;` +
-			`padding-bottom: ${t * padding_bottom}px;` +
-			`margin-top: ${t * margin_top}px;` +
-			`margin-bottom: ${t * margin_bottom}px;` +
-			`border-top-width: ${t * border_top_width}px;` +
-			`border-bottom-width: ${t * border_bottom_width}px;`,
+		css: (t) => `
+			overflow: hidden;
+			opacity: ${Math.min(t * 20, 1) * opacity};
+			height: ${t * height}px;
+			padding-top: ${t * padding_top}px;
+			padding-bottom: ${t * padding_bottom}px;
+			margin-top: ${t * margin_top}px;
+			margin-bottom: ${t * margin_bottom}px;
+			border-top-width: ${t * border_top_width}px;
+			border-bottom-width: ${t * border_bottom_width}px;`,
 	};
 }
 
@@ -129,10 +127,8 @@ export function scale(
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
-
 	const sd = 1 - start;
 	const od = target_opacity * (1 - opacity);
-
 	return {
 		delay,
 		duration,
@@ -152,27 +148,13 @@ interface DrawParams {
 }
 
 export function draw(
-	node: SVGElement & { getTotalLength(): number },
+	node: SVGPathElement | SVGGeometryElement,
 	{ delay = 0, speed, duration, easing = cubicInOut }: DrawParams
 ): TransitionConfig {
 	const len = node.getTotalLength();
-
-	if (duration === undefined) {
-		if (speed === undefined) {
-			duration = 800;
-		} else {
-			duration = len / speed;
-		}
-	} else if (typeof duration === 'function') {
-		duration = duration(len);
-	}
-
-	return {
-		delay,
-		duration,
-		easing,
-		css: (t, u) => `stroke-dasharray: ${t * len} ${u * len};`,
-	};
+	if (duration === undefined) duration = speed ? len / speed : 800;
+	else if (typeof duration === 'function') duration = duration(len);
+	return { delay, duration, easing, css: (t, u) => `stroke-dasharray: ${t * len} ${u * len};` };
 }
 
 interface CrossfadeParams {
@@ -190,12 +172,13 @@ type ElementMap = Map<string, Element>;
 
 export function crossfade({
 	delay: default_delay = 0,
-	easing: default_easing = cubicOut,
 	duration: default_duration = (d) => Math.sqrt(d) * 30,
+	easing: default_easing = cubicOut,
 	fallback,
 }: CrossFadeConfig) {
 	const to_receive: ElementMap = new Map();
 	const to_send: ElementMap = new Map();
+
 	function crossfade(
 		from_node: Element,
 		to_node: Element,
@@ -207,31 +190,30 @@ export function crossfade({
 		const dy = from.top - to.top;
 		const dw = from.width / to.width;
 		const dh = from.height / to.height;
-		const d = Math.sqrt(dx * dx + dy * dy);
-		const style = getComputedStyle(to_node);
-		const transform = style.transform === 'none' ? '' : style.transform;
-		const opacity = +style.opacity;
+		const { transform, opacity } = getComputedStyle(to_node);
+		const prev = transform === 'none' ? '' : transform;
 		return {
 			delay,
 			easing,
-			duration: is_function(duration) ? duration(d) : duration,
+			duration: typeof duration === 'function' ? duration(Math.sqrt(dx * dx + dy * dy)) : duration,
 			css: (t, u) => `
-				opacity: ${t * opacity};
+				opacity: ${t * +opacity};
 				transform-origin: top left;
-				transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${t + (1 - t) * dh});
+				transform: ${prev} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${t + (1 - t) * dh});
 			`,
 		} as TransitionConfig;
 	}
 	function transition(a: ElementMap, b: ElementMap, is_intro: boolean) {
 		return (node: Element, params: MarkedCrossFadeConfig) => {
-			a.set(params.key, node);
+			const key = params.key;
+			a.set(key, node);
 			return () => {
-				if (b.has(params.key)) {
-					const from_node = b.get(params.key);
-					b.delete(params.key);
+				if (b.has(key)) {
+					const from_node = b.get(key);
+					b.delete(key);
 					return crossfade(from_node, node, params);
 				} else {
-					a.delete(params.key);
+					a.delete(key);
 					return fallback && fallback(node, params, is_intro);
 				}
 			};

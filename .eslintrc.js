@@ -1,9 +1,9 @@
 module.exports = {
 	root: true,
 	rules: {
-		indent: 'off',
+		'indent': 'off',
 		'no-unused-vars': 'off',
-		semi: [2, 'always'],
+		'semi': [2, 'always'],
 		'keyword-spacing': [2, { before: true, after: true }],
 		'space-before-blocks': [2, 'always'],
 		'no-mixed-spaces-and-tabs': [2, 'smart-tabs'],
@@ -16,7 +16,6 @@ module.exports = {
 		'no-unreachable': 2,
 		'valid-typeof': 2,
 		'quote-props': [2, 'as-needed'],
-		'one-var': [2, 'never'],
 		'prefer-arrow-callback': 2,
 		'prefer-const': [2, { destructuring: 'all' }],
 		'arrow-spacing': 2,
@@ -32,57 +31,51 @@ module.exports = {
 		'@typescript-eslint/no-unused-vars': [
 			'error',
 			{
-				argsIgnorePattern: '^_'
-			}
+				argsIgnorePattern: '^_',
+			},
 		],
 		'@typescript-eslint/no-object-literal-type-assertion': 'off',
 		'@typescript-eslint/no-unused-vars': 'off',
-		'@typescript-eslint/prefer-interface': 'off'
+		'@typescript-eslint/prefer-interface': 'off',
 	},
 	globals: {
-		globalThis: false
+		globalThis: false,
 	},
 	env: {
 		es6: true,
 		browser: true,
 		node: true,
-		mocha: true
+		mocha: true,
 	},
 	extends: [
 		'eslint:recommended',
 		'plugin:import/errors',
 		'plugin:import/warnings',
 		'plugin:import/typescript',
-		'plugin:@typescript-eslint/recommended'
+		'plugin:@typescript-eslint/recommended',
 	],
 	parserOptions: {
 		ecmaVersion: 9,
-		sourceType: 'module'
+		sourceType: 'module',
 	},
 	plugins: ['svelte3'],
 	settings: {
-		'import/core-modules': [
-			'svelte',
-			'svelte/internal',
-			'svelte/store',
-			'svelte/easing',
-			'estree'
-		],
-		'svelte3/compiler': require('./compiler')
+		'import/core-modules': ['svelte', 'svelte/internal', 'svelte/store', 'svelte/easing', 'estree'],
+		'svelte3/compiler': require('./compiler'),
 	},
 	overrides: [
 		{
 			files: ['*.js'],
 			rules: {
-				'@typescript-eslint/no-var-requires': 'off'
-			}
+				'@typescript-eslint/no-var-requires': 'off',
+			},
 		},
 		{
 			files: ['*.svelte'],
 			processor: 'svelte3/svelte3',
 			rules: {
-				'@typescript-eslint/indent': 'off'
-			}
-		}
-	]
+				'@typescript-eslint/indent': 'off',
+			},
+		},
+	],
 };
