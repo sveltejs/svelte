@@ -585,7 +585,7 @@ export default class ElementWrapper extends Wrapper {
 						b`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
 					);
 
-					block.chunks.destroy.push(
+					block.chunks.destroy.unshift(
 						b`${resize_listener}();`
 					);
 				} else {

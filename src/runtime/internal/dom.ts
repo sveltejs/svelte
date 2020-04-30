@@ -287,8 +287,8 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	append(node, iframe);
 
 	return () => {
-		detach(iframe);
 		if (unsubscribe) unsubscribe();
+		detach(iframe);
 	};
 }
 
