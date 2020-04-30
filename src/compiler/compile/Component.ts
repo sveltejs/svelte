@@ -205,7 +205,7 @@ export default class Component {
 
 			const variable = this.var_lookup.get(subscribable_name);
 			if (variable) {
-				variable.referenced   = true;
+				variable.referenced = true;
 				variable.subscribable = true;
 			}
 		} else {
@@ -714,8 +714,14 @@ export default class Component {
 		};
 		let scope_updated = false;
 
+		let generator_count = 0;
+
 		walk(content, {
 			enter(node: Node, parent, prop, index) {
+				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
+					generator_count++;
+				}
+
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
@@ -742,8 +748,12 @@ export default class Component {
 			},
 
 			leave(node: Node) {
+				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
+					generator_count--;
+				}
+
 				// do it on leave, to prevent infinite loop
-				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0) {
+				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0 && generator_count <= 0) {
 					const to_replace_for_loop_protect = component.loop_protect(node, scope, component.compile_options.loopGuardTimeout);
 					if (to_replace_for_loop_protect) {
 						this.replace(to_replace_for_loop_protect);
@@ -1259,7 +1269,7 @@ export default class Component {
 
 		const add_declaration = declaration => {
 			if (this.reactive_declarations.includes(declaration)) return;
-			
+
 			declaration.dependencies.forEach(name => {
 				if (declaration.assignees.has(name)) return;
 				const earlier_declarations = lookup.get(name);

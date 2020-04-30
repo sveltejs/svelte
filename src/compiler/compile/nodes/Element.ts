@@ -482,7 +482,7 @@ export default class Element extends Node {
 		if (this.name === 'img') {
 			const alt_attribute = attribute_map.get('alt');
 			const aria_hidden_attribute = attribute_map.get('aria-hidden');
-			
+
 			const aria_hidden_exist = aria_hidden_attribute && aria_hidden_attribute.get_static_value();
 			
 			if (alt_attribute && !aria_hidden_exist) {
