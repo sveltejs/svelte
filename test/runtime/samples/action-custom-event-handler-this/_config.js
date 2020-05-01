@@ -4,7 +4,7 @@ export default {
 	test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		const event = new window.KeyboardEvent('keydown', {
-			which: 13
+			key: 'Enter'
 		});
 
 		let blurred = false;
