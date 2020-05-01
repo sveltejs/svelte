@@ -484,7 +484,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				b`if (${name}) @transition_out(${name}.$$.fragment, #local);`
 			);
 
-			block.chunks.destroy.push(b`if (${name}) @destroy_component(${name}, ${parent_node ? null : 'detaching'});`);
+			block.chunks.destroy.splice(-1, 0, b`if (${name}) @destroy_component(${name}, ${parent_node ? null : 'detaching'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? component.name
@@ -523,7 +523,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 			}
 
-			block.chunks.destroy.push(b`
+			block.chunks.destroy.splice(-1, 0, b`
 				@destroy_component(${name}, ${parent_node ? null : 'detaching'});
 			`);
 

@@ -69,8 +69,8 @@ function create_fragment(ctx) {
 		},
 		d(detaching) {
 			destroy_component(foo, detaching);
-			if (detaching) detach(t0);
 			destroy_component(bar, detaching);
+			if (detaching) detach(t0);
 			if (detaching) detach(t1);
 			if (detaching) detach(input);
 			dispose();

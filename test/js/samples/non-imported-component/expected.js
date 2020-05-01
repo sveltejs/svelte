@@ -48,8 +48,8 @@ function create_fragment(ctx) {
 		},
 		d(detaching) {
 			destroy_component(imported, detaching);
-			if (detaching) detach(t);
 			destroy_component(nonimported, detaching);
+			if (detaching) detach(t);
 		}
 	};
 }
