@@ -54,10 +54,10 @@ export default function bind_this(component: Component, block: Block, binding: B
 
 		const args = [];
 		for (const id of contextual_dependencies) {
+			args.push(id);
 			if (block.variables.has(id.name)) {
 				if (block.renderer.context_lookup.get(id.name).is_contextual) continue;
 			}
-			args.push(id);
 			block.add_variable(id, block.renderer.reference(id.name));
 		}
 
