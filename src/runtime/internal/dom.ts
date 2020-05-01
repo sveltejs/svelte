@@ -270,9 +270,11 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	iframe.setAttribute('aria-hidden', 'true');
 	iframe.tabIndex = -1;
 
+	const crossorigin = is_crossorigin();
+
 	let unsubscribe: () => void;
 
-	if (is_crossorigin()) {
+	if (crossorigin) {
 		iframe.src = `data:text/html,<script>onresize=function(){parent.postMessage(0,'*')}</script>`;
 		unsubscribe = listen(window, 'message', (event: MessageEvent) => {
 			if (event.source === iframe.contentWindow) fn();
@@ -287,8 +289,13 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	append(node, iframe);
 
 	return () => {
+		if (crossorigin) {
+			unsubscribe();
+		} else if (unsubscribe && iframe.contentWindow) {
+			unsubscribe();
+		}
+		
 		detach(iframe);
-		if (unsubscribe) unsubscribe();
 	};
 }
 
