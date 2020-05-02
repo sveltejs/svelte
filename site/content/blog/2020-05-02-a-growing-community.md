@@ -35,9 +35,7 @@ If you like Svelte and want to support it - give it a star [here](https://github
 ### Community events
 
 * An online conference was organized under the Svelte Society banner, which featured 10 talks. Check out the conference website at [sveltesociety.dev](https://sveltesociety.dev/)
-* Multiple real-life events have been coordinated under the Svelte Society banner as well
-    * There's been 4 events in New York, 3 events in Stockholm, 2 in Amsterdam and an event in Russia (with over 100 people attending!).
-    * A lot of these have videos of the talks, which you can find on the Svelte Society's [Twitter](https://twitter.com/sveltesociety) page.
+* Multiple real-life events have been coordinated under the Svelte Society banner, for example there's been events in New York, Stockholm, Amsterdam,  Russia and Bangalore, among [others](https://svelte-community.netlify.app/events/).
 
 If you want to stay on top of what is happening in the Svelte world, follow [@sveltejs](https://twitter.com/sveltejs) and [@sveltesociety](https://twitter.com/sveltesociety) on Twitter.
 
