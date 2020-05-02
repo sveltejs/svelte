@@ -133,6 +133,8 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const name = this.var;
 
+		if (parent_node === null) block.root_nodes.push(name);
+
 		const component_opts = x`{}` as ObjectExpression;
 
 		const statements: Array<Node | Node[]> = [];

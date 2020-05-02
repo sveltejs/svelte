@@ -75,6 +75,8 @@ export default class Block {
 	variables: Map<string, { id: Identifier; init?: Node }> = new Map();
 	get_unique_name: (name: string) => Identifier;
 
+	root_nodes: Identifier[] = [];
+
 	has_update_method = false;
 	autofocus: string;
 
@@ -269,9 +271,14 @@ export default class Block {
 					: this.chunks.hydrate
 			);
 
+			const return_value = this.type === 'slot'
+				? b`return [${this.root_nodes}]`
+				: null;
+
 			properties.create = x`function #create() {
 				${this.chunks.create}
 				${hydrate}
+				${return_value}
 			}`;
 		}
 
