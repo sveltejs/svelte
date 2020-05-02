@@ -7,7 +7,7 @@ authorURL: https://twitter.com/wolfr_2_
 
 It's been a year since the release of Svelte 3, and over the year, a lot has happened in terms of community. In this post, I am collecting some highlights of the past year, from a community perspective.
 
-I am sure you are probably pretty tired of exponential graphs by now, but here is the interest in Svelte as measured by Github stars over time.
+This graph is only one slice of the pie, but here is the interest in Svelte as measured by Github stars over time.
 
 <img src="/blog/graph.png" style="max-width: 100%;">
 
