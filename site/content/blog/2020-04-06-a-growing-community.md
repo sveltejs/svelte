@@ -13,7 +13,7 @@ This graph is only one slice of the pie, but here is the interest in Svelte as m
 
 If you like Svelte and want to support it - give it a star [here](https://github.com/sveltejs/svelte).
 
-* Right after the last post, Rich's talk [Rethinking Reactivity](https://www.youtube.com/watch?v=AdNJ3fydeao) got a lot of people excited about Svelte. He followed this talk up with [Computer, build me an app](https://www.youtube.com/watch?v=qqt6YxAZoOc) and [The return of write less, do more](https://www.youtube.com/watch?v=BzX4aTRPzno).
+* Right after the last post, Rich's talk [Rethinking Reactivity](https://www.youtube.com/watch?v=AdNJ3fydeao) got a lot of people excited about Svelte. Other talks garnering attention included [Computer, build me an app](https://www.youtube.com/watch?v=qqt6YxAZoOc) and [The return of write less, do more](https://www.youtube.com/watch?v=BzX4aTRPzno).
 * Near the end of last year, Svelte was a rising star in 2019's [State of JS](https://2019.stateofjs.com/front-end-frameworks/). It also received the "Prediction Award" for best upcoming technology.
 * Some noteworthy community projects:
     * UI libraries such as [Svelte Material UI](https://github.com/hperrin/svelte-material-ui), [Svelma](https://github.com/c0bra/svelma) (based on Bulma), and [SvelteStrap](https://github.com/bestguy/sveltestrap) (based on Bootstrap 4)
