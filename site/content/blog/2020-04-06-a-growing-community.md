@@ -25,4 +25,4 @@ If you like Svelte and want to support it - give it a star [here](https://github
 * A [community site](https://svelte-community.netlify.com/) was built, with a listing of events, tools & resources and code that you can use
 * Recently, Svelte was featured in [Wired Magazine](https://www.wired.com/story/javascript-framework-puts-web-pages-diet/).
 
-If you want to stay on top of what is happening in the Svelte world, follow [@sveltejs](https://twitter.com/sveltejs) on Twitter.
+As you can see, things are moving quickly in the Svelte world. If you want to stay on top of what is happening, follow [@sveltejs](https://twitter.com/sveltejs) on Twitter. Or join us on the [Discord channels](https://svelte.dev/chat).
