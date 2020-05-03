@@ -438,7 +438,7 @@ export default class Element extends Node {
 
 			if (href_attribute) {
 				const href_value = href_attribute.get_static_value();
-				
+
 				if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
 					component.warn(href_attribute, {
 						code: `a11y-invalid-attribute`,
@@ -484,11 +484,11 @@ export default class Element extends Node {
 			const aria_hidden_attribute = attribute_map.get('aria-hidden');
 
 			const aria_hidden_exist = aria_hidden_attribute && aria_hidden_attribute.get_static_value();
-			
+
 			if (alt_attribute && !aria_hidden_exist) {
 				const alt_value = alt_attribute.get_static_value();
 
-				if (alt_value.match(/\b(image|picture|photo)\b/i)) {
+				if (alt_value && alt_value.match(/\b(image|picture|photo)\b/i)) {
 					component.warn(this, {
 						code: `a11y-img-redundant-alt`,
 						message: `A11y: Screenreaders already announce <img> elements as an image.`
