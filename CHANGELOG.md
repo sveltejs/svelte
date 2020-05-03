@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.22.1
+
+* Fix compiler exception with `a11y-img-redundant-alt` and dynamic `alt` attribute ([#4770](https://github.com/sveltejs/svelte/issues/4770))
+
 ## 3.22.0
 
 * Fix misaligned line numbers in source maps ([#3906](https://github.com/sveltejs/svelte/issues/3906))
