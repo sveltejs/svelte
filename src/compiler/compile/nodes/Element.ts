@@ -272,6 +272,7 @@ export default class Element extends Node {
 		}
 
 		this.validate_attributes();
+		this.validate_special_cases();
 		this.validate_bindings();
 		this.validate_content();
 		this.validate_event_handlers();
@@ -420,8 +421,16 @@ export default class Element extends Node {
 
 			attribute_map.set(attribute.name, attribute);
 		});
+	}
 
-		// handle special cases
+	validate_special_cases() {
+		const { component,attributes } = this;
+		const attribute_map = new Map();
+
+		attributes.forEach(attribute => (
+			attribute_map.set(attribute.name, attribute)
+		));
+
 		if (this.name === 'a') {
 			const href_attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
 			const id_attribute = attribute_map.get('id');
@@ -447,9 +456,7 @@ export default class Element extends Node {
 					});
 				}
 			}
-		}
-
-		else {
+		} else {
 			const required_attributes = a11y_required_attributes[this.name];
 			if (required_attributes) {
 				const has_attribute = required_attributes.some(name => attribute_map.has(name));
@@ -458,16 +465,34 @@ export default class Element extends Node {
 					should_have_attribute(this, required_attributes);
 				}
 			}
+		}
 
-			if (this.name === 'input') {
-				const type = attribute_map.get('type');
-				if (type && type.get_static_value() === 'image') {
-					const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
-					const has_attribute = required_attributes.some(name => attribute_map.has(name));
+		if (this.name === 'input') {
+			const type = attribute_map.get('type');
+			if (type && type.get_static_value() === 'image') {
+				const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
+				const has_attribute = required_attributes.some(name => attribute_map.has(name));
 
-					if (!has_attribute) {
-						should_have_attribute(this, required_attributes, 'input type="image"');
-					}
+				if (!has_attribute) {
+					should_have_attribute(this, required_attributes, 'input type="image"');
+				}
+			}
+		}
+
+		if (this.name === 'img') {
+			const alt_attribute = attribute_map.get('alt');
+			const aria_hidden_attribute = attribute_map.get('aria-hidden');
+
+			const aria_hidden_exist = aria_hidden_attribute && aria_hidden_attribute.get_static_value();
+			
+			if (alt_attribute && !aria_hidden_exist) {
+				const alt_value = alt_attribute.get_static_value();
+
+				if (alt_value.match(/\b(image|picture|photo)\b/i)) {
+					component.warn(this, {
+						code: `a11y-img-redundant-alt`,
+						message: `A11y: Screenreaders already announce <img> elements as an image.`
+					});
 				}
 			}
 		}

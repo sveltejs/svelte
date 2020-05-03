@@ -1,5 +1,5 @@
 <figure>
-	<img src='foo.jpg' alt='a picture of a foo'>
+	<img src='foo.jpg' alt='a foo'>
 
 	<figcaption>
 		a foo in its natural habitat
@@ -9,7 +9,7 @@
 </figure>
 
 <figure>
-	<img src='foo.jpg' alt='a picture of a foo'>
+	<img src='foo.jpg' alt='a foo'>
 
 	<div class='markup-for-styling'>
 		<figcaption>
