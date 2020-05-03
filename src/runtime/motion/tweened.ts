@@ -93,6 +93,11 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 			interpolate = get_interpolator
 		} = assign(assign({}, defaults), opts);
 
+		if (duration === 0) {
+			store.set(target_value);
+			return Promise.resolve();
+		}
+
 		const start = now() + delay;
 		let fn;
 
