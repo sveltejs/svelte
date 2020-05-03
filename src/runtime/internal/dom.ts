@@ -133,7 +133,7 @@ export function get_binding_group_value(group) {
 }
 
 export function to_number(value) {
-	return value === '' ? undefined : +value;
+	return value === '' ? null : +value;
 }
 
 export function time_ranges_to_array(ranges) {
