@@ -175,7 +175,7 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 ##### Store contract
 
 ```js
-store = { subscribe: (subscription: (value: any) => void) => () => void, set?: (value: any) => void }
+store = { subscribe: (subscription: (value: any) => void) => (() => void), set?: (value: any) => void }
 ```
 
 You can create your own stores without relying on [`svelte/store`](docs#svelte_store), by implementing the *store contract*:
