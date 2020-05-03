@@ -5,3 +5,4 @@
 <img src="foo" alt="Picture of baz fixing a bug." />
 <img src="bar" alt="Plant doing photosynthesis in the afternoon" />
 <img src="foo" alt="Picturesque food" />
+<img src="baz" alt={'baz'} />
