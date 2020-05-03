@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.22.0
 
 * Fix misaligned line numbers in source maps ([#3906](https://github.com/sveltejs/svelte/issues/3906))
 * Make setting a `tweened` store using `duration: 0` instantly update the value ([#4399](https://github.com/sveltejs/svelte/issues/4399))
