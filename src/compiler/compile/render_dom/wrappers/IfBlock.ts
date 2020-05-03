@@ -293,7 +293,7 @@ export default class IfBlockWrapper extends Wrapper {
 		`);
 
 		const initial_mount_node = parent_node || '#target';
-		const anchor_node = parent_node ? 'null' : 'anchor';
+		const anchor_node = parent_node ? 'null' : '#anchor';
 
 		if (if_exists_condition) {
 			block.chunks.mount.push(
@@ -423,7 +423,7 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 
 		const initial_mount_node = parent_node || '#target';
-		const anchor_node = parent_node ? 'null' : 'anchor';
+		const anchor_node = parent_node ? 'null' : '#anchor';
 
 		block.chunks.mount.push(
 			if_current_block_type_index(
@@ -519,7 +519,7 @@ export default class IfBlockWrapper extends Wrapper {
 		`);
 
 		const initial_mount_node = parent_node || '#target';
-		const anchor_node = parent_node ? 'null' : 'anchor';
+		const anchor_node = parent_node ? 'null' : '#anchor';
 
 		block.chunks.mount.push(
 			b`if (${name}) ${name}.m(${initial_mount_node}, ${anchor_node});`
