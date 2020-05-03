@@ -7,6 +7,7 @@
 * Do not display a11y warning about missing `href` for `<a>` with `name` or `id` ([#4697](https://github.com/sveltejs/svelte/issues/4697))
 * Disable infinite loop guard inside generators ([#4698](https://github.com/sveltejs/svelte/issues/4698))
 * Display a11y warning for `href="javascript:..."` ([#4733](https://github.com/sveltejs/svelte/pull/4733))
+* Fix variable name conflict with component called `<Anchor>` ([#4768](https://github.com/sveltejs/svelte/issues/4768))
 
 ## 3.21.0
 
