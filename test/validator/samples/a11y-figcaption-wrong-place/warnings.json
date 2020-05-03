@@ -5,14 +5,14 @@
 		"start": {
 			"line": 4,
 			"column": 1,
-			"character": 57
+			"character": 44
 		},
 		"end": {
 			"line": 6,
 			"column": 14,
-			"character": 115
+			"character": 102
 		},
-		"pos": 57
+		"pos": 44
 	},
 	{
 		"code": "a11y-structure",
@@ -20,13 +20,13 @@
 		"start": {
 			"line": 15,
 			"column": 2,
-			"character": 252
+			"character": 226
 		},
 		"end": {
 			"line": 17,
 			"column": 15,
-			"character": 328
+			"character": 302
 		},
-		"pos": 252
+		"pos": 226
 	}
 ]
