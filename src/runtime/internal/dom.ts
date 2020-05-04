@@ -124,8 +124,8 @@ export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
-// To force uncheck repeated group, need to store old value
-let oldValue: Set<unknown> = new Set();
+// To force uncheck repeated group, need to store old value for each group
+let groups = new Map();
 
 export function get_binding_group_value(group) {
 	const value = new Set();
@@ -133,14 +133,14 @@ export function get_binding_group_value(group) {
 	for (let i = 0; i < group.length; i += 1) {
 		if (group[i].checked) {
 			value.add(group[i].__value);
-		} else if (oldValue.has(group[i].__value)) {
+		} else if (groups.get(group) && groups.get(group).has(group[i].__value)) {
 			force.push(group[i].__value);
 		}
 	}
 	for (let i = 0; i < force.length; i += 1) {
 		value.delete(force[i]);
 	}
-	oldValue = value;
+	groups.set(group, value);
 	return Array.from(value);
 }
 

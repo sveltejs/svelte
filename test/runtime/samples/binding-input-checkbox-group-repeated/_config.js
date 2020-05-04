@@ -1,7 +1,6 @@
 const values = [
 	{ name: 'Alpha' },
-	{ name: 'Beta' },
-	{ name: 'Gamma' }
+	{ name: 'Beta' }
 ];
 
 export default {
