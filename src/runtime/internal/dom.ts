@@ -129,17 +129,15 @@ const groups = new Map();
 
 export function get_binding_group_value(group) {
 	const value = new Set();
-	const force = [];
+	const force = new Set();
 	for (let i = 0; i < group.length; i += 1) {
 		if (group[i].checked) {
 			value.add(group[i].__value);
 		} else if (groups.get(group) && groups.get(group).has(group[i].__value)) {
-			force.push(group[i].__value);
+			force.add(group[i].__value);
 		}
 	}
-	for (let i = 0; i < force.length; i += 1) {
-		value.delete(force[i]);
-	}
+	force.forEach((key) => value.delete(key));
 	groups.set(group, value);
 	return Array.from(value);
 }
