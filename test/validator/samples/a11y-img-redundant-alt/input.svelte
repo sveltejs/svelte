@@ -6,3 +6,4 @@
 <img src="bar" alt="Plant doing photosynthesis in the afternoon" />
 <img src="foo" alt="Picturesque food" />
 <img src="baz" alt={'baz'} />
+<img src="baz" alt />
