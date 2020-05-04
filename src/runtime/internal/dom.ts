@@ -125,7 +125,7 @@ export function xlink_attr(node, attribute, value) {
 }
 
 // To force uncheck repeated group, need to store old value for each group
-let groups = new Map();
+const groups = new Map();
 
 export function get_binding_group_value(group) {
 	const value = new Set();
