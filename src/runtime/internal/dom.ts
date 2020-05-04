@@ -124,6 +124,7 @@ export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
+// To force uncheck repeated group, need to store old value
 let oldValue: Set<unknown> = new Set();
 
 export function get_binding_group_value(group) {
