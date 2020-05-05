@@ -21,7 +21,7 @@ function create_fragment(ctx) {
 			div.textContent = "some content";
 			add_render_callback(() => /*div_elementresize_handler*/ ctx[2].call(div));
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 			div_resize_listener = add_resize_listener(div, /*div_elementresize_handler*/ ctx[2].bind(div));
 		},

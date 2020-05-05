@@ -20,7 +20,7 @@ function create_if_block_4(ctx) {
 			p = element("p");
 			p.textContent = "a";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
@@ -38,7 +38,7 @@ function create_if_block_3(ctx) {
 			p = element("p");
 			p.textContent = "b";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
@@ -56,7 +56,7 @@ function create_if_block_2(ctx) {
 			p = element("p");
 			p.textContent = "c";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
@@ -74,7 +74,7 @@ function create_if_block_1(ctx) {
 			p = element("p");
 			p.textContent = "d";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
@@ -92,7 +92,7 @@ function create_if_block(ctx) {
 			p = element("p");
 			p.textContent = "e";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
@@ -138,27 +138,27 @@ function create_fragment(ctx) {
 			if (if_block4) if_block4.c();
 			if_block4_anchor = empty();
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
-			if (if_block0) if_block0.m(div, null);
+			if (if_block0) if_block0.m(div, null, remount);
 			append(div, t0);
 			append(div, p0);
 			append(div, t2);
-			if (if_block1) if_block1.m(div, null);
+			if (if_block1) if_block1.m(div, null, remount);
 			append(div, t3);
-			if (if_block2) if_block2.m(div, null);
+			if (if_block2) if_block2.m(div, null, remount);
 			append(div, t4);
 			append(div, p1);
 			append(div, t6);
-			if (if_block3) if_block3.m(div, null);
+			if (if_block3) if_block3.m(div, null, remount);
 			insert(target, t7, anchor);
-			if (if_block4) if_block4.m(target, anchor);
+			if (if_block4) if_block4.m(target, anchor, remount);
 			insert(target, if_block4_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
 			if (/*a*/ ctx[0]) {
 				if (if_block0) {
-					
+
 				} else {
 					if_block0 = create_if_block_4(ctx);
 					if_block0.c();
@@ -171,7 +171,7 @@ function create_fragment(ctx) {
 
 			if (/*b*/ ctx[1]) {
 				if (if_block1) {
-					
+
 				} else {
 					if_block1 = create_if_block_3(ctx);
 					if_block1.c();
@@ -184,7 +184,7 @@ function create_fragment(ctx) {
 
 			if (/*c*/ ctx[2]) {
 				if (if_block2) {
-					
+
 				} else {
 					if_block2 = create_if_block_2(ctx);
 					if_block2.c();
@@ -197,7 +197,7 @@ function create_fragment(ctx) {
 
 			if (/*d*/ ctx[3]) {
 				if (if_block3) {
-					
+
 				} else {
 					if_block3 = create_if_block_1(ctx);
 					if_block3.c();
@@ -210,7 +210,7 @@ function create_fragment(ctx) {
 
 			if (/*e*/ ctx[4]) {
 				if (if_block4) {
-					
+
 				} else {
 					if_block4 = create_if_block(ctx);
 					if_block4.c();

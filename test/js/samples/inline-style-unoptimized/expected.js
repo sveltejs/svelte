@@ -25,7 +25,7 @@ function create_fragment(ctx) {
 			attr(div0, "style", /*style*/ ctx[0]);
 			attr(div1, "style", div1_style_value = "" + (/*key*/ ctx[1] + ": " + /*value*/ ctx[2]));
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div0, anchor);
 			insert(target, t, anchor);
 			insert(target, div1, anchor);

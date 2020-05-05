@@ -205,7 +205,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const has_transitions = this.pending.block.has_intro_method || this.pending.block.has_outro_method;
 
 		block.chunks.mount.push(b`
-			${info}.block.m(${initial_mount_node}, ${info}.anchor = ${anchor_node});
+			${info}.block.m(${initial_mount_node}, ${info}.anchor = ${anchor_node}, #remount);
 			${info}.mount = () => ${update_mount_node};
 			${info}.anchor = ${anchor};
 		`);

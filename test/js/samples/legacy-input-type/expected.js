@@ -18,7 +18,7 @@ function create_fragment(ctx) {
 			input = element("input");
 			set_input_type(input, "search");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, input, anchor);
 		},
 		p: noop,

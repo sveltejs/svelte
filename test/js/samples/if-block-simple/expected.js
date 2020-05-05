@@ -18,7 +18,7 @@ function create_if_block(ctx) {
 			p = element("p");
 			p.textContent = "foo!";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
@@ -36,14 +36,14 @@ function create_fragment(ctx) {
 			if (if_block) if_block.c();
 			if_block_anchor = empty();
 		},
-		m(target, anchor) {
-			if (if_block) if_block.m(target, anchor);
+		m(target, anchor, remount) {
+			if (if_block) if_block.m(target, anchor, remount);
 			insert(target, if_block_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
 			if (/*foo*/ ctx[0]) {
 				if (if_block) {
-					
+
 				} else {
 					if_block = create_if_block(ctx);
 					if_block.c();

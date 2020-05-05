@@ -22,7 +22,7 @@ function create_fragment(ctx) {
 			title = svg_element("title");
 			t = text("a title");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, svg, anchor);
 			append(svg, title);
 			append(title, t);

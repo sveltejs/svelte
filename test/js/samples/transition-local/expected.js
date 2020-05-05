@@ -22,8 +22,8 @@ function create_if_block(ctx) {
 			if (if_block) if_block.c();
 			if_block_anchor = empty();
 		},
-		m(target, anchor) {
-			if (if_block) if_block.m(target, anchor);
+		m(target, anchor, remount) {
+			if (if_block) if_block.m(target, anchor, remount);
 			insert(target, if_block_anchor, anchor);
 		},
 		p(ctx, dirty) {
@@ -60,7 +60,7 @@ function create_if_block_1(ctx) {
 			div = element("div");
 			div.textContent = "...";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 		},
 		i(local) {
@@ -89,8 +89,8 @@ function create_fragment(ctx) {
 			if (if_block) if_block.c();
 			if_block_anchor = empty();
 		},
-		m(target, anchor) {
-			if (if_block) if_block.m(target, anchor);
+		m(target, anchor, remount) {
+			if (if_block) if_block.m(target, anchor, remount);
 			insert(target, if_block_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
@@ -117,7 +117,7 @@ function create_fragment(ctx) {
 }
 
 function foo() {
-	
+
 }
 
 function instance($$self, $$props, $$invalidate) {

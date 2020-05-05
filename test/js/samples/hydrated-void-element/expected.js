@@ -38,7 +38,7 @@ function create_fragment(ctx) {
 			if (img.src !== (img_src_value = "donuts.jpg")) attr(img, "src", img_src_value);
 			attr(img, "alt", "donuts");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, img, anchor);
 			insert(target, t, anchor);
 			insert(target, div, anchor);

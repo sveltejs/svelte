@@ -19,7 +19,7 @@ function create_fragment(ctx) {
 			set_style(div, "color", /*color*/ ctx[0]);
 			set_style(div, "transform", "translate(" + /*x*/ ctx[1] + "px," + /*y*/ ctx[2] + "px)");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 		},
 		p(ctx, [dirty]) {

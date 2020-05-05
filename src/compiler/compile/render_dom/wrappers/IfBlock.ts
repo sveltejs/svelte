@@ -297,11 +297,11 @@ export default class IfBlockWrapper extends Wrapper {
 
 		if (if_exists_condition) {
 			block.chunks.mount.push(
-				b`if (${if_exists_condition}) ${name}.m(${initial_mount_node}, ${anchor_node});`
+				b`if (${if_exists_condition}) ${name}.m(${initial_mount_node}, ${anchor_node}, #remount);`
 			);
 		} else {
 			block.chunks.mount.push(
-				b`${name}.m(${initial_mount_node}, ${anchor_node});`
+				b`${name}.m(${initial_mount_node}, ${anchor_node}, #remount);`
 			);
 		}
 
@@ -427,7 +427,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		block.chunks.mount.push(
 			if_current_block_type_index(
-				b`${if_blocks}[${current_block_type_index}].m(${initial_mount_node}, ${anchor_node});`
+				b`${if_blocks}[${current_block_type_index}].m(${initial_mount_node}, ${anchor_node}, #remount);`
 			)
 		);
 
@@ -522,7 +522,7 @@ export default class IfBlockWrapper extends Wrapper {
 		const anchor_node = parent_node ? 'null' : '#anchor';
 
 		block.chunks.mount.push(
-			b`if (${name}) ${name}.m(${initial_mount_node}, ${anchor_node});`
+			b`if (${name}) ${name}.m(${initial_mount_node}, ${anchor_node}, #remount);`
 		);
 
 		if (branch.dependencies.length > 0) {

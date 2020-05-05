@@ -37,9 +37,9 @@ function create_fragment(ctx) {
 			input = element("input");
 		},
 		m(target, anchor, remount) {
-			mount_component(foo, target, anchor);
+			mount_component(foo, target, anchor, remount);
 			insert(target, t0, anchor);
-			mount_component(bar, target, anchor);
+			mount_component(bar, target, anchor, remount);
 			insert(target, t1, anchor);
 			insert(target, input, anchor);
 			set_input_value(input, /*z*/ ctx[0]);

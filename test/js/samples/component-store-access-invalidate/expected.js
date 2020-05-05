@@ -24,7 +24,7 @@ function create_fragment(ctx) {
 			h1 = element("h1");
 			t = text(/*$foo*/ ctx[0]);
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, h1, anchor);
 			append(h1, t);
 		},

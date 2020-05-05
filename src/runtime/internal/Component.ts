@@ -52,10 +52,10 @@ export function claim_component(block, parent_nodes) {
 	block && block.l(parent_nodes);
 }
 
-export function mount_component(component, target, anchor) {
+export function mount_component(component, target, anchor, remount=false) {
 	const { fragment, on_mount, on_destroy, after_update } = component.$$;
 
-	fragment && fragment.m(target, anchor);
+	fragment && fragment.m(target, anchor, remount);
 
 	// onMount happens before the initial afterUpdate
 	add_render_callback(() => {

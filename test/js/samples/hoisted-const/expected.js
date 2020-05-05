@@ -17,7 +17,7 @@ function create_fragment(ctx) {
 			b = element("b");
 			b.textContent = `${get_answer()}`;
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, b, anchor);
 		},
 		p: noop,

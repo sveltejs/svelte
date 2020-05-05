@@ -39,7 +39,7 @@ function create_each_block(key_1, ctx) {
 			t = text(t_value);
 			this.first = div;
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 			append(div, t);
 		},
@@ -84,9 +84,9 @@ function create_fragment(ctx) {
 
 			each_1_anchor = empty();
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
+				each_blocks[i].m(target, anchor, remount);
 			}
 
 			insert(target, each_1_anchor, anchor);

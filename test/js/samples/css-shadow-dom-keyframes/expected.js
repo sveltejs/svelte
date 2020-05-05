@@ -18,7 +18,7 @@ function create_fragment(ctx) {
 			div.textContent = "fades in";
 			this.c = noop;
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 		},
 		p: noop,

@@ -31,7 +31,7 @@ function create_each_block(ctx) {
 			span = element("span");
 			t = text(t_value);
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, span, anchor);
 			append(span, t);
 		},
@@ -61,9 +61,9 @@ function create_fragment(ctx) {
 
 			each_1_anchor = empty();
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			for (let i = 0; i < 5; i += 1) {
-				each_blocks[i].m(target, anchor);
+				each_blocks[i].m(target, anchor, remount);
 			}
 
 			insert(target, each_1_anchor, anchor);

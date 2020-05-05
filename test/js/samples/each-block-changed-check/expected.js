@@ -56,7 +56,7 @@ function create_each_block(ctx) {
 			html_tag = new HtmlTag(raw_value, null);
 			attr(div, "class", "comment");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 			append(div, strong);
 			append(strong, t0);
@@ -101,9 +101,9 @@ function create_fragment(ctx) {
 			p = element("p");
 			t1 = text(/*foo*/ ctx[3]);
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
+				each_blocks[i].m(target, anchor, remount);
 			}
 
 			insert(target, t0, anchor);

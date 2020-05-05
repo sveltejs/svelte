@@ -19,8 +19,8 @@ function create_fragment(ctx) {
 		c() {
 			create_component(nested.$$.fragment);
 		},
-		m(target, anchor) {
-			mount_component(nested, target, anchor);
+		m(target, anchor, remount) {
+			mount_component(nested, target, anchor, remount);
 			current = true;
 		},
 		p: noop,

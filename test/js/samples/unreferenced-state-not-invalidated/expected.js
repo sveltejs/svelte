@@ -23,7 +23,7 @@ function create_fragment(ctx) {
 			p = element("p");
 			t = text(/*y*/ ctx[0]);
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 			append(p, t);
 		},

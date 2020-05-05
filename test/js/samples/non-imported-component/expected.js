@@ -28,10 +28,10 @@ function create_fragment(ctx) {
 			t = space();
 			create_component(nonimported.$$.fragment);
 		},
-		m(target, anchor) {
-			mount_component(imported, target, anchor);
+		m(target, anchor, remount) {
+			mount_component(imported, target, anchor, remount);
 			insert(target, t, anchor);
-			mount_component(nonimported, target, anchor);
+			mount_component(nonimported, target, anchor, remount);
 			current = true;
 		},
 		p: noop,

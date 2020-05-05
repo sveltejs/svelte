@@ -26,7 +26,7 @@ function create_fragment(ctx) {
 			div = element("div");
 			attr(div, "class", "svelte-1slhpfn");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 		},
 		p: noop,

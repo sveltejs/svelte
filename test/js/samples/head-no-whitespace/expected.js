@@ -23,7 +23,7 @@ function create_fragment(ctx) {
 			attr(meta1, "name", "twitter:title");
 			attr(meta1, "content", "Svelte");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			append(document.head, meta0);
 			append(document.head, meta1);
 		},

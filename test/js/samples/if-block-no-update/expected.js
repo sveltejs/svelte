@@ -18,7 +18,7 @@ function create_else_block(ctx) {
 			p = element("p");
 			p.textContent = "not foo!";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
@@ -36,7 +36,7 @@ function create_if_block(ctx) {
 			p = element("p");
 			p.textContent = "foo!";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
@@ -61,8 +61,8 @@ function create_fragment(ctx) {
 			if_block.c();
 			if_block_anchor = empty();
 		},
-		m(target, anchor) {
-			if_block.m(target, anchor);
+		m(target, anchor, remount) {
+			if_block.m(target, anchor, remount);
 			insert(target, if_block_anchor, anchor);
 		},
 		p(ctx, [dirty]) {

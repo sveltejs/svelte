@@ -43,7 +43,7 @@ function create_fragment(ctx) {
 			t8 = text("Hello ");
 			t9 = text(/*world3*/ ctx[0]);
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div0, anchor);
 			append(div0, p0);
 			append(div0, t1);

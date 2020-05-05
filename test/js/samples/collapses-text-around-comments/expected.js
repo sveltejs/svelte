@@ -30,7 +30,7 @@ function create_fragment(ctx) {
 			t = text(/*foo*/ ctx[0]);
 			attr(p, "class", "svelte-1a7i8ec");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, p, anchor);
 			append(p, t);
 		},

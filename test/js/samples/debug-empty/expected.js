@@ -38,7 +38,7 @@ function create_fragment(ctx) {
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 		},
-		m: function mount(target, anchor) {
+		m: function mount(target, anchor, remount) {
 			insert_dev(target, h1, anchor);
 			append_dev(h1, t0);
 			append_dev(h1, t1);

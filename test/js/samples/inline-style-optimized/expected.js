@@ -18,7 +18,7 @@ function create_fragment(ctx) {
 			div = element("div");
 			set_style(div, "color", /*color*/ ctx[0]);
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 		},
 		p(ctx, [dirty]) {

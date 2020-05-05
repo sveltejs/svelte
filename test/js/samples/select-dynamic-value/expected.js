@@ -28,7 +28,7 @@ function create_fragment(ctx) {
 			option1.__value = "2";
 			option1.value = option1.__value;
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, select, anchor);
 			append(select, option0);
 			append(select, option1);

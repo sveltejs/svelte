@@ -26,7 +26,7 @@ function create_if_block(ctx) {
 			div = element("div");
 			div.innerHTML = `<p>wheeee</p>`;
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 			current = true;
 		},
@@ -56,8 +56,8 @@ function create_fragment(ctx) {
 			if (if_block) if_block.c();
 			if_block_anchor = empty();
 		},
-		m(target, anchor) {
-			if (if_block) if_block.m(target, anchor);
+		m(target, anchor, remount) {
+			if (if_block) if_block.m(target, anchor, remount);
 			insert(target, if_block_anchor, anchor);
 			current = true;
 		},

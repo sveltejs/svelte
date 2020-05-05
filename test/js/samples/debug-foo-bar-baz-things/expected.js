@@ -50,7 +50,7 @@ function create_each_block(ctx) {
 
 			add_location(span, file, 8, 1, 116);
 		},
-		m: function mount(target, anchor) {
+		m: function mount(target, anchor, remount) {
 			insert_dev(target, span, anchor);
 			append_dev(span, t0);
 			insert_dev(target, t1, anchor);
@@ -112,9 +112,9 @@ function create_fragment(ctx) {
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 		},
-		m: function mount(target, anchor) {
+		m: function mount(target, anchor, remount) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
+				each_blocks[i].m(target, anchor, remount);
 			}
 
 			insert_dev(target, t0, anchor);

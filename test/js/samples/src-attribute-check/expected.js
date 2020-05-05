@@ -39,7 +39,7 @@ function create_fragment(ctx) {
 			attr(img1, "alt", "potato");
 			if (img1.src !== (img1_src_value = "" + (/*slug*/ ctx[1] + ".jpg"))) attr(img1, "src", img1_src_value);
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, img0, anchor);
 			insert(target, t, anchor);
 			insert(target, img1, anchor);
