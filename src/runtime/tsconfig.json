@@ -1,6 +1,6 @@
 {
 	"extends": "../../tsconfig.json",
-	"include": ["."],
+	"include": [".", "../ambient.ts"],
 
 	"compilerOptions": {
 		"lib": ["es2015", "dom", "dom.iterable"],

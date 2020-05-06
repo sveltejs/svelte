@@ -1,14 +1,18 @@
 import { has_prop } from './utils';
+import { dispatch_dev, dev$dispatch, dev$element, dev$block } from './dev';
 
 export function append(target: Node, node: Node) {
+	dev$element(node, `mount`, { target });
 	target.appendChild(node);
 }
 
 export function insert(target: Node, node: Node, anchor?: Node) {
+	dev$element(node, `mount`, { target, anchor });
 	target.insertBefore(node, anchor || null);
 }
 
 export function detach(node: Node) {
+	dev$element(node, `unmount`);
 	node.parentNode.removeChild(node);
 }
 
@@ -17,12 +21,14 @@ export function destroy_each(iterations, detaching) {
 		if (iterations[i]) iterations[i].d(detaching);
 	}
 }
-
+const dev$create = <K>(elem: K) => (dev$block(`create`, elem), elem);
 export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
+	if (__DEV__) return dev$create(document.createElement<K>(name));
 	return document.createElement<K>(name);
 }
 
 export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: string) {
+	if (__DEV__) return dev$create(document.createElement<K>(name));
 	return document.createElement<K>(name, { is });
 }
 export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
@@ -41,10 +47,12 @@ export function object_without_properties<T, K extends keyof T>(obj: T, exclude:
 }
 
 export function svg_element<K extends keyof SVGElementTagNameMap>(name: K): SVGElement {
+	if (__DEV__) return dev$create(document.createElementNS<K>('http://www.w3.org/2000/svg', name));
 	return document.createElementNS<K>('http://www.w3.org/2000/svg', name);
 }
 
 export function text(data: string) {
+	if (__DEV__) return dev$create(document.createTextNode(data));
 	return document.createTextNode(data);
 }
 
@@ -55,17 +63,25 @@ export function space() {
 export function empty() {
 	return text('');
 }
-
 export function listen(
 	node: EventTarget,
 	event: string,
 	handler: EventListenerOrEventListenerObject,
 	options?: boolean | AddEventListenerOptions | EventListenerOptions
 ) {
+	if (__DEV__) {
+		const reference = { event, handler };
+		dev$element(node, `addEventListener`, reference);
+		node.addEventListener(event, handler, options);
+		return () => {
+			dev$element(node, `removeEventListener`, reference);
+			node.removeEventListener(event, handler, options);
+		};
+	}
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
 }
-
+// todo inline at compile time
 export function prevent_default(fn) {
 	return function (event) {
 		event.preventDefault();
@@ -73,15 +89,15 @@ export function prevent_default(fn) {
 		return fn.call(this, event);
 	};
 }
-
-export function stop_propagation(fn) {
+// todo inline at compile time
+export function stop_propagation(fn): EventListenerOrEventListenerObject {
 	return function (event) {
 		event.stopPropagation();
-		// @ts-ignore
+		//@ts-ignore
 		return fn.call(this, event);
 	};
 }
-
+// todo inline at compile time
 export function self(fn) {
 	return function (event) {
 		// @ts-ignore
@@ -89,48 +105,60 @@ export function self(fn) {
 	};
 }
 
-export function attr(node: Element, attribute: string, value?: string) {
-	if (value == null) node.removeAttribute(attribute);
-	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
+export function attr(node: Element, name: string, value?: any) {
+	if (value == null) {
+		dev$element(node, `removeAttribute`, { name });
+		node.removeAttribute(name);
+	} else if (node.getAttribute(name) !== value) {
+		dev$element(node, `setAttribute`, { name, value });
+		node.setAttribute(name, value);
+	}
 }
 
-export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
-	// @ts-ignore
+export function set_attributes(node: HTMLElement, attributes: { [x: string]: any }) {
+	// @ts-ignore #3687
 	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
-	for (const key in attributes) {
-		if (attributes[key] == null) {
-			node.removeAttribute(key);
-		} else if (key === 'style') {
-			node.style.cssText = attributes[key];
-		} else if (key === '__value' || (descriptors[key] && descriptors[key].set)) {
-			node[key] = attributes[key];
+	let name;
+	for (name in attributes) {
+		if (attributes[name] == null) {
+			dev$element(node, `removeAttribute`, { name });
+			node.removeAttribute(name);
+		} else if (name === 'style') {
+			dev$element(node, `setAttribute`, { name, value: attributes[name] });
+			node.style.cssText = attributes[name];
+		} else if (name === '__value' || (descriptors[name] && descriptors[name].set)) {
+			dev$element(node, `setAttribute`, { name, value: attributes[name] });
+			node[name] = attributes[name];
 		} else {
-			attr(node, key, attributes[key]);
+			attr(node, name, attributes[name]);
 		}
 	}
 }
 
-export function set_svg_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
-	for (const key in attributes) {
-		attr(node, key, attributes[key]);
+export function set_svg_attributes(node: SVGElement, attributes: { [x: string]: any }) {
+	let name;
+	for (name in attributes) {
+		attr(node, name, attributes[name]);
 	}
 }
 
-export function set_custom_element_data(node, prop, value) {
-	if (prop in node) {
-		node[prop] = value;
+export function set_custom_element_data(node, name, value) {
+	if (name in node) {
+		dev$element(node, `setAttribute`, { name, value });
+		node[name] = value;
 	} else {
-		attr(node, prop, value);
+		attr(node, name, value);
 	}
 }
 
-export function xlink_attr(node, attribute, value) {
-	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
+export function xlink_attr(node: Element, name, value) {
+	dev$element(node, `setAttribute`, { name, value });
+	node.setAttributeNS('http://www.w3.org/1999/xlink', name, value);
 }
 
 export function get_binding_group_value(group) {
 	const value = [];
-	for (let i = 0; i < group.length; i += 1) {
+	for (let i = 0, value = []; i < group.length; i += 1) {
 		if (group[i].checked) value.push(group[i].__value);
 	}
 	return value;
@@ -150,35 +178,28 @@ export function time_ranges_to_array(ranges) {
 
 export const children = (element: HTMLElement) => Array.from(element.childNodes);
 
-export function claim_element(nodes, name, attributes, svg) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (node.nodeName === name) {
-			let j = 0;
-			while (j < node.attributes.length) {
-				const attribute = node.attributes[j];
-				if (attributes[attribute.name]) {
-					j++;
-				} else {
-					node.removeAttribute(attribute.name);
-				}
+export function claim_element(nodes, name, attributes, is_svg) {
+	for (let i = 0, j = 0, n, a; i < nodes.length; i += 1, j = 0)
+		if ((n = nodes[i]).nodeName !== name) continue;
+		else {
+			while (j < n.attributes.length) {
+				if (attributes[(a = n.attributes[j]).name]) j++;
+				else n.removeAttribute(a.name);
 			}
+			dev$block(`claim`, n);
 			return nodes.splice(i, 1)[0];
 		}
-	}
-
-	return svg ? svg_element(name) : element(name);
+	dev$block(`claim.failed`, name);
+	return is_svg ? svg_element(name) : element(name);
 }
 
 export function claim_text(nodes, data) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (node.nodeType === 3) {
-			node.data = '' + data;
-			return nodes.splice(i, 1)[0];
+	for (let i = 0, n; i < nodes.length; i += 1)
+		if ((n = nodes[i]).nodeType === 3) {
+			dev$block(`claim`, n);
+			return (n.data = '' + data), nodes.splice(i, 1)[0];
 		}
-	}
-
+	dev$block(`claim.failed`, 'text');
 	return text(data);
 }
 
@@ -187,49 +208,56 @@ export function claim_space(nodes) {
 }
 
 export function set_data(text, data) {
-	data = '' + data;
-	if (text.data !== data) text.data = data;
+	if (text.data !== (data = '' + data)) {
+		text.data = data;
+		dev$element(text, `setAttribute`, { name: 'data', value: data });
+	}
 }
 
 export function set_input_value(input, value) {
 	if (value != null || input.value) {
 		input.value = value;
+		dev$element(input, `setAttribute`, { name: 'value', value });
 	}
 }
 
 export function set_input_type(input, type) {
 	try {
 		input.type = type;
-	} catch (e) {
-		// do nothing
-	}
+		dev$element(input, `setAttribute`, { name: 'type', value: type });
+	} catch (e) {}
 }
 
-export function set_style(node, key, value, important) {
-	node.style.setProperty(key, value, important ? 'important' : '');
+export function set_style(node, property, value, is_important?) {
+	dev$element(node, `setAttribute`, { name: 'style', property, value });
+	node.style.setProperty(property, value, is_important ? 'important' : '');
 }
 
 export function select_option(select, value) {
-	for (let i = 0; i < select.options.length; i += 1) {
-		const option = select.options[i];
-
-		if (option.__value === value) {
-			option.selected = true;
+	for (let i = 0, o; i < select.options.length; i += 1) {
+		if ((o = select.options[i]).__value === value) {
+			dev$element(o, `setAttribute`, { name: 'selected', value: true });
+			o.selected = true;
 			return;
 		}
 	}
 }
 
 export function select_options(select, value) {
-	for (let i = 0; i < select.options.length; i += 1) {
-		const option = select.options[i];
-		option.selected = ~value.indexOf(option.__value);
+	for (let i = 0, o; i < select.options.length; i += 1) {
+		if (__DEV__) {
+			dev$element((o = select.options[i]), `setAttribute`, {
+				name: 'selected',
+				value: (o = select.options[i]).selected = ~value.indexOf(o.__value),
+			});
+			continue;
+		}
+		(o = select.options[i]).selected = ~value.indexOf(o.__value);
 	}
 }
 
 export function select_value(select) {
-	const selected_option = select.querySelector(':checked') || select.options[0];
-	return selected_option && selected_option.__value;
+	return (select = select.querySelector(':checked') || select.options[0]) && select.__value;
 }
 
 export function select_multiple_value(select) {
@@ -261,17 +289,18 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	const z_index = (parseInt(computed_style.zIndex) || 0) - 1;
 
 	if (computed_style.position === 'static') {
-		node.style.position = 'relative';
+		set_style(node, 'position', 'relative');
 	}
 
 	const iframe = element('iframe');
-	iframe.setAttribute(
+	attr(
+		iframe,
 		'style',
 		`display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; ` +
 			`overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: ${z_index};`
 	);
-	iframe.setAttribute('aria-hidden', 'true');
-	iframe.tabIndex = -1;
+	attr(iframe, 'aria-hidden', 'true');
+	attr(iframe, 'tabIndex', -1);
 
 	let unsubscribe: () => void;
 
@@ -296,13 +325,14 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 }
 
 export function toggle_class(element, name, toggle) {
+	dev$element(element, toggle ? 'addClass' : 'removeClass', { name });
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
 export function custom_event<T = any>(type: string, detail?: T) {
-	const e: CustomEvent<T> = document.createEvent('CustomEvent');
-	e.initCustomEvent(type, false, false, detail);
-	return e;
+	const event: CustomEvent<T> = document.createEvent('CustomEvent');
+	event.initCustomEvent(type, false, false, detail);
+	return event;
 }
 
 export function query_selector_all(selector: string, parent: HTMLElement = document.body) {

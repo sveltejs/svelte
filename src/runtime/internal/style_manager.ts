@@ -6,8 +6,8 @@ const enum SVELTE {
 	RULESET = `__svelte_rules`,
 }
 
-let FRAME_RATE;
-function calc_framerate() {
+export let FRAME_RATE;
+export function calc_framerate() {
 	const f24 = 1000 / 24,
 		f60 = 1000 / 60,
 		f144 = 1000 / 144;

@@ -157,9 +157,9 @@ export function init(
 	set_current_component(parent_component);
 }
 
-export let SvelteElement;
-if (typeof HTMLElement === 'function') {
-	SvelteElement = class extends HTMLElement {
+export const SvelteElement =
+	typeof HTMLElement === 'function' &&
+	class extends HTMLElement {
 		$$: T$$;
 		constructor() {
 			super();
@@ -196,7 +196,6 @@ if (typeof HTMLElement === 'function') {
 		// overridden by instance, if it has props
 		$set() {}
 	};
-}
 
 export class SvelteComponent {
 	$$: T$$;

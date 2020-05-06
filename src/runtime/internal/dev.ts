@@ -1,4 +1,4 @@
-import { custom_event, append, insert, detach, listen, attr } from './dom';
+import { custom_event, insert, detach, attr } from './dom';
 import { SvelteComponent } from './Component';
 import {
 	get_current_component,
@@ -10,7 +10,7 @@ import {
 	setContext,
 	getContext,
 } from './lifecycle';
-import { cubicBezier } from 'svelte/easing';
+import { writable } from 'svelte/store';
 
 export const [
 	beforeUpdate_dev,
@@ -26,17 +26,73 @@ export const [
 		return fn(a, b);
 	}
 );
-export function cubicBezier_dev(mX1, mY1, mX2, mY2) {
-	if (!(0 <= mX1 && mX1 <= 1 && 0 <= mX2 && mX2 <= 1)) throw new Error('CubicBezier x values must be { 0 < x < 1 }');
-	return cubicBezier(mX1, mY1, mX2, mY2);
+
+const dev$hook =
+	__DEV__ &&
+	!__TEST__ &&
+	typeof window !== 'undefined' &&
+	(() => {
+		const subscribers = [];
+		function subscribe(listener) {
+			subscribers.push(listener);
+			return () => subscribers.splice(subscribers.indexOf(listener), 1);
+		}
+		const components = [];
+		const hook = writable(components);
+		Object.defineProperty(window, `__SVELTE_DEVTOOLS_GLOBAL_HOOK__`, {
+			enumerable: false,
+			get() {
+				return {
+					version: __VERSION__,
+					components,
+				};
+			},
+		});
+		return function update(type, value) {
+			subscribers.forEach((listener) => {
+				listener(type, value);
+			});
+		};
+	})();
+export function dev$dispatch(type: string, value: any) {
+	dev$hook.update((o) => {
+		return o;
+	});
 }
+export function dev$element(element: Element, event: keyof ElementEventsMap, payload?: any) {
+	if (__DEV__) {
+	}
+}
+export function dev$block(event: keyof BlockEventsMap, payload) {}
+export function dev$tracing(type, value: any) {}
+export function dev$assert(truthy: boolean, else_throw: string) {
+	if (__DEV__ && !truthy) {
+		throw new Error(else_throw);
+	}
+}
+interface SvelteDevEvent extends CustomEvent {
+	__VERSION__: string;
+}
+interface ElementEventsMap {
+	mount;
+	unmount;
+	setAttribute;
+	removeAttribute;
+	addEventListener;
+	removeEventListener;
+	addClass;
+	removeClass;
+}
+interface BlockEventsMap {
+	'create';
+	'claim';
+	'claim.failed';
+}
+interface SvelteDevErrorsMap {}
+export interface SvelteDOM {}
+
 export function dispatch_dev<T = any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }));
-}
-
-export function append_dev(target: Node, node: Node) {
-	dispatch_dev('SvelteDOMInsert', { target, node });
-	append(target, node);
 }
 
 export function insert_dev(target: Node, node: Node, anchor?: Node) {
@@ -65,27 +121,6 @@ export function detach_after_dev(before: Node) {
 	while (before.nextSibling) {
 		detach_dev(before.nextSibling);
 	}
-}
-
-export function listen_dev(
-	node: Node,
-	event: string,
-	handler: EventListenerOrEventListenerObject,
-	options?: boolean | AddEventListenerOptions | EventListenerOptions,
-	has_prevent_default?: boolean,
-	has_stop_propagation?: boolean
-) {
-	const modifiers = options === true ? ['capture'] : options ? Array.from(Object.keys(options)) : [];
-	if (has_prevent_default) modifiers.push('preventDefault');
-	if (has_stop_propagation) modifiers.push('stopPropagation');
-
-	dispatch_dev('SvelteDOMAddEventListener', { node, event, handler, modifiers });
-
-	const dispose = listen(node, event, handler, options);
-	return () => {
-		dispatch_dev('SvelteDOMRemoveEventListener', { node, event, handler, modifiers });
-		dispose();
-	};
 }
 
 export function attr_dev(node: Element, attribute: string, value?: string) {

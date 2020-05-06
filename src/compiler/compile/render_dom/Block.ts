@@ -228,7 +228,7 @@ export default class Block {
 	}
 
 	get_contents(key?: any) {
-		const { dev } = this.renderer.options;
+		const { dev,version } = this.renderer.options;
 
 		if (this.has_outros) {
 			this.add_variable({ type: 'Identifier', name: '#current' });
@@ -403,13 +403,13 @@ export default class Block {
 			${dev
 				? b`
 					const ${block} = ${return_value};
-					@dispatch_dev("SvelteRegisterBlock", {
+					${version < 3.22 && b`@dispatch_dev$legacy("SvelteRegisterBlock", {
 						block: ${block},
 						id: ${this.name || 'create_fragment'}.name,
 						type: "${this.type}",
 						source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
 						ctx: #ctx
-					});
+					});`}
 					return ${block};`
 				: b`
 					return ${return_value};`

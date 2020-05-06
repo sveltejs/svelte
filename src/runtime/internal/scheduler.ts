@@ -7,8 +7,7 @@ const resolved_promise = Promise.resolve();
 let update_scheduled = false;
 export function schedule_update(component) {
 	dirty_components.push(component);
-	if (update_scheduled) return;
-	(update_scheduled = true), resolved_promise.then(flush);
+	if (!update_scheduled) (update_scheduled = true), resolved_promise.then(flush);
 }
 export function tick() {
 	if (!update_scheduled) (update_scheduled = true), resolved_promise.then(flush);
@@ -16,16 +15,17 @@ export function tick() {
 }
 export const binding_callbacks = [];
 const render_callbacks = [];
-export const add_render_callback = (fn) => render_callbacks.push(fn);
+const seen_callbacks = new Set();
+export const add_render_callback = (fn) =>
+	void (!seen_callbacks.has(fn) && (seen_callbacks.add(fn), render_callbacks.push(fn)));
 
 const flush_callbacks = [];
-export const add_flush_callback = (fn) => flush_callbacks.push(fn);
+export const add_flush_callback = (fn) => void flush_callbacks.push(fn);
 
 let flushing = false;
-const seen_callbacks = new Set();
 export function flush() {
 	if (flushing) return;
-	flushing = true;
+	else flushing = true;
 
 	for (; dirty_components.length; ) {
 		// update components + beforeUpdate
@@ -42,21 +42,17 @@ export function flush() {
 		dirty_components.length = 0;
 
 		// update bindings in reverse order
-		for (let i = binding_callbacks.length - 1; i; i--) binding_callbacks[i]();
+		for (let i = binding_callbacks.length - 1; i >= 0; i--) binding_callbacks[i]();
 		binding_callbacks.length = 0;
 
 		// afterUpdate
-		for (let i = 0, callback; i < render_callbacks.length; i++) {
-			if (seen_callbacks.has((callback = render_callbacks[i]))) continue;
-			seen_callbacks.add(callback), callback();
-		}
+		for (let i = 0; i < render_callbacks.length; i++) render_callbacks[i]();
 		render_callbacks.length = 0;
+		seen_callbacks.clear();
 	}
 
 	for (let i = 0; i < flush_callbacks.length; i++) flush_callbacks[i]();
 	flush_callbacks.length = 0;
 
-	seen_callbacks.clear();
-	update_scheduled = false;
-	flushing = false;
+	update_scheduled = flushing = false;
 }

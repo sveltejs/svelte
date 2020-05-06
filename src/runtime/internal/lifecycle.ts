@@ -1,33 +1,41 @@
 import { custom_event } from './dom';
+import { dev$assert, SvelteComponentDev } from './dev';
+import { SvelteComponent } from './Component';
 
-export let current_component;
+export let current_component: SvelteComponentDev | SvelteComponent | null;
 
 export const set_current_component = (component) => (current_component = component);
 
+const dev$guard = (name: string) =>
+	dev$assert(!!current_component, `${name} cannot be called outside of component initialization`);
+
 export function get_current_component() {
-	if (!current_component) throw new Error(`Function called outside component initialization`);
 	return current_component;
 }
 
 export function beforeUpdate(fn) {
-	get_current_component().$$.before_update.push(fn);
+	dev$guard(`beforeUpdate`);
+	return current_component.$$.before_update.push(fn);
 }
 
 export function onMount(fn) {
-	get_current_component().$$.on_mount.push(fn);
+	dev$guard(`onMount`);
+	return current_component.$$.on_mount.push(fn);
 }
 
 export function afterUpdate(fn) {
-	get_current_component().$$.after_update.push(fn);
+	dev$guard(`afterUpdate`);
+	return current_component.$$.after_update.push(fn);
 }
 
 export function onDestroy(fn) {
-	get_current_component().$$.on_destroy.push(fn);
+	dev$guard(`onDestroy`);
+	return current_component.$$.on_destroy.push(fn);
 }
 
 export function createEventDispatcher() {
-	const component = get_current_component();
-
+	dev$guard(`createEventDispatcher`);
+	const component = current_component;
 	return (type: string, detail?: any) => {
 		const callbacks = component.$$.callbacks[type];
 		if (!callbacks) return;
@@ -41,11 +49,13 @@ export function createEventDispatcher() {
 }
 
 export function setContext(key, context) {
-	get_current_component().$$.context.set(key, context);
+	dev$guard(`setContext`);
+	current_component.$$.context.set(key, context);
 }
 
 export function getContext(key) {
-	return get_current_component().$$.context.get(key);
+	dev$guard(`getContext`);
+	return current_component.$$.context.get(key);
 }
 
 // TODO figure out if we still want to support

@@ -1,6 +1,6 @@
 import { run_all } from './utils';
 import { now } from './environment';
-import { setAnimationTimeout, loopThen } from './loop';
+import { setAnimationTimeout, useTween } from './loop';
 import { animate_css } from './style_manager';
 import { custom_event } from './dom';
 import { TransitionConfig } from '../transition';
@@ -82,7 +82,7 @@ export function run_transition(
 			);
 		dispatch_end = startStopDispatcher(node, is_intro);
 		cancel_raf = tick
-			? loopThen(runner(eased(tick, easing), is_intro), stop, duration, end_time)
+			? useTween(runner(eased(tick, easing), is_intro), stop, duration, end_time)
 			: setAnimationTimeout(stop, end_time);
 	}
 	function stop(reset_reverse?: 1 | -1) {

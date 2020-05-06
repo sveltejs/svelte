@@ -1,4 +1,5 @@
 import './ambient';
+import '../ambient';
 
 export {
 	onMount,
@@ -9,5 +10,5 @@ export {
 	getContext,
 	tick,
 	createEventDispatcher,
-	SvelteComponentDev as SvelteComponent
+	SvelteComponentDev as SvelteComponent,
 } from 'svelte/internal';

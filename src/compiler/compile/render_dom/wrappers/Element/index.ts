@@ -886,10 +886,6 @@ function run_animation(element: ElementWrapper, block: Block) {
 	];
 }
 function run_transition(element: ElementWrapper, block: Block, transition: Transition, type: string) {
-	// const run = b`
-	// 0 = @run_transition(1, `2`, ${
-	// 	type === 'intro' ? `true` : `false`
-	// }, ${params});
 	return [
 		/* node_intro */ block.alias(`${element.var.name}_${type}`),
 		/* node */ element.var,

@@ -1,147 +1,81 @@
-import { Readable, writable } from 'svelte/store';
-import { loop, now, Task } from 'svelte/internal';
-import { is_date } from './utils';
+import { Store, onEachFrame } from 'svelte/internal';
 
-interface TickContext<T> {
-	inv_mass: number;
-	dt: number;
-	opts: Spring<T>;
-	settled: boolean;
-}
-
-function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, target_value: T): T {
-	if (typeof current_value === 'number' || is_date(current_value)) {
-		// @ts-ignore
-		const delta = target_value - current_value;
-		// @ts-ignore
-		const velocity = (current_value - last_value) / (ctx.dt||1/60); // guard div by 0
-		const spring = ctx.opts.stiffness * delta;
-		const damper = ctx.opts.damping * velocity;
-		const acceleration = (spring - damper) * ctx.inv_mass;
-		const d = (velocity + acceleration) * ctx.dt;
-
-		if (Math.abs(d) < ctx.opts.precision && Math.abs(delta) < ctx.opts.precision) {
-			return target_value; // settled
-		} else {
-			ctx.settled = false; // signal loop to keep ticking
-			// @ts-ignore
-			return is_date(current_value) ?
-				new Date(current_value.getTime() + d) : current_value + d;
-		}
-	} else if (Array.isArray(current_value)) {
-		// @ts-ignore
-		return current_value.map((_, i) =>
-			tick_spring(ctx, last_value[i], current_value[i], target_value[i]));
-	} else if (typeof current_value === 'object') {
-		const next_value = {};
-		for (const k in current_value)
-			// @ts-ignore
-			next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
-		// @ts-ignore
-		return next_value;
+function solve_spring(
+	prev_value: number,
+	prev_velocity: number,
+	target_value: number,
+	{ stiffness, mass, damping, soft }
+) {
+	const delta = target_value - prev_value;
+	if (soft || 1 <= damping / (2.0 * Math.sqrt(stiffness * mass))) {
+		const angular_frequency = -Math.sqrt(stiffness / mass);
+		return (t: number) =>
+			target_value - (delta + t * (-angular_frequency * delta - prev_velocity)) * Math.exp(t * angular_frequency);
 	} else {
-		throw new Error(`Cannot spring ${typeof current_value} values`);
+		const damping_frequency = Math.sqrt(4.0 * mass * stiffness - damping ** 2);
+		const leftover = (damping * delta - 2.0 * mass * prev_velocity) / damping_frequency;
+		const dfm = (0.5 * damping_frequency) / mass;
+		const dm = -(0.5 * damping) / mass;
+		let f = 0.0;
+		return (t: number) => target_value - (Math.cos((f = t * dfm)) * delta + Math.sin(f) * leftover) * Math.exp(t * dm);
 	}
 }
-
-interface SpringOpts {
-	stiffness?: number;
-	damping?: number;
-	precision?: number;
-}
-
-interface SpringUpdateOpts {
-	hard?: any;
-	soft?: string | number | boolean;
-}
-
-type Updater<T> = (target_value: T, value: T) => T;
-
-interface Spring<T> extends Readable<T>{
-	set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
-	update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
-	precision: number;
-	damping: number;
-	stiffness: number;
-}
-
-export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
-	const store = writable(value);
-	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
-
-	let last_time: number;
-	let task: Task;
-	let current_token: object;
-	let last_value: T = value;
-	let target_value: T = value;
-
-	let inv_mass = 1;
-	let inv_mass_recovery_rate = 0;
-	let cancel_task = false;
-
-	function set(new_value: T, opts: SpringUpdateOpts={}): Promise<void> {
-		target_value = new_value;
-		const token = current_token = {};
-
-		if (value == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
-			cancel_task = true; // cancel any running animation
-			last_time = now();
-			last_value = new_value;
-			store.set(value = target_value);
-			return Promise.resolve();
-		} else if (opts.soft) {
-			const rate = opts.soft === true ? .5 : +opts.soft;
-			inv_mass_recovery_rate = 1 / (rate * 60);
-			inv_mass = 0; // infinite mass, unaffected by spring forces
-		}
-
-		if (!task) {
-			last_time = now();
-			cancel_task = false;
-
-			task = loop(now => {
-
-				if (cancel_task) {
-					cancel_task = false;
-					task = null;
-					return false;
-				}
-
-				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
-
-				const ctx: TickContext<T> = {
-					inv_mass,
-					opts: spring,
-					settled: true, // tick_spring may signal false
-					dt: (now - last_time) * 60 / 1000
-				};
-				const next_value = tick_spring(ctx, last_value, value, target_value);
-
-				last_time = now;
-				last_value = value;
-				store.set(value = next_value);
-
-				if (ctx.settled)
-					task = null;
-				return !ctx.settled;
-			});
-		}
-
-		return new Promise(fulfil => {
-			task.promise.then(() => {
-				if (token === current_token) fulfil();
-			});
-		});
+class MotionStore<T> extends Store<T> {
+	elapsed = 0.0;
+	running = false;
+	setTick: (prev_value: T, next_value: T) => (current_value: T, elapsed: number, dt: number) => boolean;
+	tick: (current_value: T, elapsed: number, dt: number) => boolean;
+	constructor(value, startSetTick) {
+		super(value);
+		this.setTick = startSetTick(super.set.bind(this));
 	}
-
-	const spring: Spring<T> = {
-		set,
-		update: (fn, opts: SpringUpdateOpts) => set(fn(target_value, value), opts),
-		subscribe: store.subscribe,
-		stiffness,
-		damping,
-		precision
-	};
-
-	return spring;
+	set(next_value: T) {
+		this.elapsed = 0.0;
+		this.tick = this.setTick(this.value, next_value);
+		if (this.running) return;
+		else this.running = true;
+		onEachFrame((dt) => (this.running = this.tick(this.value, (this.elapsed += dt), dt)));
+	}
+}
+export function spring(value, params) {
+	const { mass = 1.0, damping = 10.0, stiffness = 100.0, precision = 0.001, soft = false } = params || {};
+	return new MotionStore(
+		value,
+		parseStructure(value, (set) => {
+			let velocity = 0.0,
+				calc;
+			return (from_value, to_value) => {
+				calc = solve_spring(from_value, velocity, to_value, { mass, damping, stiffness, soft });
+				return (current, elapsed, dt) =>
+					precision > Math.abs((velocity = (-current + (current = calc(elapsed))) / dt)) &&
+					precision > Math.abs(to_value - current)
+						? (set(to_value), !!(velocity = 0.0))
+						: (set(current), true);
+			};
+		})
+	);
+}
+function parseStructure(obj, schema) {
+	if (typeof obj === 'object' && obj !== null) {
+		const keys = Object.keys(obj);
+		let i = 0,
+			k = '',
+			setTickers = keys.map((key) => parseStructure(obj[key], schema)((next_value) => (obj[key] = next_value))),
+			tickers,
+			pending = 0;
+		const target = { ...obj };
+		const isArray = Array.isArray(obj);
+		obj = isArray ? [...obj] : { ...obj };
+		return (set) => (_from_value, to_value) => {
+			for (k in to_value) if (to_value[k] !== obj[k]) target[k] = to_value[k];
+			tickers = setTickers.map((setTicker, i) => ((pending |= 1 << i), setTicker(obj[keys[i]], target[keys[i]])));
+			return (_current, elapsed, dt) => {
+				for (i = 0; i < tickers.length; i++)
+					if (pending & (1 << i) && !tickers[i](obj[keys[i]], elapsed, dt)) pending &= ~(1 << i);
+				set(isArray ? [...obj] : { ...obj });
+				return !!pending;
+			};
+		};
+	}
+	return schema;
 }
