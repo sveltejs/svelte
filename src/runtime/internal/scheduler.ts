@@ -1,8 +1,7 @@
 import { set_current_component } from './lifecycle';
+import { resolved_promise } from './environment';
 
 const dirty_components = [];
-
-const resolved_promise = Promise.resolve();
 
 let update_scheduled = false;
 export function schedule_update(component) {

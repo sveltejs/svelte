@@ -116,7 +116,7 @@ export function init(
 				if ($$.ctx && not_equal($$.ctx[i], ($$.ctx[i] = val))) {
 					if (i in $$.bound) $$.bound[i](val);
 					if (ready) {
-						if (!~$$.dirty) {
+						if (!~$$.dirty[0]) {
 							schedule_update(component);
 							$$.dirty.fill(0);
 						}

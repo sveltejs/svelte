@@ -1,19 +1,20 @@
 import { cubicOut, cubicInOut, linear } from 'svelte/easing';
 
 type EasingFunction = (t: number) => number;
-
-export interface TransitionConfig {
+interface BasicConfig {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
+}
+interface TimeableConfig extends Omit<BasicConfig, 'duration'> {
+	duration?: number | ((len: number) => number);
+}
+export interface TransitionConfig extends BasicConfig {
 	css?: (t: number, u?: number) => string;
 	tick?: (t: number, u?: number) => void;
 }
 
-interface BlurParams {
-	delay: number;
-	duration: number;
-	easing?: EasingFunction;
+interface BlurParams extends BasicConfig {
 	amount: number;
 	opacity: number;
 }
@@ -34,13 +35,7 @@ export function blur(
 	};
 }
 
-interface FadeParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
-}
-
-export function fade(node: Element, { delay = 0, duration = 400, easing = linear }: FadeParams): TransitionConfig {
+export function fade(node: Element, { delay = 0, duration = 400, easing = linear }: BasicConfig): TransitionConfig {
 	const o = +getComputedStyle(node).opacity;
 	return {
 		delay,
@@ -50,10 +45,7 @@ export function fade(node: Element, { delay = 0, duration = 400, easing = linear
 	};
 }
 
-interface FlyParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
+interface FlyParams extends BasicConfig {
 	x: number;
 	y: number;
 	opacity: number;
@@ -79,13 +71,7 @@ export function fly(
 	};
 }
 
-interface SlideParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
-}
-
-export function slide(node: Element, { delay = 0, duration = 400, easing = cubicOut }: SlideParams): TransitionConfig {
+export function slide(node: Element, { delay = 0, duration = 400, easing = cubicOut }: BasicConfig): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const height = parseFloat(style.height);
@@ -112,10 +98,7 @@ export function slide(node: Element, { delay = 0, duration = 400, easing = cubic
 	};
 }
 
-interface ScaleParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
+interface ScaleParams extends BasicConfig {
 	start: number;
 	opacity: number;
 }
@@ -140,11 +123,8 @@ export function scale(
 	};
 }
 
-interface DrawParams {
-	delay: number;
+interface DrawParams extends TimeableConfig {
 	speed: number;
-	duration: number | ((len: number) => number);
-	easing: EasingFunction;
 }
 
 export function draw(
@@ -156,18 +136,10 @@ export function draw(
 	else if (typeof duration === 'function') duration = duration(len);
 	return { delay, duration, easing, css: (t, u) => `stroke-dasharray: ${t * len} ${u * len};` };
 }
-
-interface CrossfadeParams {
-	delay: number;
-	duration: number | ((len: number) => number);
-	easing: EasingFunction;
+interface CrossFadeConfig extends TimeableConfig {
+	fallback: (node: Element, params: TimeableConfig, intro: boolean) => TransitionConfig;
 }
-interface CrossFadeConfig extends CrossfadeParams {
-	fallback: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
-}
-interface MarkedCrossFadeConfig extends CrossfadeParams {
-	key: any;
-}
+type MarkedCrossFadeConfig = TimeableConfig & { key: any };
 type ElementMap = Map<string, Element>;
 
 export function crossfade({
@@ -182,7 +154,7 @@ export function crossfade({
 	function crossfade(
 		from_node: Element,
 		to_node: Element,
-		{ delay = default_delay, easing = default_easing, duration = default_duration }: CrossfadeParams
+		{ delay = default_delay, easing = default_easing, duration = default_duration }: TimeableConfig
 	) {
 		const from = from_node.getBoundingClientRect();
 		const to = to_node.getBoundingClientRect();

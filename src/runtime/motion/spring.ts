@@ -1,4 +1,5 @@
-import { Store, onEachFrame } from 'svelte/internal';
+import { SpringMotion, TweenMotion, now } from 'svelte/internal';
+import { is_date } from './utils';
 
 function solve_spring(
 	prev_value: number,
@@ -20,62 +21,91 @@ function solve_spring(
 		return (t: number) => target_value - (Math.cos((f = t * dfm)) * delta + Math.sin(f) * leftover) * Math.exp(t * dm);
 	}
 }
-class MotionStore<T> extends Store<T> {
-	elapsed = 0.0;
-	running = false;
-	setTick: (prev_value: T, next_value: T) => (current_value: T, elapsed: number, dt: number) => boolean;
-	tick: (current_value: T, elapsed: number, dt: number) => boolean;
-	constructor(value, startSetTick) {
-		super(value);
-		this.setTick = startSetTick(super.set.bind(this));
-	}
-	set(next_value: T) {
-		this.elapsed = 0.0;
-		this.tick = this.setTick(this.value, next_value);
-		if (this.running) return;
-		else this.running = true;
-		onEachFrame((dt) => (this.running = this.tick(this.value, (this.elapsed += dt), dt)));
-	}
+export function spring(value, { mass = 1.0, damping = 10.0, stiffness = 100.0, precision = 0.001, soft = false } = {}) {
+	const store = new SpringMotion(value, (set) => {
+		let velocity = 0.0,
+			calc;
+		return (from_value, to_value) => {
+			calc = solve_spring(from_value, velocity, to_value, obj);
+			return (current, elapsed, dt) =>
+				precision > Math.abs((velocity = (-current + (current = calc(elapsed))) / dt)) &&
+				precision > Math.abs(to_value - current)
+					? (set(to_value), !!(velocity = 0.0))
+					: (set(current), true);
+		};
+	});
+	const obj = {
+		mass,
+		damping,
+		stiffness,
+		precision,
+		soft,
+		set(next_value, params) {
+			if (params) {
+				if ('mass' in params) obj.mass = params.mass;
+				if ('damping' in params) obj.damping = params.damping;
+				if ('stiffness' in params) obj.stiffness = params.stiffness;
+				if ('precision' in params) obj.precision = params.precision;
+				if ('soft' in params) obj.soft = params.soft;
+			}
+			return store.set(next_value);
+		},
+		setImmediate: store.setImmediate.bind(store),
+		subscribe: store.subscribe.bind(store),
+		onRest: store.onRest.bind(store),
+	};
+	return obj;
 }
-export function spring(value, params) {
-	const { mass = 1.0, damping = 10.0, stiffness = 100.0, precision = 0.001, soft = false } = params || {};
-	return new MotionStore(
-		value,
-		parseStructure(value, (set) => {
-			let velocity = 0.0,
-				calc;
-			return (from_value, to_value) => {
-				calc = solve_spring(from_value, velocity, to_value, { mass, damping, stiffness, soft });
-				return (current, elapsed, dt) =>
-					precision > Math.abs((velocity = (-current + (current = calc(elapsed))) / dt)) &&
-					precision > Math.abs(to_value - current)
-						? (set(to_value), !!(velocity = 0.0))
-						: (set(current), true);
-			};
-		})
-	);
+function tween_between(a, b) {
+	if (a === b || a !== a) return () => a;
+	else if (typeof a === 'number') {
+		return (t) => a + t * (b-a);
+	} else if (is_date(a) && is_date(b)) {
+		a = a.getTime();
+		b = b.getTime();
+		const delta = b - a;
+		return (t) => new Date(a + t * delta);
+	} else throw new Error(`Cannot interpolate ${typeof a} values`);
 }
-function parseStructure(obj, schema) {
-	if (typeof obj === 'object' && obj !== null) {
-		const keys = Object.keys(obj);
-		let i = 0,
-			k = '',
-			setTickers = keys.map((key) => parseStructure(obj[key], schema)((next_value) => (obj[key] = next_value))),
-			tickers,
-			pending = 0;
-		const target = { ...obj };
-		const isArray = Array.isArray(obj);
-		obj = isArray ? [...obj] : { ...obj };
-		return (set) => (_from_value, to_value) => {
-			for (k in to_value) if (to_value[k] !== obj[k]) target[k] = to_value[k];
-			tickers = setTickers.map((setTicker, i) => ((pending |= 1 << i), setTicker(obj[keys[i]], target[keys[i]])));
-			return (_current, elapsed, dt) => {
-				for (i = 0; i < tickers.length; i++)
-					if (pending & (1 << i) && !tickers[i](obj[keys[i]], elapsed, dt)) pending &= ~(1 << i);
-				set(isArray ? [...obj] : { ...obj });
-				return !!pending;
+export function tween(
+	value,
+	{
+		delay: default_delay = 0,
+		duration: default_duration = 400,
+		easing: default_easing = (v) => v,
+		interpolate: default_interpolate = tween_between,
+	}
+) {
+	let delay = default_delay,
+		duration = default_duration,
+		easing = default_easing,
+		interpolate = default_interpolate;
+	const store = new TweenMotion(value, (set) => {
+		let end_time = 0,
+			calc;
+		return (from_value, to_value) => {
+			end_time = now() + delay + duration;
+			calc = interpolate(from_value, to_value);
+			return (t) => {
+				t = 1 - (end_time - t) / duration;
+				if (t >= 1) return set(calc(easing(1))),  false;
+				if (t >= 0) set(calc(easing(t)));
+				return true;
 			};
 		};
+	});
+	function set(next_value, params) {
+		delay = (params && params.delay) || default_delay;
+		duration = (params && 'duration' in params && params.duration) || default_duration;
+		easing = (params && params.easing) || default_easing;
+		interpolate = (params && params.interpolate) || default_interpolate;
+		return store.set(next_value);
 	}
-	return schema;
+	return {
+		set,
+		// update: (fn, params) => set(fn(target_value, value), params),
+		setImmediate: store.setImmediate.bind(store),
+		subscribe: store.subscribe.bind(store),
+		onRest: store.onRest.bind(store),
+	};
 }

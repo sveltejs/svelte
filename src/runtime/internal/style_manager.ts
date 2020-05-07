@@ -26,7 +26,7 @@ interface ExtendedDoc extends Document {
 const active_documents = new Set<ExtendedDoc>();
 let running_animations = 0;
 
-function add_rule(node, name, rule): [CSSStyleSheet, Set<string>] {
+function add_rule(node): [CSSStyleSheet, Set<string>] {
 	const { ownerDocument } = node;
 	if (!active_documents.has(ownerDocument)) {
 		active_documents.add(ownerDocument);
@@ -52,7 +52,7 @@ const gen = (t, step, css) => {
 };
 export function animate_css(css: (t: number) => string, node: HTMLElement, duration: number, t = 0) {
 	const [name, rule] = gen(t, duration / (FRAME_RATE || calc_framerate()), css);
-	const [stylesheet, rules] = add_rule(node, rule);
+	const [stylesheet, rules] = add_rule(node);
 	if (!rules.has(name)) {
 		rules.add(name);
 		stylesheet.insertRule(rule, stylesheet.cssRules.length);

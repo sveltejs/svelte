@@ -72,7 +72,7 @@
     "c8": "^7.1.1",
     "code-red": "0.1.1",
     "codecov": "^3.6.5",
-    "css-tree": "1.0.0-alpha39",
+    "css-tree": "1.0.0-alpha22",
     "eslint": "^6.8.0",
     "eslint-plugin-import": "^2.20.2",
     "eslint-plugin-svelte3": "^2.7.3",
