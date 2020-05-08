@@ -24,6 +24,7 @@ export default class Text extends Node {
 		super(component, parent, scope, info);
 		this.data = info.data;
 		this.synthetic = info.synthetic || false;
+		this.validate();
 	}
 
 	should_skip() {
@@ -41,5 +42,36 @@ export default class Text extends Node {
 		}
 
 		return parent_element.namespace || elements_without_text.has(parent_element.name);
+	}
+
+	validate() {
+		const { data, component, parent } = this;
+
+		// https://github.com/mathiasbynens/emoji-regex/blob/master/src/index.js
+		const emoji_regex =/<% emojiSequence %>|\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\p{Emoji_Modifier_Base}/gu;
+
+		if (!emoji_regex.test(data)) return;
+
+		let is_accessible = false;
+
+		if (parent.type === 'Element' && parent.name === 'span') {
+			const { attributes } = parent;
+			const role = parent.get_static_attribute_value('role');
+			const aria_label_index = attributes.findIndex(attr => 
+				attr.type === 'Attribute' &&
+				(attr.name === 'aria-label' || attr.name === 'aria-labelledby') 
+			);
+
+			if (role === 'img' && aria_label_index > -1) {
+				is_accessible = true;
+			}
+		}
+
+		if (!is_accessible) {
+			component.warn(this, {
+				code: 'a11y-accessible-emoji',
+				message: 'A11y: emojis should be wrapped in a <span>, with role="img", and have a description using aria-label or aria-labelledby'
+			});
+		}
 	}
 }
