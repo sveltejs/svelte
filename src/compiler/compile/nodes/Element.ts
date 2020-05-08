@@ -514,7 +514,7 @@ export default class Element extends Node {
 			if (change_handler && !blur_handler) {
 				component.warn(this, {
 					code: `a11y-no-onchange`,
-					message: `A11y: onBlur must be used instead of onchange, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.`
+					message: `A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.`
 				});
 			}
 		}
