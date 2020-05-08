@@ -1,5 +1,5 @@
 import { element } from './dom';
-import { raf } from './environment';
+import { raf, now } from './environment';
 const enum SVELTE {
 	RULE = `__svelte_`,
 	STYLESHEET = `__svelte_stylesheet`,
@@ -43,22 +43,23 @@ function hash(str: string) {
 	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
 	return hash >>> 0;
 }
-const gen = (t, step, css) => {
+const gen = (step, css) => {
 	let rule = '{\n';
-	for (; t < 1; t += step) rule += `${100 * t}%{${css(t)}}\n`;
+	for (let t = 0; t < 1; t += step) rule += `${100 * t}%{${css(t)}}\n`;
 	rule += `100% {${css(1)}}\n}`;
 	const name = SVELTE.RULE + hash(rule);
 	return [name, `@keyframes ${name} ${rule}`];
 };
-export function animate_css(css: (t: number) => string, node: HTMLElement, duration: number, t = 0) {
-	const [name, rule] = gen(t, duration / (FRAME_RATE || calc_framerate()), css);
+export function animate_css(css: (t: number) => string, node: HTMLElement, duration: number, delay = 0) {
+	const [name, rule] = gen(Math.max(1 / 1000, (FRAME_RATE || calc_framerate()) / duration), css);
 	const [stylesheet, rules] = add_rule(node);
 	if (!rules.has(name)) {
 		rules.add(name);
 		stylesheet.insertRule(rule, stylesheet.cssRules.length);
 	}
 	const previous = node.style.animation;
-	node.style.animation = (previous ? previous + ', ' : '') + `${duration}ms linear 0ms 1 normal both running ${name}`;
+	node.style.animation =
+		(previous ? previous + ', ' : '') + `${duration}ms linear ${delay}ms 1 normal both running ${name}`;
 	running_animations++;
 	return () => {
 		const prev = (node.style.animation || '').split(', ');

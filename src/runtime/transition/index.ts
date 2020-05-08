@@ -58,16 +58,14 @@ export function fly(
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
-
 	const od = target_opacity * (1 - opacity);
-
 	return {
 		delay,
 		duration,
 		easing,
 		css: (t, u) => `
-			transform: ${transform} translate(${(1 - t) * x}px, ${(1 - t) * y}px);
-			opacity: ${target_opacity - od * u};`,
+			transform: ${transform} translate(${u * x}px, ${u * y}px);
+			opacity: ${target_opacity - od * u}`,
 	};
 }
 

@@ -136,8 +136,3 @@ export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj,
 export function action_destroyer(action_result) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }
-export const minmax = (min: number, max: number) => (value: number) => (min > value ? min : value > max ? max : value);
-export const clamper = (min: number, max: number) =>
-	min !== -Infinity || max !== Infinity
-		? (fn: (value: number) => any) => (value: number) => (min > (value = fn(value)) ? min : value > max ? max : value)
-		: (fn: (value: number) => any) => fn;

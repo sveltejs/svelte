@@ -28,24 +28,20 @@ let pending_inserts = false;
 const run_timed = (now: number) => {
 	/* Runs every timed out task */
 	let last_index = timed_tasks.length - 1;
-	while (last_index >= 0 && now >= timed_tasks[last_index].timestamp) timed_tasks[last_index--].callback(now);
+	while (~last_index && now >= timed_tasks[last_index].timestamp) timed_tasks[last_index--].callback(now);
 	if (pending_inserts) {
-		for (
-			let i = 0, j = last_index, this_task: TimeoutTask, that_task: TimeoutTask;
-			i < pending_insert_timed.length;
-			i++
-		)
+		for (let i = 0, j = 0, this_task: TimeoutTask, that_task: TimeoutTask; i < pending_insert_timed.length; i++)
 			if (now >= (this_task = pending_insert_timed[i]).timestamp) this_task.callback(now);
 			else {
 				/* moves each task up until this_task.timestamp > task.timestamp */
-				for (j = last_index; j > 0 && this_task.timestamp > (that_task = timed_tasks[j]).timestamp; j--)
+				for (j = last_index; ~j && this_task.timestamp > (that_task = timed_tasks[j]).timestamp; j--)
 					timed_tasks[j + 1] = that_task;
-				timed_tasks[j] = this_task;
+				timed_tasks[j + 1] = this_task;
 				last_index++;
 			}
 		pending_inserts = !!(pending_insert_timed.length = 0);
 	}
-	return (running_timed = !!(timed_tasks.length = last_index));
+	return (running_timed = !!(timed_tasks.length = last_index + 1));
 };
 const unsafe_loop = (fn) => {
 	if (!next_frame_length) raf(run);
@@ -73,15 +69,15 @@ export const setAnimationTimeout = (callback: () => void, timestamp: number): Ta
  */
 export const useTween = (
 	run: (now: number) => void,
-	stop: () => void,
+	stop: (now: number) => void,
 	end_time: number,
 	duration = end_time - now()
 ): TaskCanceller => {
 	let running = true;
 	unsafe_loop((t) => {
 		if (!running) return false;
-		t = 1 - (end_time - t) / duration;
-		if (t >= 1) return run(1), stop(), false;
+		t = (end_time - t) / duration;
+		if (t >= 1) return run(1), stop(t), false;
 		if (t >= 0) run(t);
 		return running;
 	});
