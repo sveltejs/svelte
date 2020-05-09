@@ -1,11 +1,13 @@
-import { run_all } from './utils';
-import { now } from './environment';
-import { setAnimationTimeout, useTween } from './loop';
-import { animate_css } from './style_manager';
-import { custom_event } from './dom';
 import { TransitionConfig } from '../transition';
-import { add_measure_callback, add_render_callback } from './scheduler';
 import { Fragment } from './Component';
+import { custom_event } from './dom';
+import { now } from './environment';
+import { setFrameTimeout, setTweenTimeout } from './loop';
+import { add_measure_callback } from './scheduler';
+import { animate_css } from './style_manager';
+
+type TransitionFn = (node: HTMLElement, params: any) => TransitionConfig;
+type StopResetReverse = (reset_reverse?: 1 | -1) => StopResetReverse;
 
 function startStopDispatcher(node: Element, is_intro: boolean) {
 	node.dispatchEvent(custom_event(`${is_intro ? 'intro' : 'outro'}start`));
@@ -14,92 +16,132 @@ function startStopDispatcher(node: Element, is_intro: boolean) {
 
 const outroing = new Set();
 
-let outros;
-export function group_outros() {
-	outros = {
-		/* 	parent group 	*/ p: outros,
-		/* 	callbacks 		*/ c: [],
-		/* 	remaining outros */ r: 0,
-	};
-}
+let transition_group;
+export const group_outros = () => void (transition_group = { p: transition_group, c: [], r: 0 });
 
-export function check_outros() {
-	if (!outros.r) run_all(outros.c);
-	outros = outros.p;
-}
+export const check_outros = () => {
+	if (!transition_group.r) for (let i = 0; i < transition_group.c.length; i++) transition_group.c[i]();
+	transition_group = transition_group.p;
+};
 
-export function transition_in(block: Fragment, local?: 0 | 1) {
+export const transition_in = (block: Fragment, local?: 0 | 1) => {
 	if (!block || !block.i) return;
 	outroing.delete(block);
 	block.i(local);
-}
+};
 
-export function transition_out(block: Fragment, local?: 0 | 1, detach?: 0 | 1, callback?: () => void) {
+export const transition_out = (block: Fragment, local?: 0 | 1, detach?: 0 | 1, callback?: () => void) => {
 	if (!block || !block.o || outroing.has(block)) return;
 	outroing.add(block);
-	outros.c.push(() => {
+	transition_group.c.push(() => {
 		if (!outroing.has(block)) return;
-		outroing.delete(block);
+		else outroing.delete(block);
 		if (!callback) return;
 		if (detach) block.d(1);
 		callback();
 	});
 	block.o(local);
-}
-
-const eased = (fn: (t: number) => any, easing: (t: number) => number, start, end) => (t: number) =>
-	fn(start + (end - start) * easing(t));
-//easing ? (!is_intro ? (t: number) => fn(easing(t)) : (t: number) => fn(1 - easing(1 - t))) : fn;
-const runner = (fn: (t0: number, t1: number) => any, is_intro: boolean) =>
-	is_intro ? (t: number) => fn(t, 1 - t) : (t: number) => fn(1 - t, t);
-const mirror = (fn, easing, is_intro) => {
-	const run = is_intro ? (t) => fn(1 - t, t) : (t) => fn(t, 1 - t);
-	return easing ? (is_intro ? (t) => run(1 - easing(1 - t)) : (t) => run(easing(t))) : run;
 };
-type TransitionFn = (node: HTMLElement, params: any) => TransitionConfig;
-export function run_transition(
+
+/* todo: deprecate */
+const swap = (fn, is_intro) => (is_intro ? (t) => fn(t, 1 - t) : (t) => fn(1 - t, t));
+
+const mirrored = (fn, is_intro, easing) => {
+	const run = swap(fn, is_intro);
+	return easing ? (!is_intro ? (t) => run(1 - easing(1 - t)) : (t) => run(easing(t))) : run;
+};
+
+const reversed = (fn, is_intro, easing, start = 0, end = 1) => {
+	const run = swap(fn, is_intro);
+	const difference = end - start;
+	return easing ? (t) => run(start + difference * easing(t)) : (t) => run(start + difference * t);
+};
+
+export const run_transition = (
 	node: HTMLElement,
 	fn: TransitionFn,
 	is_intro = true,
 	params = {},
-	left_duration = 0,
-	prev_left = 0
-): StopResetReverse {
+	/* internal to this file */
+	is_bidirectional = false,
+	elapsed_duration = 0,
+	delay_left = -1,
+	elapsed_ratio = 0
+) => {
 	let config;
 	let running = true;
 
 	let cancel_css;
 	let cancel_raf;
 	let dispatch_end;
-	let end_time;
-	let t;
-	let start_ratio;
 
-	const group = outros;
-	if (!is_intro) group.r++;
+	let start_time = 0;
+	let end_time = 0;
 
-	const start = ({ delay = 0, duration = 300, easing, tick, css }: TransitionConfig) => {
+	const group = transition_group;
+	if (!is_intro) transition_group.r++;
+
+	const start = ({ delay = 0, duration = 300, easing, tick, css, strategy = 'reverse' }: TransitionConfig) => {
 		if (!running) return;
-		t = duration - (left_duration > 0 ? left_duration : 0);
-		end_time = now() + t;
-		start_ratio = 1 - easing((t - prev_left) / duration);
-		if (css) cancel_css = animate_css(eased(runner(css, is_intro), easing, start_ratio, 1), node, t, 0);
+
+		if (~delay_left) delay = delay_left;
+
+		const solver = strategy === 'reverse' ? reversed : mirrored;
+		const runner = (fn) => solver(fn, is_intro, easing, elapsed_ratio, 1);
+
+		if (solver === mirrored) {
+			delay -= elapsed_duration;
+		} else if (solver === reversed) {
+			duration -= elapsed_duration;
+		}
+
+		end_time = (start_time = now() + delay) + duration;
+
 		dispatch_end = startStopDispatcher(node, is_intro);
-		cancel_raf = tick
-			? useTween(eased(runner(tick, is_intro), easing, start_ratio, 1), stop, end_time, t)
-			: setAnimationTimeout(stop, end_time);
+
+		if (css) cancel_css = animate_css(runner(css), node, duration, delay);
+		cancel_raf = tick ? setTweenTimeout(stop, end_time, runner(tick), duration) : setFrameTimeout(stop, end_time);
 	};
 
-	const stop = (end_reset_reverse?: number | 1 | -1) => {
+	const stop: StopResetReverse = (t?: number | 1 | -1) => {
 		if (!running) return;
 		else running = false;
+
 		if (cancel_css) cancel_css();
 		if (cancel_raf) cancel_raf();
-		if (t > end_time && dispatch_end) dispatch_end();
-		if (!is_intro && !--group.r) for (let i = 0; i < group.c.length; i++) group.c[i]();
-		if (!~end_reset_reverse)
-			return run_transition(node, () => config, !is_intro, params, end_time - now(), left_duration);
-		else if (left_duration) running_bidi.delete(node);
+		if (t > end_time) {
+			if (dispatch_end) {
+				dispatch_end();
+			}
+		}
+
+		if (!is_intro) {
+			if (!--group.r) {
+				for (let i = 0; i < group.c.length; i++) {
+					group.c[i]();
+				}
+			}
+		}
+
+		if (is_bidirectional) {
+			if (-1 === t) {
+				return (
+					(t = now()) < end_time &&
+					run_transition(
+						node,
+						() => config,
+						!is_intro,
+						params,
+						true,
+						end_time - t,
+						start_time > t ? start_time - t : 0,
+						(1 - elapsed_ratio) * (1 - config.easing(1 - (end_time - t) / (end_time - start_time)))
+					)
+				);
+			} else {
+				running_bidi.delete(node);
+			}
+		}
 	};
 
 	add_measure_callback(() => {
@@ -108,12 +150,14 @@ export function run_transition(
 	});
 
 	return stop;
-}
-export type StopResetReverse = (reset_reverse?: 1 | -1) => StopResetReverse;
+};
+
 const running_bidi: Map<HTMLElement, StopResetReverse> = new Map();
-export function run_bidirectional_transition(node: HTMLElement, fn: TransitionFn, is_intro: boolean, params: any) {
+export const run_bidirectional_transition = (node: HTMLElement, fn: TransitionFn, is_intro: boolean, params: any) => {
 	let cancel;
 	if (running_bidi.has(node) && (cancel = running_bidi.get(node)(-1))) running_bidi.set(node, cancel);
-	else running_bidi.set(node, (cancel = run_transition(node, fn, is_intro, params, -1)));
+	else running_bidi.set(node, (cancel = run_transition(node, fn, is_intro, params, true)));
 	return cancel;
-}
+};
+export const run_duration = (duration, ...args): number =>
+	typeof duration === 'function' ? duration.apply(null, args) : duration;

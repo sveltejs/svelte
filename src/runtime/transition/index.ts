@@ -1,10 +1,12 @@
-import { cubicOut, cubicInOut, linear } from 'svelte/easing';
+import { cubicOut, cubicInOut } from 'svelte/easing';
+import { run_duration } from 'svelte/internal';
 
 type EasingFunction = (t: number) => number;
 interface BasicConfig {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
+	strategy?: 'reverse' | 'mirror';
 }
 interface TimeableConfig extends Omit<BasicConfig, 'duration'> {
 	duration?: number | ((len: number) => number);
@@ -31,18 +33,13 @@ export function blur(
 		delay,
 		duration,
 		easing,
-		css: (_t, u) => `opacity: ${target_opacity - od * u}; filter: ${f} blur(${u * amount}px);`,
+		css: (_t, u) => `opacity: ${target_opacity - od * u}; filter:${f} blur(${u * amount}px);`,
 	};
 }
 
-export function fade(node: Element, { delay = 0, duration = 400, easing = linear }: BasicConfig): TransitionConfig {
+export function fade(node: Element, { delay = 0, duration = 400, easing }: BasicConfig): TransitionConfig {
 	const o = +getComputedStyle(node).opacity;
-	return {
-		delay,
-		duration,
-		easing,
-		css: (t) => `opacity: ${t * o};`,
-	};
+	return { delay, duration, easing, css: (t) => `opacity: ${t * o};` };
 }
 
 interface FlyParams extends BasicConfig {
@@ -57,15 +54,13 @@ export function fly(
 ): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
-	const transform = style.transform === 'none' ? '' : style.transform;
+	const prev = style.transform === 'none' ? '' : style.transform;
 	const od = target_opacity * (1 - opacity);
 	return {
 		delay,
 		duration,
 		easing,
-		css: (t, u) => `
-			transform: ${transform} translate(${u * x}px, ${u * y}px);
-			opacity: ${target_opacity - od * u}`,
+		css: (_t, u) => `transform: ${prev} translate(${u * x}px, ${u * y}px); opacity: ${target_opacity - od * u};`,
 	};
 }
 
@@ -114,10 +109,7 @@ export function scale(
 		delay,
 		duration,
 		easing,
-		css: (_t, u) => `
-			transform: ${transform} scale(${1 - sd * u});
-			opacity: ${target_opacity - od * u};
-		`,
+		css: (_t, u) => `transform: ${transform} scale(${1 - sd * u}); opacity: ${target_opacity - od * u};`,
 	};
 }
 
@@ -131,7 +123,7 @@ export function draw(
 ): TransitionConfig {
 	const len = node.getTotalLength();
 	if (duration === undefined) duration = speed ? len / speed : 800;
-	else if (typeof duration === 'function') duration = duration(len);
+	else duration = run_duration(duration, len);
 	return { delay, duration, easing, css: (t, u) => `stroke-dasharray: ${t * len} ${u * len};` };
 }
 interface CrossFadeConfig extends TimeableConfig {
@@ -165,7 +157,7 @@ export function crossfade({
 		return {
 			delay,
 			easing,
-			duration: typeof duration === 'function' ? duration(Math.sqrt(dx * dx + dy * dy)) : duration,
+			duration: run_duration(duration, Math.sqrt(dx * dx + dy * dy)),
 			css: (t, u) => `
 				opacity: ${t * +opacity};
 				transform-origin: top left;

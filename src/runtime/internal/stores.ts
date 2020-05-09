@@ -1,6 +1,5 @@
 import { safe_not_equal, noop, subscribe } from './utils';
-import { onEachFrame, useTween, loop } from './loop';
-import { now } from './environment';
+import { onEachFrame, loop } from './loop';
 type Setter<T> = (value: T) => void;
 type StopCallback = () => void;
 export type StartStopNotifier<T> = (set: Setter<T>) => StopCallback | void;
@@ -140,11 +139,16 @@ export class Derived<S extends Observable_s, D extends Deriver<T>, T> extends St
 	}
 }
 export type initCreateMotionTick<T> = (set: (value: T) => void) => createMotionTick<T>;
+export type initCreateTweenTick<T> = (set: (value: T) => void) => createTweenTick<T>;
 export type createMotionTick<T> = (prev_value: T, next_value: T) => SpringTick<T>;
+export type createTweenTick<T> = (prev_value: T, next_value: T) => TweenTick;
 export type SpringTick<T> = (current_value: T, elapsed: number, dt: number) => boolean;
 export type TweenTick = (t: number) => boolean;
 /** applies motion fn to every leaf of any object */
-function parseStructure<T>(obj: T, schema: initCreateMotionTick<T>): initCreateMotionTick<T> {
+function parseStructure<T>(
+	obj: unknown,
+	schema: initCreateMotionTick<T> | initCreateTweenTick<T>
+): initCreateMotionTick<T> | initCreateTweenTick<T> {
 	const isArray = Array.isArray(obj);
 	if (typeof obj === 'object' && obj !== null && (isArray || Object.prototype === Object.getPrototypeOf(obj))) {
 		const keys = Object.keys(obj);
@@ -155,15 +159,13 @@ function parseStructure<T>(obj: T, schema: initCreateMotionTick<T>): initCreateM
 			tickers = new Array(l),
 			pending = 0;
 		const target = { ...obj };
-		//@ts-ignore
-		obj = isArray ? [...obj] : { ...obj };
+		obj = isArray ? [...(obj as T[])] : { ...obj };
 		return (set) => (_from_value, to_value) => {
 			for (k in to_value) if (to_value[k] !== obj[k]) target[k] = to_value[k];
 			for (i = 0; i < l; i++) (pending |= 1 << i), (tickers[i] = createTickers[i](obj[keys[i]], target[keys[i]]));
 			return (_current, elapsed, dt) => {
 				for (i = 0; i < l; i++) if (pending & (1 << i) && !tickers[i](obj[keys[i]], elapsed, dt)) pending &= ~(1 << i);
-				//@ts-ignore
-				set(isArray ? [...obj] : { ...obj });
+				set(isArray ? [...(obj as T[])] : { ...(obj as any) });
 				return !!pending;
 			};
 		};
@@ -173,18 +175,17 @@ function parseStructure<T>(obj: T, schema: initCreateMotionTick<T>): initCreateM
 abstract class MotionStore<T> extends Store<T> {
 	running = false;
 	cancel = noop;
-	initCreateTicker: initCreateMotionTick<T>;
-	createTicker: createMotionTick<T>;
+	initCreateTicker;
+	createTicker;
 	tick;
-	constructor(value: T, startSetTick: initCreateMotionTick<T>) {
+	constructor(value: T, startSetTick: initCreateMotionTick<T> | initCreateTweenTick<T>) {
 		super(value);
 		this.createTicker = parseStructure(value, (this.initCreateTicker = startSetTick))(super.set.bind(this));
 	}
 	set(next_value: T) {
 		const this_id = ++this.uidRunning;
 		this.clearStateSubscribers(false);
-		//@ts-ignore
-		if (!this.value && this.value !== 0) {
+		if (!this.value && (this.value as unknown) !== 0) {
 			this.setImmediate(next_value);
 		} else {
 			this.tick = this.createTicker(this.value, next_value);
@@ -232,14 +233,18 @@ abstract class MotionStore<T> extends Store<T> {
 	}
 }
 export class SpringMotion<T> extends MotionStore<T> {
-	elapsed = 0.0;
+	initCreateTicker: initCreateMotionTick<T>;
+	createTicker: createMotionTick<T>;
 	tick: SpringTick<T>;
+	elapsed = 0.0;
 	loop(stop) {
 		this.elapsed = 0.0;
 		if (!this.running) this.cancel = onEachFrame((dt) => this.tick(this.value, (this.elapsed += dt), dt), stop);
 	}
 }
 export class TweenMotion<T> extends MotionStore<T> {
+	initCreateTicker: initCreateTweenTick<T>;
+	createTicker: createTweenTick<T>;
 	tick: TweenTick;
 	loop(stop) {
 		if (this.running) this.cancel();

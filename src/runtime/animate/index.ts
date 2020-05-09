@@ -1,6 +1,5 @@
 import { cubicOut } from 'svelte/easing';
-import { AnimationConfig } from 'svelte/internal';
-
+import { AnimationConfig, run_duration } from 'svelte/internal';
 
 interface FlipParams {
 	delay: number;
@@ -23,7 +22,7 @@ export function flip(
 
 	return {
 		delay,
-		duration: typeof duration === 'function' ? duration(Math.sqrt(dx * dx + dy * dy)) : duration,
+		duration: run_duration(duration, Math.sqrt(dx * dx + dy * dy)),
 		easing,
 		css: (_t, u) => `transform: ${transform} translate(${u * dx}px, ${u * dy}px);`,
 	};

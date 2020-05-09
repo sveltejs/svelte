@@ -53,7 +53,7 @@ export const loop = (fn) => {
 	next_frame[next_frame_length++] = (t) => !running || fn(t);
 	return () => void (running = false);
 };
-export const setAnimationTimeout = (callback: () => void, timestamp: number): TaskCanceller => {
+export const setFrameTimeout = (callback: () => void, timestamp: number): TaskCanceller => {
 	const task: TimeoutTask = { callback, timestamp };
 	if (running_timed) {
 		pending_inserts = !!pending_insert_timed.push(task);
@@ -67,16 +67,16 @@ export const setAnimationTimeout = (callback: () => void, timestamp: number): Ta
 /**
  * Calls function every frame with a value going from 0 to 1
  */
-export const useTween = (
-	run: (now: number) => void,
+export const setTweenTimeout = (
 	stop: (now: number) => void,
 	end_time: number,
+	run: (now: number) => void,
 	duration = end_time - now()
 ): TaskCanceller => {
 	let running = true;
 	unsafe_loop((t) => {
 		if (!running) return false;
-		t = (end_time - t) / duration;
+		t = 1 - (end_time - t) / duration;
 		if (t >= 1) return run(1), stop(t), false;
 		if (t >= 0) run(t);
 		return running;
@@ -102,6 +102,7 @@ export const onEachFrame = (
 	});
 	return () => void (running = false);
 };
-// tests
+
+/** tests only */
 export const clear_loops = () =>
 	void (next_frame.length = running_frame.length = timed_tasks.length = pending_insert_timed.length = next_frame_length = +(running_timed = pending_inserts = false));

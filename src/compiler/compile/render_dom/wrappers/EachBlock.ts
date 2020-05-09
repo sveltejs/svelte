@@ -29,7 +29,7 @@ export class ElseBlockWrapper extends Wrapper {
 		this.block = block.child({
 			comment: create_debugging_comment(node, this.renderer.component),
 			name: this.renderer.component.get_unique_name(`create_else_block`),
-			type: 'else'
+			type: 'else',
 		});
 
 		this.fragment = new FragmentWrapper(
@@ -58,7 +58,7 @@ export default class EachBlockWrapper extends Wrapper {
 		fixed_length: number;
 		data_length: string;
 		view_length: string;
-	}
+	};
 
 	context_props: Array<Node | Node[]>;
 	index_name: Identifier;
@@ -82,7 +82,7 @@ export default class EachBlockWrapper extends Wrapper {
 		const { dependencies } = node.expression;
 		block.add_dependencies(dependencies);
 
-		this.node.contexts.forEach(context => {
+		this.node.contexts.forEach((context) => {
 			renderer.add_to_context(context.key.name, true);
 		});
 
@@ -93,7 +93,7 @@ export default class EachBlockWrapper extends Wrapper {
 			// @ts-ignore todo: probably error
 			key: node.key as string,
 
-			bindings: new Map(block.bindings)
+			bindings: new Map(block.bindings),
 		});
 
 		// TODO this seems messy
@@ -105,7 +105,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const fixed_length =
 			node.expression.node.type === 'ArrayExpression' &&
-			node.expression.node.elements.every(element => element.type !== 'SpreadElement')
+			node.expression.node.elements.every((element) => element.type !== 'SpreadElement')
 				? node.expression.node.elements.length
 				: null;
 
@@ -118,7 +118,7 @@ export default class EachBlockWrapper extends Wrapper {
 		const length = {
 			type: 'Identifier',
 			name: 'length',
-			loc: { start, end }
+			loc: { start, end },
 		};
 
 		const each_block_value = renderer.component.get_unique_name(`${this.var.name}_value`);
@@ -136,23 +136,22 @@ export default class EachBlockWrapper extends Wrapper {
 			// optimisation for array literal
 			fixed_length,
 			data_length: fixed_length === null ? x`${each_block_value}.${length}` : fixed_length,
-			view_length: fixed_length === null ? x`${iterations}.length` : fixed_length
+			view_length: fixed_length === null ? x`${iterations}.length` : fixed_length,
 		};
 
 		const store =
-			node.expression.node.type === 'Identifier' &&
-			node.expression.node.name[0] === '$'
+			node.expression.node.type === 'Identifier' && node.expression.node.name[0] === '$'
 				? node.expression.node.name.slice(1)
 				: null;
 
-		node.contexts.forEach(prop => {
+		node.contexts.forEach((prop) => {
 			this.block.bindings.set(prop.key.name, {
 				object: this.vars.each_block_value,
 				property: this.index_name,
 				modifier: prop.modifier,
 				snippet: prop.modifier(x`${this.vars.each_block_value}[${this.index_name}]` as Node),
 				store,
-				tail: prop.modifier(x`[${this.index_name}]` as Node)
+				tail: prop.modifier(x`[${this.index_name}]` as Node),
 			});
 		});
 
@@ -165,14 +164,7 @@ export default class EachBlockWrapper extends Wrapper {
 		this.fragment = new FragmentWrapper(renderer, this.block, node.children, this, strip_whitespace, next_sibling);
 
 		if (this.node.else) {
-			this.else = new ElseBlockWrapper(
-				renderer,
-				block,
-				this,
-				this.node.else,
-				strip_whitespace,
-				next_sibling
-			);
+			this.else = new ElseBlockWrapper(renderer, block, this, this.node.else, strip_whitespace, next_sibling);
 
 			renderer.blocks.push(this.else.block);
 
@@ -194,14 +186,18 @@ export default class EachBlockWrapper extends Wrapper {
 		const { renderer } = this;
 		const { component } = renderer;
 
-		const needs_anchor = this.next
-			? !this.next.is_dom_node() :
-			!parent_node || !this.parent.is_dom_node();
+		const needs_anchor = this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node();
 
-		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.modifier(x`list[i]`)};`);
+		this.context_props = this.node.contexts.map(
+			(prop) => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.modifier(x`list[i]`)};`
+		);
 
-		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`);
-		if (this.node.has_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);
+		if (this.node.has_binding)
+			this.context_props.push(
+				b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`
+			);
+		if (this.node.has_binding || this.node.index)
+			this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);
 
 		const snippet = this.node.expression.manipulate(block);
 
@@ -224,7 +220,7 @@ export default class EachBlockWrapper extends Wrapper {
 		const update_anchor_node = needs_anchor
 			? block.get_unique_name(`${this.var.name}_anchor`)
 			: (this.next && this.next.var) || { type: 'Identifier', name: 'null' };
-		const update_mount_node: Identifier = this.get_update_mount_node((update_anchor_node as Identifier));
+		const update_mount_node: Identifier = this.get_update_mount_node(update_anchor_node as Identifier);
 
 		const args = {
 			block,
@@ -234,7 +230,7 @@ export default class EachBlockWrapper extends Wrapper {
 			initial_anchor_node,
 			initial_mount_node,
 			update_anchor_node,
-			update_mount_node
+			update_mount_node,
 		};
 
 		const all_dependencies = new Set(this.block.dependencies); // TODO should be dynamic deps only
@@ -258,12 +254,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		if (needs_anchor) {
-			block.add_element(
-				update_anchor_node as Identifier,
-				x`@empty()`,
-				parent_nodes && x`@empty()`,
-				parent_node
-			);
+			block.add_element(update_anchor_node as Identifier, x`@empty()`, parent_nodes && x`@empty()`, parent_node);
 		}
 
 		if (this.else) {
@@ -354,7 +345,7 @@ export default class EachBlockWrapper extends Wrapper {
 		initial_anchor_node,
 		initial_mount_node,
 		update_anchor_node,
-		update_mount_node
+		update_mount_node,
 	}: {
 		block: Block;
 		parent_node: Identifier;
@@ -365,12 +356,7 @@ export default class EachBlockWrapper extends Wrapper {
 		update_anchor_node: Identifier;
 		update_mount_node: Identifier;
 	}) {
-		const {
-			create_each_block,
-			iterations,
-			data_length,
-			view_length
-		} = this.vars;
+		const { create_each_block, iterations, data_length, view_length } = this.vars;
 
 		const get_key = block.get_unique_name('get_key');
 		const lookup = block.get_unique_name(`${this.var.name}_lookup`);
@@ -382,18 +368,16 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.first = this.fragment.nodes[0].var;
 		} else {
 			this.block.first = this.block.get_unique_name('first');
-			this.block.add_element(
-				this.block.first,
-				x`@empty()`,
-				parent_nodes && x`@empty()`,
-				null
-			);
+			this.block.add_element(this.block.first, x`@empty()`, parent_nodes && x`@empty()`, null);
 		}
 
 		block.chunks.init.push(b`
 			const ${get_key} = #ctx => ${this.node.key.manipulate(block)};
 
-			${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
+			${
+				this.renderer.options.dev &&
+				b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`
+			}
 			for (let #i = 0; #i < ${data_length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(#ctx, ${this.vars.each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
@@ -424,12 +408,12 @@ export default class EachBlockWrapper extends Wrapper {
 		const dynamic = this.block.has_update_method;
 
 		const destroy = this.node.has_animation
-			? (this.block.has_outros
+			? this.block.has_outros
 				? `@fix_and_outro_and_destroy_block`
-				: `@fix_and_destroy_block`)
+				: `@fix_and_destroy_block`
 			: this.block.has_outros
-				? `@outro_and_destroy_block`
-				: `@destroy_block`;
+			? `@outro_and_destroy_block`
+			: `@destroy_block`;
 
 		if (this.dependencies.size) {
 			this.updates.push(b`
@@ -437,10 +421,17 @@ export default class EachBlockWrapper extends Wrapper {
 				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 
 				${this.block.has_outros && b`@group_outros();`}
-				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
-				${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
-				${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
-				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
+				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1){ ${iterations}[#i].r();}`}
+				${
+					this.renderer.options.dev &&
+					b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`
+				}
+				${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${
+				this.vars.each_block_value
+			}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${
+				this.vars.get_each_context
+			});
+				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1){ ${iterations}[#i].a();}`}
 				${this.block.has_outros && b`@check_outros();`}
 			`);
 		}
@@ -467,7 +458,7 @@ export default class EachBlockWrapper extends Wrapper {
 		initial_anchor_node,
 		initial_mount_node,
 		update_anchor_node,
-		update_mount_node
+		update_mount_node,
 	}: {
 		block: Block;
 		parent_nodes: Identifier;
@@ -477,17 +468,10 @@ export default class EachBlockWrapper extends Wrapper {
 		update_anchor_node: Identifier;
 		update_mount_node: Identifier;
 	}) {
-		const {
-			create_each_block,
-			iterations,
-			fixed_length,
-			data_length,
-			view_length
-		} = this.vars;
+		const { create_each_block, iterations, fixed_length, data_length, view_length } = this.vars;
 
 		block.chunks.init.push(b`
 			let ${iterations} = [];
-
 			for (let #i = 0; #i < ${data_length}; #i += 1) {
 				${iterations}[#i] = ${create_each_block}(${this.vars.get_each_context}(#ctx, ${this.vars.each_block_value}, #i));
 			}
@@ -529,7 +513,7 @@ export default class EachBlockWrapper extends Wrapper {
 					}
 				`
 				: has_transitions
-					? b`
+				? b`
 						if (${iterations}[#i]) {
 							@transition_in(${this.vars.iterations}[#i], 1);
 						} else {
@@ -539,7 +523,7 @@ export default class EachBlockWrapper extends Wrapper {
 							${iterations}[#i].m(${update_mount_node}, ${update_anchor_node});
 						}
 					`
-					: b`
+				: b`
 						if (!${iterations}[#i]) {
 							${iterations}[#i] = ${create_each_block}(child_ctx);
 							${iterations}[#i].c();
@@ -568,7 +552,9 @@ export default class EachBlockWrapper extends Wrapper {
 				`;
 			} else {
 				remove_old_blocks = b`
-					for (${this.block.has_update_method ? null : x`#i = ${data_length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
+					for (${this.block.has_update_method ? null : x`#i = ${data_length}`}; #i < ${
+					this.block.has_update_method ? view_length : '#old_length'
+				}; #i += 1) {
 						${iterations}[#i].d(1);
 					}
 					${!fixed_length && b`${view_length} = ${data_length};`}
