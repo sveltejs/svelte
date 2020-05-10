@@ -62,8 +62,18 @@ export default function read_context(
 
 	const pattern_string = parser.template.slice(start, i);
 	try {
+		// the length of the `space_with_newline` has to be start - 1
+		// because we added a `(` in front of the pattern_string,
+		// which shifted the entire string to right by 1
+		// so we offset it by removing 1 character in the `space_with_newline`
+		// to achieve that, we remove the 1st space encountered,
+		// so it will not affect the `column` of the node
+		let space_with_newline = parser.template.slice(0, start).replace(/[^\n]/g, ' ');
+		const first_space = space_with_newline.indexOf(' ');
+		space_with_newline = space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
+
 		return (parse_expression_at(
-			`${" ".repeat(start - 1)}(${pattern_string} = 1)`,
+			`${space_with_newline}(${pattern_string} = 1)`,
 			start - 1
 		) as any).left;
 	} catch (error) {
