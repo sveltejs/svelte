@@ -312,7 +312,7 @@ export default function mustache(parser: Parser) {
 		const await_block_catch_shorthand = !await_block_shorthand && type === 'AwaitBlock' && parser.eat('catch');
 		if (await_block_catch_shorthand) {
 			parser.require_whitespace();
-			block.error = parser.read_destructure_pattern();
+			block.error = read_context(parser);
 			parser.allow_whitespace();
 		}
 
