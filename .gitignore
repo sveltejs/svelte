@@ -12,6 +12,7 @@ node_modules
 /dev
 /store
 /easing
+/interpolate
 /motion
 /transition
 /animate

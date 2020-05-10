@@ -407,33 +407,38 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const dynamic = this.block.has_update_method;
 
-		const destroy = this.node.has_animation
-			? this.block.has_outros
-				? `@fix_and_outro_and_destroy_block`
-				: `@fix_and_destroy_block`
-			: this.block.has_outros
-			? `@outro_and_destroy_block`
-			: `@destroy_block`;
+		// const destroy = this.node.has_animation
+		// 	? this.block.has_outros
+		// 		? `@fix_and_outro_and_destroy_block`
+		// 		: `@fix_and_destroy_block`
+		// 	: this.block.has_outros
+		// 	? `@outro_and_destroy_block`
+		// 	: `@destroy_block`;
 
 		if (this.dependencies.size) {
-			this.updates.push(b`
+			this.updates.push(
+				b`
 				const ${this.vars.each_block_value} = ${snippet};
-				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
-
-				${this.block.has_outros && b`@group_outros();`}
-				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1){ ${iterations}[#i].r();}`}
+				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}`,
+				this.block.group_transition_out(
+					(transition_out) => b`
+					${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1){ ${iterations}[#i].r();}`}
 				${
 					this.renderer.options.dev &&
 					b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`
 				}
-				${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${
-				this.vars.each_block_value
-			}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${
-				this.vars.get_each_context
-			});
-				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1){ ${iterations}[#i].a();}`}
-				${this.block.has_outros && b`@check_outros();`}
-			`);
+				${iterations} = @update_keyed_each(${iterations}, #dirty, #ctx, ${bit_state([
+						dynamic,
+						this.node.has_animation,
+						this.block.has_outros,
+					])}, ${get_key}, ${
+						this.vars.each_block_value
+					}, ${lookup}, ${update_mount_node}, ${create_each_block}, ${update_anchor_node}, ${
+						this.vars.get_each_context
+					}, ${transition_out});
+				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1){ ${iterations}[#i].a();}`}`
+				)
+			);
 		}
 
 		if (this.block.has_outros) {
@@ -533,33 +538,21 @@ export default class EachBlockWrapper extends Wrapper {
 
 			const start = this.block.has_update_method ? 0 : `#old_length`;
 
-			let remove_old_blocks;
-
-			if (this.block.has_outros) {
-				const out = block.get_unique_name('out');
-
-				block.chunks.init.push(b`
-					const ${out} = i => @transition_out(${iterations}[i], 1, 1, () => {
-						${iterations}[i] = null;
-					});
-				`);
-				remove_old_blocks = b`
-					@group_outros();
+			const remove_old_blocks = this.block.group_transition_out((transition_out) =>
+				transition_out
+					? b`
 					for (#i = ${data_length}; #i < ${view_length}; #i += 1) {
-						${out}(#i);
-					}
-					@check_outros();
-				`;
-			} else {
-				remove_old_blocks = b`
-					for (${this.block.has_update_method ? null : x`#i = ${data_length}`}; #i < ${
-					this.block.has_update_method ? view_length : '#old_length'
-				}; #i += 1) {
+						${transition_out}(${iterations}[#i], () => { ${iterations}[#i] = null; });
+					}`
+					: b`
+					for (${this.block.has_update_method ? null : x`#i = ${data_length}`}; 
+					#i < ${this.block.has_update_method ? view_length : '#old_length'}; 
+					#i += 1 ) {
 						${iterations}[#i].d(1);
 					}
-					${!fixed_length && b`${view_length} = ${data_length};`}
-				`;
-			}
+				${!fixed_length && b`${view_length} = ${data_length};`}
+			`
+			);
 
 			// We declare `i` as block scoped here, as the `remove_old_blocks` code
 			// may rely on continuing where this iteration stopped.
@@ -593,3 +586,4 @@ export default class EachBlockWrapper extends Wrapper {
 		block.chunks.destroy.push(b`@destroy_each(${iterations}, detaching);`);
 	}
 }
+const bit_state = (arr) => arr.reduce((state, bool, index) => (bool ? (state |= 1 << index) : state), 0);

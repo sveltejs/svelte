@@ -7,44 +7,54 @@ import { add_measure_callback } from './scheduler';
 import { animate_css } from './style_manager';
 
 type TransitionFn = (node: HTMLElement, params: any) => TransitionConfig;
-type StopResetReverse = (reset_reverse?: 1 | -1) => StopResetReverse;
+export type StopResetReverse = (reset_reverse?: 1 | -1) => StopResetReverse;
 
-function startStopDispatcher(node: Element, is_intro: boolean) {
-	node.dispatchEvent(custom_event(`${is_intro ? 'intro' : 'outro'}start`));
-	return () => node.dispatchEvent(custom_event(`${is_intro ? 'intro' : 'outro'}end`));
-}
-
-const outroing = new Set();
-
-let transition_group;
-export const group_outros = () => void (transition_group = { p: transition_group, c: [], r: 0 });
-
-export const check_outros = () => {
-	if (!transition_group.r) for (let i = 0; i < transition_group.c.length; i++) transition_group.c[i]();
-	transition_group = transition_group.p;
-};
-
-export const transition_in = (block: Fragment, local?: 0 | 1) => {
+export const transition_in = (block: Fragment, local?) => {
 	if (!block || !block.i) return;
 	outroing.delete(block);
 	block.i(local);
 };
 
-export const transition_out = (block: Fragment, local?: 0 | 1, detach?: 0 | 1, callback?: () => void) => {
+export const transition_out = (block: Fragment, local) => {
 	if (!block || !block.o || outroing.has(block)) return;
 	outroing.add(block);
-	transition_group.c.push(() => {
-		if (!outroing.has(block)) return;
-		else outroing.delete(block);
-		if (!callback) return;
-		if (detach) block.d(1);
-		callback();
-	});
 	block.o(local);
 };
 
+let transition_group;
+const outroing = new Set();
+const check_transition_group = (group, decrement = true) => {
+	if (decrement) group.r--;
+	if (!group.r) for (let i = 0; i < group.c.length; i++) group.c[i]();
+};
+export const group_transition_out = (fn) => {
+	const c = [];
+	const current_group = (transition_group = { p: transition_group, c, r: 0 });
+	fn((block, callback, detach = true) => {
+		if (!block || !block.o || outroing.has(block)) return;
+		outroing.add(block);
+		c.push(() => {
+			if (outroing.has(block)) {
+				outroing.delete(block);
+				if (detach) block.d(1);
+				// callback always ?
+				callback();
+			}
+		});
+		block.o(1);
+	});
+	check_transition_group(current_group, false);
+	transition_group = transition_group.p;
+};
+// todo : deprecate
+function startStopDispatcher(node: Element, is_intro: boolean) {
+	node.dispatchEvent(custom_event(`${is_intro ? 'intro' : 'outro'}start`));
+	return () => node.dispatchEvent(custom_event(`${is_intro ? 'intro' : 'outro'}end`));
+}
+
 /* todo: deprecate */
-const swap = (fn, is_intro) => (is_intro ? (t) => fn(t, 1 - t) : (t) => fn(1 - t, t));
+const swap = (fn, is_intro) =>
+	fn.length === 1 ? (is_intro ? fn : (t) => fn(1 - t)) : is_intro ? (t) => fn(t, 1 - t) : (t) => fn(1 - t, t);
 
 const mirrored = (fn, is_intro, easing) => {
 	const run = swap(fn, is_intro);
@@ -78,7 +88,7 @@ export const run_transition = (
 	let start_time = 0;
 	let end_time = 0;
 
-	const group = transition_group;
+	const current_group = transition_group;
 	if (!is_intro) transition_group.r++;
 
 	const start = ({ delay = 0, duration = 300, easing, tick, css, strategy = 'reverse' }: TransitionConfig) => {
@@ -115,13 +125,7 @@ export const run_transition = (
 			}
 		}
 
-		if (!is_intro) {
-			if (!--group.r) {
-				for (let i = 0; i < group.c.length; i++) {
-					group.c[i]();
-				}
-			}
-		}
+		if (!is_intro) check_transition_group(current_group);
 
 		if (is_bidirectional) {
 			if (-1 === t) {

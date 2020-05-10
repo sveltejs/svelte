@@ -1,49 +1,38 @@
 import { add_render_callback, flush, schedule_update } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
-import { blank_object, is_function, run_all, noop } from './utils';
+import { noop } from './utils';
 import { children, detach } from './dom';
 import { transition_in } from './transitions';
-
+type binary = 0 | 1;
 export interface Fragment {
 	key: string | null;
 	first: null;
-	/**
-	 * create
-	 * run once
-	 * runs hydrate if exists
-	 */
-	c: () => void;
-	/**
-	 *  claim
-	 *	runs hydrate if exists
-	 * */
-
-	l: (nodes: any) => void;
+	/* create  */ c: () => void;
+	/* claim   */ l: (nodes: any) => void;
 	/* hydrate */ h: () => void;
-	/* mount   */ m: (target: HTMLElement, anchor: any, is_remount: boolean) => void;
+	/* mount   */ m: (target: HTMLElement, anchor: any, is_remount: binary) => void;
 	/* update  */ p: (ctx: any, dirty: any) => void;
 	/* measure */ r: () => void;
 	/* fix     */ f: () => void;
 	/* animate */ a: () => void;
-	/* intro   */ i: (local: 0 | 1) => void;
-	/* outro   */ o: (local: 0 | 1) => void;
-	/* destroy */ d: (detaching: 0 | 1) => void;
+	/* intro   */ i: (local: binary) => void;
+	/* outro   */ o: (local: binary) => void;
+	/* destroy */ d: (detaching: binary) => void;
 }
 // eslint-disable-next-line @typescript-eslint/class-name-casing
-interface T$$ {
+export interface T$$ {
 	dirty: number[];
 	ctx: null | any;
 	bound: any;
 	update: () => void;
 	callbacks: any;
-	after_update: any[];
 	props: Record<string, 0 | string>;
 	fragment: null | false | Fragment;
-	not_equal: any;
-	before_update: any[];
 	context: Map<any, any>;
 	on_mount: any[];
 	on_destroy: any[];
+	before_update: any[];
+	after_update: any[];
 }
 
 export function bind({ $$: { props, bound, ctx } }, name: string, callback: (prop: any) => void) {
@@ -52,22 +41,24 @@ export function bind({ $$: { props, bound, ctx } }, name: string, callback: (pro
 	bound[index] = callback;
 	callback(ctx[index]);
 }
-export function mount_component({ $$: { fragment, on_mount, on_destroy, after_update } }, target, anchor) {
-	if (fragment) fragment.m(target, anchor);
+export function mount_component({ $$ }, target, anchor) {
+	if ($$.fragment) $$.fragment.m(target, anchor);
 	add_render_callback(() => {
-		for (let i = 0, res; i < on_mount.length; i++)
-			if (is_function((res = on_mount[i]())))
-				if (on_destroy) on_destroy.push(res);
+		let { on_mount, on_destroy, after_update } = $$,
+			i = 0,
+			res;
+		for (; i < on_mount.length; i++)
+			if ('function' === typeof (res = on_mount[i]()))
+				if ($$.on_destroy) on_destroy.push(res);
 				else res(); // component already destroyed
-		on_mount.length = 0;
-		for (let i = 0; i < after_update.length; i++) after_update[i]();
+		for (i = on_mount.length = 0; i < after_update.length; i++) after_update[i]();
 	});
 }
 
 export function destroy_component({ $$ }, detaching: 0 | 1) {
-	if ($$.fragment === null) return;
+	if (null === $$.fragment) return;
 
-	run_all($$.on_destroy);
+	for (let i = 0, { on_destroy } = $$; i < on_destroy.length; i++) on_destroy[i]();
 	if ($$.fragment) $$.fragment.d(detaching);
 
 	// TODO null out other refs, including component.$$
@@ -93,21 +84,20 @@ export function init(
 		fragment: null,
 		ctx: null,
 
-		// state
+		/* state */
 		props,
 		update: noop,
-		not_equal,
-		bound: blank_object(),
+		bound: Object.create(null),
 
-		// lifecycle
+		/* lifecycle */
 		on_mount: [],
 		on_destroy: [],
 		before_update: [],
 		after_update: [],
 		context: new Map(parent_component ? parent_component.$$.context : []),
 
-		// everything else
-		callbacks: blank_object(),
+		/* everything else */
+		callbacks: Object.create(null),
 		dirty,
 	});
 
@@ -131,7 +121,9 @@ export function init(
 
 	ready = true;
 
-	run_all($$.before_update);
+	for (let i = 0, { before_update } = $$; i < before_update.length; i++) {
+		before_update[i]();
+	}
 
 	// false when empty
 	$$.fragment = create_fragment ? create_fragment($$.ctx) : false;

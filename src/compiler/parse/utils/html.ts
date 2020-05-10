@@ -35,10 +35,7 @@ const windows_1252 = [
 	376,
 ];
 
-const entity_pattern = new RegExp(
-	`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(entities).join('|')}))(?:;|\\b)`,
-	'g'
-);
+const entity_pattern = new RegExp(`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(entities).join('|')}))(?:;|\\b)`, 'g');
 
 export function decode_character_references(html: string) {
 	return html.replace(entity_pattern, (match, entity) => {
@@ -60,8 +57,6 @@ export function decode_character_references(html: string) {
 		return String.fromCodePoint(validate_code(code));
 	});
 }
-
-const NUL = 0;
 
 // some code points are verboten. If we were inserting HTML, the browser would replace the illegal
 // code points with alternatives in some cases - since we're bypassing that mechanism, we need
@@ -92,7 +87,7 @@ function validate_code(code: number) {
 
 	// UTF-16 surrogate halves
 	if (code <= 57343) {
-		return NUL;
+		return 0;
 	}
 
 	// rest of the basic multilingual plane
@@ -110,7 +105,7 @@ function validate_code(code: number) {
 		return code;
 	}
 
-	return NUL;
+	return 0;
 }
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission

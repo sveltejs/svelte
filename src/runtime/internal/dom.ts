@@ -1,18 +1,18 @@
-import { has_prop } from './utils';
-import { dispatch_dev, dev$dispatch, dev$element, dev$block } from './dev';
+import { dev$element, dev$block } from './dev.tools';
+import { is_client, is_cors } from './environment';
 
 export function append(target: Node, node: Node) {
-	dev$element(node, `mount`, { target });
+	dev$element(node, `onMount`, { target });
 	target.appendChild(node);
 }
 
 export function insert(target: Node, node: Node, anchor?: Node) {
-	dev$element(node, `mount`, { target, anchor });
+	dev$element(node, `onMount`, { target, anchor });
 	target.insertBefore(node, anchor || null);
 }
 
 export function detach(node: Node) {
-	dev$element(node, `unmount`);
+	dev$element(node, `onDestroy`);
 	node.parentNode.removeChild(node);
 }
 
@@ -31,18 +31,10 @@ export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: s
 	if (__DEV__) return dev$create(document.createElement<K>(name));
 	return document.createElement<K>(name, { is });
 }
-export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
-	const target = {} as Pick<T, Exclude<keyof T, K>>;
-	for (const k in obj) {
-		if (
-			has_prop(obj, k) &&
-			// @ts-ignore
-			exclude.indexOf(k) === -1
-		) {
-			// @ts-ignore
-			target[k] = obj[k];
-		}
-	}
+export function object_without_properties<T, K extends string[]>(obj: T, excluded: K) {
+	const target = {} as Pick<T, Exclude<keyof T, keyof K>>;
+	let key;
+	for (key in obj) if (!~excluded.indexOf(key)) target[key] = obj[key];
 	return target;
 }
 
@@ -116,7 +108,7 @@ export function attr(node: Element, name: string, value?: any) {
 }
 
 export function set_attributes(node: HTMLElement, attributes: { [x: string]: any }) {
-	// @ts-ignore #3687
+	// @ts-ignore
 	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
 	let name;
 	for (name in attributes) {
@@ -264,26 +256,6 @@ export function select_multiple_value(select) {
 	return [].map.call(select.querySelectorAll(':checked'), (option) => option.__value);
 }
 
-// unfortunately this can't be a constant as that wouldn't be tree-shakeable
-// so we cache the result instead
-let crossorigin: boolean;
-
-export function is_crossorigin() {
-	if (crossorigin === undefined) {
-		crossorigin = false;
-
-		try {
-			if (typeof window !== 'undefined' && window.parent) {
-				void window.parent.document;
-			}
-		} catch (error) {
-			crossorigin = true;
-		}
-	}
-
-	return crossorigin;
-}
-
 export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	const computed_style = getComputedStyle(node);
 	const z_index = (parseInt(computed_style.zIndex) || 0) - 1;
@@ -304,7 +276,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 
 	let unsubscribe: () => void;
 
-	if (is_crossorigin()) {
+	if (is_cors) {
 		iframe.src = `data:text/html,<script>onresize=function(){parent.postMessage(0,'*')}</script>`;
 		unsubscribe = listen(window, 'message', (event: MessageEvent) => {
 			if (event.source === iframe.contentWindow) fn();
@@ -334,11 +306,6 @@ export function custom_event<T = any>(type: string, detail?: T) {
 	event.initCustomEvent(type, false, false, detail);
 	return event;
 }
-
-export function query_selector_all(selector: string, parent: HTMLElement = document.body) {
-	return Array.from(parent.querySelectorAll(selector));
-}
-
 export class HtmlTag {
 	e: HTMLElement;
 	n: ChildNode[];
@@ -374,3 +341,18 @@ export class HtmlTag {
 		this.n.forEach(detach);
 	}
 }
+
+export const hasOwnProperty = Object.prototype.hasOwnProperty;
+const nodeProto = Node.prototype;
+export const insertBefore = nodeProto.insertBefore;
+export const removeChild = nodeProto.removeChild;
+export const replaceChild = nodeProto.replaceChild;
+export const cloneNode = nodeProto.cloneNode;
+const elementProto = Element.prototype;
+export const setAttribute = elementProto.setAttribute;
+export const setAttributeNS = elementProto.setAttributeNS;
+export const removeAttribute = elementProto.removeAttribute;
+const getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+export const setClassName = getOwnPropertyDescriptor(elementProto, 'className').set;
+export const getStyle = getOwnPropertyDescriptor(HTMLElement.prototype, 'style').get;
+export const svg_getStyle = getOwnPropertyDescriptor(SVGElement.prototype, 'style').get;

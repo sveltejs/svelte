@@ -1,5 +1,4 @@
 import { INode } from '../../../nodes/interfaces';
-import { trim_end, trim_start } from '../../../../utils/trim';
 import { link } from '../../../../utils/link';
 
 // similar logic from `compile/render_dom/wrappers/Fragment`
@@ -21,13 +20,11 @@ export default function remove_whitespace_children(children: INode[], next?: INo
 
 			if (nodes.length === 0) {
 				const should_trim = next
-					? next.type === 'Text' &&
-					  /^\s/.test(next.data) &&
-					  trimmable_at(child, next)
+					? next.type === 'Text' && /^\s/.test(next.data) && trimmable_at(child, next)
 					: !child.has_ancestor('EachBlock');
 
 				if (should_trim) {
-					data = trim_end(data);
+					data = data.trimRight();
 					if (!data) continue;
 				}
 			}
@@ -39,16 +36,16 @@ export default function remove_whitespace_children(children: INode[], next?: INo
 			}
 
 			nodes.unshift(child);
-			link(last_child, last_child = child);
+			link(last_child, (last_child = child));
 		} else {
 			nodes.unshift(child);
-			link(last_child, last_child = child);
+			link(last_child, (last_child = child));
 		}
 	}
 
 	const first = nodes[0];
 	if (first && first.type === 'Text') {
-		first.data = trim_start(first.data);
+		first.data = first.data.trimLeft();
 		if (!first.data) {
 			first.var = null;
 			nodes.shift();
@@ -67,7 +64,6 @@ function trimmable_at(child: INode, next_sibling: INode): boolean {
 	// The child and its sibling share a common nearest each block (not at an each block boundary)
 	// The next sibling's previous node is an each block
 	return (
-		next_sibling.find_nearest(/EachBlock/) ===
-			child.find_nearest(/EachBlock/) || next_sibling.prev.type === 'EachBlock'
+		next_sibling.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/) || next_sibling.prev.type === 'EachBlock'
 	);
 }

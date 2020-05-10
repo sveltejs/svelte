@@ -11,14 +11,17 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: Identifier;
-	bindings?: Map<string, {
-		object: Identifier;
-		property: Identifier;
-		snippet: Node;
-		store: string;
-		tail: Node;
-		modifier: (node: Node) => Node;
-	}>;
+	bindings?: Map<
+		string,
+		{
+			object: Identifier;
+			property: Identifier;
+			snippet: Node;
+			store: string;
+			tail: Node;
+			modifier: (node: Node) => Node;
+		}
+	>;
 	dependencies?: Set<string>;
 }
 
@@ -36,14 +39,17 @@ export default class Block {
 
 	dependencies: Set<string> = new Set();
 
-	bindings: Map<string, {
-		object: Identifier;
-		property: Identifier;
-		snippet: Node;
-		store: string;
-		tail: Node;
-		modifier: (node: Node) => Node;
-	}>;
+	bindings: Map<
+		string,
+		{
+			object: Identifier;
+			property: Identifier;
+			snippet: Node;
+			store: string;
+			tail: Node;
+			modifier: (node: Node) => Node;
+		}
+	>;
 
 	chunks: {
 		declarations: Array<Node | Node[]>;
@@ -157,7 +163,7 @@ export default class Block {
 	}
 
 	add_dependencies(dependencies: Set<string>) {
-		dependencies.forEach(dependency => {
+		dependencies.forEach((dependency) => {
 			this.dependencies.add(dependency);
 		});
 
@@ -167,13 +173,7 @@ export default class Block {
 		}
 	}
 
-	add_element(
-		id: Identifier,
-		render_statement: Node,
-		claim_statement: Node,
-		parent_node: Node,
-		no_detach?: boolean
-	) {
+	add_element(id: Identifier, render_statement: Node, claim_statement: Node, parent_node: Node, no_detach?: boolean) {
 		this.add_variable(id);
 		this.chunks.create.push(b`${id} = ${render_statement};`);
 
@@ -207,12 +207,13 @@ export default class Block {
 
 	add_variable(id: Identifier, init?: Node) {
 		if (this.variables.has(id.name)) {
-			throw new Error(
-				`Variable '${id.name}' already initialised with a different value`
-			);
+			throw new Error(`Variable '${id.name}' already initialised with a different value`);
 		}
 
 		this.variables.set(id.name, { id, init });
+	}
+	group_transition_out(fn) {
+		return this.has_outros ? b`@group_transition_out((#transition_out) => { ${fn(x`#transition_out`)} })` : fn(null);
 	}
 
 	alias(name: string) {
@@ -228,7 +229,7 @@ export default class Block {
 	}
 
 	get_contents(key?: any) {
-		const { dev,version } = this.renderer.options;
+		const { dev, version } = this.renderer.options;
 
 		if (this.has_outros) {
 			this.add_variable({ type: 'Identifier', name: '#current' });
@@ -263,11 +264,8 @@ export default class Block {
 		if (this.chunks.create.length === 0 && this.chunks.hydrate.length === 0) {
 			properties.create = noop;
 		} else {
-			const hydrate = this.chunks.hydrate.length > 0 && (
-				this.renderer.options.hydratable
-					? b`this.h();`
-					: this.chunks.hydrate
-			);
+			const hydrate =
+				this.chunks.hydrate.length > 0 && (this.renderer.options.hydratable ? b`this.h();` : this.chunks.hydrate);
 
 			properties.create = x`function #create() {
 				${this.chunks.create}
@@ -393,25 +391,27 @@ export default class Block {
 			${this.chunks.declarations}
 
 			${Array.from(this.variables.values()).map(({ id, init }) => {
-				return init
-					? b`let ${id} = ${init}`
-					: b`let ${id}`;
+				return init ? b`let ${id} = ${init}` : b`let ${id}`;
 			})}
 
 			${this.chunks.init}
 
-			${dev
-				? b`
+			${
+				dev
+					? b`
 					const ${block} = ${return_value};
-					${version < 3.22 && b`@dispatch_dev$legacy("SvelteRegisterBlock", {
+					${
+						version < 3.22 &&
+						b`@dispatch_dev$legacy("SvelteRegisterBlock", {
 						block: ${block},
 						id: ${this.name || 'create_fragment'}.name,
 						type: "${this.type}",
 						source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
 						ctx: #ctx
-					});`}
+					});`
+					}
 					return ${block};`
-				: b`
+					: b`
 					return ${return_value};`
 			}
 		`;
@@ -420,17 +420,19 @@ export default class Block {
 	}
 
 	has_content(): boolean {
-		return !!this.first ||
+		return (
+			!!this.first ||
 			this.event_listeners.length > 0 ||
 			this.chunks.intro.length > 0 ||
-			this.chunks.outro.length > 0  ||
+			this.chunks.outro.length > 0 ||
 			this.chunks.create.length > 0 ||
 			this.chunks.hydrate.length > 0 ||
 			this.chunks.claim.length > 0 ||
 			this.chunks.mount.length > 0 ||
 			this.chunks.update.length > 0 ||
 			this.chunks.destroy.length > 0 ||
-			this.has_animation;
+			this.has_animation
+		);
 	}
 
 	render() {
@@ -454,7 +456,7 @@ export default class Block {
 		if (this.event_listeners.length > 0) {
 			const dispose: Identifier = {
 				type: 'Identifier',
-				name: `#dispose${chunk}`
+				name: `#dispose${chunk}`,
 			};
 
 			this.add_variable(dispose);
@@ -467,20 +469,16 @@ export default class Block {
 					`
 				);
 
-				this.chunks.destroy.push(
-					b`${dispose}();`
-				);
+				this.chunks.destroy.push(b`${dispose}();`);
 			} else {
 				this.chunks.mount.push(b`
-					if (#remount) @run_all(${dispose});
+					if (#remount) for(let #i=0;#i<${dispose}.length;#i++){ ${dispose}[#i];}
 					${dispose} = [
 						${this.event_listeners}
 					];
 				`);
 
-				this.chunks.destroy.push(
-					b`@run_all(${dispose});`
-				);
+				this.chunks.destroy.push(b`for(let #i=0;#i<${dispose}.length;#i++){ ${dispose}[#i];}`);
 			}
 		}
 	}

@@ -372,7 +372,9 @@ export default class ElementWrapper extends Wrapper {
 		if (renderer.options.dev) {
 			const loc = renderer.locate(this.node.start);
 			block.chunks.hydrate.push(
-				b`@add_location(${this.var}, ${renderer.file_var}, ${loc.line - 1}, ${loc.column}, ${this.node.start});`
+				b`@add_location_dev$legacy(${this.var}, ${renderer.file_var}, ${loc.line - 1}, ${loc.column}, ${
+					this.node.start
+				});`
 			);
 		}
 	}
@@ -387,7 +389,7 @@ export default class ElementWrapper extends Wrapper {
 	get_render_statement(block: Block) {
 		const { name, namespace } = this.node;
 
-		if (namespace === 'http://www.w3.org/2000/svg') {
+		if (namespace === namespaces.svg) {
 			return x`@svg_element("${name}")`;
 		}
 
@@ -654,11 +656,10 @@ export default class ElementWrapper extends Wrapper {
 		});
 
 		block.chunks.init.push(b`
-			let ${levels} = [${initial_props}];
-
-			let ${data} = {};
-			for (let #i = 0; #i < ${levels}.length; #i += 1) {
-				${data} = @assign(${data}, ${levels}[#i]);
+			const ${levels} = [${initial_props}];
+			const ${data} = ${levels}[0]||{};
+			for (let #i = 1; #i < ${levels}.length; #i += 1) {
+				${data} = { ...${data}, ...${levels}[#i] };
 			}
 		`);
 
@@ -669,15 +670,14 @@ export default class ElementWrapper extends Wrapper {
 		block.chunks.update.push(b`${fn}(${this.var}, @get_spread_update(${levels}, [${updates}]));`);
 	}
 	add_bidi_transition(block: Block, intro: Transition) {
-		const name = block.get_unique_name(`${this.var.name}_bidi_transition`);
-		const snippet = intro.expression ? intro.expression.manipulate(block) : x`{}`;
+		const name = block.get_unique_name(`${this.var.name}_transition`);
+		const snippet = intro.expression ? intro.expression.manipulate(block) : null;
 
 		block.add_variable(name);
 
 		const fn = this.renderer.reference(intro.name);
 
 		let intro_block = b`${name} = @run_bidirectional_transition(${this.var}, ${fn}, true, ${snippet});`;
-
 		let outro_block = b`${name} = @run_bidirectional_transition(${this.var}, ${fn}, false, ${snippet});`;
 
 		if (intro.is_local) {

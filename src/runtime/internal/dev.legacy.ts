@@ -1,9 +1,15 @@
 import { custom_event, append, insert, detach, listen, attr } from './dom';
-let inited
+import { now } from './environment';
+let inited;
+export function add_location_dev$legacy(element, file, line, column, char) {
+	element.__svelte_meta = {
+		loc: { file, line, column, char },
+	};
+}
 export function dispatch_dev$legacy<T = any>(type: string, detail?: T) {
-	if(!inited && `__SVELTE_DEVTOOLS_GLOBAL_HOOK__` in window) {
-		inited = true
-		throw new Error(`You must specify the version`)
+	if (!inited && `__SVELTE_DEVTOOLS_GLOBAL_HOOK__` in window) {
+		inited = true;
+		throw new Error(`You must specify the version`);
 	}
 	document.dispatchEvent(custom_event(type, { version: __VERSION__, ...detail }));
 }
@@ -87,4 +93,17 @@ export function set_data_dev$legacy(text, data) {
 
 	dispatch_dev$legacy('SvelteDOMSetData', { node: text, data });
 	text.data = data;
+}
+export function loop_guard_dev$legacy(timeout) {
+	const start = now();
+	return () => {
+		if (now() - start > timeout) {
+			throw new Error(`Infinite loop detected`);
+		}
+	};
+}
+export function validate_store_dev$legacy(store, name) {
+	if (store != null && typeof store.subscribe !== 'function') {
+		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
+	}
 }

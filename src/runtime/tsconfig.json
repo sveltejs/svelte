@@ -3,8 +3,8 @@
 	"include": [".", "../ambient.ts"],
 
 	"compilerOptions": {
-		"lib": ["es2015", "dom", "dom.iterable"],
-		"target": "es2015",
+		"lib": ["ESNext", "dom", "dom.iterable"],
+		"target": "ESNext",
 		"types": [],
 
 		"baseUrl": ".",

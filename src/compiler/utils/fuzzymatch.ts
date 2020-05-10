@@ -1,4 +1,4 @@
-export default function fuzzymatch(name: string, names: string[]) {
+export default function fuzzymatch(name: string, names: string[] | object) {
 	const set = new FuzzySet(names);
 	const matches = set.get(name);
 
@@ -13,8 +13,7 @@ const GRAM_SIZE_UPPER = 3;
 
 // return an edit distance from 0 to 1
 function _distance(str1: string, str2: string) {
-	if (str1 === null && str2 === null)
-		throw 'Trying to compare two null values';
+	if (str1 === null && str2 === null) throw 'Trying to compare two null values';
 	if (str1 === null || str2 === null) return 0;
 	str1 = String(str1);
 	str2 = String(str2);
@@ -96,15 +95,16 @@ class FuzzySet {
 	match_dict = {};
 	items = {};
 
-	constructor(arr: string[]) {
+	constructor(arr: string[] | object) {
 		// initialization
 		for (let i = GRAM_SIZE_LOWER; i < GRAM_SIZE_UPPER + 1; ++i) {
 			this.items[i] = [];
 		}
 
+		let k;
 		// add all the items to the set
-		for (let i = 0; i < arr.length; ++i) {
-			this.add(arr[i]);
+		for (k in arr) {
+			this.add(arr[k]);
 		}
 	}
 
@@ -156,11 +156,7 @@ class FuzzySet {
 
 		let results = [];
 		// start with high gram size and if there are no results, go to lower gram sizes
-		for (
-			let gram_size = GRAM_SIZE_UPPER;
-			gram_size >= GRAM_SIZE_LOWER;
-			--gram_size
-		) {
+		for (let gram_size = GRAM_SIZE_UPPER; gram_size >= GRAM_SIZE_LOWER; --gram_size) {
 			results = this.__get(value, gram_size);
 			if (results) {
 				return results;
@@ -204,10 +200,7 @@ class FuzzySet {
 		// build a results list of [score, str]
 		for (const match_index in matches) {
 			match_score = matches[match_index];
-			results.push([
-				match_score / (vector_normal * items[match_index][0]),
-				items[match_index][1],
-			]);
+			results.push([match_score / (vector_normal * items[match_index][0]), items[match_index][1]]);
 		}
 
 		results.sort(sort_descending);
@@ -216,10 +209,7 @@ class FuzzySet {
 		const end_index = Math.min(50, results.length);
 		// truncate somewhat arbitrarily to 50
 		for (let i = 0; i < end_index; ++i) {
-			new_results.push([
-				_distance(results[i][1], normalized_value),
-				results[i][1],
-			]);
+			new_results.push([_distance(results[i][1], normalized_value), results[i][1]]);
 		}
 		results = new_results;
 		results.sort(sort_descending);

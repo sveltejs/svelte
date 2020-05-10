@@ -1,37 +1,37 @@
-import { walk } from 'estree-walker';
-import { getLocator } from 'locate-character';
-import Stats from '../Stats';
-import { globals, reserved, is_valid } from '../utils/names';
-import { namespaces, valid_namespaces } from '../utils/namespaces';
-import create_module from './create_module';
-import { create_scopes, extract_names, Scope, extract_identifiers } from './utils/scope';
-import Stylesheet from './css/Stylesheet';
-import { test } from '../config';
-import Fragment from './nodes/Fragment';
-import internal_exports from './internal_exports';
-import { Ast, CompileOptions, Var, Warning, CssResult } from '../interfaces';
-import error from '../utils/error';
-import get_code_frame from '../utils/get_code_frame';
-import flatten_reference from './utils/flatten_reference';
-import is_used_as_reference from './utils/is_used_as_reference';
-import is_reference from 'is-reference';
-import TemplateScope from './nodes/shared/TemplateScope';
-import fuzzymatch from '../utils/fuzzymatch';
-import get_object from './utils/get_object';
-import Slot from './nodes/Slot';
+import { b, print, x } from 'code-red';
 import {
-	Node,
-	ImportDeclaration,
-	Identifier,
-	Program,
-	ExpressionStatement,
 	AssignmentExpression,
+	ExpressionStatement,
+	Identifier,
+	ImportDeclaration,
 	Literal,
+	Node,
+	Program,
 } from 'estree';
+import { walk } from 'estree-walker';
+import is_reference from 'is-reference';
+import { getLocator } from 'locate-character';
+import { test } from '../config';
+import { Ast, CompileOptions, CssResult, Var, Warning } from '../interfaces';
+import Stats from '../Stats';
+import error from '../utils/error';
+import fuzzymatch from '../utils/fuzzymatch';
+import get_code_frame from '../utils/get_code_frame';
+import { globals, is_valid, reserved } from '../utils/names';
+import { namespaces } from '../utils/namespaces';
+import create_module from './create_module';
+import Stylesheet from './css/Stylesheet';
+import internal_exports from './internal_exports';
+import Fragment from './nodes/Fragment';
+import TemplateScope from './nodes/shared/TemplateScope';
+import Slot from './nodes/Slot';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
-import { print, x, b } from 'code-red';
+import flatten_reference from './utils/flatten_reference';
+import get_object from './utils/get_object';
+import is_used_as_reference from './utils/is_used_as_reference';
 import { is_reserved_keyword } from './utils/reserved_keywords';
+import { create_scopes, extract_identifiers, extract_names, Scope } from './utils/scope';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -1343,8 +1343,8 @@ function process_component_options(component: Component, nodes) {
 
 						if (typeof ns !== 'string') component.error(attribute, { code, message });
 
-						if (valid_namespaces.indexOf(ns) === -1) {
-							const match = fuzzymatch(ns, valid_namespaces);
+						if (!(ns in namespaces)) {
+							const match = fuzzymatch(ns, namespaces);
 							if (match) {
 								component.error(attribute, {
 									code: `invalid-namespace-property`,

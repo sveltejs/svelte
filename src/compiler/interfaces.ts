@@ -102,12 +102,15 @@ export interface Warning {
 export type ModuleFormat = 'esm' | 'cjs';
 
 export interface CompileOptions {
-	format?: ModuleFormat;
-	name?: string;
+	/* bundler */
 	filename?: string;
-	generate?: string | false;
 	version?: number;
-	
+	format?: ModuleFormat;
+
+	/* Component class name */
+	name?: string;
+	generate?: string | false;
+
 	outputFilename?: string;
 	cssOutputFilename?: string;
 	sveltePath?: string;
@@ -116,7 +119,6 @@ export interface CompileOptions {
 	accessors?: boolean;
 	immutable?: boolean;
 	hydratable?: boolean;
-	legacy?: boolean;
 	customElement?: boolean;
 	tag?: string;
 	css?: boolean;

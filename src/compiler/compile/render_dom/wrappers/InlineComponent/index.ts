@@ -240,12 +240,10 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (attr.is_spread) {
 						const value = attr.expression.manipulate(block);
 						initial_props.push(value);
-
-						let value_object = value;
-						if (attr.expression.node.type !== 'ObjectExpression') {
-							value_object = x`@get_spread_object(${value})`;
-						}
-						change_object = value_object;
+						change_object =
+							attr.expression.node.type !== 'ObjectExpression'
+								? x`(typeof ${value} === 'object' && ${value} !== null ? ${value} : {})`
+								: value;
 					} else {
 						const obj = x`{ ${name}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
@@ -261,7 +259,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				statements.push(b`
 					for (let #i = 0; #i < ${levels}.length; #i += 1) {
-						${props} = @assign(${props}, ${levels}[#i]);
+						${props} = Object.assign(${props}, ${levels}[#i]);
 					}
 				`);
 
@@ -417,12 +415,11 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.chunks.update.push(b`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) {
-						@group_outros();
 						const old_component = ${name};
-						@transition_out(old_component.$$.fragment, 1, 0, () => {
-							@destroy_component(old_component, 1);
-						});
-						@check_outros();
+						${block.group_transition_out(
+							(transition_out) =>
+								b`${transition_out}(old_component.$$.fragment, () => { @destroy_component(old_component, 1); }, 0)`
+						)}
 					}
 
 					if (${switch_value}) {

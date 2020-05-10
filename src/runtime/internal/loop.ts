@@ -17,7 +17,6 @@ const run = (t: number) => {
 	}
 	running_frame.length = 0;
 	if (next_frame_length) raf(run);
-	else console.log('ended loop');
 };
 
 type TimeoutTask = { timestamp: number; callback: (now: number) => void };

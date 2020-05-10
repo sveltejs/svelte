@@ -54,7 +54,7 @@ export const globals = new Set([
 	'undefined',
 	'URIError',
 	'URL',
-	'window'
+	'window',
 ]);
 
 export const reserved = new Set([

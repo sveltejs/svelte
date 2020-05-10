@@ -1,31 +1,31 @@
 import { dev$assert } from 'svelte/internal';
 
-export { identity as linear } from 'svelte/internal';
+export const linear = (t: number) => t;
 export const quadIn = (t: number) => t ** 2;
 export const quadOut = (t: number) => 1.0 - (1.0 - t) ** 2;
-export const quadInOut = (t: number) => 0.5 * (t >= 0.5 ? 2 - 2 * (1.0 - t) ** 2 : (2 * t) ** 2);
+export const quadInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - 2 * (1.0 - t) ** 2 : (2 * t) ** 2);
 export const cubicIn = (t: number) => t ** 3;
 export const cubicOut = (t: number) => 1.0 - (1.0 - t) ** 3;
-export const cubicInOut = (t: number) => 0.5 * (t >= 0.5 ? 2 - (2 * (1.0 - t)) ** 3 : (2 * t) ** 3);
+export const cubicInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - (2 * (1.0 - t)) ** 3 : (2 * t) ** 3);
 export const quartIn = (t: number) => t ** 4;
 export const quartOut = (t: number) => 1.0 - (1.0 - t) ** 4;
-export const quartInOut = (t: number) => 0.5 * (t >= 0.5 ? 2 - (2 * (1.0 - t)) ** 4 : (2 * t) ** 4);
+export const quartInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - (2 * (1.0 - t)) ** 4 : (2 * t) ** 4);
 export const easeIn = quartIn;
 export const easeOut = quartOut;
 export const easeInOut = quartInOut;
 export const quintIn = (t: number) => t ** 5;
 export const quintOut = (t: number) => 1.0 - (1.0 - t) ** 5;
-export const quintInOut = (t: number) => 0.5 * (t >= 0.5 ? 2 - (2 * (1.0 - t)) ** 5 : (2 * t) ** 5);
+export const quintInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - (2 * (1.0 - t)) ** 5 : (2 * t) ** 5);
 export const backIn = (t: number) => t * t * (2.6 * t - 1.6);
-export const backOut = (t: number) => 1 - (t = 1.0 - t) * t * (2.6 * t - 1.6);
+export const backOut = (t: number) => 1.0 - (t = 1.0 - t) * t * (2.6 * t - 1.6);
 export const backInOut = (t: number) =>
-	0.5 * (t >= 0.5 ? 2 - (t = 2 * (1 - t)) * t * (2.6 * t - 1.6) : (t = 2 * t) * t * (2.6 * t - 1.6));
+	0.5 * (t >= 0.5 ? 2 - (t = 2 * (1.0 - t)) * t * (2.6 * t - 1.6) : (t = 2 * t) * t * (2.6 * t - 1.6));
 export const expoIn = (t: number) => (t ? Math.pow(2.0, 10.0 * (t - 1.0)) : t);
 export const expoOut = (t: number) => (t ? 1.0 - Math.pow(2.0, -10.0 * t) : t);
 export const expoInOut = (t: number) =>
 	!t || t === 1.0 ? t : t < 0.5 ? 0.5 * Math.pow(2.0, 20.0 * t - 10.0) : -0.5 * Math.pow(2.0, 10.0 - t * 20.0) + 1.0;
-export const elasticIn = (t: number) => Math.sin((13.0 * t * Math.PI) / 2) * Math.pow(2.0, 10.0 * (t - 1.0));
-export const elasticOut = (t: number) => Math.sin((-13.0 * (t + 1.0) * Math.PI) / 2) * Math.pow(2.0, -10.0 * t) + 1.0;
+export const elasticIn = (t: number) => Math.sin((13.0 * t * Math.PI) / 2.0) * Math.pow(2.0, 10.0 * (t - 1.0));
+export const elasticOut = (t: number) => Math.sin((-13.0 * (t + 1.0) * Math.PI) / 2.0) * Math.pow(2.0, -10.0 * t) + 1.0;
 export const elasticInOut = (t: number) =>
 	t < 0.5
 		? 0.5 * Math.sin(((+13.0 * Math.PI) / 2) * 2.0 * t) * Math.pow(2.0, 10.0 * (2.0 * t - 1.0))
@@ -43,9 +43,9 @@ export const bounceInOut = (t: number) =>
 	t < 0.5 ? 0.5 * (1.0 - bounceOut(1.0 - t * 2.0)) : 0.5 * bounceOut(t * 2.0 - 1.0) + 0.5;
 export const sineIn = (t: number) => (1e-14 > Math.abs((t = Math.cos(t * Math.PI * 0.5))) ? 1.0 : 1.0 - t);
 export const sineOut = (t: number) => Math.sin((t * Math.PI) / 2);
-export const sineInOut = (t: number) => -0.5 * (Math.cos(Math.PI * t) - 1);
-export const circIn = (t: number) => 1 - Math.sin(Math.acos(t));
-export const circOut = (t: number) => Math.sin(Math.acos(1 - t));
+export const sineInOut = (t: number) => -0.5 * (Math.cos(Math.PI * t) - 1.0);
+export const circIn = (t: number) => 1.0 - Math.sin(Math.acos(t));
+export const circOut = (t: number) => Math.sin(Math.acos(1.0 - t));
 export const circInOut = (t: number) =>
 	0.5 * (t >= 0.5 ? 2.0 - Math.sin(Math.acos(1.0 - 2.0 * (1.0 - t))) : Math.sin(Math.acos(1.0 - 2.0 * t)));
 export const cubicBezier = (x1: number, y1: number, x2: number, y2: number) => {

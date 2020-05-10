@@ -33,7 +33,7 @@ class AwaitBlockBranch extends Wrapper {
 		this.block = block.child({
 			comment: create_debugging_comment(node, this.renderer.component),
 			name: this.renderer.component.get_unique_name(`create_${status}_block`),
-			type: status
+			type: status,
 		});
 
 		this.fragment = new FragmentWrapper(
@@ -111,18 +111,10 @@ export default class AwaitBlockWrapper extends Wrapper {
 		let has_intros = false;
 		let has_outros = false;
 
-		['pending', 'then', 'catch'].forEach(status => {
+		['pending', 'then', 'catch'].forEach((status) => {
 			const child = this.node[status];
 
-			const branch = new AwaitBlockBranch(
-				status,
-				renderer,
-				block,
-				this,
-				child,
-				strip_whitespace,
-				next_sibling
-			);
+			const branch = new AwaitBlockBranch(status, renderer, block, this, child, strip_whitespace, next_sibling);
 
 			renderer.blocks.push(branch.block);
 
@@ -138,7 +130,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			this[status] = branch;
 		});
 
-		['pending', 'then', 'catch'].forEach(status => {
+		['pending', 'then', 'catch'].forEach((status) => {
 			this[status].block.has_update_method = is_dynamic;
 			this[status].block.has_intro_method = has_intros;
 			this[status].block.has_outro_method = has_outros;
@@ -149,11 +141,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		}
 	}
 
-	render(
-		block: Block,
-		parent_node: Identifier,
-		parent_nodes: Identifier
-	) {
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 		const update_mount_node = this.get_update_mount_node(anchor);
 
@@ -222,9 +210,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 				${promise} !== (${promise} = ${snippet}) &&
 				@handle_promise(${promise}, ${info})`;
 
-			block.chunks.update.push(
-				b`${info}.ctx = #ctx;`
-			);
+			block.chunks.update.push(b`${info}.ctx = #ctx;`);
 
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
@@ -256,8 +242,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		if (this.pending.block.has_outro_method) {
 			block.chunks.outro.push(b`
 				for (let #i = 0; #i < 3; #i += 1) {
-					const block = ${info}.blocks[#i];
-					@transition_out(block);
+					@transition_out(${info}.blocks[#i]);
 				}
 			`);
 		}
@@ -268,7 +253,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			${info} = null;
 		`);
 
-		[this.pending, this.then, this.catch].forEach(branch => {
+		[this.pending, this.then, this.catch].forEach((branch) => {
 			branch.render(branch.block, null, x`#nodes` as Identifier);
 		});
 		this.then.render_destructure(block, this.value, this.node.value, value_index);

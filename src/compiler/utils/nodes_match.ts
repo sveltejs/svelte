@@ -17,12 +17,8 @@ export function nodes_match(a, b) {
 		while (i--) {
 			const key = a_keys[i];
 			if (b_keys[i] !== key) return false;
-
-			if (key === 'start' || key === 'end') continue;
-
-			if (!nodes_match(a[key], b[key])) {
-				return false;
-			}
+			else if (key === 'start' || key === 'end') continue;
+			else if (!nodes_match(a[key], b[key])) return false;
 		}
 
 		return true;

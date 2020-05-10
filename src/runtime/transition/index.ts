@@ -2,21 +2,21 @@ import { cubicOut, cubicInOut } from 'svelte/easing';
 import { run_duration } from 'svelte/internal';
 
 type EasingFunction = (t: number) => number;
-interface BasicConfig {
+interface AnyConfig {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
 	strategy?: 'reverse' | 'mirror';
 }
-interface TimeableConfig extends Omit<BasicConfig, 'duration'> {
+interface TimeableConfig extends Omit<AnyConfig, 'duration'> {
 	duration?: number | ((len: number) => number);
 }
-export interface TransitionConfig extends BasicConfig {
+export interface TransitionConfig extends AnyConfig {
 	css?: (t: number, u?: number) => string;
 	tick?: (t: number, u?: number) => void;
 }
 
-interface BlurParams extends BasicConfig {
+interface BlurParams extends AnyConfig {
 	amount: number;
 	opacity: number;
 }
@@ -37,12 +37,12 @@ export function blur(
 	};
 }
 
-export function fade(node: Element, { delay = 0, duration = 400, easing }: BasicConfig): TransitionConfig {
+export function fade(node: Element, { delay = 0, duration = 400, easing }: AnyConfig): TransitionConfig {
 	const o = +getComputedStyle(node).opacity;
 	return { delay, duration, easing, css: (t) => `opacity: ${t * o};` };
 }
 
-interface FlyParams extends BasicConfig {
+interface FlyParams extends AnyConfig {
 	x: number;
 	y: number;
 	opacity: number;
@@ -64,7 +64,7 @@ export function fly(
 	};
 }
 
-export function slide(node: Element, { delay = 0, duration = 400, easing = cubicOut }: BasicConfig): TransitionConfig {
+export function slide(node: Element, { delay = 0, duration = 400, easing = cubicOut }: AnyConfig): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const height = parseFloat(style.height);
@@ -91,7 +91,7 @@ export function slide(node: Element, { delay = 0, duration = 400, easing = cubic
 	};
 }
 
-interface ScaleParams extends BasicConfig {
+interface ScaleParams extends AnyConfig {
 	start: number;
 	opacity: number;
 }

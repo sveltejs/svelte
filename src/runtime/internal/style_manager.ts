@@ -1,5 +1,5 @@
 import { element } from './dom';
-import { raf, now } from './environment';
+import { raf } from './environment';
 const enum SVELTE {
 	RULE = `__svelte_`,
 	STYLESHEET = `__svelte_stylesheet`,
