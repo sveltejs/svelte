@@ -99,7 +99,7 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 		} else if (key === 'style') {
 			node.style.cssText = attributes[key];
 		} else if (key === '__value') {
-			(node as any).value = (node as any).__value = attributes[key];
+			(node as any).value = node[key] = attributes[key];
 		} else if (descriptors[key] && descriptors[key].set) {
 			node[key] = attributes[key];
 		} else {
