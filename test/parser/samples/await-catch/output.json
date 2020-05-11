@@ -26,6 +26,8 @@
 				},
 				"value": null,
 				"error": {
+					"start": 47,
+					"end": 55,
 					"type": "Identifier",
 					"name": "theError"
 				},
