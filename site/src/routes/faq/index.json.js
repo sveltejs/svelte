@@ -1,3 +1,4 @@
+import send from '@polka/send';
 import get_faqs from './_faqs.js';
 
 let json;
