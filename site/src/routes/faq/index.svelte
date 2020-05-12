@@ -22,8 +22,13 @@
 <div class='faqs stretch'>
 	<h1>Frequently Asked Questions</h1>
 	{#each faqs as faq}
+
 		<article class='faq'>
-			<h2>{faq.metadata.question}</h2>
+			<h2>
+			<span id={faq.fragment} class="offset-anchor"></span>
+			<a class="anchor" rel='prefetch' href='faq#{faq.fragment}' title='{faq.question}'>&nbsp;</a>
+			{faq.metadata.question}
+			</h2>
 			<p>{@html faq.answer}</p>
 		</article>
 	{/each}
@@ -68,5 +73,17 @@
 
 	:global(.faqs .faq ul) {
 		margin-left: 3.2rem;
+	}
+
+	.faqs :global(.anchor) {
+		top: calc((var(--h3) - 24px) / 2);
+	}
+
+	@media (max-width: 768px) {
+		.faqs :global(.anchor) {
+			transform: scale(0.6);
+			opacity: 1;
+			left: -1.0em;
+		}
 	}
 </style>

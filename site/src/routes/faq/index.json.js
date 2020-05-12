@@ -8,6 +8,7 @@ export function get(req, res) {
 		const faqs = get_faqs()
 			.map(faq => {
 				return {
+					fragment: faq.fragment,
 					answer: faq.answer,
 					metadata: faq.metadata
 				};

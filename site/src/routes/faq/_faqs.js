@@ -8,16 +8,16 @@ import { SLUG_PRESERVE_UNICODE } from '../../../config';
 
 const makeSlug = makeSlugProcessor(SLUG_PRESERVE_UNICODE);
 
-export default function get_posts() {
+export default function get_faqs() {
 	return fs
 		.readdirSync('content/faq')
 		.map(file => {
 			if (path.extname(file) !== '.md') return;
 
-			const match = /^(.+)\.md$/.exec(file);
+			const match = /^([0-9]+)-(.+)\.md$/.exec(file);
 			if (!match) throw new Error(`Invalid filename '${file}'`);
 
-			const [, slug] = match;
+			const [, order, slug] = match;
 
 			const markdown = fs.readFileSync(`content/faq/${file}`, 'utf-8');
 
@@ -35,6 +35,7 @@ export default function get_posts() {
 				return `
 					<h${level}>
 						<span id="${fragment}" class="offset-anchor"></span>
+						<a href="faq#${fragment}" class="anchor" aria-hidden="true"></a>
 						${text}
 					</h${level}>`;
 			};
@@ -44,10 +45,14 @@ export default function get_posts() {
 				{ renderer }
 			);
 
+			const fragment = makeSlug(slug);
+
 			return {
-				slug,
+				fragment,
+				order,
 				answer,
 				metadata
 			};
-		});
+		})
+		.sort((a, b) => a.order - b.order);
 }
