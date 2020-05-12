@@ -1,5 +1,4 @@
-import { now, raf } from './environment';
-import { calc_framerate, FRAME_RATE } from './style_manager';
+import { now, raf, framerate } from 'svelte/environment';
 import { noop } from './utils';
 type TaskCallback = (t: number) => boolean;
 type TaskCanceller = () => void;
@@ -90,7 +89,7 @@ export const onEachFrame = (
 	on_stop?,
 	max_skipped_frames = 4
 ): TaskCanceller => {
-	max_skipped_frames *= FRAME_RATE || calc_framerate();
+	max_skipped_frames *= framerate;
 	let lastTime = now();
 	let running = true;
 	const cancel = (t) => (on_stop && on_stop(t), false);

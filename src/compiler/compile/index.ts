@@ -68,7 +68,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = { generate: 'dom', dev: false, ...options };
+	options = { generate: 'dom', dev: null, ...options };
 
 	const stats = new Stats();
 	const warnings = [];

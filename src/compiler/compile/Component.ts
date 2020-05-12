@@ -181,24 +181,29 @@ export default class Component {
 				injected: true,
 				referenced: true,
 			});
-		} else if (name[0] === '$') {
-			this.add_var({
-				name,
-				injected: true,
-				referenced: true,
-				mutated: true,
-				writable: true,
-			});
-
-			const subscribable_name = name.slice(1);
-
-			const variable = this.var_lookup.get(subscribable_name);
-			if (variable) {
-				variable.referenced = true;
-				variable.subscribable = true;
-			}
 		} else {
-			this.used_names.add(name);
+			if (!name) {
+				console.log(name);
+			}
+			if (name[0] === '$') {
+				this.add_var({
+					name,
+					injected: true,
+					referenced: true,
+					mutated: true,
+					writable: true,
+				});
+
+				const subscribable_name = name.slice(1);
+
+				const variable = this.var_lookup.get(subscribable_name);
+				if (variable) {
+					variable.referenced = true;
+					variable.subscribable = true;
+				}
+			} else {
+				this.used_names.add(name);
+			}
 		}
 	}
 

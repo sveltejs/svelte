@@ -1,5 +1,5 @@
 import { set_current_component } from './lifecycle';
-import { resolved_promise } from './environment';
+import { resolved_promise } from 'svelte/environment';
 import { T$$ } from './Component';
 
 let update_scheduled = false;
@@ -88,15 +88,15 @@ export const flush = () => {
 	update_scheduled = false;
 
 	// measurement callbacks for animations
-	for (i = 0; i < measure_callbacks.length; i++) {
-		flush_callbacks.push(measure_callbacks[i]());
+	for (i = 0, j = flush_callbacks.length; i < measure_callbacks.length; i++) {
+		flush_callbacks[j++] = measure_callbacks[i]();
 	}
 	measure_callbacks.length = i = 0;
 
 	// apply styles
 	// todo : remove every non style callback from flush_callbacks
-	for (; i < flush_callbacks.length; i++) flush_callbacks[i]();
-	flush_callbacks.length = 0;
+	for (; i < j; i++) flush_callbacks[i]();
+	flush_callbacks.length = i = j = 0;
 
 	is_flushing = false;
 };

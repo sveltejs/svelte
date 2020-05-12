@@ -15,14 +15,19 @@ const ts_plugin = is_publish
 
 // documented in src/ambient.ts
 const globals = (name) =>
-	replace({
-		'var __DEV__: boolean': 'var rollup_removes_this',
-		'__DEV__': name === 'dev',
-		'var __TEST__: boolean': 'var rollup_removes_this',
-		'__TEST__': name === 'test',
-		'var __VERSION__: string': 'var rollup_removes_this',
-		'__VERSION__': `"${pkg.version}"`,
-	});
+	name === 'compiler'
+		? replace({
+				'var __VERSION__: string': 'var rollup_removes_this',
+				'__VERSION__': `"${pkg.version}"`,
+		  })
+		: replace({
+				'var __DEV__: boolean': 'var rollup_removes_this',
+				'__DEV__': name === 'dev',
+				'var __TEST__: boolean': 'var rollup_removes_this',
+				'__TEST__': name === 'test',
+				'var __VERSION__: string': 'var rollup_removes_this',
+				'__VERSION__': `"${pkg.version}"`,
+		  });
 /**
  *
  */

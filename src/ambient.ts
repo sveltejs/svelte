@@ -53,5 +53,3 @@ declare var __VERSION__: string;
  * instead of relying on hacks
  */
 declare var __TEST__: boolean;
-
-declare var global: any;

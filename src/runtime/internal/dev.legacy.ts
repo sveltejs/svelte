@@ -1,5 +1,5 @@
 import { custom_event, append, insert, detach, listen, attr } from './dom';
-import { now } from './environment';
+import { now } from 'svelte/environment';
 let inited;
 export function add_location_dev$legacy(element, file, line, column, char) {
 	element.__svelte_meta = {

@@ -1,5 +1,5 @@
 import { transition_in } from './transitions';
-export function update_keyed_each(
+export const update_keyed_each = (
 	old_blocks,
 	dirty,
 	ctx,
@@ -12,7 +12,7 @@ export function update_keyed_each(
 	next,
 	get_context,
 	transition_out?
-) {
+) => {
 	let o = old_blocks.length;
 	let n = list.length;
 
@@ -54,7 +54,7 @@ export function update_keyed_each(
 	};
 	const destroy = (block) => {
 		if (state & 2) block.f();
-		if (state & 4) transition_out(block, () => lookup.delete(block.key));
+		if (state & 4) transition_out(block, lookup.delete.bind(lookup, block.key));
 		else block.d(1), lookup.delete(block.key);
 	};
 
@@ -94,7 +94,7 @@ export function update_keyed_each(
 	while (n) insert(new_blocks[n - 1]);
 
 	return new_blocks;
-}
+};
 
 export function validate_each_keys(ctx, list, get_context, get_key) {
 	const keys = new Set();

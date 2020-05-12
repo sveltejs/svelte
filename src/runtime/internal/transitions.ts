@@ -1,7 +1,7 @@
 import { TransitionConfig } from '../transition';
 import { Fragment } from './Component';
 import { custom_event } from './dom';
-import { now } from './environment';
+import { now } from 'svelte/environment';
 import { setFrameTimeout, setTweenTimeout } from './loop';
 import { add_measure_callback } from './scheduler';
 import { animate_css } from './style_manager';
@@ -99,17 +99,17 @@ export const run_transition = (
 		const solver = strategy === 'reverse' ? reversed : mirrored;
 		const runner = (fn) => solver(fn, is_intro, easing, elapsed_ratio, 1);
 
-		if (solver === mirrored) {
-			delay -= elapsed_duration;
-		} else if (solver === reversed) {
+		if (solver === reversed) {
 			duration -= elapsed_duration;
+		} else if (solver === mirrored) {
+			delay -= elapsed_duration;
 		}
 
 		end_time = (start_time = now() + delay) + duration;
 
 		dispatch_end = startStopDispatcher(node, is_intro);
 
-		if (css) cancel_css = animate_css(runner(css), node, duration, delay);
+		if (css) cancel_css = animate_css(node, runner(css), duration, delay);
 		cancel_raf = tick ? setTweenTimeout(stop, end_time, runner(tick), duration) : setFrameTimeout(stop, end_time);
 	};
 

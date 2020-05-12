@@ -692,31 +692,28 @@ export default class ElementWrapper extends Wrapper {
 	add_intro(block: Block, intro: Transition, outro: Transition) {
 		if (outro) {
 			const outro_var = block.alias(`${this.var.name}_outro`);
-			if (this.node.animation) {
-				const [unfreeze_var, rect_var, stop_animation_var, animationFn, params] = run_animation(this, block);
-				block.chunks.intro.push(b`
-					if (${outro_var}){ 
-						${outro_var}(1);
-						if (${unfreeze_var}) {
-							${unfreeze_var}(), (unfreeze = undefined);
-							${stop_animation_var} = @run_animation(${this.var}, ${rect_var}, ${animationFn}, ${params});
-						}
-					}
-				`);
-			} else {
-				block.chunks.intro.push(b`
+			block.chunks.intro.push(b`
 					if (${outro_var}){ 
 						${outro_var}(1);
 					}
 				`);
-			}
+		}
+		if (this.node.animation) {
+			const [unfreeze_var, rect_var, stop_animation_var, animationFn, params] = run_animation(this, block);
+			block.chunks.intro.push(b`
+				if (${unfreeze_var}) {
+					${unfreeze_var}();
+					${unfreeze_var} = void 0;
+					${stop_animation_var} = @run_animation(${this.var}, ${rect_var}, ${animationFn}, ${params});
+				}
+			`);
 		}
 		if (!intro) return;
 
 		const [intro_var, node, transitionFn, params] = run_transition(this, block, intro, `intro`);
 		block.add_variable(intro_var);
 
-		let start_intro = b`@add_render_callback(()=>{${intro_var} = @run_transition(${node}, ${transitionFn}, true, ${params});})`;
+		let start_intro = b`${intro_var} = @run_transition(${node}, ${transitionFn}, true, ${params});`;
 		if (intro.is_local) start_intro = b`if (#local) ${start_intro};`;
 		block.chunks.intro.push(start_intro);
 	}
@@ -750,23 +747,24 @@ export default class ElementWrapper extends Wrapper {
 		block.add_variable(stop_animation_var, x`@noop`);
 
 		block.chunks.measure.push(b`
-			${rect_var} = ${this.var}.getBoundingClientRect();
+			if(!${unfreeze_var}) ${rect_var} = ${this.var}.getBoundingClientRect();
 			${intro && b`if(${intro_var}) ${intro_var}();`}
 		`);
 
 		block.chunks.fix.push(b`
-			${unfreeze_var} = @fix_position(${this.var});
 			${stop_animation_var}();
-			${outro && b`@add_transform(${this.var}, ${rect_var});`}
+			${unfreeze_var} = @fix_position(${this.var}, ${rect_var});
 		`);
 
 		block.chunks.animate.push(b`
-			if(${unfreeze_var}) return
-			${stop_animation_var}();
-			@add_render_callback(()=>{${stop_animation_var} = @run_animation(${this.var}, ${rect_var}, ${name_var}, ${params_var});});
+			if (${unfreeze_var}) return
+			else {
+				${stop_animation_var}();
+				${stop_animation_var} = @run_animation(${this.var}, ${rect_var}, ${name_var}, ${params_var});
+			}
 		`);
 
-		block.chunks.destroy.push(b`${unfreeze_var} = undefined;`);
+		block.chunks.destroy.push(b`${unfreeze_var} = void 0;`);
 	}
 
 	add_classes(block: Block) {
@@ -882,7 +880,7 @@ function run_animation(element: ElementWrapper, block: Block) {
 		block.alias('rect'),
 		block.alias('stop_animation'),
 		element.renderer.reference(element.node.animation.name),
-		element.node.animation.expression ? element.node.animation.expression.manipulate(block) : x`{}`,
+		element.node.animation.expression ? element.node.animation.expression.manipulate(block) : null,
 	];
 }
 function run_transition(element: ElementWrapper, block: Block, transition: Transition, type: string) {
@@ -890,6 +888,6 @@ function run_transition(element: ElementWrapper, block: Block, transition: Trans
 		/* node_intro */ block.alias(`${element.var.name}_${type}`),
 		/* node */ element.var,
 		/* transitionFn */ element.renderer.reference(transition.name),
-		/* params */ transition.expression ? transition.expression.manipulate(block) : x`{}`,
+		/* params */ transition.expression ? transition.expression.manipulate(block) : null,
 	];
 }

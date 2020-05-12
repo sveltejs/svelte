@@ -9,31 +9,27 @@ export interface AnimationConfig {
 	tick?: (t: number, u?: number) => void;
 }
 
-//todo: documentation says it is DOMRect, but in IE it would be ClientRect
-type PositionRect = DOMRect | ClientRect;
+type AnimationFn = (node: Element, { from, to }: { from: DOMRect; to: DOMRect }, params: any) => AnimationConfig;
 
-type AnimationFn = (
-	node: Element,
-	{ from, to }: { from: PositionRect; to: PositionRect },
-	params: any
-) => AnimationConfig;
-
-export function run_animation(node: HTMLElement, from: PositionRect, fn: AnimationFn, params) {
+export function run_animation(node: HTMLElement, from: DOMRect, fn: AnimationFn, params) {
 	if (!from) return noop;
-	const to = node.getBoundingClientRect();
-	if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) return noop;
-	return run_transition(node, (node, params) => fn(node, { from, to }, params), true, params);
+	return run_transition(
+		node,
+		(node, params) => fn(node, { from, to: node.getBoundingClientRect() }, params),
+		true,
+		params
+	);
 }
 
-export function fix_position(node: HTMLElement) {
-	const { position, width, height } = getComputedStyle(node);
+export function fix_position(node: HTMLElement, { left, top }: DOMRect) {
+	const { position, width, height, transform } = getComputedStyle(node);
 	if (position === 'absolute' || position === 'fixed') return noop;
-	const current_position = node.getBoundingClientRect();
 	const { position: og_position, width: og_width, height: og_height } = node.style;
 	node.style.position = 'absolute';
 	node.style.width = width;
 	node.style.height = height;
-	add_transform(node, current_position);
+	const b = node.getBoundingClientRect();
+	node.style.transform = `${transform === 'none' ? '' : transform} translate(${left - b.left}px, ${top - b.top}px)`;
 	return () => {
 		node.style.position = og_position;
 		node.style.width = og_width;
@@ -42,7 +38,7 @@ export function fix_position(node: HTMLElement) {
 	};
 }
 
-export function add_transform(node: HTMLElement, a: PositionRect) {
+export function add_transform(node: HTMLElement, a: DOMRect) {
 	const b = node.getBoundingClientRect();
 	if (a.left !== b.left || a.top !== b.top) {
 		const style = getComputedStyle(node);

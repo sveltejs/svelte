@@ -36,14 +36,14 @@ export default function create_module(
 	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 }
 
-function edit_source(source, sveltePath) {
-	return source === 'svelte' || source.startsWith('svelte/') ? source.replace('svelte', sveltePath) : source;
-}
+const edit_source = (source, sveltePath) => (/^svelte\/?/.test(source) ? source.replace('svelte', sveltePath) : source);
 
 function get_internal_globals(
 	globals: Array<{ name: string; alias: Identifier }>,
 	helpers: Array<{ name: string; alias: Identifier }>
 ) {
+	// TODO : internal_globals is too aggressive
+	// see output https://svelte.dev/repl/1623b8b2ff604d7ca6e794343d976ae6
 	return (
 		globals.length > 0 && {
 			type: 'VariableDeclaration',

@@ -230,6 +230,8 @@ export default class Block {
 
 	get_contents(key?: any) {
 		const { dev, version } = this.renderer.options;
+		let k;
+		for (k in this.chunks) this.chunks[k] = this.chunks[k].filter(Boolean);
 
 		if (this.has_outros) {
 			this.add_variable({ type: 'Identifier', name: '#current' });
@@ -420,17 +422,17 @@ export default class Block {
 	}
 
 	has_content(): boolean {
-		return (
-			!!this.first ||
-			this.event_listeners.length > 0 ||
-			this.chunks.intro.length > 0 ||
-			this.chunks.outro.length > 0 ||
-			this.chunks.create.length > 0 ||
-			this.chunks.hydrate.length > 0 ||
-			this.chunks.claim.length > 0 ||
-			this.chunks.mount.length > 0 ||
-			this.chunks.update.length > 0 ||
-			this.chunks.destroy.length > 0 ||
+		return !!(
+			this.first ||
+			this.event_listeners.length ||
+			this.chunks.intro.length ||
+			this.chunks.outro.length ||
+			this.chunks.create.length ||
+			this.chunks.hydrate.length ||
+			this.chunks.claim.length ||
+			this.chunks.mount.length ||
+			this.chunks.update.length ||
+			this.chunks.destroy.length ||
 			this.has_animation
 		);
 	}
@@ -472,13 +474,13 @@ export default class Block {
 				this.chunks.destroy.push(b`${dispose}();`);
 			} else {
 				this.chunks.mount.push(b`
-					if (#remount) for(let #i=0;#i<${dispose}.length;#i++){ ${dispose}[#i];}
+					if (#remount) for(let #i=0;#i<${dispose}.length;#i++){ ${dispose}[#i](); }
 					${dispose} = [
 						${this.event_listeners}
 					];
 				`);
 
-				this.chunks.destroy.push(b`for(let #i=0;#i<${dispose}.length;#i++){ ${dispose}[#i];}`);
+				this.chunks.destroy.push(b`for(let #i=0;#i<${dispose}.length;#i++){ ${dispose}[#i](); }`);
 			}
 		}
 	}

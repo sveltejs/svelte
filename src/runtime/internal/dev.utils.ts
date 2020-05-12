@@ -1,5 +1,5 @@
 import { SvelteComponent } from './Component';
-import { now, has_Symbol } from './environment';
+import { now, has_Symbol } from 'svelte/environment';
 import { dev$assert } from './dev.tools';
 
 export const dev$is_array_like = (arg) =>

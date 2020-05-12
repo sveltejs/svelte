@@ -1,5 +1,5 @@
 import { dev$element, dev$block } from './dev.tools';
-import { is_client, is_cors } from './environment';
+import { is_cors } from 'svelte/environment';
 
 export function append(target: Node, node: Node) {
 	dev$element(node, `onMount`, { target });
@@ -341,18 +341,3 @@ export class HtmlTag {
 		this.n.forEach(detach);
 	}
 }
-
-export const hasOwnProperty = Object.prototype.hasOwnProperty;
-const nodeProto = Node.prototype;
-export const insertBefore = nodeProto.insertBefore;
-export const removeChild = nodeProto.removeChild;
-export const replaceChild = nodeProto.replaceChild;
-export const cloneNode = nodeProto.cloneNode;
-const elementProto = Element.prototype;
-export const setAttribute = elementProto.setAttribute;
-export const setAttributeNS = elementProto.setAttributeNS;
-export const removeAttribute = elementProto.removeAttribute;
-const getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-export const setClassName = getOwnPropertyDescriptor(elementProto, 'className').set;
-export const getStyle = getOwnPropertyDescriptor(HTMLElement.prototype, 'style').get;
-export const svg_getStyle = getOwnPropertyDescriptor(SVGElement.prototype, 'style').get;

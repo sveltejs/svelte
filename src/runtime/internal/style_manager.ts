@@ -1,22 +1,9 @@
 import { element } from './dom';
-import { raf } from './environment';
-const enum SVELTE {
+import { framerate } from 'svelte/environment';
+enum SVELTE {
 	RULE = `__svelte_`,
 	STYLESHEET = `__svelte_stylesheet`,
 	RULESET = `__svelte_rules`,
-}
-
-export let FRAME_RATE;
-export function calc_framerate() {
-	const f24 = 1000 / 24,
-		f60 = 1000 / 60,
-		f144 = 1000 / 144;
-	raf((t1) => {
-		raf((d) => {
-			FRAME_RATE = (d = d - t1) > f144 ? f144 : d < f24 ? f24 : d;
-		});
-	});
-	return (FRAME_RATE = f60);
 }
 interface ExtendedDoc extends Document {
 	[SVELTE.STYLESHEET]: CSSStyleSheet;
@@ -36,8 +23,9 @@ function add_rule(node): [CSSStyleSheet, Set<string>] {
 	}
 	return [ownerDocument[SVELTE.STYLESHEET], ownerDocument[SVELTE.RULESET]];
 }
-// https://github.com/darkskyapp/string-hash/blob/master/index.js
+
 function hash(str: string) {
+	// darkskyapp/string-hash
 	let hash = 5381;
 	let i = str.length;
 	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
@@ -50,21 +38,23 @@ const gen = (step, css) => {
 	const name = SVELTE.RULE + hash(rule);
 	return [name, `@keyframes ${name} ${rule}`];
 };
-export function animate_css(css: (t: number) => string, node: HTMLElement, duration: number, delay = 0) {
-	const [name, rule] = gen(Math.max(1 / 1000, (FRAME_RATE || calc_framerate()) / duration), css);
-	const [stylesheet, rules] = add_rule(node);
+function animate(this: HTMLElement, css: (t: number) => string, duration: number, delay = 0) {
+	const [name, rule] = gen(Math.max(1 / 1000, framerate / duration), css);
+	const [stylesheet, rules] = add_rule(this);
 	if (!rules.has(name)) {
 		rules.add(name);
 		stylesheet.insertRule(rule, stylesheet.cssRules.length);
 	}
-	const previous = node.style.animation;
-	node.style.animation =
-		(previous ? previous + ', ' : '') + `${duration}ms linear ${delay}ms 1 normal both running ${name}`;
+	const previous = this.style.animation;
+	this.style.animation = `${
+		previous ? `${previous}, ` : ''
+	} ${duration}ms linear ${delay}ms 1 normal both running ${name}`;
+
 	running_animations++;
 	return () => {
-		const prev = (node.style.animation || '').split(', ');
+		const prev = (this.style.animation || '').split(', ');
 		const next = prev.filter((anim) => !anim.includes(name));
-		if (prev.length !== next.length) node.style.animation = next.join(', ');
+		if (prev.length !== next.length) this.style.animation = next.join(', ');
 		if (--running_animations) return;
 		active_documents.forEach(({ [SVELTE.STYLESHEET]: stylesheet, [SVELTE.RULESET]: ruleset }) => {
 			let i = stylesheet.cssRules.length;
@@ -74,17 +64,4 @@ export function animate_css(css: (t: number) => string, node: HTMLElement, durat
 		active_documents.clear();
 	};
 }
-export function delete_rule(node: HTMLElement, name?: string) {
-	const previous = (node.style.animation || '').split(', ');
-	const next = previous.filter(
-		name
-			? (anim) => anim.indexOf(name) < 0 // remove specific animation
-			: (anim) => anim.indexOf(SVELTE.RULE) === -1 // remove all Svelte animations
-	);
-	const deleted = previous.length - next.length;
-	if (deleted) {
-		node.style.animation = next.join(', ');
-		running_animations -= deleted;
-		if (!active_documents) active_documents.clear();
-	}
-}
+export const animate_css = Function.prototype.call.bind(animate);

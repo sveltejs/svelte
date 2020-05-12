@@ -59,7 +59,7 @@ export function destroy_component({ $$ }, detaching: 0 | 1) {
 	if (null === $$.fragment) return;
 
 	for (let i = 0, { on_destroy } = $$; i < on_destroy.length; i++) on_destroy[i]();
-	if ($$.fragment) $$.fragment.d(detaching);
+	if (false !== $$.fragment) $$.fragment.d(detaching);
 
 	// TODO null out other refs, including component.$$
 	// (need to preserve final state?)

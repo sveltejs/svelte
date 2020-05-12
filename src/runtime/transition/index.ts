@@ -153,22 +153,30 @@ export function crossfade({
 		const dw = from.width / to.width;
 		const dh = from.height / to.height;
 		const { transform, opacity } = getComputedStyle(to_node);
+		const op = +opacity;
 		const prev = transform === 'none' ? '' : transform;
 		return {
 			delay,
 			easing,
 			duration: run_duration(duration, Math.sqrt(dx * dx + dy * dy)),
 			css: (t, u) => `
-				opacity: ${t * +opacity};
+				opacity: ${t * op};
 				transform-origin: top left;
 				transform: ${prev} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${t + (1 - t) * dh});
 			`,
 		} as TransitionConfig;
 	}
-	function transition(a: ElementMap, b: ElementMap, is_intro: boolean) {
-		return (node: Element, params: MarkedCrossFadeConfig) => {
-			const key = params.key;
-			a.set(key, node);
+	const transition = (a: ElementMap, b: ElementMap, is_intro: boolean) => (
+		node: Element,
+		params: MarkedCrossFadeConfig
+	) => {
+		const key = params.key;
+		a.set(key, node);
+		if (b.has(key)) {
+			const from_node = b.get(key);
+			b.delete(key);
+			return crossfade(from_node, node, params);
+		} else {
 			return () => {
 				if (b.has(key)) {
 					const from_node = b.get(key);
@@ -179,8 +187,8 @@ export function crossfade({
 					return fallback && fallback(node, params, is_intro);
 				}
 			};
-		};
-	}
+		}
+	};
 
 	return [transition(to_send, to_receive, false), transition(to_receive, to_send, true)];
 }
