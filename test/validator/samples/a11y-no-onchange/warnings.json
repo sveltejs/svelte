@@ -6,7 +6,7 @@
             "column": 9,
             "line": 4
         },
-        "message": "A11y: onBlur must be used instead of onchange, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.",
+        "message": "A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.",
         "pos": 0,
         "start": {
             "character": 0,
@@ -21,7 +21,7 @@
             "column": 44,
             "line": 10
         },
-        "message": "A11y: onBlur must be used instead of onchange, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.",
+        "message": "A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.",
         "pos": 209,
         "start": {
             "character": 209,
