@@ -677,6 +677,27 @@ Inputs that work together can use `bind:group`.
 <input type="checkbox" bind:group={fillings} value="Guac (extra)">
 ```
 
+---
+
+The Svelte compiler must be able to detect the `value` attribute for `bind:group` to work properly.
+
+This example uses spread attributes to set the `value` of each checkbox, but it will *not* work since the compiler can not see the `value` attribute.
+
+```sv
+<script>
+	let tortilla = 'Plain';
+	let tortillaInputs = [
+		{ value: 'Plain',  style: 'color:silver' },
+		{ value: 'Whole wheat',  style: 'color:wheat' },
+		{ value: 'Spinach',  style: 'color:lightgreen' },
+	];
+</script>
+
+{#each tortillaInputs as props}
+	<input type="radio" bind:group={tortilla} {...props}>
+{/each}
+```
+
 #### [bind:this](bind_element)
 
 ```sv
