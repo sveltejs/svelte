@@ -372,9 +372,7 @@ export default class ElementWrapper extends Wrapper {
 		if (renderer.options.dev) {
 			const loc = renderer.locate(this.node.start);
 			block.chunks.hydrate.push(
-				b`@add_location_dev$legacy(${this.var}, ${renderer.file_var}, ${loc.line - 1}, ${loc.column}, ${
-					this.node.start
-				});`
+				b`@add_location_dev(${this.var}, ${renderer.file_var}, ${loc.line - 1}, ${loc.column}, ${this.node.start});`
 			);
 		}
 	}

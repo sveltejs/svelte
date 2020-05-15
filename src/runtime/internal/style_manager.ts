@@ -7,7 +7,7 @@ const document_uid = new Map();
 const document_stylesheets = new Map();
 
 const current_rules = new Set();
-export const animate_css = Function.prototype.call.bind(function animate_css(
+export const animate_css = /*#__PURE__*/ Function.prototype.call.bind(function animate_css(
 	this: HTMLElement,
 	css: (t: number) => string,
 	duration: number,

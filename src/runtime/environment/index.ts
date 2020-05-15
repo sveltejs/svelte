@@ -20,7 +20,7 @@ export const resolved_promise = Promise.resolve();
 export let now = /*#__PURE__*/ is_browser ? performance.now.bind(performance) : Date.now.bind(Date);
 export let raf = /*#__PURE__*/ __TEST__ ? () => {} : is_browser ? requestAnimationFrame : noop;
 export let framerate = 1000 / 60;
-raf((t1) => {
+/*#__PURE__*/ raf((t1) => {
 	raf((d) => {
 		const f24 = 1000 / 24,
 			f144 = 1000 / 144;

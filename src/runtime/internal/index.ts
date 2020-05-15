@@ -1,9 +1,7 @@
 export * from './animations';
 export * from './await_block';
 export * from './Component';
-export * from './dev.legacy';
-export * from './dev.utils';
-export * from './dev.tools';
+export * from './dev';
 export * from './dom';
 export * from './keyed_each';
 export * from './lifecycle';
@@ -16,5 +14,5 @@ export * from './stores';
 export * from './transitions';
 export * from './utils';
 
-// todo; create_module.ts line 24; allow compiler to import non internal
+// todo: [create_module.ts line 24] allow compiler to import non internal
 export * from '../environment/index';

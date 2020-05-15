@@ -73,7 +73,7 @@ export function spring(
 	};
 	return obj;
 }
-export function tween<T>(
+export function tweened<T>(
 	value: T,
 	{
 		delay: default_delay = 0,

@@ -48,7 +48,6 @@ export const group_transition_out = (fn) => {
 	transition_group = transition_group.p;
 };
 
-/* todo: deprecate */
 const swap = (fn, rx) =>
 	fn.length === 1 ? (rx & tx.intro ? fn : (t) => fn(1 - t)) : rx & tx.intro ? (t) => fn(t, 1 - t) : (t) => fn(1 - t, t);
 
@@ -69,7 +68,7 @@ export enum tx {
 	bidirectional_outro = 6,
 	animation = 8,
 }
-export const run_transition = Function.prototype.call.bind(function transition(
+export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(function transition(
 	this: HTMLElement,
 	fn: TransitionFn,
 	rx: tx,
@@ -94,7 +93,7 @@ export const run_transition = Function.prototype.call.bind(function transition(
 	add_measure_callback(() => {
 		if (null === (config = fn(this, params))) return noop;
 		return (t) => {
-			if (false === running) return void (running = false);
+			if (false === running) return;
 			if ('then' in config) return void config.then(stop);
 
 			let { delay = 0, duration = 300, easing, tick, css, strategy = 'reverse' }: TransitionConfig =
@@ -160,7 +159,7 @@ export const run_transition = Function.prototype.call.bind(function transition(
 });
 
 const running_bidi: Map<HTMLElement, StopResetReverse> = new Map();
-export const run_bidirectional_transition = Function.prototype.call.bind(function bidirectional(
+export const run_bidirectional_transition = /*#__PURE__*/ Function.prototype.call.bind(function bidirectional(
 	this: HTMLElement,
 	fn: TransitionFn,
 	rx: tx.intro | tx.outro,

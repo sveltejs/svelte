@@ -102,12 +102,8 @@ export interface Warning {
 export type ModuleFormat = 'esm' | 'cjs';
 
 export interface CompileOptions {
-	/* bundler */
 	filename?: string;
-	version?: number;
 	format?: ModuleFormat;
-
-	/* Component class name */
 	name?: string;
 	generate?: string | false;
 

@@ -11,7 +11,7 @@ export interface AnimationConfig {
 
 type AnimationFn = (node: Element, { from, to }: { from: DOMRect; to: DOMRect }, params: any) => AnimationConfig;
 
-export const run_animation = Function.prototype.call.bind(function run_animation(
+export const run_animation = /*#__PURE__*/ Function.prototype.call.bind(function run_animation(
 	this: HTMLElement,
 	from: DOMRect,
 	fn: AnimationFn,
@@ -31,7 +31,7 @@ export const run_animation = Function.prototype.call.bind(function run_animation
 	);
 });
 
-export const fix_position = Function.prototype.call.bind(function fix_position(
+export const fix_position = /*#__PURE__*/ Function.prototype.call.bind(function fix_position(
 	this: HTMLElement,
 	{ left, top }: DOMRect
 ) {

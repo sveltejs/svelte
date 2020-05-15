@@ -172,7 +172,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.chunks.init.push(b`let ${each_block_value} = ${snippet};`);
 		if (__DEV__) {
-			block.chunks.init.push(b`@validate_each_argument(${each_block_value});`);
+			block.chunks.init.push(b`@is_array_like_dev(${each_block_value});`);
 		}
 
 		renderer.blocks.push(b`
@@ -341,9 +341,9 @@ export default class EachBlockWrapper extends Wrapper {
 			);
 
 		const validate_each_keys =
-			__DEV__ && b`@validate_each_keys(#ctx, ${each_block_value}, ${each_context_getter}, ${key_getter});`;
+			__DEV__ && b`@check_duplicate_keys_dev(#ctx, ${each_block_value}, ${each_context_getter}, ${key_getter});`;
 
-		const validate_each_argument = __DEV__ && b`@validate_each_argument(${each_block_value});`;
+		const validate_each_argument = __DEV__ && b`@is_array_like_dev(${each_block_value});`;
 
 		block.chunks.init.push(
 			b`const ${key_getter} = (#ctx) => ${this.node.key.manipulate(block)};`,
@@ -438,7 +438,7 @@ export default class EachBlockWrapper extends Wrapper {
 			this.updates.push(b`
 				${!has_update_method && b`const #old_length = ${each_block}.length;`}
 				${each_block_value} = ${snippet};
-				${__DEV__ && b`@validate_each_argument(${each_block_value});`}
+				${__DEV__ && b`@is_array_like_dev(${each_block_value});`}
 				let #i = ${start}, #block;
 				${for_loop(
 					each_block_value,

@@ -13,8 +13,8 @@ const measure_callbacks = [];
 const flush_callbacks = [];
 
 // todo : remove add_flush_callback
-export const add_flush_callback = Array.prototype.push.bind(flush_callbacks);
-export const add_measure_callback = Array.prototype.push.bind(measure_callbacks);
+export const add_flush_callback = /*#__PURE__*/ Array.prototype.push.bind(flush_callbacks);
+export const add_measure_callback = /*#__PURE__*/ Array.prototype.push.bind(measure_callbacks);
 
 const seen_render_callbacks = new Set();
 export const add_render_callback = (fn) => {

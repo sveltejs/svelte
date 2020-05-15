@@ -1,18 +1,14 @@
-import { dev$element, dev$block } from './dev.tools';
 import { is_cors } from 'svelte/environment';
 
 export function append(target: Node, node: Node) {
-	dev$element(node, `onMount`, { target });
 	target.appendChild(node);
 }
 
 export function insert(target: Node, node: Node, anchor?: Node) {
-	dev$element(node, `onMount`, { target, anchor });
 	target.insertBefore(node, anchor || null);
 }
 
 export function detach(node: Node) {
-	dev$element(node, `onDestroy`);
 	node.parentNode.removeChild(node);
 }
 
@@ -21,14 +17,11 @@ export function destroy_each(iterations, detaching) {
 		if (iterations[i]) iterations[i].d(detaching);
 	}
 }
-const dev$create = <K>(elem: K) => (dev$block(`create`, elem), elem);
 export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
-	if (__DEV__) return dev$create(document.createElement<K>(name));
 	return document.createElement<K>(name);
 }
 
 export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: string) {
-	if (__DEV__) return dev$create(document.createElement<K>(name));
 	return document.createElement<K>(name, { is });
 }
 export function object_without_properties<T, K extends string[]>(obj: T, excluded: K) {
@@ -39,12 +32,10 @@ export function object_without_properties<T, K extends string[]>(obj: T, exclude
 }
 
 export function svg_element<K extends keyof SVGElementTagNameMap>(name: K): SVGElement {
-	if (__DEV__) return dev$create(document.createElementNS<K>('http://www.w3.org/2000/svg', name));
 	return document.createElementNS<K>('http://www.w3.org/2000/svg', name);
 }
 
 export function text(data: string) {
-	if (__DEV__) return dev$create(document.createTextNode(data));
 	return document.createTextNode(data);
 }
 
@@ -61,15 +52,6 @@ export function listen(
 	handler: EventListenerOrEventListenerObject,
 	options?: boolean | AddEventListenerOptions | EventListenerOptions
 ) {
-	if (__DEV__) {
-		const reference = { event, handler };
-		dev$element(node, `addEventListener`, reference);
-		node.addEventListener(event, handler, options);
-		return () => {
-			dev$element(node, `removeEventListener`, reference);
-			node.removeEventListener(event, handler, options);
-		};
-	}
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
 }
@@ -99,10 +81,8 @@ export function self(fn) {
 
 export function attr(node: Element, name: string, value?: any) {
 	if (value == null) {
-		dev$element(node, `removeAttribute`, { name });
 		node.removeAttribute(name);
 	} else if (node.getAttribute(name) !== value) {
-		dev$element(node, `setAttribute`, { name, value });
 		node.setAttribute(name, value);
 	}
 }
@@ -113,13 +93,10 @@ export function set_attributes(node: HTMLElement, attributes: { [x: string]: any
 	let name;
 	for (name in attributes) {
 		if (attributes[name] == null) {
-			dev$element(node, `removeAttribute`, { name });
 			node.removeAttribute(name);
 		} else if (name === 'style') {
-			dev$element(node, `setAttribute`, { name, value: attributes[name] });
 			node.style.cssText = attributes[name];
 		} else if (name === '__value' || (descriptors[name] && descriptors[name].set)) {
-			dev$element(node, `setAttribute`, { name, value: attributes[name] });
 			node[name] = attributes[name];
 		} else {
 			attr(node, name, attributes[name]);
@@ -136,7 +113,6 @@ export function set_svg_attributes(node: SVGElement, attributes: { [x: string]: 
 
 export function set_custom_element_data(node, name, value) {
 	if (name in node) {
-		dev$element(node, `setAttribute`, { name, value });
 		node[name] = value;
 	} else {
 		attr(node, name, value);
@@ -144,7 +120,6 @@ export function set_custom_element_data(node, name, value) {
 }
 
 export function xlink_attr(node: Element, name, value) {
-	dev$element(node, `setAttribute`, { name, value });
 	node.setAttributeNS('http://www.w3.org/1999/xlink', name, value);
 }
 
@@ -178,20 +153,16 @@ export function claim_element(nodes, name, attributes, is_svg) {
 				if (attributes[(a = n.attributes[j]).name]) j++;
 				else n.removeAttribute(a.name);
 			}
-			dev$block(`claim`, n);
 			return nodes.splice(i, 1)[0];
 		}
-	dev$block(`claim.failed`, name);
 	return is_svg ? svg_element(name) : element(name);
 }
 
 export function claim_text(nodes, data) {
 	for (let i = 0, n; i < nodes.length; i += 1)
 		if ((n = nodes[i]).nodeType === 3) {
-			dev$block(`claim`, n);
 			return (n.data = '' + data), nodes.splice(i, 1)[0];
 		}
-	dev$block(`claim.failed`, 'text');
 	return text(data);
 }
 
@@ -202,33 +173,28 @@ export function claim_space(nodes) {
 export function set_data(text, data) {
 	if (text.data !== (data = '' + data)) {
 		text.data = data;
-		dev$element(text, `setAttribute`, { name: 'data', value: data });
 	}
 }
 
 export function set_input_value(input, value) {
 	if (value != null || input.value) {
 		input.value = value;
-		dev$element(input, `setAttribute`, { name: 'value', value });
 	}
 }
 
 export function set_input_type(input, type) {
 	try {
 		input.type = type;
-		dev$element(input, `setAttribute`, { name: 'type', value: type });
 	} catch (e) {}
 }
 
 export function set_style(node, property, value, is_important?) {
-	dev$element(node, `setAttribute`, { name: 'style', property, value });
 	node.style.setProperty(property, value, is_important ? 'important' : '');
 }
 
 export function select_option(select, value) {
 	for (let i = 0, o; i < select.options.length; i += 1) {
 		if ((o = select.options[i]).__value === value) {
-			dev$element(o, `setAttribute`, { name: 'selected', value: true });
 			o.selected = true;
 			return;
 		}
@@ -237,13 +203,6 @@ export function select_option(select, value) {
 
 export function select_options(select, value) {
 	for (let i = 0, o; i < select.options.length; i += 1) {
-		if (__DEV__) {
-			dev$element((o = select.options[i]), `setAttribute`, {
-				name: 'selected',
-				value: (o = select.options[i]).selected = ~value.indexOf(o.__value),
-			});
-			continue;
-		}
 		(o = select.options[i]).selected = ~value.indexOf(o.__value);
 	}
 }
@@ -297,7 +256,6 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 }
 
 export function toggle_class(element, name, toggle) {
-	dev$element(element, toggle ? 'addClass' : 'removeClass', { name });
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 

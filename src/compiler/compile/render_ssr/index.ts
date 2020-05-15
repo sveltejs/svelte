@@ -42,7 +42,7 @@ export default function ssr(component: Component, options: CompileOptions): { js
 			if (store && store.hoistable) return null;
 			const assignment = b`${store_name}.subscribe(#v=>{${name}=#v})();`;
 			return component.compile_options.dev
-				? b`@validate_store(${store_name}, '${store_name}'); ${assignment}`
+				? b`@validate_store_dev(${store_name}, '${store_name}'); ${assignment}`
 				: assignment;
 		})
 		.filter(Boolean);
@@ -50,7 +50,7 @@ export default function ssr(component: Component, options: CompileOptions): { js
 	component.rewrite_props(
 		({ name }) =>
 			b`${
-				component.compile_options.dev && b`@validate_store(${name}, '${name}');`
+				component.compile_options.dev && b`@validate_store_dev(${name}, '${name}');`
 			}${name}.subscribe((#v)=>{$${name}=#v})()`
 	);
 

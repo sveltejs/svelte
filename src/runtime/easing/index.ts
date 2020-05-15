@@ -1,5 +1,3 @@
-import { dev$assert } from 'svelte/internal';
-
 export const linear = (t: number) => t;
 export const quadIn = (t: number) => t ** 2;
 export const quadOut = (t: number) => 1.0 - (1.0 - t) ** 2;
@@ -49,10 +47,9 @@ export const circOut = (t: number) => Math.sin(Math.acos(1.0 - t));
 export const circInOut = (t: number) =>
 	0.5 * (t >= 0.5 ? 2.0 - Math.sin(Math.acos(1.0 - 2.0 * (1.0 - t))) : Math.sin(Math.acos(1.0 - 2.0 * t)));
 export const cubicBezier = (x1: number, y1: number, x2: number, y2: number) => {
-	dev$assert(
-		x1 >= 0 && x1 <= 1 && x2 >= 0 && x2 <= 1,
-		`CubicBezier x1 & x2 values must be { 0 < x < 1 }, got { x1 : ${x1}, x2: ${x2} }`
-	);
+	if (!(x1 >= 0 && x1 <= 1 && x2 >= 0 && x2 <= 1)) {
+		throw new Error(`CubicBezier x1 & x2 values must be { 0 < x < 1 }, got { x1 : ${x1}, x2: ${x2} }`);
+	}
 	const ax = 1.0 - (x2 = 3.0 * (x2 - x1) - (x1 = 3.0 * x1)) - x1,
 		ay = 1.0 - (y2 = 3.0 * (y2 - y1) - (y1 = 3.0 * y1)) - y1;
 	let i = 0,

@@ -229,7 +229,7 @@ export default class Block {
 	}
 
 	get_contents(key?: any) {
-		const { dev, version } = this.renderer.options;
+		const { dev } = this.renderer.options;
 		let k;
 		for (k in this.chunks) this.chunks[k] = this.chunks[k].filter(Boolean);
 
@@ -403,8 +403,8 @@ export default class Block {
 					? b`
 					const ${block} = ${return_value};
 					${
-						version < 3.22 &&
-						b`@dispatch_dev$legacy("SvelteRegisterBlock", {
+						dev &&
+						b`@dispatch_dev("SvelteRegisterBlock", {
 						block: ${block},
 						id: ${this.name || 'create_fragment'}.name,
 						type: "${this.type}",

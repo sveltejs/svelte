@@ -267,7 +267,7 @@ export default function dom(component: Component, options: CompileOptions): { js
 					: b`$$self.$$.on_destroy.push(@subscribe(${name}, #value => $$invalidate(${i}, ${value} = #value)));`;
 
 			if (component.compile_options.dev) {
-				return b`@validate_store(${name}, '${name}'); ${insert}`;
+				return b`@validate_store_dev(${name}, '${name}'); ${insert}`;
 			}
 
 			return insert;
@@ -342,7 +342,7 @@ export default function dom(component: Component, options: CompileOptions): { js
 		})
 		.map(
 			({ name }) => b`
-			${component.compile_options.dev && b`@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
+			${component.compile_options.dev && b`@validate_store_dev(${name.slice(1)}, '${name.slice(1)}');`}
 			$$self.$$.on_destroy.push(@subscribe(${name.slice(1)}, #value => $$invalidate(${
 				renderer.context_lookup.get(name).index
 			}, ${name} = #value));
@@ -443,7 +443,7 @@ export default function dom(component: Component, options: CompileOptions): { js
 				${component.slots.size || component.compile_options.dev ? b`let { $$slots = {}, $$scope } = $$props;` : null}
 				${
 					component.compile_options.dev &&
-					b`@validate_slots('${component.tag}', $$slots, [${[...component.slots.keys()]
+					b`@validate_slots_dev('${component.tag}', $$slots, [${[...component.slots.keys()]
 						.map((key) => `'${key}'`)
 						.join(',')}]);`
 				}
@@ -562,8 +562,7 @@ export default function dom(component: Component, options: CompileOptions): { js
 		}, ${not_equal}, ${prop_indexes}, ${dirty});
 					${
 						options.dev &&
-						options.version < 3.22 &&
-						b`@dispatch_dev$legacy("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`
+						b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`
 					}
 
 					${dev_props_check}

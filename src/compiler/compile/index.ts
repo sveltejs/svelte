@@ -8,7 +8,6 @@ import fuzzymatch from '../utils/fuzzymatch';
 import get_name_from_filename from './utils/get_name_from_filename';
 
 const valid_options = [
-	'version',
 	'format',
 	'name',
 	'filename',
@@ -68,7 +67,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = { generate: 'dom', dev: null, version: 3, ...options };
+	options = { generate: 'dom', dev: null, ...options };
 
 	const stats = new Stats();
 	const warnings = [];
