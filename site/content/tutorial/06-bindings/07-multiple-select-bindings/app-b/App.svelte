@@ -41,13 +41,13 @@
 	{/each}
 </select>
 
-{#if flavours.length === 0}
-	<p>Please select at least one flavour</p>
-{:else if flavours.length > scoops}
-	<p>Can't order more flavours than scoops!</p>
-{:else}
-	<p>
+<p>
+	{#if flavours.length === 0}
+		Please select at least one flavour
+	{:else if flavours.length > scoops}
+		Can't order more flavours than scoops!
+	{:else}
 		You ordered {scoops} {scoops === 1 ? 'scoop' : 'scoops'}
 		of {join(flavours)}
-	</p>
-{/if}
+	{/if}
+</p>
