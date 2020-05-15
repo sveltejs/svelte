@@ -4,7 +4,8 @@ import * as fs from 'fs';
 import { rollup } from 'rollup';
 import * as virtual from '@rollup/plugin-virtual';
 import * as glob from 'tiny-glob/sync.js';
-import { clear_loops, flush, set_now, set_raf } from '../../internal';
+import { clear_loops, flush } from '../../internal';
+import { set_now, set_raf } from '../../environment';
 
 import { showOutput, loadConfig, loadSvelte, cleanRequireCache, env, setupHtmlEqual, mkdirp } from '../helpers.js';
 

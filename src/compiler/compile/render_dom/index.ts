@@ -88,7 +88,7 @@ export default function dom(component: Component, options: CompileOptions): { js
 				${
 					uses_any &&
 					b`
-					${!uses_rest && x`let #k;`}
+					${!uses_rest && `let #k`}
 					for (#k in $$new_props) if ($$new_props[#k][0] !== '$') $$props[k] = $$new_props[k];
 					${uses_rest && compute_rest}
 					${renderer.invalidate(uses_props ? '$$props' : '$$restProps')}
@@ -264,7 +264,7 @@ export default function dom(component: Component, options: CompileOptions): { js
 			const insert =
 				reassigned || export_name
 					? b`${`$$subscribe_${name}`}();`
-					: b`$$self.$$.on_destroy.push(@subscribe(${name}, #value => $$invalidate(${i}, ${value} = #value)));`;
+					: b`$$self.$$.on_destroy.push(@subscribe(${name}, (#value) => $$invalidate(${i}, ${value} = #value)));`;
 
 			if (component.compile_options.dev) {
 				return b`@validate_store_dev(${name}, '${name}'); ${insert}`;
@@ -343,9 +343,9 @@ export default function dom(component: Component, options: CompileOptions): { js
 		.map(
 			({ name }) => b`
 			${component.compile_options.dev && b`@validate_store_dev(${name.slice(1)}, '${name.slice(1)}');`}
-			$$self.$$.on_destroy.push(@subscribe(${name.slice(1)}, #value => $$invalidate(${
-				renderer.context_lookup.get(name).index
-			}, ${name} = #value));
+			$$self.$$.on_destroy.push(@subscribe(${name.slice(1)}, (#value) => {
+				$$invalidate(${renderer.context_lookup.get(name).index}, (${name} = #value));
+			});
 		`
 		);
 
@@ -466,7 +466,12 @@ export default function dom(component: Component, options: CompileOptions): { js
 
 				${fixed_reactive_declarations}
 
-				${uses_props && b`let #k;for (#k in $$props) if ($$props[#k][0] === '$') delete $$props[#k];`}
+				${
+					uses_props &&
+					b`
+					let #k;
+					for (#k in $$props) if ($$props[#k][0] === '$') delete $$props[#k];`
+				}
 
 				return ${return_value};
 			}

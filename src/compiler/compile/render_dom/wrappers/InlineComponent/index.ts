@@ -242,7 +242,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						initial_props.push(value);
 						change_object =
 							attr.expression.node.type !== 'ObjectExpression'
-								? x`(typeof ${value} === 'object' && ${value} !== null ? ${value} : {})`
+								? b`(typeof ${value} === 'object' && ${value} !== null ? ${value} : {})`
 								: value;
 					} else {
 						const obj = x`{ ${name}: ${attr.get_value(block)} }`;

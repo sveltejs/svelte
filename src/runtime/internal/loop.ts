@@ -107,4 +107,4 @@ export const onEachFrame = (
 
 /** tests only */
 export const clear_loops = () =>
-	void (next_frame.length = running_frame.length = timed_tasks.length = pending_insert_timed.length = n = +(running_timed = pending_inserts = false));
+	void (next_frame.length = running_frame.length = timed_tasks.length = pending_insert_timed.length = n = i = j = +(running_timed = pending_inserts = false));

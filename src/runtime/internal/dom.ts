@@ -212,7 +212,7 @@ export function select_value(select) {
 }
 
 export function select_multiple_value(select) {
-	return [].map.call(select.querySelectorAll(':checked'), (option) => option.__value);
+	return [].map.call(select.querySelectorAll(':checked'), (option: any) => option.__value);
 }
 
 export function add_resize_listener(node: HTMLElement, fn: () => void) {

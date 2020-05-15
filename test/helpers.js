@@ -47,14 +47,14 @@ export function tryToReadFile(file) {
 
 export function cleanRequireCache() {
 	Object.keys(require.cache)
-		.filter(x => x.endsWith('.svelte'))
-		.forEach(file => delete require.cache[file]);
+		.filter((x) => x.endsWith('.svelte'))
+		.forEach((file) => delete require.cache[file]);
 }
 
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 
-const window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
+const window = new jsdom.JSDOM('<main></main>', { virtualConsole }).window;
 global.document = window.document;
 global.navigator = window.navigator;
 global.getComputedStyle = window.getComputedStyle;
@@ -67,7 +67,7 @@ for (const key of Object.getOwnPropertyNames(global)) {
 }
 
 // implement mock scroll
-window.scrollTo = function(pageXOffset, pageYOffset) {
+window.scrollTo = function (pageXOffset, pageYOffset) {
 	window.pageXOffset = pageXOffset;
 	window.pageYOffset = pageYOffset;
 };
@@ -88,23 +88,19 @@ function cleanChildren(node) {
 		return a.name < b.name ? -1 : 1;
 	});
 
-	attributes.forEach(attr => {
+	attributes.forEach((attr) => {
 		node.removeAttribute(attr.name);
 	});
 
-	attributes.forEach(attr => {
+	attributes.forEach((attr) => {
 		node.setAttribute(attr.name, attr.value);
 	});
 
 	// recurse
-	[...node.childNodes].forEach(child => {
+	[...node.childNodes].forEach((child) => {
 		if (child.nodeType === 3) {
 			// text
-			if (
-				node.namespaceURI === 'http://www.w3.org/2000/svg' &&
-				node.tagName !== 'text' &&
-				node.tagName !== 'tspan'
-			) {
+			if (node.namespaceURI === 'http://www.w3.org/2000/svg' && node.tagName !== 'text' && node.tagName !== 'tspan') {
 				node.removeChild(child);
 			}
 
@@ -154,11 +150,7 @@ export function setupHtmlEqual() {
 	const window = env();
 
 	assert.htmlEqual = (actual, expected, message) => {
-		assert.deepEqual(
-			normalizeHtml(window, actual),
-			normalizeHtml(window, expected),
-			message
-		);
+		assert.deepEqual(normalizeHtml(window, actual), normalizeHtml(window, expected), message);
 	};
 }
 
@@ -185,27 +177,25 @@ export function addLineNumbers(code) {
 			i = String(i + 1);
 			while (i.length < 3) i = ` ${i}`;
 
-			return (
-				colors.gray(`  ${i}: `) +
-				line.replace(/^\t+/, match => match.split('\t').join('    '))
-			);
+			return colors.gray(`  ${i}: `) + line.replace(/^\t+/, (match) => match.split('\t').join('    '));
 		})
 		.join('\n');
 }
 
 export function showOutput(cwd, options = {}, compile = svelte.compile) {
-	glob('**/*.svelte', { cwd }).forEach(file => {
+	glob('**/*.svelte', { cwd }).forEach((file) => {
 		if (file[0] === '_') return;
 
 		try {
 			const { js } = compile(
 				fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 				Object.assign(options, {
-					filename: file
+					filename: file,
 				})
 			);
 
-			console.log( // eslint-disable-line no-console
+			console.log(
+				// eslint-disable-line no-console
 				`\n>> ${colors.cyan().bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors.cyan().bold(file)}`
 			);
 		} catch (err) {
@@ -230,19 +220,19 @@ const original_set_timeout = global.setTimeout;
 export function useFakeTimers() {
 	const callbacks = [];
 
-	global.setTimeout = function(fn) {
+	global.setTimeout = function (fn) {
 		callbacks.push(fn);
 	};
 
 	return {
 		flush() {
-			callbacks.forEach(fn => fn());
+			callbacks.forEach((fn) => fn());
 			callbacks.splice(0, callbacks.length);
 		},
 		removeFakeTimers() {
 			callbacks.splice(0, callbacks.length);
 			global.setTimeout = original_set_timeout;
-		}
+		},
 	};
 }
 

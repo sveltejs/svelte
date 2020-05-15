@@ -725,7 +725,7 @@ export default class ElementWrapper extends Wrapper {
 		block.add_variable(outro_var, x`@noop`);
 
 		let start_outro = b`${outro_var} = @run_transition(${node}, ${transitionFn}, 2, ${params});`;
-		if (intro.is_local) start_outro = b`if (#local) ${start_outro};`;
+		if (outro.is_local) start_outro = b`if (#local) ${start_outro};`;
 		block.chunks.outro.push(start_outro);
 
 		block.chunks.destroy.push(b`if (detaching) ${outro_var}();`);

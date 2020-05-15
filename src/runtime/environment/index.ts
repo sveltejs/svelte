@@ -1,6 +1,6 @@
 import { noop } from '../internal/utils';
 export const is_browser = typeof window !== 'undefined';
-export const is_iframe = /*#__PURE__*/ is_browser && window.self !== window.top;
+export const is_iframe = is_browser && window.self !== window.top;
 export const is_cors =
 	is_iframe &&
 	/*#__PURE__*/ (() => {
@@ -17,8 +17,8 @@ declare var global: any;
 export const globals = is_browser ? window : typeof globalThis !== 'undefined' ? globalThis : global;
 export const resolved_promise = Promise.resolve();
 
-export let now = /*#__PURE__*/ is_browser ? performance.now.bind(performance) : Date.now.bind(Date);
-export let raf = /*#__PURE__*/ __TEST__ ? () => {} : is_browser ? requestAnimationFrame : noop;
+export let now = is_browser ? () => performance.now() : Date.now.bind(Date);
+export let raf = is_browser ? requestAnimationFrame : noop;
 export let framerate = 1000 / 60;
 /*#__PURE__*/ raf((t1) => {
 	raf((d) => {
@@ -29,5 +29,5 @@ export let framerate = 1000 / 60;
 });
 
 /* tests only */
-export const test$set_now = (fn) => void (now = fn);
-export const test$set_raf = (fn) => void (raf = fn);
+export const set_now = (fn) => void (now = fn);
+export const set_raf = (fn) => void (raf = fn);
