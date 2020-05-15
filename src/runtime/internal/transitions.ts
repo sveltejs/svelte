@@ -5,9 +5,10 @@ import { now } from 'svelte/environment';
 import { setFrameTimeout, setTweenTimeout } from './loop';
 import { add_measure_callback } from './scheduler';
 import { animate_css } from './style_manager';
+import { noop } from './utils';
 
 type TransitionFn = (node: HTMLElement, params: any) => TransitionConfig;
-export type StopResetReverse = (reset_reverse?: 1 | -1) => StopResetReverse;
+export type StopResetReverse = (t?: number | -1) => StopResetReverse | void;
 
 export const transition_in = (block: Fragment, local?) => {
 	if (!block || !block.i) return;
@@ -46,72 +47,78 @@ export const group_transition_out = (fn) => {
 	check_transition_group(current_group, false);
 	transition_group = transition_group.p;
 };
-// todo : deprecate
-function startStopDispatcher(node: Element, is_intro: boolean) {
-	node.dispatchEvent(custom_event(`${is_intro ? 'intro' : 'outro'}start`));
-	return () => node.dispatchEvent(custom_event(`${is_intro ? 'intro' : 'outro'}end`));
-}
 
 /* todo: deprecate */
-const swap = (fn, is_intro) =>
-	fn.length === 1 ? (is_intro ? fn : (t) => fn(1 - t)) : is_intro ? (t) => fn(t, 1 - t) : (t) => fn(1 - t, t);
+const swap = (fn, rx) =>
+	fn.length === 1 ? (rx & tx.intro ? fn : (t) => fn(1 - t)) : rx & tx.intro ? (t) => fn(t, 1 - t) : (t) => fn(1 - t, t);
 
-const mirrored = (fn, is_intro, easing) => {
-	const run = swap(fn, is_intro);
-	return easing ? (!is_intro ? (t) => run(1 - easing(1 - t)) : (t) => run(easing(t))) : run;
+const mirrored = (fn, rx, easing) => {
+	const run = swap(fn, rx);
+	return easing ? (rx & tx.intro ? (t) => run(easing(t)) : (t) => run(1 - easing(1 - t))) : run;
 };
-
-const reversed = (fn, is_intro, easing, start = 0, end = 1) => {
-	const run = swap(fn, is_intro);
+const reversed = (fn, rx, easing, start = 0, end = 1) => {
+	const run = swap(fn, rx);
 	const difference = end - start;
 	return easing ? (t) => run(start + difference * easing(t)) : (t) => run(start + difference * t);
 };
-
-export const run_transition = (
-	node: HTMLElement,
+export enum tx {
+	intro = 1,
+	outro = 2,
+	bidirectional = 4,
+	bidirectional_intro = 5,
+	bidirectional_outro = 6,
+	animation = 8,
+}
+export const run_transition = Function.prototype.call.bind(function transition(
+	this: HTMLElement,
 	fn: TransitionFn,
-	is_intro = true,
+	rx: tx,
 	params = {},
 	/* internal to this file */
-	is_bidirectional = false,
 	elapsed_duration = 0,
 	delay_left = -1,
 	elapsed_ratio = 0
-) => {
+) {
 	let config;
 	let running = true;
 
 	let cancel_css;
 	let cancel_raf;
-	let dispatch_end;
 
 	let start_time = 0;
 	let end_time = 0;
 
 	const current_group = transition_group;
-	if (!is_intro) transition_group.r++;
+	if (rx & tx.outro) current_group.r++;
 
-	const start = ({ delay = 0, duration = 300, easing, tick, css, strategy = 'reverse' }: TransitionConfig) => {
-		if (!running) return;
+	add_measure_callback(() => {
+		if (null === (config = fn(this, params))) return noop;
+		return (t) => {
+			if (false === running) return void (running = false);
+			if ('then' in config) return void config.then(stop);
 
-		if (~delay_left) delay = delay_left;
+			let { delay = 0, duration = 300, easing, tick, css, strategy = 'reverse' }: TransitionConfig =
+				'function' === typeof config ? (config = config()) : config;
 
-		const solver = strategy === 'reverse' ? reversed : mirrored;
-		const runner = (fn) => solver(fn, is_intro, easing, elapsed_ratio, 1);
+			const solver = 'reverse' === strategy ? reversed : mirrored;
+			const runner = (fn) => solver(fn, rx, easing, elapsed_ratio, 1);
 
-		if (solver === reversed) {
-			duration -= elapsed_duration;
-		} else if (solver === mirrored) {
-			delay -= elapsed_duration;
-		}
+			if (rx & tx.bidirectional) {
+				if (-1 !== delay_left) delay = delay_left;
+				if (solver === reversed) duration -= elapsed_duration;
+				else if (solver === mirrored) delay -= elapsed_duration;
+			}
 
-		end_time = (start_time = now() + delay) + duration;
+			end_time = (start_time = t + delay) + duration;
 
-		dispatch_end = startStopDispatcher(node, is_intro);
+			if (0 === (rx & tx.animation)) {
+				this.dispatchEvent(custom_event(`${rx & tx.intro ? 'in' : 'ou'}trostart`));
+			}
 
-		if (css) cancel_css = animate_css(node, runner(css), duration, delay);
-		cancel_raf = tick ? setTweenTimeout(stop, end_time, runner(tick), duration) : setFrameTimeout(stop, end_time);
-	};
+			if (css) cancel_css = animate_css(this, runner(css), duration, delay);
+			cancel_raf = tick ? setTweenTimeout(stop, end_time, runner(tick), duration) : setFrameTimeout(stop, end_time);
+		};
+	});
 
 	const stop: StopResetReverse = (t?: number | 1 | -1) => {
 		if (!running) return;
@@ -119,49 +126,53 @@ export const run_transition = (
 
 		if (cancel_css) cancel_css();
 		if (cancel_raf) cancel_raf();
-		if (t > end_time) {
-			if (dispatch_end) {
-				dispatch_end();
+
+		if (0 === (rx & tx.animation)) {
+			if (t >= end_time) {
+				this.dispatchEvent(custom_event(`${rx & tx.intro ? 'in' : 'ou'}troend`));
+			}
+			if (rx & tx.outro) {
+				check_transition_group(current_group);
 			}
 		}
 
-		if (!is_intro) check_transition_group(current_group);
-
-		if (is_bidirectional) {
+		if (rx & tx.bidirectional) {
 			if (-1 === t) {
 				return (
 					(t = now()) < end_time &&
 					run_transition(
-						node,
+						this,
 						() => config,
-						!is_intro,
+						rx ^ 1,
 						params,
-						true,
 						end_time - t,
 						start_time > t ? start_time - t : 0,
 						(1 - elapsed_ratio) * (1 - config.easing(1 - (end_time - t) / (end_time - start_time)))
 					)
 				);
 			} else {
-				running_bidi.delete(node);
+				running_bidi.delete(this);
 			}
 		}
 	};
 
-	add_measure_callback(() => {
-		config = fn(node, params);
-		return () => start(typeof config === 'function' ? (config = config()) : config);
-	});
-
 	return stop;
-};
+});
 
 const running_bidi: Map<HTMLElement, StopResetReverse> = new Map();
-export const run_bidirectional_transition = (node: HTMLElement, fn: TransitionFn, is_intro: boolean, params: any) => {
+export const run_bidirectional_transition = Function.prototype.call.bind(function bidirectional(
+	this: HTMLElement,
+	fn: TransitionFn,
+	rx: tx.intro | tx.outro,
+	params: any
+) {
 	let cancel;
-	if (running_bidi.has(node) && (cancel = running_bidi.get(node)(-1))) running_bidi.set(node, cancel);
-	else running_bidi.set(node, (cancel = run_transition(node, fn, is_intro, params, true)));
+	running_bidi.set(
+		this,
+		(cancel =
+			(running_bidi.has(this) && running_bidi.get(this)(-1)) || run_transition(this, fn, rx | tx.bidirectional, params))
+	);
 	return cancel;
-};
-export const run_duration = (duration, ...args): number =>
-	typeof duration === 'function' ? duration.apply(null, args) : duration;
+});
+export const run_duration = (duration, value1, value2?): number =>
+	typeof duration === 'function' ? duration(value1, value2) : duration;

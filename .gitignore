@@ -10,7 +10,7 @@ node_modules
 /animate
 /dev
 /easing
-/environment
+/environment/
 /internal
 /interpolate
 /motion

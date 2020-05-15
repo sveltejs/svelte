@@ -1,5 +1,5 @@
 import { set_current_component } from './lifecycle';
-import { resolved_promise } from 'svelte/environment';
+import { resolved_promise, now } from 'svelte/environment';
 import { T$$ } from './Component';
 
 let update_scheduled = false;
@@ -43,6 +43,7 @@ export const flush = () => {
 
 	let i = 0,
 		j = 0,
+		t = 0,
 		$$: T$$,
 		dirty,
 		before_update,
@@ -74,7 +75,7 @@ export const flush = () => {
 		}
 		dirty_components.length = 0;
 
-		// update bindings [ in reverse order (#3145); is there a better way ? ]
+		// update bindings [ ...in reverse order (#3145) ]
 		i = binding_callbacks.length;
 		while (i--) binding_callbacks[i]();
 		binding_callbacks.length = i = 0;
@@ -95,7 +96,7 @@ export const flush = () => {
 
 	// apply styles
 	// todo : remove every non style callback from flush_callbacks
-	for (; i < j; i++) flush_callbacks[i]();
+	for (t = now(); i < j; i++) flush_callbacks[i](t);
 	flush_callbacks.length = i = j = 0;
 
 	is_flushing = false;

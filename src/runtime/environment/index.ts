@@ -12,11 +12,13 @@ export const is_cors =
 		}
 	})();
 export const has_Symbol = typeof Symbol === 'function';
+
+declare var global: any;
 export const globals = is_browser ? window : typeof globalThis !== 'undefined' ? globalThis : global;
 export const resolved_promise = Promise.resolve();
 
 export let now = /*#__PURE__*/ is_browser ? performance.now.bind(performance) : Date.now.bind(Date);
-export let raf = /*#__PURE__*/ is_browser ? requestAnimationFrame : noop;
+export let raf = /*#__PURE__*/ __TEST__ ? () => {} : is_browser ? requestAnimationFrame : noop;
 export let framerate = 1000 / 60;
 raf((t1) => {
 	raf((d) => {

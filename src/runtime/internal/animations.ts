@@ -11,38 +11,42 @@ export interface AnimationConfig {
 
 type AnimationFn = (node: Element, { from, to }: { from: DOMRect; to: DOMRect }, params: any) => AnimationConfig;
 
-export function run_animation(node: HTMLElement, from: DOMRect, fn: AnimationFn, params) {
+export const run_animation = Function.prototype.call.bind(function run_animation(
+	this: HTMLElement,
+	from: DOMRect,
+	fn: AnimationFn,
+	params = {}
+) {
 	if (!from) return noop;
 	return run_transition(
-		node,
-		(node, params) => fn(node, { from, to: node.getBoundingClientRect() }, params),
-		true,
+		this,
+		(_, params) => {
+			const to = this.getBoundingClientRect();
+			if (from.left !== to.left || from.right !== to.right || from.top !== to.top || from.bottom !== to.bottom) {
+				return fn(this, { from, to }, params);
+			} else return null;
+		},
+		9,
 		params
 	);
-}
+});
 
-export function fix_position(node: HTMLElement, { left, top }: DOMRect) {
-	const { position, width, height, transform } = getComputedStyle(node);
+export const fix_position = Function.prototype.call.bind(function fix_position(
+	this: HTMLElement,
+	{ left, top }: DOMRect
+) {
+	const { position, width, height, transform } = getComputedStyle(this);
 	if (position === 'absolute' || position === 'fixed') return noop;
-	const { position: og_position, width: og_width, height: og_height } = node.style;
-	node.style.position = 'absolute';
-	node.style.width = width;
-	node.style.height = height;
-	const b = node.getBoundingClientRect();
-	node.style.transform = `${transform === 'none' ? '' : transform} translate(${left - b.left}px, ${top - b.top}px)`;
+	const { position: og_position, width: og_width, height: og_height } = this.style;
+	this.style.position = 'absolute';
+	this.style.width = width;
+	this.style.height = height;
+	const b = this.getBoundingClientRect();
+	this.style.transform = `${transform === 'none' ? '' : transform} translate(${left - b.left}px, ${top - b.top}px)`;
 	return () => {
-		node.style.position = og_position;
-		node.style.width = og_width;
-		node.style.height = og_height;
-		node.style.transform = ''; // unsafe
+		this.style.position = og_position;
+		this.style.width = og_width;
+		this.style.height = og_height;
+		this.style.transform = ''; // unsafe
 	};
-}
-
-export function add_transform(node: HTMLElement, a: DOMRect) {
-	const b = node.getBoundingClientRect();
-	if (a.left !== b.left || a.top !== b.top) {
-		const style = getComputedStyle(node);
-		const transform = style.transform === 'none' ? '' : style.transform;
-		node.style.transform = `${transform} translate(${a.left - b.left}px, ${a.top - b.top}px)`;
-	}
-}
+});

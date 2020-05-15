@@ -210,7 +210,7 @@ export default class AttributeWrapper {
 
 		if (scoped_css && rendered.length === 2) {
 			// we have a situation like class={possiblyUndefined}
-			rendered[0] = x`${rendered[0]} ?? ""`;
+			rendered[0] = x`null != ${rendered[0]} ? ${rendered[0]} : ""`;
 		}
 
 		return rendered.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);

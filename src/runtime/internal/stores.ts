@@ -8,7 +8,7 @@ type Unsubscriber = () => void;
 interface Observable<T> {
 	subscribe(callback: Subscriber<T>): Unsubscriber;
 }
-type Observable_s = Observable<unknown>[] | Observable<unknown>;
+type Obs = Observable<unknown>[] | Observable<unknown>;
 type Deriver<T> = (values: any, setter?: Setter<T>) => void | (() => void) | T;
 
 /**
@@ -26,7 +26,8 @@ export class Store<T> {
 		for (let i = 0, j = 0, subscribers, value; i < this.update_queue.length; i++)
 			for (j = 0, subscribers = this.update_queue[i], value = this.value_queue[i]; j < subscribers.length; j++)
 				subscribers[j].run(value);
-		this.update_queue.length = this.value_queue.length = +(this.is_flushing = false);
+		this.update_queue.length = this.value_queue.length = 0;
+		this.is_flushing = false;
 	}
 	value: T;
 	has_subscribers = false;
@@ -97,7 +98,7 @@ export class Writable<T> extends StartStopWritable<T> {
 		if (safe_not_equal(this.value, next_value)) super.set(next_value);
 	}
 }
-export class Derived<S extends Observable_s, D extends Deriver<T>, T> extends StartStopWritable<T> {
+export class Derived<S extends Obs, D extends Deriver<T>, T> extends StartStopWritable<T> {
 	cleanup = noop;
 	target;
 	deriver;
@@ -129,9 +130,9 @@ export class Derived<S extends Observable_s, D extends Deriver<T>, T> extends St
 		this.set =
 			// deriver defines < 2 arguments ?
 			deriver.length < 2
-				? // return value is store value
+				? // deriver returned value is store value
 				  (v) => void super.set(deriver(v) as T)
-				: // return value is cleanup | void, store value is set manually
+				: // deriver returned value is cleanup | void, store value is set manually within deriver
 				  (v) =>
 						void (this.cleanup(),
 						typeof (this.cleanup = deriver(v, super.set.bind(this)) as () => void) !== 'function' &&
@@ -144,11 +145,12 @@ export type createMotionTick<T> = (prev_value: T, next_value: T) => SpringTick<T
 export type createTweenTick<T> = (prev_value: T, next_value: T) => TweenTick;
 export type SpringTick<T> = (current_value: T, elapsed: number, dt: number) => boolean;
 export type TweenTick = (t: number) => boolean;
-/** applies motion fn to every leaf of any object */
-function parseStructure<T>(
+
+/** applies motion function initializer to every leaf of any shape of array-like or object literal like value */
+const parseStructure = <T>(
 	obj: unknown,
 	schema: initCreateMotionTick<T> | initCreateTweenTick<T>
-): initCreateMotionTick<T> | initCreateTweenTick<T> {
+): initCreateMotionTick<T> | initCreateTweenTick<T> => {
 	const isArray = Array.isArray(obj);
 	if (typeof obj === 'object' && obj !== null && (isArray || Object.prototype === Object.getPrototypeOf(obj))) {
 		const keys = Object.keys(obj);
@@ -160,10 +162,10 @@ function parseStructure<T>(
 			pending = 0;
 		const target = { ...obj };
 		obj = isArray ? [...(obj as T[])] : { ...obj };
-		return (set) => (_from_value, to_value) => {
+		return (set) => (_, to_value) => {
 			for (k in to_value) if (to_value[k] !== obj[k]) target[k] = to_value[k];
 			for (i = 0; i < l; i++) (pending |= 1 << i), (tickers[i] = createTickers[i](obj[keys[i]], target[keys[i]]));
-			return (_current, elapsed, dt) => {
+			return (_, elapsed, dt) => {
 				for (i = 0; i < l; i++) if (pending & (1 << i) && !tickers[i](obj[keys[i]], elapsed, dt)) pending &= ~(1 << i);
 				set(isArray ? [...(obj as T[])] : { ...(obj as any) });
 				return !!pending;
@@ -171,16 +173,16 @@ function parseStructure<T>(
 		};
 	}
 	return schema;
-}
+};
 abstract class MotionStore<T> extends Store<T> {
 	running = false;
 	cancel = noop;
-	initCreateTicker;
-	createTicker;
+	init;
+	create;
 	tick;
 	constructor(value: T, startSetTick: initCreateMotionTick<T> | initCreateTweenTick<T>) {
 		super(value);
-		this.createTicker = parseStructure(value, (this.initCreateTicker = startSetTick))(super.set.bind(this));
+		this.create = parseStructure(value, (this.init = startSetTick))(super.set.bind(this));
 	}
 	set(next_value: T) {
 		const this_id = ++this.uidRunning;
@@ -188,7 +190,7 @@ abstract class MotionStore<T> extends Store<T> {
 		if (!this.value && (this.value as unknown) !== 0) {
 			this.setImmediate(next_value);
 		} else {
-			this.tick = this.createTicker(this.value, next_value);
+			this.tick = this.create(this.value, next_value);
 			this.loop(() => this.clearStateSubscribers(true));
 			this.running = true;
 		}
@@ -202,7 +204,7 @@ abstract class MotionStore<T> extends Store<T> {
 	}
 	abstract loop(stop): void;
 	setImmediate(value) {
-		this.createTicker = parseStructure(value, this.initCreateTicker)(super.set.bind(this));
+		this.create = parseStructure(value, this.init)(super.set.bind(this));
 		super.set((this.value = value));
 		if (this.running) this.cancel();
 		this.running = false;
@@ -233,8 +235,8 @@ abstract class MotionStore<T> extends Store<T> {
 	}
 }
 export class SpringMotion<T> extends MotionStore<T> {
-	initCreateTicker: initCreateMotionTick<T>;
-	createTicker: createMotionTick<T>;
+	init: initCreateMotionTick<T>;
+	create: createMotionTick<T>;
 	tick: SpringTick<T>;
 	elapsed = 0.0;
 	loop(stop) {
@@ -243,8 +245,8 @@ export class SpringMotion<T> extends MotionStore<T> {
 	}
 }
 export class TweenMotion<T> extends MotionStore<T> {
-	initCreateTicker: initCreateTweenTick<T>;
-	createTicker: createTweenTick<T>;
+	init: initCreateTweenTick<T>;
+	create: createTweenTick<T>;
 	tick: TweenTick;
 	loop(stop) {
 		if (this.running) this.cancel();

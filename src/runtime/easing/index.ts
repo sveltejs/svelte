@@ -55,13 +55,13 @@ export const cubicBezier = (x1: number, y1: number, x2: number, y2: number) => {
 	);
 	const ax = 1.0 - (x2 = 3.0 * (x2 - x1) - (x1 = 3.0 * x1)) - x1,
 		ay = 1.0 - (y2 = 3.0 * (y2 - y1) - (y1 = 3.0 * y1)) - y1;
-	let r = 0.0,
+	let i = 0,
+		r = 0.0,
 		s = 0.0,
 		d = 0.0,
 		x = 0.0;
 	return (t: number) => {
-		r = t;
-		for (let i = 0; 32 > i; i++)
+		for (r = t, i = 0; 32 > i; i++)
 			if (1e-5 > Math.abs((x = r * r * (r * ax + x1 + x2) - t))) return r * (r * (r * ay + y2) + y1);
 			else if (1e-5 > Math.abs((d = r * (r * ax * 3.0 + x2 * 2.0) + x1))) break;
 			else r = r - x / d;

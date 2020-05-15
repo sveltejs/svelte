@@ -3,19 +3,23 @@ import { noop } from './utils';
 type TaskCallback = (t: number) => boolean;
 type TaskCanceller = () => void;
 
+/** manual upkeeping of next_frame.length */
+let n = 0;
+let i = 0,
+	j = 0;
+let v;
 let next_frame: Array<TaskCallback> = [];
 let running_frame: Array<TaskCallback> = [];
-let next_frame_length = 0;
 const run = (t: number) => {
-	t = now();
 	[running_frame, next_frame] = [next_frame, running_frame];
-	for (let i = (next_frame_length = 0), j = running_frame.length, v; i < j; i++) {
+	for (t = now(), i = n = 0, j = running_frame.length; i < j; i++) {
 		if ((v = running_frame[i])(t)) {
-			next_frame[next_frame_length++] = v;
+			next_frame[n++] = v;
 		}
 	}
-	running_frame.length = 0;
-	if (next_frame_length) raf(run);
+	if ((running_frame.length = 0) < n) {
+		raf(run);
+	}
 };
 
 type TimeoutTask = { timestamp: number; callback: (now: number) => void };
@@ -42,13 +46,13 @@ const run_timed = (now: number) => {
 	return (running_timed = !!(timed_tasks.length = last_index + 1));
 };
 const unsafe_loop = (fn) => {
-	if (!next_frame_length) raf(run);
-	next_frame[next_frame_length++] = fn;
+	if (0 === n) raf(run);
+	next_frame[n++] = fn;
 };
 export const loop = (fn) => {
 	let running = true;
-	if (!next_frame_length) raf(run);
-	next_frame[next_frame_length++] = (t) => !running || fn(t);
+	if (0 === n) raf(run);
+	next_frame[n++] = (t) => !running || fn(t);
 	return () => void (running = false);
 };
 export const setFrameTimeout = (callback: () => void, timestamp: number): TaskCanceller => {
@@ -103,4 +107,4 @@ export const onEachFrame = (
 
 /** tests only */
 export const clear_loops = () =>
-	void (next_frame.length = running_frame.length = timed_tasks.length = pending_insert_timed.length = next_frame_length = +(running_timed = pending_inserts = false));
+	void (next_frame.length = running_frame.length = timed_tasks.length = pending_insert_timed.length = n = +(running_timed = pending_inserts = false));

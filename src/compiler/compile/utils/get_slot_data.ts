@@ -5,7 +5,7 @@ import Block from '../render_dom/Block';
 
 export default function get_slot_data(values: Map<string, Attribute>, block: Block = null) {
 	return {
-		type: 'Expression',
+		type: 'ObjectExpression',
 		properties: Array.from(values.values())
 			.filter((attribute) => attribute.name !== 'name')
 			.map((attribute) => {

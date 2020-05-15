@@ -141,11 +141,11 @@ export function crossfade({
 	const to_receive: ElementMap = new Map();
 	const to_send: ElementMap = new Map();
 
-	function crossfade(
+	const crossfade = (
 		from_node: Element,
 		to_node: Element,
 		{ delay = default_delay, easing = default_easing, duration = default_duration }: TimeableConfig
-	) {
+	) => {
 		const from = from_node.getBoundingClientRect();
 		const to = to_node.getBoundingClientRect();
 		const dx = from.left - to.left;
@@ -165,7 +165,7 @@ export function crossfade({
 				transform: ${prev} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${t + (1 - t) * dh});
 			`,
 		} as TransitionConfig;
-	}
+	};
 	const transition = (a: ElementMap, b: ElementMap, is_intro: boolean) => (
 		node: Element,
 		params: MarkedCrossFadeConfig

@@ -4,7 +4,7 @@ interface TweenParams<T> {
 	delay?: number;
 	duration?: number | ((from: T, to: T) => number);
 	easing?: (t: number) => number;
-	interpolate?: (a: T, b: T) => (t: number) => T;
+	interpolate?: (from: T, to: T) => (t: number) => T;
 }
 interface SpringParams {
 	stiffness?: number /* { 10 < 100 < 200 } */;
@@ -110,7 +110,7 @@ export function tween<T>(
 	};
 	return {
 		set,
-		/* todo: test update() */
+		/* todo: test update() with objects */
 		update: (fn, params) => set(fn(store.value, value), params),
 		setImmediate: store.setImmediate.bind(store),
 		subscribe: store.subscribe.bind(store),

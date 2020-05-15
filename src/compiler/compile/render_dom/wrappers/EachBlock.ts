@@ -436,27 +436,29 @@ export default class EachBlockWrapper extends Wrapper {
 			// We declare `i` as block scoped here, as the `remove_old_blocks` code
 			// may rely on continuing where this iteration stopped.
 			this.updates.push(b`
-				${!has_update_method && b`const #old_length = ${each_block_value}.length;`}
+				${!has_update_method && b`const #old_length = ${each_block}.length;`}
 				${each_block_value} = ${snippet};
 				${__DEV__ && b`@validate_each_argument(${each_block_value});`}
-				let #i;
-				${for_each_block(
-					(block, index) => b`
+				let #i = ${start}, #block;
+				${for_loop(
+					each_block_value,
+					(_, index) => b`
+					#block = ${each_block}[${index}]
 					const #child_ctx = ${each_context_getter}(#ctx, ${each_block_value}, ${index});
 					${$if({
-						if: (has_update_method || has_transitions) && block,
+						if: (has_update_method || has_transitions) && x`#block`,
 						true: b`
-							${has_update_method && b`${block}.p(#child_ctx, #dirty);`}
-							${has_transitions && b`@transition_in(${block}, 1);`}
+							${has_update_method && b`#block.p(#child_ctx, #dirty);`}
+							${has_transitions && b`@transition_in(#block, 1);`}
 						`,
 						false: b`
-							${block} = ${create_each_block}(#child_ctx);
-							${block}.c();
-							${has_transitions && b`@transition_in(${block}, 1);`}
-							${block}.m(${update_mount_node}, ${update_anchor_node});
+							#block = ${each_block}[${index}] = ${create_each_block}(#child_ctx);
+							#block.c();
+							${has_transitions && b`@transition_in(#block, 1);`}
+							#block.m(${update_mount_node}, ${update_anchor_node});
 						`,
 					})}`,
-					{ i: start }
+					{ i: null }
 				)}
 				${this.block.group_transition_out((transition_out) =>
 					for_each_block(
@@ -488,7 +490,7 @@ const for_loop = <T>(
 	callback: (item: Node, index: Node, array: T) => Node[],
 	{ length = x`${arr}.length`, i = undefined } = {}
 ) =>
-	i || i === null
+	i !== undefined
 		? b`for (${i}; #i < ${length}; #i++) { ${callback(x`${arr}[#i]`, x`#i`, arr)} }`
 		: b`for (let #i = 0; #i < ${length}; #i++) { ${callback(x`${arr}[#i]`, x`#i`, arr)} }`;
 
@@ -504,7 +506,7 @@ const $if = ({ if: condition, true: success, false: failure = null }) => {
 			return b`if(!${condition}){ ${success} }`;
 		}
 	} else {
-		if (!failure) {
+		if (failure) {
 			return failure;
 		}
 	}

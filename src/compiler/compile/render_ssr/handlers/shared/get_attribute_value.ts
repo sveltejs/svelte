@@ -9,7 +9,7 @@ export function get_class_attribute_value(attribute: Attribute): ESTreeExpressio
 	// handle special case — `class={possiblyUndefined}` with scoped CSS
 	if (attribute.chunks.length === 2 && (attribute.chunks[1] as Text).synthetic) {
 		const value = (attribute.chunks[0] as Expression).node;
-		return x`@escape(${value} ?? "") + "${(attribute.chunks[1] as Text).data}"`;
+		return x`(${x`${value} != null && @escape(${value}) || ""`}) + "${(attribute.chunks[1] as Text).data}"`;
 	}
 
 	return get_attribute_value(attribute);

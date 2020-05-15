@@ -124,7 +124,6 @@ export function dev$element(element: Element | Node | EventTarget, event: keyof 
 	}
 }
 export function dev$block(event: keyof BlockEventsMap, payload) {}
-export function dev$tracing(type, value: any) {}
 export function dev$assert(truthy: any, else_throw: string) {
 	if (__DEV__ && !truthy) {
 		throw new Error(else_throw);

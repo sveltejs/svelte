@@ -10,7 +10,7 @@ interface FlipParams {
 export function flip(
 	node: Element,
 	animation: { from: DOMRect; to: DOMRect },
-	{ delay = 0, duration = (d: number) => Math.sqrt(d) * 120, easing = cubicOut }: FlipParams
+	{ delay = 0, duration = (d: number) => Math.sqrt(d) * 30, easing = cubicOut }: FlipParams
 ): AnimationConfig {
 	const style = getComputedStyle(node).transform;
 	const transform = style === 'none' ? '' : style;
