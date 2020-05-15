@@ -13,21 +13,11 @@ const ts_plugin = is_publish
 	? typescript({ include: 'src/**', typescript: require('typescript') })
 	: sucrase({ transforms: ['typescript'] });
 
-// documented in src/ambient.ts
 const globals = (name) =>
-	name === 'compiler'
-		? replace({
-				'var __VERSION__: string': 'var rollup_removes_this',
-				'__VERSION__': `"${pkg.version}"`,
-		  })
-		: replace({
-				'var __DEV__: boolean': 'var rollup_removes_this',
-				'__DEV__': name === 'dev',
-				'var __TEST__: boolean': 'var rollup_removes_this',
-				'__TEST__': name === 'test',
-				'var __VERSION__: string': 'var rollup_removes_this',
-				'__VERSION__': `"${pkg.version}"`,
-		  });
+	replace({
+		'var __VERSION__: string': 'var rollup_removes_this',
+		'__VERSION__': `"${pkg.version}"`,
+	});
 /**
  *
  */
@@ -61,12 +51,6 @@ export default [
 			 * -> 'svelte/index.js'
 			 */
 			default: { file: 'index', path: '.' },
-			/**
-			 * Development main runtime
-			 * -> 'svelte/dev/index.js'
-			 * redirected to by the compiler
-			 */
-			dev: { file: 'index', path: '.' },
 		},
 		plugins: [ts_plugin],
 	}),
@@ -83,12 +67,6 @@ export default [
 					 * -> 'svelte/[library]/index.js'
 					 */
 					[library]: { file: 'index', path: '..' },
-					/**
-					 * Development runtime
-					 * -> 'svelte/dev/[library].js'
-					 * Must be redirected to by user's bundler
-					 */
-					dev: { file: library, path: '.' },
 				},
 				plugins: [
 					ts_plugin,
