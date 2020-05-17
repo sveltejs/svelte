@@ -4,6 +4,7 @@
 
 * Support default values and trailing commas in destructuring `{#await}` ([#4560](https://github.com/sveltejs/svelte/issues/4560), [#4810](https://github.com/sveltejs/svelte/issues/4810))
 * Fix setting `value` attribute with `bind:group` and attribute spread ([#4803](https://github.com/sveltejs/svelte/issues/4803))
+* Fix issue with compound `{#if}` block involving static condition, dynamic condition, and inline component ([#4840](https://github.com/sveltejs/svelte/issues/4840))
 
 ## 3.22.2
 
