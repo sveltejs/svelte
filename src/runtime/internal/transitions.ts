@@ -1,14 +1,13 @@
 import { TransitionConfig } from '../transition';
 import { Fragment } from './Component';
 import { custom_event } from './dom';
-import { now } from 'svelte/environment';
+import { now, noop } from 'svelte/environment';
 import { setFrameTimeout, setTweenTimeout } from './loop';
 import { add_measure_callback } from './scheduler';
 import { animate_css } from './style_manager';
-import { noop } from './utils';
 
 type TransitionFn = (node: HTMLElement, params: any) => TransitionConfig;
-export type StopResetReverse = (t?: number | -1) => StopResetReverse | void;
+export type StopReverse = (t?: number | -1) => StopReverse | void;
 
 export const transition_in = (block: Fragment, local?) => {
 	if (!block || !block.i) return;
@@ -16,21 +15,23 @@ export const transition_in = (block: Fragment, local?) => {
 	block.i(local);
 };
 
-export const transition_out = (block: Fragment, local) => {
+export const transition_out = (block: Fragment, local?) => {
 	if (!block || !block.o || outroing.has(block)) return;
 	outroing.add(block);
 	block.o(local);
 };
-
-let transition_group;
-const outroing = new Set();
-const check_transition_group = (group, decrement = true) => {
-	if (decrement) group.r--;
-	if (!group.r) for (let i = 0; i < group.c.length; i++) group.c[i]();
+type TransitionGroup = {
+	/* parent group 		*/ p: TransitionGroup;
+	/* callbacks 			*/ c: (() => void)[];
+	/* running outros		*/ r: number;
+	/* stop callbacks		*/ s: ((t: number) => void)[];
+	/* outro timeout 		*/ t: number;
 };
+let transition_group: TransitionGroup;
+const outroing = new Set();
 export const group_transition_out = (fn) => {
 	const c = [];
-	const current_group = (transition_group = { p: transition_group, c, r: 0 });
+	const current_group = (transition_group = { p: transition_group, c, r: 0, s: [], t: 0 });
 	fn((block, callback, detach = true) => {
 		if (!block || !block.o || outroing.has(block)) return;
 		outroing.add(block);
@@ -44,7 +45,7 @@ export const group_transition_out = (fn) => {
 		});
 		block.o(1);
 	});
-	check_transition_group(current_group, false);
+	if (!current_group.r) for (let i = 0; i < current_group.c.length; i++) current_group.c[i]();
 	transition_group = transition_group.p;
 };
 
@@ -63,9 +64,8 @@ const reversed = (fn, rx, easing, start = 0, end = 1) => {
 export enum tx {
 	intro = 1,
 	outro = 2,
+	reverse = 3,
 	bidirectional = 4,
-	bidirectional_intro = 5,
-	bidirectional_outro = 6,
 	animation = 8,
 }
 export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(function transition(
@@ -92,9 +92,8 @@ export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(functio
 
 	add_measure_callback(() => {
 		if (null === (config = fn(this, params))) return noop;
-		return (t) => {
+		return (current_frame_time) => {
 			if (false === running) return;
-			if ('then' in config) return void config.then(stop);
 
 			let { delay = 0, duration = 300, easing, tick, css, strategy = 'reverse' }: TransitionConfig =
 				'function' === typeof config ? (config = config()) : config;
@@ -108,57 +107,67 @@ export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(functio
 				else if (solver === mirrored) delay -= elapsed_duration;
 			}
 
-			end_time = (start_time = t + delay) + duration;
+			end_time = (start_time = current_frame_time + delay) + duration;
 
 			if (0 === (rx & tx.animation)) {
 				this.dispatchEvent(custom_event(`${rx & tx.intro ? 'in' : 'ou'}trostart`));
 			}
 
 			if (css) cancel_css = animate_css(this, runner(css), duration, delay);
-			cancel_raf = tick ? setTweenTimeout(stop, end_time, runner(tick), duration) : setFrameTimeout(stop, end_time);
+
+			if (rx & tx.outro && css) {
+				if (current_group.s.push(stop) === current_group.r) {
+					setFrameTimeout((t) => {
+						for (let i = 0; i < current_group.s.length; i++) current_group.s[i](t);
+					}, Math.max(end_time, current_group.t));
+				} else {
+					current_group.t = Math.max(end_time, current_group.t);
+				}
+				if (tick) {
+					cancel_raf = setTweenTimeout(noop, end_time, runner(tick), duration);
+				}
+			} else {
+				cancel_raf = tick ? setTweenTimeout(stop, end_time, runner(tick), duration) : setFrameTimeout(stop, end_time);
+			}
 		};
 	});
 
-	const stop: StopResetReverse = (t?: number | 1 | -1) => {
-		if (!running) return;
+	const stop: StopReverse = (t?: number | -1) => {
+		if (rx & tx.outro && 0 === (rx & tx.bidirectional) && void 0 === t && 'tick' in config) config.tick(1, 0);
+
+		if (false === running) return;
 		else running = false;
 
 		if (cancel_css) cancel_css();
 		if (cancel_raf) cancel_raf();
 
-		if (0 === (rx & tx.animation)) {
-			if (t >= end_time) {
-				this.dispatchEvent(custom_event(`${rx & tx.intro ? 'in' : 'ou'}troend`));
-			}
-			if (rx & tx.outro) {
-				check_transition_group(current_group);
-			}
-		}
+		if (rx & tx.animation) return;
 
-		if (rx & tx.bidirectional) {
-			if (-1 === t) {
-				return (
-					(t = now()) < end_time &&
-					run_transition(
-						this,
-						() => config,
-						rx ^ 1,
-						params,
-						end_time - t,
-						start_time > t ? start_time - t : 0,
-						(1 - elapsed_ratio) * (1 - config.easing(1 - (end_time - t) / (end_time - start_time)))
-					)
-				);
-			} else {
-				running_bidi.delete(this);
-			}
-		}
+		if (t >= end_time) this.dispatchEvent(custom_event(`${rx & tx.intro ? 'in' : 'ou'}troend`));
+		if (rx & tx.outro && !--current_group.r) for (let i = 0; i < current_group.c.length; i++) current_group.c[i]();
+
+		if (0 === (rx & tx.bidirectional)) return;
+
+		if (-1 === t)
+			return (
+				(t = now()) < end_time &&
+				run_transition(
+					this,
+					() => config,
+					rx ^ tx.reverse,
+					params,
+					end_time - t,
+					start_time > t ? start_time - t : 0,
+					(1 - elapsed_ratio) * (1 - (config.easing || ((v) => v))(1 - (end_time - t) / (end_time - start_time)))
+				)
+			);
+		else running_bidi.delete(this);
 	};
 
 	return stop;
 });
 
-const running_bidi: Map<HTMLElement, StopResetReverse> = new Map();
+const running_bidi: Map<HTMLElement, StopReverse> = new Map();
 export const run_bidirectional_transition = /*#__PURE__*/ Function.prototype.call.bind(function bidirectional(
 	this: HTMLElement,
 	fn: TransitionFn,

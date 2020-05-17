@@ -1,7 +1,5 @@
-import * as assert from "assert";
-import * as fs from "fs";
-import * as path from "path";
-import * as glob from 'tiny-glob/sync.js';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import {
 	showOutput,
@@ -11,14 +9,16 @@ import {
 	tryToLoadJson,
 	cleanRequireCache,
 	shouldUpdateExpected,
-	mkdirp
-} from "../helpers.js";
+	mkdirp,
+} from '../helpers.ts';
+import { glob } from '../tiny-glob.ts';
+import { assert } from '../test';
 
 function tryToReadFile(file) {
 	try {
-		return fs.readFileSync(file, "utf-8");
+		return fs.readFileSync(file, 'utf-8');
 	} catch (err) {
-		if (err.code !== "ENOENT") throw err;
+		if (err.code !== 'ENOENT') throw err;
 		return null;
 	}
 }
@@ -26,15 +26,15 @@ function tryToReadFile(file) {
 const sveltePath = process.cwd().split('\\').join('/');
 let compile = null;
 
-describe("ssr", () => {
+describe('ssr', () => {
 	before(() => {
 		compile = loadSvelte(true).compile;
 
 		return setupHtmlEqual();
 	});
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
-		if (dir[0] === ".") return;
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
+		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 
@@ -44,7 +44,7 @@ describe("ssr", () => {
 		const show = /\.show/.test(dir);
 
 		if (solo && process.env.CI) {
-			throw new Error("Forgot to remove `solo: true` from test");
+			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
 		(solo ? it.only : it)(dir, () => {
@@ -56,16 +56,16 @@ describe("ssr", () => {
 				sveltePath,
 				...config.compileOptions,
 				generate: 'ssr',
-				format: 'cjs'
+				format: 'cjs',
 			};
 
-			require("../../register")(compileOptions);
+			require('../../register')(compileOptions);
 
 			try {
 				const Component = require(`${dir}/main.svelte`).default;
 
 				const expectedHtml = tryToReadFile(`${dir}/_expected.html`);
-				const expectedCss = tryToReadFile(`${dir}/_expected.css`) || "";
+				const expectedCss = tryToReadFile(`${dir}/_expected.css`) || '';
 
 				const props = tryToLoadJson(`${dir}/data.json`) || undefined;
 
@@ -87,10 +87,7 @@ describe("ssr", () => {
 				}
 
 				try {
-					assert.equal(
-						css.code.replace(/^\s+/gm, ""),
-						expectedCss.replace(/^\s+/gm, "")
-					);
+					assert.equal(css.code.replace(/^\s+/gm, ''), expectedCss.replace(/^\s+/gm, ''));
 				} catch (error) {
 					if (shouldUpdateExpected()) {
 						fs.writeFileSync(`${dir}/_expected.css`, css.code);
@@ -104,10 +101,7 @@ describe("ssr", () => {
 					fs.writeFileSync(`${dir}/_actual-head.html`, head);
 
 					try {
-						assert.htmlEqual(
-							head,
-							fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8')
-						);
+						assert.htmlEqual(head, fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8'));
 					} catch (error) {
 						if (shouldUpdateExpected()) {
 							fs.writeFileSync(`${dir}/_expected-head.html`, head);
@@ -128,20 +122,20 @@ describe("ssr", () => {
 	});
 
 	// duplicate client-side tests, as far as possible
-	fs.readdirSync("test/runtime/samples").forEach(dir => {
-		if (dir[0] === ".") return;
+	fs.readdirSync('test/runtime/samples').forEach((dir) => {
+		if (dir[0] === '.') return;
 
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
 
 		if (solo && process.env.CI) {
-			throw new Error("Forgot to remove `solo: true` from test");
+			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
 		if (config.skip_if_ssr) return;
 
 		(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
-			const cwd = path.resolve("test/runtime/samples", dir);
+			const cwd = path.resolve('test/runtime/samples', dir);
 
 			cleanRequireCache();
 
@@ -151,15 +145,15 @@ describe("ssr", () => {
 				sveltePath,
 				...config.compileOptions,
 				generate: 'ssr',
-				format: 'cjs'
+				format: 'cjs',
 			};
 
-			require("../../register")(compileOptions);
+			require('../../register')(compileOptions);
 
-			glob('**/*.svelte', { cwd }).forEach(file => {
+			glob('**/*.svelte', { cwd }).forEach((file) => {
 				if (file[0] === '_') return;
 
-				const dir  = `${cwd}/_output/ssr`;
+				const dir = `${cwd}/_output/ssr`;
 				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
 
 				if (fs.existsSync(out)) {
@@ -169,13 +163,10 @@ describe("ssr", () => {
 				mkdirp(dir);
 
 				try {
-					const { js } = compile(
-						fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-						{
-							...compileOptions,
-							filename: file
-						}
-					);
+					const { js } = compile(fs.readFileSync(`${cwd}/${file}`, 'utf-8'), {
+						...compileOptions,
+						filename: file,
+					});
 
 					fs.writeFileSync(out, js.code);
 				} catch (err) {
@@ -188,7 +179,7 @@ describe("ssr", () => {
 
 				const Component = require(`../runtime/samples/${dir}/main.svelte`).default;
 				const { html } = Component.render(config.props, {
-					store: (config.store !== true) && config.store
+					store: config.store !== true && config.store,
 				});
 
 				if (config.ssrHtml) {

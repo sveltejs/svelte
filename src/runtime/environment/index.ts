@@ -1,4 +1,4 @@
-import { noop } from '../internal/utils';
+export function noop() {}
 export const is_browser = typeof window !== 'undefined';
 export const is_iframe = is_browser && window.self !== window.top;
 export const is_cors =
@@ -17,7 +17,7 @@ declare var global: any;
 export const globals = is_browser ? window : typeof globalThis !== 'undefined' ? globalThis : global;
 export const resolved_promise = Promise.resolve();
 
-export let now = is_browser ? () => performance.now() : Date.now.bind(Date);
+export let now = is_browser ? window.performance.now.bind(window.performance) : Date.now.bind(Date);
 export let raf = is_browser ? requestAnimationFrame : noop;
 export let framerate = 1000 / 60;
 /*#__PURE__*/ raf((t1) => {
@@ -29,5 +29,6 @@ export let framerate = 1000 / 60;
 });
 
 /* tests only */
-export const set_now = (fn) => void (now = fn);
+export const set_now = (v) => void (now = v);
 export const set_raf = (fn) => void (raf = fn);
+export const set_framerate = (v) => void (framerate = v);

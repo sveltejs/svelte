@@ -422,17 +422,17 @@ export default class Block {
 	}
 
 	has_content(): boolean {
-		return !!(
-			this.first ||
-			this.event_listeners.length ||
-			this.chunks.intro.length ||
-			this.chunks.outro.length ||
-			this.chunks.create.length ||
-			this.chunks.hydrate.length ||
-			this.chunks.claim.length ||
-			this.chunks.mount.length ||
-			this.chunks.update.length ||
-			this.chunks.destroy.length ||
+		return (
+			!!this.first ||
+			this.event_listeners.length > 0 ||
+			this.chunks.intro.length > 0 ||
+			this.chunks.outro.length > 0 ||
+			this.chunks.create.length > 0 ||
+			this.chunks.hydrate.length > 0 ||
+			this.chunks.claim.length > 0 ||
+			this.chunks.mount.length > 0 ||
+			this.chunks.update.length > 0 ||
+			this.chunks.destroy.length > 0 ||
 			this.has_animation
 		);
 	}
@@ -458,7 +458,7 @@ export default class Block {
 		if (this.event_listeners.length > 0) {
 			const dispose: Identifier = {
 				type: 'Identifier',
-				name: `#dispose${chunk}`,
+				name: `dispose${chunk}`,
 			};
 
 			this.add_variable(dispose);
@@ -474,13 +474,13 @@ export default class Block {
 				this.chunks.destroy.push(b`${dispose}();`);
 			} else {
 				this.chunks.mount.push(b`
-					if (#remount) for(let #i=0;#i<${dispose}.length;#i++){ ${dispose}[#i](); }
+					if (#remount) for(let i=0;i<${dispose}.length;i++){ ${dispose}[i](); }
 					${dispose} = [
 						${this.event_listeners}
 					];
 				`);
 
-				this.chunks.destroy.push(b`for(let #i=0;#i<${dispose}.length;#i++){ ${dispose}[#i](); }`);
+				this.chunks.destroy.push(b`for(let i=0;i<${dispose}.length;i++){ ${dispose}[i](); }`);
 			}
 		}
 	}

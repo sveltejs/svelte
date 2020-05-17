@@ -1,6 +1,6 @@
-import * as assert from 'assert';
-import * as fs from 'fs';
-import { env, svelte, setupHtmlEqual, shouldUpdateExpected } from '../helpers.js';
+import { assert } from '../test';
+import { readFileSync, writeFileSync, readdirSync } from 'fs';
+import { env, svelte, setupHtmlEqual, shouldUpdateExpected } from '../helpers';
 
 function try_require(file) {
 	try {
@@ -13,10 +13,7 @@ function try_require(file) {
 }
 
 function normalize_warning(warning) {
-	warning.frame = warning.frame
-		.replace(/^\n/, '')
-		.replace(/^\t+/gm, '')
-		.replace(/\s+$/gm, '');
+	warning.frame = warning.frame.replace(/^\n/, '').replace(/^\t+/gm, '').replace(/\s+$/gm, '');
 	delete warning.filename;
 	delete warning.toString;
 	return warning;
@@ -26,7 +23,7 @@ function create(code) {
 	const fn = new Function('module', 'exports', 'require', code);
 
 	const module = { exports: {} };
-	fn(module, module.exports, id => {
+	fn(module, module.exports, (id) => {
 		if (id === 'svelte') return require('../../index.js');
 		if (id.startsWith('svelte/')) return require(id.replace('svelte', '../../'));
 
@@ -41,7 +38,7 @@ describe('css', () => {
 		setupHtmlEqual();
 	});
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		if (dir[0] === '.') return;
 
 		// add .solo to a sample directory name to only run that test
@@ -54,21 +51,13 @@ describe('css', () => {
 
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = try_require(`./samples/${dir}/_config.js`) || {};
-			const input = fs
-				.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8')
-				.replace(/\s+$/, '');
+			const input = readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '');
 
 			const expected_warnings = (config.warnings || []).map(normalize_warning);
 
-			const dom = svelte.compile(
-				input,
-				Object.assign(config.compileOptions || {}, { format: 'cjs' })
-			);
+			const dom = svelte.compile(input, Object.assign(config.compileOptions || {}, { format: 'cjs' }));
 
-			const ssr = svelte.compile(
-				input,
-				Object.assign(config.compileOptions || {}, { format: 'cjs', generate: 'ssr' })
-			);
+			const ssr = svelte.compile(input, Object.assign(config.compileOptions || {}, { format: 'cjs', generate: 'ssr' }));
 
 			assert.equal(dom.css.code, ssr.css.code);
 
@@ -78,18 +67,18 @@ describe('css', () => {
 			assert.deepEqual(dom_warnings, ssr_warnings);
 			assert.deepEqual(dom_warnings.map(normalize_warning), expected_warnings);
 
-			fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.css`, dom.css.code);
+			writeFileSync(`${__dirname}/samples/${dir}/_actual.css`, dom.css.code);
 			const expected = {
 				html: read(`${__dirname}/samples/${dir}/expected.html`),
-				css: read(`${__dirname}/samples/${dir}/expected.css`)
+				css: read(`${__dirname}/samples/${dir}/expected.css`),
 			};
 
-			const actual_css = dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz');
+			const actual_css = dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => ($1 ? m : 'svelte-xyz'));
 			try {
 				assert.equal(actual_css, expected.css);
 			} catch (error) {
 				if (shouldUpdateExpected()) {
-					fs.writeFileSync(`${__dirname}/samples/${dir}/expected.css`, actual_css);
+					writeFileSync(`${__dirname}/samples/${dir}/expected.css`, actual_css);
 					console.log(`Updated ${dir}/expected.css.`);
 				} else {
 					throw error;
@@ -126,9 +115,9 @@ describe('css', () => {
 					new ClientComponent({ target, props: config.props });
 					const html = target.innerHTML;
 
-					fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, html);
+					writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, html);
 
-					const actual_html = html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz');
+					const actual_html = html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => ($1 ? m : 'svelte-xyz'));
 					assert.htmlEqual(actual_html, expected.html);
 
 					window.document.head.innerHTML = ''; // remove added styles
@@ -139,7 +128,9 @@ describe('css', () => {
 
 				// ssr
 				try {
-					const actual_ssr = ServerComponent.render(config.props).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz');
+					const actual_ssr = ServerComponent.render(config.props).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) =>
+						$1 ? m : 'svelte-xyz'
+					);
 					assert.htmlEqual(actual_ssr, expected.html);
 				} catch (err) {
 					console.log(ssr.js.code);
@@ -152,7 +143,7 @@ describe('css', () => {
 
 function read(file) {
 	try {
-		return fs.readFileSync(file, 'utf-8');
+		return readFileSync(file, 'utf-8');
 	} catch (err) {
 		return null;
 	}

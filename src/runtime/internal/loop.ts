@@ -1,5 +1,4 @@
-import { now, raf, framerate } from 'svelte/environment';
-import { noop } from './utils';
+import { now, raf, framerate, noop } from 'svelte/environment';
 type TaskCallback = (t: number) => boolean;
 type TaskCanceller = () => void;
 
@@ -55,7 +54,7 @@ export const loop = (fn) => {
 	next_frame[n++] = (t) => !running || fn(t);
 	return () => void (running = false);
 };
-export const setFrameTimeout = (callback: () => void, timestamp: number): TaskCanceller => {
+export const setFrameTimeout = (callback: (t: number) => void, timestamp: number): TaskCanceller => {
 	const task: TimeoutTask = { callback, timestamp };
 	if (running_timed) {
 		pending_inserts = !!pending_insert_timed.push(task);
@@ -78,9 +77,9 @@ export const setTweenTimeout = (
 	let running = true;
 	unsafe_loop((t) => {
 		if (!running) return false;
-		t = 1 - (end_time - t) / duration;
-		if (t >= 1) return run(1), stop(t), false;
-		if (t >= 0) run(t);
+		t = 1.0 - (end_time - t) / duration;
+		if (t >= 1.0) return run(1), stop(t), false;
+		if (t >= 0.0) run(t);
 		return running;
 	});
 	return () => void (running = false);
@@ -89,7 +88,7 @@ export const setTweenTimeout = (
  * Calls function every frame with the amount of elapsed frames
  */
 export const onEachFrame = (
-	each_frame: (seconds_elapsed: number) => boolean,
+	callback: (seconds_elapsed: number) => boolean,
 	on_stop?,
 	max_skipped_frames = 4
 ): TaskCanceller => {
@@ -100,7 +99,7 @@ export const onEachFrame = (
 	unsafe_loop((t: number) => {
 		if (!running) return cancel(t);
 		if (t > lastTime + max_skipped_frames) t = lastTime + max_skipped_frames;
-		return each_frame((-lastTime + (lastTime = t)) / 1000) ? true : cancel(t);
+		return callback((-lastTime + (lastTime = t)) / 1000) ? true : cancel(t);
 	});
 	return () => void (running = false);
 };

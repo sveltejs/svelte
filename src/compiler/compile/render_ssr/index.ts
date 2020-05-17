@@ -31,7 +31,7 @@ export default function ssr(component: Component, options: CompileOptions): { js
 		let #k;
 		const #keys = new Set([${props.map((prop) => `"${prop.export_name}"`).join(',')}]);
 		let $$restProps = {};
-		for (#k in $$props){ if (!#keys.has(#k) && $$props[#k][0] !== '$'){ $$restProps[#k] = $$props[#k];}}`
+		for (#k in $$props){ if (!#keys.has(#k) && #k[0] !== '$'){ $$restProps[#k] = $$props[#k];}}`
 		: null;
 
 	const reactive_stores = component.vars.filter((variable) => variable.name[0] === '$' && variable.name[1] !== '$');

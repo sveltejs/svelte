@@ -1,8 +1,8 @@
 import { add_render_callback, flush, schedule_update } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
-import { noop } from './utils';
 import { children, detach } from './dom';
 import { transition_in } from './transitions';
+import { noop } from 'svelte/environment';
 type binary = 0 | 1;
 export interface Fragment {
 	key: string | null;

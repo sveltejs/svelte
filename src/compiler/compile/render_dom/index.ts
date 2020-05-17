@@ -73,13 +73,16 @@ export default function dom(component: Component, options: CompileOptions): { js
 	const props = component.vars.filter((variable) => !variable.module && variable.export_name);
 	const writable_props = props.filter((variable) => variable.writable);
 
-	const compute_rest = b`for (#k in $$props){ if (!#keys.has(#k) && $$props[#k][0] !== '$'){ $$restProps[#k] = $$props[#k];}}`;
 	const rest = uses_rest
 		? b`
 		let #k;
 		const #keys = new Set([${props.map((prop) => `"${prop.export_name}"`).join(',')}]);
-		let $$restProps = {}; 
-		${compute_rest};`
+		const $$restProps = {}; 
+		for (#k in $$props) { 
+			if (!#keys.has(#k) && #k[0] !== '$') { 
+				$$restProps[#k] = $$props[#k];
+			}
+		};`
 		: null;
 
 	const set =
@@ -88,10 +91,23 @@ export default function dom(component: Component, options: CompileOptions): { js
 				${
 					uses_any &&
 					b`
-					${!uses_rest && `let #k`}
-					for (#k in $$new_props) if ($$new_props[#k][0] !== '$') $$props[k] = $$new_props[k];
-					${uses_rest && compute_rest}
-					${renderer.invalidate(uses_props ? '$$props' : '$$restProps')}
+					${!uses_rest && b`let #k;`}
+					for (#k in $$new_props) { 
+						if (#k[0] !== '$') {
+							${
+								uses_rest
+									? b`
+									if (!#keys.has(#k)) { 
+										$$props[#k] = $$restProps[#k] = $$new_props[#k];
+									} else {
+										$$props[#k] = $$new_props[#k];
+									}`
+									: b`$$props[#k] = $$new_props[#k];`
+							}
+						}
+					}
+					${uses_props && renderer.invalidate('$$props')}
+					${uses_rest && renderer.invalidate('$$restProps')}
 					`
 				}
 				${writable_props.map(
@@ -264,7 +280,7 @@ export default function dom(component: Component, options: CompileOptions): { js
 			const insert =
 				reassigned || export_name
 					? b`${`$$subscribe_${name}`}();`
-					: b`$$self.$$.on_destroy.push(@subscribe(${name}, (#value) => $$invalidate(${i}, ${value} = #value)));`;
+					: b`$$self.$$.on_destroy.push(@subscribe(${name}, (value) => {$$invalidate(${i}, (${value} = value));}));`;
 
 			if (component.compile_options.dev) {
 				return b`@validate_store_dev(${name}, '${name}'); ${insert}`;
@@ -343,9 +359,9 @@ export default function dom(component: Component, options: CompileOptions): { js
 		.map(
 			({ name }) => b`
 			${component.compile_options.dev && b`@validate_store_dev(${name.slice(1)}, '${name.slice(1)}');`}
-			$$self.$$.on_destroy.push(@subscribe(${name.slice(1)}, (#value) => {
-				$$invalidate(${renderer.context_lookup.get(name).index}, (${name} = #value));
-			});
+			$$self.$$.on_destroy.push(@subscribe(${name.slice(1)}, #value => {
+				$$invalidate(${renderer.context_lookup.get(name).index}, ${name} = #value);
+			}));
 		`
 		);
 
@@ -397,7 +413,7 @@ export default function dom(component: Component, options: CompileOptions): { js
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
 
-				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate(${i}, ${$name} = $$value)), ${name})`;
+				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, (value) => {$$invalidate(${i}, (${$name} = value));}), ${name})`;
 			}
 
 			return b`let ${$name};`;
@@ -448,7 +464,7 @@ export default function dom(component: Component, options: CompileOptions): { js
 						.join(',')}]);`
 				}
 
-				${renderer.binding_groups.length && b`const $$binding_groups = [${renderer.binding_groups.map((_) => x`[]`)}];`}
+				${renderer.binding_groups.length ? b`const $$binding_groups = [${renderer.binding_groups.map((_) => x`[]`)}];` : null}
 
 				${component.partly_hoisted}
 
@@ -462,15 +478,15 @@ export default function dom(component: Component, options: CompileOptions): { js
 
 				${/* before reactive declarations */ props_inject}
 
-				${reactive_declarations.length && b`$$self.$$.update = () => {${reactive_declarations}};`}
+				${reactive_declarations.length ? b`$$self.$$.update = () => {${reactive_declarations}};` : null}
 
 				${fixed_reactive_declarations}
 
 				${
 					uses_props &&
 					b`
-					let #k;
-					for (#k in $$props) if ($$props[#k][0] === '$') delete $$props[#k];`
+					${!rest ? b`let #k;` : null}
+					for (#k in $$props) if (#k[0] === '$') delete $$props[#k];`
 				}
 
 				return ${return_value};
@@ -517,12 +533,13 @@ export default function dom(component: Component, options: CompileOptions): { js
 						}
 
 						${
-							(props.length > 0 || uses_props || uses_rest) &&
-							b`
+							props.length > 0 || uses_props || uses_rest
+								? b`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();
 						}`
+								: null
 						}
 					}
 				}

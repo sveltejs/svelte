@@ -128,7 +128,6 @@ export default class Expression {
 
 				if (names) {
 					names.forEach((name) => {
-						if (!name) return;
 						if (template_scope.names.has(name)) {
 							template_scope.dependencies_for_name.get(name).forEach((name) => {
 								const variable = component.var_lookup.get(name);

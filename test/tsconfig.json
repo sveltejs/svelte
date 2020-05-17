@@ -3,6 +3,7 @@
 	"include": ["."],
 
 	"compilerOptions": {
+		"lib": ["DOM", "es2020"],
 		"allowJs": true,
 		"checkJs": true,
 		"noEmit": true

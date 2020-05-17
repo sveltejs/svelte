@@ -125,7 +125,7 @@ export function xlink_attr(node: Element, name, value) {
 
 export function get_binding_group_value(group) {
 	const value = [];
-	for (let i = 0, value = []; i < group.length; i += 1) {
+	for (let i = 0; i < group.length; i += 1) {
 		if (group[i].checked) value.push(group[i].__value);
 	}
 	return value;

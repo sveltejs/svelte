@@ -28,7 +28,7 @@ export const animate_css = /*#__PURE__*/ Function.prototype.call.bind(function a
 	let i = rule.length,
 		hash = 5381;
 	while (i--) hash = ((hash << 5) - hash) ^ rule.charCodeAt(i);
-	const name = '_' + (hash >>> 0) + document_uid.get(this.ownerDocument);
+	const name = `__svelte_${hash >>> 0}${document_uid.get(this.ownerDocument)}`;
 
 	if (!current_rules.has(name)) {
 		current_rules.add(name);
@@ -39,7 +39,7 @@ export const animate_css = /*#__PURE__*/ Function.prototype.call.bind(function a
 	const previous = this.style.animation;
 	this.style.animation = `${
 		previous ? `${previous}, ` : ''
-	} ${duration}ms linear ${delay}ms 1 normal both running ${name}`;
+	}${duration}ms linear ${delay}ms 1 normal both running ${name}`;
 
 	running_animations++;
 

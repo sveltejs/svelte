@@ -1,5 +1,6 @@
-import { safe_not_equal, noop, subscribe } from './utils';
+import { safe_not_equal, subscribe } from './utils';
 import { onEachFrame, loop } from './loop';
+import { noop } from 'svelte/environment';
 type Setter<T> = (value: T) => void;
 type StopCallback = () => void;
 export type StartStopNotifier<T> = (set: Setter<T>) => StopCallback | void;
@@ -70,7 +71,7 @@ class StartStopWritable<T> extends Store<T> {
 		super(initial);
 		this.start = startStopNotifier || noop;
 	}
-	subscribe(run, invalidate) {
+	subscribe(run, invalidate?) {
 		// *must* run *after* first subscription ?
 		if (!super.has_subscribers) this.stop = this.start(this.set.bind(this)) || noop;
 		return super.subscribe(run, invalidate);
@@ -132,7 +133,8 @@ export class Derived<S extends Obs, D extends Deriver<T>, T> extends StartStopWr
 			deriver.length < 2
 				? // deriver returned value is store value
 				  (v) => void super.set(deriver(v) as T)
-				: // deriver returned value is cleanup | void, store value is set manually within deriver
+				: // deriver returned value is cleanup | void
+				  // store value is set manually within deriver
 				  (v) =>
 						void (this.cleanup(),
 						typeof (this.cleanup = deriver(v, super.set.bind(this)) as () => void) !== 'function' &&

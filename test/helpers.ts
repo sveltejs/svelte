@@ -1,13 +1,13 @@
 import * as jsdom from 'jsdom';
-import * as assert from 'assert';
-import * as glob from 'tiny-glob/sync.js';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
+import { glob } from './tiny-glob';
+import { assert } from './test';
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
-export function loadSvelte(test) {
+export function loadSvelte(test?) {
 	process.env.TEST = test ? 'true' : '';
 
 	const resolved = require.resolve('../compiler.js');
@@ -16,7 +16,7 @@ export function loadSvelte(test) {
 	return require(resolved);
 }
 
-export const svelte = loadSvelte();
+export const svelte = loadSvelte(false);
 
 export function exists(path) {
 	try {
@@ -54,7 +54,8 @@ export function cleanRequireCache() {
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 
-const window = new jsdom.JSDOM('<main></main>', { virtualConsole }).window;
+const { window } = new jsdom.JSDOM('<main></main>', { virtualConsole });
+
 global.document = window.document;
 global.navigator = window.navigator;
 global.getComputedStyle = window.getComputedStyle;
@@ -63,14 +64,14 @@ global.window = window;
 
 // add missing ecmascript globals to window
 for (const key of Object.getOwnPropertyNames(global)) {
-	window[key] = window[key] || global[key];
+	if (!(key in window)) window[key] = global[key];
 }
 
 // implement mock scroll
-window.scrollTo = function (pageXOffset, pageYOffset) {
-	window.pageXOffset = pageXOffset;
-	window.pageYOffset = pageYOffset;
-};
+// window.scrollTo = function (pageXOffset, pageYOffset) {
+// 	window.pageXOffset = pageXOffset;
+// 	window.pageYOffset = pageYOffset;
+// };
 
 export function env() {
 	window.document.title = '';
@@ -79,8 +80,8 @@ export function env() {
 
 	return window;
 }
-
-function cleanChildren(node) {
+const is_TextNode = (n: any): n is Text => n.nodeType === 3;
+function cleanChildren(node: Element) {
 	let previous = null;
 
 	// sort attributes
@@ -97,9 +98,8 @@ function cleanChildren(node) {
 	});
 
 	// recurse
-	[...node.childNodes].forEach((child) => {
-		if (child.nodeType === 3) {
-			// text
+	Array.from(node.childNodes).forEach((child) => {
+		if (is_TextNode(child)) {
 			if (node.namespaceURI === 'http://www.w3.org/2000/svg' && node.tagName !== 'text' && node.tagName !== 'tspan') {
 				node.removeChild(child);
 			}
@@ -114,19 +114,19 @@ function cleanChildren(node) {
 				child = previous;
 			}
 		} else {
-			cleanChildren(child);
+			cleanChildren(child as Element);
 		}
 
 		previous = child;
 	});
 
 	// collapse whitespace
-	if (node.firstChild && node.firstChild.nodeType === 3) {
+	if (node.firstChild && is_TextNode(node.firstChild)) {
 		node.firstChild.data = node.firstChild.data.replace(/^\s+/, '');
 		if (!node.firstChild.data) node.removeChild(node.firstChild);
 	}
 
-	if (node.lastChild && node.lastChild.nodeType === 3) {
+	if (node.lastChild && is_TextNode(node.lastChild)) {
 		node.lastChild.data = node.lastChild.data.replace(/\s+$/, '');
 		if (!node.lastChild.data) node.removeChild(node.lastChild);
 	}
@@ -145,11 +145,10 @@ export function normalizeHtml(window, html) {
 		throw new Error(`Failed to normalize HTML:\n${html}`);
 	}
 }
-
 export function setupHtmlEqual() {
 	const window = env();
 
-	assert.htmlEqual = (actual, expected, message) => {
+	assert.htmlEqual = function (actual, expected, message) {
 		assert.deepEqual(normalizeHtml(window, actual), normalizeHtml(window, expected), message);
 	};
 }
@@ -176,7 +175,6 @@ export function addLineNumbers(code) {
 		.map((line, i) => {
 			i = String(i + 1);
 			while (i.length < 3) i = ` ${i}`;
-
 			return colors.gray(`  ${i}: `) + line.replace(/^\t+/, (match) => match.split('\t').join('    '));
 		})
 		.join('\n');
@@ -208,12 +206,6 @@ export function shouldUpdateExpected() {
 	return process.argv.includes('--update');
 }
 
-export function spaces(i) {
-	let result = '';
-	while (i--) result += ' ';
-	return result;
-}
-
 // fake timers
 const original_set_timeout = global.setTimeout;
 
@@ -222,7 +214,7 @@ export function useFakeTimers() {
 
 	global.setTimeout = function (fn) {
 		callbacks.push(fn);
-	};
+	} as (callback: (...args: any[]) => void, ms: number, ...args: any[]) => any;
 
 	return {
 		flush() {

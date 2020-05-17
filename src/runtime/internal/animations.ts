@@ -1,5 +1,5 @@
-import { noop } from './utils';
 import { run_transition } from './transitions';
+import { noop } from 'svelte/environment';
 
 export interface AnimationConfig {
 	delay?: number;

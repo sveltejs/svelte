@@ -655,9 +655,9 @@ export default class ElementWrapper extends Wrapper {
 
 		block.chunks.init.push(b`
 			const ${levels} = [${initial_props}];
-			const ${data} = ${levels}[0]||{};
-			for (let #i = 1; #i < ${levels}.length; #i += 1) {
-				${data} = { ...${data}, ...${levels}[#i] };
+			let ${data} = ${levels}[0] || {};
+			for (let i = 1; i < ${levels}.length; i++) {
+				${data} = { ...${data}, ...${levels}[i] };
 			}
 		`);
 
@@ -707,8 +707,10 @@ export default class ElementWrapper extends Wrapper {
 		const [intro_var, node, transitionFn, params] = run_transition(this, block, intro, `intro`);
 		block.add_variable(intro_var, x`@noop`);
 
-		let start_intro = b`${intro_var} = @run_transition(${node}, ${transitionFn}, 1, ${params});`;
-		if (intro.is_local) start_intro = b`if (#local) ${start_intro};`;
+		let start_intro;
+		if (intro.is_local)
+			start_intro = b`if (#local) ${intro_var} = @run_transition(${node}, ${transitionFn}, 1, ${params});`;
+		else start_intro = b`${intro_var} = @run_transition(${node}, ${transitionFn}, 1, ${params});`;
 		block.chunks.intro.push(start_intro);
 	}
 	// TODO
@@ -724,8 +726,9 @@ export default class ElementWrapper extends Wrapper {
 		const [outro_var, node, transitionFn, params] = run_transition(this, block, outro, `outro`);
 		block.add_variable(outro_var, x`@noop`);
 
-		let start_outro = b`${outro_var} = @run_transition(${node}, ${transitionFn}, 2, ${params});`;
-		if (outro.is_local) start_outro = b`if (#local) ${start_outro};`;
+		let start_outro;
+		if (outro.is_local) start_outro = b`if (#local) @run_transition(${node}, ${transitionFn}, 2, ${params});`;
+		else start_outro = b`${outro_var} = @run_transition(${node}, ${transitionFn}, 2, ${params});`;
 		block.chunks.outro.push(start_outro);
 
 		block.chunks.destroy.push(b`if (detaching) ${outro_var}();`);

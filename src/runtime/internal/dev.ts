@@ -127,6 +127,14 @@ export const check_duplicate_keys_dev = (ctx, list, get_context, get_key) => {
 	}
 };
 
+export function validate_slots_dev(name, slot, keys) {
+	for (const slot_key of Object.keys(slot)) {
+		if (!~keys.indexOf(slot_key)) {
+			console.warn(`<${name}> received an unexpected slot "${slot_key}".`);
+		}
+	}
+}
+
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;

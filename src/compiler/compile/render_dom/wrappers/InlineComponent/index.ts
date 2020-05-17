@@ -242,7 +242,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						initial_props.push(value);
 						change_object =
 							attr.expression.node.type !== 'ObjectExpression'
-								? b`(typeof ${value} === 'object' && ${value} !== null ? ${value} : {})`
+								? x`typeof ${value} === 'object' && ${value} !== null ? ${value} : {}`
 								: value;
 					} else {
 						const obj = x`{ ${name}: ${attr.get_value(block)} }`;
@@ -258,8 +258,8 @@ export default class InlineComponentWrapper extends Wrapper {
 				block.chunks.init.push(b`const ${levels} = [${initial_props}];`);
 
 				statements.push(b`
-					for (let #i = 0; #i < ${levels}.length; #i += 1) {
-						${props} = Object.assign(${props}, ${levels}[#i]);
+					for (let i = 0; i < ${levels}.length; i += 1) {
+						${props} = Object.assign(${props}, ${levels}[i]);
 					}
 				`);
 
@@ -418,7 +418,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						const old_component = ${name};
 						${block.group_transition_out(
 							(transition_out) =>
-								b`${transition_out}(old_component.$$.fragment, () => { @destroy_component(old_component, 1); }, 0)`
+								b`${transition_out}(old_component.$$.fragment, () => { @destroy_component(old_component, 1); }, 0);`
 						)}
 					}
 

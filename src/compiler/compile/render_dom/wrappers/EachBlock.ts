@@ -262,7 +262,7 @@ export default class EachBlockWrapper extends Wrapper {
 				$if({
 					if: each_block_else,
 					true: $if({
-						if: no_each_else,
+						if: this.else.is_dynamic && no_each_else,
 						true: update_else,
 						false: destroy_else,
 					}),
@@ -315,6 +315,8 @@ export default class EachBlockWrapper extends Wrapper {
 		update_anchor_node: Identifier;
 		update_mount_node: Identifier;
 	}) {
+		this.block.maintain_context = true;
+
 		const __DEV__ = this.renderer.options.dev;
 		const {
 			create_each_block,
@@ -431,20 +433,21 @@ export default class EachBlockWrapper extends Wrapper {
 			const has_transitions = !!(this.block.has_intro_method || this.block.has_outro_method);
 			const { has_update_method } = this.block;
 
-			const start = has_update_method ? 0 : `#old_length`;
+			const start = has_update_method ? 0 : x`old_length`;
 
 			// We declare `i` as block scoped here, as the `remove_old_blocks` code
 			// may rely on continuing where this iteration stopped.
 			this.updates.push(b`
-				${!has_update_method && b`const #old_length = ${each_block}.length;`}
+				${!has_update_method && b`const old_length = ${each_block}.length;`}
 				${each_block_value} = ${snippet};
 				${__DEV__ && b`@is_array_like_dev(${each_block_value});`}
-				let #i = ${start}, #block;
+				let i = ${start};
+				let #block;
 				${for_loop(
 					each_block_value,
-					(_, index) => b`
-					#block = ${each_block}[${index}]
-					const #child_ctx = ${each_context_getter}(#ctx, ${each_block_value}, ${index});
+					(_) => b`
+					#block = ${each_block}[i]
+					const #child_ctx = ${each_context_getter}(#ctx, ${each_block_value}, i);
 					${$if({
 						if: (has_update_method || has_transitions) && x`#block`,
 						true: b`
@@ -452,7 +455,7 @@ export default class EachBlockWrapper extends Wrapper {
 							${has_transitions && b`@transition_in(#block, 1);`}
 						`,
 						false: b`
-							#block = ${each_block}[${index}] = ${create_each_block}(#child_ctx);
+							#block = ${each_block}[i] = ${create_each_block}(#child_ctx);
 							#block.c();
 							${has_transitions && b`@transition_in(#block, 1);`}
 							#block.m(${update_mount_node}, ${update_anchor_node});
@@ -465,8 +468,8 @@ export default class EachBlockWrapper extends Wrapper {
 						(block) =>
 							transition_out ? b`${transition_out}(${block}, () => { ${block} = null; });` : b`${block}.d(1);`,
 						{
-							i: has_update_method && !transition_out ? null : x`#i = ${each_block_value}.length`,
-							length: has_update_method || transition_out ? x`${each_block}.length` : x`#old_length`,
+							i: has_update_method && !transition_out ? null : x`i = ${each_block_value}.length`,
+							length: has_update_method || transition_out ? x`${each_block}.length` : x`old_length`,
 						}
 					)
 				)}
@@ -487,12 +490,12 @@ const bit_state = (arr) => arr.reduce((state, bool, index) => (bool ? (state |= 
 
 const for_loop = <T>(
 	arr: T,
-	callback: (item: Node, index: Node, array: T) => Node[],
+	callback: (item: Node, index: string, array: T) => Node[],
 	{ length = x`${arr}.length`, i = undefined } = {}
 ) =>
 	i !== undefined
-		? b`for (${i}; #i < ${length}; #i++) { ${callback(x`${arr}[#i]`, x`#i`, arr)} }`
-		: b`for (let #i = 0; #i < ${length}; #i++) { ${callback(x`${arr}[#i]`, x`#i`, arr)} }`;
+		? b`for (${i}; i < ${length}; i++) { ${callback(x`${arr}[i]`, `i`, arr)} }`
+		: b`for (let i = 0; i < ${length}; i++) { ${callback(x`${arr}[i]`, `i`, arr)} }`;
 
 const $if = ({ if: condition, true: success, false: failure = null }) => {
 	if (condition) {

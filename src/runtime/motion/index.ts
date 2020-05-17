@@ -36,7 +36,7 @@ function solve_spring(
 }
 
 export function spring(
-	value,
+	value?,
 	{ mass = 1.0, damping = 10.0, stiffness = 100.0, precision = 0.001, soft = false }: SpringParams = {}
 ) {
 	const store = new SpringMotion(value, (set) => {
@@ -74,13 +74,13 @@ export function spring(
 	return obj;
 }
 export function tweened<T>(
-	value: T,
+	value?: T,
 	{
 		delay: default_delay = 0,
 		duration: default_duration = 400,
 		easing: default_easing = (v) => v,
 		interpolate: default_interpolate = numbers,
-	}: TweenParams<T>
+	}: TweenParams<T> = {}
 ) {
 	let delay = default_delay,
 		duration = default_duration,

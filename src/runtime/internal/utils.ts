@@ -1,4 +1,5 @@
-export function noop() {}
+import { noop } from 'svelte/environment';
+
 export const is_promise = <T = any>(value: any): value is PromiseLike<T> =>
 	value && typeof value === 'object' && typeof value.then === 'function';
 

@@ -9,7 +9,7 @@ node_modules
 
 /animate
 /easing
-/environment/
+/environment
 /internal
 /interpolate
 /motion

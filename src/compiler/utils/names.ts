@@ -2,7 +2,6 @@ import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import full_char_code_at from './full_char_code_at';
 /** source : rollup */
 export const globals = new Set([
-	'global',
 	'__proto__',
 	'AbortController',
 	'AbortSignal',
@@ -162,6 +161,7 @@ export const globals = new Set([
 	'GamepadEvent',
 	'getComputedStyle',
 	'getSelection',
+	'global',
 	'globalThis',
 	'HashChangeEvent',
 	'hasOwnProperty',
@@ -272,6 +272,7 @@ export const globals = new Set([
 	'Int16Array',
 	'Int32Array',
 	'Int8Array',
+	'InternalError',
 	'IntersectionObserver',
 	'IntersectionObserverEntry',
 	'Intl',
@@ -400,6 +401,7 @@ export const globals = new Set([
 	'PresentationReceiver',
 	'PresentationRequest',
 	'print',
+	'process',
 	'ProcessingInstruction',
 	'ProgressEvent',
 	'Promise',
@@ -614,6 +616,7 @@ export const globals = new Set([
 	'Uint32Array',
 	'Uint8Array',
 	'Uint8ClampedArray',
+	'undefined',
 	'unescape',
 	'URIError',
 	'URL',

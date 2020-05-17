@@ -1,15 +1,8 @@
-import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import {
-	showOutput,
-	loadConfig,
-	loadSvelte,
-	env,
-	setupHtmlEqual,
-	shouldUpdateExpected
-} from '../helpers.js';
+import { showOutput, loadConfig, loadSvelte, env, setupHtmlEqual, shouldUpdateExpected } from '../helpers';
+import { assert } from '../test';
 
 let compileOptions = null;
 
@@ -19,13 +12,13 @@ describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 
-		require.extensions['.svelte'] = function(module, filename) {
+		require.extensions['.svelte'] = function (module, filename) {
 			const options = Object.assign(
 				{
 					filename,
 					hydratable: true,
 					format: 'cjs',
-					sveltePath
+					sveltePath,
 				},
 				compileOptions
 			);
@@ -82,7 +75,7 @@ describe('hydration', () => {
 				const component = new SvelteComponent({
 					target,
 					hydrate: true,
-					props: config.props
+					props: config.props,
 				});
 
 				try {
@@ -117,18 +110,19 @@ describe('hydration', () => {
 				}
 			} catch (err) {
 				showOutput(cwd, {
-					hydratable: true
+					hydratable: true,
 				});
 				throw err;
 			}
 
-			if (config.show) showOutput(cwd, {
-				hydratable: true
-			});
+			if (config.show)
+				showOutput(cwd, {
+					hydratable: true,
+				});
 		});
 	}
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		runTest(dir, null);
 	});
 });

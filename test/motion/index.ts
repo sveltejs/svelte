@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import { assert } from '../test';
 import { get } from '../../store';
 import { spring, tweened } from '../../motion';
 

@@ -1,4 +1,8 @@
-import * as assert from 'assert';
-type TestSetup = {
-	test: ({ assert: module.assert, component, mod, target, window, raf, compileOptions }) => void | Promise<void>;
+type Test = {
+	test({ assert, component, mod, target, window, raf, compileOptions }): void | Promise<void>;
+	html: string;
+	skip: boolean;
 };
+declare module 'samples/*/_config.js' {
+	export default Test;
+}

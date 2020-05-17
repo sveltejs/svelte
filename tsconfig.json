@@ -2,13 +2,12 @@
 	"include": [],
 
 	"compilerOptions": {
-		"rootDir": "src",
+		"rootDirs": ["src", "test"],
 
-		// target node v8+ (https://node.green/)
-		// the only missing feature is Array.prototype.values
-		"lib": ["ESNext"],
-		"target": "ESNext",
+		"lib": ["ES2020", "DOM"],
+		"target": "ES2020",
 
+		"skipLibCheck": true,
 		"declaration": true,
 		"declarationDir": "types",
 		"strictBindCallApply": true,

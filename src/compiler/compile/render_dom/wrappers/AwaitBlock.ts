@@ -241,8 +241,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		if (this.pending.block.has_outro_method) {
 			block.chunks.outro.push(b`
-				for (let #i = 0; #i < 3; #i += 1) {
-					@transition_out(${info}.blocks[#i]);
+				for (let i = 0; i < 3; i++) {
+					@transition_out(${info}.blocks[i]);
 				}
 			`);
 		}
