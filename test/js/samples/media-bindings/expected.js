@@ -21,15 +21,15 @@ function create_fragment(ctx) {
 	let audio_is_paused = true;
 	let dispose;
 
-	function audio_timeupdate_handler() {
+	function audio_timeupdate_play_seeking_handler() {
 		cancelAnimationFrame(audio_animationframe);
 
 		if (!audio.paused) {
-			audio_animationframe = raf(audio_timeupdate_handler);
+			audio_animationframe = raf(audio_timeupdate_play_seeking_handler);
 			audio_updating = true;
 		}
 
-		/*audio_timeupdate_handler*/ ctx[12].call(audio);
+		/*audio_timeupdate_play_seeking_handler*/ ctx[12].call(audio);
 	}
 
 	return {
@@ -37,7 +37,7 @@ function create_fragment(ctx) {
 			audio = element("audio");
 			if (/*buffered*/ ctx[0] === void 0) add_render_callback(() => /*audio_progress_handler*/ ctx[10].call(audio));
 			if (/*buffered*/ ctx[0] === void 0 || /*seekable*/ ctx[1] === void 0) add_render_callback(() => /*audio_loadedmetadata_handler*/ ctx[11].call(audio));
-			if (/*played*/ ctx[2] === void 0 || /*currentTime*/ ctx[3] === void 0 || /*ended*/ ctx[9] === void 0) add_render_callback(audio_timeupdate_handler);
+			if (/*played*/ ctx[2] === void 0 || /*currentTime*/ ctx[3] === void 0 || /*ended*/ ctx[9] === void 0) add_render_callback(audio_timeupdate_play_seeking_handler);
 			if (/*duration*/ ctx[4] === void 0) add_render_callback(() => /*audio_durationchange_handler*/ ctx[13].call(audio));
 			if (/*seeking*/ ctx[8] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[17].call(audio));
 			if (/*ended*/ ctx[9] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[18].call(audio));
@@ -58,7 +58,8 @@ function create_fragment(ctx) {
 			dispose = [
 				listen(audio, "progress", /*audio_progress_handler*/ ctx[10]),
 				listen(audio, "loadedmetadata", /*audio_loadedmetadata_handler*/ ctx[11]),
-				listen(audio, "timeupdate", audio_timeupdate_handler),
+				listen(audio, "play", audio_timeupdate_play_seeking_handler),
+				listen(audio, "seeking", audio_timeupdate_play_seeking_handler),
 				listen(audio, "durationchange", /*audio_durationchange_handler*/ ctx[13]),
 				listen(audio, "play", /*audio_play_pause_handler*/ ctx[14]),
 				listen(audio, "pause", /*audio_play_pause_handler*/ ctx[14]),
@@ -121,7 +122,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(1, seekable);
 	}
 
-	function audio_timeupdate_handler() {
+	function audio_timeupdate_play_seeking_handler() {
 		played = time_ranges_to_array(this.played);
 		currentTime = this.currentTime;
 		ended = this.ended;
@@ -186,7 +187,7 @@ function instance($$self, $$props, $$invalidate) {
 		ended,
 		audio_progress_handler,
 		audio_loadedmetadata_handler,
-		audio_timeupdate_handler,
+		audio_timeupdate_play_seeking_handler,
 		audio_durationchange_handler,
 		audio_play_pause_handler,
 		audio_volumechange_handler,
