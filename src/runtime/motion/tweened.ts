@@ -94,7 +94,12 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 		} = assign(assign({}, defaults), opts);
 
 		if (duration === 0) {
-			store.set(target_value);
+			if (previous_task) {
+				previous_task.abort();
+				previous_task = null;
+			}
+			
+			store.set(value = target_value);
 			return Promise.resolve();
 		}
 
