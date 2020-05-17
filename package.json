@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.22.2",
+  "version": "3.22.3",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
