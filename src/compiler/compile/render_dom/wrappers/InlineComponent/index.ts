@@ -574,6 +574,9 @@ export default class InlineComponentWrapper extends Wrapper {
 				${props && b`let ${props} = ${attribute_object};`}`}
 				${statements}
 				const ${name} = new ${expression}(${component_opts});
+				${uses_classes && component.compile_options.dev && b`if (${name}.$$.props.class === undefined) {
+					@_console.warn("<${this.node.name}> does not export class property but was used with a class directive.")
+				}`}
 
 				${munged_bindings}
 				${munged_handlers}
