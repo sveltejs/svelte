@@ -87,13 +87,13 @@ function create_fragment(ctx) {
 	let each_value = /*comments*/ ctx[0];
 	let each_blocks = [];
 
-	for (let i = 0; i < each_value.length; i += 1) {
+	for (let i = 0; i < each_value.length; i++) {
 		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
 	}
 
 	return {
 		c() {
-			for (let i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i++) {
 				each_blocks[i].c();
 			}
 
@@ -102,7 +102,7 @@ function create_fragment(ctx) {
 			t1 = text(/*foo*/ ctx[3]);
 		},
 		m(target, anchor) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i++) {
 				each_blocks[i].m(target, anchor);
 			}
 
@@ -113,21 +113,23 @@ function create_fragment(ctx) {
 		p(ctx, [dirty]) {
 			if (dirty & /*comments, elapsed, time*/ 7) {
 				each_value = /*comments*/ ctx[0];
-				let i;
+				let i = 0;
+				let block;
 
-				for (i = 0; i < each_value.length; i += 1) {
+				for (; i < each_value.length; i++) {
+					block = each_blocks[i];
 					const child_ctx = get_each_context(ctx, each_value, i);
 
-					if (each_blocks[i]) {
-						each_blocks[i].p(child_ctx, dirty);
+					if (block) {
+						block.p(child_ctx, dirty);
 					} else {
-						each_blocks[i] = create_each_block(child_ctx);
-						each_blocks[i].c();
-						each_blocks[i].m(t0.parentNode, t0);
+						block = each_blocks[i] = create_each_block(child_ctx);
+						block.c();
+						block.m(t0.parentNode, t0);
 					}
 				}
 
-				for (; i < each_blocks.length; i += 1) {
+				for (; i < each_blocks.length; i++) {
 					each_blocks[i].d(1);
 				}
 
@@ -157,6 +159,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("elapsed" in $$props) $$invalidate(1, elapsed = $$props.elapsed);
 		if ("time" in $$props) $$invalidate(2, time = $$props.time);
 		if ("foo" in $$props) $$invalidate(3, foo = $$props.foo);
+		0;
 	};
 
 	return [comments, elapsed, time, foo];

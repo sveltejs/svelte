@@ -49,20 +49,20 @@ function create_fragment(ctx) {
 	let each_value = [/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]];
 	let each_blocks = [];
 
-	for (let i = 0; i < 5; i += 1) {
+	for (let i = 0; i < each_value.length; i++) {
 		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
 	}
 
 	return {
 		c() {
-			for (let i = 0; i < 5; i += 1) {
+			for (let i = 0; i < each_blocks.length; i++) {
 				each_blocks[i].c();
 			}
 
 			each_1_anchor = empty();
 		},
 		m(target, anchor) {
-			for (let i = 0; i < 5; i += 1) {
+			for (let i = 0; i < each_blocks.length; i++) {
 				each_blocks[i].m(target, anchor);
 			}
 
@@ -71,23 +71,27 @@ function create_fragment(ctx) {
 		p(ctx, [dirty]) {
 			if (dirty & /*a, b, c, d, e*/ 31) {
 				each_value = [/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]];
-				let i;
+				let i = 0;
+				let block;
 
-				for (i = 0; i < 5; i += 1) {
+				for (; i < each_value.length; i++) {
+					block = each_blocks[i];
 					const child_ctx = get_each_context(ctx, each_value, i);
 
-					if (each_blocks[i]) {
-						each_blocks[i].p(child_ctx, dirty);
+					if (block) {
+						block.p(child_ctx, dirty);
 					} else {
-						each_blocks[i] = create_each_block(child_ctx);
-						each_blocks[i].c();
-						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
+						block = each_blocks[i] = create_each_block(child_ctx);
+						block.c();
+						block.m(each_1_anchor.parentNode, each_1_anchor);
 					}
 				}
 
-				for (; i < 5; i += 1) {
+				for (; i < each_blocks.length; i++) {
 					each_blocks[i].d(1);
 				}
+
+				each_blocks.length = each_value.length;
 			}
 		},
 		i: noop,
@@ -112,6 +116,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("c" in $$props) $$invalidate(2, c = $$props.c);
 		if ("d" in $$props) $$invalidate(3, d = $$props.d);
 		if ("e" in $$props) $$invalidate(4, e = $$props.e);
+		0;
 	};
 
 	return [a, b, c, d, e];

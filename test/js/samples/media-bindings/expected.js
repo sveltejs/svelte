@@ -9,7 +9,6 @@ import {
 	listen,
 	noop,
 	raf,
-	run_all,
 	safe_not_equal,
 	time_ranges_to_array
 } from "svelte/internal";
@@ -53,7 +52,9 @@ function create_fragment(ctx) {
 				audio.playbackRate = /*playbackRate*/ ctx[7];
 			}
 
-			if (remount) run_all(dispose);
+			if (remount) for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 
 			dispose = [
 				listen(audio, "progress", /*audio_progress_handler*/ ctx[10]),
@@ -92,7 +93,10 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(audio);
-			run_all(dispose);
+
+			for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 		}
 	};
 }
@@ -171,6 +175,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("playbackRate" in $$props) $$invalidate(7, playbackRate = $$props.playbackRate);
 		if ("seeking" in $$props) $$invalidate(8, seeking = $$props.seeking);
 		if ("ended" in $$props) $$invalidate(9, ended = $$props.ended);
+		0;
 	};
 
 	return [

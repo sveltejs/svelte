@@ -1,12 +1,12 @@
 {
 	"html": {
 		"start": 0,
-		"end": 54,
+		"end": 56,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 54,
+				"end": 56,
 				"type": "EachBlock",
 				"expression": {
 					"type": "Identifier",
@@ -26,20 +26,20 @@
 				},
 				"children": [
 					{
-						"start": 33,
-						"end": 46,
+						"start": 34,
+						"end": 47,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 36,
-								"end": 42,
+								"start": 37,
+								"end": 43,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 37,
-									"end": 41,
+									"start": 38,
+									"end": 42,
 									"loc": {
 										"start": {
 											"line": 2,

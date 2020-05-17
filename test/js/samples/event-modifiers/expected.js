@@ -9,7 +9,6 @@ import {
 	listen,
 	noop,
 	prevent_default,
-	run_all,
 	safe_not_equal,
 	space,
 	stop_propagation
@@ -43,7 +42,10 @@ function create_fragment(ctx) {
 			append(div, button1);
 			append(div, t3);
 			append(div, button2);
-			if (remount) run_all(dispose);
+
+			if (remount) for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 
 			dispose = [
 				listen(button0, "click", stop_propagation(prevent_default(handleClick))),
@@ -57,7 +59,10 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(div);
-			run_all(dispose);
+
+			for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 		}
 	};
 }

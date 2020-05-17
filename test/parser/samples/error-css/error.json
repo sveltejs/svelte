@@ -1,10 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "css-syntax-error",
-	"message": "LeftCurlyBracket is expected",
 	"start": {
 		"line": 2,
 		"column": 16,
-		"character": 24
+		"character": 25
 	},
-	"pos": 24
+	"end": {
+		"line": 2,
+		"column": 16,
+		"character": 25
+	},
+	"pos": 25,
+	"frame": "1: <style>\r\n2:   this is not css\r\n                    ^\n3: </style>",
+	"message": "LeftCurlyBracket is expected"
 }

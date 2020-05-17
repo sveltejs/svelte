@@ -6,7 +6,6 @@ import {
 	element,
 	init,
 	insert,
-	is_function,
 	noop,
 	safe_not_equal
 } from "svelte/internal";
@@ -27,7 +26,7 @@ function create_fragment(ctx) {
 			dispose = action_destroyer(foo_action = foo.call(null, button, /*foo_function*/ ctx[1]));
 		},
 		p(ctx, [dirty]) {
-			if (foo_action && is_function(foo_action.update) && dirty & /*bar*/ 1) foo_action.update.call(null, /*foo_function*/ ctx[1]);
+			if (foo_action && "function" === typeof foo_action.update && dirty & /*bar*/ 1) foo_action.update.call(null, /*foo_function*/ ctx[1]);
 		},
 		i: noop,
 		o: noop,
@@ -52,6 +51,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ("bar" in $$props) $$invalidate(0, bar = $$props.bar);
+		0;
 	};
 
 	return [bar, foo_function];

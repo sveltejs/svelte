@@ -9,7 +9,6 @@ import {
 	insert,
 	listen,
 	noop,
-	run_all,
 	safe_not_equal,
 	set_input_value,
 	space
@@ -38,7 +37,10 @@ function create_fragment(ctx) {
 			set_input_value(input, /*test*/ ctx[0]);
 			append(form, t0);
 			append(form, button);
-			if (remount) run_all(dispose);
+
+			if (remount) for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 
 			dispose = [
 				listen(input, "input", /*input_input_handler*/ ctx[2]),
@@ -54,7 +56,10 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(form);
-			run_all(dispose);
+
+			for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 		}
 	};
 }

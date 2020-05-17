@@ -49,20 +49,20 @@ function create_fragment(ctx) {
 	let each_value = /*createElement*/ ctx[0];
 	let each_blocks = [];
 
-	for (let i = 0; i < each_value.length; i += 1) {
+	for (let i = 0; i < each_value.length; i++) {
 		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
 	}
 
 	return {
 		c() {
-			for (let i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i++) {
 				each_blocks[i].c();
 			}
 
 			each_1_anchor = empty();
 		},
 		m(target, anchor) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i++) {
 				each_blocks[i].m(target, anchor);
 			}
 
@@ -71,21 +71,23 @@ function create_fragment(ctx) {
 		p(ctx, [dirty]) {
 			if (dirty & /*createElement*/ 1) {
 				each_value = /*createElement*/ ctx[0];
-				let i;
+				let i = 0;
+				let block;
 
-				for (i = 0; i < each_value.length; i += 1) {
+				for (; i < each_value.length; i++) {
+					block = each_blocks[i];
 					const child_ctx = get_each_context(ctx, each_value, i);
 
-					if (each_blocks[i]) {
-						each_blocks[i].p(child_ctx, dirty);
+					if (block) {
+						block.p(child_ctx, dirty);
 					} else {
-						each_blocks[i] = create_each_block(child_ctx);
-						each_blocks[i].c();
-						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
+						block = each_blocks[i] = create_each_block(child_ctx);
+						block.c();
+						block.m(each_1_anchor.parentNode, each_1_anchor);
 					}
 				}
 
-				for (; i < each_blocks.length; i += 1) {
+				for (; i < each_blocks.length; i++) {
 					each_blocks[i].d(1);
 				}
 
@@ -106,6 +108,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ("createElement" in $$props) $$invalidate(0, createElement = $$props.createElement);
+		0;
 	};
 
 	return [createElement];

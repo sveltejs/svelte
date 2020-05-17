@@ -10,7 +10,6 @@ import {
 	listen,
 	noop,
 	raf,
-	run_all,
 	safe_not_equal
 } from "svelte/internal";
 
@@ -41,7 +40,10 @@ function create_fragment(ctx) {
 		m(target, anchor, remount) {
 			insert(target, video, anchor);
 			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[6].bind(video));
-			if (remount) run_all(dispose);
+
+			if (remount) for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 
 			dispose = [
 				listen(video, "timeupdate", video_timeupdate_handler),
@@ -60,7 +62,10 @@ function create_fragment(ctx) {
 		d(detaching) {
 			if (detaching) detach(video);
 			video_resize_listener();
-			run_all(dispose);
+
+			for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 		}
 	};
 }
@@ -93,6 +98,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("videoHeight" in $$props) $$invalidate(1, videoHeight = $$props.videoHeight);
 		if ("videoWidth" in $$props) $$invalidate(2, videoWidth = $$props.videoWidth);
 		if ("offsetWidth" in $$props) $$invalidate(3, offsetWidth = $$props.offsetWidth);
+		0;
 	};
 
 	return [

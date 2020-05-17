@@ -1,7 +1,7 @@
 {
 	"html": {
 		"start": 0,
-		"end": 97,
+		"end": 101,
 		"type": "Fragment",
 		"children": [
 			{
@@ -115,19 +115,19 @@
 			},
 			{
 				"start": 61,
-				"end": 63,
+				"end": 65,
 				"type": "Text",
-				"raw": "\n\n",
-				"data": "\n\n"
+				"raw": "\r\n\r\n",
+				"data": "\r\n\r\n"
 			},
 			{
-				"start": 63,
-				"end": 97,
+				"start": 65,
+				"end": 101,
 				"type": "IfBlock",
 				"expression": {
 					"type": "Identifier",
-					"start": 68,
-					"end": 75,
+					"start": 70,
+					"end": 77,
 					"loc": {
 						"start": {
 							"line": 3,
@@ -142,15 +142,15 @@
 				},
 				"children": [
 					{
-						"start": 78,
-						"end": 91,
+						"start": 81,
+						"end": 94,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 81,
-								"end": 87,
+								"start": 84,
+								"end": 90,
 								"type": "Text",
 								"raw": "hello!",
 								"data": "hello!"

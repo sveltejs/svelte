@@ -68,6 +68,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ("current" in $$props) $$invalidate(0, current = $$props.current);
+		0;
 	};
 
 	return [current];

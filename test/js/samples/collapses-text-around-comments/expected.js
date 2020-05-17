@@ -15,8 +15,8 @@ import {
 
 function add_css() {
 	var style = element("style");
-	style.id = "svelte-1a7i8ec-style";
-	style.textContent = "p.svelte-1a7i8ec{color:red}";
+	style.id = "svelte-1o8xv48-style";
+	style.textContent = "p.svelte-1o8xv48{color:red}";
 	append(document.head, style);
 }
 
@@ -28,7 +28,7 @@ function create_fragment(ctx) {
 		c() {
 			p = element("p");
 			t = text(/*foo*/ ctx[0]);
-			attr(p, "class", "svelte-1a7i8ec");
+			attr(p, "class", "svelte-1o8xv48");
 		},
 		m(target, anchor) {
 			insert(target, p, anchor);
@@ -50,6 +50,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
+		0;
 	};
 
 	return [foo];
@@ -58,7 +59,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		if (!document.getElementById("svelte-1a7i8ec-style")) add_css();
+		if (!document.getElementById("svelte-1o8xv48-style")) add_css();
 		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 });
 	}
 }

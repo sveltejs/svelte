@@ -8,7 +8,6 @@ import {
 	insert,
 	listen,
 	noop,
-	run_all,
 	safe_not_equal,
 	space
 } from "svelte/internal";
@@ -31,7 +30,10 @@ function create_fragment(ctx) {
 			insert(target, input0, anchor);
 			insert(target, t, anchor);
 			insert(target, input1, anchor);
-			if (remount) run_all(dispose);
+
+			if (remount) for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 
 			dispose = [
 				listen(input0, "change", /*input0_change_handler*/ ctx[1]),
@@ -45,7 +47,10 @@ function create_fragment(ctx) {
 			if (detaching) detach(input0);
 			if (detaching) detach(t);
 			if (detaching) detach(input1);
-			run_all(dispose);
+
+			for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 		}
 	};
 }
@@ -65,6 +70,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ("files" in $$props) $$invalidate(0, files = $$props.files);
+		0;
 	};
 
 	return [files, input0_change_handler, input1_change_handler];

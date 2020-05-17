@@ -2,7 +2,6 @@
 import {
 	SvelteComponent,
 	append,
-	component_subscribe,
 	detach,
 	element,
 	init,
@@ -10,6 +9,7 @@ import {
 	noop,
 	safe_not_equal,
 	set_data,
+	subscribe,
 	text
 } from "svelte/internal";
 
@@ -42,7 +42,11 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let $foo;
 	const foo = writable(0);
-	component_subscribe($$self, foo, value => $$invalidate(0, $foo = value));
+
+	$$self.$$.on_destroy.push(subscribe(foo, value => {
+		$$invalidate(0, $foo = value);
+	}));
+
 	return [$foo, foo];
 }
 

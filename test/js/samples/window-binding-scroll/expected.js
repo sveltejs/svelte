@@ -75,6 +75,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ("y" in $$props) $$invalidate(0, y = $$props.y);
+		0;
 	};
 
 	return [y, onwindowscroll];

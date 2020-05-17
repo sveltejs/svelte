@@ -8,7 +8,6 @@ import {
 	insert,
 	listen,
 	noop,
-	run_all,
 	safe_not_equal,
 	set_input_value,
 	to_number
@@ -26,7 +25,10 @@ function create_fragment(ctx) {
 		m(target, anchor, remount) {
 			insert(target, input, anchor);
 			set_input_value(input, /*value*/ ctx[0]);
-			if (remount) run_all(dispose);
+
+			if (remount) for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 
 			dispose = [
 				listen(input, "change", /*input_change_input_handler*/ ctx[1]),
@@ -42,7 +44,10 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(input);
-			run_all(dispose);
+
+			for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 		}
 	};
 }
@@ -57,6 +62,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ("value" in $$props) $$invalidate(0, value = $$props.value);
+		0;
 	};
 
 	return [value, input_change_input_handler];

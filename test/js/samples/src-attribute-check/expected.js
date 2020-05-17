@@ -70,6 +70,7 @@ function instance($$self, $$props, $$invalidate) {
 	$$self.$set = $$props => {
 		if ("url" in $$props) $$invalidate(0, url = $$props.url);
 		if ("slug" in $$props) $$invalidate(1, slug = $$props.slug);
+		0;
 	};
 
 	return [url, slug];

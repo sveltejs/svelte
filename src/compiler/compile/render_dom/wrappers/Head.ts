@@ -30,7 +30,7 @@ export default class HeadWrapper extends Wrapper {
 		if (this.renderer.options.hydratable && this.fragment.nodes.length) {
 			nodes = block.get_unique_name('head_nodes');
 			block.chunks.claim.push(
-				b`const ${nodes} = Array.from((@_document.head||@_document.body).querySelectorAll('[data-svelte="${this.node.id}"]'));`
+				b`const ${nodes} = Array.from(( @_document.head || @_document.body ).querySelectorAll('[data-svelte="${this.node.id}"]'));`
 			);
 		}
 

@@ -58,6 +58,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("style" in $$props) $$invalidate(0, style = $$props.style);
 		if ("key" in $$props) $$invalidate(1, key = $$props.key);
 		if ("value" in $$props) $$invalidate(2, value = $$props.value);
+		0;
 	};
 
 	return [style, key, value];

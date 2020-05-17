@@ -249,6 +249,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("c" in $$props) $$invalidate(2, c = $$props.c);
 		if ("d" in $$props) $$invalidate(3, d = $$props.d);
 		if ("e" in $$props) $$invalidate(4, e = $$props.e);
+		0;
 	};
 
 	return [a, b, c, d, e];

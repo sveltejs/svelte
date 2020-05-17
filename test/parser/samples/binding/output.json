@@ -1,32 +1,32 @@
 {
 	"html": {
-		"start": 31,
-		"end": 56,
+		"start": 35,
+		"end": 60,
 		"type": "Fragment",
 		"children": [
 			{
-				"start": 29,
-				"end": 31,
+				"start": 31,
+				"end": 35,
 				"type": "Text",
-				"raw": "\n\n",
-				"data": "\n\n"
+				"raw": "\r\n\r\n",
+				"data": "\r\n\r\n"
 			},
 			{
-				"start": 31,
-				"end": 56,
+				"start": 35,
+				"end": 60,
 				"type": "Element",
 				"name": "input",
 				"attributes": [
 					{
-						"start": 38,
-						"end": 55,
+						"start": 42,
+						"end": 59,
 						"type": "Binding",
 						"name": "value",
 						"modifiers": [],
 						"expression": {
 							"type": "Identifier",
-							"start": 50,
-							"end": 54,
+							"start": 54,
+							"end": 58,
 							"loc": {
 								"start": {
 									"line": 5,
@@ -48,12 +48,12 @@
 	"instance": {
 		"type": "Script",
 		"start": 0,
-		"end": 29,
+		"end": 31,
 		"context": "default",
 		"content": {
 			"type": "Program",
 			"start": 8,
-			"end": 20,
+			"end": 22,
 			"loc": {
 				"start": {
 					"line": 1,
@@ -67,8 +67,8 @@
 			"body": [
 				{
 					"type": "VariableDeclaration",
-					"start": 10,
-					"end": 19,
+					"start": 11,
+					"end": 20,
 					"loc": {
 						"start": {
 							"line": 2,
@@ -82,8 +82,8 @@
 					"declarations": [
 						{
 							"type": "VariableDeclarator",
-							"start": 14,
-							"end": 18,
+							"start": 15,
+							"end": 19,
 							"loc": {
 								"start": {
 									"line": 2,
@@ -96,8 +96,8 @@
 							},
 							"id": {
 								"type": "Identifier",
-								"start": 14,
-								"end": 18,
+								"start": 15,
+								"end": 19,
 								"loc": {
 									"start": {
 										"line": 2,

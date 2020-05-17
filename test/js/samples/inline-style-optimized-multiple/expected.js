@@ -48,6 +48,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ("color" in $$props) $$invalidate(0, color = $$props.color);
 		if ("x" in $$props) $$invalidate(1, x = $$props.x);
 		if ("y" in $$props) $$invalidate(2, y = $$props.y);
+		0;
 	};
 
 	return [color, x, y];

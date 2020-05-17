@@ -5,7 +5,6 @@ import {
 	init,
 	listen,
 	noop,
-	run_all,
 	safe_not_equal
 } from "svelte/internal";
 
@@ -16,7 +15,9 @@ function create_fragment(ctx) {
 	return {
 		c: noop,
 		m(target, anchor, remount) {
-			if (remount) run_all(dispose);
+			if (remount) for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 
 			dispose = [
 				listen(window, "online", /*onlinestatuschanged*/ ctx[1]),
@@ -27,7 +28,9 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
-			run_all(dispose);
+			for (let i = 0; i < dispose.length; i++) {
+				dispose[i]();
+			}
 		}
 	};
 }

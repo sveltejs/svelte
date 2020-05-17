@@ -90,6 +90,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
+		0;
 	};
 
 	return [foo];

@@ -2,15 +2,14 @@
 import {
 	SvelteComponent,
 	append,
-	create_animation,
 	detach,
 	element,
 	empty,
-	fix_and_destroy_block,
 	fix_position,
 	init,
 	insert,
 	noop,
+	run_animation,
 	safe_not_equal,
 	set_data,
 	text,
@@ -28,6 +27,7 @@ function create_each_block(key_1, ctx) {
 	let div;
 	let t_value = /*thing*/ ctx[1].name + "";
 	let t;
+	let unfreeze;
 	let rect;
 	let stop_animation = noop;
 
@@ -43,22 +43,26 @@ function create_each_block(key_1, ctx) {
 			insert(target, div, anchor);
 			append(div, t);
 		},
-		p(ctx, dirty) {
+		p(new_ctx, dirty) {
+			ctx = new_ctx;
 			if (dirty & /*things*/ 1 && t_value !== (t_value = /*thing*/ ctx[1].name + "")) set_data(t, t_value);
 		},
 		r() {
 			rect = div.getBoundingClientRect();
 		},
 		f() {
-			fix_position(div);
 			stop_animation();
+			unfreeze = fix_position(div, rect);
 		},
 		a() {
-			stop_animation();
-			stop_animation = create_animation(div, rect, foo, {});
+			if (unfreeze) return; else {
+				stop_animation();
+				stop_animation = run_animation(div, rect, foo);
+			}
 		},
 		d(detaching) {
 			if (detaching) detach(div);
+			unfreeze = void 0;
 		}
 	};
 }
@@ -70,22 +74,22 @@ function create_fragment(ctx) {
 	let each_value = /*things*/ ctx[0];
 	const get_key = ctx => /*thing*/ ctx[1].id;
 
-	for (let i = 0; i < each_value.length; i += 1) {
-		let child_ctx = get_each_context(ctx, each_value, i);
-		let key = get_key(child_ctx);
+	for (let i = 0; i < each_value.length; i++) {
+		const child_ctx = get_each_context(ctx, each_value, i);
+		const key = get_key(child_ctx);
 		each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
 	}
 
 	return {
 		c() {
-			for (let i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i++) {
 				each_blocks[i].c();
 			}
 
 			each_1_anchor = empty();
 		},
 		m(target, anchor) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i++) {
 				each_blocks[i].m(target, anchor);
 			}
 
@@ -94,15 +98,22 @@ function create_fragment(ctx) {
 		p(ctx, [dirty]) {
 			if (dirty & /*things*/ 1) {
 				const each_value = /*things*/ ctx[0];
-				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
-				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
-				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].a();
+
+				for (let i = 0; i < each_blocks.length; i++) {
+					each_blocks[i].r();
+				}
+
+				each_blocks = update_keyed_each(each_blocks, dirty, ctx, 3, get_key, each_value, each_1_lookup, each_1_anchor.parentNode, create_each_block, each_1_anchor, get_each_context);
+
+				for (let i = 0; i < each_blocks.length; i++) {
+					each_blocks[i].a();
+				}
 			}
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
+			for (let i = 0; i < each_blocks.length; i++) {
 				each_blocks[i].d(detaching);
 			}
 
@@ -130,6 +141,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$set = $$props => {
 		if ("things" in $$props) $$invalidate(0, things = $$props.things);
+		0;
 	};
 
 	return [things];

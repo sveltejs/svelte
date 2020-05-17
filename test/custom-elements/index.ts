@@ -131,9 +131,9 @@ describe('custom-elements', function () {
 						warnings.map((w) => ({
 							code: w.code,
 							message: w.message,
-							pos: w.pos,
-							start: w.start,
-							end: w.end,
+							// pos: w.pos,
+							// start: w.start,
+							// end: w.end,
 						})),
 						expected_warnings
 					);

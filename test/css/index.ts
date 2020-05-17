@@ -16,6 +16,9 @@ function normalize_warning(warning) {
 	warning.frame = warning.frame.replace(/^\n/, '').replace(/^\t+/gm, '').replace(/\s+$/gm, '');
 	delete warning.filename;
 	delete warning.toString;
+	delete warning.start;
+	delete warning.end;
+	delete warning.pos;
 	return warning;
 }
 

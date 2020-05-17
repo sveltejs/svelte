@@ -1,12 +1,12 @@
 {
 	"html": {
 		"start": 0,
-		"end": 89,
+		"end": 93,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 89,
+				"end": 93,
 				"type": "IfBlock",
 				"expression": {
 					"type": "BinaryExpression",
@@ -59,15 +59,15 @@
 				},
 				"children": [
 					{
-						"start": 14,
-						"end": 41,
+						"start": 15,
+						"end": 42,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 17,
-								"end": 37,
+								"start": 18,
+								"end": 38,
 								"type": "Text",
 								"raw": "x is greater than 10",
 								"data": "x is greater than 10"
@@ -76,19 +76,19 @@
 					}
 				],
 				"else": {
-					"start": 58,
-					"end": 84,
+					"start": 60,
+					"end": 88,
 					"type": "ElseBlock",
 					"children": [
 						{
-							"start": 58,
-							"end": 89,
+							"start": 60,
+							"end": 93,
 							"type": "IfBlock",
 							"elseif": true,
 							"expression": {
 								"type": "BinaryExpression",
-								"start": 52,
-								"end": 57,
+								"start": 54,
+								"end": 59,
 								"loc": {
 									"start": {
 										"line": 3,
@@ -101,8 +101,8 @@
 								},
 								"left": {
 									"type": "Identifier",
-									"start": 52,
-									"end": 53,
+									"start": 54,
+									"end": 55,
 									"loc": {
 										"start": {
 											"line": 3,
@@ -118,8 +118,8 @@
 								"operator": "<",
 								"right": {
 									"type": "Literal",
-									"start": 56,
-									"end": 57,
+									"start": 58,
+									"end": 59,
 									"loc": {
 										"start": {
 											"line": 3,
@@ -136,15 +136,15 @@
 							},
 							"children": [
 								{
-									"start": 60,
-									"end": 83,
+									"start": 63,
+									"end": 86,
 									"type": "Element",
 									"name": "p",
 									"attributes": [],
 									"children": [
 										{
-											"start": 63,
-											"end": 79,
+											"start": 66,
+											"end": 82,
 											"type": "Text",
 											"raw": "x is less than 5",
 											"data": "x is less than 5"
