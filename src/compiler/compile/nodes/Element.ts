@@ -56,6 +56,11 @@ const a11y_required_content = new Set([
 	'h6'
 ]);
 
+const a11y_no_onchange = new Set([
+	'select',
+	'option'
+]);
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
@@ -424,11 +429,16 @@ export default class Element extends Node {
 	}
 
 	validate_special_cases() {
-		const { component,attributes } = this;
+		const { component, attributes, handlers } = this;
 		const attribute_map = new Map();
+		const handlers_map = new Map();
 
 		attributes.forEach(attribute => (
 			attribute_map.set(attribute.name, attribute)
+		));
+
+		handlers.forEach(handler => (
+			handlers_map.set(handler.name, handler)
 		));
 
 		if (this.name === 'a') {
@@ -494,6 +504,15 @@ export default class Element extends Node {
 						message: `A11y: Screenreaders already announce <img> elements as an image.`
 					});
 				}
+			}
+		}
+
+		if (a11y_no_onchange.has(this.name)) {
+			if (handlers_map.has('change') && !handlers_map.has('blur')) {
+				component.warn(this, {
+					code: `a11y-no-onchange`,
+					message: `A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.`
+				});
 			}
 		}
 	}
