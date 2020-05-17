@@ -22,7 +22,7 @@ The `onMount` function schedules a callback to run as soon as the component has 
 
 `onMount` does not run inside a [server-side component](docs#Server-side_component_API).
 
-```html
+```sv
 <script>
 	import { onMount } from 'svelte';
 
@@ -36,7 +36,7 @@ The `onMount` function schedules a callback to run as soon as the component has 
 
 If a function is returned from `onMount`, it will be called when the component is unmounted.
 
-```html
+```sv
 <script>
 	import { onMount } from 'svelte';
 
@@ -62,7 +62,7 @@ Schedules a callback to run immediately before the component is updated after an
 
 > The first time the callback runs will be before the initial `onMount`
 
-```html
+```sv
 <script>
 	import { beforeUpdate } from 'svelte';
 
@@ -82,7 +82,7 @@ afterUpdate(callback: () => void)
 
 Schedules a callback to run immediately after the component has been updated.
 
-```html
+```sv
 <script>
 	import { afterUpdate } from 'svelte';
 
@@ -104,7 +104,7 @@ Schedules a callback to run once the component is unmounted.
 
 Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the only one that runs inside a server-side component.
 
-```html
+```sv
 <script>
 	import { onDestroy } from 'svelte';
 
@@ -124,7 +124,7 @@ promise: Promise = tick()
 
 Returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
 
-```html
+```sv
 <script>
 	import { beforeUpdate, tick } from 'svelte';
 
@@ -148,7 +148,7 @@ Associates an arbitrary `context` object with the current component and the spec
 
 Like lifecycle functions, this must be called during component initialisation.
 
-```html
+```sv
 <script>
 	import { setContext } from 'svelte';
 
@@ -168,7 +168,7 @@ context: any = getContext(key: any)
 
 Retrieves the context that belongs to the closest parent component with the specified `key`. Must be called during component initialisation.
 
-```html
+```sv
 <script>
 	import { getContext } from 'svelte';
 
@@ -188,7 +188,7 @@ Creates an event dispatcher that can be used to dispatch [component events](docs
 
 Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture) and are not cancellable with `event.preventDefault()`. The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
 
-```html
+```sv
 <script>
 	import { createEventDispatcher } from 'svelte';
 
@@ -202,7 +202,7 @@ Component events created with `createEventDispatcher` create a [CustomEvent](htt
 
 Events dispatched from child components can be listened to in their parent. Any data provided when the event was dispatched is available on the `detail` property of the event object.
 
-```html
+```sv
 <script>
 	function callbackFunction(event) {
 		console.log(`Notify fired! Detail: ${event.detail}`)
@@ -413,7 +413,7 @@ Both functions return a Promise that resolves when the tween completes. If the t
 
 Out of the box, Svelte will interpolate between two numbers, two arrays or two objects (as long as the arrays and objects are the same 'shape', and their 'leaf' properties are also numbers).
 
-```html
+```sv
 <script>
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
@@ -452,7 +452,7 @@ $: $size = big ? 100 : 10;
 
 The `interpolate` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
 
-```html
+```sv
 <script>
 	import { interpolateLab } from 'd3-interpolate';
 	import { tweened } from 'svelte/motion';
@@ -499,7 +499,7 @@ Both `set` and `update` can take a second argument — an object with `hard` or 
 
 [See a full example on the spring tutorial.](tutorial/spring)
 
-```html
+```sv
 <script>
 	import { spring } from 'svelte/motion';
 
@@ -546,7 +546,7 @@ Animates the opacity of an element from 0 to the current opacity for `in` transi
 
 You can see the `fade` transition in action in the [transition tutorial](tutorial/transition).
 
-```html
+```sv
 <script>
 	import { fade } from 'svelte/transition';
 </script>
@@ -582,7 +582,7 @@ Animates a `blur` filter alongside an element's opacity.
 * `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 * `amount` (`number`, default 5) - the size of the blur in pixels
 
-```html
+```sv
 <script>
 	import { blur } from 'svelte/transition';
 </script>
@@ -621,7 +621,7 @@ Animates the x and y positions and the opacity of an element. `in` transitions a
 
 You can see the `fly` transition in action in the [transition tutorial](tutorial/adding-parameters-to-transitions).
 
-```html
+```sv
 <script>
 	import { fly } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
@@ -656,7 +656,7 @@ Slides an element in and out.
 * `duration` (`number`, default 400) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
 
-```html
+```sv
 <script>
 	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
@@ -693,7 +693,7 @@ Animates the opacity and scale of an element. `in` transitions animate from an e
 * `start` (`number`, default 0) - the scale value to animate out to and in from
 * `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 
-```html
+```sv
 <script>
 	import { scale } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
@@ -731,7 +731,7 @@ Animates the stroke of an SVG element, like a snake in a tube. `in` transitions 
 
 The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will double that duration and setting it to `2` will halve it.
 
-```html
+```sv
 <script>
 	import { draw } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
@@ -785,7 +785,7 @@ The `flip` function calculates the start and end position of an element and anim
 You can see a full example on the [animations tutorial](tutorial/animate)
 
 
-```html
+```sv
 <script>
 	import { flip } from 'svelte/animate';
 	import { quintOut } from 'svelte/easing';
@@ -973,7 +973,7 @@ app.count += 1;
 
 Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](docs#svelte_options).
 
-```html
+```sv
 <svelte:options tag="my-element" />
 
 <script>
