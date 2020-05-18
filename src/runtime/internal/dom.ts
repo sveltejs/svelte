@@ -171,9 +171,8 @@ export function claim_space(nodes) {
 }
 
 export function set_data(text, data) {
-	if (text.data !== (data = '' + data)) {
-		text.data = data;
-	}
+	data = '' + data;
+	if (text.data !== data) text.data = data;
 }
 
 export function set_input_value(input, value) {

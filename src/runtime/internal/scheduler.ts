@@ -33,7 +33,7 @@ export const schedule_update = (component) => {
 export const tick = () => {
 	if (!update_scheduled) {
 		update_scheduled = true;
-		return resolved_promise.then(flush);
+		resolved_promise.then(flush);
 	}
 	return resolved_promise;
 };

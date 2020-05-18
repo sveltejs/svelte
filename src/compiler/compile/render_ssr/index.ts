@@ -40,7 +40,7 @@ export default function ssr(component: Component, options: CompileOptions): { js
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
 			if (store && store.hoistable) return null;
-			const assignment = b`${store_name}.subscribe(#v=>{${name}=#v})();`;
+			const assignment = b`@subscribe(${store_name},#v=>{${name}=#v;})();`;
 			return component.compile_options.dev
 				? b`@validate_store_dev(${store_name}, '${store_name}'); ${assignment}`
 				: assignment;
@@ -49,9 +49,9 @@ export default function ssr(component: Component, options: CompileOptions): { js
 
 	component.rewrite_props(
 		({ name }) =>
-			b`${
-				component.compile_options.dev && b`@validate_store_dev(${name}, '${name}');`
-			}${name}.subscribe((#v)=>{$${name}=#v})()`
+			b`
+			${component.compile_options.dev && b`@validate_store_dev(${name}, '${name}');`}
+			@subscribe(${name},(#v)=>{${`$${name}`}=#v})();`
 	);
 
 	const instance_javascript = component.extract_javascript(component.ast.instance);
@@ -128,9 +128,8 @@ export default function ssr(component: Component, options: CompileOptions): { js
 		...reactive_stores.map(({ name }) => {
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
-			return b`let ${name};${store && store.hoistable && b`${store_name}.subscribe((#v)=>{${name}=#v})()`}`;
+			return b`let ${name};${store && store.hoistable && b`@subscribe(${store_name},#v=>{${name}=#v;})();`}`;
 		}),
-
 		instance_javascript,
 		...parent_bindings,
 		css.code && b`$$result.css.add(#css);`,
@@ -140,11 +139,10 @@ export default function ssr(component: Component, options: CompileOptions): { js
 	const js = b`
 		${
 			css.code
-				? b`
-		const #css = {
-			code: "${css.code}",
-			map: ${css.map ? string_literal(css.map.toString()) : 'null'}
-		};`
+				? b`const #css = {
+					code: "${css.code}",
+					map: ${css.map ? string_literal(css.map.toString()) : 'null'}
+				};`
 				: null
 		}
 

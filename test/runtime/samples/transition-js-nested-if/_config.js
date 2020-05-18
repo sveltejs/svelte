@@ -1,14 +1,14 @@
 export default {
 	props: {
 		x: false,
-		y: true
+		y: true,
 	},
 
 	test({ assert, component, target, window, raf }) {
 		component.x = true;
 
 		const div = target.querySelector('div');
-		assert.equal(div.foo, 0);
+		assert.equal(div.foo, undefined);
 
 		raf.tick(100);
 		assert.equal(div.foo, 1);

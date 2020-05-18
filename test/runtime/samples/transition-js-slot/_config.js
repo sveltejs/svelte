@@ -1,6 +1,6 @@
 export default {
 	props: {
-		visible: false
+		visible: false,
 	},
 
 	html: `
@@ -10,7 +10,7 @@ export default {
 	test({ assert, component, target, window, raf }) {
 		component.visible = true;
 		const p = target.querySelector('p');
-		assert.equal(p.foo, 0);
+		assert.equal(p.foo, undefined);
 
 		raf.tick(50);
 		assert.equal(p.foo, 0.5);
@@ -22,5 +22,5 @@ export default {
 
 		raf.tick(100);
 		assert.equal(p.foo, 0);
-	}
+	},
 };

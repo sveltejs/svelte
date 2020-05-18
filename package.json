@@ -44,7 +44,7 @@
 		"file": "./test/test.ts",
 		"require": "esm",
 		"bail": true,
-		"timeout": "4000"
+		"timeout": "10000"
 	},
 	"repository": {
 		"type": "git",
@@ -91,7 +91,7 @@
 		"jsdom": "^16.2.2",
 		"kleur": "^3.0.3",
 		"locate-character": "^2.0.5",
-		"magic-string": "^0.25.7",
+		"magic-string": "^0.25.3",
 		"mocha": "^7.1.2",
 		"periscopic": "^2.0.1",
 		"puppeteer": "^3.0.4",

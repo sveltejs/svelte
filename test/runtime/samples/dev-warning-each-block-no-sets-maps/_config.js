@@ -1,6 +1,6 @@
 export default {
 	compileOptions: {
-		dev: true
+		dev: true,
 	},
-	error: `{#each} only iterates over array-like objects. You can use a spread to convert this iterable into an array.`
+	error: `{#each} only iterates over Array-like Objects. Consider using a [...spread] to convert this iterable into an Array instead.`,
 };

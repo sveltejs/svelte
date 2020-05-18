@@ -387,7 +387,7 @@ export default class ElementWrapper extends Wrapper {
 	get_render_statement(block: Block) {
 		const { name, namespace } = this.node;
 
-		if (namespace === namespaces.svg) {
+		if (namespace === namespaces.svg || namespace === 'svg') {
 			return x`@svg_element("${name}")`;
 		}
 
@@ -410,7 +410,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const name = this.node.namespace ? this.node.name : this.node.name.toUpperCase();
 
-		const svg = this.node.namespace === namespaces.svg ? 1 : null;
+		const svg = this.node.namespace === namespaces.svg || this.node.namespace === 'svg' ? 1 : null;
 
 		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
 	}
@@ -671,7 +671,7 @@ export default class ElementWrapper extends Wrapper {
 		const name = block.get_unique_name(`${this.var.name}_transition`);
 		const snippet = intro.expression ? intro.expression.manipulate(block) : null;
 
-		block.add_variable(name);
+		block.add_variable(name, x`@noop`);
 
 		const fn = this.renderer.reference(intro.name);
 
@@ -690,7 +690,7 @@ export default class ElementWrapper extends Wrapper {
 	add_intro(block: Block, intro: Transition, outro: Transition) {
 		if (outro) {
 			const outro_var = block.alias(`${this.var.name}_outro`);
-			block.chunks.intro.push(b`${outro_var}();`);
+			block.chunks.intro.push(b`${outro_var}(1);`);
 		}
 		if (this.node.animation) {
 			const [unfreeze_var, rect_var, stop_animation_var, animationFn, params] = run_animation(this, block);

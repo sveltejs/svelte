@@ -1,12 +1,12 @@
 export default {
 	props: {
-		duration: 200
+		duration: 200,
 	},
 
 	test({ assert, component, target, window, raf }) {
 		component.visible = true;
 		const div = target.querySelector('div');
-		assert.equal(div.foo, 0);
+		assert.equal(div.foo, undefined);
 
 		raf.tick(50);
 		assert.equal(div.foo, 100);

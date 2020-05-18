@@ -4,9 +4,13 @@ export default {
 		assert.equal(component.foo1, 42);
 		assert.equal(component.foo2(), 42);
 		assert.equal(component.bar, undefined);
-		component.foo1 = null;
-		component.foo2 = null;
+		try {
+			component.foo1 = null;
+			component.foo2 = null;
+		} catch (e) {
+			assert.equal(e.message, 'Cannot set property foo1 of #<Main$> which has only a getter');
+		}
 		assert.equal(component.foo1, 42);
 		assert.equal(component.foo2(), 42);
-	}
+	},
 };

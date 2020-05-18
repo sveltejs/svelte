@@ -242,7 +242,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						initial_props.push(value);
 						change_object =
 							attr.expression.node.type !== 'ObjectExpression'
-								? x`typeof ${value} === 'object' && ${value} !== null ? ${value} : {}`
+								? x`typeof (#buffer=${value}) === 'object' && #buffer !== null ? #buffer : {}`
 								: value;
 					} else {
 						const obj = x`{ ${name}: ${attr.get_value(block)} }`;
@@ -267,6 +267,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					const condition = renderer.dirty(Array.from(all_dependencies));
 
 					updates.push(b`
+						let #buffer
 						const ${name_changes} = ${condition} ? @get_spread_update(${levels}, [${changes}]) : {};
 					`);
 				} else {

@@ -14,9 +14,9 @@
 	function foo(node, params) {
 		return {
 			duration: 100,
-			tick: t => {
+			tick: (t) => {
 				node.foo = t;
-			}
+			},
 		};
 	}
 
@@ -53,7 +53,8 @@
 			on:introstart={introstart}
 			on:introend={introend}
 			on:outrostart={outrostart}
-			on:outroend={outroend}
-		>{thing}</p>
+			on:outroend={outroend}>
+			{thing}
+		</p>
 	{/if}
 {/each}

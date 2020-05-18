@@ -3,9 +3,10 @@ export default {
 		component.visible = true;
 
 		const div = target.querySelector('div');
+		raf.tick(1);
 		assert.equal(div.foo, 42);
 
 		raf.tick(50);
 		assert.equal(div.foo, 42);
-	}
+	},
 };

@@ -5,7 +5,6 @@ export default {
 		component.visible = true;
 		assert.equal(global.count, 1);
 		const div = target.querySelector('div');
-		assert.equal(div.foo, 0);
 
 		raf.tick(300);
 		assert.equal(div.foo, 0.75);
@@ -24,5 +23,5 @@ export default {
 		assert.equal(div.foo, 1);
 
 		raf.tick(900);
-	}
+	},
 };

@@ -1,5 +1,5 @@
 import { custom_event, append, insert, detach, listen, attr } from './dom';
-import { now, has_Symbol } from 'svelte/environment';
+import { has_Symbol } from 'svelte/environment';
 import { SvelteComponent } from './Component';
 
 export function add_location_dev(element, file, line, column, char) {
@@ -92,9 +92,9 @@ export function set_data_dev(text, data) {
 	text.data = data;
 }
 export function loop_guard_dev(timeout) {
-	const start = now();
+	const start = Date.now();
 	return () => {
-		if (now() - start > timeout) {
+		if (Date.now() - start > timeout) {
 			throw new Error(`Infinite loop detected`);
 		}
 	};

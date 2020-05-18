@@ -28,7 +28,7 @@ export default function (node: InlineComponent, renderer: Renderer, options: Ren
 		const snippet = binding.expression.node;
 
 		binding_props.push(p`${binding.name}: ${snippet}`);
-		binding_fns.push(p`${binding.name}: (#value) => { ${snippet} = #value; $$settled = false }`);
+		binding_fns.push(p`${binding.name}: $$value => { ${snippet} = $$value; $$settled = false }`);
 	});
 
 	const uses_spread = node.attributes.find((attr) => attr.is_spread);
@@ -36,13 +36,15 @@ export default function (node: InlineComponent, renderer: Renderer, options: Ren
 	let props;
 
 	if (uses_spread) {
-		props = x`{${node.attributes
+		props = x`@_Object.assign(${node.attributes
 			.map((attribute) => {
-				if (attribute.is_spread) return x`...${attribute.expression.node}`;
-				else return x`${attribute.name}: ${get_prop_value(attribute)}`;
+				if (attribute.is_spread) {
+					return attribute.expression.node;
+				} else {
+					return x`{ ${attribute.name}: ${get_prop_value(attribute)} }`;
+				}
 			})
-			.concat(binding_props.map((p) => x`${p}`))
-			.join()}}`;
+			.concat(binding_props.map((p) => x`{ ${p} }`))})`;
 	} else {
 		props = x`{
 			${node.attributes.map((attribute) => p`${attribute.name}: ${get_prop_value(attribute)}`)},
@@ -70,7 +72,12 @@ export default function (node: InlineComponent, renderer: Renderer, options: Ren
 
 		renderer.push();
 
-		renderer.render(children, { ...options, ...slot_scopes });
+		renderer.render(
+			children,
+			Object.assign({}, options, {
+				slot_scopes,
+			})
+		);
 
 		slot_scopes.set('default', {
 			input: get_slot_scope(node.lets),

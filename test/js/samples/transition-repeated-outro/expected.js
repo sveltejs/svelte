@@ -32,7 +32,7 @@ function create_if_block(ctx) {
 		},
 		i(local) {
 			if (current) return;
-			div_outro();
+			div_outro(1);
 			current = true;
 		},
 		o(local) {

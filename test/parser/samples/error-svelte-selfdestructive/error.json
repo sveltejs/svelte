@@ -13,5 +13,5 @@
 	},
 	"pos": 11,
 	"frame": "1: {#if x}\r\n2:   <svelte:selfdestructive x=\"{x - 1}\"/>\r\n      ^\n3: {/if}",
-	"message": "Valid <svelte:...> tag names are svelte:head, svelte:options, svelte:window, svelte:body, svelte:selfor svelte:component"
+	"message": "Valid <svelte:...> tag names are svelte:head, svelte:options, svelte:window, svelte:body, svelte:self or svelte:component"
 }

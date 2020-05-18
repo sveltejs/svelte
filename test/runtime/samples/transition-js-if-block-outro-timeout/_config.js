@@ -9,11 +9,11 @@ export default {
 		raf.tick(200);
 		assert.equal(window.getComputedStyle(div).opacity, 0.5);
 
-		raf.tick(400);
-		assert.equal(window.getComputedStyle(div).opacity, 0);
+		raf.tick(399.999);
+		assert.equal(Math.round(window.getComputedStyle(div).opacity * 100) / 100, 0);
 
 		raf.tick(600);
 		assert.equal(component.div, undefined);
 		assert.equal(target.querySelector('div'), undefined);
-	}
+	},
 };

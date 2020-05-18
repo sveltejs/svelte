@@ -57,6 +57,8 @@ export function decode_character_references(html: string) {
 		return String.fromCodePoint(validate_code(code));
 	});
 }
+// this is necessary
+const NUL = 0;
 
 // some code points are verboten. If we were inserting HTML, the browser would replace the illegal
 // code points with alternatives in some cases - since we're bypassing that mechanism, we need
@@ -87,7 +89,7 @@ function validate_code(code: number) {
 
 	// UTF-16 surrogate halves
 	if (code <= 57343) {
-		return 0;
+		return NUL;
 	}
 
 	// rest of the basic multilingual plane
@@ -105,7 +107,7 @@ function validate_code(code: number) {
 		return code;
 	}
 
-	return 0;
+	return NUL;
 }
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission

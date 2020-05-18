@@ -16,6 +16,7 @@ import Window from './Window';
 import { INode } from '../../nodes/interfaces';
 import Renderer from '../Renderer';
 import Block from '../Block';
+import { trim_start, trim_end } from '../../../utils/trim';
 import { link } from '../../../utils/link';
 import { Identifier } from 'estree';
 
@@ -96,7 +97,7 @@ export default class FragmentWrapper {
 						: !child.has_ancestor('EachBlock');
 
 					if (should_trim) {
-						data = data.trimRight();
+						data = trim_end(data);
 						if (!data) continue;
 					}
 				}
@@ -128,7 +129,7 @@ export default class FragmentWrapper {
 			const first = this.nodes[0] as Text;
 
 			if (first && first.node.type === 'Text') {
-				first.data = first.data.trimLeft();
+				first.data = trim_start(first.data);
 				if (!first.data) {
 					first.var = null;
 					this.nodes.shift();

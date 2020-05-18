@@ -102,9 +102,9 @@ export function init(
 	});
 
 	$$.ctx = instance
-		? instance(component, prop_values, (i, res, val = res) => {
-				if ($$.ctx && not_equal($$.ctx[i], ($$.ctx[i] = val))) {
-					if (i in $$.bound) $$.bound[i](val);
+		? instance(component, prop_values, (i, res, ...rest) => {
+				if ($$.ctx && not_equal($$.ctx[i], ($$.ctx[i] = 0 in rest ? rest[0] : res))) {
+					if (i in $$.bound) $$.bound[i]($$.ctx[i]);
 					if (ready) {
 						if (!~$$.dirty[0]) {
 							schedule_update(component);

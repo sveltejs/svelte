@@ -8,7 +8,7 @@ const promise = new Promise((f, r) => {
 
 export default {
 	props: {
-		promise
+		promise,
 	},
 
 	intro: true,
@@ -17,7 +17,9 @@ export default {
 		const p = target.querySelector('p');
 
 		assert.equal(p.className, 'pending');
-		assert.equal(p.foo, 0);
+
+		raf.tick(10);
+		assert.equal(Math.round(p.foo * 100) / 100, 0.1);
 
 		raf.tick(50);
 		assert.equal(p.foo, 0.5);
@@ -29,8 +31,8 @@ export default {
 			const ps = document.querySelectorAll('p');
 			assert.equal(ps[1].className, 'pending');
 			assert.equal(ps[0].className, 'then');
-			assert.equal(ps[1].foo, 0.2);
-			assert.equal(ps[0].foo, 0.3);
+			assert.equal(Math.round(ps[1].foo * 100) / 100, 0.2);
+			assert.equal(Math.round(ps[0].foo * 100) / 100, 0.3);
 		});
-	}
+	},
 };

@@ -2,7 +2,6 @@
 	export let cats;
 
 	function someCheck() {
-		console.log('Check');
 	}
 </script>
 

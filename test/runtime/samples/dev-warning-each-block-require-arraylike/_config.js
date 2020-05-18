@@ -1,6 +1,6 @@
 export default {
 	compileOptions: {
-		dev: true
+		dev: true,
 	},
-	error: `{#each} only iterates over array-like objects.`
+	error: `{#each} only iterates over Array-like Objects.`,
 };

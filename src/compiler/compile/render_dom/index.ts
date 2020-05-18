@@ -392,9 +392,9 @@ export default function dom(component: Component, options: CompileOptions): { js
 			if (condition) statement = b`if (${condition}) { ${statement} }`[0] as Statement;
 
 			if (condition || uses_rest_or_props) {
-				reactive_declarations.push(statement);
+				statement && reactive_declarations.push(statement);
 			} else {
-				fixed_reactive_declarations.push(statement);
+				statement && fixed_reactive_declarations.push(statement);
 			}
 		});
 
@@ -413,7 +413,7 @@ export default function dom(component: Component, options: CompileOptions): { js
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
 
-				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, (value) => {$$invalidate(${i}, (${$name} = value));}), ${name})`;
+				return b`let ${$name},${unsubscribe}=@noop,${subscribe}=()=>(${unsubscribe}(),${unsubscribe}=@subscribe(${name},(#value)=>{$$invalidate(${i},${$name}=#value);}),${name});`;
 			}
 
 			return b`let ${$name};`;

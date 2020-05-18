@@ -41,13 +41,14 @@ describe('ssr', () => {
 		// add .solo to a sample directory name to only run that test, or
 		// .show to always show the output. or both
 		const solo = config.solo || /\.solo/.test(dir);
+		const skip = config.skip || /\.skip/.test(dir);
 		const show = /\.show/.test(dir);
 
 		if (solo && process.env.CI) {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		(solo ? it.only : it)(dir, () => {
+		(skip ? it.skip : solo ? it.only : it)(dir, () => {
 			dir = path.resolve(`${__dirname}/samples`, dir);
 
 			cleanRequireCache();
@@ -127,6 +128,7 @@ describe('ssr', () => {
 
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
+		const skip = config.skip || /\.skip/.test(dir);
 
 		if (solo && process.env.CI) {
 			throw new Error('Forgot to remove `solo: true` from test');
@@ -134,7 +136,7 @@ describe('ssr', () => {
 
 		if (config.skip_if_ssr) return;
 
-		(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
+		(skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve('test/runtime/samples', dir);
 
 			cleanRequireCache();

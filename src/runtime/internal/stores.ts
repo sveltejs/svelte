@@ -73,7 +73,7 @@ class StartStopWritable<T> extends Store<T> {
 	}
 	subscribe(run, invalidate?) {
 		// *must* run *after* first subscription ?
-		if (!super.has_subscribers) this.stop = this.start(this.set.bind(this)) || noop;
+		if (!this.has_subscribers) this.stop = this.start(this.set.bind(this)) || noop;
 		return super.subscribe(run, invalidate);
 	}
 	set(next_value: T) {

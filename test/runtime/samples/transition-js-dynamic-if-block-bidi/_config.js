@@ -1,6 +1,6 @@
 export default {
 	props: {
-		name: 'world'
+		name: 'world',
 	},
 
 	test({ assert, component, target, raf }) {
@@ -9,7 +9,7 @@ export default {
 		component.visible = true;
 		assert.equal(global.count, 1);
 		const div = target.querySelector('div');
-		assert.equal(div.foo, 0);
+		assert.equal(div.foo, undefined);
 
 		raf.tick(75);
 		component.name = 'everybody';
@@ -32,5 +32,5 @@ export default {
 		assert.equal(div.foo, 1);
 
 		raf.tick(225);
-	}
+	},
 };

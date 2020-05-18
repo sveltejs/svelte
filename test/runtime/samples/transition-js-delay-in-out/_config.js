@@ -2,7 +2,7 @@ export default {
 	test({ assert, component, target, window, raf }) {
 		component.visible = true;
 		const div = target.querySelector('div');
-		assert.equal(div.foo, 0);
+		assert.equal(div.foo, undefined);
 
 		raf.tick(50);
 		assert.equal(div.foo, 0);
@@ -18,5 +18,5 @@ export default {
 
 		raf.tick(300);
 		assert.equal(div.bar, 0);
-	}
+	},
 };

@@ -2,6 +2,7 @@ import read_context from '../read/context';
 import read_expression from '../read/expression';
 import { closing_tag_omitted } from '../utils/html';
 import { whitespace } from '../../utils/patterns';
+import { trim_start, trim_end } from '../../utils/trim';
 import { to_string } from '../utils/node';
 import { Parser } from '../index';
 import { TemplateNode } from '../../interfaces';
@@ -13,12 +14,12 @@ function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: 
 	const last_child = block.children[block.children.length - 1];
 
 	if (first_child.type === 'Text' && trim_before) {
-		first_child.data = first_child.data.trimLeft();
+		first_child.data = trim_start(first_child.data);
 		if (!first_child.data) block.children.shift();
 	}
 
 	if (last_child.type === 'Text' && trim_after) {
-		last_child.data = last_child.data.trimRight();
+		last_child.data = trim_end(last_child.data);
 		if (!last_child.data) block.children.pop();
 	}
 

@@ -75,14 +75,20 @@ export const setTweenTimeout = (
 	duration = end_time - now()
 ): TaskCanceller => {
 	let running = true;
-	unsafe_loop((t) => {
+	let t = 0.0;
+	unsafe_loop((now) => {
 		if (!running) return false;
-		t = 1.0 - (end_time - t) / duration;
-		if (t >= 1.0) return run(1), stop(t), false;
+		t = 1.0 - (end_time - now) / duration;
+		if (t >= 1.0) return run(1), stop(now), false;
 		if (t >= 0.0) run(t);
 		return running;
 	});
-	return () => void (running = false);
+	return (run_last = false) => {
+		// since outros are cancelled in group by a setFrameTimeout
+		// tick(0, 1) needs to be called in here
+		if (run_last) run(1);
+		running = false;
+	};
 };
 /**
  * Calls function every frame with the amount of elapsed frames

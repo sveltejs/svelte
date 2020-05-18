@@ -1,13 +1,13 @@
 let fulfil;
 
-const promise = new Promise(f => {
+const promise = new Promise((f) => {
 	fulfil = f;
 });
 
 export default {
 	props: {
 		x: false,
-		promise
+		promise,
 	},
 
 	test({ assert, component, target, window, raf }) {
@@ -16,7 +16,7 @@ export default {
 
 		return promise.then(() => {
 			const div = target.querySelector('div');
-			assert.equal(div.foo, 0);
+			assert.equal(div.foo, undefined);
 
 			raf.tick(100);
 			assert.equal(div.foo, 1);
@@ -30,5 +30,5 @@ export default {
 			raf.tick(200);
 			assert.htmlEqual(target.innerHTML, '');
 		});
-	}
+	},
 };

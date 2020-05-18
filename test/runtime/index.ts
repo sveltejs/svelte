@@ -44,6 +44,7 @@ describe('runtime', () => {
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
+		const skip = config.skip || /\.skip/.test(dir);
 
 		if (hydratable && config.skip_if_hydrate) return;
 
@@ -51,7 +52,7 @@ describe('runtime', () => {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		(config.skip ? it.skip : solo ? it.only : it)(`${dir} ${hydratable ? '(with hydration)' : ''}`, () => {
+		(skip ? it.skip : solo ? it.only : it)(`${dir} ${hydratable ? '(with hydration)' : ''}`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -126,7 +127,7 @@ describe('runtime', () => {
 					});
 
 					try {
-						SvelteComponent = require(`./samples/${dir}/main.svelte`).default;
+						SvelteComponent = (mod = require(`./samples/${dir}/main.svelte`)).default;
 					} catch (err) {
 						showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 						throw err;
@@ -254,6 +255,9 @@ describe('runtime', () => {
 					resolveId: (importee) => {
 						if (importee.startsWith('svelte/')) {
 							return importee.replace('svelte', process.cwd()) + '/index.mjs';
+						}
+						if (importee === '../environment') {
+							return process.cwd() + '/environment/index.mjs';
 						}
 					},
 				},

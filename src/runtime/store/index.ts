@@ -1,5 +1,5 @@
-import { Writable, StartStopNotifier, Derived } from 'svelte/internal';
-export const get = (store) => (store.subscribe((v) => void (store = v))(), store);
+import { Writable, StartStopNotifier, Derived, subscribe } from 'svelte/internal';
+export const get = (store) => (subscribe(store, (v) => void (store = v))(), store);
 export const readable = <T>(value: T, start: StartStopNotifier<T>) => {
 	const store = new Writable(value, start);
 	return { subscribe: store.subscribe.bind(store) };

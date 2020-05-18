@@ -1,7 +1,7 @@
 export default {
 	props: {
 		x: false,
-		things: ['a']
+		things: ['a'],
 	},
 
 	test({ assert, component, target, raf }) {
@@ -18,7 +18,9 @@ export default {
 
 		const div2 = target.querySelector('div:last-child');
 		assert.equal(div1.foo, undefined);
-		assert.equal(div2.foo, 0);
+		assert.equal(div2.foo, undefined);
+		raf.tick(101);
+		assert.equal(Math.round(div2.foo * 100) / 100, 0.01);
 
 		raf.tick(200);
 		assert.equal(div1.foo, undefined);

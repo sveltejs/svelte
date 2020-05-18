@@ -1,13 +1,15 @@
 export default {
 	props: {
-		x: false
+		x: false,
 	},
 
 	test({ assert, component, target, raf }) {
 		component.x = true;
 
 		const div = target.querySelector('div');
-		assert.equal(div.foo, 0);
+		assert.equal(div.foo, undefined);
+		raf.tick(1);
+		assert.equal(Math.round(div.foo * 100) / 100, 0.01);
 
 		raf.tick(100);
 		assert.equal(div.foo, 1);
@@ -20,5 +22,5 @@ export default {
 
 		raf.tick(200);
 		assert.htmlEqual(target.innerHTML, '');
-	}
+	},
 };
