@@ -184,7 +184,9 @@ export function set_input_value(input, value) {
 export function set_input_type(input, type) {
 	try {
 		input.type = type;
-	} catch (e) {}
+	} catch (e) {
+		//
+	}
 }
 
 export function set_style(node, property, value, is_important?) {

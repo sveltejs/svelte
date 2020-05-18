@@ -337,7 +337,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const params = [x`#value`];
-			let args = [];
+			const args = [];
 			contextual_dependencies.forEach((name) => {
 				params.push({ type: 'Identifier', name });
 				renderer.add_to_context(name, true);

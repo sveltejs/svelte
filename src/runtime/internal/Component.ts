@@ -44,8 +44,8 @@ export function bind({ $$: { props, bound, ctx } }, name: string, callback: (pro
 export function mount_component({ $$ }, target, anchor) {
 	if ($$.fragment) $$.fragment.m(target, anchor);
 	add_render_callback(() => {
-		let { on_mount, on_destroy, after_update } = $$,
-			i = 0,
+		const { on_mount, on_destroy, after_update } = $$;
+		let i = 0,
 			res;
 		for (; i < on_mount.length; i++)
 			if ('function' === typeof (res = on_mount[i]()))

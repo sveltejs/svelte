@@ -51,13 +51,11 @@ describe('hydration', () => {
 			try {
 				global.window = window;
 
-				let SvelteComponent;
-
-				try {
-					SvelteComponent = require(`${cwd}/main.svelte`).default;
-				} catch (err) {
-					throw err;
-				}
+				// try {
+				const SvelteComponent = require(`${cwd}/main.svelte`).default;
+				// } catch (err) {
+				// 	throw err;
+				// }
 
 				const target = window.document.body;
 				const head = window.document.head;
@@ -68,7 +66,9 @@ describe('hydration', () => {
 				try {
 					before_head = fs.readFileSync(`${cwd}/_before_head.html`, 'utf-8');
 					head.innerHTML = before_head;
-				} catch (err) {}
+				} catch (_err) {
+					//
+				}
 
 				const snapshot = config.snapshot ? config.snapshot(target) : {};
 

@@ -454,7 +454,7 @@ export default class Block {
 			: fn;
 	}
 
-	render_listeners(chunk: string = '') {
+	render_listeners(chunk = '') {
 		if (this.event_listeners.length > 0) {
 			const dispose: Identifier = {
 				type: 'Identifier',

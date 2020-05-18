@@ -10,7 +10,7 @@ export function invalidate(
 	scope: Scope,
 	node: Node,
 	names: Set<string>,
-	main_execution_context: boolean = false
+	main_execution_context = false
 ) {
 	const { component } = renderer;
 

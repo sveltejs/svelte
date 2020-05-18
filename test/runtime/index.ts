@@ -4,7 +4,6 @@ import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import { clear_loops, flush, SvelteComponent } from '../../internal';
 import { set_now, set_raf, set_framerate } from '../../environment';
-import './ambient';
 import { showOutput, loadConfig, loadSvelte, cleanRequireCache, env, setupHtmlEqual, mkdirp } from '../helpers';
 import { glob } from '../tiny-glob';
 import { assert } from '../test';

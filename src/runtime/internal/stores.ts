@@ -155,13 +155,13 @@ const parseStructure = <T>(
 ): initCreateMotionTick<T> | initCreateTweenTick<T> => {
 	const isArray = Array.isArray(obj);
 	if (typeof obj === 'object' && obj !== null && (isArray || Object.prototype === Object.getPrototypeOf(obj))) {
-		const keys = Object.keys(obj);
 		let i = 0,
-			l = keys.length,
 			k = '',
-			createTickers = keys.map((key) => parseStructure(obj[key], schema)((next_value) => (obj[key] = next_value))),
-			tickers = new Array(l),
 			pending = 0;
+		const keys = Object.keys(obj),
+			l = keys.length,
+			createTickers = keys.map((key) => parseStructure(obj[key], schema)((next_value) => (obj[key] = next_value))),
+			tickers = new Array(l);
 		const target = { ...obj };
 		obj = isArray ? [...(obj as T[])] : { ...obj };
 		return (set) => (_, to_value) => {

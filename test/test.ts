@@ -1,8 +1,7 @@
 import './ambient';
 import * as assert$1 from 'assert';
-import { readFileSync } from 'fs';
 export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void };
-const { glob } = require('./tiny-glob.ts');
+import { glob } from './tiny-glob';
 
 // require('./setup.ts');
 

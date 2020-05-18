@@ -12,7 +12,7 @@ export const is_cors =
 		}
 	})();
 export const has_Symbol = typeof Symbol === 'function';
-
+/* eslint-disable no-var */
 declare var global: any;
 export const globals = is_browser ? window : typeof globalThis !== 'undefined' ? globalThis : global;
 export const resolved_promise = Promise.resolve();

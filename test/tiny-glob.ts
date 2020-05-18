@@ -14,17 +14,17 @@ const GLOBSTAR = `((?:[^/]*(?:/|$))*)`;
 const WILDCARD = `([^/]*)`;
 const GLOBSTAR_SEGMENT = `((?:[^${SEP_ESC}]*(?:${SEP_ESC}|$))*)`;
 const WILDCARD_SEGMENT = `([^${SEP_ESC}]*)`;
-const isHidden = /(^|[\\\/])\.[^\\\/\.]/g;
+const isHidden = /(^|[\\/])\.[^\\/.]/g;
 let CACHE = {};
 function isglob(str, { strict = true } = {}) {
 	if (str === '') return false;
-	let match,
-		rgx = strict ? STRICT : RELAXED;
+	let match;
+	const rgx = strict ? STRICT : RELAXED;
 	while ((match = rgx.exec(str))) {
 		if (match[2]) return true;
 		let idx = match.index + match[0].length;
-		let open = match[1];
-		let close = open ? CHARS[open] : null;
+		const open = match[1];
+		const close = open ? CHARS[open] : null;
 		let n;
 		if (open && close) if ((n = str.indexOf(close, idx)) !== -1) idx = n + 1;
 		str = str.slice(idx);
@@ -33,15 +33,15 @@ function isglob(str, { strict = true } = {}) {
 }
 function parent(str, { strict = false } = {}) {
 	str = normalize(str).replace(/\/|\\/, '/');
-	if (/[\{\[].*[\/]*.*[\}\]]$/.test(str)) str += '/';
+	if (/[{[].*[/]*.*[}]]$/.test(str)) str += '/';
 	str += 'a';
 	do str = dirname(str);
-	while (isglob(str, { strict }) || /(^|[^\\])([\{\[]|\([^\)]+$)/.test(str));
-	return str.replace(/\\([\*\?\|\[\]\(\)\{\}])/g, '$1');
+	while (isglob(str, { strict }) || /(^|[^\\])([{[]|\([^)]+$)/.test(str));
+	return str.replace(/\\([*?|[\](){}])/g, '$1');
 }
 function globalyzer(pattern, opts = {}) {
 	let base = parent(pattern, opts);
-	let isGlob = isglob(pattern, opts);
+	const isGlob = isglob(pattern, opts);
 	let glob;
 	if (base != '.') {
 		if ((glob = pattern.substr(base.length)).startsWith('/')) glob = glob.substr(1);
@@ -54,7 +54,7 @@ function globalyzer(pattern, opts = {}) {
 function globrex(glob, { extended = false, globstar = false, strict = false, filepath = false, flags = '' } = {}) {
 	let regex = '';
 	let segment = '';
-	let path = {
+	const path = {
 		regex: '',
 		segments: [],
 		globstar: undefined,
@@ -101,7 +101,7 @@ function globrex(glob, { extended = false, globstar = false, strict = false, fil
 			case ')': {
 				if (ext.length) {
 					add(c);
-					let type = ext.pop();
+					const type = ext.pop();
 					if (type === '@') {
 						add('{1}');
 					} else if (type === '!') {
@@ -177,16 +177,16 @@ function globrex(glob, { extended = false, globstar = false, strict = false, fil
 					ext.push(c);
 					break;
 				}
-				let prevChar = glob[i - 1];
+				const prevChar = glob[i - 1];
 				let starCount = 1;
 				while (glob[i + 1] === '*') {
 					starCount++;
 					i++;
 				}
-				let nextChar = glob[i + 1];
+				const nextChar = glob[i + 1];
 				if (!globstar) add('.*');
 				else {
-					let isGlobstar =
+					const isGlobstar =
 						starCount > 1 && (prevChar === '/' || prevChar === void 0) && (nextChar === '/' || nextChar === void 0);
 					if (isGlobstar) {
 						add(GLOBSTAR, { only: 'regex' });
@@ -225,8 +225,9 @@ function walk(output, prefix, lexer, filesOnly, dot, cwd, dirname = '', level = 
 	const dir = join(cwd, prefix, dirname);
 	const files = readdirSync(dir);
 	let i = 0,
-		len = files.length,
 		file;
+	const len = files.length;
+
 	let fullpath, relpath, stats, isMatch;
 	for (; i < len; i++) {
 		fullpath = join(dir, (file = files[i]));
@@ -245,11 +246,11 @@ function walk(output, prefix, lexer, filesOnly, dot, cwd, dirname = '', level = 
 }
 export function glob(str: string, { cwd = '.', absolute = false, filesOnly = false, dot = false, flush = false }) {
 	if (!str) return [];
-	let glob = globalyzer(str);
+	const glob = globalyzer(str);
 	if (!glob.isGlob) {
 		try {
-			let resolved = resolve(cwd, str);
-			let dirent = statSync(resolved);
+			const resolved = resolve(cwd, str);
+			const dirent = statSync(resolved);
 			if (filesOnly && !dirent.isFile()) return [];
 
 			return absolute ? [resolved] : [str];
@@ -260,7 +261,7 @@ export function glob(str: string, { cwd = '.', absolute = false, filesOnly = fal
 		}
 	}
 	if (flush) CACHE = {};
-	let matches = [];
+	const matches = [];
 	const { path } = globrex(glob.glob, { filepath: true, globstar: true, extended: true });
 	//@ts-ignore
 	path.globstar = path.globstar.toString();
