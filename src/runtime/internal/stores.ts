@@ -11,36 +11,37 @@ interface Observable<T> {
 }
 type Obs = Observable<unknown>[] | Observable<unknown>;
 type Deriver<T> = (values: any, setter?: Setter<T>) => void | (() => void) | T;
-
+const value_queue = [];
+const update_queue = [];
+let is_flushing = false;
+function flush(store: Store<any>) {
+	value_queue.push(store.value);
+	update_queue.push([...store.subscribers]);
+	if (is_flushing) return;
+	is_flushing = true;
+	for (let i = 0, j = 0, subscribers, value; i < update_queue.length; i++)
+		for (j = 0, subscribers = update_queue[i], value = value_queue[i]; j < subscribers.length; j++)
+			subscribers[j].run(value);
+	update_queue.length = value_queue.length = 0;
+	is_flushing = false;
+}
 /**
  * Internal Svelte Observable
  */
 export class Store<T> {
-	static value_queue: Store<any>['value'][] = [];
-	static update_queue: Store<any>['subscribers'][] = [];
-	static is_flushing = false;
-	static flush(store: Store<any>) {
-		this.value_queue.push(store.value);
-		this.update_queue.push([...store.subscribers]);
-		if (this.is_flushing) return;
-		this.is_flushing = true;
-		for (let i = 0, j = 0, subscribers, value; i < this.update_queue.length; i++)
-			for (j = 0, subscribers = this.update_queue[i], value = this.value_queue[i]; j < subscribers.length; j++)
-				subscribers[j].run(value);
-		this.update_queue.length = this.value_queue.length = 0;
-		this.is_flushing = false;
-	}
 	value: T;
-	has_subscribers = false;
-	subscribers = [];
+	has_subscribers: boolean;
+	subscribers: any[];
 	constructor(initial: T) {
+		this.subscribers = [];
+		this.has_subscribers = false;
 		this.value = initial;
 	}
 	set(next_value: T) {
 		this.value = next_value;
 		if (!this.has_subscribers) return;
 		for (let i = 0; i < this.subscribers.length; i++) this.subscribers[i].invalidate();
-		Store.flush(this);
+		flush(this);
 	}
 	subscribe(run: Subscriber<T>, invalidate = noop) {
 		const subscriber = { run, invalidate };
@@ -51,7 +52,7 @@ export class Store<T> {
 	unsubscribe(subscriber) {
 		const index = this.subscribers.indexOf(subscriber);
 		if (~index) {
-			if (Store.is_flushing) subscriber.run = subscriber.invalidate = noop;
+			if (is_flushing) subscriber.run = subscriber.invalidate = noop;
 			this.subscribers.splice(index, 1);
 			this.has_subscribers = !!this.subscribers.length;
 			return true;
@@ -66,9 +67,10 @@ export class Store<T> {
  */
 class StartStopWritable<T> extends Store<T> {
 	start: StartStopNotifier<T>;
-	stop = noop;
+	stop: typeof noop;
 	constructor(initial: T, startStopNotifier: StartStopNotifier<T>) {
 		super(initial);
+		this.stop = noop;
 		this.start = startStopNotifier || noop;
 	}
 	subscribe(run, invalidate?) {
@@ -100,7 +102,7 @@ export class Writable<T> extends StartStopWritable<T> {
 	}
 }
 export class Derived<S extends Obs, D extends Deriver<T>, T> extends StartStopWritable<T> {
-	cleanup = noop;
+	cleanup: typeof noop;
 	target;
 	deriver;
 	set: (value_s: unknown | unknown[]) => void;
@@ -127,6 +129,7 @@ export class Derived<S extends Obs, D extends Deriver<T>, T> extends StartStopWr
 				  }
 				: (_set) => ((unsub) => void (unsub(), this.cleanup())).bind(this, subscribe(stores, this.set))
 		);
+		this.cleanup = noop;
 		this.target = stores;
 		this.set =
 			// deriver defines < 2 arguments ?
@@ -177,13 +180,15 @@ const parseStructure = <T>(
 	return schema;
 };
 abstract class MotionStore<T> extends Store<T> {
-	running = false;
-	cancel = noop;
+	running: boolean;
+	cancel: () => void;
 	init;
 	create;
 	tick;
 	constructor(value: T, startSetTick: initCreateMotionTick<T> | initCreateTweenTick<T>) {
 		super(value);
+		this.running = false;
+		this.cancel = noop;
 		this.create = parseStructure(value, (this.init = startSetTick))(super.set.bind(this));
 	}
 	set(next_value: T) {

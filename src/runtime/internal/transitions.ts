@@ -63,7 +63,7 @@ const reversed = (fn, rx, easing, start = 0, end = 1) => {
 	const difference = end - start;
 	return easing ? (t) => run(start + difference * easing(t)) : (t) => run(start + difference * t);
 };
-export enum tx {
+export const enum tx {
 	intro = 1,
 	outro = 2,
 	reverse = 3,
