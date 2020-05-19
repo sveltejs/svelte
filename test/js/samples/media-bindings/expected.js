@@ -49,9 +49,7 @@ function create_fragment(ctx) {
 				audio.volume = /*volume*/ ctx[6];
 			}
 
-			if (!isNaN(/*muted*/ ctx[7])) {
-				audio.muted = /*muted*/ ctx[7];
-			}
+			audio.muted = /*muted*/ ctx[7];
 
 			if (!isNaN(/*playbackRate*/ ctx[8])) {
 				audio.playbackRate = /*playbackRate*/ ctx[8];
@@ -74,7 +72,7 @@ function create_fragment(ctx) {
 			];
 		},
 		p(ctx, [dirty]) {
-			if (!audio_updating && dirty & /*currentTime*/ 9 && !isNaN(/*currentTime*/ ctx[3])) {
+			if (!audio_updating && dirty & /*currentTime*/ 8 && !isNaN(/*currentTime*/ ctx[3])) {
 				audio.currentTime = /*currentTime*/ ctx[3];
 			}
 
@@ -88,8 +86,8 @@ function create_fragment(ctx) {
 				audio.volume = /*volume*/ ctx[6];
 			}
 
-			if (dirty & /*muted*/ 128 && !isNaN(/*muted*/ ctx[7])) {
-				audio.muted = /*muted*/ ctx[7];
+			if (dirty & /*muted*/ 128) {
+				audio.muted = !!/*muted*/ ctx[7];
 			}
 
 			if (dirty & /*playbackRate*/ 256 && !isNaN(/*playbackRate*/ ctx[8])) {
