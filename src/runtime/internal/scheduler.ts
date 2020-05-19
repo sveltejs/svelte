@@ -46,6 +46,8 @@ export function flush() {
 			update(component.$$);
 		}
 
+		set_current_component(null);
+
 		dirty_components.length = 0;
 
 		while (binding_callbacks.length) binding_callbacks.pop()();
