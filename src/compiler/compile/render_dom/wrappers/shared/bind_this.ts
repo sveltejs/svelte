@@ -1,50 +1,33 @@
-import flatten_reference from '../../../utils/flatten_reference';
 import { b, x } from 'code-red';
 import Component from '../../../Component';
 import Block from '../../Block';
-import Binding from '../../../nodes/Binding';
+import BindingWrapper from '../Element/Binding';
 import { Identifier } from 'estree';
 
-export default function bind_this(component: Component, block: Block, binding: Binding, variable: Identifier) {
+export default function bind_this(component: Component, block: Block, binding: BindingWrapper, variable: Identifier) {
 	const fn = component.get_unique_name(`${variable.name}_binding`);
 
 	block.renderer.add_to_context(fn.name);
 	const callee = block.renderer.reference(fn.name);
 
-	let lhs;
-	let object;
-	let body;
+	const { contextual_dependencies, mutation, lhs } = binding.handler;
+	const dependencies = binding.get_dependencies();
 
-	if (binding.is_contextual && binding.raw_expression.type === 'Identifier') {
-		// bind:x={y} — we can't just do `y = x`, we need to
-		// to `array[index] = x;
-		const { name } = binding.raw_expression;
-		const { snippet } = block.bindings.get(name);
-		lhs = snippet;
+	const body = b`
+		${mutation}
+		${Array.from(dependencies)
+			.filter(dep => dep[0] !== '$')
+			.filter(dep => !contextual_dependencies.has(dep))
+			.map(dep => b`${block.renderer.invalidate(dep)};`)}
+	`;
 
-		body = b`${lhs} = $$value`; // TODO we need to invalidate... something
-	} else {
-		object = flatten_reference(binding.raw_expression).name;
-		lhs = binding.raw_expression;
-
-		body = binding.raw_expression.type === 'Identifier'
-			? b`
-				${block.renderer.invalidate(object, x`${lhs} = $$value`)};
-			`
-			: b`
-				${lhs} = $$value;
-				${block.renderer.invalidate(object)};
-			`;
-	}
-
-	const contextual_dependencies: Identifier[] = Array.from(binding.expression.contextual_dependencies).map(name => ({
-		type: 'Identifier',
-		name
-	}));
-
-	if (contextual_dependencies.length) {
+	if (contextual_dependencies.size) {
+		const params: Identifier[] = Array.from(contextual_dependencies).map(name => ({
+			type: 'Identifier',
+			name
+		}));
 		component.partly_hoisted.push(b`
-			function ${fn}($$value, ${contextual_dependencies}) {
+			function ${fn}($$value, ${params}) {
 				if (${lhs} === $$value) return;
 				@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 					${body}
@@ -53,7 +36,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		`);
 
 		const args = [];
-		for (const id of contextual_dependencies) {
+		for (const id of params) {
 			args.push(id);
 			if (block.variables.has(id.name)) {
 				if (block.renderer.context_lookup.get(id.name).is_contextual) continue;
@@ -69,7 +52,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 			const ${unassign} = () => ${callee}(null, ${args});
 		`);
 
-		const condition = Array.from(contextual_dependencies)
+		const condition = Array.from(params)
 			.map(name => x`${name} !== ${block.renderer.reference(name.name)}`)
 			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
