@@ -87,7 +87,7 @@ function create_fragment(ctx) {
 			}
 
 			if (dirty & /*muted*/ 128) {
-				audio.muted = !!/*muted*/ ctx[7];
+				audio.muted = /*muted*/ ctx[7];
 			}
 
 			if (dirty & /*playbackRate*/ 256 && !isNaN(/*playbackRate*/ ctx[8])) {
