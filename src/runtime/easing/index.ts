@@ -1,7 +1,7 @@
 export const linear = (t: number) => t;
 export const quadIn = (t: number) => t ** 2;
 export const quadOut = (t: number) => 1.0 - (1.0 - t) ** 2;
-export const quadInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - 2 * (1.0 - t) ** 2 : (2 * t) ** 2);
+export const quadInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - (2 * (1.0 - t)) ** 2 : (2 * t) ** 2);
 export const cubicIn = (t: number) => t ** 3;
 export const cubicOut = (t: number) => 1.0 - (1.0 - t) ** 3;
 export const cubicInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - (2 * (1.0 - t)) ** 3 : (2 * t) ** 3);
