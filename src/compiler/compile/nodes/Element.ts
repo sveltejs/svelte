@@ -638,6 +638,7 @@ export default class Element extends Node {
 				name === 'seekable' ||
 				name === 'played' ||
 				name === 'volume' ||
+				name === 'muted' ||
 				name === 'playbackRate' ||
 				name === 'seeking' ||
 				name === 'ended'

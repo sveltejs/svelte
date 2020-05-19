@@ -603,12 +603,13 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — six 
 * `seeking` (readonly) — boolean
 * `ended` (readonly) — boolean
 
-...and four *two-way* bindings:
+...and five *two-way* bindings:
 
 * `currentTime` — the current point in the video, in seconds
 * `playbackRate` — how fast to play the video, where 1 is 'normal'
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
+* `muted` — a boolean value where true is muted
 
 Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 
@@ -624,6 +625,7 @@ Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 	bind:currentTime
 	bind:paused
 	bind:volume
+	bind:muted
 	bind:videoWidth
 	bind:videoHeight
 ></video>
