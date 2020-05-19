@@ -45,7 +45,7 @@ export default class SlotWrapper extends Wrapper {
 			renderer,
 			this.fallback,
 			node.children,
-			parent,
+			this,
 			strip_whitespace,
 			next_sibling
 		);
@@ -145,7 +145,7 @@ export default class SlotWrapper extends Wrapper {
 
 		block.chunks.mount.push(b`
 			if (${slot_or_fallback}) {
-				${slot_or_fallback}.m(${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
+				${slot_or_fallback}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 			}
 		`);
 

@@ -219,7 +219,7 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		`);
 
-		const initial_anchor_node: Identifier = { type: 'Identifier', name: parent_node ? 'null' : 'anchor' };
+		const initial_anchor_node: Identifier = { type: 'Identifier', name: parent_node ? 'null' : '#anchor' };
 		const initial_mount_node: Identifier = parent_node || { type: 'Identifier', name: '#target' };
 		const update_anchor_node = needs_anchor
 			? block.get_unique_name(`${this.var.name}_anchor`)

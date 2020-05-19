@@ -4,56 +4,8 @@ import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 import Element from './Element';
-import { x } from 'code-red';
-import { Node, Identifier, RestElement } from 'estree';
-
-interface Context {
-	key: Identifier;
-	name?: string;
-	modifier: (node: Node) => Node;
-}
-
-function unpack_destructuring(contexts: Context[], node: Node, modifier: (node: Node) => Node) {
-	if (!node) return;
-
-	if (node.type === 'Identifier' || (node as any).type === 'RestIdentifier') { // TODO is this right? not RestElement?
-		contexts.push({
-			key: node as Identifier,
-			modifier
-		});
-	} else if (node.type === 'ArrayPattern') {
-		node.elements.forEach((element, i) => {
-			if (element && (element as any).type === 'RestIdentifier') {
-				unpack_destructuring(contexts, element, node => x`${modifier(node)}.slice(${i})` as Node);
-			} else {
-				unpack_destructuring(contexts, element, node => x`${modifier(node)}[${i}]` as Node);
-			}
-		});
-	} else if (node.type === 'ObjectPattern') {
-		const used_properties = [];
-
-		node.properties.forEach((property, i) => {
-			if ((property as any).kind === 'rest') { // TODO is this right?
-				const replacement: RestElement = {
-					type: 'RestElement',
-					argument: property.key as Identifier
-				};
-
-				node.properties[i] = replacement as any;
-
-				unpack_destructuring(
-					contexts,
-					property.value,
-					node => x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node
-				);
-			} else {
-				used_properties.push(x`"${(property.key as Identifier).name}"`);
-
-				unpack_destructuring(contexts, property.value, node => x`${modifier(node)}.${(property.key as Identifier).name}` as Node);
-			}
-		});
-	}
-}
+import { Context, unpack_destructuring } from './shared/Context';
+import { Node } from 'estree';
 
 export default class EachBlock extends AbstractBlock {
 	type: 'EachBlock';

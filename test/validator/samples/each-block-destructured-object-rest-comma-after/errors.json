@@ -1,5 +1,5 @@
 [{
-	"code": "comma-after-rest",
+	"code": "parse-error",
 	"message": "Comma is not permitted after the rest element",
 	"pos": 100,
 	"start": {

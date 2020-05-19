@@ -116,6 +116,8 @@
 					"raw": "true"
 				},
 				"value": {
+					"start": 97,
+					"end": 98,
 					"type": "Identifier",
 					"name": "f"
 				},
@@ -202,6 +204,8 @@
 					"raw": "true"
 				},
 				"value": {
+					"start": 137,
+					"end": 138,
 					"type": "Identifier",
 					"name": "f"
 				},
