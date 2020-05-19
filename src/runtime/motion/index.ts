@@ -103,7 +103,7 @@ export function tweened<T>(
 	});
 	const set = (next_value, params) => {
 		delay = (params && params.delay) || default_delay;
-		duration = +((params && 'duration' in params) || default_duration);
+		duration = (params && params.duration) || default_duration;
 		easing = (params && params.easing) || default_easing;
 		interpolate = (params && params.interpolate) || default_interpolate;
 		return store.set(next_value);
