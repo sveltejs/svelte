@@ -96,6 +96,19 @@ export default class EachBlockWrapper extends Wrapper {
 			bindings: new Map(block.bindings)
 		});
 
+		const reassigned_deps: Set<string> = new Set();
+
+		block.dependencies.forEach(dep => {
+			const info = renderer.context_lookup.get(dep);
+			if (info && info.variable.reassigned) {
+				reassigned_deps.add(dep);
+			}
+		});
+
+		if (reassigned_deps.size) {
+			this.block.add_dependencies(reassigned_deps);
+		}
+
 		// TODO this seems messy
 		this.block.has_animation = this.node.has_animation;
 
