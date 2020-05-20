@@ -400,7 +400,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.chunks.mount.push(b`
 				if (${name}) {
-					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
+					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 				}
 			`);
 
@@ -470,7 +470,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.chunks.mount.push(
-				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
+				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
 			);
 
 			block.chunks.intro.push(b`

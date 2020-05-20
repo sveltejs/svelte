@@ -185,7 +185,7 @@ export default class Block {
 			this.chunks.mount.push(b`@append(${parent_node}, ${id});`);
 			if (is_head(parent_node) && !no_detach) this.chunks.destroy.push(b`@detach(${id});`);
 		} else {
-			this.chunks.mount.push(b`@insert(#target, ${id}, anchor);`);
+			this.chunks.mount.push(b`@insert(#target, ${id}, #anchor);`);
 			if (!no_detach) this.chunks.destroy.push(b`if (detaching) @detach(${id});`);
 		}
 	}
@@ -295,11 +295,11 @@ export default class Block {
 		if (this.chunks.mount.length === 0) {
 			properties.mount = noop;
 		} else if (this.event_listeners.length === 0) {
-			properties.mount = x`function #mount(#target, anchor) {
+			properties.mount = x`function #mount(#target, #anchor) {
 				${this.chunks.mount}
 			}`;
 		} else {
-			properties.mount = x`function #mount(#target, anchor, #remount) {
+			properties.mount = x`function #mount(#target, #anchor, #remount) {
 				${this.chunks.mount}
 			}`;
 		}

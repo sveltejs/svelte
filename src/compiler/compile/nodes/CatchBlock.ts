@@ -13,9 +13,9 @@ export default class CatchBlock extends AbstractBlock {
 		super(component, parent, scope, info);
 
 		this.scope = scope.child();
-		if (parent.error) {
-			parent.error.expressions.forEach(expression => {
-				this.scope.add(expression, parent.expression.dependencies, this);
+		if (parent.catch_node) {
+			parent.catch_contexts.forEach(context => {
+				this.scope.add(context.key.name, parent.expression.dependencies, this);
 			});
 		}
 		this.children = map_children(component, parent, this.scope, info.children);

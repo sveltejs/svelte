@@ -25,10 +25,14 @@
 					"name": "thePromise"
 				},
 				"value": {
+					"start": 46,
+					"end": 54,
 					"type": "Identifier",
 					"name": "theValue"
 				},
 				"error": {
+					"start": 96,
+					"end": 104,
 					"type": "Identifier",
 					"name": "theError"
 				},
