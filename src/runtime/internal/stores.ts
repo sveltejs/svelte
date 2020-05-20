@@ -1,6 +1,6 @@
 import { safe_not_equal, subscribe } from './utils';
 import { onEachFrame, loop } from './loop';
-import { noop } from 'svelte/environment';
+import { noop } from './environment';
 type Setter<T> = (value: T) => void;
 type StopCallback = () => void;
 export type StartStopNotifier<T> = (set: Setter<T>) => StopCallback | void;

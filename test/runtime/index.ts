@@ -2,8 +2,7 @@ import { relative, resolve } from 'path';
 import { readFileSync, existsSync, unlinkSync, writeFileSync, readdirSync } from 'fs';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
-import { clear_loops, flush, SvelteComponent } from '../../internal';
-import { set_now, set_raf, set_framerate } from '../../environment';
+import { clear_loops, flush, SvelteComponent,set_now, set_raf, set_framerate } from '../../internal';
 import { showOutput, loadConfig, loadSvelte, cleanRequireCache, env, setupHtmlEqual, mkdirp } from '../helpers';
 import { glob } from '../tiny-glob';
 import { assert } from '../test';
@@ -254,9 +253,6 @@ describe('runtime', () => {
 					resolveId: (importee) => {
 						if (importee.startsWith('svelte/')) {
 							return importee.replace('svelte', process.cwd()) + '/index.mjs';
-						}
-						if (importee === '../environment') {
-							return process.cwd() + '/environment/index.mjs';
 						}
 					},
 				},

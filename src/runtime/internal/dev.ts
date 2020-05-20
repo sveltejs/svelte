@@ -1,5 +1,5 @@
 import { custom_event, append, insert, detach, listen, attr } from './dom';
-import { has_Symbol } from 'svelte/environment';
+import { has_Symbol } from './environment';
 import { SvelteComponent } from './Component';
 
 export function add_location_dev(element, file, line, column, char) {

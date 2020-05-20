@@ -1,4 +1,4 @@
-import { now, raf, framerate, noop } from 'svelte/environment';
+import { now, raf, framerate, noop } from './environment';
 type TaskCallback = (t: number) => boolean;
 type TaskCanceller = () => void;
 

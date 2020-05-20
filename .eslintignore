@@ -10,7 +10,6 @@ internal_exports.ts
 # output files
 animate/*.js
 easing/*.js
-environment/*.js
 internal/*.js
 interpolate/*.js
 motion/*.js

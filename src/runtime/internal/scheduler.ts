@@ -1,5 +1,5 @@
 import { set_current_component } from './lifecycle';
-import { resolved_promise, now } from 'svelte/environment';
+import { resolved_promise, now } from './environment';
 import { T$$ } from './Component';
 
 let update_scheduled = false;

@@ -1,4 +1,4 @@
-import { framerate } from 'svelte/environment';
+import { framerate } from './environment';
 
 let documents_uid = 0;
 let running_animations = 0;

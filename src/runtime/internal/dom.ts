@@ -1,4 +1,4 @@
-import { is_cors } from 'svelte/environment';
+import { is_cors } from './environment';
 
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
