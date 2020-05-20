@@ -287,6 +287,29 @@ export default class Element extends Node {
 			}
 		}
 
+		if (this.is_media_node()) {
+			const has_muted_attribute = this.attributes.some(attr => attr.name === 'muted');
+
+			if (has_muted_attribute) {
+				return;
+			}
+
+			const is_track = (child: INode) => child.type === 'Element' && child.name === 'track';
+			const is_caption = (attr: Attribute) =>
+				attr.name === 'kind' &&
+				attr.get_static_value().toString().toLowerCase() === 'captions';
+			const has_captions = this.children.some(
+				child => !is_track(child) ? false : child.attributes.some(is_caption)
+			);
+
+			if (!has_captions) {
+				this.component.warn(this, {
+					code: `a11y-media-has-caption`,
+					message: `A11y: <${this.name}> should have a <track> for captions`
+				});
+			}
+		}
+
 		this.validate_attributes();
 		this.validate_special_cases();
 		this.validate_bindings();
