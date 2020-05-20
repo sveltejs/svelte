@@ -6,6 +6,7 @@
 * Fix resize listening on certain older browsers ([#4752](https://github.com/sveltejs/svelte/issues/4752))
 * Add `a11y-no-onchange` warning ([#4788](https://github.com/sveltejs/svelte/pull/4788))
 * Add `muted` binding for media elements ([#2998](https://github.com/sveltejs/svelte/issues/2998))
+* Fix let-less `<slot>` with context overflow ([#4624](https://github.com/sveltejs/svelte/issues/4624))
 
 ## 3.22.3
 
