@@ -10,8 +10,8 @@ import {
 	cleanRequireCache,
 	shouldUpdateExpected,
 	mkdirp,
-} from '../helpers.ts';
-import { glob } from '../tiny-glob.ts';
+} from '../helpers';
+import { glob } from '../tiny-glob';
 import { assert } from '../test';
 
 function tryToReadFile(file) {

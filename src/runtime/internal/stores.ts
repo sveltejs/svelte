@@ -1,6 +1,12 @@
-import { safe_not_equal, subscribe } from './utils';
+import { safe_not_equal } from './utils';
 import { onEachFrame, loop } from './loop';
 import { noop } from './environment';
+export const set_store_value = (store, ret, value) => (store.set(value || ret), ret);
+export const subscribe = (store, subscriber, invalidator?) => {
+	if (store == null) return noop;
+	const unsub = store.subscribe(subscriber, invalidator);
+	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+};
 type Setter<T> = (value: T) => void;
 type StopCallback = () => void;
 export type StartStopNotifier<T> = (set: Setter<T>) => StopCallback | void;

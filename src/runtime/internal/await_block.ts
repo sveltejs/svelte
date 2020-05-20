@@ -1,4 +1,3 @@
-import { is_promise } from './utils';
 import { transition_in, group_transition_out } from './transitions';
 import { flush } from './scheduler';
 import { get_current_component, set_current_component } from './lifecycle';
@@ -52,7 +51,7 @@ export function handle_promise(promise, info) {
 		}
 	}
 
-	if (is_promise(promise)) {
+	if (promise && typeof promise === 'object' && typeof promise.then === 'function') {
 		const current_component = get_current_component();
 		promise.then(
 			(value) => {

@@ -1,24 +1,31 @@
 {
 	"html": {
-		"start": 0,
-		"end": 73,
+		"start": 45,
+		"end": 118,
 		"type": "Fragment",
 		"children": [
 			{
-				"start": 0,
-				"end": 73,
+				"start": 41,
+				"end": 45,
+				"type": "Text",
+				"raw": "\r\n\r\n",
+				"data": "\r\n\r\n"
+			},
+			{
+				"start": 45,
+				"end": 118,
 				"type": "EachBlock",
 				"expression": {
 					"type": "Identifier",
-					"start": 7,
-					"end": 14,
+					"start": 52,
+					"end": 59,
 					"loc": {
 						"start": {
-							"line": 1,
+							"line": 5,
 							"column": 7
 						},
 						"end": {
-							"line": 1,
+							"line": 5,
 							"column": 14
 						}
 					},
@@ -26,27 +33,27 @@
 				},
 				"children": [
 					{
-						"start": 43,
-						"end": 64,
+						"start": 88,
+						"end": 109,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 46,
-								"end": 51,
+								"start": 91,
+								"end": 96,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 47,
-									"end": 50,
+									"start": 92,
+									"end": 95,
 									"loc": {
 										"start": {
-											"line": 2,
+											"line": 6,
 											"column": 5
 										},
 										"end": {
-											"line": 2,
+											"line": 6,
 											"column": 8
 										}
 									},
@@ -54,27 +61,27 @@
 								}
 							},
 							{
-								"start": 51,
-								"end": 53,
+								"start": 96,
+								"end": 98,
 								"type": "Text",
 								"raw": ": ",
 								"data": ": "
 							},
 							{
-								"start": 53,
-								"end": 60,
+								"start": 98,
+								"end": 105,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 54,
-									"end": 59,
+									"start": 99,
+									"end": 104,
 									"loc": {
 										"start": {
-											"line": 2,
+											"line": 6,
 											"column": 12
 										},
 										"end": {
-											"line": 2,
+											"line": 6,
 											"column": 17
 										}
 									},
@@ -85,31 +92,177 @@
 					}
 				],
 				"context": {
-					"start": 18,
-					"end": 39,
 					"type": "ArrayPattern",
+					"start": 63,
+					"end": 84,
+					"loc": {
+						"start": {
+							"line": 5,
+							"column": 19
+						},
+						"end": {
+							"line": 5,
+							"column": 40
+						}
+					},
 					"elements": [
 						{
-							"start": 19,
-							"end": 22,
 							"type": "Identifier",
+							"start": 64,
+							"end": 67,
+							"loc": {
+								"start": {
+									"line": 5,
+									"column": 20
+								},
+								"end": {
+									"line": 5,
+									"column": 23
+								}
+							},
 							"name": "key"
 						},
 						{
-							"start": 24,
-							"end": 29,
 							"type": "Identifier",
+							"start": 69,
+							"end": 74,
+							"loc": {
+								"start": {
+									"line": 5,
+									"column": 25
+								},
+								"end": {
+									"line": 5,
+									"column": 30
+								}
+							},
 							"name": "value"
 						},
 						{
-							"start": 31,
-							"end": 38,
-							"type": "RestIdentifier",
-							"name": "rest"
+							"type": "RestElement",
+							"start": 76,
+							"end": 83,
+							"loc": {
+								"start": {
+									"line": 5,
+									"column": 32
+								},
+								"end": {
+									"line": 5,
+									"column": 39
+								}
+							},
+							"argument": {
+								"type": "Identifier",
+								"start": 79,
+								"end": 83,
+								"loc": {
+									"start": {
+										"line": 5,
+										"column": 35
+									},
+									"end": {
+										"line": 5,
+										"column": 39
+									}
+								},
+								"name": "rest"
+							}
 						}
 					]
 				}
 			}
 		]
+	},
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 41,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 32,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 3,
+					"column": 0
+				}
+			},
+			"body": [
+				{
+					"type": "ExportNamedDeclaration",
+					"start": 11,
+					"end": 30,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 1
+						},
+						"end": {
+							"line": 2,
+							"column": 20
+						}
+					},
+					"declaration": {
+						"type": "VariableDeclaration",
+						"start": 18,
+						"end": 30,
+						"loc": {
+							"start": {
+								"line": 2,
+								"column": 8
+							},
+							"end": {
+								"line": 2,
+								"column": 20
+							}
+						},
+						"declarations": [
+							{
+								"type": "VariableDeclarator",
+								"start": 22,
+								"end": 29,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 12
+									},
+									"end": {
+										"line": 2,
+										"column": 19
+									}
+								},
+								"id": {
+									"type": "Identifier",
+									"start": 22,
+									"end": 29,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 12
+										},
+										"end": {
+											"line": 2,
+											"column": 19
+										}
+									},
+									"name": "animals"
+								},
+								"init": null
+							}
+						],
+						"kind": "let"
+					},
+					"specifiers": [],
+					"source": null
+				}
+			],
+			"sourceType": "module"
+		}
 	}
 }

@@ -21,8 +21,9 @@ export function add_action(block: Block, target: string, action: Action) {
 	block.add_variable(id);
 
 	const fn = block.renderer.reference(action.name);
-
-	block.event_listeners.push(x`@action_destroyer(${id} = ${fn}.call(null, ${target}, ${snippet}))`);
+	block.event_listeners.push(
+		x`(${id} = ${fn}.call(null, ${target}, ${snippet})) && 'function' === typeof ${id}.destroy ? ${id}.destroy : @noop`
+	);
 
 	if (dependencies && dependencies.length > 0) {
 		let condition = x`${id} && "function" === typeof ${id}.update`;

@@ -63,7 +63,6 @@ export function prevent_default(fn) {
 		return fn.call(this, event);
 	};
 }
-// todo inline at compile time
 export function stop_propagation(fn): EventListenerOrEventListenerObject {
 	return function (event) {
 		event.stopPropagation();
@@ -71,14 +70,20 @@ export function stop_propagation(fn): EventListenerOrEventListenerObject {
 		return fn.call(this, event);
 	};
 }
-// todo inline at compile time
 export function self(fn) {
 	return function (event) {
 		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
 	};
 }
-
+export function once(fn) {
+	let ran = false;
+	return function (this: any, ...args) {
+		if (ran) return;
+		ran = true;
+		fn.call(this, ...args);
+	};
+}
 export function attr(node: Element, name: string, value?: any) {
 	if (value == null) {
 		node.removeAttribute(name);
@@ -96,7 +101,9 @@ export function set_attributes(node: HTMLElement, attributes: { [x: string]: any
 			node.removeAttribute(name);
 		} else if (name === 'style') {
 			node.style.cssText = attributes[name];
-		} else if (name === '__value' || (descriptors[name] && descriptors[name].set)) {
+		} else if (name === '__value') {
+			(node as HTMLInputElement).value = node[name] = attributes[name];
+		} else if (descriptors[name] && descriptors[name].set) {
 			node[name] = attributes[name];
 		} else {
 			attr(node, name, attributes[name]);
@@ -176,9 +183,7 @@ export function set_data(text, data) {
 }
 
 export function set_input_value(input, value) {
-	if (value != null || input.value) {
-		input.value = value;
-	}
+	input.value = value == null ? '' : value;
 }
 
 export function set_input_type(input, type) {
@@ -251,8 +256,8 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	append(node, iframe);
 
 	return () => {
+		if (is_cors || (unsubscribe && iframe.contentWindow)) unsubscribe();
 		detach(iframe);
-		if (unsubscribe) unsubscribe();
 	};
 }
 
