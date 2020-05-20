@@ -8,16 +8,15 @@ import { sanitize } from '../../../../utils/names';
 import add_to_set from '../../../utils/add_to_set';
 import { b, x, p } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
-import get_object from '../../../utils/get_object';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_slot_definition } from '../shared/get_slot_definition';
-import EachBlock from '../../../nodes/EachBlock';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { Node, Identifier, ObjectExpression } from 'estree';
 import EventHandler from '../Element/EventHandler';
 import { extract_names } from 'periscopic';
+import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
@@ -48,12 +47,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		this.node.bindings.forEach(binding => {
 			if (binding.is_contextual) {
-				// we need to ensure that the each block creates a context including
-				// the list and the index, if they're not otherwise referenced
-				const { name } = get_object(binding.expression.node);
-				const each_block = this.node.scope.get_owner(name);
-
-				(each_block as EachBlock).has_binding = true;
+				mark_each_block_bindings(this, binding);
 			}
 
 			block.add_dependencies(binding.expression.dependencies);
