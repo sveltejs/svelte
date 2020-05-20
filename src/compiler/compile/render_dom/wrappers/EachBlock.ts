@@ -53,6 +53,7 @@ export default class EachBlockWrapper extends Wrapper {
 	vars: {
 		create_each_block: Identifier;
 		each_block_value: Identifier;
+		each_block_length: Identifier;
 		get_each_context: Identifier;
 		iterations: Identifier;
 		fixed_length: number;
@@ -96,19 +97,6 @@ export default class EachBlockWrapper extends Wrapper {
 			bindings: new Map(block.bindings)
 		});
 
-		const reassigned_deps: Set<string> = new Set();
-
-		block.dependencies.forEach(dep => {
-			const info = renderer.context_lookup.get(dep);
-			if (info && info.variable.reassigned) {
-				reassigned_deps.add(dep);
-			}
-		});
-
-		if (reassigned_deps.size) {
-			this.block.add_dependencies(reassigned_deps);
-		}
-
 		// TODO this seems messy
 		this.block.has_animation = this.node.has_animation;
 
@@ -143,6 +131,7 @@ export default class EachBlockWrapper extends Wrapper {
 		this.vars = {
 			create_each_block: this.block.name,
 			each_block_value,
+			each_block_length: renderer.component.get_unique_name(`${this.var.name}_length`),
 			get_each_context: renderer.component.get_unique_name(`get_${this.var.name}_context`),
 			iterations,
 
@@ -221,6 +210,10 @@ export default class EachBlockWrapper extends Wrapper {
 		block.chunks.init.push(b`let ${this.vars.each_block_value} = ${snippet};`);
 		if (this.renderer.options.dev) {
 			block.chunks.init.push(b`@validate_each_argument(${this.vars.each_block_value});`);
+		}
+
+		if (!this.block.has_update_method && !this.vars.fixed_length) {
+			block.chunks.init.push(b`let ${this.vars.each_block_length} = ${this.vars.each_block_value}.length`);
 		}
 
 		// TODO which is better — Object.create(array) or array.slice()?
@@ -492,6 +485,7 @@ export default class EachBlockWrapper extends Wrapper {
 	}) {
 		const {
 			create_each_block,
+			each_block_length,
 			iterations,
 			fixed_length,
 			data_length,
@@ -560,7 +554,7 @@ export default class EachBlockWrapper extends Wrapper {
 						}
 					`;
 
-			const start = this.block.has_update_method ? 0 : `#old_length`;
+			const start = this.block.has_update_method ? 0 : each_block_length;
 
 			let remove_old_blocks;
 
@@ -577,21 +571,27 @@ export default class EachBlockWrapper extends Wrapper {
 					for (#i = ${data_length}; #i < ${view_length}; #i += 1) {
 						${out}(#i);
 					}
+					${!fixed_length && !this.block.has_update_method && (
+						b`${each_block_length} = ${data_length};`
+					)}
 					@check_outros();
 				`;
 			} else {
 				remove_old_blocks = b`
-					for (${this.block.has_update_method ? null : x`#i = ${data_length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {
+					for (${this.block.has_update_method ? null : x`#i = ${data_length}`}; #i < ${this.block.has_update_method ? view_length : each_block_length}; #i += 1) {
 						${iterations}[#i].d(1);
 					}
-					${!fixed_length && b`${view_length} = ${data_length};`}
+					${!fixed_length && (
+						this.block.has_update_method
+							? b`${view_length} = ${data_length};`
+							: b`${each_block_length} = ${view_length} = ${data_length};`
+					)}
 				`;
 			}
 
 			// We declare `i` as block scoped here, as the `remove_old_blocks` code
 			// may rely on continuing where this iteration stopped.
 			const update = b`
-				${!this.block.has_update_method && b`const #old_length = ${this.vars.each_block_value}.length;`}
 				${this.vars.each_block_value} = ${snippet};
 				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 
