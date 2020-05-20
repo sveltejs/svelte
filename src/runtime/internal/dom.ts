@@ -321,21 +321,25 @@ export class HtmlTag {
 
 	constructor(anchor: HTMLElement = null) {
 		this.a = anchor;
+		this.e = this.n = null;
 	}
 
 	m(html: string, target: HTMLElement, anchor: HTMLElement = null) {
 		if (!this.e) {
 			this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
 			this.t = target;
+			this.h(html);
 		}
 
-		this.u(html, anchor);
+		this.i(anchor);
 	}
 
-	u(html: string, anchor) {
+	h(html) {
 		this.e.innerHTML = html;
 		this.n = Array.from(this.e.childNodes);
+	}
 
+	i(anchor) {
 		for (let i = 0; i < this.n.length; i += 1) {
 			insert(this.t, this.n[i], anchor);
 		}
@@ -343,7 +347,8 @@ export class HtmlTag {
 
 	p(html: string) {
 		this.d();
-		this.u(html, this.a);
+		this.h(html);
+		this.i(this.a);
 	}
 
 	d() {

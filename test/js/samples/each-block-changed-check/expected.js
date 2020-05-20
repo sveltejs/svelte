@@ -53,7 +53,7 @@ function create_each_block(ctx) {
 			t5 = text(" ago:");
 			t6 = space();
 			attr(span, "class", "meta");
-			html_tag = new HtmlTag(raw_value, null);
+			html_tag = new HtmlTag(null);
 			attr(div, "class", "comment");
 		},
 		m(target, anchor) {
@@ -67,7 +67,7 @@ function create_each_block(ctx) {
 			append(span, t4);
 			append(span, t5);
 			append(div, t6);
-			html_tag.m(div);
+			html_tag.m(raw_value, div);
 		},
 		p(ctx, dirty) {
 			if (dirty & /*comments*/ 1 && t2_value !== (t2_value = /*comment*/ ctx[4].author + "")) set_data(t2, t2_value);
