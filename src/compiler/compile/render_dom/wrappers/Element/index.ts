@@ -93,7 +93,7 @@ const events = [
 		event_names: ['volumechange'],
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
-			name === 'volume'
+			(name === 'volume' || name === 'muted')
 	},
 	{
 		event_names: ['ratechange'],
@@ -320,7 +320,7 @@ export default class ElementWrapper extends Wrapper {
 				block.chunks.destroy.push(b`@detach(${node});`);
 			}
 		} else {
-			block.chunks.mount.push(b`@insert(#target, ${node}, anchor);`);
+			block.chunks.mount.push(b`@insert(#target, ${node}, #anchor);`);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
@@ -415,7 +415,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const is = this.attributes.find(attr => attr.node.name === 'is');
 		if (is) {
-			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)});`;
+			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)})`;
 		}
 
 		return x`@element("${name}")`;
@@ -586,7 +586,7 @@ export default class ElementWrapper extends Wrapper {
 					);
 
 					block.chunks.destroy.push(
-						b`${resize_listener}.cancel();`
+						b`${resize_listener}();`
 					);
 				} else {
 					block.event_listeners.push(
@@ -632,7 +632,7 @@ export default class ElementWrapper extends Wrapper {
 
 	add_this_binding(block: Block, this_binding: Binding) {
 		const { renderer } = this;
-		
+
 		renderer.component.has_reactive_assignments = true;
 
 		const binding_callback = bind_this(renderer.component, block, this_binding.node, this.var);
@@ -679,10 +679,10 @@ export default class ElementWrapper extends Wrapper {
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
 				} else {
 					const metadata = attr.get_metadata();
-					const snippet = x`{ ${
-						(metadata && metadata.property_name) ||
-						fix_attribute_casing(attr.node.name)
-					}: ${attr.get_value(block)} }`;
+					const name = attr.is_indirectly_bound_value()
+						? '__value'
+						: (metadata && metadata.property_name) || fix_attribute_casing(attr.node.name);
+					const snippet = x`{ ${name}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
 
 					updates.push(condition ? x`${condition} && ${snippet}` : snippet);

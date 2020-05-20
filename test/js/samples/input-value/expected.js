@@ -31,12 +31,13 @@ function create_fragment(ctx) {
 			t2 = text("!");
 			input.value = /*name*/ ctx[0];
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, input, anchor);
 			insert(target, t0, anchor);
 			insert(target, h1, anchor);
 			append(h1, t1);
 			append(h1, t2);
+			if (remount) dispose();
 			dispose = listen(input, "input", /*onInput*/ ctx[1]);
 		},
 		p(ctx, [dirty]) {

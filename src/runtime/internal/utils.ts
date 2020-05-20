@@ -83,7 +83,11 @@ export function get_slot_changes(definition, $$scope, dirty, fn) {
 	if (definition[2] && fn) {
 		const lets = definition[2](fn(dirty));
 
-		if (typeof $$scope.dirty === 'object') {
+		if ($$scope.dirty === undefined) {
+			return lets;
+		}
+
+		if (typeof lets === 'object') {
 			const merged = [];
 			const len = Math.max($$scope.dirty.length, lets.length);
 			for (let i = 0; i < len; i += 1) {
@@ -99,10 +103,25 @@ export function get_slot_changes(definition, $$scope, dirty, fn) {
 	return $$scope.dirty;
 }
 
+export function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
+	const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
+	if (slot_changes) {
+		const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
+		slot.p(slot_context, slot_changes);
+	}
+}
+
 export function exclude_internal_props(props) {
 	const result = {};
 	for (const k in props) if (k[0] !== '$') result[k] = props[k];
 	return result;
+}
+
+export function compute_rest_props(props, keys) {
+	const rest = {};
+	keys = new Set(keys);
+	for (const k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
+	return rest;
 }
 
 export function once(fn) {

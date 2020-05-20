@@ -19,10 +19,10 @@ import { INode } from './interfaces';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
-const aria_attributes = 'activedescendant atomic autocomplete busy checked colindex controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowindex selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
+const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
 
-const aria_roles = 'alert alertdialog application article banner button cell checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document feed figure form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search searchbox section sectionhead select separator slider spinbutton status structure switch tab table tablist tabpanel term textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(' ');
+const aria_roles = 'alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure form generic grid gridcell group heading img link list listbox listitem log main marquee math meter menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' ');
 const aria_role_set = new Set(aria_roles);
 
 const a11y_required_attributes = {
@@ -54,6 +54,11 @@ const a11y_required_content = new Set([
 	'h4',
 	'h5',
 	'h6'
+]);
+
+const a11y_no_onchange = new Set([
+	'select',
+	'option'
 ]);
 
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
@@ -272,13 +277,14 @@ export default class Element extends Node {
 		}
 
 		this.validate_attributes();
+		this.validate_special_cases();
 		this.validate_bindings();
 		this.validate_content();
 		this.validate_event_handlers();
 	}
 
 	validate_attributes() {
-		const { component } = this;
+		const { component, parent } = this;
 
 		const attribute_map = new Map();
 
@@ -378,6 +384,14 @@ export default class Element extends Node {
 				}
 			}
 
+
+			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
+				component.error(attribute, {
+					code: `illegal-attribute`,
+					message: `'${name}' is not a valid attribute name`,
+				});
+			}
+
 			if (name === 'slot') {
 				if (!attribute.is_static) {
 					component.error(attribute, {
@@ -395,26 +409,10 @@ export default class Element extends Node {
 					component.slot_outlets.add(name);
 				}
 
-				let ancestor = this.parent;
-				do {
-					if (ancestor.type === 'InlineComponent') break;
-					if (ancestor.type === 'Element' && /-/.test(ancestor.name)) break;
-
-					if (ancestor.type === 'IfBlock' || ancestor.type === 'EachBlock') {
-						const type = ancestor.type === 'IfBlock' ? 'if' : 'each';
-						const message = `Cannot place slotted elements inside an ${type}-block`;
-
-						component.error(attribute, {
-							code: `invalid-slotted-content`,
-							message
-						});
-					}
-				} while (ancestor = ancestor.parent);
-
-				if (!ancestor) {
+				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
 					component.error(attribute, {
 						code: `invalid-slotted-content`,
-						message: `Element with a slot='...' attribute must be a descendant of a component or custom element`
+						message: `Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`,
 					});
 				}
 			}
@@ -428,29 +426,47 @@ export default class Element extends Node {
 
 			attribute_map.set(attribute.name, attribute);
 		});
+	}
 
-		// handle special cases
+	validate_special_cases() {
+		const { component, attributes, handlers } = this;
+		const attribute_map = new Map();
+		const handlers_map = new Map();
+
+		attributes.forEach(attribute => (
+			attribute_map.set(attribute.name, attribute)
+		));
+
+		handlers.forEach(handler => (
+			handlers_map.set(handler.name, handler)
+		));
+
 		if (this.name === 'a') {
-			const attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
+			const href_attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
+			const id_attribute = attribute_map.get('id');
+			const name_attribute = attribute_map.get('name');
 
-			if (attribute) {
-				const value = attribute.get_static_value();
+			if (href_attribute) {
+				const href_value = href_attribute.get_static_value();
 
-				if (value === '' || value === '#') {
-					component.warn(attribute, {
+				if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
+					component.warn(href_attribute, {
 						code: `a11y-invalid-attribute`,
-						message: `A11y: '${value}' is not a valid ${attribute.name} attribute`
+						message: `A11y: '${href_value}' is not a valid ${href_attribute.name} attribute`
 					});
 				}
 			} else {
-				component.warn(this, {
-					code: `a11y-missing-attribute`,
-					message: `A11y: <a> element should have an href attribute`
-				});
-			}
-		}
+				const id_attribute_valid = id_attribute && id_attribute.get_static_value() !== '';
+				const name_attribute_valid = name_attribute && name_attribute.get_static_value() !== '';
 
-		else {
+				if (!id_attribute_valid && !name_attribute_valid) {
+					component.warn(this, {
+						code: `a11y-missing-attribute`,
+						message: `A11y: <a> element should have an href attribute`
+					});
+				}
+			}
+		} else {
 			const required_attributes = a11y_required_attributes[this.name];
 			if (required_attributes) {
 				const has_attribute = required_attributes.some(name => attribute_map.has(name));
@@ -459,17 +475,44 @@ export default class Element extends Node {
 					should_have_attribute(this, required_attributes);
 				}
 			}
+		}
 
-			if (this.name === 'input') {
-				const type = attribute_map.get('type');
-				if (type && type.get_static_value() === 'image') {
-					const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
-					const has_attribute = required_attributes.some(name => attribute_map.has(name));
+		if (this.name === 'input') {
+			const type = attribute_map.get('type');
+			if (type && type.get_static_value() === 'image') {
+				const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
+				const has_attribute = required_attributes.some(name => attribute_map.has(name));
 
-					if (!has_attribute) {
-						should_have_attribute(this, required_attributes, 'input type="image"');
-					}
+				if (!has_attribute) {
+					should_have_attribute(this, required_attributes, 'input type="image"');
 				}
+			}
+		}
+
+		if (this.name === 'img') {
+			const alt_attribute = attribute_map.get('alt');
+			const aria_hidden_attribute = attribute_map.get('aria-hidden');
+
+			const aria_hidden_exist = aria_hidden_attribute && aria_hidden_attribute.get_static_value();
+
+			if (alt_attribute && !aria_hidden_exist) {
+				const alt_value = alt_attribute.get_static_value();
+
+				if (/\b(image|picture|photo)\b/i.test(alt_value)) {
+					component.warn(this, {
+						code: `a11y-img-redundant-alt`,
+						message: `A11y: Screenreaders already announce <img> elements as an image.`
+					});
+				}
+			}
+		}
+
+		if (a11y_no_onchange.has(this.name)) {
+			if (handlers_map.has('change') && !handlers_map.has('blur')) {
+				component.warn(this, {
+					code: `a11y-no-onchange`,
+					message: `A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.`
+				});
 			}
 		}
 	}
@@ -595,6 +638,7 @@ export default class Element extends Node {
 				name === 'seekable' ||
 				name === 'played' ||
 				name === 'volume' ||
+				name === 'muted' ||
 				name === 'playbackRate' ||
 				name === 'seeking' ||
 				name === 'ended'
@@ -775,4 +819,13 @@ function should_have_attribute(
 		code: `a11y-missing-attribute`,
 		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
 	});
+}
+
+function within_custom_element(parent: INode) {
+	while (parent) {
+		if (parent.type === 'InlineComponent') return false;
+		if (parent.type === 'Element' && /-/.test(parent.name)) return true;
+		parent = parent.parent;
+	}
+	return false;
 }

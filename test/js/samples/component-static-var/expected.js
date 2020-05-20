@@ -36,7 +36,7 @@ function create_fragment(ctx) {
 			t1 = space();
 			input = element("input");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			mount_component(foo, target, anchor);
 			insert(target, t0, anchor);
 			mount_component(bar, target, anchor);
@@ -44,6 +44,7 @@ function create_fragment(ctx) {
 			insert(target, input, anchor);
 			set_input_value(input, /*z*/ ctx[0]);
 			current = true;
+			if (remount) dispose();
 			dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
 		},
 		p(ctx, [dirty]) {

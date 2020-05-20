@@ -106,11 +106,28 @@ export default class InlineComponentWrapper extends Wrapper {
 		block.add_outro();
 	}
 
+	warn_if_reactive() {
+		const { name } = this.node;
+		const variable = this.renderer.component.var_lookup.get(name);
+		if (!variable) {
+			return;
+		}
+
+		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
+			this.renderer.component.warn(this.node, {
+				code: 'reactive-component',
+				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`,
+			});
+		}
+	}
+
 	render(
 		block: Block,
 		parent_node: Identifier,
 		parent_nodes: Identifier
 	) {
+		this.warn_if_reactive();
+
 		const { renderer } = this;
 		const { component } = renderer;
 
@@ -121,10 +138,27 @@ export default class InlineComponentWrapper extends Wrapper {
 		const statements: Array<Node | Node[]> = [];
 		const updates: Array<Node | Node[]> = [];
 
+		if (this.fragment) {
+			this.renderer.add_to_context('$$scope', true);
+			const default_slot = this.slots.get('default');
+
+			this.fragment.nodes.forEach((child) => {
+				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
+			});
+		}
+
 		let props;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
+
+		// removing empty slot
+		for (const slot of this.slots.keys()) {
+			if (!this.slots.get(slot).block.has_content()) {
+				this.renderer.remove_block(this.slots.get(slot).block);
+				this.slots.delete(slot);
+			}
+		}
 
 		const initial_props = this.slots.size > 0
 			? [
@@ -153,15 +187,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				props = block.get_unique_name(`${name.name}_props`);
 				component_opts.properties.push(p`props: ${props}`);
 			}
-		}
-
-		if (this.fragment) {
-			this.renderer.add_to_context('$$scope', true);
-			const default_slot = this.slots.get('default');
-
-			this.fragment.nodes.forEach((child) => {
-				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
-			});
 		}
 
 		if (component.compile_options.dev) {
@@ -207,7 +232,9 @@ export default class InlineComponentWrapper extends Wrapper {
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
 						? renderer.dirty(Array.from(dependencies))
 						: null;
+					const unchanged = dependencies.size === 0;
 
+					let change_object;
 					if (attr.is_spread) {
 						const value = attr.expression.manipulate(block);
 						initial_props.push(value);
@@ -216,13 +243,20 @@ export default class InlineComponentWrapper extends Wrapper {
 						if (attr.expression.node.type !== 'ObjectExpression') {
 							value_object = x`@get_spread_object(${value})`;
 						}
-						changes.push(condition ? x`${condition} && ${value_object}` : value_object);
+						change_object = value_object;
 					} else {
 						const obj = x`{ ${name}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
-
-						changes.push(condition ? x`${condition} && ${obj}` : x`${levels}[${i}]`);
+						change_object = obj;
 					}
+
+					changes.push(
+						unchanged
+							? x`${levels}[${i}]`
+							: condition
+							? x`${condition} && ${change_object}`
+							: change_object
+					);
 				});
 
 				block.chunks.init.push(b`
@@ -315,8 +349,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				contextual_dependencies.push(object.name, property.name);
 			}
 
-			const value = block.get_unique_name('value');
-			const params: any[] = [value];
+			const params = [x`#value`];
 			if (contextual_dependencies.length > 0) {
 				const args = [];
 
@@ -332,23 +365,23 @@ export default class InlineComponentWrapper extends Wrapper {
 
 
 				block.chunks.init.push(b`
-					function ${id}(${value}) {
-						${callee}.call(null, ${value}, ${args});
+					function ${id}(#value) {
+						${callee}.call(null, #value, ${args});
 					}
 				`);
 
 				block.maintain_context = true; // TODO put this somewhere more logical
 			} else {
 				block.chunks.init.push(b`
-					function ${id}(${value}) {
-						${callee}.call(null, ${value});
+					function ${id}(#value) {
+						${callee}.call(null, #value);
 					}
 				`);
 			}
 
 			const body = b`
 				function ${id}(${params}) {
-					${lhs} = ${value};
+					${lhs} = #value;
 					${renderer.invalidate(dependencies[0])};
 				}
 			`;
@@ -402,7 +435,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.chunks.mount.push(b`
 				if (${name}) {
-					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
+					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 				}
 			`);
 
@@ -476,7 +509,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.chunks.mount.push(
-				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
+				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
 			);
 
 			block.chunks.intro.push(b`

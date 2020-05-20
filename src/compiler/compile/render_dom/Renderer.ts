@@ -5,6 +5,7 @@ import FragmentWrapper from './wrappers/Fragment';
 import { x } from 'code-red';
 import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression } from 'estree';
 import flatten_reference from '../utils/flatten_reference';
+import { reserved_keywords } from '../utils/reserved_keywords';
 
 interface ContextMember {
 	name: string;
@@ -50,9 +51,11 @@ export default class Renderer {
 		// ensure store values are included in context
 		component.vars.filter(v => v.subscribable).forEach(v => this.add_to_context(`$${v.name}`));
 
-		if (component.var_lookup.has('$$props')) {
-			this.add_to_context('$$props');
-		}
+		reserved_keywords.forEach(keyword => {
+			if (component.var_lookup.has(keyword)) {
+				this.add_to_context(keyword);
+			}
+		});
 
 		if (component.slots.size > 0) {
 			this.add_to_context('$$scope');
@@ -161,11 +164,14 @@ export default class Renderer {
 		}
 
 		if (
-			variable &&
-			!variable.referenced &&
-			!variable.is_reactive_dependency &&
-			!variable.export_name &&
-			!name.startsWith('$$')
+			variable && (
+				variable.module || (
+					!variable.referenced &&
+					!variable.is_reactive_dependency &&
+					!variable.export_name &&
+					!name.startsWith('$$')
+				)
+			)
 		) {
 			return value || name;
 		}
@@ -194,7 +200,7 @@ export default class Renderer {
 
 		return filtered
 			.map(n => x`$$invalidate(${this.context_lookup.get(n).index}, ${n})`)
-			.reduce((lhs, rhs) => x`${lhs}, ${rhs}}`);
+			.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
 	}
 
 	dirty(names, is_reactive_declaration = false): Expression {
@@ -227,6 +233,7 @@ export default class Renderer {
 			return bitmask;
 		};
 
+		// TODO: context-overflow make it less gross
 		return {
 			// Using a ParenthesizedExpression allows us to create
 			// the expression lazily. TODO would be better if
@@ -276,5 +283,9 @@ export default class Renderer {
 		}
 
 		return node;
+	}
+
+	remove_block(block: Block | Node | Node[]) {
+		this.blocks.splice(this.blocks.indexOf(block), 1);
 	}
 }

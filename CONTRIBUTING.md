@@ -93,7 +93,7 @@ Test samples are kept in `/test/xxx/samples` folder.
 
 #### Running tests
 
-1. To run test, run `npm run test`
+1. To run test, run `npm run test`.
 1. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test involving transitions, run `npm run test -- -g transition`.
 
 ##### Running solo test
@@ -130,7 +130,7 @@ The core Svelte team will be monitoring for pull requests. Do help us by making 
 
 ### Code conventions
 
-- `snake_case` for internal variable names and methods
+- `snake_case` for internal variable names and methods.
 - `camelCase` for public variable names and methods.
 
 ## License

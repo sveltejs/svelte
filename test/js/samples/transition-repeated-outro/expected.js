@@ -63,13 +63,15 @@ function create_fragment(ctx) {
 		},
 		p(ctx, [dirty]) {
 			if (/*num*/ ctx[0] < 5) {
-				if (!if_block) {
+				if (if_block) {
+					if (dirty & /*num*/ 1) {
+						transition_in(if_block, 1);
+					}
+				} else {
 					if_block = create_if_block(ctx);
 					if_block.c();
 					transition_in(if_block, 1);
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
-				} else {
-					transition_in(if_block, 1);
 				}
 			} else if (if_block) {
 				group_outros();

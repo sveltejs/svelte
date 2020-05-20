@@ -38,9 +38,10 @@ function create_fragment(ctx) {
 			if (/*videoHeight*/ ctx[1] === void 0 || /*videoWidth*/ ctx[2] === void 0) add_render_callback(() => /*video_resize_handler*/ ctx[5].call(video));
 			add_render_callback(() => /*video_elementresize_handler*/ ctx[6].call(video));
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, video, anchor);
 			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[6].bind(video));
+			if (remount) run_all(dispose);
 
 			dispose = [
 				listen(video, "timeupdate", video_timeupdate_handler),
@@ -58,7 +59,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(video);
-			video_resize_listener.cancel();
+			video_resize_listener();
 			run_all(dispose);
 		}
 	};
