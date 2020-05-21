@@ -1,7 +1,7 @@
 export default {
 	html: `
-		<div class="foo svelte-xg5rbo">red</div>
-		<div class="qux svelte-xg5rbo">red</div>
-		<div class="bar svelte-xg5rbo">red and bold</div>
+		<div class="foo svelte-1553ulx">red</div>
+		<div class="qux svelte-1553ulx">red</div>
+		<div class="bar svelte-1553ulx">red and bold</div>
 	`
 };

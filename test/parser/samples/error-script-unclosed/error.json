@@ -1,10 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "unclosed-script",
-	"message": "<script> must have a closing tag",
 	"start": {
 		"line": 3,
 		"column": 8,
-		"character": 32
+		"character": 34
 	},
-	"pos": 32
+	"end": {
+		"line": 3,
+		"column": 8,
+		"character": 34
+	},
+	"pos": 34,
+	"frame": "1: <h1>Hello {name}!</h1>\r\n2: \r\n3: <script>\n           ^",
+	"message": "<script> must have a closing tag"
 }

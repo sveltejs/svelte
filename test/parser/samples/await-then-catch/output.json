@@ -1,12 +1,12 @@
 {
 	"html": {
 		"start": 0,
-		"end": 148,
+		"end": 154,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 148,
+				"end": 154,
 				"type": "AwaitBlock",
 				"expression": {
 					"type": "Identifier",
@@ -25,39 +25,39 @@
 					"name": "thePromise"
 				},
 				"value": {
-					"start": 46,
-					"end": 54,
 					"type": "Identifier",
-					"name": "theValue"
+					"name": "theValue",
+					"start": 48,
+					"end": 56
 				},
 				"error": {
-					"start": 96,
-					"end": 104,
 					"type": "Identifier",
-					"name": "theError"
+					"name": "theError",
+					"start": 100,
+					"end": 108
 				},
 				"pending": {
 					"start": 19,
-					"end": 39,
+					"end": 41,
 					"type": "PendingBlock",
 					"children": [
 						{
 							"start": 19,
-							"end": 21,
+							"end": 22,
 							"type": "Text",
-							"raw": "\n\t",
-							"data": "\n\t"
+							"raw": "\r\n\t",
+							"data": "\r\n\t"
 						},
 						{
-							"start": 21,
-							"end": 38,
+							"start": 22,
+							"end": 39,
 							"type": "Element",
 							"name": "p",
 							"attributes": [],
 							"children": [
 								{
-									"start": 24,
-									"end": 34,
+									"start": 25,
+									"end": 35,
 									"type": "Text",
 									"raw": "loading...",
 									"data": "loading..."
@@ -65,49 +65,49 @@
 							]
 						},
 						{
-							"start": 38,
-							"end": 39,
+							"start": 39,
+							"end": 41,
 							"type": "Text",
-							"raw": "\n",
-							"data": "\n"
+							"raw": "\r\n",
+							"data": "\r\n"
 						}
 					],
 					"skip": false
 				},
 				"then": {
-					"start": 39,
-					"end": 88,
+					"start": 41,
+					"end": 92,
 					"type": "ThenBlock",
 					"children": [
 						{
-							"start": 55,
-							"end": 57,
+							"start": 57,
+							"end": 60,
 							"type": "Text",
-							"raw": "\n\t",
-							"data": "\n\t"
+							"raw": "\r\n\t",
+							"data": "\r\n\t"
 						},
 						{
-							"start": 57,
-							"end": 87,
+							"start": 60,
+							"end": 90,
 							"type": "Element",
 							"name": "p",
 							"attributes": [],
 							"children": [
 								{
-									"start": 60,
-									"end": 73,
+									"start": 63,
+									"end": 76,
 									"type": "Text",
 									"raw": "the value is ",
 									"data": "the value is "
 								},
 								{
-									"start": 73,
-									"end": 83,
+									"start": 76,
+									"end": 86,
 									"type": "MustacheTag",
 									"expression": {
 										"type": "Identifier",
-										"start": 74,
-										"end": 82,
+										"start": 77,
+										"end": 85,
 										"loc": {
 											"start": {
 												"line": 4,
@@ -124,49 +124,49 @@
 							]
 						},
 						{
-							"start": 87,
-							"end": 88,
+							"start": 90,
+							"end": 92,
 							"type": "Text",
-							"raw": "\n",
-							"data": "\n"
+							"raw": "\r\n",
+							"data": "\r\n"
 						}
 					],
 					"skip": false
 				},
 				"catch": {
-					"start": 88,
-					"end": 140,
+					"start": 92,
+					"end": 146,
 					"type": "CatchBlock",
 					"children": [
 						{
-							"start": 105,
-							"end": 107,
+							"start": 109,
+							"end": 112,
 							"type": "Text",
-							"raw": "\n\t",
-							"data": "\n\t"
+							"raw": "\r\n\t",
+							"data": "\r\n\t"
 						},
 						{
-							"start": 107,
-							"end": 139,
+							"start": 112,
+							"end": 144,
 							"type": "Element",
 							"name": "p",
 							"attributes": [],
 							"children": [
 								{
-									"start": 110,
-									"end": 117,
+									"start": 115,
+									"end": 122,
 									"type": "Text",
 									"raw": "oh no! ",
 									"data": "oh no! "
 								},
 								{
-									"start": 117,
-									"end": 135,
+									"start": 122,
+									"end": 140,
 									"type": "MustacheTag",
 									"expression": {
 										"type": "MemberExpression",
-										"start": 118,
-										"end": 134,
+										"start": 123,
+										"end": 139,
 										"loc": {
 											"start": {
 												"line": 6,
@@ -179,8 +179,8 @@
 										},
 										"object": {
 											"type": "Identifier",
-											"start": 118,
-											"end": 126,
+											"start": 123,
+											"end": 131,
 											"loc": {
 												"start": {
 													"line": 6,
@@ -195,8 +195,8 @@
 										},
 										"property": {
 											"type": "Identifier",
-											"start": 127,
-											"end": 134,
+											"start": 132,
+											"end": 139,
 											"loc": {
 												"start": {
 													"line": 6,
@@ -215,11 +215,11 @@
 							]
 						},
 						{
-							"start": 139,
-							"end": 140,
+							"start": 144,
+							"end": 146,
 							"type": "Text",
-							"raw": "\n",
-							"data": "\n"
+							"raw": "\r\n",
+							"data": "\r\n"
 						}
 					],
 					"skip": false

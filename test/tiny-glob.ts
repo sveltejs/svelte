@@ -79,7 +79,8 @@ function globrex(glob, { extended = false, globstar = false, strict = false, fil
 		}
 	}
 	const escaped = (condition, str = c) => add(condition ? str : `//${c}`);
-	let c, n;
+	let c;
+	let n;
 	for (let i = 0; i < glob.length; i++) {
 		c = glob[i];
 		n = glob[i + 1];
@@ -224,11 +225,14 @@ function walk(output, prefix, lexer, filesOnly, dot, cwd, dirname = '', level = 
 	const rgx = lexer.segments[level];
 	const dir = join(cwd, prefix, dirname);
 	const files = readdirSync(dir);
-	let i = 0,
-		file;
+	let i = 0;
+	let	file;
 	const len = files.length;
 
-	let fullpath, relpath, stats, isMatch;
+	let fullpath;
+	let relpath;
+	let stats;
+	let isMatch;
 	for (; i < len; i++) {
 		fullpath = join(dir, (file = files[i]));
 		relpath = dirname ? join(dirname, file) : file;

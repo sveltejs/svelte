@@ -1,10 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "duplicate-window",
-	"message": "A component can only have one <svelte:window> tag",
 	"start": {
 		"line": 2,
 		"column": 0,
-		"character": 17
+		"character": 18
 	},
-	"pos": 17
+	"end": {
+		"line": 2,
+		"column": 0,
+		"character": 18
+	},
+	"pos": 18,
+	"frame": "1: <svelte:window/>\r\n2: <svelte:window/>\n   ^",
+	"message": "A component can only have one <svelte:window> tag"
 }

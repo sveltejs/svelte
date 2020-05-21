@@ -88,7 +88,7 @@ describe('ssr', () => {
 				}
 
 				try {
-					assert.equal(css.code.replace(/^\s+/gm, ''), expectedCss.replace(/^\s+/gm, ''));
+					assert.equal(css.code.replace(/^\s+/gm, '').replace(/[\r\n]/, ''), expectedCss.replace(/^\s+/gm, '').replace(/[\r\n]/, ''));
 				} catch (error) {
 					if (shouldUpdateExpected()) {
 						fs.writeFileSync(`${dir}/_expected.css`, css.code);

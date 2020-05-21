@@ -1,12 +1,12 @@
 {
 	"html": {
 		"start": 0,
-		"end": 148,
+		"end": 166,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 33,
+				"end": 36,
 				"type": "IfBlock",
 				"expression": {
 					"type": "Literal",
@@ -27,8 +27,8 @@
 				},
 				"children": [
 					{
-						"start": 12,
-						"end": 19,
+						"start": 13,
+						"end": 20,
 						"type": "Element",
 						"name": "input",
 						"attributes": [],
@@ -36,27 +36,27 @@
 					}
 				],
 				"else": {
-					"start": 27,
-					"end": 28,
+					"start": 29,
+					"end": 31,
 					"type": "ElseBlock",
 					"children": []
 				}
 			},
 			{
-				"start": 33,
-				"end": 35,
+				"start": 36,
+				"end": 40,
 				"type": "Text",
-				"raw": "\n\n",
-				"data": "\n\n"
+				"raw": "\r\n\r\n",
+				"data": "\r\n\r\n"
 			},
 			{
-				"start": 35,
-				"end": 65,
+				"start": 40,
+				"end": 73,
 				"type": "IfBlock",
 				"expression": {
 					"type": "Literal",
-					"start": 40,
-					"end": 44,
+					"start": 45,
+					"end": 49,
 					"loc": {
 						"start": {
 							"line": 6,
@@ -72,8 +72,8 @@
 				},
 				"children": [
 					{
-						"start": 47,
-						"end": 51,
+						"start": 53,
+						"end": 57,
 						"type": "Element",
 						"name": "br",
 						"attributes": [],
@@ -81,27 +81,27 @@
 					}
 				],
 				"else": {
-					"start": 59,
-					"end": 60,
+					"start": 66,
+					"end": 68,
 					"type": "ElseBlock",
 					"children": []
 				}
 			},
 			{
-				"start": 65,
-				"end": 67,
+				"start": 73,
+				"end": 77,
 				"type": "Text",
-				"raw": "\n\n",
-				"data": "\n\n"
+				"raw": "\r\n\r\n",
+				"data": "\r\n\r\n"
 			},
 			{
-				"start": 67,
-				"end": 108,
+				"start": 77,
+				"end": 121,
 				"type": "AwaitBlock",
 				"expression": {
 					"type": "Literal",
-					"start": 75,
-					"end": 79,
+					"start": 85,
+					"end": 89,
 					"loc": {
 						"start": {
 							"line": 11,
@@ -116,53 +116,53 @@
 					"raw": "true"
 				},
 				"value": {
-					"start": 97,
-					"end": 98,
 					"type": "Identifier",
-					"name": "f"
+					"name": "f",
+					"start": 109,
+					"end": 110
 				},
 				"error": null,
 				"pending": {
-					"start": 80,
-					"end": 90,
+					"start": 90,
+					"end": 102,
 					"type": "PendingBlock",
 					"children": [
 						{
-							"start": 80,
-							"end": 82,
+							"start": 90,
+							"end": 93,
 							"type": "Text",
-							"raw": "\n\t",
-							"data": "\n\t"
+							"raw": "\r\n\t",
+							"data": "\r\n\t"
 						},
 						{
-							"start": 82,
-							"end": 89,
+							"start": 93,
+							"end": 100,
 							"type": "Element",
 							"name": "input",
 							"attributes": [],
 							"children": []
 						},
 						{
-							"start": 89,
-							"end": 90,
+							"start": 100,
+							"end": 102,
 							"type": "Text",
-							"raw": "\n",
-							"data": "\n"
+							"raw": "\r\n",
+							"data": "\r\n"
 						}
 					],
 					"skip": false
 				},
 				"then": {
-					"start": 90,
-					"end": 100,
+					"start": 102,
+					"end": 113,
 					"type": "ThenBlock",
 					"children": [
 						{
-							"start": 99,
-							"end": 100,
+							"start": 111,
+							"end": 113,
 							"type": "Text",
-							"raw": "\n",
-							"data": "\n"
+							"raw": "\r\n",
+							"data": "\r\n"
 						}
 					],
 					"skip": false
@@ -176,20 +176,20 @@
 				}
 			},
 			{
-				"start": 108,
-				"end": 110,
+				"start": 121,
+				"end": 125,
 				"type": "Text",
-				"raw": "\n\n",
-				"data": "\n\n"
+				"raw": "\r\n\r\n",
+				"data": "\r\n\r\n"
 			},
 			{
-				"start": 110,
-				"end": 148,
+				"start": 125,
+				"end": 166,
 				"type": "AwaitBlock",
 				"expression": {
 					"type": "Literal",
-					"start": 118,
-					"end": 122,
+					"start": 133,
+					"end": 137,
 					"loc": {
 						"start": {
 							"line": 16,
@@ -204,53 +204,53 @@
 					"raw": "true"
 				},
 				"value": {
-					"start": 137,
-					"end": 138,
 					"type": "Identifier",
-					"name": "f"
+					"name": "f",
+					"start": 154,
+					"end": 155
 				},
 				"error": null,
 				"pending": {
-					"start": 123,
-					"end": 130,
+					"start": 138,
+					"end": 147,
 					"type": "PendingBlock",
 					"children": [
 						{
-							"start": 123,
-							"end": 125,
+							"start": 138,
+							"end": 141,
 							"type": "Text",
-							"raw": "\n\t",
-							"data": "\n\t"
+							"raw": "\r\n\t",
+							"data": "\r\n\t"
 						},
 						{
-							"start": 125,
-							"end": 129,
+							"start": 141,
+							"end": 145,
 							"type": "Element",
 							"name": "br",
 							"attributes": [],
 							"children": []
 						},
 						{
-							"start": 129,
-							"end": 130,
+							"start": 145,
+							"end": 147,
 							"type": "Text",
-							"raw": "\n",
-							"data": "\n"
+							"raw": "\r\n",
+							"data": "\r\n"
 						}
 					],
 					"skip": false
 				},
 				"then": {
-					"start": 130,
-					"end": 140,
+					"start": 147,
+					"end": 158,
 					"type": "ThenBlock",
 					"children": [
 						{
-							"start": 139,
-							"end": 140,
+							"start": 156,
+							"end": 158,
 							"type": "Text",
-							"raw": "\n",
-							"data": "\n"
+							"raw": "\r\n",
+							"data": "\r\n"
 						}
 					],
 					"skip": false

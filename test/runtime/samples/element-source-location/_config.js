@@ -13,14 +13,14 @@ export default {
 			file: path.relative(process.cwd(), path.resolve(__dirname, 'main.svelte')),
 			line: 4,
 			column: 0,
-			char: 53
+			char: 57
 		});
 
 		assert.deepEqual(p.__svelte_meta.loc, {
 			file: path.relative(process.cwd(), path.resolve(__dirname, 'Foo.svelte')),
 			line: 1,
 			column: 1,
-			char: 7
+			char: 8
 		});
 	}
 };

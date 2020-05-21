@@ -1,10 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "duplicate-style",
-	"message": "You can only have one top-level <style> tag per component",
 	"start": {
 		"line": 9,
 		"column": 0,
-		"character": 58
+		"character": 66
 	},
-	"pos": 58
+	"end": {
+		"line": 9,
+		"column": 0,
+		"character": 66
+	},
+	"pos": 66,
+	"frame": " 7: </style>\r\n 8: \r\n 9: <style>\r\n    ^\n10:   div {\r\n11:     color: blue;\r",
+	"message": "You can only have one top-level <style> tag per component"
 }

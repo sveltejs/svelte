@@ -1,10 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "invalid-then-placement",
-	"message": "Cannot have an {:then} block outside an {#await ...} block",
 	"start": {
 		"line": 1,
 		"column": 6,
 		"character": 6
 	},
-	"pos": 6
+	"end": {
+		"line": 1,
+		"column": 6,
+		"character": 6
+	},
+	"pos": 6,
+	"frame": "1: {:then theValue}\n         ^",
+	"message": "Cannot have an {:then} block outside an {#await ...} block"
 }

@@ -10,6 +10,7 @@ describe('js', () => {
 
 		// add .solo to a sample directory name to only run that test
 		const solo = /\.solo/.test(dir);
+		const skip = /\.skip$/.test(dir);
 
 		if (solo && process.env.CI) {
 			throw new Error('Forgot to remove `solo: true` from test');
@@ -28,7 +29,7 @@ describe('js', () => {
 			return;
 		}
 
-		(solo ? it.only : it)(dir, () => {
+		(skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const config = loadConfig(`${resolved}/_config.js`);
 
 			const input = fs.readFileSync(`${resolved}/input.svelte`, 'utf-8').replace(/\s+$/, '');
@@ -63,7 +64,7 @@ describe('js', () => {
 			}
 
 			try {
-				assert.equal(actual.trim().replace(/^[ \t]+$/gm, ''), expected.trim().replace(/^[ \t]+$/gm, ''));
+				assert.equal(actual.trim().replace(/^[ \t]+$/gm, '').replace(/\r/g, ''), expected.trim().replace(/^[ \t]+$/gm, '').replace(/\r/g, ''));
 			} catch (error) {
 				if (shouldUpdateExpected()) {
 					fs.writeFileSync(expectedPath, actual);

@@ -1,45 +1,45 @@
 {
 	"html": {
 		"start": 0,
-		"end": 51,
+		"end": 57,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 51,
+				"end": 57,
 				"type": "Element",
 				"name": "ul",
 				"attributes": [],
 				"children": [
 					{
 						"start": 4,
-						"end": 6,
+						"end": 7,
 						"type": "Text",
-						"raw": "\n\t",
-						"data": "\n\t"
+						"raw": "\r\n\t",
+						"data": "\r\n\t"
 					},
 					{
-						"start": 6,
-						"end": 40,
+						"start": 7,
+						"end": 45,
 						"type": "Element",
 						"name": "li",
 						"attributes": [],
 						"children": [
 							{
-								"start": 10,
-								"end": 13,
+								"start": 11,
+								"end": 15,
 								"type": "Text",
-								"raw": "a\n\t",
-								"data": "a\n\t"
+								"raw": "a\r\n\t",
+								"data": "a\r\n\t"
 							},
 							{
-								"start": 13,
-								"end": 38,
+								"start": 15,
+								"end": 42,
 								"type": "IfBlock",
 								"expression": {
 									"type": "Literal",
-									"start": 18,
-									"end": 22,
+									"start": 20,
+									"end": 24,
 									"loc": {
 										"start": {
 											"line": 3,
@@ -55,45 +55,45 @@
 								},
 								"children": [
 									{
-										"start": 26,
-										"end": 33,
+										"start": 29,
+										"end": 37,
 										"type": "Element",
 										"name": "li",
 										"attributes": [],
 										"children": [
 											{
-												"start": 30,
-												"end": 33,
+												"start": 33,
+												"end": 37,
 												"type": "Text",
-												"raw": "b\n\t",
-												"data": "b\n\t"
+												"raw": "b\r\n\t",
+												"data": "b\r\n\t"
 											}
 										]
 									}
 								]
 							},
 							{
-								"start": 38,
-								"end": 40,
+								"start": 42,
+								"end": 45,
 								"type": "Text",
-								"raw": "\n\t",
-								"data": "\n\t"
+								"raw": "\r\n\t",
+								"data": "\r\n\t"
 							}
 						]
 					},
 					{
-						"start": 40,
-						"end": 46,
+						"start": 45,
+						"end": 52,
 						"type": "Element",
 						"name": "li",
 						"attributes": [],
 						"children": [
 							{
-								"start": 44,
-								"end": 46,
+								"start": 49,
+								"end": 52,
 								"type": "Text",
-								"raw": "c\n",
-								"data": "c\n"
+								"raw": "c\r\n",
+								"data": "c\r\n"
 							}
 						]
 					}
