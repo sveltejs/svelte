@@ -36,14 +36,21 @@ export default class SlotWrapper extends Wrapper {
 			this.fallback = block.child({
 				comment: create_debugging_comment(this.node.children[0], this.renderer.component),
 				name: this.renderer.component.get_unique_name(`fallback_block`),
-				type: 'fallback',
+				type: 'fallback'
 			});
 			renderer.blocks.push(this.fallback);
 		}
 
-		this.fragment = new FragmentWrapper(renderer, this.fallback, node.children, this, strip_whitespace, next_sibling);
+		this.fragment = new FragmentWrapper(
+			renderer,
+			this.fallback,
+			node.children,
+			this,
+			strip_whitespace,
+			next_sibling
+		);
 
-		this.node.values.forEach((attribute) => {
+		this.node.values.forEach(attribute => {
 			add_to_set(this.dependencies, attribute.dependencies);
 		});
 
@@ -54,7 +61,11 @@ export default class SlotWrapper extends Wrapper {
 		block.add_outro();
 	}
 
-	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+	render(
+		block: Block,
+		parent_node: Identifier,
+		parent_nodes: Identifier
+	) {
 		const { renderer } = this;
 
 		const { slot_name } = this.node;
@@ -70,20 +81,20 @@ export default class SlotWrapper extends Wrapper {
 
 			const dependencies = new Set();
 
-			this.node.values.forEach((attribute) => {
-				attribute.chunks.forEach((chunk) => {
+			this.node.values.forEach(attribute => {
+				attribute.chunks.forEach(chunk => {
 					if ((chunk as Expression).dependencies) {
 						add_to_set(dependencies, (chunk as Expression).contextual_dependencies);
 
 						// add_to_set(dependencies, (chunk as Expression).dependencies);
-						(chunk as Expression).dependencies.forEach((name) => {
+						(chunk as Expression).dependencies.forEach(name => {
 							const variable = renderer.component.var_lookup.get(name);
 							if (variable && !variable.hoistable) dependencies.add(name);
 						});
 					}
 				});
 
-				const dynamic_dependencies = Array.from(attribute.dependencies).filter((name) => {
+				const dynamic_dependencies = Array.from(attribute.dependencies).filter(name => {
 					if (this.node.scope.is_let(name)) return true;
 					const variable = renderer.component.var_lookup.get(name);
 					return is_dynamic(variable);
@@ -127,10 +138,14 @@ export default class SlotWrapper extends Wrapper {
 			${has_fallback ? b`const ${slot_or_fallback} = ${slot} || ${this.fallback.name}(#ctx);` : null}
 		`);
 
-		block.chunks.create.push(b`if (${slot_or_fallback}) ${slot_or_fallback}.c();`);
+		block.chunks.create.push(
+			b`if (${slot_or_fallback}) ${slot_or_fallback}.c();`
+		);
 
 		if (renderer.options.hydratable) {
-			block.chunks.claim.push(b`if (${slot_or_fallback}) ${slot_or_fallback}.l(${parent_nodes});`);
+			block.chunks.claim.push(
+				b`if (${slot_or_fallback}) ${slot_or_fallback}.l(${parent_nodes});`
+			);
 		}
 
 		block.chunks.mount.push(b`
@@ -139,11 +154,15 @@ export default class SlotWrapper extends Wrapper {
 			}
 		`);
 
-		block.chunks.intro.push(b`@transition_in(${slot_or_fallback}, #local);`);
+		block.chunks.intro.push(
+			b`@transition_in(${slot_or_fallback}, #local);`
+		);
 
-		block.chunks.outro.push(b`@transition_out(${slot_or_fallback}, #local);`);
+		block.chunks.outro.push(
+			b`@transition_out(${slot_or_fallback}, #local);`
+		);
 
-		const is_dependency_dynamic = (name) => {
+		const is_dependency_dynamic = name => {
 			if (name === '$$scope') return true;
 			if (this.node.scope.is_let(name)) return true;
 			const variable = renderer.component.var_lookup.get(name);
@@ -169,7 +188,7 @@ export default class SlotWrapper extends Wrapper {
 			if (${slot_or_fallback} && ${slot_or_fallback}.p && ${renderer.dirty(fallback_dynamic_dependencies)}) {
 				${slot_or_fallback}.p(#ctx, #dirty);
 			}
-		`;
+			`;
 
 		if (fallback_update) {
 			block.chunks.update.push(b`
@@ -187,6 +206,8 @@ export default class SlotWrapper extends Wrapper {
 			`);
 		}
 
-		block.chunks.destroy.push(b`if (${slot_or_fallback}) ${slot_or_fallback}.d(detaching);`);
+		block.chunks.destroy.push(
+			b`if (${slot_or_fallback}) ${slot_or_fallback}.d(detaching);`
+		);
 	}
 }

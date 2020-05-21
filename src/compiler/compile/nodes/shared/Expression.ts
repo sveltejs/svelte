@@ -30,7 +30,7 @@ export default class Expression {
 	scope: Scope;
 	scope_map: WeakMap<Node, Scope>;
 
-	declarations: Array<Node | Node[]> = [];
+	declarations: Array<(Node | Node[])> = [];
 	uses_context = false;
 
 	manipulated: Node;
@@ -40,8 +40,8 @@ export default class Expression {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
-				value: component,
-			},
+				value: component
+			}
 		});
 
 		this.node = info;
@@ -79,13 +79,12 @@ export default class Expression {
 					if (name[0] === '$' && template_scope.names.has(name.slice(1))) {
 						component.error(node, {
 							code: `contextual-store`,
-							message: `Stores must be declared at the top level of the component (this may change in a future version of Svelte)`,
+							message: `Stores must be declared at the top level of the component (this may change in a future version of Svelte)`
 						});
 					}
 
 					if (template_scope.is_let(name)) {
-						if (!function_expression) {
-							// TODO should this be `!lazy` ?
+						if (!function_expression) { // TODO should this be `!lazy` ?
 							contextual_dependencies.add(name);
 							dependencies.add(name);
 						}
@@ -98,7 +97,7 @@ export default class Expression {
 						const is_index = owner.type === 'EachBlock' && owner.key && name === owner.index;
 
 						if (!lazy || is_index) {
-							template_scope.dependencies_for_name.get(name).forEach((name) => dependencies.add(name));
+							template_scope.dependencies_for_name.get(name).forEach(name => dependencies.add(name));
 						}
 					} else {
 						if (!lazy) {
@@ -119,7 +118,9 @@ export default class Expression {
 				if (function_expression) {
 					if (node.type === 'AssignmentExpression') {
 						deep = node.left.type === 'MemberExpression';
-						names = deep ? [get_object(node.left).name] : extract_names(node.left);
+						names = deep
+							? [get_object(node.left).name]
+							: extract_names(node.left);
 					} else if (node.type === 'UpdateExpression') {
 						const { name } = get_object(node.argument);
 						names = [name];
@@ -127,9 +128,9 @@ export default class Expression {
 				}
 
 				if (names) {
-					names.forEach((name) => {
+					names.forEach(name => {
 						if (template_scope.names.has(name)) {
-							template_scope.dependencies_for_name.get(name).forEach((name) => {
+							template_scope.dependencies_for_name.get(name).forEach(name => {
 								const variable = component.var_lookup.get(name);
 								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
 							});
@@ -151,12 +152,12 @@ export default class Expression {
 				if (node === function_expression) {
 					function_expression = null;
 				}
-			},
+			}
 		});
 	}
 
 	dynamic_dependencies() {
-		return Array.from(this.dependencies).filter((name) => {
+		return Array.from(this.dependencies).filter(name => {
 			if (this.template_scope.is_let(name)) return true;
 			if (is_reserved_keyword(name)) return true;
 
@@ -171,7 +172,13 @@ export default class Expression {
 		// multiple times
 		if (this.manipulated) return this.manipulated;
 
-		const { component, declarations, scope_map: map, template_scope, owner } = this;
+		const {
+			component,
+			declarations,
+			scope_map: map,
+			template_scope,
+			owner
+		} = this;
 		let scope = this.scope;
 
 		let function_expression;
@@ -199,7 +206,7 @@ export default class Expression {
 						if (template_scope.names.has(name)) {
 							contextual_dependencies.add(name);
 
-							template_scope.dependencies_for_name.get(name).forEach((dependency) => {
+							template_scope.dependencies_for_name.get(name).forEach(dependency => {
 								dependencies.add(dependency);
 							});
 						} else {
@@ -231,7 +238,9 @@ export default class Expression {
 				if (map.has(node)) scope = scope.parent;
 
 				if (node === function_expression) {
-					const id = component.get_unique_name(sanitize(get_function_name(node, owner)));
+					const id = component.get_unique_name(
+						sanitize(get_function_name(node, owner))
+					);
 
 					const declaration = b`const ${id} = ${node}`;
 
@@ -245,21 +254,25 @@ export default class Expression {
 							name: id.name,
 							internal: true,
 							hoistable: true,
-							referenced: true,
+							referenced: true
 						});
-					} else if (contextual_dependencies.size === 0) {
+					}
+
+					else if (contextual_dependencies.size === 0) {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(declaration);
 
 						block.renderer.add_to_context(id.name);
 						this.replace(block.renderer.reference(id));
-					} else {
+					}
+
+					else {
 						// we need a combo block/init recipe
 						const deps = Array.from(contextual_dependencies);
 
 						(node as FunctionExpression).params = [
-							...deps.map((name) => ({ type: 'Identifier', name } as Identifier)),
-							...(node as FunctionExpression).params,
+							...deps.map(name => ({ type: 'Identifier', name } as Identifier)),
+							...(node as FunctionExpression).params
 						];
 
 						const context_args = deps.map((name) => block.renderer.reference(name));
@@ -305,10 +318,10 @@ export default class Expression {
 					const names = new Set(extract_names(assignee));
 
 					const traced: Set<string> = new Set();
-					names.forEach((name) => {
+					names.forEach(name => {
 						const dependencies = template_scope.dependencies_for_name.get(name);
 						if (dependencies) {
-							dependencies.forEach((name) => traced.add(name));
+							dependencies.forEach(name => traced.add(name));
 						} else {
 							traced.add(name);
 						}
@@ -316,12 +329,12 @@ export default class Expression {
 
 					this.replace(invalidate(block.renderer, scope, node, traced));
 				}
-			},
+			}
 		});
 
 		if (declarations.length > 0) {
 			block.maintain_context = true;
-			declarations.forEach((declaration) => {
+			declarations.forEach(declaration => {
 				block.chunks.init.push(declaration);
 			});
 		}

@@ -1,4 +1,4 @@
-import { Node, Program } from 'estree';
+import { Node, Program } from "estree";
 import { SourceMap } from 'magic-string';
 
 interface BaseNode {
@@ -24,15 +24,14 @@ export interface MustacheTag extends BaseNode {
 	expression: Node;
 }
 
-export type DirectiveType =
-	| 'Action'
-	| 'Animation'
-	| 'Binding'
-	| 'Class'
-	| 'EventHandler'
-	| 'Let'
-	| 'Ref'
-	| 'Transition';
+export type DirectiveType = 'Action'
+| 'Animation'
+| 'Binding'
+| 'Class'
+| 'EventHandler'
+| 'Let'
+| 'Ref'
+| 'Transition';
 
 interface BaseDirective extends BaseNode {
 	type: DirectiveType;
@@ -41,7 +40,7 @@ interface BaseDirective extends BaseNode {
 	modifiers: string[];
 }
 
-export interface Transition extends BaseDirective {
+export interface Transition extends BaseDirective{
 	type: 'Transition';
 	intro: boolean;
 	outro: boolean;
@@ -49,7 +48,11 @@ export interface Transition extends BaseDirective {
 
 export type Directive = BaseDirective | Transition;
 
-export type TemplateNode = Text | MustacheTag | BaseNode | Directive | Transition;
+export type TemplateNode = Text
+| MustacheTag
+| BaseNode
+| Directive
+| Transition;
 
 export interface Parser {
 	readonly template: string;
@@ -102,9 +105,9 @@ export interface Warning {
 export type ModuleFormat = 'esm' | 'cjs';
 
 export interface CompileOptions {
-	filename?: string;
 	format?: ModuleFormat;
 	name?: string;
+	filename?: string;
 	generate?: string | false;
 
 	outputFilename?: string;
@@ -146,8 +149,8 @@ export interface Var {
 	module?: boolean;
 	mutated?: boolean;
 	reassigned?: boolean;
-	referenced?: boolean; // referenced from template scope
-	referenced_from_script?: boolean; // referenced from script
+	referenced?: boolean;  // referenced from template scope
+	referenced_from_script?: boolean;        // referenced from script
 	writable?: boolean;
 
 	// used internally, but not exposed
@@ -159,7 +162,7 @@ export interface Var {
 	is_reactive_dependency?: boolean;
 }
 
-export interface CssResult {
+export interface CssResult { 
 	code: string;
 	map: SourceMap;
 }

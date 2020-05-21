@@ -35,7 +35,10 @@ const windows_1252 = [
 	376,
 ];
 
-const entity_pattern = new RegExp(`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(entities).join('|')}))(?:;|\\b)`, 'g');
+const entity_pattern = new RegExp(
+	`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(entities).join('|')}))(?:;|\\b)`,
+	'g'
+);
 
 export function decode_character_references(html: string) {
 	return html.replace(entity_pattern, (match, entity) => {
@@ -57,7 +60,7 @@ export function decode_character_references(html: string) {
 		return String.fromCodePoint(validate_code(code));
 	});
 }
-// this is necessary
+
 const NUL = 0;
 
 // some code points are verboten. If we were inserting HTML, the browser would replace the illegal

@@ -47,7 +47,7 @@ export const group_transition_out = (fn) => {
 		});
 		block.o(1);
 	});
-	if (!current_group.r) for (let i = 0; i < current_group.c.length; i++) current_group.c[i]();
+	if (!current_group.r) for (let i = 0; i < c.length; i++) c[i]();
 	transition_group = transition_group.p;
 };
 

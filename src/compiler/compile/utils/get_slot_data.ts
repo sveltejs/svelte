@@ -7,8 +7,8 @@ export default function get_slot_data(values: Map<string, Attribute>, block: Blo
 	return {
 		type: 'ObjectExpression',
 		properties: Array.from(values.values())
-			.filter((attribute) => attribute.name !== 'name')
-			.map((attribute) => {
+			.filter(attribute => attribute.name !== 'name')
+			.map(attribute => {
 				const value = get_value(block, attribute);
 				return p`${attribute.name}: ${value}`;
 			}),

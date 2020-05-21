@@ -49,12 +49,7 @@ export default function mustache(parser: Parser) {
 			block = parser.current();
 		}
 
-		if (
-			block.type === 'ElseBlock' ||
-			block.type === 'PendingBlock' ||
-			block.type === 'ThenBlock' ||
-			block.type === 'CatchBlock'
-		) {
+		if (block.type === 'ElseBlock' || block.type === 'PendingBlock' || block.type === 'ThenBlock' || block.type === 'CatchBlock') {
 			block.end = start;
 			parser.stack.pop();
 			block = parser.current();
@@ -71,7 +66,7 @@ export default function mustache(parser: Parser) {
 		} else {
 			parser.error({
 				code: `unexpected-block-close`,
-				message: `Unexpected block closing tag`,
+				message: `Unexpected block closing tag`
 			});
 		}
 
@@ -103,7 +98,7 @@ export default function mustache(parser: Parser) {
 		if (parser.eat('if')) {
 			parser.error({
 				code: 'invalid-elseif',
-				message: `'elseif' should be 'else if'`,
+				message: `'elseif' should be 'else if'`
 			});
 		}
 
@@ -115,9 +110,9 @@ export default function mustache(parser: Parser) {
 			if (block.type !== 'IfBlock') {
 				parser.error({
 					code: `invalid-elseif-placement`,
-					message: parser.stack.some((block) => block.type === 'IfBlock')
+					message: parser.stack.some(block => block.type === 'IfBlock')
 						? `Expected to close ${to_string(block)} before seeing {:else if ...} block`
-						: `Cannot have an {:else if ...} block outside an {#if ...} block`,
+						: `Cannot have an {:else if ...} block outside an {#if ...} block`
 				});
 			}
 
@@ -153,9 +148,9 @@ export default function mustache(parser: Parser) {
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 				parser.error({
 					code: `invalid-else-placement`,
-					message: parser.stack.some((block) => block.type === 'IfBlock' || block.type === 'EachBlock')
+					message: parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
 						? `Expected to close ${to_string(block)} before seeing {:else} block`
-						: `Cannot have an {:else} block outside an {#if ...} or {#each ...} block`,
+						: `Cannot have an {:else} block outside an {#if ...} or {#each ...} block`
 				});
 			}
 
@@ -179,18 +174,18 @@ export default function mustache(parser: Parser) {
 			if (block.type !== 'PendingBlock') {
 				parser.error({
 					code: `invalid-then-placement`,
-					message: parser.stack.some((block) => block.type === 'PendingBlock')
+					message: parser.stack.some(block => block.type === 'PendingBlock')
 						? `Expected to close ${to_string(block)} before seeing {:then} block`
-						: `Cannot have an {:then} block outside an {#await ...} block`,
+						: `Cannot have an {:then} block outside an {#await ...} block`
 				});
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
 				parser.error({
 					code: `invalid-catch-placement`,
-					message: parser.stack.some((block) => block.type === 'ThenBlock' || block.type === 'PendingBlock')
+					message: parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
 						? `Expected to close ${to_string(block)} before seeing {:catch} block`
-						: `Cannot have an {:catch} block outside an {#await ...} block`,
+						: `Cannot have an {:catch} block outside an {#await ...} block`
 				});
 			}
 		}
@@ -209,9 +204,9 @@ export default function mustache(parser: Parser) {
 		const new_block: TemplateNode = {
 			start,
 			end: null,
-			type: is_then ? 'ThenBlock' : 'CatchBlock',
+			type: is_then ? 'ThenBlock': 'CatchBlock',
 			children: [],
-			skip: false,
+			skip: false
 		};
 
 		await_block[is_then ? 'then' : 'catch'] = new_block;
@@ -229,7 +224,7 @@ export default function mustache(parser: Parser) {
 		} else {
 			parser.error({
 				code: `expected-block-type`,
-				message: `Expected if, each or await`,
+				message: `Expected if, each or await`
 			});
 		}
 
@@ -237,44 +232,43 @@ export default function mustache(parser: Parser) {
 
 		const expression = read_expression(parser);
 
-		const block: TemplateNode =
-			type === 'AwaitBlock'
-				? {
-						start,
-						end: null,
-						type,
-						expression,
-						value: null,
-						error: null,
-						pending: {
-							start: null,
-							end: null,
-							type: 'PendingBlock',
-							children: [],
-							skip: true,
-						},
-						then: {
-							start: null,
-							end: null,
-							type: 'ThenBlock',
-							children: [],
-							skip: true,
-						},
-						catch: {
-							start: null,
-							end: null,
-							type: 'CatchBlock',
-							children: [],
-							skip: true,
-						},
-				  }
-				: {
-						start,
-						end: null,
-						type,
-						expression,
-						children: [],
-				  };
+		const block: TemplateNode = type === 'AwaitBlock' ?
+		{
+			start,
+			end: null,
+			type,
+			expression,
+			value: null,
+			error: null,
+			pending: {
+				start: null,
+				end: null,
+				type: 'PendingBlock',
+				children: [],
+				skip: true
+			},
+			then: {
+				start: null,
+				end: null,
+				type: 'ThenBlock',
+				children: [],
+				skip: true
+			},
+			catch: {
+				start: null,
+				end: null,
+				type: 'CatchBlock',
+				children: [],
+				skip: true
+			},
+		} :
+		{
+			start,
+			end: null,
+			type,
+			expression,
+			children: [],
+		};
 
 		parser.allow_whitespace();
 
@@ -290,11 +284,10 @@ export default function mustache(parser: Parser) {
 			if (parser.eat(',')) {
 				parser.allow_whitespace();
 				block.index = parser.read_identifier();
-				if (!block.index)
-					parser.error({
-						code: `expected-name`,
-						message: `Expected name`,
-					});
+				if (!block.index) parser.error({
+					code: `expected-name`,
+					message: `Expected name`
+				});
 
 				parser.allow_whitespace();
 			}
@@ -368,17 +361,16 @@ export default function mustache(parser: Parser) {
 		} else {
 			const expression = read_expression(parser);
 
-			identifiers = expression.type === 'SequenceExpression' ? expression.expressions : [expression];
+			identifiers = expression.type === 'SequenceExpression'
+				? expression.expressions
+				: [expression];
 
-			identifiers.forEach((node) => {
+			identifiers.forEach(node => {
 				if (node.type !== 'Identifier') {
-					parser.error(
-						{
-							code: 'invalid-debug-args',
-							message: '{@debug ...} arguments must be identifiers, not arbitrary expressions',
-						},
-						node.start
-					);
+					parser.error({
+						code: 'invalid-debug-args',
+						message: '{@debug ...} arguments must be identifiers, not arbitrary expressions'
+					}, node.start);
 				}
 			});
 
@@ -390,7 +382,7 @@ export default function mustache(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'DebugTag',
-			identifiers,
+			identifiers
 		});
 	} else {
 		const expression = read_expression(parser);

@@ -43,7 +43,7 @@ class AwaitBlockBranch extends Wrapper {
 		this.block = block.child({
 			comment: create_debugging_comment(node, this.renderer.component),
 			name: this.renderer.component.get_unique_name(`create_${status}_block`),
-			type: status,
+			type: status
 		});
 
 		this.add_context(parent.node[status + '_node'], parent.node[status + '_contexts']);
@@ -132,7 +132,15 @@ export default class AwaitBlockWrapper extends Wrapper {
 		['pending', 'then', 'catch'].forEach((status: Status) => {
 			const child = this.node[status];
 
-			const branch = new AwaitBlockBranch(status, renderer, block, this, child, strip_whitespace, next_sibling);
+			const branch = new AwaitBlockBranch(
+				status,
+				renderer,
+				block,
+				this,
+				child,
+				strip_whitespace,
+				next_sibling
+			);
 
 			renderer.blocks.push(branch.block);
 
@@ -148,7 +156,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			this[status] = branch;
 		});
 
-		['pending', 'then', 'catch'].forEach((status) => {
+		['pending', 'then', 'catch'].forEach(status => {
 			this[status].block.has_update_method = is_dynamic;
 			this[status].block.has_intro_method = has_intros;
 			this[status].block.has_outro_method = has_outros;
@@ -159,7 +167,11 @@ export default class AwaitBlockWrapper extends Wrapper {
 		}
 	}
 
-	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+	render(
+		block: Block,
+		parent_node: Identifier,
+		parent_nodes: Identifier
+	) {
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 		const update_mount_node = this.get_update_mount_node(anchor);
 
@@ -268,7 +280,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			${info} = null;
 		`);
 
-		[this.pending, this.then, this.catch].forEach((branch) => {
+		[this.pending, this.then, this.catch].forEach(branch => {
 			branch.render(branch.block, null, x`#nodes` as Identifier);
 		});
 	}

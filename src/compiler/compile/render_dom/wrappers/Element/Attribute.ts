@@ -29,7 +29,7 @@ export default class AttributeWrapper {
 					select = select.parent;
 
 				if (select && select.select_binding_dependencies) {
-					select.select_binding_dependencies.forEach((prop) => {
+					select.select_binding_dependencies.forEach(prop => {
 						this.node.dependencies.forEach((dependency: string) => {
 							this.parent.renderer.component.indirect_dependencies.get(prop).add(dependency);
 						});
@@ -42,11 +42,13 @@ export default class AttributeWrapper {
 	is_indirectly_bound_value() {
 		const element = this.parent;
 		const name = fix_attribute_casing(this.node.name);
-		return (
-			name === 'value' &&
-			(element.node.name === 'option' || // TODO check it's actually bound
-				(element.node.name === 'input' && element.node.bindings.some((binding) => /checked|group/.test(binding.name))))
-		);
+		return name === 'value' &&
+		(element.node.name === 'option' || // TODO check it's actually bound
+			(element.node.name === 'input' &&
+				element.node.bindings.some(
+					(binding) =>
+						/checked|group/.test(binding.name)
+				)));
 	}
 
 	render(block: Block) {
@@ -57,7 +59,9 @@ export default class AttributeWrapper {
 
 		const is_indirectly_bound_value = this.is_indirectly_bound_value();
 
-		const property_name = is_indirectly_bound_value ? '__value' : metadata && metadata.property_name;
+		const property_name = is_indirectly_bound_value
+			? '__value'
+			: metadata && metadata.property_name;
 
 		// xlink is a special case... we could maybe extend this to generic
 		// namespaced attributes but I'm not sure that's applicable in
@@ -66,20 +70,22 @@ export default class AttributeWrapper {
 			? '@set_custom_element_data'
 			: name.slice(0, 6) === 'xlink:'
 			? '@xlink_attr'
-			: '@attr';
+				: '@attr';
 
 		const dependencies = this.node.get_dependencies();
 		const value = this.get_value(block);
 
 		const is_src = this.node.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
-		const is_select_value_attribute = name === 'value' && element.node.name === 'select';
+		const is_select_value_attribute =
+			name === 'value' && element.node.name === 'select';
 
 		const is_input_value = name === 'value' && element.node.name === 'input';
 
 		const should_cache = is_src || this.node.should_cache() || is_select_value_attribute; // TODO is this necessary?
 
-		const last =
-			should_cache && block.get_unique_name(`${element.var.name}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`);
+		const last = should_cache && block.get_unique_name(
+			`${element.var.name}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
+		);
 
 		if (should_cache) block.add_variable(last);
 
@@ -114,15 +120,21 @@ export default class AttributeWrapper {
 				${updater}
 			`);
 		} else if (is_src) {
-			block.chunks.hydrate.push(b`if (${element.var}.src !== ${init}) ${method}(${element.var}, "${name}", ${last});`);
+			block.chunks.hydrate.push(
+				b`if (${element.var}.src !== ${init}) ${method}(${element.var}, "${name}", ${last});`
+			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
 		} else if (property_name) {
-			block.chunks.hydrate.push(b`${element.var}.${property_name} = ${init};`);
+			block.chunks.hydrate.push(
+				b`${element.var}.${property_name} = ${init};`
+			);
 			updater = block.renderer.options.dev
 				? b`@prop_dev(${element.var}, "${property_name}", ${should_cache ? last : value});`
 				: b`${element.var}.${property_name} = ${should_cache ? last : value};`;
 		} else {
-			block.chunks.hydrate.push(b`${method}(${element.var}, "${name}", ${init});`);
+			block.chunks.hydrate.push(
+				b`${method}(${element.var}, "${name}", ${init});`
+			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? last : value});`;
 		}
 
@@ -138,7 +150,7 @@ export default class AttributeWrapper {
 			if (is_input_value) {
 				const type = element.node.get_static_attribute_value('type');
 
-				if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
+				if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
 					condition = x`${condition} && ${element.var}.${property_name} !== ${should_cache ? last : value}`;
 				}
 			}
@@ -191,10 +203,9 @@ export default class AttributeWrapper {
 				: (this.node.chunks[0] as Expression).manipulate(block);
 		}
 
-		let value =
-			this.node.name === 'class'
-				? this.get_class_name_text(block)
-				: this.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
+		let value = this.node.name === 'class'
+			? this.get_class_name_text(block)
+			: this.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
 		// '{foo} {bar}' — treat as string concatenation
 		if (this.node.chunks[0].type !== 'Text') {
@@ -232,11 +243,11 @@ export default class AttributeWrapper {
 		const value = this.node.chunks;
 		if (value.length === 0) return `=""`;
 
-		return `="${value
-			.map((chunk) => {
-				return chunk.type === 'Text' ? chunk.data.replace(/"/g, '\\"') : `\${${chunk.manipulate()}}`;
-			})
-			.join('')}"`;
+		return `="${value.map(chunk => {
+			return chunk.type === 'Text'
+				? chunk.data.replace(/"/g, '\\"')
+				: `\${${chunk.manipulate()}}`;
+		}).join('')}"`;
 	}
 }
 
@@ -252,7 +263,16 @@ const attribute_lookup = {
 	default: { applies_to: ['track'] },
 	defer: { applies_to: ['script'] },
 	disabled: {
-		applies_to: ['button', 'fieldset', 'input', 'keygen', 'optgroup', 'option', 'select', 'textarea'],
+		applies_to: [
+			'button',
+			'fieldset',
+			'input',
+			'keygen',
+			'optgroup',
+			'option',
+			'select',
+			'textarea',
+		],
 	},
 	formnovalidate: { property_name: 'formNoValidate', applies_to: ['button', 'input'] },
 	hidden: {},
@@ -270,11 +290,21 @@ const attribute_lookup = {
 	reversed: { applies_to: ['ol'] },
 	selected: { applies_to: ['option'] },
 	value: {
-		applies_to: ['button', 'option', 'input', 'li', 'meter', 'progress', 'param', 'select', 'textarea'],
+		applies_to: [
+			'button',
+			'option',
+			'input',
+			'li',
+			'meter',
+			'progress',
+			'param',
+			'select',
+			'textarea',
+		],
 	},
 };
 
-Object.keys(attribute_lookup).forEach((name) => {
+Object.keys(attribute_lookup).forEach(name => {
 	const metadata = attribute_lookup[name];
 	if (!metadata.property_name) metadata.property_name = name;
 });
@@ -305,5 +335,5 @@ const boolean_attribute = new Set([
 	'readonly',
 	'required',
 	'reversed',
-	'selected',
+	'selected'
 ]);

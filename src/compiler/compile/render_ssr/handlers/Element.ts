@@ -8,22 +8,20 @@ import { x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
 import remove_whitespace_children from './utils/remove_whitespace_children';
 
-export default function (
-	node: Element,
-	renderer: Renderer,
-	options: RenderOptions & {
-		slot_scopes: Map<any, any>;
-	}
-) {
+export default function(node: Element, renderer: Renderer, options: RenderOptions & {
+	slot_scopes: Map<any, any>;
+}) {
+
 	const children = remove_whitespace_children(node.children, node.next);
 
 	// awkward special case
 	let node_contents;
 
-	const contenteditable =
+	const contenteditable = (
 		node.name !== 'textarea' &&
 		node.name !== 'input' &&
-		node.attributes.some((attribute) => attribute.name === 'contenteditable');
+		node.attributes.some((attribute) => attribute.name === 'contenteditable')
+	);
 
 	const slot = node.get_static_attribute_value('slot');
 	const nearest_inline_component = node.find_nearest(/InlineComponent/);
@@ -34,7 +32,7 @@ export default function (
 
 	renderer.add_string(`<${node.name}`);
 
-	const class_expression_list = node.classes.map((class_directive) => {
+	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
 		const snippet = expression ? expression.node : x`#ctx.${name}`; // TODO is this right?
 		return x`${snippet} ? "${name}" : ""`;
@@ -43,12 +41,13 @@ export default function (
 		class_expression_list.push(x`"${node.component.stylesheet.id}"`);
 	}
 	const class_expression =
-		class_expression_list.length > 0 && class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
+		class_expression_list.length > 0 &&
+		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
 
-	if (node.attributes.some((attr) => attr.is_spread)) {
+	if (node.attributes.some(attr => attr.is_spread)) {
 		// TODO dry this out
 		const args = [];
-		node.attributes.forEach((attribute) => {
+		node.attributes.forEach(attribute => {
 			if (attribute.is_spread) {
 				args.push(attribute.expression.node);
 			} else {
@@ -79,7 +78,11 @@ export default function (
 				node_contents = get_attribute_value(attribute);
 			} else if (attribute.is_true) {
 				renderer.add_string(` ${attribute.name}`);
-			} else if (boolean_attributes.has(name) && attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
+			} else if (
+				boolean_attributes.has(name) &&
+				attribute.chunks.length === 1 &&
+				attribute.chunks[0].type !== 'Text'
+			) {
 				// a boolean attribute with one non-Text chunk
 				renderer.add_string(` `);
 				renderer.add_expression(x`${(attribute.chunks[0] as Expression).node} ? "${attribute.name}" : ""`);
@@ -90,9 +93,7 @@ export default function (
 				renderer.add_string(`"`);
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const snippet = (attribute.chunks[0] as Expression).node;
-				renderer.add_expression(
-					x`@add_attribute("${attribute.name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`
-				);
+				renderer.add_expression(x`@add_attribute("${attribute.name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
 			} else {
 				renderer.add_string(` ${attribute.name}="`);
 				renderer.add_expression((name === 'class' ? get_class_attribute_value : get_attribute_value)(attribute));
@@ -104,7 +105,7 @@ export default function (
 		}
 	}
 
-	node.bindings.forEach((binding) => {
+	node.bindings.forEach(binding => {
 		const { name, expression } = binding;
 
 		if (binding.is_readonly) {
@@ -155,15 +156,15 @@ export default function (
 		}
 
 		const lets = node.lets;
-		const seen = new Set(lets.map((l) => l.name.name));
+		const seen = new Set(lets.map(l => l.name.name));
 
-		nearest_inline_component.lets.forEach((l) => {
+		nearest_inline_component.lets.forEach(l => {
 			if (!seen.has(l.name.name)) lets.push(l);
 		});
 
 		options.slot_scopes.set(slot, {
 			input: get_slot_scope(node.lets),
-			output: renderer.pop(),
+			output: renderer.pop()
 		});
 	} else {
 		renderer.render(children, options);

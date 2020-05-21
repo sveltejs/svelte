@@ -27,9 +27,7 @@ export default class EventHandlerWrapper {
 	}
 
 	get_snippet(block) {
-		const snippet = this.node.expression
-			? this.node.expression.manipulate(block)
-			: block.renderer.reference(this.node.handler_name);
+		const snippet = this.node.expression ? this.node.expression.manipulate(block) : block.renderer.reference(this.node.handler_name);
 
 		if (this.node.reassigned) {
 			block.maintain_context = true;
@@ -47,9 +45,11 @@ export default class EventHandlerWrapper {
 
 		const args = [];
 
-		const opts = ['passive', 'once', 'capture'].filter((mod) => this.node.modifiers.has(mod));
+		const opts = ['passive', 'once', 'capture'].filter(mod => this.node.modifiers.has(mod));
 		if (opts.length) {
-			args.push(opts.length === 1 && opts[0] === 'capture' ? TRUE : x`{ ${opts.map((opt) => p`${opt}: true`)} }`);
+			args.push((opts.length === 1 && opts[0] === 'capture')
+				? TRUE
+				: x`{ ${opts.map(opt => p`${opt}: true`)} }`);
 		} else if (block.renderer.options.dev) {
 			args.push(FALSE);
 		}
@@ -59,6 +59,8 @@ export default class EventHandlerWrapper {
 			args.push(this.node.modifiers.has('stopPropagation') ? TRUE : FALSE);
 		}
 
-		block.event_listeners.push(x`@listen(${target}, "${this.node.name}", ${snippet}, ${args})`);
+		block.event_listeners.push(
+			x`@listen(${target}, "${this.node.name}", ${snippet}, ${args})`
+		);
 	}
 }

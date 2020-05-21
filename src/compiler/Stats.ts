@@ -1,10 +1,9 @@
-const now =
-	typeof process !== 'undefined' && process.hrtime
-		? () => {
-				const t = process.hrtime();
-				return t[0] * 1e3 + t[1] / 1e6;
-		  }
-		: () => self.performance.now();
+const now = (typeof process !== 'undefined' && process.hrtime)
+	? () => {
+		const t = process.hrtime();
+		return t[0] * 1e3 + t[1] / 1e6;
+	}
+	: () => self.performance.now();
 
 interface Timing {
 	label: string;
@@ -15,13 +14,10 @@ interface Timing {
 
 function collapse_timings(timings) {
 	const result = {};
-	timings.forEach((timing) => {
-		result[timing.label] = Object.assign(
-			{
-				total: timing.end - timing.start,
-			},
-			timing.children && collapse_timings(timing.children)
-		);
+	timings.forEach(timing => {
+		result[timing.label] = Object.assign({
+			total: timing.end - timing.start
+		}, timing.children && collapse_timings(timing.children));
 	});
 	return result;
 }
@@ -44,7 +40,7 @@ export default class Stats {
 			label,
 			start: now(),
 			end: null,
-			children: [],
+			children: []
 		};
 
 		this.current_children.push(timing);
@@ -66,13 +62,12 @@ export default class Stats {
 	}
 
 	render() {
-		const timings = {
-			total: now() - this.start_time,
-			...collapse_timings(this.timings),
-		};
+		const timings = Object.assign({
+			total: now() - this.start_time
+		}, collapse_timings(this.timings));
 
 		return {
-			timings,
+			timings
 		};
 	}
 }

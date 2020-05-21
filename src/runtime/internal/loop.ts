@@ -40,7 +40,8 @@ const run_timed = (now: number) => {
 				timed_tasks[j + 1] = this_task;
 				last_index++;
 			}
-		pending_inserts = !!(pending_insert_timed.length = 0);
+		pending_insert_timed.length = 0;
+		pending_inserts = false;
 	}
 	return (running_timed = !!(timed_tasks.length = last_index + 1));
 };
@@ -66,7 +67,7 @@ export const setFrameTimeout = (callback: (t: number) => void, timestamp: number
 	return () => void (task.callback = noop);
 };
 /**
- * Calls function every frame with a value going from 0 to 1
+ * Calls function every frame with linear tween from 0 to 1
  */
 export const setTweenTimeout = (
 	stop: (now: number) => void,
@@ -91,7 +92,7 @@ export const setTweenTimeout = (
 	};
 };
 /**
- * Calls function every frame with the amount of elapsed frames
+ * Calls function every frame with time elapsed in seconds
  */
 export const onEachFrame = (
 	callback: (seconds_elapsed: number) => boolean,

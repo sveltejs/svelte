@@ -8,33 +8,40 @@ import Text from '../nodes/Text';
 import { extract_names } from '../utils/scope';
 import { LabeledStatement, Statement, ExpressionStatement, AssignmentExpression, Node } from 'estree';
 
-export default function ssr(component: Component, options: CompileOptions): { js: Node[]; css: CssResult } {
+export default function ssr(
+	component: Component,
+	options: CompileOptions
+): {js: Node[]; css: CssResult} {
 	const renderer = new Renderer({
-		name: component.name,
+		name: component.name
 	});
 
 	const { name } = component;
 
 	// create $$render function
-	renderer.render(trim(component.fragment.children), { locate: component.locate, ...options });
+	renderer.render(trim(component.fragment.children), Object.assign({
+		locate: component.locate
+	}, options));
 
 	// TODO put this inside the Renderer class
 	const literal = renderer.pop();
 
 	// TODO concatenate CSS maps
-	const css = options.customElement ? { code: null, map: null } : component.stylesheet.render(options.filename, true);
+	const css = options.customElement ?
+		{ code: null, map: null } :
+		component.stylesheet.render(options.filename, true);
 
 	const uses_rest = component.var_lookup.has('$$restProps');
-	const props = component.vars.filter((variable) => !variable.module && variable.export_name);
+	const props = component.vars.filter((variable => !variable.module && variable.export_name));
 	const rest = uses_rest
 		? b`
 		let #k;
-		const #keys = new Set([${props.map((prop) => `"${prop.export_name}"`).join(',')}]);
+		const #keys = new Set([${props.map(prop => `"${prop.export_name}"`).join(',')}]);
 		let $$restProps = {};
 		for (#k in $$props){ if (!#keys.has(#k) && #k[0] !== '$'){ $$restProps[#k] = $$props[#k];}}`
 		: null;
 
-	const reactive_stores = component.vars.filter((variable) => variable.name[0] === '$' && variable.name[1] !== '$');
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 	const reactive_store_values = reactive_stores
 		.map(({ name }) => {
 			const store_name = name.slice(1);
@@ -59,40 +66,42 @@ export default function ssr(component: Component, options: CompileOptions): { js
 	// TODO only do this for props with a default value
 	const parent_bindings = instance_javascript
 		? component.vars
-				.filter((variable) => !variable.module && variable.export_name)
-				.map((prop) => {
-					return b`if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
-				})
+		.filter(variable => !variable.module && variable.export_name)
+		.map(prop => {
+			return b`if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
+		})
 		: [];
 
-	const reactive_declarations = component.reactive_declarations.map((d) => {
+	const reactive_declarations = component.reactive_declarations.map(d => {
 		const body: Statement = (d.node as LabeledStatement).body;
 
 		let statement = b`${body}`;
 
 		if (d.declaration) {
 			const declared = extract_names(d.declaration);
-			const injected = declared.filter((name) => {
+			const injected = declared.filter(name => {
 				return name[0] !== '$' && component.var_lookup.get(name).injected;
 			});
 
-			const self_dependencies = injected.filter((name) => d.dependencies.has(name));
+			const self_dependencies = injected.filter(name => d.dependencies.has(name));
 
 			if (injected.length) {
 				// in some cases we need to do `let foo; [expression]`, in
 				// others we can do `let [expression]`
-				const separate = self_dependencies.length > 0 || declared.length > injected.length;
+				const separate = (
+					self_dependencies.length > 0 ||
+					declared.length > injected.length
+				);
 
 				const { left, right } = (body as ExpressionStatement).expression as AssignmentExpression;
 
 				statement = separate
 					? b`
-						${injected.map((name) => b`let ${name};`)}
+						${injected.map(name => b`let ${name};`)}
 						${statement}`
 					: b`let ${left} = ${right}`;
 			}
-		} else {
-			// TODO do not add label if it's not referenced
+		} else { // TODO do not add label if it's not referenced
 			statement = b`$: { ${statement} }`;
 		}
 
@@ -128,23 +137,22 @@ export default function ssr(component: Component, options: CompileOptions): { js
 		...reactive_stores.map(({ name }) => {
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
-			return b`let ${name};${store && store.hoistable && b`@subscribe(${store_name},#v=>{${name}=#v;})();`}`;
+			return b`
+			let ${name}; 
+			${store && store.hoistable && b`@subscribe(${store_name},#v=>{${name}=#v;})();`}`;
 		}),
 		instance_javascript,
 		...parent_bindings,
 		css.code && b`$$result.css.add(#css);`,
-		main,
+		main
 	].filter(Boolean);
 
 	const js = b`
-		${
-			css.code
-				? b`const #css = {
-					code: "${css.code}",
-					map: ${css.map ? string_literal(css.map.toString()) : 'null'}
-				};`
-				: null
-		}
+	${css.code ? b`
+		const #css = {
+			code: "${css.code}",
+			map: ${css.map ? string_literal(css.map.toString()) : 'null'}
+		};` : null}
 
 		${component.extract_javascript(component.ast.module)}
 
@@ -155,7 +163,7 @@ export default function ssr(component: Component, options: CompileOptions): { js
 		});
 	`;
 
-	return { js, css };
+	return {js, css};
 }
 
 function trim(nodes: TemplateNode[]) {

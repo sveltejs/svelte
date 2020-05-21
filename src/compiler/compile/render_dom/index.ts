@@ -1,14 +1,24 @@
-import { b, x, p } from 'code-red';
-import Component from '../Component';
-import Renderer from './Renderer';
-import { CompileOptions, CssResult } from '../../interfaces';
-import { walk } from 'estree-walker';
-import { extract_names, Scope } from '../utils/scope';
-import { invalidate } from './invalidate';
-import Block from './Block';
-import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { b, x, p } from "code-red";
+import Component from "../Component";
+import Renderer from "./Renderer";
+import { CompileOptions, CssResult } from "../../interfaces";
+import { walk } from "estree-walker";
+import { extract_names, Scope } from "../utils/scope";
+import { invalidate } from "./invalidate";
+import Block from "./Block";
+import {
+	ClassDeclaration,
+	FunctionExpression,
+	Node,
+	Statement,
+	ObjectExpression,
+	Expression,
+} from "estree";
 
-export default function dom(component: Component, options: CompileOptions): { js: Node[]; css: CssResult } {
+export default function dom(
+	component: Component,
+	options: CompileOptions
+): { js: Node[]; css: CssResult } {
 	const { name } = component;
 
 	const renderer = new Renderer(component, options);
@@ -26,15 +36,19 @@ export default function dom(component: Component, options: CompileOptions): { js
 		body.push(b`const ${renderer.file_var} = ${file};`);
 	}
 
-	const css = component.stylesheet.render(options.filename, !options.customElement);
+	const css = component.stylesheet.render(
+		options.filename,
+		!options.customElement
+	);
 	const styles =
 		component.stylesheet.has_styles && options.dev
 			? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
 			: css.code;
 
-	const add_css = component.get_unique_name('add_css');
+	const add_css = component.get_unique_name("add_css");
 
-	const should_add_css = !options.customElement && !!styles && options.css !== false;
+	const should_add_css =
+		!options.customElement && !!styles && options.css !== false;
 
 	if (should_add_css) {
 		body.push(b`
@@ -66,17 +80,21 @@ export default function dom(component: Component, options: CompileOptions): { js
 		);
 	}
 
-	const uses_props = component.var_lookup.has('$$props');
-	const uses_rest = component.var_lookup.has('$$restProps');
+	const uses_props = component.var_lookup.has("$$props");
+	const uses_rest = component.var_lookup.has("$$restProps");
 	const uses_any = uses_props || uses_rest;
 	const $$props = uses_any ? `$$new_props` : `$$props`;
-	const props = component.vars.filter((variable) => !variable.module && variable.export_name);
+	const props = component.vars.filter(
+		(variable) => !variable.module && variable.export_name
+	);
 	const writable_props = props.filter((variable) => variable.writable);
 
 	const rest = uses_rest
 		? b`
 		let #k;
-		const #keys = new Set([${props.map((prop) => `"${prop.export_name}"`).join(',')}]);
+		const #keys = new Set([${props
+			.map((prop) => `"${prop.export_name}"`)
+			.join(",")}]);
 		const $$restProps = {}; 
 		for (#k in $$props) { 
 			if (!#keys.has(#k) && #k[0] !== '$') { 
@@ -106,8 +124,8 @@ export default function dom(component: Component, options: CompileOptions): { js
 							}
 						}
 					}
-					${uses_props && renderer.invalidate('$$props')}
-					${uses_rest && renderer.invalidate('$$restProps')}
+					${uses_props && renderer.invalidate("$$props")}
+					${uses_rest && renderer.invalidate("$$restProps")}
 					`
 				}
 				${writable_props.map(
@@ -119,14 +137,19 @@ export default function dom(component: Component, options: CompileOptions): { js
 				)}
 				${
 					component.slots.size &&
-					b`if ('$$scope' in ${$$props}) ${renderer.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`
+					b`if ('$$scope' in ${$$props}) ${renderer.invalidate(
+						"$$scope",
+						x`$$scope = ${$$props}.$$scope`
+					)};`
 				}
 			}`
 			: null;
 
 	const accessors = [];
 
-	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
+	const not_equal = component.component_options.immutable
+		? x`@not_equal`
+		: x`@safe_not_equal`;
 	let dev_props_check: Node[] | Node;
 	let inject_state: Expression;
 	let capture_state: Expression;
@@ -137,18 +160,22 @@ export default function dom(component: Component, options: CompileOptions): { js
 
 		if (!variable.writable || component.component_options.accessors) {
 			accessors.push({
-				type: 'MethodDefinition',
-				kind: 'get',
-				key: { type: 'Identifier', name: prop.export_name },
+				type: "MethodDefinition",
+				kind: "get",
+				key: { type: "Identifier", name: prop.export_name },
 				value: x`function() {
-					return ${prop.hoistable ? prop.name : x`this.$$.ctx[${renderer.context_lookup.get(prop.name).index}]`}
+					return ${
+						prop.hoistable
+							? prop.name
+							: x`this.$$.ctx[${renderer.context_lookup.get(prop.name).index}]`
+					}
 				}`,
 			});
 		} else if (component.compile_options.dev) {
 			accessors.push({
-				type: 'MethodDefinition',
-				kind: 'get',
-				key: { type: 'Identifier', name: prop.export_name },
+				type: "MethodDefinition",
+				kind: "get",
+				key: { type: "Identifier", name: prop.export_name },
 				value: x`function() {
 					throw new @_Error("<${component.tag}>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 				}`,
@@ -158,9 +185,9 @@ export default function dom(component: Component, options: CompileOptions): { js
 		if (component.component_options.accessors) {
 			if (variable.writable && !renderer.readonly.has(prop.name)) {
 				accessors.push({
-					type: 'MethodDefinition',
-					kind: 'set',
-					key: { type: 'Identifier', name: prop.export_name },
+					type: "MethodDefinition",
+					kind: "set",
+					key: { type: "Identifier", name: prop.export_name },
 					value: x`function(${prop.name}) {
 						this.$set({ ${prop.export_name}: ${prop.name} });
 						@flush();
@@ -168,9 +195,9 @@ export default function dom(component: Component, options: CompileOptions): { js
 				});
 			} else if (component.compile_options.dev) {
 				accessors.push({
-					type: 'MethodDefinition',
-					kind: 'set',
-					key: { type: 'Identifier', name: prop.export_name },
+					type: "MethodDefinition",
+					kind: "set",
+					key: { type: "Identifier", name: prop.export_name },
 					value: x`function(value) {
 						throw new @_Error("<${component.tag}>: Cannot set read-only property '${prop.export_name}'");
 					}`,
@@ -178,9 +205,9 @@ export default function dom(component: Component, options: CompileOptions): { js
 			}
 		} else if (component.compile_options.dev) {
 			accessors.push({
-				type: 'MethodDefinition',
-				kind: 'set',
-				key: { type: 'Identifier', name: prop.export_name },
+				type: "MethodDefinition",
+				kind: "set",
+				key: { type: "Identifier", name: prop.export_name },
 				value: x`function(value) {
 					throw new @_Error("<${component.tag}>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 				}`,
@@ -195,30 +222,52 @@ export default function dom(component: Component, options: CompileOptions): { js
 		if (expected.length) {
 			dev_props_check = b`
 				const { ctx: #ctx } = this.$$;
-				const props = ${options.customElement ? x`this.attributes` : x`options.props || {}`};
+				const props = ${
+					options.customElement ? x`this.attributes` : x`options.props || {}`
+				};
 				${expected.map(
 					(prop) => b`
-				if (${renderer.reference(prop.name)} === undefined && !('${prop.export_name}' in props)) {
-					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
+				if (${renderer.reference(prop.name)} === undefined && !('${
+						prop.export_name
+					}' in props)) {
+					@_console.warn("<${component.tag}> was created without expected prop '${
+						prop.export_name
+					}'");
 				}`
 				)}
 			`;
 		}
 
-		const capturable_vars = component.vars.filter((v) => !v.internal && !v.global && !v.name.startsWith('$$'));
+		const capturable_vars = component.vars.filter(
+			(v) => !v.internal && !v.global && !v.name.startsWith("$$")
+		);
 
 		if (capturable_vars.length > 0) {
-			capture_state = x`() => ({ ${capturable_vars.map((prop) => p`${prop.name}`)} })`;
+			capture_state = x`() => ({ ${capturable_vars.map(
+				(prop) => p`${prop.name}`
+			)} })`;
 		}
 
-		const injectable_vars = capturable_vars.filter((v) => !v.module && v.writable && v.name[0] !== '$');
+		const injectable_vars = capturable_vars.filter(
+			(v) => !v.module && v.writable && v.name[0] !== "$"
+		);
 
 		if (uses_props || injectable_vars.length > 0) {
 			inject_state = x`
 				${$$props} => {
-					${uses_props && renderer.invalidate('$$props', x`$$props = { ...$$props, ...$$new_props }`)}
+					${
+						uses_props &&
+						renderer.invalidate(
+							"$$props",
+							x`$$props = { ...$$props, ...$$new_props }`
+						)
+					}
 					${injectable_vars.map(
-						(v) => b`if ('${v.name}' in $$props) ${renderer.invalidate(v.name, x`${v.name} = ${$$props}.${v.name}`)};`
+						(v) =>
+							b`if ('${v.name}' in $$props) ${renderer.invalidate(
+								v.name,
+								x`${v.name} = ${$$props}.${v.name}`
+							)};`
 					)}
 				}
 			`;
@@ -245,7 +294,11 @@ export default function dom(component: Component, options: CompileOptions): { js
 					if (!execution_context && !scope.block) {
 						execution_context = node;
 					}
-				} else if (!execution_context && node.type === 'LabeledStatement' && node.label.name === '$') {
+				} else if (
+					!execution_context &&
+					node.type === "LabeledStatement" &&
+					node.label.name === "$"
+				) {
 					execution_context = node;
 				}
 			},
@@ -259,8 +312,12 @@ export default function dom(component: Component, options: CompileOptions): { js
 					execution_context = null;
 				}
 
-				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
-					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
+				if (
+					node.type === "AssignmentExpression" ||
+					node.type === "UpdateExpression"
+				) {
+					const assignee =
+						node.type === "AssignmentExpression" ? node.left : node.argument;
 
 					// normally (`a = 1`, `b.c = 2`), there'll be a single name
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
@@ -268,7 +325,9 @@ export default function dom(component: Component, options: CompileOptions): { js
 					// onto the initial function call
 					const names = new Set(extract_names(assignee));
 
-					this.replace(invalidate(renderer, scope, node, names, execution_context === null));
+					this.replace(
+						invalidate(renderer, scope, node, names, execution_context === null)
+					);
 				}
 			},
 		});
@@ -279,8 +338,8 @@ export default function dom(component: Component, options: CompileOptions): { js
 
 			const insert =
 				reassigned || export_name
-					? b`${`$$subscribe_${name}`}();`
-					: b`$$self.$$.on_destroy.push(@subscribe(${name}, (value) => {$$invalidate(${i}, (${value} = value));}));`;
+					? b`${`$$subscribe_${name}`}()`
+					: b`@component_subscribe($$self, ${name}, #value => $$invalidate(${i}, ${value} = #value))`;
 
 			if (component.compile_options.dev) {
 				return b`@validate_store_dev(${name}, '${name}'); ${insert}`;
@@ -292,7 +351,11 @@ export default function dom(component: Component, options: CompileOptions): { js
 
 	const args = [x`$$self`];
 	const has_invalidate =
-		props.length > 0 || component.has_reactive_assignments || component.slots.size > 0 || capture_state || inject_state;
+		props.length > 0 ||
+		component.has_reactive_assignments ||
+		component.slots.size > 0 ||
+		capture_state ||
+		inject_state;
 	if (has_invalidate) {
 		args.push(x`$$props`, x`$$invalidate`);
 	} else if (component.compile_options.dev) {
@@ -300,7 +363,8 @@ export default function dom(component: Component, options: CompileOptions): { js
 		args.push(x`$$props`);
 	}
 
-	const has_create_fragment = component.compile_options.dev || block.has_content();
+	const has_create_fragment =
+		component.compile_options.dev || block.has_content();
 	if (has_create_fragment) {
 		body.push(b`
 			function create_fragment(#ctx) {
@@ -319,13 +383,17 @@ export default function dom(component: Component, options: CompileOptions): { js
 		const variable = component.var_lookup.get(prop.name);
 
 		if (variable.hoistable) return false;
-		if (prop.name[0] === '$') return false;
+		if (prop.name[0] === "$") return false;
 		return true;
 	});
 
-	const reactive_stores = component.vars.filter((variable) => variable.name[0] === '$' && variable.name[1] !== '$');
+	const reactive_stores = component.vars.filter(
+		(variable) => variable.name[0] === "$" && variable.name[1] !== "$"
+	);
 
-	const instance_javascript = component.extract_javascript(component.ast.instance);
+	const instance_javascript = component.extract_javascript(
+		component.ast.instance
+	);
 
 	let i = renderer.context.length;
 	while (i--) {
@@ -349,7 +417,9 @@ export default function dom(component: Component, options: CompileOptions): { js
 		capture_state ||
 		inject_state;
 
-	const definition = has_definition ? component.alias('instance') : { type: 'Literal', value: null };
+	const definition = has_definition
+		? component.alias("instance")
+		: { type: "Literal", value: null };
 
 	const reactive_store_subscriptions = reactive_stores
 		.filter((store) => {
@@ -358,7 +428,10 @@ export default function dom(component: Component, options: CompileOptions): { js
 		})
 		.map(
 			({ name }) => b`
-			${component.compile_options.dev && b`@validate_store_dev(${name.slice(1)}, '${name.slice(1)}');`}
+			${
+				component.compile_options.dev &&
+				b`@validate_store_dev(${name.slice(1)}, '${name.slice(1)}');`
+			}
 			$$self.$$.on_destroy.push(@subscribe(${name.slice(1)}, #value => {
 				$$invalidate(${renderer.context_lookup.get(name).index}, ${name} = #value);
 			}));
@@ -370,7 +443,12 @@ export default function dom(component: Component, options: CompileOptions): { js
 			const variable = component.var_lookup.get(store.name.slice(1));
 			return variable && (variable.reassigned || variable.export_name);
 		})
-		.map(({ name }) => b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(1)}`}());`);
+		.map(
+			({ name }) =>
+				b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(
+					1
+				)}`}());`
+		);
 
 	if (has_definition) {
 		const reactive_declarations: Node | Node[] = [];
@@ -378,29 +456,40 @@ export default function dom(component: Component, options: CompileOptions): { js
 
 		component.reactive_declarations.forEach((d) => {
 			const dependencies = Array.from(d.dependencies);
-			const uses_rest_or_props = !!dependencies.find((n) => n === '$$props' || n === '$$restProps');
+			const uses_rest_or_props = !!dependencies.find(
+				(n) => n === "$$props" || n === "$$restProps"
+			);
 
 			const writable = dependencies.filter((n) => {
 				const variable = component.var_lookup.get(n);
-				return variable && (variable.export_name || variable.mutated || variable.reassigned);
+				return (
+					variable &&
+					(variable.export_name || variable.mutated || variable.reassigned)
+				);
 			});
 
-			const condition = !uses_rest_or_props && writable.length > 0 && renderer.dirty(writable, true);
+			const condition =
+				!uses_rest_or_props &&
+				writable.length > 0 &&
+				renderer.dirty(writable, true);
 
 			let statement = d.node; // TODO remove label (use d.node.body) if it's not referenced
 
-			if (condition) statement = b`if (${condition}) { ${statement} }`[0] as Statement;
+			if (condition)
+				statement = b`if (${condition}) { ${statement} }`[0] as Statement;
 
 			if (condition || uses_rest_or_props) {
-				statement && reactive_declarations.push(statement);
+				reactive_declarations.push(statement);
 			} else {
-				statement && fixed_reactive_declarations.push(statement);
+				fixed_reactive_declarations.push(statement);
 			}
 		});
 
-		const injected = Array.from(component.injected_reactive_declaration_vars).filter((name) => {
+		const injected = Array.from(
+			component.injected_reactive_declaration_vars
+		).filter((name) => {
 			const variable = component.var_lookup.get(name);
-			return variable.injected && variable.name[0] !== '$';
+			return variable.injected && variable.name[0] !== "$";
 		});
 
 		const reactive_store_declarations = reactive_stores.map((variable) => {
@@ -413,7 +502,13 @@ export default function dom(component: Component, options: CompileOptions): { js
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
 
-				return b`let ${$name},${unsubscribe}=@noop,${subscribe}=()=>(${unsubscribe}(),${unsubscribe}=@subscribe(${name},(#value)=>{$$invalidate(${i},${$name}=#value);}),${name});`;
+				return b`
+				let ${$name}, 
+					${unsubscribe} = @noop,
+					${subscribe}= () => ( ${unsubscribe}(),
+										  ${unsubscribe} = @subscribe(${name}, (#value) => { $$invalidate(${i}, ${$name} = #value); }), 
+										  ${name}
+										);`;
 			}
 
 			return b`let ${$name};`;
@@ -422,7 +517,9 @@ export default function dom(component: Component, options: CompileOptions): { js
 		let unknown_props_check;
 		if (component.compile_options.dev && !(uses_props || uses_rest)) {
 			unknown_props_check = b`
-				const writable_props = [${writable_props.map((prop) => x`'${prop.export_name}'`)}];
+				const writable_props = [${writable_props.map(
+					(prop) => x`'${prop.export_name}'`
+				)}];
 				@_Object.keys($$props).forEach(key => {
 					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$') @_console.warn(\`<${
 						component.tag
@@ -432,11 +529,11 @@ export default function dom(component: Component, options: CompileOptions): { js
 		}
 
 		const return_value = {
-			type: 'ArrayExpression',
+			type: "ArrayExpression",
 			elements: initial_context.map(
 				(member) =>
 					({
-						type: 'Identifier',
+						type: "Identifier",
 						name: member.name,
 					} as Expression)
 			),
@@ -456,15 +553,27 @@ export default function dom(component: Component, options: CompileOptions): { js
 
 				${unknown_props_check}
 
-				${component.slots.size || component.compile_options.dev ? b`let { $$slots = {}, $$scope } = $$props;` : null}
+				${
+					component.slots.size || component.compile_options.dev
+						? b`let { $$slots = {}, $$scope } = $$props;`
+						: null
+				}
 				${
 					component.compile_options.dev &&
-					b`@validate_slots_dev('${component.tag}', $$slots, [${[...component.slots.keys()]
+					b`@validate_slots_dev('${component.tag}', $$slots, [${[
+						...component.slots.keys(),
+					]
 						.map((key) => `'${key}'`)
-						.join(',')}]);`
+						.join(",")}]);`
 				}
 
-				${renderer.binding_groups.length ? b`const $$binding_groups = [${renderer.binding_groups.map((_) => x`[]`)}];` : null}
+				${
+					renderer.binding_groups.length
+						? b`const $$binding_groups = [${renderer.binding_groups.map(
+								(_) => x`[]`
+						  )}];`
+						: null
+				}
 
 				${component.partly_hoisted}
 
@@ -478,7 +587,14 @@ export default function dom(component: Component, options: CompileOptions): { js
 
 				${/* before reactive declarations */ props_inject}
 
-				${reactive_declarations.length ? b`$$self.$$.update = () => {${reactive_declarations}};` : null}
+				${
+					reactive_declarations.length > 0 &&
+					b`
+				$$self.$$.update = () => {
+					${reactive_declarations}
+				};
+				`
+				}
 
 				${fixed_reactive_declarations}
 
@@ -497,7 +613,9 @@ export default function dom(component: Component, options: CompileOptions): { js
 	const prop_indexes = x`{
 		${props
 			.filter((v) => v.export_name && !v.module)
-			.map((v) => p`${v.export_name}: ${renderer.context_lookup.get(v.name).index}`)}
+			.map(
+				(v) => p`${v.export_name}: ${renderer.context_lookup.get(v.name).index}`
+			)}
 	}` as ObjectExpression;
 
 	let dirty;
@@ -516,13 +634,16 @@ export default function dom(component: Component, options: CompileOptions): { js
 
 					${
 						css.code &&
-						b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${
-							options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''
+						b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(
+							/\\/g,
+							"\\\\"
+						)}${
+							options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ""
 						}</style>\`;`
 					}
 
 					@init(this, { target: this.shadowRoot }, ${definition}, ${
-			has_create_fragment ? 'create_fragment' : 'null'
+			has_create_fragment ? "create_fragment" : "null"
 		}, ${not_equal}, ${prop_indexes}, ${dirty});
 
 					${dev_props_check}
@@ -532,15 +653,11 @@ export default function dom(component: Component, options: CompileOptions): { js
 							@insert(options.target, this, options.anchor);
 						}
 
-						${
-							props.length > 0 || uses_props || uses_rest
-								? b`
+						${(props.length > 0 || uses_props || uses_rest) && b`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();
-						}`
-								: null
-						}
+						}`}
 					}
 				}
 			}
@@ -548,14 +665,14 @@ export default function dom(component: Component, options: CompileOptions): { js
 
 		if (props.length > 0) {
 			declaration.body.body.push({
-				type: 'MethodDefinition',
-				kind: 'get',
+				type: "MethodDefinition",
+				kind: "get",
 				static: true,
 				computed: false,
-				key: { type: 'Identifier', name: 'observedAttributes' },
+				key: { type: "Identifier", name: "observedAttributes" },
 				value: x`function() {
-					return [${props.map((prop) => x`"${prop.export_name}"`)}];
-				}` as FunctionExpression,
+					return [${props.map(prop => x`"${prop.export_name}"`)}];
+				}` as FunctionExpression
 			});
 		}
 
@@ -570,8 +687,8 @@ export default function dom(component: Component, options: CompileOptions): { js
 		}
 	} else {
 		const superclass = {
-			type: 'Identifier',
-			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent',
+			type: "Identifier",
+			name: options.dev ? "@SvelteComponentDev" : "@SvelteComponent"
 		};
 
 		const declaration = b`
@@ -579,14 +696,8 @@ export default function dom(component: Component, options: CompileOptions): { js
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, ${
-			has_create_fragment ? 'create_fragment' : 'null'
-		}, ${not_equal}, ${prop_indexes}, ${dirty});
-					${
-						options.dev &&
-						b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`
-					}
-
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 					${dev_props_check}
 				}
 			}

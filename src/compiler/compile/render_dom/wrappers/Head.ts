@@ -22,7 +22,14 @@ export default class HeadWrapper extends Wrapper {
 
 		this.can_use_innerhtml = false;
 
-		this.fragment = new FragmentWrapper(renderer, block, node.children, this, strip_whitespace, next_sibling);
+		this.fragment = new FragmentWrapper(
+			renderer,
+			block,
+			node.children,
+			this,
+			strip_whitespace,
+			next_sibling
+		);
 	}
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
@@ -34,10 +41,12 @@ export default class HeadWrapper extends Wrapper {
 			);
 		}
 
-		this.fragment.render(block, (x`@_document.head` as unknown) as Identifier, nodes);
+		this.fragment.render(block, x`@_document.head` as unknown as Identifier, nodes);
 
 		if (nodes && this.renderer.options.hydratable) {
-			block.chunks.claim.push(b`${nodes}.forEach(@detach);`);
+			block.chunks.claim.push(
+				b`${nodes}.forEach(@detach);`
+			);
 		}
 	}
 }

@@ -21,7 +21,7 @@ export function get_attribute_value(attribute: Attribute): ESTreeExpression {
 	return attribute.chunks
 		.map((chunk) => {
 			return chunk.type === 'Text'
-				? (string_literal(chunk.data.replace(/"/g, '&quot;')) as ESTreeExpression)
+				? string_literal(chunk.data.replace(/"/g, '&quot;')) as ESTreeExpression
 				: x`@escape(${chunk.node})`;
 		})
 		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
