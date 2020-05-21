@@ -1,171 +1,68 @@
-/*
-Adapted from https://github.com/mattdesl
-Distributed under MIT License https://github.com/mattdesl/eases/blob/master/LICENSE.md
-*/
-
-export { identity as linear } from 'svelte/internal';
-
-export function backInOut(t: number) {
-	const s = 1.70158 * 1.525;
-	if ((t *= 2) < 1) return 0.5 * (t * t * ((s + 1) * t - s));
-	return 0.5 * ((t -= 2) * t * ((s + 1) * t + s) + 2);
-}
-
-export function backIn(t: number) {
-	const s = 1.70158;
-	return t * t * ((s + 1) * t - s);
-}
-
-export function backOut(t: number) {
-	const s = 1.70158;
-	return --t * t * ((s + 1) * t + s) + 1;
-}
-
-export function bounceOut(t: number) {
-	const a = 4.0 / 11.0;
-	const b = 8.0 / 11.0;
-	const c = 9.0 / 10.0;
-
-	const ca = 4356.0 / 361.0;
-	const cb = 35442.0 / 1805.0;
-	const cc = 16061.0 / 1805.0;
-
-	const t2 = t * t;
-
-	return t < a
-		? 7.5625 * t2
-		: t < b
-			? 9.075 * t2 - 9.9 * t + 3.4
-			: t < c
-				? ca * t2 - cb * t + cc
-				: 10.8 * t * t - 20.52 * t + 10.72;
-}
-
-export function bounceInOut(t: number) {
-	return t < 0.5
-		? 0.5 * (1.0 - bounceOut(1.0 - t * 2.0))
-		: 0.5 * bounceOut(t * 2.0 - 1.0) + 0.5;
-}
-
-export function bounceIn(t: number) {
-	return 1.0 - bounceOut(1.0 - t);
-}
-
-export function circInOut(t: number) {
-	if ((t *= 2) < 1) return -0.5 * (Math.sqrt(1 - t * t) - 1);
-	return 0.5 * (Math.sqrt(1 - (t -= 2) * t) + 1);
-}
-
-export function circIn(t: number) {
-	return 1.0 - Math.sqrt(1.0 - t * t);
-}
-
-export function circOut(t: number) {
-	return Math.sqrt(1 - --t * t);
-}
-
-export function cubicInOut(t: number) {
-	return t < 0.5 ? 4.0 * t * t * t : 0.5 * Math.pow(2.0 * t - 2.0, 3.0) + 1.0;
-}
-
-export function cubicIn(t: number) {
-	return t * t * t;
-}
-
-export function cubicOut(t: number) {
-	const f = t - 1.0;
-	return f * f * f + 1.0;
-}
-
-export function elasticInOut(t: number) {
-	return t < 0.5
-		? 0.5 *
-				Math.sin(((+13.0 * Math.PI) / 2) * 2.0 * t) *
-				Math.pow(2.0, 10.0 * (2.0 * t - 1.0))
-		: 0.5 *
-				Math.sin(((-13.0 * Math.PI) / 2) * (2.0 * t - 1.0 + 1.0)) *
-				Math.pow(2.0, -10.0 * (2.0 * t - 1.0)) +
-				1.0;
-}
-
-export function elasticIn(t: number) {
-	return Math.sin((13.0 * t * Math.PI) / 2) * Math.pow(2.0, 10.0 * (t - 1.0));
-}
-
-export function elasticOut(t: number) {
-	return (
-		Math.sin((-13.0 * (t + 1.0) * Math.PI) / 2) * Math.pow(2.0, -10.0 * t) + 1.0
-	);
-}
-
-export function expoInOut(t: number) {
-	return t === 0.0 || t === 1.0
-		? t
-		: t < 0.5
-			? +0.5 * Math.pow(2.0, 20.0 * t - 10.0)
-			: -0.5 * Math.pow(2.0, 10.0 - t * 20.0) + 1.0;
-}
-
-export function expoIn(t: number) {
-	return t === 0.0 ? t : Math.pow(2.0, 10.0 * (t - 1.0));
-}
-
-export function expoOut(t: number) {
-	return t === 1.0 ? t : 1.0 - Math.pow(2.0, -10.0 * t);
-}
-
-export function quadInOut(t: number) {
-	t /= 0.5;
-	if (t < 1) return 0.5 * t * t;
-	t--;
-	return -0.5 * (t * (t - 2) - 1);
-}
-
-export function quadIn(t: number) {
-	return t * t;
-}
-
-export function quadOut(t: number) {
-	return -t * (t - 2.0);
-}
-
-export function quartInOut(t: number) {
-	return t < 0.5
-		? +8.0 * Math.pow(t, 4.0)
-		: -8.0 * Math.pow(t - 1.0, 4.0) + 1.0;
-}
-
-export function quartIn(t: number) {
-	return Math.pow(t, 4.0);
-}
-
-export function quartOut(t: number) {
-	return Math.pow(t - 1.0, 3.0) * (1.0 - t) + 1.0;
-}
-
-export function quintInOut(t: number) {
-	if ((t *= 2) < 1) return 0.5 * t * t * t * t * t;
-	return 0.5 * ((t -= 2) * t * t * t * t + 2);
-}
-
-export function quintIn(t: number) {
-	return t * t * t * t * t;
-}
-
-export function quintOut(t: number) {
-	return --t * t * t * t * t + 1;
-}
-
-export function sineInOut(t: number) {
-	return -0.5 * (Math.cos(Math.PI * t) - 1);
-}
-
-export function sineIn(t: number) {
-	const v = Math.cos(t * Math.PI * 0.5);
-	if (Math.abs(v) < 1e-14) return 1;
-	else return 1 - v;
-}
-
-export function sineOut(t: number) {
-	return Math.sin((t * Math.PI) / 2);
-}
+export const linear = (t: number) => t;
+export const quadIn = (t: number) => t ** 2;
+export const quadOut = (t: number) => 1.0 - (1.0 - t) ** 2;
+export const quadInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - (2 * (1.0 - t)) ** 2 : (2 * t) ** 2);
+export const cubicIn = (t: number) => t ** 3;
+export const cubicOut = (t: number) => 1.0 - (1.0 - t) ** 3;
+export const cubicInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - (2 * (1.0 - t)) ** 3 : (2 * t) ** 3);
+export const quartIn = (t: number) => t ** 4;
+export const quartOut = (t: number) => 1.0 - (1.0 - t) ** 4;
+export const quartInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - (2 * (1.0 - t)) ** 4 : (2 * t) ** 4);
+export const quintIn = (t: number) => t ** 5;
+export const quintOut = (t: number) => 1.0 - (1.0 - t) ** 5;
+export const quintInOut = (t: number) => 0.5 * (t >= 0.5 ? 2.0 - (2 * (1.0 - t)) ** 5 : (2 * t) ** 5);
+export const backIn = (t: number) => t * t * (2.6 * t - 1.6);
+export const backOut = (t: number) => 1.0 - (t = 1.0 - t) * t * (2.6 * t - 1.6);
+export const backInOut = (t: number) =>
+	0.5 * (t >= 0.5 ? 2 - (t = 2 * (1.0 - t)) * t * (2.6 * t - 1.6) : (t = 2 * t) * t * (2.6 * t - 1.6));
+export const expoIn = (t: number) => (t ? Math.pow(2.0, 10.0 * (t - 1.0)) : t);
+export const expoOut = (t: number) => (t ? 1.0 - Math.pow(2.0, -10.0 * t) : t);
+export const expoInOut = (t: number) =>
+	!t || t === 1.0 ? t : t < 0.5 ? 0.5 * Math.pow(2.0, 20.0 * t - 10.0) : -0.5 * Math.pow(2.0, 10.0 - t * 20.0) + 1.0;
+export const elasticIn = (t: number) => Math.sin((13.0 * t * Math.PI) / 2.0) * Math.pow(2.0, 10.0 * (t - 1.0));
+export const elasticOut = (t: number) => Math.sin((-13.0 * (t + 1.0) * Math.PI) / 2.0) * Math.pow(2.0, -10.0 * t) + 1.0;
+export const elasticInOut = (t: number) =>
+	t < 0.5
+		? 0.5 * Math.sin(((+13.0 * Math.PI) / 2) * 2.0 * t) * Math.pow(2.0, 10.0 * (2.0 * t - 1.0))
+		: 0.5 * Math.sin(((-13.0 * Math.PI) / 2) * (2.0 * t - 1.0 + 1.0)) * Math.pow(2.0, -10.0 * (2.0 * t - 1.0)) + 1.0;
+export const bounceOut = (t: number) =>
+	4 / 11 > t
+		? 7.5625 * t * t
+		: 8 / 11 > t
+		? 3.4 + 9.075 * t * t - 9.9 * t
+		: 9 / 10 > t
+		? 16061.0 / 1805.0 + (4356.0 * t * t) / 361.0 - (35442.0 * t) / 1805.0
+		: 10.72 + 10.8 * t * t - 20.52 * t;
+export const bounceIn = (t: number) => 1.0 - bounceOut(1.0 - t);
+export const bounceInOut = (t: number) =>
+	t < 0.5 ? 0.5 * (1.0 - bounceOut(1.0 - t * 2.0)) : 0.5 * bounceOut(t * 2.0 - 1.0) + 0.5;
+export const sineIn = (t: number) => (1e-14 > Math.abs((t = Math.cos(t * Math.PI * 0.5))) ? 1.0 : 1.0 - t);
+export const sineOut = (t: number) => Math.sin((t * Math.PI) / 2);
+export const sineInOut = (t: number) => -0.5 * (Math.cos(Math.PI * t) - 1.0);
+export const circIn = (t: number) => 1.0 - Math.sin(Math.acos(t));
+export const circOut = (t: number) => Math.sin(Math.acos(1.0 - t));
+export const circInOut = (t: number) =>
+	0.5 * (t >= 0.5 ? 2.0 - Math.sin(Math.acos(1.0 - 2.0 * (1.0 - t))) : Math.sin(Math.acos(1.0 - 2.0 * t)));
+export const cubicBezier = (x1: number, y1: number, x2: number, y2: number) => {
+	if (!(x1 >= 0 && x1 <= 1 && x2 >= 0 && x2 <= 1))
+		throw new Error(`CubicBezier x1 & x2 values must be { 0 < x < 1 }, got { x1 : ${x1}, x2: ${x2} }`);
+	const ax = 1.0 - (x2 = 3.0 * (x2 - x1) - (x1 *= 3.0)) - x1,
+		ay = 1.0 - (y2 = 3.0 * (y2 - y1) - (y1 *= 3.0)) - y1;
+	let i = 0,
+		r = 0.0,
+		s = 0.0,
+		d = 0.0,
+		x = 0.0;
+	return (t: number) => {
+		for (r = t, i = 0; 32 > i; i++)
+			if (1e-5 > Math.abs((x = r * (r * (r * ax + x2) + x1) - t))) return r * (r * (r * ay + y2) + y1);
+			else if (1e-5 > Math.abs((d = r * (r * ax * 3.0 + x2 * 2.0) + x1))) break;
+			else r -= x / d;
+		if ((s = 0.0) > (r = t)) return 0;
+		else if ((d = 1.0) < r) return 1;
+		while (d > s)
+			if (1e-5 > Math.abs((x = r * (r * (r * ax + x2) + x1)) - t)) break;
+			else t > x ? (s = r) : (d = r), (r = 0.5 * (d - s) + s);
+		return r * (r * (r * ay + y2) + y1);
+	};
+};
