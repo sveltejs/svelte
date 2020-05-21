@@ -122,7 +122,7 @@ An element or component can have multiple spread attributes, interspersed with r
 ```
 
 
-> The `value` attribute of an `input` element or its children `option` elements must  not be set with spread attributes when using `bind:group` or `bind:checked`. Svelte needs to see the element's `value` directly in the markup in this case so that it can link it to the bound variable.
+> The `value` attribute of an `input` element or its children `option` elements must not be set with spread attributes when using `bind:group` or `bind:checked`. Svelte needs to be able to see the element's `value` directly in the markup in these cases so that it can link it to the bound variable.
 
 ---
 
