@@ -93,7 +93,7 @@
     "magic-string": "^0.25.3",
     "mocha": "^7.1.2",
     "periscopic": "^2.0.1",
-    "puppeteer": "^3.1.0",
+    "puppeteer": "^2.1.1",
     "rollup": "^2.10.5",
     "source-map-support": "^0.5.19",
     "source-map": "^0.7.3",
