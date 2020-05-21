@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Update `<select>` with `bind:value` when the available `<option>`s change ([#1764](https://github.com/sveltejs/svelte/issues/1764))
 * Fix inconsistencies when setting a two-way bound `<input>` to `undefined` ([#3569](https://github.com/sveltejs/svelte/issues/3569))
 * Fix resize listening on certain older browsers ([#4752](https://github.com/sveltejs/svelte/issues/4752))
 * Add `a11y-no-onchange` warning ([#4788](https://github.com/sveltejs/svelte/pull/4788))
