@@ -1,38 +1,38 @@
 {
 	"html": {
-		"start": 79,
-		"end": 101,
+		"start": 87,
+		"end": 109,
 		"type": "Fragment",
 		"children": [
 			{
-				"start": 77,
-				"end": 79,
+				"start": 83,
+				"end": 87,
 				"type": "Text",
-				"raw": "\n\n",
-				"data": "\n\n"
+				"raw": "\r\n\r\n",
+				"data": "\r\n\r\n"
 			},
 			{
-				"start": 79,
-				"end": 101,
+				"start": 87,
+				"end": 109,
 				"type": "Element",
 				"name": "h1",
 				"attributes": [],
 				"children": [
 					{
-						"start": 83,
-						"end": 89,
+						"start": 91,
+						"end": 97,
 						"type": "Text",
 						"raw": "Hello ",
 						"data": "Hello "
 					},
 					{
-						"start": 89,
-						"end": 95,
+						"start": 97,
+						"end": 103,
 						"type": "MustacheTag",
 						"expression": {
 							"type": "Identifier",
-							"start": 90,
-							"end": 94,
+							"start": 98,
+							"end": 102,
 							"loc": {
 								"start": {
 									"line": 9,
@@ -47,8 +47,8 @@
 						}
 					},
 					{
-						"start": 95,
-						"end": 96,
+						"start": 103,
+						"end": 104,
 						"type": "Text",
 						"raw": "!",
 						"data": "!"
@@ -60,12 +60,12 @@
 	"instance": {
 		"type": "Script",
 		"start": 0,
-		"end": 77,
+		"end": 83,
 		"context": "default",
 		"content": {
 			"type": "Program",
 			"start": 8,
-			"end": 68,
+			"end": 74,
 			"loc": {
 				"start": {
 					"line": 1,
@@ -79,8 +79,8 @@
 			"body": [
 				{
 					"type": "VariableDeclaration",
-					"start": 10,
-					"end": 29,
+					"start": 11,
+					"end": 30,
 					"loc": {
 						"start": {
 							"line": 2,
@@ -94,8 +94,8 @@
 					"declarations": [
 						{
 							"type": "VariableDeclarator",
-							"start": 14,
-							"end": 28,
+							"start": 15,
+							"end": 29,
 							"loc": {
 								"start": {
 									"line": 2,
@@ -108,8 +108,8 @@
 							},
 							"id": {
 								"type": "Identifier",
-								"start": 14,
-								"end": 18,
+								"start": 15,
+								"end": 19,
 								"loc": {
 									"start": {
 										"line": 2,
@@ -124,8 +124,8 @@
 							},
 							"init": {
 								"type": "Literal",
-								"start": 21,
-								"end": 28,
+								"start": 22,
+								"end": 29,
 								"loc": {
 									"start": {
 										"line": 2,
@@ -148,9 +148,9 @@
 			"trailingComments": [
 				{
 					"type": "Block",
-					"value": "\n\ttrailing multiline comment\n",
-					"start": 32,
-					"end": 67
+					"value": "\r\n\ttrailing multiline comment\r\n",
+					"start": 35,
+					"end": 72
 				}
 			]
 		}

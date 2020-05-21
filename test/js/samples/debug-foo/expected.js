@@ -45,7 +45,7 @@ function create_each_block(ctx) {
 				debugger;
 			}
 
-			add_location(span, file, 6, 1, 82);
+			add_location(span, file, 6, 1, 88);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, span, anchor);
@@ -101,7 +101,7 @@ function create_fragment(ctx) {
 			p = element("p");
 			t1 = text("foo: ");
 			t2 = text(/*foo*/ ctx[1]);
-			add_location(p, file, 10, 0, 131);
+			add_location(p, file, 10, 0, 141);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");

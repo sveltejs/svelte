@@ -1,19 +1,19 @@
 {
 	"html": {
-		"start": 45,
-		"end": 56,
+		"start": 49,
+		"end": 60,
 		"type": "Fragment",
 		"children": [
 			{
-				"start": 43,
-				"end": 45,
+				"start": 45,
+				"end": 49,
 				"type": "Text",
-				"raw": "\n\n",
-				"data": "\n\n"
+				"raw": "\r\n\r\n",
+				"data": "\r\n\r\n"
 			},
 			{
-				"start": 45,
-				"end": 56,
+				"start": 49,
+				"end": 60,
 				"type": "Element",
 				"name": "div",
 				"attributes": [],
@@ -24,12 +24,12 @@
 	"instance": {
 		"type": "Script",
 		"start": 0,
-		"end": 43,
+		"end": 45,
 		"context": "default",
 		"content": {
 			"type": "Program",
 			"start": 8,
-			"end": 34,
+			"end": 36,
 			"loc": {
 				"start": {
 					"line": 1,
@@ -46,8 +46,8 @@
 				{
 					"type": "Line",
 					"value": " TODO write some code",
-					"start": 10,
-					"end": 33
+					"start": 11,
+					"end": 34
 				}
 			]
 		}

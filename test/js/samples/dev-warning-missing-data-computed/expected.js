@@ -31,7 +31,7 @@ function create_fragment(ctx) {
 			t0 = text(t0_value);
 			t1 = space();
 			t2 = text(/*bar*/ ctx[1]);
-			add_location(p, file, 7, 0, 67);
+			add_location(p, file, 7, 0, 74);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");

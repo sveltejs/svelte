@@ -24,7 +24,7 @@ function create_fragment(ctx) {
 	const block = {
 		c: function create() {
 			div = element("div");
-			add_location(div, file, 22, 0, 288);
+			add_location(div, file, 22, 0, 310);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");

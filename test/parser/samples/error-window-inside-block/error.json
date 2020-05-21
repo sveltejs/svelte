@@ -1,10 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "invalid-window-placement",
-	"message": "<svelte:window> tags cannot be inside elements or blocks",
 	"start": {
 		"line": 2,
 		"column": 1,
-		"character": 11
+		"character": 12
 	},
-	"pos": 11
+	"end": {
+		"line": 2,
+		"column": 1,
+		"character": 12
+	},
+	"pos": 12,
+	"frame": "1: {#if foo}\r\n2:   <svelte:window/>\r\n     ^\n3: {/if}",
+	"message": "<svelte:window> tags cannot be inside elements or blocks"
 }

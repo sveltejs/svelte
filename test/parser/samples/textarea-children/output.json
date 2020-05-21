@@ -1,12 +1,12 @@
 {
 	"html": {
 		"start": 0,
-		"end": 61,
+		"end": 63,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 61,
+				"end": 63,
 				"type": "Element",
 				"name": "textarea",
 				"attributes": [
@@ -16,19 +16,19 @@
 						"value": [
 							{
 								"start": 10,
-								"end": 41,
+								"end": 42,
 								"type": "Text",
-								"raw": "\n\t<p>not actually an element. ",
-								"data": "\n\t<p>not actually an element. "
+								"raw": "\r\n\t<p>not actually an element. ",
+								"data": "\r\n\t<p>not actually an element. "
 							},
 							{
-								"start": 40,
-								"end": 45,
+								"start": 41,
+								"end": 46,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 41,
-									"end": 44,
+									"start": 42,
+									"end": 45,
 									"loc": {
 										"start": {
 											"line": 2,
@@ -43,11 +43,11 @@
 								}
 							},
 							{
-								"start": 45,
-								"end": 50,
+								"start": 46,
+								"end": 52,
 								"type": "Text",
-								"raw": "</p>\n",
-								"data": "</p>\n"
+								"raw": "</p>\r\n",
+								"data": "</p>\r\n"
 							}
 						]
 					}

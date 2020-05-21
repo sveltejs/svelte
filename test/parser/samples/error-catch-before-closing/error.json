@@ -1,6 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "invalid-catch-placement",
-	"message": "Expected to close {#each} block before seeing {:catch} block",
-	"start": { "line": 3, "column": 7, "character": 41 },
-	"pos": 41
+	"start": {
+		"line": 3,
+		"column": 7,
+		"character": 43
+	},
+	"end": {
+		"line": 3,
+		"column": 7,
+		"character": 43
+	},
+	"pos": 43,
+	"frame": "1: {#await true}\r\n2:   {#each foo as bar}\r\n3: {:catch f}\r\n          ^\n4: {/await}",
+	"message": "Expected to close {#each} block before seeing {:catch} block"
 }

@@ -1,6 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "invalid-else-placement",
-	"message": "Cannot have an {:else} block outside an {#if ...} or {#each ...} block",
-	"start": { "line": 2, "column": 6, "character": 11 },
-	"pos": 11
+	"start": {
+		"line": 2,
+		"column": 6,
+		"character": 12
+	},
+	"end": {
+		"line": 2,
+		"column": 6,
+		"character": 12
+	},
+	"pos": 12,
+	"frame": "1: <li>\r\n2: {:else}\n         ^",
+	"message": "Cannot have an {:else} block outside an {#if ...} or {#each ...} block"
 }

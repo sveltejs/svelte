@@ -1,5 +1,5 @@
-import * as assert from 'assert';
 import { readable, writable, derived, get } from '../../store';
+import { assert } from '../test';
 
 describe('store', () => {
 	describe('writable', () => {
@@ -7,17 +7,17 @@ describe('store', () => {
 			const count = writable(0);
 			const values = [];
 
-			const unsubscribe = count.subscribe(value => {
+			const unsubscribe = count.subscribe((value) => {
 				values.push(value);
 			});
 
 			count.set(1);
-			count.update(n => n + 1);
+			count.update((n) => n + 1);
 
 			unsubscribe();
 
 			count.set(3);
-			count.update(n => n + 1);
+			count.update((n) => n + 1);
 
 			assert.deepEqual(values, [0, 1, 2]);
 		});
@@ -27,13 +27,13 @@ describe('store', () => {
 
 			const store = writable(0, () => {
 				called += 1;
-				return () => called -= 1;
+				return () => (called -= 1);
 			});
 
-			const unsubscribe1 = store.subscribe(() => { });
+			const unsubscribe1 = store.subscribe(() => {});
 			assert.equal(called, 1);
 
-			const unsubscribe2 = store.subscribe(() => { });
+			const unsubscribe2 = store.subscribe(() => {});
 			assert.equal(called, 1);
 
 			unsubscribe1();
@@ -56,21 +56,21 @@ describe('store', () => {
 			store.set(obj);
 			assert.equal(called, 2);
 
-			store.update(obj => obj);
+			store.update((obj) => obj);
 			assert.equal(called, 3);
 		});
 
 		it('only calls subscriber once initially, including on resubscriptions', () => {
 			let num = 0;
-			const store = writable(num, set => set(num += 1));
+			const store = writable(num, (set) => set((num += 1)));
 
 			let count1 = 0;
 			let count2 = 0;
 
-			store.subscribe(() => count1 += 1)();
+			store.subscribe(() => (count1 += 1))();
 			assert.equal(count1, 1);
 
-			const unsubscribe = store.subscribe(() => count2 += 1);
+			const unsubscribe = store.subscribe(() => (count2 += 1));
 			assert.equal(count2, 1);
 
 			unsubscribe();
@@ -82,14 +82,14 @@ describe('store', () => {
 			let running;
 			let tick;
 
-			const store = readable(undefined, set => {
+			const store = readable(undefined, (set) => {
 				tick = set;
 				running = true;
 
 				set(0);
 
 				return () => {
-					tick = () => { };
+					tick = () => {};
 					running = false;
 				};
 			});
@@ -98,7 +98,7 @@ describe('store', () => {
 
 			const values = [];
 
-			const unsubscribe = store.subscribe(value => {
+			const unsubscribe = store.subscribe((value) => {
 				values.push(value);
 			});
 
@@ -120,19 +120,19 @@ describe('store', () => {
 		subscribe(fn) {
 			fn(42);
 			return {
-				unsubscribe: () => {}
+				unsubscribe: () => {},
 			};
-		}
+		},
 	};
 
 	describe('derived', () => {
 		it('maps a single store', () => {
 			const a = writable(1);
-			const b = derived(a, n => n * 2);
+			const b = derived(a, (n) => n * 2);
 
 			const values = [];
 
-			const unsubscribe = b.subscribe(value => {
+			const unsubscribe = b.subscribe((value) => {
 				values.push(value);
 			});
 
@@ -148,11 +148,11 @@ describe('store', () => {
 		it('maps multiple stores', () => {
 			const a = writable(2);
 			const b = writable(3);
-			const c = derived(([a, b]), ([a, b]) => a * b);
+			const c = derived([a, b], ([a, b]) => a * b);
 
 			const values = [];
 
-			const unsubscribe = c.subscribe(value => {
+			const unsubscribe = c.subscribe((value) => {
 				values.push(value);
 			});
 
@@ -168,13 +168,17 @@ describe('store', () => {
 
 		it('passes optional set function', () => {
 			const number = writable(1);
-			const evens = derived(number, (n, set) => {
-				if (n % 2 === 0) set(n);
-			}, 0);
+			const evens = derived(
+				number,
+				(n, set) => {
+					if (n % 2 === 0) set(n);
+				},
+				0
+			);
 
 			const values = [];
 
-			const unsubscribe = evens.subscribe(value => {
+			const unsubscribe = evens.subscribe((value) => {
 				values.push(value);
 			});
 
@@ -194,22 +198,19 @@ describe('store', () => {
 
 		it('prevents glitches', () => {
 			const lastname = writable('Jekyll');
-			const firstname = derived(lastname, n => n === 'Jekyll' ? 'Henry' : 'Edward');
+			const firstname = derived(lastname, (n) => (n === 'Jekyll' ? 'Henry' : 'Edward'));
 
-			const fullname = derived([firstname, lastname], names => names.join(' '));
+			const fullname = derived([firstname, lastname], (names) => names.join(' '));
 
 			const values = [];
 
-			const unsubscribe = fullname.subscribe(value => {
+			const unsubscribe = fullname.subscribe((value) => {
 				values.push(value);
 			});
 
 			lastname.set('Hyde');
 
-			assert.deepEqual(values, [
-				'Henry Jekyll',
-				'Edward Hyde'
-			]);
+			assert.deepEqual(values, ['Henry Jekyll', 'Edward Hyde']);
 
 			unsubscribe();
 		});
@@ -218,11 +219,11 @@ describe('store', () => {
 			const count = writable(0);
 			const values = [];
 
-			const a = derived(count, $count => {
+			const a = derived(count, ($count) => {
 				return 'a' + $count;
 			});
 
-			const b = derived(count, $count => {
+			const b = derived(count, ($count) => {
 				return 'b' + $count;
 			});
 
@@ -230,7 +231,7 @@ describe('store', () => {
 				return a + b;
 			});
 
-			const unsubscribe = combined.subscribe(v => {
+			const unsubscribe = combined.subscribe((v) => {
 				values.push(v);
 			});
 
@@ -243,10 +244,10 @@ describe('store', () => {
 		});
 
 		it('derived dependency does not update and shared ancestor updates', () => {
-			const root = writable({ a: 0, b:0 });
+			const root = writable({ a: 0, b: 0 });
 			const values = [];
 
-			const a = derived(root, $root => {
+			const a = derived(root, ($root) => {
 				return 'a' + $root.a;
 			});
 
@@ -254,7 +255,7 @@ describe('store', () => {
 				return 'b' + $root.b + $a;
 			});
 
-			const unsubscribe = b.subscribe(v => {
+			const unsubscribe = b.subscribe((v) => {
 				values.push(v);
 			});
 
@@ -270,14 +271,14 @@ describe('store', () => {
 			const arr = [0];
 
 			const number = writable(1);
-			const numbers = derived(number, $number => {
+			const numbers = derived(number, ($number) => {
 				arr[0] = $number;
 				return arr;
 			});
 
 			const concatenated = [];
 
-			const unsubscribe = numbers.subscribe(value => {
+			const unsubscribe = numbers.subscribe((value) => {
 				concatenated.push(...value);
 			});
 
@@ -305,7 +306,7 @@ describe('store', () => {
 
 			num.set(2);
 
-			const unsubscribe = d.subscribe(value => {
+			const unsubscribe = d.subscribe((value) => {
 				values.push(value);
 			});
 
@@ -332,7 +333,7 @@ describe('store', () => {
 
 			num.set(2);
 
-			const unsubscribe = d.subscribe(value => {
+			const unsubscribe = d.subscribe((value) => {
 				values.push(value);
 			});
 
@@ -357,14 +358,14 @@ describe('store', () => {
 		});
 
 		it('works with RxJS-style observables', () => {
-			const d = derived(fake_observable, _ => _);
+			const d = derived(fake_observable, (_) => _);
 			assert.equal(get(d), 42);
 		});
 	});
 
 	describe('get', () => {
 		it('gets the current value of a store', () => {
-			const store = readable(42, () => { });
+			const store = readable(42, () => {});
 			assert.equal(get(store), 42);
 		});
 

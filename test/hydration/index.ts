@@ -1,15 +1,8 @@
-import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import {
-	showOutput,
-	loadConfig,
-	loadSvelte,
-	env,
-	setupHtmlEqual,
-	shouldUpdateExpected
-} from '../helpers.js';
+import { showOutput, loadConfig, loadSvelte, env, setupHtmlEqual, shouldUpdateExpected } from '../helpers';
+import { assert } from '../test';
 
 let compileOptions = null;
 
@@ -19,13 +12,13 @@ describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 
-		require.extensions['.svelte'] = function(module, filename) {
+		require.extensions['.svelte'] = function (module, filename) {
 			const options = Object.assign(
 				{
 					filename,
 					hydratable: true,
 					format: 'cjs',
-					sveltePath
+					sveltePath,
 				},
 				compileOptions
 			);
@@ -58,13 +51,11 @@ describe('hydration', () => {
 			try {
 				global.window = window;
 
-				let SvelteComponent;
-
-				try {
-					SvelteComponent = require(`${cwd}/main.svelte`).default;
-				} catch (err) {
-					throw err;
-				}
+				// try {
+				const SvelteComponent = require(`${cwd}/main.svelte`).default;
+				// } catch (err) {
+				// 	throw err;
+				// }
 
 				const target = window.document.body;
 				const head = window.document.head;
@@ -75,14 +66,16 @@ describe('hydration', () => {
 				try {
 					before_head = fs.readFileSync(`${cwd}/_before_head.html`, 'utf-8');
 					head.innerHTML = before_head;
-				} catch (err) {}
+				} catch (_err) {
+					//
+				}
 
 				const snapshot = config.snapshot ? config.snapshot(target) : {};
 
 				const component = new SvelteComponent({
 					target,
 					hydrate: true,
-					props: config.props
+					props: config.props,
 				});
 
 				try {
@@ -117,18 +110,19 @@ describe('hydration', () => {
 				}
 			} catch (err) {
 				showOutput(cwd, {
-					hydratable: true
+					hydratable: true,
 				});
 				throw err;
 			}
 
-			if (config.show) showOutput(cwd, {
-				hydratable: true
-			});
+			if (config.show)
+				showOutput(cwd, {
+					hydratable: true,
+				});
 		});
 	}
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		runTest(dir, null);
 	});
 });

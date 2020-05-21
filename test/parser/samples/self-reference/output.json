@@ -1,12 +1,12 @@
 {
 	"html": {
 		"start": 0,
-		"end": 57,
+		"end": 59,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 57,
+				"end": 59,
 				"type": "IfBlock",
 				"expression": {
 					"type": "BinaryExpression",
@@ -59,25 +59,25 @@
 				},
 				"children": [
 					{
-						"start": 17,
-						"end": 51,
+						"start": 18,
+						"end": 52,
 						"type": "InlineComponent",
 						"name": "svelte:self",
 						"attributes": [
 							{
-								"start": 30,
-								"end": 49,
+								"start": 31,
+								"end": 50,
 								"type": "Attribute",
 								"name": "depth",
 								"value": [
 									{
-										"start": 37,
-										"end": 48,
+										"start": 38,
+										"end": 49,
 										"type": "MustacheTag",
 										"expression": {
 											"type": "BinaryExpression",
-											"start": 38,
-											"end": 47,
+											"start": 39,
+											"end": 48,
 											"loc": {
 												"start": {
 													"line": 2,
@@ -90,8 +90,8 @@
 											},
 											"left": {
 												"type": "Identifier",
-												"start": 38,
-												"end": 43,
+												"start": 39,
+												"end": 44,
 												"loc": {
 													"start": {
 														"line": 2,
@@ -107,8 +107,8 @@
 											"operator": "-",
 											"right": {
 												"type": "Literal",
-												"start": 46,
-												"end": 47,
+												"start": 47,
+												"end": 48,
 												"loc": {
 													"start": {
 														"line": 2,
