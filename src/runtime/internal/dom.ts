@@ -126,7 +126,38 @@ export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
-export function get_binding_group_value(group) {
+const binding_group = Symbol.for("$$binding_group");
+
+export function add_into_binding_group(array, input) {
+	if (array) {
+		if (!array[binding_group]) {
+			Object.defineProperty(array, binding_group, {
+				enumerable: false,
+				value: [],
+			});
+    }
+		array[binding_group].push(input);
+		input.__binding_group = array[binding_group];
+	}
+}
+
+export function remove_from_binding_group(array, input) {
+	if (array && array[binding_group]) {
+		array[binding_group].splice(array[binding_group].indexOf(input), 1);
+		delete input.__binding_group;
+	}
+}
+
+export function reattach_binding_group(array, input) {
+	// if the array got reassigned, reattach binding group
+	if (array[binding_group] !== input.__binding_group) {
+		array.__binding_group.splice(array.__binding_group.indexOf(input), 1);
+		add_into_binding_group(array, input);
+	}
+}
+
+export function get_binding_group_value(input) {
+	const group = input.__binding_group;
 	const value = [];
 	for (let i = 0; i < group.length; i += 1) {
 		if (group[i].checked) value.push(group[i].__value);

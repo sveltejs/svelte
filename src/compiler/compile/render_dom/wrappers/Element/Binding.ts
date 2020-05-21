@@ -121,17 +121,17 @@ export default class BindingWrapper {
 		switch (this.node.name) {
 			case 'group':
 			{
-				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
+				// const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
 
-				block.renderer.add_to_context(`$$binding_groups`);
-				const reference = block.renderer.reference(`$$binding_groups`);
+				// block.renderer.add_to_context(`$$binding_groups`);
+				// const reference = block.renderer.reference(`$$binding_groups`);
 
 				block.chunks.hydrate.push(
-					b`${reference}[${binding_group}].push(${parent.var});`
+					b`@add_into_binding_group(${this.snippet}, ${parent.var});`
 				);
 
 				block.chunks.destroy.push(
-					b`${reference}[${binding_group}].splice(${reference}[${binding_group}].indexOf(${parent.var}), 1);`
+					b`@remove_from_binding_group(${this.snippet}, ${parent.var});`
 				);
 				break;
 			}
@@ -233,7 +233,10 @@ function get_dom_updater(
 			? x`~${binding.snippet}.indexOf(${element.var}.__value)`
 			: x`${element.var}.__value === ${binding.snippet}`;
 
-		return b`${element.var}.checked = ${condition};`;
+		return b`
+			@reattach_binding_group(${binding.snippet}, ${element.var});
+			${element.var}.checked = ${condition};
+		`;
 	}
 
 	if (binding.node.name === 'value') {
@@ -243,20 +246,20 @@ function get_dom_updater(
 	return b`${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
-function get_binding_group(renderer: Renderer, value: Node) {
-	const { parts } = flatten_reference(value); // TODO handle cases involving computed member expressions
-	const keypath = parts.join('.');
+// function get_binding_group(renderer: Renderer, value: Node) {
+// 	const { parts } = flatten_reference(value); // TODO handle cases involving computed member expressions
+// 	const keypath = parts.join('.');
 
-	// TODO handle contextual bindings — `keypath` should include unique ID of
-	// each block that provides context
-	let index = renderer.binding_groups.indexOf(keypath);
-	if (index === -1) {
-		index = renderer.binding_groups.length;
-		renderer.binding_groups.push(keypath);
-	}
+// 	// TODO handle contextual bindings — `keypath` should include unique ID of
+// 	// each block that provides context
+// 	let index = renderer.binding_groups.indexOf(keypath);
+// 	if (index === -1) {
+// 		index = renderer.binding_groups.length;
+// 		renderer.binding_groups.push(keypath);
+// 	}
 
-	return index;
-}
+// 	return index;
+// }
 
 function get_event_handler(
 	binding: BindingWrapper,
@@ -332,9 +335,9 @@ function get_value_from_dom(
 
 	// <input type='checkbox' bind:group='foo'>
 	if (name === 'group') {
-		const binding_group = get_binding_group(renderer, binding.node.expression.node);
+		// const binding_group = get_binding_group(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			return x`@get_binding_group_value($$binding_groups[${binding_group}])`;
+			return x`@get_binding_group_value(this)`;
 		}
 
 		return x`this.__value`;
