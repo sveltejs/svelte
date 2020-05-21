@@ -94,7 +94,7 @@
     "mocha": "^7.1.2",
     "periscopic": "^2.0.1",
     "puppeteer": "^2.1.1",
-    "rollup": "^2.10.5",
+    "rollup": "^1.32.1",
     "source-map-support": "^0.5.19",
     "source-map": "^0.7.3",
     "tslib": "^2.0.0",
