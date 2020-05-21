@@ -126,12 +126,15 @@ export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
-export function get_binding_group_value(group) {
-	const value = [];
+export function get_binding_group_value(group, __value, checked) {
+	const value = new Set();
 	for (let i = 0; i < group.length; i += 1) {
-		if (group[i].checked) value.push(group[i].__value);
+		if (group[i].checked) value.add(group[i].__value);
 	}
-	return value;
+	if (!checked) {
+		value.delete(__value);
+	}
+	return Array.from(value);
 }
 
 export function to_number(value) {
