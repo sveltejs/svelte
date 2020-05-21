@@ -87,7 +87,7 @@ export default class BindingWrapper {
 		const update_conditions: any[] = this.needs_lock ? [x`!${lock}`] : [];
 		const mount_conditions: any[] = [];
 
-		const dependency_array = [...this.node.expression.dependencies];
+		const dependency_array = Array.from(this.get_dependencies());
 
 		if (dependency_array.length > 0) {
 			update_conditions.push(block.renderer.dirty(dependency_array));
