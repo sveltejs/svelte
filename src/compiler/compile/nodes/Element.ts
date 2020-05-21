@@ -260,7 +260,7 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'figure') {
-			const children = this.children.filter((node) => {
+			const children = this.children.filter(node => {
 				if (node.type === 'Comment') return false;
 				if (node.type === 'Text') return /\S/.test(node.data);
 				return true;
@@ -384,10 +384,11 @@ export default class Element extends Node {
 				}
 			}
 
+
 			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
 				component.error(attribute, {
 					code: `illegal-attribute`,
-					message: `'${name}' is not a valid attribute name`
+					message: `'${name}' is not a valid attribute name`,
 				});
 			}
 
@@ -395,7 +396,7 @@ export default class Element extends Node {
 				if (!attribute.is_static) {
 					component.error(attribute, {
 						code: `invalid-slot-attribute`,
-						message: `slot attribute cannot have a dynamic value`,
+						message: `slot attribute cannot have a dynamic value`
 					});
 				}
 
@@ -621,6 +622,7 @@ export default class Element extends Node {
 						message: `'files' binding can only be used with <input type="file">`
 					});
 				}
+
 			} else if (name === 'open') {
 				if (this.name !== 'details') {
 					component.error(binding, {
@@ -661,7 +663,7 @@ export default class Element extends Node {
 				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
 					component.error(binding, {
 						code: 'invalid-binding',
-						message: `'${binding.name}' is not a valid binding on <svg>. Use '${name.replace('offset', 'client')}' instead`,
+						message: `'${binding.name}' is not a valid binding on <svg>. Use '${name.replace('offset', 'client')}' instead`
 					});
 				} else if (svg.test(this.name)) {
 					component.error(binding, {
@@ -778,7 +780,7 @@ export default class Element extends Node {
 					new Text(this.component, this, this.scope, {
 						type: 'Text',
 						data: ` ${id}`,
-						synthetic: true,
+						synthetic: true
 					})
 				);
 			}

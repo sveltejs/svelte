@@ -10,5 +10,5 @@ export {
 	getContext,
 	tick,
 	createEventDispatcher,
-	SvelteComponentDev as SvelteComponent,
+	SvelteComponentDev as SvelteComponent
 } from 'svelte/internal';

@@ -233,42 +233,42 @@ export default function mustache(parser: Parser) {
 		const expression = read_expression(parser);
 
 		const block: TemplateNode = type === 'AwaitBlock' ?
-		{
-			start,
-			end: null,
-			type,
-			expression,
-			value: null,
-			error: null,
-			pending: {
-				start: null,
+			{
+				start,
 				end: null,
-				type: 'PendingBlock',
-				children: [],
-				skip: true
-			},
-			then: {
-				start: null,
+				type,
+				expression,
+				value: null,
+				error: null,
+				pending: {
+					start: null,
+					end: null,
+					type: 'PendingBlock',
+					children: [],
+					skip: true
+				},
+				then: {
+					start: null,
+					end: null,
+					type: 'ThenBlock',
+					children: [],
+					skip: true
+				},
+				catch: {
+					start: null,
+					end: null,
+					type: 'CatchBlock',
+					children: [],
+					skip: true
+				},
+			} :
+			{
+				start,
 				end: null,
-				type: 'ThenBlock',
+				type,
+				expression,
 				children: [],
-				skip: true
-			},
-			catch: {
-				start: null,
-				end: null,
-				type: 'CatchBlock',
-				children: [],
-				skip: true
-			},
-		} :
-		{
-			start,
-			end: null,
-			type,
-			expression,
-			children: [],
-		};
+			};
 
 		parser.allow_whitespace();
 

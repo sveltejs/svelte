@@ -43,12 +43,12 @@ export default class AttributeWrapper {
 		const element = this.parent;
 		const name = fix_attribute_casing(this.node.name);
 		return name === 'value' &&
-		(element.node.name === 'option' || // TODO check it's actually bound
-			(element.node.name === 'input' &&
-				element.node.bindings.some(
-					(binding) =>
-						/checked|group/.test(binding.name)
-				)));
+			(element.node.name === 'option' || // TODO check it's actually bound
+				(element.node.name === 'input' &&
+					element.node.bindings.some(
+						(binding) =>
+							/checked|group/.test(binding.name)
+					)));
 	}
 
 	render(block: Block) {
@@ -69,7 +69,7 @@ export default class AttributeWrapper {
 		const method = /-/.test(element.node.name)
 			? '@set_custom_element_data'
 			: name.slice(0, 6) === 'xlink:'
-			? '@xlink_attr'
+				? '@xlink_attr'
 				: '@attr';
 
 		const dependencies = this.node.get_dependencies();

@@ -62,8 +62,8 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		node.name === 'svelte:self'
 			? renderer.name
 			: node.name === 'svelte:component'
-			? x`(${node.expression.node}) || @missing_component`
-			: node.name.split('.').reduce(((lhs, rhs) => x`${lhs}.${rhs}`) as any)
+				? x`(${node.expression.node}) || @missing_component`
+				: node.name.split('.').reduce(((lhs, rhs) => x`${lhs}.${rhs}`) as any)
 	);
 	const slot_fns = [];
 

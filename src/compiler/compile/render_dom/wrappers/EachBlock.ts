@@ -90,7 +90,7 @@ export default class EachBlockWrapper extends Wrapper {
 			// @ts-ignore todo: probably error
 			key: node.key as string,
 
-			bindings: new Map(block.bindings),
+			bindings: new Map(block.bindings)
 		});
 
 		// TODO this seems messy

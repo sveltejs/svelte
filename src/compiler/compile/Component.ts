@@ -122,7 +122,9 @@ export default class Component {
 		this.file =
 			compile_options.filename &&
 			(typeof process !== 'undefined'
-				? compile_options.filename.replace(process.cwd(), '').replace(/^[/\\]/, '')
+				? compile_options.filename
+				.replace(process.cwd(), '')
+				.replace(/^[/\\]/, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
@@ -316,9 +318,7 @@ export default class Component {
 			});
 
 			js.map.sources = [
-				compile_options.filename
-					? get_relative_path(compile_options.outputFilename || '', compile_options.filename)
-					: null,
+				compile_options.filename ? get_relative_path(compile_options.outputFilename || '', compile_options.filename) : null
 			];
 
 			js.map.sourcesContent = [
@@ -860,8 +860,8 @@ export default class Component {
 
 	loop_protect(node, scope: Scope, timeout: number): Node | null {
 		if (node.type === 'WhileStatement' ||
-		node.type === 'ForStatement' ||
-		node.type === 'DoWhileStatement') {
+			node.type === 'ForStatement' ||
+			node.type === 'DoWhileStatement') {
 			const guard = this.get_unique_name('guard', scope);
 			this.used_names.add(guard.name);
 
@@ -1162,7 +1162,7 @@ export default class Component {
 
 		const unsorted_reactive_declarations = [];
 
-		this.ast.instance.content.body.forEach((node) => {
+		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 

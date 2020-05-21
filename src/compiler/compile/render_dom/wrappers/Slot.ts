@@ -121,7 +121,7 @@ export default class SlotWrapper extends Wrapper {
 			if (!has_fallback) {
 				renderer.remove_block(this.fallback);
 			}
-		} 
+		}
 
 		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
@@ -181,14 +181,11 @@ export default class SlotWrapper extends Wrapper {
 				if (#changes) ${slot}.p(${context}, #changes);
 			}
 		`;
-		const fallback_update =
-			has_fallback &&
-			fallback_dynamic_dependencies.length > 0 &&
-			b`
+		const fallback_update = has_fallback && fallback_dynamic_dependencies.length > 0 && b`
 			if (${slot_or_fallback} && ${slot_or_fallback}.p && ${renderer.dirty(fallback_dynamic_dependencies)}) {
 				${slot_or_fallback}.p(#ctx, #dirty);
 			}
-			`;
+		`;
 
 		if (fallback_update) {
 			block.chunks.update.push(b`

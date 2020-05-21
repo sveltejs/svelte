@@ -2,13 +2,13 @@ import { custom_event, append, insert, detach, listen, attr } from './dom';
 import { has_Symbol } from './environment';
 import { SvelteComponent } from './Component';
 
+export function dispatch_dev<T = any>(type: string, detail?: T) {
+	document.dispatchEvent(custom_event(type, { version: __VERSION__, ...detail }));
+}
 export function add_location_dev(element, file, line, column, char) {
 	element.__svelte_meta = {
 		loc: { file, line, column, char },
 	};
-}
-export function dispatch_dev<T = any>(type: string, detail?: T) {
-	document.dispatchEvent(custom_event(type, { version: __VERSION__, ...detail }));
 }
 
 export function append_dev(target: Node, node: Node) {

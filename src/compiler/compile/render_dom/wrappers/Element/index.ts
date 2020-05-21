@@ -440,7 +440,7 @@ export default class ElementWrapper extends Wrapper {
 		const name = this.node.namespace
 			? this.node.name
 			: this.node.name.toUpperCase();
-			
+
 		const svg = this.node.namespace === namespaces.svg || this.node.namespace === 'svg' ? 1 : null;
 
 		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
@@ -508,7 +508,6 @@ export default class ElementWrapper extends Wrapper {
 		const lock = bindingGroup.bindings.some(binding => binding.needs_lock) ?
 			block.get_unique_name(`${this.var.name}_updating`) :
 			null;
-		
 		if (lock) block.add_variable(lock, x`false`);
 
 		[bindingGroup].forEach(group => {
@@ -571,7 +570,7 @@ export default class ElementWrapper extends Wrapper {
 				callee = handler;
 			}
 
-			const params = Array.from(contextual_dependencies).map((name) => ({
+			const params = Array.from(contextual_dependencies).map(name => ({
 				type: 'Identifier',
 				name
 			}));
@@ -610,7 +609,7 @@ export default class ElementWrapper extends Wrapper {
 				.map(binding => x`${binding.snippet} === void 0`)
 				.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
-			const should_initialise =
+			const should_initialise = (
 				this.node.name === 'select' ||
 				group.bindings.find(binding => {
 					return (
@@ -619,7 +618,8 @@ export default class ElementWrapper extends Wrapper {
 						binding.node.name === 'innerHTML' ||
 						binding.is_readonly_media_attribute()
 					);
-				});
+				})
+			);
 
 			if (should_initialise) {
 				const callback = has_local_function ? handler : x`() => ${callee}.call(${this.var})`;
@@ -651,7 +651,7 @@ export default class ElementWrapper extends Wrapper {
 
 	add_attributes(block: Block) {
 		// Get all the class dependencies first
-		this.attributes.forEach(attribute => {
+		this.attributes.forEach((attribute) => {
 			if (attribute.node.name === 'class') {
 				const dependencies = attribute.node.get_dependencies();
 				this.class_dependencies.push(...dependencies);
@@ -663,7 +663,7 @@ export default class ElementWrapper extends Wrapper {
 			return;
 		}
 
-		this.attributes.forEach(attribute => {
+		this.attributes.forEach((attribute) => {
 			attribute.render(block);
 		});
 	}
@@ -681,23 +681,23 @@ export default class ElementWrapper extends Wrapper {
 					? block.renderer.dirty(Array.from(attr.node.dependencies))
 					: null;
 
-			if (attr.node.is_spread) {
-				const snippet = attr.node.expression.manipulate(block);
+				if (attr.node.is_spread) {
+					const snippet = attr.node.expression.manipulate(block);
 
-				initial_props.push(snippet);
+					initial_props.push(snippet);
 
-				updates.push(condition ? x`${condition} && ${snippet}` : snippet);
-			} else {
-				const metadata = attr.get_metadata();
-				const name = attr.is_indirectly_bound_value()
-					? '__value'
-					: (metadata && metadata.property_name) || fix_attribute_casing(attr.node.name);
-				const snippet = x`{ ${name}: ${attr.get_value(block)} }`;
-				initial_props.push(snippet);
+					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
+				} else {
+					const metadata = attr.get_metadata();
+					const name = attr.is_indirectly_bound_value()
+						? '__value'
+						: (metadata && metadata.property_name) || fix_attribute_casing(attr.node.name);
+					const snippet = x`{ ${name}: ${attr.get_value(block)} }`;
+					initial_props.push(snippet);
 
-				updates.push(condition ? x`${condition} && ${snippet}` : snippet);
-			}
-		});
+					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
+				}
+			});
 
 		block.chunks.init.push(b`
 			const ${levels} = [${initial_props}];

@@ -237,7 +237,9 @@ export default class AwaitBlockWrapper extends Wrapper {
 				${promise} !== (${promise} = ${snippet}) &&
 				@handle_promise(${promise}, ${info})`;
 
-			block.chunks.update.push(b`${info}.ctx = #ctx;`);
+			block.chunks.update.push(
+				b`${info}.ctx = #ctx;`
+			);
 
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`

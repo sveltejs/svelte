@@ -94,7 +94,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const dependencies: Set<string> = new Set();
 
 			// TODO is this filtering necessary? (I *think* so)
-			default_slot.dependencies.forEach((name) => {
+			default_slot.dependencies.forEach(name => {
 				if (!this.node.scope.is_let(name)) {
 					dependencies.add(name);
 				}
@@ -169,7 +169,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				}`,
 				p`$$scope: {
 					ctx: #ctx
-				}`,
+				}`
 			]
 			: [];
 

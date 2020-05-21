@@ -24,6 +24,6 @@ export function flip(
 		delay,
 		duration: run_duration(duration, Math.sqrt(dx * dx + dy * dy)),
 		easing,
-		css: (_t, u) => `transform: ${transform} translate(${u * dx}px, ${u * dy}px);`,
+		css: (_t, u) => `transform: ${transform} translate(${u * dx}px, ${u * dy}px);`
 	};
 }

@@ -12,29 +12,29 @@ const on_init_only = (name: string) => {
 };
 
 export function get_current_component() {
-	return current_component;
+	current_component;
 }
 
 export function beforeUpdate(fn) {
 	on_init_only(`beforeUpdate`);
-	return current_component.$$.before_update.push(fn);
+	current_component.$$.before_update.push(fn);
 }
 
 export function onMount(fn) {
 	on_init_only(`onMount`);
-	return current_component.$$.on_mount.push(fn);
+	current_component.$$.on_mount.push(fn);
 }
 
 export function afterUpdate(fn) {
 	on_init_only(`afterUpdate`);
-	return current_component.$$.after_update.push(fn);
+	current_component.$$.after_update.push(fn);
 }
 
 export function onDestroy(fn) {
 	on_init_only(`onDestroy`);
-	return current_component.$$.on_destroy.push(fn);
+	current_component.$$.on_destroy.push(fn);
 }
-// todo : deprecate
+
 export function createEventDispatcher() {
 	on_init_only(`createEventDispatcher`);
 	const component = current_component;

@@ -275,7 +275,7 @@ export default class Expression {
 							...(node as FunctionExpression).params
 						];
 
-						const context_args = deps.map((name) => block.renderer.reference(name));
+						const context_args = deps.map(name => block.renderer.reference(name));
 
 						component.partly_hoisted.push(declaration);
 

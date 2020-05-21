@@ -53,18 +53,15 @@ export function handle_promise(promise, info) {
 
 	if (promise && typeof promise === 'object' && typeof promise.then === 'function') {
 		const current_component = get_current_component();
-		promise.then(
-			(value) => {
-				set_current_component(current_component);
-				update(info.then, 1, info.value, value);
-				set_current_component(null);
-			},
-			(error) => {
-				set_current_component(current_component);
-				update(info.catch, 2, info.error, error);
-				set_current_component(null);
-			}
-		);
+		promise.then(value => {
+			set_current_component(current_component);
+			update(info.then, 1, info.value, value);
+			set_current_component(null);
+		}, error => {
+			set_current_component(current_component);
+			update(info.catch, 2, info.error, error);
+			set_current_component(null);
+		});
 
 		// if we previously had a then/catch block, destroy it
 		if (info.current !== info.pending) {

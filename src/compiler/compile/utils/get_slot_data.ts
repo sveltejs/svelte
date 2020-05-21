@@ -11,7 +11,7 @@ export default function get_slot_data(values: Map<string, Attribute>, block: Blo
 			.map(attribute => {
 				const value = get_value(block, attribute);
 				return p`${attribute.name}: ${value}`;
-			}),
+			})
 	};
 }
 
@@ -20,7 +20,7 @@ function get_value(block: Block, attribute: Attribute) {
 	if (attribute.chunks.length === 0) return x`""`;
 
 	let value = attribute.chunks
-		.map((chunk) => (chunk.type === 'Text' ? string_literal(chunk.data) : block ? chunk.manipulate(block) : chunk.node))
+		.map(chunk => (chunk.type === 'Text' ? string_literal(chunk.data) : block ? chunk.manipulate(block) : chunk.node))
 		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
 	if (attribute.chunks.length > 1 && attribute.chunks[0].type !== 'Text') {

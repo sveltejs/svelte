@@ -99,7 +99,7 @@ function esm(
 			type: 'Specifier',
 			local: { type: 'Identifier', name: x.name },
 			exported: { type: 'Identifier', name: x.as }
-		})),
+		}))
 	};
 
 	program.body = b`

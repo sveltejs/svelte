@@ -3,21 +3,20 @@ import { current_component, set_current_component } from './lifecycle';
 import { children, detach } from './dom';
 import { transition_in } from './transitions';
 import { noop } from './environment';
-type binary = 0 | 1;
 export interface Fragment {
 	key: string | null;
 	first: null;
 	/* create  */ c: () => void;
 	/* claim   */ l: (nodes: any) => void;
 	/* hydrate */ h: () => void;
-	/* mount   */ m: (target: HTMLElement, anchor: any, is_remount: binary) => void;
+	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
 	/* update  */ p: (ctx: any, dirty: any) => void;
 	/* measure */ r: () => void;
 	/* fix     */ f: () => void;
 	/* animate */ a: () => void;
-	/* intro   */ i: (local: binary) => void;
-	/* outro   */ o: (local: binary) => void;
-	/* destroy */ d: (detaching: binary) => void;
+	/* intro   */ i: (local: any) => void;
+	/* outro   */ o: (local: any) => void;
+	/* destroy */ d: (detaching: 0|1) => void;
 }
 // eslint-disable-next-line @typescript-eslint/class-name-casing
 export interface T$$ {
@@ -106,7 +105,7 @@ export function init(
 				if ($$.ctx && not_equal($$.ctx[i], ($$.ctx[i] = 0 in rest ? rest[0] : res))) {
 					if (i in $$.bound) $$.bound[i]($$.ctx[i]);
 					if (ready) {
-						if (!~$$.dirty[0]) {
+						if (-1 === $$.dirty[0]) {
 							schedule_update(component);
 							$$.dirty.fill(0);
 						}
@@ -181,12 +180,13 @@ export const SvelteElement =
 			callbacks.push(callback);
 			return () => {
 				const index = callbacks.indexOf(callback);
-				if (~index) callbacks.splice(index, 1);
+				if (index !== -1) callbacks.splice(index, 1);
 			};
 		}
 
-		// overridden by instance, if it has props
-		$set() {}
+		$set() {
+			// overridden by instance, if it has props
+		}
 	};
 
 export class SvelteComponent {
@@ -200,9 +200,10 @@ export class SvelteComponent {
 		callbacks.push(callback);
 		return () => {
 			const index = callbacks.indexOf(callback);
-			if (~index) callbacks.splice(index, 1);
+			if (index !== -1) callbacks.splice(index, 1);
 		};
 	}
-	// overridden by instance, if it has props
-	$set() {}
+	$set() {
+		// overridden by instance, if it has props
+	}
 }

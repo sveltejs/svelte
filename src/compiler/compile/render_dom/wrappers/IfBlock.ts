@@ -245,7 +245,7 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 
 		this.branches.forEach(branch => {
-			branch.fragment.render(branch.block, null, (x`#nodes` as unknown) as Identifier);
+			branch.fragment.render(branch.block, null, x`#nodes` as unknown as Identifier);
 		});
 	}
 
@@ -399,7 +399,7 @@ export default class IfBlockWrapper extends Wrapper {
 						${!has_else && b`return -1;`}
 					}
 				`
-					: b`
+				: b`
 					function ${select_block_type}(#ctx, #dirty) {
 						${this.branches.map(({ condition, snippet }, i) => condition
 						? b`if (${snippet || condition}) return ${i};`
