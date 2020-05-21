@@ -5,6 +5,8 @@ const processed_eases = {};
 for (const ease in eases) {
 	if (ease === "linear") {
 		processed_eases.linear = eases.linear;
+	} else if (ease === "cubicBezier") {
+		continue;
 	} else {
 		const name = ease.replace(/In$|InOut$|Out$/, '');
 		const type = ease.match(/In$|InOut$|Out$/)[0];
