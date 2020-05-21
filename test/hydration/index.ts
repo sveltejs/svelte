@@ -12,13 +12,13 @@ describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 
-		require.extensions['.svelte'] = function (module, filename) {
+		require.extensions['.svelte'] = function(module, filename) {
 			const options = Object.assign(
 				{
 					filename,
 					hydratable: true,
 					format: 'cjs',
-					sveltePath,
+					sveltePath
 				},
 				compileOptions
 			);
@@ -75,7 +75,7 @@ describe('hydration', () => {
 				const component = new SvelteComponent({
 					target,
 					hydrate: true,
-					props: config.props,
+					props: config.props
 				});
 
 				try {
@@ -110,19 +110,18 @@ describe('hydration', () => {
 				}
 			} catch (err) {
 				showOutput(cwd, {
-					hydratable: true,
+					hydratable: true
 				});
 				throw err;
 			}
 
-			if (config.show)
-				showOutput(cwd, {
-					hydratable: true,
-				});
+			if (config.show) showOutput(cwd, {
+				hydratable: true
+			});
 		});
 	}
 
-	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		runTest(dir, null);
 	});
 });

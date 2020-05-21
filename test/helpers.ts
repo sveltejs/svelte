@@ -47,14 +47,14 @@ export function tryToReadFile(file) {
 
 export function cleanRequireCache() {
 	Object.keys(require.cache)
-		.filter((x) => x.endsWith('.svelte'))
-		.forEach((file) => delete require.cache[file]);
+		.filter(x => x.endsWith('.svelte'))
+		.forEach(file => delete require.cache[file]);
 }
 
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 
-const { window } = new jsdom.JSDOM('<main></main>', { virtualConsole });
+const window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
 
 global.document = window.document;
 global.navigator = window.navigator;
@@ -68,7 +68,7 @@ for (const key of Object.getOwnPropertyNames(global)) {
 }
 
 // implement mock scroll
-window.scrollTo = function (pageXOffset, pageYOffset) {
+window.scrollTo = function(pageXOffset, pageYOffset) {
 	window.pageXOffset = pageXOffset;
 	window.pageYOffset = pageYOffset;
 };
@@ -89,11 +89,11 @@ function cleanChildren(node: Element) {
 		return a.name < b.name ? -1 : 1;
 	});
 
-	attributes.forEach((attr) => {
+	attributes.forEach(attr => {
 		node.removeAttribute(attr.name);
 	});
 
-	attributes.forEach((attr) => {
+	attributes.forEach(attr => {
 		node.setAttribute(attr.name, attr.value);
 	});
 
@@ -148,8 +148,12 @@ export function normalizeHtml(window, html) {
 export function setupHtmlEqual() {
 	const window = env();
 
-	assert.htmlEqual = function (actual, expected, message) {
-		assert.deepEqual(normalizeHtml(window, actual), normalizeHtml(window, expected), message);
+	assert.htmlEqual = (actual, expected, message) => {
+		assert.deepEqual(
+			normalizeHtml(window, actual),
+			normalizeHtml(window, expected),
+			message
+		);
 	};
 }
 
@@ -175,20 +179,24 @@ export function addLineNumbers(code) {
 		.map((line, i) => {
 			i = String(i + 1);
 			while (i.length < 3) i = ` ${i}`;
-			return colors.gray(`  ${i}: `) + line.replace(/^\t+/, (match) => match.split('\t').join('    '));
+
+			return (
+				colors.gray(`  ${i}: `) +
+				line.replace(/^\t+/, match => match.split('\t').join('    '))
+			);
 		})
 		.join('\n');
 }
 
 export function showOutput(cwd, options = {}, compile = svelte.compile) {
-	glob('**/*.svelte', { cwd }).forEach((file) => {
+	glob('**/*.svelte', { cwd }).forEach(file => {
 		if (file[0] === '_') return;
 
 		try {
 			const { js } = compile(
 				fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 				Object.assign(options, {
-					filename: file,
+					filename: file
 				})
 			);
 
@@ -218,13 +226,13 @@ export function useFakeTimers() {
 
 	return {
 		flush() {
-			callbacks.forEach((fn) => fn());
+			callbacks.forEach(fn => fn());
 			callbacks.splice(0, callbacks.length);
 		},
 		removeFakeTimers() {
 			callbacks.splice(0, callbacks.length);
 			global.setTimeout = original_set_timeout;
-		},
+		}
 	};
 }
 

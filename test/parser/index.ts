@@ -3,7 +3,7 @@ import { svelte, tryToLoadJson } from '../helpers';
 import { assert } from '../test';
 
 describe('parser', () => {
-	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === '.') return;
 
 		// add .solo to a sample directory name to only run that test
@@ -23,12 +23,9 @@ describe('parser', () => {
 			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
 
 			try {
-				const { ast } = svelte.compile(
-					input,
-					Object.assign(options, {
-						generate: false,
-					})
-				);
+				const { ast } = svelte.compile(input, Object.assign(options, {
+					generate: false
+				}));
 
 				fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.json`, JSON.stringify(ast, null, '\t'));
 
