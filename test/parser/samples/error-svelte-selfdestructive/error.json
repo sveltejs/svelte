@@ -1,10 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "invalid-tag-name",
-	"message": "Valid <svelte:...> tag names are svelte:head, svelte:options, svelte:window, svelte:body, svelte:self or svelte:component",
-	"pos": 10,
 	"start": {
-		"character": 10,
 		"line": 2,
-		"column": 2
-	}
+		"column": 2,
+		"character": 11
+	},
+	"end": {
+		"line": 2,
+		"column": 2,
+		"character": 11
+	},
+	"pos": 11,
+	"frame": "1: {#if x}\r\n2:   <svelte:selfdestructive x=\"{x - 1}\"/>\r\n      ^\n3: {/if}",
+	"message": "Valid <svelte:...> tag names are svelte:head, svelte:options, svelte:window, svelte:body, svelte:self or svelte:component"
 }

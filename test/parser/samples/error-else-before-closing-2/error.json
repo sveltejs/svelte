@@ -1,6 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "invalid-else-placement",
-	"message": "Expected to close {#await} block before seeing {:else} block",
-	"start": { "line": 3, "column": 6, "character": 29 },
-	"pos": 29
+	"start": {
+		"line": 3,
+		"column": 6,
+		"character": 31
+	},
+	"end": {
+		"line": 3,
+		"column": 6,
+		"character": 31
+	},
+	"pos": 31,
+	"frame": "1: {#if true}\r\n2:   {#await p}\r\n3: {:else}\r\n         ^\n4: {/if}",
+	"message": "Expected to close {#await} block before seeing {:else} block"
 }

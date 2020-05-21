@@ -1,6 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "invalid-elseif-placement",
-	"message": "Cannot have an {:else if ...} block outside an {#if ...} block",
-	"start": { "line": 3, "column": 10, "character": 35 },
-	"pos": 35
+	"start": {
+		"line": 3,
+		"column": 10,
+		"character": 37
+	},
+	"end": {
+		"line": 3,
+		"column": 10,
+		"character": 37
+	},
+	"pos": 37,
+	"frame": "1: {#await foo}\r\n2: {:then bar}\r\n3:   {:else if}\r\n              ^\n4: {/await}",
+	"message": "Cannot have an {:else if ...} block outside an {#if ...} block"
 }

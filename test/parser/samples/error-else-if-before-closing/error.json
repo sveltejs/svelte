@@ -1,6 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "invalid-elseif-placement",
-	"message": "Expected to close {#await} block before seeing {:else if ...} block",
-	"start": { "line": 3, "column": 9, "character": 34 },
-	"pos": 34
+	"start": {
+		"line": 3,
+		"column": 9,
+		"character": 36
+	},
+	"end": {
+		"line": 3,
+		"column": 9,
+		"character": 36
+	},
+	"pos": 36,
+	"frame": "1: {#if true}\r\n2:   {#await foo}\r\n3: {:else if false}\r\n            ^\n4: {/if}",
+	"message": "Expected to close {#await} block before seeing {:else if ...} block"
 }

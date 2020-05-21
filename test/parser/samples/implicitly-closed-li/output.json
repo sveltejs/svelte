@@ -1,68 +1,68 @@
 {
 	"html": {
 		"start": 0,
-		"end": 31,
+		"end": 35,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 31,
+				"end": 35,
 				"type": "Element",
 				"name": "ul",
 				"attributes": [],
 				"children": [
 					{
 						"start": 4,
-						"end": 6,
+						"end": 7,
 						"type": "Text",
-						"raw": "\n\t",
-						"data": "\n\t"
+						"raw": "\r\n\t",
+						"data": "\r\n\t"
 					},
 					{
-						"start": 6,
-						"end": 13,
+						"start": 7,
+						"end": 15,
 						"type": "Element",
 						"name": "li",
 						"attributes": [],
 						"children": [
 							{
-								"start": 10,
-								"end": 13,
+								"start": 11,
+								"end": 15,
 								"type": "Text",
-								"raw": "a\n\t",
-								"data": "a\n\t"
+								"raw": "a\r\n\t",
+								"data": "a\r\n\t"
 							}
 						]
 					},
 					{
-						"start": 13,
-						"end": 20,
+						"start": 15,
+						"end": 23,
 						"type": "Element",
 						"name": "li",
 						"attributes": [],
 						"children": [
 							{
-								"start": 17,
-								"end": 20,
+								"start": 19,
+								"end": 23,
 								"type": "Text",
-								"raw": "b\n\t",
-								"data": "b\n\t"
+								"raw": "b\r\n\t",
+								"data": "b\r\n\t"
 							}
 						]
 					},
 					{
-						"start": 20,
-						"end": 26,
+						"start": 23,
+						"end": 30,
 						"type": "Element",
 						"name": "li",
 						"attributes": [],
 						"children": [
 							{
-								"start": 24,
-								"end": 26,
+								"start": 27,
+								"end": 30,
 								"type": "Text",
-								"raw": "c\n",
-								"data": "c\n"
+								"raw": "c\r\n",
+								"data": "c\r\n"
 							}
 						]
 					}

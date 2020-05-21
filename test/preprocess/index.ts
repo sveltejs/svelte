@@ -1,9 +1,9 @@
 import * as fs from 'fs';
-import * as assert from 'assert';
-import { loadConfig, svelte } from '../helpers.js';
+import { loadConfig, svelte } from '../helpers';
+import { assert } from '../test';
 
 describe('preprocess', () => {
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);

@@ -1,6 +1,17 @@
 {
+	"name": "ParseError",
 	"code": "invalid-elseif-placement",
-	"message": "Expected to close <p> tag before seeing {:else if ...} block",
-	"start": { "line": 3, "column": 9, "character": 25 },
-	"pos": 25
+	"start": {
+		"line": 3,
+		"column": 9,
+		"character": 27
+	},
+	"end": {
+		"line": 3,
+		"column": 9,
+		"character": 27
+	},
+	"pos": 27,
+	"frame": "1: {#if true}\r\n2:   <p>\r\n3: {:else if false}\r\n            ^\n4: {/if}",
+	"message": "Expected to close <p> tag before seeing {:else if ...} block"
 }

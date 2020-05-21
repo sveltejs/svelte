@@ -1,42 +1,40 @@
 export default {
 	props: {
-		testName: "testClassName"
+		testName: 'testClassName',
 	},
-
-	html: `<div class="testClassName svelte-x1o6ra"></div>`,
-
 	test({ assert, component, target }) {
 		const div = target.querySelector('div');
-		assert.equal(div.className, 'testClassName svelte-x1o6ra');
+		const startsWith = (str) => assert.ok(div.className.startsWith(str + ' svelte-'));
+		startsWith('testClassName');
 
 		component.testName = null;
-		assert.equal(div.className, ' svelte-x1o6ra');
+		startsWith('');
 
 		component.testName = undefined;
-		assert.equal(div.className, ' svelte-x1o6ra');
+		startsWith('');
 
 		component.testName = undefined + '';
-		assert.equal(div.className, 'undefined svelte-x1o6ra');
+		startsWith('undefined');
 
 		component.testName = null + '';
-		assert.equal(div.className, 'null svelte-x1o6ra');
+		startsWith('null');
 
 		component.testName = 1;
-		assert.equal(div.className, '1 svelte-x1o6ra');
+		startsWith('1');
 
 		component.testName = 0;
-		assert.equal(div.className, '0 svelte-x1o6ra');
+		startsWith('0');
 
 		component.testName = false;
-		assert.equal(div.className, 'false svelte-x1o6ra');
+		startsWith('false');
 
 		component.testName = true;
-		assert.equal(div.className, 'true svelte-x1o6ra');
+		startsWith('true');
 
 		component.testName = {};
-		assert.equal(div.className, '[object Object] svelte-x1o6ra');
+		startsWith('[object Object]');
 
 		component.testName = '';
-		assert.equal(div.className, ' svelte-x1o6ra');
-	}
+		startsWith('');
+	},
 };
