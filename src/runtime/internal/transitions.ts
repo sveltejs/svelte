@@ -68,7 +68,6 @@ export function transition_out(block, local: 0 | 1, detach: 0 | 1, callback) {
 const null_transition: TransitionConfig = { duration: 0 };
 
 type TransitionFn = (node: Element, params: any) => TransitionConfig;
-type PromiseFn = (node: Element, params: any) => Promise<any>
 
 export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
 	let config = fn(node, params);
@@ -151,7 +150,7 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 	};
 }
 
-export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn | PromiseFn, params: any) {
+export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
 	let config = fn(node, params);
 	let running = true;
 	let animation_name;
@@ -160,19 +159,6 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 
 	group.r += 1;
 
-	function started() {
-		add_render_callback(() => dispatch(node, false, 'start'));
-	}
-
-	function ended() {
-		dispatch(node, false, 'end');
-		if (!--group.r) {
-			// this will result in `end()` being called,
-			// so we don't need to clean up here
-			run_all(group.c);
-		}
-	}
-
 	function go() {
 		const {
 			delay = 0,
@@ -180,21 +166,27 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 			easing = linear,
 			tick = noop,
 			css
-		} = config as TransitionConfig || null_transition;
+		} = config || null_transition;
 
 		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
 
 		const start_time = now() + delay;
 		const end_time = start_time + duration;
 
-		started();
+		add_render_callback(() => dispatch(node, false, 'start'));
 
 		loop(now => {
 			if (running) {
 				if (now >= end_time) {
 					tick(0, 1);
 
-					ended();
+					dispatch(node, false, 'end');
+
+					if (!--group.r) {
+						// this will result in `end()` being called,
+						// so we don't need to clean up here
+						run_all(group.c);
+					}
 
 					return false;
 				}
@@ -215,16 +207,13 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 			config = config();
 			go();
 		});
-	} else if (config && 'then' in config) {
-		started();
-		config.then(ended).catch(ended);
 	} else {
 		go();
 	}
 
 	return {
 		end(reset) {
-			if (reset && 'tick' in config) {
+			if (reset && config.tick) {
 				config.tick(1, 0);
 			}
 
