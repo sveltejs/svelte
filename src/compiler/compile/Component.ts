@@ -445,8 +445,12 @@ export default class Component {
 		});
 	}
 
-	extract_imports(node) {
+	extract_imports(node: ImportDeclaration) {
 		this.imports.push(node);
+		for (const specifier of node.specifiers) {
+			const variable = this.var_lookup.get(specifier.local.name);
+			variable.imported = true;
+		}
 	}
 
 	extract_exports(node) {

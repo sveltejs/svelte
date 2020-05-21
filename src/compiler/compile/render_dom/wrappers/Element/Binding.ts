@@ -121,18 +121,30 @@ export default class BindingWrapper {
 		switch (this.node.name) {
 			case 'group':
 			{
-				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
+				const variable = block.renderer.component.var_lookup.get(this.object);
+				const use_global_binding_group = variable && (variable.imported || variable.export_name);
+				if (use_global_binding_group) {
+					block.chunks.hydrate.push(
+						b`@add_into_binding_group(${this.snippet}, ${parent.var});`
+					);
 
-				block.renderer.add_to_context(`$$binding_groups`);
-				const reference = block.renderer.reference(`$$binding_groups`);
+					block.chunks.destroy.push(
+						b`@remove_from_binding_group(${this.snippet}, ${parent.var});`
+					);
+				} else {
+					const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
 
-				block.chunks.hydrate.push(
-					b`${reference}[${binding_group}].push(${parent.var});`
-				);
+					block.renderer.add_to_context(`$$binding_groups`);
+					const reference = block.renderer.reference(`$$binding_groups`);
 
-				block.chunks.destroy.push(
-					b`${reference}[${binding_group}].splice(${reference}[${binding_group}].indexOf(${parent.var}), 1);`
-				);
+					block.chunks.hydrate.push(
+						b`${reference}[${binding_group}].push(${parent.var});`
+					);
+
+					block.chunks.destroy.push(
+						b`${reference}[${binding_group}].splice(${reference}[${binding_group}].indexOf(${parent.var}), 1);`		
+					);
+				}
 				break;
 			}
 
@@ -233,7 +245,10 @@ function get_dom_updater(
 			? x`~${binding.snippet}.indexOf(${element.var}.__value)`
 			: x`${element.var}.__value === ${binding.snippet}`;
 
-		return b`${element.var}.checked = ${condition};`;
+		return b`
+			@reattach_binding_group(${binding.snippet}, ${element.var});
+			${element.var}.checked = ${condition};
+		`;
 	}
 
 	if (binding.node.name === 'value') {
@@ -332,6 +347,11 @@ function get_value_from_dom(
 
 	// <input type='checkbox' bind:group='foo'>
 	if (name === 'group') {
+		const variable = renderer.component.var_lookup.get(binding.object);
+		if (variable && (variable.imported || variable.export_name)) {
+			return x`@get_global_binding_group_value(${binding.snippet})`;
+		}
+
 		const binding_group = get_binding_group(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
 			return x`@get_binding_group_value($$binding_groups[${binding_group}])`;

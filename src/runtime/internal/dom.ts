@@ -126,6 +126,38 @@ export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
+const global_binding_group = new WeakMap();
+
+export function add_into_binding_group(array, input) {
+	if (!global_binding_group.has(array)) {
+		global_binding_group.set(array, []);
+	}
+	global_binding_group.get(array).push(input);
+}
+
+export function remove_from_global_binding_group(array, input) {
+	const binding_group = global_binding_group.get(array);
+	if (binding_group) {
+		binding_group.splice(binding_group.indexOf(input), 1);
+	}
+}
+
+export function reattach_global_binding_group(array, input) {
+	// if the array got reassigned, reattach binding group
+	if (!global_binding_group.has(array)) {
+		add_into_binding_group(array, input);
+	}
+}
+
+export function get_global_binding_group_value(array) {
+	const group = global_binding_group.get(array);
+	const value = [];
+	for (let i = 0; i < group.length; i += 1) {
+		if (group[i].checked) value.push(group[i].__value);
+	}
+	return value;
+}
+
 export function get_binding_group_value(group) {
 	const value = [];
 	for (let i = 0; i < group.length; i += 1) {
