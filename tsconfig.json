@@ -2,13 +2,14 @@
 	"include": [],
 
 	"compilerOptions": {
-		"rootDir": "src",
+		"rootDirs": ["src", "test"],
 
 		// target node v8+ (https://node.green/)
 		// the only missing feature is Array.prototype.values
-		"lib": ["es2017"],
-		"target": "es2017",
+		"lib": ["ES2017"],
+		"target": "ES2017",
 
+		"skipLibCheck": true,
 		"declaration": true,
 		"declarationDir": "types",
 
@@ -16,7 +17,7 @@
 		"noErrorTruncation": true,
 
 		// rollup takes care of these
-		"module": "esnext",
+		"module": "ESNext",
 		"moduleResolution": "node",
 		"resolveJsonModule": true,
 		"allowSyntheticDefaultImports": true,

@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
-import { rollup } from 'rollup';
-import * as virtual from '@rollup/plugin-virtual';
-import * as puppeteer from 'puppeteer';
-import { addLineNumbers, loadConfig, loadSvelte } from "../helpers.js";
+const { rollup } = require('rollup');
+const virtual = require('@rollup/plugin-virtual');
+const puppeteer = require('puppeteer');
+import { addLineNumbers, loadConfig, loadSvelte } from '../helpers';
 import { deepEqual } from 'assert';
 
 const page = `
@@ -16,7 +16,7 @@ const page = `
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('custom-elements', function() {
+describe('custom-elements', function () {
 	this.timeout(10000);
 
 	let svelte;
@@ -53,7 +53,7 @@ describe('custom-elements', function() {
 		await browser.close();
 	});
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		if (dir[0] === '.') return;
 
 		const solo = /\.solo$/.test(dir);
@@ -84,20 +84,19 @@ describe('custom-elements', function() {
 							if (id.endsWith('.svelte')) {
 								const compiled = svelte.compile(code, {
 									customElement: true,
-									dev: config.dev
+									dev: config.dev,
 								});
 
-								compiled.warnings.forEach(w => warnings.push(w));
+								compiled.warnings.forEach((w) => warnings.push(w));
 
 								return compiled.js;
 							}
-						}
+						},
 					},
-
 					virtual({
-						assert
-					})
-				]
+						assert,
+					}),
+				],
 			});
 
 			const result = await bundle.generate({ format: 'iife', name: 'test' });
@@ -109,7 +108,7 @@ describe('custom-elements', function() {
 				console[type](...args);
 			});
 
-			page.on('error', error => {
+			page.on('error', (error) => {
 				console.log('>>> an error happened');
 				console.error(error);
 			});
@@ -124,13 +123,16 @@ describe('custom-elements', function() {
 				throw err;
 			} finally {
 				if (expected_warnings) {
-					deepEqual(warnings.map(w => ({
-						code: w.code,
-						message: w.message,
-						pos: w.pos,
-						start: w.start,
-						end: w.end
-					})), expected_warnings);
+					deepEqual(
+						warnings.map((w) => ({
+							code: w.code,
+							message: w.message,
+							pos: w.pos,
+							start: w.start,
+							end: w.end,
+						})),
+						expected_warnings
+					);
 				}
 			}
 		});
