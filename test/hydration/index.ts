@@ -91,7 +91,9 @@ describe('hydration', () => {
 
 				if (before_head) {
 					try {
-						assert.htmlEqual(head.innerHTML, fs.readFileSync(`${cwd}/_after_head.html`, 'utf-8'));
+						assert.htmlEqual(
+							head.innerHTML.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz'), 
+							fs.readFileSync(`${cwd}/_after_head.html`, 'utf-8').replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz'));
 					} catch (error) {
 						if (shouldUpdateExpected()) {
 							fs.writeFileSync(`${cwd}/_after_head.html`, head.innerHTML);
