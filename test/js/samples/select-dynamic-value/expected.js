@@ -7,7 +7,8 @@ import {
 	init,
 	insert,
 	noop,
-	safe_not_equal
+	safe_not_equal,
+	select_option
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -33,26 +34,11 @@ function create_fragment(ctx) {
 			append(select, option0);
 			append(select, option1);
 			select_value_value = /*current*/ ctx[0];
-
-			for (var i = 0; i < select.options.length; i += 1) {
-				var option = select.options[i];
-
-				if (option.__value === select_value_value) {
-					option.selected = true;
-					break;
-				}
-			}
+			select_option(select, select_value_value);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*current*/ 1 && select_value_value !== (select_value_value = /*current*/ ctx[0])) {
-				for (var i = 0; i < select.options.length; i += 1) {
-					var option = select.options[i];
-
-					if (option.__value === select_value_value) {
-						option.selected = true;
-						break;
-					}
-				}
+				select_option(select, select_value_value);
 			}
 		},
 		i: noop,
