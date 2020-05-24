@@ -1,3 +1,5 @@
+import { assign } from "./utils";
+
 export function get_spread_update(levels, updates) {
 	const update = {};
 
@@ -11,7 +13,7 @@ export function get_spread_update(levels, updates) {
 
 		if (n) {
 			for (const key in o) {
-				if (!(key in n)) to_null_out[key] = 1;
+				if (!(key in n) && !accounted_for[key]) to_null_out[key] = 1;
 			}
 
 			for (const key in n) {
@@ -24,6 +26,11 @@ export function get_spread_update(levels, updates) {
 			levels[i] = n;
 		} else {
 			for (const key in o) {
+				// if spreads decides to null out the key
+				// should reset it back for static attribute
+				if (to_null_out[key]) {
+					update[key] = o[key];
+				}
 				accounted_for[key] = 1;
 			}
 		}
@@ -34,6 +41,14 @@ export function get_spread_update(levels, updates) {
 	}
 
 	return update;
+}
+
+export function get_attributes_for_spread(levels) {
+	let attrs = {};
+	for (let i = 0; i < levels.length; i += 1) {
+		attrs = assign(attrs, levels[i]);
+	}
+	return attrs;
 }
 
 export function get_spread_object(spread_props) {

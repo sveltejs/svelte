@@ -252,7 +252,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 					changes.push(
 						unchanged
-							? x`${levels}[${i}]`
+							? x`false`
 							: condition
 							? x`${condition} && ${change_object}`
 							: change_object
@@ -266,9 +266,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 
 				statements.push(b`
-					for (let #i = 0; #i < ${levels}.length; #i += 1) {
-						${props} = @assign(${props}, ${levels}[#i]);
-					}
+					${props} = @assign(${props}, @get_attributes_for_spread(${levels}))
 				`);
 
 				if (all_dependencies.size) {

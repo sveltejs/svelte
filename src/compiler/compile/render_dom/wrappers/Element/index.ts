@@ -676,7 +676,7 @@ export default class ElementWrapper extends Wrapper {
 
 					initial_props.push(snippet);
 
-					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
+					updates.push(condition ? x`${condition} && ${snippet}` : x`false`);
 				} else {
 					const metadata = attr.get_metadata();
 					const name = attr.is_indirectly_bound_value()
@@ -685,17 +685,14 @@ export default class ElementWrapper extends Wrapper {
 					const snippet = x`{ ${name}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
 
-					updates.push(condition ? x`${condition} && ${snippet}` : snippet);
+					updates.push(condition ? x`${condition} && ${snippet}` : x`false`);
 				}
 			});
 
 		block.chunks.init.push(b`
 			let ${levels} = [${initial_props}];
 
-			let ${data} = {};
-			for (let #i = 0; #i < ${levels}.length; #i += 1) {
-				${data} = @assign(${data}, ${levels}[#i]);
-			}
+			let ${data} = @get_attributes_for_spread(${levels});
 		`);
 
 		const fn = this.node.namespace === namespaces.svg ? x`@set_svg_attributes` : x`@set_attributes`;
