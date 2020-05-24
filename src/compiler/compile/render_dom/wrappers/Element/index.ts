@@ -665,28 +665,45 @@ export default class ElementWrapper extends Wrapper {
 		const initial_props = [];
 		const updates = [];
 
+		const all_dependencies = new Set();
+		this.attributes.forEach(attr => {
+			add_to_set(all_dependencies, attr.node.get_dependencies());
+		});
+
 		this.attributes
 			.forEach(attr => {
-				const condition = attr.node.dependencies.size > 0
-					? block.renderer.dirty(Array.from(attr.node.dependencies))
-					: null;
+				const dependencies = attr.node.get_dependencies();
 
+				const condition = dependencies.length > 0 && (dependencies.length !== all_dependencies.size)
+					? block.renderer.dirty(dependencies)
+					: null;
+				const unchanged = dependencies.length === 0;
+
+				let snippet;
 				if (attr.node.is_spread) {
-					const snippet = attr.node.expression.manipulate(block);
+					snippet = attr.node.expression.manipulate(block);
 
 					initial_props.push(snippet);
 
-					updates.push(condition ? x`${condition} && ${snippet}` : x`false`);
+					if (attr.node.expression.node.type !== 'ObjectExpression') {
+						snippet = x`@get_spread_object(${snippet})`;
+					}
 				} else {
 					const metadata = attr.get_metadata();
 					const name = attr.is_indirectly_bound_value()
 						? '__value'
 						: (metadata && metadata.property_name) || fix_attribute_casing(attr.node.name);
-					const snippet = x`{ ${name}: ${attr.get_value(block)} }`;
+					snippet = x`{ ${name}: ${attr.get_value(block)} }`;
 					initial_props.push(snippet);
-
-					updates.push(condition ? x`${condition} && ${snippet}` : x`false`);
 				}
+
+				updates.push(
+					unchanged
+					 ? x`false`
+					 : condition
+					 ? x`${condition} && ${snippet}`
+					 : snippet
+				);
 			});
 
 		block.chunks.init.push(b`
@@ -701,27 +718,29 @@ export default class ElementWrapper extends Wrapper {
 			b`${fn}(${this.var}, ${data});`
 		);
 
-		block.chunks.update.push(b`
-			${fn}(${this.var}, ${data} = @get_spread_update(${levels}, [
-				${updates}
-			]));
-		`);
+		const need_update_data = this.node.name === 'select';
+
+		if (all_dependencies.size > 0) {
+			block.chunks.update.push(b`
+				if (${block.renderer.dirty(Array.from(all_dependencies))}) {
+					${fn}(${this.var}, @get_spread_update(${levels}, [
+						${updates}
+					]));
+					${need_update_data && b`${data} = @get_attributes_for_spread(${levels});`}
+				}
+			`);
+		}
 
 		// handle edge cases for elements
 		if (this.node.name === 'select') {
-			const dependencies = new Set();
-			for (const attr of this.attributes) {
-				for (const dep of attr.node.dependencies) {
-					dependencies.add(dep);
-				}
-			}
-
 			block.chunks.mount.push(b`
 				if (${data}.multiple) @select_options(${this.var}, ${data}.value);
 			`);
-			block.chunks.update.push(b`
-				if (${block.renderer.dirty(Array.from(dependencies))} && ${data}.multiple) @select_options(${this.var}, ${data}.value);
-			`);
+			if (all_dependencies.size > 0) {
+				block.chunks.update.push(b`
+					if (${block.renderer.dirty(Array.from(all_dependencies))} && ${data}.multiple) @select_options(${this.var}, ${data}.value);
+				`);
+			}
 		}
 	}
 
