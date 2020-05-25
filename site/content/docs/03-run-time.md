@@ -288,7 +288,8 @@ The second argument to `readable` is the same as the second argument to `writabl
 import { readable } from 'svelte/store';
 
 const time = readable(null, set => {
-  set(new Date());
+	set(new Date());
+
 	const interval = setInterval(() => {
 		set(new Date());
 	}, 1000);
