@@ -294,7 +294,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 		} else if (unsubscribe && iframe.contentWindow) {
 			unsubscribe();
 		}
-		
+
 		detach(iframe);
 	};
 }
@@ -319,29 +319,36 @@ export class HtmlTag {
 	t: HTMLElement;
 	a: HTMLElement;
 
-	constructor(html: string, anchor: HTMLElement = null) {
-		this.e = element('div');
+	constructor(anchor: HTMLElement = null) {
 		this.a = anchor;
-		this.u(html);
+		this.e = this.n = null;
 	}
 
-	m(target: HTMLElement, anchor: HTMLElement = null) {
-		for (let i = 0; i < this.n.length; i += 1) {
-			insert(target, this.n[i], anchor);
+	m(html: string, target: HTMLElement, anchor: HTMLElement = null) {
+		if (!this.e) {
+			this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
+			this.t = target;
+			this.h(html);
 		}
 
-		this.t = target;
+		this.i(anchor);
 	}
 
-	u(html: string) {
+	h(html) {
 		this.e.innerHTML = html;
 		this.n = Array.from(this.e.childNodes);
 	}
 
+	i(anchor) {
+		for (let i = 0; i < this.n.length; i += 1) {
+			insert(this.t, this.n[i], anchor);
+		}
+	}
+
 	p(html: string) {
 		this.d();
-		this.u(html);
-		this.m(this.t, this.a);
+		this.h(html);
+		this.i(this.a);
 	}
 
 	d() {
