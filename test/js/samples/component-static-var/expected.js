@@ -24,6 +24,7 @@ function create_fragment(ctx) {
 	let t1;
 	let input;
 	let current;
+	let mounted;
 	let dispose;
 	const foo = new Foo({ props: { x: y } });
 	const bar = new Bar({ props: { x: /*z*/ ctx[0] } });
@@ -36,7 +37,7 @@ function create_fragment(ctx) {
 			t1 = space();
 			input = element("input");
 		},
-		m(target, anchor, remount) {
+		m(target, anchor) {
 			mount_component(foo, target, anchor);
 			insert(target, t0, anchor);
 			mount_component(bar, target, anchor);
@@ -44,8 +45,11 @@ function create_fragment(ctx) {
 			insert(target, input, anchor);
 			set_input_value(input, /*z*/ ctx[0]);
 			current = true;
-			if (remount) dispose();
-			dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
+
+			if (!mounted) {
+				dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			const bar_changes = {};
@@ -73,6 +77,7 @@ function create_fragment(ctx) {
 			destroy_component(bar, detaching);
 			if (detaching) detach(t1);
 			if (detaching) detach(input);
+			mounted = false;
 			dispose();
 		}
 	};
