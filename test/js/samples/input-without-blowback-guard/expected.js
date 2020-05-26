@@ -13,6 +13,7 @@ import {
 
 function create_fragment(ctx) {
 	let input;
+	let mounted;
 	let dispose;
 
 	return {
@@ -20,11 +21,14 @@ function create_fragment(ctx) {
 			input = element("input");
 			attr(input, "type", "checkbox");
 		},
-		m(target, anchor, remount) {
+		m(target, anchor) {
 			insert(target, input, anchor);
 			input.checked = /*foo*/ ctx[0];
-			if (remount) dispose();
-			dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
+
+			if (!mounted) {
+				dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*foo*/ 1) {
@@ -35,6 +39,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(input);
+			mounted = false;
 			dispose();
 		}
 	};

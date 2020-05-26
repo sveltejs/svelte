@@ -299,7 +299,7 @@ export default class Block {
 				${this.chunks.mount}
 			}`;
 		} else {
-			properties.mount = x`function #mount(#target, #anchor, #remount) {
+			properties.mount = x`function #mount(#target, #anchor) {
 				${this.chunks.mount}
 			}`;
 		}
@@ -452,6 +452,9 @@ export default class Block {
 
 	render_listeners(chunk: string = '') {
 		if (this.event_listeners.length > 0) {
+			this.add_variable({ type: 'Identifier', name: '#mounted' });
+			this.chunks.destroy.push(b`#mounted = false`);
+
 			const dispose: Identifier = {
 				type: 'Identifier',
 				name: `#dispose${chunk}`
@@ -462,8 +465,10 @@ export default class Block {
 			if (this.event_listeners.length === 1) {
 				this.chunks.mount.push(
 					b`
-						if (#remount) ${dispose}();
-						${dispose} = ${this.event_listeners[0]};
+						if (!#mounted) {
+							${dispose} = ${this.event_listeners[0]};
+							#mounted = true;
+						}
 					`
 				);
 
@@ -472,10 +477,12 @@ export default class Block {
 				);
 			} else {
 				this.chunks.mount.push(b`
-					if (#remount) @run_all(${dispose});
-					${dispose} = [
-						${this.event_listeners}
-					];
+					if (!#mounted) {
+						${dispose} = [
+							${this.event_listeners}
+						];
+						#mounted = true;
+					}
 				`);
 
 				this.chunks.destroy.push(

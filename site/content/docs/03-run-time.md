@@ -287,7 +287,9 @@ The second argument to `readable` is the same as the second argument to `writabl
 ```js
 import { readable } from 'svelte/store';
 
-const time = readable(new Date(), set => {
+const time = readable(null, set => {
+	set(new Date());
+
 	const interval = setInterval(() => {
 		set(new Date());
 	}, 1000);
@@ -521,7 +523,7 @@ $: $size = big ? 100 : 10;
 
 ### `svelte/transition`
 
-The `svelte/transition` module exports six functions: `fade`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with Svelte [`transitions`](docs#transition_fn).
+The `svelte/transition` module exports seven functions: `fade`, `blur`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with Svelte [`transitions`](docs#transition_fn).
 
 #### `fade`
 
