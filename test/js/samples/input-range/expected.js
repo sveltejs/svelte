@@ -16,6 +16,7 @@ import {
 
 function create_fragment(ctx) {
 	let input;
+	let mounted;
 	let dispose;
 
 	return {
@@ -23,15 +24,18 @@ function create_fragment(ctx) {
 			input = element("input");
 			attr(input, "type", "range");
 		},
-		m(target, anchor, remount) {
+		m(target, anchor) {
 			insert(target, input, anchor);
 			set_input_value(input, /*value*/ ctx[0]);
-			if (remount) run_all(dispose);
 
-			dispose = [
-				listen(input, "change", /*input_change_input_handler*/ ctx[1]),
-				listen(input, "input", /*input_change_input_handler*/ ctx[1])
-			];
+			if (!mounted) {
+				dispose = [
+					listen(input, "change", /*input_change_input_handler*/ ctx[1]),
+					listen(input, "input", /*input_change_input_handler*/ ctx[1])
+				];
+
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*value*/ 1) {
@@ -42,6 +46,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(input);
+			mounted = false;
 			run_all(dispose);
 		}
 	};
