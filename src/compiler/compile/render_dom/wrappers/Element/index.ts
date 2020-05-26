@@ -705,10 +705,27 @@ export default class ElementWrapper extends Wrapper {
 		);
 
 		block.chunks.update.push(b`
-			${fn}(${this.var}, @get_spread_update(${levels}, [
+			${fn}(${this.var}, ${data} = @get_spread_update(${levels}, [
 				${updates}
 			]));
 		`);
+
+		// handle edge cases for elements
+		if (this.node.name === 'select') {
+			const dependencies = new Set();
+			for (const attr of this.attributes) {
+				for (const dep of attr.node.dependencies) {
+					dependencies.add(dep);
+				}
+			}
+
+			block.chunks.mount.push(b`
+				if (${data}.multiple) @select_options(${this.var}, ${data}.value);
+			`);
+			block.chunks.update.push(b`
+				if (${block.renderer.dirty(Array.from(dependencies))} && ${data}.multiple) @select_options(${this.var}, ${data}.value);
+			`);
+		}
 	}
 
 	add_transitions(
