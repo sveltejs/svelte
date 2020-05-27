@@ -17,6 +17,7 @@ export type Preprocessor = (options: {
 	content: string;
 	attributes: Record<string, string | boolean>;
 	filename?: string;
+	markup: string;
 }) => Processed | Promise<Processed>;
 
 function parse_attributes(str: string) {
@@ -103,7 +104,8 @@ export default async function preprocess(
 				const processed = await fn({
 					content,
 					attributes: parse_attributes(attributes),
-					filename
+					filename,
+					markup: source
 				});
 				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
 				return processed ? `<script${attributes}>${processed.code}</script>` : match;
@@ -122,7 +124,8 @@ export default async function preprocess(
 				const processed: Processed = await fn({
 					content,
 					attributes: parse_attributes(attributes),
-					filename
+					filename,
+					markup: source
 				});
 				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
 				return processed ? `<style${attributes}>${processed.code}</style>` : match;
