@@ -690,11 +690,10 @@ export default class ElementWrapper extends Wrapper {
 			});
 
 		block.chunks.init.push(b`
-			let ${levels} = [${initial_props}];
-
-			let ${data} = {};
-			for (let #i = 0; #i < ${levels}.length; #i += 1) {
-				${data} = @assign(${data}, ${levels}[#i]);
+			const ${levels} = [${initial_props}];
+			let ${data} = ${levels}[0] || {};
+			for (let i = 1; i < ${levels}.length; i++) {
+				${data} = { ...${data}, ...${levels}[i] };
 			}
 		`);
 

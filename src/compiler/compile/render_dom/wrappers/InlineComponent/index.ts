@@ -241,7 +241,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 						let value_object = value;
 						if (attr.expression.node.type !== 'ObjectExpression') {
-							value_object = x`@get_spread_object(${value})`;
+							value_object = x`typeof (#buffer = ${value}) === 'object' && #buffer !== null ? #buffer : {}`
 						}
 						change_object = value_object;
 					} else {
@@ -265,16 +265,13 @@ export default class InlineComponentWrapper extends Wrapper {
 					];
 				`);
 
-				statements.push(b`
-					for (let #i = 0; #i < ${levels}.length; #i += 1) {
-						${props} = @assign(${props}, ${levels}[#i]);
-					}
-				`);
+				statements.push(b`${props} = @_Object.assign(${props}, ...${levels});`);
 
 				if (all_dependencies.size) {
 					const condition = renderer.dirty(Array.from(all_dependencies));
 
 					updates.push(b`
+						let #buffer;
 						const ${name_changes} = ${condition} ? @get_spread_update(${levels}, [
 							${changes}
 						]) : {}
@@ -424,7 +421,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.chunks.create.push(
-				b`if (${name}) @create_component(${name}.$$.fragment);`
+				b`if (${name} && ${name}.$$.fragment) ${name}.$$.fragment.c();`
 			);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
@@ -465,7 +462,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${munged_bindings}
 						${munged_handlers}
 
-						@create_component(${name}.$$.fragment);
+						if(${name}.$$.fragment) ${name}.$$.fragment.c();
 						@transition_in(${name}.$$.fragment, 1);
 						@mount_component(${name}, ${update_mount_node}, ${anchor});
 					} else {
@@ -500,11 +497,11 @@ export default class InlineComponentWrapper extends Wrapper {
 				${munged_handlers}
 			`);
 
-			block.chunks.create.push(b`@create_component(${name}.$$.fragment);`);
+			block.chunks.create.push(b`if(${name}.$$.fragment) ${name}.$$.fragment.c();`);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
 				block.chunks.claim.push(
-					b`@claim_component(${name}.$$.fragment, ${parent_nodes});`
+					b`if(${name}.$$.fragment) ${name}.$$.fragment.l(${parent_nodes});`
 				);
 			}
 

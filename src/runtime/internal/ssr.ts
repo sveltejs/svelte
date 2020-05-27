@@ -1,5 +1,4 @@
 import { set_current_component, current_component } from './lifecycle';
-import { run_all, blank_object } from './utils';
 import { boolean_attributes } from '../../compiler/compile/render_ssr/handlers/shared/boolean_attributes';
 
 export const invalid_attribute_name_character = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
@@ -56,15 +55,6 @@ export const missing_component = {
 	$$render: () => ''
 };
 
-export function validate_component(component, name) {
-	if (!component || !component.$$render) {
-		if (name === 'svelte:component') name += ' this={...}';
-		throw new Error(`<${name}> is not a valid SSR component. You may need to review your build config to ensure that dependencies are compiled, rather than imported as pre-compiled modules`);
-	}
-
-	return component;
-}
-
 export function debug(file, line, column, values) {
 	console.log(`{@debug} ${file ? file + ' ' : ''}(${line}:${column})`); // eslint-disable-line no-console
 	console.log(values); // eslint-disable-line no-console
@@ -85,7 +75,7 @@ export function create_ssr_component(fn) {
 			on_mount: [],
 			before_update: [],
 			after_update: [],
-			callbacks: blank_object()
+			callbacks: Object.create(null)
 		};
 
 		set_current_component({ $$ });
@@ -111,7 +101,7 @@ export function create_ssr_component(fn) {
 
 			const html = $$render(result, props, {}, options);
 
-			run_all(on_destroy);
+			on_destroy.forEach(v => v());
 
 			return {
 				html,

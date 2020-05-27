@@ -72,32 +72,48 @@ export default function dom(
 
 	const uses_props = component.var_lookup.has('$$props');
 	const uses_rest = component.var_lookup.has('$$restProps');
-	const $$props = uses_props || uses_rest ? `$$new_props` : `$$props`;
+	const uses_$$ = uses_props || uses_rest;
+	const $$props = uses_$$ ? `$$new_props` : `$$props`;
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
 	const omit_props_names = component.get_unique_name('omit_props_names');
-	const compute_rest = x`@compute_rest_props($$props, ${omit_props_names.name})`;
+
 	const rest = uses_rest ? b`
-		const ${omit_props_names.name} = [${props.map(prop => `"${prop.export_name}"`).join(',')}];
-		let $$restProps = ${compute_rest};
+		const ${omit_props_names.name} = [${props.map(prop => `"${prop.export_name}"`)}];
+		const $$restProps = {}; 
+		for (#k in $$props) { 
+			if (!#keys.has(#k) && #k[0] !== '$') { 
+				$$restProps[#k] = $$props[#k];
+			}
+		}
 	` : null;
 
-	const set = (uses_props || uses_rest || writable_props.length > 0 || component.slots.size > 0)
-		? x`
-			${$$props} => {
-				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`)}
-				${uses_rest && !uses_props && x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`}
-				${uses_rest && renderer.invalidate('$$restProps', x`$$restProps = ${compute_rest}`)}
-				${writable_props.map(prop =>
-					b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
-				)}
-				${component.slots.size > 0 &&
-				b`if ('$$scope' in ${$$props}) ${renderer.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
+	const process_new_$$ = b`
+		for (#k in $$new_props) { 
+			if (#k[0] !== '$') {
+			${uses_rest ? b`
+				if (!#keys.has(#k)) { 
+					$$props[#k] = ($$restProps[#k] = $$new_props[#k]);
+				} else {
+					$$props[#k] = $$new_props[#k];
+				}`
+			: b`$$props[#k] = $$new_props[#k];`}
 			}
-		`
-		: null;
-
+		}
+		${uses_props && renderer.invalidate("$$props")}
+		${uses_rest && renderer.invalidate("$$restProps")}
+	`
+	
+	const set = (uses_$$ || writable_props.length > 0 || component.slots.size > 0)
+	? x`${$$props} => {
+		${uses_$$ ? process_new_$$ : null}
+		${writable_props.map(prop => b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`)}
+		${component.slots.size > 0 && b`if ('$$scope' in ${$$props}) ${renderer.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
+	}`
+	: null;
+			
+	const k = set ? b`let #k;` : null
 	const accessors = [];
 
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
@@ -188,7 +204,7 @@ export default function dom(
 		if (uses_props || injectable_vars.length > 0) {
 			inject_state = x`
 				${$$props} => {
-					${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
+					${uses_props && renderer.invalidate('$$props', x`$$props = { ...$$props, ...$$new_props }`)}
 					${injectable_vars.map(
 						v => b`if ('${v.name}' in $$props) ${renderer.invalidate(v.name, x`${v.name} = ${$$props}.${v.name}`)};`
 					)}
@@ -251,7 +267,7 @@ export default function dom(
 
 			const insert = (reassigned || export_name)
 				? b`${`$$subscribe_${name}`}()`
-				: b`@component_subscribe($$self, ${name}, #value => $$invalidate(${i}, ${value} = #value))`;
+				: b`$$self.$$.on_destroy.push(@subscribe(${name}, #value => {$$invalidate(${i}, (${value} = #value));})`;
 
 			if (component.compile_options.dev) {
 				return b`@validate_store(${name}, '${name}'); ${insert}`;
@@ -335,7 +351,9 @@ export default function dom(
 		})
 		.map(({ name }) => b`
 			${component.compile_options.dev && b`@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
-			@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate(${renderer.context_lookup.get(name).index}, ${name} = $$value));
+			$$self.$$.on_destroy.push(@subscribe(${name.slice(1)}, #value => {
+				$$invalidate(${renderer.context_lookup.get(name).index}, (${name} = #value));
+			}));
 		`);
 
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
@@ -386,7 +404,14 @@ export default function dom(
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
 
-				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate(${i}, ${$name} = $$value)), ${name})`;
+				return b`
+				let ${$name}, 
+					${unsubscribe} = @noop,
+					${subscribe} = () => { 
+						${unsubscribe}();
+						${unsubscribe} = @subscribe(${name}, (#value) => { $$invalidate(${i}, (${$name} = #value)); });
+						return ${name};
+					};`;
 			}
 
 			return b`let ${$name};`;
@@ -412,6 +437,8 @@ export default function dom(
 
 		body.push(b`
 			function ${definition}(${args}) {
+				${k}
+
 				${rest}
 
 				${reactive_store_declarations}
@@ -449,7 +476,7 @@ export default function dom(
 
 				${fixed_reactive_declarations}
 
-				${uses_props && b`$$props = @exclude_internal_props($$props);`}
+				${uses_props && b`for (#k in $$props) if (#k[0] === '$') delete $$props[#k];`}
 
 				return ${return_value};
 			}

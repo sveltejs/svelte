@@ -1,5 +1,3 @@
-import { has_prop } from "./utils";
-
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
@@ -26,18 +24,10 @@ export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: s
 	return document.createElement<K>(name, { is });
 }
 
-export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
-	const target = {} as Pick<T, Exclude<keyof T, K>>;
-	for (const k in obj) {
-		if (
-			has_prop(obj, k)
-			// @ts-ignore
-			&& exclude.indexOf(k) === -1
-		) {
-			// @ts-ignore
-			target[k] = obj[k];
-		}
-	}
+export function object_without_properties<T, K extends string[]>(obj: T, excluded: K) {
+	const target = {} as Pick<T, Exclude<keyof T, keyof K>>;
+	let key;
+	for (key in obj) if (!~excluded.indexOf(key)) target[key] = obj[key];
 	return target;
 }
 
@@ -82,6 +72,15 @@ export function self(fn) {
 	return function(event) {
 		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
+	};
+}
+
+export function once(fn) {
+	let ran = false;
+	return function(this: any, ...args) {
+		if (ran) return;
+		ran = true;
+		fn.call(this, ...args);
 	};
 }
 
@@ -307,10 +306,6 @@ export function custom_event<T=any>(type: string, detail?: T) {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, false, false, detail);
 	return e;
-}
-
-export function query_selector_all(selector: string, parent: HTMLElement = document.body) {
-	return Array.from(parent.querySelectorAll(selector));
 }
 
 export class HtmlTag {

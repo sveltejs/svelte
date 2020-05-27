@@ -126,10 +126,15 @@ export default class SlotWrapper extends Wrapper {
 		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
 		const slot_or_fallback = has_fallback ? block.get_unique_name(`${sanitize(slot_name)}_slot_or_fallback`) : slot;
+		const $$scope = renderer.reference('$$scope');
+		const context = x`
+			${slot_definition}[1] && ${get_slot_context_fn} 
+			? @_Object.assign(${$$scope}.ctx.slice(), ${slot_definition}[1](${get_slot_context_fn}(#ctx))) 
+			: ${$$scope}.ctx`;
 
 		block.chunks.init.push(b`
 			const ${slot_definition} = ${renderer.reference('$$slots')}.${slot_name};
-			const ${slot} = @create_slot(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn});
+			const ${slot} = ${slot_definition} && ${slot_definition}[0](${context});
 			${has_fallback ? b`const ${slot_or_fallback} = ${slot} || ${this.fallback.name}(#ctx);` : null}
 		`);
 
@@ -172,7 +177,8 @@ export default class SlotWrapper extends Wrapper {
 
 		const slot_update = b`
 			if (${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
-				@update_slot(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_context_fn});
+				const #changes = @get_slot_changes(${slot_definition}, ${$$scope}, #dirty, ${get_slot_changes_fn})
+				if (#changes) ${slot}.p(${context}, #changes);
 			}
 		`;
 		const fallback_update = has_fallback && fallback_dynamic_dependencies.length > 0 && b`

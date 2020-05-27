@@ -486,7 +486,7 @@ export default class Block {
 				`);
 
 				this.chunks.destroy.push(
-					b`@run_all(${dispose});`
+					b`${dispose}.forEach((#v) => #v());`
 				);
 			}
 		}

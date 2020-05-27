@@ -1,6 +1,6 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
-import { blank_object, is_function, run, run_all, noop } from './utils';
+import { noop } from './utils';
 import { children, detach } from './dom';
 import { transition_in } from './transitions';
 
@@ -59,13 +59,13 @@ export function mount_component(component, target, anchor) {
 
 	// onMount happens before the initial afterUpdate
 	add_render_callback(() => {
-		const new_on_destroy = on_mount.map(run).filter(is_function);
+		const new_on_destroy = on_mount.map(v => v()).filter(v => typeof v === "function");
 		if (on_destroy) {
 			on_destroy.push(...new_on_destroy);
 		} else {
 			// Edge case - component was destroyed immediately,
 			// most likely as a result of a binding initialising
-			run_all(new_on_destroy);
+			new_on_destroy.forEach(v => v());
 		}
 		component.$$.on_mount = [];
 	});
@@ -76,7 +76,7 @@ export function mount_component(component, target, anchor) {
 export function destroy_component(component, detaching) {
 	const $$ = component.$$;
 	if ($$.fragment !== null) {
-		run_all($$.on_destroy);
+		$$.on_destroy.forEach(v => v());
 
 		$$.fragment && $$.fragment.d(detaching);
 
@@ -110,7 +110,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		props,
 		update: noop,
 		not_equal,
-		bound: blank_object(),
+		bound: Object.create(null),
 
 		// lifecycle
 		on_mount: [],
@@ -120,7 +120,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		context: new Map(parent_component ? parent_component.$$.context : []),
 
 		// everything else
-		callbacks: blank_object(),
+		callbacks: Object.create(null),
 		dirty
 	};
 
@@ -139,7 +139,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	$$.update();
 	ready = true;
-	run_all($$.before_update);
+	$$.before_update.forEach(v => v());
 
 	// `false` as a special case of no DOM component
 	$$.fragment = create_fragment ? create_fragment($$.ctx) : false;

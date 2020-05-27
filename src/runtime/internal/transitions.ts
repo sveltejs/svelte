@@ -1,4 +1,4 @@
-import { identity as linear, is_function, noop, run_all } from './utils';
+import { identity as linear, noop } from './utils';
 import { now } from "./environment";
 import { loop } from './loop';
 import { create_rule, delete_rule } from './style_manager';
@@ -36,7 +36,7 @@ export function group_outros() {
 
 export function check_outros() {
 	if (!outros.r) {
-		run_all(outros.c);
+		outros.c.forEach(v => v());
 	}
 	outros = outros.p;
 }
@@ -129,7 +129,8 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 
 			delete_rule(node);
 
-			if (is_function(config)) {
+			if (typeof config === "function") {
+				//@ts-ignore
 				config = config();
 				wait().then(go);
 			} else {
@@ -185,7 +186,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 					if (!--group.r) {
 						// this will result in `end()` being called,
 						// so we don't need to clean up here
-						run_all(group.c);
+						group.c.forEach(v => v());
 					}
 
 					return false;
@@ -201,7 +202,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 		});
 	}
 
-	if (is_function(config)) {
+	if (typeof config === "function") {
 		wait().then(() => {
 			// @ts-ignore
 			config = config();
@@ -313,7 +314,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 								clear_animation();
 							} else {
 								// outro — needs to be coordinated
-								if (!--running_program.group.r) run_all(running_program.group.c);
+								if (!--running_program.group.r) running_program.group.c.forEach(v => v());
 							}
 						}
 
@@ -334,7 +335,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 
 	return {
 		run(b) {
-			if (is_function(config)) {
+			if (typeof config === "function") {
 				wait().then(() => {
 					// @ts-ignore
 					config = config();

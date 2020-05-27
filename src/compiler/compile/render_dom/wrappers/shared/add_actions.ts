@@ -29,11 +29,11 @@ export function add_action(block: Block, target: string, action: Action) {
 	const fn = block.renderer.reference(action.name);
 
 	block.event_listeners.push(
-		x`@action_destroyer(${id} = ${fn}.call(null, ${target}, ${snippet}))`
+		x`(${id} = ${fn}.call(null, ${target}, ${snippet})) && 'function' === typeof ${id}.destroy ? ${id}.destroy : @noop`
 	);
 
 	if (dependencies && dependencies.length > 0) {
-		let condition = x`${id} && @is_function(${id}.update)`;
+		let condition = x`${id} && "function" === typeof ${id}.update`;
 
 		if (dependencies.length > 0) {
 			condition = x`${condition} && ${block.renderer.dirty(dependencies)}`;

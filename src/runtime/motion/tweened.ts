@@ -1,5 +1,5 @@
 import { Readable, writable } from 'svelte/store';
-import { assign, loop, now, Task } from 'svelte/internal';
+import { loop, now, Task } from 'svelte/internal';
 import { linear } from 'svelte/easing';
 import { is_date } from './utils';
 
@@ -91,7 +91,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 			duration = 400,
 			easing = linear,
 			interpolate = get_interpolator
-		} = assign(assign({}, defaults), opts);
+		} = { ...defaults, ...opts };
 
 		if (duration === 0) {
 			if (previous_task) {

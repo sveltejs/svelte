@@ -1,4 +1,4 @@
-import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
+import { subscribe, noop, safe_not_equal } from 'svelte/internal';
 
 /** Callback to inform of a value updates. */
 type Subscriber<T> = (value: T) => void;
@@ -169,7 +169,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			if (auto) {
 				set(result as T);
 			} else {
-				cleanup = is_function(result) ? result as Unsubscriber : noop;
+				cleanup = "function" === typeof result ? result as Unsubscriber : noop;
 			}
 		};
 
@@ -191,7 +191,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 		sync();
 
 		return function stop() {
-			run_all(unsubscribers);
+			unsubscribers.forEach(v => v());
 			cleanup();
 		};
 	});
@@ -201,4 +201,8 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
  * Get the current value from a store by subscribing and immediately unsubscribing.
  * @param store readable
  */
-export { get_store_value as get };
+export function get(store) {
+	let value;
+	subscribe(store, _ => value = _)();
+	return value;
+}

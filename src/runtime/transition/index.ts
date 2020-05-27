@@ -1,5 +1,4 @@
 import { cubicOut, cubicInOut, linear } from 'svelte/easing';
-import { assign, is_function } from 'svelte/internal';
 
 type EasingFunction = (t: number) => number;
 
@@ -217,7 +216,8 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 			delay = 0,
 			duration = d => Math.sqrt(d) * 30,
 			easing = cubicOut
-		} = assign(assign({}, defaults), params);
+			//@ts-ignore
+		} = {...defaults, params};
 
 		const to = node.getBoundingClientRect();
 		const dx = from.left - to.left;
@@ -232,7 +232,7 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 
 		return {
 			delay,
-			duration: is_function(duration) ? duration(d) : duration,
+			duration: typeof duration === "function" ? duration(d) : duration,
 			easing,
 			css: (t, u) => `
 				opacity: ${t * opacity};

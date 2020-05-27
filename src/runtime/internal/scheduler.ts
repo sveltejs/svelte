@@ -1,4 +1,3 @@
-import { run_all } from './utils';
 import { set_current_component } from './lifecycle';
 
 export const dirty_components = [];
@@ -43,7 +42,15 @@ export function flush() {
 		for (let i = 0; i < dirty_components.length; i += 1) {
 			const component = dirty_components[i];
 			set_current_component(component);
-			update(component.$$);
+			const { $$ } = component
+			if ($$.fragment !== null) {
+				$$.update();
+				$$.before_update.forEach(v => v());
+				const dirty = $$.dirty;
+				$$.dirty = [-1];
+				$$.fragment && $$.fragment.p($$.ctx, dirty);
+				$$.after_update.forEach(add_render_callback);
+			}
 		}
 
 		dirty_components.length = 0;
@@ -74,16 +81,4 @@ export function flush() {
 	update_scheduled = false;
 	flushing = false;
 	seen_callbacks.clear();
-}
-
-function update($$) {
-	if ($$.fragment !== null) {
-		$$.update();
-		run_all($$.before_update);
-		const dirty = $$.dirty;
-		$$.dirty = [-1];
-		$$.fragment && $$.fragment.p($$.ctx, dirty);
-
-		$$.after_update.forEach(add_render_callback);
-	}
 }

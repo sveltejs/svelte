@@ -1,5 +1,4 @@
 import { cubicOut } from 'svelte/easing';
-import { is_function } from 'svelte/internal';
 
 // todo: same as Transition, should it be shared?
 export interface AnimationConfig {
@@ -35,7 +34,7 @@ export function flip(node: Element, animation: { from: DOMRect; to: DOMRect }, p
 
 	return {
 		delay,
-		duration: is_function(duration) ? duration(d) : duration,
+		duration: typeof duration === "function" ? duration(d) : duration,
 		easing,
 		css: (_t, u) => `transform: ${transform} translate(${u * dx}px, ${u * dy}px);`
 	};

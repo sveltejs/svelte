@@ -13,7 +13,7 @@ export default function(node: AwaitBlock, renderer: Renderer, options: RenderOpt
 
 	renderer.add_expression(x`
 		function(__value) {
-			if (@is_promise(__value)) return ${pending};
+			if (__value && typeof __value === 'object' && typeof __value.then === 'function') return ${pending};
 			return (function(${node.then_node ? node.then_node : ''}) { return ${then}; }(__value));
 		}(${node.expression.node})
 	`);

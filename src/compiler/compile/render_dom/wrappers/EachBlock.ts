@@ -604,6 +604,9 @@ export default class EachBlockWrapper extends Wrapper {
 			`);
 		}
 
-		block.chunks.destroy.push(b`@destroy_each(${iterations}, detaching);`);
+		block.chunks.destroy.push(b`
+		for (let #i = 0; #i < ${iterations}.length; #i += 1) {
+			if (${iterations}[#i]) ${iterations}[#i].d(detaching);
+		}`);
 	}
 }

@@ -1,6 +1,12 @@
 import { custom_event, append, insert, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
 
+export function add_location(element, file, line, column, char) {
+	element.__svelte_meta = {
+		loc: { file, line, column, char }
+	};
+}
+
 export function dispatch_dev<T=any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }));
 }
@@ -79,6 +85,15 @@ export function set_data_dev(text, data) {
 	text.data = data;
 }
 
+export function validate_component(component, name) {
+	if (!component || !component.$$render) {
+		if (name === 'svelte:component') name += ' this={...}';
+		throw new Error(`<${name}> is not a valid SSR component. You may need to review your build config to ensure that dependencies are compiled, rather than imported as pre-compiled modules`);
+	}
+
+	return component;
+}
+
 export function validate_each_argument(arg) {
 	if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
 		let msg = '{#each} only iterates over array-like objects.';
@@ -96,6 +111,24 @@ export function validate_slots(name, slot, keys) {
 		}
 	}
 }
+
+export function validate_store(store, name) {
+	if (store != null && typeof store.subscribe !== 'function') {
+		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
+	}
+}
+
+export function validate_each_keys(ctx, list, get_context, get_key) {
+	const keys = new Set();
+	for (let i = 0; i < list.length; i++) {
+		const key = get_key(get_context(ctx, list, i));
+		if (keys.has(key)) {
+			throw new Error(`Cannot have duplicate keys in a keyed each`);
+		}
+		keys.add(key);
+	}
+}
+
 
 type Props = Record<string, any>;
 export interface SvelteComponentDev {

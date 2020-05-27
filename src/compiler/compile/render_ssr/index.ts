@@ -32,8 +32,14 @@ export default function ssr(
 		component.stylesheet.render(options.filename, true);
 
 	const uses_rest = component.var_lookup.has('$$restProps');
-	const props = component.vars.filter(variable => !variable.module && variable.export_name);
-	const rest = uses_rest ? b`let $$restProps = @compute_rest_props($$props, [${props.map(prop => `"${prop.export_name}"`).join(',')}]);` : null;
+	const props = component.vars.filter((variable => !variable.module && variable.export_name));
+	const rest = uses_rest
+		? b`
+		let #k;
+		const #keys = new Set([${props.map(prop => `"${prop.export_name}"`)}]);
+		let $$restProps = {};
+		for (#k in $$props){ if (!#keys.has(#k) && #k[0] !== '$'){ $$restProps[#k] = $$props[#k];}}`
+		: null;
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 	const reactive_store_values = reactive_stores
@@ -42,7 +48,7 @@ export default function ssr(
 			const store = component.var_lookup.get(store_name);
 			if (store && store.hoistable) return null;
 
-			const assignment = b`${name} = @get_store_value(${store_name});`;
+			const assignment = b`@subscribe(${store_name}, (#v) => { ${name} = #v; })();`;
 
 			return component.compile_options.dev
 				? b`@validate_store(${store_name}, '${store_name}'); ${assignment}`
@@ -50,16 +56,12 @@ export default function ssr(
 		})
 		.filter(Boolean);
 
-	component.rewrite_props(({ name }) => {
-		const value = `$${name}`;
-
-		let insert = b`${value} = @get_store_value(${name})`;
-		if (component.compile_options.dev) {
-			insert = b`@validate_store(${name}, '${name}'); ${insert}`;
-		}
-
-		return insert;
-	});
+	component.rewrite_props(
+		({ name }) =>
+			b`
+			${component.compile_options.dev && b`@validate_store_dev(${name}, '${name}');`}
+			@subscribe(${name}, (#v) => { ${`$${name}`} = #v; })();`
+	);
 
 	const instance_javascript = component.extract_javascript(component.ast.instance);
 
@@ -138,10 +140,9 @@ export default function ssr(
 		...reactive_stores.map(({ name }) => {
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
-			if (store && store.hoistable) {
-				return b`let ${name} = @get_store_value(${store_name});`;
-			}
-			return b`let ${name};`;
+				return b`
+			let ${name}; 
+			${store && store.hoistable && b`@subscribe(${store_name},(#v) => { ${name}=#v; })();`}`;
 		}),
 
 		instance_javascript,
