@@ -23,12 +23,9 @@ describe('parser', () => {
 			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
 
 			try {
-				const { ast } = svelte.compile(
-					input,
-					Object.assign(options, {
-						generate: false,
-					})
-				);
+				const { ast } = svelte.compile(input, Object.assign(options, {
+					generate: false
+				}));
 
 				fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.json`, JSON.stringify(ast, null, '\t'));
 

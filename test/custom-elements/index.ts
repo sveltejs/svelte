@@ -53,7 +53,7 @@ describe('custom-elements', function () {
 		await browser.close();
 	});
 
-	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
+	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === '.') return;
 
 		const solo = /\.solo$/.test(dir);
@@ -94,9 +94,9 @@ describe('custom-elements', function () {
 						},
 					},
 					virtual({
-						assert,
-					}),
-				],
+						assert
+					})
+				]
 			});
 
 			const result = await bundle.generate({ format: 'iife', name: 'test' });
@@ -108,7 +108,7 @@ describe('custom-elements', function () {
 				console[type](...args);
 			});
 
-			page.on('error', (error) => {
+			page.on('error', error => {
 				console.log('>>> an error happened');
 				console.error(error);
 			});
