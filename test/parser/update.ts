@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
+import { glob } from '../tiny-glob';
+
 // this file will replace all the expected.js files with their _actual
 // equivalents. Only use it when you're sure that you haven't
 // broken anything!
@@ -9,8 +10,8 @@ const svelte = (function loadSvelte(test) {
 	delete require.cache[resolved];
 	return require(resolved);
 })(false);
-require(resolve(__dirname, '../tiny-glob.ts'))
-	.glob('samples/*/input.svelte', { cwd: __dirname })
+
+glob('samples/*/input.svelte', { cwd: __dirname })
 	.forEach((file) => {
 		try {
 			writeFileSync(
