@@ -93,7 +93,7 @@ describe('hydration', () => {
 					try {
 						assert.htmlEqual(
 							head.innerHTML, 
-							fs.readFileSync(`${cwd}/_after_head.html`, 'utf-8'))
+							fs.readFileSync(`${cwd}/_after_head.html`, 'utf-8'));
 					} catch (error) {
 						if (shouldUpdateExpected()) {
 							fs.writeFileSync(`${cwd}/_after_head.html`, head.innerHTML);
