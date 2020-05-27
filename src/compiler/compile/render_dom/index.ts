@@ -77,10 +77,8 @@ export default function dom(
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	const omit_props_names = component.get_unique_name('omit_props_names');
-
 	const rest = uses_rest ? b`
-		const ${omit_props_names.name} = [${props.map(prop => `"${prop.export_name}"`)}];
+		const #keys = new Set([${props.map(prop => `"${prop.export_name}"`).join()}]);
 		const $$restProps = {}; 
 		for (#k in $$props) { 
 			if (!#keys.has(#k) && #k[0] !== '$') { 
@@ -405,13 +403,12 @@ export default function dom(
 				const i = renderer.context_lookup.get($name).index;
 
 				return b`
-				let ${$name}, 
-					${unsubscribe} = @noop,
-					${subscribe} = () => { 
-						${unsubscribe}();
-						${unsubscribe} = @subscribe(${name}, (#value) => { $$invalidate(${i}, (${$name} = #value)); });
-						return ${name};
-					};`;
+				let ${$name}, ${unsubscribe} = @noop;
+				const ${subscribe} = () => { 
+					${unsubscribe}();
+					${unsubscribe} = @subscribe(${name}, (#value) => { $$invalidate(${i}, (${$name} = #value)); });
+					return ${name};
+				};`;
 			}
 
 			return b`let ${$name};`;

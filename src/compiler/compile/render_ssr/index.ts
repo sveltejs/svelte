@@ -36,7 +36,7 @@ export default function ssr(
 	const rest = uses_rest
 		? b`
 		let #k;
-		const #keys = new Set([${props.map(prop => `"${prop.export_name}"`)}]);
+		const #keys = new Set([${props.map(prop => `"${prop.export_name}"`).join()}]);
 		let $$restProps = {};
 		for (#k in $$props){ if (!#keys.has(#k) && #k[0] !== '$'){ $$restProps[#k] = $$props[#k];}}`
 		: null;
@@ -59,7 +59,7 @@ export default function ssr(
 	component.rewrite_props(
 		({ name }) =>
 			b`
-			${component.compile_options.dev && b`@validate_store_dev(${name}, '${name}');`}
+			${component.compile_options.dev && b`@validate_store(${name}, '${name}');`}
 			@subscribe(${name}, (#v) => { ${`$${name}`} = #v; })();`
 	);
 
