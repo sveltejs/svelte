@@ -26,6 +26,7 @@
     "test": "mocha --opts mocha.opts",
     "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts",
     "quicktest": "mocha --opts mocha.opts",
+    "update-expected": "node -r sucrase/register ./test/js/update.ts && node -r sucrase/register ./test/parser/update.ts",
     "precoverage": "c8 mocha --opts mocha.coverage.opts",
     "coverage": "c8 report --reporter=text-lcov > coverage.lcov && c8 report --reporter=html",
     "codecov": "codecov",
@@ -88,7 +89,6 @@
     "rollup": "^1.27.14",
     "source-map": "^0.7.3",
     "source-map-support": "^0.5.13",
-    "tiny-glob": "^0.2.6",
     "tslib": "^1.10.0",
     "typescript": "^3.5.3"
   },
