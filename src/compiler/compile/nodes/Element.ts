@@ -750,14 +750,6 @@ export default class Element extends Node {
 					}
 				}
 
-				if (component.compile_options.legacy && (modifier === 'once' || modifier === 'passive')) {
-					// TODO this could be supported, but it would need a few changes to
-					// how event listeners work
-					component.error(handler, {
-						code: 'invalid-event-modifier',
-						message: `The '${modifier}' modifier cannot be used in legacy mode`
-					});
-				}
 			});
 
 			if (passive_events.has(handler.name) && handler.can_make_passive && !handler.modifiers.has('preventDefault')) {

@@ -72,8 +72,6 @@ export default class AttributeWrapper {
 				? '@xlink_attr'
 				: '@attr';
 
-		const is_legacy_input_type = element.renderer.component.compile_options.legacy && name === 'type' && this.parent.node.name === 'input';
-
 		const dependencies = this.node.get_dependencies();
 		const value = this.get_value(block);
 
@@ -94,12 +92,7 @@ export default class AttributeWrapper {
 		let updater;
 		const init = should_cache ? x`${last} = ${value}` : value;
 
-		if (is_legacy_input_type) {
-			block.chunks.hydrate.push(
-				b`@set_input_type(${element.var}, ${init});`
-			);
-			updater = b`@set_input_type(${element.var}, ${should_cache ? last : value});`;
-		} else if (is_select_value_attribute) {
+		if (is_select_value_attribute) {
 			// annoying special case
 			const is_multiple_select = element.node.get_static_attribute_value('multiple');
 

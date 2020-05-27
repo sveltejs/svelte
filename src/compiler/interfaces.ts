@@ -118,7 +118,6 @@ export interface CompileOptions {
 	accessors?: boolean;
 	immutable?: boolean;
 	hydratable?: boolean;
-	legacy?: boolean;
 	customElement?: boolean;
 	tag?: string;
 	css?: boolean;

@@ -20,7 +20,6 @@ const valid_options = [
 	'accessors',
 	'immutable',
 	'hydratable',
-	'legacy',
 	'customElement',
 	'tag',
 	'css',
