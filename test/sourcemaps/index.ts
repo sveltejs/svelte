@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as assert from "assert";
-import { svelte } from "../helpers.js";
+import { svelte } from "../helpers";
 import { SourceMapConsumer } from "source-map";
 import { getLocator } from "locate-character";
 

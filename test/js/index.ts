@@ -2,7 +2,7 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import * as colors from "kleur";
-import { loadConfig, svelte, shouldUpdateExpected } from "../helpers.js";
+import { loadConfig, svelte, shouldUpdateExpected } from "../helpers";
 
 describe("js", () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
