@@ -267,7 +267,7 @@ export default function dom(
 
 			const insert = (reassigned || export_name)
 				? b`${`$$subscribe_${name}`}()`
-				: b`$$self.$$.on_destroy.push(@subscribe(${name}, #value => {$$invalidate(${i}, (${value} = #value));})`;
+				: b`$$self.$$.on_destroy.push(@subscribe(${name}, #value => {$$invalidate(${i}, ${value} = #value);}))`;
 
 			if (component.compile_options.dev) {
 				return b`@validate_store(${name}, '${name}'); ${insert}`;
