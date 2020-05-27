@@ -1,4 +1,4 @@
-const glob = require('tiny-glob/sync.js');
+import { glob } from './tiny-glob'
 
 import './setup';
 
