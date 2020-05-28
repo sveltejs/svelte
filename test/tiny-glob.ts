@@ -272,7 +272,7 @@ export function glob(str: string, { cwd = '.', absolute = false, filesOnly = fal
 	walk(matches, glob.base, path, filesOnly, dot, cwd, '.', 0);
 	return absolute ? matches.map((x) => resolve(cwd, x)) : matches;
 }
-export function replaceIfUpdated(config_getter, cwd) {
+export function replaceIfUpdated(run, cwd) {
 	const svelte = (function loadSvelte() {
 		const resolved = require.resolve("../compiler.js");
 		delete require.cache[resolved];
@@ -287,8 +287,8 @@ export function replaceIfUpdated(config_getter, cwd) {
 				options
 			);
 		}
-		function check_news(file, value) {
-			const path = `${cwd}/${dir.replace("input.svelte", file)}`;
+		function check(target, value) {
+			const path = `${cwd}/${dir.replace("input.svelte", target)}`;
 			try {
 				const previous = readFileSync(path, "utf-8");
 				if (typeof value === "object") {
@@ -312,6 +312,6 @@ export function replaceIfUpdated(config_getter, cwd) {
 			return `${cwd}/${dir.replace("input.svelte", name)}`;
 		}
 
-		config_getter(compile, check_news, get_relative);
+		run(compile, check, get_relative);
 	});
 }
