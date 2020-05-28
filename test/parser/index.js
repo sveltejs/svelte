@@ -38,9 +38,9 @@ describe('parse', () => {
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
 				if (!expectedError) throw err;
-				const { code, message, pos, start, end } = err;
+				const { code, message, pos, start } = err
 				try {
-					assert.deepEqual({ code, message, pos, start, end }, expectedError);
+					assert.deepEqual({ code, message, pos, start }, expectedError);
 				} catch (err2) {
 					const e = err2.code === 'MODULE_NOT_FOUND' ? err : err2;
 					throw e;
