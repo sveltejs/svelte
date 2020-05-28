@@ -57,12 +57,12 @@ export function mount_component(component, target, anchor) {
 		} else {
 			// Edge case - component was destroyed immediately,
 			// most likely as a result of a binding initialising
-			new_on_destroy.forEach(v => v());
+			for (let i = 0; i < new_on_destroy.length; i++) new_on_destroy[i]();
 		}
 		component.$$.on_mount = [];
 	});
 
-	after_update.forEach(add_render_callback);
+	for (let i = 0; i < after_update.length; i++) add_render_callback(after_update);
 }
 
 export function destroy_component(component, detaching) {
