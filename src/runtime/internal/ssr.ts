@@ -101,7 +101,7 @@ export function create_ssr_component(fn) {
 
 			const html = $$render(result, props, {}, options);
 
-			on_destroy.forEach(v => v());
+			for (let i = 0; i < on_destroy.length; i++) on_destroy[i]();
 
 			return {
 				html,

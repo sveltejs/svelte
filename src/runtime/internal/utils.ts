@@ -33,3 +33,5 @@ export function set_store_value(store, ret, value = ret) {
 	store.set(value);
 	return ret;
 }
+
+export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);

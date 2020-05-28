@@ -1,3 +1,5 @@
+import { has_prop } from "./utils";
+
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
@@ -27,7 +29,7 @@ export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: s
 export function object_without_properties<T, K extends string[]>(obj: T, excluded: K) {
 	const target = {} as Pick<T, Exclude<keyof T, keyof K>>;
 	let key;
-	for (key in obj) if (!~excluded.indexOf(key)) target[key] = obj[key];
+	for (key in obj) if (has_prop(obj, key) && !~excluded.indexOf(key)) target[key] = obj[key];
 	return target;
 }
 

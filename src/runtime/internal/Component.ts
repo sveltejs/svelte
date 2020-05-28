@@ -44,14 +44,6 @@ export function bind(component, name, callback) {
 	}
 }
 
-export function create_component(block) {
-	block && block.c();
-}
-
-export function claim_component(block, parent_nodes) {
-	block && block.l(parent_nodes);
-}
-
 export function mount_component(component, target, anchor) {
 	const { fragment, on_mount, on_destroy, after_update } = component.$$;
 
@@ -139,7 +131,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	$$.update();
 	ready = true;
-	$$.before_update.forEach(v => v());
+	for (let i = 0, { before_update } = $$; i < before_update.length; i++) before_update[i]();
 
 	// `false` as a special case of no DOM component
 	$$.fragment = create_fragment ? create_fragment($$.ctx) : false;
