@@ -426,7 +426,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			if (parent_nodes && this.renderer.options.hydratable) {
 				block.chunks.claim.push(
-					b`if (${name}) @claim_component(${name}.$$.fragment, ${parent_nodes});`
+					b`if (${name} && ${name}.$$.fragment) ${name}.$$.fragment.l(${parent_nodes});`
 				);
 			}
 
