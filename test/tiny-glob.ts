@@ -279,13 +279,15 @@ export function replaceIfUpdated(config_getter, cwd) {
 		return require(resolved);
 	})();
 	glob("samples/*/input.svelte", { cwd }).forEach((dir) => {
-		function compile(options){
+		function compile(options) {
 			return svelte.compile(
-				readFileSync(`${cwd}/${dir}`, "utf-8").replace(/\s+$/, "").replace(/\r/g, ""),
+				readFileSync(`${cwd}/${dir}`, "utf-8")
+					.replace(/\s+$/, "")
+					.replace(/\r/g, ""),
 				options
-			)
+			);
 		}
-		function check_news(file, value){
+		function check_news(file, value) {
 			const path = `${cwd}/${dir.replace("input.svelte", file)}`;
 			try {
 				const previous = readFileSync(path, "utf-8");
@@ -301,14 +303,15 @@ export function replaceIfUpdated(config_getter, cwd) {
 					);
 				}
 			} catch (e) {
-				if (typeof value === "object") value = JSON.stringify(value, null, "\t");
+				if (typeof value === "object")
+					value = JSON.stringify(value, null, "\t");
 				writeFileSync(path, value);
 			}
 		}
-		function get_relative(name){
-			return `${cwd}/${dir.replace("input.svelte", name)}`
+		function get_relative(name) {
+			return `${cwd}/${dir.replace("input.svelte", name)}`;
 		}
 
-		config_getter(compile, check_news, get_relative );
+		config_getter(compile, check_news, get_relative);
 	});
 }
