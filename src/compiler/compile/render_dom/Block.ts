@@ -3,6 +3,7 @@ import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
 import { Node, Identifier, ArrayPattern, Literal, CallExpression } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
+import { sanitize_name } from '../utils/stringify';
 
 export interface BlockOptions {
 	parent?: Block;
@@ -465,14 +466,14 @@ export default class Block {
 				node.callee.name === "@listen"
 			) {
 				// b`@listen(ref, "type", args);`
-				const listener = this.get_unique_name(`${(node.arguments[1] as Literal).value}_listener`);
+				const listener = this.get_unique_name(`${sanitize_name((node.arguments[1] as Literal).value)}_listener`);
 				this.add_variable(listener);
 				mount.push(b`${listener} = ${node};`);
 				destroy.push(b`${listener}();`)
 			} else if (
 				node.type === "AssignmentExpression" &&
 				node.left.type === "Identifier" &&
-				node.left.name.endsWith("_action")
+				node.left.name.includes("_action")
 			) {
 				// b`identifier = use_action(args);`
 				mount.push(node);
