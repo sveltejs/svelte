@@ -26,7 +26,7 @@ glob('samples/*/input.svelte', { cwd: __dirname })
 			if (e.name !== 'ParseError') throw e;
 			writeFileSync(
 				`${__dirname}/${file.replace('input.svelte', 'error.json')}`,
-				JSON.stringify({ code:e.code, message: e.message, pos:e.pos, start:e.start, end:e.end }, null, '\t')
+				JSON.stringify({ code:e.code, message: e.message, pos:e.pos, start:e.start }, null, '\t')
 			);
 		}
 	});
