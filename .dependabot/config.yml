@@ -1,0 +1,23 @@
+version: 1
+update_configs:
+  # Keep package.json (& lockfiles) up to date as soon as
+  # new versions are published to the npm registry
+  - package_manager: "javascript"
+    directory: "/"
+    update_schedule: "live"
+    # Apply default reviewer(s), assignee(s) and label to created
+    # pull requests
+    default_reviewers:
+      - "Rich-Harris"
+      - "Conduitry"
+    default_assignees:
+      - "Rich-Harris"
+      - "Conduitry"
+      - "antony"
+    default_labels:
+      - "dependencies"
+    # Enable correct commit message using scope, eg. chore(deps): <pkg> update
+    commit_message:
+      prefix: "fix"
+      prefix_development: "chore"
+      include_scope: true
