@@ -17,7 +17,7 @@ glob('samples/*/input.svelte', { cwd: __dirname })
 			writeFileSync(
 				`${__dirname}/${file.replace('input.svelte', 'output.json')}`,
 				JSON.stringify(
-					svelte.compile(readFileSync(`${__dirname}/${file}`, 'utf-8').replace(/\s+$/, ''), { generate: false }).ast,
+					svelte.compile(readFileSync(`${__dirname}/${file}`, 'utf-8').replace(/\s+$/, '').replace(/\r/g, ''), { generate: false }).ast,
 					null,
 					'\t'
 				)
@@ -26,7 +26,7 @@ glob('samples/*/input.svelte', { cwd: __dirname })
 			if (e.name !== 'ParseError') throw e;
 			writeFileSync(
 				`${__dirname}/${file.replace('input.svelte', 'error.json')}`,
-				JSON.stringify({ ...e, message: e.message }, null, '\t')
+				JSON.stringify({ code:e.code, message: e.message, pos:e.pos, start:e.start, end:e.end }, null, '\t')
 			);
 		}
 	});
