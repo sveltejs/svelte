@@ -111,7 +111,7 @@ export default function dom(
 	}`
 	: null;
 			
-	const k = set ? b`let #k;` : null
+	const k = uses_$$ ? b`let #k;` : null
 	const accessors = [];
 
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;

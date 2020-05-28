@@ -1,7 +1,7 @@
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
-import { Node, Identifier, ArrayPattern } from 'estree';
+import { Node, Identifier, ArrayPattern, Literal, CallExpression } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
 
 export interface BlockOptions {
@@ -450,45 +450,51 @@ export default class Block {
 			: fn;
 	}
 
-	render_listeners(chunk: string = '') {
-		if (this.event_listeners.length > 0) {
-			this.add_variable({ type: 'Identifier', name: '#mounted' });
-			this.chunks.destroy.push(b`#mounted = false`);
+	render_listeners() {
+		if (!this.event_listeners.length) return;
+		const mounted = this.alias(`mounted`);
+		this.add_variable(mounted, x`false`);
 
-			const dispose: Identifier = {
-				type: 'Identifier',
-				name: `#dispose${chunk}`
-			};
+		const mount = [];
+		const destroy = [];
 
-			this.add_variable(dispose);
-
-			if (this.event_listeners.length === 1) {
-				this.chunks.mount.push(
-					b`
-						if (!#mounted) {
-							${dispose} = ${this.event_listeners[0]};
-							#mounted = true;
-						}
-					`
-				);
-
-				this.chunks.destroy.push(
-					b`${dispose}();`
-				);
+		this.event_listeners.forEach((node) => {
+			if (
+				isCallExpression(node) &&
+				node.callee.type === "Identifier" &&
+				node.callee.name === "@listen"
+			) {
+				// b`@listen(ref, "type", args);`
+				const listener = this.get_unique_name(`${(node.arguments[1] as Literal).value}_listener`);
+				this.add_variable(listener);
+				mount.push(b`${listener} = ${node};`);
+				destroy.push(b`${listener}();`)
+			} else if (
+				node.type === "AssignmentExpression" &&
+				node.left.type === "Identifier" &&
+				node.left.name.endsWith("_action")
+			) {
+				// b`identifier = use_action(args);`
+				mount.push(node);
+				destroy.push(b`if (${node.left} && typeof ${node.left}.destroy === "function") ${node.left}.destroy();`)
 			} else {
-				this.chunks.mount.push(b`
-					if (!#mounted) {
-						${dispose} = [
-							${this.event_listeners}
-						];
-						#mounted = true;
-					}
-				`);
-
-				this.chunks.destroy.push(
-					b`${dispose}.forEach((#v) => #v());`
-				);
+				throw new Error(`Forgot to specify logic for event_listener handling`);
 			}
-		}
+		});
+
+		this.chunks.mount.push(b`
+			if (!${mounted}) {
+				${mount}
+				${mounted} = true;
+			}
+		`);
+		this.chunks.destroy.push(
+			b`
+			${destroy}
+			${mounted} = false;
+			`
+		);
 	}
 }
+
+const isCallExpression = (node): node is CallExpression => node.type === "CallExpression"

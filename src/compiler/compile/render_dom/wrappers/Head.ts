@@ -43,7 +43,7 @@ export default class HeadWrapper extends Wrapper {
 
 		if (nodes && this.renderer.options.hydratable) {
 			block.chunks.claim.push(
-				b`${nodes}.forEach(@detach);`
+				b`for(let #i = 0;#i < ${nodes}.length; #i++) @detach(${nodes}[#i]);`
 			);
 		}
 	}
