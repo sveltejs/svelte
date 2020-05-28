@@ -1,10 +1,10 @@
-import { replaceIfUpdated } from "../tiny-glob";
+import { update_expected } from "../update";
 
 // this file will replace all the expected.js files with their _actual
 // equivalents. Only use it when you're sure that you haven't
 // broken anything!
 
-replaceIfUpdated((compile, check) => {
+update_expected((compile, check) => {
 	try {
 		check("output.json", compile({ generate: false }).ast);
 	} catch (e) {
