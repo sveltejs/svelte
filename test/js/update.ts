@@ -1,4 +1,4 @@
-import {replaceIfUpdated } from "../tiny-glob";
+import { update_expected } from "../update";
 
 // this file will replace all the expected.js files with their _actual
 // equivalents. Only use it when you're sure that you haven't
@@ -19,7 +19,8 @@ function loadConfig(file) {
 		throw err;
 	}
 }
-replaceIfUpdated((compile, check, get_relative) => {
+
+update_expected((compile, check, get_relative) => {
 	check(
 		"expected.js",
 		compile(loadConfig(get_relative("_config.js")).options).js.code.replace(
