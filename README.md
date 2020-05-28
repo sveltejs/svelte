@@ -34,11 +34,6 @@ npm install
 
 > Do not use Yarn to install the dependencies, as the specific package versions in `package-lock.json` are used to build and test Svelte.
 
-> Many tests depend on newlines being preserved as `<LF>`. On Windows, you can ensure this by cloning with:
-> ```bash
-> git -c core.autocrlf=false clone https://github.com/sveltejs/svelte.git
-> ```
-
 To build the compiler, and all the other modules included in the package:
 
 ```bash
