@@ -38,7 +38,7 @@ describe('parse', () => {
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
 				if (!expectedError) throw err;
-				const { code, message, pos, start } = err
+				const { code, message, pos, start } = err;
 				try {
 					assert.deepEqual({ code, message, pos, start }, expectedError);
 				} catch (err2) {
