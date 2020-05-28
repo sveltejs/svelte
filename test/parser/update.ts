@@ -1,4 +1,4 @@
-import { update_expected } from "../update";
+import { update_expected } from "../helpers";
 
 export function sanitize_ast(compiled) {
 	return compiled.ast;
