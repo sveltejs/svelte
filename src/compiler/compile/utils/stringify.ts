@@ -5,8 +5,8 @@ export function string_literal(data: string) {
 	};
 }
 
-export function sanitize_name(str){
-	return str.replace(/[^a-zA-Z0-9_$]/g, '_')
+export function sanitize_name(str) {
+	return str.replace(/[^a-zA-Z0-9_$]/g, '_');
 }
 
 export function escape(data: string, { only_escape_at_symbol = false } = {}) {

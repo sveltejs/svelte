@@ -469,7 +469,7 @@ export default class Block {
 				const listener = this.get_unique_name(`${sanitize_name((node.arguments[1] as Literal).value)}_listener`);
 				this.add_variable(listener);
 				mount.push(b`${listener} = ${node};`);
-				destroy.push(b`${listener}();`)
+				destroy.push(b`${listener}();`);
 			} else if (
 				node.type === "AssignmentExpression" &&
 				node.left.type === "Identifier" &&
@@ -477,7 +477,7 @@ export default class Block {
 			) {
 				// b`identifier = use_action(args);`
 				mount.push(node);
-				destroy.push(b`if (${node.left} && typeof ${node.left}.destroy === "function") ${node.left}.destroy();`)
+				destroy.push(b`if (${node.left} && typeof ${node.left}.destroy === "function") ${node.left}.destroy();`);
 			} else {
 				throw new Error(`Forgot to specify logic for event_listener handling`);
 			}
@@ -498,4 +498,4 @@ export default class Block {
 	}
 }
 
-const isCallExpression = (node): node is CallExpression => node.type === "CallExpression"
+const isCallExpression = (node): node is CallExpression => node.type === "CallExpression";

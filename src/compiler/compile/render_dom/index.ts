@@ -101,7 +101,7 @@ export default function dom(
 		}
 		${uses_props && renderer.invalidate("$$props")}
 		${uses_rest && renderer.invalidate("$$restProps")}
-	`
+	`;
 	
 	const set = (uses_$$ || writable_props.length > 0 || component.slots.size > 0)
 	? x`${$$props} => {
@@ -111,7 +111,7 @@ export default function dom(
 	}`
 	: null;
 			
-	const k = uses_$$ ? b`let #k;` : null
+	const k = uses_$$ ? b`let #k;` : null;
 	const accessors = [];
 
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;

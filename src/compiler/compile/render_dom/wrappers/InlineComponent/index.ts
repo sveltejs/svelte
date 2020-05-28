@@ -241,7 +241,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 						let value_object = value;
 						if (attr.expression.node.type !== 'ObjectExpression') {
-							value_object = x`typeof (#buffer = ${value}) === 'object' && #buffer !== null ? #buffer : {}`
+							value_object = x`typeof (#buffer = ${value}) === 'object' && #buffer !== null ? #buffer : {}`;
 						}
 						change_object = value_object;
 					} else {

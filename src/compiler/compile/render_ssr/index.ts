@@ -142,7 +142,7 @@ export default function ssr(
 			const store = component.var_lookup.get(store_name);
 				return b`
 			let ${name}; 
-			${store && store.hoistable && b`@subscribe(${store_name},(#v) => { ${name}=#v; })();`}`;
+			${store && store.hoistable && b`@subscribe(${store_name},(#v) => { ${name} = #v; })();`}`;
 		}),
 
 		instance_javascript,

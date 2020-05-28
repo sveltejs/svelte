@@ -42,7 +42,7 @@ export function flush() {
 		for (let i = 0; i < dirty_components.length; i += 1) {
 			const component = dirty_components[i];
 			set_current_component(component);
-			const { $$ } = component
+			const { $$ } = component;
 			if ($$.fragment !== null) {
 				$$.update();
 				$$.before_update.forEach(v => v());

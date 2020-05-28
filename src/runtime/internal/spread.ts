@@ -4,9 +4,9 @@ export function get_spread_update(levels, updates) {
 	const to_null_out = {};
 	const accounted_for = { $$scope: 1 };
 
-	let i = levels.length,
-		key,
-		n;
+	let i = levels.length;
+	let	key;
+	let	n;
 	while (i--) {
 		if (n = updates[i]) {
 			for (key in levels[i]) {
