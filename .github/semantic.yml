@@ -1,0 +1,23 @@
+# Always validate the PR title AND all the commits
+titleAndCommits: true
+# By default types specified in commitizen/conventional-commit-types is used.
+# See: https://github.com/commitizen/conventional-commit-types/blob/v3.0.0/index.json
+# You can override the valid types
+types:
+  - feat
+  - fix
+  - docs
+  - style
+  - refactor
+  - perf
+  - test
+  - build
+  - ci
+  - chore
+  - revert
+# Allows use of Merge commits (eg on github: "Merge branch 'master' into feature/ride-unicorns")
+# this is only relevant when using commitsOnly: true (or titleAndCommits: true)
+allowMergeCommits: true
+# Allow use of Revert commits (eg on github: "Revert "feat: ride unicorns"")
+# this is only relevant when using commitsOnly: true (or titleAndCommits: true)
+allowRevertCommits: true
