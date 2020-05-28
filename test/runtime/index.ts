@@ -2,7 +2,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
-import { glob } from '../tiny-glob';
+import glob from 'tiny-glob/sync';
 import { clear_loops, flush, set_now, set_raf } from "../../internal";
 
 import {

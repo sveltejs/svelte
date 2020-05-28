@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import { svelte, tryToLoadJson, shouldUpdateExpected } from '../helpers';
+import { sanitize_ast, sanitize_error } from './update';
 
 describe('parse', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
@@ -25,9 +26,7 @@ describe('parse', () => {
 			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
 
 			try {
-				const { ast } = svelte.compile(input, Object.assign(options, {
-					generate: false
-				}));
+				const ast = sanitize_ast(svelte.compile(input, { ...options, generate: false }));
 
 				fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.json`, JSON.stringify(ast, null, '\t'));
 
@@ -38,9 +37,8 @@ describe('parse', () => {
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
 				if (!expectedError) throw err;
-				const { code, message, pos, start } = err;
 				try {
-					assert.deepEqual({ code, message, pos, start }, expectedError);
+					assert.deepEqual(sanitize_error(err), expectedError);
 				} catch (err2) {
 					const e = err2.code === 'MODULE_NOT_FOUND' ? err : err2;
 					throw e;

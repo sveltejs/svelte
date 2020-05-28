@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { glob } from '../tiny-glob';
+import glob from 'tiny-glob/sync';
 
 import {
 	assert,

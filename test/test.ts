@@ -1,4 +1,4 @@
-import { glob } from './tiny-glob';
+import glob from 'tiny-glob/sync';
 
 import './setup';
 
