@@ -152,16 +152,13 @@ export function children(element) {
 }
 
 export function claim_element(nodes, name, attributes, svg) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (node.nodeName === name) {
-			let j = 0;
+	for (let i = 0, j = 0, node, attr; i < nodes.length; i += 1) {
+		if ((node = nodes[i]).nodeName === name) {
 			while (j < node.attributes.length) {
-				const attribute = node.attributes[j];
-				if (attributes[attribute.name]) {
+				if (attributes[attr = node.attributes[j].name]) {
 					j++;
 				} else {
-					node.removeAttribute(attribute.name);
+					node.removeAttribute(attr);
 				}
 			}
 			return nodes.splice(i, 1)[0];
@@ -172,14 +169,12 @@ export function claim_element(nodes, name, attributes, svg) {
 }
 
 export function claim_text(nodes, data) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (node.nodeType === 3) {
+	for (let i = 0, node; i < nodes.length; i += 1) {
+		if ((node = nodes[i]).nodeType === 3) {
 			node.data = '' + data;
 			return nodes.splice(i, 1)[0];
 		}
 	}
-
 	return text(data);
 }
 
@@ -209,10 +204,8 @@ export function set_style(node, key, value, important) {
 }
 
 export function select_option(select, value) {
-	for (let i = 0; i < select.options.length; i += 1) {
-		const option = select.options[i];
-
-		if (option.__value === value) {
+	for (let i = 0, option; i < select.options.length; i += 1) {
+		if ((option = select.options[i]).__value === value) {
 			option.selected = true;
 			return;
 		}
@@ -220,15 +213,13 @@ export function select_option(select, value) {
 }
 
 export function select_options(select, value) {
-	for (let i = 0; i < select.options.length; i += 1) {
-		const option = select.options[i];
-		option.selected = ~value.indexOf(option.__value);
+	for (let i = 0, option; i < select.options.length; i += 1) {
+		(option = select.options[i]).selected = ~value.indexOf(option.__value);
 	}
 }
 
 export function select_value(select) {
-	const selected_option = select.querySelector(':checked') || select.options[0];
-	return selected_option && selected_option.__value;
+	return (select = select.querySelector(':checked') || select.options[0]) && select.__value;
 }
 
 export function select_multiple_value(select) {
