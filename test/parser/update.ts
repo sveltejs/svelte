@@ -1,16 +1,16 @@
 import { update_expected } from "../update";
 
-export function sanitize_ast(compiled){
+export function sanitize_ast(compiled) {
 	return compiled.ast;
 }
 
-export function sanitize_error(e){
+export function sanitize_error(e) {
 	return {
 		code: e.code,
 		message: e.message,
 		start: e.start,
 		pos: e.pos
-	}
+	};
 }
 
 // this file will replace all the expected.js files with their _actual
