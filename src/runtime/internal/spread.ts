@@ -44,9 +44,9 @@ export function get_spread_update(levels, updates) {
 }
 
 export function get_attributes_for_spread(levels) {
-	let attrs = {};
-	for (let i = 0; i < levels.length; i += 1) {
-		attrs = assign(attrs, levels[i]);
+	const attrs = {};
+	for (let i = 0; i < levels.length; i++) {
+		assign(attrs, levels[i++]);
 	}
 	return attrs;
 }
