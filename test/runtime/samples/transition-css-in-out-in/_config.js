@@ -16,5 +16,5 @@ export default {
 
 		// reset original styles
 		assert.equal(div.style.animation, `__svelte_3809512021_1 100ms linear 0ms 1 both`);
-	},
+	}
 };

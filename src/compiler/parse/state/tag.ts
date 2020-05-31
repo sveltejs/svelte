@@ -25,16 +25,16 @@ const specials = new Map([
 		'script',
 		{
 			read: read_script,
-			property: 'js',
-		},
+			property: 'js'
+		}
 	],
 	[
 		'style',
 		{
 			read: read_style,
-			property: 'css',
-		},
-	],
+			property: 'css'
+		}
+	]
 ]);
 
 const SELF = /^svelte:self(?=[\s/>])/;
@@ -63,7 +63,7 @@ export default function tag(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'Comment',
-			data,
+			data
 		});
 
 		return;
@@ -116,7 +116,7 @@ export default function tag(parser: Parser) {
 		type,
 		name,
 		attributes: [],
-		children: [],
+		children: []
 	};
 
 	parser.allow_whitespace();
@@ -424,7 +424,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		end,
 		type: 'Attribute',
 		name,
-		value,
+		value
 	};
 }
 
@@ -491,7 +491,7 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 				start: index,
 				end: parser.index,
 				type: 'MustacheTag',
-				expression,
+				expression
 			});
 
 			current_chunk = {

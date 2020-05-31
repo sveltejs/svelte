@@ -33,5 +33,5 @@ export default {
 			<input>
 			<p>HE</p>
 		`);
-	},
+	}
 };

@@ -52,7 +52,7 @@ const subscriber_queue = [];
  */
 export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
 	return {
-		subscribe: writable(value, start).subscribe,
+		subscribe: writable(value, start).subscribe
 	};
 }
 

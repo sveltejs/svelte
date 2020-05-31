@@ -7,7 +7,7 @@ export default {
 
 		return {
 			nullText,
-			undefinedText,
+			undefinedText
 		};
 	},
 
@@ -17,5 +17,5 @@ export default {
 
 		assert.equal(nullText, snapshot.nullText);
 		assert.equal(undefinedText, snapshot.undefinedText);
-	},
+	}
 };

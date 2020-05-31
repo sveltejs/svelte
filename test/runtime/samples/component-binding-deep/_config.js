@@ -21,5 +21,5 @@ export default {
 			<input>
 			<p>blah</p>
 		`);
-	},
+	}
 };

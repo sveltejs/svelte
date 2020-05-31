@@ -7,7 +7,7 @@ function callback(_value) {
 
 export default {
 	props: {
-		callback,
+		callback
 	},
 	async test({ assert, component, target, window }) {
 		assert.equal(called, 1);
