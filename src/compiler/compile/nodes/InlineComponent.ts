@@ -38,50 +38,50 @@ export default class InlineComponent extends Node {
 		info.attributes.forEach(node => {
 			/* eslint-disable no-fallthrough */
 			switch (node.type) {
-				case 'Action':
+			case 'Action':
+				component.error(node, {
+					code: `invalid-action`,
+					message: `Actions can only be applied to DOM elements, not components`
+				});
+
+			case 'Attribute':
+				if (node.name === 'slot') {
 					component.error(node, {
-						code: `invalid-action`,
-						message: `Actions can only be applied to DOM elements, not components`
+						code: `invalid-prop`,
+						message: `'slot' is reserved for future use in named slots`
 					});
+				}
+				// fallthrough
+			case 'Spread':
+				this.attributes.push(new Attribute(component, this, scope, node));
+				break;
 
-				case 'Attribute':
-					if (node.name === 'slot') {
-						component.error(node, {
-							code: `invalid-prop`,
-							message: `'slot' is reserved for future use in named slots`
-						});
-					}
-					// fallthrough
-				case 'Spread':
-					this.attributes.push(new Attribute(component, this, scope, node));
-					break;
+			case 'Binding':
+				this.bindings.push(new Binding(component, this, scope, node));
+				break;
 
-				case 'Binding':
-					this.bindings.push(new Binding(component, this, scope, node));
-					break;
+			case 'Class':
+				component.error(node, {
+					code: `invalid-class`,
+					message: `Classes can only be applied to DOM elements, not components`
+				});
 
-				case 'Class':
-					component.error(node, {
-						code: `invalid-class`,
-						message: `Classes can only be applied to DOM elements, not components`
-					});
+			case 'EventHandler':
+				this.handlers.push(new EventHandler(component, this, scope, node));
+				break;
 
-				case 'EventHandler':
-					this.handlers.push(new EventHandler(component, this, scope, node));
-					break;
+			case 'Let':
+				this.lets.push(new Let(component, this, scope, node));
+				break;
 
-				case 'Let':
-					this.lets.push(new Let(component, this, scope, node));
-					break;
+			case 'Transition':
+				component.error(node, {
+					code: `invalid-transition`,
+					message: `Transitions can only be applied to DOM elements, not components`
+				});
 
-				case 'Transition':
-					component.error(node, {
-						code: `invalid-transition`,
-						message: `Transitions can only be applied to DOM elements, not components`
-					});
-
-				default:
-					throw new Error(`Not implemented: ${node.type}`);
+			default:
+				throw new Error(`Not implemented: ${node.type}`);
 			}
 			/* eslint-enable no-fallthrough */
 		});

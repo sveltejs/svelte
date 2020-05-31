@@ -119,61 +119,61 @@ export default class BindingWrapper {
 
 		// special cases
 		switch (this.node.name) {
-			case 'group':
-			{
-				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
+		case 'group':
+		{
+			const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
 
-				block.renderer.add_to_context(`$$binding_groups`);
-				const reference = block.renderer.reference(`$$binding_groups`);
+			block.renderer.add_to_context(`$$binding_groups`);
+			const reference = block.renderer.reference(`$$binding_groups`);
 
-				block.chunks.hydrate.push(
-					b`${reference}[${binding_group}].push(${parent.var});`
-				);
+			block.chunks.hydrate.push(
+				b`${reference}[${binding_group}].push(${parent.var});`
+			);
 
-				block.chunks.destroy.push(
-					b`${reference}[${binding_group}].splice(${reference}[${binding_group}].indexOf(${parent.var}), 1);`
-				);
-				break;
-			}
+			block.chunks.destroy.push(
+				b`${reference}[${binding_group}].splice(${reference}[${binding_group}].indexOf(${parent.var}), 1);`
+			);
+			break;
+		}
 
-			case 'textContent':
-				update_conditions.push(x`${this.snippet} !== ${parent.var}.textContent`);
-				mount_conditions.push(x`${this.snippet} !== void 0`);
-				break;
+		case 'textContent':
+			update_conditions.push(x`${this.snippet} !== ${parent.var}.textContent`);
+			mount_conditions.push(x`${this.snippet} !== void 0`);
+			break;
 
-			case 'innerHTML':
-				update_conditions.push(x`${this.snippet} !== ${parent.var}.innerHTML`);
-				mount_conditions.push(x`${this.snippet} !== void 0`);
-				break;
+		case 'innerHTML':
+			update_conditions.push(x`${this.snippet} !== ${parent.var}.innerHTML`);
+			mount_conditions.push(x`${this.snippet} !== void 0`);
+			break;
 
-			case 'currentTime':
-				update_conditions.push(x`!@_isNaN(${this.snippet})`);
+		case 'currentTime':
+			update_conditions.push(x`!@_isNaN(${this.snippet})`);
+			mount_dom = null;
+			break;
+
+		case 'playbackRate':
+		case 'volume':
+			update_conditions.push(x`!@_isNaN(${this.snippet})`);
+			mount_conditions.push(x`!@_isNaN(${this.snippet})`);
+			break;
+
+		case 'paused':
+		{
+			// this is necessary to prevent audio restarting by itself
+			const last = block.get_unique_name(`${parent.var.name}_is_paused`);
+			block.add_variable(last, x`true`);
+
+			update_conditions.push(x`${last} !== (${last} = ${this.snippet})`);
+			update_dom = b`${parent.var}[${last} ? "pause" : "play"]();`;
+			mount_dom = null;
+			break;
+		}
+
+		case 'value':
+			if (parent.node.get_static_attribute_value('type') === 'file') {
+				update_dom = null;
 				mount_dom = null;
-				break;
-
-			case 'playbackRate':
-			case 'volume':
-				update_conditions.push(x`!@_isNaN(${this.snippet})`);
-				mount_conditions.push(x`!@_isNaN(${this.snippet})`);
-				break;
-
-			case 'paused':
-			{
-				// this is necessary to prevent audio restarting by itself
-				const last = block.get_unique_name(`${parent.var.name}_is_paused`);
-				block.add_variable(last, x`true`);
-
-				update_conditions.push(x`${last} !== (${last} = ${this.snippet})`);
-				update_dom = b`${parent.var}[${last} ? "pause" : "play"]();`;
-				mount_dom = null;
-				break;
 			}
-
-			case 'value':
-				if (parent.node.get_static_attribute_value('type') === 'file') {
-					update_dom = null;
-					mount_dom = null;
-				}
 		}
 
 		if (update_dom) {
@@ -265,11 +265,11 @@ function get_event_handler(
 	name: string,
 	lhs: Node
 ): {
-	uses_context: boolean;
-	mutation: (Node | Node[]);
-	contextual_dependencies: Set<string>;
-	lhs?: Node;
-} {
+		uses_context: boolean;
+		mutation: (Node | Node[]);
+		contextual_dependencies: Set<string>;
+		lhs?: Node;
+	} {
 	const value = get_value_from_dom(renderer, binding.parent, binding);
 	const contextual_dependencies = new Set(binding.node.expression.contextual_dependencies);
 

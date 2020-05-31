@@ -184,7 +184,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			},
 			() => {
 				pending |= (1 << i);
-			}),
+			})
 		);
 
 		inited = true;

@@ -12,8 +12,8 @@ export function escape(data: string, { only_escape_at_symbol = false } = {}) {
 }
 
 const escaped = {
-  '"': '&quot;',
-  "'": '&#39;',
+	'"': '&quot;',
+	"'": '&#39;',
 	'&': '&amp;',
 	'<': '&lt;',
 	'>': '&gt;'

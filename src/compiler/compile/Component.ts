@@ -1362,78 +1362,78 @@ function process_component_options(component: Component, nodes) {
 				const { name } = attribute;
 
 				switch (name) {
-					case 'tag': {
-						const code = 'invalid-tag-attribute';
-						const message = `'tag' must be a string literal`;
-						const tag = get_value(attribute, code, message);
+				case 'tag': {
+					const code = 'invalid-tag-attribute';
+					const message = `'tag' must be a string literal`;
+					const tag = get_value(attribute, code, message);
 
-						if (typeof tag !== 'string' && tag !== null)
-							component.error(attribute, { code, message });
+					if (typeof tag !== 'string' && tag !== null)
+						component.error(attribute, { code, message });
 
-						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
-							component.error(attribute, {
-								code: `invalid-tag-property`,
-								message: `tag name must be two or more words joined by the '-' character`
-							});
-						}
-
-						if (tag && !component.compile_options.customElement) {
-							component.warn(attribute, {
-								code: 'missing-custom-element-compile-options',
-								message: `The 'tag' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?`
-							});
-						}
-
-						component_options.tag = tag;
-						break;
-					}
-
-					case 'namespace': {
-						const code = 'invalid-namespace-attribute';
-						const message = `The 'namespace' attribute must be a string literal representing a valid namespace`;
-						const ns = get_value(attribute, code, message);
-
-						if (typeof ns !== 'string')
-							component.error(attribute, { code, message });
-
-						if (valid_namespaces.indexOf(ns) === -1) {
-							const match = fuzzymatch(ns, valid_namespaces);
-							if (match) {
-								component.error(attribute, {
-									code: `invalid-namespace-property`,
-									message: `Invalid namespace '${ns}' (did you mean '${match}'?)`
-								});
-							} else {
-								component.error(attribute, {
-									code: `invalid-namespace-property`,
-									message: `Invalid namespace '${ns}'`
-								});
-							}
-						}
-
-						component_options.namespace = ns;
-						break;
-					}
-
-					case 'accessors':
-					case 'immutable':
-					case 'preserveWhitespace': {
-						const code = `invalid-${name}-value`;
-						const message = `${name} attribute must be true or false`;
-						const value = get_value(attribute, code, message);
-
-						if (typeof value !== 'boolean')
-							component.error(attribute, { code, message });
-
-						component_options[name] = value;
-						break;
-					}
-
-					default:
+					if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
 						component.error(attribute, {
-							code: `invalid-options-attribute`,
-							message: `<svelte:options> unknown attribute`
+							code: `invalid-tag-property`,
+							message: `tag name must be two or more words joined by the '-' character`
 						});
+					}
+
+					if (tag && !component.compile_options.customElement) {
+						component.warn(attribute, {
+							code: 'missing-custom-element-compile-options',
+							message: `The 'tag' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?`
+						});
+					}
+
+					component_options.tag = tag;
+					break;
+				}
+
+				case 'namespace': {
+					const code = 'invalid-namespace-attribute';
+					const message = `The 'namespace' attribute must be a string literal representing a valid namespace`;
+					const ns = get_value(attribute, code, message);
+
+					if (typeof ns !== 'string')
+						component.error(attribute, { code, message });
+
+					if (valid_namespaces.indexOf(ns) === -1) {
+						const match = fuzzymatch(ns, valid_namespaces);
+						if (match) {
+							component.error(attribute, {
+								code: `invalid-namespace-property`,
+								message: `Invalid namespace '${ns}' (did you mean '${match}'?)`
+							});
+						} else {
+							component.error(attribute, {
+								code: `invalid-namespace-property`,
+								message: `Invalid namespace '${ns}'`
+							});
+						}
+					}
+
+					component_options.namespace = ns;
+					break;
+				}
+
+				case 'accessors':
+				case 'immutable':
+				case 'preserveWhitespace': {
+					const code = `invalid-${name}-value`;
+					const message = `${name} attribute must be true or false`;
+					const value = get_value(attribute, code, message);
+
+					if (typeof value !== 'boolean')
+						component.error(attribute, { code, message });
+
+					component_options[name] = value;
+					break;
+				}
+
+				default:
+					component.error(attribute, {
+						code: `invalid-options-attribute`,
+						message: `<svelte:options> unknown attribute`
+					});
 				}
 			} else {
 				component.error(attribute, {

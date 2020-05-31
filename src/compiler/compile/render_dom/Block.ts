@@ -393,15 +393,15 @@ export default class Block {
 			${this.chunks.declarations}
 
 			${Array.from(this.variables.values()).map(({ id, init }) => {
-				return init
-					? b`let ${id} = ${init}`
-					: b`let ${id}`;
-			})}
+		return init
+			? b`let ${id} = ${init}`
+			: b`let ${id}`;
+	})}
 
 			${this.chunks.init}
 
 			${dev
-				? b`
+		? b`
 					const ${block} = ${return_value};
 					@dispatch_dev("SvelteRegisterBlock", {
 						block: ${block},
@@ -411,9 +411,9 @@ export default class Block {
 						ctx: #ctx
 					});
 					return ${block};`
-				: b`
+		: b`
 					return ${return_value};`
-			}
+}
 		`;
 
 		return body;

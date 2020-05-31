@@ -14,21 +14,21 @@ export default function is_used_as_reference(
 
 	/* eslint-disable no-fallthrough */
 	switch (parent.type) {
-		// disregard the `foo` in `const foo = bar`
-		case 'VariableDeclarator':
-			return node !== parent.id;
+	// disregard the `foo` in `const foo = bar`
+	case 'VariableDeclarator':
+		return node !== parent.id;
 		// disregard the `foo`, `bar` in `function foo(bar){}`
-		case 'FunctionDeclaration':
+	case 'FunctionDeclaration':
 		// disregard the `foo` in `import { foo } from 'foo'`
-		case 'ImportSpecifier':
+	case 'ImportSpecifier':
 		// disregard the `foo` in `import foo from 'foo'`
-		case 'ImportDefaultSpecifier':
+	case 'ImportDefaultSpecifier':
 		// disregard the `foo` in `import * as foo from 'foo'`
-		case 'ImportNamespaceSpecifier':
+	case 'ImportNamespaceSpecifier':
 		// disregard the `foo` in `export { foo }`
-		case 'ExportSpecifier':
-			return false;
-		default:
-			return true;
+	case 'ExportSpecifier':
+		return false;
+	default:
+		return true;
 	}
 }

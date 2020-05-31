@@ -167,55 +167,55 @@ export default class Element extends Node {
 
 		info.attributes.forEach(node => {
 			switch (node.type) {
-				case 'Action':
-					this.actions.push(new Action(component, this, scope, node));
-					break;
+			case 'Action':
+				this.actions.push(new Action(component, this, scope, node));
+				break;
 
-				case 'Attribute':
-				case 'Spread':
-					// special case
-					if (node.name === 'xmlns') this.namespace = node.value[0].data;
+			case 'Attribute':
+			case 'Spread':
+				// special case
+				if (node.name === 'xmlns') this.namespace = node.value[0].data;
 
-					this.attributes.push(new Attribute(component, this, scope, node));
-					break;
+				this.attributes.push(new Attribute(component, this, scope, node));
+				break;
 
-				case 'Binding':
-					this.bindings.push(new Binding(component, this, scope, node));
-					break;
+			case 'Binding':
+				this.bindings.push(new Binding(component, this, scope, node));
+				break;
 
-				case 'Class':
-					this.classes.push(new Class(component, this, scope, node));
-					break;
+			case 'Class':
+				this.classes.push(new Class(component, this, scope, node));
+				break;
 
-				case 'EventHandler':
-					this.handlers.push(new EventHandler(component, this, scope, node));
-					break;
+			case 'EventHandler':
+				this.handlers.push(new EventHandler(component, this, scope, node));
+				break;
 
-				case 'Let': {
-					const l = new Let(component, this, scope, node);
-					this.lets.push(l);
-					const dependencies = new Set([l.name.name]);
+			case 'Let': {
+				const l = new Let(component, this, scope, node);
+				this.lets.push(l);
+				const dependencies = new Set([l.name.name]);
 
-					l.names.forEach(name => {
-						scope.add(name, dependencies, this);
-					});
-					break;
-				}
+				l.names.forEach(name => {
+					scope.add(name, dependencies, this);
+				});
+				break;
+			}
 
-				case 'Transition':
-				{
-					const transition = new Transition(component, this, scope, node);
-					if (node.intro) this.intro = transition;
-					if (node.outro) this.outro = transition;
-					break;
-				}
+			case 'Transition':
+			{
+				const transition = new Transition(component, this, scope, node);
+				if (node.intro) this.intro = transition;
+				if (node.outro) this.outro = transition;
+				break;
+			}
 
-				case 'Animation':
-					this.animation = new Animation(component, this, scope, node);
-					break;
+			case 'Animation':
+				this.animation = new Animation(component, this, scope, node);
+				break;
 
-				default:
-					throw new Error(`Not implemented: ${node.type}`);
+			default:
+				throw new Error(`Not implemented: ${node.type}`);
 			}
 		});
 
