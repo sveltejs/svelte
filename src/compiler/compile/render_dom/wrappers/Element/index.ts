@@ -26,6 +26,7 @@ import { Identifier } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
+import Transition from '../../../nodes/Transition';
 
 const events = [
 	{
@@ -379,8 +380,18 @@ export default class ElementWrapper extends Wrapper {
 
 		this.add_attributes(block);
 		this.add_directives_in_order(block);
-		this.add_transitions(block);
-		this.add_animation(block);
+		const { intro, outro } = this.node;
+		if (intro || outro) {
+			if (intro === outro) {
+				this.add_bidi_transition(block, intro);
+			} else {
+				this.add_intro(block, intro, outro);
+				this.add_outro(block, intro, outro);
+			}
+		}
+		if (this.node.animation) {
+			this.add_animation(block, intro);
+		}
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
 
@@ -728,165 +739,101 @@ export default class ElementWrapper extends Wrapper {
 		}
 	}
 
-	add_transitions(
-		block: Block
-	) {
-		const { intro, outro } = this.node;
-		if (!intro && !outro) return;
+	add_bidi_transition(block: Block, intro: Transition) {
+		const name = block.get_unique_name(`${this.var.name}_transition`);
+		const snippet = intro.expression ? intro.expression.manipulate(block) : null;
 
-		if (intro === outro) {
-			// bidirectional transition
-			const name = block.get_unique_name(`${this.var.name}_transition`);
-			const snippet = intro.expression
-				? intro.expression.manipulate(block)
-				: x`{}`;
+		block.add_variable(name, x`@noop`);
 
-			block.add_variable(name);
+		const fn = this.renderer.reference(intro.name);
 
-			const fn = this.renderer.reference(intro.name);
+		let intro_block = b`${name} = @run_bidirectional_transition(${this.var}, ${fn}, 1, ${snippet});`;
+		let outro_block = b`${name} = @run_bidirectional_transition(${this.var}, ${fn}, 2, ${snippet});`;
 
-			const intro_block = b`
-				@add_render_callback(() => {
-					if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, true);
-					${name}.run(1);
-				});
-			`;
-
-			const outro_block = b`
-				if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, false);
-				${name}.run(0);
-			`;
-
-			if (intro.is_local) {
-				block.chunks.intro.push(b`
-					if (#local) {
-						${intro_block}
-					}
-				`);
-
-				block.chunks.outro.push(b`
-					if (#local) {
-						${outro_block}
-					}
-				`);
-			} else {
-				block.chunks.intro.push(intro_block);
-				block.chunks.outro.push(outro_block);
-			}
-
-			block.chunks.destroy.push(b`if (detaching && ${name}) ${name}.end();`);
+		if (intro.is_local) {
+			intro_block = b`if (#local) {${intro_block}}`;
+			outro_block = b`if (#local) {${outro_block}}`;
 		}
+		block.chunks.intro.push(intro_block);
+		block.chunks.outro.push(outro_block);
 
-		else {
-			const intro_name = intro && block.get_unique_name(`${this.var.name}_intro`);
-			const outro_name = outro && block.get_unique_name(`${this.var.name}_outro`);
-
-			if (intro) {
-				block.add_variable(intro_name);
-				const snippet = intro.expression
-					? intro.expression.manipulate(block)
-					: x`{}`;
-
-				const fn = this.renderer.reference(intro.name);
-
-				let intro_block;
-
-				if (outro) {
-					intro_block = b`
-						@add_render_callback(() => {
-							if (${outro_name}) ${outro_name}.end(1);
-							if (!${intro_name}) ${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
-							${intro_name}.start();
-						});
-					`;
-
-					block.chunks.outro.push(b`if (${intro_name}) ${intro_name}.invalidate();`);
-				} else {
-					intro_block = b`
-						if (!${intro_name}) {
-							@add_render_callback(() => {
-								${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
-								${intro_name}.start();
-							});
-						}
-					`;
-				}
-
-				if (intro.is_local) {
-					intro_block = b`
-						if (#local) {
-							${intro_block}
-						}
-					`;
-				}
-
-				block.chunks.intro.push(intro_block);
-			}
-
-			if (outro) {
-				block.add_variable(outro_name);
-				const snippet = outro.expression
-					? outro.expression.manipulate(block)
-					: x`{}`;
-
-				const fn = this.renderer.reference(outro.name);
-
-				if (!intro) {
-					block.chunks.intro.push(b`
-						if (${outro_name}) ${outro_name}.end(1);
-					`);
-				}
-
-				// TODO hide elements that have outro'd (unless they belong to a still-outroing
-				// group) prior to their removal from the DOM
-				let outro_block = b`
-					${outro_name} = @create_out_transition(${this.var}, ${fn}, ${snippet});
-				`;
-
-				if (outro.is_local) {
-					outro_block = b`
-						if (#local) {
-							${outro_block}
-						}
-					`;
-				}
-
-				block.chunks.outro.push(outro_block);
-
-				block.chunks.destroy.push(b`if (detaching && ${outro_name}) ${outro_name}.end();`);
-			}
+		block.chunks.destroy.push(b`if (detaching) ${name}();`);
+	}
+	add_intro(block: Block, intro: Transition, outro: Transition) {
+		if (outro) {
+			const outro_var = block.alias(`${this.var.name}_outro`);
+			block.chunks.intro.push(b`${outro_var}(1);`);
 		}
+		if (this.node.animation) {
+			const [unfreeze_var, rect_var, stop_animation_var, animationFn, params] = run_animation(this, block);
+			block.chunks.intro.push(b`
+				if (${unfreeze_var}) {
+					${unfreeze_var}();
+					${unfreeze_var} = void 0;
+					${stop_animation_var} = @run_animation(${this.var}, ${rect_var}, ${animationFn}, ${params});
+				}
+			`);
+		}
+		if (!intro) return;
+
+		const [intro_var, node, transitionFn, params] = run_transition(this, block, intro, `intro`);
+		block.add_variable(intro_var, x`@noop`);
+
+		let start_intro;
+		if (intro.is_local)
+			start_intro = b`if (#local) ${intro_var} = @run_transition(${node}, ${transitionFn}, 1, ${params});`;
+		else start_intro = b`${intro_var} = @run_transition(${node}, ${transitionFn}, 1, ${params});`;
+		block.chunks.intro.push(start_intro);
+	}
+	// TODO
+	// hide elements that have outro'd prior to their removal from the DOM
+	// ( ...unless they belong to a still-outroing group )
+	add_outro(block: Block, intro: Transition, outro: Transition) {
+		if (intro) {
+			const intro_var = block.alias(`${this.var.name}_intro`);
+			block.chunks.outro.push(b`${intro_var}();`);
+		}
+		if (!outro) return;
+
+		const [outro_var, node, transitionFn, params] = run_transition(this, block, outro, `outro`);
+		block.add_variable(outro_var, x`@noop`);
+
+		let start_outro;
+		if (outro.is_local) start_outro = b`if (#local) @run_transition(${node}, ${transitionFn}, 2, ${params});`;
+		else start_outro = b`${outro_var} = @run_transition(${node}, ${transitionFn}, 2, ${params});`;
+		block.chunks.outro.push(start_outro);
+
+		block.chunks.destroy.push(b`if (detaching) ${outro_var}();`);
 	}
 
-	add_animation(block: Block) {
-		if (!this.node.animation) return;
+	add_animation(block: Block, intro: Transition) {
+		const intro_var = intro && block.alias(`${this.var.name}_intro`);
 
-		const { outro } = this.node;
+		const [unfreeze_var, rect_var, stop_animation_var, name_var, params_var] = run_animation(this, block);
 
-		const rect = block.get_unique_name('rect');
-		const stop_animation = block.get_unique_name('stop_animation');
-
-		block.add_variable(rect);
-		block.add_variable(stop_animation, x`@noop`);
+		block.add_variable(unfreeze_var);
+		block.add_variable(rect_var);
+		block.add_variable(stop_animation_var, x`@noop`);
 
 		block.chunks.measure.push(b`
-			${rect} = ${this.var}.getBoundingClientRect();
+			${rect_var} = ${this.var}.getBoundingClientRect();
+			${intro && b`${intro_var}();`}
 		`);
 
 		block.chunks.fix.push(b`
-			@fix_position(${this.var});
-			${stop_animation}();
-			${outro && b`@add_transform(${this.var}, ${rect});`}
+			${stop_animation_var}();
+			${unfreeze_var} = @fix_position(${this.var}, ${rect_var});
 		`);
-
-		const params = this.node.animation.expression ? this.node.animation.expression.manipulate(block) : x`{}`;
-
-		const name = this.renderer.reference(this.node.animation.name);
 
 		block.chunks.animate.push(b`
-			${stop_animation}();
-			${stop_animation} = @create_animation(${this.var}, ${rect}, ${name}, ${params});
+			if (${unfreeze_var}) return
+			else {
+				${stop_animation_var}();
+				${stop_animation_var} = @run_animation(${this.var}, ${rect_var}, ${name_var}, ${params_var});
+			}
 		`);
+
+		block.chunks.destroy.push(b`${unfreeze_var} = void 0;`);
 	}
 
 	add_classes(block: Block) {
@@ -994,4 +941,21 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 			}
 		}
 	});
+}
+function run_animation(element: ElementWrapper, block: Block) {
+	return [
+		block.alias('unfreeze'),
+		block.alias('rect'),
+		block.alias('stop_animation'),
+		element.renderer.reference(element.node.animation.name),
+		element.node.animation.expression ? element.node.animation.expression.manipulate(block) : null,
+	];
+}
+function run_transition(element: ElementWrapper, block: Block, transition: Transition, type: string) {
+	return [
+		/* node_intro */ block.alias(`${element.var.name}_${type}`),
+		/* node */ element.var,
+		/* transitionFn */ element.renderer.reference(transition.name),
+		/* params */ transition.expression ? transition.expression.manipulate(block) : null,
+	];
 }

@@ -1,74 +1,62 @@
-import { element } from './dom';
-import { raf } from './environment';
+import { framerate } from './environment';
 
-interface ExtendedDoc extends Document {
-	__svelte_stylesheet: CSSStyleSheet;
-	__svelte_rules: Record<string, true>;
-}
+let documents_uid = 0;
+let running_animations = 0;
 
-const active_docs = new Set<ExtendedDoc>();
-let active = 0;
+const document_uid = new Map();
+const document_stylesheets = new Map();
 
-// https://github.com/darkskyapp/string-hash/blob/master/index.js
-function hash(str: string) {
-	let hash = 5381;
-	let i = str.length;
-
-	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
-	return hash >>> 0;
-}
-
-export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
-	const step = 16.666 / duration;
-	let keyframes = '{\n';
-
-	for (let p = 0; p <= 1; p += step) {
-		const t = a + (b - a) * ease(p);
-		keyframes += p * 100 + `%{${fn(t, 1 - t)}}\n`;
+const current_rules = new Set();
+export const animate_css = /*#__PURE__*/ Function.prototype.call.bind(function animate_css(
+	this: HTMLElement,
+	css: (t: number) => string,
+	duration: number,
+	delay = 0
+) {
+	if (!document_uid.has(this.ownerDocument)) {
+		document_uid.set(this.ownerDocument, documents_uid++);
+		document_stylesheets.set(
+			this.ownerDocument,
+			this.ownerDocument.head.appendChild(this.ownerDocument.createElement('style')).sheet
+		);
 	}
+	let rule = '{\n';
+	for (let t = 0, step = framerate / duration; t < 1; t += step) rule += `${100 * t}%{${css(t)}}\n`;
+	rule += `100% {${css(1)}}\n}`;
 
-	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
-	const name = `__svelte_${hash(rule)}_${uid}`;
-	const doc = node.ownerDocument as ExtendedDoc;
-	active_docs.add(doc);
-	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet);
-	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
+	// darkskyapp/string-hash
+	let i = rule.length, hash = 5381;
+	while (i--) hash = ((hash << 5) - hash) ^ rule.charCodeAt(i);
+	const name = `__svelte_${hash >>> 0}${document_uid.get(this.ownerDocument)}`;
 
-	if (!current_rules[name]) {
-		current_rules[name] = true;
+	if (!current_rules.has(name)) {
+		current_rules.add(name);
+		const stylesheet = document_stylesheets.get(this.ownerDocument);
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
 	}
 
-	const animation = node.style.animation || '';
-	node.style.animation = `${animation ? `${animation}, ` : ``}${name} ${duration}ms linear ${delay}ms 1 both`;
+	const previous = this.style.animation;
+	this.style.animation = `${
+		previous ? `${previous}, ` : ''
+	}${duration}ms linear ${delay}ms 1 normal both running ${name}`;
 
-	active += 1;
-	return name;
-}
+	running_animations++;
 
-export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string) {
-	const previous = (node.style.animation || '').split(', ');
-	const next = previous.filter(name
-		? anim => anim.indexOf(name) < 0 // remove specific animation
-		: anim => anim.indexOf('__svelte') === -1 // remove all Svelte animations
-	);
-	const deleted = previous.length - next.length;
-	if (deleted) {
-		node.style.animation = next.join(', ');
-		active -= deleted;
-		if (!active) clear_rules();
-	}
-}
-
-export function clear_rules() {
-	raf(() => {
-		if (active) return;
-		active_docs.forEach(doc => {
-			const stylesheet = doc.__svelte_stylesheet;
-			let i = stylesheet.cssRules.length;
-			while (i--) stylesheet.deleteRule(i);
-			doc.__svelte_rules = {};
-		});
-		active_docs.clear();
-	});
-}
+	return () => {
+		const prev = (this.style.animation || '').split(', ');
+		const next = prev.filter((anim) => !anim.includes(name));
+		if (prev.length !== next.length) this.style.animation = next.join(', ');
+		if (--running_animations === 0) {
+			document_stylesheets.forEach((stylesheet) => {
+				let i = stylesheet.cssRules.length;
+				while (i--) stylesheet.deleteRule(i);
+			});
+			current_rules.clear();
+			if (1 !== documents_uid) {
+				document_stylesheets.clear();
+				document_uid.clear();
+				documents_uid = 0;
+			}
+		}
+	};
+});

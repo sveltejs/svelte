@@ -451,12 +451,11 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.chunks.update.push(b`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) {
-						@group_outros();
 						const old_component = ${name};
-						@transition_out(old_component.$$.fragment, 1, 0, () => {
-							@destroy_component(old_component, 1);
-						});
-						@check_outros();
+						${block.group_transition_out(
+							(transition_out) =>
+								b`${transition_out}(old_component.$$.fragment, () => { @destroy_component(old_component, 1); }, 0);`
+						)}
 					}
 
 					if (${switch_value}) {

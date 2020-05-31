@@ -1,4 +1,4 @@
-export function noop() {}
+import { noop } from "./environment";
 
 export const identity = x => x;
 
@@ -147,3 +147,8 @@ export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj,
 export function action_destroyer(action_result) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }
+
+export const methodify = /*#__PURE__*/ (function() {
+	const call = Function.prototype.call;
+	return call.bind.bind(call);
+})();

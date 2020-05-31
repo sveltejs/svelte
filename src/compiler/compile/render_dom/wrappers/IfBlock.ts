@@ -434,13 +434,10 @@ export default class IfBlockWrapper extends Wrapper {
 		if (this.needs_update) {
 			const update_mount_node = this.get_update_mount_node(anchor);
 
-			const destroy_old_block = b`
-				@group_outros();
-				@transition_out(${if_blocks}[${previous_block_index}], 1, 1, () => {
-					${if_blocks}[${previous_block_index}] = null;
-				});
-				@check_outros();
-			`;
+			const destroy_old_block = block.group_transition_out(
+				(transition_out) =>
+					b`${transition_out}(${if_blocks}[${previous_block_index}], () => {${if_blocks}[${previous_block_index}] = null;})`
+			);
 
 			const create_new_block = b`
 				${name} = ${if_blocks}[${current_block_type_index}];
@@ -556,11 +553,7 @@ export default class IfBlockWrapper extends Wrapper {
 					if (${branch.condition}) {
 						${enter}
 					} else if (${name}) {
-						@group_outros();
-						@transition_out(${name}, 1, 1, () => {
-							${name} = null;
-						});
-						@check_outros();
+						${block.group_transition_out((transition_out) => b`${transition_out}(${name},() => {${name} = null;})`)}
 					}
 				`);
 			} else {

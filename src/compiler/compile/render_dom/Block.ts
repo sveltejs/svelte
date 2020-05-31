@@ -205,6 +205,10 @@ export default class Block {
 		this.has_animation = true;
 	}
 
+	group_transition_out(fn) {
+		return this.has_outros ? b`@group_transition_out((#transition_out) => { ${fn(x`#transition_out`)} })` : fn(null);
+	}
+
 	add_variable(id: Identifier, init?: Node) {
 		if (this.variables.has(id.name)) {
 			throw new Error(

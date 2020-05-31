@@ -1,10 +1,11 @@
-import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
+import { add_render_callback, flush, schedule_update } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
-import { blank_object, is_function, run, run_all, noop } from './utils';
+import { blank_object, is_function, run, run_all } from './utils';
 import { children, detach } from './dom';
 import { transition_in } from './transitions';
+import { noop } from './environment';
 
-interface Fragment {
+export interface Fragment {
 	key: string|null;
 	first: null;
 	/* create  */ c: () => void;
@@ -20,7 +21,7 @@ interface Fragment {
 	/* destroy */ d: (detaching: 0|1) => void;
 }
 // eslint-disable-next-line @typescript-eslint/class-name-casing
-interface T$$ {
+export interface T$$ {
 	dirty: number[];
 	ctx: null|any;
 	bound: any;
@@ -87,15 +88,6 @@ export function destroy_component(component, detaching) {
 	}
 }
 
-function make_dirty(component, i) {
-	if (component.$$.dirty[0] === -1) {
-		dirty_components.push(component);
-		schedule_update();
-		component.$$.dirty.fill(0);
-	}
-	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
-}
-
 export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
 	const parent_component = current_component;
 	set_current_component(component);
@@ -127,13 +119,18 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	let ready = false;
 
 	$$.ctx = instance
-		? instance(component, prop_values, (i, ret, ...rest) => {
-			const value = rest.length ? rest[0] : ret;
-			if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
-				if ($$.bound[i]) $$.bound[i](value);
-				if (ready) make_dirty(component, i);
-			}
-			return ret;
+		? instance(component, prop_values, (i, res, ...rest) => {
+				if ($$.ctx && not_equal($$.ctx[i], ($$.ctx[i] = rest.length ? rest[0] : res))) {
+					if (i in $$.bound) $$.bound[i]($$.ctx[i]);
+					if (ready) {
+						if (-1 === $$.dirty[0]) {
+							schedule_update(component);
+							$$.dirty.fill(0);
+						}
+						$$.dirty[(i / 31) | 0] |= 1 << i % 31;
+					}
+				}
+				return res;
 		})
 		: [];
 

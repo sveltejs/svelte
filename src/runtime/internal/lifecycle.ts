@@ -2,9 +2,7 @@ import { custom_event } from './dom';
 
 export let current_component;
 
-export function set_current_component(component) {
-	current_component = component;
-}
+export const set_current_component = (component) => (current_component = component);
 
 export function get_current_component() {
 	if (!current_component) throw new Error(`Function called outside component initialization`);

@@ -1,0 +1,1 @@
+export default (arr) => arr.reduce((state, bool, index) => (bool ? (state |= 1 << index) : state), 0);

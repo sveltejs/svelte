@@ -1,89 +1,106 @@
-import { run_all } from './utils';
 import { set_current_component } from './lifecycle';
+import { resolved_promise, now } from './environment';
+import { T$$ } from './Component';
 
-export const dirty_components = [];
-export const intros = { enabled: false };
+let update_scheduled = false;
+let is_flushing = false;
 
+const dirty_components = [];
+
+// todo : remove binding_callbacks export
 export const binding_callbacks = [];
 const render_callbacks = [];
+const measure_callbacks = [];
 const flush_callbacks = [];
 
-const resolved_promise = Promise.resolve();
-let update_scheduled = false;
+// todo : remove add_flush_callback
+export const add_flush_callback = /*#__PURE__*/ Array.prototype.push.bind(flush_callbacks);
+export const add_measure_callback = /*#__PURE__*/ Array.prototype.push.bind(measure_callbacks);
 
-export function schedule_update() {
+const seen_render_callbacks = new Set();
+export const add_render_callback = (fn) => {
+	if (!seen_render_callbacks.has(fn)) {
+		seen_render_callbacks.add(fn);
+		render_callbacks.push(fn);
+	}
+};
+export const schedule_update = (component) => {
+	dirty_components.push(component);
 	if (!update_scheduled) {
 		update_scheduled = true;
 		resolved_promise.then(flush);
 	}
-}
-
-export function tick() {
-	schedule_update();
+};
+export const tick = () => {
+	if (!update_scheduled) {
+		update_scheduled = true;
+		resolved_promise.then(flush);
+	}
 	return resolved_promise;
-}
+};
+export const flush = () => {
+	if (is_flushing) return;
+	else is_flushing = true;
 
-export function add_render_callback(fn) {
-	render_callbacks.push(fn);
-}
-
-export function add_flush_callback(fn) {
-	flush_callbacks.push(fn);
-}
-
-let flushing = false;
-const seen_callbacks = new Set();
-export function flush() {
-	if (flushing) return;
-	flushing = true;
+	let i = 0,
+		j = 0,
+		t = 0,
+		$$: T$$,
+		dirty,
+		before_update,
+		after_update;
 
 	do {
-		// first, call beforeUpdate functions
-		// and update components
-		for (let i = 0; i < dirty_components.length; i += 1) {
-			const component = dirty_components[i];
-			set_current_component(component);
-			update(component.$$);
-		}
+		while (i < dirty_components.length) {
+			({ $$ } = set_current_component(dirty_components[i]));
 
+			// todo : is this check still necessary ?
+			if (null === $$.fragment) continue;
+
+			/* run reactive statements */
+			$$.update();
+
+			/* run beforeUpdate */
+			for (j = 0, { before_update } = $$; j < before_update.length; j++) {
+				before_update[j]();
+			}
+
+			/* update blocks */
+			({ dirty } = $$).dirty = [-1];
+			if (false !== $$.fragment) $$.fragment.p($$.ctx, dirty);
+
+			/* schedule afterUpdate */
+			for (j = 0, { after_update } = $$; j < after_update.length; j++) {
+				add_render_callback(after_update[j]);
+			}
+
+			i = i + 1;
+		}
 		dirty_components.length = 0;
 
-		while (binding_callbacks.length) binding_callbacks.pop()();
+		// update bindings [ ...in reverse order (#3145) ]
+		i = binding_callbacks.length;
+		while (i--) binding_callbacks[i]();
+		binding_callbacks.length = i = 0;
 
-		// then, once components are updated, call
-		// afterUpdate functions. This may cause
-		// subsequent updates...
-		for (let i = 0; i < render_callbacks.length; i += 1) {
-			const callback = render_callbacks[i];
-
-			if (!seen_callbacks.has(callback)) {
-				// ...so guard against infinite loops
-				seen_callbacks.add(callback);
-
-				callback();
-			}
-		}
-
-		render_callbacks.length = 0;
+		// run afterUpdates
+		// todo : remove every non afterUpdate callback from render_callbacks
+		for (; i < render_callbacks.length; i++) render_callbacks[i]();
+		render_callbacks.length = i = 0;
 	} while (dirty_components.length);
-
-	while (flush_callbacks.length) {
-		flush_callbacks.pop()();
-	}
-
+	seen_render_callbacks.clear();
 	update_scheduled = false;
-	flushing = false;
-	seen_callbacks.clear();
-}
 
-function update($$) {
-	if ($$.fragment !== null) {
-		$$.update();
-		run_all($$.before_update);
-		const dirty = $$.dirty;
-		$$.dirty = [-1];
-		$$.fragment && $$.fragment.p($$.ctx, dirty);
-
-		$$.after_update.forEach(add_render_callback);
+	// measurement callbacks for animations
+	for (i = 0, j = flush_callbacks.length; i < measure_callbacks.length; i++) {
+		flush_callbacks[j++] = measure_callbacks[i]();
 	}
-}
+	measure_callbacks.length = i = 0;
+
+	// apply styles
+	// todo : remove every non style callback from flush_callbacks
+	for (t = now(); i < j; i++) flush_callbacks[i](t);
+	flush_callbacks.length = i = j = 0;
+
+	is_flushing = false;
+};

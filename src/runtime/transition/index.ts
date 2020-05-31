@@ -1,110 +1,60 @@
-import { cubicOut, cubicInOut, linear } from 'svelte/easing';
-import { assign, is_function } from 'svelte/internal';
+import { cubicOut, cubicInOut } from 'svelte/easing';
+import { run_duration } from 'svelte/internal';
 
-type EasingFunction = (t: number) => number;
-
-export interface TransitionConfig {
+interface CssAnimationConfig {
 	delay?: number;
 	duration?: number;
-	easing?: EasingFunction;
-	css?: (t: number, u: number) => string;
-	tick?: (t: number, u: number) => void;
+	easing?: (t: number) => number;
+	strategy?: 'reverse' | 'mirror';
 }
 
-interface BlurParams {
-	delay: number;
-	duration: number;
-	easing?: EasingFunction;
-	amount: number;
-	opacity: number;
+export interface CssTransitionConfig extends CssAnimationConfig {
+	css?: (t: number, u?: number) => string;
+	tick?: (t: number, u?: number) => void;
 }
 
-export function blur(node: Element, {
-	delay = 0,
-	duration = 400,
-	easing = cubicInOut,
-	amount = 5,
-	opacity = 0
-}: BlurParams): TransitionConfig {
+type FlyParams = FadingConfig & { x: number; y: number; };
+type BlurParams = FadingConfig & { amount: number; };
+type ScaleParams = FadingConfig & { start: number; };
+type DrawParams = CssAnimationConfig & { speed : number };
+type FadingConfig = CssAnimationConfig & { opacity: number; };
+type MarkedCrossFadeConfig = TimeableConfig & { key: any; };
+export type TimeableConfig = Omit<CssAnimationConfig, 'duration'> & { duration?: number | ((len: number) => number) };
+type CrossFadeConfig = TimeableConfig & { fallback(node: Element, params: TimeableConfig, intro: boolean): CssTransitionConfig; };
+type ElementMap = Map<any, Element>;
+
+export function blur(node: Element, { delay = 0, duration = 400, easing = cubicInOut, amount = 5, opacity = 0 }: BlurParams): CssTransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const f = style.filter === 'none' ? '' : style.filter;
-
 	const od = target_opacity * (1 - opacity);
-
 	return {
 		delay,
 		duration,
 		easing,
-		css: (_t, u) => `opacity: ${target_opacity - (od * u)}; filter: ${f} blur(${u * amount}px);`
+		css: (_t, u) => `opacity: ${target_opacity - od * u}; filter:${f} blur(${u * amount}px);`,
 	};
 }
 
-interface FadeParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
-}
-
-export function fade(node: Element, {
-	delay = 0,
-	duration = 400,
-	easing = linear
-}: FadeParams): TransitionConfig {
+export function fade(node: Element, { delay = 0, duration = 400, easing }: CssAnimationConfig): CssTransitionConfig {
 	const o = +getComputedStyle(node).opacity;
-
-	return {
-		delay,
-		duration,
-		easing,
-		css: t => `opacity: ${t * o}`
-	};
+	return { delay, duration, easing, css: (t) => `opacity: ${t * o};` };
 }
 
-interface FlyParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
-	x: number;
-	y: number;
-	opacity: number;
-}
-
-export function fly(node: Element, {
-	delay = 0,
-	duration = 400,
-	easing = cubicOut,
-	x = 0,
-	y = 0,
-	opacity = 0
-}: FlyParams): TransitionConfig {
+export function fly(node: Element, { delay = 0, duration = 400, easing = cubicOut, x = 0, y = 0, opacity = 0 }: FlyParams ): CssTransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
-	const transform = style.transform === 'none' ? '' : style.transform;
-
+	const prev = style.transform === 'none' ? '' : style.transform;
 	const od = target_opacity * (1 - opacity);
-
 	return {
 		delay,
 		duration,
 		easing,
-		css: (t, u) => `
-			transform: ${transform} translate(${(1 - t) * x}px, ${(1 - t) * y}px);
-			opacity: ${target_opacity - (od * u)}`
+		css: (_t, u) => `transform: ${prev} translate(${u * x}px, ${u * y}px); opacity: ${target_opacity - od * u};`,
 	};
 }
 
-interface SlideParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
-}
-
-export function slide(node: Element, {
-	delay = 0,
-	duration = 400,
-	easing = cubicOut
-}: SlideParams): TransitionConfig {
+export function slide(node: Element, { delay = 0, duration = 400, easing = cubicOut }: CssAnimationConfig): CssTransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const height = parseFloat(style.height);
@@ -114,159 +64,91 @@ export function slide(node: Element, {
 	const margin_bottom = parseFloat(style.marginBottom);
 	const border_top_width = parseFloat(style.borderTopWidth);
 	const border_bottom_width = parseFloat(style.borderBottomWidth);
-
 	return {
 		delay,
 		duration,
 		easing,
-		css: t =>
-			`overflow: hidden;` +
-			`opacity: ${Math.min(t * 20, 1) * opacity};` +
-			`height: ${t * height}px;` +
-			`padding-top: ${t * padding_top}px;` +
-			`padding-bottom: ${t * padding_bottom}px;` +
-			`margin-top: ${t * margin_top}px;` +
-			`margin-bottom: ${t * margin_bottom}px;` +
-			`border-top-width: ${t * border_top_width}px;` +
-			`border-bottom-width: ${t * border_bottom_width}px;`
+		css: (t) => `
+			overflow: hidden;
+			opacity: ${Math.min(t * 20, 1) * opacity};
+			height: ${t * height}px;
+			padding-top: ${t * padding_top}px;
+			padding-bottom: ${t * padding_bottom}px;
+			margin-top: ${t * margin_top}px;
+			margin-bottom: ${t * margin_bottom}px;
+			border-top-width: ${t * border_top_width}px;
+			border-bottom-width: ${t * border_bottom_width}px;`,
 	};
 }
 
-interface ScaleParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
-	start: number;
-	opacity: number;
-}
-
-export function scale(node: Element, {
-	delay = 0,
-	duration = 400,
-	easing = cubicOut,
-	start = 0,
-	opacity = 0
-}: ScaleParams): TransitionConfig {
+export function scale(node: Element, { delay = 0, duration = 400, easing = cubicOut, start = 0, opacity = 0 }: ScaleParams): CssTransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
-
 	const sd = 1 - start;
 	const od = target_opacity * (1 - opacity);
-
 	return {
 		delay,
 		duration,
 		easing,
-		css: (_t, u) => `
-			transform: ${transform} scale(${1 - (sd * u)});
-			opacity: ${target_opacity - (od * u)}
-		`
+		css: (_t, u) => `transform: ${transform} scale(${1 - sd * u}); opacity: ${target_opacity - od * u};`,
 	};
 }
 
-interface DrawParams {
-	delay: number;
-	speed: number;
-	duration: number | ((len: number) => number);
-	easing: EasingFunction;
-}
 
-export function draw(node: SVGElement & { getTotalLength(): number }, {
-	delay = 0,
-	speed,
-	duration,
-	easing = cubicInOut
-}: DrawParams): TransitionConfig {
+export function draw(node: SVGPathElement | SVGGeometryElement, { delay = 0, speed, duration, easing = cubicInOut }: DrawParams): CssTransitionConfig {
 	const len = node.getTotalLength();
-
-	if (duration === undefined) {
-		if (speed === undefined) {
-			duration = 800;
-		} else {
-			duration = len / speed;
-		}
-	} else if (typeof duration === 'function') {
-		duration = duration(len);
-	}
-
-	return {
-		delay,
-		duration,
-		easing,
-		css: (t, u) => `stroke-dasharray: ${t * len} ${u * len}`
-	};
+	if (duration === undefined) duration = speed ? len / speed : 800;
+	else duration = run_duration(duration, len);
+	return { delay, duration, easing, css: (t, u) => `stroke-dasharray: ${t * len} ${u * len};` };
 }
 
-interface CrossfadeParams {
-	delay: number;
-	duration: number | ((len: number) => number);
-	easing: EasingFunction;
-}
+export function crossfade({ delay: default_delay = 0, duration: default_duration = (d) => Math.sqrt(d) * 30, easing: default_easing = cubicOut, fallback }: CrossFadeConfig) {
+	const a: ElementMap = new Map();
+	const b: ElementMap = new Map();
 
-type ClientRectMap = Map<any, { rect: ClientRect }>;
-
-export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
-	fallback: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
-}) {
-	const to_receive: ClientRectMap = new Map();
-	const to_send: ClientRectMap = new Map();
-
-	function crossfade(from: ClientRect, node: Element, params: CrossfadeParams): TransitionConfig {
-		const {
-			delay = 0,
-			duration = d => Math.sqrt(d) * 30,
-			easing = cubicOut
-		} = assign(assign({}, defaults), params);
-
-		const to = node.getBoundingClientRect();
+	const crossfade = (from_node: Element, to_node: Element, { delay = default_delay, easing = default_easing, duration = default_duration }: TimeableConfig ) => {
+		const from = from_node.getBoundingClientRect();
+		const to = to_node.getBoundingClientRect();
 		const dx = from.left - to.left;
 		const dy = from.top - to.top;
 		const dw = from.width / to.width;
 		const dh = from.height / to.height;
-		const d = Math.sqrt(dx * dx + dy * dy);
-
-		const style = getComputedStyle(node);
-		const transform = style.transform === 'none' ? '' : style.transform;
-		const opacity = +style.opacity;
-
+		const { transform, opacity } = getComputedStyle(to_node);
+		const op = +opacity;
+		const prev = transform === 'none' ? '' : transform;
 		return {
 			delay,
-			duration: is_function(duration) ? duration(d) : duration,
 			easing,
+			duration: run_duration(duration, Math.sqrt(dx * dx + dy * dy)),
 			css: (t, u) => `
-				opacity: ${t * opacity};
+				opacity: ${t * op};
 				transform-origin: top left;
-				transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1-t) * dw}, ${t + (1-t) * dh});
-			`
-		};
-	}
-
-	function transition(items: ClientRectMap, counterparts: ClientRectMap, intro: boolean) {
-		return (node: Element, params: CrossfadeParams & { key: any }) => {
-			items.set(params.key, {
-				rect: node.getBoundingClientRect()
-			});
-
+				transform: ${prev} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${t + (1 - t) * dh});
+			`,
+		} as CssTransitionConfig;
+	};
+	
+	const transition = (a: ElementMap, b: ElementMap, is_intro: boolean) => ( node: Element, params: MarkedCrossFadeConfig ) => {
+		const { key } = params;
+		a.set(key, node);
+		if (b.has(key)) {
+			const from_node = b.get(key);
+			b.delete(key);
+			return crossfade(from_node, node, params);
+		} else {
 			return () => {
-				if (counterparts.has(params.key)) {
-					const { rect } = counterparts.get(params.key);
-					counterparts.delete(params.key);
-
-					return crossfade(rect, node, params);
+				if (b.has(key)) {
+					const from_node = b.get(key);
+					b.delete(key);
+					return crossfade(from_node, node, params);
+				} else {
+					a.delete(key);
+					return fallback && fallback(node, params, is_intro);
 				}
-
-				// if the node is disappearing altogether
-				// (i.e. wasn't claimed by the other list)
-				// then we need to supply an outro
-				items.delete(params.key);
-				return fallback && fallback(node, params, intro);
 			};
-		};
-	}
+		}
+	};
 
-	return [
-		transition(to_send, to_receive, false),
-		transition(to_receive, to_send, true)
-	];
+	return [transition(b, a, false), transition(a, b, true)];
 }

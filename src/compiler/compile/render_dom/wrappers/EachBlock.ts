@@ -7,6 +7,7 @@ import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import ElseBlock from '../../nodes/ElseBlock';
 import { Identifier, Node } from 'estree';
+import bit_state from '../../utils/bit_state'
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -423,25 +424,18 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const dynamic = this.block.has_update_method;
 
-		const destroy = this.node.has_animation
-			? (this.block.has_outros
-				? `@fix_and_outro_and_destroy_block`
-				: `@fix_and_destroy_block`)
-			: this.block.has_outros
-				? `@outro_and_destroy_block`
-				: `@destroy_block`;
+		const transition_state = bit_state([dynamic, this.node.has_animation, this.block.has_outros]);
+		const update_keyed_each = (transition_out) =>
+			b`${iterations} = @update_keyed_each(${iterations}, #dirty, #ctx, ${transition_state}, ${get_key}, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context}, ${transition_out});`;
 
 		if (this.dependencies.size) {
 			this.updates.push(b`
 				const ${this.vars.each_block_value} = ${snippet};
 				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
-
-				${this.block.has_outros && b`@group_outros();`}
 				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
 				${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
-				${iterations} = @update_keyed_each(${iterations}, #dirty, ${get_key}, ${dynamic ? 1 : 0}, #ctx, ${this.vars.each_block_value}, ${lookup}, ${update_mount_node}, ${destroy}, ${create_each_block}, ${update_anchor_node}, ${this.vars.get_each_context});
+				${this.block.group_transition_out(update_keyed_each)}
 				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
-				${this.block.has_outros && b`@check_outros();`}
 			`);
 		}
 
@@ -552,20 +546,11 @@ export default class EachBlockWrapper extends Wrapper {
 			let remove_old_blocks;
 
 			if (this.block.has_outros) {
-				const out = block.get_unique_name('out');
-
-				block.chunks.init.push(b`
-					const ${out} = i => @transition_out(${iterations}[i], 1, 1, () => {
-						${iterations}[i] = null;
-					});
-				`);
-				remove_old_blocks = b`
-					@group_outros();
-					for (#i = ${data_length}; #i < ${view_length}; #i += 1) {
-						${out}(#i);
-					}
-					@check_outros();
-				`;
+				remove_old_blocks = this.block.group_transition_out((transition_out) =>
+					b`for (#i = ${data_length}; #i < ${view_length}; #i += 1) {
+						${transition_out}(#i);
+					}`
+				)
 			} else {
 				remove_old_blocks = b`
 					for (${this.block.has_update_method ? null : x`#i = ${data_length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {

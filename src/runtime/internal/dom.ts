@@ -1,4 +1,5 @@
 import { has_prop } from "./utils";
+import { is_cors } from "./environment";
 
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
@@ -234,26 +235,6 @@ export function select_multiple_value(select) {
 	return [].map.call(select.querySelectorAll(':checked'), option => option.__value);
 }
 
-// unfortunately this can't be a constant as that wouldn't be tree-shakeable
-// so we cache the result instead
-let crossorigin: boolean;
-
-export function is_crossorigin() {
-	if (crossorigin === undefined) {
-		crossorigin = false;
-
-		try {
-			if (typeof window !== 'undefined' && window.parent) {
-				void window.parent.document;
-			}
-		} catch (error) {
-			crossorigin = true;
-		}
-	}
-
-	return crossorigin;
-}
-
 export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	const computed_style = getComputedStyle(node);
 	const z_index = (parseInt(computed_style.zIndex) || 0) - 1;
@@ -270,11 +251,9 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	iframe.setAttribute('aria-hidden', 'true');
 	iframe.tabIndex = -1;
 
-	const crossorigin = is_crossorigin();
-
 	let unsubscribe: () => void;
 
-	if (crossorigin) {
+	if (is_cors) {
 		iframe.src = `data:text/html,<script>onresize=function(){parent.postMessage(0,'*')}</script>`;
 		unsubscribe = listen(window, 'message', (event: MessageEvent) => {
 			if (event.source === iframe.contentWindow) fn();
@@ -289,7 +268,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	append(node, iframe);
 
 	return () => {
-		if (crossorigin) {
+		if (is_cors) {
 			unsubscribe();
 		} else if (unsubscribe && iframe.contentWindow) {
 			unsubscribe();
