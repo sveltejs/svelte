@@ -5,7 +5,6 @@ import { now, noop } from './environment';
 import { setFrameTimeout, setTweenTimeout } from './loop';
 import { add_measure_callback } from './scheduler';
 import { animate_css } from './style_manager';
-import { linear } from 'svelte/easing';
 
 type TransitionFn = (node: HTMLElement, params: any) => CssTransitionConfig;
 export type StopResetReverseFn = (t?: number | -1) => StopResetReverseFn | void;
@@ -175,7 +174,7 @@ export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(functio
 					params,
 					end_time - t,
 					start_time > t ? start_time - t : 0,
-					(1 - elapsed_ratio) * (1 - (config.easing || linear)(1 - (end_time - t) / (end_time - start_time)))
+					(1 - elapsed_ratio) * (1 - (config.easing || ((v) => v))(1 - (end_time - t) / (end_time - start_time)))
 				)
 			);
 		else running_bidi.delete(this);

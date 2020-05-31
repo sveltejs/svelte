@@ -51,7 +51,7 @@ export const flush = () => {
 		after_update;
 
 	do {
-		while (i < dirty_components.length) {
+		for (;i < dirty_components.length;i++) {
 			({ $$ } = set_current_component(dirty_components[i]));
 
 			// todo : is this check still necessary ?
@@ -73,8 +73,6 @@ export const flush = () => {
 			for (j = 0, { after_update } = $$; j < after_update.length; j++) {
 				add_render_callback(after_update[j]);
 			}
-
-			i = i + 1;
 		}
 		dirty_components.length = 0;
 
