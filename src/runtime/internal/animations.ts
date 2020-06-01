@@ -1,5 +1,5 @@
-import { identity as linear, noop } from './utils';
-import { now } from './environment';
+import { identity as linear } from './utils';
+import { now, noop } from './environment';
 import { loop } from './loop';
 import { create_rule, delete_rule } from './style_manager';
 import { AnimationConfig } from '../animate';
