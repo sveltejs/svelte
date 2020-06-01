@@ -84,7 +84,7 @@ export const setTweenTimeout = (
 	is_outro = false
 ): TaskCanceller => {
 	let running = true;
-	let t = 1 - (end_time - now) / duration || 0;
+	let t = 1 - (end_time - now()) / duration || 0;
 	if (!is_outro && t <= 1.0) run(t >= 0.0 ? t : 0);
 	unsafe_loop((now) => {
 		if (!running) return false;

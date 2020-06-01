@@ -61,7 +61,7 @@ const swap = (fn, rx) =>
 		? (t) => fn(t, 1 - t)
 		: (t) => fn(1 - t, t);
 
-const mirrored = (fn, rx, easing) => {
+const mirrored = (fn, rx, easing, _start, _end) => {
 	const run = swap(fn, rx);
 	return easing
 		? rx & tx.intro
@@ -76,7 +76,7 @@ const reversed = (fn, rx, easing, start = 0, end = 1) => {
 		? (t) => run(start + difference * easing(t))
 		: (t) => run(start + difference * t);
 };
-export const enum tx {
+const enum tx {
 	intro = 1,
 	outro = 2,
 	reverse = 3,

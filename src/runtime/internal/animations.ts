@@ -2,10 +2,11 @@ import { run_transition } from './transitions';
 import { methodify, noop } from './utils';
 import { CssTransitionConfig } from 'svelte/transition';
 
-type AnimationFn = (node: Element, { from, to }: { from: DOMRect; to: DOMRect }, params: any) => CssTransitionConfig;
+type Rect = DOMRect | ClientRect;
+type AnimationFn = (node: Element, { from, to }: { from: Rect; to: Rect }, params: any) => CssTransitionConfig;
 
 export const run_animation = /*#__PURE__*/ methodify(
-	function run_animation(this: HTMLElement, from: DOMRect, fn: AnimationFn, params = {}) {
+	function run_animation(this: HTMLElement, from: Rect, fn: AnimationFn, params = {}) {
 		if (!from) return noop;
 		return run_transition(
 			this,
@@ -22,7 +23,7 @@ export const run_animation = /*#__PURE__*/ methodify(
 );
 
 export const fix_position = /*#__PURE__*/ methodify(
-	function fix_position(this: HTMLElement, { left, top }: DOMRect) {
+	function fix_position(this: HTMLElement, { left, top }: Rect) {
 		const { position, width, height, transform } = getComputedStyle(this);
 		if (position === 'absolute' || position === 'fixed') return noop;
 		const { position: og_position, width: og_width, height: og_height } = this.style;
