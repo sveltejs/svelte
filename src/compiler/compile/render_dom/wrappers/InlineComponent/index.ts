@@ -133,6 +133,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const { component } = renderer;
 
 		const name = this.var;
+		block.add_variable(name);
 
 		const component_opts = x`{}` as ObjectExpression;
 
@@ -417,7 +418,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 
 				if (${switch_value}) {
-					var ${name} = new ${switch_value}(${switch_props}(#ctx));
+					${name} = new ${switch_value}(${switch_props}(#ctx));
 
 					${munged_bindings}
 					${munged_handlers}
@@ -495,7 +496,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				${(this.node.attributes.length > 0 || this.node.bindings.length > 0) && b`
 				${props && b`let ${props} = ${attribute_object};`}`}
 				${statements}
-				const ${name} = new ${expression}(${component_opts});
+				${name} = new ${expression}(${component_opts});
 
 				${munged_bindings}
 				${munged_handlers}
