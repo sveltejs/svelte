@@ -22,7 +22,7 @@ export default class RawMustacheTagWrapper extends Tag {
 		this.not_static_content();
 	}
 
-	render(block: Block, parent_node: Identifier, _parent_nodes: Identifier) {
+	render(block: Block, parent_node: Identifier) {
 		const in_head = is_head(parent_node);
 
 		const can_use_innerhtml = !in_head && parent_node && !this.prev && !this.next;
