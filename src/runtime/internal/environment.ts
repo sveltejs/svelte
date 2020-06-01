@@ -12,8 +12,7 @@ export const is_cors =
 		}
 	})();
 export const has_Symbol = typeof Symbol === 'function';
-/* eslint-disable no-var */
-declare var global: any;
+declare const global: any;
 export const globals = is_browser ? window : typeof globalThis !== 'undefined' ? globalThis : global;
 export const resolved_promise = Promise.resolve();
 export let now = is_browser ? window.performance.now.bind(window.performance) : Date.now.bind(Date);
