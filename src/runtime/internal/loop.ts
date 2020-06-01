@@ -2,13 +2,13 @@ import { now, raf, framerate, noop } from './environment';
 type TaskCallback = (t: number) => boolean;
 type TaskCanceller = () => void;
 
-let i = 0,
-	j = 0,
-	n = 0,
-	v : TaskCallback;
+let i = 0;
+let j = 0;
+let n = 0;
+let v: TaskCallback;
 
-let running_frame : Array<TaskCallback> = [],
-	next_frame	  : Array<TaskCallback> = [];
+let running_frame: TaskCallback[] = [];
+let	next_frame: TaskCallback[] = [];
 
 const run = (t: number) => {
 	[running_frame, next_frame] = [next_frame, running_frame];
@@ -24,11 +24,11 @@ const run = (t: number) => {
 
 type TimeoutTask = { timestamp: number; callback: (now: number) => void };
 
-const pending_insert_timed	: Array<TimeoutTask> = [],
-	  timed_tasks			: Array<TimeoutTask> = [];
+const pending_insert_timed: TimeoutTask[] = [];
+const timed_tasks: TimeoutTask[] = [];
 
-let pending_inserts = false,
-	running_timed = false;
+let pending_inserts = false;
+let	running_timed = false;
 
 const run_timed = (now: number) => {
 	let last_index = timed_tasks.length - 1;
@@ -79,20 +79,20 @@ export const setTweenTimeout = (
 	stop: (now: number) => void,
 	end_time: number,
 	run: (now: number) => void,
-	duration = end_time - now()
+	duration = end_time - now(),
+	is_outro = false
 ): TaskCanceller => {
 	let running = true;
-	let t = 0.0;
+	let t = 1 - (end_time - now) / duration || 0;
+	if (!is_outro && t <= 1.0) run(t >= 0.0 ? t : 0);
 	unsafe_loop((now) => {
 		if (!running) return false;
-		t = 1.0 - (end_time - now) / duration;
+		t = 1 - (end_time - now) / duration;
 		if (t >= 1.0) return run(1), stop(now), false;
 		if (t >= 0.0) run(t);
 		return running;
 	});
 	return (run_last = false) => {
-		// since outros are cancelled in group by a setFrameTimeout
-		// tick(0, 1) has to be called in here
 		if (run_last) run(1);
 		running = false;
 	};

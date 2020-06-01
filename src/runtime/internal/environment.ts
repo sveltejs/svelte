@@ -21,8 +21,8 @@ export let raf = is_browser ? requestAnimationFrame : noop;
 export let framerate = 1000 / 60;
 /*#__PURE__*/ raf((t1) => {
 	raf((d) => {
-		const f24 = 1000 / 24,
-			f144 = 1000 / 144;
+		const f24 = 1000 / 24;
+		const f144 = 1000 / 144;
 		framerate = (d = d - t1) > f144 ? f144 : d < f24 ? f24 : d;
 	});
 });
@@ -30,4 +30,3 @@ export let framerate = 1000 / 60;
 /* tests only */
 export const set_now = (v) => void (now = v);
 export const set_raf = (fn) => void (raf = fn);
-export const set_framerate = (v) => void (framerate = v);

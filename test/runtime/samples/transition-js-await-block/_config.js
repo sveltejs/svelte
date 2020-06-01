@@ -29,8 +29,8 @@ export default {
 			const ps = document.querySelectorAll('p');
 			assert.equal(ps[1].className, 'pending');
 			assert.equal(ps[0].className, 'then');
-			assert.equal(ps[1].foo, 0.2);
-			assert.equal(ps[0].foo, 0.3);
+			assert.equal(Math.round(ps[1].foo * 10) / 10, 0.2);
+			assert.equal(Math.round(ps[0].foo * 10) / 10, 0.3);
 		});
 	}
 };

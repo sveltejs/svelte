@@ -751,8 +751,8 @@ export default class ElementWrapper extends Wrapper {
 		let outro_block = b`${name} = @run_bidirectional_transition(${this.var}, ${fn}, 2, ${snippet});`;
 
 		if (intro.is_local) {
-			intro_block = b`if (#local) {${intro_block}}`;
-			outro_block = b`if (#local) {${outro_block}}`;
+			intro_block = b`if (#local) { ${intro_block} }`;
+			outro_block = b`if (#local) { ${outro_block} }`;
 		}
 		block.chunks.intro.push(intro_block);
 		block.chunks.outro.push(outro_block);
@@ -777,12 +777,11 @@ export default class ElementWrapper extends Wrapper {
 		if (!intro) return;
 
 		const [intro_var, node, transitionFn, params] = run_transition(this, block, intro, `intro`);
-		block.add_variable(intro_var, x`@noop`);
+		block.add_variable(intro_var, outro ? x`@noop`: null);
 
-		let start_intro;
-		if (intro.is_local)
-			start_intro = b`if (#local) ${intro_var} = @run_transition(${node}, ${transitionFn}, 1, ${params});`;
-		else start_intro = b`${intro_var} = @run_transition(${node}, ${transitionFn}, 1, ${params});`;
+		let start_intro = b`${intro_var} = @run_transition(${node}, ${transitionFn}, 1, ${params});`;
+		if (!outro) start_intro = b`if (!${intro_var}) { ${start_intro} }`;
+		if (intro.is_local) start_intro = b`if (#local) { ${start_intro} }`;
 		block.chunks.intro.push(start_intro);
 	}
 	// TODO
@@ -798,9 +797,8 @@ export default class ElementWrapper extends Wrapper {
 		const [outro_var, node, transitionFn, params] = run_transition(this, block, outro, `outro`);
 		block.add_variable(outro_var, x`@noop`);
 
-		let start_outro;
-		if (outro.is_local) start_outro = b`if (#local) @run_transition(${node}, ${transitionFn}, 2, ${params});`;
-		else start_outro = b`${outro_var} = @run_transition(${node}, ${transitionFn}, 2, ${params});`;
+		let start_outro = b`${outro_var} = @run_transition(${node}, ${transitionFn}, 2, ${params});`;
+		if (outro.is_local) start_outro = b`if (#local) { ${start_outro} }`;
 		block.chunks.outro.push(start_outro);
 
 		block.chunks.destroy.push(b`if (detaching) ${outro_var}();`);

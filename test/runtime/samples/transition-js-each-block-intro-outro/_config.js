@@ -19,9 +19,9 @@ export default {
 		component.visible = false;
 
 		raf.tick(70);
-		assert.equal(divs[0].foo, 0.7);
-		assert.equal(divs[1].foo, 0.7);
-		assert.equal(divs[2].foo, 0.7);
+		assert.equal(divs[0].foo, 0.5);
+		assert.equal(divs[1].foo, 0.5);
+		assert.equal(divs[2].foo, 0.5);
 
 		assert.equal(divs[0].bar, 0.8);
 		assert.equal(divs[1].bar, 0.8);
@@ -30,9 +30,9 @@ export default {
 		component.visible = true;
 
 		raf.tick(100);
-		assert.equal(divs[0].foo, 0.3);
-		assert.equal(divs[1].foo, 0.3);
-		assert.equal(divs[2].foo, 0.3);
+		assert.equal(Math.round(divs[0].foo * 10) / 10, 0.3);
+		assert.equal(Math.round(divs[1].foo * 10) / 10, 0.3);
+		assert.equal(Math.round(divs[2].foo * 10) / 10, 0.3);
 
 		assert.equal(divs[0].bar, 1);
 		assert.equal(divs[1].bar, 1);

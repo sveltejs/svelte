@@ -13,15 +13,9 @@ export default {
 		component.visible = false;
 
 		raf.tick(125);
-		assert.equal(div.foo, 0.75);
+		assert.equal(div.foo, 0.25);
 
 		raf.tick(150);
-		assert.equal(div.foo, 1);
-
-		raf.tick(175);
-		assert.equal(div.foo, 0.75);
-
-		raf.tick(250);
 		assert.equal(div.foo, 0);
 	}
 };

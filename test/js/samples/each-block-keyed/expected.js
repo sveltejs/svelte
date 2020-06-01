@@ -2,7 +2,6 @@
 import {
 	SvelteComponent,
 	append,
-	destroy_block,
 	detach,
 	element,
 	empty,
@@ -79,7 +78,7 @@ function create_fragment(ctx) {
 		p(ctx, [dirty]) {
 			if (dirty & /*things*/ 1) {
 				const each_value = /*things*/ ctx[0];
-				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, destroy_block, create_each_block, each_1_anchor, get_each_context);
+				each_blocks = update_keyed_each(each_blocks, dirty, ctx, 1, get_key, each_value, each_1_lookup, each_1_anchor.parentNode, create_each_block, each_1_anchor, get_each_context);
 			}
 		},
 		i: noop,

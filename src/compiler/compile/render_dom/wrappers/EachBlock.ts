@@ -7,7 +7,7 @@ import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import ElseBlock from '../../nodes/ElseBlock';
 import { Identifier, Node } from 'estree';
-import bit_state from '../../utils/bit_state'
+import bit_state from '../../utils/bit_state';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -434,7 +434,7 @@ export default class EachBlockWrapper extends Wrapper {
 				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].r();`}
 				${this.renderer.options.dev && b`@validate_each_keys(#ctx, ${this.vars.each_block_value}, ${this.vars.get_each_context}, ${get_key});`}
-				${this.block.group_transition_out(update_keyed_each)}
+				${(this.block.has_outros ? this.block.group_transition_out : v => v(null))(update_keyed_each)}
 				${this.node.has_animation && b`for (let #i = 0; #i < ${view_length}; #i += 1) ${iterations}[#i].a();`}
 			`);
 		}
@@ -548,9 +548,12 @@ export default class EachBlockWrapper extends Wrapper {
 			if (this.block.has_outros) {
 				remove_old_blocks = this.block.group_transition_out((transition_out) =>
 					b`for (#i = ${data_length}; #i < ${view_length}; #i += 1) {
-						${transition_out}(#i);
+						const #index = #i;
+						${transition_out}(${iterations}[#index], () => {
+							${iterations}[#index] = null;
+						});
 					}`
-				)
+				);
 			} else {
 				remove_old_blocks = b`
 					for (${this.block.has_update_method ? null : x`#i = ${data_length}`}; #i < ${this.block.has_update_method ? view_length : '#old_length'}; #i += 1) {

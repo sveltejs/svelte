@@ -206,7 +206,7 @@ export default class Block {
 	}
 
 	group_transition_out(fn) {
-		return this.has_outros ? b`@group_transition_out((#transition_out) => { ${fn(x`#transition_out`)} })` : fn(null);
+		return b`@group_transition_out((#transition_out) => { ${fn(x`#transition_out`)} })`;
 	}
 
 	add_variable(id: Identifier, init?: Node) {

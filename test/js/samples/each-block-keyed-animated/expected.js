@@ -2,15 +2,14 @@
 import {
 	SvelteComponent,
 	append,
-	create_animation,
 	detach,
 	element,
 	empty,
-	fix_and_destroy_block,
 	fix_position,
 	init,
 	insert,
 	noop,
+	run_animation,
 	safe_not_equal,
 	set_data,
 	text,
@@ -28,6 +27,7 @@ function create_each_block(key_1, ctx) {
 	let div;
 	let t_value = /*thing*/ ctx[1].name + "";
 	let t;
+	let unfreeze;
 	let rect;
 	let stop_animation = noop;
 
@@ -50,15 +50,18 @@ function create_each_block(key_1, ctx) {
 			rect = div.getBoundingClientRect();
 		},
 		f() {
-			fix_position(div);
 			stop_animation();
+			unfreeze = fix_position(div, rect);
 		},
 		a() {
-			stop_animation();
-			stop_animation = create_animation(div, rect, foo, {});
+			if (unfreeze) return; else {
+				stop_animation();
+				stop_animation = run_animation(div, rect, foo);
+			}
 		},
 		d(detaching) {
 			if (detaching) detach(div);
+			unfreeze = void 0;
 		}
 	};
 }
@@ -95,7 +98,7 @@ function create_fragment(ctx) {
 			if (dirty & /*things*/ 1) {
 				const each_value = /*things*/ ctx[0];
 				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
-				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
+				each_blocks = update_keyed_each(each_blocks, dirty, ctx, 3, get_key, each_value, each_1_lookup, each_1_anchor.parentNode, create_each_block, each_1_anchor, get_each_context);
 				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].a();
 			}
 		},

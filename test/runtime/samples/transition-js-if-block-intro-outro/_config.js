@@ -32,11 +32,11 @@ export default {
 
 		component.visible = false;
 		raf.tick(1300);
-		assert.equal(div.foo, 0.75);
+		assert.equal(div.foo, 0.5);
 		assert.equal(div.bar, 0.75);
 
 		raf.tick(1400);
-		assert.equal(div.foo, 1);
+		assert.equal(div.foo, 0.5);
 		assert.equal(div.bar, 0.5);
 
 		raf.tick(2000);

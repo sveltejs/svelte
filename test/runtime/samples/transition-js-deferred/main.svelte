@@ -40,7 +40,7 @@
 </script>
 
 {#if visible}
-	<div transition:foo>a</div>
+	<div class="foo" transition:foo>a</div>
 {:else}
 	<div transition:bar>b</div>
 {/if}

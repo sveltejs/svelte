@@ -5,6 +5,7 @@ import { now, noop } from './environment';
 import { setFrameTimeout, setTweenTimeout } from './loop';
 import { add_measure_callback } from './scheduler';
 import { animate_css } from './style_manager';
+import { methodify } from './utils';
 
 type TransitionFn = (node: HTMLElement, params: any) => CssTransitionConfig;
 export type StopResetReverseFn = (t?: number | -1) => StopResetReverseFn | void;
@@ -22,9 +23,9 @@ export const transition_out = (block: Fragment, local?) => {
 };
 type TransitionGroup = {
 	/* parent group 		*/ p: TransitionGroup;
-	/* callbacks 			*/ c: ((cancelled: boolean) => void)[];
+	/* callbacks 			*/ c: Array<((cancelled: boolean) => void)>;
 	/* running outros		*/ r: number;
-	/* stop callbacks		*/ s: ((t: number) => void)[];
+	/* stop callbacks		*/ s: Array<((t: number) => void)>;
 	/* outro timeout 		*/ t: number;
 };
 let transition_group: TransitionGroup;
@@ -82,7 +83,7 @@ export const enum tx {
 	bidirectional = 4,
 	animation = 8,
 }
-export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(function transition(
+export const run_transition = /*#__PURE__*/ methodify(function transition(
 	this: HTMLElement,
 	fn: TransitionFn,
 	rx: tx,
@@ -96,11 +97,11 @@ export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(functio
 	
 	let running = true;
 
-	let cancel_css,
-		cancel_raf;
+	let cancel_css;
+	let	cancel_raf;
 
-	let start_time = 0,
-		end_time = 0;
+	let start_time = 0;
+	let	end_time = 0;
 
 	const current_group = transition_group;
 	if (rx & tx.outro) current_group.r++;
@@ -129,7 +130,7 @@ export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(functio
 			}
 
 			if (css) cancel_css = animate_css(this, runner(css), duration, delay);
-
+			
 			if (rx & tx.outro) {
 				if (current_group.s.push(stop) === current_group.r) {
 					setFrameTimeout((t) => {
@@ -138,7 +139,7 @@ export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(functio
 				} else {
 					current_group.t = Math.max(end_time, current_group.t);
 				}
-				if (tick) cancel_raf = setTweenTimeout(noop, end_time, runner(tick), duration);
+				if (tick) cancel_raf = setTweenTimeout(noop, end_time, runner(tick), duration, true);
 			} else {
 				cancel_raf = tick ? setTweenTimeout(stop, end_time, runner(tick), duration) : setFrameTimeout(stop, end_time);
 			}
@@ -146,7 +147,6 @@ export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(functio
 	});
 
 	const stop: StopResetReverseFn = (t?: number | 1 | -1) => {
-		// resetting `out:` in intros
 		if (t === 1 && rx & tx.outro && 0 === (rx & tx.bidirectional) && 'tick' in config) config.tick(1, 0);
 
 		if (false === running) return;
@@ -184,19 +184,16 @@ export const run_transition = /*#__PURE__*/ Function.prototype.call.bind(functio
 });
 
 const running_bidi: Map<HTMLElement, StopResetReverseFn> = new Map();
-export const run_bidirectional_transition = /*#__PURE__*/ Function.prototype.call.bind(function bidirectional(
-	this: HTMLElement,
-	fn: TransitionFn,
-	rx: tx.intro | tx.outro,
-	params: any
-) {
-	let cancel;
-	running_bidi.set(
-		this,
-		(cancel =
-			(running_bidi.has(this) && running_bidi.get(this)(-1)) || run_transition(this, fn, rx | tx.bidirectional, params))
-	);
-	return cancel;
-});
+export const run_bidirectional_transition = /*#__PURE__*/ methodify(
+	function bidirectional(this: HTMLElement, fn: TransitionFn, rx: tx.intro | tx.outro, params: any ) {
+		let cancel;
+		running_bidi.set(
+			this,
+			(cancel =
+				(running_bidi.has(this) && running_bidi.get(this)(-1)) || run_transition(this, fn, rx | tx.bidirectional, params))
+		);
+		return cancel;
+	}
+);
 export const run_duration = (duration, value1, value2?): number =>
 	typeof duration === 'function' ? duration(value1, value2) : duration;

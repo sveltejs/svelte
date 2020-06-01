@@ -28,13 +28,17 @@ export const schedule_update = (component) => {
 	dirty_components.push(component);
 	if (!update_scheduled) {
 		update_scheduled = true;
-		resolved_promise.then(flush);
+		if (!is_flushing) {
+			resolved_promise.then(flush);
+		}
 	}
 };
 export const tick = () => {
 	if (!update_scheduled) {
 		update_scheduled = true;
-		resolved_promise.then(flush);
+		if (!is_flushing) {
+			resolved_promise.then(flush);
+		}
 	}
 	return resolved_promise;
 };
@@ -42,13 +46,13 @@ export const flush = () => {
 	if (is_flushing) return;
 	else is_flushing = true;
 
-	let i = 0,
-		j = 0,
-		t = 0,
-		$$: T$$,
-		dirty,
-		before_update,
-		after_update;
+	let i = 0;
+	let	j = 0;
+	let	t = 0;
+	let	$$: T$$;
+	let	dirty;
+	let	before_update;
+	let	after_update;
 
 	do {
 		for (;i < dirty_components.length;i++) {
@@ -101,4 +105,8 @@ export const flush = () => {
 	flush_callbacks.length = i = j = 0;
 
 	is_flushing = false;
+	if (update_scheduled) { 
+		// reflush if applying animations triggered an update
+		flush();
+	}
 };

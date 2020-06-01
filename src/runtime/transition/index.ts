@@ -13,14 +13,14 @@ export interface CssTransitionConfig extends CssAnimationConfig {
 	tick?: (t: number, u?: number) => void;
 }
 
-type FlyParams = FadingConfig & { x: number; y: number; };
-type BlurParams = FadingConfig & { amount: number; };
-type ScaleParams = FadingConfig & { start: number; };
-type DrawParams = CssAnimationConfig & { speed : number };
-type FadingConfig = CssAnimationConfig & { opacity: number; };
-type MarkedCrossFadeConfig = TimeableConfig & { key: any; };
+type FlyParams = FadingConfig & { x: number; y: number };
+type BlurParams = FadingConfig & { amount: number };
+type ScaleParams = FadingConfig & { start: number };
+type DrawParams = CssAnimationConfig & { speed: number };
+type FadingConfig = CssAnimationConfig & { opacity: number };
+type MarkedCrossFadeConfig = TimeableConfig & { key: any };
 export type TimeableConfig = Omit<CssAnimationConfig, 'duration'> & { duration?: number | ((len: number) => number) };
-type CrossFadeConfig = TimeableConfig & { fallback(node: Element, params: TimeableConfig, intro: boolean): CssTransitionConfig; };
+type CrossFadeConfig = TimeableConfig & { fallback(node: Element, params: TimeableConfig, intro: boolean): CssTransitionConfig };
 type ElementMap = Map<any, Element>;
 
 export function blur(node: Element, { delay = 0, duration = 400, easing = cubicInOut, amount = 5, opacity = 0 }: BlurParams): CssTransitionConfig {
