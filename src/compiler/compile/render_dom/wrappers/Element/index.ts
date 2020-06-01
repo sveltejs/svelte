@@ -405,7 +405,7 @@ export default class ElementWrapper extends Wrapper {
 	get_render_statement(block: Block) {
 		const { name, namespace } = this.node;
 
-		if (namespace === 'http://www.w3.org/2000/svg') {
+		if (namespace === namespaces.svg) {
 			return x`@svg_element("${name}")`;
 		}
 
