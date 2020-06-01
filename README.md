@@ -36,13 +36,13 @@ npm install
 
 To build the compiler, and all the other modules included in the package:
 
-```bash
+```sh
 npm run build
 ```
 
 To watch for changes and continually rebuild the package (this is useful if you're using [npm link](https://docs.npmjs.com/cli/link.html) to test out changes in a project locally):
 
-```bash
+```sh
 npm run dev
 ```
 
@@ -51,13 +51,13 @@ The compiler is written in [TypeScript](https://www.typescriptlang.org/), but do
 
 ### Running Tests
 
-```bash
+```sh
 npm run test
 ```
 
 To filter tests, use `-g` (aka `--grep`). For example, to only run tests involving transitions:
 
-```bash
+```sh
 npm run test -- -g transition
 ```
 
@@ -66,7 +66,7 @@ npm run test -- -g transition
 
 The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.dev). To develop locally:
 
-```bash
+```sh
 cd site
 npm install && npm run update
 npm run dev
