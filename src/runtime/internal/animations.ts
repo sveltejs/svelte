@@ -1,6 +1,5 @@
 import { run_transition } from './transitions';
-import { noop } from './environment';
-import { methodify } from './utils';
+import { methodify, noop } from './utils';
 import { CssTransitionConfig } from 'svelte/transition';
 
 type AnimationFn = (node: Element, { from, to }: { from: DOMRect; to: DOMRect }, params: any) => CssTransitionConfig;

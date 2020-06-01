@@ -1,5 +1,4 @@
-import { noop } from "./environment";
-
+export function noop() {}
 export const identity = x => x;
 
 export function assign<T, S>(tar: T, src: S): T & S {

@@ -1,11 +1,11 @@
 import { CssTransitionConfig } from '../transition';
 import { Fragment } from './Component';
 import { custom_event } from './dom';
-import { now, noop } from './environment';
+import { now } from './environment';
 import { setFrameTimeout, setTweenTimeout } from './loop';
 import { add_measure_callback } from './scheduler';
 import { animate_css } from './style_manager';
-import { methodify } from './utils';
+import { methodify, noop } from './utils';
 
 type TransitionFn = (node: HTMLElement, params: any) => CssTransitionConfig;
 export type StopResetReverseFn = (t?: number | -1) => StopResetReverseFn | void;

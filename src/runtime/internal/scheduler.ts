@@ -1,6 +1,8 @@
 import { set_current_component } from './lifecycle';
-import { resolved_promise, now } from './environment';
+import { now } from './environment';
 import { T$$ } from './Component';
+
+const resolved_promise = Promise.resolve();
 
 let update_scheduled = false;
 let is_flushing = false;

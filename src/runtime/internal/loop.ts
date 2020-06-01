@@ -1,4 +1,5 @@
-import { now, raf, framerate, noop } from './environment';
+import { now, raf, framerate } from './environment';
+import { noop } from './utils';
 type TaskCallback = (t: number) => boolean;
 type TaskCanceller = () => void;
 
