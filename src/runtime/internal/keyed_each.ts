@@ -47,7 +47,7 @@ export const update_keyed_each = (
 
 	const insert = (block) => {
 		transition_in(block, 1);
-		block.m(node, next, lookup.has(block.key));
+		block.m(node, next);
 		lookup.set(block.key, block);
 		next = block.first;
 		n--;

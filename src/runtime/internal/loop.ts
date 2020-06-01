@@ -118,5 +118,40 @@ export const onEachFrame = (
 };
 
 /** tests only */
-export const clear_loops = () =>
-	void (next_frame.length = running_frame.length = timed_tasks.length = pending_insert_timed.length = n = i = j = +(running_timed = pending_inserts = false));
+export const clear_loops = () => {
+	next_frame.length = running_frame.length = timed_tasks.length = pending_insert_timed.length = n = i = j = +(running_timed = pending_inserts = false);
+	tasks.clear();
+};
+
+/** legacy loop for svelte/motion */
+
+export interface MotionTask { abort(): void; promise: Promise<void> }
+type MotionTaskCallback = (now: number) => boolean | void;
+type MotionTaskEntry = { c: MotionTaskCallback; f: () => void };
+
+const tasks = new Set<MotionTaskEntry>();
+
+function run_tasks(now: number) {
+	tasks.forEach(task => {
+		if (!task.c(now)) {
+			tasks.delete(task);
+			task.f();
+		}
+	});
+
+	if (tasks.size !== 0) raf(run_tasks);
+}
+export function motion_loop(callback: MotionTaskCallback): MotionTask {
+	let task: MotionTaskEntry;
+
+	if (tasks.size === 0) raf(run_tasks);
+
+	return {
+		promise: new Promise(fulfill => {
+			tasks.add(task = { c: callback, f: fulfill });
+		}),
+		abort() {
+			tasks.delete(task);
+		}
+	};
+}

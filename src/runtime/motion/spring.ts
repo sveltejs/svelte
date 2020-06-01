@@ -1,5 +1,5 @@
 import { Readable, writable } from 'svelte/store';
-import { loop, now, Task } from 'svelte/internal';
+import { motion_loop as loop, now, MotionTask as Task } from 'svelte/internal';
 import { is_date } from './utils';
 
 interface TickContext<T> {

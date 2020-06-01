@@ -1,5 +1,5 @@
 import { Readable, writable } from 'svelte/store';
-import { assign, loop, now, Task } from 'svelte/internal';
+import { assign, motion_loop as loop, now, MotionTask as Task } from 'svelte/internal';
 import { linear } from 'svelte/easing';
 import { is_date } from './utils';
 
