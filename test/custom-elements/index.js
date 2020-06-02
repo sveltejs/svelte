@@ -63,7 +63,7 @@ describe('custom-elements', function() {
 		const warnings = [];
 
 		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
-			const config = loadConfig(`./custom-elements/samples/${dir}/_config.js`);
+			const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 			const expected_warnings = config.warnings || [];
 
 			const bundle = await rollup({
@@ -82,7 +82,7 @@ describe('custom-elements', function() {
 
 						transform(code, id) {
 							if (id.endsWith('.svelte')) {
-								const compiled = svelte.compile(code, {
+								const compiled = svelte.compile(code.replace(/\r/g, ""), {
 									customElement: true,
 									dev: config.dev
 								});

@@ -26,6 +26,7 @@ function create_fragment(ctx) {
 	let t4;
 	let t5;
 	let button2;
+	let mounted;
 	let dispose;
 
 	return {
@@ -54,13 +55,17 @@ function create_fragment(ctx) {
 			insert(target, t5, anchor);
 			insert(target, button2, anchor);
 
-			dispose = [
-				listen(button0, "click", /*updateHandler1*/ ctx[2]),
-				listen(button1, "click", /*updateHandler2*/ ctx[3]),
-				listen(button2, "click", function () {
-					if (is_function(/*clickHandler*/ ctx[0])) /*clickHandler*/ ctx[0].apply(this, arguments);
-				})
-			];
+			if (!mounted) {
+				dispose = [
+					listen(button0, "click", /*updateHandler1*/ ctx[2]),
+					listen(button1, "click", /*updateHandler2*/ ctx[3]),
+					listen(button2, "click", function () {
+						if (is_function(/*clickHandler*/ ctx[0])) /*clickHandler*/ ctx[0].apply(this, arguments);
+					})
+				];
+
+				mounted = true;
+			}
 		},
 		p(new_ctx, [dirty]) {
 			ctx = new_ctx;
@@ -74,6 +79,7 @@ function create_fragment(ctx) {
 			if (detaching) detach(p1);
 			if (detaching) detach(t5);
 			if (detaching) detach(button2);
+			mounted = false;
 			run_all(dispose);
 		}
 	};

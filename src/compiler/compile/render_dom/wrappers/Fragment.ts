@@ -17,6 +17,7 @@ import { INode } from '../../nodes/interfaces';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import { trim_start, trim_end } from '../../../utils/trim';
+import { link } from '../../../utils/link';
 import { Identifier } from 'estree';
 
 const wrappers = {
@@ -37,11 +38,6 @@ const wrappers = {
 	Title,
 	Window
 };
-
-function link(next: Wrapper, prev: Wrapper) {
-	prev.next = next;
-	if (next) next.prev = prev;
-}
 
 function trimmable_at(child: INode, next_sibling: Wrapper): boolean {
 	// Whitespace is trimmable if one of the following is true:

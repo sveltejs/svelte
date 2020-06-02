@@ -57,7 +57,7 @@ export function empty() {
 	return text('');
 }
 
-export function listen(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
+export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
 }
@@ -98,7 +98,9 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 			node.removeAttribute(key);
 		} else if (key === 'style') {
 			node.style.cssText = attributes[key];
-		} else if (key === '__value' || descriptors[key] && descriptors[key].set) {
+		} else if (key === '__value') {
+			(node as any).value = node[key] = attributes[key];
+		} else if (descriptors[key] && descriptors[key].set) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key]);
@@ -190,9 +192,7 @@ export function set_data(text, data) {
 }
 
 export function set_input_value(input, value) {
-	if (value != null || input.value) {
-		input.value = value;
-	}
+	input.value = value == null ? '' : value;
 }
 
 export function set_input_type(input, type) {
@@ -234,37 +234,68 @@ export function select_multiple_value(select) {
 	return [].map.call(select.querySelectorAll(':checked'), option => option.__value);
 }
 
-export function add_resize_listener(element, fn) {
-	if (getComputedStyle(element).position === 'static') {
-		element.style.position = 'relative';
-	}
+// unfortunately this can't be a constant as that wouldn't be tree-shakeable
+// so we cache the result instead
+let crossorigin: boolean;
 
-	const object = document.createElement('object');
-	object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
-	object.setAttribute('aria-hidden', 'true');
-	object.type = 'text/html';
-	object.tabIndex = -1;
+export function is_crossorigin() {
+	if (crossorigin === undefined) {
+		crossorigin = false;
 
-	let win;
-
-	object.onload = () => {
-		win = object.contentDocument.defaultView;
-		win.addEventListener('resize', fn);
-	};
-
-	if (/Trident/.test(navigator.userAgent)) {
-		element.appendChild(object);
-		object.data = 'about:blank';
-	} else {
-		object.data = 'about:blank';
-		element.appendChild(object);
-	}
-
-	return {
-		cancel: () => {
-			win && win.removeEventListener && win.removeEventListener('resize', fn);
-			element.removeChild(object);
+		try {
+			if (typeof window !== 'undefined' && window.parent) {
+				void window.parent.document;
+			}
+		} catch (error) {
+			crossorigin = true;
 		}
+	}
+
+	return crossorigin;
+}
+
+export function add_resize_listener(node: HTMLElement, fn: () => void) {
+	const computed_style = getComputedStyle(node);
+	const z_index = (parseInt(computed_style.zIndex) || 0) - 1;
+
+	if (computed_style.position === 'static') {
+		node.style.position = 'relative';
+	}
+
+	const iframe = element('iframe');
+	iframe.setAttribute('style',
+		`display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; ` +
+		`overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: ${z_index};`
+	);
+	iframe.setAttribute('aria-hidden', 'true');
+	iframe.tabIndex = -1;
+
+	const crossorigin = is_crossorigin();
+
+	let unsubscribe: () => void;
+
+	if (crossorigin) {
+		iframe.src = `data:text/html,<script>onresize=function(){parent.postMessage(0,'*')}</script>`;
+		unsubscribe = listen(window, 'message', (event: MessageEvent) => {
+			if (event.source === iframe.contentWindow) fn();
+		});
+	} else {
+		iframe.src = 'about:blank';
+		iframe.onload = () => {
+			unsubscribe = listen(iframe.contentWindow, 'resize', fn);
+		};
+	}
+
+	append(node, iframe);
+
+	return () => {
+		if (crossorigin) {
+			unsubscribe();
+		} else if (unsubscribe && iframe.contentWindow) {
+			unsubscribe();
+		}
+
+		detach(iframe);
 	};
 }
 
@@ -288,29 +319,36 @@ export class HtmlTag {
 	t: HTMLElement;
 	a: HTMLElement;
 
-	constructor(html: string, anchor: HTMLElement = null) {
-		this.e = element('div');
+	constructor(anchor: HTMLElement = null) {
 		this.a = anchor;
-		this.u(html);
+		this.e = this.n = null;
 	}
 
-	m(target: HTMLElement, anchor: HTMLElement = null) {
-		for (let i = 0; i < this.n.length; i += 1) {
-			insert(target, this.n[i], anchor);
+	m(html: string, target: HTMLElement, anchor: HTMLElement = null) {
+		if (!this.e) {
+			this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
+			this.t = target;
+			this.h(html);
 		}
 
-		this.t = target;
+		this.i(anchor);
 	}
 
-	u(html: string) {
+	h(html) {
 		this.e.innerHTML = html;
 		this.n = Array.from(this.e.childNodes);
 	}
 
+	i(anchor) {
+		for (let i = 0; i < this.n.length; i += 1) {
+			insert(this.t, this.n[i], anchor);
+		}
+	}
+
 	p(html: string) {
 		this.d();
-		this.u(html);
-		this.m(this.t, this.a);
+		this.h(html);
+		this.i(this.a);
 	}
 
 	d() {

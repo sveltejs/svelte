@@ -30,7 +30,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(div);
-			div_resize_listener.cancel();
+			div_resize_listener();
 		}
 	};
 }

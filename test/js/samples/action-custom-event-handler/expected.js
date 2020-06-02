@@ -14,6 +14,7 @@ import {
 function create_fragment(ctx) {
 	let button;
 	let foo_action;
+	let mounted;
 	let dispose;
 
 	return {
@@ -23,7 +24,11 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, button, anchor);
-			dispose = action_destroyer(foo_action = foo.call(null, button, /*foo_function*/ ctx[1]));
+
+			if (!mounted) {
+				dispose = action_destroyer(foo_action = foo.call(null, button, /*foo_function*/ ctx[1]));
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (foo_action && is_function(foo_action.update) && dirty & /*bar*/ 1) foo_action.update.call(null, /*foo_function*/ ctx[1]);
@@ -32,6 +37,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(button);
+			mounted = false;
 			dispose();
 		}
 	};

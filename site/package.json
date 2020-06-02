@@ -24,6 +24,7 @@
     "marked": "^0.7.0",
     "pg": "^7.12.1",
     "polka": "^1.0.0-next.9",
+    "prism-svelte": "^0.4.3",
     "prismjs": "^1.17.1",
     "sirv": "^1.0.0-next.2",
     "yootils": "0.0.16"
@@ -35,8 +36,8 @@
     "@babel/preset-env": "^7.6.0",
     "@babel/runtime": "^7.6.0",
     "@sindresorhus/slugify": "^0.9.1",
-    "@sveltejs/site-kit": "^1.1.4",
-    "@sveltejs/svelte-repl": "^0.1.17",
+    "@sveltejs/site-kit": "^1.1.5",
+    "@sveltejs/svelte-repl": "^0.1.19",
     "degit": "^2.1.4",
     "dotenv": "^8.1.0",
     "esm": "^3.2.25",
@@ -53,7 +54,7 @@
     "rollup-plugin-replace": "^2.2.0",
     "rollup-plugin-svelte": "^5.1.0",
     "rollup-plugin-terser": "^5.1.1",
-    "sapper": "^0.27.8",
+    "sapper": "^0.27.11",
     "shelljs": "^0.8.3",
     "svelte": "^3.12.0"
   },

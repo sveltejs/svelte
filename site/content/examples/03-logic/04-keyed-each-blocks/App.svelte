@@ -18,7 +18,7 @@
 	Remove first thing
 </button>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; grip-gap: 1em">
+<div style="display: grid; grid-template-columns: 1fr 1fr; grid-gap: 1em">
 	<div>
 		<h2>Keyed</h2>
 		{#each things as thing (thing.id)}

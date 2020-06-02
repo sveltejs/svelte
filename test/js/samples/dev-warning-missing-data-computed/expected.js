@@ -12,7 +12,8 @@ import {
 	safe_not_equal,
 	set_data_dev,
 	space,
-	text
+	text,
+	validate_slots
 } from "svelte/internal";
 
 const file = undefined;
@@ -72,18 +73,23 @@ function instance($$self, $$props, $$invalidate) {
 		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
+	let { $$slots = {}, $$scope } = $$props;
+	validate_slots("Component", $$slots, []);
+
 	$$self.$set = $$props => {
 		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
 	};
 
-	$$self.$capture_state = () => {
-		return { foo, bar };
-	};
+	$$self.$capture_state = () => ({ foo, bar });
 
 	$$self.$inject_state = $$props => {
 		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
 		if ("bar" in $$props) $$invalidate(1, bar = $$props.bar);
 	};
+
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*foo*/ 1) {

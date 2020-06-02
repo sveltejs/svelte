@@ -102,25 +102,12 @@ export default class AttributeWrapper {
 		} else if (is_select_value_attribute) {
 			// annoying special case
 			const is_multiple_select = element.node.get_static_attribute_value('multiple');
-			const i = block.get_unique_name('i');
-			const option = block.get_unique_name('option');
 
-			const if_statement = is_multiple_select
-				? b`
-					${option}.selected = ~${last}.indexOf(${option}.__value);`
-				: b`
-					if (${option}.__value === ${last}) {
-						${option}.selected = true;
-						${{ type: 'BreakStatement' }};
-					}`; // TODO the BreakStatement is gross, but it's unsyntactic otherwise...
-
-			updater = b`
-				for (var ${i} = 0; ${i} < ${element.var}.options.length; ${i} += 1) {
-					var ${option} = ${element.var}.options[${i}];
-
-					${if_statement}
-				}
-			`;
+			if (is_multiple_select) {
+				updater = b`@select_options(${element.var}, ${last});`;
+			} else {
+				updater = b`@select_option(${element.var}, ${last});`;
+			}
 
 			block.chunks.mount.push(b`
 				${last} = ${value};

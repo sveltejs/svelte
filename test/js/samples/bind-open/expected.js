@@ -12,6 +12,7 @@ import {
 
 function create_fragment(ctx) {
 	let details;
+	let mounted;
 	let dispose;
 
 	return {
@@ -24,7 +25,11 @@ function create_fragment(ctx) {
 		m(target, anchor) {
 			insert(target, details, anchor);
 			details.open = /*open*/ ctx[0];
-			dispose = listen(details, "toggle", /*details_toggle_handler*/ ctx[1]);
+
+			if (!mounted) {
+				dispose = listen(details, "toggle", /*details_toggle_handler*/ ctx[1]);
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*open*/ 1) {
@@ -35,6 +40,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(details);
+			mounted = false;
 			dispose();
 		}
 	};
