@@ -54,13 +54,32 @@
 			<Icon name="github"/>
 		</NavItem>
 	</Nav>
-	<div class="BLM">Black Lives Matter. 
+	<div class="BLM">
 		<a
 			target="_blank"
 			rel="noopener noreferrer"
-			href="https://support.eji.org/give/153413/#!/donation/checkout">
-			Support&nbsp;the&nbsp;Equal&nbsp;Justice&nbsp;Initiative.
-		</a>
+			href="https://blacklivesmatter.com/"
+		>Black Lives Matter</a>.
+
+		Support
+
+		<a
+			target="_blank"
+			rel="noopener noreferrer"
+			href="https://www.joincampaignzero.org/"
+		>Campaign Zero</a>, the
+
+		<a
+			target="_blank"
+			rel="noopener noreferrer"
+			href="https://support.eji.org/give/153413/#!/donation/checkout"
+		>Equal&nbsp;Justice&nbsp;Initiative</a>, and
+
+		<a
+			target="_blank"
+			rel="noopener noreferrer"
+			href="https://bailfunds.github.io/"
+		>local bail funds</a>.
 	</div>
 {/if}
 
@@ -72,12 +91,15 @@
 	.BLM {
 		background-color: black;
 		color: white;
-    position: fixed;
-    bottom: 0;
-    width: 100vw;
-    text-align: center;
-    padding: 1em;
-    z-index: 999;
+		position: fixed;
+		bottom: 0;
+		width: 100vw;
+		text-align: center;
+		padding: 1em;
+		z-index: 999;
+	}
+	.BLM a {
+		white-space: nowrap;
 	}
 	:global(header){
 		filter: grayscale(100%) /* BLM */
