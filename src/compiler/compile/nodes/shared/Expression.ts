@@ -62,7 +62,7 @@ export default class Expression {
 
 		// discover dependencies, but don't change the code yet
 		walk(info, {
-			enter(node: any, parent: any, key: string) {
+			enter(node: Node, parent: any, key: string) {
 				// don't manipulate shorthand props twice
 				if (key === 'key' && parent.shorthand) return;
 				// don't manipulate `import.meta`, `new.target`
@@ -126,6 +126,7 @@ export default class Expression {
 						deep = node.left.type === 'MemberExpression';
 						names = extract_names(deep ? get_object(node.left) : node.left);
 					} else if (node.type === 'UpdateExpression') {
+                        deep = node.argument.type === 'MemberExpression';
 						names = extract_names(get_object(node.argument));
 					}
 				}
@@ -146,8 +147,18 @@ export default class Expression {
 						} else {
 							component.add_reference(node, name);
 
-							const variable = component.var_lookup.get(name);
-							if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
+                            const variable = component.var_lookup.get(name);
+
+							if (variable) {
+								variable[deep ? 'mutated' : 'reassigned'] = true;
+
+								if (!deep && variable.writable === false) {
+									component.warn(node as any, {
+										code: 'assignment-to-const',
+										message: 'You are assigning to a const'
+									});
+								}
+							}
 						}
 					});
 				}

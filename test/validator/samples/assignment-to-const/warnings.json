@@ -1,0 +1,62 @@
+[
+	{
+		"code": "assignment-to-const",
+		"message": "You are assigning to a const",
+		"start": {
+			"line": 31,
+			"column": 24,
+			"character": 512
+		},
+		"end": {
+			"line": 31,
+			"column": 41,
+			"character": 529
+		},
+		"pos": 512
+	},
+	{
+		"code": "assignment-to-const",
+		"message": "You are assigning to a const",
+		"start": {
+			"line": 32,
+			"column": 24,
+			"character": 570
+		},
+		"end": {
+			"line": 32,
+			"column": 36,
+			"character": 582
+		},
+		"pos": 570
+	},
+	{
+		"code": "assignment-to-const",
+		"message": "You are assigning to a const",
+		"start": {
+			"line": 10,
+			"column": 2,
+			"character": 171
+		},
+		"end": {
+			"line": 10,
+			"column": 19,
+			"character": 188
+		},
+		"pos": 171
+	},
+	{
+		"code": "assignment-to-const",
+		"message": "You are assigning to a const",
+		"start": {
+			"line": 14,
+			"column": 2,
+			"character": 215
+		},
+		"end": {
+			"line": 14,
+			"column": 14,
+			"character": 227
+		},
+		"pos": 215
+	}
+]

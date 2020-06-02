@@ -788,6 +788,33 @@ export default class Component {
 					scope = map.get(node);
 				}
 
+                let deep = false;
+                let names: string[] | null;
+
+                if (node.type === 'AssignmentExpression') {
+						deep = node.left.type === 'MemberExpression';
+						names = deep
+							? [get_object(node.left).name]
+							: extract_names(node.left);
+                } else if (node.type === 'UpdateExpression') {
+                    deep = node.argument.type === 'MemberExpression';
+                    const { name } = get_object(node.argument);
+                    names = [name];
+				}
+
+				
+				if (names) {
+					names.forEach(name => {
+						const variable = component.var_lookup.get(name);
+						if (variable && variable.writable === false && !deep) {
+							component.warn(node as any, {
+								code: 'assignment-to-const',
+								message: 'You are assigning to a const'
+							});
+						}
+					});
+				}
+
 				if (node.type === 'ImportDeclaration') {
 					component.extract_imports(node);
 					// TODO: to use actual remove
