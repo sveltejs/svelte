@@ -7,11 +7,6 @@
     <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
   </a>
 
-  <a href="https://github.com/sveltejs/svelte/actions">
-    <img src="https://github.com/sveltejs/svelte/workflows/CI/badge.svg?branch=master"
-         alt="build status">
-  </a>
-
   <a href="https://github.com/sveltejs/svelte/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
   </a>
@@ -37,10 +32,7 @@ cd svelte
 npm install
 ```
 
-> Many tests depend on newlines being preserved as `<LF>`. On Windows, you can ensure this by cloning with:
-> ```bash
-> git -c core.autocrlf=false clone https://github.com/sveltejs/svelte.git
-> ```
+> Do not use Yarn to install the dependencies, as the specific package versions in `package-lock.json` are used to build and test Svelte.
 
 To build the compiler, and all the other modules included in the package:
 
@@ -80,6 +72,9 @@ npm install && npm run update
 npm run dev
 ```
 
+### Is svelte.dev down?
+
+Probably not, but it's possible. If you can't seem to access any `.dev` sites, check out [this SuperUser question and answer](https://superuser.com/q/1413402).
 
 ## License
 

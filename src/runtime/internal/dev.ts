@@ -79,6 +79,23 @@ export function set_data_dev(text, data) {
 	text.data = data;
 }
 
+export function validate_each_argument(arg) {
+	if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
+		let msg = '{#each} only iterates over array-like objects.';
+		if (typeof Symbol === 'function' && arg && Symbol.iterator in arg) {
+			msg += ' You can use a spread to convert this iterable into an array.';
+		}
+		throw new Error(msg);
+	}
+}
+
+export function validate_slots(name, slot, keys) {
+	for (const slot_key of Object.keys(slot)) {
+		if (!~keys.indexOf(slot_key)) {
+			console.warn(`<${name}> received an unexpected slot "${slot_key}".`);
+		}
+	}
+}
 
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
@@ -110,6 +127,10 @@ export class SvelteComponentDev extends SvelteComponent {
 			console.warn(`Component was already destroyed`); // eslint-disable-line no-console
 		};
 	}
+
+	$capture_state() {}
+
+	$inject_state() {}
 }
 
 export function loop_guard(timeout) {

@@ -60,7 +60,7 @@ export default class Binding extends Node {
 			scope.dependencies_for_name.get(name).forEach(name => {
 				const variable = component.var_lookup.get(name);
 				if (variable) {
-					variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
+					variable.mutated = true;
 				}
 			});
 		} else {
@@ -72,6 +72,11 @@ export default class Binding extends Node {
 			});
 
 			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
+
+			if (info.expression.type === 'Identifier' && !variable.writable) component.error(this.expression.node, {
+				code: 'invalid-binding',
+				message: 'Cannot bind to a variable which is not writable',
+			});
 		}
 
 		const type = parent.get_static_attribute_value('type');

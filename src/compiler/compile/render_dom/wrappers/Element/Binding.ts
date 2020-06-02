@@ -57,7 +57,7 @@ export default class BindingWrapper {
 
 		this.is_readonly = this.node.is_readonly;
 
-		this.needs_lock = this.node.name === 'currentTime' || (parent.node.name === 'input' && parent.node.get_static_attribute_value('type') === 'number'); // TODO others?
+		this.needs_lock = this.node.name === 'currentTime';  // TODO others?
 	}
 
 	get_dependencies() {
@@ -87,17 +87,29 @@ export default class BindingWrapper {
 		const update_conditions: any[] = this.needs_lock ? [x`!${lock}`] : [];
 		const mount_conditions: any[] = [];
 
-		const dependency_array = [...this.node.expression.dependencies];
+		const dependency_array = Array.from(this.get_dependencies());
 
 		if (dependency_array.length > 0) {
 			update_conditions.push(block.renderer.dirty(dependency_array));
 		}
 
-		if (parent.node.name === 'input') {
-			const type = parent.node.get_static_attribute_value('type');
+		if (parent.node.name === "input") {
+			const type = parent.node.get_static_attribute_value("type");
 
-			if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
-				update_conditions.push(x`${parent.var}.${this.node.name} !== ${this.snippet}`);
+			if (
+				type === null ||
+				type === "" ||
+				type === "text" ||
+				type === "email" ||
+				type === "password"
+			) {
+				update_conditions.push(
+					x`${parent.var}.${this.node.name} !== ${this.snippet}`
+				);
+			} else if (type === "number") {
+				update_conditions.push(
+					x`@to_number(${parent.var}.${this.node.name}) !== ${this.snippet}`
+				);
 			}
 		}
 

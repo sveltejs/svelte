@@ -28,13 +28,15 @@ function create_if_block(ctx) {
 		},
 		p(ctx, dirty) {
 			if (/*y*/ ctx[1]) {
-				if (!if_block) {
+				if (if_block) {
+					if (dirty & /*y*/ 2) {
+						transition_in(if_block, 1);
+					}
+				} else {
 					if_block = create_if_block_1(ctx);
 					if_block.c();
 					transition_in(if_block, 1);
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
-				} else {
-					transition_in(if_block, 1);
 				}
 			} else if (if_block) {
 				if_block.d(1);

@@ -13,6 +13,7 @@ import {
 
 function create_fragment(ctx) {
 	let a;
+	let mounted;
 	let dispose;
 
 	return {
@@ -23,13 +24,18 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, a, anchor);
-			dispose = listen(a, "touchstart", touchstart_handler);
+
+			if (!mounted) {
+				dispose = listen(a, "touchstart", touchstart_handler);
+				mounted = true;
+			}
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(a);
+			mounted = false;
 			dispose();
 		}
 	};
