@@ -54,6 +54,14 @@
 			<Icon name="github"/>
 		</NavItem>
 	</Nav>
+	<div class="BLM">Black Lives Matter. 
+		<a
+			target="_blank"
+			rel="noopener noreferrer"
+			href="https://support.eji.org/give/153413/#!/donation/checkout">
+			Support&nbsp;the&nbsp;Equal&nbsp;Justice&nbsp;Initiative.
+		</a>
+	</div>
 {/if}
 
 <main>
@@ -61,11 +69,25 @@
 </main>
 
 <style>
+	.BLM {
+		background-color: black;
+		color: white;
+    position: fixed;
+    bottom: 0;
+    width: 100vw;
+    text-align: center;
+    padding: 1em;
+    z-index: 999;
+	}
+	:global(header){
+		filter: grayscale(100%) /* BLM */
+	}
 	main {
 		position: relative;
 		margin: 0 auto;
 		/* padding: var(--nav-h) var(--side-nav) 0 var(--side-nav); */
 		padding: var(--nav-h) 0 0 0;
 		overflow-x: hidden;
+		filter: grayscale(100%) /* BLM */
 	}
 </style>
