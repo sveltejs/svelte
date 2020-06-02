@@ -110,6 +110,9 @@
 		/* padding: var(--nav-h) var(--side-nav) 0 var(--side-nav); */
 		padding: var(--nav-h) 0 0 0;
 		overflow-x: hidden;
+	}
+
+	main > :global(*) {
 		filter: grayscale(100%) /* BLM */
 	}
 </style>
