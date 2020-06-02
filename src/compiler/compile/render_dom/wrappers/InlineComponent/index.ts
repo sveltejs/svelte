@@ -388,13 +388,24 @@ export default class InlineComponentWrapper extends Wrapper {
 			return b`@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${id}));`;
 		});
 
-		const munged_handlers = this.node.handlers.map(handler => {
-			const event_handler = new EventHandler(handler, this);
-			let snippet = event_handler.get_snippet(block);
-			if (handler.modifiers.has('once')) snippet = x`@once(${snippet})`;
+		const munged_handlers = this.node.handlers
+			.filter(handler => {
+				if (handler.expression) return true;
 
-			return b`${name}.$on("${handler.name}", ${snippet});`;
-		});
+				if (handler.name === "*")
+					block.chunks.bubble.push(b`local_dispose.push(${name}.$on(type, callback))`);
+				else
+					block.chunks.bubble.push(b`if (type === "${handler.name}") local_dispose.push(${name}.$on("${handler.name}", callback));`);
+
+				return false;
+			})
+			.map(handler => {
+				const event_handler = new EventHandler(handler, this);
+				let snippet = event_handler.get_snippet(block);
+				if (handler.modifiers.has('once')) snippet = x`@once(${snippet})`;
+
+				return b`${name}.$on("${handler.name}", ${snippet});`;
+			});
 
 		if (this.node.name === 'svelte:component') {
 			const switch_value = block.get_unique_name('switch_value');

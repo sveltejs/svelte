@@ -11,6 +11,7 @@ interface Fragment {
 	/* claim   */ l: (nodes: any) => void;
 	/* hydrate */ h: () => void;
 	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
+	/* bubble  */ b?: (type: string, callback: Function) => Function;
 	/* update  */ p: (ctx: any, dirty: any) => void;
 	/* measure */ r: () => void;
 	/* fix     */ f: () => void;
@@ -222,10 +223,15 @@ export class SvelteComponent {
 	}
 
 	$on(type, callback) {
+		const dispose = this.$$.fragment
+			&& this.$$.fragment.b
+			&& this.$$.fragment.b(type, callback)
+			|| noop;
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 		callbacks.push(callback);
 
 		return () => {
+			dispose();
 			const index = callbacks.indexOf(callback);
 			if (index !== -1) callbacks.splice(index, 1);
 		};

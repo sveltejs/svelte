@@ -1,6 +1,6 @@
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
-import { b, x } from 'code-red';
+import { b, x, p } from 'code-red';
 import { Node, Identifier, ArrayPattern } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
 
@@ -47,6 +47,7 @@ export default class Block {
 		claim: Array<Node | Node[]>;
 		hydrate: Array<Node | Node[]>;
 		mount: Array<Node | Node[]>;
+		bubble: Array<Node | Node[]>;
 		measure: Array<Node | Node[]>;
 		fix: Array<Node | Node[]>;
 		animate: Array<Node | Node[]>;
@@ -95,6 +96,7 @@ export default class Block {
 			claim: [],
 			hydrate: [],
 			mount: [],
+			bubble: [],
 			measure: [],
 			fix: [],
 			animate: [],
@@ -287,12 +289,27 @@ export default class Block {
 			}`;
 		}
 
+		if (this.chunks.bubble.length > 0) {
+			const bubble_fns: Identifier = {
+				type: 'Identifier',
+				name: '#bubble_fns'
+			};
+			this.add_variable(bubble_fns, x`[]`);
+
+			properties.bubble = x`function #bubble(type, callback) {
+				const local_dispose = [];
+				const fn = () => {
+					${this.chunks.bubble}
+					#dispose.push(...local_dispose);
+				}
+				if (#mounted) fn()
+				else ${bubble_fns}.push(fn);
+				return () => @run_all(local_dispose);
+			}`;
+		}
+
 		if (this.chunks.mount.length === 0) {
 			properties.mount = noop;
-		} else if (this.event_listeners.length === 0) {
-			properties.mount = x`function #mount(#target, #anchor) {
-				${this.chunks.mount}
-			}`;
 		} else {
 			properties.mount = x`function #mount(#target, #anchor) {
 				${this.chunks.mount}
@@ -382,6 +399,10 @@ export default class Block {
 			d: ${properties.destroy}
 		}`;
 
+		if (properties.bubble) {
+			return_value.properties.push(p`b: ${properties.bubble}`);
+		}
+
 		const block = dev && this.get_unique_name('block');
 
 		const body = b`
@@ -423,6 +444,7 @@ export default class Block {
 			this.chunks.hydrate.length > 0 ||
 			this.chunks.claim.length > 0 ||
 			this.chunks.mount.length > 0 ||
+			this.chunks.bubble.length > 0 ||
 			this.chunks.update.length > 0 ||
 			this.chunks.destroy.length > 0 ||
 			this.has_animation;
@@ -446,7 +468,7 @@ export default class Block {
 	}
 
 	render_listeners(chunk: string = '') {
-		if (this.event_listeners.length > 0) {
+		if (this.event_listeners.length > 0 || this.chunks.bubble.length > 0) {
 			this.add_variable({ type: 'Identifier', name: '#mounted' });
 			this.chunks.destroy.push(b`#mounted = false`);
 
@@ -457,7 +479,7 @@ export default class Block {
 
 			this.add_variable(dispose);
 
-			if (this.event_listeners.length === 1) {
+			if (this.event_listeners.length === 1 && this.chunks.bubble.length === 0) {
 				this.chunks.mount.push(
 					b`
 						if (!#mounted) {
@@ -476,6 +498,7 @@ export default class Block {
 						${dispose} = [
 							${this.event_listeners}
 						];
+						${this.chunks.bubble.length > 0 && b`@run_all(#bubble_fns)`}
 						#mounted = true;
 					}
 				`);

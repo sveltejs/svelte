@@ -14,20 +14,10 @@ export default class EventHandlerWrapper {
 	constructor(node: EventHandler, parent: Wrapper) {
 		this.node = node;
 		this.parent = parent;
-
-		if (!node.expression) {
-			this.parent.renderer.add_to_context(node.handler_name.name);
-
-			this.parent.renderer.component.partly_hoisted.push(b`
-				function ${node.handler_name.name}(event) {
-					@bubble($$self, event);
-				}
-			`);
-		}
 	}
 
 	get_snippet(block) {
-		const snippet = this.node.expression ? this.node.expression.manipulate(block) : block.renderer.reference(this.node.handler_name);
+		const snippet = this.node.expression.manipulate(block);
 
 		if (this.node.reassigned) {
 			block.maintain_context = true;
@@ -37,6 +27,15 @@ export default class EventHandlerWrapper {
 	}
 
 	render(block: Block, target: string | Expression) {
+		if (!this.node.expression) {
+			if (this.node.name === "*")
+				block.chunks.bubble.push(b`local_dispose.push(@listen(${target}, type, callback))`);
+			else
+				block.chunks.bubble.push(b`if (type === "${this.node.name}") local_dispose.push(@listen(${target}, "${this.node.name}", callback));`);
+
+			return;
+		}
+
 		let snippet = this.get_snippet(block);
 
 		if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
