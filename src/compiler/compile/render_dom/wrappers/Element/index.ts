@@ -93,7 +93,7 @@ const events = [
 		event_names: ['volumechange'],
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
-			name === 'volume'
+			(name === 'volume' || name === 'muted')
 	},
 	{
 		event_names: ['ratechange'],
@@ -320,7 +320,7 @@ export default class ElementWrapper extends Wrapper {
 				block.chunks.destroy.push(b`@detach(${node});`);
 			}
 		} else {
-			block.chunks.mount.push(b`@insert(#target, ${node}, anchor);`);
+			block.chunks.mount.push(b`@insert(#target, ${node}, #anchor);`);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
@@ -405,7 +405,7 @@ export default class ElementWrapper extends Wrapper {
 	get_render_statement(block: Block) {
 		const { name, namespace } = this.node;
 
-		if (namespace === 'http://www.w3.org/2000/svg') {
+		if (namespace === namespaces.svg) {
 			return x`@svg_element("${name}")`;
 		}
 
@@ -586,7 +586,7 @@ export default class ElementWrapper extends Wrapper {
 					);
 
 					block.chunks.destroy.push(
-						b`${resize_listener}.cancel();`
+						b`${resize_listener}();`
 					);
 				} else {
 					block.event_listeners.push(
@@ -705,10 +705,27 @@ export default class ElementWrapper extends Wrapper {
 		);
 
 		block.chunks.update.push(b`
-			${fn}(${this.var}, @get_spread_update(${levels}, [
+			${fn}(${this.var}, ${data} = @get_spread_update(${levels}, [
 				${updates}
 			]));
 		`);
+
+		// handle edge cases for elements
+		if (this.node.name === 'select') {
+			const dependencies = new Set();
+			for (const attr of this.attributes) {
+				for (const dep of attr.node.dependencies) {
+					dependencies.add(dep);
+				}
+			}
+
+			block.chunks.mount.push(b`
+				if (${data}.multiple) @select_options(${this.var}, ${data}.value);
+			`);
+			block.chunks.update.push(b`
+				if (${block.renderer.dirty(Array.from(dependencies))} && ${data}.multiple) @select_options(${this.var}, ${data}.value);
+			`);
+		}
 	}
 
 	add_transitions(

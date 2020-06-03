@@ -155,6 +155,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		// removing empty slot
 		for (const slot of this.slots.keys()) {
 			if (!this.slots.get(slot).block.has_content()) {
+				this.renderer.remove_block(this.slots.get(slot).block);
 				this.slots.delete(slot);
 			}
 		}
@@ -434,7 +435,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.chunks.mount.push(b`
 				if (${name}) {
-					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
+					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 				}
 			`);
 
@@ -508,7 +509,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.chunks.mount.push(
-				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
+				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
 			);
 
 			block.chunks.intro.push(b`
