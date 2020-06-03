@@ -34,6 +34,7 @@ interface T$$ {
 	on_mount: any[];
 	on_destroy: any[];
 	skip_bound: boolean;
+	on_disconnect: any[];
 }
 
 export function bind(component, name, callback) {
@@ -54,21 +55,25 @@ export function claim_component(block, parent_nodes) {
 
 export function mount_component(component, target, anchor) {
 	const { fragment, on_mount, on_destroy, after_update } = component.$$;
+	const isCustomElement = typeof SvelteElement !== 'undefined' && component instanceof SvelteElement;
 
 	fragment && fragment.m(target, anchor);
 
-	// onMount happens before the initial afterUpdate
-	add_render_callback(() => {
-		const new_on_destroy = on_mount.map(run).filter(is_function);
-		if (on_destroy) {
-			on_destroy.push(...new_on_destroy);
-		} else {
-			// Edge case - component was destroyed immediately,
-			// most likely as a result of a binding initialising
-			run_all(new_on_destroy);
-		}
-		component.$$.on_mount = [];
-	});
+	// custom element on_mount is called in connectedCallback
+	if (!isCustomElement) {
+		// onMount happens before the initial afterUpdate
+		add_render_callback(() => {
+			const new_on_destroy = on_mount.map(run).filter(is_function);
+			if (on_destroy) {
+				on_destroy.push(...new_on_destroy);
+			} else {
+				// Edge case - component was destroyed immediately,
+				// most likely as a result of a binding initialising
+				run_all(new_on_destroy);
+			}
+			component.$$.on_mount = [];
+		});
+	}
 
 	after_update.forEach(add_render_callback);
 }
@@ -113,6 +118,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		// lifecycle
 		on_mount: [],
 		on_destroy: [],
+		on_disconnect: [],
 		before_update: [],
 		after_update: [],
 		context: new Map(parent_component ? parent_component.$$.context : []),
@@ -178,6 +184,17 @@ if (typeof HTMLElement === 'function') {
 				// @ts-ignore todo: improve typings
 				this.appendChild(this.$$.slotted[key]);
 			}
+
+			const { on_mount, on_disconnect, on_destroy } = this.$$;
+			const new_on_disconnect = on_mount.map(run).filter(is_function);
+			if (on_destroy) {
+				on_disconnect.push(...new_on_disconnect);
+			} else {
+				// Edge case - component was destroyed immediately,
+				// most likely as a result of a binding initialising
+				run_all(new_on_disconnect);
+			}
+			this.$$.on_mount = [];
 		}
 
 		attributeChangedCallback(attr, _oldValue, newValue) {
@@ -185,7 +202,7 @@ if (typeof HTMLElement === 'function') {
 		}
 
 		disconnectedCallback() {
-			run_all(this.$$.on_destroy);
+			run_all(this.$$.on_disconnect);
 		}
 
 		$destroy() {
