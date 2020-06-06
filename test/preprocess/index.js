@@ -19,6 +19,9 @@ describe('preprocess', () => {
 
 			const result = await svelte.preprocess(input, config.preprocess);
 			fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, result.code);
+			if (result.map) {
+				fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html.map`, JSON.stringify(result.map, null, 2));
+			}
 
 			assert.equal(result.code, expected);
 

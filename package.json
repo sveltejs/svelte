@@ -56,6 +56,7 @@
   },
   "homepage": "https://github.com/sveltejs/svelte#README",
   "devDependencies": {
+    "@ampproject/remapping": "^0.3.0",
     "@rollup/plugin-commonjs": "^11.0.0",
     "@rollup/plugin-json": "^4.0.1",
     "@rollup/plugin-node-resolve": "^6.0.0",
@@ -91,7 +92,8 @@
     "source-map-support": "^0.5.13",
     "tiny-glob": "^0.2.6",
     "tslib": "^1.10.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.5.3",
+    "sourcemap-codec": "^1.4.8"
   },
   "nyc": {
     "include": [

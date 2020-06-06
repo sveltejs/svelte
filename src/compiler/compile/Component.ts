@@ -29,6 +29,7 @@ import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
+import remapping from '@ampproject/remapping';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -324,6 +325,35 @@ export default class Component {
 			js.map.sourcesContent = [
 				this.source
 			];
+
+			if (compile_options.sourceMap) {
+				if (js.map) {
+					const pre_remap_sources = js.map.sources;
+					js.map = remapping([js.map, compile_options.sourceMap], () => null);
+					// remapper can remove our source if it isn't used (no segments map back to it). It is still handy to have a source
+					// so we add it back
+					if (js.map.sources && js.map.sources.length == 0) {
+						js.map.sources = pre_remap_sources;
+					}
+					Object.defineProperties(js.map, {
+						toString: {
+							enumerable: false,
+							value: function toString() {
+								return JSON.stringify(this);
+							}
+						},
+						toUrl: {
+							enumerable: false,
+							value: function toUrl() {
+								return 'data:application/json;charset=utf-8;base64,' + btoa(this.toString());
+							}
+						}
+					});
+				}
+				if (css.map) {
+					css.map = remapping([css.map, compile_options.sourceMap], () => null);
+				}
+			}
 		}
 
 		return {

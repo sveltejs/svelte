@@ -110,6 +110,7 @@ export interface CompileOptions {
 	filename?: string;
 	generate?: string | false;
 
+	sourceMap?: object | string;
 	outputFilename?: string;
 	cssOutputFilename?: string;
 	sveltePath?: string;
