@@ -12,6 +12,7 @@ const valid_options = [
 	'format',
 	'name',
 	'filename',
+	'sourceMap',
 	'generate',
 	'outputFilename',
 	'cssOutputFilename',
