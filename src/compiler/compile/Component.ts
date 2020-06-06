@@ -205,7 +205,7 @@ export default class Component {
 
 			const variable = this.var_lookup.get(subscribable_name);
 			if (variable) {
-				variable.referenced   = true;
+				variable.referenced = true;
 				variable.subscribable = true;
 			}
 		} else {
@@ -632,7 +632,6 @@ export default class Component {
 			this.add_var({
 				name,
 				initialised: instance_scope.initialised_declarations.has(name),
-				hoistable: /^Import/.test(node.type),
 				writable
 			});
 
@@ -715,8 +714,14 @@ export default class Component {
 		};
 		let scope_updated = false;
 
+		let generator_count = 0;
+
 		walk(content, {
 			enter(node: Node, parent, prop, index) {
+				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
+					generator_count++;
+				}
+
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
@@ -743,8 +748,12 @@ export default class Component {
 			},
 
 			leave(node: Node) {
+				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
+					generator_count--;
+				}
+
 				// do it on leave, to prevent infinite loop
-				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0) {
+				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0 && generator_count <= 0) {
 					const to_replace_for_loop_protect = component.loop_protect(node, scope, component.compile_options.loopGuardTimeout);
 					if (to_replace_for_loop_protect) {
 						this.replace(to_replace_for_loop_protect);
@@ -986,6 +995,7 @@ export default class Component {
 			hoistable_nodes,
 			var_lookup,
 			injected_reactive_declaration_vars,
+			imports,
 		} = this;
 
 		const top_level_function_declarations = new Map();
@@ -1137,6 +1147,14 @@ export default class Component {
 				this.fully_hoisted.push(node);
 			}
 		}
+
+		for (const { specifiers } of imports) {
+			for (const specifier of specifiers) {
+				const variable = var_lookup.get(specifier.local.name);
+
+				if (!variable.mutated) variable.hoistable = true;
+			}
+		}
 	}
 
 	extract_reactive_declarations() {
@@ -1216,7 +1234,6 @@ export default class Component {
 		});
 
 		const lookup = new Map();
-		let seen;
 
 		unsorted_reactive_declarations.forEach(declaration => {
 			declaration.assignees.forEach(name => {
@@ -1251,28 +1268,19 @@ export default class Component {
 		}
 
 		const add_declaration = declaration => {
-			if (this.reactive_declarations.indexOf(declaration) !== -1) {
-				return;
-			}
-
-			seen.add(declaration);
+			if (this.reactive_declarations.includes(declaration)) return;
 
 			declaration.dependencies.forEach(name => {
 				if (declaration.assignees.has(name)) return;
 				const earlier_declarations = lookup.get(name);
 				if (earlier_declarations)
-					earlier_declarations.forEach(declaration => {
-						add_declaration(declaration);
-					});
+					earlier_declarations.forEach(add_declaration);
 			});
 
 			this.reactive_declarations.push(declaration);
 		};
 
-		unsorted_reactive_declarations.forEach(declaration => {
-			seen = new Set();
-			add_declaration(declaration);
-		});
+		unsorted_reactive_declarations.forEach(add_declaration);
 	}
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {

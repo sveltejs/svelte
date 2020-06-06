@@ -1,0 +1,32 @@
+[
+    {
+        "code": "a11y-no-onchange",
+        "end": {
+            "character": 88,
+            "column": 9,
+            "line": 4
+        },
+        "message": "A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.",
+        "pos": 0,
+        "start": {
+            "character": 0,
+            "column": 0,
+            "line": 1
+        }
+    },
+    {
+        "code": "a11y-no-onchange",
+        "end": {
+            "character": 249,
+            "column": 44,
+            "line": 10
+        },
+        "message": "A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.",
+        "pos": 209,
+        "start": {
+            "character": 209,
+            "column": 4,
+            "line": 10
+        }
+    }
+]

@@ -13,6 +13,7 @@ import {
 
 function create_fragment(ctx) {
 	let input;
+	let mounted;
 	let dispose;
 
 	return {
@@ -21,16 +22,20 @@ function create_fragment(ctx) {
 			attr(input, "type", "file");
 			input.multiple = true;
 		},
-		m(target, anchor, remount) {
+		m(target, anchor) {
 			insert(target, input, anchor);
-			if (remount) dispose();
-			dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
+
+			if (!mounted) {
+				dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
+				mounted = true;
+			}
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(input);
+			mounted = false;
 			dispose();
 		}
 	};

@@ -20,7 +20,7 @@ describe('parse', () => {
 		(skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`) || {};
 
-			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '');
+			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '').replace(/\r/g, "");
 			const expectedOutput = tryToLoadJson(`${__dirname}/samples/${dir}/output.json`);
 			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
 
@@ -38,13 +38,9 @@ describe('parse', () => {
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
 				if (!expectedError) throw err;
-
+				const { code, message, pos, start } = err
 				try {
-					assert.equal(err.code, expectedError.code);
-					assert.equal(err.message, expectedError.message);
-					assert.deepEqual(err.start, expectedError.start);
-					assert.equal(err.pos, expectedError.pos);
-					assert.equal(err.toString().split('\n')[0], `${expectedError.message} (${expectedError.start.line}:${expectedError.start.column})`);
+					assert.deepEqual({ code, message, pos, start }, expectedError);
 				} catch (err2) {
 					const e = err2.code === 'MODULE_NOT_FOUND' ? err : err2;
 					throw e;

@@ -45,7 +45,7 @@ export default class SlotWrapper extends Wrapper {
 			renderer,
 			this.fallback,
 			node.children,
-			parent,
+			this,
 			strip_whitespace,
 			next_sibling
 		);
@@ -145,7 +145,7 @@ export default class SlotWrapper extends Wrapper {
 
 		block.chunks.mount.push(b`
 			if (${slot_or_fallback}) {
-				${slot_or_fallback}.m(${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
+				${slot_or_fallback}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 			}
 		`);
 
@@ -172,10 +172,7 @@ export default class SlotWrapper extends Wrapper {
 
 		const slot_update = b`
 			if (${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
-				${slot}.p(
-					@get_slot_context(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn}),
-					@get_slot_changes(${slot_definition}, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn})
-				);
+				@update_slot(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_context_fn});
 			}
 		`;
 		const fallback_update = has_fallback && fallback_dynamic_dependencies.length > 0 && b`

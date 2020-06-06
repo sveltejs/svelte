@@ -133,44 +133,14 @@
 		border: 0.8rem solid var(--second);
 	}
 
-	/* headers anchors */
-
-	.post :global(.offset-anchor) {
-		position: relative;
-		display: block;
-		top: calc(-1 * (var(--nav-h) + var(--top-offset) - 1rem));
-		width: 0;
-		height: 0;
-	}
-
 	.post :global(.anchor) {
-		position: absolute;
-		display: block;
-		background: url(/icons/link.svg) 0 50% no-repeat;
-		background-size: 1em 1em;
-		width: 1.4em;
-		height: 1em;
 		top: calc((var(--h3) - 24px) / 2);
-		left: -1.4em;
-		opacity: 0;
-		transition: opacity 0.2s;
-		border: none !important; /* TODO get rid of linkify */
 	}
-
-	.post :global(h2):hover :global(.anchor),
-	.post :global(h3):hover :global(.anchor),
-	.post :global(h4):hover :global(.anchor),
-	.post :global(h5):hover :global(.anchor),
-	.post :global(h6):hover :global(.anchor) {
-		opacity: 1;
-	}
-
 
 	@media (max-width: 768px) {
 		.post :global(.anchor) {
 			transform: scale(0.6);
 			opacity: 1;
-			top: calc((1em - 0.6 * 24px) / 2);
 			left: -1.0em;
 		}
 	}
