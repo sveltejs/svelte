@@ -1,5 +1,5 @@
-import { framerate } from './environment';
-import { methodify } from './utils';
+import { frame } from './loop';
+import { methodify, noop } from './utils';
 
 let documents_uid = 0;
 let running_animations = 0;
@@ -9,7 +9,7 @@ const document_stylesheets = new Map();
 
 const current_rules = new Set();
 export const animate_css = /*#__PURE__*/ methodify(
-	function animate_css(this: HTMLElement, css: (t: number) => string, duration: number, delay = 0) {
+	function (this: HTMLElement, css: (t: number) => string, duration: number, delay = 0) {
 		if (!document_uid.has(this.ownerDocument)) {
 			document_uid.set(this.ownerDocument, documents_uid++);
 			document_stylesheets.set(
@@ -18,7 +18,7 @@ export const animate_css = /*#__PURE__*/ methodify(
 			);
 		}
 		let rule = '{\n';
-		for (let t = 0, step = framerate / duration; t < 1; t += step) rule += `${100 * t}%{${css(t)}}\n`;
+		for (let t = 0, step = frame.rate / duration; t < 1; t += step) rule += `${100 * t}%{${css(t)}}\n`;
 		rule += `100% {${css(1)}}\n}`;
 
 		// darkskyapp/string-hash
@@ -34,6 +34,7 @@ export const animate_css = /*#__PURE__*/ methodify(
 		}
 
 		const previous = this.style.animation;
+		if (previous) {console.error("stacked animations"); return noop}
 		this.style.animation = `${
 			previous ? `${previous}, ` : ''
 		}${duration}ms linear ${delay}ms 1 normal both running ${name}`;
@@ -56,6 +57,25 @@ export const animate_css = /*#__PURE__*/ methodify(
 					documents_uid = 0;
 				}
 			}
+		};
+	}
+);
+export const fix_position = /*#__PURE__*/ methodify(
+	function (this: HTMLElement, { left, top }: DOMRect | ClientRect) {
+		const { position, width, height, transform } = getComputedStyle(this);
+		if (position === 'absolute' || position === 'fixed') return noop;
+		const { position: og_position, width: og_width, height: og_height, transform: og_transform } = this.style;
+		this.style.position = 'absolute';
+		this.style.width = width;
+		this.style.height = height;
+		const b = this.getBoundingClientRect();
+		this.style.transform = `${transform === 'none' ? '' : transform} translate(${left - b.left}px, ${top - b.top}px)`;
+		return () => {
+			// unsafe
+			this.style.position = og_position;
+			this.style.width = og_width;
+			this.style.height = og_height;
+			this.style.transform = og_transform;
 		};
 	}
 );

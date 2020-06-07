@@ -1,25 +1,12 @@
 import { cubicOut, cubicInOut } from 'svelte/easing';
-import { run_duration } from 'svelte/internal';
+import { run_duration, CssAnimationConfig, CssTransitionConfig, TimeableConfig } from 'svelte/internal';
 
-interface CssAnimationConfig {
-	delay?: number;
-	duration?: number;
-	easing?: (t: number) => number;
-	strategy?: 'reverse' | 'mirror';
-}
-
-export interface CssTransitionConfig extends CssAnimationConfig {
-	css?: (t: number, u?: number) => string;
-	tick?: (t: number, u?: number) => void;
-}
-
-type FlyParams = FadingConfig & { x: number; y: number };
+type FlyParams = FadingConfig & { x: number; y: number; rotate: number };
 type BlurParams = FadingConfig & { amount: number };
 type ScaleParams = FadingConfig & { start: number };
 type DrawParams = CssAnimationConfig & { speed: number };
 type FadingConfig = CssAnimationConfig & { opacity: number };
 type MarkedCrossFadeConfig = TimeableConfig & { key: any };
-export type TimeableConfig = Omit<CssAnimationConfig, 'duration'> & { duration?: number | ((len: number) => number) };
 type CrossFadeConfig = TimeableConfig & { fallback(node: Element, params: TimeableConfig, intro: boolean): CssTransitionConfig };
 type ElementMap = Map<any, Element>;
 
@@ -41,7 +28,7 @@ export function fade(node: Element, { delay = 0, duration = 400, easing }: CssAn
 	return { delay, duration, easing, css: (t) => `opacity: ${t * o};` };
 }
 
-export function fly(node: Element, { delay = 0, duration = 400, easing = cubicOut, x = 0, y = 0, opacity = 0 }: FlyParams ): CssTransitionConfig {
+export function fly(node: Element, { delay = 0, duration = 400, easing = cubicOut, x = 0, y = 0, opacity = 0, rotate = 0 }: FlyParams ): CssTransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const prev = style.transform === 'none' ? '' : style.transform;
@@ -50,7 +37,7 @@ export function fly(node: Element, { delay = 0, duration = 400, easing = cubicOu
 		delay,
 		duration,
 		easing,
-		css: (_t, u) => `transform: ${prev} translate(${u * x}px, ${u * y}px); opacity: ${target_opacity - od * u};`,
+		css: (_t, u) => `transform: ${prev} translate(${u * x}px, ${u * y}px) rotate(${u * rotate}deg); opacity: ${target_opacity - od * u};`,
 	};
 }
 
@@ -129,22 +116,23 @@ export function crossfade({ delay: default_delay = 0, duration: default_duration
 		} as CssTransitionConfig;
 	};
 	
-	const transition = (a: ElementMap, b: ElementMap, is_intro: boolean) => ( node: Element, params: MarkedCrossFadeConfig ) => {
+	const transition = (a: ElementMap, b: ElementMap, is_intro: boolean) => ( to_node: Element, params: MarkedCrossFadeConfig ) => {
 		const { key } = params;
-		a.set(key, node);
+		a.set(key, to_node);
 		if (b.has(key)) {
 			const from_node = b.get(key);
 			b.delete(key);
-			return crossfade(from_node, node, params);
+			return crossfade(from_node, to_node, params);
 		} else {
 			return () => {
 				if (b.has(key)) {
 					const from_node = b.get(key);
 					b.delete(key);
-					return crossfade(from_node, node, params);
+					return crossfade(from_node, to_node, params);
 				} else {
+					debugger
 					a.delete(key);
-					return fallback && fallback(node, params, is_intro);
+					return fallback && fallback(to_node, params, is_intro);
 				}
 			};
 		}

@@ -1,6 +1,6 @@
 import { set_current_component } from './lifecycle';
-import { now } from './environment';
 import { T$$ } from './Component';
+import { frame } from './loop';
 
 const resolved_promise = Promise.resolve();
 
@@ -17,7 +17,9 @@ const flush_callbacks = [];
 
 // todo : remove add_flush_callback
 export const add_flush_callback = /*#__PURE__*/ Array.prototype.push.bind(flush_callbacks);
-export const add_measure_callback = /*#__PURE__*/ Array.prototype.push.bind(measure_callbacks);
+type MeasureCallback = () => FlushCallback 
+type FlushCallback = (current_frame_time: number) => void 
+export const add_measure_callback: (...args: MeasureCallback[]) => number = /*#__PURE__*/ Array.prototype.push.bind(measure_callbacks);
 
 const seen_render_callbacks = new Set();
 export const add_render_callback = (fn) => {
@@ -48,9 +50,10 @@ export const flush = () => {
 	if (is_flushing) return;
 	else is_flushing = true;
 
+	frame.sync();
+
 	let i = 0;
 	let	j = 0;
-	let	t = 0;
 	let	$$: T$$;
 	let	dirty;
 	let	before_update;
@@ -103,7 +106,7 @@ export const flush = () => {
 
 	// apply styles
 	// todo : remove every non style callback from flush_callbacks
-	for (t = now(); i < j; i++) flush_callbacks[i](t);
+	for (const t = frame.time; i < j; i++) flush_callbacks[i](t);
 	flush_callbacks.length = i = j = 0;
 
 	is_flushing = false;

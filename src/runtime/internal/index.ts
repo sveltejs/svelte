@@ -1,4 +1,3 @@
-export * from './animations';
 export * from './await_block';
 export * from './dom';
 export * from './environment';
@@ -12,4 +11,5 @@ export * from './ssr';
 export * from './transitions';
 export * from './utils';
 export * from './Component';
+export * from './style_manager'
 export * from './dev';

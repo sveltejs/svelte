@@ -740,15 +740,16 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_bidi_transition(block: Block, intro: Transition) {
-		const name = block.get_unique_name(`${this.var.name}_transition`);
+		const transition = block.get_unique_name(`${this.var.name}_transition`);
 		const snippet = intro.expression ? intro.expression.manipulate(block) : null;
-
-		block.add_variable(name, x`@noop`);
-
 		const fn = this.renderer.reference(intro.name);
 
-		let intro_block = b`${name} = @run_bidirectional_transition(${this.var}, ${fn}, 1, ${snippet});`;
-		let outro_block = b`${name} = @run_bidirectional_transition(${this.var}, ${fn}, 2, ${snippet});`;
+		block.add_variable(transition);
+		block.chunks.create.push(b`${transition} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet})`)
+
+
+		let intro_block = b`${transition}.i();`;
+		let outro_block = b`${transition}.o();`;
 
 		if (intro.is_local) {
 			intro_block = b`if (#local) { ${intro_block} }`;
@@ -757,7 +758,7 @@ export default class ElementWrapper extends Wrapper {
 		block.chunks.intro.push(intro_block);
 		block.chunks.outro.push(outro_block);
 
-		block.chunks.destroy.push(b`if (detaching) ${name}();`);
+		block.chunks.destroy.push(b`if (detaching) ${transition}.d();`);
 	}
 	add_intro(block: Block, intro: Transition, outro: Transition) {
 		if (outro) {
@@ -779,7 +780,7 @@ export default class ElementWrapper extends Wrapper {
 		const [intro_var, node, transitionFn, params] = run_transition(this, block, intro, `intro`);
 		block.add_variable(intro_var, outro ? x`@noop`: null);
 
-		let start_intro = b`${intro_var} = @run_transition(${node}, ${transitionFn}, 1, ${params});`;
+		let start_intro = b`${intro_var} = @run_in(${node}, ${transitionFn}, ${params}, this);`;
 		if (!outro) start_intro = b`if (!${intro_var}) { ${start_intro} }`;
 		if (intro.is_local) start_intro = b`if (#local) { ${start_intro} }`;
 		block.chunks.intro.push(start_intro);
@@ -797,7 +798,7 @@ export default class ElementWrapper extends Wrapper {
 		const [outro_var, node, transitionFn, params] = run_transition(this, block, outro, `outro`);
 		block.add_variable(outro_var, x`@noop`);
 
-		let start_outro = b`${outro_var} = @run_transition(${node}, ${transitionFn}, 2, ${params});`;
+		let start_outro = b`${outro_var} = @run_out(${node}, ${transitionFn}, ${params}, this);`;
 		if (outro.is_local) start_outro = b`if (#local) { ${start_outro} }`;
 		block.chunks.outro.push(start_outro);
 
@@ -824,7 +825,7 @@ export default class ElementWrapper extends Wrapper {
 		`);
 
 		block.chunks.animate.push(b`
-			if (${unfreeze_var}) return
+			if (${unfreeze_var} || !${rect_var}) return
 			else {
 				${stop_animation_var}();
 				${stop_animation_var} = @run_animation(${this.var}, ${rect_var}, ${name_var}, ${params_var});

@@ -1,6 +1,5 @@
 import { cubicOut } from "svelte/easing";
-import { run_duration } from "svelte/internal";
-import { CssTransitionConfig, TimeableConfig } from "svelte/transition";
+import { run_duration, TimeableConfig, CssTransitionConfig } from "svelte/internal";
 export function flip(
 	node: Element,
 	animation: { from: DOMRect; to: DOMRect },
