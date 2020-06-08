@@ -305,6 +305,7 @@ export default class EachBlockWrapper extends Wrapper {
 					} else if (!${this.vars.data_length}) {
 						${each_block_else} = ${this.else.block.name}(#ctx);
 						${each_block_else}.c();
+						@transition_in(${each_block_else}, 1);
 						${each_block_else}.m(${update_mount_node}, ${update_anchor_node});
 					} else if (${each_block_else}) {
 						${each_block_else}.d(1);
@@ -321,6 +322,7 @@ export default class EachBlockWrapper extends Wrapper {
 					} else if (!${each_block_else}) {
 						${each_block_else} = ${this.else.block.name}(#ctx);
 						${each_block_else}.c();
+						@transition_in(${each_block_else}, 1);
 						${each_block_else}.m(${update_mount_node}, ${update_anchor_node});
 					}
 				`);
