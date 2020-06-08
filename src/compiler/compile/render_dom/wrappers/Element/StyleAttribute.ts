@@ -39,7 +39,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 					})
 					.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
-				// TODO is this necessary? style.setProperty always treats value as string, no?
+				// TODO is this necessary? style.setProperty always treats value as string, no? - Yes, it is required when there is an additional subcall for a value throught some kind of variable
 				// if (prop.value.length === 1 || prop.value[0].type !== 'Text') {
 				// 	value = x`"" + ${value}`;
 				// }
