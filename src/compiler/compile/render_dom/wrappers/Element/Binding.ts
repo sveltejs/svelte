@@ -1,7 +1,9 @@
 import { b, x } from 'code-red';
 import Binding from '../../../nodes/Binding';
 import ElementWrapper from '../Element';
+import InlineComponentWrapper from '../InlineComponent';
 import get_object from '../../../utils/get_object';
+import replace_object from '../../../utils/replace_object';
 import Block from '../../Block';
 import Renderer from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
@@ -10,20 +12,20 @@ import { Node, Identifier } from 'estree';
 
 export default class BindingWrapper {
 	node: Binding;
-	parent: ElementWrapper;
+	parent: ElementWrapper | InlineComponentWrapper;
 
 	object: string;
 	handler: {
 		uses_context: boolean;
 		mutation: (Node | Node[]);
 		contextual_dependencies: Set<string>;
-		snippet?: Node;
+		lhs?: Node;
 	};
 	snippet: Node;
 	is_readonly: boolean;
 	needs_lock: boolean;
 
-	constructor(block: Block, node: Binding, parent: ElementWrapper) {
+	constructor(block: Block, node: Binding, parent: ElementWrapper | InlineComponentWrapper) {
 		this.node = node;
 		this.parent = parent;
 
@@ -33,7 +35,7 @@ export default class BindingWrapper {
 
 		// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
 		if (parent.node.name === 'select') {
-			parent.select_binding_dependencies = dependencies;
+			(parent as ElementWrapper).select_binding_dependencies = dependencies;
 			dependencies.forEach((prop: string) => {
 				parent.renderer.component.indirect_dependencies.set(prop, new Set());
 			});
@@ -207,7 +209,7 @@ export default class BindingWrapper {
 }
 
 function get_dom_updater(
-	element: ElementWrapper,
+	element: ElementWrapper | InlineComponentWrapper,
 	binding: BindingWrapper
 ) {
 	const { node } = element;
@@ -270,21 +272,17 @@ function get_event_handler(
 	contextual_dependencies: Set<string>;
 	lhs?: Node;
 } {
-	const value = get_value_from_dom(renderer, binding.parent, binding);
-	const contextual_dependencies = new Set(binding.node.expression.contextual_dependencies);
+	const contextual_dependencies = new Set<string>(binding.node.expression.contextual_dependencies);
 
 	const context = block.bindings.get(name);
 	let set_store;
 
 	if (context) {
-		const { object, property, modifier, store } = context;
-
-		if (lhs.type === 'Identifier') {
-			lhs = modifier(x`${object}[${property}]`);
-
-			contextual_dependencies.add(object.name);
-			contextual_dependencies.add(property.name);
-		}
+		const { object, property, store, snippet } = context;
+		lhs = replace_object(lhs, snippet);
+		contextual_dependencies.add(object.name);
+		contextual_dependencies.add(property.name);
+		contextual_dependencies.delete(name);
 
 		if (store) {
 			set_store = b`${store}.set(${`$${store}`});`;
@@ -297,6 +295,8 @@ function get_event_handler(
 		}
 	}
 
+	const value = get_value_from_dom(renderer, binding.parent, binding);
+
 	const mutation = b`
 		${lhs} = ${value};
 		${set_store}
@@ -305,20 +305,21 @@ function get_event_handler(
 	return {
 		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy
 		mutation,
-		contextual_dependencies
+		contextual_dependencies,
+		lhs,
 	};
 }
 
 function get_value_from_dom(
 	renderer: Renderer,
-	element: ElementWrapper,
+	element: ElementWrapper | InlineComponentWrapper,
 	binding: BindingWrapper
 ) {
 	const { node } = element;
 	const { name } = binding.node;
 
 	if (name === 'this') {
-		return x`$$node`;
+		return x`$$value`;
 	}
 
 	// <select bind:value='selected>
