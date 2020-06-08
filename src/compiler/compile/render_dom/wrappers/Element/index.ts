@@ -27,6 +27,11 @@ import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
 
+interface BindingGroup {
+	events: string[];
+	bindings: Binding[];
+}
+
 const events = [
 	{
 		event_names: ['input'],
@@ -405,7 +410,7 @@ export default class ElementWrapper extends Wrapper {
 	get_render_statement(block: Block) {
 		const { name, namespace } = this.node;
 
-		if (namespace === 'http://www.w3.org/2000/svg') {
+		if (namespace === namespaces.svg) {
 			return x`@svg_element("${name}")`;
 		}
 
@@ -436,14 +441,9 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_directives_in_order (block: Block) {
-		interface BindingGroup {
-			events: string[];
-			bindings: Binding[];
-		}
-
 		type OrderedAttribute = EventHandler | BindingGroup | Binding | Action;
 
-		const bindingGroups = events
+		const binding_groups = events
 			.map(event => ({
 				events: event.event_names,
 				bindings: this.bindings
@@ -467,7 +467,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		([
-			...bindingGroups,
+			...binding_groups,
 			...this.event_handlers,
 			this_binding,
 			...this.node.actions
@@ -487,143 +487,140 @@ export default class ElementWrapper extends Wrapper {
 			});
 	}
 
-	add_bindings(block: Block, bindingGroup) {
+	add_bindings(block: Block, binding_group: BindingGroup) {
 		const { renderer } = this;
 
-		if (bindingGroup.bindings.length === 0) return;
+		if (binding_group.bindings.length === 0) return;
 
 		renderer.component.has_reactive_assignments = true;
 
-		const lock = bindingGroup.bindings.some(binding => binding.needs_lock) ?
+		const lock = binding_group.bindings.some(binding => binding.needs_lock) ?
 			block.get_unique_name(`${this.var.name}_updating`) :
 			null;
 
 		if (lock) block.add_variable(lock, x`false`);
 
-		[bindingGroup].forEach(group => {
-			const handler = renderer.component.get_unique_name(`${this.var.name}_${group.events.join('_')}_handler`);
-			renderer.add_to_context(handler.name);
+		const handler = renderer.component.get_unique_name(`${this.var.name}_${binding_group.events.join('_')}_handler`);
+		renderer.add_to_context(handler.name);
 
-			// TODO figure out how to handle locks
-			const needs_lock = group.bindings.some(binding => binding.needs_lock);
+		// TODO figure out how to handle locks
+		const needs_lock = binding_group.bindings.some(binding => binding.needs_lock);
 
-			const dependencies: Set<string> = new Set();
-			const contextual_dependencies: Set<string> = new Set();
+		const dependencies: Set<string> = new Set();
+		const contextual_dependencies: Set<string> = new Set();
 
-			group.bindings.forEach(binding => {
-				// TODO this is a mess
-				add_to_set(dependencies, binding.get_dependencies());
-				add_to_set(contextual_dependencies, binding.node.expression.contextual_dependencies);
-				add_to_set(contextual_dependencies, binding.handler.contextual_dependencies);
+		binding_group.bindings.forEach(binding => {
+			// TODO this is a mess
+			add_to_set(dependencies, binding.get_dependencies());
+			add_to_set(contextual_dependencies, binding.handler.contextual_dependencies);
 
-				binding.render(block, lock);
-			});
+			binding.render(block, lock);
+		});
 
-			// media bindings — awkward special case. The native timeupdate events
-			// fire too infrequently, so we need to take matters into our
-			// own hands
-			let animation_frame;
-			if (group.events[0] === 'timeupdate') {
-				animation_frame = block.get_unique_name(`${this.var.name}_animationframe`);
-				block.add_variable(animation_frame);
-			}
+		// media bindings — awkward special case. The native timeupdate events
+		// fire too infrequently, so we need to take matters into our
+		// own hands
+		let animation_frame;
+		if (binding_group.events[0] === 'timeupdate') {
+			animation_frame = block.get_unique_name(`${this.var.name}_animationframe`);
+			block.add_variable(animation_frame);
+		}
 
-			const has_local_function = contextual_dependencies.size > 0 || needs_lock || animation_frame;
+		const has_local_function = contextual_dependencies.size > 0 || needs_lock || animation_frame;
 
-			let callee = renderer.reference(handler);
+		let callee = renderer.reference(handler);
 
-			// TODO dry this out — similar code for event handlers and component bindings
-			if (has_local_function) {
-				const args = Array.from(contextual_dependencies).map(name => renderer.reference(name));
+		// TODO dry this out — similar code for event handlers and component bindings
+		if (has_local_function) {
+			const args = Array.from(contextual_dependencies).map(name => renderer.reference(name));
 
-				// need to create a block-local function that calls an instance-level function
-				if (animation_frame) {
-					block.chunks.init.push(b`
-						function ${handler}() {
-							@_cancelAnimationFrame(${animation_frame});
-							if (!${this.var}.paused) {
-								${animation_frame} = @raf(${handler});
-								${needs_lock && b`${lock} = true;`}
-							}
-							${callee}.call(${this.var}, ${args});
-						}
-					`);
-				} else {
-					block.chunks.init.push(b`
-						function ${handler}() {
+			// need to create a block-local function that calls an instance-level function
+			if (animation_frame) {
+				block.chunks.init.push(b`
+					function ${handler}() {
+						@_cancelAnimationFrame(${animation_frame});
+						if (!${this.var}.paused) {
+							${animation_frame} = @raf(${handler});
 							${needs_lock && b`${lock} = true;`}
-							${callee}.call(${this.var}, ${args});
 						}
-					`);
-				}
-
-				callee = handler;
+						${callee}.call(${this.var}, ${args});
+					}
+				`);
+			} else {
+				block.chunks.init.push(b`
+					function ${handler}() {
+						${needs_lock && b`${lock} = true;`}
+						${callee}.call(${this.var}, ${args});
+					}
+				`);
 			}
 
-			const params = Array.from(contextual_dependencies).map(name => ({
-				type: 'Identifier',
-				name
-			}));
+			callee = handler;
+		}
 
-			this.renderer.component.partly_hoisted.push(b`
-				function ${handler}(${params}) {
-					${group.bindings.map(b => b.handler.mutation)}
-					${Array.from(dependencies)
-						.filter(dep => dep[0] !== '$')
-						.filter(dep => !contextual_dependencies.has(dep))
-						.map(dep => b`${this.renderer.invalidate(dep)};`)}
-				}
-			`);
+		const params = Array.from(contextual_dependencies).map(name => ({
+			type: 'Identifier',
+			name
+		}));
 
-			group.events.forEach(name => {
-				if (name === 'elementresize') {
-					// special case
-					const resize_listener = block.get_unique_name(`${this.var.name}_resize_listener`);
-					block.add_variable(resize_listener);
+		this.renderer.component.partly_hoisted.push(b`
+			function ${handler}(${params}) {
+				${binding_group.bindings.map(b => b.handler.mutation)}
+				${Array.from(dependencies)
+					.filter(dep => dep[0] !== '$')
+					.filter(dep => !contextual_dependencies.has(dep))
+					.map(dep => b`${this.renderer.invalidate(dep)};`)}
+			}
+		`);
 
-					block.chunks.mount.push(
-						b`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
-					);
+		binding_group.events.forEach(name => {
+			if (name === 'elementresize') {
+				// special case
+				const resize_listener = block.get_unique_name(`${this.var.name}_resize_listener`);
+				block.add_variable(resize_listener);
 
-					block.chunks.destroy.push(
-						b`${resize_listener}();`
-					);
-				} else {
-					block.event_listeners.push(
-						x`@listen(${this.var}, "${name}", ${callee})`
-					);
-				}
-			});
-
-			const some_initial_state_is_undefined = group.bindings
-				.map(binding => x`${binding.snippet} === void 0`)
-				.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
-
-			const should_initialise = (
-				this.node.name === 'select' ||
-				group.bindings.find(binding => {
-					return (
-						binding.node.name === 'indeterminate' ||
-						binding.node.name === 'textContent' ||
-						binding.node.name === 'innerHTML' ||
-						binding.is_readonly_media_attribute()
-					);
-				})
-			);
-
-			if (should_initialise) {
-				const callback = has_local_function ? handler : x`() => ${callee}.call(${this.var})`;
-				block.chunks.hydrate.push(
-					b`if (${some_initial_state_is_undefined}) @add_render_callback(${callback});`
+				block.chunks.mount.push(
+					b`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
 				);
-			}
 
-			if (group.events[0] === 'elementresize') {
-				block.chunks.hydrate.push(
-					b`@add_render_callback(() => ${callee}.call(${this.var}));`
+				block.chunks.destroy.push(
+					b`${resize_listener}();`
+				);
+			} else {
+				block.event_listeners.push(
+					x`@listen(${this.var}, "${name}", ${callee})`
 				);
 			}
 		});
+
+		const some_initial_state_is_undefined = binding_group.bindings
+			.map(binding => x`${binding.snippet} === void 0`)
+			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
+
+		const should_initialise = (
+			this.node.name === 'select' ||
+			binding_group.bindings.find(binding => {
+				return (
+					binding.node.name === 'indeterminate' ||
+					binding.node.name === 'textContent' ||
+					binding.node.name === 'innerHTML' ||
+					binding.is_readonly_media_attribute()
+				);
+			})
+		);
+
+		if (should_initialise) {
+			const callback = has_local_function ? handler : x`() => ${callee}.call(${this.var})`;
+			block.chunks.hydrate.push(
+				b`if (${some_initial_state_is_undefined}) @add_render_callback(${callback});`
+			);
+		}
+
+		if (binding_group.events[0] === 'elementresize') {
+			block.chunks.hydrate.push(
+				b`@add_render_callback(() => ${callee}.call(${this.var}));`
+			);
+		}
 
 		if (lock) {
 			block.chunks.update.push(b`${lock} = false;`);
@@ -635,7 +632,7 @@ export default class ElementWrapper extends Wrapper {
 
 		renderer.component.has_reactive_assignments = true;
 
-		const binding_callback = bind_this(renderer.component, block, this_binding.node, this.var);
+		const binding_callback = bind_this(renderer.component, block, this_binding, this.var);
 		block.chunks.mount.push(binding_callback);
 	}
 
