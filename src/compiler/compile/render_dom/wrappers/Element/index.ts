@@ -443,7 +443,7 @@ export default class ElementWrapper extends Wrapper {
 	add_directives_in_order (block: Block) {
 		type OrderedAttribute = EventHandler | BindingGroup | Binding | Action;
 
-		const bindingGroups = events
+		const binding_groups = events
 			.map(event => ({
 				events: event.event_names,
 				bindings: this.bindings
@@ -467,7 +467,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		([
-			...bindingGroups,
+			...binding_groups,
 			...this.event_handlers,
 			this_binding,
 			...this.node.actions
@@ -487,29 +487,29 @@ export default class ElementWrapper extends Wrapper {
 			});
 	}
 
-	add_bindings(block: Block, bindingGroup: BindingGroup) {
+	add_bindings(block: Block, binding_group: BindingGroup) {
 		const { renderer } = this;
 
-		if (bindingGroup.bindings.length === 0) return;
+		if (binding_group.bindings.length === 0) return;
 
 		renderer.component.has_reactive_assignments = true;
 
-		const lock = bindingGroup.bindings.some(binding => binding.needs_lock) ?
+		const lock = binding_group.bindings.some(binding => binding.needs_lock) ?
 			block.get_unique_name(`${this.var.name}_updating`) :
 			null;
 
 		if (lock) block.add_variable(lock, x`false`);
 
-		const handler = renderer.component.get_unique_name(`${this.var.name}_${bindingGroup.events.join('_')}_handler`);
+		const handler = renderer.component.get_unique_name(`${this.var.name}_${binding_group.events.join('_')}_handler`);
 		renderer.add_to_context(handler.name);
 
 		// TODO figure out how to handle locks
-		const needs_lock = bindingGroup.bindings.some(binding => binding.needs_lock);
+		const needs_lock = binding_group.bindings.some(binding => binding.needs_lock);
 
 		const dependencies: Set<string> = new Set();
 		const contextual_dependencies: Set<string> = new Set();
 
-		bindingGroup.bindings.forEach(binding => {
+		binding_group.bindings.forEach(binding => {
 			// TODO this is a mess
 			add_to_set(dependencies, binding.get_dependencies());
 			add_to_set(contextual_dependencies, binding.handler.contextual_dependencies);
@@ -521,7 +521,7 @@ export default class ElementWrapper extends Wrapper {
 		// fire too infrequently, so we need to take matters into our
 		// own hands
 		let animation_frame;
-		if (bindingGroup.events[0] === 'timeupdate') {
+		if (binding_group.events[0] === 'timeupdate') {
 			animation_frame = block.get_unique_name(`${this.var.name}_animationframe`);
 			block.add_variable(animation_frame);
 		}
@@ -565,7 +565,7 @@ export default class ElementWrapper extends Wrapper {
 
 		this.renderer.component.partly_hoisted.push(b`
 			function ${handler}(${params}) {
-				${bindingGroup.bindings.map(b => b.handler.mutation)}
+				${binding_group.bindings.map(b => b.handler.mutation)}
 				${Array.from(dependencies)
 					.filter(dep => dep[0] !== '$')
 					.filter(dep => !contextual_dependencies.has(dep))
@@ -573,7 +573,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 		`);
 
-		bindingGroup.events.forEach(name => {
+		binding_group.events.forEach(name => {
 			if (name === 'elementresize') {
 				// special case
 				const resize_listener = block.get_unique_name(`${this.var.name}_resize_listener`);
@@ -593,13 +593,13 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 
-		const some_initial_state_is_undefined = bindingGroup.bindings
+		const some_initial_state_is_undefined = binding_group.bindings
 			.map(binding => x`${binding.snippet} === void 0`)
 			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
 		const should_initialise = (
 			this.node.name === 'select' ||
-			bindingGroup.bindings.find(binding => {
+			binding_group.bindings.find(binding => {
 				return (
 					binding.node.name === 'indeterminate' ||
 					binding.node.name === 'textContent' ||
@@ -616,7 +616,7 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 
-		if (bindingGroup.events[0] === 'elementresize') {
+		if (binding_group.events[0] === 'elementresize') {
 			block.chunks.hydrate.push(
 				b`@add_render_callback(() => ${callee}.call(${this.var}));`
 			);
