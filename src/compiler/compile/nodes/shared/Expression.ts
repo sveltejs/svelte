@@ -14,6 +14,8 @@ import { invalidate } from '../../render_dom/invalidate';
 import { Node, FunctionExpression, Identifier } from 'estree';
 import { TemplateNode } from '../../../interfaces';
 import { is_reserved_keyword } from '../../utils/reserved_keywords';
+import replace_object from '../../utils/replace_object';
+import EachBlock from '../EachBlock';
 
 type Owner = Wrapper | TemplateNode;
 
@@ -134,6 +136,8 @@ export default class Expression {
 								const variable = component.var_lookup.get(name);
 								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
 							});
+							const each_block = template_scope.get_owner(name);
+							(each_block as EachBlock).has_binding = true;
 						} else {
 							component.add_reference(name);
 
@@ -311,6 +315,10 @@ export default class Expression {
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 
+					const object_name = get_object(assignee).name;
+
+					if (scope.has(object_name)) return;
+
 					// normally (`a = 1`, `b.c = 2`), there'll be a single name
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
@@ -326,6 +334,23 @@ export default class Expression {
 							traced.add(name);
 						}
 					});
+
+					const context = block.bindings.get(object_name);
+
+					if (context) {
+						// for `{#each array as item}`
+						// replace `item = 1` to `each_array[each_index] = 1`, this allow us to mutate the array
+						// rather than mutating the local `item` variable
+						const { snippet, object, property } = context;
+						const replaced: any = replace_object(assignee, snippet);
+						if (node.type === 'AssignmentExpression') {
+							node.left = replaced;
+						} else {
+							node.argument = replaced;
+						}
+						contextual_dependencies.add(object.name);
+						contextual_dependencies.add(property.name);
+					}
 
 					this.replace(invalidate(block.renderer, scope, node, traced));
 				}
