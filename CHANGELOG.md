@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix `bind:this` to the value of an `{#each}` block ([#4517](https://github.com/sveltejs/svelte/issues/4517))
+* Fix reactivity when assigning to contextual `{#each}` variable ([#4574](https://github.com/sveltejs/svelte/issues/4574), [#4744](https://github.com/sveltejs/svelte/issues/4744))
 * Fix binding to contextual `{#each}` values that shadow outer names ([#4757](https://github.com/sveltejs/svelte/issues/4757))
 
 ## 3.23.0
