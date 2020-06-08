@@ -1,0 +1,3 @@
+<style>
+	:global {}
+</style>
