@@ -335,7 +335,7 @@ function get_value_from_dom(
 	if (name === 'group') {
 		const binding_group = get_binding_group(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			return x`@get_binding_group_value($$binding_groups[${binding_group}])`;
+			return x`@get_binding_group_value($$binding_groups[${binding_group}], this.__value, this.checked)`;
 		}
 
 		return x`this.__value`;
