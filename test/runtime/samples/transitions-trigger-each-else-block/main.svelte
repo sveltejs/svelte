@@ -6,6 +6,6 @@
 </script>
 {#each arr as v}
     {v}
-    {:else}
+{:else}
     <div transition:foo>empty</div>
 {/each}

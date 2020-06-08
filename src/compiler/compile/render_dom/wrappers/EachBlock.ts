@@ -298,6 +298,21 @@ export default class EachBlockWrapper extends Wrapper {
 				}
 			`);
 
+			const has_transitions = !!(this.else.block.has_intro_method || this.else.block.has_outro_method);
+
+			const destroy_old_block_with_transition = b`
+				@group_outros();
+				@transition_out(${each_block_else}, 1, 1, () => {
+					${each_block_else} = null;
+				});
+				@check_outros();
+			`;
+
+			const destroy_old_block_without_transition = b`
+				${each_block_else}.d(1);
+				${each_block_else} = null;
+			`;
+
 			if (this.else.block.has_update_method) {
 				this.updates.push(b`
 					if (!${this.vars.data_length} && ${each_block_else}) {
@@ -308,16 +323,14 @@ export default class EachBlockWrapper extends Wrapper {
 						@transition_in(${each_block_else}, 1);
 						${each_block_else}.m(${update_mount_node}, ${update_anchor_node});
 					} else if (${each_block_else}) {
-						${each_block_else}.d(1);
-						${each_block_else} = null;
+						${has_transitions ? destroy_old_block_with_transition : destroy_old_block_without_transition}
 					}
 				`);
 			} else {
 				this.updates.push(b`
 					if (${this.vars.data_length}) {
 						if (${each_block_else}) {
-							${each_block_else}.d(1);
-							${each_block_else} = null;
+							${has_transitions ? destroy_old_block_with_transition : destroy_old_block_without_transition}
 						}
 					} else if (!${each_block_else}) {
 						${each_block_else} = ${this.else.block.name}(#ctx);
