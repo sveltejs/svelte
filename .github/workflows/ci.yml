@@ -8,7 +8,6 @@ jobs:
         node-version: [8, 10, 12, 14]
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
-    - run: git config --global core.autocrlf false
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
@@ -24,7 +23,10 @@ jobs:
     - uses: actions/setup-node@v1
     - run: 'npm i && npm run lint'
   Unit:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1

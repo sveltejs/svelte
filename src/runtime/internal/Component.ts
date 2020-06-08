@@ -19,7 +19,6 @@ interface Fragment {
 	/* outro   */ o: (local: any) => void;
 	/* destroy */ d: (detaching: 0|1) => void;
 }
-// eslint-disable-next-line @typescript-eslint/class-name-casing
 interface T$$ {
 	dirty: number[];
 	ctx: null|any;
