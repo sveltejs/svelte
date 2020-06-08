@@ -1,4 +1,5 @@
 import Wrapper from '../shared/Wrapper';
+import BindingWrapper from '../Element/Binding';
 import Renderer from '../../Renderer';
 import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
@@ -309,7 +310,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			component.has_reactive_assignments = true;
 
 			if (binding.name === 'this') {
-				return bind_this(component, block, binding, this.var);
+				return bind_this(component, block, new BindingWrapper(block, binding, this), this.var);
 			}
 
 			const id = component.get_unique_name(`${this.var.name}_${binding.name}_binding`);
