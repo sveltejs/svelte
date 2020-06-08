@@ -26,6 +26,7 @@ export default class Renderer {
 	options: CompileOptions;
 
 	context: ContextMember[] = [];
+	initial_context: ContextMember[] = [];
 	context_lookup: Map<string, ContextMember> = new Map();
 	context_overflow: boolean;
 	blocks: Array<Block | Node | Node[]> = [];
@@ -110,8 +111,12 @@ export default class Renderer {
 
 				// these determine whether variable is included in initial context
 				// array, so must have the highest priority
-				if (variable.export_name) member.priority += 8;
-				if (variable.referenced) member.priority += 16;
+				if (variable.export_name) member.priority += 16;
+				if (variable.referenced) member.priority += 32;
+			} else if (member.is_non_contextual) {
+				// determine whether variable is included in initial context
+				// array, so must have the highest priority
+				member.priority += 8;
 			}
 
 			if (!member.is_contextual) {
@@ -121,6 +126,17 @@ export default class Renderer {
 
 		this.context.sort((a, b) => (b.priority - a.priority) || ((a.index.value as number) - (b.index.value as number)));
 		this.context.forEach((member, i) => member.index.value = i);
+
+		let i = this.context.length;
+		while (i--) {
+			const member = this.context[i];
+			if (member.variable) {
+				if (member.variable.referenced || member.variable.export_name) break;
+			} else if (member.is_non_contextual) {
+				break;
+			}
+		}
+		this.initial_context = this.context.slice(0, i + 1);
 	}
 
 	add_to_context(name: string, contextual = false) {
