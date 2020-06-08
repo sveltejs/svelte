@@ -56,8 +56,8 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 			if (node.type === 'PseudoClassSelector' && node.name === 'global' && node.children === null) {
 				parser.error({
-					code: `css-global-without-selector`,
-					message: `:global() must contain a selector, cannot be used on its own`
+					code: `css-syntax-error`,
+					message: `:global() must contain a selector`
 				}, node.loc.start.offset);
 			}
 
