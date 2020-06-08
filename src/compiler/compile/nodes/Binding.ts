@@ -60,7 +60,7 @@ export default class Binding extends Node {
 			scope.dependencies_for_name.get(name).forEach(name => {
 				const variable = component.var_lookup.get(name);
 				if (variable) {
-					variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
+					variable.mutated = true;
 				}
 			});
 		} else {

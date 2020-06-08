@@ -17,6 +17,7 @@ function create_fragment(ctx) {
 	let input0;
 	let t;
 	let input1;
+	let mounted;
 	let dispose;
 
 	return {
@@ -27,16 +28,19 @@ function create_fragment(ctx) {
 			attr(input0, "type", "file");
 			attr(input1, "type", "file");
 		},
-		m(target, anchor, remount) {
+		m(target, anchor) {
 			insert(target, input0, anchor);
 			insert(target, t, anchor);
 			insert(target, input1, anchor);
-			if (remount) run_all(dispose);
 
-			dispose = [
-				listen(input0, "change", /*input0_change_handler*/ ctx[1]),
-				listen(input1, "change", /*input1_change_handler*/ ctx[2])
-			];
+			if (!mounted) {
+				dispose = [
+					listen(input0, "change", /*input0_change_handler*/ ctx[1]),
+					listen(input1, "change", /*input1_change_handler*/ ctx[2])
+				];
+
+				mounted = true;
+			}
 		},
 		p: noop,
 		i: noop,
@@ -45,6 +49,7 @@ function create_fragment(ctx) {
 			if (detaching) detach(input0);
 			if (detaching) detach(t);
 			if (detaching) detach(input1);
+			mounted = false;
 			run_all(dispose);
 		}
 	};

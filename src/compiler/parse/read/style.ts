@@ -54,6 +54,13 @@ export default function read_style(parser: Parser, start: number, attributes: No
 				}, node.start);
 			}
 
+			if (node.type === 'PseudoClassSelector' && node.name === 'global' && node.children === null) {
+				parser.error({
+					code: `css-syntax-error`,
+					message: `:global() must contain a selector`
+				}, node.loc.start.offset);
+			}
+
 			if (node.loc) {
 				node.start = node.loc.start.offset;
 				node.end = node.loc.end.offset;
