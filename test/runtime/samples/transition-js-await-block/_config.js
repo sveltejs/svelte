@@ -17,8 +17,7 @@ export default {
 		const p = target.querySelector('p');
 
 		assert.equal(p.className, 'pending');
-		assert.equal(p.foo, 0);
-
+		
 		raf.tick(50);
 		assert.equal(p.foo, 0.5);
 

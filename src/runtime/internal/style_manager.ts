@@ -34,7 +34,6 @@ export const animate_css = /*#__PURE__*/ methodify(
 		}
 
 		const previous = this.style.animation;
-		if (previous) {console.error("stacked animations"); return noop}
 		this.style.animation = `${
 			previous ? `${previous}, ` : ''
 		}${duration}ms linear ${delay}ms 1 normal both running ${name}`;

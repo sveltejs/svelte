@@ -7,9 +7,8 @@ export default {
 		global.count = 0;
 
 		component.visible = true;
-		assert.equal(global.count, 1);
+		assert.equal(global.count, 2);
 		const div = target.querySelector('div');
-		assert.equal(div.foo, 0);
 
 		raf.tick(75);
 		component.name = 'everybody';

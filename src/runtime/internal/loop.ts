@@ -9,23 +9,23 @@ export const frame = {
 	},
 };
 
-function calc_framerate() {
-	raf((t1) => {
-		raf((t2) => {
-			const delta = t2 - t1;
-			raf((t3) => {
-				if (Math.abs(t3 - t2 - delta) > 1) {
-					calc_framerate();
-				} else {
-					const f24 = 1000 / 24;
-					const f144 = 1000 / 144;
-					frame.rate = delta > f144 ? f144 : delta < f24 ? f24 : delta;
-				}
-			});
-		});
-	});
-}
-calc_framerate();
+// function calc_framerate() {
+// 	raf((t1) => {
+// 		raf((t2) => {
+// 			const delta = t2 - t1;
+// 			raf((t3) => {
+// 				if (Math.abs(t3 - t2 - delta) > 1) {
+// 					calc_framerate();
+// 				} else {
+// 					const f24 = 1000 / 24;
+// 					const f144 = 1000 / 144;
+// 					frame.rate = delta > f144 ? f144 : delta < f24 ? f24 : delta;
+// 				}
+// 			});
+// 		});
+// 	});
+// }
+// calc_framerate();
 type TaskCallback = (t: number) => boolean;
 type TaskCanceller = () => void;
 

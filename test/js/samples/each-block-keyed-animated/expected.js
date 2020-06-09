@@ -54,7 +54,7 @@ function create_each_block(key_1, ctx) {
 			unfreeze = fix_position(div, rect);
 		},
 		a() {
-			if (unfreeze) return; else {
+			if (unfreeze || !rect) return; else {
 				stop_animation();
 				stop_animation = run_animation(div, rect, foo);
 			}

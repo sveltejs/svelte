@@ -7,7 +7,7 @@ import {
 	init,
 	insert,
 	noop,
-	run_transition,
+	run_in,
 	safe_not_equal,
 	transition_in
 } from "svelte/internal";
@@ -52,7 +52,8 @@ function create_if_block(ctx) {
 // (9:1) {#if y}
 function create_if_block_1(ctx) {
 	let div;
-	let div_intro;
+	let div_intro = noop;
+	let current;
 
 	return {
 		c() {
@@ -61,16 +62,20 @@ function create_if_block_1(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
+			current = true;
 		},
 		i(local) {
+			if (current) return;
+
 			if (local) {
-				if (!div_intro) {
-					div_intro = run_transition(div, foo, 1);
-				}
+				div_intro();
+				div_intro = run_in(div, foo);
 			}
+
+			current = true;
 		},
 		o(local) {
-			div_intro();
+			current = false;
 		},
 		d(detaching) {
 			if (detaching) detach(div);

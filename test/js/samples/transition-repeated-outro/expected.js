@@ -8,7 +8,7 @@ import {
 	init,
 	insert,
 	noop,
-	run_transition,
+	run_out,
 	safe_not_equal,
 	transition_in,
 	transition_out
@@ -36,7 +36,7 @@ function create_if_block(ctx) {
 			current = true;
 		},
 		o(local) {
-			div_outro = run_transition(div, fade, 2);
+			div_outro = run_out(div, fade);
 			current = false;
 		},
 		d(detaching) {

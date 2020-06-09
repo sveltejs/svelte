@@ -16,7 +16,6 @@ export default {
 
 		return promise.then(() => {
 			const div = target.querySelector('div');
-			assert.equal(div.foo, 0);
 
 			raf.tick(100);
 			assert.equal(div.foo, 1);

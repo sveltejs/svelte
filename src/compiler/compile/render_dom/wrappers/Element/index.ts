@@ -744,10 +744,14 @@ export default class ElementWrapper extends Wrapper {
 		const snippet = intro.expression ? intro.expression.manipulate(block) : null;
 		const fn = this.renderer.reference(intro.name);
 
+		
 		block.add_variable(transition);
-		block.chunks.create.push(b`${transition} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet})`)
-
-
+		block.chunks.mount.push(b`if (!${transition}) ${transition} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet});`);
+		block.chunks.hydrate.push(b`if (!${transition}) ${transition} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet});`);
+		if (intro.expression) {
+			const dirty = block.renderer.dirty([intro.name,...Array.from(intro.expression.dependencies)]);
+			block.chunks.update.push(b`if (${dirty}) ${transition}.u(${fn}, ${snippet});`);
+		}
 		let intro_block = b`${transition}.i();`;
 		let outro_block = b`${transition}.o();`;
 
@@ -758,7 +762,7 @@ export default class ElementWrapper extends Wrapper {
 		block.chunks.intro.push(intro_block);
 		block.chunks.outro.push(outro_block);
 
-		block.chunks.destroy.push(b`if (detaching) ${transition}.d();`);
+		block.chunks.destroy.push(b`if (detaching && ${transition}) ${transition}.d();`);
 	}
 	add_intro(block: Block, intro: Transition, outro: Transition) {
 		if (outro) {
@@ -766,47 +770,43 @@ export default class ElementWrapper extends Wrapper {
 			block.chunks.intro.push(b`${outro_var}(1);`);
 		}
 		if (this.node.animation) {
-			const [unfreeze_var, rect_var, stop_animation_var, animationFn, params] = run_animation(this, block);
+			const [unfreeze_var] = run_animation(this, block);
 			block.chunks.intro.push(b`
 				if (${unfreeze_var}) {
 					${unfreeze_var}();
 					${unfreeze_var} = void 0;
-					${stop_animation_var} = @run_animation(${this.var}, ${rect_var}, ${animationFn}, ${params});
 				}
 			`);
 		}
 		if (!intro) return;
 
 		const [intro_var, node, transitionFn, params] = run_transition(this, block, intro, `intro`);
-		block.add_variable(intro_var, outro ? x`@noop`: null);
+		block.add_variable(intro_var, x`@noop`);
 
-		let start_intro = b`${intro_var} = @run_in(${node}, ${transitionFn}, ${params}, this);`;
-		if (!outro) start_intro = b`if (!${intro_var}) { ${start_intro} }`;
+		let start_intro = b`
+			${intro_var}();
+			${intro_var} = @run_in(${node}, ${transitionFn}, ${params});
+		`;
 		if (intro.is_local) start_intro = b`if (#local) { ${start_intro} }`;
 		block.chunks.intro.push(start_intro);
 	}
 	// TODO
 	// hide elements that have outro'd prior to their removal from the DOM
 	// ( ...unless they belong to a still-outroing group )
-	add_outro(block: Block, intro: Transition, outro: Transition) {
-		if (intro) {
-			const intro_var = block.alias(`${this.var.name}_intro`);
-			block.chunks.outro.push(b`${intro_var}();`);
-		}
+	add_outro(block: Block, _intro: Transition, outro: Transition) {
 		if (!outro) return;
 
 		const [outro_var, node, transitionFn, params] = run_transition(this, block, outro, `outro`);
 		block.add_variable(outro_var, x`@noop`);
 
-		let start_outro = b`${outro_var} = @run_out(${node}, ${transitionFn}, ${params}, this);`;
+		let start_outro = b`${outro_var} = @run_out(${node}, ${transitionFn}, ${params});`;
 		if (outro.is_local) start_outro = b`if (#local) { ${start_outro} }`;
 		block.chunks.outro.push(start_outro);
 
 		block.chunks.destroy.push(b`if (detaching) ${outro_var}();`);
 	}
 
-	add_animation(block: Block, intro: Transition) {
-		const intro_var = intro && block.alias(`${this.var.name}_intro`);
+	add_animation(block: Block) {
 
 		const [unfreeze_var, rect_var, stop_animation_var, name_var, params_var] = run_animation(this, block);
 
@@ -816,7 +816,6 @@ export default class ElementWrapper extends Wrapper {
 
 		block.chunks.measure.push(b`
 			${rect_var} = ${this.var}.getBoundingClientRect();
-			${intro && b`${intro_var}();`}
 		`);
 
 		block.chunks.fix.push(b`

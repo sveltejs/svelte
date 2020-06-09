@@ -243,7 +243,7 @@ describe("runtime", () => {
 		});
 	}
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).reverse().forEach(dir => {
 		runTest(dir, false);
 		runTest(dir, true);
 	});

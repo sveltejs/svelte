@@ -123,6 +123,7 @@ export const run_animation = /*#__PURE__*/ methodify(function (this: HTMLElement
 			const end_time = current_frame_time + delay + duration;
 			const runner = (fn) => reversed(fn, true, easing);
 			if (css) cancel_css = animate_css(this, runner(css), duration, delay);
+			if (tick) tick(0, 1);
 			cancel_raf = tick ? setTweenTimeout(stop, end_time, runner(tick), duration) : setFrameTimeout(stop, end_time);
 		};
 	});
@@ -324,7 +325,7 @@ export const create_bidirectional_transition = /*#__PURE__*/ methodify(function(
 			prev = prev ? prev(-1) : run_transition(true);
 		},
 		d() {
-			prev = prev(1);
+			if (prev) prev(1);
 		}
 	}
 });

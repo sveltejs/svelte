@@ -234,17 +234,14 @@ export default class Block {
 	get_contents(key?: any) {
 		const { dev } = this.renderer.options;
 
-		if (this.has_outros) {
+		if (this.has_outros || this.has_intros) {
 			this.add_variable({ type: 'Identifier', name: '#current' });
 
-			if (this.chunks.intro.length > 0) {
-				this.chunks.intro.push(b`#current = true;`);
-				this.chunks.mount.push(b`#current = true;`);
-			}
+			this.chunks.intro.push(b`#current = true;`);
+			this.chunks.mount.push(b`#current = true;`);
+			
 
-			if (this.chunks.outro.length > 0) {
-				this.chunks.outro.push(b`#current = false;`);
-			}
+			this.chunks.outro.push(b`#current = false;`);
 		}
 
 		if (this.autofocus) {
@@ -345,7 +342,7 @@ export default class Block {
 				properties.intro = noop;
 			} else {
 				properties.intro = x`function #intro(#local) {
-					${this.has_outros && b`if (#current) return;`}
+					${b`if (#current) return;`}
 					${this.chunks.intro}
 				}`;
 			}

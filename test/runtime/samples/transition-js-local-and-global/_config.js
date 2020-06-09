@@ -11,7 +11,6 @@ export default {
 
 		let divs = target.querySelectorAll('div');
 		assert.equal(divs[0].foo, undefined);
-		assert.equal(divs[1].foo, 0);
 
 		raf.tick(50);
 		assert.equal(divs[0].foo, undefined);

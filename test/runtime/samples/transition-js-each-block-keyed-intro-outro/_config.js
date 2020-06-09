@@ -15,9 +15,6 @@ export default {
 		divs[1].i = 1;
 		divs[2].i = 2;
 
-		assert.equal(divs[0].foo, 0);
-		assert.equal(divs[1].foo, 0);
-		assert.equal(divs[2].foo, 0);
 
 		raf.tick(100);
 		assert.equal(divs[0].foo, 1);

@@ -16,7 +16,6 @@ export default {
 	test({ assert, component, target, window, raf }) {
 		const divs = target.querySelectorAll('div');
 
-		assert.equal(divs[0].foo, 0);
 
 		raf.tick(100);
 		assert.equal(divs[0].foo, 1);

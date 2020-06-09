@@ -18,7 +18,6 @@ export default {
 
 		const div2 = target.querySelector('div:last-child');
 		assert.equal(div1.foo, undefined);
-		assert.equal(div2.foo, 0);
 
 		raf.tick(200);
 		assert.equal(div1.foo, undefined);
