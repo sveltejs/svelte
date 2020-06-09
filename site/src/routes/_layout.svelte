@@ -101,9 +101,6 @@
 	.BLM a {
 		white-space: nowrap;
 	}
-	:global(header){
-		filter: grayscale(100%) /* BLM */
-	}
 	main {
 		position: relative;
 		margin: 0 auto;
@@ -126,9 +123,5 @@
 		main {
 			padding-bottom: 75px; /* BLM */
 		}
-	}
-
-	main > :global(*) {
-		filter: grayscale(100%) /* BLM */
 	}
 </style>
