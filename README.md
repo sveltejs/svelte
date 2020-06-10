@@ -64,13 +64,7 @@ npm run test -- -g transition
 
 ## svelte.dev
 
-The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.dev). To develop locally:
-
-```bash
-cd site
-npm install && npm run update
-npm run dev
-```
+The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.dev).
 
 ### Is svelte.dev down?
 

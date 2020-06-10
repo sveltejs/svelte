@@ -7,8 +7,9 @@ import replace_object from '../../../utils/replace_object';
 import Block from '../../Block';
 import Renderer from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
-import EachBlock from '../../../nodes/EachBlock';
 import { Node, Identifier } from 'estree';
+import add_to_set from '../../../utils/add_to_set';
+import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 
 export default class BindingWrapper {
 	node: Binding;
@@ -42,12 +43,7 @@ export default class BindingWrapper {
 		}
 
 		if (node.is_contextual) {
-			// we need to ensure that the each block creates a context including
-			// the list and the index, if they're not otherwise referenced
-			const { name } = get_object(this.node.expression.node);
-			const each_block = this.parent.node.scope.get_owner(name);
-
-			(each_block as EachBlock).has_binding = true;
+			mark_each_block_bindings(this.parent, this.node);
 		}
 
 		this.object = get_object(this.node.expression.node).name;
@@ -123,17 +119,31 @@ export default class BindingWrapper {
 		switch (this.node.name) {
 			case 'group':
 			{
-				const binding_group = get_binding_group(parent.renderer, this.node.expression.node);
+				const { binding_group, is_context, contexts, index } = get_binding_group(parent.renderer, this.node, block);
 
 				block.renderer.add_to_context(`$$binding_groups`);
-				const reference = block.renderer.reference(`$$binding_groups`);
+
+				if (is_context) {
+					if (contexts.length > 1) {
+						let binding_group = x`${block.renderer.reference('$$binding_groups')}[${index}]`;
+						for (const name of contexts.slice(0, -1)) {
+							binding_group = x`${binding_group}[${block.renderer.reference(name)}]`;
+							block.chunks.init.push(
+								b`${binding_group} = ${binding_group} || [];`
+							);
+						}
+					}
+					block.chunks.init.push(
+						b`${binding_group(true)} = [];`
+					);
+				}
 
 				block.chunks.hydrate.push(
-					b`${reference}[${binding_group}].push(${parent.var});`
+					b`${binding_group(true)}.push(${parent.var});`
 				);
 
 				block.chunks.destroy.push(
-					b`${reference}[${binding_group}].splice(${reference}[${binding_group}].indexOf(${parent.var}), 1);`
+					b`${binding_group(true)}.splice(${binding_group(true)}.indexOf(${parent.var}), 1);`
 				);
 				break;
 			}
@@ -245,19 +255,61 @@ function get_dom_updater(
 	return b`${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
-function get_binding_group(renderer: Renderer, value: Node) {
-	const { parts } = flatten_reference(value); // TODO handle cases involving computed member expressions
-	const keypath = parts.join('.');
+function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
+	const { parts } = flatten_reference(value.raw_expression);
+	let keypath = parts.join('.');
 
-	// TODO handle contextual bindings — `keypath` should include unique ID of
-	// each block that provides context
-	let index = renderer.binding_groups.indexOf(keypath);
-	if (index === -1) {
-		index = renderer.binding_groups.length;
-		renderer.binding_groups.push(keypath);
+	const contexts = [];
+
+	for (const dep of value.expression.contextual_dependencies) {
+		const context = block.bindings.get(dep);
+		let key;
+		let name;
+		if (context) {
+			key = context.object.name;
+			name = context.property.name;
+		} else {
+			key = dep;
+			name = dep;
+		}
+		keypath = `${key}@${keypath}`;
+		contexts.push(name);
 	}
 
-	return index;
+	if (!renderer.binding_groups.has(keypath)) {
+		const index = renderer.binding_groups.size;
+
+		contexts.forEach(context => {
+			renderer.add_to_context(context, true);
+		});
+
+		renderer.binding_groups.set(keypath, {
+			binding_group: (to_reference: boolean = false) => {
+				let binding_group = '$$binding_groups';
+				let _secondary_indexes = contexts;
+
+				if (to_reference) {
+					binding_group = block.renderer.reference(binding_group);
+					_secondary_indexes = _secondary_indexes.map(name => block.renderer.reference(name));
+				}
+
+				if (_secondary_indexes.length > 0) {
+					let obj = x`${binding_group}[${index}]`;
+					_secondary_indexes.forEach(secondary_index => {
+						obj = x`${obj}[${secondary_index}]`;
+					});
+					return obj;
+				} else {
+					return x`${binding_group}[${index}]`;
+				}
+			},
+			is_context: contexts.length > 0,
+			contexts,
+			index,
+		});
+	}
+
+	return renderer.binding_groups.get(keypath);
 }
 
 function get_event_handler(
@@ -295,7 +347,7 @@ function get_event_handler(
 		}
 	}
 
-	const value = get_value_from_dom(renderer, binding.parent, binding);
+	const value = get_value_from_dom(renderer, binding.parent, binding, block, contextual_dependencies);
 
 	const mutation = b`
 		${lhs} = ${value};
@@ -313,7 +365,9 @@ function get_event_handler(
 function get_value_from_dom(
 	renderer: Renderer,
 	element: ElementWrapper | InlineComponentWrapper,
-	binding: BindingWrapper
+	binding: BindingWrapper,
+	block: Block,
+	contextual_dependencies: Set<string>
 ) {
 	const { node } = element;
 	const { name } = binding.node;
@@ -333,9 +387,10 @@ function get_value_from_dom(
 
 	// <input type='checkbox' bind:group='foo'>
 	if (name === 'group') {
-		const binding_group = get_binding_group(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			return x`@get_binding_group_value($$binding_groups[${binding_group}], this.__value, this.checked)`;
+			const { binding_group, contexts } = get_binding_group(renderer, binding.node, block);
+			add_to_set(contextual_dependencies, contexts);
+			return x`@get_binding_group_value(${binding_group()}, this.__value, this.checked)`;
 		}
 
 		return x`this.__value`;

@@ -32,7 +32,7 @@ export default class Renderer {
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
-	binding_groups: string[] = [];
+	binding_groups: Map<string, { binding_group: (to_reference?: boolean) => Node; is_context: boolean; contexts: string[]; index: number }> = new Map();
 
 	block: Block;
 	fragment: FragmentWrapper;
@@ -63,7 +63,7 @@ export default class Renderer {
 			this.add_to_context('$$slots');
 		}
 
-		if (this.binding_groups.length > 0) {
+		if (this.binding_groups.size > 0) {
 			this.add_to_context('$$binding_groups');
 		}
 

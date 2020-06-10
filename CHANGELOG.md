@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fix `bind:group` inside `{#each}` ([#3243](https://github.com/sveltejs/svelte/issues/3243))
+
+## 3.23.1
+
 * Fix checkbox `bind:group` when multiple options have the same value ([#4397](https://github.com/sveltejs/svelte/issues/4397))
 * Fix `bind:this` to the value of an `{#each}` block ([#4517](https://github.com/sveltejs/svelte/issues/4517))
 * Fix reactivity when assigning to contextual `{#each}` variable ([#4574](https://github.com/sveltejs/svelte/issues/4574), [#4744](https://github.com/sveltejs/svelte/issues/4744))
