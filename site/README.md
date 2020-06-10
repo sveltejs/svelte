@@ -26,6 +26,7 @@ PUBLISH=1 npm run build
 cd site
 npm ci
 npm run update
+npm run dev
 ```
 
 Then visit the REPL at [localhost:3000/repl?version=local](http://localhost:3000/repl?version=local). Please note that the local REPL only works with `npm run dev` and not when building the site for production usage.
