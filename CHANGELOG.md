@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix `bind:group` inside `{#each}` ([#3243](https://github.com/sveltejs/svelte/issues/3243))
+* Deconflict `bind:this` variable ([#4636](https://github.com/sveltejs/svelte/issues/4636))
 
 ## 3.23.1
 
