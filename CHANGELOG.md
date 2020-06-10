@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix `bind:group` inside `{#each}` ([#3243](https://github.com/sveltejs/svelte/issues/3243))
+
 ## 3.23.1
 
 * Fix checkbox `bind:group` when multiple options have the same value ([#4397](https://github.com/sveltejs/svelte/issues/4397))
