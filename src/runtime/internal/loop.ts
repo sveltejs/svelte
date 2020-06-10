@@ -10,79 +10,86 @@ export const frame = {
 };
 type TaskCallback = (t: number) => boolean;
 type TaskCanceller = () => void;
+type TimeoutTask = { t: number; c: (now: number) => void };
+
+const pending_sort: TimeoutTask[] = [];
+const timed_tasks: TimeoutTask[] = [];
 
 let i = 0;
 let j = 0;
-let n = 0;
-let v: TaskCallback;
+let t = 0;
+let c: TaskCallback;
 
 let running_frame: TaskCallback[] = [];
 let	next_frame: TaskCallback[] = [];
 
-const run = (t: number) => {
-	[running_frame, next_frame] = [next_frame, running_frame];
-	for (t = (frame.time = now()), i = n = 0, j = running_frame.length; i < j; i++) {
-		if ((v = running_frame[i])(t)) {
-			next_frame[n++] = v;
+let this_task: TimeoutTask;
+let that_task: TimeoutTask;
+
+let l = -1;
+let n = 0;
+let p = 0;
+
+const run = (time: number) => {
+	time = (frame.time = now());
+	if (0 !== n) {
+		[running_frame, next_frame] = [next_frame, running_frame];
+		j = n;
+		for (i = n = 0; i < j; i++) {
+			c = running_frame[i];
+			if (c(time)) {
+				next_frame[n++] = c;
+			}
 		}
+		running_frame.length = 0;
 	}
-	if ((running_frame.length = 0) < n) {
+	if (-1 !== l) {
+		while (-1 !== l && time >= timed_tasks[l].t) { 
+			timed_tasks[l--].c(time);
+		}
+		if (0 !== p) {
+			for (i = j = 0; i < p; i++) {
+				this_task = pending_sort[i];
+				t = this_task.t;
+				if (time >= t) {
+					this_task.c(time);
+					continue;
+				}
+				for (j = l++; -1 !== j; j--) {
+					that_task = timed_tasks[j];
+					if (t <= that_task.t) break;
+					timed_tasks[j + 1] = that_task;
+				}
+				timed_tasks[j + 1] = this_task;
+			}
+			pending_sort.length = p = 0;
+		}
+		timed_tasks.length = l + 1;
+	}
+	if (0 !== n || -1 !== l) {
 		raf(run);
 	}
 };
 
-type TimeoutTask = { timestamp: number; callback: (now: number) => void };
-
-const pending_insert_timed: TimeoutTask[] = [];
-const timed_tasks: TimeoutTask[] = [];
-
-let pending_inserts = false;
-let	running_timed = false;
-
-const run_timed = (now: number) => {
-	let last_index = timed_tasks.length - 1;
-	while (-1 !== last_index && now >= timed_tasks[last_index].timestamp) { 
-		timed_tasks[last_index--].callback(now);
-	}
-	if (pending_inserts) {
-		for (let i = 0, j = 0, this_task: TimeoutTask, that_task: TimeoutTask; i < pending_insert_timed.length; i++) {
-			if (now >= (this_task = pending_insert_timed[i]).timestamp) {
-				this_task.callback(now);
-			} else {
-				for (j = last_index; -1 !== j && this_task.timestamp > (that_task = timed_tasks[j]).timestamp; j--) {
-					timed_tasks[j + 1] = that_task;
-				}
-				timed_tasks[j + 1] = this_task;
-				last_index++;
-			}
-		}
-		pending_insert_timed.length = 0;
-		pending_inserts = false;
-	}
-	return (running_timed = !!(timed_tasks.length = last_index + 1));
-};
-const unsafe_loop = (fn) => {
-	if (0 === n) raf(run);
-	next_frame[n++] = fn;
-};
-
-export const loop = (fn) => {
+const loop = (fn) => {
 	let running = true;
-	unsafe_loop((t) => running && fn(t));
-	return () => void (running = false);
+	if (0 === n) raf(run);
+	next_frame[n++] = (t) => running && fn(t);
+	return () => {
+		running = false;
+	};
 };
 
-export const setFrameTimeout = (callback: (t: number) => void, timestamp: number): TaskCanceller => {
-	const task: TimeoutTask = { callback, timestamp };
-	if (running_timed) {
-		pending_inserts = !!pending_insert_timed.push(task);
+export const setFrameTimeout = (c: (t: number) => void, t: number): TaskCanceller => {
+	const task: TimeoutTask = { c, t };
+	if (-1 !== l) {
+		pending_sort[p++] = task;
 	} else {
-		unsafe_loop(run_timed);
-		running_timed = true;
-		timed_tasks.push(task);
+		if (0 === n) raf(run);
+		timed_tasks[(l = 0)] = task;
 	}
 	return () => {
-		task.callback = noop;
+		task.c = noop;
 	};
 };
 export const setTweenTimeout = (
@@ -102,7 +109,12 @@ export const setTweenTimeout = (
 
 /** tests only */
 export const clear_loops = () => {
-	next_frame.length = running_frame.length = timed_tasks.length = pending_insert_timed.length = n = i = j = +(running_timed = pending_inserts = false);
+	running_frame.length = 0;
+	pending_sort.length = 0;
+	timed_tasks.length = 0;
+	next_frame.length = 0;
+	i = j = t = n = p = 0;
+	l = -1;
 	tasks.clear();
 };
 
