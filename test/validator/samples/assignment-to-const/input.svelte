@@ -4,21 +4,21 @@
 	const obj1 = { prop: true };
 	const obj2 = { prop: 0 };
 
-	function funcShouldNotError() {
+	function shouldNotError() {
 		obj1.prop = false;
 	}
 
-	function funcShouldNotError2() {
+	function shouldNotError2() {
 		obj2.prop++;
 	}
 
-	function funcShouldError() {
+	function shouldError() {
 		immutable = true
 	}
 
 	
 </script>
 
-<button on:click={funcShouldNotError}>click</button>
-<button on:click={funcShouldNotError2}>click</button>
-<button on:click={funcShouldError}>click</button>
+<button on:click={shouldNotError}>click</button>
+<button on:click={shouldNotError2}>click</button>
+<button on:click={shouldError}>click</button>

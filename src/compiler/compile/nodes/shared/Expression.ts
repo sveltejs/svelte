@@ -164,11 +164,13 @@ export default class Expression {
 								current_scope = current_scope.parent;
 							}
 
-							if (declaration && declaration.kind === 'const' && !deep) {
-								component.error(node as any, {
-									code: 'assignment-to-const',
-									message: 'You are assigning to a const'
-								});
+							if (declaration) {
+								if (declaration.kind === 'const' && !deep) {
+									component.error(node as any, {
+										code: 'assignment-to-const',
+										message: 'You are assigning to a const'
+									});
+								}
 							} else if (variable && variable.writable === false && !deep) {
 								component.error(node as any, {
 									code: 'assignment-to-const',
