@@ -10,7 +10,7 @@ export default {
 		<p>waiting...</p>
 	`,
 
-	async test({ assert, component, target, raf }) {
+	test({ assert, component, target, raf }) {
 		component.visible = true;
 
 		assert.htmlEqual(target.innerHTML, `
@@ -25,7 +25,7 @@ export default {
 		assert.deepEqual(component.intros.sort(), ['a', 'b', 'c', 'd']);
 		assert.equal(component.intro_count, 4);
 
-		await raf.tick(100);
+		raf.tick(100);
 		assert.equal(component.intro_count, 0);
 
 		assert.htmlEqual(target.innerHTML, `
@@ -55,7 +55,7 @@ export default {
 
 		component.visible = true;
 
-		await raf.tick(250);
+		raf.tick(250);
 		assert.deepEqual(component.intros.sort(), ['a', 'a', 'b', 'b', 'c', 'c', 'd', 'd']);
 		assert.equal(component.intro_count, 4);
 

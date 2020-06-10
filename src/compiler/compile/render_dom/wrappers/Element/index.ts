@@ -746,8 +746,7 @@ export default class ElementWrapper extends Wrapper {
 
 		
 		block.add_variable(transition);
-		block.chunks.mount.push(b`if (!${transition}) ${transition} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet});`);
-		block.chunks.hydrate.push(b`if (!${transition}) ${transition} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet});`);
+		block.chunks.hydrate.push(b`${transition} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet});`);
 		if (intro.expression) {
 			const dirty = block.renderer.dirty([intro.name,...Array.from(intro.expression.dependencies)]);
 			block.chunks.update.push(b`if (${dirty}) ${transition}.u(${fn}, ${snippet});`);

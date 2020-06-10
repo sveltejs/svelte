@@ -8,24 +8,6 @@ export const frame = {
 		return n ? this.time : (this.time = now());
 	},
 };
-
-// function calc_framerate() {
-// 	raf((t1) => {
-// 		raf((t2) => {
-// 			const delta = t2 - t1;
-// 			raf((t3) => {
-// 				if (Math.abs(t3 - t2 - delta) > 1) {
-// 					calc_framerate();
-// 				} else {
-// 					const f24 = 1000 / 24;
-// 					const f144 = 1000 / 144;
-// 					frame.rate = delta > f144 ? f144 : delta < f24 ? f24 : delta;
-// 				}
-// 			});
-// 		});
-// 	});
-// }
-// calc_framerate();
 type TaskCallback = (t: number) => boolean;
 type TaskCanceller = () => void;
 
@@ -111,7 +93,7 @@ export const setTweenTimeout = (
 ): TaskCanceller => {
 	let t = 0.0;
 	return loop((now) => {
-		t = 1 - (end_time - now) / duration;
+		t = 1.0 - (end_time - now) / duration;
 		if (t >= 1.0) return run(1), stop(now), false;
 		if (t >= 0.0) run(t);
 		return true;
