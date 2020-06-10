@@ -1,5 +1,6 @@
 import { element } from './dom';
 import { raf } from './environment';
+import { is_function } from './utils';
 
 interface ExtendedDoc extends Document {
 	__svelte_stylesheet: CSSStyleSheet;
@@ -18,6 +19,21 @@ function hash(str: string) {
 	return hash >>> 0;
 }
 
+function append_style(doc) {
+	return doc.host ?
+		doc.insertBefore(element('style') as HTMLStyleElement, doc.firstElementChild) :
+		doc.head.appendChild(element('style') as HTMLStyleElement);
+}
+
+function get_root_node(node) {
+	if (is_function(node.getRootNode)) return node.getRootNode();
+	let rootNode = node.parentNode;
+	while (rootNode.parentNode != null) {
+		rootNode = rootNode.parentNode;
+	}
+	return rootNode;
+}
+
 export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
 	const step = 16.666 / duration;
 	let keyframes = '{\n';
@@ -29,9 +45,9 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 
 	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
 	const name = `__svelte_${hash(rule)}_${uid}`;
-	const doc = node.ownerDocument as ExtendedDoc;
+	const doc = get_root_node(node) as ExtendedDoc;
 	active_docs.add(doc);
-	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet);
+	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = append_style(doc).sheet as CSSStyleSheet);
 	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
 
 	if (!current_rules[name]) {
