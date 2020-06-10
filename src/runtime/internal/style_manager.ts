@@ -18,7 +18,7 @@ export const animate_css = /*#__PURE__*/ methodify(
 			);
 		}
 		let rule = '{\n';
-		for (let t = 0, step = frame.rate / duration; t < 1; t += step) rule += `${100 * t}%{${css(t)}}\n`;
+		for (let t = 0, step = frame.rate / Math.max(frame.rate,duration); t < 1; t += step) rule += `${100 * t}%{${css(t)}}\n`;
 		rule += `100% {${css(1)}}\n}`;
 
 		// darkskyapp/string-hash

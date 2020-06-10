@@ -78,7 +78,7 @@ export const group_transition_out = (fn) => {
 	transition_group = transition_group.p;
 };
 type Rect = DOMRect | ClientRect;
-type MeasureCallback = () => CssTransitionConfig
+type MeasureCallback = (is_intro?: boolean) => CssTransitionConfig;
 type CustomTransitionFunction = (node: HTMLElement, params: any) => MeasureCallback | CssTransitionConfig;
 type AnimationFn = (node: Element, { from, to }: { from: Rect; to: Rect }, params: any) => CssTransitionConfig;
 type StopResetReverseFn = (t?: number | 1 | -1) => StopResetReverseFn | void;
@@ -117,7 +117,7 @@ const balanced = (fn, is_intro, easing, start = 0, end = 1) => {
 		: (t) => run(start + difference * t);
 };
 
-export const run_animation = /*#__PURE__*/ methodify(function (this: HTMLElement, from : Rect, fn: AnimationFn, params: CssTransitionConfig = {}) {
+export const run_animation = /*#__PURE__*/ methodify(function (this: HTMLElement, from: Rect, fn: AnimationFn, params: CssTransitionConfig = {}) {
 	let running = true;
 	let cancel_css;
 	let cancel_raf;
@@ -140,8 +140,8 @@ export const run_animation = /*#__PURE__*/ methodify(function (this: HTMLElement
 		else running = false;
 		if (cancel_css) cancel_css();
 		if (cancel_raf) cancel_raf();
-	}
-	return stop
+	};
+	return stop;
 });
 export const run_in = /*#__PURE__*/ methodify(function (this: HTMLElement, fn: CustomTransitionFunction, params: CssTransitionConfig = {}) {
 	let config;
@@ -152,7 +152,7 @@ export const run_in = /*#__PURE__*/ methodify(function (this: HTMLElement, fn: C
 	add_measure_callback(() => {
 		config = fn(this, params);
 		return (current_frame_time) => {
-			let { delay = 0, duration = 300, easing, tick, css }: CssTransitionConfig =
+			const { delay = 0, duration = 300, easing, tick, css }: CssTransitionConfig =
 				"function" === typeof config ? (config = config()) : config;
 			const runner = (fn) => balanced(fn, true, easing);
 			end_time = current_frame_time + delay + duration;
@@ -167,8 +167,8 @@ export const run_in = /*#__PURE__*/ methodify(function (this: HTMLElement, fn: C
 		if (cancel_css) cancel_css();
 		if (cancel_raf) cancel_raf();
 		if (t && t >= end_time) this.dispatchEvent(custom_event(TransitionEvent.introend));
-	}
-	return stop
+	};
+	return stop;
 });
 export const run_out = /*#__PURE__*/ methodify(function (this: HTMLElement, fn: CustomTransitionFunction, params: CssTransitionConfig = {}) {
 	let config;
@@ -181,7 +181,7 @@ export const run_out = /*#__PURE__*/ methodify(function (this: HTMLElement, fn: 
 	add_measure_callback(() => {
 		config = fn(this, params);
 		return (current_frame_time) => {
-			let { delay = 0, duration = 300, easing, tick, css }: CssTransitionConfig =
+			const { delay = 0, duration = 300, easing, tick, css }: CssTransitionConfig =
 				"function" === typeof config ? (config = config()) : config;
 			const runner = (fn) => balanced(fn, false, easing);
 			end_time = current_frame_time + delay + duration;
@@ -208,12 +208,12 @@ export const run_out = /*#__PURE__*/ methodify(function (this: HTMLElement, fn: 
 			if ("tick" in config) config.tick(0, 1);
 			this.dispatchEvent(custom_event(TransitionEvent.outroend));
 		}
-		if(!--current_group.r) for (let i = 0, { c } = current_group, r = t === void 0;i < c.length;i++) c[i](r);
-	}
-	return stop
+		if (!--current_group.r) for (let i = 0, { c } = current_group, r = t === void 0;i < c.length;i++) c[i](r);
+	};
+	return stop;
 });
 export const create_bidirectional_transition = /*#__PURE__*/ methodify(function(this: HTMLElement, fn: CustomTransitionFunction, params?: CssTransitionConfig) {
-	let transition_delay;
+	let transition_delay = 0.0;
 	let pending = 0;
 	let prev;
 
@@ -221,10 +221,10 @@ export const create_bidirectional_transition = /*#__PURE__*/ methodify(function(
 		let test_config;
 		if (typeof (test_config = (fn = new_fn)(this,(params = new_params))) === "function") test_config = test_config();
 		transition_delay = test_config.delay || 0.0;
-	}
+	};
 	u();
 
-	const run_transition = (is_intro:boolean, cancel_previous?) => {
+	const run_transition = (is_intro: boolean, cancel_previous?) => {
 		const delayed_start = transition_delay && cancel_previous && pending;
 
 		let config;
@@ -250,20 +250,20 @@ export const create_bidirectional_transition = /*#__PURE__*/ methodify(function(
 				config = fn(this, params);
 				return (current_frame_time) => {
 					let { tick, css, duration = 300.0, delay = 0.0, easing, strategy = EasingStrategy.balanced }: CssTransitionConfig = 
-						"function" === typeof config ? (config = config()) : config;
+						"function" === typeof config ? (config = config(is_intro)) : config;
 					const solver = EasingStrategy.balanced === strategy ? balanced : EasingStrategy.reversed === strategy ? reversed : mirrored;
 					const runner = (fn) => solver(fn, is_intro, easing, ratio_left, 1);
 					if (delayed_start) delay = 0;
 					if (solver === reversed) duration -= prev_duration_left;
-					else if(solver === balanced) duration *= (1-ratio_left)
+					else if (solver === balanced) duration *= 1 - ratio_left;
 					else if (solver === mirrored) delay -= prev_duration_left;
 					start_time = current_frame_time + delay;
 					end_time = start_time + duration;
-					if (cancelled || duration < 1) return;
+					if (cancelled) return;
 					this.dispatchEvent(custom_event(is_intro ? TransitionEvent.introstart : TransitionEvent.outrostart));
 					if (css) cancel_css = animate_css(this, runner(css), duration, delay);
-					if (tick) cancel_raf = setTweenTimeout(stop, end_time, runner(tick), duration);
-					else cancel_raf = setFrameTimeout(stop, end_time);
+					if (tick) cancel_raf = setTweenTimeout(is_intro ? stop : noop, end_time, runner(tick), duration);
+					else if (is_intro) cancel_raf = setFrameTimeout(stop, end_time);
 					if (!is_intro) {
 						current_group.t = Math.max(end_time, current_group.t);
 						if (current_group.s.push(stop) === current_group.r) {
@@ -274,9 +274,15 @@ export const create_bidirectional_transition = /*#__PURE__*/ methodify(function(
 							}, current_group.t);
 						}
 					}
+					setFrameTimeout(() => {
+						if (!cancelled || !pending) {
+							if (!is_intro && tick) tick(0, 1);
+							this.dispatchEvent(custom_event(is_intro ? TransitionEvent.introend : TransitionEvent.outroend));
+						}
+					}, end_time);
 				};
 			};
-		}
+		};
 
 		const cancel = (t) => {
 			if (!cancelled) {
@@ -285,22 +291,23 @@ export const create_bidirectional_transition = /*#__PURE__*/ methodify(function(
 				if (cancel_css) cancel_css();
 				if (cancel_raf) cancel_raf();
 			}
-			if (!config) return;
+			if (!config || 1 === t) return;
 			const duration_left = end_time - t;
 			const next_ratio_left = 1 - duration_left / (end_time - start_time);
 			return duration_left > 0 && next_ratio_left > 0 && [duration_left, (1 - ratio_left) * (1 - (config.easing || ((v) => v))(next_ratio_left))];
 		};
 
 		const stop: StopResetReverseFn = (t?: number | -1 | 1) => {
-			if (t >= end_time) {
-				if (pending === 1 && (is_intro || t >= current_group.t)) cancel(t);
-				this.dispatchEvent(custom_event(is_intro ? TransitionEvent.introend : TransitionEvent.outroend));
-			}
 			if (running) {
 				running = false;
-				if (config && !is_intro && !--current_group.r) {
-					for (let i = 0, { c } = current_group, r = Math.abs(t) === 1; i < c.length; i++) {
-						c[i](r);
+				if (config) {
+					if (t && t >= end_time) {
+						if (pending === 1) cancel(1);
+					}
+					if (!is_intro) {
+						if (!--current_group.r) {
+							for (let i = 0, { c } = current_group, r = Math.abs(t) === 1; i < c.length; i++) c[i](r);
+						}
 					}
 				}
 			}
@@ -316,7 +323,7 @@ export const create_bidirectional_transition = /*#__PURE__*/ methodify(function(
 			add_measure_callback(run(frame.time));
 		}
 
-		return stop
+		return stop;
 	};
 
 	return {
@@ -330,7 +337,7 @@ export const create_bidirectional_transition = /*#__PURE__*/ methodify(function(
 		d() {
 			if (prev) prev(1);
 		}
-	}
+	};
 });
 export const run_duration = (duration, value1, value2?): number =>
 	typeof duration === "function" ? duration(value1, value2) : duration;

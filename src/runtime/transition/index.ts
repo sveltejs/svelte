@@ -130,7 +130,6 @@ export function crossfade({ delay: default_delay = 0, duration: default_duration
 					b.delete(key);
 					return crossfade(from_node, to_node, params);
 				} else {
-					debugger
 					a.delete(key);
 					return fallback && fallback(to_node, params, is_intro);
 				}

@@ -805,7 +805,7 @@ export default class ElementWrapper extends Wrapper {
 		block.chunks.destroy.push(b`if (detaching) ${outro_var}();`);
 	}
 
-	add_animation(block: Block) {
+	add_animation(block: Block, _intro: Transition) {
 
 		const [unfreeze_var, rect_var, stop_animation_var, name_var, params_var] = run_animation(this, block);
 

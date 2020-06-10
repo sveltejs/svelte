@@ -146,7 +146,7 @@ export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj,
 export function action_destroyer(action_result) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }
-type Methodify<T extends (...args: any) => any> = (thisType : ThisParameterType<T>, ...parameters :Parameters<T>) => T extends (...args: Parameters<T>) => infer R ? R : any
+type Methodify<T extends (...args: any) => any> = (thisType: ThisParameterType<T>, ...parameters: Parameters<T>) => T extends (...args: Parameters<T>) => infer R ? R : any
 export const methodify: <T extends (...args: any) => any>(fn: T) => Methodify<T> = /*#__PURE__*/ (function () {
 	const call = Function.prototype.call;
 	return call.bind.bind(call);
