@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.23.2
 
 * Fix `bind:group` inside `{#each}` ([#3243](https://github.com/sveltejs/svelte/issues/3243))
 * Don't crash when using an arrow function as a statement ([#4617](https://github.com/sveltejs/svelte/issues/4617))
