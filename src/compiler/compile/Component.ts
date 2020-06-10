@@ -789,7 +789,7 @@ export default class Component {
 				}
 
 				let deep = false;
-				let names: string[] | null;
+				let names: string[] | undefined; 
 
 				if (node.type === 'AssignmentExpression') {
 						deep = node.left.type === 'MemberExpression';
@@ -801,11 +801,21 @@ export default class Component {
 					const { name } = get_object(node.argument);
 					names = [name];
 				}
-				
+
 				if (names) {
 					names.forEach(name => {
-						const variable = component.var_lookup.get(name);
-						if (variable && variable.writable === false && !deep) {
+						let current_scope = scope;
+						let declaration;
+
+						while (current_scope) {
+							if (current_scope.declarations.has(name)) {
+								declaration = current_scope.declarations.get(name);
+								break;
+							}
+							current_scope = current_scope.parent;
+						}
+
+						if (declaration && declaration.kind === 'const' && !deep) {
 							component.error(node as any, {
 								code: 'assignment-to-const',
 								message: 'You are assigning to a const'

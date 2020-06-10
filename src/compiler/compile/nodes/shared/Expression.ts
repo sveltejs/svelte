@@ -151,13 +151,29 @@ export default class Expression {
 
 							if (variable) {
 								variable[deep ? 'mutated' : 'reassigned'] = true;
+							}
 
-								if (!deep && variable.writable === false) {
-									component.error(node as any, {
-										code: 'assignment-to-const',
-										message: 'You are assigning to a const'
-									});
+							let current_scope = scope;
+							let declaration;
+
+							while (current_scope) {
+								if (current_scope.declarations.has(name)) {
+									declaration = current_scope.declarations.get(name);
+									break;
 								}
+								current_scope = current_scope.parent;
+							}
+
+							if (declaration && declaration.kind === 'const' && !deep) {
+								component.error(node as any, {
+									code: 'assignment-to-const',
+									message: 'You are assigning to a const'
+								});
+							} else if (variable && variable.writable === false && !deep) {
+								component.error(node as any, {
+									code: 'assignment-to-const',
+									message: 'You are assigning to a const'
+								});
 							}
 						}
 					});
