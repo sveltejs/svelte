@@ -3,6 +3,7 @@ import Component from '../../../Component';
 import Block from '../../Block';
 import BindingWrapper from '../Element/Binding';
 import { Identifier } from 'estree';
+import { compare_node } from '../../../utils/compare_node';
 
 export default function bind_this(component: Component, block: Block, binding: BindingWrapper, variable: Identifier) {
 	const fn = component.get_unique_name(`${variable.name}_binding`);
@@ -35,13 +36,26 @@ export default function bind_this(component: Component, block: Block, binding: B
 			}
 		`);
 
+		const alias_map = new Map();
 		const args = [];
-		for (const id of params) {
-			args.push(id);
+		for (let id of params) {
+			const value = block.renderer.reference(id.name);
+			let found = false;
 			if (block.variables.has(id.name)) {
-				if (block.renderer.context_lookup.get(id.name).is_contextual) continue;
+				let alias = id.name;
+				for (
+					let i = 1;
+					block.variables.has(alias) && !compare_node(block.variables.get(alias).init, value);
+					alias = `${id.name}_${i++}`
+				);
+				alias_map.set(alias, id.name);
+				id = { type: 'Identifier', name: alias };
+				found = block.variables.has(alias);
 			}
-			block.add_variable(id, block.renderer.reference(id.name));
+			args.push(id);
+			if (!found) {
+				block.add_variable(id, value);
+			}
 		}
 
 		const assign = block.get_unique_name(`assign_${variable.name}`);
@@ -52,8 +66,8 @@ export default function bind_this(component: Component, block: Block, binding: B
 			const ${unassign} = () => ${callee}(null, ${args});
 		`);
 
-		const condition = Array.from(params)
-			.map(name => x`${name} !== ${block.renderer.reference(name.name)}`)
+		const condition = Array.from(args)
+			.map(name => x`${name} !== ${block.renderer.reference(alias_map.get(name.name) || name.name)}`)
 			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
 		// we push unassign and unshift assign so that references are
@@ -62,7 +76,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		block.chunks.update.push(b`
 			if (${condition}) {
 				${unassign}();
-				${args.map(a => b`${a} = ${block.renderer.reference(a.name)}`)};
+				${args.map(a => b`${a} = ${block.renderer.reference(alias_map.get(a.name) || a.name)}`)};
 				${assign}();
 			}`
 		);

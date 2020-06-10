@@ -20,14 +20,16 @@ import Foo from "./Foo.svelte";
 import Bar from "./Bar.svelte";
 
 function create_fragment(ctx) {
+	let foo;
 	let t0;
+	let bar;
 	let t1;
 	let input;
 	let current;
 	let mounted;
 	let dispose;
-	const foo = new Foo({ props: { x: y } });
-	const bar = new Bar({ props: { x: /*z*/ ctx[0] } });
+	foo = new Foo({ props: { x: y } });
+	bar = new Bar({ props: { x: /*z*/ ctx[0] } });
 
 	return {
 		c() {
