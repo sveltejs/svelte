@@ -1,6 +1,22 @@
 ## Running locally
 
-Set up the project:
+Set up the site sub-project:
+
+```bash
+git clone https://github.com/sveltejs/svelte.git
+cd site
+npm ci
+npm run update
+npm run dev
+```
+
+and navigate to [localhost:3000](http://localhost:3000).
+
+## Running using the local copy of Svelte
+
+By default, the REPL will fetch the most recent version of Svelte from https://unpkg.com/svelte. When running the site locally, you can also use your local copy of Svelte.
+
+To produce the proper browser-compatible UMD build of the compiler, you will need to run `npm run build` (or `npm run dev`) in the root of this repository with the `PUBLISH` environment variable set to any non-empty string:
 
 ```bash
 git clone https://github.com/sveltejs/svelte.git
@@ -10,15 +26,8 @@ PUBLISH=1 npm run build
 cd site
 npm ci
 npm run update
+npm run dev
 ```
-
-Start the server with `npm run dev`, and navigate to [localhost:3000](http://localhost:3000).
-
-## Using a local copy of Svelte
-
-By default, the REPL will fetch the most recent version of Svelte from https://unpkg.com/svelte. When running the site locally, you can also use your local copy of Svelte.
-
-To produce the proper browser-compatible UMD build of the compiler, you will need to run `npm run build` (or `npm run dev`) in the root of this repository with the `PUBLISH` environment variable set to any non-empty string.
 
 Then visit the REPL at [localhost:3000/repl?version=local](http://localhost:3000/repl?version=local). Please note that the local REPL only works with `npm run dev` and not when building the site for production usage.
 
@@ -35,6 +44,7 @@ In order for the REPL's GitHub integration to work properly when running locally
    GITHUB_CLIENT_SECRET=[your app's Client Secret]
    BASEURL=http://localhost:3000
    ```
+
 ## Building the site
 
 To build the website, run `npm run sapper`. The output can be found in `__sapper__/build`.
