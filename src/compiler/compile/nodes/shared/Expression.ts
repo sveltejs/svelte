@@ -147,13 +147,13 @@ export default class Expression {
 						} else {
 							component.add_reference(node, name);
 
-                            const variable = component.var_lookup.get(name);
+							const variable = component.var_lookup.get(name);
 
 							if (variable) {
 								variable[deep ? 'mutated' : 'reassigned'] = true;
 
 								if (!deep && variable.writable === false) {
-									component.warn(node as any, {
+									component.error(node as any, {
 										code: 'assignment-to-const',
 										message: 'You are assigning to a const'
 									});
