@@ -792,11 +792,11 @@ export default class Component {
 				let names: string[] | undefined; 
 
 				if (node.type === 'AssignmentExpression') {
-						deep = node.left.type === 'MemberExpression';
-						names = deep
-							? [get_object(node.left).name]
-							: extract_names(node.left);
-                } else if (node.type === 'UpdateExpression') {
+					deep = node.left.type === 'MemberExpression';
+					names = deep
+						? [get_object(node.left).name]
+						: extract_names(node.left);
+				} else if (node.type === 'UpdateExpression') {
 					deep = node.argument.type === 'MemberExpression';
 					const { name } = get_object(node.argument);
 					names = [name];
