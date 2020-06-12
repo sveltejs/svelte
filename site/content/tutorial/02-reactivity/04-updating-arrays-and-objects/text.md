@@ -13,7 +13,15 @@ function addNumber() {
 }
 ```
 
-But there's a more idiomatic solution:
+You can also do this in one line:
+
+```js
+function addNumber() {
+	numbers = numbers.push(numbers.length + 1) && numbers;
+}
+```
+
+Or for conciseness, use the spread operator if not in code that needs to be optimized:
 
 ```js
 function addNumber() {
