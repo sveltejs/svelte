@@ -63,7 +63,9 @@ describe('custom-elements', function() {
 
 		const solo = /\.solo$/.test(dir);
 		const skip = /\.skip$/.test(dir);
+		const easing = path.resolve('easing/index.mjs');
 		const internal = path.resolve('internal/index.mjs');
+		const transition = path.resolve('transition/index.mjs');
 		const index = path.resolve('index.mjs');
 		const warnings = [];
 
@@ -76,8 +78,16 @@ describe('custom-elements', function() {
 				plugins: [
 					{
 						resolveId(importee) {
-							if (importee === 'svelte/internal' || importee === './internal') {
+							if (importee === '../easing') {
+								return easing;
+							}
+
+							if (importee === 'svelte/internal' || importee === './internal' || importee === '../internal') {
 								return internal;
+							}
+
+							if (importee === 'svelte/transition' || importee === './transition') {
+								return transition;
 							}
 
 							if (importee === 'svelte') {
