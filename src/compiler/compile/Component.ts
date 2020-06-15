@@ -632,6 +632,7 @@ export default class Component {
 			this.add_var({
 				name,
 				initialised: instance_scope.initialised_declarations.has(name),
+				hoistable: true,
 				writable
 			});
 
