@@ -632,7 +632,6 @@ export default class Component {
 			this.add_var({
 				name,
 				initialised: instance_scope.initialised_declarations.has(name),
-				hoistable: true,
 				writable
 			});
 
@@ -1153,7 +1152,9 @@ export default class Component {
 			for (const specifier of specifiers) {
 				const variable = var_lookup.get(specifier.local.name);
 
-				if (!variable.mutated) variable.hoistable = true;
+				if (!variable.mutated || var_lookup.get(`$${specifier.local.name}`)) {
+					variable.hoistable = true;
+				}
 			}
 		}
 	}
