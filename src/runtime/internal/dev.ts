@@ -73,7 +73,7 @@ export function dataset_dev(node: HTMLElement, property: string, value?: any) {
 
 export function set_data_dev(text, data) {
 	data = '' + data;
-	if (text.data === data) return;
+	if (text.wholeText === data) return;
 
 	dispatch_dev("SvelteDOMSetData", { node: text, data });
 	text.data = data;
