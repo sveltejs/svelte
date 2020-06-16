@@ -20,7 +20,7 @@
 				const t = window.performance.now();
 
 				const r = 64 + (128 * x / canvas.width) + (64 * Math.sin(t / 1000));
-				const g = 64 + (128 * y / canvas.height) + (64 * Math.cos(t / 1000));
+				const g = 64 + (128 * y / canvas.height) + (64 * Math.cos(t / 1400));
 				const b = 128;
 
 				imageData.data[p + 0] = r;
