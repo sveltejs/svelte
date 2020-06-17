@@ -117,75 +117,75 @@ export default class BindingWrapper {
 
 		// special cases
 		switch (this.node.name) {
-			case 'group':
-			{
-				const { binding_group, is_context, contexts, index } = get_binding_group(parent.renderer, this.node, block);
+		case 'group':
+		{
+			const { binding_group, is_context, contexts, index } = get_binding_group(parent.renderer, this.node, block);
 
-				block.renderer.add_to_context(`$$binding_groups`);
+			block.renderer.add_to_context(`$$binding_groups`);
 
-				if (is_context) {
-					if (contexts.length > 1) {
-						let binding_group = x`${block.renderer.reference('$$binding_groups')}[${index}]`;
-						for (const name of contexts.slice(0, -1)) {
-							binding_group = x`${binding_group}[${block.renderer.reference(name)}]`;
-							block.chunks.init.push(
-								b`${binding_group} = ${binding_group} || [];`
-							);
-						}
+			if (is_context) {
+				if (contexts.length > 1) {
+					let binding_group = x`${block.renderer.reference('$$binding_groups')}[${index}]`;
+					for (const name of contexts.slice(0, -1)) {
+						binding_group = x`${binding_group}[${block.renderer.reference(name)}]`;
+						block.chunks.init.push(
+							b`${binding_group} = ${binding_group} || [];`
+						);
 					}
-					block.chunks.init.push(
-						b`${binding_group(true)} = [];`
-					);
 				}
-
-				block.chunks.hydrate.push(
-					b`${binding_group(true)}.push(${parent.var});`
+				block.chunks.init.push(
+					b`${binding_group(true)} = [];`
 				);
-
-				block.chunks.destroy.push(
-					b`${binding_group(true)}.splice(${binding_group(true)}.indexOf(${parent.var}), 1);`
-				);
-				break;
 			}
 
-			case 'textContent':
-				update_conditions.push(x`${this.snippet} !== ${parent.var}.textContent`);
-				mount_conditions.push(x`${this.snippet} !== void 0`);
-				break;
+			block.chunks.hydrate.push(
+				b`${binding_group(true)}.push(${parent.var});`
+			);
 
-			case 'innerHTML':
-				update_conditions.push(x`${this.snippet} !== ${parent.var}.innerHTML`);
-				mount_conditions.push(x`${this.snippet} !== void 0`);
-				break;
+			block.chunks.destroy.push(
+				b`${binding_group(true)}.splice(${binding_group(true)}.indexOf(${parent.var}), 1);`
+			);
+			break;
+		}
 
-			case 'currentTime':
-				update_conditions.push(x`!@_isNaN(${this.snippet})`);
+		case 'textContent':
+			update_conditions.push(x`${this.snippet} !== ${parent.var}.textContent`);
+			mount_conditions.push(x`${this.snippet} !== void 0`);
+			break;
+
+		case 'innerHTML':
+			update_conditions.push(x`${this.snippet} !== ${parent.var}.innerHTML`);
+			mount_conditions.push(x`${this.snippet} !== void 0`);
+			break;
+
+		case 'currentTime':
+			update_conditions.push(x`!@_isNaN(${this.snippet})`);
+			mount_dom = null;
+			break;
+
+		case 'playbackRate':
+		case 'volume':
+			update_conditions.push(x`!@_isNaN(${this.snippet})`);
+			mount_conditions.push(x`!@_isNaN(${this.snippet})`);
+			break;
+
+		case 'paused':
+		{
+			// this is necessary to prevent audio restarting by itself
+			const last = block.get_unique_name(`${parent.var.name}_is_paused`);
+			block.add_variable(last, x`true`);
+
+			update_conditions.push(x`${last} !== (${last} = ${this.snippet})`);
+			update_dom = b`${parent.var}[${last} ? "pause" : "play"]();`;
+			mount_dom = null;
+			break;
+		}
+
+		case 'value':
+			if (parent.node.get_static_attribute_value('type') === 'file') {
+				update_dom = null;
 				mount_dom = null;
-				break;
-
-			case 'playbackRate':
-			case 'volume':
-				update_conditions.push(x`!@_isNaN(${this.snippet})`);
-				mount_conditions.push(x`!@_isNaN(${this.snippet})`);
-				break;
-
-			case 'paused':
-			{
-				// this is necessary to prevent audio restarting by itself
-				const last = block.get_unique_name(`${parent.var.name}_is_paused`);
-				block.add_variable(last, x`true`);
-
-				update_conditions.push(x`${last} !== (${last} = ${this.snippet})`);
-				update_dom = b`${parent.var}[${last} ? "pause" : "play"]();`;
-				mount_dom = null;
-				break;
 			}
-
-			case 'value':
-				if (parent.node.get_static_attribute_value('type') === 'file') {
-					update_dom = null;
-					mount_dom = null;
-				}
 		}
 
 		if (update_dom) {
@@ -305,7 +305,7 @@ function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
 			},
 			is_context: contexts.length > 0,
 			contexts,
-			index,
+			index
 		});
 	}
 
@@ -319,11 +319,11 @@ function get_event_handler(
 	name: string,
 	lhs: Node
 ): {
-	uses_context: boolean;
-	mutation: (Node | Node[]);
-	contextual_dependencies: Set<string>;
-	lhs?: Node;
-} {
+		uses_context: boolean;
+		mutation: (Node | Node[]);
+		contextual_dependencies: Set<string>;
+		lhs?: Node;
+	} {
 	const contextual_dependencies = new Set<string>(binding.node.expression.contextual_dependencies);
 
 	const context = block.bindings.get(name);
@@ -358,7 +358,7 @@ function get_event_handler(
 		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy
 		mutation,
 		contextual_dependencies,
-		lhs,
+		lhs
 	};
 }
 

@@ -17,9 +17,9 @@ export default function bind_this(component: Component, block: Block, binding: B
 	const body = b`
 		${mutation}
 		${Array.from(dependencies)
-			.filter(dep => dep[0] !== '$')
-			.filter(dep => !contextual_dependencies.has(dep))
-			.map(dep => b`${block.renderer.invalidate(dep)};`)}
+		.filter(dep => dep[0] !== '$')
+		.filter(dep => !contextual_dependencies.has(dep))
+		.map(dep => b`${block.renderer.invalidate(dep)};`)}
 	`;
 
 	if (contextual_dependencies.size) {

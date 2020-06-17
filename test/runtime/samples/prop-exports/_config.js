@@ -10,7 +10,7 @@ export default {
 		a2: 4,
 		a6: writable(29),
 		for: 'loop',
-		continue: '...',
+		continue: '...'
 	},
 
 	html: `

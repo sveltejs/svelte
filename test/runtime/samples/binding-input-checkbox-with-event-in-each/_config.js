@@ -3,13 +3,13 @@ export default {
 		cats: [
 			{
 				name: "cat 0",
-				checked: false,
+				checked: false
 			},
 			{
 				name: "cat 1",
-				checked: false,
-			},
-		],
+				checked: false
+			}
+		]
 	},
 
 	html: `
@@ -22,7 +22,7 @@ export default {
 		const newCats = cats.slice();
 		newCats.push({
 			name: "cat " + cats.length,
-			checked: false,
+			checked: false
 		});
 		component.cats = newCats;
 

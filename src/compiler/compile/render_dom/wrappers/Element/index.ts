@@ -130,7 +130,7 @@ const events = [
 		event_names: ['toggle'],
 		filter: (node: Element, _name: string) =>
 			node.name === 'details'
-	},
+	}
 ];
 
 export default class ElementWrapper extends Wrapper {
@@ -567,9 +567,9 @@ export default class ElementWrapper extends Wrapper {
 			function ${handler}(${params}) {
 				${binding_group.bindings.map(b => b.handler.mutation)}
 				${Array.from(dependencies)
-					.filter(dep => dep[0] !== '$')
-					.filter(dep => !contextual_dependencies.has(dep))
-					.map(dep => b`${this.renderer.invalidate(dep)};`)}
+		.filter(dep => dep[0] !== '$')
+		.filter(dep => !contextual_dependencies.has(dep))
+		.map(dep => b`${this.renderer.invalidate(dep)};`)}
 			}
 		`);
 

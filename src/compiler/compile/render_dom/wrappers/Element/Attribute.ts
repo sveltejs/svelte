@@ -265,8 +265,8 @@ const attribute_lookup = {
 			'optgroup',
 			'option',
 			'select',
-			'textarea',
-		],
+			'textarea'
+		]
 	},
 	formnovalidate: { property_name: 'formNoValidate', applies_to: ['button', 'input'] },
 	hidden: {},
@@ -293,9 +293,9 @@ const attribute_lookup = {
 			'progress',
 			'param',
 			'select',
-			'textarea',
-		],
-	},
+			'textarea'
+		]
+	}
 };
 
 Object.keys(attribute_lookup).forEach(name => {

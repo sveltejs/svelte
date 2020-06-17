@@ -1,7 +1,7 @@
 const value = [];
 export default {
 	props: {
-		value,
+		value
 	},
 
 	async test({ assert, component, target, window }) {
@@ -32,7 +32,7 @@ export default {
 			'15',
 			'16',
 			'17',
-			'18',
+			'18'
 		]);
-	},
+	}
 };

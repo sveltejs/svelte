@@ -20,23 +20,23 @@ export type Children = ReturnType<typeof map_children>;
 
 function get_constructor(type) {
 	switch (type) {
-		case 'AwaitBlock': return AwaitBlock;
-		case 'Body': return Body;
-		case 'Comment': return Comment;
-		case 'EachBlock': return EachBlock;
-		case 'Element': return Element;
-		case 'Head': return Head;
-		case 'IfBlock': return IfBlock;
-		case 'InlineComponent': return InlineComponent;
-		case 'MustacheTag': return MustacheTag;
-		case 'Options': return Options;
-		case 'RawMustacheTag': return RawMustacheTag;
-		case 'DebugTag': return DebugTag;
-		case 'Slot': return Slot;
-		case 'Text': return Text;
-		case 'Title': return Title;
-		case 'Window': return Window;
-		default: throw new Error(`Not implemented: ${type}`);
+	case 'AwaitBlock': return AwaitBlock;
+	case 'Body': return Body;
+	case 'Comment': return Comment;
+	case 'EachBlock': return EachBlock;
+	case 'Element': return Element;
+	case 'Head': return Head;
+	case 'IfBlock': return IfBlock;
+	case 'InlineComponent': return InlineComponent;
+	case 'MustacheTag': return MustacheTag;
+	case 'Options': return Options;
+	case 'RawMustacheTag': return RawMustacheTag;
+	case 'DebugTag': return DebugTag;
+	case 'Slot': return Slot;
+	case 'Text': return Text;
+	case 'Title': return Title;
+	case 'Window': return Window;
+	default: throw new Error(`Not implemented: ${type}`);
 	}
 }
 

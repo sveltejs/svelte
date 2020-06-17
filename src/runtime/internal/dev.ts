@@ -113,7 +113,7 @@ export class SvelteComponentDev extends SvelteComponent {
 		hydrate?: boolean;
 		intro?: boolean;
 		$$inline?: boolean;
-    }) {
+	}) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error(`'target' is a required option`);
 		}

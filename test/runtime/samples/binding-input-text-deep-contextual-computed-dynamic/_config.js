@@ -5,9 +5,9 @@ export default {
 			{
 				foo: 'a',
 				bar: 'b',
-				baz: 'c',
-			},
-		],
+				baz: 'c'
+			}
+		]
 	},
 
 	html: `
@@ -58,5 +58,5 @@ export default {
 			<input>
 			<pre>{"foo":"d","bar":"e","baz":"f"}</pre>
 		`);
-	},
+	}
 };

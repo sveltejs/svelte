@@ -31,9 +31,9 @@ export default function flatten_reference(node: Node) {
 
 function to_string(node: Node) {
 	switch (node.type) {
-		case 'Literal':
-			return String(node.value);
-		case 'Identifier':
-			return node.name;
+	case 'Literal':
+		return String(node.value);
+	case 'Identifier':
+		return node.name;
 	}
 }

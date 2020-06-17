@@ -16,5 +16,5 @@ export default {
 			<button>Test</button>
 		`
 		);
-	},
+	}
 };
