@@ -10,9 +10,5 @@ module.exports = {
 			'estree'
 		],
 		'svelte3/compiler': require('./compiler')
-	},
-	// workaround for https://github.com/typescript-eslint/typescript-eslint/issues/1824 and rely solely on 'indent' rule
-	rules: {
-		"@typescript-eslint/indent": "off"
 	}
 };
