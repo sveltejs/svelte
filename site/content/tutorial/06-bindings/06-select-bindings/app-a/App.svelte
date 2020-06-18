@@ -21,7 +21,7 @@
 <h2>Insecurity questions</h2>
 
 <form on:submit|preventDefault={handleSubmit}>
-	<select value={selected} on:change="{() => answer = ''}">
+	<select value={selected} on:blur="{() => answer = ''}">
 		{#each questions as question}
 			<option value={question}>
 				{question.text}
