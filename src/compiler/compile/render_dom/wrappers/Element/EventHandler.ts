@@ -1,8 +1,8 @@
-import EventHandler from '../../../nodes/EventHandler';
-import Wrapper from '../shared/Wrapper';
-import Block from '../../Block';
-import { b, x, p } from 'code-red';
-import { Expression } from 'estree';
+import EventHandler from "../../../nodes/EventHandler";
+import Wrapper from "../shared/Wrapper";
+import Block from "../../Block";
+import { b, x, p } from "code-red";
+import { Expression } from "estree";
 
 const TRUE = x`true`;
 const FALSE = x`false`;
@@ -27,7 +27,9 @@ export default class EventHandlerWrapper {
 	}
 
 	get_snippet(block) {
-		const snippet = this.node.expression ? this.node.expression.manipulate(block) : block.renderer.reference(this.node.handler_name);
+		const snippet = this.node.expression
+			? this.node.expression.manipulate(block)
+			: block.renderer.reference(this.node.handler_name);
 
 		if (this.node.reassigned) {
 			block.maintain_context = true;
@@ -39,24 +41,35 @@ export default class EventHandlerWrapper {
 	render(block: Block, target: string | Expression) {
 		let snippet = this.get_snippet(block);
 
-		if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
-		if (this.node.modifiers.has('stopPropagation')) snippet = x`@stop_propagation(${snippet})`;
-		if (this.node.modifiers.has('self')) snippet = x`@self(${snippet})`;
+		if (this.node.modifiers.has("preventDefault"))
+			snippet = x`@prevent_default(${snippet})`;
+		if (this.node.modifiers.has("stopPropagation"))
+			snippet = x`@stop_propagation(${snippet})`;
+		if (this.node.modifiers.has("stopImmediatePropagation"))
+			snippet = x`@stop_immediate_propagation(${snippet})`;
+		if (this.node.modifiers.has("self")) snippet = x`@self(${snippet})`;
 
 		const args = [];
 
-		const opts = ['passive', 'once', 'capture'].filter(mod => this.node.modifiers.has(mod));
+		const opts = ["passive", "once", "capture"].filter((mod) =>
+			this.node.modifiers.has(mod)
+		);
 		if (opts.length) {
-			args.push((opts.length === 1 && opts[0] === 'capture')
-				? TRUE
-				: x`{ ${opts.map(opt => p`${opt}: true`)} }`);
+			args.push(
+				opts.length === 1 && opts[0] === "capture"
+					? TRUE
+					: x`{ ${opts.map((opt) => p`${opt}: true`)} }`
+			);
 		} else if (block.renderer.options.dev) {
 			args.push(FALSE);
 		}
 
 		if (block.renderer.options.dev) {
-			args.push(this.node.modifiers.has('preventDefault') ? TRUE : FALSE);
-			args.push(this.node.modifiers.has('stopPropagation') ? TRUE : FALSE);
+			args.push(this.node.modifiers.has("preventDefault") ? TRUE : FALSE);
+			args.push(this.node.modifiers.has("stopPropagation") ? TRUE : FALSE);
+			args.push(
+				this.node.modifiers.has("stopImmediatePropagation") ? TRUE : FALSE
+			);
 		}
 
 		block.event_listeners.push(
