@@ -5,7 +5,7 @@ title: Select bindings
 We can also use `bind:value` with `<select>` elements. Update line 24:
 
 ```html
-<select bind:value={selected} on:change="{() => answer = ''}">
+<select bind:value={selected} on:blur="{() => answer = ''}">
 ```
 
 Note that the `<option>` values are objects rather than strings. Svelte doesn't mind.
