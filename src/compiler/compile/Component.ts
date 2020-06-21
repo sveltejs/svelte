@@ -1166,12 +1166,27 @@ export default class Component {
 			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 
-				const assignees = new Set();
+				const assignees = new Set<string>();
 				const assignee_nodes = new Set();
 				const dependencies = new Set();
 
 				let scope = this.instance_scope;
 				const map = this.instance_scope_map;
+
+				const assignee_stack: Array<{
+					has_mutated_assignee: boolean,
+				}> = [];
+
+				const new_assignee_stack = () => assignee_stack.push({
+					has_mutated_assignee: false,
+				});
+
+				const update_assignee_stack = (name) => {
+					const variable = component.var_lookup.get(name);
+					if (variable) {
+						if (variable.mutated) assignee_stack[assignee_stack.length - 1].has_mutated_assignee = true;
+					}
+				};
 
 				walk(node.body, {
 					enter(node: Node, parent) {
@@ -1182,9 +1197,13 @@ export default class Component {
 						if (node.type === 'AssignmentExpression') {
 							const left = get_object(node.left);
 
+							new_assignee_stack();
+
 							extract_identifiers(left).forEach(node => {
 								assignee_nodes.add(node);
 								assignees.add(node.name);
+
+								update_assignee_stack(node.name);								
 							});
 
 							if (node.operator !== '=') {
@@ -1193,6 +1212,9 @@ export default class Component {
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
+
+							new_assignee_stack();
+							update_assignee_stack(identifier.name);
 						} else if (is_reference(node as Node, parent as Node)) {
 							const identifier = get_object(node);
 							if (!assignee_nodes.has(identifier)) {
@@ -1200,6 +1222,11 @@ export default class Component {
 								const owner = scope.find_owner(name);
 								const variable = component.var_lookup.get(name);
 								if (variable) variable.is_reactive_dependency = true;
+								
+								if (variable && owner === component.instance_scope && assignee_stack.length) {
+									if (assignee_stack[assignee_stack.length - 1].has_mutated_assignee) variable.mutated = true;
+								}
+
 								const is_writable_or_mutated =
 									variable && (variable.writable || variable.mutated);
 								if (
@@ -1217,6 +1244,9 @@ export default class Component {
 					leave(node: Node) {
 						if (map.has(node)) {
 							scope = scope.parent;
+						}
+						if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+							assignee_stack.pop();
 						}
 					},
 				});
