@@ -50,7 +50,7 @@ If a function is returned from `onMount`, it will be called when the component i
 </script>
 ```
 
-> This behaviour will only work when the function passed to `onMount` synchronously returns a value. `async` functions always return a `Promise`, and as such cannot *synchronously* return a function.
+> This behaviour will only work when the function passed to `onMount` *synchronously* returns a value. `async` functions always return a `Promise`, and as such cannot *synchronously* return a function.
 
 #### `beforeUpdate`
 
