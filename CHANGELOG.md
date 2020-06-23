@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix handling of `this` in inline function expressions in the template ([#5033](https://github.com/sveltejs/svelte/issues/5033))
+
 ## 3.23.2
 
 * Fix `bind:group` inside `{#each}` ([#3243](https://github.com/sveltejs/svelte/issues/3243))
