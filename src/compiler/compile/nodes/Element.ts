@@ -708,8 +708,7 @@ export default class Element extends Node {
 		if (!a11y_required_content.has(this.name)) return;
 		if (
 			this.bindings
-				.map((binding) => binding.name)
-				.some((name) => ['textContent', 'innerHTML'].includes(name))
+				.some((binding) => ['textContent', 'innerHTML'].includes(binding.name))
 		) return;
 
 		if (this.children.length === 0) {
