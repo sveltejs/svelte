@@ -6,6 +6,7 @@ import { string_literal } from '../../../utils/stringify';
 import { b, x } from 'code-red';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
+import handle_select_value_binding from './handle_select_value_binding';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -35,6 +36,10 @@ export default class AttributeWrapper {
 						});
 					});
 				}
+			}
+
+			if (node.name === 'value') {
+				handle_select_value_binding(this, node.dependencies);
 			}
 		}
 	}
@@ -74,7 +79,7 @@ export default class AttributeWrapper {
 
 		const is_legacy_input_type = element.renderer.component.compile_options.legacy && name === 'type' && this.parent.node.name === 'input';
 
-		const dependencies = this.node.get_dependencies();
+		const dependencies = this.get_dependencies();
 		const value = this.get_value(block);
 
 		const is_src = this.node.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
@@ -83,7 +88,7 @@ export default class AttributeWrapper {
 
 		const is_input_value = name === 'value' && element.node.name === 'input';
 
-		const should_cache = is_src || this.node.should_cache() || is_select_value_attribute; // TODO is this necessary?
+		const should_cache = is_src || this.node.should_cache();
 
 		const last = should_cache && block.get_unique_name(
 			`${element.var.name}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
@@ -104,13 +109,12 @@ export default class AttributeWrapper {
 			const is_multiple_select = element.node.get_static_attribute_value('multiple');
 
 			if (is_multiple_select) {
-				updater = b`@select_options(${element.var}, ${last});`;
+				updater = b`@select_options(${element.var}, ${value});`;
 			} else {
-				updater = b`@select_option(${element.var}, ${last});`;
+				updater = b`@select_option(${element.var}, ${value});`;
 			}
 
 			block.chunks.mount.push(b`
-				${last} = ${value};
 				${updater}
 			`);
 		} else if (is_src) {
@@ -168,8 +172,24 @@ export default class AttributeWrapper {
 			const update_value = b`${element.var}.value = ${element.var}.__value;`;
 
 			block.chunks.hydrate.push(update_value);
-			if (this.node.get_dependencies().length > 0) block.chunks.update.push(update_value);
+			if (dependencies.length > 0) block.chunks.update.push(update_value);
 		}
+	}
+
+	get_dependencies() {
+		const node_dependencies = this.node.get_dependencies();
+		const dependencies = new Set(node_dependencies);
+
+		node_dependencies.forEach((prop: string) => {
+			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(prop);
+			if (indirect_dependencies) {
+				indirect_dependencies.forEach(indirect_dependency => {
+					dependencies.add(indirect_dependency);
+				});
+			}
+		});
+
+		return Array.from(dependencies);
 	}
 
 	get_metadata() {

@@ -10,6 +10,7 @@ import flatten_reference from '../../../utils/flatten_reference';
 import { Node, Identifier } from 'estree';
 import add_to_set from '../../../utils/add_to_set';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
+import handle_select_value_binding from './handle_select_value_binding';
 
 export default class BindingWrapper {
 	node: Binding;
@@ -35,12 +36,8 @@ export default class BindingWrapper {
 		block.add_dependencies(dependencies);
 
 		// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
-		if (parent.node.name === 'select') {
-			(parent as ElementWrapper).select_binding_dependencies = dependencies;
-			dependencies.forEach((prop: string) => {
-				parent.renderer.component.indirect_dependencies.set(prop, new Set());
-			});
-		}
+
+		handle_select_value_binding(this, dependencies);
 
 		if (node.is_contextual) {
 			mark_each_block_bindings(this.parent, this.node);

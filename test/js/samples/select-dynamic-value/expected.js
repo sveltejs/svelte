@@ -15,7 +15,6 @@ function create_fragment(ctx) {
 	let select;
 	let option0;
 	let option1;
-	let select_value_value;
 
 	return {
 		c() {
@@ -33,12 +32,11 @@ function create_fragment(ctx) {
 			insert(target, select, anchor);
 			append(select, option0);
 			append(select, option1);
-			select_value_value = /*current*/ ctx[0];
-			select_option(select, select_value_value);
+			select_option(select, /*current*/ ctx[0]);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*current*/ 1 && select_value_value !== (select_value_value = /*current*/ ctx[0])) {
-				select_option(select, select_value_value);
+			if (dirty & /*current*/ 1) {
+				select_option(select, /*current*/ ctx[0]);
 			}
 		},
 		i: noop,
