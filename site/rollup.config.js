@@ -13,6 +13,10 @@ const mode = process.env.NODE_ENV;
 const dev = mode === 'development';
 const legacy = !!process.env.SAPPER_LEGACY_BUILD;
 
+if (!dev && !process.env.MAPBOX_ACCESS_TOKEN) {
+	throw Error('MAPBOX Access Token is missing. Please add the token in the .env file to generate the production build.');
+}
+
 const onwarn = (warning, onwarn) => (warning.code === 'CIRCULAR_DEPENDENCY' && /[/\\]@sapper[/\\]/.test(warning.message)) || onwarn(warning);
 const dedupe = importee => importee === 'svelte' || importee.startsWith('svelte/');
 
