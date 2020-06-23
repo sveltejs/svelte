@@ -1152,7 +1152,7 @@ export default class Component {
 			for (const specifier of specifiers) {
 				const variable = var_lookup.get(specifier.local.name);
 
-				if (!variable.mutated || var_lookup.get(`$${specifier.local.name}`)) {
+				if (!variable.mutated || variable.subscribable) {
 					variable.hoistable = true;
 				}
 			}
