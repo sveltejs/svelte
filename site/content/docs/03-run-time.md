@@ -50,6 +50,8 @@ If a function is returned from `onMount`, it will be called when the component i
 </script>
 ```
 
+Note that returning a function is only available for *synchronous* onMount functions. If an async function or promise is passed to `onMount`, the function returned will **not** be called when the component is unmounted.
+
 #### `beforeUpdate`
 
 ```js
