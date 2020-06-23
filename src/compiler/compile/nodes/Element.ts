@@ -706,6 +706,10 @@ export default class Element extends Node {
 
 	validate_content() {
 		if (!a11y_required_content.has(this.name)) return;
+		if (
+			this.bindings
+				.some((binding) => ['textContent', 'innerHTML'].includes(binding.name))
+		) return;
 
 		if (this.children.length === 0) {
 			this.component.warn(this, {
