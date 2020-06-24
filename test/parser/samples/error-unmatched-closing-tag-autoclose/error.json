@@ -1,0 +1,10 @@
+{
+	"code": "invalid-closing-tag",
+	"message": "<p> cannot have child element <pre>",
+	"pos": 24,
+	"start": {
+		"character": 24,
+		"column": 0,
+		"line": 3
+	}
+}
