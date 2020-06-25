@@ -11,7 +11,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 	block.renderer.add_to_context(fn.name);
 	const callee = block.renderer.reference(fn.name);
 
-	const { contextual_dependencies, mutation, lhs } = binding.handler;
+	const { contextual_dependencies, mutation } = binding.handler;
 	const dependencies = binding.get_dependencies();
 
 	const body = b`
@@ -29,7 +29,6 @@ export default function bind_this(component: Component, block: Block, binding: B
 		}));
 		component.partly_hoisted.push(b`
 			function ${fn}($$value, ${params}) {
-				if (${lhs} === $$value) return;
 				@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 					${body}
 				});
