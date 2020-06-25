@@ -18,9 +18,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			details = element("details");
-
-			details.innerHTML = `<summary>summary</summary>content
-`;
+			details.innerHTML = `<summary>summary</summary>content`;
 		},
 		m(target, anchor) {
 			insert(target, details, anchor);
