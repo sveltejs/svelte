@@ -1,7 +1,7 @@
 <script>
 	import { tick } from 'svelte';
-  let refs = []
-	
+	let refs = [];
+
 	export function addItem() {
 		refs = refs.concat({ ref: null });
 		return tick();
@@ -13,5 +13,5 @@
 </script>
 
 {#each refs as xxx}
-    <div bind:this={xxx.ref} />
+	<div bind:this={xxx.ref} />
 {/each}
