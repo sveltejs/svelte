@@ -51,7 +51,7 @@ export default class RawMustacheTagWrapper extends Tag {
 				content => x`${html_tag}.p(${content})`
 			);
 
-			const update_anchor = in_head ? 'null' : needs_anchor ? html_anchor : this.next ? this.next.var : 'null';
+			const update_anchor = needs_anchor ? html_anchor : this.next ? this.next.var : 'null';
 
 			block.chunks.hydrate.push(b`${html_tag} = new @HtmlTag(${update_anchor});`);
 			block.chunks.mount.push(b`${html_tag}.m(${init}, ${parent_node || '#target'}, ${parent_node ? null : '#anchor'});`);
