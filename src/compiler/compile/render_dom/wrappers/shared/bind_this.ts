@@ -29,7 +29,6 @@ export default function bind_this(component: Component, block: Block, binding: B
 		}));
 		component.partly_hoisted.push(b`
 			function ${fn}($$value, ${params}) {
-				if (${lhs} === $$value) return;
 				@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 					${body}
 				});
