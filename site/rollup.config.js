@@ -14,7 +14,7 @@ const dev = mode === 'development';
 const legacy = !!process.env.SAPPER_LEGACY_BUILD;
 
 if (!dev && !process.env.MAPBOX_ACCESS_TOKEN) {
-	throw Error('MAPBOX Access Token is missing. Please add the token in the .env file to generate the production build.');
+	throw new Error('MAPBOX_ACCESS_TOKEN is missing. Please add the token in the .env file before generating the production build.');
 }
 
 const onwarn = (warning, onwarn) => (warning.code === 'CIRCULAR_DEPENDENCY' && /[/\\]@sapper[/\\]/.test(warning.message)) || onwarn(warning);
