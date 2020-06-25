@@ -1,8 +1,16 @@
 <script>
-	export let visible = false;
-	let input;
+	let autofocus = true;
+	let active = "text";
 </script>
 
-{#if visible}
-	<input bind:this={input} autofocus>
+<input title="input" bind:value={active} />
+
+{#if active === "text"}
+	<input title={active} autofocus />
+{:else if active === "dynamic"}
+	<input title={active} {autofocus} />
+{:else if active === "bound"}
+	<input title={active} autofocus={autofocus} />
+{:else if active === "fn"}
+	<input title={active} autofocus={() => true} />
 {/if}

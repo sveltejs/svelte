@@ -164,7 +164,7 @@ export default class AttributeWrapper {
 		}
 
 		// special case – autofocus. has to be handled in a bit of a weird way
-		if (this.node.is_true && name === 'autofocus') {
+		if (name === 'autofocus') {
 			block.autofocus = element.var;
 		}
 
