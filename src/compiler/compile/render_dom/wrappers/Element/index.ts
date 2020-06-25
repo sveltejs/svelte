@@ -6,7 +6,6 @@ import { is_void, sanitize } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
 import { escape_html, string_literal } from '../../../utils/stringify';
 import TextWrapper from '../Text';
-import TagWrapper from '../shared/Tag';
 import fix_attribute_casing from './fix_attribute_casing';
 import { b, x, p } from 'code-red';
 import { namespaces } from '../../../../utils/namespaces';
@@ -26,6 +25,8 @@ import { Identifier } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
+import MustacheTagWrapper from '../MustacheTag';
+import RawMustacheTagWrapper from '../RawMustacheTag';
 
 interface BindingGroup {
 	events: string[];
@@ -337,8 +338,7 @@ export default class ElementWrapper extends Wrapper {
 		if (!this.node.namespace && (this.can_use_innerhtml || can_use_textcontent) && this.fragment.nodes.length > 0) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				block.chunks.create.push(
-					 // @ts-ignore todo: should it be this.fragment.nodes[0].node.data instead?
-					b`${node}.textContent = ${string_literal(this.fragment.nodes[0].data)};`
+					b`${node}.textContent = ${string_literal((this.fragment.nodes[0] as TextWrapper).data)};`
 				);
 			} else {
 				const state = {
@@ -926,9 +926,9 @@ export default class ElementWrapper extends Wrapper {
 	}
 }
 
-function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
+function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapper | RawMustacheTagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
-		if (wrapper.node.type === 'Text') {
+		if (wrapper instanceof TextWrapper) {
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
 
 			const parent = wrapper.node.parent as Element;
@@ -939,13 +939,13 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 				can_use_raw_text
 			);
 
-			state.quasi.value.raw += (raw ? wrapper.node.data : escape_html(wrapper.node.data))
+			state.quasi.value.raw += (raw ? wrapper.data : escape_html(wrapper.data))
 				.replace(/\\/g, '\\\\')
 				.replace(/`/g, '\\`')
 				.replace(/\$/g, '\\$');
 		}
 
-		else if (wrapper.node.type === 'MustacheTag' || wrapper.node.type === 'RawMustacheTag' ) {
+		else if (wrapper instanceof MustacheTagWrapper || wrapper instanceof RawMustacheTagWrapper) {
 			literal.quasis.push(state.quasi);
 			literal.expressions.push(wrapper.node.expression.manipulate(block));
 			state.quasi = {
@@ -984,8 +984,8 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | TagWrapper>, blo
 
 			state.quasi.value.raw += '>';
 
-			if (!(wrapper as ElementWrapper).void) {
-				to_html((wrapper as ElementWrapper).fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
+			if (!wrapper.void) {
+				to_html(wrapper.fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
 				state.quasi.value.raw += `</${wrapper.node.name}>`;
 			}
