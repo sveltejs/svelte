@@ -64,9 +64,9 @@ interface Options<T> {
 type Updater<T> = (target_value: T, value: T) => T;
 
 interface Tweened<T> extends Readable<T> {
-	set(value: T, opts: Options<T>): Promise<void>;
+	set(value: T, opts?: Options<T>): Promise<void>;
 
-	update(updater: Updater<T>, opts: Options<T>): Promise<void>;
+	update(updater: Updater<T>, opts?: Options<T>): Promise<void>;
 }
 
 export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
@@ -75,7 +75,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 	let task: Task;
 	let target_value = value;
 
-	function set(new_value: T, opts: Options<T>) {
+	function set(new_value: T, opts?: Options<T>) {
 		if (value == null) {
 			store.set(value = new_value);
 			return Promise.resolve();
@@ -98,7 +98,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 				previous_task.abort();
 				previous_task = null;
 			}
-			
+
 			store.set(value = target_value);
 			return Promise.resolve();
 		}
@@ -137,7 +137,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 
 	return {
 		set,
-		update: (fn, opts: Options<T>) => set(fn(target_value, value), opts),
+		update: (fn, opts?: Options<T>) => set(fn(target_value, value), opts),
 		subscribe: store.subscribe
 	};
 }
