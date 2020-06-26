@@ -61,11 +61,6 @@ const a11y_no_onchange = new Set([
 	'option'
 ]);
 
-const a11y_mouse_events = new Set([
-	'onMouseOver',
-	'onMouseOut'
-]);
-
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
@@ -512,7 +507,7 @@ export default class Element extends Node {
 			}
 		}
 
-		if (a11y_mouse_events.has(this.name)) {
+		if (attribute_map.has('onMouseOver') || attribute_map.has('onMouseOut')) {
 			if (attribute_map.has('onMouseOver') && !attribute_map.has('onFocus')) {
 				component.warn(this, {
 					code: `a11y-mouse-events-have-key-events`,

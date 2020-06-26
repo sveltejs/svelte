@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "code": "a11y-mouse-events-have-key-events",
+    "end": {
+      "character": 36,
+      "column": 36,
+      "line": 1
+    },
+    "message": "A11y: onMouseOver must be accompanied by onFocus for accessibility.",
+    "pos": 0,
+    "start": {
+      "character": 0,
+      "column": 0,
+      "line": 1
+    }
+  },
+  {
+    "code": "a11y-mouse-events-have-key-events",
+    "end": {
+      "character": 194,
+      "column": 59,
+      "line": 4
+    },
+    "message": "A11y: onMouseOut must be accompanied by onBlur for accessibility.",
+    "pos": 135,
+    "start": {
+      "character": 135,
+      "column": 0,
+      "line": 4
+    }
+  }
+]
