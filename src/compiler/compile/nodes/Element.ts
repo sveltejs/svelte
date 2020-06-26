@@ -61,6 +61,11 @@ const a11y_no_onchange = new Set([
 	'option'
 ]);
 
+const a11y_mouse_events = new Set([
+	'onMouseOver',
+	'onMouseOut'
+]);
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
@@ -505,6 +510,24 @@ export default class Element extends Node {
 					});
 				}
 			}
+		}
+
+		if (a11y_mouse_events.has(this.name)) {
+			if (attribute_map.has('onMouseOver') && !attribute_map.has('onFocus')) {
+				component.warn(this, {
+					code: `a11y-mouse-events-have-key-events`,
+					message: `A11y: onMouseOver must be accompanied by onFocus for accessibility.`
+				});
+			}
+
+			if (attribute_map.has('onMouseOut') && attribute_map.has('onBlur')) {
+				component.warn(this, {
+					code: `a11y-mouse-events-have-key-events`,
+					message: `A11y: onMouseOut must be accompanied by onBlur for accessibility.`
+				});
+			}
+
+
 		}
 
 		if (a11y_no_onchange.has(this.name)) {
