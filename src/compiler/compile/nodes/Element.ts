@@ -507,6 +507,16 @@ export default class Element extends Node {
 			}
 		}
 
+		if (this.name === 'label') {
+			const has_input_child = this.children.some(i => (i instanceof Element && i.name === 'input' ));
+			if (!attribute_map.has('for') && !has_input_child) {
+				component.warn(this, {
+					code: `a11y-label-has-associated-control`,
+					message: `A11y: A form label must be associated with a control.`
+				});
+			}
+		}
+
 		if (a11y_no_onchange.has(this.name)) {
 			if (handlers_map.has('change') && !handlers_map.has('blur')) {
 				component.warn(this, {
