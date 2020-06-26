@@ -1,6 +1,6 @@
 <div>
-	<video autoplay></video>
-	<video></video>
+	<video autoplay muted></video>
+	<video muted></video>
 </div>
 
 <style>
