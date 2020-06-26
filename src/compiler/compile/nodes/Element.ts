@@ -434,11 +434,16 @@ export default class Element extends Node {
 	}
 
 	validate_attributes_a11y() {
-		const { component, attributes } = this;
+		const { component, attributes, handlers } = this;
 
 		const attribute_map = new Map<string, Attribute>();
+		const handlers_map = new Map();
+
 		attributes.forEach(attribute => (
 			attribute_map.set(attribute.name, attribute)
+		));
+		handlers.forEach(handler => (
+			handlers_map.set(handler.name, handler)
 		));
 
 		attributes.forEach(attribute => {
@@ -549,6 +554,21 @@ export default class Element extends Node {
 				}
 			}
 		});
+
+		// click-events-have-key-events
+		if (handlers_map.has("click")) {
+		  const hasKeyEvent =
+		    handlers_map.has("keydown") ||
+		    handlers_map.has("keyup") ||
+		    handlers_map.has("keypress");
+		    
+		  if (!hasKeyEvent) {
+		    component.warn(this, {
+		      code: `a11y-click-events-have-key-events`,
+		      message: `A11y: on:click event must be accompanied by on:keydown, on:keyup or on:keypress event`
+		    });
+		  }
+		}
 
 		// no-noninteractive-tabindex
 		if (!is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
