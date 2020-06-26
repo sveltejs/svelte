@@ -507,6 +507,26 @@ export default class Element extends Node {
 			}
 		}
 
+
+		if (this.is_media_node()) {
+			if (attribute_map.has('muted')) {
+				return;
+			}
+
+			let has_caption;
+			const track = this.children.find((i: Element) => i.name === 'track');
+			if (track) {
+				has_caption = track.attributes.find(a => a.name === "kind" && a.get_static_value() === "captions");
+			}
+
+			if (!has_caption) {
+				component.warn(this, {
+					code: `a11y-media-has-caption`,
+					message: `A11y: Media elements such as <audio> and <video> must have a <track> for captions.`
+				});
+			}
+		}
+
 		if (a11y_no_onchange.has(this.name)) {
 			if (handlers_map.has('change') && !handlers_map.has('blur')) {
 				component.warn(this, {
