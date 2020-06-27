@@ -424,6 +424,25 @@ export default class Element extends Node {
 				});
 			}
 
+			if (name === "onmouseover") {
+				if (!this.attributes.find(i => i.name === 'onFocus')) {
+					component.warn(attribute, {
+						code: `a11y-mouse-events-have-key-events`,
+						message: `A11y: onMouseOver must be accompanied by onFocus for accessibility.`
+					});
+				}
+			}
+
+			if (name === "onmouseout") {
+				if (!this.attributes.find(i => i.name === 'onBlur')) {
+					component.warn(attribute, {
+						code: `a11y-mouse-events-have-key-events`,
+						message: `A11y: onMouseOut must be accompanied by onBlur for accessibility.`
+					});
+				}
+			}
+
+
 			attribute_map.set(attribute.name, attribute);
 		});
 	}
@@ -505,24 +524,6 @@ export default class Element extends Node {
 					});
 				}
 			}
-		}
-
-		if (attribute_map.has('onMouseOver') || attribute_map.has('onMouseOut')) {
-			if (attribute_map.has('onMouseOver') && !attribute_map.has('onFocus')) {
-				component.warn(this, {
-					code: `a11y-mouse-events-have-key-events`,
-					message: `A11y: onMouseOver must be accompanied by onFocus for accessibility.`
-				});
-			}
-
-			if (attribute_map.has('onMouseOut') && attribute_map.has('onBlur')) {
-				component.warn(this, {
-					code: `a11y-mouse-events-have-key-events`,
-					message: `A11y: onMouseOut must be accompanied by onBlur for accessibility.`
-				});
-			}
-
-
 		}
 
 		if (a11y_no_onchange.has(this.name)) {
