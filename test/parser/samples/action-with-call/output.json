@@ -64,7 +64,8 @@
 									"value": "tooltip msg",
 									"raw": "'tooltip msg'"
 								}
-							]
+							],
+							"optional": false
 						}
 					}
 				],

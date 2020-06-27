@@ -1,5 +1,5 @@
 import { x } from 'code-red';
-import { Node, Identifier, RestElement, Property } from 'estree';
+import { Node, Identifier } from 'estree';
 
 export interface Context {
 	key: Identifier;
@@ -34,12 +34,10 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 		const used_properties = [];
 
 		node.properties.forEach((property) => {
-			const props: (RestElement | Property) = (property as any);
-
-			if (props.type === 'RestElement') {
+			if (property.type === 'RestElement') {
 				unpack_destructuring(
 					contexts,
-					props.argument,
+					property.argument,
 					node => x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node
 				);
 			} else {
