@@ -14,7 +14,10 @@ let update_scheduled = false;
 export function schedule_update() {
 	if (!update_scheduled) {
 		update_scheduled = true;
-		resolved_promise.then(flush);
+		resolved_promise.then(() => {
+			flush();
+			set_current_component(null);
+		});
 	}
 }
 
