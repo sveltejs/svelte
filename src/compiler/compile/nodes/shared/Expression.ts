@@ -198,7 +198,7 @@ export default class Expression {
 					scope = map.get(node);
 				}
 
-				if (is_reference(node, parent)) {
+				if (node.type === 'Identifier' && is_reference(node, parent)) {
 					const { name } = flatten_reference(node);
 
 					if (scope.has(name)) return;
