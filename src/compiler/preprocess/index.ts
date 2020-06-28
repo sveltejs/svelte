@@ -114,8 +114,8 @@ export default async function preprocess(
 	for (const fn of style) {
 		source = await replace_async(
 			source,
-			/<!--[^]*?-->|<style(\s[^]*?)?>([^]*?)<\/style>/gi,
-			async (match, attributes = '', content) => {
+			/<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi,
+			async (match, attributes = '', content = '') => {
 				if (!attributes && !content) {
 					return match;
 				}
