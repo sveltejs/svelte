@@ -94,8 +94,8 @@ export default async function preprocess(
 	for (const fn of script) {
 		source = await replace_async(
 			source,
-			/<!--[^]*?-->|<script(\s[^]*?)?>([^]*?)<\/script>/gi,
-			async (match, attributes = '', content) => {
+			/<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi,
+			async (match, attributes = '', content = '') => {
 				if (!attributes && !content) {
 					return match;
 				}
