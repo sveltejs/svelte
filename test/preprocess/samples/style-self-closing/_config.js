@@ -3,7 +3,7 @@ import * as assert from "assert";
 export default {
 	preprocess: {
 		style: ({ content, attributes: { color } }) => {
-			assert.equal(content, "");
+			assert.equal(content, undefined);
 			return {
 				code: `div { color: ${color}; }`
 			};
