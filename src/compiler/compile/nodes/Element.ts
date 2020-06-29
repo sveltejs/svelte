@@ -66,7 +66,7 @@ const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 const valid_modifiers = new Set([
 	'preventDefault',
 	'stopPropagation',
-	'stopImmediatePropagation'
+	'stopImmediatePropagation',
 	'capture',
 	'once',
 	'passive',
@@ -204,12 +204,12 @@ export default class Element extends Node {
 				}
 
 				case 'Transition':
-				{
-					const transition = new Transition(component, this, scope, node);
-					if (node.intro) this.intro = transition;
-					if (node.outro) this.outro = transition;
-					break;
-				}
+					{
+						const transition = new Transition(component, this, scope, node);
+						if (node.intro) this.intro = transition;
+						if (node.outro) this.outro = transition;
+						break;
+					}
 
 				case 'Animation':
 					this.animation = new Animation(component, this, scope, node);
