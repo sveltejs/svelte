@@ -1,15 +1,22 @@
 <script>
-	function handleTouchstart() {
-		// ...
-	}
+  function handleTouchstart() {
+    // ...
+  }
 
-	function handleClick() {
-		// ...
-	}
+  function handleClick() {
+    // ...
+  }
 </script>
 
 <div on:touchstart={handleTouchstart}>
-	<button on:click|stopPropagation|preventDefault={handleClick}>click me</button>
-	<button on:click|once|capture={handleClick}>or me</button>
-	<button on:click|capture={handleClick}>or me!</button>
+  <button on:click|stopPropagation|preventDefault={handleClick}>
+    click me
+  </button>
+  <button on:click|once|capture={handleClick}>or me</button>
+  <button on:click|capture={handleClick}>or me!</button>
+  <button
+    on:click|stopImmediatePropagation={handleClick}
+    on:click={handleTouchstart}>
+    or me!
+  </button>
 </div>
