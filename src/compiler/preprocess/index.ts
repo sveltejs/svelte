@@ -67,68 +67,144 @@ async function replace_async(str: string, re: RegExp, func: (...any) => Promise<
 	return out;
 }
 
+async function process_markup(
+	source: string,
+	func: (...any) => Processed | Promise<Processed>,
+	filename: string,
+) {
+
+	const processed: Processed = await func({
+		content: source,
+		filename
+	});
+
+	return {
+		source: processed ? processed.code : source,
+		dependencies: processed.dependencies
+	};
+}
+
+async function process_script(
+	source: string,
+	func: (...any) => Processed | Promise<Processed>,
+	filename: string,
+) {
+	const dependencies = [];
+
+	source = await replace_async(
+		source,
+		/<!--[^]*?-->|<script(\s[^]*?)?>([^]*?)<\/script>/gi,
+		async (match, attributes = '', content) => {
+			if (!attributes && !content) {
+				return match;
+			}
+			attributes = attributes || '';
+			const processed: Processed = await func({
+				content,
+				attributes: parse_attributes(attributes),
+				filename
+			});
+			if (processed && processed.dependencies) {
+				dependencies.push(...processed.dependencies);
+			}
+
+			return processed ? `<script${attributes}>${processed.code}</script>` : match;
+		}
+	);
+
+	return {
+		source,
+		dependencies,
+	};
+}
+
+async function process_style(
+	source: string,
+	func: (...any) => Processed | Promise<Processed>,
+	filename: string,
+) {
+	const dependencies = [];
+
+	source = await replace_async(
+		source,
+		/<!--[^]*?-->|<style(\s[^]*?)?>([^]*?)<\/style>/gi,
+		async (match, attributes = '', content) => {
+			if (!attributes && !content) {
+				return match;
+			}
+			const processed: Processed = await func({
+				content,
+				attributes: parse_attributes(attributes),
+				filename
+			});
+
+			if (processed && processed.dependencies) {
+				dependencies.push(...processed.dependencies);
+			}
+
+			return processed ? `<style${attributes}>${processed.code}</style>` : match;
+		}
+	);
+
+	return {
+		source,
+		dependencies,
+	};
+}
+
+async function async_for_each(array, callback) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
+}
+
 export default async function preprocess(
 	source: string,
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
-	options?: { filename?: string }
+	options?: { filename?: string; strictOrder?: boolean }
 ) {
 	// @ts-ignore todo: doublecheck
 	const filename = (options && options.filename) || preprocessor.filename; // legacy
+	const strictOrder = options && options.strictOrder;
 	const dependencies = [];
 
 	const preprocessors = Array.isArray(preprocessor) ? preprocessor : [preprocessor];
 
-	const markup = preprocessors.map(p => p.markup).filter(Boolean);
-	const script = preprocessors.map(p => p.script).filter(Boolean);
-	const style = preprocessors.map(p => p.style).filter(Boolean);
+	const order = strictOrder
+		? preprocessors
+		: [
+		...preprocessors.map(({ markup }) => ({ markup })),
+		...preprocessors.map(({ script }) => ({ script })),
+		...preprocessors.map(({ style }) => ({ style })),
+	];
 
-	for (const fn of markup) {
-		const processed = await fn({
-			content: source,
-			filename
-		});
-		if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
-		source = processed ? processed.code : source;
-	}
+	await async_for_each(order, async p => {
+		let processed;
 
-	for (const fn of script) {
-		source = await replace_async(
-			source,
-			/<!--[^]*?-->|<script(\s[^]*?)?>([^]*?)<\/script>/gi,
-			async (match, attributes = '', content) => {
-				if (!attributes && !content) {
-					return match;
-				}
-				attributes = attributes || '';
-				const processed = await fn({
-					content,
-					attributes: parse_attributes(attributes),
-					filename
-				});
-				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
-				return processed ? `<script${attributes}>${processed.code}</script>` : match;
+		if (p.markup) {
+			processed = await process_markup(source, p.markup, filename);
+			source = processed.source;
+			if (processed.dependencies && processed.dependencies.length) {
+				dependencies.push(...processed.dependencies);
 			}
-		);
-	}
+		}
 
-	for (const fn of style) {
-		source = await replace_async(
-			source,
-			/<!--[^]*?-->|<style(\s[^]*?)?>([^]*?)<\/style>/gi,
-			async (match, attributes = '', content) => {
-				if (!attributes && !content) {
-					return match;
-				}
-				const processed: Processed = await fn({
-					content,
-					attributes: parse_attributes(attributes),
-					filename
-				});
-				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
-				return processed ? `<style${attributes}>${processed.code}</style>` : match;
+		if (p.script) {
+			processed = await process_script(source, p.script, filename);
+			source = processed.source;
+			if (processed.dependencies && processed.dependencies.length) {
+				dependencies.push(...processed.dependencies);
 			}
-		);
-	}
+		}
+
+		if (p.style) {
+			processed = await process_style(source, p.style, filename);
+			source = processed.source;
+			if (processed.dependencies && processed.dependencies.length) {
+				dependencies.push(...processed.dependencies);
+			}
+		}
+	});
 
 	return {
 		// TODO return separated output, in future version where svelte.compile supports it:
