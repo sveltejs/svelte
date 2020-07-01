@@ -219,16 +219,17 @@ export default class InlineComponentWrapper extends Wrapper {
 				const all_dependencies: Set<string> = new Set();
 
 				this.node.attributes.forEach(attr => {
-					add_to_set(all_dependencies, attr.dependencies);
+					add_to_set(all_dependencies, attr.get_dependencies());
 				});
 
-				this.node.attributes.forEach((attr, i) => {
-					const { name, dependencies } = attr;
+				this.node.attributes.forEach((attr) => {
+					const { name } = attr;
+					const dependencies = attr.get_dependencies();
 
-					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
+					const condition = dependencies.length > 0 && (dependencies.length !== all_dependencies.size)
 						? renderer.dirty(Array.from(dependencies))
 						: null;
-					const unchanged = dependencies.size === 0;
+					const unchanged = dependencies.length === 0;
 
 					let change_object;
 					if (attr.is_spread) {
@@ -248,7 +249,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 					changes.push(
 						unchanged
-							? x`${levels}[${i}]`
+							? x`false`
 							: condition
 							? x`${condition} && ${change_object}`
 							: change_object
@@ -262,9 +263,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 
 				statements.push(b`
-					for (let #i = 0; #i < ${levels}.length; #i += 1) {
-						${props} = @assign(${props}, ${levels}[#i]);
-					}
+					${props} = @assign(${props}, @get_attributes_for_spread(${levels}))
 				`);
 
 				if (all_dependencies.size) {
