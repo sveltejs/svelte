@@ -1,5 +1,5 @@
 [{
-	"message": "Event modifiers other than 'once' can only be used on DOM elements",
+	"message": "Event modifiers other than 'once' and 'detail' can only be used on DOM elements",
 	"code": "invalid-event-modifier",
 	"start": {
 		"line": 6,

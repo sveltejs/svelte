@@ -102,10 +102,10 @@ export default class InlineComponent extends Node {
 
 		this.handlers.forEach(handler => {
 			handler.modifiers.forEach(modifier => {
-				if (modifier !== 'once') {
+				if (['once', 'detail'].indexOf(modifier) === -1) {
 					component.error(handler, {
 						code: 'invalid-event-modifier',
-						message: `Event modifiers other than 'once' can only be used on DOM elements`
+						message: `Event modifiers other than 'once' and 'detail' can only be used on DOM elements`
 					});
 				}
 			});

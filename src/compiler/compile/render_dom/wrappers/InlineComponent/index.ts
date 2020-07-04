@@ -391,6 +391,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const event_handler = new EventHandler(handler, this);
 			let snippet = event_handler.get_snippet(block);
 			if (handler.modifiers.has('once')) snippet = x`@once(${snippet})`;
+			if (handler.modifiers.has('detail')) snippet = x`@detail(${snippet})`;
 
 			return b`${name}.$on("${handler.name}", ${snippet});`;
 		});

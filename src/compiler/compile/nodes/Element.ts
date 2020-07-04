@@ -69,7 +69,8 @@ const valid_modifiers = new Set([
 	'capture',
 	'once',
 	'passive',
-	'self'
+	'self',
+	'detail'
 ]);
 
 const passive_events = new Set([

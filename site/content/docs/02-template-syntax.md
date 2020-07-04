@@ -474,6 +474,7 @@ The following modifiers are available:
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
 * `self` — only trigger handler if event.target is the element itself
+* `detail` — calls the handler with the event.detail value, instead of the event object.
 
 Modifiers can be chained together, e.g. `on:click|once|capture={...}`.
 

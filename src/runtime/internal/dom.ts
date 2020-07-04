@@ -85,6 +85,13 @@ export function self(fn) {
 	};
 }
 
+export function detail(fn) {
+	return function(event) {
+		// @ts-ignore
+		fn.call(this, event.detail);
+	};
+}
+
 export function attr(node: Element, attribute: string, value?: string) {
 	if (value == null) node.removeAttribute(attribute);
 	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
