@@ -28,7 +28,7 @@ For the editor level, we took inspiration from [Pine's](https://github.com/octre
 
 #### `*.svelte` Introspection
 
-For the official Svelte VS Code extension, we built off the foundations which [James Britles](https://github.com/UnwrittenFun) has created in [`UnwrittenFun/svelte-vscode`](https://github.com/UnwrittenFun/svelte-vscode) and [`UnwrittenFun/svelte-language-server`](https://github.com/UnwrittenFun/svelte-language-server/).
+For the official Svelte VS Code extension, we built off the foundations which [James Birtles](https://github.com/UnwrittenFun) has created in [`UnwrittenFun/svelte-vscode`](https://github.com/UnwrittenFun/svelte-vscode) and [`UnwrittenFun/svelte-language-server`](https://github.com/UnwrittenFun/svelte-language-server/).
 
 [Simon H](https://github.com/dummdidumm) and [Lyu, Wei-Da](https://github.com/jasonlyu123) have worked on improving JavaScript and typeScript improvements, including integrating [@halfnelson](https://github.com/halfnelson)'s [svelte2ts](https://github.com/sveltejs/language-tools/tree/master/packages/svelte2tsx#svelte2tsx) which powers understanding the props on components in your codebase.
 
