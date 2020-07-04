@@ -89,7 +89,7 @@ To switch a `<script>` to use TypeScript, use `<script lang="ts">` and that shou
 
 ##### 3. CI Checks
 
-Having red squiggles is great, well, kinda. On the long run though, you want to be able to verify that there are no errors in your code. To verify your project is error free, you can use the CLI tool [`svelte-check`]. It acts like an editor asking for errors against all of your `.svelte` files.
+Having red squiggles is great, well, kinda. On the long run though, you want to be able to verify that there are no errors in your code. To verify your project is error free, you can use the CLI tool [`svelte-check`](https://www.npmjs.com/package/svelte-check). It acts like an editor asking for errors against all of your `.svelte` files.
 
 You can add the dependency to your project and then add it to CI.
 
