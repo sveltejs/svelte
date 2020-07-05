@@ -30,7 +30,7 @@ For the editor level, we took inspiration from [Pine's](https://github.com/octre
 
 For the official Svelte VS Code extension, we built off the foundations which [James Birtles](https://github.com/UnwrittenFun) has created in [`UnwrittenFun/svelte-vscode`](https://github.com/UnwrittenFun/svelte-vscode) and [`UnwrittenFun/svelte-language-server`](https://github.com/UnwrittenFun/svelte-language-server/).
 
-[Simon H](https://github.com/dummdidumm) and [Lyu, Wei-Da](https://github.com/jasonlyu123) have worked on improving JavaScript and typeScript improvements, including integrating [@halfnelson](https://github.com/halfnelson)'s [svelte2ts](https://github.com/sveltejs/language-tools/tree/master/packages/svelte2tsx#svelte2tsx) which powers understanding the props on components in your codebase.
+[Simon H](https://github.com/dummdidumm) and [Lyu, Wei-Da](https://github.com/jasonlyu123) have done great work improving the Javascript and Typescript introspection, including integrating [@halfnelson](https://github.com/halfnelson)'s [svelte2ts](https://github.com/sveltejs/language-tools/tree/master/packages/svelte2tsx#svelte2tsx) which powers understanding the props on components in your codebase.
 
 ### Try today
 
@@ -83,7 +83,7 @@ Your `include`/`exclude` may differ per project.
 
 Any editor which supports using an LSP can work, the [VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) extension has been our primary focus but there is work in progress [on Atom](https://github.com/sveltejs/language-tools/pull/160), and [coc-svelte](https://github.com/coc-extensions/coc-svelte) has been updated with the latest changes.
 
-These editor extensions will work with your existing JavaScript code. The editor won't offer errors, but it will offer inference and refactoring tools. You can [add `// @check-js`](https://www.staging-typescript.org/docs/handbook/intro-to-js-ts.html) to the top of a `<script>` tag using JavaScript to get better error messages.
+These editor extensions will improve your coding experience even if you only use JavaScript. The editor won't offer errors, but it will offer inference and refactoring tools. You can [add `// @check-js`](https://www.staging-typescript.org/docs/handbook/intro-to-js-ts.html) to the top of a `<script>` tag using JavaScript to get better error messages.
 
 To switch a `<script>` to use TypeScript, use `<script lang="ts">` and that should be it. Hopefully you won't be seeing an ocean of red squiggles.
 
