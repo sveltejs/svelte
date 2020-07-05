@@ -24,7 +24,7 @@ A week before COVID was declared a pandemic, [I pitched a consolidation](https:/
 
 To understand the two main parts of TypeScript support, we'll compare it to the technique TypeScript uses to provide dev tools. There is a compiler `tsc` which you run on the command-line to convert `*.ts` to `*.js`, then there is a `TSServer` which is a node API that responds to requests from text editors. The `TSServer` is what provides all the JavaScript and TypeScript realtime introspection for editors while coding, and it has most of the compiler's code inside it.
 
-For Svelte, we have the Svelte compiler, and now we have the [`svelte-language-server`](https://github.com/sveltejs/language-tools/tree/master/packages/language-server#svelte-language-server) which responds to text editor calls via the [Language Server Protocol standard](https://microsoft.github.io//language-server-protocol/overviews/lsp/overview/). First class TypeScript support means that _both_ of these two systems do good job of handling TypeScript code.
+For Svelte, we have the Svelte compiler, and now we have the [`svelte-language-server`](https://github.com/sveltejs/language-tools/tree/master/packages/language-server#svelte-language-server) which responds to text editor calls via the [Language Server Protocol standard](https://microsoft.github.io//language-server-protocol/overviews/lsp/overview/). First class TypeScript support means that _both_ of these two systems do a good job of handling TypeScript code.
 
 The Svelte compiler support for TypeScript is handled by [Christian Kaisermann](https://github.com/kaisermann)'s [`svelte-preprocess`](https://github.com/sveltejs/svelte-preprocess#svelte-preprocess) which is now an official Svelte project.
 
