@@ -43,7 +43,8 @@ For the official Svelte VS Code extension, we built off the foundations which [J
 The Svelte template has been extended with a script to convert it to a TypeScript project.
 
 ```bash
-npx degit svelte/template
+npx degit sveltejs/template svelte-app
+cd svelte-app
 node scripts/updateTypeScriptVersion.js
 ```
 
