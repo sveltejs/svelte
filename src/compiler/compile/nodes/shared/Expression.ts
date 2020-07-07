@@ -78,11 +78,14 @@ export default class Expression {
 
 					if (scope.has(name)) return;
 
-					if (name[0] === '$' && template_scope.names.has(name.slice(1))) {
-						component.error(node, {
-							code: `contextual-store`,
-							message: `Stores must be declared at the top level of the component (this may change in a future version of Svelte)`
-						});
+					if (name[0] === '$') {
+						const store_name = name.slice(1);
+						if (template_scope.names.has(store_name) || scope.has(store_name)) {
+							component.error(node, {
+								code: `contextual-store`,
+								message: `Stores must be declared at the top level of the component (this may change in a future version of Svelte)`
+							});
+						}
 					}
 
 					if (template_scope.is_let(name)) {
