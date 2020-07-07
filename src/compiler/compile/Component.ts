@@ -836,7 +836,7 @@ export default class Component {
 		});
 	}
 
-	warn_on_undefined_store_value_references(node, parent, scope) {
+	warn_on_undefined_store_value_references(node, parent, scope: Scope) {
 		if (
 			node.type === 'LabeledStatement' &&
 			node.label.name === '$' &&
@@ -852,8 +852,17 @@ export default class Component {
 			const object = get_object(node);
 			const { name } = object;
 
-			if (name[0] === '$' && !scope.has(name)) {
-				this.warn_if_undefined(name, object, null);
+			if (name[0] === '$') {
+				if (!scope.has(name)) {
+					this.warn_if_undefined(name, object, null);
+				}
+
+				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
+					this.error(node, {
+						code: `contextual-store`,
+						message: `Stores must be declared at the top level of the component (this may change in a future version of Svelte)`
+					});
+				}
 			}
 		}
 	}
