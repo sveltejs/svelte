@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.24.0
 
 * Support nullish coalescing (`??`) and optional chaining (`?.`) operators ([#1972](https://github.com/sveltejs/svelte/issues/1972))
 * Support `import.meta` ([#4379](https://github.com/sveltejs/svelte/issues/4379))
