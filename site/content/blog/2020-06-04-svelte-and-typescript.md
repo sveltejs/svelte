@@ -53,8 +53,8 @@ node scripts/updateTypeScriptVersion.js
 Before getting started, add the dependencies:
 
 ```bash
-yarn add --dev svelte-preprocess @rollup/plugin-typescript @tsconfig/svelte svelte-check
-npm install --save-dev svelte-preprocess @rollup/plugin-typescript @tsconfig/svelte svelte-check
+yarn add --dev svelte-preprocess @rollup/plugin-typescript @tsconfig/svelte svelte-check typescript
+npm install --save-dev svelte-preprocess @rollup/plugin-typescript @tsconfig/svelte svelte-check typescript
 ```
 
 ##### 1. Compiling TypeScript
@@ -64,7 +64,7 @@ You first need to set up [`svelte-preprocess`](https://github.com/sveltejs/svelt
 When in a rollup project, this would mean:
 
 ```diff
-+ import preprocess from 'svelte-preprocess'
++ import autoPreprocess from 'svelte-preprocess'
 + import typescript from '@rollup/plugin-typescript';
 
 export default {
