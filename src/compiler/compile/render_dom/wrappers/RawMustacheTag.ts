@@ -39,7 +39,7 @@ export default class RawMustacheTagWrapper extends Tag {
 		}
 
 		else {
-			const needs_anchor = in_head || (this.next && !this.next.is_dom_node());
+			const needs_anchor = in_head || (this.next ? !this.next.is_dom_node() : (!this.parent || !this.parent.is_dom_node()));
 
 			const html_tag = block.get_unique_name('html_tag');
 			const html_anchor = needs_anchor && block.get_unique_name('html_anchor');
@@ -51,7 +51,7 @@ export default class RawMustacheTagWrapper extends Tag {
 				content => x`${html_tag}.p(${content})`
 			);
 
-			const update_anchor = in_head ? 'null' : needs_anchor ? html_anchor : this.next ? this.next.var : 'null';
+			const update_anchor = needs_anchor ? html_anchor : this.next ? this.next.var : 'null';
 
 			block.chunks.hydrate.push(b`${html_tag} = new @HtmlTag(${update_anchor});`);
 			block.chunks.mount.push(b`${html_tag}.m(${init}, ${parent_node || '#target'}, ${parent_node ? null : '#anchor'});`);
