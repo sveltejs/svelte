@@ -95,7 +95,7 @@ export default async function preprocess(
 		source = await replace_async(
 			source,
 			/<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi,
-			async (match, attributes = '', content) => {
+			async (match, attributes = '', content = '') => {
 				if (!attributes && !content) {
 					return match;
 				}
@@ -115,7 +115,7 @@ export default async function preprocess(
 		source = await replace_async(
 			source,
 			/<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi,
-			async (match, attributes = '', content) => {
+			async (match, attributes = '', content = '') => {
 				if (!attributes && !content) {
 					return match;
 				}
