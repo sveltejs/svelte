@@ -56,6 +56,13 @@ const events = [
 		filter: (node: Element, _name: string) =>
 			node.name === 'input' && node.get_static_attribute_value('type') === 'range'
 	},
+	// img events
+	{
+		event_names: ['load'],
+		filter: (node: Element, name: string) =>
+			node.name === 'img' &&
+			name === 'complete'
+	},
 
 	{
 		event_names: ['elementresize'],
@@ -557,6 +564,7 @@ export default class ElementWrapper extends Wrapper {
 					binding.node.name === 'indeterminate' ||
 					binding.node.name === 'textContent' ||
 					binding.node.name === 'innerHTML' ||
+					binding.node.name === 'complete' ||
 					binding.is_readonly_media_attribute()
 				);
 			})
