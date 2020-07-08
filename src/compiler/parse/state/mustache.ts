@@ -196,7 +196,7 @@ export default function mustache(parser: Parser) {
 
 		if (!parser.eat('}')) {
 			parser.require_whitespace();
-			await_block[is_then ? 'value': 'error'] = parser.read_identifier();
+			await_block[is_then ? 'value': 'error'] = read_context(parser);
 			parser.allow_whitespace();
 			parser.eat('}', true);
 		}
@@ -305,7 +305,14 @@ export default function mustache(parser: Parser) {
 		const await_block_shorthand = type === 'AwaitBlock' && parser.eat('then');
 		if (await_block_shorthand) {
 			parser.require_whitespace();
-			block.value = parser.read_identifier();
+			block.value = read_context(parser);
+			parser.allow_whitespace();
+		}
+
+		const await_block_catch_shorthand = !await_block_shorthand && type === 'AwaitBlock' && parser.eat('catch');
+		if (await_block_catch_shorthand) {
+			parser.require_whitespace();
+			block.error = read_context(parser);
 			parser.allow_whitespace();
 		}
 
@@ -319,6 +326,9 @@ export default function mustache(parser: Parser) {
 			if (await_block_shorthand) {
 				block.then.skip = false;
 				child_block = block.then;
+			} else if (await_block_catch_shorthand) {
+				block.catch.skip = false;
+				child_block = block.catch;
 			} else {
 				block.pending.skip = false;
 				child_block = block.pending;

@@ -1,4 +1,5 @@
 import Wrapper from '../shared/Wrapper';
+import BindingWrapper from '../Element/Binding';
 import Renderer from '../../Renderer';
 import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
@@ -7,16 +8,15 @@ import { sanitize } from '../../../../utils/names';
 import add_to_set from '../../../utils/add_to_set';
 import { b, x, p } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
-import get_object from '../../../utils/get_object';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_slot_definition } from '../shared/get_slot_definition';
-import EachBlock from '../../../nodes/EachBlock';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { Node, Identifier, ObjectExpression } from 'estree';
 import EventHandler from '../Element/EventHandler';
 import { extract_names } from 'periscopic';
+import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
@@ -47,12 +47,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		this.node.bindings.forEach(binding => {
 			if (binding.is_contextual) {
-				// we need to ensure that the each block creates a context including
-				// the list and the index, if they're not otherwise referenced
-				const { name } = get_object(binding.expression.node);
-				const each_block = this.node.scope.get_owner(name);
-
-				(each_block as EachBlock).has_binding = true;
+				mark_each_block_bindings(this, binding);
 			}
 
 			block.add_dependencies(binding.expression.dependencies);
@@ -132,16 +127,34 @@ export default class InlineComponentWrapper extends Wrapper {
 		const { component } = renderer;
 
 		const name = this.var;
+		block.add_variable(name);
 
 		const component_opts = x`{}` as ObjectExpression;
 
 		const statements: Array<Node | Node[]> = [];
 		const updates: Array<Node | Node[]> = [];
 
+		if (this.fragment) {
+			this.renderer.add_to_context('$$scope', true);
+			const default_slot = this.slots.get('default');
+
+			this.fragment.nodes.forEach((child) => {
+				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
+			});
+		}
+
 		let props;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
+
+		// removing empty slot
+		for (const slot of this.slots.keys()) {
+			if (!this.slots.get(slot).block.has_content()) {
+				this.renderer.remove_block(this.slots.get(slot).block);
+				this.slots.delete(slot);
+			}
+		}
 
 		const initial_props = this.slots.size > 0
 			? [
@@ -170,15 +183,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				props = block.get_unique_name(`${name.name}_props`);
 				component_opts.properties.push(p`props: ${props}`);
 			}
-		}
-
-		if (this.fragment) {
-			this.renderer.add_to_context('$$scope', true);
-			const default_slot = this.slots.get('default');
-
-			this.fragment.nodes.forEach((child) => {
-				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
-			});
 		}
 
 		if (component.compile_options.dev) {
@@ -224,7 +228,9 @@ export default class InlineComponentWrapper extends Wrapper {
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
 						? renderer.dirty(Array.from(dependencies))
 						: null;
+					const unchanged = dependencies.size === 0;
 
+					let change_object;
 					if (attr.is_spread) {
 						const value = attr.expression.manipulate(block);
 						initial_props.push(value);
@@ -233,13 +239,20 @@ export default class InlineComponentWrapper extends Wrapper {
 						if (attr.expression.node.type !== 'ObjectExpression') {
 							value_object = x`@get_spread_object(${value})`;
 						}
-						changes.push(condition ? x`${condition} && ${value_object}` : value_object);
+						change_object = value_object;
 					} else {
 						const obj = x`{ ${name}: ${attr.get_value(block)} }`;
 						initial_props.push(obj);
-
-						changes.push(condition ? x`${condition} && ${obj}` : x`${levels}[${i}]`);
+						change_object = obj;
 					}
+
+					changes.push(
+						unchanged
+							? x`${levels}[${i}]`
+							: condition
+							? x`${condition} && ${change_object}`
+							: change_object
+					);
 				});
 
 				block.chunks.init.push(b`
@@ -292,7 +305,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			component.has_reactive_assignments = true;
 
 			if (binding.name === 'this') {
-				return bind_this(component, block, binding, this.var);
+				return bind_this(component, block, new BindingWrapper(block, binding, this), this.var);
 			}
 
 			const id = component.get_unique_name(`${this.var.name}_${binding.name}_binding`);
@@ -399,7 +412,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 
 				if (${switch_value}) {
-					var ${name} = new ${switch_value}(${switch_props}(#ctx));
+					${name} = new ${switch_value}(${switch_props}(#ctx));
 
 					${munged_bindings}
 					${munged_handlers}
@@ -418,7 +431,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.chunks.mount.push(b`
 				if (${name}) {
-					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
+					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 				}
 			`);
 
@@ -477,7 +490,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				${(this.node.attributes.length > 0 || this.node.bindings.length > 0) && b`
 				${props && b`let ${props} = ${attribute_object};`}`}
 				${statements}
-				const ${name} = new ${expression}(${component_opts});
+				${name} = new ${expression}(${component_opts});
 
 				${munged_bindings}
 				${munged_handlers}
@@ -492,7 +505,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.chunks.mount.push(
-				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
+				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
 			);
 
 			block.chunks.intro.push(b`

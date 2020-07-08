@@ -12,11 +12,11 @@ export interface TransitionConfig {
 }
 
 interface BlurParams {
-	delay: number;
-	duration: number;
+	delay?: number;
+	duration?: number;
 	easing?: EasingFunction;
-	amount: number;
-	opacity: number;
+	amount?: number;
+	opacity?: number;
 }
 
 export function blur(node: Element, {
@@ -41,9 +41,9 @@ export function blur(node: Element, {
 }
 
 interface FadeParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
+	delay?: number;
+	duration?: number;
+	easing?: EasingFunction;
 }
 
 export function fade(node: Element, {
@@ -62,12 +62,12 @@ export function fade(node: Element, {
 }
 
 interface FlyParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
-	x: number;
-	y: number;
-	opacity: number;
+	delay?: number;
+	duration?: number;
+	easing?: EasingFunction;
+	x?: number;
+	y?: number;
+	opacity?: number;
 }
 
 export function fly(node: Element, {
@@ -95,9 +95,9 @@ export function fly(node: Element, {
 }
 
 interface SlideParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
+	delay?: number;
+	duration?: number;
+	easing?: EasingFunction;
 }
 
 export function slide(node: Element, {
@@ -133,11 +133,11 @@ export function slide(node: Element, {
 }
 
 interface ScaleParams {
-	delay: number;
-	duration: number;
-	easing: EasingFunction;
-	start: number;
-	opacity: number;
+	delay?: number;
+	duration?: number;
+	easing?: EasingFunction;
+	start?: number;
+	opacity?: number;
 }
 
 export function scale(node: Element, {
@@ -166,10 +166,10 @@ export function scale(node: Element, {
 }
 
 interface DrawParams {
-	delay: number;
-	speed: number;
-	duration: number | ((len: number) => number);
-	easing: EasingFunction;
+	delay?: number;
+	speed?: number;
+	duration?: number | ((len: number) => number);
+	easing?: EasingFunction;
 }
 
 export function draw(node: SVGElement & { getTotalLength(): number }, {
@@ -199,9 +199,9 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 }
 
 interface CrossfadeParams {
-	delay: number;
-	duration: number | ((len: number) => number);
-	easing: EasingFunction;
+	delay?: number;
+	duration?: number | ((len: number) => number);
+	easing?: EasingFunction;
 }
 
 type ClientRectMap = Map<any, { rect: ClientRect }>;

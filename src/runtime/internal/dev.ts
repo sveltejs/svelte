@@ -73,7 +73,7 @@ export function dataset_dev(node: HTMLElement, property: string, value?: any) {
 
 export function set_data_dev(text, data) {
 	data = '' + data;
-	if (text.data === data) return;
+	if (text.wholeText === data) return;
 
 	dispatch_dev("SvelteDOMSetData", { node: text, data });
 	text.data = data;
@@ -89,6 +89,13 @@ export function validate_each_argument(arg) {
 	}
 }
 
+export function validate_slots(name, slot, keys) {
+	for (const slot_key of Object.keys(slot)) {
+		if (!~keys.indexOf(slot_key)) {
+			console.warn(`<${name}> received an unexpected slot "${slot_key}".`);
+		}
+	}
+}
 
 type Props = Record<string, any>;
 export interface SvelteComponentDev {

@@ -1,61 +1,60 @@
-import flatten_reference from '../../../utils/flatten_reference';
 import { b, x } from 'code-red';
 import Component from '../../../Component';
 import Block from '../../Block';
-import Binding from '../../../nodes/Binding';
+import BindingWrapper from '../Element/Binding';
 import { Identifier } from 'estree';
+import { compare_node } from '../../../utils/compare_node';
 
-export default function bind_this(component: Component, block: Block, binding: Binding, variable: Identifier) {
+export default function bind_this(component: Component, block: Block, binding: BindingWrapper, variable: Identifier) {
 	const fn = component.get_unique_name(`${variable.name}_binding`);
 
 	block.renderer.add_to_context(fn.name);
 	const callee = block.renderer.reference(fn.name);
 
-	let lhs;
-	let object;
-	let body;
+	const { contextual_dependencies, mutation } = binding.handler;
+	const dependencies = binding.get_dependencies();
 
-	if (binding.is_contextual && binding.raw_expression.type === 'Identifier') {
-		// bind:x={y} — we can't just do `y = x`, we need to
-		// to `array[index] = x;
-		const { name } = binding.raw_expression;
-		const { snippet } = block.bindings.get(name);
-		lhs = snippet;
+	const body = b`
+		${mutation}
+		${Array.from(dependencies)
+			.filter(dep => dep[0] !== '$')
+			.filter(dep => !contextual_dependencies.has(dep))
+			.map(dep => b`${block.renderer.invalidate(dep)};`)}
+	`;
 
-		body = b`${lhs} = $$value`; // TODO we need to invalidate... something
-	} else {
-		object = flatten_reference(binding.raw_expression).name;
-		lhs = binding.raw_expression;
-
-		body = binding.raw_expression.type === 'Identifier'
-			? b`
-				${block.renderer.invalidate(object, x`${lhs} = $$value`)};
-			`
-			: b`
-				${lhs} = $$value;
-				${block.renderer.invalidate(object)};
-			`;
-	}
-
-	const contextual_dependencies: Identifier[] = Array.from(binding.expression.contextual_dependencies).map(name => ({
-		type: 'Identifier',
-		name
-	}));
-
-	if (contextual_dependencies.length) {
+	if (contextual_dependencies.size) {
+		const params: Identifier[] = Array.from(contextual_dependencies).map(name => ({
+			type: 'Identifier',
+			name
+		}));
 		component.partly_hoisted.push(b`
-			function ${fn}($$value, ${contextual_dependencies}) {
-				if (${lhs} === $$value) return;
+			function ${fn}($$value, ${params}) {
 				@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 					${body}
 				});
 			}
 		`);
 
+		const alias_map = new Map();
 		const args = [];
-		for (const id of contextual_dependencies) {
+		for (let id of params) {
+			const value = block.renderer.reference(id.name);
+			let found = false;
+			if (block.variables.has(id.name)) {
+				let alias = id.name;
+				for (
+					let i = 1;
+					block.variables.has(alias) && !compare_node(block.variables.get(alias).init, value);
+					alias = `${id.name}_${i++}`
+				);
+				alias_map.set(alias, id.name);
+				id = { type: 'Identifier', name: alias };
+				found = block.variables.has(alias);
+			}
 			args.push(id);
-			block.add_variable(id, block.renderer.reference(id.name));
+			if (!found) {
+				block.add_variable(id, value);
+			}
 		}
 
 		const assign = block.get_unique_name(`assign_${variable.name}`);
@@ -66,8 +65,8 @@ export default function bind_this(component: Component, block: Block, binding: B
 			const ${unassign} = () => ${callee}(null, ${args});
 		`);
 
-		const condition = Array.from(contextual_dependencies)
-			.map(name => x`${name} !== ${block.renderer.reference(name.name)}`)
+		const condition = Array.from(args)
+			.map(name => x`${name} !== ${block.renderer.reference(alias_map.get(name.name) || name.name)}`)
 			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
 		// we push unassign and unshift assign so that references are
@@ -76,7 +75,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 		block.chunks.update.push(b`
 			if (${condition}) {
 				${unassign}();
-				${args.map(a => b`${a} = ${block.renderer.reference(a.name)}`)};
+				${args.map(a => b`${a} = ${block.renderer.reference(alias_map.get(a.name) || a.name)}`)};
 				${assign}();
 			}`
 		);

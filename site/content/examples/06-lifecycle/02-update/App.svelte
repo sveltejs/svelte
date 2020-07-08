@@ -20,7 +20,7 @@
 	];
 
 	function handleKeydown(event) {
-		if (event.which === 13) {
+		if (event.key === 'Enter') {
 			const text = event.target.value;
 			if (!text) return;
 

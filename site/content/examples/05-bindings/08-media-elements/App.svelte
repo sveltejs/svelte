@@ -109,8 +109,8 @@
 
 <div>
 	<video
-		poster="http://sveltejs.github.io/assets/caminandes-llamigos.jpg"
-		src="http://sveltejs.github.io/assets/caminandes-llamigos.mp4"
+		poster="https://sveltejs.github.io/assets/caminandes-llamigos.jpg"
+		src="https://sveltejs.github.io/assets/caminandes-llamigos.mp4"
 		on:mousemove={handleMousemove}
 		on:mousedown={handleMousedown}
 		bind:currentTime={time}

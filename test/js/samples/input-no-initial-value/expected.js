@@ -20,6 +20,7 @@ function create_fragment(ctx) {
 	let input;
 	let t0;
 	let button;
+	let mounted;
 	let dispose;
 
 	return {
@@ -39,10 +40,14 @@ function create_fragment(ctx) {
 			append(form, t0);
 			append(form, button);
 
-			dispose = [
-				listen(input, "input", /*input_input_handler*/ ctx[2]),
-				listen(form, "submit", /*handleSubmit*/ ctx[1])
-			];
+			if (!mounted) {
+				dispose = [
+					listen(input, "input", /*input_input_handler*/ ctx[2]),
+					listen(form, "submit", /*handleSubmit*/ ctx[1])
+				];
+
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*test*/ 1 && input.value !== /*test*/ ctx[0]) {
@@ -53,6 +58,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(form);
+			mounted = false;
 			run_all(dispose);
 		}
 	};
