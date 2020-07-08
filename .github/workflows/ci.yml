@@ -3,7 +3,7 @@ on: [push, pull_request]
 jobs:
   Tests:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 6
+    timeout-minutes: 10
     strategy:
       matrix:
         node-version: [8, 10, 12, 14]
