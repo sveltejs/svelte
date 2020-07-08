@@ -26,7 +26,7 @@ jobs:
     - run: 'npm i && npm run lint'
   Unit:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 3
+    timeout-minutes: 5
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
