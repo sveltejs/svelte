@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import CustomElement from './main.svelte';
 
-export default function (target) {
+export default async function (target) {
 	new CustomElement({
 		target
 	});
@@ -9,7 +9,14 @@ export default function (target) {
 	assert.equal(target.innerHTML, '<custom-element></custom-element>');
 
 	const el = target.querySelector('custom-element');
+
+	// await new Promise((resolve) => setTimeout(resolve, 100));
+	// await new Promise((resolve) => setTimeout(resolve, 100));
 	const widget = el.shadowRoot.querySelector('my-widget');
+
+	console.log(widget);
+
+	// await new Promise((resolve) => setTimeout(resolve, 100));
 
 	const [p1, p2] = widget.shadowRoot.querySelectorAll('p');
 

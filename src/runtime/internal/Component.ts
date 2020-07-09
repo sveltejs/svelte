@@ -171,7 +171,32 @@ if (typeof HTMLElement === 'function') {
 			this.attachShadow({ mode: 'open' });
 		}
 
+		$$initialProps: Record<string, any> | null = {};
+		$$options: Record<string, any> | null = {};
+		$$setup(_options) {
+			// overridden by instance
+		}
+
+		$$runSetup(options?: Record<string, any>) {
+			console.log("$$runSetup");
+			const {$$initialProps} = this;
+			if ($$initialProps) {
+				const opts = (options || this.$$options);
+				this.$$initialProps = null;
+				this.$$options = null;
+				this.$$setup({
+					...opts,
+					props: {
+						...opts.props,
+						...$$initialProps
+					}
+				});
+			}
+		}
+
 		connectedCallback() {
+			console.log("connectedCallback");
+			this.$$runSetup();
 			// @ts-ignore todo: improve typings
 			for (const key in this.$$.slotted) {
 				// @ts-ignore todo: improve typings
@@ -179,7 +204,12 @@ if (typeof HTMLElement === 'function') {
 			}
 		}
 
+		// initial implementation of method, will be overridden on setup
 		attributeChangedCallback(attr, _oldValue, newValue) {
+			console.log(`attributeChangedCallback: ${attr}, ${newValue}`);
+			if (this.$$initialProps) {
+				this.$$initialProps[attr] = newValue;
+			}
 			this[attr] = newValue;
 		}
 
@@ -199,7 +229,12 @@ if (typeof HTMLElement === 'function') {
 			};
 		}
 
-		$set() {
+		$set(obj) {
+			if (this.$$initialProps && obj) {
+				for (const attr of Object.getOwnPropertyNames(obj)) {
+					this.$$initialProps[attr] = obj[attr];
+				}
+			}
 			// overridden by instance, if it has props
 		}
 	};
