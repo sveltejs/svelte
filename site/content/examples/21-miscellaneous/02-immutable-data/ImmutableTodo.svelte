@@ -23,6 +23,6 @@
 
 <!-- the text will flash red whenever
 		the `todo` object changes -->
-<div bind:this={div} on:click>
+<div bind:this={div} on:click={toggle}>
 	{todo.done ? '👍': ''} {todo.text}
 </div>
