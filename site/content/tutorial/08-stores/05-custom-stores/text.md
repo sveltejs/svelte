@@ -6,6 +6,8 @@ As long as an object correctly implements the `subscribe` method, it's a store. 
 
 For example, the `count` store from our earlier example could include `increment`, `decrement` and `reset` methods and avoid exposing `set` and `update`:
 
+[more explanations here]
+
 ```js
 function createCount() {
 	const { subscribe, set, update } = writable(0);
