@@ -1,5 +1,5 @@
 ---
-question: How do I document my .svelte files?
+question: How do I document my components?
 ---
 
 In editors which use the Svelte Language Server you can document Components, functions and exports using specially formatted comments.
