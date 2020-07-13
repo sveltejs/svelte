@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix reactivity when passing `$$props` to a `<slot>` ([#3364](https://github.com/sveltejs/svelte/issues/3364))
+
 ## 3.24.0
 
 * Support nullish coalescing (`??`) and optional chaining (`?.`) operators ([#1972](https://github.com/sveltejs/svelte/issues/1972))
