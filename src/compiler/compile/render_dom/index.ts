@@ -11,7 +11,7 @@ import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression
 export default function dom(
 	component: Component,
 	options: CompileOptions
-): { js: Node[]; css: CssResult; } {
+): { js: Node[]; css: CssResult } {
 	const { name } = component;
 
 	const renderer = new Renderer(component, options);
@@ -93,7 +93,7 @@ export default function dom(
 					b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
 				${component.slots.size > 0 &&
-			b`if ('$$scope' in ${$$props}) ${renderer.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
+				b`if ('$$scope' in ${$$props}) ${renderer.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
 			}
 		`
 		: null;
