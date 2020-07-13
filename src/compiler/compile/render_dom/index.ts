@@ -467,7 +467,6 @@ export default function dom(
 					}
 				}
 				$$setup(options) {
-					console.log("$$setup");
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
 					@init(this, { props: options ? options.props : null, target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});

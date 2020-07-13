@@ -178,7 +178,6 @@ if (typeof HTMLElement === 'function') {
 		}
 
 		connectedCallback() {
-			console.log("connectedCallback");
 			if (!this.$$) {
 				// wasn't set up from constructor as options were not ready
 				const options = Object.keys(this.$$initialProps).length ?
@@ -200,7 +199,6 @@ if (typeof HTMLElement === 'function') {
 
 		// initial implementation of method, will be overridden on setup
 		attributeChangedCallback(attr, _oldValue, newValue) {
-			console.log(`attributeChangedCallback: ${attr}, ${newValue}`);
 			if (this.$$initialProps) {
 				this.$$initialProps[attr] = newValue;
 			}
