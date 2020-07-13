@@ -12,8 +12,8 @@ In editors which use the Svelte Language Server you can document Components, fun
 
 <!--
 @component
-Here's some documentation for this component. It will show up
-on hover.
+Here's some documentation for this component.
+It will show up on hover.
 
 - You can use markdown here.
 - You can also use code blocks here.
