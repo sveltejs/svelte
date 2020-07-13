@@ -463,7 +463,7 @@ export default function dom(
 				constructor(options) {
 					super();
 					if (options) {
-						this.$$runSetup(options);
+						this.$$setup(options);
 					}
 				}
 				$$setup(options) {

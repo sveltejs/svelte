@@ -171,32 +171,26 @@ if (typeof HTMLElement === 'function') {
 			this.attachShadow({ mode: 'open' });
 		}
 
+		// placeholder object to allow props to be set pre-$$setup
 		$$initialProps: Record<string, any> | null = {};
-		$$options: Record<string, any> | null = {};
-		$$setup(_options) {
+		$$setup(_options?) {
 			// overridden by instance
-		}
-
-		$$runSetup(options?: Record<string, any>) {
-			console.log("$$runSetup");
-			const {$$initialProps} = this;
-			if ($$initialProps) {
-				const opts = (options || this.$$options);
-				this.$$initialProps = null;
-				this.$$options = null;
-				this.$$setup({
-					...opts,
-					props: {
-						...opts.props,
-						...$$initialProps
-					}
-				});
-			}
 		}
 
 		connectedCallback() {
 			console.log("connectedCallback");
-			this.$$runSetup();
+			if (!this.$$) {
+				// wasn't set up from constructor as options were not ready
+				const options = Object.keys(this.$$initialProps).length ?
+					{
+						props: this.$$initialProps
+					} :
+					null;
+
+				this.$$setup(options);
+				// clean up
+				this.$$initialProps = null;
+			}
 			// @ts-ignore todo: improve typings
 			for (const key in this.$$.slotted) {
 				// @ts-ignore todo: improve typings
