@@ -74,8 +74,6 @@ This creates a new directory, `my-svelte-project`, adds files from the [sveltejs
 
 In the `package.json` file, there is a section called `"scripts"`. These scripts define shortcuts for working with your application — `dev`, `build` and `start`. To launch your app in development mode, type the following:
 
-> TODO update the template, it needs... some work
-
 ```bash
 npm run dev
 ```
