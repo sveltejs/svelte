@@ -468,7 +468,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${name} = null;
 					}
 				} else if (${switch_value}) {
-					${updates.length && b`${name}.$set(${name_changes});`}
+					${updates.length > 0 && b`${name}.$set(${name_changes});`}
 				}
 			`);
 
