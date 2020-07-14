@@ -59,8 +59,8 @@ export function handle_promise(promise, info) {
 			update(info.then, 1, info.value, value);
 			set_current_component(null);
 		}, error => {
-			if (info.current === info.catch && info.error === undefined) {
-				// when no catch block is present
+			console.log(info);
+			if (!info.hasCatch) {
 				throw error;
 			}
 			set_current_component(current_component);

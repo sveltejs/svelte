@@ -188,6 +188,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			ctx: #ctx,
 			current: null,
 			token: null,
+			hasCatch: false,
 			pending: ${this.pending.block.name},
 			then: ${this.then.block.name},
 			catch: ${this.catch.block.name},
@@ -199,6 +200,12 @@ export default class AwaitBlockWrapper extends Wrapper {
 		block.chunks.init.push(b`
 			let ${info} = ${info_props};
 		`);
+
+		if (this.catch.node.start !== null) {
+			block.chunks.init.push(b`
+				${info}.hasCatch = true;
+			`);
+		}
 
 		block.chunks.init.push(b`
 			@handle_promise(${promise} = ${snippet}, ${info});
