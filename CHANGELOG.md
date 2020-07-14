@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix reactivity when passing `$$props` to a `<slot>` ([#3364](https://github.com/sveltejs/svelte/issues/3364))
+* Fix unneeded invalidation of `$$props` and `$$restProps` ([#4993](https://github.com/sveltejs/svelte/issues/4993), [#5118](https://github.com/sveltejs/svelte/issues/5118))
 
 ## 3.24.0
 
