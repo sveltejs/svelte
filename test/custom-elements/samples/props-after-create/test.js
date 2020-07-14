@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import CustomElement from './main.svelte';
 
-export default async function (target) {
+export default function (target) {
 
 	// initialize without options to simulate instantiation within HTML
 	const el = new CustomElement();
@@ -14,8 +14,8 @@ export default async function (target) {
 	// shouldn't be instantitated yet
 	assert.equal(p0, undefined);
 
-	// simulate adding to DOM to trigger setup
-	el.connectedCallback();
+	// add to to DOM to trigger setup
+	target.appendChild(el);
 
 	const [p1, p2] = el.shadowRoot.querySelectorAll('p');
 	assert.equal(p1.textContent, '3 items');
