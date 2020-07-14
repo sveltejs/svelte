@@ -59,7 +59,6 @@ export function handle_promise(promise, info) {
 			update(info.then, 1, info.value, value);
 			set_current_component(null);
 		}, error => {
-			console.log(info);
 			if (!info.hasCatch) {
 				throw error;
 			}
