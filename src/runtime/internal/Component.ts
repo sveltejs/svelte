@@ -166,9 +166,10 @@ export let SvelteElement;
 if (typeof HTMLElement === 'function') {
 	SvelteElement = class extends HTMLElement {
 		$$: T$$;
+		protected _content;
+		slotting;
 		constructor() {
 			super();
-			this.attachShadow({ mode: 'open' });
 		}
 
 		connectedCallback() {

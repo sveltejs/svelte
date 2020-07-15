@@ -20,7 +20,7 @@ export default function dom(
 	block.has_outro_method = true;
 
 	// prevent fragment being created twice (#1063)
-	if (options.customElement) block.chunks.create.push(b`this.c = @noop;`);
+	if (options.customElement && options.shadowDom !== "none") block.chunks.create.push(b`this.c = @noop;`);
 
 	const body = [];
 
@@ -29,7 +29,7 @@ export default function dom(
 		body.push(b`const ${renderer.file_var} = ${file};`);
 	}
 
-	const css = component.stylesheet.render(options.filename, !options.customElement);
+	const css = component.stylesheet.render(options.filename, (!options.customElement || options.shadowDom === "none"));
 	const styles = component.stylesheet.has_styles && options.dev
 		? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
 		: css.code;
@@ -37,9 +37,9 @@ export default function dom(
 	const add_css = component.get_unique_name('add_css');
 
 	const should_add_css = (
-		!options.customElement &&
+		(!options.customElement  &&
 		!!styles &&
-		options.css !== false
+		options.css !== false ) || options.shadowDom === "none"
 	);
 
 	if (should_add_css) {
@@ -459,14 +459,22 @@ export default function dom(
 	}
 
 	if (options.customElement) {
+		const lightDom = options.shadowDom === 'none';
 		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
+					${!lightDom && b`
+						this._root =this.attachShadow({ mode: '${options.shadowDom}' });
+					` || b`
+						this._copycontent();
+						this.slotObserver = new MutationObserver(() => this._slotcontent());
+						this.slotObserver.observe(this, {childList: true, subtree: true});
+					`}
+					${css.code && !lightDom && b`this._root.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${should_add_css && lightDom && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
-
-					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, { target: ${lightDom ? 'this' : 'this._root'} }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 
 					${dev_props_check}
 
@@ -494,6 +502,82 @@ export default function dom(
 				key: { type: 'Identifier', name: 'observedAttributes' },
 				value: x`function() {
 					return [${props.map(prop => x`"${prop.export_name}"`)}];
+				}` as FunctionExpression
+			});
+		}
+
+		if (lightDom) {
+			declaration.body.body.push({
+				type: 'MethodDefinition',
+				kind: 'method',
+				static: false,
+				computed: false,
+				key: { type: 'Identifier', name: '_copycontent' },
+				value: x`function() {
+					if(this.children){
+						this._content = Array.from(this.childNodes)
+						while (this.firstChild) {
+							this.removeChild(this.firstChild)
+						}
+					}
+				}` as FunctionExpression
+			});
+
+			declaration.body.body.push({
+				type: 'MethodDefinition',
+				kind: 'method',
+				static: false,
+				computed: false,
+				key: { type: 'Identifier', name: '_slotcontent' },
+				value: x`function() {
+					if(this.slotting) return; // prevent running in parallel
+						this.slotting = true;
+						if(this._content){
+							let namedslots = Array.from(this.querySelectorAll("slot[name]"))
+							let defaultslot = this.querySelector("slot:not([name])")
+							let named = {}
+							if(!namedslots.length && !defaultslot) return(this.slotting=false);
+							let slotted = []
+							this._content.filter((node)=> node.slot ).forEach((node)=> named[node.slot] = node )
+							namedslots.forEach(slot =>{
+								this._content.forEach(node =>{ //append all named slots
+									if(named[node.slot] && slot.getAttribute("name") == node.slot){
+										if(!slot.hasAttribute("hasupdated")){
+											while (slot.firstChild) {
+												slot.removeChild(slot.firstChild)
+											}
+											slot.appendChild(named[node.slot]);
+										}
+										slot.setAttribute("hasupdated","")
+										slotted.push(node)
+									}
+								})
+							})
+							if(!defaultslot) return(this.slotting=false);
+							// get all nodes without a slot attribute
+							let toAppend = this._content.filter(node => node.hasAttribute && !node.hasAttribute("slot"))
+							// remove default
+							if(!defaultslot.hasAttribute("hasupdated") && toAppend.length){
+								while (defaultslot.firstChild) {
+									defaultslot.removeChild(defaultslot.firstChild)
+								}
+							}
+							toAppend.forEach(node => !defaultslot.hasAttribute("hasupdated") && defaultslot.appendChild(node) )
+							defaultslot.setAttribute("hasupdated","")
+						}
+						this.slotting = false
+					}
+				}` as FunctionExpression
+			});
+
+			declaration.body.body.push({
+				type: 'MethodDefinition',
+				kind: 'method',
+				static: false,
+				computed: false,
+				key: { type: 'Identifier', name: 'disconnectedCallback' },
+				value: x`function() {
+					this.slotObserver.disconnect();
 				}` as FunctionExpression
 			});
 		}
