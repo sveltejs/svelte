@@ -86,7 +86,6 @@ export default function dom(
 	const set = (uses_props || uses_rest || writable_props.length > 0 || component.slots.size > 0)
 		? x`
 			${$$props} => {
-				${(uses_props || uses_rest) && b`if (@is_empty(${$$props})) return;`}
 				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`)}
 				${uses_rest && !uses_props && x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`}
 				${uses_rest && renderer.invalidate('$$restProps', x`$$restProps = ${compute_rest}`)}
@@ -421,7 +420,7 @@ export default function dom(
 
 				${component.partly_hoisted}
 
-				${set && b`$$self.$set = ${set};`}
+				${set && b`$$self.$$set = ${set};`}
 
 				${capture_state && b`$$self.$capture_state = ${capture_state};`}
 

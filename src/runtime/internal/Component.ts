@@ -1,6 +1,6 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
-import { blank_object, is_function, run, run_all, noop } from './utils';
+import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
 import { children, detach } from './dom';
 import { transition_in } from './transitions';
 
@@ -33,6 +33,7 @@ interface T$$ {
 	context: Map<any, any>;
 	on_mount: any[];
 	on_destroy: any[];
+	skip_bound: boolean;
 }
 
 export function bind(component, name, callback) {
@@ -120,7 +121,8 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 		// everything else
 		callbacks: blank_object(),
-		dirty
+		dirty,
+		skip_bound: false
 	};
 
 	let ready = false;
@@ -129,7 +131,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		? instance(component, prop_values, (i, ret, ...rest) => {
 			const value = rest.length ? rest[0] : ret;
 			if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
-				if ($$.bound[i]) $$.bound[i](value);
+				if (!$$.skip_bound && $$.bound[i]) $$.bound[i](value);
 				if (ready) make_dirty(component, i);
 			}
 			return ret;
@@ -166,6 +168,7 @@ export let SvelteElement;
 if (typeof HTMLElement === 'function') {
 	SvelteElement = class extends HTMLElement {
 		$$: T$$;
+		$$set?: ($$props: any) => void;
 		constructor() {
 			super();
 			this.attachShadow({ mode: 'open' });
@@ -199,14 +202,19 @@ if (typeof HTMLElement === 'function') {
 			};
 		}
 
-		$set() {
-			// overridden by instance, if it has props
+		$set($$props) {
+			if (this.$$set && !is_empty($$props)) {
+				this.$$.skip_bound = true;
+				this.$$set($$props);
+				this.$$.skip_bound = false;
+			}
 		}
 	};
 }
 
 export class SvelteComponent {
 	$$: T$$;
+	$$set?: ($$props: any) => void;
 
 	$destroy() {
 		destroy_component(this, 1);
@@ -223,7 +231,11 @@ export class SvelteComponent {
 		};
 	}
 
-	$set() {
-		// overridden by instance, if it has props
+	$set($$props) {
+		if (this.$$set && !is_empty($$props)) {
+			this.$$.skip_bound = true;
+			this.$$set($$props);
+			this.$$.skip_bound = false;
+		}
 	}
 }
