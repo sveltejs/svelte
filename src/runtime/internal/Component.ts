@@ -55,7 +55,7 @@ export function claim_component(block, parent_nodes) {
 
 export function mount_component(component, target, anchor) {
 	const { fragment, on_mount, on_destroy, after_update } = component.$$;
-	const isCustomElement = ['connectedCallback', 'attributeChangedCallback', 'disconnectedCallback'].every((method) => typeof component[method] === 'function');
+	const isCustomElement = Object.getPrototypeOf(component.constructor) === SvelteElement;
 
 	fragment && fragment.m(target, anchor);
 
