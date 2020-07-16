@@ -180,7 +180,6 @@ if (typeof HTMLElement === 'function') {
 
 		connectedCallback() {
 			const { on_mount } = this.$$;
-
 			this.$$.on_disconnect = on_mount.map(run).filter(is_function);
 
 			// @ts-ignore todo: improve typings
