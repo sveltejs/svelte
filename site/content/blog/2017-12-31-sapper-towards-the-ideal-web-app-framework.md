@@ -57,7 +57,7 @@ What about a more 'real world' example? Conveniently, the [RealWorld](https://gi
 
 <aside><p>Code-splitting isn't free — if the reference implementation used code-splitting, it would be larger still</p></aside>
 
-The entire app costs 132.7kb (39.9kb zipped), which is significantly smaller than the reference React/Redux implementation at 327kb (85.7kb), but even if was as large it would *feel* faster because of code-splitting. And that's a crucial point. We're told we need to code-split our apps, but if your app uses a traditional framework like React or Vue then there's a hard lower bound on the size of your initial code-split chunk — the framework itself, which is likely to be a significant portion of your total app size. With the Svelte approach, that's no longer the case.
+The entire app costs 132.7kb (39.9kb zipped), which is significantly smaller than the reference React/Redux implementation at 327kb (85.7kb), but even if it was as large it would *feel* faster because of code-splitting. And that's a crucial point. We're told we need to code-split our apps, but if your app uses a traditional framework like React or Vue then there's a hard lower bound on the size of your initial code-split chunk — the framework itself, which is likely to be a significant portion of your total app size. With the Svelte approach, that's no longer the case.
 
 But size is only part of the story. Svelte apps are also extremely performant and memory-efficient, and the framework includes powerful features that you would sacrifice if you chose a 'minimal' or 'simple' UI library.
 

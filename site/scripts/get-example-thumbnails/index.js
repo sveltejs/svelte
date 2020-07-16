@@ -45,7 +45,7 @@ async function main() {
 			image.autocrop();
 			// image.scale(0.25);
 
-			if (image.bitmap.width > 200 || image.bitmap.width > 200) {
+			if (image.bitmap.width > 200 || image.bitmap.height > 200) {
 				const scale = Math.min(
 					200 / image.bitmap.width,
 					200 / image.bitmap.height

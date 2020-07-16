@@ -34,11 +34,6 @@ npm install
 
 > Do not use Yarn to install the dependencies, as the specific package versions in `package-lock.json` are used to build and test Svelte.
 
-> Many tests depend on newlines being preserved as `<LF>`. On Windows, you can ensure this by cloning with:
-> ```bash
-> git -c core.autocrlf=false clone https://github.com/sveltejs/svelte.git
-> ```
-
 To build the compiler, and all the other modules included in the package:
 
 ```bash
@@ -69,14 +64,11 @@ npm run test -- -g transition
 
 ## svelte.dev
 
-The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.dev). To develop locally:
+The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.dev).
 
-```bash
-cd site
-npm install && npm run update
-npm run dev
-```
+### Is svelte.dev down?
 
+Probably not, but it's possible. If you can't seem to access any `.dev` sites, check out [this SuperUser question and answer](https://superuser.com/q/1413402).
 
 ## License
 

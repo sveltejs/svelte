@@ -116,7 +116,8 @@ function instance($$self, $$props, $$invalidate) {
 
 	function div_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
-			$$invalidate(0, node = $$value);
+			node = $$value;
+			$$invalidate(0, node);
 		});
 	}
 
