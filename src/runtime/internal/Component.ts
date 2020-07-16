@@ -182,7 +182,6 @@ if (typeof HTMLElement === 'function') {
 			const { on_mount } = this.$$;
 
 			this.$$.on_disconnect = on_mount.map(run).filter(is_function);
-			this.$$.on_mount = [];
 
 			// @ts-ignore todo: improve typings
 			for (const key in this.$$.slotted) {
