@@ -101,7 +101,7 @@ To configure TypeScript, you will need to create a `tsconfig.json` in the root o
 }
 ```
 
-Your `include`/`exclude` may differ per project.
+Your `include`/`exclude` may differ per project — these are defaults that should work across most Svelte projects.
 
 ##### 2. Editor Support
 
