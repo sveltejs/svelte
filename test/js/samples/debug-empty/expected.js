@@ -79,7 +79,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { $$slots = {}, $$scope } = $$props;
 	validate_slots("Component", $$slots, []);
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("name" in $$props) $$invalidate(0, name = $$props.name);
 	};
 
