@@ -2,16 +2,26 @@
 
 ## Unreleased
 
+* Fix reactivity when passing `$$props` to a `<slot>` ([#3364](https://github.com/sveltejs/svelte/issues/3364))
+* Fix unneeded invalidation of `$$props` and `$$restProps` ([#4993](https://github.com/sveltejs/svelte/issues/4993), [#5118](https://github.com/sveltejs/svelte/issues/5118))
+
+## 3.24.0
+
 * Support nullish coalescing (`??`) and optional chaining (`?.`) operators ([#1972](https://github.com/sveltejs/svelte/issues/1972))
 * Support `import.meta` ([#4379](https://github.com/sveltejs/svelte/issues/4379))
-* Fix placement of `{@html}` when used at the root of a slot or the root of a component ([#5012](https://github.com/sveltejs/svelte/issues/5012))
+* Fix only setting `<input>` values when they're changed when there are spread attributes ([#4418](https://github.com/sveltejs/svelte/issues/4418))
+* Fix placement of `{@html}` when used at the root of a slot, at the root of a component, or in `<svelte:head>` ([#5012](https://github.com/sveltejs/svelte/issues/5012), [#5071](https://github.com/sveltejs/svelte/pull/5071))
+* Fix certain handling of two-way bound `contenteditable` elements ([#5018](https://github.com/sveltejs/svelte/issues/5018))
 * Fix handling of `import`ed value that is used as a store and is also mutated ([#5019](https://github.com/sveltejs/svelte/issues/5019))
 * Do not display `a11y-missing-content` warning on elements with `contenteditable` bindings ([#5020](https://github.com/sveltejs/svelte/issues/5020))
 * Fix handling of `this` in inline function expressions in the template ([#5033](https://github.com/sveltejs/svelte/issues/5033))
 * Fix collapsing HTML with static content ([#5040](https://github.com/sveltejs/svelte/issues/5040))
+* Prevent use of `$store` at compile time when top-level `store` has been shadowed ([#5048](https://github.com/sveltejs/svelte/issues/5048))
 * Update `<select>` with one-way `value` binding when the available `<option>`s change ([#5051](https://github.com/sveltejs/svelte/issues/5051))
 * Fix published `tweened` types so the `.set()` and `.update()` options are optional ([#5062](https://github.com/sveltejs/svelte/issues/5062))
 * Fix contextual `bind:this` inside `{#each}` block ([#5067](https://github.com/sveltejs/svelte/issues/5067))
+* Preprocess self-closing `<script>` and `<style>` tags ([#5080](https://github.com/sveltejs/svelte/issues/5080))
+* Fix types for animation- and transition-related param objects so each param is optional ([#5083](https://github.com/sveltejs/svelte/pull/5083))
 
 ## 3.23.2
 
