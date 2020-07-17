@@ -53,6 +53,17 @@ To build the website, run `npm run sapper`. The output can be found in `__sapper
 
 Tests can be run using `npm run test`.
 
+
+## Working With Components
+
+svelte.dev uses the package [`@sveltejs/site-kit`](https://github.com/sveltejs/site-kit) to import it's UI components
+
+clone [`@sveltejs/site-kit`](https://github.com/sveltejs/site-kit) locally
+
+[`npm-link`](https://docs.npmjs.com/cli/link) your local site-kit to `svelte/site` to see your component changes reflected locally.
+ 
+
+
 ## Translating the API docs
 
 Anchors are automatically generated using headings in the documentation and by default (for the english language) they are latinised to make sure the URL is always conforming to RFC3986.
