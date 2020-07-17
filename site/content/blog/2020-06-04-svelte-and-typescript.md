@@ -45,7 +45,7 @@ The Svelte template has been extended with a script to convert it to a TypeScrip
 ```bash
 npx degit sveltejs/template svelte-app
 cd svelte-app
-node scripts/updateTypeScriptVersion.js
+node scripts/setupTypeScript.js
 ```
 
 ### Adding TypeScript support to your project
@@ -71,7 +71,7 @@ export default {
   ...,
   plugins: [
     svelte({
-+       preprocess: autoPreprocess({ /* options */ })
++       preprocess: autoPreprocess({ /* options */ });
     }).
 +   typescript({ sourceMap: !production }),
   ]
