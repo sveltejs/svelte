@@ -5,20 +5,41 @@ author: Orta Therox
 authorURL: https://twitter.com/orta
 ---
 
-It's been on the TODO list for a while, and it's now happening. TypeScript with Svelte is now a first class citizen of the ecosystem.
+It's been by far the most requested feature for a while, and it's finally here: Svelte officially supports TypeScript.
 
-We think it'll help you handle much larger Svelte code bases regardless of whether you use TypeScript or JavaScript.
+We think it'll give you a much nicer development experience — one that also scales beautifully to larger Svelte code bases — regardless of whether you use TypeScript or JavaScript.
 
 <figure>
 	<img alt="Screenshot of TypeScript in Svelte" src="media/svelte-ts.png">
 	<figcaption>Image of TypeScript + Svelte in VS Code (theme is <a href="https://marketplace.visualstudio.com/items?itemName=karyfoundation.theme-karyfoundation-themes">Kary Pro</a>.)</figcaption>
 </figure>
 
+
+## Try it now
+
+You can start a new Svelte TypeScript project using the [normal template](https://github.com/sveltejs/template) and by running `node scripts/setupTypeScript.js` before you do anything else:
+
+```bash
+npx degit sveltejs/template svelte-typescript-app
+cd svelte-typescript-app
+node scripts/setupTypeScript.js
+```
+
+If you're a VS Code user, make sure you're using the (new) [official extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), which replaces the popular extension by James Birtles.
+Later in this blog post, we'll detail the individual steps involved in using TypeScript in an existing Svelte project.
+
 ## What does it mean to support TypeScript in Svelte?
 
 TypeScript support in Svelte has been possible for a long time, but you had to mix a lot of disparate tools together and each project ran independently. Today, nearly all of these tools live under the Svelte organization and are maintained by a set of people who take responsibility over the whole pipeline and have common goals.
 
-A week before COVID was declared a pandemic, [I pitched a consolidation](https://github.com/sveltejs/svelte/issues/4518) of the best Svelte tools and ideas from similar dev-ecosystems and provided a set of steps to get TypeScript support first class. Since then, many people have pitched in and wrote the code to get us there.
+A week before COVID was declared a pandemic, [I pitched a consolidation](https://github.com/sveltejs/svelte/issues/4518) of the best Svelte tools and ideas from similar dev-ecosystems and provided a set of steps to get first class TypeScript support. Since then, many people have pitched in and written the code to get us there.
+
+When we say that Svelte now supports TypeScript, we mean a few different things:
+
+* You can use TypeScript inside your `<script>` blocks — just add the `lang="ts"` attribute
+* Components with TypeScript can be type-checked with the `svelte-check` command
+* You get autocompletion hints and type-checking as you're writing components, even in expressions inside markup
+* TypeScript files understand the Svelte component API — no more red squiggles when you import a `.svelte` file into a `.ts` module
 
 #### How does it work?
 
@@ -38,30 +59,19 @@ For the official Svelte VS Code extension, we built off the foundations which [J
 [Simon Holthausen](https://github.com/dummdidumm) and [Lyu, Wei-Da](https://github.com/jasonlyu123) have done great work improving the JavaScript and TypeScript introspection, including integrating [@halfnelson](https://github.com/halfnelson)'s [svelte2tsx](https://github.com/sveltejs/language-tools/tree/master/packages/svelte2tsx#svelte2tsx) which powers understanding the props on components in your codebase.
 
 
-### Try today
-
-The Svelte template has been extended with a script to convert it to a TypeScript project.
-
-```bash
-npx degit sveltejs/template svelte-app
-cd svelte-app
-node scripts/setupTypeScript.js
-```
-
-### Adding TypeScript support to your project
+## Adding TypeScript to an existing project
 
 Before getting started, add the dependencies:
 
 ```bash
-yarn add --dev svelte-preprocess @rollup/plugin-typescript @tsconfig/svelte svelte-check typescript
-npm install --save-dev svelte-preprocess @rollup/plugin-typescript @tsconfig/svelte svelte-check typescript
+npm install --save-dev @tsconfig/svelte typescript svelte-preprocess svelte-check
 ```
 
 ##### 1. Compiling TypeScript
 
-You first need to set up [`svelte-preprocess`](https://github.com/sveltejs/svelte-preprocess#svelte-preprocess) and  [`@rollup/plugin-typescript`](https://github.com/rollup/plugins/tree/master/packages/typescript#rollupplugin-typescript) for the compiler:
+You first need to set up [`svelte-preprocess`](https://github.com/sveltejs/svelte-preprocess#svelte-preprocess), which passes the contents of your `<script lang="ts">` blocks through the TypeScript compiler.
 
-When in a rollup project, this would mean:
+In a Rollup project, that would look like this — note that we also need to install `@rollup/plugin-typescript` so that Rollup can handle `.ts` files:
 
 ```diff
 + import autoPreprocess from 'svelte-preprocess'
@@ -71,7 +81,7 @@ export default {
   ...,
   plugins: [
     svelte({
-+       preprocess: autoPreprocess({ /* options */ });
++       preprocess: autoPreprocess({ /* options */ }),
     }).
 +   typescript({ sourceMap: !production }),
   ]
@@ -86,7 +96,7 @@ To configure TypeScript, you will need to create a `tsconfig.json` in the root o
 {
   "extends": "@tsconfig/svelte/tsconfig.json",
 
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/node_modules"],
   "exclude": ["node_modules/*", "__sapper__/*", "public/*"],
 }
 ```
@@ -108,7 +118,7 @@ Having red squiggles is great, well, kinda. On the long run though, you want to 
 You can add the dependency to your project and then add it to CI.
 
 ```bash
-❯ yarn svelte-check
+❯ npx svelte-check
 
 Loading svelte-check in workspace: /Users/ortatherox/dev/svelte/example-app
 Getting Svelte diagnostics...
@@ -121,3 +131,11 @@ Error: Type '123' is not assignable to type 'string'. (ts)
 svelte-check found 1 error
 error Command failed with exit code 1.
 ```
+
+## What about TypeScript in Sapper projects?
+
+Watch this space!
+
+## How can I contribute?
+
+We're so glad you asked. The work is happening in the [sveltejs/language-tools](https://github.com/sveltejs/language-tools) repo and in the [#language-tools](https://discord.gg/enV6v8K) channel in the Svelte Discord. If you'd like to report issues, submit fixes, or help out with extensions for new editors and so on, that's where you can find us. See you there!
