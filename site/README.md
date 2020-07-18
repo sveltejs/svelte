@@ -54,13 +54,22 @@ To build the website, run `npm run sapper`. The output can be found in `__sapper
 Tests can be run using `npm run test`.
 
 
-## Working With Components
+## Linking `@sveltejs/site-kit` and `@sveltejs/site-repl`
 
-svelte.dev uses the package [`@sveltejs/site-kit`](https://github.com/sveltejs/site-kit) to import it's UI components
+This site depends on `@sveltejs/site-kit`, a collection of styles, components and icons used in common by *.svelte.dev websites, and `@sveltejs/site-repl`.
 
-clone [`@sveltejs/site-kit`](https://github.com/sveltejs/site-kit) locally
+In order to work on features that depend on those packages, you need to [link](https://docs.npmjs.com/cli/link) their repositories:
 
-[`npm-link`](https://docs.npmjs.com/cli/link) your local site-kit to `svelte/site` to see your component changes reflected locally.
+- `cd <somewhere>`
+- `git clone https://github.com/sveltejs/site-kit`
+- `git clone https://github.com/sveltejs/svelte-repl`
+- `cd <somewhere>/site-kit`
+- `npm link`
+- `cd <somewhere>/svelte-repl`
+- `npm link`
+- `cd <svelte-repo>/site`
+- `npm link @sveltejs/site-kit`
+- `npm link @sveltejs/svelte-repl`
  
 
 
