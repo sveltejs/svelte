@@ -19,7 +19,6 @@
 <select
 	bind:value={selected.name}
 	on:change={change}
-
 >
 	{#each items as item}
 		<option value={item.name}>{item.val}</option>
@@ -31,7 +30,7 @@
 <h4>❗️ Event handler first</h4>
 <select
 	on:change={change}
-  bind:value={selected.name}
+	bind:value={selected.name}
 >
 	{#each items as item}
 		<option value={item.name}>{item.val}</option>
