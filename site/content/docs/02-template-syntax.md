@@ -545,6 +545,26 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 ```
 
 
+##### A gotcha when using `on:` and `bind:` together
+
+Note that if you add an event handler and bind a property, they will be executed in the order you write them in the template.
+
+---
+
+For example, here `onChange` will be attached (and called) before the internal event handler added by `bind:value`.
+
+```sv
+<input type="number" on:change={onChange} bind:value>
+```
+
+---
+
+In the opposite case, if `bind:value` is before `on:change` then your change handler will see the updated bound value.
+
+```sv
+<input type="number" bind:value on:change={onChange}>
+```
+
 ##### Binding `<select>` value
 
 ---
