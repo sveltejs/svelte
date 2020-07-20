@@ -53,6 +53,26 @@ To build the website, run `npm run sapper`. The output can be found in `__sapper
 
 Tests can be run using `npm run test`.
 
+
+## Linking `@sveltejs/site-kit` and `@sveltejs/site-repl`
+
+This site depends on `@sveltejs/site-kit`, a collection of styles, components and icons used in common by *.svelte.dev websites, and `@sveltejs/site-repl`.
+
+In order to work on features that depend on those packages, you need to [link](https://docs.npmjs.com/cli/link) their repositories:
+
+- `cd <somewhere>`
+- `git clone https://github.com/sveltejs/site-kit`
+- `git clone https://github.com/sveltejs/svelte-repl`
+- `cd <somewhere>/site-kit`
+- `npm link`
+- `cd <somewhere>/svelte-repl`
+- `npm link`
+- `cd <svelte-repo>/site`
+- `npm link @sveltejs/site-kit`
+- `npm link @sveltejs/svelte-repl`
+ 
+
+
 ## Translating the API docs
 
 Anchors are automatically generated using headings in the documentation and by default (for the english language) they are latinised to make sure the URL is always conforming to RFC3986.
