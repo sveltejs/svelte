@@ -105,7 +105,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const fixed_length =
 			node.expression.node.type === 'ArrayExpression' &&
-				node.expression.node.elements.every(element => element.type !== 'SpreadElement')
+			node.expression.node.elements.every(element => element.type !== 'SpreadElement')
 				? node.expression.node.elements.length
 				: null;
 
@@ -141,7 +141,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const store =
 			node.expression.node.type === 'Identifier' &&
-				node.expression.node.name[0] === '$'
+			node.expression.node.name[0] === '$'
 				? node.expression.node.name.slice(1)
 				: null;
 
@@ -317,10 +317,10 @@ export default class EachBlockWrapper extends Wrapper {
 			if (this.else.block.has_update_method) {
 				this.updates.push(b`
 					if (!${this.vars.data_length} && ${each_block_else}) {
-												${each_block_else}.p(#ctx, #dirty);
+						${each_block_else}.p(#ctx, #dirty);
 					} else if (!${this.vars.data_length}) {
 						${each_block_else} = ${this.else.block.name}(#ctx);
-												${each_block_else}.c();
+						${each_block_else}.c();
 						${has_transitions && b`@transition_in(${each_block_else}, 1);`}
 						${each_block_else}.m(${update_mount_node}, ${update_anchor_node});
 					} else if (${each_block_else}) {
@@ -336,7 +336,7 @@ export default class EachBlockWrapper extends Wrapper {
 						}
 					} else if (!${each_block_else}) {
 						${each_block_else} = ${this.else.block.name}(#ctx);
-												${each_block_else}.c();
+							${each_block_else}.c();
 							${has_transitions && b`@transition_in(${each_block_else}, 1);`}
 						${each_block_else}.m(${update_mount_node}, ${update_anchor_node});
 					}
