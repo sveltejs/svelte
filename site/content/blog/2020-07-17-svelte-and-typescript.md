@@ -74,16 +74,16 @@ You first need to set up [`svelte-preprocess`](https://github.com/sveltejs/svelt
 In a Rollup project, that would look like this — note that we also need to install `@rollup/plugin-typescript` so that Rollup can handle `.ts` files:
 
 ```diff
-+ import autoPreprocess from 'svelte-preprocess'
++ import autoPreprocess from 'svelte-preprocess';
 + import typescript from '@rollup/plugin-typescript';
 
 export default {
   ...,
   plugins: [
     svelte({
-+       preprocess: autoPreprocess({ /* options */ }),
-    }).
-+   typescript({ sourceMap: !production }),
++       preprocess: autoPreprocess()
+    }),
++   typescript({ sourceMap: !production })
   ]
 }
 ```
