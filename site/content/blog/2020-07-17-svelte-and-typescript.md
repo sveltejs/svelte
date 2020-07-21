@@ -88,7 +88,7 @@ export default {
 }
 ```
 
-[Full instructions for other environments here](https://github.com/sveltejs/svelte-preprocess#usage)
+[Full instructions for other environments here](https://github.com/sveltejs/svelte-preprocess#usage).
 
 To configure TypeScript, you will need to create a `tsconfig.json` in the root of your project:
 
