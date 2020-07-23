@@ -82,10 +82,12 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		const element = this.parent;
 		const { name, property_name, should_cache, is_indirectly_bound_value } = this;
 
+		const is_custom_element = /-/.test(element.node.name);
+
 		// xlink is a special case... we could maybe extend this to generic
 		// namespaced attributes but I'm not sure that's applicable in
 		// HTML5?
-		const method = /-/.test(element.node.name)
+		const method = is_custom_element
 			? '@set_custom_element_data'
 			: name.slice(0, 6) === 'xlink:'
 				? '@xlink_attr'
@@ -130,10 +132,12 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 				? b`@prop_dev(${element.var}, "${property_name}", ${should_cache ? this.last : value});`
 				: b`${element.var}.${property_name} = ${should_cache ? this.last : value};`;
 		} else {
+			// use this.node.name when the element is a custom element to preserve property case-sensitivity
+			const custom_element_aware_name = is_custom_element ? this.node.name : name;
 			block.chunks.hydrate.push(
-				b`${method}(${element.var}, "${name}", ${init});`
+				b`${method}(${element.var}, "${custom_element_aware_name}", ${init});`
 			);
-			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
+			updater = b`${method}(${element.var}, "${custom_element_aware_name}", ${should_cache ? this.last : value});`;
 		}
 
 		if (is_indirectly_bound_value) {

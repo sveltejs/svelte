@@ -1,8 +1,8 @@
 <svelte:options tag="my-widget"/>
 
 <script>
-	export let items = [];
+	export let widgetItems = [];
 </script>
 
-<p>{items.length} items</p>
-<p>{items.join(', ')}</p>
+<p>{widgetItems.length} items</p>
+<p>{widgetItems.join(', ')}</p>
