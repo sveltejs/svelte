@@ -41,7 +41,8 @@ export default class Binding extends Node {
 		this.raw_expression = JSON.parse(JSON.stringify(info.expression));
 
 		const { name } = get_object(this.expression.node);
-		this.is_contextual = scope.names.has(name);
+
+		this.is_contextual = Array.from(this.expression.references).some(name => scope.names.has(name));
 
 		// make sure we track this as a mutable ref
 		if (scope.is_let(name)) {
@@ -49,7 +50,7 @@ export default class Binding extends Node {
 				code: 'invalid-binding',
 				message: 'Cannot bind to a variable declared with the let: directive'
 			});
-		} else if (this.is_contextual) {
+		} else if (scope.names.has(name)) {
 			if (scope.is_await(name)) {
 				component.error(this, {
 					code: 'invalid-binding',
