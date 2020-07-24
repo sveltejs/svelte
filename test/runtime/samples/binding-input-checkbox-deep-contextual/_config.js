@@ -43,6 +43,7 @@ export default {
 		const event = new window.Event('change');
 
 		inputs[1].checked = true;
+		console.log('@@', event, inputs[1]);
 		await inputs[1].dispatchEvent(event);
 
 		assert.equal(component.numCompleted, 2);
