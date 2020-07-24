@@ -1,6 +1,6 @@
 {
 	"code": "invalid-closing-tag",
-	"message": "<p> cannot have child element <pre>",
+	"message": "</p> attempted to close <p> that was already automatically closed by <pre>",
 	"pos": 24,
 	"start": {
 		"character": 24,

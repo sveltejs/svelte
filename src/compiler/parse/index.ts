@@ -8,7 +8,7 @@ import error from '../utils/error';
 
 type ParserState = (parser: Parser) => (ParserState | void);
 
-interface LastAutoCloseTag {
+interface LastAutoClosedTag {
 	tag: string;
 	reason: string;
 	depth: number;
@@ -26,7 +26,7 @@ export class Parser {
 	css: Style[] = [];
 	js: Script[] = [];
 	meta_tags = {};
-	last_auto_closed_tag?: LastAutoCloseTag;
+	last_auto_closed_tag?: LastAutoClosedTag;
 
 	constructor(template: string, options: ParserOptions) {
 		if (typeof template !== 'string') {

@@ -134,16 +134,12 @@ export default function tag(parser: Parser) {
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (parent.name !== name) {
 			if (parent.type !== 'Element') {
-				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
-					parser.error({
-						code: `invalid-closing-tag`,
-						message: `<${parser.last_auto_closed_tag.tag}> cannot have child element <${parser.last_auto_closed_tag.reason}>`,
-					}, start);
-				}
-
+				const message = parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name
+					? `</${name}> attempted to close <${name}> that was already automatically closed by <${parser.last_auto_closed_tag.reason}>`
+					: `</${name}> attempted to close an element that was not open`;
 				parser.error({
 					code: `invalid-closing-tag`,
-					message: `</${name}> attempted to close an element that was not open`
+					message
 				}, start);
 			}
 
@@ -164,7 +160,7 @@ export default function tag(parser: Parser) {
 	} else if (closing_tag_omitted(parent.name, name)) {
 		parent.end = start;
 		parser.stack.pop();
-		parser.last_auto_closed_tag ={
+		parser.last_auto_closed_tag = {
 			tag: parent.name,
 			reason: name,
 			depth: parser.stack.length,
