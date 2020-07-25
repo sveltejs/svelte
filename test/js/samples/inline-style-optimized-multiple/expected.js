@@ -7,34 +7,53 @@ import {
 	insert,
 	noop,
 	safe_not_equal,
-	set_style
+	set_style,
+	space
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	let div;
+	let div0;
+	let t;
+	let div1;
 
 	return {
 		c() {
-			div = element("div");
-			set_style(div, "color", /*color*/ ctx[0]);
-			set_style(div, "transform", "translate(" + /*x*/ ctx[1] + "px," + /*y*/ ctx[2] + "px)");
+			div0 = element("div");
+			t = space();
+			div1 = element("div");
+			set_style(div0, "color", /*color*/ ctx[0]);
+			set_style(div0, "transform", "translate(" + /*x*/ ctx[1] + "px," + /*y*/ ctx[2] + "px)");
+			set_style(div1, "color", /*color*/ ctx[0]);
+			set_style(div1, "transform", "translate(" + /*x*/ ctx[1] + "px," + /*y*/ ctx[2] + "px)");
 		},
 		m(target, anchor) {
-			insert(target, div, anchor);
+			insert(target, div0, anchor);
+			insert(target, t, anchor);
+			insert(target, div1, anchor);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*color*/ 1) {
-				set_style(div, "color", /*color*/ ctx[0]);
+				set_style(div0, "color", /*color*/ ctx[0]);
 			}
 
 			if (dirty & /*x, y*/ 6) {
-				set_style(div, "transform", "translate(" + /*x*/ ctx[1] + "px," + /*y*/ ctx[2] + "px)");
+				set_style(div0, "transform", "translate(" + /*x*/ ctx[1] + "px," + /*y*/ ctx[2] + "px)");
+			}
+
+			if (dirty & /*color*/ 1) {
+				set_style(div1, "color", /*color*/ ctx[0]);
+			}
+
+			if (dirty & /*x, y*/ 6) {
+				set_style(div1, "transform", "translate(" + /*x*/ ctx[1] + "px," + /*y*/ ctx[2] + "px)");
 			}
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(div);
+			if (detaching) detach(div0);
+			if (detaching) detach(t);
+			if (detaching) detach(div1);
 		}
 	};
 }

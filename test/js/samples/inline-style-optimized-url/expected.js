@@ -7,29 +7,43 @@ import {
 	insert,
 	noop,
 	safe_not_equal,
-	set_style
+	set_style,
+	space
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	let div;
+	let div0;
+	let t;
+	let div1;
 
 	return {
 		c() {
-			div = element("div");
-			set_style(div, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
+			div0 = element("div");
+			t = space();
+			div1 = element("div");
+			set_style(div0, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
+			set_style(div1, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
 		},
 		m(target, anchor) {
-			insert(target, div, anchor);
+			insert(target, div0, anchor);
+			insert(target, t, anchor);
+			insert(target, div1, anchor);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*data*/ 1) {
-				set_style(div, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
+				set_style(div0, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
+			}
+
+			if (dirty & /*data*/ 1) {
+				set_style(div1, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
 			}
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(div);
+			if (detaching) detach(div0);
+			if (detaching) detach(t);
+			if (detaching) detach(div1);
 		}
 	};
 }

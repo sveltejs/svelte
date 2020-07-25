@@ -7,6 +7,7 @@ import { string_literal } from '../../../utils/stringify';
 import add_to_set from '../../../utils/add_to_set';
 import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
+import { TemplateLiteral } from 'estree';
 
 export interface StyleProp {
 	key: string;
@@ -19,7 +20,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 	parent: ElementWrapper;
 
 	render(block: Block) {
-		const style_props = optimize_style(this.node.chunks);
+		const style_props = optimize_style(template_literal_to_text(this.node.chunks, this));
 		if (!style_props) return super.render(block);
 
 		style_props.forEach((prop: StyleProp) => {
@@ -189,4 +190,38 @@ function get_style_value(chunks: Array<Text | Expression>) {
 
 function is_dynamic(value: Array<Text|Expression>) {
 	return value.length > 1 || value[0].type !== 'Text';
+}
+
+function template_literal_to_text(
+	value: Array<Text | Expression>,
+	wrapper: StyleAttributeWrapper
+) {
+	if (value.length > 1) return value;
+	const expression = value[0];
+	if (expression.type !== "Expression") return value;
+	if (expression.node.type !== "TemplateLiteral") return value;
+	const template = expression.node as TemplateLiteral;
+
+	const chunks = [];
+
+	for (let i = 0; i < template.expressions.length; i++) {
+		chunks.push({
+			type: "Text",
+			data: template.quasis[i].value.raw,
+		});
+		chunks.push(
+			new Expression(
+				wrapper.node.component,
+				wrapper.node,
+				wrapper.node.scope,
+				template.expressions[i]
+			)
+		);
+	}
+	chunks.push({
+		type: "Text",
+		data: template.quasis[template.quasis.length - 1].value.raw,
+	});
+
+	return chunks;
 }
