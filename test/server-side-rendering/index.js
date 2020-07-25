@@ -1,4 +1,3 @@
-import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import * as glob from 'tiny-glob/sync.js';
@@ -7,11 +6,11 @@ import {
 	showOutput,
 	loadConfig,
 	loadSvelte,
-	setupHtmlEqual,
 	tryToLoadJson,
 	cleanRequireCache,
 	shouldUpdateExpected,
-	mkdirp
+	mkdirp,
+	assert
 } from "../helpers.js";
 
 function tryToReadFile(file) {
@@ -29,8 +28,6 @@ let compile = null;
 describe("ssr", () => {
 	before(() => {
 		compile = loadSvelte(true).compile;
-
-		return setupHtmlEqual();
 	});
 
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {

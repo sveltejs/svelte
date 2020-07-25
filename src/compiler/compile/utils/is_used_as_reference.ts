@@ -14,7 +14,7 @@ export default function is_used_as_reference(
 
 	/* eslint-disable no-fallthrough */
 	switch (parent.type) {
-		// disregard the `foo` in `const foo = bar`
+	// disregard the `foo` in `const foo = bar`
 		case 'VariableDeclarator':
 			return node !== parent.id;
 		// disregard the `foo`, `bar` in `function foo(bar){}`

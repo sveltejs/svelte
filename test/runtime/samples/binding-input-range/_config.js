@@ -1,6 +1,6 @@
 export default {
 	props: {
-		count: 42,
+		count: 42
 	},
 
 	html: `
@@ -34,5 +34,5 @@ export default {
 			<input type='range'>
 			<p>number 44</p>
 		`);
-	},
+	}
 };

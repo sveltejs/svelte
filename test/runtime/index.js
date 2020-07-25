@@ -1,4 +1,3 @@
-import * as assert from "assert";
 import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
@@ -12,7 +11,7 @@ import {
 	loadSvelte,
 	cleanRequireCache,
 	env,
-	setupHtmlEqual,
+	assert,
 	mkdirp
 } from "../helpers.js";
 
@@ -43,8 +42,6 @@ describe("runtime", () => {
 
 			return module._compile(code, filename);
 		};
-
-		return setupHtmlEqual();
 	});
 
 	const failed = new Set();

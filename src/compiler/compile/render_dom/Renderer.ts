@@ -76,7 +76,7 @@ export default class Renderer {
 
 			bindings: new Map(),
 
-			dependencies: new Set(),
+			dependencies: new Set()
 		});
 
 		this.block.has_update_method = true;

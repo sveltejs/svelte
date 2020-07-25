@@ -184,7 +184,7 @@ export default class Element extends Node {
 
 				case 'Attribute':
 				case 'Spread':
-					// special case
+				// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
 
 					this.attributes.push(new Attribute(component, this, scope, node));
@@ -399,7 +399,7 @@ export default class Element extends Node {
 			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
 				component.error(attribute, {
 					code: `illegal-attribute`,
-					message: `'${name}' is not a valid attribute name`,
+					message: `'${name}' is not a valid attribute name`
 				});
 			}
 
@@ -423,7 +423,7 @@ export default class Element extends Node {
 				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
 					component.error(attribute, {
 						code: `invalid-slotted-content`,
-						message: `Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`,
+						message: `Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`
 					});
 				}
 			}

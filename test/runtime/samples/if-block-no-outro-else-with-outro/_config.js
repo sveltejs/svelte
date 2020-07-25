@@ -18,5 +18,5 @@ export default {
 			<p>y</p>
 			<input type=text>
 		`);
-	},
+	}
 };

@@ -1,4 +1,3 @@
-import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -7,8 +6,8 @@ import {
 	loadConfig,
 	loadSvelte,
 	env,
-	setupHtmlEqual,
-	shouldUpdateExpected
+	shouldUpdateExpected,
+	assert
 } from '../helpers.js';
 
 let compileOptions = null;
@@ -34,8 +33,6 @@ describe('hydration', () => {
 
 			return module._compile(js.code, filename);
 		};
-
-		return setupHtmlEqual();
 	});
 
 	function runTest(dir) {

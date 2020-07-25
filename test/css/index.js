@@ -1,6 +1,5 @@
-import * as assert from 'assert';
 import * as fs from 'fs';
-import { env, svelte, setupHtmlEqual, shouldUpdateExpected } from '../helpers.js';
+import { env, svelte, assert, shouldUpdateExpected } from '../helpers.js';
 
 function try_require(file) {
 	try {
@@ -37,10 +36,6 @@ function create(code) {
 }
 
 describe('css', () => {
-	before(() => {
-		setupHtmlEqual();
-	});
-
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === '.') return;
 

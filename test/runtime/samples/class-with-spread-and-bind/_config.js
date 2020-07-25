@@ -1,6 +1,6 @@
 export default {
 	props: {
-		primary: true,
+		primary: true
 	},
 
 	html: `<div class="test-class primary" role="button"></div>`,
@@ -14,5 +14,5 @@ export default {
 			<div class="test-class primary" role="button"></div>
 		`
 		);
-	},
+	}
 };

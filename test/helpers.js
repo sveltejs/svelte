@@ -1,9 +1,26 @@
 import * as jsdom from 'jsdom';
-import * as assert from 'assert';
+import * as originalAssert from 'assert';
 import * as glob from 'tiny-glob/sync.js';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
+
+export const assert = {
+	...originalAssert,
+	htmlEqual: setupHtmlEqual(originalAssert)
+};
+
+function setupHtmlEqual(originalAssert) {
+	const window = env();
+
+	originalAssert.htmlEqual = (actual, expected, message) => {
+		originalAssert.deepEqual(
+			normalizeHtml(window, actual),
+			normalizeHtml(window, expected),
+			message
+		);
+	};
+}
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
@@ -148,18 +165,6 @@ export function normalizeHtml(window, html) {
 	} catch (err) {
 		throw new Error(`Failed to normalize HTML:\n${html}`);
 	}
-}
-
-export function setupHtmlEqual() {
-	const window = env();
-
-	assert.htmlEqual = (actual, expected, message) => {
-		assert.deepEqual(
-			normalizeHtml(window, actual),
-			normalizeHtml(window, expected),
-			message
-		);
-	};
 }
 
 export function loadConfig(file) {

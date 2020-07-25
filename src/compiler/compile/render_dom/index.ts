@@ -90,8 +90,8 @@ export default function dom(
 				${uses_rest && !uses_props && x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`}
 				${uses_rest && renderer.invalidate('$$restProps', x`$$restProps = ${compute_rest}`)}
 				${writable_props.map(prop =>
-					b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
-				)}
+		b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
+	)}
 				${component.slots.size > 0 &&
 				b`if ('$$scope' in ${$$props}) ${renderer.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
 			}
@@ -190,8 +190,8 @@ export default function dom(
 				${$$props} => {
 					${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
 					${injectable_vars.map(
-						v => b`if ('${v.name}' in $$props) ${renderer.invalidate(v.name, x`${v.name} = ${$$props}.${v.name}`)};`
-					)}
+		v => b`if ('${v.name}' in $$props) ${renderer.invalidate(v.name, x`${v.name} = ${$$props}.${v.name}`)};`
+	)}
 				}
 			`;
 

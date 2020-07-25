@@ -160,7 +160,7 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 			return false;
 
 		case BlockAppliesToNode.UnknownSelectorType:
-			// bail. TODO figure out what these could be
+		// bail. TODO figure out what these could be
 			to_encapsulate.push({ node, block });
 			return true;
 	}

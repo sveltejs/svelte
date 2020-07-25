@@ -51,7 +51,7 @@ export default class InlineComponent extends Node {
 							message: `'slot' is reserved for future use in named slots`
 						});
 					}
-					// fallthrough
+				// fallthrough
 				case 'Spread':
 					this.attributes.push(new Attribute(component, this, scope, node));
 					break;

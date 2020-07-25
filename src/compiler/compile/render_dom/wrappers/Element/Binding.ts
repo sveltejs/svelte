@@ -168,7 +168,7 @@ export default class BindingWrapper {
 
 			case 'paused':
 			{
-				// this is necessary to prevent audio restarting by itself
+			// this is necessary to prevent audio restarting by itself
 				const last = block.get_unique_name(`${parent.var.name}_is_paused`);
 				block.add_variable(last, x`true`);
 
@@ -302,7 +302,7 @@ function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
 			},
 			is_context: contexts.length > 0,
 			contexts,
-			index,
+			index
 		});
 	}
 
@@ -316,11 +316,11 @@ function get_event_handler(
 	name: string,
 	lhs: Node
 ): {
-	uses_context: boolean;
-	mutation: (Node | Node[]);
-	contextual_dependencies: Set<string>;
-	lhs?: Node;
-} {
+		uses_context: boolean;
+		mutation: (Node | Node[]);
+		contextual_dependencies: Set<string>;
+		lhs?: Node;
+	} {
 	const contextual_dependencies = new Set<string>(binding.node.expression.contextual_dependencies);
 
 	const context = block.bindings.get(name);
@@ -355,7 +355,7 @@ function get_event_handler(
 		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy
 		mutation,
 		contextual_dependencies,
-		lhs,
+		lhs
 	};
 }
 

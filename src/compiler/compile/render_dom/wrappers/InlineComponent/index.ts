@@ -111,7 +111,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
 			this.renderer.component.warn(this.node, {
 				code: 'reactive-component',
-				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`,
+				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`
 			});
 		}
 	}
@@ -160,8 +160,8 @@ export default class InlineComponentWrapper extends Wrapper {
 			? [
 				p`$$slots: {
 					${Array.from(this.slots).map(([name, slot]) => {
-						return p`${name}: [${slot.block.name}, ${slot.get_context || null}, ${slot.get_changes || null}]`;
-					})}
+		return p`${name}: [${slot.block.name}, ${slot.get_context || null}, ${slot.get_changes || null}]`;
+	})}
 				}`,
 				p`$$scope: {
 					ctx: #ctx
@@ -250,8 +250,8 @@ export default class InlineComponentWrapper extends Wrapper {
 						unchanged
 							? x`${levels}[${i}]`
 							: condition
-							? x`${condition} && ${change_object}`
-							: change_object
+								? x`${condition} && ${change_object}`
+								: change_object
 					);
 				});
 
