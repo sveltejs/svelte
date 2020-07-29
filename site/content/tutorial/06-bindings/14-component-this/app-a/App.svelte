@@ -2,4 +2,4 @@
 	import InputField from './InputField.svelte';
 </script>
 
-<InputField/>
+<InputField />
