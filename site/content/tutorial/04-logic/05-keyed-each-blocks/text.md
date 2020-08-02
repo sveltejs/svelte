@@ -6,6 +6,8 @@ By default, when you modify the value of an `each` block, it will add and remove
 
 It's easier to show why than to explain. Click the 'Remove first thing' button a few times, and notice that it's removing `<Thing>` components from the end and updating the `color` for those that remain. Instead, we'd like to remove the first `<Thing>` component and leave the rest unaffected.
 
+If you're coming from React, it's the same functionality as [keys](https://reactjs.org/docs/lists-and-keys.html#keys).
+
 To do that, we specify a unique identifier for the `each` block:
 
 ```html
