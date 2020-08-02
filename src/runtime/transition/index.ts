@@ -102,7 +102,7 @@ interface SlideParams {
 
 export function slide(node: Element, {
 	delay = 0,
-	duration = 400,
+	duration = 40000,
 	easing = cubicOut
 }: SlideParams): TransitionConfig {
 	const style = getComputedStyle(node);
@@ -115,20 +115,35 @@ export function slide(node: Element, {
 	const border_top_width = parseFloat(style.borderTopWidth);
 	const border_bottom_width = parseFloat(style.borderBottomWidth);
 
+	
 	return {
 		delay,
 		duration,
 		easing,
-		css: t =>
-			`overflow-y: hidden;` +
-			`opacity: ${Math.min(t * 20, 1) * opacity};` +
+		css: t => {
+
+			// console.log(`overflow-y: hidden;` +
+			// `opacity: ${Math.min(t * 20, 1) * opacity};` + 
+			// `height: ${t * height}px;` +
+			// `padding-top: ${t * padding_top}px;` +
+			// `padding-bottom: ${t * padding_bottom}px;` +
+			// `margin-top: ${t * margin_top}px;` +
+			// `margin-bottom: ${t * margin_bottom}px;` +
+			// `border-top-width: ${t * border_top_width}px;` +
+			// `border-bottom-width: ${t * border_bottom_width}px;`+
+			// `border: 3px solid red`);
+			return `overflow-y: hidden;` +
+			`opacity: ${Math.min(t * 20, 1) * opacity};` + 
 			`height: ${t * height}px;` +
 			`padding-top: ${t * padding_top}px;` +
 			`padding-bottom: ${t * padding_bottom}px;` +
 			`margin-top: ${t * margin_top}px;` +
 			`margin-bottom: ${t * margin_bottom}px;` +
 			`border-top-width: ${t * border_top_width}px;` +
-			`border-bottom-width: ${t * border_bottom_width}px;`
+			`border-bottom-width: ${t * border_bottom_width}px;`+
+			`border: 3px solid red`;
+		}
+			
 	};
 }
 
