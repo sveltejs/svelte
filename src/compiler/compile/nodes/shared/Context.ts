@@ -32,7 +32,7 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 
 					update_reference(contexts.slice(0, n), node, alternate);
 
-					return x`${modifier(node)}[${i}] !== undefined ? ${modifier(node)}[${i}] : ${alternate.replacement || alternate}` as Node
+					return x`${modifier(node)}[${i}] !== undefined ? ${modifier(node)}[${i}] : ${alternate.replacement || alternate}` as Node;
 				});
 			} else {
 				unpack_destructuring(contexts, element, node => x`${modifier(node)}[${i}]` as Node);
@@ -61,7 +61,7 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 
 						update_reference(contexts.slice(0, n), node, alternate);
 
-						return x`${modifier(node)}.${key.name} !== undefined ? ${modifier(node)}.${key.name} : ${alternate.replacement || alternate}` as Node
+						return x`${modifier(node)}.${key.name} !== undefined ? ${modifier(node)}.${key.name} : ${alternate.replacement || alternate}` as Node;
 					});
 				} else {
 					unpack_destructuring(contexts, value, node => x`${modifier(node)}.${key.name}` as Node);
