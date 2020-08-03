@@ -7,16 +7,14 @@ export default {
 	},
 
 	html: `
-		<p class="mammal">raccoon - P. lotor - 25kg</p>
-		<p class="bird">eagle - unknown - 5.4kg</p>
+		<p class="mammal">raccoon - P. lotor - 25kg (55 lb)</p>
+		<p class="bird">eagle - unknown - 5.4kg (12 lb)</p>
 	`,
-
-	
 
 	test({ assert, component, target }) {
 		component.animalEntries = [{ animal: 'cow', class: 'mammal', species: '‎B. taurus' }];
 		assert.htmlEqual(target.innerHTML, `
-			<p class="mammal">cow - ‎B. taurus - 50kg</p>
+			<p class="mammal">cow - ‎B. taurus - 50kg (110 lb)</p>
 		`);
 	}
 };
