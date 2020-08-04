@@ -152,10 +152,12 @@ async function process_style(
 	};
 }
 
-async function async_for_each(array, callback) {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array);
-  }
+function merge_preprocessors(preprocessors: PreprocessorGroup[]): PreprocessorGroup[] {
+	return [
+		...preprocessors.map(({ markup }) => ({ markup })),
+		...preprocessors.map(({ script }) => ({ script })),
+		...preprocessors.map(({ style }) => ({ style })),
+	];
 }
 
 export default async function preprocess(
@@ -172,13 +174,9 @@ export default async function preprocess(
 
 	const order = strictOrder
 		? preprocessors
-		: [
-		...preprocessors.map(({ markup }) => ({ markup })),
-		...preprocessors.map(({ script }) => ({ script })),
-		...preprocessors.map(({ style }) => ({ style })),
-	];
+		: merge_preprocessors(preprocessors);
 
-	await async_for_each(order, async p => {
+	for (const p of order) {
 		let processed;
 
 		if (p.markup) {
@@ -204,7 +202,7 @@ export default async function preprocess(
 				dependencies.push(...processed.dependencies);
 			}
 		}
-	});
+	}
 
 	return {
 		// TODO return separated output, in future version where svelte.compile supports it:
