@@ -1,6 +1,6 @@
-import { set_current_component, current_component } from './lifecycle';
-import { run_all, blank_object } from './utils';
-import { boolean_attributes } from '../../compiler/compile/render_ssr/handlers/shared/boolean_attributes';
+import { set_current_component, current_component } from "./lifecycle";
+import { run_all, blank_object } from "./utils";
+import { boolean_attributes } from "../../compiler/compile/render_ssr/handlers/shared/boolean_attributes";
 
 export const invalid_attribute_name_character = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
@@ -12,12 +12,12 @@ export function spread(args, classes_to_add) {
 		if (attributes.class == null) {
 			attributes.class = classes_to_add;
 		} else {
-			attributes.class += ' ' + classes_to_add;
+			attributes.class += " " + classes_to_add;
 		}
 	}
-	let str = '';
+	let str = "";
 
-	Object.keys(attributes).forEach(name => {
+	Object.keys(attributes).forEach((name) => {
 		if (invalid_attribute_name_character.test(name)) return;
 
 		const value = attributes[name];
@@ -25,7 +25,9 @@ export function spread(args, classes_to_add) {
 		else if (boolean_attributes.has(name.toLowerCase())) {
 			if (value) str += " " + name;
 		} else if (value != null) {
-			str += ` ${name}="${String(value).replace(/"/g, '&#34;').replace(/'/g, '&#39;')}"`;
+			str += ` ${name}="${String(value)
+				.replace(/"/g, "&#34;")
+				.replace(/'/g, "&#39;")}"`;
 		}
 	});
 
@@ -33,19 +35,19 @@ export function spread(args, classes_to_add) {
 }
 
 export const escaped = {
-	'"': '&quot;',
-	"'": '&#39;',
-	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;'
+	'"': "&quot;",
+	"'": "&#39;",
+	"&": "&amp;",
+	"<": "&lt;",
+	">": "&gt;",
 };
 
 export function escape(html) {
-	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+	return String(html).replace(/["'&<>]/g, (match) => escaped[match]);
 }
 
 export function each(items, fn) {
-	let str = '';
+	let str = "";
 	for (let i = 0; i < items.length; i += 1) {
 		str += fn(items[i], i);
 	}
@@ -53,22 +55,25 @@ export function each(items, fn) {
 }
 
 export const missing_component = {
-	$$render: () => ''
+	$$render: () => "",
 };
 
 export function validate_component(component, name) {
+	if (component.default) component = component.default;
 	if (!component || !component.$$render) {
-		if (name === 'svelte:component') name += ' this={...}';
-		throw new Error(`<${name}> is not a valid SSR component. You may need to review your build config to ensure that dependencies are compiled, rather than imported as pre-compiled modules`);
+		if (name === "svelte:component") name += " this={...}";
+		throw new Error(
+			`<${name}> is not a valid SSR component. You may need to review your build config to ensure that dependencies are compiled, rather than imported as pre-compiled modules`
+		);
 	}
 
 	return component;
 }
 
 export function debug(file, line, column, values) {
-	console.log(`{@debug} ${file ? file + ' ' : ''}(${line}:${column})`); // eslint-disable-line no-console
+	console.log(`{@debug} ${file ? file + " " : ""}(${line}:${column})`); // eslint-disable-line no-console
 	console.log(values); // eslint-disable-line no-console
-	return '';
+	return "";
 }
 
 let on_destroy;
@@ -85,7 +90,7 @@ export function create_ssr_component(fn) {
 			on_mount: [],
 			before_update: [],
 			after_update: [],
-			callbacks: blank_object()
+			callbacks: blank_object(),
 		};
 
 		set_current_component({ $$ });
@@ -107,7 +112,7 @@ export function create_ssr_component(fn) {
 					map: null;
 					code: string;
 				}>;
-			} = { title: '', head: '', css: new Set() };
+			} = { title: "", head: "", css: new Set() };
 
 			const html = $$render(result, props, {}, options);
 
@@ -116,20 +121,30 @@ export function create_ssr_component(fn) {
 			return {
 				html,
 				css: {
-					code: Array.from(result.css).map(css => css.code).join('\n'),
-					map: null // TODO
+					code: Array.from(result.css)
+						.map((css) => css.code)
+						.join("\n"),
+					map: null, // TODO
 				},
-				head: result.title + result.head
+				head: result.title + result.head,
 			};
 		},
 
-		$$render
+		$$render,
 	};
 }
 
 export function add_attribute(name, value, boolean) {
-	if (value == null || (boolean && !value)) return '';
-	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value)) : `"${value}"`}`}`;
+	if (value == null || (boolean && !value)) return "";
+	return ` ${name}${
+		value === true
+			? ""
+			: `=${
+					typeof value === "string"
+						? JSON.stringify(escape(value))
+						: `"${value}"`
+			  }`
+	}`;
 }
 
 export function add_classes(classes) {

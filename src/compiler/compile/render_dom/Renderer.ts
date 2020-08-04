@@ -1,11 +1,18 @@
-import Block from './Block';
-import { CompileOptions, Var } from '../../interfaces';
-import Component from '../Component';
-import FragmentWrapper from './wrappers/Fragment';
-import { x } from 'code-red';
-import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression } from 'estree';
-import flatten_reference from '../utils/flatten_reference';
-import { reserved_keywords } from '../utils/reserved_keywords';
+import Block from "./Block";
+import { CompileOptions, Var } from "../../interfaces";
+import Component from "../Component";
+import FragmentWrapper from "./wrappers/Fragment";
+import { x } from "code-red";
+import {
+	Node,
+	Identifier,
+	MemberExpression,
+	Literal,
+	Expression,
+	BinaryExpression,
+} from "estree";
+import flatten_reference from "../utils/flatten_reference";
+import { reserved_keywords } from "../utils/reserved_keywords";
 
 interface ContextMember {
 	name: string;
@@ -32,7 +39,15 @@ export default class Renderer {
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
-	binding_groups: Map<string, { binding_group: (to_reference?: boolean) => Node; is_context: boolean; contexts: string[]; index: number }> = new Map();
+	binding_groups: Map<
+		string,
+		{
+			binding_group: (to_reference?: boolean) => Node;
+			is_context: boolean;
+			contexts: string[];
+			index: number;
+		}
+	> = new Map();
 
 	block: Block;
 	fragment: FragmentWrapper;
@@ -45,33 +60,37 @@ export default class Renderer {
 		this.options = options;
 		this.locate = component.locate; // TODO messy
 
-		this.file_var = options.dev && this.component.get_unique_name('file');
+		this.file_var = options.dev && this.component.get_unique_name("file");
 
-		component.vars.filter(v => !v.hoistable || (v.export_name && !v.module)).forEach(v => this.add_to_context(v.name));
+		component.vars
+			.filter((v) => !v.hoistable || (v.export_name && !v.module))
+			.forEach((v) => this.add_to_context(v.name));
 
 		// ensure store values are included in context
-		component.vars.filter(v => v.subscribable).forEach(v => this.add_to_context(`$${v.name}`));
+		component.vars
+			.filter((v) => v.subscribable)
+			.forEach((v) => this.add_to_context(`$${v.name}`));
 
-		reserved_keywords.forEach(keyword => {
+		reserved_keywords.forEach((keyword) => {
 			if (component.var_lookup.has(keyword)) {
 				this.add_to_context(keyword);
 			}
 		});
 
 		if (component.slots.size > 0) {
-			this.add_to_context('$$scope');
-			this.add_to_context('$$slots');
+			this.add_to_context("$$scope");
+			this.add_to_context("$$slots");
 		}
 
 		if (this.binding_groups.size > 0) {
-			this.add_to_context('$$binding_groups');
+			this.add_to_context("$$binding_groups");
 		}
 
 		// main block
 		this.block = new Block({
 			renderer: this,
 			name: null,
-			type: 'component',
+			type: "component",
 			key: null,
 
 			bindings: new Map(),
@@ -91,7 +110,7 @@ export default class Renderer {
 		);
 
 		// TODO messy
-		this.blocks.forEach(block => {
+		this.blocks.forEach((block) => {
 			if (block instanceof Block) {
 				block.assign_variable_names();
 			}
@@ -103,7 +122,7 @@ export default class Renderer {
 
 		this.context_overflow = this.context.length > 31;
 
-		this.context.forEach(member => {
+		this.context.forEach((member) => {
 			const { variable } = member;
 			if (variable) {
 				member.priority += 2;
@@ -124,8 +143,12 @@ export default class Renderer {
 			}
 		});
 
-		this.context.sort((a, b) => (b.priority - a.priority) || ((a.index.value as number) - (b.index.value as number)));
-		this.context.forEach((member, i) => member.index.value = i);
+		this.context.sort(
+			(a, b) =>
+				b.priority - a.priority ||
+				(a.index.value as number) - (b.index.value as number)
+		);
+		this.context.forEach((member, i) => (member.index.value = i));
 
 		let i = this.context.length;
 		while (i--) {
@@ -143,11 +166,11 @@ export default class Renderer {
 		if (!this.context_lookup.has(name)) {
 			const member: ContextMember = {
 				name,
-				index: { type: 'Literal', value: this.context.length }, // index is updated later, but set here to preserve order within groups
+				index: { type: "Literal", value: this.context.length }, // index is updated later, but set here to preserve order within groups
 				is_contextual: false,
 				is_non_contextual: false, // shadowed vars could be contextual and non-contextual
 				variable: null,
-				priority: 0
+				priority: 0,
 			};
 
 			this.context_lookup.set(name, member);
@@ -171,23 +194,27 @@ export default class Renderer {
 		const variable = this.component.var_lookup.get(name);
 		const member = this.context_lookup.get(name);
 
-		if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {
-			return x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${value || name}))`;
+		if (
+			variable &&
+			variable.subscribable &&
+			(variable.reassigned || variable.export_name)
+		) {
+			return x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${
+				value || name
+			}))`;
 		}
 
-		if (name[0] === '$' && name[1] !== '$') {
+		if (name[0] === "$" && name[1] !== "$") {
 			return x`${name.slice(1)}.set(${value || name})`;
 		}
 
 		if (
-			variable && (
-				variable.module || (
-					!variable.referenced &&
+			variable &&
+			(variable.module ||
+				(!variable.referenced &&
 					!variable.is_reactive_dependency &&
 					!variable.export_name &&
-					!name.startsWith('$$')
-				)
-			)
+					!name.startsWith("$$")))
 		) {
 			return value || name;
 		}
@@ -199,32 +226,32 @@ export default class Renderer {
 		// if this is a reactive declaration, invalidate dependencies recursively
 		const deps = new Set([name]);
 
-		deps.forEach(name => {
-			const reactive_declarations = this.component.reactive_declarations.filter(x =>
-				x.assignees.has(name)
+		deps.forEach((name) => {
+			const reactive_declarations = this.component.reactive_declarations.filter(
+				(x) => x.assignees.has(name)
 			);
-			reactive_declarations.forEach(declaration => {
-				declaration.dependencies.forEach(name => {
+			reactive_declarations.forEach((declaration) => {
+				declaration.dependencies.forEach((name) => {
 					deps.add(name);
 				});
 			});
 		});
 
 		// TODO ideally globals etc wouldn't be here in the first place
-		const filtered = Array.from(deps).filter(n => this.context_lookup.has(n));
+		const filtered = Array.from(deps).filter((n) => this.context_lookup.has(n));
 		if (!filtered.length) return null;
 
 		return filtered
-			.map(n => x`$$invalidate(${this.context_lookup.get(n).index}, ${n})`)
+			.map((n) => x`$$invalidate(${this.context_lookup.get(n).index}, ${n})`)
 			.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
 	}
 
 	dirty(names, is_reactive_declaration = false): Expression {
 		const renderer = this;
 
-		const dirty = (is_reactive_declaration
-			? x`$$self.$$.dirty`
-			: x`#dirty`) as Identifier | MemberExpression;
+		const dirty = (is_reactive_declaration ? x`$$self.$$.dirty` : x`#dirty`) as
+			| Identifier
+			| MemberExpression;
 
 		const get_bitmask = () => {
 			const bitmask: BitMasks = [];
@@ -239,7 +266,7 @@ export default class Renderer {
 
 				const value = member.index.value as number;
 				const i = (value / 31) | 0;
-				const n = 1 << (value % 31);
+				const n = 1 << value % 31;
 
 				if (!bitmask[i]) bitmask[i] = { n: 0, names: [] };
 
@@ -255,30 +282,34 @@ export default class Renderer {
 			// the expression lazily. TODO would be better if
 			// context was determined before rendering, so that
 			// this indirection was unnecessary
-			type: 'ParenthesizedExpression',
+			type: "ParenthesizedExpression",
 			get expression() {
 				const bitmask = get_bitmask();
 
 				if (!bitmask.length) {
-					return x`${dirty} & /*${names.join(', ')}*/ 0` as BinaryExpression;
+					return x`${dirty} & /*${names.join(", ")}*/ 0` as BinaryExpression;
 				}
 
 				if (renderer.context_overflow) {
 					return bitmask
 						.map((b, i) => ({ b, i }))
 						.filter(({ b }) => b)
-						.map(({ b, i }) => x`${dirty}[${i}] & /*${b.names.join(', ')}*/ ${b.n}`)
+						.map(
+							({ b, i }) => x`${dirty}[${i}] & /*${b.names.join(", ")}*/ ${b.n}`
+						)
 						.reduce((lhs, rhs) => x`${lhs} | ${rhs}`);
 				}
 
-				return x`${dirty} & /*${names.join(', ')}*/ ${bitmask[0].n}` as BinaryExpression;
-			}
+				return x`${dirty} & /*${names.join(", ")}*/ ${
+					bitmask[0].n
+				}` as BinaryExpression;
+			},
 		} as any;
 	}
 
 	reference(node: string | Identifier | MemberExpression) {
-		if (typeof node === 'string') {
-			node = { type: 'Identifier', name: node };
+		if (typeof node === "string") {
+			node = { type: "Identifier", name: node };
 		}
 
 		const { name, nodes } = flatten_reference(node);
