@@ -61,6 +61,17 @@ const a11y_no_onchange = new Set([
 	'option'
 ]);
 
+const a11y_labelable = new Set([
+	"button",
+	"input",
+	"keygen",
+	"meter",
+	"output",
+	"progress",
+	"select",
+	"textarea"
+]);
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
@@ -504,6 +515,16 @@ export default class Element extends Node {
 						message: `A11y: Screenreaders already announce <img> elements as an image.`
 					});
 				}
+			}
+		}
+
+		if (this.name === 'label') {
+			const has_input_child = this.children.some(i => (i instanceof Element && a11y_labelable.has(i.name) ));
+			if (!attribute_map.has('for') && !has_input_child) {
+				component.warn(this, {
+					code: `a11y-label-has-associated-control`,
+					message: `A11y: A form label must be associated with a control.`
+				});
 			}
 		}
 
