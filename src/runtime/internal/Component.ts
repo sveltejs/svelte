@@ -176,9 +176,7 @@ if (typeof HTMLElement === 'function') {
 
 		// placeholder object to allow props to be set pre-$$setup
 		$$initialProps: Record<string, any> | null = {};
-		$$setup(_options?) {
-			// overridden by instance
-		}
+		$$setup: (options) => void;
 
 		connectedCallback() {
 			if (!this.$$) {
