@@ -11,4 +11,4 @@ let x: number;
 $: x = count + 1;
 ```
 
-Also, to import an interface please use [TypeScript's `import type` syntax](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export).
+To `import` a type or interface make sure to use [TypeScript's `type` modifier](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export):
