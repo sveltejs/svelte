@@ -301,18 +301,15 @@ export default class EachBlockWrapper extends Wrapper {
 			const has_transitions = !!(this.else.block.has_intro_method || this.else.block.has_outro_method);
 
 			const destroy_block_else = this.else.block.has_outro_method
-				?
-				b`
-						@group_outros();
-						@transition_out(${each_block_else}, 1, 1, () => {
-								${each_block_else} = null;
-						});
-						@check_outros();
-				`
-				: b`
-						${each_block_else}.d(1);
+				? b`
+					@group_outros();
+					@transition_out(${each_block_else}, 1, 1, () => {
 						${each_block_else} = null;
-				`;
+					});
+					@check_outros();`
+				: b`
+					${each_block_else}.d(1);
+					${each_block_else} = null;`;
 
 			if (this.else.block.has_update_method) {
 				this.updates.push(b`
@@ -328,7 +325,6 @@ export default class EachBlockWrapper extends Wrapper {
 					}
 				`);
 			} else {
-
 				this.updates.push(b`
 					if (${this.vars.data_length}) {
 						if (${each_block_else}) {
@@ -336,8 +332,8 @@ export default class EachBlockWrapper extends Wrapper {
 						}
 					} else if (!${each_block_else}) {
 						${each_block_else} = ${this.else.block.name}(#ctx);
-							${each_block_else}.c();
-							${has_transitions && b`@transition_in(${each_block_else}, 1);`}
+						${each_block_else}.c();
+						${has_transitions && b`@transition_in(${each_block_else}, 1);`}
 						${each_block_else}.m(${update_mount_node}, ${update_anchor_node});
 					}
 				`);

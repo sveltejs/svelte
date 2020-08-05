@@ -10,18 +10,18 @@
 		};
 	}
 
-  function bar(node, params) {
-    return {
-      duration: 400,
-      tick: t => {
-        node.bar = t;
-      }
-    };
-  }
+	function bar(node, params) {
+		return {
+			duration: 400,
+			tick: t => {
+				node.bar = t;
+			}
+		};
+	}
 </script>
 
 {#each things as thing}
-  <p>{thing}</p>
-  {:else}
-  <div in:foo out:bar>else</div>
+	<p>{thing}</p>
+{:else}
+	<div in:foo out:bar>else</div>
 {/each}

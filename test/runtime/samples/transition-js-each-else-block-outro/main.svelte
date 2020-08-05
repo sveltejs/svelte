@@ -12,7 +12,7 @@
 </script>
 
 {#each things as thing}
-  <p>{thing}</p>
+	<p>{thing}</p>
 {:else}
-  <div out:foo>else</div>
+	<div out:foo>else</div>
 {/each}
