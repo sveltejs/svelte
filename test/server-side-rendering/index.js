@@ -23,6 +23,12 @@ function tryToReadFile(file) {
 	}
 }
 
+function es6Compiler(code) {
+	return require("@babel/core").transformSync(code, {
+		plugins: ["@babel/plugin-transform-modules-commonjs"],
+	});
+}
+
 const sveltePath = process.cwd().split('\\').join('/');
 let compile = null;
 
@@ -59,12 +65,6 @@ describe("ssr", () => {
 				format: 'cjs'
 			};
 			
-			function es6Compiler(code) {
-				return require("@babel/core").transformSync(code, {
-					plugins: ["@babel/plugin-transform-modules-commonjs"],
-				});
-			}
-
 			require("../../register")(compileOptions,es6Compiler);
 
 			try {
@@ -160,7 +160,7 @@ describe("ssr", () => {
 				format: 'cjs'
 			};
 
-			require("../../register")(compileOptions);
+			require("../../register")(compileOptions,es6Compiler);
 
 			glob('**/*.svelte', { cwd }).forEach(file => {
 				if (file[0] === '_') return;
