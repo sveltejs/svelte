@@ -12,3 +12,7 @@ $: x = count + 1;
 ```
 
 To `import` a type or interface make sure to use [TypeScript's `type` modifier](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export):
+
+```
+import type { SomeInterface } from './SomeFile';
+```
