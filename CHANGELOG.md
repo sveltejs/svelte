@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.24.1
 
 * Prevent duplicate invalidation with certain two-way component bindings ([#3180](https://github.com/sveltejs/svelte/issues/3180), [#5117](https://github.com/sveltejs/svelte/issues/5117), [#5144](https://github.com/sveltejs/svelte/issues/5144))
 * Fix reactivity when passing `$$props` to a `<slot>` ([#3364](https://github.com/sveltejs/svelte/issues/3364))
