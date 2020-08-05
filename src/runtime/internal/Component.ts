@@ -181,14 +181,14 @@ if (typeof HTMLElement === 'function') {
 		connectedCallback() {
 			if (!this.$$) {
 				// wasn't set up from constructor as options were not ready
-				const options = Object.keys(this.$$initialProps).length ?
+				const options = is_empty(this.$$initialProps) ?
+					null:
 					{
 						props: this.$$initialProps
-					} :
-					null;
+					};
 
 				this.$$setup(options);
-				// clean up
+				// clean up, prevent reuse of $$initialProps
 				this.$$initialProps = null;
 			}
 			// @ts-ignore todo: improve typings
