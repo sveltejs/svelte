@@ -516,13 +516,13 @@ export default class Element extends Node {
 			let has_caption;
 			const track = this.children.find((i: Element) => i.name === 'track');
 			if (track) {
-				has_caption = track.attributes.find(a => a.name === "kind" && a.get_static_value() === "captions");
+				has_caption = track.attributes.find(a => a.name === 'kind' && a.get_static_value() === 'captions');
 			}
 
 			if (!has_caption) {
 				component.warn(this, {
 					code: `a11y-media-has-caption`,
-					message: `A11y: Media elements such as <audio> and <video> must have a <track> for captions.`
+					message: `A11y: Media elements must have a <track kind="captions">`
 				});
 			}
 		}
