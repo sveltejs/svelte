@@ -5,7 +5,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { a = 1 } = $$props;
 	let { b = 2 } = $$props;
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("a" in $$props) $$invalidate(0, a = $$props.a);
 		if ("b" in $$props) $$invalidate(1, b = $$props.b);
 	};

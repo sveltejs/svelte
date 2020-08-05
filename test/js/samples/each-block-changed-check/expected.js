@@ -152,7 +152,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { time } = $$props;
 	let { foo } = $$props;
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("comments" in $$props) $$invalidate(0, comments = $$props.comments);
 		if ("elapsed" in $$props) $$invalidate(1, elapsed = $$props.elapsed);
 		if ("time" in $$props) $$invalidate(2, time = $$props.time);
