@@ -7,6 +7,7 @@
 * Fix transitions on `{#each}` `{:else}` ([#4970](https://github.com/sveltejs/svelte/issues/4970))
 * Fix unneeded invalidation of `$$props` and `$$restProps` ([#4993](https://github.com/sveltejs/svelte/issues/4993), [#5118](https://github.com/sveltejs/svelte/issues/5118))
 * Provide better compiler error message when mismatched tags are due to autoclosing of tags ([#5049](https://github.com/sveltejs/svelte/issues/5049))
+* Add `a11y-label-has-associated-control` warning ([#5074](https://github.com/sveltejs/svelte/pull/5074))
 * Fix `bind:group` when using contextual reference ([#5174](https://github.com/sveltejs/svelte/issues/5174))
 
 ## 3.24.0
