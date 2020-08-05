@@ -99,6 +99,11 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		let updater;
 		const init = this.get_init(block, value);
 
+		// Set inputs value default to '' if undefined
+		if (name == 'value') {
+			block.chunks.mount.push(b`@set_input_value(${element.var}, ${value});`);
+		}
+		
 		if (is_legacy_input_type) {
 			block.chunks.hydrate.push(
 				b`@set_input_type(${element.var}, ${init});`
@@ -113,11 +118,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			} else {
 				updater = b`@select_option(${element.var}, ${value});`;
 			}
-			
-			// Set inputs value default to '' if undefined
-			if (name == 'value') {
-				block.chunks.mount.push(b`@set_input_value(${element.var}, ${value});`);
-			}
+
 
 			block.chunks.mount.push(b`
 				${updater}
