@@ -10,3 +10,5 @@ To declare the type of a reactive variable in a Svelte template, you should use 
 let x: number;
 $: x = count + 1;
 ```
+
+Also, to import an interface please use [TypeScript's `import type` syntax](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export).
