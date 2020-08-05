@@ -10,6 +10,7 @@ import {
 	noop,
 	safe_not_equal,
 	set_data,
+	set_input_value,
 	space,
 	text
 } from "svelte/internal";
@@ -34,6 +35,7 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, input, anchor);
+			set_input_value(input, /*name*/ ctx[0]);
 			insert(target, t0, anchor);
 			insert(target, h1, anchor);
 			append(h1, t1);
