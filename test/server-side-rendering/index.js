@@ -58,8 +58,14 @@ describe("ssr", () => {
 				generate: 'ssr',
 				format: 'cjs'
 			};
+			
+			function es6Compiler(code) {
+				return require("@babel/core").transformSync(code, {
+					plugins: ["@babel/plugin-transform-modules-commonjs"],
+				});
+			}
 
-			require("../../register")(compileOptions);
+			require("../../register")(compileOptions,es6Compiler);
 
 			try {
 				const Component = require(`${dir}/main.svelte`).default;
