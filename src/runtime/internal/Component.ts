@@ -229,7 +229,6 @@ if (typeof HTMLElement === 'function') {
 				for (const attr of Object.getOwnPropertyNames($$props)) {
 					this.$$initialProps[attr] = $$props[attr];
 				}
-				return;
 			}
 			if (this.$$set && !is_empty($$props)) {
 				this.$$.skip_bound = true;
