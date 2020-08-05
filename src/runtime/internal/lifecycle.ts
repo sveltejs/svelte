@@ -44,11 +44,11 @@ export function createEventDispatcher() {
 	};
 }
 
-export function setContext(key, context) {
+export function setContext<T>(key, context: T) {
 	get_current_component().$$.context.set(key, context);
 }
 
-export function getContext(key) {
+export function getContext<T>(key): T {
 	return get_current_component().$$.context.get(key);
 }
 

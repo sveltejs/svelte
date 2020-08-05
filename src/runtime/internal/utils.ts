@@ -42,6 +42,10 @@ export function not_equal(a, b) {
 	return a != a ? b == b : a !== b;
 }
 
+export function is_empty(obj) {
+	return Object.keys(obj).length === 0;
+}
+
 export function validate_store(store, name) {
 	if (store != null && typeof store.subscribe !== 'function') {
 		throw new Error(`'${name}' is not a store with a 'subscribe' method`);

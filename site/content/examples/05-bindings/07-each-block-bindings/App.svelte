@@ -16,16 +16,10 @@
 	$: remaining = todos.filter(t => !t.done).length;
 </script>
 
-<style>
-	.done {
-		opacity: 0.4;
-	}
-</style>
-
 <h1>Todos</h1>
 
 {#each todos as todo}
-	<div class:done={todo.done}>
+	<div>
 		<input
 			type=checkbox
 			bind:checked={todo.done}
@@ -34,6 +28,7 @@
 		<input
 			placeholder="What needs to be done?"
 			bind:value={todo.text}
+			disabled={todo.done}
 		>
 	</div>
 {/each}

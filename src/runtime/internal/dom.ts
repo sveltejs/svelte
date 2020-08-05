@@ -193,7 +193,7 @@ export function claim_space(nodes) {
 
 export function set_data(text, data) {
 	data = '' + data;
-	if (text.data !== data) text.data = data;
+	if (text.wholeText !== data) text.data = data;
 }
 
 export function set_input_value(input, value) {

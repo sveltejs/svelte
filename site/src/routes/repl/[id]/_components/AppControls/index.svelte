@@ -227,6 +227,7 @@ export default app;` });
 		padding: .6rem var(--side-nav);
 		background-color: var(--second);
 		color: white;
+		white-space: nowrap;
 	}
 
 	.icon {
