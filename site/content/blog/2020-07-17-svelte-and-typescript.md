@@ -134,7 +134,7 @@ error Command failed with exit code 1.
 
 ## What about TypeScript in Sapper projects?
 
-Watch this space!
+TypeScript support was added to Sapper in 0.28, so if you're using an older version be sure to [upgrade](https://sapper.svelte.dev/migrating#0_27_to_0_28).
 
 ## How can I contribute?
 
