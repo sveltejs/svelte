@@ -16,7 +16,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector ".fooba"',
+			message: 'Unused CSS selector ".foobb"',
 			frame:
 				`10:   .foo {color: red;}
 				11:   .fooaa {color: red;}
