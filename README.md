@@ -70,6 +70,10 @@ The source code for https://svelte.dev, including all the documentation, lives i
 
 Probably not, but it's possible. If you can't seem to access any `.dev` sites, check out [this SuperUser question and answer](https://superuser.com/q/1413402).
 
+## Testing powered by 
+<a target="_blank" href="https://www.browserstack.com/"><img width="200" src="https://www.browserstack.com/images/layout/browserstack-logo-600x315.png"></a><br>
+[BrowserStack Open-Source Program](https://www.browserstack.com/open-source)
+
 ## License
 
 [MIT](LICENSE)
