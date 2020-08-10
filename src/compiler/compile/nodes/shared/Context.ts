@@ -1,5 +1,7 @@
 import { x } from 'code-red';
 import { Node, Identifier } from 'estree';
+import { walk } from 'estree-walker';
+import is_reference from 'is-reference';
 
 export interface Context {
 	key: Identifier;
@@ -27,13 +29,7 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 			} else if (element && element.type === 'AssignmentPattern') {
 				const n = contexts.length;
 
-				unpack_destructuring(contexts, element.left, node => {
-					const alternate = JSON.parse(JSON.stringify(element.right));
-
-					update_reference(contexts.slice(0, n), node, alternate);
-
-					return x`${modifier(node)}[${i}] !== undefined ? ${modifier(node)}[${i}] : ${alternate.replacement || alternate}` as Node;
-				});
+				unpack_destructuring(contexts, element.left, node =>  x`${modifier(node)}[${i}] !== undefined ? ${modifier(node)}[${i}] : ${update_reference(contexts, n, element.right, node)}` as Node);
 			} else {
 				unpack_destructuring(contexts, element, node => x`${modifier(node)}[${i}]` as Node);
 			}
@@ -56,13 +52,7 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 				if (value.type === 'AssignmentPattern') {
 					const n = contexts.length;
 
-					unpack_destructuring(contexts, value.left, node => {
-						const alternate = JSON.parse(JSON.stringify(value.right));
-
-						update_reference(contexts.slice(0, n), node, alternate);
-
-						return x`${modifier(node)}.${key.name} !== undefined ? ${modifier(node)}.${key.name} : ${alternate.replacement || alternate}` as Node;
-					});
+					unpack_destructuring(contexts, value.left, node => x`${modifier(node)}.${key.name} !== undefined ? ${modifier(node)}.${key.name} : ${update_reference(contexts, n, value.right, node)}` as Node);
 				} else {
 					unpack_destructuring(contexts, value, node => x`${modifier(node)}.${key.name}` as Node);
 				}
@@ -71,36 +61,36 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 	}
 }
 
-function update_reference(contexts: Context[], node: Node, parent: any, property?: any) {
-	const current_node = (property !== undefined && parent[property] || parent);
+function update_reference(contexts: Context[], n: number, info, replacement: Node): Node {
+	if (!n) return info;
 
-	if (!current_node || !contexts.length) return;
+	let copy = JSON.parse(JSON.stringify(info)) as Node;
+	const replace = (node: Identifier, callback: (node: Node, context: any) => void, context?: any) => {
+		for (let i = 0; i < n; i++) {
+			const { key, modifier } = contexts[i];
 
-	if (current_node.type === 'Identifier') {
-		contexts.forEach((context) => {
-			const { key, modifier } = context;
+			if (node.name === key.name) {
+				callback(modifier(replacement), context);
+				break;
+			}
+		}
+	};
 
-			if (current_node.name === key.name) {
-				const replacement = modifier(node);
-				
-				if (property === undefined) {
-					current_node.replacement = replacement;
-				} else {
-					parent[property] = replacement;
+	if (copy.type === 'Identifier') {
+		replace(copy, (node: Node, _context: any) => copy = node);
+	} else {
+		walk(copy, {
+			enter(node, parent: Node) {
+				if (!['Identifier', 'BinaryExpression', 'CallExpression', 'MemberExpression'].includes(node.type)) {
+					return this.skip();
+				}
+
+				if (is_reference(node, parent)) {
+					replace(node as Identifier, (node: Node, context: any) => context && context.replace(node), this);
 				}
 			}
 		});
-	} else if (current_node.type === 'BinaryExpression') {
-		update_reference(contexts, node, current_node, 'left');
-		update_reference(contexts, node, current_node, 'right');
-	} else if (current_node.type === 'CallExpression') {
-		for (let i = 0; i < current_node.arguments.length; i += 1) {
-			update_reference(contexts, node, current_node.arguments, i);
-		}
-
-		update_reference(contexts, node, current_node, 'callee');
-	} else if (current_node.type === 'MemberExpression') {
-		update_reference(contexts, node, current_node, 'object');
-		update_reference(contexts, node, current_node, 'property');
 	}
+
+	return copy;
 }
