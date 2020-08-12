@@ -6,11 +6,16 @@ Set up the site sub-project:
 git clone https://github.com/sveltejs/svelte.git
 cd site
 npm ci
-npm run update
 npm run dev
 ```
 
 and navigate to [localhost:3000](http://localhost:3000).
+
+The first time you run the site locally, it will update the list of Contributors and REPL dependencies. After this it won't run again unless you force it by running:
+
+```bash
+npm run update
+```
 
 ## Running using the local copy of Svelte
 
@@ -25,7 +30,6 @@ npm ci
 PUBLISH=1 npm run build
 cd site
 npm ci
-npm run update
 npm run dev
 ```
 
