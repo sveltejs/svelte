@@ -3,6 +3,7 @@
 ## Unreleased
 
 * In SSR mode, do not automatically declare variables for reactive assignments to member expressions ([#5247](https://github.com/sveltejs/svelte/issues/5247))
+* Fix using `<Namespaced.Component/>`s in child `{#await}`/`{#each}` contexts ([#5255](https://github.com/sveltejs/svelte/issues/5255))
 
 ## 3.24.1
 
