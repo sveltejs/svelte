@@ -27,7 +27,9 @@ export function onDestroy(fn) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
-export function createEventDispatcher() {
+export function createEventDispatcher<
+	EventMap extends {} = any
+>(): <EventKey extends Extract<keyof EventMap, string>>(type: EventKey, detail?: EventMap[EventKey]) => void {
 	const component = get_current_component();
 
 	return (type: string, detail?: any) => {
