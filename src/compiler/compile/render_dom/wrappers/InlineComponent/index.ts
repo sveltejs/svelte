@@ -17,6 +17,7 @@ import { Node, Identifier, ObjectExpression } from 'estree';
 import EventHandler from '../Element/EventHandler';
 import { extract_names } from 'periscopic';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
+import { string_to_member_expression } from '../../../utils/string_to_member_expression';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
@@ -484,7 +485,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? component.name
-				: this.renderer.reference(this.node.name);
+				: this.renderer.reference(string_to_member_expression(this.node.name));
 
 			block.chunks.init.push(b`
 				${(this.node.attributes.length > 0 || this.node.bindings.length > 0) && b`
