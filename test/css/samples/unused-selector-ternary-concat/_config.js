@@ -13,7 +13,7 @@ export default {
 				14:   .unused {color: blue;}
 				      ^
 				15: </style>`,
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".unused"',
 			pos: 198,
 			start: {
 				character: 198,
