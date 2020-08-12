@@ -231,6 +231,15 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		const dependencies = this.node.expression.dynamic_dependencies();
 
+		let update_child_context;
+		if (this.then.value && this.catch.value) {
+			update_child_context = b`#child_ctx[${this.then.value_index}] = #child_ctx[${this.catch.value_index}] = ${info}.resolved;`;
+		} else if (this.then.value) {
+			update_child_context = b`#child_ctx[${this.then.value_index}] = ${info}.resolved;`;
+		} else if (this.catch.value) {
+			update_child_context = b`#child_ctx[${this.catch.value_index}] = ${info}.resolved;`;
+		}
+
 		if (dependencies.length > 0) {
 			const condition = x`
 				${block.renderer.dirty(dependencies)} &&
@@ -247,7 +256,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 					} else {
 						const #child_ctx = #ctx.slice();
-						${this.then.value && b`#child_ctx[${this.then.value_index}] = ${info}.resolved;`}
+						${update_child_context}
 						${info}.block.p(#child_ctx, #dirty);
 					}
 				`);
@@ -261,7 +270,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 				block.chunks.update.push(b`
 					{
 						const #child_ctx = #ctx.slice();
-						${this.then.value && b`#child_ctx[${this.then.value_index}] = ${info}.resolved;`}
+						${update_child_context}
 						${info}.block.p(#child_ctx, #dirty);
 					}
 				`);
