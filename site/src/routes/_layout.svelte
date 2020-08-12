@@ -62,6 +62,7 @@
 
 <style>
 	main {
+		height: 100%;
 		position: relative;
 		margin: 0 auto;
 		/* padding: var(--nav-h) var(--side-nav) 0 var(--side-nav); */
