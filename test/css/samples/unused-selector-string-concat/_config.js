@@ -2,7 +2,7 @@ export default {
 	warnings: [
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".fooaa"',
 			frame:
 				` 9: <style>
 				10:   .foo {color: red;}
@@ -16,7 +16,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".foobb"',
 			frame:
 				`10:   .foo {color: red;}
 				11:   .fooaa {color: red;}
@@ -30,7 +30,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".foodd"',
 			frame:
 				`12:   .foobb {color: red;}
 				13:   .foocc {color: red;}
@@ -44,7 +44,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".bbbar"',
 			frame:
 				`18:   .dd {color: red;}
 				19:   .aabar {color: red;}
@@ -58,7 +58,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".ccbar"',
 			frame:
 				`19:   .aabar {color: red;}
 				20:   .bbbar {color: red;}
@@ -72,7 +72,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".ddbar"',
 			frame:
 				`20:   .bbbar {color: red;}
 				21:   .ccbar {color: red;}
@@ -86,7 +86,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".fooaabar"',
 			frame:
 				`21:   .ccbar {color: red;}
 				22:   .ddbar {color: red;}
@@ -100,7 +100,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".foobbbar"',
 			frame:
 				`22:   .ddbar {color: red;}
 				23:   .fooaabar {color: red;}
@@ -114,7 +114,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".fooccbar"',
 			frame:
 				`23:   .fooaabar {color: red;}
 				24:   .foobbbar {color: red;}
@@ -128,7 +128,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".unused"',
 			frame:
 				`26:   .fooddbar {color: red;}
 				27:   .baz {color: red;}

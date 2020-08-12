@@ -2,7 +2,7 @@ export default {
 	warnings: [
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".hover.unused"',
 			frame: `
 				13:   .thing.active {color: blue;}
 				14:   .hover { color: blue; }
@@ -16,7 +16,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			message: 'Unused CSS selector',
+			message: 'Unused CSS selector ".unused"',
 			frame: `
 				15:   .hover.unused { color: blue; }
 				16:
