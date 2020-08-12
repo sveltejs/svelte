@@ -2,6 +2,8 @@
 	let files;
 
 	$: if (files) {
+		// Note that `files` is of type `FileList`, not an Array:
+		// https://developer.mozilla.org/en-US/docs/Web/API/FileList
 		console.log(files);
 
 		for (const file of files) {
@@ -28,13 +30,8 @@
 />
 
 {#if files}
-<h2>Selected files:</h2>
-{#each Array.from(files) as file}
-<p>{file.name} ({file.size} bytes) </p>
-{/each}
+	<h2>Selected files:</h2>
+	{#each Array.from(files) as file}
+		<p>{file.name} ({file.size} bytes) </p>
+	{/each}
 {/if}
-
-<!--
-	Note that `files` is of type `FileList`, not an Array:
-	https://developer.mozilla.org/en-US/docs/Web/API/FileList
--->
