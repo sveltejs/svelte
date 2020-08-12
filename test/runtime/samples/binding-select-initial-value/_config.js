@@ -24,7 +24,7 @@ export default {
 	`,
 
 	props: {
-		selected: 'b',
+		selected: 'b'
 	},
 
 	test({ assert, component, target }) {
@@ -33,5 +33,5 @@ export default {
 
 		assert.equal(select.value, 'b');
 		assert.ok(options[1].selected);
-	},
+	}
 };

@@ -12,5 +12,5 @@ export default {
 		await btn.dispatchEvent(clickEvent);
 
 		assert.equal(window.document.head.innerHTML.includes('<style>body { color: blue; }</style><style>body { color: green; }</style>'), true);
-	},
+	}
 };

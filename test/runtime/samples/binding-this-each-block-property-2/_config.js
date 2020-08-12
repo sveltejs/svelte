@@ -5,7 +5,7 @@ function callback(refs) {
 export default {
 	html: ``,
 	props: {
-		callback,
+		callback
 	},
 	after_test() {
 		calls = [];
@@ -49,5 +49,5 @@ export default {
 		assert.equal(calls[6][0].ref, divs[0]);
 		assert.equal(calls[6][1].ref, divs[1]);
 		assert.equal(calls[6][2].ref, divs[2]);
-	},
+	}
 };

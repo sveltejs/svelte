@@ -134,9 +134,9 @@ export default function mustache(parser: Parser) {
 						type: 'IfBlock',
 						elseif: true,
 						expression,
-						children: [],
-					},
-				],
+						children: []
+					}
+				]
 			};
 
 			parser.stack.push(block.else.children[0]);
@@ -161,7 +161,7 @@ export default function mustache(parser: Parser) {
 				start: parser.index,
 				end: null,
 				type: 'ElseBlock',
-				children: [],
+				children: []
 			};
 
 			parser.stack.push(block.else);
@@ -260,14 +260,14 @@ export default function mustache(parser: Parser) {
 					type: 'CatchBlock',
 					children: [],
 					skip: true
-				},
+				}
 			} :
 			{
 				start,
 				end: null,
 				type,
 				expression,
-				children: [],
+				children: []
 			};
 
 		parser.allow_whitespace();
@@ -350,7 +350,7 @@ export default function mustache(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'RawMustacheTag',
-			expression,
+			expression
 		});
 	} else if (parser.eat('@debug')) {
 		let identifiers;
@@ -394,7 +394,7 @@ export default function mustache(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'MustacheTag',
-			expression,
+			expression
 		});
 	}
 }

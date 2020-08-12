@@ -41,7 +41,7 @@ export class Parser {
 			start: null,
 			end: null,
 			type: 'Fragment',
-			children: [],
+			children: []
 		};
 
 		this.stack.push(this.html);
