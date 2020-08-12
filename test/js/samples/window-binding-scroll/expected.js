@@ -78,7 +78,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(0, y = window.pageYOffset)
 	}
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("y" in $$props) $$invalidate(0, y = $$props.y);
 	};
 

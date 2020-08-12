@@ -61,6 +61,17 @@ const a11y_no_onchange = new Set([
 	'option'
 ]);
 
+const a11y_labelable = new Set([
+	"button",
+	"input",
+	"keygen",
+	"meter",
+	"output",
+	"progress",
+	"select",
+	"textarea"
+]);
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
@@ -504,6 +515,35 @@ export default class Element extends Node {
 						message: `A11y: Screenreaders already announce <img> elements as an image.`
 					});
 				}
+			}
+		}
+
+		if (this.name === 'label') {
+			const has_input_child = this.children.some(i => (i instanceof Element && a11y_labelable.has(i.name) ));
+			if (!attribute_map.has('for') && !has_input_child) {
+				component.warn(this, {
+					code: `a11y-label-has-associated-control`,
+					message: `A11y: A form label must be associated with a control.`
+				});
+			}
+		}
+
+		if (this.is_media_node()) {
+			if (attribute_map.has('muted')) {
+				return;
+			}
+
+			let has_caption;
+			const track = this.children.find((i: Element) => i.name === 'track');
+			if (track) {
+				has_caption = track.attributes.find(a => a.name === 'kind' && a.get_static_value() === 'captions');
+			}
+
+			if (!has_caption) {
+				component.warn(this, {
+					code: `a11y-media-has-caption`,
+					message: `A11y: Media elements must have a <track kind="captions">`
+				});
 			}
 		}
 

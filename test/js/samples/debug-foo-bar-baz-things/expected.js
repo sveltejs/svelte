@@ -183,7 +183,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { $$slots = {}, $$scope } = $$props;
 	validate_slots("Component", $$slots, []);
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("things" in $$props) $$invalidate(0, things = $$props.things);
 		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
 		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);

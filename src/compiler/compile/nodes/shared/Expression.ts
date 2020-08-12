@@ -24,7 +24,7 @@ export default class Expression {
 	component: Component;
 	owner: Owner;
 	node: any;
-	references: Set<string>;
+	references: Set<string> = new Set();
 	dependencies: Set<string> = new Set();
 	contextual_dependencies: Set<string> = new Set();
 
@@ -50,7 +50,7 @@ export default class Expression {
 		this.template_scope = template_scope;
 		this.owner = owner;
 
-		const { dependencies, contextual_dependencies } = this;
+		const { dependencies, contextual_dependencies, references } = this;
 
 		let { map, scope } = create_scopes(info);
 		this.scope = scope;
@@ -75,6 +75,7 @@ export default class Expression {
 
 				if (is_reference(node, parent)) {
 					const { name, nodes } = flatten_reference(node);
+					references.add(name);
 
 					if (scope.has(name)) return;
 

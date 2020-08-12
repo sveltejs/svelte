@@ -1,0 +1,10 @@
+{
+	"code": "invalid-closing-tag",
+	"message": "</p> attempted to close <p> that was already automatically closed by <pre>",
+	"pos": 24,
+	"start": {
+		"character": 24,
+		"column": 0,
+		"line": 3
+	}
+}

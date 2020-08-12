@@ -420,7 +420,7 @@ export default function dom(
 
 				${component.partly_hoisted}
 
-				${set && b`$$self.$set = ${set};`}
+				${set && b`$$self.$$set = ${set};`}
 
 				${capture_state && b`$$self.$capture_state = ${capture_state};`}
 
