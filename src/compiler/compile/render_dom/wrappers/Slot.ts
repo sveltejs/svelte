@@ -125,7 +125,7 @@ export default class SlotWrapper extends Wrapper {
 		const slot_or_fallback = has_fallback ? block.get_unique_name(`${sanitize(slot_name)}_slot_or_fallback`) : slot;
 
 		block.chunks.init.push(b`
-			const ${slot_definition} = ${renderer.reference('$$slots')}.${slot_name};
+			const ${slot_definition} = ${renderer.reference('#slots')}.${slot_name};
 			const ${slot} = @create_slot(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn});
 			${has_fallback ? b`const ${slot_or_fallback} = ${slot} || ${this.fallback.name}(#ctx);` : null}
 		`);

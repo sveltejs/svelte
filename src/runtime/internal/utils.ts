@@ -128,6 +128,14 @@ export function compute_rest_props(props, keys) {
 	return rest;
 }
 
+export function compute_slots(slots) {
+	const result = {};
+	for (const key in slots) {
+		result[key] = true;
+	}
+	return result;
+}
+
 export function once(fn) {
 	let ran = false;
 	return function(this: any, ...args) {
