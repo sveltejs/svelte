@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Expose object of which slots have received content in `$$slots` ([#2106](https://github.com/sveltejs/svelte/issues/2106))
 * Add types to `createEventDispatcher` ([#5211](https://github.com/sveltejs/svelte/issues/5211))
 * In SSR mode, do not automatically declare variables for reactive assignments to member expressions ([#5247](https://github.com/sveltejs/svelte/issues/5247))
 * Include selector in message of `unused-css-selector` warning ([#5252](https://github.com/sveltejs/svelte/issues/5252))
