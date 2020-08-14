@@ -1,4 +1,3 @@
-import { assign } from '../../runtime/internal/utils';
 import Stats from '../Stats';
 import parse from '../parse/index';
 import render_dom from './render_dom/index';
@@ -68,7 +67,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = assign({ generate: 'dom', dev: false }, options);
+	options = Object.assign({ generate: 'dom', dev: false }, options);
 
 	const stats = new Stats();
 	const warnings = [];
