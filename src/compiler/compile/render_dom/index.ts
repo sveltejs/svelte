@@ -302,8 +302,7 @@ export default function dom(
 		const variable = component.var_lookup.get(prop.name);
 
 		if (variable.hoistable) return false;
-		if (prop.name[0] === '$') return false;
-		return true;
+		return prop.name[0] !== '$';
 	});
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');

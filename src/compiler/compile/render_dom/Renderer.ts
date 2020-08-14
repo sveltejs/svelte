@@ -160,8 +160,7 @@ export default class Renderer {
 			member.is_contextual = true;
 		} else {
 			member.is_non_contextual = true;
-			const variable = this.component.var_lookup.get(name);
-			member.variable = variable;
+			member.variable = this.component.var_lookup.get(name);
 		}
 
 		return member;
