@@ -1289,6 +1289,27 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 </div>
 ```
 
+---
+
+`$$slots` is an object whose keys are the names of the slots passed into the component by the parent. If the parent leaves a named slot empty, `$$slots` will not have a key for that slot. This allows components to render a slot (and other elements, like wrappers for styling) only if the parent provides children for it.
+
+```sv
+<!-- App.svelte -->
+<Card>
+	<h1 slot="title">Blog Post Title</h1>
+</Card>
+
+<!-- Card.svelte -->
+<div>
+	<slot name="title"></slot>
+	{#if $$slots.description}
+		<!-- This slot and the <hr> before it will not render. -->
+		<hr>
+		<slot name="description"></slot>
+	{/if}
+</div>
+```
+
 #### [`<slot let:`*name*`={`*value*`}>`](slot_let)
 
 ---
