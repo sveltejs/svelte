@@ -364,6 +364,22 @@ The expression should be valid standalone HTML — `{@html "<div>"}content{@html
 </div>
 ```
 
+---
+
+By default, CSS is locally scoped to the component and Svelte won't target elements inside `{@html expression}` because it doesn't know which elements are going to appear, any unused styles are dead-code-eliminated. To target elements inside the expression, we can use the `:global(...)` modifier, but it will break the CSS scope if the expression is placed at the root level of the component. To mitigate this, we can wrap the expression inside a locally defined element and use the modifier as the descendant of the element.
+
+```sv
+<div class="content">
+	{@html post.content}
+</div>
+
+<style>
+	.content :global(p) {
+		line-height: 1.5;
+	}
+</style>
+```
+
 
 ### {@debug ...}
 
