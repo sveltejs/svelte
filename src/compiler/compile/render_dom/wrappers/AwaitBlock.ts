@@ -188,6 +188,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			ctx: #ctx,
 			current: null,
 			token: null,
+			hasCatch: ${this.catch.node.start !== null ? 'true' : 'false'},
 			pending: ${this.pending.block.name},
 			then: ${this.then.block.name},
 			catch: ${this.catch.block.name},
