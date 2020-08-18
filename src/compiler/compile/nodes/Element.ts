@@ -80,7 +80,7 @@ const valid_modifiers = new Set([
 	'capture',
 	'once',
 	'passive',
-    'nonpassive',
+	'nonpassive',
 	'self',
 ]);
 
