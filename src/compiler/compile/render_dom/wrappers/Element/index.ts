@@ -725,6 +725,15 @@ export default class ElementWrapper extends Wrapper {
 			block.chunks.update.push(b`
 				if (${block.renderer.dirty(Array.from(dependencies))} && ${data}.multiple) @select_options(${this.var}, ${data}.value);
 			`);
+		} else if (this.node.name === 'input' && this.attributes.find(attr => attr.node.name === 'value')) {
+			block.chunks.mount.push(b`
+				${this.var}.value = ${data}.value;
+			`);
+			block.chunks.update.push(b`
+				if ('value' in ${data}) {
+					${this.var}.value = ${data}.value;
+				}
+			`);
 		}
 	}
 
