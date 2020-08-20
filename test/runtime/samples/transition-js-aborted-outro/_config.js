@@ -1,6 +1,6 @@
 export default {
 	props: {
-		visible: true,
+		visible: true
 	},
 
 	test({ assert, component, target, raf }) {
@@ -20,5 +20,5 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<span>hello</span>
 		`);
-	},
+	}
 };

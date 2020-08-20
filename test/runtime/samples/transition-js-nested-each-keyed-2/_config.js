@@ -7,5 +7,5 @@ export default {
 	test({ assert, component, target, window, raf }) {
 		component.x = false;
 		assert.htmlEqual(target.innerHTML, '');
-	},
+	}
 };

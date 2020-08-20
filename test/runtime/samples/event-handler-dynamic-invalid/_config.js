@@ -24,5 +24,5 @@ export default {
 
 		await buttonInvalid.dispatchEvent(event);
 		assert.equal(err, "", err);
-	},
+	}
 };

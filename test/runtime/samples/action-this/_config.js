@@ -7,5 +7,5 @@ export default {
 		await button.dispatchEvent(click);
 		await Promise.resolve();
 		assert.htmlEqual(target.innerHTML, `<button>2</button>`);
-	},
+	}
 };

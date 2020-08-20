@@ -35,7 +35,7 @@ export default {
 		spy2.reset();
 		component.val2 = '56789';
 		assert.ok(spy2.isSetCalled());
-	},
+	}
 };
 
 function spyOnValueSetter(input, initialValue) {
@@ -48,7 +48,7 @@ function spyOnValueSetter(input, initialValue) {
 		set(_value) {
 			value = _value;
 			isSet = true;
-		},
+		}
 	});
 
 	return {
@@ -57,6 +57,6 @@ function spyOnValueSetter(input, initialValue) {
 		},
 		reset() {
 			isSet = false;
-		},
+		}
 	};
 }

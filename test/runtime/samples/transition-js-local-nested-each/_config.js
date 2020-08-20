@@ -26,5 +26,5 @@ export default {
 
 		component.x = false;
 		assert.htmlEqual(target.innerHTML, '');
-	},
+	}
 };

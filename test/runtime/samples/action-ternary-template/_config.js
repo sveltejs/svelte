@@ -1,7 +1,7 @@
 export default {
 	props: {
 		target: 'World!',
-		display: true,
+		display: true
 	},
 
 	html: `
@@ -16,5 +16,5 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<h1>Hello World!</h1>
 		`);
-	},
+	}
 };

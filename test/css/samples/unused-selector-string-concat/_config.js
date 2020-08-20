@@ -12,7 +12,7 @@ export default {
 				13:   .foocc {color: red;}`,
 			start: { line: 11, column: 2, character: 206 },
 			end: { line: 11, column: 8, character: 212 },
-			pos: 206,
+			pos: 206
 		},
 		{
 			code: 'css-unused-selector',
@@ -26,7 +26,7 @@ export default {
 				14:   .foodd {color: red;}`,
 			start: { line: 12, column: 2, character: 229 },
 			end: { line: 12, column: 8, character: 235 },
-			pos: 229,
+			pos: 229
 		},
 		{
 			code: 'css-unused-selector',
@@ -40,7 +40,7 @@ export default {
 				16:   .bb {color: red;}`,
 			start: { line: 14, column: 2, character: 275 },
 			end: { line: 14, column: 8, character: 281 },
-			pos: 275,
+			pos: 275
 		},
 		{
 			code: 'css-unused-selector',
@@ -54,7 +54,7 @@ export default {
 				22:   .ddbar {color: red;}`,
 			start: { line: 20, column: 2, character: 401 },
 			end: { line: 20, column: 8, character: 407 },
-			pos: 401,
+			pos: 401
 		},
 		{
 			code: 'css-unused-selector',
@@ -68,7 +68,7 @@ export default {
 				23:   .fooaabar {color: red;}`,
 			start: { line: 21, column: 2, character: 424 },
 			end: { line: 21, column: 8, character: 430 },
-			pos: 424,
+			pos: 424
 		},
 		{
 			code: 'css-unused-selector',
@@ -82,7 +82,7 @@ export default {
 				24:   .foobbbar {color: red;}`,
 			start: { line: 22, column: 2, character: 447 },
 			end: { line: 22, column: 8, character: 453 },
-			pos: 447,
+			pos: 447
 		},
 		{
 			code: 'css-unused-selector',
@@ -96,7 +96,7 @@ export default {
 				25:   .fooccbar {color: red;}`,
 			start: { line: 23, column: 2, character: 470 },
 			end: { line: 23, column: 11, character: 479 },
-			pos: 470,
+			pos: 470
 		},
 		{
 			code: 'css-unused-selector',
@@ -110,7 +110,7 @@ export default {
 				26:   .fooddbar {color: red;}`,
 			start: { line: 24, column: 2, character: 496 },
 			end: { line: 24, column: 11, character: 505 },
-			pos: 496,
+			pos: 496
 		},
 		{
 			code: 'css-unused-selector',
@@ -124,7 +124,7 @@ export default {
 				27:   .baz {color: red;}`,
 			start: { line: 25, column: 2, character: 522 },
 			end: { line: 25, column: 11, character: 531 },
-			pos: 522,
+			pos: 522
 		},
 		{
 			code: 'css-unused-selector',
@@ -137,7 +137,7 @@ export default {
 				29: </style>`,
 			start: { line: 28, column: 2, character: 595 },
 			end: { line: 28, column: 9, character: 602 },
-			pos: 595,
-		},
-	],
+			pos: 595
+		}
+	]
 };
