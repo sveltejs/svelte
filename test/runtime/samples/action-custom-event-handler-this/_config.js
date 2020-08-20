@@ -18,5 +18,5 @@ export default {
 		input.dispatchEvent(event);
 
 		assert.ok(blurred);
-	},
+	}
 };

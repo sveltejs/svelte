@@ -34,13 +34,13 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 			type: 'Property',
 			kind: 'init',
 			key: l.name,
-			value,
+			value
 		});
 	});
 
 	const changes_input = {
 		type: 'ObjectPattern',
-		properties,
+		properties
 	};
 
 	const names: Set<string> = new Set();

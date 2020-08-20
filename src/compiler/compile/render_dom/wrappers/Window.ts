@@ -16,7 +16,7 @@ const associated_events = {
 	outerHeight: 'resize',
 
 	scrollX: 'scroll',
-	scrollY: 'scroll',
+	scrollY: 'scroll'
 };
 
 const properties = {
@@ -29,7 +29,7 @@ const readonly = new Set([
 	'innerHeight',
 	'outerWidth',
 	'outerHeight',
-	'online',
+	'online'
 ]);
 
 export default class WindowWrapper extends Wrapper {

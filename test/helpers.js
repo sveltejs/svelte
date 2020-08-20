@@ -153,6 +153,7 @@ export function normalizeHtml(window, html) {
 export function setupHtmlEqual() {
 	const window = env();
 
+	// eslint-disable-next-line no-import-assign
 	assert.htmlEqual = (actual, expected, message) => {
 		assert.deepEqual(
 			normalizeHtml(window, actual),

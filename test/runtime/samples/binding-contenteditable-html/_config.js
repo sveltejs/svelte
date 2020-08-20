@@ -1,6 +1,6 @@
 export default {
 	props: {
-		name: '<b>world</b>',
+		name: '<b>world</b>'
 	},
 
 	html: `
@@ -34,5 +34,5 @@ export default {
 			<editor contenteditable="true">good<span>bye</span></editor>
 			<p>hello good<span>bye</span></p>
 		`);
-	},
+	}
 };

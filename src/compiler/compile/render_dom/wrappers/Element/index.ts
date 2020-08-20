@@ -132,7 +132,7 @@ const events = [
 		event_names: ['toggle'],
 		filter: (node: Element, _name: string) =>
 			node.name === 'details'
-	},
+	}
 ];
 
 export default class ElementWrapper extends Wrapper {

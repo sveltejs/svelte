@@ -9,5 +9,5 @@ export default {
 
 		raf.tick(26);
 		assert.ok(~div.style.animation.indexOf('25ms'));
-	},
+	}
 };

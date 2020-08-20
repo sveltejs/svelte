@@ -7,13 +7,13 @@ const values = [
 const selected_array = [
 	[values[1]],
 	[],
-	[values[2]],
+	[values[2]]
 ];
 
 export default {
 	props: {
 		values,
-		selected_array,
+		selected_array
 	},
 
 	html: `
