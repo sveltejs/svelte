@@ -54,7 +54,7 @@ export function space() {
 }
 
 export function empty() {
-	return text('');
+	return document.createComment('');
 }
 
 export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
