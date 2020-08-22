@@ -726,14 +726,17 @@ export default class ElementWrapper extends Wrapper {
 				if (${block.renderer.dirty(Array.from(dependencies))} && ${data}.multiple) @select_options(${this.var}, ${data}.value);
 			`);
 		} else if (this.node.name === 'input' && this.attributes.find(attr => attr.node.name === 'value')) {
-			block.chunks.mount.push(b`
-				${this.var}.value = ${data}.value;
-			`);
-			block.chunks.update.push(b`
-				if ('value' in ${data}) {
+			const type = this.node.get_static_attribute_value('type');
+			if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
+				block.chunks.mount.push(b`
 					${this.var}.value = ${data}.value;
-				}
-			`);
+				`);
+				block.chunks.update.push(b`
+					if ('value' in ${data}) {
+						${this.var}.value = ${data}.value;
+					}
+				`);
+			}
 		}
 	}
 
