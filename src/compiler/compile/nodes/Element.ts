@@ -239,6 +239,13 @@ export default class Element extends Node {
 	}
 
 	validate() {
+		if (this.component.var_lookup.has(this.name) || this.scope.names.has(this.name)) {
+			this.component.warn(this, {
+				code: 'lowercase-component-name',
+				message: `A lowercase tag <${this.name}> will be treated as a regular HTML element`,
+			});
+		}
+
 		if (a11y_distracting_elements.has(this.name)) {
 			// no-distracting-elements
 			this.component.warn(this, {
