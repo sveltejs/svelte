@@ -7,23 +7,23 @@
 		display: block;
 	}
 
-	.active {
+	.selected {
 		background-color: #ff3e00;
 		color: white;
 	}
 </style>
 
 <button
-	class="{current === 'foo' ? 'active' : ''}"
+	class="{current === 'foo' ? 'selected' : ''}"
 	on:click="{() => current = 'foo'}"
 >foo</button>
 
 <button
-	class="{current === 'bar' ? 'active' : ''}"
+	class="{current === 'bar' ? 'selected' : ''}"
 	on:click="{() => current = 'bar'}"
 >bar</button>
 
 <button
-	class="{current === 'baz' ? 'active' : ''}"
+	class="{current === 'baz' ? 'selected' : ''}"
 	on:click="{() => current = 'baz'}"
 >baz</button>
