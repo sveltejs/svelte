@@ -184,7 +184,7 @@ export default class Element extends Node {
 
 				case 'Attribute':
 				case 'Spread':
-					// special case
+				// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
 
 					this.attributes.push(new Attribute(component, this, scope, node));
@@ -239,10 +239,10 @@ export default class Element extends Node {
 	}
 
 	validate() {
-		if (this.component.var_lookup.has(this.name) || this.scope.names.has(this.name)) {
+		if (this.component.var_lookup.has(this.name) && this.component.var_lookup.get(this.name).imported) {
 			this.component.warn(this, {
 				code: 'lowercase-component-name',
-				message: `A lowercase tag <${this.name}> will be treated as a regular HTML element`,
+				message: `A lowercase tag <${this.name}> will be treated as a regular HTML element`
 			});
 		}
 
