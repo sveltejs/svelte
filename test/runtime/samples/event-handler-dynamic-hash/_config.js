@@ -52,5 +52,5 @@ export default {
 			<p>2</p>
 			<button>click</button>
 		`);
-	},
+	}
 };

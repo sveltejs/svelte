@@ -24,7 +24,7 @@ export default {
 	`,
 
 	props: {
-		selected: 'one',
+		selected: 'one'
 	},
 
 	async test({ assert, component, target, window }) {
@@ -53,5 +53,5 @@ export default {
 		`);
 
 		component.selected = 'three';
-	},
+	}
 };

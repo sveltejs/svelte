@@ -106,7 +106,7 @@ export default class Block {
 			intro: [],
 			update: [],
 			outro: [],
-			destroy: [],
+			destroy: []
 		};
 
 		this.has_animation = false;

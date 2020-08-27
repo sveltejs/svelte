@@ -12,5 +12,5 @@ export default {
 		await button.dispatchEvent(event);
 
 		assert.ok(!component.inner_clicked);
-	},
+	}
 };

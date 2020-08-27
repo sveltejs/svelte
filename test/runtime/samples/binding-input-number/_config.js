@@ -1,6 +1,6 @@
 export default {
 	props: {
-		count: 42,
+		count: 42
 	},
 
 	html: `
@@ -44,5 +44,5 @@ export default {
 			<input type='number'>
 			<p>undefined undefined</p>
 		`);
-	},
+	}
 };
