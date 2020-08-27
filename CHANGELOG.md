@@ -9,6 +9,7 @@
 * Include selector in message of `unused-css-selector` warning ([#5252](https://github.com/sveltejs/svelte/issues/5252))
 * Fix using `<Namespaced.Component/>`s in child `{#await}`/`{#each}` contexts ([#5255](https://github.com/sveltejs/svelte/issues/5255))
 * Fix using `<svelte:component>` in `{:catch}` ([#5259](https://github.com/sveltejs/svelte/issues/5259))
+* Fix setting one-way bound `<input>` `value` to `undefined` when it has spread attributes ([#5270](https://github.com/sveltejs/svelte/issues/5270))
 
 ## 3.24.1
 
