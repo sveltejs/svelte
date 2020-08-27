@@ -76,7 +76,7 @@ export default class Binding extends Node {
 
 			if (info.expression.type === 'Identifier' && !variable.writable) component.error(this.expression.node, {
 				code: 'invalid-binding',
-				message: 'Cannot bind to a variable which is not writable',
+				message: 'Cannot bind to a variable which is not writable'
 			});
 		}
 

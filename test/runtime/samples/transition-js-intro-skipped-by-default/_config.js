@@ -5,5 +5,5 @@ export default {
 
 		raf.tick(50);
 		assert.equal(div.foo, undefined);
-	},
+	}
 };

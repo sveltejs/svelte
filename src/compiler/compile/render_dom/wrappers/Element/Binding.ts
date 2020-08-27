@@ -302,7 +302,7 @@ function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
 			},
 			is_context: contexts.length > 0,
 			contexts,
-			index,
+			index
 		});
 	}
 
@@ -355,7 +355,7 @@ function get_event_handler(
 		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy
 		mutation,
 		contextual_dependencies,
-		lhs,
+		lhs
 	};
 }
 

@@ -6,5 +6,5 @@ export default {
 		await btn.dispatchEvent(clickEvent);
 
 		assert.equal(btn.x, 1);
-	},
+	}
 };
