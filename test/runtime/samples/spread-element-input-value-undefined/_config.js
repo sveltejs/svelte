@@ -8,5 +8,5 @@ export default {
 		component.value = "foobar";
 
 		assert.equal(input.value, "foobar");
-	},
+	}
 };
