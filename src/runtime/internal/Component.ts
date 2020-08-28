@@ -171,7 +171,6 @@ if (typeof HTMLElement === 'function') {
 		$$set?: ($$props: any) => void;
 		constructor() {
 			super();
-			this.attachShadow({ mode: 'open' });
 		}
 
 		connectedCallback() {

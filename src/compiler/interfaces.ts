@@ -120,6 +120,7 @@ export interface CompileOptions {
 	hydratable?: boolean;
 	legacy?: boolean;
 	customElement?: boolean;
+	shadowDom?: ShadowDomMode;
 	tag?: string;
 	css?: boolean;
 	loopGuardTimeout?: number;
@@ -167,3 +168,7 @@ export interface CssResult {
 	code: string;
 	map: SourceMap;
 }
+
+export type ShadowDomMode = 'none'
+	| 'open'
+	| 'closed'
