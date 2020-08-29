@@ -616,8 +616,25 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'label') {
-			const has_input_child = this.children.some(i => (i instanceof Element && a11y_labelable.has(i.name) ));
-			if (!attribute_map.has('for') && !has_input_child) {
+			const has_input_child = (children) => {
+				const has_input = children.some(i => (i instanceof Element && a11y_labelable.has(i.name)));
+				if (has_input) {
+					return true;
+				}
+
+				for (const c of children) {
+					if (!c.children || c.children.length === 0) {
+						continue;
+					}
+					if (has_input_child(c.children)) {
+						return true;
+					}
+				}
+
+				return false;
+			};
+
+			if (!attribute_map.has('for') && !has_input_child(this.children)) {
 				component.warn(this, compiler_warnings.a11y_label_has_associated_control);
 			}
 		}
