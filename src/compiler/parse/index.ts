@@ -189,11 +189,11 @@ export class Parser {
 
 		if (match) {
 			this.index = start + match.index;
-			return this.template.slice(start, this.index);
+			return [this.template.slice(start, this.index), match[0]];
 		}
 
 		this.index = this.template.length;
-		return this.template.slice(start);
+		return [this.template.slice(start)];
 	}
 
 	require_whitespace() {
