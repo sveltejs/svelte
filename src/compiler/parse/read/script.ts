@@ -3,7 +3,7 @@ import { Parser } from '../index';
 import { Script } from '../../interfaces';
 import { Node, Program } from 'estree';
 
-const script_closing_tag = '</script>';
+// const script_closing_tag = '</script>';
 
 function get_context(parser: Parser, attributes: any[], start: number): string {
 	const context = attributes.find(attribute => attribute.name === 'context');
@@ -28,11 +28,14 @@ function get_context(parser: Parser, attributes: any[], start: number): string {
 	return value;
 }
 
+
+const RE_SCRIPT_END = /<\/script\s*>/;
+
 export default function read_script(parser: Parser, start: number, attributes: Node[]): Script {
 	const script_start = parser.index;
-	const script_end = parser.template.indexOf(script_closing_tag, script_start);
-
-	if (script_end === -1) {
+	const script_end = RE_SCRIPT_END.exec(parser.template.slice(script_start));
+	
+	if (!script_end) {
 		parser.error({
 			code: 'unclosed-script',
 			message: '<script> must have a closing tag'
@@ -40,9 +43,9 @@ export default function read_script(parser: Parser, start: number, attributes: N
 	}
 
 	const source = parser.template.slice(0, script_start).replace(/[^\n]/g, ' ') +
-		parser.template.slice(script_start, script_end);
-	parser.index = script_end + script_closing_tag.length;
-
+		parser.template.slice(script_start, script_end.index + script_start);
+	parser.index = script_end.index + script_end[0].length + script_start ;
+	
 	let ast: Program;
 
 	try {
