@@ -3,8 +3,6 @@ import { Parser } from '../index';
 import { Script } from '../../interfaces';
 import { Node, Program } from 'estree';
 
-// const script_closing_tag = '</script>';
-
 function get_context(parser: Parser, attributes: any[], start: number): string {
 	const context = attributes.find(attribute => attribute.name === 'context');
 	if (!context) return 'default';
@@ -28,12 +26,9 @@ function get_context(parser: Parser, attributes: any[], start: number): string {
 	return value;
 }
 
-
-const RE_SCRIPT_END = /<\/script\s*>/;
-
 export default function read_script(parser: Parser, start: number, attributes: Node[]): Script {
 	const script_start = parser.index;
-	const script_end = RE_SCRIPT_END.exec(parser.template.slice(script_start));
+	const script_end = /<\/script\s*>/.exec(parser.template.slice(script_start));
 	
 	if (!script_end) parser.error({
 		code: `unclosed-script`,
