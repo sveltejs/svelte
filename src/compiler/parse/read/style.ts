@@ -6,7 +6,7 @@ import { Style } from '../../interfaces';
 
 export default function read_style(parser: Parser, start: number, attributes: Node[]): Style {
 	const content_start = parser.index;
-	const styles = parser.read_until(/<\/style>/);
+	const [styles, matched] = parser.read_until(/<\/style\s*>/);
 	const content_end = parser.index;
 
 	let ast;
@@ -72,7 +72,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 		}
 	});
 
-	parser.eat('</style>', true);
+	parser.eat(matched, true);
 	const end = parser.index;
 
 	return {

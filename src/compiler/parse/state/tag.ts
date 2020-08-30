@@ -57,7 +57,7 @@ export default function tag(parser: Parser) {
 	let parent = parser.current();
 
 	if (parser.eat('!--')) {
-		const data = parser.read_until(/-->/);
+		const [data] = parser.read_until(/-->/);
 		parser.eat('-->', true, 'comment was left open, expected -->');
 
 		parser.current().children.push({
@@ -360,7 +360,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	}
 
 	// eslint-disable-next-line no-useless-escape
-	const name = parser.read_until(/[\s=\/>"']/);
+	const [name] = parser.read_until(/[\s=\/>"']/);
 	if (!name) return null;
 
 	let end = parser.index;
