@@ -6,8 +6,14 @@ import { Style } from '../../interfaces';
 
 export default function read_style(parser: Parser, start: number, attributes: Node[]): Style {
 	const content_start = parser.index;
-	const [styles, matched] = parser.read_until(/<\/style\s*>/);
+	const error_message ={
+		code: `unclosed-style`,
+		message: `<style> must have a closing tag`
+	};
+	const [styles, matched] = parser.read_until(/<\/style\s*>/, error_message);
 	const content_end = parser.index;
+
+	if (!matched) parser.error(error_message);
 
 	let ast;
 
@@ -73,12 +79,11 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	});
 
 	parser.eat(matched, true);
-	const end = parser.index;
 
 	return {
 		type: 'Style',
 		start,
-		end,
+		end: parser.index,
 		attributes,
 		children: ast.children,
 		content: {
