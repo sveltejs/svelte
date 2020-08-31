@@ -28,16 +28,15 @@ function get_context(parser: Parser, attributes: any[], start: number): string {
 
 export default function read_script(parser: Parser, start: number, attributes: Node[]): Script {
 	const script_start = parser.index;
-	const script_end = /<\/script\s*>/.exec(parser.template.slice(script_start));
-	
-	if (!script_end) parser.error({
+	const error_message ={
 		code: `unclosed-script`,
 		message: `<script> must have a closing tag`
-	});
+	};
+	const [data, matched] = parser.read_until(/<\/script\s*>/, error_message);
 
-	const source = parser.template.slice(0, script_start).replace(/[^\n]/g, ' ') +
-		parser.template.slice(script_start, script_end.index + script_start);
-	parser.index = script_end.index + script_end[0].length + script_start ;
+	if (!matched) parser.error(error_message);
+
+	const source = parser.template.slice(0, script_start).replace(/[^\n]/g, ' ') + data;
 	
 	let ast: Program;
 
@@ -49,6 +48,8 @@ export default function read_script(parser: Parser, start: number, attributes: N
 
 	// TODO is this necessary?
 	(ast as any).start = script_start;
+
+	parser.eat(matched, true);
 
 	return {
 		type: 'Script',
