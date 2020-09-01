@@ -4,7 +4,7 @@
   "description": "Docs and examples for Svelte",
   "scripts": {
     "dev": "npm run copy-workers && sapper dev",
-    "copy-workers": "rm -rf static/workers && cp -r node_modules/@sveltejs/svelte-repl/workers static",
+    "copy-workers": "node scripts/copy-workers.js",
     "migrate": "node-pg-migrate -r dotenv/config",
     "sapper": "npm run copy-workers && sapper build --legacy",
     "update": "node scripts/update_template.js && node scripts/get-contributors.js && node scripts/update_whos_using.js",
