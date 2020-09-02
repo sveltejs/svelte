@@ -556,18 +556,67 @@ export default class Element extends Node {
 		});
 
 		// click-events-have-key-events
-		if (handlers_map.has("click")) {
-		  const hasKeyEvent =
-		    handlers_map.has("keydown") ||
-		    handlers_map.has("keyup") ||
-		    handlers_map.has("keypress");
-		    
-		  if (!hasKeyEvent) {
-		    component.warn(this, {
-		      code: `a11y-click-events-have-key-events`,
-		      message: `A11y: on:click event must be accompanied by on:keydown, on:keyup or on:keypress event`
-		    });
-		  }
+		if (handlers_map.has('click')) {
+
+			const a11y_interactive = new Set([
+				'a',
+				'button',
+				'select'
+			]);
+
+			if (a11y_interactive.has(this.name)) {
+				return;
+			}
+
+			if (this.name === 'input') {
+				const input_type = attribute_map.get('type');
+				const input_type_interactive = new Set(['button', 'checkbox', 'color', 'file', 'image', 'radio', 'reset', 'submit']);
+
+				if (input_type && input_type_interactive.has(input_type.get_static_value())) {
+					return;
+				}
+			}
+
+			if (this.attributes.find((attr) => attr.is_spread)) {
+				return;
+			}
+
+			const aria_hidden_attribute = attribute_map.get('aria-hidden');
+			const aria_hidden_value =
+				aria_hidden_attribute && aria_hidden_attribute.get_static_value();
+
+			// aria-hidden value is string, check its boolean value with JSON.parse()
+			if (aria_hidden_value && JSON.parse(aria_hidden_value)) {
+				return;
+			}
+
+			const type_attribute = attribute_map.get('type');
+			const type_value = type_attribute && type_attribute.get_static_value();
+
+			if (type_value && type_value === 'hidden') {
+				return;
+			}
+
+			const role_attribute = attribute_map.get('role');
+			const role_value = role_attribute && role_attribute.get_static_value();
+			const presentation_role_value =
+				role_value === 'presentation' || role_value === 'none';
+
+			if (presentation_role_value) {
+				return;
+			}
+
+			const hasKeyEvent =
+				handlers_map.has('keydown') ||
+				handlers_map.has('keyup') ||
+				handlers_map.has('keypress');
+
+			if (!hasKeyEvent) {
+				component.warn(this, {
+					code: `a11y-click-events-have-key-events`,
+					message: `A11y: visible, non-interactive elements with on:click event must be accompanied by a on:keydown, on:keyup or on:keypress event.`
+				});
+			}
 		}
 
 		// no-noninteractive-tabindex
