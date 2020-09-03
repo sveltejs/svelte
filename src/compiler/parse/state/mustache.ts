@@ -6,6 +6,7 @@ import { trim_start, trim_end } from '../../utils/trim';
 import { to_string } from '../utils/node';
 import { Parser } from '../index';
 import { TemplateNode } from '../../interfaces';
+import { template_errors } from '../errors';
 
 function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: boolean) {
 	if (!block.children || block.children.length === 0) return; // AwaitBlock
@@ -64,10 +65,7 @@ export default function mustache(parser: Parser) {
 		} else if (block.type === 'AwaitBlock') {
 			expected = 'await';
 		} else {
-			parser.error({
-				code: `unexpected-block-close`,
-				message: `Unexpected block closing tag`
-			});
+			parser.error(template_errors.unexpected_block_close());
 		}
 
 		parser.eat(expected, true);
@@ -96,10 +94,7 @@ export default function mustache(parser: Parser) {
 		parser.stack.pop();
 	} else if (parser.eat(':else')) {
 		if (parser.eat('if')) {
-			parser.error({
-				code: 'invalid-elseif',
-				message: `'elseif' should be 'else if'`
-			});
+			parser.error(template_errors.invalid_elseif());
 		}
 
 		parser.allow_whitespace();
@@ -108,12 +103,11 @@ export default function mustache(parser: Parser) {
 		if (parser.eat('if')) {
 			const block = parser.current();
 			if (block.type !== 'IfBlock') {
-				parser.error({
-					code: `invalid-elseif-placement`,
-					message: parser.stack.some(block => block.type === 'IfBlock')
-						? `Expected to close ${to_string(block)} before seeing {:else if ...} block`
-						: `Cannot have an {:else if ...} block outside an {#if ...} block`
-				});
+				parser.error(
+					parser.stack.some(block => block.type === 'IfBlock') 
+						? template_errors.else_if_before_block_close(to_string(block)) 
+						: template_errors.else_if_without_if()
+				);
 			}
 
 			parser.require_whitespace();
@@ -146,12 +140,11 @@ export default function mustache(parser: Parser) {
 		else {
 			const block = parser.current();
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
-				parser.error({
-					code: `invalid-else-placement`,
-					message: parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
-						? `Expected to close ${to_string(block)} before seeing {:else} block`
-						: `Cannot have an {:else} block outside an {#if ...} or {#each ...} block`
-				});
+				parser.error(
+					parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock') 
+						? template_errors.else_before_block_close(to_string(block)) 
+						: template_errors.else_without_if()
+				);
 			}
 
 			parser.allow_whitespace();
