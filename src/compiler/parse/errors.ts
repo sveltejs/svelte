@@ -16,7 +16,24 @@ interface ErroMessage {
  */
 type error_generator = (...args: string[]) => ErroMessage;
 
+export const end_of_file_error: error_generator = () => ({
+	code: `unexpected-eof`,
+	message: `Unexpected end of input`
+});
+
 export const template_errors: Record<string, error_generator> = {
+	attribute_duplicate: () => ({
+		code: `duplicate-attribute`,
+		message: 'Attributes need to be unique'
+	}),
+	attribute_quote_outside_value: () => ({
+		code: `unexpected-token`,
+		message: `Expected =`
+	}),
+	directive_value_invalid: () => ({
+		code: `invalid-directive-value`,
+		message: `Directive value must be a JavaScript expression enclosed in curly braces`
+	}),
 	duplicate_style: () => ({
 		code: 'duplicate-style',
 		message: 'You can only have one top-level <style> tag per component'
@@ -50,19 +67,93 @@ export const template_errors: Record<string, error_generator> = {
 		message: `Expected to close ${block} before seeing {:else if ...} block`
 	}),
 	else_without_if_each: () => ({
-		code: `invalid-elseif-placement`,
+		code: `invalid-else-placement`,
 		message: `Cannot have an {:else} block outside an {#if ...} or {#each ...} block`
 	}),
 	else_before_block_close: (block) => ({
-		code: `invalid-elseif-placement`,
+		code: `invalid-else-placement`,
 		message: `Expected to close ${block} before seeing {:else} block`
 	}),
-
+	then_before_close_block: (block) => ({
+		code: `invalid-then-placement`,
+		message: `Expected to close ${block} before seeing {:then} block`
+	}),
+	then_without_await: () => ({
+		code: `invalid-then-placement`,
+		message: `Cannot have an {:then} block outside an {#await ...} block`
+	}),
+	catch_before_close_block: (block) => ({
+		code: `invalid-catch-placement`,
+		message: `Expected to close ${block} before seeing {:catch} block`
+	}),
+	catch_without_await: () => ({
+		code: `invalid-catch-placement`,
+		message: `Cannot have an {:catch} block outside an {#await ...} block`
+	}),
+	component_definition_invalid: () => ({
+		code: `invalid-component-definition`,
+		message: `invalid component definition`
+	}),
+	component_definition_missing: () => ({
+		code: `missing-component-definition`,
+		message: `<svelte:component> must have a 'this' attribute`
+	}),
+	expected_block_type: () => ({
+		code: `expected-block-type`,
+		message: `Expected if, each or await`
+	}),
+	expected_name: () => ({
+		code: `expected-name`,
+		message: `Expected name`
+	}),
 	unexpected_block_close: () => ({
 		code: `unexpected-block-close`,
 		message: `Unexpected block closing tag`
 	}),
-	
+	debug_args: () => ({
+		code: 'invalid-debug-args',
+		message: '{@debug ...} arguments must be identifiers, not arbitrary expressions'
+	}),
+	element_unopened: (name) => ({
+		code: `invalid-closing-tag`,
+		message: `</${name}> attempted to close an element that was not open`
+	}),
+	element_autoclosed: (name, reason) => ({
+		code: `invalid-closing-tag`,
+		message: `</${name}> attempted to close <${name}> that was already automatically closed by <${reason}>`
+	}),
+	element_tag_name_invalid: () => ({
+		code: `invalid-tag-name`,
+		message: `Expected valid tag name`
+	}),
+	meta_no_children: (slug, name) => ({
+		code: `invalid-${slug}-content`,
+		message: `<${name}> cannot have children`
+	}),
+	meta_duplicate: (slug, name) => ({
+		code: `duplicate-${slug}`,
+		message: `A component can only have one <${name}> tag`
+	}),
+	meta_top_level: (slug, name) => ({
+		code: `invalid-${slug}-placement`,
+		message: `<${name}> tags cannot be inside elements or blocks`
+	}),
+	self_placement_invalid: () => ({
+		code: `invalid-self-placement`,
+		message: `<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, or slots passed to components`
+	}),
+	meta_tag_name_invalid: (tags, match) => ({
+		code: 'invalid-tag-name',
+		message: `Valid <svelte:...> tag names are ${tags}${match ? '(did you mean ' + match + '?)' : ''}`
+	}),
+	ref_directive_invalid: (name) => ({
+		code: `invalid-ref-directive`,
+		message: `The ref directive is no longer supported — use \`bind:this={${name}}\` instead`
+	}),
+	void_no_children: (name) => ({
+		code: `invalid-void-content`,
+		message: `<${name}> is a void element and cannot have children, or a closing tag`
+	}),
 	unclosed_script: () => ({
 		code: `unclosed-script`,
 		message: `<script> must have a closing tag`

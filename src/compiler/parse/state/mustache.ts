@@ -143,7 +143,7 @@ export default function mustache(parser: Parser) {
 				parser.error(
 					parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock') 
 						? template_errors.else_before_block_close(to_string(block)) 
-						: template_errors.else_without_if()
+						: template_errors.else_without_if_each()
 				);
 			}
 
@@ -165,21 +165,18 @@ export default function mustache(parser: Parser) {
 
 		if (is_then) {
 			if (block.type !== 'PendingBlock') {
-				parser.error({
-					code: `invalid-then-placement`,
-					message: parser.stack.some(block => block.type === 'PendingBlock')
-						? `Expected to close ${to_string(block)} before seeing {:then} block`
-						: `Cannot have an {:then} block outside an {#await ...} block`
-				});
+				parser.error(
+					parser.stack.some(block => block.type === 'PendingBlock')
+						? template_errors.then_before_close_block(to_string(block)) 
+						: template_errors.then_without_await() 
+					);
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
-				parser.error({
-					code: `invalid-catch-placement`,
-					message: parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
-						? `Expected to close ${to_string(block)} before seeing {:catch} block`
-						: `Cannot have an {:catch} block outside an {#await ...} block`
-				});
+				parser.error(parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
+						? template_errors.catch_before_close_block(to_string(block)) 
+						: template_errors.catch_without_await() 
+				);
 			}
 		}
 
@@ -215,10 +212,7 @@ export default function mustache(parser: Parser) {
 		} else if (parser.eat('await')) {
 			type = 'AwaitBlock';
 		} else {
-			parser.error({
-				code: `expected-block-type`,
-				message: `Expected if, each or await`
-			});
+			parser.error(template_errors.expected_block_type());
 		}
 
 		parser.require_whitespace();
@@ -277,10 +271,7 @@ export default function mustache(parser: Parser) {
 			if (parser.eat(',')) {
 				parser.allow_whitespace();
 				block.index = parser.read_identifier();
-				if (!block.index) parser.error({
-					code: `expected-name`,
-					message: `Expected name`
-				});
+				if (!block.index) parser.error(template_errors.expected_name());
 
 				parser.allow_whitespace();
 			}
@@ -360,10 +351,7 @@ export default function mustache(parser: Parser) {
 
 			identifiers.forEach(node => {
 				if (node.type !== 'Identifier') {
-					parser.error({
-						code: 'invalid-debug-args',
-						message: '{@debug ...} arguments must be identifiers, not arbitrary expressions'
-					}, node.start);
+					parser.error(template_errors.debug_args(), node.start);
 				}
 			});
 
