@@ -7,6 +7,7 @@ import { Parser } from '../index';
 import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
+import parser_errors from '../errors';
 
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
@@ -81,24 +82,18 @@ export default function tag(parser: Parser) {
 				(name === 'svelte:window' || name === 'svelte:body') &&
 				parser.current().children.length
 			) {
-				parser.error({
-					code: `invalid-${slug}-content`,
-					message: `<${name}> cannot have children`
-				}, parser.current().children[0].start);
+				parser.error(
+					parser_errors.meta_no_children(slug, name), 
+					parser.current().children[0].start
+				);
 			}
 		} else {
 			if (name in parser.meta_tags) {
-				parser.error({
-					code: `duplicate-${slug}`,
-					message: `A component can only have one <${name}> tag`
-				}, start);
+				parser.error(parser_errors.meta_duplicate(slug, name), start);
 			}
 
 			if (parser.stack.length > 1) {
-				parser.error({
-					code: `invalid-${slug}-placement`,
-					message: `<${name}> tags cannot be inside elements or blocks`
-				}, start);
+				parser.error(parser_errors.meta_top_level(slug, name), start);
 			}
 
 			parser.meta_tags[name] = true;
@@ -125,10 +120,7 @@ export default function tag(parser: Parser) {
 
 	if (is_closing_tag) {
 		if (is_void(name)) {
-			parser.error({
-				code: 'invalid-void-content',
-				message: `<${name}> is a void element and cannot have children, or a closing tag`
-			}, start);
+			parser.error(parser_errors.void_no_children(name), start);
 		}
 
 		parser.eat('>', true);
@@ -136,13 +128,10 @@ export default function tag(parser: Parser) {
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (parent.name !== name) {
 			if (parent.type !== 'Element') {
-				const message = parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name
-					? `</${name}> attempted to close <${name}> that was already automatically closed by <${parser.last_auto_closed_tag.reason}>`
-					: `</${name}> attempted to close an element that was not open`;
-				parser.error({
-					code: 'invalid-closing-tag',
-					message
-				}, start);
+				const error = parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name
+					? parser_errors.element_autoclosed(name, parser.last_auto_closed_tag.reason)
+					: parser_errors.element_unopened(name);
+				parser.error(error, start);
 			}
 
 			parent.end = start;
@@ -180,18 +169,12 @@ export default function tag(parser: Parser) {
 	if (name === 'svelte:component') {
 		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
 		if (!~index) {
-			parser.error({
-				code: 'missing-component-definition',
-				message: "<svelte:component> must have a 'this' attribute"
-			}, start);
+			parser.error(parser_errors.component_definition_missing, start);
 		}
 
 		const definition = element.attributes.splice(index, 1)[0];
 		if (definition.value === true || definition.value.length !== 1 || definition.value[0].type === 'Text') {
-			parser.error({
-				code: 'invalid-component-definition',
-				message: 'invalid component definition'
-			}, definition.start);
+			parser.error(parser_errors.component_definition_invalid, definition.start);
 		}
 
 		element.expression = definition.value[0].expression;
@@ -256,10 +239,7 @@ function read_tag_name(parser: Parser) {
 		}
 
 		if (!legal) {
-			parser.error({
-				code: 'invalid-self-placement',
-				message: '<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, or slots passed to components'
-			}, start);
+			parser.error(parser_errors.self_placement_invalid, start);
 		}
 
 		return 'svelte:self';
@@ -276,20 +256,14 @@ function read_tag_name(parser: Parser) {
 	if (name.startsWith('svelte:')) {
 		const match = fuzzymatch(name.slice(7), valid_meta_tags);
 
-		let message = `Valid <svelte:...> tag names are ${list(valid_meta_tags)}`;
-		if (match) message += ` (did you mean '${match}'?)`;
-
-		parser.error({
-			code: 'invalid-tag-name',
-			message
-		}, start);
+		parser.error(
+			parser_errors.meta_tag_name_invalid(list(valid_meta_tags), match), 
+			start
+			);
 	}
 
 	if (!valid_tag_name.test(name)) {
-		parser.error({
-			code: 'invalid-tag-name',
-			message: 'Expected valid tag name'
-		}, start);
+		parser.error(parser_errors.element_tag_name_invalid, start);
 	}
 
 	return name;
@@ -300,10 +274,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 	function check_unique(name: string) {
 		if (unique_names.has(name)) {
-			parser.error({
-				code: 'duplicate-attribute',
-				message: 'Attributes need to be unique'
-			}, start);
+			parser.error(parser_errors.attribute_duplicate, start);
 		}
 		unique_names.add(name);
 	}
@@ -376,10 +347,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		value = read_attribute_value(parser);
 		end = parser.index;
 	} else if (parser.match_regex(/["']/)) {
-		parser.error({
-			code: 'unexpected-token',
-			message: 'Expected ='
-		}, parser.index);
+		parser.error(parser_errors.expected_token_equal, parser.index);
 	}
 
 	if (type) {
@@ -399,18 +367,12 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		}
 
 		if (type === 'Ref') {
-			parser.error({
-				code: 'invalid-ref-directive',
-				message: `The ref directive is no longer supported — use \`bind:this={${directive_name}}\` instead`
-			}, start);
+			parser.error(parser_errors.ref_directive_invalid(directive_name), start);
 		}
 
 		if (value[0]) {
 			if ((value as any[]).length > 1 || value[0].type === 'Text') {
-				parser.error({
-					code: 'invalid-directive-value',
-					message: 'Directive value must be a JavaScript expression enclosed in curly braces'
-				}, value[0].start);
+				parser.error(parser_errors.directive_value_invalid, value[0].start);
 			}
 		}
 
@@ -530,8 +492,5 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 		}
 	}
 
-	parser.error({
-		code: 'unexpected-eof',
-		message: 'Unexpected end of input'
-	});
+	parser.error(parser_errors.unexpected_eof);
 }

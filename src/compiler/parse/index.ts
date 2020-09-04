@@ -5,7 +5,7 @@ import { reserved } from '../utils/names';
 import full_char_code_at from '../utils/full_char_code_at';
 import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../interfaces';
 import error from '../utils/error';
-import { template_errors } from './errors';
+import parser_errors from './errors';
 
 type ParserState = (parser: Parser) => (ParserState | void);
 
@@ -219,18 +219,18 @@ export default function parse(
 	// TODO we may want to allow multiple <style> tags —
 	// one scoped, one global. for now, only allow one
 	if (parser.css.length > 1) {
-		parser.error(template_errors.duplicate_style(), parser.css[1].start);
+		parser.error(parser_errors.duplicate_style, parser.css[1].start);
 	}
 
 	const instance_scripts = parser.js.filter(script => script.context === 'default');
 	const module_scripts = parser.js.filter(script => script.context === 'module');
 
 	if (instance_scripts.length > 1) {
-		parser.error(template_errors.duplicate_instance_script(), instance_scripts[1].start);
+		parser.error(parser_errors.duplicate_instance_script(), instance_scripts[1].start);
 	}
 
 	if (module_scripts.length > 1) {
-		parser.error(template_errors.duplicate_module_script(), module_scripts[1].start);
+		parser.error(parser_errors.duplicate_module_script(), module_scripts[1].start);
 	}
 
 	return {

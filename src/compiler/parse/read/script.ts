@@ -2,20 +2,20 @@ import * as acorn from '../acorn';
 import { Parser } from '../index';
 import { Script } from '../../interfaces';
 import { Node, Program } from 'estree';
-import { template_errors } from '../errors';
+import parser_errors from '../errors';
 
 function get_context(parser: Parser, attributes: any[], start: number): string {
 	const context = attributes.find(attribute => attribute.name === 'context');
 	if (!context) return 'default';
 
 	if (context.value.length !== 1 || context.value[0].type !== 'Text') {
-		parser.error(template_errors.dynamic_context_attribute(), start);
+		parser.error(parser_errors.dynamic_context_attribute(), start);
 	}
 
 	const value = context.value[0].data;
 
 	if (value !== 'module') {
-		parser.error(template_errors.fixed_context_attribute(), context.start);
+		parser.error(parser_errors.fixed_context_attribute(), context.start);
 	}
 
 	return value;
@@ -23,7 +23,7 @@ function get_context(parser: Parser, attributes: any[], start: number): string {
 
 export default function read_script(parser: Parser, start: number, attributes: Node[]): Script {
 	const script_start = parser.index;
-	const error_message = template_errors.unclosed_script();
+	const error_message = parser_errors.unclosed_script();
 	const data = parser.read_until(/<\/script\s*>/, error_message);
 	if (parser.index >= parser.template.length) {
 		parser.error(error_message);
