@@ -1,4 +1,4 @@
-import { encode } from "sourcemap-codec";
+import { encode as sourcemap_encode } from "sourcemap-codec";
 
 type MappingSegment =
 	| [number]
@@ -24,7 +24,7 @@ function get_end_location(s: string): SourceLocation {
 	};
 }
 
-export function offset_source_location(
+export function sourcemap_add_offset(
 	offset: SourceLocation,
 	map: SourceMappings
 ): SourceMappings {
@@ -72,7 +72,7 @@ function merge_tables<T>(
 	return { table, new_idx };
 }
 
-export class GeneratedStringWithMap {
+export class StringWithSourcemap {
 	readonly generated: string;
 	readonly map: SourceMappings;
 
@@ -81,16 +81,16 @@ export class GeneratedStringWithMap {
 		this.map = map;
 	}
 
-	as_sourcemap() {
+	get_sourcemap() {
 		return {
 			version: 3,
 			sources: this.map.sources,
 			names: [],
-			mappings: encode(this.map.mappings as any),
+			mappings: sourcemap_encode(this.map.mappings as any),
 		};
 	}
 
-	concat(other: GeneratedStringWithMap): GeneratedStringWithMap {
+	concat(other: StringWithSourcemap): StringWithSourcemap {
 		// if one is empty, return the other
 		if (this.generated.length == 0) return other;
 		if (other.generated.length == 0) return this;
@@ -103,6 +103,8 @@ export class GeneratedStringWithMap {
 			this.map.sources,
 			other.map.sources
 		);
+
+		// combine names
 		const {
 			table: new_names,
 			new_idx: other_name_idx
@@ -135,10 +137,14 @@ export class GeneratedStringWithMap {
 		);
 
 		// combine the mappings
+
+		// this.map is readonly, so we copy
 		let new_mappings = this.map.mappings.slice();
 
-		// shift the first line of the second mapping
-		// by the number of columns in the last line of the first mapping
+		// combine:
+		// 1. last line of first map
+		// 2. first line of second map
+		// columns of 2 must be shifted
 		const end = get_end_location(this.generated);
 		const col_offset = end.column + 1;
 		const first_line =
@@ -148,17 +154,18 @@ export class GeneratedStringWithMap {
 						const new_seg = seg.slice() as MappingSegment;
 						new_seg[0] = seg[0] + col_offset;
 						return new_seg;
-				  });
-		new_mappings[new_mappings.length - 1] = new_mappings[
-			new_mappings.length - 1
-		].concat(first_line);
+					});
 
-		// the rest don't need modification and can just be appended
+		// append segments to last line of first map
+		new_mappings[new_mappings.length - 1] =
+		new_mappings[new_mappings.length - 1].concat(first_line);
+
+		// the other lines don't need modification and can just be appended
 		new_mappings = new_mappings.concat(
 			other_mappings.slice(1) as MappingSegment[][]
 		);
 
-		return new GeneratedStringWithMap(
+		return new StringWithSourcemap(
 			this.generated + other.generated, {
 			sources: new_sources,
 			names: new_names,
@@ -169,8 +176,8 @@ export class GeneratedStringWithMap {
 	static from_generated(
 		generated: string,
 		map?: SourceMappings
-	): GeneratedStringWithMap {
-		if (map) return new GeneratedStringWithMap(generated, map);
+	): StringWithSourcemap {
+		if (map) return new StringWithSourcemap(generated, map);
 
 		const replacement_map: SourceMappings = {
 			names: [],
@@ -179,7 +186,7 @@ export class GeneratedStringWithMap {
 		};
 
 		if (generated.length == 0)
-			return new GeneratedStringWithMap(generated, replacement_map);
+			return new StringWithSourcemap(generated, replacement_map);
 
 		// we generate a mapping
 		// where the source was overwritten by the generated
@@ -188,14 +195,14 @@ export class GeneratedStringWithMap {
 			replacement_map.mappings.push([]); // unmapped line
 		}
 
-		return new GeneratedStringWithMap(generated, replacement_map);
+		return new StringWithSourcemap(generated, replacement_map);
 	}
 
 	static from_source(
 		source_file: string,
 		source: string,
 		offset_in_source?: SourceLocation
-	): GeneratedStringWithMap {
+	): StringWithSourcemap {
 		const offset = offset_in_source || { line: 0, column: 0 };
 		const map: SourceMappings = {
 			names: [],
@@ -203,7 +210,7 @@ export class GeneratedStringWithMap {
 			mappings: [],
 		};
 
-		if (source.length == 0) return new GeneratedStringWithMap(source, map);
+		if (source.length == 0) return new StringWithSourcemap(source, map);
 
 		// we create a high resolution identity map here,
 		// we know that it will eventually be merged with svelte's map,
@@ -213,12 +220,13 @@ export class GeneratedStringWithMap {
 		const identity_map = lines.map((line, line_idx) => {
 			const segs = line
 				.split(/([^\d\w\s]|\s+)/g)
-				.filter((x) => x !== "")
+				.filter((s) => s !== "")
 				.map((s) => {
 					const seg: MappingSegment = [
 						pos,
 						0,
-						offset.line + line_idx,
+						line_idx + offset.line,
+						// shift first line
 						pos + (line_idx == 0 ? offset.column : 0),
 					];
 					pos = pos + s.length;
@@ -230,6 +238,6 @@ export class GeneratedStringWithMap {
 
 		map.mappings = identity_map;
 
-		return new GeneratedStringWithMap(source, map);
+		return new StringWithSourcemap(source, map);
 	}
 }

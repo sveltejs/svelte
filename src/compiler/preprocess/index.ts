@@ -1,7 +1,7 @@
 import remapper from '@ampproject/remapping';
 import { decode } from 'sourcemap-codec';
 import { getLocator } from 'locate-character';
-import { GeneratedStringWithMap, offset_source_location } from '../utils/string_with_map';
+import { StringWithSourcemap, sourcemap_add_offset } from '../utils/string_with_sourcemap';
 
 
 export interface Processed {
@@ -43,7 +43,7 @@ function parse_attributes(str: string) {
 interface Replacement {
 	offset: number;
 	length: number;
-	replacement: GeneratedStringWithMap;
+	replacement: StringWithSourcemap;
 }
 
 export default async function preprocess(
@@ -60,28 +60,41 @@ export default async function preprocess(
 	const markup = preprocessors.map(p => p.markup).filter(Boolean);
 	const script = preprocessors.map(p => p.script).filter(Boolean);
 	const style = preprocessors.map(p => p.style).filter(Boolean);
-	const source_maps: Array<Processed['map']> = [];
 
-	let source_locator: ReturnType<typeof getLocator>;
+	const sourcemap_list: Array<Processed['map']> = [];
 
-	function get_replacement(offset: number, original: string, processed: Processed, prefix: string, suffix: string): GeneratedStringWithMap {
-		const generated_prefix = GeneratedStringWithMap.from_source(filename, prefix, source_locator(offset));
-		const generated_suffix = GeneratedStringWithMap.from_source(filename, suffix, source_locator(offset + prefix.length + original.length));
+	let get_location: ReturnType<typeof getLocator>;
+
+	function get_replacement(
+		offset: number,
+		original: string,
+		processed: Processed,
+		prefix: string,
+		suffix: string
+	): StringWithSourcemap {
+		const generated_prefix = StringWithSourcemap.from_source(
+			filename, prefix, get_location(offset));
+		const generated_suffix = StringWithSourcemap.from_source(
+			filename, suffix, get_location(offset + prefix.length + original.length));
 
 		let generated;
 		if (processed.map) {
 			const full_map = typeof processed.map === "string" ? JSON.parse(processed.map) : processed.map;
 			const decoded_map = { ...full_map, mappings: decode(full_map.mappings) };
-			const processed_offset = source_locator(offset + prefix.length);
-			generated = GeneratedStringWithMap.from_generated(processed.code, offset_source_location(processed_offset, decoded_map));
+			const processed_offset = get_location(offset + prefix.length);
+			generated = StringWithSourcemap.from_generated(processed.code, sourcemap_add_offset(processed_offset, decoded_map));
 		} else {
-			generated = GeneratedStringWithMap.from_generated(processed.code);
+			generated = StringWithSourcemap.from_generated(processed.code);
 		}
 		const map = generated_prefix.concat(generated).concat(generated_suffix);
 		return map;
 	}
 
-	async function replace_async(str: string, re: RegExp, func: (...any) => Promise<GeneratedStringWithMap>): Promise<GeneratedStringWithMap> {
+	async function replace_async(
+		str: string,
+		re: RegExp,
+		func: (...any) => Promise<StringWithSourcemap>
+	): Promise<StringWithSourcemap> {
 		const replacement_promises: Array<Promise<Replacement>> = [];
 		str.replace(re, (...args) => {
 			replacement_promises.push(
@@ -98,86 +111,117 @@ export default async function preprocess(
 		});
 		const replacements = await Promise.all(replacement_promises);
 
-		let out: GeneratedStringWithMap;
+		let out: StringWithSourcemap;
 		let last_end = 0;
-		for (const { offset, length, replacement } of replacements)
-		{
-			const content = GeneratedStringWithMap.from_source(filename, str.slice(last_end, offset), source_locator(last_end));
+		for (const { offset, length, replacement } of replacements) {
+			// content = source before replacement
+			const content = StringWithSourcemap.from_source(
+				filename, str.slice(last_end, offset), get_location(last_end));
 			out = out ? out.concat(content) : content;
 			out = out.concat(replacement);
 			last_end = offset + length;
 		}
-		const final_content = GeneratedStringWithMap.from_source(filename, str.slice(last_end), source_locator(last_end));
+		// final_content = source after last replacement
+		const final_content = StringWithSourcemap.from_source(
+			filename, str.slice(last_end), get_location(last_end));
 		out = out.concat(final_content);
 		return out;
 	}
-	
+
 	for (const fn of markup) {
+
+		// run markup preprocessor
 		const processed = await fn({
 			content: source,
 			filename
 		});
-		if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
+
+		if (processed && processed.dependencies) {
+			dependencies.push(...processed.dependencies);
+		}
 		source = processed ? processed.code : source;
-		if (processed && processed.map) source_maps.unshift(processed.map);
+		if (processed && processed.map) {
+			sourcemap_list.unshift(processed.map);
+		}
 	}
 
 	for (const fn of script) {
-		source_locator = getLocator(source);
+		get_location = getLocator(source);
 		const res = await replace_async(
 			source,
 			/<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi,
 			async (match, attributes = '', content, offset) => {
-				const no_change = () => GeneratedStringWithMap.from_source(filename, match, source_locator(offset));
-
+				const no_change = () => StringWithSourcemap.from_source(
+					filename, match, get_location(offset));
 				if (!attributes && !content) {
 					return no_change();
 				}
-
 				attributes = attributes || '';
+
+				// run script preprocessor
 				const processed = await fn({
 					content,
 					attributes: parse_attributes(attributes),
 					filename
 				});
 
-				if (!processed) return no_change();
-				if (processed.dependencies) dependencies.push(...processed.dependencies);
-				return get_replacement(offset, content, processed, `<script${attributes}>`, `</script>`);
+				if (!processed) {
+					return no_change();
+				}
+				if (processed.dependencies) {
+					dependencies.push(...processed.dependencies);
+				}
+				return get_replacement(
+					offset, content, processed,
+					`<script${attributes}>`, `</script>`
+				);
 			}
 		);
 		source = res.generated;
-		source_maps.unshift(res.as_sourcemap());
+		sourcemap_list.unshift(res.get_sourcemap());
 	}
 
 	for (const fn of style) {
-		source_locator = getLocator(source);
+		get_location = getLocator(source);
 		const res = await replace_async(
 			source,
 			/<!--[^]*?-->|<style(\s[^]*?)?>([^]*?)<\/style>/gi,
 			async (match, attributes = '', content, offset) => {
-				const no_change = () => GeneratedStringWithMap.from_source(filename, match, source_locator(offset));
+				const no_change = () => StringWithSourcemap.from_source(
+					filename, match, get_location(offset));
 				if (!attributes && !content) {
 					return no_change();
 				}
 
+				// run style preprocessor
 				const processed: Processed = await fn({
 					content,
 					attributes: parse_attributes(attributes),
 					filename
 				});
 
-				if (!processed) return no_change();
-				if (processed.dependencies) dependencies.push(...processed.dependencies);
-				return get_replacement(offset, content, processed, `<style${attributes}>`, `</style>`);
+				if (!processed) {
+					return no_change();
+				}
+				if (processed.dependencies) {
+					dependencies.push(...processed.dependencies);
+				}
+				return get_replacement(
+					offset, content, processed,
+					`<style${attributes}>`, `</style>`
+				);
 			}
 		);
 
 		source = res.generated;
-		source_maps.unshift(res.as_sourcemap());
+		sourcemap_list.unshift(res.get_sourcemap());
 	}
 
-	const map: ReturnType<typeof remapper> = source_maps.length == 0 ? null : remapper(source_maps as any, () => null);
+	const map: ReturnType<typeof remapper> =
+		sourcemap_list.length == 0
+			? null
+			: remapper(sourcemap_list as any, () => null);
+
 	return {
 		// TODO return separated output, in future version where svelte.compile supports it:
 		// style: { code: styleCode, map: styleMap },
