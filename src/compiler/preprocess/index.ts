@@ -1,5 +1,5 @@
 import remapper from '@ampproject/remapping';
-import { decode } from 'sourcemap-codec';
+import { decode as sourcemap_decode } from 'sourcemap-codec';
 import { getLocator } from 'locate-character';
 import { StringWithSourcemap, sourcemap_add_offset } from '../utils/string_with_sourcemap';
 
@@ -80,7 +80,7 @@ export default async function preprocess(
 		let generated;
 		if (processed.map) {
 			const full_map = typeof processed.map === "string" ? JSON.parse(processed.map) : processed.map;
-			const decoded_map = { ...full_map, mappings: decode(full_map.mappings) };
+			const decoded_map = { ...full_map, mappings: sourcemap_decode(full_map.mappings) };
 			const processed_offset = get_location(offset + prefix.length);
 			generated = StringWithSourcemap.from_generated(processed.code, sourcemap_add_offset(processed_offset, decoded_map));
 		} else {
@@ -185,7 +185,7 @@ export default async function preprocess(
 		get_location = getLocator(source);
 		const res = await replace_async(
 			source,
-			/<!--[^]*?-->|<style(\s[^]*?)?>([^]*?)<\/style>/gi,
+			/<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi,
 			async (match, attributes = '', content, offset) => {
 				const no_change = () => StringWithSourcemap.from_source(
 					filename, match, get_location(offset));
