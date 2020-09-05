@@ -157,6 +157,7 @@ export default async function preprocess(
 					return no_change();
 				}
 				attributes = attributes || '';
+				content = content || '';
 
 				// run script preprocessor
 				const processed = await fn({
@@ -192,6 +193,8 @@ export default async function preprocess(
 				if (!attributes && !content) {
 					return no_change();
 				}
+				attributes = attributes || '';
+				content = content || '';
 
 				// run style preprocessor
 				const processed: Processed = await fn({
