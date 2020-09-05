@@ -326,10 +326,10 @@ export default class Component {
 				this.source
 			];
 
-			if (compile_options.sourceMap) {
+			if (compile_options.sourcemap) {
 				if (js.map) {
 					const pre_remap_sources = js.map.sources;
-					js.map = remapping([js.map, compile_options.sourceMap], () => null);
+					js.map = remapping([js.map, compile_options.sourcemap], () => null);
 					// remapper can remove our source if it isn't used (no segments map back to it). It is still handy to have a source
 					// so we add it back
 					if (js.map.sources && js.map.sources.length == 0) {
@@ -351,7 +351,7 @@ export default class Component {
 					});
 				}
 				if (css.map) {
-					css.map = remapping([css.map, compile_options.sourceMap], () => null);
+					css.map = remapping([css.map, compile_options.sourcemap], () => null);
 				}
 			}
 		}

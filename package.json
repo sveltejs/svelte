@@ -90,10 +90,10 @@
     "rollup": "^1.27.14",
     "source-map": "^0.7.3",
     "source-map-support": "^0.5.13",
+    "sourcemap-codec": "^1.4.8",
     "tiny-glob": "^0.2.6",
     "tslib": "^1.10.0",
-    "typescript": "^3.5.3",
-    "sourcemap-codec": "^1.4.8"
+    "typescript": "^3.5.3"
   },
   "nyc": {
     "include": [

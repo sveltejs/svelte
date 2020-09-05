@@ -42,7 +42,7 @@ describe("sourcemaps", () => {
 			
 			const { js, css } = svelte.compile(processed_input, {
 				filename,
-				sourceMap: processed_map,
+				sourcemap: processed_map,
 				outputFilename: `${outputFilename}.js`,
 				cssOutputFilename: `${outputFilename}.css`
 			});
