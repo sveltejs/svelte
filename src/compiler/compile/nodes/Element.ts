@@ -214,12 +214,12 @@ export default class Element extends Node {
 				}
 
 				case 'Transition':
-				{
-					const transition = new Transition(component, this, scope, node);
-					if (node.intro) this.intro = transition;
-					if (node.outro) this.outro = transition;
-					break;
-				}
+					{
+						const transition = new Transition(component, this, scope, node);
+						if (node.intro) this.intro = transition;
+						if (node.outro) this.outro = transition;
+						break;
+					}
 
 				case 'Animation':
 					this.animation = new Animation(component, this, scope, node);
@@ -357,6 +357,67 @@ export default class Element extends Node {
 						message
 					});
 				}
+
+				const implicitAriaSemantics = new Map([
+					// ['a', ''],
+					// ['area', ''],
+					['article', 'article'],
+					['aside', 'complementary'],
+					['body', 'document'],
+					['button', 'button'],
+					['datalist', 'listbox'],
+					['dd', 'definition'],
+					['dfn', 'term'],
+					['details', 'group'],
+					['dialog', 'dialog'],
+					['dt', 'term'],
+					['fieldset', 'group'],
+					['figure', 'figure'],
+					// ['footer', ''],
+					['form', 'form'],
+					['h1', 'heading'],
+					['h2', 'heading'],
+					['h3', 'heading'],
+					['h4', 'heading'],
+					['h5', 'heading'],
+					['h6', 'heading'],
+					// ['header', ''],
+					['hr', 'separator'],
+					// ['img', ''],
+					// ['input', ''],
+					['li', 'listitem'],
+					['link', 'link'],
+					['main', 'main'],
+					['math', 'math'],
+					['menu', 'list'],
+					['nav', 'navigation'],
+					['ol', 'list'],
+					['optgroup', 'group'],
+					['option', 'option'],
+					['output', 'status'],
+					['progress', 'progressbar'],
+					['section', 'region'],
+					// ['select', ''],
+					['summary', 'button'],
+					['table', 'table'],
+					['tbody', 'rowgroup'],
+					['textarea', 'textbox'],
+					['tfoot', 'rowgroup'],
+					['thead', 'rowgroup'],
+					// ['td', ''],
+					// ['th', ''],
+					['tr', 'row'],
+					['ul', 'list'],
+					['ul', 'list']
+				]);
+
+				const redundantAriaRole = implicitAriaSemantics.get(this.name);
+
+				if (value === redundantAriaRole)
+					component.warn(this, {
+						code: `a11y-no-redundant-roles`,
+						message: `A11y: The element <${this.name}> has an implicit role of '${redundantAriaRole}'. Defining this explicitly is redundant and should be avoided.`
+					});
 			}
 
 			// no-access-key
@@ -519,7 +580,7 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'label') {
-			const has_input_child = this.children.some(i => (i instanceof Element && a11y_labelable.has(i.name) ));
+			const has_input_child = this.children.some(i => (i instanceof Element && a11y_labelable.has(i.name)));
 			if (!attribute_map.has('for') && !has_input_child) {
 				component.warn(this, {
 					code: `a11y-label-has-associated-control`,
