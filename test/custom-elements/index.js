@@ -3,59 +3,113 @@ import * as path from 'path';
 import * as http from 'http';
 import { rollup } from 'rollup';
 import * as virtual from '@rollup/plugin-virtual';
-import * as puppeteer from 'puppeteer';
+
+import { TestcafeController, testcafeHolder } from '../testcafeController.js';
+import * as getPort from 'get-port';
+import { platform as os_platform } from 'os';
+import { execSync } from 'child_process';
+
 import { addLineNumbers, loadConfig, loadSvelte } from "../helpers.js";
 import { deepEqual } from 'assert';
 
-const page = `
-<body>
-	<main></main>
-	<script src='/bundle.js'></script>
-</body>
+const pageHtml = `\
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Svelte Test</title>
+	</head>
+	<body>
+		<main></main>
+		<script src="/bundle.js"></script>
+	</body>
+</html>
 `;
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('custom-elements', function() {
-	this.timeout(10000);
+const testGroup = 'custom-elements';
+describe(testGroup, async function(env) {
+	this.timeout(20000);
 
 	let svelte;
 	let server;
-	let browser;
+	let serverPort;
+	let testcafe;
+	let controller;
 	let code;
 
 	function create_server() {
 		return new Promise((fulfil, reject) => {
 			const server = http.createServer((req, res) => {
-				if (req.url === '/') {
-					res.end(page);
-				}
-
-				if (req.url === '/bundle.js') {
-					res.end(code);
-				}
+				if (req.url == '/') res.end(pageHtml);
+				if (req.url == '/bundle.js') res.end(code);
 			});
-
 			server.on('error', reject);
-
-			server.listen('6789', () => {
+			server.listen(serverPort, () => {
 				fulfil(server);
 			});
 		});
 	}
 
 	before(async () => {
+		this.timeout(10000);
+
 		svelte = loadSvelte();
-		console.log('[custom-element] Loaded Svelte');
+		console.log('    i Loaded Svelte');
+
+		serverPort = await getPort();
 		server = await create_server();
-		console.log('[custom-element] Started server');
-		browser = await puppeteer.launch();
-		console.log('[custom-element] Launched puppeteer browser');
+		console.log(`    i Started server at http://localhost:${serverPort}/`);
+
+		// init testcafe
+
+		// write tempfile
+		TestcafeController.createTestFile({
+			fixtureName: testGroup,
+		});
+
+		// guess browser
+		const testcafeBrowserList = await TestcafeController.testcafeListLocalBrowsers();
+		// browsers sorted by personal taste
+		const preferredBrowsers = [
+			'chrome', 'chromium', 'chrome-canary',
+			'firefox', 'safari', 'opera', 'edge', 'ie',
+		];
+		// get default browser name: harder on windows, crazy hard on darwin
+		// https://github.com/jakub-g/x-default-browser
+		const userDefaultBrowser = ['linux', 'freebsd'].includes(os_platform())
+			? execSync('xdg-mime query default x-scheme-handler/http').toString()
+				.replace(/.*(firefox|chrome|chromium|opera).*\n/i, '$1').toLowerCase()
+			: null;
+		const browser = testcafeBrowserList.includes(userDefaultBrowser)
+			? userDefaultBrowser
+			: preferredBrowsers.find( // find first match
+					b => testcafeBrowserList.includes(b)
+				) || testcafeBrowserList[0];
+		const HL = browser.match(/(firefox|chro)/) ? ':headless' : '';
+
+		// find open ports
+		const port1 = await getPort();
+		const port2 = await getPort();
+
+		console.log('    i Starting TestCafe in browser '+browser+HL);
+		testcafe = await TestcafeController.createTestCafeWithRunner(
+			[ browser+HL ], port1, port2,
+		);
+
+		console.log('    i Getting TestCafe controller');
+		// this will print 'Running tests in: ....'
+		const testController = await testcafeHolder.get();
+		controller = new TestcafeController(testController);
+
+		console.log('    i init done');
 	});
 
 	after(async () => {
 		if (server) server.close();
-		if (browser) await browser.close();
+		if (testcafe) await testcafe.close();
+		TestcafeController.deleteTestFile();
 	});
 
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
@@ -105,29 +159,60 @@ describe('custom-elements', function() {
 				]
 			});
 
-			const result = await bundle.generate({ format: 'iife', name: 'test' });
-			code = result.output[0].code;
-
-			const page = await browser.newPage();
-
-			page.on('console', (type, ...args) => {
-				console[type](...args);
-			});
-
-			page.on('error', error => {
-				console.log('>>> an error happened');
-				console.error(error);
-			});
+			const generated = await bundle.generate({ format: 'iife', name: 'test' });
+			code = generated.output[0].code;
 
 			try {
-				await page.goto('http://localhost:6789');
+				//const t1 = (new Date()).getTime();
 
-				const result = await page.evaluate(() => test(document.querySelector('main')));
-				if (result) console.log(result);
-			} catch (err) {
+				// start loading test page
+				await controller.t.navigateTo('http://localhost:'+serverPort+'/');
+
+				await controller.t.wait(50); // TODO better?
+
+				// wait for page load: retry loop
+				// takes between 500 and 1500 ms
+				let testFunc;
+				for (let i = 0; i < 100; i++) {
+					try {
+						testFunc = controller.getFunc(
+							() => (
+								test(document.querySelector('main'))
+							)
+						);
+						break;
+					}
+					catch (e) {
+						// script not yet loaded
+						// assert: e.errMsg == "ReferenceError: test is not defined"
+						await controller.t.wait(50);
+						process.stdout.write('.');
+					}
+				}
+
+				const testResult = await testFunc();
+
+				//const t2 = (new Date()).getTime();
+				//console.log('      '+(t2-t1)+' ms for page load');
+
+				// print console messages
+				// in current version of testcafe
+				// the messages are not sorted by time (bug)
+				const testConsole = await controller.popConsole();
+				['error', 'log', 'info', 'warn'].forEach(key => {
+					if (testConsole[key].length > 0) {
+						console.log(key+': '+testConsole[key].join('\n'+key+': '));
+					}
+				})
+
+				if (testResult) console.log(testResult);
+			}
+			catch (err) {
 				console.log(addLineNumbers(code));
-				throw err;
-			} finally {
+				// testcafe error objects are verbose and useless
+				throw err.errMsg ? new Error(err.errMsg) : err;
+			}
+			finally {
 				if (expected_warnings) {
 					deepEqual(warnings.map(w => ({
 						code: w.code,
