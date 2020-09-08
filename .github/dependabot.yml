@@ -7,14 +7,14 @@ updates:
     time: '00:00'
   open-pull-requests-limit: 10
   reviewers:
-  - Rich-Harris
-  - Conduitry
+    - Rich-Harris
+    - Conduitry
   assignees:
-  - Rich-Harris
-  - Conduitry
-  - antony
+    - Rich-Harris
+    - Conduitry
+    - antony
   labels:
-  - dependencies
+    - dependencies
   commit-message:
     prefix: fix
     prefix-development: chore
