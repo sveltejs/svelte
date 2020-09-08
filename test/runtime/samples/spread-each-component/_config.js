@@ -20,5 +20,5 @@ export default {
 			<div data-a="3" data-b="4"></div>
 			<div data-a="1" data-b="2"></div>
 		`);
-	},
+	}
 };

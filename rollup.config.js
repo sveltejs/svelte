@@ -99,12 +99,20 @@ export default [
 			json(),
 			ts_plugin
 		],
-		output: {
-			file: 'compiler.js',
-			format: is_publish ? 'umd' : 'cjs',
-			name: 'svelte',
-			sourcemap: true,
-		},
+		output: [
+			{
+				file: 'compiler.js',
+				format: is_publish ? 'umd' : 'cjs',
+				name: 'svelte',
+				sourcemap: true,
+			},
+			{
+				file: 'compiler.mjs',
+				format: 'esm',
+				name: 'svelte',
+				sourcemap: true,
+			}
+		],
 		external: is_publish
 			? []
 			: id => id === 'acorn' || id === 'magic-string' || id.startsWith('css-tree')

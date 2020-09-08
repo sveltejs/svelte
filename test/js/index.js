@@ -25,7 +25,7 @@ describe("js", () => {
 		(solo ? it.only : it)(dir, () => {
 			const config = loadConfig(`${resolved}/_config.js`);
 
-			const input = fs.readFileSync(`${resolved}/input.svelte`, "utf-8").replace(/\s+$/, "");
+			const input = fs.readFileSync(`${resolved}/input.svelte`, "utf-8").replace(/\s+$/, "").replace(/\r/g, "");
 
 			let actual;
 
@@ -56,8 +56,8 @@ describe("js", () => {
 
 			try {
 				assert.equal(
-					actual.trim().replace(/^[ \t]+$/gm, ""),
-					expected.trim().replace(/^[ \t]+$/gm, "")
+					actual.trim().replace(/^[ \t]+$/gm, "").replace(/\r/g, ""),
+					expected.trim().replace(/^[ \t]+$/gm, "").replace(/\r/g, "")
 				);
 			} catch (error) {
 				if (shouldUpdateExpected()) {

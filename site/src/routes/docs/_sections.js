@@ -85,7 +85,7 @@ export default function() {
 			renderer.heading = (text, level, rawtext) => {
 				let slug;
 
-				const match = /<a href="([^"]+)">(.+)<\/a>/.exec(text);
+				const match = /<a href="([^"]+)"[^>]*>(.+)<\/a>/.exec(text);
 				if (match) {
 					slug = match[1];
 					text = match[2];

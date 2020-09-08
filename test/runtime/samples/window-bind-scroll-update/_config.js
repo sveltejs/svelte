@@ -33,5 +33,5 @@ export default {
 
 		clock.flush();
 		assert.equal(window.pageYOffset, 100);
-	},
+	}
 };

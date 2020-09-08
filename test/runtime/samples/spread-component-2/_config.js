@@ -10,7 +10,7 @@ export default {
 			baz: 50 + 2,
 			qux: 1,
 			quux: 'quuxx'
-		}],
+		}]
 	},
 
 	html: `
