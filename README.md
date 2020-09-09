@@ -12,6 +12,7 @@
   </a>
 </p>
 
+_Read this in other languages: [Spanish](README.es-es.md)_
 
 ## What is Svelte?
 
