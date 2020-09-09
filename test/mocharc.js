@@ -10,8 +10,8 @@ module.exports = {
   ui: 'bdd',
   // files to import before tests
   file: [
-    'test/test.js',
-  ],
+    'test/test.js'
+  ]
   // not used. test files are called from test/test.js
   //'watch-files': ['test/*/index.js'],
 };

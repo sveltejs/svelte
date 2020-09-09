@@ -4,7 +4,7 @@ module.exports = Object.assign(
   {
     fullTrace: true,
     require: [
-      'source-map-support/register',
-    ],
+      'source-map-support/register'
+    ]
   }
 );
