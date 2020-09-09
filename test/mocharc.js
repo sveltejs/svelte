@@ -1,3 +1,5 @@
+// paths are relative to project root
+
 module.exports = {
   diff: true,
   extension: ['js'],
@@ -9,10 +11,7 @@ module.exports = {
   // files to import before tests
   file: [
     'test/test.js',
-    //'test/setup.js',
-    //'test/helpers.js',
-    //'internal/index.js',
   ],
-  // test files
+  // not used. test files are called from test/test.js
   //'watch-files': ['test/*/index.js'],
 };
