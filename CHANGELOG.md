@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.25.0
 
 * Use `null` rather than `undefined` for coerced bound value of `<input type="number">` ([#1701](https://github.com/sveltejs/svelte/issues/1701))
 * Expose object of which slots have received content in `$$slots` ([#2106](https://github.com/sveltejs/svelte/issues/2106))
