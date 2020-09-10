@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Use `null` rather than `undefined` for coerced bound value of `<input type="number">` ([#1701](https://github.com/sveltejs/svelte/issues/1701))
 * Expose object of which slots have received content in `$$slots` ([#2106](https://github.com/sveltejs/svelte/issues/2106))
 * Correctly disallow using lifecycle hooks after synchronous component initialisation ([#4259](https://github.com/sveltejs/svelte/issues/4259), [#4899](https://github.com/sveltejs/svelte/issues/4899))
 * Re-throw an unhandled rejection when an `{#await}` block with no `{:catch}` gets a rejection ([#5129](https://github.com/sveltejs/svelte/issues/5129))
