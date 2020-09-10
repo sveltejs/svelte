@@ -6,7 +6,7 @@
     "dev": "npm run copy-workers && sapper dev",
     "copy-workers": "node scripts/copy-workers.js",
     "migrate": "node-pg-migrate -r dotenv/config",
-    "sapper": "npm run copy-workers && sapper build --legacy",
+    "build": "npm run copy-workers && sapper build --legacy",
     "update": "node scripts/update_template.js && node scripts/get-contributors.js && node scripts/update_whos_using.js",
     "start": "node __sapper__/build",
     "test": "mocha -r esm test/**",
