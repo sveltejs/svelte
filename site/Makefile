@@ -9,7 +9,7 @@ sapper:
 	@echo "\n~> updating template & contributors list"
 	@npm run update
 	@echo "\n~> building Sapper app"
-	@npm run sapper
+	@npm run build
 
 
 docker:
