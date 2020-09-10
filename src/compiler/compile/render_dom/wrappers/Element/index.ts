@@ -997,12 +997,14 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 				state.quasi.value.raw += `"`;
 			});
 
-			state.quasi.value.raw += '>';
-
 			if (!wrapper.void) {
+				state.quasi.value.raw += '>';
+
 				to_html(wrapper.fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
 				state.quasi.value.raw += `</${wrapper.node.name}>`;
+			} else {
+				state.quasi.value.raw += '/>';
 			}
 		}
 	});

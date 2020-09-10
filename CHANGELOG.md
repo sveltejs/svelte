@@ -11,6 +11,7 @@
 * Fix using `<svelte:component>` in `{:catch}` ([#5259](https://github.com/sveltejs/svelte/issues/5259))
 * Fix setting one-way bound `<input>` `value` to `undefined` when it has spread attributes ([#5270](https://github.com/sveltejs/svelte/issues/5270))
 * Fix deep two-way bindings inside an `{#each}` involving a store ([#5286](https://github.com/sveltejs/svelte/issues/5286))
+* Use valid XHTML for elements that are optimised and inserted with `.innerHTML` ([#5315](https://github.com/sveltejs/svelte/issues/5315))
 * Fix reactivity of `$$props` in slot fallback content ([#5367](https://github.com/sveltejs/svelte/issues/5367))
 
 ## 3.24.1
