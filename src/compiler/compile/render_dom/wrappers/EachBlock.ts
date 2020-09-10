@@ -7,6 +7,7 @@ import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import ElseBlock from '../../nodes/ElseBlock';
 import { Identifier, Node } from 'estree';
+import get_object from '../../utils/get_object';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -139,11 +140,8 @@ export default class EachBlockWrapper extends Wrapper {
 			view_length: fixed_length === null ? x`${iterations}.length` : fixed_length
 		};
 
-		const store =
-			node.expression.node.type === 'Identifier' &&
-			node.expression.node.name[0] === '$'
-				? node.expression.node.name.slice(1)
-				: null;
+		const object = get_object(node.expression.node);
+		const store = object.type === 'Identifier' && object.name[0] === '$' ? object.name.slice(1) : null;
 
 		node.contexts.forEach(prop => {
 			this.block.bindings.set(prop.key.name, {
