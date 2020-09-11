@@ -70,7 +70,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		const namespace = this.parent.node.namespace;
 		// some processing only applies to html namespace (and not MathML, SVG, or Svelte Native etc)
 		if (namespace && namespace != 'html' && namespace != namespaces.html) {
-			// attributes outside of the html namespaced may be case sensitive
+			// attributes outside of the html namespace may be case sensitive
 			// namespaces for which we don't have case corrections, are left in their original case (required for svelte-native)
 			this.name = (valid_namespaces.indexOf(namespace) >= 0) ? fix_attribute_casing(this.node.name) : this.node.name;
 			this.is_indirectly_bound_value = false;
