@@ -7,12 +7,12 @@ export default {
 		</page>
 	`,
 	options: {
-		hydrate: false, // Hydrations currently doesn't work, the case sensitivity is only handled for svg elements.
+		hydrate: false // Hydrations currently doesn't work, the case sensitivity is only handled for svg elements.
 	},
 
 	test({ assert, target }) {
 		const attr = sel => target.querySelector(sel).attributes[0].name;
 		assert.equal(attr('page'), "horizontalAlignment");
-		assert.equal(attr('button'), "textWrap")
+		assert.equal(attr('button'), "textWrap");
 	}
 };
