@@ -947,12 +947,6 @@ export default class Component {
 							const variable = component.var_lookup.get(name);
 
 							if (variable.export_name && variable.writable) {
-								const insert = variable.subscribable
-									? get_insert(variable)
-									: null;
-
-								parent[key].splice(index + 1, 0, insert);
-
 								declarator.id = {
 									type: 'ObjectPattern',
 									properties: [{
@@ -973,7 +967,9 @@ export default class Component {
 								};
 
 								declarator.init = x`$$props`;
-							} else if (variable.subscribable) {
+							}
+
+							if (variable.subscribable && declarator.init) {
 								const insert = get_insert(variable);
 								parent[key].splice(index + 1, 0, ...insert);
 							}
