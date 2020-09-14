@@ -8,7 +8,7 @@ Rich Harris, the creator of Svelte, taught a course:
 
 There are also a couple of third-party courses:
 
-- [Egghead](https://egghead.io/playlists/getting-started-with-svelte-3-05a8541a)
-- [Udemy](https://www.udemy.com/sveltejs-the-complete-guide/)
+- [Egghead](https://egghead.io/browse/frameworks/svelte)
+- [Udemy](https://www.udemy.com/courses/search/?q=sveltejs+svelte)
 
 Note that Udemy very frequently has discounts over 90%.
