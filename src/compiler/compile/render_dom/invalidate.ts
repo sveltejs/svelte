@@ -31,10 +31,9 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 
 	function get_invalidated(variable: Var, node?: Expression) {
 		if (main_execution_context && !variable.subscribable && variable.name[0] !== '$') {
-			return node || x`${variable.name}`;
+			return node;
 		}
-
-		return renderer.invalidate(variable.name);
+		return renderer.invalidate(variable.name, undefined, main_execution_context);
 	}
 
 	if (head) {
@@ -44,12 +43,15 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 			return get_invalidated(head, node);
 		} else {
 			const is_store_value = head.name[0] === '$' && head.name[1] !== '$';
-			const extra_args = tail.map(variable => get_invalidated(variable));
+			const extra_args = tail.map(variable => get_invalidated(variable)).filter(Boolean);
 
 			const pass_value = (
-				extra_args.length > 0 ||
-				(node.type === 'AssignmentExpression' && node.left.type !== 'Identifier') ||
-				(node.type === 'UpdateExpression' && (!node.prefix || node.argument.type !== 'Identifier'))
+				!main_execution_context && 
+				(
+					extra_args.length > 0 ||
+					(node.type === 'AssignmentExpression' && node.left.type !== 'Identifier') ||
+					(node.type === 'UpdateExpression' && (!node.prefix || node.argument.type !== 'Identifier'))
+				)
 			);
 
 			if (pass_value) {
@@ -63,7 +65,9 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 				? x`@set_store_value(${head.name.slice(1)}, ${node}, ${extra_args})`
 				: !main_execution_context
 					? x`$$invalidate(${renderer.context_lookup.get(head.name).index}, ${node}, ${extra_args})`
-					: node;
+					: extra_args.length
+						? [node, ...extra_args]
+						: node;
 
 			if (head.subscribable && head.reassigned) {
 				const subscribe = `$$subscribe_${head.name}`;

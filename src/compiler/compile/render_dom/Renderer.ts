@@ -166,12 +166,14 @@ export default class Renderer {
 		return member;
 	}
 
-	invalidate(name: string, value?) {
+	invalidate(name: string, value?, main_execution_context: boolean = false) {
 		const variable = this.component.var_lookup.get(name);
 		const member = this.context_lookup.get(name);
 
 		if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {
-			return x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${value || name}))`;
+			return main_execution_context
+			  ? x`${`$$subscribe_${name}`}(${value || name})`
+			  : x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${value || name}))`;
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
