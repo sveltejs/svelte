@@ -23,10 +23,10 @@
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
-    "test": "mocha --config .mocharc.js",
+    "test": "mocha",
     "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts",
-    "quicktest": "mocha --config .mocharc.js",
-    "precoverage": "c8 mocha --config .mocharc.coverage.js",
+    "quicktest": "mocha",
+    "precoverage": "c8 mocha",
     "coverage": "c8 report --reporter=text-lcov > coverage.lcov && c8 report --reporter=html",
     "codecov": "codecov",
     "precodecov": "npm run coverage",
