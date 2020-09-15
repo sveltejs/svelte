@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix specificity of certain styles involving a child selector ([#4795](https://github.com/sveltejs/svelte/issues/4795))
 * Fix scoping of styles involving child selector and `*` ([#5370](https://github.com/sveltejs/svelte/issues/5370))
 
 ## 3.25.0
