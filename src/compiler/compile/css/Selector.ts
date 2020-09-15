@@ -65,9 +65,8 @@ export default class Selector {
 
 	transform(code: MagicString, attr: string, max_amount_class_specificity_increased: number) {
 		const amount_class_specificity_to_increase = max_amount_class_specificity_increased - this.blocks.filter(block => block.should_encapsulate).length;
-		attr = attr.repeat(amount_class_specificity_to_increase + 1);
 
-		function encapsulate_block(block: Block) {
+		function encapsulate_block(block: Block, attr: string) {
 			let i = block.selectors.length;
 
 			while (i--) {
@@ -89,15 +88,14 @@ export default class Selector {
 			}
 		}
 
-		this.blocks.forEach((block) => {
+		this.blocks.forEach((block, index) => {
 			if (block.global) {
 				const selector = block.selectors[0];
 				const first = selector.children[0];
 				const last = selector.children[selector.children.length - 1];
 				code.remove(selector.start, first.start).remove(last.end, selector.end);
 			}
-
-			if (block.should_encapsulate) encapsulate_block(block);
+			if (block.should_encapsulate) encapsulate_block(block, index === this.blocks.length - 1 ? attr.repeat(amount_class_specificity_to_increase + 1) : attr);
 		});
 	}
 
