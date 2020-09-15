@@ -152,7 +152,7 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 	if (!block) return false;
 
 	if (!node) {
-		return blocks.every(block => block.global);
+		return block.global && blocks.every(block => block.global);
 	}
 
 	switch (block_might_apply_to_node(block, node)) {
@@ -208,7 +208,7 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 	return true;
 }
 
-function block_might_apply_to_node(block, node): BlockAppliesToNode {
+function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToNode {
 	let i = block.selectors.length;
 
 	while (i--) {
