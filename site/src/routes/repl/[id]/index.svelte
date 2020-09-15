@@ -117,7 +117,7 @@
 <style>
 	.repl-outer {
 		position: relative;
-		height: 100%;
+		height: calc(100vh - var(--nav-h));
 		--app-controls-h: 5.6rem;
 		--pane-controls-h: 4.2rem;
 		overflow: hidden;
