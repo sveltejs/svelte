@@ -4,6 +4,6 @@
 	export let thirdValue = 0;
 </script>
 
-{#key [value, anotherValue]}
+{#key value + anotherValue}
 	<div>{value}{anotherValue}{thirdValue}</div>
 {/key}

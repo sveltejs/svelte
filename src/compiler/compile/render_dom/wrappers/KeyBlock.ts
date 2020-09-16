@@ -30,12 +30,16 @@ export default class KeyBlockWrapper extends Wrapper {
 
 		this.dependencies = node.expression.dynamic_dependencies();
 
-		this.block = block.child({
-			comment: create_debugging_comment(node, renderer.component),
-			name: renderer.component.get_unique_name("create_key_block"),
-			type: "key"
-		});
+		if (this.dependencies.length) {
+			block = block.child({
+				comment: create_debugging_comment(node, renderer.component),
+				name: renderer.component.get_unique_name("create_key_block"),
+				type: "key"
+			});
+			renderer.blocks.push(block);
+		}
 
+		this.block = block;
 		this.fragment = new FragmentWrapper(
 			renderer,
 			this.block,
@@ -44,11 +48,21 @@ export default class KeyBlockWrapper extends Wrapper {
 			strip_whitespace,
 			next_sibling
 		);
-
-		renderer.blocks.push(this.block);
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+		if (this.dependencies.length === 0) {
+			this.render_static_key(block, parent_node, parent_nodes);
+		} else {
+			this.render_dynamic_key(block, parent_node, parent_nodes);
+		}
+	}
+
+	render_static_key(_block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+		this.fragment.render(this.block, parent_node, parent_nodes);
+	}
+
+	render_dynamic_key(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		this.fragment.render(
 			this.block,
 			null,
@@ -59,6 +73,13 @@ export default class KeyBlockWrapper extends Wrapper {
 			this.block.has_intro_method || this.block.has_outro_method
 		);
 		const dynamic = this.block.has_update_method;
+
+		const previous_key = block.get_unique_name('previous_key');
+		const snippet = this.node.expression.manipulate(block);
+		block.add_variable(previous_key, snippet);
+
+		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
+		const condition = x`${this.renderer.dirty(this.dependencies)} && ${not_equal}(${previous_key}, ${previous_key} = ${snippet})`;
 
 		block.chunks.init.push(b`
 			let ${this.var} = ${this.block.name}(#ctx);
@@ -73,41 +94,36 @@ export default class KeyBlockWrapper extends Wrapper {
 			});`
 		);
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
-
-		if (this.dependencies.length) {
-			const body = b`
-				${
-					has_transitions
-						? b`
-							@group_outros();
-							@transition_out(${this.var}, 1, 1, @noop);
-							@check_outros();
-						`
-						: b`${this.var}.d(1);`
-				}
-				${this.var} = ${this.block.name}(#ctx);
-				${this.var}.c();
-				${has_transitions && b`@transition_in(${this.var})`}
-				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
-			`;
-
-			if (dynamic) {
-				block.chunks.update.push(b`
-					if (${this.renderer.dirty(this.dependencies)}) {
-						${body}
-					} else {
-						${this.var}.p(#ctx, #dirty);
-					}
-				`);
-			} else {
-				block.chunks.update.push(b`
-					if (${this.renderer.dirty(this.dependencies)}) {
-						${body}
-					}
-				`);
+		const body = b`
+			${
+				has_transitions
+					? b`
+						@group_outros();
+						@transition_out(${this.var}, 1, 1, @noop);
+						@check_outros();
+					`
+					: b`${this.var}.d(1);`
 			}
-		} else if (dynamic) {
-			block.chunks.update.push(b`${this.var}.p(#ctx, #dirty);`);
+			${this.var} = ${this.block.name}(#ctx);
+			${this.var}.c();
+			${has_transitions && b`@transition_in(${this.var})`}
+			${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+		`;
+
+		if (dynamic) {
+			block.chunks.update.push(b`
+				if (${condition}) {
+					${body}
+				} else {
+					${this.var}.p(#ctx, #dirty);
+				}
+			`);
+		} else {
+			block.chunks.update.push(b`
+				if (${condition}) {
+					${body}
+				}
+			`);
 		}
 
 		if (has_transitions) {

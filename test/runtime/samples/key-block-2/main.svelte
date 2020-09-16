@@ -4,7 +4,5 @@
 </script>
 
 {#key value}
-	<div>{value}</div>
+	<div>{value}{reactive}</div>
 {/key}
-
-<div>{reactive}</div>
