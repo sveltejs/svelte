@@ -1,4 +1,4 @@
-import { b } from 'code-red';
+import { x, b } from 'code-red';
 import Component from '../Component';
 import { CompileOptions, CssResult } from '../../interfaces';
 import { string_literal } from '../utils/stringify';
@@ -6,6 +6,8 @@ import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
 import { LabeledStatement, Statement, Node } from 'estree';
+import { walk } from 'estree-walker';
+import { extract_names } from 'periscopic';
 
 export default function ssr(
 	component: Component,
@@ -51,6 +53,58 @@ export default function ssr(
 				: assignment;
 		})
 		.filter(Boolean);
+
+	// instrument get/set store value
+	if (component.ast.instance) {
+		let scope = component.instance_scope;
+		const map = component.instance_scope_map;
+
+		walk(component.ast.instance.content, {
+			enter(node: Node) {
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+			},
+			leave(node: Node) {
+				if (map.has(node)) {
+					scope = scope.parent;
+				}
+
+				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
+					const names = new Set(extract_names(assignee));
+
+					const vars = Array.from(names)
+						.filter(name => {
+							const owner = scope.find_owner(name);
+							return !owner || owner === component.instance_scope;
+						})
+						.map(name => component.var_lookup.get(name))
+						.filter(variable =>	{
+							return variable && 
+								!variable.hoistable &&
+								!variable.global &&
+								!variable.module &&
+								(
+									variable.subscribable || variable.name[0] === '$'
+								);
+						})
+						.map(variable => {
+							if (variable.subscribable) {
+								return x`${'$' + variable.name} = @get_store_value(${variable.name})`;
+							}
+							if (variable.name[0] === '$') {
+								return x`${variable.name.slice(1)}.set(${variable.name})`;
+							}
+						});
+
+					if (vars.length) {
+						this.replace(x`@identity(${node}, ${vars})`);
+					}
+				}
+			}
+		});
+	}
 
 	component.rewrite_props(({ name }) => {
 		const value = `$${name}`;
@@ -126,7 +180,10 @@ export default function ssr(
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
 			if (store && store.hoistable) {
-				return b`let ${name} = @get_store_value(${store_name});`;
+				return b`
+					${component.compile_options.dev && b`@validate_store(${store_name}, '${store_name}');`}
+					let ${name} = @get_store_value(${store_name});
+				`;
 			}
 			return b`let ${name};`;
 		}),

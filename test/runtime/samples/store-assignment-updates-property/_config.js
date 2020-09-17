@@ -5,7 +5,6 @@ export default {
 		<button></button>
 		<button></button>
 	`,
-	skip_if_ssr: true,
 
 	async test({ assert, component, target, window }) {
 		const [btn1, btn2] = target.querySelectorAll('button');
