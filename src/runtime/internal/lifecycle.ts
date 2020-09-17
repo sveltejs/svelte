@@ -11,20 +11,20 @@ export function get_current_component() {
 	return current_component;
 }
 
-export function beforeUpdate(fn) {
-	get_current_component().$$.before_update.push(fn);
+export function beforeUpdate(...callbacks) {
+	get_current_component().$$.before_update.push(...callbacks);
 }
 
-export function onMount(fn) {
-	get_current_component().$$.on_mount.push(fn);
+export function onMount(...callbacks) {
+	get_current_component().$$.on_mount.push(...callbacks);
 }
 
-export function afterUpdate(fn) {
-	get_current_component().$$.after_update.push(fn);
+export function afterUpdate(...callbacks) {
+	get_current_component().$$.after_update.push(...callbacks);
 }
 
-export function onDestroy(fn) {
-	get_current_component().$$.on_destroy.push(fn);
+export function onDestroy(...callbacks) {
+	get_current_component().$$.on_destroy.push(...callbacks);
 }
 
 export function createEventDispatcher<
