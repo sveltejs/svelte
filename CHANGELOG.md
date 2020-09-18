@@ -5,6 +5,7 @@
 * Support `use:obj.method` as actions ([#3935](https://github.com/sveltejs/svelte/issues/3935))
 * Support `_` as numeric separator ([#5407](https://github.com/sveltejs/svelte/issues/5407))
 * Fix assignments to properties on store values ([#5412](https://github.com/sveltejs/svelte/issues/5412))
+* Add special style scoping handling of `[open]` selectors on `<details>` elements ([#5421](https://github.com/sveltejs/svelte/issues/5421))
 * Support `import.meta` in template expressions ([#5422](https://github.com/sveltejs/svelte/issues/5422))
 
 ## 3.25.1
