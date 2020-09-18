@@ -2,5 +2,5 @@
 	const url = import.meta.url;
 </script>
 
-{ url }
-{ import.meta.url }
+{url}
+{import.meta.url}
