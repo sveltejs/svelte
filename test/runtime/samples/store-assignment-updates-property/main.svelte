@@ -4,13 +4,13 @@
 	const a = writable({ foo: 1, bar: 2 });
 	$a.foo = 3;
 
-	let b = writable({ foo: 1, bar: 2 });
+	const b = writable({ foo: 1, bar: 2 });
 	$b = { foo: 3 };
 
 	function update() {
 		$a.foo = $a.foo + 1;
-		$b = { foo: $b.foo + 1, qux: 0 };	
-	}	
+		$b = { foo: $b.foo + 1, qux: 0 };
+	}
 </script>
 
 <p>a: {JSON.stringify($a)}</p>
