@@ -26,13 +26,13 @@ export function add_action(block: Block, target: string, action: Action) {
 
 	block.add_variable(id);
 
-	const [obj, ...property] = action.name.split('.');
+	const [obj, ...properties] = action.name.split('.');
 
 	const fn = block.renderer.reference(obj);
 
-	if (property.length) {
+	if (properties.length) {
 		block.event_listeners.push(
-			x`@action_destroyer(${id} = ${fn}.${property.join('.')}(${target}, ${snippet}))`
+			x`@action_destroyer(${id} = ${fn}.${properties.join('.')}(${target}, ${snippet}))`
 		);
 	} else {
 		block.event_listeners.push(
