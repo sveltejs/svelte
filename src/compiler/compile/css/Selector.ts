@@ -11,6 +11,10 @@ enum BlockAppliesToNode {
 	UnknownSelectorType
 }
 
+const whitelist_attribute_selector = new Map([
+	['details', new Set(['open'])]
+]);
+
 export default class Selector {
 	node: CssNode;
 	stylesheet: Stylesheet;
@@ -232,7 +236,11 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 		}
 
 		else if (selector.type === 'AttributeSelector') {
-			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return BlockAppliesToNode.NotPossible;
+			if (
+				!(whitelist_attribute_selector.has(node.name.toLowerCase()) && whitelist_attribute_selector.get(node.name.toLowerCase()).has(selector.name.name.toLowerCase())) &&
+				!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) {
+				return BlockAppliesToNode.NotPossible;
+			}
 		}
 
 		else if (selector.type === 'TypeSelector') {
