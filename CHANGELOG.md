@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## Unreleased
+
+* Support `_` as numeric separator ([#5407](https://github.com/sveltejs/svelte/issues/5407))
+* Support `import.meta` in template expressions ([#5422](https://github.com/sveltejs/svelte/issues/5422))
+
 ## 3.25.1
 
 * Fix specificity of certain styles involving a child selector ([#4795](https://github.com/sveltejs/svelte/issues/4795))
