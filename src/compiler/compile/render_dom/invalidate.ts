@@ -62,7 +62,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 			}
 
 			let invalidate = is_store_value
-				? x`@set_store_value(${head.name.slice(1)}, ${node}, ${extra_args})`
+				? x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name})`
 				: !main_execution_context
 					? x`$$invalidate(${renderer.context_lookup.get(head.name).index}, ${node}, ${extra_args})`
 					: extra_args.length

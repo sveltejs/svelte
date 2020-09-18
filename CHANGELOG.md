@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Support `_` as numeric separator ([#5407](https://github.com/sveltejs/svelte/issues/5407))
+* Fix assignments to properties on store values ([#5412](https://github.com/sveltejs/svelte/issues/5412))
 * Support `import.meta` in template expressions ([#5422](https://github.com/sveltejs/svelte/issues/5422))
 
 ## 3.25.1
