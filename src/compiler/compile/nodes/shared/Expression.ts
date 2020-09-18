@@ -64,6 +64,8 @@ export default class Expression {
 			enter(node: any, parent: any, key: string) {
 				// don't manipulate shorthand props twice
 				if (key === 'value' && parent.shorthand) return;
+				// don't manipulate `import.meta`, `new.target`
+				if (node.type === 'MetaProperty') return this.skip();
 
 				if (map.has(node)) {
 					scope = map.get(node);
