@@ -5,7 +5,7 @@ import { string_literal } from '../utils/stringify';
 import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
-import { LabeledStatement, Statement, Node } from 'estree';
+import { LabeledStatement, Statement, Node, Expression } from 'estree';
 import { walk } from 'estree-walker';
 import { extract_names } from 'periscopic';
 
@@ -99,7 +99,14 @@ export default function ssr(
 						});
 
 					if (vars.length) {
-						this.replace(x`@identity(${node}, ${vars})`);
+						this.replace({
+							type: 'SequenceExpression',
+							expressions: [
+								node,
+								...vars,
+								assignee as Expression
+							]
+						});
 					}
 				}
 			}

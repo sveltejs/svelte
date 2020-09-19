@@ -8,16 +8,24 @@
 	// should resubscribe immediately
 	value = writable({ foo: $value.foo + 2, bar: $value.bar - 2 }); // { foo: 5, bar: 4 }
 	
+	// should mutate the store value
 	$value.baz = $value.foo + $value.bar; // { foo: 5, bar: 4, baz: 9 }
 	
 	// should resubscribe immediately
 	value = writable({ qux: $value.baz - $value.foo }); // { qux: 4 }
 
-	// should update the store immediately
-	$value = { baz: $value.qux }; // { baz: 4 }
+	// making sure instrumentation returns the expression value
+	$value = {
+		one: writable(
+			$value = {
+				two: ({ $value } = { '$value': { fred: $value.qux } }) // { fred: 4 }
+			}, // { two: { $value: { fred: 4 } } }
+		), // { one: { two: { $value: { fred: 4 } } } }
+	};
 
-	value.update(val => ({ answer: val.baz })); // { answer: 4 }
-	value = value; // for ssr
+	const one = $value.one;
+
+	value.update(val => ({ answer: $one.two.$value.fred })); // { answer: 4 }
 </script>
 
 {JSON.stringify($value)}
