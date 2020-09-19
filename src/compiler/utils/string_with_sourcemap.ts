@@ -138,7 +138,7 @@ export class StringWithSourcemap {
 
 		// combine the mappings
 
-		// this.map is readonly, so we copy
+		// this.map is read-only, so we copy
 		let new_mappings = this.map.mappings.slice();
 
 		// combine:
@@ -147,14 +147,18 @@ export class StringWithSourcemap {
 		// columns of 2 must be shifted
 		const end = get_end_location(this.generated);
 		const col_offset = end.column + 1;
+
 		const first_line =
 			other_mappings.length == 0
 				? []
-				: other_mappings[0].map((seg) => {
-						const new_seg = seg.slice() as MappingSegment;
-						new_seg[0] = seg[0] + col_offset;
-						return new_seg;
-					});
+				: col_offset == 0
+					? other_mappings[0]
+					: other_mappings[0].map((seg) => {
+							// shift columns
+							const new_seg = seg.slice() as MappingSegment;
+							new_seg[0] = seg[0] + col_offset;
+							return new_seg;
+						});
 
 		// append segments to last line of first map
 		new_mappings[new_mappings.length - 1] =

@@ -46,6 +46,46 @@ interface Replacement {
 	replacement: StringWithSourcemap;
 }
 
+async function replace_async(
+	filename: string,
+	source: string,
+	get_location: ReturnType<typeof getLocator>,
+	re: RegExp,
+	func: (...any) => Promise<StringWithSourcemap>
+): Promise<StringWithSourcemap> {
+	const replacements: Array<Promise<Replacement>> = [];
+	source.replace(re, (...args) => {
+		replacements.push(
+			func(...args).then(
+				res =>
+					({
+						offset: args[args.length - 2],
+						length: args[0].length,
+						replacement: res
+					}) as Replacement
+			)
+		);
+		return '';
+	});
+	let out: StringWithSourcemap;
+	let last_end = 0;
+	for (const { offset, length, replacement } of await Promise.all(
+		replacements
+	)) {
+		// content = source before replacement
+		const content = StringWithSourcemap.from_source(
+			filename, source.slice(last_end, offset), get_location(last_end));
+		out = out ? out.concat(content) : content;
+		out = out.concat(replacement);
+		last_end = offset + length;
+	}
+	// final_content = source after last replacement
+	const final_content = StringWithSourcemap.from_source(
+		filename, source.slice(last_end), get_location(last_end));
+	out = out.concat(final_content);
+	return out;
+}
+
 export default async function preprocess(
 	source: string,
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
@@ -55,23 +95,29 @@ export default async function preprocess(
 	const filename = (options && options.filename) || preprocessor.filename; // legacy
 	const dependencies = [];
 
-	const preprocessors = Array.isArray(preprocessor) ? preprocessor : [preprocessor];
+	const preprocessors = preprocessor
+		? Array.isArray(preprocessor) ? preprocessor : [preprocessor]
+		: []; // noop
 
 	const markup = preprocessors.map(p => p.markup).filter(Boolean);
 	const script = preprocessors.map(p => p.script).filter(Boolean);
 	const style = preprocessors.map(p => p.style).filter(Boolean);
 
+	// sourcemap_list is sorted in reverse order from last map (index 0) to first map (index -1)
+	// so we use sourcemap_list.unshift() to add new maps
+	// https://github.com/ampproject/remapping#multiple-transformations-of-a-file
 	const sourcemap_list: Array<Processed['map']> = [];
 
-	let get_location: ReturnType<typeof getLocator>;
-
 	function get_replacement(
+		filename: string,
 		offset: number,
+		get_location: ReturnType<typeof getLocator>,
 		original: string,
 		processed: Processed,
 		prefix: string,
 		suffix: string
 	): StringWithSourcemap {
+
 		const generated_prefix = StringWithSourcemap.from_source(
 			filename, prefix, get_location(offset));
 		const generated_suffix = StringWithSourcemap.from_source(
@@ -90,44 +136,6 @@ export default async function preprocess(
 		return map;
 	}
 
-	async function replace_async(
-		str: string,
-		re: RegExp,
-		func: (...any) => Promise<StringWithSourcemap>
-	): Promise<StringWithSourcemap> {
-		const replacement_promises: Array<Promise<Replacement>> = [];
-		str.replace(re, (...args) => {
-			replacement_promises.push(
-				func(...args).then(
-					(replacement) =>
-						({
-							offset: args[args.length - 2],
-							length: args[0].length,
-							replacement
-						}) as Replacement
-				)
-			);
-			return '';
-		});
-		const replacements = await Promise.all(replacement_promises);
-
-		let out: StringWithSourcemap;
-		let last_end = 0;
-		for (const { offset, length, replacement } of replacements) {
-			// content = source before replacement
-			const content = StringWithSourcemap.from_source(
-				filename, str.slice(last_end, offset), get_location(last_end));
-			out = out ? out.concat(content) : content;
-			out = out.concat(replacement);
-			last_end = offset + length;
-		}
-		// final_content = source after last replacement
-		const final_content = StringWithSourcemap.from_source(
-			filename, str.slice(last_end), get_location(last_end));
-		out = out.concat(final_content);
-		return out;
-	}
-
 	for (const fn of markup) {
 
 		// run markup preprocessor
@@ -136,21 +144,19 @@ export default async function preprocess(
 			filename
 		});
 
-		if (processed && processed.dependencies) {
-			dependencies.push(...processed.dependencies);
-		}
+		if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
 		source = processed ? processed.code : source;
-		if (processed && processed.map) {
-			sourcemap_list.unshift(processed.map);
-		}
+		if (processed && processed.map) sourcemap_list.unshift(processed.map);
 	}
 
 	for (const fn of script) {
-		get_location = getLocator(source);
+		const get_location = getLocator(source);
 		const res = await replace_async(
+			filename,
 			source,
+			get_location,
 			/<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi,
-			async (match, attributes = '', content, offset) => {
+			async (match, attributes = '', content = '', offset) => {
 				const no_change = () => StringWithSourcemap.from_source(
 					filename, match, get_location(offset));
 				if (!attributes && !content) {
@@ -166,16 +172,10 @@ export default async function preprocess(
 					filename
 				});
 
-				if (!processed) {
-					return no_change();
-				}
-				if (processed.dependencies) {
-					dependencies.push(...processed.dependencies);
-				}
-				return get_replacement(
-					offset, content, processed,
-					`<script${attributes}>`, `</script>`
-				);
+				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
+				return processed
+					? get_replacement(filename, offset, get_location, content, processed, `<script${attributes}>`, `</script>`)
+					: no_change();
 			}
 		);
 		source = res.generated;
@@ -183,11 +183,13 @@ export default async function preprocess(
 	}
 
 	for (const fn of style) {
-		get_location = getLocator(source);
+		const get_location = getLocator(source);
 		const res = await replace_async(
+			filename,
 			source,
+			get_location,
 			/<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi,
-			async (match, attributes = '', content, offset) => {
+			async (match, attributes = '', content = '', offset) => {
 				const no_change = () => StringWithSourcemap.from_source(
 					filename, match, get_location(offset));
 				if (!attributes && !content) {
@@ -203,27 +205,35 @@ export default async function preprocess(
 					filename
 				});
 
-				if (!processed) {
-					return no_change();
-				}
-				if (processed.dependencies) {
-					dependencies.push(...processed.dependencies);
-				}
-				return get_replacement(
-					offset, content, processed,
-					`<style${attributes}>`, `</style>`
-				);
+				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
+				return processed
+					? get_replacement(filename, offset, get_location, content, processed, `<style${attributes}>`, `</style>`)
+					: no_change();
 			}
 		);
-
 		source = res.generated;
 		sourcemap_list.unshift(res.get_sourcemap());
 	}
 
+	// HACK
+	// remove `undefined` sources in first sourcemap
+	// otherwise remapper throws error:
+	// Error: Transformation map 0 must have exactly one source file.
+	// Did you specify these with the most recent transformation maps first?
+	// test: preprocess comments
+	(firstMap => {
+		if (firstMap && firstMap.sources)
+			firstMap.sources = firstMap.sources.filter(Boolean);
+	})(sourcemap_list[0] as any);
+
+	// https://github.com/ampproject/remapping#usage
+	// https://github.com/mozilla/source-map#new-sourcemapconsumerrawsourcemap
 	const map: ReturnType<typeof remapper> =
 		sourcemap_list.length == 0
 			? null
-			: remapper(sourcemap_list as any, () => null);
+			: remapper(sourcemap_list as any, () => null, true); // true: skip optional field `sourcesContent`
+
+	if (map) delete map.file; // skip optional field `file`
 
 	return {
 		// TODO return separated output, in future version where svelte.compile supports it:
@@ -234,6 +244,7 @@ export default async function preprocess(
 		code: source,
 		dependencies: [...new Set(dependencies)],
 		map,
+
 		toString() {
 			return source;
 		}
