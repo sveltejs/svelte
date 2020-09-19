@@ -3,58 +3,58 @@ export default {
 		{
 			code: "css-unused-selector",
 			frame: `
-				17:
-				18:   /* no match */
-				19:   article ~ div {
+				10:
+				11:   /* no match */
+				12:   article ~ div { color: green; }
 				      ^
-				20:     color: green;
-				21:   }`,
+				13:   span ~ article { color: green; }
+				14:   b ~ article { color: green; }`,
 			message: 'Unused CSS selector "article ~ div"',
-			pos: 194,
-			start: { character: 194, column: 1, line: 19 },
-			end: { character: 207, column: 14, line: 19 }
+			pos: 275,
+			start: { character: 275, column: 1, line: 12 },
+			end: { character: 288, column: 14, line: 12 },
 		},
 		{
 			code: "css-unused-selector",
 			frame: `
-				20:     color: green;
-				21:   }
-				22:   span ~ article {
+				11:   /* no match */
+				12:   article ~ div { color: green; }
+				13:   span ~ article { color: green; }
 				      ^
-				23:     color: green;
-				24:   }`,
+				14:   b ~ article { color: green; }
+				15:   span ~ div { color: green; }`,
 			message: 'Unused CSS selector "span ~ article"',
-			pos: 230,
-			start: { character: 230, column: 1, line: 22 },
-			end: { character: 244, column: 15, line: 22 }
+			pos: 308,
+			start: { character: 308, column: 1, line: 13 },
+			end: { character: 322, column: 15, line: 13 },
 		},
 		{
 			code: "css-unused-selector",
 			frame: `
-				23:     color: green;
-				24:   }
-				25:   b ~ article {
+				12:   article ~ div { color: green; }
+				13:   span ~ article { color: green; }
+				14:   b ~ article { color: green; }
 				      ^
-				26:     color: green;
-				27:   }`,
+				15:   span ~ div { color: green; }
+				16: </style>`,
 			message: 'Unused CSS selector "b ~ article"',
-			pos: 267,
-			start: { character: 267, column: 1, line: 25 },
-			end: { character: 278, column: 12, line: 25 }
+			pos: 342,
+			start: { character: 342, column: 1, line: 14 },
+			end: { character: 353, column: 12, line: 14 },
 		},
 		{
 			code: "css-unused-selector",
 			frame: `
-				26:     color: green;
-				27:   }
-				28:   span ~ div {
+				13:   span ~ article { color: green; }
+				14:   b ~ article { color: green; }
+				15:   span ~ div { color: green; }
 				      ^
-				29:     color: green;
-				30:   }`,
+				16: </style>
+				17:`,
 			message: 'Unused CSS selector "span ~ div"',
-			pos: 301,
-			start: { character: 301, column: 1, line: 28 },
-			end: { character: 311, column: 11, line: 28 }
-		}
-	]
+			pos: 373,
+			start: { character: 373, column: 1, line: 15 },
+			end: { character: 383, column: 11, line: 15 },
+		},
+	],
 };

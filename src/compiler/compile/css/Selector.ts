@@ -418,18 +418,22 @@ function get_element_parent(node: Element): Element | null {
 function get_possible_element_siblings(node: INode, adjacent_only: boolean): ElementAndExist[] {
 	const result: ElementAndExist[] = [];
 	let prev: INode = node;
-	while ((prev = prev.prev) && prev.type !== 'Element') {
-		if (prev.type === 'EachBlock' || prev.type === 'IfBlock' || prev.type === 'AwaitBlock') {
+	while (prev = prev.prev) {
+		if (prev.type === 'Element') {
+			if (!prev.attributes.find(attr => attr.name.toLowerCase() === 'slot')) {
+				result.push({ element: prev as Element, exist: NodeExist.Definitely });
+			}
+
+			if (adjacent_only) {
+				break;
+			}
+		} else if (prev.type === 'EachBlock' || prev.type === 'IfBlock' || prev.type === 'AwaitBlock') {
 			const possible_last_child = get_possible_last_child(prev, adjacent_only);
 			result.push(...possible_last_child);
 			if (adjacent_only && possible_last_child.find(child => child.exist === NodeExist.Definitely)) {
 				return result;
 			}
 		}
-	}
-
-	if (prev) {
-		result.push({ element: prev as Element, exist: NodeExist.Definitely });
 	}
 
 	if (!prev || !adjacent_only) {
