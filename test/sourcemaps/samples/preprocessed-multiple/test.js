@@ -1,10 +1,10 @@
-export function test({ assert, smc, smcCss, locateInSource, locateInGenerated, locateInGeneratedCss }) {
-	const expectedBar = locateInSource('baritone');
-	const expectedBaz = locateInSource('--bazitone');
-	
-	let start = locateInGenerated('bar');
+export function test({ assert, input, js, css }) {
+	const expectedBar = input.locate('baritone');
+	const expectedBaz = input.locate('--bazitone');
 
-	const actualbar = smc.originalPositionFor({
+	let start = js.locate('bar');
+
+	const actualbar = js.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});
@@ -16,9 +16,9 @@ export function test({ assert, smc, smcCss, locateInSource, locateInGenerated, l
 		column: expectedBar.column
 	});
 
-	start = locateInGeneratedCss('--baz');
+	start = css.locate('--baz');
 
-	const actualbaz = smcCss.originalPositionFor({
+	const actualbaz = css.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});
@@ -28,5 +28,10 @@ export function test({ assert, smc, smcCss, locateInSource, locateInGenerated, l
 		name: null,
 		line: expectedBaz.line + 1,
 		column: expectedBaz.column
-	}, `couldn't find baz in css,\n gen:${JSON.stringify(start)}\n actual:${JSON.stringify(actualbaz)}\n expected:${JSON.stringify(expectedBaz)}`);
+	}, `\
+couldn't find baz in css,
+ gen: ${JSON.stringify(start)}
+ actual: ${JSON.stringify(actualbaz)}
+ expected: ${JSON.stringify(expectedBaz)}\
+`);
 }

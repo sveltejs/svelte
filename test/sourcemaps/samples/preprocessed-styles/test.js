@@ -1,10 +1,10 @@
-export function test({ assert, smcCss, locateInSource, locateInGeneratedCss }) {
-	const expectedBar = locateInSource('--baritone');
-	const expectedBaz = locateInSource('--baz');
-	
-	let start = locateInGeneratedCss('--bar');
+export function test({ assert, input, css }) {
+	const expectedBar = input.locate('--baritone');
+	const expectedBaz = input.locate('--baz');
 
-	const actualbar = smcCss.originalPositionFor({
+	let start = css.locate('--bar');
+
+	const actualbar = css.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});
@@ -14,11 +14,11 @@ export function test({ assert, smcCss, locateInSource, locateInGeneratedCss }) {
 		name: null,
 		line: expectedBar.line + 1,
 		column: expectedBar.column
-	}, `couldn't find bar in source` );
+	}, "couldn't find bar in source");
 
-	start = locateInGeneratedCss('--baz');
+	start = css.locate('--baz');
 
-	const actualbaz = smcCss.originalPositionFor({
+	const actualbaz = css.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});
@@ -28,5 +28,5 @@ export function test({ assert, smcCss, locateInSource, locateInGeneratedCss }) {
 		name: null,
 		line: expectedBaz.line + 1,
 		column: expectedBaz.column
-	}, `couldn't find baz in source` );
+	}, "couldn't find baz in source");
 }

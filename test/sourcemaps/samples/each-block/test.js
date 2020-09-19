@@ -1,10 +1,10 @@
-export function test({ assert, code, smc, map, locateInSource, locateInGenerated }) {
-	const startIndex = code.indexOf('create_main_fragment');
+export function test({ assert, input, js }) {
+	const startIndex = js.code.indexOf('create_main_fragment');
 
-	const expected = locateInSource('each');
-	const start = locateInGenerated('length', startIndex);
+	const expected = input.locate('each');
+	const start = js.locate('length', startIndex);
 
-	const actual = smc.originalPositionFor({
+	const actual = js.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});

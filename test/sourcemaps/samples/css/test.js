@@ -1,14 +1,14 @@
-export function test({ assert, smcCss, locateInSource, locateInGeneratedCss }) {
-	const expected = locateInSource( '.foo' );
+export function test({ assert, input, css }) {
+	const expected = input.locate('.foo');
 
-	const start = locateInGeneratedCss( '.foo' );
+	const start = css.locate('.foo');
 
-	const actual = smcCss.originalPositionFor({
+	const actual = css.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});
 
-	assert.deepEqual( actual, {
+	assert.deepEqual(actual, {
 		source: 'input.svelte',
 		name: null,
 		line: expected.line + 1,
