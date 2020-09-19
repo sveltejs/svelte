@@ -434,21 +434,20 @@ function get_possible_element_siblings(node: INode, adjacent_only: boolean): Ele
 
 	if (!prev || !adjacent_only) {
 		let parent: INode = node;
-		let else_block = node.type === 'ElseBlock';
+		if (node.type === 'ElseBlock') {
+			parent = parent.parent;
+		}
 		while ((parent = parent.parent) && (parent.type === 'EachBlock' || parent.type === 'IfBlock' || parent.type === 'ElseBlock' || parent.type === 'AwaitBlock')) {
 			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
 			result.push(...possible_siblings);
 			
 			if (parent.type === 'EachBlock') {
-				if (else_block) {
-					else_block = false;
-				} else {
-					for (const each_parent_last_child of get_possible_last_child(parent, adjacent_only)) {
-						result.push(each_parent_last_child);
-					}
+				// first child of each block can select the last child of each block as previous sibling
+				for (const each_parent_last_child of get_possible_last_child(parent, adjacent_only)) {
+					result.push(each_parent_last_child);
 				}
 			} else if (parent.type === 'ElseBlock') {
-				else_block = true;
+				parent = parent.parent;
 			}
 
 			if (adjacent_only && possible_siblings.find(sibling => sibling.exist === NodeExist.Definitely)) {
