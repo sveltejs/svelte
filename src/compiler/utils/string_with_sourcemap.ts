@@ -20,7 +20,7 @@ function get_end_location(s: string): SourceLocation {
 	const parts = s.split("\n");
 	return {
 		line: parts.length - 1,
-		column: parts[parts.length - 1].length - 1,
+		column: parts[parts.length - 1].length - 1
 	};
 }
 
@@ -49,7 +49,7 @@ export function sourcemap_add_offset(
 
 	return {
 		sources: map.sources,
-		mappings: new_mappings,
+		mappings: new_mappings
 	} as SourceMappings;
 }
 
@@ -86,7 +86,7 @@ export class StringWithSourcemap {
 			version: 3,
 			sources: this.map.sources,
 			names: [],
-			mappings: sourcemap_encode(this.map.mappings as any),
+			mappings: sourcemap_encode(this.map.mappings as any)
 		};
 	}
 
@@ -173,7 +173,7 @@ export class StringWithSourcemap {
 			this.generated + other.generated, {
 			sources: new_sources,
 			names: new_names,
-			mappings: new_mappings,
+			mappings: new_mappings
 		});
 	}
 
@@ -186,7 +186,7 @@ export class StringWithSourcemap {
 		const replacement_map: SourceMappings = {
 			names: [],
 			sources: [],
-			mappings: [],
+			mappings: []
 		};
 
 		if (generated.length == 0)
@@ -211,7 +211,7 @@ export class StringWithSourcemap {
 		const map: SourceMappings = {
 			names: [],
 			sources: [source_file],
-			mappings: [],
+			mappings: []
 		};
 
 		if (source.length == 0) return new StringWithSourcemap(source, map);
@@ -231,7 +231,7 @@ export class StringWithSourcemap {
 						0,
 						line_idx + offset.line,
 						// shift first line
-						pos + (line_idx == 0 ? offset.column : 0),
+						pos + (line_idx == 0 ? offset.column : 0)
 					];
 					pos = pos + s.length;
 					return seg;

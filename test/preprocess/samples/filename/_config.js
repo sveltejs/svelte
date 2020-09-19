@@ -21,6 +21,6 @@ export default {
 	options: {
 		// options.filename is preferred over preprocessor.filename
 		// see function preprocess
-		filename: 'file.svelte',
+		filename: 'file.svelte'
 	}
 };
