@@ -20,6 +20,8 @@ These last two updates come from an update to Svelte’s upstream dependency, [a
 ## Coming up
 - Anything coming down the pipe???
 
+See the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md) for a full list of features and bugfixes. 
+
 
 ---
 
