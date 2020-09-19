@@ -4,11 +4,23 @@ import { gather_possible_values, UNKNOWN } from './gather_possible_values';
 import { CssNode } from './interfaces';
 import Component from '../Component';
 import Element from '../nodes/Element';
+import { INode } from '../nodes/interfaces';
+import EachBlock from '../nodes/EachBlock';
+import IfBlock from '../nodes/IfBlock';
+import AwaitBlock from '../nodes/AwaitBlock';
 
 enum BlockAppliesToNode {
 	NotPossible,
 	Possible,
 	UnknownSelectorType
+}
+enum NodeExist {
+	Probably,
+	Definitely,
+}
+interface ElementAndExist {
+	element: Element;
+	exist: NodeExist;
 }
 
 const whitelist_attribute_selector = new Map([
@@ -39,10 +51,10 @@ export default class Selector {
 		this.used = this.local_blocks.length === 0;
 	}
 
-	apply(node: Element, stack: Element[]) {
+	apply(node: Element) {
 		const to_encapsulate: any[] = [];
 
-		apply_selector(this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
+		apply_selector(this.local_blocks.slice(), node, to_encapsulate);
 
 		if (to_encapsulate.length > 0) {
 			to_encapsulate.forEach(({ node, block }) => {
@@ -149,7 +161,7 @@ export default class Selector {
 	}
 }
 
-function apply_selector(blocks: Block[], node: Element, stack: Element[], to_encapsulate: any[]): boolean {
+function apply_selector(blocks: Block[], node: Element, to_encapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
@@ -162,7 +174,7 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 			return false;
 
 		case BlockAppliesToNode.UnknownSelectorType:
-			// bail. TODO figure out what these could be
+		// bail. TODO figure out what these could be
 			to_encapsulate.push({ node, block });
 			return true;
 	}
@@ -174,9 +186,10 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 					continue;
 				}
 
-				for (const stack_node of stack) {
-					if (block_might_apply_to_node(ancestor_block, stack_node) !== BlockAppliesToNode.NotPossible) {
-						to_encapsulate.push({ node: stack_node, block: ancestor_block });
+				let parent = node;
+				while (parent = get_element_parent(parent)) {
+					if (block_might_apply_to_node(ancestor_block, parent) !== BlockAppliesToNode.NotPossible) {
+						to_encapsulate.push({ node: parent, block: ancestor_block });
 					}
 				}
 
@@ -193,12 +206,32 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			if (apply_selector(blocks, stack.pop(), stack, to_encapsulate)) {
+			if (apply_selector(blocks, get_element_parent(node), to_encapsulate)) {
 				to_encapsulate.push({ node, block });
 				return true;
 			}
 
 			return false;
+		} else if (block.combinator.name === '+') {
+			const siblings = get_possible_element_siblings(node, true);
+			let has_match = false;
+			for (const possible_sibling of siblings) {
+				if (apply_selector(blocks.slice(), possible_sibling.element, to_encapsulate)) {
+					to_encapsulate.push({ node, block });
+					has_match = true;
+				}
+			}
+			return has_match;
+		} else if (block.combinator.name === '~') {
+			const siblings = get_possible_element_siblings(node, false);
+			let has_match = false;
+			for (const possible_sibling of siblings) {
+				if (apply_selector(blocks.slice(), possible_sibling.element, to_encapsulate)) {
+					to_encapsulate.push({ node, block });
+					has_match = true;
+				}
+			}
+			return has_match;
 		}
 
 		// TODO other combinators
@@ -374,6 +407,127 @@ function unquote(value: CssNode) {
 		return str.slice(1, str.length - 1);
 	}
 	return str;
+}
+
+function get_element_parent(node: Element): Element | null {
+	let parent: INode = node;
+	while ((parent = parent.parent) && parent.type !== 'Element');
+	return parent as Element | null;
+}
+
+function get_possible_element_siblings(node: INode, adjacent_only: boolean): ElementAndExist[] {
+	const result: ElementAndExist[] = [];
+	let prev: INode = node;
+	while ((prev = prev.prev) && prev.type !== 'Element') {
+		if (prev.type === 'EachBlock' || prev.type === 'IfBlock' || prev.type === 'AwaitBlock') {
+			const possible_last_child = get_possible_last_child(prev, adjacent_only);
+			result.push(...possible_last_child);
+			if (adjacent_only && possible_last_child.find(child => child.exist === NodeExist.Definitely)) {
+				return result;
+			}
+		}
+	}
+
+	if (prev) {
+		result.push({ element: prev as Element, exist: NodeExist.Definitely });
+	}
+
+	if (!prev || !adjacent_only) {
+		let parent: INode = node;
+		let else_block = node.type === 'ElseBlock';
+		while ((parent = parent.parent) && (parent.type === 'EachBlock' || parent.type === 'IfBlock' || parent.type === 'ElseBlock' || parent.type === 'AwaitBlock')) {
+			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
+			result.push(...possible_siblings);
+			
+			if (parent.type === 'EachBlock') {
+				if (else_block) {
+					else_block = false;
+				} else {
+					for (const each_parent_last_child of get_possible_last_child(parent, adjacent_only)) {
+						result.push(each_parent_last_child);
+					}
+				}
+			} else if (parent.type === 'ElseBlock') {
+				else_block = true;
+			}
+
+			if (adjacent_only && possible_siblings.find(sibling => sibling.exist === NodeExist.Definitely)) {
+				break;
+			}
+		}
+	}
+
+	return result;
+}
+
+function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjacent_only: boolean): ElementAndExist[] {
+	const result = [];
+
+	if (block.type === 'EachBlock') {
+		const each_result: ElementAndExist[] = loop_child(block.children, adjacent_only);
+		const else_result: ElementAndExist[] = block.else ? loop_child(block.else.children, adjacent_only) : [];
+		
+		const not_exhaustive =
+			else_result.length === 0 || !else_result.find(result => result.exist === NodeExist.Definitely);
+
+		if (not_exhaustive) {
+			each_result.forEach(result => result.exist = NodeExist.Probably);
+			else_result.forEach(result => result.exist = NodeExist.Probably);
+		}
+		result.push(...each_result, ...else_result);
+	} else if (block.type === 'IfBlock') {
+		const if_result: ElementAndExist[] = loop_child(block.children, adjacent_only);
+		const else_result: ElementAndExist[] = block.else ? loop_child(block.else.children, adjacent_only) : [];
+
+		const not_exhaustive = 
+			if_result.length === 0 || !if_result.find(result => result.exist === NodeExist.Definitely) ||
+			else_result.length === 0 || !else_result.find(result => result.exist === NodeExist.Definitely);
+
+		if (not_exhaustive) {
+			if_result.forEach(result => result.exist = NodeExist.Probably);
+			else_result.forEach(result => result.exist = NodeExist.Probably);
+		}
+
+		result.push(...if_result, ...else_result);
+	} else if (block.type === 'AwaitBlock') {
+		const pending_result: ElementAndExist[] = block.pending ? loop_child(block.pending.children, adjacent_only) : [];
+		const then_result: ElementAndExist[] = block.then ? loop_child(block.then.children, adjacent_only) : [];
+		const catch_result: ElementAndExist[] = block.catch ? loop_child(block.catch.children, adjacent_only) : [];
+
+		const not_exhaustive = 
+			pending_result.length === 0 || !pending_result.find(result => result.exist === NodeExist.Definitely) ||
+			then_result.length === 0 || !then_result.find(result => result.exist === NodeExist.Definitely) ||
+			catch_result.length === 0 || !catch_result.find(result => result.exist === NodeExist.Definitely);
+
+		if (not_exhaustive) {
+			pending_result.forEach(result => result.exist = NodeExist.Probably);
+			then_result.forEach(result => result.exist = NodeExist.Probably);
+			catch_result.forEach(result => result.exist = NodeExist.Probably);
+		}
+		result.push(...pending_result,...then_result,...catch_result);
+	}
+
+	return result;
+}
+
+function loop_child(children: INode[], adjacent_only: boolean) {
+	const result = [];
+	for (let i = children.length - 1; i >= 0; i--) {
+		const child = children[i];
+		if (child.type === 'Element') {
+			result.push({ element: child, exist: NodeExist.Definitely });
+			if (adjacent_only) {
+				break;
+			}
+		} else if (child.type === 'EachBlock' || child.type === 'IfBlock' || child.type === 'AwaitBlock') {
+			const child_result = get_possible_last_child(child, adjacent_only);
+			result.push(...child_result);
+			if (adjacent_only && child_result.find(child => child.exist === NodeExist.Definitely)) {
+				break;
+			}
+		}
+	}
+	return result;
 }
 
 class Block {
