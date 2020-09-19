@@ -1,6 +1,7 @@
 export default {
 	preprocess: {
-		filename: 'file.svelte',
+		// this is ignored cos filename is set in options
+		//filename: 'file.svelte',
 		markup: ({ content, filename }) => {
 			return {
 				code: content.replace('__MARKUP_FILENAME__', filename)
@@ -16,5 +17,10 @@ export default {
 				code: content.replace('__SCRIPT_FILENAME__', filename)
 			};
 		}
+	},
+	options: {
+		// options.filename is preferred over preprocessor.filename
+		// see function preprocess
+		filename: 'file.svelte',
 	}
 };
