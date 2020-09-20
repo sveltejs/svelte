@@ -11,6 +11,10 @@ enum BlockAppliesToNode {
 	UnknownSelectorType
 }
 
+const whitelist_attribute_selector = new Map([
+	['details', new Set(['open'])]
+]);
+
 export default class Selector {
 	node: CssNode;
 	stylesheet: Stylesheet;
@@ -65,9 +69,8 @@ export default class Selector {
 
 	transform(code: MagicString, attr: string, max_amount_class_specificity_increased: number) {
 		const amount_class_specificity_to_increase = max_amount_class_specificity_increased - this.blocks.filter(block => block.should_encapsulate).length;
-		attr = attr.repeat(amount_class_specificity_to_increase + 1);
 
-		function encapsulate_block(block: Block) {
+		function encapsulate_block(block: Block, attr: string) {
 			let i = block.selectors.length;
 
 			while (i--) {
@@ -89,15 +92,14 @@ export default class Selector {
 			}
 		}
 
-		this.blocks.forEach((block) => {
+		this.blocks.forEach((block, index) => {
 			if (block.global) {
 				const selector = block.selectors[0];
 				const first = selector.children[0];
 				const last = selector.children[selector.children.length - 1];
 				code.remove(selector.start, first.start).remove(last.end, selector.end);
 			}
-
-			if (block.should_encapsulate) encapsulate_block(block);
+			if (block.should_encapsulate) encapsulate_block(block, index === this.blocks.length - 1 ? attr.repeat(amount_class_specificity_to_increase + 1) : attr);
 		});
 	}
 
@@ -152,7 +154,7 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 	if (!block) return false;
 
 	if (!node) {
-		return blocks.every(block => block.global);
+		return block.global && blocks.every(block => block.global);
 	}
 
 	switch (block_might_apply_to_node(block, node)) {
@@ -208,7 +210,7 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 	return true;
 }
 
-function block_might_apply_to_node(block, node): BlockAppliesToNode {
+function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToNode {
 	let i = block.selectors.length;
 
 	while (i--) {
@@ -234,7 +236,11 @@ function block_might_apply_to_node(block, node): BlockAppliesToNode {
 		}
 
 		else if (selector.type === 'AttributeSelector') {
-			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return BlockAppliesToNode.NotPossible;
+			if (
+				!(whitelist_attribute_selector.has(node.name.toLowerCase()) && whitelist_attribute_selector.get(node.name.toLowerCase()).has(selector.name.name.toLowerCase())) &&
+				!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) {
+				return BlockAppliesToNode.NotPossible;
+			}
 		}
 
 		else if (selector.type === 'TypeSelector') {

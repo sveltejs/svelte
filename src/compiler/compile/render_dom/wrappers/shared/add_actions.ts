@@ -26,11 +26,19 @@ export function add_action(block: Block, target: string, action: Action) {
 
 	block.add_variable(id);
 
-	const fn = block.renderer.reference(action.name);
+	const [obj, ...properties] = action.name.split('.');
 
-	block.event_listeners.push(
-		x`@action_destroyer(${id} = ${fn}.call(null, ${target}, ${snippet}))`
-	);
+	const fn = block.renderer.reference(obj);
+
+	if (properties.length) {
+		block.event_listeners.push(
+			x`@action_destroyer(${id} = ${fn}.${properties.join('.')}(${target}, ${snippet}))`
+		);
+	} else {
+		block.event_listeners.push(
+			x`@action_destroyer(${id} = ${fn}.call(null, ${target}, ${snippet}))`
+		);
+	}
 
 	if (dependencies && dependencies.length > 0) {
 		let condition = x`${id} && @is_function(${id}.update)`;

@@ -45,6 +45,7 @@ export function flush() {
 			set_current_component(component);
 			update(component.$$);
 		}
+		set_current_component(null);
 
 		dirty_components.length = 0;
 

@@ -39,6 +39,7 @@ export default {
 		})
 		.catch((err) => {
 			assert.equal(err.message, 'this error should be thrown');
+			assert.htmlEqual(target.innerHTML, '');
 		});
 	}
 };

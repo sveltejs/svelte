@@ -868,6 +868,10 @@ export default class ElementWrapper extends Wrapper {
 				block.chunks.destroy.push(b`if (detaching && ${outro_name}) ${outro_name}.end();`);
 			}
 		}
+
+		if ((intro && intro.expression && intro.expression.dependencies.size) || (outro && outro.expression && outro.expression.dependencies.size)) {
+			block.maintain_context = true;
+		}
 	}
 
 	add_animation(block: Block) {
@@ -997,12 +1001,14 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 				state.quasi.value.raw += `"`;
 			});
 
-			state.quasi.value.raw += '>';
-
 			if (!wrapper.void) {
+				state.quasi.value.raw += '>';
+
 				to_html(wrapper.fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
 				state.quasi.value.raw += `</${wrapper.node.name}>`;
+			} else {
+				state.quasi.value.raw += '/>';
 			}
 		}
 	});
