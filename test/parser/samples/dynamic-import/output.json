@@ -275,8 +275,7 @@
 														},
 														"name": "then"
 													},
-													"computed": false,
-													"optional": false
+													"computed": false
 												},
 												"arguments": [
 													{
@@ -404,8 +403,7 @@
 																				},
 																				"name": "log"
 																			},
-																			"computed": false,
-																			"optional": false
+																			"computed": false
 																		},
 																		"arguments": [
 																			{
@@ -454,25 +452,21 @@
 																					},
 																					"name": "default"
 																				},
-																				"computed": false,
-																				"optional": false
+																				"computed": false
 																			}
-																		],
-																		"optional": false
+																		]
 																	}
 																}
 															]
 														}
 													}
-												],
-												"optional": false
+												]
 											}
 										}
 									]
 								}
 							}
-						],
-						"optional": false
+						]
 					}
 				}
 			],

@@ -2,7 +2,7 @@ export default {
 	warnings: [{
 		filename: "SvelteComponent.svelte",
 		code: `css-unused-selector`,
-		message: 'Unused CSS selector ".x"',
+		message: "Unused CSS selector",
 		start: {
 			line: 4,
 			column: 1,

@@ -170,8 +170,6 @@ function create_fragment(ctx) {
 }
 
 function instance($$self, $$props, $$invalidate) {
-	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots("Component", slots, []);
 	let { things } = $$props;
 	let { foo } = $$props;
 	let { bar } = $$props;
@@ -182,7 +180,10 @@ function instance($$self, $$props, $$invalidate) {
 		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
-	$$self.$$set = $$props => {
+	let { $$slots = {}, $$scope } = $$props;
+	validate_slots("Component", $$slots, []);
+
+	$$self.$set = $$props => {
 		if ("things" in $$props) $$invalidate(0, things = $$props.things);
 		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
 		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);

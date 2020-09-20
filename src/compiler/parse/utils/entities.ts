@@ -2030,5 +2030,5 @@ export default {
 	sc: 8827,
 	wp: 8472,
 	wr: 8768,
-	xi: 958
+	xi: 958,
 };

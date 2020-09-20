@@ -20,16 +20,13 @@ import Foo from "./Foo.svelte";
 import Bar from "./Bar.svelte";
 
 function create_fragment(ctx) {
-	let foo;
 	let t0;
-	let bar;
 	let t1;
 	let input;
 	let current;
-	let mounted;
 	let dispose;
-	foo = new Foo({ props: { x: y } });
-	bar = new Bar({ props: { x: /*z*/ ctx[0] } });
+	const foo = new Foo({ props: { x: y } });
+	const bar = new Bar({ props: { x: /*z*/ ctx[0] } });
 
 	return {
 		c() {
@@ -39,7 +36,7 @@ function create_fragment(ctx) {
 			t1 = space();
 			input = element("input");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			mount_component(foo, target, anchor);
 			insert(target, t0, anchor);
 			mount_component(bar, target, anchor);
@@ -47,11 +44,8 @@ function create_fragment(ctx) {
 			insert(target, input, anchor);
 			set_input_value(input, /*z*/ ctx[0]);
 			current = true;
-
-			if (!mounted) {
-				dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
-				mounted = true;
-			}
+			if (remount) dispose();
+			dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
 		},
 		p(ctx, [dirty]) {
 			const bar_changes = {};
@@ -79,7 +73,6 @@ function create_fragment(ctx) {
 			destroy_component(bar, detaching);
 			if (detaching) detach(t1);
 			if (detaching) detach(input);
-			mounted = false;
 			dispose();
 		}
 	};

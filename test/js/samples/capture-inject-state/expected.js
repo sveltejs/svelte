@@ -103,8 +103,6 @@ function instance($$self, $$props, $$invalidate) {
 		$$subscribe_prop = () => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe(prop, $$value => $$invalidate(2, $prop = $$value)), prop);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_prop());
-	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots("Component", slots, []);
 	let { prop } = $$props;
 	validate_store(prop, "prop");
 	$$subscribe_prop();
@@ -117,7 +115,10 @@ function instance($$self, $$props, $$invalidate) {
 		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
-	$$self.$$set = $$props => {
+	let { $$slots = {}, $$scope } = $$props;
+	validate_slots("Component", $$slots, []);
+
+	$$self.$set = $$props => {
 		if ("prop" in $$props) $$subscribe_prop($$invalidate(0, prop = $$props.prop));
 		if ("alias" in $$props) $$invalidate(1, realName = $$props.alias);
 	};

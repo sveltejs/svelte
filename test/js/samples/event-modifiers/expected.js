@@ -22,7 +22,6 @@ function create_fragment(ctx) {
 	let button1;
 	let t3;
 	let button2;
-	let mounted;
 	let dispose;
 
 	return {
@@ -37,31 +36,27 @@ function create_fragment(ctx) {
 			button2 = element("button");
 			button2.textContent = "or me!";
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, div, anchor);
 			append(div, button0);
 			append(div, t1);
 			append(div, button1);
 			append(div, t3);
 			append(div, button2);
+			if (remount) run_all(dispose);
 
-			if (!mounted) {
-				dispose = [
-					listen(button0, "click", stop_propagation(prevent_default(handleClick))),
-					listen(button1, "click", handleClick, { once: true, capture: true }),
-					listen(button2, "click", handleClick, true),
-					listen(div, "touchstart", handleTouchstart, { passive: true })
-				];
-
-				mounted = true;
-			}
+			dispose = [
+				listen(button0, "click", stop_propagation(prevent_default(handleClick))),
+				listen(button1, "click", handleClick, { once: true, capture: true }),
+				listen(button2, "click", handleClick, true),
+				listen(div, "touchstart", handleTouchstart, { passive: true })
+			];
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(div);
-			mounted = false;
 			run_all(dispose);
 		}
 	};

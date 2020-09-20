@@ -25,7 +25,7 @@ describe('custom-elements', function() {
 	let code;
 
 	function create_server() {
-		return new Promise((fulfil, reject) => {
+		return new Promise((fulfil) => {
 			const server = http.createServer((req, res) => {
 				if (req.url === '/') {
 					res.end(page);
@@ -36,8 +36,6 @@ describe('custom-elements', function() {
 				}
 			});
 
-			server.on('error', reject);
-
 			server.listen('6789', () => {
 				fulfil(server);
 			});
@@ -46,16 +44,13 @@ describe('custom-elements', function() {
 
 	before(async () => {
 		svelte = loadSvelte();
-		console.log('[custom-element] Loaded Svelte');
 		server = await create_server();
-		console.log('[custom-element] Started server');
 		browser = await puppeteer.launch();
-		console.log('[custom-element] Launched puppeteer browser');
 	});
 
 	after(async () => {
-		if (server) server.close();
-		if (browser) await browser.close();
+		server.close();
+		await browser.close();
 	});
 
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
@@ -68,7 +63,7 @@ describe('custom-elements', function() {
 		const warnings = [];
 
 		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
-			const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
+			const config = loadConfig(`./custom-elements/samples/${dir}/_config.js`);
 			const expected_warnings = config.warnings || [];
 
 			const bundle = await rollup({
@@ -87,7 +82,7 @@ describe('custom-elements', function() {
 
 						transform(code, id) {
 							if (id.endsWith('.svelte')) {
-								const compiled = svelte.compile(code.replace(/\r/g, ""), {
+								const compiled = svelte.compile(code, {
 									customElement: true,
 									dev: config.dev
 								});

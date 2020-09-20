@@ -2,6 +2,7 @@
 **/expected.js
 _output
 test/*/samples/*/output.js
+node_modules
 
 # automatically generated
 internal_exports.ts

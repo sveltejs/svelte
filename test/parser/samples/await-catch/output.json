@@ -26,10 +26,10 @@
 				},
 				"value": null,
 				"error": {
-					"type": "Identifier",
-					"name": "theError",
 					"start": 47,
-					"end": 55
+					"end": 55,
+					"type": "Identifier",
+					"name": "theError"
 				},
 				"pending": {
 					"start": 19,
@@ -152,8 +152,7 @@
 											},
 											"name": "message"
 										},
-										"computed": false,
-										"optional": false
+										"computed": false
 									}
 								}
 							]

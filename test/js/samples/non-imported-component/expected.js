@@ -17,12 +17,10 @@ import {
 import Imported from "Imported.svelte";
 
 function create_fragment(ctx) {
-	let imported;
 	let t;
-	let nonimported;
 	let current;
-	imported = new Imported({});
-	nonimported = new NonImported({});
+	const imported = new Imported({});
+	const nonimported = new NonImported({});
 
 	return {
 		c() {

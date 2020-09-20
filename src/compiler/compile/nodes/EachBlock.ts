@@ -21,7 +21,6 @@ export default class EachBlock extends AbstractBlock {
 	contexts: Context[];
 	has_animation: boolean;
 	has_binding = false;
-	has_index_binding = false;
 
 	else?: ElseBlock;
 

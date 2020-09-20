@@ -88,8 +88,8 @@ describe("ssr", () => {
 
 				try {
 					assert.equal(
-						css.code.replace(/^\s+/gm, "").replace(/[\r\n]/g, ""),
-						expectedCss.replace(/^\s+/gm, "").replace(/[\r\n]/g, "")
+						css.code.replace(/^\s+/gm, ""),
+						expectedCss.replace(/^\s+/gm, "")
 					);
 				} catch (error) {
 					if (shouldUpdateExpected()) {

@@ -12,9 +12,8 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	let nested;
 	let current;
-	nested = new /*Nested*/ ctx[0]({ props: { foo: [1, 2, 3] } });
+	const nested = new /*Nested*/ ctx[0]({ props: { foo: [1, 2, 3] } });
 
 	return {
 		c() {

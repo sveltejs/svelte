@@ -25,16 +25,16 @@
 					"name": "thePromise"
 				},
 				"value": {
-					"type": "Identifier",
-					"name": "theValue",
 					"start": 46,
-					"end": 54
+					"end": 54,
+					"type": "Identifier",
+					"name": "theValue"
 				},
 				"error": {
-					"type": "Identifier",
-					"name": "theError",
 					"start": 96,
-					"end": 104
+					"end": 104,
+					"type": "Identifier",
+					"name": "theError"
 				},
 				"pending": {
 					"start": 19,
@@ -209,8 +209,7 @@
 											},
 											"name": "message"
 										},
-										"computed": false,
-										"optional": false
+										"computed": false
 									}
 								}
 							]
