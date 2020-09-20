@@ -42,6 +42,10 @@ export function not_equal(a, b) {
 	return a != a ? b == b : a !== b;
 }
 
+export function is_empty(obj) {
+	return Object.keys(obj).length === 0;
+}
+
 export function validate_store(store, name) {
 	if (store != null && typeof store.subscribe !== 'function') {
 		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
@@ -122,6 +126,14 @@ export function compute_rest_props(props, keys) {
 	keys = new Set(keys);
 	for (const k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
 	return rest;
+}
+
+export function compute_slots(slots) {
+	const result = {};
+	for (const key in slots) {
+		result[key] = true;
+	}
+	return result;
 }
 
 export function once(fn) {

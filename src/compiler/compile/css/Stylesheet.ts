@@ -435,7 +435,7 @@ export default class Stylesheet {
 			child.warn_on_unused_selector((selector: Selector) => {
 				component.warn(selector.node, {
 					code: `css-unused-selector`,
-					message: `Unused CSS selector`
+					message: `Unused CSS selector "${this.source.slice(selector.node.start, selector.node.end)}"`
 				});
 			});
 		});

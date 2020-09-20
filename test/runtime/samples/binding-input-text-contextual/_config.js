@@ -1,6 +1,6 @@
 export default {
 	props: {
-		items: ['one', 'two', 'three'],
+		items: ['one', 'two', 'three']
 	},
 
 	html: `
@@ -65,5 +65,5 @@ export default {
 				<input><p>five</p>
 			</div>
 		`);
-	},
+	}
 };

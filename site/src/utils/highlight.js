@@ -1,6 +1,7 @@
 import { langs } from '@sveltejs/site-kit/utils/markdown.js';
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-diff';
 import 'prism-svelte';
 
 export function highlight(source, lang) {

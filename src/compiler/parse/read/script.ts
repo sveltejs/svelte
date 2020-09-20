@@ -57,6 +57,6 @@ export default function read_script(parser: Parser, start: number, attributes: N
 		start,
 		end: parser.index,
 		context: get_context(parser, attributes, start),
-		content: ast,
+		content: ast
 	};
 }

@@ -1,6 +1,6 @@
 export default {
 	compileOptions: {
 		dev: true,
-		loopGuardTimeout: 1,
-	},
+		loopGuardTimeout: 1
+	}
 };

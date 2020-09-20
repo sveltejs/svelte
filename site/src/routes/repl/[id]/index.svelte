@@ -117,7 +117,7 @@
 <style>
 	.repl-outer {
 		position: relative;
-		height: calc(100vh - var(--nav-h));
+		height: 100%;
 		--app-controls-h: 5.6rem;
 		--pane-controls-h: 4.2rem;
 		overflow: hidden;
@@ -125,6 +125,8 @@
 		padding: var(--app-controls-h) 0 0 0;
 		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.viewport {
@@ -136,6 +138,7 @@
 		width: 200%;
 		height: calc(100% - 42px);
 		transition: transform 0.3s;
+		flex: 1;
 	}
 
 	.mobile .offset {

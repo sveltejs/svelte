@@ -25,5 +25,5 @@ export default {
 
 		assert.equal(p1, p4, 'first <p> element should be retained');
 		assert.equal(p3, p5, 'last <p> element should be retained');
-	},
+	}
 };

@@ -7,6 +7,11 @@ assignees: ''
 
 ---
 
+<!--
+If you'd like to propose an implementation for a large new feature or change then please create an RFC:
+https://github.com/sveltejs/rfcs
+-->
+
 **Is your feature request related to a problem? Please describe.**
 A clear and concise description of what the problem is. For example: I'm always frustrated when [...]
 
