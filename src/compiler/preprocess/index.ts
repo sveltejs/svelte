@@ -214,17 +214,6 @@ export default async function preprocess(
 		sourcemap_list.unshift(res.get_sourcemap());
 	}
 
-	// HACK
-	// remove `undefined` sources in first sourcemap
-	// otherwise remapper throws error:
-	// Error: Transformation map 0 must have exactly one source file.
-	// Did you specify these with the most recent transformation maps first?
-	// test: preprocess comments
-	(firstMap => {
-		if (firstMap && firstMap.sources)
-			firstMap.sources = firstMap.sources.filter(Boolean);
-	})(sourcemap_list[0] as any);
-
 	// https://github.com/ampproject/remapping#usage
 	// https://github.com/mozilla/source-map#new-sourcemapconsumerrawsourcemap
 	const map: ReturnType<typeof remapper> =
