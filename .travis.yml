@@ -1,0 +1,54 @@
+language: node_js
+
+os:
+  - linux
+  - osx
+  - windows
+
+jobs:
+  include:
+
+  # stage 1: check syntax. no retry
+
+  - name: "Lint"
+    stage: stage_1
+    node_js: 10
+    os: linux
+    script: npm run lint
+
+  # stage 2: wait for one test to pass. no retry
+
+  - name: "First Test Node 10 Linux"
+    stage: stage_2
+    node_js: 10
+    os: linux
+    script: npm run test
+
+  # stage 3: run other tests in parallel. retry failed
+
+  - name: "Unit Test Node 10"
+    stage: stage_3
+    node_js: 10
+    env: COMMAND=test:unit
+
+  - name: "Test Node 14"
+    node_js: 14
+    env: COMMAND=test
+
+  - name: "Test Node 12"
+    node_js: 12
+    env: COMMAND=test
+
+  - name: "Test Node 10"
+    node_js: 10
+    env: COMMAND=test
+    os:
+      - osx
+      - windows
+
+  - name: "Test Node 8"
+    node_js: 8
+    env: COMMAND=test
+
+# retry test after timeout or non-zero exit code
+script: travis_retry npm run $COMMAND
