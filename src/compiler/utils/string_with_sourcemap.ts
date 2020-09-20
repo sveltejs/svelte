@@ -59,14 +59,16 @@ function merge_tables<T>(
 ): { table: T[]; new_idx: number[] } {
 	const table = original.slice();
 	const new_idx = [];
-	for (let j = 0; j < original.length; j++) {
-		const current = extended[j];
-		const existing = table.indexOf(current);
-		if (existing < 0) {
-			table.push(current);
-			new_idx[j] = table.length - 1;
-		} else {
-			new_idx[j] = existing;
+	if (extended) {
+		for (let j = 0; j < extended.length; j++) {
+			const current = extended[j];
+			const existing = table.indexOf(current);
+			if (existing == -1) {
+				table.push(current);
+				new_idx[j] = table.length - 1;
+			} else {
+				new_idx[j] = existing;
+			}
 		}
 	}
 	return { table, new_idx };
