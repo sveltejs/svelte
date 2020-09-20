@@ -20,15 +20,6 @@ Svelte is a new way to build web applications. It's a compiler that takes your d
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://svelte.dev/chat).
 
 
-## Supporting Svelte
-
-Svelte is an MIT-licensed open source project with its ongoing development made possible entirely by the support of awesome volunteers. If you'd like to support their efforts, please consider:
-
-- [Becoming a backer on Open Collective](https://opencollective.com/svelte).
-
-Funds donated via Open Collective will be used for compensating expenses related to Svelte's development such as hosting costs. If sufficient donations are received, funds may also be used to support Svelte's development more directly.
-
-
 ## Development
 
 Pull requests are encouraged and always welcome. [Pick an issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and help us out!
@@ -42,6 +33,11 @@ npm install
 ```
 
 > Do not use Yarn to install the dependencies, as the specific package versions in `package-lock.json` are used to build and test Svelte.
+
+> Many tests depend on newlines being preserved as `<LF>`. On Windows, you can ensure this by cloning with:
+> ```bash
+> git -c core.autocrlf=false clone https://github.com/sveltejs/svelte.git
+> ```
 
 To build the compiler, and all the other modules included in the package:
 
@@ -73,11 +69,14 @@ npm run test -- -g transition
 
 ## svelte.dev
 
-The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.dev).
+The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.dev). To develop locally:
 
-### Is svelte.dev down?
+```bash
+cd site
+npm install && npm run update
+npm run dev
+```
 
-Probably not, but it's possible. If you can't seem to access any `.dev` sites, check out [this SuperUser question and answer](https://superuser.com/q/1413402).
 
 ## License
 

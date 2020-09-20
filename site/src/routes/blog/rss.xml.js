@@ -8,18 +8,6 @@ function formatPubdate(str) {
 	return `${d} ${months[+m]} ${y} 12:00 +0000`;
 }
 
-function escapeHTML(html) {
-	const chars = {
-		'"' : 'quot',
-		"'": '#39',
-		'&': 'amp',
-		'<' : 'lt',
-		'>' : 'gt'
-	};
-
-	return html.replace(/["'&<>]/g, c => `&${chars[c]};`);
-}
-
 const rss = `
 <?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0">
@@ -35,9 +23,9 @@ const rss = `
 	</image>
 	${get_posts().filter(post => !post.metadata.draft).map(post => `
 		<item>
-			<title>${escapeHTML(post.metadata.title)}</title>
+			<title>${post.metadata.title}</title>
 			<link>https://svelte.dev/blog/${post.slug}</link>
-			<description>${escapeHTML(post.metadata.description)}</description>
+			<description>${post.metadata.description}</description>
 			<pubDate>${formatPubdate(post.metadata.pubdate)}</pubDate>
 		</item>
 	`).join('')}

@@ -19,7 +19,6 @@ function create_fragment(ctx) {
 	let audio_updating = false;
 	let audio_animationframe;
 	let audio_is_paused = true;
-	let mounted;
 	let dispose;
 
 	function audio_timeupdate_handler() {
@@ -43,7 +42,7 @@ function create_fragment(ctx) {
 			if (/*seeking*/ ctx[9] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[18].call(audio));
 			if (/*ended*/ ctx[10] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[19].call(audio));
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, audio, anchor);
 
 			if (!isNaN(/*volume*/ ctx[6])) {
@@ -56,23 +55,21 @@ function create_fragment(ctx) {
 				audio.playbackRate = /*playbackRate*/ ctx[8];
 			}
 
-			if (!mounted) {
-				dispose = [
-					listen(audio, "progress", /*audio_progress_handler*/ ctx[11]),
-					listen(audio, "loadedmetadata", /*audio_loadedmetadata_handler*/ ctx[12]),
-					listen(audio, "timeupdate", audio_timeupdate_handler),
-					listen(audio, "durationchange", /*audio_durationchange_handler*/ ctx[14]),
-					listen(audio, "play", /*audio_play_pause_handler*/ ctx[15]),
-					listen(audio, "pause", /*audio_play_pause_handler*/ ctx[15]),
-					listen(audio, "volumechange", /*audio_volumechange_handler*/ ctx[16]),
-					listen(audio, "ratechange", /*audio_ratechange_handler*/ ctx[17]),
-					listen(audio, "seeking", /*audio_seeking_seeked_handler*/ ctx[18]),
-					listen(audio, "seeked", /*audio_seeking_seeked_handler*/ ctx[18]),
-					listen(audio, "ended", /*audio_ended_handler*/ ctx[19])
-				];
+			if (remount) run_all(dispose);
 
-				mounted = true;
-			}
+			dispose = [
+				listen(audio, "progress", /*audio_progress_handler*/ ctx[11]),
+				listen(audio, "loadedmetadata", /*audio_loadedmetadata_handler*/ ctx[12]),
+				listen(audio, "timeupdate", audio_timeupdate_handler),
+				listen(audio, "durationchange", /*audio_durationchange_handler*/ ctx[14]),
+				listen(audio, "play", /*audio_play_pause_handler*/ ctx[15]),
+				listen(audio, "pause", /*audio_play_pause_handler*/ ctx[15]),
+				listen(audio, "volumechange", /*audio_volumechange_handler*/ ctx[16]),
+				listen(audio, "ratechange", /*audio_ratechange_handler*/ ctx[17]),
+				listen(audio, "seeking", /*audio_seeking_seeked_handler*/ ctx[18]),
+				listen(audio, "seeked", /*audio_seeking_seeked_handler*/ ctx[18]),
+				listen(audio, "ended", /*audio_ended_handler*/ ctx[19])
+			];
 		},
 		p(ctx, [dirty]) {
 			if (!audio_updating && dirty & /*currentTime*/ 8 && !isNaN(/*currentTime*/ ctx[3])) {
@@ -101,7 +98,6 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(audio);
-			mounted = false;
 			run_all(dispose);
 		}
 	};
@@ -173,7 +169,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(10, ended);
 	}
 
-	$$self.$$set = $$props => {
+	$$self.$set = $$props => {
 		if ("buffered" in $$props) $$invalidate(0, buffered = $$props.buffered);
 		if ("seekable" in $$props) $$invalidate(1, seekable = $$props.seekable);
 		if ("played" in $$props) $$invalidate(2, played = $$props.played);

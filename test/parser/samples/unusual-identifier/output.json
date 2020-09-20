@@ -57,10 +57,10 @@
 					}
 				],
 				"context": {
-					"type": "Identifier",
-					"name": "𐊧",
 					"start": 17,
-					"end": 19
+					"end": 19,
+					"type": "Identifier",
+					"name": "𐊧"
 				}
 			}
 		]

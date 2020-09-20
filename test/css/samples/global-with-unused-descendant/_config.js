@@ -13,7 +13,7 @@ export default {
 			3:     color: red;
 			4:   }
 		`,
-		message: 'Unused CSS selector ":global(.foo) .bar"',
+		message: 'Unused CSS selector',
 		pos: 9,
 		start: {
 			character: 9,

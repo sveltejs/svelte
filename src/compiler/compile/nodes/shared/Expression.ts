@@ -14,8 +14,6 @@ import { invalidate } from '../../render_dom/invalidate';
 import { Node, FunctionExpression, Identifier } from 'estree';
 import { TemplateNode } from '../../../interfaces';
 import { is_reserved_keyword } from '../../utils/reserved_keywords';
-import replace_object from '../../utils/replace_object';
-import EachBlock from '../EachBlock';
 
 type Owner = Wrapper | TemplateNode;
 
@@ -24,7 +22,7 @@ export default class Expression {
 	component: Component;
 	owner: Owner;
 	node: any;
-	references: Set<string> = new Set();
+	references: Set<string>;
 	dependencies: Set<string> = new Set();
 	contextual_dependencies: Set<string> = new Set();
 
@@ -50,7 +48,7 @@ export default class Expression {
 		this.template_scope = template_scope;
 		this.owner = owner;
 
-		const { dependencies, contextual_dependencies, references } = this;
+		const { dependencies, contextual_dependencies } = this;
 
 		let { map, scope } = create_scopes(info);
 		this.scope = scope;
@@ -75,18 +73,14 @@ export default class Expression {
 
 				if (is_reference(node, parent)) {
 					const { name, nodes } = flatten_reference(node);
-					references.add(name);
 
 					if (scope.has(name)) return;
 
-					if (name[0] === '$') {
-						const store_name = name.slice(1);
-						if (template_scope.names.has(store_name) || scope.has(store_name)) {
-							component.error(node, {
-								code: `contextual-store`,
-								message: `Stores must be declared at the top level of the component (this may change in a future version of Svelte)`
-							});
-						}
+					if (name[0] === '$' && template_scope.names.has(name.slice(1))) {
+						component.error(node, {
+							code: `contextual-store`,
+							message: `Stores must be declared at the top level of the component (this may change in a future version of Svelte)`
+						});
 					}
 
 					if (template_scope.is_let(name)) {
@@ -124,9 +118,12 @@ export default class Expression {
 				if (function_expression) {
 					if (node.type === 'AssignmentExpression') {
 						deep = node.left.type === 'MemberExpression';
-						names = extract_names(deep ? get_object(node.left) : node.left);
+						names = deep
+							? [get_object(node.left).name]
+							: extract_names(node.left);
 					} else if (node.type === 'UpdateExpression') {
-						names = extract_names(get_object(node.argument));
+						const { name } = get_object(node.argument);
+						names = [name];
 					}
 				}
 
@@ -137,8 +134,6 @@ export default class Expression {
 								const variable = component.var_lookup.get(name);
 								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
 							});
-							const each_block = template_scope.get_owner(name);
-							(each_block as EachBlock).has_binding = true;
 						} else {
 							component.add_reference(name);
 
@@ -202,7 +197,7 @@ export default class Expression {
 					scope = map.get(node);
 				}
 
-				if (node.type === 'Identifier' && is_reference(node, parent)) {
+				if (is_reference(node, parent)) {
 					const { name } = flatten_reference(node);
 
 					if (scope.has(name)) return;
@@ -316,10 +311,6 @@ export default class Expression {
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 
-					const object_name = get_object(assignee).name;
-
-					if (scope.has(object_name)) return;
-
 					// normally (`a = 1`, `b.c = 2`), there'll be a single name
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
@@ -335,23 +326,6 @@ export default class Expression {
 							traced.add(name);
 						}
 					});
-
-					const context = block.bindings.get(object_name);
-
-					if (context) {
-						// for `{#each array as item}`
-						// replace `item = 1` to `each_array[each_index] = 1`, this allow us to mutate the array
-						// rather than mutating the local `item` variable
-						const { snippet, object, property } = context;
-						const replaced: any = replace_object(assignee, snippet);
-						if (node.type === 'AssignmentExpression') {
-							node.left = replaced;
-						} else {
-							node.argument = replaced;
-						}
-						contextual_dependencies.add(object.name);
-						contextual_dependencies.add(property.name);
-					}
 
 					this.replace(invalidate(block.renderer, scope, node, traced));
 				}

@@ -8,12 +8,6 @@ import error from '../utils/error';
 
 type ParserState = (parser: Parser) => (ParserState | void);
 
-interface LastAutoClosedTag {
-	tag: string;
-	reason: string;
-	depth: number;
-}
-
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
@@ -26,7 +20,6 @@ export class Parser {
 	css: Style[] = [];
 	js: Script[] = [];
 	meta_tags = {};
-	last_auto_closed_tag?: LastAutoClosedTag;
 
 	constructor(template: string, options: ParserOptions) {
 		if (typeof template !== 'string') {
@@ -41,7 +34,7 @@ export class Parser {
 			start: null,
 			end: null,
 			type: 'Fragment',
-			children: []
+			children: [],
 		};
 
 		this.stack.push(this.html);

@@ -3,7 +3,7 @@ export default {
 		{
 			filename: "SvelteComponent.svelte",
 			code: `css-unused-selector`,
-			message: 'Unused CSS selector ".foo"',
+			message: "Unused CSS selector",
 			start: {
 				line: 4,
 				column: 1,
@@ -27,7 +27,7 @@ export default {
 		{
 			filename: "SvelteComponent.svelte",
 			code: `css-unused-selector`,
-			message: 'Unused CSS selector ".baz"',
+			message: "Unused CSS selector",
 			start: {
 				line: 4,
 				column: 13,

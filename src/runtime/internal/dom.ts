@@ -126,15 +126,12 @@ export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
-export function get_binding_group_value(group, __value, checked) {
-	const value = new Set();
+export function get_binding_group_value(group) {
+	const value = [];
 	for (let i = 0; i < group.length; i += 1) {
-		if (group[i].checked) value.add(group[i].__value);
+		if (group[i].checked) value.push(group[i].__value);
 	}
-	if (!checked) {
-		value.delete(__value);
-	}
-	return Array.from(value);
+	return value;
 }
 
 export function to_number(value) {
@@ -158,15 +155,13 @@ export function claim_element(nodes, name, attributes, svg) {
 		const node = nodes[i];
 		if (node.nodeName === name) {
 			let j = 0;
-			const remove = [];
 			while (j < node.attributes.length) {
-				const attribute = node.attributes[j++];
-				if (!attributes[attribute.name]) {
-					remove.push(attribute.name);
+				const attribute = node.attributes[j];
+				if (attributes[attribute.name]) {
+					j++;
+				} else {
+					node.removeAttribute(attribute.name);
 				}
-			}
-			for (let k = 0; k < remove.length; k++) {
-				node.removeAttribute(remove[k]);
 			}
 			return nodes.splice(i, 1)[0];
 		}
@@ -193,7 +188,7 @@ export function claim_space(nodes) {
 
 export function set_data(text, data) {
 	data = '' + data;
-	if (text.wholeText !== data) text.data = data;
+	if (text.data !== data) text.data = data;
 }
 
 export function set_input_value(input, value) {
@@ -299,7 +294,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 		} else if (unsubscribe && iframe.contentWindow) {
 			unsubscribe();
 		}
-
+		
 		detach(iframe);
 	};
 }
@@ -324,36 +319,29 @@ export class HtmlTag {
 	t: HTMLElement;
 	a: HTMLElement;
 
-	constructor(anchor: HTMLElement = null) {
+	constructor(html: string, anchor: HTMLElement = null) {
+		this.e = element('div');
 		this.a = anchor;
-		this.e = this.n = null;
+		this.u(html);
 	}
 
-	m(html: string, target: HTMLElement, anchor: HTMLElement = null) {
-		if (!this.e) {
-			this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
-			this.t = target;
-			this.h(html);
+	m(target: HTMLElement, anchor: HTMLElement = null) {
+		for (let i = 0; i < this.n.length; i += 1) {
+			insert(target, this.n[i], anchor);
 		}
 
-		this.i(anchor);
+		this.t = target;
 	}
 
-	h(html) {
+	u(html: string) {
 		this.e.innerHTML = html;
 		this.n = Array.from(this.e.childNodes);
 	}
 
-	i(anchor) {
-		for (let i = 0; i < this.n.length; i += 1) {
-			insert(this.t, this.n[i], anchor);
-		}
-	}
-
 	p(html: string) {
 		this.d();
-		this.h(html);
-		this.i(this.a);
+		this.u(html);
+		this.m(this.t, this.a);
 	}
 
 	d() {

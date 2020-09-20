@@ -12,27 +12,22 @@ import {
 
 function create_fragment(ctx) {
 	let input;
-	let mounted;
 	let dispose;
 
 	return {
 		c() {
 			input = element("input");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, input, anchor);
-
-			if (!mounted) {
-				dispose = listen(input, "input", make_uppercase);
-				mounted = true;
-			}
+			if (remount) dispose();
+			dispose = listen(input, "input", make_uppercase);
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(input);
-			mounted = false;
 			dispose();
 		}
 	};

@@ -17,7 +17,6 @@ function create_fragment(ctx) {
 	let input0;
 	let t;
 	let input1;
-	let mounted;
 	let dispose;
 
 	return {
@@ -28,19 +27,16 @@ function create_fragment(ctx) {
 			attr(input0, "type", "file");
 			attr(input1, "type", "file");
 		},
-		m(target, anchor) {
+		m(target, anchor, remount) {
 			insert(target, input0, anchor);
 			insert(target, t, anchor);
 			insert(target, input1, anchor);
+			if (remount) run_all(dispose);
 
-			if (!mounted) {
-				dispose = [
-					listen(input0, "change", /*input0_change_handler*/ ctx[1]),
-					listen(input1, "change", /*input1_change_handler*/ ctx[2])
-				];
-
-				mounted = true;
-			}
+			dispose = [
+				listen(input0, "change", /*input0_change_handler*/ ctx[1]),
+				listen(input1, "change", /*input1_change_handler*/ ctx[2])
+			];
 		},
 		p: noop,
 		i: noop,
@@ -49,7 +45,6 @@ function create_fragment(ctx) {
 			if (detaching) detach(input0);
 			if (detaching) detach(t);
 			if (detaching) detach(input1);
-			mounted = false;
 			run_all(dispose);
 		}
 	};
@@ -68,7 +63,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(0, files);
 	}
 
-	$$self.$$set = $$props => {
+	$$self.$set = $$props => {
 		if ("files" in $$props) $$invalidate(0, files = $$props.files);
 	};
 

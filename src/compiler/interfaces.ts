@@ -108,7 +108,7 @@ export interface CompileOptions {
 	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
-	generate?: 'dom' | 'ssr' | false;
+	generate?: string | false;
 
 	outputFilename?: string;
 	cssOutputFilename?: string;
