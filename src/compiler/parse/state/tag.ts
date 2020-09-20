@@ -25,16 +25,16 @@ const specials = new Map([
 		'script',
 		{
 			read: read_script,
-			property: 'js',
-		},
+			property: 'js'
+		}
 	],
 	[
 		'style',
 		{
 			read: read_style,
-			property: 'css',
-		},
-	],
+			property: 'css'
+		}
+	]
 ]);
 
 const SELF = /^svelte:self(?=[\s/>])/;
@@ -63,7 +63,7 @@ export default function tag(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'Comment',
-			data,
+			data
 		});
 
 		return;
@@ -116,7 +116,7 @@ export default function tag(parser: Parser) {
 		type,
 		name,
 		attributes: [],
-		children: [],
+		children: []
 	};
 
 	parser.allow_whitespace();
@@ -133,11 +133,15 @@ export default function tag(parser: Parser) {
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (parent.name !== name) {
-			if (parent.type !== 'Element')
+			if (parent.type !== 'Element') {
+				const message = parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name
+					? `</${name}> attempted to close <${name}> that was already automatically closed by <${parser.last_auto_closed_tag.reason}>`
+					: `</${name}> attempted to close an element that was not open`;
 				parser.error({
 					code: `invalid-closing-tag`,
-					message: `</${name}> attempted to close an element that was not open`
+					message
 				}, start);
+			}
 
 			parent.end = start;
 			parser.stack.pop();
@@ -148,10 +152,19 @@ export default function tag(parser: Parser) {
 		parent.end = parser.index;
 		parser.stack.pop();
 
+		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
+			parser.last_auto_closed_tag = null;
+		}
+
 		return;
 	} else if (closing_tag_omitted(parent.name, name)) {
 		parent.end = start;
 		parser.stack.pop();
+		parser.last_auto_closed_tag = {
+			tag: parent.name,
+			reason: name,
+			depth: parser.stack.length
+		};
 	}
 
 	const unique_names: Set<string> = new Set();
@@ -424,7 +437,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		end,
 		type: 'Attribute',
 		name,
-		value,
+		value
 	};
 }
 
@@ -491,7 +504,7 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 				start: index,
 				end: parser.index,
 				type: 'MustacheTag',
-				expression,
+				expression
 			});
 
 			current_chunk = {

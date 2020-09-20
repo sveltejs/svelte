@@ -21,7 +21,7 @@ export default {
 				'3: onMount',
 				'3: afterUpdate',
 				'0: onMount',
-				'0: afterUpdate',
+				'0: afterUpdate'
 			]);
 		} else {
 			assert.deepEqual(order, [
@@ -40,10 +40,10 @@ export default {
 				'3: onMount',
 				'3: afterUpdate',
 				'0: onMount',
-				'0: afterUpdate',
+				'0: afterUpdate'
 			]);
 		}
 
 		order.length = 0;
-	},
+	}
 };

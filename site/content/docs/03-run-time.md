@@ -50,6 +50,8 @@ If a function is returned from `onMount`, it will be called when the component i
 </script>
 ```
 
+> This behaviour will only work when the function passed to `onMount` *synchronously* returns a value. `async` functions always return a `Promise`, and as such cannot *synchronously* return a function.
+
 #### `beforeUpdate`
 
 ```js
@@ -287,7 +289,9 @@ The second argument to `readable` is the same as the second argument to `writabl
 ```js
 import { readable } from 'svelte/store';
 
-const time = readable(new Date(), set => {
+const time = readable(null, set => {
+	set(new Date());
+
 	const interval = setInterval(() => {
 		set(new Date());
 	}, 1000);
@@ -521,7 +525,7 @@ $: $size = big ? 100 : 10;
 
 ### `svelte/transition`
 
-The `svelte/transition` module exports six functions: `fade`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with Svelte [`transitions`](docs#transition_fn).
+The `svelte/transition` module exports seven functions: `fade`, `blur`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with Svelte [`transitions`](docs#transition_fn).
 
 #### `fade`
 

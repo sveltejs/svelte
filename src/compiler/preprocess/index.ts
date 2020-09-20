@@ -49,7 +49,7 @@ async function replace_async(str: string, re: RegExp, func: (...any) => Promise<
 					({
 						offset: args[args.length - 2],
 						length: args[0].length,
-						replacement: res,
+						replacement: res
 					}) as Replacement
 			)
 		);
@@ -94,8 +94,8 @@ export default async function preprocess(
 	for (const fn of script) {
 		source = await replace_async(
 			source,
-			/<!--[^]*?-->|<script(\s[^]*?)?>([^]*?)<\/script>/gi,
-			async (match, attributes = '', content) => {
+			/<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi,
+			async (match, attributes = '', content = '') => {
 				if (!attributes && !content) {
 					return match;
 				}
@@ -114,8 +114,8 @@ export default async function preprocess(
 	for (const fn of style) {
 		source = await replace_async(
 			source,
-			/<!--[^]*?-->|<style(\s[^]*?)?>([^]*?)<\/style>/gi,
-			async (match, attributes = '', content) => {
+			/<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi,
+			async (match, attributes = '', content = '') => {
 				if (!attributes && !content) {
 					return match;
 				}

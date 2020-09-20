@@ -51,7 +51,7 @@ Once installed, you'll have access to three new commands:
 
 ## Installing a text editor
 
-To write code, you need a good editor. The most popular choice is [Visual Studio Code](https://code.visualstudio.com/) or VSCode, and justifiably so — it's well-designed and fully-featured, and has a wealth of extensions ([including one for Svelte](https://marketplace.visualstudio.com/items?itemName=JamesBirtles.svelte-vscode), which provides syntax highlighting and diagnostic messages when you're writing components).
+To write code, you need a good editor. The most popular choice is [Visual Studio Code](https://code.visualstudio.com/) or VSCode, and justifiably so — it's well-designed and fully-featured, and has a wealth of extensions ([including one for Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), which provides syntax highlighting and diagnostic messages when you're writing components).
 
 
 ## Creating a project
@@ -73,8 +73,6 @@ npm install
 This creates a new directory, `my-svelte-project`, adds files from the [sveltejs/template](https://github.com/sveltejs/template) code repository, and installs a number of packages from npm. Open the directory in your text editor and take a look around. The app's 'source code' lives in the `src` directory, while the files your app can load are in `public`.
 
 In the `package.json` file, there is a section called `"scripts"`. These scripts define shortcuts for working with your application — `dev`, `build` and `start`. To launch your app in development mode, type the following:
-
-> TODO update the template, it needs... some work
 
 ```bash
 npm run dev

@@ -15,5 +15,5 @@ export default {
 
 		button.dispatchEvent(event);
 		assert.equal(component.clicked, 'racoon');
-	},
+	}
 };

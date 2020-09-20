@@ -9,5 +9,5 @@ export default {
 		assert.equal(target.querySelectorAll('input').length, 3);
 		assert.deepEqual(component.data, { a: 'svelte', b: 'B', c: 'C' });
 		assert.deepEqual(component.x, ['a', 'b', 'c']);
-	},
+	}
 };

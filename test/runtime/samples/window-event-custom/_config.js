@@ -11,5 +11,5 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<p>escaped: true</p>
 		`);
-	},
+	}
 };
