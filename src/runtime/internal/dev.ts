@@ -103,7 +103,7 @@ export interface SvelteComponentDev<
 	Slots extends Record<string, any> = any
 > {
 	$set(props?: Partial<Props> & Record<string, any>): void;
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: CustomEvent<Events[K]>) => void): () => void;
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }

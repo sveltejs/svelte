@@ -224,7 +224,7 @@ export class SvelteComponent<
 		this.$destroy = noop;
 	}
 
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: CustomEvent<Events[K]>) => void) {
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void) {
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 		callbacks.push(callback);
 
