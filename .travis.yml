@@ -5,6 +5,11 @@ os:
   - osx
   - windows
 
+env: COMMAND=test
+
+# retry test after timeout or non-zero exit code
+script: travis_retry npm run $COMMAND
+
 jobs:
   include:
 
@@ -26,29 +31,24 @@ jobs:
 
   # stage 3: run other tests in parallel. retry failed
 
-  - name: "Unit Test Node 10"
+  - name: "Test Node 10"
     stage: stage_3
+    node_js: 10
+    os:
+      - osx
+      - windows
+    #env: COMMAND=test
+
+  - name: "Unit Test Node 10"
     node_js: 10
     env: COMMAND=test:unit
 
   - name: "Test Node 14"
     node_js: 14
-    env: COMMAND=test
+    #env: COMMAND=test
 
   - name: "Test Node 12"
     node_js: 12
-    env: COMMAND=test
-
-  - name: "Test Node 10"
-    node_js: 10
-    env: COMMAND=test
-    os:
-      - osx
-      - windows
 
   - name: "Test Node 8"
     node_js: 8
-    env: COMMAND=test
-
-# retry test after timeout or non-zero exit code
-script: travis_retry npm run $COMMAND
