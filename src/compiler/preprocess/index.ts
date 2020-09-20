@@ -86,6 +86,33 @@ async function replace_async(
 	return out;
 }
 
+function get_replacement(
+	filename: string,
+	offset: number,
+	get_location: ReturnType<typeof getLocator>,
+	original: string,
+	processed: Processed,
+	prefix: string,
+	suffix: string
+): StringWithSourcemap {
+	const generated_prefix = StringWithSourcemap.from_source(
+		filename, prefix, get_location(offset));
+	const generated_suffix = StringWithSourcemap.from_source(
+		filename, suffix, get_location(offset + prefix.length + original.length));
+
+	let generated;
+	if (processed.map) {
+		const full_map = typeof processed.map === "string" ? JSON.parse(processed.map) : processed.map;
+		const decoded_map = { ...full_map, mappings: sourcemap_decode(full_map.mappings) };
+		const processed_offset = get_location(offset + prefix.length);
+		generated = StringWithSourcemap.from_generated(processed.code, sourcemap_add_offset(processed_offset, decoded_map));
+	} else {
+		generated = StringWithSourcemap.from_generated(processed.code);
+	}
+	const map = generated_prefix.concat(generated).concat(generated_suffix);
+	return map;
+}
+
 export default async function preprocess(
 	source: string,
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
@@ -107,34 +134,6 @@ export default async function preprocess(
 	// so we use sourcemap_list.unshift() to add new maps
 	// https://github.com/ampproject/remapping#multiple-transformations-of-a-file
 	const sourcemap_list: Array<Processed['map']> = [];
-
-	function get_replacement(
-		filename: string,
-		offset: number,
-		get_location: ReturnType<typeof getLocator>,
-		original: string,
-		processed: Processed,
-		prefix: string,
-		suffix: string
-	): StringWithSourcemap {
-
-		const generated_prefix = StringWithSourcemap.from_source(
-			filename, prefix, get_location(offset));
-		const generated_suffix = StringWithSourcemap.from_source(
-			filename, suffix, get_location(offset + prefix.length + original.length));
-
-		let generated;
-		if (processed.map) {
-			const full_map = typeof processed.map === "string" ? JSON.parse(processed.map) : processed.map;
-			const decoded_map = { ...full_map, mappings: sourcemap_decode(full_map.mappings) };
-			const processed_offset = get_location(offset + prefix.length);
-			generated = StringWithSourcemap.from_generated(processed.code, sourcemap_add_offset(processed_offset, decoded_map));
-		} else {
-			generated = StringWithSourcemap.from_generated(processed.code);
-		}
-		const map = generated_prefix.concat(generated).concat(generated_suffix);
-		return map;
-	}
 
 	for (const fn of markup) {
 
