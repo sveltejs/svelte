@@ -13,8 +13,16 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm install
-    - run: npm test
+    - uses: nick-invision/retry@v1
+      with:
+        timeout_minutes: 2
+        max_attempts: 3
+        command: npm install
+    - uses: nick-invision/retry@v1
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        command: npm test
       env:
         CI: true
   Lint:
@@ -33,4 +41,13 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
-    - run: 'npm i && npm run test:unit'
+    - uses: nick-invision/retry@v1
+      with:
+        timeout_minutes: 2
+        max_attempts: 3
+        command: npm install
+    - uses: nick-invision/retry@v1
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        command: 'npm run test:unit'
