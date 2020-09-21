@@ -6,19 +6,14 @@
 	const initial = current;
 </script>
 
-<p>
-	<span style="background-color: {initial}">initial</span>
-	<span style="background-color: {current}">current</span>
-</p>
+<p>initial: {initial}, current: {current}</p>
 
 <style>
-	span {
-		display: inline-block;
-		padding: 0.2em 0.5em;
-		margin: 0 0.2em 0.2em 0;
-		width: 4em;
+	p {
+		background-color: #ededed;
+		padding: 0.5em 0;
+		margin: 1em 0;
 		text-align: center;
 		border-radius: 0.2em;
-		color: white;
 	}
 </style>

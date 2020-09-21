@@ -1,23 +1,23 @@
 <script>
 	import Thing from './Thing.svelte';
 
-	let things = [
-		{ id: 1, color: '#0d0887' },
-		{ id: 2, color: '#6a00a8' },
-		{ id: 3, color: '#b12a90' },
-		{ id: 4, color: '#e16462' },
-		{ id: 5, color: '#fca636' }
+	let array = [
+		{ id: 1, data: 1 },
+		{ id: 2, data: 2 },
+		{ id: 3, data: 3 },
+		{ id: 4, data: 4 },
+		{ id: 5, data: 5 }
 	];
 
 	function handleClick() {
-		things = things.slice(1);
+		array = array.slice(1);
 	}
 </script>
 
 <button on:click={handleClick}>
-	Remove first thing
+	Remove first element
 </button>
 
-{#each things as thing (thing.id)}
-	<Thing current={thing.color}/>
+{#each array as element (element.id)}
+	<Thing current={element.data}/>
 {/each}
