@@ -16,145 +16,97 @@ type SourceLocation = {
 	column: number;
 };
 
-function get_end_location(s: string): SourceLocation {
-	const parts = s.split("\n");
-	return {
-		line: parts.length - 1,
-		column: parts[parts.length - 1].length - 1
-	};
+function last_line_length(s: string) {
+	return s.length - s.lastIndexOf('\n') - 1;
 }
 
 export function sourcemap_add_offset(
-	offset: SourceLocation,
-	map: SourceMappings
+	map: SourceMappings, offset: SourceLocation
 ): SourceMappings {
-	const new_mappings = map.mappings.map((line) =>
-		line.map((seg) => {
-			if (seg.length < 3) return seg;
-			const new_seg = seg.slice() as MappingSegment;
-			new_seg[2] = new_seg[2] + offset.line;
-			return new_seg;
-		})
-	);
-
-	// column changed in first line
-	if (new_mappings.length > 0) {
-		new_mappings[0] = new_mappings[0].map((seg) => {
-			if (seg.length < 4) return seg;
-			const newSeg = seg.slice() as MappingSegment;
-			newSeg[3] = newSeg[3] + offset.column;
-			return newSeg;
-		});
-	}
-
 	return {
-		sources: map.sources,
-		mappings: new_mappings
+		sources: map.sources.slice(),
+		mappings: map.mappings.map((line, line_idx) =>
+			line.map(seg => {
+				const new_seg = seg.slice() as MappingSegment;
+				if (seg.length >= 4) {
+					new_seg[2] = new_seg[2] + offset.line;
+					if (line_idx == 0)
+						new_seg[3] = new_seg[3] + offset.column;
+				}
+				return new_seg;
+			})
+		)
 	} as SourceMappings;
 }
 
-function merge_tables<T>(
-	original: T[],
-	extended: T[]
-): { table: T[]; new_idx: number[] } {
-	const table = original.slice();
-	const new_idx = [];
-	if (extended) {
-		for (let j = 0; j < extended.length; j++) {
-			const current = extended[j];
-			const existing = table.indexOf(current);
-			if (existing == -1) {
-				table.push(current);
-				new_idx[j] = table.length - 1;
-			} else {
-				new_idx[j] = existing;
-			}
+function merge_tables<T>(this_table: T[], other_table): [T[], number[]] {
+	const new_table = this_table.slice();
+	const idx_map = [];
+	other_table = other_table || [];
+	for (const [other_idx, other_val] of other_table.entries()) {
+		const this_idx = this_table.indexOf(other_val);
+		if (this_idx >= 0) {
+			idx_map[other_idx] = this_idx;
+		} else {
+			const new_idx = new_table.length;
+			new_table[new_idx] = other_val;
+			idx_map[other_idx] = new_idx;
 		}
 	}
-	return { table, new_idx };
+	return [new_table, idx_map];
 }
 
 export class StringWithSourcemap {
-	readonly generated: string;
+	readonly string: string;
 	readonly map: SourceMappings;
 
-	constructor(generated: string, map: SourceMappings) {
-		this.generated = generated;
+	constructor(string: string, map: SourceMappings) {
+		this.string = string;
 		this.map = map;
 	}
 
 	get_sourcemap() {
 		return {
 			version: 3,
-			sources: this.map.sources,
+			sources: this.map.sources.slice(),
 			names: [],
 			mappings: sourcemap_encode(this.map.mappings as any)
 		};
 	}
 
 	concat(other: StringWithSourcemap): StringWithSourcemap {
-		// if one is empty, return the other
-		if (this.generated.length == 0) return other;
-		if (other.generated.length == 0) return this;
+		// noop: if one is empty, return the other
+		if (this.string == '') return other;
+		if (other.string == '') return this;
 
-		// combine sources
-		const {
-			table: new_sources,
-			new_idx: other_source_idx
-		} = merge_tables(
-			this.map.sources,
-			other.map.sources
-		);
-
-		// combine names
-		const {
-			table: new_names,
-			new_idx: other_name_idx
-		} = merge_tables(
-			this.map.names,
-			other.map.names
-		);
+		// combine sources and names
+		const [sources, new_source_idx] = merge_tables(this.map.sources, other.map.sources);
+		const [names, new_name_idx] = merge_tables(this.map.names, other.map.names);
 
 		// update source refs and name refs in segments
 		const other_mappings = other.map.mappings.map((line) =>
-			line.map((seg) => {
-				// to reduce allocations,
-				// we only return a new segment if a value has changed
-				if (
-					// new source idx
-					(seg.length > 1 && other_source_idx[seg[1]] != seg[1]) ||
-					// new name idx
-					(seg.length == 5 && other_name_idx[seg[4]] != seg[4])
-				) {
-					const new_seg = seg.slice() as MappingSegment;
-					new_seg[1] = other_source_idx[seg[1]];
-					if (seg.length == 5) {
-						new_seg[4] = other_name_idx[seg[4]];
-					}
-					return new_seg;
-				} else {
-					return seg;
-				}
+			line.map(seg => {
+				const new_seg = seg.slice() as MappingSegment;
+				if (seg[1]) new_seg[1] = new_source_idx[seg[1]];
+				if (seg[4]) new_seg[4] = new_name_idx[seg[4]];
+				return new_seg;
 			})
 		);
 
 		// combine the mappings
 
-		// this.map is read-only, so we copy
-		let new_mappings = this.map.mappings.slice();
-
-		// combine:
+		// combine
 		// 1. last line of first map
 		// 2. first line of second map
 		// columns of 2 must be shifted
-		const end = get_end_location(this.generated);
-		const col_offset = end.column + 1;
 
-		const first_line =
+		const col_offset = last_line_length(this.string);
+
+		const first_line: MappingSegment[] =
 			other_mappings.length == 0
 				? []
 				: col_offset == 0
-					? other_mappings[0]
+					? other_mappings[0].slice() as MappingSegment[]
 					: other_mappings[0].map((seg) => {
 							// shift columns
 							const new_seg = seg.slice() as MappingSegment;
@@ -162,88 +114,54 @@ export class StringWithSourcemap {
 							return new_seg;
 						});
 
-		// append segments to last line of first map
-		new_mappings[new_mappings.length - 1] =
-		new_mappings[new_mappings.length - 1].concat(first_line);
-
-		// the other lines don't need modification and can just be appended
-		new_mappings = new_mappings.concat(
-			other_mappings.slice(1) as MappingSegment[][]
-		);
+		const mappings: MappingSegment[][] =
+			this.map.mappings.slice(0, -1)
+			.concat([
+				this.map.mappings.slice(-1)[0] // last line
+				.concat(first_line)
+			])
+			.concat(other_mappings.slice(1) as MappingSegment[][]);
 
 		return new StringWithSourcemap(
-			this.generated + other.generated, {
-			sources: new_sources,
-			names: new_names,
-			mappings: new_mappings
-		});
+			this.string + other.string,
+			{ sources, names, mappings }
+		);
 	}
 
-	static from_generated(
-		generated: string,
-		map?: SourceMappings
-	): StringWithSourcemap {
-		if (map) return new StringWithSourcemap(generated, map);
-
-		const replacement_map: SourceMappings = {
-			names: [],
-			sources: [],
-			mappings: []
-		};
-
-		if (generated.length == 0)
-			return new StringWithSourcemap(generated, replacement_map);
-
-		// we generate a mapping
-		// where the source was overwritten by the generated
-		const end = get_end_location(generated);
-		for (let i = 0; i <= end.line; i++) {
-			replacement_map.mappings.push([]); // unmapped line
-		}
-
-		return new StringWithSourcemap(generated, replacement_map);
+	static from_processed(string: string, map?: SourceMappings): StringWithSourcemap {
+		if (map) return new StringWithSourcemap(string, map);
+		map = { names: [], sources: [], mappings: [] };
+		if (string == '') return new StringWithSourcemap(string, map);
+		// add empty MappingSegment[] for every line
+		const lineCount = string.split('\n').length;
+		map.mappings = Array.from({length: lineCount}).map(_ => []);
+		return new StringWithSourcemap(string, map);
 	}
 
 	static from_source(
-		source_file: string,
-		source: string,
-		offset_in_source?: SourceLocation
+		source_file: string, source: string, offset_in_source?: SourceLocation
 	): StringWithSourcemap {
 		const offset = offset_in_source || { line: 0, column: 0 };
-		const map: SourceMappings = {
-			names: [],
-			sources: [source_file],
-			mappings: []
-		};
-
+		const map: SourceMappings = { names: [], sources: [source_file], mappings: [] };
 		if (source.length == 0) return new StringWithSourcemap(source, map);
 
 		// we create a high resolution identity map here,
 		// we know that it will eventually be merged with svelte's map,
 		// at which stage the resolution will decrease.
-		const lines = source.split("\n");
-		let pos = 0;
-		const identity_map = lines.map((line, line_idx) => {
-			const segs = line
-				.split(/([^\d\w\s]|\s+)/g)
-				.filter((s) => s !== "")
-				.map((s) => {
+		map.mappings = source.split("\n").map((line, line_idx) => {
+			let pos = 0;
+			const segs = line.split(/([^\d\w\s]|\s+)/g)
+				.filter(s => s !== "").map(s => {
 					const seg: MappingSegment = [
-						pos,
-						0,
+						pos, 0,
 						line_idx + offset.line,
-						// shift first line
-						pos + (line_idx == 0 ? offset.column : 0)
+						pos + (line_idx == 0 ? offset.column : 0) // shift first line
 					];
 					pos = pos + s.length;
 					return seg;
 				});
-			pos = 0;
 			return segs;
 		});
-
-		map.mappings = identity_map;
-
 		return new StringWithSourcemap(source, map);
 	}
 }

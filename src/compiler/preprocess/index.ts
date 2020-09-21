@@ -95,22 +95,21 @@ function get_replacement(
 	prefix: string,
 	suffix: string
 ): StringWithSourcemap {
-	const generated_prefix = StringWithSourcemap.from_source(
+	const prefix_with_map = StringWithSourcemap.from_source(
 		filename, prefix, get_location(offset));
-	const generated_suffix = StringWithSourcemap.from_source(
+	const suffix_with_map = StringWithSourcemap.from_source(
 		filename, suffix, get_location(offset + prefix.length + original.length));
 
-	let generated;
+	let processed_map_shifted;
 	if (processed.map) {
-		const full_map = typeof processed.map === "string" ? JSON.parse(processed.map) : processed.map;
-		const decoded_map = { ...full_map, mappings: sourcemap_decode(full_map.mappings) };
+		const decoded_map = typeof processed.map === "string" ? JSON.parse(processed.map) : processed.map;
+		decoded_map.mappings = sourcemap_decode(decoded_map.mappings);
 		const processed_offset = get_location(offset + prefix.length);
-		generated = StringWithSourcemap.from_generated(processed.code, sourcemap_add_offset(processed_offset, decoded_map));
-	} else {
-		generated = StringWithSourcemap.from_generated(processed.code);
+		processed_map_shifted = sourcemap_add_offset(decoded_map, processed_offset);
 	}
-	const map = generated_prefix.concat(generated).concat(generated_suffix);
-	return map;
+	const processed_with_map = StringWithSourcemap.from_processed(processed.code, processed_map_shifted);
+
+	return prefix_with_map.concat(processed_with_map).concat(suffix_with_map);
 }
 
 export default async function preprocess(
@@ -177,7 +176,7 @@ export default async function preprocess(
 					: no_change();
 			}
 		);
-		source = res.generated;
+		source = res.string;
 		sourcemap_list.unshift(res.get_sourcemap());
 	}
 
@@ -210,7 +209,7 @@ export default async function preprocess(
 					: no_change();
 			}
 		);
-		source = res.generated;
+		source = res.string;
 		sourcemap_list.unshift(res.get_sourcemap());
 	}
 

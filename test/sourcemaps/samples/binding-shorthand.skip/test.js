@@ -6,7 +6,7 @@ export function test({ assert, input, js }) {
 	start = js.locate('potato');
 	start = js.locate('potato', start.character + 1);
 	start = js.locate('potato', start.character + 1);
-  // we need the third instance of 'potato'
+	// we need the third instance of 'potato'
 
 	const actual = js.mapConsumer.originalPositionFor({
 		line: start.line + 1,
