@@ -17,11 +17,13 @@ jobs:
       with:
         timeout_minutes: 2
         max_attempts: 3
+        retry_on: timeout
         command: npm install
     - uses: nick-invision/retry@v1
       with:
         timeout_minutes: 5
         max_attempts: 3
+        retry_on: timeout
         command: npm test
       env:
         CI: true
@@ -45,9 +47,11 @@ jobs:
       with:
         timeout_minutes: 2
         max_attempts: 3
+        retry_on: timeout
         command: npm install
     - uses: nick-invision/retry@v1
       with:
         timeout_minutes: 5
         max_attempts: 3
+        retry_on: timeout
         command: 'npm run test:unit'
