@@ -7,7 +7,7 @@ type MappingSegment =
 
 type SourceMappings = {
 	sources: string[];
-	names: string[];
+	names: string[]; // names are ignored. might change in future
 	mappings: MappingSegment[][];
 };
 
@@ -79,16 +79,16 @@ export class StringWithSourcemap {
 		if (this.string == '') return other;
 		if (other.string == '') return this;
 
-		// combine sources and names
+		// combine sources
 		const [sources, new_source_idx] = merge_tables(this.map.sources, other.map.sources);
-		const [names, new_name_idx] = merge_tables(this.map.names, other.map.names);
+		//const [names, new_name_idx] = merge_tables(this.map.names, other.map.names);
 
-		// update source refs and name refs in segments
+		// update source refs
 		const other_mappings = other.map.mappings.map((line) =>
 			line.map(seg => {
 				const new_seg = seg.slice() as MappingSegment;
 				if (seg[1]) new_seg[1] = new_source_idx[seg[1]];
-				if (seg[4]) new_seg[4] = new_name_idx[seg[4]];
+				//if (seg[4]) new_seg[4] = new_name_idx[seg[4]];
 				return new_seg;
 			})
 		);
@@ -107,12 +107,10 @@ export class StringWithSourcemap {
 				? []
 				: col_offset == 0
 					? other_mappings[0].slice() as MappingSegment[]
-					: other_mappings[0].map((seg) => {
-							// shift columns
-							const new_seg = seg.slice() as MappingSegment;
-							new_seg[0] = seg[0] + col_offset;
-							return new_seg;
-						});
+					: other_mappings[0].map(seg => (
+							// shift column
+							[seg[0] + col_offset].concat(seg.slice(1)) as MappingSegment
+						));
 
 		const mappings: MappingSegment[][] =
 			this.map.mappings.slice(0, -1)
@@ -124,7 +122,7 @@ export class StringWithSourcemap {
 
 		return new StringWithSourcemap(
 			this.string + other.string,
-			{ sources, names, mappings }
+			{ sources, names: [], mappings }
 		);
 	}
 
