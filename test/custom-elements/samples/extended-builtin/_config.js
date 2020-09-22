@@ -1,7 +1,7 @@
 export default {
 	warnings: [{
-		code: "avoid-is",
-		message: "The 'is' attribute is not supported cross-browser and should be avoided",
+		code: 'avoid-is',
+		message: 'The \'is\' attribute is not supported cross-browser and should be avoided',
 		pos: 98,
 		start: {
 			character: 98,

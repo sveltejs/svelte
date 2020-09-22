@@ -120,7 +120,7 @@ export function slide(node: Element, {
 		duration,
 		easing,
 		css: t =>
-			`overflow: hidden;` +
+			'overflow: hidden;' +
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
 			`height: ${t * height}px;` +
 			`padding-top: ${t * padding_top}px;` +

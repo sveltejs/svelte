@@ -1,14 +1,14 @@
-import { Parser } from "../index";
-import { isIdentifierStart } from "acorn";
-import full_char_code_at from "../../utils/full_char_code_at";
+import { Parser } from '../index';
+import { isIdentifierStart } from 'acorn';
+import full_char_code_at from '../../utils/full_char_code_at';
 import {
 	is_bracket_open,
 	is_bracket_close,
 	is_bracket_pair,
 	get_bracket_close
-} from "../utils/bracket";
-import { parse_expression_at } from "../acorn";
-import { Pattern } from "estree";
+} from '../utils/bracket';
+import { parse_expression_at } from '../acorn';
+import { Pattern } from 'estree';
 
 export default function read_context(
 	parser: Parser
@@ -19,7 +19,7 @@ export default function read_context(
 	const code = full_char_code_at(parser.template, i);
 	if (isIdentifierStart(code, true)) {
 		return {
-			type: "Identifier",
+			type: 'Identifier',
 			name: parser.read_identifier(),
 			start,
 			end: parser.index
@@ -28,8 +28,8 @@ export default function read_context(
 
 	if (!is_bracket_open(code)) {
 		parser.error({
-			code: "unexpected-token",
-			message: "Expected identifier or destructure pattern"
+			code: 'unexpected-token',
+			message: 'Expected identifier or destructure pattern'
 		});
 	}
 
@@ -43,7 +43,7 @@ export default function read_context(
 		} else if (is_bracket_close(code)) {
 			if (!is_bracket_pair(bracket_stack[bracket_stack.length - 1], code)) {
 				parser.error({
-					code: "unexpected-token",
+					code: 'unexpected-token',
 					message: `Expected ${String.fromCharCode(
 						get_bracket_close(bracket_stack[bracket_stack.length - 1])
 					)}`

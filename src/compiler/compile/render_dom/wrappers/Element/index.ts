@@ -727,7 +727,7 @@ export default class ElementWrapper extends Wrapper {
 			`);
 		} else if (this.node.name === 'input' && this.attributes.find(attr => attr.node.name === 'value')) {
 			const type = this.node.get_static_attribute_value('type');
-			if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
+			if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
 				block.chunks.mount.push(b`
 					${this.var}.value = ${data}.value;
 				`);
@@ -998,7 +998,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 					}
 				});
 
-				state.quasi.value.raw += `"`;
+				state.quasi.value.raw += '"';
 			});
 
 			if (!wrapper.void) {

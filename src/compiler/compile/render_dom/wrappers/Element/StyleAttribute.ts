@@ -128,7 +128,7 @@ function get_style_value(chunks: Array<Text | Expression>) {
 					escaped = true;
 				} else if (char === quote_mark) {
 					quote_mark = null;
-				} else if (char === '"' || char === "'") {
+				} else if (char === '"' || char === '\'') {
 					quote_mark = char;
 				} else if (char === ')' && in_url) {
 					in_url = false;

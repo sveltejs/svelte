@@ -44,7 +44,7 @@ export default {
 				done: true
 			},
 			third: {
-				description: "Find life's true purpose",
+				description: 'Find life\'s true purpose',
 				done: false
 			}
 		}

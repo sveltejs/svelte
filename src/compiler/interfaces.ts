@@ -1,4 +1,4 @@
-import { Node, Program } from "estree";
+import { Node, Program } from 'estree';
 import { SourceMap } from 'magic-string';
 
 interface BaseNode {

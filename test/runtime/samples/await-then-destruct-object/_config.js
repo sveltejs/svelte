@@ -8,7 +8,7 @@ export default {
 	`,
 
 	async test({ assert, component, target }) {
-		await (component.thePromise = Promise.resolve({ error: "error message" }));
+		await (component.thePromise = Promise.resolve({ error: 'error message' }));
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -18,7 +18,7 @@ export default {
 			`
 		);
 
-		await (component.thePromise = Promise.resolve({ result: "42" }));
+		await (component.thePromise = Promise.resolve({ result: '42' }));
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -30,7 +30,7 @@ export default {
 
 		try {
 			await (component.thePromise = Promise.reject({
-				error: { message: "oops", code: "123" }
+				error: { message: 'oops', code: '123' }
 			}));
 		} catch (e) {
 			// do nothing
@@ -46,7 +46,7 @@ export default {
 
 		try {
 			await (component.thePromise = Promise.reject({
-				error: { message: "timeout", code: "456" }
+				error: { message: 'timeout', code: '456' }
 			}));
 		} catch (e) {
 			// do nothing

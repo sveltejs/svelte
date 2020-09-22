@@ -65,8 +65,8 @@ export default function mustache(parser: Parser) {
 			expected = 'await';
 		} else {
 			parser.error({
-				code: `unexpected-block-close`,
-				message: `Unexpected block closing tag`
+				code: 'unexpected-block-close',
+				message: 'Unexpected block closing tag'
 			});
 		}
 
@@ -98,7 +98,7 @@ export default function mustache(parser: Parser) {
 		if (parser.eat('if')) {
 			parser.error({
 				code: 'invalid-elseif',
-				message: `'elseif' should be 'else if'`
+				message: '\'elseif\' should be \'else if\''
 			});
 		}
 
@@ -109,10 +109,10 @@ export default function mustache(parser: Parser) {
 			const block = parser.current();
 			if (block.type !== 'IfBlock') {
 				parser.error({
-					code: `invalid-elseif-placement`,
+					code: 'invalid-elseif-placement',
 					message: parser.stack.some(block => block.type === 'IfBlock')
 						? `Expected to close ${to_string(block)} before seeing {:else if ...} block`
-						: `Cannot have an {:else if ...} block outside an {#if ...} block`
+						: 'Cannot have an {:else if ...} block outside an {#if ...} block'
 				});
 			}
 
@@ -147,10 +147,10 @@ export default function mustache(parser: Parser) {
 			const block = parser.current();
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 				parser.error({
-					code: `invalid-else-placement`,
+					code: 'invalid-else-placement',
 					message: parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
 						? `Expected to close ${to_string(block)} before seeing {:else} block`
-						: `Cannot have an {:else} block outside an {#if ...} or {#each ...} block`
+						: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
 				});
 			}
 
@@ -173,19 +173,19 @@ export default function mustache(parser: Parser) {
 		if (is_then) {
 			if (block.type !== 'PendingBlock') {
 				parser.error({
-					code: `invalid-then-placement`,
+					code: 'invalid-then-placement',
 					message: parser.stack.some(block => block.type === 'PendingBlock')
 						? `Expected to close ${to_string(block)} before seeing {:then} block`
-						: `Cannot have an {:then} block outside an {#await ...} block`
+						: 'Cannot have an {:then} block outside an {#await ...} block'
 				});
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
 				parser.error({
-					code: `invalid-catch-placement`,
+					code: 'invalid-catch-placement',
 					message: parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
 						? `Expected to close ${to_string(block)} before seeing {:catch} block`
-						: `Cannot have an {:catch} block outside an {#await ...} block`
+						: 'Cannot have an {:catch} block outside an {#await ...} block'
 				});
 			}
 		}
@@ -223,8 +223,8 @@ export default function mustache(parser: Parser) {
 			type = 'AwaitBlock';
 		} else {
 			parser.error({
-				code: `expected-block-type`,
-				message: `Expected if, each or await`
+				code: 'expected-block-type',
+				message: 'Expected if, each or await'
 			});
 		}
 
@@ -285,8 +285,8 @@ export default function mustache(parser: Parser) {
 				parser.allow_whitespace();
 				block.index = parser.read_identifier();
 				if (!block.index) parser.error({
-					code: `expected-name`,
-					message: `Expected name`
+					code: 'expected-name',
+					message: 'Expected name'
 				});
 
 				parser.allow_whitespace();

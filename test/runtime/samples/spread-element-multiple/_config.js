@@ -25,7 +25,7 @@ export default {
 
 		assert.htmlEqual(
 			target.innerHTML,
-			`<div data-one="10" data-b="b" data-c="new" data-d="DEEEEEE" >test</div>`
+			'<div data-one="10" data-b="b" data-c="new" data-d="DEEEEEE" >test</div>'
 		);
 	}
 };
