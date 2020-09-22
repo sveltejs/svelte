@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.26.0
 
 * Support `use:obj.method` as actions ([#3935](https://github.com/sveltejs/svelte/issues/3935))
 * Support `_` as numeric separator ([#5407](https://github.com/sveltejs/svelte/issues/5407))
