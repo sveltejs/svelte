@@ -49,9 +49,9 @@ describe("sourcemaps", () => {
 				match => match.replace(/\d/g, "x")
 			);
 
-			fs.writeFileSync(`${outputBase}.html`, preprocessed.code);
+			fs.writeFileSync(`${outputBase}.svelte`, preprocessed.code);
 			if (preprocessed.map) {
-				fs.writeFileSync(`${outputBase}.html.map`, JSON.stringify(preprocessed.map, null, 2));
+				fs.writeFileSync(`${outputBase}.svelte.map`, JSON.stringify(preprocessed.map, null, 2));
 			}
 			fs.writeFileSync(
 				`${outputBase}.js`,
@@ -77,13 +77,16 @@ describe("sourcemaps", () => {
 
 			const { test } = require(`./samples/${dir}/test.js`);
 
-			js.mapConsumer = await new SourceMapConsumer(js.map);
+			preprocessed.mapConsumer = preprocessed.map && await new SourceMapConsumer(preprocessed.map);
+			preprocessed.locate = getLocator(preprocessed.code);
+
+			js.mapConsumer = js.map && await new SourceMapConsumer(js.map);
 			js.locate = getLocator(js.code);
 
 			css.mapConsumer = css.map && await new SourceMapConsumer(css.map);
 			css.locate = getLocator(css.code || "");
 
-			test({ assert, input, js, css });
+			test({ assert, input, preprocessed, js, css });
 
 		});
 	});

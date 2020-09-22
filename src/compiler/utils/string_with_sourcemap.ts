@@ -7,7 +7,7 @@ type MappingSegment =
 
 type SourceMappings = {
 	sources: string[];
-	names: string[]; // names are ignored. might change in future
+	names: string[];
 	mappings: MappingSegment[][];
 };
 
@@ -69,7 +69,7 @@ export class StringWithSourcemap {
 		return {
 			version: 3,
 			sources: this.map.sources.slice(),
-			names: [],
+			names: this.map.names.slice(),
 			mappings: sourcemap_encode(this.map.mappings as any)
 		};
 	}
@@ -79,16 +79,16 @@ export class StringWithSourcemap {
 		if (this.string == '') return other;
 		if (other.string == '') return this;
 
-		// combine sources
+		// combine sources and names
 		const [sources, new_source_idx] = merge_tables(this.map.sources, other.map.sources);
-		//const [names, new_name_idx] = merge_tables(this.map.names, other.map.names);
+		const [names, new_name_idx] = merge_tables(this.map.names, other.map.names);
 
-		// update source refs
+		// update source refs and name refs
 		const other_mappings = other.map.mappings.map((line) =>
 			line.map(seg => {
 				const new_seg = seg.slice() as MappingSegment;
 				if (seg[1]) new_seg[1] = new_source_idx[seg[1]];
-				//if (seg[4]) new_seg[4] = new_name_idx[seg[4]];
+				if (seg[4]) new_seg[4] = new_name_idx[seg[4]];
 				return new_seg;
 			})
 		);
@@ -122,7 +122,7 @@ export class StringWithSourcemap {
 
 		return new StringWithSourcemap(
 			this.string + other.string,
-			{ sources, names: [], mappings }
+			{ sources, names, mappings }
 		);
 	}
 
