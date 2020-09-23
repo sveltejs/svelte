@@ -46,23 +46,17 @@ export default class EventHandlerWrapper {
 		const args = [];
 
 		const opts = ['nonpassive', 'passive', 'once', 'capture'].filter(mod => this.node.modifiers.has(mod));
-        if (opts.length) {
-            let opts_as_string;
-
-            if (opts[0] === 'nonpassive') {
-                opts.shift();
-
-                if (!opts.includes('passive')) {
-                    opts.push('passive');
-                }
-                opts_as_string = opts.map(opt => p`${opt}: ${opt === 'passive' ? false : true}`);
-            }
-            else {
-                opts_as_string = opts.map(opt => p`${opt}: true`);
-            }
-			args.push((opts.length === 1 && opts[0] === 'capture') ? TRUE : x`{ ${opts_as_string} }`);
-		}
-	    else if (block.renderer.options.dev) {
+		if (opts.length) {
+			if (opts.length === 1 && opts[0] === 'capture') {
+				args.push(TRUE);
+			} else {
+				args.push(x`{ ${ opts.map(opt =>
+					opt === 'nonpassive'
+						? p`passive: false`
+						: p`${opt}: true`
+				) } }`);
+			}
+		} else if (block.renderer.options.dev) {
 			args.push(FALSE);
 		}
 
