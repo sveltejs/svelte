@@ -342,6 +342,31 @@ If you don't care about the pending state, you can also omit the initial block.
 {/await}
 ```
 
+### {#key ...}
+
+```sv
+{#key expression}...{/key}
+```
+
+---
+
+Key block destroys and recreates the elements when the value of the expression changes.
+
+This is useful if you want to transition the element whenever the expression value changes.
+
+```sv
+{#key value}
+	<div transition:fade>{value}</div>
+{/key}
+```
+
+Another use case is to reinitialise a Svelte component.
+
+```sv
+{#key value}
+	<Component />
+{/key}
+```
 
 ### {@html ...}
 
