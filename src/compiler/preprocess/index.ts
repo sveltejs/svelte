@@ -177,7 +177,7 @@ export default async function preprocess(
 			}
 		);
 		source = res.string;
-		sourcemap_list.unshift(res.get_sourcemap());
+		sourcemap_list.unshift(res.map);
 	}
 
 	for (const fn of style) {
@@ -210,7 +210,7 @@ export default async function preprocess(
 			}
 		);
 		source = res.string;
-		sourcemap_list.unshift(res.get_sourcemap());
+		sourcemap_list.unshift(res.map);
 	}
 
 	// https://github.com/ampproject/remapping#usage

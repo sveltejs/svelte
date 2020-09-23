@@ -1,5 +1,3 @@
-import { encode as sourcemap_encode } from "sourcemap-codec";
-
 type MappingSegment =
 	| [number]
 	| [number, number, number, number]
@@ -63,15 +61,6 @@ export class StringWithSourcemap {
 	constructor(string: string, map: SourceMappings) {
 		this.string = string;
 		this.map = map;
-	}
-
-	get_sourcemap() {
-		return {
-			version: 3,
-			sources: this.map.sources.slice(),
-			names: this.map.names.slice(),
-			mappings: sourcemap_encode(this.map.mappings as any)
-		};
 	}
 
 	concat(other: StringWithSourcemap): StringWithSourcemap {
