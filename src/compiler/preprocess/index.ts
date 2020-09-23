@@ -132,7 +132,7 @@ export default async function preprocess(
 	// sourcemap_list is sorted in reverse order from last map (index 0) to first map (index -1)
 	// so we use sourcemap_list.unshift() to add new maps
 	// https://github.com/ampproject/remapping#multiple-transformations-of-a-file
-	const sourcemap_list: Array<Processed['map']> = [];
+	let sourcemap_list: Array<Processed['map']> = [];
 
 	for (const fn of markup) {
 
@@ -213,14 +213,22 @@ export default async function preprocess(
 		sourcemap_list.unshift(res.map);
 	}
 
-	// https://github.com/ampproject/remapping#usage
-	// https://github.com/mozilla/source-map#new-sourcemapconsumerrawsourcemap
+	// remapper can throw error
+	// `Transformation map ${i} must have exactly one source file.`
+	sourcemap_list = sourcemap_list
+		.map(sourcemap => {
+			if ((sourcemap as any).sources.filter(Boolean).length == 0)
+				// fix missing source file
+				(sourcemap as any).sources = [filename];
+			return sourcemap;
+		});
+
 	const map: ReturnType<typeof remapper> =
 		sourcemap_list.length == 0
 			? null
 			: remapper(sourcemap_list as any, () => null, true); // true: skip optional field `sourcesContent`
 
-	if (map) delete map.file; // skip optional field `file`
+	if (map && !map.file) delete map.file; // skip optional field `file`
 
 	return {
 		// TODO return separated output, in future version where svelte.compile supports it:

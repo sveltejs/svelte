@@ -29,11 +29,20 @@ describe("sourcemaps", () => {
 			input.code = fs.readFileSync(inputFile, "utf-8");
 			input.locate = getLocator(input.code);
 
-			const preprocessed = await svelte.preprocess(
-				input.code,
-				config.preprocess, {
-				filename: "input.svelte"
-			});
+			let preprocessed;
+			try {
+				preprocessed = await svelte.preprocess(
+					input.code,
+					config.preprocess, {
+					filename: "input.svelte"
+				});
+			} catch (error) {
+				preprocessed = {
+					error,
+					code: '',
+					map: null
+				};
+			}
 
 			const { js, css } = svelte.compile(
 				preprocessed.code, {
