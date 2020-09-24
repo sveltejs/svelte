@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix keyed `{#each}` not reacting to key changing ([#5444](https://github.com/sveltejs/svelte/issues/5444))
 * Fix destructuring into store values ([#5449](https://github.com/sveltejs/svelte/issues/5449))
 * Fix erroneous `missing-declaration` warning with `use:obj.method` ([#5451](https://github.com/sveltejs/svelte/issues/5451))
 
