@@ -37,10 +37,11 @@ export function sourcemap_add_offset(
 	} as SourceMappings;
 }
 
-function merge_tables<T>(this_table: T[], other_table): [T[], number[]] {
+function merge_tables<T>(this_table: T[], other_table): [T[], number[], boolean] {
 	const new_table = this_table.slice();
 	const idx_map = [];
 	other_table = other_table || [];
+	let has_changed = false;
 	for (const [other_idx, other_val] of other_table.entries()) {
 		const this_idx = this_table.indexOf(other_val);
 		if (this_idx >= 0) {
@@ -49,9 +50,10 @@ function merge_tables<T>(this_table: T[], other_table): [T[], number[]] {
 			const new_idx = new_table.length;
 			new_table[new_idx] = other_val;
 			idx_map[other_idx] = new_idx;
+			has_changed = true;
 		}
 	}
-	return [new_table, idx_map];
+	return [new_table, idx_map, has_changed];
 }
 
 export class StringWithSourcemap {
@@ -69,18 +71,20 @@ export class StringWithSourcemap {
 		if (other.string == '') return this;
 
 		// combine sources and names
-		const [sources, new_source_idx] = merge_tables(this.map.sources, other.map.sources);
-		const [names, new_name_idx] = merge_tables(this.map.names, other.map.names);
+		const [sources, new_source_idx, sources_changed] = merge_tables(this.map.sources, other.map.sources);
+		const [names, new_name_idx, names_changed] = merge_tables(this.map.names, other.map.names);
 
 		// update source refs and name refs
-		const other_mappings = other.map.mappings.map((line) =>
-			line.map(seg => {
-				const new_seg = seg.slice() as MappingSegment;
-				if (seg[1]) new_seg[1] = new_source_idx[seg[1]];
-				if (seg[4]) new_seg[4] = new_name_idx[seg[4]];
-				return new_seg;
-			})
-		);
+		const other_mappings =
+			(sources_changed || names_changed)
+				? other.map.mappings.slice().map(line =>
+						line.map(seg => {
+							if (seg[1]) seg[1] = new_source_idx[seg[1]];
+							if (seg[4]) seg[4] = new_name_idx[seg[4]];
+							return seg;
+						})
+					)
+				: other.map.mappings;
 
 		// combine the mappings
 
@@ -89,17 +93,18 @@ export class StringWithSourcemap {
 		// 2. first line of second map
 		// columns of 2 must be shifted
 
-		const col_offset = last_line_length(this.string);
+		const column_offset = last_line_length(this.string);
 
 		const first_line: MappingSegment[] =
 			other_mappings.length == 0
 				? []
-				: col_offset == 0
+				: column_offset == 0
 					? other_mappings[0].slice() as MappingSegment[]
-					: other_mappings[0].map(seg => (
+					: other_mappings[0].slice().map(seg => {
 							// shift column
-							[seg[0] + col_offset].concat(seg.slice(1)) as MappingSegment
-						));
+							seg[0] += column_offset;
+							return seg;
+						});
 
 		const mappings: MappingSegment[][] =
 			this.map.mappings.slice(0, -1)
