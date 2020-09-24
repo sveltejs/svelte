@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix destructuring into store values ([#5449](https://github.com/sveltejs/svelte/issues/5449))
 * Fix erroneous `missing-declaration` warning with `use:obj.method` ([#5451](https://github.com/sveltejs/svelte/issues/5451))
 
 ## 3.26.0
