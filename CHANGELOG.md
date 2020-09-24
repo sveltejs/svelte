@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.27.0
 
 * Add `|nonpassive` event modifier, explicitly passing `passive: false` ([#2068](https://github.com/sveltejs/svelte/issues/2068))
 * Scope CSS selectors with `~` and `+` combinators ([#3104](https://github.com/sveltejs/svelte/issues/3104))
