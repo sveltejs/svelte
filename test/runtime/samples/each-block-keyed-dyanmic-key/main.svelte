@@ -3,6 +3,6 @@
 	export let value;
 </script>
 
-{#each ["foo", "bar"] as key (id + key)}
+{#each ['foo', 'bar'] as key (id + key)}
 	<div>{value()}</div>
 {/each}

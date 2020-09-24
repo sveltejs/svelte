@@ -4,7 +4,7 @@ let value = 'foo';
 export default {
 	props: {
 		value() {
-			count ++;
+			count++;
 			return value;
 		}
 	},
