@@ -239,6 +239,11 @@ export default class EachBlockWrapper extends Wrapper {
 		this.node.expression.dynamic_dependencies().forEach((dependency: string) => {
 			all_dependencies.add(dependency);
 		});
+		if (this.node.key) {
+			this.node.key.dynamic_dependencies().forEach((dependency: string) => {
+				all_dependencies.add(dependency);
+			});
+		}
 		this.dependencies = all_dependencies;
 
 		if (this.node.key) {
