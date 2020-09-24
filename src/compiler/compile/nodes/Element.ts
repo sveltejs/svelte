@@ -80,6 +80,7 @@ const valid_modifiers = new Set([
 	'capture',
 	'once',
 	'passive',
+	'nonpassive',
 	'self'
 ]);
 
@@ -770,6 +771,13 @@ export default class Element extends Node {
 				});
 			}
 
+			if (handler.modifiers.has('passive') && handler.modifiers.has('nonpassive')) {
+				component.error(handler, {
+					code: 'invalid-event-modifier',
+					message: `The 'passive' and 'nonpassive' modifiers cannot be used together`
+				});
+			}
+
 			handler.modifiers.forEach(modifier => {
 				if (!valid_modifiers.has(modifier)) {
 					component.error(handler, {
@@ -804,7 +812,7 @@ export default class Element extends Node {
 				}
 			});
 
-			if (passive_events.has(handler.name) && handler.can_make_passive && !handler.modifiers.has('preventDefault')) {
+			if (passive_events.has(handler.name) && handler.can_make_passive && !handler.modifiers.has('preventDefault') && !handler.modifiers.has('nonpassive')) {
 				// touch/wheel events should be passive by default
 				handler.modifiers.add('passive');
 			}
