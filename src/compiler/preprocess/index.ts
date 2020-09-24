@@ -103,7 +103,8 @@ function get_replacement(
 	let processed_map_shifted;
 	if (processed.map) {
 		const decoded_map = typeof processed.map === "string" ? JSON.parse(processed.map) : processed.map;
-		decoded_map.mappings = sourcemap_decode(decoded_map.mappings);
+		if (typeof(decoded_map.mappings) === 'string')
+			decoded_map.mappings = sourcemap_decode(decoded_map.mappings);
 		const processed_offset = get_location(offset + prefix.length);
 		processed_map_shifted = sourcemap_add_offset(decoded_map, processed_offset);
 	}
@@ -132,7 +133,7 @@ export default async function preprocess(
 	// sourcemap_list is sorted in reverse order from last map (index 0) to first map (index -1)
 	// so we use sourcemap_list.unshift() to add new maps
 	// https://github.com/ampproject/remapping#multiple-transformations-of-a-file
-	let sourcemap_list: Array<Processed['map']> = [];
+	const sourcemap_list: Array<Processed['map']> = [];
 
 	for (const fn of markup) {
 
@@ -215,14 +216,7 @@ export default async function preprocess(
 
 	// remapper can throw error
 	// `Transformation map ${i} must have exactly one source file.`
-	sourcemap_list = sourcemap_list
-		.map(sourcemap => {
-			if ((sourcemap as any).sources.filter(Boolean).length == 0)
-				// fix missing source file
-				(sourcemap as any).sources = [filename];
-			return sourcemap;
-		});
-
+	// for 0 <= i <= (sourcemap_list.length - 2)
 	const map: ReturnType<typeof remapper> =
 		sourcemap_list.length == 0
 			? null

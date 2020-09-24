@@ -8,6 +8,7 @@ export function test({ assert, input, preprocessed, js, css }) {
 		['baritone', '--bazitone', 'old_name_1', 'old_name_2'].sort()
 	);
 
+  // TODO move fn test_name to test/sourcemaps/index.js and use in samples/*/test.js
 	function test_name(old_name, new_name, where) {
 
 		let loc = { character: -1 };

@@ -22,8 +22,10 @@ describe("sourcemaps", () => {
 		}
 
 		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
+			const { test } = require(`./samples/${dir}/test.js`);
 			const inputFile = path.resolve(`${__dirname}/samples/${dir}/input.svelte`);
-			const outputBase = path.resolve(`${__dirname}/samples/${dir}/_actual`);
+			const outputName = '_actual';
+			const outputBase = path.resolve(`${__dirname}/samples/${dir}/${outputName}`);
 
 			const input = {};
 			input.code = fs.readFileSync(inputFile, "utf-8");
@@ -37,11 +39,9 @@ describe("sourcemaps", () => {
 					filename: "input.svelte"
 				});
 			} catch (error) {
-				preprocessed = {
-					error,
-					code: '',
-					map: null
-				};
+				preprocessed = { error };
+				// run test without js, css
+				return test({ assert, input, preprocessed });
 			}
 
 			const { js, css } = svelte.compile(
@@ -49,8 +49,8 @@ describe("sourcemaps", () => {
 				filename: "input.svelte",
 				sourcemap: preprocessed.map,
 				// filenames for sourcemaps
-				outputFilename: "output.js",
-				cssOutputFilename: "output.css",
+				outputFilename: `${outputName}.js`,
+				cssOutputFilename: `${outputName}.css`,
 			});
 
 			js.code = js.code.replace(
@@ -64,7 +64,7 @@ describe("sourcemaps", () => {
 			}
 			fs.writeFileSync(
 				`${outputBase}.js`,
-				`${js.code}\n//# sourceMappingURL=output.js.map`
+				`${js.code}\n//# sourceMappingURL=${outputName}.js.map`
 			);
 			fs.writeFileSync(
 				`${outputBase}.js.map`,
@@ -73,7 +73,7 @@ describe("sourcemaps", () => {
 			if (css.code) {
 				fs.writeFileSync(
 					`${outputBase}.css`,
-					`${css.code}\n/*# sourceMappingURL=output.css.map */`
+					`${css.code}\n/*# sourceMappingURL=${outputName}.css.map */`
 				);
 				fs.writeFileSync(
 					`${outputBase}.css.map`,
@@ -83,8 +83,6 @@ describe("sourcemaps", () => {
 
 			assert.deepEqual(js.map.sources, ["input.svelte"]);
 			if (css.map) assert.deepEqual(css.map.sources, ["input.svelte"]);
-
-			const { test } = require(`./samples/${dir}/test.js`);
 
 			preprocessed.mapConsumer = preprocessed.map && await new SourceMapConsumer(preprocessed.map);
 			preprocessed.locate = getLocator(preprocessed.code);
@@ -96,7 +94,6 @@ describe("sourcemaps", () => {
 			css.locate = getLocator(css.code || "");
 
 			test({ assert, input, preprocessed, js, css });
-
 		});
 	});
 });
