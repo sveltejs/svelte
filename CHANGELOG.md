@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix erroneous `missing-declaration` warning with `use:obj.method` ([#5451](https://github.com/sveltejs/svelte/issues/5451))
+
 ## 3.26.0
 
 * Support `use:obj.method` as actions ([#3935](https://github.com/sveltejs/svelte/issues/3935))
