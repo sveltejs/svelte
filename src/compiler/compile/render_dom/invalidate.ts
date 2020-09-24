@@ -46,6 +46,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 			const extra_args = tail.map(variable => get_invalidated(variable)).filter(Boolean);
 
 			const pass_value = (
+				!is_store_value &&
 				!main_execution_context && 
 				(
 					extra_args.length > 0 ||
@@ -62,7 +63,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 			}
 
 			let invalidate = is_store_value
-				? x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name})`
+				? x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name}, ${extra_args})`
 				: !main_execution_context
 					? x`$$invalidate(${renderer.context_lookup.get(head.name).index}, ${node}, ${extra_args})`
 					: extra_args.length
