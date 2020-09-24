@@ -3,11 +3,11 @@
 
 	let eid = writable(1);
 	let foo;
-	let u = writable(2);
-	let v = writable(3);
-	let w = writable(4);
-	let x = writable(5);
-	let y = writable(6);
+	const u = writable(2);
+	const v = writable(3);
+	const w = writable(4);
+	const x = writable(5);
+	const y = writable(6);
 	[$u, $v, $w] = [
 		{id: eid = writable(foo = 2), name: 'xxx'},
 		5,
