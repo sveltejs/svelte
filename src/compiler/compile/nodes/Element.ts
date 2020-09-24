@@ -16,6 +16,7 @@ import list from '../../utils/list';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
+import Component from '../Component';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -124,7 +125,7 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 
-	constructor(component, parent, scope, info: any) {
+	constructor(component: Component, parent, scope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
@@ -185,7 +186,7 @@ export default class Element extends Node {
 
 				case 'Attribute':
 				case 'Spread':
-					// special case
+				// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
 
 					this.attributes.push(new Attribute(component, this, scope, node));
@@ -236,7 +237,7 @@ export default class Element extends Node {
 
 		this.validate();
 
-		component.stylesheet.apply(this);
+		component.apply_stylesheet(this);
 	}
 
 	validate() {
