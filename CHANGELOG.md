@@ -1,6 +1,14 @@
 # Svelte changelog
 
-## Unreleased
+## 3.27.0
+
+* Add `|nonpassive` event modifier, explicitly passing `passive: false` ([#2068](https://github.com/sveltejs/svelte/issues/2068))
+* Scope CSS selectors with `~` and `+` combinators ([#3104](https://github.com/sveltejs/svelte/issues/3104))
+* Fix keyed `{#each}` not reacting to key changing ([#5444](https://github.com/sveltejs/svelte/issues/5444))
+* Fix destructuring into store values ([#5449](https://github.com/sveltejs/svelte/issues/5449))
+* Fix erroneous `missing-declaration` warning with `use:obj.method` ([#5451](https://github.com/sveltejs/svelte/issues/5451))
+
+## 3.26.0
 
 * Support `use:obj.method` as actions ([#3935](https://github.com/sveltejs/svelte/issues/3935))
 * Support `_` as numeric separator ([#5407](https://github.com/sveltejs/svelte/issues/5407))

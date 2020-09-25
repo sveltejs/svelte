@@ -13,7 +13,7 @@ First, you'll need to integrate Svelte with a build tool. There are officially m
 
 Don't worry if you're relatively new to web development and haven't used these tools before. We've prepared a simple step-by-step guide, [Svelte for new developers](blog/svelte-for-new-developers), which walks you through the process.
 
-You'll also want to configure your text editor to treat `.svelte` files the same as `.html` for the sake of syntax highlighting. [Read this guide to learn how](blog/setting-up-your-editor).
+You'll also want to configure your text editor. If you're using VS Code, install the [Svelte extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), otherwise follow [this guide](blog/setting-up-your-editor) to configure your text editor to treat `.svelte` files the same as `.html` for the sake of syntax highlighting.
 
 Then, once you've got your project set up, using Svelte components is easy. The compiler turns each component into a regular JavaScript class — just import it and instantiate with `new`:
 

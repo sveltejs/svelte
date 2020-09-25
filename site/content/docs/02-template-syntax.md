@@ -471,6 +471,7 @@ The following modifiers are available:
 * `preventDefault` — calls `event.preventDefault()` before running the handler
 * `stopPropagation` — calls `event.stopPropagation()`, preventing the event reaching the next element
 * `passive` — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
+* `nonpassive` — explicitly set `passive: false`
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
 * `self` — only trigger handler if event.target is the element itself
