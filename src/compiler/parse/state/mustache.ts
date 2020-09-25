@@ -228,7 +228,7 @@ export default function mustache(parser: Parser) {
 		} else {
 			parser.error({
 				code: `expected-block-type`,
-				message: `Expected if, each or await`
+				message: `Expected if, each, await or key`
 			});
 		}
 
