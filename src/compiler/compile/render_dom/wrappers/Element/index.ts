@@ -868,6 +868,10 @@ export default class ElementWrapper extends Wrapper {
 				block.chunks.destroy.push(b`if (detaching && ${outro_name}) ${outro_name}.end();`);
 			}
 		}
+
+		if ((intro && intro.expression && intro.expression.dependencies.size) || (outro && outro.expression && outro.expression.dependencies.size)) {
+			block.maintain_context = true;
+		}
 	}
 
 	add_animation(block: Block) {

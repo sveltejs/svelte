@@ -1,5 +1,29 @@
 # Svelte changelog
 
+## 3.27.0
+
+* Add `|nonpassive` event modifier, explicitly passing `passive: false` ([#2068](https://github.com/sveltejs/svelte/issues/2068))
+* Scope CSS selectors with `~` and `+` combinators ([#3104](https://github.com/sveltejs/svelte/issues/3104))
+* Fix keyed `{#each}` not reacting to key changing ([#5444](https://github.com/sveltejs/svelte/issues/5444))
+* Fix destructuring into store values ([#5449](https://github.com/sveltejs/svelte/issues/5449))
+* Fix erroneous `missing-declaration` warning with `use:obj.method` ([#5451](https://github.com/sveltejs/svelte/issues/5451))
+
+## 3.26.0
+
+* Support `use:obj.method` as actions ([#3935](https://github.com/sveltejs/svelte/issues/3935))
+* Support `_` as numeric separator ([#5407](https://github.com/sveltejs/svelte/issues/5407))
+* Fix assignments to properties on store values ([#5412](https://github.com/sveltejs/svelte/issues/5412))
+* Add special style scoping handling of `[open]` selectors on `<details>` elements ([#5421](https://github.com/sveltejs/svelte/issues/5421))
+* Support `import.meta` in template expressions ([#5422](https://github.com/sveltejs/svelte/issues/5422))
+
+## 3.25.1
+
+* Fix specificity of certain styles involving a child selector ([#4795](https://github.com/sveltejs/svelte/issues/4795))
+* Fix transitions that are parameterised with stores ([#5244](https://github.com/sveltejs/svelte/issues/5244))
+* Fix scoping of styles involving child selector and `*` ([#5370](https://github.com/sveltejs/svelte/issues/5370))
+* Fix destructuring which reassigns stores ([#5388](https://github.com/sveltejs/svelte/issues/5388))
+* Fix `{#await}`s with no `{:catch}` getting stuck unresolved if the promise rejects ([#5401](https://github.com/sveltejs/svelte/issues/5401))
+
 ## 3.25.0
 
 * Use `null` rather than `undefined` for coerced bound value of `<input type="number">` ([#1701](https://github.com/sveltejs/svelte/issues/1701))

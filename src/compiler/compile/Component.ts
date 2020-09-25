@@ -29,6 +29,7 @@ import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
+import Element from './nodes/Element';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -85,6 +86,7 @@ export default class Component {
 	file: string;
 	locate: (c: number) => { line: number; column: number };
 
+	elements: Element[] = [];
 	stylesheet: Stylesheet;
 
 	aliases: Map<string, Identifier> = new Map();
@@ -171,8 +173,8 @@ export default class Component {
 
 		this.walk_instance_js_post_template();
 
+		this.elements.forEach(element => this.stylesheet.apply(element));
 		if (!compile_options.customElement) this.stylesheet.reify();
-
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
 
@@ -219,6 +221,10 @@ export default class Component {
 		}
 
 		return this.aliases.get(name);
+	}
+
+	apply_stylesheet(element: Element) {
+		this.elements.push(element);
 	}
 
 	global(name: string) {
@@ -947,12 +953,6 @@ export default class Component {
 							const variable = component.var_lookup.get(name);
 
 							if (variable.export_name && variable.writable) {
-								const insert = variable.subscribable
-									? get_insert(variable)
-									: null;
-
-								parent[key].splice(index + 1, 0, insert);
-
 								declarator.id = {
 									type: 'ObjectPattern',
 									properties: [{
@@ -973,7 +973,9 @@ export default class Component {
 								};
 
 								declarator.init = x`$$props`;
-							} else if (variable.subscribable) {
+							}
+
+							if (variable.subscribable && declarator.init) {
 								const insert = get_insert(variable);
 								parent[key].splice(index + 1, 0, ...insert);
 							}
