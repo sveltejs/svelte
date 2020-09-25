@@ -18,7 +18,7 @@ const meta_tags = new Map([
 	['svelte:body', 'Body']
 ]);
 
-const valid_meta_tags = Array.from(meta_tags.keys()).concat('svelte:self', 'svelte:component', 'svelte:fragment');
+const valid_meta_tags = Array.from(meta_tags.keys()).concat('svelte:self', 'svelte:component', 'svelte:fragment', 'svelte:element');
 
 const specials = new Map([
 	[
@@ -40,6 +40,7 @@ const specials = new Map([
 const SELF = /^svelte:self(?=[\s/>])/;
 const COMPONENT = /^svelte:component(?=[\s/>])/;
 const SLOT = /^svelte:fragment(?=[\s/>])/;
+const ELEMENT = /^svelte:element(?=[\s/>])/;
 
 function parent_is_head(stack) {
 	let i = stack.length;
@@ -109,8 +110,9 @@ export default function tag(parser: Parser) {
 		? meta_tags.get(name)
 		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
 			: name === 'svelte:fragment' ? 'SlotTemplate'
-				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
-					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+			  : (name === 'svelte:element') ? 'DynamicElement'
+				  : name === 'title' && parent_is_head(parser.stack) ? 'Title'
+					  : name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
 	const element: TemplateNode = {
 		start,
@@ -196,6 +198,26 @@ export default function tag(parser: Parser) {
 
 		element.expression = definition.value[0].expression;
 	}
+	
+	if (name === 'svelte:element') {
+		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'tag');
+		if (!~index) {
+			parser.error({
+				code: 'missing-element-definition',
+				message: '<svelte:element> must have a \'tag\' attribute'
+			}, start);
+		}
+
+		const definition = element.attributes.splice(index, 1)[0];
+		if (definition.value === true || definition.value.length !== 1 || (definition.value[0].type !== 'Text' && definition.value[0].type !== 'MustacheTag' && definition.value[0].type !== 'AttributeShorthand')) {
+			parser.error({
+				code: 'invalid-element-definition',
+				message: 'invalid element definition'
+			}, definition.start);
+		}
+
+		element.tag = definition.value[0].data || definition.value[0].expression;
+	}
 
 	// special cases – top-level <script> and <style>
 	if (specials.has(name) && parser.stack.length === 1) {
@@ -266,6 +288,7 @@ function read_tag_name(parser: Parser) {
 	}
 
 	if (parser.read(COMPONENT)) return 'svelte:component';
+	if (parser.read(ELEMENT)) return 'svelte:element';
 
 	if (parser.read(SLOT)) return 'svelte:fragment';
 

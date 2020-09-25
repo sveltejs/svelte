@@ -247,7 +247,7 @@ export default class ElementWrapper extends Wrapper {
 		if (renderer.options.hydratable) {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
-					${node} = ${this.get_claim_statement(parent_nodes)};
+					${node} = ${this.get_claim_statement(block, parent_nodes)};
 				`);
 
 				if (!this.void && this.node.children.length > 0) {
@@ -368,10 +368,11 @@ export default class ElementWrapper extends Wrapper {
 			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)})`;
 		}
 
-		return x`@element("${name}")`;
+		const reference = this.node.dynamic_tag ? this.node.dynamic_tag.manipulate(block) : `"${name}"`;
+		return x`@element(${reference})`;
 	}
 
-	get_claim_statement(nodes: Identifier) {
+	get_claim_statement(block: Block, nodes: Identifier) {
 		const attributes = this.node.attributes
 			.filter((attr) => attr.type === 'Attribute')
 			.map((attr) => p`${attr.name}: true`);
@@ -382,7 +383,8 @@ export default class ElementWrapper extends Wrapper {
 
 		const svg = this.node.namespace === namespaces.svg ? 1 : null;
 
-		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
+		const reference = this.node.dynamic_tag ? this.node.dynamic_tag.manipulate(block) : `"${name}"`;
+		return x`@claim_element(${nodes}, ${reference}, { ${attributes} }, ${svg})`;
 	}
 
 	add_directives_in_order (block: Block) {

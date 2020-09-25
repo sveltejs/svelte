@@ -4,6 +4,7 @@ import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { TemplateNode } from '../../interfaces';
 import Element from './Element';
+import DynamicElement from './DynamicElement';
 
 export default class Transition extends Node {
 	type: 'Transition';
@@ -12,7 +13,7 @@ export default class Transition extends Node {
 	expression: Expression;
 	is_local: boolean;
 
-	constructor(component: Component, parent: Element, scope: TemplateScope, info: TemplateNode) {
+	constructor(component: Component, parent: Element | DynamicElement, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		component.warn_if_undefined(info.name, info, scope);

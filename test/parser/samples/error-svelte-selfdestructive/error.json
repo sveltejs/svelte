@@ -1,6 +1,6 @@
 {
 	"code": "invalid-tag-name",
-	"message": "Valid <svelte:...> tag names are svelte:head, svelte:options, svelte:window, svelte:body, svelte:self, svelte:component or svelte:fragment",
+	"message": "Valid <svelte:...> tag names are svelte:head, svelte:options, svelte:window, svelte:body, svelte:self, svelte:component, svelte:fragment or svelte:element",
 	"pos": 10,
 	"start": {
 		"character": 10,

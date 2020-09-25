@@ -1,0 +1,18 @@
+{
+	"html": {
+		"start": 0,
+		"end": 43,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 43,
+				"type": "DynamicElement",
+				"name": "svelte:element",
+				"attributes": [],
+				"children": [],
+				"tag": "div"
+			}
+		]
+	}
+}
