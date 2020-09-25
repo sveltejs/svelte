@@ -348,11 +348,11 @@ If you don't care about the pending state, you can also omit the initial block.
 {#key expression}...{/key}
 ```
 
+Key blocks destroy and recreate their contents when the value of an expression changes.
+
 ---
 
-Key block destroys and recreates the elements when the value of the expression changes.
-
-This is useful if you want to transition the element whenever the expression value changes.
+This is useful if you want an element to play its transition whenever a value changes.
 
 ```sv
 {#key value}
@@ -360,7 +360,9 @@ This is useful if you want to transition the element whenever the expression val
 {/key}
 ```
 
-Another use case is to reinitialise a Svelte component.
+---
+
+When used around components, this will cause them to be reinstantiated and reinitialised.
 
 ```sv
 {#key value}
