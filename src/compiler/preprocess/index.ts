@@ -217,10 +217,21 @@ export default async function preprocess(
 	// remapper can throw error
 	// `Transformation map ${i} must have exactly one source file.`
 	// for 0 <= i <= (sourcemap_list.length - 2)
-	const map: ReturnType<typeof remapper> =
-		sourcemap_list.length == 0
-			? null
-			: remapper(sourcemap_list as any, () => null, true); // true: skip optional field `sourcesContent`
+
+	let map: ReturnType<typeof remapper>;
+	try {
+		map =
+			sourcemap_list.length == 0
+				? null
+				: remapper(sourcemap_list as any, () => null, true); // true: skip optional field `sourcesContent`
+	} catch (error) {
+		throw { ...error, message: error.message +
+			'\n\ncould not combine sourcemaps:\n' +
+			JSON.stringify((sourcemap_list as any).map(m => {
+				return { ...m, mappings: JSON.stringify(m.mappings).slice(0, 100)+' ....'};
+			}), null, 2)
+		};
+	}
 
 	if (map && !map.file) delete map.file; // skip optional field `file`
 

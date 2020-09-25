@@ -53,6 +53,12 @@ function merge_tables<T>(this_table: T[], other_table): [T[], number[], boolean]
 			has_changed = true;
 		}
 	}
+	if (has_changed) {
+		if (idx_map.find((val, idx) => val != idx) === undefined) {
+			// idx_map is identity map [0, 1, 2, 3, 4, ....]
+			has_changed = false;
+		}
+	}
 	return [new_table, idx_map, has_changed];
 }
 
