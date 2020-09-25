@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.28.0
 
 * Add `{#key}` block for keying arbitrary content on an expression ([#1469](https://github.com/sveltejs/svelte/issues/1469))
 
