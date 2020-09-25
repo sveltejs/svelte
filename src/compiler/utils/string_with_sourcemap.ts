@@ -4,6 +4,7 @@ type MappingSegment =
 	| [number, number, number, number, number];
 
 type SourceMappings = {
+	version: number;
 	sources: string[];
 	names: string[];
 	mappings: MappingSegment[][];
@@ -18,30 +19,28 @@ function last_line_length(s: string) {
 	return s.length - s.lastIndexOf('\n') - 1;
 }
 
+// mutate map in-place
 export function sourcemap_add_offset(
 	map: SourceMappings, offset: SourceLocation
-): SourceMappings {
-	return {
-		sources: map.sources.slice(),
-		mappings: map.mappings.map((line, line_idx) =>
-			line.map(seg => {
-				const new_seg = seg.slice() as MappingSegment;
-				if (seg.length >= 4) {
-					new_seg[2] = new_seg[2] + offset.line;
-					if (line_idx == 0)
-						new_seg[3] = new_seg[3] + offset.column;
-				}
-				return new_seg;
-			})
-		)
-	} as SourceMappings;
+) {
+	// shift columns in first line
+	const m = map.mappings as any;
+	m[0].forEach(seg => {
+		if (seg[3]) seg[3] += offset.column;
+	});
+	// shift lines
+	m.forEach(line => {
+		line.forEach(seg => {
+			if (seg[2]) seg[2] += offset.line;
+		});
+	});
 }
 
-function merge_tables<T>(this_table: T[], other_table): [T[], number[], boolean] {
+function merge_tables<T>(this_table: T[], other_table): [T[], number[], boolean, boolean] {
 	const new_table = this_table.slice();
 	const idx_map = [];
 	other_table = other_table || [];
-	let has_changed = false;
+	let val_changed = false;
 	for (const [other_idx, other_val] of other_table.entries()) {
 		const this_idx = this_table.indexOf(other_val);
 		if (this_idx >= 0) {
@@ -50,47 +49,85 @@ function merge_tables<T>(this_table: T[], other_table): [T[], number[], boolean]
 			const new_idx = new_table.length;
 			new_table[new_idx] = other_val;
 			idx_map[other_idx] = new_idx;
-			has_changed = true;
+			val_changed = true;
 		}
 	}
-	if (has_changed) {
+	let idx_changed = val_changed;
+	if (val_changed) {
 		if (idx_map.find((val, idx) => val != idx) === undefined) {
 			// idx_map is identity map [0, 1, 2, 3, 4, ....]
-			has_changed = false;
+			idx_changed = false;
 		}
 	}
-	return [new_table, idx_map, has_changed];
+	return [new_table, idx_map, val_changed, idx_changed];
+}
+
+function pushArray<T>(_this: T[], other: T[]) {
+	for (let i = 0; i < other.length; i++)
+		_this.push(other[i]);
 }
 
 export class StringWithSourcemap {
-	readonly string: string;
-	readonly map: SourceMappings;
+	string: string;
+	map: SourceMappings;
 
-	constructor(string: string, map: SourceMappings) {
+	constructor(string = '', map = null) {
 		this.string = string;
-		this.map = map;
+		if (map)
+			this.map = map as SourceMappings;
+		else
+			this.map = {
+				version: 3,
+				mappings: [],
+				sources: [],
+				names: []
+			};
 	}
 
+	// concat in-place (mutable), return this (chainable)
+	// will also mutate the `other` object
 	concat(other: StringWithSourcemap): StringWithSourcemap {
 		// noop: if one is empty, return the other
-		if (this.string == '') return other;
 		if (other.string == '') return this;
+		if (this.string == '') {
+			this.string = other.string;
+			this.map = other.map;
+			return this;
+		}
+
+		this.string += other.string;
+
+		const m1 = this.map as any;
+		const m2 = other.map as any;
 
 		// combine sources and names
-		const [sources, new_source_idx, sources_changed] = merge_tables(this.map.sources, other.map.sources);
-		const [names, new_name_idx, names_changed] = merge_tables(this.map.names, other.map.names);
+		const [sources, new_source_idx, sources_changed, sources_idx_changed] = merge_tables(m1.sources, m2.sources);
+		const [names, new_name_idx, names_changed, names_idx_changed] = merge_tables(m1.names, m2.names);
 
-		// update source refs and name refs
-		const other_mappings =
-			(sources_changed || names_changed)
-				? other.map.mappings.slice().map(line =>
-						line.map(seg => {
-							if (seg[1]) seg[1] = new_source_idx[seg[1]];
-							if (seg[4]) seg[4] = new_name_idx[seg[4]];
-							return seg;
-						})
-					)
-				: other.map.mappings;
+		if (sources_changed) m1.sources = sources;
+		if (names_changed) m1.names = names;
+
+		// unswitched loops are faster
+		if (sources_idx_changed && names_idx_changed) {
+			m2.forEach(line => {
+				line.forEach(seg => {
+					if (seg[1]) seg[1] = new_source_idx[seg[1]];
+					if (seg[4]) seg[4] = new_name_idx[seg[4]];
+				});
+			});
+		} else if (sources_idx_changed) {
+			m2.forEach(line => {
+				line.forEach(seg => {
+					if (seg[1]) seg[1] = new_source_idx[seg[1]];
+				});
+			});
+		} else if (names_idx_changed) {
+			m2.forEach(line => {
+				line.forEach(seg => {
+					if (seg[4]) seg[4] = new_name_idx[seg[4]];
+				});
+			});
+		}
 
 		// combine the mappings
 
@@ -100,35 +137,25 @@ export class StringWithSourcemap {
 		// columns of 2 must be shifted
 
 		const column_offset = last_line_length(this.string);
+		if (m2.length > 0 && column_offset > 0) {
+			// shift columns in first line
+			m2[0].forEach(seg => {
+				seg[0] += column_offset;
+			});
+		}
 
-		const first_line: MappingSegment[] =
-			other_mappings.length == 0
-				? []
-				: column_offset == 0
-					? other_mappings[0].slice() as MappingSegment[]
-					: other_mappings[0].slice().map(seg => {
-							// shift column
-							seg[0] += column_offset;
-							return seg;
-						});
+		// combine last line + first line
+		pushArray(m1.mappings[m1.mappings.length - 1], m2.mappings.shift());
 
-		const mappings: MappingSegment[][] =
-			this.map.mappings.slice(0, -1)
-			.concat([
-				this.map.mappings.slice(-1)[0] // last line
-				.concat(first_line)
-			])
-			.concat(other_mappings.slice(1) as MappingSegment[][]);
+		// append other lines
+		pushArray(m1.mappings, m2.mappings);
 
-		return new StringWithSourcemap(
-			this.string + other.string,
-			{ sources, names, mappings }
-		);
+		return this;
 	}
 
 	static from_processed(string: string, map?: SourceMappings): StringWithSourcemap {
 		if (map) return new StringWithSourcemap(string, map);
-		map = { names: [], sources: [], mappings: [] };
+		map = { version: 3, names: [], sources: [], mappings: [] };
 		if (string == '') return new StringWithSourcemap(string, map);
 		// add empty MappingSegment[] for every line
 		const lineCount = string.split('\n').length;
@@ -140,7 +167,7 @@ export class StringWithSourcemap {
 		source_file: string, source: string, offset_in_source?: SourceLocation
 	): StringWithSourcemap {
 		const offset = offset_in_source || { line: 0, column: 0 };
-		const map: SourceMappings = { names: [], sources: [source_file], mappings: [] };
+		const map: SourceMappings = { version: 3, names: [], sources: [source_file], mappings: [] };
 		if (source.length == 0) return new StringWithSourcemap(source, map);
 
 		// we create a high resolution identity map here,

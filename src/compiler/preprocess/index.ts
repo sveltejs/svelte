@@ -67,7 +67,7 @@ async function replace_async(
 		);
 		return '';
 	});
-	let out: StringWithSourcemap;
+	const out = new StringWithSourcemap();
 	let last_end = 0;
 	for (const { offset, length, replacement } of await Promise.all(
 		replacements
@@ -75,15 +75,13 @@ async function replace_async(
 		// content = source before replacement
 		const content = StringWithSourcemap.from_source(
 			filename, source.slice(last_end, offset), get_location(last_end));
-		out = out ? out.concat(content) : content;
-		out = out.concat(replacement);
+		out.concat(content).concat(replacement);
 		last_end = offset + length;
 	}
 	// final_content = source after last replacement
 	const final_content = StringWithSourcemap.from_source(
 		filename, source.slice(last_end), get_location(last_end));
-	out = out.concat(final_content);
-	return out;
+	return out.concat(final_content);
 }
 
 function get_replacement(
@@ -100,15 +98,14 @@ function get_replacement(
 	const suffix_with_map = StringWithSourcemap.from_source(
 		filename, suffix, get_location(offset + prefix.length + original.length));
 
-	let processed_map_shifted;
+	let decoded_map;
 	if (processed.map) {
-		const decoded_map = typeof processed.map === "string" ? JSON.parse(processed.map) : processed.map;
+		decoded_map = typeof processed.map === "string" ? JSON.parse(processed.map) : processed.map;
 		if (typeof(decoded_map.mappings) === 'string')
 			decoded_map.mappings = sourcemap_decode(decoded_map.mappings);
-		const processed_offset = get_location(offset + prefix.length);
-		processed_map_shifted = sourcemap_add_offset(decoded_map, processed_offset);
+		sourcemap_add_offset(decoded_map, get_location(offset + prefix.length));
 	}
-	const processed_with_map = StringWithSourcemap.from_processed(processed.code, processed_map_shifted);
+	const processed_with_map = StringWithSourcemap.from_processed(processed.code, decoded_map);
 
 	return prefix_with_map.concat(processed_with_map).concat(suffix_with_map);
 }
