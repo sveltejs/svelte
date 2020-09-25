@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add `{#key}` block for keying arbitrary content on an expression ([#1469](https://github.com/sveltejs/svelte/issues/1469))
+
 ## 3.27.0
 
 * Add `|nonpassive` event modifier, explicitly passing `passive: false` ([#2068](https://github.com/sveltejs/svelte/issues/2068))
