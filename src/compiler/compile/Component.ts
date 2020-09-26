@@ -806,6 +806,20 @@ export default class Component {
 					scope = map.get(node);
 				}
 
+				if (node.type === 'VariableDeclarator' && node.init !== null && node.init.type === 'Identifier') {
+					const variable = component.var_lookup.get(node.init.name);
+					variable.aliased = true;
+				}
+
+				if (node.type === 'CallExpression') {
+					node.arguments.forEach(arg => {
+						if (arg.type === 'Identifier' && scope.find_owner(arg.name) === instance_scope) {
+							const variable = component.var_lookup.get(arg.name);
+							variable.aliased = true;
+						}
+					});
+				}
+
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 					const names = extract_names(assignee);
@@ -1104,7 +1118,7 @@ export default class Component {
 						} else if (owner === instance_scope) {
 							const variable = var_lookup.get(name);
 
-							if (variable.reassigned || variable.mutated) hoistable = false;
+							if (variable.reassigned || variable.mutated || variable.aliased) hoistable = false;
 
 							if (name === fn_declaration.id.name) return;
 
