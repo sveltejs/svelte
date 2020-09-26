@@ -1,9 +1,4 @@
-import MagicString from 'magic-string';
-// eslint warning: import/no-named-as-default-member
-
-//import MagicString, { Bundle } from 'magic-string';
-// TODO why does this break mocha?
-// SyntaxError: Cannot use import statement outside a module
+import MagicString, { Bundle } from 'magic-string';
 
 function add(bundle, filename, source) {
 	bundle.addSource({
@@ -27,7 +22,7 @@ export default {
 	preprocess: [
 		{
 			script: ({ content, filename }) => {
-				const bundle = new MagicString.Bundle();
+				const bundle = new Bundle();
 
 				add(bundle, filename, content);
 				add(bundle, 'foo.js', 'var answer = 42;');
@@ -38,7 +33,7 @@ export default {
 		},
 		{
 			script: ({ content, filename }) => {
-				const bundle = new MagicString.Bundle();
+				const bundle = new Bundle();
 
 				add(bundle, filename, content);
 				add(bundle, 'foo2.js', 'var answer2 = 84;');
