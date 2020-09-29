@@ -1,5 +1,5 @@
 <script>
-	const test = { placeholder: 'Text' }
+	const test = { placeholder: 'Text' };
 </script>
 
 <style>
