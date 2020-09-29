@@ -235,7 +235,7 @@ export default class Renderer {
 				if (!member) return;
 
 				if (member.index.value === -1) {
-					throw new Error(`unset index`);
+					throw new Error('unset index');
 				}
 
 				const value = member.index.value as number;

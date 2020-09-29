@@ -40,7 +40,7 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	}
 
 	const animation = node.style.animation || '';
-	node.style.animation = `${animation ? `${animation}, ` : ``}${name} ${duration}ms linear ${delay}ms 1 both`;
+	node.style.animation = `${animation ? `${animation}, ` : ''}${name} ${duration}ms linear ${delay}ms 1 both`;
 
 	active += 1;
 	return name;

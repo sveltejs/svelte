@@ -29,7 +29,7 @@ export class ElseBlockWrapper extends Wrapper {
 
 		this.block = block.child({
 			comment: create_debugging_comment(node, this.renderer.component),
-			name: this.renderer.component.get_unique_name(`create_else_block`),
+			name: this.renderer.component.get_unique_name('create_else_block'),
 			type: 'else'
 		});
 
@@ -441,11 +441,11 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const destroy = this.node.has_animation
 			? (this.block.has_outros
-				? `@fix_and_outro_and_destroy_block`
-				: `@fix_and_destroy_block`)
+				? '@fix_and_outro_and_destroy_block'
+				: '@fix_and_destroy_block')
 			: this.block.has_outros
-				? `@outro_and_destroy_block`
-				: `@destroy_block`;
+				? '@outro_and_destroy_block'
+				: '@destroy_block';
 
 		if (this.dependencies.size) {
 			this.updates.push(b`
@@ -563,7 +563,7 @@ export default class EachBlockWrapper extends Wrapper {
 						}
 					`;
 
-			const start = this.block.has_update_method ? 0 : `#old_length`;
+			const start = this.block.has_update_method ? 0 : '#old_length';
 
 			let remove_old_blocks;
 

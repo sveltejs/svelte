@@ -19,6 +19,6 @@ export default {
 
 		component.foo = false;
 		component.bar = true;
-		assert.htmlEqual(target.innerHTML, `<p>bar!</p>`);
+		assert.htmlEqual(target.innerHTML, '<p>bar!</p>');
 	}
 };

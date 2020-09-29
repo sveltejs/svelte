@@ -1,3 +1,3 @@
 export default {
-	html: `blah blah blah blah`
+	html: 'blah blah blah blah'
 };

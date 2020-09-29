@@ -1,7 +1,7 @@
 // this looks like another JSDOM quirk — svg.className = 'foo' behaves
 // differently from browsers. So this test succeeds even when it should fail
 export default {
-	html: `<svg class='foo'></svg>`,
+	html: "<svg class='foo'></svg>",
 
 	test({ assert, component, target }) {
 		const svg = target.querySelector('svg');

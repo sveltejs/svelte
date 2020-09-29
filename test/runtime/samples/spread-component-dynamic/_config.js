@@ -14,6 +14,6 @@ export default {
 			a: 2
 		};
 
-		assert.htmlEqual(target.innerHTML, `<p>a: 2</p>`);
+		assert.htmlEqual(target.innerHTML, '<p>a: 2</p>');
 	}
 };

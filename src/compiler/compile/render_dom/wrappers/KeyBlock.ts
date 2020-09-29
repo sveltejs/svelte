@@ -1,19 +1,19 @@
-import Wrapper from "./shared/Wrapper";
-import Renderer from "../Renderer";
-import Block from "../Block";
-import EachBlock from "../../nodes/EachBlock";
-import KeyBlock from "../../nodes/KeyBlock";
-import create_debugging_comment from "./shared/create_debugging_comment";
-import FragmentWrapper from "./Fragment";
-import { b, x } from "code-red";
-import { Identifier } from "estree";
+import Wrapper from './shared/Wrapper';
+import Renderer from '../Renderer';
+import Block from '../Block';
+import EachBlock from '../../nodes/EachBlock';
+import KeyBlock from '../../nodes/KeyBlock';
+import create_debugging_comment from './shared/create_debugging_comment';
+import FragmentWrapper from './Fragment';
+import { b, x } from 'code-red';
+import { Identifier } from 'estree';
 
 export default class KeyBlockWrapper extends Wrapper {
 	node: KeyBlock;
 	fragment: FragmentWrapper;
 	block: Block;
 	dependencies: string[];
-	var: Identifier = { type: "Identifier", name: "key_block" };
+	var: Identifier = { type: 'Identifier', name: 'key_block' };
 
 	constructor(
 		renderer: Renderer,
@@ -33,8 +33,8 @@ export default class KeyBlockWrapper extends Wrapper {
 		if (this.dependencies.length) {
 			block = block.child({
 				comment: create_debugging_comment(node, renderer.component),
-				name: renderer.component.get_unique_name("create_key_block"),
-				type: "key"
+				name: renderer.component.get_unique_name('create_key_block'),
+				type: 'key'
 			});
 			renderer.blocks.push(block);
 		}
@@ -89,8 +89,8 @@ export default class KeyBlockWrapper extends Wrapper {
 			block.chunks.claim.push(b`${this.var}.l(${parent_nodes});`);
 		}
 		block.chunks.mount.push(
-			b`${this.var}.m(${parent_node || "#target"}, ${
-				parent_node ? "null" : "#anchor"
+			b`${this.var}.m(${parent_node || '#target'}, ${
+				parent_node ? 'null' : '#anchor'
 			});`
 		);
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);

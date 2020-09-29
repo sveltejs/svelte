@@ -4,7 +4,7 @@ import * as http from 'http';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import puppeteer from 'puppeteer';
-import { addLineNumbers, loadConfig, loadSvelte } from "../helpers";
+import { addLineNumbers, loadConfig, loadSvelte } from '../helpers';
 import { deepEqual } from 'assert';
 
 const page = `
@@ -87,7 +87,7 @@ describe('custom-elements', function() {
 
 						transform(code, id) {
 							if (id.endsWith('.svelte')) {
-								const compiled = svelte.compile(code.replace(/\r/g, ""), {
+								const compiled = svelte.compile(code.replace(/\r/g, ''), {
 									customElement: true,
 									dev: config.dev
 								});

@@ -60,8 +60,8 @@ export default class EachBlock extends AbstractBlock {
 			if (this.children.length !== 1) {
 				const child = this.children.find(child => !!(child as Element).animation);
 				component.error((child as Element).animation, {
-					code: `invalid-animation`,
-					message: `An element that use the animate directive must be the sole child of a keyed each block`
+					code: 'invalid-animation',
+					message: 'An element that use the animate directive must be the sole child of a keyed each block'
 				});
 			}
 		}

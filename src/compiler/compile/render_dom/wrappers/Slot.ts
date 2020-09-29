@@ -38,7 +38,7 @@ export default class SlotWrapper extends Wrapper {
 		if (this.node.children.length) {
 			this.fallback = block.child({
 				comment: create_debugging_comment(this.node.children[0], this.renderer.component),
-				name: this.renderer.component.get_unique_name(`fallback_block`),
+				name: this.renderer.component.get_unique_name('fallback_block'),
 				type: 'fallback'
 			});
 			renderer.blocks.push(this.fallback);

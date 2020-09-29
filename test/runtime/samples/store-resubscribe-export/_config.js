@@ -22,6 +22,6 @@ export default {
 	async test({ assert, component, target }) {
 		component.foo = fakeStore(5);
 
-		return assert.htmlEqual(target.innerHTML, `<h1>5</h1>`);
+		return assert.htmlEqual(target.innerHTML, '<h1>5</h1>');
 	}
 };

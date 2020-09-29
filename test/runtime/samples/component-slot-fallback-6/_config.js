@@ -6,8 +6,8 @@ export default {
 	`,
 
 	async test({ assert, target, window }) {
-		const input = target.querySelector("input");
-		input.value = "abc";
+		const input = target.querySelector('input');
+		input.value = 'abc';
 		await input.dispatchEvent(new window.Event('input'));
 
 		assert.htmlEqual(target.innerHTML, `

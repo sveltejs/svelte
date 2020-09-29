@@ -4,6 +4,6 @@ export default {
 	},
 
 	warnings: [
-		`<Foo> was created without expected prop 'y'`
+		"<Foo> was created without expected prop 'y'"
 	]
 };

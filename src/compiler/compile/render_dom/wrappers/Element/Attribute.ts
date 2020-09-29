@@ -187,7 +187,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		if (this.is_input_value) {
 			const type = element.node.get_static_attribute_value('type');
 
-			if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
+			if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
 				condition = x`${condition} && ${element.var}.${property_name} !== ${should_cache ? last : value}`;
 			}
 		}
@@ -277,7 +277,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		if (this.node.is_true) return '';
 
 		const value = this.node.chunks;
-		if (value.length === 0) return `=""`;
+		if (value.length === 0) return '=""';
 
 		return `="${value.map(chunk => {
 			return chunk.type === 'Text'

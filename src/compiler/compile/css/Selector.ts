@@ -118,8 +118,8 @@ export default class Selector {
 				const selector = block.selectors[i];
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 					component.error(selector, {
-						code: `css-invalid-global`,
-						message: `:global(...) must be the first element in a compound selector`
+						code: 'css-invalid-global',
+						message: ':global(...) must be the first element in a compound selector'
 					});
 				}
 			}
@@ -139,8 +139,8 @@ export default class Selector {
 		for (let i = start; i < end; i += 1) {
 			if (this.blocks[i].global) {
 				component.error(this.blocks[i].selectors[0], {
-					code: `css-invalid-global`,
-					message: `:global(...) can be at the start or end of a selector sequence, but not in the middle`
+					code: 'css-invalid-global',
+					message: ':global(...) can be at the start or end of a selector sequence, but not in the middle'
 				});
 			}
 		}
@@ -286,7 +286,7 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 		case '^=': return value.startsWith(expected_value);
 		case '$=': return value.endsWith(expected_value);
 		case '*=': return value.includes(expected_value);
-		default: throw new Error(`this shouldn't happen`);
+		default: throw new Error("this shouldn't happen");
 	}
 }
 
