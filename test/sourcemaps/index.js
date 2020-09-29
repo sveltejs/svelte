@@ -81,17 +81,37 @@ describe("sourcemaps", () => {
 				);
 			}
 
-			assert.deepEqual(js.map.sources, ["input.svelte"]);
-			if (css.map) assert.deepEqual(css.map.sources, ["input.svelte"]);
+			assert.deepEqual(
+				js.map.sources.slice().sort(),
+				(config.js_map_sources || ["input.svelte"]).sort()
+			);
+			if (css.map) {
+				assert.deepEqual(
+					css.map.sources.slice().sort(),
+					(config.css_map_sources || ["input.svelte"]).sort()
+				);
+			};
 
-			preprocessed.mapConsumer = preprocessed.map && await new SourceMapConsumer(preprocessed.map);
-			preprocessed.locate = getLocator(preprocessed.code);
+			// use locate_1 with mapConsumer:
+			// lines are one-based, columns are zero-based
 
-			js.mapConsumer = js.map && await new SourceMapConsumer(js.map);
-			js.locate = getLocator(js.code);
+			if (preprocessed.map) {
+				preprocessed.mapConsumer = await new SourceMapConsumer(preprocessed.map);
+				preprocessed.locate = getLocator(preprocessed.code);
+				preprocessed.locate_1 = getLocator(preprocessed.code, { offsetLine: 1 });
+			}
 
-			css.mapConsumer = css.map && await new SourceMapConsumer(css.map);
-			css.locate = getLocator(css.code || "");
+			if (js.map) {
+				js.mapConsumer = await new SourceMapConsumer(js.map);
+				js.locate = getLocator(js.code);
+				js.locate_1 = getLocator(js.code, { offsetLine: 1 });
+			}
+
+			if (css.map) {
+				css.mapConsumer = await new SourceMapConsumer(css.map);
+				css.locate = getLocator(css.code);
+				css.locate_1 = getLocator(css.code, { offsetLine: 1 });
+			}
 
 			test({ assert, input, preprocessed, js, css });
 		});

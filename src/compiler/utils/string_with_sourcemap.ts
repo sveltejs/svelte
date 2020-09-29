@@ -1,14 +1,4 @@
-type MappingSegment =
-	| [number]
-	| [number, number, number, number]
-	| [number, number, number, number, number];
-
-type SourceMappings = {
-	version: number;
-	sources: string[];
-	names: string[];
-	mappings: MappingSegment[][];
-};
+import { DecodedSourceMap, SourceMapSegment } from '@ampproject/remapping/dist/types/types';
 
 type SourceLocation = {
 	line: number;
@@ -21,10 +11,10 @@ function last_line_length(s: string) {
 
 // mutate map in-place
 export function sourcemap_add_offset(
-	map: SourceMappings, offset: SourceLocation
+	map: DecodedSourceMap, offset: SourceLocation
 ) {
 	// shift columns in first line
-	const m = map.mappings as any;
+	const m = map.mappings;
 	m[0].forEach(seg => {
 		if (seg[3]) seg[3] += offset.column;
 	});
@@ -69,12 +59,12 @@ function pushArray<T>(_this: T[], other: T[]) {
 
 export class StringWithSourcemap {
 	string: string;
-	map: SourceMappings;
+	map: DecodedSourceMap;
 
 	constructor(string = '', map = null) {
 		this.string = string;
 		if (map)
-			this.map = map as SourceMappings;
+			this.map = map as DecodedSourceMap;
 		else
 			this.map = {
 				version: 3,
@@ -97,8 +87,8 @@ export class StringWithSourcemap {
 
 		this.string += other.string;
 
-		const m1 = this.map as any;
-		const m2 = other.map as any;
+		const m1 = this.map;
+		const m2 = other.map;
 
 		// combine sources and names
 		const [sources, new_source_idx, sources_changed, sources_idx_changed] = merge_tables(m1.sources, m2.sources);
@@ -109,20 +99,20 @@ export class StringWithSourcemap {
 
 		// unswitched loops are faster
 		if (sources_idx_changed && names_idx_changed) {
-			m2.forEach(line => {
+			m2.mappings.forEach(line => {
 				line.forEach(seg => {
 					if (seg[1]) seg[1] = new_source_idx[seg[1]];
 					if (seg[4]) seg[4] = new_name_idx[seg[4]];
 				});
 			});
 		} else if (sources_idx_changed) {
-			m2.forEach(line => {
+			m2.mappings.forEach(line => {
 				line.forEach(seg => {
 					if (seg[1]) seg[1] = new_source_idx[seg[1]];
 				});
 			});
 		} else if (names_idx_changed) {
-			m2.forEach(line => {
+			m2.mappings.forEach(line => {
 				line.forEach(seg => {
 					if (seg[4]) seg[4] = new_name_idx[seg[4]];
 				});
@@ -137,9 +127,9 @@ export class StringWithSourcemap {
 		// columns of 2 must be shifted
 
 		const column_offset = last_line_length(this.string);
-		if (m2.length > 0 && column_offset > 0) {
+		if (m2.mappings.length > 0 && column_offset > 0) {
 			// shift columns in first line
-			m2[0].forEach(seg => {
+			m2.mappings[0].forEach(seg => {
 				seg[0] += column_offset;
 			});
 		}
@@ -153,11 +143,11 @@ export class StringWithSourcemap {
 		return this;
 	}
 
-	static from_processed(string: string, map?: SourceMappings): StringWithSourcemap {
+	static from_processed(string: string, map?: DecodedSourceMap): StringWithSourcemap {
 		if (map) return new StringWithSourcemap(string, map);
 		map = { version: 3, names: [], sources: [], mappings: [] };
 		if (string == '') return new StringWithSourcemap(string, map);
-		// add empty MappingSegment[] for every line
+		// add empty SourceMapSegment[] for every line
 		const lineCount = string.split('\n').length;
 		map.mappings = Array.from({length: lineCount}).map(_ => []);
 		return new StringWithSourcemap(string, map);
@@ -167,7 +157,7 @@ export class StringWithSourcemap {
 		source_file: string, source: string, offset_in_source?: SourceLocation
 	): StringWithSourcemap {
 		const offset = offset_in_source || { line: 0, column: 0 };
-		const map: SourceMappings = { version: 3, names: [], sources: [source_file], mappings: [] };
+		const map: DecodedSourceMap = { version: 3, names: [], sources: [source_file], mappings: [] };
 		if (source.length == 0) return new StringWithSourcemap(source, map);
 
 		// we create a high resolution identity map here,
@@ -177,7 +167,7 @@ export class StringWithSourcemap {
 			let pos = 0;
 			const segs = line.split(/([^\d\w\s]|\s+)/g)
 				.filter(s => s !== "").map(s => {
-					const seg: MappingSegment = [
+					const seg: SourceMapSegment = [
 						pos, 0,
 						line_idx + offset.line,
 						pos + (line_idx == 0 ? offset.column : 0) // shift first line

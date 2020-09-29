@@ -1,12 +1,29 @@
-export function test({ assert, preprocessed, js, css }) {
+export function test({ assert, preprocessed, js }) {
 
-	assert.notEqual(preprocessed.error, undefined, 'expected preprocessed.error');
+	assert.equal(preprocessed.error, undefined);
 
-	const msg_expected_prefix = 'Transformation map 0 must have exactly one source file.';
+	// sourcemap stores location only for 'answer = 42;'
+	// not for 'var answer = 42;'
+	[
+		[js, 'foo.js', 'answer = 42;'],
+		[js, 'bar.js', 'console.log(answer);'],
+		[js, 'foo2.js', 'answer2 = 84;'],
+		[js, 'bar2.js', 'console.log(answer2);'],
+	]
+	.forEach(([where, sourcefile, content]) => {
 
-	assert.equal(
-		preprocessed.error.message.slice(0, msg_expected_prefix.length),
-		msg_expected_prefix
-	);
+		assert.deepEqual(
+			where.mapConsumer.originalPositionFor(
+				where.locate_1(content)
+			),
+			{
+				source: sourcefile,
+				name: null,
+				line: 1,
+				column: 0
+			},
+			`failed to locate "${content}" from "${sourcefile}"`
+		);
 
+	});
 }

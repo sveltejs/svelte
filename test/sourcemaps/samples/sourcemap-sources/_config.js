@@ -3,7 +3,9 @@ import MagicString, { Bundle } from 'magic-string';
 function add(bundle, filename, source) {
 	bundle.addSource({
 		filename,
-		content: new MagicString(source)
+		content: new MagicString(source),
+		separator: '\n',
+		//separator: '', // ERROR. probably a bug in magic-string
 	});
 }
 
@@ -12,13 +14,20 @@ function result(bundle, filename) {
 		code: bundle.toString(),
 		map: bundle.generateMap({
 			file: filename,
-			includeContent: true,
-			hires: true
+			includeContent: false,
+			hires: false
 		})
 	};
 }
 
 export default {
+	js_map_sources: [
+		'input.svelte',
+		'foo.js',
+		'bar.js',
+		'foo2.js',
+		'bar2.js',
+	],
 	preprocess: [
 		{
 			script: ({ content, filename }) => {

@@ -1,12 +1,12 @@
-import remapper from '@ampproject/remapping';
-import { decode as sourcemap_decode } from 'sourcemap-codec';
+import remapping from '@ampproject/remapping';
+import { SourceMapInput, SourceMapLoader, RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import { decode as decode_mappings } from 'sourcemap-codec';
 import { getLocator } from 'locate-character';
 import { StringWithSourcemap, sourcemap_add_offset } from '../utils/string_with_sourcemap';
 
-
 export interface Processed {
 	code: string;
-	map?: object | string;
+	map?: SourceMapInput;
 	dependencies?: string[];
 }
 
@@ -102,7 +102,7 @@ function get_replacement(
 	if (processed.map) {
 		decoded_map = typeof processed.map === "string" ? JSON.parse(processed.map) : processed.map;
 		if (typeof(decoded_map.mappings) === 'string')
-			decoded_map.mappings = sourcemap_decode(decoded_map.mappings);
+			decoded_map.mappings = decode_mappings(decoded_map.mappings);
 		sourcemap_add_offset(decoded_map, get_location(offset + prefix.length));
 	}
 	const processed_with_map = StringWithSourcemap.from_processed(processed.code, decoded_map);
@@ -130,7 +130,7 @@ export default async function preprocess(
 	// sourcemap_list is sorted in reverse order from last map (index 0) to first map (index -1)
 	// so we use sourcemap_list.unshift() to add new maps
 	// https://github.com/ampproject/remapping#multiple-transformations-of-a-file
-	const sourcemap_list: Array<Processed['map']> = [];
+	const sourcemap_list: (DecodedSourceMap | RawSourceMap)[] = [];
 
 	for (const fn of markup) {
 
@@ -142,7 +142,12 @@ export default async function preprocess(
 
 		if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
 		source = processed ? processed.code : source;
-		if (processed && processed.map) sourcemap_list.unshift(processed.map);
+		if (processed && processed.map)
+			sourcemap_list.unshift(
+				typeof(processed.map) === 'string'
+					? JSON.parse(processed.map) as RawSourceMap
+					: processed.map as (RawSourceMap | DecodedSourceMap)
+			);
 	}
 
 	for (const fn of script) {
@@ -211,20 +216,31 @@ export default async function preprocess(
 		sourcemap_list.unshift(res.map);
 	}
 
-	// remapper can throw error
-	// `Transformation map ${i} must have exactly one source file.`
-	// for 0 <= i <= (sourcemap_list.length - 2)
-
-	let map: ReturnType<typeof remapper>;
+	let map: RawSourceMap;
+	let map_idx = 0;
 	try {
 		map =
 			sourcemap_list.length == 0
 				? null
-				: remapper(sourcemap_list as any, () => null, true); // true: skip optional field `sourcesContent`
+				: sourcemap_list.slice(0, -1).find(m => m.sources.length !== 1) === undefined
+					? remapping( // use array interface
+							sourcemap_list,
+							() => null,
+							true // skip optional field `sourcesContent`
+						)
+					: remapping( // use loader interface
+							sourcemap_list[map_idx++],
+							function loader(sourcefile) {
+								if (sourcefile === filename)
+									return sourcemap_list[map_idx++] || null;
+									// bundle file = branch node
+								else return null; // source file = leaf node
+							} as SourceMapLoader
+						);
 	} catch (error) {
 		throw { ...error, message: error.message +
 			'\n\ncould not combine sourcemaps:\n' +
-			JSON.stringify((sourcemap_list as any).map(m => {
+			JSON.stringify(sourcemap_list.map(m => {
 				return { ...m, mappings: JSON.stringify(m.mappings).slice(0, 100)+' ....'};
 			}), null, 2)
 		};
