@@ -1,15 +1,15 @@
 [
 	{
-		"code": "lowercase-component-name",
-		"message": "A lowercase tag <thisShouldWarnMe> will be treated as a regular HTML element",
-		"pos": 84,
+		"code": "component-name-lowercase",
+		"message": "<thisShouldWarnMe> will be treated as an HTML element unless it begins with a capital letter",
+		"pos": 82,
 		"start": {
-			"character": 84,
+			"character": 82,
 			"column": 0,
 			"line": 6
 		},
 		"end": {
-			"character": 104,
+			"character": 102,
 			"column": 20,
 			"line": 6
 		}
