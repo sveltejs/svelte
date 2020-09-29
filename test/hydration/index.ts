@@ -1,15 +1,15 @@
-import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 
 import {
+	assert,
 	showOutput,
 	loadConfig,
 	loadSvelte,
 	env,
 	setupHtmlEqual,
 	shouldUpdateExpected
-} from '../helpers.js';
+} from '../helpers';
 
 let compileOptions = null;
 
@@ -58,13 +58,7 @@ describe('hydration', () => {
 			try {
 				global.window = window;
 
-				let SvelteComponent;
-
-				try {
-					SvelteComponent = require(`${cwd}/main.svelte`).default;
-				} catch (err) {
-					throw err;
-				}
+				const SvelteComponent = require(`${cwd}/main.svelte`).default;
 
 				const target = window.document.body;
 				const head = window.document.head;
@@ -75,7 +69,9 @@ describe('hydration', () => {
 				try {
 					before_head = fs.readFileSync(`${cwd}/_before_head.html`, 'utf-8');
 					head.innerHTML = before_head;
-				} catch (err) {}
+				} catch (err) {
+					// continue regardless of error
+				}
 
 				const snapshot = config.snapshot ? config.snapshot(target) : {};
 

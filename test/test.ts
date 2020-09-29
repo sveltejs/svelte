@@ -3,12 +3,12 @@ const glob = require('tiny-glob/sync.js');
 require('./setup');
 
 // bind internal to jsdom
-require('./helpers');
+require('./helpers.ts');
 require('../internal');
 
 console.clear();
 
-const test_folders = glob('*/index.js', { cwd: 'test' });
+const test_folders = glob('*/index.ts', { cwd: 'test' });
 const solo_folders = test_folders.filter(folder => /\.solo/.test(folder));
 
 if (solo_folders.length) {

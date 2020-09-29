@@ -1,15 +1,14 @@
 module.exports = {
 	file: [
-		'test/test.js'
+		'test/test.ts'
+	],
+	require: [
+		'sucrase/register'
 	]
 };
 
 // add coverage options when running 'npx c8 mocha'
 if (process.env.NODE_V8_COVERAGE) {
-	Object.assign(module.exports, {
-		fullTrace: true,
-		require: [
-			'source-map-support/register'
-		]
-	});
+	module.exports.fullTrace = true;
+	module.exports.require.push('source-map-support/register');
 }
