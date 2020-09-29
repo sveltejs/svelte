@@ -4,7 +4,7 @@ import * as http from 'http';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import puppeteer from 'puppeteer';
-import { addLineNumbers, loadConfig, loadSvelte } from "../helpers.ts";
+import { addLineNumbers, loadConfig, loadSvelte } from "../helpers";
 import { deepEqual } from 'assert';
 
 const page = `

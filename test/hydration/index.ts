@@ -9,7 +9,7 @@ import {
 	env,
 	setupHtmlEqual,
 	shouldUpdateExpected
-} from '../helpers.ts';
+} from '../helpers';
 
 let compileOptions = null;
 

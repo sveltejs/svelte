@@ -14,7 +14,7 @@ import {
 	env,
 	setupHtmlEqual,
 	mkdirp
-} from "../helpers.ts";
+} from "../helpers";
 
 let svelte$;
 let svelte;

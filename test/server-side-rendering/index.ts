@@ -12,7 +12,7 @@ import {
 	cleanRequireCache,
 	shouldUpdateExpected,
 	mkdirp
-} from "../helpers.ts";
+} from "../helpers";
 
 function tryToReadFile(file) {
 	try {
