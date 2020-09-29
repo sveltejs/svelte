@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add `EventSource` to known globals ([#5463](https://github.com/sveltejs/svelte/issues/5463))
+* Fix compiler exception with `~`/`+` combinators and `{...spread}` attributes ([#5465](https://github.com/sveltejs/svelte/issues/5465))
 
 ## 3.28.0
 

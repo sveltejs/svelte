@@ -406,7 +406,7 @@ function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map
 	let prev: INode = node;
 	while (prev = prev.prev) {
 		if (prev.type === 'Element') {
-			if (!prev.attributes.find(attr => attr.name.toLowerCase() === 'slot')) {
+			if (!prev.attributes.find(attr => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot')) {
 				result.set(prev, NodeExist.Definitely);
 			}
 
