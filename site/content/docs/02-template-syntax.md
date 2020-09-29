@@ -342,6 +342,33 @@ If you don't care about the pending state, you can also omit the initial block.
 {/await}
 ```
 
+### {#key ...}
+
+```sv
+{#key expression}...{/key}
+```
+
+Key blocks destroy and recreate their contents when the value of an expression changes.
+
+---
+
+This is useful if you want an element to play its transition whenever a value changes.
+
+```sv
+{#key value}
+	<div transition:fade>{value}</div>
+{/key}
+```
+
+---
+
+When used around components, this will cause them to be reinstantiated and reinitialised.
+
+```sv
+{#key value}
+	<Component />
+{/key}
+```
 
 ### {@html ...}
 
@@ -471,6 +498,7 @@ The following modifiers are available:
 * `preventDefault` — calls `event.preventDefault()` before running the handler
 * `stopPropagation` — calls `event.stopPropagation()`, preventing the event reaching the next element
 * `passive` — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
+* `nonpassive` — explicitly set `passive: false`
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
 * `self` — only trigger handler if event.target is the element itself
