@@ -1,9 +1,10 @@
+import * as assert$1 from 'assert';
 import * as jsdom from 'jsdom';
-import * as assert from 'assert';
-import * as glob from 'tiny-glob/sync.js';
+import glob from 'tiny-glob/sync';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
+export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void };
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
@@ -63,7 +64,7 @@ global.window = window;
 
 // add missing ecmascript globals to window
 for (const key of Object.getOwnPropertyNames(global)) {
-	window[key] = window[key] || global[key];
+	if (!(key in window)) window[key] = global[key];
 }
 
 // implement mock scroll

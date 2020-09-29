@@ -1,6 +1,5 @@
-import * as assert from 'assert';
 import * as fs from 'fs';
-import { env, svelte, setupHtmlEqual, shouldUpdateExpected } from '../helpers.js';
+import { assert, env, svelte, setupHtmlEqual, shouldUpdateExpected } from '../helpers';
 
 function try_require(file) {
 	try {

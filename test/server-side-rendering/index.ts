@@ -1,9 +1,9 @@
-import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import * as glob from 'tiny-glob/sync.js';
+import glob from 'tiny-glob/sync.js';
 
 import {
+	assert,
 	showOutput,
 	loadConfig,
 	loadSvelte,
@@ -12,7 +12,7 @@ import {
 	cleanRequireCache,
 	shouldUpdateExpected,
 	mkdirp
-} from "../helpers.js";
+} from "../helpers";
 
 function tryToReadFile(file) {
 	try {
