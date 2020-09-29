@@ -5,5 +5,5 @@ export default {
 		await button.dispatchEvent(event);
 		raf.tick(500);
 		assert.htmlEqual(target.innerHTML, "");
-	},
+	}
 };

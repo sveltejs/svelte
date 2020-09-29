@@ -16,5 +16,5 @@ export default {
 		
 		await button.dispatchEvent(event);
 		assert.htmlEqual(target.innerHTML, `<button>foo</button>`);
-	},
+	}
 };

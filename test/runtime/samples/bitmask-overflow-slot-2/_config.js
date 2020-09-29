@@ -90,7 +90,7 @@ export default {
 
 		assert.deepEqual(component.reads, {
 			_0: 2,
-			_1: 2,
+			_1: 2
 		});
 	}
 };

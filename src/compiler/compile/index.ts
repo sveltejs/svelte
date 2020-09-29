@@ -51,7 +51,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 			code: `options-lowercase-name`,
 			message,
 			filename,
-			toString: () => message,
+			toString: () => message
 		});
 	}
 
@@ -61,7 +61,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 			code: `options-loop-guard-timeout`,
 			message,
 			filename,
-			toString: () => message,
+			toString: () => message
 		});
 	}
 }

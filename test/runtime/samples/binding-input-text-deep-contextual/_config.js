@@ -3,8 +3,8 @@ export default {
 		items: [
 			{ description: 'one' },
 			{ description: 'two' },
-			{ description: 'three' },
-		],
+			{ description: 'three' }
+		]
 	},
 
 	html: `
@@ -45,5 +45,5 @@ export default {
 			<div><input><p>four</p></div>
 			<div><input><p>five</p></div>
 		`);
-	},
+	}
 };

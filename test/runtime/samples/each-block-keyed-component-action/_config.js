@@ -17,5 +17,5 @@ export default {
 		component.arr = [];
 
 		assert.equal(component.count, 0);
-	},
+	}
 };

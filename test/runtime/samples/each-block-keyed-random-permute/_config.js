@@ -19,7 +19,7 @@ function permute() {
 
 export default {
 	props: {
-		values: toObjects('abc'),
+		values: toObjects('abc')
 	},
 
 	html: `(a)(b)(c)`,

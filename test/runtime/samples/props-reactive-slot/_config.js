@@ -17,5 +17,5 @@ export default {
 			<button>Change</button>
 		`
 		);
-	},
+	}
 };

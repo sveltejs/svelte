@@ -47,7 +47,7 @@ In order for the REPL's GitHub integration to work properly when running locally
 
 ## Building the site
 
-To build the website, run `npm run sapper`. The output can be found in `__sapper__/build`.
+To build the website, run `npm run build`. The output can be found in `__sapper__/build`.
 
 ## Testing
 

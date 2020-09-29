@@ -18,6 +18,7 @@ export const globals = new Set([
 	'Error',
 	'EvalError',
 	'Event',
+	'EventSource',
 	'fetch',
 	'global',
 	'globalThis',
@@ -105,7 +106,7 @@ export const reserved = new Set([
 	'void',
 	'while',
 	'with',
-	'yield',
+	'yield'
 ]);
 
 const void_element_names = /^(?:area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/;

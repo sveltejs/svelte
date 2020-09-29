@@ -4,7 +4,7 @@ export default {
 	props: {
 		callback: (value) => callbacks.push(value),
 		val1: "1",
-		val2: "2",
+		val2: "2"
 	},
 
 	before_test() {
@@ -26,5 +26,5 @@ export default {
 		component.val2 = "5";
 		assert.equal(callbacks.length, 5);
 		assert.equal(JSON.stringify(callbacks), '["1","2","1","1","2"]');
-	},
+	}
 };

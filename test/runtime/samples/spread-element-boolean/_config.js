@@ -21,5 +21,5 @@ export default {
 			`<button>click me</button>`
 		);
 		assert.ok(!button.disabled);
-	},
+	}
 };

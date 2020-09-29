@@ -18,5 +18,5 @@ export default {
 		const ul = target.querySelector('ul');
 
 		assert.equal(ul.childNodes.length, 5);
-	},
+	}
 };

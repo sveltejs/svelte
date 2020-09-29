@@ -3,5 +3,5 @@ export default {
 		await component.condition.set(false);
 		raf.tick(500);
 		assert.htmlEqual(target.innerHTML, "");
-	},
+	}
 };

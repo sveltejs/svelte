@@ -49,7 +49,7 @@ async function replace_async(str: string, re: RegExp, func: (...any) => Promise<
 					({
 						offset: args[args.length - 2],
 						length: args[0].length,
-						replacement: res,
+						replacement: res
 					}) as Replacement
 			)
 		);

@@ -14,7 +14,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	try {
 		ast = parse(styles, {
 			positions: true,
-			offset: content_start,
+			offset: content_start
 		});
 	} catch (err) {
 		if (err.name === 'CssSyntaxError') {

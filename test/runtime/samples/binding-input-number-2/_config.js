@@ -27,5 +27,5 @@ export default {
 		component.value = 1;
 		assert.equal(component.value, 1);
 		assert.equal(input.value, "1");
-	},
+	}
 };

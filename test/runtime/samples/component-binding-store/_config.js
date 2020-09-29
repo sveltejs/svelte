@@ -57,5 +57,5 @@ export default {
 		assert.equal(input1.value, "456");
 		assert.equal(input2.value, "456");
 		assert.equal(count, 3);
-	},
+	}
 };

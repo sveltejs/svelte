@@ -1,6 +1,6 @@
 export default {
 	props: {
-		people: [{ name: { first: 'Doctor', last: 'Who' } }],
+		people: [{ name: { first: 'Doctor', last: 'Who' } }]
 	},
 
 	html: `
@@ -41,5 +41,5 @@ export default {
 			<input>
 			<p>Frank Oz</p>
 		`);
-	},
+	}
 };

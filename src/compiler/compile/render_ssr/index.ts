@@ -5,8 +5,7 @@ import { string_literal } from '../utils/stringify';
 import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
-import { extract_names } from '../utils/scope';
-import { LabeledStatement, Statement, ExpressionStatement, AssignmentExpression, Node } from 'estree';
+import { LabeledStatement, Statement, Node } from 'estree';
 
 export default function ssr(
 	component: Component,
@@ -34,6 +33,9 @@ export default function ssr(
 	const uses_rest = component.var_lookup.has('$$restProps');
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const rest = uses_rest ? b`let $$restProps = @compute_rest_props($$props, [${props.map(prop => `"${prop.export_name}"`).join(',')}]);` : null;
+
+	const uses_slots = component.var_lookup.has('$$slots');
+	const slots = uses_slots ? b`let $$slots = @compute_slots(#slots);` : null;
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 	const reactive_store_values = reactive_stores
@@ -72,37 +74,17 @@ export default function ssr(
 			})
 		: [];
 
+	const injected = Array.from(component.injected_reactive_declaration_vars).filter(name => {
+		const variable = component.var_lookup.get(name);
+		return variable.injected;
+	});
+
 	const reactive_declarations = component.reactive_declarations.map(d => {
 		const body: Statement = (d.node as LabeledStatement).body;
 
 		let statement = b`${body}`;
 
-		if (d.declaration) {
-			const declared = extract_names(d.declaration);
-			const injected = declared.filter(name => {
-				return name[0] !== '$' && component.var_lookup.get(name).injected;
-			});
-
-			const self_dependencies = injected.filter(name => d.dependencies.has(name));
-
-			if (injected.length) {
-				// in some cases we need to do `let foo; [expression]`, in
-				// others we can do `let [expression]`
-				const separate = (
-					self_dependencies.length > 0 ||
-					declared.length > injected.length
-				);
-
-				const { left, right } = (body as ExpressionStatement).expression as AssignmentExpression;
-
-				statement = separate
-					? b`
-						${injected.map(name => b`let ${name};`)}
-						${statement}`
-					: b`
-						let ${left} = ${right}`;
-			}
-		} else { // TODO do not add label if it's not referenced
+		if (!d.declaration) { // TODO do not add label if it's not referenced
 			statement = b`$: { ${statement} }`;
 		}
 
@@ -119,6 +101,8 @@ export default function ssr(
 
 				${reactive_store_values}
 
+				${injected.map(name => b`let ${name};`)}
+
 				${reactive_declarations}
 
 				$$rendered = ${literal};
@@ -129,12 +113,15 @@ export default function ssr(
 		: b`
 			${reactive_store_values}
 
+			${injected.map(name => b`let ${name};`)}
+
 			${reactive_declarations}
 
 			return ${literal};`;
 
 	const blocks = [
 		rest,
+		slots,
 		...reactive_stores.map(({ name }) => {
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
@@ -161,7 +148,7 @@ export default function ssr(
 
 		${component.fully_hoisted}
 
-		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, #slots) => {
 			${blocks}
 		});
 	`;

@@ -138,7 +138,7 @@ export function get_binding_group_value(group, __value, checked) {
 }
 
 export function to_number(value) {
-	return value === '' ? undefined : +value;
+	return value === '' ? null : +value;
 }
 
 export function time_ranges_to_array(ranges) {

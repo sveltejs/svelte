@@ -70,6 +70,15 @@ export default function dom(
 		);
 	}
 
+	const uses_slots = component.var_lookup.has('$$slots');
+	let compute_slots;
+	if (uses_slots) {
+		compute_slots = b`
+			const $$slots = @compute_slots(#slots);
+		`;
+	}
+
+
 	const uses_props = component.var_lookup.has('$$props');
 	const uses_rest = component.var_lookup.has('$$restProps');
 	const $$props = uses_props || uses_rest ? `$$new_props` : `$$props`;
@@ -293,8 +302,7 @@ export default function dom(
 		const variable = component.var_lookup.get(prop.name);
 
 		if (variable.hoistable) return false;
-		if (prop.name[0] === '$') return false;
-		return true;
+		return prop.name[0] !== '$';
 	});
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
@@ -409,12 +417,13 @@ export default function dom(
 
 				${resubscribable_reactive_store_unsubscribers}
 
+				${component.slots.size || component.compile_options.dev || uses_slots ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
+				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
+				${compute_slots}
+
 				${instance_javascript}
 
 				${unknown_props_check}
-
-				${component.slots.size || component.compile_options.dev ? b`let { $$slots = {}, $$scope } = $$props;` : null}
-				${component.compile_options.dev && b`@validate_slots('${component.tag}', $$slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
 
 				${renderer.binding_groups.size > 0 && b`const $$binding_groups = [${[...renderer.binding_groups.keys()].map(_ => x`[]`)}];`}
 

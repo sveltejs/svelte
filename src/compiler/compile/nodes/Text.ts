@@ -12,7 +12,7 @@ const elements_without_text = new Set([
 	'dl',
 	'optgroup',
 	'select',
-	'video',
+	'video'
 ]);
 
 export default class Text extends Node {

@@ -603,7 +603,7 @@ export default class IfBlockWrapper extends Wrapper {
 			// as -1
 			operator: val.operator,
 			prefix: val.prefix,
-			argument: val.argument,
+			argument: val.argument
 		};
 	}
 }

@@ -17,7 +17,7 @@ export const valid_namespaces = [
 	svg,
 	xlink,
 	xml,
-	xmlns,
+	xmlns
 ];
 
 export const namespaces: Record<string, string> = { html, mathml, svg, xlink, xml, xmlns };

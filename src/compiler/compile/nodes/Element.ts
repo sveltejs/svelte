@@ -16,6 +16,7 @@ import list from '../../utils/list';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
+import Component from '../Component';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -61,6 +62,17 @@ const a11y_no_onchange = new Set([
 	'option'
 ]);
 
+const a11y_labelable = new Set([
+	"button",
+	"input",
+	"keygen",
+	"meter",
+	"output",
+	"progress",
+	"select",
+	"textarea"
+]);
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
@@ -69,6 +81,7 @@ const valid_modifiers = new Set([
 	'capture',
 	'once',
 	'passive',
+	'nonpassive',
 	'self'
 ]);
 
@@ -112,7 +125,7 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 
-	constructor(component, parent, scope, info: any) {
+	constructor(component: Component, parent, scope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
@@ -173,7 +186,7 @@ export default class Element extends Node {
 
 				case 'Attribute':
 				case 'Spread':
-					// special case
+				// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
 
 					this.attributes.push(new Attribute(component, this, scope, node));
@@ -224,7 +237,7 @@ export default class Element extends Node {
 
 		this.validate();
 
-		component.stylesheet.apply(this);
+		component.apply_stylesheet(this);
 	}
 
 	validate() {
@@ -388,7 +401,7 @@ export default class Element extends Node {
 			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
 				component.error(attribute, {
 					code: `illegal-attribute`,
-					message: `'${name}' is not a valid attribute name`,
+					message: `'${name}' is not a valid attribute name`
 				});
 			}
 
@@ -412,7 +425,7 @@ export default class Element extends Node {
 				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
 					component.error(attribute, {
 						code: `invalid-slotted-content`,
-						message: `Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`,
+						message: `Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`
 					});
 				}
 			}
@@ -504,6 +517,35 @@ export default class Element extends Node {
 						message: `A11y: Screenreaders already announce <img> elements as an image.`
 					});
 				}
+			}
+		}
+
+		if (this.name === 'label') {
+			const has_input_child = this.children.some(i => (i instanceof Element && a11y_labelable.has(i.name) ));
+			if (!attribute_map.has('for') && !has_input_child) {
+				component.warn(this, {
+					code: `a11y-label-has-associated-control`,
+					message: `A11y: A form label must be associated with a control.`
+				});
+			}
+		}
+
+		if (this.is_media_node()) {
+			if (attribute_map.has('muted')) {
+				return;
+			}
+
+			let has_caption;
+			const track = this.children.find((i: Element) => i.name === 'track');
+			if (track) {
+				has_caption = track.attributes.find(a => a.name === 'kind' && a.get_static_value() === 'captions');
+			}
+
+			if (!has_caption) {
+				component.warn(this, {
+					code: `a11y-media-has-caption`,
+					message: `A11y: Media elements must have a <track kind="captions">`
+				});
 			}
 		}
 
@@ -730,6 +772,13 @@ export default class Element extends Node {
 				});
 			}
 
+			if (handler.modifiers.has('passive') && handler.modifiers.has('nonpassive')) {
+				component.error(handler, {
+					code: 'invalid-event-modifier',
+					message: `The 'passive' and 'nonpassive' modifiers cannot be used together`
+				});
+			}
+
 			handler.modifiers.forEach(modifier => {
 				if (!valid_modifiers.has(modifier)) {
 					component.error(handler, {
@@ -764,7 +813,7 @@ export default class Element extends Node {
 				}
 			});
 
-			if (passive_events.has(handler.name) && handler.can_make_passive && !handler.modifiers.has('preventDefault')) {
+			if (passive_events.has(handler.name) && handler.can_make_passive && !handler.modifiers.has('preventDefault') && !handler.modifiers.has('nonpassive')) {
 				// touch/wheel events should be passive by default
 				handler.modifiers.add('passive');
 			}

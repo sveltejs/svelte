@@ -2,9 +2,13 @@
 question: Are there any video courses?
 ---
 
-There are no official ones, but here are a couple of third-part ones that we know of.
+Rich Harris, the creator of Svelte, taught a course:
 
-- [Egghead](https://egghead.io/playlists/getting-started-with-svelte-3-05a8541a)
-- [Udemy](https://www.udemy.com/sveltejs-the-complete-guide/)
+- [Frontend Masters](https://frontendmasters.com/courses/svelte/)
+
+There are also a number of third-party courses:
+
+- [Egghead](https://egghead.io/browse/frameworks/svelte)
+- [Udemy](https://www.udemy.com/courses/search/?q=sveltejs+svelte)
 
 Note that Udemy very frequently has discounts over 90%.

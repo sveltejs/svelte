@@ -6,5 +6,5 @@ export default {
 			target.innerHTML,
 			`<div class='a' title='baz'></div>`
 		);
-	},
+	}
 };

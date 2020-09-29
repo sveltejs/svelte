@@ -38,7 +38,7 @@ export default function mustache(parser: Parser) {
 
 	parser.allow_whitespace();
 
-	// {/if}, {/each} or {/await}
+	// {/if}, {/each}, {/await} or {/key}
 	if (parser.eat('/')) {
 		let block = parser.current();
 		let expected;
@@ -63,6 +63,8 @@ export default function mustache(parser: Parser) {
 			expected = 'each';
 		} else if (block.type === 'AwaitBlock') {
 			expected = 'await';
+		} else if (block.type === 'KeyBlock') {
+			expected = 'key';
 		} else {
 			parser.error({
 				code: `unexpected-block-close`,
@@ -134,9 +136,9 @@ export default function mustache(parser: Parser) {
 						type: 'IfBlock',
 						elseif: true,
 						expression,
-						children: [],
-					},
-				],
+						children: []
+					}
+				]
 			};
 
 			parser.stack.push(block.else.children[0]);
@@ -161,7 +163,7 @@ export default function mustache(parser: Parser) {
 				start: parser.index,
 				end: null,
 				type: 'ElseBlock',
-				children: [],
+				children: []
 			};
 
 			parser.stack.push(block.else);
@@ -221,10 +223,12 @@ export default function mustache(parser: Parser) {
 			type = 'EachBlock';
 		} else if (parser.eat('await')) {
 			type = 'AwaitBlock';
+		} else if (parser.eat('key')) {
+			type = 'KeyBlock';
 		} else {
 			parser.error({
 				code: `expected-block-type`,
-				message: `Expected if, each or await`
+				message: `Expected if, each, await or key`
 			});
 		}
 
@@ -260,14 +264,14 @@ export default function mustache(parser: Parser) {
 					type: 'CatchBlock',
 					children: [],
 					skip: true
-				},
+				}
 			} :
 			{
 				start,
 				end: null,
 				type,
 				expression,
-				children: [],
+				children: []
 			};
 
 		parser.allow_whitespace();
@@ -350,7 +354,7 @@ export default function mustache(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'RawMustacheTag',
-			expression,
+			expression
 		});
 	} else if (parser.eat('@debug')) {
 		let identifiers;
@@ -394,7 +398,7 @@ export default function mustache(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'MustacheTag',
-			expression,
+			expression
 		});
 	}
 }

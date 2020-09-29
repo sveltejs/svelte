@@ -20,5 +20,5 @@ export default {
 		};
 
 		component.value = 'two';
-	},
+	}
 };

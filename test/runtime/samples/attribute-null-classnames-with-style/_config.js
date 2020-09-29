@@ -1,7 +1,7 @@
 export default {
 	props: {
 		testName1: "test1",
-		testName2: "test2",
+		testName2: "test2"
 	},
 
 	html: `<div class="test1test2 svelte-x1o6ra"></div>`,

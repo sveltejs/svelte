@@ -77,5 +77,5 @@ export default {
 		assert.equal(inputs[5].checked, false);
 		assert.equal(inputs[6].checked, false);
 		assert.equal(inputs[7].checked, true);
-	},
+	}
 };

@@ -3,7 +3,7 @@ export default {
 		const h1 = target.querySelector('h1');
 
 		return {
-			h1,
+			h1
 		};
 	},
 

@@ -1,6 +1,6 @@
 export default {
 	props: {
-		prop: 'a',
+		prop: 'a'
 	},
 
 	html: 'a',
