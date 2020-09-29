@@ -34,7 +34,7 @@ export default class Transition extends Node {
 		}
 
 		this.expression = info.expression
-			? new Expression(component, this, scope, info.expression, true)
+			? new Expression(component, this, scope, info.expression)
 			: null;
 	}
 }

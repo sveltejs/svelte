@@ -6,6 +6,7 @@ import EachBlock from './EachBlock';
 import Element from './Element/index';
 import Head from './Head';
 import IfBlock from './IfBlock';
+import KeyBlock from './KeyBlock';
 import InlineComponent from './InlineComponent/index';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
@@ -17,6 +18,7 @@ import { INode } from '../../nodes/interfaces';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import { trim_start, trim_end } from '../../../utils/trim';
+import { link } from '../../../utils/link';
 import { Identifier } from 'estree';
 
 const wrappers = {
@@ -29,6 +31,7 @@ const wrappers = {
 	Head,
 	IfBlock,
 	InlineComponent,
+	KeyBlock,
 	MustacheTag,
 	Options: null,
 	RawMustacheTag,
@@ -37,11 +40,6 @@ const wrappers = {
 	Title,
 	Window
 };
-
-function link(next: Wrapper, prev: Wrapper) {
-	prev.next = next;
-	if (next) next.prev = prev;
-}
 
 function trimmable_at(child: INode, next_sibling: Wrapper): boolean {
 	// Whitespace is trimmable if one of the following is true:

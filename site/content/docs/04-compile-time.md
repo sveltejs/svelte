@@ -76,7 +76,7 @@ The following options can be passed to the compiler. None are required:
 | `css` | `true` | If `true`, styles will be included in the JavaScript class and injected at runtime. It's recommended that you set this to `false` and use the CSS that is statically generated, as it will result in smaller JavaScript bundles and better performance.
 | `loopGuardTimeout` | 0 | A `number` that tells Svelte to break the loop if it blocks the thread for more than `loopGuardTimeout` ms. This is useful to prevent infinite loops. **Only available when `dev: true`**
 | `preserveComments` | `false` | If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
-| `preserveWhitespace` | `false` | If `true`, whitespace inside and between elements is kept as you typed it, rather than optimised by Svelte.
+| `preserveWhitespace` | `false` | If `true`, whitespace inside and between elements is kept as you typed it, rather than removed or collapsed to a single space where possible.
 | `outputFilename` | `null` | A `string` used for your JavaScript sourcemap.
 | `cssOutputFilename` | `null` | A `string` used for your CSS sourcemap.
 | `sveltePath` | `"svelte"` | The location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.
@@ -113,7 +113,8 @@ const {
 	* `module` is `true` if the value is declared in a `context="module"` script
 	* `mutated` is `true` if the value's properties are assigned to inside the component
 	* `reassigned` is `true` if the value is reassigned inside the component
-	* `referenced` is `true` if the value is used outside the declaration
+	* `referenced` is `true` if the value is used in the template
+	* `referenced_from_script` is `true` if the value is used in the `<script>` outside the declaration
 	* `writable` is `true` if the value was declared with `let` or `var` (but not `const`, `class` or `function`)
 * `stats` is an object used by the Svelte developer team for diagnosing the compiler. Avoid relying on it to stay the same!
 
@@ -144,6 +145,7 @@ compiled: {
 		mutated: boolean,
 		reassigned: boolean,
 		referenced: boolean,
+		referenced_from_script: boolean,
 		writable: boolean
 	}>,
 	stats: {
@@ -181,11 +183,15 @@ const ast = svelte.parse(source, { filename: 'App.svelte' });
 
 ### `svelte.preprocess`
 
+A number of [community-maintained preprocessing plugins](https://github.com/sveltejs/integrations#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
+
+You can write your own preprocessor using the `svelte.preprocess` API.
+
 ```js
 result: {
 	code: string,
 	dependencies: Array<string>
-} = svelte.preprocess(
+} = await svelte.preprocess(
 	source: string,
 	preprocessors: Array<{
 		markup?: (input: { content: string, filename: string }) => Promise<{
@@ -222,7 +228,7 @@ The `markup` function receives the entire component source text, along with the 
 ```js
 const svelte = require('svelte/compiler');
 
-const { code } = svelte.preprocess(source, {
+const { code } = await svelte.preprocess(source, {
 	markup: ({ content, filename }) => {
 		return {
 			code: content.replace(/foo/g, 'bar')
@@ -244,7 +250,7 @@ const svelte = require('svelte/compiler');
 const sass = require('node-sass');
 const { dirname } = require('path');
 
-const { code, dependencies } = svelte.preprocess(source, {
+const { code, dependencies } = await svelte.preprocess(source, {
 	style: async ({ content, attributes, filename }) => {
 		// only process <style lang="sass">
 		if (attributes.lang !== 'sass') return;
@@ -277,7 +283,7 @@ Multiple preprocessors can be used together. The output of the first becomes the
 ```js
 const svelte = require('svelte/compiler');
 
-const { code } = svelte.preprocess(source, [
+const { code } = await svelte.preprocess(source, [
 	{
 		markup: () => {
 			console.log('this runs first');

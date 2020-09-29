@@ -5,36 +5,6 @@ import Wrapper from './shared/Wrapper';
 import { x } from 'code-red';
 import { Identifier } from 'estree';
 
-// Whitespace inside one of these elements will not result in
-// a whitespace node being created in any circumstances. (This
-// list is almost certainly very incomplete)
-const elements_without_text = new Set([
-	'audio',
-	'datalist',
-	'dl',
-	'optgroup',
-	'select',
-	'video',
-]);
-
-// TODO this should probably be in Fragment
-function should_skip(node: Text) {
-	if (/\S/.test(node.data)) return false;
-
-	const parent_element = node.find_nearest(/(?:Element|InlineComponent|Head)/);
-	if (!parent_element) return false;
-
-	if (parent_element.type === 'Head') return true;
-	if (parent_element.type === 'InlineComponent') return parent_element.children.length === 1 && node === parent_element.children[0];
-
-	// svg namespace exclusions
-	if (/svg$/.test(parent_element.namespace)) {
-		if (node.prev && node.prev.type === "Element" && node.prev.name === "tspan") return false;
-	}
-
-	return parent_element.namespace || elements_without_text.has(parent_element.name);
-}
-
 export default class TextWrapper extends Wrapper {
 	node: Text;
 	data: string;
@@ -50,7 +20,7 @@ export default class TextWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		this.skip = should_skip(this.node);
+		this.skip = this.node.should_skip();
 		this.data = data;
 		this.var = (this.skip ? null : x`t`) as unknown as Identifier;
 	}

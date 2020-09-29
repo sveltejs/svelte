@@ -20,8 +20,8 @@ export default function(node: Slot, renderer: Renderer, options: RenderOptions &
 	const result = renderer.pop();
 
 	renderer.add_expression(x`
-		$$slots.${node.slot_name}
-			? $$slots.${node.slot_name}(${slot_data})
+		#slots.${node.slot_name}
+			? #slots.${node.slot_name}(${slot_data})
 			: ${result}
 	`);
 

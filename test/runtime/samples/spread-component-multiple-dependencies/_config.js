@@ -6,5 +6,5 @@ export default {
 			target.innerHTML,
 			`a baz`
 		);
-	},
+	}
 };

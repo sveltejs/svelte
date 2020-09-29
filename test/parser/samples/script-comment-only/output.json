@@ -41,7 +41,15 @@
 				}
 			},
 			"body": [],
-			"sourceType": "module"
+			"sourceType": "module",
+			"trailingComments": [
+				{
+					"type": "Line",
+					"value": " TODO write some code",
+					"start": 10,
+					"end": 33
+				}
+			]
 		}
 	}
 }

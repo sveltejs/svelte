@@ -40,6 +40,16 @@
 									"type": "Literal",
 									"start": 18,
 									"end": 22,
+									"loc": {
+										"start": {
+											"line": 3,
+											"column": 6
+										},
+										"end": {
+											"line": 3,
+											"column": 10
+										}
+									},
 									"value": true,
 									"raw": "true"
 								},

@@ -13,7 +13,9 @@ import {
 	safe_not_equal,
 	set_data_dev,
 	space,
-	text
+	text,
+	validate_each_argument,
+	validate_slots
 } from "svelte/internal";
 
 const file = undefined;
@@ -88,6 +90,7 @@ function create_fragment(ctx) {
 	let t1;
 	let t2;
 	let each_value = /*things*/ ctx[0];
+	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -122,6 +125,7 @@ function create_fragment(ctx) {
 		p: function update(ctx, [dirty]) {
 			if (dirty & /*things*/ 1) {
 				each_value = /*things*/ ctx[0];
+				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -166,6 +170,8 @@ function create_fragment(ctx) {
 }
 
 function instance($$self, $$props, $$invalidate) {
+	let { $$slots: slots = {}, $$scope } = $$props;
+	validate_slots("Component", slots, []);
 	let { things } = $$props;
 	let { foo } = $$props;
 	let { bar } = $$props;
@@ -176,16 +182,14 @@ function instance($$self, $$props, $$invalidate) {
 		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("things" in $$props) $$invalidate(0, things = $$props.things);
 		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
 		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);
 		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
 	};
 
-	$$self.$capture_state = () => {
-		return { things, foo, bar, baz };
-	};
+	$$self.$capture_state = () => ({ things, foo, bar, baz });
 
 	$$self.$inject_state = $$props => {
 		if ("things" in $$props) $$invalidate(0, things = $$props.things);
@@ -193,6 +197,10 @@ function instance($$self, $$props, $$invalidate) {
 		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);
 		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
 	};
+
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
 
 	return [things, foo, bar, baz];
 }
@@ -210,7 +218,7 @@ class Component extends SvelteComponentDev {
 		});
 
 		const { ctx } = this.$$;
-		const props = options.props || ({});
+		const props = options.props || {};
 
 		if (/*things*/ ctx[0] === undefined && !("things" in props)) {
 			console.warn("<Component> was created without expected prop 'things'");

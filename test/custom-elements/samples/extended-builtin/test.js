@@ -11,5 +11,5 @@ export default function (target) {
 	const el = target.querySelector('custom-element');
 	const button = el.shadowRoot.querySelector('button');
 
-	assert.ok(button instanceof customElements.get('fancy-button'));
+	assert.ok(button instanceof customElements.get('custom-button'));
 }

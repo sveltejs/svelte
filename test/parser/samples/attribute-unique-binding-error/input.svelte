@@ -1,0 +1,1 @@
+<Widget foo={42} bind:foo/>

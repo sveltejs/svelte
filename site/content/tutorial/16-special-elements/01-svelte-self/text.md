@@ -14,7 +14,7 @@ It's useful for things like this folder tree view, where folders can contain *ot
 {/if}
 ```
 
-...but that's impossible, because a file can't import itself. Instead, we use `<svelte:self>`:
+...but that's impossible, because a module can't import itself. Instead, we use `<svelte:self>`:
 
 ```html
 {#if file.type === 'folder'}

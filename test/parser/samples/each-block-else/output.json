@@ -40,6 +40,16 @@
 									"type": "Identifier",
 									"start": 31,
 									"end": 37,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 5
+										},
+										"end": {
+											"line": 2,
+											"column": 11
+										}
+									},
 									"name": "animal"
 								}
 							}
@@ -47,10 +57,10 @@
 					}
 				],
 				"context": {
-					"start": 18,
-					"end": 24,
 					"type": "Identifier",
-					"name": "animal"
+					"name": "animal",
+					"start": 18,
+					"end": 24
 				},
 				"else": {
 					"start": 50,

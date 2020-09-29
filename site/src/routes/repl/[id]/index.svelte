@@ -57,7 +57,10 @@
 					is_relaxed_gist = data.relaxed;
 
 					const components = data.files.map(file => {
-						let [name, type] = file.name.split('.');
+						const dot = file.name.lastIndexOf(".");
+						let name = file.name.slice(0, dot);
+						let type = file.name.slice(dot + 1);
+
 						if (type === 'html') type = 'svelte'; // TODO do this on the server
 						return { name, type, source: file.source };
 					});
@@ -122,6 +125,8 @@
 		padding: var(--app-controls-h) 0 0 0;
 		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.viewport {
@@ -133,6 +138,7 @@
 		width: 200%;
 		height: calc(100% - 42px);
 		transition: transform 0.3s;
+		flex: 1;
 	}
 
 	.mobile .offset {

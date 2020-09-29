@@ -116,6 +116,15 @@ describe('store', () => {
 		});
 	});
 
+	const fake_observable = {
+		subscribe(fn) {
+			fn(42);
+			return {
+				unsubscribe: () => {}
+			};
+		}
+	};
+
 	describe('derived', () => {
 		it('maps a single store', () => {
 			const a = writable(1);
@@ -346,6 +355,11 @@ describe('store', () => {
 			b.set(2);
 			assert.deepEqual(get(c), 'two 2');
 		});
+
+		it('works with RxJS-style observables', () => {
+			const d = derived(fake_observable, _ => _);
+			assert.equal(get(d), 42);
+		});
 	});
 
 	describe('get', () => {
@@ -355,16 +369,7 @@ describe('store', () => {
 		});
 
 		it('works with RxJS-style observables', () => {
-			const observable = {
-				subscribe(fn) {
-					fn(42);
-					return {
-						unsubscribe: () => {}
-					};
-				}
-			};
-
-			assert.equal(get(observable), 42);
+			assert.equal(get(fake_observable), 42);
 		});
 	});
 });

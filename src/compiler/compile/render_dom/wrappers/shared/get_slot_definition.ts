@@ -34,13 +34,13 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 			type: 'Property',
 			kind: 'init',
 			key: l.name,
-			value,
+			value
 		});
 	});
 
 	const changes_input = {
 		type: 'ObjectPattern',
-		properties,
+		properties
 	};
 
 	const names: Set<string> = new Set();
@@ -63,7 +63,7 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 	const { context_lookup } = block.renderer;
 
 	// i am well aware that this code is gross
-	// TODO make it less gross
+	// TODO: context-overflow make it less gross
 	const changes = {
 		type: 'ParenthesizedExpression',
 		get expression() {

@@ -16,7 +16,7 @@ const escaped = {
   "'": '&#39;',
 	'&': '&amp;',
 	'<': '&lt;',
-	'>': '&gt;',
+	'>': '&gt;'
 };
 
 export function escape_html(html) {

@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-binding",
+	"message": "Cannot bind to a variable which is not writable",
+	"pos": 61,
+	"start": {
+		"line": 5,
+		"column": 19,
+		"character": 61
+	},
+	"end": {
+		"line": 5,
+		"column": 24,
+		"character": 66
+	}
+}]

@@ -13,9 +13,9 @@ function foo() {
 
 function swipe(node, callback) {
 	
-}
+} // TODO implement
 
-const Component = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+const Component = create_ssr_component(($$result, $$props, $$bindings, slots) => {
 	onMount(() => {
 		console.log("onMount");
 	});

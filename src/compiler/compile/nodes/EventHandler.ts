@@ -53,13 +53,6 @@ export default class EventHandler extends Node {
 		}
 		const node = this.expression.node;
 
-		if (node.type === 'Identifier') {
-			return (
-				this.component.node_for_declaration.get(node.name) &&
-				this.component.var_lookup.get(node.name).reassigned
-			);
-		}
-
 		if (/FunctionExpression/.test(node.type)) {
 			return false;
 		}

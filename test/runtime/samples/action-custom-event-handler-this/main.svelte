@@ -1,7 +1,7 @@
 <script>
 	function enter(node, callback) {
 		function handleKeydown(event) {
-			if (event.which === 13) {
+			if (event.key === 'Enter') {
 				callback(event);
 			}
 		}

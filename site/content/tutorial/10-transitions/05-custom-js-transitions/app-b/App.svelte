@@ -4,7 +4,7 @@
 	function typewriter(node, { speed = 50 }) {
 		const valid = (
 			node.childNodes.length === 1 &&
-			node.childNodes[0].nodeType === 3
+			node.childNodes[0].nodeType === Node.TEXT_NODE
 		);
 
 		if (!valid) {

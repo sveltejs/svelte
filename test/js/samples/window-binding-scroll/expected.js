@@ -25,6 +25,7 @@ function create_fragment(ctx) {
 	let p;
 	let t0;
 	let t1;
+	let mounted;
 	let dispose;
 	add_render_callback(/*onwindowscroll*/ ctx[1]);
 
@@ -39,12 +40,16 @@ function create_fragment(ctx) {
 			append(p, t0);
 			append(p, t1);
 
-			dispose = listen(window, "scroll", () => {
-				scrolling = true;
-				clearTimeout(scrolling_timeout);
-				scrolling_timeout = setTimeout(clear_scrolling, 100);
-				/*onwindowscroll*/ ctx[1]();
-			});
+			if (!mounted) {
+				dispose = listen(window, "scroll", () => {
+					scrolling = true;
+					clearTimeout(scrolling_timeout);
+					scrolling_timeout = setTimeout(clear_scrolling, 100);
+					/*onwindowscroll*/ ctx[1]();
+				});
+
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*y*/ 1 && !scrolling) {
@@ -60,6 +65,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(p);
+			mounted = false;
 			dispose();
 		}
 	};
@@ -72,7 +78,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(0, y = window.pageYOffset)
 	}
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("y" in $$props) $$invalidate(0, y = $$props.y);
 	};
 

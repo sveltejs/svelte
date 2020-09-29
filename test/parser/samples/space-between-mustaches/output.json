@@ -26,6 +26,16 @@
 							"type": "Identifier",
 							"start": 5,
 							"end": 6,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 5
+								},
+								"end": {
+									"line": 1,
+									"column": 6
+								}
+							},
 							"name": "a"
 						}
 					},
@@ -44,6 +54,16 @@
 							"type": "Identifier",
 							"start": 9,
 							"end": 10,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 9
+								},
+								"end": {
+									"line": 1,
+									"column": 10
+								}
+							},
 							"name": "b"
 						}
 					},
@@ -62,6 +82,16 @@
 							"type": "Identifier",
 							"start": 15,
 							"end": 16,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 15
+								},
+								"end": {
+									"line": 1,
+									"column": 16
+								}
+							},
 							"name": "c"
 						}
 					},

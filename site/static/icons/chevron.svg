@@ -1,4 +1,1 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px" viewBox="0 0 24 24">
-	<path style="stroke: #676778; stroke-width: 2; fill: none" d="M2,8 L12,16 L22,8"/>
-</svg>
+<svg height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m2 8 10 8 10-8" fill="none" stroke="#676778" stroke-width="2"/></svg>

@@ -10,7 +10,9 @@ import {
 	noop,
 	safe_not_equal,
 	space,
-	text
+	text,
+	validate_each_argument,
+	validate_slots
 } from "svelte/internal";
 
 const file = undefined;
@@ -64,6 +66,7 @@ function create_each_block(ctx) {
 function create_fragment(ctx) {
 	let each_1_anchor;
 	let each_value = things;
+	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -91,6 +94,7 @@ function create_fragment(ctx) {
 		p: function update(ctx, [dirty]) {
 			if (dirty & /*things*/ 0) {
 				each_value = things;
+				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -131,10 +135,22 @@ function create_fragment(ctx) {
 	return block;
 }
 
+function instance($$self, $$props) {
+	let { $$slots: slots = {}, $$scope } = $$props;
+	validate_slots("Component", slots, []);
+	const writable_props = [];
+
+	Object.keys($$props).forEach(key => {
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
+	});
+
+	return [];
+}
+
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, null, create_fragment, safe_not_equal, {});
+		init(this, options, instance, create_fragment, safe_not_equal, {});
 
 		dispatch_dev("SvelteRegisterComponent", {
 			component: this,

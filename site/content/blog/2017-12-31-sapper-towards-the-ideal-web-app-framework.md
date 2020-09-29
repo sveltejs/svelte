@@ -5,7 +5,7 @@ author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---
 
-> Quickstart for the impatient: [the Sapper docs](https://sapper.svelte.technology), and the [starter template](https://github.com/sveltejs/sapper-template)
+> Quickstart for the impatient: [the Sapper docs](https://sapper.svelte.dev), and the [starter template](https://github.com/sveltejs/sapper-template)
 
 If you had to list the characteristics of the perfect Node.js web application framework, you'd probably come up with something like this:
 
@@ -47,9 +47,9 @@ What happens if we use the new model as a starting point?
 
 ## Introducing Sapper
 
-<aside><p>The <a href="https://sapper.svelte.technology/docs#why-the-name-">name comes from</a> the term for combat engineers, and is also short for Svelte app maker</p></aside>
+<aside><p>The <a href="https://sapper.svelte.dev/docs#Why_the_name">name comes from</a> the term for combat engineers, and is also short for Svelte app maker</p></aside>
 
-[Sapper](https://sapper.svelte.technology) is the answer to that question. **Sapper is a Next.js-style framework that aims to meet the eleven criteria at the top of this article while dramatically reducing the amount of code that gets sent to the browser.** It's implemented as Express-compatible middleware, meaning it's easy to understand and customise.
+[Sapper](https://sapper.svelte.dev) is the answer to that question. **Sapper is a Next.js-style framework that aims to meet the eleven criteria at the top of this article while dramatically reducing the amount of code that gets sent to the browser.** It's implemented as Express-compatible middleware, meaning it's easy to understand and customise.
 
 The same 'hello world' app that took 204kb with React and Next weighs just 7kb with Sapper. That number is likely to fall further in the future as we explore the space of optimisation possibilities, such as not shipping any JavaScript *at all* for pages that aren't interactive, beyond the tiny Sapper runtime that handles client-side routing.
 
@@ -57,7 +57,7 @@ What about a more 'real world' example? Conveniently, the [RealWorld](https://gi
 
 <aside><p>Code-splitting isn't free — if the reference implementation used code-splitting, it would be larger still</p></aside>
 
-The entire app costs 132.7kb (39.9kb zipped), which is significantly smaller than the reference React/Redux implementation at 327kb (85.7kb), but even if was as large it would *feel* faster because of code-splitting. And that's a crucial point. We're told we need to code-split our apps, but if your app uses a traditional framework like React or Vue then there's a hard lower bound on the size of your initial code-split chunk — the framework itself, which is likely to be a significant portion of your total app size. With the Svelte approach, that's no longer the case.
+The entire app costs 132.7kb (39.9kb zipped), which is significantly smaller than the reference React/Redux implementation at 327kb (85.7kb), but even if it was as large it would *feel* faster because of code-splitting. And that's a crucial point. We're told we need to code-split our apps, but if your app uses a traditional framework like React or Vue then there's a hard lower bound on the size of your initial code-split chunk — the framework itself, which is likely to be a significant portion of your total app size. With the Svelte approach, that's no longer the case.
 
 But size is only part of the story. Svelte apps are also extremely performant and memory-efficient, and the framework includes powerful features that you would sacrifice if you chose a 'minimal' or 'simple' UI library.
 

@@ -12,19 +12,22 @@ import {
 
 function create_fragment(ctx) {
 	let details;
+	let mounted;
 	let dispose;
 
 	return {
 		c() {
 			details = element("details");
-
-			details.innerHTML = `<summary>summary</summary>content
-`;
+			details.innerHTML = `<summary>summary</summary>content`;
 		},
 		m(target, anchor) {
 			insert(target, details, anchor);
 			details.open = /*open*/ ctx[0];
-			dispose = listen(details, "toggle", /*details_toggle_handler*/ ctx[1]);
+
+			if (!mounted) {
+				dispose = listen(details, "toggle", /*details_toggle_handler*/ ctx[1]);
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*open*/ 1) {
@@ -35,6 +38,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(details);
+			mounted = false;
 			dispose();
 		}
 	};
@@ -48,7 +52,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(0, open);
 	}
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("open" in $$props) $$invalidate(0, open = $$props.open);
 	};
 

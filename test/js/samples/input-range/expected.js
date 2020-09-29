@@ -16,6 +16,7 @@ import {
 
 function create_fragment(ctx) {
 	let input;
+	let mounted;
 	let dispose;
 
 	return {
@@ -27,10 +28,14 @@ function create_fragment(ctx) {
 			insert(target, input, anchor);
 			set_input_value(input, /*value*/ ctx[0]);
 
-			dispose = [
-				listen(input, "change", /*input_change_input_handler*/ ctx[1]),
-				listen(input, "input", /*input_change_input_handler*/ ctx[1])
-			];
+			if (!mounted) {
+				dispose = [
+					listen(input, "change", /*input_change_input_handler*/ ctx[1]),
+					listen(input, "input", /*input_change_input_handler*/ ctx[1])
+				];
+
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*value*/ 1) {
@@ -41,6 +46,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(input);
+			mounted = false;
 			run_all(dispose);
 		}
 	};
@@ -54,7 +60,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(0, value);
 	}
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("value" in $$props) $$invalidate(0, value = $$props.value);
 	};
 

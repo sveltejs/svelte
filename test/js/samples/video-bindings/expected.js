@@ -19,6 +19,7 @@ function create_fragment(ctx) {
 	let video_updating = false;
 	let video_animationframe;
 	let video_resize_listener;
+	let mounted;
 	let dispose;
 
 	function video_timeupdate_handler() {
@@ -42,10 +43,14 @@ function create_fragment(ctx) {
 			insert(target, video, anchor);
 			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[6].bind(video));
 
-			dispose = [
-				listen(video, "timeupdate", video_timeupdate_handler),
-				listen(video, "resize", /*video_resize_handler*/ ctx[5])
-			];
+			if (!mounted) {
+				dispose = [
+					listen(video, "timeupdate", video_timeupdate_handler),
+					listen(video, "resize", /*video_resize_handler*/ ctx[5])
+				];
+
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (!video_updating && dirty & /*currentTime*/ 1 && !isNaN(/*currentTime*/ ctx[0])) {
@@ -58,7 +63,8 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(video);
-			video_resize_listener.cancel();
+			video_resize_listener();
+			mounted = false;
 			run_all(dispose);
 		}
 	};
@@ -87,7 +93,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(3, offsetWidth);
 	}
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("currentTime" in $$props) $$invalidate(0, currentTime = $$props.currentTime);
 		if ("videoHeight" in $$props) $$invalidate(1, videoHeight = $$props.videoHeight);
 		if ("videoWidth" in $$props) $$invalidate(2, videoWidth = $$props.videoWidth);

@@ -1,8 +1,8 @@
 export default {
 	async test({ assert, target }) {
-		const object = target.querySelector('object');
+		const iframe = target.querySelector('iframe');
 
-		assert.equal(object.getAttribute('aria-hidden'), "true");
-		assert.equal(object.getAttribute('tabindex'), "-1");
+		assert.equal(iframe.getAttribute('aria-hidden'), "true");
+		assert.equal(iframe.getAttribute('tabindex'), "-1");
 	}
 };

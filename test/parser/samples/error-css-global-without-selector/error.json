@@ -1,0 +1,10 @@
+{
+	"code": "css-syntax-error",
+	"message": ":global() must contain a selector",
+	"start": {
+		"line": 2,
+		"column": 1,
+		"character": 9
+	},
+	"pos": 9
+}

@@ -25,16 +25,16 @@ const specials = new Map([
 		'script',
 		{
 			read: read_script,
-			property: 'js',
-		},
+			property: 'js'
+		}
 	],
 	[
 		'style',
 		{
 			read: read_style,
-			property: 'css',
-		},
-	],
+			property: 'css'
+		}
+	]
 ]);
 
 const SELF = /^svelte:self(?=[\s/>])/;
@@ -63,7 +63,7 @@ export default function tag(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'Comment',
-			data,
+			data
 		});
 
 		return;
@@ -116,7 +116,7 @@ export default function tag(parser: Parser) {
 		type,
 		name,
 		attributes: [],
-		children: [],
+		children: []
 	};
 
 	parser.allow_whitespace();
@@ -133,11 +133,15 @@ export default function tag(parser: Parser) {
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (parent.name !== name) {
-			if (parent.type !== 'Element')
+			if (parent.type !== 'Element') {
+				const message = parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name
+					? `</${name}> attempted to close <${name}> that was already automatically closed by <${parser.last_auto_closed_tag.reason}>`
+					: `</${name}> attempted to close an element that was not open`;
 				parser.error({
 					code: `invalid-closing-tag`,
-					message: `</${name}> attempted to close an element that was not open`
+					message
 				}, start);
+			}
 
 			parent.end = start;
 			parser.stack.pop();
@@ -148,10 +152,19 @@ export default function tag(parser: Parser) {
 		parent.end = parser.index;
 		parser.stack.pop();
 
+		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
+			parser.last_auto_closed_tag = null;
+		}
+
 		return;
 	} else if (closing_tag_omitted(parent.name, name)) {
 		parent.end = start;
 		parser.stack.pop();
+		parser.last_auto_closed_tag = {
+			tag: parent.name,
+			reason: name,
+			depth: parser.stack.length
+		};
 	}
 
 	const unique_names: Set<string> = new Set();
@@ -241,7 +254,7 @@ function read_tag_name(parser: Parser) {
 
 		while (i--) {
 			const fragment = parser.stack[i];
-			if (fragment.type === 'IfBlock' || fragment.type === 'EachBlock') {
+			if (fragment.type === 'IfBlock' || fragment.type === 'EachBlock' || fragment.type === 'InlineComponent') {
 				legal = true;
 				break;
 			}
@@ -250,7 +263,7 @@ function read_tag_name(parser: Parser) {
 		if (!legal) {
 			parser.error({
 				code: `invalid-self-placement`,
-				message: `<svelte:self> components can only exist inside if-blocks or each-blocks`
+				message: `<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, or slots passed to components`
 			}, start);
 		}
 
@@ -288,6 +301,16 @@ function read_tag_name(parser: Parser) {
 function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const start = parser.index;
 
+	function check_unique(name: string) {
+		if (unique_names.has(name)) {
+			parser.error({
+				code: `duplicate-attribute`,
+				message: 'Attributes need to be unique'
+			}, start);
+		}
+		unique_names.add(name);
+	}
+
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
 
@@ -309,6 +332,8 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			const name = parser.read_identifier();
 			parser.allow_whitespace();
 			parser.eat('}', true);
+
+			check_unique(name);
 
 			return {
 				start,
@@ -341,17 +366,6 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	if (unique_names.has(name)) {
-		parser.error({
-			code: `duplicate-attribute`,
-			message: 'Attributes need to be unique'
-		}, start);
-	}
-
-	if (type !== "EventHandler") {
-		unique_names.add(name);
-	}
-
 	let value: any[] | true = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
@@ -366,6 +380,12 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
+
+		if (type === 'Binding' && directive_name !== 'this') {
+			check_unique(directive_name);
+		} else if (type !== 'EventHandler') {
+			check_unique(name);
+		}
 
 		if (type === 'Ref') {
 			parser.error({
@@ -410,12 +430,14 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		return directive;
 	}
 
+	check_unique(name);
+
 	return {
 		start,
 		end,
 		type: 'Attribute',
 		name,
-		value,
+		value
 	};
 }
 
@@ -482,7 +504,7 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 				start: index,
 				end: parser.index,
 				type: 'MustacheTag',
-				expression,
+				expression
 			});
 
 			current_chunk = {

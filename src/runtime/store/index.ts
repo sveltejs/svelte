@@ -1,4 +1,4 @@
-import { run_all, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
+import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
 
 /** Callback to inform of a value updates. */
 type Subscriber<T> = (value: T) => void;
@@ -52,7 +52,7 @@ const subscriber_queue = [];
  */
 export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
 	return {
-		subscribe: writable(value, start).subscribe,
+		subscribe: writable(value, start).subscribe
 	};
 }
 
@@ -173,7 +173,8 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			}
 		};
 
-		const unsubscribers = stores_array.map((store, i) => store.subscribe(
+		const unsubscribers = stores_array.map((store, i) => subscribe(
+			store,
 			(value) => {
 				values[i] = value;
 				pending &= ~(1 << i);
@@ -183,7 +184,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			},
 			() => {
 				pending |= (1 << i);
-			}),
+			})
 		);
 
 		inited = true;

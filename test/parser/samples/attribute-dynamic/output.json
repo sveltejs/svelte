@@ -31,6 +31,16 @@
 									"type": "Identifier",
 									"start": 20,
 									"end": 25,
+									"loc": {
+										"start": {
+											"line": 1,
+											"column": 20
+										},
+										"end": {
+											"line": 1,
+											"column": 25
+										}
+									},
 									"name": "color"
 								}
 							},
@@ -53,6 +63,16 @@
 							"type": "Identifier",
 							"start": 30,
 							"end": 35,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 30
+								},
+								"end": {
+									"line": 1,
+									"column": 35
+								}
+							},
 							"name": "color"
 						}
 					}

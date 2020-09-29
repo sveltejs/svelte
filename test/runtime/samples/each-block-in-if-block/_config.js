@@ -1,7 +1,7 @@
 export default {
 	props: {
 		dummy: false,
-		fruits: ['Apple', 'Banana', 'Tomato'],
+		fruits: ['Apple', 'Banana', 'Tomato']
 	},
 
 	html: '<div><div>Apple</div><div>Banana</div><div>Tomato</div></div>',

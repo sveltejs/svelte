@@ -33,6 +33,16 @@
 							"type": "Identifier",
 							"start": 79,
 							"end": 83,
+							"loc": {
+								"start": {
+									"line": 7,
+									"column": 11
+								},
+								"end": {
+									"line": 7,
+									"column": 15
+								}
+							},
 							"name": "name"
 						}
 					},
@@ -134,7 +144,15 @@
 					"kind": "let"
 				}
 			],
-			"sourceType": "module"
+			"sourceType": "module",
+			"trailingComments": [
+				{
+					"type": "Line",
+					"value": " trailing line comment",
+					"start": 32,
+					"end": 56
+				}
+			]
 		}
 	}
 }

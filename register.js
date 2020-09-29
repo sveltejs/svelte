@@ -36,7 +36,15 @@ function registerExtension(extension) {
 			format: 'cjs'
 		});
 
-		const { js } = compile(fs.readFileSync(filename, 'utf-8'), options);
+		const { js, warnings } = compile(fs.readFileSync(filename, 'utf-8'), options);
+		
+		if (options.dev) {
+			warnings.forEach(warning => {
+				console.warn(`\nSvelte Warning in ${warning.filename}:`);
+				console.warn(warning.message);
+				console.warn(warning.frame);
+			})
+		}
 
 		return module._compile(js.code, filename);
 	};

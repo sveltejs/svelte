@@ -1,7 +1,7 @@
 <svelte:options tag="custom-element"/>
 
 <script>
-	import './fancy-button.js';
+	import './custom-button.js';
 </script>
 
-<button is="fancy-button">click me</button>
+<button is="custom-button">click me</button>

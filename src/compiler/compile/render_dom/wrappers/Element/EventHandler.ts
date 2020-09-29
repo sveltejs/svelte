@@ -45,11 +45,17 @@ export default class EventHandlerWrapper {
 
 		const args = [];
 
-		const opts = ['passive', 'once', 'capture'].filter(mod => this.node.modifiers.has(mod));
+		const opts = ['nonpassive', 'passive', 'once', 'capture'].filter(mod => this.node.modifiers.has(mod));
 		if (opts.length) {
-			args.push((opts.length === 1 && opts[0] === 'capture')
-				? TRUE
-				: x`{ ${opts.map(opt => p`${opt}: true`)} }`);
+			if (opts.length === 1 && opts[0] === 'capture') {
+				args.push(TRUE);
+			} else {
+				args.push(x`{ ${ opts.map(opt =>
+					opt === 'nonpassive'
+						? p`passive: false`
+						: p`${opt}: true`
+				) } }`);
+			}
 		} else if (block.renderer.options.dev) {
 			args.push(FALSE);
 		}

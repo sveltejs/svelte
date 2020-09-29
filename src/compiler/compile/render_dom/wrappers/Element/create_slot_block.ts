@@ -18,7 +18,7 @@ export default function create_slot_block(attribute, element: ElementWrapper | S
 				name: element.renderer.component.get_unique_name(
 					`create_${sanitize(name)}_slot`
 				),
-				type: 'slot',
+				type: 'slot'
 			});
 
 			const { scope, lets } = element.node;
