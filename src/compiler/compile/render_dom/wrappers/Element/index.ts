@@ -2,7 +2,7 @@ import Renderer from '../../Renderer';
 import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
-import { is_void, sanitize } from '../../../../utils/names';
+import { is_void } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
 import { escape_html, string_literal } from '../../../utils/stringify';
 import TextWrapper from '../Text';
@@ -14,12 +14,9 @@ import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
 import { dimensions } from '../../../../utils/patterns';
 import Binding from './Binding';
-import InlineComponentWrapper from '../InlineComponent';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
 import { add_action } from '../shared/add_actions';
-import create_debugging_comment from '../shared/create_debugging_comment';
-import { get_slot_definition } from '../shared/get_slot_definition';
 import bind_this from '../shared/bind_this';
 import { is_head } from '../shared/is_head';
 import { Identifier } from 'estree';
@@ -28,6 +25,7 @@ import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
 import MustacheTagWrapper from '../MustacheTag';
 import RawMustacheTagWrapper from '../RawMustacheTag';
+import create_slot_block from './create_slot_block';
 
 interface BindingGroup {
 	events: string[];
@@ -177,47 +175,7 @@ export default class ElementWrapper extends Wrapper {
 
 		this.attributes = this.node.attributes.map(attribute => {
 			if (attribute.name === 'slot') {
-				// TODO make separate subclass for this?
-				let owner = this.parent;
-				while (owner) {
-					if (owner.node.type === 'InlineComponent') {
-						break;
-					}
-
-					if (owner.node.type === 'Element' && /-/.test(owner.node.name)) {
-						break;
-					}
-
-					owner = owner.parent;
-				}
-
-				if (owner && owner.node.type === 'InlineComponent') {
-					const name = attribute.get_static_value() as string;
-
-					if (!(owner as unknown as InlineComponentWrapper).slots.has(name)) {
-						const child_block = block.child({
-							comment: create_debugging_comment(node, this.renderer.component),
-							name: this.renderer.component.get_unique_name(`create_${sanitize(name)}_slot`),
-							type: 'slot'
-						});
-
-						const { scope, lets } = this.node;
-						const seen = new Set(lets.map(l => l.name.name));
-
-						(owner as unknown as InlineComponentWrapper).node.lets.forEach(l => {
-							if (!seen.has(l.name.name)) lets.push(l);
-						});
-
-						(owner as unknown as InlineComponentWrapper).slots.set(
-							name,
-							get_slot_definition(child_block, scope, lets)
-						);
-						this.renderer.blocks.push(child_block);
-					}
-
-					this.slot_block = (owner as unknown as InlineComponentWrapper).slots.get(name).block;
-					block = this.slot_block;
-				}
+				block = create_slot_block(attribute, this, block);
 			}
 			if (attribute.name === 'style') {
 				return new StyleAttributeWrapper(this, block, attribute);
