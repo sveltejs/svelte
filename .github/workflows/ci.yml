@@ -13,13 +13,13 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - uses: nick-invision/retry@v1
+    - uses: nick-invision/retry@v2
       with:
         timeout_minutes: 2
         max_attempts: 3
         retry_on: timeout
         command: npm install
-    - uses: nick-invision/retry@v1
+    - uses: nick-invision/retry@v2
       with:
         timeout_minutes: 5
         max_attempts: 3
@@ -43,13 +43,13 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
-    - uses: nick-invision/retry@v1
+    - uses: nick-invision/retry@v2
       with:
         timeout_minutes: 2
         max_attempts: 3
         retry_on: timeout
         command: npm install
-    - uses: nick-invision/retry@v1
+    - uses: nick-invision/retry@v2
       with:
         timeout_minutes: 5
         max_attempts: 3
