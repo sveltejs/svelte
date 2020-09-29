@@ -111,8 +111,6 @@ export function slide(node: Element, {
 }: SlideParams): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
-	const width = parseFloat(style.width);
-	const height = parseFloat(style.height);
 	const padding_top = parseFloat(style.paddingTop);
 	const padding_bottom = parseFloat(style.paddingBottom);
 	const margin_top = parseFloat(style.marginTop);
@@ -120,7 +118,7 @@ export function slide(node: Element, {
 	const border_top_width = parseFloat(style.borderTopWidth);
 	const border_bottom_width = parseFloat(style.borderBottomWidth);
 	const targetProp = direction === 'vertical' ? 'height' : 'width';
-	const targetPropVal = targetProp === 'height' ? height : width;
+	const targetPropVal = targetProp === 'height' ? parseFloat(height) : parseFloat(width);
 
 	return {
 		delay,
