@@ -18,6 +18,7 @@ export const globals = new Set([
 	'Error',
 	'EvalError',
 	'Event',
+	'EventSource',
 	'fetch',
 	'global',
 	'globalThis',
