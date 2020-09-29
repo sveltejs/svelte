@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.29.0
 
 * Support `<slot slot="...">` ([#2079](https://github.com/sveltejs/svelte/issues/2079))
 * Fix unmounting components with a bidirectional transition with a delay ([#4954](https://github.com/sveltejs/svelte/issues/4954))
