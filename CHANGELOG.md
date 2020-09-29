@@ -5,6 +5,7 @@
 * Support `<slot slot="...">` ([#2079](https://github.com/sveltejs/svelte/issues/2079))
 * Fix unmounting components with a bidirectional transition with a delay ([#4954](https://github.com/sveltejs/svelte/issues/4954))
 * Add types to `get` function in `svelte/store` ([#5269](https://github.com/sveltejs/svelte/pull/5269))
+* Add a warning when a component looks like it's trying to use another component without beginning with a capital letter ([#5302](https://github.com/sveltejs/svelte/pull/5302))
 * Add `EventSource` to known globals ([#5463](https://github.com/sveltejs/svelte/issues/5463))
 * Fix compiler exception with `~`/`+` combinators and `{...spread}` attributes ([#5465](https://github.com/sveltejs/svelte/issues/5465))
 

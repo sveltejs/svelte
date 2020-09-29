@@ -161,6 +161,7 @@ export interface Var {
 	hoistable?: boolean;
 	subscribable?: boolean;
 	is_reactive_dependency?: boolean;
+	imported?: boolean;
 }
 
 export interface CssResult { 

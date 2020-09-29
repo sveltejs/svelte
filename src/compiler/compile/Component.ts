@@ -634,11 +634,13 @@ export default class Component {
 			}
 
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
+			const imported = node.type.startsWith('Import');
 
 			this.add_var({
 				name,
 				initialised: instance_scope.initialised_declarations.has(name),
-				writable
+				writable,
+				imported
 			});
 
 			this.node_for_declaration.set(name, node);
