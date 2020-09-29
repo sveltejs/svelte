@@ -107,7 +107,7 @@ Your `include`/`exclude` may differ per project — these are defaults that shou
 
 Any editor [using an LSP](https://langserver.org/#implementations-client) can be supported. The [VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) extension has been our primary focus, but there is work in progress [on Atom](https://github.com/sveltejs/language-tools/pull/160), and Vim via [coc-svelte](https://github.com/coc-extensions/coc-svelte) has been updated with the latest LSP.
 
-These editor extensions will improve your coding experience even if you only use JavaScript. The editor won't offer errors, but it will offer inference and refactoring tools. You can [add `// @check-js`](https://www.staging-typescript.org/docs/handbook/intro-to-js-ts.html) to the top of a `<script>` tag using JavaScript to get better error messages with no infra changes.
+These editor extensions will improve your coding experience even if you only use JavaScript. The editor won't offer errors, but it will offer inference and refactoring tools. You can [add `// @ts-check`](https://www.staging-typescript.org/docs/handbook/intro-to-js-ts.html) to the top of a `<script>` tag using JavaScript to get better error messages with no infra changes.
 
 To switch a `<script>` to use TypeScript, use `<script lang="ts">` and that should be it. Hopefully you won't be seeing an ocean of red squiggles.
 

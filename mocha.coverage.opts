@@ -1,4 +1,0 @@
---require source-map-support/register
---full-trace
---recursive
-test/test.js

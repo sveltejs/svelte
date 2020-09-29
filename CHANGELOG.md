@@ -2,13 +2,55 @@
 
 ## Unreleased
 
+* Support `<slot slot="...">` ([#2079](https://github.com/sveltejs/svelte/issues/2079))
+* Fix unmounting components with a bidirectional transition with a delay ([#4954](https://github.com/sveltejs/svelte/issues/4954))
+* Add types to `get` function in `svelte/store` ([#5269](https://github.com/sveltejs/svelte/pull/5269))
+* Add `EventSource` to known globals ([#5463](https://github.com/sveltejs/svelte/issues/5463))
+* Fix compiler exception with `~`/`+` combinators and `{...spread}` attributes ([#5465](https://github.com/sveltejs/svelte/issues/5465))
+
+## 3.28.0
+
+* Add `{#key}` block for keying arbitrary content on an expression ([#1469](https://github.com/sveltejs/svelte/issues/1469))
+
+## 3.27.0
+
+* Add `|nonpassive` event modifier, explicitly passing `passive: false` ([#2068](https://github.com/sveltejs/svelte/issues/2068))
+* Scope CSS selectors with `~` and `+` combinators ([#3104](https://github.com/sveltejs/svelte/issues/3104))
+* Fix keyed `{#each}` not reacting to key changing ([#5444](https://github.com/sveltejs/svelte/issues/5444))
+* Fix destructuring into store values ([#5449](https://github.com/sveltejs/svelte/issues/5449))
+* Fix erroneous `missing-declaration` warning with `use:obj.method` ([#5451](https://github.com/sveltejs/svelte/issues/5451))
+
+## 3.26.0
+
+* Support `use:obj.method` as actions ([#3935](https://github.com/sveltejs/svelte/issues/3935))
+* Support `_` as numeric separator ([#5407](https://github.com/sveltejs/svelte/issues/5407))
+* Fix assignments to properties on store values ([#5412](https://github.com/sveltejs/svelte/issues/5412))
+* Add special style scoping handling of `[open]` selectors on `<details>` elements ([#5421](https://github.com/sveltejs/svelte/issues/5421))
+* Support `import.meta` in template expressions ([#5422](https://github.com/sveltejs/svelte/issues/5422))
+
+## 3.25.1
+
+* Fix specificity of certain styles involving a child selector ([#4795](https://github.com/sveltejs/svelte/issues/4795))
+* Fix transitions that are parameterised with stores ([#5244](https://github.com/sveltejs/svelte/issues/5244))
+* Fix scoping of styles involving child selector and `*` ([#5370](https://github.com/sveltejs/svelte/issues/5370))
+* Fix destructuring which reassigns stores ([#5388](https://github.com/sveltejs/svelte/issues/5388))
+* Fix `{#await}`s with no `{:catch}` getting stuck unresolved if the promise rejects ([#5401](https://github.com/sveltejs/svelte/issues/5401))
+
+## 3.25.0
+
+* Use `null` rather than `undefined` for coerced bound value of `<input type="number">` ([#1701](https://github.com/sveltejs/svelte/issues/1701))
 * Expose object of which slots have received content in `$$slots` ([#2106](https://github.com/sveltejs/svelte/issues/2106))
+* Correctly disallow using lifecycle hooks after synchronous component initialisation ([#4259](https://github.com/sveltejs/svelte/issues/4259), [#4899](https://github.com/sveltejs/svelte/issues/4899))
 * Re-throw an unhandled rejection when an `{#await}` block with no `{:catch}` gets a rejection ([#5129](https://github.com/sveltejs/svelte/issues/5129))
 * Add types to `createEventDispatcher` ([#5211](https://github.com/sveltejs/svelte/issues/5211))
 * In SSR mode, do not automatically declare variables for reactive assignments to member expressions ([#5247](https://github.com/sveltejs/svelte/issues/5247))
 * Include selector in message of `unused-css-selector` warning ([#5252](https://github.com/sveltejs/svelte/issues/5252))
 * Fix using `<Namespaced.Component/>`s in child `{#await}`/`{#each}` contexts ([#5255](https://github.com/sveltejs/svelte/issues/5255))
 * Fix using `<svelte:component>` in `{:catch}` ([#5259](https://github.com/sveltejs/svelte/issues/5259))
+* Fix setting one-way bound `<input>` `value` to `undefined` when it has spread attributes ([#5270](https://github.com/sveltejs/svelte/issues/5270))
+* Fix deep two-way bindings inside an `{#each}` involving a store ([#5286](https://github.com/sveltejs/svelte/issues/5286))
+* Use valid XHTML for elements that are optimised and inserted with `.innerHTML` ([#5315](https://github.com/sveltejs/svelte/issues/5315))
+* Fix reactivity of `$$props` in slot fallback content ([#5367](https://github.com/sveltejs/svelte/issues/5367))
 
 ## 3.24.1
 

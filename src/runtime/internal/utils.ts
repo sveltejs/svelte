@@ -1,3 +1,5 @@
+import { Readable } from "svelte/store";
+
 export function noop() {}
 
 export const identity = x => x;
@@ -60,7 +62,7 @@ export function subscribe(store, ...callbacks) {
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
-export function get_store_value(store) {
+export function get_store_value<T, S extends Readable<T>>(store: S): T {
 	let value;
 	subscribe(store, _ => value = _)();
 	return value;
