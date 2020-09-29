@@ -201,4 +201,6 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
  * Get the current value from a store by subscribing and immediately unsubscribing.
  * @param store readable
  */
-export { get_store_value as get };
+export const get = get_store_value as {
+	<T>(store: Readable<T>): (T | undefined);
+};
