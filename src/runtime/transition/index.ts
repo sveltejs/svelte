@@ -3,6 +3,8 @@ import { assign, is_function } from 'svelte/internal';
 
 type EasingFunction = (t: number) => number;
 
+type SlideDirections = "vertical" | "horizontal"
+
 export interface TransitionConfig {
 	delay?: number;
 	duration?: number;
@@ -98,15 +100,18 @@ interface SlideParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
+	direction?: SlideDirections
 }
 
 export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
-	easing = cubicOut
+	easing = cubicOut,
+	direction = "vertical"
 }: SlideParams): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
+	const width = parseFloat(style.width);
 	const height = parseFloat(style.height);
 	const padding_top = parseFloat(style.paddingTop);
 	const padding_bottom = parseFloat(style.paddingBottom);
@@ -114,6 +119,8 @@ export function slide(node: Element, {
 	const margin_bottom = parseFloat(style.marginBottom);
 	const border_top_width = parseFloat(style.borderTopWidth);
 	const border_bottom_width = parseFloat(style.borderBottomWidth);
+	const targetProp = direction === 'vertical' ? 'height' : 'width';
+	const targetPropVal = targetProp === 'height' ? height : width;
 
 	return {
 		delay,
@@ -122,7 +129,7 @@ export function slide(node: Element, {
 		css: t =>
 			'overflow: hidden;' +
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
-			`height: ${t * height}px;` +
+			`${targetProp}: ${t * targetPropVal}px;` +
 			`padding-top: ${t * padding_top}px;` +
 			`padding-bottom: ${t * padding_bottom}px;` +
 			`margin-top: ${t * margin_top}px;` +

@@ -659,6 +659,7 @@ Slides an element in and out.
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `direction` (`string`, default `vertical`) — direction of transition, vertical or horizontal
 
 ```sv
 <script>
@@ -667,7 +668,7 @@ Slides an element in and out.
 </script>
 
 {#if condition}
-	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut }}">
+	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut, direction: 'vertical' }}">
 		slides in and out
 	</div>
 {/if}
