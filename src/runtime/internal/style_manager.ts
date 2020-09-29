@@ -34,6 +34,8 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet);
 	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
 
+	console.log(doc, rule);
+	
 	if (!current_rules[name]) {
 		current_rules[name] = true;
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
@@ -42,7 +44,10 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	const animation = node.style.animation || '';
 	node.style.animation = `${animation ? `${animation}, ` : ``}${name} ${duration}ms linear ${delay}ms 1 both`;
 
+	console.log(node.style.animation, current_rules);
 	active += 1;
+	// debugger;
+
 	return name;
 }
 
