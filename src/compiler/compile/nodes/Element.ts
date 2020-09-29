@@ -186,7 +186,7 @@ export default class Element extends Node {
 
 				case 'Attribute':
 				case 'Spread':
-				// special case
+					// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
 
 					this.attributes.push(new Attribute(component, this, scope, node));
@@ -241,6 +241,13 @@ export default class Element extends Node {
 	}
 
 	validate() {
+		if (this.component.var_lookup.has(this.name) && this.component.var_lookup.get(this.name).imported) {
+			this.component.warn(this, {
+				code: 'component-name-lowercase',
+				message: `<${this.name}> will be treated as an HTML element unless it begins with a capital letter`
+			});
+		}
+
 		if (a11y_distracting_elements.has(this.name)) {
 			// no-distracting-elements
 			this.component.warn(this, {
