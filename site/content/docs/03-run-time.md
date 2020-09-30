@@ -1051,12 +1051,14 @@ A server-side component exposes a `render` method that can be called with option
 
 You can import a Svelte component directly into Node using [`svelte/register`](docs#svelte_register).
 
+`renderedComponents` contains an array of filenames of components that were rendered during SSR. The filenames come from `svelte.compile({filename: '...' })`, which is generally done behind the scenes by your bundler (eg: Rollup). You can match these file names to your asset modules in order to preload asynchronous components that will be required on the client-side ahead-of-time.
+
 ```js
 require('svelte/register');
 
 const App = require('./App.svelte').default;
 
-const { head, html, css } = App.render({
+const { head, html, css, renderedComponents } = App.render({
 	answer: 42
 });
 ```

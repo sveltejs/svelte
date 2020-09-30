@@ -37,7 +37,6 @@ describe('ssr', () => {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
-
 		// add .solo to a sample directory name to only run that test, or
 		// .show to always show the output. or both
 		const solo = config.solo || /\.solo/.test(dir);
@@ -76,7 +75,11 @@ describe('ssr', () => {
 				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
 
 				try {
-					assert.htmlEqual(html, expectedHtml);
+					if (config.testForRenderedComponents) {
+						assert.ok(rendered.renderedComponents[0].includes('main.svelte'));
+					} else {
+						assert.htmlEqual(html, expectedHtml);
+					}
 				} catch (error) {
 					if (shouldUpdateExpected()) {
 						fs.writeFileSync(`${dir}/_expected.html`, html);

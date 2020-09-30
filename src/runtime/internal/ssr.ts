@@ -107,7 +107,8 @@ export function create_ssr_component(fn) {
 					map: null;
 					code: string;
 				}>;
-			} = { title: '', head: '', css: new Set() };
+				renderedComponents: Set<string>;
+			} = { title: '', head: '', css: new Set(), renderedComponents: new Set() };
 
 			const html = $$render(result, props, {}, options);
 
@@ -119,7 +120,8 @@ export function create_ssr_component(fn) {
 					code: Array.from(result.css).map(css => css.code).join('\n'),
 					map: null // TODO
 				},
-				head: result.title + result.head
+				head: result.title + result.head,
+				renderedComponents: Array.from(result.renderedComponents)
 			};
 		},
 

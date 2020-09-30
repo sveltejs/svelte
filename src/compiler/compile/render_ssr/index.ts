@@ -134,6 +134,7 @@ export default function ssr(
 		instance_javascript,
 		...parent_bindings,
 		css.code && b`$$result.css.add(#css);`,
+		options.filename && b`$$result.renderedComponents.add('${options.filename}');`,
 		main
 	].filter(Boolean);
 
