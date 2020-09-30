@@ -25,6 +25,7 @@ _If you're interested in contributing to Sapper, [check out these "good first is
 
 ## Impactful bug fixes
 - CSS compilation will no longer remove rules for the `open` attribute on `<details>` elements ([Example](https://svelte.dev/repl/ab4c0c177d1f4fab92f46eb8539cea9a?version=3.26.0), **3.26.0**)
+2. `prettier-plugin-svelte` will do a better job now at dealing with whitespaces, especially around inline elements. It will also preserve formatting inside `<pre>` tags and will no longer format languages which are not supported by Prettier, like SASS, Pug or Stylus.
 
 
 ## Coming up
