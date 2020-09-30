@@ -1291,7 +1291,7 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 
 ---
 
-`$$slots` is an object whose keys are the names of the slots passed into the component by the parent. If the parent leaves a named slot empty, `$$slots` will not have a key for that slot. This allows components to render a slot (and other elements, like wrappers for styling) only if the parent provides children for it.
+`$$slots` is an object whose keys are the names of the slots passed into the component by the parent. If the parent does not pass in a slot with a particular name, that name will not be a present in `$$slots`. This allows components to render a slot (and other elements, like wrappers for styling) only if the parent provides it.
 
 ```sv
 <!-- App.svelte -->
@@ -1309,6 +1309,8 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 	{/if}
 </div>
 ```
+
+Note that explicitly passing in an empty named slot will add that slot's name to `$$slots`. For example, if a parent passes `<div slot="title" />` to a child component, `$$slots.title` will be truthy within the child.
 
 #### [`<slot let:`*name*`={`*value*`}>`](slot_let)
 
