@@ -1,4 +1,4 @@
-import { Readable } from "svelte/store";
+import { Readable } from 'svelte/store';
 
 export function noop() {}
 

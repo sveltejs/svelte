@@ -3,7 +3,7 @@ function callback(refs) {
 	calls.push(refs.map(({ ref }) => ({ ref })));
 }
 export default {
-	html: ``,
+	html: '',
 	props: {
 		callback
 	},
@@ -16,7 +16,7 @@ export default {
 
 		await component.addItem();
 
-		let divs = target.querySelectorAll("div");
+		let divs = target.querySelectorAll('div');
 
 		assert.equal(calls.length, 3);
 		assert.equal(calls[1].length, 1);
@@ -26,7 +26,7 @@ export default {
 
 		await component.addItem();
 
-		divs = target.querySelectorAll("div");
+		divs = target.querySelectorAll('div');
 
 		assert.equal(calls.length, 5);
 		assert.equal(calls[3].length, 2);
@@ -38,7 +38,7 @@ export default {
 
 		await component.addItem();
 
-		divs = target.querySelectorAll("div");
+		divs = target.querySelectorAll('div');
 
 		assert.equal(calls.length, 7);
 		assert.equal(calls[5].length, 3);

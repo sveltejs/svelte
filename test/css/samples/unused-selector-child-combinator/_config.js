@@ -1,7 +1,7 @@
 export default {
 	warnings: [
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			message: 'Unused CSS selector "article > *"',
 			frame: `
 			1: <style>
@@ -14,7 +14,7 @@ export default {
 			end: { character: 21, column: 12, line: 2 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			message: 'Unused CSS selector "article *"',
 			frame: `
 			4:   }
@@ -28,7 +28,7 @@ export default {
 			end: { character: 58, column: 10, line: 6 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			message: 'Unused CSS selector ".article > *"',
 			frame: `
 			 8:   }

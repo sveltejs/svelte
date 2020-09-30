@@ -20,7 +20,7 @@ describe('parse', () => {
 		(skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`) || {};
 
-			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '').replace(/\r/g, "");
+			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '').replace(/\r/g, '');
 			const expectedOutput = tryToLoadJson(`${__dirname}/samples/${dir}/output.json`);
 			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
 

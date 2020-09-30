@@ -36,7 +36,7 @@ export default class Window extends Node {
 
 					// TODO is this constraint necessary?
 					component.error(node.expression, {
-						code: `invalid-binding`,
+						code: 'invalid-binding',
 						message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
 					});
 				}
@@ -52,12 +52,12 @@ export default class Window extends Node {
 
 					if (match) {
 						component.error(node, {
-							code: `invalid-binding`,
+							code: 'invalid-binding',
 							message: `${message} (did you mean '${match}'?)`
 						});
 					} else {
 						component.error(node, {
-							code: `invalid-binding`,
+							code: 'invalid-binding',
 							message: `${message} — valid bindings are ${list(valid_bindings)}`
 						});
 					}

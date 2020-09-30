@@ -9,14 +9,14 @@ export default {
 		thePromise
 	},
 
-	html: `waiting`,
+	html: 'waiting',
 
 	test({ assert, component, target }) {
 		fulfil(9000);
 
 		return thePromise
 			.then(() => {
-				assert.htmlEqual(target.innerHTML, `resolved`);
+				assert.htmlEqual(target.innerHTML, 'resolved');
 
 				let reject;
 
@@ -26,14 +26,14 @@ export default {
 
 				component.thePromise = thePromise;
 
-				assert.htmlEqual(target.innerHTML, `waiting`);
+				assert.htmlEqual(target.innerHTML, 'waiting');
 
 				reject(new Error('something broke'));
 
 				return thePromise.catch(() => {});
 			})
 			.then(() => {
-				assert.htmlEqual(target.innerHTML, `rejected`);
+				assert.htmlEqual(target.innerHTML, 'rejected');
 			});
 	}
 };

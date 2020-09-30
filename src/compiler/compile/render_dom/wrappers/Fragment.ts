@@ -69,7 +69,7 @@ export default class FragmentWrapper {
 			const child = nodes[i];
 
 			if (!child.type) {
-				throw new Error(`missing type`);
+				throw new Error('missing type');
 			}
 
 			if (!(child.type in wrappers)) {

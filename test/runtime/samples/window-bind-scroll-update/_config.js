@@ -1,4 +1,4 @@
-import { env, useFakeTimers } from "../../../helpers";
+import { env, useFakeTimers } from '../../../helpers';
 
 let clock;
 

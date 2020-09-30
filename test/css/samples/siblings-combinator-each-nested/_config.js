@@ -1,7 +1,7 @@
 export default {
 	warnings: [
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				56:
 				57:   /* no match */
@@ -15,7 +15,7 @@ export default {
 			end: { character: 1236, column: 8, line: 58 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				57:   /* no match */
 				58:   .a + .h { color: green; }
@@ -29,7 +29,7 @@ export default {
 			end: { character: 1263, column: 8, line: 59 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				58:   .a + .h { color: green; }
 				59:   .a + .i { color: green; }
@@ -43,7 +43,7 @@ export default {
 			end: { character: 1290, column: 8, line: 60 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				59:   .a + .i { color: green; }
 				60:   .c + .h { color: green; }
@@ -57,7 +57,7 @@ export default {
 			end: { character: 1317, column: 8, line: 61 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				60:   .c + .h { color: green; }
 				61:   .c + .i { color: green; }
@@ -71,7 +71,7 @@ export default {
 			end: { character: 1344, column: 8, line: 62 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				61:   .c + .i { color: green; }
 				62:   .d + .f { color: green; }
@@ -85,7 +85,7 @@ export default {
 			end: { character: 1371, column: 8, line: 63 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				62:   .d + .f { color: green; }
 				63:   .d + .g { color: green; }
@@ -99,7 +99,7 @@ export default {
 			end: { character: 1398, column: 8, line: 64 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				63:   .d + .g { color: green; }
 				64:   .e + .g { color: green; }

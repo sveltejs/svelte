@@ -3,7 +3,7 @@ import get_object from '../utils/get_object';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
-import {dimensions} from "../../utils/patterns";
+import {dimensions} from '../../utils/patterns';
 import { Node as ESTreeNode } from 'estree';
 
 // TODO this should live in a specific binding

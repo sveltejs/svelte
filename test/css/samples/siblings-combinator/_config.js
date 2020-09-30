@@ -1,7 +1,7 @@
 export default {
 	warnings: [
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				3:     color: green;
 				4:   }
@@ -15,7 +15,7 @@ export default {
 			end: { character: 58, column: 14, line: 5 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			
 			frame:`
 				 6:     color: green;
@@ -30,7 +30,7 @@ export default {
 			end: { character: 95, column: 15, line: 8 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			
 			frame: `
 				 9:     color: green;
@@ -45,7 +45,7 @@ export default {
 			end: { character: 129, column: 12, line: 11 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				12:     color: green;
 				13:   }

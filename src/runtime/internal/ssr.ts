@@ -21,9 +21,9 @@ export function spread(args, classes_to_add) {
 		if (invalid_attribute_name_character.test(name)) return;
 
 		const value = attributes[name];
-		if (value === true) str += " " + name;
+		if (value === true) str += ' ' + name;
 		else if (boolean_attributes.has(name.toLowerCase())) {
-			if (value) str += " " + name;
+			if (value) str += ' ' + name;
 		} else if (value != null) {
 			str += ` ${name}="${String(value).replace(/"/g, '&#34;').replace(/'/g, '&#39;')}"`;
 		}
@@ -133,5 +133,5 @@ export function add_attribute(name, value, boolean) {
 }
 
 export function add_classes(classes) {
-	return classes ? ` class="${classes}"` : ``;
+	return classes ? ` class="${classes}"` : '';
 }
