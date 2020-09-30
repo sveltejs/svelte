@@ -14,6 +14,23 @@ Welcome to the first edition of our "What's new in Svelte" series! We'll try to 
 4. CSS Selectors with `~` and `+` combinators are now supported ([Example](https://svelte.dev/repl/91ad9257d2d1430185a504a18cc60172?version=3.29.0), **3.27.0**, with a compiler fix in **3.29.0**)
 5. The `{#key}` block is now available to key arbitrary content on an expression ([More info](https://github.com/sveltejs/svelte/issues/1469), **3.29.0**)
 6. Slots can now be forwarded through child components! This used to only be possible by adding extra wrapper `<div>`s ([More info](https://github.com/sveltejs/svelte/issues/2079), **3.29.0**)
+7. When using TypeScript, you can now type the `createEventDispatcher` method:
+```html
+<script lang="ts">
+    import { createEventDispatcher } from 'svelte';
+
+    const dispatch = createEventDispatcher<{
+        /**
+         * you can also add docs
+         */
+        checked: boolean; // Will translate to `CustomEvent<boolean>`
+        hello: string;
+    }>();
+
+    // ...
+</script>
+```
+This will make sure that you can invoke dispatch only with the specified event names and its types. The Svelte for VS Code extension was also updated to deal with this new feature. It will provide strong typings for these events as well as autocompletion and hover information.
 
 **New from Sapper!**
 Sapper 0.28.9 just came out. The highlights from it include much better support for CSP nonces, asset preload support for exported pages, and error details are now available in the $page store on error pages.
