@@ -28,7 +28,7 @@ _If you're interested in contributing to Sapper, [check out these "good first is
 
 
 ## Coming up
-- [Svelte Summit](https://sveltesummit.com/) is taking place on October 18!
+- [Svelte Summit](https://sveltesummit.com/), Svelte's second global online conference, is taking place on October 18! Sign up for free to get reminders and talk updates!
 
 For all the features and bugfixes see the CHANGELOG for [Svelte](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md) and [Sapper](https://github.com/sveltejs/sapper/blob/master/CHANGELOG.md).
 
