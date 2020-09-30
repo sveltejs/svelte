@@ -5,13 +5,13 @@ export default {
 		}
 	},
 
-	html: ``,
+	html: '',
 
 	test({ assert, component, target }) {
 		component.props = {
 			a: 2
 		};
 
-		assert.htmlEqual(target.innerHTML, ``);
+		assert.htmlEqual(target.innerHTML, '');
 	}
 };

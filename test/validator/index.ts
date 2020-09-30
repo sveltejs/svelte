@@ -1,23 +1,23 @@
-import * as fs from "fs";
-import * as assert from "assert";
-import { svelte, loadConfig, tryToLoadJson } from "../helpers";
+import * as fs from 'fs';
+import * as assert from 'assert';
+import { svelte, loadConfig, tryToLoadJson } from '../helpers';
 
-describe("validate", () => {
+describe('validate', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
-		if (dir[0] === ".") return;
+		if (dir[0] === '.') return;
 
 		// add .solo to a sample directory name to only run that test
 		const solo = /\.solo/.test(dir);
 		const skip = /\.skip/.test(dir);
 
 		if (solo && process.env.CI) {
-			throw new Error("Forgot to remove `solo: true` from test");
+			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 
-			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, "utf-8").replace(/\s+$/, "").replace(/\r/g, "");
+			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '').replace(/\r/g, '');
 			const expected_warnings = tryToLoadJson(`${__dirname}/samples/${dir}/warnings.json`) || [];
 			const expected_errors = tryToLoadJson(`${__dirname}/samples/${dir}/errors.json`);
 			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`);
@@ -69,18 +69,18 @@ describe("validate", () => {
 		});
 	});
 
-	it("errors if options.name is illegal", () => {
+	it('errors if options.name is illegal', () => {
 		assert.throws(() => {
-			svelte.compile("<div></div>", {
-				name: "not.valid",
+			svelte.compile('<div></div>', {
+				name: 'not.valid',
 				generate: false
 			});
 		}, /options\.name must be a valid identifier/);
 	});
 
-	it("warns if options.name is not capitalised", () => {
-		const { warnings } = svelte.compile("<div></div>", {
-			name: "lowercase",
+	it('warns if options.name is not capitalised', () => {
+		const { warnings } = svelte.compile('<div></div>', {
+			name: 'lowercase',
 			generate: false
 		});
 
@@ -88,14 +88,14 @@ describe("validate", () => {
 			code: w.code,
 			message: w.message
 		})), [{
-			code: `options-lowercase-name`,
-			message: "options.name should be capitalised"
+			code: 'options-lowercase-name',
+			message: 'options.name should be capitalised'
 		}]);
 	});
 
-	it("does not warn if options.name begins with non-alphabetic character", () => {
-		const { warnings } = svelte.compile("<div></div>", {
-			name: "_",
+	it('does not warn if options.name begins with non-alphabetic character', () => {
+		const { warnings } = svelte.compile('<div></div>', {
+			name: '_',
 			generate: false
 		});
 

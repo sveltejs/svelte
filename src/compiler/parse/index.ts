@@ -66,7 +66,7 @@ export class Parser {
 
 		if (state !== fragment) {
 			this.error({
-				code: `unexpected-eof`,
+				code: 'unexpected-eof',
 				message: 'Unexpected end of input'
 			});
 		}
@@ -91,7 +91,7 @@ export class Parser {
 
 	acorn_error(err: any) {
 		this.error({
-			code: `parse-error`,
+			code: 'parse-error',
 			message: err.message.replace(/ \(\d+:\d+\)$/, '')
 		}, err.pos);
 	}
@@ -169,7 +169,7 @@ export class Parser {
 
 		if (!allow_reserved && reserved.has(identifier)) {
 			this.error({
-				code: `unexpected-reserved-word`,
+				code: 'unexpected-reserved-word',
 				message: `'${identifier}' is a reserved word in JavaScript and cannot be used here`
 			}, start);
 		}
@@ -180,7 +180,7 @@ export class Parser {
 	read_until(pattern: RegExp) {
 		if (this.index >= this.template.length)
 			this.error({
-				code: `unexpected-eof`,
+				code: 'unexpected-eof',
 				message: 'Unexpected end of input'
 			});
 
@@ -199,8 +199,8 @@ export class Parser {
 	require_whitespace() {
 		if (!whitespace.test(this.template[this.index])) {
 			this.error({
-				code: `missing-whitespace`,
-				message: `Expected whitespace`
+				code: 'missing-whitespace',
+				message: 'Expected whitespace'
 			});
 		}
 
@@ -228,15 +228,15 @@ export default function parse(
 
 	if (instance_scripts.length > 1) {
 		parser.error({
-			code: `invalid-script`,
-			message: `A component can only have one instance-level <script> element`
+			code: 'invalid-script',
+			message: 'A component can only have one instance-level <script> element'
 		}, instance_scripts[1].start);
 	}
 
 	if (module_scripts.length > 1) {
 		parser.error({
-			code: `invalid-script`,
-			message: `A component can only have one <script context="module"> element`
+			code: 'invalid-script',
+			message: 'A component can only have one <script context="module"> element'
 		}, module_scripts[1].start);
 	}
 

@@ -1,5 +1,5 @@
 export default {
-	html: `<div>1024x768</div>`,
+	html: '<div>1024x768</div>',
 
 	before_test() {
 		Object.defineProperties(window, {

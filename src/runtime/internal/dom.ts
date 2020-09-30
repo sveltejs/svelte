@@ -1,4 +1,4 @@
-import { has_prop } from "./utils";
+import { has_prop } from './utils';
 
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
@@ -269,7 +269,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 
 	const iframe = element('iframe');
 	iframe.setAttribute('style',
-		`display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; ` +
+		'display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; ' +
 		`overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: ${z_index};`
 	);
 	iframe.setAttribute('aria-hidden', 'true');
@@ -280,7 +280,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	let unsubscribe: () => void;
 
 	if (crossorigin) {
-		iframe.src = `data:text/html,<script>onresize=function(){parent.postMessage(0,'*')}</script>`;
+		iframe.src = "data:text/html,<script>onresize=function(){parent.postMessage(0,'*')}</script>";
 		unsubscribe = listen(window, 'message', (event: MessageEvent) => {
 			if (event.source === iframe.contentWindow) fn();
 		});

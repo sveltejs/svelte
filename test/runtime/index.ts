@@ -1,9 +1,9 @@
-import * as path from "path";
-import * as fs from "fs";
+import * as path from 'path';
+import * as fs from 'fs';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import glob from 'tiny-glob/sync.js';
-import { clear_loops, flush, set_now, set_raf } from "../../internal";
+import { clear_loops, flush, set_now, set_raf } from '../../internal';
 
 import {
 	assert,
@@ -14,7 +14,7 @@ import {
 	env,
 	setupHtmlEqual,
 	mkdirp
-} from "../helpers";
+} from '../helpers';
 
 let svelte$;
 let svelte;
@@ -29,17 +29,17 @@ process.on('unhandledRejection', err => {
 	unhandled_rejection = err;
 });
 
-describe("runtime", () => {
+describe('runtime', () => {
 	before(() => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
 
-		require.extensions[".svelte"] = function(module, filename) {
+		require.extensions['.svelte'] = function(module, filename) {
 			const options = Object.assign({
 				filename
 			}, compileOptions);
 
-			const { js: { code } } = compile(fs.readFileSync(filename, "utf-8").replace(/\r/g, ""), options);
+			const { js: { code } } = compile(fs.readFileSync(filename, 'utf-8').replace(/\r/g, ''), options);
 
 			return module._compile(code, filename);
 		};
@@ -50,7 +50,7 @@ describe("runtime", () => {
 	const failed = new Set();
 
 	function runTest(dir, hydrate) {
-		if (dir[0] === ".") return;
+		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
@@ -58,7 +58,7 @@ describe("runtime", () => {
 		if (hydrate && config.skip_if_hydrate) return;
 
 		if (solo && process.env.CI) {
-			throw new Error("Forgot to remove `solo: true` from test");
+			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
 		(config.skip ? it.skip : solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, () => {
@@ -103,7 +103,7 @@ describe("runtime", () => {
 
 				try {
 					const { js } = compile(
-						fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r/g, ""),
+						fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r/g, ''),
 						{
 							...compileOptions,
 							filename: file
@@ -151,7 +151,7 @@ describe("runtime", () => {
 					// Put things we need on window for testing
 					window.SvelteComponent = SvelteComponent;
 
-					const target = window.document.querySelector("main");
+					const target = window.document.querySelector('main');
 
 					const warnings = [];
 					const warn = console.warn;
@@ -172,14 +172,14 @@ describe("runtime", () => {
 
 					if (config.error) {
 						unintendedError = true;
-						throw new Error("Expected a runtime error");
+						throw new Error('Expected a runtime error');
 					}
 
 					if (config.warnings) {
 						assert.deepEqual(warnings, config.warnings);
 					} else if (warnings.length) {
 						unintendedError = true;
-						throw new Error("Received unexpected warnings");
+						throw new Error('Received unexpected warnings');
 					}
 
 					if (config.html) {
@@ -204,7 +204,7 @@ describe("runtime", () => {
 						});
 					} else {
 						component.$destroy();
-						assert.htmlEqual(target.innerHTML, "");
+						assert.htmlEqual(target.innerHTML, '');
 
 						if (unhandled_rejection) {
 							throw unhandled_rejection;
@@ -250,8 +250,8 @@ describe("runtime", () => {
 
 	async function create_component(src = '<div></div>') {
 		const { js } = svelte$.compile(src, {
-			format: "esm",
-			name: "SvelteComponent",
+			format: 'esm',
+			name: 'SvelteComponent',
 			dev: true
 		});
 
@@ -282,7 +282,7 @@ describe("runtime", () => {
 		);
 	}
 
-	it("fails if options.target is missing in dev mode", async () => {
+	it('fails if options.target is missing in dev mode', async () => {
 		const App = await create_component();
 
 		assert.throws(() => {
@@ -290,7 +290,7 @@ describe("runtime", () => {
 		}, /'target' is a required option/);
 	});
 
-	it("fails if options.hydrate is true but the component is non-hydratable", async () => {
+	it('fails if options.hydrate is true but the component is non-hydratable', async () => {
 		const App = await create_component();
 
 		assert.throws(() => {

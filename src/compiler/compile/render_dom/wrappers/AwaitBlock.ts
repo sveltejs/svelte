@@ -177,8 +177,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		const snippet = this.node.expression.manipulate(block);
 
-		const info = block.get_unique_name(`info`);
-		const promise = block.get_unique_name(`promise`);
+		const info = block.get_unique_name('info');
+		const promise = block.get_unique_name('promise');
 
 		block.add_variable(promise);
 

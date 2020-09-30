@@ -13,7 +13,7 @@ export default function get_name_from_filename(filename: string) {
 
 	const base = parts.pop()
 		.replace(/%/g, 'u')
-		.replace(/\.[^.]+$/, "")
+		.replace(/\.[^.]+$/, '')
 		.replace(/[^a-zA-Z_$0-9]+/g, '_')
 		.replace(/^_/, '')
 		.replace(/_$/, '')

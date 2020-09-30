@@ -1,7 +1,7 @@
 export default {
 	warnings: [
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				21:
 				22:   /* no match */
@@ -15,7 +15,7 @@ export default {
 			end: { character: 486, column: 8, line: 23 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				22:   /* no match */
 				23:   .a + .c { color: green; }
@@ -29,7 +29,7 @@ export default {
 			end: { character: 513, column: 8, line: 24 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				23:   .a + .c { color: green; }
 				24:   .a + .g { color: green; }
@@ -43,7 +43,7 @@ export default {
 			end: { character: 540, column: 8, line: 25 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				24:   .a + .g { color: green; }
 				25:   .b + .e { color: green; }
@@ -57,7 +57,7 @@ export default {
 			end: { character: 567, column: 8, line: 26 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				25:   .b + .e { color: green; }
 				26:   .c + .g { color: green; }
@@ -71,7 +71,7 @@ export default {
 			end: { character: 594, column: 8, line: 27 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				26:   .c + .g { color: green; }
 				27:   .c + .k { color: green; }
@@ -85,7 +85,7 @@ export default {
 			end: { character: 621, column: 8, line: 28 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				27:   .c + .k { color: green; }
 				28:   .d + .d { color: green; }
@@ -99,7 +99,7 @@ export default {
 			end: { character: 648, column: 8, line: 29 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				28:   .d + .d { color: green; }
 				29:   .e + .f { color: green; }
@@ -113,7 +113,7 @@ export default {
 			end: { character: 675, column: 8, line: 30 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				29:   .e + .f { color: green; }
 				30:   .f + .f { color: green; }
@@ -127,7 +127,7 @@ export default {
 			end: { character: 702, column: 8, line: 31 }
 		},
 		{
-			code: "css-unused-selector",
+			code: 'css-unused-selector',
 			frame: `
 				30:   .f + .f { color: green; }
 				31:   .g + .j { color: green; }

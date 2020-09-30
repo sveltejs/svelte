@@ -1,6 +1,6 @@
 export default {
 	async test({ assert, component, target, window }) {
-		const [input1, input2] = target.querySelectorAll("input");
+		const [input1, input2] = target.querySelectorAll('input');
 
 		// we are not able emulate user interaction in jsdom,
 		// therefore, jsdom could not validate minlength / maxlength
@@ -14,7 +14,7 @@ export default {
 		const spy1 = spyOnValueSetter(input1, input1.value);
 		const spy2 = spyOnValueSetter(input2, input2.value);
 		
-		const event = new window.Event("input");
+		const event = new window.Event('input');
 		
 		input1.value = '12345';
 		spy1.reset();
@@ -41,7 +41,7 @@ export default {
 function spyOnValueSetter(input, initialValue) {
 	let value = initialValue;
 	let isSet = false;
-	Object.defineProperty(input, "value", {
+	Object.defineProperty(input, 'value', {
 		get() {
 			return value;
 		},

@@ -2,7 +2,7 @@ export default {
 	test(assert, vars) {
 		assert.deepEqual(vars, [
 			{
-				name: "a",
+				name: 'a',
 				export_name: null,
 				injected: false,
 				module: true,
@@ -13,7 +13,7 @@ export default {
 				writable: true
 			},
 			{
-				name: "b",
+				name: 'b',
 				export_name: null,
 				injected: false,
 				module: true,
@@ -24,7 +24,7 @@ export default {
 				writable: true
 			},
 			{
-				name: "c",
+				name: 'c',
 				export_name: null,
 				injected: false,
 				module: true,
@@ -35,7 +35,7 @@ export default {
 				writable: true
 			},
 			{
-				name: "d",
+				name: 'd',
 				export_name: null,
 				injected: false,
 				module: true,
@@ -46,7 +46,7 @@ export default {
 				writable: true
 			},
 			{
-				name: "c",
+				name: 'c',
 				export_name: null,
 				injected: false,
 				module: false,
@@ -57,7 +57,7 @@ export default {
 				writable: true
 			},
 			{
-				name: "foo",
+				name: 'foo',
 				export_name: null,
 				injected: false,
 				module: false,

@@ -6,7 +6,7 @@ export default {
 	test({ assert, component, target }) {
 		assert.equal(
 			target.textContent,
-			`Hello world! How are you?`
+			'Hello world! How are you?'
 		);
 	}
 };

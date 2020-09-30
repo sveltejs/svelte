@@ -81,7 +81,7 @@ export default function dom(
 
 	const uses_props = component.var_lookup.has('$$props');
 	const uses_rest = component.var_lookup.has('$$restProps');
-	const $$props = uses_props || uses_rest ? `$$new_props` : `$$props`;
+	const $$props = uses_props || uses_rest ? '$$new_props' : '$$props';
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
@@ -524,7 +524,7 @@ export default function dom(
 		const declaration = b`
 			class ${name} extends ${superclass} {
 				constructor(options) {
-					super(${options.dev && `options`});
+					super(${options.dev && 'options'});
 					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
 					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}

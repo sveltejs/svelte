@@ -14,6 +14,6 @@ export default {
 		`);
 
 		component.x = 6;
-		assert.htmlEqual(target.innerHTML, ``);
+		assert.htmlEqual(target.innerHTML, '');
 	}
 };
