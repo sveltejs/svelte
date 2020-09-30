@@ -3,7 +3,7 @@ import { assign, is_function } from 'svelte/internal';
 
 type EasingFunction = (t: number) => number;
 
-type SlideDirections = "vertical" | "horizontal"
+type SlideDirections = 'vertical' | 'horizontal'
 
 export interface TransitionConfig {
 	delay?: number;
@@ -107,7 +107,7 @@ export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut,
-	direction = "vertical"
+	direction = 'vertical'
 }: SlideParams): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
