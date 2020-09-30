@@ -28,7 +28,7 @@ export default class EventHandlerWrapper {
 
 	render(block: Block, target: string | Expression) {
 		if (!this.node.expression) {
-			if (this.node.name === "*")
+			if (this.node.name === '*')
 				block.chunks.bubble.push(b`local_dispose.push(@listen(${target}, type, callback))`);
 			else
 				block.chunks.bubble.push(b`if (type === "${this.node.name}") local_dispose.push(@listen(${target}, "${this.node.name}", callback));`);

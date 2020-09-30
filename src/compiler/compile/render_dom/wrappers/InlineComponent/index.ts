@@ -392,7 +392,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			.filter(handler => {
 				if (handler.expression) return true;
 
-				if (handler.name === "*")
+				if (handler.name === '*')
 					block.chunks.bubble.push(b`local_dispose.push(${name}.$on(type, callback))`);
 				else
 					block.chunks.bubble.push(b`if (type === "${handler.name}") local_dispose.push(${name}.$on("${handler.name}", callback));`);
