@@ -5,22 +5,32 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-## New features
-1. `use:obj.method` allows functions defined within objects to be used within actions ([Example](https://svelte.dev/repl/c305722adb4a4545b27b198ea8ff9bde?version=3.26.0), **3.26.0**)
-2. `_` is now supported as a "numerical seperator", similar to a `.` or `,` ([Example](https://svelte.dev/repl/6612cec5c50b44cbab7f4a64ff930153?version=3.26.0), **3.26.0**)
-3. `import.meta` now works in template expressions ([Example](https://svelte.dev/repl/9630de41957a4c80a4fce264360a6bc7?version=3.26.0), **3.26.0**)
+Lots of new features this month, from both Svelte and Sapper! In this monthly post, you'll find new features, bug fixes, and a showcase of Svelte projects from around the community. _We know it's been a while since we posted a new blog post... there will be lots more soon, starting with this monthly series!_
 
-These last two updates come from an update to Svelte’s upstream dependency, [acorn](https://github.com/acornjs/acorn). Acorn generates Svelte’s Abstract Syntax Tree (AST) and is explained in detail [here](https://github.com/sveltejs/svelte/issues/1011#issuecomment-351262252)!
+## New features
+1. `use:obj.method` allows functions defined within objects to be used within actions ([Example](https://svelte.dev/repl/c305722adb4a4545b27b198ea8ff9bde?version=3.27.0), **3.26.0**, warning removed in **3.27.0**)
+2. `_` is now supported as a "numerical seperator", similar to a `.` or `,` ([Example](https://svelte.dev/repl/844c39e91d1248649fe54af839fab570?version=3.26.0), **3.26.0**)
+3. `import.meta` now works in template expressions ([Example](https://svelte.dev/repl/9630de41957a4c80a4fce264360a6bc7?version=3.26.0), **3.26.0**)
+4. CSS Selectors with `~` and `+` combinators are now supported ([Example](https://svelte.dev/repl/91ad9257d2d1430185a504a18cc60172?version=3.29.0), **3.27.0**, with a compiler fix in **3.29.0**)
+5. The `{#key}` block is now available to key arbitrary content on an expression ([More info](https://github.com/sveltejs/svelte/issues/1469), **3.29.0**)
+6. Slots can now be forwarded through child components! This used to only be possible by adding extra wrapper `<div>`s ([More info](https://github.com/sveltejs/svelte/issues/2079), **3.29.0**)
+
+**New from Sapper!**
+Sapper 0.28.9 just came out. The highlights from it include much better support for CSP nonces, asset preload support for exported pages, and error details are now available in the $page store on error pages.
+
+In addition, Sapper's CSS handling has been rewritten over the course of recent releases in order to fix existing CSS handling bugs, refactor the CSS handling to occur entirely within a Rollup plugin, and remove the need internally to register CSS in the routing system. Congrats and thank you to the folks working on Sapper for all their solid work!
+
+_If you're interested in contributing to Sapper, [check out these "good first issue"s](https://github.com/sveltejs/sapper/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)!_
 
 
 ## Impactful bug fixes
-1. CSS compilation will no longer remove rules for the `open` attribute on `<details>` elements ([Example](https://svelte.dev/repl/ab4c0c177d1f4fab92f46eb8539cea9a?version=3.26.0), **3.26.0**)
+- CSS compilation will no longer remove rules for the `open` attribute on `<details>` elements ([Example](https://svelte.dev/repl/ab4c0c177d1f4fab92f46eb8539cea9a?version=3.26.0), **3.26.0**)
 
 
 ## Coming up
-- Anything coming down the pipe???
+- [Svelte Summit](https://sveltesummit.com/) is taking place on October 18!
 
-See the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md) for a full list of features and bugfixes. 
+For all the features and bugfixes see the CHANGELOG for [Svelte](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md) and [Sapper](https://github.com/sveltejs/sapper/blob/master/CHANGELOG.md).
 
 
 ---
@@ -33,7 +43,8 @@ See the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md)
 
 #### In-depth learning:
 - [Svelte 3 Up and Running](https://www.amazon.com/dp/B08D6T6BKS/ref=cm_sw_r_tw_dp_x_OQMtFb3GPQCB2) is a new book about building production-ready static web apps with Svelte 3
-- [Sapper Tutorial (Crash Course)](https://www.youtube.com/playlist?list=PL4cUxeGkcC9gdr4Qhx83gBBcID-KMe-PQ) walks through the ins-and-outs of Sapper, the Svelte-powered applicaiton framework
+- [Sapper Tutorial (Crash Course)](https://www.youtube.com/playlist?list=PL4cUxeGkcC9gdr4Qhx83gBBcID-KMe-PQ) walks through the ins-and-outs of Sapper, the Svelte-powered application framework
+- [Svelte Society Day France](https://france.sveltesociety.dev/) happened September 27th featuring a wide variety of topics all in French! You can find the full recording [here](https://www.youtube.com/watch?v=aS1TQ155JK4).
 
 #### Plug-and-play components:
 - [svelte-zoom](https://github.com/vaheqelyan/svelte-zoom) brings "nearly native" pan-and-zoom to images on desktop and mobile
@@ -42,7 +53,6 @@ See the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md)
 - [This Tilt component](https://svelte.dev/repl/7b23ad9d2693424482cd411b0378b55b?version=3.24.1) implements a common UX pattern where the hovered element tilts to follow the mouse
 
 #### Lots of examples of how use JS tech came out this month:
-  - [Snowpack + Svelte + SSR](https://github.com/Rich-Harris/snowpack-svelte-ssr)
   - [Sapper with PostCSS and Tailwind](https://codechips.me/sapper-with-postcss-and-tailwind/)
   - [PrismJS (Code block syntax highlighting)](https://github.com/phptuts/Svelte-PrismJS)
   - [Filepond (Drag-and-drop file upload)](https://github.com/pqina/svelte-filepond)
@@ -52,7 +62,7 @@ See the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md)
 
 **Reminder**: There's a [Svelte integrations repo](https://github.com/sveltejs/integrations) that demonstrates ways to incorporate Svelte into your stack (and vice versa). If you've got questions on how to use a particular piece of tech with Svelte, you may find your answer there... and if you've gotten something to work with Svelte, consider contributing!
 
-For more amazing Svelte projects, check out the [Svelte Community showcase](https://svelte-community.netlify.app/showcase/), [Reddit](https://www.reddit.com/r/sveltejs/) and [Discord](https://discord.com/invite/yy75DKs)… and be sure to post your own!
+For more amazing Svelte projects, check out the [Svelte Society](https://sveltesociety.dev/), [Reddit](https://www.reddit.com/r/sveltejs/) and [Discord](https://discord.com/invite/yy75DKs)… and be sure to post your own!
 
 ## See you next month!
 
