@@ -33,7 +33,7 @@ Welcome to the first edition of our "What's new in Svelte" series! We'll try to 
 This will make sure that you can invoke dispatch only with the specified event names and its types. The Svelte for VS Code extension was also updated to deal with this new feature. It will provide strong typings for these events as well as autocompletion and hover information.
 
 **New from Sapper!**
-Sapper 0.28.9 just came out. The highlights from it include much better support for CSP nonces, asset preload support for exported pages, and error details are now available in the $page store on error pages.
+Sapper 0.28.9 just came out. The highlights from it include much better support for CSP nonces, asset preload support for exported pages, and error details are now available in the `$page` store on error pages.
 
 In addition, Sapper's CSS handling has been rewritten over the course of recent releases in order to fix existing CSS handling bugs, refactor the CSS handling to occur entirely within a Rollup plugin, and remove the need internally to register CSS in the routing system. Congrats and thank you to the folks working on Sapper for all their solid work!
 
