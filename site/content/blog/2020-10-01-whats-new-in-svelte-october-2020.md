@@ -5,7 +5,7 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-Lots of new features this month, from both Svelte and Sapper! In this monthly post, you'll find new features, bug fixes, and a showcase of Svelte projects from around the community. _We know it's been a while since we posted a new blog post... there will be lots more soon, starting with this monthly series!_
+Welcome to the first edition of our "What's new in Svelte" series! We'll try to make this a monthly blog post in which you'll find out about new features, bug fixes, and a showcase of Svelte projects from around the community.
 
 ## New features
 1. `use:obj.method` allows functions defined within objects to be used within actions ([Example](https://svelte.dev/repl/c305722adb4a4545b27b198ea8ff9bde?version=3.27.0), **3.26.0**, warning removed in **3.27.0**)
