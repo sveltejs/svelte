@@ -20,8 +20,6 @@ Sapper 0.28.9 just came out. The highlights from it include much better support 
 
 In addition, Sapper's CSS handling has been rewritten over the course of recent releases in order to fix existing CSS handling bugs, refactor the CSS handling to occur entirely within a Rollup plugin, and remove the need internally to register CSS in the routing system. Congrats and thank you to the folks working on Sapper for all their solid work!
 
-_If you're interested in contributing to Sapper, [check out these "good first issue"s](https://github.com/sveltejs/sapper/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)!_
-
 
 ## Impactful bug fixes
 - CSS compilation will no longer remove rules for the `open` attribute on `<details>` elements ([Example](https://svelte.dev/repl/ab4c0c177d1f4fab92f46eb8539cea9a?version=3.26.0), **3.26.0**)
