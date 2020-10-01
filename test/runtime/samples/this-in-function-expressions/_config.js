@@ -1,6 +1,5 @@
 export default {
 	async test({ assert, target, window }) {
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const [_, btn] = target.querySelectorAll('button');
 		const clickEvent = new window.MouseEvent('click');
 
