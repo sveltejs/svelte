@@ -1,7 +1,7 @@
 <style>
 	button {
-		height: 4rem;
 		width: 8rem;
+		height: 4rem;
 		background-color: #aaa;
 		border-color: #f1c40f;
 		color: #f1c40f;
