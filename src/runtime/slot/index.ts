@@ -1,7 +1,7 @@
 import { noop, insert, detach } from 'svelte/internal';
 
 function create_root_slot_fn(elements) {
-	return function create_root_slot() {
+	return function () {
 		return {
 			c: noop,
 
