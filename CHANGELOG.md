@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix types on `get` function in `svelte/store` ([#5483](https://github.com/sveltejs/svelte/pull/5483))
+
 ## 3.29.0
 
 * Support `<slot slot="...">` ([#2079](https://github.com/sveltejs/svelte/issues/2079))
