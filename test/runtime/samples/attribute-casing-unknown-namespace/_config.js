@@ -12,7 +12,7 @@ export default {
 
 	test({ assert, target }) {
 		const attr = sel => target.querySelector(sel).attributes[0].name;
-		assert.equal(attr('page'), "horizontalAlignment");
-		assert.equal(attr('button'), "textWrap");
+		assert.equal(attr('page'), 'horizontalAlignment');
+		assert.equal(attr('button'), 'textWrap');
 	}
 };

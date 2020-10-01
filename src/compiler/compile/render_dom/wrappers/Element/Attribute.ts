@@ -8,7 +8,7 @@ import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
 import handle_select_value_binding from './handle_select_value_binding';
 import { Identifier, Node } from 'estree';
-import { namespaces, valid_namespaces } from '../../../../utils/namespaces';
+import { valid_namespaces } from '../../../../utils/namespaces';
 
 export class BaseAttributeWrapper {
 	node: Attribute;
@@ -68,13 +68,13 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		}
 		
 		const namespace = this.parent.node.namespace;
-		// some processing only applies to html namespace (and not MathML, SVG, or Svelte Native etc)
-		if (namespace && namespace != 'html' && namespace != namespaces.html) {
-			// attributes outside of the html namespace may be case sensitive
-			// namespaces for which we don't have case corrections, are left in their original case (required for svelte-native)
-			this.name = (valid_namespaces.indexOf(namespace) >= 0) ? fix_attribute_casing(this.node.name) : this.node.name;
+		
+		// some processing only applies to known namespaces
+		if (namespace && !valid_namespaces.includes(namespace)) {
+			// attributes outside of the valid namespace may be case sensitive (eg svelte native). We leave them in their current case
+			this.name = this.node.name;
+			this.metadata = this.get_metadata();
 			this.is_indirectly_bound_value = false;
-			this.metadata = null;
 			this.property_name = null;
 			this.is_select_value_attribute = false;
 			this.is_input_value = false;
@@ -92,7 +92,6 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 		this.is_src = this.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
 		this.should_cache = should_cache(this);
-
 	}
 
 	render(block: Block) {
