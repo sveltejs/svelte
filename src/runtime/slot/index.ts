@@ -13,7 +13,7 @@ function create_root_slot_fn(elements) {
 
 			d: function destroy(detaching) {
 				if (detaching) {
-					elements.forEach(element => detach(element));
+					elements.forEach(detach);
 				}
 			},
 
