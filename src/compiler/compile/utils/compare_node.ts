@@ -12,8 +12,8 @@ export function compare_node(a: Node | void, b: Node | void) {
 				compare_node(a.object, (b as MemberExpression).object) &&
 				compare_node(a.property, (b as MemberExpression).property) &&
 				a.computed === (b as MemberExpression).computed
-      );
-    case 'Literal':
-      return a.value === (b as Literal).value;
+			);
+		case 'Literal':
+			return a.value === (b as Literal).value;
 	}
 }
