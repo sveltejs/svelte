@@ -62,7 +62,7 @@ export function subscribe(store, ...callbacks) {
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
-export function get_store_value<T, S extends Readable<T>>(store: S): T {
+export function get_store_value<T>(store: Readable<T>): T {
 	let value;
 	subscribe(store, _ => value = _)();
 	return value;
