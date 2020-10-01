@@ -9,7 +9,7 @@ Welcome to the first edition of our "What's new in Svelte" series! We'll try to 
 
 ## New features
 1. `use:obj.method` allows functions defined within objects to be used within actions ([Example](https://svelte.dev/repl/c305722adb4a4545b27b198ea8ff9bde?version=3.27.0), **3.26.0**, warning removed in **3.27.0**)
-2. `_` is now supported as a "numerical seperator", similar to a `.` or `,` ([Example](https://svelte.dev/repl/844c39e91d1248649fe54af839fab570?version=3.26.0), **3.26.0**)
+2. `_` is now supported as a "numerical separator", similar to a `.` or `,` ([Example](https://svelte.dev/repl/844c39e91d1248649fe54af839fab570?version=3.26.0), **3.26.0**)
 3. `import.meta` now works in template expressions ([Example](https://svelte.dev/repl/9630de41957a4c80a4fce264360a6bc7?version=3.26.0), **3.26.0**)
 4. CSS Selectors with `~` and `+` combinators are now supported ([Example](https://svelte.dev/repl/91ad9257d2d1430185a504a18cc60172?version=3.29.0), **3.27.0**, with a compiler fix in **3.29.0**)
 5. The `{#key}` block is now available to key arbitrary content on an expression. Whever the expression changes, the contents inside the `{#key}` block will be destroyed and recreated. For an indepth explanation and to find out how it's implemented, check out the [new blog post](https://lihautan.com/contributing-to-svelte-implement-key-block/) of Svelte Team member Tan Li Hau. ([More info](https://github.com/sveltejs/svelte/issues/1469), **3.29.0**)
@@ -82,4 +82,4 @@ For more amazing Svelte projects, check out the [Svelte Society](https://sveltes
 
 ## See you next month!
 
-By the way, Svelte now has an [OpenCollective](https://opencollective.com/svelte)! All contributions and all expenses are published in our transparent public ledger. Learn who is donating, how much, where is that money going, submit expenses, get reimbursed and more!
+By the way, Svelte now has an [OpenCollective](https://opencollective.com/svelte)! All contributions and all expenses are published in our transparent public ledger. Learn who is donating, how much, where that money is going, submit expenses, get reimbursed and more!
