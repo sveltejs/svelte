@@ -22,14 +22,11 @@ function create_root_slot_fn(elements) {
 	};
 }
 
-export function createSlot(slots) {
-	const root_slots = {};
-	for (const slot_name in slots) {
-		let elements = slots[slot_name];
-		if (!Array.isArray(elements)) {
-			elements = [elements];
-		}
-		root_slots[slot_name] = [create_root_slot_fn(elements)];
+export function createSlot(input) {
+	var key, tmp, slots={};
+	for (key in input) {
+		tmp = input[key];
+		slots[key] = [create_root_slot_fn(Array.isArray(tmp) ? tmp : [tmp])];
 	}
-	return root_slots;
+	return slots;
 }
