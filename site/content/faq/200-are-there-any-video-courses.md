@@ -9,7 +9,7 @@ Rich Harris, the creator of Svelte, taught a course:
 There are also a number of third-party courses:
 
 - [Egghead](https://egghead.io/browse/frameworks/svelte)
-- [Udemy](https://www.udemy.com/courses/search/?q=sveltejs+svelte) Note: Udemy frequently has discounts over 90%
+- [Udemy](https://www.udemy.com/courses/search/?q=sveltejs+svelte) (Note: Udemy frequently has discounts over 90%)
 - [Pluralsight](https://www.pluralsight.com/search?q=svelte)
 
 Finally, there are also YouTube channels and playlists that teach Svelte:
