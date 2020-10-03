@@ -12,7 +12,7 @@ There are also a number of third-party courses:
 - [Udemy](https://www.udemy.com/courses/search/?q=sveltejs+svelte) Note: Udemy frequently has discounts over 90%
 - [Pluralsight](https://www.pluralsight.com/search?q=svelte)
 
-Here are also Youtube channels or playlists that teach Svelte:
+Finally, there are also YouTube channels and playlists that teach Svelte:
 
 - [Svelte Master](https://www.youtube.com/channel/UCg6SQd5jnWo5Y70rZD9SQFA)
 - [Svelte Tutorial for Beginners](https://www.youtube.com/watch?v=zojEMeQGGHs&list=PL4cUxeGkcC9hlbrVO_2QFVqVPhlZmz7tO) by The Net Ninja
