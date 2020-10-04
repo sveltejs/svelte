@@ -547,6 +547,7 @@ Animates the opacity of an element from 0 to the current opacity for `in` transi
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the transition lasts
+* `easing` (`function`, default `linear`) — an [easing function](docs#svelte_easing)
 
 You can see the `fade` transition in action in the [transition tutorial](tutorial/transition).
 
