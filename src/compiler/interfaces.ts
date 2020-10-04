@@ -1,5 +1,7 @@
 import { Node, Program } from "estree";
-import { SourceMap } from 'magic-string';
+
+// eslint-disable-next-line import/named
+import { DecodedSourceMap } from 'magic-string';
 
 interface BaseNode {
 	start: number;
@@ -166,5 +168,5 @@ export interface Var {
 
 export interface CssResult { 
 	code: string;
-	map: SourceMap;
+	map: DecodedSourceMap;
 }

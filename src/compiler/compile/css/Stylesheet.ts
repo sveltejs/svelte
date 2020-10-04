@@ -410,7 +410,7 @@ export default class Stylesheet {
 
 		return {
 			code: code.toString(),
-			map: code.generateMap({
+			map: code.generateDecodedMap({
 				includeContent: true,
 				source: this.filename,
 				file

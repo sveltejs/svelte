@@ -29,8 +29,11 @@ import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
-import remapping from '@ampproject/remapping';
+import { combine_sourcemaps, sourcemap_add_tostring_tourl, combine_sourcemaps_map_stats } from '../utils/string_with_sourcemap';
 import Element from './nodes/Element';
+import { RawSourceMap } from '@ampproject/remapping/dist/types/types';
+import { encode as encode_mappings, decode as decode_mappings } from 'sourcemap-codec';
+
 
 interface ComponentOptions {
 	namespace?: string;
@@ -318,11 +321,18 @@ export default class Component {
 
 			css = compile_options.customElement
 				? { code: null, map: null }
-				: result.css;
+				: result.css; // css.map.mappings are decoded
 
 			js = print(program, {
 				sourceMapSource: compile_options.filename
 			});
+
+			// TODO remove workaround
+			// js.map.mappings should be decoded
+			// https://github.com/Rich-Harris/code-red/issues/50
+			if (js.map && typeof (js.map as any).mappings == 'string') {
+				(js.map as any).mappings = decode_mappings((js.map as any).mappings);
+			}
 
 			js.map.sources = [
 				compile_options.filename ? get_relative_path(compile_options.outputFilename || '', compile_options.filename) : null
@@ -332,34 +342,59 @@ export default class Component {
 				this.source
 			];
 
+			// combine sourcemaps
+			const map_stats: combine_sourcemaps_map_stats = {
+				sourcemapWarnLoss: 0, // segment loss is usually high, so we ignore
+				sourcemapEncodedWarn: true // TODO config
+				// property `result` is set by combine_sourcemaps
+			};
+
 			if (compile_options.sourcemap) {
 				if (js.map) {
-					const pre_remap_sources = js.map.sources;
-					js.map = remapping([js.map, compile_options.sourcemap], () => null, true);
-					// remapper can remove our source if it isn't used (no segments map back to it). It is still handy to have a source
-					// so we add it back
-					if (js.map.sources && js.map.sources.length == 0) {
-						js.map.sources = pre_remap_sources;
+					js.map = combine_sourcemaps(
+						this.file,
+						[
+							js.map, // idx 1: internal
+							compile_options.sourcemap // idx 0: external: svelte.preprocess, etc
+						],
+						map_stats
+					) as RawSourceMap;
+					sourcemap_add_tostring_tourl(js.map);
+					if (map_stats.result && map_stats.result.maps_encoded && map_stats.result.maps_encoded.length > 0) {
+						console.log('warning. svelte.compile received encoded script sourcemaps (index '+
+							map_stats.result.maps_encoded.join(', ')+'). '+
+							'this is slow. make your sourcemap-generators return decoded mappings '+
+							'or disable this warning with svelte.compile(_, _, { sourcemapEncodedWarn: false })'
+						);
 					}
-					Object.defineProperties(js.map, {
-						toString: {
-							enumerable: false,
-							value: function toString() {
-								return JSON.stringify(this);
-							}
-						},
-						toUrl: {
-							enumerable: false,
-							value: function toUrl() {
-								return 'data:application/json;charset=utf-8;base64,' + btoa(this.toString());
-							}
-						}
-					});
 				}
 				if (css.map) {
-					css.map = remapping([css.map, compile_options.sourcemap], () => null, true);
+					css.map = combine_sourcemaps(
+						this.file,
+						[
+							css.map, // idx 1: internal
+							compile_options.sourcemap // idx 0: external: svelte.preprocess, etc
+						]
+					) as RawSourceMap;
+					sourcemap_add_tostring_tourl(css.map);
+					if (map_stats.result && map_stats.result.maps_encoded && map_stats.result.maps_encoded.length > 0) {
+						console.log('warning. svelte.compile received encoded style sourcemaps (index '+
+							map_stats.result.maps_encoded.join(', ')+'). '+
+							'this is slow. make your sourcemap-generators return decoded mappings '+
+							'or disable this warning with svelte.compile(_, _, { sourcemapEncodedWarn: false })'
+						);
+					}
 				}
 			}
+
+			// encode mappings only once, after all sourcemaps are combined
+			if (js.map && typeof(js.map.mappings) == 'object') {
+				(js.map as RawSourceMap).mappings = encode_mappings(js.map.mappings);
+			}
+			if (css.map && typeof(css.map.mappings) == 'object') {
+				(css.map as RawSourceMap).mappings = encode_mappings(css.map.mappings);
+			}
+
 		}
 
 		return {

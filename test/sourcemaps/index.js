@@ -6,6 +6,7 @@ import { loadConfig, svelte } from "../helpers.js";
 // https://github.com/mozilla/source-map/issues/400
 import { SourceMapConsumer } from "source-map";
 import { getLocator } from "locate-character";
+import { encode as encode_mappings, decode as decode_mappings } from 'sourcemap-codec';
 
 describe("sourcemaps", () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
@@ -44,6 +45,13 @@ describe("sourcemaps", () => {
 				return test({ assert, input, preprocessed });
 			}
 
+			// preprocessed.map.mappings should be decoded
+			// to avoid unnecessary encode + decode steps
+			if (preprocessed.map) {
+				assert.equal(typeof preprocessed.map.mappings, 'object', 'preprocessed.map.mappings should be decoded');
+				assert.equal(Array.isArray(preprocessed.map.mappings), true, 'preprocessed.map.mappings should be decoded');
+			}
+
 			const { js, css } = svelte.compile(
 				preprocessed.code, {
 				filename: "input.svelte",
@@ -60,7 +68,11 @@ describe("sourcemaps", () => {
 
 			fs.writeFileSync(`${outputBase}.svelte`, preprocessed.code);
 			if (preprocessed.map) {
-				fs.writeFileSync(`${outputBase}.svelte.map`, JSON.stringify(preprocessed.map, null, 2));
+				fs.writeFileSync(
+					`${outputBase}.svelte.map`,
+					// TODO encode mappings for output - svelte.preprocess returns decoded mappings
+					JSON.stringify(preprocessed.map, null, 2)
+				);
 			}
 			fs.writeFileSync(
 				`${outputBase}.js`,
@@ -92,26 +104,26 @@ describe("sourcemaps", () => {
 				);
 			};
 
+			// stupid workaround (unnecessary encode + decode steps)
+			// TODO find a SourceMapConsumer who also consumes decoded mappings
+			if (preprocessed.map) {
+				preprocessed.map.mappings = encode_mappings(preprocessed.map.mappings);
+			}
+
 			// use locate_1 with mapConsumer:
 			// lines are one-based, columns are zero-based
 
-			if (preprocessed.map) {
-				preprocessed.mapConsumer = await new SourceMapConsumer(preprocessed.map);
-				preprocessed.locate = getLocator(preprocessed.code);
-				preprocessed.locate_1 = getLocator(preprocessed.code, { offsetLine: 1 });
-			}
+			preprocessed.mapConsumer = preprocessed.map && await new SourceMapConsumer(preprocessed.map);
+			preprocessed.locate = getLocator(preprocessed.code);
+			preprocessed.locate_1 = getLocator(preprocessed.code, { offsetLine: 1 });
 
-			if (js.map) {
-				js.mapConsumer = await new SourceMapConsumer(js.map);
-				js.locate = getLocator(js.code);
-				js.locate_1 = getLocator(js.code, { offsetLine: 1 });
-			}
+			js.mapConsumer = js.map && await new SourceMapConsumer(js.map);
+			js.locate = getLocator(js.code);
+			js.locate_1 = getLocator(js.code, { offsetLine: 1 });
 
-			if (css.map) {
-				css.mapConsumer = await new SourceMapConsumer(css.map);
-				css.locate = getLocator(css.code);
-				css.locate_1 = getLocator(css.code, { offsetLine: 1 });
-			}
+			css.mapConsumer = css.map && await new SourceMapConsumer(css.map);
+			css.locate = getLocator(css.code || '');
+			css.locate_1 = getLocator(css.code || '', { offsetLine: 1 });
 
 			test({ assert, input, preprocessed, js, css });
 		});

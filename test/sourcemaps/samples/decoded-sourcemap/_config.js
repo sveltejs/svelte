@@ -19,6 +19,9 @@ function result(src, filename) {
 }
 
 export default {
+
+	js_map_sources: [], // test component has no scripts
+
 	preprocess: {
 		markup: ({ content, filename }) => {
 			const src = new MagicString(content);

@@ -1,4 +1,6 @@
-import { DecodedSourceMap, SourceMapSegment } from '@ampproject/remapping/dist/types/types';
+import { DecodedSourceMap, RawSourceMap, SourceMapSegment, SourceMapLoader } from '@ampproject/remapping/dist/types/types';
+import remapping from '@ampproject/remapping';
+import { decode as decode_mappings } from 'sourcemap-codec';
 
 type SourceLocation = {
 	line: number;
@@ -179,4 +181,153 @@ export class StringWithSourcemap {
 		});
 		return new StringWithSourcemap(source, map);
 	}
+}
+
+export type combine_sourcemaps_map_stats = {
+	sourcemapEncodedWarn?: boolean,
+	sourcemapWarnLoss?: number,
+	result?: {
+		maps_encoded?: number[],
+		segments_lost?: boolean
+		segment_loss_per_map?: number[],
+		segments_per_map?: number[],
+	}
+};
+
+export function combine_sourcemaps(
+	filename: string,
+	sourcemap_list: Array<DecodedSourceMap | RawSourceMap>,
+	map_stats?: combine_sourcemaps_map_stats,
+	do_decode_mappings?: boolean
+): (RawSourceMap | DecodedSourceMap) {
+	if (sourcemap_list.length == 0) return null;
+
+	if (map_stats) {
+		map_stats.result = {};
+		const { result } = map_stats;
+
+		const last_map_idx = sourcemap_list.length - 1;
+
+		// TODO allow to set options per preprocessor -> extend preprocessor config object
+		// some sourcemap-generators produce ultra-high-resolution sourcemaps (1 token = 1 character), so a high segment loss can be tolerable
+
+		// sourcemapEncodedWarn: show warning
+		// if preprocessors return sourcemaps with encoded mappings
+		// we need decoded mappings, so that is a waste of time
+
+		if (map_stats.sourcemapEncodedWarn) {
+			result.maps_encoded = [];
+
+			for (let map_idx = last_map_idx; map_idx >= 0; map_idx--) {
+				const map = sourcemap_list[map_idx];
+				if (typeof(map) == 'string') {
+					sourcemap_list[map_idx] = JSON.parse(map);
+				}
+				if (typeof(map.mappings) == 'string') {
+					result.maps_encoded.push(last_map_idx - map_idx); // chronological index
+				}
+			}
+		}
+
+		// sourcemapWarnLoss: show warning if source files were lost
+		// disable warning with `svelte.preprocess(_, _, { sourcemapWarnLoss: false })`
+		// value 1  : never warn
+		// value 0.8: seldom warn
+		// value 0.5: average warn
+		// value 0.2: often warn
+		// value 0  : nonsense -> never warn
+		// -Infinity <= loss <= 1 and 0 < sourcemapWarnLoss <= 1
+
+		if (map_stats.sourcemapWarnLoss) {
+
+			// guess if segments were lost because of lowres sourcemaps
+			// assert: typeof(result) == 'object'
+			result.segments_per_map = [];
+			result.segment_loss_per_map = [];
+			result.segments_lost = false;
+
+			let last_num_segments;
+
+			for (let map_idx = last_map_idx; map_idx >= 0; map_idx--) {
+
+				const map = sourcemap_list[map_idx];
+				if (typeof(map) == 'string') {
+					sourcemap_list[map_idx] = JSON.parse(map);
+				}
+				if (typeof(map.mappings) == 'string') {
+					// do this before remapping to avoid double decoding
+					// remapping does not mutate its input data
+					map.mappings = decode_mappings(map.mappings);
+				}
+				let num_segments = 0;
+				for (const line of map.mappings) {
+					num_segments += line.length;
+				}
+				// get relative loss, compared to last map
+				const loss = map_idx == last_map_idx
+					? 0 : (last_num_segments - num_segments) / last_num_segments;
+				if (loss > map_stats.sourcemapWarnLoss) {
+					result.segments_lost = true;
+				}
+
+				 // chronological index
+				result.segment_loss_per_map.push(loss);
+				result.segments_per_map.push(num_segments);
+
+				last_num_segments = num_segments;
+			}
+		}
+
+	}
+
+	let map_idx = 1;
+	const map: RawSourceMap =
+		sourcemap_list.slice(0, -1)
+		.find(m => m.sources.length !== 1) === undefined
+
+			? remapping( // use array interface
+					// only the oldest sourcemap can have multiple sources
+					sourcemap_list,
+					() => null,
+					true // skip optional field `sourcesContent`
+				)
+
+			: remapping( // use loader interface
+					sourcemap_list[0], // last map
+					function loader(sourcefile) {
+						if (sourcefile === filename && sourcemap_list[map_idx]) {
+							return sourcemap_list[map_idx++]; // idx 1, 2, ...
+							// bundle file = branch node
+						}
+						else return null; // source file = leaf node
+					} as SourceMapLoader,
+					true
+				);
+
+	if (!map.file) delete map.file; // skip optional field `file`
+
+	if (do_decode_mappings) {
+		// explicitly decode mappings
+		// TODO remove this, when `remapping` allows to return decoded mappings, so we skip the unnecessary encode + decode steps
+		(map as unknown as DecodedSourceMap).mappings = decode_mappings(map.mappings);
+	}
+
+	return map;
+}
+
+export function sourcemap_add_tostring_tourl(map) {
+	Object.defineProperties(map, {
+		toString: {
+			enumerable: false,
+			value: function toString() {
+				return JSON.stringify(this);
+			}
+		},
+		toUrl: {
+			enumerable: false,
+			value: function toUrl() {
+				return 'data:application/json;charset=utf-8;base64,' + btoa(this.toString());
+			}
+		}
+	});
 }

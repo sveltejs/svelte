@@ -1,8 +1,7 @@
-import remapping from '@ampproject/remapping';
-import { SourceMapInput, SourceMapLoader, RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import { SourceMapInput, RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { decode as decode_mappings } from 'sourcemap-codec';
 import { getLocator } from 'locate-character';
-import { StringWithSourcemap, sourcemap_add_offset } from '../utils/string_with_sourcemap';
+import { StringWithSourcemap, sourcemap_add_offset, combine_sourcemaps, combine_sourcemaps_map_stats } from '../utils/string_with_sourcemap';
 
 export interface Processed {
 	code: string;
@@ -113,10 +112,17 @@ function get_replacement(
 export default async function preprocess(
 	source: string,
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
-	options?: { filename?: string }
+	options?: {
+		filename?: string,
+		sourcemapWarnLoss?: number, // default 0.5
+		sourcemapEncodedWarn?: boolean // default true
+	}
 ) {
 	// @ts-ignore todo: doublecheck
 	const filename = (options && options.filename) || preprocessor.filename; // legacy
+	const sourcemapWarnLoss = (options && options.sourcemapWarnLoss != undefined) ? options.sourcemapWarnLoss : 0.5;
+	const sourcemapEncodedWarn = (options && options.sourcemapEncodedWarn != undefined) ? options.sourcemapEncodedWarn : true;
+
 	const dependencies = [];
 
 	const preprocessors = preprocessor
@@ -130,7 +136,9 @@ export default async function preprocess(
 	// sourcemap_list is sorted in reverse order from last map (index 0) to first map (index -1)
 	// so we use sourcemap_list.unshift() to add new maps
 	// https://github.com/ampproject/remapping#multiple-transformations-of-a-file
-	const sourcemap_list: (DecodedSourceMap | RawSourceMap)[] = [];
+	const sourcemap_list: Array<DecodedSourceMap | RawSourceMap> = [];
+
+	// TODO keep track: what preprocessor generated what sourcemap? to make debugging easier = detect low-resolution sourcemaps in fn combine_mappings
 
 	for (const fn of markup) {
 
@@ -149,6 +157,8 @@ export default async function preprocess(
 					: processed.map as (RawSourceMap | DecodedSourceMap)
 			);
 	}
+
+	// TODO run script and style in parallel
 
 	for (const fn of script) {
 		const get_location = getLocator(source);
@@ -216,37 +226,41 @@ export default async function preprocess(
 		sourcemap_list.unshift(res.map);
 	}
 
-	let map: RawSourceMap;
-	let map_idx = 0;
-	try {
-		map =
-			sourcemap_list.length == 0
-				? null
-				: sourcemap_list.slice(0, -1).find(m => m.sources.length !== 1) === undefined
-					? remapping( // use array interface
-							sourcemap_list,
-							() => null,
-							true // skip optional field `sourcesContent`
-						)
-					: remapping( // use loader interface
-							sourcemap_list[map_idx++],
-							function loader(sourcefile) {
-								if (sourcefile === filename)
-									return sourcemap_list[map_idx++] || null;
-									// bundle file = branch node
-								else return null; // source file = leaf node
-							} as SourceMapLoader
-						);
-	} catch (error) {
-		throw { ...error, message: error.message +
-			'\n\ncould not combine sourcemaps:\n' +
-			JSON.stringify(sourcemap_list.map(m => {
-				return { ...m, mappings: JSON.stringify(m.mappings).slice(0, 100)+' ....'};
-			}), null, 2)
-		};
+	const map_stats: combine_sourcemaps_map_stats = {
+		sourcemapWarnLoss,
+		sourcemapEncodedWarn
+		// property `result` is set by combine_sourcemaps
+	};
+
+	const map: DecodedSourceMap = combine_sourcemaps(
+		filename,
+		sourcemap_list,
+		map_stats,
+		true // explicitly decode mappings
+		// TODO remove this, when `remapping` allows to return decoded mappings, so we skip the unnecessary encode + decode steps
+	) as DecodedSourceMap;
+
+	// TODO better than console.log?
+
+	if (map_stats.result && map_stats.result.segments_lost) {
+		const { segment_loss_per_map, segments_per_map } = map_stats.result;
+		console.log('warning. svelte.preprocess seems to receive low-resolution sourcemaps. '+
+			'relative segment loss per combine_sourcemaps step: '+
+			segment_loss_per_map.map(f => f.toFixed(2)).join(' -> ')+
+			'. absolute number of segments per sourcemap: '+
+			segments_per_map.join(' -> ')+
+			'. make your preprocessors return high-resolution sourcemaps '+
+			'or increase the tolerated loss with svelte.preprocess(_, _, { sourcemapWarnLoss: 0.8 })'
+		);
 	}
 
-	if (map && !map.file) delete map.file; // skip optional field `file`
+	if (map_stats.result && map_stats.result.maps_encoded && map_stats.result.maps_encoded.length > 0) {
+		console.log('warning. svelte.preprocess received encoded sourcemaps (index '+
+			map_stats.result.maps_encoded.join(', ')+'). '+
+			'this is slow. make your sourcemap-generators return decoded mappings '+
+			'or disable this warning with svelte.preprocess(_, _, { sourcemapEncodedWarn: false })'
+		);
+	}
 
 	return {
 		// TODO return separated output, in future version where svelte.compile supports it:

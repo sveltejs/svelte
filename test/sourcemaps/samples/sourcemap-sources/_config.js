@@ -4,8 +4,8 @@ function add(bundle, filename, source) {
 	bundle.addSource({
 		filename,
 		content: new MagicString(source),
-		separator: '\n',
-		//separator: '', // ERROR. probably a bug in magic-string
+		separator: '\n'
+		//separator: '' // ERROR. probably a bug in magic-string
 	});
 }
 
@@ -15,7 +15,7 @@ function result(bundle, filename) {
 		map: bundle.generateMap({
 			file: filename,
 			includeContent: false,
-			hires: false
+			hires: true // required for remapping
 		})
 	};
 }
@@ -26,7 +26,7 @@ export default {
 		'foo.js',
 		'bar.js',
 		'foo2.js',
-		'bar2.js',
+		'bar2.js'
 	],
 	preprocess: [
 		{
@@ -34,8 +34,8 @@ export default {
 				const bundle = new Bundle();
 
 				add(bundle, filename, content);
-				add(bundle, 'foo.js', 'var answer = 42;');
-				add(bundle, 'bar.js', 'console.log(answer);');
+				add(bundle, 'foo.js', 'var answer = 42; // foo.js\n');
+				add(bundle, 'bar.js', 'console.log(answer); // bar.js\n');
 
 				return result(bundle, filename);
 			}
@@ -45,8 +45,8 @@ export default {
 				const bundle = new Bundle();
 
 				add(bundle, filename, content);
-				add(bundle, 'foo2.js', 'var answer2 = 84;');
-				add(bundle, 'bar2.js', 'console.log(answer2);');
+				add(bundle, 'foo2.js', 'var answer2 = 84; // foo2.js\n');
+				add(bundle, 'bar2.js', 'console.log(answer2); // bar2.js\n');
 
 				return result(bundle, filename);
 			}

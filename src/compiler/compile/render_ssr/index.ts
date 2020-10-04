@@ -137,6 +137,7 @@ export default function ssr(
 		main
 	].filter(Boolean);
 
+	// TODO use combined css.map? see compile/Component.ts
 	const js = b`
 		${css.code ? b`
 		const #css = {

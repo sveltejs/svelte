@@ -11,7 +11,7 @@ export default {
 			src.overwrite(css_idx, css_idx + "--bazitone".length, "--baz");
 			return {
 				code: src.toString(),
-				map: src.generateMap({
+				map: src.generateDecodedMap({
 					source: filename,
 					hires: true,
 					includeContent: false
@@ -24,7 +24,7 @@ export default {
 			src.prependLeft(idx, "      ");
 			return {
 				code: src.toString(),
-				map: src.generateMap({
+				map: src.generateDecodedMap({
 					source: filename,
 					hires: true,
 					includeContent: false
@@ -37,7 +37,7 @@ export default {
 			src.prependLeft(idx, "      ");
 			return {
 				code: src.toString(),
-				map: src.generateMap({
+				map: src.generateDecodedMap({
 					source: filename,
 					hires: true,
 					includeContent: false

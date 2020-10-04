@@ -30,8 +30,12 @@ export default function dom(
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
+
+	// TODO fix css.map.toUrl - stylesheet.render returns decoded mappings, map.toUrl needs encoded mappings
+	// TODO use combined css.map? see compile/Component.ts
 	const styles = component.stylesheet.has_styles && options.dev
-		? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
+		//? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
+		? `${css.code}\n/*# sourceMappingURL=TODO_FIXME */`
 		: css.code;
 
 	const add_css = component.get_unique_name('add_css');
@@ -467,12 +471,15 @@ export default function dom(
 	}
 
 	if (options.customElement) {
+		// TODO use combined css.map? see compile/Component.ts
+		// TODO css.map.toUrl needs encoded mappings
+		//			${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=TODO_FIXME */` : ''}</style>\`;`}
 
 					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 

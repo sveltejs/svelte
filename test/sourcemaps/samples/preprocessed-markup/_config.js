@@ -8,7 +8,7 @@ export default {
 			src.overwrite(idx, idx+"baritone".length, "bar");
 			return {
 				code: src.toString(),
-				map: src.generateMap({
+				map: src.generateDecodedMap({
 					source: filename,
 					includeContent: false
 				})

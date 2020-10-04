@@ -10,7 +10,7 @@ function replace(search, replace, content, src, options = { storeName: true }) {
 function result(src, filename) {
 	return {
 		code: src.toString(),
-		map: src.generateMap({
+		map: src.generateDecodedMap({
 			source: filename,
 			hires: true,
 			includeContent: false
