@@ -14,6 +14,7 @@ import Animation from './Animation';
 import Action from './Action';
 import { string_literal } from '../utils/stringify';
 import { Literal } from 'estree';
+import Text from './Text';
 
 export default class DynamicElement extends Node {
 	type: 'DynamicElement';
@@ -30,6 +31,7 @@ export default class DynamicElement extends Node {
 	animation?: Animation = null;
 	children: INode[];
 	scope: TemplateScope;
+	needs_manual_style_scoping: boolean;
 
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
@@ -95,5 +97,38 @@ export default class DynamicElement extends Node {
 		this.scope = scope;
 
 		this.children = map_children(component, this, this.scope, info.children);
+	}
+
+	add_css_class() {
+		if (this.attributes.some(attr => attr.is_spread)) {
+			this.needs_manual_style_scoping = true;
+			return;
+		}
+
+		const { id } = this.component.stylesheet;
+
+		const class_attribute = this.attributes.find(a => a.name === 'class');
+
+		if (class_attribute && !class_attribute.is_true) {
+			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
+				(class_attribute.chunks[0] as Text).data += ` ${id}`;
+			} else {
+				(class_attribute.chunks as Node[]).push(
+					new Text(this.component, this, this.scope, {
+						type: 'Text',
+						data: ` ${id}`,
+						synthetic: true
+					} as any)
+				);
+			}
+		} else {
+			this.attributes.push(
+				new Attribute(this.component, this, this.scope, {
+					type: 'Attribute',
+					name: 'class',
+					value: [{ type: 'Text', data: id, synthetic: true }]
+				} as any)
+			);
+		}
 	}
 }

@@ -50,9 +50,9 @@ export default function (
 			const snippet = expression ? expression.node : x`#ctx.${name}`; // TODO is this right?
 			return x`${snippet} ? "${name}" : ""`;
 		});
-		// if (node.needs_manual_style_scoping) {
-		// 	class_expression_list.push(x`"${node.component.stylesheet.id}"`);
-		// }
+		if (node.needs_manual_style_scoping) {
+			class_expression_list.push(x`"${node.component.stylesheet.id}"`);
+		}
 		const class_expression =
 			class_expression_list.length > 0 &&
 			class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
