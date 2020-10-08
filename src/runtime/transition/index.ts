@@ -118,7 +118,7 @@ export function slide(node: Element, {
 	const border_top_width = parseFloat(style.borderTopWidth);
 	const border_bottom_width = parseFloat(style.borderBottomWidth);
 	const targetProp = direction === 'vertical' ? 'height' : 'width';
-	const targetPropVal = targetProp === 'height' ? parseFloat(style.height) : parseFloat(style.width);
+	const targetPropVal = parseFloat(style[targetProp]);
 
 	return {
 		delay,
