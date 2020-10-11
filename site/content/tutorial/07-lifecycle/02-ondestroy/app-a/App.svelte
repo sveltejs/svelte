@@ -1,10 +1,17 @@
 <script>
-	import { onDestroy } from 'svelte';
+	import Inner from './Inner.svelte';
 
-	let seconds = 0;
+	let counter = 0;
+	let show = true;
+
+	const toggle = () => (show = !show);
+	const handleTick = () => (counter += 1);
 </script>
 
-<p>
-	The page has been open for
-	{seconds} {seconds === 1 ? 'second' : 'seconds'}
-</p>
+<div>
+	<button on:click={toggle}>{show ? 'Destroy' : 'Show'} Inner component</button>
+	<p>counter={counter}</p>
+	{#if show}
+		<Inner callback={handleTick} />
+	{/if}
+</div>
