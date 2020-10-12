@@ -116,7 +116,9 @@
 		bind:currentTime={time}
 		bind:duration
 		bind:paused
-	></video>
+	>
+		<track src="" kind="captions">
+	</video>
 
 	<div class="controls" style="opacity: {duration && showControls ? 1 : 0}">
 		<progress value="{(time / duration) || 0}"/>
