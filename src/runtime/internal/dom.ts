@@ -261,7 +261,7 @@ export function is_crossorigin() {
 
 export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	if ('ResizeObserver' in window) {
-		const obs = new ResizeObserver(fn);
+		const obs = new ResizeObserver(fn) as any;
 		obs.observe(node);
 		return obs.disconnect.bind(obs);
 	}
