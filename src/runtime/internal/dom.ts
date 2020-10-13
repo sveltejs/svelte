@@ -260,6 +260,11 @@ export function is_crossorigin() {
 }
 
 export function add_resize_listener(node: HTMLElement, fn: () => void) {
+	if ('ResizeObserver' in window) {
+		const obs = new ResizeObserver(fn);
+		obs.observe(node);
+		return obs.disconnect.bind(obs);
+	}
 	const computed_style = getComputedStyle(node);
 	const z_index = (parseInt(computed_style.zIndex) || 0) - 1;
 
