@@ -29,7 +29,7 @@ export default function create_debugging_comment(
 	} else {
 		// @ts-ignore
 		d = node.expression ? node.expression.node.end : c;
-		while (source[d] !== '}') d += 1;
+		while (source[d] !== '}' && d <= source.length) d += 1;
 		while (source[d] === '}') d += 1;
 	}
 
