@@ -24,6 +24,18 @@
 		color: white;
 		overflow: hidden;
 	}
+
+	.banner {
+		background-color: #d6f1f5;
+		color: #333;
+    position: fixed;
+    bottom: 0;
+    width: 100vw;
+    text-align: center;
+    padding: 1em;
+    z-index: 999;
+		box-shadow: 0 0.2rem 1.2rem 0rem rgba(0,0,0,.3);
+	}
 </style>
 
 <svelte:head>
@@ -118,3 +130,12 @@ npm run dev
 
 	<Contributors/>
 </Section>
+
+<div class="banner"><strong>Svelte Summit 2020</strong> is happening today at 2pm GMT! 
+	<a
+		target="_blank"
+		rel="noopener noreferrer"
+		href="https://www.youtube.com/watch?v=vHHLLJA0b70">
+		Watch it on YouTube!
+	</a>
+</div>
