@@ -32,7 +32,7 @@ import Transition from './Transition';
 import Window from './Window';
 
 // note: to write less types each of types in union below should have type defined as literal
-// https://www.typescriptlang.org/docs/handbook/advanced-types.html#discriminated-unions
+// https://www.typescriptlang.org/docs/handbook/unions-and-intersections.html#discriminating-unions
 export type INode = Action
 | Animation
 | Attribute
