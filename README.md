@@ -8,9 +8,9 @@
   <a href="https://github.com/sveltejs/svelte/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
   </a>
-	<a href="https://svelte.dev/chat">
-		<img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg?sanitize=true" alt="Chat">
-	</a>
+  <a href="https://svelte.dev/chat">
+    <img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg" alt="Chat">
+  </a>
 </p>
 
 
