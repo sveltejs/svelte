@@ -131,7 +131,27 @@ export function slide(node: Element, {
 			`border-bottom-width: ${t * border_bottom_width}px;`
 	};
 }
-
+interface SwipeLeftParams {
+	delay?: number;
+	duration?: number;
+	easing?: EasingFunction;
+}
+export function swipeLeft(node: Element, { 
+	delay = 0,
+	duration = 500,
+	easing = cubicInOut
+}:SwipeLeftParams ) {
+	return {
+		delay,
+		duration,
+		css: t => {
+			const eased = easing(t);
+			return `
+				transform: translate3d(-${(1-eased)*100}%,0,0);
+				`
+		}
+	};
+}
 interface ScaleParams {
 	delay?: number;
 	duration?: number;
