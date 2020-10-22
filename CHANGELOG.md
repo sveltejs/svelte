@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.29.1
 
 * Fix compiler hanging on `<slot slot="...">` ([#5475](https://github.com/sveltejs/svelte/issues/5475))
 * Fix types on `get` function in `svelte/store` ([#5483](https://github.com/sveltejs/svelte/pull/5483))
