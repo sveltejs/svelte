@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.29.3
+
+* Hopefully actually republish with proper UMD build for use in the REPL
+
 ## 3.29.2
 
 * Republish with proper UMD build for use in the REPL
