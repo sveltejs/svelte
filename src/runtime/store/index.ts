@@ -113,7 +113,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 }
 
 /** One or more `Readable`s. */
-type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>];
+type Stores = Readable<any> | Readable<any>[];
 
 /** One or more values from `Readable` stores. */
 type StoresValues<T> = T extends Readable<infer U> ? U :
