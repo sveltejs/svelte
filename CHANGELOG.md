@@ -2,9 +2,10 @@
 
 ## Unreleased
 
-* Fix compiler hanging on `<slot slot="...">` ([#5475](https://github.com/sveltejs/svelte/pull/5475))
+* Fix compiler hanging on `<slot slot="...">` ([#5475](https://github.com/sveltejs/svelte/issues/5475))
 * Fix types on `get` function in `svelte/store` ([#5483](https://github.com/sveltejs/svelte/pull/5483))
 * Add missing `end` field on ASTs for non-top-level `<style>` elements ([#5487](https://github.com/sveltejs/svelte/pull/5487))
+* Fix types on lifecycle hooks ([#5529](https://github.com/sveltejs/svelte/pull/5529))
 
 ## 3.29.0
 
