@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix code generation error with `??` alongside logical operators ([#5558](https://github.com/sveltejs/svelte/issues/5558))
+
 ## 3.29.3
 
 * Hopefully actually republish with proper UMD build for use in the REPL
