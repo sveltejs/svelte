@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.29.2
+
+* Republish with proper UMD build for use in the REPL
+
 ## 3.29.1
 
 * Fix compiler hanging on `<slot slot="...">` ([#5475](https://github.com/sveltejs/svelte/issues/5475))
