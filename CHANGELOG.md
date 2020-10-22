@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.29.4
 
 * Fix code generation error with `??` alongside logical operators ([#5558](https://github.com/sveltejs/svelte/issues/5558))
 
