@@ -18,6 +18,40 @@
     "svelte",
     "README.md"
   ],
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    },
+    "./compiler": {
+      "import": "./compiler.mjs",
+      "require": "./compiler.js"
+    },
+    "./animate": {
+      "import": "./animate/index.mjs",
+      "require": "./animate/index.js"
+    },
+    "./easing": {
+      "import": "./easing/index.mjs",
+      "require": "./easing/index.js"
+    },
+    "./internal": {
+      "import": "./internal/index.mjs",
+      "require": "./internal/index.js"
+    },
+    "./motion": {
+      "import": "./motion/index.mjs",
+      "require": "./motion/index.js"
+    },
+    "./store": {
+      "import": "./store/index.mjs",
+      "require": "./store/index.js"
+    },
+    "./transition": {
+      "import": "./transition/index.mjs",
+      "require": "./transition/index.js"
+    }
+  },
   "engines": {
     "node": ">= 8"
   },
