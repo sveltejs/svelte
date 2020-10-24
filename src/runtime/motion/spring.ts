@@ -2,14 +2,41 @@ import { Readable, writable } from 'svelte/store';
 import { loop, now, Task } from 'svelte/internal';
 import { is_date } from './utils';
 
-interface TickContext<T> {
+interface TickContext {
 	inv_mass: number;
 	dt: number;
-	opts: Spring<T>;
+	opts: SpringOpts;
 	settled: boolean;
 }
 
-function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, target_value: T): T {
+export function springFrames(from, to, opts: SpringOpts) {
+	Object.assign(opts, { stiffness: 0.15, damping: 0.8, precision: 0.01 });
+
+	let value = from;
+	let last_val = from;
+	let dt = 0.25; //WTF???
+	const values = [from];
+
+	let ctx: TickContext;
+	do {
+		ctx = {
+			inv_mass: 1,
+			opts,
+			settled: true,
+			dt,
+		};
+
+		const next_value = tick_spring(ctx, last_val, value, to);
+		values.push(next_value);
+		last_val = value;
+		value = next_value;
+		dt = 1;
+	} while (!ctx.settled);
+
+	return values;
+}
+
+function tick_spring<T>(ctx: TickContext, last_value: T, current_value: T, target_value: T): T {
 	if (typeof current_value === 'number' || is_date(current_value)) {
 		// @ts-ignore
 		const delta = target_value - current_value;
@@ -109,7 +136,7 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
 
-				const ctx: TickContext<T> = {
+				const ctx: TickContext = {
 					inv_mass,
 					opts: spring,
 					settled: true, // tick_spring may signal false

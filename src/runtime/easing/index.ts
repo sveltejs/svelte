@@ -1,3 +1,5 @@
+import { springFrames } from "svelte/motion";
+
 /*
 Adapted from https://github.com/mattdesl
 Distributed under MIT License https://github.com/mattdesl/eases/blob/master/LICENSE.md
@@ -168,4 +170,36 @@ export function sineIn(t: number) {
 
 export function sineOut(t: number) {
 	return Math.sin((t * Math.PI) / 2);
+}
+
+const springEasing = (frames, inDirection = true) => t => {
+	t = inDirection ? t : 1 - t;
+	const indexPrecise = t * frames.length;
+	const indexExcess = indexPrecise % 1;
+
+	const a = frames[indexPrecise - indexExcess];
+	let b = frames[indexPrecise - indexExcess + 1];
+	if (b == null) {
+		b = a;
+	}
+
+	return indexExcess ? a + (b - a) * indexExcess : a;
+};
+
+export function springEnter(from, to, opts) {
+	const frames = springFrames(from, to, opts);
+
+	return { 
+        duration: (frames.length * 1000) / 60,
+        easing: springEasing(frames) 
+    };
+}
+
+export function springLeave(from, to, opts) {
+	const frames = springFrames(from, to, opts);
+
+	return { 
+        duration: (frames.length * 1000) / 60,
+        easing: springEasing(frames, false) 
+    };
 }
