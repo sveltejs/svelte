@@ -37,7 +37,7 @@ describe('sourcemaps', () => {
 			const preprocessed = await svelte.preprocess(
 				input.code,
 				config.preprocess || {},
-				{
+				config.options || {
 					filename: 'input.svelte'
 				}
 			);
@@ -46,6 +46,7 @@ describe('sourcemaps', () => {
 				preprocessed.code, {
 				filename: 'input.svelte',
 				// filenames for sourcemaps
+				sourcemap: preprocessed.map,
 				outputFilename: `${outputName}.js`,
 				cssOutputFilename: `${outputName}.css`
 			});
