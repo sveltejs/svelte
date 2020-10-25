@@ -1,13 +1,14 @@
-export function test({ assert, smc, locateInSource, locateInGenerated }) {
-	const expected = locateInSource('potato');
+export function test({ assert, input, js }) {
+	const expected = input.locate('potato');
 
 	let start;
 
-	start = locateInGenerated('potato');
-	start = locateInGenerated('potato', start.character + 1);
-	start = locateInGenerated('potato', start.character + 1); // we need the third instance of 'potato'
+	start = js.locate('potato');
+	start = js.locate('potato', start.character + 1);
+	start = js.locate('potato', start.character + 1);
+	// we need the third instance of 'potato'
 
-	const actual = smc.originalPositionFor({
+	const actual = js.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});
