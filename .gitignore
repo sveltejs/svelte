@@ -18,10 +18,6 @@ node_modules
 /coverage/
 /coverage.lcov
 /test/*/samples/_
-/test/sourcemaps/samples/*/output.js
-/test/sourcemaps/samples/*/output.js.map
-/test/sourcemaps/samples/*/output.css
-/test/sourcemaps/samples/*/output.css.map
 /yarn-error.log
 _actual*.*
 _output
