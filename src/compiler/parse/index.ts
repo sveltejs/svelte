@@ -178,11 +178,12 @@ export class Parser {
 	}
 
 	read_until(pattern: RegExp) {
-		if (this.index >= this.template.length)
+		if (this.index >= this.template.length) {
 			this.error({
 				code: 'unexpected-eof',
 				message: 'Unexpected end of input'
 			});
+		}
 
 		const start = this.index;
 		const match = pattern.exec(this.template.slice(start));
