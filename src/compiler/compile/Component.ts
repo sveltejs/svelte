@@ -29,8 +29,9 @@ import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
-import { combine_sourcemaps, sourcemap_define_tostring_tourl } from '../utils/string_with_sourcemap';
+import { apply_preprocessor_sourcemap } from '../utils/string_with_sourcemap';
 import Element from './nodes/Element';
+import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types/types';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -332,28 +333,7 @@ export default class Component {
 				this.source
 			];
 
-			if (compile_options.sourcemap) {
-				if (js.map) {
-					js.map = combine_sourcemaps(
-						this.file,
-						[
-							js.map, // idx 1: internal
-							compile_options.sourcemap // idx 0: external: svelte.preprocess, etc
-						]
-					);
-					sourcemap_define_tostring_tourl(js.map);
-				}
-				if (css.map) {
-					css.map = combine_sourcemaps(
-						this.file,
-						[
-							css.map, // idx 1: internal
-							compile_options.sourcemap // idx 0: external: svelte.preprocess, etc
-						]
-					);
-					sourcemap_define_tostring_tourl(css.map);
-				}
-			}
+			js.map = apply_preprocessor_sourcemap(this.file, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
 		}
 
 		return {
