@@ -5,7 +5,7 @@ import { StringWithSourcemap, sourcemap_add_offset, combine_sourcemaps } from '.
 
 export interface Processed {
 	code: string;
-	map?: string | object;  // we be opaque with the type here to avoid dependency on the remapping module for our public types.
+	map?: string | object;  // we are opaque with the type here to avoid dependency on the remapping module for our public types.
 	dependencies?: string[];
 }
 
