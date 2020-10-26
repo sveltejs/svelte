@@ -288,10 +288,12 @@ export default function mustache(parser: Parser) {
 			if (parser.eat(',')) {
 				parser.allow_whitespace();
 				block.index = parser.read_identifier();
-				if (!block.index) parser.error({
-					code: 'expected-name',
-					message: 'Expected name'
-				});
+				if (!block.index) {
+					parser.error({
+						code: 'expected-name',
+						message: 'Expected name'
+					});
+				}
 
 				parser.allow_whitespace();
 			}
