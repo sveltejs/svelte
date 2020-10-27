@@ -16,7 +16,7 @@ Welcome back to the "What's new in Svelte" series! This month, we're covering ne
 
 **What's going on in Sapper?**
 
-Sapper also got some new types in its `preload` function, along with fixes to `preload` links in exported sites. Route layouts got a few fixes too - including ensuring CSS is applied to nested route layouts. You can also better organize your files now that extensions with multiple dots are supported. (**0.28.10**)
+Sapper got some new types in its `preload` function, which will ease typing if you are using TypeScript. See the [Sapper docs](https://sapper.svelte.dev/docs#Typing_the_function) on how to use them. There also were fixes to `preload` links in exported sites. Route layouts got a few fixes too - including ensuring CSS is applied to nested route layouts. You can also better organize your files now that extensions with multiple dots are supported. (**0.28.10**)
 
 
 For all the features and bugfixes see the CHANGELOGs for [Svelte](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md) and [Sapper](https://github.com/sveltejs/sapper/blob/master/CHANGELOG.md).
