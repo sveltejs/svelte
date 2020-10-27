@@ -70,6 +70,14 @@ export default function dom(
 		);
 	}
 
+	const uses_dispatch = component.var_lookup.has('$$dispatch');
+	let create_dispatch;
+	if (uses_dispatch) {
+		create_dispatch = b`
+			const $$dispatch = @createEventDispatcher();
+		`;
+	}
+
 	const uses_slots = component.var_lookup.has('$$slots');
 	let compute_slots;
 	if (uses_slots) {
@@ -416,6 +424,8 @@ export default function dom(
 				${reactive_store_subscriptions}
 
 				${resubscribable_reactive_store_unsubscribers}
+
+				${create_dispatch}
 
 				${component.slots.size || component.compile_options.dev || uses_slots ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
 				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
