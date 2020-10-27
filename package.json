@@ -63,7 +63,7 @@
     "@rollup/plugin-sucrase": "^3.0.0",
     "@rollup/plugin-typescript": "^2.0.1",
     "@rollup/plugin-virtual": "^2.0.0",
-    "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.4.0",
+    "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.5.0",
     "@types/mocha": "^7.0.0",
     "@types/node": "^8.10.53",
     "@typescript-eslint/eslint-plugin": "^3.0.2",
