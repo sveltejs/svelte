@@ -43,6 +43,11 @@ export function createEventDispatcher<
 				fn.call(component, event);
 			});
 		}
+
+		if (component.shadowRoot) {
+			const event = custom_event(type, detail);
+			component.dispatchEvent(event);
+		}
 	};
 }
 
