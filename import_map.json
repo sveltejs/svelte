@@ -1,0 +1,13 @@
+{
+   "imports": {
+      "acorn": "https://cdn.skypack.dev/acorn",
+      "estree": "https://cdn.skypack.dev/@types/estree?dts",
+      "estree-walker": "https://cdn.skypack.dev/estree-walker",
+      "magic-string": "https://cdn.skypack.dev/magic-string",
+      "code-red": "https://cdn.skypack.dev/code-red",
+      "is-reference": "https://cdn.skypack.dev/is-reference",
+      "locate-character": "https://cdn.skypack.dev/locate-character",
+      "periscopic": "https://cdn.skypack.dev/periscopic",
+      "css-tree": "https://esm.sh/css-tree@1.0.0-alpha22"
+   }
+}

@@ -5,7 +5,7 @@ import { b, x } from 'code-red';
 import add_event_handlers from './shared/add_event_handlers.ts';
 import Window from '../../nodes/Window.ts';
 import add_actions from './shared/add_actions.ts';
-import { Identifier } from 'estree.ts';
+import { Identifier } from 'estree';
 import { TemplateNode } from '../../../interfaces.ts';
 import EventHandler from './Element/EventHandler.ts';
 

@@ -9,7 +9,7 @@ import TemplateScope from './TemplateScope.ts';
 import get_object from '../../utils/get_object.ts';
 import Block from '../../render_dom/Block.ts';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic.ts';
-import { b } from 'code-red.ts';
+import { b } from 'code-red';
 import { invalidate } from '../../render_dom/invalidate.ts';
 import { Node, FunctionExpression, Identifier } from 'estree';
 import { TemplateNode } from '../../../interfaces.ts';
