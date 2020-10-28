@@ -1,8 +1,8 @@
-import Renderer from './Renderer';
-import Wrapper from './wrappers/shared/Wrapper';
+import Renderer from './Renderer.ts';
+import Wrapper from './wrappers/shared/Wrapper.ts';
 import { b, x } from 'code-red';
 import { Node, Identifier, ArrayPattern } from 'estree';
-import { is_head } from './wrappers/shared/is_head';
+import { is_head } from './wrappers/shared/is_head.ts';
 
 export interface Bindings {
 	object: Identifier;

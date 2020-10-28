@@ -1,13 +1,13 @@
 import MagicString from 'magic-string';
-import Stylesheet from './Stylesheet';
-import { gather_possible_values, UNKNOWN } from './gather_possible_values';
-import { CssNode } from './interfaces';
-import Component from '../Component';
-import Element from '../nodes/Element';
-import { INode } from '../nodes/interfaces';
-import EachBlock from '../nodes/EachBlock';
-import IfBlock from '../nodes/IfBlock';
-import AwaitBlock from '../nodes/AwaitBlock';
+import Stylesheet from './Stylesheet.ts';
+import { gather_possible_values, UNKNOWN } from './gather_possible_values.ts';
+import { CssNode } from './interfaces.ts';
+import Component from '../Component.ts';
+import Element from '../nodes/Element.ts';
+import { INode } from '../nodes/interfaces.ts';
+import EachBlock from '../nodes/EachBlock.ts';
+import IfBlock from '../nodes/IfBlock.ts';
+import AwaitBlock from '../nodes/AwaitBlock.ts';
 
 enum BlockAppliesToNode {
 	NotPossible,
@@ -429,7 +429,7 @@ function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map
 		while ((parent = parent.parent) && (parent.type === 'EachBlock' || parent.type === 'IfBlock' || parent.type === 'ElseBlock' || parent.type === 'AwaitBlock')) {
 			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
 			add_to_map(possible_siblings, result);
-			
+
 			if (parent.type === 'EachBlock') {
 				// first child of each block can select the last child of each block as previous sibling
 				if (skip_each_for_last_child) {
@@ -457,7 +457,7 @@ function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjace
 	if (block.type === 'EachBlock') {
 		const each_result: Map<Element, NodeExist> = loop_child(block.children, adjacent_only);
 		const else_result: Map<Element, NodeExist> = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
-		
+
 		const not_exhaustive = !has_definite_elements(else_result);
 
 		if (not_exhaustive) {

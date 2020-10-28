@@ -1,5 +1,5 @@
 import { locate } from 'locate-character';
-import get_code_frame from './get_code_frame';
+import get_code_frame from './get_code_frame.ts';
 
 class CompileError extends Error {
 	code: string;

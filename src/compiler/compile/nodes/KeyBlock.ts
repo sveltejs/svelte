@@ -1,6 +1,6 @@
-import Expression from './shared/Expression';
-import map_children from './shared/map_children';
-import AbstractBlock from './shared/AbstractBlock';
+import Expression from './shared/Expression.ts';
+import map_children from './shared/map_children.ts';
+import AbstractBlock from './shared/AbstractBlock.ts';
 
 export default class KeyBlock extends AbstractBlock {
 	type: 'KeyBlock';

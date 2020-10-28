@@ -1,13 +1,13 @@
-import Renderer from '../Renderer';
-import Block from '../Block';
-import Wrapper from './shared/Wrapper';
-import create_debugging_comment from './shared/create_debugging_comment';
-import EachBlock from '../../nodes/EachBlock';
-import FragmentWrapper from './Fragment';
+import Renderer from '../Renderer.ts';
+import Block from '../Block.ts';
+import Wrapper from './shared/Wrapper.ts';
+import create_debugging_comment from './shared/create_debugging_comment.ts';
+import EachBlock from '../../nodes/EachBlock.ts';
+import FragmentWrapper from './Fragment.ts';
 import { b, x } from 'code-red';
-import ElseBlock from '../../nodes/ElseBlock';
+import ElseBlock from '../../nodes/ElseBlock.ts';
 import { Identifier, Node } from 'estree';
-import get_object from '../../utils/get_object';
+import get_object from '../../utils/get_object.ts';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;

@@ -1,5 +1,5 @@
-import Renderer, { RenderOptions } from '../Renderer';
-import EachBlock from '../../nodes/EachBlock';
+import Renderer, { RenderOptions } from '../Renderer.ts';
+import EachBlock from '../../nodes/EachBlock.ts';
 import { x } from 'code-red';
 
 export default function(node: EachBlock, renderer: Renderer, options: RenderOptions) {

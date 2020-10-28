@@ -1,10 +1,10 @@
 import { b } from 'code-red';
-import Component from '../Component';
-import { CompileOptions, CssResult } from '../../interfaces';
-import { string_literal } from '../utils/stringify';
-import Renderer from './Renderer';
-import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
-import Text from '../nodes/Text';
+import Component from '../Component.ts';
+import { CompileOptions, CssResult } from '../../interfaces.ts';
+import { string_literal } from '../utils/stringify.ts';
+import Renderer from './Renderer.ts';
+import { INode as TemplateNode } from '../nodes/interfaces.ts'; // TODO
+import Text from '../nodes/Text.ts';
 import { LabeledStatement, Statement, Node } from 'estree';
 
 export default function ssr(

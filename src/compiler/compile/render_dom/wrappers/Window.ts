@@ -1,13 +1,13 @@
-import Renderer from '../Renderer';
-import Block from '../Block';
-import Wrapper from './shared/Wrapper';
+import Renderer from '../Renderer.ts';
+import Block from '../Block.ts';
+import Wrapper from './shared/Wrapper.ts';
 import { b, x } from 'code-red';
-import add_event_handlers from './shared/add_event_handlers';
-import Window from '../../nodes/Window';
-import add_actions from './shared/add_actions';
+import add_event_handlers from './shared/add_event_handlers.ts';
+import Window from '../../nodes/Window.ts';
+import add_actions from './shared/add_actions.ts';
 import { Identifier } from 'estree';
-import { TemplateNode } from '../../../interfaces';
-import EventHandler from './Element/EventHandler';
+import { TemplateNode } from '../../../interfaces.ts';
+import EventHandler from './Element/EventHandler.ts';
 
 const associated_events = {
 	innerWidth: 'resize',

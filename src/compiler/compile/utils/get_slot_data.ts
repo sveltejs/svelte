@@ -1,7 +1,7 @@
-import Attribute from '../nodes/Attribute';
+import Attribute from '../nodes/Attribute.ts';
 import { p, x } from 'code-red';
-import { string_literal } from './stringify';
-import Block from '../render_dom/Block';
+import { string_literal } from './stringify.ts';
+import Block from '../render_dom/Block.ts';
 
 export default function get_slot_data(values: Map<string, Attribute>, block: Block = null) {
 	return {

@@ -1,11 +1,11 @@
-import read_context from '../read/context';
-import read_expression from '../read/expression';
-import { closing_tag_omitted } from '../utils/html';
-import { whitespace } from '../../utils/patterns';
-import { trim_start, trim_end } from '../../utils/trim';
-import { to_string } from '../utils/node';
-import { Parser } from '../index';
-import { TemplateNode } from '../../interfaces';
+import read_context from '../read/context.ts';
+import read_expression from '../read/expression.ts';
+import { closing_tag_omitted } from '../utils/html.ts';
+import { whitespace } from '../../utils/patterns.ts';
+import { trim_start, trim_end } from '../../utils/trim.ts';
+import { to_string } from '../utils/node.ts';
+import { Parser } from '../index.ts';
+import { TemplateNode } from '../../interfaces.ts';
 
 function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: boolean) {
 	if (!block.children || block.children.length === 0) return; // AwaitBlock

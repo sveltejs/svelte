@@ -1,12 +1,12 @@
-import { is_void } from '../../../utils/names';
-import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
-import { get_slot_scope } from './shared/get_slot_scope';
-import { boolean_attributes } from './shared/boolean_attributes';
-import Renderer, { RenderOptions } from '../Renderer';
-import Element from '../../nodes/Element';
+import { is_void } from '../../../utils/names.ts';
+import { get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value.ts';
+import { get_slot_scope } from './shared/get_slot_scope.ts';
+import { boolean_attributes } from './shared/boolean_attributes.ts';
+import Renderer, { RenderOptions } from '../Renderer.ts';
+import Element from '../../nodes/Element.ts';
 import { x } from 'code-red';
-import Expression from '../../nodes/shared/Expression';
-import remove_whitespace_children from './utils/remove_whitespace_children';
+import Expression from '../../nodes/shared/Expression.ts';
+import remove_whitespace_children from './utils/remove_whitespace_children.ts';
 
 export default function(node: Element, renderer: Renderer, options: RenderOptions & {
 	slot_scopes: Map<any, any>;
@@ -174,4 +174,3 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		}
 	}
 }
-

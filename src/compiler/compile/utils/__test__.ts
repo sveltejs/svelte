@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import get_name_from_filename from './get_name_from_filename';
+import get_name_from_filename from './get_name_from_filename.ts';
 
 describe('get_name_from_filename', () => {
 	it('uses the basename', () => {

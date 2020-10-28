@@ -1,6 +1,6 @@
-import * as acorn from '../acorn';
-import { Parser } from '../index';
-import { Script } from '../../interfaces';
+import * as acorn from '../acorn.ts';
+import { Parser } from '../index.ts';
+import { Script } from '../../interfaces.ts';
 import { Node, Program } from 'estree';
 
 const script_closing_tag = '</script>';

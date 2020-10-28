@@ -1,6 +1,6 @@
 import { b, x } from 'code-red';
-import Block from '../../Block';
-import Action from '../../../nodes/Action';
+import Block from '../../Block.ts';
+import Action from '../../../nodes/Action.ts';
 
 export default function add_actions(
 	block: Block,

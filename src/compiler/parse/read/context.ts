@@ -1,13 +1,13 @@
-import { Parser } from '../index';
+import { Parser } from '../index.ts';
 import { isIdentifierStart } from 'acorn';
-import full_char_code_at from '../../utils/full_char_code_at';
+import full_char_code_at from '../../utils/full_char_code_at.ts';
 import {
 	is_bracket_open,
 	is_bracket_close,
 	is_bracket_pair,
 	get_bracket_close
-} from '../utils/bracket';
-import { parse_expression_at } from '../acorn';
+} from '../utils/bracket.ts';
+import { parse_expression_at } from '../acorn.ts';
 import { Pattern } from 'estree';
 
 export default function read_context(

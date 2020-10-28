@@ -1,4 +1,4 @@
-import { TemplateNode } from '../../interfaces';
+import { TemplateNode } from '../../interfaces.ts';
 
 export function to_string(node: TemplateNode) {
 	switch (node.type) {

@@ -1,13 +1,13 @@
-import Node from './shared/Node';
-import Attribute from './Attribute';
-import map_children from './shared/map_children';
-import Binding from './Binding';
-import EventHandler from './EventHandler';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import Let from './Let';
-import TemplateScope from './shared/TemplateScope';
-import { INode } from './interfaces';
+import Node from './shared/Node.ts';
+import Attribute from './Attribute.ts';
+import map_children from './shared/map_children.ts';
+import Binding from './Binding.ts';
+import EventHandler from './EventHandler.ts';
+import Expression from './shared/Expression.ts';
+import Component from '../Component.ts';
+import Let from './Let.ts';
+import TemplateScope from './shared/TemplateScope.ts';
+import { INode } from './interfaces.ts';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';

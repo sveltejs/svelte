@@ -1,8 +1,8 @@
-import EachBlock from '../EachBlock';
-import ThenBlock from '../ThenBlock';
-import CatchBlock from '../CatchBlock';
-import InlineComponent from '../InlineComponent';
-import Element from '../Element';
+import EachBlock from '../EachBlock.ts';
+import ThenBlock from '../ThenBlock.ts';
+import CatchBlock from '../CatchBlock.ts';
+import InlineComponent from '../InlineComponent.ts';
+import Element from '../Element.ts';
 
 type NodeWithScope = EachBlock | ThenBlock | CatchBlock | InlineComponent | Element;
 

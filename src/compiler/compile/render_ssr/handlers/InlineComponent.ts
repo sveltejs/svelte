@@ -1,8 +1,8 @@
-import { string_literal } from '../../utils/stringify';
-import Renderer, { RenderOptions } from '../Renderer';
-import { get_slot_scope } from './shared/get_slot_scope';
-import InlineComponent from '../../nodes/InlineComponent';
-import remove_whitespace_children from './utils/remove_whitespace_children';
+import { string_literal } from '../../utils/stringify.ts';
+import Renderer, { RenderOptions } from '../Renderer.ts';
+import { get_slot_scope } from './shared/get_slot_scope.ts';
+import InlineComponent from '../../nodes/InlineComponent.ts';
+import remove_whitespace_children from './utils/remove_whitespace_children.ts';
 import { p, x } from 'code-red';
 
 function get_prop_value(attribute) {

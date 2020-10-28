@@ -1,8 +1,8 @@
-import Element from './Element';
-import Attribute from './Attribute';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { INode } from './interfaces';
+import Element from './Element.ts';
+import Attribute from './Attribute.ts';
+import Component from '../Component.ts';
+import TemplateScope from './shared/TemplateScope.ts';
+import { INode } from './interfaces.ts';
 
 export default class Slot extends Element {
 	type: 'Element';

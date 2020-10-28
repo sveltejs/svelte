@@ -1,10 +1,10 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
-import fragment from './state/fragment';
-import { whitespace } from '../utils/patterns';
-import { reserved } from '../utils/names';
-import full_char_code_at from '../utils/full_char_code_at';
-import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../interfaces';
-import error from '../utils/error';
+import fragment from './state/fragment.ts';
+import { whitespace } from '../utils/patterns.ts';
+import { reserved } from '../utils/names.ts';
+import full_char_code_at from '../utils/full_char_code_at.ts';
+import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../interfaces.ts';
+import error from '../utils/error.ts';
 
 type ParserState = (parser: Parser) => (ParserState | void);
 

@@ -1,11 +1,11 @@
 import { b, x } from 'code-red';
-import Renderer from '../Renderer';
-import Block from '../Block';
-import Tag from './shared/Tag';
-import Wrapper from './shared/Wrapper';
-import MustacheTag from '../../nodes/MustacheTag';
-import RawMustacheTag from '../../nodes/RawMustacheTag';
-import { is_head } from './shared/is_head';
+import Renderer from '../Renderer.ts';
+import Block from '../Block.ts';
+import Tag from './shared/Tag.ts';
+import Wrapper from './shared/Wrapper.ts';
+import MustacheTag from '../../nodes/MustacheTag.ts';
+import RawMustacheTag from '../../nodes/RawMustacheTag.ts';
+import { is_head } from './shared/is_head.ts';
 import { Identifier } from 'estree';
 
 export default class RawMustacheTagWrapper extends Tag {

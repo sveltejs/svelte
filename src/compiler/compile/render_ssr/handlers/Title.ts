@@ -1,5 +1,5 @@
-import Renderer, { RenderOptions } from '../Renderer';
-import Title from '../../nodes/Title';
+import Renderer, { RenderOptions } from '../Renderer.ts';
+import Title from '../../nodes/Title.ts';
 import { x } from 'code-red';
 
 export default function(node: Title, renderer: Renderer, options: RenderOptions) {

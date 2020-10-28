@@ -1,11 +1,11 @@
 import { b, x, p } from 'code-red';
-import Component from '../Component';
-import Renderer from './Renderer';
-import { CompileOptions, CssResult } from '../../interfaces';
+import Component from '../Component.ts';
+import Renderer from './Renderer.ts';
+import { CompileOptions, CssResult } from '../../interfaces.ts';
 import { walk } from 'estree-walker';
-import { extract_names, Scope } from '../utils/scope';
-import { invalidate } from './invalidate';
-import Block from './Block';
+import { extract_names, Scope } from '../utils/scope.ts';
+import { invalidate } from './invalidate.ts';
+import Block from './Block.ts';
 import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
 
 export default function dom(

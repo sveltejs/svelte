@@ -1,16 +1,16 @@
 import { b, x } from 'code-red';
-import Binding from '../../../nodes/Binding';
-import ElementWrapper from '../Element';
-import InlineComponentWrapper from '../InlineComponent';
-import get_object from '../../../utils/get_object';
-import replace_object from '../../../utils/replace_object';
-import Block from '../../Block';
-import Renderer from '../../Renderer';
-import flatten_reference from '../../../utils/flatten_reference';
+import Binding from '../../../nodes/Binding.ts';
+import ElementWrapper from '../Element/index.ts';
+import InlineComponentWrapper from '../InlineComponent/index.ts';
+import get_object from '../../../utils/get_object.ts';
+import replace_object from '../../../utils/replace_object.ts';
+import Block from '../../Block.ts';
+import Renderer from '../../Renderer.ts';
+import flatten_reference from '../../../utils/flatten_reference.ts';
 import { Node, Identifier } from 'estree';
-import add_to_set from '../../../utils/add_to_set';
-import mark_each_block_bindings from '../shared/mark_each_block_bindings';
-import handle_select_value_binding from './handle_select_value_binding';
+import add_to_set from '../../../utils/add_to_set.ts';
+import mark_each_block_bindings from '../shared/mark_each_block_bindings.ts';
+import handle_select_value_binding from './handle_select_value_binding.ts';
 
 export default class BindingWrapper {
 	node: Binding;

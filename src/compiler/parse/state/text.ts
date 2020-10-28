@@ -1,5 +1,5 @@
-import { decode_character_references } from '../utils/html';
-import { Parser } from '../index';
+import { decode_character_references } from '../utils/html.ts';
+import { Parser } from '../index.ts';
 
 export default function text(parser: Parser) {
 	const start = parser.index;

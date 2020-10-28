@@ -1,5 +1,5 @@
-import Component from '../../../Component';
-import { INode } from '../../../nodes/interfaces';
+import Component from '../../../Component.ts';
+import { INode } from '../../../nodes/interfaces.ts';
 
 export default function create_debugging_comment(
 	node: INode,

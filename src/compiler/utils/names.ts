@@ -1,5 +1,5 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
-import full_char_code_at from './full_char_code_at';
+import full_char_code_at from './full_char_code_at.ts';
 
 export const globals = new Set([
 	'alert',

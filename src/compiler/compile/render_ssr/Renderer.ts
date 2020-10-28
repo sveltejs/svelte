@@ -1,21 +1,21 @@
-import AwaitBlock from './handlers/AwaitBlock';
-import Comment from './handlers/Comment';
-import DebugTag from './handlers/DebugTag';
-import EachBlock from './handlers/EachBlock';
-import Element from './handlers/Element';
-import Head from './handlers/Head';
-import HtmlTag from './handlers/HtmlTag';
-import IfBlock from './handlers/IfBlock';
-import InlineComponent from './handlers/InlineComponent';
-import KeyBlock from './handlers/KeyBlock';
-import Slot from './handlers/Slot';
-import Tag from './handlers/Tag';
-import Text from './handlers/Text';
-import Title from './handlers/Title';
-import { AppendTarget, CompileOptions } from '../../interfaces';
-import { INode } from '../nodes/interfaces';
+import AwaitBlock from './handlers/AwaitBlock.ts';
+import Comment from './handlers/Comment.ts';
+import DebugTag from './handlers/DebugTag.ts';
+import EachBlock from './handlers/EachBlock.ts';
+import Element from './handlers/Element.ts';
+import Head from './handlers/Head.ts';
+import HtmlTag from './handlers/HtmlTag.ts';
+import IfBlock from './handlers/IfBlock.ts';
+import InlineComponent from './handlers/InlineComponent.ts';
+import KeyBlock from './handlers/KeyBlock.ts';
+import Slot from './handlers/Slot.ts';
+import Tag from './handlers/Tag.ts';
+import Text from './handlers/Text.ts';
+import Title from './handlers/Title.ts';
+import { AppendTarget, CompileOptions } from '../../interfaces.ts';
+import { INode } from '../nodes/interfaces.ts';
 import { Expression, TemplateLiteral, Identifier } from 'estree';
-import { escape_template } from '../utils/stringify';
+import { escape_template } from '../utils/stringify.ts';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
 

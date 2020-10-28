@@ -1,11 +1,11 @@
-import Stats from '../Stats';
-import parse from '../parse/index';
-import render_dom from './render_dom/index';
-import render_ssr from './render_ssr/index';
-import { CompileOptions, Warning } from '../interfaces';
-import Component from './Component';
-import fuzzymatch from '../utils/fuzzymatch';
-import get_name_from_filename from './utils/get_name_from_filename';
+import Stats from '../Stats.ts';
+import parse from '../parse/index.ts';
+import render_dom from './render_dom/index.ts';
+import render_ssr from './render_ssr/index.ts';
+import { CompileOptions, Warning } from '../interfaces.ts';
+import Component from './Component.ts';
+import fuzzymatch from '../utils/fuzzymatch.ts';
+import get_name_from_filename from './utils/get_name_from_filename.ts';
 
 const valid_options = [
 	'format',

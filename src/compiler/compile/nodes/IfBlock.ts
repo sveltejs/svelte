@@ -1,7 +1,7 @@
-import ElseBlock from './ElseBlock';
-import Expression from './shared/Expression';
-import map_children from './shared/map_children';
-import AbstractBlock from './shared/AbstractBlock';
+import ElseBlock from './ElseBlock.ts';
+import Expression from './shared/Expression.ts';
+import map_children from './shared/map_children.ts';
+import AbstractBlock from './shared/AbstractBlock.ts';
 
 export default class IfBlock extends AbstractBlock {
 	type: 'IfBlock';

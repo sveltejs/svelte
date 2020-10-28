@@ -1,9 +1,9 @@
-import Renderer from '../Renderer';
-import Block from '../Block';
-import Tag from './shared/Tag';
-import Wrapper from './shared/Wrapper';
-import MustacheTag from '../../nodes/MustacheTag';
-import RawMustacheTag from '../../nodes/RawMustacheTag';
+import Renderer from '../Renderer.ts';
+import Block from '../Block.ts';
+import Tag from './shared/Tag.ts';
+import Wrapper from './shared/Wrapper.ts';
+import MustacheTag from '../../nodes/MustacheTag.ts';
+import RawMustacheTag from '../../nodes/RawMustacheTag.ts';
 import { x } from 'code-red';
 import { Identifier } from 'estree';
 

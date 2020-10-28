@@ -1,9 +1,9 @@
-import map_children from './shared/map_children';
-import TemplateScope from './shared/TemplateScope';
-import AbstractBlock from './shared/AbstractBlock';
-import AwaitBlock from './AwaitBlock';
-import Component from '../Component';
-import { TemplateNode } from '../../interfaces';
+import map_children from './shared/map_children.ts';
+import TemplateScope from './shared/TemplateScope.ts';
+import AbstractBlock from './shared/AbstractBlock.ts';
+import AwaitBlock from './AwaitBlock.ts';
+import Component from '../Component.ts';
+import { TemplateNode } from '../../interfaces.ts';
 
 export default class CatchBlock extends AbstractBlock {
 	type: 'CatchBlock';

@@ -1,13 +1,13 @@
 import { b, x } from 'code-red';
-import Wrapper from './shared/Wrapper';
-import Renderer from '../Renderer';
-import Block from '../Block';
-import Title from '../../nodes/Title';
-import { string_literal } from '../../utils/stringify';
-import add_to_set from '../../utils/add_to_set';
-import Text from '../../nodes/Text';
+import Wrapper from './shared/Wrapper.ts';
+import Renderer from '../Renderer.ts';
+import Block from '../Block.ts';
+import Title from '../../nodes/Title.ts';
+import { string_literal } from '../../utils/stringify.ts';
+import add_to_set from '../../utils/add_to_set.ts';
+import Text from '../../nodes/Text.ts';
 import { Identifier } from 'estree';
-import MustacheTag from '../../nodes/MustacheTag';
+import MustacheTag from '../../nodes/MustacheTag.ts';
 
 export default class TitleWrapper extends Wrapper {
 	node: Title;

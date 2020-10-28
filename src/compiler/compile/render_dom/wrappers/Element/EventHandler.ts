@@ -1,6 +1,6 @@
-import EventHandler from '../../../nodes/EventHandler';
-import Wrapper from '../shared/Wrapper';
-import Block from '../../Block';
+import EventHandler from '../../../nodes/EventHandler.ts';
+import Wrapper from '../shared/Wrapper.ts';
+import Block from '../../Block.ts';
 import { b, x, p } from 'code-red';
 import { Expression } from 'estree';
 

@@ -1,4 +1,4 @@
-import entities from './entities';
+import entities from './entities.ts';
 
 const windows_1252 = [
 	8364,

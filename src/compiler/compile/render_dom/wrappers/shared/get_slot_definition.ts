@@ -1,7 +1,7 @@
-import Let from '../../../nodes/Let';
+import Let from '../../../nodes/Let.ts';
 import { x, p } from 'code-red';
-import Block from '../../Block';
-import TemplateScope from '../../../nodes/shared/TemplateScope';
+import Block from '../../Block.ts';
+import TemplateScope from '../../../nodes/shared/TemplateScope.ts';
 import { BinaryExpression } from 'estree';
 
 export function get_slot_definition(block: Block, scope: TemplateScope, lets: Let[]) {

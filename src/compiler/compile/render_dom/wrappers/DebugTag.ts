@@ -1,8 +1,8 @@
-import Renderer from '../Renderer';
-import Wrapper from './shared/Wrapper';
-import Block from '../Block';
-import DebugTag from '../../nodes/DebugTag';
-import add_to_set from '../../utils/add_to_set';
+import Renderer from '../Renderer.ts';
+import Wrapper from './shared/Wrapper.ts';
+import Block from '../Block.ts';
+import DebugTag from '../../nodes/DebugTag.ts';
+import add_to_set from '../../utils/add_to_set.ts';
 import { b, p } from 'code-red';
 import { Identifier, DebuggerStatement } from 'estree';
 

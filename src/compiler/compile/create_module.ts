@@ -1,5 +1,5 @@
-import list from '../utils/list';
-import { ModuleFormat } from '../interfaces';
+import list from '../utils/list.ts';
+import { ModuleFormat } from '../interfaces.ts';
 import { b, x } from 'code-red';
 import { Identifier, ImportDeclaration } from 'estree';
 
@@ -42,7 +42,7 @@ function edit_source(source, sveltePath) {
 }
 
 function get_internal_globals(
-	globals: Array<{ name: string; alias: Identifier }>, 
+	globals: Array<{ name: string; alias: Identifier }>,
 	helpers: Array<{ name: string; alias: Identifier }>
 ) {
 	return globals.length > 0 && {
@@ -65,7 +65,7 @@ function get_internal_globals(
 			init: helpers.find(({ name }) => name === 'globals').alias
 		}]
 	};
-} 
+}
 
 function esm(
 	program: any,

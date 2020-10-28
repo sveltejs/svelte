@@ -1,7 +1,7 @@
-import { escape_html } from '../../utils/stringify';
-import Renderer, { RenderOptions } from '../Renderer';
-import Text from '../../nodes/Text';
-import Element from '../../nodes/Element';
+import { escape_html } from '../../utils/stringify.ts';
+import Renderer, { RenderOptions } from '../Renderer.ts';
+import Text from '../../nodes/Text.ts';
+import Element from '../../nodes/Element.ts';
 
 export default function(node: Text, renderer: Renderer, _options: RenderOptions) {
 	let text = node.data;

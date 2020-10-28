@@ -1,35 +1,35 @@
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
-import Stats from '../Stats';
-import { globals, reserved, is_valid } from '../utils/names';
-import { namespaces, valid_namespaces } from '../utils/namespaces';
-import create_module from './create_module';
+import Stats from '../Stats.ts';
+import { globals, reserved, is_valid } from '../utils/names.ts';
+import { namespaces, valid_namespaces } from '../utils/namespaces.ts';
+import create_module from './create_module.ts';
 import {
 	create_scopes,
 	extract_names,
 	Scope,
 	extract_identifiers
-} from './utils/scope';
-import Stylesheet from './css/Stylesheet';
-import { test } from '../config';
-import Fragment from './nodes/Fragment';
-import internal_exports from './internal_exports';
-import { Ast, CompileOptions, Var, Warning, CssResult } from '../interfaces';
-import error from '../utils/error';
-import get_code_frame from '../utils/get_code_frame';
-import flatten_reference from './utils/flatten_reference';
-import is_used_as_reference from './utils/is_used_as_reference';
+} from './utils/scope.ts';
+import Stylesheet from './css/Stylesheet.ts';
+import { test } from '../config.ts';
+import Fragment from './nodes/Fragment.ts';
+import internal_exports from './internal_exports.ts';
+import { Ast, CompileOptions, Var, Warning, CssResult } from '../interfaces.ts';
+import error from '../utils/error.ts';
+import get_code_frame from '../utils/get_code_frame.ts';
+import flatten_reference from './utils/flatten_reference.ts';
+import is_used_as_reference from './utils/is_used_as_reference.ts';
 import is_reference from 'is-reference';
-import TemplateScope from './nodes/shared/TemplateScope';
-import fuzzymatch from '../utils/fuzzymatch';
-import get_object from './utils/get_object';
-import Slot from './nodes/Slot';
+import TemplateScope from './nodes/shared/TemplateScope.ts';
+import fuzzymatch from '../utils/fuzzymatch.ts';
+import get_object from './utils/get_object.ts';
+import Slot from './nodes/Slot.ts';
 import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, AssignmentExpression, Literal } from 'estree';
-import add_to_set from './utils/add_to_set';
-import check_graph_for_cycles from './utils/check_graph_for_cycles';
+import add_to_set from './utils/add_to_set.ts';
+import check_graph_for_cycles from './utils/check_graph_for_cycles.ts';
 import { print, x, b } from 'code-red';
-import { is_reserved_keyword } from './utils/reserved_keywords';
-import Element from './nodes/Element';
+import { is_reserved_keyword } from './utils/reserved_keywords.ts';
+import Element from './nodes/Element.ts';
 
 interface ComponentOptions {
 	namespace?: string;
