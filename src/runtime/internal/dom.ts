@@ -360,3 +360,11 @@ export class HtmlTag {
 		this.n.forEach(detach);
 	}
 }
+
+export function attribute_to_object(attributes) {
+	const result = {};
+	for (const attribute of attributes) {
+		result[attribute.name] = attribute.value;
+	}
+	return result;
+}
