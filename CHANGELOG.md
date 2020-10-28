@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix `$$props` and `$$restProps` when compiling to a custom element ([#5482](https://github.com/sveltejs/svelte/issues/5482))
 * Add `Element` and `Node` to known globals ([#5586](https://github.com/sveltejs/svelte/issues/5586))
 
 ## 3.29.4
