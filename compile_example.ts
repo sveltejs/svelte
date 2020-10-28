@@ -18,4 +18,17 @@ const compiledSsr = compile(src, {
 	sveltePath: "./svelte",
 });
 
-console.log(compiledSsr)
+console.log("===SSR===")
+console.log(compiledSsr.js.code)
+console.log("=========")
+
+const compiledDom = compile(src, {
+	filename: "Deno.svelte",
+	generate: 'dom',
+	name: "Deno",
+	sveltePath: "./svelte",
+});
+
+console.log("===DOM===")
+console.log(compiledDom.js.code)
+console.log("=========")
