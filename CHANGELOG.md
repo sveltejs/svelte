@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add `Element` and `Node` to known globals ([#5586](https://github.com/sveltejs/svelte/issues/5586))
+
 ## 3.29.4
 
 * Fix code generation error with `??` alongside logical operators ([#5558](https://github.com/sveltejs/svelte/issues/5558))
