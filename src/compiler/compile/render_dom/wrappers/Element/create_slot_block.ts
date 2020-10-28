@@ -2,7 +2,7 @@ import ElementWrapper from './index.ts';
 import SlotWrapper from '../Slot.ts';
 import Block from '../../Block.ts';
 import { sanitize } from '../../../../utils/names.ts';
-import InlineComponentWrapper from '../InlineComponent.ts';
+import InlineComponentWrapper from '../InlineComponent/index.ts';
 import create_debugging_comment from '../shared/create_debugging_comment.ts';
 import { get_slot_definition } from '../shared/get_slot_definition.ts';
 

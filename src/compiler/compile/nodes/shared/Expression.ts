@@ -1,21 +1,21 @@
-import Component from '../../Component';
+import Component from '../../Component.ts';
 import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
-import flatten_reference from '../../utils/flatten_reference';
-import { create_scopes, Scope, extract_names } from '../../utils/scope';
-import { sanitize } from '../../../utils/names';
-import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
-import TemplateScope from './TemplateScope';
-import get_object from '../../utils/get_object';
-import Block from '../../render_dom/Block';
-import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
-import { b } from 'code-red';
-import { invalidate } from '../../render_dom/invalidate';
+import flatten_reference from '../../utils/flatten_reference.ts';
+import { create_scopes, Scope, extract_names } from '../../utils/scope.ts';
+import { sanitize } from '../../../utils/names.ts';
+import Wrapper from '../../render_dom/wrappers/shared/Wrapper.ts';
+import TemplateScope from './TemplateScope.ts';
+import get_object from '../../utils/get_object.ts';
+import Block from '../../render_dom/Block.ts';
+import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic.ts';
+import { b } from 'code-red.ts';
+import { invalidate } from '../../render_dom/invalidate.ts';
 import { Node, FunctionExpression, Identifier } from 'estree';
-import { TemplateNode } from '../../../interfaces';
-import { is_reserved_keyword } from '../../utils/reserved_keywords';
-import replace_object from '../../utils/replace_object';
-import EachBlock from '../EachBlock';
+import { TemplateNode } from '../../../interfaces.ts';
+import { is_reserved_keyword } from '../../utils/reserved_keywords.ts';
+import replace_object from '../../utils/replace_object.ts';
+import EachBlock from '../EachBlock.ts';
 
 type Owner = Wrapper | TemplateNode;
 

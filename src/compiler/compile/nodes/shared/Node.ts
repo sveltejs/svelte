@@ -1,7 +1,7 @@
-import Attribute from '../Attribute';
-import Component from '../../Component';
-import { INode } from '../interfaces';
-import Text from '../Text';
+import Attribute from '../Attribute.ts';
+import Component from '../../Component.ts';
+import { INode } from '../interfaces.ts';
+import Text from '../Text.ts';
 
 export default class Node {
 	readonly start: number;

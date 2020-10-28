@@ -1,6 +1,6 @@
-import Node from './shared/Node';
-import map_children from './shared/map_children';
-import hash from '../utils/hash';
+import Node from './shared/Node.ts';
+import map_children from './shared/map_children.ts';
+import hash from '../utils/hash.ts';
 
 export default class Head extends Node {
 	type: 'Head';

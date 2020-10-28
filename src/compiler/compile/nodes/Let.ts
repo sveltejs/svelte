@@ -1,5 +1,5 @@
-import Node from './shared/Node';
-import Component from '../Component';
+import Node from './shared/Node.ts';
+import Component from '../Component.ts';
 import { walk } from 'estree-walker';
 import { BasePattern, Identifier } from 'estree';
 

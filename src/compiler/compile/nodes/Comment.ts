@@ -1,4 +1,4 @@
-import Node from './shared/Node';
+import Node from './shared/Node.ts';
 
 const pattern = /^\s*svelte-ignore\s+([\s\S]+)\s*$/m;
 

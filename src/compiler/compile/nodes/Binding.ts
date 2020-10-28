@@ -1,9 +1,9 @@
-import Node from './shared/Node';
-import get_object from '../utils/get_object';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import {dimensions} from '../../utils/patterns';
+import Node from './shared/Node.ts';
+import get_object from '../utils/get_object.ts';
+import Expression from './shared/Expression.ts';
+import Component from '../Component.ts';
+import TemplateScope from './shared/TemplateScope.ts';
+import {dimensions} from '../../utils/patterns.ts';
 import { Node as ESTreeNode } from 'estree';
 
 // TODO this should live in a specific binding

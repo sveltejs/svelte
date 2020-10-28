@@ -1,5 +1,5 @@
-import Node from './Node';
-import Expression from './Expression';
+import Node from './Node.ts';
+import Expression from './Expression.ts';
 
 export default class Tag extends Node {
 	type: 'MustacheTag' | 'RawMustacheTag';

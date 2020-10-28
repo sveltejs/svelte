@@ -1,6 +1,6 @@
-import Node from './shared/Node';
-import map_children, { Children } from './shared/map_children';
-import Component from '../Component';
+import Node from './shared/Node.ts';
+import map_children, { Children } from './shared/map_children.ts';
+import Component from '../Component.ts';
 
 export default class Title extends Node {
 	type: 'Title';

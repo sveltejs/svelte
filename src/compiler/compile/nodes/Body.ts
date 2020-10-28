@@ -1,5 +1,5 @@
-import Node from './shared/Node';
-import EventHandler from './EventHandler';
+import Node from './shared/Node.ts';
+import EventHandler from './EventHandler.ts';
 
 export default class Body extends Node {
 	type: 'Body';

@@ -1,10 +1,10 @@
-import Node from './shared/Node';
-import Binding from './Binding';
-import EventHandler from './EventHandler';
-import flatten_reference from '../utils/flatten_reference';
-import fuzzymatch from '../../utils/fuzzymatch';
-import list from '../../utils/list';
-import Action from './Action';
+import Node from './shared/Node.ts';
+import Binding from './Binding.ts';
+import EventHandler from './EventHandler.ts';
+import flatten_reference from '../utils/flatten_reference.ts';
+import fuzzymatch from '../../utils/fuzzymatch.ts';
+import list from '../../utils/list.ts';
+import Action from './Action.ts';
 
 const valid_bindings = [
 	'innerWidth',

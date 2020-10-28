@@ -1,5 +1,5 @@
-import map_children from './shared/map_children';
-import AbstractBlock from './shared/AbstractBlock';
+import map_children from './shared/map_children.ts';
+import AbstractBlock from './shared/AbstractBlock.ts';
 
 export default class PendingBlock extends AbstractBlock {
 	type: 'PendingBlock';

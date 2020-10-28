@@ -1,7 +1,7 @@
 import { b, x } from 'code-red';
 import Binding from '../../../nodes/Binding.ts';
-import ElementWrapper from '../Element.ts';
-import InlineComponentWrapper from '../InlineComponent.ts';
+import ElementWrapper from '../Element/index.ts';
+import InlineComponentWrapper from '../InlineComponent/index.ts';
 import get_object from '../../../utils/get_object.ts';
 import replace_object from '../../../utils/replace_object.ts';
 import Block from '../../Block.ts';

@@ -7,7 +7,7 @@ import {
 	is_bracket_pair,
 	get_bracket_close
 } from '../utils/bracket.ts';
-import { parse_expression_at } from '../acorn';
+import { parse_expression_at } from '../acorn.ts';
 import { Pattern } from 'estree';
 
 export default function read_context(

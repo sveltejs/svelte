@@ -1,12 +1,12 @@
-import Node from './shared/Node';
-import PendingBlock from './PendingBlock';
-import ThenBlock from './ThenBlock';
-import CatchBlock from './CatchBlock';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { TemplateNode } from '../../interfaces';
-import { Context, unpack_destructuring } from './shared/Context';
+import Node from './shared/Node.ts';
+import PendingBlock from './PendingBlock.ts';
+import ThenBlock from './ThenBlock.ts';
+import CatchBlock from './CatchBlock.ts';
+import Expression from './shared/Expression.ts';
+import Component from '../Component.ts';
+import TemplateScope from './shared/TemplateScope.ts';
+import { TemplateNode } from '../../interfaces.ts';
+import { Context, unpack_destructuring } from './shared/Context.ts';
 import { Node as ESTreeNode } from 'estree';
 
 export default class AwaitBlock extends Node {

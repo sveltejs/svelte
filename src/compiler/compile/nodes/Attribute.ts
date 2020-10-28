@@ -1,11 +1,11 @@
-import { string_literal } from '../utils/stringify';
-import add_to_set from '../utils/add_to_set';
-import Component from '../Component';
-import Node from './shared/Node';
-import Element from './Element';
-import Text from './Text';
-import Expression from './shared/Expression';
-import TemplateScope from './shared/TemplateScope';
+import { string_literal } from '../utils/stringify.ts';
+import add_to_set from '../utils/add_to_set.ts';
+import Component from '../Component.ts';
+import Node from './shared/Node.ts';
+import Element from './Element.ts';
+import Text from './Text.ts';
+import Expression from './shared/Expression.ts';
+import TemplateScope from './shared/TemplateScope.ts';
 import { x } from 'code-red';
 
 export default class Attribute extends Node {

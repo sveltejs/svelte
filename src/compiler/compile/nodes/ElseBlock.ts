@@ -1,6 +1,6 @@
-import map_children from './shared/map_children';
-import AbstractBlock from './shared/AbstractBlock';
-import Component from '../Component';
+import map_children from './shared/map_children.ts';
+import AbstractBlock from './shared/AbstractBlock.ts';
+import Component from '../Component.ts';
 
 export default class ElseBlock extends AbstractBlock {
 	type: 'ElseBlock';

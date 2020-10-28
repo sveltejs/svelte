@@ -1,7 +1,7 @@
-import Node from './shared/Node';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import { sanitize } from '../../utils/names';
+import Node from './shared/Node.ts';
+import Expression from './shared/Expression.ts';
+import Component from '../Component.ts';
+import { sanitize } from '../../utils/names.ts';
 import { Identifier } from 'estree';
 
 export default class EventHandler extends Node {

@@ -1,11 +1,11 @@
 import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
-import Selector from './Selector';
-import Element from '../nodes/Element';
-import { Ast } from '../../interfaces';
-import Component from '../Component';
-import { CssNode } from './interfaces';
-import hash from '../utils/hash';
+import Selector from './Selector.ts';
+import Element from '../nodes/Element.ts';
+import { Ast } from '../../interfaces.ts';
+import Component from '../Component.ts';
+import { CssNode } from './interfaces.ts';
+import hash from '../utils/hash.ts';
 
 function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');

@@ -8,7 +8,7 @@ import { sanitize } from '../../../utils/names.ts';
 import add_to_set from '../../utils/add_to_set.ts';
 import get_slot_data from '../../utils/get_slot_data.ts';
 import { is_reserved_keyword } from '../../utils/reserved_keywords.ts';
-import Expression from '../../nodes/shared/Expression'.ts;
+import Expression from '../../nodes/shared/Expression.ts';
 import is_dynamic from './shared/is_dynamic.ts';
 import { Identifier, ObjectExpression } from 'estree';
 import create_debugging_comment from './shared/create_debugging_comment.ts';

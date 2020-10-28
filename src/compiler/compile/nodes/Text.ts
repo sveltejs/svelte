@@ -1,7 +1,7 @@
-import Node from './shared/Node';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { INode } from './interfaces';
+import Node from './shared/Node.ts';
+import Component from '../Component.ts';
+import TemplateScope from './shared/TemplateScope.ts';
+import { INode } from './interfaces.ts';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This

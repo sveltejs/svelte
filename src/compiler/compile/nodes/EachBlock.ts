@@ -1,10 +1,10 @@
-import ElseBlock from './ElseBlock';
-import Expression from './shared/Expression';
-import map_children from './shared/map_children';
-import TemplateScope from './shared/TemplateScope';
-import AbstractBlock from './shared/AbstractBlock';
-import Element from './Element';
-import { Context, unpack_destructuring } from './shared/Context';
+import ElseBlock from './ElseBlock.ts';
+import Expression from './shared/Expression.ts';
+import map_children from './shared/map_children.ts';
+import TemplateScope from './shared/TemplateScope.ts';
+import AbstractBlock from './shared/AbstractBlock.ts';
+import Element from './Element.ts';
+import { Context, unpack_destructuring } from './shared/Context.ts';
 import { Node } from 'estree';
 
 export default class EachBlock extends AbstractBlock {

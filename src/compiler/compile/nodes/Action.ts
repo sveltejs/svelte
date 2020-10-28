@@ -1,6 +1,6 @@
 import Node from './shared/Node.ts';
 import Expression from './shared/Expression.ts';
-import Component from '../Component';
+import Component from '../Component.ts';
 
 export default class Action extends Node {
 	type: 'Action';

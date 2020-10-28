@@ -1,7 +1,7 @@
-import Block from '../../render_dom/Block';
-import Component from '../../Component';
-import Node from './Node';
-import { INode } from '../interfaces';
+import Block from '../../render_dom/Block.ts';
+import Component from '../../Component.ts';
+import Node from './Node.ts';
+import { INode } from '../interfaces.ts';
 
 export default class AbstractBlock extends Node {
 	block: Block;

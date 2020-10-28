@@ -1,9 +1,9 @@
-import Node from './shared/Node';
-import Component from '../Component';
-import map_children from './shared/map_children';
-import Block from '../render_dom/Block';
-import TemplateScope from './shared/TemplateScope';
-import { INode } from './interfaces';
+import Node from './shared/Node.ts';
+import Component from '../Component.ts';
+import map_children from './shared/map_children.ts';
+import Block from '../render_dom/Block.ts';
+import TemplateScope from './shared/TemplateScope.ts';
+import { INode } from './interfaces.ts';
 
 export default class Fragment extends Node {
 	type: 'Fragment';

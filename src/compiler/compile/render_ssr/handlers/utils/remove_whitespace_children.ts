@@ -1,6 +1,6 @@
-import { INode } from '../../../nodes/interfaces';
-import { trim_end, trim_start } from '../../../../utils/trim';
-import { link } from '../../../../utils/link';
+import { INode } from '../../../nodes/interfaces.ts';
+import { trim_end, trim_start } from '../../../../utils/trim.ts';
+import { link } from '../../../../utils/link.ts';
 
 // similar logic from `compile/render_dom/wrappers/Fragment`
 // We want to remove trailing whitespace inside an element/component/block,
