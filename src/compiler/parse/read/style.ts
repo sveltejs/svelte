@@ -1,8 +1,8 @@
 import parse from 'css-tree/lib/parser/index.js';
 import { walk } from 'estree-walker';
-import { Parser } from '../index';
+import { Parser } from '../index.ts';
 import { Node } from 'estree';
-import { Style } from '../../interfaces';
+import { Style } from '../../interfaces.ts';
 
 export default function read_style(parser: Parser, start: number, attributes: Node[]): Style {
 	const content_start = parser.index;

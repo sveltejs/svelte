@@ -1,4 +1,4 @@
-import Let from '../../../nodes/Let';
+import Let from '../../../nodes/Let.ts';
 import { ObjectPattern } from 'estree';
 
 export function get_slot_scope(lets: Let[]): ObjectPattern {

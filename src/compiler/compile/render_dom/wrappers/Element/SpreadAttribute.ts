@@ -1,3 +1,3 @@
-import { BaseAttributeWrapper } from './Attribute';
+import { BaseAttributeWrapper } from './Attribute.ts';
 
 export default class SpreadAttributeWrapper extends BaseAttributeWrapper {}

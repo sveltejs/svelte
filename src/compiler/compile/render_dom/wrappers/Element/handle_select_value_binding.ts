@@ -1,6 +1,6 @@
-import AttributeWrapper from './Attribute';
-import BindingWrapper from './Binding';
-import ElementWrapper from './index';
+import AttributeWrapper from './Attribute.ts';
+import BindingWrapper from './Binding.ts';
+import ElementWrapper from './index.ts';
 
 export default function handle_select_value_binding(
 	attr: AttributeWrapper | BindingWrapper,

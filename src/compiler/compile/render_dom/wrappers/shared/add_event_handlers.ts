@@ -1,5 +1,5 @@
-import Block from '../../Block';
-import EventHandler from '../Element/EventHandler';
+import Block from '../../Block.ts';
+import EventHandler from '../Element/EventHandler.ts';
 import { Expression } from 'estree';
 
 export default function add_event_handlers(

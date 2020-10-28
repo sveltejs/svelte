@@ -1,14 +1,14 @@
-import Wrapper from './shared/Wrapper';
-import Renderer from '../Renderer';
-import Block from '../Block';
-import AwaitBlock from '../../nodes/AwaitBlock';
-import create_debugging_comment from './shared/create_debugging_comment';
+import Wrapper from './shared/Wrapper.ts';
+import Renderer from '../Renderer.ts';
+import Block from '../Block.ts';
+import AwaitBlock from '../../nodes/AwaitBlock.ts';
+import create_debugging_comment from './shared/create_debugging_comment.ts';
 import { b, x } from 'code-red';
-import FragmentWrapper from './Fragment';
-import PendingBlock from '../../nodes/PendingBlock';
-import ThenBlock from '../../nodes/ThenBlock';
-import CatchBlock from '../../nodes/CatchBlock';
-import { Context } from '../../nodes/shared/Context';
+import FragmentWrapper from './Fragment.ts';
+import PendingBlock from '../../nodes/PendingBlock.ts';
+import ThenBlock from '../../nodes/ThenBlock.ts';
+import CatchBlock from '../../nodes/CatchBlock.ts';
+import { Context } from '../../nodes/shared/Context.ts';
 import { Identifier, Literal, Node } from 'estree';
 
 type Status = 'pending' | 'then' | 'catch';

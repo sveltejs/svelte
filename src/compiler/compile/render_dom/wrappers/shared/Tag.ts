@@ -1,9 +1,9 @@
 import { b, x } from 'code-red';
-import Wrapper from './Wrapper';
-import Renderer from '../../Renderer';
-import Block from '../../Block';
-import MustacheTag from '../../../nodes/MustacheTag';
-import RawMustacheTag from '../../../nodes/RawMustacheTag';
+import Wrapper from './Wrapper.ts';
+import Renderer from '../../Renderer.ts';
+import Block from '../../Block.ts';
+import MustacheTag from '../../../nodes/MustacheTag.ts';
+import RawMustacheTag from '../../../nodes/RawMustacheTag.ts';
 import { Node } from 'estree';
 
 export default class Tag extends Wrapper {

@@ -1,5 +1,5 @@
-import { Var } from '../../../../interfaces';
-import { is_reserved_keyword } from '../../../utils/reserved_keywords';
+import { Var } from '../../../../interfaces.ts';
+import { is_reserved_keyword } from '../../../utils/reserved_keywords.ts';
 
 export default function is_dynamic(variable: Var) {
 	if (variable) {

@@ -1,8 +1,8 @@
-import Wrapper from './shared/Wrapper';
-import Renderer from '../Renderer';
-import Block from '../Block';
-import Head from '../../nodes/Head';
-import FragmentWrapper from './Fragment';
+import Wrapper from './shared/Wrapper.ts';
+import Renderer from '../Renderer.ts';
+import Block from '../Block.ts';
+import Head from '../../nodes/Head.ts';
+import FragmentWrapper from './Fragment.ts';
 import { x, b } from 'code-red';
 import { Identifier } from 'estree';
 

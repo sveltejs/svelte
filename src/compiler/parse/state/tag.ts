@@ -1,12 +1,12 @@
-import read_expression from '../read/expression';
-import read_script from '../read/script';
-import read_style from '../read/style';
-import { decode_character_references, closing_tag_omitted } from '../utils/html';
-import { is_void } from '../../utils/names';
-import { Parser } from '../index';
-import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
-import fuzzymatch from '../../utils/fuzzymatch';
-import list from '../../utils/list';
+import read_expression from '../read/expression.ts';
+import read_script from '../read/script.ts';
+import read_style from '../read/style.ts';
+import { decode_character_references, closing_tag_omitted } from '../utils/html.ts';
+import { is_void } from '../../utils/names.ts';
+import { Parser } from '../index.ts';
+import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces.ts';
+import fuzzymatch from '../../utils/fuzzymatch.ts';
+import list from '../../utils/list.ts';
 
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;

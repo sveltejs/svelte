@@ -1,5 +1,5 @@
-import Renderer, { RenderOptions } from '../Renderer';
-import Head from '../../nodes/Head';
+import Renderer, { RenderOptions } from '../Renderer.ts';
+import Head from '../../nodes/Head.ts';
 import { x } from 'code-red';
 
 export default function(node: Head, renderer: Renderer, options: RenderOptions) {

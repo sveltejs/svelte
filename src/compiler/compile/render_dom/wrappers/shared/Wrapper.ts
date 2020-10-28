@@ -1,7 +1,7 @@
-import Renderer from '../../Renderer';
-import Block from '../../Block';
+import Renderer from '../../Renderer.ts';
+import Block from '../../Block.ts';
 import { x } from 'code-red';
-import { TemplateNode } from '../../../../interfaces';
+import { TemplateNode } from '../../../../interfaces.ts';
 import { Identifier } from 'estree';
 
 export default class Wrapper {

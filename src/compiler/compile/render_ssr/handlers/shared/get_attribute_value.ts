@@ -1,8 +1,8 @@
-import Attribute from '../../../nodes/Attribute';
-import { string_literal } from '../../../utils/stringify';
-import Text from '../../../nodes/Text';
+import Attribute from '../../../nodes/Attribute.ts';
+import { string_literal } from '../../../utils/stringify.ts';
+import Text from '../../../nodes/Text.ts';
 import { x } from 'code-red';
-import Expression from '../../../nodes/shared/Expression';
+import Expression from '../../../nodes/shared/Expression.ts';
 import { Expression as ESTreeExpression } from 'estree';
 
 export function get_class_attribute_value(attribute: Attribute): ESTreeExpression {

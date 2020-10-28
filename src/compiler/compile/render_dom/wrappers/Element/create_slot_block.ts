@@ -1,10 +1,10 @@
-import ElementWrapper from './index';
-import SlotWrapper from '../Slot';
-import Block from '../../Block';
-import { sanitize } from '../../../../utils/names';
-import InlineComponentWrapper from '../InlineComponent';
-import create_debugging_comment from '../shared/create_debugging_comment';
-import { get_slot_definition } from '../shared/get_slot_definition';
+import ElementWrapper from './index.ts';
+import SlotWrapper from '../Slot.ts';
+import Block from '../../Block.ts';
+import { sanitize } from '../../../../utils/names.ts';
+import InlineComponentWrapper from '../InlineComponent.ts';
+import create_debugging_comment from '../shared/create_debugging_comment.ts';
+import { get_slot_definition } from '../shared/get_slot_definition.ts';
 
 export default function create_slot_block(attribute, element: ElementWrapper | SlotWrapper, block: Block) {
 	const owner = find_slot_owner(element.parent);

@@ -1,5 +1,5 @@
-import IfBlock from '../../nodes/IfBlock';
-import Renderer, { RenderOptions } from '../Renderer';
+import IfBlock from '../../nodes/IfBlock.ts';
+import Renderer, { RenderOptions } from '../Renderer.ts';
 import { x } from 'code-red';
 
 export default function(node: IfBlock, renderer: Renderer, options: RenderOptions) {

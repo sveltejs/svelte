@@ -1,12 +1,12 @@
 import { b, x } from 'code-red';
-import Attribute from '../../../nodes/Attribute';
-import Block from '../../Block';
-import AttributeWrapper from './Attribute';
-import ElementWrapper from '../Element';
-import { string_literal } from '../../../utils/stringify';
-import add_to_set from '../../../utils/add_to_set';
-import Expression from '../../../nodes/shared/Expression';
-import Text from '../../../nodes/Text';
+import Attribute from '../../../nodes/Attribute.ts';
+import Block from '../../Block.ts';
+import AttributeWrapper from './Attribute.ts';
+import ElementWrapper from '../Element.ts';
+import { string_literal } from '../../../utils/stringify.ts';
+import add_to_set from '../../../utils/add_to_set.ts';
+import Expression from '../../../nodes/shared/Expression'.ts;
+import Text from '../../../nodes/Text.ts';
 
 export interface StyleProp {
 	key: string;

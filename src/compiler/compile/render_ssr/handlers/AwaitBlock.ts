@@ -1,5 +1,5 @@
-import Renderer, { RenderOptions } from '../Renderer';
-import AwaitBlock from '../../nodes/AwaitBlock';
+import Renderer, { RenderOptions } from '../Renderer.ts';
+import AwaitBlock from '../../nodes/AwaitBlock.ts';
 import { x } from 'code-red';
 
 export default function(node: AwaitBlock, renderer: Renderer, options: RenderOptions) {

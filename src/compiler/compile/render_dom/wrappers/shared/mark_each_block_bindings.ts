@@ -1,7 +1,7 @@
-import EachBlock from '../../../nodes/EachBlock';
-import InlineComponentWrapper from '../InlineComponent';
-import ElementWrapper from '../Element';
-import Binding from '../../../nodes/Binding';
+import EachBlock from '../../../nodes/EachBlock.ts';
+import InlineComponentWrapper from '../InlineComponent.ts';
+import ElementWrapper from '../Element.ts';
+import Binding from '../../../nodes/Binding.ts';
 
 export default function mark_each_block_bindings(
 	parent: ElementWrapper | InlineComponentWrapper,

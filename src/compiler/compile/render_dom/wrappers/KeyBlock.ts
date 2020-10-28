@@ -1,10 +1,10 @@
-import Wrapper from './shared/Wrapper';
-import Renderer from '../Renderer';
-import Block from '../Block';
-import EachBlock from '../../nodes/EachBlock';
-import KeyBlock from '../../nodes/KeyBlock';
-import create_debugging_comment from './shared/create_debugging_comment';
-import FragmentWrapper from './Fragment';
+import Wrapper from './shared/Wrapper.ts';
+import Renderer from '../Renderer.ts';
+import Block from '../Block.ts';
+import EachBlock from '../../nodes/EachBlock.ts';
+import KeyBlock from '../../nodes/KeyBlock.ts';
+import create_debugging_comment from './shared/create_debugging_comment.ts';
+import FragmentWrapper from './Fragment.ts';
 import { b, x } from 'code-red';
 import { Identifier } from 'estree';
 

@@ -1,7 +1,7 @@
-import { parse_expression_at } from '../acorn';
-import { Parser } from '../index';
+import { parse_expression_at } from '../acorn.ts';
+import { Parser } from '../index.ts';
 import { Node } from 'estree';
-import { whitespace } from '../../utils/patterns';
+import { whitespace } from '../../utils/patterns.ts';
 
 export default function read_expression(parser: Parser): Node {
 	try {

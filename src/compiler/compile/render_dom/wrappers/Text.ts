@@ -1,7 +1,7 @@
-import Renderer from '../Renderer';
-import Block from '../Block';
-import Text from '../../nodes/Text';
-import Wrapper from './shared/Wrapper';
+import Renderer from '../Renderer.ts';
+import Block from '../Block.ts';
+import Text from '../../nodes/Text.ts';
+import Wrapper from './shared/Wrapper.ts';
 import { x } from 'code-red';
 import { Identifier } from 'estree';
 

@@ -1,9 +1,9 @@
 import { b, x } from 'code-red';
-import Component from '../../../Component';
-import Block from '../../Block';
-import BindingWrapper from '../Element/Binding';
+import Component from '../../../Component.ts';
+import Block from '../../Block.ts';
+import BindingWrapper from '../Element/Binding.ts';
 import { Identifier } from 'estree';
-import { compare_node } from '../../../utils/compare_node';
+import { compare_node } from '../../../utils/compare_node.ts';
 
 export default function bind_this(component: Component, block: Block, binding: BindingWrapper, variable: Identifier) {
 	const fn = component.get_unique_name(`${variable.name}_binding`);

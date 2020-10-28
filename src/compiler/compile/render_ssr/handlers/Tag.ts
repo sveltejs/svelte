@@ -1,5 +1,5 @@
 
-import Renderer, { RenderOptions } from '../Renderer';
+import Renderer, { RenderOptions } from '../Renderer.ts';
 import { x } from 'code-red';
 
 export default function(node, renderer: Renderer, _options: RenderOptions) {

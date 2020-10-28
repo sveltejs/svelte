@@ -1,14 +1,14 @@
-import Wrapper from './shared/Wrapper';
-import Renderer from '../Renderer';
-import Block from '../Block';
-import EachBlock from '../../nodes/EachBlock';
-import IfBlock from '../../nodes/IfBlock';
-import create_debugging_comment from './shared/create_debugging_comment';
-import ElseBlock from '../../nodes/ElseBlock';
-import FragmentWrapper from './Fragment';
+import Wrapper from './shared/Wrapper.ts';
+import Renderer from '../Renderer.ts';
+import Block from '../Block.ts';
+import EachBlock from '../../nodes/EachBlock.ts';
+import IfBlock from '../../nodes/IfBlock.ts';
+import create_debugging_comment from './shared/create_debugging_comment.ts';
+import ElseBlock from '../../nodes/ElseBlock.ts';
+import FragmentWrapper from './Fragment.ts';
 import { b, x } from 'code-red';
 import { walk } from 'estree-walker';
-import { is_head } from './shared/is_head';
+import { is_head } from './shared/is_head.ts';
 import { Identifier, Node, UnaryExpression } from 'estree';
 
 function is_else_if(node: ElseBlock) {

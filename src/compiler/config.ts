@@ -1,1 +1,1 @@
-export const test = typeof process !== 'undefined' && process.env.TEST;
+export const test = typeof Deno !== 'undefined' && process.env.TEST;

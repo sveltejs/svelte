@@ -1,5 +1,5 @@
-import DebugTag from '../../nodes/DebugTag';
-import Renderer, { RenderOptions } from '../Renderer';
+import DebugTag from '../../nodes/DebugTag.ts';
+import Renderer, { RenderOptions } from '../Renderer.ts';
 import { x, p } from 'code-red';
 
 export default function(node: DebugTag, renderer: Renderer, options: RenderOptions) {

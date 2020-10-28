@@ -1,11 +1,11 @@
-import Block from './Block';
-import { CompileOptions, Var } from '../../interfaces';
-import Component from '../Component';
-import FragmentWrapper from './wrappers/Fragment';
+import Block from './Block.ts';
+import { CompileOptions, Var } from '../../interfaces.ts';
+import Component from '../Component.ts';
+import FragmentWrapper from './wrappers/Fragment.ts';
 import { x } from 'code-red';
 import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression } from 'estree';
-import flatten_reference from '../utils/flatten_reference';
-import { reserved_keywords } from '../utils/reserved_keywords';
+import flatten_reference from '../utils/flatten_reference.ts';
+import { reserved_keywords } from '../utils/reserved_keywords.ts';
 
 interface ContextMember {
 	name: string;
