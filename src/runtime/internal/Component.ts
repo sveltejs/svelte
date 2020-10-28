@@ -174,7 +174,23 @@ if (typeof HTMLElement === 'function') {
 			this.attachShadow({ mode: 'open' });
 		}
 
+		// placeholder object to allow props to be set pre-$$setup
+		$$initialProps: Record<string, any> | null = {};
+		$$setup: (options) => void;
+
 		connectedCallback() {
+			if (!this.$$) {
+				// wasn't set up from constructor as options were not ready
+				const options = is_empty(this.$$initialProps) ?
+					null:
+					{
+						props: this.$$initialProps
+					};
+
+				this.$$setup(options);
+				// clean up, prevent reuse of $$initialProps
+				this.$$initialProps = null;
+			}
 			// @ts-ignore todo: improve typings
 			for (const key in this.$$.slotted) {
 				// @ts-ignore todo: improve typings
@@ -182,7 +198,11 @@ if (typeof HTMLElement === 'function') {
 			}
 		}
 
+		// initial implementation of method, will be overridden on setup
 		attributeChangedCallback(attr, _oldValue, newValue) {
+			if (this.$$initialProps) {
+				this.$$initialProps[attr] = newValue;
+			}
 			this[attr] = newValue;
 		}
 
@@ -203,6 +223,11 @@ if (typeof HTMLElement === 'function') {
 		}
 
 		$set($$props) {
+			if (this.$$initialProps && $$props) {
+				for (const attr of Object.getOwnPropertyNames($$props)) {
+					this.$$initialProps[attr] = $$props[attr];
+				}
+			}
 			if (this.$$set && !is_empty($$props)) {
 				this.$$.skip_bound = true;
 				this.$$set($$props);
