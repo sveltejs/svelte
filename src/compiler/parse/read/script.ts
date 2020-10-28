@@ -32,10 +32,12 @@ export default function read_script(parser: Parser, start: number, attributes: N
 	const script_start = parser.index;
 	const script_end = parser.template.indexOf(script_closing_tag, script_start);
 
-	if (script_end === -1) parser.error({
-		code: 'unclosed-script',
-		message: '<script> must have a closing tag'
-	});
+	if (script_end === -1) {
+		parser.error({
+			code: 'unclosed-script',
+			message: '<script> must have a closing tag'
+		});
+	}
 
 	const source = parser.template.slice(0, script_start).replace(/[^\n]/g, ' ') +
 		parser.template.slice(script_start, script_end);
