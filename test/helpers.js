@@ -1,23 +1,13 @@
-import * as assert$1 from 'assert';
-import * as jsdom from 'jsdom';
-import glob from 'tiny-glob/sync';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as colors from 'kleur';
-export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void };
+import * as assert from 'https://esm.sh/assert';
+import * as jsdom from 'https://esm.sh/jsdom';
+import glob from 'https://esm.sh/tiny-glob/sync';
+import * as path from 'https://deno.land/std@0.75.0/node/path.ts';
+import * as fs from 'https://deno.land/std@0.75.0/node/fs.ts';
+import * as colors from 'https://esm.sh/kleur';
+// @ts-ignore
+import * as svelte from "../src/compiler/index.ts";
 
-// for coverage purposes, we need to test source files,
-// but for sanity purposes, we need to test dist files
-export function loadSvelte(test) {
-	process.env.TEST = test ? 'true' : '';
 
-	const resolved = require.resolve('../compiler.js');
-
-	delete require.cache[resolved];
-	return require(resolved);
-}
-
-export const svelte = loadSvelte();
 
 export function exists(path) {
 	try {

@@ -123,9 +123,9 @@ export default class Component {
 
 		this.file =
 			compile_options.filename &&
-			(typeof process !== 'undefined'
+			(typeof Deno !== 'undefined'
 				? compile_options.filename
-					.replace(process.cwd(), '')
+					.replace(Deno.cwd(), '')
 					.replace(/^[/\\]/, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source, { offsetLine: 1 });
