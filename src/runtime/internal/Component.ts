@@ -148,15 +148,13 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	if (options.target) {
 		if (options.hydrate) {
 			const nodes = children(options.target);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			$$.fragment && $$.fragment!.l(nodes);
+			claim_component($$.fragment, nodes);
 			nodes.forEach(detach);
 		} else {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			$$.fragment && $$.fragment!.c();
+			create_component($$.fragment);
 		}
 
-		if (options.intro) transition_in(component.$$.fragment);
+		if (options.intro) transition_in($$.fragment);
 		mount_component(component, options.target, options.anchor);
 		flush();
 	}
