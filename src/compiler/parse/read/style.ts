@@ -14,12 +14,12 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	try {
 		ast = parse(styles, {
 			positions: true,
-			offset: content_start,
+			offset: content_start
 		});
 	} catch (err) {
 		if (err.name === 'CssSyntaxError') {
 			parser.error({
-				code: `css-syntax-error`,
+				code: 'css-syntax-error',
 				message: err.message
 			}, err.offset);
 		} else {
@@ -40,7 +40,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 					if (is_ref_selector(a, b)) {
 						parser.error({
-							code: `invalid-ref-selector`,
+							code: 'invalid-ref-selector',
 							message: 'ref selectors are no longer supported'
 						}, a.loc.start.offset);
 					}
@@ -49,15 +49,15 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 			if (node.type === 'Declaration' && node.value.type === 'Value' && node.value.children.length === 0) {
 				parser.error({
-					code: `invalid-declaration`,
-					message: `Declaration cannot be empty`
+					code: 'invalid-declaration',
+					message: 'Declaration cannot be empty'
 				}, node.start);
 			}
 
 			if (node.type === 'PseudoClassSelector' && node.name === 'global' && node.children === null) {
 				parser.error({
-					code: `css-syntax-error`,
-					message: `:global() must contain a selector`
+					code: 'css-syntax-error',
+					message: ':global() must contain a selector'
 				}, node.loc.start.offset);
 			}
 

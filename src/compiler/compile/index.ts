@@ -1,4 +1,3 @@
-import { assign } from '../../runtime/internal/utils';
 import Stats from '../Stats';
 import parse from '../parse/index';
 import render_dom from './render_dom/index';
@@ -47,28 +46,28 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 	}
 
 	if (name && /^[a-z]/.test(name)) {
-		const message = `options.name should be capitalised`;
+		const message = 'options.name should be capitalised';
 		warnings.push({
-			code: `options-lowercase-name`,
+			code: 'options-lowercase-name',
 			message,
 			filename,
-			toString: () => message,
+			toString: () => message
 		});
 	}
 
 	if (loopGuardTimeout && !dev) {
 		const message = 'options.loopGuardTimeout is for options.dev = true only';
 		warnings.push({
-			code: `options-loop-guard-timeout`,
+			code: 'options-loop-guard-timeout',
 			message,
 			filename,
-			toString: () => message,
+			toString: () => message
 		});
 	}
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = assign({ generate: 'dom', dev: false }, options);
+	options = Object.assign({ generate: 'dom', dev: false }, options);
 
 	const stats = new Stats();
 	const warnings = [];

@@ -62,6 +62,9 @@ export function handle_promise(promise, info) {
 			set_current_component(current_component);
 			update(info.catch, 2, info.error, error);
 			set_current_component(null);
+			if (!info.hasCatch) {
+				throw error;
+			}
 		});
 
 		// if we previously had a then/catch block, destroy it

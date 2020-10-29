@@ -1,5 +1,5 @@
 export default {
-	html: `<p>escaped: false</p>`,
+	html: '<p>escaped: false</p>',
 
 	async test({ assert, component, target, window }) {
 		const event = new window.KeyboardEvent('keydown', {
@@ -11,5 +11,5 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<p>escaped: true</p>
 		`);
-	},
+	}
 };

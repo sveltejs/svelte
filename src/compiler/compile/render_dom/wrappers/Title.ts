@@ -59,7 +59,7 @@ export default class TitleWrapper extends Wrapper {
 			}
 
 			const last = this.node.should_cache && block.get_unique_name(
-				`title_value`
+				'title_value'
 			);
 
 			if (this.node.should_cache) block.add_variable(last);

@@ -137,6 +137,15 @@
 		top: calc((var(--h3) - 24px) / 2);
 	}
 
+	.post :global(a) {
+		padding: 0;
+		transition: none;
+	}
+
+	.post :global(a):not(:hover) {
+		border: none;
+	}
+
 	@media (max-width: 768px) {
 		.post :global(.anchor) {
 			transform: scale(0.6);

@@ -29,5 +29,5 @@ export default {
 
 		await handler_b.dispatchEvent(event);
 		assert.equal(p.innerHTML, '2');
-	},
+	}
 };

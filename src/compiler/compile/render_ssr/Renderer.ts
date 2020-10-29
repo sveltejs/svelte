@@ -7,6 +7,7 @@ import Head from './handlers/Head';
 import HtmlTag from './handlers/HtmlTag';
 import IfBlock from './handlers/IfBlock';
 import InlineComponent from './handlers/InlineComponent';
+import KeyBlock from './handlers/KeyBlock';
 import Slot from './handlers/Slot';
 import Tag from './handlers/Tag';
 import Text from './handlers/Text';
@@ -30,6 +31,7 @@ const handlers: Record<string, Handler> = {
 	Head,
 	IfBlock,
 	InlineComponent,
+	KeyBlock,
 	MustacheTag: Tag, // TODO MustacheTag is an anachronism
 	Options: noop,
 	RawMustacheTag: HtmlTag,

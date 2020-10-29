@@ -9,5 +9,5 @@ export default {
 		const event2 = new window.Event('mouseleave');
 		window.document.body.dispatchEvent(event2);
 		assert.deepEqual(component.events, ['enter', 'leave']);
-	},
+	}
 };

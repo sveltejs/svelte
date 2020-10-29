@@ -30,7 +30,9 @@ To treat `*.svelte` files as HTML, open *__Edit → Config...__* and add the fol
 
 ## Vim/Neovim
 
-To treat all `*.svelte` files as HTML, add the following line to your `init.vim`:
+You can use the [coc-svelte extension](https://github.com/coc-extensions/coc-svelte) which utilises the official language-server.
+
+As an alternative you can treat all `*.svelte` files as HTML. Add the following line to your `init.vim`:
 
 ```
 au! BufNewFile,BufRead *.svelte set ft=html
@@ -50,13 +52,7 @@ To set the filetype for a single file, use a [modeline](https://vim.fandom.com/w
 
 ## Visual Studio Code
 
-To treat `*.svelte` files as HTML, add the following lines to your `settings.json` file:
-
-```cson
-  "files.associations": {
-    "*.svelte": "html"
-  }
-```
+We recommend using the official [Svelte for VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
 
 ## JetBrains WebStorm
 

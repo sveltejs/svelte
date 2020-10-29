@@ -1,5 +1,5 @@
 export default {
-	html: `<input>`,
+	html: '<input>',
 
 	test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
@@ -18,5 +18,5 @@ export default {
 		input.dispatchEvent(event);
 
 		assert.ok(blurred);
-	},
+	}
 };

@@ -1,3 +1,5 @@
+import { Readable } from 'svelte/store';
+
 export function noop() {}
 
 export const identity = x => x;
@@ -60,7 +62,7 @@ export function subscribe(store, ...callbacks) {
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
-export function get_store_value(store) {
+export function get_store_value<T>(store: Readable<T>): T {
 	let value;
 	subscribe(store, _ => value = _)();
 	return value;
@@ -126,6 +128,14 @@ export function compute_rest_props(props, keys) {
 	keys = new Set(keys);
 	for (const k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
 	return rest;
+}
+
+export function compute_slots(slots) {
+	const result = {};
+	for (const key in slots) {
+		result[key] = true;
+	}
+	return result;
 }
 
 export function once(fn) {

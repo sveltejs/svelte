@@ -48,9 +48,10 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			// special case — <option value={foo}> — see below
 			if (this.parent.node.name === 'option' && node.name === 'value') {
 				let select: ElementWrapper = this.parent;
-				while (select && (select.node.type !== 'Element' || select.node.name !== 'select'))
+				while (select && (select.node.type !== 'Element' || select.node.name !== 'select')) {
 					// @ts-ignore todo: doublecheck this, but looks to be correct
 					select = select.parent;
+				}
 
 				if (select && select.select_binding_dependencies) {
 					select.select_binding_dependencies.forEach(prop => {
@@ -187,7 +188,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		if (this.is_input_value) {
 			const type = element.node.get_static_attribute_value('type');
 
-			if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
+			if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
 				condition = x`${condition} && ${element.var}.${property_name} !== ${should_cache ? last : value}`;
 			}
 		}
@@ -277,7 +278,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		if (this.node.is_true) return '';
 
 		const value = this.node.chunks;
-		if (value.length === 0) return `=""`;
+		if (value.length === 0) return '=""';
 
 		return `="${value.map(chunk => {
 			return chunk.type === 'Text'
@@ -307,8 +308,8 @@ const attribute_lookup = {
 			'optgroup',
 			'option',
 			'select',
-			'textarea',
-		],
+			'textarea'
+		]
 	},
 	formnovalidate: { property_name: 'formNoValidate', applies_to: ['button', 'input'] },
 	hidden: {},
@@ -335,9 +336,9 @@ const attribute_lookup = {
 			'progress',
 			'param',
 			'select',
-			'textarea',
-		],
-	},
+			'textarea'
+		]
+	}
 };
 
 Object.keys(attribute_lookup).forEach(name => {

@@ -9,9 +9,9 @@ export default {
 	<button>Test</button>
 	`,
 	async test({ assert, component, target, window }) {
-		let [incrementBtn, ...buttons] = target.querySelectorAll("button");
+		let [incrementBtn, ...buttons] = target.querySelectorAll('button');
 
-		const clickEvent = new window.MouseEvent("click");
+		const clickEvent = new window.MouseEvent('click');
 		await buttons[0].dispatchEvent(clickEvent);
 
 		assert.htmlEqual(
@@ -75,7 +75,7 @@ export default {
 		`
 		);
 
-		[incrementBtn, ...buttons] = target.querySelectorAll("button");
+		[incrementBtn, ...buttons] = target.querySelectorAll('button');
 
 		await buttons[3].dispatchEvent(clickEvent);
 
@@ -93,5 +93,5 @@ export default {
 			<button>Test</button>
 		`
 		);		
-	},
+	}
 };

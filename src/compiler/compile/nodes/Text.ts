@@ -12,7 +12,7 @@ const elements_without_text = new Set([
 	'dl',
 	'optgroup',
 	'select',
-	'video',
+	'video'
 ]);
 
 export default class Text extends Node {
@@ -37,7 +37,7 @@ export default class Text extends Node {
 
 		// svg namespace exclusions
 		if (/svg$/.test(parent_element.namespace)) {
-			if (this.prev && this.prev.type === "Element" && this.prev.name === "tspan") return false;
+			if (this.prev && this.prev.type === 'Element' && this.prev.name === 'tspan') return false;
 		}
 
 		return parent_element.namespace || elements_without_text.has(parent_element.name);

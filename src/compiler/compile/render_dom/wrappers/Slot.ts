@@ -12,11 +12,13 @@ import Expression from '../../nodes/shared/Expression';
 import is_dynamic from './shared/is_dynamic';
 import { Identifier, ObjectExpression } from 'estree';
 import create_debugging_comment from './shared/create_debugging_comment';
+import create_slot_block from './Element/create_slot_block';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
 	fragment: FragmentWrapper;
 	fallback: Block | null = null;
+	slot_block: Block;
 
 	var: Identifier = { type: 'Identifier', name: 'slot' };
 	dependencies: Set<string> = new Set(['$$scope']);
@@ -36,10 +38,14 @@ export default class SlotWrapper extends Wrapper {
 		if (this.node.children.length) {
 			this.fallback = block.child({
 				comment: create_debugging_comment(this.node.children[0], this.renderer.component),
-				name: this.renderer.component.get_unique_name(`fallback_block`),
+				name: this.renderer.component.get_unique_name('fallback_block'),
 				type: 'fallback'
 			});
 			renderer.blocks.push(this.fallback);
+		}
+
+		if (this.node.values.has('slot')) {
+			block = create_slot_block(this.node.values.get('slot'), this, block);
 		}
 
 		this.fragment = new FragmentWrapper(
@@ -70,6 +76,10 @@ export default class SlotWrapper extends Wrapper {
 		const { renderer } = this;
 
 		const { slot_name } = this.node;
+
+		if (this.slot_block) {
+			block = this.slot_block;
+		}
 
 		let get_slot_changes_fn;
 		let get_slot_context_fn;
@@ -125,7 +135,7 @@ export default class SlotWrapper extends Wrapper {
 		const slot_or_fallback = has_fallback ? block.get_unique_name(`${sanitize(slot_name)}_slot_or_fallback`) : slot;
 
 		block.chunks.init.push(b`
-			const ${slot_definition} = ${renderer.reference('$$slots')}.${slot_name};
+			const ${slot_definition} = ${renderer.reference('#slots')}.${slot_name};
 			const ${slot} = @create_slot(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn});
 			${has_fallback ? b`const ${slot_or_fallback} = ${slot} || ${this.fallback.name}(#ctx);` : null}
 		`);

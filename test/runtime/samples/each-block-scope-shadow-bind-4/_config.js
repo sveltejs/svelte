@@ -14,11 +14,11 @@ export default {
 		<button>Button</button>
 	`,
 	async test({ assert, target, window }) {
-		const input = target.querySelector("input");
-		const button = target.querySelector("button");
+		const input = target.querySelector('input');
+		const button = target.querySelector('button');
 
-		input.value = "Awesome";
-		await input.dispatchEvent(new window.Event("input"));
+		input.value = 'Awesome';
+		await input.dispatchEvent(new window.Event('input'));
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -32,7 +32,7 @@ export default {
 		);
 
 
-		await button.dispatchEvent(new window.MouseEvent("click"));
+		await button.dispatchEvent(new window.MouseEvent('click'));
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -47,8 +47,8 @@ export default {
 
 		assert.equal(input.value, 'World');
 
-		input.value = "Svelte";
-		await input.dispatchEvent(new window.Event("input"));
+		input.value = 'Svelte';
+		await input.dispatchEvent(new window.Event('input'));
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -60,5 +60,5 @@ export default {
 				<button>Button</button>
       `
 		);
-	},
+	}
 };

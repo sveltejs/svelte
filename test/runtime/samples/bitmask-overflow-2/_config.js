@@ -1,3 +1,3 @@
 export default {
-	error: `potato is not defined`,
+	error: 'potato is not defined'
 };

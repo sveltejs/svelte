@@ -107,7 +107,7 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ---
 
-*`$$props`* references all props that are passed to a component – including ones that are not declared with `export`. It is useful in rare cases, but not generally recommended, as it is difficult for Svelte to optimise.
+*`$$props`* references all props that are passed to a component, including ones that are not declared with `export`. It is not generally recommended, as it is difficult for Svelte to optimise. But it can be useful in rare cases – for example, when you don't know at compile time what props might be passed to a component.
 
 ```sv
 <Widget {...$$props}/>
@@ -115,7 +115,7 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ---
 
-*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component.
+*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component. It shares the same optimisation problems as *`$$props`*, and is likewise not recommended.
 
 ```html
 <input {...$$restProps}>
@@ -342,6 +342,33 @@ If you don't care about the pending state, you can also omit the initial block.
 {/await}
 ```
 
+### {#key ...}
+
+```sv
+{#key expression}...{/key}
+```
+
+Key blocks destroy and recreate their contents when the value of an expression changes.
+
+---
+
+This is useful if you want an element to play its transition whenever a value changes.
+
+```sv
+{#key value}
+	<div transition:fade>{value}</div>
+{/key}
+```
+
+---
+
+When used around components, this will cause them to be reinstantiated and reinitialised.
+
+```sv
+{#key value}
+	<Component />
+{/key}
+```
 
 ### {@html ...}
 
@@ -471,6 +498,7 @@ The following modifiers are available:
 * `preventDefault` — calls `event.preventDefault()` before running the handler
 * `stopPropagation` — calls `event.stopPropagation()`, preventing the event reaching the next element
 * `passive` — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
+* `nonpassive` — explicitly set `passive: false`
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
 * `self` — only trigger handler if event.target is the element itself
@@ -542,6 +570,21 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 ```sv
 <input type="number" bind:value={num}>
 <input type="range" bind:value={num}>
+```
+
+---
+
+On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList).
+
+```sv
+<label for="avatar">Upload a picture:</label>
+<input
+	accept="image/png, image/jpeg"
+	bind:files
+	id="avatar"
+	name="avatar"
+	type="file"
+/>
 ```
 
 
@@ -773,7 +816,7 @@ Actions are functions that are called when an element is created. They can retur
 
 ---
 
-An action can have parameters. If the returned value has an `update` method, it will be called whenever those parameters change, immediately after Svelte has applied updates to the markup.
+An action can have a parameter. If the returned value has an `update` method, it will be called whenever that parameter changes, immediately after Svelte has applied updates to the markup.
 
 > Don't worry about the fact that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
 

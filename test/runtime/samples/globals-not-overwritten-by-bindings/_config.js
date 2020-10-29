@@ -37,17 +37,17 @@ export default {
 		todos: {
 			first: {
 				description: 'Buy some milk',
-				done: true,
+				done: true
 			},
 			second: {
 				description: 'Do the laundry',
-				done: true,
+				done: true
 			},
 			third: {
 				description: "Find life's true purpose",
-				done: false,
-			},
-		},
+				done: false
+			}
+		}
 	},
 
 	async test({ assert, component, target, window }) {
@@ -74,5 +74,5 @@ export default {
 				<input type="text">
 			</div>
 		`);
-	},
+	}
 };

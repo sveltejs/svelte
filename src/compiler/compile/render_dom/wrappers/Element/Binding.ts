@@ -88,20 +88,20 @@ export default class BindingWrapper {
 			update_conditions.push(block.renderer.dirty(dependency_array));
 		}
 
-		if (parent.node.name === "input") {
-			const type = parent.node.get_static_attribute_value("type");
+		if (parent.node.name === 'input') {
+			const type = parent.node.get_static_attribute_value('type');
 
 			if (
 				type === null ||
-				type === "" ||
-				type === "text" ||
-				type === "email" ||
-				type === "password"
+				type === '' ||
+				type === 'text' ||
+				type === 'email' ||
+				type === 'password'
 			) {
 				update_conditions.push(
 					x`${parent.var}.${this.node.name} !== ${this.snippet}`
 				);
-			} else if (type === "number") {
+			} else if (type === 'number') {
 				update_conditions.push(
 					x`@to_number(${parent.var}.${this.node.name}) !== ${this.snippet}`
 				);
@@ -118,7 +118,7 @@ export default class BindingWrapper {
 			{
 				const { binding_group, is_context, contexts, index } = get_binding_group(parent.renderer, this.node, block);
 
-				block.renderer.add_to_context(`$$binding_groups`);
+				block.renderer.add_to_context('$$binding_groups');
 
 				if (is_context) {
 					if (contexts.length > 1) {
@@ -302,7 +302,7 @@ function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
 			},
 			is_context: contexts.length > 0,
 			contexts,
-			index,
+			index
 		});
 	}
 
@@ -355,7 +355,7 @@ function get_event_handler(
 		uses_context: binding.node.is_contextual || binding.node.expression.uses_context, // TODO this is messy
 		mutation,
 		contextual_dependencies,
-		lhs,
+		lhs
 	};
 }
 

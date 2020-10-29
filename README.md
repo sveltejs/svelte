@@ -2,13 +2,14 @@
   <a href="https://svelte.dev">
 	<img alt="Cybernetically enhanced web apps: Svelte" src="https://sveltejs.github.io/assets/banner.png">
   </a>
-
   <a href="https://www.npmjs.com/package/svelte">
     <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
   </a>
-
   <a href="https://github.com/sveltejs/svelte/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
+  </a>
+  <a href="https://svelte.dev/chat">
+    <img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg" alt="Chat">
   </a>
 </p>
 
@@ -18,6 +19,15 @@
 Svelte is a new way to build web applications. It's a compiler that takes your declarative components and converts them into efficient JavaScript that surgically updates the DOM.
 
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://svelte.dev/chat).
+
+
+## Supporting Svelte
+
+Svelte is an MIT-licensed open source project with its ongoing development made possible entirely by the support of awesome volunteers. If you'd like to support their efforts, please consider:
+
+- [Becoming a backer on Open Collective](https://opencollective.com/svelte).
+
+Funds donated via Open Collective will be used for compensating expenses related to Svelte's development such as hosting costs. If sufficient donations are received, funds may also be used to support Svelte's development more directly.
 
 
 ## Development
