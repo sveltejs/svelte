@@ -1,3 +1,3 @@
 export default {
-	html: `<div class="false"></div>`,
+	html: '<div class="false"></div>'
 };

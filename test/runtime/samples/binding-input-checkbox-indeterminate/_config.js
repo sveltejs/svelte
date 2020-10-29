@@ -2,7 +2,7 @@ export default {
 	skip_if_ssr: true,
 
 	props: {
-		indeterminate: true,
+		indeterminate: true
 	},
 
 	html: `
@@ -38,5 +38,5 @@ export default {
 			<p>checked? true</p>
 			<p>indeterminate? true</p>
 		`);
-	},
+	}
 };

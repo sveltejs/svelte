@@ -2,14 +2,14 @@ export default {
 	props: {
 		cats: [
 			{
-				name: "cat 0",
-				checked: false,
+				name: 'cat 0',
+				checked: false
 			},
 			{
-				name: "cat 1",
-				checked: false,
-			},
-		],
+				name: 'cat 1',
+				checked: false
+			}
+		]
 	},
 
 	html: `
@@ -21,8 +21,8 @@ export default {
 		const { cats } = component;
 		const newCats = cats.slice();
 		newCats.push({
-			name: "cat " + cats.length,
-			checked: false,
+			name: 'cat ' + cats.length,
+			checked: false
 		});
 		component.cats = newCats;
 

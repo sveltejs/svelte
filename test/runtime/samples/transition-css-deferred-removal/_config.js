@@ -20,5 +20,5 @@ export default {
 			outer.style.animation,
 			inner.style.animation
 		], animations);
-	},
+	}
 };

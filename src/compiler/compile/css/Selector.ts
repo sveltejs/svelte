@@ -4,12 +4,24 @@ import { gather_possible_values, UNKNOWN } from './gather_possible_values';
 import { CssNode } from './interfaces';
 import Component from '../Component';
 import Element from '../nodes/Element';
+import { INode } from '../nodes/interfaces';
+import EachBlock from '../nodes/EachBlock';
+import IfBlock from '../nodes/IfBlock';
+import AwaitBlock from '../nodes/AwaitBlock';
 
 enum BlockAppliesToNode {
 	NotPossible,
 	Possible,
 	UnknownSelectorType
 }
+enum NodeExist {
+	Probably = 1,
+	Definitely = 2,
+}
+
+const whitelist_attribute_selector = new Map([
+	['details', new Set(['open'])]
+]);
 
 export default class Selector {
 	node: CssNode;
@@ -35,10 +47,10 @@ export default class Selector {
 		this.used = this.local_blocks.length === 0;
 	}
 
-	apply(node: Element, stack: Element[]) {
+	apply(node: Element) {
 		const to_encapsulate: any[] = [];
 
-		apply_selector(this.local_blocks.slice(), node, stack.slice(), to_encapsulate);
+		apply_selector(this.local_blocks.slice(), node, to_encapsulate);
 
 		if (to_encapsulate.length > 0) {
 			to_encapsulate.forEach(({ node, block }) => {
@@ -65,9 +77,8 @@ export default class Selector {
 
 	transform(code: MagicString, attr: string, max_amount_class_specificity_increased: number) {
 		const amount_class_specificity_to_increase = max_amount_class_specificity_increased - this.blocks.filter(block => block.should_encapsulate).length;
-		attr = attr.repeat(amount_class_specificity_to_increase + 1);
 
-		function encapsulate_block(block: Block) {
+		function encapsulate_block(block: Block, attr: string) {
 			let i = block.selectors.length;
 
 			while (i--) {
@@ -89,15 +100,14 @@ export default class Selector {
 			}
 		}
 
-		this.blocks.forEach((block) => {
+		this.blocks.forEach((block, index) => {
 			if (block.global) {
 				const selector = block.selectors[0];
 				const first = selector.children[0];
 				const last = selector.children[selector.children.length - 1];
 				code.remove(selector.start, first.start).remove(last.end, selector.end);
 			}
-
-			if (block.should_encapsulate) encapsulate_block(block);
+			if (block.should_encapsulate) encapsulate_block(block, index === this.blocks.length - 1 ? attr.repeat(amount_class_specificity_to_increase + 1) : attr);
 		});
 	}
 
@@ -108,8 +118,8 @@ export default class Selector {
 				const selector = block.selectors[i];
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 					component.error(selector, {
-						code: `css-invalid-global`,
-						message: `:global(...) must be the first element in a compound selector`
+						code: 'css-invalid-global',
+						message: ':global(...) must be the first element in a compound selector'
 					});
 				}
 			}
@@ -129,8 +139,8 @@ export default class Selector {
 		for (let i = start; i < end; i += 1) {
 			if (this.blocks[i].global) {
 				component.error(this.blocks[i].selectors[0], {
-					code: `css-invalid-global`,
-					message: `:global(...) can be at the start or end of a selector sequence, but not in the middle`
+					code: 'css-invalid-global',
+					message: ':global(...) can be at the start or end of a selector sequence, but not in the middle'
 				});
 			}
 		}
@@ -147,12 +157,12 @@ export default class Selector {
 	}
 }
 
-function apply_selector(blocks: Block[], node: Element, stack: Element[], to_encapsulate: any[]): boolean {
+function apply_selector(blocks: Block[], node: Element, to_encapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
 	if (!node) {
-		return blocks.every(block => block.global);
+		return block.global && blocks.every(block => block.global);
 	}
 
 	switch (block_might_apply_to_node(block, node)) {
@@ -160,7 +170,7 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 			return false;
 
 		case BlockAppliesToNode.UnknownSelectorType:
-			// bail. TODO figure out what these could be
+		// bail. TODO figure out what these could be
 			to_encapsulate.push({ node, block });
 			return true;
 	}
@@ -172,9 +182,10 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 					continue;
 				}
 
-				for (const stack_node of stack) {
-					if (block_might_apply_to_node(ancestor_block, stack_node) !== BlockAppliesToNode.NotPossible) {
-						to_encapsulate.push({ node: stack_node, block: ancestor_block });
+				let parent = node;
+				while (parent = get_element_parent(parent)) {
+					if (block_might_apply_to_node(ancestor_block, parent) !== BlockAppliesToNode.NotPossible) {
+						to_encapsulate.push({ node: parent, block: ancestor_block });
 					}
 				}
 
@@ -191,12 +202,22 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			if (apply_selector(blocks, stack.pop(), stack, to_encapsulate)) {
+			if (apply_selector(blocks, get_element_parent(node), to_encapsulate)) {
 				to_encapsulate.push({ node, block });
 				return true;
 			}
 
 			return false;
+		} else if (block.combinator.name === '+' || block.combinator.name === '~') {
+			const siblings = get_possible_element_siblings(node, block.combinator.name === '+');
+			let has_match = false;
+			for (const possible_sibling of siblings.keys()) {
+				if (apply_selector(blocks.slice(), possible_sibling, to_encapsulate)) {
+					to_encapsulate.push({ node, block });
+					has_match = true;
+				}
+			}
+			return has_match;
 		}
 
 		// TODO other combinators
@@ -208,7 +229,7 @@ function apply_selector(blocks: Block[], node: Element, stack: Element[], to_enc
 	return true;
 }
 
-function block_might_apply_to_node(block, node): BlockAppliesToNode {
+function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToNode {
 	let i = block.selectors.length;
 
 	while (i--) {
@@ -234,7 +255,11 @@ function block_might_apply_to_node(block, node): BlockAppliesToNode {
 		}
 
 		else if (selector.type === 'AttributeSelector') {
-			if (!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return BlockAppliesToNode.NotPossible;
+			if (
+				!(whitelist_attribute_selector.has(node.name.toLowerCase()) && whitelist_attribute_selector.get(node.name.toLowerCase()).has(selector.name.name.toLowerCase())) &&
+				!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) {
+				return BlockAppliesToNode.NotPossible;
+			}
 		}
 
 		else if (selector.type === 'TypeSelector') {
@@ -261,7 +286,7 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 		case '^=': return value.startsWith(expected_value);
 		case '$=': return value.endsWith(expected_value);
 		case '*=': return value.includes(expected_value);
-		default: throw new Error(`this shouldn't happen`);
+		default: throw new Error("this shouldn't happen");
 	}
 }
 
@@ -368,6 +393,158 @@ function unquote(value: CssNode) {
 		return str.slice(1, str.length - 1);
 	}
 	return str;
+}
+
+function get_element_parent(node: Element): Element | null {
+	let parent: INode = node;
+	while ((parent = parent.parent) && parent.type !== 'Element');
+	return parent as Element | null;
+}
+
+function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map<Element, NodeExist> {
+	const result: Map<Element, NodeExist> = new Map();
+	let prev: INode = node;
+	while (prev = prev.prev) {
+		if (prev.type === 'Element') {
+			if (!prev.attributes.find(attr => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot')) {
+				result.set(prev, NodeExist.Definitely);
+			}
+
+			if (adjacent_only) {
+				break;
+			}
+		} else if (prev.type === 'EachBlock' || prev.type === 'IfBlock' || prev.type === 'AwaitBlock') {
+			const possible_last_child = get_possible_last_child(prev, adjacent_only);
+
+			add_to_map(possible_last_child, result);
+			if (adjacent_only && has_definite_elements(possible_last_child)) {
+				return result;
+			}
+		}
+	}
+
+	if (!prev || !adjacent_only) {
+		let parent: INode = node;
+		let skip_each_for_last_child = node.type === 'ElseBlock';
+		while ((parent = parent.parent) && (parent.type === 'EachBlock' || parent.type === 'IfBlock' || parent.type === 'ElseBlock' || parent.type === 'AwaitBlock')) {
+			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
+			add_to_map(possible_siblings, result);
+			
+			if (parent.type === 'EachBlock') {
+				// first child of each block can select the last child of each block as previous sibling
+				if (skip_each_for_last_child) {
+					skip_each_for_last_child = false;
+				} else {
+					add_to_map(get_possible_last_child(parent, adjacent_only), result);
+				}
+			} else if (parent.type === 'ElseBlock') {
+				skip_each_for_last_child = true;
+				parent = parent.parent;
+			}
+
+			if (adjacent_only && has_definite_elements(possible_siblings)) {
+				break;
+			}
+		}
+	}
+
+	return result;
+}
+
+function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjacent_only: boolean): Map<Element, NodeExist> {
+	const result: Map<Element, NodeExist> = new Map();
+
+	if (block.type === 'EachBlock') {
+		const each_result: Map<Element, NodeExist> = loop_child(block.children, adjacent_only);
+		const else_result: Map<Element, NodeExist> = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
+		
+		const not_exhaustive = !has_definite_elements(else_result);
+
+		if (not_exhaustive) {
+			mark_as_probably(each_result);
+			mark_as_probably(else_result);
+		}
+		add_to_map(each_result, result);
+		add_to_map(else_result, result);
+	} else if (block.type === 'IfBlock') {
+		const if_result: Map<Element, NodeExist> = loop_child(block.children, adjacent_only);
+		const else_result: Map<Element, NodeExist> = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
+
+		const not_exhaustive = !has_definite_elements(if_result) || !has_definite_elements(else_result);
+
+		if (not_exhaustive) {
+			mark_as_probably(if_result);
+			mark_as_probably(else_result);
+		}
+
+		add_to_map(if_result, result);
+		add_to_map(else_result, result);
+	} else if (block.type === 'AwaitBlock') {
+		const pending_result: Map<Element, NodeExist> = block.pending ? loop_child(block.pending.children, adjacent_only) : new Map();
+		const then_result: Map<Element, NodeExist> = block.then ? loop_child(block.then.children, adjacent_only) : new Map();
+		const catch_result: Map<Element, NodeExist> = block.catch ? loop_child(block.catch.children, adjacent_only) : new Map();
+
+		const not_exhaustive = !has_definite_elements(pending_result) || !has_definite_elements(then_result) || !has_definite_elements(catch_result);
+
+		if (not_exhaustive) {
+			mark_as_probably(pending_result);
+			mark_as_probably(then_result);
+			mark_as_probably(catch_result);
+		}
+
+		add_to_map(pending_result, result);
+		add_to_map(then_result, result);
+		add_to_map(catch_result, result);
+	}
+
+	return result;
+}
+
+function has_definite_elements(result: Map<Element, NodeExist>): boolean {
+	if (result.size === 0) return false;
+	for (const exist of result.values()) {
+		if (exist === NodeExist.Definitely) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function add_to_map(from: Map<Element, NodeExist>, to: Map<Element, NodeExist>) {
+	from.forEach((exist, element) => {
+		to.set(element, higher_existance(exist, to.get(element)));
+	});
+}
+
+function higher_existance(exist1: NodeExist | null, exist2: NodeExist | null): NodeExist {
+	if (exist1 === undefined || exist2 === undefined) return exist1 || exist2;
+	return exist1 > exist2 ? exist1 : exist2;
+}
+
+function mark_as_probably(result: Map<Element, NodeExist>) {
+	for (const key of result.keys()) {
+		result.set(key, NodeExist.Probably);
+	}
+}
+
+function loop_child(children: INode[], adjacent_only: boolean) {
+	const result: Map<Element, NodeExist> = new Map();
+	for (let i = children.length - 1; i >= 0; i--) {
+		const child = children[i];
+		if (child.type === 'Element') {
+			result.set(child, NodeExist.Definitely);
+			if (adjacent_only) {
+				break;
+			}
+		} else if (child.type === 'EachBlock' || child.type === 'IfBlock' || child.type === 'AwaitBlock') {
+			const child_result = get_possible_last_child(child, adjacent_only);
+			add_to_map(child_result, result);
+			if (adjacent_only && has_definite_elements(child_result)) {
+				break;
+			}
+		}
+	}
+	return result;
 }
 
 class Block {

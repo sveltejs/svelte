@@ -6,7 +6,7 @@ export default {
 		}
 	},
 
-	html: `<div class="one two" role="button"></div>`,
+	html: '<div class="one two" role="button"></div>',
 
 	test({ assert, component, target, window }) {
 		component.myClass = 'one';

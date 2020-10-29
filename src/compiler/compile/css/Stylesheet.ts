@@ -2,10 +2,10 @@ import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
 import Element from '../nodes/Element';
-import { Ast, TemplateNode } from '../../interfaces';
+import { Ast } from '../../interfaces';
 import Component from '../Component';
 import { CssNode } from './interfaces';
-import hash from "../utils/hash";
+import hash from '../utils/hash';
 
 function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
@@ -51,8 +51,8 @@ class Rule {
 		this.declarations = node.block.children.map((node: CssNode) => new Declaration(node));
 	}
 
-	apply(node: Element, stack: Element[]) {
-		this.selectors.forEach(selector => selector.apply(node, stack)); // TODO move the logic in here?
+	apply(node: Element) {
+		this.selectors.forEach(selector => selector.apply(node)); // TODO move the logic in here?
 	}
 
 	is_used(dev: boolean) {
@@ -162,10 +162,10 @@ class Atrule {
 		this.declarations = [];
 	}
 
-	apply(node: Element, stack: Element[]) {
+	apply(node: Element) {
 		if (this.node.name === 'media' || this.node.name === 'supports') {
 			this.children.forEach(child => {
-				child.apply(node, stack);
+				child.apply(node);
 			});
 		}
 
@@ -364,15 +364,9 @@ export default class Stylesheet {
 	apply(node: Element) {
 		if (!this.has_styles) return;
 
-		const stack: Element[] = [];
-		let parent: TemplateNode = node;
-		while (parent = parent.parent) {
-			if (parent.type === 'Element') stack.unshift(parent as Element);
-		}
-
 		for (let i = 0; i < this.children.length; i += 1) {
 			const child = this.children[i];
-			child.apply(node, stack);
+			child.apply(node);
 		}
 	}
 
@@ -434,7 +428,7 @@ export default class Stylesheet {
 		this.children.forEach(child => {
 			child.warn_on_unused_selector((selector: Selector) => {
 				component.warn(selector.node, {
-					code: `css-unused-selector`,
+					code: 'css-unused-selector',
 					message: `Unused CSS selector "${this.source.slice(selector.node.start, selector.node.end)}"`
 				});
 			});

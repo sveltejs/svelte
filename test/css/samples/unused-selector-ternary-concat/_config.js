@@ -5,7 +5,7 @@ export default {
 			end: {
 				character: 205,
 				column: 9,
-				line: 14,
+				line: 14
 			},
 			frame: `
 				12:   .thing.active {color: blue;}
@@ -18,8 +18,8 @@ export default {
 			start: {
 				character: 198,
 				column: 2,
-				line: 14,
-			},
-		},
-	],
+				line: 14
+			}
+		}
+	]
 };

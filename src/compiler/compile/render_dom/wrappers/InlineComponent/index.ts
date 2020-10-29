@@ -78,7 +78,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const default_slot = block.child({
 				comment: create_debugging_comment(node, renderer.component),
-				name: renderer.component.get_unique_name(`create_default_slot`),
+				name: renderer.component.get_unique_name('create_default_slot'),
 				type: 'slot'
 			});
 
@@ -112,7 +112,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
 			this.renderer.component.warn(this.node, {
 				code: 'reactive-component',
-				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`,
+				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`
 			});
 		}
 	}

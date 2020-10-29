@@ -26,7 +26,7 @@ function parse_attributes(str: string) {
 		if (p === -1) {
 			attrs[attr] = true;
 		} else {
-			attrs[attr.slice(0, p)] = `'"`.includes(attr[p + 1]) ?
+			attrs[attr.slice(0, p)] = '\'"'.includes(attr[p + 1]) ?
 				attr.slice(p + 2, -1) :
 				attr.slice(p + 1);
 		}
@@ -49,7 +49,7 @@ async function replace_async(str: string, re: RegExp, func: (...any) => Promise<
 					({
 						offset: args[args.length - 2],
 						length: args[0].length,
-						replacement: res,
+						replacement: res
 					}) as Replacement
 			)
 		);

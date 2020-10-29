@@ -1,11 +1,11 @@
-import * as assert from "assert";
+import * as assert from 'assert';
 
 export default {
 	preprocess: {
 		script: ({ content, attributes }) => {
-			assert.equal(content, "");
+			assert.equal(content, '');
 			return {
-				code: `console.log("${attributes["the-answer"]}");`
+				code: `console.log("${attributes['the-answer']}");`
 			};
 		}
 	}

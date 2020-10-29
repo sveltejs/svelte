@@ -1,4 +1,4 @@
-import { env, useFakeTimers } from "../../../helpers";
+import { env, useFakeTimers } from '../../../helpers';
 
 let clock;
 
@@ -33,5 +33,5 @@ export default {
 
 		clock.flush();
 		assert.equal(window.pageYOffset, 100);
-	},
+	}
 };

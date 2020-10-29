@@ -3,10 +3,10 @@ export default {
 		items: []
 	},
 
-	html: ``,
+	html: '',
 
 	test({ assert, component, target }) {
 		component.items = ['x'];
-		assert.htmlEqual(target.innerHTML, `foo`);
+		assert.htmlEqual(target.innerHTML, 'foo');
 	}
 };

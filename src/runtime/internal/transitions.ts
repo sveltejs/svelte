@@ -1,5 +1,5 @@
 import { identity as linear, is_function, noop, run_all } from './utils';
-import { now } from "./environment";
+import { now } from './environment';
 import { loop } from './loop';
 import { create_rule, delete_rule } from './style_manager';
 import { custom_event } from './dom';
@@ -273,7 +273,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			outros.r += 1;
 		}
 
-		if (running_program) {
+		if (running_program || pending_program) {
 			pending_program = program;
 		} else {
 			// if this is an intro, and there's a delay, we need to do

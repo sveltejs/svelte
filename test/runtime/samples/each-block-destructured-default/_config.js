@@ -18,5 +18,5 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<p class="mammal">cow - ‎B. taurus - 50kg</p>
 		`);
-	},
+	}
 };

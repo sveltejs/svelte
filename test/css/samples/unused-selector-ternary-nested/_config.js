@@ -12,7 +12,7 @@ export default {
 				17:   .unused {color: blue;}`,
 			start: { line: 15, column: 2, character: 261 },
 			end: { line: 15, column: 15, character: 274 },
-			pos: 261,
+			pos: 261
 		},
 		{
 			code: 'css-unused-selector',
@@ -25,7 +25,7 @@ export default {
 				18: </style>`,
 			start: { line: 17, column: 2, character: 295 },
 			end: { line: 17, column: 9, character: 302 },
-			pos: 295,
-		},
-	],
+			pos: 295
+		}
+	]
 };

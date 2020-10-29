@@ -1,3 +1,3 @@
 export default {
-	html: '<div data-potato=""></div>',
+	html: '<div data-potato=""></div>'
 };

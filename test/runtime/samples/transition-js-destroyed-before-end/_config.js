@@ -13,5 +13,5 @@ export default {
 		component.$destroy();
 
 		raf.tick(100);
-	},
+	}
 };

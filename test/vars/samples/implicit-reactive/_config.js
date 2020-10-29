@@ -24,5 +24,5 @@ export default {
 				writable: true
 			}
 		]);
-	},
+	}
 };

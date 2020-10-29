@@ -1,7 +1,7 @@
 export default {
 	props: {
 		ones: [{ text: '1' }],
-		twos: [{ text: '2' }],
+		twos: [{ text: '2' }]
 	},
 
 	html: `
@@ -16,5 +16,5 @@ export default {
 			<div>11</div>
 			<div>2</div>
 		`);
-	},
+	}
 };

@@ -3,7 +3,7 @@ export default {
 		foo: 'hello'
 	},
 
-	html: `<option value='hello'>hello</option>`,
+	html: "<option value='hello'>hello</option>",
 
 	test({ assert, component, target }) {
 		component.foo = 'goodbye';

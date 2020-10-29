@@ -8,9 +8,9 @@ export default {
 		<input value="Hello"/>
 	`,
 	async test({ assert, target, window }) {
-		const input = target.querySelector("input");
-		input.value = "abcd";
-		await input.dispatchEvent(new window.Event("input"));
+		const input = target.querySelector('input');
+		input.value = 'abcd';
+		await input.dispatchEvent(new window.Event('input'));
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -19,5 +19,5 @@ export default {
         <input />
       `
 		);
-	},
+	}
 };

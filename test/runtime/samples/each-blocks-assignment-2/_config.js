@@ -4,9 +4,9 @@ export default {
 		<button>Test</button>
 	`,
 	async test({ assert, component, target, window }) {
-		const button = target.querySelector("button");
+		const button = target.querySelector('button');
 
-		const clickEvent = new window.MouseEvent("click");
+		const clickEvent = new window.MouseEvent('click');
 		await button.dispatchEvent(clickEvent);
 
 		assert.htmlEqual(
@@ -16,5 +16,5 @@ export default {
 			<button>Test</button>
 		`
 		);
-	},
+	}
 };

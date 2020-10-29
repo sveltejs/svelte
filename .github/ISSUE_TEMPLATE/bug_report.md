@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+## Is this about svelte@next? This project is currently in a pre-release stage and breaking changes may occur at any time. Please do not post any kind of bug reports or questions on GitHub about it.
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 

@@ -55,7 +55,7 @@ class IfBlockBranch extends Wrapper {
 			});
 
 			if (should_cache) {
-				this.condition = block.get_unique_name(`show_if`);
+				this.condition = block.get_unique_name('show_if');
 				this.snippet = (expression.manipulate(block) as Node);
 			} else {
 				this.condition = expression.manipulate(block);
@@ -65,7 +65,7 @@ class IfBlockBranch extends Wrapper {
 		this.block = block.child({
 			comment: create_debugging_comment(node, parent.renderer.component),
 			name: parent.renderer.component.get_unique_name(
-				is_else ? `create_else_block` : `create_if_block`
+				is_else ? 'create_else_block' : 'create_if_block'
 			),
 			type: (node as IfBlock).expression ? 'if' : 'else'
 		});
@@ -257,8 +257,8 @@ export default class IfBlockWrapper extends Wrapper {
 		{ name, anchor, has_else, if_exists_condition, has_transitions },
 		detaching
 	) {
-		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
-		const current_block_type = block.get_unique_name(`current_block_type`);
+		const select_block_type = this.renderer.component.get_unique_name('select_block_type');
+		const current_block_type = block.get_unique_name('current_block_type');
 		const get_block = has_else
 			? x`${current_block_type}(#ctx)`
 			: x`${current_block_type} && ${current_block_type}(#ctx)`;
@@ -364,11 +364,11 @@ export default class IfBlockWrapper extends Wrapper {
 		{ name, anchor, has_else, has_transitions, if_exists_condition },
 		detaching
 	) {
-		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
-		const current_block_type_index = block.get_unique_name(`current_block_type_index`);
-		const previous_block_index = block.get_unique_name(`previous_block_index`);
-		const if_block_creators = block.get_unique_name(`if_block_creators`);
-		const if_blocks = block.get_unique_name(`if_blocks`);
+		const select_block_type = this.renderer.component.get_unique_name('select_block_type');
+		const current_block_type_index = block.get_unique_name('current_block_type_index');
+		const previous_block_index = block.get_unique_name('previous_block_index');
+		const if_block_creators = block.get_unique_name('if_block_creators');
+		const if_blocks = block.get_unique_name('if_blocks');
 
 		const if_current_block_type_index = has_else
 			? nodes => nodes
@@ -603,7 +603,7 @@ export default class IfBlockWrapper extends Wrapper {
 			// as -1
 			operator: val.operator,
 			prefix: val.prefix,
-			argument: val.argument,
+			argument: val.argument
 		};
 	}
 }

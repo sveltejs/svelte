@@ -107,7 +107,7 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ---
 
-*`$$props`* references all props that are passed to a component – including ones that are not declared with `export`. It is useful in rare cases, but not generally recommended, as it is difficult for Svelte to optimise.
+*`$$props`* references all props that are passed to a component, including ones that are not declared with `export`. It is not generally recommended, as it is difficult for Svelte to optimise. But it can be useful in rare cases – for example, when you don't know at compile time what props might be passed to a component.
 
 ```sv
 <Widget {...$$props}/>
@@ -115,7 +115,7 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ---
 
-*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component.
+*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component. It shares the same optimisation problems as *`$$props`*, and is likewise not recommended.
 
 ```html
 <input {...$$restProps}>
@@ -342,6 +342,33 @@ If you don't care about the pending state, you can also omit the initial block.
 {/await}
 ```
 
+### {#key ...}
+
+```sv
+{#key expression}...{/key}
+```
+
+Key blocks destroy and recreate their contents when the value of an expression changes.
+
+---
+
+This is useful if you want an element to play its transition whenever a value changes.
+
+```sv
+{#key value}
+	<div transition:fade>{value}</div>
+{/key}
+```
+
+---
+
+When used around components, this will cause them to be reinstantiated and reinitialised.
+
+```sv
+{#key value}
+	<Component />
+{/key}
+```
 
 ### {@html ...}
 
@@ -471,6 +498,7 @@ The following modifiers are available:
 * `preventDefault` — calls `event.preventDefault()` before running the handler
 * `stopPropagation` — calls `event.stopPropagation()`, preventing the event reaching the next element
 * `passive` — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
+* `nonpassive` — explicitly set `passive: false`
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
 * `self` — only trigger handler if event.target is the element itself

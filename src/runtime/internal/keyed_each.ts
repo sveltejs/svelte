@@ -113,7 +113,7 @@ export function validate_each_keys(ctx, list, get_context, get_key) {
 	for (let i = 0; i < list.length; i++) {
 		const key = get_key(get_context(ctx, list, i));
 		if (keys.has(key)) {
-			throw new Error(`Cannot have duplicate keys in a keyed each`);
+			throw new Error('Cannot have duplicate keys in a keyed each');
 		}
 		keys.add(key);
 	}

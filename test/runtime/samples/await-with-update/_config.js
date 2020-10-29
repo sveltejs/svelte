@@ -1,7 +1,7 @@
 export default {
 	props: {
 		thePromise: new Promise((_) => {}),
-		count: 0,
+		count: 0
 	},
 
 	html: `
@@ -56,5 +56,5 @@ export default {
 			</div>
 			`
 		);
-	},
+	}
 };

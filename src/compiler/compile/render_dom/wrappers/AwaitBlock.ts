@@ -96,7 +96,7 @@ class AwaitBlockBranch extends Wrapper {
 		`);
 		this.block.chunks.declarations.push(b`${get_context}(#ctx)`);
 		if (this.block.has_update_method) {
-			this.block.chunks.update.push(b`${get_context}(#ctx)`);
+			this.block.chunks.update.unshift(b`${get_context}(#ctx)`);
 		}
 	}
 }
@@ -177,8 +177,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		const snippet = this.node.expression.manipulate(block);
 
-		const info = block.get_unique_name(`info`);
-		const promise = block.get_unique_name(`promise`);
+		const info = block.get_unique_name('info');
+		const promise = block.get_unique_name('promise');
 
 		block.add_variable(promise);
 
@@ -188,6 +188,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			ctx: #ctx,
 			current: null,
 			token: null,
+			hasCatch: ${this.catch.node.start !== null ? 'true' : 'false'},
 			pending: ${this.pending.block.name},
 			then: ${this.then.block.name},
 			catch: ${this.catch.block.name},

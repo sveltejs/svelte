@@ -1,3 +1,3 @@
 export default {
-	html: `<p>x<span>baz</span></p>`
+	html: '<p>x<span>baz</span></p>'
 };

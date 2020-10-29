@@ -6,7 +6,7 @@ export default {
 
 		component.promise = promise;
 
-		assert.htmlEqual(target.innerHTML, `<p>wait for it...</p>`);
+		assert.htmlEqual(target.innerHTML, '<p>wait for it...</p>');
 
 		return promise
 			.then(() => {

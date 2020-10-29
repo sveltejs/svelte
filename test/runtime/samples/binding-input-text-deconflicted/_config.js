@@ -1,8 +1,8 @@
 export default {
 	props: {
 		component: {
-			name: 'world',
-		},
+			name: 'world'
+		}
 	},
 
 	html: `
@@ -36,5 +36,5 @@ export default {
 			<h1>Hello goodbye!</h1>
 			<input>
 		`);
-	},
+	}
 };

@@ -1,7 +1,7 @@
-import EachBlock from "../../../nodes/EachBlock";
-import InlineComponentWrapper from "../InlineComponent";
-import ElementWrapper from "../Element";
-import Binding from "../../../nodes/Binding";
+import EachBlock from '../../../nodes/EachBlock';
+import InlineComponentWrapper from '../InlineComponent';
+import ElementWrapper from '../Element';
+import Binding from '../../../nodes/Binding';
 
 export default function mark_each_block_bindings(
 	parent: ElementWrapper | InlineComponentWrapper,
@@ -16,7 +16,7 @@ export default function mark_each_block_bindings(
 		}
 	});
 
-	if (binding.name === "group") {
+	if (binding.name === 'group') {
 		// for `<input bind:group={} >`, we make sure that all the each blocks creates context with `index`
 		for (const name of binding.expression.contextual_dependencies) {
 			const each_block = parent.node.scope.get_owner(name);

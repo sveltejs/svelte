@@ -26,5 +26,5 @@ export default {
 
 		component.x = undefined;
 		assert.equal(input.value, '');
-	},
+	}
 };

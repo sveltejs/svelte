@@ -12,8 +12,8 @@ export default class Head extends Node {
 
 		if (info.attributes.length) {
 			component.error(info.attributes[0], {
-				code: `invalid-attribute`,
-				message: `<svelte:head> should not have any attributes or directives`
+				code: 'invalid-attribute',
+				message: '<svelte:head> should not have any attributes or directives'
 			});
 		}
 

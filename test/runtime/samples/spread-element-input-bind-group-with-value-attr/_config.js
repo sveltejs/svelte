@@ -5,7 +5,7 @@ export default {
 		}
 	},
 
-	html: `<input data-foo="bar" type="radio" value="abc">`,
+	html: '<input data-foo="bar" type="radio" value="abc">',
 
 	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');

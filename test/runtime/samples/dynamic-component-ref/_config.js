@@ -1,5 +1,5 @@
 export default {
-	html: `Foo`,
+	html: 'Foo',
 
 	test({ assert, component }) {
 		assert.ok(component.test);

@@ -4,7 +4,7 @@ export default {
 		fields: [1, 2]
 	},
 
-	html: `<div></div>`,
+	html: '<div></div>',
 
 	test({ assert, component, target }) {
 		component.show = true;

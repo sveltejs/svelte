@@ -1,4 +1,4 @@
 export default {
 	props: { items: [] },
-	html: `No items.`,
+	html: 'No items.'
 };
