@@ -11,7 +11,7 @@ export function test({ assert, input, js, css }) {
 
 	assert.deepEqual(actualbar, {
 		source: 'input.svelte',
-		name: null,
+		name: 'baritone',
 		line: expectedBar.line + 1,
 		column: expectedBar.column
 	});
@@ -25,13 +25,8 @@ export function test({ assert, input, js, css }) {
 
 	assert.deepEqual(actualbaz, {
 		source: 'input.svelte',
-		name: null,
+		name: '--bazitone',
 		line: expectedBaz.line + 1,
 		column: expectedBaz.column
-	}, `\
-couldn't find baz in css,
- gen: ${JSON.stringify(start)}
- actual: ${JSON.stringify(actualbaz)}
- expected: ${JSON.stringify(expectedBaz)}\
-`);
+	});
 }

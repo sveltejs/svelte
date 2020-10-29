@@ -1,22 +1,5 @@
 import MagicString from 'magic-string';
-
-function replace(search, replace, content, src, options = {}) {
-	let idx = -1;
-	while ((idx = content.indexOf(search, idx + 1)) != -1) {
-		src.overwrite(idx, idx + search.length, replace, options);
-	}
-}
-
-function result(src, filename) {
-	return {
-		code: src.toString(),
-		map: src.generateDecodedMap({ // return decoded sourcemap
-			source: filename,
-			hires: true,
-			includeContent: false
-		})
-	};
-}
+import { magic_string_preprocessor_result, magic_string_replace_all } from '../../helpers';
 
 export default {
 
@@ -25,8 +8,8 @@ export default {
 	preprocess: {
 		markup: ({ content, filename }) => {
 			const src = new MagicString(content);
-			replace('replace me', 'success', content, src);
-			return result(src, filename);
+			magic_string_replace_all(src, 'replace me', 'success');
+			return magic_string_preprocessor_result(filename, src);
 		}
 	}
 };

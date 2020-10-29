@@ -1,19 +1,12 @@
 import MagicString from 'magic-string';
+import { magic_string_preprocessor_result, magic_string_replace_all } from '../../helpers';
 
 export default {
 	preprocess: {
 		script: ({ content, filename }) =>  {
 			const src = new MagicString(content);
-			const idx = content.indexOf('baritone');
-			src.overwrite(idx, idx+'baritone'.length, 'bar');
-			return {
-				code: src.toString(),
-				map: src.generateMap({
-					source: filename,
-					hires: true,
-					includeContent: false
-				})
-			};
+			magic_string_replace_all(src, 'baritone', 'bar');
+			return magic_string_preprocessor_result(filename, src);
 		}
 	}
 };

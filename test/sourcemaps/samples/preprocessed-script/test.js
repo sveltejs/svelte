@@ -11,7 +11,7 @@ export function test({ assert, input, js }) {
 
 	assert.deepEqual(actualbar, {
 		source: 'input.svelte',
-		name: null,
+		name: 'baritone',
 		line: expectedBar.line + 1,
 		column: expectedBar.column
 	}, "couldn't find bar: in source");

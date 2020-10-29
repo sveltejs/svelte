@@ -4,7 +4,7 @@ const b64dec = s => Buffer.from(s, 'base64').toString();
 
 export async function test({ assert, css,  js }) {
 
-    //We check that the css source map embedded in the js is accurate
+    // We check that the css source map embedded in the js is accurate
     const match = js.code.match(/\tstyle\.textContent = "(.*?)(?:\\n\/\*# sourceMappingURL=data:(.*?);charset=(.*?);base64,(.*?) \*\/)?";\n/);
 	assert.notEqual(match, null);
 

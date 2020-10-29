@@ -1,48 +1,25 @@
 import MagicString from 'magic-string';
+import { magic_string_preprocessor_result, magic_string_replace_all } from '../../helpers';
 
 export default {
 	preprocess: {
 		markup: ({ content, filename }) => {
 			const src = new MagicString(content);
-			const idx = content.indexOf('baritone');
-			src.overwrite(idx, idx + 'baritone'.length, 'bar');
-
-			const css_idx = content.indexOf('--bazitone');
-			src.overwrite(css_idx, css_idx + '--bazitone'.length, '--baz');
-			return {
-				code: src.toString(),
-				map: src.generateDecodedMap({
-					source: filename,
-					hires: true,
-					includeContent: false
-				})
-			};
+			magic_string_replace_all(src, 'baritone', 'bar');
+			magic_string_replace_all(src, '--bazitone', '--baz');
+			return magic_string_preprocessor_result(filename, src);
 		},
 		script: ({ content, filename }) => {
 			const src = new MagicString(content);
 			const idx = content.indexOf('bar');
 			src.prependLeft(idx, '      ');
-			return {
-				code: src.toString(),
-				map: src.generateDecodedMap({
-					source: filename,
-					hires: true,
-					includeContent: false
-				})
-			};
+			return magic_string_preprocessor_result(filename, src);
 		},
 		style: ({ content, filename }) => {
 			const src = new MagicString(content);
 			const idx = content.indexOf('--baz');
 			src.prependLeft(idx, '      ');
-			return {
-				code: src.toString(),
-				map: src.generateDecodedMap({
-					source: filename,
-					hires: true,
-					includeContent: false
-				})
-			};
+			return magic_string_preprocessor_result(filename, src);
 		}
 	}
 };

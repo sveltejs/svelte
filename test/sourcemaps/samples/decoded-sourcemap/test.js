@@ -11,7 +11,7 @@ export function test({ assert, input, preprocessed }) {
 
   assert.deepEqual(actualbar, {
     source: 'input.svelte',
-    name: null,
+    name: 'replace me',
     line: expected.line + 1,
     column: expected.column
   });
