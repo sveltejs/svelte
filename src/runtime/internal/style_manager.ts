@@ -1,5 +1,5 @@
-import { element } from './dom';
-import { raf } from './environment';
+import { element } from './dom.ts';
+import { raf } from './environment.ts';
 
 interface ExtendedDoc extends Document {
 	__svelte_stylesheet: CSSStyleSheet;

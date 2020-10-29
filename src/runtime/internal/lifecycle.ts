@@ -1,4 +1,4 @@
-import { custom_event } from './dom';
+import { custom_event } from './dom.ts';
 
 export let current_component;
 

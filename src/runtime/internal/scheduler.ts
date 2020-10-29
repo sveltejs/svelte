@@ -1,5 +1,5 @@
-import { run_all } from './utils';
-import { set_current_component } from './lifecycle';
+import { run_all } from './utils.ts';
+import { set_current_component } from './lifecycle.ts';
 
 export const dirty_components = [];
 export const intros = { enabled: false };

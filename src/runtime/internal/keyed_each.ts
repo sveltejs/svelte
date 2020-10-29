@@ -1,4 +1,4 @@
-import { transition_in, transition_out } from './transitions';
+import { transition_in, transition_out } from './transitions.ts';
 
 export function destroy_block(block, lookup) {
 	block.d(1);

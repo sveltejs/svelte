@@ -1,5 +1,5 @@
-import { custom_event, append, insert, detach, listen, attr } from './dom';
-import { SvelteComponent } from './Component';
+import { custom_event, append, insert, detach, listen, attr } from './dom.ts';
+import { SvelteComponent } from './Component.ts';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }));

@@ -1,7 +1,7 @@
-import { Readable, writable } from 'svelte/store';
-import { assign, loop, now, Task } from 'svelte/internal';
-import { linear } from 'svelte/easing';
-import { is_date } from './utils';
+import { Readable, writable } from '../store/index.ts';
+import { assign, loop, now, Task } from '../internal/index.ts';
+import { linear } from '../easing/index.ts';
+import { is_date } from './utils.ts';
 
 function get_interpolator(a, b) {
 	if (a === b || a !== a) return () => a;

@@ -1,4 +1,4 @@
-import { raf } from './environment';
+import { raf } from './environment.ts';
 
 export interface Task { abort(): void; promise: Promise<void> }
 

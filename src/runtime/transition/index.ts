@@ -1,5 +1,5 @@
-import { cubicOut, cubicInOut, linear } from 'svelte/easing';
-import { assign, is_function } from 'svelte/internal';
+import { cubicOut, cubicInOut, linear } from '../easing/index.ts';
+import { assign, is_function } from '../internal/index.ts';
 
 type EasingFunction = (t: number) => number;
 

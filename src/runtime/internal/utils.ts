@@ -1,4 +1,4 @@
-import { Readable } from 'svelte/store';
+import { Readable } from '../store/index.ts';
 
 export function noop() {}
 

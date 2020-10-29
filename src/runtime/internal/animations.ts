@@ -1,8 +1,8 @@
-import { identity as linear, noop } from './utils';
-import { now } from './environment';
-import { loop } from './loop';
-import { create_rule, delete_rule } from './style_manager';
-import { AnimationConfig } from '../animate';
+import { identity as linear, noop } from './utils.ts';
+import { now } from './environment.ts';
+import { loop } from './loop.ts';
+import { create_rule, delete_rule } from './style_manager.ts';
+import { AnimationConfig } from '../animate/index.ts';
 
 
 //todo: documentation says it is DOMRect, but in IE it would be ClientRect

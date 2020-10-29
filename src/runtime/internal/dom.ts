@@ -1,4 +1,4 @@
-import { has_prop } from './utils';
+import { has_prop } from './utils.ts';
 
 export function append(target: Node, node: Node) {
 	target.appendChild(node);

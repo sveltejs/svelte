@@ -1,2 +1,2 @@
-export * from './spring';
-export * from './tweened';
+export * from './spring.ts';
+export * from './tweened.ts';

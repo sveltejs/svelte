@@ -1,7 +1,7 @@
-import { is_promise } from './utils';
-import { check_outros, group_outros, transition_in, transition_out } from './transitions';
-import { flush } from './scheduler';
-import { get_current_component, set_current_component } from './lifecycle';
+import { is_promise } from './utils.ts';
+import { check_outros, group_outros, transition_in, transition_out } from './transitions.ts';
+import { flush } from './scheduler.ts';
+import { get_current_component, set_current_component } from './lifecycle.ts';
 
 export function handle_promise(promise, info) {
 	const token = info.token = {};

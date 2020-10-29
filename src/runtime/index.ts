@@ -1,4 +1,4 @@
-import './ambient';
+import './ambient.ts';
 
 export {
 	onMount,
@@ -10,4 +10,4 @@ export {
 	tick,
 	createEventDispatcher,
 	SvelteComponentDev as SvelteComponent
-} from 'svelte/internal';
+} from './internal/index.ts';

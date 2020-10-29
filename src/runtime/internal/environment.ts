@@ -1,4 +1,4 @@
-import { noop } from './utils';
+import { noop } from './utils.ts';
 
 export const is_client = typeof window !== 'undefined';
 
