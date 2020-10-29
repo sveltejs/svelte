@@ -1,5 +1,5 @@
 ---
-title: Checking slots
+title: Checking for slot content
 ---
 
 In some cases, you may want to control parts of your component based on whether the parent passes in content for a certain slot. Perhaps you have a wrapper around that slot, and you don't want to render it if the slot is empty. Or perhaps you'd like to apply a class only if the slot is present. You can do this by checking the properties of the special `$$slots` variable.
