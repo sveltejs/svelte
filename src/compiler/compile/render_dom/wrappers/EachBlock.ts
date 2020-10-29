@@ -196,26 +196,12 @@ export default class EachBlockWrapper extends Wrapper {
 			? !this.next.is_dom_node() :
 			!parent_node || !this.parent.is_dom_node();
 
-		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.modifier(x`list[i]`)};`);
-
-		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`);
-		if (this.node.has_binding || this.node.has_index_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);
-
 		const snippet = this.node.expression.manipulate(block);
 
 		block.chunks.init.push(b`let ${this.vars.each_block_value} = ${snippet};`);
 		if (this.renderer.options.dev) {
 			block.chunks.init.push(b`@validate_each_argument(${this.vars.each_block_value});`);
 		}
-
-		// TODO which is better — Object.create(array) or array.slice()?
-		renderer.blocks.push(b`
-			function ${this.vars.get_each_context}(#ctx, list, i) {
-				const child_ctx = #ctx.slice();
-				${this.context_props}
-				return child_ctx;
-			}
-		`);
 
 		const initial_anchor_node: Identifier = { type: 'Identifier', name: parent_node ? 'null' : '#anchor' };
 		const initial_mount_node: Identifier = parent_node || { type: 'Identifier', name: '#target' };
@@ -360,6 +346,19 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.else) {
 			this.else.fragment.render(this.else.block, null, x`#nodes` as Identifier);
 		}
+
+		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.modifier(x`list[i]`)};`);
+
+		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`);
+		if (this.node.has_binding || this.node.has_index_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);
+		// TODO which is better — Object.create(array) or array.slice()?
+		renderer.blocks.push(b`
+			function ${this.vars.get_each_context}(#ctx, list, i) {
+				const child_ctx = #ctx.slice();
+				${this.context_props}
+				return child_ctx;
+			}
+		`);
 	}
 
 	render_keyed({
