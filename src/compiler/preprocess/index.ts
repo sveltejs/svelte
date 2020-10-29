@@ -104,8 +104,9 @@ function get_replacement(
 	let decoded_map: DecodedSourceMap;
 	if (processed.map) {
 		decoded_map = typeof processed.map === 'string' ? JSON.parse(processed.map) : processed.map;
-		if (typeof(decoded_map.mappings) === 'string')
+		if (typeof(decoded_map.mappings) === 'string') {
 			decoded_map.mappings = decode_mappings(decoded_map.mappings);
+		}
 		sourcemap_add_offset(decoded_map, get_location(offset + prefix.length));
 	}
 	const processed_with_map = StringWithSourcemap.from_processed(processed.code, decoded_map);
@@ -146,12 +147,13 @@ export default async function preprocess(
 
 		if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
 		source = processed ? processed.code : source;
-		if (processed && processed.map)
+		if (processed && processed.map) {
 			sourcemap_list.unshift(
 				typeof(processed.map) === 'string'
 					? JSON.parse(processed.map)
 					: processed.map
 			);
+		}
 	}
 
 	for (const fn of script) {

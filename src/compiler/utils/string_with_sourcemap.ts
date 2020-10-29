@@ -59,8 +59,9 @@ function merge_tables<T>(this_table: T[], other_table): [T[], number[], boolean,
 }
 
 function pushArray<T>(_this: T[], other: T[]) {
-	for (let i = 0; i < other.length; i++)
+	for (let i = 0; i < other.length; i++) {
 		_this.push(other[i]);
+	}
 }
 
 export class StringWithSourcemap {
@@ -69,15 +70,16 @@ export class StringWithSourcemap {
 
 	constructor(string = '', map = null) {
 		this.string = string;
-		if (map)
+		if (map) {
 			this.map = map as DecodedSourceMap;
-		else
+		} else {
 			this.map = {
 				version: 3,
 				mappings: [],
 				sources: [],
 				names: []
 			};
+		}
 	}
 
 	// concat in-place (mutable), return this (chainable)
