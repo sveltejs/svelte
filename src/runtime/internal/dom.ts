@@ -210,12 +210,12 @@ export function claim_element(nodes, name, attributes, svg) {
 }
 
 export function claim_text(nodes, data) {
-	const node = nodes.shift();
+	const node = nodes[0];
 	if (node) {
 		if (node.nodeType === 3) {
 			node.data = '' + data;
-			return node;
-		} else {
+			return nodes.shift();
+		} else if (!data.match(/\s+/)) {
 			console.error(`Hydration error: Expected text node "${data}" but found`, node);
 			detach(node);
 		}
