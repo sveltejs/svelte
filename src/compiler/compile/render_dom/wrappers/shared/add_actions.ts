@@ -48,7 +48,7 @@ export function add_action(block: Block, target: string, action: Action) {
 		}
 
 		block.chunks.update.push(
-			b`if (${condition}) ${id}.update.call(null, ${snippet});`
+			b`if (${condition}) ${id}.update(${snippet});`
 		);
 	}
 }
