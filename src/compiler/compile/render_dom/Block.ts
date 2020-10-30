@@ -226,7 +226,9 @@ export default class Block {
 		const { dev } = this.renderer.options;
 
 		if (this.has_outros) {
-			this.add_variable({ type: 'Identifier', name: '#current' });
+
+			this.add_variable({ type: 'Identifier', name: '#current' },
+				this.chunks.intro.length === 0 ? x`true` : undefined);
 
 			if (this.chunks.intro.length > 0) {
 				this.chunks.intro.push(b`#current = true;`);
