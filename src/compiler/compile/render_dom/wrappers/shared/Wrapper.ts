@@ -85,6 +85,10 @@ export default class Wrapper {
 		);
 	}
 
+	has_only_spaces() {
+		return false;
+	}
+
 	render(_block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
 		throw Error('Wrapper class is not renderable');
 	}

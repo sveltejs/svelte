@@ -4,6 +4,8 @@ import { get_slot_scope } from './shared/get_slot_scope';
 import InlineComponent from '../../nodes/InlineComponent';
 import remove_whitespace_children from './utils/remove_whitespace_children';
 import { p, x } from 'code-red';
+import { TemplateLiteral } from 'estree';
+
 
 function get_prop_value(attribute) {
 	if (attribute.is_true) return x`true`;
@@ -85,7 +87,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		});
 
 		slot_scopes.forEach(({ input, output }, name) => {
-			if (!is_empty_template_literal(output)) {
+			if (!is_empty_template_literal(output) && (name !== 'default' || !has_only_spaces(output))) {
 				slot_fns.push(
 					p`${name}: (${input}) => ${output}`
 				);
@@ -100,10 +102,16 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 	renderer.add_expression(x`@validate_component(${expression}, "${node.name}").$$render($$result, ${props}, ${bindings}, ${slots})`);
 }
 
-function is_empty_template_literal(template_literal) {
+function is_empty_template_literal(template_literal: TemplateLiteral) {
 	return (
 		template_literal.expressions.length === 0 &&
 		template_literal.quasis.length === 1 &&
 		template_literal.quasis[0].value.raw === ''
 	);
+}
+
+function has_only_spaces(template_literal: TemplateLiteral): boolean {
+	return template_literal.expressions.length === 0 &&
+		template_literal.quasis.length === 1 &&
+		!/\S/.test(template_literal.quasis[0].value.raw);
 }

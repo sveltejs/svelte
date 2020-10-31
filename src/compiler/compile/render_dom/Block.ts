@@ -428,6 +428,10 @@ export default class Block {
 			this.has_animation;
 	}
 
+	has_only_spaces(): boolean {
+		return this.wrappers.every(w => w.has_only_spaces());
+	}
+
 	render() {
 		const key = this.key && this.get_unique_name('key');
 

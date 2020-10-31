@@ -40,6 +40,10 @@ export default class TextWrapper extends Wrapper {
 		return true;
 	}
 
+	has_only_spaces() {
+		return !/\S/.test(this.data);
+	}
+
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		if (this.skip) return;
 		const use_space = this.use_space();
