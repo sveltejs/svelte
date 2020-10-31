@@ -24,7 +24,7 @@ For all the features and bugfixes see the CHANGELOGs for [Svelte](https://github
 
 ## [Svelte Summit](https://sveltesummit.com/) was Svelte-tacular!
 - Rich Harris demoed the possible future of Svelte development in a talk titled "Futuristic Web Development". The not-yet-public project is called SvelteKit (name may change) and will bring a first-class developer experience and more flexibility for build outputs. If you want to get the full sneak-peek, [check out the video](https://www.youtube.com/watch?v=qSfdtmcZ4d0).
-- 18 speakers made the best of the conference's virtual format... From floating heads to seamless demos, Svelte developers from every skill level will find something of interest in this year's [YouTube playlist](https://www.youtube.com/playlist?list=PL8bMgX1kyZThM1sbYCoWdTcpiYysJsSeu)
+- 17 speakers made the best of the conference's virtual format... From floating heads to seamless demos, Svelte developers from every skill level will find something of interest in this year's [YouTube playlist](https://www.youtube.com/playlist?list=PL8bMgX1kyZThM1sbYCoWdTcpiYysJsSeu)
 
 ---
 
