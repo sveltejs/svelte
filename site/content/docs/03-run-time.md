@@ -668,7 +668,7 @@ Slides an element in and out.
 </script>
 
 {#if condition}
-	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut, direction: 'vertical' }}">
+	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut, direction: 'horizontal' }}">
 		slides in and out
 	</div>
 {/if}
