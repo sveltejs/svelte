@@ -1,6 +1,6 @@
 import { has_prop } from './utils';
 
-let is_hydrating = true;
+let is_hydrating = false;
 const nodes_to_detach = new Set<Node>();
 
 export function start_hydrating() {
