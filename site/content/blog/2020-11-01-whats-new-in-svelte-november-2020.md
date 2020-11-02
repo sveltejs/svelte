@@ -31,7 +31,7 @@ For all the features and bugfixes see the CHANGELOGs for [Svelte](https://github
 ## Community Showcase
 - [Svelte Lab](https://sveltelab.app/) showcases a variety of components, visualizations and interactions that can be achieved in Svelte. You can click into any component to see its source or edit it, using the site's built-in REPL
 - [svelte-electron-boilerplate](https://github.com/hjalmar/svelte-electron-boilerplate) is a fast way to get up and running with a Svelte app built in the desktop javascript framework, Electron
-- [React Hooks in Svelte](https://github.com/benflap/tabler-icons-svelte) showcases examples of common React Hooks ported to Svelte.
+- [React Hooks in Svelte](https://github.com/joshnuss/react-hooks-in-svelte) showcases examples of common React Hooks ported to Svelte.
 - [gurlic](https://gurlic.com/) is a social network and internet experiment that is super snappy thanks to Svelte
 - [Interference 2020](https://interference2020.org/) visualizes reported foreign interference in the 2020 U.S. elections. You can learn more about how it was built in [YYY's talk at Svelte Summit]()
 - [jitsi-svelte](https://github.com/relm-us/jitsi-svelte) lets you easily create your own custom Jitsi client by providing out-of-the-box components built with Svelte
