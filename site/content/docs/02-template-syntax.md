@@ -141,6 +141,13 @@ Text can also contain JavaScript expressions:
 <p>{a} + {b} = {a + b}.</p>
 ```
 
+---
+
+However, if you're using regular expression literal that starts with `/`, you'll need to wrap it in parentheses.
+
+```sv
+<div>{(/^[A-Za-z ]+$/).test('value') ? 'foo' : 'bar'}</div>
+```
 
 ### Comments
 
