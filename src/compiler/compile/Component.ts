@@ -521,8 +521,7 @@ export default class Component {
 			if (this.hoistable_nodes.has(node)) return false;
 			if (this.reactive_declaration_nodes.has(node)) return false;
 			if (node.type === 'ImportDeclaration') return false;
-			if (node.type === 'ExportDeclaration' && node.specifiers.length > 0)
-				return false;
+			if (node.type === 'ExportDeclaration' && node.specifiers.length > 0) return false;
 			return true;
 		});
 	}
@@ -1038,8 +1037,9 @@ export default class Component {
 						this.vars.find(
 							variable => variable.name === name && variable.module
 						)
-					)
+					) {
 						return false;
+					}
 
 					return true;
 				});
@@ -1288,8 +1288,9 @@ export default class Component {
 			declaration.dependencies.forEach(name => {
 				if (declaration.assignees.has(name)) return;
 				const earlier_declarations = lookup.get(name);
-				if (earlier_declarations)
+				if (earlier_declarations) {
 					earlier_declarations.forEach(add_declaration);
+				}
 			});
 
 			this.reactive_declarations.push(declaration);
@@ -1319,8 +1320,9 @@ export default class Component {
 		if (globals.has(name) && node.type !== 'InlineComponent') return;
 
 		let message = `'${name}' is not defined`;
-		if (!this.ast.instance)
+		if (!this.ast.instance) {
 			message += `. Consider adding a <script> block with 'export let ${name}' to declare a prop`;
+		}
 
 		this.warn(node, {
 			code: 'missing-declaration',
@@ -1382,8 +1384,9 @@ function process_component_options(component: Component, nodes) {
 						const message = "'tag' must be a string literal";
 						const tag = get_value(attribute, code, message);
 
-						if (typeof tag !== 'string' && tag !== null)
+						if (typeof tag !== 'string' && tag !== null) {
 							component.error(attribute, { code, message });
+						}
 
 						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
 							component.error(attribute, {
@@ -1408,8 +1411,9 @@ function process_component_options(component: Component, nodes) {
 						const message = "The 'namespace' attribute must be a string literal representing a valid namespace";
 						const ns = get_value(attribute, code, message);
 
-						if (typeof ns !== 'string')
+						if (typeof ns !== 'string') {
 							component.error(attribute, { code, message });
+						}
 
 						if (valid_namespaces.indexOf(ns) === -1) {
 							const match = fuzzymatch(ns, valid_namespaces);
@@ -1437,8 +1441,9 @@ function process_component_options(component: Component, nodes) {
 						const message = `${name} attribute must be true or false`;
 						const value = get_value(attribute, code, message);
 
-						if (typeof value !== 'boolean')
+						if (typeof value !== 'boolean') {
 							component.error(attribute, { code, message });
+						}
 
 						component_options[name] = value;
 						break;

@@ -34,9 +34,10 @@ function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, ta
 			tick_spring(ctx, last_value[i], current_value[i], target_value[i]));
 	} else if (typeof current_value === 'object') {
 		const next_value = {};
-		for (const k in current_value)
+		for (const k in current_value) {
 			// @ts-ignore
 			next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
+		}
 		// @ts-ignore
 		return next_value;
 	} else {
@@ -121,8 +122,9 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 				last_value = value;
 				store.set(value = next_value);
 
-				if (ctx.settled)
+				if (ctx.settled) {
 					task = null;
+				}
 				return !ctx.settled;
 			});
 		}
