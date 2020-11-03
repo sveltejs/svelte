@@ -44,11 +44,14 @@ export default function dom(
 
 	if (should_add_css) {
 		body.push(b`
-			function ${add_css}() {
+			function ${add_css}(customStyleTag) {
+				const styleId = "${component.stylesheet.id}-style"
+				const appendTo = customStyleTag || @_document.head
+				if (appendTo.querySelector(styleId)) return
 				var style = @element("style");
-				style.id = "${component.stylesheet.id}-style";
+				style.id = styleId;
 				style.textContent = "${styles}";
-				@append(@_document.head, style);
+				@append(appendTo, style);
 			}
 		`);
 	}
@@ -474,7 +477,7 @@ export default function dom(
 
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
 
 					${dev_props_check}
 
@@ -525,8 +528,7 @@ export default function dom(
 			class ${name} extends ${superclass} {
 				constructor(options) {
 					super(${options.dev && 'options'});
-					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${should_add_css ? add_css : null}, ${dirty});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}
