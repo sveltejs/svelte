@@ -21,7 +21,7 @@ This was slightly tongue-in-cheek — as the talk explains, it's really more of 
 While the Svelte homepage and documentation encourages you to [degit](https://github.com/Rich-Harris/degit) the [sveltejs/template](https://github.com/sveltejs/template) repo to start building an app, Sapper has long been our recommended way to build apps; this very blog post is (at the time of writing!) rendered with Sapper.
 
 
-## Why is it being wound down?
+## Why are we migrating to something new?
 
 Firstly, the distinction between [sveltejs/template](https://github.com/sveltejs/template) and [sveltejs/sapper-template](https://github.com/sveltejs/sapper-template) is confusing, particularly to newcomers to Svelte. Having a single recommended way to start building apps with Svelte will bring enormous benefits: we simplify onboarding, reduce the maintenance and support burden, and can potentially begin to explore the new possibilities that are unlocked by having a predictable project structure. (This last part is deliberately vague because it will take time to fully understand what those possibilities are.)
 
