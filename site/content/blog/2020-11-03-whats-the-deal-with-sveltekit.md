@@ -54,7 +54,7 @@ Static files can go pretty much anywhere, but running a Node server (and monitor
 
 <aside><p>It'll still be possible to create both Node apps and fully pre-rendered (aka exported) sites</a></p></aside>
 
-SvelteKit fully embraces the serverless paradigm, and will launch with support for all the major serverless providers, with an 'adapter' API for targeting any platforms that we don't officially support. In addition, we'll be able to do partial pre-rendering, which means that static pages can be generated at build time but dynamic ones get rendered on-demand.
+SvelteKit fully embraces the serverless paradigm, and will launch with support for all the major serverless providers, with an 'adapter' API for targeting any platforms that we don't officially cater to. In addition, we'll be able to do partial pre-rendering, which means that static pages can be generated at build time but dynamic ones get rendered on-demand.
 
 
 ## When can I start using it?
