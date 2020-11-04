@@ -45,13 +45,7 @@ export default function dom(
 	if (should_add_css) {
 		body.push(b`
 			function ${add_css}(customStyleTag) {
-				const styleId = "${component.stylesheet.id}-style"
-				const appendTo = customStyleTag || @_document.head
-				if (appendTo.querySelector(styleId)) return
-				var style = @element("style");
-				style.id = styleId;
-				style.textContent = "${styles}";
-				@append(appendTo, style);
+				@appendStyleIfNotPresent(customStyleTag || @_document.head, "${component.stylesheet.id}-style", "${styles}");
 			}
 		`);
 	}

@@ -1,5 +1,14 @@
 import { has_prop } from './utils';
 
+export function appendStyleIfNotPresent(target: Element, styleId: string, styles: string) {
+	if (!target.querySelector('#' + styleId)) {
+		const style = element('style');
+		style.id = styleId;
+		style.textContent = styles;
+		append(target, style);
+	}
+}
+
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
@@ -63,7 +72,7 @@ export function listen(node: EventTarget, event: string, handler: EventListenerO
 }
 
 export function prevent_default(fn) {
-	return function(event) {
+	return function (event) {
 		event.preventDefault();
 		// @ts-ignore
 		return fn.call(this, event);
@@ -71,7 +80,7 @@ export function prevent_default(fn) {
 }
 
 export function stop_propagation(fn) {
-	return function(event) {
+	return function (event) {
 		event.stopPropagation();
 		// @ts-ignore
 		return fn.call(this, event);
@@ -79,7 +88,7 @@ export function stop_propagation(fn) {
 }
 
 export function self(fn) {
-	return function(event) {
+	return function (event) {
 		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
 	};
@@ -308,7 +317,7 @@ export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event<T=any>(type: string, detail?: T) {
+export function custom_event<T = any>(type: string, detail?: T) {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, false, false, detail);
 	return e;
