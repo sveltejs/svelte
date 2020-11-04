@@ -76,7 +76,11 @@ Don't worry, we won't launch without full TypeScript support.
 
 ## How can I migrate my existing Sapper apps?
 
-Detailed migration guides will accompany the 1.0 launch. For the most part, it should be relatively straightforward to migrate a Sapper codebase — there are some unavoidable changes (being able to run on serverless platforms means no more custom `server.js`, for example, and no more `req` and `res` objects in your handlers), and a few design flaws that we're taking the opportunity to fix, but on the whole a SvelteKit app will feel very familiar to Sapper users.
+For the most part, it should be relatively straightforward to migrate a Sapper codebase.
+
+There are some unavoidable changes (being able to run on serverless platforms means we need to replace custom `server.js` files and `(req, res) => {...}` functions with more portable equivalents), and we're taking the opportunity to fix a few design flaws, but on the whole a SvelteKit app will feel very familiar to Sapper users.
+
+Detailed migration guides will accompany the 1.0 launch.
 
 
 ## How can I contribute?
