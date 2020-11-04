@@ -7,11 +7,21 @@ authorURL: https://twitter.com/rich_harris
 
 <aside><p>If you <em>didn't</em> attend Svelte Summit, you can catch up on the <a href="https://www.youtube.com/c/SvelteSociety/videos">Svelte Society YouTube page</a></p></aside>
 
-If you attended [Svelte Summit](https://sveltesummit.com/) last month you may have seen my talk, [Futuristic Web Development](https://www.youtube.com/watch?v=qSfdtmcZ4d0), in which I finally tackled one of the most frequently asked questions about Svelte: when will Sapper reach version 1.0?
+If you attended [Svelte Summit](https://sveltesummit.com/) last month you may have seen my talk, Futuristic Web Development, in which I finally tackled one of the most frequently asked questions about Svelte: when will Sapper reach version 1.0?
 
 The answer: never.
 
 This was slightly tongue-in-cheek — as the talk explains, it's really more of a rewrite of Sapper coupled with a rebrand — but it raised a lot of new questions from the community, and it's time we offered a bit more clarity on what you can expect from Sapper's successor, SvelteKit.
+
+<div class="max">
+<figure style="max-width: 960px; margin: 0 auto">
+<div style="height: 0; padding: 0 0 57.1% 0; position: relative; margin: 0 auto;">
+	<iframe style="position: absolute; width: 100%; height: 100%; left: 0; top: 0; margin: 0;" src="https://www.youtube-nocookie.com/embed/qSfdtmcZ4d0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+<figcaption>'Futuristic Web Development' from <a href="https://sveltesummit.com/">Svelte Summit</a></figcaption>
+</figure>
+</div>
 
 
 ## What's Sapper?
