@@ -130,7 +130,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	let ready = false;
 
-	add_css && add_css($$.customStyleTag);
+	add_css($$.customStyleTag);
 
 	$$.ctx = instance
 		? instance(component, prop_values, (i, ret, ...rest) => {
