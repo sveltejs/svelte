@@ -11,7 +11,7 @@ If you attended [Svelte Summit](https://sveltesummit.com/) last month you may ha
 
 The answer: never.
 
-This was slightly tongue-in-cheek — as the talk explains, it's really more of a rewrite of Sapper coupled with a rebrand — but it raised a lot of new questions from the community, and it's time we offered a bit more clarity on what you can expect.
+This was slightly tongue-in-cheek — as the talk explains, it's really more of a rewrite of Sapper coupled with a rebrand — but it raised a lot of new questions from the community, and it's time we offered a bit more clarity on what you can expect from Sapper's successor, SvelteKit.
 
 
 ## What's Sapper?
