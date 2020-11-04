@@ -71,7 +71,7 @@ You won't have to — it will always be possible to use Svelte as a standalone p
 
 ## TypeScript?
 
-Don't worry, we won't launch without it.
+Don't worry, we won't launch without full TypeScript support.
 
 
 ## How can I migrate my existing Sapper apps?
