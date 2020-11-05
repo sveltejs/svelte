@@ -267,17 +267,13 @@ export default class Component {
 								this.helpers.set(name, alias);
 								node.name = alias.name;
 							}
-						}
-
-						else if (node.name[0] !== '#' && !is_valid(node.name)) {
+						} else if (node.name[0] !== '#' && !is_valid(node.name)) {
 							// this hack allows x`foo.${bar}` where bar could be invalid
 							const literal: Literal = { type: 'Literal', value: node.name };
 
 							if (parent.type === 'Property' && key === 'key') {
 								parent.key = literal;
-							}
-
-							else if (parent.type === 'MemberExpression' && key === 'property') {
+							} else if (parent.type === 'MemberExpression' && key === 'property') {
 								parent.property = literal;
 								parent.computed = true;
 							}
