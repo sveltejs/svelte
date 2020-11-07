@@ -83,7 +83,9 @@ async function replace_async(
 	return out.concat(final_content);
 }
 
-// Convert a preprocessor output and its leading prefix and trailing suffix into StringWithSourceMap
+/** 
+ * Convert a preprocessor output and its leading prefix and trailing suffix into StringWithSourceMap  
+ */
 function get_replacement(
 	filename: string,
 	offset: number,
@@ -124,7 +126,9 @@ export default async function preprocess(
 	const filename = (options && options.filename) || preprocessor.filename; // legacy
 	const dependencies = [];
 
-	const preprocessors = Array.isArray(preprocessor) ? preprocessor : [preprocessor || {}];
+	const preprocessors = preprocessor
+		? Array.isArray(preprocessor) ? preprocessor : [preprocessor]
+		: [];
 
 	const markup = preprocessors.map(p => p.markup).filter(Boolean);
 	const script = preprocessors.map(p => p.script).filter(Boolean);
@@ -145,24 +149,30 @@ export default async function preprocess(
 			filename
 		});
 
-		if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
-		source = processed ? processed.code : source;
-		if (processed && processed.map) {
-			sourcemap_list.unshift(
-				typeof(processed.map) === 'string'
-					? JSON.parse(processed.map)
-					: processed.map
-			);
+		if (processed) {
+			if (processed.dependencies) dependencies.push(...processed.dependencies);
+			source = processed.code;
+			if (processed.map) {
+				sourcemap_list.unshift(
+					typeof(processed.map) === 'string'
+						? JSON.parse(processed.map)
+						: processed.map
+				);
+			}
 		}
 	}
 
-	for (const fn of script) {
+	async function preprocess_tag_content(tag_name: 'style' | 'script', preprocessor: Preprocessor) {
 		const get_location = getLocator(source);
+		const tag_regex = tag_name == 'style' 
+			? /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi
+			: /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
+
 		const res = await replace_async(
 			filename,
 			source,
 			get_location,
-			/<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi,
+			tag_regex,
 			async (match, attributes = '', content = '', offset) => {
 				const no_change = () => StringWithSourcemap.from_source(
 					filename, match, get_location(offset));
@@ -173,51 +183,27 @@ export default async function preprocess(
 				content = content || '';
 
 				// run script preprocessor
-				const processed = await fn({
+				const processed = await preprocessor({
 					content,
 					attributes: parse_attributes(attributes),
 					filename
 				});
-				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
-				return processed
-					? get_replacement(filename, offset, get_location, content, processed, `<script${attributes}>`, '</script>')
-					: no_change();
+
+				if (!processed) return no_change();
+				if (processed.dependencies) dependencies.push(...processed.dependencies);
+				return get_replacement(filename, offset, get_location, content, processed, `<${tag_name}${attributes}>`, `</${tag_name}>`);
 			}
 		);
 		source = res.string;
 		sourcemap_list.unshift(res.map);
 	}
 
-	for (const fn of style) {
-		const get_location = getLocator(source);
-		const res = await replace_async(
-			filename,
-			source,
-			get_location,
-			/<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi,
-			async (match, attributes = '', content = '', offset) => {
-				const no_change = () => StringWithSourcemap.from_source(
-					filename, match, get_location(offset));
-				if (!attributes && !content) {
-					return no_change();
-				}
-				attributes = attributes || '';
-				content = content || '';
+	for (const fn of script) {
+		await preprocess_tag_content('script', fn);
+	}
 
-				// run style preprocessor
-				const processed: Processed = await fn({
-					content,
-					attributes: parse_attributes(attributes),
-					filename
-				});
-				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
-				return processed
-					? get_replacement(filename, offset, get_location, content, processed, `<style${attributes}>`, '</style>')
-					: no_change();
-			}
-		);
-		source = res.string;
-		sourcemap_list.unshift(res.map);
+	for (const fn of style) {
+		await preprocess_tag_content('style', fn);
 	}
 
 	// Combine all the source maps for each preprocessor function into one

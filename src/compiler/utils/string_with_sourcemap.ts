@@ -32,7 +32,7 @@ export function sourcemap_add_offset(
 	}
 }
 
-function merge_tables<T>(this_table: T[], other_table): [T[], number[], boolean, boolean] {
+function merge_tables<T>(this_table: T[], other_table: T[]): [T[], number[], boolean, boolean] {
 	const new_table = this_table.slice();
 	const idx_map = [];
 	other_table = other_table || [];
@@ -68,7 +68,7 @@ export class StringWithSourcemap {
 	string: string;
 	map: DecodedSourceMap;
 
-	constructor(string = '', map = null) {
+	constructor(string = '', map: DecodedSourceMap = null) {
 		this.string = string;
 		if (map) {
 			this.map = map as DecodedSourceMap;
@@ -82,8 +82,10 @@ export class StringWithSourcemap {
 		}
 	}
 
-	// concat in-place (mutable), return this (chainable)
-	// will also mutate the `other` object
+	/**
+	 * concat in-place (mutable), return this (chainable)
+	 * will also mutate the `other` object
+	 */
 	concat(other: StringWithSourcemap): StringWithSourcemap {
 		// noop: if one is empty, return the other
 		if (other.string == '') return this;
@@ -250,8 +252,8 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 		]
 	) as RawSourceMap;
 
-	//Svelte expects a SourceMap which includes toUrl and toString. Instead of using the magic-string constructor that takes a decoded map
-	//we just tack on the extra properties.
+	// Svelte expects a SourceMap which includes toUrl and toString. Instead of wrapping our output in a class,
+	// we just tack on the extra properties.
 	Object.defineProperties(result_map, {
 		toString: {
 			enumerable: false,
