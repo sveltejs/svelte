@@ -149,16 +149,16 @@ export default async function preprocess(
 			filename
 		});
 
-		if (processed) {
-			if (processed.dependencies) dependencies.push(...processed.dependencies);
-			source = processed.code;
-			if (processed.map) {
-				sourcemap_list.unshift(
-					typeof(processed.map) === 'string'
-						? JSON.parse(processed.map)
-						: processed.map
-				);
-			}
+		if (!processed) continue;
+
+		if (processed.dependencies) dependencies.push(...processed.dependencies);
+		source = processed.code;
+		if (processed.map) {
+			sourcemap_list.unshift(
+				typeof(processed.map) === 'string'
+					? JSON.parse(processed.map)
+					: processed.map
+			);
 		}
 	}
 

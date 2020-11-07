@@ -59,6 +59,8 @@ function merge_tables<T>(this_table: T[], other_table: T[]): [T[], number[], boo
 }
 
 function pushArray<T>(_this: T[], other: T[]) {
+	// We use push to mutate in place for memory and perf reasons
+	// We use the for loop instead of _this.push(...other) to avoid the JS engine's function argument limit (65,535 in JavascriptCore)
 	for (let i = 0; i < other.length; i++) {
 		_this.push(other[i]);
 	}
