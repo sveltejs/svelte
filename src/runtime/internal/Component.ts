@@ -217,7 +217,7 @@ export class SvelteComponent<
 	Events extends Record<string, any> = any
 > {
 	$$: T$$;
-	$$set?: ($$props: Partial<Props> & Record<string, any>) => void;
+	$$set?: ($$props: Partial<Props>) => void;
 
 	$destroy() {
 		destroy_component(this, 1);
@@ -234,7 +234,7 @@ export class SvelteComponent<
 		};
 	}
 
-	$set($$props: Partial<Props> & Record<string, any>) {
+	$set($$props: Partial<Props>) {
 		if (this.$$set && !is_empty($$props)) {
 			this.$$.skip_bound = true;
 			this.$$set($$props);
