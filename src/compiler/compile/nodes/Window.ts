@@ -28,9 +28,7 @@ export default class Window extends Node {
 		info.attributes.forEach(node => {
 			if (node.type === 'EventHandler') {
 				this.handlers.push(new EventHandler(component, this, scope, node));
-			}
-
-			else if (node.type === 'Binding') {
+			} else if (node.type === 'Binding') {
 				if (node.expression.type !== 'Identifier') {
 					const { parts } = flatten_reference(node.expression);
 
@@ -64,13 +62,9 @@ export default class Window extends Node {
 				}
 
 				this.bindings.push(new Binding(component, this, scope, node));
-			}
-
-			else if (node.type === 'Action') {
+			} else if (node.type === 'Action') {
 				this.actions.push(new Action(component, this, scope, node));
-			}
-
-			else {
+			} else {
 				// TODO there shouldn't be anything else here...
 			}
 		});

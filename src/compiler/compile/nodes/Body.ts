@@ -13,9 +13,7 @@ export default class Body extends Node {
 		info.attributes.forEach(node => {
 			if (node.type === 'EventHandler') {
 				this.handlers.push(new EventHandler(component, this, scope, node));
-			}
-
-			else {
+			} else {
 				// TODO there shouldn't be anything else here...
 			}
 		});
