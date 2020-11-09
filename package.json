@@ -19,6 +19,7 @@
     "README.md"
   ],
   "exports": {
+    "./package.json": "./package.json",
     ".": {
       "import": "./index.mjs",
       "require": "./index.js"
