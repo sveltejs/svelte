@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.29.6
 
 * Include `./package.json` in export map ([#5659](https://github.com/sveltejs/svelte/issues/5659))
 
