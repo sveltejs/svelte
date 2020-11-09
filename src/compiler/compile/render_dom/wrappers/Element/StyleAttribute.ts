@@ -164,9 +164,7 @@ function get_style_value(chunks: Array<Text | Expression>) {
 
 				break;
 			}
-		}
-
-		else {
+		} else {
 			value.push(chunk);
 		}
 	}
