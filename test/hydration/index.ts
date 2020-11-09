@@ -118,9 +118,11 @@ describe('hydration', () => {
 				throw err;
 			}
 
-			if (config.show) showOutput(cwd, {
-				hydratable: true
-			});
+			if (config.show) {
+				showOutput(cwd, {
+					hydratable: true
+				});
+			}
 		});
 	}
 

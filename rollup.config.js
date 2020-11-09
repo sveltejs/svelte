@@ -30,12 +30,12 @@ export default [
 			{
 				file: `index.mjs`,
 				format: 'esm',
-				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}`
+				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}/index.mjs`
 			},
 			{
 				file: `index.js`,
 				format: 'cjs',
-				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}`
+				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}/index.js`
 			}
 		],
 		external,
@@ -50,12 +50,12 @@ export default [
 				{
 					file: `${dir}/index.mjs`,
 					format: 'esm',
-					paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '..')}`
+					paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '..')}/index.mjs`
 				},
 				{
 					file: `${dir}/index.js`,
 					format: 'cjs',
-					paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '..')}`
+					paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '..')}/index.js`
 				}
 			],
 			external,

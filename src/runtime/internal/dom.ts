@@ -360,3 +360,19 @@ export class HtmlTag {
 		this.n.forEach(detach);
 	}
 }
+
+export function attribute_to_object(attributes: NamedNodeMap) {
+	const result = {};
+	for (const attribute of attributes) {
+		result[attribute.name] = attribute.value;
+	}
+	return result;
+}
+
+export function get_custom_elements_slots(element: HTMLElement) {
+	const result = {};
+	element.childNodes.forEach((node: Element) => {
+		result[node.slot || 'default'] = true;
+	});
+	return result;
+}

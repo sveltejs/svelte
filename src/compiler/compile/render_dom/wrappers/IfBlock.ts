@@ -447,6 +447,8 @@ export default class IfBlockWrapper extends Wrapper {
 				if (!${name}) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 					${name}.c();
+				} else {
+					${name}.p(#ctx, #dirty);
 				}
 				${has_transitions && b`@transition_in(${name}, 1);`}
 				${name}.m(${update_mount_node}, ${anchor});

@@ -67,17 +67,21 @@ export default class Binding extends Node {
 		} else {
 			const variable = component.var_lookup.get(name);
 
-			if (!variable || variable.global) component.error(this.expression.node, {
-				code: 'binding-undeclared',
-				message: `${name} is not declared`
-			});
+			if (!variable || variable.global) {
+				component.error(this.expression.node, {
+					code: 'binding-undeclared',
+					message: `${name} is not declared`
+				});
+			}
 
 			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
 
-			if (info.expression.type === 'Identifier' && !variable.writable) component.error(this.expression.node, {
-				code: 'invalid-binding',
-				message: 'Cannot bind to a variable which is not writable'
-			});
+			if (info.expression.type === 'Identifier' && !variable.writable) {
+				component.error(this.expression.node, {
+					code: 'invalid-binding',
+					message: 'Cannot bind to a variable which is not writable'
+				});
+			}
 		}
 
 		const type = parent.get_static_attribute_value('type');
