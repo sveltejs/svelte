@@ -142,10 +142,8 @@ export default function mustache(parser: Parser) {
 			};
 
 			parser.stack.push(block.else.children[0]);
-		}
-
-		// :else
-		else {
+		} else {
+			// :else
 			const block = parser.current();
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 				parser.error({

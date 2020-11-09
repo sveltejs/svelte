@@ -1,6 +1,6 @@
 [{
 	"code": "invalid-animation",
-	"message": "An element that use the animate directive must be the immediate child of a keyed each block",
+	"message": "An element that uses the animate directive must be the immediate child of a keyed each block",
 	"start": {
 		"line": 6,
 		"column": 6,

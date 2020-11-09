@@ -27,7 +27,7 @@ export default class Animation extends Node {
 			// TODO can we relax the 'immediate child' rule?
 			component.error(this, {
 				code: 'invalid-animation',
-				message: 'An element that use the animate directive must be the immediate child of a keyed each block'
+				message: 'An element that uses the animate directive must be the immediate child of a keyed each block'
 			});
 		}
 
