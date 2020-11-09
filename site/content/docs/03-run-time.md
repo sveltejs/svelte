@@ -777,7 +777,7 @@ The `flip` function calculates the start and end position of an element and anim
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number` | `function`, default `d => Math.sqrt(d) * 120`) — see below
-* `easing` (`function`, default [`cubicOut`](docs#cubicOut)) — an [easing function](docs#svelte_easing)
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
 
 
 `duration` can be be provided as either:
