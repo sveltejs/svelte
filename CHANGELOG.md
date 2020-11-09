@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Include `./package.json` in export map ([#5659](https://github.com/sveltejs/svelte/issues/5659))
+
 ## 3.29.5
 
 * Fix `$$props` and `$$restProps` when compiling to a custom element ([#5482](https://github.com/sveltejs/svelte/issues/5482))
