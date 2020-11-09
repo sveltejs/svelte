@@ -65,7 +65,7 @@
     "codecov": "codecov",
     "precodecov": "npm run coverage",
     "build": "rollup -c && npm run tsd",
-    "prepare": "npm run build",
+    "prepare": "PUBLISH=true npm run build",
     "dev": "rollup -cw",
     "pretest": "npm run build",
     "posttest": "agadoo internal/index.mjs",
