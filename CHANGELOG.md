@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix `$$props` and `$$restProps` when compiling to a custom element ([#5482](https://github.com/sveltejs/svelte/issues/5482))
+* Include an export map in `package.json` ([#5556](https://github.com/sveltejs/svelte/issues/5556))
 * Fix function calls in `<slot>` props that use contextual values ([#5565](https://github.com/sveltejs/svelte/issues/5565))
 * Fix handling aborted transitions in `{:else}` blocks ([#5573](https://github.com/sveltejs/svelte/issues/5573))
 * Add `Element` and `Node` to known globals ([#5586](https://github.com/sveltejs/svelte/issues/5586))
