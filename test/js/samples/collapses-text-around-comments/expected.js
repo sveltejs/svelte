@@ -59,7 +59,7 @@ class Component extends SvelteComponent {
 	constructor(options) {
 		super();
 		if (!document.getElementById("svelte-1a7i8ec-style")) add_css();
-		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 });
+		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 }, noop);
 	}
 }
 

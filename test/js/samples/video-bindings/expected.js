@@ -120,7 +120,7 @@ class Component extends SvelteComponent {
 			videoHeight: 1,
 			videoWidth: 2,
 			offsetWidth: 3
-		});
+		}, noop);
 	}
 }
 
