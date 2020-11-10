@@ -36,9 +36,7 @@ export default class RawMustacheTagWrapper extends Tag {
 			);
 
 			block.chunks.mount.push(insert(init));
-		}
-
-		else {
+		} else {
 			const needs_anchor = in_head || (this.next ? !this.next.is_dom_node() : (!this.parent || !this.parent.is_dom_node()));
 
 			const html_tag = block.get_unique_name('html_tag');

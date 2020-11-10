@@ -167,9 +167,7 @@ class Atrule {
 			this.children.forEach(child => {
 				child.apply(node);
 			});
-		}
-
-		else if (is_keyframes_node(this.node)) {
+		} else if (is_keyframes_node(this.node)) {
 			this.children.forEach((rule: Rule) => {
 				rule.selectors.forEach(selector => {
 					selector.used = true;

@@ -464,16 +464,18 @@ export default function dom(
 	}
 
 	if (options.customElement) {
+
+		let init_props = x`@attribute_to_object(this.attributes)`;
+		if (uses_slots) {
+			init_props = x`{ ...${init_props}, $$slots: @get_custom_elements_slots(this) }`;
+		}
+
 		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
 
-					const add_css = ${css.code
-						?	(b`() => this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`)
-						: x`@noop`}
-
-					@init(this, { target: this.shadowRoot, props: @attribute_to_object(this.attributes) }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${add_css}, ${dirty});
+					@init(this, { target: this.shadowRoot, props: ${init_props} }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${x`@noop`}, ${dirty});
 
 					${dev_props_check}
 

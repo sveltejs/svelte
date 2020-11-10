@@ -1,11 +1,18 @@
 # Svelte changelog
 
-## Unreleased
+## 3.29.6
+
+* Include `./package.json` in export map ([#5659](https://github.com/sveltejs/svelte/issues/5659))
+
+## 3.29.5
 
 * Fix `$$props` and `$$restProps` when compiling to a custom element ([#5482](https://github.com/sveltejs/svelte/issues/5482))
+* Include an export map in `package.json` ([#5556](https://github.com/sveltejs/svelte/issues/5556))
 * Fix function calls in `<slot>` props that use contextual values ([#5565](https://github.com/sveltejs/svelte/issues/5565))
 * Fix handling aborted transitions in `{:else}` blocks ([#5573](https://github.com/sveltejs/svelte/issues/5573))
 * Add `Element` and `Node` to known globals ([#5586](https://github.com/sveltejs/svelte/issues/5586))
+* Fix `$$slots` when compiling to custom elements ([#5594](https://github.com/sveltejs/svelte/issues/5594))
+* Fix internal `import`s so that we're exposing a valid ES module ([#5617](https://github.com/sveltejs/svelte/issues/5617))
 
 ## 3.29.4
 

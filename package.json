@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.29.4",
+  "version": "3.29.6",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -18,6 +18,41 @@
     "svelte",
     "README.md"
   ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    },
+    "./compiler": {
+      "import": "./compiler.mjs",
+      "require": "./compiler.js"
+    },
+    "./animate": {
+      "import": "./animate/index.mjs",
+      "require": "./animate/index.js"
+    },
+    "./easing": {
+      "import": "./easing/index.mjs",
+      "require": "./easing/index.js"
+    },
+    "./internal": {
+      "import": "./internal/index.mjs",
+      "require": "./internal/index.js"
+    },
+    "./motion": {
+      "import": "./motion/index.mjs",
+      "require": "./motion/index.js"
+    },
+    "./store": {
+      "import": "./store/index.mjs",
+      "require": "./store/index.js"
+    },
+    "./transition": {
+      "import": "./transition/index.mjs",
+      "require": "./transition/index.js"
+    }
+  },
   "engines": {
     "node": ">= 8"
   },
@@ -63,7 +98,7 @@
     "@rollup/plugin-sucrase": "^3.0.0",
     "@rollup/plugin-typescript": "^2.0.1",
     "@rollup/plugin-virtual": "^2.0.0",
-    "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.5.0",
+    "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.6.0",
     "@types/mocha": "^7.0.0",
     "@types/node": "^8.10.53",
     "@typescript-eslint/eslint-plugin": "^3.0.2",

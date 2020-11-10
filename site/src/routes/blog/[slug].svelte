@@ -172,17 +172,4 @@
 			margin: 2em auto;
 		}
 	}
-
-	/* @media (min-width: 1460px) {
-		.post :global(iframe) {
-			width: 1360px;
-			margin: 2em -280px;
-		}
-	}
-
-	@media (min-height: 800px) {
-		.post :global(iframe) {
-			height: 640px;
-		}
-	} */
 </style>
