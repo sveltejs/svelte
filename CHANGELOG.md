@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.29.7
+
+* Include `./register` in exports map ([#5670](https://github.com/sveltejs/svelte/issues/5670))
+
 ## 3.29.6
 
 * Include `./package.json` in export map ([#5659](https://github.com/sveltejs/svelte/issues/5659))
