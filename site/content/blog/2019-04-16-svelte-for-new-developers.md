@@ -45,7 +45,7 @@ A full introduction to the command line is out of the scope of this guide, but h
 Once installed, you'll have access to three new commands:
 
 * `node my-file.js` — runs the JavaScript in `my-file.js`
-* `npm [subcommand]` — [npm](https://www.npmjs.com/) is a way to install 'packages' that your application depends on, such as the [svelte](https://www.npmjs.com/) package
+* `npm [subcommand]` — [npm](https://www.npmjs.com/) is a way to install 'packages' that your application depends on, such as the [svelte](https://www.npmjs.com/package/svelte) package
 * `npx [subcommand]` — a convenient way to run programs available on npm without permanently installing them
 
 
