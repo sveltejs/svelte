@@ -44,6 +44,9 @@
       "import": "./motion/index.mjs",
       "require": "./motion/index.js"
     },
+    "./register": {
+      "require": "./register.js"
+    },
     "./store": {
       "import": "./store/index.mjs",
       "require": "./store/index.js"
