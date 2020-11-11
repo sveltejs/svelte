@@ -34,7 +34,7 @@ interface T$$ {
 	on_mount: any[];
 	on_destroy: any[];
 	skip_bound: boolean;
-	customStyleTag: HTMLElement;
+	customStyleTag?: HTMLElement;
 }
 
 export function bind(component, name, callback) {
@@ -97,17 +97,25 @@ function make_dirty(component, i) {
 	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
-export function init(component, options, instance, create_fragment, not_equal, props, add_css, dirty = [-1]) {
+
+export function addCssToComponent(that, add_css, options) {
+	that.$$ = {
+		customStyleTag: options.customStyleTag || current_component && current_component.$$.customStyleTag
+	};
+	add_css(that.$$.customStyleTag);
+}
+
+export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
 	const parent_component = current_component;
 	set_current_component(component);
 
 	const prop_values = options.props || {};
 
 	const $$: T$$ = component.$$ = {
+		...component.$$,
+
 		fragment: null,
 		ctx: null,
-
-		customStyleTag: options.customStyleTag || parent_component && parent_component.$$.customStyleTag,
 
 		// state
 		props,
@@ -129,8 +137,6 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	};
 
 	let ready = false;
-
-	add_css($$.customStyleTag);
 
 	$$.ctx = instance
 		? instance(component, prop_values, (i, ret, ...rest) => {
