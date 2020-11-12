@@ -45,8 +45,7 @@ class Component extends SvelteElement {
 			null,
 			create_fragment,
 			safe_not_equal,
-			{},
-			noop
+			{}
 		);
 
 		if (options) {

@@ -2,7 +2,6 @@
 import {
 	SvelteComponent,
 	append,
-	appendStyleIfNotPresent,
 	attr,
 	detach,
 	element,
@@ -14,8 +13,11 @@ import {
 	text
 } from "svelte/internal";
 
-function add_css(customStyleTag) {
-	appendStyleIfNotPresent(customStyleTag || document.head, "svelte-1a7i8ec-style", "p.svelte-1a7i8ec{color:red}");
+function add_css() {
+	var style = element("style");
+	style.id = "svelte-1a7i8ec-style";
+	style.textContent = "p.svelte-1a7i8ec{color:red}";
+	append(document.head, style);
 }
 
 function create_fragment(ctx) {
@@ -56,7 +58,8 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 }, add_css);
+		if (!document.getElementById("svelte-1a7i8ec-style")) add_css();
+		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 }, noop);
 	}
 }
 

@@ -3,7 +3,6 @@ import {
 	SvelteComponent,
 	component_subscribe,
 	init,
-	noop,
 	safe_not_equal,
 	set_store_value
 } from "svelte/internal";
@@ -24,7 +23,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, null, safe_not_equal, { increment: 0 }, noop);
+		init(this, options, instance, null, safe_not_equal, { increment: 0 });
 	}
 
 	get increment() {

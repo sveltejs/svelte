@@ -60,7 +60,7 @@ function link(node) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, {}, noop);
+		init(this, options, null, create_fragment, safe_not_equal, {});
 	}
 }
 
