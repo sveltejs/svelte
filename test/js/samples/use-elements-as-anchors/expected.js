@@ -158,7 +158,7 @@ function create_fragment(ctx) {
 		p(ctx, [dirty]) {
 			if (/*a*/ ctx[0]) {
 				if (if_block0) {
-
+					
 				} else {
 					if_block0 = create_if_block_4(ctx);
 					if_block0.c();
@@ -171,7 +171,7 @@ function create_fragment(ctx) {
 
 			if (/*b*/ ctx[1]) {
 				if (if_block1) {
-
+					
 				} else {
 					if_block1 = create_if_block_3(ctx);
 					if_block1.c();
@@ -184,7 +184,7 @@ function create_fragment(ctx) {
 
 			if (/*c*/ ctx[2]) {
 				if (if_block2) {
-
+					
 				} else {
 					if_block2 = create_if_block_2(ctx);
 					if_block2.c();
@@ -197,7 +197,7 @@ function create_fragment(ctx) {
 
 			if (/*d*/ ctx[3]) {
 				if (if_block3) {
-
+					
 				} else {
 					if_block3 = create_if_block_1(ctx);
 					if_block3.c();
@@ -210,7 +210,7 @@ function create_fragment(ctx) {
 
 			if (/*e*/ ctx[4]) {
 				if (if_block4) {
-
+					
 				} else {
 					if_block4 = create_if_block(ctx);
 					if_block4.c();
@@ -257,7 +257,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { a: 0, b: 1, c: 2, d: 3, e: 4 }, noop);
+		init(this, options, instance, create_fragment, safe_not_equal, { a: 0, b: 1, c: 2, d: 3, e: 4 });
 	}
 }
 

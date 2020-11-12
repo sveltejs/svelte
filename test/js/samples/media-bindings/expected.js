@@ -227,7 +227,7 @@ class Component extends SvelteComponent {
 			playbackRate: 8,
 			seeking: 9,
 			ended: 10
-		}, noop);
+		});
 	}
 }
 
