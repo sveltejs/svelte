@@ -224,7 +224,7 @@ if (typeof HTMLElement === 'function') {
 }
 
 export class SvelteComponent {
-	$$: T$$;
+	$$: T$$ = {} as T$$;
 	$$set?: ($$props: any) => void;
 
 	$destroy() {
