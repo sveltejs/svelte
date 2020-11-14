@@ -1,7 +1,7 @@
 import { has_prop } from './utils';
 
 export function appendStyleIfNotPresent(
-	target: Element = document.head,
+	target: Element,
 	styleSheetId: string,
 	styles: string,
 	styleId:string = `svelte-${styleSheetId}-style`) {

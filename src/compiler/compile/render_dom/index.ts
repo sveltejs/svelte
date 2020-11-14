@@ -44,8 +44,8 @@ export default function dom(
 
 	if (should_add_css) {
 		body.push(b`
-			function ${add_css}(customStyleTag) {
-				@appendStyleIfNotPresent(customStyleTag, "${component.stylesheet.id.replace('svelte-', '')}", "${styles}");
+			function ${add_css}(target) {
+				@appendStyleIfNotPresent(target, "${component.stylesheet.id.replace('svelte-', '')}", "${styles}");
 			}
 		`);
 	}

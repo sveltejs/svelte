@@ -102,7 +102,7 @@ export function addCssToComponent(component, add_css, options) {
 	component.$$ = {
 		customStyleTag: options.customStyleTag || current_component && current_component.$$.customStyleTag
 	};
-	add_css(component.$$.customStyleTag);
+	add_css(component.$$.customStyleTag || document.head);
 }
 
 export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
