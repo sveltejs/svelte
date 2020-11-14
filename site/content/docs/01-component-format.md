@@ -24,7 +24,7 @@ All three sections — script, styles and markup — are optional.
 
 A `<script>` block contains JavaScript that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup. There are four additional rules:
 
-#### 1. `export` creates a component prop
+#### 1. `export` creates a component prop { data-toc-ignore }
 
 ---
 
@@ -85,7 +85,7 @@ You can use reserved words as prop names.
 </script>
 ```
 
-#### 2. Assignments are 'reactive'
+#### 2. Assignments are 'reactive' { data-toc-ignore }
 
 ---
 
@@ -107,7 +107,7 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 </script>
 ```
 
-#### 3. `$:` marks a statement as reactive
+#### 3. `$:` marks a statement as reactive { data-toc-ignore }
 
 ---
 
@@ -143,7 +143,7 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 </script>
 ```
 
-#### 4. Prefix stores with `$` to access their values
+#### 4. Prefix stores with `$` to access their values { data-toc-ignore }
 
 ---
 
@@ -172,7 +172,7 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 </script>
 ```
 
-#### Store contract
+#### Store contract { data-toc-ignore }
 
 ```js
 store = { subscribe: (subscription: (value: any) => void) => (() => void), set?: (value: any) => void }

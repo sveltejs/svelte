@@ -3,6 +3,7 @@ import path from 'path';
 import { SLUG_PRESERVE_UNICODE, SLUG_SEPARATOR } from '../../../config';
 import { extract_frontmatter, extract_metadata, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
 import { make_session_slug_processor } from '@sveltejs/site-kit/utils/slug';
+import { extract_attributes } from '../../utils/attributes';
 import { highlight } from '../../utils/highlight';
 import marked from 'marked';
 
@@ -85,6 +86,10 @@ export default function() {
 			renderer.heading = (text, level, rawtext) => {
 				let slug;
 
+				let extracted = extract_attributes(text, rawtext);
+				text = extracted.text;
+				rawtext = extracted.raw;
+
 				const match = /<a href="([^"]+)"[^>]*>(.+)<\/a>/.exec(text);
 				if (match) {
 					slug = match[1];
@@ -93,7 +98,8 @@ export default function() {
 					slug = make_slug(rawtext);
 				}
 
-				if (level === 3 || level === 4) {
+				const tocIgnore = 'data-toc-ignore' in extracted.attrs;
+				if ((level === 3 || level === 4) && !tocIgnore) {
 					const title = text
 						.replace(/<\/?code>/g, '')
 						.replace(/\.(\w+)(\((.+)?\))?/, (m, $1, $2, $3) => {
@@ -106,8 +112,8 @@ export default function() {
 				}
 
 				return `
-					<h${level}>
-						<span id="${slug}" class="offset-anchor" ${level > 4 ? 'data-scrollignore' : ''}></span>
+					<h${level} ${extracted.attrstring}>
+						<span id="${slug}" class="offset-anchor" ${level > 4 || tocIgnore ? 'data-scrollignore' : ''}></span>
 						<a href="docs#${slug}" class="anchor" aria-hidden="true"></a>
 						${text}
 					</h${level}>`;
