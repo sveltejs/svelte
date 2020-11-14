@@ -98,11 +98,11 @@ function make_dirty(component, i) {
 }
 
 
-export function addCssToComponent(that, add_css, options) {
-	that.$$ = {
+export function addCssToComponent(component, add_css, options) {
+	component.$$ = {
 		customStyleTag: options.customStyleTag || current_component && current_component.$$.customStyleTag
 	};
-	add_css(that.$$.customStyleTag);
+	add_css(component.$$.customStyleTag);
 }
 
 export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
