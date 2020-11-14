@@ -13,7 +13,7 @@ import {
 } from "svelte/internal";
 
 function add_css(customStyleTag) {
-	appendStyleIfNotPresent(customStyleTag || document.head, "svelte-1slhpfn-style", "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}");
+	appendStyleIfNotPresent(customStyleTag, "1slhpfn", "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}");
 }
 
 function create_fragment(ctx) {

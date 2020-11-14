@@ -16,7 +16,7 @@ import {
 } from "svelte/internal";
 
 function add_css(customStyleTag) {
-	appendStyleIfNotPresent(customStyleTag || document.head, "svelte-1a7i8ec-style", "p.svelte-1a7i8ec{color:red}");
+	appendStyleIfNotPresent(customStyleTag, "1a7i8ec", "p.svelte-1a7i8ec{color:red}");
 }
 
 function create_fragment(ctx) {
