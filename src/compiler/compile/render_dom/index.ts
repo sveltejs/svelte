@@ -45,7 +45,7 @@ export default function dom(
 	if (should_add_css) {
 		body.push(b`
 			function ${add_css}(customStyleTag) {
-				@appendStyleIfNotPresent(customStyleTag || @_document.head, "${component.stylesheet.id}-style", "${styles}");
+				@appendStyleIfNotPresent(customStyleTag, "${component.stylesheet.id}", "${styles}");
 			}
 		`);
 	}

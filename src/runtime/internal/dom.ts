@@ -1,6 +1,10 @@
 import { has_prop } from './utils';
 
-export function appendStyleIfNotPresent(target: Element, styleId: string, styles: string) {
+export function appendStyleIfNotPresent(
+	target: Element = document.head,
+	styleSheetId: string,
+	styles: string,
+	styleId:string = styleSheetId + '-style') {
 	if (!target.querySelector('#' + styleId)) {
 		const style = element('style');
 		style.id = styleId;
