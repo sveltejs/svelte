@@ -98,7 +98,7 @@ function make_dirty(component, i) {
 }
 
 
-export function addCssToComponent(component, add_css, options) {
+export function add_css_to_component(component, add_css, options) {
 	component.$$ = {
 		customStyleTag: options.customStyleTag || current_component && current_component.$$.customStyleTag
 	};

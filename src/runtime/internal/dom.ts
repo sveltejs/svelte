@@ -1,6 +1,6 @@
 import { has_prop } from './utils';
 
-export function appendStyleIfNotPresent(
+export function append_style_if_not_present(
 	target: Element,
 	styleSheetId: string,
 	styles: string,

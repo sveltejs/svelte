@@ -45,7 +45,7 @@ export default function dom(
 	if (should_add_css) {
 		body.push(b`
 			function ${add_css}(target) {
-				@appendStyleIfNotPresent(target, "${component.stylesheet.id.replace('svelte-', '')}", "${styles}");
+				@append_style_if_not_present(target, "${component.stylesheet.id.replace('svelte-', '')}", "${styles}");
 			}
 		`);
 	}
@@ -529,7 +529,7 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && 'options'});
 
-					${should_add_css && b`@addCssToComponent(this, ${add_css}, options);`}
+					${should_add_css && b`@add_css_to_component(this, ${add_css}, options);`}
 
 					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
