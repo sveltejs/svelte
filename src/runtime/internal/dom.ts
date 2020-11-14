@@ -4,7 +4,7 @@ export function appendStyleIfNotPresent(
 	target: Element = document.head,
 	styleSheetId: string,
 	styles: string,
-	styleId:string = styleSheetId + '-style') {
+	styleId:string = `svelte-${styleSheetId}-style`) {
 	if (!target.querySelector('#' + styleId)) {
 		const style = element('style');
 		style.id = styleId;
