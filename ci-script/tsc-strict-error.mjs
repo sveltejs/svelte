@@ -4,7 +4,7 @@ const dirToCheck = [
 ]
 const tsErrorsThreshold = [
     883,  /* 'compiler' */
-    362,  /* 'runtime' */
+    358,  /* 'runtime' */
 ];
 
 import { promisify } from 'util';
