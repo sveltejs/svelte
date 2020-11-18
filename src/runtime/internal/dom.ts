@@ -122,7 +122,7 @@ export function set_custom_element_data(node, prop, value) {
 	}
 }
 
-export function xlink_attr(node, attribute, value) {
+export function xlink_attr(node: Element, attribute: string, value: string) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
