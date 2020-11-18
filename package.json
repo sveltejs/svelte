@@ -74,8 +74,9 @@
     "pretest": "npm run build",
     "posttest": "agadoo internal/index.mjs",
     "prepublishOnly": "npm run lint && PUBLISH=true npm test",
-    "tsd": "tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly",
-    "lint": "eslint \"{src,test}/**/*.{ts,js}\""
+    "tsd": "tsc -p src/compiler --emitDeclarationOnly --strict false && tsc -p src/runtime --emitDeclarationOnly --strict false",
+    "tsc-strict-error": "node ci-script/tsc-strict-error.mjs --unhandled-rejections=strict",
+    "lint": "npm run tsc-strict-error && eslint \"{src,test}/**/*.{ts,js}\""
   },
   "repository": {
     "type": "git",
