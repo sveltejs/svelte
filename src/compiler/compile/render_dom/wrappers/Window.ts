@@ -16,7 +16,7 @@ const associated_events = {
 	outerHeight: 'resize',
 
 	scrollX: 'scroll',
-	scrollY: 'scroll',
+	scrollY: 'scroll'
 };
 
 const properties = {
@@ -29,7 +29,7 @@ const readonly = new Set([
 	'innerHeight',
 	'outerWidth',
 	'outerHeight',
-	'online',
+	'online'
 ]);
 
 export default class WindowWrapper extends Wrapper {
@@ -72,9 +72,9 @@ export default class WindowWrapper extends Wrapper {
 			});
 		});
 
-		const scrolling = block.get_unique_name(`scrolling`);
-		const clear_scrolling = block.get_unique_name(`clear_scrolling`);
-		const scrolling_timeout = block.get_unique_name(`scrolling_timeout`);
+		const scrolling = block.get_unique_name('scrolling');
+		const clear_scrolling = block.get_unique_name('clear_scrolling');
+		const scrolling_timeout = block.get_unique_name('scrolling_timeout');
 
 		Object.keys(events).forEach(event => {
 			const id = block.get_unique_name(`onwindow${event}`);
@@ -156,7 +156,7 @@ export default class WindowWrapper extends Wrapper {
 
 		// another special case. (I'm starting to think these are all special cases.)
 		if (bindings.online) {
-			const id = block.get_unique_name(`onlinestatuschanged`);
+			const id = block.get_unique_name('onlinestatuschanged');
 			const name = bindings.online;
 
 			renderer.add_to_context(id.name);

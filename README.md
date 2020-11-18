@@ -2,13 +2,14 @@
   <a href="https://svelte.dev">
 	<img alt="Cybernetically enhanced web apps: Svelte" src="https://sveltejs.github.io/assets/banner.png">
   </a>
-
   <a href="https://www.npmjs.com/package/svelte">
     <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
   </a>
-
   <a href="https://github.com/sveltejs/svelte/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
+  </a>
+  <a href="https://svelte.dev/chat">
+    <img src="https://img.shields.io/discord/457912077277855764?label=chat&logo=discord" alt="Chat">
   </a>
 </p>
 
@@ -18,6 +19,15 @@
 Svelte is a new way to build web applications. It's a compiler that takes your declarative components and converts them into efficient JavaScript that surgically updates the DOM.
 
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://svelte.dev/chat).
+
+
+## Supporting Svelte
+
+Svelte is an MIT-licensed open source project with its ongoing development made possible entirely by the support of awesome volunteers. If you'd like to support their efforts, please consider:
+
+- [Becoming a backer on Open Collective](https://opencollective.com/svelte).
+
+Funds donated via Open Collective will be used for compensating expenses related to Svelte's development such as hosting costs. If sufficient donations are received, funds may also be used to support Svelte's development more directly.
 
 
 ## Development
@@ -33,11 +43,6 @@ npm install
 ```
 
 > Do not use Yarn to install the dependencies, as the specific package versions in `package-lock.json` are used to build and test Svelte.
-
-> Many tests depend on newlines being preserved as `<LF>`. On Windows, you can ensure this by cloning with:
-> ```bash
-> git -c core.autocrlf=false clone https://github.com/sveltejs/svelte.git
-> ```
 
 To build the compiler, and all the other modules included in the package:
 
@@ -69,14 +74,11 @@ npm run test -- -g transition
 
 ## svelte.dev
 
-The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.dev). To develop locally:
+The source code for https://svelte.dev, including all the documentation, lives in the [site](site) directory. The site is built with [Sapper](https://sapper.svelte.dev).
 
-```bash
-cd site
-npm install && npm run update
-npm run dev
-```
+### Is svelte.dev down?
 
+Probably not, but it's possible. If you can't seem to access any `.dev` sites, check out [this SuperUser question and answer](https://superuser.com/q/1413402).
 
 ## License
 

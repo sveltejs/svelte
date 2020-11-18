@@ -35,5 +35,5 @@ export default {
 		assert.equal(spans[0].foo, 1);
 		assert.equal(spans[1].foo, 1);
 		assert.equal(spans[2].foo, 1);
-	},
+	}
 };

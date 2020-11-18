@@ -1,4 +1,4 @@
-import { Node, Program } from "estree";
+import { Node, Program } from 'estree';
 import { SourceMap } from 'magic-string';
 
 interface BaseNode {
@@ -108,7 +108,7 @@ export interface CompileOptions {
 	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
-	generate?: string | false;
+	generate?: 'dom' | 'ssr' | false;
 
 	outputFilename?: string;
 	cssOutputFilename?: string;
@@ -161,6 +161,7 @@ export interface Var {
 	hoistable?: boolean;
 	subscribable?: boolean;
 	is_reactive_dependency?: boolean;
+	imported?: boolean;
 }
 
 export interface CssResult { 

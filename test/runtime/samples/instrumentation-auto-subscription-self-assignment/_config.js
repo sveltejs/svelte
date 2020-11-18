@@ -1,8 +1,8 @@
 export default {
-	html: `[]`,
+	html: '[]',
 
 	async test({ assert, component, target }) {
 		await component.go();
-		assert.htmlEqual(target.innerHTML, `[42]`);
+		assert.htmlEqual(target.innerHTML, '[42]');
 	}
 };

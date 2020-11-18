@@ -31,3 +31,24 @@ export function equal(a, b, message) {
 export function ok(condition, message) {
 	if (!condition) throw new Error(message || `Expected ${condition} to be truthy`);
 }
+
+export function htmlEqual(actual, expected, message) {
+	return deepEqual(
+		normalizeHtml(window, actual),
+		normalizeHtml(window, expected),
+		message
+	);
+}
+
+function normalizeHtml(window, html) {
+	try {
+		const node = window.document.createElement('div');
+		node.innerHTML = html
+			.replace(/<!--.*?-->/g, '')
+			.replace(/>[\s\r\n]+</g, '><')
+			.trim();
+		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
+	} catch (err) {
+		throw new Error(`Failed to normalize HTML:\n${html}`);
+	}
+}

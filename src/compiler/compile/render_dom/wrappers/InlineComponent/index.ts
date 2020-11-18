@@ -1,4 +1,5 @@
 import Wrapper from '../shared/Wrapper';
+import BindingWrapper from '../Element/Binding';
 import Renderer from '../../Renderer';
 import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
@@ -7,16 +8,16 @@ import { sanitize } from '../../../../utils/names';
 import add_to_set from '../../../utils/add_to_set';
 import { b, x, p } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
-import get_object from '../../../utils/get_object';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { get_slot_definition } from '../shared/get_slot_definition';
-import EachBlock from '../../../nodes/EachBlock';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { Node, Identifier, ObjectExpression } from 'estree';
 import EventHandler from '../Element/EventHandler';
 import { extract_names } from 'periscopic';
+import mark_each_block_bindings from '../shared/mark_each_block_bindings';
+import { string_to_member_expression } from '../../../utils/string_to_member_expression';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
@@ -47,12 +48,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		this.node.bindings.forEach(binding => {
 			if (binding.is_contextual) {
-				// we need to ensure that the each block creates a context including
-				// the list and the index, if they're not otherwise referenced
-				const { name } = get_object(binding.expression.node);
-				const each_block = this.node.scope.get_owner(name);
-
-				(each_block as EachBlock).has_binding = true;
+				mark_each_block_bindings(this, binding);
 			}
 
 			block.add_dependencies(binding.expression.dependencies);
@@ -82,7 +78,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const default_slot = block.child({
 				comment: create_debugging_comment(node, renderer.component),
-				name: renderer.component.get_unique_name(`create_default_slot`),
+				name: renderer.component.get_unique_name('create_default_slot'),
 				type: 'slot'
 			});
 
@@ -116,7 +112,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
 			this.renderer.component.warn(this.node, {
 				code: 'reactive-component',
-				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`,
+				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`
 			});
 		}
 	}
@@ -132,6 +128,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const { component } = renderer;
 
 		const name = this.var;
+		block.add_variable(name);
 
 		const component_opts = x`{}` as ObjectExpression;
 
@@ -155,6 +152,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		// removing empty slot
 		for (const slot of this.slots.keys()) {
 			if (!this.slots.get(slot).block.has_content()) {
+				this.renderer.remove_block(this.slots.get(slot).block);
 				this.slots.delete(slot);
 			}
 		}
@@ -308,7 +306,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			component.has_reactive_assignments = true;
 
 			if (binding.name === 'this') {
-				return bind_this(component, block, binding, this.var);
+				return bind_this(component, block, new BindingWrapper(block, binding, this), this.var);
 			}
 
 			const id = component.get_unique_name(`${this.var.name}_${binding.name}_binding`);
@@ -415,7 +413,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 
 				if (${switch_value}) {
-					var ${name} = new ${switch_value}(${switch_props}(#ctx));
+					${name} = new ${switch_value}(${switch_props}(#ctx));
 
 					${munged_bindings}
 					${munged_handlers}
@@ -434,7 +432,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.chunks.mount.push(b`
 				if (${name}) {
-					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});
+					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 				}
 			`);
 
@@ -471,7 +469,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${name} = null;
 					}
 				} else if (${switch_value}) {
-					${updates.length && b`${name}.$set(${name_changes});`}
+					${updates.length > 0 && b`${name}.$set(${name_changes});`}
 				}
 			`);
 
@@ -487,13 +485,13 @@ export default class InlineComponentWrapper extends Wrapper {
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? component.name
-				: this.renderer.reference(this.node.name);
+				: this.renderer.reference(string_to_member_expression(this.node.name));
 
 			block.chunks.init.push(b`
 				${(this.node.attributes.length > 0 || this.node.bindings.length > 0) && b`
 				${props && b`let ${props} = ${attribute_object};`}`}
 				${statements}
-				const ${name} = new ${expression}(${component_opts});
+				${name} = new ${expression}(${component_opts});
 
 				${munged_bindings}
 				${munged_handlers}
@@ -508,7 +506,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.chunks.mount.push(
-				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : 'anchor'});`
+				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
 			);
 
 			block.chunks.intro.push(b`

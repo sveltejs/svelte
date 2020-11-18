@@ -112,7 +112,7 @@
 	<input
 		class="new-todo"
 		placeholder="what needs to be done?"
-		on:keydown="{event => event.which === 13 && add(event.target)}"
+		on:keydown="{event => event.key === 'Enter' && add(event.target)}"
 	>
 
 	<div class='left'>

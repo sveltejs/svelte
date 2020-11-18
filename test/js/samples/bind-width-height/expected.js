@@ -30,7 +30,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(div);
-			div_resize_listener.cancel();
+			div_resize_listener();
 		}
 	};
 }
@@ -46,7 +46,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(1, h);
 	}
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("w" in $$props) $$invalidate(0, w = $$props.w);
 		if ("h" in $$props) $$invalidate(1, h = $$props.h);
 	};

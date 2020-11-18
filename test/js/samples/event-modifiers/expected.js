@@ -16,46 +16,60 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
-	let div;
-	let button0;
+	let div1;
+	let div0;
 	let t1;
-	let button1;
+	let button0;
 	let t3;
+	let button1;
+	let t5;
 	let button2;
+	let mounted;
 	let dispose;
 
 	return {
 		c() {
-			div = element("div");
+			div1 = element("div");
+			div0 = element("div");
+			div0.textContent = "touch me";
+			t1 = space();
 			button0 = element("button");
 			button0.textContent = "click me";
-			t1 = space();
+			t3 = space();
 			button1 = element("button");
 			button1.textContent = "or me";
-			t3 = space();
+			t5 = space();
 			button2 = element("button");
 			button2.textContent = "or me!";
 		},
 		m(target, anchor) {
-			insert(target, div, anchor);
-			append(div, button0);
-			append(div, t1);
-			append(div, button1);
-			append(div, t3);
-			append(div, button2);
+			insert(target, div1, anchor);
+			append(div1, div0);
+			append(div1, t1);
+			append(div1, button0);
+			append(div1, t3);
+			append(div1, button1);
+			append(div1, t5);
+			append(div1, button2);
 
-			dispose = [
-				listen(button0, "click", stop_propagation(prevent_default(handleClick))),
-				listen(button1, "click", handleClick, { once: true, capture: true }),
-				listen(button2, "click", handleClick, true),
-				listen(div, "touchstart", handleTouchstart, { passive: true })
-			];
+			if (!mounted) {
+				dispose = [
+					listen(div0, "touchstart", handleTouchstart, { passive: false }),
+					listen(button0, "click", stop_propagation(prevent_default(handleClick))),
+					listen(button1, "click", handleClick, { once: true, capture: true }),
+					listen(button2, "click", handleClick, true),
+					listen(div1, "touchstart", handleTouchstart, { passive: true })
+				];
+
+				mounted = true;
+			}
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(div);
+			if (detaching) detach(div1);
+			mounted = false;
 			run_all(dispose);
 		}
 	};

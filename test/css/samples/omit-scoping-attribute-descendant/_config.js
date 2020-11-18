@@ -1,7 +1,7 @@
 export default {
 	warnings: [{
-		code: `css-unused-selector`,
-		message: 'Unused CSS selector',
+		code: 'css-unused-selector',
+		message: 'Unused CSS selector "div > p"',
 		start: {
 			line: 8,
 			column: 1,

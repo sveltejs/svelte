@@ -70,9 +70,18 @@ export default function dom(
 		);
 	}
 
+	const uses_slots = component.var_lookup.has('$$slots');
+	let compute_slots;
+	if (uses_slots) {
+		compute_slots = b`
+			const $$slots = @compute_slots(#slots);
+		`;
+	}
+
+
 	const uses_props = component.var_lookup.has('$$props');
 	const uses_rest = component.var_lookup.has('$$restProps');
-	const $$props = uses_props || uses_rest ? `$$new_props` : `$$props`;
+	const $$props = uses_props || uses_rest ? '$$new_props' : '$$props';
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
@@ -293,24 +302,12 @@ export default function dom(
 		const variable = component.var_lookup.get(prop.name);
 
 		if (variable.hoistable) return false;
-		if (prop.name[0] === '$') return false;
-		return true;
+		return prop.name[0] !== '$';
 	});
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 
 	const instance_javascript = component.extract_javascript(component.ast.instance);
-
-	let i = renderer.context.length;
-	while (i--) {
-		const member = renderer.context[i];
-		if (member.variable) {
-			if (member.variable.referenced || member.variable.export_name) break;
-		} else if (member.is_non_contextual) {
-			break;
-		}
-	}
-	const initial_context = renderer.context.slice(0, i + 1);
 
 	const has_definition = (
 		component.compile_options.dev ||
@@ -318,7 +315,7 @@ export default function dom(
 		filtered_props.length > 0 ||
 		uses_props ||
 		component.partly_hoisted.length > 0 ||
-		initial_context.length > 0 ||
+		renderer.initial_context.length > 0 ||
 		component.reactive_declarations.length > 0 ||
 		capture_state ||
 		inject_state
@@ -404,7 +401,7 @@ export default function dom(
 
 		const return_value = {
 			type: 'ArrayExpression',
-			elements: initial_context.map(member => ({
+			elements: renderer.initial_context.map(member => ({
 				type: 'Identifier',
 				name: member.name
 			}) as Expression)
@@ -420,18 +417,19 @@ export default function dom(
 
 				${resubscribable_reactive_store_unsubscribers}
 
+				${component.slots.size || component.compile_options.dev || uses_slots ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
+				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
+				${compute_slots}
+
 				${instance_javascript}
 
 				${unknown_props_check}
 
-				${component.slots.size || component.compile_options.dev ? b`let { $$slots = {}, $$scope } = $$props;` : null}
-				${component.compile_options.dev && b`@validate_slots('${component.tag}', $$slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
-
-				${renderer.binding_groups.length > 0 && b`const $$binding_groups = [${renderer.binding_groups.map(_ => x`[]`)}];`}
+				${renderer.binding_groups.size > 0 && b`const $$binding_groups = [${[...renderer.binding_groups.keys()].map(_ => x`[]`)}];`}
 
 				${component.partly_hoisted}
 
-				${set && b`$$self.$set = ${set};`}
+				${set && b`$$self.$$set = ${set};`}
 
 				${capture_state && b`$$self.$capture_state = ${capture_state};`}
 
@@ -469,6 +467,12 @@ export default function dom(
 	}
 
 	if (options.customElement) {
+
+		let init_props = x`@attribute_to_object(this.attributes)`;
+		if (uses_slots) {
+			init_props = x`{ ...${init_props}, $$slots: @get_custom_elements_slots(this) }`;
+		}
+
 		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
@@ -476,7 +480,7 @@ export default function dom(
 
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, { target: this.shadowRoot, props: ${init_props} }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 
 					${dev_props_check}
 
@@ -526,7 +530,7 @@ export default function dom(
 		const declaration = b`
 			class ${name} extends ${superclass} {
 				constructor(options) {
-					super(${options.dev && `options`});
+					super(${options.dev && 'options'});
 					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
 					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}

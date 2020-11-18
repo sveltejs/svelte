@@ -5,8 +5,8 @@
 <style>
 	.input-output-toggle {
 		display: grid;
-		position: absolute;
 		user-select: none;
+		flex: 0;
 		grid-template-columns: 1fr 40px 1fr;
 		grid-gap: 0.5em;
 		align-items: center;

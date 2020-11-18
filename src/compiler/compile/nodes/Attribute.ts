@@ -38,9 +38,7 @@ export default class Attribute extends Node {
 			this.chunks = null;
 
 			this.is_static = false;
-		}
-
-		else {
+		} else {
 			this.name = info.name;
 			this.is_true = info.value === true;
 			this.is_static = true;

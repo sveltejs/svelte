@@ -1,7 +1,1 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px" viewBox="0 0 24 24">
-	<g style="fill: none; stroke: white; stroke-width: 2;">
-		<path d='M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34' />
-		<polygon points='18 2 22 6 12 16 8 16 8 12 18 2' />
-	</g>
-</svg>
+<svg height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#fff" stroke-width="2"><path d="m20 14.66v5.34a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2-2v-14a2 2 0 0 1 2-2h5.34"/><path d="m18 2 4 4-10 10h-4v-4z"/></g></svg>

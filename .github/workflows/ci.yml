@@ -3,12 +3,12 @@ on: [push, pull_request]
 jobs:
   Tests:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [8, 10, 12]
+        node-version: [8, 10, 12, 14]
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
-    - run: git config --global core.autocrlf false
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
@@ -19,12 +19,17 @@ jobs:
         CI: true
   Lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
     - run: 'npm i && npm run lint'
   Unit:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1

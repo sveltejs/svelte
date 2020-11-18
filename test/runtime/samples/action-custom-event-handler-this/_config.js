@@ -1,10 +1,10 @@
 export default {
-	html: `<input>`,
+	html: '<input>',
 
 	test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		const event = new window.KeyboardEvent('keydown', {
-			which: 13
+			key: 'Enter'
 		});
 
 		let blurred = false;
@@ -18,5 +18,5 @@ export default {
 		input.dispatchEvent(event);
 
 		assert.ok(blurred);
-	},
+	}
 };

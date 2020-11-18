@@ -5,5 +5,5 @@ export default {
 		count: writable(0)
 	},
 
-	error: `The $ prefix is reserved, and cannot be used for variable and import names`
+	error: 'The $ prefix is reserved, and cannot be used for variable and import names'
 };

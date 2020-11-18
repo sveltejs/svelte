@@ -37,5 +37,5 @@ export default {
 
 		assert.deepEqual(names, ['world', 'everybody', 'goodbye']);
 		unsubscribe();
-	},
+	}
 };

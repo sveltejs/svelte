@@ -6,6 +6,7 @@ import EachBlock from './EachBlock';
 import Element from './Element/index';
 import Head from './Head';
 import IfBlock from './IfBlock';
+import KeyBlock from './KeyBlock';
 import InlineComponent from './InlineComponent/index';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
@@ -30,6 +31,7 @@ const wrappers = {
 	Head,
 	IfBlock,
 	InlineComponent,
+	KeyBlock,
 	MustacheTag,
 	Options: null,
 	RawMustacheTag,
@@ -67,7 +69,7 @@ export default class FragmentWrapper {
 			const child = nodes[i];
 
 			if (!child.type) {
-				throw new Error(`missing type`);
+				throw new Error('missing type');
 			}
 
 			if (!(child.type in wrappers)) {

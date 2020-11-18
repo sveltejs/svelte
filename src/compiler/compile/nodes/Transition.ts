@@ -28,19 +28,19 @@ export default class Transition extends Node {
 				: `An element cannot have both ${describe(parent_transition)} directive and ${describe(this)} directive`;
 
 			component.error(info, {
-				code: `duplicate-transition`,
+				code: 'duplicate-transition',
 				message
 			});
 		}
 
 		this.expression = info.expression
-			? new Expression(component, this, scope, info.expression, true)
+			? new Expression(component, this, scope, info.expression)
 			: null;
 	}
 }
 
 function describe(transition: Transition) {
 	return transition.directive === 'transition'
-		? `a 'transition'`
+		? "a 'transition'"
 		: `an '${transition.directive}'`;
 }

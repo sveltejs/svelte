@@ -15,7 +15,7 @@ export default {
 		component.$destroy();
 
 		assert.deepEqual(warnings, [
-			`Component was already destroyed`
+			'Component was already destroyed'
 		]);
 
 		console.warn = warn; // eslint-disable-line no-console

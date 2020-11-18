@@ -21,5 +21,5 @@ export default {
 
 		raf.tick(200);
 		assert.htmlEqual(target.innerHTML, '');
-	},
+	}
 };

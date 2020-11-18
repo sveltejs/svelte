@@ -1,7 +1,1 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px" viewBox="0 0 24 24">
-	<g fill="none" stroke="white" stroke-width="2">
-		<line x1='5' y1='12' x2='19' y2='12' />
-		<polyline points='12 5 19 12 12 19' />
-	</g>
-</svg>
+<svg height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#fff" stroke-width="2"><path d="m5 12h14"/><path d="m12 5 7 7-7 7"/></g></svg>

@@ -157,12 +157,12 @@ function create_fragment(ctx) {
 		},
 		p(ctx, [dirty]) {
 			if (/*a*/ ctx[0]) {
-				if (!if_block0) {
+				if (if_block0) {
+					
+				} else {
 					if_block0 = create_if_block_4(ctx);
 					if_block0.c();
 					if_block0.m(div, t0);
-				} else {
-					
 				}
 			} else if (if_block0) {
 				if_block0.d(1);
@@ -170,12 +170,12 @@ function create_fragment(ctx) {
 			}
 
 			if (/*b*/ ctx[1]) {
-				if (!if_block1) {
+				if (if_block1) {
+					
+				} else {
 					if_block1 = create_if_block_3(ctx);
 					if_block1.c();
 					if_block1.m(div, t3);
-				} else {
-					
 				}
 			} else if (if_block1) {
 				if_block1.d(1);
@@ -183,12 +183,12 @@ function create_fragment(ctx) {
 			}
 
 			if (/*c*/ ctx[2]) {
-				if (!if_block2) {
+				if (if_block2) {
+					
+				} else {
 					if_block2 = create_if_block_2(ctx);
 					if_block2.c();
 					if_block2.m(div, t4);
-				} else {
-					
 				}
 			} else if (if_block2) {
 				if_block2.d(1);
@@ -196,12 +196,12 @@ function create_fragment(ctx) {
 			}
 
 			if (/*d*/ ctx[3]) {
-				if (!if_block3) {
+				if (if_block3) {
+					
+				} else {
 					if_block3 = create_if_block_1(ctx);
 					if_block3.c();
 					if_block3.m(div, null);
-				} else {
-					
 				}
 			} else if (if_block3) {
 				if_block3.d(1);
@@ -209,12 +209,12 @@ function create_fragment(ctx) {
 			}
 
 			if (/*e*/ ctx[4]) {
-				if (!if_block4) {
+				if (if_block4) {
+					
+				} else {
 					if_block4 = create_if_block(ctx);
 					if_block4.c();
 					if_block4.m(if_block4_anchor.parentNode, if_block4_anchor);
-				} else {
-					
 				}
 			} else if (if_block4) {
 				if_block4.d(1);
@@ -243,7 +243,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { d } = $$props;
 	let { e } = $$props;
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("a" in $$props) $$invalidate(0, a = $$props.a);
 		if ("b" in $$props) $$invalidate(1, b = $$props.b);
 		if ("c" in $$props) $$invalidate(2, c = $$props.c);

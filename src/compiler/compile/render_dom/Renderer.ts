@@ -26,12 +26,13 @@ export default class Renderer {
 	options: CompileOptions;
 
 	context: ContextMember[] = [];
+	initial_context: ContextMember[] = [];
 	context_lookup: Map<string, ContextMember> = new Map();
 	context_overflow: boolean;
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
-	binding_groups: string[] = [];
+	binding_groups: Map<string, { binding_group: (to_reference?: boolean) => Node; is_context: boolean; contexts: string[]; index: number }> = new Map();
 
 	block: Block;
 	fragment: FragmentWrapper;
@@ -59,10 +60,10 @@ export default class Renderer {
 
 		if (component.slots.size > 0) {
 			this.add_to_context('$$scope');
-			this.add_to_context('$$slots');
+			this.add_to_context('#slots');
 		}
 
-		if (this.binding_groups.length > 0) {
+		if (this.binding_groups.size > 0) {
 			this.add_to_context('$$binding_groups');
 		}
 
@@ -75,7 +76,7 @@ export default class Renderer {
 
 			bindings: new Map(),
 
-			dependencies: new Set(),
+			dependencies: new Set()
 		});
 
 		this.block.has_update_method = true;
@@ -110,8 +111,12 @@ export default class Renderer {
 
 				// these determine whether variable is included in initial context
 				// array, so must have the highest priority
-				if (variable.export_name) member.priority += 8;
-				if (variable.referenced) member.priority += 16;
+				if (variable.export_name) member.priority += 16;
+				if (variable.referenced) member.priority += 32;
+			} else if (member.is_non_contextual) {
+				// determine whether variable is included in initial context
+				// array, so must have the highest priority
+				member.priority += 8;
 			}
 
 			if (!member.is_contextual) {
@@ -121,6 +126,17 @@ export default class Renderer {
 
 		this.context.sort((a, b) => (b.priority - a.priority) || ((a.index.value as number) - (b.index.value as number)));
 		this.context.forEach((member, i) => member.index.value = i);
+
+		let i = this.context.length;
+		while (i--) {
+			const member = this.context[i];
+			if (member.variable) {
+				if (member.variable.referenced || member.variable.export_name) break;
+			} else if (member.is_non_contextual) {
+				break;
+			}
+		}
+		this.initial_context = this.context.slice(0, i + 1);
 	}
 
 	add_to_context(name: string, contextual = false) {
@@ -144,19 +160,20 @@ export default class Renderer {
 			member.is_contextual = true;
 		} else {
 			member.is_non_contextual = true;
-			const variable = this.component.var_lookup.get(name);
-			member.variable = variable;
+			member.variable = this.component.var_lookup.get(name);
 		}
 
 		return member;
 	}
 
-	invalidate(name: string, value?) {
+	invalidate(name: string, value?, main_execution_context: boolean = false) {
 		const variable = this.component.var_lookup.get(name);
 		const member = this.context_lookup.get(name);
 
 		if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {
-			return x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${value || name}))`;
+			return main_execution_context
+			  ? x`${`$$subscribe_${name}`}(${value || name})`
+			  : x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${value || name}))`;
 		}
 
 		if (name[0] === '$' && name[1] !== '$') {
@@ -218,7 +235,7 @@ export default class Renderer {
 				if (!member) return;
 
 				if (member.index.value === -1) {
-					throw new Error(`unset index`);
+					throw new Error('unset index');
 				}
 
 				const value = member.index.value as number;
@@ -283,5 +300,9 @@ export default class Renderer {
 		}
 
 		return node;
+	}
+
+	remove_block(block: Block | Node | Node[]) {
+		this.blocks.splice(this.blocks.indexOf(block), 1);
 	}
 }

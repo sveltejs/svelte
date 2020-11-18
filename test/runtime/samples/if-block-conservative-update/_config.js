@@ -9,7 +9,7 @@ export default {
 		}
 	},
 
-	html: `<p>potato</p>`,
+	html: '<p>potato</p>',
 
 	test({ assert, component, target }) {
 		assert.equal(count, 1);
@@ -17,6 +17,6 @@ export default {
 		component.foo = 'soup';
 		assert.equal(count, 1);
 
-		assert.htmlEqual(target.innerHTML, `<p>soup</p>`);
+		assert.htmlEqual(target.innerHTML, '<p>soup</p>');
 	}
 };

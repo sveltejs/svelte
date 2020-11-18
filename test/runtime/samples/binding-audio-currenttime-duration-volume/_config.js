@@ -8,6 +8,7 @@ export default {
 		assert.equal(component.t, 0);
 		assert.equal(component.d, 0);
 		assert.equal(component.v, 0.5);
+		assert.equal(component.m, true);
 		assert.equal(component.r, 1);
 		assert.equal(component.paused, true);
 
@@ -20,6 +21,7 @@ export default {
 		audio.currentTime = 10;
 		audio.duration = 20;
 		audio.volume = 0.75;
+		audio.muted = false;
 		audio.playbackRate = 2;
 		audio.dispatchEvent(timeupdate);
 		audio.dispatchEvent(durationchange);
@@ -30,6 +32,7 @@ export default {
 		assert.equal(component.t, 10);
 		assert.equal(component.d, 0); // not 20, because read-only. Not sure how to test this!
 		assert.equal(component.v, 0.75);
+		assert.equal(component.m, false);
 		assert.equal(component.r, 2);
 		assert.equal(component.paused, true); // ditto...
 	}

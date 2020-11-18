@@ -11,9 +11,9 @@ export interface AnimationConfig {
 }
 
 interface FlipParams {
-	delay: number;
-	duration: number | ((len: number) => number);
-	easing: (t: number) => number;
+	delay?: number;
+	duration?: number | ((len: number) => number);
+	easing?: (t: number) => number;
 }
 
 export function flip(node: Element, animation: { from: DOMRect; to: DOMRect }, params: FlipParams): AnimationConfig {
