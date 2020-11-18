@@ -102,7 +102,7 @@ onDestroy(callback: () => void)
 
 ---
 
-Schedules a callback to run once the component is unmounted.
+Schedules a callback to run immediately before the component is unmounted.
 
 Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the only one that runs inside a server-side component.
 
