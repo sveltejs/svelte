@@ -54,6 +54,10 @@ export function getContext<T>(key): T {
 	return get_current_component().$$.context.get(key);
 }
 
+export function hasContext(key): boolean {
+	return get_current_component().$$.context.has(key);	
+}
+
 // TODO figure out if we still want to support
 // shorthand events, or if we want to implement
 // a real bubbling mechanism
