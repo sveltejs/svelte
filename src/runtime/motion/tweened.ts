@@ -2,6 +2,7 @@ import { Readable, writable } from 'svelte/store';
 import { assign, is_function, loop, now, Task } from 'svelte/internal';
 import { linear } from 'svelte/easing';
 import { is_date } from './utils';
+import { resolved_promise } from '../../constants';
 
 function get_interpolator(a, b) {
 	if (a === b || a !== a) return () => a;
@@ -78,7 +79,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 	function set(new_value: T, opts?: Options<T>) {
 		if (value == null) {
 			store.set(value = new_value);
-			return Promise.resolve();
+			return resolved_promise;
 		}
 
 		target_value = new_value;
@@ -100,7 +101,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 			}
 
 			store.set(value = target_value);
-			return Promise.resolve();
+			return resolved_promise;
 		}
 
 		const start = now() + delay;

@@ -5,12 +5,13 @@ import { create_rule, delete_rule } from './style_manager';
 import { custom_event } from './dom';
 import { add_render_callback } from './scheduler';
 import { TransitionConfig } from '../transition';
+import { resolved_promise } from '../../constants';
 
 let promise: Promise<void>|null;
 
 function wait() {
 	if (!promise) {
-		promise = Promise.resolve();
+		promise = resolved_promise;
 		promise.then(() => {
 			promise = null;
 		});
