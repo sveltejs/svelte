@@ -1,5 +1,5 @@
 import { Readable, writable } from 'svelte/store';
-import { assign, loop, now, Task } from 'svelte/internal';
+import { assign, is_function, loop, now, Task } from 'svelte/internal';
 import { linear } from 'svelte/easing';
 import { is_date } from './utils';
 
@@ -111,7 +111,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 
 			if (!started) {
 				fn = interpolate(value, new_value);
-				if (typeof duration === 'function') duration = duration(value, new_value);
+				if (is_function(duration)) duration = duration(value, new_value);
 				started = true;
 			}
 
