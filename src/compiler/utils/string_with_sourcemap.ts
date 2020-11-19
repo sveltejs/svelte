@@ -227,8 +227,9 @@ export function combine_sourcemaps(
 					if (sourcefile === filename && sourcemap_list[map_idx]) {
 						return sourcemap_list[map_idx++]; // idx 1, 2, ...
 						// bundle file = branch node
+					} else {
+						return null; // source file = leaf node
 					}
-					else return null; // source file = leaf node
 				} as SourceMapLoader,
 				true
 			);
