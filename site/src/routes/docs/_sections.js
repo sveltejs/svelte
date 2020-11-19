@@ -86,7 +86,7 @@ export default function() {
 			renderer.heading = (text, level, rawtext) => {
 				let slug;
 
-				let extracted = extract_attributes(text, rawtext);
+				const extracted = extract_attributes(text, rawtext);
 				text = extracted.text;
 				rawtext = extracted.raw;
 
