@@ -25,7 +25,7 @@ async function main() {
     let conditionallyExitWithNonZeroCode = noop;
 
     for (let i = 0; i < tsErrorsThreshold.length; i++) {
-        if(errorsCount[i] > tsErrorsThreshold[i]) {
+        if (errorsCount[i] > tsErrorsThreshold[i]) {
             conditionallyPrintError[i] = () => console.log(errors[i]);
             conditionallyExplainError = () => console.log(`This project is in the processing of enforcing TypeScript's "strict": true`);
             printErrorCount[i] = () => printErrorFromCompileCount(dirToCheck[i], errorsCount[i], tsErrorsThreshold[i], 'higher than')
