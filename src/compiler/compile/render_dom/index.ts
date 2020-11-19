@@ -7,6 +7,8 @@ import { extract_names, Scope } from '../utils/scope';
 import { invalidate } from './invalidate';
 import Block from './Block';
 import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { apply_preprocessor_sourcemap } from '../../utils/string_with_sourcemap';
+import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 
 export default function dom(
 	component: Component,
@@ -30,6 +32,9 @@ export default function dom(
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
+
+	css.map = apply_preprocessor_sourcemap(options.filename, css.map, options.sourcemap as string | RawSourceMap | DecodedSourceMap);
+
 	const styles = component.stylesheet.has_styles && options.dev
 		? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
 		: css.code;
