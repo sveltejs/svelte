@@ -32,45 +32,31 @@ export function spread(args, classes_to_add) {
 	return str;
 }
 
-const ATTR_REGEX = /[&<"]/;
-const CONTENT_REGEX = /[&<]/;
+const ATTR_REGEX = /[&"]/g;
+const CONTENT_REGEX = /[&<]/g;
+
+const escapes = {
+	'"': '&quot;',
+	'&': '&amp;',
+	'<': '&lt'
+};
 
 export function escape(html: string, attr: 0 | 1 = 0) {
 	if (typeof html !== 'string') return html;
 
-	const match = (attr ? ATTR_REGEX : CONTENT_REGEX).exec(html);
-	if (!match) return html;
+	const pattern = (attr ? ATTR_REGEX : CONTENT_REGEX);
+	pattern.lastIndex = 0;
 
-	let index = 0;
-	let lastIndex = 0;
-	let out = '';
-	let escape = '';
+	let escaped = '';
+	let last = 0;
 
-	for (index = match.index; index < html.length; index++) {
-		switch (html.charCodeAt(index)) {
-			case 34: // "
-			if (!attr) continue;
-			escape = '&quot;';
-			break;
-			case 38: // &
-			escape = '&amp;';
-			break;
-			case 60: // <
-			escape = '&lt;';
-			break;
-			default:
-			continue;
-		}
-
-		if (lastIndex !== index) {
-			out += html.substring(lastIndex, index);
-		}
-
-		lastIndex = index + 1;
-		out += escape;
+	while (pattern.test(html)) {
+		const i = pattern.lastIndex - 1;
+		escaped += html.slice(last, i) + escapes[html[i]];
+		last = i + 1;
 	}
 
-	return lastIndex !== index ? out + html.substring(lastIndex, index) : out;
+	return escaped + html.slice(last);
 }
 
 export function each(items, fn) {
