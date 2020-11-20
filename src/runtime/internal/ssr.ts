@@ -144,7 +144,7 @@ export function create_ssr_component(fn) {
 
 export function add_attribute(name, value, boolean) {
 	if (value == null || (boolean && !value)) return '';
-	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value, 1)) : `"${value}"`}`}`;
+	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value, true)) : `"${value}"`}`}`;
 }
 
 export function add_classes(classes) {
