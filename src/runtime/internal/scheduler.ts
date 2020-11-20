@@ -78,12 +78,13 @@ export function flush() {
 }
 
 function update($$) {
-	if ($$.fragment !== null) {
+	const { fragment } = $$;
+	if (fragment !== null) {
 		$$.update();
 		run_all($$.before_update);
 		const dirty = $$.dirty;
 		$$.dirty = [-1];
-		$$.fragment && $$.fragment.p($$.ctx, dirty);
+		fragment && fragment.p($$.ctx, dirty);
 
 		$$.after_update.forEach(add_render_callback);
 	}

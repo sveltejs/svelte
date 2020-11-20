@@ -64,8 +64,8 @@ export function get_store_value<T>(store: Readable<T>): T {
 	return value;
 }
 
-export function component_subscribe(component, store, callback) {
-	component.$$.on_destroy.push(subscribe(store, callback));
+export function component_subscribe({ $$ }, store, callback) {
+	$$.on_destroy.push(subscribe(store, callback));
 }
 
 export function create_slot(definition, ctx, $$scope, fn) {
