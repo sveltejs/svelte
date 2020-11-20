@@ -98,11 +98,11 @@ function make_dirty(component, i) {
 }
 
 
-export function add_css_to_component(component, add_css, options) {
-	component.$$ = {
-		customStyleTag: options.customStyleTag || current_component && current_component.$$.customStyleTag
-	};
-	add_css(component.$$.customStyleTag || document.head);
+let appendStylesTo = document.head;
+
+export function add_css_to_component(add_css, { customStyleTag }) {
+   if (customStyleTag) appendStylesTo = customStyleTag;
+   add_css(appendStylesTo);
 }
 
 export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
@@ -112,8 +112,6 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	const prop_values = options.props || {};
 
 	const $$: T$$ = component.$$ = {
-		...component.$$,
-
 		fragment: null,
 		ctx: null,
 
