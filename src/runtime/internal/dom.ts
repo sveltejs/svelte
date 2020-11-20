@@ -1,18 +1,5 @@
 import { has_prop } from './utils';
 
-export function append_style_if_not_present(
-	target: Element,
-	styleSheetId: string,
-	styles: string,
-	styleId:string = `svelte-${styleSheetId}-style`) {
-	if (!target.querySelector('#' + styleId)) {
-		const style = element('style');
-		style.id = styleId;
-		style.textContent = styles;
-		append(target, style);
-	}
-}
-
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
