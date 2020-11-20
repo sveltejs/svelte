@@ -1,7 +1,6 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
-import { sanitize } from '../../utils/names';
 import { Identifier } from 'estree';
 
 export default class EventHandler extends Node {
@@ -42,8 +41,6 @@ export default class EventHandler extends Node {
 					}
 				}
 			}
-		} else {
-			this.handler_name = component.get_unique_name(`${sanitize(this.name)}_handler`);
 		}
 	}
 

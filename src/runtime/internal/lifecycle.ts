@@ -53,14 +53,3 @@ export function setContext<T>(key, context: T) {
 export function getContext<T>(key): T {
 	return get_current_component().$$.context.get(key);
 }
-
-// TODO figure out if we still want to support
-// shorthand events, or if we want to implement
-// a real bubbling mechanism
-export function bubble(component, event) {
-	const callbacks = component.$$.callbacks[event.type];
-
-	if (callbacks) {
-		callbacks.slice().forEach(fn => fn(event));
-	}
-}
