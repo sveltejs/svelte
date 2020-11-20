@@ -104,9 +104,6 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	const prop_values = options.props || {};
 
 	const $$: T$$ = component.$$ = {
-		fragment: null,
-		ctx: null,
-
 		// state
 		props,
 		update: noop,
@@ -124,7 +121,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		callbacks: {},
 		dirty,
 		skip_bound: false
-	};
+	} as T$$;
 
 	let ready = false;
 
