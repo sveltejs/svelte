@@ -32,16 +32,45 @@ export function spread(args, classes_to_add) {
 	return str;
 }
 
-export const escaped = {
-	'"': '&quot;',
-	"'": '&#39;',
-	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;'
-};
+const ATTR_REGEX = /[&<"]/;
+const CONTENT_REGEX = /[&<]/;
 
-export function escape(html) {
-	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+export function escape(html: string, attr: 0 | 1 = 0) {
+	if (typeof html !== 'string') return html;
+
+	const match = (attr ? ATTR_REGEX : CONTENT_REGEX).exec(html);
+	if (!match) return html;
+
+	let index = 0;
+	let lastIndex = 0;
+	let out = '';
+	let escape = '';
+
+	for (index = match.index; index < html.length; index++) {
+		switch (html.charCodeAt(index)) {
+			case 34: // "
+			if (!attr) continue;
+			escape = '&quot;';
+			break;
+			case 38: // &
+			escape = '&amp;';
+			break;
+			case 60: // <
+			escape = '&lt;';
+			break;
+			default:
+			continue;
+		}
+
+		if (lastIndex !== index) {
+			out += html.substring(lastIndex, index);
+		}
+
+		lastIndex = index + 1;
+		out += escape;
+	}
+
+	return lastIndex !== index ? out + html.substring(lastIndex, index) : out;
 }
 
 export function each(items, fn) {
@@ -129,7 +158,7 @@ export function create_ssr_component(fn) {
 
 export function add_attribute(name, value, boolean) {
 	if (value == null || (boolean && !value)) return '';
-	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value)) : `"${value}"`}`}`;
+	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value, 1)) : `"${value}"`}`}`;
 }
 
 export function add_classes(classes) {
