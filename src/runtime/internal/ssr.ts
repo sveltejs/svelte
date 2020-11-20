@@ -44,7 +44,7 @@ const escapes = {
 export function escape(html: string, attr: 0 | 1 = 0) {
 	if (typeof html !== 'string') return html;
 
-	const pattern = (attr ? ATTR_REGEX : CONTENT_REGEX);
+	const pattern = attr ? ATTR_REGEX : CONTENT_REGEX;
 	pattern.lastIndex = 0;
 
 	let escaped = '';
