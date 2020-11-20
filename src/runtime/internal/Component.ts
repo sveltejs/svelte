@@ -1,7 +1,7 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
-import { append, children, detach, element } from './dom';
+import { children, detach } from './dom';
 import { transition_in } from './transitions';
 
 interface Fragment {
@@ -95,25 +95,6 @@ function make_dirty(component, i) {
 		component.$$.dirty.fill(0);
 	}
 	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
-}
-
-
-let appendStylesTo = document.head;
-
-export function add_css_to_component(
-	{ customStyleTag },
-	styleSheetId: string,
-	styles: string,
-	styleId:string = `svelte-${styleSheetId}-style`) {
-
-	if (customStyleTag) appendStylesTo = customStyleTag;
-
-	if (!appendStylesTo.querySelector('#' + styleId)) {
-		const style = element('style');
-		style.id = styleId;
-		style.textContent = styles;
-		append(appendStylesTo, style);
-	}
 }
 
 export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {

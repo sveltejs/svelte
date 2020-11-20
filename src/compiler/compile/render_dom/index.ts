@@ -50,7 +50,7 @@ export default function dom(
 	if (should_add_css) {
 		body.push(b`
 			function ${add_css}(options) {
-				@add_css_to_component(options, "${component.stylesheet.id.replace('svelte-', '')}", "${styles}");
+				@append_styles(options, "${component.stylesheet.id.replace('svelte-', '')}", "${styles}");
 			}
 		`);
 	}
