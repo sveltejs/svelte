@@ -53,13 +53,13 @@ export function claim_component(block, parent_nodes) {
 }
 
 export function mount_component({ $$ }, target, anchor) {
-	const { fragment, on_mount, on_destroy, after_update } = $$;
+	const { fragment, on_destroy } = $$;
 
 	fragment && fragment.m(target, anchor);
 
 	// onMount happens before the initial afterUpdate
 	add_render_callback(() => {
-		const new_on_destroy = on_mount.map(run).filter(is_function);
+		const new_on_destroy = $$.on_mount.map(run).filter(is_function);
 		if (on_destroy) {
 			on_destroy.push(...new_on_destroy);
 		} else {
@@ -70,7 +70,7 @@ export function mount_component({ $$ }, target, anchor) {
 		$$.on_mount = [];
 	});
 
-	after_update.forEach(add_render_callback);
+	$$.after_update.forEach(add_render_callback);
 }
 
 export function destroy_component({ $$ }, detaching) {
