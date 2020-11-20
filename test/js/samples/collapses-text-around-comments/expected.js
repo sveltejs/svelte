@@ -3,7 +3,6 @@ import {
 	SvelteComponent,
 	add_css_to_component,
 	append,
-	append_style_if_not_present,
 	attr,
 	detach,
 	element,
@@ -15,8 +14,8 @@ import {
 	text
 } from "svelte/internal";
 
-function add_css(target) {
-	append_style_if_not_present(target, "1a7i8ec", "p.svelte-1a7i8ec{color:red}");
+function add_css(options) {
+	add_css_to_component(options, "1a7i8ec", "p.svelte-1a7i8ec{color:red}");
 }
 
 function create_fragment(ctx) {
@@ -57,7 +56,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		add_css_to_component(this, add_css, options);
+		add_css(options);
 		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 });
 	}
 }
