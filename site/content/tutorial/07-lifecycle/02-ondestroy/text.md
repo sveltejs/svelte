@@ -41,3 +41,5 @@ export function onInterval(callback, milliseconds) {
 	onInterval(() => counter += 1, 1000);
 </script>
 ```
+
+Open and close the timer a few times and make sure the counter keeps ticking and the CPU load increases. This is due to a memory leak as the previous timers are not deleted. Don't forget to refresh the page before solving the example.
