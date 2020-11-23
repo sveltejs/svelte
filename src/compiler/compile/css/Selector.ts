@@ -248,25 +248,17 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 
 		if (selector.type === 'ClassSelector') {
 			if (!attribute_matches(node, 'class', name, '~=', false) && !node.classes.some(c => c.name === name)) return BlockAppliesToNode.NotPossible;
-		}
-
-		else if (selector.type === 'IdSelector') {
+		} else if (selector.type === 'IdSelector') {
 			if (!attribute_matches(node, 'id', name, '=', false)) return BlockAppliesToNode.NotPossible;
-		}
-
-		else if (selector.type === 'AttributeSelector') {
+		} else if (selector.type === 'AttributeSelector') {
 			if (
 				!(whitelist_attribute_selector.has(node.name.toLowerCase()) && whitelist_attribute_selector.get(node.name.toLowerCase()).has(selector.name.name.toLowerCase())) &&
 				!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) {
 				return BlockAppliesToNode.NotPossible;
 			}
-		}
-
-		else if (selector.type === 'TypeSelector') {
+		} else if (selector.type === 'TypeSelector') {
 			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*') return BlockAppliesToNode.NotPossible;
-		}
-
-		else {
+		} else {
 			return BlockAppliesToNode.UnknownSelectorType;
 		}
 	}

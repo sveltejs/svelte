@@ -37,6 +37,8 @@ If you have a stack trace to include, we recommend putting inside a `<details>` 
 </details>
 
 **Information about your Svelte project:**
+To make your life easier, just run `npx envinfo --system --npmPackages svelte,rollup,webpack --binaries --browsers` and paste the output here.
+
 - Your browser and the version: (e.x. Chrome 52.1, Firefox 48.0, IE 10)
 
 - Your operating system: (e.x. OS X 10, Ubuntu Linux 19.10, Windows XP, etc)

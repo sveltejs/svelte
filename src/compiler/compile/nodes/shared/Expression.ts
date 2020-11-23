@@ -261,17 +261,13 @@ export default class Expression {
 							hoistable: true,
 							referenced: true
 						});
-					}
-
-					else if (contextual_dependencies.size === 0) {
+					} else if (contextual_dependencies.size === 0) {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(declaration);
 
 						block.renderer.add_to_context(id.name);
 						this.replace(block.renderer.reference(id));
-					}
-
-					else {
+					} else {
 						// we need a combo block/init recipe
 						const deps = Array.from(contextual_dependencies);
 						const function_expression = node as FunctionExpression;

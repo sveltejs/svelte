@@ -745,9 +745,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			block.chunks.destroy.push(b`if (detaching && ${name}) ${name}.end();`);
-		}
-
-		else {
+		} else {
 			const intro_name = intro && block.get_unique_name(`${this.var.name}_intro`);
 			const outro_name = outro && block.get_unique_name(`${this.var.name}_outro`);
 
@@ -920,22 +918,16 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 				.replace(/\\/g, '\\\\')
 				.replace(/`/g, '\\`')
 				.replace(/\$/g, '\\$');
-		}
-
-		else if (wrapper instanceof MustacheTagWrapper || wrapper instanceof RawMustacheTagWrapper) {
+		} else if (wrapper instanceof MustacheTagWrapper || wrapper instanceof RawMustacheTagWrapper) {
 			literal.quasis.push(state.quasi);
 			literal.expressions.push(wrapper.node.expression.manipulate(block));
 			state.quasi = {
 				type: 'TemplateElement',
 				value: { raw: '' }
 			};
-		}
-
-		else if (wrapper.node.name === 'noscript') {
+		} else if (wrapper.node.name === 'noscript') {
 			// do nothing
-		}
-
-		else {
+		} else {
 			// element
 			state.quasi.value.raw += `<${wrapper.node.name}`;
 

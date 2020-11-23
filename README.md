@@ -9,7 +9,7 @@
     <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
   </a>
   <a href="https://svelte.dev/chat">
-    <img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg" alt="Chat">
+    <img src="https://img.shields.io/discord/457912077277855764?label=chat&logo=discord" alt="Chat">
   </a>
 </p>
 

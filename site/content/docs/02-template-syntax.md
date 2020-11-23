@@ -300,6 +300,9 @@ An each block can also have an `{:else}` clause, which is rendered if the list i
 ```sv
 {#await expression then name}...{/await}
 ```
+```sv
+{#await expression catch name}...{/await}
+```
 
 ---
 
@@ -339,6 +342,16 @@ If you don't care about the pending state, you can also omit the initial block.
 ```sv
 {#await promise then value}
 	<p>The value is {value}</p>
+{/await}
+```
+
+---
+
+If conversely you only want to show the error state, you can omit the `then` block.
+
+```sv
+{#await promise catch error}
+	<p>The error is {error}</p>
 {/await}
 ```
 
