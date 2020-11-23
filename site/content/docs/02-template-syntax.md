@@ -300,6 +300,9 @@ An each block can also have an `{:else}` clause, which is rendered if the list i
 ```sv
 {#await expression then name}...{/await}
 ```
+```sv
+{#await expression catch name}...{/await}
+```
 
 ---
 
@@ -339,6 +342,16 @@ If you don't care about the pending state, you can also omit the initial block.
 ```sv
 {#await promise then value}
 	<p>The value is {value}</p>
+{/await}
+```
+
+---
+
+If conversely you only want to show the error state, you can omit the `then` block.
+
+```sv
+{#await promise catch error}
+	<p>The error is {error}</p>
 {/await}
 ```
 
@@ -1314,6 +1327,31 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 	<slot name="header">No header was provided</slot>
 	<p>Some content between header and footer</p>
 	<slot name="footer"></slot>
+</div>
+```
+
+#### [`$$slots`](slots_object)
+
+---
+
+`$$slots` is an object whose keys are the names of the slots passed into the component by the parent. If the parent does not pass in a slot with a particular name, that name will not be a present in `$$slots`. This allows components to render a slot (and other elements, like wrappers for styling) only if the parent provides it.
+
+Note that explicitly passing in an empty named slot will add that slot's name to `$$slots`. For example, if a parent passes `<div slot="title" />` to a child component, `$$slots.title` will be truthy within the child.
+
+```sv
+<!-- App.svelte -->
+<Card>
+	<h1 slot="title">Blog Post Title</h1>
+</Card>
+
+<!-- Card.svelte -->
+<div>
+	<slot name="title"></slot>
+	{#if $$slots.description}
+		<!-- This slot and the <hr> before it will not render. -->
+		<hr>
+		<slot name="description"></slot>
+	{/if}
 </div>
 ```
 
