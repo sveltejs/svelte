@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix missing `walk` types in `svelte/compiler` ([#5696](https://github.com/sveltejs/svelte/pull/5696))
+
 ## 3.29.7
 
 * Include `./register` in exports map ([#5670](https://github.com/sveltejs/svelte/issues/5670))
