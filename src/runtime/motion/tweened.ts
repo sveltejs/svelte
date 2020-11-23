@@ -2,7 +2,7 @@ import { Readable, writable } from 'svelte/store';
 import { assign, is_function, loop, now, Task } from 'svelte/internal';
 import { linear } from 'svelte/easing';
 import { is_date } from './utils';
-import { resolved_promise } from '../../constants';
+import { resolved_promise } from '../constants';
 
 function get_interpolator(a, b) {
 	if (a === b || a !== a) return () => a;

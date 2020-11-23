@@ -1,6 +1,6 @@
 {
 	"extends": "../../tsconfig.json",
-	"include": [".", "../constants.ts"],
+	"include": ["."],
 
 	"compilerOptions": {
 		"lib": ["es2015", "dom", "dom.iterable"],

@@ -1,6 +1,6 @@
 import { run_all } from './utils';
 import { set_current_component } from './lifecycle';
-import { resolved_promise } from '../../constants';
+import { resolved_promise } from '../constants';
 
 export const dirty_components = [];
 export const intros = { enabled: false };
