@@ -13,7 +13,7 @@ It's the last "What's new in Svelte" of the year... To round out the season, thi
 2. Svelte now includes an export map, which explicitly states which files can be imported from its npm package (**3.29.5** with some fixes in **3.29.6** and **3.29.7**)
 
 ## What's going on in Sapper?
-Lots of new typecript definitions to make editing Sapper apps even easier! Dynamic imports also should now work in `client.js` files. (Unreleased)
+Lots of new TypeScript definition improvements to make editing Sapper apps even easier! CSS for dynamic imports also should now work in `client.js` files. (Unreleased)
 
 ## What's the deal with SvelteKit?
 We're glad you asked! If you didn't catch Rich's blog post from early last month, [you can find it here](https://svelte.dev/blog/whats-the-deal-with-sveltekit)!
