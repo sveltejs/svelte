@@ -7,7 +7,11 @@ jobs:
     strategy:
       matrix:
         node-version: [8, 10, 12, 14]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-latest, windows-latest]
+        # MacOS is charged for at 10x the rate of Ubuntu so run it only on one version of Node
+        include:
+          - node: 14
+            os: macOS-latest
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
