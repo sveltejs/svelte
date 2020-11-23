@@ -44,7 +44,7 @@ export default class KeyBlockWrapper extends Wrapper {
 			renderer,
 			this.block,
 			node.children,
-			parent,
+			this,
 			strip_whitespace,
 			next_sibling
 		);
