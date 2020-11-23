@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Add `hasContext` lifecycle function ([#5690](https://github.com/sveltejs/svelte/pull/5690))
 * Fix missing `walk` types in `svelte/compiler` ([#5696](https://github.com/sveltejs/svelte/pull/5696))
 
 ## 3.29.7
