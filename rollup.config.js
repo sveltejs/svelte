@@ -20,7 +20,7 @@ const ts_plugin = is_publish
 
 const external = id => id.startsWith('svelte/');
 
-fs.writeFileSync(`./compiler.d.ts`, `export { compile, parse, preprocess, VERSION } from './types/compiler/index';`);
+fs.writeFileSync(`./compiler.d.ts`, `export { compile, parse, preprocess, walk, VERSION } from './types/compiler/index';`);
 
 export default [
 	/* runtime */
