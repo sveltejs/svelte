@@ -64,7 +64,7 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$: x = a * 2;
-	return [y];
+	return [y, b];
 }
 
 class Component extends SvelteComponent {

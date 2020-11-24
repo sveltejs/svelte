@@ -29,7 +29,9 @@ import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
+import { apply_preprocessor_sourcemap } from '../utils/string_with_sourcemap';
 import Element from './nodes/Element';
+import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types/types';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -267,17 +269,13 @@ export default class Component {
 								this.helpers.set(name, alias);
 								node.name = alias.name;
 							}
-						}
-
-						else if (node.name[0] !== '#' && !is_valid(node.name)) {
+						} else if (node.name[0] !== '#' && !is_valid(node.name)) {
 							// this hack allows x`foo.${bar}` where bar could be invalid
 							const literal: Literal = { type: 'Literal', value: node.name };
 
 							if (parent.type === 'Property' && key === 'key') {
 								parent.key = literal;
-							}
-
-							else if (parent.type === 'MemberExpression' && key === 'property') {
+							} else if (parent.type === 'MemberExpression' && key === 'property') {
 								parent.property = literal;
 								parent.computed = true;
 							}
@@ -330,6 +328,8 @@ export default class Component {
 			js.map.sourcesContent = [
 				this.source
 			];
+
+			js.map = apply_preprocessor_sourcemap(this.file, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
 		}
 
 		return {
