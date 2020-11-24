@@ -670,7 +670,7 @@ export default class ElementWrapper extends Wrapper {
 
 		// handle edge cases for elements
 		if (this.node.name === 'select') {
-			const dependencies = new Set();
+			const dependencies = new Set<string>();
 			for (const attr of this.attributes) {
 				for (const dep of attr.node.dependencies) {
 					dependencies.add(dep);

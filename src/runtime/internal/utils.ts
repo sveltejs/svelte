@@ -117,6 +117,14 @@ export function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot
 	}
 }
 
+export function update_slot_spread(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_spread_changes_fn, get_slot_context_fn) {
+	const slot_changes = get_slot_spread_changes_fn(dirty) | get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
+	if (slot_changes) {
+		const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
+		slot.p(slot_context, slot_changes);
+	}
+}
+
 export function exclude_internal_props(props) {
 	const result = {};
 	for (const k in props) if (k[0] !== '$') result[k] = props[k];
