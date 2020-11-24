@@ -97,15 +97,44 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
-type Props = Record<string, any>;
-export interface SvelteComponentDev {
-	$set(props?: Props): void;
-	$on<T = any>(event: string, callback: (event: CustomEvent<T>) => void): () => void;
+export interface SvelteComponentDev<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
+> {
+	$set(props?: Partial<Props>): void;
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
 
-export class SvelteComponentDev extends SvelteComponent {
+export class SvelteComponentDev<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
+> extends SvelteComponent<Props, Events> {
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$prop_def: Props;
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$events_def: Events;
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$slot_def: Slots;
+
 	constructor(options: {
 		target: Element;
 		anchor?: Element;
@@ -113,7 +142,7 @@ export class SvelteComponentDev extends SvelteComponent {
 		hydrate?: boolean;
 		intro?: boolean;
 		$$inline?: boolean;
-    }) {
+	}) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
