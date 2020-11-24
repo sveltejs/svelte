@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Add a typed `SvelteComponent` interface ([#5431](https://github.com/sveltejs/svelte/pull/5431))
 * Fix setting reactive dependencies which don't appear in the template to `undefined` ([#5538](https://github.com/sveltejs/svelte/issues/5538))
 * Support preprocessor sourcemaps during compilation ([#5584](https://github.com/sveltejs/svelte/pull/5584))
 * Fix ordering of elements when using `{#if}` inside `{#key}` ([#5680](https://github.com/sveltejs/svelte/issues/5680))

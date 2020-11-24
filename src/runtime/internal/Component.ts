@@ -212,16 +212,19 @@ if (typeof HTMLElement === 'function') {
 	};
 }
 
-export class SvelteComponent {
+export class SvelteComponent<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any
+> {
 	$$: T$$;
-	$$set?: ($$props: any) => void;
+	$$set?: ($$props: Partial<Props>) => void;
 
 	$destroy() {
 		destroy_component(this, 1);
 		this.$destroy = noop;
 	}
 
-	$on(type, callback) {
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void) {
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 		callbacks.push(callback);
 
@@ -231,7 +234,7 @@ export class SvelteComponent {
 		};
 	}
 
-	$set($$props) {
+	$set($$props: Partial<Props>) {
 		if (this.$$set && !is_empty($$props)) {
 			this.$$.skip_bound = true;
 			this.$$set($$props);
