@@ -40,15 +40,15 @@ export default class InlineComponent extends Node {
 			switch (node.type) {
 				case 'Action':
 					component.error(node, {
-						code: `invalid-action`,
-						message: `Actions can only be applied to DOM elements, not components`
+						code: 'invalid-action',
+						message: 'Actions can only be applied to DOM elements, not components'
 					});
 
 				case 'Attribute':
 					if (node.name === 'slot') {
 						component.error(node, {
-							code: `invalid-prop`,
-							message: `'slot' is reserved for future use in named slots`
+							code: 'invalid-prop',
+							message: "'slot' is reserved for future use in named slots"
 						});
 					}
 					// fallthrough
@@ -62,8 +62,8 @@ export default class InlineComponent extends Node {
 
 				case 'Class':
 					component.error(node, {
-						code: `invalid-class`,
-						message: `Classes can only be applied to DOM elements, not components`
+						code: 'invalid-class',
+						message: 'Classes can only be applied to DOM elements, not components'
 					});
 
 				case 'EventHandler':
@@ -76,8 +76,8 @@ export default class InlineComponent extends Node {
 
 				case 'Transition':
 					component.error(node, {
-						code: `invalid-transition`,
-						message: `Transitions can only be applied to DOM elements, not components`
+						code: 'invalid-transition',
+						message: 'Transitions can only be applied to DOM elements, not components'
 					});
 
 				default:
@@ -105,7 +105,7 @@ export default class InlineComponent extends Node {
 				if (modifier !== 'once') {
 					component.error(handler, {
 						code: 'invalid-event-modifier',
-						message: `Event modifiers other than 'once' can only be used on DOM elements`
+						message: "Event modifiers other than 'once' can only be used on DOM elements"
 					});
 				}
 			});

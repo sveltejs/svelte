@@ -29,7 +29,7 @@ export class ElseBlockWrapper extends Wrapper {
 
 		this.block = block.child({
 			comment: create_debugging_comment(node, this.renderer.component),
-			name: this.renderer.component.get_unique_name(`create_else_block`),
+			name: this.renderer.component.get_unique_name('create_else_block'),
 			type: 'else'
 		});
 
@@ -196,26 +196,12 @@ export default class EachBlockWrapper extends Wrapper {
 			? !this.next.is_dom_node() :
 			!parent_node || !this.parent.is_dom_node();
 
-		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.modifier(x`list[i]`)};`);
-
-		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`);
-		if (this.node.has_binding || this.node.has_index_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);
-
 		const snippet = this.node.expression.manipulate(block);
 
 		block.chunks.init.push(b`let ${this.vars.each_block_value} = ${snippet};`);
 		if (this.renderer.options.dev) {
 			block.chunks.init.push(b`@validate_each_argument(${this.vars.each_block_value});`);
 		}
-
-		// TODO which is better — Object.create(array) or array.slice()?
-		renderer.blocks.push(b`
-			function ${this.vars.get_each_context}(#ctx, list, i) {
-				const child_ctx = #ctx.slice();
-				${this.context_props}
-				return child_ctx;
-			}
-		`);
 
 		const initial_anchor_node: Identifier = { type: 'Identifier', name: parent_node ? 'null' : '#anchor' };
 		const initial_mount_node: Identifier = parent_node || { type: 'Identifier', name: '#target' };
@@ -239,6 +225,11 @@ export default class EachBlockWrapper extends Wrapper {
 		this.node.expression.dynamic_dependencies().forEach((dependency: string) => {
 			all_dependencies.add(dependency);
 		});
+		if (this.node.key) {
+			this.node.key.dynamic_dependencies().forEach((dependency: string) => {
+				all_dependencies.add(dependency);
+			});
+		}
 		this.dependencies = all_dependencies;
 
 		if (this.node.key) {
@@ -355,6 +346,19 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.else) {
 			this.else.fragment.render(this.else.block, null, x`#nodes` as Identifier);
 		}
+
+		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.modifier(x`list[i]`)};`);
+
+		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`);
+		if (this.node.has_binding || this.node.has_index_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);
+		// TODO which is better — Object.create(array) or array.slice()?
+		renderer.blocks.push(b`
+			function ${this.vars.get_each_context}(#ctx, list, i) {
+				const child_ctx = #ctx.slice();
+				${this.context_props}
+				return child_ctx;
+			}
+		`);
 	}
 
 	render_keyed({
@@ -436,11 +440,11 @@ export default class EachBlockWrapper extends Wrapper {
 
 		const destroy = this.node.has_animation
 			? (this.block.has_outros
-				? `@fix_and_outro_and_destroy_block`
-				: `@fix_and_destroy_block`)
+				? '@fix_and_outro_and_destroy_block'
+				: '@fix_and_destroy_block')
 			: this.block.has_outros
-				? `@outro_and_destroy_block`
-				: `@destroy_block`;
+				? '@outro_and_destroy_block'
+				: '@destroy_block';
 
 		if (this.dependencies.size) {
 			this.updates.push(b`
@@ -558,7 +562,7 @@ export default class EachBlockWrapper extends Wrapper {
 						}
 					`;
 
-			const start = this.block.has_update_method ? 0 : `#old_length`;
+			const start = this.block.has_update_method ? 0 : '#old_length';
 
 			let remove_old_blocks;
 

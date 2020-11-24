@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+## Is this about svelte@next? This project is currently in a pre-release stage and breaking changes may occur at any time. Please do not post any kind of bug reports or questions on GitHub about it.
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 
@@ -35,6 +37,8 @@ If you have a stack trace to include, we recommend putting inside a `<details>` 
 </details>
 
 **Information about your Svelte project:**
+To make your life easier, just run `npx envinfo --system --npmPackages svelte,rollup,webpack --binaries --browsers` and paste the output here.
+
 - Your browser and the version: (e.x. Chrome 52.1, Firefox 48.0, IE 10)
 
 - Your operating system: (e.x. OS X 10, Ubuntu Linux 19.10, Windows XP, etc)

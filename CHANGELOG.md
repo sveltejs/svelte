@@ -2,6 +2,73 @@
 
 ## Unreleased
 
+* Fix setting reactive dependencies which don't appear in the template to `undefined` ([#5538](https://github.com/sveltejs/svelte/issues/5538))
+* Support preprocessor sourcemaps during compilation ([#5584](https://github.com/sveltejs/svelte/pull/5584))
+* Fix ordering of elements when using `{#if}` inside `{#key}` ([#5680](https://github.com/sveltejs/svelte/issues/5680))
+* Add `hasContext` lifecycle function ([#5690](https://github.com/sveltejs/svelte/pull/5690))
+* Fix missing `walk` types in `svelte/compiler` ([#5696](https://github.com/sveltejs/svelte/pull/5696))
+
+## 3.29.7
+
+* Include `./register` in exports map ([#5670](https://github.com/sveltejs/svelte/issues/5670))
+
+## 3.29.6
+
+* Include `./package.json` in export map ([#5659](https://github.com/sveltejs/svelte/issues/5659))
+
+## 3.29.5
+
+* Fix `$$props` and `$$restProps` when compiling to a custom element ([#5482](https://github.com/sveltejs/svelte/issues/5482))
+* Include an export map in `package.json` ([#5556](https://github.com/sveltejs/svelte/issues/5556))
+* Fix function calls in `<slot>` props that use contextual values ([#5565](https://github.com/sveltejs/svelte/issues/5565))
+* Fix handling aborted transitions in `{:else}` blocks ([#5573](https://github.com/sveltejs/svelte/issues/5573))
+* Add `Element` and `Node` to known globals ([#5586](https://github.com/sveltejs/svelte/issues/5586))
+* Fix `$$slots` when compiling to custom elements ([#5594](https://github.com/sveltejs/svelte/issues/5594))
+* Fix internal `import`s so that we're exposing a valid ES module ([#5617](https://github.com/sveltejs/svelte/issues/5617))
+
+## 3.29.4
+
+* Fix code generation error with `??` alongside logical operators ([#5558](https://github.com/sveltejs/svelte/issues/5558))
+
+## 3.29.3
+
+* Hopefully actually republish with proper UMD build for use in the REPL
+
+## 3.29.2
+
+* Republish with proper UMD build for use in the REPL
+
+## 3.29.1
+
+* Fix compiler hanging on `<slot slot="...">` ([#5475](https://github.com/sveltejs/svelte/issues/5475))
+* Fix types on `get` function in `svelte/store` ([#5483](https://github.com/sveltejs/svelte/pull/5483))
+* Add missing `end` field on ASTs for non-top-level `<style>` elements ([#5487](https://github.com/sveltejs/svelte/pull/5487))
+* Fix `{#if}` inside `{#await}` with destructuring ([#5508](https://github.com/sveltejs/svelte/issues/5508))
+* Fix types on lifecycle hooks ([#5529](https://github.com/sveltejs/svelte/pull/5529))
+
+## 3.29.0
+
+* Support `<slot slot="...">` ([#2079](https://github.com/sveltejs/svelte/issues/2079))
+* Fix unmounting components with a bidirectional transition with a delay ([#4954](https://github.com/sveltejs/svelte/issues/4954))
+* Add types to `get` function in `svelte/store` ([#5269](https://github.com/sveltejs/svelte/pull/5269))
+* Add a warning when a component looks like it's trying to use another component without beginning with a capital letter ([#5302](https://github.com/sveltejs/svelte/pull/5302))
+* Add `EventSource` to known globals ([#5463](https://github.com/sveltejs/svelte/issues/5463))
+* Fix compiler exception with `~`/`+` combinators and `{...spread}` attributes ([#5465](https://github.com/sveltejs/svelte/issues/5465))
+
+## 3.28.0
+
+* Add `{#key}` block for keying arbitrary content on an expression ([#1469](https://github.com/sveltejs/svelte/issues/1469))
+
+## 3.27.0
+
+* Add `|nonpassive` event modifier, explicitly passing `passive: false` ([#2068](https://github.com/sveltejs/svelte/issues/2068))
+* Scope CSS selectors with `~` and `+` combinators ([#3104](https://github.com/sveltejs/svelte/issues/3104))
+* Fix keyed `{#each}` not reacting to key changing ([#5444](https://github.com/sveltejs/svelte/issues/5444))
+* Fix destructuring into store values ([#5449](https://github.com/sveltejs/svelte/issues/5449))
+* Fix erroneous `missing-declaration` warning with `use:obj.method` ([#5451](https://github.com/sveltejs/svelte/issues/5451))
+
+## 3.26.0
+
 * Support `use:obj.method` as actions ([#3935](https://github.com/sveltejs/svelte/issues/3935))
 * Support `_` as numeric separator ([#5407](https://github.com/sveltejs/svelte/issues/5407))
 * Fix assignments to properties on store values ([#5412](https://github.com/sveltejs/svelte/issues/5412))

@@ -6,7 +6,7 @@ export default {
 		inputValue: 42
 	},
 
-	html: `<input type="text">`,
+	html: '<input type="text">',
 
 	test({ assert, component, target }) {
 		const input = target.querySelector('input');

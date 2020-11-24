@@ -2,7 +2,7 @@ import Renderer from '../../Renderer';
 import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
-import { is_void, sanitize } from '../../../../utils/names';
+import { is_void } from '../../../../utils/names';
 import FragmentWrapper from '../Fragment';
 import { escape_html, string_literal } from '../../../utils/stringify';
 import TextWrapper from '../Text';
@@ -14,12 +14,9 @@ import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
 import { dimensions } from '../../../../utils/patterns';
 import Binding from './Binding';
-import InlineComponentWrapper from '../InlineComponent';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
 import { add_action } from '../shared/add_actions';
-import create_debugging_comment from '../shared/create_debugging_comment';
-import { get_slot_definition } from '../shared/get_slot_definition';
 import bind_this from '../shared/bind_this';
 import { is_head } from '../shared/is_head';
 import { Identifier } from 'estree';
@@ -28,6 +25,7 @@ import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
 import MustacheTagWrapper from '../MustacheTag';
 import RawMustacheTagWrapper from '../RawMustacheTag';
+import create_slot_block from './create_slot_block';
 
 interface BindingGroup {
 	events: string[];
@@ -177,47 +175,7 @@ export default class ElementWrapper extends Wrapper {
 
 		this.attributes = this.node.attributes.map(attribute => {
 			if (attribute.name === 'slot') {
-				// TODO make separate subclass for this?
-				let owner = this.parent;
-				while (owner) {
-					if (owner.node.type === 'InlineComponent') {
-						break;
-					}
-
-					if (owner.node.type === 'Element' && /-/.test(owner.node.name)) {
-						break;
-					}
-
-					owner = owner.parent;
-				}
-
-				if (owner && owner.node.type === 'InlineComponent') {
-					const name = attribute.get_static_value() as string;
-
-					if (!(owner as unknown as InlineComponentWrapper).slots.has(name)) {
-						const child_block = block.child({
-							comment: create_debugging_comment(node, this.renderer.component),
-							name: this.renderer.component.get_unique_name(`create_${sanitize(name)}_slot`),
-							type: 'slot'
-						});
-
-						const { scope, lets } = this.node;
-						const seen = new Set(lets.map(l => l.name.name));
-
-						(owner as unknown as InlineComponentWrapper).node.lets.forEach(l => {
-							if (!seen.has(l.name.name)) lets.push(l);
-						});
-
-						(owner as unknown as InlineComponentWrapper).slots.set(
-							name,
-							get_slot_definition(child_block, scope, lets)
-						);
-						this.renderer.blocks.push(child_block);
-					}
-
-					this.slot_block = (owner as unknown as InlineComponentWrapper).slots.get(name).block;
-					block = this.slot_block;
-				}
+				block = create_slot_block(attribute, this, block);
 			}
 			if (attribute.name === 'style') {
 				return new StyleAttributeWrapper(this, block, attribute);
@@ -727,7 +685,7 @@ export default class ElementWrapper extends Wrapper {
 			`);
 		} else if (this.node.name === 'input' && this.attributes.find(attr => attr.node.name === 'value')) {
 			const type = this.node.get_static_attribute_value('type');
-			if (type === null || type === "" || type === "text" || type === "email" || type === "password") {
+			if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
 				block.chunks.mount.push(b`
 					${this.var}.value = ${data}.value;
 				`);
@@ -787,9 +745,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			block.chunks.destroy.push(b`if (detaching && ${name}) ${name}.end();`);
-		}
-
-		else {
+		} else {
 			const intro_name = intro && block.get_unique_name(`${this.var.name}_intro`);
 			const outro_name = outro && block.get_unique_name(`${this.var.name}_outro`);
 
@@ -962,22 +918,16 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 				.replace(/\\/g, '\\\\')
 				.replace(/`/g, '\\`')
 				.replace(/\$/g, '\\$');
-		}
-
-		else if (wrapper instanceof MustacheTagWrapper || wrapper instanceof RawMustacheTagWrapper) {
+		} else if (wrapper instanceof MustacheTagWrapper || wrapper instanceof RawMustacheTagWrapper) {
 			literal.quasis.push(state.quasi);
 			literal.expressions.push(wrapper.node.expression.manipulate(block));
 			state.quasi = {
 				type: 'TemplateElement',
 				value: { raw: '' }
 			};
-		}
-
-		else if (wrapper.node.name === 'noscript') {
+		} else if (wrapper.node.name === 'noscript') {
 			// do nothing
-		}
-
-		else {
+		} else {
 			// element
 			state.quasi.value.raw += `<${wrapper.node.name}`;
 
@@ -998,7 +948,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 					}
 				});
 
-				state.quasi.value.raw += `"`;
+				state.quasi.value.raw += '"';
 			});
 
 			if (!wrapper.void) {

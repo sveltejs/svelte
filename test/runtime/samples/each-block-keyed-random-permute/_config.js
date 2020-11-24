@@ -22,7 +22,7 @@ export default {
 		values: toObjects('abc')
 	},
 
-	html: `(a)(b)(c)`,
+	html: '(a)(b)(c)',
 
 	test({ assert, component, target }) {
 		function test(sequence) {

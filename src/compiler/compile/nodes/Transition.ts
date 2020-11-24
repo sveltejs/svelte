@@ -28,7 +28,7 @@ export default class Transition extends Node {
 				: `An element cannot have both ${describe(parent_transition)} directive and ${describe(this)} directive`;
 
 			component.error(info, {
-				code: `duplicate-transition`,
+				code: 'duplicate-transition',
 				message
 			});
 		}
@@ -41,6 +41,6 @@ export default class Transition extends Node {
 
 function describe(transition: Transition) {
 	return transition.directive === 'transition'
-		? `a 'transition'`
+		? "a 'transition'"
 		: `an '${transition.directive}'`;
 }

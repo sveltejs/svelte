@@ -6,7 +6,7 @@ export default {
 	test({ assert, component, target }) {
 		assert.equal(
 			target.textContent,
-			`a b c `
+			'a b c '
 		);
 	}
 };

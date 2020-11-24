@@ -300,6 +300,9 @@ An each block can also have an `{:else}` clause, which is rendered if the list i
 ```sv
 {#await expression then name}...{/await}
 ```
+```sv
+{#await expression catch name}...{/await}
+```
 
 ---
 
@@ -342,6 +345,43 @@ If you don't care about the pending state, you can also omit the initial block.
 {/await}
 ```
 
+---
+
+If conversely you only want to show the error state, you can omit the `then` block.
+
+```sv
+{#await promise catch error}
+	<p>The error is {error}</p>
+{/await}
+```
+
+### {#key ...}
+
+```sv
+{#key expression}...{/key}
+```
+
+Key blocks destroy and recreate their contents when the value of an expression changes.
+
+---
+
+This is useful if you want an element to play its transition whenever a value changes.
+
+```sv
+{#key value}
+	<div transition:fade>{value}</div>
+{/key}
+```
+
+---
+
+When used around components, this will cause them to be reinstantiated and reinitialised.
+
+```sv
+{#key value}
+	<Component />
+{/key}
+```
 
 ### {@html ...}
 
@@ -471,6 +511,7 @@ The following modifiers are available:
 * `preventDefault` — calls `event.preventDefault()` before running the handler
 * `stopPropagation` — calls `event.stopPropagation()`, preventing the event reaching the next element
 * `passive` — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
+* `nonpassive` — explicitly set `passive: false`
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
 * `self` — only trigger handler if event.target is the element itself
@@ -1286,6 +1327,31 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 	<slot name="header">No header was provided</slot>
 	<p>Some content between header and footer</p>
 	<slot name="footer"></slot>
+</div>
+```
+
+#### [`$$slots`](slots_object)
+
+---
+
+`$$slots` is an object whose keys are the names of the slots passed into the component by the parent. If the parent does not pass in a slot with a particular name, that name will not be a present in `$$slots`. This allows components to render a slot (and other elements, like wrappers for styling) only if the parent provides it.
+
+Note that explicitly passing in an empty named slot will add that slot's name to `$$slots`. For example, if a parent passes `<div slot="title" />` to a child component, `$$slots.title` will be truthy within the child.
+
+```sv
+<!-- App.svelte -->
+<Card>
+	<h1 slot="title">Blog Post Title</h1>
+</Card>
+
+<!-- Card.svelte -->
+<div>
+	<slot name="title"></slot>
+	{#if $$slots.description}
+		<!-- This slot and the <hr> before it will not render. -->
+		<hr>
+		<slot name="description"></slot>
+	{/if}
 </div>
 ```
 
