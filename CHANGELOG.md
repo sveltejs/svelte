@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.30.0
 
 * Add a typed `SvelteComponent` interface ([#5431](https://github.com/sveltejs/svelte/pull/5431))
 * Support spread into `<slot>` props ([#5456](https://github.com/sveltejs/svelte/issues/5456))
