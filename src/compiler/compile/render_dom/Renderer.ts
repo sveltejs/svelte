@@ -221,7 +221,7 @@ export default class Renderer {
 			.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
 	}
 
-	dirty(names, is_reactive_declaration = false): Expression {
+	dirty(names: string[], is_reactive_declaration = false): Expression {
 		const renderer = this;
 
 		const dirty = (is_reactive_declaration
