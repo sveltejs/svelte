@@ -886,6 +886,7 @@ The following initialisation options can be provided:
 | `props` | `{}` | An object of properties to supply to the component
 | `hydrate` | `false` | See below
 | `intro` | `false` | If `true`, will play transitions on initial render, rather than waiting for subsequent state changes
+| `customStyleTag` | `document.head` | An `HTMLElement` the styles should be appended to. It will only work if the component was compiled with the [`css: true` option](docs#svelte_compile).
 
 Existing children of `target` are left where they are.
 
