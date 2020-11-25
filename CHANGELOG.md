@@ -1,5 +1,15 @@
 # Svelte changelog
 
+## 3.30.0
+
+* Add a typed `SvelteComponent` interface ([#5431](https://github.com/sveltejs/svelte/pull/5431))
+* Support spread into `<slot>` props ([#5456](https://github.com/sveltejs/svelte/issues/5456))
+* Fix setting reactive dependencies which don't appear in the template to `undefined` ([#5538](https://github.com/sveltejs/svelte/issues/5538))
+* Support preprocessor sourcemaps during compilation ([#5584](https://github.com/sveltejs/svelte/pull/5584))
+* Fix ordering of elements when using `{#if}` inside `{#key}` ([#5680](https://github.com/sveltejs/svelte/issues/5680))
+* Add `hasContext` lifecycle function ([#5690](https://github.com/sveltejs/svelte/pull/5690))
+* Fix missing `walk` types in `svelte/compiler` ([#5696](https://github.com/sveltejs/svelte/pull/5696))
+
 ## 3.29.7
 
 * Include `./register` in exports map ([#5670](https://github.com/sveltejs/svelte/issues/5670))
