@@ -130,6 +130,24 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 
 ---
 
+Only values which directly appear within the `$:` block will become dependencies of the reactive statement. For example, in the code below `total` will only update when `x` or `y` change, but not `z`.
+
+```sv
+<script>
+	let x = 0;
+	let y = 0;
+	let z = 0;
+	
+	function updateTotal(x, y) {
+		return x + y + z;
+	}
+	
+	$: total = updateTotal(x, y);
+</script>
+```
+
+---
+
 If a statement consists entirely of an assignment to an undeclared variable, Svelte will inject a `let` declaration on your behalf.
 
 ```sv
