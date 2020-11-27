@@ -7,6 +7,7 @@ export {
 	afterUpdate,
 	setContext,
 	getContext,
+	hasContext,
 	tick,
 	createEventDispatcher,
 	SvelteComponentDev as SvelteComponent
