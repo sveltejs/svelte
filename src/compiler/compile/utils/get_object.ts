@@ -1,6 +1,28 @@
-import { Node, Identifier } from 'estree';
+import {
+	Node,
+	Identifier,
+	ArrayExpression,
+	ObjectExpression,
+	ThisExpression,
+	ObjectPattern,
+	ArrayPattern,
+	Literal,
+} from "estree";
 
-export default function get_object(node: Node): Identifier {
-	while (node.type === 'MemberExpression') node = node.object;
-	return node as Identifier;
+type ObjectType =
+	| Identifier
+	| ThisExpression
+	| ArrayExpression
+	| ObjectExpression
+	| ArrayPattern
+	| ObjectPattern
+	| Literal;
+
+export default function get_object(node: Node): ObjectType {
+	while (true) {
+		if (node.type === "MemberExpression") node = node.object;
+		else if (node.type === "CallExpression") node = node.callee;
+		else break;
+	}
+	return node as ObjectType;
 }
