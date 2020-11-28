@@ -1,16 +1,21 @@
 ---
 title: What's new in Svelte: December 2020
-description: TBD
+description: Better tooling, export maps and improvements to slots and context
 author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-It's the last "What's new in Svelte" of the year... To round out the season, this month's coverage includes _things_!
+It's the last "What's new in Svelte" of the year and there's lots to celebrate! This month's coverage includes updates from `rollup-plugin-svelte`, `Sapper` and `SvelteKit` and a bunch of showcases from the Svelte community!
 
 ## New features & impactful bug fixes
 
-1. Transitions within `{:else}` block should now complete successfully (**3.29.5**, [Example](https://svelte.dev/repl/49cef205e5da459594ef2eafcbd41593?version=3.29.5))
-2. Svelte now includes an export map, which explicitly states which files can be imported from its npm package (**3.29.5** with some fixes in **3.29.6** and **3.29.7**)
+1. `slot` components now support spread props: `<slot {...foo} />` (**3.30.0**)
+2. A new `hasContext` lifecycle function makes it easy to check whether a `key` has been set in the context of a parent component (**3.30.0**, [Docs](https://svelte.dev/docs#hasContext))
+3. A new Typed `SvelteComponent` makes it easier to add typed classes that extends base Svelte Components. Component library and framework authors rejoice! (**3.30.0**, [RFC](https://github.com/sveltejs/rfcs/pull/37))
+4. Transitions within `{:else}` block should now complete successfully (**3.29.5**, [Example](https://svelte.dev/repl/49cef205e5da459594ef2eafcbd41593?version=3.29.5))
+5. Svelte now includes an export map, which explicitly states which files can be imported from its npm package. This should significantly improve debugging in web dev tools (**3.29.5** with some fixes in **3.29.6**, **3.29.7** and **3.30.0**)
+6. `rollup-plugin-svelte` had a new [7.0.0 release](https://github.com/sveltejs/rollup-plugin-svelte/blob/master/CHANGELOG.md). Biggest change is that the css option was removed. Users who were using that option should add another plugin like `rollup-plugin-css-only` as demonstrated [in the template](https://github.com/sveltejs/template/blob/5b1135c286f7a649daa99825a077586655051649/rollup.config.js#L48)
+
 
 ## What's going on in Sapper?
 Lots of new TypeScript definition improvements to make editing Sapper apps even easier! CSS for dynamic imports also should now work in `client.js` files. (Unreleased)
@@ -29,6 +34,7 @@ For all the features and bugfixes see the CHANGELOGs for [Svelte](https://github
 - [Vippet](https://vippet.netlify.app/) is a video recording and editing tool for the browser.
 - [Pattern Monster](https://pattern.monster/) is a simple online pattern generator to create repeatable SVG patterns.
 - [Plant-based diets](https://planetbaseddiets.panda.org/) is a website from the World Wildlife Foundation (WWF) built with Svelte.
+- [johnells.se](https://www.johnells.se/) is a Swedish fashion e-commerce site, built with [Crown](https://crownframework.com/) - a Svelte-powered framework.
 - [sentence-length](https://sentence-length.netlify.app/) is a learning and analysis tool to show how some authors play with different lengths, while others stick with one.
 - [svelte-presenter](https://github.com/stephane-vanraes/svelte-presenter) lets you quickly make good looking presentations using Svelte and mdsvex.
 
