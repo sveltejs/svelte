@@ -2,6 +2,7 @@ import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types
 import { decode as decode_mappings } from 'sourcemap-codec';
 import { getLocator } from 'locate-character';
 import { StringWithSourcemap, sourcemap_add_offset, combine_sourcemaps } from '../utils/string_with_sourcemap';
+import { compareByGeneratedPositionsInflated } from 'source-map/lib/util';
 
 export interface Processed {
 	code: string;
@@ -83,6 +84,72 @@ async function replace_async(
 	return out.concat(final_content);
 }
 
+
+
+// import decoded sourcemap from mozilla/source-map/SourceMapGenerator
+// forked from source-map/lib/source-map-generator.js
+// from methods _serializeMappings and toJSON
+function DecodedSourcemapFromSourceMapGenerator(this: any) {
+	function convertMappings(this: any) {
+		let previousGeneratedLine = 1;
+		const result = [[]];
+		let resultLine;
+		let resultSegment;
+		let mapping;
+
+		const sourceIdx = this._sources.toArray().reduce((acc, val, idx) => (acc[val] = idx, acc), {});
+		const nameIdx = this._names.toArray().reduce((acc, val, idx) => (acc[val] = idx, acc), {});
+
+		const mappings = this._mappings.toArray();
+		resultLine = result[0];
+
+		for (let i = 0, len = mappings.length; i < len; i++) {
+			mapping = mappings[i];
+
+			if (mapping.generatedLine > previousGeneratedLine) {
+				while (mapping.generatedLine > previousGeneratedLine) {
+					result.push([]);
+					previousGeneratedLine++;
+				}
+				resultLine = result[mapping.generatedLine - 1]; // line is one-based
+			} else if (i > 0) {
+				if (
+					!compareByGeneratedPositionsInflated(mapping, mappings[i - 1])
+				) {
+					continue;
+				}
+			}
+			resultLine.push([mapping.generatedColumn]);
+			resultSegment = resultLine[resultLine.length - 1];
+
+			if (mapping.source != null) {
+				resultSegment.push(...[
+					sourceIdx[mapping.source],
+					mapping.originalLine - 1, // line is one-based
+					mapping.originalColumn
+				]);
+				if (mapping.name != null) {
+					resultSegment.push(nameIdx[mapping.name]);
+				}
+			}
+		}
+		return result;
+	}
+	const map = {
+		version: this._version,
+		sources: this._sources.toArray(),
+		names: this._names.toArray(),
+		mappings: convertMappings.apply(this)
+	};
+	if (this._file != null) {
+		(map as any).file = this._file;
+	}
+	// not needed: map.sourcesContent and map.sourceRoot
+	return map;
+}
+
+
+
 /** 
  * Convert a preprocessor output and its leading prefix and trailing suffix into StringWithSourceMap  
  */
@@ -108,6 +175,13 @@ function get_replacement(
 		decoded_map = typeof processed.map === 'string' ? JSON.parse(processed.map) : processed.map;
 		if (typeof(decoded_map.mappings) === 'string') {
 			decoded_map.mappings = decode_mappings(decoded_map.mappings);
+		}
+		if (
+			(decoded_map as any)._mappings &&
+			decoded_map.constructor.name == 'SourceMapGenerator'
+		) {
+			// import decoded sourcemap from mozilla/source-map/SourceMapGenerator
+			decoded_map = DecodedSourcemapFromSourceMapGenerator.apply(decoded_map);
 		}
 		sourcemap_add_offset(decoded_map, get_location(offset + prefix.length));
 	}
