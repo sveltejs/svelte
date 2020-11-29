@@ -2,7 +2,6 @@ import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types
 import { decode as decode_mappings } from 'sourcemap-codec';
 import { getLocator } from 'locate-character';
 import { StringWithSourcemap, sourcemap_add_offset, combine_sourcemaps } from '../utils/string_with_sourcemap';
-import { compareByGeneratedPositionsInflated } from 'source-map/lib/util';
 
 export interface Processed {
 	code: string;
@@ -90,6 +89,16 @@ async function replace_async(
 // forked from source-map/lib/source-map-generator.js
 // from methods _serializeMappings and toJSON
 function DecodedSourcemapFromSourceMapGenerator(this: any) {
+	function areEqualMappings(a, b) {
+		return (
+			a.generatedLine == b.generatedLine &&
+			a.generatedColumn == b.generatedColumn &&
+			a.source == b.source &&
+			a.originalLine == b.originalLine &&
+			a.originalColumn == b.originalColumn &&
+			a.name == b.name
+		);
+	}
 	function convertMappings(this: any) {
 		let previousGeneratedLine = 1;
 		const result = [[]];
@@ -113,9 +122,7 @@ function DecodedSourcemapFromSourceMapGenerator(this: any) {
 				}
 				resultLine = result[mapping.generatedLine - 1]; // line is one-based
 			} else if (i > 0) {
-				if (
-					!compareByGeneratedPositionsInflated(mapping, mappings[i - 1])
-				) {
+				if (areEqualMappings(mapping, mappings[i - 1])) {
 					continue;
 				}
 			}
