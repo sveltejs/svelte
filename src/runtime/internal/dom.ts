@@ -18,6 +18,9 @@ export function append_styles(
 	}
 }
 
+export function append_empty_stylesheet() {
+	return appendStylesTo.appendChild(element('style') as HTMLStyleElement);
+}
 
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
