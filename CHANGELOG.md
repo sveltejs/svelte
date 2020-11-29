@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Actually export `hasContext` ([#5726](https://github.com/sveltejs/svelte/issues/5726))
+
 ## 3.30.0
 
 * Add a typed `SvelteComponent` interface ([#5431](https://github.com/sveltejs/svelte/pull/5431))
