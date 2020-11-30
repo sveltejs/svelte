@@ -89,29 +89,35 @@ async function replace_async(
  * import decoded sourcemap from mozilla/source-map/SourceMapGenerator
  * forked from source-map/lib/source-map-generator.js
  * from methods _serializeMappings and toJSON
+ * we cannot use source-map.d.ts types, cos we access hidden properties
  */
-function decodedSourcemapFromSourceMapGenerator(this: any) {
+function decoded_sourcemap_from_generator(generator: any) {
 	function areEqualMappings(a, b) {
 		return (
-			a.generatedLine == b.generatedLine &&
+			// sorted by selectivity
 			a.generatedColumn == b.generatedColumn &&
-			a.source == b.source &&
-			a.originalLine == b.originalLine &&
 			a.originalColumn == b.originalColumn &&
-			a.name == b.name
+			a.name == b.name &&
+			a.generatedLine == b.generatedLine &&
+			a.originalLine == b.originalLine &&
+			a.source == b.source
 		);
 	}
-	function convertMappings(this: any) {
+	function convertMappings() {
+		// use global variable: generator
 		let previousGeneratedLine = 1;
 		const result = [[]];
 		let resultLine;
 		let resultSegment;
 		let mapping;
 
-		const sourceIdx = this._sources.toArray().reduce((acc, val, idx) => (acc[val] = idx, acc), {});
-		const nameIdx = this._names.toArray().reduce((acc, val, idx) => (acc[val] = idx, acc), {});
+		const sourceIdx = generator._sources.toArray()
+			.reduce((acc, val, idx) => (acc[val] = idx, acc), {});
 
-		const mappings = this._mappings.toArray();
+		const nameIdx = generator._names.toArray()
+			.reduce((acc, val, idx) => (acc[val] = idx, acc), {});
+
+		const mappings = generator._mappings.toArray();
 		resultLine = result[0];
 
 		for (let i = 0, len = mappings.length; i < len; i++) {
@@ -145,13 +151,13 @@ function decodedSourcemapFromSourceMapGenerator(this: any) {
 		return result;
 	}
 	const map = {
-		version: this._version,
-		sources: this._sources.toArray(),
-		names: this._names.toArray(),
-		mappings: convertMappings.apply(this)
+		version: generator._version,
+		sources: generator._sources.toArray(),
+		names: generator._names.toArray(),
+		mappings: convertMappings()
 	};
-	if (this._file != null) {
-		(map as any).file = this._file;
+	if (generator._file != null) {
+		(map as any).file = generator._file;
 	}
 	// not needed: map.sourcesContent and map.sourceRoot
 	return map;
@@ -185,12 +191,9 @@ function get_replacement(
 		if (typeof(decoded_map.mappings) === 'string') {
 			decoded_map.mappings = decode_mappings(decoded_map.mappings);
 		}
-		if (
-			(decoded_map as any)._mappings &&
-			decoded_map.constructor.name == 'SourceMapGenerator'
-		) {
+		if ((decoded_map as any)._mappings && decoded_map.constructor.name == 'SourceMapGenerator') {
 			// import decoded sourcemap from mozilla/source-map/SourceMapGenerator
-			decoded_map = decodedSourcemapFromSourceMapGenerator.apply(decoded_map);
+			decoded_map = decoded_sourcemap_from_generator(decoded_map);
 		}
 		sourcemap_add_offset(decoded_map, get_location(offset + prefix.length));
 	}
