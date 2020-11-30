@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.30.1
 
 * Support consuming decoded sourcemaps as created by the `source-map` library's `SourceMapGenerator` ([#5722](https://github.com/sveltejs/svelte/issues/5722))
 * Actually export `hasContext` ([#5726](https://github.com/sveltejs/svelte/issues/5726))
