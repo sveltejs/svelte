@@ -11,8 +11,8 @@ It's the last "What's new in Svelte" of the year and there's lots to celebrate! 
 
 1. `slot` components now support spread props: `<slot {...foo} />` (**3.30.0**)
 2. A new `hasContext` lifecycle function makes it easy to check whether a `key` has been set in the context of a parent component (**3.30.0**, [Docs](https://svelte.dev/docs#hasContext))
-3. A new Typed `SvelteComponent` makes it easier to add typed classes that extends base Svelte Components. Component library and framework authors rejoice! An example: `export class YourComponent extends SvelteComponent<{aProp: boolean}, {click: MouseEvent}, {default: {aSlot: string}}> {}` (**3.30.0**, [RFC](https://github.com/sveltejs/rfcs/pull/37))
-4. Transitions within `{:else}` block should now complete successfully (**3.29.5**, [Example](https://svelte.dev/repl/49cef205e5da459594ef2eafcbd41593?version=3.29.5))
+3. `SvelteComponent` is now typed which makes it easier to add typed classes that extend base Svelte Components. Component library and framework authors rejoice! An example: `export class YourComponent extends SvelteComponent<{aProp: boolean}, {click: MouseEvent}, {default: {aSlot: string}}> {}` (**3.30.0**, [RFC](https://github.com/sveltejs/rfcs/pull/37))
+4. Transitions within `{:else}` blocks should now complete successfully (**3.29.5**, [Example](https://svelte.dev/repl/49cef205e5da459594ef2eafcbd41593?version=3.29.5))
 5. Svelte now includes an export map, which explicitly states which files can be imported from its npm package. This should significantly improve debugging in web dev tools (**3.29.5** with some fixes in **3.29.6**, **3.29.7** and **3.30.0**)
 6. `rollup-plugin-svelte` had a new [7.0.0 release](https://github.com/sveltejs/rollup-plugin-svelte/blob/master/CHANGELOG.md). Biggest change is that the css option was removed. Users who were using that option should add another plugin like `rollup-plugin-css-only` as demonstrated [in the template](https://github.com/sveltejs/template/blob/5b1135c286f7a649daa99825a077586655051649/rollup.config.js#L48)
 
@@ -60,9 +60,9 @@ For all the features and bugfixes see the CHANGELOGs for [Svelte](https://github
 - [svelte-slimscroll](https://github.com/MelihAltintas/svelte-slimscroll) is a Svelte Action that transforms any div into a scrollable area with a nice scrollbar.
 - [svelte-typewriter](https://github.com/henriquehbr/svelte-typewriter) is a simple and reusable typewriter effect for your Svelte applications
 - [svelte-store-router](https://github.com/zyxd/svelte-store-router) is a store-based router for Svelte that suggests that routing is just another global state and History API changes are just an optional side-effects of this state.
-- [Routify](https://routify.dev/blog/routify-2-released) just released the V2 of its Svelte router.
+- [Routify](https://routify.dev/blog/routify-2-released) just released version 2 of its Svelte router.
 - [svelte-error-boundary](https://www.npmjs.com/package/@crownframework/svelte-error-boundary) provides a simple error boundary component for Svelte that can be can be used with both DOM and SSR targets.
-- [svelte2dts](https://www.npmjs.com/package/svelte2dts) generates d.ts files from svelte files, creating truly sharable and well typed components!
+- [svelte2dts](https://www.npmjs.com/package/svelte2dts) generates d.ts files from svelte files, creating truly sharable and well typed components.
 
 ## See you next month!
 
