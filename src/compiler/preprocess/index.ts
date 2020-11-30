@@ -83,78 +83,71 @@ async function replace_async(
 	return out.concat(final_content);
 }
 
-
-
 /**
- * import decoded sourcemap from mozilla/source-map/SourceMapGenerator
- * forked from source-map/lib/source-map-generator.js
- * from methods _serializeMappings and toJSON
- * we cannot use source-map.d.ts types, cos we access hidden properties
+ * Import decoded sourcemap from mozilla/source-map/SourceMapGenerator
+ * Forked from source-map/lib/source-map-generator.js
+ * from methods _serializeMappings and toJSON.
+ * We cannot use source-map.d.ts types, because we access hidden properties.
  */
 function decoded_sourcemap_from_generator(generator: any) {
-	function are_equal_mappings(a, b) {
-		return (
-			// sorted by selectivity
-			a.generatedColumn == b.generatedColumn &&
-			a.originalColumn == b.originalColumn &&
-			a.name == b.name &&
-			a.generatedLine == b.generatedLine &&
-			a.originalLine == b.originalLine &&
-			a.source == b.source
-		);
-	}
-	function convert_mappings() {
-		// use global variable: generator
-		let previousGeneratedLine = 1;
-		const result = [[]];
-		let resultLine;
-		let resultSegment;
-		let mapping;
+	let previous_generated_line = 1;
+	const converted_mappings = [[]];
+	let result_line;
+	let result_segment;
+	let mapping;
 
-		const sourceIdx = generator._sources.toArray()
-			.reduce((acc, val, idx) => (acc[val] = idx, acc), {});
+	const source_idx = generator._sources.toArray()
+		.reduce((acc, val, idx) => (acc[val] = idx, acc), {});
 
-		const nameIdx = generator._names.toArray()
-			.reduce((acc, val, idx) => (acc[val] = idx, acc), {});
+	const name_idx = generator._names.toArray()
+		.reduce((acc, val, idx) => (acc[val] = idx, acc), {});
 
-		const mappings = generator._mappings.toArray();
-		resultLine = result[0];
+	const mappings = generator._mappings.toArray();
+	result_line = converted_mappings[0];
 
-		for (let i = 0, len = mappings.length; i < len; i++) {
-			mapping = mappings[i];
+	for (let i = 0, len = mappings.length; i < len; i++) {
+		mapping = mappings[i];
 
-			if (mapping.generatedLine > previousGeneratedLine) {
-				while (mapping.generatedLine > previousGeneratedLine) {
-					result.push([]);
-					previousGeneratedLine++;
-				}
-				resultLine = result[mapping.generatedLine - 1]; // line is one-based
-			} else if (i > 0) {
-				if (are_equal_mappings(mapping, mappings[i - 1])) {
-					continue;
-				}
+		if (mapping.generatedLine > previous_generated_line) {
+			while (mapping.generatedLine > previous_generated_line) {
+				converted_mappings.push([]);
+				previous_generated_line++;
 			}
-			resultLine.push([mapping.generatedColumn]);
-			resultSegment = resultLine[resultLine.length - 1];
-
-			if (mapping.source != null) {
-				resultSegment.push(...[
-					sourceIdx[mapping.source],
-					mapping.originalLine - 1, // line is one-based
-					mapping.originalColumn
-				]);
-				if (mapping.name != null) {
-					resultSegment.push(nameIdx[mapping.name]);
-				}
+			result_line = converted_mappings[mapping.generatedLine - 1]; // line is one-based
+		} else if (i > 0) {
+			const previous_mapping = mappings[i - 1];
+			if (
+				// sorted by selectivity
+				mapping.generatedColumn === previous_mapping.generatedColumn &&
+				mapping.originalColumn === previous_mapping.originalColumn &&
+				mapping.name === previous_mapping.name &&
+				mapping.generatedLine === previous_mapping.generatedLine &&
+				mapping.originalLine === previous_mapping.originalLine &&
+				mapping.source === previous_mapping.source
+		) {
+				continue;
 			}
 		}
-		return result;
+		result_line.push([mapping.generatedColumn]);
+		result_segment = result_line[result_line.length - 1];
+
+		if (mapping.source != null) {
+			result_segment.push(...[
+				source_idx[mapping.source],
+				mapping.originalLine - 1, // line is one-based
+				mapping.originalColumn
+			]);
+			if (mapping.name != null) {
+				result_segment.push(name_idx[mapping.name]);
+			}
+		}
 	}
+
 	const map = {
 		version: generator._version,
 		sources: generator._sources.toArray(),
 		names: generator._names.toArray(),
-		mappings: convert_mappings()
+		mappings: converted_mappings
 	};
 	if (generator._file != null) {
 		(map as any).file = generator._file;
@@ -163,10 +156,8 @@ function decoded_sourcemap_from_generator(generator: any) {
 	return map;
 }
 
-
-
-/** 
- * Convert a preprocessor output and its leading prefix and trailing suffix into StringWithSourceMap  
+/**
+ * Convert a preprocessor output and its leading prefix and trailing suffix into StringWithSourceMap
  */
 function get_replacement(
 	filename: string,
@@ -191,7 +182,7 @@ function get_replacement(
 		if (typeof(decoded_map.mappings) === 'string') {
 			decoded_map.mappings = decode_mappings(decoded_map.mappings);
 		}
-		if ((decoded_map as any)._mappings && decoded_map.constructor.name == 'SourceMapGenerator') {
+		if ((decoded_map as any)._mappings && decoded_map.constructor.name === 'SourceMapGenerator') {
 			// import decoded sourcemap from mozilla/source-map/SourceMapGenerator
 			decoded_map = decoded_sourcemap_from_generator(decoded_map);
 		}
@@ -250,7 +241,7 @@ export default async function preprocess(
 
 	async function preprocess_tag_content(tag_name: 'style' | 'script', preprocessor: Preprocessor) {
 		const get_location = getLocator(source);
-		const tag_regex = tag_name == 'style' 
+		const tag_regex = tag_name === 'style'
 			? /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi
 			: /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
 
