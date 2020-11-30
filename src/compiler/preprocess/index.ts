@@ -92,7 +92,7 @@ async function replace_async(
  * we cannot use source-map.d.ts types, cos we access hidden properties
  */
 function decoded_sourcemap_from_generator(generator: any) {
-	function areEqualMappings(a, b) {
+	function are_equal_mappings(a, b) {
 		return (
 			// sorted by selectivity
 			a.generatedColumn == b.generatedColumn &&
@@ -103,7 +103,7 @@ function decoded_sourcemap_from_generator(generator: any) {
 			a.source == b.source
 		);
 	}
-	function convertMappings() {
+	function convert_mappings() {
 		// use global variable: generator
 		let previousGeneratedLine = 1;
 		const result = [[]];
@@ -130,7 +130,7 @@ function decoded_sourcemap_from_generator(generator: any) {
 				}
 				resultLine = result[mapping.generatedLine - 1]; // line is one-based
 			} else if (i > 0) {
-				if (areEqualMappings(mapping, mappings[i - 1])) {
+				if (are_equal_mappings(mapping, mappings[i - 1])) {
 					continue;
 				}
 			}
@@ -154,7 +154,7 @@ function decoded_sourcemap_from_generator(generator: any) {
 		version: generator._version,
 		sources: generator._sources.toArray(),
 		names: generator._names.toArray(),
-		mappings: convertMappings()
+		mappings: convert_mappings()
 	};
 	if (generator._file != null) {
 		(map as any).file = generator._file;
