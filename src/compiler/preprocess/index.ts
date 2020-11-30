@@ -85,10 +85,12 @@ async function replace_async(
 
 
 
-// import decoded sourcemap from mozilla/source-map/SourceMapGenerator
-// forked from source-map/lib/source-map-generator.js
-// from methods _serializeMappings and toJSON
-function DecodedSourcemapFromSourceMapGenerator(this: any) {
+/**
+ * import decoded sourcemap from mozilla/source-map/SourceMapGenerator
+ * forked from source-map/lib/source-map-generator.js
+ * from methods _serializeMappings and toJSON
+ */
+function decodedSourcemapFromSourceMapGenerator(this: any) {
 	function areEqualMappings(a, b) {
 		return (
 			a.generatedLine == b.generatedLine &&
@@ -188,7 +190,7 @@ function get_replacement(
 			decoded_map.constructor.name == 'SourceMapGenerator'
 		) {
 			// import decoded sourcemap from mozilla/source-map/SourceMapGenerator
-			decoded_map = DecodedSourcemapFromSourceMapGenerator.apply(decoded_map);
+			decoded_map = decodedSourcemapFromSourceMapGenerator.apply(decoded_map);
 		}
 		sourcemap_add_offset(decoded_map, get_location(offset + prefix.length));
 	}
