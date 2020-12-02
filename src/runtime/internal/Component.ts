@@ -212,19 +212,19 @@ if (typeof HTMLElement === 'function') {
 	};
 }
 
-export class SvelteComponent<
-	Props extends Record<string, any> = any,
-	Events extends Record<string, any> = any
-> {
+/**
+ * Base class for Svelte components. Used when dev=false.
+ */
+export class SvelteComponent {
 	$$: T$$;
-	$$set?: ($$props: Partial<Props>) => void;
+	$$set?: ($$props: any) => void;
 
 	$destroy() {
 		destroy_component(this, 1);
 		this.$destroy = noop;
 	}
 
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void) {
+	$on(type, callback) {
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 		callbacks.push(callback);
 
@@ -234,7 +234,7 @@ export class SvelteComponent<
 		};
 	}
 
-	$set($$props: Partial<Props>) {
+	$set($$props) {
 		if (this.$$set && !is_empty($$props)) {
 			this.$$.skip_bound = true;
 			this.$$set($$props);
