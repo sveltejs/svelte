@@ -157,7 +157,7 @@ export interface SvelteComponentTyped<
  * Base class to create strongly typed Svelte components.
  * This only exists for typing purposes and should be used in `.d.ts` files.
  * 
- * Example:
+ * ### Example:
  * 
  * You have component library on npm called `component-library`, from which
  * you export a component called `MyComponent`. For Svelte+TypeScript users,
@@ -175,6 +175,14 @@ export interface SvelteComponentTyped<
  * </script>
  * <MyComponent foo={'bar'} />
  * ```
+ * 
+ * #### Why not make this part of `SvelteComponent(Dev)`?
+ * Because
+ * ```ts
+ * class ASubclassOfSvelteComponent extends SvelteComponent<{foo: string}> {}
+ * const component: typeof SvelteComponent = ASubclassOfSvelteComponent;
+ * ```
+ * will throw a type error, so we need to seperate the more strictly typed class.
  */
 export class SvelteComponentTyped<
 	Props extends Record<string, any> = any,
