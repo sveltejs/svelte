@@ -178,6 +178,26 @@ Retrieves the context that belongs to the closest parent component with the spec
 </script>
 ```
 
+#### `hasContext`
+
+```js
+hasContext: boolean = hasContext(key: any)
+```
+
+---
+
+Checks whether a given `key` has been set in the context of a parent component. Must be called during component initialisation.
+
+```sv
+<script>
+	import { hasContext } from 'svelte';
+
+	if (hasContext('answer')) {
+		// do something
+	}
+</script>
+```
+
 #### `createEventDispatcher`
 
 ```js
