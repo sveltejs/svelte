@@ -97,22 +97,55 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
-export interface SvelteComponentDev<
-	Props extends Record<string, any> = any,
-	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any
-> {
-	$set(props?: Partial<Props>): void;
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
+type Props = Record<string, any>;
+export interface SvelteComponentDev {
+	$set(props?: Props): void;
+	$on(event: string, callback: (event: any) => void): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
 
-export class SvelteComponentDev<
+export class SvelteComponentDev extends SvelteComponent {
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$prop_def: Props;
+
+	constructor(options: {
+		target: Element;
+		anchor?: Element;
+		props?: Props;
+		hydrate?: boolean;
+		intro?: boolean;
+		$$inline?: boolean;
+    }) {
+		if (!options || (!options.target && !options.$$inline)) {
+			throw new Error("'target' is a required option");
+		}
+
+		super();
+	}
+
+	$destroy() {
+		super.$destroy();
+		this.$destroy = () => {
+			console.warn('Component was already destroyed'); // eslint-disable-line no-console
+		};
+	}
+
+	$capture_state() {}
+
+	$inject_state() {}
+}
+
+export declare class SvelteComponentTyped<
 	Props extends Record<string, any> = any,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
-> extends SvelteComponent<Props, Events> {
+> extends SvelteComponentDev {
 	/**
 	 * @private
 	 * For type checking capabilities only.
@@ -142,24 +175,12 @@ export class SvelteComponentDev<
 		hydrate?: boolean;
 		intro?: boolean;
 		$$inline?: boolean;
-	}) {
-		if (!options || (!options.target && !options.$$inline)) {
-			throw new Error("'target' is a required option");
-		}
+    })
 
-		super();
-	}
-
-	$destroy() {
-		super.$destroy();
-		this.$destroy = () => {
-			console.warn('Component was already destroyed'); // eslint-disable-line no-console
-		};
-	}
-
-	$capture_state() {}
-
-	$inject_state() {}
+	$set(props?: Partial<Props>): void;
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
+	$destroy(): void;
+	[accessor: string]: any;
 }
 
 export function loop_guard(timeout) {
