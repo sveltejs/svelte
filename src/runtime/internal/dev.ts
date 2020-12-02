@@ -97,7 +97,57 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
-export interface SvelteComponentDev<
+type Props = Record<string, any>;
+export interface SvelteComponentDev {
+	$set(props?: Props): void;
+	$on(event: string, callback: (event: any) => void): () => void;
+	$destroy(): void;
+	[accessor: string]: any;
+}
+/**
+ * Base class for Svelte components with some minor dev-enhancements. Used when dev=true.
+ */
+export class SvelteComponentDev extends SvelteComponent {
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$prop_def: Props;
+
+	constructor(options: {
+		target: Element;
+		anchor?: Element;
+		props?: Props;
+		hydrate?: boolean;
+		intro?: boolean;
+		$$inline?: boolean;
+    }) {
+		if (!options || (!options.target && !options.$$inline)) {
+			throw new Error("'target' is a required option");
+		}
+
+		super();
+	}
+
+	$destroy() {
+		super.$destroy();
+		this.$destroy = () => {
+			console.warn('Component was already destroyed'); // eslint-disable-line no-console
+		};
+	}
+
+	$capture_state() {}
+
+	$inject_state() {}
+}
+
+// TODO https://github.com/microsoft/TypeScript/issues/41770 is the reason
+// why we have to split out SvelteComponentTyped to not break existing usage of SvelteComponent.
+// Try to find a better way for Svelte 4.0.
+
+export interface SvelteComponentTyped<
 	Props extends Record<string, any> = any,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
@@ -107,12 +157,42 @@ export interface SvelteComponentDev<
 	$destroy(): void;
 	[accessor: string]: any;
 }
-
-export class SvelteComponentDev<
+/**
+ * Base class to create strongly typed Svelte components.
+ * This only exists for typing purposes and should be used in `.d.ts` files.
+ * 
+ * ### Example:
+ * 
+ * You have component library on npm called `component-library`, from which
+ * you export a component called `MyComponent`. For Svelte+TypeScript users,
+ * you want to provide typings. Therefore you create a `index.d.ts`:
+ * ```ts
+ * import { SvelteComponentTyped } from "svelte";
+ * export class MyComponent extends SvelteComponentTyped<{foo: string}> {}
+ * ```
+ * Typing this makes it possible for IDEs like VS Code with the Svelte extension
+ * to provide intellisense and to use the component like this in a Svelte file
+ * with TypeScript:
+ * ```svelte
+ * <script lang="ts">
+ * 	import { MyComponent } from "component-library";
+ * </script>
+ * <MyComponent foo={'bar'} />
+ * ```
+ * 
+ * #### Why not make this part of `SvelteComponent(Dev)`?
+ * Because
+ * ```ts
+ * class ASubclassOfSvelteComponent extends SvelteComponent<{foo: string}> {}
+ * const component: typeof SvelteComponent = ASubclassOfSvelteComponent;
+ * ```
+ * will throw a type error, so we need to seperate the more strictly typed class.
+ */
+export class SvelteComponentTyped<
 	Props extends Record<string, any> = any,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
-> extends SvelteComponent<Props, Events> {
+> extends SvelteComponentDev {
 	/**
 	 * @private
 	 * For type checking capabilities only.
@@ -142,24 +222,9 @@ export class SvelteComponentDev<
 		hydrate?: boolean;
 		intro?: boolean;
 		$$inline?: boolean;
-	}) {
-		if (!options || (!options.target && !options.$$inline)) {
-			throw new Error("'target' is a required option");
-		}
-
-		super();
+    }) {
+		super(options);
 	}
-
-	$destroy() {
-		super.$destroy();
-		this.$destroy = () => {
-			console.warn('Component was already destroyed'); // eslint-disable-line no-console
-		};
-	}
-
-	$capture_state() {}
-
-	$inject_state() {}
 }
 
 export function loop_guard(timeout) {
