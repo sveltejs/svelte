@@ -141,7 +141,17 @@ export class SvelteComponentDev extends SvelteComponent {
 	$inject_state() {}
 }
 
-export declare class SvelteComponentTyped<
+export interface SvelteComponentTyped<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
+> {
+	$set(props?: Partial<Props>): void;
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
+	$destroy(): void;
+	[accessor: string]: any;
+}
+export class SvelteComponentTyped<
 	Props extends Record<string, any> = any,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
@@ -175,12 +185,9 @@ export declare class SvelteComponentTyped<
 		hydrate?: boolean;
 		intro?: boolean;
 		$$inline?: boolean;
-    })
-
-	$set(props?: Partial<Props>): void;
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
-	$destroy(): void;
-	[accessor: string]: any;
+    }) {
+		super(options);
+	}
 }
 
 export function loop_guard(timeout) {
