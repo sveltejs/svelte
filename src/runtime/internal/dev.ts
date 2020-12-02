@@ -143,6 +143,10 @@ export class SvelteComponentDev extends SvelteComponent {
 	$inject_state() {}
 }
 
+// TODO https://github.com/microsoft/TypeScript/issues/41770 is the reason
+// why we have to split out SvelteComponentTyped to not break existing usage of SvelteComponent.
+// Try to find a better way for Svelte 4.0.
+
 export interface SvelteComponentTyped<
 	Props extends Record<string, any> = any,
 	Events extends Record<string, any> = any,
