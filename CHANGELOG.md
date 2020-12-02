@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.31.0
+
+* Use a separate `SvelteComponentTyped` interface for typed components ([#5738](https://github.com/sveltejs/svelte/pull/5738))
+
 ## 3.30.1
 
 * Support consuming decoded sourcemaps as created by the `source-map` library's `SourceMapGenerator` ([#5722](https://github.com/sveltejs/svelte/issues/5722))
