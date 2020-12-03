@@ -117,7 +117,8 @@ export class SvelteComponentDev extends SvelteComponent {
 	$$prop_def: Props;
 
 	constructor(options: {
-		target: Element;
+		target: Element | ShadowRoot;
+		customStyleTag: Element | ShadowRoot;
 		anchor?: Element;
 		props?: Props;
 		hydrate?: boolean;
