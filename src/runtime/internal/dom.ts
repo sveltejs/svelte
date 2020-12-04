@@ -269,7 +269,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	const iframe = element('iframe');
 	iframe.setAttribute('style',
 		'display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; ' +
-		`overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: -1;`
+		'overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: -1;'
 	);
 	iframe.setAttribute('aria-hidden', 'true');
 	iframe.tabIndex = -1;
