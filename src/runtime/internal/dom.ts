@@ -5,7 +5,9 @@ export function append(target: Node, node: Node) {
 }
 
 export function insert(target: Node, node: Node, anchor?: Node) {
-	target.insertBefore(node, anchor || null);
+	if (target != document) {
+		target.insertBefore(node, anchor || null);
+	}
 }
 
 export function detach(node: Node) {
