@@ -130,20 +130,28 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 
 ---
 
-Only values which directly appear within the `$:` block will become dependencies of the reactive statement. For example, in the code below `total` will only update when `x` or `y` change, but not `z`.
+Only values which directly appear within the `$:` block will become dependencies of the reactive statement. For example, in the code below `total` will only update when `x` changes, but not `y`.
 
 ```sv
 <script>
 	let x = 0;
 	let y = 0;
-	let z = 0;
 	
-	function updateTotal(x, y) {
-		return x + y + z;
+	function yPlusAValue(value) {
+		return value + y;
 	}
 	
-	$: total = updateTotal(x, y);
+	$: total = yPlusAValue(x);
 </script>
+
+Total: {total}
+<button on:click={() => x++}>
+	Increment X
+</button>
+
+<button on:click={() => y++}>
+	Increment Y
+</button>
 ```
 
 ---
