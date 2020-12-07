@@ -124,6 +124,7 @@ export interface CompileOptions {
 	tag?: string;
 	css?: boolean;
 	loopGuardTimeout?: number;
+	namespace?: string;
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;
