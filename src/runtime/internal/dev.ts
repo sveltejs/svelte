@@ -150,7 +150,7 @@ export class SvelteComponentDev extends SvelteComponent {
 export interface SvelteComponentTyped<
 	Props extends Record<string, any> = any,
 	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any
+	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
 > {
 	$set(props?: Partial<Props>): void;
 	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
