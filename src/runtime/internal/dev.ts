@@ -100,12 +100,22 @@ export function validate_slots(name, slot, keys) {
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;
-	$on<T = any>(event: string, callback: (event: CustomEvent<T>) => void): () => void;
+	$on(event: string, callback: (event: any) => void): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
-
+/**
+ * Base class for Svelte components with some minor dev-enhancements. Used when dev=true.
+ */
 export class SvelteComponentDev extends SvelteComponent {
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$prop_def: Props;
+
 	constructor(options: {
 		target: Element;
 		anchor?: Element;
@@ -131,6 +141,90 @@ export class SvelteComponentDev extends SvelteComponent {
 	$capture_state() {}
 
 	$inject_state() {}
+}
+
+// TODO https://github.com/microsoft/TypeScript/issues/41770 is the reason
+// why we have to split out SvelteComponentTyped to not break existing usage of SvelteComponent.
+// Try to find a better way for Svelte 4.0.
+
+export interface SvelteComponentTyped<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
+> {
+	$set(props?: Partial<Props>): void;
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
+	$destroy(): void;
+	[accessor: string]: any;
+}
+/**
+ * Base class to create strongly typed Svelte components.
+ * This only exists for typing purposes and should be used in `.d.ts` files.
+ * 
+ * ### Example:
+ * 
+ * You have component library on npm called `component-library`, from which
+ * you export a component called `MyComponent`. For Svelte+TypeScript users,
+ * you want to provide typings. Therefore you create a `index.d.ts`:
+ * ```ts
+ * import { SvelteComponentTyped } from "svelte";
+ * export class MyComponent extends SvelteComponentTyped<{foo: string}> {}
+ * ```
+ * Typing this makes it possible for IDEs like VS Code with the Svelte extension
+ * to provide intellisense and to use the component like this in a Svelte file
+ * with TypeScript:
+ * ```svelte
+ * <script lang="ts">
+ * 	import { MyComponent } from "component-library";
+ * </script>
+ * <MyComponent foo={'bar'} />
+ * ```
+ * 
+ * #### Why not make this part of `SvelteComponent(Dev)`?
+ * Because
+ * ```ts
+ * class ASubclassOfSvelteComponent extends SvelteComponent<{foo: string}> {}
+ * const component: typeof SvelteComponent = ASubclassOfSvelteComponent;
+ * ```
+ * will throw a type error, so we need to seperate the more strictly typed class.
+ */
+export class SvelteComponentTyped<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
+> extends SvelteComponentDev {
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$prop_def: Props;
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$events_def: Events;
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$slot_def: Slots;
+
+	constructor(options: {
+		target: Element;
+		anchor?: Element;
+		props?: Props;
+		hydrate?: boolean;
+		intro?: boolean;
+		$$inline?: boolean;
+    }) {
+		super(options);
+	}
 }
 
 export function loop_guard(timeout) {

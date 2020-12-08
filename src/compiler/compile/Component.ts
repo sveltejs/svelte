@@ -29,7 +29,9 @@ import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
+import { apply_preprocessor_sourcemap } from '../utils/string_with_sourcemap';
 import Element from './nodes/Element';
+import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types/types';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -326,6 +328,8 @@ export default class Component {
 			js.map.sourcesContent = [
 				this.source
 			];
+
+			js.map = apply_preprocessor_sourcemap(this.file, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
 		}
 
 		return {

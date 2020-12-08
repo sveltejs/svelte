@@ -102,7 +102,7 @@ onDestroy(callback: () => void)
 
 ---
 
-Schedules a callback to run once the component is unmounted.
+Schedules a callback to run immediately before the component is unmounted.
 
 Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the only one that runs inside a server-side component.
 
@@ -175,6 +175,26 @@ Retrieves the context that belongs to the closest parent component with the spec
 	import { getContext } from 'svelte';
 
 	const answer = getContext('answer');
+</script>
+```
+
+#### `hasContext`
+
+```js
+hasContext: boolean = hasContext(key: any)
+```
+
+---
+
+Checks whether a given `key` has been set in the context of a parent component. Must be called during component initialisation.
+
+```sv
+<script>
+	import { hasContext } from 'svelte';
+
+	if (hasContext('answer')) {
+		// do something
+	}
 </script>
 ```
 

@@ -111,8 +111,9 @@ export default class Renderer {
 
 				// these determine whether variable is included in initial context
 				// array, so must have the highest priority
-				if (variable.export_name) member.priority += 16;
-				if (variable.referenced) member.priority += 32;
+				if (variable.is_reactive_dependency && (variable.mutated || variable.reassigned)) member.priority += 16;
+				if (variable.export_name) member.priority += 32;
+				if (variable.referenced) member.priority += 64;
 			} else if (member.is_non_contextual) {
 				// determine whether variable is included in initial context
 				// array, so must have the highest priority
@@ -131,7 +132,7 @@ export default class Renderer {
 		while (i--) {
 			const member = this.context[i];
 			if (member.variable) {
-				if (member.variable.referenced || member.variable.export_name) break;
+				if (member.variable.referenced || member.variable.export_name || (member.variable.is_reactive_dependency && (member.variable.mutated || member.variable.reassigned))) break;
 			} else if (member.is_non_contextual) {
 				break;
 			}
@@ -220,7 +221,7 @@ export default class Renderer {
 			.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
 	}
 
-	dirty(names, is_reactive_declaration = false): Expression {
+	dirty(names: string[], is_reactive_declaration = false): Expression {
 		const renderer = this;
 
 		const dirty = (is_reactive_declaration

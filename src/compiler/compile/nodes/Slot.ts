@@ -15,7 +15,7 @@ export default class Slot extends Element {
 		super(component, parent, scope, info);
 
 		info.attributes.forEach(attr => {
-			if (attr.type !== 'Attribute') {
+			if (attr.type !== 'Attribute' && attr.type !== 'Spread') {
 				component.error(attr, {
 					code: 'invalid-slot-directive',
 					message: '<slot> cannot have directives'

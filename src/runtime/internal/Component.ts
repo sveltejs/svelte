@@ -212,6 +212,9 @@ if (typeof HTMLElement === 'function') {
 	};
 }
 
+/**
+ * Base class for Svelte components. Used when dev=false.
+ */
 export class SvelteComponent {
 	$$: T$$;
 	$$set?: ($$props: any) => void;

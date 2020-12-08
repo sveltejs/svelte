@@ -37,7 +37,7 @@ describe('sourcemaps', () => {
 			const preprocessed = await svelte.preprocess(
 				input.code,
 				config.preprocess || {},
-				{
+				config.options || {
 					filename: 'input.svelte'
 				}
 			);
@@ -46,8 +46,10 @@ describe('sourcemaps', () => {
 				preprocessed.code, {
 				filename: 'input.svelte',
 				// filenames for sourcemaps
+				sourcemap: preprocessed.map,
 				outputFilename: `${outputName}.js`,
-				cssOutputFilename: `${outputName}.css`
+				cssOutputFilename: `${outputName}.css`,
+				...(config.compile_options || {})
 			});
 
 			js.code = js.code.replace(
@@ -107,7 +109,7 @@ describe('sourcemaps', () => {
 			css.mapConsumer = css.map && await new SourceMapConsumer(css.map);
 			css.locate = getLocator(css.code || '');
 			css.locate_1 = getLocator(css.code || '', { offsetLine: 1 });
-			test({ assert, input, preprocessed, js, css });
+			await test({ assert, input, preprocessed, js, css });
 		});
 	});
 });
