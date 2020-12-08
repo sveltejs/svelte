@@ -1,13 +1,16 @@
 import Node from './shared/Node';
 import map_children from './shared/map_children';
 import hash from '../utils/hash';
+import Component from '../Component';
+import TemplateScope from './shared/TemplateScope';
+import { TemplateNode } from '../../interfaces';
 
 export default class Head extends Node {
 	type: 'Head';
 	children: any[]; // TODO
 	id: string;
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		if (info.attributes.length) {

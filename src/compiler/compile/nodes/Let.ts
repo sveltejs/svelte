@@ -2,6 +2,8 @@ import Node from './shared/Node';
 import Component from '../Component';
 import { walk } from 'estree-walker';
 import { BasePattern, Identifier } from 'estree';
+import TemplateScope from './shared/TemplateScope';
+import { TemplateNode } from '../../interfaces';
 
 const applicable = new Set(['Identifier', 'ObjectExpression', 'ArrayExpression', 'Property']);
 
@@ -11,7 +13,7 @@ export default class Let extends Node {
 	value: Identifier;
 	names: string[] = [];
 
-	constructor(component: Component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		this.name = { type: 'Identifier', name: info.name };

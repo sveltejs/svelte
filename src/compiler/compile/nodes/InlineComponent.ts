@@ -8,6 +8,7 @@ import Component from '../Component';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
+import { TemplateNode } from '../../interfaces';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -20,7 +21,7 @@ export default class InlineComponent extends Node {
 	children: INode[];
 	scope: TemplateScope;
 
-	constructor(component: Component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
