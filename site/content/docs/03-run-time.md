@@ -906,6 +906,7 @@ The following initialisation options can be provided:
 | `props` | `{}` | An object of properties to supply to the component
 | `hydrate` | `false` | See below
 | `intro` | `false` | If `true`, will play transitions on initial render, rather than waiting for subsequent state changes
+| `slots` | `{}` | An object with keys - slot names, values - element or array of elements
 
 Existing children of `target` are left where they are.
 

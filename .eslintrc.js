@@ -7,6 +7,7 @@ module.exports = {
 			'svelte/internal',
 			'svelte/store',
 			'svelte/easing',
+			'svelte/slot',
 			'estree'
 		],
 		'svelte3/compiler': require('./compiler')

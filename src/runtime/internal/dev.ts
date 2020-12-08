@@ -1,5 +1,5 @@
 import { custom_event, append, insert, detach, listen, attr } from './dom';
-import { SvelteComponent } from './Component';
+import { SvelteComponent, Props, SvelteComponentOptions, SvelteComponentOptionsPrivate } from './Component';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }));
@@ -97,7 +97,6 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
-type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;
 	$on(event: string, callback: (event: any) => void): () => void;
@@ -116,15 +115,9 @@ export class SvelteComponentDev extends SvelteComponent {
 	 */
 	$$prop_def: Props;
 
-	constructor(options: {
-		target: Element;
-		anchor?: Element;
-		props?: Props;
-		hydrate?: boolean;
-		intro?: boolean;
-		$$inline?: boolean;
-    }) {
-		if (!options || (!options.target && !options.$$inline)) {
+	constructor(options: SvelteComponentOptions) {
+		const privateOptions: SvelteComponentOptionsPrivate = options;
+		if (!privateOptions || (!privateOptions.target && !privateOptions.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
 

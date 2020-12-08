@@ -24,8 +24,8 @@ let compile = null;
 
 const sveltePath = process.cwd().split('\\').join('/');
 
-let unhandled_rejection = false;
-process.on('unhandledRejection', err => {
+let unhandled_rejection: Error | null = null;
+process.on('unhandledRejection', (err: Error) => {
 	unhandled_rejection = err;
 });
 
@@ -159,12 +159,13 @@ describe('runtime', () => {
 						warnings.push(warning);
 					};
 
+					const configOptions = typeof config.options === 'function' ? config.options(window) : config.options;
 					const options = Object.assign({}, {
 						target,
 						hydrate,
 						props: config.props,
 						intro: config.intro
-					}, config.options || {});
+					}, configOptions || {});
 
 					const component = new SvelteComponent(options);
 

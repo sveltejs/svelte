@@ -13,3 +13,5 @@ export {
 	SvelteComponentDev as SvelteComponent,
 	SvelteComponentTyped
 } from 'svelte/internal';
+
+export { createSlot, slot } from 'svelte/slot';

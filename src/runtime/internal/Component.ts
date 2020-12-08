@@ -4,27 +4,30 @@ import { blank_object, is_empty, is_function, run, run_all, noop } from './utils
 import { children, detach } from './dom';
 import { transition_in } from './transitions';
 
-interface Fragment {
-	key: string|null;
-	first: null;
+export interface FragmentMinimal {
 	/* create  */ c: () => void;
 	/* claim   */ l: (nodes: any) => void;
+	/* mount   */ m: (target: HTMLElement, anchor: HTMLElement) => void;
+	/* destroy */ d: (detaching: 0|1) => void;
+
+}
+interface Fragment extends FragmentMinimal {
+	key: string|null;
+	first: null;
 	/* hydrate */ h: () => void;
-	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
 	/* update  */ p: (ctx: any, dirty: any) => void;
 	/* measure */ r: () => void;
 	/* fix     */ f: () => void;
 	/* animate */ a: () => void;
 	/* intro   */ i: (local: any) => void;
 	/* outro   */ o: (local: any) => void;
-	/* destroy */ d: (detaching: 0|1) => void;
 }
 interface T$$ {
 	dirty: number[];
-	ctx: null|any;
+	ctx?: any;
 	bound: any;
 	update: () => void;
-	callbacks: any;
+	callbacks: Record<string, CallableFunction[]>;
 	after_update: any[];
 	props: Record<string, 0 | string>;
 	fragment: null|false|Fragment;
@@ -36,7 +39,7 @@ interface T$$ {
 	skip_bound: boolean;
 }
 
-export function bind(component, name, callback) {
+export function bind(component: SvelteComponent, name, callback) {
 	const index = component.$$.props[name];
 	if (index !== undefined) {
 		component.$$.bound[index] = callback;
@@ -52,7 +55,7 @@ export function claim_component(block, parent_nodes) {
 	block && block.l(parent_nodes);
 }
 
-export function mount_component(component, target, anchor) {
+export function mount_component(component: SvelteComponent, target, anchor) {
 	const { fragment, on_mount, on_destroy, after_update } = component.$$;
 
 	fragment && fragment.m(target, anchor);
@@ -73,7 +76,7 @@ export function mount_component(component, target, anchor) {
 	after_update.forEach(add_render_callback);
 }
 
-export function destroy_component(component, detaching) {
+export function destroy_component(component: SvelteComponent, detaching) {
 	const $$ = component.$$;
 	if ($$.fragment !== null) {
 		run_all($$.on_destroy);
@@ -87,7 +90,7 @@ export function destroy_component(component, detaching) {
 	}
 }
 
-function make_dirty(component, i) {
+function make_dirty(component: SvelteComponent, i) {
 	if (component.$$.dirty[0] === -1) {
 		dirty_components.push(component);
 		schedule_update();
@@ -96,11 +99,33 @@ function make_dirty(component, i) {
 	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
-export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
+export type Props = Record<string, any>;
+
+export type SvelteSlotOptions = {
+	props?: Props;
+}
+
+export type SvelteComponentOptions = {
+	target: Element;
+	anchor?: Element;
+	hydrate?: boolean;
+	intro?: boolean;
+	slots?: unknown;
+} & SvelteSlotOptions;
+
+export type SvelteComponentOptionsPrivate = {
+	target?: Element;
+	$$inline?: boolean;
+} & SvelteComponentOptions;
+
+export function init(component: SvelteComponent, options: SvelteComponentOptions, instance, create_fragment, not_equal, props: Props, dirty = [-1]) {
 	const parent_component = current_component;
 	set_current_component(component);
 
 	const prop_values = options.props || {};
+	if (options.slots) {
+		prop_values.$$slots = options.slots;
+	}
 
 	const $$: T$$ = component.$$ = {
 		fragment: null,
@@ -164,9 +189,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	set_current_component(parent_component);
 }
 
-export let SvelteElement;
-if (typeof HTMLElement === 'function') {
-	SvelteElement = class extends HTMLElement {
+export class SvelteElement extends HTMLElement {
 		$$: T$$;
 		$$set?: ($$props: any) => void;
 		constructor() {
@@ -209,8 +232,7 @@ if (typeof HTMLElement === 'function') {
 				this.$$.skip_bound = false;
 			}
 		}
-	};
-}
+	}
 
 /**
  * Base class for Svelte components. Used when dev=false.
@@ -224,7 +246,7 @@ export class SvelteComponent {
 		this.$destroy = noop;
 	}
 
-	$on(type, callback) {
+	$on(type: string, callback: CallableFunction) {
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 		callbacks.push(callback);
 
