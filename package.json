@@ -99,7 +99,7 @@
     "@rollup/plugin-json": "^4.0.1",
     "@rollup/plugin-node-resolve": "^6.0.0",
     "@rollup/plugin-replace": "^2.3.0",
-    "@rollup/plugin-sucrase": "^3.0.0",
+    "@rollup/plugin-sucrase": "^3.1.0",
     "@rollup/plugin-typescript": "^2.0.1",
     "@rollup/plugin-virtual": "^2.0.0",
     "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.6.0",
@@ -130,8 +130,8 @@
     "source-map-support": "^0.5.13",
     "sourcemap-codec": "^1.4.8",
     "tiny-glob": "^0.2.6",
-    "tslib": "^1.10.0",
-    "typescript": "^3.5.3"
+    "tslib": "^2.0.3",
+    "typescript": "^3.7.5"
   },
   "nyc": {
     "include": [
