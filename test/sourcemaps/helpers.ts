@@ -1,4 +1,26 @@
-import MagicString from 'magic-string';
+import MagicString, { Bundle } from 'magic-string';
+
+export function magic_string_bundle(
+	inputs: Array<{ code: string | MagicString, filename: string }>,
+	filename = 'bundle.js',
+	separator = '\n'
+) {
+	const bundle = new Bundle({ separator });
+	inputs.forEach(({ code, filename }) => {
+		bundle.addSource({
+			filename,
+			content: typeof code === 'string' ? new MagicString(code) : code
+		});
+	});
+	return {
+		code: bundle.toString(),
+		map: bundle.generateMap({
+			source: filename,
+			hires: true,
+			includeContent: false
+		})
+	};
+}
 
 export function magic_string_preprocessor_result(filename: string, src: MagicString) {
 	return {
