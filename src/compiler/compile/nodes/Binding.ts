@@ -72,7 +72,7 @@ export default class Binding extends Node {
 			const variable = component.var_lookup.get(name);
 
 			if (!variable || variable.global) {
-				component.error(this, {
+				component.error(this.expression.node as any, {
 					code: 'binding-undeclared',
 					message: `${name} is not declared`
 				});
@@ -81,7 +81,7 @@ export default class Binding extends Node {
 			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
 
 			if (info.expression.type === 'Identifier' && !variable.writable) {
-				component.error(this, {
+				component.error(this.expression.node as any, {
 					code: 'invalid-binding',
 					message: 'Cannot bind to a variable which is not writable'
 				});
@@ -89,10 +89,6 @@ export default class Binding extends Node {
 		}
 
 		const type = parent.get_static_attribute_value('type');
-
-		function isElement(node: Node): node is Element {
-			return !!(node as any).is_media_node;
-		}
 
 		this.is_readonly =
 			dimensions.test(this.name) ||
@@ -104,4 +100,8 @@ export default class Binding extends Node {
 	is_readonly_media_attribute() {
 		return read_only_media_attributes.has(this.name);
 	}
+}
+
+function isElement(node: Node): node is Element {
+	return !!(node as any).is_media_node;
 }
