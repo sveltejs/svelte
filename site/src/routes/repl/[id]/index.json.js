@@ -49,6 +49,7 @@ async function import_gist(req, res) {
 		`, [req.params.id, user.id, data.description, JSON.stringify(files)]);
 
 		send(res, 200, {
+			'Access-Control-Allow-Origin': "sveltesociety.dev",
 			uid: req.params.id,
 			name: data.description,
 			files,
