@@ -1,3 +1,5 @@
+// the foreign namespace covers all DOM implementations that aren't html5. It opts out of html5 specific a11y checks 
+// and case insensitive attribute names
 export const foreign = 'https://svelte.dev/docs#svelte_options';
 export const html = 'http://www.w3.org/1999/xhtml';
 export const mathml = 'http://www.w3.org/1998/Math/MathML';
