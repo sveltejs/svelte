@@ -14,7 +14,7 @@ export function test({ assert, input, preprocessed }) {
 				line: sourceLoc.line + 1,
 				column: sourceLoc.column
 			},
-			`failed to locate "${code}"`
+			`failed to locate "${code}" in "${filename}"`
 		);
 	};
 

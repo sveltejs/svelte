@@ -161,29 +161,6 @@ function decoded_sourcemap_from_generator(generator: any) {
 }
 
 /**
- * Heuristic used to find index of component source inside source map sources.
- */
-function guess_source_index(
-	file_basename: string,
-	decoded_map: DecodedSourceMap
-): number {
-	if (!file_basename) {
-		return decoded_map.sources.findIndex(source => !source);
-	}
-	// different tools produce different sources
-	// (file name, relative path, absolute path)
-	const index = decoded_map.sources.findIndex(source => {
-		const source_basename = source && get_file_basename(source);
-		return source_basename === file_basename;
-	});
-	if (index !== -1) {
-		// also normalize it in on source map
-		decoded_map.sources[index] = file_basename;
-	}
-	return index;
-}
-
-/**
  * Convert a preprocessor output and its leading prefix and trailing suffix into StringWithSourceMap
  */
 function get_replacement(
@@ -214,7 +191,7 @@ function get_replacement(
 			decoded_map = decoded_sourcemap_from_generator(decoded_map);
 		}
 		// offset only segments pointing at original component source
-		const source_index = guess_source_index(file_basename, decoded_map);
+		const source_index = decoded_map.sources.findIndex(source => source === file_basename);
 		sourcemap_add_offset(decoded_map, get_location(offset + prefix.length), source_index);
 	}
 	const processed_with_map = StringWithSourcemap.from_processed(processed.code, decoded_map);
