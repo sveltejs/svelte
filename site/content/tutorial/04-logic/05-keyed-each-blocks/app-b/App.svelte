@@ -1,7 +1,7 @@
 <script>
 	import Thing from './Thing.svelte';
 
-		let things = [
+	let things = [
 		{ id: 1, color: 'darkblue' },
 		{ id: 2, color: 'indigo' },
 		{ id: 3, color: 'deeppink' },
