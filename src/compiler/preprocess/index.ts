@@ -12,6 +12,9 @@ interface SourceUpdate {
 	dependencies?: string[];
 }
 
+/**
+ * Represents intermediate states of the preprocessing.
+ */
 class PreprocessResult {
 	// sourcemap_list is sorted in reverse order from last map (index 0) to first map (index -1)
 	// so we use sourcemap_list.unshift() to add new maps
@@ -22,13 +25,13 @@ class PreprocessResult {
 	get_location: ReturnType<typeof getLocator>;
 
 	constructor(public source: string, public filename: string) {
-		this.update_source({string: source});
+		this.update_source({ string: source });
 	}
 
-	update_source({string: source, map, dependencies}: SourceUpdate) {
+	update_source({ string: source, map, dependencies }: SourceUpdate) {
 		this.source = source;
 		this.get_location = getLocator(source);
-		
+
 		if (map) {
 			this.sourcemap_list.unshift(map);
 		}
@@ -38,12 +41,9 @@ class PreprocessResult {
 		}
 	}
 
-	processed(): Processed {
+	to_processed(): Processed {
 		// Combine all the source maps for each preprocessor function into one
-		const map: RawSourceMap = combine_sourcemaps(
-			this.filename,
-			this.sourcemap_list
-		);
+		const map: RawSourceMap = combine_sourcemaps(this.filename, this.sourcemap_list);
 
 		return {
 			// TODO return separated output, in future version where svelte.compile supports it:
@@ -53,7 +53,7 @@ class PreprocessResult {
 
 			code: this.source,
 			dependencies: [...new Set(this.dependencies)],
-			map: (map as object),
+			map: map as object,
 			toString: () => this.source
 		};
 	}
@@ -78,29 +78,31 @@ function processed_content_to_sws(
 }
 
 /**
- * Convert the whole tag including content (replacing it with `processed`)
- * into a `StringWithSourcemap` representing the transformed code.
+ * Given the whole tag including content, return a `StringWithSourcemap`
+ * representing the tag content replaced with `processed`.
  */
 function processed_tag_to_sws(
 	processed: Processed,
 	tag_name: 'style' | 'script',
 	attributes: string,
-	content: string,
-	{ filename, get_location }: Source): StringWithSourcemap {
-	const build_sws = (content: string, offset: number) =>
-		StringWithSourcemap.from_source(filename, content, get_location(offset));
+	{ source, filename, get_location }: Source): StringWithSourcemap {
+	const build_sws = (source: string, offset: number) =>
+		StringWithSourcemap.from_source(filename, source, get_location(offset));
 
 	const tag_open = `<${tag_name}${attributes || ''}>`;
 	const tag_close = `</${tag_name}>`;
 
 	const tag_open_sws = build_sws(tag_open, 0);
-	const tag_close_sws = build_sws(tag_close, tag_open.length + content.length);
+	const tag_close_sws = build_sws(tag_close, tag_open.length + source.length);
 
 	const content_sws = processed_content_to_sws(processed, get_location(tag_open.length));
 
 	return tag_open_sws.concat(content_sws).concat(tag_close_sws);
 }
 
+/** 
+ * Calculate the updates required to process all instances of the specified tag. 
+ */
 async function process_tag(
 	tag_name: 'style' | 'script',
 	preprocessor: Preprocessor,
@@ -134,8 +136,8 @@ async function process_tag(
 		if (!processed) return no_change();
 		if (processed.dependencies) dependencies.push(...processed.dependencies);
 
-		return processed_tag_to_sws(processed, tag_name, attributes, content,
-			{...source, get_location: offset => source.get_location(offset + tag_offset)});
+		return processed_tag_to_sws(processed, tag_name, attributes,
+			{source: content, get_location: offset => source.get_location(offset + tag_offset), filename});
 	}
 
 	return {...await replace_in_code(tag_regex, process_single_tag, source), dependencies};
@@ -190,5 +192,5 @@ export default async function preprocess(
 		result.update_source(await process_tag('style', preprocess, result));
 	}
 
-	return result.processed();
+	return result.to_processed();
 }

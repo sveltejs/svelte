@@ -2,9 +2,9 @@ import { getLocator } from 'locate-character';
 import { StringWithSourcemap } from '../utils/string_with_sourcemap';
 
 export interface Source {
-  source: string;
+	source: string;
 	get_location: ReturnType<typeof getLocator>;
-  filename: string;
+	filename: string;
 }
 
 interface Replacement {
@@ -24,11 +24,11 @@ function calculate_replacements(
 		replacements.push(
 			get_replacement(...match).then(
 				replacement => {
-          const matched_string = match[0];
-          const offset = match[match.length-2];
+					const matched_string = match[0];
+					const offset = match[match.length-2];
 
-          return ({ offset, length: matched_string.length, replacement });
-        }
+					return ({ offset, length: matched_string.length, replacement });
+				}
 			)
 		);
 		return '';
