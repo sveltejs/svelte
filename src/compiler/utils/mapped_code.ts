@@ -1,9 +1,9 @@
 import { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/remapping/dist/types/types';
 import remapping from '@ampproject/remapping';
 import { SourceMap } from 'magic-string';
-import { Processed } from '../preprocess';
+import { Source, Processed } from '../preprocess/types';
 
-type SourceLocation = {
+export type SourceLocation = {
 	line: number;
 	column: number;
 };
@@ -68,7 +68,7 @@ function pushArray<T>(_this: T[], other: T[]) {
 	}
 }
 
-export class StringWithSourcemap {
+export class MappedCode {
 	string: string;
 	map: DecodedSourceMap;
 
@@ -90,7 +90,7 @@ export class StringWithSourcemap {
 	 * concat in-place (mutable), return this (chainable)
 	 * will also mutate the `other` object
 	 */
-	concat(other: StringWithSourcemap): StringWithSourcemap {
+	concat(other: MappedCode): MappedCode {
 		// noop: if one is empty, return the other
 		if (other.string == '') return this;
 		if (this.string == '') {
@@ -167,34 +167,34 @@ export class StringWithSourcemap {
 		return this;
 	}
 
-	static from_processed(string: string, map?: DecodedSourceMap): StringWithSourcemap {
+	static from_processed(string: string, map?: DecodedSourceMap): MappedCode {
 		const line_count = string.split('\n').length;
 
 		if (map) {
-			// ensure that count of source map mappings lines 
+			// ensure that count of source map mappings lines
 			// is equal to count of generated code lines
 			// (some tools may produce less)
 			const missing_lines = line_count - map.mappings.length;
 			for (let i = 0; i < missing_lines; i++) {
 				map.mappings.push([]);
 			}
-			return new StringWithSourcemap(string, map);
+			return new MappedCode(string, map);
 		}
 
-		if (string == '') return new StringWithSourcemap();
+		if (string == '') return new MappedCode();
 		map = { version: 3, names: [], sources: [], mappings: [] };
 
 		// add empty SourceMapSegment[] for every line
 		for (let i = 0; i < line_count; i++) map.mappings.push([]);
-		return new StringWithSourcemap(string, map);
+		return new MappedCode(string, map);
 	}
 
-	static from_source(
-		source_file: string, source: string, offset?: SourceLocation
-	): StringWithSourcemap {
+	static from_source({ source, file_basename, get_location }: Source): MappedCode {
+		let offset: SourceLocation = get_location(0);
+
 		if (!offset) offset = { line: 0, column: 0 };
-		const map: DecodedSourceMap = { version: 3, names: [], sources: [source_file], mappings: [] };
-		if (source == '') return new StringWithSourcemap(source, map);
+		const map: DecodedSourceMap = { version: 3, names: [], sources: [file_basename], mappings: [] };
+		if (source == '') return new MappedCode(source, map);
 
 		// we create a high resolution identity map here,
 		// we know that it will eventually be merged with svelte's map,
@@ -214,7 +214,7 @@ export class StringWithSourcemap {
 		for (let segment = 0; segment < segment_list.length; segment++) {
 			segment_list[segment][3] += offset.column;
 		}
-		return new StringWithSourcemap(source, map);
+		return new MappedCode(source, map);
 	}
 }
 
