@@ -1,30 +1,21 @@
-export function test({ assert, input, preprocessed }) {
-	const assertMapped = (source, transformed) => {
-		const sourceLoc = input.locate(source);
-		const transformedLoc = preprocessed.locate_1(transformed);
-		assert.deepEqual(
-			preprocessed.mapConsumer.originalPositionFor(transformedLoc),
-			{
-				source: 'input.svelte',
-				name: null,
-				line: sourceLoc.line + 1,
-				column: sourceLoc.column
-			},
-			`failed to locate "${transformed}"`
-		);
-	};
+import { assert_mapped, assert_not_located } from '../../helpers';
 
-	const assertNotMapped = (code) => {
-		const transformedLoc = preprocessed.locate_1(code);
-		assert.strictEqual(transformedLoc, undefined, `failed to remove "${code}"`);
-	};
-
+export function test({ input, preprocessed }) {
 	// TS => JS code
-	assertMapped('let count: number = 0;', 'let count = 0;');
+	assert_mapped({
+		code: 'let count = 0;',
+		input_code: 'let count: number = 0;',
+		input: input.locate,
+		preprocessed
+	});
 
 	// Markup, not touched
-	assertMapped('<h1>Hello world!</h1>', '<h1>Hello world!</h1>');
-
+	assert_mapped({
+		code: '<h1>Hello world!</h1>',
+		input: input.locate,
+		preprocessed
+	});
+	
 	// TS types, removed
-	assertNotMapped('ITimeoutDestroyer');
+	assert_not_located('ITimeoutDestroyer', preprocessed.locate_1);
 }

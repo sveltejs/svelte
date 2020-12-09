@@ -1,4 +1,59 @@
+import * as assert from 'assert';
+import { getLocator } from 'locate-character';
 import MagicString, { Bundle } from 'magic-string';
+
+type AssertMappedParameters = {
+	code: string;
+	filename?: string;
+	input: string | ReturnType<typeof getLocator>;
+	input_code?: string;
+	preprocessed: any;
+};
+
+export function assert_mapped(
+	{ code, filename, input, input_code, preprocessed }: AssertMappedParameters
+) {
+	const locate_input = typeof input === 'function' ? input : getLocator(input);
+	if (filename === undefined) filename = 'input.svelte';
+	if (input_code === undefined) input_code = code;	
+
+	const source_loc = locate_input(input_code);
+	assert.notEqual(
+		source_loc,
+		undefined,
+		`failed to locate "${input_code}" in "${filename}"`
+	);
+
+	const transformed_loc = preprocessed.locate_1(code);
+	assert.notEqual(
+		transformed_loc,
+		undefined,
+		`failed to locate "${code}" in transformed "${filename}"`
+	);
+
+	assert.deepEqual(
+		preprocessed.mapConsumer.originalPositionFor(transformed_loc),
+		{
+			source: filename,
+			name: null,
+			line: source_loc.line + 1,
+			column: source_loc.column
+		},
+		`incorrect mappings for "${input_code}" in "${filename}"`
+	);
+}
+
+export function assert_not_located(
+	code: string,
+	locate: ReturnType<typeof getLocator>,
+	filename = 'input.svelte'
+) {
+	assert.equal(
+		locate(code),
+		undefined,
+		`located "${code}" that should be removed from ${filename}`
+	);
+}
 
 export function magic_string_bundle(
 	inputs: Array<{ code: string | MagicString, filename: string }>,

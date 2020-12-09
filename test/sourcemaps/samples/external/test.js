@@ -1,27 +1,26 @@
-import { getLocator } from 'locate-character';
+import { assert_mapped } from '../../helpers';
 import { COMMON, STYLES } from './_config';
 
-export function test({ assert, input, preprocessed }) {
-
-	const assertMapped = (locateInput, code, filename) => {
-		const sourceLoc = locateInput(code);
-		const transformedLoc = preprocessed.locate_1(code);
-		assert.deepEqual(
-			preprocessed.mapConsumer.originalPositionFor(transformedLoc),
-			{
-				source: filename,
-				name: null,
-				line: sourceLoc.line + 1,
-				column: sourceLoc.column
-			},
-			`failed to locate "${code}" in "${filename}"`
-		);
-	};
-
+export function test({ input, preprocessed }) {
 	// Transformed script, main file
-	assertMapped(input.locate, 'Divs ftw!', 'input.svelte');
+	assert_mapped({
+		filename: 'input.svelte',
+		code: 'Divs ftw!',
+		input: input.locate,
+		preprocessed
+	});
 
 	// External files
-	assertMapped(getLocator(COMMON), 'height: 100%;', 'common.scss');
-	assertMapped(getLocator(STYLES), 'color: orange;', 'styles.scss');
+	assert_mapped({
+		filename: 'common.scss',
+		code: 'height: 100%;',
+		input: COMMON,
+		preprocessed
+	});
+	assert_mapped({
+		filename: 'styles.scss',
+		code: 'color: orange;',
+		input: STYLES,
+		preprocessed
+	});
 }
