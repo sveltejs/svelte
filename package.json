@@ -99,7 +99,7 @@
     "@rollup/plugin-json": "^4.0.1",
     "@rollup/plugin-node-resolve": "^6.0.0",
     "@rollup/plugin-replace": "^2.3.0",
-    "@rollup/plugin-sucrase": "^3.0.0",
+    "@rollup/plugin-sucrase": "^3.1.0",
     "@rollup/plugin-typescript": "^2.0.1",
     "@rollup/plugin-virtual": "^2.0.0",
     "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.6.0",
