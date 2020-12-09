@@ -8,14 +8,14 @@ export default {
 	preprocess: [
 		{
 			script: ({ content, filename }) => {
-        const s = new MagicString(content);
-        s.prepend('// This script code is approved\n');
-        return magic_string_preprocessor_result(filename, s);
-      },
-      style: ({ content, filename }) => {
-        const s = new MagicString(content);
-        s.prepend('/* This style code is approved */\n');
-        return magic_string_preprocessor_result(filename, s);
+				const s = new MagicString(content);
+				s.prepend('// This script code is approved\n');
+				return magic_string_preprocessor_result(filename, s);
+			},
+			style: ({ content, filename }) => {
+				const s = new MagicString(content);
+				s.prepend('/* This style code is approved */\n');
+				return magic_string_preprocessor_result(filename, s);
 			}
 		}
 	]
