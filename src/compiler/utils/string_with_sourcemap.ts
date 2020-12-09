@@ -15,7 +15,7 @@ function last_line_length(s: string) {
 export function sourcemap_add_offset(
 	map: DecodedSourceMap, offset: SourceLocation, source_index: number
 ) {
-	if (map.mappings.length == 0 || source_index < 0) return;
+	if (map.mappings.length == 0) return;
 	// shift lines
 	for (let line = 0; line < map.mappings.length; line++) {
 		const segment_list = map.mappings[line];

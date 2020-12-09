@@ -191,8 +191,10 @@ function get_replacement(
 			decoded_map = decoded_sourcemap_from_generator(decoded_map);
 		}
 		// offset only segments pointing at original component source
-		const source_index = decoded_map.sources.findIndex(source => source === file_basename);
-		sourcemap_add_offset(decoded_map, get_location(offset + prefix.length), source_index);
+		const source_index = decoded_map.sources.indexOf(file_basename);
+		if (source_index !== -1) {
+			sourcemap_add_offset(decoded_map, get_location(offset + prefix.length), source_index);
+		}
 	}
 	const processed_with_map = StringWithSourcemap.from_processed(processed.code, decoded_map);
 
