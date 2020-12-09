@@ -2,7 +2,7 @@ import { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/rem
 import remapping from '@ampproject/remapping';
 import { SourceMap } from 'magic-string';
 
-type SourceLocation = {
+export type SourceLocation = {
 	line: number;
 	column: number;
 };
