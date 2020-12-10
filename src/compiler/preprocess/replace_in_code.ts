@@ -7,37 +7,13 @@ export interface Source {
 	filename: string;
 }
 
-interface Replacement {
+export interface Replacement {
 	offset: number;
 	length: number;
 	replacement: StringWithSourcemap;
 }
 
-function calculate_replacements(
-	re: RegExp,
-	get_replacement: (...match: any[]) => Promise<StringWithSourcemap>,
-	source: string
-) {
-	const replacements: Array<Promise<Replacement>> = [];
-
-	source.replace(re, (...match) => {
-		replacements.push(
-			get_replacement(...match).then(
-				replacement => {
-					const matched_string = match[0];
-					const offset = match[match.length-2];
-
-					return ({ offset, length: matched_string.length, replacement });
-				}
-			)
-		);
-		return '';
-	});
-
-	return Promise.all(replacements);
-}
-
-function perform_replacements(
+export function perform_replacements(
 	replacements: Replacement[],
 	{ filename, source, get_location }: Source
 ): StringWithSourcemap {
@@ -55,14 +31,4 @@ function perform_replacements(
 		filename, source.slice(last_end), get_location(last_end));
 
 	return out.concat(unchanged_suffix);
-}
-
-export async function replace_in_code(
-	regex: RegExp,
-	get_replacement: (...match: any[]) => Promise<StringWithSourcemap>,
-	location: Source
-): Promise<StringWithSourcemap> {
-	const replacements = await calculate_replacements(regex, get_replacement, location.source);
-
-	return perform_replacements(replacements, location);
 }

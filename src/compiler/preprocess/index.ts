@@ -3,8 +3,8 @@ import { getLocator } from 'locate-character';
 import { StringWithSourcemap, SourceLocation, sourcemap_add_offset, combine_sourcemaps } from '../utils/string_with_sourcemap';
 import { decode_map } from './decode_sourcemap';
 import parse_tag_attributes from './parse_tag_attributes';
-import { replace_in_code, Source } from './replace_in_code';
-import { Preprocessor, PreprocessorGroup, Processed } from './types';
+import { perform_replacements, Source, Replacement } from './replace_in_code';
+import { Preprocessor, SyncPreprocessor, PreprocessorGroup, Processed } from './types';
 
 interface SourceUpdate {
 	string: string;
@@ -100,47 +100,181 @@ function processed_tag_to_sws(
 	return tag_open_sws.concat(content_sws).concat(tag_close_sws);
 }
 
+
+interface TagInstance {
+	tag_with_content: string, 
+	attributes: string, 
+	content: string, 
+	tag_offset: number;
+}
+
+export function get_tag_instances(tag: 'style'|'script', source: string): TagInstance[] {
+	const tag_regex =
+		tag === 'style'
+			? /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi
+			: /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
+
+	const instances: TagInstance[] = [];
+
+	source.replace(tag_regex, (...match) => {
+		const [tag_with_content, attributes, content, tag_offset] = match;
+
+		instances.push({
+			tag_with_content,
+			attributes: attributes || '',
+			content: content || '',
+			tag_offset
+		});
+
+		return '';
+	});
+
+	return instances;
+}
+
+function to_source_update(tags: TagInstance[], processed: Processed[], tag_name: 'style' | 'script', source: Source) {
+	const { filename, get_location } = source;
+	const dependencies: string[] = [];
+
+	const replacements: Replacement[] = processed.map((processed, idx) => {
+		const match = tags[idx];
+		const {tag_with_content, attributes, content, tag_offset} = match;
+
+		let sws: StringWithSourcemap;
+
+		if (!processed) {
+			sws = StringWithSourcemap.from_source(filename, tag_with_content, get_location(tag_offset));
+		} else {
+			if (processed.dependencies) dependencies.push(...processed.dependencies);
+	
+			sws = processed_tag_to_sws(processed, tag_name, attributes, {
+				source: content,
+				get_location: offset => source.get_location(offset + tag_offset),
+				filename
+			});	
+		}
+
+		return { offset: tag_offset, length: tag_with_content.length, replacement: sws };
+	});
+
+	return {...perform_replacements(replacements, source), dependencies};
+}
+
 /** 
  * Calculate the updates required to process all instances of the specified tag. 
  */
 async function process_tag(
 	tag_name: 'style' | 'script',
-	preprocessor: Preprocessor,
+	preprocessor: Preprocessor | SyncPreprocessor,
 	source: Source
 ): Promise<SourceUpdate> {
-	const { filename, get_location } = source;
-	const tag_regex =
-		tag_name === 'style'
-			? /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi
-			: /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
+	const { filename } = source;
+	
+	const tags = get_tag_instances(tag_name, source.source);
+	
+	const processed = await Promise.all<Processed>(tags.map(({attributes, content}) => {
+		if (attributes || content) {			
+			return preprocessor({
+				content,
+				attributes: parse_tag_attributes(attributes || ''),
+				filename
+			});
+		}
+	}));
 
-	const dependencies: string[] = [];
+	return to_source_update(tags, processed, tag_name, source);
+}
 
-	async function process_single_tag(
-		tag_with_content: string,
-		attributes = '',
-		content = '',
-		tag_offset: number
-	): Promise<StringWithSourcemap> {
-		const no_change = () =>
-			StringWithSourcemap.from_source(filename, tag_with_content, get_location(tag_offset));
+function process_tag_sync(
+	tag_name: 'style' | 'script',
+	preprocessor: SyncPreprocessor,
+	source: Source
+): SourceUpdate {
+	const { filename } = source;
+	
+	const tags = get_tag_instances(tag_name, source.source);
+	
+	const processed: Processed[] = tags.map(({attributes, content}) => {
+		if (attributes || content) {			
+			return preprocessor({
+				content,
+				attributes: parse_tag_attributes(attributes || ''),
+				filename
+			});
+		}
+	});
 
-		if (!attributes && !content) return no_change();
+	return to_source_update(tags, processed, tag_name, source);
+}
 
-		const processed = await preprocessor({
-			content: content || '',
-			attributes: parse_tag_attributes(attributes || ''),
-			filename
-		});
+function decode_preprocessor_params(
+	preprocessor: PreprocessorGroup | PreprocessorGroup[],
+	options?: { filename?: string }
+) {
+	// @ts-ignore todo: doublecheck
+	const filename = (options && options.filename) || preprocessor.filename; // legacy
 
-		if (!processed) return no_change();
-		if (processed.dependencies) dependencies.push(...processed.dependencies);
+	const preprocessors = preprocessor ? (Array.isArray(preprocessor) ? preprocessor : [preprocessor]) : [];
 
-		return processed_tag_to_sws(processed, tag_name, attributes,
-			{source: content, get_location: offset => source.get_location(offset + tag_offset), filename});
+	const markup = preprocessors.map(p => p.markup).filter(Boolean);
+	const script = preprocessors.map(p => p.script).filter(Boolean);
+	const style = preprocessors.map(p => p.style).filter(Boolean);
+
+	return { markup, script, style, filename };
+}
+
+function is_sync(processor: Preprocessor | SyncPreprocessor): processor is SyncPreprocessor {
+	return processor['is_sync'];
+}
+
+export function preprocess_sync(
+	source: string,
+	preprocessor: PreprocessorGroup | PreprocessorGroup[],
+	options?: { filename?: string }
+): Processed {
+	const { markup, script, style, filename } = decode_preprocessor_params(preprocessor, options);
+
+	const result = new PreprocessResult(source, filename);
+
+	// TODO keep track: what preprocessor generated what sourcemap?
+	// to make debugging easier = detect low-resolution sourcemaps in fn combine_mappings
+
+	for (const process of markup) {
+		if (is_sync(process)) {
+			const processed = process({
+				content: result.source,
+				filename,
+				attributes: null
+			});
+	
+			if (!processed) continue;
+	
+			result.update_source({
+				string: processed.code,
+				map: processed.map
+					? // TODO: can we use decode_sourcemap?
+						typeof processed.map === 'string'
+						? JSON.parse(processed.map)
+						: processed.map
+					: undefined,
+				dependencies: processed.dependencies
+			});
+		}
 	}
 
-	return {...await replace_in_code(tag_regex, process_single_tag, source), dependencies};
+	for (const process of script) {
+		if (is_sync(process)) {
+			result.update_source(process_tag_sync('script', process, result));
+		}
+	}
+
+	for (const process of style) {
+		if (is_sync(process)) {
+			result.update_source(process_tag_sync('style', process, result));
+		}
+	}
+
+	return result.to_processed();
 }
 
 export default async function preprocess(
@@ -148,16 +282,7 @@ export default async function preprocess(
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
 	options?: { filename?: string }
 ): Promise<Processed> {
-	// @ts-ignore todo: doublecheck
-	const filename = (options && options.filename) || preprocessor.filename; // legacy
-
-	const preprocessors = preprocessor
-		? Array.isArray(preprocessor) ? preprocessor : [preprocessor]
-		: [];
-
-	const markup = preprocessors.map(p => p.markup).filter(Boolean);
-	const script = preprocessors.map(p => p.script).filter(Boolean);
-	const style = preprocessors.map(p => p.style).filter(Boolean);
+	const { markup, script, style, filename } = decode_preprocessor_params(preprocessor, options);
 
 	const result = new PreprocessResult(source, filename);
 
@@ -167,7 +292,8 @@ export default async function preprocess(
 	for (const process of markup) {
 		const processed = await process({
 			content: result.source,
-			filename
+			filename,
+			attributes: null
 		});
 
 		if (!processed) continue;
@@ -188,8 +314,8 @@ export default async function preprocess(
 		result.update_source(await process_tag('script', process, result));
 	}
 
-	for (const preprocess of style) {
-		result.update_source(await process_tag('style', preprocess, result));
+	for (const process of style) {
+		result.update_source(await process_tag('style', process, result));
 	}
 
 	return result.to_processed();

@@ -6,13 +6,17 @@ export interface Processed {
 }
 
 export interface PreprocessorGroup {
-	markup?: (options: { content: string; filename: string }) => Processed | Promise<Processed>;
-	style?: Preprocessor;
-	script?: Preprocessor;
+	markup?: Preprocessor | SyncPreprocessor;
+	style?: Preprocessor | SyncPreprocessor;
+	script?: Preprocessor | SyncPreprocessor;
 }
 
-export type Preprocessor = (options: {
+interface PreprocessorOptions {
 	content: string;
 	attributes: Record<string, string | boolean>;
 	filename?: string;
-}) => Processed | Promise<Processed>;
+}
+
+export declare type Preprocessor = (options: PreprocessorOptions) => Promise<Processed>;
+
+export declare type SyncPreprocessor = ((options: PreprocessorOptions) => Processed) & { is_sync: true };
