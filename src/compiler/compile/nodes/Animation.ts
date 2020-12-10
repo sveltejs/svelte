@@ -4,6 +4,7 @@ import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { TemplateNode } from '../../interfaces';
 import Element from './Element';
+import EachBlock from './EachBlock';
 
 export default class Animation extends Node {
 	type: 'Animation';
@@ -34,7 +35,7 @@ export default class Animation extends Node {
 			});
 		}
 
-		(block as any).has_animation = true;
+		(block as EachBlock).has_animation = true;
 
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression, true)
