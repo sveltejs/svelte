@@ -70,7 +70,7 @@ function processed_content_to_sws(
 	let decoded_map: DecodedSourceMap;
 	if (processed.map) {
 		decoded_map = decode_map(processed);
-		
+
 		sourcemap_add_offset(decoded_map, location);
 	}
 
@@ -102,9 +102,9 @@ function processed_tag_to_sws(
 
 
 interface TagInstance {
-	tag_with_content: string, 
-	attributes: string, 
-	content: string, 
+	tag_with_content: string,
+	attributes: string,
+	content: string,
 	tag_offset: number;
 }
 
@@ -146,12 +146,12 @@ function to_source_update(tags: TagInstance[], processed: Processed[], tag_name:
 			sws = StringWithSourcemap.from_source(filename, tag_with_content, get_location(tag_offset));
 		} else {
 			if (processed.dependencies) dependencies.push(...processed.dependencies);
-	
+
 			sws = processed_tag_to_sws(processed, tag_name, attributes, {
 				source: content,
 				get_location: offset => source.get_location(offset + tag_offset),
 				filename
-			});	
+			});
 		}
 
 		return { offset: tag_offset, length: tag_with_content.length, replacement: sws };
@@ -166,11 +166,11 @@ function get_processed_for_tag(
 	source: Source
 ) {
 	const { filename } = source;
-	
+
 	const tags = get_tag_instances(tag_name, source.source);
-	
+
 	const processed = tags.map(({attributes, content}) => {
-		if (attributes || content) {			
+		if (attributes || content) {
 			return preprocessor({
 				content,
 				attributes: parse_tag_attributes(attributes || ''),
@@ -182,8 +182,8 @@ function get_processed_for_tag(
 	return { tags, processed };
 }
 
-/** 
- * Calculate the updates required to process all instances of the specified tag. 
+/**
+ * Calculate the updates required to process all instances of the specified tag.
  */
 async function process_tag(
 	tag_name: 'style' | 'script',
