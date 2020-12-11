@@ -218,13 +218,10 @@ function decode_preprocessor_params(
 
 	const markup = preprocessors.map(p => p.markup).filter(Boolean);
 	const script = preprocessors.map(p => p.script).filter(Boolean);
+	const script_sync = preprocessors.map(p => p.script_sync).filter(Boolean);
 	const style = preprocessors.map(p => p.style).filter(Boolean);
 
-	return { markup, script, style, filename };
-}
-
-function is_sync(processor: Preprocessor | SyncPreprocessor): processor is SyncPreprocessor {
-	return processor['is_sync'];
+	return { markup, script, script_sync, style, filename };
 }
 
 export function preprocess_sync(
@@ -232,47 +229,49 @@ export function preprocess_sync(
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
 	options?: { filename?: string }
 ): Processed {
-	const { markup, script, style, filename } = decode_preprocessor_params(preprocessor, options);
+	const { script_sync, filename } = decode_preprocessor_params(preprocessor, options);
 
 	const result = new PreprocessResult(source, filename);
 
 	// TODO keep track: what preprocessor generated what sourcemap?
 	// to make debugging easier = detect low-resolution sourcemaps in fn combine_mappings
 
-	for (const process of markup) {
-		if (is_sync(process)) {
-			const processed = process({
-				content: result.source,
-				filename,
-				attributes: null
-			});
+	// for (const process of markup) {
+	// 	if (is_sync(process)) {
+	// 		const processed = process({
+	// 			content: result.source,
+	// 			filename,
+	// 			attributes: null
+	// 		});
 	
-			if (!processed) continue;
+	// 		if (!processed) continue;
 	
-			result.update_source({
-				string: processed.code,
-				map: processed.map
-					? // TODO: can we use decode_sourcemap?
-						typeof processed.map === 'string'
-						? JSON.parse(processed.map)
-						: processed.map
-					: undefined,
-				dependencies: processed.dependencies
-			});
-		}
+	// 		result.update_source({
+	// 			string: processed.code,
+	// 			map: processed.map
+	// 				? // TODO: can we use decode_sourcemap?
+	// 					typeof processed.map === 'string'
+	// 					? JSON.parse(processed.map)
+	// 					: processed.map
+	// 				: undefined,
+	// 			dependencies: processed.dependencies
+	// 		});
+	// 	} else {
+	// 		console.error(`Preprocessor is not synchronous: ${process}.`);
+	// 	}
+	// }
+
+	for (const process of script_sync) {
+		result.update_source(process_tag_sync('script', process, result));
 	}
 
-	for (const process of script) {
-		if (is_sync(process)) {
-			result.update_source(process_tag_sync('script', process, result));
-		}
-	}
-
-	for (const process of style) {
-		if (is_sync(process)) {
-			result.update_source(process_tag_sync('style', process, result));
-		}
-	}
+	// for (const process of style) {
+	// 	if (is_sync(process)) {
+	// 		result.update_source(process_tag_sync('style', process, result));
+	// 	} else {
+	// 		console.error(`Preprocessor is not synchronous: ${process}.`);
+	// 	}
+	// }
 
 	return result.to_processed();
 }

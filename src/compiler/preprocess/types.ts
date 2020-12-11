@@ -6,9 +6,12 @@ export interface Processed {
 }
 
 export interface PreprocessorGroup {
-	markup?: Preprocessor | SyncPreprocessor;
-	style?: Preprocessor | SyncPreprocessor;
-	script?: Preprocessor | SyncPreprocessor;
+	markup?: Preprocessor;
+	style?: Preprocessor;
+	script?: Preprocessor;
+	markup_sync?: SyncPreprocessor;
+	script_sync?: SyncPreprocessor;
+	style_sync?: SyncPreprocessor;
 }
 
 interface PreprocessorOptions {
@@ -19,4 +22,4 @@ interface PreprocessorOptions {
 
 export declare type Preprocessor = (options: PreprocessorOptions) => Promise<Processed>;
 
-export declare type SyncPreprocessor = ((options: PreprocessorOptions) => Processed) & { is_sync: true };
+export declare type SyncPreprocessor = (options: PreprocessorOptions) => Processed;
