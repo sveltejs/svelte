@@ -160,41 +160,16 @@ function to_source_update(tags: TagInstance[], processed: Processed[], tag_name:
 	return {...perform_replacements(replacements, source), dependencies};
 }
 
-/** 
- * Calculate the updates required to process all instances of the specified tag. 
- */
-async function process_tag(
+function get_processed_for_tag(
 	tag_name: 'style' | 'script',
 	preprocessor: Preprocessor | SyncPreprocessor,
 	source: Source
-): Promise<SourceUpdate> {
+) {
 	const { filename } = source;
 	
 	const tags = get_tag_instances(tag_name, source.source);
 	
-	const processed = await Promise.all<Processed>(tags.map(({attributes, content}) => {
-		if (attributes || content) {			
-			return preprocessor({
-				content,
-				attributes: parse_tag_attributes(attributes || ''),
-				filename
-			});
-		}
-	}));
-
-	return to_source_update(tags, processed, tag_name, source);
-}
-
-function process_tag_sync(
-	tag_name: 'style' | 'script',
-	preprocessor: SyncPreprocessor,
-	source: Source
-): SourceUpdate {
-	const { filename } = source;
-	
-	const tags = get_tag_instances(tag_name, source.source);
-	
-	const processed: Processed[] = tags.map(({attributes, content}) => {
+	const processed = tags.map(({attributes, content}) => {
 		if (attributes || content) {			
 			return preprocessor({
 				content,
@@ -204,7 +179,30 @@ function process_tag_sync(
 		}
 	});
 
-	return to_source_update(tags, processed, tag_name, source);
+	return { tags, processed };
+}
+
+/** 
+ * Calculate the updates required to process all instances of the specified tag. 
+ */
+async function process_tag(
+	tag_name: 'style' | 'script',
+	preprocessor: Preprocessor | SyncPreprocessor,
+	source: Source
+): Promise<SourceUpdate> {
+	const { tags, processed } = get_processed_for_tag(tag_name, preprocessor, source);
+
+	return to_source_update(tags, await Promise.all(processed), tag_name, source);
+}
+
+function process_tag_sync(
+	tag_name: 'style' | 'script',
+	preprocessor: SyncPreprocessor,
+	source: Source
+): SourceUpdate {
+	const { tags, processed } = get_processed_for_tag(tag_name, preprocessor, source);
+
+	return to_source_update(tags, processed as Processed[], tag_name, source);
 }
 
 function decode_preprocessor_params(
@@ -217,11 +215,26 @@ function decode_preprocessor_params(
 	const preprocessors = preprocessor ? (Array.isArray(preprocessor) ? preprocessor : [preprocessor]) : [];
 
 	const markup = preprocessors.map(p => p.markup).filter(Boolean);
+	const markup_sync = preprocessors.map(p => p.markup_sync).filter(Boolean);
 	const script = preprocessors.map(p => p.script).filter(Boolean);
 	const script_sync = preprocessors.map(p => p.script_sync).filter(Boolean);
 	const style = preprocessors.map(p => p.style).filter(Boolean);
+	const style_sync = preprocessors.map(p => p.style_sync).filter(Boolean);
 
-	return { markup, script, script_sync, style, filename };
+	return { markup, markup_sync, script, script_sync, style, style_sync, filename };
+}
+
+function processed_markup_to_source_update(processed: Processed): SourceUpdate {
+	return {
+		string: processed.code,
+		map: processed.map
+			? // TODO: can we use decode_sourcemap?
+				typeof processed.map === 'string'
+				? JSON.parse(processed.map)
+				: processed.map
+			: undefined,
+		dependencies: processed.dependencies
+	};
 }
 
 export function preprocess_sync(
@@ -229,49 +242,32 @@ export function preprocess_sync(
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
 	options?: { filename?: string }
 ): Processed {
-	const { script_sync, filename } = decode_preprocessor_params(preprocessor, options);
+	const { script_sync, style_sync, markup_sync, filename } = decode_preprocessor_params(preprocessor, options);
 
 	const result = new PreprocessResult(source, filename);
 
 	// TODO keep track: what preprocessor generated what sourcemap?
 	// to make debugging easier = detect low-resolution sourcemaps in fn combine_mappings
 
-	// for (const process of markup) {
-	// 	if (is_sync(process)) {
-	// 		const processed = process({
-	// 			content: result.source,
-	// 			filename,
-	// 			attributes: null
-	// 		});
-	
-	// 		if (!processed) continue;
-	
-	// 		result.update_source({
-	// 			string: processed.code,
-	// 			map: processed.map
-	// 				? // TODO: can we use decode_sourcemap?
-	// 					typeof processed.map === 'string'
-	// 					? JSON.parse(processed.map)
-	// 					: processed.map
-	// 				: undefined,
-	// 			dependencies: processed.dependencies
-	// 		});
-	// 	} else {
-	// 		console.error(`Preprocessor is not synchronous: ${process}.`);
-	// 	}
-	// }
+	for (const process of markup_sync) {
+		const processed = process({
+			content: result.source,
+			filename,
+			attributes: null
+		});
+
+		if (!processed) continue;
+
+		result.update_source(processed_markup_to_source_update(processed));
+	}
 
 	for (const process of script_sync) {
 		result.update_source(process_tag_sync('script', process, result));
 	}
 
-	// for (const process of style) {
-	// 	if (is_sync(process)) {
-	// 		result.update_source(process_tag_sync('style', process, result));
-	// 	} else {
-	// 		console.error(`Preprocessor is not synchronous: ${process}.`);
-	// 	}
-	// }
+	for (const process of style_sync) {
+		result.update_source(process_tag_sync('style', process, result));
+	}
 
 	return result.to_processed();
 }
@@ -297,16 +293,7 @@ export default async function preprocess(
 
 		if (!processed) continue;
 
-		result.update_source({
-			string: processed.code,
-			map: processed.map
-				? // TODO: can we use decode_sourcemap?
-				  typeof processed.map === 'string'
-					? JSON.parse(processed.map)
-					: processed.map
-				: undefined,
-			dependencies: processed.dependencies
-		});
+		result.update_source(processed_markup_to_source_update(processed));
 	}
 
 	for (const process of script) {

@@ -315,8 +315,8 @@ export default class Expression {
 								// rename #ctx -> child_ctx;
 								walk(func_expression, {
 									enter(node) {
-										if (node.type === 'Identifier' && node.name === '#ctx') {
-											node.name = 'child_ctx';
+										if (node.type === 'Identifier' && (node as Identifier).name === '#ctx') {
+											(node as Identifier).name = 'child_ctx';
 										}
 									}
 								});
