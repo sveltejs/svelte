@@ -211,8 +211,8 @@ export default async function preprocess(
 	const filename = (options && options.filename) || preprocessor.filename; // legacy
 	const dependencies = [];
 
-	// preprocess source must be relative to itself
-	const file_basename = filename && get_file_basename(filename);
+	// preprocess source must be relative to itself or equal null
+	const file_basename = filename == null ? null : get_file_basename(filename);
 
 	const preprocessors = preprocessor
 		? Array.isArray(preprocessor) ? preprocessor : [preprocessor]

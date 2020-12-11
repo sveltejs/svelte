@@ -16,17 +16,17 @@ export function sourcemap_add_offset(
 	map: DecodedSourceMap, offset: SourceLocation, source_index: number
 ) {
 	if (map.mappings.length == 0) return;
-	// shift lines
 	for (let line = 0; line < map.mappings.length; line++) {
 		const segment_list = map.mappings[line];
 		for (let segment = 0; segment < segment_list.length; segment++) {
 			const seg = segment_list[segment];
 			// shift only segments that belong to component source file
-			if (seg.length >= 4 && seg[1] === source_index) {
-				// shift columns pointing at the first line
+			if (seg[1] === source_index) { // also ensures that seg.length >= 4
+				// shift column if it points at the first line
 				if (seg[2] === 0) {
 					seg[3] += offset.column;
 				}
+				// shift line
 				seg[2] += offset.line;
 			}
 		}
@@ -121,8 +121,8 @@ export class StringWithSourcemap {
 				const segment_list = m2.mappings[line];
 				for (let segment = 0; segment < segment_list.length; segment++) {
 					const seg = segment_list[segment];
-					if (seg.length > 1) seg[1] = new_source_idx[seg[1]];
-					if (seg.length > 4) seg[4] = new_name_idx[seg[4]];
+					if (seg[1] >= 0) seg[1] = new_source_idx[seg[1]];
+					if (seg[4] >= 0) seg[4] = new_name_idx[seg[4]];
 				}
 			}
 		} else if (sources_idx_changed) {
@@ -130,7 +130,7 @@ export class StringWithSourcemap {
 				const segment_list = m2.mappings[line];
 				for (let segment = 0; segment < segment_list.length; segment++) {
 					const seg = segment_list[segment];
-					if (seg.length > 1) seg[1] = new_source_idx[seg[1]];
+					if (seg[1] >= 0) seg[1] = new_source_idx[seg[1]];
 				}
 			}
 		} else if (names_idx_changed) {
@@ -138,7 +138,7 @@ export class StringWithSourcemap {
 				const segment_list = m2.mappings[line];
 				for (let segment = 0; segment < segment_list.length; segment++) {
 					const seg = segment_list[segment];
-					if (seg.length > 4) seg[4] = new_name_idx[seg[4]];
+					if (seg[4] >= 0) seg[4] = new_name_idx[seg[4]];
 				}
 			}
 		}
