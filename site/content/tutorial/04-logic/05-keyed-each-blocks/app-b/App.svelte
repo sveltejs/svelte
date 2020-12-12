@@ -19,5 +19,5 @@
 </button>
 
 {#each things as thing (thing.id)}
-	<Thing current={thing.color}/>
+	<Thing currentColor={thing.color} currentId={thing.id}/>
 {/each}
