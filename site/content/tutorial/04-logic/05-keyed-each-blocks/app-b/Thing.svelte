@@ -23,4 +23,8 @@
 		border-radius: 0.2em;
 		color: white;
 	}
+	p{
+		margin-top: 0.1em;
+		margin-bottom: 0.2em;
+	}
 </style>
