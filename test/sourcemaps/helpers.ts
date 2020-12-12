@@ -43,6 +43,36 @@ export function assert_mapped(
 	);
 }
 
+type AssertNotMappedParameters = {
+	code: string;
+	filename?: string;
+	preprocessed: any;
+};
+
+export function assert_not_mapped(
+	{ code, filename, preprocessed }: AssertNotMappedParameters
+) {
+	if (filename === undefined) filename = 'input.svelte';
+
+	const transformed_loc = preprocessed.locate_1(code);
+	assert.notEqual(
+		transformed_loc,
+		undefined,
+		`failed to locate "${code}" in transformed "${filename}"`
+	);
+
+	assert.deepEqual(
+		preprocessed.mapConsumer.originalPositionFor(transformed_loc),
+		{
+			source: null,
+			name: null,
+			line: null,
+			column: null
+		},
+		`incorrect mappings for "${code}" in "${filename}"`
+	);
+}
+
 export function assert_not_located(
 	code: string,
 	locate: ReturnType<typeof getLocator>,

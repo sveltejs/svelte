@@ -167,11 +167,13 @@ export class StringWithSourcemap {
 	}
 
 	static from_processed(string: string, map?: DecodedSourceMap): StringWithSourcemap {
+		const line_count = string.split('\n').length;
+
 		if (map) {
 			// ensure that count of source map mappings lines 
 			// is equal to count of generated code lines
 			// (some tools may produce less)
-			const missing_lines = string.split('\n').length - map.mappings.length;
+			const missing_lines = line_count - map.mappings.length;
 			for (let i = 0; i < missing_lines; i++) {
 				map.mappings.push([]);
 			}
@@ -182,7 +184,6 @@ export class StringWithSourcemap {
 		map = { version: 3, names: [], sources: [], mappings: [] };
 
 		// add empty SourceMapSegment[] for every line
-		const line_count = (string.match(/\n/g) || '').length;
 		for (let i = 0; i < line_count; i++) map.mappings.push([]);
 		return new StringWithSourcemap(string, map);
 	}
