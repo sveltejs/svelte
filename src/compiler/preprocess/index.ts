@@ -276,9 +276,12 @@ export default async function preprocess(
 					attributes: parse_attributes(attributes),
 					filename
 				});
-
-				if (!processed) return no_change();
-				if (processed.dependencies) dependencies.push(...processed.dependencies);
+				if (processed && processed.dependencies) {
+					dependencies.push(...processed.dependencies);
+				}
+				if (!processed || !processed.map && processed.code === content) {
+					return no_change();
+				}
 				return get_replacement(file_basename, offset, get_location, content, processed, `<${tag_name}${attributes}>`, `</${tag_name}>`);
 			}
 		);

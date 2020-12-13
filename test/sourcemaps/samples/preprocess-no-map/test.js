@@ -8,9 +8,10 @@ export function test({ input, preprocessed }) {
 		preprocessed
 	});
 
-	// script
-	assert_not_mapped({
+	// script content (preprocessed without map, content not changed)
+	assert_mapped({
 		code: 'console.log(name);',
+		input: input.locate,
 		preprocessed
 	});
 	
@@ -21,7 +22,7 @@ export function test({ input, preprocessed }) {
 		preprocessed
 	});
 	
-	// style content
+	// style content (preprocessed without map, content changed)
 	assert_not_mapped({
 		code: 'font-weight: bold;',
 		preprocessed

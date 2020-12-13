@@ -3,9 +3,11 @@ export default {
 	preprocess: [
 		{
 			style: ({ content }) => {
-				return { code: content };
+				// Modified without source map
+				return { code: content + ' ' };
 			},
 			script: ({ content }) => {
+				// Not modified
 				return { code: content };
 			}
 		}
