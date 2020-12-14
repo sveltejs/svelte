@@ -418,8 +418,6 @@ The expression should be valid standalone HTML — `{@html "<div>"}content{@html
 
 The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.
 
-It accepts a comma-separated list of variable names (not arbitrary expressions).
-
 ```sv
 <script>
 	let user = {
