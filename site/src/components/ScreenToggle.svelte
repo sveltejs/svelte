@@ -22,7 +22,7 @@
 		height: 1em;
 		padding: .2em .4em .3em;
 		border-radius: var(--border-r);
-		line-height: 1;
+		line-height: normal;
 		box-sizing: content-box;
 		color: #888;
 		border: 1px solid var(--back-light);
