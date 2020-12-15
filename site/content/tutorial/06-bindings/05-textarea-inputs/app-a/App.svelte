@@ -1,6 +1,6 @@
 <script>
 	import marked from 'marked';
-	let value = `Some words are *italic*, some are **bold**`;
+	let value = `Some words are *italic*, some are **bold** (Scroll down to see markdown output).`;
 </script>
 
 <style>
