@@ -89,6 +89,7 @@ export default class Binding extends Node {
 		this.is_readonly = (
 			dimensions.test(this.name) ||
 			(parent.is_media_node && parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
+			(parent.name === 'img' && this.name == 'complete') ||
 			(parent.name === 'input' && type === 'file') // TODO others?
 		);
 	}

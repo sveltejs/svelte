@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-binding",
+	"message": "'complete' binding can only be used with <img>",
+	"pos": 40,
+	"start": {
+		"line": 5,
+		"column": 5,
+		"character": 40
+	},
+	"end": {
+		"line": 5,
+		"column": 18,
+		"character": 53
+	}
+}]

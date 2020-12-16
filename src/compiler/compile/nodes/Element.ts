@@ -744,6 +744,13 @@ export default class Element extends Node {
 						message: '\'contenteditable\' attribute cannot be dynamic if element uses two-way binding'
 					});
 				}
+			} else if (name === 'complete') {
+				if (this.name !== 'img') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${binding.name}' binding can only be used with <img>`
+					});
+				}
 			} else if (name !== 'this') {
 				component.error(binding, {
 					code: 'invalid-binding',
