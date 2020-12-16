@@ -13,21 +13,22 @@ function last_line_length(s: string) {
 
 // mutate map in-place
 export function sourcemap_add_offset(
-	map: DecodedSourceMap, offset: SourceLocation
+	map: DecodedSourceMap, offset: SourceLocation, source_index: number
 ) {
-	if (map.mappings.length == 0) return map;
-	// shift columns in first line
-	const segment_list = map.mappings[0];
-	for (let segment = 0; segment < segment_list.length; segment++) {
-		const seg = segment_list[segment];
-		if (seg[3]) seg[3] += offset.column;
-	}
-	// shift lines
+	if (map.mappings.length == 0) return;
 	for (let line = 0; line < map.mappings.length; line++) {
 		const segment_list = map.mappings[line];
 		for (let segment = 0; segment < segment_list.length; segment++) {
 			const seg = segment_list[segment];
-			if (seg[2]) seg[2] += offset.line;
+			// shift only segments that belong to component source file
+			if (seg[1] === source_index) { // also ensures that seg.length >= 4
+				// shift column if it points at the first line
+				if (seg[2] === 0) {
+					seg[3] += offset.column;
+				}
+				// shift line
+				seg[2] += offset.line;
+			}
 		}
 	}
 }
@@ -97,6 +98,9 @@ export class StringWithSourcemap {
 			return this;
 		}
 
+		// compute last line length before mutating
+		const column_offset = last_line_length(this.string);
+
 		this.string += other.string;
 
 		const m1 = this.map;
@@ -117,8 +121,8 @@ export class StringWithSourcemap {
 				const segment_list = m2.mappings[line];
 				for (let segment = 0; segment < segment_list.length; segment++) {
 					const seg = segment_list[segment];
-					if (seg[1]) seg[1] = new_source_idx[seg[1]];
-					if (seg[4]) seg[4] = new_name_idx[seg[4]];
+					if (seg[1] >= 0) seg[1] = new_source_idx[seg[1]];
+					if (seg[4] >= 0) seg[4] = new_name_idx[seg[4]];
 				}
 			}
 		} else if (sources_idx_changed) {
@@ -126,7 +130,7 @@ export class StringWithSourcemap {
 				const segment_list = m2.mappings[line];
 				for (let segment = 0; segment < segment_list.length; segment++) {
 					const seg = segment_list[segment];
-					if (seg[1]) seg[1] = new_source_idx[seg[1]];
+					if (seg[1] >= 0) seg[1] = new_source_idx[seg[1]];
 				}
 			}
 		} else if (names_idx_changed) {
@@ -134,7 +138,7 @@ export class StringWithSourcemap {
 				const segment_list = m2.mappings[line];
 				for (let segment = 0; segment < segment_list.length; segment++) {
 					const seg = segment_list[segment];
-					if (seg[4]) seg[4] = new_name_idx[seg[4]];
+					if (seg[4] >= 0) seg[4] = new_name_idx[seg[4]];
 				}
 			}
 		}
@@ -146,7 +150,6 @@ export class StringWithSourcemap {
 		// 2. first line of second map
 		// columns of 2 must be shifted
 
-		const column_offset = last_line_length(this.string);
 		if (m2.mappings.length > 0 && column_offset > 0) {
 			const first_line = m2.mappings[0];
 			for (let i = 0; i < first_line.length; i++) {
@@ -164,12 +167,23 @@ export class StringWithSourcemap {
 	}
 
 	static from_processed(string: string, map?: DecodedSourceMap): StringWithSourcemap {
-		if (map) return new StringWithSourcemap(string, map);
+		const line_count = string.split('\n').length;
+
+		if (map) {
+			// ensure that count of source map mappings lines 
+			// is equal to count of generated code lines
+			// (some tools may produce less)
+			const missing_lines = line_count - map.mappings.length;
+			for (let i = 0; i < missing_lines; i++) {
+				map.mappings.push([]);
+			}
+			return new StringWithSourcemap(string, map);
+		}
+
 		if (string == '') return new StringWithSourcemap();
 		map = { version: 3, names: [], sources: [], mappings: [] };
 
 		// add empty SourceMapSegment[] for every line
-		const line_count = (string.match(/\n/g) || '').length;
 		for (let i = 0; i < line_count; i++) map.mappings.push([]);
 		return new StringWithSourcemap(string, map);
 	}
