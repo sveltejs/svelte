@@ -39,6 +39,10 @@ function parse_attributes(str: string) {
 	return attrs;
 }
 
+function get_file_basename(filename: string) {
+	return filename.split(/[/\\]/).pop();
+}
+
 interface Replacement {
 	offset: number;
 	length: number;
@@ -46,7 +50,7 @@ interface Replacement {
 }
 
 async function replace_async(
-	filename: string,
+	file_basename: string,
 	source: string,
 	get_location: ReturnType<typeof getLocator>,
 	re: RegExp,
@@ -73,13 +77,13 @@ async function replace_async(
 	)) {
 		// content = unchanged source characters before the replaced segment
 		const content = StringWithSourcemap.from_source(
-			filename, source.slice(last_end, offset), get_location(last_end));
+			file_basename, source.slice(last_end, offset), get_location(last_end));
 		out.concat(content).concat(replacement);
 		last_end = offset + length;
 	}
 	// final_content = unchanged source characters after last replaced segment
 	const final_content = StringWithSourcemap.from_source(
-		filename, source.slice(last_end), get_location(last_end));
+		file_basename, source.slice(last_end), get_location(last_end));
 	return out.concat(final_content);
 }
 
@@ -160,7 +164,7 @@ function decoded_sourcemap_from_generator(generator: any) {
  * Convert a preprocessor output and its leading prefix and trailing suffix into StringWithSourceMap
  */
 function get_replacement(
-	filename: string,
+	file_basename: string,
 	offset: number,
 	get_location: ReturnType<typeof getLocator>,
 	original: string,
@@ -171,9 +175,9 @@ function get_replacement(
 
 	// Convert the unchanged prefix and suffix to StringWithSourcemap
 	const prefix_with_map = StringWithSourcemap.from_source(
-		filename, prefix, get_location(offset));
+		file_basename, prefix, get_location(offset));
 	const suffix_with_map = StringWithSourcemap.from_source(
-		filename, suffix, get_location(offset + prefix.length + original.length));
+		file_basename, suffix, get_location(offset + prefix.length + original.length));
 
 	// Convert the preprocessed code and its sourcemap to a StringWithSourcemap
 	let decoded_map: DecodedSourceMap;
@@ -186,7 +190,11 @@ function get_replacement(
 			// import decoded sourcemap from mozilla/source-map/SourceMapGenerator
 			decoded_map = decoded_sourcemap_from_generator(decoded_map);
 		}
-		sourcemap_add_offset(decoded_map, get_location(offset + prefix.length));
+		// offset only segments pointing at original component source
+		const source_index = decoded_map.sources.indexOf(file_basename);
+		if (source_index !== -1) {
+			sourcemap_add_offset(decoded_map, get_location(offset + prefix.length), source_index);
+		}
 	}
 	const processed_with_map = StringWithSourcemap.from_processed(processed.code, decoded_map);
 
@@ -202,6 +210,9 @@ export default async function preprocess(
 	// @ts-ignore todo: doublecheck
 	const filename = (options && options.filename) || preprocessor.filename; // legacy
 	const dependencies = [];
+
+	// preprocess source must be relative to itself or equal null
+	const file_basename = filename == null ? null : get_file_basename(filename);
 
 	const preprocessors = preprocessor
 		? Array.isArray(preprocessor) ? preprocessor : [preprocessor]
@@ -246,13 +257,13 @@ export default async function preprocess(
 			: /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
 
 		const res = await replace_async(
-			filename,
+			file_basename,
 			source,
 			get_location,
 			tag_regex,
 			async (match, attributes = '', content = '', offset) => {
 				const no_change = () => StringWithSourcemap.from_source(
-					filename, match, get_location(offset));
+					file_basename, match, get_location(offset));
 				if (!attributes && !content) {
 					return no_change();
 				}
@@ -265,10 +276,13 @@ export default async function preprocess(
 					attributes: parse_attributes(attributes),
 					filename
 				});
-
-				if (!processed) return no_change();
-				if (processed.dependencies) dependencies.push(...processed.dependencies);
-				return get_replacement(filename, offset, get_location, content, processed, `<${tag_name}${attributes}>`, `</${tag_name}>`);
+				if (processed && processed.dependencies) {
+					dependencies.push(...processed.dependencies);
+				}
+				if (!processed || !processed.map && processed.code === content) {
+					return no_change();
+				}
+				return get_replacement(file_basename, offset, get_location, content, processed, `<${tag_name}${attributes}>`, `</${tag_name}>`);
 			}
 		);
 		source = res.string;
@@ -285,7 +299,7 @@ export default async function preprocess(
 
 	// Combine all the source maps for each preprocessor function into one
 	const map: RawSourceMap = combine_sourcemaps(
-		filename,
+		file_basename,
 		sourcemap_list
 	);
 
