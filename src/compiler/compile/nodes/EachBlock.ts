@@ -6,6 +6,7 @@ import AbstractBlock from './shared/AbstractBlock';
 import Element from './Element';
 import { Context, unpack_destructuring } from './shared/Context';
 import { Node } from 'estree';
+import { INode } from './interfaces';
 
 export default class EachBlock extends AbstractBlock {
 	type: 'EachBlock';
@@ -57,6 +58,8 @@ export default class EachBlock extends AbstractBlock {
 		this.children = map_children(component, this, this.scope, info.children);
 
 		if (this.has_animation) {
+			this.children = this.children.filter(child => !isEmptyNode(child));
+
 			if (this.children.length !== 1) {
 				const child = this.children.find(child => !!(child as Element).animation);
 				component.error((child as Element).animation, {
@@ -72,4 +75,8 @@ export default class EachBlock extends AbstractBlock {
 			? new ElseBlock(component, this, this.scope, info.else)
 			: null;
 	}
+}
+
+function isEmptyNode(node: INode) {
+	return node.type === 'Text' && node.data.trim() === '';
 }
