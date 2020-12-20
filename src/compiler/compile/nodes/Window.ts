@@ -5,6 +5,9 @@ import flatten_reference from '../utils/flatten_reference';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Action from './Action';
+import Component from '../Component';
+import TemplateScope from './shared/TemplateScope';
+import { TemplateNode } from '../../interfaces';
 
 const valid_bindings = [
 	'innerWidth',
@@ -22,7 +25,7 @@ export default class Window extends Node {
 	bindings: Binding[] = [];
 	actions: Action[] = [];
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		info.attributes.forEach(node => {

@@ -52,12 +52,15 @@ export default class WindowWrapper extends Wrapper {
 		add_event_handlers(block, '@_window', this.handlers);
 
 		this.node.bindings.forEach(binding => {
+			// TODO: what if it's a MemberExpression?
+			const binding_name = (binding.expression.node as Identifier).name;
+
 			// in dev mode, throw if read-only values are written to
 			if (readonly.has(binding.name)) {
-				renderer.readonly.add(binding.expression.node.name);
+				renderer.readonly.add(binding_name);
 			}
 
-			bindings[binding.name] = binding.expression.node.name;
+			bindings[binding.name] = binding_name;
 
 			// bind:online is a special case, we need to listen for two separate events
 			if (binding.name === 'online') return;
@@ -67,7 +70,7 @@ export default class WindowWrapper extends Wrapper {
 
 			if (!events[associated_event]) events[associated_event] = [];
 			events[associated_event].push({
-				name: binding.expression.node.name,
+				name: binding_name,
 				value: property
 			});
 		});

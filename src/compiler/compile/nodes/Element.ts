@@ -125,11 +125,11 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 
-	constructor(component: Component, parent, scope, info: any) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
-		this.namespace = get_namespace(parent, this, component.namespace);
+		this.namespace = get_namespace(parent as Element, this, component.namespace);
 
 		if (this.name === 'textarea') {
 			if (info.children.length > 0) {
@@ -850,7 +850,7 @@ export default class Element extends Node {
 						type: 'Text',
 						data: ` ${id}`,
 						synthetic: true
-					})
+					} as any)
 				);
 			}
 		} else {
@@ -859,7 +859,7 @@ export default class Element extends Node {
 					type: 'Attribute',
 					name: 'class',
 					value: [{ type: 'Text', data: id, synthetic: true }]
-				})
+				} as any)
 			);
 		}
 	}
