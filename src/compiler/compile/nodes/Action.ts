@@ -1,6 +1,8 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
+import TemplateScope from './shared/TemplateScope';
+import { TemplateNode } from '../../interfaces';
 
 export default class Action extends Node {
 	type: 'Action';
@@ -8,7 +10,7 @@ export default class Action extends Node {
 	expression: Expression;
 	uses_context: boolean;
 
-	constructor(component: Component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		const object = info.name.split('.')[0];

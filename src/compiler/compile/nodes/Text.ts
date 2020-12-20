@@ -2,6 +2,7 @@ import Node from './shared/Node';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
+import { TemplateNode } from '../../interfaces';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
@@ -20,7 +21,7 @@ export default class Text extends Node {
 	data: string;
 	synthetic: boolean;
 
-	constructor(component: Component, parent: INode, scope: TemplateScope, info: any) {
+	constructor(component: Component, parent: INode, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 		this.data = info.data;
 		this.synthetic = info.synthetic || false;
