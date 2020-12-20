@@ -52,7 +52,7 @@ export default class WindowWrapper extends Wrapper {
 		add_event_handlers(block, '@_window', this.handlers);
 
 		this.node.bindings.forEach(binding => {
-			// Todo: what if it's a MemberExpression?
+			// TODO: what if it's a MemberExpression?
 			const binding_name = (binding.expression.node as Identifier).name;
 
 			// in dev mode, throw if read-only values are written to
