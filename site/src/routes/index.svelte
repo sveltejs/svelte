@@ -34,6 +34,7 @@
 	<meta name="Description" content="Cybernetically enhanced web apps">
 </svelte:head>
 
+<h1 class="visually-hidden">Svelte</h1>
 <Hero
 	title="Svelte"
 	tagline="Cybernetically enhanced web apps"

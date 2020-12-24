@@ -18,6 +18,7 @@
 	<meta name="Description" content="Articles about Svelte and UI development">
 </svelte:head>
 
+<h1 class="visually-hidden">Blog</h1>
 <div class='posts stretch'>
 	{#each posts as post}
 		<article class='post' data-pubdate={post.metadata.dateString}>
