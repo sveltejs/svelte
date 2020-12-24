@@ -23,7 +23,7 @@
 	$: area = `${path}L${xScale(maxX)},${yScale(0)}L${xScale(minX)},${yScale(0)}Z`;
 
 	function formatMobile (tick) {
-		return "'" + tick % 100;
+		return "'" + tick.toString().slice(-2);
 	}
 </script>
 
