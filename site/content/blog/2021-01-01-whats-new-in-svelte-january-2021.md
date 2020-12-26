@@ -15,12 +15,14 @@ If you're using `SvelteComponent` or the new `SvelteComponentTyped` in your proj
 
 
 ## What's going on in Sapper?
+
 More quality of life features are landing in the upcoming release every day. `0.29.0` includes new typescript definitions, fixes to scroll tracking and prefetching behavior, and improvements to the runtime router to support encoded query parameters.
 
 If you're upgrading from 0.28.x, check out [the migration guide](https://sapper.svelte.dev/migrating/#0_28_to_0_29) for steps on updating to Sapper 0.29.
 
 
 ## Is SvelteKit ready yet?
+
 To avoid too much churn during development, SvelteKit is still being worked on in a private repo. There will be an announcement on the Discord, blog and Twitter when it's ready for a larger group of users and contributors.
 
 In the meantime, you can explore the current build by running `npm init svelte@next` from your command line.
@@ -33,6 +35,7 @@ As cautioned in _[What's the deal with SvelteKit?](https://svelte.dev/blog/whats
 ## Community Showcase
 
 **Apps & Sites**
+
 - [manitu.me](https://manitu.me/) is a background sound / pomodoro timer for focus and relaxation
 - [Answer Socrates](https://answersocrates.com/) helps you find trending questions on the internet so that you can write the most relevant blog post, tweet, or billboard
 - [multris](https://multris.s1h.org/) is a multiplayer Tetris game. You can read about its development [here](https://blog.s1h.org/svelte-multiplayer-game/)
@@ -45,6 +48,7 @@ As cautioned in _[What's the deal with SvelteKit?](https://svelte.dev/blog/whats
 - [Infinite Walking Bass Generator 2](https://github.com/elialbert/infinitewalkingbass2) is an online music player that generates a unique walking bass line
 
 **Demos, Libraries & Components**
+
 - [svelte-tiny-virtual-list](https://github.com/Skayo/svelte-tiny-virtual-list) speeds up long lists by only rendering visible items
 - [svelte-query](https://github.com/TanStack/svelte-query) is a collection of helpful hooks for managing, caching and syncing asynchronous and remote data
 - [svelte-previous](https://github.com/bryanmylee/svelte-previous) is a svelte store to remember previous values - helpful for transitions or a quick undo stack
@@ -56,17 +60,20 @@ As cautioned in _[What's the deal with SvelteKit?](https://svelte.dev/blog/whats
 - [Svelte Zoomable](https://svelte.dev/repl/58dfe87756ee4db897c281b52fdef7b7?version=3.31.0) is a custom transition with a nice zoom effect
 
 **Learning Resources**
+
 - [Using Svelte to create a scroll video effect](https://blog.koenvangilst.nl/tutorial-svelte-scroll-video/) showcases how the `bind` command can be used to create a cool scroll video effect with very little code
 - [How to make a flappybird game in svelte and typescript](https://www.youtube.com/watch?v=nhrYBoVI8pQ) is a video tutorial including docs and code for reference
 - [Accessible Svelte Transition](https://www.youtube.com/watch?v=QK_QuRL7nSo&feature=youtu.be) walks through `prefers-reduced-motion` to make svelte transitions more accessible
 - [Svelte's module scripts explained](https://codechips.me/svelte-module-scripts-explained/) is a great introduction to the module context, a common Sapper pattern
 - [Awesome Svelte](https://github.com/TheComputerM/awesome-svelte#readme) is a curated list of Svelte resources
+- [.NET Core and Svelte](https://dev.to/cainux/net-core-and-svelte-f8o) explains how to get Svelte up and running with .NET Core
 - [A la découverte de Svelte JS](https://www.youtube.com/watch?v=SLpx1Y8e1ek&list=PLff5I1miao9ZEUhpqkrOx7k8RGAZt-nm9) is a svelte tutorial series in French!
 - [Svelte for React Developers](https://soshace.com/svelte-for-react-developers/) explains Svelte's core concepts to folks who are used to React
 - [Building a Svelte Static Website with Smooth Page Transitions](https://www.youtube.com/watch?v=dvPfmcGtmrI&feature=emb_title) shows how to build a static website with Svelte and add smooth page transitions using Three.js and GSAP.
 - [Using Apollo Client in Sapper](https://bjornlu.com/blog/using-apollo-client-in-sapper/) explains the "simplest" solutions to integrate the Apollog query client into Sapper
 
 **Related Projects**
+
 - [Snowpack's v3 release candidate](https://www.snowpack.dev/posts/2020-12-03-snowpack-3-release-candidate) is out now in preparation for a January 6 release date. Check out the [Getting Started with Svelte](https://www.snowpack.dev/tutorials/svelte) for more info on how to use Snowpack.
 - [Uppy](https://uppy.io/blog/2020/12/1.24/), the open source file uploader, announced Svelte support in its new version 1.24
 
