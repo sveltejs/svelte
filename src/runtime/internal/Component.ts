@@ -11,7 +11,7 @@ interface Fragment {
 	/* claim   */ l?: (nodes: any) => void;
 	/* hydrate */ h?: () => void;
 	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
-	/* update  */ p?: (ctx: any, dirty: any) => void;
+	/* update  */ p: (ctx: any, dirty: any) => void;
 	/* measure */ r?: () => void;
 	/* fix     */ f?: () => void;
 	/* animate */ a?: () => void;
