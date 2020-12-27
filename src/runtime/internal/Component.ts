@@ -5,18 +5,18 @@ import { children, detach } from './dom';
 import { transition_in } from './transitions';
 
 interface Fragment {
-	key: string|null;
-	first: null;
+	key?: string|null;
+	first?: null;
 	/* create  */ c: () => void;
-	/* claim   */ l: (nodes: any) => void;
-	/* hydrate */ h: () => void;
+	/* claim   */ l?: (nodes: any) => void;
+	/* hydrate */ h?: () => void;
 	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
-	/* update  */ p: (ctx: any, dirty: any) => void;
-	/* measure */ r: () => void;
-	/* fix     */ f: () => void;
-	/* animate */ a: () => void;
-	/* intro   */ i: (local: any) => void;
-	/* outro   */ o: (local: any) => void;
+	/* update  */ p?: (ctx: any, dirty: any) => void;
+	/* measure */ r?: () => void;
+	/* fix     */ f?: () => void;
+	/* animate */ a?: () => void;
+	/* intro   */ i?: (local: any) => void;
+	/* outro   */ o?: (local: any) => void;
 	/* destroy */ d: (detaching: 0|1) => void;
 }
 interface T$$ {
