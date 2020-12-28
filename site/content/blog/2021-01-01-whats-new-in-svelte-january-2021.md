@@ -11,7 +11,7 @@ Happy new year from Svelte! In the last month we made progress on Sapper's upcom
 
 A new minor release replaces the `SvelteComponent` class with a `SvelteComponentTyped` class. This renaming should help with backwards compatibility. We've updated [last month's blog post](https://svelte.dev/blog/whats-new-in-svelte-december-2020) to avoid any confusion with the name change.
 
-If you're using `SvelteComponent` or the new `SvelteComponentTyped` in your project or library. Let us know what you're using it for and we'll add it to the showcase!
+If you're using `SvelteComponent` or the new `SvelteComponentTyped` in your project or library, let us know what you're using it for and we'll add it to the showcase!
 
 
 ## What's going on in Sapper?
