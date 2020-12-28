@@ -16,7 +16,7 @@ If you're using `SvelteComponent` or the new `SvelteComponentTyped` in your proj
 
 ## What's going on in Sapper?
 
-More quality of life features are landing in the upcoming release every day. `0.29.0` includes new typescript definitions, fixes to scroll tracking and prefetching behavior, and improvements to the runtime router to support encoded query parameters.
+More quality of life features are landing in the upcoming release every day. `0.29.0` will include new TypeScript definitions, fixes to scroll tracking and prefetching behavior, and improvements to the runtime router to support encoded query parameters.
 
 If you're upgrading from 0.28.x, check out [the migration guide](https://sapper.svelte.dev/migrating/#0_28_to_0_29) for steps on updating to Sapper 0.29.
 
