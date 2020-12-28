@@ -5,7 +5,7 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-Happy new year from Svelte! In the last month we made progress on Sapper's upcoming minor release, tried out Snowpack's V3 release, and seen some amazing apps, sites and libraries coming out in the showcase.
+Happy new year from Svelte! In the last month we made progress on Sapper's upcoming minor release, fine-tuned our `SvelteComponent` typings, and seen some amazing apps, sites and libraries coming out in the showcase.
 
 ## What's changed in Svelte?
 
