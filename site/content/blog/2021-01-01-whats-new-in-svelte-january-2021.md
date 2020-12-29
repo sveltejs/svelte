@@ -46,6 +46,7 @@ As cautioned in _[What's the deal with SvelteKit?](https://svelte.dev/blog/whats
 - [Zero.2](https://zero.oleksandrdemian.tech/) is a math-based challenge game where you try to get to zero as quickly as possible
 - [Octave Compass](https://octavecompass.com/2741) is a chord table and scale explorer for many popular musical scales
 - [Infinite Walking Bass Generator 2](https://github.com/elialbert/infinitewalkingbass2) is an online music player that generates a unique walking bass line
+- [ListenAddict](https://www.listenaddict.com/) is a site that notifies you whenever a person has a new talk/interview on podcast
 
 **Demos, Libraries & Components**
 
@@ -58,6 +59,8 @@ As cautioned in _[What's the deal with SvelteKit?](https://svelte.dev/blog/whats
 - [svelte-datepicker](https://github.com/beyonk-adventures/svelte-datepicker) is a datepicker component with variations for time selection, date ranges and responsive themes
 - [svelte-slimscroll](https://github.com/MelihAltintas/svelte-slimscroll) is a action for Svelte.js, which can transforms any div into a scrollable area with a nice scrollbar.
 - [Svelte Zoomable](https://svelte.dev/repl/58dfe87756ee4db897c281b52fdef7b7?version=3.31.0) is a custom transition with a nice zoom effect
+
+**Have a component you'd like to share?** Check out the [Components](https://sveltesociety.dev/components) page on the Svelte Society site. You can contribute by making [a PR to this file](https://github.com/svelte-society/sveltesociety.dev/blob/master/src/pages/components/components.json).
 
 **Learning Resources**
 
