@@ -1,11 +1,11 @@
-import { x, b } from 'code-red';
+import { b } from 'code-red';
 import Component from '../Component';
 import { CompileOptions, CssResult } from '../../interfaces';
 import { string_literal } from '../utils/stringify';
 import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
-import { LabeledStatement, Statement, Node, Expression } from 'estree';
+import { LabeledStatement, Statement, Node } from 'estree';
 import { walk } from 'estree-walker';
 import { extract_names } from 'periscopic';
 import { invalidate } from '../render_dom/invalidate';
@@ -52,7 +52,7 @@ export default function ssr(
 				${component.compile_options.dev && b`@validate_store(${store_name}, '${store_name}');`}
 				${`$$unsubscribe_${store_name}`} = @subscribe(${store_name}, #value => ${name} = #value)
 				${store_name}.subscribe($$value => ${name} = $$value);
-			`
+			`;
 		});
 	const reactive_store_unsubscriptions = reactive_stores.map(
 		({ name }) => b`${`$$unsubscribe_${name.slice(1)}`}()`
@@ -90,8 +90,8 @@ export default function ssr(
 
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-					let names = new Set(extract_names(assignee));
-					let to_invalidate = new Set<string>();
+					const names = new Set(extract_names(assignee));
+					const to_invalidate = new Set<string>();
 
 					for (const name of names) {
 						const variable = component.var_lookup.get(name);

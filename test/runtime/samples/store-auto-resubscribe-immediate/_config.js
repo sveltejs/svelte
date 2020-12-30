@@ -1,3 +1,3 @@
 export default {
-	html: `{"answer":4}`
+	html: '{"answer":4}'
 };
