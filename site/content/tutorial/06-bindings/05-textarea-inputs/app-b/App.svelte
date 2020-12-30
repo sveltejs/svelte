@@ -7,6 +7,6 @@
 	textarea { width: 100%; height: 100px; }
 </style>
 
+{@html marked(value)}
 <textarea bind:value></textarea>
 
-{@html marked(value)}
