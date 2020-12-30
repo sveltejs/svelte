@@ -95,7 +95,7 @@ const passive_events = new Set([
 
 const react_attributes = new Map([
 	['className', 'class'],
-	['htmlFor', 'for'],
+	['htmlFor', 'for']
 ]);
 
 function get_namespace(parent: Element, element: Element, explicit_namespace: string) {
