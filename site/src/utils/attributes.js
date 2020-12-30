@@ -1,16 +1,15 @@
 const ATTRS_REGEX = /^(.+)\s+\{(.+)\}$/;
 /**
- * Extracts attributes from markdown text to be applied to the resulting HTML.
+ * Extracts attributes from Markdown text.
  * @example
  * // returns { 
  * //   text: 'Heading',
  * //   raw: '<code>Heading</code>',
- * //   attrs: { id: 'important', class: 'red', test: 'true' },
- * //   attrstring: 'id="important" class="red" test="true"'
+ * //   attrs: { test: 'true' }
  * // }
  * extract_attributes(
- *   'Heading { #important .red test=true }', 
- *   '<code>Heading</code> { #important .red test=true }'
+ *   'Heading { test=true }', 
+ *   '<code>Heading</code> { test=true }'
  * );
  * ```
  * @param {string} text 
@@ -25,16 +24,14 @@ export function extract_attributes(text, raw) {
 		return {
 			text: textMatch ? textMatch[1] : text,
 			raw: rawMatch ? rawMatch[1] : raw,
-			attrs,
-			attrstring: Object.keys(attrs).map(key => `${key}="${attrs[key].trim()}"`).join(' ')
+			attrs
 		}
 	} catch (err) {
 		console.log(err);
 		return {
 			text,
 			raw,
-			attrs: {},
-			attrstring: ''
+			attrs: {}
 		};
 	}
 }
@@ -44,18 +41,9 @@ function parse_attributes(raw_attributes) {
 	const result = { };
 	attributes.forEach(attr => {
 		if (!attr) return;
-		if (attr.startsWith('#')) {
-			result.id = attr.substring(1);
-		} else if (attr.startsWith('.')) {
-			if (!result.class) {
-				result.class = '';
-			}
-			result.class += attr.substring(1) + ' ';
-		} else {
-			let [key, value = ''] = attr.split('=');
-			result[key] = value;
-		}
-	})
+		let [key, value = ''] = attr.split('=');
+		result[key] = value;
+	});
 
 	return result;
 }

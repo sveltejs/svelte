@@ -112,7 +112,7 @@ export default function() {
 				}
 
 				return `
-					<h${level} ${extracted.attrstring}>
+					<h${level}>
 						<span id="${slug}" class="offset-anchor" ${level > 4 || tocIgnore ? 'data-scrollignore' : ''}></span>
 						<a href="docs#${slug}" class="anchor" aria-hidden="true"></a>
 						${text}
