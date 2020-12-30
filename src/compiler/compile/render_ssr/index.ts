@@ -8,6 +8,7 @@ import Text from '../nodes/Text';
 import { LabeledStatement, Statement, Node, Expression } from 'estree';
 import { walk } from 'estree-walker';
 import { extract_names } from 'periscopic';
+import { invalidate } from '../render_dom/invalidate';
 
 export default function ssr(
 	component: Component,
@@ -40,19 +41,36 @@ export default function ssr(
 	const slots = uses_slots ? b`let $$slots = @compute_slots(#slots);` : null;
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
-	const reactive_store_values = reactive_stores
+	const reactive_store_subscriptions = reactive_stores
+		.filter(store => {
+			const variable = component.var_lookup.get(store.name.slice(1));
+			return !variable || variable.hoistable;
+		})
+		.map(({ name }) => {
+			const store_name = name.slice(1);
+			return b`
+				${component.compile_options.dev && b`@validate_store(${store_name}, '${store_name}');`}
+				${`$$unsubscribe_${store_name}`} = @subscribe(${store_name}, #value => ${name} = #value)
+				${store_name}.subscribe($$value => ${name} = $$value);
+			`
+		});
+	const reactive_store_unsubscriptions = reactive_stores.map(
+		({ name }) => b`${`$$unsubscribe_${name.slice(1)}`}()`
+	);
+
+	const reactive_store_declarations = reactive_stores
 		.map(({ name }) => {
 			const store_name = name.slice(1);
 			const store = component.var_lookup.get(store_name);
-			if (store && store.hoistable) return null;
 
-			const assignment = b`${name} = @get_store_value(${store_name});`;
+			if (store && store.reassigned) {
+				const unsubscribe = `$$unsubscribe_${store_name}`;
+				const subscribe = `$$subscribe_${store_name}`;
 
-			return component.compile_options.dev
-				? b`@validate_store(${store_name}, '${store_name}'); ${assignment}`
-				: assignment;
-		})
-		.filter(Boolean);
+				return b`let ${name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${store_name}, $$value => ${name} = $$value), ${store_name})`;
+			}
+			return b`let ${name}, ${`$$unsubscribe_${store_name}`};`;
+		});
 
 	// instrument get/set store value
 	if (component.ast.instance) {
@@ -72,51 +90,45 @@ export default function ssr(
 
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-					const names = new Set(extract_names(assignee));
+					let names = new Set(extract_names(assignee));
+					let to_invalidate = new Set<string>();
 
-					const vars = Array.from(names)
-						.filter(name => {
-							const owner = scope.find_owner(name);
-							return !owner || owner === component.instance_scope;
-						})
-						.map(name => component.var_lookup.get(name))
-						.filter(variable =>	{
-							return variable && 
-								!variable.hoistable &&
-								!variable.global &&
-								!variable.module &&
-								(
-									variable.subscribable || variable.name[0] === '$'
-								);
-						})
-						.map(variable => {
-							if (variable.subscribable) {
-								return x`${'$' + variable.name} = @get_store_value(${variable.name})`;
+					for (const name of names) {
+						const variable = component.var_lookup.get(name);
+						if (variable &&
+							!variable.hoistable &&
+							!variable.global &&
+							!variable.module &&
+							(
+								variable.subscribable || variable.name[0] === '$'
+							)) {
+								to_invalidate.add(variable.name);
 							}
-							if (variable.name[0] === '$') {
-								return x`${variable.name.slice(1)}.set(${variable.name})`;
-							}
-						});
+					}
 
-					if (vars.length) {
-						this.replace({
-							type: 'SequenceExpression',
-							expressions: [
-								node,
-								...vars,
-								assignee as Expression
-							]
-						});
+					if (to_invalidate.size) {
+						this.replace(
+              invalidate(
+                { component } as any,
+                scope,
+                node,
+                to_invalidate,
+                true
+              )
+            );
 					}
 				}
 			}
 		});
 	}
 
-	component.rewrite_props(({ name }) => {
+	component.rewrite_props(({ name, reassigned }) => {
 		const value = `$${name}`;
 
-		let insert = b`${value} = @get_store_value(${name})`;
+		let insert = reassigned
+			? b`${`$$subscribe_${name}`}()`
+			: b`${`$$unsubscribe_${name}`} = @subscribe(${name}, #value => $${value} = #value)`;
+
 		if (component.compile_options.dev) {
 			insert = b`@validate_store(${name}, '${name}'); ${insert}`;
 		}
@@ -160,8 +172,6 @@ export default function ssr(
 			do {
 				$$settled = true;
 
-				${reactive_store_values}
-
 				${injected.map(name => b`let ${name};`)}
 
 				${reactive_declarations}
@@ -169,32 +179,24 @@ export default function ssr(
 				$$rendered = ${literal};
 			} while (!$$settled);
 
+			${reactive_store_unsubscriptions}
+
 			return $$rendered;
 		`
 		: b`
-			${reactive_store_values}
-
 			${injected.map(name => b`let ${name};`)}
 
 			${reactive_declarations}
+
+			${reactive_store_unsubscriptions}
 
 			return ${literal};`;
 
 	const blocks = [
 		rest,
 		slots,
-		...reactive_stores.map(({ name }) => {
-			const store_name = name.slice(1);
-			const store = component.var_lookup.get(store_name);
-			if (store && store.hoistable) {
-				return b`
-					${component.compile_options.dev && b`@validate_store(${store_name}, '${store_name}');`}
-					let ${name} = @get_store_value(${store_name});
-				`;
-			}
-			return b`let ${name};`;
-		}),
-
+		...reactive_store_declarations,
+		...reactive_store_subscriptions,
 		instance_javascript,
 		...parent_bindings,
 		css.code && b`$$result.css.add(#css);`,

@@ -7,10 +7,10 @@
 
 	// should resubscribe immediately
 	value = writable({ foo: $value.foo + 2, bar: $value.bar - 2 }); // { foo: 5, bar: 4 }
-	
+
 	// should mutate the store value
 	$value.baz = $value.foo + $value.bar; // { foo: 5, bar: 4, baz: 9 }
-	
+
 	// should resubscribe immediately
 	value = writable({ qux: $value.baz - $value.foo }); // { qux: 4 }
 
