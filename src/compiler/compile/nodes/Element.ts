@@ -451,8 +451,8 @@ export default class Element extends Node {
 
 			if (react_attributes.has(attribute.name)) {
 				component.warn(attribute, {
-					code: 'use-the-platform',
-					message: `'${attribute.name}' is not a valid html attribute. Did you mean '${react_attributes.get(attribute.name)}'? If you are a recovering React developer, remember, Svelte actually uses the web platform.`
+					code: 'invalid-html-attribute',
+					message: `'${attribute.name}' is not a valid html attribute. Did you mean '${react_attributes.get(attribute.name)}'?`
 				});
 			}
 

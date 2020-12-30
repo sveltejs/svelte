@@ -1,7 +1,7 @@
 [
 	{
-		"code": "use-the-platform",
-		"message": "'className' is not a valid html attribute. Did you mean 'class'? If you are a recovering React developer, remember, Svelte actually uses the web platform.",
+		"code": "invalid-html-attribute",
+		"message": "'className' is not a valid html attribute. Did you mean 'class'?",
 		"pos": 5,
 		"start": {
 			"character": 5,
@@ -15,8 +15,8 @@
 		}
 	},
 	{
-		"code": "use-the-platform",
-		"message": "'htmlFor' is not a valid html attribute. Did you mean 'for'? If you are a recovering React developer, remember, Svelte actually uses the web platform.",
+		"code": "invalid-html-attribute",
+		"message": "'htmlFor' is not a valid html attribute. Did you mean 'for'?",
 		"pos": 35,
 		"start": {
 			"character": 35,
