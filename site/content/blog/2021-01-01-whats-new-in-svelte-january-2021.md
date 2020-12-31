@@ -74,6 +74,7 @@ As cautioned in _[What's the deal with SvelteKit?](https://svelte.dev/blog/whats
 - [Svelte for React Developers](https://soshace.com/svelte-for-react-developers/) explains Svelte's core concepts to folks who are used to React
 - [Building a Svelte Static Website with Smooth Page Transitions](https://www.youtube.com/watch?v=dvPfmcGtmrI&feature=emb_title) shows how to build a static website with Svelte and add smooth page transitions using Three.js and GSAP.
 - [Using Apollo Client in Sapper](https://bjornlu.com/blog/using-apollo-client-in-sapper/) explains the "simplest" solutions to integrate the Apollog query client into Sapper
+- [Reactive web apps with Crystal + Svelte](https://www.youtube.com/watch?v=i1xjLd6z7BU) explores how to build full-stack, server-rendered Svelte apps with a [Crystal](https://crystal-lang.org) backend
 
 **Related Projects**
 
