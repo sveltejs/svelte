@@ -1,3 +1,3 @@
 export default {
-	html: `<p>aca</p>`
+	html: '<p>aca</p>'
 };
