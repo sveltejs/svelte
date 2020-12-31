@@ -48,42 +48,6 @@ export default {
 		await checkInbox(8);
 		for (let i = 0; i < 18; i++) {
       assert.equal(inputs[i].checked, checked.has(i));
-		}
-
-    // inputs[4].checked = true;
-    // await inputs[4].dispatchEvent(event);
-
-    // assert.htmlEqual(target.innerHTML, `
-    // 	<label><input type="checkbox" value="x"> x</label>
-    // 	<label><input type="checkbox" value="y"> y</label>
-    // 	<label><input type="checkbox" value="z"> z</label>
-    // 	<p>z</p>
-    // 	<label><input type="checkbox" value="x"> x</label>
-    // 	<label><input type="checkbox" value="y"> y</label>
-    // 	<label><input type="checkbox" value="z"> z</label>
-    // 	<p>y</p>
-    // 	<label><input type="checkbox" value="x"> x</label>
-    // 	<label><input type="checkbox" value="y"> y</label>
-    // 	<label><input type="checkbox" value="z"> z</label>
-    // 	<p></p>
-    // `);
-
-    // inputs[5].checked = true;
-    // await inputs[5].dispatchEvent(event);
-
-    // assert.htmlEqual(target.innerHTML, `
-    // 	<label><input type="checkbox" value="x"> x</label>
-    // 	<label><input type="checkbox" value="y"> y</label>
-    // 	<label><input type="checkbox" value="z"> z</label>
-    // 	<p>z</p>
-    // 	<label><input type="checkbox" value="x"> x</label>
-    // 	<label><input type="checkbox" value="y"> y</label>
-    // 	<label><input type="checkbox" value="z"> z</label>
-    // 	<p>y, z</p>
-    // 	<label><input type="checkbox" value="x"> x</label>
-    // 	<label><input type="checkbox" value="y"> y</label>
-    // 	<label><input type="checkbox" value="z"> z</label>
-    // 	<p></p>
-    // `);
+    }
   }
 };
