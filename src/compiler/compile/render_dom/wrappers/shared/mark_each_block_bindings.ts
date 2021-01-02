@@ -17,10 +17,18 @@ export default function mark_each_block_bindings(
 	});
 
 	if (binding.name === 'group') {
+		const add_index_binding = (name: string) => {
+			const each_block = parent.node.scope.get_owner(name);
+			if (each_block.type === 'EachBlock') {
+				each_block.has_index_binding = true;
+				for (const dep of each_block.expression.contextual_dependencies) {
+					add_index_binding(dep);
+				}
+			}
+		};
 		// for `<input bind:group={} >`, we make sure that all the each blocks creates context with `index`
 		for (const name of binding.expression.contextual_dependencies) {
-			const each_block = parent.node.scope.get_owner(name);
-			(each_block as EachBlock).has_index_binding = true;
+			add_index_binding(name);
 		}
 	}
 }
