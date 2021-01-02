@@ -8,6 +8,7 @@
 * Fix checkbox `bind:group` in nested `{#each}` contexts ([#5811](https://github.com/sveltejs/svelte/issues/5811))
 * Add graphics roles as known ARIA roles ([#5822](https://github.com/sveltejs/svelte/pull/5822))
 * Fix local transitions if a parent has a cancelled outro transition ([#5822](https://github.com/sveltejs/svelte/issues/5822))
+* Support `use:obj.some.deep.function` as actions ([#5844](https://github.com/sveltejs/svelte/issues/5844))
 
 ## 3.31.0
 
