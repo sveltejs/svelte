@@ -93,6 +93,11 @@ const passive_events = new Set([
 	'touchcancel'
 ]);
 
+const react_attributes = new Map([
+	['className', 'class'],
+	['htmlFor', 'for']
+]);
+
 function get_namespace(parent: Element, element: Element, explicit_namespace: string) {
 	const parent_element = parent.find_nearest(/^Element/);
 
@@ -441,6 +446,13 @@ export default class Element extends Node {
 				component.warn(attribute, {
 					code: 'avoid-is',
 					message: 'The \'is\' attribute is not supported cross-browser and should be avoided'
+				});
+			}
+
+			if (react_attributes.has(attribute.name)) {
+				component.warn(attribute, {
+					code: 'invalid-html-attribute',
+					message: `'${attribute.name}' is not a valid HTML attribute. Did you mean '${react_attributes.get(attribute.name)}'?`
 				});
 			}
 
