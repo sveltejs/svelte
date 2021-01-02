@@ -4,6 +4,7 @@
 
 * Fix location of automatically declared reactive variables ([#5749](https://github.com/sveltejs/svelte/issues/5749))
 * Warn when using `className` or `htmlFor` attributes ([#5777](https://github.com/sveltejs/svelte/issues/5777))
+* Fix checkbox `bind:group` in keyed `{#each}` where the array can be reordered ([#5779](https://github.com/sveltejs/svelte/issues/5779))
 * Fix checkbox `bind:group` in nested `{#each}` contexts ([#5811](https://github.com/sveltejs/svelte/issues/5811))
 * Add graphics roles as known ARIA roles ([#5822](https://github.com/sveltejs/svelte/pull/5822))
 
