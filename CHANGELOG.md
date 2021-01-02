@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix scrolling of element with resize listener by making the `<iframe>` have `z-index: -1` ([#5448](https://github.com/sveltejs/svelte/issues/5448))
 * Fix location of automatically declared reactive variables ([#5749](https://github.com/sveltejs/svelte/issues/5749))
 * Warn when using `className` or `htmlFor` attributes ([#5777](https://github.com/sveltejs/svelte/issues/5777))
 * Fix checkbox `bind:group` in keyed `{#each}` where the array can be reordered ([#5779](https://github.com/sveltejs/svelte/issues/5779))
