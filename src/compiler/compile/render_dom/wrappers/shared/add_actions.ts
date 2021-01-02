@@ -12,7 +12,7 @@ export default function add_actions(
 }
 
 export function add_action(block: Block, target: string, action: Action) {
-	const { expression } = action;
+	const { expression, template_scope } = action;
 	let snippet;
 	let dependencies;
 
@@ -29,7 +29,7 @@ export function add_action(block: Block, target: string, action: Action) {
 
 	const [obj, ...properties] = action.name.split('.');
 
-	const fn = is_contextual(action.component, action.expression.template_scope, obj)
+	const fn = is_contextual(action.component, template_scope, obj)
 		? block.renderer.reference(obj)
 		: obj;
 
