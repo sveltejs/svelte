@@ -259,18 +259,18 @@ function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
 
 	const contexts = [];
 	const contextual_dependencies = new Set<string>();
-  const { template_scope } = value.expression;
-  const add_contextual_dependency = (dep: string) => {
+	const { template_scope } = value.expression;
+	const add_contextual_dependency = (dep: string) => {
 		contextual_dependencies.add(dep);
-    const owner = template_scope.get_owner(dep);
-    if (owner.type === 'EachBlock') {
-      for (const dep of owner.expression.contextual_dependencies) {
-        add_contextual_dependency(dep);
-      }
-    }
-  };
-  for (const dep of value.expression.contextual_dependencies) {
-    add_contextual_dependency(dep);
+		const owner = template_scope.get_owner(dep);
+		if (owner.type === 'EachBlock') {
+			for (const dep of owner.expression.contextual_dependencies) {
+				add_contextual_dependency(dep);
+			}
+		}
+	};
+	for (const dep of value.expression.contextual_dependencies) {
+		add_contextual_dependency(dep);
 	}
 
 	for (const dep of contextual_dependencies) {

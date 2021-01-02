@@ -1,5 +1,5 @@
 export default {
-  html: `
+	html: `
 		<input type="checkbox" value="a" data-index="x-1">
 		<input type="checkbox" value="b" data-index="x-1">
 		<input type="checkbox" value="c" data-index="x-1">
@@ -20,34 +20,34 @@ export default {
 		<input type="checkbox" value="c" data-index="z-2">
 	`,
 
-  async test({ assert, component, target, window }) {
-    const inputs = target.querySelectorAll('input');
+	async test({ assert, component, target, window }) {
+		const inputs = target.querySelectorAll('input');
 		const checked = new Set();
 		const checkInbox = async (i) => {
 			checked.add(i);
 			inputs[i].checked = true;
-			await inputs[i].dispatchEvent(event);	
+			await inputs[i].dispatchEvent(event);
 		};
 
-    for (let i = 0; i < 18; i++) {
-      assert.equal(inputs[i].checked, checked.has(i));
-    }
+		for (let i = 0; i < 18; i++) {
+			assert.equal(inputs[i].checked, checked.has(i));
+		}
 
-    const event = new window.Event('change');
+		const event = new window.Event('change');
 
 		await checkInbox(2);
 		for (let i = 0; i < 18; i++) {
-      assert.equal(inputs[i].checked, checked.has(i));
+			assert.equal(inputs[i].checked, checked.has(i));
 		}
 
 		await checkInbox(12);
 		for (let i = 0; i < 18; i++) {
-      assert.equal(inputs[i].checked, checked.has(i));
+			assert.equal(inputs[i].checked, checked.has(i));
 		}
 
 		await checkInbox(8);
 		for (let i = 0; i < 18; i++) {
-      assert.equal(inputs[i].checked, checked.has(i));
-    }
-  }
+			assert.equal(inputs[i].checked, checked.has(i));
+		}
+	}
 };
