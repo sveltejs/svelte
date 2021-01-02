@@ -450,7 +450,7 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.maintain_context = true;
 
 			this.updates.push(b`
-				const ${this.vars.each_block_value} = ${snippet};
+				${this.vars.each_block_value} = ${snippet};
 				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 
 				${this.block.has_outros && b`@group_outros();`}
