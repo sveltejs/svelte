@@ -1,10 +1,10 @@
 export default {
 	html: `
-		<label><input type="checkbox" value="Vanilla"> Vanilla</label>	
+		<label><input type="checkbox" value="Vanilla"> Vanilla</label>
 		<label><input type="checkbox" value="Strawberry"> Strawberry</label>
 		<label><input type="checkbox" value="Chocolate"> Chocolate</label>
 		<label><input type="checkbox" value="Lemon"> Lemon</label>
-		<label><input type="checkbox" value="Coconout"> Coconout</label>
+		<label><input type="checkbox" value="Coconut"> Coconut</label>
 	`,
 
 	async test({ assert, target, window }) {
@@ -16,10 +16,10 @@ export default {
 
 		assert.htmlEqual(target.innerHTML, `
 			<label><input type="checkbox" value="Chocolate"> Chocolate</label>
-			<label><input type="checkbox" value="Vanilla"> Vanilla</label>	
+			<label><input type="checkbox" value="Vanilla"> Vanilla</label>
 			<label><input type="checkbox" value="Strawberry"> Strawberry</label>
 			<label><input type="checkbox" value="Lemon"> Lemon</label>
-			<label><input type="checkbox" value="Coconout"> Coconout</label>
+			<label><input type="checkbox" value="Coconut"> Coconut</label>
 		`);
 
 		assert.equal(input1.checked, false);
@@ -34,9 +34,9 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<label><input type="checkbox" value="Chocolate"> Chocolate</label>
 			<label><input type="checkbox" value="Lemon"> Lemon</label>
-			<label><input type="checkbox" value="Vanilla"> Vanilla</label>	
+			<label><input type="checkbox" value="Vanilla"> Vanilla</label>
 			<label><input type="checkbox" value="Strawberry"> Strawberry</label>
-			<label><input type="checkbox" value="Coconout"> Coconout</label>
+			<label><input type="checkbox" value="Coconut"> Coconut</label>
 		`);
 
 		assert.equal(input1.checked, false);
@@ -51,9 +51,9 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<label><input type="checkbox" value="Lemon"> Lemon</label>
 			<label><input type="checkbox" value="Chocolate"> Chocolate</label>
-			<label><input type="checkbox" value="Vanilla"> Vanilla</label>	
+			<label><input type="checkbox" value="Vanilla"> Vanilla</label>
 			<label><input type="checkbox" value="Strawberry"> Strawberry</label>
-			<label><input type="checkbox" value="Coconout"> Coconout</label>
+			<label><input type="checkbox" value="Coconut"> Coconut</label>
 		`);
 
 		assert.equal(input1.checked, false);

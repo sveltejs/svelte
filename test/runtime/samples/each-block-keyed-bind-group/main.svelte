@@ -1,14 +1,14 @@
 <script>
 	let flavours = [
-		'Vanilla', 
+		'Vanilla',
 		'Strawberry',
 		'Chocolate',
 		'Lemon',
-		'Coconout'
+		'Coconut'
 	];
-	
+
 	let choices = [];
-	
+
 	// Put choices first by sorting
 	$: flavours = flavours.sort((a, b) => choices.includes(b) - choices.includes(a));
 </script>
