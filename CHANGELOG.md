@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add graphics roles as known ARIA roles ([#5822](https://github.com/sveltejs/svelte/pull/5822))
+
 ## 3.31.0
 
 * Use a separate `SvelteComponentTyped` interface for typed components ([#5738](https://github.com/sveltejs/svelte/pull/5738))
