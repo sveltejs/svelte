@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.31.1
 
 * Fix scrolling of element with resize listener by making the `<iframe>` have `z-index: -1` ([#5448](https://github.com/sveltejs/svelte/issues/5448))
 * Fix location of automatically declared reactive variables ([#5749](https://github.com/sveltejs/svelte/issues/5749))
