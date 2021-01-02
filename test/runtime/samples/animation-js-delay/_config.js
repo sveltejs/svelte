@@ -18,7 +18,7 @@ export default {
 	`,
 
 	test({ assert, component, target, window, raf }) {
-		let divs = document.querySelectorAll('div');
+		let divs = window.document.querySelectorAll('div');
 		divs.forEach(div => {
 			div.getBoundingClientRect = function() {
 				const index = [...this.parentNode.children].indexOf(this);
@@ -41,7 +41,7 @@ export default {
 			{ id: 1, name: 'a' }
 		];
 
-		divs = document.querySelectorAll('div');
+		divs = window.document.querySelectorAll('div');
 		assert.equal(divs[0].dy, 120);
 		assert.equal(divs[4].dy, -120);
 
@@ -54,6 +54,30 @@ export default {
 		assert.equal(divs[4].dy, 0);
 
 		raf.tick(150);
+		assert.equal(divs[0].dy, 0);
+		assert.equal(divs[4].dy, 0);
+
+		component.things = [
+			{ id: 1, name: 'a' },
+			{ id: 2, name: 'b' },
+			{ id: 3, name: 'c' },
+			{ id: 4, name: 'd' },
+			{ id: 5, name: 'e' }
+		];
+
+		divs = document.querySelectorAll('div');
+		assert.equal(divs[0].dy, 120);
+		assert.equal(divs[4].dy, -120);
+
+		raf.tick(200);
+		assert.equal(divs[0].dy, 108);
+		assert.equal(divs[4].dy, -60);
+
+		raf.tick(250);
+		assert.equal(divs[0].dy, 48);
+		assert.equal(divs[4].dy, 0);
+
+		raf.tick(300);
 		assert.equal(divs[0].dy, 0);
 		assert.equal(divs[4].dy, 0);
 	}
