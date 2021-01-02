@@ -6,6 +6,8 @@ import AbstractBlock from './shared/AbstractBlock';
 import Element from './Element';
 import { Context, unpack_destructuring } from './shared/Context';
 import { Node } from 'estree';
+import Component from '../Component';
+import { TemplateNode } from '../../interfaces';
 
 export default class EachBlock extends AbstractBlock {
 	type: 'EachBlock';
@@ -25,7 +27,7 @@ export default class EachBlock extends AbstractBlock {
 
 	else?: ElseBlock;
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		this.expression = new Expression(component, this, scope, info.expression);

@@ -101,8 +101,6 @@ export default function ssr(
 
 				${reactive_store_values}
 
-				${injected.map(name => b`let ${name};`)}
-
 				${reactive_declarations}
 
 				$$rendered = ${literal};
@@ -113,13 +111,12 @@ export default function ssr(
 		: b`
 			${reactive_store_values}
 
-			${injected.map(name => b`let ${name};`)}
-
 			${reactive_declarations}
 
 			return ${literal};`;
 
 	const blocks = [
+		...injected.map(name => b`let ${name};`),
 		rest,
 		slots,
 		...reactive_stores.map(({ name }) => {

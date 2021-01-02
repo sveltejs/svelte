@@ -414,6 +414,8 @@ export default function dom(
 
 		body.push(b`
 			function ${definition}(${args}) {
+				${injected.map(name => b`let ${name};`)}
+
 				${rest}
 
 				${reactive_store_declarations}
@@ -439,8 +441,6 @@ export default function dom(
 				${capture_state && b`$$self.$capture_state = ${capture_state};`}
 
 				${inject_state && b`$$self.$inject_state = ${inject_state};`}
-
-				${injected.map(name => b`let ${name};`)}
 
 				${/* before reactive declarations */ props_inject}
 

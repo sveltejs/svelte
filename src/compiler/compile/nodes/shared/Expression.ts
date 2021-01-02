@@ -22,7 +22,7 @@ export default class Expression {
 	type: 'Expression' = 'Expression';
 	component: Component;
 	owner: Owner;
-	node: any;
+	node: Node;
 	references: Set<string> = new Set();
 	dependencies: Set<string> = new Set();
 	contextual_dependencies: Set<string> = new Set();
@@ -36,7 +36,7 @@ export default class Expression {
 
 	manipulated: Node;
 
-	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info, lazy?: boolean) {
+	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info: Node, lazy?: boolean) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
@@ -314,7 +314,7 @@ export default class Expression {
 								block.renderer.add_to_context(func_id.name, true);
 								// rename #ctx -> child_ctx;
 								walk(func_expression, {
-									enter(node) {
+									enter(node: Node) {
 										if (node.type === 'Identifier' && node.name === '#ctx') {
 											node.name = 'child_ctx';
 										}

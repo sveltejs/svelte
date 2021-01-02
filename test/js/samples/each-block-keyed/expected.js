@@ -39,7 +39,8 @@ function create_each_block(key_1, ctx) {
 			insert(target, div, anchor);
 			append(div, t);
 		},
-		p(ctx, dirty) {
+		p(new_ctx, dirty) {
+			ctx = new_ctx;
 			if (dirty & /*things*/ 1 && t_value !== (t_value = /*thing*/ ctx[1].name + "")) set_data(t, t_value);
 		},
 		d(detaching) {
@@ -78,7 +79,7 @@ function create_fragment(ctx) {
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*things*/ 1) {
-				const each_value = /*things*/ ctx[0];
+				each_value = /*things*/ ctx[0];
 				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, destroy_block, create_each_block, each_1_anchor, get_each_context);
 			}
 		},
