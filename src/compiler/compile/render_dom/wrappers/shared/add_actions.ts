@@ -31,8 +31,9 @@ export function add_action(block: Block, target: string, action: Action) {
 	const fn = block.renderer.reference(obj);
 
 	if (properties.length) {
+		const member_expression = properties.reduce((lhs, rhs) => x`${lhs}.${rhs}`, fn);
 		block.event_listeners.push(
-			x`@action_destroyer(${id} = ${fn}.${properties.join('.')}(${target}, ${snippet}))`
+			x`@action_destroyer(${id} = ${member_expression}(${target}, ${snippet}))`
 		);
 	} else {
 		block.event_listeners.push(
