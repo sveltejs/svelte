@@ -10,10 +10,10 @@
 
 	let shown = true;
 	let _id = 1;
-  let items = [];
-	
-  export const toggle = () => (shown = !shown);
-  export const add = () => {
+	let items = [];
+
+	export const toggle = () => (shown = !shown);
+	export const add = () => {
 		items = items.concat({ _id, name: `Thing ${_id}` });
 		_id++;
 	};
@@ -21,9 +21,9 @@
 </script>
 
 {#if shown}
-  <section transition:fade>
+	<section transition:fade>
 		{#each items as thing (thing._id)}
 			<div in:fade|local out:fade|local>{thing.name}</div>
 		{/each}
-  </section>
+	</section>
 {/if}
