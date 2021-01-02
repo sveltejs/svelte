@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Warn when using `className` or `htmlFor` attributes ([#5777](https://github.com/sveltejs/svelte/issues/5777))
 * Fix checkbox `bind:group` in nested `{#each}` contexts ([#5811](https://github.com/sveltejs/svelte/issues/5811))
 * Add graphics roles as known ARIA roles ([#5822](https://github.com/sveltejs/svelte/pull/5822))
 
