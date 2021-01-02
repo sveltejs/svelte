@@ -452,7 +452,7 @@ export default class Element extends Node {
 			if (react_attributes.has(attribute.name)) {
 				component.warn(attribute, {
 					code: 'invalid-html-attribute',
-					message: `'${attribute.name}' is not a valid html attribute. Did you mean '${react_attributes.get(attribute.name)}'?`
+					message: `'${attribute.name}' is not a valid HTML attribute. Did you mean '${react_attributes.get(attribute.name)}'?`
 				});
 			}
 
