@@ -1,4 +1,4 @@
-import { is_promise } from './utils';
+import { is_promise, noop } from './utils';
 import { check_outros, group_outros, transition_in, transition_out } from './transitions';
 import { flush } from './scheduler';
 import { get_current_component, set_current_component } from './lifecycle';
@@ -27,9 +27,7 @@ export function handle_promise(promise, info) {
 				info.blocks.forEach((block, i) => {
 					if (i !== index && block) {
 						group_outros();
-						transition_out(block, 1, 1, () => {
-							info.blocks[i] = null;
-						});
+						transition_out(block, 1, 1, noop);
 						check_outros();
 					}
 				});
