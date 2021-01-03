@@ -1,7 +1,12 @@
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { decode as decode_mappings } from 'sourcemap-codec';
 import { getLocator } from 'locate-character';
-import { StringWithSourcemap, sourcemap_add_offset, combine_sourcemaps } from '../utils/string_with_sourcemap';
+import {
+	StringWithSourcemap,
+	sourcemap_add_offset,
+	combine_sourcemaps,
+	parse_attached_sourcemap
+} from '../utils/string_with_sourcemap';
 
 export interface Processed {
 	code: string;
@@ -178,6 +183,8 @@ function get_replacement(
 		file_basename, prefix, get_location(offset));
 	const suffix_with_map = StringWithSourcemap.from_source(
 		file_basename, suffix, get_location(offset + prefix.length + original.length));
+
+	parse_attached_sourcemap(processed);
 
 	// Convert the preprocessed code and its sourcemap to a StringWithSourcemap
 	let decoded_map: DecodedSourceMap;

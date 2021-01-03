@@ -1,6 +1,7 @@
 import { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/remapping/dist/types/types';
 import remapping from '@ampproject/remapping';
 import { SourceMap } from 'magic-string';
+import { Processed } from '../preprocess';
 
 type SourceLocation = {
 	line: number;
@@ -255,6 +256,7 @@ export function combine_sourcemaps(
 
 // browser vs node.js
 const b64enc = typeof btoa == 'function' ? btoa : b => Buffer.from(b).toString('base64');
+const b64dec = typeof atob == 'function' ? atob : a => Buffer.from(a, 'base64').toString();
 
 export function apply_preprocessor_sourcemap(filename: string, svelte_map: SourceMap, preprocessor_map_input: string | DecodedSourceMap | RawSourceMap): SourceMap {
 	if (!svelte_map || !preprocessor_map_input) return svelte_map;
@@ -287,4 +289,27 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 	});
 
 	return result_map as SourceMap;
+}
+
+// find attached sourcemap in processed.code
+// TODO? handle multiple attached maps, combine with processed.map
+export function parse_attached_sourcemap(processed: Processed): void {
+	const magic_prefix = '\n/*# sourceMappingURL=data:application/json;';
+	const cut_index = processed.code.lastIndexOf('\n');
+	const last_line = processed.code.slice(cut_index);
+	if (magic_prefix != last_line.slice(0, magic_prefix.length)) {
+		return; // attachment not found
+	}
+	if (processed.map) {
+		throw 'not implemented. '+
+			'found sourcemap in both processed.code and processed.map. '+
+			'please pass only one sourcemap.\n'+
+			'processed.code:\n'+
+			processed.code.slice(0, 100)+' [....]'; // help to find preprocessor
+	}
+	// remove last line
+	processed.code = processed.code.slice(0, cut_index);
+	// slice to -2 --> remove trailing '*/'
+	const b64map = last_line.slice(last_line.indexOf('base64,')+7, -2).trim();
+	processed.map = b64dec(b64map);
 }
