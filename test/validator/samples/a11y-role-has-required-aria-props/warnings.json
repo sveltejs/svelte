@@ -13,35 +13,35 @@
 			"character": 19
 		},
 		"pos": 5
-    },
-    {
-        "code": "a11y-role-has-required-aria-props",
-        "message": "A11y: Elements with the ARIA role \"checkbox\" must have the following attributes defined: aria-checked",
-        "start": {
-            "line": 2,
-            "column": 6,
-            "character": 33
-        },
-        "end": {
-            "line": 2,
-            "column": 21,
-            "character": 48
-        },
-        "pos": 33
-    },
-    {
-        "code": "a11y-role-has-required-aria-props",
-        "message": "A11y: Elements with the ARIA role \"meter\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow",
-        "start": {
-            "line": 3,
-            "column": 5,
-            "character": 62
-        },
-        "end": {
-            "line": 3,
-            "column": 17,
-            "character": 74
-        },
-        "pos": 62
-    }
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"message": "A11y: Elements with the ARIA role \"checkbox\" must have the following attributes defined: aria-checked",
+		"start": {
+			"line": 2,
+			"column": 6,
+			"character": 33
+		},
+		"end": {
+			"line": 2,
+			"column": 21,
+			"character": 48
+		},
+		"pos": 33
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"message": "A11y: Elements with the ARIA role \"meter\" must have the following attributes defined: aria-valuemax,aria-valuemin,aria-valuenow",
+		"start": {
+			"line": 3,
+			"column": 5,
+			"character": 62
+		},
+		"end": {
+			"line": 3,
+			"column": 17,
+			"character": 74
+		},
+		"pos": 62
+	}
 ]
