@@ -45,6 +45,20 @@ const a11y_required_attributes = {
 	object: ['title', 'aria-label', 'aria-labelledby']
 };
 
+const a11y_required_role_props = {
+	checkbox: ['aria-checked'],
+	combobox: ['aria-controls', 'aria-expanded'],
+	heading: ['aria-level'],
+	menuitemcheckbox: ['aria-checked'],
+	menuitemradio: ['aria-checked'],
+	meter: ['aria-valuemax', 'aria-valuemin', 'aria-valuenow'],
+	option: ['aria-selected'],
+	radio: ['aria-checked'],
+	scrollbar: ['aria-controls', 'aria-valuenow'],
+	slider: ['aria-valuenow'],
+	switch: ['aria-checked']
+};
+
 const a11y_distracting_elements = new Set([
 	'blink',
 	'marquee'
@@ -407,9 +421,9 @@ export default class Element extends Node {
 	}
 
 	validate_attributes_a11y() {
-		const { component } = this;
+		const { component, attributes } = this;
 
-		this.attributes.forEach(attribute => {
+		attributes.forEach(attribute => {
 			if (attribute.is_spread) return;
 
 			const name = attribute.name.toLowerCase();
@@ -460,6 +474,21 @@ export default class Element extends Node {
 					const has_nested_redundant_role = value === a11y_nested_implicit_semantics.get(this.name);
 					if (has_nested_redundant_role) {
 						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
+					}
+				}
+
+				// @ts-ignore
+				const required_role_props = a11y_required_role_props[value];
+
+				// role-has-required-aria-props
+				if (required_role_props) {
+					const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
+
+					if (has_missing_props) {
+						component.warn(attribute, {
+							code: 'a11y-role-has-required-aria-props',
+							message: `A11y: Elements with the ARIA role "${value}" must have the following attributes defined: ${String(required_role_props)}`
+						});
 					}
 				}
 			}
