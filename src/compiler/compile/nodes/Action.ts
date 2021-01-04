@@ -2,15 +2,16 @@ import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
-import { TemplateNode } from '../../interfaces';
+import { Directive } from '../../interfaces';
 
 export default class Action extends Node {
 	type: 'Action';
 	name: string;
 	expression: Expression;
 	uses_context: boolean;
+	template_scope: TemplateScope;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: Directive) {
 		super(component, parent, scope, info);
 
 		const object = info.name.split('.')[0];
@@ -22,6 +23,8 @@ export default class Action extends Node {
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression)
 			: null;
+
+		this.template_scope = scope;
 
 		this.uses_context = this.expression && this.expression.uses_context;
 	}
