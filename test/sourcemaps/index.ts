@@ -42,7 +42,7 @@ describe('sourcemaps', () => {
 					filename: 'input.svelte'
 				}
 			);
-	
+
 			const { js, css } = svelte.compile(
 				preprocessed.code, {
 				filename: 'input.svelte',

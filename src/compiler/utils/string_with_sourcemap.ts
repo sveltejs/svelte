@@ -292,13 +292,14 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 }
 
 // parse attached sourcemap in processed.code
-export function parse_attached_sourcemap(processed: Processed): void {
-	const magic_prefix = '\n/*# sourceMappingURL=data:application/json;';
+export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style'): void {
+	const magic_prefix = '# sourceMappingURL=data:application/json;';
 	const cut_index = processed.code.lastIndexOf('\n');
 	const last_line = processed.code.slice(cut_index);
-	if (magic_prefix != last_line.slice(0, magic_prefix.length)) {
-		return; // attachment not found
-	}
+	const line_start = last_line.slice(1, 3); // last_line[0] == '\n'
+	if ((line_start != '/*' && (tag_name == 'script' && line_start != '//')) ||
+		magic_prefix != last_line.slice(3, 3 + magic_prefix.length)
+	) return; // attachment not found
 	if (processed.map) {
 		throw 'not implemented. '+
 			'found sourcemap in both processed.code and processed.map. '+
@@ -306,9 +307,8 @@ export function parse_attached_sourcemap(processed: Processed): void {
 			'processed.code:\n'+
 			processed.code.slice(0, 100)+' [....]'; // help to find preprocessor
 	}
-	// remove last line
-	processed.code = processed.code.slice(0, cut_index);
-	// slice to -2 --> remove trailing '*/'
-	const b64map = last_line.slice(last_line.indexOf('base64,')+7, -2).trim();
+	processed.code = processed.code.slice(0, cut_index); // remove last line
+	const slice_to = (line_start == '/*') ? -2 : undefined;
+	const b64map = last_line.slice(last_line.indexOf('base64,')+7, slice_to).trim();
 	processed.map = b64dec(b64map);
 }
