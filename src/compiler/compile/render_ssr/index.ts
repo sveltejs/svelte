@@ -108,14 +108,14 @@ export default function ssr(
 
 					if (to_invalidate.size) {
 						this.replace(
-              invalidate(
-                { component } as any,
-                scope,
-                node,
-                to_invalidate,
-                true
-              )
-            );
+							invalidate(
+								{ component } as any,
+								scope,
+								node,
+								to_invalidate,
+								true
+							)
+						);
 					}
 				}
 			}
