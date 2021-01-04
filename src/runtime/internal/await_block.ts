@@ -28,7 +28,9 @@ export function handle_promise(promise, info) {
 					if (i !== index && block) {
 						group_outros();
 						transition_out(block, 1, 1, () => {
-							info.blocks[i] = null;
+							if (info.blocks[i] === block) {
+								info.blocks[i] = null;
+							}
 						});
 						check_outros();
 					}
