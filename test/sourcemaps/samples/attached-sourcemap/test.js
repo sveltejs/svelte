@@ -7,7 +7,8 @@ export function test({ input, css, js }) {
 	let out_obj, loc_output, actual, loc_input, expected;
 
 	out_obj = js;
-	// we need the seconds occurence in output.js
+	// we need the second occurence of 'done_replace_script_2' in output.js
+	// the first occurence is mapped back to markup '{done_replace_script_2}'
 	loc_output = out_obj.locate_1('done_replace_script_2');
 	loc_output = out_obj.locate_1('done_replace_script_2', loc_output.character + 1);
 	actual = out_obj.mapConsumer.originalPositionFor(loc_output);
@@ -22,7 +23,6 @@ export function test({ input, css, js }) {
 	out_obj = css;
 	loc_output = out_obj.locate_1('.done_replace_style_2');
 	actual = out_obj.mapConsumer.originalPositionFor(loc_output);
-	// first occurence in input.svelte
 	loc_input = input.locate_1('.replace_me_style');
 	expected = {
 		source: 'input.svelte',

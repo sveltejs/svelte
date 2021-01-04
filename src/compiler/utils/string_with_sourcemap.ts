@@ -291,8 +291,7 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 	return result_map as SourceMap;
 }
 
-// find attached sourcemap in processed.code
-// TODO? handle multiple attached maps, combine with processed.map
+// parse attached sourcemap in processed.code
 export function parse_attached_sourcemap(processed: Processed): void {
 	const magic_prefix = '\n/*# sourceMappingURL=data:application/json;';
 	const cut_index = processed.code.lastIndexOf('\n');
