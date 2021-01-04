@@ -172,8 +172,6 @@ export default function ssr(
 			do {
 				$$settled = true;
 
-				${injected.map(name => b`let ${name};`)}
-
 				${reactive_declarations}
 
 				$$rendered = ${literal};
@@ -184,8 +182,6 @@ export default function ssr(
 			return $$rendered;
 		`
 		: b`
-			${injected.map(name => b`let ${name};`)}
-
 			${reactive_declarations}
 
 			${reactive_store_unsubscriptions}
@@ -193,6 +189,7 @@ export default function ssr(
 			return ${literal};`;
 
 	const blocks = [
+		...injected.map(name => b`let ${name};`),
 		rest,
 		slots,
 		...reactive_store_declarations,

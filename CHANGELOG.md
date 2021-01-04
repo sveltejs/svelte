@@ -1,5 +1,16 @@
 # Svelte changelog
 
+## 3.31.1
+
+* Fix scrolling of element with resize listener by making the `<iframe>` have `z-index: -1` ([#5448](https://github.com/sveltejs/svelte/issues/5448))
+* Fix location of automatically declared reactive variables ([#5749](https://github.com/sveltejs/svelte/issues/5749))
+* Warn when using `className` or `htmlFor` attributes ([#5777](https://github.com/sveltejs/svelte/issues/5777))
+* Fix checkbox `bind:group` in keyed `{#each}` where the array can be reordered ([#5779](https://github.com/sveltejs/svelte/issues/5779))
+* Fix checkbox `bind:group` in nested `{#each}` contexts ([#5811](https://github.com/sveltejs/svelte/issues/5811))
+* Add graphics roles as known ARIA roles ([#5822](https://github.com/sveltejs/svelte/pull/5822))
+* Fix local transitions if a parent has a cancelled outro transition ([#5829](https://github.com/sveltejs/svelte/issues/5829))
+* Support `use:obj.some.deep.function` as actions ([#5844](https://github.com/sveltejs/svelte/issues/5844))
+
 ## 3.31.0
 
 * Use a separate `SvelteComponentTyped` interface for typed components ([#5738](https://github.com/sveltejs/svelte/pull/5738))

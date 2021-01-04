@@ -851,7 +851,21 @@ export default class ElementWrapper extends Wrapper {
 			${outro && b`@add_transform(${this.var}, ${rect});`}
 		`);
 
-		const params = this.node.animation.expression ? this.node.animation.expression.manipulate(block) : x`{}`;
+		let params;
+		if (this.node.animation.expression) {
+			params = this.node.animation.expression.manipulate(block);
+
+			if (this.node.animation.expression.dynamic_dependencies().length) {
+				// if `params` is dynamic, calculate params ahead of time in the `.r()` method
+				const params_var = block.get_unique_name('params');
+				block.add_variable(params_var);
+
+				block.chunks.measure.push(b`${params_var} = ${params};`);
+				params = params_var;
+			}
+		} else {
+			params = x`{}`;
+		}
 
 		const name = this.renderer.reference(this.node.animation.name);
 
