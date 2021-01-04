@@ -1,5 +1,5 @@
 <script>
-	import action from './util';
+	import action from './util.js';
 	export let collect;
 
 	function each_action(_, fn) {

@@ -1,3 +1,3 @@
 export default function (_, fn) {
-  fn('import_action');
+	fn('import_action');
 }
