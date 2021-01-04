@@ -18,9 +18,9 @@
 	$value = {
 		one: writable(
 			$value = {
-				two: ({ $value } = { '$value': { fred: $value.qux } }) // { fred: 4 }
-			}, // { two: { $value: { fred: 4 } } }
-		), // { one: { two: { $value: { fred: 4 } } } }
+				two: ({ $value } = { $value: { fred: $value.qux } }) // { fred: 4 }
+			} // { two: { $value: { fred: 4 } } }
+		) // { one: { two: { $value: { fred: 4 } } } }
 	};
 
 	const one = $value.one;
