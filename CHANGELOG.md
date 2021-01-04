@@ -5,6 +5,7 @@
 * Rework SSR store handling to subscribe and unsubscribe as in DOM mode ([#3375](https://github.com/sveltejs/svelte/issues/3375), [#3582](https://github.com/sveltejs/svelte/issues/3582), [#3636](https://github.com/sveltejs/svelte/issues/3636))
 * Fix error when removing elements that are already transitioning out ([#5789](https://github.com/sveltejs/svelte/issues/5789), [#5808](https://github.com/sveltejs/svelte/issues/5808))
 * Fix duplicate content race condition with `{#await}` blocks and out transitions ([#5815](https://github.com/sveltejs/svelte/issues/5815))
+* Deconflict variable names used for contextual actions ([#5839](https://github.com/sveltejs/svelte/issues/5839))
 
 ## 3.31.1
 

@@ -14,6 +14,7 @@ import { Node, FunctionExpression, Identifier } from 'estree';
 import { INode } from '../interfaces';
 import { is_reserved_keyword } from '../../utils/reserved_keywords';
 import replace_object from '../../utils/replace_object';
+import is_contextual from './is_contextual';
 import EachBlock from '../EachBlock';
 
 type Owner = INode;
@@ -408,19 +409,4 @@ function get_function_name(_node, parent) {
 	}
 
 	return 'func';
-}
-
-function is_contextual(component: Component, scope: TemplateScope, name: string) {
-	if (is_reserved_keyword(name)) return true;
-
-	// if it's a name below root scope, it's contextual
-	if (!scope.is_top_level(name)) return true;
-
-	const variable = component.var_lookup.get(name);
-
-	// hoistables, module declarations, and imports are non-contextual
-	if (!variable || variable.hoistable) return false;
-
-	// assume contextual
-	return true;
 }
