@@ -387,6 +387,13 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			}, start);
 		}
 
+        if (type === 'Class' && directive_name === '') {
+            parser.error({
+                code: 'empty-classbinding-name',
+                message: 'Class binding name cannot be empty'
+            }, start + ('class:').length);
+        }
+
 		if (value[0]) {
 			if ((value as any[]).length > 1 || value[0].type === 'Text') {
 				parser.error({
