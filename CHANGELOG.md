@@ -1,5 +1,27 @@
 # Svelte changelog
 
+## 3.31.2
+
+* Rework SSR store handling to subscribe and unsubscribe as in DOM mode ([#3375](https://github.com/sveltejs/svelte/issues/3375), [#3582](https://github.com/sveltejs/svelte/issues/3582), [#3636](https://github.com/sveltejs/svelte/issues/3636))
+* Fix error when removing elements that are already transitioning out ([#5789](https://github.com/sveltejs/svelte/issues/5789), [#5808](https://github.com/sveltejs/svelte/issues/5808))
+* Fix duplicate content race condition with `{#await}` blocks and out transitions ([#5815](https://github.com/sveltejs/svelte/issues/5815))
+* Deconflict variable names used for contextual actions ([#5834](https://github.com/sveltejs/svelte/issues/5834))
+
+## 3.31.1
+
+* Fix scrolling of element with resize listener by making the `<iframe>` have `z-index: -1` ([#5448](https://github.com/sveltejs/svelte/issues/5448))
+* Fix location of automatically declared reactive variables ([#5749](https://github.com/sveltejs/svelte/issues/5749))
+* Warn when using `className` or `htmlFor` attributes ([#5777](https://github.com/sveltejs/svelte/issues/5777))
+* Fix checkbox `bind:group` in keyed `{#each}` where the array can be reordered ([#5779](https://github.com/sveltejs/svelte/issues/5779))
+* Fix checkbox `bind:group` in nested `{#each}` contexts ([#5811](https://github.com/sveltejs/svelte/issues/5811))
+* Add graphics roles as known ARIA roles ([#5822](https://github.com/sveltejs/svelte/pull/5822))
+* Fix local transitions if a parent has a cancelled outro transition ([#5829](https://github.com/sveltejs/svelte/issues/5829))
+* Support `use:obj.some.deep.function` as actions ([#5844](https://github.com/sveltejs/svelte/issues/5844))
+
+## 3.31.0
+
+* Use a separate `SvelteComponentTyped` interface for typed components ([#5738](https://github.com/sveltejs/svelte/pull/5738))
+
 ## 3.30.1
 
 * Support consuming decoded sourcemaps as created by the `source-map` library's `SourceMapGenerator` ([#5722](https://github.com/sveltejs/svelte/issues/5722))

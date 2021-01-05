@@ -23,7 +23,7 @@ const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateM
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
 
-const aria_roles = 'alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure form generic grid gridcell group heading img link list listbox listitem log main marquee math meter menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' ');
+const aria_roles = 'alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure form generic graphics-document graphics-object graphics-symbol grid gridcell group heading img link list listbox listitem log main marquee math meter menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' ');
 const aria_role_set = new Set(aria_roles);
 
 const a11y_required_attributes = {
@@ -93,6 +93,11 @@ const passive_events = new Set([
 	'touchcancel'
 ]);
 
+const react_attributes = new Map([
+	['className', 'class'],
+	['htmlFor', 'for']
+]);
+
 function get_namespace(parent: Element, element: Element, explicit_namespace: string) {
 	const parent_element = parent.find_nearest(/^Element/);
 
@@ -125,11 +130,11 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 
-	constructor(component: Component, parent, scope, info: any) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
-		this.namespace = get_namespace(parent, this, component.namespace);
+		this.namespace = get_namespace(parent as Element, this, component.namespace);
 
 		if (this.name === 'textarea') {
 			if (info.children.length > 0) {
@@ -441,6 +446,13 @@ export default class Element extends Node {
 				component.warn(attribute, {
 					code: 'avoid-is',
 					message: 'The \'is\' attribute is not supported cross-browser and should be avoided'
+				});
+			}
+
+			if (react_attributes.has(attribute.name)) {
+				component.warn(attribute, {
+					code: 'invalid-html-attribute',
+					message: `'${attribute.name}' is not a valid HTML attribute. Did you mean '${react_attributes.get(attribute.name)}'?`
 				});
 			}
 
@@ -850,7 +862,7 @@ export default class Element extends Node {
 						type: 'Text',
 						data: ` ${id}`,
 						synthetic: true
-					})
+					} as any)
 				);
 			}
 		} else {
@@ -859,7 +871,7 @@ export default class Element extends Node {
 					type: 'Attribute',
 					name: 'class',
 					value: [{ type: 'Text', data: id, synthetic: true }]
-				})
+				} as any)
 			);
 		}
 	}

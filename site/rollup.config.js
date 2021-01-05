@@ -31,9 +31,10 @@ export default {
 				'process.env.MAPBOX_ACCESS_TOKEN': JSON.stringify(process.env.MAPBOX_ACCESS_TOKEN)
 			}),
 			svelte({
-				dev,
-				hydratable: true,
-				emitCss: true
+				compilerOptions: {
+					dev,
+					hydratable: true
+				}
 			}),
 			resolve({
 				browser: true,
@@ -77,8 +78,12 @@ export default {
 				'process.env.NODE_ENV': JSON.stringify(mode)
 			}),
 			svelte({
-				generate: 'ssr',
-				dev
+				compilerOptions: {
+					dev,
+					generate: 'ssr',
+					hydratable: true
+				},
+				emitCss: false
 			}),
 			resolve({
 				dedupe
