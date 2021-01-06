@@ -293,22 +293,23 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 
 // parse attached sourcemap in processed.code
 export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style'): void {
-	const magic_prefix = '# sourceMappingURL=data:application/json;';
-	const cut_index = processed.code.lastIndexOf('\n');
-	const last_line = processed.code.slice(cut_index);
-	const line_start = last_line.slice(1, 3); // last_line[0] == '\n'
-	if ((line_start != '/*' && (tag_name == 'script' && line_start != '//')) ||
-		magic_prefix != last_line.slice(3, 3 + magic_prefix.length)
-	) return; // attachment not found
-	if (processed.map) {
-		throw 'not implemented. '+
-			'found sourcemap in both processed.code and processed.map. '+
-			'please pass only one sourcemap.\n'+
-			'processed.code:\n'+
-			processed.code.slice(0, 100)+' [....]'; // help to find preprocessor
-	}
-	processed.code = processed.code.slice(0, cut_index); // remove last line
-	const slice_to = (line_start == '/*') ? -2 : undefined;
-	const b64map = last_line.slice(last_line.indexOf('base64,')+7, slice_to).trim();
-	processed.map = b64dec(b64map);
+	const r_in = '[#@]\\s*sourceMappingURL\\s*=\\s*data:' + 
+		'(?:application|text)/json;(?:charset[:=]\\S+?;)?base64,(\\S*)';
+	const regex = (tag_name == 'script')
+		? new RegExp('(?://'+r_in+')|(?:/\\*'+r_in+'\\s*\\*/)$')
+		: new RegExp('/\\*'+r_in+'\\s*\\*/$');
+	processed.code = processed.code.replace(regex, (_, match1, match2) => {
+		if (processed.map) {
+			throw 'not implemented. '+
+				'found sourcemap in both processed.code and processed.map. '+
+				'please pass only one sourcemap.\n'+
+				'processed.code:\n'+
+				processed.code.slice(0, 100)+' [....]'; // help to find preprocessor
+		}
+		const map64 = (tag_name == 'script')
+			? (match1 || match2)
+			: match1;
+		processed.map = b64dec(map64);
+		return ''; // remove from processed.code
+	});
 }
