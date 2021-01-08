@@ -77,6 +77,8 @@
 npx degit <a href="https://github.com/sveltejs/template" style="user-select: initial;">sveltejs/template</a> my-svelte-project
 <span class="token comment"># or download and extract <a href="https://github.com/sveltejs/template/archive/master.zip">this .zip file</a></span>
 cd my-svelte-project
+<span class="token comment"># to use <a href="blog/svelte-and-typescript">TypeScript</a> run:</span>
+<span class="token comment"># node scripts/setupTypeScript.js</span>
 
 npm install
 npm run dev
