@@ -110,6 +110,26 @@ function init_hydrate(target: NodeEx) {
 		const anchor = j < lis.length ? lis[j] : null;
 		target.insertBefore(toMove[i], anchor);
 	}
+let appendStylesTo = document.head;
+
+export function append_styles(
+	{ stylesTarget },
+	styleSheetId: string,
+	styles: string,
+	styleId: string = `svelte-${styleSheetId}-style`
+) {
+	if (stylesTarget) appendStylesTo = stylesTarget;
+
+	if (!appendStylesTo.querySelector('#' + styleId)) {
+		const style = element('style');
+		style.id = styleId;
+		style.textContent = styles;
+		append(appendStylesTo, style);
+	}
+}
+
+export function append_empty_stylesheet() {
+	return appendStylesTo.appendChild(element('style') as HTMLStyleElement);
 }
 
 export function append(target: NodeEx, node: NodeEx) {

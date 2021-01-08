@@ -140,7 +140,15 @@ export class SvelteComponentDev extends SvelteComponent {
 	 */
 	$$slot_def: any;
 
-	constructor(options: IComponentOptions) {
+	constructor(options: {
+		target: Element|ShadowRoot;
+		stylesTarget: Element|ShadowRoot;
+		anchor?: Element;
+		props?: Props;
+		hydrate?: boolean;
+		intro?: boolean;
+		$$inline?: boolean;
+    }) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
@@ -232,7 +240,15 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: IComponentOptions<Props>) {
+	constructor(options: {
+		target: Element|ShadowRoot;
+		stylesTarget: Element|ShadowRoot;
+		anchor?: Element;
+		props?: Props;
+		hydrate?: boolean;
+		intro?: boolean;
+		$$inline?: boolean;
+    }) {
 		super(options);
 	}
 }

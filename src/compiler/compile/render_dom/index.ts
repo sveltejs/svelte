@@ -49,11 +49,8 @@ export default function dom(
 
 	if (should_add_css) {
 		body.push(b`
-			function ${add_css}() {
-				var style = @element("style");
-				style.id = "${component.stylesheet.id}-style";
-				style.textContent = "${styles}";
-				@append(@_document.head, style);
+			function ${add_css}(options) {
+				@append_styles(options, "${component.stylesheet.id.replace('svelte-', '')}", "${styles}");
 			}
 		`);
 	}
