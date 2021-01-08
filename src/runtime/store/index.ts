@@ -197,6 +197,17 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 }
 
 /**
+ * Get a readable store from a writable store.
+ *
+ * @param store writable
+ *
+ * @returns readable store
+ */
+export function readOnly<T>(store: Writable<T>): Readable<T> {
+	return { subscribe: store.subscribe };
+}
+
+/**
  * Get the current value from a store by subscribing and immediately unsubscribing.
  * @param store readable
  */

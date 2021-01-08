@@ -365,6 +365,38 @@ const delayed = derived([a, b], ([$a, $b], set) => {
 });
 ```
 
+
+#### `readOnly`
+
+```js
+readable = readOnly(writable: Writable<T>)
+```
+
+---
+
+Sometimes readable and derived aren't the ideal tools for more complex custom stores. For stores that need to only be writable in their module, and _not_ outside, you can use `readOnly` to get a readonly version of a writable store.
+
+```js
+import { writable, readOnly } from 'svelte/store';
+
+const userStore = writable({});
+
+export function logIn(username, password) {
+	if (password == 'password') {
+		userStore.set({ username, error: null });
+	} else {
+		userStore.set({ username: null, error: 'Bad Password' });
+	}
+}
+
+export function logOut() {
+	userStore.set({});
+}
+
+export const user = readOnly(userStore);
+```
+
+
 #### `get`
 
 ```js
