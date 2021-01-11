@@ -1,1 +1,2 @@
-/site/* -linguist-detectable
+/site/** -linguist-detectable
+/test/** -linguist-detectable
