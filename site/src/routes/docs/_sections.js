@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { SLUG_PRESERVE_UNICODE, SLUG_SEPARATOR } from '../../../config';
-import { extract_frontmatter, extract_metadata, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
+import { extract_frontmatter, extract_metadata, link_renderer, permalink } from '@sveltejs/site-kit/utils/markdown.js';
 import { make_session_slug_processor } from '@sveltejs/site-kit/utils/slug';
 import { highlight } from '../../utils/highlight';
 import marked from 'marked';
@@ -108,8 +108,8 @@ export default function() {
 				return `
 					<h${level}>
 						<span id="${slug}" class="offset-anchor" ${level > 4 ? 'data-scrollignore' : ''}></span>
-						<a href="docs#${slug}" class="anchor" aria-hidden="true"></a>
 						${text}
+						${permalink(`docs#${slug}`)}
 					</h${level}>`;
 			};
 
