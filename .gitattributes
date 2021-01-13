@@ -1,2 +1,3 @@
 /site/** -linguist-detectable
 /test/** -linguist-detectable
+/**/*.svelte linguist-detectable
