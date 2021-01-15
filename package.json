@@ -105,6 +105,7 @@
     "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.6.0",
     "@types/mocha": "^7.0.0",
     "@types/node": "^8.10.53",
+    "@types/resize-observer-browser": "^0.1.5",
     "@typescript-eslint/eslint-plugin": "^4.9.0",
     "@typescript-eslint/parser": "^4.9.0",
     "acorn": "^7.4.0",
