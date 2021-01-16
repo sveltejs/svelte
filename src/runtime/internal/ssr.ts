@@ -147,3 +147,7 @@ export function add_attribute(name, value, boolean) {
 export function add_classes(classes) {
 	return classes ? ` class="${classes}"` : '';
 }
+
+export function add_styles(styles) {
+	return styles ? ` style="${styles}"` : '';
+}
