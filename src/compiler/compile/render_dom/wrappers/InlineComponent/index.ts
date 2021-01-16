@@ -363,7 +363,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				block.maintain_context = true; // TODO put this somewhere more logical
 			}
-			
+
 			block.chunks.init.push(b`
 				function ${id}(#value) {
 					${callee}(${args});
@@ -373,12 +373,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			let invalidate_binding = b`
 				${lhs} = #value;
 				${renderer.invalidate(dependencies[0])};
-			`
-			if (binding.expression.node.type === "MemberExpression") {
+			`;
+			if (binding.expression.node.type === 'MemberExpression') {
 				invalidate_binding = b`
 				if ($$self.$$.not_equal(${lhs}, #value)) {
 					${invalidate_binding}
-				}`
+				}`;
 			}
 
 			const body = b`
