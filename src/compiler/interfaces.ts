@@ -24,10 +24,12 @@ export interface MustacheTag extends BaseNode {
 	expression: Node;
 }
 
+// @paul
 export type DirectiveType = 'Action'
 | 'Animation'
 | 'Binding'
 | 'Class'
+| 'Style'
 | 'EventHandler'
 | 'Let'
 | 'Ref'
