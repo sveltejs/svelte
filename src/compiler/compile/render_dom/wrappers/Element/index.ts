@@ -340,6 +340,7 @@ export default class ElementWrapper extends Wrapper {
 		this.add_transitions(block);
 		this.add_animation(block);
 		this.add_classes(block);
+		this.add_styles(block);
 		this.add_manual_style_scoping(block);
 
 		if (nodes && this.renderer.options.hydratable && !this.void) {
@@ -903,6 +904,31 @@ export default class ElementWrapper extends Wrapper {
 					`);
 				}
 			}
+		});
+	}
+
+	add_styles(block: Block) {
+		this.node.styles.forEach(style_directive => {
+			
+			// @FIXME:
+			// Hmm, I thought this would work:
+			
+			// const { name, expression: { node: expression } } = style_directive;
+			// const updater = b`@set_style(${this.var}, "${name}", ${expression}, false)`;
+			
+			// But that results in this, and `myColor` is undefined:
+			
+			/*
+			c() {
+				p$ = element$("p");
+				set_style$(p$, "color", myColor, false);
+			},
+			*/
+			
+			const { name } = style_directive;
+			const updater = b`@set_style(${this.var}, "${name}", "red", false)`;
+
+			block.chunks.hydrate.push(updater);
 		});
 	}
 
