@@ -378,8 +378,10 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const body = b`
 				function ${id}(${params}) {
-					${lhs} = #value;
-					${renderer.invalidate(dependencies[0])};
+					if ($$self.$$.not_equal(${lhs}, #value)) {
+						${lhs} = #value;
+						${renderer.invalidate(dependencies[0])};
+					}
 				}
 			`;
 
