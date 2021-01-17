@@ -5,7 +5,7 @@ Svelte is a new way to build web applications. It's a compiler that takes your d
 The [Open Source Guides](https://opensource.guide/) website has a collection of resources for individuals, communities, and companies. These resources help people who want to learn how to run and contribute to open source projects. Contributors and people new to open source alike will find the following guides especially useful:
 
 * [How to Contribute to Open Source](https://opensource.guide/how-to-contribute/)
-* [Building Welcoming Communities](https://opensource.guide/building-community/)
+* [Building Welcoming Communities](https://opensource.guide/building-community/)****
 
 ## Get involved
 
@@ -47,11 +47,13 @@ When [opening a new issue](https://github.com/sveltejs/svelte/issues/new/choose)
 
 If you'd like to propose an implementation for a large new feature or change then please [create an RFC](https://github.com/sveltejs/rfcs) to discuss it up front.
 
-## Installation
+## Installation and Development
 
 1. Ensure you have [npm](https://www.npmjs.com/get-npm) installed.
 1. After cloning the repository, run `npm install` in the root of the repository.
-1. To start a development server, run `npm run dev`.
+1. To start developing, run these 2 commands in separate terminals:
+  - `npm run dev` to start a development server.
+  - `npm run tsd -- -w` to recompile Typescript declarations files on code changes.
 
 ## Pull requests
 
