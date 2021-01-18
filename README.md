@@ -13,13 +13,11 @@
   </a>
 </p>
 
-
 ## What is Svelte?
 
 Svelte is a new way to build web applications. It's a compiler that takes your declarative components and converts them into efficient JavaScript that surgically updates the DOM.
 
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://svelte.dev/chat).
-
 
 ## Supporting Svelte
 
@@ -27,8 +25,7 @@ Svelte is an MIT-licensed open source project with its ongoing development made 
 
 - [Becoming a backer on Open Collective](https://opencollective.com/svelte).
 
-Funds donated via Open Collective will be used for compensating expenses related to Svelte's development such as hosting costs. If sufficient donations are received, funds may also be used to support Svelte's development more directly.
-
+Funds donated via Open Collective go towards compensating expenses related to Svelte's development, such as hosting costs. If sufficient donations are received, funds will support Svelte's development more directly.
 
 ## Development
 
@@ -56,8 +53,7 @@ To watch for changes and continually rebuild the package (this is useful if you'
 npm run dev
 ```
 
-The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/), you may need to install a plugin in order to get syntax highlighting and code hints, etc.
-
+The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/), you may need to install a plugin to get syntax highlighting and code hints, etc.
 
 ### Running Tests
 
@@ -70,7 +66,6 @@ To filter tests, use `-g` (aka `--grep`). For example, to only run tests involvi
 ```bash
 npm run test -- -g transition
 ```
-
 
 ## svelte.dev
 
