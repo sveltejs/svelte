@@ -43,11 +43,16 @@ In the terminal, you can instantly create a new project like so:
 ```bash
 npx degit sveltejs/template my-svelte-project
 cd my-svelte-project
+# to use TypeScript run:
+# node scripts/setupTypeScript.js
+
 npm install
 npm run dev
 ```
 
 This will create a new project in the `my-svelte-project` directory, install its dependencies, and start a server on http://localhost:5000.
+
+You can find more information about using TypeScript [here](blog/svelte-and-typescript).
 
 Once you've tinkered a bit and understood how everything fits together, you can fork [sveltejs/template](https://github.com/sveltejs/template) and start doing this instead:
 
