@@ -293,23 +293,35 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 
 // parse attached sourcemap in processed.code
 export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style'): void {
-	const r_in = '[#@]\\s*sourceMappingURL\\s*=\\s*data:' + 
-		'(?:application|text)/json;(?:charset[:=]\\S+?;)?base64,(\\S*)';
+	const r_in = '[#@]\\s*sourceMappingURL\\s*=\\s*(\\S*)';
 	const regex = (tag_name == 'script')
 		? new RegExp('(?://'+r_in+')|(?:/\\*'+r_in+'\\s*\\*/)$')
 		: new RegExp('/\\*'+r_in+'\\s*\\*/$');
+	function throw_error(message) {
+		throw 'error: ' + message + '\nprocessed.code:\n' +
+			(processed.code.length < 100 ? processed.code : processed.code.slice(0, 100)+' [...]'); // help to find preprocessor
+	}
 	processed.code = processed.code.replace(regex, (_, match1, match2) => {
-		if (processed.map) {
-			throw 'not implemented. '+
-				'found sourcemap in both processed.code and processed.map. '+
-				'please pass only one sourcemap.\n'+
-				'processed.code:\n'+
-				processed.code.slice(0, 100)+' [....]'; // help to find preprocessor
+		const map_url = (tag_name == 'script') ? (match1 || match2) : match1;
+		const map_data = (map_url.match(/data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/) || [])[1];
+		if (map_data) {
+			// sourceMappingURL is data URL
+			if (processed.map) {
+				throw_error('not implemented. '+
+					'found sourcemap in both processed.code and processed.map. '+
+					'please pass only one sourcemap.');
+			}
+			processed.map = b64dec(map_data); // use attached sourcemap
+			return ''; // remove from processed.code
 		}
-		const map64 = (tag_name == 'script')
-			? (match1 || match2)
-			: match1;
-		processed.map = b64dec(map64);
+		// sourceMappingURL is file path or URL
+		if (!processed.map) {
+			// TODO show warning? silently ignore?
+			throw_error('value error. processed.map is empty, '+
+				'but processed.code has attached sourcemap file '+map_url+'. '+
+				'please make your preprocessor return a sourcemap.');
+		}
+		// ignore sourcemap file path
 		return ''; // remove from processed.code
 	});
 }
