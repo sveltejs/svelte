@@ -1,7 +1,12 @@
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { decode as decode_mappings } from 'sourcemap-codec';
 import { getLocator } from 'locate-character';
-import { StringWithSourcemap, sourcemap_add_offset, combine_sourcemaps } from '../utils/string_with_sourcemap';
+import {
+	StringWithSourcemap,
+	sourcemap_add_offset,
+	combine_sourcemaps,
+	parse_attached_sourcemap
+} from '../utils/string_with_sourcemap';
 
 export interface Processed {
 	code: string;
@@ -170,7 +175,8 @@ function get_replacement(
 	original: string,
 	processed: Processed,
 	prefix: string,
-	suffix: string
+	suffix: string,
+	tag_name: 'script' | 'style'
 ): StringWithSourcemap {
 
 	// Convert the unchanged prefix and suffix to StringWithSourcemap
@@ -178,6 +184,8 @@ function get_replacement(
 		file_basename, prefix, get_location(offset));
 	const suffix_with_map = StringWithSourcemap.from_source(
 		file_basename, suffix, get_location(offset + prefix.length + original.length));
+
+	parse_attached_sourcemap(processed, tag_name);
 
 	// Convert the preprocessed code and its sourcemap to a StringWithSourcemap
 	let decoded_map: DecodedSourceMap;
@@ -282,7 +290,7 @@ export default async function preprocess(
 				if (!processed || !processed.map && processed.code === content) {
 					return no_change();
 				}
-				return get_replacement(file_basename, offset, get_location, content, processed, `<${tag_name}${attributes}>`, `</${tag_name}>`);
+				return get_replacement(file_basename, offset, get_location, content, processed, `<${tag_name}${attributes}>`, `</${tag_name}>`, tag_name);
 			}
 		);
 		source = res.string;
