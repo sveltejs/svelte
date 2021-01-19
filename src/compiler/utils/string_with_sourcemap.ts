@@ -297,9 +297,10 @@ export function parse_attached_sourcemap(processed: Processed, tag_name: 'script
 	const regex = (tag_name == 'script')
 		? new RegExp('(?://'+r_in+')|(?:/\\*'+r_in+'\\s*\\*/)$')
 		: new RegExp('/\\*'+r_in+'\\s*\\*/$');
-	function throw_error(message) {
-		throw 'error: ' + message + '\nprocessed.code:\n' +
-			(processed.code.length < 100 ? processed.code : processed.code.slice(0, 100)+' [...]'); // help to find preprocessor
+	function log_warning(message) {
+		// code_start: help to find preprocessor
+		const code_start = processed.code.length < 100 ? processed.code : (processed.code.slice(0, 100) + ' [...]');
+		console.warn(`warning: ${message}. processed.code = ${JSON.stringify(code_start)}`);
 	}
 	processed.code = processed.code.replace(regex, (_, match1, match2) => {
 		const map_url = (tag_name == 'script') ? (match1 || match2) : match1;
@@ -307,21 +308,20 @@ export function parse_attached_sourcemap(processed: Processed, tag_name: 'script
 		if (map_data) {
 			// sourceMappingURL is data URL
 			if (processed.map) {
-				throw_error('not implemented. '+
-					'found sourcemap in both processed.code and processed.map. '+
-					'please pass only one sourcemap.');
+				log_warning('not implemented. ' +
+					'found sourcemap in both processed.code and processed.map. ' +
+					'please make your preprocessor return only one sourcemap.');
 			}
 			processed.map = b64dec(map_data); // use attached sourcemap
 			return ''; // remove from processed.code
 		}
-		// sourceMappingURL is file path or URL
+		// sourceMappingURL is path or URL
 		if (!processed.map) {
-			// TODO show warning? silently ignore?
-			throw_error('value error. processed.map is empty, '+
-				'but processed.code has attached sourcemap file '+map_url+'. '+
+			log_warning('value error. processed.map is empty, ' +
+				`but processed.code has attached sourcemap path ${JSON.stringify(map_url)}. ` +
 				'please make your preprocessor return a sourcemap.');
 		}
-		// ignore sourcemap file path
+		// ignore sourcemap path
 		return ''; // remove from processed.code
 	});
 }
