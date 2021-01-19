@@ -308,18 +308,19 @@ export function parse_attached_sourcemap(processed: Processed, tag_name: 'script
 		if (map_data) {
 			// sourceMappingURL is data URL
 			if (processed.map) {
-				log_warning('not implemented. ' +
-					'found sourcemap in both processed.code and processed.map. ' +
-					'please make your preprocessor return only one sourcemap.');
+				log_warning('Not implemented. ' +
+					'Found sourcemap in both processed.code and processed.map. ' +
+					'Please update your preprocessor to return only one sourcemap.');
+				// ignore attached sourcemap
+				return '';
 			}
 			processed.map = b64dec(map_data); // use attached sourcemap
 			return ''; // remove from processed.code
 		}
 		// sourceMappingURL is path or URL
 		if (!processed.map) {
-			log_warning('value error. processed.map is empty, ' +
-				`but processed.code has attached sourcemap path ${JSON.stringify(map_url)}. ` +
-				'please make your preprocessor return a sourcemap.');
+			log_warning(`Found sourcemap path ${JSON.stringify(map_url)} in processed.code, but no sourcemap data. ` +
+				'Please update your preprocessor to return sourcemap data directly.');
 		}
 		// ignore sourcemap path
 		return ''; // remove from processed.code
