@@ -23,7 +23,7 @@ Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord 
 
 ## Supporting Svelte
 
-Svelte is an MIT-licensed open source project with its ongoing development made possible entirely by the support of awesome volunteers. If you'd like to support their efforts, please consider:
+Svelte is an MIT-licensed open source project with its ongoing development made possible entirely by fantastic volunteers. If you'd like to support their efforts, please consider:
 
 - [Becoming a backer on Open Collective](https://opencollective.com/svelte).
 
@@ -44,7 +44,7 @@ npm install
 
 > Do not use Yarn to install the dependencies, as the specific package versions in `package-lock.json` are used to build and test Svelte.
 
-To build the compiler, and all the other modules included in the package:
+To build the compiler and all the other modules included in the package:
 
 ```bash
 npm run build
@@ -56,7 +56,7 @@ To watch for changes and continually rebuild the package (this is useful if you'
 npm run dev
 ```
 
-The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/) you may need to install a plugin in order to get syntax highlighting and code hints etc.
+The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/), you may need to install a plugin in order to get syntax highlighting and code hints, etc.
 
 
 ### Running Tests

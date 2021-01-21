@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## Unreleased
+
+
+* Support attached sourcemaps as magic comment inside code from preprocessors ([#5854](https://github.com/sveltejs/svelte/pull/5854))
+
 ## 3.31.2
 
 * Rework SSR store handling to subscribe and unsubscribe as in DOM mode ([#3375](https://github.com/sveltejs/svelte/issues/3375), [#3582](https://github.com/sveltejs/svelte/issues/3582), [#3636](https://github.com/sveltejs/svelte/issues/3636))

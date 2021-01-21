@@ -31,7 +31,8 @@ describe('sourcemaps', () => {
 			const inputCode = fs.readFileSync(inputFile, 'utf-8');
 			const input = {
 				code: inputCode,
-				locate: getLocator(inputCode)
+				locate: getLocator(inputCode),
+				locate_1: getLocator(inputCode, { offsetLine: 1 })
 			};
 
 			const preprocessed = await svelte.preprocess(
@@ -41,7 +42,7 @@ describe('sourcemaps', () => {
 					filename: 'input.svelte'
 				}
 			);
-	
+
 			const { js, css } = svelte.compile(
 				preprocessed.code, {
 				filename: 'input.svelte',
@@ -86,12 +87,14 @@ describe('sourcemaps', () => {
 
 			assert.deepEqual(
 				js.map.sources.slice().sort(),
-				(config.js_map_sources || ['input.svelte']).sort()
+				(config.js_map_sources || ['input.svelte']).sort(),
+				'js.map.sources is wrong'
 			);
 			if (css.map) {
 				assert.deepEqual(
 					css.map.sources.slice().sort(),
-					(config.css_map_sources || ['input.svelte']).sort()
+					(config.css_map_sources || ['input.svelte']).sort(),
+					'css.map.sources is wrong'
 				);
 			}
 
