@@ -10,10 +10,10 @@ export type Unsubscriber = () => void;
 export type Updater<T> = (value: T) => T;
 
 /** Cleanup logic callback. */
-export type Invalidator<T> = (value?: T) => void;
+type Invalidator<T> = (value?: T) => void;
 
 /** Start and stop notification callbacks. */
-export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
+type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
