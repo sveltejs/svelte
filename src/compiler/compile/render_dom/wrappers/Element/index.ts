@@ -77,7 +77,7 @@ const events = [
 			name === 'duration'
 	},
 	{
-		event_names: ['play', 'pause'],
+		event_names: ['play', 'pause', 'canplay'],
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
 			name === 'paused'
