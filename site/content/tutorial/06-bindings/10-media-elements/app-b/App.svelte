@@ -25,8 +25,8 @@
 		time = duration * (clientX - left) / (right - left);
 	}
 
-		// we can't rely on the built-in click event, because it fires
-		// after a drag — we have to listen for clicks ourselves
+	// we can't rely on the built-in click event, because it fires
+	// after a drag — we have to listen for clicks ourselves
 	function handleMousedown(e) {
 		lastMouseDown = new Date();
 	}
