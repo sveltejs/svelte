@@ -10,12 +10,15 @@ On line 58, add `currentTime={time}`, `duration` and `paused` bindings:
 <video
 	poster="https://sveltejs.github.io/assets/caminandes-llamigos.jpg"
 	src="https://sveltejs.github.io/assets/caminandes-llamigos.mp4"
-	on:mousemove={handleMousemove}
+	on:mousemove={handleMove}
+	on:touchmove|preventDefault={handleMove}
 	on:mousedown={handleMousedown}
+	on:mouseup={handleMouseup}
 	bind:currentTime={time}
 	bind:duration
-	bind:paused
-></video>
+	bind:paused>
+	<track kind="captions">
+</video>
 ```
 
 > `bind:duration` is equivalent to `bind:duration={duration}`
