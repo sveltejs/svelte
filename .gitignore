@@ -34,4 +34,4 @@ _output
 /site/scripts/svelte-app
 /site/scripts/community
 /site/src/routes/_contributors.js
-/site/src/routes/_components/WhosUsingSvelte.svelte
+/site/src/routes/_components/WhosUsingSvelte.*
