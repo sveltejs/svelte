@@ -13,7 +13,7 @@ export type Updater<T> = (value: T) => T;
 type Invalidator<T> = (value?: T) => void;
 
 /** Start and stop notification callbacks. */
-type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
+export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
