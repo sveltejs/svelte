@@ -911,20 +911,14 @@ export default class ElementWrapper extends Wrapper {
 		this.node.styles.forEach(style_directive => {
 			
 			// @FIXME:
+			// I'm not sure how to set the right value expression here
 			// Hmm, I thought this would work:
 			
 			// const { name, expression: { node: expression } } = style_directive;
 			// const updater = b`@set_style(${this.var}, "${name}", ${expression}, false)`;
+	
 			
-			// But that results in this, and `myColor` is undefined:
-			
-			/*
-			c() {
-				p$ = element$("p");
-				set_style$(p$, "color", myColor, false);
-			},
-			*/
-			
+			// @FIXME: This is obviously wrong, hardcoding the color
 			const { name } = style_directive;
 			const updater = b`@set_style(${this.var}, "${name}", "red", false)`;
 
