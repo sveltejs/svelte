@@ -18,6 +18,32 @@ function hash(str: string) {
 	return hash >>> 0;
 }
 
+export function create_static_rule(node: Element & ElementCSSInlineStyle, rule: string, uid: number = 0) {
+	const className = `__svelte_${hash(rule)}_${uid}`;
+	const doc = node.ownerDocument as ExtendedDoc;
+	active_docs.add(doc);
+	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet);
+	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
+
+	if (!current_rules[className]) {
+		current_rules[className] = true;
+		stylesheet.insertRule(`.${className} {${rule}}`, stylesheet.cssRules.length);
+	}
+
+	node.classList.add(className);
+
+	active += 1;
+	return className;
+}
+
+export function delete_static_rule(node: Element & ElementCSSInlineStyle, name: string) {
+	if (name) {
+		node.classList.remove(name); // remove specific class
+	}
+	active -= 1;
+	if (!active) clear_rules();
+}
+
 export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
 	const step = 16.666 / duration;
 	let keyframes = '{\n';

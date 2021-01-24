@@ -8,6 +8,7 @@ export interface TransitionConfig {
 	duration?: number;
 	easing?: EasingFunction;
 	css?: (t: number, u: number) => string;
+	staticCss?: string;
 	tick?: (t: number, u: number) => void;
 }
 
@@ -115,12 +116,19 @@ export function slide(node: Element, {
 	const border_top_width = parseFloat(style.borderTopWidth);
 	const border_bottom_width = parseFloat(style.borderBottomWidth);
 
+	let displayOverride = '';
+	// May want to use a whitelist instead
+	if (style.display.includes('table')) {
+		displayOverride = 'display: block;';
+	}
+
 	return {
+		// Support a custom className to be added before and cleaned up after the thing.
+		staticCss: displayOverride + 'overflow: hidden;',
 		delay,
 		duration,
 		easing,
 		css: t =>
-			'overflow: hidden;' +
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
 			`height: ${t * height}px;` +
 			`padding-top: ${t * padding_top}px;` +
