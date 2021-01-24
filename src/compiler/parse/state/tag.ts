@@ -365,7 +365,8 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 		if (value[0]) {
 			if ((value as any[]).length > 1 || value[0].type === 'Text') {
-				// @FIXME: Is this okay? -@paul
+				// @paul
+				// @FIXME: Is this okay?
 				if (type !== 'Style') {
 					parser.error(parser_errors.invalid_directive_value, value[0].start);
 				}
