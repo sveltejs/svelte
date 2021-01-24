@@ -89,10 +89,10 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 			easing = linear,
 			tick = noop,
 			css,
-			staticCss,
+			static_css
 		} = config || null_transition;
 
-		if (staticCss) static_class_name = create_static_rule(node, staticCss, uid++);
+		if (static_css) static_class_name = create_static_rule(node, static_css, uid++);
 		if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
 		tick(0, 1);
 
@@ -272,7 +272,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			easing = linear,
 			tick = noop,
 			css,
-			staticCss
+			static_css
 		} = config || null_transition;
 
 		const program = {
@@ -291,8 +291,8 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 		} else {
 			// if this is an intro, and there's a delay, we need to do
 			// an initial tick and/or apply CSS animation immediately
-			if (staticCss && !static_class_name) {
-				static_class_name = create_static_rule(node, staticCss);
+			if (static_css && !static_class_name) {
+				static_class_name = create_static_rule(node, static_css);
 			}
 			if (css) {
 				clear_animation();
