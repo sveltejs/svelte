@@ -376,7 +376,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 		if (type === 'Binding' && directive_name !== 'this') {
 			check_unique(directive_name);
-		} else if (type !== 'EventHandler') {
+		} else if (type !== 'EventHandler' && type !== 'Action') {
 			check_unique(name);
 		}
 
