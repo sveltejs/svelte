@@ -1,0 +1,34 @@
+{
+	"html": {
+		"start": 0,
+		"end": 35,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 35,
+				"type": "Element",
+				"name": "input",
+				"attributes": [
+					{
+						"start": 7,
+						"end": 20,
+						"type": "Action",
+						"name": "autofocus",
+						"modifiers": [],
+						"expression": null
+					},
+					{
+						"start": 21,
+						"end": 34,
+						"type": "Action",
+						"name": "autofocus",
+						"modifiers": [],
+						"expression": null
+					}
+				],
+				"children": []
+			}
+		]
+	}
+}

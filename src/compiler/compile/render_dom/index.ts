@@ -7,7 +7,7 @@ import { extract_names, Scope } from '../utils/scope';
 import { invalidate } from './invalidate';
 import Block from './Block';
 import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
-import { apply_preprocessor_sourcemap } from '../../utils/string_with_sourcemap';
+import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 
 export default function dom(
