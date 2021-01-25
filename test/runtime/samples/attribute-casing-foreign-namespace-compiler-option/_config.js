@@ -1,4 +1,4 @@
-// Test support for the native namespaces preserving attribute case (eg svelte-native, svelte-nodegui).
+// Test support for the `foreign` namespace preserving attribute case.
 
 export default {
 	html: `
