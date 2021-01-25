@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-
-* Support attached sourcemaps as magic comment inside code from preprocessors ([#5854](https://github.com/sveltejs/svelte/pull/5854))
+* Allow multiple instances of the same action on an element ([#5516](https://github.com/sveltejs/svelte/pull/5516))
+* Support inline comment sourcemaps in code from preprocessors ([#5854](https://github.com/sveltejs/svelte/pull/5854))
 
 ## 3.31.2
 
