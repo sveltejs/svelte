@@ -1349,7 +1349,8 @@ function process_component_options(component: Component, nodes) {
 			'accessors' in component.compile_options
 				? component.compile_options.accessors
 				: !!component.compile_options.customElement,
-		preserveWhitespace: !!component.compile_options.preserveWhitespace
+		preserveWhitespace: !!component.compile_options.preserveWhitespace,
+		namespace: component.compile_options.namespace
 	};
 
 	const node = nodes.find(node => node.name === 'svelte:options');

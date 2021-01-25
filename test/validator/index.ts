@@ -101,4 +101,22 @@ describe('validate', () => {
 
 		assert.deepEqual(warnings, []);
 	});
+
+	it('errors if namespace is provided but unrecognised', () => {
+		assert.throws(() => {
+			svelte.compile('<div></div>', {
+				name: 'test',
+				namespace: 'svefefe'
+			});
+		}, /Invalid namespace 'svefefe'/);
+	});
+
+	it('errors with a hint if namespace is provided but unrecognised but close', () => {
+		assert.throws(() => {
+			svelte.compile('<div></div>', {
+				name: 'test',
+				namespace: 'foriegn'
+			});
+		}, /Invalid namespace 'foriegn' \(did you mean 'foreign'\?\)/);
+	});
 });
