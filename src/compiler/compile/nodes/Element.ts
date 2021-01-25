@@ -136,44 +136,45 @@ export default class Element extends Node {
 
 		this.namespace = get_namespace(parent as Element, this, component.namespace);
 
-		if (this.name === 'textarea') {
-			if (info.children.length > 0) {
-				const value_attribute = info.attributes.find(node => node.name === 'value');
-				if (value_attribute) {
-					component.error(value_attribute, {
-						code: 'textarea-duplicate-value',
-						message: 'A <textarea> can have either a value attribute or (equivalently) child content, but not both'
+		if (this.namespace !== namespaces.foreign) {
+			if (this.name === 'textarea') {
+				if (info.children.length > 0) {
+					const value_attribute = info.attributes.find(node => node.name === 'value');
+					if (value_attribute) {
+						component.error(value_attribute, {
+							code: 'textarea-duplicate-value',
+							message: 'A <textarea> can have either a value attribute or (equivalently) child content, but not both'
+						});
+					}
+
+					// this is an egregious hack, but it's the easiest way to get <textarea>
+					// children treated the same way as a value attribute
+					info.attributes.push({
+						type: 'Attribute',
+						name: 'value',
+						value: info.children
+					});
+
+					info.children = [];
+				}
+			}
+
+			if (this.name === 'option') {
+				// Special case — treat these the same way:
+				//   <option>{foo}</option>
+				//   <option value={foo}>{foo}</option>
+				const value_attribute = info.attributes.find(attribute => attribute.name === 'value');
+
+				if (!value_attribute) {
+					info.attributes.push({
+						type: 'Attribute',
+						name: 'value',
+						value: info.children,
+						synthetic: true
 					});
 				}
-
-				// this is an egregious hack, but it's the easiest way to get <textarea>
-				// children treated the same way as a value attribute
-				info.attributes.push({
-					type: 'Attribute',
-					name: 'value',
-					value: info.children
-				});
-
-				info.children = [];
 			}
 		}
-
-		if (this.name === 'option') {
-			// Special case — treat these the same way:
-			//   <option>{foo}</option>
-			//   <option value={foo}>{foo}</option>
-			const value_attribute = info.attributes.find(attribute => attribute.name === 'value');
-
-			if (!value_attribute) {
-				info.attributes.push({
-					type: 'Attribute',
-					name: 'value',
-					value: info.children,
-					synthetic: true
-				});
-			}
-		}
-
 		const has_let = info.attributes.some(node => node.type === 'Let');
 		if (has_let) {
 			scope = scope.child();
@@ -253,65 +254,83 @@ export default class Element extends Node {
 			});
 		}
 
-		if (a11y_distracting_elements.has(this.name)) {
-			// no-distracting-elements
-			this.component.warn(this, {
-				code: 'a11y-distracting-elements',
-				message: `A11y: Avoid <${this.name}> elements`
-			});
-		}
-
-		if (this.name === 'figcaption') {
-			let { parent } = this;
-			let is_figure_parent = false;
-
-			while (parent) {
-				if ((parent as Element).name === 'figure') {
-					is_figure_parent = true;
-					break;
-				}
-				if (parent.type === 'Element') {
-					break;
-				}
-				parent = parent.parent;
-			}
-
-			if (!is_figure_parent) {
-				this.component.warn(this, {
-					code: 'a11y-structure',
-					message: 'A11y: <figcaption> must be an immediate child of <figure>'
-				});
-			}
-		}
-
-		if (this.name === 'figure') {
-			const children = this.children.filter(node => {
-				if (node.type === 'Comment') return false;
-				if (node.type === 'Text') return /\S/.test(node.data);
-				return true;
-			});
-
-			const index = children.findIndex(child => (child as Element).name === 'figcaption');
-
-			if (index !== -1 && (index !== 0 && index !== children.length - 1)) {
-				this.component.warn(children[index], {
-					code: 'a11y-structure',
-					message: 'A11y: <figcaption> must be first or last child of <figure>'
-				});
-			}
-		}
-
 		this.validate_attributes();
-		this.validate_special_cases();
-		this.validate_bindings();
-		this.validate_content();
 		this.validate_event_handlers();
+		if (this.namespace === namespaces.foreign) {
+			this.validate_bindings_foreign();
+		} else {
+			this.validate_attributes_a11y();
+			this.validate_special_cases();
+			this.validate_bindings();
+			this.validate_content();
+		}
+
 	}
 
 	validate_attributes() {
 		const { component, parent } = this;
 
-		const attribute_map = new Map();
+		this.attributes.forEach(attribute => {
+			if (attribute.is_spread) return;
+
+			const name = attribute.name.toLowerCase();
+
+			// Errors
+
+			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
+				component.error(attribute, {
+					code: 'illegal-attribute',
+					message: `'${name}' is not a valid attribute name`
+				});
+			}
+
+			if (name === 'slot') {
+				if (!attribute.is_static) {
+					component.error(attribute, {
+						code: 'invalid-slot-attribute',
+						message: 'slot attribute cannot have a dynamic value'
+					});
+				}
+
+				if (component.slot_outlets.has(name)) {
+					component.error(attribute, {
+						code: 'duplicate-slot-attribute',
+						message: `Duplicate '${name}' slot`
+					});
+
+					component.slot_outlets.add(name);
+				}
+
+				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
+					component.error(attribute, {
+						code: 'invalid-slotted-content',
+						message: 'Element with a slot=\'...\' attribute must be a child of a component or a descendant of a custom element'
+					});
+				}
+			}
+
+			// Warnings
+
+			if (this.namespace !== namespaces.foreign) {
+				if (name === 'is') {
+					component.warn(attribute, {
+						code: 'avoid-is',
+						message: 'The \'is\' attribute is not supported cross-browser and should be avoided'
+					});
+				}
+
+				if (react_attributes.has(attribute.name)) {
+					component.warn(attribute, {
+						code: 'invalid-html-attribute',
+						message: `'${attribute.name}' is not a valid HTML attribute. Did you mean '${react_attributes.get(attribute.name)}'?`
+					});
+				}
+			}
+		});
+	}
+
+	validate_attributes_a11y() {
+		const { component } = this;
 
 		this.attributes.forEach(attribute => {
 			if (attribute.is_spread) return;
@@ -408,60 +427,13 @@ export default class Element extends Node {
 					});
 				}
 			}
-
-
-			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
-				component.error(attribute, {
-					code: 'illegal-attribute',
-					message: `'${name}' is not a valid attribute name`
-				});
-			}
-
-			if (name === 'slot') {
-				if (!attribute.is_static) {
-					component.error(attribute, {
-						code: 'invalid-slot-attribute',
-						message: 'slot attribute cannot have a dynamic value'
-					});
-				}
-
-				if (component.slot_outlets.has(name)) {
-					component.error(attribute, {
-						code: 'duplicate-slot-attribute',
-						message: `Duplicate '${name}' slot`
-					});
-
-					component.slot_outlets.add(name);
-				}
-
-				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
-					component.error(attribute, {
-						code: 'invalid-slotted-content',
-						message: 'Element with a slot=\'...\' attribute must be a child of a component or a descendant of a custom element'
-					});
-				}
-			}
-
-			if (name === 'is') {
-				component.warn(attribute, {
-					code: 'avoid-is',
-					message: 'The \'is\' attribute is not supported cross-browser and should be avoided'
-				});
-			}
-
-			if (react_attributes.has(attribute.name)) {
-				component.warn(attribute, {
-					code: 'invalid-html-attribute',
-					message: `'${attribute.name}' is not a valid HTML attribute. Did you mean '${react_attributes.get(attribute.name)}'?`
-				});
-			}
-
-			attribute_map.set(attribute.name, attribute);
 		});
 	}
 
+
 	validate_special_cases() {
 		const { component, attributes, handlers } = this;
+
 		const attribute_map = new Map();
 		const handlers_map = new Map();
 
@@ -576,6 +548,63 @@ export default class Element extends Node {
 				});
 			}
 		}
+
+		if (a11y_distracting_elements.has(this.name)) {
+			// no-distracting-elements
+			component.warn(this, {
+				code: 'a11y-distracting-elements',
+				message: `A11y: Avoid <${this.name}> elements`
+			});
+		}
+
+		if (this.name === 'figcaption') {
+			let { parent } = this;
+			let is_figure_parent = false;
+
+			while (parent) {
+				if ((parent as Element).name === 'figure') {
+					is_figure_parent = true;
+					break;
+				}
+				if (parent.type === 'Element') {
+					break;
+				}
+				parent = parent.parent;
+			}
+
+			if (!is_figure_parent) {
+				component.warn(this, {
+					code: 'a11y-structure',
+					message: 'A11y: <figcaption> must be an immediate child of <figure>'
+				});
+			}
+		}
+
+		if (this.name === 'figure') {
+			const children = this.children.filter(node => {
+				if (node.type === 'Comment') return false;
+				if (node.type === 'Text') return /\S/.test(node.data);
+				return true;
+			});
+
+			const index = children.findIndex(child => (child as Element).name === 'figcaption');
+
+			if (index !== -1 && (index !== 0 && index !== children.length - 1)) {
+				component.warn(children[index], {
+					code: 'a11y-structure',
+					message: 'A11y: <figcaption> must be first or last child of <figure>'
+				});
+			}
+		}
+	}
+
+	validate_bindings_foreign() {
+		this.bindings.forEach(binding => {
+			this.component.error(binding, {
+				code: 'invalid-binding',
+				message: `'${binding.name}' is not a valid binding. Foreign elements only support bind:this`
+			});
+		});
 	}
 
 	validate_bindings() {
