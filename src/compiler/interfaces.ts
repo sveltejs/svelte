@@ -1,11 +1,12 @@
 import { Node, Program } from 'estree';
 import { SourceMap } from 'magic-string';
+import { CssNode } from './cssInterfaces';
 
-interface BaseNode {
+interface BaseNode<NodeType = TemplateNode> {
 	start: number;
 	end: number;
 	type: string;
-	children?: TemplateNode[];
+	children?: NodeType[];
 	[prop_name: string]: any;
 }
 
@@ -73,10 +74,10 @@ export interface Script extends BaseNode {
 	content: Program;
 }
 
-export interface Style extends BaseNode {
+export interface Style extends BaseNode<CssNode> {
 	type: 'Style';
-	attributes: any[]; // TODO
-	children: any[]; // TODO add CSS node types
+	attributes: Node[]; // TODO
+	children: CssNode[]; // TODO add CSS node types
 	content: {
 		start: number;
 		end: number;
