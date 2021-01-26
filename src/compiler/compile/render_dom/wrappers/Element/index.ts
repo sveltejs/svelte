@@ -902,8 +902,8 @@ export default class ElementWrapper extends Wrapper {
 				// If all of the dependencies are non-dynamic (don't get updated) then there is no reason
 				// to add an updater for this.
 				const any_dynamic_dependencies = all_dependencies.some((dep) => {
-					const v = this.renderer.component.var_lookup.get(dep);
-					return !v || is_dynamic(v);
+					const variable = this.renderer.component.var_lookup.get(dep);
+					return !variable || is_dynamic(variable);
 				});
 				if (any_dynamic_dependencies) {
 					block.chunks.update.push(b`
