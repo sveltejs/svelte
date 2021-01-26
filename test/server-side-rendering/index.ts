@@ -33,6 +33,10 @@ describe('ssr', () => {
 		return setupHtmlEqual();
 	});
 
+	let saved_window;
+	before(() => saved_window = global.window);
+	after(() => global.window = saved_window);
+
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === '.') return;
 
