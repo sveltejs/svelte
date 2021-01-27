@@ -37,7 +37,10 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
 
 	const style_expression_list = node.styles.map(style_directive => {
-		const { name, expression: { node: expression } } = style_directive;
+		const { name, expression: { node: expression }, text } = style_directive;
+		if (text) {
+			return x`"${name}: ${text};"`;
+		}
 		return x`"${name}: " + ${expression} + ";"`;
 	});
 	
@@ -74,7 +77,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			}
 		});
 
-		renderer.add_expression(x`@spread([${args}], ${class_expression})`);
+		renderer.add_expression(x`@spread([${args}], { classes: ${class_expression}, styles: ${style_expression} })`);
 	} else {
 		let add_class_attribute = !!class_expression;
 		let add_style_attribute = !!style_expression;
@@ -101,7 +104,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				renderer.add_string('"');
 			} else if (name === 'style' && style_expression) {
 				add_style_attribute = false;
-				// TODO
+				renderer.add_string(` ${attribute.name}="`);
+				renderer.add_expression(x`[${get_attribute_value(attribute)}, ${style_expression}].join(' ').trim()`);
+				renderer.add_string('"');
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const snippet = (attribute.chunks[0] as Expression).node;
 				renderer.add_expression(x`@add_attribute("${attr_name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
