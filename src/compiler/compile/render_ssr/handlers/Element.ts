@@ -82,7 +82,6 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		let add_class_attribute = !!class_expression;
 		let add_style_attribute = !!style_expression;
 		node.attributes.forEach(attribute => {
-			// console.log("SSR NODE ATTRIBUTE", attribute)
 			const name = attribute.name.toLowerCase();
 			const attr_name = node.namespace === namespaces.foreign ? attribute.name : fix_attribute_casing(attribute.name);
 			if (name === 'value' && node.name.toLowerCase() === 'textarea') {
