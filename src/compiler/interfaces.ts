@@ -48,6 +48,11 @@ export interface Transition extends BaseDirective{
 	outro: boolean;
 }
 
+export interface StyleDirective extends BaseDirective {
+	type: 'Style';
+	text: string;
+}
+
 export type Directive = BaseDirective | Transition;
 
 export type TemplateNode = Text
