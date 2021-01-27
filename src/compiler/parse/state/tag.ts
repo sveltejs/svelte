@@ -363,13 +363,19 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			parser.error(parser_errors.invalid_ref_directive(directive_name), start);
 		}
 
-		if (value[0]) {
-			if ((value as any[]).length > 1 || value[0].type === 'Text') {
-				// @paul
-				// @FIXME: Is this okay?
-				if (type !== 'Style') {
-					parser.error(parser_errors.invalid_directive_value, value[0].start);
+		const firstValue = value[0];
+		let expression = null;
+		let text = null;
+
+		if (firstValue) {
+			if ((value as any[]).length > 1 || firstValue.type === 'Text') {
+				if (type === 'Style') {
+					text = firstValue.data;
+				} else {
+					parser.error(parser_errors.invalid_directive_value, firstValue.start);
 				}
+			} else {
+				expression = firstValue.expression || null;
 			}
 		}
 
@@ -379,7 +385,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			type,
 			name: directive_name,
 			modifiers,
-			expression: (value[0] && value[0].expression) || null
+			expression
 		};
 
 		if (type === 'Transition') {
@@ -388,6 +394,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			directive.outro = direction === 'out' || direction === 'transition';
 		}
 
+		// Directive name is expression, e.g. <p class:isRed />
 		if (!directive.expression && (type === 'Binding' || type === 'Class' || type === 'Style')) {
 			directive.expression = {
 				start: directive.start + colon_index + 1,
@@ -395,6 +402,10 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 				type: 'Identifier',
 				name: directive.name
 			} as any;
+		}
+
+		if (type === 'Style' && text) {
+			directive.text = text;
 		}
 
 		return directive;
