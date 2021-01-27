@@ -923,6 +923,7 @@ export default class ElementWrapper extends Wrapper {
 			const updater = b`@set_style(${this.var}, "${name}", ${snippet}, false)`;
 
 			block.chunks.hydrate.push(updater);
+			block.chunks.update.push(updater);
 		});
 	}
 
