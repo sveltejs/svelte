@@ -908,19 +908,19 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_styles(block: Block) {
-		this.node.styles.forEach(style_directive => {
-			
-			// @FIXME:
-			// I'm not sure how to set the right value expression here
-			// Hmm, I thought this would work:
-			
-			// const { name, expression: { node: expression } } = style_directive;
-			// const updater = b`@set_style(${this.var}, "${name}", ${expression}, false)`;
-	
-			
-			// @FIXME: This is obviously wrong, hardcoding the color
-			const { name } = style_directive;
-			const updater = b`@set_style(${this.var}, "${name}", "red", false)`;
+		this.node.styles.forEach((style_directive) => {
+			const { name, expression, text } = style_directive;
+
+			let snippet;
+			if (text) {
+				snippet = `"${text}"`;
+			} else if (expression) {
+				snippet = expression.manipulate(block);
+			} else {
+				snippet = name;
+			}
+
+			const updater = b`@set_style(${this.var}, "${name}", ${snippet}, false)`;
 
 			block.chunks.hydrate.push(updater);
 		});
