@@ -205,7 +205,6 @@ export default class Element extends Node {
 					this.classes.push(new Class(component, this, scope, node));
 					break;
 
-				// @paul
 				case 'Style':
 					this.styles.push(new Style(component, this, scope, node));
 					break;

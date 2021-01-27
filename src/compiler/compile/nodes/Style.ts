@@ -4,7 +4,6 @@ import { TemplateNode } from '../../interfaces';
 import TemplateScope from './shared/TemplateScope';
 import Component from '../Component';
 
-// @paul
 export default class Style extends Node {
 	type: 'Style';
 	name: string;
