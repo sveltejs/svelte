@@ -9,7 +9,5 @@ export default {
 		const styles = window.getComputedStyle(p);
     assert.equal(styles.color, 'red');
     assert.equal(styles.height, '40px');
-	},
-
-	skip_if_ssr: true
+	}
 };
