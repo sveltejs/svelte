@@ -196,7 +196,7 @@ export default function mustache(parser: Parser) {
 
 		if (!parser.eat('}')) {
 			parser.require_whitespace();
-			await_block[is_then ? 'value': 'error'] = read_context(parser);
+			await_block[is_then ? 'value' : 'error'] = read_context(parser);
 			parser.allow_whitespace();
 			parser.eat('}', true);
 		}
@@ -204,7 +204,7 @@ export default function mustache(parser: Parser) {
 		const new_block: TemplateNode = {
 			start,
 			end: null,
-			type: is_then ? 'ThenBlock': 'CatchBlock',
+			type: is_then ? 'ThenBlock' : 'CatchBlock',
 			children: [],
 			skip: false
 		};
