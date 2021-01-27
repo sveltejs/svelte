@@ -363,19 +363,19 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			parser.error(parser_errors.invalid_ref_directive(directive_name), start);
 		}
 
-		const firstValue = value[0];
+		const first_value = value[0];
 		let expression = null;
 		let text = null;
 
-		if (firstValue) {
-			if ((value as any[]).length > 1 || firstValue.type === 'Text') {
+		if (first_value) {
+			if ((value as any[]).length > 1 || first_value.type === 'Text') {
 				if (type === 'Style') {
-					text = firstValue.data;
+					text = first_value.data;
 				} else {
-					parser.error(parser_errors.invalid_directive_value, firstValue.start);
+					parser.error(parser_errors.invalid_directive_value, first_value.start);
 				}
 			} else {
-				expression = firstValue.expression || null;
+				expression = first_value.expression || null;
 			}
 		}
 
