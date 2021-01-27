@@ -6,22 +6,25 @@ export const invalid_attribute_name_character = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFF
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 
-export function spread(args, add) {
+export function spread(args, attrs_to_add) {
 	const attributes = Object.assign({}, ...args);
-	if (add) {
-		if (add.classes) {
+	if (attrs_to_add) {
+		const classes_to_add = attrs_to_add.classes;
+		const styles_to_add = attrs_to_add.styles;
+
+		if (classes_to_add) {
 			if (attributes.class == null) {
-				attributes.class = add.classes;
+				attributes.class = classes_to_add;
 			} else {
-				attributes.class += ' ' + add.classes;
+				attributes.class += ' ' + classes_to_add;
 			}
 		}
 		
-		if (add.styles) {
+		if (styles_to_add) {
 			if (attributes.style == null) {
-				attributes.style = add.styles;
+				attributes.style = styles_to_add;
 			} else {
-				attributes.style += '; ' + add.styles;
+				attributes.style += '; ' + styles_to_add;
 			}
 		}
 	}
