@@ -115,6 +115,20 @@ export class SvelteComponentDev extends SvelteComponent {
 	 * ### DO NOT USE!
 	 */
 	$$prop_def: Props;
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$events_def: any;
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$slot_def: any;
 
 	constructor(options: {
 		target: Element;
