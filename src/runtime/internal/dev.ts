@@ -73,8 +73,13 @@ export function dataset_dev(node: HTMLElement, property: string, value?: any) {
 
 export function set_data_dev(text, data) {
 	data = '' + data;
-	if (text === data) return;
-
+	// In particular, when the property is contentEditable, ' 'TEXT_NODE is inserted into the text
+	if (text.textContent === '' && text.wholeText !== '') {
+		if (text.wholeText === data) return;
+	} else {
+		if (text.textContent === data) return;
+	}
+	
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
 	text.data = data;
 }
