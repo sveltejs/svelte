@@ -1226,8 +1226,8 @@ export default class Component {
 									if (variable.module) {
 										should_add_as_dependency = false;
 										component.warn(node as any, {
-											code: 'module-vars-not-reactive',
-											message: `"${name}" is a module variable, it will not be reactive`
+											code: 'module-script-reactive-declaration',
+											message: `"${name}" is declared in a module variable and will not be reactive`
 										});
 									}
 								}

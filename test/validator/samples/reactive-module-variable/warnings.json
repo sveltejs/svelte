@@ -1,7 +1,7 @@
 [
 	{
-		"code": "module-vars-not-reactive",
-		"message": "\"foo\" is a module variable, it will not be reactive",
+		"code": "module-script-reactive-declaration",
+		"message": "\"foo\" is declared in a module variable and will not be reactive",
 		"pos": 67,
 		"start": {
 			"character": 67,
