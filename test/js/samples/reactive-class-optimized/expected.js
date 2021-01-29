@@ -148,12 +148,7 @@ function instance($$self, $$props, $$invalidate) {
 		reactiveConst.x += 1;
 	}
 
-	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*reactiveModuleVar*/ 0) {
-			$: $$subscribe_reactiveDeclaration($$invalidate(1, reactiveDeclaration = reactiveModuleVar * 2));
-		}
-	};
-
+	$: $$subscribe_reactiveDeclaration($$invalidate(1, reactiveDeclaration = reactiveModuleVar * 2));
 	return [reactiveConst, reactiveDeclaration, $reactiveStoreVal, $reactiveDeclaration];
 }
 
