@@ -549,7 +549,6 @@ export default function dom(
 
 		body.push(declaration);
 	}
-
 	return { js: flatten(body, []), css };
 }
 
