@@ -14,7 +14,7 @@ function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, ta
 		// @ts-ignore
 		const delta = target_value - current_value;
 		// @ts-ignore
-		const velocity = (current_value - last_value) / (ctx.dt||1/60); // guard div by 0
+		const velocity = (current_value - last_value) / (ctx.dt || 1 / 60); // guard div by 0
 		const spring = ctx.opts.stiffness * delta;
 		const damper = ctx.opts.damping * velocity;
 		const acceleration = (spring - damper) * ctx.inv_mass;
@@ -80,7 +80,7 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 	let inv_mass_recovery_rate = 0;
 	let cancel_task = false;
 
-	function set(new_value: T, opts: SpringUpdateOpts={}): Promise<void> {
+	function set(new_value: T, opts: SpringUpdateOpts = {}): Promise<void> {
 		target_value = new_value;
 		const token = current_token = {};
 

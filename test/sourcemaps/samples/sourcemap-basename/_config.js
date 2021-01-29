@@ -19,7 +19,7 @@ export default {
 	preprocess: [
 		{
 			style: ({ content, filename }) => {
-				const external =`/* Filename from preprocess: ${filename} */` + external_code;
+				const external = `/* Filename from preprocess: ${filename} */` + external_code;
 				return magic_string_bundle([
 					{ code: external, filename: external_relative_filename },
 					{ code: content, filename }

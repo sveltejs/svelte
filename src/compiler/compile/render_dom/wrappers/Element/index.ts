@@ -321,7 +321,7 @@ export default class ElementWrapper extends Wrapper {
 				literal.quasis.push(state.quasi);
 
 				block.chunks.create.push(
-					b`${node}.${this.can_use_innerhtml ? 'innerHTML': 'textContent'} = ${literal};`
+					b`${node}.${this.can_use_innerhtml ? 'innerHTML' : 'textContent'} = ${literal};`
 				);
 			}
 		} else {
