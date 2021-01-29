@@ -130,6 +130,6 @@ describe('validate', () => {
 				name: 'test',
 				namespace: 'foreign'
 			});
-		})
-	})
+		});
+	});
 });
