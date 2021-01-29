@@ -12,7 +12,7 @@ export default {
 			a: moduleA
 			b: moduleB
 			moduleA: moduleA
-			moduleB: moduleB		
+			moduleB: moduleB
 		`);
 	}
 };

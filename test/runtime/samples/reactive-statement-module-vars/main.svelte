@@ -1,5 +1,5 @@
 <script context="module">
-  let moduleA = 'moduleA';
+	let moduleA = 'moduleA';
 	let moduleB = 'moduleB';
 </script>
 <script>

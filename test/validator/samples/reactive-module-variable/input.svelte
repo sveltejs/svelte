@@ -1,6 +1,6 @@
 <script context="module">
-  let foo;
+	let foo;
 </script>
 <script>
-  $: bar = foo;
+	$: bar = foo;
 </script>
