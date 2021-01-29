@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Warn when using `module` variables reactively, and close weird reactivity loophole ([#5847](https://github.com/sveltejs/svelte/pull/5847))
 * Throw a parser error for `class:` directives with an empty class name ([#5858](https://github.com/sveltejs/svelte/issues/5858))
 * Fix extraneous store subscription in SSR mode ([#5883](https://github.com/sveltejs/svelte/issues/5883))
 * Don't emit update code for `class:` directives whose expression is not dynamic ([#5919](https://github.com/sveltejs/svelte/issues/5919))
