@@ -907,9 +907,10 @@ export default class ElementWrapper extends Wrapper {
 				});
 				if (any_dynamic_dependencies) {
 					block.chunks.update.push(b`
-					if (${condition}) {
-						${updater}
-					}`);
+						if (${condition}) {
+							${updater}
+						}
+					`);
 				}
 			}
 		});
