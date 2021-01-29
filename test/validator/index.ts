@@ -119,4 +119,17 @@ describe('validate', () => {
 			});
 		}, /Invalid namespace 'foriegn' \(did you mean 'foreign'\?\)/);
 	});
+
+	it('does not throw error if \'this\' is bound for foreign element', () => {
+		assert.doesNotThrow(() => {
+			svelte.compile(`
+			<script>
+				let whatever;
+			</script>
+			<div bind:this={whatever} />`, {
+				name: 'test',
+				namespace: 'foreign'
+			});
+		});
+	});
 });

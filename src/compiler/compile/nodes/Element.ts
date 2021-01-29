@@ -600,10 +600,12 @@ export default class Element extends Node {
 
 	validate_bindings_foreign() {
 		this.bindings.forEach(binding => {
-			this.component.error(binding, {
-				code: 'invalid-binding',
-				message: `'${binding.name}' is not a valid binding. Foreign elements only support bind:this`
-			});
+			if (binding.name !== 'this') {
+				this.component.error(binding, {
+					code: 'invalid-binding',
+					message: `'${binding.name}' is not a valid binding. Foreign elements only support bind:this`
+				});
+			}
 		});
 	}
 
