@@ -100,8 +100,6 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	const parent_component = current_component;
 	set_current_component(component);
 
-	const prop_values = options.props || {};
-
 	const $$: T$$ = component.$$ = {
 		fragment: null,
 		ctx: null,
@@ -128,7 +126,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	let ready = false;
 
 	$$.ctx = instance
-		? instance(component, prop_values, (i, ret, ...rest) => {
+		? instance(component, options.props || {}, (i, ret, ...rest) => {
 			const value = rest.length ? rest[0] : ret;
 			if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
 				if (!$$.skip_bound && $$.bound[i]) $$.bound[i](value);
