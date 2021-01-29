@@ -193,6 +193,7 @@ export function claim_space(nodes) {
 
 export function set_data(text, data) {
 	data = '' + data;
+	// ??? I'm not sure if I need to change this
 	if (text.wholeText !== data) text.data = data;
 }
 
