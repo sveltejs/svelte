@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Throw a parser error for `class:` directives with an empty class name ([#5858](https://github.com/sveltejs/svelte/issues/5858))
 * Fix type inference for derived stores ([#5935](https://github.com/sveltejs/svelte/pull/5935))
 
 ## 3.32.0
