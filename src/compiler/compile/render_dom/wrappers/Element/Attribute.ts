@@ -8,6 +8,7 @@ import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
 import handle_select_value_binding from './handle_select_value_binding';
 import { Identifier, Node } from 'estree';
+import { namespaces } from '../../../../utils/namespaces';
 
 export class BaseAttributeWrapper {
 	node: Attribute;
@@ -67,15 +68,26 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			}
 		}
 
-		this.name = fix_attribute_casing(this.node.name);
-		this.metadata = this.get_metadata();
-		this.is_indirectly_bound_value = is_indirectly_bound_value(this);
-		this.property_name = this.is_indirectly_bound_value
-			? '__value'
-			: this.metadata && this.metadata.property_name;
+		if (this.parent.node.namespace == namespaces.foreign) {
+			// leave attribute case alone for elements in the "foreign" namespace
+			this.name = this.node.name;
+			this.metadata = this.get_metadata();
+			this.is_indirectly_bound_value = false;
+			this.property_name = null;
+			this.is_select_value_attribute = false;
+			this.is_input_value = false;
+		} else {
+			this.name = fix_attribute_casing(this.node.name);
+			this.metadata = this.get_metadata();
+			this.is_indirectly_bound_value = is_indirectly_bound_value(this);
+			this.property_name = this.is_indirectly_bound_value
+				? '__value'
+				: this.metadata && this.metadata.property_name;
+			this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
+			this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
+		}
+		
 		this.is_src = this.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
-		this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
-		this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
 		this.should_cache = should_cache(this);
 	}
 

@@ -1,8 +1,9 @@
 import { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/remapping/dist/types/types';
 import remapping from '@ampproject/remapping';
 import { SourceMap } from 'magic-string';
+import { Source, Processed } from '../preprocess/types';
 
-type SourceLocation = {
+export type SourceLocation = {
 	line: number;
 	column: number;
 };
@@ -67,7 +68,7 @@ function pushArray<T>(_this: T[], other: T[]) {
 	}
 }
 
-export class StringWithSourcemap {
+export class MappedCode {
 	string: string;
 	map: DecodedSourceMap;
 
@@ -89,7 +90,7 @@ export class StringWithSourcemap {
 	 * concat in-place (mutable), return this (chainable)
 	 * will also mutate the `other` object
 	 */
-	concat(other: StringWithSourcemap): StringWithSourcemap {
+	concat(other: MappedCode): MappedCode {
 		// noop: if one is empty, return the other
 		if (other.string == '') return this;
 		if (this.string == '') {
@@ -166,34 +167,34 @@ export class StringWithSourcemap {
 		return this;
 	}
 
-	static from_processed(string: string, map?: DecodedSourceMap): StringWithSourcemap {
+	static from_processed(string: string, map?: DecodedSourceMap): MappedCode {
 		const line_count = string.split('\n').length;
 
 		if (map) {
-			// ensure that count of source map mappings lines 
+			// ensure that count of source map mappings lines
 			// is equal to count of generated code lines
 			// (some tools may produce less)
 			const missing_lines = line_count - map.mappings.length;
 			for (let i = 0; i < missing_lines; i++) {
 				map.mappings.push([]);
 			}
-			return new StringWithSourcemap(string, map);
+			return new MappedCode(string, map);
 		}
 
-		if (string == '') return new StringWithSourcemap();
+		if (string == '') return new MappedCode();
 		map = { version: 3, names: [], sources: [], mappings: [] };
 
 		// add empty SourceMapSegment[] for every line
 		for (let i = 0; i < line_count; i++) map.mappings.push([]);
-		return new StringWithSourcemap(string, map);
+		return new MappedCode(string, map);
 	}
 
-	static from_source(
-		source_file: string, source: string, offset?: SourceLocation
-	): StringWithSourcemap {
+	static from_source({ source, file_basename, get_location }: Source): MappedCode {
+		let offset: SourceLocation = get_location(0);
+
 		if (!offset) offset = { line: 0, column: 0 };
-		const map: DecodedSourceMap = { version: 3, names: [], sources: [source_file], mappings: [] };
-		if (source == '') return new StringWithSourcemap(source, map);
+		const map: DecodedSourceMap = { version: 3, names: [], sources: [file_basename], mappings: [] };
+		if (source == '') return new MappedCode(source, map);
 
 		// we create a high resolution identity map here,
 		// we know that it will eventually be merged with svelte's map,
@@ -213,7 +214,7 @@ export class StringWithSourcemap {
 		for (let segment = 0; segment < segment_list.length; segment++) {
 			segment_list[segment][3] += offset.column;
 		}
-		return new StringWithSourcemap(source, map);
+		return new MappedCode(source, map);
 	}
 }
 
@@ -255,6 +256,7 @@ export function combine_sourcemaps(
 
 // browser vs node.js
 const b64enc = typeof btoa == 'function' ? btoa : b => Buffer.from(b).toString('base64');
+const b64dec = typeof atob == 'function' ? atob : a => Buffer.from(a, 'base64').toString();
 
 export function apply_preprocessor_sourcemap(filename: string, svelte_map: SourceMap, preprocessor_map_input: string | DecodedSourceMap | RawSourceMap): SourceMap {
 	if (!svelte_map || !preprocessor_map_input) return svelte_map;
@@ -287,4 +289,40 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 	});
 
 	return result_map as SourceMap;
+}
+
+// parse attached sourcemap in processed.code
+export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style'): void {
+	const r_in = '[#@]\\s*sourceMappingURL\\s*=\\s*(\\S*)';
+	const regex = (tag_name == 'script')
+		? new RegExp('(?://'+r_in+')|(?:/\\*'+r_in+'\\s*\\*/)$')
+		: new RegExp('/\\*'+r_in+'\\s*\\*/$');
+	function log_warning(message) {
+		// code_start: help to find preprocessor
+		const code_start = processed.code.length < 100 ? processed.code : (processed.code.slice(0, 100) + ' [...]');
+		console.warn(`warning: ${message}. processed.code = ${JSON.stringify(code_start)}`);
+	}
+	processed.code = processed.code.replace(regex, (_, match1, match2) => {
+		const map_url = (tag_name == 'script') ? (match1 || match2) : match1;
+		const map_data = (map_url.match(/data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/) || [])[1];
+		if (map_data) {
+			// sourceMappingURL is data URL
+			if (processed.map) {
+				log_warning('Not implemented. ' +
+					'Found sourcemap in both processed.code and processed.map. ' +
+					'Please update your preprocessor to return only one sourcemap.');
+				// ignore attached sourcemap
+				return '';
+			}
+			processed.map = b64dec(map_data); // use attached sourcemap
+			return ''; // remove from processed.code
+		}
+		// sourceMappingURL is path or URL
+		if (!processed.map) {
+			log_warning(`Found sourcemap path ${JSON.stringify(map_url)} in processed.code, but no sourcemap data. ` +
+				'Please update your preprocessor to return sourcemap data directly.');
+		}
+		// ignore sourcemap path
+		return ''; // remove from processed.code
+	});
 }
