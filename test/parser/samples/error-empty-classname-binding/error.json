@@ -1,10 +1,10 @@
 {
-    "code": "invalid-class-directive-value",
-    "message": "Class binding name cannot be empty",
-    "start": {
-        "line": 1,
-        "column": 10,
-        "character": 10
-    },
-    "pos": 10
+	"code": "invalid-class-directive-value",
+	"message": "Class binding name cannot be empty",
+	"start": {
+		"line": 1,
+		"column": 10,
+		"character": 10
+	},
+	"pos": 10
 }

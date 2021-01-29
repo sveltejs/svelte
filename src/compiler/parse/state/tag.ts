@@ -387,12 +387,12 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			}, start);
 		}
 
-        if (type === 'Class' && directive_name === '') {
-            parser.error({
-                code: 'invalid-class-directive-value',
-                message: 'Class binding name cannot be empty'
-            }, start + colon_index + 1);
-        }
+		if (type === 'Class' && directive_name === '') {
+			parser.error({
+				code: 'invalid-class-directive-value',
+				message: 'Class binding name cannot be empty'
+			}, start + colon_index + 1);
+		}
 
 		if (value[0]) {
 			if ((value as any[]).length > 1 || value[0].type === 'Text') {
