@@ -201,6 +201,10 @@ describe('ssr', () => {
 					assert.htmlEqual(html, config.html);
 				}
 
+				if (config.test_ssr) {
+					config.test_ssr({ assert });
+				}
+
 				if (config.after_test) config.after_test();
 
 				if (config.show) {
