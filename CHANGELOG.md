@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.32.1
 
 * Warn when using `module` variables reactively, and close weird reactivity loophole ([#5847](https://github.com/sveltejs/svelte/pull/5847))
 * Throw a parser error for `class:` directives with an empty class name ([#5858](https://github.com/sveltejs/svelte/issues/5858))
