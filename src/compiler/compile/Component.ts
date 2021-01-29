@@ -1175,15 +1175,20 @@ export default class Component {
 	extract_reactive_declarations() {
 		const component = this;
 
-		const unsorted_reactive_declarations = [];
+		const unsorted_reactive_declarations: Array<{
+			assignees: Set<string>;
+			dependencies: Set<string>;
+			node: Node;
+			declaration: Node;
+		}> = [];
 
 		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 
-				const assignees = new Set();
+				const assignees = new Set<string>();
 				const assignee_nodes = new Set();
-				const dependencies = new Set();
+				const dependencies = new Set<string>();
 
 				let scope = this.instance_scope;
 				const map = this.instance_scope_map;
@@ -1214,10 +1219,22 @@ export default class Component {
 								const { name } = identifier;
 								const owner = scope.find_owner(name);
 								const variable = component.var_lookup.get(name);
-								if (variable) variable.is_reactive_dependency = true;
+								let should_add_as_dependency = true;
+
+								if (variable) {
+									variable.is_reactive_dependency = true;
+									if (variable.module) {
+										should_add_as_dependency = false;
+										component.warn(node as any, {
+											code: 'module-script-reactive-declaration',
+											message: `"${name}" is declared in a module script and will not be reactive`
+										});
+									}
+								}
 								const is_writable_or_mutated =
 									variable && (variable.writable || variable.mutated);
 								if (
+									should_add_as_dependency &&
 									(!owner || owner === component.instance_scope) &&
 									(name[0] === '$' || is_writable_or_mutated)
 								) {
