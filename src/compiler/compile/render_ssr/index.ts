@@ -51,7 +51,6 @@ export default function ssr(
 			return b`
 				${component.compile_options.dev && b`@validate_store(${store_name}, '${store_name}');`}
 				${`$$unsubscribe_${store_name}`} = @subscribe(${store_name}, #value => ${name} = #value)
-				${store_name}.subscribe($$value => ${name} = $$value);
 			`;
 		});
 	const reactive_store_unsubscriptions = reactive_stores.map(
