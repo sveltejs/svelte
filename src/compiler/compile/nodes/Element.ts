@@ -600,7 +600,7 @@ export default class Element extends Node {
 
 	validate_bindings_foreign() {
 		this.bindings
-			.filter(binding => binding.name !== 'this')
+			// .filter(binding => binding.name !== 'this')
 			.forEach(binding => {
 				this.component.error(binding, {
 					code: 'invalid-binding',
