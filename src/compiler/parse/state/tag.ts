@@ -389,7 +389,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 		if (type === 'Class' && directive_name === '') {
 			parser.error({
-				code: 'invalid-class-directive-value',
+				code: 'invalid-class-directive',
 				message: 'Class binding name cannot be empty'
 			}, start + colon_index + 1);
 		}
