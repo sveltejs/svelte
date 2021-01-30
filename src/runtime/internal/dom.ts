@@ -193,8 +193,13 @@ export function claim_space(nodes) {
 
 export function set_data(text, data) {
 	data = '' + data;
-	// ??? I'm not sure if I need to change this
-	if (text.wholeText !== data) text.data = data;
+	// In particular, when the property is contentEditable, ' 'TEXT_NODE is inserted into the text
+    if (text.textContent === '' && text.wholeText !== '') {
+		if (text.wholeText === data) return;
+	} else {
+		if (text.textContent === data) return;
+	}
+	 text.data = data;
 }
 
 export function set_input_value(input, value) {
