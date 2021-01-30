@@ -28,7 +28,7 @@
 	p { margin: 1em auto }
 
 	.error {
-		background-color: #da106e;
+		background-color: var(--second);
 		color: white;
 		padding: 12px 16px;
 		font: 600 16px/1.7 var(--font);
