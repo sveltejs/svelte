@@ -125,10 +125,12 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
  *
  * @param stores - input stores
  * @param fn - function callback that aggregates the values
+ * @param initial_value - when used asynchronously
  */
 export function derived<S extends Stores, T>(
 	stores: S,
-	fn: (values: StoresValues<S>) => T
+	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
+	initial_value?: T
 ): Readable<T>;
 
 /**
@@ -137,12 +139,10 @@ export function derived<S extends Stores, T>(
  *
  * @param stores - input stores
  * @param fn - function callback that aggregates the values
- * @param initial_value - when used asynchronously
  */
 export function derived<S extends Stores, T>(
 	stores: S,
-	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
-	initial_value?: T
+	fn: (values: StoresValues<S>) => T
 ): Readable<T>;
 
 export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Readable<T> {
