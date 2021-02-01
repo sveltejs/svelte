@@ -1,11 +1,11 @@
 ---
 title: What's new in Svelte: February 2021
-description: A Svelte-packed showcase to kick-off the new year!
+description: Integrations and improvements at lightning speed...
 author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-With the shortest month of the year coming up, Svelte maintainers and community members alike have been busy this last month – from new aria roles in the compiler to semantic highlighting hooks in the langugage-tools. Meanwhile, lots of folks have been busy integrating Svelte with other popular frameworks.
+With the shortest month of the year coming up, Svelte maintainers and community members alike have been busy this last month – from big changes in svelte-loader, prettier-plugin-svelte, rollup-plugin-svelte, and language-tools to steady progress in sapper and svelte-preprocess. Meanwhile, lots of folks have been busy integrating Svelte with other popular frameworks.
 
 ## New compiler features
 - Aria roles from the [WAI-ARIA Graphics Module](https://www.w3.org/TR/graphics-aria-1.0/#role_definitions) are now recognized as valid aria roles in Svelte components (**3.31.1**)
