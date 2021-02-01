@@ -34,6 +34,8 @@ A great way to try the language tools is to download the [Svelte Extension for V
 - [Sapper](https://github.com/sveltejs/sapper) got some improvements in scroll tracking and handling encoding query parameters. Dynamic imports also now work as expected in browsers that don't support ES modules. These changes from 0.29.0 and a step-by-step migration guide can be found [in the changelog](https://github.com/sveltejs/sapper/blob/master/CHANGELOG.md)
 - [prettier-plugin-svelte](https://github.com/sveltejs/prettier-plugin-svelte) version 2 was released. It received an overhaul and comes with a rewrite of the HTML formatting. The output is now much more in line with how standard Prettier formats HTML. Better defaults for `svelteBracketNewLine` and `options-scripts-markup-styles` should now match how the majority of users like to order the code blocks. Additionally, Prettier's `htmlWhitespaceSensitivity` setting is now supported. [More info in the changelog](https://github.com/sveltejs/prettier-plugin-svelte/blob/master/CHANGELOG.md)
 
+New changes to the Svelte Society website include [a new cheat sheet](https://sveltesociety.dev/cheatsheet) for easy access to useful code patterns and some smaller visual fixes across the site. **Want to help make the Svelte Society website ready for prime time**? [Checkout the GitHub repo](https://github.com/svelte-society/sveltesociety.dev) to get started! 
+
 ---
 
 ## Community Showcase
