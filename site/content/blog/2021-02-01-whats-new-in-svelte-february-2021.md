@@ -5,7 +5,7 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-With the shortest month of the year coming up, Svelte maintainers and community members alike have been busy this last month – from big changes in `svelte-loader`, `prettier-plugin-svelte`, `rollup-plugin-svelte`, and `language-tools` to steady progress in sapper and svelte-preprocess. Meanwhile, lots of folks have been busy integrating Svelte with other popular frameworks.
+With the shortest month of the year coming up, Svelte maintainers and community members alike have been busy this last month – from big changes in `svelte-loader`, `prettier-plugin-svelte`, `rollup-plugin-svelte`, and `language-tools` to steady progress in Sapper and `svelte-preprocess`. Meanwhile, lots of folks have been busy integrating Svelte with other popular frameworks.
 
 ## New compiler features
 - Aria roles from the [WAI-ARIA Graphics Module](https://www.w3.org/TR/graphics-aria-1.0/#role_definitions) are now recognized as valid aria roles in Svelte components (**3.31.1**)
