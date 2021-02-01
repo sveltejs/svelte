@@ -48,8 +48,8 @@ A great way to try the language tools is to download the [Svelte Extension for V
 
 **Demos, Libraries & Components**
 
-- [Svelte Reactive Debugger](https://addons.mozilla.org/en-US/firefox/addon/svelte-reactive-debugger/) is a way to monitor svelte reactive statements in Firefox devtools
-- [svelte-actions](https://github.com/sw-yx/svelte-actions) is a set of prototype svelte actions for inclusion into official actions in future. [See RFC](https://github.com/sveltejs/rfcs/pull/24) and [Discuss High Level Policy](https://github.com/sw-yx/svelte-actions/issues/7).
+- [Svelte Reactive Debugger](https://addons.mozilla.org/en-US/firefox/addon/svelte-reactive-debugger/) is a way to monitor Svelte reactive statements in Firefox devtools
+- [svelte-actions](https://github.com/sw-yx/svelte-actions) is a set of prototype Svelte actions for inclusion into official actions in future. [See RFC](https://github.com/sveltejs/rfcs/pull/24) and [Discuss High Level Policy](https://github.com/sw-yx/svelte-actions/issues/7).
 - [This css grid gallery](https://svelte.dev/repl/3a1b7fae13b242fe9cd4a4f7aa092fa4?version=3.31.2) made by @joja (in the Svelte Discord) features grid transitions based on a user's mouse position
 - [Patchcab](https://github.com/spectrome/patchcab) is a modular Eurorack style synthesizer made with Web Audio.
 - [svelte-knob](https://github.com/MelihAltintas/svelte-knob) is a knob control to help with speedometer-style visualization
@@ -60,21 +60,21 @@ A great way to try the language tools is to download the [Svelte Extension for V
 
 
 **New Integrations & Starters**
-- [svelte-derver-starter](https://github.com/AlexxNB/svelte-derver-starter) is a starter for baking fullstack application with client based on Svelte framework and server side powered by Derver.
+- [svelte-derver-starter](https://github.com/AlexxNB/svelte-derver-starter) is a starter for baking fullstack application with the client based on Svelte and server side powered by Derver.
 - [eleventy-plugin-embed-svelte](https://github.com/shalomscott/eleventy-plugin-embed-svelte) makes it easy to embed Svelte components into an 11ty site.
 - [svelte-tailwind-extension-boilerplate](https://github.com/kyrelldixon/svelte-tailwind-extension-boilerplate) is a good foundation for a Chrome extension using either JavaScript or TypeScript, Svelte for the frontend, Tailwind CSS for styling, Jest for testing, and Rollup as the build system.
 - [snowpack-ui](https://github.com/rajasegar/snowpack-ui) lets you run & manage Snowpack projects from the browser instead of the terminal
 - [Svelte for Appwrite](https://dev.to/torstendittmann/svelte-for-appwrite-4fkg) explains how to integrate with Appwrite, a self-hosted Firebase alternative [Github Repo](https://github.com/appwrite/sdk-for-svelte)
 - [here-maps-svelte](https://github.com/peopledrivemecrazy/here-maps-svelte) makes it easy to include HERE maps in a Svelte app
 - [p5-svelte](https://github.com/tonyketcham/p5-svelte) is an absolutely dead simple way of tossing the creative coding/sketching tool, p5, into a project
-- [svelte-windicss-preprocess](https://github.com/voorjaar/svelte-windicss-preprocess) is a svelte preprocessor to compile tailwindcss at build time based on windicss compiler
+- [svelte-windicss-preprocess](https://github.com/voorjaar/svelte-windicss-preprocess) is a Svelte preprocessor to compile tailwindcss at build time based on windicss compiler
 - [MitzaCoder/svelte-boilerplate](https://github.com/MitzaCoder/svelte-boilerplate) features configurations for Typescript, TailwindCSS, IE11 compatibility (with Babel) and lazy loaded modules.
 
 **Want to share your Svelte Component with the world?** Head over to the [Components](https://sveltesociety.dev/components) page on the Svelte Society site. You can contribute by making [a PR to this file](https://github.com/svelte-society/sveltesociety.dev/blob/master/src/pages/components/components.json).
 
 **Learning Resources**
 
-- [lihautan's Svelte Actions Playlist](https://www.youtube.com/watch?v=ciaMT_MswzE&list=PLoKaNN3BjQX3Gl14MBygFf8buPIw9pAeK) teaches how Actions work and how they can help solve common problems when developing Svelte applications
+- [lihautan's Svelte Actions Playlist](https://www.youtube.com/watch?v=ciaMT_MswzE&list=PLoKaNN3BjQX3Gl14MBygFf8buPIw9pAeK) teaches how actions work and how they can help solve common problems when developing Svelte applications
 - [One-click Portfolio/Personal blog generator from dev.to API ](https://dev.to/shriji/one-click-portfolio-personal-blog-generator-from-dev-to-api-3apb) walks through creating a Sapper site that also fetches your articles from DEV.to using the API
 - [How to Code a VSCode Extension](https://www.youtube.com/watch?v=a5DX5pQ9p5M) features Svelte as a way to render a custom UI within VSCode
 - [This YouTube series on Plenti](https://www.youtube.com/watch?v=wyNC7R_VVyQ&list=PLbWvcwWtuDm12y3Hye6oKDwI2gAS0ccHW) walks through the new static site generator in detail
