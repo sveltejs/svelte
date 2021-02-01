@@ -26,7 +26,7 @@ For the complete list of changes, check out the language-tools [Releases page](h
 
 A great way to try the language tools is to download the [Svelte Extension for VSCode](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode). This extension provides syntax highlighting and rich intellisense for Svelte components in VS Code, using the svelte language server. Check your editor's extension sources to see if there's a Svelte plugin for your IDE or build your own (see [coc-svelte](https://github.com/coc-extensions/coc-svelte) for example)!
 
-## Big improvements across the sveltejs ecosystem
+## Big improvements across the Svelte ecosystem
 
 - [svelte-loader](https://github.com/sveltejs/svelte-loader) released a major version, 3.0.0 - featuring Webpack 5 and Node 14 support, better hot reloading, and new `compilerOptions` to match `rollup-plugin-svelte`. Breaking changes include dropping Svelte 2 and Node 8 support. [More info in the changelog](https://github.com/sveltejs/svelte-loader/blob/master/CHANGELOG.md)
 - [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) is now at version 7.x - with support for relative filenames, better handling of sourcemaps, and consistent `compilerOptions`. Be sure to [checkout the changelog](https://github.com/sveltejs/rollup-plugin-svelte/blob/master/CHANGELOG.md) for breaking changes when upgrading
