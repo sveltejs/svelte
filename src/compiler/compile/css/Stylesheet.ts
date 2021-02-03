@@ -47,7 +47,7 @@ class Rule {
 	constructor(node: CssNode, stylesheet, parent?: Atrule) {
 		this.node = node;
 		this.parent = parent;
-		this.selectors = node.selector.children.map((node: CssNode) => new Selector(node, stylesheet));
+		this.selectors = node.prelude.children.map((node: CssNode) => new Selector(node, stylesheet));
 		this.declarations = node.block.children.map((node: CssNode) => new Declaration(node));
 	}
 
@@ -182,11 +182,11 @@ class Atrule {
 
 	minify(code: MagicString, dev: boolean) {
 		if (this.node.name === 'media') {
-			const expression_char = code.original[this.node.expression.start];
+			const expression_char = code.original[this.node.prelude.start];
 			let c = this.node.start + (expression_char === '(' ? 6 : 7);
-			if (this.node.expression.start > c) code.remove(c, this.node.expression.start);
+			if (this.node.prelude.start > c) code.remove(c, this.node.prelude.start);
 
-			this.node.expression.children.forEach((query: CssNode) => {
+			this.node.prelude.children.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
 			});
@@ -194,17 +194,17 @@ class Atrule {
 			code.remove(c, this.node.block.start);
 		} else if (this.node.name === 'supports') {
 			let c = this.node.start + 9;
-			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
-			this.node.expression.children.forEach((query: CssNode) => {
+			if (this.node.prelude.start - c > 1) code.overwrite(c, this.node.prelude.start, ' ');
+			this.node.prelude.children.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
 			});
 			code.remove(c, this.node.block.start);
 		} else {
 			let c = this.node.start + this.node.name.length + 1;
-			if (this.node.expression) {
-				if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
-				c = this.node.expression.end;
+			if (this.node.prelude) {
+				if (this.node.prelude.start - c > 1) code.overwrite(c, this.node.prelude.start, ' ');
+				c = this.node.prelude.end;
 			}
 			if (this.node.block && this.node.block.start - c > 0) {
 				code.remove(c, this.node.block.start);
@@ -235,7 +235,7 @@ class Atrule {
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>, max_amount_class_specificity_increased: number) {
 		if (is_keyframes_node(this.node)) {
-			this.node.expression.children.forEach(({ type, name, start, end }: CssNode) => {
+			this.node.prelude.children.forEach(({ type, name, start, end }: CssNode) => {
 				if (type === 'Identifier') {
 					if (name.startsWith('-global-')) {
 						code.remove(start, start + 8);
@@ -317,7 +317,7 @@ export default class Stylesheet {
 						}
 
 						if (is_keyframes_node(node)) {
-							node.expression.children.forEach((expression: CssNode) => {
+							node.prelude.children.forEach((expression: CssNode) => {
 								if (expression.type === 'Identifier' && !expression.name.startsWith('-global-')) {
 									this.keyframes.set(expression.name, `${this.id}-${expression.name}`);
 								}
