@@ -24,6 +24,8 @@ import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
+import { noninteractive_roles } from '../utils/aria_roles';
+import { interactive_elements } from '../utils/elements';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -683,6 +685,18 @@ export default class Element extends Node {
 
 		if (handlers_map.has('mouseout') && !handlers_map.has('blur')) {
 			component.warn(this, compiler_warnings.a11y_mouse_events_have_key_events('mouseout', 'blur'));
+		}
+		
+		if (interactive_elements.has(this.name)) {
+			if (attribute_map.has('role')) {
+				const roleValue = this.attributes.find(a => a.name === 'role').get_static_value().toString() as ARIARoleDefintionKey;
+				if (noninteractive_roles.has(roleValue)) {
+					component.warn(this, {
+						code: 'a11y-no-interactive-element-to-noninteractive-role',
+						message: `A11y: <${this.name}> cannot have role ${roleValue}`
+					});
+				}
+			}
 		}
 	}
 
