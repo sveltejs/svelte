@@ -3,7 +3,7 @@ import get_object from '../utils/get_object';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
-import {dimensions} from '../../utils/patterns';
+import {dimensions, sizing} from '../../utils/patterns';
 import { Node as ESTreeNode } from 'estree';
 import { TemplateNode } from '../../interfaces';
 import Element from './Element';
@@ -29,6 +29,7 @@ export default class Binding extends Node {
 	raw_expression: ESTreeNode; // TODO exists only for bind:this — is there a more elegant solution?
 	is_contextual: boolean;
 	is_readonly: boolean;
+	has_arg: boolean;
 
 	constructor(component: Component, parent: Element | InlineComponent | Window, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
@@ -91,10 +92,12 @@ export default class Binding extends Node {
 		const type = parent.get_static_attribute_value('type');
 
 		this.is_readonly =
-			dimensions.test(this.name) ||
+			dimensions.test(this.name) || sizing.test(this.name) ||
 			(isElement(parent) &&
 				((parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
 					(parent.name === 'input' && type === 'file')) /* TODO others? */);
+
+		this.has_arg = sizing.test(this.name);
 	}
 
 	is_readonly_media_attribute() {

@@ -1,4 +1,4 @@
-import { has_prop } from './utils';
+import { has_prop, noop } from './utils';
 
 export function append(target: Node, node: Node) {
 	target.appendChild(node);
@@ -301,6 +301,17 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 
 		detach(iframe);
 	};
+}
+
+export function add_resize_observer(node: HTMLElement, fn: (arg: any) => void) {
+	if ('ResizeObserver' in window) {
+		// @ts-ignore https://github.com/Microsoft/TypeScript/issues/28502
+		const observer = new ResizeObserver(entries => fn(entries.values().next().value));
+		observer.observe(node);
+		return () => observer.disconnect();
+	} else {
+		return noop;
+	}
 }
 
 export function toggle_class(element, name, toggle) {

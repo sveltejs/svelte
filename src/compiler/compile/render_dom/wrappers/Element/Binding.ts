@@ -11,6 +11,7 @@ import { Node, Identifier } from 'estree';
 import add_to_set from '../../../utils/add_to_set';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import handle_select_value_binding from './handle_select_value_binding';
+import { sizing } from '../../../../utils/patterns';
 
 export default class BindingWrapper {
 	node: Binding;
@@ -25,6 +26,7 @@ export default class BindingWrapper {
 	};
 	snippet: Node;
 	is_readonly: boolean;
+	has_arg: boolean;
 	needs_lock: boolean;
 
 	constructor(block: Block, node: Binding, parent: ElementWrapper | InlineComponentWrapper) {
@@ -51,6 +53,8 @@ export default class BindingWrapper {
 		this.snippet = this.node.expression.manipulate(block);
 
 		this.is_readonly = this.node.is_readonly;
+
+		this.has_arg = this.node.has_arg;
 
 		this.needs_lock = this.node.name === 'currentTime';  // TODO others?
 	}
@@ -363,7 +367,7 @@ function get_event_handler(
 	const value = get_value_from_dom(renderer, binding.parent, binding, block, contextual_dependencies);
 
 	const mutation = b`
-		${lhs} = ${value};
+		${lhs} = ${sizing.test(name) ? `arg.${name}` : value};
 		${set_store}
 	`;
 

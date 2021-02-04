@@ -10,7 +10,7 @@ import Class from './Class';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { dimensions } from '../../utils/patterns';
+import { dimensions, sizing } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
@@ -787,7 +787,7 @@ export default class Element extends Node {
 						message: '\'contenteditable\' attribute cannot be dynamic if element uses two-way binding'
 					});
 				}
-			} else if (name !== 'this') {
+			} else if (name !== 'this' && !sizing.test(name)) {
 				component.error(binding, {
 					code: 'invalid-binding',
 					message: `'${binding.name}' is not a valid binding`
