@@ -33,6 +33,10 @@ describe('ssr', () => {
 		return setupHtmlEqual();
 	});
 
+	let saved_window;
+	before(() => saved_window = global.window);
+	after(() => global.window = saved_window);
+
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === '.') return;
 
@@ -195,6 +199,10 @@ describe('ssr', () => {
 					assert.htmlEqual(html, config.ssrHtml);
 				} else if (config.html) {
 					assert.htmlEqual(html, config.html);
+				}
+
+				if (config.test_ssr) {
+					config.test_ssr({ assert });
 				}
 
 				if (config.after_test) config.after_test();

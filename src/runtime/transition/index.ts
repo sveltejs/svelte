@@ -25,7 +25,7 @@ export function blur(node: Element, {
 	easing = cubicInOut,
 	amount = 5,
 	opacity = 0
-}: BlurParams): TransitionConfig {
+}: BlurParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const f = style.filter === 'none' ? '' : style.filter;
@@ -50,7 +50,7 @@ export function fade(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = linear
-}: FadeParams): TransitionConfig {
+}: FadeParams = {}): TransitionConfig {
 	const o = +getComputedStyle(node).opacity;
 
 	return {
@@ -77,7 +77,7 @@ export function fly(node: Element, {
 	x = 0,
 	y = 0,
 	opacity = 0
-}: FlyParams): TransitionConfig {
+}: FlyParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
@@ -104,7 +104,7 @@ export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut
-}: SlideParams): TransitionConfig {
+}: SlideParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const height = parseFloat(style.height);
@@ -146,7 +146,7 @@ export function scale(node: Element, {
 	easing = cubicOut,
 	start = 0,
 	opacity = 0
-}: ScaleParams): TransitionConfig {
+}: ScaleParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
@@ -177,7 +177,7 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 	speed,
 	duration,
 	easing = cubicInOut
-}: DrawParams): TransitionConfig {
+}: DrawParams = {}): TransitionConfig {
 	const len = node.getTotalLength();
 
 	if (duration === undefined) {
@@ -237,7 +237,7 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 			css: (t, u) => `
 				opacity: ${t * opacity};
 				transform-origin: top left;
-				transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1-t) * dw}, ${t + (1-t) * dh});
+				transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${t + (1 - t) * dh});
 			`
 		};
 	}
