@@ -376,9 +376,10 @@ export default class InlineComponentWrapper extends Wrapper {
 			`;
 			if (binding.expression.node.type === 'MemberExpression') {
 				invalidate_binding = b`
-				if ($$self.$$.not_equal(${lhs}, #value)) {
-					${invalidate_binding}
-				}`;
+					if ($$self.$$.not_equal(${lhs}, #value)) {
+						${invalidate_binding}
+					}
+				`;
 			}
 
 			const body = b`
