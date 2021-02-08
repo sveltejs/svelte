@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix unnecessary additional invalidation with `<Component bind:prop={obj.foo}/>` ([#3075](https://github.com/sveltejs/svelte/issues/3075), [#4447](https://github.com/sveltejs/svelte/issues/4447), [#5555](https://github.com/sveltejs/svelte/issues/5555))
 * Fix scoping of selectors with `:global()` and `~` sibling combinators ([#5499](https://github.com/sveltejs/svelte/issues/5499))
 * Fix removal of `:host` selectors as unused when compiling to a custom element ([#5946](https://github.com/sveltejs/svelte/issues/5946))
 
