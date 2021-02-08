@@ -37,7 +37,7 @@
 		"children": [
 			{
 				"type": "Rule",
-				"selector": {
+				"prelude": {
 					"type": "SelectorList",
 					"children": [
 						{
@@ -74,7 +74,7 @@
 										"end": 43
 									}
 								],
-								"start": 39,
+								"start": 40,
 								"end": 43
 							},
 							"start": 33,
