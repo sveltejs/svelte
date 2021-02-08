@@ -347,8 +347,8 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const params = [x`#value`];
+			const args = [x`#value`];
 			if (contextual_dependencies.length > 0) {
-				const args = [];
 
 				contextual_dependencies.forEach(name => {
 					params.push({
@@ -361,25 +361,30 @@ export default class InlineComponentWrapper extends Wrapper {
 				});
 
 
-				block.chunks.init.push(b`
-					function ${id}(#value) {
-						${callee}.call(null, #value, ${args});
-					}
-				`);
-
 				block.maintain_context = true; // TODO put this somewhere more logical
-			} else {
-				block.chunks.init.push(b`
-					function ${id}(#value) {
-						${callee}.call(null, #value);
+			}
+
+			block.chunks.init.push(b`
+				function ${id}(#value) {
+					${callee}(${args});
+				}
+			`);
+
+			let invalidate_binding = b`
+				${lhs} = #value;
+				${renderer.invalidate(dependencies[0])};
+			`;
+			if (binding.expression.node.type === 'MemberExpression') {
+				invalidate_binding = b`
+					if ($$self.$$.not_equal(${lhs}, #value)) {
+						${invalidate_binding}
 					}
-				`);
+				`;
 			}
 
 			const body = b`
 				function ${id}(${params}) {
-					${lhs} = #value;
-					${renderer.invalidate(dependencies[0])};
+					${invalidate_binding}
 				}
 			`;
 
