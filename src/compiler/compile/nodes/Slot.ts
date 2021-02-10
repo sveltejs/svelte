@@ -6,7 +6,7 @@ import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
 
 export default class Slot extends Element {
-	type: 'Element';
+	type: 'Slot';
 	name: string;
 	children: INode[];
 	slot_name: string;
