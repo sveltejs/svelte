@@ -73,7 +73,7 @@
     "dev": "rollup -cw",
     "pretest": "npm run build",
     "posttest": "agadoo internal/index.mjs",
-    "prepublishOnly": "npm run lint && PUBLISH=true npm test",
+    "prepublishOnly": "node check_publish_env.js && npm run lint && npm test",
     "tsd": "tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\""
   },
