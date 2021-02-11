@@ -53,27 +53,26 @@ export function claim_component(block, parent_nodes) {
 	block && block.l(parent_nodes);
 }
 
-export function mount_component(component, target, anchor) {
+export function mount_component(component, target, anchor, customElement) {
 	const { fragment, on_mount, on_destroy, after_update } = component.$$;
-	const isCustomElement = Object.getPrototypeOf(component.constructor) === SvelteElement;
 
 	fragment && fragment.m(target, anchor);
 
-	// onMount happens before the initial afterUpdate
-	add_render_callback(() => {
-		// custom element on_mount is called in connectedCallback
-		if (isCustomElement) return;
+	if (!customElement) {
+		// onMount happens before the initial afterUpdate
+		add_render_callback(() => {
 
-		const new_on_destroy = on_mount.map(run).filter(is_function);
-		if (on_destroy) {
-			on_destroy.push(...new_on_destroy);
-		} else {
-			// Edge case - component was destroyed immediately,
-			// most likely as a result of a binding initialising
-			run_all(new_on_destroy);
-		}
-		component.$$.on_mount = [];
-	});
+			const new_on_destroy = on_mount.map(run).filter(is_function);
+			if (on_destroy) {
+				on_destroy.push(...new_on_destroy);
+			} else {
+				// Edge case - component was destroyed immediately,
+				// most likely as a result of a binding initialising
+				run_all(new_on_destroy);
+			}
+			component.$$.on_mount = [];
+		});
+	}
 
 	after_update.forEach(add_render_callback);
 }
@@ -161,7 +160,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		}
 
 		if (options.intro) transition_in(component.$$.fragment);
-		mount_component(component, options.target, options.anchor);
+		mount_component(component, options.target, options.anchor, options.customElement);
 		flush();
 	}
 
