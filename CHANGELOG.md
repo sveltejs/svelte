@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.32.3
 
 * Fix removal of lone `:host` selectors ([#5982](https://github.com/sveltejs/svelte/issues/5982))
 
