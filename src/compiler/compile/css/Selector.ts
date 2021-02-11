@@ -44,7 +44,10 @@ export default class Selector {
 		}
 
 		this.local_blocks = this.blocks.slice(0, i);
-		this.used = this.local_blocks.length === 0;
+
+		const host_only = this.blocks.length === 1 && this.blocks[0].host;
+
+		this.used = this.local_blocks.length === 0 || host_only;
 	}
 
 	apply(node: Element) {

@@ -18,6 +18,10 @@
 	:host > span {
 		color: red;
 	}
+
+  :host {
+    color: red;
+  }
 </style>
 
 <h1>Hello!</h1>
