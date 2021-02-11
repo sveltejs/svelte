@@ -447,6 +447,8 @@ export default class IfBlockWrapper extends Wrapper {
 				if (!${name}) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 					${name}.c();
+				} else {
+					${dynamic && b`${name}.p(#ctx, #dirty);`}
 				}
 				${has_transitions && b`@transition_in(${name}, 1);`}
 				${name}.m(${update_mount_node}, ${anchor});
@@ -470,10 +472,13 @@ export default class IfBlockWrapper extends Wrapper {
 					}
 				`;
 
+			block.chunks.update.push(b`
+				let ${previous_block_index} = ${current_block_type_index};
+				${current_block_type_index} = ${select_block_type}(#ctx, #dirty);
+			`);
+
 			if (dynamic) {
 				block.chunks.update.push(b`
-					let ${previous_block_index} = ${current_block_type_index};
-					${current_block_type_index} = ${select_block_type}(#ctx, #dirty);
 					if (${current_block_type_index} === ${previous_block_index}) {
 						${if_current_block_type_index(b`${if_blocks}[${current_block_type_index}].p(#ctx, #dirty);`)}
 					} else {
@@ -482,8 +487,6 @@ export default class IfBlockWrapper extends Wrapper {
 				`);
 			} else {
 				block.chunks.update.push(b`
-					let ${previous_block_index} = ${current_block_type_index};
-					${current_block_type_index} = ${select_block_type}(#ctx, #dirty);
 					if (${current_block_type_index} !== ${previous_block_index}) {
 						${change_block}
 					}

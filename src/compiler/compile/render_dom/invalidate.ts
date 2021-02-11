@@ -33,7 +33,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 		if (main_execution_context && !variable.subscribable && variable.name[0] !== '$') {
 			return node;
 		}
-		return renderer.invalidate(variable.name, undefined, main_execution_context);
+		return renderer_invalidate(renderer, variable.name, undefined, main_execution_context);
 	}
 
 	if (!head) {
@@ -78,4 +78,67 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 	}
 
 	return invalidate;
+}
+
+export function renderer_invalidate(renderer: Renderer, name: string, value?, main_execution_context: boolean = false) {
+	const variable = renderer.component.var_lookup.get(name);
+
+	if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {
+		if (main_execution_context) {
+			return x`${`$$subscribe_${name}`}(${value || name})`;
+		} else {
+			const member = renderer.context_lookup.get(name);
+			return x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${value || name}))`;
+		}
+	}
+
+	if (name[0] === '$' && name[1] !== '$') {
+		return x`${name.slice(1)}.set(${value || name})`;
+	}
+
+	if (
+		variable && (
+			variable.module || (
+				!variable.referenced &&
+				!variable.is_reactive_dependency &&
+				!variable.export_name &&
+				!name.startsWith('$$')
+			)
+		)
+	) {
+		return value || name;
+	}
+
+	if (value) {
+		if (main_execution_context) {
+			return x`${value}`;
+		} else {
+			const member = renderer.context_lookup.get(name);
+			return x`$$invalidate(${member.index}, ${value})`;
+		}
+	}
+
+	if (main_execution_context) return;
+
+	// if this is a reactive declaration, invalidate dependencies recursively
+	const deps = new Set([name]);
+
+	deps.forEach(name => {
+		const reactive_declarations = renderer.component.reactive_declarations.filter(x =>
+			x.assignees.has(name)
+		);
+		reactive_declarations.forEach(declaration => {
+			declaration.dependencies.forEach(name => {
+				deps.add(name);
+			});
+		});
+	});
+
+	// TODO ideally globals etc wouldn't be here in the first place
+	const filtered = Array.from(deps).filter(n => renderer.context_lookup.has(n));
+	if (!filtered.length) return null;
+
+	return filtered
+		.map(n => x`$$invalidate(${renderer.context_lookup.get(n).index}, ${n})`)
+		.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
 }

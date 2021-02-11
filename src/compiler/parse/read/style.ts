@@ -14,10 +14,13 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	try {
 		ast = parse(styles, {
 			positions: true,
-			offset: content_start
+			offset: content_start,
+			onParseError(error) {
+				throw error;
+			}
 		});
 	} catch (err) {
-		if (err.name === 'CssSyntaxError') {
+		if (err.name === 'SyntaxError') {
 			parser.error({
 				code: 'css-syntax-error',
 				message: err.message

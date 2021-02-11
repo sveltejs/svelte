@@ -48,7 +48,7 @@ export function transition_in(block, local?: 0 | 1) {
 	}
 }
 
-export function transition_out(block, local: 0 | 1, detach: 0 | 1, callback) {
+export function transition_out(block, local: 0 | 1, detach?: 0 | 1, callback?) {
 	if (block && block.o) {
 		if (outroing.has(block)) return;
 		outroing.add(block);
@@ -318,9 +318,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 						}
 
 						running_program = null;
-					}
-
-					else if (now >= running_program.start) {
+					} else if (now >= running_program.start) {
 						const p = now - running_program.start;
 						t = running_program.a + running_program.d * easing(p / running_program.duration);
 						tick(t, 1 - t);

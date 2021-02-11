@@ -110,6 +110,7 @@ export interface CompileOptions {
 	filename?: string;
 	generate?: 'dom' | 'ssr' | false;
 
+	sourcemap?: object | string;
 	outputFilename?: string;
 	cssOutputFilename?: string;
 	sveltePath?: string;
@@ -123,6 +124,7 @@ export interface CompileOptions {
 	tag?: string;
 	css?: boolean;
 	loopGuardTimeout?: number;
+	namespace?: string;
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;

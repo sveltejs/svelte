@@ -7,6 +7,8 @@ import { extract_names, Scope } from '../utils/scope';
 import { invalidate } from './invalidate';
 import Block from './Block';
 import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
+import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 
 export default function dom(
 	component: Component,
@@ -30,6 +32,9 @@ export default function dom(
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
+
+	css.map = apply_preprocessor_sourcemap(options.filename, css.map, options.sourcemap as string | RawSourceMap | DecodedSourceMap);
+
 	const styles = component.stylesheet.has_styles && options.dev
 		? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
 		: css.code;
@@ -409,6 +414,8 @@ export default function dom(
 
 		body.push(b`
 			function ${definition}(${args}) {
+				${injected.map(name => b`let ${name};`)}
+
 				${rest}
 
 				${reactive_store_declarations}
@@ -434,8 +441,6 @@ export default function dom(
 				${capture_state && b`$$self.$capture_state = ${capture_state};`}
 
 				${inject_state && b`$$self.$inject_state = ${inject_state};`}
-
-				${injected.map(name => b`let ${name};`)}
 
 				${/* before reactive declarations */ props_inject}
 
@@ -467,6 +472,12 @@ export default function dom(
 	}
 
 	if (options.customElement) {
+
+		let init_props = x`@attribute_to_object(this.attributes)`;
+		if (uses_slots) {
+			init_props = x`{ ...${init_props}, $$slots: @get_custom_elements_slots(this) }`;
+		}
+
 		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
@@ -474,7 +485,7 @@ export default function dom(
 
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot, props: @attribute_to_object(this.attributes) }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, { target: this.shadowRoot, props: ${init_props} }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 
 					${dev_props_check}
 
@@ -526,7 +537,7 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && 'options'});
 					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}

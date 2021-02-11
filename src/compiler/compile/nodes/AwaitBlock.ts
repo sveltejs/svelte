@@ -23,7 +23,7 @@ export default class AwaitBlock extends Node {
 	then: ThenBlock;
 	catch: CatchBlock;
 
-	constructor(component: Component, parent, scope: TemplateScope, info: TemplateNode) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		this.expression = new Expression(component, this, scope, info.expression);

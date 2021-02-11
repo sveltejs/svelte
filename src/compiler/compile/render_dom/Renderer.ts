@@ -6,6 +6,7 @@ import { x } from 'code-red';
 import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression } from 'estree';
 import flatten_reference from '../utils/flatten_reference';
 import { reserved_keywords } from '../utils/reserved_keywords';
+import { renderer_invalidate } from './invalidate';
 
 interface ContextMember {
 	name: string;
@@ -32,7 +33,7 @@ export default class Renderer {
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
-	binding_groups: Map<string, { binding_group: (to_reference?: boolean) => Node; is_context: boolean; contexts: string[]; index: number }> = new Map();
+	binding_groups: Map<string, { binding_group: (to_reference?: boolean) => Node; is_context: boolean; contexts: string[]; index: number; keypath: string }> = new Map();
 
 	block: Block;
 	fragment: FragmentWrapper;
@@ -111,8 +112,9 @@ export default class Renderer {
 
 				// these determine whether variable is included in initial context
 				// array, so must have the highest priority
-				if (variable.export_name) member.priority += 16;
-				if (variable.referenced) member.priority += 32;
+				if (variable.is_reactive_dependency && (variable.mutated || variable.reassigned)) member.priority += 16;
+				if (variable.export_name) member.priority += 32;
+				if (variable.referenced) member.priority += 64;
 			} else if (member.is_non_contextual) {
 				// determine whether variable is included in initial context
 				// array, so must have the highest priority
@@ -131,7 +133,7 @@ export default class Renderer {
 		while (i--) {
 			const member = this.context[i];
 			if (member.variable) {
-				if (member.variable.referenced || member.variable.export_name) break;
+				if (member.variable.referenced || member.variable.export_name || (member.variable.is_reactive_dependency && (member.variable.mutated || member.variable.reassigned))) break;
 			} else if (member.is_non_contextual) {
 				break;
 			}
@@ -167,60 +169,10 @@ export default class Renderer {
 	}
 
 	invalidate(name: string, value?, main_execution_context: boolean = false) {
-		const variable = this.component.var_lookup.get(name);
-		const member = this.context_lookup.get(name);
-
-		if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {
-			return main_execution_context
-			  ? x`${`$$subscribe_${name}`}(${value || name})`
-			  : x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${value || name}))`;
-		}
-
-		if (name[0] === '$' && name[1] !== '$') {
-			return x`${name.slice(1)}.set(${value || name})`;
-		}
-
-		if (
-			variable && (
-				variable.module || (
-					!variable.referenced &&
-					!variable.is_reactive_dependency &&
-					!variable.export_name &&
-					!name.startsWith('$$')
-				)
-			)
-		) {
-			return value || name;
-		}
-
-		if (value) {
-			return x`$$invalidate(${member.index}, ${value})`;
-		}
-
-		// if this is a reactive declaration, invalidate dependencies recursively
-		const deps = new Set([name]);
-
-		deps.forEach(name => {
-			const reactive_declarations = this.component.reactive_declarations.filter(x =>
-				x.assignees.has(name)
-			);
-			reactive_declarations.forEach(declaration => {
-				declaration.dependencies.forEach(name => {
-					deps.add(name);
-				});
-			});
-		});
-
-		// TODO ideally globals etc wouldn't be here in the first place
-		const filtered = Array.from(deps).filter(n => this.context_lookup.has(n));
-		if (!filtered.length) return null;
-
-		return filtered
-			.map(n => x`$$invalidate(${this.context_lookup.get(n).index}, ${n})`)
-			.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
+		return renderer_invalidate(this, name, value, main_execution_context);
 	}
 
-	dirty(names, is_reactive_declaration = false): Expression {
+	dirty(names: string[], is_reactive_declaration = false): Expression {
 		const renderer = this;
 
 		const dirty = (is_reactive_declaration

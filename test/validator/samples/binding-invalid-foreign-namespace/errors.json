@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-binding",
+	"message": "'value' is not a valid binding. Foreign elements only support bind:this",
+	"pos": 81,
+	"start": {
+		"line": 6,
+		"column": 7,
+		"character": 81
+	},
+	"end": {
+		"line": 6,
+		"column": 28,
+		"character": 102
+	}
+}]

@@ -4,7 +4,6 @@ import is_reference from 'is-reference';
 import flatten_reference from '../../utils/flatten_reference';
 import { create_scopes, Scope, extract_names } from '../../utils/scope';
 import { sanitize } from '../../../utils/names';
-import Wrapper from '../../render_dom/wrappers/shared/Wrapper';
 import TemplateScope from './TemplateScope';
 import get_object from '../../utils/get_object';
 import Block from '../../render_dom/Block';
@@ -12,18 +11,19 @@ import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
 import { b } from 'code-red';
 import { invalidate } from '../../render_dom/invalidate';
 import { Node, FunctionExpression, Identifier } from 'estree';
-import { TemplateNode } from '../../../interfaces';
+import { INode } from '../interfaces';
 import { is_reserved_keyword } from '../../utils/reserved_keywords';
 import replace_object from '../../utils/replace_object';
+import is_contextual from './is_contextual';
 import EachBlock from '../EachBlock';
 
-type Owner = Wrapper | TemplateNode;
+type Owner = INode;
 
 export default class Expression {
 	type: 'Expression' = 'Expression';
 	component: Component;
 	owner: Owner;
-	node: any;
+	node: Node;
 	references: Set<string> = new Set();
 	dependencies: Set<string> = new Set();
 	contextual_dependencies: Set<string> = new Set();
@@ -37,8 +37,7 @@ export default class Expression {
 
 	manipulated: Node;
 
-	// todo: owner type
-	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info, lazy?: boolean) {
+	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info: Node, lazy?: boolean) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
@@ -263,23 +262,21 @@ export default class Expression {
 							hoistable: true,
 							referenced: true
 						});
-					}
-
-					else if (contextual_dependencies.size === 0) {
+					} else if (contextual_dependencies.size === 0) {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(declaration);
 
 						block.renderer.add_to_context(id.name);
 						this.replace(block.renderer.reference(id));
-					}
-
-					else {
+					} else {
 						// we need a combo block/init recipe
 						const deps = Array.from(contextual_dependencies);
+						const function_expression = node as FunctionExpression;
 
-						(node as FunctionExpression).params = [
+						const has_args = function_expression.params.length > 0;
+						function_expression.params = [
 							...deps.map(name => ({ type: 'Identifier', name } as Identifier)),
-							...(node as FunctionExpression).params
+							...function_expression.params
 						];
 
 						const context_args = deps.map(name => block.renderer.reference(name));
@@ -291,18 +288,49 @@ export default class Expression {
 
 						this.replace(id as any);
 
-						if ((node as FunctionExpression).params.length > 0) {
-							declarations.push(b`
-								function ${id}(...args) {
-									return ${callee}(${context_args}, ...args);
-								}
-							`);
+						const func_declaration = has_args
+							? b`function ${id}(...args) {
+								return ${callee}(${context_args}, ...args);
+							}`
+							: b`function ${id}() {
+								return ${callee}(${context_args});
+							}`;
+
+						if (owner.type === 'Attribute' && owner.parent.name === 'slot') {
+							const dep_scopes = new Set<INode>(deps.map(name => template_scope.get_owner(name)));
+							// find the nearest scopes
+							let node: INode = owner.parent;
+							while (node && !dep_scopes.has(node)) {
+								node = node.parent;
+							}
+
+							const func_expression = func_declaration[0];
+
+							if (node.type === 'InlineComponent') {
+								// <Comp let:data />
+								this.replace(func_expression);
+							} else {
+								// {#each}, {#await}
+								const func_id = component.get_unique_name(id.name + '_func');
+								block.renderer.add_to_context(func_id.name, true);
+								// rename #ctx -> child_ctx;
+								walk(func_expression, {
+									enter(node: Node) {
+										if (node.type === 'Identifier' && node.name === '#ctx') {
+											node.name = 'child_ctx';
+										}
+									}
+								});
+								// add to get_xxx_context
+								// child_ctx[x] = function () { ... }
+								(template_scope.get_owner(deps[0]) as EachBlock).contexts.push({
+									key: func_id,
+									modifier: () => func_expression
+								});
+								this.replace(block.renderer.reference(func_id));
+							}
 						} else {
-							declarations.push(b`
-								function ${id}() {
-									return ${callee}(${context_args});
-								}
-							`);
+							declarations.push(func_declaration);
 						}
 					}
 
@@ -381,19 +409,4 @@ function get_function_name(_node, parent) {
 	}
 
 	return 'func';
-}
-
-function is_contextual(component: Component, scope: TemplateScope, name: string) {
-	if (is_reserved_keyword(name)) return true;
-
-	// if it's a name below root scope, it's contextual
-	if (!scope.is_top_level(name)) return true;
-
-	const variable = component.var_lookup.get(name);
-
-	// hoistables, module declarations, and imports are non-contextual
-	if (!variable || variable.hoistable) return false;
-
-	// assume contextual
-	return true;
 }

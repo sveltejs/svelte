@@ -18,7 +18,7 @@
 	let height = 200;
 
 	function formatMobile(tick) {
-		return "'" + tick % 100;
+		return "'" + tick.toString().slice(-2);
 	}
 
 	$: xScale = scaleLinear()

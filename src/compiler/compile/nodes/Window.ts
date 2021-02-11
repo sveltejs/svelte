@@ -5,6 +5,9 @@ import flatten_reference from '../utils/flatten_reference';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Action from './Action';
+import Component from '../Component';
+import TemplateScope from './shared/TemplateScope';
+import { TemplateNode } from '../../interfaces';
 
 const valid_bindings = [
 	'innerWidth',
@@ -22,15 +25,13 @@ export default class Window extends Node {
 	bindings: Binding[] = [];
 	actions: Action[] = [];
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		info.attributes.forEach(node => {
 			if (node.type === 'EventHandler') {
 				this.handlers.push(new EventHandler(component, this, scope, node));
-			}
-
-			else if (node.type === 'Binding') {
+			} else if (node.type === 'Binding') {
 				if (node.expression.type !== 'Identifier') {
 					const { parts } = flatten_reference(node.expression);
 
@@ -64,13 +65,9 @@ export default class Window extends Node {
 				}
 
 				this.bindings.push(new Binding(component, this, scope, node));
-			}
-
-			else if (node.type === 'Action') {
+			} else if (node.type === 'Action') {
 				this.actions.push(new Action(component, this, scope, node));
-			}
-
-			else {
+			} else {
 				// TODO there shouldn't be anything else here...
 			}
 		});

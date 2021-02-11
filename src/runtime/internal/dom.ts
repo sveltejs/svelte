@@ -261,7 +261,6 @@ export function is_crossorigin() {
 
 export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	const computed_style = getComputedStyle(node);
-	const z_index = (parseInt(computed_style.zIndex) || 0) - 1;
 
 	if (computed_style.position === 'static') {
 		node.style.position = 'relative';
@@ -270,7 +269,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	const iframe = element('iframe');
 	iframe.setAttribute('style',
 		'display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; ' +
-		`overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: ${z_index};`
+		'overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: -1;'
 	);
 	iframe.setAttribute('aria-hidden', 'true');
 	iframe.tabIndex = -1;
@@ -361,10 +360,18 @@ export class HtmlTag {
 	}
 }
 
-export function attribute_to_object(attributes) {
+export function attribute_to_object(attributes: NamedNodeMap) {
 	const result = {};
 	for (const attribute of attributes) {
 		result[attribute.name] = attribute.value;
 	}
+	return result;
+}
+
+export function get_custom_elements_slots(element: HTMLElement) {
+	const result = {};
+	element.childNodes.forEach((node: Element) => {
+		result[node.slot || 'default'] = true;
+	});
 	return result;
 }

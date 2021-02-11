@@ -142,10 +142,8 @@ export default function mustache(parser: Parser) {
 			};
 
 			parser.stack.push(block.else.children[0]);
-		}
-
-		// :else
-		else {
+		} else {
+			// :else
 			const block = parser.current();
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 				parser.error({
@@ -198,7 +196,7 @@ export default function mustache(parser: Parser) {
 
 		if (!parser.eat('}')) {
 			parser.require_whitespace();
-			await_block[is_then ? 'value': 'error'] = read_context(parser);
+			await_block[is_then ? 'value' : 'error'] = read_context(parser);
 			parser.allow_whitespace();
 			parser.eat('}', true);
 		}
@@ -206,7 +204,7 @@ export default function mustache(parser: Parser) {
 		const new_block: TemplateNode = {
 			start,
 			end: null,
-			type: is_then ? 'ThenBlock': 'CatchBlock',
+			type: is_then ? 'ThenBlock' : 'CatchBlock',
 			children: [],
 			skip: false
 		};
