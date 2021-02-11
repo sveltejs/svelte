@@ -1,6 +1,6 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
-import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
+import { is_empty, is_function, run, run_all, noop } from './utils';
 import { children, detach } from './dom';
 import { transition_in } from './transitions';
 
@@ -36,11 +36,11 @@ interface T$$ {
 	skip_bound: boolean;
 }
 
-export function bind(component, name, callback) {
-	const index = component.$$.props[name];
+export function bind({ $$ }, name, callback) {
+	const index = $$.props[name];
 	if (index !== undefined) {
-		component.$$.bound[index] = callback;
-		callback(component.$$.ctx[index]);
+		$$.bound[index] = callback;
+		callback($$.ctx[index]);
 	}
 }
 
@@ -52,14 +52,14 @@ export function claim_component(block, parent_nodes) {
 	block && block.l(parent_nodes);
 }
 
-export function mount_component(component, target, anchor) {
-	const { fragment, on_mount, on_destroy, after_update } = component.$$;
+export function mount_component({ $$ }, target, anchor) {
+	const { fragment, on_destroy } = $$;
 
 	fragment && fragment.m(target, anchor);
 
 	// onMount happens before the initial afterUpdate
 	add_render_callback(() => {
-		const new_on_destroy = on_mount.map(run).filter(is_function);
+		const new_on_destroy = $$.on_mount.map(run).filter(is_function);
 		if (on_destroy) {
 			on_destroy.push(...new_on_destroy);
 		} else {
@@ -67,18 +67,18 @@ export function mount_component(component, target, anchor) {
 			// most likely as a result of a binding initialising
 			run_all(new_on_destroy);
 		}
-		component.$$.on_mount = [];
+		$$.on_mount = [];
 	});
 
-	after_update.forEach(add_render_callback);
+	$$.after_update.forEach(add_render_callback);
 }
 
-export function destroy_component(component, detaching) {
-	const $$ = component.$$;
-	if ($$.fragment !== null) {
+export function destroy_component({ $$ }, detaching) {
+	const { fragment } = $$;
+	if (fragment !== null) {
 		run_all($$.on_destroy);
 
-		$$.fragment && $$.fragment.d(detaching);
+		fragment && fragment.d(detaching);
 
 		// TODO null out other refs, including component.$$ (but need to
 		// preserve final state?)
@@ -88,12 +88,13 @@ export function destroy_component(component, detaching) {
 }
 
 function make_dirty(component, i) {
-	if (component.$$.dirty[0] === -1) {
+	const { $$ } = component;
+	if ($$.dirty[0] === -1) {
 		dirty_components.push(component);
 		schedule_update();
-		component.$$.dirty.fill(0);
+		$$.dirty.fill(0);
 	}
-	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
+	$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
 export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
@@ -101,14 +102,11 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	set_current_component(component);
 
 	const $$: T$$ = component.$$ = {
-		fragment: null,
-		ctx: null,
-
 		// state
 		props,
 		update: noop,
 		not_equal,
-		bound: blank_object(),
+		bound: {},
 
 		// lifecycle
 		on_mount: [],
@@ -118,10 +116,10 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		context: new Map(parent_component ? parent_component.$$.context : []),
 
 		// everything else
-		callbacks: blank_object(),
+		callbacks: {},
 		dirty,
 		skip_bound: false
-	};
+	} as T$$;
 
 	let ready = false;
 
@@ -144,17 +142,19 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	$$.fragment = create_fragment ? create_fragment($$.ctx) : false;
 
 	if (options.target) {
+		const { fragment } = $$;
+
 		if (options.hydrate) {
 			const nodes = children(options.target);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			$$.fragment && $$.fragment!.l(nodes);
+			fragment && fragment!.l(nodes);
 			nodes.forEach(detach);
 		} else {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			$$.fragment && $$.fragment!.c();
+			fragment && fragment!.c();
 		}
 
-		if (options.intro) transition_in(component.$$.fragment);
+		if (options.intro) transition_in(fragment);
 		mount_component(component, options.target, options.anchor);
 		flush();
 	}
@@ -191,7 +191,8 @@ if (typeof HTMLElement === 'function') {
 
 		$on(type, callback) {
 			// TODO should this delegate to addEventListener?
-			const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
+			const { $$ } = this;
+			const callbacks = ($$.callbacks[type] || ($$.callbacks[type] = []));
 			callbacks.push(callback);
 
 			return () => {
@@ -201,10 +202,11 @@ if (typeof HTMLElement === 'function') {
 		}
 
 		$set($$props) {
-			if (this.$$set && !is_empty($$props)) {
-				this.$$.skip_bound = true;
-				this.$$set($$props);
-				this.$$.skip_bound = false;
+			const { $$set, $$ } = this;
+			if ($$set && !is_empty($$props)) {
+				$$.skip_bound = true;
+				$$set($$props);
+				$$.skip_bound = false;
 			}
 		}
 	};
@@ -223,7 +225,8 @@ export class SvelteComponent {
 	}
 
 	$on(type, callback) {
-		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
+		const { $$ } = this;
+		const callbacks = ($$.callbacks[type] || ($$.callbacks[type] = []));
 		callbacks.push(callback);
 
 		return () => {
@@ -233,10 +236,11 @@ export class SvelteComponent {
 	}
 
 	$set($$props) {
-		if (this.$$set && !is_empty($$props)) {
-			this.$$.skip_bound = true;
-			this.$$set($$props);
-			this.$$.skip_bound = false;
+		const { $$set, $$ } = this;
+		if ($$set && !is_empty($$props)) {
+			$$.skip_bound = true;
+			$$set($$props);
+			$$.skip_bound = false;
 		}
 	}
 }
