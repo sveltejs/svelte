@@ -14,7 +14,7 @@ Inside the `handleClick` function, all we need to do is change the value of `cou
 
 ```js
 function handleClick() {
-	count += 1;
+	count++;
 }
 ```
 
