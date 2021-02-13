@@ -2,7 +2,7 @@ import { Readable } from 'svelte/store';
 
 export function noop() {}
 
-export const identity = x => x;
+export const identity = <T>(x:T) => x;
 
 export function assign<T, S>(tar: T, src: S): T & S {
 	// @ts-ignore

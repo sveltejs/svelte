@@ -23,6 +23,8 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
+      with:
+        node-version: 14
     - run: 'npm i && npm run lint'
   Unit:
     runs-on: ${{ matrix.os }}
