@@ -38,7 +38,7 @@ export default class EachBlock extends AbstractBlock {
 		this.scope = scope.child();
 
 		this.contexts = [];
-		unpack_destructuring(this.contexts, info.context, node => node);
+		unpack_destructuring(this.contexts, info.context);
 
 		this.contexts.forEach(context => {
 			this.scope.add(context.key.name, this.expression.dependencies, this);

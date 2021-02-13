@@ -1,5 +1,5 @@
 import { x } from 'code-red';
-import { Node, Identifier } from 'estree';
+import { Node, Identifier, Expression } from 'estree';
 import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
 
@@ -7,31 +7,34 @@ export interface Context {
 	key: Identifier;
 	name?: string;
 	modifier: (node: Node) => Node;
+	default_modifier: (node: Node, to_ctx: (name: string) => Node) => Node;
 }
 
-export function unpack_destructuring(contexts: Context[], node: Node, modifier: (node: Node) => Node) {
+export function unpack_destructuring(contexts: Context[], node: Node, modifier: Context['modifier'] = node => node, default_modifier: Context['default_modifier'] = node => node) {
 	if (!node) return;
 
 	if (node.type === 'Identifier') {
 		contexts.push({
 			key: node as Identifier,
-			modifier
+			modifier,
+			default_modifier
 		});
 	} else if (node.type === 'RestElement') {
 		contexts.push({
 			key: node.argument as Identifier,
-			modifier
+			modifier,
+			default_modifier
 		});
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
 			if (element && element.type === 'RestElement') {
-				unpack_destructuring(contexts, element, node => x`${modifier(node)}.slice(${i})` as Node);
+				unpack_destructuring(contexts, element, node => x`${modifier(node)}.slice(${i})` as Node, default_modifier);
 			} else if (element && element.type === 'AssignmentPattern') {
 				const n = contexts.length;
 
-				unpack_destructuring(contexts, element.left, node =>  x`${modifier(node)}[${i}] !== undefined ? ${modifier(node)}[${i}] : ${update_reference(contexts, n, element.right, node)}` as Node);
+				unpack_destructuring(contexts, element.left, node => x`${modifier(node)}[${i}]`, (node, to_ctx) => x`${node} !== undefined ? ${node} : ${update_reference(contexts, n, element.right, to_ctx)}` as Node);
 			} else {
-				unpack_destructuring(contexts, element, node => x`${modifier(node)}[${i}]` as Node);
+				unpack_destructuring(contexts, element, node => x`${modifier(node)}[${i}]` as Node, default_modifier);
 			}
 		});
 	} else if (node.type === 'ObjectPattern') {
@@ -42,7 +45,8 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 				unpack_destructuring(
 					contexts,
 					property.argument,
-					node => x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node
+					node => x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node,
+					default_modifier
 				);
 			} else {
 				const key = property.key as Identifier;
@@ -52,45 +56,40 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 				if (value.type === 'AssignmentPattern') {
 					const n = contexts.length;
 
-					unpack_destructuring(contexts, value.left, node => x`${modifier(node)}.${key.name} !== undefined ? ${modifier(node)}.${key.name} : ${update_reference(contexts, n, value.right, node)}` as Node);
+					unpack_destructuring(contexts, value.left, node => x`${modifier(node)}.${key.name}`, (node, to_ctx) => x`${node} !== undefined ? ${node} : ${update_reference(contexts, n, value.right, to_ctx)}` as Node);
 				} else {
-					unpack_destructuring(contexts, value, node => x`${modifier(node)}.${key.name}` as Node);
+					unpack_destructuring(contexts, value, node => x`${modifier(node)}.${key.name}` as Node, default_modifier);
 				}
 			}
 		});
 	}
 }
 
-function update_reference(contexts: Context[], n: number, info, replacement: Node): Node {
-	if (!n) return info;
-
-	let copy = JSON.parse(JSON.stringify(info)) as Node;
-	const replace = (node: Identifier, callback: (node: Node, context: any) => void, context?: any) => {
-		for (let i = 0; i < n; i++) {
-			const { key, modifier } = contexts[i];
-
+function update_reference(contexts: Context[], n: number, expression: Expression, to_ctx: (name: string) => Node): Node {
+	const find_from_context = (node: Identifier) => {
+		for (let i = n; i < contexts.length; i++) {
+			const { key } = contexts[i];
 			if (node.name === key.name) {
-				callback(modifier(replacement), context);
-				break;
+				throw new Error(`Cannot access '${node.name}' before initialization`);
 			}
 		}
+		return to_ctx(node.name);
 	};
 
-	if (copy.type === 'Identifier') {
-		replace(copy, (node: Node, _context: any) => copy = node);
-	} else {
-		walk(copy, {
-			enter(node, parent: Node) {
-				if (!['Identifier', 'BinaryExpression', 'CallExpression', 'MemberExpression'].includes(node.type)) {
-					return this.skip();
-				}
-
-				if (is_reference(node, parent)) {
-					replace(node as Identifier, (node: Node, context: any) => context && context.replace(node), this);
-				}
-			}
-		});
+	if (expression.type === 'Identifier') {
+		return find_from_context(expression);
 	}
 
-	return copy;
+	// NOTE: avoid unnecessary deep clone?
+	expression = JSON.parse(JSON.stringify(expression)) as Expression;
+	walk(expression, {
+		enter(node, parent: Node) {
+			if (is_reference(node, parent)) {
+				this.replace(find_from_context(node as Identifier));
+				this.skip();
+			}
+		}
+	});
+
+	return expression;
 }
