@@ -1,3 +1,4 @@
+import { TemplateLiteral } from 'estree';
 import read_expression from '../read/expression';
 import read_script from '../read/script';
 import read_style from '../read/style';
@@ -268,6 +269,29 @@ function read_tag_name(parser: Parser) {
 	return name;
 }
 
+function node_to_template_literal(value: TemplateNode[]): TemplateLiteral {
+
+	const literal: TemplateLiteral = {
+		type: "TemplateLiteral",
+		expressions: [],
+		quasis: []
+	};
+
+	value.forEach((node) => {
+		if (node.type === "Text") {
+			literal.quasis.push({
+				type: 'TemplateElement',
+				value: { raw: node.raw, cooked: null },
+				tail: false
+			});
+		} else if (node.type === "MustacheTag") {
+			literal.expressions.push(node.expression);
+		}
+	});
+
+	return literal;
+}
+
 function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const start = parser.index;
 
@@ -365,12 +389,11 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 		const first_value = value[0];
 		let expression = null;
-		let text = null;
 
 		if (first_value) {
 			if ((value as any[]).length > 1 || first_value.type === 'Text') {
 				if (type === 'Style') {
-					text = first_value.data;
+					expression = node_to_template_literal(value as TemplateNode[]);
 				} else {
 					parser.error(parser_errors.invalid_directive_value, first_value.start);
 				}
@@ -404,9 +427,6 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			} as any;
 		}
 
-		if (type === 'Style' && text) {
-			directive.text = text;
-		}
 
 		return directive;
 	}
@@ -458,6 +478,8 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 		data: null
 	};
 
+	const chunks: TemplateNode[] = [];
+
 	function flush() {
 		if (current_chunk.raw) {
 			current_chunk.data = decode_character_references(current_chunk.raw);
@@ -465,8 +487,6 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 			chunks.push(current_chunk);
 		}
 	}
-
-	const chunks: TemplateNode[] = [];
 
 	while (parser.index < parser.template.length) {
 		const index = parser.index;

@@ -17,12 +17,19 @@
 						"name": "color",
 						"modifiers": [],
 						"expression": {
-							"end": 22,
-							"name": "color",
-							"start": 11,
-							"type": "Identifier"
-						},
-						"text": "red"
+							"type": "TemplateLiteral",
+							"expressions": [],
+							"quasis": [
+								{
+									"type": "TemplateElement",
+									"value": {
+										"raw": "red",
+										"cooked": null
+									},
+									"tail": false
+								}
+							]
+						}
 					}
 				],
 				"children": []

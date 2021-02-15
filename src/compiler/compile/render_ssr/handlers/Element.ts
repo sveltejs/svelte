@@ -37,10 +37,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
 
 	const style_expression_list = node.styles.map(style_directive => {
-		const { name, expression: { node: expression }, text } = style_directive;
-		if (text) {
-			return x`"${name}: ${text};"`;
-		}
+		const { name, expression: { node: expression } } = style_directive;
 		return x`"${name}: " + ${expression} + ";"`;
 	});
 	
