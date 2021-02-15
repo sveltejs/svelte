@@ -911,12 +911,7 @@ export default class ElementWrapper extends Wrapper {
 		this.node.styles.forEach((style_directive) => {
 			const { name, expression } = style_directive;
 
-			let snippet;
-			if (expression) {
-				snippet = expression.manipulate(block);
-			} else {
-				snippet = name;
-			}
+			const snippet = expression ? expression.manipulate(block) : name;
 
 			const updater = b`@set_style(${this.var}, "${name}", ${snippet}, false)`;
 
