@@ -272,19 +272,19 @@ function read_tag_name(parser: Parser) {
 function node_to_template_literal(value: TemplateNode[]): TemplateLiteral {
 
 	const literal: TemplateLiteral = {
-		type: "TemplateLiteral",
+		type: 'TemplateLiteral',
 		expressions: [],
 		quasis: []
 	};
 
 	value.forEach((node) => {
-		if (node.type === "Text") {
+		if (node.type === 'Text') {
 			literal.quasis.push({
 				type: 'TemplateElement',
 				value: { raw: node.raw, cooked: null },
 				tail: false
 			});
-		} else if (node.type === "MustacheTag") {
+		} else if (node.type === 'MustacheTag') {
 			literal.expressions.push(node.expression);
 		}
 	});
@@ -426,7 +426,6 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 				name: directive.name
 			} as any;
 		}
-
 
 		return directive;
 	}
