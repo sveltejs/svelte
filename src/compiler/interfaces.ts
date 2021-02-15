@@ -49,7 +49,6 @@ export interface Transition extends BaseDirective{
 
 export interface StyleDirective extends BaseDirective {
 	type: 'Style';
-	text: string;
 }
 
 export type Directive = BaseDirective | Transition;
