@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Custom Elements - Call onMount when connected & clean-up when disconnected ([#4522](https://github.com/sveltejs/svelte/pull/4522))
+* Custom Elements - Call `onMount` when connected & clean-up when disconnected ([#4522](https://github.com/sveltejs/svelte/pull/4522))
 
 ## 3.32.3
 
