@@ -2,7 +2,7 @@ import { custom_event, append, insert, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
-	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }));
+	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, true));
 }
 
 export function append_dev(target: Node, node: Node) {
