@@ -139,7 +139,7 @@ export default class Component {
 			filename: compile_options.filename,
 			component_name: name,
 			dev: compile_options.dev,
-			scope_class_getter: compile_options.scopeClass
+			get_css_hash: compile_options.cssHash
 		});
 		this.stylesheet.validate(this);
 

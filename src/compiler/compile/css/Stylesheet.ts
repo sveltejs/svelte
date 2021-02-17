@@ -2,7 +2,7 @@ import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
 import Element from '../nodes/Element';
-import { Ast, CssScopeClassGetter } from '../../interfaces';
+import { Ast, CssHashGetter } from '../../interfaces';
 import Component from '../Component';
 import { CssNode } from './interfaces';
 import hash from '../utils/hash';
@@ -275,7 +275,7 @@ class Atrule {
 	}
 }
 
-const getDefaultScopeClass: CssScopeClassGetter = ({ hash }) => {
+const get_default_css_hash: CssHashGetter = ({ hash }) => {
 	return `svelte-${hash}`;
 };
 
@@ -299,14 +299,14 @@ export default class Stylesheet {
 		component_name,
 		filename,
 		dev,
-		scope_class_getter = getDefaultScopeClass,
+		get_css_hash = get_default_css_hash,
 	}: {
 		source: string;
 		ast: Ast;
 		filename: string | undefined;
 		component_name: string | undefined;
 		dev: boolean;
-		scope_class_getter: CssScopeClassGetter;
+		get_css_hash: CssHashGetter;
 	}) {
 		this.source = source;
 		this.ast = ast;
@@ -314,7 +314,7 @@ export default class Stylesheet {
 		this.dev = dev;
 
 		if (ast.css && ast.css.children.length) {
-			this.id = scope_class_getter({
+			this.id = get_css_hash({
 				filename,
 				name: component_name,
 				hash: hash(ast.css.content.styles),

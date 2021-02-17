@@ -104,7 +104,7 @@ export interface Warning {
 
 export type ModuleFormat = 'esm' | 'cjs';
 
-export type CssScopeClassGetter = (args: {
+export type CssHashGetter = (args: {
 	name: string;
 	filename: string | undefined;
 	hash: string;
@@ -131,7 +131,7 @@ export interface CompileOptions {
 	css?: boolean;
 	loopGuardTimeout?: number;
 	namespace?: string;
-	scopeClass?: CssScopeClassGetter;
+	cssHash?: CssHashGetter;
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;
