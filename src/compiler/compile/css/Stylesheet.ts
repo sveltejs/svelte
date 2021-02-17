@@ -299,7 +299,7 @@ export default class Stylesheet {
 		component_name,
 		filename,
 		dev,
-		get_css_hash = get_default_css_hash,
+		get_css_hash = get_default_css_hash
 	}: {
 		source: string;
 		ast: Ast;
@@ -317,7 +317,7 @@ export default class Stylesheet {
 			this.id = get_css_hash({
 				filename,
 				name: component_name,
-				hash: hash(ast.css.content.styles),
+				hash: hash(ast.css.content.styles)
 			});
 
 			this.has_styles = true;

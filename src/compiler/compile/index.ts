@@ -29,7 +29,7 @@ const valid_options = [
 	'loopGuardTimeout',
 	'preserveComments',
 	'preserveWhitespace',
-	'cssHash',
+	'cssHash'
 ];
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {

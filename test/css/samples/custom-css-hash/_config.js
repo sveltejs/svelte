@@ -7,6 +7,6 @@ export default {
 				.map(i => i.charAt(0).toLowerCase())
 				.join('');
 			return `sv-${name}-${minFilename}-${hash}`;
-		},
-	},
+		}
+	}
 };
