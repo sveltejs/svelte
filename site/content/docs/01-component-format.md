@@ -6,11 +6,15 @@ title: Component format
 
 Components are the building blocks of Svelte applications. They are written into `.svelte` files, using a superset of HTML.
 
-All three sections — script, styles and markup — are optional.
+All four sections — script context="module", script, styles and markup — are optional.
 
 ```sv
+<script context="module">
+  // here is javasript code, that runs once when the module first evaluates
+</script>
+
 <script>
-	// logic goes here
+	// javascript code of logic goes here
 </script>
 
 <style>
