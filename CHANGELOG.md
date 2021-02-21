@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Custom Elements - Call `onMount` when connected & clean-up when disconnected ([#4522](https://github.com/sveltejs/svelte/pull/4522))
+
 ## 3.32.3
 
 * Fix removal of lone `:host` selectors ([#5982](https://github.com/sveltejs/svelte/issues/5982))
