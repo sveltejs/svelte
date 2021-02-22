@@ -8,6 +8,8 @@ Components are the building blocks of Svelte applications. They are written into
 
 All four tags — `<script context="module">`, `<script>`, `<styles>` and html markup — are optional.
 
+html markup can contain as much root elements as You want.
+
 ```sv
 <script context="module">
   // this code runs when the module first evaluates
