@@ -10,7 +10,7 @@ All four tags — `<script context="module">`, `<script>`, `<styles>` and html m
 
 ```sv
 <script context="module">
-  // here is javascript code, that runs once when the module first evaluates
+  // this code runs when the module first evaluates
 </script>
 
 <script>
