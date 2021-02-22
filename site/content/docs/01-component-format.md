@@ -14,7 +14,7 @@ All four tags — `<script context="module">`, `<script>`, `<styles>` and html m
 </script>
 
 <script>
-	// javascript code of logic goes here
+	// logic goes here
 </script>
 
 <style>
