@@ -10,7 +10,7 @@ All four sections — script context="module", script, styles and markup — are
 
 ```sv
 <script context="module">
-  // here is javasript code, that runs once when the module first evaluates
+  // here is javascript code, that runs once when the module first evaluates
 </script>
 
 <script>
