@@ -325,7 +325,8 @@ export default class Expression {
 								// child_ctx[x] = function () { ... }
 								(template_scope.get_owner(deps[0]) as EachBlock).contexts.push({
 									key: func_id,
-									modifier: () => func_expression
+									modifier: () => func_expression,
+									default_modifier: node => node
 								});
 								this.replace(block.renderer.reference(func_id));
 							}
