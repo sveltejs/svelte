@@ -3,9 +3,12 @@
 <script>
 	import { onMount } from 'svelte';
 
-	export let wasCreated;
+  export let prop = false;
+  export let propsInitialized;
+  export let wasCreated;
 
-	onMount(() => {
-		wasCreated = true;
-	});
+  onMount(() => {
+    propsInitialized = prop !== false;
+    wasCreated = true;
+  });
 </script>

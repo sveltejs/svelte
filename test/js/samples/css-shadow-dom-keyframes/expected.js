@@ -40,7 +40,8 @@ class Component extends SvelteElement {
 			this,
 			{
 				target: this.shadowRoot,
-				props: attribute_to_object(this.attributes)
+				props: attribute_to_object(this.attributes),
+				customElement: true
 			},
 			null,
 			create_fragment,
