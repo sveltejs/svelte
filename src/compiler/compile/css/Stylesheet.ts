@@ -275,8 +275,8 @@ class Atrule {
 	}
 }
 
-const get_default_css_hash: CssHashGetter = ({ hash }) => {
-	return `svelte-${hash}`;
+const get_default_css_hash: CssHashGetter = ({ css, hash }) => {
+	return `svelte-${hash(css)}`;
 };
 
 export default class Stylesheet {
@@ -317,7 +317,8 @@ export default class Stylesheet {
 			this.id = get_css_hash({
 				filename,
 				name: component_name,
-				hash: hash(ast.css.content.styles)
+				css: ast.css.content.styles,
+				hash
 			});
 
 			this.has_styles = true;

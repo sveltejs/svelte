@@ -107,7 +107,8 @@ export type ModuleFormat = 'esm' | 'cjs';
 export type CssHashGetter = (args: {
 	name: string;
 	filename: string | undefined;
-	hash: string;
+	css: string;
+	hash: (input: string) => string;
 }) => string;
 
 export interface CompileOptions {
