@@ -110,8 +110,8 @@ describe('custom-elements', function() {
 
 			const page = await browser.newPage();
 
-			page.on('console', (type, ...args) => {
-				console[type](...args);
+			page.on('console', (type) => {
+				console[type._type](type._text);
 			});
 
 			page.on('error', error => {
