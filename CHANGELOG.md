@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.34.0
+
+* Add a `cssHash` option for controlling the classname used for CSS scoping ([#570](https://github.com/sveltejs/svelte/issues/570))
+
 ## 3.33.0
 
 * In custom elements, call `onMount` functions when connecting and clean up when disconnecting ([#1152](https://github.com/sveltejs/svelte/issues/1152), [#2227](https://github.com/sveltejs/svelte/issues/2227), [#4522](https://github.com/sveltejs/svelte/pull/4522))
