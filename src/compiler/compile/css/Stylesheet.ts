@@ -2,7 +2,7 @@ import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
 import Element from '../nodes/Element';
-import { Ast } from '../../interfaces';
+import { Ast, CssHashGetter } from '../../interfaces';
 import Component from '../Component';
 import { CssNode } from './interfaces';
 import hash from '../utils/hash';
@@ -275,6 +275,10 @@ class Atrule {
 	}
 }
 
+const get_default_css_hash: CssHashGetter = ({ css, hash }) => {
+	return `svelte-${hash(css)}`;
+};
+
 export default class Stylesheet {
 	source: string;
 	ast: Ast;
@@ -289,14 +293,33 @@ export default class Stylesheet {
 
 	nodes_with_css_class: Set<CssNode> = new Set();
 
-	constructor(source: string, ast: Ast, filename: string, dev: boolean) {
+	constructor({
+		source,
+		ast,
+		component_name,
+		filename,
+		dev,
+		get_css_hash = get_default_css_hash
+	}: {
+		source: string;
+		ast: Ast;
+		filename: string | undefined;
+		component_name: string | undefined;
+		dev: boolean;
+		get_css_hash: CssHashGetter;
+	}) {
 		this.source = source;
 		this.ast = ast;
 		this.filename = filename;
 		this.dev = dev;
 
 		if (ast.css && ast.css.children.length) {
-			this.id = `svelte-${hash(ast.css.content.styles)}`;
+			this.id = get_css_hash({
+				filename,
+				name: component_name,
+				css: ast.css.content.styles,
+				hash
+			});
 
 			this.has_styles = true;
 

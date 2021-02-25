@@ -133,12 +133,14 @@ export default class Component {
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
 		// styles
-		this.stylesheet = new Stylesheet(
+		this.stylesheet = new Stylesheet({
 			source,
 			ast,
-			compile_options.filename,
-			compile_options.dev
-		);
+			filename: compile_options.filename,
+			component_name: name,
+			dev: compile_options.dev,
+			get_css_hash: compile_options.cssHash
+		});
 		this.stylesheet.validate(this);
 
 		this.component_options = process_component_options(
