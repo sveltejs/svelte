@@ -449,6 +449,17 @@ export default class Element extends Node {
 			const href_attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
 			const id_attribute = attribute_map.get('id');
 			const name_attribute = attribute_map.get('name');
+			const target_attribute = attribute_map.get('target');
+			const rel_attribute = attribute_map.get('rel');
+
+			if (target_attribute && target_attribute.get_static_value() === '_blank' && 
+				(!rel_attribute || !/noopener|noreferrer/.test(rel_attribute.get_static_value()))) {
+				// https://web.dev/external-anchors-use-rel-noopener/
+				component.warn(target_attribute, {
+					code: 'missing-attribute',
+					message: 'target="_blank" links should have a rel="noopener" attribute'
+				});
+			}
 
 			if (href_attribute) {
 				const href_value = href_attribute.get_static_value();

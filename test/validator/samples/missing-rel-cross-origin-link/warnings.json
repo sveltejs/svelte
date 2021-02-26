@@ -1,0 +1,17 @@
+[
+	{
+		"code": "missing-attribute",
+		"end": {
+			"character": 45,
+			"column": 45,
+			"line": 1
+		},
+		"message": "target=\"_blank\" links should have a rel=\"noopener\" attribute",
+		"pos": 30,
+		"start": {
+			"character": 30,
+			"column": 30,
+			"line": 1
+		}
+	}
+]
