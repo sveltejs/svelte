@@ -1,5 +1,25 @@
 # Svelte changelog
 
+## 3.34.0
+
+* Add a `cssHash` option for controlling the classname used for CSS scoping ([#570](https://github.com/sveltejs/svelte/issues/570))
+
+## 3.33.0
+
+* In custom elements, call `onMount` functions when connecting and clean up when disconnecting ([#1152](https://github.com/sveltejs/svelte/issues/1152), [#2227](https://github.com/sveltejs/svelte/issues/2227), [#4522](https://github.com/sveltejs/svelte/pull/4522))
+* Allow destructured defaults to refer to other variables ([#5066](https://github.com/sveltejs/svelte/issues/5066))
+* Do not emit `contextual-store` warnings for function parameters or declared variables ([#6008](https://github.com/sveltejs/svelte/pull/6008))
+
+## 3.32.3
+
+* Fix removal of lone `:host` selectors ([#5982](https://github.com/sveltejs/svelte/issues/5982))
+
+## 3.32.2
+
+* Fix unnecessary additional invalidation with `<Component bind:prop={obj.foo}/>` ([#3075](https://github.com/sveltejs/svelte/issues/3075), [#4447](https://github.com/sveltejs/svelte/issues/4447), [#5555](https://github.com/sveltejs/svelte/issues/5555))
+* Fix scoping of selectors with `:global()` and `~` sibling combinators ([#5499](https://github.com/sveltejs/svelte/issues/5499))
+* Fix removal of `:host` selectors as unused when compiling to a custom element ([#5946](https://github.com/sveltejs/svelte/issues/5946))
+
 ## 3.32.1
 
 * Warn when using `module` variables reactively, and close weird reactivity loophole ([#5847](https://github.com/sveltejs/svelte/pull/5847))

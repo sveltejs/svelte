@@ -44,7 +44,10 @@ export default class Selector {
 		}
 
 		this.local_blocks = this.blocks.slice(0, i);
-		this.used = this.local_blocks.length === 0;
+
+		const host_only = this.blocks.length === 1 && this.blocks[0].host;
+
+		this.used = this.local_blocks.length === 0 || host_only;
 	}
 
 	apply(node: Element) {
@@ -84,7 +87,7 @@ export default class Selector {
 			while (i--) {
 				const selector = block.selectors[i];
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
-					if (selector.name !== 'root') {
+					if (selector.name !== 'root' && selector.name !== 'host') {
 						if (i === 0) code.prependRight(selector.start, attr);
 					}
 					continue;
@@ -162,7 +165,10 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: any[]): 
 	if (!block) return false;
 
 	if (!node) {
-		return block.global && blocks.every(block => block.global);
+		return (
+      (block.global && blocks.every(block => block.global)) ||
+      (block.host && blocks.length === 0)
+    );
 	}
 
 	switch (block_might_apply_to_node(block, node)) {
@@ -180,6 +186,11 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: any[]): 
 			for (const ancestor_block of blocks) {
 				if (ancestor_block.global) {
 					continue;
+				}
+
+				if (ancestor_block.host) {
+					to_encapsulate.push({ node, block });
+					return true;
 				}
 
 				let parent = node;
@@ -211,6 +222,19 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: any[]): 
 		} else if (block.combinator.name === '+' || block.combinator.name === '~') {
 			const siblings = get_possible_element_siblings(node, block.combinator.name === '+');
 			let has_match = false;
+
+			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the 
+			// css-tree limitation that does not parse the inner selector of :global
+			// so unless we are sure there will be no sibling to match, we will consider it as matched
+			const has_global = blocks.some(block => block.global);
+			if (has_global) {
+				if (siblings.size === 0 && get_element_parent(node) !== null) {
+					return false;
+				}
+				to_encapsulate.push({ node, block });
+				return true;
+			}
+
 			for (const possible_sibling of siblings.keys()) {
 				if (apply_selector(blocks.slice(), possible_sibling, to_encapsulate)) {
 					to_encapsulate.push({ node, block });
@@ -235,6 +259,10 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 	while (i--) {
 		const selector = block.selectors[i];
 		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
+
+		if (selector.type === 'PseudoClassSelector' && name === 'host') {
+			return BlockAppliesToNode.NotPossible;
+		}
 
 		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
 			continue;
@@ -541,6 +569,7 @@ function loop_child(children: INode[], adjacent_only: boolean) {
 
 class Block {
 	global: boolean;
+	host: boolean;
 	combinator: CssNode;
 	selectors: CssNode[]
 	start: number;
@@ -550,6 +579,7 @@ class Block {
 	constructor(combinator: CssNode) {
 		this.combinator = combinator;
 		this.global = false;
+		this.host = false;
 		this.selectors = [];
 
 		this.start = null;
@@ -562,6 +592,7 @@ class Block {
 		if (this.selectors.length === 0) {
 			this.start = selector.start;
 			this.global = selector.type === 'PseudoClassSelector' && selector.name === 'global';
+			this.host = selector.type === 'PseudoClassSelector' && selector.name === 'host';
 		}
 
 		this.selectors.push(selector);
