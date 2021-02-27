@@ -312,6 +312,51 @@ const { code } = await svelte.preprocess(source, [
 });
 ```
 
+An additional level of nesting allows more control over the timing of subsequent `markup` functions.
+
+```js
+const svelte = require('svelte/compiler');
+
+const { code } = await svelte.preprocess(source, [
+	[
+		{
+			markup: () => {
+				console.log('this runs first');
+			},
+			script: () => {
+				console.log('this runs third');
+			},
+			style: () => {
+				console.log('this runs fifth');
+			}
+		},
+		{
+			markup: () => {
+				console.log('this runs second');
+			},
+			script: () => {
+				console.log('this runs fourth');
+			},
+			style: () => {
+				console.log('this runs sixth');
+			}
+		}
+	],
+	{
+		markup: () => {
+			console.log('this runs seventh');
+		},
+		script: () => {
+			console.log('this runs eighth');
+		},
+		style: () => {
+			console.log('this runs ninth');
+		}
+	}
+], {
+	filename: 'App.svelte'
+});
+```
 
 ### `svelte.walk`
 

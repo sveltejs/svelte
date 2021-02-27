@@ -195,27 +195,51 @@ async function process_markup(filename: string, process: MarkupPreprocessor, sou
 	}
 }
 
-export default async function preprocess(
-	source: string,
-	preprocessor: PreprocessorGroup | PreprocessorGroup[],
-	options?: { filename?: string }
-): Promise<Processed> {
-	// @ts-ignore todo: doublecheck
-	const filename = (options && options.filename) || preprocessor.filename; // legacy
+function ensureArray<T>(x: T): T extends readonly any[] ? T : T[] {
+	// @ts-ignore
+	return Array.isArray(x)? x : [x];
+}
 
-	const preprocessors = preprocessor ? (Array.isArray(preprocessor) ? preprocessor : [preprocessor]) : [];
+function groupPreprocessors(preprocessorsIn: Array<PreprocessorGroup|PreprocessorGroup[]>): PreprocessorGroup[][] {
+	const preprocessors = { completed: [], building: [] };
 
-	const markup = preprocessors.map(p => p.markup).filter(Boolean);
-	const script = preprocessors.map(p => p.script).filter(Boolean);
-	const style = preprocessors.map(p => p.style).filter(Boolean);
+	function cleanUpBuilding() {
+		if (preprocessors.building.length) {
+		preprocessors.completed.push(preprocessors.building);
+		preprocessors.building = [];
+		}
+	}
 
-	const result = new PreprocessResult(source, filename);
+	for (const current of preprocessorsIn) {
+		if (Array.isArray(current)) {
+			cleanUpBuilding();
+			preprocessors.completed.push(current);
+		} else {
+			preprocessors.building.push(current);
+		}
+	}
+
+	cleanUpBuilding();
+
+	return preprocessors.completed;
+
+}
+
+async function preprocessGrouped<T extends PreprocessResult>(
+	result: T,
+	preprocessorGroup: PreprocessorGroup[]|PreprocessorGroup
+): Promise<void> {
+	const preprocessors = ensureArray(preprocessorGroup);
+	
+	const markup = preprocessors.map((p) => p.markup).filter(Boolean);
+	const script = preprocessors.map((p) => p.script).filter(Boolean);
+	const style = preprocessors.map((p) => p.style).filter(Boolean);
 
 	// TODO keep track: what preprocessor generated what sourcemap?
 	// to make debugging easier = detect low-resolution sourcemaps in fn combine_mappings
 
 	for (const process of markup) {
-		result.update_source(await process_markup(filename, process, result));
+		result.update_source(await process_markup(result.filename, process, result));
 	}
 
 	for (const process of script) {
@@ -224,6 +248,22 @@ export default async function preprocess(
 
 	for (const preprocess of style) {
 		result.update_source(await process_tag('style', preprocess, result));
+	}
+
+	return;
+}
+
+export default async function preprocess(
+	source: string,
+	preprocessor: PreprocessorGroup | Array<PreprocessorGroup | PreprocessorGroup[]> = [],
+	options?: { filename?: string }
+): Promise<Processed> {
+	// @ts-ignore todo: doublecheck
+	const filename = (options && options.filename) || preprocessor.filename; // legacy
+	const result = new PreprocessResult(source, filename);
+
+	for (const preprocessorGrouping of groupPreprocessors(ensureArray(preprocessor))) {
+		await preprocessGrouped(result, preprocessorGrouping);
 	}
 
 	return result.to_processed();
