@@ -5,10 +5,10 @@ export default {
 		const called = [];
 		const component = new Component({
 			target,
-			context: {
-				key: 'svelte',
-				fn: (value) => called.push(value)
-			}
+			context: new Map([
+				['key', 'svelte'],
+				['fn', (value) => called.push(value)]
+			])
 		});
 		assert.htmlEqual(target.innerHTML, '<div>svelte</div><button></button>');
 
