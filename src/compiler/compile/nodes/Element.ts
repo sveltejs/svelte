@@ -301,7 +301,7 @@ export default class Element extends Node {
 					component.slot_outlets.add(name);
 				}
 
-				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
+				if (!(parent.type === 'SlotTemplate' || within_custom_element(parent))) {
 					component.error(attribute, {
 						code: 'invalid-slotted-content',
 						message: 'Element with a slot=\'...\' attribute must be a child of a component or a descendant of a custom element'
@@ -905,6 +905,10 @@ export default class Element extends Node {
 				} as any)
 			);
 		}
+	}
+
+	get slot_template_name() {
+		return this.attributes.find(attribute => attribute.name === 'slot').get_static_value() as string;
 	}
 }
 
