@@ -24,7 +24,6 @@ For a complete list of changes, including bug fixes and links to PRs, check out 
 
 ## New from `sveltejs/language-tools`
 
-- TypeScript's control flow pattern now works (as of TS 4.2) as of VS Code Svelte extension version 104.4.4 and `svelte-check` version 1.1.36.
 - For language server clients that don't support `didChangeWatchedFiles`, a fallback file watcher will be used instead
 - svelte-check 1.1.33 / extension version 104.4.0 introduced new highlighting rules for reactive statements, store accessors and element directives (like `bind:` and `class:`)
 - HTML tags can now be renamed at the same time
