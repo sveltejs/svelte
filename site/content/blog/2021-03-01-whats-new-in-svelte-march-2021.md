@@ -25,8 +25,8 @@ For a complete list of changes, including bug fixes and links to PRs, check out 
 ## New from `sveltejs/language-tools`
 
 - For language server clients that don't support `didChangeWatchedFiles`, a fallback file watcher will be used instead
-- svelte-check 1.1.33 / extension version 104.4.0 introduced new highlighting rules for reactive statements, store accessors and element directives (like `bind:` and `class:`)
-- HTML tags can now be renamed at the same time
+- Svelte for VS Code version 104.4.0 introduced new highlighting rules for store accessors and element directives (like `bind:` and `class:`)
+- HTML tags can now be renamed
 - Mustache tags parsing is now more robust and will provide better intellisense in more situations
 
 Haven't tried the language-tools yet? Check out [Svelte Extension for VSCode](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) or find a plugin for your favorite IDE!
