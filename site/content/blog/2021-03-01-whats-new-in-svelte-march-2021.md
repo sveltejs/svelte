@@ -5,13 +5,13 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-Lots to cover this month with releases from across the Svelte ecosystem. Most importantly, Svelte Summit Spring 2021 has an [Open Call for Speakers](https://sessionize.com/svelte-summit-spring-2021). **The deadlinen is March 14** so if you have an idea for a talk, submit it now!
+Lots to cover this month with releases from across the Svelte ecosystem. Most importantly, Svelte Summit Spring 2021 has an [Open Call for Speakers](https://sessionize.com/svelte-summit-spring-2021). **The deadline is March 14** so if you have an idea for a talk, submit it now!
 
 Let's dive into the news 🐬
 
 ## What's new in `sveltejs/svelte`
 * SSR store handling has been reworked to subscribe and unsubscribe as in DOM mode. SSR stores should work much more consistently now (**3.31.2**, see [custom stores](https://svelte.dev/examples#custom-stores) and [Server-side component API ](https://svelte.dev/docs#Server-side_component_API))
-* Multiple instances of the same action are now allowed on an element (**3.32.0**, [xample](https://svelte.dev/repl/01a14375951749dab9579cb6860eccde?version=3.32.0))
+* Multiple instances of the same action are now allowed on an element (**3.32.0**, [example](https://svelte.dev/repl/01a14375951749dab9579cb6860eccde?version=3.32.0))
 * The new `foreign` namespace should make it easier for alternative compile targets (like Svelte Native and SvelteGUI) by disabling certain HTML5-specific behaviour and checks (**3.32.0**, [more info](https://github.com/sveltejs/svelte/pull/5652))
 * Support for inline comment sourcemaps in code from preprocessors (**3.32.0**)
 * Destructured defaults are now allowed to refer to other variables (**3.33.0**, [example](https://svelte.dev/repl/0ee7227e1b45465b9b47d7a5ae2d1252?version=3.33.0))
