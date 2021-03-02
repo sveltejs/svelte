@@ -164,12 +164,17 @@ export default class SlotWrapper extends Wrapper {
 			? Array.from(this.fallback.dependencies).filter((name) => this.is_dependency_dynamic(name))
 			: [];
 
+		let condition = renderer.dirty(dynamic_dependencies);
+		if (block.has_outros) {
+			condition = x`!#current || ${condition}`;
+		}
+
 		const slot_update = get_slot_spread_changes_fn ? b`
-			if (${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
+			if (${slot}.p && ${condition}) {
 				@update_slot_spread(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_spread_changes_fn}, ${get_slot_context_fn});
 			}
 		` : b`
-			if (${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
+			if (${slot}.p && ${condition}) {
 				@update_slot(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_context_fn});
 			}
 		`;
