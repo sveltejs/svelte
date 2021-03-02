@@ -18,5 +18,15 @@ export default {
 		assert.deepEqual(called, ['hello world']);
 
 		component.$destroy();
+	},
+	test_ssr({ assert }) {
+		const Component = require('./Component.svelte').default;
+
+		const called = [];
+		const { html } = Component.render(undefined, undefined, new Map([
+			['key', 'svelte'],
+			['fn', (value) => called.push(value)]
+		]));
+		assert.htmlEqual(html, '<div>svelte</div><button></button>');
 	}
 };
