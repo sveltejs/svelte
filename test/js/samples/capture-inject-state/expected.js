@@ -106,6 +106,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_prop());
 	let { $$slots: slots = {}, $$scope } = $$props;
+	let { $$inject } = $$props;
 	validate_slots("Component", slots, []);
 	let { prop } = $$props;
 	validate_store(prop, "prop");
@@ -147,8 +148,8 @@ function instance($$self, $$props, $$invalidate) {
 		if ("computed" in $$props) computed = $$props.computed;
 	};
 
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
+	if ($$inject) {
+		$$self.$inject_state($$inject);
 	}
 
 	$: computed = local * 2;

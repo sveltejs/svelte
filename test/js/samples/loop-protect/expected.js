@@ -68,6 +68,7 @@ function foo() {
 
 function instance($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
+	let { $$inject } = $$props;
 	validate_slots("Component", slots, []);
 	let node;
 
@@ -126,8 +127,8 @@ function instance($$self, $$props, $$invalidate) {
 		if ("node" in $$props) $$invalidate(0, node = $$props.node);
 	};
 
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
+	if ($$inject) {
+		$$self.$inject_state($$inject);
 	}
 
 	$: {

@@ -210,8 +210,8 @@ export default function dom(
 			`;
 
 			props_inject = b`
-				if ($$props && "$$inject" in $$props) {
-					$$self.$inject_state($$props.$$inject);
+				if ($$inject) {
+					$$self.$inject_state($$inject);
 				}
 			`;
 		}
@@ -425,6 +425,9 @@ export default function dom(
 				${resubscribable_reactive_store_unsubscribers}
 
 				${component.slots.size || component.compile_options.dev || uses_slots ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
+				${props_inject ? b`let { $$inject } = $$props;` : null}
+				${uses_props && b`$$props = @exclude_internal_props($$props);`}
+
 				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
 				${compute_slots}
 
@@ -451,8 +454,6 @@ export default function dom(
 				`}
 
 				${fixed_reactive_declarations}
-
-				${uses_props && b`$$props = @exclude_internal_props($$props);`}
 
 				return ${return_value};
 			}
