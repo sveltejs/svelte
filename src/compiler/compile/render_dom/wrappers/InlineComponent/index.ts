@@ -4,12 +4,11 @@ import Renderer from '../../Renderer';
 import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
 import FragmentWrapper from '../Fragment';
+import SlotTemplateWrapper from '../SlotTemplate';
 import { sanitize } from '../../../../utils/names';
 import add_to_set from '../../../utils/add_to_set';
 import { b, x, p } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
-import create_debugging_comment from '../shared/create_debugging_comment';
-import { get_slot_definition } from '../shared/get_slot_definition';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
@@ -18,12 +17,16 @@ import EventHandler from '../Element/EventHandler';
 import { extract_names } from 'periscopic';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import { string_to_member_expression } from '../../../utils/string_to_member_expression';
+import SlotTemplate from '../../../nodes/SlotTemplate';
+
+type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
-	slots: Map<string, { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node }> = new Map();
+	slots: Map<string, SlotDefinition> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
+	children: Array<Wrapper | FragmentWrapper> = [];
 
 	constructor(
 		renderer: Renderer,
@@ -76,30 +79,20 @@ export default class InlineComponentWrapper extends Wrapper {
 				});
 			});
 
-			const default_slot = block.child({
-				comment: create_debugging_comment(node, renderer.component),
-				name: renderer.component.get_unique_name('create_default_slot'),
-				type: 'slot'
-			});
-
-			this.renderer.blocks.push(default_slot);
-
-			this.slots.set('default', get_slot_definition(default_slot, this.node.scope, this.node.lets));
-			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, strip_whitespace, next_sibling);
-
-			const dependencies: Set<string> = new Set();
-
-			// TODO is this filtering necessary? (I *think* so)
-			default_slot.dependencies.forEach(name => {
-				if (!this.node.scope.is_let(name)) {
-					dependencies.add(name);
-				}
-			});
-
-			block.add_dependencies(dependencies);
+			this.children = this.node.children.map(child => new SlotTemplateWrapper(renderer, block, this, child as SlotTemplate, strip_whitespace, next_sibling));
 		}
 
 		block.add_outro();
+	}
+
+	set_slot(name: string, slot_definition: SlotDefinition) {
+		if (this.slots.has(name)) {
+			if (name === 'default') {
+				throw new Error('Found elements without slot attribute when using slot="default"');
+			}
+			throw new Error(`Duplicate slot name "${name}" in <${this.node.name}>`);
+		}
+		this.slots.set(name, slot_definition);
 	}
 
 	warn_if_reactive() {
@@ -135,14 +128,10 @@ export default class InlineComponentWrapper extends Wrapper {
 		const statements: Array<Node | Node[]> = [];
 		const updates: Array<Node | Node[]> = [];
 
-		if (this.fragment) {
+		this.children.forEach((child) => {
 			this.renderer.add_to_context('$$scope', true);
-			const default_slot = this.slots.get('default');
-
-			this.fragment.nodes.forEach((child) => {
-				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
-			});
-		}
+			child.render(block, null, x`#nodes` as Identifier);
+		});
 
 		let props;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
@@ -194,7 +183,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			component_opts.properties.push(p`$$inline: true`);
 		}
 
-		const fragment_dependencies = new Set(this.fragment ? ['$$scope'] : []);
+		const fragment_dependencies = new Set(this.slots.size ? ['$$scope'] : []);
 		this.slots.forEach(slot => {
 			slot.block.dependencies.forEach(name => {
 				const is_let = slot.scope.is_let(name);

@@ -11,7 +11,6 @@ import { is_reserved_keyword } from '../../utils/reserved_keywords';
 import is_dynamic from './shared/is_dynamic';
 import { Identifier, ObjectExpression } from 'estree';
 import create_debugging_comment from './shared/create_debugging_comment';
-import create_slot_block from './Element/create_slot_block';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
@@ -41,10 +40,6 @@ export default class SlotWrapper extends Wrapper {
 				type: 'fallback'
 			});
 			renderer.blocks.push(this.fallback);
-		}
-
-		if (this.node.values.has('slot')) {
-			block = create_slot_block(this.node.values.get('slot'), this, block);
 		}
 
 		this.fragment = new FragmentWrapper(

@@ -15,7 +15,7 @@ export default function create_debugging_comment(
 
 	let d;
 
-	if (node.type === 'InlineComponent' || node.type === 'Element') {
+	if (node.type === 'InlineComponent' || node.type === 'Element' || node.type === 'SlotTemplate') {
 		if (node.children.length) {
 			d = node.children[0].start;
 			while (source[d - 1] !== '>') d -= 1;

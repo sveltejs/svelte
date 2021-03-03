@@ -11,6 +11,7 @@ import InlineComponent from './InlineComponent/index';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
 import Slot from './Slot';
+import SlotTemplate from './SlotTemplate';
 import Text from './Text';
 import Title from './Title';
 import Window from './Window';
@@ -36,6 +37,7 @@ const wrappers = {
 	Options: null,
 	RawMustacheTag,
 	Slot,
+	SlotTemplate,
 	Text,
 	Title,
 	Window
