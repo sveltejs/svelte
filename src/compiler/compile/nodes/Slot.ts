@@ -37,28 +37,6 @@ export default class Slot extends Element {
 
 		if (!this.slot_name) this.slot_name = 'default';
 
-		if (this.slot_name === 'default') {
-			// if this is the default slot, add our dependencies to any
-			// other slots (which inherit our slot values) that were
-			// previously encountered
-			component.slots.forEach((slot) => {
-				this.values.forEach((attribute, name) => {
-					if (!slot.values.has(name)) {
-						slot.values.set(name, attribute);
-					}
-				});
-			});
-		} else if (component.slots.has('default')) {
-			// otherwise, go the other way — inherit values from
-			// a previously encountered default slot
-			const default_slot = component.slots.get('default');
-			default_slot.values.forEach((attribute, name) => {
-				if (!this.values.has(name)) {
-					this.values.set(name, attribute);
-				}
-			});
-		}
-
 		component.slots.set(this.slot_name, this);
 	}
 }

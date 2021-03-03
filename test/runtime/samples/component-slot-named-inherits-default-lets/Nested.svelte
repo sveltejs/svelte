@@ -1,6 +1,4 @@
 <script>
-	import { onDestroy } from 'svelte';
-
 	let count = 0;
 
 	function increment() {

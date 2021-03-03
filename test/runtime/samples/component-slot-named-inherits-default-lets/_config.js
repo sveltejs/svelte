@@ -3,7 +3,7 @@ export default {
 		<div>
 			<p>count in default slot: 0</p>
 			<p slot="foo">count in foo slot: 0</p>
-			<p slot="bar">count in bar slot: 0</p>
+			<p slot="bar">count in bar slot: undefined</p>
 			<button>+1</button>
 		</div>
 	`,
@@ -17,7 +17,7 @@ export default {
 			<div>
 				<p>count in default slot: 1</p>
 				<p slot="foo">count in foo slot: 1</p>
-				<p slot="bar">count in bar slot: 1</p>
+				<p slot="bar">count in bar slot: undefined</p>
 				<button>+1</button>
 			</div>
 		`);
