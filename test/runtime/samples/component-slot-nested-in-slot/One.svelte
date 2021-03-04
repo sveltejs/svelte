@@ -3,6 +3,8 @@
 	export let a, b;
 </script>
 
-<Two {b} let:two>
-	<slot name="one" slot="two" one={a} two={two}></slot>
+<Two {b}>
+	<svelte:fragment slot="two" let:two>
+		<slot name="one" one={a} two={two}></slot>
+	</svelte:fragment>
 </Two>

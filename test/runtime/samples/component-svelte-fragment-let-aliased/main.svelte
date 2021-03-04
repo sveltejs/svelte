@@ -4,8 +4,8 @@
 	export let things;
 </script>
 
-<Nested {things} let:thing={x}>
-	<svelte:fragment slot="main">
+<Nested {things}>
+	<svelte:fragment slot="main" let:thing={x}>
 		<span>{x}</span>
 	</svelte:fragment>
 </Nested>
