@@ -68,6 +68,7 @@ interface FlyParams {
 	x?: number;
 	y?: number;
 	opacity?: number;
+	unit?: string;
 }
 
 export function fly(node: Element, {
@@ -76,7 +77,8 @@ export function fly(node: Element, {
 	easing = cubicOut,
 	x = 0,
 	y = 0,
-	opacity = 0
+	opacity = 0,
+	unit = 'px'
 }: FlyParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
@@ -89,7 +91,7 @@ export function fly(node: Element, {
 		duration,
 		easing,
 		css: (t, u) => `
-			transform: ${transform} translate(${(1 - t) * x}px, ${(1 - t) * y}px);
+			transform: ${transform} translate(${(1 - t) * x}${unit}, ${(1 - t) * y}${unit});
 			opacity: ${target_opacity - (od * u)}`
 	};
 }
