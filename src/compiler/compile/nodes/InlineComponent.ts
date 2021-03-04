@@ -5,7 +5,6 @@ import Binding from './Binding';
 import EventHandler from './EventHandler';
 import Expression from './shared/Expression';
 import Component from '../Component';
-import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
@@ -18,7 +17,6 @@ export default class InlineComponent extends Node {
 	attributes: Attribute[] = [];
 	bindings: Binding[] = [];
 	handlers: EventHandler[] = [];
-	lets: Let[] = [];
 	css_custom_properties: Attribute[] = [];
 	children: INode[];
 	scope: TemplateScope;
@@ -40,6 +38,7 @@ export default class InlineComponent extends Node {
 			? new Expression(component, this, scope, info.expression)
 			: null;
 
+		const let_attributes = [];
 		info.attributes.forEach(node => {
 			/* eslint-disable no-fallthrough */
 			switch (node.type) {
@@ -68,7 +67,7 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Let':
-					this.lets.push(new Let(component, this, scope, node));
+					let_attributes.push(node);
 					break;
 
 				case 'Transition':
@@ -83,19 +82,7 @@ export default class InlineComponent extends Node {
 			/* eslint-enable no-fallthrough */
 		});
 
-		if (this.lets.length > 0) {
-			this.scope = scope.child();
-
-			this.lets.forEach(l => {
-				const dependencies = new Set([l.name.name]);
-
-				l.names.forEach(name => {
-					this.scope.add(name, dependencies, this);
-				});
-			});
-		} else {
-			this.scope = scope;
-		}
+		this.scope = scope;
 
 		this.handlers.forEach(handler => {
 			handler.modifiers.forEach(modifier => {
@@ -153,6 +140,24 @@ export default class InlineComponent extends Node {
 				name: 'svelte:fragment',
 				attributes: [],
 				children: info.children
+			});
+		}
+
+		if (let_attributes.length) {
+			let warned = false;
+			// copy let: attribute from <Component /> to <svelte:fragment slot="default" />
+			// as they are for `slot="default"` only
+			children.forEach(child => {
+				const slot = child.attributes.find(attribute => attribute.name === 'slot');
+				if (!slot || slot.value[0].data === 'default') {
+					child.attributes.push(...let_attributes);
+				} else if (!warned) {
+					component.warn(info, {
+						code: 'let-on-component',
+						message: 'let: bindings on Component are meant for default slot template only, it is better to define them on <svelte:fragment slot="default"> instead.'
+					});
+					warned = true;
+				}
 			});
 		}
 

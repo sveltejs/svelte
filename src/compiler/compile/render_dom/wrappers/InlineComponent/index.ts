@@ -14,7 +14,6 @@ import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { Node, Identifier, ObjectExpression } from 'estree';
 import EventHandler from '../Element/EventHandler';
-import { extract_names } from 'periscopic';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import { string_to_member_expression } from '../../../utils/string_to_member_expression';
 import SlotTemplate from '../../../nodes/SlotTemplate';
@@ -80,12 +79,6 @@ export default class InlineComponentWrapper extends Wrapper {
 		};
 
 		if (this.node.children.length) {
-			this.node.lets.forEach(l => {
-				extract_names(l.value || l.name).forEach(name => {
-					renderer.add_to_context(name, true);
-				});
-			});
-
 			this.children = this.node.children.map(child => new SlotTemplateWrapper(renderer, block, this, child as SlotTemplate, strip_whitespace, next_sibling));
 		}
 

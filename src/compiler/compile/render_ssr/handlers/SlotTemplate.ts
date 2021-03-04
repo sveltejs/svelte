@@ -14,12 +14,6 @@ export default function(node: SlotTemplate, renderer: Renderer, options: RenderO
 	renderer.push();
 	renderer.render(children, options);
 
-	const lets = node.lets;
-	const seen = new Set(lets.map(l => l.name.name));
-	parent_inline_component.lets.forEach(l => {
-		if (!seen.has(l.name.name)) lets.push(l);
-	});
-
 	const slot_fragment_content = renderer.pop();
 	if (!is_empty_template_literal(slot_fragment_content)) {
 		if (options.slot_scopes.has(node.slot_template_name)) {
