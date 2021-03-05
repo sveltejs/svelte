@@ -1,4 +1,4 @@
-<!-- https://github.com/eugenkiss/7guis/wiki#temperature-converter -->
+<!-- https://eugenkiss.github.io/7guis/tasks/#temp -->
 <input value={c} on:input="{e => setBothFromC(e.target.value)}" type=number> °c =
 <input value={f} on:input="{e => setBothFromF(e.target.value)}" type=number> °f
 
