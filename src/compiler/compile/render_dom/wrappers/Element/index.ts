@@ -25,7 +25,6 @@ import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
 import MustacheTagWrapper from '../MustacheTag';
 import RawMustacheTagWrapper from '../RawMustacheTag';
-import create_slot_block from './create_slot_block';
 import is_dynamic from '../shared/is_dynamic';
 
 interface BindingGroup {
@@ -142,7 +141,6 @@ export default class ElementWrapper extends Wrapper {
 	event_handlers: EventHandler[];
 	class_dependencies: string[];
 
-	slot_block: Block;
 	select_binding_dependencies?: Set<string>;
 
 	var: any;
@@ -175,9 +173,6 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		this.attributes = this.node.attributes.map(attribute => {
-			if (attribute.name === 'slot') {
-				block = create_slot_block(attribute, this, block);
-			}
 			if (attribute.name === 'style') {
 				return new StyleAttributeWrapper(this, block, attribute);
 			}
@@ -232,25 +227,12 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		this.fragment = new FragmentWrapper(renderer, block, node.children, this, strip_whitespace, next_sibling);
-
-		if (this.slot_block) {
-			block.parent.add_dependencies(block.dependencies);
-
-			// appalling hack
-			const index = block.parent.wrappers.indexOf(this);
-			block.parent.wrappers.splice(index, 1);
-			block.wrappers.push(this);
-		}
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		const { renderer } = this;
 
 		if (this.node.name === 'noscript') return;
-
-		if (this.slot_block) {
-			block = this.slot_block;
-		}
 
 		const node = this.var;
 		const nodes = parent_nodes && block.get_unique_name(`${this.var.name}_nodes`); // if we're in unclaimable territory, i.e. <head>, parent_nodes is null

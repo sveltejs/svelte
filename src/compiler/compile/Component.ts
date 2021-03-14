@@ -133,12 +133,14 @@ export default class Component {
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
 		// styles
-		this.stylesheet = new Stylesheet(
+		this.stylesheet = new Stylesheet({
 			source,
 			ast,
-			compile_options.filename,
-			compile_options.dev
-		);
+			filename: compile_options.filename,
+			component_name: name,
+			dev: compile_options.dev,
+			get_css_hash: compile_options.cssHash
+		});
 		this.stylesheet.validate(this);
 
 		this.component_options = process_component_options(
@@ -751,7 +753,7 @@ export default class Component {
 					return this.skip();
 				}
 
-				component.warn_on_undefined_store_value_references(node, parent, scope);
+				component.warn_on_undefined_store_value_references(node, parent, prop, scope);
 			},
 
 			leave(node: Node) {
@@ -843,7 +845,7 @@ export default class Component {
 		});
 	}
 
-	warn_on_undefined_store_value_references(node, parent, scope: Scope) {
+	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string, scope: Scope) {
 		if (
 			node.type === 'LabeledStatement' &&
 			node.label.name === '$' &&
@@ -855,7 +857,7 @@ export default class Component {
 			});
 		}
 
-		if (is_reference(node as Node, parent as Node)) {
+		if (is_reference(node, parent)) {
 			const object = get_object(node);
 			const { name } = object;
 
@@ -865,10 +867,12 @@ export default class Component {
 				}
 
 				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
-					this.error(node, {
-						code: 'contextual-store',
-						message: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
-					});
+					if (!((/Function/.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
+						this.error(node as any, {
+							code: 'contextual-store',
+							message: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
+						});
+					}
 				}
 			}
 		}

@@ -87,7 +87,7 @@ class AwaitBlockBranch extends Wrapper {
 	}
 
 	render_destructure() {
-		const props = this.value_contexts.map(prop => b`#ctx[${this.block.renderer.context_lookup.get(prop.key.name).index}] = ${prop.modifier(x`#ctx[${this.value_index}]`)};`);
+		const props = this.value_contexts.map(prop => b`#ctx[${this.block.renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`#ctx[${this.value_index}]`), name => this.renderer.reference(name))};`);
 		const get_context = this.block.renderer.component.get_unique_name(`get_${this.status}_context`);
 		this.block.renderer.blocks.push(b`
 			function ${get_context}(#ctx) {

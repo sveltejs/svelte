@@ -1,8 +1,19 @@
 # Svelte changelog
 
-## Unreleased
+## 3.35.0
 
-* Custom Elements - Call `onMount` when connected & clean-up when disconnected ([#4522](https://github.com/sveltejs/svelte/pull/4522))
+* Implement slotted components and `<svelte:fragment slot="...">` ([#1037](https://github.com/sveltejs/svelte/issues/1037), [#2079](https://github.com/sveltejs/svelte/issues/2079))
+* Fix reactivity bug where `slot="..."` is specified after attributes that should be reactive ([#5626](https://github.com/sveltejs/svelte/issues/5626))
+
+## 3.34.0
+
+* Add a `cssHash` option for controlling the classname used for CSS scoping ([#570](https://github.com/sveltejs/svelte/issues/570))
+
+## 3.33.0
+
+* In custom elements, call `onMount` functions when connecting and clean up when disconnecting ([#1152](https://github.com/sveltejs/svelte/issues/1152), [#2227](https://github.com/sveltejs/svelte/issues/2227), [#4522](https://github.com/sveltejs/svelte/pull/4522))
+* Allow destructured defaults to refer to other variables ([#5066](https://github.com/sveltejs/svelte/issues/5066))
+* Do not emit `contextual-store` warnings for function parameters or declared variables ([#6008](https://github.com/sveltejs/svelte/pull/6008))
 
 ## 3.32.3
 
