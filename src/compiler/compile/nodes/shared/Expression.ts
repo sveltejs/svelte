@@ -360,7 +360,7 @@ export default class Expression {
 					names.forEach(name => {
 						const dependencies = template_scope.dependencies_for_name.get(name);
 						if (dependencies) {
-							dependencies.forEach(name => traced.add(name));
+							dependencies.forEach(traced.add, traced);
 						} else {
 							traced.add(name);
 						}
