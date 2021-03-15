@@ -54,7 +54,7 @@ class Rule {
 	}
 
 	is_used(dev: boolean) {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) return true;
+		if (this.parent?.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) return true;
 		if (this.declarations.length === 0) return dev;
 		return this.selectors.some(s => s.used);
 	}
@@ -63,9 +63,8 @@ class Rule {
 		let c = this.node.start;
 		let started = false;
 
-		this.selectors
-			.filter(selector => selector.used)
-			.forEach((selector) => {
+		this.selectors.forEach((selector) => {
+			if (selector.used) {
 				const separator = started ? ',' : '';
 				if ((selector.node.start - c) > separator.length) {
 					code.overwrite(c, selector.node.start, separator);
@@ -75,6 +74,7 @@ class Rule {
 				c = selector.node.end;
 
 				started = true;
+			}
 		});
 
 		code.remove(c, this.node.block.start);
@@ -86,7 +86,7 @@ class Rule {
 	}
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>, max_amount_class_specificity_increased: number) {
-		if (this.parent?.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) return true;
+		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) return true;
 
 		const attr = `.${id}`;
 
@@ -113,7 +113,7 @@ class Rule {
 
 class Declaration {
 	node: CssNode;
-	static readonly VALID_PROPERTIES: string[] = ['animation', 'animation-name'];
+	private static readonly TRANSFORMABLE_PROPERTIES: string[] = ['animation', 'animation-name'];
 
 	constructor(node: CssNode) {
 		this.node = node;
@@ -121,12 +121,14 @@ class Declaration {
 
 	transform(code: MagicString, keyframes: Map<string, string>) {
 		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
-		if (Declaration.VALID_PROPERTIES.includes(property)) {
-			this.node.value.children
-				.filter(block => block.type === 'Identifier')
-				.filter(block => keyframes.has(block.name))
-				.forEach((block: CssNode) => {
-					code.overwrite(block.start, block.end, keyframes.get(block.name));
+		if (Declaration.TRANSFORMABLE_PROPERTIES.includes(property)) {
+			this.node.value.children.forEach((block: CssNode) => {
+				if (block.type === 'Identifier') {
+					const name = block.name;
+					if (keyframes.has(name)) {
+						code.overwrite(block.start, block.end, keyframes.get(name));
+					}
+				}
 			});
 		}
 	}
@@ -150,7 +152,7 @@ class Atrule {
 	node: CssNode;
 	children: Array<Atrule|Rule> = [];
 	declarations: Declaration[] = [];
-	static readonly NODES_TO_APPLY: string[] = ['media', 'supports'];
+	private static readonly NODES_TO_APPLY: string[] = ['media', 'supports'];
 
 	constructor(node: CssNode) {
 		this.node = node;
@@ -215,12 +217,12 @@ class Atrule {
 				if (this.children.length) c++;
 			}
 
-			this.children
-				.filter(child => child.is_used(dev))
-				.forEach(child => {
+			this.children.forEach(child => {
+				if (child.is_used(dev)) {
 					code.remove(c, child.node.start);
 					child.minify(code, dev);
 					c = child.node.end;
+				}
 			});
 
 			code.remove(c, this.node.block.end - 1);
@@ -229,9 +231,8 @@ class Atrule {
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>, max_amount_class_specificity_increased: number) {
 		if (is_keyframes_node(this.node)) {
-			this.node.prelude.children
-				.filter(({ type }: CssNode) => type === 'Identifier')
-				.forEach(({ name, start, end }: CssNode) => {
+			this.node.prelude.children.forEach(({ type, name, start, end }: CssNode) => {
+				if (type === 'Identifier') {
 					if (name.startsWith('-global-')) {
 						code.remove(start, start + 8);
 						this.children.forEach((rule: Rule) => {
@@ -242,6 +243,7 @@ class Atrule {
 					} else {
 						code.overwrite(start, end, keyframes.get(name));
 					}
+				}
 			});
 		}
 
@@ -334,9 +336,11 @@ export default class Stylesheet {
 						}
 
 						if (is_keyframes_node(node)) {
-							node.prelude.children
-								.filter(expression => expression.type === 'Identifier' && !expression.name.startsWith('-global-'))
-								.forEach((expression: CssNode) => this.keyframes.set(expression.name, `${this.id}-${expression.name}`));
+							node.prelude.children.forEach((expression: CssNode) => {
+								if (expression.type === 'Identifier' && !expression.name.startsWith('-global-')) {
+									this.keyframes.set(expression.name, `${this.id}-${expression.name}`);
+								}
+							});
 						} else if (at_rule_has_declaration(node)) {
 							const at_rule_declarations = node.block.children
 								.filter(node => node.type === 'Declaration')
@@ -411,12 +415,12 @@ export default class Stylesheet {
 		}
 
 		let c = 0;
-		this.children
-			.filter(child => child.is_used(this.dev))
-			.forEach(child => {
+		this.children.forEach(child => {
+			if (child.is_used(this.dev)) {
 				code.remove(c, child.node.start);
 				child.minify(code, this.dev);
 				c = child.node.end;
+			}
 		});
 
 		code.remove(c, this.source.length);
