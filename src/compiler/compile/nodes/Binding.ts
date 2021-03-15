@@ -29,11 +29,12 @@ export default class Binding extends Node {
 	raw_expression: ESTreeNode; // TODO exists only for bind:this — is there a more elegant solution?
 	is_contextual: boolean;
 	is_readonly: boolean;
+	private static readonly VALID_DIRECTIVE_VALUES: string[] = ['Identifier', 'MemberExpression'];
 
 	constructor(component: Component, parent: Element | InlineComponent | Window, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
-		if (info.expression.type !== 'Identifier' && info.expression.type !== 'MemberExpression') {
+		if (!Binding.VALID_DIRECTIVE_VALUES.includes(info.expression.type)) {
 			component.error(info, {
 				code: 'invalid-directive-value',
 				message: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
