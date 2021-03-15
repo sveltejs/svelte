@@ -12,11 +12,13 @@ export default class TemplateScope {
 	dependencies_for_name: Map<string, Set<string>>;
 	owners: Map<string, NodeWithScope> = new Map();
 	parent?: TemplateScope;
+	private static readonly LET_TYPES: string[] = ['Element', 'InlineComponent', 'SlotTemplate'];
+	private static readonly AWAIT_TYPES: string[] = ['ThenBlock', 'CatchBlock'];
 
 	constructor(parent?: TemplateScope) {
 		this.parent = parent;
-		this.names = new Set(parent ? parent.names : []);
-		this.dependencies_for_name = new Map(parent ? parent.dependencies_for_name : []);
+		this.names = new Set(parent?.names || []);
+		this.dependencies_for_name = new Map(parent?.dependencies_for_name || []);
 	}
 
 	add(name, dependencies: Set<string>, owner) {
@@ -36,16 +38,16 @@ export default class TemplateScope {
 	}
 
 	get_owner(name: string): NodeWithScope {
-		return this.owners.get(name) || (this.parent && this.parent.get_owner(name));
+		return this.owners.get(name) || this.parent?.get_owner(name);
 	}
 
 	is_let(name: string) {
 		const owner = this.get_owner(name);
-		return owner && (owner.type === 'Element' || owner.type === 'InlineComponent' || owner.type === 'SlotTemplate');
+		return TemplateScope.LET_TYPES.includes(owner?.type);
 	}
 
 	is_await(name: string) {
 		const owner = this.get_owner(name);
-		return owner && (owner.type === 'ThenBlock' || owner.type === 'CatchBlock');
+		return TemplateScope.AWAIT_TYPES.includes(owner?.type);
 	}
 }
