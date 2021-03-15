@@ -164,11 +164,10 @@ export default class Expression {
 
 	dynamic_dependencies() {
 		return Array.from(this.dependencies).filter(name => {
-			if (this.template_scope.is_let(name)) return true;
-			if (is_reserved_keyword(name)) return true;
-
 			const variable = this.component.var_lookup.get(name);
-			return is_dynamic(variable);
+			return this.template_scope.is_let(name)
+			|| is_reserved_keyword(name)
+			|| is_dynamic(variable)
 		});
 	}
 
