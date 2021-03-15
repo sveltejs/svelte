@@ -167,7 +167,7 @@ export default class Expression {
 			const variable = this.component.var_lookup.get(name);
 			return this.template_scope.is_let(name)
 			|| is_reserved_keyword(name)
-			|| is_dynamic(variable)
+			|| is_dynamic(variable);
 		});
 	}
 
@@ -399,7 +399,7 @@ export default class Expression {
 
 function get_function_name(_node, parent) {
 	return {
-		'EventHandler': `${parent.name}_handler`,
-		'Action': `${parent.name}_function`
+		EventHandler: `${parent.name}_handler`,
+		Action: `${parent.name}_function`
 	}[parent.type] || 'func';
 }
