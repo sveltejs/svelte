@@ -390,9 +390,7 @@ export default class Expression {
 
 		if (declarations.length > 0) {
 			block.maintain_context = true;
-			declarations.forEach(declaration => {
-				block.chunks.init.push(declaration);
-			});
+			block.chunks.init.push(...declarations);
 		}
 
 		return (this.manipulated = node as Node);
