@@ -198,7 +198,6 @@
 	.chapter-markup::-webkit-scrollbar-thumb {
 		background-color: rgba(255,255,255,.7);
 		border-radius: 1em;
-		outline: 1px solid green;
 	}
 
 	.chapter-markup :global(p) > :global(code),
