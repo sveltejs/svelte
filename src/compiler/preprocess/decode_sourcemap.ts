@@ -1,5 +1,5 @@
 import { decode as decode_mappings } from 'sourcemap-codec';
-import { Processed } from './types';
+import { Processed } from '.';
 
 /**
  * Import decoded sourcemap from mozilla/source-map/SourceMapGenerator

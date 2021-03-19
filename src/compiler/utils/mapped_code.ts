@@ -1,7 +1,7 @@
 import { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/remapping/dist/types/types';
 import remapping from '@ampproject/remapping';
 import { SourceMap } from 'magic-string';
-import { Source, Processed } from '../preprocess/types';
+import { Source, Processed } from '../preprocess';
 
 export type SourceLocation = {
 	line: number;
