@@ -30,7 +30,7 @@ In the example notice how we applied a flex layout with a gap of 2em to the box.
 </div>
 ```
 
-The content in the footer however is not spaced out according to this rythm because wrapping it in a div created a new flow layout.
+However, the content in the footer is not spaced out according to this rhythm because wrapping it in a div created a new flow layout.
 
 We can solve this by changing `<div slot="footer">` in the `App` component:
 
@@ -40,4 +40,3 @@ We can solve this by changing `<div slot="footer">` in the `App` component:
 	<p>Copyright (c) 2019 Svelte Industries</p>
 </svelte:fragment>
 ```
-
