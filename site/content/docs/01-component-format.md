@@ -264,6 +264,9 @@ This works by adding a class to affected elements, which is based on a hash of t
 
 To apply styles to a selector globally, use the `:global(...)` modifier.
 
+> Svelte uses [PostCSS](https://postcss.org/) to process global styles. It needs 
+to be added as a dependency for this modifier to work.
+
 ```sv
 <style>
 	:global(body) {
