@@ -1,2 +1,2 @@
 <a href='/foo'></a>
-<a href="#{'foo'}">hello</a>
+<a href="#{'foo'}">bar</a>
