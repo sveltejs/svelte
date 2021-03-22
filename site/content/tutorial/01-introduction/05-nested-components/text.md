@@ -15,6 +15,7 @@ Add a `<script>` tag that imports `Nested.svelte`...
 ...then add it to the markup:
 
 ```html
+<Nested>
 <p>This is a paragraph.</p>
 <Nested/>
 ```
