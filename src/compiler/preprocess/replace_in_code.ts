@@ -1,5 +1,5 @@
 import { MappedCode } from '../utils/mapped_code';
-import { Source } from '.';
+import { Source } from './types';
 
 interface Replacement {
 	offset: number;
