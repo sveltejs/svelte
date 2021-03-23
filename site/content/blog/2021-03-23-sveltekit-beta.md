@@ -5,9 +5,9 @@ author: Rich Harris
 authorURL: https://twitter.com/rich_harris
 ---
 
-It's time. After five months and hundreds of commits, you're finally invited to try out the SvelteKit beta. It's not finished — there are a few known bugs and several missing features — but we're really happy with how it's shaping up and can't wait for you to try it.
-
 <aside><p>Previously: <a href="/blog/whats-the-deal-with-sveltekit">What's the deal with SvelteKit?</a></p></aside>
+
+It's time. After five months and hundreds of commits, you're finally invited to try out the SvelteKit beta. It's not finished — there are a few known bugs and several missing features — but we're really happy with how it's shaping up and can't wait for you to try it.
 
 Starting a new project is easy:
 
