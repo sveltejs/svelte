@@ -28,6 +28,13 @@ You'll find documentation at [kit.svelte.dev/docs](https://kit.svelte.dev/docs).
 
 The source code is available at [github.com/sveltejs/kit](https://github.com/sveltejs/kit). Issues and pull requests are disabled while we finish getting our house in order, but we'll be making it fully open in the near future.
 
+
+## Wait, what is SvelteKit?
+
+Think of it as [Next](https://nextjs.org/) for Svelte. It's a framework for building apps with Svelte, complete with server-side rendering, routing, code-splitting for JS and CSS, adapters for different serverless platforms and so on.
+
+If you're familiar with [Sapper](https://sapper.svelte.dev), SvelteKit is Sapper's successor.
+
 ## From Snowpack to Vite
 
 One thing that might seem surprising after the [announcement video](/blog/whats-the-deal-with-sveltekit), in which I waxed lyrical about [Snowpack](https://www.snowpack.dev/), is that SvelteKit uses [Vite](https://vitejs.dev) under the hood. When we tried Snowpack back when we started thinking about what form SvelteKit should take, it was love at first sight.
