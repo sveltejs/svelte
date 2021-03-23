@@ -58,7 +58,7 @@ interface SpringUpdateOpts {
 
 type Updater<T> = (target_value: T, value: T) => T;
 
-interface Spring<T> extends Readable<T>{
+export interface Spring<T> extends Readable<T>{
 	set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
 	update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
 	precision: number;
