@@ -45,7 +45,7 @@ SvelteKit is very much in beta, but that doesn't mean it hasn't been used in pro
 
 My day job is at the New York Times, where I've spent much of the last twelve months working on our [coronavirus tracker](https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html). It uses a customised version of the workflow that powers the majority of graphics at the Times, which isn't designed for large multi-page projects. When we decided late last year to create pages for each of the ~3,000 counties in the US, we quickly realised we would need to completely rearchitect the project.
 
-Even though it was far from ready, SvelteKit was the only framework that matched our esoteric requirements (anyone who has worked in a newsroom and done battle with their CMS will know what I'm talking about). Today it powers our [county risk pages](https://www.nytimes.com/interactive/2021/us/tom-green-texas-covid-cases.html) and we're in the process of migrating existing pages to the SvelteKit app.
+Even though it was far from ready, SvelteKit was the only framework that matched our esoteric requirements. (Anyone who has worked in a newsroom and done battle with their CMS will know what I'm talking about.) Today it powers our [county risk pages](https://www.nytimes.com/interactive/2021/us/tom-green-texas-covid-cases.html) and we're in the process of migrating existing pages to the SvelteKit app.
 
 <aside><p>I am eternally grateful for my coworkers' forbearance.</p></aside>
 
