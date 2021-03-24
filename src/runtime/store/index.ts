@@ -22,7 +22,7 @@ export interface Readable<T> {
 	 * @param run subscription callback
 	 * @param invalidate cleanup callback
 	 */
-	subscribe(run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
 }
 
 /** Writable interface for both updating and subscribing. */
@@ -31,13 +31,13 @@ export interface Writable<T> extends Readable<T> {
 	 * Set value and inform subscribers.
 	 * @param value to set
 	 */
-	set(value: T): void;
+	set(this: void, value: T): void;
 
 	/**
 	 * Update value using callback and inform subscribers.
 	 * @param updater callback
 	 */
-	update(updater: Updater<T>): void;
+	update(this: void, updater: Updater<T>): void;
 }
 
 /** Pair of subscriber and invalidator. */
