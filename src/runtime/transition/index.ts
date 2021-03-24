@@ -11,7 +11,7 @@ export interface TransitionConfig {
 	tick?: (t: number, u: number) => void;
 }
 
-interface BlurParams {
+export interface BlurParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -40,7 +40,7 @@ export function blur(node: Element, {
 	};
 }
 
-interface FadeParams {
+export interface FadeParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -61,7 +61,7 @@ export function fade(node: Element, {
 	};
 }
 
-interface FlyParams {
+export interface FlyParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -94,7 +94,7 @@ export function fly(node: Element, {
 	};
 }
 
-interface SlideParams {
+export interface SlideParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -132,7 +132,7 @@ export function slide(node: Element, {
 	};
 }
 
-interface ScaleParams {
+export interface ScaleParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -165,7 +165,7 @@ export function scale(node: Element, {
 	};
 }
 
-interface DrawParams {
+export interface DrawParams {
 	delay?: number;
 	speed?: number;
 	duration?: number | ((len: number) => number);
@@ -198,7 +198,7 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 	};
 }
 
-interface CrossfadeParams {
+export interface CrossfadeParams {
 	delay?: number;
 	duration?: number | ((len: number) => number);
 	easing?: EasingFunction;
