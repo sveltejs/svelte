@@ -1,7 +1,7 @@
 import { cubicOut, cubicInOut, linear } from 'svelte/easing';
 import { assign, is_function } from 'svelte/internal';
 
-type EasingFunction = (t: number) => number;
+export type EasingFunction = (t: number) => number;
 
 export interface TransitionConfig {
 	delay?: number;
