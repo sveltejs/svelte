@@ -1,19 +1,19 @@
 import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
 
 /** Callback to inform of a value updates. */
-type Subscriber<T> = (value: T) => void;
+export type Subscriber<T> = (value: T) => void;
 
 /** Unsubscribes from value updates. */
-type Unsubscriber = () => void;
+export type Unsubscriber = () => void;
 
 /** Callback to update a value. */
-type Updater<T> = (value: T) => T;
+export type Updater<T> = (value: T) => T;
 
 /** Cleanup logic callback. */
 type Invalidator<T> = (value?: T) => void;
 
 /** Start and stop notification callbacks. */
-type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
+export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
