@@ -23,10 +23,10 @@ export default {
 		const Component = require('./Component.svelte').default;
 
 		const called = [];
-		const { html } = Component.render(undefined, undefined, new Map([
+		const { html } = Component.render(undefined, { context: new Map([
 			['key', 'svelte'],
 			['fn', (value) => called.push(value)]
-		]));
+		]) });
 		assert.htmlEqual(html, '<div>svelte</div><button></button>');
 	}
 };

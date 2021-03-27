@@ -3,7 +3,7 @@
 	"include": ["."],
 
 	"compilerOptions": {
-		"lib": ["es2017", "dom", "dom.iterable"],
+		"lib": ["es2015", "dom", "dom.iterable"],
 		"target": "es2015",
 		"types": [],
 

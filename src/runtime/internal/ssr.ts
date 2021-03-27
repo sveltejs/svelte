@@ -97,7 +97,7 @@ export function create_ssr_component(fn) {
 	}
 
 	return {
-		render: (props = {}, slots = {}, context = new Map()) => {
+		render: (props = {}, { slots = {}, context = new Map() } = {}) => {
 			on_destroy = [];
 
 			const result: {

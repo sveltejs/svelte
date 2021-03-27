@@ -1088,16 +1088,22 @@ You can call the `.render()` with the following parameters:
 | option | default | description |
 | --- | --- | --- |
 | `props` | `{}` | An object of properties to supply to the component
-| `slots` | `{}` | A object of slots to supply to the component
+| `options` | `{}` | An object of options
+
+The `options` object takes in the following properties:
+| key | default | description |
+| --- | --- | --- |
+| `slots` | `{}` | slots to supply to the component
 | `context` | `new Map()` | A `Map` of context key-value pairs to supply to the component
 
 ```js
 const { head, html, css } = App.render(
 	// props
 	{ answer: 42 },
-	// slots
-	{ 'slot-a': (lets) => 'hello world' },
-	// contexts
-	new Map([['context-key', 'context-value']]),
+	// options
+	{
+		slots: { 'slot-a': (lets) => 'hello world' },
+		context: new Map([['context-key', 'context-value']]),
+	}
 );
 ```
