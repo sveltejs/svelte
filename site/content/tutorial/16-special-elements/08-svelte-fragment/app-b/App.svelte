@@ -2,7 +2,6 @@
 	import Box from './Box.svelte'
 </script>
 
-<!-- App.svelte -->
 <Box>
 	<svelte:fragment slot="footer">
 		<p>All rights reserved.</p>

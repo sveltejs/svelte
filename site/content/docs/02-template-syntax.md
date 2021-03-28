@@ -1562,7 +1562,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 
 ### `<svelte:fragment>`
 
-The `<svelte:fragment>` element allows you to place content in a named [docs](docs#slot_name) without wrapping it in a container. This keeps the flow layout of your document intact.
+The `<svelte:fragment>` element allows you to place content in a named [docs](docs#slot_name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
 
 ```sv
 <!-- Widget.svelte -->
