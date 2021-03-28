@@ -142,7 +142,6 @@ export class SvelteComponentDev extends SvelteComponent {
 
 	constructor(options: {
 		target: Element|ShadowRoot;
-		stylesTarget: Element|ShadowRoot;
 		anchor?: Element;
 		props?: Props;
 		hydrate?: boolean;
@@ -242,7 +241,6 @@ export class SvelteComponentTyped<
 
 	constructor(options: {
 		target: Element|ShadowRoot;
-		stylesTarget: Element|ShadowRoot;
 		anchor?: Element;
 		props?: Props;
 		hydrate?: boolean;

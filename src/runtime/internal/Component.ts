@@ -38,7 +38,6 @@ interface T$$ {
 	on_destroy: any[];
 	skip_bound: boolean;
 	on_disconnect: any[];
-	stylesTarget?: HTMLElement|ShadowRoot;
 }
 
 export function bind(component, name, callback) {
