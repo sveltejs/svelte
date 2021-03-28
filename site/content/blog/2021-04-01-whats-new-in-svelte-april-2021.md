@@ -8,10 +8,13 @@ authorURL: https://desandoval.net
 Two projects that have been months (even years) in the making have made their way out into the world. SvelteKit is now in public beta and slotted components are now available in Svelte!
 
 ## What's up with SvelteKit?
-SvelteKit - Svelte's meta-framework for building SSR, serverless applications - is now officially in public beta. Expect bugs! Lots more detail in the [latest blog post](https://svelte.dev/blog/sveltekit-beta). Want to know when 1.0 is close? Check out the milestone on [github](https://github.com/sveltejs/kit/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.0).
+SvelteKit - Svelte's framework for building SSR, serverless applications - is now officially in public beta. Expect bugs! Lots more detail in the [latest blog post](https://svelte.dev/blog/sveltekit-beta). Want to know when 1.0 is close? Check out the milestone on [github](https://github.com/sveltejs/kit/milestone/2).
 
 ## New in Svelte & Language Tools
-- Slotted components, including `<svelte:fragment slot="...">` lets component consumers target specific slots with rich content (**Svelte 3.35.0, Language Tools [104.5.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.5.0)**, [documentation](https://svelte.dev/docs#slot_name))
+- Slotted components, including `<svelte:fragment slot="...">` lets component consumers target specific slots with rich content (**Svelte 3.35.0, Language Tools [104.5.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.5.0)**, [docs coming soon](https://github.com/sveltejs/svelte/pull/6097))
+> Components can be placed in a named slot using the syntax `<Component slot="name" />`.
+> 
+> In order to place content in a slot without losing the flow layout (ie: without using a wrapper element) you can use the special element `<svelte:fragment>`.
 - Linked editing now works for HTML in Svelte files (**Language Tools, [104.6.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.6.0)**)
 - Type definitions `svelte.d.ts` are now resolved in order, allowing library authors to ship type definitions with their svelte components (**Language Tools, [104.7.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.7.0)**)
 
@@ -26,17 +29,17 @@ SvelteKit - Svelte's meta-framework for building SSR, serverless applications - 
 - [Pittsburgh Steps](https://pittsburgh-steps.samlearner.com/) is an interactive map of the more than 800 sets of public outdoor stairways in Pittsburgh, PA.
 - [Music Mode Wheels](https://tobx.github.io/music-mode-wheels/) is a website that displays music modes as interactive wheels.
 - [Critical Notes](https://www.critical-notes.com/) helps game masters and players keep track of their roleplaying games campaigns and adventures.
-- [Svelte Game of Life](https://github.com/alanrsoares/svelte-game-of-life) is an educational implementation of Conway's Game of Life in Typescript + Svelte
+- [Svelte Game of Life](https://github.com/alanrsoares/svelte-game-of-life) is an educational implementation of Conway's Game of Life in TypeScript + Svelte
 - [foxql](https://github.com/foxql) is a peer to peer full text search engine that runs on your browser.
 
 
 **Demos, Libraries, Tools & Components**
 
 - [svelte-nodegui](https://github.com/nodegui/svelte-nodegui) is a way to build performant, native and cross-platform desktop applications with Node.js and Svelte
-- [Svelte Story Format](https://www.npmjs.com/package/@storybook/addon-svelte-csf) Allows to write your "stories" in Storybook using the Svelte syntax. More info in the [Storybook blog](https://storybook.js.org/blog/storybook-for-svelte/)
+- [Svelte Story Format](https://www.npmjs.com/package/@storybook/addon-svelte-csf) allows you to write your "stories" in Storybook using the Svelte syntax. More info in the [Storybook blog](https://storybook.js.org/blog/storybook-for-svelte/)
 - [SelectMadu](https://github.com/pavish/select-madu) is a replacement for the select menu, with support for searching, multiple selections, async data loading and more.
 - [Svelte Checklist](https://www.npmjs.com/package/svelte-checklist) is a customizable CheckList built with Svelte.
-- [Suspense for Svelte](https://www.npmjs.com/package/@jamcart/suspense) is a Svelte component that implements the core idea of React's <Suspense>.
+- [Suspense for Svelte](https://www.npmjs.com/package/@jamcart/suspense) is a Svelte component that implements the core idea of React's `<Suspense>`.
 - [MiniRx](https://spierala.github.io/mini-rx-store/) is a RxJS Redux Store that works with Svelte and TypeScript
 - [svelte-formly](https://github.com/arabdevelop/svelte-formly) generates dynamic forms for Svelte and Sapper
 - [7ty](https://www.npmjs.com/package/@jamcart/7ty) is a static site generator that uses Svelte, supports partial hydration of components, and uses file based routing resembling Sapper and 11ty.
@@ -48,11 +51,14 @@ SvelteKit - Svelte's meta-framework for building SSR, serverless applications - 
 
 - [sveltekit-electron](https://github.com/FractalHQ/sveltekit-electron) is a starter kit for Electron using SvelteKit
 - [sveltekit-tailwindcss-external-api](https://github.com/acidlake/sveltekit-tailwindcss-external-api) is everything you need to build a Svelte project with TailwindCSS and an external API, powered by create-svelte.
-- [Sapper Netlify](https://www.npmjs.com/package/sapper-netlify) is a Sapper project that can run on a netlify function.
+- [Sapper Netlify](https://www.npmjs.com/package/sapper-netlify) is a Sapper project that can run on a Netlify function.
+
+
+**Looking for a particular starter?** Check out [svelte-adders](https://github.com/svelte-add/svelte-adders) and a number of other integration examples at [sveltejs/integrations](https://github.com/sveltejs/integrations)
 
 **Learning Resources**
 - [How to Build a Website with Svelte and SvelteKit](https://prismic.io/blog/svelte-sveltekit-tutorial) is a step-by-step tutorial walking through the new SvelteKit setup.
-- [A Svelte store for prefers-reduced-motion](https://geoffrich.net/posts/svelte-prefers-reduced-motion-store/) demonstrates how to make a custom Svelte store whose value will indicate whether the user has requested reduced motion #a11y
+- [A Svelte store for prefers-reduced-motion](https://geoffrich.net/posts/svelte-prefers-reduced-motion-store/) demonstrates how to make a custom Svelte store whose value will indicate whether the user has requested reduced motion and improve accessibility.
 - [TypeScript support in Svelte](https://developer.mozilla.org/en-US/docs/Learn/Tools_and_testing/Client-side_JavaScript_frameworks/Svelte_TypeScript) is an MDN guide to using TypeScript in Svelte.
 - [How to merge cells with svelte-window](https://gradientdescent.de/merging-cells/) is a walkthrough of svelte-window, a port of the popular react-window tool for merging table cells. For more on this migration, see [from react-window 1:1 to svelte-window](https://gradientdescent.de/porting-react-window/).
 - [Easy-to-Embed Svelte Components](https://codeandlife.com/2021/03/06/easy-to-embed-svelte-components/) explains how to use Rollup and a script tag to embed Svelte components anywhere.
