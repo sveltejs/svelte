@@ -20,7 +20,7 @@ import {
 
 const file = undefined;
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let p;
 	let t0;
 	let t1;

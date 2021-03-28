@@ -44,7 +44,7 @@ function create_each_block(ctx) {
 	};
 }
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let each_1_anchor;
 	let each_value = [/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]];
 	let each_blocks = [];

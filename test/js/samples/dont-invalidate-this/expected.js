@@ -10,7 +10,7 @@ import {
 	safe_not_equal
 } from "svelte/internal";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let input;
 	let mounted;
 	let dispose;

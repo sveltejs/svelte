@@ -13,7 +13,7 @@ import {
 
 import LazyLoad from "./LazyLoad.svelte";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let lazyload;
 	let current;
 	lazyload = new LazyLoad({ props: { load: func } });

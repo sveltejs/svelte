@@ -84,7 +84,7 @@ function create_each_block(ctx) {
 	return block;
 }
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let t0;
 	let p;
 	let t1;

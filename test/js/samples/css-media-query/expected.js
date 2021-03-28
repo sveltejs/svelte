@@ -15,7 +15,7 @@ function add_css(options) {
 	append_styles(options, "1slhpfn", "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}");
 }
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let div;
 
 	return {

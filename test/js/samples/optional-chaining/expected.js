@@ -17,7 +17,7 @@ import {
 	transition_out
 } from "svelte/internal";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let t0_value = /*a*/ ctx[0].normal + "";
 	let t0;
 	let t1_value = /*b*/ ctx[1]?.optional + "";

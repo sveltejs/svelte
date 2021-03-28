@@ -16,7 +16,7 @@ import {
 
 import Imported from "Imported.svelte";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let imported;
 	let t;
 	let nonimported;

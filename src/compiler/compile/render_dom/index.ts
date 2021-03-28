@@ -288,7 +288,7 @@ export default function dom(
 	const has_create_fragment = component.compile_options.dev || block.has_content();
 	if (has_create_fragment) {
 		body.push(b`
-			function create_fragment(#ctx) {
+			function create_fragment(root, #ctx) {
 				${block.get_contents()}
 			}
 		`);

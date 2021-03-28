@@ -110,17 +110,17 @@ function init_hydrate(target: NodeEx) {
 		const anchor = j < lis.length ? lis[j] : null;
 		target.insertBefore(toMove[i], anchor);
 	}
-let appendStylesTo: Element;
+}
 
 export function append_styles(
-	{ target },
+	{ target, root },
 	styleSheetId: string,
 	styles: string,
 	styleId: string = `svelte-${styleSheetId}-style`
 ) {
-	if (target) appendStylesTo = get_root_for_node(target);
+	const appendStylesTo = get_root_for_node(target || root);
 
-	if (!appendStylesTo.querySelector('#' + styleId)) {
+	if (!appendStylesTo?.querySelector('#' + styleId)) {
 		const style = element('style');
 		style.id = styleId;
 		style.textContent = styles;
@@ -129,12 +129,14 @@ export function append_styles(
 }
 
 function get_root_for_node(node: Node) {
+	if (!node) return document.head;
+
 	const root = (node.getRootNode ? node.getRootNode() : node.ownerDocument); // check for getRootNode because IE is still supported
 	return ((root as ShadowRoot).host ? root : (root as Document).head) as Element;
 }
 
-export function append_empty_stylesheet() {
-	return appendStylesTo.appendChild(element('style') as HTMLStyleElement);
+export function append_empty_stylesheet(node: Node) {
+	return get_root_for_node(node).appendChild(element('style') as HTMLStyleElement);
 }
 
 export function append(target: NodeEx, node: NodeEx) {

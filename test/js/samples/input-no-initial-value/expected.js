@@ -15,7 +15,7 @@ import {
 	space
 } from "svelte/internal";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let form;
 	let input;
 	let t0;

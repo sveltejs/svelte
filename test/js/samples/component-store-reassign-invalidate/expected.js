@@ -17,7 +17,7 @@ import {
 
 import { writable } from "svelte/store";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let h1;
 	let t0;
 	let t1;

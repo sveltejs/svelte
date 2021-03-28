@@ -13,7 +13,7 @@ import {
 	text
 } from "svelte/internal";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let div0;
 	let p0;
 	let t1;

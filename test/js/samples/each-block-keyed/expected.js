@@ -49,7 +49,7 @@ function create_each_block(key_1, ctx) {
 	};
 }
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let each_blocks = [];
 	let each_1_lookup = new Map();
 	let each_1_anchor;

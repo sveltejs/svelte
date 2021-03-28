@@ -14,7 +14,7 @@ import {
 	time_ranges_to_array
 } from "svelte/internal";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let audio;
 	let audio_updating = false;
 	let audio_animationframe;

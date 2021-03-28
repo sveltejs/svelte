@@ -13,7 +13,7 @@ import {
 	space
 } from "svelte/internal";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let img0;
 	let img0_src_value;
 	let t;

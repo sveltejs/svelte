@@ -31,7 +31,7 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	const name = `__svelte_${hash(rule)}_${uid}`;
 	const doc = node.ownerDocument as ExtendedDoc;
 	active_docs.add(doc);
-	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = append_empty_stylesheet().sheet as CSSStyleSheet);
+	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = append_empty_stylesheet(node).sheet as CSSStyleSheet);
 	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
 
 	if (!current_rules[name]) {

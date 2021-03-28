@@ -15,7 +15,7 @@ import {
 
 import { reactiveStoreVal, unreactiveExport } from "./store";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let div0;
 	let t0;
 	let div1;

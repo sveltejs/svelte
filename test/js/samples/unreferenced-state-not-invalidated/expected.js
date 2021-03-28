@@ -14,7 +14,7 @@ import {
 
 import { onMount } from "svelte";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let p;
 	let t;
 

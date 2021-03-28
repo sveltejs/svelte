@@ -11,7 +11,7 @@ import {
 	safe_not_equal
 } from "svelte/internal";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let button;
 	let foo_action;
 	let mounted;
@@ -48,7 +48,7 @@ function handleFoo(bar) {
 }
 
 function foo(node, callback) {
-	
+
 } // code goes here
 
 function instance($$self, $$props, $$invalidate) {

@@ -11,7 +11,7 @@ import {
 	transition_out
 } from "svelte/internal";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let nested;
 	let current;
 	nested = new /*Nested*/ ctx[0]({ props: { foo: "bar" } });

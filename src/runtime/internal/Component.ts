@@ -149,7 +149,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	run_all($$.before_update);
 
 	// `false` as a special case of no DOM component
-	$$.fragment = create_fragment ? create_fragment($$.ctx) : false;
+	$$.fragment = create_fragment ? create_fragment(options.target || options.root, $$.ctx) : false;
 
 	if (options.target) {
 		if (options.hydrate) {

@@ -63,7 +63,7 @@ function create_each_block(ctx) {
 	return block;
 }
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let each_1_anchor;
 	let each_value = things;
 	validate_each_argument(each_value);

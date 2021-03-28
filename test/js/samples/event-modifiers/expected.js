@@ -15,7 +15,7 @@ import {
 	stop_propagation
 } from "svelte/internal";
 
-function create_fragment(ctx) {
+function create_fragment(root, ctx) {
 	let div1;
 	let div0;
 	let t1;
@@ -76,11 +76,11 @@ function create_fragment(ctx) {
 }
 
 function handleTouchstart() {
-	
+
 } // ...
 
 function handleClick() {
-	
+
 } // ...
 
 class Component extends SvelteComponent {
