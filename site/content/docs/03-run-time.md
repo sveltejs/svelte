@@ -930,7 +930,6 @@ The following initialisation options can be provided:
 | option | default | description |
 | --- | --- | --- |
 | `target` | **none** | An `HTMLElement` to render to. This option is required
-| `stylesTarget` | `document.head` | An `HTMLElement` the styles should be appended to. It will only work if the component was compiled with the [`css: true` option](docs#svelte_compile).
 | `anchor` | `null` | A child of `target` to render the component immediately before
 | `props` | `{}` | An object of properties to supply to the component
 | `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component
