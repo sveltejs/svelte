@@ -1329,7 +1329,7 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 ```
 
 Components can be placed in a named slot using the syntax `<Component slot="name" />`.
-In order to place content in a slot without losing the flow layout (ie: without using a wrapper element) you can use the special element `<svelte:fragment>`.
+In order to place content in a slot without using a wrapper element, you can use the special element `<svelte:fragment>`.
 
 ```sv
 <!-- Widget.svelte -->
@@ -1562,7 +1562,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 
 ### `<svelte:fragment>`
 
-The `<svelte:fragment>` element allows you to place content in a named [docs](docs#slot_name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
+The `<svelte:fragment>` element allows you to place content in a [named slot](docs#slot_name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
 
 ```sv
 <!-- Widget.svelte -->
