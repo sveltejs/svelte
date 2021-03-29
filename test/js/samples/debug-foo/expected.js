@@ -23,6 +23,7 @@ const file = undefined;
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
 	child_ctx[2] = list[i];
+	child_ctx.root = ctx.root;
 	return child_ctx;
 }
 
@@ -78,7 +79,7 @@ function create_each_block(ctx) {
 	return block;
 }
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let t0;
 	let p;
 	let t1;

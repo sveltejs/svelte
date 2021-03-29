@@ -9,7 +9,7 @@ import {
 	safe_not_equal
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let h1;
 
 	return {

@@ -15,7 +15,7 @@ import {
 	stop_propagation
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let div1;
 	let div0;
 	let t1;

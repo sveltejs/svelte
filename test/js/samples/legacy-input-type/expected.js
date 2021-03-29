@@ -10,7 +10,7 @@ import {
 	set_input_type
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let input;
 
 	return {

@@ -18,7 +18,7 @@ import {
 const { console: console_1 } = globals;
 const file = undefined;
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let div;
 
 	const block = {

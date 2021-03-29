@@ -46,7 +46,7 @@ function create_if_block(ctx) {
 	};
 }
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let if_block_anchor;
 	let current;
 	let if_block = /*num*/ ctx[0] < 5 && create_if_block(ctx);

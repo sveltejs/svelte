@@ -11,7 +11,7 @@ import {
 	text
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let svg;
 	let title;
 	let t;

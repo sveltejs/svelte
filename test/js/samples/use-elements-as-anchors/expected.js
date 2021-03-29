@@ -101,7 +101,7 @@ function create_if_block(ctx) {
 	};
 }
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let div;
 	let t0;
 	let p0;

@@ -10,7 +10,7 @@ import {
 	set_style
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let div;
 
 	return {

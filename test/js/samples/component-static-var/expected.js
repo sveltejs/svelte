@@ -19,7 +19,7 @@ import {
 import Foo from "./Foo.svelte";
 import Bar from "./Bar.svelte";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let foo;
 	let t0;
 	let bar;

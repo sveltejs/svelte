@@ -18,7 +18,7 @@ import {
 
 const file = undefined;
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let p;
 	let t0_value = Math.max(0, /*foo*/ ctx[0]) + "";
 	let t0;

@@ -11,7 +11,7 @@ import {
 	select_option
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let select;
 	let option0;
 	let option1;

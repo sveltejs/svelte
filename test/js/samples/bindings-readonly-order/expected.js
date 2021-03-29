@@ -13,7 +13,7 @@ import {
 	space
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let input0;
 	let t;
 	let input1;

@@ -10,7 +10,7 @@ import {
 
 const file = undefined;
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	const block = {
 		c: function create() {
 			{

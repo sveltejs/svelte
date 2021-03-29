@@ -14,7 +14,7 @@ import {
 	text
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let input;
 	let t0;
 	let h1;

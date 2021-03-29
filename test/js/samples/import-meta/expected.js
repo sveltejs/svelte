@@ -10,7 +10,7 @@ import {
 	text
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let t0;
 	let t1;
 	let t2_value = import.meta.url + "";

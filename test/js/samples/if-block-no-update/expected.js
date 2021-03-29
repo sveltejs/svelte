@@ -45,7 +45,7 @@ function create_if_block(ctx) {
 	};
 }
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let if_block_anchor;
 
 	function select_block_type(ctx, dirty) {

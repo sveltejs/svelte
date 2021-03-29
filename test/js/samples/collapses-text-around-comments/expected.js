@@ -18,7 +18,7 @@ function add_css(options) {
 	append_styles(options, "1a7i8ec", "p.svelte-1a7i8ec{color:red}");
 }
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let p;
 	let t;
 

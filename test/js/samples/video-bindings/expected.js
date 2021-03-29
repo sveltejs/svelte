@@ -14,7 +14,7 @@ import {
 	safe_not_equal
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let video;
 	let video_updating = false;
 	let video_animationframe;

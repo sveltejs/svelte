@@ -17,6 +17,7 @@ import {
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
 	child_ctx[1] = list[i];
+	child_ctx.root = ctx.root;
 	return child_ctx;
 }
 
@@ -44,7 +45,7 @@ function create_each_block(ctx) {
 	};
 }
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let each_1_anchor;
 	let each_value = /*createElement*/ ctx[0];
 	let each_blocks = [];

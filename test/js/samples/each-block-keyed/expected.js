@@ -18,6 +18,7 @@ import {
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
 	child_ctx[1] = list[i];
+	child_ctx.root = ctx.root;
 	return child_ctx;
 }
 
@@ -49,7 +50,7 @@ function create_each_block(key_1, ctx) {
 	};
 }
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let each_blocks = [];
 	let each_1_lookup = new Map();
 	let each_1_anchor;

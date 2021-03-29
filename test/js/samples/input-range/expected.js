@@ -14,7 +14,7 @@ import {
 	to_number
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let input;
 	let mounted;
 	let dispose;

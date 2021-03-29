@@ -11,7 +11,7 @@ import {
 	safe_not_equal
 } from "svelte/internal";
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let div;
 	let div_resize_listener;
 

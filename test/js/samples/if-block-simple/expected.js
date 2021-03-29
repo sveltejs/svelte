@@ -27,7 +27,7 @@ function create_if_block(ctx) {
 	};
 }
 
-function create_fragment(root, ctx) {
+function create_fragment(ctx) {
 	let if_block_anchor;
 	let if_block = /*foo*/ ctx[0] && create_if_block(ctx);
 
