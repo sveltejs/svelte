@@ -92,7 +92,7 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 			static_css
 		} = config || null_transition;
 
-		if (static_css) static_class_name = create_static_rule(node, static_css, uid++);
+		if (static_css) static_class_name = create_static_rule(node, static_css);
 		if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
 		tick(0, 1);
 
@@ -157,6 +157,7 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
 	let config = fn(node, params);
 	let running = true;
+	let static_class_name;
 	let animation_name;
 
 	const group = outros;
@@ -169,9 +170,11 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 			duration = 300,
 			easing = linear,
 			tick = noop,
-			css
+			css,
+			static_css
 		} = config || null_transition;
 
+		if (static_css) static_class_name = create_static_rule(node, static_css);
 		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
 
 		const start_time = now() + delay;
@@ -223,6 +226,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 
 			if (running) {
 				if (animation_name) delete_rule(node, animation_name);
+				if (static_class_name) delete_static_rule(node, static_class_name);
 				running = false;
 			}
 		}

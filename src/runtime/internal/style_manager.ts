@@ -18,8 +18,8 @@ function hash(str: string) {
 	return hash >>> 0;
 }
 
-export function create_static_rule(node: Element & ElementCSSInlineStyle, rule: string, uid: number = 0) {
-	const className = `__svelte_${hash(rule)}_${uid}`;
+export function create_static_rule(node: Element & ElementCSSInlineStyle, rule: string) {
+	const className = `__svelte_${hash(rule)}`;
 	const doc = node.ownerDocument as ExtendedDoc;
 	active_docs.add(doc);
 	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet);
