@@ -10,11 +10,10 @@ Two projects that have been months (even years) in the making have made their wa
 ## What's up with SvelteKit?
 SvelteKit - Svelte's framework for building SSR, serverless applications - is now officially in public beta. Expect bugs! Lots more detail in the [latest blog post](https://svelte.dev/blog/sveltekit-beta). Want to know when 1.0 is close? Check out the milestone on [github](https://github.com/sveltejs/kit/milestone/2).
 
+Want to learn more about how to get started, what's different compared to Sapper, new features and migration paths? Check out this week's [episode of Svelte Radio](https://www.svelteradio.com/episodes/svelte-kit-public-beta) for a deep dive with Antony, Kev and Swyx.
+
 ## New in Svelte & Language Tools
-- Slotted components, including `<svelte:fragment slot="...">` lets component consumers target specific slots with rich content (**Svelte 3.35.0, Language Tools [104.5.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.5.0)**, [docs coming soon](https://github.com/sveltejs/svelte/pull/6097))
-> Components can be placed in a named slot using the syntax `<Component slot="name" />`.
-> 
-> In order to place content in a slot without losing the flow layout (ie: without using a wrapper element) you can use the special element `<svelte:fragment>`.
+- Slotted components, including `<svelte:fragment slot="...">` lets component consumers target specific slots with rich content (**Svelte 3.35.0, Language Tools [104.5.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.5.0)**, check out the [docs](https://svelte.dev/docs#svelte_fragment) and the [tutorial](https://svelte.dev/tutorial/svelte-fragment))
 - Linked editing now works for HTML in Svelte files (**Language Tools, [104.6.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.6.0)**)
 - Type definitions `svelte.d.ts` are now resolved in order, allowing library authors to ship type definitions with their svelte components (**Language Tools, [104.7.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.7.0)**)
 
