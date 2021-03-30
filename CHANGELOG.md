@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.36.0
 
 * Add `this: void` typing to store functions ([#6094](https://github.com/sveltejs/svelte/pull/6094))
 * Export `Spring`, `Tweened` and `EasingFunction` interfaces ([#6070](https://github.com/sveltejs/svelte/issues/6070), [#6056](https://github.com/sveltejs/svelte/pull/6056))
