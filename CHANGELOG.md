@@ -6,6 +6,7 @@
 * Export `Spring`, `Tweened` and `EasingFunction` interfaces ([#6070](https://github.com/sveltejs/svelte/issues/6070), [#6056](https://github.com/sveltejs/svelte/pull/6056))
 * Export interfaces for transition parameters ([#5207](https://github.com/sveltejs/svelte/issues/5207))
 * Export store's useful TypeScript definitions ([#5864](https://github.com/sveltejs/svelte/issues/5864))
+* Fix previous breaking change to `svelte/preprocess` types location ([#6100](https://github.com/sveltejs/svelte/pull/6100))
 
 ## 3.35.0
 
