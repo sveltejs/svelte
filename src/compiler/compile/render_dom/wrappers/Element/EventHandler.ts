@@ -42,6 +42,7 @@ export default class EventHandlerWrapper {
 		if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
 		if (this.node.modifiers.has('stopPropagation')) snippet = x`@stop_propagation(${snippet})`;
 		if (this.node.modifiers.has('self')) snippet = x`@self(${snippet})`;
+		if (this.node.modifiers.has('trusted')) snippet = x`@trusted(${snippet})`;
 
 		const args = [];
 
