@@ -21,7 +21,7 @@
     "flru": "^1.0.2",
     "httpie": "^1.1.2",
     "jsonwebtoken": "^8.5.1",
-    "marked": "3.0.5",
+    "marked": "^4.0.6",
     "pg": "^8.7.1",
     "prism-svelte": "^0.4.3",
     "prismjs": "^1.25.0"
@@ -31,7 +31,7 @@
     "@sveltejs/adapter-node": "next",
     "@sveltejs/kit": "next",
     "@sveltejs/site-kit": "^1.4.1",
-    "@sveltejs/svelte-repl": "0.3.0",
+    "@sveltejs/svelte-repl": "^0.4.1",
     "degit": "^2.1.4",
     "dotenv": "^10.0.0",
     "jimp": "^0.8.0",
