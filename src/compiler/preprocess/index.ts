@@ -5,6 +5,8 @@ import { decode_map } from './decode_sourcemap';
 import { replace_in_code, slice_source } from './replace_in_code';
 import { MarkupPreprocessor, Source, Preprocessor, PreprocessorGroup, Processed } from './types';
 
+export * from './types';
+
 interface SourceUpdate {
 	string?: string;
 	map?: DecodedSourceMap;
