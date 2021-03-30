@@ -223,7 +223,7 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: any[]): 
 			const siblings = get_possible_element_siblings(node, block.combinator.name === '+');
 			let has_match = false;
 
-			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the 
+			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
 			// css-tree limitation that does not parse the inner selector of :global
 			// so unless we are sure there will be no sibling to match, we will consider it as matched
 			const has_global = blocks.some(block => block.global);
@@ -449,7 +449,7 @@ function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map
 		while ((parent = parent.parent) && (parent.type === 'EachBlock' || parent.type === 'IfBlock' || parent.type === 'ElseBlock' || parent.type === 'AwaitBlock')) {
 			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
 			add_to_map(possible_siblings, result);
-			
+
 			if (parent.type === 'EachBlock') {
 				// first child of each block can select the last child of each block as previous sibling
 				if (skip_each_for_last_child) {
@@ -477,7 +477,7 @@ function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjace
 	if (block.type === 'EachBlock') {
 		const each_result: Map<Element, NodeExist> = loop_child(block.children, adjacent_only);
 		const else_result: Map<Element, NodeExist> = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
-		
+
 		const not_exhaustive = !has_definite_elements(else_result);
 
 		if (not_exhaustive) {
