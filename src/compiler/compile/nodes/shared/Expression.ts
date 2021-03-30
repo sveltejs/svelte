@@ -16,6 +16,7 @@ import { is_reserved_keyword } from '../../utils/reserved_keywords';
 import replace_object from '../../utils/replace_object';
 import is_contextual from './is_contextual';
 import EachBlock from '../EachBlock';
+import { clone } from '../../../utils/clone';
 
 type Owner = INode;
 
@@ -195,7 +196,7 @@ export default class Expression {
 		const node = walk(this.node, {
 			enter(node: any, parent: any) {
 				if (node.type === 'Property' && node.shorthand) {
-					node.value = JSON.parse(JSON.stringify(node.value));
+					node.value = clone(node.value);
 					node.shorthand = false;
 				}
 

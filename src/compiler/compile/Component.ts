@@ -32,6 +32,7 @@ import { is_reserved_keyword } from './utils/reserved_keywords';
 import { apply_preprocessor_sourcemap } from '../utils/mapped_code';
 import Element from './nodes/Element';
 import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types/types';
+import { clone } from '../utils/clone';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -116,12 +117,12 @@ export default class Component {
 
 		// the instance JS gets mutated, so we park
 		// a copy here for later. TODO this feels gross
-		this.original_ast = {
+		this.original_ast = clone({
 			html: ast.html,
 			css: ast.css,
-			instance: ast.instance && JSON.parse(JSON.stringify(ast.instance)),
+			instance: ast.instance,
 			module: ast.module
-		};
+		});
 
 		this.file =
 			compile_options.filename &&

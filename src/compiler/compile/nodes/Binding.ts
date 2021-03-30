@@ -9,6 +9,7 @@ import { TemplateNode } from '../../interfaces';
 import Element from './Element';
 import InlineComponent from './InlineComponent';
 import Window from './Window';
+import { clone } from '../../utils/clone';
 
 // TODO this should live in a specific binding
 const read_only_media_attributes = new Set([
@@ -42,7 +43,7 @@ export default class Binding extends Node {
 
 		this.name = info.name;
 		this.expression = new Expression(component, this, scope, info.expression);
-		this.raw_expression = JSON.parse(JSON.stringify(info.expression));
+		this.raw_expression = clone(info.expression);
 
 		const { name } = get_object(this.expression.node);
 
