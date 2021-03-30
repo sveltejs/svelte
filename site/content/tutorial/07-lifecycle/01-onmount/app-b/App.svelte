@@ -4,7 +4,7 @@
 	let photos = [];
 
 	onMount(async () => {
-		const res = await fetch(`https://jsonplaceholder.typicode.com/photos?_limit=20`);
+		const res = await fetch(`https://picsum.photos/v2/list?limit=20`);
 		photos = await res.json();
 	});
 </script>
@@ -28,8 +28,8 @@
 <div class="photos">
 	{#each photos as photo}
 		<figure>
-			<img src={photo.thumbnailUrl} alt={photo.title}>
-			<figcaption>{photo.title}</figcaption>
+			<img src={photo.download_url.replace(/\/\d+\/\d+$/, '/128/128')} alt={photo.author}>
+			<figcaption>{photo.author}</figcaption>
 		</figure>
 	{:else}
 		<!-- this block renders when photos.length === 0 -->

@@ -21,8 +21,8 @@
 <div class="photos">
 	{#each photos as photo}
 		<figure>
-			<img src={photo.thumbnailUrl} alt={photo.title}>
-			<figcaption>{photo.title}</figcaption>
+			<img src={photo.download_url.replace(/\/\d+\/\d+$/, '/128/128')} alt={photo.author}>
+			<figcaption>{photo.author}</figcaption>
 		</figure>
 	{:else}
 		<!-- this block renders when photos.length === 0 -->

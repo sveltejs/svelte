@@ -15,7 +15,7 @@ We'll add an `onMount` handler that loads some data over the network:
 	let photos = [];
 
 	onMount(async () => {
-		const res = await fetch(`https://jsonplaceholder.typicode.com/photos?_limit=20`);
+		const res = await fetch(`https://picsum.photos/v2/list?limit=20`);
 		photos = await res.json();
 	});
 </script>
