@@ -1093,7 +1093,6 @@ You can call the `.render()` with the following parameters:
 The `options` object takes in the following properties:
 | key | default | description |
 | --- | --- | --- |
-| `slots` | `{}` | slots to supply to the component
 | `context` | `new Map()` | A `Map` of context key-value pairs to supply to the component
 
 ```js
@@ -1102,7 +1101,6 @@ const { head, html, css } = App.render(
 	{ answer: 42 },
 	// options
 	{
-		slots: { 'slot-a': (lets) => 'hello world' },
 		context: new Map([['context-key', 'context-value']]),
 	}
 );
