@@ -1,7 +1,6 @@
 import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
-import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import { Identifier } from 'estree';
 import DynamicElement from '../../nodes/DynamicElement';
@@ -10,7 +9,6 @@ import create_debugging_comment from './shared/create_debugging_comment';
 import Element from '../../nodes/Element';
 
 export default class DynamicElementWrapper extends Wrapper {
-	fragment: FragmentWrapper;
 	node: DynamicElement;
 	elementWrapper: ElementWrapper;
 	block: Block;
@@ -112,41 +110,43 @@ export default class DynamicElementWrapper extends Wrapper {
 		);
 
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
-		const body = b`
-			${
-				has_transitions
-					? b`
-						@group_outros();
-						@transition_out(${this.var}, 1, 1, @noop);
-						@check_outros();
-					`
-					: b`${this.var}.d(1);`
-			}
-			${this.var} = ${this.block.name}(#ctx);
-			${this.var}.c();
-			${has_transitions && b`@transition_in(${this.var})`}
-			${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
-		`;
-
-		if (dynamic) {
-			block.chunks.update.push(b`
-			if (${condition}) {
-				${body}
-			} else {
-				${this.var}.p(#ctx, #dirty);
-			}
-		`);
-		} else {
-			block.chunks.update.push(b`
-			if (${condition}) {
-				${body}
-			}
-		`);
-		}
 
 		if (has_transitions) {
 			block.chunks.intro.push(b`@transition_in(${this.var})`);
 			block.chunks.outro.push(b`@transition_out(${this.var})`);
+
+			const body = b`
+				@group_outros();
+				@transition_out(${this.var}, 1, 1, @noop);
+				@check_outros();
+				${this.var} = ${this.block.name}(#ctx);
+				${this.var}.c();
+				@transition_in(${this.var});
+				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+			`;
+
+			if (dynamic) {
+				block.chunks.update.push(b`
+					if (${condition}) {
+						${body}		
+					} else {
+						${this.var}.p(#ctx, #dirty);
+					}
+				`);
+			} else {
+				block.chunks.update.push(b`
+				  if (${condition}) {
+						${body}
+					}
+				`);
+			}
+		} else if (dynamic) {
+			block.chunks.update.push(b`
+			${this.var}.p(#ctx, #dirty);
+			if (${condition}) {
+				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+			}
+		`);
 		}
 
 		block.chunks.destroy.push(b`${this.var}.d(detaching)`);

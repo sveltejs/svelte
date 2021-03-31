@@ -97,6 +97,19 @@ export default class DynamicElement extends Node {
 		this.scope = scope;
 
 		this.children = map_children(component, this, this.scope, info.children);
+
+		this.validate();
+	}
+
+	validate() {
+		this.bindings.forEach(binding => {
+			if (binding.name !== 'this') {
+				this.component.error(binding, {
+					code: 'invalid-binding',
+					message: `'${binding.name}' is not a valid binding. svelte:element only supports bind:this`
+				});
+			}
+		});
 	}
 
 	add_css_class() {

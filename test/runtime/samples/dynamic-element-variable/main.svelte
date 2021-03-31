@@ -1,6 +1,6 @@
 <script>
-  export let tag = "di";
+  export let tag = "div";
   export let text = "Foo";
 </script>
 
-<svelte:element tag={tag + "v"}>{text}</svelte:element>
+<svelte:element tag={tag}>{text}</svelte:element>

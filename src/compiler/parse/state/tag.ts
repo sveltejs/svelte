@@ -181,7 +181,7 @@ export default function tag(parser: Parser) {
 
 	if (name === 'svelte:component') {
 		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
-		if (!~index) {
+		if (index === -1) {
 			parser.error({
 				code: 'missing-component-definition',
 				message: "<svelte:component> must have a 'this' attribute"
@@ -201,7 +201,7 @@ export default function tag(parser: Parser) {
 	
 	if (name === 'svelte:element') {
 		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'tag');
-		if (!~index) {
+		if (index === -1) {
 			parser.error({
 				code: 'missing-element-definition',
 				message: '<svelte:element> must have a \'tag\' attribute'

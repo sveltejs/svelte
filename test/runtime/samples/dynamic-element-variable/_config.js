@@ -1,13 +1,13 @@
 export default {
 	props: {
-		tag: 'di',
+		tag: 'div',
 		text: 'Foo'
 	},
 	html: '<div>Foo</div>',
 
 	test({ assert, component, target }) {
 		const div = target.firstChild;
-		component.tag = 'na';
+		component.tag = 'nav';
 		component.text = 'Bar';
 
 		assert.htmlEqual(target.innerHTML, `
