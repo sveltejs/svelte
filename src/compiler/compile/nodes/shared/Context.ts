@@ -2,6 +2,7 @@ import { x } from 'code-red';
 import { Node, Identifier, Expression } from 'estree';
 import { walk } from 'estree-walker';
 import is_reference from 'is-reference';
+import { clone } from '../../../utils/clone';
 
 export interface Context {
 	key: Identifier;
@@ -81,7 +82,7 @@ function update_reference(contexts: Context[], n: number, expression: Expression
 	}
 
 	// NOTE: avoid unnecessary deep clone?
-	expression = JSON.parse(JSON.stringify(expression)) as Expression;
+	expression = clone(expression) as Expression;
 	walk(expression, {
 		enter(node, parent: Node) {
 			if (is_reference(node, parent)) {
