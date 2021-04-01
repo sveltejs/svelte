@@ -8,7 +8,7 @@ authorURL: https://desandoval.net
 Two projects that have been months (even years) in the making have made their way out into the world. SvelteKit is now in public beta and slotted components are now available in Svelte!
 
 ## What's up with SvelteKit?
-SvelteKit - Svelte's framework for building SSR, serverless applications - is now officially in public beta. Expect bugs! Lots more detail in the [latest blog post](https://svelte.dev/blog/sveltekit-beta). Want to know when 1.0 is close? Check out the milestone on [github](https://github.com/sveltejs/kit/milestone/2).
+[SvelteKit](https://kit.svelte.dev/) - Svelte's framework for building SSR, serverless applications - is now officially in public beta. Expect bugs! Lots more detail in the [latest blog post](https://svelte.dev/blog/sveltekit-beta). Want to know when 1.0 is close? Check out the milestone on [github](https://github.com/sveltejs/kit/milestone/2).
 
 Want to learn more about how to get started, what's different compared to Sapper, new features and migration paths? Check out this week's [episode of Svelte Radio](https://www.svelteradio.com/episodes/svelte-kit-public-beta) for a deep dive with Antony, Kev and Swyx.
 
