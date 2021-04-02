@@ -144,7 +144,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		})
 		: [];
 
-	$$.ctx.root = options.target || options.root;
+	$$.ctx.$$root = options.target || options.$$root;
 
 	$$.update();
 	ready = true;

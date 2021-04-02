@@ -16,7 +16,7 @@ export function handle_promise(promise, info) {
 		if (key !== undefined) {
 			child_ctx = child_ctx.slice();
 			child_ctx[key] = value;
-			child_ctx.root = info.ctx.root;
+			child_ctx.$$root = info.ctx.$$root;
 		}
 
 		const block = type && (info.current = type)(child_ctx);
