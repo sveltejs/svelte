@@ -83,7 +83,6 @@ function get_slot_context(definition, ctx, $$scope, fn) {
 	const context = definition[1] && fn
 		? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
 		: $$scope.ctx;
-	context.$$root = ctx.$$root;
 	return context;
 }
 

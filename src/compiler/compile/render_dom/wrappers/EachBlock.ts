@@ -355,7 +355,6 @@ export default class EachBlockWrapper extends Wrapper {
 			function ${this.vars.get_each_context}(#ctx, list, i) {
 				const child_ctx = #ctx.slice();
 				${this.context_props}
-				child_ctx.$$root = #ctx.$$root;
 				return child_ctx;
 			}
 		`);
