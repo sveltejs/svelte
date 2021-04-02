@@ -186,12 +186,13 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 		}
 
+		component_opts.properties.push(p`root: #ctx.root`);
+
 		if (component.compile_options.dev) {
 			// TODO this is a terrible hack, but without it the component
 			// will complain that options.target is missing. This would
 			// work better if components had separate public and private
 			// APIs
-			component_opts.properties.push(p`root: #ctx.root`);
 			component_opts.properties.push(p`$$inline: true`);
 		}
 
