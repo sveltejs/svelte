@@ -23,7 +23,6 @@ const file = undefined;
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
 	child_ctx[2] = list[i];
-	child_ctx.root = ctx.root;
 	return child_ctx;
 }
 
@@ -197,7 +196,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, instance, create_fragment, safe_not_equal, { things: 0, foo: 1 });
+		init(this, options, instance, create_fragment, safe_not_equal, { things: 0, foo: 1 }, null);
 
 		dispatch_dev("SvelteRegisterComponent", {
 			component: this,

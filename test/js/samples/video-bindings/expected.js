@@ -115,12 +115,20 @@ class Component extends SvelteComponent {
 	constructor(options) {
 		super();
 
-		init(this, options, instance, create_fragment, safe_not_equal, {
-			currentTime: 0,
-			videoHeight: 1,
-			videoWidth: 2,
-			offsetWidth: 3
-		});
+		init(
+			this,
+			options,
+			instance,
+			create_fragment,
+			safe_not_equal,
+			{
+				currentTime: 0,
+				videoHeight: 1,
+				videoWidth: 2,
+				offsetWidth: 3
+			},
+			null
+		);
 	}
 }
 

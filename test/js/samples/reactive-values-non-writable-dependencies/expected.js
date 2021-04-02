@@ -22,7 +22,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, null, safe_not_equal, { a: 0, b: 1 });
+		init(this, options, instance, null, safe_not_equal, { a: 0, b: 1 }, null);
 	}
 }
 

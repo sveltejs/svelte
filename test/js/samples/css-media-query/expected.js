@@ -11,8 +11,8 @@ import {
 	safe_not_equal
 } from "svelte/internal";
 
-function add_css(options) {
-	append_styles(options, "1slhpfn", "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}");
+function add_css(target) {
+	append_styles(target, "1slhpfn", "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}");
 }
 
 function create_fragment(ctx) {
@@ -38,8 +38,7 @@ function create_fragment(ctx) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		add_css(options);
-		init(this, options, null, create_fragment, safe_not_equal, {});
+		init(this, options, null, create_fragment, safe_not_equal, {}, add_css);
 	}
 }
 

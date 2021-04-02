@@ -17,7 +17,6 @@ import {
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
 	child_ctx[5] = list[i];
-	child_ctx.root = ctx.root;
 	return child_ctx;
 }
 
@@ -121,7 +120,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { a: 0, b: 1, c: 2, d: 3, e: 4 });
+		init(this, options, instance, create_fragment, safe_not_equal, { a: 0, b: 1, c: 2, d: 3, e: 4 }, null);
 	}
 }
 
