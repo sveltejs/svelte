@@ -762,6 +762,68 @@ To get a reference to a DOM node, use `bind:this`.
 <canvas bind:this={canvasElement}></canvas>
 ```
 
+#### [{...bind:*property*}](spread_bind_element_property)
+
+```sv
+{...bind:variable}
+```
+
+---
+
+This type of binding works the same as simply using the spread syntax, but gives the advantages of two-way binding.
+
+A scenario where one would want this would be for passing binds from a parent to a child component (A → B → C).
+
+```sv
+<!-- A.svelte -->
+<script>
+	import B from './B.svelte';
+	
+	let foo = 1;
+	let bar = 2;
+	
+	// ... edit `foo` & `bar` here, and have their changes reflect in `C.svelte`
+</script>
+
+<B bind:foo bind:bar />
+```
+
+```sv
+<!-- B.svelte -->
+<script>
+	import C from './C.svelte';
+	
+	let baz = 3; // baz was abstracted out from A.svelte
+
+	$: restProps = $$restProps;
+	$: restProps, updateRestProps(restProps);
+
+	function updateRestProps(restProps) {
+		Object.entries(restProps).forEach(([key, value]) => {
+			$$restProps[key] = value;
+		})
+	}
+</script>
+
+<C bind:baz {...bind:restProps} />
+```
+
+```sv
+<!-- C.svelte -->
+<script>
+	import { onMount, onDestroy } from 'svelte';
+	
+	let interval;
+	
+	export let foo;
+	export let bar;
+	export let baz;
+	
+	// ... edit `foo` & `bar` here, and have their changes reflect in `A.svelte`
+</script>
+
+<p>foo: {foo}; bar: {bar}; baz: {baz}</p>
+```
 
 #### class:*name*
 
