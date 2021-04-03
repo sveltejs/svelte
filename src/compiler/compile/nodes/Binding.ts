@@ -30,6 +30,7 @@ export default class Binding extends Node {
 	raw_expression: ESTreeNode; // TODO exists only for bind:this — is there a more elegant solution?
 	is_contextual: boolean;
 	is_readonly: boolean;
+	is_spread: boolean;
 
 	constructor(component: Component, parent: Element | InlineComponent | Window, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
@@ -42,6 +43,7 @@ export default class Binding extends Node {
 		}
 
 		this.name = info.name;
+		this.is_spread = info.modifiers.includes('spread');
 		this.expression = new Expression(component, this, scope, info.expression);
 		this.raw_expression = clone(info.expression);
 

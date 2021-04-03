@@ -314,6 +314,31 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		if (parser.eat('...')) {
 			const expression = read_expression(parser);
 
+			if (parser.eat(':')
+				&& expression.type === 'Identifier'
+				&& expression.name === 'bind') {
+				const bind_expression = read_expression(parser);
+
+				if (bind_expression.type === 'Identifier') {
+					parser.allow_whitespace();
+					parser.eat('}', true);
+
+					return {
+						start,
+						end: parser.index,
+						type: 'Binding',
+						name: bind_expression.name,
+						modifiers: ['spread'],
+						expression: bind_expression
+					};
+				} else {
+					parser.error({
+						code: 'unexpected-token',
+						message: 'Expected identifier'
+					}, parser.index);
+				}
+			}
+
 			parser.allow_whitespace();
 			parser.eat('}', true);
 

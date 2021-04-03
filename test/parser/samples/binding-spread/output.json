@@ -1,0 +1,244 @@
+{
+	"html": {
+		"start": 69,
+		"end": 94,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 67,
+				"end": 69,
+				"type": "Text",
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"start": 69,
+				"end": 94,
+				"type": "InlineComponent",
+				"name": "Widget",
+				"attributes": [
+					{
+						"start": 77,
+						"end": 91,
+						"type": "Binding",
+						"name": "item",
+						"modifiers": [
+							"spread"
+						],
+						"expression": {
+							"type": "Identifier",
+							"start": 86,
+							"end": 90,
+							"loc": {
+								"start": {
+									"line": 8,
+									"column": 17
+								},
+								"end": {
+									"line": 8,
+									"column": 21
+								}
+							},
+							"name": "item"
+						}
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 67,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 58,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 6,
+					"column": 0
+				}
+			},
+			"body": [
+				{
+					"type": "VariableDeclaration",
+					"start": 10,
+					"end": 57,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 1
+						},
+						"end": {
+							"line": 5,
+							"column": 3
+						}
+					},
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 14,
+							"end": 56,
+							"loc": {
+								"start": {
+									"line": 2,
+									"column": 5
+								},
+								"end": {
+									"line": 5,
+									"column": 2
+								}
+							},
+							"id": {
+								"type": "Identifier",
+								"start": 14,
+								"end": 18,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 5
+									},
+									"end": {
+										"line": 2,
+										"column": 9
+									}
+								},
+								"name": "item"
+							},
+							"init": {
+								"type": "ObjectExpression",
+								"start": 21,
+								"end": 56,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 12
+									},
+									"end": {
+										"line": 5,
+										"column": 2
+									}
+								},
+								"properties": [
+									{
+										"type": "Property",
+										"start": 25,
+										"end": 37,
+										"loc": {
+											"start": {
+												"line": 3,
+												"column": 2
+											},
+											"end": {
+												"line": 3,
+												"column": 14
+											}
+										},
+										"method": false,
+										"shorthand": false,
+										"computed": false,
+										"key": {
+											"type": "Identifier",
+											"start": 25,
+											"end": 30,
+											"loc": {
+												"start": {
+													"line": 3,
+													"column": 2
+												},
+												"end": {
+													"line": 3,
+													"column": 7
+												}
+											},
+											"name": "prop1"
+										},
+										"value": {
+											"type": "Literal",
+											"start": 32,
+											"end": 37,
+											"loc": {
+												"start": {
+													"line": 3,
+													"column": 9
+												},
+												"end": {
+													"line": 3,
+													"column": 14
+												}
+											},
+											"value": "foo",
+											"raw": "'foo'"
+										},
+										"kind": "init"
+									},
+									{
+										"type": "Property",
+										"start": 41,
+										"end": 53,
+										"loc": {
+											"start": {
+												"line": 4,
+												"column": 2
+											},
+											"end": {
+												"line": 4,
+												"column": 14
+											}
+										},
+										"method": false,
+										"shorthand": false,
+										"computed": false,
+										"key": {
+											"type": "Identifier",
+											"start": 41,
+											"end": 46,
+											"loc": {
+												"start": {
+													"line": 4,
+													"column": 2
+												},
+												"end": {
+													"line": 4,
+													"column": 7
+												}
+											},
+											"name": "prop2"
+										},
+										"value": {
+											"type": "Literal",
+											"start": 48,
+											"end": 53,
+											"loc": {
+												"start": {
+													"line": 4,
+													"column": 9
+												},
+												"end": {
+													"line": 4,
+													"column": 14
+												}
+											},
+											"value": "bar",
+											"raw": "'bar'"
+										},
+										"kind": "init"
+									}
+								]
+							}
+						}
+					],
+					"kind": "let"
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}

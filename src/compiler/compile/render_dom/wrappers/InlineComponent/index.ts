@@ -18,6 +18,7 @@ import { extract_names } from 'periscopic';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import { string_to_member_expression } from '../../../utils/string_to_member_expression';
 import SlotTemplate from '../../../nodes/SlotTemplate';
+import Binding from '../../../nodes/Binding';
 
 type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
 
@@ -136,7 +137,9 @@ export default class InlineComponentWrapper extends Wrapper {
 		let props;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
-		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
+		const attributes_uses_spread = !!this.node.attributes.find(a => a.is_spread);
+		const bindings_uses_spread = !!this.node.bindings.find(b => b.is_spread);
+		const uses_spread = attributes_uses_spread || bindings_uses_spread;
 
 		// removing empty slot
 		for (const slot of this.slots.keys()) {
@@ -199,7 +202,8 @@ export default class InlineComponentWrapper extends Wrapper {
 			updates.push(b`const ${name_changes} = {};`);
 		}
 
-		if (this.node.attributes.length) {
+		if (this.node.attributes.length 
+			|| this.node.bindings.length) {
 			if (uses_spread) {
 				const levels = block.get_unique_name(`${this.var.name}_spread_levels`);
 
@@ -212,8 +216,18 @@ export default class InlineComponentWrapper extends Wrapper {
 					add_to_set(all_dependencies, attr.dependencies);
 				});
 
-				this.node.attributes.forEach((attr, i) => {
-					const { name, dependencies } = attr;
+				this.node.bindings.forEach(binding => {
+					add_to_set(all_dependencies, binding.expression.dependencies);
+				});
+
+				[
+					...this.node.attributes,
+					...this.node.bindings.filter(binding => binding.is_spread)
+				].forEach((node: Attribute | Binding, i) => {
+					const { name } = node;
+					const dependencies = node.type === 'Attribute' 
+						? node.dependencies 
+						: node.expression.dependencies;
 
 					const condition = dependencies.size > 0 && (dependencies.size !== all_dependencies.size)
 						? renderer.dirty(Array.from(dependencies))
@@ -221,17 +235,20 @@ export default class InlineComponentWrapper extends Wrapper {
 					const unchanged = dependencies.size === 0;
 
 					let change_object;
-					if (attr.is_spread) {
-						const value = attr.expression.manipulate(block);
+					if (node.is_spread) {
+						const value = node.expression.manipulate(block);
 						initial_props.push(value);
 
 						let value_object = value;
-						if (attr.expression.node.type !== 'ObjectExpression') {
+						if (node.expression.node.type !== 'ObjectExpression') {
 							value_object = x`@get_spread_object(${value})`;
 						}
 						change_object = value_object;
-					} else {
-						const obj = x`{ ${name}: ${attr.get_value(block)} }`;
+					}
+					
+					if (!node.is_spread
+						&& node.type === 'Attribute') {
+						const obj = x`{ ${name}: ${node.get_value(block)} }`;
 						initial_props.push(obj);
 						change_object = obj;
 					}
@@ -307,19 +324,28 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const snippet = binding.expression.manipulate(block);
 
-			statements.push(b`
-				if (${snippet} !== void 0) {
-					${props}.${binding.name} = ${snippet};
-				}`
-			);
+			if (binding.is_spread) {
+				updates.push(b`
+					if (!${updating} && ${renderer.dirty(Array.from(binding.expression.dependencies))}) {
+						${updating} = true;
+						@add_flush_callback(() => ${updating} = false);
+					}
+				`);
+			} else {
+				statements.push(b`
+					if (${snippet} !== void 0) {
+						${props}.${binding.name} = ${snippet};
+					}`
+				);
 
-			updates.push(b`
-				if (!${updating} && ${renderer.dirty(Array.from(binding.expression.dependencies))}) {
-					${updating} = true;
-					${name_changes}.${binding.name} = ${snippet};
-					@add_flush_callback(() => ${updating} = false);
-				}
-			`);
+				updates.push(b`
+					if (!${updating} && ${renderer.dirty(Array.from(binding.expression.dependencies))}) {
+						${updating} = true;
+						${name_changes}.${binding.name} = ${snippet};
+						@add_flush_callback(() => ${updating} = false);
+					}
+				`);
+			}
 
 			const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
 			const dependencies = Array.from(binding.expression.dependencies);
@@ -335,10 +361,17 @@ export default class InlineComponentWrapper extends Wrapper {
 				contextual_dependencies.push(object.name, property.name);
 			}
 
-			const params = [x`#value`];
-			const args = [x`#value`];
-			if (contextual_dependencies.length > 0) {
+			if (binding.is_spread) {
+				lhs = x`${lhs}[#key]`;
+			}
 
+			const params = binding.is_spread 
+				? [x`#key`, x`#value`] 
+				: [x`#value`];
+			const args = binding.is_spread 
+				? [x`#key`, x`#value`] 
+				: [x`#value`];
+			if (contextual_dependencies.length > 0) {
 				contextual_dependencies.forEach(name => {
 					params.push({
 						type: 'Identifier',
@@ -349,12 +382,11 @@ export default class InlineComponentWrapper extends Wrapper {
 					args.push(renderer.reference(name));
 				});
 
-
 				block.maintain_context = true; // TODO put this somewhere more logical
 			}
 
 			block.chunks.init.push(b`
-				function ${id}(#value) {
+				function ${id}(${params}) {
 					${callee}(${args});
 				}
 			`);
@@ -378,6 +410,19 @@ export default class InlineComponentWrapper extends Wrapper {
 			`;
 
 			component.partly_hoisted.push(body);
+
+			if (binding.is_spread) {
+				return b`
+					@binding_callbacks.push(
+						() => Object
+							.keys(
+								#ctx[${renderer.context_lookup.get(dependencies[0]).index.value}]
+							)
+							.forEach(
+								#key => @bind(${this.var}, #key, ${id}.bind(undefined, #key))
+							)
+						);`;
+			}
 
 			return b`@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${id}));`;
 		});
