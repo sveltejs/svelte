@@ -139,7 +139,7 @@ async function process_tag(
 	preprocessor: Preprocessor,
 	source: Source
 ): Promise<SourceUpdate> {
-	const { filename } = source;
+	const { filename, source: markup } = source;
 	const tag_regex =
 		tag_name === 'style'
 			? /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi
@@ -160,6 +160,7 @@ async function process_tag(
 		const processed = await preprocessor({
 			content: content || '',
 			attributes: parse_tag_attributes(attributes || ''),
+			markup,
 			filename
 		});
 

@@ -22,6 +22,7 @@ export type MarkupPreprocessor = (options: {
 export type Preprocessor = (options: {
 	content: string;
 	attributes: Record<string, string | boolean>;
+	markup: string;
 	filename?: string;
 }) => Processed | Promise<Processed>;
 
