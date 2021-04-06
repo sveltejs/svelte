@@ -57,32 +57,12 @@ const subscriber_queue = [];
  */
 export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
 	
-	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
-		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
-		subscribers.push(subscriber);
-		if (subscribers.length === 1) {
-			stop = start(set) || noop;
-		}
-		run(value);
-
-		return () => {
-			const index = subscribers.indexOf(subscriber);
-			if (index !== -1) {
-				subscribers.splice(index, 1);
-			}
-			if (subscribers.length === 0) {
-				stop();
-				stop = null;
-			}
-		};
-	}
-	
 	function get(): T {
 		return value;
 	}
 	
 	return {
-		subscribe
+		subscribe: writable(value, start).subscribe
 	};
 }
 
@@ -118,8 +98,28 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 	function update(fn: Updater<T>): void {
 		set(fn(value));
 	}
+	
+	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
+		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
+		subscribers.push(subscriber);
+		if (subscribers.length === 1) {
+			stop = start(set) || noop;
+		}
+		run(value);
 
-	return { set, update, subscribe: readable(value, start).subscribe };
+		return () => {
+			const index = subscribers.indexOf(subscriber);
+			if (index !== -1) {
+				subscribers.splice(index, 1);
+			}
+			if (subscribers.length === 0) {
+				stop();
+				stop = null;
+			}
+		};
+	}
+
+	return { set, update, subscribe };
 }
 
 /** One or more `Readable`s. */
