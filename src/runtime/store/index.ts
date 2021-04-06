@@ -23,6 +23,11 @@ export interface Readable<T> {
 	 * @param invalidate cleanup callback
 	 */
 	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+	
+	/**
+	 * Get the readable's current value. 
+	 */
+	get(): T;
 }
 
 /** Writable interface for both updating and subscribing. */
@@ -51,8 +56,33 @@ const subscriber_queue = [];
  * @param {StartStopNotifier}start start and stop notifications for subscriptions
  */
 export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
+	
+	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
+		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
+		subscribers.push(subscriber);
+		if (subscribers.length === 1) {
+			stop = start(set) || noop;
+		}
+		run(value);
+
+		return () => {
+			const index = subscribers.indexOf(subscriber);
+			if (index !== -1) {
+				subscribers.splice(index, 1);
+			}
+			if (subscribers.length === 0) {
+				stop();
+				stop = null;
+			}
+		};
+	}
+	
+	function get(): T {
+		return value;
+	}
+	
 	return {
-		subscribe: writable(value, start).subscribe
+		subscribe
 	};
 }
 
@@ -89,27 +119,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 		set(fn(value));
 	}
 
-	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
-		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
-		subscribers.push(subscriber);
-		if (subscribers.length === 1) {
-			stop = start(set) || noop;
-		}
-		run(value);
-
-		return () => {
-			const index = subscribers.indexOf(subscriber);
-			if (index !== -1) {
-				subscribers.splice(index, 1);
-			}
-			if (subscribers.length === 0) {
-				stop();
-				stop = null;
-			}
-		};
-	}
-
-	return { set, update, subscribe };
+	return { set, update, subscribe: readable(value, start).subscribe };
 }
 
 /** One or more `Readable`s. */
