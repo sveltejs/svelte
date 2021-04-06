@@ -904,6 +904,7 @@ The following initialisation options can be provided:
 | `target` | **none** | An `HTMLElement` to render to. This option is required
 | `anchor` | `null` | A child of `target` to render the component immediately before
 | `props` | `{}` | An object of properties to supply to the component
+| `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component
 | `hydrate` | `false` | See below
 | `intro` | `false` | If `true`, will play transitions on initial render, rather than waiting for subsequent state changes
 
@@ -1080,4 +1081,30 @@ const App = require('./App.svelte').default;
 const { head, html, css } = App.render({
 	answer: 42
 });
+```
+
+---
+
+The `.render()` method accepts the following parameters:
+
+| parameter | default | description |
+| --- | --- | --- |
+| `props` | `{}` | An object of properties to supply to the component
+| `options` | `{}` | An object of options
+
+The `options` object takes in the following options:
+
+| option | default | description |
+| --- | --- | --- |
+| `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component
+
+```js
+const { head, html, css } = App.render(
+	// props
+	{ answer: 42 },
+	// options
+	{
+		context: new Map([['context-key', 'context-value']])
+	}
+);
 ```

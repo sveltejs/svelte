@@ -13,6 +13,7 @@ import {
 	shouldUpdateExpected,
 	mkdirp
 } from '../helpers';
+import { set_current_component } from '../../internal';
 
 function tryToReadFile(file) {
 	try {
@@ -127,6 +128,8 @@ describe('ssr', () => {
 				showOutput(dir, { generate: 'ssr', format: 'cjs' });
 				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
 				throw err;
+			} finally {
+				set_current_component(null);
 			}
 		});
 	});
@@ -223,6 +226,8 @@ describe('ssr', () => {
 					showOutput(cwd, compileOptions);
 					throw err;
 				}
+			} finally {
+				set_current_component(null);
 			}
 		});
 	});

@@ -120,7 +120,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		on_disconnect: [],
 		before_update: [],
 		after_update: [],
-		context: new Map(parent_component ? parent_component.$$.context : []),
+		context: new Map(parent_component ? parent_component.$$.context : options.context || []),
 
 		// everything else
 		callbacks: blank_object(),

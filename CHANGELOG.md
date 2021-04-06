@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.37.0
+
+* Allow root-level context to be passed to the component constructor ([#6032](https://github.com/sveltejs/svelte/pull/6032))
+
 ## 3.36.0
 
 * Add `this: void` typing to store functions ([#6094](https://github.com/sveltejs/svelte/pull/6094))
