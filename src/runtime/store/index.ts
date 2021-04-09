@@ -139,6 +139,20 @@ export function derived<S extends Stores, T>(
  *
  * @param stores - input stores
  * @param fn - function callback that aggregates the values
+ * @param initial_value - initial value
+ */
+export function derived<S extends Stores, T>(
+	stores: S,
+	fn: (values: StoresValues<S>) => T,
+	initial_value?: T
+): Readable<T>;
+
+/**
+ * Derived value store by synchronizing one or more readable stores and
+ * applying an aggregation function over its input values.
+ *
+ * @param stores - input stores
+ * @param fn - function callback that aggregates the values
  */
 export function derived<S extends Stores, T>(
 	stores: S,
