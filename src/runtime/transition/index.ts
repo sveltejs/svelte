@@ -98,40 +98,46 @@ export interface SlideParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
-	xAxis?: number;
-	yAxis?: number;
+	axis?: "x" | "y";
 }
 
 export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
-	easing = cubicOut
-
+	easing = cubicOut,
+	axis = "y"
 }: SlideParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const height = parseFloat(style.height);
+	const width = parseFloat(style.width);
 	const padding_top = parseFloat(style.paddingTop);
 	const padding_bottom = parseFloat(style.paddingBottom);
+	const padding_left = parseFloat(style.paddingLeft);
+	const padding_right = parseFloat(style.paddingRight);
 	const margin_top = parseFloat(style.marginTop);
 	const margin_bottom = parseFloat(style.marginBottom);
+	const margin_left = parseFloat(style.marginLeft);
+	const margin_right = parseFloat(style.marginRight);
 	const border_top_width = parseFloat(style.borderTopWidth);
 	const border_bottom_width = parseFloat(style.borderBottomWidth);
+	const border_left_width = parseFloat(style.borderLeftWidth);
+	const border_right_width = parseFloat(style.borderRightWidth);
 
 	return {
 		delay,
 		duration,
 		easing,
 		css: t =>
+			`--yAxisT: ${axis === "y" ? t : 1};` +
+			`--xAxisT: ${axis === "x" ? t : 1};` +
 			'overflow: hidden;' +
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
-			`height: ${t * height}px;` +
-			`padding-top: ${t * padding_top}px;` +
-			`padding-bottom: ${t * padding_bottom}px;` +
-			`margin-top: ${t * margin_top}px;` +
-			`margin-bottom: ${t * margin_bottom}px;` +
-			`border-top-width: ${t * border_top_width}px;` +
-			`border-bottom-width: ${t * border_bottom_width}px;`
+			`height: calc(var(--yAxisT) * ${height}px);` +
+			`width: calc(var(--xAxisT) * ${width}px);` +
+			`padding: calc(var(--yAxisT) * ${padding_top}px) calc(var(--xAxisT) * ${padding_right}px) calc(var(--yAxisT) * ${padding_bottom}px) $calc(var(--xAxisT) * ${padding_left}px);` +
+			`margin: calc(var(--yAxisT) * ${margin_top}px)  calc(var(--xAxisT) * ${margin_right}px) calc(var(--yAxisT) * ${margin_bottom}px) calc(var(--xAxisT) * ${margin_left}px);` +
+			`border-width: calc(var(--yAxisT) * ${border_top_width}px) calc(var(--xAxisT) * ${border_right_width}px) calc(var(--yAxisT) * ${border_bottom_width}px) calc(var(--xAxisT) * ${border_left_width}px);`
 	};
 }
 
