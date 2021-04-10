@@ -98,12 +98,15 @@ export interface SlideParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
+	xAxis?: number;
+	yAxis?: number;
 }
 
 export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut
+
 }: SlideParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
