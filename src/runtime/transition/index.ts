@@ -98,14 +98,14 @@ export interface SlideParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
-	axis?: "x" | "y";
+	axis?: 'x' | 'y';
 }
 
 export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut,
-	axis = "y"
+	axis = 'y'
 }: SlideParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
@@ -129,8 +129,8 @@ export function slide(node: Element, {
 		duration,
 		easing,
 		css: t =>
-			`--yAxisT: ${axis === "y" ? t : 1};` +
-			`--xAxisT: ${axis === "x" ? t : 1};` +
+			`--y_axis_t: ${axis === 'y' ? t : 1};` +
+			`--x_axis_t: ${axis === 'x' ? t : 1};` +
 			'overflow: hidden;' +
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
 			`height: calc(var(--yAxisT) * ${height}px);` +
