@@ -20,8 +20,15 @@ export type MarkupPreprocessor = (options: {
 }) => Processed | Promise<Processed>;
 
 export type Preprocessor = (options: {
+	/**
+	 * The script/style tag content
+	 */
 	content: string;
 	attributes: Record<string, string | boolean>;
+	/**
+	 * The whole Svelte file content
+	 */
+	markup: string;
 	filename?: string;
 }) => Processed | Promise<Processed>;
 

@@ -199,11 +199,11 @@ result: {
 			code: string,
 			dependencies?: Array<string>
 		}>,
-		script?: (input: { content: string, attributes: Record<string, string>, filename: string }) => Promise<{
+		script?: (input: { content: string, markup: string, attributes: Record<string, string>, filename: string }) => Promise<{
 			code: string,
 			dependencies?: Array<string>
 		}>,
-		style?: (input: { content: string, attributes: Record<string, string>, filename: string }) => Promise<{
+		style?: (input: { content: string, markup: string, attributes: Record<string, string>, filename: string }) => Promise<{
 			code: string,
 			dependencies?: Array<string>
 		}>
@@ -242,7 +242,7 @@ const { code } = await svelte.preprocess(source, {
 
 ---
 
-The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively. In addition to `filename`, they get an object of the element's attributes.
+The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively (`content`) as well as the entire component source text (`markup`). In addition to `filename`, they get an object of the element's attributes.
 
 If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 
