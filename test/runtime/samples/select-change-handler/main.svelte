@@ -8,7 +8,7 @@
 	}
 </script>
 
-<select bind:value={selected} on:change="{() => updateLastChangedTo(selected)}">
+<select bind:value={selected} on:blur="{() => updateLastChangedTo(selected)}">
 	{#each options as option}
 		<option value="{option.id}">{option.id}</option>
 	{/each}
