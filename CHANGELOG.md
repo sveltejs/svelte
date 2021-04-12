@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add missing function overload for `derived` to allow explicitly setting an initial value for non-async derived stores ([#6172](https://github.com/sveltejs/svelte/pull/6172))
+* Pass full markup source to script/style preprocessors ([#6169](https://github.com/sveltejs/svelte/pull/6169))
 
 ## 3.37.0
 
