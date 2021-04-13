@@ -17,7 +17,7 @@ export default class Slot extends Element {
 
 		info.attributes.forEach(attr => {
 			if (attr.type !== 'Attribute' && attr.type !== 'Spread') {
-				component.error(attr, {
+				return component.error(attr, {
 					code: 'invalid-slot-directive',
 					message: '<slot> cannot have directives'
 				});
@@ -25,7 +25,7 @@ export default class Slot extends Element {
 
 			if (attr.name === 'name') {
 				if (attr.value.length !== 1 || attr.value[0].type !== 'Text') {
-					component.error(attr, {
+					return component.error(attr, {
 						code: 'dynamic-slot-name',
 						message: '<slot> name cannot be dynamic'
 					});
@@ -33,7 +33,7 @@ export default class Slot extends Element {
 
 				this.slot_name = attr.value[0].data;
 				if (this.slot_name === 'default') {
-					component.error(attr, {
+					return component.error(attr, {
 						code: 'invalid-slot-name',
 						message: 'default is a reserved word — it cannot be used as a slot name'
 					});

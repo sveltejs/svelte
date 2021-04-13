@@ -40,7 +40,7 @@ export default class InlineComponent extends Node {
 			/* eslint-disable no-fallthrough */
 			switch (node.type) {
 				case 'Action':
-					component.error(node, {
+					return component.error(node, {
 						code: 'invalid-action',
 						message: 'Actions can only be applied to DOM elements, not components'
 					});
@@ -56,7 +56,7 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Class':
-					component.error(node, {
+					return component.error(node, {
 						code: 'invalid-class',
 						message: 'Classes can only be applied to DOM elements, not components'
 					});
@@ -70,7 +70,7 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Transition':
-					component.error(node, {
+					return component.error(node, {
 						code: 'invalid-transition',
 						message: 'Transitions can only be applied to DOM elements, not components'
 					});
@@ -98,7 +98,7 @@ export default class InlineComponent extends Node {
 		this.handlers.forEach(handler => {
 			handler.modifiers.forEach(modifier => {
 				if (modifier !== 'once') {
-					component.error(handler, {
+					return component.error(handler, {
 						code: 'invalid-event-modifier',
 						message: "Event modifiers other than 'once' can only be used on DOM elements"
 					});

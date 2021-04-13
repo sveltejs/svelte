@@ -34,6 +34,7 @@ export default class Transition extends Node {
 				code: 'duplicate-transition',
 				message
 			});
+			return;
 		}
 
 		this.expression = info.expression

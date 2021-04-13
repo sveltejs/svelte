@@ -18,6 +18,7 @@ export default class Head extends Node {
 				code: 'invalid-attribute',
 				message: '<svelte:head> should not have any attributes or directives'
 			});
+			return;
 		}
 
 		this.children = map_children(component, parent, scope, info.children.filter(child => {

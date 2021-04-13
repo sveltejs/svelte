@@ -412,14 +412,18 @@ export default class Component {
 			message: string;
 		}
 	) {
-		error(e.message, {
-			name: 'ValidationError',
-			code: e.code,
-			source: this.source,
-			start: pos.start,
-			end: pos.end,
-			filename: this.compile_options.filename
-		});
+		if (this.compile_options.errorMode === 'warn') {
+			this.warn(pos, e);
+		} else {
+			error(e.message, {
+				name: 'ValidationError',
+				code: e.code,
+				source: this.source,
+				start: pos.start,
+				end: pos.end,
+				filename: this.compile_options.filename
+			});
+		}
 	}
 
 	warn(
@@ -460,7 +464,7 @@ export default class Component {
 
 	extract_exports(node) {
 		if (node.type === 'ExportDefaultDeclaration') {
-			this.error(node, {
+			return this.error(node, {
 				code: 'default-export',
 				message: 'A component cannot have a default export'
 			});
@@ -468,7 +472,7 @@ export default class Component {
 
 		if (node.type === 'ExportNamedDeclaration') {
 			if (node.source) {
-				this.error(node, {
+				return this.error(node, {
 					code: 'not-implemented',
 					message: 'A component currently cannot have an export ... from'
 				});
@@ -550,7 +554,7 @@ export default class Component {
 
 		scope.declarations.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node as any, {
+				return this.error(node as any, {
 					code: 'illegal-declaration',
 					message: 'The $ prefix is reserved, and cannot be used for variable and import names'
 				});
@@ -568,7 +572,7 @@ export default class Component {
 
 		globals.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node as any, {
+				return this.error(node as any, {
 					code: 'illegal-subscription',
 					message: 'Cannot reference store value inside <script context="module">'
 				});
@@ -629,7 +633,7 @@ export default class Component {
 
 		instance_scope.declarations.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node as any, {
+				return this.error(node as any, {
 					code: 'illegal-declaration',
 					message: 'The $ prefix is reserved, and cannot be used for variable and import names'
 				});
@@ -666,7 +670,7 @@ export default class Component {
 				});
 			} else if (name[0] === '$') {
 				if (name === '$' || name[1] === '$') {
-					this.error(node as any, {
+					return this.error(node as any, {
 						code: 'illegal-global',
 						message: `${name} is an illegal variable name`
 					});
@@ -869,7 +873,7 @@ export default class Component {
 
 				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
 					if (!((/Function/.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
-						this.error(node as any, {
+						return this.error(node as any, {
 							code: 'contextual-store',
 							message: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
 						});
@@ -937,7 +941,7 @@ export default class Component {
 
 									if (variable.export_name) {
 										// TODO is this still true post-#3539?
-										component.error(declarator as any, {
+										return component.error(declarator as any, {
 											code: 'destructured-prop',
 											message: 'Cannot declare props in destructured declaration'
 										});
@@ -1298,7 +1302,7 @@ export default class Component {
 		if (cycle && cycle.length) {
 			const declarationList = lookup.get(cycle[0]);
 			const declaration = declarationList[0];
-			this.error(declaration.node, {
+			return this.error(declaration.node, {
 				code: 'cyclical-reactive-declaration',
 				message: `Cyclical dependency detected: ${cycle.join(' → ')}`
 			});
@@ -1324,7 +1328,7 @@ export default class Component {
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
 			if (name === '$' || name[1] === '$' && !is_reserved_keyword(name)) {
-				this.error(node, {
+				return this.error(node, {
 					code: 'illegal-global',
 					message: `${name} is an illegal variable name`
 				});
@@ -1384,13 +1388,13 @@ function process_component_options(component: Component, nodes) {
 		if (!chunk) return true;
 
 		if (value.length > 1) {
-			component.error(attribute, { code, message });
+			return component.error(attribute, { code, message });
 		}
 
 		if (chunk.type === 'Text') return chunk.data;
 
 		if (chunk.expression.type !== 'Literal') {
-			component.error(attribute, { code, message });
+			return component.error(attribute, { code, message });
 		}
 
 		return chunk.expression.value;
@@ -1408,11 +1412,11 @@ function process_component_options(component: Component, nodes) {
 						const tag = get_value(attribute, code, message);
 
 						if (typeof tag !== 'string' && tag !== null) {
-							component.error(attribute, { code, message });
+							return component.error(attribute, { code, message });
 						}
 
 						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
-							component.error(attribute, {
+							return component.error(attribute, {
 								code: 'invalid-tag-property',
 								message: "tag name must be two or more words joined by the '-' character"
 							});
@@ -1435,18 +1439,18 @@ function process_component_options(component: Component, nodes) {
 						const ns = get_value(attribute, code, message);
 
 						if (typeof ns !== 'string') {
-							component.error(attribute, { code, message });
+							return component.error(attribute, { code, message });
 						}
 
 						if (valid_namespaces.indexOf(ns) === -1) {
 							const match = fuzzymatch(ns, valid_namespaces);
 							if (match) {
-								component.error(attribute, {
+								return component.error(attribute, {
 									code: 'invalid-namespace-property',
 									message: `Invalid namespace '${ns}' (did you mean '${match}'?)`
 								});
 							} else {
-								component.error(attribute, {
+								return component.error(attribute, {
 									code: 'invalid-namespace-property',
 									message: `Invalid namespace '${ns}'`
 								});
@@ -1465,7 +1469,7 @@ function process_component_options(component: Component, nodes) {
 						const value = get_value(attribute, code, message);
 
 						if (typeof value !== 'boolean') {
-							component.error(attribute, { code, message });
+							return component.error(attribute, { code, message });
 						}
 
 						component_options[name] = value;
@@ -1473,13 +1477,13 @@ function process_component_options(component: Component, nodes) {
 					}
 
 					default:
-						component.error(attribute, {
+						return component.error(attribute, {
 							code: 'invalid-options-attribute',
 							message: '<svelte:options> unknown attribute'
 						});
 				}
 			} else {
-				component.error(attribute, {
+				return component.error(attribute, {
 					code: 'invalid-options-attribute',
 					message: "<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable' and 'preserveWhitespace' attributes"
 				});

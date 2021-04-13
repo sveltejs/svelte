@@ -18,11 +18,12 @@ export default class Title extends Node {
 				code: 'illegal-attribute',
 				message: '<title> cannot have attributes'
 			});
+			return;
 		}
 
 		info.children.forEach(child => {
 			if (child.type !== 'Text' && child.type !== 'MustacheTag') {
-				component.error(child, {
+				return component.error(child, {
 					code: 'illegal-structure',
 					message: '<title> can only contain text and {tags}'
 				});

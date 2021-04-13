@@ -39,6 +39,7 @@ export default class Binding extends Node {
 				code: 'invalid-directive-value',
 				message: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
 			});
+			return;
 		}
 
 		this.name = info.name;
@@ -55,12 +56,14 @@ export default class Binding extends Node {
 				code: 'invalid-binding',
 				message: 'Cannot bind to a variable declared with the let: directive'
 			});
+			return;
 		} else if (scope.names.has(name)) {
 			if (scope.is_await(name)) {
 				component.error(this, {
 					code: 'invalid-binding',
 					message: 'Cannot bind to a variable declared with {#await ... then} or {:catch} blocks'
 				});
+				return;
 			}
 
 			scope.dependencies_for_name.get(name).forEach(name => {
@@ -77,6 +80,7 @@ export default class Binding extends Node {
 					code: 'binding-undeclared',
 					message: `${name} is not declared`
 				});
+				return;
 			}
 
 			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
@@ -86,6 +90,7 @@ export default class Binding extends Node {
 					code: 'invalid-binding',
 					message: 'Cannot bind to a variable which is not writable'
 				});
+				return;
 			}
 		}
 

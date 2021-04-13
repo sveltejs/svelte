@@ -116,6 +116,7 @@ export interface CompileOptions {
 	name?: string;
 	filename?: string;
 	generate?: 'dom' | 'ssr' | false;
+	errorMode?: 'throw' | 'warn';
 
 	sourcemap?: object | string;
 	outputFilename?: string;

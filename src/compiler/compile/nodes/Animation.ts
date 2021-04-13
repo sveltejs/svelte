@@ -24,6 +24,7 @@ export default class Animation extends Node {
 				code: 'duplicate-animation',
 				message: "An element can only have one 'animate' directive"
 			});
+			return;
 		}
 
 		const block = parent.parent;
@@ -33,6 +34,7 @@ export default class Animation extends Node {
 				code: 'invalid-animation',
 				message: 'An element that uses the animate directive must be the immediate child of a keyed each block'
 			});
+			return;
 		}
 
 		(block as EachBlock).has_animation = true;

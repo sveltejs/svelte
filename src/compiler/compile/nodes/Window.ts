@@ -36,7 +36,7 @@ export default class Window extends Node {
 					const { parts } = flatten_reference(node.expression);
 
 					// TODO is this constraint necessary?
-					component.error(node.expression, {
+					return component.error(node.expression, {
 						code: 'invalid-binding',
 						message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
 					});
@@ -52,12 +52,12 @@ export default class Window extends Node {
 					const message = `'${node.name}' is not a valid binding on <svelte:window>`;
 
 					if (match) {
-						component.error(node, {
+						return component.error(node, {
 							code: 'invalid-binding',
 							message: `${message} (did you mean '${match}'?)`
 						});
 					} else {
-						component.error(node, {
+						return component.error(node, {
 							code: 'invalid-binding',
 							message: `${message} — valid bindings are ${list(valid_bindings)}`
 						});

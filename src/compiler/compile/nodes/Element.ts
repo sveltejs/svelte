@@ -145,6 +145,7 @@ export default class Element extends Node {
 							code: 'textarea-duplicate-value',
 							message: 'A <textarea> can have either a value attribute or (equivalently) child content, but not both'
 						});
+						return;
 					}
 
 					// this is an egregious hack, but it's the easiest way to get <textarea>
@@ -278,7 +279,7 @@ export default class Element extends Node {
 			// Errors
 
 			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
-				component.error(attribute, {
+				return component.error(attribute, {
 					code: 'illegal-attribute',
 					message: `'${name}' is not a valid attribute name`
 				});
@@ -286,23 +287,24 @@ export default class Element extends Node {
 
 			if (name === 'slot') {
 				if (!attribute.is_static) {
-					component.error(attribute, {
+					return component.error(attribute, {
 						code: 'invalid-slot-attribute',
 						message: 'slot attribute cannot have a dynamic value'
 					});
 				}
 
 				if (component.slot_outlets.has(name)) {
-					component.error(attribute, {
+					return component.error(attribute, {
 						code: 'duplicate-slot-attribute',
 						message: `Duplicate '${name}' slot`
 					});
 
-					component.slot_outlets.add(name);
+					// this code was unreachable. Still needed?
+					// component.slot_outlets.add(name);
 				}
 
 				if (!(parent.type === 'SlotTemplate' || within_custom_element(parent))) {
-					component.error(attribute, {
+					return component.error(attribute, {
 						code: 'invalid-slotted-content',
 						message: 'Element with a slot=\'...\' attribute must be a child of a component or a descendant of a custom element'
 					});
@@ -601,7 +603,7 @@ export default class Element extends Node {
 	validate_bindings_foreign() {
 		this.bindings.forEach(binding => {
 			if (binding.name !== 'this') {
-				this.component.error(binding, {
+				return this.component.error(binding, {
 					code: 'invalid-binding',
 					message: `'${binding.name}' is not a valid binding. Foreign elements only support bind:this`
 				});
@@ -620,7 +622,7 @@ export default class Element extends Node {
 			if (!attribute) return null;
 
 			if (!attribute.is_static) {
-				component.error(attribute, {
+				return component.error(attribute, {
 					code: 'invalid-type',
 					message: '\'type\' attribute cannot be dynamic if input uses two-way binding'
 				});
@@ -629,7 +631,7 @@ export default class Element extends Node {
 			const value = attribute.get_static_value();
 
 			if (value === true) {
-				component.error(attribute, {
+				return component.error(attribute, {
 					code: 'missing-type',
 					message: '\'type\' attribute must be specified'
 				});
@@ -647,7 +649,7 @@ export default class Element extends Node {
 					this.name !== 'textarea' &&
 					this.name !== 'select'
 				) {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: `'value' is not a valid binding on <${this.name}> elements`
 					});
@@ -659,7 +661,7 @@ export default class Element extends Node {
 					);
 
 					if (attribute && !attribute.is_static) {
-						component.error(attribute, {
+						return component.error(attribute, {
 							code: 'dynamic-multiple-attribute',
 							message: '\'multiple\' attribute cannot be dynamic if select uses two-way binding'
 						});
@@ -669,7 +671,7 @@ export default class Element extends Node {
 				}
 			} else if (name === 'checked' || name === 'indeterminate') {
 				if (this.name !== 'input') {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: `'${name}' is not a valid binding on <${this.name}> elements`
 					});
@@ -680,11 +682,11 @@ export default class Element extends Node {
 				if (type !== 'checkbox') {
 					let message = `'${name}' binding can only be used with <input type="checkbox">`;
 					if (type === 'radio') message += ' — for <input type="radio">, use \'group\' binding';
-					component.error(binding, { code: 'invalid-binding', message });
+					return component.error(binding, { code: 'invalid-binding', message });
 				}
 			} else if (name === 'group') {
 				if (this.name !== 'input') {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: `'group' is not a valid binding on <${this.name}> elements`
 					});
@@ -693,14 +695,14 @@ export default class Element extends Node {
 				const type = check_type_attribute();
 
 				if (type !== 'checkbox' && type !== 'radio') {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: '\'group\' binding can only be used with <input type="checkbox"> or <input type="radio">'
 					});
 				}
 			} else if (name === 'files') {
 				if (this.name !== 'input') {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: `'files' is not a valid binding on <${this.name}> elements`
 					});
@@ -709,7 +711,7 @@ export default class Element extends Node {
 				const type = check_type_attribute();
 
 				if (type !== 'file') {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: '\'files\' binding can only be used with <input type="file">'
 					});
@@ -717,7 +719,7 @@ export default class Element extends Node {
 
 			} else if (name === 'open') {
 				if (this.name !== 'details') {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: `'${name}' binding can only be used with <details>`
 					});
@@ -736,7 +738,7 @@ export default class Element extends Node {
 				name === 'ended'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: `'${name}' binding can only be used with <audio> or <video>`
 					});
@@ -746,24 +748,24 @@ export default class Element extends Node {
 				name === 'videoWidth'
 			) {
 				if (this.name !== 'video') {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: `'${name}' binding can only be used with <video>`
 					});
 				}
 			} else if (dimensions.test(name)) {
 				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: `'${binding.name}' is not a valid binding on <svg>. Use '${name.replace('offset', 'client')}' instead`
 					});
 				} else if (svg.test(this.name)) {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: `'${binding.name}' is not a valid binding on SVG elements`
 					});
 				} else if (is_void(this.name)) {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'invalid-binding',
 						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`
 					});
@@ -777,18 +779,18 @@ export default class Element extends Node {
 				);
 
 				if (!contenteditable) {
-					component.error(binding, {
+					return component.error(binding, {
 						code: 'missing-contenteditable-attribute',
 						message: '\'contenteditable\' attribute is required for textContent and innerHTML two-way bindings'
 					});
 				} else if (contenteditable && !contenteditable.is_static) {
-					component.error(contenteditable, {
+					return component.error(contenteditable, {
 						code: 'dynamic-contenteditable-attribute',
 						message: '\'contenteditable\' attribute cannot be dynamic if element uses two-way binding'
 					});
 				}
 			} else if (name !== 'this') {
-				component.error(binding, {
+				return component.error(binding, {
 					code: 'invalid-binding',
 					message: `'${binding.name}' is not a valid binding`
 				});
@@ -816,14 +818,14 @@ export default class Element extends Node {
 
 		this.handlers.forEach(handler => {
 			if (handler.modifiers.has('passive') && handler.modifiers.has('preventDefault')) {
-				component.error(handler, {
+				return component.error(handler, {
 					code: 'invalid-event-modifier',
 					message: 'The \'passive\' and \'preventDefault\' modifiers cannot be used together'
 				});
 			}
 
 			if (handler.modifiers.has('passive') && handler.modifiers.has('nonpassive')) {
-				component.error(handler, {
+				return component.error(handler, {
 					code: 'invalid-event-modifier',
 					message: 'The \'passive\' and \'nonpassive\' modifiers cannot be used together'
 				});
@@ -831,7 +833,7 @@ export default class Element extends Node {
 
 			handler.modifiers.forEach(modifier => {
 				if (!valid_modifiers.has(modifier)) {
-					component.error(handler, {
+					return component.error(handler, {
 						code: 'invalid-event-modifier',
 						message: `Valid event modifiers are ${list(Array.from(valid_modifiers))}`
 					});
@@ -856,7 +858,7 @@ export default class Element extends Node {
 				if (component.compile_options.legacy && (modifier === 'once' || modifier === 'passive')) {
 					// TODO this could be supported, but it would need a few changes to
 					// how event listeners work
-					component.error(handler, {
+					return component.error(handler, {
 						code: 'invalid-event-modifier',
 						message: `The '${modifier}' modifier cannot be used in legacy mode`
 					});

@@ -65,6 +65,7 @@ export default class EachBlock extends AbstractBlock {
 					code: 'invalid-animation',
 					message: 'An element that uses the animate directive must be the sole child of a keyed each block'
 				});
+				return;
 			}
 		}
 

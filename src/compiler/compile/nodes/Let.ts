@@ -26,7 +26,7 @@ export default class Let extends Node {
 			walk(info.expression, {
 				enter(node: Identifier|BasePattern) {
 					if (!applicable.has(node.type)) {
-						component.error(node as any, {
+						return component.error(node as any, {
 							code: 'invalid-let',
 							message: 'let directive value must be an identifier or an object/array pattern'
 						});

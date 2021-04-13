@@ -45,14 +45,14 @@ export default class SlotTemplate extends Node {
 					if (node.name === 'slot') {
 						this.slot_attribute = new Attribute(component, this, scope, node);
 						if (!this.slot_attribute.is_static) {
-							component.error(node, {
+							return component.error(node, {
 								code: 'invalid-slot-attribute',
 								message: 'slot attribute cannot have a dynamic value'
 							});
 						}
 						const value = this.slot_attribute.get_static_value();
 						if (typeof value === 'boolean') {
-							component.error(node, {
+							return component.error(node, {
 								code: 'invalid-slot-attribute',
 								message: 'slot attribute value is missing'
 							});
@@ -73,7 +73,7 @@ export default class SlotTemplate extends Node {
 
 	validate_slot_template_placement() {
 		if (this.parent.type !== 'InlineComponent') {
-			this.component.error(this, {
+			return this.component.error(this, {
 				code: 'invalid-slotted-content',
 				message: '<svelte:fragment> must be a child of a component'
 			});
