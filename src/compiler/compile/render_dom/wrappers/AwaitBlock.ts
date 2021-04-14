@@ -232,7 +232,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		const dependencies = this.node.expression.dynamic_dependencies();
 
-		const update_child_context = b`@update_child_context(${info}, #ctx, #dirty)`;
+		const update_await_block_branch = b`@update_await_block_branch(${info}, #ctx, #dirty)`;
 
 		if (dependencies.length > 0) {
 			const condition = x`
@@ -249,7 +249,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 					if (${condition}) {
 
 					} else {
-						${update_child_context}
+						${update_await_block_branch}
 					}
 				`);
 			} else {
@@ -260,7 +260,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		} else {
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
-					${update_child_context}
+					${update_await_block_branch}
 				`);
 			}
 		}

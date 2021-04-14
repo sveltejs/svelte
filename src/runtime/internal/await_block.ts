@@ -84,7 +84,7 @@ export function handle_promise(promise, info) {
 	}
 }
 
-export function update_child_context(info, ctx, dirty) {
+export function update_await_block_branch(info, ctx, dirty) {
 	const child_ctx = ctx.slice();
 	const { resolved } = info;
 
