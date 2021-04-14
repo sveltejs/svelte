@@ -1,6 +1,6 @@
 export default {
 	props: {
-		thePromise: new Promise((_) => {}),
+		thePromise: new Promise((_) => {})
 	},
 
 	html: `
@@ -8,7 +8,7 @@ export default {
 	`,
 
 	async test({ assert, component, target }) {
-		await (component.thePromise = Promise.resolve("abc"));
+		await (component.thePromise = Promise.resolve('abc'));
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -33,7 +33,7 @@ export default {
 		);
 
 		try {
-			await (component.thePromise = Promise.reject("failure"));
+			await (component.thePromise = Promise.reject('failure'));
 		} catch (error) {
 			// ignore
 		}
@@ -47,5 +47,5 @@ export default {
 			</div>
 			`
 		);
-	},
+	}
 };
