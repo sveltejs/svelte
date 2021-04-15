@@ -543,8 +543,7 @@ const size = spring();
 $: $size = big ? 100 : 10;
 ```
 
-### `svelte/
-`
+### `svelte/transition`
 
 The `svelte/transition` module exports seven functions: `fade`, `blur`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with Svelte [`transitions`](docs#transition_fn).
 
