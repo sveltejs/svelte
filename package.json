@@ -118,7 +118,7 @@
     "eslint-plugin-svelte3": "^2.7.3",
     "estree-walker": "^1.0.0",
     "is-reference": "^1.1.4",
-    "jsdom": "^15.1.1",
+    "jsdom": "^15.2.1",
     "kleur": "^3.0.3",
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.3",
