@@ -105,8 +105,9 @@ export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut,
-	axis = 'y'
+	axis = 'x'
 }: SlideParams = {}): TransitionConfig {
+	const direction: { x: 1 | 0, y: 1 | 0 } = { x: axis === 'x' ? 1 : 0, y: axis === 'y' ? 1 : 0 };
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const height = parseFloat(style.height);
@@ -129,15 +130,13 @@ export function slide(node: Element, {
 		duration,
 		easing,
 		css: t =>
-			`--y_axis_t: ${axis === 'y' ? t : 1};` +
-			`--x_axis_t: ${axis === 'x' ? t : 1};` +
 			'overflow: hidden;' +
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
-			`height: calc(var(--yAxisT) * ${height}px);` +
-			`width: calc(var(--xAxisT) * ${width}px);` +
-			`padding: calc(var(--yAxisT) * ${padding_top}px) calc(var(--xAxisT) * ${padding_right}px) calc(var(--yAxisT) * ${padding_bottom}px) calc(var(--xAxisT) * ${padding_left}px);` +
-			`margin: calc(var(--yAxisT) * ${margin_top}px)  calc(var(--xAxisT) * ${margin_right}px) calc(var(--yAxisT) * ${margin_bottom}px) calc(var(--xAxisT) * ${margin_left}px);` +
-			`border-width: calc(var(--yAxisT) * ${border_top_width}px) calc(var(--xAxisT) * ${border_right_width}px) calc(var(--yAxisT) * ${border_bottom_width}px) calc(var(--xAxisT) * ${border_left_width}px);`
+			`height: ${t ** direction.y * height}px;` +
+			`width: ${t ** direction.x * width}px;` +
+			`padding: ${t ** direction.y * padding_top}px ${t ** direction.x * padding_right}px ${t ** direction.y * padding_bottom}px) ${t ** direction.x * padding_left}px;` +
+			`margin: ${t ** direction.y * margin_top}px  ${t ** direction.x * margin_right}px ${t ** direction.y * margin_bottom}px ${t ** direction.x * margin_left}px;` +
+			`border-width: ${t ** direction.y * border_top_width}px ${t ** direction.x * border_right_width}px ${t ** direction.y * border_bottom_width}px ${t ** direction.x * border_left_width}px;`
 	};
 }
 
