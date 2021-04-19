@@ -135,7 +135,7 @@ export function slide(node: Element, {
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
 			`height: calc(var(--yAxisT) * ${height}px);` +
 			`width: calc(var(--xAxisT) * ${width}px);` +
-			`padding: calc(var(--yAxisT) * ${padding_top}px) calc(var(--xAxisT) * ${padding_right}px) calc(var(--yAxisT) * ${padding_bottom}px) $calc(var(--xAxisT) * ${padding_left}px);` +
+			`padding: calc(var(--yAxisT) * ${padding_top}px) calc(var(--xAxisT) * ${padding_right}px) calc(var(--yAxisT) * ${padding_bottom}px) calc(var(--xAxisT) * ${padding_left}px);` +
 			`margin: calc(var(--yAxisT) * ${margin_top}px)  calc(var(--xAxisT) * ${margin_right}px) calc(var(--yAxisT) * ${margin_bottom}px) calc(var(--xAxisT) * ${margin_left}px);` +
 			`border-width: calc(var(--yAxisT) * ${border_top_width}px) calc(var(--xAxisT) * ${border_right_width}px) calc(var(--yAxisT) * ${border_bottom_width}px) calc(var(--xAxisT) * ${border_left_width}px);`
 	};
