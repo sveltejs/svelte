@@ -112,18 +112,9 @@ export function slide(node: Element, {
 	const opacity = +style.opacity;
 	const height = parseFloat(style.height);
 	const width = parseFloat(style.width);
-	const padding_top = parseFloat(style.paddingTop);
-	const padding_bottom = parseFloat(style.paddingBottom);
-	const padding_left = parseFloat(style.paddingLeft);
-	const padding_right = parseFloat(style.paddingRight);
-	const margin_top = parseFloat(style.marginTop);
-	const margin_bottom = parseFloat(style.marginBottom);
-	const margin_left = parseFloat(style.marginLeft);
-	const margin_right = parseFloat(style.marginRight);
-	const border_top_width = parseFloat(style.borderTopWidth);
-	const border_bottom_width = parseFloat(style.borderBottomWidth);
-	const border_left_width = parseFloat(style.borderLeftWidth);
-	const border_right_width = parseFloat(style.borderRightWidth);
+	const padding = { top: parseFloat(style.paddingTop), right: parseFloat(style.paddingRight), bottom: parseFloat(style.paddingBottom), left: parseFloat(style.paddingLeft) };
+	const margin = { top: parseFloat(style.marginTop), right: parseFloat(style.marginRight), bottom: parseFloat(style.marginBottom), left: parseFloat(style.marginLeft) };
+	const border_width = { top: parseFloat(style.borderTopWidth), right: parseFloat(style.borderRightWidth), bottom: parseFloat(style.borderBottomWidth), left: parseFloat(style.borderLeftWidth) };
 
 	return {
 		delay,
@@ -134,9 +125,9 @@ export function slide(node: Element, {
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
 			`height: ${t ** direction.y * height}px;` +
 			`width: ${t ** direction.x * width}px;` +
-			`padding: ${t ** direction.y * padding_top}px ${t ** direction.x * padding_right}px ${t ** direction.y * padding_bottom}px) ${t ** direction.x * padding_left}px;` +
-			`margin: ${t ** direction.y * margin_top}px  ${t ** direction.x * margin_right}px ${t ** direction.y * margin_bottom}px ${t ** direction.x * margin_left}px;` +
-			`border-width: ${t ** direction.y * border_top_width}px ${t ** direction.x * border_right_width}px ${t ** direction.y * border_bottom_width}px ${t ** direction.x * border_left_width}px;`
+			`padding: ${t ** direction.y * padding.top}px ${t ** direction.x * padding.right}px ${t ** direction.y * padding.bottom}px) ${t ** direction.x * padding.left}px;` +
+			`margin: ${t ** direction.y * margin.top}px  ${t ** direction.x * margin.right}px ${t ** direction.y * margin.bottom}px ${t ** direction.x * margin.left}px;` +
+			`border-width: ${t ** direction.y * border_width.top}px ${t ** direction.x * border_width.right}px ${t ** direction.y * border_width.bottom}px ${t ** direction.x * border_width.left}px;`
 	};
 }
 
