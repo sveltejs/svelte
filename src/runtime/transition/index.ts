@@ -105,9 +105,9 @@ export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut,
-	axis = 'x'
+	axis = 'y'
 }: SlideParams = {}): TransitionConfig {
-	const direction: { x: 1 | 0, y: 1 | 0 } = { x: axis === 'x' ? 1 : 0, y: axis === 'y' ? 1 : 0 };
+	const direction = { x: axis === 'x' ? 1 : 0, y: axis === 'y' ? 1 : 0 };
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const height = parseFloat(style.height);
