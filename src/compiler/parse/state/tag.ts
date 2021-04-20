@@ -330,6 +330,13 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
+            if (name === null) {
+                parser.error({
+                    code: 'empty-attribute-value',
+                    message: 'Empty attribute shorthand'
+                }, start);
+            }
+
 			check_unique(name);
 
 			return {
