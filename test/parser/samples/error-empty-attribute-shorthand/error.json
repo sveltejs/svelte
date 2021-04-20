@@ -1,5 +1,5 @@
 {
-    "code": "empty-attribute-value",
+    "code": "empty-attribute-shorthand",
     "message": "Attribute shorthand cannot be empty",
     "start": {
         "line": 1,
