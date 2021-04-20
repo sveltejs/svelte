@@ -335,7 +335,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 					code: 'empty-attribute-value',
 					message: 'Empty attribute shorthand'
 				}, start);
-            }
+			}
 
 			check_unique(name);
 
