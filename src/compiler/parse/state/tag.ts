@@ -333,7 +333,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			if (name === null) {
 				parser.error({
 					code: 'empty-attribute-value',
-					message: 'Empty attribute shorthand'
+					message: 'Attribute shorthand cannot be empty'
 				}, start);
 			}
 
