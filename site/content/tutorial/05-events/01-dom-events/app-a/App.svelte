@@ -7,10 +7,13 @@
 	}
 </script>
 
-<style>
-	div { width: 100%; height: 100%; }
-</style>
-
 <div>
 	The mouse position is {m.x} x {m.y}
 </div>
+
+<style>
+	div {
+		width: 100%;
+		height: 100%;
+	}
+</style>
