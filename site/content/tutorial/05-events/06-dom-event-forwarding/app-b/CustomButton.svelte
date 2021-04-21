@@ -1,8 +1,6 @@
-
 <button on:click>
 	Click me
 </button>
-
 
 <style>
 	button {

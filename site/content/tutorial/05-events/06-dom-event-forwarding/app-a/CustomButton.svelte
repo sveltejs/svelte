@@ -1,8 +1,6 @@
-
 <button>
 	Click me
 </button>
-
 
 <style>
 	button {
