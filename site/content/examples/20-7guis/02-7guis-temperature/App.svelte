@@ -1,13 +1,3 @@
-<!-- https://eugenkiss.github.io/7guis/tasks/#temp -->
-<input value={c} on:input="{e => setBothFromC(e.target.value)}" type=number> °c =
-<input value={f} on:input="{e => setBothFromF(e.target.value)}" type=number> °f
-
-<style>
-	input {
-		width: 5em;
-	}
-</style>
-
 <script>
 	let c = 0;
 	let f = 32;
@@ -22,3 +12,13 @@
 		c =+(5 / 9 * (f - 32)).toFixed(1);
 	}
 </script>
+
+<!-- https://eugenkiss.github.io/7guis/tasks/#temp -->
+<input value={c} on:input="{e => setBothFromC(e.target.value)}" type=number> °c =
+<input value={f} on:input="{e => setBothFromF(e.target.value)}" type=number> °f
+
+<style>
+	input {
+		width: 5em;
+	}
+</style>

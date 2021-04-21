@@ -20,44 +20,6 @@
 	});
 </script>
 
-<style>
-	svg {
-		width: 100%;
-		height: 100%;
-	}
-
-	.clock-face {
-		stroke: #333;
-		fill: white;
-	}
-
-	.minor {
-		stroke: #999;
-		stroke-width: 0.5;
-	}
-
-	.major {
-		stroke: #333;
-		stroke-width: 1;
-	}
-
-	.hour {
-		stroke: #333;
-	}
-
-	.minute {
-		stroke: #666;
-	}
-
-	.second, .second-counterweight {
-		stroke: rgb(180,0,0);
-	}
-
-	.second-counterweight {
-		stroke-width: 3;
-	}
-</style>
-
 <svg viewBox='-50 -50 100 100'>
 	<circle class='clock-face' r='48'/>
 
@@ -102,3 +64,41 @@
 		<line class='second-counterweight' y1='10' y2='2'/>
 	</g>
 </svg>
+
+<style>
+	svg {
+		width: 100%;
+		height: 100%;
+	}
+
+	.clock-face {
+		stroke: #333;
+		fill: white;
+	}
+
+	.minor {
+		stroke: #999;
+		stroke-width: 0.5;
+	}
+
+	.major {
+		stroke: #333;
+		stroke-width: 1;
+	}
+
+	.hour {
+		stroke: #333;
+	}
+
+	.minute {
+		stroke: #666;
+	}
+
+	.second, .second-counterweight {
+		stroke: rgb(180,0,0);
+	}
+
+	.second-counterweight {
+		stroke-width: 3;
+	}
+</style>
