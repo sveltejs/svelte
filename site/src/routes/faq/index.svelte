@@ -40,7 +40,7 @@
 		grid-gap: 1em;
 		min-height: calc(100vh - var(--nav-h));
 		padding: var(--top-offset) var(--side-nav) 6rem var(--side-nav);
-		max-width: var(--main-width);
+		max-width: 30em;
 		margin: 0 auto;
 	}
 
@@ -67,7 +67,6 @@
 
 	.faq p {
 		font-size: var(--h5);
-		max-width: 30em;
 		color: var(--second);
 	}
 
