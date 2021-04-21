@@ -1,3 +1,5 @@
+<p>Hello, Svelte!</p>
+
 <style>
 	p {
 		color: purple;
@@ -5,5 +7,3 @@
 		font-size: 2em;
 	}
 </style>
-
-<p>This is a paragraph.</p>
