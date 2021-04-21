@@ -1,3 +1,23 @@
+<article class="contact-card">
+	<h2>
+		<slot>
+			<span class="missing">Unknown name</span>
+		</slot>
+	</h2>
+
+	<div class="address">
+		<slot>
+			<span class="missing">Unknown address</span>
+		</slot>
+	</div>
+
+	<div class="email">
+		<slot>
+			<span class="missing">Unknown email</span>
+		</slot>
+	</div>
+</article>
+
 <style>
 	.contact-card {
 		width: 300px;
@@ -21,27 +41,13 @@
 		line-height: 1.2;
 	}
 
-	.address { background-image: url(tutorial/icons/map-marker.svg) }
-	.email   { background-image: url(tutorial/icons/email.svg) }
-	.missing { color: #999 }
+	.address {
+		background-image: url(tutorial/icons/map-marker.svg);
+	}
+	.email {
+		background-image: url(tutorial/icons/email.svg);
+	}
+	.missing {
+		color: #999;
+	}
 </style>
-
-<article class="contact-card">
-	<h2>
-		<slot>
-			<span class="missing">Unknown name</span>
-		</slot>
-	</h2>
-
-	<div class="address">
-		<slot>
-			<span class="missing">Unknown address</span>
-		</slot>
-	</div>
-
-	<div class="email">
-		<slot>
-			<span class="missing">Unknown email</span>
-		</slot>
-	</div>
-</article>
