@@ -15,13 +15,7 @@
 </div>
 
 <style>
-	input {
-		display: block;
-	}
-	div {
-		display: inline-block;
-	}
-	span {
-		word-break: break-all;
-	}
+	input { display: block; }
+	div { display: inline-block; }
+	span { word-break: break-all; }
 </style>

@@ -1,4 +1,4 @@
-<p>Hello, Svelte!</p>
+<p>This is a paragraph.</p>
 
 <style>
 	p {
