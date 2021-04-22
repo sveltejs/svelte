@@ -7,22 +7,6 @@
 	$: url = !item.domain ? `https://news.ycombinator.com/${item.url}` : item.url;
 </script>
 
-<style>
-	article {
-		margin: 0 0 1em 0;
-	}
-
-	a {
-		display: block;
-		margin: 0 0 1em 0;
-	}
-
-	h1 {
-		font-size: 1.4em;
-		margin: 0;
-	}
-</style>
-
 <a href={returnTo}>&laquo; back</a>
 
 <article>
@@ -41,3 +25,19 @@
 		<Comment {comment}/>
 	{/each}
 </div>
+
+<style>
+	article {
+		margin: 0 0 1em 0;
+	}
+
+	a {
+		display: block;
+		margin: 0 0 1em 0;
+	}
+
+	h1 {
+		font-size: 1.4em;
+		margin: 0;
+	}
+</style>

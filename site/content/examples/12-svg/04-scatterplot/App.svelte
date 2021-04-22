@@ -3,6 +3,15 @@
 	import data from './data.js';
 </script>
 
+<div class="chart">
+	<h2>Anscombe's quartet</h2>
+
+	<Scatterplot points={data.a}/>
+	<Scatterplot points={data.b}/>
+	<Scatterplot points={data.c}/>
+	<Scatterplot points={data.d}/>
+</div>
+
 <style>
 	.chart {
 		width: 100%;
@@ -13,12 +22,3 @@
 		margin: 0 auto;
 	}
 </style>
-
-<div class="chart">
-	<h2>Anscombe's quartet</h2>
-
-	<Scatterplot points={data.a}/>
-	<Scatterplot points={data.b}/>
-	<Scatterplot points={data.c}/>
-	<Scatterplot points={data.d}/>
-</div>

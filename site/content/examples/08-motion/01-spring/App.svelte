@@ -9,11 +9,6 @@
 	let size = spring(10);
 </script>
 
-<style>
-	svg { width: 100%; height: 100%; margin: -8px }
-	circle { fill: #ff3e00 }
-</style>
-
 <div style="position: absolute; right: 1em;">
 	<label>
 		<h3>stiffness ({coords.stiffness})</h3>
@@ -33,3 +28,8 @@
 >
 	<circle cx={$coords.x} cy={$coords.y} r={$size}/>
 </svg>
+
+<style>
+	svg { width: 100%; height: 100%; margin: -8px }
+	circle { fill: #ff3e00 }
+</style>

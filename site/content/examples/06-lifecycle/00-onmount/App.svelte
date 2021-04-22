@@ -9,20 +9,6 @@
 	});
 </script>
 
-<style>
-	.photos {
-		width: 100%;
-		display: grid;
-		grid-template-columns: repeat(5, 1fr);
-		grid-gap: 8px;
-	}
-
-	figure, img {
-		width: 100%;
-		margin: 0;
-	}
-</style>
-
 <h1>Photo album</h1>
 
 <div class="photos">
@@ -36,3 +22,17 @@
 		<p>loading...</p>
 	{/each}
 </div>
+
+<style>
+	.photos {
+		width: 100%;
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		grid-gap: 8px;
+	}
+
+	figure, img {
+		width: 100%;
+		margin: 0;
+	}
+</style>
