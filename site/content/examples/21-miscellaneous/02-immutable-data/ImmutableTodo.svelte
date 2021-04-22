@@ -1,3 +1,5 @@
+<svelte:options immutable/>
+
 <script>
 	import { afterUpdate } from 'svelte';
 	import flash from './flash.js';
@@ -11,8 +13,6 @@
 		flash(div);
 	});
 </script>
-
-<svelte:options immutable/>
 
 <!-- the text will flash red whenever
 		the `todo` object changes -->
