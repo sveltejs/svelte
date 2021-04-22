@@ -1,3 +1,5 @@
+<svelte:options immutable/>
+
 <script>
 	import ImmutableTodo from './ImmutableTodo.svelte';
 	import MutableTodo from './MutableTodo.svelte';
@@ -24,8 +26,6 @@
 		});
 	}
 </script>
-
-<svelte:options immutable/>
 
 <h2>Immutable</h2>
 {#each todos as todo}
