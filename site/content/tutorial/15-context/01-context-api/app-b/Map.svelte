@@ -36,15 +36,15 @@
 	});
 </script>
 
+<div bind:this={container}>
+	{#if map}
+		<slot></slot>
+	{/if}
+</div>
+
 <style>
 	div {
 		width: 100%;
 		height: 100%;
 	}
 </style>
-
-<div bind:this={container}>
-	{#if map}
-		<slot></slot>
-	{/if}
-</div>
