@@ -5,7 +5,7 @@ title: Styling
 Just like in HTML, you can add a `<style>` tag to your component. Let's add some styles to the `<p>` element:
 
 ```html
-<p>Hello, Svelte!</p>
+<p>This is a paragraph.</p>
 
 <style>
 	p {
