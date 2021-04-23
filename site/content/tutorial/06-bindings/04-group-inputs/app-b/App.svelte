@@ -10,7 +10,7 @@
 
 	function join(flavours) {
 		if (flavours.length === 1) return flavours[0];
-		return `${flavours.slice(0, -1).join(', ')} and ${flavours[flavours.length - 1]}`;
+		return `${flavours.slice(0, -1).join(', ')}, and ${flavours[flavours.length - 1]}`;
 	}
 </script>
 
