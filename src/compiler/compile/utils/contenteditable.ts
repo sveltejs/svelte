@@ -1,9 +1,6 @@
-// Utilities for managing contenteditable nodes 
+// Utilities for managing contenteditable nodes
 import Attribute from '../nodes/Attribute';
 import Element from '../nodes/Element';
-
-
-export const CONTENTEDITABLE_ATTR = 'contenteditable';
 
 export const CONTENTEDITABLE_BINDINGS = [
   'textContent',
@@ -24,7 +21,7 @@ export function is_input_or_textarea(node: Element): boolean {
  * @param {Attribute} attribute A node.attribute
  */
 export function is_attr_contenteditable(attribute: Attribute): boolean {
-  return attribute.name === CONTENTEDITABLE_ATTR;
+  return attribute.name === 'contenteditable';
 }
 
 /**

@@ -7,7 +7,6 @@ import {
 	has_contenteditable_attr,
 	is_name_contenteditable,
 	get_contenteditable_attr,
-	CONTENTEDITABLE_ATTR,
 	CONTENTEDITABLE_BINDINGS,
 } from './contenteditable';
 import Element from '../nodes/Element';
@@ -43,7 +42,7 @@ describe('contenteditable', () => {
 			assert.equal(is_contenteditable(node), false);
 		});
 		it('returns true if node is not input or textarea AND it is contenteditable', () => {
-			const attr = { name: CONTENTEDITABLE_ATTR } as Attribute;
+			const attr = { name: 'contenteditable' } as Attribute;
 			const node = { name: 'a', attributes: [attr] } as Element;
 			assert.equal(is_contenteditable(node), true);
 		});
@@ -66,7 +65,7 @@ describe('contenteditable', () => {
 
 	describe('is_attr_contenteditable', () => {
 		it('returns true if attribute is contenteditable', () => {
-			const attr = { name: CONTENTEDITABLE_ATTR } as Attribute;
+			const attr = { name: 'contenteditable' } as Attribute;
 			assert.equal(is_attr_contenteditable(attr), true);
 		});
 		it('returns false if attribute is not contenteditable', () => {
@@ -78,7 +77,7 @@ describe('contenteditable', () => {
 
 	describe('has_contenteditable_attr', () => {
 		it('returns true if attribute is contenteditable', () => {
-			const attr = { name: CONTENTEDITABLE_ATTR } as Attribute;
+			const attr = { name: 'contenteditable' } as Attribute;
 			const node = { attributes: [attr] } as Element;
 			assert.equal(has_contenteditable_attr(node), true);
 		});
@@ -100,7 +99,7 @@ describe('contenteditable', () => {
 
 	describe('get_contenteditable_attr', () => {
 		it('returns the contenteditable Attribute if it exists', () => {
-			const attr = { name: CONTENTEDITABLE_ATTR } as Attribute;
+			const attr = { name: 'contenteditable' } as Attribute;
 			const node = { name: 'div', attributes: [attr] } as Element;
 			assert.equal(get_contenteditable_attr(node), attr);
 		});
