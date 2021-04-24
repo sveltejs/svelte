@@ -2,11 +2,10 @@
 	import Thing from './Thing.svelte';
 
 	let things = [
-		{ id: 1, color: 'darkblue' },
-		{ id: 2, color: 'indigo' },
-		{ id: 3, color: 'deeppink' },
-		{ id: 4, color: 'salmon' },
-		{ id: 5, color: 'gold' }
+		{ id: 1, color: '#3B82F6' },
+		{ id: 2, color: '#10B981' },
+		{ id: 3, color: '#EF4444' },
+		{ id: 4, color: '#EAB308' },
 	];
 
 	function handleClick() {
@@ -19,5 +18,5 @@
 </button>
 
 {#each things as thing (thing.id)}
-	<Thing current={thing.color}/>
+	<Thing current={thing.color} />
 {/each}
