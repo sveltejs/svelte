@@ -108,7 +108,7 @@ interface IComponentOptions {
 	target: Element;
 	anchor?: Element;
 	props?: Props;
-	context?: Record<string, unknown>;
+	context?: Map<any, any>;
 	hydrate?: boolean;
 	intro?: boolean;
 	$$inline?: boolean;
