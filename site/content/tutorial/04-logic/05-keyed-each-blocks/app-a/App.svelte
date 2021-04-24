@@ -4,8 +4,8 @@
 	let things = [
 		{ id: 1, color: '#3B82F6' },
 		{ id: 2, color: '#10B981' },
-		{ id: 3, color: '#EF4444' },
-		{ id: 4, color: '#EAB308' },
+		{ id: 3, color: '#EAB308' },
+		{ id: 4, color: '#EF4444' },
 	];
 
 	function handleClick() {
