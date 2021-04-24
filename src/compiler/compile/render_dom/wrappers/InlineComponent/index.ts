@@ -18,6 +18,7 @@ import { extract_names } from 'periscopic';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import { string_to_member_expression } from '../../../utils/string_to_member_expression';
 import SlotTemplate from '../../../nodes/SlotTemplate';
+import { is_head } from '../shared/is_head';
 
 type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
 
@@ -61,6 +62,10 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (handler.expression) {
 				block.add_dependencies(handler.expression.dependencies);
 			}
+		});
+
+		this.node.css_custom_properties.forEach(attr => {
+			block.add_dependencies(attr.dependencies);
 		});
 
 		this.var = {
@@ -144,6 +149,12 @@ export default class InlineComponentWrapper extends Wrapper {
 				this.renderer.remove_block(this.slots.get(slot).block);
 				this.slots.delete(slot);
 			}
+		}
+
+		const has_css_custom_properties = this.node.css_custom_properties.length > 0;
+		const css_custom_properties_wrapper = has_css_custom_properties ? block.get_unique_name('div') : null;
+		if (has_css_custom_properties) {
+			block.add_variable(css_custom_properties_wrapper);
 		}
 
 		const initial_props = this.slots.size > 0
@@ -491,17 +502,64 @@ export default class InlineComponentWrapper extends Wrapper {
 				${munged_handlers}
 			`);
 
+			if (has_css_custom_properties) {
+				block.chunks.create.push(b`${css_custom_properties_wrapper} = @element("div");`);
+				block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "display", "contents");`);
+				this.node.css_custom_properties.forEach(attr => {
+					const dependencies = attr.get_dependencies();
+					const should_cache = attr.should_cache();
+					const last = should_cache && block.get_unique_name(`${attr.name.replace(/[^a-zA-Z_$]/g, '_')}_last`);
+					if (should_cache) block.add_variable(last);
+					const value = attr.get_value(block);
+					const init = should_cache ? x`${last} = ${value}` : value;
+
+					block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${init});`);
+					if (dependencies.length > 0) {
+						let condition = block.renderer.dirty(dependencies);
+						if (should_cache) condition = x`${condition} && (${last} !== (${last} = ${value}))`;
+
+						block.chunks.update.push(b`
+							if (${condition}) {
+								@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${should_cache ? last : value});
+							}
+						`);
+					}
+				});
+			}
 			block.chunks.create.push(b`@create_component(${name}.$$.fragment);`);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
+				let nodes = parent_nodes;
+				if (has_css_custom_properties) {
+					nodes = block.get_unique_name(`${css_custom_properties_wrapper.name}_nodes`);
+					block.chunks.claim.push(b`
+						${css_custom_properties_wrapper} = @claim_element(${parent_nodes}, "DIV", { style: true })
+						var ${nodes} = @children(${css_custom_properties_wrapper});
+					`);
+				}
 				block.chunks.claim.push(
-					b`@claim_component(${name}.$$.fragment, ${parent_nodes});`
+					b`@claim_component(${name}.$$.fragment, ${nodes});`
 				);
 			}
 
-			block.chunks.mount.push(
-				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
-			);
+			if (has_css_custom_properties) {
+				if (parent_node) {
+					block.chunks.mount.push(b`@append(${parent_node}, ${css_custom_properties_wrapper})`);
+					if (is_head(parent_node)) {
+						block.chunks.destroy.push(b`@detach(${css_custom_properties_wrapper});`);
+					}
+				} else {
+					block.chunks.mount.push(b`@insert(#target, ${css_custom_properties_wrapper}, #anchor);`);
+					// TODO we eventually need to consider what happens to elements
+					// that belong to the same outgroup as an outroing element...
+					block.chunks.destroy.push(b`if (detaching) @detach(${css_custom_properties_wrapper});`);
+				}
+				block.chunks.mount.push(b`@mount_component(${name}, ${css_custom_properties_wrapper}, null);`);
+			} else {
+				block.chunks.mount.push(
+					b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
+				);
+			}
 
 			block.chunks.intro.push(b`
 				@transition_in(${name}.$$.fragment, #local);
