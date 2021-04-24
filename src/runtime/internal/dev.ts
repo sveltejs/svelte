@@ -104,6 +104,16 @@ export interface SvelteComponentDev {
 	$destroy(): void;
 	[accessor: string]: any;
 }
+interface IComponentOptions {
+	target: Element;
+	anchor?: Element;
+	props?: Props;
+	context?: Map<any, any>;
+	hydrate?: boolean;
+	intro?: boolean;
+	$$inline?: boolean;
+}
+
 /**
  * Base class for Svelte components with some minor dev-enhancements. Used when dev=true.
  */
@@ -130,14 +140,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	 */
 	$$slot_def: any;
 
-	constructor(options: {
-		target: Element;
-		anchor?: Element;
-		props?: Props;
-		hydrate?: boolean;
-		intro?: boolean;
-		$$inline?: boolean;
-    }) {
+	constructor(options: IComponentOptions) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
@@ -174,9 +177,9 @@ export interface SvelteComponentTyped<
 /**
  * Base class to create strongly typed Svelte components.
  * This only exists for typing purposes and should be used in `.d.ts` files.
- * 
+ *
  * ### Example:
- * 
+ *
  * You have component library on npm called `component-library`, from which
  * you export a component called `MyComponent`. For Svelte+TypeScript users,
  * you want to provide typings. Therefore you create a `index.d.ts`:
@@ -193,7 +196,7 @@ export interface SvelteComponentTyped<
  * </script>
  * <MyComponent foo={'bar'} />
  * ```
- * 
+ *
  * #### Why not make this part of `SvelteComponent(Dev)`?
  * Because
  * ```ts
@@ -229,14 +232,7 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: {
-		target: Element;
-		anchor?: Element;
-		props?: Props;
-		hydrate?: boolean;
-		intro?: boolean;
-		$$inline?: boolean;
-    }) {
+	constructor(options: IComponentOptions) {
 		super(options);
 	}
 }
