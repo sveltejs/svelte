@@ -2,23 +2,24 @@
 	// `current` is updated whenever the prop value changes...
 	export let current;
 
-	// ...but `initial` is fixed upon initialisation
+	// ...but `initial` is fixed upon initialization
 	const initial = current;
 </script>
 
-<p>
-	<span style="background-color: {initial}">initial</span>
-	<span style="background-color: {current}">current</span>
-</p>
+<div>
+	<p style="background: {initial}">initial</p>
+	<p style="background: {current}">current</p>
+</div>
 
 <style>
-	span {
+	div:first-of-type { margin-top: 6px }
+	p {
 		display: inline-block;
-		padding: 0.2em 0.5em;
-		margin: 0 0.2em 0.2em 0;
-		width: 4em;
+		padding: 0.4em 1em;
 		text-align: center;
 		border-radius: 0.2em;
-		color: white;
+		color: #F1F5F9;
+		margin: 0;
 	}
+	p:nth-child(odd) { margin: 0 4px 8px 0 }
 </style>
