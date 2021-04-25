@@ -6,4 +6,4 @@
 	export let items = ['a', 'b', 'c'];
 </script>
 
-<my-widget class="foo" {items}/>
+<my-widget class="foo" widgetItems={items}/>
