@@ -5,7 +5,7 @@ import Element from '../nodes/Element';
 export const CONTENTEDITABLE_BINDINGS = [
   'textContent',
   'innerHTML',
-  'innerText',
+  'innerText'
 ];
 
 /**

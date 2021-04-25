@@ -7,7 +7,7 @@ import {
 	has_contenteditable_attr,
 	is_name_contenteditable,
 	get_contenteditable_attr,
-	CONTENTEDITABLE_BINDINGS,
+	CONTENTEDITABLE_BINDINGS
 } from './contenteditable';
 import Element from '../nodes/Element';
 import Attribute from '../nodes/Attribute';
