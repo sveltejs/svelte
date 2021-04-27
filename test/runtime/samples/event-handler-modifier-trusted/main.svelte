@@ -1,5 +1,5 @@
 <script>
-	export let trusted = false;
+	export let trusted = true;
 </script>
 
-<button on:click|trusted="{() => trusted = true}">Only trusted events: {trusted?'true':'false'}</button>
+<button on:click|trusted="{() => trusted = false}">Only trusted events: {trusted?'true':'false'}</button>

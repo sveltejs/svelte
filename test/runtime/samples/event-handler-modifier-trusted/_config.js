@@ -4,6 +4,6 @@ export default {
 		const event = new window.MouseEvent('click');
 
 		await button.dispatchEvent(event);
-		assert.equal(component.trusted, false);
+		assert.equal(component.trusted, true);
 	}
 };
