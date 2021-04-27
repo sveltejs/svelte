@@ -47,6 +47,17 @@
 			return;
 		}
 
+		const local_repl_content = localStorage.getItem("repl_content")
+
+		// Check if user is not logged in and has local data
+		if (id == 'hello-world' && local_repl_content && !$session.user) {
+			setTimeout(() => {
+				repl.set(JSON.parse(local_repl_content))
+			}, 300) // Wait for repl var (it's undefined when this function gets called)
+			// TODO: Fix this possible race condition
+			return
+		}
+
 		// TODO handle `relaxed` logic
 		fetch(`repl/${id}.json`).then(r => {
 			if (r.ok) {

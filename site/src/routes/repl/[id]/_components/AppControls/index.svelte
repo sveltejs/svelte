@@ -86,6 +86,8 @@
 		if (saving) return;
 
 		if (!canSave) {
+			// Save to local storage
+			localStorage.setItem("repl_content", JSON.stringify(repl.toJSON()))
 			fork(true);
 			return;
 		}
