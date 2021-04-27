@@ -53,6 +53,7 @@
 		if (id == 'hello-world' && local_repl_content && !$session.user) {
 			setTimeout(() => {
 				repl.set(JSON.parse(local_repl_content))
+				name = localStorage.getItem("repl_name")
 			}, 300) // Wait for repl var (it's undefined when this function gets called)
 			// TODO: Fix this possible race condition
 			return

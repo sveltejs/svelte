@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher, getContext } from 'svelte';
+	import { createEventDispatcher, getContext, onDestroy, onMount } from 'svelte';
 	import { stores } from '@sapper/app';
 	import UserMenu from './UserMenu.svelte';
 	import { Icon } from '@sveltejs/site-kit';
@@ -82,12 +82,18 @@
 		saving = false;
 	}
 
+	function saveLocal() {
+		localStorage.setItem("repl_content", JSON.stringify(repl.toJSON()));
+		localStorage.setItem("repl_name", name);
+	}
+
 	async function save() {
 		if (saving) return;
 
 		if (!canSave) {
 			// Save to local storage
-			localStorage.setItem("repl_content", JSON.stringify(repl.toJSON()))
+			// TODO: Add some feedback to let the user know they saved
+			saveLocal();
 			fork(true);
 			return;
 		}
@@ -165,6 +171,20 @@ export default app;` });
 
 		downloading = false;
 	}
+
+	const autosave_interval = setInterval(() => {
+		// Only run when user isn't logged in
+		// We could also run save() every 5 seconds
+		// That would make it autosave for logged in users
+		// as well. But that's not what this PR is about.
+		if (!canSave) {
+			saveLocal()
+		}
+	}, 2000);
+
+	onDestroy(() => {
+		clearInterval(autosave_interval);
+	});
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
