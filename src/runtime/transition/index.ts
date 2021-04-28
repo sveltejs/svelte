@@ -107,15 +107,17 @@ export function slide(node: Element, {
 	easing = cubicOut,
 	axis = 'y'
 }: SlideParams = {}): TransitionConfig {
-	const direction: { x: 1 | 0, y: 1 | 0 } = { x: axis === 'x' ? 1 : 0, y: axis === 'y' ? 1 : 0 };
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
-	const height = parseFloat(style.height);
-	const width = parseFloat(style.width);
-	const padding = { top: parseFloat(style.paddingTop), right: parseFloat(style.paddingRight), bottom: parseFloat(style.paddingBottom), left: parseFloat(style.paddingLeft) };
-	const margin = { top: parseFloat(style.marginTop), right: parseFloat(style.marginRight), bottom: parseFloat(style.marginBottom), left: parseFloat(style.marginLeft) };
-	const border_width = { top: parseFloat(style.borderTopWidth), right: parseFloat(style.borderRightWidth), bottom: parseFloat(style.borderBottomWidth), left: parseFloat(style.borderLeftWidth) };
-
+	const primary_dimension = axis === 'y' ? 'height' : 'width';
+	const primary_dimension_value = parseFloat(style[primary_dimension]);
+	const secondary_dimensions = axis === 'y' ? ['Top', 'Bottom'] : ['Left', 'Right'];
+	const padding_first_value = parseFloat(style.padding[secondary_dimensions[0]]);
+	const padding_second_value = parseFloat(style.padding[secondary_dimensions[1]]);
+	const margin_first_value = parseFloat(style.margin[secondary_dimensions[0]]);
+	const margin_second_value = parseFloat(style.margin[secondary_dimensions[1]]);
+	const border_width_first_value = parseFloat(style['border'.concat(secondary_dimensions[0].concat('Width'))]);
+	const border_width_second_value = parseFloat(style['border'.concat(secondary_dimensions[1].concat('Width'))]);
 	return {
 		delay,
 		duration,
@@ -123,11 +125,13 @@ export function slide(node: Element, {
 		css: t =>
 			'overflow: hidden;' +
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
-			`height: ${t ** direction.y * height}px;` +
-			`width: ${t ** direction.x * width}px;` +
-			`padding: ${t ** direction.y * padding.top}px ${t ** direction.x * padding.right}px ${t ** direction.y * padding.bottom}px) ${t ** direction.x * padding.left}px;` +
-			`margin: ${t ** direction.y * margin.top}px  ${t ** direction.x * margin.right}px ${t ** direction.y * margin.bottom}px ${t ** direction.x * margin.left}px;` +
-			`border-width: ${t ** direction.y * border_width.top}px ${t ** direction.x * border_width.right}px ${t ** direction.y * border_width.bottom}px ${t ** direction.x * border_width.left}px;`
+			`${primary_dimension}: ${t * primary_dimension_value}px;` +
+			`padding-${secondary_dimensions[0].toLowerCase()}: ${t * padding_first_value}px;` +
+			`padding-${secondary_dimensions[1].toLowerCase()}: ${t * padding_second_value}px;` +
+			`margin-${secondary_dimensions[0].toLowerCase()}: ${t * margin_first_value}px;` +
+			`margin-${secondary_dimensions[1].toLowerCase()}: ${t * margin_second_value}px;` +
+			`border-${secondary_dimensions[0].toLowerCase()}-width: ${t * border_width_first_value}px;` +
+			`border-${secondary_dimensions[1].toLowerCase()}-width: ${t * border_width_second_value}px;`
 	};
 }
 
