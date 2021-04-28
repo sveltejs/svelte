@@ -112,10 +112,10 @@ export function slide(node: Element, {
 	const primary_dimension = axis === 'y' ? 'height' : 'width';
 	const primary_dimension_value = parseFloat(style[primary_dimension]);
 	const secondary_dimensions = axis === 'y' ? ['Top', 'Bottom'] : ['Left', 'Right'];
-	const padding_first_value = parseFloat(style.padding[secondary_dimensions[0]]);
-	const padding_second_value = parseFloat(style.padding[secondary_dimensions[1]]);
-	const margin_first_value = parseFloat(style.margin[secondary_dimensions[0]]);
-	const margin_second_value = parseFloat(style.margin[secondary_dimensions[1]]);
+	const padding_first_value = parseFloat(style.padding + secondary_dimensions[0]);
+	const padding_second_value = parseFloat(style.padding + secondary_dimensions[1]);
+	const margin_first_value = parseFloat(style.margin + secondary_dimensions[0]);
+	const margin_second_value = parseFloat(style.margin + secondary_dimensions[1]);
 	const border_width_first_value = parseFloat(style['border'.concat(secondary_dimensions[0].concat('Width'))]);
 	const border_width_second_value = parseFloat(style['border'.concat(secondary_dimensions[1].concat('Width'))]);
 	return {
