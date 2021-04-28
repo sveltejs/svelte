@@ -55,7 +55,11 @@ export function getContext<T>(key): T {
 }
 
 export function hasContext(key): boolean {
-	return get_current_component().$$.context.has(key);	
+	return get_current_component().$$.context.has(key);
+}
+
+export function deleteContext(key): boolean {
+	return get_current_component().$$.context.delete(key);
 }
 
 // TODO figure out if we still want to support
