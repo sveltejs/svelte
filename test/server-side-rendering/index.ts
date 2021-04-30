@@ -135,100 +135,105 @@ describe('ssr', () => {
 	});
 
 	// duplicate client-side tests, as far as possible
-	fs.readdirSync('test/runtime/samples').forEach(dir => {
-		if (dir[0] === '.') return;
+	runRuntimeSamples('runtime');
+	runRuntimeSamples('runtime-puppeteer');
 
-		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
-		const solo = config.solo || /\.solo/.test(dir);
+	function runRuntimeSamples(suite) {
+		fs.readdirSync(`test/${suite}/samples`).forEach(dir => {
+			if (dir[0] === '.') return;
 
-		if (solo && process.env.CI) {
-			throw new Error('Forgot to remove `solo: true` from test');
-		}
+			const config = loadConfig(`./${suite}/samples/${dir}/_config.js`);
+			const solo = config.solo || /\.solo/.test(dir);
 
-		if (config.skip_if_ssr) return;
+			if (solo && process.env.CI) {
+				throw new Error('Forgot to remove `solo: true` from test');
+			}
 
-		(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
-			const cwd = path.resolve('test/runtime/samples', dir);
+			if (config.skip_if_ssr) return;
 
-			cleanRequireCache();
+			(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
+				const cwd = path.resolve(`test/${suite}/samples`, dir);
 
-			delete global.window;
+				cleanRequireCache();
 
-			const compileOptions = {
-				sveltePath,
-				...config.compileOptions,
-				generate: 'ssr',
-				format: 'cjs'
-			};
+				delete global.window;
 
-			require('../../register')(compileOptions);
+				const compileOptions = {
+					sveltePath,
+					...config.compileOptions,
+					generate: 'ssr',
+					format: 'cjs'
+				};
 
-			glob('**/*.svelte', { cwd }).forEach(file => {
-				if (file[0] === '_') return;
+				require('../../register')(compileOptions);
 
-				const dir  = `${cwd}/_output/ssr`;
-				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
+				glob('**/*.svelte', { cwd }).forEach(file => {
+					if (file[0] === '_') return;
 
-				if (fs.existsSync(out)) {
-					fs.unlinkSync(out);
-				}
+					const dir  = `${cwd}/_output/ssr`;
+					const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
 
-				mkdirp(dir);
+					if (fs.existsSync(out)) {
+						fs.unlinkSync(out);
+					}
 
-				try {
-					const { js } = compile(
-						fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-						{
-							...compileOptions,
-							filename: file
-						}
-					);
+					mkdirp(dir);
 
-					fs.writeFileSync(out, js.code);
-				} catch (err) {
-					// do nothing
-				}
-			});
+					try {
+						const { js } = compile(
+							fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
+							{
+								...compileOptions,
+								filename: file
+							}
+						);
 
-			try {
-				if (config.before_test) config.before_test();
-
-				const Component = require(`../runtime/samples/${dir}/main.svelte`).default;
-				const { html } = Component.render(config.props, {
-					store: (config.store !== true) && config.store
+						fs.writeFileSync(out, js.code);
+					} catch (err) {
+						// do nothing
+					}
 				});
 
-				if (config.ssrHtml) {
-					assert.htmlEqual(html, config.ssrHtml);
-				} else if (config.html) {
-					assert.htmlEqual(html, config.html);
-				}
+				try {
+					if (config.before_test) config.before_test();
 
-				if (config.test_ssr) {
-					config.test_ssr({ assert });
-				}
+					const Component = require(`../${suite}/samples/${dir}/main.svelte`).default;
+					const { html } = Component.render(config.props, {
+						store: (config.store !== true) && config.store
+					});
 
-				if (config.after_test) config.after_test();
-
-				if (config.show) {
-					showOutput(cwd, compileOptions);
-				}
-			} catch (err) {
-				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
-
-				if (config.error) {
-					if (typeof config.error === 'function') {
-						config.error(assert, err);
-					} else {
-						assert.equal(err.message, config.error);
+					if (config.ssrHtml) {
+						assert.htmlEqual(html, config.ssrHtml);
+					} else if (config.html) {
+						assert.htmlEqual(html, config.html);
 					}
-				} else {
-					showOutput(cwd, compileOptions);
-					throw err;
+
+					if (config.test_ssr) {
+						config.test_ssr({ assert });
+					}
+
+					if (config.after_test) config.after_test();
+
+					if (config.show) {
+						showOutput(cwd, compileOptions);
+					}
+				} catch (err) {
+					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+
+					if (config.error) {
+						if (typeof config.error === 'function') {
+							config.error(assert, err);
+						} else {
+							assert.equal(err.message, config.error);
+						}
+					} else {
+						showOutput(cwd, compileOptions);
+						throw err;
+					}
+				} finally {
+					set_current_component(null);
 				}
-			} finally {
-				set_current_component(null);
-			}
+			});
 		});
-	});
+	}
 });
