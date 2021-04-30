@@ -83,3 +83,17 @@ export function handle_promise(promise, info) {
 		info.resolved = promise;
 	}
 }
+
+export function update_await_block_branch(info, ctx, dirty) {
+	const child_ctx = ctx.slice();
+	const { resolved } = info;
+
+	if (info.current === info.then) {
+		child_ctx[info.value] = resolved;
+	}
+	if (info.current === info.catch) {
+		child_ctx[info.error] = resolved;
+	}
+
+	info.block.p(child_ctx, dirty);
+}
