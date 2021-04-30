@@ -148,7 +148,7 @@ export function set_svg_attributes(node: Element & ElementCSSInlineStyle, attrib
 
 export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
-		node[prop] = value;
+		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
 	} else {
 		attr(node, prop, value);
 	}
