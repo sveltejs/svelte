@@ -1,5 +1,5 @@
-// Test support for the `foreign` namespace preserving attribute case.
-// including ensuring that svg named elements don't interfere
+// Test support for the `foreign` namespace preserving attribute case,
+// including ensuring that SVG elements don't interfere.
 
 export default {
 	html: `
