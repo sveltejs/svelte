@@ -88,13 +88,11 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 	}`;
 
 	if (node.css_custom_properties.length > 0) {
-		renderer.add_string('<div style="display: contents; ');
-		node.css_custom_properties.forEach((attr, index) => {
-			renderer.add_string(attr.name);
-			renderer.add_string(':');
+		renderer.add_string('<div style="display: contents;');
+		node.css_custom_properties.forEach(attr => {
+			renderer.add_string(` ${attr.name}:`);
 			renderer.add_expression(get_attribute_value(attr));
 			renderer.add_string(';');
-			if (index < node.css_custom_properties.length - 1) renderer.add_string(' ');
 		});
 		renderer.add_string('">');
 	}
