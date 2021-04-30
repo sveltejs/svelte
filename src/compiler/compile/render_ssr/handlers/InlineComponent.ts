@@ -1,4 +1,5 @@
 import { string_literal } from '../../utils/stringify';
+import { get_attribute_value } from './shared/get_attribute_value';
 import Renderer, { RenderOptions } from '../Renderer';
 import InlineComponent from '../../nodes/InlineComponent';
 import { p, x } from 'code-red';
@@ -86,5 +87,19 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		${slot_fns}
 	}`;
 
+	if (node.css_custom_properties.length > 0) {
+		renderer.add_string('<div style="display: contents;');
+		node.css_custom_properties.forEach(attr => {
+			renderer.add_string(` ${attr.name}:`);
+			renderer.add_expression(get_attribute_value(attr));
+			renderer.add_string(';');
+		});
+		renderer.add_string('">');
+	}
+
 	renderer.add_expression(x`@validate_component(${expression}, "${node.name}").$$render($$result, ${props}, ${bindings}, ${slots})`);
+
+	if (node.css_custom_properties.length > 0) {
+		renderer.add_string('</div>');
+	}
 }
