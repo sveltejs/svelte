@@ -207,7 +207,7 @@ export interface CrossfadeParams {
 type ClientRectMap = Map<any, { rect: ClientRect }>;
 
 export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
-	fallback: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
+	fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
 }) {
 	const to_receive: ClientRectMap = new Map();
 	const to_send: ClientRectMap = new Map();
