@@ -162,9 +162,9 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 
 	if (!node) {
 		return (
-      (block.global && blocks.every(block => block.global)) ||
-      (block.host && blocks.length === 0)
-    );
+			(block.global && blocks.every(block => block.global)) ||
+			(block.host && blocks.length === 0)
+		);
 	}
 
 	switch (block_might_apply_to_node(block, node)) {
@@ -591,8 +591,13 @@ class Block {
 		this.selectors.push(selector);
 		this.end = selector.end;
 	}
+
 	get global() {
-		return this.selectors.length === 1 && this.selectors[0].type === 'PseudoClassSelector' && this.selectors[0].name === 'global';
+		return (
+			this.selectors.length === 1 &&
+			this.selectors[0].type === 'PseudoClassSelector' &&
+			this.selectors[0].name === 'global'
+		);
 	}
 }
 
