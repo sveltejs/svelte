@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.38.0
 
 * Avoid recreating DOM elements during hydration ([#1067](https://github.com/sveltejs/svelte/issues/1067))
 * Support passing CSS custom properties to component ([#5628](https://github.com/sveltejs/svelte/issues/5628))
