@@ -5,6 +5,7 @@
 * Avoid recreating DOM elements during hydration ([#1067](https://github.com/sveltejs/svelte/issues/1067))
 * Support passing CSS custom properties to component ([#5628](https://github.com/sveltejs/svelte/issues/5628))
 * Support `:global()` as part of compound CSS selectors ([#6222](https://github.com/sveltejs/svelte/issues/6222))
+* Fix updating `<slot>` contents when there's an aborted transition ([#3542](https://github.com/sveltejs/svelte/issues/3542))
 * Fix setting boolean attributes on custom elements ([#5951](https://github.com/sveltejs/svelte/issues/5951))
 * Add missing function overload for `derived` to allow explicitly setting an initial value for non-async derived stores ([#6172](https://github.com/sveltejs/svelte/pull/6172))
 * Fix dynamic `href` values erroneously triggering a11y warnings ([#5990](https://github.com/sveltejs/svelte/issues/5990))
