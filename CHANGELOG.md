@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.38.1
+
+* Fix hydration regression ([#6274](https://github.com/sveltejs/svelte/issues/6274))
+
 ## 3.38.0
 
 * Avoid recreating DOM elements during hydration ([#1067](https://github.com/sveltejs/svelte/issues/1067))
