@@ -5,23 +5,24 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-Last week, Svelte Summit blew us away with a mountain of content! [Check out the full recording](https://www.youtube.com/watch?v=fnr9XWvjJHw) or an audio-only (p)review [on Svelte Radio](https://www.svelteradio.com/episodes/svelte-summit-party-episode). Now lets get into this month's news...
+Last week, Svelte Summit blew us away with a mountain of content! [Check out the full recording](https://www.youtube.com/watch?v=fnr9XWvjJHw) or an audio-only (p)review [on Svelte Radio](https://www.svelteradio.com/episodes/svelte-summit-party-episode). Now let's get into this month's news...
 
-## Svelte Compiler Updates
-- No new releases this month? To be deleted if these changes stay "Unreleased": https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#unreleased
+## New features in the Svelte Compiler
+- `:global()` is now supported as part of compound CSS selectors (**3.38.0**, [Example]https://svelte.dev/repl/54148fd2af484f2c84977c94e523c7c5?version=3.38.0)
+- CSS custom properties can now be passed to components for use cases such as theming (**3.38.0**, [Docs coming soon](https://github.com/sveltejs/svelte/issues/6268))
 
 ## New in SvelteKit
-- The new [SvelteKit Demo Site](https://netlify.demo.svelte.dev/) looks better than ever after running `npm init svelte`
+- [kit.svelte.dev](https://kit.svelte.dev/) has a fresh new look and the [SvelteKit Demo Site](https://netlify.demo.svelte.dev/) got a fresh set of paint. Check it out by running `npm init svelte@next`
 - You can now use `@sveltejs/adapter-static` to create a single-page app or SPA by specifying a fallback page ([PR](https://github.com/sveltejs/kit/pull/1181), [Docs](https://github.com/sveltejs/kit/tree/master/packages/adapter-static))
 - Disable Server-side Rendering (SSR) app-wide or on a page-by-page basis ([PR](https://github.com/sveltejs/kit/pull/713), [Docs](https://kit.svelte.dev/docs#ssr-and-javascript-ssr))
-- Error messages thrown during pre-rendering are now much more informative and readble ([PR](https://github.com/sveltejs/kit/pull/1062), [Docs](https://kit.svelte.dev/docs#layouts-error-pages))
+- Error messages thrown during pre-rendering are now much more informative and readable ([PR](https://github.com/sveltejs/kit/pull/1062), [Docs](https://kit.svelte.dev/docs#layouts-error-pages))
 - Layouts can now be reset to prevent pages from inheriting the root layout. This is useful if you have a specific layout for a page or i18n variation ([PR](https://github.com/sveltejs/kit/pull/1061), [Docs](https://kit.svelte.dev/docs#layouts-resets))
 - `fetch` in SvelteKit code will now use the environment-provided implementation, whenever possible. If `fetch` is unavailable, it will be polyfilled by adapters ([PR](https://github.com/sveltejs/kit/pull/1066), [Docs](https://kit.svelte.dev/docs#loading-input-fetch))
 
 ## New in Svelte & Language Tools
-- `svelte-preprocess` now supports ts build with no tsconfig.json (4.7.2)
+- `svelte-preprocess` now supports the "extends" field of the tsconfig.json (4.7.2)
 - HTML `style` attributes now have hover & auto-complete. Foreign namespaces and ESM configs are now supported in the Svelte language server & extensions
-- The svelte language tools can now infer slot/events types from their props and relationships
+- The Svelte language tools can now infer slot/event types from their props if a generic relationship between them was defined
 
 ---
 
@@ -49,7 +50,7 @@ Last week, Svelte Summit blew us away with a mountain of content! [Check out the
 
 
 **Starters**
-- [How to use Vercel Analytics with SvelteKit](https://ivoberger.com/posts/using-vercel-analytics-with-svelte-kit) teaches how ot track Web Vitals across your users' devices
+- [How to use Vercel Analytics with SvelteKit](https://ivoberger.com/posts/using-vercel-analytics-with-svelte-kit) teaches how to track Web Vitals across your users' devices
 - [Asp.NETCore + Svelte + Vite](https://github.com/Kiho/aspcore-spa-cli/tree/master/samples/SviteSample) connects the three frameworks with SpaCliMiddleware (VS2019)
 - [Add CoffeeScript to Svelte](https://github.com/Leftium/coffeescript-adder) is an experimental command to run to add CoffeeScript to your SvelteKit project or Vite-powered Svelte app
 - [Adds Supabase to Svelte](https://github.com/joshnuss/svelte-supabase) is an experimental command to run to add Supabase to your SvelteKit project
