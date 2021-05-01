@@ -34,6 +34,7 @@ Last week, Svelte Summit blew us away with a mountain of content! [Check out the
 - [highlight eel](https://highlighteel.com/) is a web-based editor to mark your favorite parts of any YouTube video to clip and share with anyone
 - [The Far Star Mission](https://thefarstar.apotheus.net/) is an interactive audiobook companion to the album, The Far Star by Apotheus
 - [JavaScript quiz](https://github.com/nclskfm/javascript-quiz) is a small quiz application that saves your answers locally
+- [ExtensionPay](https://extensionpay.com/) lets developers accept secure payments in browser extensions with no backend server code.
 - [mk48.io](https://mk48.io/) is a naval warship game made with SvelteKit
 - [Frog Safety](https://frog-safety.vercel.app/) is a guide for African Dwarf Frogs and the API freshwater master kit
 - [Stardew Valley Character Preview](https://github.com/overscore-media/stardew-valley-character-preview) loads your character's attributes from your Stardew Valley savefile and lets you play around with different outfits, colours, and accessories.
