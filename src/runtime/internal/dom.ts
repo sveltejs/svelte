@@ -216,7 +216,7 @@ export function claim_text(nodes, data) {
 		const node = nodes[i];
 		if (node.nodeType === 3) {
 			node.data = '' + data;
-			return nodes.shift();
+			return nodes.splice(i, 1)[0];
 		}
 	}
 
