@@ -22,7 +22,7 @@ export function append(target: Node, node: Node) {
 	if (is_hydrating) {
 		nodes_to_detach.delete(node);
 	}
-	if (node.parentNode !== target) {
+	if (node.parentNode !== target || node.parentNode !== null) {
 		target.appendChild(node);
 	}
 }
@@ -31,7 +31,7 @@ export function insert(target: Node, node: Node, anchor?: Node) {
 	if (is_hydrating) {
 		nodes_to_detach.delete(node);
 	}
-	if (node.parentNode !== target || (anchor && node.nextSibling !== anchor)) {
+	if (node.parentNode !== target || node.parentNode !== null || (anchor && node.nextSibling !== anchor)) {
 		target.insertBefore(node, anchor || null);
 	}
 }
