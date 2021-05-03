@@ -1,47 +1,15 @@
 import { has_prop } from './utils';
 
-// Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
-// at the end of hydration without touching the remaining nodes.
-let is_hydrating = false;
-const nodes_to_detach = new Set<Node>();
-
-export function start_hydrating() {
-	is_hydrating = true;
-}
-export function end_hydrating() {
-	is_hydrating = false;
-
-	for (const node of nodes_to_detach) {
-		node.parentNode.removeChild(node);
-	}
-
-	nodes_to_detach.clear();
-}
-
 export function append(target: Node, node: Node) {
-	if (is_hydrating) {
-		nodes_to_detach.delete(node);
-	}
-	if (node.parentNode !== target) {
-		target.appendChild(node);
-	}
+	target.appendChild(node);
 }
 
 export function insert(target: Node, node: Node, anchor?: Node) {
-	if (is_hydrating) {
-		nodes_to_detach.delete(node);
-	}
-	if (node.parentNode !== target || (anchor && node.nextSibling !== anchor)) {
-		target.insertBefore(node, anchor || null);
-	}
+	target.insertBefore(node, anchor || null);
 }
 
 export function detach(node: Node) {
-	if (is_hydrating) {
-		nodes_to_detach.add(node);
-	} else if (node.parentNode) {
-		node.parentNode.removeChild(node);
-	}
+	node.parentNode.removeChild(node);
 }
 
 export function destroy_each(iterations, detaching) {
@@ -186,9 +154,8 @@ export function children(element) {
 }
 
 export function claim_element(nodes, name, attributes, svg) {
-	while (nodes.length > 0) {
-		const node = nodes.shift();
-
+	for (let i = 0; i < nodes.length; i += 1) {
+		const node = nodes[i];
 		if (node.nodeName === name) {
 			let j = 0;
 			const remove = [];
@@ -201,10 +168,7 @@ export function claim_element(nodes, name, attributes, svg) {
 			for (let k = 0; k < remove.length; k++) {
 				node.removeAttribute(remove[k]);
 			}
-
-			return node;
-		} else {
-			detach(node);
+			return nodes.splice(i, 1)[0];
 		}
 	}
 
