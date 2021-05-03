@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.38.2
 
 * Revert hydration optimisation for the time being
 
