@@ -1,0 +1,182 @@
+[
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"start": {
+			"line": 2,
+			"column": 0,
+			"character": 52
+		},
+		"end": {
+			"line": 2,
+			"column": 73,
+			"character": 125
+		},
+		"pos": 52
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"start": {
+			"line": 4,
+			"column": 0,
+			"character": 178
+		},
+		"end": {
+			"line": 4,
+			"column": 80,
+			"character": 258
+		},
+		"pos": 178
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"start": {
+			"line": 5,
+			"column": 0,
+			"character": 259
+		},
+		"end": {
+			"line": 5,
+			"column": 88,
+			"character": 347
+		},
+		"pos": 259
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"end": {
+			"character": 475,
+			"column": 75,
+			"line": 7
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"pos": 400,
+		"start": {
+			"character": 400,
+			"column": 0,
+			"line": 7
+		}
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"end": {
+			"character": 610,
+			"column": 82,
+			"line": 9
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"pos": 528,
+		"start": {
+			"character": 528,
+			"column": 0,
+			"line": 9
+		}
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"end": {
+			"character": 701,
+			"column": 90,
+			"line": 10
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"pos": 611,
+		"start": {
+			"character": 611,
+			"column": 0,
+			"line": 10
+		}
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"end": {
+			"character": 821,
+			"column": 67,
+			"line": 12
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"pos": 754,
+		"start": {
+			"character": 754,
+			"column": 0,
+			"line": 12
+		}
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"end": {
+			"character": 948,
+			"column": 74,
+			"line": 14
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"pos": 874,
+		"start": {
+			"character": 874,
+			"column": 0,
+			"line": 14
+		}
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"end": {
+			"character": 1031,
+			"column": 82,
+			"line": 15
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"pos": 949,
+		"start": {
+			"character": 949,
+			"column": 0,
+			"line": 15
+		}
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"end": {
+			"character": 1156,
+			"column": 72,
+			"line": 17
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"pos": 1084,
+		"start": {
+			"character": 1084,
+			"column": 0,
+			"line": 17
+		}
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"end": {
+			"character": 1288,
+			"column": 79,
+			"line": 19
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"pos": 1209,
+		"start": {
+			"character": 1209,
+			"column": 0,
+			"line": 19
+		}
+	},
+	{
+		"code": "security-anchor-rel-noreferrer",
+		"end": {
+			"character": 1376,
+			"column": 87,
+			"line": 20
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"pos": 1289,
+		"start": {
+			"character": 1289,
+			"column": 0,
+			"line": 20
+		}
+	}
+]
