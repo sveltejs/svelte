@@ -127,14 +127,14 @@ export function update_slot_spread(slot, slot_definition, ctx, $$scope, dirty, g
 
 export function exclude_internal_props(props) {
 	const result = {};
-	for (const k in props) if (k[0] !== '$') result[k] = props[k];
+	for (const key in props) if (key[0] !== '$') result[key] = props[key];
 	return result;
 }
 
 export function compute_rest_props(props, keys) {
 	const rest = {};
 	keys = new Set(keys);
-	for (const k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
+	for (const key in props) if (!keys.has(key) && key[0] !== '$') rest[key] = props[key];
 	return rest;
 }
 
