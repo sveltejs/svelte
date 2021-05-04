@@ -128,7 +128,7 @@ export function append_styles(
 	}
 }
 
-function get_root_for_node(node: Node) {
+export function get_root_for_node(node: Node) {
 	if (!node) return document.head;
 
 	const root = (node.getRootNode ? node.getRootNode() : node.ownerDocument); // check for getRootNode because IE is still supported
