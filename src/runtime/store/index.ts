@@ -61,7 +61,7 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
  * @param {*=}value initial value
  * @param {StartStopNotifier=}start start and stop notifications for subscriptions
  */
-export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
+export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
 	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
 

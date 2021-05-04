@@ -245,10 +245,10 @@ This makes it possible to wrap almost any other reactive state handling library 
 #### `writable`
 
 ```js
-store = writable(value: any)
+store = writable(value?: any)
 ```
 ```js
-store = writable(value: any, (set: (value: any) => void) => () => void)
+store = writable(value?: any, start?: (set: (value: any) => void) => () => void)
 ```
 
 ---
