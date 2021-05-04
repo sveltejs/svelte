@@ -212,6 +212,50 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 }
 
 /**
+ * Reads and parses value from localStorage
+ * @param key localStorage item key
+ * @param fallback_value value to use if item is `null`
+ */
+ function read_from_localstorage<T>(key: string, fallback_value: T): T {
+	return JSON.parse(localStorage.getItem(key)) ?? fallback_value;
+}
+
+/**
+ * Stringifies and writes value to localStorage
+ * @param key localStorage item key
+ * @param value value to write
+ */
+function write_to_localstorage<T>(key: string, value: T) {
+	localStorage.setItem(key, JSON.stringify(value));
+}
+
+/**
+ * Creates a `Writable` store that persists its value to localStorage.
+ * @param key localStorage item key
+ * @param initialValue initial value
+ * @param ignoreExistingValue ignore existing value in localStorage @default false 
+ * @param {StartStopNotifier} start start and stop notifications for subscriptions
+ */
+export function persisted<T>(key: string, initialValue: T, ignoreExistingValue: boolean = false, start?: StartStopNotifier<T>): Writable<T> {
+	const value = ignoreExistingValue ? initialValue : read_from_localstorage(key, initialValue);
+	const writable_store = writable<T>(value, start);
+	write_to_localstorage(key, value);
+	return {
+		set(value) {
+			writable_store.set(value);
+			write_to_localstorage(key, value);
+		},
+		update(updater) {
+			writable_store.update(updater);
+			write_to_localstorage(key, get_store_value(writable_store));
+		},
+		subscribe(subscriber, invalidator?) {
+			return writable_store.subscribe(subscriber, invalidator);
+		}
+	};
+}
+
+/**
  * Get the current value from a store by subscribing and immediately unsubscribing.
  * @param store readable
  */
