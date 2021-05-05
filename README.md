@@ -1,4 +1,4 @@
-[![Cybernetically enhanced web apps: Svelte](https://sveltejs.github.io/assets/banner.png)](https://svelte.dev)
+[![Cybernetically enhanced web apps: Svelte](https://user-images.githubusercontent.com/70065337/117144256-63833e80-adba-11eb-8f7f-116530701355.png)](https://svelte.dev)
 
 
 [![npm version](https://img.shields.io/npm/v/svelte.svg)](https://www.npmjs.com/package/svelte) [![license](https://img.shields.io/npm/l/svelte.svg)](LICENSE.md) [![Chat](https://img.shields.io/discord/457912077277855764?label=chat&logo=discord)](https://svelte.dev/chat)
@@ -39,6 +39,7 @@ To build the compiler and all the other modules included in the package:
 ```bash
 npm run build
 ```
+
 
 To watch for changes and continually rebuild the package (this is useful if you're using [npm link](https://docs.npmjs.com/cli/link.html) to test out changes in a project locally):
 
