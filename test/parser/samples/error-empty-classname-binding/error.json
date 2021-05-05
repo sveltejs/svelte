@@ -3,8 +3,8 @@
 	"message": "Class name cannot be empty",
 	"start": {
 		"line": 1,
-		"column": 9,
-		"character": 9
+		"column": 10,
+		"character": 10
 	},
-	"pos": 9
+	"pos": 10
 }

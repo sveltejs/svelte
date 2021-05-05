@@ -3,8 +3,8 @@
 	"message": "Action name cannot be empty",
 	"start": {
 		"line": 1,
-		"column": 7,
-		"character": 7
+		"column": 8,
+		"character": 8
 	},
-	"pos": 7
+	"pos": 8
 }

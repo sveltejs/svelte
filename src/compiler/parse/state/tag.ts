@@ -382,7 +382,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			parser.error({
 				code: 'empty-directive-name',
 				message: `${type} name cannot be empty`
-			}, start+colon_index);
+			}, start + colon_index + 1);
 		}
 
 		if (type === 'Binding' && directive_name !== 'this') {
