@@ -40,7 +40,6 @@ To build the compiler and all the other modules included in the package:
 npm run build
 ```
 
-
 To watch for changes and continually rebuild the package (this is useful if you're using [npm link](https://docs.npmjs.com/cli/link.html) to test out changes in a project locally):
 
 ```bash
