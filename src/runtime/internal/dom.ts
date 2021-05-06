@@ -118,7 +118,7 @@ export function append_styles(
 	styles: string,
 	styleId: string = `svelte-${styleSheetId}-style`
 ) {
-	const appendStylesTo = get_root_for_node(target);
+	const appendStylesTo = get_root_for_styles(target);
 
 	if (!appendStylesTo?.querySelector('#' + styleId)) {
 		const style = element('style');
@@ -129,14 +129,18 @@ export function append_styles(
 }
 
 export function get_root_for_node(node: Node) {
-	if (!node) return document.head;
+	if (!node) return document;
 
-	const root = (node.getRootNode ? node.getRootNode() : node.ownerDocument); // check for getRootNode because IE is still supported
+	return (node.getRootNode ? node.getRootNode() : node.ownerDocument); // check for getRootNode because IE is still supported
+}
+
+export function get_root_for_styles(node: Node) {
+	const root = get_root_for_node(node);
 	return ((root as ShadowRoot).host ? root : (root as Document).head) as Element;
 }
 
 export function append_empty_stylesheet(node: Node) {
-	return get_root_for_node(node).appendChild(element('style') as HTMLStyleElement);
+	return get_root_for_styles(node).appendChild(element('style') as HTMLStyleElement);
 }
 
 export function append(target: NodeEx, node: NodeEx) {
