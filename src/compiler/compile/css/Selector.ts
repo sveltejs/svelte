@@ -594,9 +594,9 @@ class Block {
 
 	get global() {
 		return (
-			this.selectors.length === 1 &&
 			this.selectors[0].type === 'PseudoClassSelector' &&
-			this.selectors[0].name === 'global'
+			this.selectors[0].name === 'global' &&
+			!this.selectors.some((selector) => selector.type === 'ClassSelector')
 		);
 	}
 }
