@@ -1,0 +1,145 @@
+[
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "message": "A11y: The value for the aria attribute 'aria-hidden' must be exactly one of true, false, or undefined",
+    "start": {
+      "line": 1,
+      "column": 6,
+      "character": 6
+    },
+    "end": {
+      "line": 1,
+      "column": 23,
+      "character": 23
+    },
+    "pos": 6
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 73,
+      "column": 38,
+      "line": 2
+    },
+    "message": "A11y: The value for the aria attribute 'aria-current' must be exactly one of page, step, location, date, time, true, false",
+    "pos": 41,
+    "start": {
+      "character": 41,
+      "column": 6,
+      "line": 2
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "message": "A11y: The value for the aria attribute 'aria-details' must be a string that represents a DOM element ID",
+    "start": {
+      "line": 3,
+      "column": 6,
+      "character": 91
+    },
+    "end": {
+      "line": 3,
+      "column": 18,
+      "character": 103
+    },
+    "pos": 91
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 140,
+      "column": 25,
+      "line": 4
+    },
+    "message": "A11y: The value for the aria attribute 'aria-disabled' must be exactly one of true or false",
+    "pos": 121,
+    "start": {
+      "character": 121,
+      "column": 6,
+      "line": 4
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 186,
+      "column": 34,
+      "line": 5
+    },
+    "message": "A11y: The value for the aria attribute 'aria-haspopup' must be exactly one of false, true, menu, listbox, tree, grid, dialog",
+    "pos": 158,
+    "start": {
+      "character": 158,
+      "column": 6,
+      "line": 5
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 235,
+      "column": 37,
+      "line": 6
+    },
+    "message": "A11y: The value for the aria attribute 'aria-invalid' must be exactly one of grammar, false, spelling, true",
+    "pos": 204,
+    "start": {
+      "character": 204,
+      "column": 6,
+      "line": 6
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 270,
+      "column": 23,
+      "line": 7
+    },
+    "message": "A11y: The value for the aria attribute 'aria-keyshortcuts' must be of type string",
+    "pos": 253,
+    "start": {
+      "character": 253,
+      "column": 6,
+      "line": 7
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 298,
+      "column": 16,
+      "line": 8
+    },
+    "message": "A11y: The value for the aria attribute 'aria-label' must be of type string",
+    "pos": 288,
+    "start": {
+      "character": 288,
+      "column": 6,
+      "line": 8
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 336,
+      "column": 26,
+      "line": 9
+    },
+    "message": "A11y: The value for the aria attribute 'aria-roledescription' must be of type string",
+    "pos": 316,
+    "start": {
+      "character": 316,
+      "column": 6,
+      "line": 9
+    }
+  }
+]

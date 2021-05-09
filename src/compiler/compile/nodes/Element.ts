@@ -26,6 +26,154 @@ const aria_attribute_set = new Set(aria_attributes);
 const aria_roles = 'alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure form generic graphics-document graphics-object graphics-symbol grid gridcell group heading img link list listbox listitem log main marquee math meter menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' ');
 const aria_role_set = new Set(aria_roles);
 
+const aria_attribute_value_type_map = new Map([
+	// global attributes
+	// https://www.w3.org/TR/wai-aria/#global_states
+	['current', {
+		type: 'token',
+		valid_values: 'page step location date time true false'.split(' ')
+	}],
+	['disabled', { type: 'boolean'}],
+	['haspopup', {
+		type: 'token',
+		valid_values: 'false true menu listbox tree grid dialog'.split(' ')
+	}],
+	['hidden', { type: 'boolean_or_undefined' }],
+	['invalid', {
+		type: 'token',
+		valid_values: 'grammar false spelling true'.split(' ')
+	}],
+	['keyshortcuts', { type: 'string' }],
+	['label', { type: 'string' }],
+	['roledescription', { type: 'string' }],
+
+	// widget attributes
+	// https://www.w3.org/TR/wai-aria/#attrs_widgets
+	['autocomplete', {
+		type: 'token',
+		valid_values: 'inline list both none'.split(' ')
+	}],
+	['checked', { type: 'tristate' }],
+	['expanded', { type: 'boolean_or_undefined' }],
+	['level', { type: 'integer' }],
+	['modal', { type: 'boolean' }],
+	['multiline', { type: 'boolean' }],
+	['multiselectable', { type: 'boolean' }],
+	['orientation', {
+		type: 'token',
+		valid_values: 'vertical undefined horizontal'.split(' ')
+	}],
+	['placeholder', { type: 'string' }],
+	['pressed', { type: 'tristate' }],
+	['readonly', { type: 'boolean' }],
+	['required', { type: 'boolean' }],
+	['selected', { type: 'boolean_or_undefined' }],
+	['sort', {
+		type: 'token',
+		valid_values: 'ascending descending none other'.split(' ')
+	}],
+	['valuemax', { type: 'number' }],
+	['valuemin', { type: 'number' }],
+	['valuenow', { type: 'number' }],
+	['valuetext', { type: 'string' }],
+
+	// live region attributes
+	// https://www.w3.org/TR/wai-aria/#attrs_liveregions
+	['atomic', { type: 'boolean' }],
+	['busy', { type: 'boolean'}],
+	['live', {
+		type: 'token',
+		valid_values: 'assertive off polite'.split(' ')
+	}],
+	['relevant', {
+		type: 'tokenlist',
+		valid_values: 'additions all removals text'.split(' ')
+	}],
+
+	// drag-and-drop attributes
+	// https://www.w3.org/TR/wai-aria/#attrs_dragdrop
+	['dropeffect', {
+		type: 'tokenlist',
+		valid_values: 'copy execute link move none popup'.split(' ')
+	}],
+	['grabbed', { type: 'boolean_or_undefined'}],
+
+	// relationship-attributes
+	// https://www.w3.org/TR/wai-aria/#attrs_relationships
+	['activedescendant', { type: 'id'}],
+	['colcount', { type: 'integer'}],
+	['colindex', { type: 'integer'}],
+	['colspan', { type: 'integer'}],
+	['controls', { type: 'idlist'}],
+	['describedby', { type: 'idlist'}],
+	['details', { type: 'id'}],
+	['errormessage', { type: 'id'}],
+	['flowto', { type: 'idlist'}],
+	['labelledby', { type: 'idlist' }],
+	['owns', { type: 'idlist' }],
+	['posinset', { type: 'integer' }],
+	['rowcount', { type: 'integer' }],
+	['rowindex', { type: 'integer' }],
+	['rowspan', { type: 'integer' }],
+	['setsize', { type: 'integer' }]
+]);
+
+function invalid_aria_attribute_value_message(mapping: any, attribute: string) {
+	switch (mapping.type) {
+		case 'tristate':
+			return `The value for the aria attribute '${attribute}' must be exactly one of true, false, or mixed`;
+		case 'token':
+			return `The value for the aria attribute '${attribute}' must be exactly one of ${mapping.valid_values.join(', ')}`;
+		case 'tokenlist':
+			return `The value for the aria attribute '${attribute}' must be a space-separated list of one or more of ${mapping.valid_values.join(', ')}`;
+		case 'idlist':
+			// TODO: (smart-idlist) should we make this idlist dynamic?
+			return `The value for the aria attribute '${attribute}' must be a space-separated list of strings that represent DOM element IDs`;
+		case 'id':
+			return `The value for the aria attribute '${attribute}' must be a string that represents a DOM element ID`;
+		case 'boolean_or_undefined':
+			return `The value for the aria attribute '${attribute}' must be exactly one of true, false, or undefined`;
+		case 'boolean':
+			return `The value for the aria attribute '${attribute}' must be exactly one of true or false`;
+		case 'string':
+		case 'integer':
+		case 'number':
+		default:
+			return `The value for the aria attribute '${attribute}' must be of type ${mapping.type}`;
+	}
+}
+
+function is_boolean(value: any): boolean {
+	return typeof value === 'boolean' || value === 'true' || value === 'false';
+}
+
+function valid_aria_attribute_value(mapping: any, value: any): boolean {
+	switch (mapping.type) {
+		case 'boolean':
+			return is_boolean(value);
+		case 'boolean_or_undefined':
+			return is_boolean(value) || value == null;
+		case 'string':
+		case 'id':
+			return typeof value === 'string';
+		case 'tristate':
+			return value === 'true' || value === 'false' || value === 'mixed';
+		case 'integer':
+		case 'number':
+			return typeof value !== 'boolean' && isNaN(Number(value)) === false;
+		case 'token':
+			return mapping.valid_values.indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1;
+		case 'idlist':
+			// TODO: (smart-idlist) should we make this idlist verification dynamic based on the ids present
+			// in the direct parent component that this element is contained within?
+			return typeof value === 'string' && value.split(' ').every((id) => typeof id === 'string');
+		case 'tokenlist':
+			return typeof value === 'string' && value.split(' ').every((token) => mapping.valid_values.indexOf(token.toLowerCase()) > -1);
+		default:
+			return false;
+	}
+}
+
 const a11y_required_attributes = {
 	a: ['href'],
 	area: ['alt', 'aria-label', 'aria-labelledby'],
@@ -365,6 +513,16 @@ export default class Element extends Node {
 					component.warn(attribute, {
 						code: 'a11y-hidden',
 						message: `A11y: <${this.name}> element should not be hidden`
+					});
+				}
+
+				// aria-proptypes
+				const value = attribute.get_static_value();
+				const aria_attribute_type_mapping = aria_attribute_value_type_map.get(type);
+				if (aria_attribute_type_mapping && !valid_aria_attribute_value(aria_attribute_type_mapping, value)) {
+					component.warn(attribute, {
+						code: 'a11y-invalid-aria-attribute-value',
+						message: `A11y: ${invalid_aria_attribute_value_message(aria_attribute_type_mapping, name)}`
 					});
 				}
 			}

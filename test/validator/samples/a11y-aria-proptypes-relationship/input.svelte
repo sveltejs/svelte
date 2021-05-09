@@ -1,0 +1,16 @@
+<span aria-activedescendant>foo</span>
+<span aria-colcount="one">foo</span>
+<span aria-colindex="one">foo</span>
+<span aria-colspan="one">foo</span>
+<span aria-controls>foo</span>
+<span aria-describedby>foo</span>
+<span aria-details>foo</span>
+<span aria-errormessage>foo</span>
+<span aria-flowto>foo</span>
+<span aria-labelledby>foo</span>
+<span aria-owns>foo</span>
+<span aria-posinset="one">foo</span>
+<span aria-rowcount="one">foo</span>
+<span aria-rowindex="one">foo</span>
+<span aria-rowspan="one">foo</span>
+<span aria-setsize="one">foo</span>

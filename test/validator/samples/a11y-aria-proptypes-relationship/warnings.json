@@ -1,0 +1,258 @@
+[
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 27,
+      "column": 27,
+      "line": 1
+    },
+    "message": "A11y: The value for the aria attribute 'aria-activedescendant' must be a string that represents a DOM element ID",
+    "pos": 6,
+    "start": {
+      "character": 6,
+      "column": 6,
+      "line": 1
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 64,
+      "column": 25,
+      "line": 2
+    },
+    "message": "A11y: The value for the aria attribute 'aria-colcount' must be of type integer",
+    "pos": 45,
+    "start": {
+      "character": 45,
+      "column": 6,
+      "line": 2
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 101,
+      "column": 25,
+      "line": 3
+    },
+    "message": "A11y: The value for the aria attribute 'aria-colindex' must be of type integer",
+    "pos": 82,
+    "start": {
+      "character": 82,
+      "column": 6,
+      "line": 3
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 137,
+      "column": 24,
+      "line": 4
+    },
+    "message": "A11y: The value for the aria attribute 'aria-colspan' must be of type integer",
+    "pos": 119,
+    "start": {
+      "character": 119,
+      "column": 6,
+      "line": 4
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 168,
+      "column": 19,
+      "line": 5
+    },
+    "message": "A11y: The value for the aria attribute 'aria-controls' must be a space-separated list of strings that represent DOM element IDs",
+    "pos": 155,
+    "start": {
+      "character": 155,
+      "column": 6,
+      "line": 5
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 202,
+      "column": 22,
+      "line": 6
+    },
+    "message": "A11y: The value for the aria attribute 'aria-describedby' must be a space-separated list of strings that represent DOM element IDs",
+    "pos": 186,
+    "start": {
+      "character": 186,
+      "column": 6,
+      "line": 6
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 232,
+      "column": 18,
+      "line": 7
+    },
+    "message": "A11y: The value for the aria attribute 'aria-details' must be a string that represents a DOM element ID",
+    "pos": 220,
+    "start": {
+      "character": 220,
+      "column": 6,
+      "line": 7
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 267,
+      "column": 23,
+      "line": 8
+    },
+    "message": "A11y: The value for the aria attribute 'aria-errormessage' must be a string that represents a DOM element ID",
+    "pos": 250,
+    "start": {
+      "character": 250,
+      "column": 6,
+      "line": 8
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 296,
+      "column": 17,
+      "line": 9
+    },
+    "message": "A11y: The value for the aria attribute 'aria-flowto' must be a space-separated list of strings that represent DOM element IDs",
+    "pos": 285,
+    "start": {
+      "character": 285,
+      "column": 6,
+      "line": 9
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 329,
+      "column": 21,
+      "line": 10
+    },
+    "message": "A11y: The value for the aria attribute 'aria-labelledby' must be a space-separated list of strings that represent DOM element IDs",
+    "pos": 314,
+    "start": {
+      "character": 314,
+      "column": 6,
+      "line": 10
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 356,
+      "column": 15,
+      "line": 11
+    },
+    "message": "A11y: The value for the aria attribute 'aria-owns' must be a space-separated list of strings that represent DOM element IDs",
+    "pos": 347,
+    "start": {
+      "character": 347,
+      "column": 6,
+      "line": 11
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 393,
+      "column": 25,
+      "line": 12
+    },
+    "message": "A11y: The value for the aria attribute 'aria-posinset' must be of type integer",
+    "pos": 374,
+    "start": {
+      "character": 374,
+      "column": 6,
+      "line": 12
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 430,
+      "column": 25,
+      "line": 13
+    },
+    "message": "A11y: The value for the aria attribute 'aria-rowcount' must be of type integer",
+    "pos": 411,
+    "start": {
+      "character": 411,
+      "column": 6,
+      "line": 13
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 467,
+      "column": 25,
+      "line": 14
+    },
+    "message": "A11y: The value for the aria attribute 'aria-rowindex' must be of type integer",
+    "pos": 448,
+    "start": {
+      "character": 448,
+      "column": 6,
+      "line": 14
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 503,
+      "column": 24,
+      "line": 15
+    },
+    "message": "A11y: The value for the aria attribute 'aria-rowspan' must be of type integer",
+    "pos": 485,
+    "start": {
+      "character": 485,
+      "column": 6,
+      "line": 15
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 539,
+      "column": 24,
+      "line": 16
+    },
+    "message": "A11y: The value for the aria attribute 'aria-setsize' must be of type integer",
+    "pos": 521,
+    "start": {
+      "character": 521,
+      "column": 6,
+      "line": 16
+    }
+  }
+]
+
