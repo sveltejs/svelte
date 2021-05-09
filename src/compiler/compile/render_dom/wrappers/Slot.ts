@@ -107,7 +107,7 @@ export default class SlotWrapper extends Wrapper {
 			if (spread_dynamic_dependencies.size) {
 				get_slot_spread_changes_fn = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_spread_changes`);
 				renderer.blocks.push(b`
-					const ${get_slot_spread_changes_fn} = #dirty => ${renderer.dirty(Array.from(spread_dynamic_dependencies))} > 0 ? -1 : 0;
+					const ${get_slot_spread_changes_fn} = #dirty => ${renderer.dirty(Array.from(spread_dynamic_dependencies))};
 				`);
 			}
 		} else {
@@ -165,12 +165,12 @@ export default class SlotWrapper extends Wrapper {
 			: [];
 
 		let condition = renderer.dirty(dynamic_dependencies);
+		let dirty = x`#dirty`;
+		let fallback_dirty = x`#dirty`;
 		if (block.has_outros) {
 			condition = x`!#current || ${condition}`;
-		}
-		let dirty = x`#dirty`;
-		if (block.has_outros) {
-			dirty = x`!#current ? ${renderer.get_initial_dirty()} : ${dirty}`;
+			dirty = x`!#current || ${dirty}`;
+			fallback_dirty = x`!#current ? ${renderer.get_initial_dirty()} : ${fallback_dirty}`;
 		}
 
 		const slot_update = get_slot_spread_changes_fn ? b`
@@ -186,9 +186,10 @@ export default class SlotWrapper extends Wrapper {
 		if (block.has_outros) {
 			fallback_condition = x`!#current || ${fallback_condition}`;
 		}
+		
 		const fallback_update = has_fallback && fallback_dynamic_dependencies.length > 0 && b`
 			if (${slot_or_fallback} && ${slot_or_fallback}.p && ${fallback_condition}) {
-				${slot_or_fallback}.p(#ctx, ${dirty});
+				${slot_or_fallback}.p(#ctx, ${fallback_dirty});
 			}
 		`;
 
