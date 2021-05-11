@@ -130,6 +130,8 @@ export default class Selector {
 	}
 
 	validate(component: Component) {
+		this.blocks.some((block) => block.validateGlobalCompoundSelector(component));
+
 		let start = 0;
 		let end = this.blocks.length;
 
@@ -637,6 +639,24 @@ class Block {
 			this.selectors[0].name === 'global' &&
 			this.selectors.every((selector) => selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector')
 		);
+	}
+
+	validateGlobalCompoundSelector(component: Component) {
+		this.selectors.some((selector, index) => {
+			if (selector.type === 'PseudoClassSelector' &&
+					selector.name === 'global' &&
+					index !== 0 &&
+					selector.children &&
+					selector.children.length > 0 &&
+					selector.children[0].value[0] !== '.'
+				) {
+					component.error(selector, {
+						code: 'css-invalid-global',
+						message: ':global(...) which not at the start of selector sequence should not contain type or universal selector'
+					});
+					return false;
+				}
+		});
 	}
 }
 

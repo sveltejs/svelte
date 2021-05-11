@@ -1,0 +1,12 @@
+[{
+	"code": "css-invalid-global",
+	"message": ":global(...) which not at the start of selector sequence should not contain type or universal selector",
+	"start": {
+		"line": 2,
+		"column": 5
+	},
+	"end": {
+		"line": 2,
+		"column": 17
+	}
+}]
