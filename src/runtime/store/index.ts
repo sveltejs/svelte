@@ -13,7 +13,7 @@ export type Updater<T> = (value: T) => T;
 type Invalidator<T> = (value?: T) => void;
 
 /** Start and stop notification callbacks. */
-export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
+export type StartStopNotifier<T> = (set: Subscriber<T>, invalidate: Invalidator<T>) => Unsubscriber | void;
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
@@ -22,7 +22,7 @@ export interface Readable<T> {
 	 * @param run subscription callback
 	 * @param invalidate cleanup callback
 	 */
-	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>, revalidate?: Revalidator): Unsubscriber;
 }
 
 /** Writable interface for both updating and subscribing. */
@@ -40,8 +40,9 @@ export interface Writable<T> extends Readable<T> {
 	update(this: void, updater: Updater<T>): void;
 }
 
-/** Pair of subscriber and invalidator. */
-type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
+type Revalidator = () => void;
+/** Tuple of subscriber, invalidator, and revalidator. */
+type Subscription<T> = [Subscriber<T>, Invalidator<T>, Revalidator];
 
 const subscriber_queue = [];
 
@@ -63,17 +64,27 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
  */
 export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
-	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
+	const subscriptions: Array<Subscription<T>> = [];
+
+	function invalidate() {
+		for (let i = 0; i < subscriptions.length; i += 1) {
+			subscriptions[i][1]();
+		}
+	}
+	function revalidate() {
+		for (let i = 0; i < subscriptions.length; i += 1) {
+			subscriptions[i][2]();
+		}
+	}
 
 	function set(new_value: T): void {
 		if (safe_not_equal(value, new_value)) {
 			value = new_value;
 			if (stop) { // store is ready
 				const run_queue = !subscriber_queue.length;
-				for (let i = 0; i < subscribers.length; i += 1) {
-					const s = subscribers[i];
-					s[1]();
-					subscriber_queue.push(s, value);
+				invalidate();
+				for (let i = 0; i < subscriptions.length; i += 1) {
+					subscriber_queue.push(subscriptions[i], value);
 				}
 				if (run_queue) {
 					for (let i = 0; i < subscriber_queue.length; i += 2) {
@@ -82,6 +93,8 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 					subscriber_queue.length = 0;
 				}
 			}
+		} else {
+			revalidate();
 		}
 	}
 
@@ -89,20 +102,20 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 		set(fn(value));
 	}
 
-	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
-		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
-		subscribers.push(subscriber);
-		if (subscribers.length === 1) {
-			stop = start(set) || noop;
+	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop, revalidate: Revalidator = noop): Unsubscriber {
+		const subscription: Subscription<T> = [run, invalidate, revalidate];
+		subscriptions.push(subscription);
+		if (subscriptions.length === 1) {
+			stop = start(set, invalidate) || noop;
 		}
 		run(value);
 
 		return () => {
-			const index = subscribers.indexOf(subscriber);
+			const index = subscriptions.indexOf(subscription);
 			if (index !== -1) {
-				subscribers.splice(index, 1);
+				subscriptions.splice(index, 1);
 			}
-			if (subscribers.length === 0) {
+			if (subscriptions.length === 0) {
 				stop();
 				stop = null;
 			}
@@ -167,7 +180,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 
 	const auto = fn.length < 2;
 
-	return readable(initial_value, (set) => {
+	return readable(initial_value, (set, invalidate) => {
 		let inited = false;
 		const values = [];
 
@@ -197,9 +210,14 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 				}
 			},
 			() => {
+				const invalidated = pending & (1 << i);
 				pending |= (1 << i);
-			})
-		);
+				if (!invalidated) {
+					invalidate();
+				}
+			},
+			() => pending &= ~(1 << i)
+		));
 
 		inited = true;
 		sync();

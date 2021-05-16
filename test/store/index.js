@@ -214,6 +214,51 @@ describe('store', () => {
 			unsubscribe();
 		});
 
+		it('prevents glitches 2', () => {
+			const lastname = writable('Jekyll');
+			const firstname = derived(lastname, n => n === 'Jekyll' ? 'Henry' : 'Edward');
+
+			const fullname = derived([lastname, firstname], names => names.reverse().join(' '));
+
+			const values = [];
+
+			const unsubscribe = fullname.subscribe(value => {
+				values.push(value);
+			});
+
+			lastname.set('Hyde');
+
+			assert.deepEqual(values, [
+				'Henry Jekyll',
+				'Edward Hyde'
+			]);
+
+			unsubscribe();
+		});
+
+		it('prevents glitches 3', () => {
+			const lastname = writable('Jekyll');
+			const firstname_first_letter = derived(lastname, n => n === 'Jekyll' ? 'H' : 'E');
+			const firstname = derived(firstname_first_letter, n => n === 'H' ? 'Henry' : 'Edward');
+
+			const fullname = derived([lastname, firstname], names => names.reverse().join(' '));
+
+			const values = [];
+
+			const unsubscribe = fullname.subscribe(value => {
+				values.push(value);
+			});
+
+			lastname.set('Hyde');
+
+			assert.deepEqual(values, [
+				'Henry Jekyll',
+				'Edward Hyde'
+			]);
+
+			unsubscribe();
+		});
+
 		it('prevents diamond dependency problem', () => {
 			const count = writable(0);
 			const values = [];
