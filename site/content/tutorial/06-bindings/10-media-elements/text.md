@@ -4,7 +4,7 @@ title: Media elements
 
 The `<audio>` and `<video>` elements have several properties that you can bind to. This example demonstrates a few of them.
 
-On line 116, add `currentTime={time}`, `duration` and `paused` bindings:
+On line 58, add `currentTime={time}`, `duration` and `paused` bindings:
 
 ```html
 <video
