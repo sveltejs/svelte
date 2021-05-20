@@ -248,7 +248,7 @@ This makes it possible to wrap almost any other reactive state handling library 
 store = writable(value?: any)
 ```
 ```js
-store = writable(value?: any, callback?: (set: (value: any) => void) => () => void)
+store = writable(value?: any, start?: (set: (value: any) => void) => () => void)
 ```
 
 ---
@@ -297,7 +297,7 @@ unsubscribe(); // logs 'no more subscribers'
 #### `readable`
 
 ```js
-store = readable(value: any, callback: (set: (value: any) => void) => () => void)
+store = readable(value?: any, start?: (set: (value: any) => void) => () => void)
 ```
 
 ---
