@@ -140,6 +140,19 @@ describe('store', () => {
 
 			assert.deepEqual(values, [undefined]);
 		});
+
+		it('creates a readable store without updater', () => {
+			const store = readable(100);
+			const values = [];
+
+			const unsubscribe = store.subscribe(value => {
+				values.push(value);
+			});
+
+			unsubscribe();
+
+			assert.deepEqual(values, [100]);
+		});
 	});
 
 	const fake_observable = {
