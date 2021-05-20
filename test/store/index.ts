@@ -22,6 +22,19 @@ describe('store', () => {
 			assert.deepEqual(values, [0, 1, 2]);
 		});
 
+		it('creates an undefined writable store', () => {
+			const store = writable();
+			const values = [];
+
+			const unsubscribe = store.subscribe(value => {
+				values.push(value);
+			});
+
+			unsubscribe();
+
+			assert.deepEqual(values, [undefined]);
+		});
+
 		it('calls provided subscribe handler', () => {
 			let called = 0;
 
@@ -113,6 +126,32 @@ describe('store', () => {
 			tick(4);
 
 			assert.deepEqual(values, [0, 1, 2]);
+		});
+
+		it('creates an undefined readable store', () => {
+			const store = readable();
+			const values = [];
+
+			const unsubscribe = store.subscribe(value => {
+				values.push(value);
+			});
+
+			unsubscribe();
+
+			assert.deepEqual(values, [undefined]);
+		});
+
+		it('creates a readable store without updater', () => {
+			const store = readable(100);
+			const values = [];
+
+			const unsubscribe = store.subscribe(value => {
+				values.push(value);
+			});
+
+			unsubscribe();
+
+			assert.deepEqual(values, [100]);
 		});
 	});
 

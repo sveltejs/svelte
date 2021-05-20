@@ -2,7 +2,7 @@
 title: Select bindings
 ---
 
-We can also use `bind:value` with `<select>` elements. Update line 24:
+We can also use `bind:value` with `<select>` elements. Update line 20:
 
 ```html
 <select bind:value={selected} on:change="{() => answer = ''}">

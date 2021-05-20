@@ -51,7 +51,7 @@ const subscriber_queue = [];
  * @param value initial value
  * @param {StartStopNotifier}start start and stop notifications for subscriptions
  */
-export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
+export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T> {
 	return {
 		subscribe: writable(value, start).subscribe
 	};
@@ -62,7 +62,7 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
  * @param {*=}value initial value
  * @param {StartStopNotifier=}start start and stop notifications for subscriptions
  */
-export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
+export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
 	const subscriptions: Array<Subscription<T>> = [];
 
