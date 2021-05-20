@@ -302,9 +302,7 @@ store = readable(value?: any, start?: (set: (value: any) => void) => () => void)
 
 ---
 
-Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value.
-
-The second argument to `readable` is the same as the second argument to `writable`, except that it is required with `readable` (since otherwise there would be no way to update the store value).
+Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
 
 ```js
 import { readable } from 'svelte/store';
