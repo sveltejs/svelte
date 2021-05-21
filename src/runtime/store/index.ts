@@ -13,7 +13,7 @@ export type Updater<T> = (value: T) => T;
 type Invalidator<T> = (value?: T) => void;
 
 /** Start and stop notification callbacks. */
-export type StartStopNotifier<T> = (set: Subscriber<T>, invalidate: Invalidator<T>) => Unsubscriber | void;
+export type StartStopNotifier<T> = (set: Subscriber<T>, invalidate: Invalidator<T>, revalidate: Revalidator) => Unsubscriber | void;
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
@@ -106,7 +106,7 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 		const subscription: Subscription<T> = [run, invalidate, revalidate];
 		subscriptions.push(subscription);
 		if (subscriptions.length === 1) {
-			stop = start(set, invalidate) || noop;
+			stop = start(set, invalidate, revalidate) || noop;
 		}
 		run(value);
 
@@ -180,7 +180,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 
 	const auto = fn.length < 2;
 
-	return readable(initial_value, (set, invalidate) => {
+	return readable(initial_value, (set, invalidate, revalidate) => {
 		let inited = false;
 		const values = [];
 
@@ -210,13 +210,18 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 				}
 			},
 			() => {
-				const invalidated = pending & (1 << i);
+				const invalidated = pending;
 				pending |= (1 << i);
 				if (!invalidated) {
 					invalidate();
 				}
 			},
-			() => pending &= ~(1 << i)
+			() => {
+				pending &= ~(1 << i)
+				if (!pending) {
+					revalidate();
+				}
+			},
 		));
 
 		inited = true;
