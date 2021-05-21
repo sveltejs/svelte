@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix type signatures of `writable` and `readable`. It's possible to invoke them without arguments ([#6291](https://github.com/sveltejs/svelte/issues/6291), [#6345](https://github.com/sveltejs/svelte/issues/6345))
+
 ## 3.38.2
 
 * Revert hydration optimisation for the time being ([#6279](https://github.com/sveltejs/svelte/issues/6279))
