@@ -217,11 +217,11 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 				}
 			},
 			() => {
-				pending &= ~(1 << i)
+				pending &= ~(1 << i);
 				if (!pending) {
 					revalidate();
 				}
-			},
+			}
 		));
 
 		inited = true;
