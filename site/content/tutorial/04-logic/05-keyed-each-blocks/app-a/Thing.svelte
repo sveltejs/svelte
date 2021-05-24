@@ -27,7 +27,6 @@
 		padding: 0.2em 1em 0.3em;
 		text-align: center;
 		border-radius: 0.2em;
-		vertical-align: center;
 		background-color: #FFDFD3;
 	}
 </style>
