@@ -24,6 +24,7 @@ async function main() {
 	}
 
 	const authors = contributors
+        .filter(({ login }) => !login.includes('[bot]'))
 		.sort((a, b) => b.contributions - a.contributions);
 
 	const sprite = new Jimp(SIZE * authors.length, SIZE);
@@ -45,7 +46,7 @@ async function main() {
 	// TODO: Optimizing the static/contributors.jpg image should probably get automated as well
 	console.log('remember to additionally optimize the resulting /static/contributors.jpg image file via e.g. https://squoosh.app ');
 
-	const str = `[\n\t${authors.map(a => `'${a.login.replace('[bot]', '')}'`).join(',\n\t')}\n]`;
+	const str = `[\n\t${authors.map(a => `'${a.login}'`).join(',\n\t')}\n]`;
 
 	fs.writeFileSync(`../src/routes/_contributors.js`, `export default ${str};`);
 }
