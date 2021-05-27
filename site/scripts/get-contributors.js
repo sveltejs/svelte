@@ -24,7 +24,7 @@ async function main() {
 	}
 
 	const authors = contributors
-        .filter(({ login }) => !login.includes('[bot]'))
+		.filter(({ login }) => !login.includes('[bot]'))
 		.sort((a, b) => b.contributions - a.contributions);
 
 	const sprite = new Jimp(SIZE * authors.length, SIZE);
