@@ -1,5 +1,5 @@
 <script>
-	let emojis = {
+	const emojis = {
         apple: "🍎",
         banana: "🍌",
         carrot: "🥕",
