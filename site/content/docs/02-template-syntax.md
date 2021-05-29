@@ -393,7 +393,7 @@ When used around components, this will cause them to be reinstantiated and reini
 
 In a text expression, characters like `<` and `>` are escaped; however, with HTML expressions, they're not.
 
-The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML.
+The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML. It also will *not* compile Svelte code.
 
 > Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
 
