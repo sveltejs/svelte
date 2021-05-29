@@ -1475,6 +1475,8 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:window>` element allows you to add event listeners to the `window` object without worrying about removing them when the component is destroyed, or checking for the existence of `window` when server-side rendering.
 
+Contrary to `<svelte:self>` this element can only be a the top level of your component and must never be inside a block or element.
+
 ```sv
 <script>
 	function handleKeydown(event) {
@@ -1512,7 +1514,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 ---
 
-As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`.
+As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`; and it has to appear at the top level of your component.
 
 ```sv
 <svelte:body
@@ -1531,6 +1533,8 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 ---
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
+
+As with `<svelte:window>` and `<svelte:head>` this element has to appear at the top level of your component and cannot be inside a block or other element.
 
 ```sv
 <svelte:head>
