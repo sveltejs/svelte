@@ -1,26 +1,35 @@
 ---
 title: What's new in Svelte: June 2021
-description: Progress on SvelteKit V1 and tighter TypeScript/Svelte integrations in language tools
+description: Progress towards SvelteKit 1.0 and tighter TypeScript/Svelte integrations in language tools
 author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-This month, we saw lots of contributions to SvelteKit and its docs. The language tools also got some new features alongside some hydration bug fixes in Svelte core. Let's jump into the updates...
+This month, we saw lots of contributions to SvelteKit and its docs. The language tools also got some new features, most notably deeper integration with Svelte files within JavaScript or TypeScript files. Let's jump into the updates...
 
 ## New in SvelteKit
-- `svelte.config.js` config files can now be loaded in ESM format (`.js` instead of `.cjs` - either can be used). It is recommended to use the `.js` format going forward.
+- `svelte.config.js` config files are now be loaded in ESM format (`.js` instead of `.cjs`).
 - AMP pages will now use the rendered CSS, rather than emitted CSS
+- `svelte-check` has been added to the TypeScript template ([sveltejs/kit#1556](https://github.com/sveltejs/kit/pull/1556)) 
+- support for https keypair [sveltejs/kit#1456](https://github.com/sveltejs/kit/pull/1456) 
+- now bundling Vite with SvelteKit and using an upgraded version. Remove Vite from your `package.json` if it's there 
+- etags for binary responses [sveltejs/kit#1382](https://github.com/sveltejs/kit/pull/1382) 
+- Renamed `$layout` to `__layout` and `$error` to `__error` 
+- Removed `getContext` in favor of `request.locals` 
+- Renamed `.svelte` output directory to `.svelte-kit`. Update your `.gitignore` accordingly
 - `trailingSlash: 'never' | 'always' | 'ignore'` is now available in the config. This should make it easier to build sites that work with static hosting providers that expect a trailing slash for `index.html` pages, and provides an escape hatch for anyone that needs more complex behaviour.
+
+## Notable bug fixes in SvelteKit
+- `adapter-netlify` got a fix [sveltejs/kit#1467](https://github.com/sveltejs/kit/pull/1467) and new documentation in the readme https://github.com/sveltejs/kit/tree/master/packages/adapter-netlify 
 - The router will no longer intercept navigation for URLs that the app does not own. This fixes a crash for apps that have `<a>` elements on the page with the same origin but don't share a base path with the app.
-- Hash only changes are now handled by the router - fixing the browser's "back" navigation between hash changes.
-- Svelte Kit builds and dev versions should now work on Windows (`pnpm build` and `dev` commands were failing due to lack of an `rm` command)
+- Hash only changes are now handled by the router fixing the browser's "back" navigation between hash changes in some circumstances.
 
 
 
 ## New in Svelte & Language Tools
 - Svelte 3.38.1 and 3.38.2 fixed an issue with hydration that was causing duplicate elements. If you're seeing this in your project, be sure to update the latest version!
-- You can now toggle the TypeScript plugin on and off in the Svelte extension (Extension version [**104.11.0**](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.11.0))
-- Language server users on newer versions of Svelte will now have their sourcemaps preprocessed by Svelte instead of the (now deprecated) logic in language tools. (Extension version [**104.12.2**](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.12.2))
+- A new TypeScript plugin provides deeper integration with Svelte files within JavaScript or TypeScript files. This includes diagnostics, references and renaming of variables. It is turned off by default for now. We encourage you to test it out and [provide feedback](https://github.com/sveltejs/language-tools/issues/580)
+- In the latest version of `svelte-check` you can now provide the path to your `tsconfig.json` or `jsconfig.json`. Example: `svelte-check --tsconfig "./tsconfig.json"`. This ensures the diagnostics are only run on files that are referenced in that config. It also runs diagnostics on JavaScript and/or TypeScript files which removes the need to run another check (like `tsc --noEmit`) for non-Svelte files (`svelte-check` version [**1.6.0**](https://github.com/sveltejs/language-tools/releases/tag/svelte-check-1.6.0))
 
 ---
 
