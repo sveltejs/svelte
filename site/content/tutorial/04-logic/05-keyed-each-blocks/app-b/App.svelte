@@ -2,11 +2,11 @@
 	import Thing from './Thing.svelte';
 
 	let things = [
-		{ id: 1, color: 'darkblue' },
-		{ id: 2, color: 'indigo' },
-		{ id: 3, color: 'deeppink' },
-		{ id: 4, color: 'salmon' },
-		{ id: 5, color: 'gold' }
+		{ id: 1, name: 'apple' },
+		{ id: 2, name: 'banana' },
+		{ id: 3, name: 'carrot' },
+		{ id: 4, name: 'doughnut' },
+		{ id: 5, name: 'egg' },
 	];
 
 	function handleClick() {
@@ -18,6 +18,6 @@
 	Remove first thing
 </button>
 
-{#each things as thing (thing.id)}
-	<Thing current={thing.color}/>
+{#each things as thing (thing.id) }
+	<Thing name={thing.name}/>
 {/each}
