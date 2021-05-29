@@ -1376,7 +1376,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 </Card>
 ```
 
-#### [`<slot let:`*name*`={`*value*`}>`](slot_let)
+#### [`<slot key={`*value*`}>`](slot_let)
 
 ---
 
