@@ -1475,7 +1475,7 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:window>` element allows you to add event listeners to the `window` object without worrying about removing them when the component is destroyed, or checking for the existence of `window` when server-side rendering.
 
-Contrary to `<svelte:self>` this element can only be a the top level of your component and must never be inside a block or element.
+Contrary to `<svelte:self>` this element can only be at the top level of your component and must never be inside a block or element.
 
 ```sv
 <script>
