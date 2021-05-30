@@ -8,12 +8,12 @@ authorURL: https://desandoval.net
 This month, we saw lots of contributions to SvelteKit and its docs. The language tools also got some new features, most notably deeper integration with Svelte files within JavaScript or TypeScript files. Let's jump into the updates...
 
 ## New in SvelteKit
-- `svelte.config.js` config files are now be loaded in ESM format (`.js` instead of `.cjs`).
+- `svelte.config.js` config files are now loaded in ESM format (`.js` instead of `.cjs`).
 - AMP pages will now use the rendered CSS, rather than emitted CSS
 - `svelte-check` has been added to the TypeScript template ([sveltejs/kit#1556](https://github.com/sveltejs/kit/pull/1556)) 
-- support for https keypair [sveltejs/kit#1456](https://github.com/sveltejs/kit/pull/1456) 
-- now bundling Vite with SvelteKit and using an upgraded version. Remove Vite from your `package.json` if it's there 
-- etags for binary responses [sveltejs/kit#1382](https://github.com/sveltejs/kit/pull/1382) 
+- Support for https keypair [sveltejs/kit#1456](https://github.com/sveltejs/kit/pull/1456) 
+- Now bundling Vite with SvelteKit and using an upgraded version. Remove Vite from your `package.json` if it's there 
+- Etags for binary responses [sveltejs/kit#1382](https://github.com/sveltejs/kit/pull/1382) 
 - Renamed `$layout` to `__layout` and `$error` to `__error` 
 - Removed `getContext` in favor of `request.locals` 
 - Renamed `.svelte` output directory to `.svelte-kit`. Update your `.gitignore` accordingly
@@ -28,7 +28,7 @@ This month, we saw lots of contributions to SvelteKit and its docs. The language
 
 ## New in Svelte & Language Tools
 - Svelte 3.38.1 and 3.38.2 fixed an issue with hydration that was causing duplicate elements. If you're seeing this in your project, be sure to update the latest version!
-- A new TypeScript plugin provides deeper integration with Svelte files within JavaScript or TypeScript files. This includes diagnostics, references and renaming of variables. It is turned off by default for now. We encourage you to test it out and [provide feedback](https://github.com/sveltejs/language-tools/issues/580)
+- A new TypeScript plugin provides deeper integration with Svelte files within JavaScript or TypeScript files. This includes diagnostics, references and renaming of variables. It comes packaged with the VS Code extension but is turned off by default for now. You can enable it through [this setting](https://github.com/sveltejs/language-tools/tree/master/packages/svelte-vscode#svelteenable-ts-plugin). We encourage you to test it out and [provide feedback](https://github.com/sveltejs/language-tools/issues/580)
 - In the latest version of `svelte-check` you can now provide the path to your `tsconfig.json` or `jsconfig.json`. Example: `svelte-check --tsconfig "./tsconfig.json"`. This ensures the diagnostics are only run on files that are referenced in that config. It also runs diagnostics on JavaScript and/or TypeScript files which removes the need to run another check (like `tsc --noEmit`) for non-Svelte files (`svelte-check` version [**1.6.0**](https://github.com/sveltejs/language-tools/releases/tag/svelte-check-1.6.0))
 - The VS Code extension and `svelte-check` got a new major release. Previously, properties that had no initializer (`export let foo;`) were only required if the user was using both TypeScript and activated `strict` mode. This is changed now: People using TypeScript, and those using `checkJs` also in JavaScript files, will now always have these properties marked as required (`svelte-check` version [**2.0.0**](https://github.com/sveltejs/language-tools/releases/tag/svelte-check-2.0.0), extension version [**105.0.0**](https://github.com/sveltejs/language-tools/releases/tag/extensions-105.0.0))
 
