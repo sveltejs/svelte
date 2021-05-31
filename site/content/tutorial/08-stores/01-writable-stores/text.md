@@ -25,5 +25,3 @@ function reset() {
 	count.set(0);
 }
 ```
-
-> The function of assigning subscribe to `unsubscribe` is explained in the next section.

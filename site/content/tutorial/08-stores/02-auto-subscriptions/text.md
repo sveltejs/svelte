@@ -2,10 +2,17 @@
 title: Auto-subscriptions
 ---
 
-The app in the previous example works, but there's a subtle bug — the `unsubscribe` function never gets called. If the component was instantiated and destroyed many times, this would result in a *memory leak*.
+The app in the previous example works, but there's a subtle bug — it is missing an `unsubscribe` function. If the component was instantiated and destroyed many times, this would result in a *memory leak*.
 
-One way to fix it would be to use the `onDestroy` [lifecycle hook](tutorial/ondestroy):
+Start by declaring `unsubscribe` in `App.svelte`:
 
+```js
+	const unsubscribe = count.subscribe(value => {
+		count_value = value;
+	});
+```
+
+Although you declared `unsubscribe`, it is never called. One way to fix it would be to use the `onDestroy` [lifecycle hook](tutorial/ondestroy):
 ```html
 <script>
 	import { onDestroy } from 'svelte';
