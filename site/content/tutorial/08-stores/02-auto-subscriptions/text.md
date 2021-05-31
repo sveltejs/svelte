@@ -12,7 +12,7 @@ Start by declaring `unsubscribe` in `App.svelte`:
 	});
 ```
 
-Although you declared `unsubscribe`, it is never called. One way to fix it would be to use the `onDestroy` [lifecycle hook](tutorial/ondestroy):
+Although you declared `unsubscribe`, it is never called. One way to fix this would be to use the `onDestroy` [lifecycle hook](tutorial/ondestroy):
 ```html
 <script>
 	import { onDestroy } from 'svelte';
