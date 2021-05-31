@@ -1,9 +1,11 @@
-// Test support for the `foreign` namespace preserving attribute case.
+// Test support for the `foreign` namespace preserving attribute case,
+// including ensuring that SVG elements don't interfere.
 
 export default {
 	html: `
 		<page horizontalAlignment="center">
-			<button textWrap="true" text="button">
+			<button textWrap="true" text="button"></button>
+			<text wordWrap="true"></text>
 		</page>
 	`,
 	options: {
@@ -16,5 +18,6 @@ export default {
 		const attr = sel => target.querySelector(sel).attributes[0].name;
 		assert.equal(attr('page'), 'horizontalAlignment');
 		assert.equal(attr('button'), 'textWrap');
+		assert.equal(attr('text'), 'wordWrap');
 	}
 };

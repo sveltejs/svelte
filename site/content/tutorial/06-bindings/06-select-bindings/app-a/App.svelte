@@ -14,10 +14,6 @@
 	}
 </script>
 
-<style>
-	input { display: block; width: 500px; max-width: 100%; }
-</style>
-
 <h2>Insecurity questions</h2>
 
 <form on:submit|preventDefault={handleSubmit}>
@@ -37,3 +33,11 @@
 </form>
 
 <p>selected question {selected ? selected.id : '[waiting...]'}</p>
+
+<style>
+	input {
+		display: block;
+		width: 500px;
+		max-width: 100%;
+	}
+</style>

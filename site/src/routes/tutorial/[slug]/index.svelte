@@ -198,7 +198,6 @@
 	.chapter-markup::-webkit-scrollbar-thumb {
 		background-color: rgba(255,255,255,.7);
 		border-radius: 1em;
-		outline: 1px solid green;
 	}
 
 	.chapter-markup :global(p) > :global(code),
@@ -244,11 +243,10 @@
 	}
 
 	.improve-chapter a {
-		padding: 0 .1em;
 		font-size: 14px;
 		text-decoration: none;
 		opacity: .3;
-		padding-left: 1.2em;
+		padding: 0 .1em 0 1.2em;
 		background: no-repeat 0 50% url(/icons/edit.svg);
 		background-size: 1em 1em;
 	}

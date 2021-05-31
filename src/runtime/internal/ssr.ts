@@ -74,12 +74,12 @@ export function debug(file, line, column, values) {
 let on_destroy;
 
 export function create_ssr_component(fn) {
-	function $$render(result, props, bindings, slots) {
+	function $$render(result, props, bindings, slots, context) {
 		const parent_component = current_component;
 
 		const $$ = {
 			on_destroy,
-			context: new Map(parent_component ? parent_component.$$.context : []),
+			context: new Map(parent_component ? parent_component.$$.context : context || []),
 
 			// these will be immediately discarded
 			on_mount: [],
@@ -97,7 +97,7 @@ export function create_ssr_component(fn) {
 	}
 
 	return {
-		render: (props = {}, options = {}) => {
+		render: (props = {}, { $$slots = {}, context = new Map() } = {}) => {
 			on_destroy = [];
 
 			const result: {
@@ -109,7 +109,7 @@ export function create_ssr_component(fn) {
 				}>;
 			} = { title: '', head: '', css: new Set() };
 
-			const html = $$render(result, props, {}, options);
+			const html = $$render(result, props, {}, $$slots, context);
 
 			run_all(on_destroy);
 

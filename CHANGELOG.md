@@ -1,5 +1,64 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix type signatures of `writable` and `readable`. It's possible to invoke them without arguments ([#6291](https://github.com/sveltejs/svelte/issues/6291), [#6345](https://github.com/sveltejs/svelte/issues/6345))
+
+## 3.38.2
+
+* Revert hydration optimisation for the time being ([#6279](https://github.com/sveltejs/svelte/issues/6279))
+
+## 3.38.1
+
+* Fix hydration regression ([#6274](https://github.com/sveltejs/svelte/issues/6274))
+
+## 3.38.0
+
+* Avoid recreating DOM elements during hydration ([#1067](https://github.com/sveltejs/svelte/issues/1067))
+* Support passing CSS custom properties to component ([#5628](https://github.com/sveltejs/svelte/issues/5628))
+* Support `:global()` as part of compound CSS selectors ([#6222](https://github.com/sveltejs/svelte/issues/6222))
+* Fix updating `<slot>` contents when there's an aborted transition ([#3542](https://github.com/sveltejs/svelte/issues/3542))
+* Fix setting boolean attributes on custom elements ([#5951](https://github.com/sveltejs/svelte/issues/5951))
+* Add missing function overload for `derived` to allow explicitly setting an initial value for non-async derived stores ([#6172](https://github.com/sveltejs/svelte/pull/6172))
+* Fix dynamic `href` values erroneously triggering a11y warnings ([#5990](https://github.com/sveltejs/svelte/issues/5990))
+* Fix scope leak when updating an `{#await}` block ([#6173](https://github.com/sveltejs/svelte/issues/6173))
+* Pass full markup source to `script`/`style` preprocessors ([#6169](https://github.com/sveltejs/svelte/pull/6169))
+* Fix `crossfade` types to mark `fallback` as optional ([#6201](https://github.com/sveltejs/svelte/pull/6201))
+* Add missing "context" typing to `SvelteComponent` constructor options ([#6236](https://github.com/sveltejs/svelte/pull/6236))
+* Don't automatically switch to `svg` namespace when in `foreign` namespace ([#6257](https://github.com/sveltejs/svelte/issues/6257))
+
+## 3.37.0
+
+* Allow root-level context to be passed to the component constructor ([#6032](https://github.com/sveltejs/svelte/pull/6032))
+
+## 3.36.0
+
+* Add `this: void` typing to store functions ([#6094](https://github.com/sveltejs/svelte/pull/6094))
+* Export `Spring`, `Tweened` and `EasingFunction` interfaces ([#6070](https://github.com/sveltejs/svelte/issues/6070), [#6056](https://github.com/sveltejs/svelte/pull/6056))
+* Export interfaces for transition parameters ([#5207](https://github.com/sveltejs/svelte/issues/5207))
+* Export store's useful TypeScript definitions ([#5864](https://github.com/sveltejs/svelte/issues/5864))
+* Fix previous breaking change to `svelte/preprocess` types location ([#6100](https://github.com/sveltejs/svelte/pull/6100))
+* Fix missing slotted elements in AST ([#6066](https://github.com/sveltejs/svelte/issues/6066))
+
+## 3.35.0
+
+* Implement slotted components and `<svelte:fragment slot="...">` ([#1037](https://github.com/sveltejs/svelte/issues/1037), [#2079](https://github.com/sveltejs/svelte/issues/2079))
+* Fix reactivity bug where `slot="..."` is specified after attributes that should be reactive ([#5626](https://github.com/sveltejs/svelte/issues/5626))
+
+## 3.34.0
+
+* Add a `cssHash` option for controlling the classname used for CSS scoping ([#570](https://github.com/sveltejs/svelte/issues/570))
+
+## 3.33.0
+
+* In custom elements, call `onMount` functions when connecting and clean up when disconnecting ([#1152](https://github.com/sveltejs/svelte/issues/1152), [#2227](https://github.com/sveltejs/svelte/issues/2227), [#4522](https://github.com/sveltejs/svelte/pull/4522))
+* Allow destructured defaults to refer to other variables ([#5066](https://github.com/sveltejs/svelte/issues/5066))
+* Do not emit `contextual-store` warnings for function parameters or declared variables ([#6008](https://github.com/sveltejs/svelte/pull/6008))
+
+## 3.32.3
+
+* Fix removal of lone `:host` selectors ([#5982](https://github.com/sveltejs/svelte/issues/5982))
+
 ## 3.32.2
 
 * Fix unnecessary additional invalidation with `<Component bind:prop={obj.foo}/>` ([#3075](https://github.com/sveltejs/svelte/issues/3075), [#4447](https://github.com/sveltejs/svelte/issues/4447), [#5555](https://github.com/sveltejs/svelte/issues/5555))

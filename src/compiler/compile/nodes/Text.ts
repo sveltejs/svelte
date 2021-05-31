@@ -30,7 +30,7 @@ export default class Text extends Node {
 	should_skip() {
 		if (/\S/.test(this.data)) return false;
 
-		const parent_element = this.find_nearest(/(?:Element|InlineComponent|Head)/);
+		const parent_element = this.find_nearest(/(?:Element|InlineComponent|SlotTemplate|Head)/);
 		if (!parent_element) return false;
 
 		if (parent_element.type === 'Head') return true;

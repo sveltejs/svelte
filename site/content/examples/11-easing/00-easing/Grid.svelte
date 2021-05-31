@@ -2,19 +2,6 @@
 	export let x, y;
 </script>
 
-<style>
-	.grid-line {
-		stroke:#ccc;
-		opacity: 0.5;
-		stroke-width: 2;
-	}
-
-	.grid-line-xy {
-		stroke: tomato;
-		stroke-width: 2;
-	}
-</style>
-
 <svelte:options namespace="svg" />
 
 <rect
@@ -60,3 +47,16 @@
 	fill=none
 	stroke-width=2
 />
+
+<style>
+	.grid-line {
+		stroke:#ccc;
+		opacity: 0.5;
+		stroke-width: 2;
+	}
+
+	.grid-line-xy {
+		stroke: tomato;
+		stroke-width: 2;
+	}
+</style>

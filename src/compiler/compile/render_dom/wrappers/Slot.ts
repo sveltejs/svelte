@@ -11,7 +11,6 @@ import { is_reserved_keyword } from '../../utils/reserved_keywords';
 import is_dynamic from './shared/is_dynamic';
 import { Identifier, ObjectExpression } from 'estree';
 import create_debugging_comment from './shared/create_debugging_comment';
-import create_slot_block from './Element/create_slot_block';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
@@ -41,10 +40,6 @@ export default class SlotWrapper extends Wrapper {
 				type: 'fallback'
 			});
 			renderer.blocks.push(this.fallback);
-		}
-
-		if (this.node.values.has('slot')) {
-			block = create_slot_block(this.node.values.get('slot'), this, block);
 		}
 
 		this.fragment = new FragmentWrapper(
@@ -169,12 +164,17 @@ export default class SlotWrapper extends Wrapper {
 			? Array.from(this.fallback.dependencies).filter((name) => this.is_dependency_dynamic(name))
 			: [];
 
+		let condition = renderer.dirty(dynamic_dependencies);
+		if (block.has_outros) {
+			condition = x`!#current || ${condition}`;
+		}
+
 		const slot_update = get_slot_spread_changes_fn ? b`
-			if (${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
+			if (${slot}.p && ${condition}) {
 				@update_slot_spread(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_spread_changes_fn}, ${get_slot_context_fn});
 			}
 		` : b`
-			if (${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
+			if (${slot}.p && ${condition}) {
 				@update_slot(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_context_fn});
 			}
 		`;

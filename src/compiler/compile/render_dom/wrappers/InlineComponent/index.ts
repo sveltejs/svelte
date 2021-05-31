@@ -4,12 +4,11 @@ import Renderer from '../../Renderer';
 import Block from '../../Block';
 import InlineComponent from '../../../nodes/InlineComponent';
 import FragmentWrapper from '../Fragment';
+import SlotTemplateWrapper from '../SlotTemplate';
 import { sanitize } from '../../../../utils/names';
 import add_to_set from '../../../utils/add_to_set';
 import { b, x, p } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
-import create_debugging_comment from '../shared/create_debugging_comment';
-import { get_slot_definition } from '../shared/get_slot_definition';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
@@ -18,12 +17,17 @@ import EventHandler from '../Element/EventHandler';
 import { extract_names } from 'periscopic';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import { string_to_member_expression } from '../../../utils/string_to_member_expression';
+import SlotTemplate from '../../../nodes/SlotTemplate';
+import { is_head } from '../shared/is_head';
+
+type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
-	slots: Map<string, { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node }> = new Map();
+	slots: Map<string, SlotDefinition> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
+	children: Array<Wrapper | FragmentWrapper> = [];
 
 	constructor(
 		renderer: Renderer,
@@ -60,6 +64,10 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 		});
 
+		this.node.css_custom_properties.forEach(attr => {
+			block.add_dependencies(attr.dependencies);
+		});
+
 		this.var = {
 			type: 'Identifier',
 			name: (
@@ -76,30 +84,20 @@ export default class InlineComponentWrapper extends Wrapper {
 				});
 			});
 
-			const default_slot = block.child({
-				comment: create_debugging_comment(node, renderer.component),
-				name: renderer.component.get_unique_name('create_default_slot'),
-				type: 'slot'
-			});
-
-			this.renderer.blocks.push(default_slot);
-
-			this.slots.set('default', get_slot_definition(default_slot, this.node.scope, this.node.lets));
-			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, strip_whitespace, next_sibling);
-
-			const dependencies: Set<string> = new Set();
-
-			// TODO is this filtering necessary? (I *think* so)
-			default_slot.dependencies.forEach(name => {
-				if (!this.node.scope.is_let(name)) {
-					dependencies.add(name);
-				}
-			});
-
-			block.add_dependencies(dependencies);
+			this.children = this.node.children.map(child => new SlotTemplateWrapper(renderer, block, this, child as SlotTemplate, strip_whitespace, next_sibling));
 		}
 
 		block.add_outro();
+	}
+
+	set_slot(name: string, slot_definition: SlotDefinition) {
+		if (this.slots.has(name)) {
+			if (name === 'default') {
+				throw new Error('Found elements without slot attribute when using slot="default"');
+			}
+			throw new Error(`Duplicate slot name "${name}" in <${this.node.name}>`);
+		}
+		this.slots.set(name, slot_definition);
 	}
 
 	warn_if_reactive() {
@@ -135,14 +133,10 @@ export default class InlineComponentWrapper extends Wrapper {
 		const statements: Array<Node | Node[]> = [];
 		const updates: Array<Node | Node[]> = [];
 
-		if (this.fragment) {
+		this.children.forEach((child) => {
 			this.renderer.add_to_context('$$scope', true);
-			const default_slot = this.slots.get('default');
-
-			this.fragment.nodes.forEach((child) => {
-				child.render(default_slot.block, null, x`#nodes` as unknown as Identifier);
-			});
-		}
+			child.render(block, null, x`#nodes` as Identifier);
+		});
 
 		let props;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
@@ -155,6 +149,12 @@ export default class InlineComponentWrapper extends Wrapper {
 				this.renderer.remove_block(this.slots.get(slot).block);
 				this.slots.delete(slot);
 			}
+		}
+
+		const has_css_custom_properties = this.node.css_custom_properties.length > 0;
+		const css_custom_properties_wrapper = has_css_custom_properties ? block.get_unique_name('div') : null;
+		if (has_css_custom_properties) {
+			block.add_variable(css_custom_properties_wrapper);
 		}
 
 		const initial_props = this.slots.size > 0
@@ -194,7 +194,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			component_opts.properties.push(p`$$inline: true`);
 		}
 
-		const fragment_dependencies = new Set(this.fragment ? ['$$scope'] : []);
+		const fragment_dependencies = new Set(this.slots.size ? ['$$scope'] : []);
 		this.slots.forEach(slot => {
 			slot.block.dependencies.forEach(name => {
 				const is_let = slot.scope.is_let(name);
@@ -502,17 +502,64 @@ export default class InlineComponentWrapper extends Wrapper {
 				${munged_handlers}
 			`);
 
+			if (has_css_custom_properties) {
+				block.chunks.create.push(b`${css_custom_properties_wrapper} = @element("div");`);
+				block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "display", "contents");`);
+				this.node.css_custom_properties.forEach(attr => {
+					const dependencies = attr.get_dependencies();
+					const should_cache = attr.should_cache();
+					const last = should_cache && block.get_unique_name(`${attr.name.replace(/[^a-zA-Z_$]/g, '_')}_last`);
+					if (should_cache) block.add_variable(last);
+					const value = attr.get_value(block);
+					const init = should_cache ? x`${last} = ${value}` : value;
+
+					block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${init});`);
+					if (dependencies.length > 0) {
+						let condition = block.renderer.dirty(dependencies);
+						if (should_cache) condition = x`${condition} && (${last} !== (${last} = ${value}))`;
+
+						block.chunks.update.push(b`
+							if (${condition}) {
+								@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${should_cache ? last : value});
+							}
+						`);
+					}
+				});
+			}
 			block.chunks.create.push(b`@create_component(${name}.$$.fragment);`);
 
 			if (parent_nodes && this.renderer.options.hydratable) {
+				let nodes = parent_nodes;
+				if (has_css_custom_properties) {
+					nodes = block.get_unique_name(`${css_custom_properties_wrapper.name}_nodes`);
+					block.chunks.claim.push(b`
+						${css_custom_properties_wrapper} = @claim_element(${parent_nodes}, "DIV", { style: true })
+						var ${nodes} = @children(${css_custom_properties_wrapper});
+					`);
+				}
 				block.chunks.claim.push(
-					b`@claim_component(${name}.$$.fragment, ${parent_nodes});`
+					b`@claim_component(${name}.$$.fragment, ${nodes});`
 				);
 			}
 
-			block.chunks.mount.push(
-				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
-			);
+			if (has_css_custom_properties) {
+				if (parent_node) {
+					block.chunks.mount.push(b`@append(${parent_node}, ${css_custom_properties_wrapper})`);
+					if (is_head(parent_node)) {
+						block.chunks.destroy.push(b`@detach(${css_custom_properties_wrapper});`);
+					}
+				} else {
+					block.chunks.mount.push(b`@insert(#target, ${css_custom_properties_wrapper}, #anchor);`);
+					// TODO we eventually need to consider what happens to elements
+					// that belong to the same outgroup as an outroing element...
+					block.chunks.destroy.push(b`if (detaching) @detach(${css_custom_properties_wrapper});`);
+				}
+				block.chunks.mount.push(b`@mount_component(${name}, ${css_custom_properties_wrapper}, null);`);
+			} else {
+				block.chunks.mount.push(
+					b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
+				);
+			}
 
 			block.chunks.intro.push(b`
 				@transition_in(${name}.$$.fragment, #local);

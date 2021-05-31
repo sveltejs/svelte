@@ -96,7 +96,7 @@ export default class Attribute extends Node {
 	}
 
 	get_static_value() {
-		if (this.is_spread || this.dependencies.size > 0) return null;
+		if (!this.is_static) return null;
 
 		return this.is_true
 			? true
