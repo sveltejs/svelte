@@ -393,7 +393,7 @@ When used around components, this will cause them to be reinstantiated and reini
 
 In a text expression, characters like `<` and `>` are escaped; however, with HTML expressions, they're not.
 
-The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML.
+The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML. It also will *not* compile Svelte code.
 
 > Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
 
@@ -585,7 +585,7 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 
 ---
 
-On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList).
+On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). It is readonly.
 
 ```sv
 <label for="avatar">Upload a picture:</label>
@@ -1376,7 +1376,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 </Card>
 ```
 
-#### [`<slot let:`*name*`={`*value*`}>`](slot_let)
+#### [`<slot key={`*value*`}>`](slot_let)
 
 ---
 
@@ -1475,6 +1475,8 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:window>` element allows you to add event listeners to the `window` object without worrying about removing them when the component is destroyed, or checking for the existence of `window` when server-side rendering.
 
+Contrary to `<svelte:self>` this element can only be at the top level of your component and must never be inside a block or element.
+
 ```sv
 <script>
 	function handleKeydown(event) {
@@ -1512,7 +1514,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 ---
 
-As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`.
+As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`; and it has to appear at the top level of your component.
 
 ```sv
 <svelte:body
@@ -1531,6 +1533,8 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 ---
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
+
+As with `<svelte:window>` and `<svelte:head>` this element has to appear at the top level of your component and cannot be inside a block or other element.
 
 ```sv
 <svelte:head>
