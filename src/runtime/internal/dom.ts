@@ -1,11 +1,48 @@
 import { has_prop } from './utils';
 
-export function append(target: Node, node: Node) {
-	target.appendChild(node);
+interface ClaimedNode extends Node {
+  /** 
+   * When a node is claimed, we know all its children will be appended during mount.
+   * Keep track of which children have already been re-appended, so we do not reorder them multiple times.
+   */
+  appendAt?: number;
 }
 
-export function insert(target: Node, node: Node, anchor?: Node) {
-	target.insertBefore(node, anchor || null);
+export function append(target: ClaimedNode, node: Node) {
+  if (target.appendAt == null) {
+    target.appendChild(node);
+  } else {
+    const appendAt = target.appendAt;
+    const childNodes = target.childNodes;
+    const nextNode = childNodes[appendAt];
+
+    if (nextNode != node) {
+      if (nextNode) {
+        target.insertBefore(node, nextNode);
+      } else {
+        target.appendChild(node);
+      }
+    }
+
+    target.appendAt = childNodes.length == appendAt + 1 ? undefined : appendAt + 1;
+  }
+}
+
+export function insert(target: ClaimedNode, node: Node, anchor?: Node) {
+	if ((target as ClaimedNode).appendAt == null) {
+		target.insertBefore(node, anchor || null);
+  } else if (anchor == null) {
+		append(target, node);
+	} else {
+    const appendAt = target.appendAt;
+    const anchorIndex = Array.prototype.indexOf.call(target.childNodes, anchor);
+
+		if (anchorIndex < appendAt) {
+			target.appendAt = target.childNodes.length == appendAt + 1 ? undefined : appendAt + 1;
+		}
+
+    target.insertBefore(node, anchor || null);
+  }
 }
 
 export function detach(node: Node) {
@@ -168,6 +205,7 @@ export function claim_element(nodes, name, attributes, svg) {
 			for (let k = 0; k < remove.length; k++) {
 				node.removeAttribute(remove[k]);
 			}
+      (node as ClaimedNode).appendAt = 0;
 			return nodes.splice(i, 1)[0];
 		}
 	}
