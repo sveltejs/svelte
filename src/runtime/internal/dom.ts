@@ -41,7 +41,7 @@ export function insert(target: ClaimedNode, node: Node, anchor?: Node) {
 			target.appendAt = target.childNodes.length == appendAt + 1 ? undefined : appendAt + 1;
 		}
 
-    target.insertBefore(node, anchor || null);
+    target.insertBefore(node, anchor);
   }
 }
 
