@@ -1,11 +1,38 @@
 import { has_prop } from './utils';
 
-export function append(target: Node, node: Node) {
-	target.appendChild(node);
+// Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
+// at the end of hydration without touching the remaining nodes.
+let is_hydrating = false;
+
+export function start_hydrating() {
+	is_hydrating = true;
+}
+export function end_hydrating() {
+	is_hydrating = false;
+}
+
+export function append(target: Node & {actual_end_child?: Node | null}, node: Node) {
+	if (is_hydrating) {
+		// If we are just starting with this target, we will insert before the firstChild (which may be null)
+		if (target.actual_end_child === undefined) {
+			target.actual_end_child = target.firstChild;
+		}
+		if (node.parentNode !== target) {
+			target.insertBefore(node, target.actual_end_child);
+		} else {
+			target.actual_end_child = node.nextSibling;
+		}
+	} else if (node.parentNode !== target) {
+		target.appendChild(node);
+	}
 }
 
 export function insert(target: Node, node: Node, anchor?: Node) {
-	target.insertBefore(node, anchor || null);
+	if (is_hydrating && !anchor) {
+		append(target, node);
+	} else if (node.parentNode !== target || (anchor && node.nextSibling !== anchor)) {
+		target.insertBefore(node, anchor || null);
+	}
 }
 
 export function detach(node: Node) {
@@ -149,42 +176,80 @@ export function time_ranges_to_array(ranges) {
 	return array;
 }
 
-export function children(element) {
+export function children(element: HTMLElement) {
 	return Array.from(element.childNodes);
 }
 
-export function claim_element(nodes, name, attributes, svg) {
-	for (let i = 0; i < nodes.length; i += 1) {
+type ChildNodeArray = ChildNode[] & {
+	/**
+     * All nodes at or after this index are available for preservation (not getting detached)
+     */
+	lastKeepIndex?: number;
+};
+
+function claim_node<R extends ChildNode>(nodes: ChildNodeArray, predicate: (node: ChildNode) => node is R, processNode: (node: ChildNode) => void, createNode: () => R) {
+	if (nodes.lastKeepIndex === undefined) {
+		nodes.lastKeepIndex = 0;
+	}
+	
+	// We first try to find a node we can actually keep without detaching
+	// This node should be after the previous node that we chose to keep without detaching
+	for (let i = nodes.lastKeepIndex; i < nodes.length; i++) {
 		const node = nodes[i];
-		if (node.nodeName === name) {
-			let j = 0;
+		
+		if (predicate(node)) {
+			processNode(node);
+
+			nodes.splice(i, 1);
+			nodes.lastKeepIndex = i;
+			return node;
+		}
+	}
+	
+	
+	// Otherwise, we try to find a node that we should detach
+	for (let i = 0; i < nodes.lastKeepIndex; i++) {
+		const node = nodes[i];
+		
+		if (predicate(node)) {
+			processNode(node);
+
+			nodes.splice(i, 1);
+			nodes.lastKeepIndex -= 1;
+			detach(node);
+			return node;
+		}
+	}
+	
+	// If we can't find any matching node, we create a new one
+	return createNode();
+}
+
+export function claim_element(nodes: ChildNodeArray, name: string, attributes: {[key: string]: boolean}, svg) {
+	return claim_node<Element | SVGElement>(
+		nodes,
+		(node: ChildNode): node is Element | SVGElement => node.nodeName === name,
+		(node: Element) => {
 			const remove = [];
-			while (j < node.attributes.length) {
-				const attribute = node.attributes[j++];
+			for (let j = 0; j < node.attributes.length; j++) {
+				const attribute = node.attributes[j];
 				if (!attributes[attribute.name]) {
 					remove.push(attribute.name);
 				}
 			}
-			for (let k = 0; k < remove.length; k++) {
-				node.removeAttribute(remove[k]);
-			}
-			return nodes.splice(i, 1)[0];
-		}
-	}
-
-	return svg ? svg_element(name) : element(name);
+			remove.forEach(v => node.removeAttribute(v));
+		},
+		() => svg ? svg_element(name as keyof SVGElementTagNameMap) : element(name as keyof HTMLElementTagNameMap)
+	);
 }
 
-export function claim_text(nodes, data) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (node.nodeType === 3) {
-			node.data = '' + data;
-			return nodes.splice(i, 1)[0];
-		}
-	}
-
-	return text(data);
+export function claim_text(nodes: ChildNodeArray, data) {
+	return claim_node<Text>(
+		nodes,
+		(node: ChildNode): node is Text => node.nodeType === 3,
+		(node: Text) => node.data = '' + data,
+		() => text(data)
+	);
 }
 
 export function claim_space(nodes) {
