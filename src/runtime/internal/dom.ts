@@ -17,11 +17,7 @@ export function append(target: ClaimedNode, node: Node) {
     const nextNode = childNodes[appendAt];
 
     if (nextNode != node) {
-      if (nextNode) {
-        target.insertBefore(node, nextNode);
-      } else {
-        target.appendChild(node);
-      }
+			target.insertBefore(node, nextNode);
     }
 
     target.appendAt = childNodes.length == appendAt + 1 ? undefined : appendAt + 1;
