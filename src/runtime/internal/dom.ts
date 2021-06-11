@@ -36,8 +36,10 @@ function init_hydrate(target: NodeEx) {
 	if (target.hydrate_init) return;
 	target.hydrate_init = true;
 	
+	type NodeEx2 = NodeEx & {claim_order: number};
+	
 	// We know that all children have claim_order values since the unclaimed have been detached
-	const children = target.childNodes as NodeListOf<NodeEx & {claim_order: number}>;
+	const children = target.childNodes as NodeListOf<NodeEx2>;
 	
 	/* 
 	* Reorder claimed children optimally.
@@ -57,7 +59,7 @@ function init_hydrate(target: NodeEx) {
 	*/
 	
 	// Compute longest increasing subsequence
-	// m: subsequence length j => index k of smallest value that ends an incresing subsequence of length j
+	// m: subsequence length j => index k of smallest value that ends an increasing subsequence of length j
 	const m = new Int32Array(children.length + 1);
 	// Predecessor indices + 1
 	const p = new Int32Array(children.length);
@@ -82,28 +84,34 @@ function init_hydrate(target: NodeEx) {
 	}
 	
 	// The longest increasing subsequence of nodes (initially reversed)
-	const lis = [];
+	const lis: NodeEx2[] = [];
 	for (let cur = m[longest] + 1; cur != 0; cur = p[cur - 1]) {
 		const node = children[cur - 1];
 		lis.push(node);
 		node.is_in_lis = true;
 	}
-	lis.reverse();
+	lis.reverse(); 
 	
 	// Move all nodes that aren't in the longest increasing subsequence
-	const toMove: NodeEx[] = [];
+	const toMove = lis.map(() => [] as NodeEx2[]);
+	// For the nodes at the end
+	toMove.push([]);
 	for (let i = 0; i < children.length; i++) {
-		if (!children[i].is_in_lis) {
-			toMove.push(children[i]);
+		const node = children[i];
+		if (!node.is_in_lis) {
+			const idx = upper_bound(0, lis.length, idx => lis[idx].claim_order, node.claim_order);
+			toMove[idx].push(node);
 		}
 	}
 	
-	toMove.forEach((node) => {
-		const idx = upper_bound(0, lis.length, idx => lis[idx].claim_order, node.claim_order);
-		if ((idx == 0) || (lis[idx - 1].claim_order != node.claim_order)) {
-			const nxt = idx == lis.length ? null : lis[idx];
-			target.insertBefore(node, nxt);
-		}
+	toMove.forEach((lst, idx) => {
+		// We sort the nodes being moved to guarantee that their insertion order matches the claim order
+		lst.sort((a, b) => a.claim_order - b.claim_order);
+		
+		const anchor = idx < lis.length ? lis[idx] : null;
+		lst.forEach(n => {
+			target.insertBefore(n, anchor);
+		});
 	});
 }
 
@@ -330,7 +338,6 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 					// Since we spliced before the last_index, we decrease it
 					nodes.claim_info.last_index--;
 				}
-				detach(node);
 				return node;
 			}
 		}
