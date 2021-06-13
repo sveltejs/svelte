@@ -14,7 +14,6 @@ export function end_hydrating() {
 type NodeEx = Node & {
 	claim_order?: number,
 	hydrate_init? : true,
-	is_in_lis?: true,
 	actual_end_child?: Node,
 	childNodes: NodeListOf<NodeEx>,
 };
@@ -85,34 +84,32 @@ function init_hydrate(target: NodeEx) {
 	
 	// The longest increasing subsequence of nodes (initially reversed)
 	const lis: NodeEx2[] = [];
+	// The rest of the nodes, nodes that will be moved
+	const toMove: NodeEx2[] = [];
+	let last = children.length - 1;
 	for (let cur = m[longest] + 1; cur != 0; cur = p[cur - 1]) {
-		const node = children[cur - 1];
-		lis.push(node);
-		node.is_in_lis = true;
-	}
-	lis.reverse(); 
-	
-	// Move all nodes that aren't in the longest increasing subsequence
-	const toMove = lis.map(() => [] as NodeEx2[]);
-	// For the nodes at the end
-	toMove.push([]);
-	for (let i = 0; i < children.length; i++) {
-		const node = children[i];
-		if (!node.is_in_lis) {
-			const idx = upper_bound(0, lis.length, idx => lis[idx].claim_order, node.claim_order);
-			toMove[idx].push(node);
+		lis.push(children[cur - 1]);
+		for (; last >= cur; last--) {
+			toMove.push(children[last]);
 		}
+		last--;
 	}
+	for (; last >= 0; last--) {
+		toMove.push(children[last]);
+	}
+	lis.reverse();
 	
-	toMove.forEach((lst, idx) => {
-		// We sort the nodes being moved to guarantee that their insertion order matches the claim order
-		lst.sort((a, b) => a.claim_order - b.claim_order);
-		
-		const anchor = idx < lis.length ? lis[idx] : null;
-		lst.forEach(n => {
-			target.insertBefore(n, anchor);
-		});
-	});
+	// We sort the nodes being moved to guarantee that their insertion order matches the claim order
+	toMove.sort((a, b) => a.claim_order - b.claim_order);
+	
+	// Finally, we move the nodes
+	for (let i = 0, j = 0; i < toMove.length; i++) {
+		while (j < lis.length && toMove[i].claim_order >= lis[j].claim_order) {
+			j++;
+		}
+		const anchor = j < lis.length ? lis[j] : null;
+		target.insertBefore(toMove[i], anchor);
+	}
 }
 
 export function append(target: NodeEx, node: NodeEx) {
