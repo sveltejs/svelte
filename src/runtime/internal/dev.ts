@@ -104,7 +104,7 @@ export interface SvelteComponentDev {
 	$destroy(): void;
 	[accessor: string]: any;
 }
-interface IComponentOptions {
+interface IComponentOptions<Props extends Record<string, any> = Record<string, any>> {
 	target: Element;
 	anchor?: Element;
 	props?: Props;
@@ -232,7 +232,7 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: IComponentOptions) {
+	constructor(options: IComponentOptions<Props>) {
 		super(options);
 	}
 }
