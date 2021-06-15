@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: December 2020
+title: "What's new in Svelte: December 2020"
 description: Better tooling, export maps and improvements to slots and context
 author: Daniel Sandoval
 authorURL: https://desandoval.net

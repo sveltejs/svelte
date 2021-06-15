@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: April 2021
+title: "What's new in Svelte: April 2021"
 description: SvelteKit beta and new way to use slots
 author: Daniel Sandoval
 authorURL: https://desandoval.net
