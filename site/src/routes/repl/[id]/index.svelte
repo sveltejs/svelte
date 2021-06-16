@@ -26,6 +26,7 @@
 	let is_relaxed_gist = false;
 	let width = process.browser ? window.innerWidth : 1000;
 	let checked = false;
+	let modified = 0;
 
 	function update_query_string(version) {
 		const params = [];
@@ -98,6 +99,10 @@
 		console.log('> handle_fork', event);
 		gist = event.detail.gist;
 		goto(`/repl/${gist.uid}?version=${version}`);
+	}
+
+	function handle_change(event) {
+		modified = event.detail.components.filter(c => c.modified).length
 	}
 
 	$: svelteUrl = process.browser && version === 'local' ?
@@ -206,6 +211,7 @@
 		{repl}
 		bind:name
 		bind:zen_mode
+		bind:modified
 		on:forked={handle_fork}
 	/>
 
@@ -219,6 +225,9 @@
 				{relaxed}
 				fixed={mobile}
 				injectedJS={mapbox_setup}
+				on:change={handle_change}
+				on:add={handle_change}
+				on:remove={handle_change}
 			/>
 		</div>
 
