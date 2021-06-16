@@ -1,5 +1,3 @@
-import * as path from 'path';
-
 export default {
 	props: {
 		a: 1
