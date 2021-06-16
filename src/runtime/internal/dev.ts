@@ -97,6 +97,12 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
+export function validate_dynamic_element(tag) {
+	if (tag == null) {
+		console.warn('<svelte:element> expects a non-nullish value in attribute "tag"');
+	}
+}
+
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;

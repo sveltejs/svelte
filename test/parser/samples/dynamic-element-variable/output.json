@@ -1,0 +1,33 @@
+{
+	"html": {
+		"start": 0,
+		"end": 43,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 43,
+				"type": "DynamicElement",
+				"name": "svelte:element",
+				"attributes": [],
+				"children": [],
+				"tag": {
+					"start": 21,
+					"end": 24,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 21
+						},
+						"end": {
+							"line": 1,
+							"column": 24
+						}
+					},
+					"name": "tag",
+					"type": "Identifier"
+				}
+			}
+		]
+	}
+}

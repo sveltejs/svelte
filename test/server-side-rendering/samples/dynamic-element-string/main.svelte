@@ -1,0 +1,1 @@
+<svelte:element tag="div">Foo</svelte:element>

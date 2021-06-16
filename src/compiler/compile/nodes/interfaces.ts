@@ -32,6 +32,7 @@ import ThenBlock from './ThenBlock';
 import Title from './Title';
 import Transition from './Transition';
 import Window from './Window';
+import DynamicElement from './DynamicElement';
 
 // note: to write less types each of types in union below should have type defined as literal
 // https://www.typescriptlang.org/docs/handbook/unions-and-intersections.html#discriminating-unions
@@ -45,6 +46,7 @@ export type INode = Action
 | Class
 | Comment
 | DebugTag
+| DynamicElement
 | EachBlock
 | Element
 | ElseBlock
