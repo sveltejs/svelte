@@ -374,7 +374,7 @@ export default class ElementWrapper extends Wrapper {
 	get_claim_statement(nodes: Identifier) {
 		const attributes = this.attributes
 			.filter((attr) => !(attr instanceof SpreadAttributeWrapper) && !attr.property_name)
-			.map((attr) => p`${fix_attribute_casing(attr.node.name)}: true`);
+			.map((attr) => p`${attr.name}: true`);
 
 		const name = this.node.namespace
 			? this.node.name

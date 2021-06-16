@@ -201,17 +201,17 @@ function find_comment(nodes, text, start) {
 	return nodes.length;
 }
 
-export function claim_html_tag(update_anchor, nodes) {
+export function claim_html_tag(nodes) {
 	// find html opening tag
 	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
 	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
 	if (start_index === end_index) {
-		return new HtmlTag(update_anchor);
+		return new HtmlTag();
 	}
 	const html_tag_nodes = nodes.splice(start_index, end_index + 1);
 	detach(html_tag_nodes[0]);
 	detach(html_tag_nodes[html_tag_nodes.length - 1]);
-	return new HtmlTag(update_anchor, html_tag_nodes.slice(1, html_tag_nodes.length - 1));
+	return new HtmlTag(html_tag_nodes.slice(1, html_tag_nodes.length - 1));
 }
 
 export function set_data(text, data) {
@@ -352,8 +352,7 @@ export class HtmlTag {
 	// anchor
 	a: HTMLElement;
 
-	constructor(anchor: HTMLElement = null, claimed_nodes?: ChildNode[]) {
-		this.a = anchor;
+	constructor(claimed_nodes?: ChildNode[]) {
 		this.e = this.n = null;
 		this.l = claimed_nodes;
 	}

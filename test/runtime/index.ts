@@ -56,6 +56,7 @@ describe('runtime', () => {
 		const solo = config.solo || /\.solo/.test(dir);
 
 		if (hydrate && config.skip_if_hydrate) return;
+		if (hydrate && from_ssr_html && config.skip_if_hydrate_from_ssr) return;
 
 		if (solo && process.env.CI) {
 			throw new Error('Forgot to remove `solo: true` from test');
@@ -160,6 +161,8 @@ describe('runtime', () => {
 						const { html } = SsrSvelteComponent.render(config.props);
 						target.innerHTML = html;
 						delete compileOptions.generate;
+					} else {
+						target.innerHTML = '';
 					}
 
 					if (config.before_test) config.before_test();
