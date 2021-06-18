@@ -1,7 +1,7 @@
 export const companies = [
 	{
 		href: "https://1password.com",
-		filename: "1password.png",
+		filename: "1password.svg",
 		alt: "1Password logo",
 	},
 	{
