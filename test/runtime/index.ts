@@ -62,7 +62,7 @@ describe('runtime', () => {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		const testName = `${dir} ${hydrate ? `(with hydration ${from_ssr_html ? 'from ssr rendered html' : ''})` : ''}`;
+		const testName = `${dir} ${hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''}`;
 		(config.skip ? it.skip : solo ? it.only : it)(testName, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
