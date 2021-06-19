@@ -16,7 +16,6 @@
 	export let gist;
 	export let name;
 	export let zen_mode;
-	export let bundle;
 
 	let saving = false;
 	let downloading = false;

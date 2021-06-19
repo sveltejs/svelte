@@ -77,6 +77,7 @@
 			{selected.chapter.title}
 		</span>
 
+		<!-- svelte-ignore a11y-no-onchange -->
 		<select value={slug} on:change={navigate}>
 			{#each sections as section, i}
 				<optgroup label="{i + 1}. {section.title}">
