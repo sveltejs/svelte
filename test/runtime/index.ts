@@ -49,19 +49,21 @@ describe('runtime', () => {
 
 	const failed = new Set();
 
-	function runTest(dir, hydrate) {
+	function runTest(dir, hydrate, from_ssr_html) {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
 
 		if (hydrate && config.skip_if_hydrate) return;
+		if (hydrate && from_ssr_html && config.skip_if_hydrate_from_ssr) return;
 
 		if (solo && process.env.CI) {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		(config.skip ? it.skip : solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, () => {
+		const testName = `${dir} ${hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''}`;
+		(config.skip ? it.skip : solo ? it.only : it)(testName, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -146,12 +148,24 @@ describe('runtime', () => {
 						throw err;
 					}
 
-					if (config.before_test) config.before_test();
-
 					// Put things we need on window for testing
 					window.SvelteComponent = SvelteComponent;
 
 					const target = window.document.querySelector('main');
+
+					if (hydrate && from_ssr_html) {
+						// ssr into target
+						compileOptions.generate = 'ssr';
+						cleanRequireCache();
+						const SsrSvelteComponent = require(`./samples/${dir}/main.svelte`).default;
+						const { html } = SsrSvelteComponent.render(config.props);
+						target.innerHTML = html;
+						delete compileOptions.generate;
+					} else {
+						target.innerHTML = '';
+					}
+
+					if (config.before_test) config.before_test();
 
 					const warnings = [];
 					const warn = console.warn;
@@ -245,7 +259,8 @@ describe('runtime', () => {
 
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		runTest(dir, false);
-		runTest(dir, true);
+		runTest(dir, true, false);
+		runTest(dir, true, true);
 	});
 
 	async function create_component(src = '<div></div>') {
