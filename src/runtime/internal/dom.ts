@@ -191,6 +191,29 @@ export function claim_space(nodes) {
 	return claim_text(nodes, ' ');
 }
 
+function find_comment(nodes, text, start) {
+	for (let i = start; i < nodes.length; i += 1) {
+		const node = nodes[i];
+		if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === text) {
+			return i;
+		}
+	}
+	return nodes.length;
+}
+
+export function claim_html_tag(nodes) {
+	// find html opening tag
+	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
+	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
+	if (start_index === end_index) {
+		return new HtmlTag();
+	}
+	const html_tag_nodes = nodes.splice(start_index, end_index + 1);
+	detach(html_tag_nodes[0]);
+	detach(html_tag_nodes[html_tag_nodes.length - 1]);
+	return new HtmlTag(html_tag_nodes.slice(1, html_tag_nodes.length - 1));
+}
+
 export function set_data(text, data) {
 	data = '' + data;
 	if (text.wholeText !== data) text.data = data;
@@ -318,27 +341,37 @@ export function query_selector_all(selector: string, parent: HTMLElement = docum
 }
 
 export class HtmlTag {
+	// parent for creating node
 	e: HTMLElement;
+	// html tag nodes
 	n: ChildNode[];
+	// hydration claimed nodes
+	l: ChildNode[] | void;
+	// target
 	t: HTMLElement;
+	// anchor
 	a: HTMLElement;
 
-	constructor(anchor: HTMLElement = null) {
-		this.a = anchor;
+	constructor(claimed_nodes?: ChildNode[]) {
 		this.e = this.n = null;
+		this.l = claimed_nodes;
 	}
 
 	m(html: string, target: HTMLElement, anchor: HTMLElement = null) {
 		if (!this.e) {
 			this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
 			this.t = target;
-			this.h(html);
+			if (this.l) {
+				this.n = this.l;
+			} else {
+				this.h(html);
+			}
 		}
 
 		this.i(anchor);
 	}
 
-	h(html) {
+	h(html: string) {
 		this.e.innerHTML = html;
 		this.n = Array.from(this.e.childNodes);
 	}
