@@ -54,6 +54,10 @@
     "./transition": {
       "import": "./transition/index.mjs",
       "require": "./transition/index.js"
+    },
+    "./ssr": {
+      "import": "./ssr.mjs",
+      "require": "./ssr.js"
     }
   },
   "engines": {
