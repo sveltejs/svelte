@@ -1,12 +1,12 @@
 {
 	"html": {
 		"start": 0,
-		"end": 94,
+		"end": 104,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 94,
+				"end": 104,
 				"type": "Element",
 				"name": "textarea",
 				"attributes": [],
