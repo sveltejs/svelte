@@ -1,12 +1,12 @@
 {
 	"html": {
 		"start": 0,
-		"end": 104,
+		"end": 117,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 104,
+				"end": 117,
 				"type": "Element",
 				"name": "textarea",
 				"attributes": [],
@@ -41,10 +41,10 @@
 					},
 					{
 						"start": 55,
-						"end": 78,
+						"end": 91,
 						"type": "Text",
-						"raw": "</p>\n</textare\n\n\n> asdf",
-						"data": "</p>\n</textare\n\n\n> asdf"
+						"raw": "</p>\n</textare\n\n\n> </textaread >asdf",
+						"data": "</p>\n</textare\n\n\n> </textaread >asdf"
 					}
 				]
 			}
