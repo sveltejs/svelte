@@ -20,7 +20,7 @@ export default class EventHandlerWrapper {
 
 			this.parent.renderer.component.partly_hoisted.push(b`
 				function ${node.handler_name.name}(event) {
-					@bubble($$self, event);
+					@bubble.call(this, $$self, event);
 				}
 			`);
 		}
