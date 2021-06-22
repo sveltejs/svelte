@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.38.3
 
 * Speed up hydration by reducing amount of element reorderings ([#4308](https://github.com/sveltejs/svelte/issues/4308))
 * Fix escaping attribute values when using a spread in SSR ([#5756](https://github.com/sveltejs/svelte/issues/5756))
