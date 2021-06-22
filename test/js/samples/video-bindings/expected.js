@@ -94,10 +94,10 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	$$self.$$set = $$props => {
-		if ("currentTime" in $$props) $$invalidate(0, currentTime = $$props.currentTime);
-		if ("videoHeight" in $$props) $$invalidate(1, videoHeight = $$props.videoHeight);
-		if ("videoWidth" in $$props) $$invalidate(2, videoWidth = $$props.videoWidth);
-		if ("offsetWidth" in $$props) $$invalidate(3, offsetWidth = $$props.offsetWidth);
+		if ('currentTime' in $$props) $$invalidate(0, currentTime = $$props.currentTime);
+		if ('videoHeight' in $$props) $$invalidate(1, videoHeight = $$props.videoHeight);
+		if ('videoWidth' in $$props) $$invalidate(2, videoWidth = $$props.videoWidth);
+		if ('offsetWidth' in $$props) $$invalidate(3, offsetWidth = $$props.offsetWidth);
 	};
 
 	return [

@@ -11,7 +11,7 @@ import {
 	transition_out
 } from "svelte/internal";
 
-import LazyLoad from "./LazyLoad.svelte";
+import LazyLoad from './LazyLoad.svelte';
 
 function create_fragment(ctx) {
 	let lazyload;
@@ -42,7 +42,7 @@ function create_fragment(ctx) {
 	};
 }
 
-const func = () => import("./Foo.svelte");
+const func = () => import('./Foo.svelte');
 
 class Component extends SvelteComponent {
 	constructor(options) {

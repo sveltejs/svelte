@@ -12,7 +12,7 @@ import {
 	text
 } from "svelte/internal";
 
-import { onMount } from "svelte";
+import { onMount } from 'svelte';
 
 function create_fragment(ctx) {
 	let p;

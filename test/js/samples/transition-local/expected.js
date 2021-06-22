@@ -125,8 +125,8 @@ function instance($$self, $$props, $$invalidate) {
 	let { y } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("x" in $$props) $$invalidate(0, x = $$props.x);
-		if ("y" in $$props) $$invalidate(1, y = $$props.y);
+		if ('x' in $$props) $$invalidate(0, x = $$props.x);
+		if ('y' in $$props) $$invalidate(1, y = $$props.y);
 	};
 
 	return [x, y];
