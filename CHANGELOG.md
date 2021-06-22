@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Speed up hydration by reducing amount of element reorderings ([#4308](https://github.com/sveltejs/svelte/issues/4308))
 * Fix escaping attribute values when using a spread in SSR ([#5756](https://github.com/sveltejs/svelte/issues/5756))
 * Throw compiler error when `:global()` contains multiple selectors ([#5907](https://github.com/sveltejs/svelte/issues/5907))
 * Give explicit error rather than crashing when an attribute shorthand `{}` is empty ([#6086](https://github.com/sveltejs/svelte/issues/6086))
