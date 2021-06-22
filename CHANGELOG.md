@@ -7,6 +7,7 @@
 * Give explicit error rather than crashing when an attribute shorthand `{}` is empty ([#6086](https://github.com/sveltejs/svelte/issues/6086))
 * Make `<textarea>` end tag parsing more robust ([#6276](https://github.com/sveltejs/svelte/issues/6276))
 * Fix type signatures of `writable` and `readable` so it's possible to call them without arguments ([#6291](https://github.com/sveltejs/svelte/issues/6291), [#6345](https://github.com/sveltejs/svelte/issues/6345))
+* Preserve `this` in bubbled events ([#6310](https://github.com/sveltejs/svelte/issues/6310))
 * Fix generic props relationship in SvelteComponentTyped ([#6400](https://github.com/sveltejs/svelte/pull/6400))
 
 ## 3.38.2
