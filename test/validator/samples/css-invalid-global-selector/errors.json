@@ -1,0 +1,17 @@
+[
+	{
+		"code": "css-invalid-global-selector",
+		"message": ":global(...) do not allow multiple selectors",
+		"start": {
+			"line": 5,
+			"column": 5,
+			"character": 58
+		},
+		"end": {
+			"line": 5,
+			"column": 24,
+			"character": 77
+		},
+		"pos": 58
+	}
+]
