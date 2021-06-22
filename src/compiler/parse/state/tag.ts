@@ -221,9 +221,9 @@ export default function tag(parser: Parser) {
 		element.children = read_sequence(
 			parser,
 			() =>
-				parser.template.slice(parser.index, parser.index + 11) === '</textarea>'
+				/^<\/textarea(\s[^>]*)?>/i.test(parser.template.slice(parser.index))
 		);
-		parser.read(/<\/textarea>/);
+		parser.read(/^<\/textarea(\s[^>]*)?>/i);
 		element.end = parser.index;
 	} else if (name === 'script' || name === 'style') {
 		// special case
