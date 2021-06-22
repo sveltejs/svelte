@@ -150,7 +150,7 @@ export default class Selector {
 					if (/[^\\],/.test(selector.children[0].value)) {
 						component.error(selector, {
 							code: 'css-invalid-global-selector',
-							message: ':global(...) do not allow multiple selectors'
+							message: ':global(...) must contain a single selector'
 						});
 					}
 				}
