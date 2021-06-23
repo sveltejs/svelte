@@ -165,26 +165,39 @@ export default class SlotWrapper extends Wrapper {
 			: [];
 
 		let condition = renderer.dirty(dynamic_dependencies);
-		let dirty = x`#dirty`;
-		let fallback_dirty = x`#dirty`;
 		if (block.has_outros) {
 			condition = x`!#current || ${condition}`;
-			dirty = x`!#current || ${dirty}`;
-			fallback_dirty = x`!#current ? ${renderer.get_initial_dirty()} : ${fallback_dirty}`;
 		}
 
-		const slot_update = get_slot_spread_changes_fn ? b`
-			if (${slot}.p && ${condition}) {
-				@update_slot_spread(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${dirty}, ${get_slot_changes_fn}, ${get_slot_spread_changes_fn}, ${get_slot_context_fn});
-			}
-		` : b`
-			if (${slot}.p && ${condition}) {
-				@update_slot(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${dirty}, ${get_slot_changes_fn}, ${get_slot_context_fn});
-			}
-		`;
+		// conditions to treat everything as dirty
+		const all_dirty_conditions = [
+			get_slot_spread_changes_fn ? x`${get_slot_spread_changes_fn}(#dirty)` : null,
+			block.has_outros ? x`!#current` : null
+		].filter(Boolean);
+		const all_dirty_condition = all_dirty_conditions.length ? all_dirty_conditions.reduce((condition1, condition2) => x`${condition1} || ${condition2}`): null;
+
+		let slot_update;
+		if (all_dirty_condition) {
+			const dirty = x`${all_dirty_condition} ? @get_all_dirty_from_scope(${renderer.reference('$$scope')}) : @get_slot_changes(${slot_definition}, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn})`;
+
+			slot_update = b`
+				if (${slot}.p && ${condition}) {
+					@update_slot_base(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${dirty}, ${get_slot_context_fn});
+				}
+			`;
+		} else {
+			slot_update = b`
+				if (${slot}.p && ${condition}) {
+					@update_slot(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_context_fn});
+				}
+			`;
+		}
+
 		let fallback_condition = renderer.dirty(fallback_dynamic_dependencies);
+		let fallback_dirty = x`#dirty`;
 		if (block.has_outros) {
 			fallback_condition = x`!#current || ${fallback_condition}`;
+			fallback_dirty = x`!#current ? ${renderer.get_initial_dirty()} : ${fallback_dirty}`;
 		}
 		
 		const fallback_update = has_fallback && fallback_dynamic_dependencies.length > 0 && b`
