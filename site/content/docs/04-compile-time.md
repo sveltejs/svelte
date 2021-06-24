@@ -237,7 +237,7 @@ const { code } = await svelte.preprocess(source, {
 			return { code: content }
 		}
 		const s = new MagicString(content, { filename })
-		s.overwrite(pos, pos+3, 'bar', { storeName: true })
+		s.overwrite(pos, pos + 3, 'bar', { storeName: true })
 		return {
 			code: s.toString(),
 			map: s.generateMap()
