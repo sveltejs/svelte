@@ -224,16 +224,24 @@ Each `markup`, `script` or `style` function must return an object (or a Promise 
 
 The `markup` function receives the entire component source text, along with the component's `filename` if it was specified in the third argument.
 
-> Preprocessor functions may additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation. In current versions of Svelte it will be ignored, but future versions of Svelte may take account of preprocessor sourcemaps.
+> Preprocessor functions should additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation.
 
 ```js
 const svelte = require('svelte/compiler');
+const MagicString = require('magic-string');
 
 const { code } = await svelte.preprocess(source, {
 	markup: ({ content, filename }) => {
+		const pos = content.indexOf('foo');
+		if(pos < 0) {
+			return { code: content }
+		}
+		const s = new MagicString(content, { filename })
+		s.overwrite(pos, pos + 3, 'bar', { storeName: true })
 		return {
-			code: content.replace(/foo/g, 'bar')
-		};
+			code: s.toString(),
+			map: s.generateMap()
+		}
 	}
 }, {
 	filename: 'App.svelte'
