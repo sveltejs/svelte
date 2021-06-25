@@ -14,7 +14,7 @@ export function end_hydrating() {
 type NodeEx = Node & {
 	claim_order?: number,
 	hydrate_init? : true,
-	actual_end_child?: Node,
+	actual_end_child?: NodeEx,
 	childNodes: NodeListOf<NodeEx>,
 };
 
@@ -38,9 +38,9 @@ function init_hydrate(target: NodeEx) {
 	type NodeEx2 = NodeEx & {claim_order: number};
 
 	// We know that all children have claim_order values since the unclaimed have been detached
-	const children = target.childNodes as NodeListOf<NodeEx2>;
-
-	/*
+	const children = Array.from(target.childNodes as NodeListOf<NodeEx>).filter(x => x.claim_order !== undefined) as NodeEx2[];
+	
+	/* 
 	* Reorder claimed children optimally.
 	* We can reorder claimed children optimally by finding the longest subsequence of
 	* nodes that are already claimed in order and only moving the rest. The longest
@@ -119,8 +119,17 @@ export function append(target: NodeEx, node: NodeEx) {
 		if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentElement !== target))) {
 			target.actual_end_child = target.firstChild;
 		}
+		
+		// Skip nodes of undefined ordering
+		while ((target.actual_end_child !== null) && (target.actual_end_child.claim_order === undefined)) {
+			target.actual_end_child = target.actual_end_child.nextSibling;
+		}
+		
 		if (node !== target.actual_end_child) {
-			target.insertBefore(node, target.actual_end_child);
+			if (node.claim_order !== undefined || node.parentNode !== target) {
+				// We only insert if the ordering of this node should be modified or the parent node is not target
+				target.insertBefore(node, target.actual_end_child);
+			}
 		} else {
 			target.actual_end_child = node.nextSibling;
 		}
