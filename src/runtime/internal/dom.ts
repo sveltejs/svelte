@@ -126,8 +126,8 @@ export function append(target: NodeEx, node: NodeEx) {
 		}
 		
 		if (node !== target.actual_end_child) {
+			// We only insert if the ordering of this node should be modified or the parent node is not target
 			if (node.claim_order !== undefined || node.parentNode !== target) {
-				// We only insert if the ordering of this node should be modified or the parent node is not target
 				target.insertBefore(node, target.actual_end_child);
 			}
 		} else {
