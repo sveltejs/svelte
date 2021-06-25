@@ -132,7 +132,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			`);
 		} else if (this.is_src) {
 			block.chunks.hydrate.push(
-				b`if (${element.var}.src !== (new URL(${init}, location)).href) ${method}(${element.var}, "${name}", ${this.last});`
+				b`if (new URL(${element.var}.src, location).href !== (new URL(${init}, location)).href) ${method}(${element.var}, "${name}", ${this.last});`
 			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
 		} else if (property_name) {
@@ -193,7 +193,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 		if (should_cache) {
 			condition = this.is_src
-				? x`${condition} && (${element.var}.src !== (new URL((${last} = ${value}), location)).href)`
+				? x`${condition} && (new URL(${element.var}.src, location).href !== (new URL((${last} = ${value}), location)).href)`
 				: x`${condition} && (${last} !== (${last} = ${value}))`;
 		}
 
