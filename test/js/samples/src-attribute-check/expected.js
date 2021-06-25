@@ -35,9 +35,9 @@ function create_fragment(ctx) {
 		},
 		h() {
 			attr(img0, "alt", "potato");
-			if (img0.src !== (img0_src_value = /*url*/ ctx[0])) attr(img0, "src", img0_src_value);
+			if (img0.src !== new URL(img0_src_value = /*url*/ ctx[0], location).href) attr(img0, "src", img0_src_value);
 			attr(img1, "alt", "potato");
-			if (img1.src !== (img1_src_value = "" + (/*slug*/ ctx[1] + ".jpg"))) attr(img1, "src", img1_src_value);
+			if (img1.src !== new URL(img1_src_value = "" + (/*slug*/ ctx[1] + ".jpg"), location).href) attr(img1, "src", img1_src_value);
 		},
 		m(target, anchor) {
 			insert(target, img0, anchor);
@@ -45,11 +45,11 @@ function create_fragment(ctx) {
 			insert(target, img1, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*url*/ 1 && img0.src !== (img0_src_value = /*url*/ ctx[0])) {
+			if (dirty & /*url*/ 1 && img0.src !== new URL(img0_src_value = /*url*/ ctx[0], location).href) {
 				attr(img0, "src", img0_src_value);
 			}
 
-			if (dirty & /*slug*/ 2 && img1.src !== (img1_src_value = "" + (/*slug*/ ctx[1] + ".jpg"))) {
+			if (dirty & /*slug*/ 2 && img1.src !== new URL(img1_src_value = "" + (/*slug*/ ctx[1] + ".jpg"), location).href) {
 				attr(img1, "src", img1_src_value);
 			}
 		},

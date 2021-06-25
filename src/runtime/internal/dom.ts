@@ -313,12 +313,16 @@ export function children(element: Element) {
 	return Array.from(element.childNodes);
 }
 
-function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (node: ChildNodeEx) => node is R, processNode: (node: ChildNodeEx) => void, createNode: () => R, dontUpdateLastIndex: boolean = false) {
-	// Try to find nodes in an order such that we lengthen the longest increasing subsequence
+function init_claim_info(nodes: ChildNodeArray) {
 	if (nodes.claim_info === undefined) {
 		nodes.claim_info = {last_index: 0, total_claimed: 0};
 	}
+}
 
+function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (node: ChildNodeEx) => node is R, processNode: (node: ChildNodeEx) => void, createNode: () => R, dontUpdateLastIndex: boolean = false) {
+	// Try to find nodes in an order such that we lengthen the longest increasing subsequence
+	init_claim_info(nodes);
+	
 	const resultNode = (() => {
 		// We first try to find an element after the previous one
 		for (let i = nodes.claim_info.last_index; i < nodes.length; i++) {
@@ -415,10 +419,17 @@ export function claim_html_tag(nodes) {
 	if (start_index === end_index) {
 		return new HtmlTag();
 	}
+	
+	init_claim_info(nodes);
 	const html_tag_nodes = nodes.splice(start_index, end_index + 1);
 	detach(html_tag_nodes[0]);
 	detach(html_tag_nodes[html_tag_nodes.length - 1]);
-	return new HtmlTag(html_tag_nodes.slice(1, html_tag_nodes.length - 1));
+	const claimed_nodes = html_tag_nodes.slice(1, html_tag_nodes.length - 1);
+	for (const n of claimed_nodes) {
+		n.claim_order = nodes.claim_info.total_claimed;
+		nodes.claim_info.total_claimed += 1;
+	}
+	return new HtmlTag(claimed_nodes);
 }
 
 export function set_data(text, data) {
@@ -544,7 +555,7 @@ export function custom_event<T=any>(type: string, detail?: T, bubbles: boolean =
 }
 
 export function query_selector_all(selector: string, parent: HTMLElement = document.body) {
-	return Array.from(parent.querySelectorAll(selector));
+	return Array.from(parent.querySelectorAll(selector)) as ChildNodeArray;
 }
 
 export class HtmlTag {

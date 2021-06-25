@@ -35,7 +35,7 @@ function create_fragment(ctx) {
 			this.h();
 		},
 		h() {
-			if (img.src !== (img_src_value = "donuts.jpg")) attr(img, "src", img_src_value);
+			if (img.src !== new URL(img_src_value = "donuts.jpg", location).href) attr(img, "src", img_src_value);
 			attr(img, "alt", "donuts");
 		},
 		m(target, anchor) {
