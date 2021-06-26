@@ -281,7 +281,8 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 	p:global(.red) {
 		/* this will apply to all <p> elements belonging to this 
 			 component with a class of red, even if class="red" does
-			 not appear in the markup. This is useful when the class 
+			 not initially appear in the markup, and is instead 
+			 added at runtime. This is useful when the class 
 			 of the element is dynamically applied, for instance 
 			 when updating the element's classList property directly. */
 	}
