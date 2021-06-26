@@ -43,12 +43,15 @@ When [opening a new issue](https://github.com/sveltejs/svelte/issues/new/choose)
 - **One issue, one bug:** Please report a single bug per issue.
 - **Provide reproduction steps:** List all the steps necessary to reproduce the issue. The person reading your bug report should be able to follow these steps to reproduce your issue with minimal effort. If possible, use the [REPL](https://svelte.dev/repl) to create your reproduction.
 
+## RFCs
+
+If you'd like to propose an implementation for a large new feature or change then please [create an RFC](https://github.com/sveltejs/rfcs) to discuss it up front.
+
 ## Installation
 
 1. Ensure you have [npm](https://www.npmjs.com/get-npm) installed.
 1. After cloning the repository, run `npm install` in the root of the repository.
 1. To start a development server, run `npm run dev`.
-
 
 ## Pull requests
 
@@ -93,7 +96,7 @@ Test samples are kept in `/test/xxx/samples` folder.
 
 #### Running tests
 
-1. To run test, run `npm run test`
+1. To run test, run `npm run test`.
 1. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test involving transitions, run `npm run test -- -g transition`.
 
 ##### Running solo test
@@ -130,7 +133,7 @@ The core Svelte team will be monitoring for pull requests. Do help us by making 
 
 ### Code conventions
 
-- `snake_case` for internal variable names and methods
+- `snake_case` for internal variable names and methods.
 - `camelCase` for public variable names and methods.
 
 ## License

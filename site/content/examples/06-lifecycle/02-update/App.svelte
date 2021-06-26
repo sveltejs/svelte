@@ -20,7 +20,7 @@
 	];
 
 	function handleKeydown(event) {
-		if (event.which === 13) {
+		if (event.key === 'Enter') {
 			const text = event.target.value;
 			if (!text) return;
 
@@ -50,6 +50,20 @@
 		}
 	}
 </script>
+
+<div class="chat">
+	<h1>Eliza</h1>
+
+	<div class="scrollable" bind:this={div}>
+		{#each comments as comment}
+			<article class={comment.author}>
+				<span>{comment.text}</span>
+			</article>
+		{/each}
+	</div>
+
+	<input on:keydown={handleKeydown}>
+</div>
 
 <style>
 	.chat {
@@ -90,17 +104,3 @@
 		border-radius: 1em 1em 0 1em;
 	}
 </style>
-
-<div class="chat">
-	<h1>Eliza</h1>
-
-	<div class="scrollable" bind:this={div}>
-		{#each comments as comment}
-			<article class={comment.author}>
-				<span>{comment.text}</span>
-			</article>
-		{/each}
-	</div>
-
-	<input on:keydown={handleKeydown}>
-</div>

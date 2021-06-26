@@ -1,9 +1,9 @@
 export default {
 	props: {
-		primary: true,
+		primary: true
 	},
 
-	html: `<div class="test-class primary" role="button"></div>`,
+	html: '<div class="test-class primary" role="button"></div>',
 
 	test({ assert, component, target, window }) {
 		component.primary = true;
@@ -14,5 +14,5 @@ export default {
 			<div class="test-class primary" role="button"></div>
 		`
 		);
-	},
+	}
 };

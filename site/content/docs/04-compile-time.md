@@ -74,13 +74,14 @@ The following options can be passed to the compiler. None are required:
 | `customElement` | `false` | If `true`, tells the compiler to generate a custom element constructor instead of a regular Svelte component.
 | `tag` | `null` | A `string` that tells Svelte what tag name to register the custom element with. It must be a lowercase alphanumeric string with at least one hyphen, e.g. `"my-element"`.
 | `css` | `true` | If `true`, styles will be included in the JavaScript class and injected at runtime. It's recommended that you set this to `false` and use the CSS that is statically generated, as it will result in smaller JavaScript bundles and better performance.
+| `cssHash` | See right | A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS. It defaults to returning `svelte-${hash(css)}`
 | `loopGuardTimeout` | 0 | A `number` that tells Svelte to break the loop if it blocks the thread for more than `loopGuardTimeout` ms. This is useful to prevent infinite loops. **Only available when `dev: true`**
 | `preserveComments` | `false` | If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
 | `preserveWhitespace` | `false` | If `true`, whitespace inside and between elements is kept as you typed it, rather than removed or collapsed to a single space where possible.
 | `outputFilename` | `null` | A `string` used for your JavaScript sourcemap.
 | `cssOutputFilename` | `null` | A `string` used for your CSS sourcemap.
 | `sveltePath` | `"svelte"` | The location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.
-
+| `namespace` | `"html"` | The namespace of the element; e.g., `"mathml"`, `"svg"`, `"foreign"`.
 
 ---
 
@@ -183,6 +184,10 @@ const ast = svelte.parse(source, { filename: 'App.svelte' });
 
 ### `svelte.preprocess`
 
+A number of [community-maintained preprocessing plugins](https://github.com/sveltejs/integrations#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
+
+You can write your own preprocessor using the `svelte.preprocess` API.
+
 ```js
 result: {
 	code: string,
@@ -194,11 +199,11 @@ result: {
 			code: string,
 			dependencies?: Array<string>
 		}>,
-		script?: (input: { content: string, attributes: Record<string, string>, filename: string }) => Promise<{
+		script?: (input: { content: string, markup: string, attributes: Record<string, string>, filename: string }) => Promise<{
 			code: string,
 			dependencies?: Array<string>
 		}>,
-		style?: (input: { content: string, attributes: Record<string, string>, filename: string }) => Promise<{
+		style?: (input: { content: string, markup: string, attributes: Record<string, string>, filename: string }) => Promise<{
 			code: string,
 			dependencies?: Array<string>
 		}>
@@ -219,16 +224,24 @@ Each `markup`, `script` or `style` function must return an object (or a Promise 
 
 The `markup` function receives the entire component source text, along with the component's `filename` if it was specified in the third argument.
 
-> Preprocessor functions may additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation. In current versions of Svelte it will be ignored, but future versions of Svelte may take account of preprocessor sourcemaps.
+> Preprocessor functions should additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation.
 
 ```js
 const svelte = require('svelte/compiler');
+const MagicString = require('magic-string');
 
 const { code } = await svelte.preprocess(source, {
 	markup: ({ content, filename }) => {
+		const pos = content.indexOf('foo');
+		if(pos < 0) {
+			return { code: content }
+		}
+		const s = new MagicString(content, { filename })
+		s.overwrite(pos, pos + 3, 'bar', { storeName: true })
 		return {
-			code: content.replace(/foo/g, 'bar')
-		};
+			code: s.toString(),
+			map: s.generateMap()
+		}
 	}
 }, {
 	filename: 'App.svelte'
@@ -237,7 +250,7 @@ const { code } = await svelte.preprocess(source, {
 
 ---
 
-The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively. In addition to `filename`, they get an object of the element's attributes.
+The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively (`content`) as well as the entire component source text (`markup`). In addition to `filename`, they get an object of the element's attributes.
 
 If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 

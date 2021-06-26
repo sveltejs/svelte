@@ -16,7 +16,7 @@ const associated_events = {
 	outerHeight: 'resize',
 
 	scrollX: 'scroll',
-	scrollY: 'scroll',
+	scrollY: 'scroll'
 };
 
 const properties = {
@@ -29,7 +29,7 @@ const readonly = new Set([
 	'innerHeight',
 	'outerWidth',
 	'outerHeight',
-	'online',
+	'online'
 ]);
 
 export default class WindowWrapper extends Wrapper {
@@ -52,12 +52,15 @@ export default class WindowWrapper extends Wrapper {
 		add_event_handlers(block, '@_window', this.handlers);
 
 		this.node.bindings.forEach(binding => {
+			// TODO: what if it's a MemberExpression?
+			const binding_name = (binding.expression.node as Identifier).name;
+
 			// in dev mode, throw if read-only values are written to
 			if (readonly.has(binding.name)) {
-				renderer.readonly.add(binding.expression.node.name);
+				renderer.readonly.add(binding_name);
 			}
 
-			bindings[binding.name] = binding.expression.node.name;
+			bindings[binding.name] = binding_name;
 
 			// bind:online is a special case, we need to listen for two separate events
 			if (binding.name === 'online') return;
@@ -67,14 +70,14 @@ export default class WindowWrapper extends Wrapper {
 
 			if (!events[associated_event]) events[associated_event] = [];
 			events[associated_event].push({
-				name: binding.expression.node.name,
+				name: binding_name,
 				value: property
 			});
 		});
 
-		const scrolling = block.get_unique_name(`scrolling`);
-		const clear_scrolling = block.get_unique_name(`clear_scrolling`);
-		const scrolling_timeout = block.get_unique_name(`scrolling_timeout`);
+		const scrolling = block.get_unique_name('scrolling');
+		const clear_scrolling = block.get_unique_name('clear_scrolling');
+		const scrolling_timeout = block.get_unique_name('scrolling_timeout');
 
 		Object.keys(events).forEach(event => {
 			const id = block.get_unique_name(`onwindow${event}`);
@@ -156,7 +159,7 @@ export default class WindowWrapper extends Wrapper {
 
 		// another special case. (I'm starting to think these are all special cases.)
 		if (bindings.online) {
-			const id = block.get_unique_name(`onlinestatuschanged`);
+			const id = block.get_unique_name('onlinestatuschanged');
 			const name = bindings.online;
 
 			renderer.add_to_context(id.name);

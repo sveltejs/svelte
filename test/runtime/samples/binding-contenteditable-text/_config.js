@@ -1,6 +1,6 @@
 export default {
 	props: {
-		name: 'world',
+		name: 'world'
 	},
 
 	html: `
@@ -28,5 +28,5 @@ export default {
 			<editor contenteditable="true">goodbye</editor>
 			<p>hello goodbye</p>
 		`);
-	},
+	}
 };

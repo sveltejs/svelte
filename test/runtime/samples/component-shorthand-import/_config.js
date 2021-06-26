@@ -1,3 +1,3 @@
 export default {
-	html: `<p>This is the widget.</p>`,
+	html: '<p>This is the widget.</p>'
 };

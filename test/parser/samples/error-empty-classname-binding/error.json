@@ -1,0 +1,10 @@
+{
+	"code": "invalid-class-directive",
+	"message": "Class binding name cannot be empty",
+	"start": {
+		"line": 1,
+		"column": 10,
+		"character": 10
+	},
+	"pos": 10
+}

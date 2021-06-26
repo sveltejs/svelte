@@ -57,10 +57,10 @@
 					}
 				],
 				"context": {
-					"start": 16,
-					"end": 20,
 					"type": "Identifier",
-					"name": "todo"
+					"name": "todo",
+					"start": 16,
+					"end": 20
 				},
 				"key": {
 					"type": "MemberExpression",
@@ -108,7 +108,8 @@
 						},
 						"name": "id"
 					},
-					"computed": false
+					"computed": false,
+					"optional": false
 				}
 			}
 		]

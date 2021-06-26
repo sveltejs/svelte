@@ -64,7 +64,7 @@
 </style>
 
 <nav>
-	<a rel="prefetch" class="no-underline" href="tutorial/{(selected.prev || selected).slug}" class:disabled={!selected.prev}>
+	<a rel="prefetch" aria-label="Previous tutorial step" class="no-underline" href="tutorial/{(selected.prev || selected).slug}" class:disabled={!selected.prev}>
 		<Icon name="arrow-left" />
 	</a>
 
@@ -77,6 +77,7 @@
 			{selected.chapter.title}
 		</span>
 
+		<!-- svelte-ignore a11y-no-onchange -->
 		<select value={slug} on:change={navigate}>
 			{#each sections as section, i}
 				<optgroup label="{i + 1}. {section.title}">
@@ -88,7 +89,7 @@
 		</select>
 	</div>
 
-	<a rel="prefetch" class="no-underline" href="tutorial/{(selected.next || selected).slug}" class:disabled={!selected.next}>
+	<a rel="prefetch" aria-label="Next tutorial step" class="no-underline" href="tutorial/{(selected.next || selected).slug}" class:disabled={!selected.next}>
 		<Icon name="arrow-right" />
 	</a>
 </nav>

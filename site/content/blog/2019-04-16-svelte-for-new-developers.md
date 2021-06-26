@@ -45,22 +45,20 @@ A full introduction to the command line is out of the scope of this guide, but h
 Once installed, you'll have access to three new commands:
 
 * `node my-file.js` — runs the JavaScript in `my-file.js`
-* `npm [subcommand]` — [npm](https://www.npmjs.com/) is a way to install 'packages' that your application depends on, such as the [svelte](https://www.npmjs.com/) package
+* `npm [subcommand]` — [npm](https://www.npmjs.com/) is a way to install 'packages' that your application depends on, such as the [svelte](https://www.npmjs.com/package/svelte) package
 * `npx [subcommand]` — a convenient way to run programs available on npm without permanently installing them
 
 
 ## Installing a text editor
 
-To write code, you need a good editor. The most popular choice is [Visual Studio Code](https://code.visualstudio.com/) or VSCode, and justifiably so — it's well-designed and fully-featured, and has a wealth of extensions ([including one for Svelte](https://marketplace.visualstudio.com/items?itemName=JamesBirtles.svelte-vscode), which provides syntax highlighting and diagnostic messages when you're writing components).
+To write code, you need a good editor. The most popular choice is [Visual Studio Code](https://code.visualstudio.com/) or VSCode, and justifiably so — it's well-designed and fully-featured, and has a wealth of extensions ([including one for Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), which provides syntax highlighting and diagnostic messages when you're writing components).
 
 
 ## Creating a project
 
 We're going to follow the instructions in part two of [The easiest way to get started with Svelte](/blog/the-easiest-way-to-get-started).
 
-First, we'll use npx to run [degit](https://github.com/Rich-Harris/degit), a program for cloning project templates from [GitHub](https://github.com) and other code storage websites. You don't have to use a project template, but it means you have to do a lot less setup work.
-
-(Eventually you'll probably have to learn [git](https://git-scm.com/), which most programmers use to manage their projects. But you don't need to worry about it just yet.)
+First, we'll use npx to run [degit](https://github.com/Rich-Harris/degit), a program for cloning project templates from [GitHub](https://github.com) and other code storage websites. You don't have to use a project template, but it means you have to do a lot less setup work. You will need to have [Git](https://git-scm.com/) installed in order to use degit. (Eventually you'll probably have to learn [Git](https://git-scm.com/) itself, which most programmers use to manage their projects.)
 
 On the command line, navigate to where you want to create a new project, then type the following lines (you can paste the whole lot, but you'll develop better muscle memory if you get into the habit of writing each line out one at a time then running it):
 
@@ -73,8 +71,6 @@ npm install
 This creates a new directory, `my-svelte-project`, adds files from the [sveltejs/template](https://github.com/sveltejs/template) code repository, and installs a number of packages from npm. Open the directory in your text editor and take a look around. The app's 'source code' lives in the `src` directory, while the files your app can load are in `public`.
 
 In the `package.json` file, there is a section called `"scripts"`. These scripts define shortcuts for working with your application — `dev`, `build` and `start`. To launch your app in development mode, type the following:
-
-> TODO update the template, it needs... some work
 
 ```bash
 npm run dev

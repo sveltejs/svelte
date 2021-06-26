@@ -4,56 +4,10 @@ import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 import Element from './Element';
-import { x } from 'code-red';
-import { Node, Identifier, RestElement } from 'estree';
-
-interface Context {
-	key: Identifier;
-	name?: string;
-	modifier: (node: Node) => Node;
-}
-
-function unpack_destructuring(contexts: Context[], node: Node, modifier: (node: Node) => Node) {
-	if (!node) return;
-
-	if (node.type === 'Identifier' || (node as any).type === 'RestIdentifier') { // TODO is this right? not RestElement?
-		contexts.push({
-			key: node as Identifier,
-			modifier
-		});
-	} else if (node.type === 'ArrayPattern') {
-		node.elements.forEach((element, i) => {
-			if (element && (element as any).type === 'RestIdentifier') {
-				unpack_destructuring(contexts, element, node => x`${modifier(node)}.slice(${i})` as Node);
-			} else {
-				unpack_destructuring(contexts, element, node => x`${modifier(node)}[${i}]` as Node);
-			}
-		});
-	} else if (node.type === 'ObjectPattern') {
-		const used_properties = [];
-
-		node.properties.forEach((property, i) => {
-			if ((property as any).kind === 'rest') { // TODO is this right?
-				const replacement: RestElement = {
-					type: 'RestElement',
-					argument: property.key as Identifier
-				};
-
-				node.properties[i] = replacement as any;
-
-				unpack_destructuring(
-					contexts,
-					property.value,
-					node => x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node
-				);
-			} else {
-				used_properties.push(x`"${(property.key as Identifier).name}"`);
-
-				unpack_destructuring(contexts, property.value, node => x`${modifier(node)}.${(property.key as Identifier).name}` as Node);
-			}
-		});
-	}
-}
+import { Context, unpack_destructuring } from './shared/Context';
+import { Node } from 'estree';
+import Component from '../Component';
+import { TemplateNode } from '../../interfaces';
 
 export default class EachBlock extends AbstractBlock {
 	type: 'EachBlock';
@@ -69,10 +23,11 @@ export default class EachBlock extends AbstractBlock {
 	contexts: Context[];
 	has_animation: boolean;
 	has_binding = false;
+	has_index_binding = false;
 
 	else?: ElseBlock;
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		this.expression = new Expression(component, this, scope, info.expression);
@@ -83,7 +38,7 @@ export default class EachBlock extends AbstractBlock {
 		this.scope = scope.child();
 
 		this.contexts = [];
-		unpack_destructuring(this.contexts, info.context, node => node);
+		unpack_destructuring(this.contexts, info.context);
 
 		this.contexts.forEach(context => {
 			this.scope.add(context.key.name, this.expression.dependencies, this);
@@ -107,8 +62,8 @@ export default class EachBlock extends AbstractBlock {
 			if (this.children.length !== 1) {
 				const child = this.children.find(child => !!(child as Element).animation);
 				component.error((child as Element).animation, {
-					code: `invalid-animation`,
-					message: `An element that use the animate directive must be the sole child of a keyed each block`
+					code: 'invalid-animation',
+					message: 'An element that uses the animate directive must be the sole child of a keyed each block'
 				});
 			}
 		}

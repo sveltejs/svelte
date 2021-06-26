@@ -39,6 +39,8 @@ function create_fragment(ctx) {
 }
 
 function instance($$self, $$props, $$invalidate) {
+	let x;
+	let y;
 	let a = 1, b = 2, c = 3;
 
 	onMount(() => {
@@ -54,9 +56,6 @@ function instance($$self, $$props, $$invalidate) {
 		return () => clearInterval(interval);
 	});
 
-	let x;
-	let y;
-
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*b*/ 2) {
 			$: $$invalidate(0, y = b * 2);
@@ -64,7 +63,7 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	$: x = a * 2;
-	return [y];
+	return [y, b];
 }
 
 class Component extends SvelteComponent {

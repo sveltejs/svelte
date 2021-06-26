@@ -9,7 +9,7 @@ export default {
 		);
 
 		const event = new window.MouseEvent('click');
-		let err = "";
+		let err = '';
 		window.addEventListener('error', (e) => {
 			e.preventDefault();
 			err = e.message;
@@ -17,12 +17,12 @@ export default {
 
 		// All three should not throw if proper checking is done in runtime code
 		await buttonUndef.dispatchEvent(event);
-		assert.equal(err, "", err);
+		assert.equal(err, '', err);
 
 		await buttonNull.dispatchEvent(event);
-		assert.equal(err, "", err);
+		assert.equal(err, '', err);
 
 		await buttonInvalid.dispatchEvent(event);
-		assert.equal(err, "", err);
-	},
+		assert.equal(err, '', err);
+	}
 };

@@ -13,8 +13,9 @@ const GRAM_SIZE_UPPER = 3;
 
 // return an edit distance from 0 to 1
 function _distance(str1: string, str2: string) {
-	if (str1 === null && str2 === null)
+	if (str1 === null && str2 === null) {
 		throw 'Trying to compare two null values';
+	}
 	if (str1 === null || str2 === null) return 0;
 	str1 = String(str1);
 	str2 = String(str2);
@@ -206,7 +207,7 @@ class FuzzySet {
 			match_score = matches[match_index];
 			results.push([
 				match_score / (vector_normal * items[match_index][0]),
-				items[match_index][1],
+				items[match_index][1]
 			]);
 		}
 
@@ -218,7 +219,7 @@ class FuzzySet {
 		for (let i = 0; i < end_index; ++i) {
 			new_results.push([
 				_distance(results[i][1], normalized_value),
-				results[i][1],
+				results[i][1]
 			]);
 		}
 		results = new_results;

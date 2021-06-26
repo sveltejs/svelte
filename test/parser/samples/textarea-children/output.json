@@ -9,50 +9,44 @@
 				"end": 61,
 				"type": "Element",
 				"name": "textarea",
-				"attributes": [
+				"attributes": [],
+				"children": [
 					{
-						"type": "Attribute",
-						"name": "value",
-						"value": [
-							{
-								"start": 10,
-								"end": 41,
-								"type": "Text",
-								"raw": "\n\t<p>not actually an element. ",
-								"data": "\n\t<p>not actually an element. "
-							},
-							{
-								"start": 40,
-								"end": 45,
-								"type": "MustacheTag",
-								"expression": {
-									"type": "Identifier",
-									"start": 41,
-									"end": 44,
-									"loc": {
-										"start": {
-											"line": 2,
-											"column": 30
-										},
-										"end": {
-											"line": 2,
-											"column": 33
-										}
-									},
-									"name": "foo"
+						"start": 10,
+						"end": 41,
+						"type": "Text",
+						"raw": "\n\t<p>not actually an element. ",
+						"data": "\n\t<p>not actually an element. "
+					},
+					{
+						"start": 40,
+						"end": 45,
+						"type": "MustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 41,
+							"end": 44,
+							"loc": {
+								"start": {
+									"line": 2,
+									"column": 30
+								},
+								"end": {
+									"line": 2,
+									"column": 33
 								}
 							},
-							{
-								"start": 45,
-								"end": 50,
-								"type": "Text",
-								"raw": "</p>\n",
-								"data": "</p>\n"
-							}
-						]
+							"name": "foo"
+						}
+					},
+					{
+						"start": 45,
+						"end": 50,
+						"type": "Text",
+						"raw": "</p>\n",
+						"data": "</p>\n"
 					}
-				],
-				"children": []
+				]
 			}
 		]
 	}

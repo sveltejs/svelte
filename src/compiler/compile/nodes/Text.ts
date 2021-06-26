@@ -2,6 +2,7 @@ import Node from './shared/Node';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
+import { TemplateNode } from '../../interfaces';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
@@ -12,7 +13,7 @@ const elements_without_text = new Set([
 	'dl',
 	'optgroup',
 	'select',
-	'video',
+	'video'
 ]);
 
 export default class Text extends Node {
@@ -20,7 +21,7 @@ export default class Text extends Node {
 	data: string;
 	synthetic: boolean;
 
-	constructor(component: Component, parent: INode, scope: TemplateScope, info: any) {
+	constructor(component: Component, parent: INode, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 		this.data = info.data;
 		this.synthetic = info.synthetic || false;
@@ -29,7 +30,7 @@ export default class Text extends Node {
 	should_skip() {
 		if (/\S/.test(this.data)) return false;
 
-		const parent_element = this.find_nearest(/(?:Element|InlineComponent|Head)/);
+		const parent_element = this.find_nearest(/(?:Element|InlineComponent|SlotTemplate|Head)/);
 		if (!parent_element) return false;
 
 		if (parent_element.type === 'Head') return true;
@@ -37,7 +38,7 @@ export default class Text extends Node {
 
 		// svg namespace exclusions
 		if (/svg$/.test(parent_element.namespace)) {
-			if (this.prev && this.prev.type === "Element" && this.prev.name === "tspan") return false;
+			if (this.prev && this.prev.type === 'Element' && this.prev.name === 'tspan') return false;
 		}
 
 		return parent_element.namespace || elements_without_text.has(parent_element.name);

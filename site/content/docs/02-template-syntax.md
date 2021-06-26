@@ -9,7 +9,7 @@ title: Template syntax
 
 A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag, such as `<Widget>` or `<Namespace.Widget>`, indicates a *component*.
 
-```html
+```sv
 <script>
 	import Widget from './Widget.svelte';
 </script>
@@ -26,7 +26,7 @@ A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag
 
 By default, attributes work exactly like their HTML counterparts.
 
-```html
+```sv
 <div class="foo">
 	<button disabled>can't touch this</button>
 </div>
@@ -36,7 +36,7 @@ By default, attributes work exactly like their HTML counterparts.
 
 As in HTML, values may be unquoted.
 
-```html
+```sv
 <input type=checkbox>
 ```
 
@@ -44,7 +44,7 @@ As in HTML, values may be unquoted.
 
 Attribute values can contain JavaScript expressions.
 
-```html
+```sv
 <a href="page/{p}">page {p}</a>
 ```
 
@@ -52,7 +52,7 @@ Attribute values can contain JavaScript expressions.
 
 Or they can *be* JavaScript expressions.
 
-```html
+```sv
 <button disabled={!clickable}>...</button>
 ```
 
@@ -71,7 +71,7 @@ All other attributes are included unless their value is [nullish](https://develo
 
 An expression might include characters that would cause syntax highlighting to fail in regular HTML, so quoting the value is permitted. The quotes do not affect how the value is parsed:
 
-```html
+```sv
 <button disabled="{number !== 42}">...</button>
 ```
 
@@ -79,7 +79,7 @@ An expression might include characters that would cause syntax highlighting to f
 
 When the attribute name and value match (`name={name}`), they can be replaced with `{name}`.
 
-```html
+```sv
 <!-- These are equivalent -->
 <button disabled={disabled}>...</button>
 <button {disabled}>...</button>
@@ -91,7 +91,7 @@ By convention, values passed to components are referred to as *properties* or *p
 
 As with elements, `name={name}` can be replaced with the `{name}` shorthand.
 
-```html
+```sv
 <Widget foo={bar} answer={42} text="hello"/>
 ```
 
@@ -101,25 +101,28 @@ As with elements, `name={name}` can be replaced with the `{name}` shorthand.
 
 An element or component can have multiple spread attributes, interspersed with regular ones.
 
-```html
+```sv
 <Widget {...things}/>
 ```
 
 ---
 
-*`$$props`* references all props that are passed to a component – including ones that are not declared with `export`. It is useful in rare cases, but not generally recommended, as it is difficult for Svelte to optimise.
+*`$$props`* references all props that are passed to a component, including ones that are not declared with `export`. It is not generally recommended, as it is difficult for Svelte to optimise. But it can be useful in rare cases – for example, when you don't know at compile time what props might be passed to a component.
 
-```html
+```sv
 <Widget {...$$props}/>
 ```
 
 ---
 
-*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component.
+*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component. It shares the same optimisation problems as *`$$props`*, and is likewise not recommended.
 
 ```html
 <input {...$$restProps}>
 ```
+
+
+> The `value` attribute of an `input` element or its children `option` elements must not be set with spread attributes when using `bind:group` or `bind:checked`. Svelte needs to be able to see the element's `value` directly in the markup in these cases so that it can link it to the bound variable.
 
 ---
 
@@ -133,7 +136,7 @@ An element or component can have multiple spread attributes, interspersed with r
 
 Text can also contain JavaScript expressions:
 
-```html
+```sv
 <h1>Hello {name}!</h1>
 <p>{a} + {b} = {a + b}.</p>
 ```
@@ -145,7 +148,7 @@ Text can also contain JavaScript expressions:
 
 You can use HTML comments inside components.
 
-```html
+```sv
 <!-- this is a comment! -->
 <h1>Hello world</h1>
 ```
@@ -154,7 +157,7 @@ You can use HTML comments inside components.
 
 Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually these are accessibility warnings; make sure that you're disabling them for a good reason.
 
-```html
+```sv
 <!-- svelte-ignore a11y-autofocus -->
 <input bind:value={name} autofocus>
 ```
@@ -176,7 +179,7 @@ Comments beginning with `svelte-ignore` disable warnings for the next block of m
 
 Content that is conditionally rendered can be wrapped in an if block.
 
-```html
+```sv
 {#if answer === 42}
 	<p>what was the question?</p>
 {/if}
@@ -186,7 +189,7 @@ Content that is conditionally rendered can be wrapped in an if block.
 
 Additional conditions can be added with `{:else if expression}`, optionally ending in an `{:else}` clause.
 
-```html
+```sv
 {#if porridge.temperature > 100}
 	<p>too hot!</p>
 {:else if 80 > porridge.temperature}
@@ -206,6 +209,9 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 {#each expression as name, index}...{/each}
 ```
 ```sv
+{#each expression as name (key)}...{/each}
+```
+```sv
 {#each expression as name, index (key)}...{/each}
 ```
 ```sv
@@ -216,7 +222,7 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 
 Iterating over lists of values can be done with an each block.
 
-```html
+```sv
 <h1>Shopping list</h1>
 <ul>
 	{#each items as item}
@@ -231,7 +237,7 @@ You can use each blocks to iterate over any array or array-like value — that i
 
 An each block can also specify an *index*, equivalent to the second argument in an `array.map(...)` callback:
 
-```html
+```sv
 {#each items as item, i}
 	<li>{i + 1}: {item.name} x {item.qty}</li>
 {/each}
@@ -241,7 +247,12 @@ An each block can also specify an *index*, equivalent to the second argument in 
 
 If a *key* expression is provided — which must uniquely identify each list item — Svelte will use it to diff the list when data changes, rather than adding or removing items at the end. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
 
-```html
+```sv
+{#each items as item (item.id)}
+	<li>{item.name} x {item.qty}</li>
+{/each}
+
+<!-- or with additional index value -->
 {#each items as item, i (item.id)}
 	<li>{i + 1}: {item.name} x {item.qty}</li>
 {/each}
@@ -251,7 +262,7 @@ If a *key* expression is provided — which must uniquely identify each list ite
 
 You can freely use destructuring and rest patterns in each blocks.
 
-```html
+```sv
 {#each items as { id, name, qty }, i (id)}
 	<li>{i + 1}: {name} x {qty}</li>
 {/each}
@@ -269,7 +280,7 @@ You can freely use destructuring and rest patterns in each blocks.
 
 An each block can also have an `{:else}` clause, which is rendered if the list is empty.
 
-```html
+```sv
 {#each todos as todo}
 	<p>{todo.text}</p>
 {:else}
@@ -289,12 +300,15 @@ An each block can also have an `{:else}` clause, which is rendered if the list i
 ```sv
 {#await expression then name}...{/await}
 ```
+```sv
+{#await expression catch name}...{/await}
+```
 
 ---
 
 Await blocks allow you to branch on the three possible states of a Promise — pending, fulfilled or rejected.
 
-```html
+```sv
 {#await promise}
 	<!-- promise is pending -->
 	<p>waiting for the promise to resolve...</p>
@@ -311,7 +325,7 @@ Await blocks allow you to branch on the three possible states of a Promise — p
 
 The `catch` block can be omitted if you don't need to render anything when the promise rejects (or no error is possible).
 
-```html
+```sv
 {#await promise}
 	<!-- promise is pending -->
 	<p>waiting for the promise to resolve...</p>
@@ -325,12 +339,49 @@ The `catch` block can be omitted if you don't need to render anything when the p
 
 If you don't care about the pending state, you can also omit the initial block.
 
-```html
+```sv
 {#await promise then value}
 	<p>The value is {value}</p>
 {/await}
 ```
 
+---
+
+If conversely you only want to show the error state, you can omit the `then` block.
+
+```sv
+{#await promise catch error}
+	<p>The error is {error}</p>
+{/await}
+```
+
+### {#key ...}
+
+```sv
+{#key expression}...{/key}
+```
+
+Key blocks destroy and recreate their contents when the value of an expression changes.
+
+---
+
+This is useful if you want an element to play its transition whenever a value changes.
+
+```sv
+{#key value}
+	<div transition:fade>{value}</div>
+{/key}
+```
+
+---
+
+When used around components, this will cause them to be reinstantiated and reinitialised.
+
+```sv
+{#key value}
+	<Component />
+{/key}
+```
 
 ### {@html ...}
 
@@ -342,11 +393,11 @@ If you don't care about the pending state, you can also omit the initial block.
 
 In a text expression, characters like `<` and `>` are escaped; however, with HTML expressions, they're not.
 
-The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML.
+The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML. It also will *not* compile Svelte code.
 
 > Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
 
-```html
+```sv
 <div class="blog-post">
 	<h1>{post.title}</h1>
 	{@html post.content}
@@ -367,9 +418,7 @@ The expression should be valid standalone HTML — `{@html "<div>"}content{@html
 
 The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.
 
-It accepts a comma-separated list of variable names (not arbitrary expressions).
-
-```html
+```sv
 <script>
 	let user = {
 		firstname: 'Ada',
@@ -386,7 +435,7 @@ It accepts a comma-separated list of variable names (not arbitrary expressions).
 
 `{@debug ...}` accepts a comma-separated list of variable names (not arbitrary expressions).
 
-```html
+```sv
 <!-- Compiles -->
 {@debug user}
 {@debug user1, user2, user3}
@@ -420,7 +469,7 @@ on:eventname|modifiers={handler}
 
 Use the `on:` directive to listen to DOM events.
 
-```html
+```sv
 <script>
 	let count = 0;
 
@@ -438,7 +487,7 @@ Use the `on:` directive to listen to DOM events.
 
 Handlers can be declared inline with no performance penalty. As with attributes, directive values may be quoted for the sake of syntax highlighters.
 
-```html
+```sv
 <button on:click="{() => count += 1}">
 	count: {count}
 </button>
@@ -448,7 +497,7 @@ Handlers can be declared inline with no performance penalty. As with attributes,
 
 Add *modifiers* to DOM events with the `|` character.
 
-```html
+```sv
 <form on:submit|preventDefault={handleSubmit}>
 	<!-- the `submit` event's default is prevented,
 	     so the page won't reload -->
@@ -460,6 +509,7 @@ The following modifiers are available:
 * `preventDefault` — calls `event.preventDefault()` before running the handler
 * `stopPropagation` — calls `event.stopPropagation()`, preventing the event reaching the next element
 * `passive` — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
+* `nonpassive` — explicitly set `passive: false`
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
 * `self` — only trigger handler if event.target is the element itself
@@ -470,7 +520,7 @@ Modifiers can be chained together, e.g. `on:click|once|capture={...}`.
 
 If the `on:` directive is used without a value, the component will *forward* the event, meaning that a consumer of the component can listen for it.
 
-```html
+```sv
 <button on:click>
 	The component itself will emit the click event
 </button>
@@ -480,7 +530,7 @@ If the `on:` directive is used without a value, the component will *forward* the
 
 It's possible to have multiple event listeners for the same event:
 
-```html
+```sv
 <script>
 	let counter = 0;
 	function increment() {
@@ -507,7 +557,7 @@ Data ordinarily flows down, from parent to child. The `bind:` directive allows d
 
 The simplest bindings reflect the value of a property, such as `input.value`.
 
-```html
+```sv
 <input bind:value={name}>
 <textarea bind:value={text}></textarea>
 
@@ -518,7 +568,7 @@ The simplest bindings reflect the value of a property, such as `input.value`.
 
 If the name matches the value, you can use a shorthand.
 
-```html
+```sv
 <!-- These are equivalent -->
 <input bind:value={value}>
 <input bind:value>
@@ -528,9 +578,24 @@ If the name matches the value, you can use a shorthand.
 
 Numeric input values are coerced; even though `input.value` is a string as far as the DOM is concerned, Svelte will treat it as a number. If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
 
-```html
+```sv
 <input type="number" bind:value={num}>
 <input type="range" bind:value={num}>
+```
+
+---
+
+On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). It is readonly.
+
+```sv
+<label for="avatar">Upload a picture:</label>
+<input
+	accept="image/png, image/jpeg"
+	bind:files
+	id="avatar"
+	name="avatar"
+	type="file"
+/>
 ```
 
 
@@ -540,7 +605,7 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 
 A `<select>` value binding corresponds to the `value` property on the selected `<option>`, which can be any value (not just strings, as is normally the case in the DOM).
 
-```html
+```sv
 <select bind:value={selected}>
 	<option value={a}>a</option>
 	<option value={b}>b</option>
@@ -552,7 +617,7 @@ A `<select>` value binding corresponds to the `value` property on the selected `
 
 A `<select multiple>` element behaves similarly to a checkbox group.
 
-```html
+```sv
 <select multiple bind:value={fillings}>
 	<option value="Rice">Rice</option>
 	<option value="Beans">Beans</option>
@@ -565,7 +630,7 @@ A `<select multiple>` element behaves similarly to a checkbox group.
 
 When the value of an `<option>` matches its text content, the attribute can be omitted.
 
-```html
+```sv
 <select multiple bind:value={fillings}>
 	<option>Rice</option>
 	<option>Beans</option>
@@ -578,7 +643,7 @@ When the value of an `<option>` matches its text content, the attribute can be o
 
 Elements with the `contenteditable` attribute support `innerHTML` and `textContent` bindings.
 
-```html
+```sv
 <div contenteditable="true" bind:innerHTML={html}></div>
 ```
 
@@ -590,32 +655,35 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — six 
 
 * `duration` (readonly) — the total duration of the video, in seconds
 * `buffered` (readonly) — an array of `{start, end}` objects
-* `seekable` (readonly) — ditto
 * `played` (readonly) — ditto
+* `seekable` (readonly) — ditto
 * `seeking` (readonly) — boolean
 * `ended` (readonly) — boolean
 
-...and four *two-way* bindings:
+...and five *two-way* bindings:
 
-* `currentTime` — the current point in the video, in seconds
-* `playbackRate` — how fast to play the video, where 1 is 'normal'
+* `currentTime` — the current playback time in the video, in seconds
+* `playbackRate` — how fast or slow to play the video, where 1 is 'normal'
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
+* `muted` — a boolean value where `true` is muted
 
 Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 
-```html
+```sv
 <video
 	src={clip}
 	bind:duration
 	bind:buffered
+	bind:played
 	bind:seekable
 	bind:seeking
-	bind:played
 	bind:ended
 	bind:currentTime
+	bind:playbackRate
 	bind:paused
 	bind:volume
+	bind:muted
 	bind:videoWidth
 	bind:videoHeight
 ></video>
@@ -632,7 +700,7 @@ Block-level elements have 4 readonly bindings, measured using a technique simila
 * `offsetWidth`
 * `offsetHeight`
 
-```html
+```sv
 <div
 	bind:offsetWidth={width}
 	bind:offsetHeight={height}
@@ -651,7 +719,7 @@ bind:group={variable}
 
 Inputs that work together can use `bind:group`.
 
-```html
+```sv
 <script>
 	let tortilla = 'Plain';
 	let fillings = [];
@@ -679,7 +747,7 @@ bind:this={dom_node}
 
 To get a reference to a DOM node, use `bind:this`.
 
-```html
+```sv
 <script>
 	import { onMount } from 'svelte';
 
@@ -708,7 +776,7 @@ class:name
 
 A `class:` directive provides a shorter way of toggling a class on an element.
 
-```html
+```sv
 <!-- These are equivalent -->
 <div class="{active ? 'active' : ''}">...</div>
 <div class:active={active}>...</div>
@@ -741,7 +809,7 @@ action = (node: HTMLElement, parameters: any) => {
 
 Actions are functions that are called when an element is created. They can return an object with a `destroy` method that is called after the element is unmounted:
 
-```html
+```sv
 <script>
 	function foo(node) {
 		// the node has been mounted in the DOM
@@ -759,11 +827,11 @@ Actions are functions that are called when an element is created. They can retur
 
 ---
 
-An action can have parameters. If the returned value has an `update` method, it will be called whenever those parameters change, immediately after Svelte has applied updates to the markup.
+An action can have a parameter. If the returned value has an `update` method, it will be called whenever that parameter changes, immediately after Svelte has applied updates to the markup.
 
 > Don't worry about the fact that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
 
-```html
+```sv
 <script>
 	export let bar;
 
@@ -816,11 +884,11 @@ transition = (node: HTMLElement, params: any) => {
 
 A transition is triggered by an element entering or leaving the DOM as a result of a state change.
 
-When a block is transitioning out, elements inside the block are kept in the DOM until all current transitions have completed.
+When a block is transitioning out, all elements inside the block, including those that do not have their own transitions, are kept in the DOM until every transition in the block has completed.
 
 The `transition:` directive indicates a *bidirectional* transition, which means it can be smoothly reversed while the transition is in progress.
 
-```html
+```sv
 {#if visible}
 	<div transition:fade>
 		fades in and out
@@ -838,7 +906,7 @@ Like actions, transitions can have parameters.
 
 (The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
 
-```html
+```sv
 {#if visible}
 	<div transition:fade="{{ duration: 2000 }}">
 		flies in, fades out over two seconds
@@ -856,7 +924,7 @@ The `t` argument passed to `css` is a value between `0` and `1` after the `easin
 
 The function is called repeatedly *before* the transition begins, with different `t` and `u` arguments.
 
-```html
+```sv
 <script>
 	import { elasticOut } from 'svelte/easing';
 
@@ -887,7 +955,7 @@ A custom transition function can also return a `tick` function, which is called 
 
 > If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
 
-```html
+```sv
 <script>
 	export let visible = false;
 
@@ -933,7 +1001,7 @@ An element with transitions will dispatch the following events in addition to an
 * `outrostart`
 * `outroend`
 
-```html
+```sv
 {#if visible}
 	<p
 		transition:fly="{{ y: 200, duration: 2000 }}"
@@ -951,7 +1019,7 @@ An element with transitions will dispatch the following events in addition to an
 
 Local transitions only play when the block they belong to is created or destroyed, *not* when parent blocks are created or destroyed.
 
-```html
+```sv
 {#if x}
 	{#if y}
 		<p transition:fade>
@@ -1000,7 +1068,7 @@ Similar to `transition:`, but only applies to elements entering (`in:`) or leavi
 
 Unlike with `transition:`, transitions applied with `in:` and `out:` are not bidirectional — an in transition will continue to 'play' alongside the out transition, rather than reversing, if the block is outroed while the transition is in progress. If an out transition is aborted, transitions will restart from scratch.
 
-```html
+```sv
 {#if visible}
 	<div in:fly out:fade>
 		flies in, fades out
@@ -1049,7 +1117,7 @@ An animation is triggered when the contents of a [keyed each block](docs#each) a
 
 Animations can be used with Svelte's [built-in animation functions](docs#svelte_animate) or [custom animation functions](docs#Custom_animation_functions).
 
-```html
+```sv
 <!-- When `list` is reordered the animation will run-->
 {#each list as item, index (item)}
 	<li animate:flip>{item}</li>
@@ -1064,7 +1132,7 @@ As with actions and transitions, animations can have parameters.
 
 (The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
 
-```html
+```sv
 {#each list as item, index (item)}
 	<li animate:flip="{{ delay: 500 }}">{item}</li>
 {/each}
@@ -1083,7 +1151,7 @@ The `t` argument passed to `css` is a value that goes from `0` and `1` after the
 The function is called repeatedly *before* the animation begins, with different `t` and `u` arguments.
 
 
-```html
+```sv
 <script>
 	import { cubicOut } from 'svelte/easing';
 
@@ -1116,7 +1184,7 @@ A custom animation function can also return a `tick` function, which is called *
 
 > If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
 
-```html
+```sv
 <script>
 	import { cubicOut } from 'svelte/easing';
 
@@ -1156,7 +1224,7 @@ on:eventname={handler}
 
 Components can emit events using [createEventDispatcher](docs#createEventDispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
 
-```html
+```sv
 <SomeComponent on:whatever={handler}/>
 ```
 
@@ -1164,7 +1232,7 @@ Components can emit events using [createEventDispatcher](docs#createEventDispatc
 
 As with DOM events, if the `on:` directive is used without a value, the component will *forward* the event, meaning that a consumer of the component can listen for it.
 
-```html
+```sv
 <SomeComponent on:whatever/>
 ```
 
@@ -1179,7 +1247,7 @@ bind:property={variable}
 
 You can bind to component props using the same syntax as for elements.
 
-```html
+```sv
 <Keypad bind:value={pin}/>
 ```
 
@@ -1195,7 +1263,7 @@ Components also support `bind:this`, allowing you to interact with component ins
 
 > Note that we can't do `{cart.empty}` since `cart` is `undefined` when the button is first rendered and throws an error.
 
-```html
+```sv
 <ShoppingCart bind:this={cart}/>
 
 <button on:click={() => cart.empty()}>
@@ -1223,20 +1291,20 @@ Components can have child content, in the same way that elements can.
 
 The content is exposed in the child component using the `<slot>` element, which can contain fallback content that is rendered if no children are provided.
 
-```html
-<!-- App.svelte -->
-<Widget></Widget>
-
-<Widget>
-	<p>this is some child content that will overwrite the default slot content</p>
-</Widget>
-
+```sv
 <!-- Widget.svelte -->
 <div>
 	<slot>
 		this fallback content will be rendered when no content is provided, like in the first example
 	</slot>
 </div>
+
+<!-- App.svelte -->
+<Widget></Widget> <!-- this component will render the default content -->
+
+<Widget>
+	<p>this is some child content that will overwrite the default slot content</p>
+</Widget>
 ```
 
 #### [`<slot name="`*name*`">`](slot_name)
@@ -1245,22 +1313,70 @@ The content is exposed in the child component using the `<slot>` element, which 
 
 Named slots allow consumers to target specific areas. They can also have fallback content.
 
-```html
-<!-- App.svelte -->
-<Widget>
-	<h1 slot="header">Hello</h1>
-	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
-</Widget>
-
+```sv
 <!-- Widget.svelte -->
 <div>
 	<slot name="header">No header was provided</slot>
 	<p>Some content between header and footer</p>
 	<slot name="footer"></slot>
 </div>
+
+<!-- App.svelte -->
+<Widget>
+	<h1 slot="header">Hello</h1>
+	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
+</Widget>
 ```
 
-#### [`<slot let:`*name*`={`*value*`}>`](slot_let)
+Components can be placed in a named slot using the syntax `<Component slot="name" />`.
+In order to place content in a slot without using a wrapper element, you can use the special element `<svelte:fragment>`.
+
+```sv
+<!-- Widget.svelte -->
+<div>
+	<slot name="header">No header was provided</slot>
+	<p>Some content between header and footer</p>
+	<slot name="footer"></slot>
+</div>
+
+<!-- App.svelte -->
+<Widget>
+	<HeaderComponent slot="header" />
+	<svelte:fragment slot="footer">
+		<p>All rights reserved.</p>
+		<p>Copyright (c) 2019 Svelte Industries</p>
+	</svelte:fragment>
+</Widget>
+```
+
+
+#### [`$$slots`](slots_object)
+
+---
+
+`$$slots` is an object whose keys are the names of the slots passed into the component by the parent. If the parent does not pass in a slot with a particular name, that name will not be a present in `$$slots`. This allows components to render a slot (and other elements, like wrappers for styling) only if the parent provides it.
+
+Note that explicitly passing in an empty named slot will add that slot's name to `$$slots`. For example, if a parent passes `<div slot="title" />` to a child component, `$$slots.title` will be truthy within the child.
+
+```sv
+<!-- Card.svelte -->
+<div>
+	<slot name="title"></slot>
+	{#if $$slots.description}
+		<!-- This <hr> and slot will render only if a slot named "description" is provided. -->
+		<hr>
+		<slot name="description"></slot>
+	{/if}
+</div>
+
+<!-- App.svelte -->
+<Card>
+	<h1 slot="title">Blog Post Title</h1>
+	<!-- No slot named "description" was provided so the optional slot will not be rendered. -->
+</Card>
+```
+
+#### [`<slot key={`*value*`}>`](slot_let)
 
 ---
 
@@ -1268,12 +1384,7 @@ Slots can be rendered zero or more times, and can pass values *back* to the pare
 
 The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}`, and `<slot {item}>` is equivalent to `<slot item={item}>`.
 
-```html
-<!-- App.svelte -->
-<FancyList {items} let:prop={thing}>
-	<div>{thing.text}</div>
-</FancyList>
-
+```sv
 <!-- FancyList.svelte -->
 <ul>
 	{#each items as item}
@@ -1282,19 +1393,18 @@ The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}
 		</li>
 	{/each}
 </ul>
+
+<!-- App.svelte -->
+<FancyList {items} let:prop={thing}>
+	<div>{thing.text}</div>
+</FancyList>
 ```
 
 ---
 
 Named slots can also expose values. The `let:` directive goes on the element with the `slot` attribute.
 
-```html
-<!-- App.svelte -->
-<FancyList {items}>
-	<div slot="item" let:item>{item.text}</div>
-	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
-</FancyList>
-
+```sv
 <!-- FancyList.svelte -->
 <ul>
 	{#each items as item}
@@ -1305,6 +1415,12 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 </ul>
 
 <slot name="footer"></slot>
+
+<!-- App.svelte -->
+<FancyList {items}>
+	<div slot="item" let:item>{item.text}</div>
+	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
+</FancyList>
 ```
 
 
@@ -1314,9 +1430,9 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 
 The `<svelte:self>` element allows a component to include itself, recursively.
 
-It cannot appear at the top level of your markup; it must be inside an if or each block to prevent an infinite loop.
+It cannot appear at the top level of your markup; it must be inside an if or each block or passed to a component's slot to prevent an infinite loop.
 
-```html
+```sv
 <script>
 	export let count;
 </script>
@@ -1341,7 +1457,7 @@ The `<svelte:component>` element renders a component dynamically, using the comp
 
 If `this` is falsy, no component is rendered.
 
-```html
+```sv
 <svelte:component this={currentSelection.component} foo={bar}/>
 ```
 
@@ -1359,7 +1475,9 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:window>` element allows you to add event listeners to the `window` object without worrying about removing them when the component is destroyed, or checking for the existence of `window` when server-side rendering.
 
-```html
+Contrary to `<svelte:self>` this element can only be at the top level of your component and must never be inside a block or element.
+
+```sv
 <script>
 	function handleKeydown(event) {
 		alert(`pressed the ${event.key} key`);
@@ -1383,7 +1501,7 @@ You can also bind to the following properties:
 
 All except `scrollX` and `scrollY` are readonly.
 
-```html
+```sv
 <svelte:window bind:scrollY={y}/>
 ```
 
@@ -1396,9 +1514,9 @@ All except `scrollX` and `scrollY` are readonly.
 
 ---
 
-As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`.
+As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`; and it has to appear at the top level of your component.
 
-```html
+```sv
 <svelte:body
 	on:mouseenter={handleMouseenter}
 	on:mouseleave={handleMouseleave}
@@ -1416,7 +1534,9 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
 
-```html
+As with `<svelte:window>` and `<svelte:head>` this element has to appear at the top level of your component and cannot be inside a block or other element.
+
+```sv
 <svelte:head>
 	<link rel="stylesheet" href="tutorial/dark-theme.css">
 </svelte:head>
@@ -1437,9 +1557,31 @@ The `<svelte:options>` element provides a place to specify per-component compile
 * `immutable={false}` — the default. Svelte will be more conservative about whether or not mutable objects have changed
 * `accessors={true}` — adds getters and setters for the component's props
 * `accessors={false}` — the default
-* `namespace="..."` — the namespace where this component will be used, most commonly "svg"
+* `namespace="..."` — the namespace where this component will be used, most commonly "svg"; use the "foreign" namespace to opt out of case-insensitive attribute names and HTML-specific warnings
 * `tag="..."` — the name to use when compiling this component as a custom element
 
-```html
+```sv
 <svelte:options tag="my-custom-element"/>
+```
+
+### `<svelte:fragment>`
+
+The `<svelte:fragment>` element allows you to place content in a [named slot](docs#slot_name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
+
+```sv
+<!-- Widget.svelte -->
+<div>
+	<slot name="header">No header was provided</slot>
+	<p>Some content between header and footer</p>
+	<slot name="footer"></slot>
+</div>
+
+<!-- App.svelte -->
+<Widget>
+	<h1 slot="header">Hello</h1>
+	<svelte:fragment slot="footer">
+		<p>All rights reserved.</p>
+		<p>Copyright (c) 2019 Svelte Industries</p>
+	</svelte:fragment>
+</Widget>
 ```

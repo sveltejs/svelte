@@ -7,14 +7,14 @@ import {
 	init,
 	insert,
 	noop,
-	safe_not_equal
+	safe_not_equal,
+	select_option
 } from "svelte/internal";
 
 function create_fragment(ctx) {
 	let select;
 	let option0;
 	let option1;
-	let select_value_value;
 
 	return {
 		c() {
@@ -32,27 +32,11 @@ function create_fragment(ctx) {
 			insert(target, select, anchor);
 			append(select, option0);
 			append(select, option1);
-			select_value_value = /*current*/ ctx[0];
-
-			for (var i = 0; i < select.options.length; i += 1) {
-				var option = select.options[i];
-
-				if (option.__value === select_value_value) {
-					option.selected = true;
-					break;
-				}
-			}
+			select_option(select, /*current*/ ctx[0]);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*current*/ 1 && select_value_value !== (select_value_value = /*current*/ ctx[0])) {
-				for (var i = 0; i < select.options.length; i += 1) {
-					var option = select.options[i];
-
-					if (option.__value === select_value_value) {
-						option.selected = true;
-						break;
-					}
-				}
+			if (dirty & /*current*/ 1) {
+				select_option(select, /*current*/ ctx[0]);
 			}
 		},
 		i: noop,
@@ -66,7 +50,7 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { current } = $$props;
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("current" in $$props) $$invalidate(0, current = $$props.current);
 	};
 

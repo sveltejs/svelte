@@ -7,27 +7,29 @@ export function set_current_component(component) {
 }
 
 export function get_current_component() {
-	if (!current_component) throw new Error(`Function called outside component initialization`);
+	if (!current_component) throw new Error('Function called outside component initialization');
 	return current_component;
 }
 
-export function beforeUpdate(fn) {
+export function beforeUpdate(fn: () => any) {
 	get_current_component().$$.before_update.push(fn);
 }
 
-export function onMount(fn) {
+export function onMount(fn: () => any) {
 	get_current_component().$$.on_mount.push(fn);
 }
 
-export function afterUpdate(fn) {
+export function afterUpdate(fn: () => any) {
 	get_current_component().$$.after_update.push(fn);
 }
 
-export function onDestroy(fn) {
+export function onDestroy(fn: () => any) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
-export function createEventDispatcher() {
+export function createEventDispatcher<
+	EventMap extends {} = any
+>(): <EventKey extends Extract<keyof EventMap, string>>(type: EventKey, detail?: EventMap[EventKey]) => void {
 	const component = get_current_component();
 
 	return (type: string, detail?: any) => {
@@ -44,12 +46,16 @@ export function createEventDispatcher() {
 	};
 }
 
-export function setContext(key, context) {
+export function setContext<T>(key, context: T) {
 	get_current_component().$$.context.set(key, context);
 }
 
-export function getContext(key) {
+export function getContext<T>(key): T {
 	return get_current_component().$$.context.get(key);
+}
+
+export function hasContext(key): boolean {
+	return get_current_component().$$.context.has(key);	
 }
 
 // TODO figure out if we still want to support
@@ -59,6 +65,7 @@ export function bubble(component, event) {
 	const callbacks = component.$$.callbacks[event.type];
 
 	if (callbacks) {
-		callbacks.slice().forEach(fn => fn(event));
+		// @ts-ignore
+		callbacks.slice().forEach(fn => fn.call(this, event));
 	}
 }

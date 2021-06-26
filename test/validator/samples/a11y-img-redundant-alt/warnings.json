@@ -1,0 +1,47 @@
+[
+	{
+		"code": "a11y-img-redundant-alt",
+		"message": "A11y: Screenreaders already announce <img> elements as an image.",
+		"end": {
+			"character": 173,
+			"column": 49,
+			"line": 3
+		},
+		"start": {
+			"character": 124,
+			"column": 0,
+			"line": 3
+		},
+		"pos": 124
+	},
+	{
+		"code": "a11y-img-redundant-alt",
+		"message": "A11y: Screenreaders already announce <img> elements as an image.",
+		"end": {
+			"character": 219,
+			"column": 45,
+			"line": 4
+		},
+		"start": {
+			"character": 174,
+			"column": 0,
+			"line": 4
+		},
+		"pos": 174
+	},
+	{
+		"code": "a11y-img-redundant-alt",
+		"message": "A11y: Screenreaders already announce <img> elements as an image.",
+		"end": {
+			"character": 272,
+			"column": 52,
+			"line": 5
+		},
+		"start": {
+			"character": 220,
+			"column": 0,
+			"line": 5
+		},
+		"pos": 220
+	}
+]

@@ -117,7 +117,9 @@
 				},
 				"value": {
 					"type": "Identifier",
-					"name": "f"
+					"name": "f",
+					"start": 97,
+					"end": 98
 				},
 				"error": null,
 				"pending": {
@@ -203,7 +205,9 @@
 				},
 				"value": {
 					"type": "Identifier",
-					"name": "f"
+					"name": "f",
+					"start": 137,
+					"end": 138
 				},
 				"error": null,
 				"pending": {

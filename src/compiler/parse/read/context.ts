@@ -1,202 +1,82 @@
 import { Parser } from '../index';
-import { reserved } from '../../utils/names';
+import { isIdentifierStart } from 'acorn';
+import full_char_code_at from '../../utils/full_char_code_at';
+import {
+	is_bracket_open,
+	is_bracket_close,
+	is_bracket_pair,
+	get_bracket_close
+} from '../utils/bracket';
+import { parse_expression_at } from '../acorn';
+import { Pattern } from 'estree';
 
-interface Identifier {
-	start: number;
-	end: number;
-	type: 'Identifier';
-	name: string;
-}
+export default function read_context(
+	parser: Parser
+): Pattern & { start: number; end: number } {
+	const start = parser.index;
+	let i = parser.index;
 
-interface Property {
-	start: number;
-	end: number;
-	type: 'Property';
-	kind: 'init' | 'rest';
-	shorthand: boolean;
-	key: Identifier;
-	value: Context;
-}
+	const code = full_char_code_at(parser.template, i);
+	if (isIdentifierStart(code, true)) {
+		return {
+			type: 'Identifier',
+			name: parser.read_identifier(),
+			start,
+			end: parser.index
+		};
+	}
 
-interface Context {
-	start: number;
-	end: number;
-	type: 'Identifier' | 'ArrayPattern' | 'ObjectPattern' | 'RestIdentifier';
-	name?: string;
-	elements?: Context[];
-	properties?: Property[];
-}
-
-function error_on_assignment_pattern(parser: Parser) {
-	if (parser.eat('=')) {
+	if (!is_bracket_open(code)) {
 		parser.error({
-			code: 'invalid-assignment-pattern',
-			message: 'Assignment patterns are not supported'
-		}, parser.index - 1);
-	}
-}
-
-function error_on_rest_pattern_not_last(parser: Parser) {
-	parser.error({
-		code: 'rest-pattern-not-last',
-		message: 'Rest destructuring expected to be last'
-	}, parser.index);
-}
-
-export default function read_context(parser: Parser) {
-	const context: Context = {
-		start: parser.index,
-		end: null,
-		type: null
-	};
-
-	if (parser.eat('[')) {
-		context.type = 'ArrayPattern';
-		context.elements = [];
-
-		do {
-			parser.allow_whitespace();
-
-			const lastContext = context.elements[context.elements.length - 1];
-			if (lastContext && lastContext.type === 'RestIdentifier') {
-				error_on_rest_pattern_not_last(parser);
-			}
-
-			if (parser.template[parser.index] === ',') {
-				context.elements.push(null);
-			} else {
-				context.elements.push(read_context(parser));
-				parser.allow_whitespace();
-			}
-		} while (parser.eat(','));
-
-		error_on_assignment_pattern(parser);
-		parser.eat(']', true);
-		context.end = parser.index;
+			code: 'unexpected-token',
+			message: 'Expected identifier or destructure pattern'
+		});
 	}
 
-	else if (parser.eat('{')) {
-		context.type = 'ObjectPattern';
-		context.properties = [];
+	const bracket_stack = [code];
+	i += code <= 0xffff ? 1 : 2;
 
-		do {
-			parser.allow_whitespace();
-
-			if (parser.eat('...')) {
-				parser.allow_whitespace();
-
-				const start = parser.index;
-				const name = parser.read_identifier();
-				const key: Identifier = {
-					start,
-					end: parser.index,
-					type: 'Identifier',
-					name
-				};
-				const property: Property = {
-					start,
-					end: parser.index,
-					type: 'Property',
-					kind: 'rest',
-					shorthand: true,
-					key,
-					value: key
-				};
-
-				context.properties.push(property);
-
-				parser.allow_whitespace();
-
-				if (parser.eat(',')) {
-					parser.error({
-						code: `comma-after-rest`,
-						message: `Comma is not permitted after the rest element`
-					}, parser.index - 1);
-				}
-
+	while (i < parser.template.length) {
+		const code = full_char_code_at(parser.template, i);
+		if (is_bracket_open(code)) {
+			bracket_stack.push(code);
+		} else if (is_bracket_close(code)) {
+			if (!is_bracket_pair(bracket_stack[bracket_stack.length - 1], code)) {
+				parser.error({
+					code: 'unexpected-token',
+					message: `Expected ${String.fromCharCode(
+						get_bracket_close(bracket_stack[bracket_stack.length - 1])
+					)}`
+				});
+			}
+			bracket_stack.pop();
+			if (bracket_stack.length === 0) {
+				i += code <= 0xffff ? 1 : 2;
 				break;
 			}
-
-			// TODO: DRY this out somehow
-			// We don't know whether we want to allow reserved words until we see whether there's a ':' after it
-			// Probably ideally we'd use Acorn to do all of this
-			const start = parser.index;
-			const name = parser.read_identifier(true);
-			const key: Identifier = {
-				start,
-				end: parser.index,
-				type: 'Identifier',
-				name
-			};
-			parser.allow_whitespace();
-
-			let value: Context;
-			if (parser.eat(':')) {
-				parser.allow_whitespace();
-				value = read_context(parser);
-			} else {
-				if (reserved.has(name)) {
-					parser.error({
-						code: `unexpected-reserved-word`,
-						message: `'${name}' is a reserved word in JavaScript and cannot be used here`
-					}, start);
-				}
-				value = key;
-			}
-
-			const property: Property = {
-				start,
-				end: value.end,
-				type: 'Property',
-				kind: 'init',
-				shorthand: value.type === 'Identifier' && value.name === name,
-				key,
-				value
-			};
-
-			context.properties.push(property);
-
-			parser.allow_whitespace();
-		} while (parser.eat(','));
-
-		error_on_assignment_pattern(parser);
-		parser.eat('}', true);
-		context.end = parser.index;
+		}
+		i += code <= 0xffff ? 1 : 2;
 	}
 
-	else if (parser.eat('...')) {
-		const name = parser.read_identifier();
-		if (name) {
-			context.type = 'RestIdentifier';
-			context.end = parser.index;
-			context.name = name;
-		}
+	parser.index = i;
 
-		else {
-			parser.error({
-				code: 'invalid-context',
-				message: 'Expected a rest pattern'
-			});
-		}
+	const pattern_string = parser.template.slice(start, i);
+	try {
+		// the length of the `space_with_newline` has to be start - 1
+		// because we added a `(` in front of the pattern_string,
+		// which shifted the entire string to right by 1
+		// so we offset it by removing 1 character in the `space_with_newline`
+		// to achieve that, we remove the 1st space encountered,
+		// so it will not affect the `column` of the node
+		let space_with_newline = parser.template.slice(0, start).replace(/[^\n]/g, ' ');
+		const first_space = space_with_newline.indexOf(' ');
+		space_with_newline = space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
+
+		return (parse_expression_at(
+			`${space_with_newline}(${pattern_string} = 1)`,
+			start - 1
+		) as any).left;
+	} catch (error) {
+		parser.acorn_error(error);
 	}
-
-	else {
-		const name = parser.read_identifier();
-		if (name) {
-			context.type = 'Identifier';
-			context.end = parser.index;
-			context.name = name;
-		}
-
-		else {
-			parser.error({
-				code: 'invalid-context',
-				message: 'Expected a name, array pattern or object pattern'
-			});
-		}
-
-		error_on_assignment_pattern(parser);
-	}
-
-	return context;
 }

@@ -16,13 +16,14 @@ import list from '../../utils/list';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
+import Component from '../Component';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
-const aria_attributes = 'activedescendant atomic autocomplete busy checked colindex controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowindex selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
+const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
 
-const aria_roles = 'alert alertdialog application article banner button cell checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document feed figure form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search searchbox section sectionhead select separator slider spinbutton status structure switch tab table tablist tabpanel term textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(' ');
+const aria_roles = 'alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure form generic graphics-document graphics-object graphics-symbol grid gridcell group heading img link list listbox listitem log main marquee math meter menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' ');
 const aria_role_set = new Set(aria_roles);
 
 const a11y_required_attributes = {
@@ -56,6 +57,22 @@ const a11y_required_content = new Set([
 	'h6'
 ]);
 
+const a11y_no_onchange = new Set([
+	'select',
+	'option'
+]);
+
+const a11y_labelable = new Set([
+	'button',
+	'input',
+	'keygen',
+	'meter',
+	'output',
+	'progress',
+	'select',
+	'textarea'
+]);
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
@@ -64,6 +81,7 @@ const valid_modifiers = new Set([
 	'capture',
 	'once',
 	'passive',
+	'nonpassive',
 	'self'
 ]);
 
@@ -75,6 +93,11 @@ const passive_events = new Set([
 	'touchcancel'
 ]);
 
+const react_attributes = new Map([
+	['className', 'class'],
+	['htmlFor', 'for']
+]);
+
 function get_namespace(parent: Element, element: Element, explicit_namespace: string) {
 	const parent_element = parent.find_nearest(/^Element/);
 
@@ -84,8 +107,10 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 			: null);
 	}
 
-	if (svg.test(element.name.toLowerCase())) return namespaces.svg;
-	if (parent_element.name.toLowerCase() === 'foreignobject') return null;
+	if (parent_element.namespace !== namespaces.foreign) {
+		if (svg.test(element.name.toLowerCase())) return namespaces.svg;
+		if (parent_element.name.toLowerCase() === 'foreignobject') return null;
+	}
 
 	return parent_element.namespace;
 }
@@ -107,50 +132,51 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 
-	constructor(component, parent, scope, info: any) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
-		this.namespace = get_namespace(parent, this, component.namespace);
+		this.namespace = get_namespace(parent as Element, this, component.namespace);
 
-		if (this.name === 'textarea') {
-			if (info.children.length > 0) {
-				const value_attribute = info.attributes.find(node => node.name === 'value');
-				if (value_attribute) {
-					component.error(value_attribute, {
-						code: `textarea-duplicate-value`,
-						message: `A <textarea> can have either a value attribute or (equivalently) child content, but not both`
+		if (this.namespace !== namespaces.foreign) {
+			if (this.name === 'textarea') {
+				if (info.children.length > 0) {
+					const value_attribute = info.attributes.find(node => node.name === 'value');
+					if (value_attribute) {
+						component.error(value_attribute, {
+							code: 'textarea-duplicate-value',
+							message: 'A <textarea> can have either a value attribute or (equivalently) child content, but not both'
+						});
+					}
+
+					// this is an egregious hack, but it's the easiest way to get <textarea>
+					// children treated the same way as a value attribute
+					info.attributes.push({
+						type: 'Attribute',
+						name: 'value',
+						value: info.children
+					});
+
+					info.children = [];
+				}
+			}
+
+			if (this.name === 'option') {
+				// Special case — treat these the same way:
+				//   <option>{foo}</option>
+				//   <option value={foo}>{foo}</option>
+				const value_attribute = info.attributes.find(attribute => attribute.name === 'value');
+
+				if (!value_attribute) {
+					info.attributes.push({
+						type: 'Attribute',
+						name: 'value',
+						value: info.children,
+						synthetic: true
 					});
 				}
-
-				// this is an egregious hack, but it's the easiest way to get <textarea>
-				// children treated the same way as a value attribute
-				info.attributes.push({
-					type: 'Attribute',
-					name: 'value',
-					value: info.children
-				});
-
-				info.children = [];
 			}
 		}
-
-		if (this.name === 'option') {
-			// Special case — treat these the same way:
-			//   <option>{foo}</option>
-			//   <option value={foo}>{foo}</option>
-			const value_attribute = info.attributes.find(attribute => attribute.name === 'value');
-
-			if (!value_attribute) {
-				info.attributes.push({
-					type: 'Attribute',
-					name: 'value',
-					value: info.children,
-					synthetic: true
-				});
-			}
-		}
-
 		const has_let = info.attributes.some(node => node.type === 'Let');
 		if (has_let) {
 			scope = scope.child();
@@ -219,14 +245,316 @@ export default class Element extends Node {
 
 		this.validate();
 
-		component.stylesheet.apply(this);
+		component.apply_stylesheet(this);
 	}
 
 	validate() {
+		if (this.component.var_lookup.has(this.name) && this.component.var_lookup.get(this.name).imported) {
+			this.component.warn(this, {
+				code: 'component-name-lowercase',
+				message: `<${this.name}> will be treated as an HTML element unless it begins with a capital letter`
+			});
+		}
+
+		this.validate_attributes();
+		this.validate_event_handlers();
+		if (this.namespace === namespaces.foreign) {
+			this.validate_bindings_foreign();
+		} else {
+			this.validate_attributes_a11y();
+			this.validate_special_cases();
+			this.validate_bindings();
+			this.validate_content();
+		}
+
+	}
+
+	validate_attributes() {
+		const { component, parent } = this;
+
+		this.attributes.forEach(attribute => {
+			if (attribute.is_spread) return;
+
+			const name = attribute.name.toLowerCase();
+
+			// Errors
+
+			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
+				component.error(attribute, {
+					code: 'illegal-attribute',
+					message: `'${name}' is not a valid attribute name`
+				});
+			}
+
+			if (name === 'slot') {
+				if (!attribute.is_static) {
+					component.error(attribute, {
+						code: 'invalid-slot-attribute',
+						message: 'slot attribute cannot have a dynamic value'
+					});
+				}
+
+				if (component.slot_outlets.has(name)) {
+					component.error(attribute, {
+						code: 'duplicate-slot-attribute',
+						message: `Duplicate '${name}' slot`
+					});
+
+					component.slot_outlets.add(name);
+				}
+
+				if (!(parent.type === 'SlotTemplate' || within_custom_element(parent))) {
+					component.error(attribute, {
+						code: 'invalid-slotted-content',
+						message: 'Element with a slot=\'...\' attribute must be a child of a component or a descendant of a custom element'
+					});
+				}
+			}
+
+			// Warnings
+
+			if (this.namespace !== namespaces.foreign) {
+				if (name === 'is') {
+					component.warn(attribute, {
+						code: 'avoid-is',
+						message: 'The \'is\' attribute is not supported cross-browser and should be avoided'
+					});
+				}
+
+				if (react_attributes.has(attribute.name)) {
+					component.warn(attribute, {
+						code: 'invalid-html-attribute',
+						message: `'${attribute.name}' is not a valid HTML attribute. Did you mean '${react_attributes.get(attribute.name)}'?`
+					});
+				}
+			}
+		});
+	}
+
+	validate_attributes_a11y() {
+		const { component } = this;
+
+		this.attributes.forEach(attribute => {
+			if (attribute.is_spread) return;
+
+			const name = attribute.name.toLowerCase();
+
+			// aria-props
+			if (name.startsWith('aria-')) {
+				if (invisible_elements.has(this.name)) {
+					// aria-unsupported-elements
+					component.warn(attribute, {
+						code: 'a11y-aria-attributes',
+						message: `A11y: <${this.name}> should not have aria-* attributes`
+					});
+				}
+
+				const type = name.slice(5);
+				if (!aria_attribute_set.has(type)) {
+					const match = fuzzymatch(type, aria_attributes);
+					let message = `A11y: Unknown aria attribute 'aria-${type}'`;
+					if (match) message += ` (did you mean '${match}'?)`;
+
+					component.warn(attribute, {
+						code: 'a11y-unknown-aria-attribute',
+						message
+					});
+				}
+
+				if (name === 'aria-hidden' && /^h[1-6]$/.test(this.name)) {
+					component.warn(attribute, {
+						code: 'a11y-hidden',
+						message: `A11y: <${this.name}> element should not be hidden`
+					});
+				}
+			}
+
+			// aria-role
+			if (name === 'role') {
+				if (invisible_elements.has(this.name)) {
+					// aria-unsupported-elements
+					component.warn(attribute, {
+						code: 'a11y-misplaced-role',
+						message: `A11y: <${this.name}> should not have role attribute`
+					});
+				}
+
+				const value = attribute.get_static_value();
+				// @ts-ignore
+				if (value && !aria_role_set.has(value)) {
+					// @ts-ignore
+					const match = fuzzymatch(value, aria_roles);
+					let message = `A11y: Unknown role '${value}'`;
+					if (match) message += ` (did you mean '${match}'?)`;
+
+					component.warn(attribute, {
+						code: 'a11y-unknown-role',
+						message
+					});
+				}
+			}
+
+			// no-access-key
+			if (name === 'accesskey') {
+				component.warn(attribute, {
+					code: 'a11y-accesskey',
+					message: 'A11y: Avoid using accesskey'
+				});
+			}
+
+			// no-autofocus
+			if (name === 'autofocus') {
+				component.warn(attribute, {
+					code: 'a11y-autofocus',
+					message: 'A11y: Avoid using autofocus'
+				});
+			}
+
+			// scope
+			if (name === 'scope' && this.name !== 'th') {
+				component.warn(attribute, {
+					code: 'a11y-misplaced-scope',
+					message: 'A11y: The scope attribute should only be used with <th> elements'
+				});
+			}
+
+			// tabindex-no-positive
+			if (name === 'tabindex') {
+				const value = attribute.get_static_value();
+				// @ts-ignore todo is tabindex=true correct case?
+				if (!isNaN(value) && +value > 0) {
+					component.warn(attribute, {
+						code: 'a11y-positive-tabindex',
+						message: 'A11y: avoid tabindex values above zero'
+					});
+				}
+			}
+		});
+	}
+
+
+	validate_special_cases() {
+		const { component, attributes, handlers } = this;
+
+		const attribute_map = new Map();
+		const handlers_map = new Map();
+
+		attributes.forEach(attribute => (
+			attribute_map.set(attribute.name, attribute)
+		));
+
+		handlers.forEach(handler => (
+			handlers_map.set(handler.name, handler)
+		));
+
+		if (this.name === 'a') {
+			const href_attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
+			const id_attribute = attribute_map.get('id');
+			const name_attribute = attribute_map.get('name');
+
+			if (href_attribute) {
+				const href_value = href_attribute.get_static_value();
+
+				if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
+					component.warn(href_attribute, {
+						code: 'a11y-invalid-attribute',
+						message: `A11y: '${href_value}' is not a valid ${href_attribute.name} attribute`
+					});
+				}
+			} else {
+				const id_attribute_valid = id_attribute && id_attribute.get_static_value() !== '';
+				const name_attribute_valid = name_attribute && name_attribute.get_static_value() !== '';
+
+				if (!id_attribute_valid && !name_attribute_valid) {
+					component.warn(this, {
+						code: 'a11y-missing-attribute',
+						message: 'A11y: <a> element should have an href attribute'
+					});
+				}
+			}
+		} else {
+			const required_attributes = a11y_required_attributes[this.name];
+			if (required_attributes) {
+				const has_attribute = required_attributes.some(name => attribute_map.has(name));
+
+				if (!has_attribute) {
+					should_have_attribute(this, required_attributes);
+				}
+			}
+		}
+
+		if (this.name === 'input') {
+			const type = attribute_map.get('type');
+			if (type && type.get_static_value() === 'image') {
+				const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
+				const has_attribute = required_attributes.some(name => attribute_map.has(name));
+
+				if (!has_attribute) {
+					should_have_attribute(this, required_attributes, 'input type="image"');
+				}
+			}
+		}
+
+		if (this.name === 'img') {
+			const alt_attribute = attribute_map.get('alt');
+			const aria_hidden_attribute = attribute_map.get('aria-hidden');
+
+			const aria_hidden_exist = aria_hidden_attribute && aria_hidden_attribute.get_static_value();
+
+			if (alt_attribute && !aria_hidden_exist) {
+				const alt_value = alt_attribute.get_static_value();
+
+				if (/\b(image|picture|photo)\b/i.test(alt_value)) {
+					component.warn(this, {
+						code: 'a11y-img-redundant-alt',
+						message: 'A11y: Screenreaders already announce <img> elements as an image.'
+					});
+				}
+			}
+		}
+
+		if (this.name === 'label') {
+			const has_input_child = this.children.some(i => (i instanceof Element && a11y_labelable.has(i.name) ));
+			if (!attribute_map.has('for') && !has_input_child) {
+				component.warn(this, {
+					code: 'a11y-label-has-associated-control',
+					message: 'A11y: A form label must be associated with a control.'
+				});
+			}
+		}
+
+		if (this.is_media_node()) {
+			if (attribute_map.has('muted')) {
+				return;
+			}
+
+			let has_caption;
+			const track = this.children.find((i: Element) => i.name === 'track');
+			if (track) {
+				has_caption = track.attributes.find(a => a.name === 'kind' && a.get_static_value() === 'captions');
+			}
+
+			if (!has_caption) {
+				component.warn(this, {
+					code: 'a11y-media-has-caption',
+					message: 'A11y: Media elements must have a <track kind="captions">'
+				});
+			}
+		}
+
+		if (a11y_no_onchange.has(this.name)) {
+			if (handlers_map.has('change') && !handlers_map.has('blur')) {
+				component.warn(this, {
+					code: 'a11y-no-onchange',
+					message: 'A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.'
+				});
+			}
+		}
+
 		if (a11y_distracting_elements.has(this.name)) {
 			// no-distracting-elements
-			this.component.warn(this, {
-				code: `a11y-distracting-elements`,
+			component.warn(this, {
+				code: 'a11y-distracting-elements',
 				message: `A11y: Avoid <${this.name}> elements`
 			});
 		}
@@ -247,9 +575,9 @@ export default class Element extends Node {
 			}
 
 			if (!is_figure_parent) {
-				this.component.warn(this, {
-					code: `a11y-structure`,
-					message: `A11y: <figcaption> must be an immediate child of <figure>`
+				component.warn(this, {
+					code: 'a11y-structure',
+					message: 'A11y: <figcaption> must be an immediate child of <figure>'
 				});
 			}
 		}
@@ -264,206 +592,23 @@ export default class Element extends Node {
 			const index = children.findIndex(child => (child as Element).name === 'figcaption');
 
 			if (index !== -1 && (index !== 0 && index !== children.length - 1)) {
-				this.component.warn(children[index], {
-					code: `a11y-structure`,
-					message: `A11y: <figcaption> must be first or last child of <figure>`
+				component.warn(children[index], {
+					code: 'a11y-structure',
+					message: 'A11y: <figcaption> must be first or last child of <figure>'
 				});
 			}
 		}
-
-		this.validate_attributes();
-		this.validate_bindings();
-		this.validate_content();
-		this.validate_event_handlers();
 	}
 
-	validate_attributes() {
-		const { component, parent } = this;
-
-		const attribute_map = new Map();
-
-		this.attributes.forEach(attribute => {
-			if (attribute.is_spread) return;
-
-			const name = attribute.name.toLowerCase();
-
-			// aria-props
-			if (name.startsWith('aria-')) {
-				if (invisible_elements.has(this.name)) {
-					// aria-unsupported-elements
-					component.warn(attribute, {
-						code: `a11y-aria-attributes`,
-						message: `A11y: <${this.name}> should not have aria-* attributes`
-					});
-				}
-
-				const type = name.slice(5);
-				if (!aria_attribute_set.has(type)) {
-					const match = fuzzymatch(type, aria_attributes);
-					let message = `A11y: Unknown aria attribute 'aria-${type}'`;
-					if (match) message += ` (did you mean '${match}'?)`;
-
-					component.warn(attribute, {
-						code: `a11y-unknown-aria-attribute`,
-						message
-					});
-				}
-
-				if (name === 'aria-hidden' && /^h[1-6]$/.test(this.name)) {
-					component.warn(attribute, {
-						code: `a11y-hidden`,
-						message: `A11y: <${this.name}> element should not be hidden`
-					});
-				}
-			}
-
-			// aria-role
-			if (name === 'role') {
-				if (invisible_elements.has(this.name)) {
-					// aria-unsupported-elements
-					component.warn(attribute, {
-						code: `a11y-misplaced-role`,
-						message: `A11y: <${this.name}> should not have role attribute`
-					});
-				}
-
-				const value = attribute.get_static_value();
-				// @ts-ignore
-				if (value && !aria_role_set.has(value)) {
-					// @ts-ignore
-					const match = fuzzymatch(value, aria_roles);
-					let message = `A11y: Unknown role '${value}'`;
-					if (match) message += ` (did you mean '${match}'?)`;
-
-					component.warn(attribute, {
-						code: `a11y-unknown-role`,
-						message
-					});
-				}
-			}
-
-			// no-access-key
-			if (name === 'accesskey') {
-				component.warn(attribute, {
-					code: `a11y-accesskey`,
-					message: `A11y: Avoid using accesskey`
+	validate_bindings_foreign() {
+		this.bindings.forEach(binding => {
+			if (binding.name !== 'this') {
+				this.component.error(binding, {
+					code: 'invalid-binding',
+					message: `'${binding.name}' is not a valid binding. Foreign elements only support bind:this`
 				});
 			}
-
-			// no-autofocus
-			if (name === 'autofocus') {
-				component.warn(attribute, {
-					code: `a11y-autofocus`,
-					message: `A11y: Avoid using autofocus`
-				});
-			}
-
-			// scope
-			if (name === 'scope' && this.name !== 'th') {
-				component.warn(attribute, {
-					code: `a11y-misplaced-scope`,
-					message: `A11y: The scope attribute should only be used with <th> elements`
-				});
-			}
-
-			// tabindex-no-positive
-			if (name === 'tabindex') {
-				const value = attribute.get_static_value();
-				// @ts-ignore todo is tabindex=true correct case?
-				if (!isNaN(value) && +value > 0) {
-					component.warn(attribute, {
-						code: `a11y-positive-tabindex`,
-						message: `A11y: avoid tabindex values above zero`
-					});
-				}
-			}
-
-
-			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
-				component.error(attribute, {
-					code: `illegal-attribute`,
-					message: `'${name}' is not a valid attribute name`,
-				});
-			}
-
-			if (name === 'slot') {
-				if (!attribute.is_static) {
-					component.error(attribute, {
-						code: `invalid-slot-attribute`,
-						message: `slot attribute cannot have a dynamic value`
-					});
-				}
-
-				if (component.slot_outlets.has(name)) {
-					component.error(attribute, {
-						code: `duplicate-slot-attribute`,
-						message: `Duplicate '${name}' slot`
-					});
-
-					component.slot_outlets.add(name);
-				}
-
-				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
-					component.error(attribute, {
-						code: `invalid-slotted-content`,
-						message: `Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`,
-					});
-				}
-			}
-
-			if (name === 'is') {
-				component.warn(attribute, {
-					code: 'avoid-is',
-					message: `The 'is' attribute is not supported cross-browser and should be avoided`
-				});
-			}
-
-			attribute_map.set(attribute.name, attribute);
 		});
-
-		// handle special cases
-		if (this.name === 'a') {
-			const attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
-
-			if (attribute) {
-				const value = attribute.get_static_value();
-
-				if (value === '' || value === '#') {
-					component.warn(attribute, {
-						code: `a11y-invalid-attribute`,
-						message: `A11y: '${value}' is not a valid ${attribute.name} attribute`
-					});
-				}
-			} else {
-				component.warn(this, {
-					code: `a11y-missing-attribute`,
-					message: `A11y: <a> element should have an href attribute`
-				});
-			}
-		}
-
-		else {
-			const required_attributes = a11y_required_attributes[this.name];
-			if (required_attributes) {
-				const has_attribute = required_attributes.some(name => attribute_map.has(name));
-
-				if (!has_attribute) {
-					should_have_attribute(this, required_attributes);
-				}
-			}
-
-			if (this.name === 'input') {
-				const type = attribute_map.get('type');
-				if (type && type.get_static_value() === 'image') {
-					const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
-					const has_attribute = required_attributes.some(name => attribute_map.has(name));
-
-					if (!has_attribute) {
-						should_have_attribute(this, required_attributes, 'input type="image"');
-					}
-				}
-			}
-		}
 	}
 
 	validate_bindings() {
@@ -478,8 +623,8 @@ export default class Element extends Node {
 
 			if (!attribute.is_static) {
 				component.error(attribute, {
-					code: `invalid-type`,
-					message: `'type' attribute cannot be dynamic if input uses two-way binding`
+					code: 'invalid-type',
+					message: '\'type\' attribute cannot be dynamic if input uses two-way binding'
 				});
 			}
 
@@ -487,8 +632,8 @@ export default class Element extends Node {
 
 			if (value === true) {
 				component.error(attribute, {
-					code: `missing-type`,
-					message: `'type' attribute must be specified`
+					code: 'missing-type',
+					message: '\'type\' attribute must be specified'
 				});
 			}
 
@@ -505,7 +650,7 @@ export default class Element extends Node {
 					this.name !== 'select'
 				) {
 					component.error(binding, {
-						code: `invalid-binding`,
+						code: 'invalid-binding',
 						message: `'value' is not a valid binding on <${this.name}> elements`
 					});
 				}
@@ -517,8 +662,8 @@ export default class Element extends Node {
 
 					if (attribute && !attribute.is_static) {
 						component.error(attribute, {
-							code: `dynamic-multiple-attribute`,
-							message: `'multiple' attribute cannot be dynamic if select uses two-way binding`
+							code: 'dynamic-multiple-attribute',
+							message: '\'multiple\' attribute cannot be dynamic if select uses two-way binding'
 						});
 					}
 				} else {
@@ -527,7 +672,7 @@ export default class Element extends Node {
 			} else if (name === 'checked' || name === 'indeterminate') {
 				if (this.name !== 'input') {
 					component.error(binding, {
-						code: `invalid-binding`,
+						code: 'invalid-binding',
 						message: `'${name}' is not a valid binding on <${this.name}> elements`
 					});
 				}
@@ -536,13 +681,13 @@ export default class Element extends Node {
 
 				if (type !== 'checkbox') {
 					let message = `'${name}' binding can only be used with <input type="checkbox">`;
-					if (type === 'radio') message += ` — for <input type="radio">, use 'group' binding`;
-					component.error(binding, { code: `invalid-binding`, message });
+					if (type === 'radio') message += ' — for <input type="radio">, use \'group\' binding';
+					component.error(binding, { code: 'invalid-binding', message });
 				}
 			} else if (name === 'group') {
 				if (this.name !== 'input') {
 					component.error(binding, {
-						code: `invalid-binding`,
+						code: 'invalid-binding',
 						message: `'group' is not a valid binding on <${this.name}> elements`
 					});
 				}
@@ -551,14 +696,14 @@ export default class Element extends Node {
 
 				if (type !== 'checkbox' && type !== 'radio') {
 					component.error(binding, {
-						code: `invalid-binding`,
-						message: `'group' binding can only be used with <input type="checkbox"> or <input type="radio">`
+						code: 'invalid-binding',
+						message: '\'group\' binding can only be used with <input type="checkbox"> or <input type="radio">'
 					});
 				}
 			} else if (name === 'files') {
 				if (this.name !== 'input') {
 					component.error(binding, {
-						code: `invalid-binding`,
+						code: 'invalid-binding',
 						message: `'files' is not a valid binding on <${this.name}> elements`
 					});
 				}
@@ -567,15 +712,15 @@ export default class Element extends Node {
 
 				if (type !== 'file') {
 					component.error(binding, {
-						code: `invalid-binding`,
-						message: `'files' binding can only be used with <input type="file">`
+						code: 'invalid-binding',
+						message: '\'files\' binding can only be used with <input type="file">'
 					});
 				}
 
 			} else if (name === 'open') {
 				if (this.name !== 'details') {
 					component.error(binding, {
-						code: `invalid-binding`,
+						code: 'invalid-binding',
 						message: `'${name}' binding can only be used with <details>`
 					});
 				}
@@ -587,13 +732,14 @@ export default class Element extends Node {
 				name === 'seekable' ||
 				name === 'played' ||
 				name === 'volume' ||
+				name === 'muted' ||
 				name === 'playbackRate' ||
 				name === 'seeking' ||
 				name === 'ended'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
 					component.error(binding, {
-						code: `invalid-binding`,
+						code: 'invalid-binding',
 						message: `'${name}' binding can only be used with <audio> or <video>`
 					});
 				}
@@ -603,7 +749,7 @@ export default class Element extends Node {
 			) {
 				if (this.name !== 'video') {
 					component.error(binding, {
-						code: `invalid-binding`,
+						code: 'invalid-binding',
 						message: `'${name}' binding can only be used with <video>`
 					});
 				}
@@ -634,18 +780,18 @@ export default class Element extends Node {
 
 				if (!contenteditable) {
 					component.error(binding, {
-						code: `missing-contenteditable-attribute`,
-						message: `'contenteditable' attribute is required for textContent and innerHTML two-way bindings`
+						code: 'missing-contenteditable-attribute',
+						message: '\'contenteditable\' attribute is required for textContent and innerHTML two-way bindings'
 					});
 				} else if (contenteditable && !contenteditable.is_static) {
 					component.error(contenteditable, {
-						code: `dynamic-contenteditable-attribute`,
-						message: `'contenteditable' attribute cannot be dynamic if element uses two-way binding`
+						code: 'dynamic-contenteditable-attribute',
+						message: '\'contenteditable\' attribute cannot be dynamic if element uses two-way binding'
 					});
 				}
 			} else if (name !== 'this') {
 				component.error(binding, {
-					code: `invalid-binding`,
+					code: 'invalid-binding',
 					message: `'${binding.name}' is not a valid binding`
 				});
 			}
@@ -654,10 +800,14 @@ export default class Element extends Node {
 
 	validate_content() {
 		if (!a11y_required_content.has(this.name)) return;
+		if (
+			this.bindings
+				.some((binding) => ['textContent', 'innerHTML'].includes(binding.name))
+		) return;
 
 		if (this.children.length === 0) {
 			this.component.warn(this, {
-				code: `a11y-missing-content`,
+				code: 'a11y-missing-content',
 				message: `A11y: <${this.name}> element should have child content`
 			});
 		}
@@ -670,7 +820,14 @@ export default class Element extends Node {
 			if (handler.modifiers.has('passive') && handler.modifiers.has('preventDefault')) {
 				component.error(handler, {
 					code: 'invalid-event-modifier',
-					message: `The 'passive' and 'preventDefault' modifiers cannot be used together`
+					message: 'The \'passive\' and \'preventDefault\' modifiers cannot be used together'
+				});
+			}
+
+			if (handler.modifiers.has('passive') && handler.modifiers.has('nonpassive')) {
+				component.error(handler, {
+					code: 'invalid-event-modifier',
+					message: 'The \'passive\' and \'nonpassive\' modifiers cannot be used together'
 				});
 			}
 
@@ -687,13 +844,13 @@ export default class Element extends Node {
 						if (handler.can_make_passive) {
 							component.warn(handler, {
 								code: 'redundant-event-modifier',
-								message: `Touch event handlers that don't use the 'event' object are passive by default`
+								message: 'Touch event handlers that don\'t use the \'event\' object are passive by default'
 							});
 						}
 					} else {
 						component.warn(handler, {
 							code: 'redundant-event-modifier',
-							message: `The passive modifier only works with wheel and touch events`
+							message: 'The passive modifier only works with wheel and touch events'
 						});
 					}
 				}
@@ -708,7 +865,7 @@ export default class Element extends Node {
 				}
 			});
 
-			if (passive_events.has(handler.name) && handler.can_make_passive && !handler.modifiers.has('preventDefault')) {
+			if (passive_events.has(handler.name) && handler.can_make_passive && !handler.modifiers.has('preventDefault') && !handler.modifiers.has('nonpassive')) {
 				// touch/wheel events should be passive by default
 				handler.modifiers.add('passive');
 			}
@@ -738,7 +895,7 @@ export default class Element extends Node {
 						type: 'Text',
 						data: ` ${id}`,
 						synthetic: true
-					})
+					} as any)
 				);
 			}
 		} else {
@@ -747,9 +904,13 @@ export default class Element extends Node {
 					type: 'Attribute',
 					name: 'class',
 					value: [{ type: 'Text', data: id, synthetic: true }]
-				})
+				} as any)
 			);
 		}
+	}
+
+	get slot_template_name() {
+		return this.attributes.find(attribute => attribute.name === 'slot').get_static_value() as string;
 	}
 }
 
@@ -764,7 +925,7 @@ function should_have_attribute(
 		attributes[0];
 
 	node.component.warn(node, {
-		code: `a11y-missing-attribute`,
+		code: 'a11y-missing-attribute',
 		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
 	});
 }

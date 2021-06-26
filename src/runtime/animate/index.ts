@@ -11,12 +11,12 @@ export interface AnimationConfig {
 }
 
 interface FlipParams {
-	delay: number;
-	duration: number | ((len: number) => number);
-	easing: (t: number) => number;
+	delay?: number;
+	duration?: number | ((len: number) => number);
+	easing?: (t: number) => number;
 }
 
-export function flip(node: Element, animation: { from: DOMRect; to: DOMRect }, params: FlipParams): AnimationConfig {
+export function flip(node: Element, animation: { from: DOMRect; to: DOMRect }, params: FlipParams = {}): AnimationConfig {
 	const style = getComputedStyle(node);
 	const transform = style.transform === 'none' ? '' : style.transform;
 	const scaleX = animation.from.width / node.clientWidth;

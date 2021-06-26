@@ -1,5 +1,5 @@
 export default {
-	html: `<button>click me</button>`,
+	html: '<button>click me</button>',
 
 	props: {
 		foo: 42

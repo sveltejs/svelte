@@ -8,7 +8,7 @@ Components are the building blocks of Svelte applications. They are written into
 
 All three sections — script, styles and markup — are optional.
 
-```html
+```sv
 <script>
 	// logic goes here
 </script>
@@ -30,7 +30,7 @@ A `<script>` block contains JavaScript that runs when a component instance is cr
 
 Svelte uses the `export` keyword to mark a variable declaration as a *property* or *prop*, which means it becomes accessible to consumers of the component (see the section on [attributes and props](docs#Attributes_and_props) for more information).
 
-```html
+```sv
 <script>
 	export let foo;
 
@@ -46,7 +46,7 @@ You can specify a default initial value for a prop. It will be used if the compo
 
 In development mode (see the [compiler options](docs#svelte_compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
 
-```html
+```sv
 <script>
 	export let bar = 'optional default initial value';
 	export let baz = undefined;
@@ -57,7 +57,7 @@ In development mode (see the [compiler options](docs#svelte_compile)), a warning
 
 If you export a `const`, `class` or `function`, it is readonly from outside the component. Function *expressions* are valid props, however.
 
-```html
+```sv
 <script>
 	// these are readonly
 	export const thisIs = 'readonly';
@@ -75,7 +75,7 @@ If you export a `const`, `class` or `function`, it is readonly from outside the 
 
 You can use reserved words as prop names.
 
-```html
+```sv
 <script>
 	let className;
 
@@ -95,7 +95,7 @@ Update expressions (`count += 1`) and property assignments (`obj.x = y`) have th
 
 Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. Options for getting around this can be found in the [tutorial](tutorial/updating-arrays-and-objects).
 
-```html
+```sv
 <script>
 	let count = 0;
 
@@ -113,7 +113,7 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 
 Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` [JS label syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label). Reactive statements run immediately before the component updates, whenever the values that they depend on have changed.
 
-```html
+```sv
 <script>
 	export let title;
 
@@ -130,9 +130,35 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 
 ---
 
+Only values which directly appear within the `$:` block will become dependencies of the reactive statement. For example, in the code below `total` will only update when `x` changes, but not `y`.
+
+```sv
+<script>
+	let x = 0;
+	let y = 0;
+	
+	function yPlusAValue(value) {
+		return value + y;
+	}
+	
+	$: total = yPlusAValue(x);
+</script>
+
+Total: {total}
+<button on:click={() => x++}>
+	Increment X
+</button>
+
+<button on:click={() => y++}>
+	Increment Y
+</button>
+```
+
+---
+
 If a statement consists entirely of an assignment to an undeclared variable, Svelte will inject a `let` declaration on your behalf.
 
-```html
+```sv
 <script>
 	export let num;
 
@@ -157,7 +183,7 @@ Note that the store must be declared at the top level of the component — not i
 
 Local variables (that do not represent store values) must *not* have a `$` prefix.
 
-```html
+```sv
 <script>
 	import { writable } from 'svelte/store';
 
@@ -175,7 +201,7 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 ##### Store contract
 
 ```js
-store = { subscribe: (subscription: (value: any) => void) => () => void, set?: (value: any) => void }
+store = { subscribe: (subscription: (value: any) => void) => (() => void), set?: (value: any) => void }
 ```
 
 You can create your own stores without relying on [`svelte/store`](docs#svelte_store), by implementing the *store contract*:
@@ -199,7 +225,7 @@ You cannot `export default`, since the default export is the component itself.
 
 > Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](docs#svelte_store).
 
-```html
+```sv
 <script context="module">
 	let totalComponents = 0;
 
@@ -225,7 +251,7 @@ CSS inside a `<style>` block will be scoped to that component.
 
 This works by adding a class to affected elements, which is based on a hash of the component styles (e.g. `svelte-123xyz`).
 
-```html
+```sv
 <style>
 	p {
 		/* this will only affect <p> elements in this component */
@@ -238,7 +264,7 @@ This works by adding a class to affected elements, which is based on a hash of t
 
 To apply styles to a selector globally, use the `:global(...)` modifier.
 
-```html
+```sv
 <style>
 	:global(body) {
 		/* this will apply to <body> */
@@ -250,6 +276,15 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 			 component, that are inside <div> elements belonging
 			 to this component */
 		color: goldenrod;
+	}
+
+	p:global(.red) {
+		/* this will apply to all <p> elements belonging to this 
+			 component with a class of red, even if class="red" does
+			 not initially appear in the markup, and is instead 
+			 added at runtime. This is useful when the class 
+			 of the element is dynamically applied, for instance 
+			 when updating the element's classList property directly. */
 	}
 </style>
 ```
@@ -264,4 +299,24 @@ The `-global-` part will be removed when compiled, and the keyframe then be refe
 <style>
 	@keyframes -global-my-animation-name {...}
 </style>
+```
+
+---
+
+There should only be 1 top-level `<style>` tag per component.
+
+However, it is possible to have `<style>` tag nested inside other elements or logic blocks.
+
+In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
+
+```html
+<div>
+	<style>
+		/* this style tag will be inserted as-is */
+		div {
+			/* this will apply to all `<div>` elements in the DOM */
+			color: red;
+		}
+	</style>
+</div>
 ```

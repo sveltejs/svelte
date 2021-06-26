@@ -52,10 +52,10 @@
 					}
 				],
 				"context": {
-					"start": 17,
-					"end": 22,
 					"type": "Identifier",
-					"name": "thing"
+					"name": "thing",
+					"start": 17,
+					"end": 22
 				},
 				"key": {
 					"type": "Identifier",

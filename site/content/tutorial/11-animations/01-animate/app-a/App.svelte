@@ -56,7 +56,7 @@
 <div class='board'>
 	<input
 		placeholder="what needs to be done?"
-		on:keydown={e => e.which === 13 && add(e.target)}
+		on:keydown={e => e.key === 'Enter' && add(e.target)}
 	>
 
 	<div class='left'>

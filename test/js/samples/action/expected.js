@@ -14,6 +14,7 @@ import {
 function create_fragment(ctx) {
 	let a;
 	let link_action;
+	let mounted;
 	let dispose;
 
 	return {
@@ -22,16 +23,20 @@ function create_fragment(ctx) {
 			a.textContent = "Test";
 			attr(a, "href", "#");
 		},
-		m(target, anchor, remount) {
+		m(target, anchor) {
 			insert(target, a, anchor);
-			if (remount) dispose();
-			dispose = action_destroyer(link_action = link.call(null, a));
+
+			if (!mounted) {
+				dispose = action_destroyer(link_action = link.call(null, a));
+				mounted = true;
+			}
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(a);
+			mounted = false;
 			dispose();
 		}
 	};

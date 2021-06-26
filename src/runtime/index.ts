@@ -7,7 +7,9 @@ export {
 	afterUpdate,
 	setContext,
 	getContext,
+	hasContext,
 	tick,
 	createEventDispatcher,
-	SvelteComponentDev as SvelteComponent
+	SvelteComponentDev as SvelteComponent,
+	SvelteComponentTyped
 } from 'svelte/internal';
