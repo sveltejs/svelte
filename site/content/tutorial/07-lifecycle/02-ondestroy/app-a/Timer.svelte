@@ -8,7 +8,7 @@
 </script>
 
 <p>
-	This component execute callback every 
+	This component execute a callback every 
 	{interval} millisecond{interval === 1 ? '' : 's'}
 </p>
 
