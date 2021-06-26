@@ -1,0 +1,42 @@
+name: "Feature Request"
+description: Request a new Svelte feature
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to request this feature! If your feature request is complex or substantial enough to warrant in-depth discussion, maintainers may close the issue and ask you to open an [RFC](https://github.com/sveltejs/rfcs).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Describe the problem
+      description: Please provide a clear and concise description the problem this feature would solve. The more information you can provide here, the better.
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the proposed solution
+      description: Please provide a clear and concise description of what you would like to happen.
+      placeholder: I would like to see...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: "Please provide a clear and concise description of any alternative solutions or features you've considered."
+    validations:
+      required: true
+  - type: dropdown
+    id: importance
+    attributes:
+      label: Importance
+      description: How important is this feature to you?
+      options:
+        - nice to have
+        - would make my life easier
+        - i cannot use svelte without it
+    validations:
+      required: true
