@@ -1,0 +1,51 @@
+# Configuration for probot-stale - https://github.com/probot/stale
+
+# Only issues or pull requests with all of these labels are check if stale. Defaults to `[]` (disabled)
+onlyLabels: []
+
+# Issues or Pull Requests with these labels will never be considered stale. Set to `[]` to disable
+exemptLabels:
+  - popular
+  - pinned
+  - security
+  - "[Status] Maybe Later"
+
+# Set to true to ignore issues in a project (defaults to false)
+exemptProjects: false
+
+# Set to true to ignore issues in a milestone (defaults to false)
+exemptMilestones: false
+
+# Set to true to ignore issues with an assignee (defaults to false)
+exemptAssignees: false
+
+# Label to use when marking as stale
+staleLabel: stale-bot
+
+# Comment to post when removing the stale label.
+# unmarkComment: >
+#   Your comment here.
+
+# Limit the number of actions per hour, from 1-30. Default is 30
+limitPerRun: 30
+
+# Optionally, specify configuration settings that are specific to just 'issues' or 'pulls':
+pulls:
+  daysUntilStale: 180
+  daysUntilClose: 25
+  markComment: >
+    This pull request has been automatically marked as stale because it has not had
+    recent activity. It will be closed if no further activity occurs. Thank you
+    for your contributions.
+  closeComment: >
+    This pull request has been closed as it was previously marked as stale and saw no subsequent activity.
+
+issues:
+  daysUntilStale: 90
+  daysUntilClose: 14
+  markComment: >
+    This issue has been automatically marked as stale because it has not had
+    recent activity. It will be closed if no further activity occurs. Thank you
+    for your contributions.
+  closeComment: >
+    This issue has been closed as it was previously marked as stale and saw no subsequent activity.
