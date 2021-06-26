@@ -2,7 +2,7 @@ import { custom_event, append, insert, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
-	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }));
+	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, true));
 }
 
 export function append_dev(target: Node, node: Node) {
@@ -104,6 +104,16 @@ export interface SvelteComponentDev {
 	$destroy(): void;
 	[accessor: string]: any;
 }
+interface IComponentOptions<Props extends Record<string, any> = Record<string, any>> {
+	target: Element;
+	anchor?: Element;
+	props?: Props;
+	context?: Map<any, any>;
+	hydrate?: boolean;
+	intro?: boolean;
+	$$inline?: boolean;
+}
+
 /**
  * Base class for Svelte components with some minor dev-enhancements. Used when dev=true.
  */
@@ -115,15 +125,22 @@ export class SvelteComponentDev extends SvelteComponent {
 	 * ### DO NOT USE!
 	 */
 	$$prop_def: Props;
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$events_def: any;
+	/**
+	 * @private
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 */
+	$$slot_def: any;
 
-	constructor(options: {
-		target: Element;
-		anchor?: Element;
-		props?: Props;
-		hydrate?: boolean;
-		intro?: boolean;
-		$$inline?: boolean;
-    }) {
+	constructor(options: IComponentOptions) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
@@ -160,9 +177,9 @@ export interface SvelteComponentTyped<
 /**
  * Base class to create strongly typed Svelte components.
  * This only exists for typing purposes and should be used in `.d.ts` files.
- * 
+ *
  * ### Example:
- * 
+ *
  * You have component library on npm called `component-library`, from which
  * you export a component called `MyComponent`. For Svelte+TypeScript users,
  * you want to provide typings. Therefore you create a `index.d.ts`:
@@ -179,7 +196,7 @@ export interface SvelteComponentTyped<
  * </script>
  * <MyComponent foo={'bar'} />
  * ```
- * 
+ *
  * #### Why not make this part of `SvelteComponent(Dev)`?
  * Because
  * ```ts
@@ -215,14 +232,7 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: {
-		target: Element;
-		anchor?: Element;
-		props?: Props;
-		hydrate?: boolean;
-		intro?: boolean;
-		$$inline?: boolean;
-    }) {
+	constructor(options: IComponentOptions<Props>) {
 		super(options);
 	}
 }

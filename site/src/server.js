@@ -10,7 +10,9 @@ const app = polka({
 	onError: (err, req, res) => {
 		const error = err.message || err;
 		const code = err.code || err.status || 500;
-		res.headersSent || send(res, code, { error });
+		res.headersSent || send(res, code, { error }, {
+			'content-type': 'text/plain'
+		});
 	}
 });
 

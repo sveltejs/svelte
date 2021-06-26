@@ -100,6 +100,7 @@
 	<meta name="Description" content="Interactive example Svelte apps">
 </svelte:head>
 
+<h1 class="visually-hidden">Examples</h1>
 <div class='examples-container' bind:clientWidth={width}>
 	<div class="viewport offset-{offset}">
 		<TableOfContents {sections} active_section={active_slug} {isLoading} />

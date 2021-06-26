@@ -3,32 +3,6 @@
 	import Comment from './Comment.svelte'
 </script>
 
-<style>
-	h1 {
-		font-weight: 300;
-		margin: 0 1rem;
-	}
-
-	ul {
-		list-style: none;
-		padding: 0;
-		margin: 0.5rem;
-		display: flex;
-	}
-
-	@media (max-width: 600px) {
-		ul {
-			flex-direction: column;
-		}
-	}
-
-	li {
-		padding: 0.5rem;
-		flex: 1 1 50%;
-		min-width: 200px;
-	}
-</style>
-
 <h1>
 	Projects
 </h1>
@@ -55,3 +29,29 @@
 		/>
 	</li>
 </ul>
+
+<style>
+	h1 {
+		font-weight: 300;
+		margin: 0 1rem;
+	}
+
+	ul {
+		list-style: none;
+		padding: 0;
+		margin: 0.5rem;
+		display: flex;
+	}
+
+	@media (max-width: 600px) {
+		ul {
+			flex-direction: column;
+		}
+	}
+
+	li {
+		padding: 0.5rem;
+		flex: 1 1 50%;
+		min-width: 200px;
+	}
+</style>

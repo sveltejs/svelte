@@ -23,7 +23,7 @@ export default class AwaitBlock extends Node {
 	then: ThenBlock;
 	catch: CatchBlock;
 
-	constructor(component: Component, parent, scope: TemplateScope, info: TemplateNode) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		this.expression = new Expression(component, this, scope, info.expression);
@@ -33,12 +33,12 @@ export default class AwaitBlock extends Node {
 
 		if (this.then_node) {
 			this.then_contexts = [];
-			unpack_destructuring(this.then_contexts, info.value, node => node);
+			unpack_destructuring(this.then_contexts, info.value);
 		}
 
 		if (this.catch_node) {
 			this.catch_contexts = [];
-			unpack_destructuring(this.catch_contexts, info.error, node => node);
+			unpack_destructuring(this.catch_contexts, info.error);
 		}
 
 		this.pending = new PendingBlock(component, this, scope, info.pending);

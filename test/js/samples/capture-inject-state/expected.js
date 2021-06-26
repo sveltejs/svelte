@@ -98,6 +98,8 @@ let shadowedByModule;
 const priv = "priv";
 
 function instance($$self, $$props, $$invalidate) {
+	let computed;
+
 	let $prop,
 		$$unsubscribe_prop = noop,
 		$$subscribe_prop = () => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe(prop, $$value => $$invalidate(2, $prop = $$value)), prop);
@@ -144,8 +146,6 @@ function instance($$self, $$props, $$invalidate) {
 		if ("shadowedByModule" in $$props) $$invalidate(4, shadowedByModule = $$props.shadowedByModule);
 		if ("computed" in $$props) computed = $$props.computed;
 	};
-
-	let computed;
 
 	if ($$props && "$$inject" in $$props) {
 		$$self.$inject_state($$props.$$inject);

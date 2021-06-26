@@ -7,6 +7,7 @@ import Text from './Text';
 import Expression from './shared/Expression';
 import TemplateScope from './shared/TemplateScope';
 import { x } from 'code-red';
+import { TemplateNode } from '../../interfaces';
 
 export default class Attribute extends Node {
 	type: 'Attribute' | 'Spread';
@@ -24,7 +25,7 @@ export default class Attribute extends Node {
 	chunks: Array<Text | Expression>;
 	dependencies: Set<string>;
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 		this.scope = scope;
 
@@ -95,7 +96,7 @@ export default class Attribute extends Node {
 	}
 
 	get_static_value() {
-		if (this.is_spread || this.dependencies.size > 0) return null;
+		if (!this.is_static) return null;
 
 		return this.is_true
 			? true

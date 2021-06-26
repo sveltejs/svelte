@@ -29,9 +29,10 @@ import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
-import { apply_preprocessor_sourcemap } from '../utils/string_with_sourcemap';
+import { apply_preprocessor_sourcemap } from '../utils/mapped_code';
 import Element from './nodes/Element';
 import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types/types';
+import { clone } from '../utils/clone';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -116,12 +117,12 @@ export default class Component {
 
 		// the instance JS gets mutated, so we park
 		// a copy here for later. TODO this feels gross
-		this.original_ast = {
+		this.original_ast = clone({
 			html: ast.html,
 			css: ast.css,
-			instance: ast.instance && JSON.parse(JSON.stringify(ast.instance)),
+			instance: ast.instance,
 			module: ast.module
-		};
+		});
 
 		this.file =
 			compile_options.filename &&
@@ -133,12 +134,14 @@ export default class Component {
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
 		// styles
-		this.stylesheet = new Stylesheet(
+		this.stylesheet = new Stylesheet({
 			source,
 			ast,
-			compile_options.filename,
-			compile_options.dev
-		);
+			filename: compile_options.filename,
+			component_name: name,
+			dev: compile_options.dev,
+			get_css_hash: compile_options.cssHash
+		});
 		this.stylesheet.validate(this);
 
 		this.component_options = process_component_options(
@@ -751,7 +754,7 @@ export default class Component {
 					return this.skip();
 				}
 
-				component.warn_on_undefined_store_value_references(node, parent, scope);
+				component.warn_on_undefined_store_value_references(node, parent, prop, scope);
 			},
 
 			leave(node: Node) {
@@ -843,7 +846,7 @@ export default class Component {
 		});
 	}
 
-	warn_on_undefined_store_value_references(node, parent, scope: Scope) {
+	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string, scope: Scope) {
 		if (
 			node.type === 'LabeledStatement' &&
 			node.label.name === '$' &&
@@ -855,7 +858,7 @@ export default class Component {
 			});
 		}
 
-		if (is_reference(node as Node, parent as Node)) {
+		if (is_reference(node, parent)) {
 			const object = get_object(node);
 			const { name } = object;
 
@@ -865,10 +868,12 @@ export default class Component {
 				}
 
 				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
-					this.error(node, {
-						code: 'contextual-store',
-						message: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
-					});
+					if (!((/Function/.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
+						this.error(node as any, {
+							code: 'contextual-store',
+							message: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
+						});
+					}
 				}
 			}
 		}
@@ -1175,15 +1180,20 @@ export default class Component {
 	extract_reactive_declarations() {
 		const component = this;
 
-		const unsorted_reactive_declarations = [];
+		const unsorted_reactive_declarations: Array<{
+			assignees: Set<string>;
+			dependencies: Set<string>;
+			node: Node;
+			declaration: Node;
+		}> = [];
 
 		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 
-				const assignees = new Set();
+				const assignees = new Set<string>();
 				const assignee_nodes = new Set();
-				const dependencies = new Set();
+				const dependencies = new Set<string>();
 
 				let scope = this.instance_scope;
 				const map = this.instance_scope_map;
@@ -1214,10 +1224,22 @@ export default class Component {
 								const { name } = identifier;
 								const owner = scope.find_owner(name);
 								const variable = component.var_lookup.get(name);
-								if (variable) variable.is_reactive_dependency = true;
+								let should_add_as_dependency = true;
+
+								if (variable) {
+									variable.is_reactive_dependency = true;
+									if (variable.module) {
+										should_add_as_dependency = false;
+										component.warn(node as any, {
+											code: 'module-script-reactive-declaration',
+											message: `"${name}" is declared in a module script and will not be reactive`
+										});
+									}
+								}
 								const is_writable_or_mutated =
 									variable && (variable.writable || variable.mutated);
 								if (
+									should_add_as_dependency &&
 									(!owner || owner === component.instance_scope) &&
 									(name[0] === '$' || is_writable_or_mutated)
 								) {
@@ -1349,7 +1371,8 @@ function process_component_options(component: Component, nodes) {
 			'accessors' in component.compile_options
 				? component.compile_options.accessors
 				: !!component.compile_options.customElement,
-		preserveWhitespace: !!component.compile_options.preserveWhitespace
+		preserveWhitespace: !!component.compile_options.preserveWhitespace,
+		namespace: component.compile_options.namespace
 	};
 
 	const node = nodes.find(node => node.name === 'svelte:options');

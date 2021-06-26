@@ -28,7 +28,9 @@ export function handle_promise(promise, info) {
 					if (i !== index && block) {
 						group_outros();
 						transition_out(block, 1, 1, () => {
-							info.blocks[i] = null;
+							if (info.blocks[i] === block) {
+								info.blocks[i] = null;
+							}
 						});
 						check_outros();
 					}
@@ -80,4 +82,18 @@ export function handle_promise(promise, info) {
 
 		info.resolved = promise;
 	}
+}
+
+export function update_await_block_branch(info, ctx, dirty) {
+	const child_ctx = ctx.slice();
+	const { resolved } = info;
+
+	if (info.current === info.then) {
+		child_ctx[info.value] = resolved;
+	}
+	if (info.current === info.catch) {
+		child_ctx[info.error] = resolved;
+	}
+
+	info.block.p(child_ctx, dirty);
 }

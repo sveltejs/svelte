@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.31.0",
+  "version": "3.38.3",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -73,7 +73,7 @@
     "dev": "rollup -cw",
     "pretest": "npm run build",
     "posttest": "agadoo internal/index.mjs",
-    "prepublishOnly": "npm run lint && PUBLISH=true npm test",
+    "prepublishOnly": "node check_publish_env.js && npm run lint && npm test",
     "tsd": "tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\""
   },
@@ -99,7 +99,7 @@
     "@rollup/plugin-json": "^4.0.1",
     "@rollup/plugin-node-resolve": "^6.0.0",
     "@rollup/plugin-replace": "^2.3.0",
-    "@rollup/plugin-sucrase": "^3.0.0",
+    "@rollup/plugin-sucrase": "^3.1.0",
     "@rollup/plugin-typescript": "^2.0.1",
     "@rollup/plugin-virtual": "^2.0.0",
     "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.6.0",
@@ -112,13 +112,13 @@
     "c8": "^5.0.1",
     "code-red": "^0.1.4",
     "codecov": "^3.5.0",
-    "css-tree": "1.0.0-alpha22",
+    "css-tree": "^1.1.2",
     "eslint": "^7.15.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-svelte3": "^2.7.3",
     "estree-walker": "^1.0.0",
     "is-reference": "^1.1.4",
-    "jsdom": "^15.1.1",
+    "jsdom": "^15.2.1",
     "kleur": "^3.0.3",
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.3",
@@ -130,8 +130,8 @@
     "source-map-support": "^0.5.13",
     "sourcemap-codec": "^1.4.8",
     "tiny-glob": "^0.2.6",
-    "tslib": "^1.10.0",
-    "typescript": "^3.5.3"
+    "tslib": "^2.0.3",
+    "typescript": "^3.7.5"
   },
   "nyc": {
     "include": [

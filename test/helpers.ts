@@ -260,3 +260,11 @@ export function mkdirp(dir) {
 		// do nothing
 	}
 }
+
+export function prettyPrintPuppeteerAssertionError(message) {
+	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(message);
+
+	if (match) {
+		assert.equal(match[1], match[2]);
+	}
+}

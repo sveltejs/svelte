@@ -393,7 +393,7 @@ When used around components, this will cause them to be reinstantiated and reini
 
 In a text expression, characters like `<` and `>` are escaped; however, with HTML expressions, they're not.
 
-The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML.
+The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML. It also will *not* compile Svelte code.
 
 > Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
 
@@ -417,8 +417,6 @@ The expression should be valid standalone HTML — `{@html "<div>"}content{@html
 ---
 
 The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.
-
-It accepts a comma-separated list of variable names (not arbitrary expressions).
 
 ```sv
 <script>
@@ -587,7 +585,7 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 
 ---
 
-On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList).
+On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). It is readonly.
 
 ```sv
 <label for="avatar">Upload a picture:</label>
@@ -1294,19 +1292,19 @@ Components can have child content, in the same way that elements can.
 The content is exposed in the child component using the `<slot>` element, which can contain fallback content that is rendered if no children are provided.
 
 ```sv
-<!-- App.svelte -->
-<Widget></Widget>
-
-<Widget>
-	<p>this is some child content that will overwrite the default slot content</p>
-</Widget>
-
 <!-- Widget.svelte -->
 <div>
 	<slot>
 		this fallback content will be rendered when no content is provided, like in the first example
 	</slot>
 </div>
+
+<!-- App.svelte -->
+<Widget></Widget> <!-- this component will render the default content -->
+
+<Widget>
+	<p>this is some child content that will overwrite the default slot content</p>
+</Widget>
 ```
 
 #### [`<slot name="`*name*`">`](slot_name)
@@ -1316,19 +1314,41 @@ The content is exposed in the child component using the `<slot>` element, which 
 Named slots allow consumers to target specific areas. They can also have fallback content.
 
 ```sv
-<!-- App.svelte -->
-<Widget>
-	<h1 slot="header">Hello</h1>
-	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
-</Widget>
-
 <!-- Widget.svelte -->
 <div>
 	<slot name="header">No header was provided</slot>
 	<p>Some content between header and footer</p>
 	<slot name="footer"></slot>
 </div>
+
+<!-- App.svelte -->
+<Widget>
+	<h1 slot="header">Hello</h1>
+	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
+</Widget>
 ```
+
+Components can be placed in a named slot using the syntax `<Component slot="name" />`.
+In order to place content in a slot without using a wrapper element, you can use the special element `<svelte:fragment>`.
+
+```sv
+<!-- Widget.svelte -->
+<div>
+	<slot name="header">No header was provided</slot>
+	<p>Some content between header and footer</p>
+	<slot name="footer"></slot>
+</div>
+
+<!-- App.svelte -->
+<Widget>
+	<HeaderComponent slot="header" />
+	<svelte:fragment slot="footer">
+		<p>All rights reserved.</p>
+		<p>Copyright (c) 2019 Svelte Industries</p>
+	</svelte:fragment>
+</Widget>
+```
+
 
 #### [`$$slots`](slots_object)
 
@@ -1339,23 +1359,24 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 Note that explicitly passing in an empty named slot will add that slot's name to `$$slots`. For example, if a parent passes `<div slot="title" />` to a child component, `$$slots.title` will be truthy within the child.
 
 ```sv
-<!-- App.svelte -->
-<Card>
-	<h1 slot="title">Blog Post Title</h1>
-</Card>
-
 <!-- Card.svelte -->
 <div>
 	<slot name="title"></slot>
 	{#if $$slots.description}
-		<!-- This slot and the <hr> before it will not render. -->
+		<!-- This <hr> and slot will render only if a slot named "description" is provided. -->
 		<hr>
 		<slot name="description"></slot>
 	{/if}
 </div>
+
+<!-- App.svelte -->
+<Card>
+	<h1 slot="title">Blog Post Title</h1>
+	<!-- No slot named "description" was provided so the optional slot will not be rendered. -->
+</Card>
 ```
 
-#### [`<slot let:`*name*`={`*value*`}>`](slot_let)
+#### [`<slot key={`*value*`}>`](slot_let)
 
 ---
 
@@ -1364,11 +1385,6 @@ Slots can be rendered zero or more times, and can pass values *back* to the pare
 The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}`, and `<slot {item}>` is equivalent to `<slot item={item}>`.
 
 ```sv
-<!-- App.svelte -->
-<FancyList {items} let:prop={thing}>
-	<div>{thing.text}</div>
-</FancyList>
-
 <!-- FancyList.svelte -->
 <ul>
 	{#each items as item}
@@ -1377,6 +1393,11 @@ The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}
 		</li>
 	{/each}
 </ul>
+
+<!-- App.svelte -->
+<FancyList {items} let:prop={thing}>
+	<div>{thing.text}</div>
+</FancyList>
 ```
 
 ---
@@ -1384,12 +1405,6 @@ The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}
 Named slots can also expose values. The `let:` directive goes on the element with the `slot` attribute.
 
 ```sv
-<!-- App.svelte -->
-<FancyList {items}>
-	<div slot="item" let:item>{item.text}</div>
-	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
-</FancyList>
-
 <!-- FancyList.svelte -->
 <ul>
 	{#each items as item}
@@ -1400,6 +1415,12 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 </ul>
 
 <slot name="footer"></slot>
+
+<!-- App.svelte -->
+<FancyList {items}>
+	<div slot="item" let:item>{item.text}</div>
+	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
+</FancyList>
 ```
 
 
@@ -1409,7 +1430,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 
 The `<svelte:self>` element allows a component to include itself, recursively.
 
-It cannot appear at the top level of your markup; it must be inside an if or each block to prevent an infinite loop.
+It cannot appear at the top level of your markup; it must be inside an if or each block or passed to a component's slot to prevent an infinite loop.
 
 ```sv
 <script>
@@ -1454,6 +1475,8 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:window>` element allows you to add event listeners to the `window` object without worrying about removing them when the component is destroyed, or checking for the existence of `window` when server-side rendering.
 
+Contrary to `<svelte:self>` this element can only be at the top level of your component and must never be inside a block or element.
+
 ```sv
 <script>
 	function handleKeydown(event) {
@@ -1491,7 +1514,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 ---
 
-As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`.
+As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`; and it has to appear at the top level of your component.
 
 ```sv
 <svelte:body
@@ -1510,6 +1533,8 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 ---
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
+
+As with `<svelte:window>` and `<svelte:head>` this element has to appear at the top level of your component and cannot be inside a block or other element.
 
 ```sv
 <svelte:head>
@@ -1532,9 +1557,31 @@ The `<svelte:options>` element provides a place to specify per-component compile
 * `immutable={false}` — the default. Svelte will be more conservative about whether or not mutable objects have changed
 * `accessors={true}` — adds getters and setters for the component's props
 * `accessors={false}` — the default
-* `namespace="..."` — the namespace where this component will be used, most commonly "svg"
+* `namespace="..."` — the namespace where this component will be used, most commonly "svg"; use the "foreign" namespace to opt out of case-insensitive attribute names and HTML-specific warnings
 * `tag="..."` — the name to use when compiling this component as a custom element
 
 ```sv
 <svelte:options tag="my-custom-element"/>
+```
+
+### `<svelte:fragment>`
+
+The `<svelte:fragment>` element allows you to place content in a [named slot](docs#slot_name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
+
+```sv
+<!-- Widget.svelte -->
+<div>
+	<slot name="header">No header was provided</slot>
+	<p>Some content between header and footer</p>
+	<slot name="footer"></slot>
+</div>
+
+<!-- App.svelte -->
+<Widget>
+	<h1 slot="header">Hello</h1>
+	<svelte:fragment slot="footer">
+		<p>All rights reserved.</p>
+		<p>Copyright (c) 2019 Svelte Industries</p>
+	</svelte:fragment>
+</Widget>
 ```

@@ -6,7 +6,7 @@ export default {
 		style: async ({ content, filename }) =>  {
 			const src = new MagicString(content);
 			const idx = content.indexOf('baritone');
-			src.overwrite(idx, idx+'baritone'.length, 'bar');
+			src.overwrite(idx, idx + 'baritone'.length, 'bar');
 
 			const map = SourceMapGenerator.fromSourceMap(
 				await new SourceMapConsumer(
