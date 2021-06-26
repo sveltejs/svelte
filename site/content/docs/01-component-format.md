@@ -291,3 +291,23 @@ The `-global-` part will be removed when compiled, and the keyframe then be refe
 	@keyframes -global-my-animation-name {...}
 </style>
 ```
+
+---
+
+There should only be 1 top-level `<style>` tag per component.
+
+However, it is possible to have `<style>` tag nested inside other elements or logic blocks.
+
+In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
+
+```html
+<div>
+	<style>
+		/* this style tag will be inserted as-is */
+		div {
+			/* this will apply to all `<div>` elements in the DOM */
+			color: red;
+		}
+	</style>
+</div>
+```
