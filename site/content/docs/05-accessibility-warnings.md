@@ -191,25 +191,6 @@ Enforce that heading elements (`h1`, `h2`, etc.) and anchors have content and th
 
 ---
 
-### `a11y-no-onchange`
-
-Enforce usage of `on:blur` over/in parallel with `on:change` on select menu elements for accessibility. `on:blur` should be used instead of `on:change`, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users. `on:blur` is a more declarative action by the user: for instance in a dropdown, using the arrow keys to toggle between options will trigger the `on:change` event in some browsers. Regardless, when a change of context results from an `on:blur` event or an `on:change` event, the user should be notified of the change unless it occurs below the currently focused element.
-
-```sv
-<select on:change={e => {}} on:blur={e => {}}>
-    <option>foo</option>
-    <option>bar</option>
-</select>
-
-<!-- A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users. -->
-<select on:change={e => {}}>
-    <option>foo</option>
-    <option>bar</option>
-</select>
-```
-
----
-
 ### `a11y-positive-tabindex`
 
 Avoid positive `tabIndex` property values to synchronize the flow of the page with keyboard tab order.
