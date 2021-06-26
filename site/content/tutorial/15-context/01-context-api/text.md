@@ -19,7 +19,7 @@ setContext(key, {
 });
 ```
 
-The context object can be anything you like. Like [lifecycle functions](tutorial/onmount), `setContext` and `getContext` must be called during component initialisation; since `map` isn't created until the component has mounted, our context object contains a `getMap` function rather than `map` itself.
+The context object can be anything you like. Like [lifecycle functions](tutorial/onmount), `setContext` and `getContext` must be called during component initialisation. Calling it afterwards - for example inside `onMount` - will throw an error. In this example, since `map` isn't created until the component has mounted, our context object contains a `getMap` function rather than `map` itself.
 
 On the other side of the equation, in `MapMarker.svelte`, we can now get a reference to the Mapbox instance:
 
@@ -54,25 +54,3 @@ In fact, you might use the two together. Since context is not reactive, values t
 ```js
 const { these, are, stores } = getContext(...);
 ```
-
-## `getContext()` must be called during component initialisation
-
-You may find this feature useful. However, remember to call `getContext()` during component initialisation! This means you can only use it directly in the `<script>` tag (for a `.svelte` file), not in any function. For example, this will work:
-
-```js
-import { getContext } from 'svelte';
-
-const map = getContext('map');
-```
-
-While this will not:
-
-```js
-import { getContext } from 'svelte';
-
-onMount(() => {
-  const map = getContext('map'); // will trigger an error!
-});
-```
-
-You may find it work in some old Svelte versions, but it won't work for current versions of Svelte.
