@@ -17,6 +17,9 @@ import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import Component from '../Component';
+import { ARIARoleDefintionKey } from 'aria-query';
+import { noninteractive_roles } from '../utils/aria_roles';
+import { interactive_elements } from '../utils/elements';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -596,6 +599,18 @@ export default class Element extends Node {
 					code: 'a11y-structure',
 					message: 'A11y: <figcaption> must be first or last child of <figure>'
 				});
+			}
+		}
+
+		if (interactive_elements.has(this.name)) {
+			if (attribute_map.has('role')) {
+				const roleValue = this.attributes.find(a => a.name === 'role').get_static_value().toString() as ARIARoleDefintionKey;
+				if (noninteractive_roles.has(roleValue)) {
+					component.warn(this, {
+						code: 'a11y-no-interactive-element-to-noninteractive-role',
+						message: `A11y: <${this.name}> cannot have role ${roleValue}`
+					});
+				}
 			}
 		}
 	}
