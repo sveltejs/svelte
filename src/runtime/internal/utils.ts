@@ -40,6 +40,10 @@ export function safe_not_equal(a, b) {
 	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
+export function src_url_equal(a, b) {
+	return new URL(a, window.location.origin).href === (new URL(b, window.location.origin)).href;
+}
+
 export function not_equal(a, b) {
 	return a != a ? b == b : a !== b;
 }
