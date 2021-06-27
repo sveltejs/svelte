@@ -294,6 +294,8 @@ const unsubscribe = count.subscribe(value => {
 unsubscribe(); // logs 'no more subscribers'
 ```
 
+Note that the value of a `writable` is lost when it is destroyed, for example when the page is refreshed. However, you can write your own logic to sync the value to for example the `localStorage`.
+
 #### `readable`
 
 ```js
