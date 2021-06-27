@@ -4,7 +4,7 @@ export default {
 		<input />
 	`,
 	ssrHtml: `
-		<input />
+		<input value="" />
 		<input value="hello" />
 	`,
 
