@@ -41,12 +41,12 @@ function init_hydrate(target: NodeEx) {
 	let children: ArrayLike<NodeEx2> = target.childNodes as NodeListOf<NodeEx2>;
 	
 	// If target is head, there may be children without claim_order
-	if (target.nodeName.toLowerCase() == "head") {
+	if (target.nodeName.toLowerCase() === 'head') {
 		const myChildren = [];
 		for (let i = 0; i < children.length; i++) {
 			const node = children[i];
 			if (node.claim_order !== undefined) {
-				myChildren.push(node)
+				myChildren.push(node);
 			}
 		}
 		children = myChildren;
@@ -332,7 +332,7 @@ function init_claim_info(nodes: ChildNodeArray) {
 	}
 }
 
-function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (node: ChildNodeEx) => node is R, processNode: (node: ChildNodeEx) => void, createNode: () => R, dontUpdateLastIndex: boolean = false) {
+function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (node: ChildNodeEx) => node is R, processNode: (node: ChildNodeEx) => ChildNodeEx | undefined, createNode: () => R, dontUpdateLastIndex: boolean = false) {
 	// Try to find nodes in an order such that we lengthen the longest increasing subsequence
 	init_claim_info(nodes);
 	
@@ -342,9 +342,13 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 			const node = nodes[i];
 
 			if (predicate(node)) {
-				processNode(node);
+				const replacement = processNode(node);
 
-				nodes.splice(i, 1);
+				if (replacement === undefined) {
+					nodes.splice(i, 1);
+				} else {
+					nodes[i] = replacement;
+				}
 				if (!dontUpdateLastIndex) {
 					nodes.claim_info.last_index = i;
 				}
@@ -359,12 +363,16 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 			const node = nodes[i];
 
 			if (predicate(node)) {
-				processNode(node);
+				const replacement = processNode(node);
 
-				nodes.splice(i, 1);
+				if (replacement === undefined) {
+					nodes.splice(i, 1);
+				} else {
+					nodes[i] = replacement;
+				}
 				if (!dontUpdateLastIndex) {
 					nodes.claim_info.last_index = i;
-				} else {
+				} else if (replacement === undefined) {
 					// Since we spliced before the last_index, we decrease it
 					nodes.claim_info.last_index--;
 				}
@@ -394,6 +402,7 @@ export function claim_element(nodes: ChildNodeArray, name: string, attributes: {
 				}
 			}
 			remove.forEach(v => node.removeAttribute(v));
+			return undefined;
 		},
 		() => svg ? svg_element(name as keyof SVGElementTagNameMap) : element(name as keyof HTMLElementTagNameMap)
 	);
@@ -404,7 +413,14 @@ export function claim_text(nodes: ChildNodeArray, data) {
 		nodes,
 		(node: ChildNode): node is Text => node.nodeType === 3,
 		(node: Text) => {
-			node.data = '' + data;
+			const dataStr = '' + data;
+			if (node.data.startsWith(dataStr)) {
+				if (node.data.length !== dataStr.length) {
+					return node.splitText(dataStr.length);
+				}
+			} else {
+				node.data = dataStr;
+			}
 		},
 		() => text(data),
 		true	// Text nodes should not update last index since it is likely not worth it to eliminate an increasing subsequence of actual elements
