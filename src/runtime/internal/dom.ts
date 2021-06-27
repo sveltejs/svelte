@@ -36,9 +36,21 @@ function init_hydrate(target: NodeEx) {
 	target.hydrate_init = true;
 
 	type NodeEx2 = NodeEx & {claim_order: number};
-
-	// We know that all children have claim_order values since the unclaimed have been detached
-	const children = Array.from(target.childNodes as NodeListOf<NodeEx>).filter(x => x.claim_order !== undefined) as NodeEx2[];
+	
+	// We know that all children have claim_order values since the unclaimed have been detached if target is not head
+	let children: ArrayLike<NodeEx2> = target.childNodes as NodeListOf<NodeEx2>;
+	
+	// If target is head, there may be children without claim_order
+	if (target.nodeName.toLowerCase() == "head") {
+		const myChildren = [];
+		for (let i = 0; i < children.length; i++) {
+			const node = children[i];
+			if (node.claim_order !== undefined) {
+				myChildren.push(node)
+			}
+		}
+		children = myChildren;
+	}
 	
 	/* 
 	* Reorder claimed children optimally.
