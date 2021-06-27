@@ -781,6 +781,8 @@ The `speed` parameter is a means of setting the duration of the transition relat
 
 The `crossfade` function creates a pair of [transitions](docs#transition_fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
 
+---
+
 `crossfade` accepts the following parameters:
 
 * `delay` (`number`, default 0) — milliseconds before starting
