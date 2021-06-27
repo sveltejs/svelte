@@ -104,7 +104,15 @@ function make_dirty(component, i) {
 	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
-export function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
+let append_styles;
+export function set_append_styles(append_styles_fn) {
+	append_styles = function (root) {
+		append_styles_fn(root);
+		append_styles = null;
+	};
+}
+
+export function init(component, options, instance, create_fragment, not_equal, props, _append_styles_legacy, dirty = [-1]) {
 	const parent_component = current_component;
 	set_current_component(component);
 
