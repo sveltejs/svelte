@@ -82,8 +82,9 @@ function init_hydrate(target: NodeEx) {
 		// Find the largest subsequence length such that it ends in a value less than our current value
 
 		// upper_bound returns first greater value, so we subtract one
-		const seqLen = upper_bound(1, longest + 1, idx => children[m[idx]].claim_order, current) - 1;
-
+		// with fast path for when we are on the current longest subsequence
+		const seqLen = ((longest > 0 && children[m[longest]].claim_order <= current) ? longest + 1 : upper_bound(1, longest, idx => children[m[idx]].claim_order, current)) - 1;
+		
 		p[i] = m[seqLen] + 1;
 
 		const newLen = seqLen + 1;
