@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add `trusted` event modifier ([#6137](https://github.com/sveltejs/svelte/issues/6137))
+
 ## 3.38.3
 
 * Speed up hydration by reducing amount of element reorderings ([#4308](https://github.com/sveltejs/svelte/issues/4308))
