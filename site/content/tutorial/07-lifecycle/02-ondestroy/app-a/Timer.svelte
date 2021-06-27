@@ -15,5 +15,6 @@
 <style>
 	p { 
 		border: 1px solid blue;
+		padding: 5px;
 	}
 </style>
