@@ -16,7 +16,7 @@
 	<ul>
 		{#each files as file}
 			<li>
-				{#if file.type === 'folder'}
+				{#if file.files}
 					<!-- show folder -->
 				{:else}
 					<File {...file}/>

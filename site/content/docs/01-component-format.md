@@ -277,6 +277,15 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 			 to this component */
 		color: goldenrod;
 	}
+
+	p:global(.red) {
+		/* this will apply to all <p> elements belonging to this 
+			 component with a class of red, even if class="red" does
+			 not initially appear in the markup, and is instead 
+			 added at runtime. This is useful when the class 
+			 of the element is dynamically applied, for instance 
+			 when updating the element's classList property directly. */
+	}
 </style>
 ```
 
@@ -290,4 +299,24 @@ The `-global-` part will be removed when compiled, and the keyframe then be refe
 <style>
 	@keyframes -global-my-animation-name {...}
 </style>
+```
+
+---
+
+There should only be 1 top-level `<style>` tag per component.
+
+However, it is possible to have `<style>` tag nested inside other elements or logic blocks.
+
+In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
+
+```html
+<div>
+	<style>
+		/* this style tag will be inserted as-is */
+		div {
+			/* this will apply to all `<div>` elements in the DOM */
+			color: red;
+		}
+	</style>
+</div>
 ```
