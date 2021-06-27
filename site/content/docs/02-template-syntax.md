@@ -1257,6 +1257,8 @@ Svelte's implementation is essentially syntactic sugar for adding a wrapper elem
 />
 ```
 
+---
+
 Desugars to this:
 
 ```sv
@@ -1269,7 +1271,9 @@ Desugars to this:
 </div>
 ```
 
-**Note**: Since this is an extra div, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature.
+**Note**: Since this is an extra div, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature. Also note that not all browsers support `display: contents`: https://caniuse.com/css-display-contents 
+
+---
 
 Svelte's CSS Variables support allows for easily themable components:
 
@@ -1282,6 +1286,8 @@ Svelte's CSS Variables support allows for easily themable components:
 </style>
 ```
 
+---
+
 So you can set a high level theme color:
 
 ```css
@@ -1290,6 +1296,8 @@ html {
   --theme-color: black;
 }
 ```
+
+---
 
 Or override it at the consumer level:
 
