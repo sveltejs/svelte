@@ -39,7 +39,7 @@ async function main() {
 		sprite.composite(image, i * SIZE, 0);
 	}
 
-	await sprite.quality(80).getBuffer(Jimp.MIME_JPEG, (err, buffer) => {
+	await sprite.quality(80).getBuffer(Jimp.MIME_JPEG, async (err, buffer) => {
 		let quality = 75;
 
 		let content = `--xxxxxxxxxx\r\nContent-Disposition: form-data; name="qlty"; \r\n\r\n${quality}\r\n--xxxxxxxxxx\r\nContent-Disposition: form-data; name="files"; filename="contributors.jpg"\r\nContent-Type:application/octet-stream\r\n\r\n`;
@@ -47,20 +47,19 @@ async function main() {
 
 		let body = Buffer.concat([Buffer.from(content, "utf8"), new Buffer(buffer, "binary"), Buffer.from(end)]);
 
-		fetch('https://api.resmush.it/ws.php', {
+		let response = await fetch('https://api.resmush.it/ws.php', {
 		    method: 'POST',
 		    headers: {
 		        "Content-type": 'multipart/form-data; boundary=xxxxxxxxxx',
 		    },
 		    body: body
-		}).then(async (res) => {
-			let response = await res.json()
-			console.log(`Reduced file size by ${response.percent}%`)
+		})
 
-		    fetch(response.dest).then(async image => {
-		    	fs.writeFileSync('../static/contributors.jpg', await image.buffer());
-		    });
-		});
+		let responseBody = await response.json();
+		console.log(`Reduced file size by ${responseBody.percent}%`);
+
+		let image = await fetch(responseBody.dest);
+		fs.writeFileSync('../static/contributors.jpg', await image.buffer());
 	});
 
 	const str = `[\n\t${authors.map(a => `'${a.login}'`).join(',\n\t')}\n]`;
