@@ -12,7 +12,7 @@ const unsubscribe = count.subscribe(value => {
 });
 ```
 
-You now declared `unsubscribe`, but it still needs be to called, for example through the `onDestroy` [lifecycle hook](tutorial/ondestroy):
+You now declared `unsubscribe`, but it still needs to be called, for example through the `onDestroy` [lifecycle hook](tutorial/ondestroy):
 
 ```html
 <script>
