@@ -147,8 +147,7 @@ export default class Selector {
 		for (const block of this.blocks) {
 			for (const selector of block.selectors) {
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					const match = selector.children[0].value.match(/\(.*?\)|([^\\],)/);
-					if (match && match[1]) {
+					if (/[^\\],(?![^([]+(?:\)|\]))/.test(selector.children[0].value)) {
 						component.error(selector, {
 							code: 'css-invalid-global-selector',
 							message: ':global(...) must contain a single selector'
