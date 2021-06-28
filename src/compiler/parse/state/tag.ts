@@ -385,6 +385,13 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
+		if (directive_name === '') {
+			parser.error({
+				code: 'empty-directive-name',
+				message: `${type} name cannot be empty`
+			}, start + colon_index + 1);
+		}
+
 		if (type === 'Binding' && directive_name !== 'this') {
 			check_unique(directive_name);
 		} else if (type !== 'EventHandler' && type !== 'Action') {
@@ -396,13 +403,6 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 				code: 'invalid-ref-directive',
 				message: `The ref directive is no longer supported — use \`bind:this={${directive_name}}\` instead`
 			}, start);
-		}
-
-		if (type === 'Class' && directive_name === '') {
-			parser.error({
-				code: 'invalid-class-directive',
-				message: 'Class binding name cannot be empty'
-			}, start + colon_index + 1);
 		}
 
 		if (value[0]) {
