@@ -529,6 +529,16 @@ export default function dom(
 			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
 		};
 
+		const optionalParameters = [];
+		if (should_add_css) {
+			optionalParameters.push(add_css);
+		} else if (dirty) {
+			optionalParameters.push(x`null`);
+		}
+		if (dirty) {
+			optionalParameters.push(dirty);
+		}
+
 		const declaration = b`
 			class ${name} extends ${superclass} {
 				constructor(options) {
