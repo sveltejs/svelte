@@ -4,6 +4,7 @@
 
 * Add `trusted` event modifier ([#6137](https://github.com/sveltejs/svelte/issues/6137))
 * Fix erroneous `unknown prop` warning when using slot on a component ([#6065](https://github.com/sveltejs/svelte/pull/6065))
+* Throw compiler error when passing empty directive names ([#6299](https://github.com/sveltejs/svelte/issues/6299))
 
 ## 3.38.3
 
