@@ -599,6 +599,20 @@ export default class Element extends Node {
 				});
 			}
 		}
+
+		if (handlers_map.has('mouseover') && !handlers_map.has('focus')) {
+			component.warn(this, {
+				code: 'a11y-mouse-events-have-key-events',
+				message: 'A11y: on:mouseover must be accompanied by on:focus'
+			});
+		}
+
+		if (handlers_map.has('mouseout') && !handlers_map.has('blur')) {
+			component.warn(this, {
+				code: 'a11y-mouse-events-have-key-events',
+				message: 'A11y: on:mouseout must be accompanied by on:blur'
+			});
+		}
 	}
 
 	validate_bindings_foreign() {
