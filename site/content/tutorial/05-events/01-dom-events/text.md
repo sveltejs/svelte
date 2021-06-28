@@ -9,3 +9,4 @@ As we've briefly seen already, you can listen to any event on an element with th
 	The mouse position is {m.x} x {m.y}
 </div>
 ```
+Now add the event handler to the div.

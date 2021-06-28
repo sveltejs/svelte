@@ -26,4 +26,6 @@ You can get the current *index* as a second argument, like so:
 {/each}
 ```
 
-If you prefer, you can use destructuring — `each cats as { id, name }` — and replace `cat.id` and `cat.name` with `id` and `name`.
+> If you prefer, you can use destructuring — `each cats as { id, name }` — and replace `cat.id` and `cat.name` with `id` and `name`.
+
+Now loop over `cats` to display their indexes and names.
