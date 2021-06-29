@@ -10,6 +10,7 @@ import {
 	Scope,
 	extract_identifiers
 } from './utils/scope';
+import { Node as PeriscopicNode } from 'periscopic';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
@@ -829,7 +830,7 @@ export default class Component {
 
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-					const names = extract_names(assignee);
+					const names = extract_names(assignee as PeriscopicNode);
 
 					const deep = assignee.type === 'MemberExpression';
 
