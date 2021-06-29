@@ -57,11 +57,6 @@ const a11y_required_content = new Set([
 	'h6'
 ]);
 
-const a11y_no_onchange = new Set([
-	'select',
-	'option'
-]);
-
 const a11y_labelable = new Set([
 	'button',
 	'input',
@@ -435,17 +430,12 @@ export default class Element extends Node {
 
 
 	validate_special_cases() {
-		const { component, attributes, handlers } = this;
+		const { component, attributes } = this;
 
 		const attribute_map = new Map();
-		const handlers_map = new Map();
 
 		attributes.forEach(attribute => (
 			attribute_map.set(attribute.name, attribute)
-		));
-
-		handlers.forEach(handler => (
-			handlers_map.set(handler.name, handler)
 		));
 
 		if (this.name === 'a') {
@@ -539,15 +529,6 @@ export default class Element extends Node {
 				component.warn(this, {
 					code: 'a11y-media-has-caption',
 					message: 'A11y: Media elements must have a <track kind="captions">'
-				});
-			}
-		}
-
-		if (a11y_no_onchange.has(this.name)) {
-			if (handlers_map.has('change') && !handlers_map.has('blur')) {
-				component.warn(this, {
-					code: 'a11y-no-onchange',
-					message: 'A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.'
 				});
 			}
 		}
