@@ -1,8 +1,5 @@
 <style>
-	div :global(.a\,bc\] ~ .d\,ef\)) {
-		color: red;
-	}
-	div :global(.abc\], .def\), h1) {
+	div :global(h1, .abc\)) {
 		color: red;
 	}
 </style>
