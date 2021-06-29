@@ -183,9 +183,12 @@ export default class Component {
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
 
-	add_var(variable: Var) {
+	add_var(variable: Var, add_to_lookup = true) {
 		this.vars.push(variable);
-		this.var_lookup.set(variable.name, variable);
+
+		if (add_to_lookup) {
+			this.var_lookup.set(variable.name, variable);
+		}
 	}
 
 	add_reference(name: string) {
@@ -216,6 +219,10 @@ export default class Component {
 				variable.subscribable = true;
 			}
 		} else {
+			if (this.compile_options.varsReport === 'full') {
+				this.add_var({ name, referenced: true }, false);
+			}
+
 			this.used_names.add(name);
 		}
 	}
@@ -340,19 +347,7 @@ export default class Component {
 			css,
 			ast: this.original_ast,
 			warnings: this.warnings,
-			vars: this.vars
-				.filter(v => !v.global && !v.internal)
-				.map(v => ({
-					name: v.name,
-					export_name: v.export_name || null,
-					injected: v.injected || false,
-					module: v.module || false,
-					mutated: v.mutated || false,
-					reassigned: v.reassigned || false,
-					referenced: v.referenced || false,
-					writable: v.writable || false,
-					referenced_from_script: v.referenced_from_script || false
-				})),
+			vars: this.get_vars_report(),
 			stats: this.stats.render()
 		};
 	}
@@ -400,6 +395,28 @@ export default class Component {
 				name: alias
 			};
 		};
+	}
+
+	get_vars_report(): Var[] {
+		const { compile_options, vars } = this;
+
+		const vars_report = compile_options.varsReport === false
+			? []
+			: compile_options.varsReport === 'full'
+				? vars
+				: vars.filter(v => !v.global && !v.internal);
+
+		return vars_report.map(v => ({
+			name: v.name,
+			export_name: v.export_name || null,
+			injected: v.injected || false,
+			module: v.module || false,
+			mutated: v.mutated || false,
+			reassigned: v.reassigned || false,
+			referenced: v.referenced || false,
+			writable: v.writable || false,
+			referenced_from_script: v.referenced_from_script || false
+		}));
 	}
 
 	error(
