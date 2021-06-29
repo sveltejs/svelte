@@ -29,5 +29,5 @@ export default {
 			<input type=range min=0 max=20>
 			<p>20 of 20</p>
 		`);
-	},
+	}
 };

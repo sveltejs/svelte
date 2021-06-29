@@ -13,11 +13,13 @@ export const globals = new Set([
 	'decodeURI',
 	'decodeURIComponent',
 	'document',
+	'Element',
 	'encodeURI',
 	'encodeURIComponent',
 	'Error',
 	'EvalError',
 	'Event',
+	'EventSource',
 	'fetch',
 	'global',
 	'globalThis',
@@ -35,6 +37,7 @@ export const globals = new Set([
 	'NaN',
 	'navigator',
 	'Number',
+	'Node',
 	'Object',
 	'parseFloat',
 	'parseInt',
@@ -105,7 +108,7 @@ export const reserved = new Set([
 	'void',
 	'while',
 	'with',
-	'yield',
+	'yield'
 ]);
 
 const void_element_names = /^(?:area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/;

@@ -67,6 +67,8 @@ function foo() {
 }
 
 function instance($$self, $$props, $$invalidate) {
+	let { $$slots: slots = {}, $$scope } = $$props;
+	validate_slots("Component", slots, []);
 	let node;
 
 	{
@@ -108,11 +110,8 @@ function instance($$self, $$props, $$invalidate) {
 	const writable_props = [];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$" && key !== "slot") console_1.warn(`<Component> was created with unknown prop '${key}'`);
 	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Component", $$slots, []);
 
 	function div_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {

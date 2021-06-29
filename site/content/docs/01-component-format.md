@@ -57,6 +57,8 @@ In development mode (see the [compiler options](docs#svelte_compile)), a warning
 
 If you export a `const`, `class` or `function`, it is readonly from outside the component. Function *expressions* are valid props, however.
 
+Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](docs#bind_element).
+
 ```sv
 <script>
 	// these are readonly
@@ -126,6 +128,32 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 		console.log(`the current title is ${title}`);
 	}
 </script>
+```
+
+---
+
+Only values which directly appear within the `$:` block will become dependencies of the reactive statement. For example, in the code below `total` will only update when `x` changes, but not `y`.
+
+```sv
+<script>
+	let x = 0;
+	let y = 0;
+	
+	function yPlusAValue(value) {
+		return value + y;
+	}
+	
+	$: total = yPlusAValue(x);
+</script>
+
+Total: {total}
+<button on:click={() => x++}>
+	Increment X
+</button>
+
+<button on:click={() => y++}>
+	Increment Y
+</button>
 ```
 
 ---
@@ -251,6 +279,15 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 			 to this component */
 		color: goldenrod;
 	}
+
+	p:global(.red) {
+		/* this will apply to all <p> elements belonging to this 
+			 component with a class of red, even if class="red" does
+			 not initially appear in the markup, and is instead 
+			 added at runtime. This is useful when the class 
+			 of the element is dynamically applied, for instance 
+			 when updating the element's classList property directly. */
+	}
 </style>
 ```
 
@@ -264,4 +301,24 @@ The `-global-` part will be removed when compiled, and the keyframe then be refe
 <style>
 	@keyframes -global-my-animation-name {...}
 </style>
+```
+
+---
+
+There should only be 1 top-level `<style>` tag per component.
+
+However, it is possible to have `<style>` tag nested inside other elements or logic blocks.
+
+In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
+
+```html
+<div>
+	<style>
+		/* this style tag will be inserted as-is */
+		div {
+			/* this will apply to all `<div>` elements in the DOM */
+			color: red;
+		}
+	</style>
+</div>
 ```

@@ -173,7 +173,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(10, ended);
 	}
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("buffered" in $$props) $$invalidate(0, buffered = $$props.buffered);
 		if ("seekable" in $$props) $$invalidate(1, seekable = $$props.seekable);
 		if ("played" in $$props) $$invalidate(2, played = $$props.played);

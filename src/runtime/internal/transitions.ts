@@ -1,12 +1,29 @@
 import { identity as linear, is_function, noop, run_all } from './utils';
-import { now } from "./environment";
+import { now } from './environment';
 import { loop } from './loop';
 import { create_rule, delete_rule } from './style_manager';
 import { custom_event } from './dom';
 import { add_render_callback } from './scheduler';
 import { TransitionConfig } from '../transition';
+import { Fragment } from './Component';
 
 let promise: Promise<void>|null;
+type INTRO = 1;
+type OUTRO = 0;
+interface Outro {
+	/**
+	 * remaining outros
+	 */
+	r: number;
+	/**
+	 * callbacks
+	 */
+	c: Function[];
+	/**
+	 * parent outro
+	 */
+	p: Outro;
+}
 
 function wait() {
 	if (!promise) {
@@ -19,12 +36,12 @@ function wait() {
 	return promise;
 }
 
-function dispatch(node: Element, direction: boolean, kind: 'start' | 'end') {
+function dispatch(node: Element, direction: INTRO | OUTRO | boolean, kind: 'start' | 'end') {
 	node.dispatchEvent(custom_event(`${direction ? 'intro' : 'outro'}${kind}`));
 }
 
 const outroing = new Set();
-let outros;
+let outros: Outro;
 
 export function group_outros() {
 	outros = {
@@ -41,14 +58,14 @@ export function check_outros() {
 	outros = outros.p;
 }
 
-export function transition_in(block, local?: 0 | 1) {
+export function transition_in(block: Fragment, local?: 0 | 1) {
 	if (block && block.i) {
 		outroing.delete(block);
 		block.i(local);
 	}
 }
 
-export function transition_out(block, local: 0 | 1, detach: 0 | 1, callback) {
+export function transition_out(block: Fragment, local: 0 | 1, detach?: 0 | 1, callback?) {
 	if (block && block.o) {
 		if (outroing.has(block)) return;
 		outroing.add(block);
@@ -225,21 +242,39 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 	};
 }
 
+interface PendingProgram {
+	start: number;
+	b: INTRO | OUTRO;
+	group?: Outro;
+}
+interface Program {
+	a: number;
+	b: INTRO | OUTRO;
+	/**
+	 * direction
+	 */
+	d: 1 | -1;
+	duration: number;
+	start: number;
+	end: number;
+	group?: Outro;
+}
+
 export function create_bidirectional_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any, intro: boolean) {
 	let config = fn(node, params);
 
 	let t = intro ? 0 : 1;
 
-	let running_program = null;
-	let pending_program = null;
+	let running_program: Program | null = null;
+	let pending_program: PendingProgram | null = null;
 	let animation_name = null;
 
 	function clear_animation() {
 		if (animation_name) delete_rule(node, animation_name);
 	}
 
-	function init(program, duration) {
-		const d = program.b - t;
+	function init(program: PendingProgram, duration: number): Program {
+		const d = (program.b - t) as Program['d'];
 		duration *= Math.abs(d);
 
 		return {
@@ -253,7 +288,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 		};
 	}
 
-	function go(b) {
+	function go(b: INTRO | OUTRO) {
 		const {
 			delay = 0,
 			duration = 300,
@@ -262,7 +297,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			css
 		} = config || null_transition;
 
-		const program = {
+		const program: PendingProgram = {
 			start: now() + delay,
 			b
 		};
@@ -273,7 +308,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			outros.r += 1;
 		}
 
-		if (running_program) {
+		if (running_program || pending_program) {
 			pending_program = program;
 		} else {
 			// if this is an intro, and there's a delay, we need to do
@@ -318,9 +353,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 						}
 
 						running_program = null;
-					}
-
-					else if (now >= running_program.start) {
+					} else if (now >= running_program.start) {
 						const p = now - running_program.start;
 						t = running_program.a + running_program.d * easing(p / running_program.duration);
 						tick(t, 1 - t);
@@ -333,7 +366,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 	}
 
 	return {
-		run(b) {
+		run(b: INTRO | OUTRO) {
 			if (is_function(config)) {
 				wait().then(() => {
 					// @ts-ignore

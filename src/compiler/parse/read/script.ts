@@ -12,7 +12,7 @@ function get_context(parser: Parser, attributes: any[], start: number): string {
 	if (context.value.length !== 1 || context.value[0].type !== 'Text') {
 		parser.error({
 			code: 'invalid-script',
-			message: `context attribute must be static`
+			message: 'context attribute must be static'
 		}, start);
 	}
 
@@ -20,8 +20,8 @@ function get_context(parser: Parser, attributes: any[], start: number): string {
 
 	if (value !== 'module') {
 		parser.error({
-			code: `invalid-script`,
-			message: `If the context attribute is supplied, its value must be "module"`
+			code: 'invalid-script',
+			message: 'If the context attribute is supplied, its value must be "module"'
 		}, context.start);
 	}
 
@@ -32,10 +32,12 @@ export default function read_script(parser: Parser, start: number, attributes: N
 	const script_start = parser.index;
 	const script_end = parser.template.indexOf(script_closing_tag, script_start);
 
-	if (script_end === -1) parser.error({
-		code: `unclosed-script`,
-		message: `<script> must have a closing tag`
-	});
+	if (script_end === -1) {
+		parser.error({
+			code: 'unclosed-script',
+			message: '<script> must have a closing tag'
+		});
+	}
 
 	const source = parser.template.slice(0, script_start).replace(/[^\n]/g, ' ') +
 		parser.template.slice(script_start, script_end);
@@ -57,6 +59,6 @@ export default function read_script(parser: Parser, start: number, attributes: N
 		start,
 		end: parser.index,
 		context: get_context(parser, attributes, start),
-		content: ast,
+		content: ast
 	};
 }

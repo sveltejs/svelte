@@ -6,7 +6,7 @@ export default {
 
 	test({ assert, component, target }) {
 		component.visible = false;
-		assert.htmlEqual(target.innerHTML, ``);
+		assert.htmlEqual(target.innerHTML, '');
 
 		component.visible = true;
 		assert.htmlEqual(target.innerHTML, `

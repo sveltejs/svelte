@@ -8,6 +8,7 @@ node_modules
 /compiler.d.ts
 /compiler.*js
 /index.*js
+/ssr.*js
 /internal
 /store
 /easing
@@ -18,10 +19,6 @@ node_modules
 /coverage/
 /coverage.lcov
 /test/*/samples/_
-/test/sourcemaps/samples/*/output.js
-/test/sourcemaps/samples/*/output.js.map
-/test/sourcemaps/samples/*/output.css
-/test/sourcemaps/samples/*/output.css.map
 /yarn-error.log
 _actual*.*
 _output
@@ -34,8 +31,6 @@ _output
 /site/static/svelte-app.json
 /site/static/contributors.jpg
 /site/static/workers
-/site/static/organisations
 /site/scripts/svelte-app
 /site/scripts/community
 /site/src/routes/_contributors.js
-/site/src/routes/_components/WhosUsingSvelte.svelte

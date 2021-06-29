@@ -5,7 +5,7 @@ export default {
 		myClass: 'one two'
 	},
 
-	html: `<div class="one two foo bar"></div>`,
+	html: '<div class="one two foo bar"></div>',
 
 	test({ assert, component, target, window }) {
 		component.foo = false;

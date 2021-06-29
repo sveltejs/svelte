@@ -5,7 +5,7 @@ export default {
 		cols: ['a', 'b', 'c']
 	},
 
-	html: ``,
+	html: '',
 
 	compileOptions: {
 		dev: true
@@ -34,6 +34,6 @@ export default {
 		component.visible = false;
 		raf.tick(0);
 		raf.tick(100);
-		assert.htmlEqual(target.innerHTML, ``);
-	},
+		assert.htmlEqual(target.innerHTML, '');
+	}
 };

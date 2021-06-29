@@ -1,16 +1,7 @@
-<p>
-  <a href="https://svelte.dev">
-	<img alt="Cybernetically enhanced web apps: Svelte" src="https://sveltejs.github.io/assets/banner.png">
-  </a>
+[![Cybernetically enhanced web apps: Svelte](https://sveltejs.github.io/assets/banner.png)](https://svelte.dev)
 
-  <a href="https://www.npmjs.com/package/svelte">
-    <img src="https://img.shields.io/npm/v/svelte.svg" alt="npm version">
-  </a>
 
-  <a href="https://github.com/sveltejs/svelte/blob/master/LICENSE">
-    <img src="https://img.shields.io/npm/l/svelte.svg" alt="license">
-  </a>
-</p>
+[![npm version](https://img.shields.io/npm/v/svelte.svg)](https://www.npmjs.com/package/svelte) [![license](https://img.shields.io/npm/l/svelte.svg)](LICENSE.md) [![Chat](https://img.shields.io/discord/457912077277855764?label=chat&logo=discord)](https://svelte.dev/chat)
 
 
 ## What is Svelte?
@@ -18,6 +9,15 @@
 Svelte is a new way to build web applications. It's a compiler that takes your declarative components and converts them into efficient JavaScript that surgically updates the DOM.
 
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://svelte.dev/chat).
+
+
+## Supporting Svelte
+
+Svelte is an MIT-licensed open source project with its ongoing development made possible entirely by fantastic volunteers. If you'd like to support their efforts, please consider:
+
+- [Becoming a backer on Open Collective](https://opencollective.com/svelte).
+
+Funds donated via Open Collective will be used for compensating expenses related to Svelte's development such as hosting costs. If sufficient donations are received, funds may also be used to support Svelte's development more directly.
 
 
 ## Development
@@ -34,7 +34,7 @@ npm install
 
 > Do not use Yarn to install the dependencies, as the specific package versions in `package-lock.json` are used to build and test Svelte.
 
-To build the compiler, and all the other modules included in the package:
+To build the compiler and all the other modules included in the package:
 
 ```bash
 npm run build
@@ -46,7 +46,7 @@ To watch for changes and continually rebuild the package (this is useful if you'
 npm run dev
 ```
 
-The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/) you may need to install a plugin in order to get syntax highlighting and code hints etc.
+The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/), you may need to install a plugin in order to get syntax highlighting and code hints, etc.
 
 
 ### Running Tests
@@ -72,4 +72,4 @@ Probably not, but it's possible. If you can't seem to access any `.dev` sites, c
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE.md)

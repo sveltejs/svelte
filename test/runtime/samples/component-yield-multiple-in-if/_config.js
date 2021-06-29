@@ -5,6 +5,6 @@ export default {
 
 	test({ assert, component, target }) {
 		component.arriving = false;
-		assert.htmlEqual(target.innerHTML, `<div><p class='widget'>Goodbye</p></div>`);
+		assert.htmlEqual(target.innerHTML, "<div><p class='widget'>Goodbye</p></div>");
 	}
 };

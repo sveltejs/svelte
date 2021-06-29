@@ -9,7 +9,7 @@ import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import { walk } from 'estree-walker';
 import { is_head } from './shared/is_head';
-import { Identifier, Node, UnaryExpression } from 'estree';
+import { Identifier, Node } from 'estree';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -55,7 +55,7 @@ class IfBlockBranch extends Wrapper {
 			});
 
 			if (should_cache) {
-				this.condition = block.get_unique_name(`show_if`);
+				this.condition = block.get_unique_name('show_if');
 				this.snippet = (expression.manipulate(block) as Node);
 			} else {
 				this.condition = expression.manipulate(block);
@@ -65,7 +65,7 @@ class IfBlockBranch extends Wrapper {
 		this.block = block.child({
 			comment: create_debugging_comment(node, parent.renderer.component),
 			name: parent.renderer.component.get_unique_name(
-				is_else ? `create_else_block` : `create_if_block`
+				is_else ? 'create_else_block' : 'create_if_block'
 			),
 			type: (node as IfBlock).expression ? 'if' : 'else'
 		});
@@ -257,8 +257,8 @@ export default class IfBlockWrapper extends Wrapper {
 		{ name, anchor, has_else, if_exists_condition, has_transitions },
 		detaching
 	) {
-		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
-		const current_block_type = block.get_unique_name(`current_block_type`);
+		const select_block_type = this.renderer.component.get_unique_name('select_block_type');
+		const current_block_type = block.get_unique_name('current_block_type');
 		const get_block = has_else
 			? x`${current_block_type}(#ctx)`
 			: x`${current_block_type} && ${current_block_type}(#ctx)`;
@@ -288,7 +288,7 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 
 		block.chunks.init.push(b`
-			let ${current_block_type} = ${select_block_type}(#ctx, ${this.get_initial_dirty_bit()});
+			let ${current_block_type} = ${select_block_type}(#ctx, ${this.renderer.get_initial_dirty()});
 			let ${name} = ${get_block};
 		`);
 
@@ -364,11 +364,11 @@ export default class IfBlockWrapper extends Wrapper {
 		{ name, anchor, has_else, has_transitions, if_exists_condition },
 		detaching
 	) {
-		const select_block_type = this.renderer.component.get_unique_name(`select_block_type`);
-		const current_block_type_index = block.get_unique_name(`current_block_type_index`);
-		const previous_block_index = block.get_unique_name(`previous_block_index`);
-		const if_block_creators = block.get_unique_name(`if_block_creators`);
-		const if_blocks = block.get_unique_name(`if_blocks`);
+		const select_block_type = this.renderer.component.get_unique_name('select_block_type');
+		const current_block_type_index = block.get_unique_name('current_block_type_index');
+		const previous_block_index = block.get_unique_name('previous_block_index');
+		const if_block_creators = block.get_unique_name('if_block_creators');
+		const if_blocks = block.get_unique_name('if_blocks');
 
 		const if_current_block_type_index = has_else
 			? nodes => nodes
@@ -411,12 +411,12 @@ export default class IfBlockWrapper extends Wrapper {
 
 		if (has_else) {
 			block.chunks.init.push(b`
-				${current_block_type_index} = ${select_block_type}(#ctx, ${this.get_initial_dirty_bit()});
+				${current_block_type_index} = ${select_block_type}(#ctx, ${this.renderer.get_initial_dirty()});
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 			`);
 		} else {
 			block.chunks.init.push(b`
-				if (~(${current_block_type_index} = ${select_block_type}(#ctx, ${this.get_initial_dirty_bit()}))) {
+				if (~(${current_block_type_index} = ${select_block_type}(#ctx, ${this.renderer.get_initial_dirty()}))) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 				}
 			`);
@@ -447,6 +447,8 @@ export default class IfBlockWrapper extends Wrapper {
 				if (!${name}) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 					${name}.c();
+				} else {
+					${dynamic && b`${name}.p(#ctx, #dirty);`}
 				}
 				${has_transitions && b`@transition_in(${name}, 1);`}
 				${name}.m(${update_mount_node}, ${anchor});
@@ -470,10 +472,13 @@ export default class IfBlockWrapper extends Wrapper {
 					}
 				`;
 
+			block.chunks.update.push(b`
+				let ${previous_block_index} = ${current_block_type_index};
+				${current_block_type_index} = ${select_block_type}(#ctx, #dirty);
+			`);
+
 			if (dynamic) {
 				block.chunks.update.push(b`
-					let ${previous_block_index} = ${current_block_type_index};
-					${current_block_type_index} = ${select_block_type}(#ctx, #dirty);
 					if (${current_block_type_index} === ${previous_block_index}) {
 						${if_current_block_type_index(b`${if_blocks}[${current_block_type_index}].p(#ctx, #dirty);`)}
 					} else {
@@ -482,8 +487,6 @@ export default class IfBlockWrapper extends Wrapper {
 				`);
 			} else {
 				block.chunks.update.push(b`
-					let ${previous_block_index} = ${current_block_type_index};
-					${current_block_type_index} = ${select_block_type}(#ctx, #dirty);
 					if (${current_block_type_index} !== ${previous_block_index}) {
 						${change_block}
 					}
@@ -588,22 +591,5 @@ export default class IfBlockWrapper extends Wrapper {
 				${name}.d(${detaching});
 			`);
 		}
-	}
-
-	get_initial_dirty_bit() {
-		const _this = this;
-		// TODO: context-overflow make it less gross
-		const val: UnaryExpression = x`-1` as UnaryExpression;
-		return {
-			get type() {
-				return _this.renderer.context_overflow ? 'ArrayExpression' : 'UnaryExpression';
-			},
-			// as [-1]
-			elements: [val],
-			// as -1
-			operator: val.operator,
-			prefix: val.prefix,
-			argument: val.argument,
-		};
 	}
 }

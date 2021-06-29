@@ -4,6 +4,14 @@ import { b, x } from 'code-red';
 import { Node, Identifier, ArrayPattern } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
 
+export interface Bindings {
+	object: Identifier;
+	property: Identifier;
+	snippet: Node;
+	store: string;
+	modifier: (node: Node) => Node;
+}
+
 export interface BlockOptions {
 	parent?: Block;
 	name: Identifier;
@@ -11,14 +19,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: Identifier;
-	bindings?: Map<string, {
-		object: Identifier;
-		property: Identifier;
-		snippet: Node;
-		store: string;
-		tail: Node;
-		modifier: (node: Node) => Node;
-	}>;
+	bindings?: Map<string, Bindings>;
 	dependencies?: Set<string>;
 }
 
@@ -36,14 +37,8 @@ export default class Block {
 
 	dependencies: Set<string> = new Set();
 
-	bindings: Map<string, {
-		object: Identifier;
-		property: Identifier;
-		snippet: Node;
-		store: string;
-		tail: Node;
-		modifier: (node: Node) => Node;
-	}>;
+	bindings: Map<string, Bindings>;
+	binding_group_initialised: Set<string> = new Set();
 
 	chunks: {
 		declarations: Array<Node | Node[]>;
@@ -106,7 +101,7 @@ export default class Block {
 			intro: [],
 			update: [],
 			outro: [],
-			destroy: [],
+			destroy: []
 		};
 
 		this.has_animation = false;

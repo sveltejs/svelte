@@ -1,5 +1,5 @@
 export default {
-	html: ``,
+	html: '',
 
 	async test({ assert, component, target }) {
 		component.visible = true;

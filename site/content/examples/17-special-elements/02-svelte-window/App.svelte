@@ -8,6 +8,17 @@
 	}
 </script>
 
+<svelte:window on:keydown={handleKeydown}/>
+
+<div style="text-align: center">
+	{#if key}
+		<kbd>{key === ' ' ? 'Space' : key}</kbd>
+		<p>{keyCode}</p>
+	{:else}
+		<p>Focus this window and press any key</p>
+	{/if}
+</div>
+
 <style>
 	div {
 		display: flex;
@@ -29,14 +40,3 @@
 		color: #555;
 	}
 </style>
-
-<svelte:window on:keydown={handleKeydown}/>
-
-<div style="text-align: center">
-	{#if key}
-		<kbd>{key === ' ' ? 'Space' : key}</kbd>
-		<p>{keyCode}</p>
-	{:else}
-		<p>Focus this window and press any key</p>
-	{/if}
-</div>

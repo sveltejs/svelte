@@ -89,6 +89,8 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
+		display: flex;
+		flex-direction: column;
 		background-color: var(--back);
 		overflow: hidden;
 		box-sizing: border-box;
@@ -98,6 +100,7 @@
 	.viewport {
 		width: 100%;
 		height: 100%;
+		flex: 1;
 	}
 
 	.mobile .viewport {

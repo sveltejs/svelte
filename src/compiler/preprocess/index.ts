@@ -1,146 +1,233 @@
-export interface Processed {
-	code: string;
-	map?: object | string;
+import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import { getLocator } from 'locate-character';
+import { MappedCode, SourceLocation, parse_attached_sourcemap, sourcemap_add_offset, combine_sourcemaps } from '../utils/mapped_code';
+import { decode_map } from './decode_sourcemap';
+import { replace_in_code, slice_source } from './replace_in_code';
+import { MarkupPreprocessor, Source, Preprocessor, PreprocessorGroup, Processed } from './types';
+
+export * from './types';
+
+interface SourceUpdate {
+	string?: string;
+	map?: DecodedSourceMap;
 	dependencies?: string[];
 }
 
-export interface PreprocessorGroup {
-	markup?: (options: {
-		content: string;
-		filename: string;
-	}) => Processed | Promise<Processed>;
-	style?: Preprocessor;
-	script?: Preprocessor;
+function get_file_basename(filename: string) {
+	return filename.split(/[/\\]/).pop();
 }
 
-export type Preprocessor = (options: {
-	content: string;
-	attributes: Record<string, string | boolean>;
-	filename?: string;
-}) => Processed | Promise<Processed>;
+/**
+ * Represents intermediate states of the preprocessing.
+ */
+class PreprocessResult implements Source {
+	// sourcemap_list is sorted in reverse order from last map (index 0) to first map (index -1)
+	// so we use sourcemap_list.unshift() to add new maps
+	// https://github.com/ampproject/remapping#multiple-transformations-of-a-file
+	sourcemap_list: Array<DecodedSourceMap | RawSourceMap> = [];
+	dependencies: string[] = [];
+	file_basename: string;
 
-function parse_attributes(str: string) {
-	const attrs = {};
-	str.split(/\s+/).filter(Boolean).forEach(attr => {
-		const p = attr.indexOf('=');
-		if (p === -1) {
-			attrs[attr] = true;
-		} else {
-			attrs[attr.slice(0, p)] = `'"`.includes(attr[p + 1]) ?
-				attr.slice(p + 2, -1) :
-				attr.slice(p + 1);
-		}
-	});
-	return attrs;
-}
+	get_location: ReturnType<typeof getLocator>;
 
-interface Replacement {
-	offset: number;
-	length: number;
-	replacement: string;
-}
+	constructor(public source: string, public filename: string) {
+		this.update_source({ string: source });
 
-async function replace_async(str: string, re: RegExp, func: (...any) => Promise<string>) {
-	const replacements: Array<Promise<Replacement>> = [];
-	str.replace(re, (...args) => {
-		replacements.push(
-			func(...args).then(
-				res =>
-					({
-						offset: args[args.length - 2],
-						length: args[0].length,
-						replacement: res,
-					}) as Replacement
-			)
-		);
-		return '';
-	});
-	let out = '';
-	let last_end = 0;
-	for (const { offset, length, replacement } of await Promise.all(
-		replacements
-	)) {
-		out += str.slice(last_end, offset) + replacement;
-		last_end = offset + length;
+		// preprocess source must be relative to itself or equal null
+		this.file_basename = filename == null ? null : get_file_basename(filename);
 	}
-	out += str.slice(last_end);
-	return out;
+
+	update_source({ string: source, map, dependencies }: SourceUpdate) {
+		if (source != null) {
+			this.source = source;
+			this.get_location = getLocator(source);
+		}
+
+		if (map) {
+			this.sourcemap_list.unshift(map);
+		}
+
+		if (dependencies) {
+			this.dependencies.push(...dependencies);
+		}
+	}
+
+	to_processed(): Processed {
+		// Combine all the source maps for each preprocessor function into one
+		const map: RawSourceMap = combine_sourcemaps(this.file_basename, this.sourcemap_list);
+
+		return {
+			// TODO return separated output, in future version where svelte.compile supports it:
+			// style: { code: styleCode, map: styleMap },
+			// script { code: scriptCode, map: scriptMap },
+			// markup { code: markupCode, map: markupMap },
+
+			code: this.source,
+			dependencies: [...new Set(this.dependencies)],
+			map: map as object,
+			toString: () => this.source
+		};
+	}
+}
+
+/**
+ * Convert preprocessor output for the tag content into MappedCode
+ */
+function processed_content_to_code(processed: Processed, location: SourceLocation, file_basename: string): MappedCode {
+	// Convert the preprocessed code and its sourcemap to a MappedCode
+	let decoded_map: DecodedSourceMap;
+	if (processed.map) {
+		decoded_map = decode_map(processed);
+
+		// offset only segments pointing at original component source
+		const source_index = decoded_map.sources.indexOf(file_basename);
+		if (source_index !== -1) {
+			sourcemap_add_offset(decoded_map, location, source_index);
+		}
+	}
+
+	return MappedCode.from_processed(processed.code, decoded_map);
+}
+
+/**
+ * Given the whole tag including content, return a `MappedCode`
+ * representing the tag content replaced with `processed`.
+ */
+function processed_tag_to_code(
+	processed: Processed,
+	tag_name: 'style' | 'script',
+	attributes: string,
+	source: Source
+): MappedCode {
+	const { file_basename, get_location } = source;
+
+	const build_mapped_code = (code: string, offset: number) =>
+		MappedCode.from_source(slice_source(code, offset, source));
+
+	const tag_open = `<${tag_name}${attributes || ''}>`;
+	const tag_close = `</${tag_name}>`;
+
+	const tag_open_code = build_mapped_code(tag_open, 0);
+	const tag_close_code = build_mapped_code(tag_close, tag_open.length + source.source.length);
+
+	parse_attached_sourcemap(processed, tag_name);
+
+	const content_code = processed_content_to_code(processed, get_location(tag_open.length), file_basename);
+
+	return tag_open_code.concat(content_code).concat(tag_close_code);
+}
+
+function parse_tag_attributes(str: string) {
+	// note: won't work with attribute values containing spaces.
+	return str
+		.split(/\s+/)
+		.filter(Boolean)
+		.reduce((attrs, attr) => {
+			const i = attr.indexOf('=');
+			const [key, value] = i > 0 ? [attr.slice(0, i), attr.slice(i+1)] : [attr];
+			const [, unquoted] = (value && value.match(/^['"](.*)['"]$/)) || [];
+
+			return { ...attrs, [key]: unquoted ?? value ?? true };
+		}, {});
+}
+
+/**
+ * Calculate the updates required to process all instances of the specified tag.
+ */
+async function process_tag(
+	tag_name: 'style' | 'script',
+	preprocessor: Preprocessor,
+	source: Source
+): Promise<SourceUpdate> {
+	const { filename, source: markup } = source;
+	const tag_regex =
+		tag_name === 'style'
+			? /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi
+			: /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
+
+	const dependencies: string[] = [];
+
+	async function process_single_tag(
+		tag_with_content: string,
+		attributes = '',
+		content = '',
+		tag_offset: number
+	): Promise<MappedCode> {
+		const no_change = () => MappedCode.from_source(slice_source(tag_with_content, tag_offset, source));
+
+		if (!attributes && !content) return no_change();
+
+		const processed = await preprocessor({
+			content: content || '',
+			attributes: parse_tag_attributes(attributes || ''),
+			markup,
+			filename
+		});
+
+		if (!processed) return no_change();
+		if (processed.dependencies) dependencies.push(...processed.dependencies);
+		if (!processed.map && processed.code === content) return no_change();
+
+		return processed_tag_to_code(processed, tag_name, attributes, slice_source(content, tag_offset, source));
+	}
+
+	const { string, map } = await replace_in_code(tag_regex, process_single_tag, source);
+
+	return { string, map, dependencies };
+}
+
+async function process_markup(filename: string, process: MarkupPreprocessor, source: Source) {
+	const processed = await process({
+		content: source.source,
+		filename
+	});
+
+	if (processed) {
+		return {
+			string: processed.code,
+			map: processed.map
+				? // TODO: can we use decode_sourcemap?
+				  typeof processed.map === 'string'
+					? JSON.parse(processed.map)
+					: processed.map
+				: undefined,
+			dependencies: processed.dependencies
+		};
+	} else {
+		return {};
+	}
 }
 
 export default async function preprocess(
 	source: string,
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
 	options?: { filename?: string }
-) {
+): Promise<Processed> {
 	// @ts-ignore todo: doublecheck
 	const filename = (options && options.filename) || preprocessor.filename; // legacy
-	const dependencies = [];
 
-	const preprocessors = Array.isArray(preprocessor) ? preprocessor : [preprocessor];
+	const preprocessors = preprocessor ? (Array.isArray(preprocessor) ? preprocessor : [preprocessor]) : [];
 
 	const markup = preprocessors.map(p => p.markup).filter(Boolean);
 	const script = preprocessors.map(p => p.script).filter(Boolean);
 	const style = preprocessors.map(p => p.style).filter(Boolean);
 
-	for (const fn of markup) {
-		const processed = await fn({
-			content: source,
-			filename
-		});
-		if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
-		source = processed ? processed.code : source;
+	const result = new PreprocessResult(source, filename);
+
+	// TODO keep track: what preprocessor generated what sourcemap?
+	// to make debugging easier = detect low-resolution sourcemaps in fn combine_mappings
+
+	for (const process of markup) {
+		result.update_source(await process_markup(filename, process, result));
 	}
 
-	for (const fn of script) {
-		source = await replace_async(
-			source,
-			/<!--[^]*?-->|<script(\s[^]*?)?>([^]*?)<\/script>/gi,
-			async (match, attributes = '', content) => {
-				if (!attributes && !content) {
-					return match;
-				}
-				attributes = attributes || '';
-				const processed = await fn({
-					content,
-					attributes: parse_attributes(attributes),
-					filename
-				});
-				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
-				return processed ? `<script${attributes}>${processed.code}</script>` : match;
-			}
-		);
+	for (const process of script) {
+		result.update_source(await process_tag('script', process, result));
 	}
 
-	for (const fn of style) {
-		source = await replace_async(
-			source,
-			/<!--[^]*?-->|<style(\s[^]*?)?>([^]*?)<\/style>/gi,
-			async (match, attributes = '', content) => {
-				if (!attributes && !content) {
-					return match;
-				}
-				const processed: Processed = await fn({
-					content,
-					attributes: parse_attributes(attributes),
-					filename
-				});
-				if (processed && processed.dependencies) dependencies.push(...processed.dependencies);
-				return processed ? `<style${attributes}>${processed.code}</style>` : match;
-			}
-		);
+	for (const preprocess of style) {
+		result.update_source(await process_tag('style', preprocess, result));
 	}
 
-	return {
-		// TODO return separated output, in future version where svelte.compile supports it:
-		// style: { code: styleCode, map: styleMap },
-		// script { code: scriptCode, map: scriptMap },
-		// markup { code: markupCode, map: markupMap },
-
-		code: source,
-		dependencies: [...new Set(dependencies)],
-
-		toString() {
-			return source;
-		}
-	};
+	return result.to_processed();
 }

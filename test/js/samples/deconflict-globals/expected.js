@@ -10,7 +10,7 @@ function instance($$self, $$props, $$invalidate) {
 		alert(JSON.stringify(data()));
 	});
 
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("foo" in $$props) $$invalidate(0, foo = $$props.foo);
 	};
 

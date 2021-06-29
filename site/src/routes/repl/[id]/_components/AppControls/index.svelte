@@ -16,7 +16,6 @@
 	export let gist;
 	export let name;
 	export let zen_mode;
-	export let bundle;
 
 	let saving = false;
 	let downloading = false;
@@ -227,6 +226,8 @@ export default app;` });
 		padding: .6rem var(--side-nav);
 		background-color: var(--second);
 		color: white;
+		white-space: nowrap;
+		flex: 0;
 	}
 
 	.icon {

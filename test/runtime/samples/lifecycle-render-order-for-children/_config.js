@@ -2,7 +2,9 @@ import order from './order.js';
 
 export default {
 	skip_if_ssr: true,
-
+	before_test() {
+		order.length = 0;
+	},
 	test({ assert, component, target, compileOptions }) {
 		if (compileOptions.hydratable) {
 			assert.deepEqual(order, [
@@ -21,7 +23,7 @@ export default {
 				'3: onMount',
 				'3: afterUpdate',
 				'0: onMount',
-				'0: afterUpdate',
+				'0: afterUpdate'
 			]);
 		} else {
 			assert.deepEqual(order, [
@@ -40,10 +42,8 @@ export default {
 				'3: onMount',
 				'3: afterUpdate',
 				'0: onMount',
-				'0: afterUpdate',
+				'0: afterUpdate'
 			]);
 		}
-
-		order.length = 0;
-	},
+	}
 };

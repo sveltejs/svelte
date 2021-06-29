@@ -2,7 +2,7 @@ export default {
 	props: {
 		props: {
 			foo: 'lol',
-			baz: 40 + 2,
+			baz: 40 + 2
 		}
 	},
 

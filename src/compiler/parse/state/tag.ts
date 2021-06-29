@@ -18,27 +18,28 @@ const meta_tags = new Map([
 	['svelte:body', 'Body']
 ]);
 
-const valid_meta_tags = Array.from(meta_tags.keys()).concat('svelte:self', 'svelte:component');
+const valid_meta_tags = Array.from(meta_tags.keys()).concat('svelte:self', 'svelte:component', 'svelte:fragment');
 
 const specials = new Map([
 	[
 		'script',
 		{
 			read: read_script,
-			property: 'js',
-		},
+			property: 'js'
+		}
 	],
 	[
 		'style',
 		{
 			read: read_style,
-			property: 'css',
-		},
-	],
+			property: 'css'
+		}
+	]
 ]);
 
 const SELF = /^svelte:self(?=[\s/>])/;
 const COMPONENT = /^svelte:component(?=[\s/>])/;
+const SLOT = /^svelte:fragment(?=[\s/>])/;
 
 function parent_is_head(stack) {
 	let i = stack.length;
@@ -63,7 +64,7 @@ export default function tag(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'Comment',
-			data,
+			data
 		});
 
 		return;
@@ -107,8 +108,9 @@ export default function tag(parser: Parser) {
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
 		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
-			: name === 'title' && parent_is_head(parser.stack) ? 'Title'
-				: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+			: name === 'svelte:fragment' ? 'SlotTemplate'
+				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
+					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
 	const element: TemplateNode = {
 		start,
@@ -116,7 +118,7 @@ export default function tag(parser: Parser) {
 		type,
 		name,
 		attributes: [],
-		children: [],
+		children: []
 	};
 
 	parser.allow_whitespace();
@@ -124,7 +126,7 @@ export default function tag(parser: Parser) {
 	if (is_closing_tag) {
 		if (is_void(name)) {
 			parser.error({
-				code: `invalid-void-content`,
+				code: 'invalid-void-content',
 				message: `<${name}> is a void element and cannot have children, or a closing tag`
 			}, start);
 		}
@@ -133,11 +135,15 @@ export default function tag(parser: Parser) {
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (parent.name !== name) {
-			if (parent.type !== 'Element')
+			if (parent.type !== 'Element') {
+				const message = parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name
+					? `</${name}> attempted to close <${name}> that was already automatically closed by <${parser.last_auto_closed_tag.reason}>`
+					: `</${name}> attempted to close an element that was not open`;
 				parser.error({
-					code: `invalid-closing-tag`,
-					message: `</${name}> attempted to close an element that was not open`
+					code: 'invalid-closing-tag',
+					message
 				}, start);
+			}
 
 			parent.end = start;
 			parser.stack.pop();
@@ -148,10 +154,19 @@ export default function tag(parser: Parser) {
 		parent.end = parser.index;
 		parser.stack.pop();
 
+		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
+			parser.last_auto_closed_tag = null;
+		}
+
 		return;
 	} else if (closing_tag_omitted(parent.name, name)) {
 		parent.end = start;
 		parser.stack.pop();
+		parser.last_auto_closed_tag = {
+			tag: parent.name,
+			reason: name,
+			depth: parser.stack.length
+		};
 	}
 
 	const unique_names: Set<string> = new Set();
@@ -166,16 +181,16 @@ export default function tag(parser: Parser) {
 		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
 		if (!~index) {
 			parser.error({
-				code: `missing-component-definition`,
-				message: `<svelte:component> must have a 'this' attribute`
+				code: 'missing-component-definition',
+				message: "<svelte:component> must have a 'this' attribute"
 			}, start);
 		}
 
 		const definition = element.attributes.splice(index, 1)[0];
 		if (definition.value === true || definition.value.length !== 1 || definition.value[0].type === 'Text') {
 			parser.error({
-				code: `invalid-component-definition`,
-				message: `invalid component definition`
+				code: 'invalid-component-definition',
+				message: 'invalid component definition'
 			}, definition.start);
 		}
 
@@ -206,25 +221,18 @@ export default function tag(parser: Parser) {
 		element.children = read_sequence(
 			parser,
 			() =>
-				parser.template.slice(parser.index, parser.index + 11) === '</textarea>'
+				/^<\/textarea(\s[^>]*)?>/i.test(parser.template.slice(parser.index))
 		);
-		parser.read(/<\/textarea>/);
+		parser.read(/^<\/textarea(\s[^>]*)?>/i);
 		element.end = parser.index;
-	} else if (name === 'script') {
+	} else if (name === 'script' || name === 'style') {
 		// special case
 		const start = parser.index;
-		const data = parser.read_until(/<\/script>/);
+		const data = parser.read_until(new RegExp(`</${name}>`));
 		const end = parser.index;
 		element.children.push({ start, end, type: 'Text', data });
-		parser.eat('</script>', true);
+		parser.eat(`</${name}>`, true);
 		element.end = parser.index;
-	} else if (name === 'style') {
-		// special case
-		const start = parser.index;
-		const data = parser.read_until(/<\/style>/);
-		const end = parser.index;
-		element.children.push({ start, end, type: 'Text', data });
-		parser.eat('</style>', true);
 	} else {
 		parser.stack.push(element);
 	}
@@ -249,8 +257,8 @@ function read_tag_name(parser: Parser) {
 
 		if (!legal) {
 			parser.error({
-				code: `invalid-self-placement`,
-				message: `<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, or slots passed to components`
+				code: 'invalid-self-placement',
+				message: '<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, or slots passed to components'
 			}, start);
 		}
 
@@ -258,6 +266,8 @@ function read_tag_name(parser: Parser) {
 	}
 
 	if (parser.read(COMPONENT)) return 'svelte:component';
+
+	if (parser.read(SLOT)) return 'svelte:fragment';
 
 	const name = parser.read_until(/(\s|\/|>)/);
 
@@ -277,8 +287,8 @@ function read_tag_name(parser: Parser) {
 
 	if (!valid_tag_name.test(name)) {
 		parser.error({
-			code: `invalid-tag-name`,
-			message: `Expected valid tag name`
+			code: 'invalid-tag-name',
+			message: 'Expected valid tag name'
 		}, start);
 	}
 
@@ -291,7 +301,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	function check_unique(name: string) {
 		if (unique_names.has(name)) {
 			parser.error({
-				code: `duplicate-attribute`,
+				code: 'duplicate-attribute',
 				message: 'Attributes need to be unique'
 			}, start);
 		}
@@ -319,6 +329,13 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			const name = parser.read_identifier();
 			parser.allow_whitespace();
 			parser.eat('}', true);
+
+			if (name === null) {
+				parser.error({
+					code: 'empty-attribute-shorthand',
+					message: 'Attribute shorthand cannot be empty'
+				}, start);
+			}
 
 			check_unique(name);
 
@@ -360,23 +377,30 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		end = parser.index;
 	} else if (parser.match_regex(/["']/)) {
 		parser.error({
-			code: `unexpected-token`,
-			message: `Expected =`
+			code: 'unexpected-token',
+			message: 'Expected ='
 		}, parser.index);
 	}
 
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
+		if (directive_name === '') {
+			parser.error({
+				code: 'empty-directive-name',
+				message: `${type} name cannot be empty`
+			}, start + colon_index + 1);
+		}
+
 		if (type === 'Binding' && directive_name !== 'this') {
 			check_unique(directive_name);
-		} else if (type !== 'EventHandler') {
+		} else if (type !== 'EventHandler' && type !== 'Action') {
 			check_unique(name);
 		}
 
 		if (type === 'Ref') {
 			parser.error({
-				code: `invalid-ref-directive`,
+				code: 'invalid-ref-directive',
 				message: `The ref directive is no longer supported — use \`bind:this={${directive_name}}\` instead`
 			}, start);
 		}
@@ -384,8 +408,8 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		if (value[0]) {
 			if ((value as any[]).length > 1 || value[0].type === 'Text') {
 				parser.error({
-					code: `invalid-directive-value`,
-					message: `Directive value must be a JavaScript expression enclosed in curly braces`
+					code: 'invalid-directive-value',
+					message: 'Directive value must be a JavaScript expression enclosed in curly braces'
 				}, value[0].start);
 			}
 		}
@@ -424,7 +448,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		end,
 		type: 'Attribute',
 		name,
-		value,
+		value
 	};
 }
 
@@ -440,11 +464,11 @@ function get_directive_type(name: string): DirectiveType {
 }
 
 function read_attribute_value(parser: Parser) {
-	const quote_mark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
+	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
 
 	const regex = (
-		quote_mark === `'` ? /'/ :
-			quote_mark === `"` ? /"/ :
+		quote_mark === "'" ? /'/ :
+			quote_mark === '"' ? /"/ :
 				/(\/>|[\s"'=<>`])/
 	);
 
@@ -491,7 +515,7 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 				start: index,
 				end: parser.index,
 				type: 'MustacheTag',
-				expression,
+				expression
 			});
 
 			current_chunk = {
@@ -507,7 +531,7 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 	}
 
 	parser.error({
-		code: `unexpected-eof`,
-		message: `Unexpected end of input`
+		code: 'unexpected-eof',
+		message: 'Unexpected end of input'
 	});
 }

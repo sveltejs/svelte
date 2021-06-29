@@ -137,6 +137,15 @@
 		top: calc((var(--h3) - 24px) / 2);
 	}
 
+	.post :global(a) {
+		padding: 0;
+		transition: none;
+	}
+
+	.post :global(a):not(:hover) {
+		border: none;
+	}
+
 	@media (max-width: 768px) {
 		.post :global(.anchor) {
 			transform: scale(0.6);
@@ -163,17 +172,4 @@
 			margin: 2em auto;
 		}
 	}
-
-	/* @media (min-width: 1460px) {
-		.post :global(iframe) {
-			width: 1360px;
-			margin: 2em -280px;
-		}
-	}
-
-	@media (min-height: 800px) {
-		.post :global(iframe) {
-			height: 640px;
-		}
-	} */
 </style>

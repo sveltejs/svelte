@@ -98,11 +98,15 @@ let shadowedByModule;
 const priv = "priv";
 
 function instance($$self, $$props, $$invalidate) {
+	let computed;
+
 	let $prop,
 		$$unsubscribe_prop = noop,
 		$$subscribe_prop = () => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe(prop, $$value => $$invalidate(2, $prop = $$value)), prop);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_prop());
+	let { $$slots: slots = {}, $$scope } = $$props;
+	validate_slots("Component", slots, []);
 	let { prop } = $$props;
 	validate_store(prop, "prop");
 	$$subscribe_prop();
@@ -112,13 +116,10 @@ function instance($$self, $$props, $$invalidate) {
 	const writable_props = ["prop", "alias"];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$" && key !== "slot") console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Component", $$slots, []);
-
-	$$self.$set = $$props => {
+	$$self.$$set = $$props => {
 		if ("prop" in $$props) $$subscribe_prop($$invalidate(0, prop = $$props.prop));
 		if ("alias" in $$props) $$invalidate(1, realName = $$props.alias);
 	};
@@ -145,8 +146,6 @@ function instance($$self, $$props, $$invalidate) {
 		if ("shadowedByModule" in $$props) $$invalidate(4, shadowedByModule = $$props.shadowedByModule);
 		if ("computed" in $$props) computed = $$props.computed;
 	};
-
-	let computed;
 
 	if ($$props && "$$inject" in $$props) {
 		$$self.$inject_state($$props.$$inject);

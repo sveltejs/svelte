@@ -1,4 +1,4 @@
-import { Node, Program } from "estree";
+import { Node, Program } from 'estree';
 import { SourceMap } from 'magic-string';
 
 interface BaseNode {
@@ -104,12 +104,21 @@ export interface Warning {
 
 export type ModuleFormat = 'esm' | 'cjs';
 
+export type CssHashGetter = (args: {
+	name: string;
+	filename: string | undefined;
+	css: string;
+	hash: (input: string) => string;
+}) => string;
+
 export interface CompileOptions {
 	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
-	generate?: string | false;
+	generate?: 'dom' | 'ssr' | false;
+	varsReport?: 'full' | 'strict' | false;
 
+	sourcemap?: object | string;
 	outputFilename?: string;
 	cssOutputFilename?: string;
 	sveltePath?: string;
@@ -123,6 +132,8 @@ export interface CompileOptions {
 	tag?: string;
 	css?: boolean;
 	loopGuardTimeout?: number;
+	namespace?: string;
+	cssHash?: CssHashGetter;
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;
@@ -161,9 +172,10 @@ export interface Var {
 	hoistable?: boolean;
 	subscribable?: boolean;
 	is_reactive_dependency?: boolean;
+	imported?: boolean;
 }
 
-export interface CssResult { 
+export interface CssResult {
 	code: string;
 	map: SourceMap;
 }

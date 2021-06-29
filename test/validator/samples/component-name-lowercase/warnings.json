@@ -1,0 +1,17 @@
+[
+	{
+		"code": "component-name-lowercase",
+		"message": "<thisShouldWarnMe> will be treated as an HTML element unless it begins with a capital letter",
+		"pos": 82,
+		"start": {
+			"character": 82,
+			"column": 0,
+			"line": 6
+		},
+		"end": {
+			"character": 102,
+			"column": 20,
+			"line": 6
+		}
+	}
+]

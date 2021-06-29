@@ -8,13 +8,6 @@
 	});
 </script>
 
-<style>
-	progress {
-		display: block;
-		width: 100%;
-	}
-</style>
-
 <progress value={$progress}></progress>
 
 <button on:click="{() => progress.set(0)}">
@@ -36,3 +29,10 @@
 <button on:click="{() => progress.set(1)}">
 	100%
 </button>
+
+<style>
+	progress {
+		display: block;
+		width: 100%;
+	}
+</style>

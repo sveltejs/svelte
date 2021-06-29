@@ -19,7 +19,7 @@ export default function text(parser: Parser) {
 		end: parser.index,
 		type: 'Text',
 		raw: data,
-		data: decode_character_references(data),
+		data: decode_character_references(data)
 	};
 
 	parser.current().children.push(node);

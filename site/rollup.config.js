@@ -1,10 +1,10 @@
 import 'dotenv/config';
-import resolve from 'rollup-plugin-node-resolve';
-import replace from 'rollup-plugin-replace';
-import commonjs from 'rollup-plugin-commonjs';
+import babel from '@rollup/plugin-babel';
+import commonjs from '@rollup/plugin-commonjs';
+import json from '@rollup/plugin-json';
+import replace from '@rollup/plugin-replace';
+import resolve from '@rollup/plugin-node-resolve';
 import svelte from 'rollup-plugin-svelte';
-import babel from 'rollup-plugin-babel';
-import json from 'rollup-plugin-json';
 import { terser } from 'rollup-plugin-terser';
 import config from 'sapper/config/rollup.js';
 import pkg from './package.json';
@@ -31,9 +31,10 @@ export default {
 				'process.env.MAPBOX_ACCESS_TOKEN': JSON.stringify(process.env.MAPBOX_ACCESS_TOKEN)
 			}),
 			svelte({
-				dev,
-				hydratable: true,
-				emitCss: true
+				compilerOptions: {
+					dev,
+					hydratable: true
+				}
 			}),
 			resolve({
 				browser: true,
@@ -44,7 +45,7 @@ export default {
 
 			legacy && babel({
 				extensions: ['.js', '.mjs', '.html', '.svelte'],
-				runtimeHelpers: true,
+				babelHelpers: 'runtime',
 				exclude: ['node_modules/@babel/**'],
 				presets: [
 					['@babel/preset-env', {
@@ -63,6 +64,8 @@ export default {
 				module: true
 			})
 		],
+
+		preserveEntrySignatures: false,
 		onwarn
 	},
 
@@ -75,8 +78,12 @@ export default {
 				'process.env.NODE_ENV': JSON.stringify(mode)
 			}),
 			svelte({
-				generate: 'ssr',
-				dev
+				compilerOptions: {
+					dev,
+					generate: 'ssr',
+					hydratable: true
+				},
+				emitCss: false
 			}),
 			resolve({
 				dedupe
@@ -91,6 +98,8 @@ export default {
 				require('module').builtinModules || Object.keys(process.binding('natives'))
 			)
 		],
+
+		preserveEntrySignatures: 'strict',
 		onwarn
 	},
 
@@ -105,6 +114,9 @@ export default {
 			}),
 			commonjs(),
 			!dev && terser()
-		]
+		],
+
+		preserveEntrySignatures: false,
+		onwarn
 	}
 };
