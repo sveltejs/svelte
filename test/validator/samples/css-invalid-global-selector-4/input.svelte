@@ -2,7 +2,7 @@
 	div :global(.a\,bc\] ~ .d\,ef\)) {
 		color: red;
 	}
-	div :global(.abc\] + .def\), h1) {
+	div :global(.abc\], .def\), h1) {
 		color: red;
 	}
 </style>
