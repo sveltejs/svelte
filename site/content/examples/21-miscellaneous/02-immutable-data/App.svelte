@@ -29,10 +29,10 @@
 
 <h2>Immutable</h2>
 {#each todos as todo}
-	<ImmutableTodo {todo} toggle={() => toggle(todo.id)}/>
+	<ImmutableTodo {todo} on:click="{() => toggle(todo.id)}"/>
 {/each}
 
 <h2>Mutable</h2>
 {#each todos as todo}
-	<MutableTodo {todo} toggle={() => toggle(todo.id)}/>
+	<MutableTodo {todo} on:click="{() => toggle(todo.id)}"/>
 {/each}
