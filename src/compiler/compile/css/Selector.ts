@@ -610,7 +610,7 @@ class Block {
 			this.selectors.length >= 1 &&
 			this.selectors[0].type === 'PseudoClassSelector' &&
 			this.selectors[0].name === 'global' &&
-			this.selectors.every((selector) => selector.type === 'PseudoClassSelector')
+			this.selectors.every((selector) => selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector')
 		);
 	}
 }
