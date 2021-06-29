@@ -115,14 +115,13 @@ function init_hydrate(target: NodeEx) {
 export function append_styles(
 	target: Node,
 	styleSheetId: string,
-	styles: string,
-	styleId: string = `svelte-${styleSheetId}-style`
+	styles: string
 ) {
 	const appendStylesTo = get_root_for_styles(target);
 
-	if (!appendStylesTo?.querySelector('#' + styleId)) {
+	if (!appendStylesTo?.querySelector(`#${styleSheetId}`)) {
 		const style = element('style');
-		style.id = styleId;
+		style.id = styleSheetId;
 		style.textContent = styles;
 		append(appendStylesTo, style);
 	}
