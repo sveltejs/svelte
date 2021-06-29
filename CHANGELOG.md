@@ -9,6 +9,7 @@
 * Fix `preserveComments` in SSR mode ([4730](https://github.com/sveltejs/svelte/issues/4730))
 * Add `varsReport` compiler option ([#6192](https://github.com/sveltejs/svelte/pull/6192))
 * Expose `svelte/ssr` which exported lifecycle methods as noop ([#6416](https://github.com/sveltejs/svelte/pull/6416))
+* Fix compiler error when using `:where()` inside `:global()` ([#6434](https://github.com/sveltejs/svelte/issues/6434))
 
 ## 3.38.3
 
