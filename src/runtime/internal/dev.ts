@@ -232,7 +232,7 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: IComponentOptions) {
+	constructor(options: IComponentOptions<Props>) {
 		super(options);
 	}
 }
