@@ -43,7 +43,7 @@ function create_fragment(ctx) {
 		p(ctx, [dirty]) {
 			if (/*foo*/ ctx[0]) {
 				if (if_block) {
-
+					
 				} else {
 					if_block = create_if_block(ctx);
 					if_block.c();
@@ -76,7 +76,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 }, null);
+		init(this, options, instance, create_fragment, safe_not_equal, { foo: 0 });
 	}
 }
 

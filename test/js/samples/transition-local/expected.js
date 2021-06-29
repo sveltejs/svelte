@@ -117,7 +117,7 @@ function create_fragment(ctx) {
 }
 
 function foo() {
-
+	
 }
 
 function instance($$self, $$props, $$invalidate) {
@@ -135,7 +135,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { x: 0, y: 1 }, null);
+		init(this, options, instance, create_fragment, safe_not_equal, { x: 0, y: 1 });
 	}
 }
 

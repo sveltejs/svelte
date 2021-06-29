@@ -48,7 +48,7 @@ function handleFoo(bar) {
 }
 
 function foo(node, callback) {
-
+	
 } // code goes here
 
 function instance($$self, $$props, $$invalidate) {
@@ -65,7 +65,7 @@ function instance($$self, $$props, $$invalidate) {
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance, create_fragment, safe_not_equal, { bar: 0 }, null);
+		init(this, options, instance, create_fragment, safe_not_equal, { bar: 0 });
 	}
 }
 

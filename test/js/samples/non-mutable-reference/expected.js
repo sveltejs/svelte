@@ -34,7 +34,7 @@ let name = "world";
 class Component extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, null, create_fragment, safe_not_equal, {}, null);
+		init(this, options, null, create_fragment, safe_not_equal, {});
 	}
 }
 
