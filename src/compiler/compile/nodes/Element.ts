@@ -430,12 +430,17 @@ export default class Element extends Node {
 
 
 	validate_special_cases() {
-		const { component, attributes } = this;
+		const { component, attributes, handlers } = this;
 
 		const attribute_map = new Map();
+		const handlers_map = new Map();
 
 		attributes.forEach(attribute => (
 			attribute_map.set(attribute.name, attribute)
+		));
+
+		handlers.forEach(handler => (
+			handlers_map.set(handler.name, handler)
 		));
 
 		if (this.name === 'a') {
