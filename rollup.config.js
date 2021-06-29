@@ -42,6 +42,24 @@ export default [
 		plugins: [ts_plugin]
 	},
 
+	{
+		input: `src/runtime/ssr.ts`,
+		output: [
+			{
+				file: `ssr.mjs`,
+				format: 'esm',
+				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}/index.mjs`
+			},
+			{
+				file: `ssr.js`,
+				format: 'cjs',
+				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}/index.js`
+			}
+		],
+		external,
+		plugins: [ts_plugin]
+	},
+
 	...fs.readdirSync('src/runtime')
 		.filter(dir => fs.statSync(`src/runtime/${dir}`).isDirectory())
 		.map(dir => ({
