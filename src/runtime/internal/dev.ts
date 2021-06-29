@@ -105,7 +105,7 @@ export interface SvelteComponentDev {
 	[accessor: string]: any;
 }
 interface IComponentOptions<Props extends Record<string, any> = Record<string, any>> {
-	target: Element;
+	target: Element|ShadowRoot;
 	anchor?: Element;
 	props?: Props;
 	context?: Map<any, any>;
@@ -140,14 +140,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	 */
 	$$slot_def: any;
 
-	constructor(options: {
-		target: Element|ShadowRoot;
-		anchor?: Element;
-		props?: Props;
-		hydrate?: boolean;
-		intro?: boolean;
-		$$inline?: boolean;
-    }) {
+	constructor(options: IComponentOptions) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
@@ -239,14 +232,7 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: {
-		target: Element|ShadowRoot;
-		anchor?: Element;
-		props?: Props;
-		hydrate?: boolean;
-		intro?: boolean;
-		$$inline?: boolean;
-    }) {
+	constructor(options: IComponentOptions) {
 		super(options);
 	}
 }
