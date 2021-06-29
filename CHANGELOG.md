@@ -8,6 +8,7 @@
 * New a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([5938](https://github.com/sveltejs/svelte/pull/5938))
 * Fix `preserveComments` in SSR mode ([4730](https://github.com/sveltejs/svelte/issues/4730))
 * Add `varsReport` compiler option ([#6192](https://github.com/sveltejs/svelte/pull/6192))
+* Expose `svelte/ssr` which exported lifecycle methods as noop ([#6416](https://github.com/sveltejs/svelte/pull/6416))
 
 ## 3.38.3
 
