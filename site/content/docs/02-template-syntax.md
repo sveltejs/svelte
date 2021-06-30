@@ -143,10 +143,10 @@ Text can also contain JavaScript expressions:
 
 ---
 
-However, if you're using regular expression literal that starts with `/`, you'll need to wrap it in parentheses.
+However, if you're using a regular expression (`RegExp`) [literal notation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp#literal_notation_and_constructor), you'll need to wrap it in parentheses.
 
 ```sv
-<div>{(/^[A-Za-z ]+$/).test('value') ? 'foo' : 'bar'}</div>
+<div>{(/^[A-Za-z ]+$/).test(value) ? 'foo' : 'bar'}</div>
 ```
 
 ### Comments
