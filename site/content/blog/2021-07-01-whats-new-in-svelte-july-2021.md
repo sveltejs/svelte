@@ -62,4 +62,4 @@ As the northern hemisphere heats up, Svelte has stayed cool with lots of perform
 
 ## See you next month!
 
-Did we miss something? Join us on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs)!
+Want more updates? Join us on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs)!
