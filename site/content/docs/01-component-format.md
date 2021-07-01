@@ -57,6 +57,8 @@ In development mode (see the [compiler options](docs#svelte_compile)), a warning
 
 If you export a `const`, `class` or `function`, it is readonly from outside the component. Function *expressions* are valid props, however.
 
+Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](docs#bind_element).
+
 ```sv
 <script>
 	// these are readonly

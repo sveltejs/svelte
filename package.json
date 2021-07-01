@@ -54,6 +54,10 @@
     "./transition": {
       "import": "./transition/index.mjs",
       "require": "./transition/index.js"
+    },
+    "./ssr": {
+      "import": "./ssr.mjs",
+      "require": "./ssr.js"
     }
   },
   "engines": {
@@ -123,7 +127,7 @@
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.3",
     "mocha": "^7.0.0",
-    "periscopic": "^2.0.1",
+    "periscopic": "^2.0.3",
     "puppeteer": "^2.1.1",
     "rollup": "^1.27.14",
     "source-map": "^0.7.3",

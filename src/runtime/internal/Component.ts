@@ -4,7 +4,10 @@ import { blank_object, is_empty, is_function, run, run_all, noop } from './utils
 import { children, detach, start_hydrating, end_hydrating } from './dom';
 import { transition_in } from './transitions';
 
-interface Fragment {
+/**
+ * INTERNAL, DO NOT USE. Code may change at any time.
+ */
+export interface Fragment {
 	key: string|null;
 	first: null;
 	/* create  */ c: () => void;

@@ -9,6 +9,7 @@ import Block from './Block';
 import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import { Node as PeriscopicNode } from 'periscopic';
 
 export default function dom(
 	component: Component,
@@ -252,7 +253,7 @@ export default function dom(
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(extract_names(assignee));
+					const names = new Set(extract_names(assignee as PeriscopicNode));
 
 					this.replace(invalidate(renderer, scope, node, names, execution_context === null));
 				}
@@ -399,7 +400,7 @@ export default function dom(
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
 				@_Object.keys($$props).forEach(key => {
-					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$') @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
+					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
 			`;
 		}

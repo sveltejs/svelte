@@ -57,11 +57,6 @@ const a11y_required_content = new Set([
 	'h6'
 ]);
 
-const a11y_no_onchange = new Set([
-	'select',
-	'option'
-]);
-
 const a11y_labelable = new Set([
 	'button',
 	'input',
@@ -82,7 +77,8 @@ const valid_modifiers = new Set([
 	'once',
 	'passive',
 	'nonpassive',
-	'self'
+	'self',
+	'trusted'
 ]);
 
 const passive_events = new Set([
@@ -542,15 +538,6 @@ export default class Element extends Node {
 			}
 		}
 
-		if (a11y_no_onchange.has(this.name)) {
-			if (handlers_map.has('change') && !handlers_map.has('blur')) {
-				component.warn(this, {
-					code: 'a11y-no-onchange',
-					message: 'A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.'
-				});
-			}
-		}
-
 		if (a11y_distracting_elements.has(this.name)) {
 			// no-distracting-elements
 			component.warn(this, {
@@ -597,6 +584,20 @@ export default class Element extends Node {
 					message: 'A11y: <figcaption> must be first or last child of <figure>'
 				});
 			}
+		}
+
+		if (handlers_map.has('mouseover') && !handlers_map.has('focus')) {
+			component.warn(this, {
+				code: 'a11y-mouse-events-have-key-events',
+				message: 'A11y: on:mouseover must be accompanied by on:focus'
+			});
+		}
+
+		if (handlers_map.has('mouseout') && !handlers_map.has('blur')) {
+			component.warn(this, {
+				code: 'a11y-mouse-events-have-key-events',
+				message: 'A11y: on:mouseout must be accompanied by on:blur'
+			});
 		}
 	}
 

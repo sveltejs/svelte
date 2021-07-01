@@ -214,6 +214,13 @@ export function self(fn) {
 	};
 }
 
+export function trusted(fn) {
+	return function(event) {
+		// @ts-ignore
+		if (event.isTrusted) fn.call(this, event);
+	};
+}
+
 export function attr(node: Element, attribute: string, value?: string) {
 	if (value == null) node.removeAttribute(attribute);
 	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);

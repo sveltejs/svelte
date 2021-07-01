@@ -1236,6 +1236,74 @@ As with DOM events, if the `on:` directive is used without a value, the componen
 <SomeComponent on:whatever/>
 ```
 
+#### [--style-props](style_props)
+
+```sv
+--style-props="anycssvalue"
+```
+
+---
+
+As of [Svelte 3.38](https://github.com/sveltejs/svelte/issues/6268) ([RFC](https://github.com/sveltejs/rfcs/pull/13)), you can pass styles as props to components for the purposes of theming, using CSS custom properties. 
+
+Svelte's implementation is essentially syntactic sugar for adding a wrapper element. This example:
+
+```sv
+<Slider
+  bind:value
+  min={0}
+  --rail-color="black"
+  --track-color="rgb(0, 0, 255)"
+/>
+```
+
+---
+
+Desugars to this:
+
+```sv
+<div style="display: contents; --rail-color: black; --track-color: rgb(0, 0, 255)">
+  <Slider
+    bind:value
+    min={0}
+    max={100}
+  />
+</div>
+```
+
+**Note**: Since this is an extra div, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature. Also note that not all browsers support `display: contents`: https://caniuse.com/css-display-contents 
+
+---
+
+Svelte's CSS Variables support allows for easily themable components:
+
+```sv
+<!-- Slider.svelte -->
+<style>
+  .potato-slider-rail {
+    background-color: var(--rail-color, var(--theme-color, 'purple'));
+  }
+</style>
+```
+
+---
+
+So you can set a high level theme color:
+
+```css
+/* global.css */
+html {
+  --theme-color: black;
+}
+```
+
+---
+
+Or override it at the consumer level:
+
+```sv
+<Slider --rail-color="goldenrod"/>
+```
 
 #### [bind:*property*](bind_component_property)
 

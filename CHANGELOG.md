@@ -1,5 +1,16 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add `trusted` event modifier ([#6137](https://github.com/sveltejs/svelte/issues/6137))
+* Fix erroneous `unknown prop` warning when using slot on a component ([#6065](https://github.com/sveltejs/svelte/pull/6065))
+* Throw compiler error when passing empty directive names ([#6299](https://github.com/sveltejs/svelte/issues/6299))
+* New a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([5938](https://github.com/sveltejs/svelte/pull/5938))
+* Fix `preserveComments` in SSR mode ([4730](https://github.com/sveltejs/svelte/issues/4730))
+* Add `varsReport` compiler option ([#6192](https://github.com/sveltejs/svelte/pull/6192))
+* Expose `svelte/ssr` which exported lifecycle methods as noop ([#6416](https://github.com/sveltejs/svelte/pull/6416))
+* Fix compiler error when using `:where()` inside `:global()` ([#6434](https://github.com/sveltejs/svelte/issues/6434))
+
 ## 3.38.3
 
 * Speed up hydration by reducing amount of element reorderings ([#4308](https://github.com/sveltejs/svelte/issues/4308))
