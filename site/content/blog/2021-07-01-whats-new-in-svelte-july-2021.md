@@ -17,7 +17,7 @@ As the northern hemisphere heats up, Svelte has stayed cool with lots of perform
 
 
 ## Features & bug fixes from around svelte/*
-- [Svelte 3.38.3](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3383) (released June 22) includes a bunch performance and bug fixes - including hydration optimizations, `this` preservation in bubbled events, and more!
+- [Svelte 3.38.3](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3383) (released June 22) includes a bunch of performance and bug fixes - including hydration optimizations, `this` preservation in bubbled events, and more!
 - The latest language tools releases added support for prop renaming from outside of a component, PostCSS syntax grammar, and a `.d.ts` output target in `svelte2tsx` which can be used to create type definitions from Svelte files.
 - Also in language tools, some long-awaited experimental features for enhanced TypeScript support were added - including explicitly typing all possible component events or slots, and using generics. Have a look at [the RFC](https://github.com/sveltejs/rfcs/pull/38) for more details and leave feedback in [this issue](https://github.com/sveltejs/language-tools/issues/442) if you are using it.
 - `svelte-scroller` got some quality-of-life fixes in 2.0.7 - fixing an initial width bug and updating its `index` more conservatively
@@ -51,7 +51,7 @@ As the northern hemisphere heats up, Svelte has stayed cool with lots of perform
 **Libraries, Tools & Components**
 - [svelte-pipeline](https://github.com/novacbn/svelte-pipeline) provides custom Javascript contexts and the Svelte Compiler as Svelte Stores, for REPLs, Editors, etc.
 - [Sveltotron](https://github.com/Salemmous/sveltotron) is an Electron-based app made to inspect your Svelte app
-- [svelte-qr-reader-writer](https://github.com/pleasemarkdarkly/svelte-qr-reader-writer) is Svelte component that helps read and write data from QR codes
+- [svelte-qr-reader-writer](https://github.com/pleasemarkdarkly/svelte-qr-reader-writer) is a Svelte component that helps read and write data from QR codes
 - [svelte-stack-router](https://www.npmjs.com/package/svelte-stack-router) Aims to make Svelte apps feel more native by routing with Stacks
 - [svelte-typed-context](https://www.npmjs.com/package/svelte-typed-context) provides an interface which, when provided to `getContext` or `setContext`, allows for stricter types
 - [svelte-modals](https://svelte-modals.mattjennings.io/) is a simple, flexible, zero-dependency modal manager for Svelte
