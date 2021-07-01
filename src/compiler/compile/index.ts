@@ -15,6 +15,7 @@ const valid_options = [
 	'sourcemap',
 	'generate',
 	'errorMode',
+	'varsReport',
 	'outputFilename',
 	'cssOutputFilename',
 	'sveltePath',

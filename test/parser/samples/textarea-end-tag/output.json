@@ -1,0 +1,53 @@
+{
+	"html": {
+		"start": 0,
+		"end": 117,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 117,
+				"type": "Element",
+				"name": "textarea",
+				"attributes": [],
+				"children": [
+					{
+						"start": 10,
+						"end": 51,
+						"type": "Text",
+						"raw": "\n\t<p>not actu </textar ally an element. ",
+						"data": "\n\t<p>not actu </textar ally an element. "
+					},
+					{
+						"start": 50,
+						"end": 55,
+						"type": "MustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 51,
+							"end": 54,
+							"loc": {
+								"start": {
+									"line": 2,
+									"column": 40
+								},
+								"end": {
+									"line": 2,
+									"column": 43
+								}
+							},
+							"name": "foo"
+						}
+					},
+					{
+						"start": 55,
+						"end": 91,
+						"type": "Text",
+						"raw": "</p>\n</textare\n\n\n> </textaread >asdf",
+						"data": "</p>\n</textare\n\n\n> </textaread >asdf"
+					}
+				]
+			}
+		]
+	}
+}

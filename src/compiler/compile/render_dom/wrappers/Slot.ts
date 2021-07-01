@@ -164,18 +164,31 @@ export default class SlotWrapper extends Wrapper {
 			? Array.from(this.fallback.dependencies).filter((name) => this.is_dependency_dynamic(name))
 			: [];
 
+		let condition = renderer.dirty(dynamic_dependencies);
+		if (block.has_outros) {
+			condition = x`!#current || ${condition}`;
+		}
+		let dirty = x`#dirty`;
+		if (block.has_outros) {
+			dirty = x`!#current ? ${renderer.get_initial_dirty()} : ${dirty}`;
+		}
+
 		const slot_update = get_slot_spread_changes_fn ? b`
-			if (${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
-				@update_slot_spread(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_spread_changes_fn}, ${get_slot_context_fn});
+			if (${slot}.p && ${condition}) {
+				@update_slot_spread(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${dirty}, ${get_slot_changes_fn}, ${get_slot_spread_changes_fn}, ${get_slot_context_fn});
 			}
 		` : b`
-			if (${slot}.p && ${renderer.dirty(dynamic_dependencies)}) {
-				@update_slot(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_context_fn});
+			if (${slot}.p && ${condition}) {
+				@update_slot(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${dirty}, ${get_slot_changes_fn}, ${get_slot_context_fn});
 			}
 		`;
+		let fallback_condition = renderer.dirty(fallback_dynamic_dependencies);
+		if (block.has_outros) {
+			fallback_condition = x`!#current || ${fallback_condition}`;
+		}
 		const fallback_update = has_fallback && fallback_dynamic_dependencies.length > 0 && b`
-			if (${slot_or_fallback} && ${slot_or_fallback}.p && ${renderer.dirty(fallback_dynamic_dependencies)}) {
-				${slot_or_fallback}.p(#ctx, #dirty);
+			if (${slot_or_fallback} && ${slot_or_fallback}.p && ${fallback_condition}) {
+				${slot_or_fallback}.p(#ctx, ${dirty});
 			}
 		`;
 

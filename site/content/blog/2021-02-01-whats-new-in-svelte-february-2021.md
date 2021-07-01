@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: February 2021
+title: "What's new in Svelte: February 2021"
 description: Integrations and improvements at lightning speed...
 author: Daniel Sandoval
 authorURL: https://desandoval.net

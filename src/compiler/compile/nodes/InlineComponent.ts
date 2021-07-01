@@ -18,6 +18,7 @@ export default class InlineComponent extends Node {
 	bindings: Binding[] = [];
 	handlers: EventHandler[] = [];
 	lets: Let[] = [];
+	css_custom_properties: Attribute[] = [];
 	children: INode[];
 	scope: TemplateScope;
 
@@ -46,6 +47,10 @@ export default class InlineComponent extends Node {
 					});
 
 				case 'Attribute':
+					if (node.name.startsWith('--')) {
+						this.css_custom_properties.push(new Attribute(component, this, scope, node));
+						break;
+					}
 					// fallthrough
 				case 'Spread':
 					this.attributes.push(new Attribute(component, this, scope, node));

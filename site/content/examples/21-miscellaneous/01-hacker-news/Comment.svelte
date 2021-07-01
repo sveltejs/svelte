@@ -2,6 +2,18 @@
 	export let comment;
 </script>
 
+<article>
+	<p class="meta">{comment.user} {comment.time_ago}</p>
+
+	{@html comment.content}
+
+	<div class="replies">
+		{#each comment.comments as child}
+			<svelte:self comment={child}/>
+		{/each}
+	</div>
+</article>
+
 <style>
 	article {
 		border-top: 1px solid #eee;
@@ -18,15 +30,3 @@
 		padding: 0 0 0 1em;
 	}
 </style>
-
-<article>
-	<p class="meta">{comment.user} {comment.time_ago}</p>
-
-	{@html comment.content}
-
-	<div class="replies">
-		{#each comment.comments as child}
-			<svelte:self comment={child}/>
-		{/each}
-	</div>
-</article>

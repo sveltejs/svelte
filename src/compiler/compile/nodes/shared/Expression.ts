@@ -17,6 +17,7 @@ import replace_object from '../../utils/replace_object';
 import is_contextual from './is_contextual';
 import EachBlock from '../EachBlock';
 import { clone } from '../../../utils/clone';
+import { Node as PeriscopicNode } from 'periscopic';
 
 type Owner = INode;
 
@@ -356,7 +357,7 @@ export default class Expression {
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(extract_names(assignee));
+					const names = new Set(extract_names(assignee as PeriscopicNode));
 
 					const traced: Set<string> = new Set();
 					names.forEach(name => {

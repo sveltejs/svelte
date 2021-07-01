@@ -372,9 +372,9 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	get_claim_statement(nodes: Identifier) {
-		const attributes = this.node.attributes
-			.filter((attr) => attr.type === 'Attribute')
-			.map((attr) => p`${attr.name}: true`);
+		const attributes = this.attributes
+			.filter((attr) => !(attr instanceof SpreadAttributeWrapper) && !attr.property_name)
+			.map((attr) => p`${(attr as StyleAttributeWrapper | AttributeWrapper).name}: true`);
 
 		const name = this.node.namespace
 			? this.node.name

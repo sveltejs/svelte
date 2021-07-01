@@ -65,6 +65,7 @@ export function bubble(component, event) {
 	const callbacks = component.$$.callbacks[event.type];
 
 	if (callbacks) {
-		callbacks.slice().forEach(fn => fn(event));
+		// @ts-ignore
+		callbacks.slice().forEach(fn => fn.call(this, event));
 	}
 }

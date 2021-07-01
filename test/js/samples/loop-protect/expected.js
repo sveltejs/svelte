@@ -110,7 +110,7 @@ function instance($$self, $$props, $$invalidate) {
 	const writable_props = [];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$" && key !== "slot") console_1.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
 	function div_binding($$value) {

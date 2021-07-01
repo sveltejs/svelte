@@ -8,6 +8,12 @@ In the example notice how we applied a flex layout with a gap of `1em` to the bo
 
 ```sv
 <!-- Box.svelte -->
+<div class="box">
+	<slot name="header">No header was provided</slot>
+	<p>Some content between header and footer</p>
+	<slot name="footer"></slot>
+</div>
+
 <style>
 	.box {		
 		display: flex;
@@ -15,12 +21,6 @@ In the example notice how we applied a flex layout with a gap of `1em` to the bo
 		gap: 1em;
 	}
 </style>
-
-<div class="box">
-	<slot name="header">No header was provided</slot>
-	<p>Some content between header and footer</p>
-	<slot name="footer"></slot>
-</div>
 ```
 
 However, the content in the footer is not spaced out according to this rhythm because wrapping it in a div created a new flow layout.

@@ -2,8 +2,50 @@
 
 ## Unreleased
 
+* Add `trusted` event modifier ([#6137](https://github.com/sveltejs/svelte/issues/6137))
+* Fix erroneous `unknown prop` warning when using slot on a component ([#6065](https://github.com/sveltejs/svelte/pull/6065))
+* Throw compiler error when passing empty directive names ([#6299](https://github.com/sveltejs/svelte/issues/6299))
+* New a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([5938](https://github.com/sveltejs/svelte/pull/5938))
+* Fix `preserveComments` in SSR mode ([4730](https://github.com/sveltejs/svelte/issues/4730))
+* Add `varsReport` compiler option ([#6192](https://github.com/sveltejs/svelte/pull/6192))
+* Expose `svelte/ssr` which exported lifecycle methods as noop ([#6416](https://github.com/sveltejs/svelte/pull/6416))
+* Fix compiler error when using `:where()` inside `:global()` ([#6434](https://github.com/sveltejs/svelte/issues/6434))
+
+## 3.38.3
+
+* Speed up hydration by reducing amount of element reorderings ([#4308](https://github.com/sveltejs/svelte/issues/4308))
+* Fix escaping attribute values when using a spread in SSR ([#5756](https://github.com/sveltejs/svelte/issues/5756))
+* Throw compiler error when `:global()` contains multiple selectors ([#5907](https://github.com/sveltejs/svelte/issues/5907))
+* Give explicit error rather than crashing when an attribute shorthand `{}` is empty ([#6086](https://github.com/sveltejs/svelte/issues/6086))
+* Make `<textarea>` end tag parsing more robust ([#6276](https://github.com/sveltejs/svelte/issues/6276))
+* Fix `:global(...):some-pseudoclass` selectors not being seen as global ([#6306](https://github.com/sveltejs/svelte/issues/6306))
+* Fix type signatures of `writable` and `readable` so it's possible to call them without arguments ([#6291](https://github.com/sveltejs/svelte/issues/6291), [#6345](https://github.com/sveltejs/svelte/issues/6345))
+* Preserve `this` in bubbled events ([#6310](https://github.com/sveltejs/svelte/issues/6310))
+* Fix slot props not updating when transition is aborted ([#6386](https://github.com/sveltejs/svelte/issues/6386))
+* Fix generic props relationship in `SvelteComponentTyped` ([#6400](https://github.com/sveltejs/svelte/pull/6400))
+
+## 3.38.2
+
+* Revert hydration optimisation for the time being ([#6279](https://github.com/sveltejs/svelte/issues/6279))
+
+## 3.38.1
+
+* Fix hydration regression ([#6274](https://github.com/sveltejs/svelte/issues/6274))
+
+## 3.38.0
+
+* Avoid recreating DOM elements during hydration ([#1067](https://github.com/sveltejs/svelte/issues/1067))
+* Support passing CSS custom properties to component ([#5628](https://github.com/sveltejs/svelte/issues/5628))
+* Support `:global()` as part of compound CSS selectors ([#6222](https://github.com/sveltejs/svelte/issues/6222))
+* Fix updating `<slot>` contents when there's an aborted transition ([#3542](https://github.com/sveltejs/svelte/issues/3542))
+* Fix setting boolean attributes on custom elements ([#5951](https://github.com/sveltejs/svelte/issues/5951))
 * Add missing function overload for `derived` to allow explicitly setting an initial value for non-async derived stores ([#6172](https://github.com/sveltejs/svelte/pull/6172))
-* Pass full markup source to script/style preprocessors ([#6169](https://github.com/sveltejs/svelte/pull/6169))
+* Fix dynamic `href` values erroneously triggering a11y warnings ([#5990](https://github.com/sveltejs/svelte/issues/5990))
+* Fix scope leak when updating an `{#await}` block ([#6173](https://github.com/sveltejs/svelte/issues/6173))
+* Pass full markup source to `script`/`style` preprocessors ([#6169](https://github.com/sveltejs/svelte/pull/6169))
+* Fix `crossfade` types to mark `fallback` as optional ([#6201](https://github.com/sveltejs/svelte/pull/6201))
+* Add missing "context" typing to `SvelteComponent` constructor options ([#6236](https://github.com/sveltejs/svelte/pull/6236))
+* Don't automatically switch to `svg` namespace when in `foreign` namespace ([#6257](https://github.com/sveltejs/svelte/issues/6257))
 
 ## 3.37.0
 

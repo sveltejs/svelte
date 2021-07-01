@@ -1,5 +1,9 @@
 import { onDestroy } from 'svelte';
 
 export function onInterval(callback, milliseconds) {
-	// implementation goes here
+	const interval = setInterval(callback, milliseconds);
+
+	onDestroy(() => {
+		// Fix the memory leak here
+	});
 }
