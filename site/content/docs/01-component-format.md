@@ -22,7 +22,7 @@ All three sections — script, styles and markup — are optional.
 
 ### &lt;script&gt;
 
-A `<script>` block contains JavaScript that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup. There are four additional rules:
+A `<script>` block contains JavaScript that runs when a component instance is created. The variables declared (or imported) at the top level are 'visible' from the component's markup.
 
 #### props
 
