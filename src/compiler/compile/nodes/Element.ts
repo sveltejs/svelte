@@ -519,7 +519,7 @@ export default class Element extends Node {
 			}
 		}
 
-		if (this.is_media_node()) {
+		if (this.name === 'video') {
 			if (attribute_map.has('muted')) {
 				return;
 			}
@@ -533,7 +533,7 @@ export default class Element extends Node {
 			if (!has_caption) {
 				component.warn(this, {
 					code: 'a11y-media-has-caption',
-					message: 'A11y: Media elements must have a <track kind="captions">'
+					message: 'A11y: <video> elements must have a <track kind="captions">'
 				});
 			}
 		}

@@ -6,7 +6,7 @@
       "column": 15,
       "line": 2
     },
-    "message": "A11y: Media elements must have a <track kind=\"captions\">",
+    "message": "A11y: <video> elements must have a <track kind=\"captions\">",
     "pos": 40,
     "start": {
       "character": 40,
@@ -21,7 +21,7 @@
       "column": 24,
       "line": 3
     },
-    "message": "A11y: Media elements must have a <track kind=\"captions\">",
+    "message": "A11y: <video> elements must have a <track kind=\"captions\">",
     "pos": 56,
     "start": {
       "character": 56,
