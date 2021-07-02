@@ -11,6 +11,7 @@ const unsubscribe = count.subscribe(value => {
 	count_value = value;
 });
 ```
+> Calling a `subscribe` method returns an `unsubscribe` function.
 
 You now declared `unsubscribe`, but it still needs to be called, for example through the `onDestroy` [lifecycle hook](tutorial/ondestroy):
 
