@@ -2,15 +2,15 @@
 title: Accessibility warnings
 ---
 
-Accessibility (shortened to a11y) isn't always easy to get right, but Svelte will help by warning you if you write inaccessible markup.
+Accessibility (shortened to a11y) isn't always easy to get right, but Svelte will help by warning you at compile time if you write inaccessible markup. However, keep in mind that many accessibility issues can only be identified at runtime using other automated tools and by manually testing your application.
 
-Here is a list of accessibility checks Svelte will do it for you.
+Here is a list of accessibility checks Svelte will do for you.
 
 ---
 
 ### `a11y-accesskey`
 
-Enforce no `accesskey` on element. Access keys are HTML attributes that allow web developers to assign keyboard shortcuts to elements. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreader and keyboard only users create accessibility complications so to avoid complications, access keys should not be used.
+Enforce no `accesskey` on element. Access keys are HTML attributes that allow web developers to assign keyboard shortcuts to elements. Inconsistencies between keyboard shortcuts and keyboard commands used by screen reader and keyboard-only users create accessibility complications. To avoid complications, access keys should not be used.
 
 ```sv
 <!-- A11y: Avoid using accesskey -->
@@ -32,7 +32,7 @@ Certain reserved DOM elements do not support ARIA roles, states and properties. 
 
 ### `a11y-autofocus`
 
-Enforce that `autofocus` is not used on elements. Autofocusing elements can cause usability issues for sighted and non-sighted users, alike.
+Enforce that `autofocus` is not used on elements. Autofocusing elements can cause usability issues for sighted and non-sighted users alike.
 
 ```sv
 <!-- A11y: Avoid using autofocus -->
@@ -56,32 +56,32 @@ The following elements are visually distracting: `<marquee>` and `<blink>`.
 
 ### `a11y-hidden`
 
-Certain DOM elements are useful for screen readers navigation and should not be hidden.
+Certain DOM elements are useful for screen reader navigation and should not be hidden.
 
 ```sv
 <!-- A11y: <h2> element should not be hidden -->
-<h2 aria-hidden>invisible header</h2>
+<h2 aria-hidden="true">invisible header</h2>
 ```
 
 ---
 
 ### `a11y-img-redundant-alt`
 
-Enforce img alt attribute does not contain the word image, picture, or photo. Screenreaders already announce `img` elements as an image. There is no need to use words such as _image_, _photo_, and/or _picture_.
+Enforce img alt attribute does not contain the word image, picture, or photo. Screen readers already announce `img` elements as an image. There is no need to use words such as _image_, _photo_, and/or _picture_.
 
 ```sv
 <img src="foo" alt="Foo eating a sandwich." />
 
 <!-- aria-hidden, won't be announced by screen reader -->
-<img src="bar" aria-hidden alt="Picture of me taking a photo of an image" />
+<img src="bar" aria-hidden="true" alt="Picture of me taking a photo of an image" />
 
-<!-- A11y: Screenreaders already announce <img> elements as an image. -->
+<!-- A11y: Screen readers already announce <img> elements as an image. -->
 <img src="foo" alt="Photo of foo being weird." />
 
-<!-- A11y: Screenreaders already announce <img> elements as an image. -->
+<!-- A11y: Screen readers already announce <img> elements as an image. -->
 <img src="bar" alt="Image of me at a bar!" />
 
-<!-- A11y: Screenreaders already announce <img> elements as an image. -->
+<!-- A11y: Screen readers already announce <img> elements as an image. -->
 <img src="foo" alt="Picture of baz fixing a bug." />
 ```
 
@@ -89,7 +89,7 @@ Enforce img alt attribute does not contain the word image, picture, or photo. Sc
 
 ### `a11y-invalid-attribute`
 
-Enforce that accessibility attribute should have valid value
+Enforce that attributes important for accessibility have a valid value. For example, `href` should not be empty, `'#'`, or `javascript:`.
 
 ```sv
 <!-- A11y: '' is not a valid href attribute -->
@@ -105,7 +105,7 @@ Enforce that a label tag has a text label and an associated control.
 There are two supported ways to associate a label with a control:
 
 - Wrapping a control in a label tag.
-- Adding `for` to a label and assigning it a DOM ID string that indicates an input on the page.
+- Adding `for` to a label and assigning it the ID of an input on the page.
 
 ```sv
 <label for="id">B</label>
@@ -151,18 +151,26 @@ Certain reserved DOM elements do not support ARIA roles, states and properties. 
 
 ### `a11y-misplaced-scope`
 
-The scope scope should be used only on `<th>` elements.
+The scope attribute should only be used on `<th>` elements.
 
 ```sv
 <!-- A11y: The scope attribute should only be used with <th> elements -->
-<div scope/>
+<div scope="row" />
 ```
 
 ---
 
 ### `a11y-missing-attribute`
 
-Enforce that element should have required accessibility attribute
+Enforce that attributes required for accessibility are present on an element. This includes the following checks:
+
+- `<a>` should have an href (unless it's a [fragment-defining tag](https://github.com/sveltejs/svelte/issues/4697))
+- `<area>` should have alt, aria-label, or aria-labelledby
+- `<html>` should have lang
+- `<iframe>` should have title
+- `<img>` should have alt
+- `<object>` should have title, aria-label, or aria-labelledby
+- `<input type="image">` should have alt, aria-label, or aria-labelledby
 
 ```sv
 <!-- A11y: <input type=\"image\"> element should have an alt, aria-label or aria-labelledby attribute -->
@@ -191,9 +199,23 @@ Enforce that heading elements (`h1`, `h2`, etc.) and anchors have content and th
 
 ---
 
+### `a11y-mouse-events-have-key-events`
+
+Enforce that `on:mouseover` and `on:mouseout` are accompanied by `on:focus` and `on:blur`, respectively. This helps to ensure that any functionality triggered by these mouse events is also accessible to keyboard users.
+
+```sv
+<!-- A11y: on:mouseover must be accompanied by on:focus -->
+<div on:mouseover={handleMouseover} />
+
+<!-- A11y: on:mouseout must be accompanied by on:blur -->
+<div on:mouseout={handleMouseout} />
+```
+
+---
+
 ### `a11y-positive-tabindex`
 
-Avoid positive `tabIndex` property values to synchronize the flow of the page with keyboard tab order.
+Avoid positive `tabindex` property values. This will move elements out of the expected tab order, creating a confusing experience for keyboard users.
 
 ```sv
 <!-- A11y: avoid tabindex values above zero -->
@@ -204,7 +226,7 @@ Avoid positive `tabIndex` property values to synchronize the flow of the page wi
 
 ### `a11y-structure`
 
-Warns when accessibility related elements are not in a right structure.
+Enforce that certain DOM elements have the correct structure.
 
 ```sv
 <!-- A11y: <figcaption> must be an immediate child of <figure> -->
@@ -217,7 +239,7 @@ Warns when accessibility related elements are not in a right structure.
 
 ### `a11y-unknown-aria-attribute`
 
-Invalid aria attribute. Enforces valid `aria-*` property based on [WAI-ARIA States and Properties spec](https://www.w3.org/WAI/PF/aria-1.1/states_and_properties)
+Enforce that only known ARIA attributes are used. This is based on the [WAI-ARIA States and Properties spec](https://www.w3.org/WAI/PF/aria-1.1/states_and_properties).
 
 ```sv
 <!-- A11y: Unknown aria attribute 'aria-labeledby' (did you mean 'labelledby'?) -->
