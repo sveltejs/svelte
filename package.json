@@ -9,6 +9,7 @@
     "compiler.*",
     "register.js",
     "index.*",
+    "ssr.*",
     "internal",
     "store",
     "animate",
