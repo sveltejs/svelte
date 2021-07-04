@@ -166,11 +166,10 @@ export default class Expression {
 
 	dynamic_dependencies() {
 		return Array.from(this.dependencies).filter(name => {
-			if (this.template_scope.is_let(name)) return true;
-			if (is_reserved_keyword(name)) return true;
-
 			const variable = this.component.var_lookup.get(name);
-			return is_dynamic(variable);
+			return this.template_scope.is_let(name)
+			|| is_reserved_keyword(name)
+			|| is_dynamic(variable);
 		});
 	}
 
@@ -363,7 +362,7 @@ export default class Expression {
 					names.forEach(name => {
 						const dependencies = template_scope.dependencies_for_name.get(name);
 						if (dependencies) {
-							dependencies.forEach(name => traced.add(name));
+							dependencies.forEach(traced.add, traced);
 						} else {
 							traced.add(name);
 						}
@@ -393,9 +392,7 @@ export default class Expression {
 
 		if (declarations.length > 0) {
 			block.maintain_context = true;
-			declarations.forEach(declaration => {
-				block.chunks.init.push(declaration);
-			});
+			block.chunks.init.push(...declarations);
 		}
 
 		return (this.manipulated = node as Node);
@@ -403,13 +400,8 @@ export default class Expression {
 }
 
 function get_function_name(_node, parent) {
-	if (parent.type === 'EventHandler') {
-		return `${parent.name}_handler`;
-	}
-
-	if (parent.type === 'Action') {
-		return `${parent.name}_function`;
-	}
-
-	return 'func';
+	return {
+		EventHandler: `${parent.name}_handler`,
+		Action: `${parent.name}_function`
+	}[parent.type] || 'func';
 }

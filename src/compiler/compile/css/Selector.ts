@@ -159,13 +159,8 @@ export default class Selector {
 	}
 
 	get_amount_class_specificity_increased() {
-		let count = 0;
-		for (const block of this.blocks) {
-			if (block.should_encapsulate) {
-				count ++;
-			}
-		}
-		return count;
+		const blockShouldEncapsulate = block => block.should_encapsulate;
+		return this.blocks.filter(blockShouldEncapsulate).length;
 	}
 }
 

@@ -15,9 +15,7 @@ const is_keyframes_node = (node: CssNode) =>
 	remove_css_prefix(node.name) === 'keyframes';
 
 const at_rule_has_declaration = ({ block }: CssNode): true =>
-	block &&
-	block.children &&
-	block.children.find((node: CssNode) => node.type === 'Declaration');
+	block?.children?.find((node: CssNode) => node.type === 'Declaration');
 
 function minify_declarations(
 	code: MagicString,
@@ -56,7 +54,7 @@ class Rule {
 	}
 
 	is_used(dev: boolean) {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) return true;
+		if (this.parent?.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) return true;
 		if (this.declarations.length === 0) return dev;
 		return this.selectors.some(s => s.used);
 	}
@@ -115,6 +113,7 @@ class Rule {
 
 class Declaration {
 	node: CssNode;
+	private static readonly TRANSFORMABLE_PROPERTIES: string[] = ['animation', 'animation-name'];
 
 	constructor(node: CssNode) {
 		this.node = node;
@@ -122,7 +121,7 @@ class Declaration {
 
 	transform(code: MagicString, keyframes: Map<string, string>) {
 		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
-		if (property === 'animation' || property === 'animation-name') {
+		if (Declaration.TRANSFORMABLE_PROPERTIES.includes(property)) {
 			this.node.value.children.forEach((block: CssNode) => {
 				if (block.type === 'Identifier') {
 					const name = block.name;
@@ -138,9 +137,7 @@ class Declaration {
 		if (!this.node.property) return; // @apply, and possibly other weird cases?
 
 		const c = this.node.start + this.node.property.length;
-		const first = this.node.value.children
-			? this.node.value.children[0]
-			: this.node.value;
+		const first = this.node.value.children?.[0] || this.node.value;
 
 		let start = first.start;
 		while (/\s/.test(code.original[start])) start += 1;
@@ -153,17 +150,16 @@ class Declaration {
 
 class Atrule {
 	node: CssNode;
-	children: Array<Atrule|Rule>;
-	declarations: Declaration[];
+	children: Array<Atrule|Rule> = [];
+	declarations: Declaration[] = [];
+	private static readonly NODES_TO_APPLY: string[] = ['media', 'supports'];
 
 	constructor(node: CssNode) {
 		this.node = node;
-		this.children = [];
-		this.declarations = [];
 	}
 
 	apply(node: Element) {
-		if (this.node.name === 'media' || this.node.name === 'supports') {
+		if (Atrule.NODES_TO_APPLY.includes(this.node.name)) {
 			this.children.forEach(child => {
 				child.apply(node);
 			});
