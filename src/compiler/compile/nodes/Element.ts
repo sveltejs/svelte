@@ -10,6 +10,7 @@ import Class from './Class';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
+import { is_name_contenteditable, get_contenteditable_attr } from '../utils/contenteditable';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
@@ -771,20 +772,14 @@ export default class Element extends Node {
 						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`
 					});
 				}
-			} else if (
-				name === 'textContent' ||
-				name === 'innerHTML'
-			) {
-				const contenteditable = this.attributes.find(
-					(attribute: Attribute) => attribute.name === 'contenteditable'
-				);
-
+			} else if (is_name_contenteditable(name)) {
+				const contenteditable = get_contenteditable_attr(this);
 				if (!contenteditable) {
 					component.error(binding, {
 						code: 'missing-contenteditable-attribute',
-						message: '\'contenteditable\' attribute is required for textContent and innerHTML two-way bindings'
+						message: '\'contenteditable\' attribute is required for textContent/innerHTML/innerText two-way bindings'
 					});
-				} else if (contenteditable && !contenteditable.is_static) {
+				} else if (!contenteditable.is_static) {
 					component.error(contenteditable, {
 						code: 'dynamic-contenteditable-attribute',
 						message: '\'contenteditable\' attribute cannot be dynamic if element uses two-way binding'
