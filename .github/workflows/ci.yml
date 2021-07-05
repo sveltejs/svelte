@@ -42,7 +42,7 @@ jobs:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: ${{ runner.os }}-node-
-      - run: "npm i && npm run lint"
+      - run: 'npm i && npm run lint'
   Unit:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
@@ -62,4 +62,4 @@ jobs:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: ${{ runner.os }}-node-
-      - run: "npm i && npm run test:unit"
+      - run: 'npm i && npm run test:unit'
