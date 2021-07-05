@@ -14,14 +14,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-      - id: npm-cache-dir
-        run: echo "::set-output name=dir::$(npm config get cache)"
-      - uses: actions/cache@v2
-        id: npm-cache
-        with:
-          path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: ${{ runner.os }}-node-
       - run: npm install
       - run: npm test
         env:
@@ -34,14 +26,6 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           cache: npm
-      - id: npm-cache-dir
-        run: echo "::set-output name=dir::$(npm config get cache)"
-      - uses: actions/cache@v2
-        id: npm-cache
-        with:
-          path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: ${{ runner.os }}-node-
       - run: 'npm i && npm run lint'
   Unit:
     runs-on: ${{ matrix.os }}
@@ -54,12 +38,4 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           cache: npm
-      - id: npm-cache-dir
-        run: echo "::set-output name=dir::$(npm config get cache)"
-      - uses: actions/cache@v2
-        id: npm-cache
-        with:
-          path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: ${{ runner.os }}-node-
       - run: 'npm i && npm run test:unit'
