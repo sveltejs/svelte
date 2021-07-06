@@ -98,6 +98,8 @@ let shadowedByModule;
 const priv = "priv";
 
 function instance($$self, $$props, $$invalidate) {
+	let computed;
+
 	let $prop,
 		$$unsubscribe_prop = noop,
 		$$subscribe_prop = () => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe(prop, $$value => $$invalidate(2, $prop = $$value)), prop);
@@ -114,7 +116,7 @@ function instance($$self, $$props, $$invalidate) {
 	const writable_props = ["prop", "alias"];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$" && key !== "slot") console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$$set = $$props => {
@@ -144,8 +146,6 @@ function instance($$self, $$props, $$invalidate) {
 		if ("shadowedByModule" in $$props) $$invalidate(4, shadowedByModule = $$props.shadowedByModule);
 		if ("computed" in $$props) computed = $$props.computed;
 	};
-
-	let computed;
 
 	if ($$props && "$$inject" in $$props) {
 		$$self.$inject_state($$props.$$inject);

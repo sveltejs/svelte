@@ -1,0 +1,17 @@
+[
+	{
+		"code": "module-script-reactive-declaration",
+		"message": "\"foo\" is declared in a module script and will not be reactive",
+		"pos": 65,
+		"start": {
+			"character": 65,
+			"column": 10,
+			"line": 5
+		},
+		"end": {
+			"character": 68,
+			"column": 13,
+			"line": 5
+		}
+	}
+]

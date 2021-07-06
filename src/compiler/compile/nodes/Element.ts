@@ -23,7 +23,7 @@ const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateM
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
 
-const aria_roles = 'alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure form generic grid gridcell group heading img link list listbox listitem log main marquee math meter menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' ');
+const aria_roles = 'alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure form generic graphics-document graphics-object graphics-symbol grid gridcell group heading img link list listbox listitem log main marquee math meter menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' ');
 const aria_role_set = new Set(aria_roles);
 
 const a11y_required_attributes = {
@@ -57,11 +57,6 @@ const a11y_required_content = new Set([
 	'h6'
 ]);
 
-const a11y_no_onchange = new Set([
-	'select',
-	'option'
-]);
-
 const a11y_labelable = new Set([
 	'button',
 	'input',
@@ -82,7 +77,8 @@ const valid_modifiers = new Set([
 	'once',
 	'passive',
 	'nonpassive',
-	'self'
+	'self',
+	'trusted'
 ]);
 
 const passive_events = new Set([
@@ -91,6 +87,11 @@ const passive_events = new Set([
 	'touchmove',
 	'touchend',
 	'touchcancel'
+]);
+
+const react_attributes = new Map([
+	['className', 'class'],
+	['htmlFor', 'for']
 ]);
 
 function get_namespace(parent: Element, element: Element, explicit_namespace: string) {
@@ -102,8 +103,10 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 			: null);
 	}
 
-	if (svg.test(element.name.toLowerCase())) return namespaces.svg;
-	if (parent_element.name.toLowerCase() === 'foreignobject') return null;
+	if (parent_element.namespace !== namespaces.foreign) {
+		if (svg.test(element.name.toLowerCase())) return namespaces.svg;
+		if (parent_element.name.toLowerCase() === 'foreignobject') return null;
+	}
 
 	return parent_element.namespace;
 }
@@ -125,50 +128,51 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 
-	constructor(component: Component, parent, scope, info: any) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
-		this.namespace = get_namespace(parent, this, component.namespace);
+		this.namespace = get_namespace(parent as Element, this, component.namespace);
 
-		if (this.name === 'textarea') {
-			if (info.children.length > 0) {
-				const value_attribute = info.attributes.find(node => node.name === 'value');
-				if (value_attribute) {
-					component.error(value_attribute, {
-						code: 'textarea-duplicate-value',
-						message: 'A <textarea> can have either a value attribute or (equivalently) child content, but not both'
+		if (this.namespace !== namespaces.foreign) {
+			if (this.name === 'textarea') {
+				if (info.children.length > 0) {
+					const value_attribute = info.attributes.find(node => node.name === 'value');
+					if (value_attribute) {
+						component.error(value_attribute, {
+							code: 'textarea-duplicate-value',
+							message: 'A <textarea> can have either a value attribute or (equivalently) child content, but not both'
+						});
+					}
+
+					// this is an egregious hack, but it's the easiest way to get <textarea>
+					// children treated the same way as a value attribute
+					info.attributes.push({
+						type: 'Attribute',
+						name: 'value',
+						value: info.children
+					});
+
+					info.children = [];
+				}
+			}
+
+			if (this.name === 'option') {
+				// Special case — treat these the same way:
+				//   <option>{foo}</option>
+				//   <option value={foo}>{foo}</option>
+				const value_attribute = info.attributes.find(attribute => attribute.name === 'value');
+
+				if (!value_attribute) {
+					info.attributes.push({
+						type: 'Attribute',
+						name: 'value',
+						value: info.children,
+						synthetic: true
 					});
 				}
-
-				// this is an egregious hack, but it's the easiest way to get <textarea>
-				// children treated the same way as a value attribute
-				info.attributes.push({
-					type: 'Attribute',
-					name: 'value',
-					value: info.children
-				});
-
-				info.children = [];
 			}
 		}
-
-		if (this.name === 'option') {
-			// Special case — treat these the same way:
-			//   <option>{foo}</option>
-			//   <option value={foo}>{foo}</option>
-			const value_attribute = info.attributes.find(attribute => attribute.name === 'value');
-
-			if (!value_attribute) {
-				info.attributes.push({
-					type: 'Attribute',
-					name: 'value',
-					value: info.children,
-					synthetic: true
-				});
-			}
-		}
-
 		const has_let = info.attributes.some(node => node.type === 'Let');
 		if (has_let) {
 			scope = scope.child();
@@ -248,65 +252,83 @@ export default class Element extends Node {
 			});
 		}
 
-		if (a11y_distracting_elements.has(this.name)) {
-			// no-distracting-elements
-			this.component.warn(this, {
-				code: 'a11y-distracting-elements',
-				message: `A11y: Avoid <${this.name}> elements`
-			});
-		}
-
-		if (this.name === 'figcaption') {
-			let { parent } = this;
-			let is_figure_parent = false;
-
-			while (parent) {
-				if ((parent as Element).name === 'figure') {
-					is_figure_parent = true;
-					break;
-				}
-				if (parent.type === 'Element') {
-					break;
-				}
-				parent = parent.parent;
-			}
-
-			if (!is_figure_parent) {
-				this.component.warn(this, {
-					code: 'a11y-structure',
-					message: 'A11y: <figcaption> must be an immediate child of <figure>'
-				});
-			}
-		}
-
-		if (this.name === 'figure') {
-			const children = this.children.filter(node => {
-				if (node.type === 'Comment') return false;
-				if (node.type === 'Text') return /\S/.test(node.data);
-				return true;
-			});
-
-			const index = children.findIndex(child => (child as Element).name === 'figcaption');
-
-			if (index !== -1 && (index !== 0 && index !== children.length - 1)) {
-				this.component.warn(children[index], {
-					code: 'a11y-structure',
-					message: 'A11y: <figcaption> must be first or last child of <figure>'
-				});
-			}
-		}
-
 		this.validate_attributes();
-		this.validate_special_cases();
-		this.validate_bindings();
-		this.validate_content();
 		this.validate_event_handlers();
+		if (this.namespace === namespaces.foreign) {
+			this.validate_bindings_foreign();
+		} else {
+			this.validate_attributes_a11y();
+			this.validate_special_cases();
+			this.validate_bindings();
+			this.validate_content();
+		}
+
 	}
 
 	validate_attributes() {
 		const { component, parent } = this;
 
-		const attribute_map = new Map();
+		this.attributes.forEach(attribute => {
+			if (attribute.is_spread) return;
+
+			const name = attribute.name.toLowerCase();
+
+			// Errors
+
+			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
+				component.error(attribute, {
+					code: 'illegal-attribute',
+					message: `'${name}' is not a valid attribute name`
+				});
+			}
+
+			if (name === 'slot') {
+				if (!attribute.is_static) {
+					component.error(attribute, {
+						code: 'invalid-slot-attribute',
+						message: 'slot attribute cannot have a dynamic value'
+					});
+				}
+
+				if (component.slot_outlets.has(name)) {
+					component.error(attribute, {
+						code: 'duplicate-slot-attribute',
+						message: `Duplicate '${name}' slot`
+					});
+
+					component.slot_outlets.add(name);
+				}
+
+				if (!(parent.type === 'SlotTemplate' || within_custom_element(parent))) {
+					component.error(attribute, {
+						code: 'invalid-slotted-content',
+						message: 'Element with a slot=\'...\' attribute must be a child of a component or a descendant of a custom element'
+					});
+				}
+			}
+
+			// Warnings
+
+			if (this.namespace !== namespaces.foreign) {
+				if (name === 'is') {
+					component.warn(attribute, {
+						code: 'avoid-is',
+						message: 'The \'is\' attribute is not supported cross-browser and should be avoided'
+					});
+				}
+
+				if (react_attributes.has(attribute.name)) {
+					component.warn(attribute, {
+						code: 'invalid-html-attribute',
+						message: `'${attribute.name}' is not a valid HTML attribute. Did you mean '${react_attributes.get(attribute.name)}'?`
+					});
+				}
+			}
+		});
+	}
+
+	validate_attributes_a11y() {
+		const { component } = this;
 
 		this.attributes.forEach(attribute => {
 			if (attribute.is_spread) return;
@@ -403,53 +425,13 @@ export default class Element extends Node {
 					});
 				}
 			}
-
-
-			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
-				component.error(attribute, {
-					code: 'illegal-attribute',
-					message: `'${name}' is not a valid attribute name`
-				});
-			}
-
-			if (name === 'slot') {
-				if (!attribute.is_static) {
-					component.error(attribute, {
-						code: 'invalid-slot-attribute',
-						message: 'slot attribute cannot have a dynamic value'
-					});
-				}
-
-				if (component.slot_outlets.has(name)) {
-					component.error(attribute, {
-						code: 'duplicate-slot-attribute',
-						message: `Duplicate '${name}' slot`
-					});
-
-					component.slot_outlets.add(name);
-				}
-
-				if (!(parent.type === 'InlineComponent' || within_custom_element(parent))) {
-					component.error(attribute, {
-						code: 'invalid-slotted-content',
-						message: 'Element with a slot=\'...\' attribute must be a child of a component or a descendant of a custom element'
-					});
-				}
-			}
-
-			if (name === 'is') {
-				component.warn(attribute, {
-					code: 'avoid-is',
-					message: 'The \'is\' attribute is not supported cross-browser and should be avoided'
-				});
-			}
-
-			attribute_map.set(attribute.name, attribute);
 		});
 	}
 
+
 	validate_special_cases() {
 		const { component, attributes, handlers } = this;
+
 		const attribute_map = new Map();
 		const handlers_map = new Map();
 
@@ -537,7 +519,7 @@ export default class Element extends Node {
 			}
 		}
 
-		if (this.is_media_node()) {
+		if (this.name === 'video') {
 			if (attribute_map.has('muted')) {
 				return;
 			}
@@ -551,19 +533,83 @@ export default class Element extends Node {
 			if (!has_caption) {
 				component.warn(this, {
 					code: 'a11y-media-has-caption',
-					message: 'A11y: Media elements must have a <track kind="captions">'
+					message: 'A11y: <video> elements must have a <track kind="captions">'
 				});
 			}
 		}
 
-		if (a11y_no_onchange.has(this.name)) {
-			if (handlers_map.has('change') && !handlers_map.has('blur')) {
+		if (a11y_distracting_elements.has(this.name)) {
+			// no-distracting-elements
+			component.warn(this, {
+				code: 'a11y-distracting-elements',
+				message: `A11y: Avoid <${this.name}> elements`
+			});
+		}
+
+		if (this.name === 'figcaption') {
+			let { parent } = this;
+			let is_figure_parent = false;
+
+			while (parent) {
+				if ((parent as Element).name === 'figure') {
+					is_figure_parent = true;
+					break;
+				}
+				if (parent.type === 'Element') {
+					break;
+				}
+				parent = parent.parent;
+			}
+
+			if (!is_figure_parent) {
 				component.warn(this, {
-					code: 'a11y-no-onchange',
-					message: 'A11y: on:blur must be used instead of on:change, unless absolutely necessary and it causes no negative consequences for keyboard only or screen reader users.'
+					code: 'a11y-structure',
+					message: 'A11y: <figcaption> must be an immediate child of <figure>'
 				});
 			}
 		}
+
+		if (this.name === 'figure') {
+			const children = this.children.filter(node => {
+				if (node.type === 'Comment') return false;
+				if (node.type === 'Text') return /\S/.test(node.data);
+				return true;
+			});
+
+			const index = children.findIndex(child => (child as Element).name === 'figcaption');
+
+			if (index !== -1 && (index !== 0 && index !== children.length - 1)) {
+				component.warn(children[index], {
+					code: 'a11y-structure',
+					message: 'A11y: <figcaption> must be first or last child of <figure>'
+				});
+			}
+		}
+
+		if (handlers_map.has('mouseover') && !handlers_map.has('focus')) {
+			component.warn(this, {
+				code: 'a11y-mouse-events-have-key-events',
+				message: 'A11y: on:mouseover must be accompanied by on:focus'
+			});
+		}
+
+		if (handlers_map.has('mouseout') && !handlers_map.has('blur')) {
+			component.warn(this, {
+				code: 'a11y-mouse-events-have-key-events',
+				message: 'A11y: on:mouseout must be accompanied by on:blur'
+			});
+		}
+	}
+
+	validate_bindings_foreign() {
+		this.bindings.forEach(binding => {
+			if (binding.name !== 'this') {
+				this.component.error(binding, {
+					code: 'invalid-binding',
+					message: `'${binding.name}' is not a valid binding. Foreign elements only support bind:this`
+				});
+			}
+		});
 	}
 
 	validate_bindings() {
@@ -850,7 +896,7 @@ export default class Element extends Node {
 						type: 'Text',
 						data: ` ${id}`,
 						synthetic: true
-					})
+					} as any)
 				);
 			}
 		} else {
@@ -859,9 +905,13 @@ export default class Element extends Node {
 					type: 'Attribute',
 					name: 'class',
 					value: [{ type: 'Text', data: id, synthetic: true }]
-				})
+				} as any)
 			);
 		}
+	}
+
+	get slot_template_name() {
+		return this.attributes.find(attribute => attribute.name === 'slot').get_static_value() as string;
 	}
 }
 

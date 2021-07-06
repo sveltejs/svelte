@@ -14,7 +14,10 @@ import { Node, FunctionExpression, Identifier } from 'estree';
 import { INode } from '../interfaces';
 import { is_reserved_keyword } from '../../utils/reserved_keywords';
 import replace_object from '../../utils/replace_object';
+import is_contextual from './is_contextual';
 import EachBlock from '../EachBlock';
+import { clone } from '../../../utils/clone';
+import { Node as PeriscopicNode } from 'periscopic';
 
 type Owner = INode;
 
@@ -22,7 +25,7 @@ export default class Expression {
 	type: 'Expression' = 'Expression';
 	component: Component;
 	owner: Owner;
-	node: any;
+	node: Node;
 	references: Set<string> = new Set();
 	dependencies: Set<string> = new Set();
 	contextual_dependencies: Set<string> = new Set();
@@ -36,7 +39,7 @@ export default class Expression {
 
 	manipulated: Node;
 
-	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info, lazy?: boolean) {
+	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info: Node, lazy?: boolean) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
@@ -194,7 +197,7 @@ export default class Expression {
 		const node = walk(this.node, {
 			enter(node: any, parent: any) {
 				if (node.type === 'Property' && node.shorthand) {
-					node.value = JSON.parse(JSON.stringify(node.value));
+					node.value = clone(node.value);
 					node.shorthand = false;
 				}
 
@@ -314,7 +317,7 @@ export default class Expression {
 								block.renderer.add_to_context(func_id.name, true);
 								// rename #ctx -> child_ctx;
 								walk(func_expression, {
-									enter(node) {
+									enter(node: Node) {
 										if (node.type === 'Identifier' && node.name === '#ctx') {
 											node.name = 'child_ctx';
 										}
@@ -324,7 +327,8 @@ export default class Expression {
 								// child_ctx[x] = function () { ... }
 								(template_scope.get_owner(deps[0]) as EachBlock).contexts.push({
 									key: func_id,
-									modifier: () => func_expression
+									modifier: () => func_expression,
+									default_modifier: node => node
 								});
 								this.replace(block.renderer.reference(func_id));
 							}
@@ -353,7 +357,7 @@ export default class Expression {
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(extract_names(assignee));
+					const names = new Set(extract_names(assignee as PeriscopicNode));
 
 					const traced: Set<string> = new Set();
 					names.forEach(name => {
@@ -408,19 +412,4 @@ function get_function_name(_node, parent) {
 	}
 
 	return 'func';
-}
-
-function is_contextual(component: Component, scope: TemplateScope, name: string) {
-	if (is_reserved_keyword(name)) return true;
-
-	// if it's a name below root scope, it's contextual
-	if (!scope.is_top_level(name)) return true;
-
-	const variable = component.var_lookup.get(name);
-
-	// hoistables, module declarations, and imports are non-contextual
-	if (!variable || variable.hoistable) return false;
-
-	// assume contextual
-	return true;
 }

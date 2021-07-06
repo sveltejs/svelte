@@ -12,6 +12,7 @@ import Options from '../Options';
 import RawMustacheTag from '../RawMustacheTag';
 import DebugTag from '../DebugTag';
 import Slot from '../Slot';
+import SlotTemplate from '../SlotTemplate';
 import Text from '../Text';
 import Title from '../Title';
 import Window from '../Window';
@@ -35,6 +36,7 @@ function get_constructor(type) {
 		case 'RawMustacheTag': return RawMustacheTag;
 		case 'DebugTag': return DebugTag;
 		case 'Slot': return Slot;
+		case 'SlotTemplate': return SlotTemplate;
 		case 'Text': return Text;
 		case 'Title': return Title;
 		case 'Window': return Window;

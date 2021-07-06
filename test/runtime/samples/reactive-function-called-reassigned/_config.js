@@ -9,6 +9,9 @@ export default {
 	props: {
 		callback
 	},
+	before_test() {
+		called = 0;
+	},
 	async test({ assert, component, target, window }) {
 		assert.equal(called, 1);
 

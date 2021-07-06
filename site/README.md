@@ -54,9 +54,9 @@ To build the website, run `npm run build`. The output can be found in `__sapper_
 Tests can be run using `npm run test`.
 
 
-## Linking `@sveltejs/site-kit` and `@sveltejs/site-repl`
+## Linking `@sveltejs/site-kit` and `@sveltejs/svelte-repl`
 
-This site depends on `@sveltejs/site-kit`, a collection of styles, components and icons used in common by *.svelte.dev websites, and `@sveltejs/site-repl`.
+This site depends on `@sveltejs/site-kit` (a collection of styles, components and icons used in common by *.svelte.dev websites), and `@sveltejs/svelte-repl`.
 
 In order to work on features that depend on those packages, you need to [link](https://docs.npmjs.com/cli/link) their repositories:
 
@@ -70,7 +70,7 @@ In order to work on features that depend on those packages, you need to [link](h
 - `cd <svelte-repo>/site`
 - `npm link @sveltejs/site-kit`
 - `npm link @sveltejs/svelte-repl`
- 
+
 
 
 ## Translating the API docs

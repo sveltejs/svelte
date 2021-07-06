@@ -25,6 +25,8 @@ import Options from './Options';
 import PendingBlock from './PendingBlock';
 import RawMustacheTag from './RawMustacheTag';
 import Slot from './Slot';
+import SlotTemplate from './SlotTemplate';
+import DefaultSlotTemplate from './DefaultSlotTemplate';
 import Text from './Text';
 import ThenBlock from './ThenBlock';
 import Title from './Title';
@@ -58,6 +60,8 @@ export type INode = Action
 | PendingBlock
 | RawMustacheTag
 | Slot
+| SlotTemplate
+| DefaultSlotTemplate
 | Tag
 | Text
 | ThenBlock

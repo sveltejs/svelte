@@ -167,26 +167,9 @@
 		z-index: 111;
 	}
 
-	.pane { width: 100%; height: 100% }
-
-	.loading {
-		text-align: center;
-		color: var(--second);
-		font-weight: 400;
-		margin: 2em 0 0 0;
-		opacity: 0;
-		animation: fade-in .4s;
-		animation-delay: .2s;
-		animation-fill-mode: both;
-	}
-
 	@keyframes fade-in {
 		0%   { opacity: 0 }
 		100% { opacity: 1 }
-	}
-
-	.input {
-		padding: 2.4em 0 0 0;
 	}
 </style>
 

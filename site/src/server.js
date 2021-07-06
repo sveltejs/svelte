@@ -4,13 +4,19 @@ import sirv from 'sirv';
 import * as sapper from '@sapper/server';
 import { sanitize_user, authenticate } from './utils/auth';
 
-const { PORT = 3000 } = process.env;
+if (!process.env.PORT) {
+	process.env.PORT = 3000;
+}
+
+const { PORT } = process.env;
 
 const app = polka({
 	onError: (err, req, res) => {
 		const error = err.message || err;
 		const code = err.code || err.status || 500;
-		res.headersSent || send(res, code, { error });
+		res.headersSent || send(res, code, { error }, {
+			'content-type': 'text/plain'
+		});
 	}
 });
 

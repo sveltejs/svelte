@@ -1,6 +1,7 @@
 <script>
 	import File from './File.svelte';
-
+	import {slide} from 'svelte/transition'
+	
 	export let expanded = false;
 	export let name;
 	export let files;
@@ -9,6 +10,22 @@
 		expanded = !expanded;
 	}
 </script>
+
+<span class:expanded on:click={toggle}>{name}</span>
+
+{#if expanded}
+	<ul transition:slide={{duration:300}}>
+		{#each files as file}
+			<li>
+				{#if file.type === 'folder'}
+					<svelte:self {...file}/>
+				{:else}
+					<File {...file}/>
+				{/if}
+			</li>
+		{/each}
+	</ul>
+{/if}
 
 <style>
 	span {
@@ -34,19 +51,3 @@
 		padding: 0.2em 0;
 	}
 </style>
-
-<span class:expanded on:click={toggle}>{name}</span>
-
-{#if expanded}
-	<ul>
-		{#each files as file}
-			<li>
-				{#if file.type === 'folder'}
-					<svelte:self {...file}/>
-				{:else}
-					<File {...file}/>
-				{/if}
-			</li>
-		{/each}
-	</ul>
-{/if}

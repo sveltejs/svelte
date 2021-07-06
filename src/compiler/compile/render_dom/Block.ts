@@ -9,7 +9,6 @@ export interface Bindings {
 	property: Identifier;
 	snippet: Node;
 	store: string;
-	tail: Node;
 	modifier: (node: Node) => Node;
 }
 
@@ -39,6 +38,7 @@ export default class Block {
 	dependencies: Set<string> = new Set();
 
 	bindings: Map<string, Bindings>;
+	binding_group_initialised: Set<string> = new Set();
 
 	chunks: {
 		declarations: Array<Node | Node[]>;

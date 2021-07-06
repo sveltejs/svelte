@@ -19,4 +19,5 @@
 	<meta name="Description" content="Cybernetically enhanced web apps">
 </svelte:head>
 
+<h1 class="visually-hidden">API Docs</h1>
 <Docs {sections}/>

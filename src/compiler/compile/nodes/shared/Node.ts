@@ -2,6 +2,7 @@ import Attribute from '../Attribute';
 import Component from '../../Component';
 import { INode } from '../interfaces';
 import Text from '../Text';
+import { TemplateNode } from '../../../interfaces';
 
 export default class Node {
 	readonly start: number;
@@ -17,7 +18,7 @@ export default class Node {
 	var: string;
 	attributes: Attribute[];
 
-	constructor(component: Component, parent, _scope, info: any) {
+	constructor(component: Component, parent: Node, _scope, info: TemplateNode) {
 		this.start = info.start;
 		this.end = info.end;
 		this.type = info.type;

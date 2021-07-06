@@ -57,8 +57,8 @@ export default class EachBlockWrapper extends Wrapper {
 		get_each_context: Identifier;
 		iterations: Identifier;
 		fixed_length: number;
-		data_length: string;
-		view_length: string;
+		data_length: Node|number;
+		view_length: Node|number;
 	}
 
 	context_props: Array<Node | Node[]>;
@@ -149,8 +149,7 @@ export default class EachBlockWrapper extends Wrapper {
 				property: this.index_name,
 				modifier: prop.modifier,
 				snippet: prop.modifier(x`${this.vars.each_block_value}[${this.index_name}]` as Node),
-				store,
-				tail: prop.modifier(x`[${this.index_name}]` as Node)
+				store
 			});
 		});
 
@@ -347,7 +346,7 @@ export default class EachBlockWrapper extends Wrapper {
 			this.else.fragment.render(this.else.block, null, x`#nodes` as Identifier);
 		}
 
-		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.modifier(x`list[i]`)};`);
+		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`list[i]`), name => renderer.context_lookup.has(name) ? x`child_ctx[${renderer.context_lookup.get(name).index}]`: { type: 'Identifier', name })};`);
 
 		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`);
 		if (this.node.has_binding || this.node.has_index_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);
@@ -447,8 +446,10 @@ export default class EachBlockWrapper extends Wrapper {
 				: '@destroy_block';
 
 		if (this.dependencies.size) {
+			this.block.maintain_context = true;
+
 			this.updates.push(b`
-				const ${this.vars.each_block_value} = ${snippet};
+				${this.vars.each_block_value} = ${snippet};
 				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 
 				${this.block.has_outros && b`@group_outros();`}
