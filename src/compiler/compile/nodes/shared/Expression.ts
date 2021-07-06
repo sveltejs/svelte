@@ -136,6 +136,13 @@ export default class Expression {
 				if (names) {
 					names.forEach(name => {
 						if (template_scope.names.has(name)) {
+							if (template_scope.is_const(name)) {
+								component.error(node, {
+									code: 'invalid-const-update',
+									message: `'${name}' is declared using {@const ...} and it is read-only`
+								});
+							}
+
 							template_scope.dependencies_for_name.get(name).forEach(name => {
 								const variable = component.var_lookup.get(name);
 								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
@@ -175,7 +182,7 @@ export default class Expression {
 	}
 
 	// TODO move this into a render-dom wrapper?
-	manipulate(block?: Block) {
+	manipulate(block?: Block, ctx?: string | void) {
 		// TODO ideally we wouldn't end up calling this method
 		// multiple times
 		if (this.manipulated) return this.manipulated;
@@ -222,7 +229,7 @@ export default class Expression {
 							component.add_reference(name); // TODO is this redundant/misplaced?
 						}
 					} else if (is_contextual(component, template_scope, name)) {
-						const reference = block.renderer.reference(node);
+						const reference = block.renderer.reference(node, ctx);
 						this.replace(reference);
 					}
 

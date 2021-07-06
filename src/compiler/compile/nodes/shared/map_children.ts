@@ -1,5 +1,6 @@
 import AwaitBlock from '../AwaitBlock';
 import Body from '../Body';
+import ConstTag from '../ConstTag';
 import Comment from '../Comment';
 import EachBlock from '../EachBlock';
 import Element from '../Element';
@@ -25,6 +26,7 @@ function get_constructor(type) {
 		case 'AwaitBlock': return AwaitBlock;
 		case 'Body': return Body;
 		case 'Comment': return Comment;
+		case 'ConstTag': return ConstTag;
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
 		case 'Head': return Head;

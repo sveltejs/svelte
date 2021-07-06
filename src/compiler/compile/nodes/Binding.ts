@@ -62,6 +62,12 @@ export default class Binding extends Node {
 					message: 'Cannot bind to a variable declared with {#await ... then} or {:catch} blocks'
 				});
 			}
+			if (scope.is_const(name)) {
+				component.error(this, {
+					code: 'invalid-binding',
+					message: 'Cannot bind to a variable declared with {@const ...}'
+				});
+			}
 
 			scope.dependencies_for_name.get(name).forEach(name => {
 				const variable = component.var_lookup.get(name);

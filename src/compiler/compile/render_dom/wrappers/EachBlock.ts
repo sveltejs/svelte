@@ -8,6 +8,7 @@ import { b, x } from 'code-red';
 import ElseBlock from '../../nodes/ElseBlock';
 import { Identifier, Node } from 'estree';
 import get_object from '../../utils/get_object';
+import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -86,6 +87,7 @@ export default class EachBlockWrapper extends Wrapper {
 		this.node.contexts.forEach(context => {
 			renderer.add_to_context(context.key.name, true);
 		});
+		add_const_tags_context(renderer, this.node.const_tags);
 
 		this.block = block.child({
 			comment: create_debugging_comment(this.node, this.renderer.component),
@@ -350,11 +352,13 @@ export default class EachBlockWrapper extends Wrapper {
 
 		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`);
 		if (this.node.has_binding || this.node.has_index_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);
+
 		// TODO which is better — Object.create(array) or array.slice()?
 		renderer.blocks.push(b`
 			function ${this.vars.get_each_context}(#ctx, list, i) {
 				const child_ctx = #ctx.slice();
 				${this.context_props}
+				${add_const_tags(this.block, this.node.const_tags, 'child_ctx')}
 				return child_ctx;
 			}
 		`);

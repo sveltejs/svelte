@@ -1,0 +1,9 @@
+[
+	{
+		"code": "invalid-const-declaration",
+		"message": "'a' has already been declared",
+		"start": { "line": 7, "column": 2, "character": 84 },
+		"end": { "line": 7, "column": 19, "character": 101 },
+		"pos": 84
+	}
+]
