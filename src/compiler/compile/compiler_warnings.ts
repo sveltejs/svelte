@@ -10,7 +10,7 @@ export default {
 	},
 	unused_export_let: (component: string, property: string) => ({
 		code: 'unused-export-let',
-		message: `${component} has unused export property '${property}'. If it is for external reference only, please conside, using \`export const ${property}\``
+		message: `${component} has unused export property '${property}'. If it is for external reference only, please consider using \`export const ${property}\``
 	}),
 	module_script_reactive_declaration: {
 		code: 'module-script-reactive-declaration',
