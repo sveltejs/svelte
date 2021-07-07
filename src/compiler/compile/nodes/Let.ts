@@ -4,6 +4,7 @@ import { walk } from 'estree-walker';
 import { BasePattern, Identifier } from 'estree';
 import TemplateScope from './shared/TemplateScope';
 import { TemplateNode } from '../../interfaces';
+import compiler_errors from '../compiler_errors';
 
 const applicable = new Set(['Identifier', 'ObjectExpression', 'ArrayExpression', 'Property']);
 
@@ -26,10 +27,7 @@ export default class Let extends Node {
 			walk(info.expression, {
 				enter(node: Identifier|BasePattern) {
 					if (!applicable.has(node.type)) {
-						component.error(node as any, {
-							code: 'invalid-let',
-							message: 'let directive value must be an identifier or an object/array pattern'
-						});
+						component.error(node as any, compiler_errors.invalid_let);
 					}
 
 					if (node.type === 'Identifier') {

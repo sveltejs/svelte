@@ -18,6 +18,7 @@ import is_contextual from './is_contextual';
 import EachBlock from '../EachBlock';
 import { clone } from '../../../utils/clone';
 import { Node as PeriscopicNode } from 'periscopic';
+import compiler_errors from '../../compiler_errors';
 
 type Owner = INode;
 
@@ -85,10 +86,7 @@ export default class Expression {
 					if (name[0] === '$') {
 						const store_name = name.slice(1);
 						if (template_scope.names.has(store_name) || scope.has(store_name)) {
-							component.error(node, {
-								code: 'contextual-store',
-								message: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
-							});
+							component.error(node, compiler_errors.contextual_store);
 						}
 					}
 
