@@ -6,6 +6,7 @@ import { Ast, CssHashGetter } from '../../interfaces';
 import Component from '../Component';
 import { CssNode } from './interfaces';
 import hash from '../utils/hash';
+import compiler_warnings from '../compiler_warnings';
 
 function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
@@ -448,10 +449,7 @@ export default class Stylesheet {
 	warn_on_unused_selectors(component: Component) {
 		this.children.forEach(child => {
 			child.warn_on_unused_selector((selector: Selector) => {
-				component.warn(selector.node, {
-					code: 'css-unused-selector',
-					message: `Unused CSS selector "${this.source.slice(selector.node.start, selector.node.end)}"`
-				});
+				component.warn(selector.node, compiler_warnings.css_unused_selector(this.source.slice(selector.node.start, selector.node.end)));
 			});
 		});
 	}
