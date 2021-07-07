@@ -2,6 +2,7 @@ import Block from '../../render_dom/Block';
 import Component from '../../Component';
 import Node from './Node';
 import { INode } from '../interfaces';
+import compiler_warnings from '../../compiler_warnings';
 
 export default class AbstractBlock extends Node {
 	block: Block;
@@ -17,10 +18,7 @@ export default class AbstractBlock extends Node {
 		const child = this.children[0];
 
 		if (!child || (child.type === 'Text' && !/[^ \r\n\f\v\t]/.test(child.data))) {
-			this.component.warn(this, {
-				code: 'empty-block',
-				message: 'Empty block'
-			});
+			this.component.warn(this, compiler_warnings.empty_block);
 		}
 	}
 }

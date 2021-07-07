@@ -5,6 +5,7 @@ import TemplateScope from './shared/TemplateScope';
 import { TemplateNode } from '../../interfaces';
 import Element from './Element';
 import EachBlock from './EachBlock';
+import compiler_errors from '../compiler_errors';
 
 export default class Animation extends Node {
 	type: 'Animation';
@@ -20,19 +21,13 @@ export default class Animation extends Node {
 		component.add_reference(info.name.split('.')[0]);
 
 		if (parent.animation) {
-			component.error(this, {
-				code: 'duplicate-animation',
-				message: "An element can only have one 'animate' directive"
-			});
+			component.error(this, compiler_errors.duplicate_animation);
 		}
 
 		const block = parent.parent;
 		if (!block || block.type !== 'EachBlock' || !block.key) {
 			// TODO can we relax the 'immediate child' rule?
-			component.error(this, {
-				code: 'invalid-animation',
-				message: 'An element that uses the animate directive must be the immediate child of a keyed each block'
-			});
+			component.error(this, compiler_errors.invalid_animation_immediate);
 		}
 
 		(block as EachBlock).has_animation = true;

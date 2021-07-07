@@ -9,6 +9,7 @@ import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
+import compiler_errors from '../compiler_errors';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -41,10 +42,7 @@ export default class InlineComponent extends Node {
 			/* eslint-disable no-fallthrough */
 			switch (node.type) {
 				case 'Action':
-					component.error(node, {
-						code: 'invalid-action',
-						message: 'Actions can only be applied to DOM elements, not components'
-					});
+					component.error(node, compiler_errors.invalid_action);
 
 				case 'Attribute':
 					if (node.name.startsWith('--')) {
@@ -61,10 +59,7 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Class':
-					component.error(node, {
-						code: 'invalid-class',
-						message: 'Classes can only be applied to DOM elements, not components'
-					});
+					component.error(node, compiler_errors.invalid_class);
 
 				case 'EventHandler':
 					this.handlers.push(new EventHandler(component, this, scope, node));
@@ -75,10 +70,7 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Transition':
-					component.error(node, {
-						code: 'invalid-transition',
-						message: 'Transitions can only be applied to DOM elements, not components'
-					});
+					component.error(node, compiler_errors.invalid_transition);
 
 				default:
 					throw new Error(`Not implemented: ${node.type}`);
@@ -103,10 +95,7 @@ export default class InlineComponent extends Node {
 		this.handlers.forEach(handler => {
 			handler.modifiers.forEach(modifier => {
 				if (modifier !== 'once') {
-					component.error(handler, {
-						code: 'invalid-event-modifier',
-						message: "Event modifiers other than 'once' can only be used on DOM elements"
-					});
+					component.error(handler, compiler_errors.invalid_event_modifier_component);
 				}
 			});
 		});

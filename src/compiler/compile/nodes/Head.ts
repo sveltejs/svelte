@@ -4,6 +4,7 @@ import hash from '../utils/hash';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { TemplateNode } from '../../interfaces';
+import compiler_errors from '../compiler_errors';
 
 export default class Head extends Node {
 	type: 'Head';
@@ -14,10 +15,7 @@ export default class Head extends Node {
 		super(component, parent, scope, info);
 
 		if (info.attributes.length) {
-			component.error(info.attributes[0], {
-				code: 'invalid-attribute',
-				message: '<svelte:head> should not have any attributes or directives'
-			});
+			component.error(info.attributes[0], compiler_errors.invalid_attribute_head);
 		}
 
 		this.children = map_children(component, parent, scope, info.children.filter(child => {
