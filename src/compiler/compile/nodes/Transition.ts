@@ -26,7 +26,8 @@ export default class Transition extends Node {
 
 		if ((info.intro && parent.intro) || (info.outro && parent.outro)) {
 			const parent_transition = (parent.intro || parent.outro);
-			return component.error(info, compiler_errors.duplicate_transition(this.directive, parent_transition.directive));
+			component.error(info, compiler_errors.duplicate_transition(this.directive, parent_transition.directive));
+			return;
 		}
 
 		this.expression = info.expression
