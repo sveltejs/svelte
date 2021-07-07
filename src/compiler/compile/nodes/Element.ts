@@ -141,7 +141,8 @@ export default class Element extends Node {
 				if (info.children.length > 0) {
 					const value_attribute = info.attributes.find(node => node.name === 'value');
 					if (value_attribute) {
-						return component.error(value_attribute, compiler_errors.textarea_duplicate_value);
+						component.error(value_attribute, compiler_errors.textarea_duplicate_value);
+						return;
 					}
 
 					// this is an egregious hack, but it's the easiest way to get <textarea>
