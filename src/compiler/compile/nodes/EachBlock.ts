@@ -62,7 +62,8 @@ export default class EachBlock extends AbstractBlock {
 		if (this.has_animation) {
 			if (this.children.length !== 1) {
 				const child = this.children.find(child => !!(child as Element).animation);
-				return component.error((child as Element).animation, compiler_errors.invalid_animation_sole);
+				component.error((child as Element).animation, compiler_errors.invalid_animation_sole);
+				return;
 			}
 		}
 
