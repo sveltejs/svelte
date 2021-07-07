@@ -1,4 +1,4 @@
-import { flatten } from "./flatten";
+import { flatten } from './flatten';
 
 const pattern = /^\s*svelte-ignore\s+([\s\S]+)\s*$/m;
 

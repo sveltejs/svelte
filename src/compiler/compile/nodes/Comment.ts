@@ -12,6 +12,6 @@ export default class Comment extends Node {
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 		this.data = info.data;
-		this.ignores = extract_svelte_ignore(this.data)
+		this.ignores = extract_svelte_ignore(this.data);
 	}
 }
