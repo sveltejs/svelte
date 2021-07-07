@@ -5,6 +5,7 @@ import Node from './shared/Node';
 import Let from './Let';
 import Attribute from './Attribute';
 import { INode } from './interfaces';
+import compiler_errors from '../compiler_errors';
 
 export default class SlotTemplate extends Node {
 	type: 'SlotTemplate';
@@ -45,17 +46,11 @@ export default class SlotTemplate extends Node {
 					if (node.name === 'slot') {
 						this.slot_attribute = new Attribute(component, this, scope, node);
 						if (!this.slot_attribute.is_static) {
-							component.error(node, {
-								code: 'invalid-slot-attribute',
-								message: 'slot attribute cannot have a dynamic value'
-							});
+							component.error(node, compiler_errors.invalid_slot_attribute);
 						}
 						const value = this.slot_attribute.get_static_value();
 						if (typeof value === 'boolean') {
-							component.error(node, {
-								code: 'invalid-slot-attribute',
-								message: 'slot attribute value is missing'
-							});
+							component.error(node, compiler_errors.invalid_slot_attribute_value_missing);
 						}
 						this.slot_template_name = value as string;
 						break;
@@ -73,10 +68,7 @@ export default class SlotTemplate extends Node {
 
 	validate_slot_template_placement() {
 		if (this.parent.type !== 'InlineComponent') {
-			this.component.error(this, {
-				code: 'invalid-slotted-content',
-				message: '<svelte:fragment> must be a child of a component'
-			});
+			this.component.error(this, compiler_errors.invalid_slotted_content_fragment);
 		}
 	}
 }

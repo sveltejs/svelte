@@ -3,6 +3,7 @@ import map_children, { Children } from './shared/map_children';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { TemplateNode } from '../../interfaces';
+import compiler_errors from '../compiler_errors';
 
 export default class Title extends Node {
 	type: 'Title';
@@ -14,18 +15,12 @@ export default class Title extends Node {
 		this.children = map_children(component, parent, scope, info.children);
 
 		if (info.attributes.length > 0) {
-			component.error(info.attributes[0], {
-				code: 'illegal-attribute',
-				message: '<title> cannot have attributes'
-			});
+			component.error(info.attributes[0], compiler_errors.illegal_attribute_title);
 		}
 
 		info.children.forEach(child => {
 			if (child.type !== 'Text' && child.type !== 'MustacheTag') {
-				component.error(child, {
-					code: 'illegal-structure',
-					message: '<title> can only contain text and {tags}'
-				});
+				component.error(child, compiler_errors.illegal_structure_title);
 			}
 		});
 

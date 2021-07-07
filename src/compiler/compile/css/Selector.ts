@@ -8,6 +8,7 @@ import { INode } from '../nodes/interfaces';
 import EachBlock from '../nodes/EachBlock';
 import IfBlock from '../nodes/IfBlock';
 import AwaitBlock from '../nodes/AwaitBlock';
+import compiler_errors from '../compiler_errors';
 
 enum BlockAppliesToNode {
 	NotPossible,
@@ -137,10 +138,7 @@ export default class Selector {
 
 		for (let i = start; i < end; i += 1) {
 			if (this.blocks[i].global) {
-				component.error(this.blocks[i].selectors[0], {
-					code: 'css-invalid-global',
-					message: ':global(...) can be at the start or end of a selector sequence, but not in the middle'
-				});
+				component.error(this.blocks[i].selectors[0], compiler_errors.css_invalid_global);
 			}
 		}
 
@@ -148,10 +146,7 @@ export default class Selector {
 			for (const selector of block.selectors) {
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 					if (/[^\\],(?!([^([]+[^\\]|[^([\\])[)\]])/.test(selector.children[0].value)) {
-						component.error(selector, {
-							code: 'css-invalid-global-selector',
-							message: ':global(...) must contain a single selector'
-						});
+						component.error(selector, compiler_errors.css_invalid_global_selector);
 					}
 				}
 			}

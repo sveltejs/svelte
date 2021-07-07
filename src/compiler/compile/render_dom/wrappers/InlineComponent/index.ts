@@ -19,6 +19,7 @@ import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import { string_to_member_expression } from '../../../utils/string_to_member_expression';
 import SlotTemplate from '../../../nodes/SlotTemplate';
 import { is_head } from '../shared/is_head';
+import compiler_warnings from '../../../compiler_warnings';
 
 type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
 
@@ -108,10 +109,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
-			this.renderer.component.warn(this.node, {
-				code: 'reactive-component',
-				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`
-			});
+			this.renderer.component.warn(this.node, compiler_warnings.reactive_component(name));
 		}
 	}
 
