@@ -218,11 +218,11 @@ export default {
 		code: `invalid-${name}-value`,
 		message: `${name} attribute must be true or false`	
 	}),
-	invalid_options_attribute: {
+	invalid_options_attribute_unknown: {
 		code: 'invalid-options-attribute',
 		message: '<svelte:options> unknown attribute'
 	},
-	invalid_options_attribute2: {
+	invalid_options_attribute: {
 		code: 'invalid-options-attribute',
 		message: "<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable' and 'preserveWhitespace' attributes"
 	},

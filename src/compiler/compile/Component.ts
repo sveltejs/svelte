@@ -1211,7 +1211,7 @@ export default class Component {
 									variable.is_reactive_dependency = true;
 									if (variable.module) {
 										should_add_as_dependency = false;
-										component.warn(node as any, compiler_warnings.module_script_reactive_declaration2(name));
+										component.warn(node as any, compiler_warnings.module_script_variable_reactive_declaration(name));
 									}
 								}
 								const is_writable_or_mutated =
@@ -1415,10 +1415,10 @@ function process_component_options(component: Component, nodes) {
 					}
 
 					default:
-						component.error(attribute, compiler_errors.invalid_options_attribute);
+						component.error(attribute, compiler_errors.invalid_options_attribute_unknown);
 				}
 			} else {
-				component.error(attribute, compiler_errors.invalid_options_attribute2);
+				component.error(attribute, compiler_errors.invalid_options_attribute);
 			}
 		});
 	}

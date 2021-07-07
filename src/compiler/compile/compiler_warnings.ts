@@ -20,7 +20,7 @@ export default {
 		code: 'non-top-level-reactive-declaration',
 		message: '$: has no effect outside of the top-level'
 	},
-	module_script_reactive_declaration2: (name: string) => ({
+	module_script_variable_reactive_declaration: (name: string) => ({
 		code: 'module-script-reactive-declaration',
 		message: `"${name}" is declared in a module script and will not be reactive`
 	}),
