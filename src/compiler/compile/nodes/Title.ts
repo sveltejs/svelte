@@ -15,7 +15,8 @@ export default class Title extends Node {
 		this.children = map_children(component, parent, scope, info.children);
 
 		if (info.attributes.length > 0) {
-			return component.error(info.attributes[0], compiler_errors.illegal_attribute_title);
+			component.error(info.attributes[0], compiler_errors.illegal_attribute_title);
+			return;
 		}
 
 		info.children.forEach(child => {
