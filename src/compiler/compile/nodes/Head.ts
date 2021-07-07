@@ -15,7 +15,8 @@ export default class Head extends Node {
 		super(component, parent, scope, info);
 
 		if (info.attributes.length) {
-			return component.error(info.attributes[0], compiler_errors.invalid_attribute_head);
+			component.error(info.attributes[0], compiler_errors.invalid_attribute_head);
+			return;
 		}
 
 		this.children = map_children(component, parent, scope, info.children.filter(child => {
