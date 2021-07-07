@@ -36,7 +36,8 @@ export default class Binding extends Node {
 		super(component, parent, scope, info);
 
 		if (info.expression.type !== 'Identifier' && info.expression.type !== 'MemberExpression') {
-			return component.error(info, compiler_errors.invalid_directive_value);
+			component.error(info, compiler_errors.invalid_directive_value);
+			return;
 		}
 
 		this.name = info.name;
