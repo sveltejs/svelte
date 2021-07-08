@@ -12,7 +12,7 @@ import {
 } from "svelte/internal";
 
 function add_css(target) {
-	append_styles(target, "1slhpfn", "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}");
+	append_styles(target, "svelte-1slhpfn", "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}");
 }
 
 function create_fragment(ctx) {
