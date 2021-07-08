@@ -40,8 +40,16 @@ export function safe_not_equal(a, b) {
 	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
-export function src_url_equal(a, b) {
-	return new URL(a, window.location.origin).href === (new URL(b, window.location.origin)).href;
+const relative_to_absolute = (function() {
+    const anchor = document.createElement('a');
+    return function(url) {
+        anchor.href = url;
+        return anchor.href;
+    };
+})();
+
+export function src_url_equal(element_src, url) {
+	return element_src === relative_to_absolute(url);
 }
 
 export function not_equal(a, b) {
