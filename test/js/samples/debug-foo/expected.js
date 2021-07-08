@@ -165,6 +165,7 @@ function create_fragment(ctx) {
 
 function instance($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
+	let { $$inject } = $$props;
 	validate_slots("Component", slots, []);
 	let { things } = $$props;
 	let { foo } = $$props;
@@ -186,8 +187,8 @@ function instance($$self, $$props, $$invalidate) {
 		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
 	};
 
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
+	if ($$inject) {
+		$$self.$inject_state($$inject);
 	}
 
 	return [things, foo];
