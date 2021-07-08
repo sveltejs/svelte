@@ -132,7 +132,7 @@ export function append(target: NodeEx, node: NodeEx) {
 export function insert(target: NodeEx, node: NodeEx, anchor?: NodeEx) {
 	if (is_hydrating && !anchor) {
 		append(target, node);
-	} else if (node.parentNode !== target || node.nextSibling !== anchor) {
+	} else if (node.parentNode !== target || node.nextSibling != anchor) {
 		target.insertBefore(node, anchor || null);
 	}
 }
