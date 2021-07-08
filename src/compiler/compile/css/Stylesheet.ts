@@ -7,7 +7,7 @@ import Component from '../Component';
 import { CssNode } from './interfaces';
 import hash from '../utils/hash';
 import compiler_warnings from '../compiler_warnings';
-import { extract_svelte_ignore } from '../utils/extract_svelte_ignore';
+import { extract_ignores_above_position } from '../utils/extract_svelte_ignore';
 
 function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
@@ -448,37 +448,13 @@ export default class Stylesheet {
 	}
 
 	warn_on_unused_selectors(component: Component) {
-		const ignores = this.get_ignores();
-		if (ignores.length) component.push_ignores(ignores);
-
+		const ignores = !this.ast.css ? [] : extract_ignores_above_position(this.ast.css.start, this.ast.html.children);
+		component.push_ignores(ignores);
 		this.children.forEach(child => {
 			child.warn_on_unused_selector((selector: Selector) => {
 				component.warn(selector.node, compiler_warnings.css_unused_selector(this.source.slice(selector.node.start, selector.node.end)));
 			});
 		});
-
-		if (ignores.length) component.pop_ignores();
-	}
-
-	private get_ignores(): string[] {
-		const previous_node_idx = !this.ast.css ? -1 : this.ast.html.children.findIndex(child => child.end === this.ast.css.start);
-		if (previous_node_idx === -1) {
-			return [];
-		}
-
-		for (let i = previous_node_idx; i >= 0; i--) {
-			const node = this.ast.html.children[i];
-			if (node.type !== 'Comment' && node.type !== 'Text') {
-				return [];
-			}
-			if (node.type === 'Comment') {
-				const ignores = extract_svelte_ignore(node.data || '');
-				if (ignores.length) {
-					return ignores;
-				}
-			}
-		}
-
-		return [];
+		component.pop_ignores();
 	}
 }
