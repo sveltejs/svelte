@@ -2,25 +2,25 @@
 
 ## Unreleased
 
-* Expose `svelte/ssr` which exported lifecycle methods as noop ([#6416](https://github.com/sveltejs/svelte/pull/6416))
-* Add `trusted` event modifier ([#6137](https://github.com/sveltejs/svelte/issues/6137))
-* Add `varsReport` compiler option ([#6192](https://github.com/sveltejs/svelte/pull/6192))
+* Expose `svelte/ssr` which exports lifecycle methods as no-ops ([#6416](https://github.com/sveltejs/svelte/pull/6416))
+* Add `|trusted` event modifier ([#6137](https://github.com/sveltejs/svelte/issues/6137))
+* Add `varsReport` compiler option to include all variables reference in the component in the `variables` report ([#6192](https://github.com/sveltejs/svelte/pull/6192))
 * Throw compiler error when passing empty directive names ([#6299](https://github.com/sveltejs/svelte/issues/6299))
-* Update `periscopic` to allow for export of anonymous function or class ([#3275](https://github.com/sveltejs/svelte/issues/3275))
-* Fix insert function ([#6445](https://github.com/sveltejs/svelte/pull/6445))
+* Throw proper error for `export default function() {}` and `export default class {}` rather than crashing the compiler ([#3275](https://github.com/sveltejs/svelte/issues/3275))
+* Fix ordering of elements in keyed `{#each}` ([#6445](https://github.com/sveltejs/svelte/pull/6445))
 * Fix `preserveComments` in SSR mode ([#4730](https://github.com/sveltejs/svelte/issues/4730))
 * Fix compiler error when using `:where()` inside `:global()` ([#6434](https://github.com/sveltejs/svelte/issues/6434))
 * Fix erroneous `unknown prop` warning when using slot on a component ([#6065](https://github.com/sveltejs/svelte/pull/6065))
-* Fix :global() with pseudo element should be considered as global ([#6470](https://github.com/sveltejs/svelte/pull/6470))
-* New a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([#5938](https://github.com/sveltejs/svelte/pull/5938))
-* Remove deprecated `a11y-no-onchange warning` ([#6457](https://github.com/sveltejs/svelte/issues/6457))
-* Remove `a11y-media-has-caption` from `audio` elements ([#6054](https://github.com/sveltejs/svelte/issues/6054))
+* Fix `:global()` with pseudo element not being seen as global ([#6470](https://github.com/sveltejs/svelte/pull/6470))
+* Add a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([#5938](https://github.com/sveltejs/svelte/pull/5938))
+* Remove deprecated a11y warning `a11y-no-onchange warning` ([#6457](https://github.com/sveltejs/svelte/issues/6457))
+* Stop checking `a11y-media-has-caption` a11y warning on `<audio>` elements ([#6054](https://github.com/sveltejs/svelte/issues/6054))
 
 ## 3.38.3
 
 * Speed up hydration by reducing amount of element reorderings ([#4308](https://github.com/sveltejs/svelte/issues/4308))
 * Fix escaping attribute values when using a spread in SSR ([#5756](https://github.com/sveltejs/svelte/issues/5756))
-* Throw compiler error when `:global()` contains multiple selectors ([#5907](https://github.com#6445/shttps://github.com/sveltejs/svelte/pull/6445veltejs/svelte/issues/5907))
+* Throw compiler error when `:global()` contains multiple selectors ([#5907](https://github.com/sveltejs/svelte/issues/5907))
 * Give explicit error rather than crashing when an attribute shorthand `{}` is empty ([#6086](https://github.com/sveltejs/svelte/issues/6086))
 * Make `<textarea>` end tag parsing more robust ([#6276](https://github.com/sveltejs/svelte/issues/6276))
 * Fix `:global(...):some-pseudoclass` selectors not being seen as global ([#6306](https://github.com/sveltejs/svelte/issues/6306))
