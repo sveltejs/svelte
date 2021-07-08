@@ -15,7 +15,7 @@ import {
 } from "svelte/internal";
 
 function add_css(target) {
-	append_styles(target, "1a7i8ec", "p.svelte-1a7i8ec{color:red}");
+	append_styles(target, "svelte-1a7i8ec", "p.svelte-1a7i8ec{color:red}");
 }
 
 function create_fragment(ctx) {
