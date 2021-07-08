@@ -44,8 +44,8 @@ The following options can be passed to the compiler. None are required:
 | `filename` | string | `null`
 | `name` | string | `"Component"`
 | `format` | `"esm"` or `"cjs"` | `"esm"`
-| `generate` | `"dom"` or `"ssr" or false` | `"dom"`
-| `varsReport` | `"strict"` or `"full" or false` | `"strict"`
+| `generate` | `"dom"` or `"ssr"` or `false` | `"dom"`
+| `varsReport` | `"strict"` or `"full"` or `false` | `"strict"`
 | `dev` | boolean | `false`
 | `immutable` | boolean | `false`
 | `hydratable` | boolean | `false`
