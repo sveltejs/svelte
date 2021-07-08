@@ -142,6 +142,15 @@ export default class Selector {
 			}
 		}
 
+		this.validate_global_with_multiple_selectors(component);
+	}
+
+	validate_global_with_multiple_selectors(component: Component) {
+		if (this.blocks.length === 1 && this.blocks[0].selectors.length === 1) {
+			// standalone :global() with multiple selectors is OK
+			return;
+		}
+
 		for (const block of this.blocks) {
 			for (const selector of block.selectors) {
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
