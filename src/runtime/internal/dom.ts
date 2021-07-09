@@ -133,13 +133,15 @@ export function get_root_for_node(node: Node) {
 	return (node.getRootNode ? node.getRootNode() : node.ownerDocument); // check for getRootNode because IE is still supported
 }
 
-export function get_root_for_styles(node: Node) {
+function get_root_for_styles(node: Node) {
 	const root = get_root_for_node(node);
 	return (root as ShadowRoot).host ? root as ShadowRoot : root as Document;
 }
 
 export function append_empty_stylesheet(node: Node) {
-	append_stylesheet(get_root_for_styles(node), element('style') as HTMLStyleElement);
+	const style_element = element('style') as HTMLStyleElement;
+	append_stylesheet(get_root_for_styles(node), style_element);
+	return style_element;
 }
 
 function append_stylesheet(node: ShadowRoot | Document, style: HTMLStyleElement) {
