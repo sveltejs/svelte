@@ -16,6 +16,7 @@
 * Add a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([#5938](https://github.com/sveltejs/svelte/pull/5938))
 * Remove deprecated a11y warning `a11y-no-onchange warning` ([#6457](https://github.com/sveltejs/svelte/issues/6457))
 * Stop checking `a11y-media-has-caption` a11y warning on `<audio>` elements ([#6054](https://github.com/sveltejs/svelte/issues/6054))
+* Relax `derived` function signature ([#6178](https://github.com/sveltejs/svelte/issues/6178))
 
 ## 3.38.3
 
