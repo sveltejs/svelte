@@ -123,7 +123,7 @@ export function append_styles(
 		const style = element('style');
 		style.id = style_sheet_id;
 		style.textContent = styles;
-		append((append_styles_to as Document).head || append_styles_to, style);
+		append_stylesheet(append_styles_to, style);
 	}
 }
 
@@ -139,7 +139,11 @@ export function get_root_for_styles(node: Node) {
 }
 
 export function append_empty_stylesheet(node: Node) {
-	return get_root_for_styles(node).appendChild(element('style') as HTMLStyleElement);
+	append_stylesheet(get_root_for_styles(node), element('style') as HTMLStyleElement);
+}
+
+function append_stylesheet(node: ShadowRoot | Document, style: HTMLStyleElement) {
+	append((node as Document).head || node, style);
 }
 
 export function append(target: NodeEx, node: NodeEx) {
