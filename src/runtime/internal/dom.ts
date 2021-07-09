@@ -114,16 +114,16 @@ function init_hydrate(target: NodeEx) {
 
 export function append_styles(
 	target: Node,
-	styleSheetId: string,
+	style_sheet_id: string,
 	styles: string
 ) {
-	const appendStylesTo = get_root_for_styles(target);
+	const append_styles_to = get_root_for_styles(target);
 
-	if (!appendStylesTo?.querySelector(`#${styleSheetId}`)) {
+	if (!append_styles_to?.querySelector(`#${style_sheet_id}`)) {
 		const style = element('style');
-		style.id = styleSheetId;
+		style.id = style_sheet_id;
 		style.textContent = styles;
-		append(appendStylesTo, style);
+		append(append_styles_to, style);
 	}
 }
 
