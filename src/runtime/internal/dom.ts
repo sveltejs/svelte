@@ -119,11 +119,11 @@ export function append_styles(
 ) {
 	const append_styles_to = get_root_for_styles(target);
 
-	if (!append_styles_to?.querySelector(`#${style_sheet_id}`)) {
+	if (!append_styles_to?.getElementById(style_sheet_id)) {
 		const style = element('style');
 		style.id = style_sheet_id;
 		style.textContent = styles;
-		append(append_styles_to, style);
+		append((append_styles_to as Document).head || append_styles_to, style);
 	}
 }
 
@@ -135,7 +135,7 @@ export function get_root_for_node(node: Node) {
 
 export function get_root_for_styles(node: Node) {
 	const root = get_root_for_node(node);
-	return ((root as ShadowRoot).host ? root : (root as Document).head) as Element;
+	return (root as ShadowRoot).host ? root as ShadowRoot : root as Document;
 }
 
 export function append_empty_stylesheet(node: Node) {
