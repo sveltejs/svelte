@@ -50,20 +50,20 @@ function create_fragment(ctx) {
 
 function instance($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots("Component", slots, []);
+	validate_slots('Component', slots, []);
 	let obj = { x: 5 };
 	let kobzol = 5;
 	const writable_props = [];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$" && key !== "slot") console.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$capture_state = () => ({ obj, kobzol });
 
 	$$self.$inject_state = $$props => {
-		if ("obj" in $$props) $$invalidate(0, obj = $$props.obj);
-		if ("kobzol" in $$props) $$invalidate(1, kobzol = $$props.kobzol);
+		if ('obj' in $$props) $$invalidate(0, obj = $$props.obj);
+		if ('kobzol' in $$props) $$invalidate(1, kobzol = $$props.kobzol);
 	};
 
 	if ($$props && "$$inject" in $$props) {

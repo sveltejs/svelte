@@ -69,14 +69,14 @@ function create_fragment(ctx) {
 	};
 }
 
-let world1 = "world";
-let world2 = "world";
+let world1 = 'world';
+let world2 = 'world';
 
 function instance($$self, $$props, $$invalidate) {
-	const world3 = "world";
+	const world3 = 'world';
 
 	function foo() {
-		$$invalidate(0, world3 = "svelte");
+		$$invalidate(0, world3 = 'svelte');
 	}
 
 	return [world3];
