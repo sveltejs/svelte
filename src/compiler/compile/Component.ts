@@ -1175,6 +1175,7 @@ export default class Component {
 				const assignees = new Set<string>();
 				const assignee_nodes = new Set();
 				const dependencies = new Set<string>();
+				const module_dependencies = new Set<string>();
 
 				let scope = this.instance_scope;
 				const map = this.instance_scope_map;
@@ -1211,7 +1212,7 @@ export default class Component {
 									variable.is_reactive_dependency = true;
 									if (variable.module) {
 										should_add_as_dependency = false;
-										component.warn(node as any, compiler_warnings.module_script_variable_reactive_declaration(name));
+										module_dependencies.add(name);
 									}
 								}
 								const is_writable_or_mutated =
@@ -1235,6 +1236,10 @@ export default class Component {
 						}
 					}
 				});
+
+				if (module_dependencies.size > 0 && dependencies.size === 0) {
+					component.warn(node.body as any, compiler_warnings.module_script_variable_reactive_declaration(Array.from(module_dependencies)));
+				}
 
 				const { expression } = node.body as ExpressionStatement;
 				const declaration = expression && (expression as AssignmentExpression).left;
