@@ -177,9 +177,9 @@ export class Parser {
 		return identifier;
 	}
 
-	read_until(pattern: RegExp, error?: {code: string; message: string}) {
+	read_until(pattern: RegExp, error_message?: Parameters<Parser['error']>[0]) {
 		if (this.index >= this.template.length) {
-			this.error(error || {
+			this.error(error_message || {
 				code: 'unexpected-eof',
 				message: 'Unexpected end of input'
 			});
@@ -190,7 +190,7 @@ export class Parser {
 
 		if (match) {
 			this.index = start + match.index;
-			return [this.template.slice(start, this.index), match[0]];
+			return this.template.slice(start, this.index);
 		}
 
 		this.index = this.template.length;
