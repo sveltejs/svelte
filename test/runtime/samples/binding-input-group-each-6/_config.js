@@ -13,7 +13,6 @@ export default {
 		<label><input type="checkbox" value="z"> z</label>
 		<p></p>
 	`,
-
 	async test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		assert.equal(inputs[0].checked, false);
