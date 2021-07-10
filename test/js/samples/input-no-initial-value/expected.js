@@ -69,7 +69,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	function handleSubmit(event) {
 		event.preventDefault();
-		console.log("value", test);
+		console.log('value', test);
 	}
 
 	function input_input_handler() {

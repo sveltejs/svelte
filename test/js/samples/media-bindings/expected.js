@@ -174,17 +174,17 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	$$self.$$set = $$props => {
-		if ("buffered" in $$props) $$invalidate(0, buffered = $$props.buffered);
-		if ("seekable" in $$props) $$invalidate(1, seekable = $$props.seekable);
-		if ("played" in $$props) $$invalidate(2, played = $$props.played);
-		if ("currentTime" in $$props) $$invalidate(3, currentTime = $$props.currentTime);
-		if ("duration" in $$props) $$invalidate(4, duration = $$props.duration);
-		if ("paused" in $$props) $$invalidate(5, paused = $$props.paused);
-		if ("volume" in $$props) $$invalidate(6, volume = $$props.volume);
-		if ("muted" in $$props) $$invalidate(7, muted = $$props.muted);
-		if ("playbackRate" in $$props) $$invalidate(8, playbackRate = $$props.playbackRate);
-		if ("seeking" in $$props) $$invalidate(9, seeking = $$props.seeking);
-		if ("ended" in $$props) $$invalidate(10, ended = $$props.ended);
+		if ('buffered' in $$props) $$invalidate(0, buffered = $$props.buffered);
+		if ('seekable' in $$props) $$invalidate(1, seekable = $$props.seekable);
+		if ('played' in $$props) $$invalidate(2, played = $$props.played);
+		if ('currentTime' in $$props) $$invalidate(3, currentTime = $$props.currentTime);
+		if ('duration' in $$props) $$invalidate(4, duration = $$props.duration);
+		if ('paused' in $$props) $$invalidate(5, paused = $$props.paused);
+		if ('volume' in $$props) $$invalidate(6, volume = $$props.volume);
+		if ('muted' in $$props) $$invalidate(7, muted = $$props.muted);
+		if ('playbackRate' in $$props) $$invalidate(8, playbackRate = $$props.playbackRate);
+		if ('seeking' in $$props) $$invalidate(9, seeking = $$props.seeking);
+		if ('ended' in $$props) $$invalidate(10, ended = $$props.ended);
 	};
 
 	return [

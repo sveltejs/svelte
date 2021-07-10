@@ -7,7 +7,7 @@ import {
 	set_store_value
 } from "svelte/internal";
 
-import { count } from "./store.js";
+import { count } from './store.js';
 
 function instance($$self, $$props, $$invalidate) {
 	let $count;
