@@ -18,6 +18,7 @@
 * Stop checking `a11y-media-has-caption` a11y warning on `<audio>` elements ([#6054](https://github.com/sveltejs/svelte/issues/6054))
 * Relax `derived` function signature ([#6178](https://github.com/sveltejs/svelte/issues/6178))
 * Support `bind:group` in SSR ([#4621](https://github.com/sveltejs/svelte/pull/4621))
+* Add sourcemaps to html elements ([#6427](https://github.com/sveltejs/svelte/pull/6427))
 
 ## 3.38.3
 
