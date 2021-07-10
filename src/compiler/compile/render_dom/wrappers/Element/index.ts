@@ -19,7 +19,7 @@ import { add_event_handler } from '../shared/add_event_handlers';
 import { add_action } from '../shared/add_actions';
 import bind_this from '../shared/bind_this';
 import { is_head } from '../shared/is_head';
-import { Identifier } from 'estree';
+import { Identifier, ExpressionStatement, CallExpression } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
@@ -263,15 +263,23 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		if (parent_node) {
-			block.chunks.mount.push(
-				b`@append(${parent_node}, ${node});`
-			);
+			const append = b`@append(${parent_node}, ${node});`;
+			((append[0] as ExpressionStatement).expression as CallExpression).callee.loc = {
+				start: this.renderer.locate(this.node.start),
+				end: this.renderer.locate(this.node.end)
+			};
+			block.chunks.mount.push(append);
 
 			if (is_head(parent_node)) {
 				block.chunks.destroy.push(b`@detach(${node});`);
 			}
 		} else {
-			block.chunks.mount.push(b`@insert(#target, ${node}, #anchor);`);
+			const insert = b`@insert(#target, ${node}, #anchor);`;
+			((insert[0] as ExpressionStatement).expression as CallExpression).callee.loc = {
+				start: this.renderer.locate(this.node.start),
+				end: this.renderer.locate(this.node.end)
+			};
+			block.chunks.mount.push(insert);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
