@@ -414,7 +414,13 @@ export function claim_html_tag(nodes) {
 
 export function set_data(text, data) {
 	data = '' + data;
-	if (text.wholeText !== data) text.data = data;
+	// In particular, when the property is contentEditable, ' 'TEXT_NODE is inserted into the text
+    if (text.textContent === '' && text.wholeText !== '') {
+		if (text.wholeText === data) return;
+	} else {
+		if (text.textContent === data) return;
+	}
+	 text.data = data;
 }
 
 export function set_input_value(input, value) {
