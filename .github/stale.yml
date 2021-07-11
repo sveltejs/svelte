@@ -8,6 +8,7 @@ exemptLabels:
   - popular
   - pinned
   - security
+  - bug
   - "[Status] Maybe Later"
 
 # Set to true to ignore issues in a project (defaults to false)
@@ -31,7 +32,7 @@ limitPerRun: 30
 
 # Optionally, specify configuration settings that are specific to just 'issues' or 'pulls':
 pulls:
-  daysUntilStale: 180
+  daysUntilStale: 210
   daysUntilClose: 25
   markComment: >
     This pull request has been automatically marked as stale because it has not had
@@ -41,7 +42,7 @@ pulls:
     This pull request has been closed as it was previously marked as stale and saw no subsequent activity.
 
 issues:
-  daysUntilStale: 90
+  daysUntilStale: 180
   daysUntilClose: 14
   markComment: >
     This issue has been automatically marked as stale because it has not had
