@@ -411,6 +411,42 @@ import { get } from 'svelte/store';
 const value = get(store);
 ```
 
+#### `unbox`
+
+```js
+unbox(store, object, "property")
+```
+
+---
+
+Unbox is a simple shorthand for assigning a store value to a property of an object. Shorthand for `store.subscribe(value => object.storeProp = value)`
+
+```js
+import { unbox } from 'svelte/store';
+
+const object = {
+	storeProp: null
+};
+
+unbox(store, object, "storeProp");
+```
+
+---
+
+It internally subscribes to the store, so you can also stop the unboxing:
+
+```js
+import { unbox } from 'svelte/store';
+
+const object = {
+	storeProp: null
+};
+
+const stop = unbox(store, object, "storeProp");
+
+stop();
+```
+
 
 ### `svelte/motion`
 
@@ -788,7 +824,7 @@ The `crossfade` function creates a pair of [transitions](docs#transition_fn) cal
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
-* `fallback` (`function`) — A fallback [transition](docs#transition_fn) to use for send when there is no matching element being received, and for receive when there is no element being sent. 
+* `fallback` (`function`) — A fallback [transition](docs#transition_fn) to use for send when there is no matching element being received, and for receive when there is no element being sent.
 
 ```sv
 <script>

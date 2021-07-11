@@ -212,6 +212,17 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 }
 
 /**
+ * "Unboxes" a store value to a property of an object.
+ *
+ * @param store - input store
+ * @param object - object with specified property
+ * @param property - a property of `object` to be assigned to
+ */
+export function unbox<T, K extends PropertyKey>(store: Readable<T>, object: { [X in K]: T }, property: K): Unsubscriber {
+	return store.subscribe(value => object[property] = value);
+}
+
+/**
  * Get the current value from a store by subscribing and immediately unsubscribing.
  * @param store readable
  */

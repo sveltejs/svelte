@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { readable, writable, derived, get } from '../../store';
+import { readable, writable, derived, get, unbox } from '../../store';
 
 describe('store', () => {
 	describe('writable', () => {
@@ -409,6 +409,39 @@ describe('store', () => {
 
 		it('works with RxJS-style observables', () => {
 			assert.equal(get(fake_observable), 42);
+		});
+	});
+
+	describe('unbox', () => {
+		it('unboxes a value', () => {
+			const store = writable(42);
+			const object = {
+				prop: 0
+			};
+
+			unbox(store, object, 'prop');
+			assert.equal(object.prop, 42);
+
+			store.set(123);
+			assert.equal(object.prop, 123);
+		});
+
+		it('can stop unboxing', () => {
+			const store = writable(42);
+			const object = {
+				prop: 0
+			};
+
+			const stop = unbox(store, object, 'prop');
+			assert.equal(object.prop, 42);
+
+			store.set(123);
+			assert.equal(object.prop, 123);
+
+			stop();
+
+			store.set(0);
+			assert.equal(object.prop, 123);
 		});
 	});
 });
