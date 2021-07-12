@@ -19,6 +19,7 @@
 * Relax `derived` function signature ([#6178](https://github.com/sveltejs/svelte/issues/6178))
 * Support `bind:group` in SSR ([#4621](https://github.com/sveltejs/svelte/pull/4621))
 * Add sourcemaps to html elements ([#6427](https://github.com/sveltejs/svelte/pull/6427))
+* Make `<script>` and `<style>` end tag parsing more robust ([#6511](https://github.com/sveltejs/svelte/pull/6511))
 
 ## 3.38.3
 
