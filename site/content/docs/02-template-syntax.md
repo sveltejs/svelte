@@ -136,11 +136,14 @@ An element or component can have multiple spread attributes, interspersed with r
 
 Text can also contain JavaScript expressions:
 
+> If you're using a regular expression (`RegExp`) [literal notation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp#literal_notation_and_constructor), you'll need to wrap it in parentheses.
+
 ```sv
 <h1>Hello {name}!</h1>
 <p>{a} + {b} = {a + b}.</p>
-```
 
+<div>{(/^[A-Za-z ]+$/).test(value) ? x : y}</div>
+```
 
 ### Comments
 

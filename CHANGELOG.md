@@ -12,9 +12,14 @@
 * Fix compiler error when using `:where()` inside `:global()` ([#6434](https://github.com/sveltejs/svelte/issues/6434))
 * Fix erroneous `unknown prop` warning when using slot on a component ([#6065](https://github.com/sveltejs/svelte/pull/6065))
 * Fix `:global()` with pseudo element not being seen as global ([#6470](https://github.com/sveltejs/svelte/pull/6470))
+* Allow `:global()` to contain multiple selectors when it is not part of a larger selector ([#6477](https://github.com/sveltejs/svelte/issues/6477))
 * Add a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([#5938](https://github.com/sveltejs/svelte/pull/5938))
 * Remove deprecated a11y warning `a11y-no-onchange warning` ([#6457](https://github.com/sveltejs/svelte/issues/6457))
 * Stop checking `a11y-media-has-caption` a11y warning on `<audio>` elements ([#6054](https://github.com/sveltejs/svelte/issues/6054))
+* Relax `derived` function signature ([#6178](https://github.com/sveltejs/svelte/issues/6178))
+* Support `bind:group` in SSR ([#4621](https://github.com/sveltejs/svelte/pull/4621))
+* Add sourcemaps to html elements ([#6427](https://github.com/sveltejs/svelte/pull/6427))
+* Make `<script>` and `<style>` end tag parsing more robust ([#6511](https://github.com/sveltejs/svelte/pull/6511))
 * Make it possible to silence more warnings ([#5954](https://github.com/sveltejs/svelte/issues/5954))
 
 ## 3.38.3

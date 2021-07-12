@@ -70,22 +70,22 @@ function create_fragment(ctx) {
 
 function instance($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots("Component", slots, []);
+	validate_slots('Component', slots, []);
 	let { name } = $$props;
-	const writable_props = ["name"];
+	const writable_props = ['name'];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$" && key !== "slot") console.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$$set = $$props => {
-		if ("name" in $$props) $$invalidate(0, name = $$props.name);
+		if ('name' in $$props) $$invalidate(0, name = $$props.name);
 	};
 
 	$$self.$capture_state = () => ({ name });
 
 	$$self.$inject_state = $$props => {
-		if ("name" in $$props) $$invalidate(0, name = $$props.name);
+		if ('name' in $$props) $$invalidate(0, name = $$props.name);
 	};
 
 	if ($$props && "$$inject" in $$props) {
@@ -110,7 +110,7 @@ class Component extends SvelteComponentDev {
 		const { ctx } = this.$$;
 		const props = options.props || {};
 
-		if (/*name*/ ctx[0] === undefined && !("name" in props)) {
+		if (/*name*/ ctx[0] === undefined && !('name' in props)) {
 			console.warn("<Component> was created without expected prop 'name'");
 		}
 	}

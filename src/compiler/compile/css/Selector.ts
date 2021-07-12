@@ -142,6 +142,15 @@ export default class Selector {
 			}
 		}
 
+		this.validate_global_with_multiple_selectors(component);
+	}
+
+	validate_global_with_multiple_selectors(component: Component) {
+		if (this.blocks.length === 1 && this.blocks[0].selectors.length === 1) {
+			// standalone :global() with multiple selectors is OK
+			return;
+		}
+
 		for (const block of this.blocks) {
 			for (const selector of block.selectors) {
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
@@ -536,11 +545,11 @@ function has_definite_elements(result: Map<Element, NodeExist>): boolean {
 
 function add_to_map(from: Map<Element, NodeExist>, to: Map<Element, NodeExist>) {
 	from.forEach((exist, element) => {
-		to.set(element, higher_existance(exist, to.get(element)));
+		to.set(element, higher_existence(exist, to.get(element)));
 	});
 }
 
-function higher_existance(exist1: NodeExist | null, exist2: NodeExist | null): NodeExist {
+function higher_existence(exist1: NodeExist | null, exist2: NodeExist | null): NodeExist {
 	if (exist1 === undefined || exist2 === undefined) return exist1 || exist2;
 	return exist1 > exist2 ? exist1 : exist2;
 }
