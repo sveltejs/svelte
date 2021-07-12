@@ -107,17 +107,18 @@ export class Parser {
 		});
 	}
 
-	eat(str: string, required?: boolean, message?: string) {
+	eat(str: string, required?: boolean, error?: { code: string, message: string }) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
 		}
 
 		if (required) {
-			this.error({
-				code: `unexpected-${this.index === this.template.length ? 'eof' : 'token'}`,
-				message: message || `Expected ${str}`
-			});
+			this.error(error ||
+				(this.index === this.template.length
+					? parser_errors.unexpected_eof_token(str)
+					: parser_errors.unexpected_token(str))
+			);
 		}
 
 		return false;
@@ -226,11 +227,11 @@ export default function parse(
 	const module_scripts = parser.js.filter(script => script.context === 'module');
 
 	if (instance_scripts.length > 1) {
-		parser.error(parser_errors.duplicate_instance_script(), instance_scripts[1].start);
+		parser.error(parser_errors.invalid_script_instance, instance_scripts[1].start);
 	}
 
 	if (module_scripts.length > 1) {
-		parser.error(parser_errors.duplicate_module_script(), module_scripts[1].start);
+		parser.error(parser_errors.invalid_script_module, module_scripts[1].start);
 	}
 
 	return {

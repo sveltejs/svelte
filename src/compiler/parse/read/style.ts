@@ -7,12 +7,11 @@ import parser_errors from '../errors';
 
 export default function read_style(parser: Parser, start: number, attributes: Node[]): Style {
 	const content_start = parser.index;
-	const error_message = parser_errors.unclosed_style();
 
-	const styles = parser.read_until(/<\/style\s*>/, error_message);
+	const styles = parser.read_until(/<\/style\s*>/, parser_errors.unclosed_style);
 
 	if (parser.index >= parser.template.length) {
-		parser.error(error_message);
+		parser.error(parser_errors.unclosed_style);
 	}
 
 	const content_end = parser.index;
@@ -29,7 +28,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 		});
 	} catch (err) {
 		if (err.name === 'SyntaxError') {
-			parser.error(parser_errors.syntax_error(err.message), err.offset);
+			parser.error(parser_errors.css_syntax_error(err.message), err.offset);
 		} else {
 			throw err;
 		}
@@ -47,17 +46,17 @@ export default function read_style(parser: Parser, start: number, attributes: No
 					const b = node.children[i + 1];
 
 					if (is_ref_selector(a, b)) {
-						parser.error(parser_errors.invalid_ref_selector(), a.loc.start.offset);
+						parser.error(parser_errors.invalid_ref_selector, a.loc.start.offset);
 					}
 				}
 			}
 
 			if (node.type === 'Declaration' && node.value.type === 'Value' && node.value.children.length === 0) {
-				parser.error(parser_errors.invalid_declaration(), node.start);
+				parser.error(parser_errors.invalid_declaration, node.start);
 			}
 
 			if (node.type === 'PseudoClassSelector' && node.name === 'global' && node.children === null) {
-				parser.error(parser_errors.empty_global_selector(), node.loc.start.offset);
+				parser.error(parser_errors.empty_global_selector, node.loc.start.offset);
 			}
 
 			if (node.loc) {

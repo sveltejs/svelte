@@ -6,7 +6,6 @@ import { is_void } from '../../utils/names';
 import { Parser } from '../index';
 import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
-import list from '../../utils/list';
 import parser_errors from '../errors';
 
 // eslint-disable-next-line no-useless-escape
@@ -59,7 +58,7 @@ export default function tag(parser: Parser) {
 
 	if (parser.eat('!--')) {
 		const data = parser.read_until(/-->/);
-		parser.eat('-->', true, 'comment was left open, expected -->');
+		parser.eat('-->', true, parser_errors.unclosed_comment);
 
 		parser.current().children.push({
 			start,
@@ -83,17 +82,17 @@ export default function tag(parser: Parser) {
 				parser.current().children.length
 			) {
 				parser.error(
-					parser_errors.meta_no_children(slug, name), 
+					parser_errors.invalid_element_content(slug, name), 
 					parser.current().children[0].start
 				);
 			}
 		} else {
 			if (name in parser.meta_tags) {
-				parser.error(parser_errors.meta_duplicate(slug, name), start);
+				parser.error(parser_errors.duplicate_element(slug, name), start);
 			}
 
 			if (parser.stack.length > 1) {
-				parser.error(parser_errors.meta_top_level(slug, name), start);
+				parser.error(parser_errors.invalid_element_placement(slug, name), start);
 			}
 
 			parser.meta_tags[name] = true;
@@ -120,7 +119,7 @@ export default function tag(parser: Parser) {
 
 	if (is_closing_tag) {
 		if (is_void(name)) {
-			parser.error(parser_errors.void_no_children(name), start);
+			parser.error(parser_errors.invalid_void_content(name), start);
 		}
 
 		parser.eat('>', true);
@@ -129,8 +128,8 @@ export default function tag(parser: Parser) {
 		while (parent.name !== name) {
 			if (parent.type !== 'Element') {
 				const error = parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name
-					? parser_errors.element_autoclosed(name, parser.last_auto_closed_tag.reason)
-					: parser_errors.element_unopened(name);
+					? parser_errors.invalid_closing_tag_autoclosed(name, parser.last_auto_closed_tag.reason)
+					: parser_errors.invalid_closing_tag_unopened(name);
 				parser.error(error, start);
 			}
 
@@ -169,12 +168,12 @@ export default function tag(parser: Parser) {
 	if (name === 'svelte:component') {
 		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
 		if (!~index) {
-			parser.error(parser_errors.component_definition_missing, start);
+			parser.error(parser_errors.missing_component_definition, start);
 		}
 
 		const definition = element.attributes.splice(index, 1)[0];
 		if (definition.value === true || definition.value.length !== 1 || definition.value[0].type === 'Text') {
-			parser.error(parser_errors.component_definition_invalid, definition.start);
+			parser.error(parser_errors.invalid_component_definition, definition.start);
 		}
 
 		element.expression = definition.value[0].expression;
@@ -239,7 +238,7 @@ function read_tag_name(parser: Parser) {
 		}
 
 		if (!legal) {
-			parser.error(parser_errors.self_placement_invalid, start);
+			parser.error(parser_errors.invalid_self_placement, start);
 		}
 
 		return 'svelte:self';
@@ -257,13 +256,13 @@ function read_tag_name(parser: Parser) {
 		const match = fuzzymatch(name.slice(7), valid_meta_tags);
 
 		parser.error(
-			parser_errors.meta_tag_name_invalid(list(valid_meta_tags), match), 
+			parser_errors.invalid_tag_name_svelte_element(valid_meta_tags, match), 
 			start
-			);
+		);
 	}
 
 	if (!valid_tag_name.test(name)) {
-		parser.error(parser_errors.element_tag_name_invalid, start);
+		parser.error(parser_errors.invalid_tag_name, start);
 	}
 
 	return name;
@@ -274,7 +273,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 
 	function check_unique(name: string) {
 		if (unique_names.has(name)) {
-			parser.error(parser_errors.attribute_duplicate, start);
+			parser.error(parser_errors.duplicate_attribute, start);
 		}
 		unique_names.add(name);
 	}
@@ -302,10 +301,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			parser.eat('}', true);
 
 			if (name === null) {
-				parser.error({
-					code: 'empty-attribute-shorthand',
-					message: 'Attribute shorthand cannot be empty'
-				}, start);
+				parser.error(parser_errors.empty_attribute_shorthand, start);
 			}
 
 			check_unique(name);
@@ -347,17 +343,14 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		value = read_attribute_value(parser);
 		end = parser.index;
 	} else if (parser.match_regex(/["']/)) {
-		parser.error(parser_errors.expected_token_equal, parser.index);
+		parser.error(parser_errors.unexpected_token('='), parser.index);
 	}
 
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
 		if (directive_name === '') {
-			parser.error({
-				code: 'empty-directive-name',
-				message: `${type} name cannot be empty`
-			}, start + colon_index + 1);
+			parser.error(parser_errors.empty_directive_name(type), start + colon_index + 1);
 		}
 
 		if (type === 'Binding' && directive_name !== 'this') {
@@ -367,12 +360,12 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		}
 
 		if (type === 'Ref') {
-			parser.error(parser_errors.ref_directive_invalid(directive_name), start);
+			parser.error(parser_errors.invalid_ref_directive(directive_name), start);
 		}
 
 		if (value[0]) {
 			if ((value as any[]).length > 1 || value[0].type === 'Text') {
-				parser.error(parser_errors.directive_value_invalid, value[0].start);
+				parser.error(parser_errors.invalid_directive_value, value[0].start);
 			}
 		}
 

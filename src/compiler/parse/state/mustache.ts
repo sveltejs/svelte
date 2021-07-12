@@ -107,8 +107,8 @@ export default function mustache(parser: Parser) {
 			if (block.type !== 'IfBlock') {
 				parser.error(
 					parser.stack.some(block => block.type === 'IfBlock') 
-						? parser_errors.else_if_before_block_close(to_string(block)) 
-						: parser_errors.else_if_without_if
+						? parser_errors.invalid_elseif_placement_unclosed_block(to_string(block)) 
+						: parser_errors.invalid_elseif_placement_outside_if
 				);
 			}
 
@@ -142,8 +142,8 @@ export default function mustache(parser: Parser) {
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 				parser.error(
 					parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock') 
-						? parser_errors.else_before_block_close(to_string(block)) 
-						: parser_errors.else_without_if_each()
+						? parser_errors.invalid_else_placement_unclosed_block(to_string(block)) 
+						: parser_errors.invalid_else_placement_outside_if
 				);
 			}
 
@@ -167,15 +167,15 @@ export default function mustache(parser: Parser) {
 			if (block.type !== 'PendingBlock') {
 				parser.error(
 					parser.stack.some(block => block.type === 'PendingBlock')
-						? parser_errors.then_before_close_block(to_string(block)) 
-						: parser_errors.then_without_await 
+						? parser_errors.invalid_then_placement_unclosed_block(to_string(block)) 
+						: parser_errors.invalid_then_placement_without_await 
 				);
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
 				parser.error(parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
-						? parser_errors.catch_before_close_block(to_string(block)) 
-						: parser_errors.catch_without_await 
+						? parser_errors.invalid_catch_placement_unclosed_block(to_string(block)) 
+						: parser_errors.invalid_catch_placement_without_await 
 				);
 			}
 		}
@@ -353,7 +353,7 @@ export default function mustache(parser: Parser) {
 
 			identifiers.forEach(node => {
 				if (node.type !== 'Identifier') {
-					parser.error(parser_errors.debug_args(), node.start);
+					parser.error(parser_errors.invalid_debug_args, node.start);
 				}
 			});
 
