@@ -15,8 +15,8 @@ export default class Style extends Node {
 
 		this.name = info.name;
 
-		this.expression = new Expression(component, this, scope, info.expression)
+		this.expression = new Expression(component, this, scope, info.expression);
 
-		this.should_cache = info.expression.type === 'TemplateLiteral' && info.expression.expressions.length > 0
+		this.should_cache = info.expression.type === 'TemplateLiteral' && info.expression.expressions.length > 0;
 	}
 }

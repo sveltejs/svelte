@@ -10,7 +10,7 @@ export default {
 		assert.equal(styles.color, 'red');
 
 		component.color = 'blue';
-		assert.htmlEqual(target.innerHTML, '<p style="color: blue;"></p>')
+		assert.htmlEqual(target.innerHTML, '<p style="color: blue;"></p>');
 
 		styles = window.getComputedStyle(p);
 		assert.equal(styles.color, 'blue');

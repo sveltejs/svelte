@@ -13,26 +13,27 @@ export default {
 
 		component.color = 'red';
 
-		assert.htmlEqual(target.innerHTML, `
-			<p id="my-id" style="width: 65px; color: red;"></p>
-		`);
+		assert.htmlEqual(
+			target.innerHTML,
+			'<p id="my-id" style="width: 65px; color: red;"></p>'
+		);
 
 		component.obj = { style: 'height: 72px;' };
 
-		assert.htmlEqual(target.innerHTML, `
-			<p style="height: 72px; color: red;"></p>
-		`);
+		assert.htmlEqual(
+			target.innerHTML,
+			'<p style="height: 72px; color: red;"></p>'
+		);
 
 		component.obj = { style: 'border-radius: 2px; color: orange' };
 
-		assert.htmlEqual(target.innerHTML, `
-			<p style="border-radius: 2px; color: red;"></p>
-		`);
+		assert.htmlEqual(
+			target.innerHTML,
+			'<p style="border-radius: 2px; color: red;"></p>'
+		);
 
 		component.obj = {};
 
-		assert.htmlEqual(target.innerHTML, `
-			<p style="color: red;"></p>
-		`);
+		assert.htmlEqual(target.innerHTML, '<p style="color: red;"></p>');
 	}
 };

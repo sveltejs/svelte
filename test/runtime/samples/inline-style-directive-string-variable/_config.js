@@ -15,8 +15,9 @@ export default {
 		component.border_width = 20;
 		component.border_color = 'yellow';
 
-		assert.htmlEqual(target.innerHTML, `
-			<p style="color: green; transform: translateX(100%); border: 20px solid yellow;"></p>
-		`)
+		assert.htmlEqual(
+			target.innerHTML,
+			'<p style="color: green; transform: translateX(100%); border: 20px solid yellow;"></p>'
+		);
 	}
 };

@@ -5,8 +5,6 @@ export default {
 
 	test({ assert, component, target }) {
 		component.myColor = 'blue';
-		assert.htmlEqual(target.innerHTML, `
-			<p style="color: blue;"></p>
-		`);
+		assert.htmlEqual(target.innerHTML, '<p style="color: blue;"></p>');
 	}
 };

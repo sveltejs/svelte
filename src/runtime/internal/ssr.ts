@@ -192,7 +192,7 @@ function style_object_to_string(style_object) {
 }
 
 export function add_styles(style_object) {
-  const styles = style_object_to_string(style_object)
+  const styles = style_object_to_string(style_object);
 
   return styles ? ` style="${styles}"` : '';
 }

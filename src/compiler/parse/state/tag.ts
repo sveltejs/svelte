@@ -1,11 +1,11 @@
-import { TemplateLiteral, TemplateElement } from 'estree';
+import { TemplateLiteral, TemplateElement, Expression } from 'estree';
 import read_expression from '../read/expression';
 import read_script from '../read/script';
 import read_style from '../read/style';
 import { decode_character_references, closing_tag_omitted } from '../utils/html';
 import { is_void } from '../../utils/names';
 import { Parser } from '../index';
-import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
+import { Directive, DirectiveType, TemplateNode, Text, MustacheTag } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
 import parser_errors from '../errors';
 
@@ -269,7 +269,7 @@ function read_tag_name(parser: Parser) {
 	return name;
 }
 
-function node_to_template_literal(value: TemplateNode[]): TemplateLiteral {
+function node_to_template_literal(value: Array<Text | MustacheTag>): TemplateLiteral {
 	let quasi: TemplateElement = {
 		type: 'TemplateElement',
 		value: { raw: '', cooked: null },
@@ -286,12 +286,12 @@ function node_to_template_literal(value: TemplateNode[]): TemplateLiteral {
 			quasi.value.raw += node.raw;
 		} else if (node.type === 'MustacheTag') {
 			literal.quasis.push(quasi);
-			literal.expressions.push(node.expression);
+			literal.expressions.push(node.expression as Expression);
 			quasi = {
 				type: 'TemplateElement',
 				value: { raw: '', cooked: null },
 				tail: false
-			}
+			};
 		}
 	});
 	quasi.tail = true;
@@ -398,14 +398,13 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		let expression = null;
 
 		if (first_value) {
-			if ((value as any[]).length > 1 || first_value.type === 'Text') {
-				if (type === 'Style') {
-					expression = node_to_template_literal(value as TemplateNode[]);
-				} else {
-					parser.error(parser_errors.invalid_directive_value, first_value.start);
-				}
+			const attribute_contains_text = (value as any[]).length > 1 || first_value.type === 'Text';
+			if (type === 'Style') {
+				expression = attribute_contains_text ? node_to_template_literal(value as Array<Text | MustacheTag>) : first_value.expression;
+			} else if (attribute_contains_text) {
+				parser.error(parser_errors.invalid_directive_value, first_value.start);
 			} else {
-				expression = first_value.expression || null;
+				expression = first_value.expression;
 			}
 		}
 

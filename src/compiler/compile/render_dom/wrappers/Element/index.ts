@@ -912,7 +912,7 @@ export default class ElementWrapper extends Wrapper {
 		this.node.styles.forEach((style_directive) => {
 			const { name, expression, should_cache } = style_directive;
 
-			let snippet = expression.manipulate(block);
+			const snippet = expression.manipulate(block);
 			let cached_snippet;
 			if (should_cache) {
 				cached_snippet = block.get_unique_name(`style_${name}`);
