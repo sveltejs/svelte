@@ -7,6 +7,7 @@ import { Parser } from '../index';
 import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
+import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore';
 
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
@@ -64,7 +65,8 @@ export default function tag(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'Comment',
-			data
+			data,
+			ignores: extract_svelte_ignore(data)
 		});
 
 		return;

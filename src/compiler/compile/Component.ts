@@ -36,7 +36,7 @@ import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types
 import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
-import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from './utils/extract_svelte_ignore';
+import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 
 interface ComponentOptions {
 	namespace?: string;

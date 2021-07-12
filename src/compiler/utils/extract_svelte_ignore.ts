@@ -1,4 +1,4 @@
-import { TemplateNode } from '../../interfaces';
+import { TemplateNode } from '../interfaces';
 import { flatten } from './flatten';
 
 const pattern = /^\s*svelte-ignore\s+([\s\S]+)\s*$/m;
@@ -24,9 +24,8 @@ export function extract_ignores_above_position(position: number, template_nodes:
 			return [];
 		}
 		if (node.type === 'Comment') {
-			const ignores = extract_svelte_ignore(node.data || '');
-			if (ignores.length) {
-				return ignores;
+			if (node.ignores.length) {
+				return node.ignores;
 			}
 		}
 	}

@@ -10,7 +10,7 @@ import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { Node as PeriscopicNode } from 'periscopic';
-import { flatten } from '../utils/flatten';
+import { flatten } from '../../utils/flatten';
 
 export default function dom(
 	component: Component,

@@ -7,7 +7,7 @@ import Component from '../Component';
 import { CssNode } from './interfaces';
 import hash from '../utils/hash';
 import compiler_warnings from '../compiler_warnings';
-import { extract_ignores_above_position } from '../utils/extract_svelte_ignore';
+import { extract_ignores_above_position } from '../../utils/extract_svelte_ignore';
 
 function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
