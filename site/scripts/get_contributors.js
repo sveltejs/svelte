@@ -3,7 +3,15 @@ const fs = require('fs');
 const fetch = require('node-fetch');
 const Jimp = require('jimp');
 
+const force = process.env.FORCE_UPDATE === 'true';
+
 process.chdir(__dirname);
+
+const outputFile = `../src/routes/_contributors.js`;
+if (!force && fs.existsSync(outputFile)) {
+	console.info(`[update/contributors] ${outputFile} exists. Skipping`);
+	process.exit(0);
+}
 
 const base = `https://api.github.com/repos/sveltejs/svelte/contributors`;
 const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } = process.env;
@@ -48,7 +56,7 @@ async function main() {
 
 	const str = `[\n\t${authors.map(a => `'${a.login}'`).join(',\n\t')}\n]`;
 
-	fs.writeFileSync(`../src/routes/_contributors.js`, `export default ${str};`);
+	fs.writeFileSync(outputFile, `export default ${str};`);
 }
 
 main();

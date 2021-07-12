@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Docs and examples for Svelte",
   "scripts": {
-    "dev": "npm run copy-workers && sapper dev",
+    "dev": "node scripts/update.js && npm run copy-workers && sapper dev",
     "copy-workers": "node scripts/copy-workers.js",
     "migrate": "node-pg-migrate -r dotenv/config",
-    "build": "npm run copy-workers && sapper build --legacy",
-    "update": "node scripts/update_template.js && node scripts/get-contributors.js",
+    "build": "node scripts/update.js && npm run copy-workers && sapper build --legacy",
+    "update": "node scripts/update.js --force=true",
     "start": "node __sapper__/build",
     "test": "mocha -r esm test/**",
     "deploy": "make deploy"
@@ -50,7 +50,6 @@
     "mocha": "^6.2.0",
     "node-fetch": "^2.6.1",
     "node-pg-migrate": "^3.22.0",
-    "npm-run-all": "^4.1.5",
     "rollup": "^2.30.0",
     "rollup-plugin-svelte": "^7.0.0",
     "rollup-plugin-terser": "^7.0.0",

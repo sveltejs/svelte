@@ -1,7 +1,16 @@
 const sh = require('shelljs');
 const fs = require('fs');
+const path = require('path');
 
-sh.cd(__dirname + '/../');
+const force = process.env.FORCE_UPDATE === 'true';
+
+sh.cd(path.join(__dirname, '..'));
+
+const outputFile = 'static/svelte-app.json';
+if (!force && fs.existsSync(outputFile)) {
+	console.info(`[update/template] ${outputFile} exists. Skipping`);
+	process.exit(0);
+}
 
 // fetch svelte app
 sh.rm('-rf','scripts/svelte-app');
@@ -22,4 +31,4 @@ for (const path of sh.find(appPath).filter(p => fs.lstatSync(p).isFile()) ) {
 	files.push({ path: path.slice(appPath.length + 1), data });
 }
 
-fs.writeFileSync('static/svelte-app.json', JSON.stringify(files));
+fs.writeFileSync(outputFile, JSON.stringify(files));
