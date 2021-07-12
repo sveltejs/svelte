@@ -22,9 +22,9 @@ export function spread(args, attrs_to_add) {
 		
 		if (styles_to_add) {
 			if (attributes.style == null) {
-				attributes.style = styles_to_add;
+				attributes.style = style_object_to_string(styles_to_add);
 			} else {
-				attributes.style += '; ' + styles_to_add;
+				attributes.style = style_object_to_string(merge_ssr_styles(attributes.style, styles_to_add));
 			}
 		}
 	}
@@ -44,6 +44,28 @@ export function spread(args, attrs_to_add) {
 	});
 
 	return str;
+}
+
+export function merge_ssr_styles(style_attribute, style_directive) {
+	const style_object = {};
+	for (const individual_style of style_attribute.split(';')) {
+		const colon_index = individual_style.indexOf(':');
+		const name = individual_style.slice(0, colon_index).trim();
+		const value = individual_style.slice(colon_index + 1).trim();
+		if (!name) continue;
+		style_object[name] = value;
+	}
+	
+	for (const name in style_directive) {
+		const value = style_directive[name];
+		if (value) {
+			style_object[name] = value;
+		} else {
+			delete style_object[name];
+		}
+	}
+
+	return style_object;
 }
 
 export const escaped = {
@@ -162,6 +184,15 @@ export function add_classes(classes) {
 	return classes ? ` class="${classes}"` : '';
 }
 
-export function add_styles(styles) {
-	return styles ? ` style="${styles}"` : '';
+function style_object_to_string(style_object) {
+	return Object.keys(style_object)
+		.filter(key => style_object[key])
+		.map(key => `${key}: ${style_object[key]};`)
+		.join(' ');
+}
+
+export function add_styles(style_object) {
+  const styles = style_object_to_string(style_object)
+
+  return styles ? ` style="${styles}"` : '';
 }

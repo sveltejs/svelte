@@ -1,4 +1,4 @@
-import { TemplateLiteral } from 'estree';
+import { TemplateLiteral, TemplateElement } from 'estree';
 import read_expression from '../read/expression';
 import read_script from '../read/script';
 import read_style from '../read/style';
@@ -270,7 +270,11 @@ function read_tag_name(parser: Parser) {
 }
 
 function node_to_template_literal(value: TemplateNode[]): TemplateLiteral {
-
+	let quasi: TemplateElement = {
+		type: 'TemplateElement',
+		value: { raw: '', cooked: null },
+		tail: false
+	};
 	const literal: TemplateLiteral = {
 		type: 'TemplateLiteral',
 		expressions: [],
@@ -279,16 +283,19 @@ function node_to_template_literal(value: TemplateNode[]): TemplateLiteral {
 
 	value.forEach((node) => {
 		if (node.type === 'Text') {
-			literal.quasis.push({
-				type: 'TemplateElement',
-				value: { raw: node.raw, cooked: null },
-				tail: false
-			});
+			quasi.value.raw += node.raw;
 		} else if (node.type === 'MustacheTag') {
+			literal.quasis.push(quasi);
 			literal.expressions.push(node.expression);
+			quasi = {
+				type: 'TemplateElement',
+				value: { raw: '', cooked: null },
+				tail: false
+			}
 		}
 	});
-
+	quasi.tail = true;
+	literal.quasis.push(quasi);
 	return literal;
 }
 

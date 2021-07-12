@@ -8,14 +8,15 @@ export default class Style extends Node {
 	type: 'Style';
 	name: string;
 	expression: Expression;
+	should_cache: boolean;
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		this.name = info.name;
 
-		this.expression = info.expression
-			? new Expression(component, this, scope, info.expression)
-			: null;
+		this.expression = new Expression(component, this, scope, info.expression)
+
+		this.should_cache = info.expression.type === 'TemplateLiteral' && info.expression.expressions.length > 0
 	}
 }
