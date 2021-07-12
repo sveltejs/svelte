@@ -10,6 +10,7 @@ import {
 	Scope,
 	extract_identifiers
 } from './utils/scope';
+import { Node as PeriscopicNode } from 'periscopic';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
@@ -32,6 +33,9 @@ import { is_reserved_keyword } from './utils/reserved_keywords';
 import { apply_preprocessor_sourcemap } from '../utils/mapped_code';
 import Element from './nodes/Element';
 import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types/types';
+import { clone } from '../utils/clone';
+import compiler_warnings from './compiler_warnings';
+import compiler_errors from './compiler_errors';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -116,12 +120,12 @@ export default class Component {
 
 		// the instance JS gets mutated, so we park
 		// a copy here for later. TODO this feels gross
-		this.original_ast = {
+		this.original_ast = clone({
 			html: ast.html,
 			css: ast.css,
-			instance: ast.instance && JSON.parse(JSON.stringify(ast.instance)),
+			instance: ast.instance,
 			module: ast.module
-		};
+		});
 
 		this.file =
 			compile_options.filename &&
@@ -133,12 +137,14 @@ export default class Component {
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
 		// styles
-		this.stylesheet = new Stylesheet(
+		this.stylesheet = new Stylesheet({
 			source,
 			ast,
-			compile_options.filename,
-			compile_options.dev
-		);
+			filename: compile_options.filename,
+			component_name: name,
+			dev: compile_options.dev,
+			get_css_hash: compile_options.cssHash
+		});
 		this.stylesheet.validate(this);
 
 		this.component_options = process_component_options(
@@ -157,10 +163,7 @@ export default class Component {
 				const svelteOptions = ast.html.children.find(
 					child => child.name === 'svelte:options'
 				) || { start: 0, end: 0 };
-				this.warn(svelteOptions, {
-					code: 'custom-element-no-tag',
-					message: 'No custom element \'tag\' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>'
-				});
+				this.warn(svelteOptions, compiler_warnings.custom_element_no_tag);
 			}
 			this.tag = this.component_options.tag || compile_options.tag;
 		} else {
@@ -180,9 +183,12 @@ export default class Component {
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
 
-	add_var(variable: Var) {
+	add_var(variable: Var, add_to_lookup = true) {
 		this.vars.push(variable);
-		this.var_lookup.set(variable.name, variable);
+
+		if (add_to_lookup) {
+			this.var_lookup.set(variable.name, variable);
+		}
 	}
 
 	add_reference(name: string) {
@@ -213,6 +219,10 @@ export default class Component {
 				variable.subscribable = true;
 			}
 		} else {
+			if (this.compile_options.varsReport === 'full') {
+				this.add_var({ name, referenced: true }, false);
+			}
+
 			this.used_names.add(name);
 		}
 	}
@@ -337,19 +347,7 @@ export default class Component {
 			css,
 			ast: this.original_ast,
 			warnings: this.warnings,
-			vars: this.vars
-				.filter(v => !v.global && !v.internal)
-				.map(v => ({
-					name: v.name,
-					export_name: v.export_name || null,
-					injected: v.injected || false,
-					module: v.module || false,
-					mutated: v.mutated || false,
-					reassigned: v.reassigned || false,
-					referenced: v.referenced || false,
-					writable: v.writable || false,
-					referenced_from_script: v.referenced_from_script || false
-				})),
+			vars: this.get_vars_report(),
 			stats: this.stats.render()
 		};
 	}
@@ -397,6 +395,28 @@ export default class Component {
 				name: alias
 			};
 		};
+	}
+
+	get_vars_report(): Var[] {
+		const { compile_options, vars } = this;
+
+		const vars_report = compile_options.varsReport === false
+			? []
+			: compile_options.varsReport === 'full'
+				? vars
+				: vars.filter(v => !v.global && !v.internal);
+
+		return vars_report.map(v => ({
+			name: v.name,
+			export_name: v.export_name || null,
+			injected: v.injected || false,
+			module: v.module || false,
+			mutated: v.mutated || false,
+			reassigned: v.reassigned || false,
+			referenced: v.referenced || false,
+			writable: v.writable || false,
+			referenced_from_script: v.referenced_from_script || false
+		}));
 	}
 
 	error(
@@ -457,18 +477,12 @@ export default class Component {
 
 	extract_exports(node) {
 		if (node.type === 'ExportDefaultDeclaration') {
-			this.error(node, {
-				code: 'default-export',
-				message: 'A component cannot have a default export'
-			});
+			this.error(node, compiler_errors.default_export);
 		}
 
 		if (node.type === 'ExportNamedDeclaration') {
 			if (node.source) {
-				this.error(node, {
-					code: 'not-implemented',
-					message: 'A component currently cannot have an export ... from'
-				});
+				this.error(node, compiler_errors.not_implemented);
 			}
 			if (node.declaration) {
 				if (node.declaration.type === 'VariableDeclaration') {
@@ -477,10 +491,7 @@ export default class Component {
 							const variable = this.var_lookup.get(name);
 							variable.export_name = name;
 							if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
-								this.warn(declarator, {
-									code: 'unused-export-let',
-									message: `${this.name.name} has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``
-								});
+								this.warn(declarator, compiler_warnings.unused_export_let(this.name.name, name));
 							}
 						});
 					});
@@ -500,10 +511,7 @@ export default class Component {
 						variable.export_name = specifier.exported.name;
 
 						if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
-							this.warn(specifier, {
-								code: 'unused-export-let',
-								message: `${this.name.name} has unused export property '${specifier.exported.name}'. If it is for external reference only, please consider using \`export const ${specifier.exported.name}\``
-							});
+							this.warn(specifier, compiler_warnings.unused_export_let(this.name.name, specifier.exported.name));
 						}
 					}
 				});
@@ -534,10 +542,7 @@ export default class Component {
 		walk(script.content, {
 			enter(node: Node) {
 				if (node.type === 'LabeledStatement' && node.label.name === '$') {
-					component.warn(node as any, {
-						code: 'module-script-reactive-declaration',
-						message: '$: has no effect in a module script'
-					});
+					component.warn(node as any, compiler_warnings.module_script_reactive_declaration);
 				}
 			}
 		});
@@ -547,10 +552,7 @@ export default class Component {
 
 		scope.declarations.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node as any, {
-					code: 'illegal-declaration',
-					message: 'The $ prefix is reserved, and cannot be used for variable and import names'
-				});
+				this.error(node as any, compiler_errors.illegal_declaration);
 			}
 
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
@@ -565,10 +567,7 @@ export default class Component {
 
 		globals.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node as any, {
-					code: 'illegal-subscription',
-					message: 'Cannot reference store value inside <script context="module">'
-				});
+				this.error(node as any, compiler_errors.illegal_subscription);
 			} else {
 				this.add_var({
 					name,
@@ -626,10 +625,7 @@ export default class Component {
 
 		instance_scope.declarations.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node as any, {
-					code: 'illegal-declaration',
-					message: 'The $ prefix is reserved, and cannot be used for variable and import names'
-				});
+				this.error(node as any, compiler_errors.illegal_declaration);
 			}
 
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
@@ -663,10 +659,7 @@ export default class Component {
 				});
 			} else if (name[0] === '$') {
 				if (name === '$' || name[1] === '$') {
-					this.error(node as any, {
-						code: 'illegal-global',
-						message: `${name} is an illegal variable name`
-					});
+					this.error(node as any, compiler_errors.illegal_global(name));
 				}
 
 				this.add_var({
@@ -751,7 +744,7 @@ export default class Component {
 					return this.skip();
 				}
 
-				component.warn_on_undefined_store_value_references(node, parent, scope);
+				component.warn_on_undefined_store_value_references(node, parent, prop, scope);
 			},
 
 			leave(node: Node) {
@@ -809,7 +802,7 @@ export default class Component {
 
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-					const names = extract_names(assignee);
+					const names = extract_names(assignee as PeriscopicNode);
 
 					const deep = assignee.type === 'MemberExpression';
 
@@ -843,19 +836,16 @@ export default class Component {
 		});
 	}
 
-	warn_on_undefined_store_value_references(node, parent, scope: Scope) {
+	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string, scope: Scope) {
 		if (
 			node.type === 'LabeledStatement' &&
 			node.label.name === '$' &&
 			parent.type !== 'Program'
 		) {
-			this.warn(node as any, {
-				code: 'non-top-level-reactive-declaration',
-				message: '$: has no effect outside of the top-level'
-			});
+			this.warn(node as any, compiler_warnings.non_top_level_reactive_declaration);
 		}
 
-		if (is_reference(node as Node, parent as Node)) {
+		if (is_reference(node, parent)) {
 			const object = get_object(node);
 			const { name } = object;
 
@@ -865,10 +855,9 @@ export default class Component {
 				}
 
 				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
-					this.error(node, {
-						code: 'contextual-store',
-						message: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
-					});
+					if (!((/Function/.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
+						this.error(node as any, compiler_errors.contextual_store);
+					}
 				}
 			}
 		}
@@ -932,10 +921,7 @@ export default class Component {
 
 									if (variable.export_name) {
 										// TODO is this still true post-#3539?
-										component.error(declarator as any, {
-											code: 'destructured-prop',
-											message: 'Cannot declare props in destructured declaration'
-										});
+										component.error(declarator as any, compiler_errors.destructured_prop);
 									}
 
 									if (variable.subscribable) {
@@ -1225,10 +1211,7 @@ export default class Component {
 									variable.is_reactive_dependency = true;
 									if (variable.module) {
 										should_add_as_dependency = false;
-										component.warn(node as any, {
-											code: 'module-script-reactive-declaration',
-											message: `"${name}" is declared in a module script and will not be reactive`
-										});
+										component.warn(node as any, compiler_warnings.module_script_variable_reactive_declaration(name));
 									}
 								}
 								const is_writable_or_mutated =
@@ -1293,10 +1276,7 @@ export default class Component {
 		if (cycle && cycle.length) {
 			const declarationList = lookup.get(cycle[0]);
 			const declaration = declarationList[0];
-			this.error(declaration.node, {
-				code: 'cyclical-reactive-declaration',
-				message: `Cyclical dependency detected: ${cycle.join(' → ')}`
-			});
+			this.error(declaration.node, compiler_errors.cyclical_reactive_declaration(cycle));
 		}
 
 		const add_declaration = declaration => {
@@ -1319,10 +1299,7 @@ export default class Component {
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
 			if (name === '$' || name[1] === '$' && !is_reserved_keyword(name)) {
-				this.error(node, {
-					code: 'illegal-global',
-					message: `${name} is an illegal variable name`
-				});
+				this.error(node, compiler_errors.illegal_global(name));
 			}
 
 			this.has_reactive_assignments = true; // TODO does this belong here?
@@ -1336,15 +1313,7 @@ export default class Component {
 		if (template_scope && template_scope.names.has(name)) return;
 		if (globals.has(name) && node.type !== 'InlineComponent') return;
 
-		let message = `'${name}' is not defined`;
-		if (!this.ast.instance) {
-			message += `. Consider adding a <script> block with 'export let ${name}' to declare a prop`;
-		}
-
-		this.warn(node, {
-			code: 'missing-declaration',
-			message
-		});
+		this.warn(node, compiler_warnings.missing_declaration(name, !!this.ast.instance));
 	}
 
 	push_ignores(ignores) {
@@ -1372,7 +1341,7 @@ function process_component_options(component: Component, nodes) {
 
 	const node = nodes.find(node => node.name === 'svelte:options');
 
-	function get_value(attribute, code, message) {
+	function get_value(attribute, {code, message}) {
 		const { value } = attribute;
 		const chunk = value[0];
 
@@ -1398,26 +1367,18 @@ function process_component_options(component: Component, nodes) {
 
 				switch (name) {
 					case 'tag': {
-						const code = 'invalid-tag-attribute';
-						const message = "'tag' must be a string literal";
-						const tag = get_value(attribute, code, message);
+						const tag = get_value(attribute, compiler_errors.invalid_tag_attribute);
 
 						if (typeof tag !== 'string' && tag !== null) {
-							component.error(attribute, { code, message });
+							component.error(attribute, compiler_errors.invalid_tag_attribute);
 						}
 
 						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
-							component.error(attribute, {
-								code: 'invalid-tag-property',
-								message: "tag name must be two or more words joined by the '-' character"
-							});
+							component.error(attribute, compiler_errors.invalid_tag_property);
 						}
 
 						if (tag && !component.compile_options.customElement) {
-							component.warn(attribute, {
-								code: 'missing-custom-element-compile-options',
-								message: "The 'tag' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?"
-							});
+							component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
 						}
 
 						component_options.tag = tag;
@@ -1425,27 +1386,15 @@ function process_component_options(component: Component, nodes) {
 					}
 
 					case 'namespace': {
-						const code = 'invalid-namespace-attribute';
-						const message = "The 'namespace' attribute must be a string literal representing a valid namespace";
-						const ns = get_value(attribute, code, message);
+						const ns = get_value(attribute, compiler_errors.invalid_namespace_attribute);
 
 						if (typeof ns !== 'string') {
-							component.error(attribute, { code, message });
+							component.error(attribute, compiler_errors.invalid_namespace_attribute);
 						}
 
 						if (valid_namespaces.indexOf(ns) === -1) {
 							const match = fuzzymatch(ns, valid_namespaces);
-							if (match) {
-								component.error(attribute, {
-									code: 'invalid-namespace-property',
-									message: `Invalid namespace '${ns}' (did you mean '${match}'?)`
-								});
-							} else {
-								component.error(attribute, {
-									code: 'invalid-namespace-property',
-									message: `Invalid namespace '${ns}'`
-								});
-							}
+							component.error(attribute, compiler_errors.invalid_namespace_property(ns, match));
 						}
 
 						component_options.namespace = ns;
@@ -1455,12 +1404,10 @@ function process_component_options(component: Component, nodes) {
 					case 'accessors':
 					case 'immutable':
 					case 'preserveWhitespace': {
-						const code = `invalid-${name}-value`;
-						const message = `${name} attribute must be true or false`;
-						const value = get_value(attribute, code, message);
+						const value = get_value(attribute, compiler_errors.invalid_attribute_value(name));
 
 						if (typeof value !== 'boolean') {
-							component.error(attribute, { code, message });
+							component.error(attribute, compiler_errors.invalid_attribute_value(name));
 						}
 
 						component_options[name] = value;
@@ -1468,16 +1415,10 @@ function process_component_options(component: Component, nodes) {
 					}
 
 					default:
-						component.error(attribute, {
-							code: 'invalid-options-attribute',
-							message: '<svelte:options> unknown attribute'
-						});
+						component.error(attribute, compiler_errors.invalid_options_attribute_unknown);
 				}
 			} else {
-				component.error(attribute, {
-					code: 'invalid-options-attribute',
-					message: "<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable' and 'preserveWhitespace' attributes"
-				});
+				component.error(attribute, compiler_errors.invalid_options_attribute);
 			}
 		});
 	}

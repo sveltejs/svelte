@@ -14,6 +14,7 @@ const valid_options = [
 	'filename',
 	'sourcemap',
 	'generate',
+	'varsReport',
 	'outputFilename',
 	'cssOutputFilename',
 	'sveltePath',
@@ -28,7 +29,8 @@ const valid_options = [
 	'css',
 	'loopGuardTimeout',
 	'preserveComments',
-	'preserveWhitespace'
+	'preserveWhitespace',
+	'cssHash'
 ];
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {

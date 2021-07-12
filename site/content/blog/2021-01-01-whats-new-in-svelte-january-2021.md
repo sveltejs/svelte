@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: January 2021
+title: "What's new in Svelte: January 2021"
 description: A Svelte-packed showcase to kick-off the new year!
 author: Daniel Sandoval
 authorURL: https://desandoval.net

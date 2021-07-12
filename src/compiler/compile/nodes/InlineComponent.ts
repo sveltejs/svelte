@@ -9,6 +9,7 @@ import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
+import compiler_errors from '../compiler_errors';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -18,6 +19,7 @@ export default class InlineComponent extends Node {
 	bindings: Binding[] = [];
 	handlers: EventHandler[] = [];
 	lets: Let[] = [];
+	css_custom_properties: Attribute[] = [];
 	children: INode[];
 	scope: TemplateScope;
 
@@ -40,17 +42,12 @@ export default class InlineComponent extends Node {
 			/* eslint-disable no-fallthrough */
 			switch (node.type) {
 				case 'Action':
-					component.error(node, {
-						code: 'invalid-action',
-						message: 'Actions can only be applied to DOM elements, not components'
-					});
+					component.error(node, compiler_errors.invalid_action);
 
 				case 'Attribute':
-					if (node.name === 'slot') {
-						component.error(node, {
-							code: 'invalid-prop',
-							message: "'slot' is reserved for future use in named slots"
-						});
+					if (node.name.startsWith('--')) {
+						this.css_custom_properties.push(new Attribute(component, this, scope, node));
+						break;
 					}
 					// fallthrough
 				case 'Spread':
@@ -62,10 +59,7 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Class':
-					component.error(node, {
-						code: 'invalid-class',
-						message: 'Classes can only be applied to DOM elements, not components'
-					});
+					component.error(node, compiler_errors.invalid_class);
 
 				case 'EventHandler':
 					this.handlers.push(new EventHandler(component, this, scope, node));
@@ -76,10 +70,7 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Transition':
-					component.error(node, {
-						code: 'invalid-transition',
-						message: 'Transitions can only be applied to DOM elements, not components'
-					});
+					component.error(node, compiler_errors.invalid_transition);
 
 				default:
 					throw new Error(`Not implemented: ${node.type}`);
@@ -104,14 +95,62 @@ export default class InlineComponent extends Node {
 		this.handlers.forEach(handler => {
 			handler.modifiers.forEach(modifier => {
 				if (modifier !== 'once') {
-					component.error(handler, {
-						code: 'invalid-event-modifier',
-						message: "Event modifiers other than 'once' can only be used on DOM elements"
-					});
+					component.error(handler, compiler_errors.invalid_event_modifier_component);
 				}
 			});
 		});
 
-		this.children = map_children(component, this, this.scope, info.children);
+		const children = [];
+		for (let i=info.children.length - 1; i >= 0; i--) {
+			const child = info.children[i];
+			if (child.type === 'SlotTemplate') {
+				children.push(child);
+				info.children.splice(i, 1);
+			} else if ((child.type === 'Element' || child.type === 'InlineComponent' || child.type === 'Slot') && child.attributes.find(attribute => attribute.name === 'slot')) {
+				const slot_template = {
+					start: child.start,
+					end: child.end,
+					type: 'SlotTemplate',
+					name: 'svelte:fragment',
+					attributes: [],
+					children: [child]
+				};
+
+				// transfer attributes
+				for (let i=child.attributes.length - 1; i >= 0; i--) {
+					const attribute = child.attributes[i];
+					if (attribute.type === 'Let') {
+						slot_template.attributes.push(attribute);
+						child.attributes.splice(i, 1);
+					} else if (attribute.type === 'Attribute' && attribute.name === 'slot') {
+						slot_template.attributes.push(attribute);
+					}
+				}
+		
+				children.push(slot_template);
+				info.children.splice(i, 1);
+			}
+		}
+
+		if (info.children.some(node => not_whitespace_text(node))) {
+			children.push({ 
+				start: info.start,
+				end: info.end,
+				type: 'SlotTemplate', 
+				name: 'svelte:fragment',
+				attributes: [],
+				children: info.children
+			});
+		}
+
+		this.children = map_children(component, this, this.scope, children);
 	}
+
+	get slot_template_name() {
+		return this.attributes.find(attribute => attribute.name === 'slot').get_static_value() as string;
+	}
+}
+
+function not_whitespace_text(node) {
+	return !(node.type === 'Text' && /^\s+$/.test(node.data));
 }

@@ -26,3 +26,10 @@ export function get_attribute_value(attribute: Attribute): ESTreeExpression {
 		})
 		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 }
+
+export function get_attribute_expression(attribute: Attribute): ESTreeExpression {
+	if (attribute.chunks.length === 1 && attribute.chunks[0].type === 'Expression') {
+		return (attribute.chunks[0] as Expression).node as ESTreeExpression;
+	}
+	return get_attribute_value(attribute);
+}

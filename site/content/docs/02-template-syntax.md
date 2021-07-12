@@ -136,11 +136,14 @@ An element or component can have multiple spread attributes, interspersed with r
 
 Text can also contain JavaScript expressions:
 
+> If you're using a regular expression (`RegExp`) [literal notation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp#literal_notation_and_constructor), you'll need to wrap it in parentheses.
+
 ```sv
 <h1>Hello {name}!</h1>
 <p>{a} + {b} = {a + b}.</p>
-```
 
+<div>{(/^[A-Za-z ]+$/).test(value) ? x : y}</div>
+```
 
 ### Comments
 
@@ -393,7 +396,7 @@ When used around components, this will cause them to be reinstantiated and reini
 
 In a text expression, characters like `<` and `>` are escaped; however, with HTML expressions, they're not.
 
-The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML.
+The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML. It also will *not* compile Svelte code.
 
 > Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
 
@@ -585,7 +588,7 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 
 ---
 
-On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList).
+On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). It is readonly.
 
 ```sv
 <label for="avatar">Upload a picture:</label>
@@ -1236,6 +1239,74 @@ As with DOM events, if the `on:` directive is used without a value, the componen
 <SomeComponent on:whatever/>
 ```
 
+#### [--style-props](style_props)
+
+```sv
+--style-props="anycssvalue"
+```
+
+---
+
+As of [Svelte 3.38](https://github.com/sveltejs/svelte/issues/6268) ([RFC](https://github.com/sveltejs/rfcs/pull/13)), you can pass styles as props to components for the purposes of theming, using CSS custom properties. 
+
+Svelte's implementation is essentially syntactic sugar for adding a wrapper element. This example:
+
+```sv
+<Slider
+  bind:value
+  min={0}
+  --rail-color="black"
+  --track-color="rgb(0, 0, 255)"
+/>
+```
+
+---
+
+Desugars to this:
+
+```sv
+<div style="display: contents; --rail-color: black; --track-color: rgb(0, 0, 255)">
+  <Slider
+    bind:value
+    min={0}
+    max={100}
+  />
+</div>
+```
+
+**Note**: Since this is an extra div, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature. Also note that not all browsers support `display: contents`: https://caniuse.com/css-display-contents 
+
+---
+
+Svelte's CSS Variables support allows for easily themable components:
+
+```sv
+<!-- Slider.svelte -->
+<style>
+  .potato-slider-rail {
+    background-color: var(--rail-color, var(--theme-color, 'purple'));
+  }
+</style>
+```
+
+---
+
+So you can set a high level theme color:
+
+```css
+/* global.css */
+html {
+  --theme-color: black;
+}
+```
+
+---
+
+Or override it at the consumer level:
+
+```sv
+<Slider --rail-color="goldenrod"/>
+```
 
 #### [bind:*property*](bind_component_property)
 
@@ -1328,6 +1399,28 @@ Named slots allow consumers to target specific areas. They can also have fallbac
 </Widget>
 ```
 
+Components can be placed in a named slot using the syntax `<Component slot="name" />`.
+In order to place content in a slot without using a wrapper element, you can use the special element `<svelte:fragment>`.
+
+```sv
+<!-- Widget.svelte -->
+<div>
+	<slot name="header">No header was provided</slot>
+	<p>Some content between header and footer</p>
+	<slot name="footer"></slot>
+</div>
+
+<!-- App.svelte -->
+<Widget>
+	<HeaderComponent slot="header" />
+	<svelte:fragment slot="footer">
+		<p>All rights reserved.</p>
+		<p>Copyright (c) 2019 Svelte Industries</p>
+	</svelte:fragment>
+</Widget>
+```
+
+
 #### [`$$slots`](slots_object)
 
 ---
@@ -1354,7 +1447,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 </Card>
 ```
 
-#### [`<slot let:`*name*`={`*value*`}>`](slot_let)
+#### [`<slot key={`*value*`}>`](slot_let)
 
 ---
 
@@ -1408,7 +1501,7 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 
 The `<svelte:self>` element allows a component to include itself, recursively.
 
-It cannot appear at the top level of your markup; it must be inside an if or each block to prevent an infinite loop.
+It cannot appear at the top level of your markup; it must be inside an if or each block or passed to a component's slot to prevent an infinite loop.
 
 ```sv
 <script>
@@ -1453,6 +1546,8 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:window>` element allows you to add event listeners to the `window` object without worrying about removing them when the component is destroyed, or checking for the existence of `window` when server-side rendering.
 
+Contrary to `<svelte:self>` this element can only be at the top level of your component and must never be inside a block or element.
+
 ```sv
 <script>
 	function handleKeydown(event) {
@@ -1490,7 +1585,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 ---
 
-As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`.
+As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`; and it has to appear at the top level of your component.
 
 ```sv
 <svelte:body
@@ -1509,6 +1604,8 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 ---
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
+
+As with `<svelte:window>` and `<svelte:head>` this element has to appear at the top level of your component and cannot be inside a block or other element.
 
 ```sv
 <svelte:head>
@@ -1536,4 +1633,26 @@ The `<svelte:options>` element provides a place to specify per-component compile
 
 ```sv
 <svelte:options tag="my-custom-element"/>
+```
+
+### `<svelte:fragment>`
+
+The `<svelte:fragment>` element allows you to place content in a [named slot](docs#slot_name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
+
+```sv
+<!-- Widget.svelte -->
+<div>
+	<slot name="header">No header was provided</slot>
+	<p>Some content between header and footer</p>
+	<slot name="footer"></slot>
+</div>
+
+<!-- App.svelte -->
+<Widget>
+	<h1 slot="header">Hello</h1>
+	<svelte:fragment slot="footer">
+		<p>All rights reserved.</p>
+		<p>Copyright (c) 2019 Svelte Industries</p>
+	</svelte:fragment>
+</Widget>
 ```

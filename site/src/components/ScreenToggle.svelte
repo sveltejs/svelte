@@ -20,9 +20,9 @@
 		margin: 0 .15em;
 		width: 4em;
 		height: 1em;
-		padding: .2em .4em .3em;
+		padding: .3em .4em;
 		border-radius: var(--border-r);
-		line-height: normal;
+		line-height: 1em;
 		box-sizing: content-box;
 		color: #888;
 		border: 1px solid var(--back-light);

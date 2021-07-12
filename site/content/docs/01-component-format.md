@@ -24,7 +24,7 @@ All three sections — script, styles and markup — are optional.
 
 A `<script>` block contains JavaScript that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup. There are four additional rules:
 
-##### 1. `export` creates a component prop
+#### 1. `export` creates a component prop
 
 ---
 
@@ -57,6 +57,8 @@ In development mode (see the [compiler options](docs#svelte_compile)), a warning
 
 If you export a `const`, `class` or `function`, it is readonly from outside the component. Function *expressions* are valid props, however.
 
+Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](docs#bind_element).
+
 ```sv
 <script>
 	// these are readonly
@@ -85,7 +87,7 @@ You can use reserved words as prop names.
 </script>
 ```
 
-##### 2. Assignments are 'reactive'
+#### 2. Assignments are 'reactive'
 
 ---
 
@@ -107,7 +109,7 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 </script>
 ```
 
-##### 3. `$:` marks a statement as reactive
+#### 3. `$:` marks a statement as reactive
 
 ---
 
@@ -169,7 +171,7 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 </script>
 ```
 
-##### 4. Prefix stores with `$` to access their values
+#### 4. Prefix stores with `$` to access their values
 
 ---
 
@@ -277,6 +279,15 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 			 to this component */
 		color: goldenrod;
 	}
+
+	p:global(.red) {
+		/* this will apply to all <p> elements belonging to this 
+			 component with a class of red, even if class="red" does
+			 not initially appear in the markup, and is instead 
+			 added at runtime. This is useful when the class 
+			 of the element is dynamically applied, for instance 
+			 when updating the element's classList property directly. */
+	}
 </style>
 ```
 
@@ -290,4 +301,24 @@ The `-global-` part will be removed when compiled, and the keyframe then be refe
 <style>
 	@keyframes -global-my-animation-name {...}
 </style>
+```
+
+---
+
+There should only be 1 top-level `<style>` tag per component.
+
+However, it is possible to have `<style>` tag nested inside other elements or logic blocks.
+
+In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
+
+```html
+<div>
+	<style>
+		/* this style tag will be inserted as-is */
+		div {
+			/* this will apply to all `<div>` elements in the DOM */
+			color: red;
+		}
+	</style>
+</div>
 ```

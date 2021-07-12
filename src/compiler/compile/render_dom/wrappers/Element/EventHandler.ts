@@ -20,7 +20,7 @@ export default class EventHandlerWrapper {
 
 			this.parent.renderer.component.partly_hoisted.push(b`
 				function ${node.handler_name.name}(event) {
-					@bubble($$self, event);
+					@bubble.call(this, $$self, event);
 				}
 			`);
 		}
@@ -42,6 +42,7 @@ export default class EventHandlerWrapper {
 		if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
 		if (this.node.modifiers.has('stopPropagation')) snippet = x`@stop_propagation(${snippet})`;
 		if (this.node.modifiers.has('self')) snippet = x`@self(${snippet})`;
+		if (this.node.modifiers.has('trusted')) snippet = x`@trusted(${snippet})`;
 
 		const args = [];
 

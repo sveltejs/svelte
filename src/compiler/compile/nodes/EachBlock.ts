@@ -8,6 +8,7 @@ import { Context, unpack_destructuring } from './shared/Context';
 import { Node } from 'estree';
 import Component from '../Component';
 import { TemplateNode } from '../../interfaces';
+import compiler_errors from '../compiler_errors';
 
 export default class EachBlock extends AbstractBlock {
 	type: 'EachBlock';
@@ -38,7 +39,7 @@ export default class EachBlock extends AbstractBlock {
 		this.scope = scope.child();
 
 		this.contexts = [];
-		unpack_destructuring(this.contexts, info.context, node => node);
+		unpack_destructuring(this.contexts, info.context);
 
 		this.contexts.forEach(context => {
 			this.scope.add(context.key.name, this.expression.dependencies, this);
@@ -61,10 +62,7 @@ export default class EachBlock extends AbstractBlock {
 		if (this.has_animation) {
 			if (this.children.length !== 1) {
 				const child = this.children.find(child => !!(child as Element).animation);
-				component.error((child as Element).animation, {
-					code: 'invalid-animation',
-					message: 'An element that uses the animate directive must be the sole child of a keyed each block'
-				});
+				component.error((child as Element).animation, compiler_errors.invalid_animation_sole);
 			}
 		}
 

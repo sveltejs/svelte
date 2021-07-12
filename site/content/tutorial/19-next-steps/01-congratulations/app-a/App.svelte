@@ -33,6 +33,10 @@
 	});
 </script>
 
+{#each confetti as c}
+	<span style="left: {c.x}%; top: {c.y}%; transform: scale({c.r})">{c.character}</span>
+{/each}
+
 <style>
 	:global(body) {
 		overflow: hidden;
@@ -43,7 +47,3 @@
 		font-size: 5vw;
 	}
 </style>
-
-{#each confetti as c}
-	<span style="left: {c.x}%; top: {c.y}%; transform: scale({c.r})">{c.character}</span>
-{/each}

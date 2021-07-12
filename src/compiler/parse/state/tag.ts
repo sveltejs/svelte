@@ -18,7 +18,7 @@ const meta_tags = new Map([
 	['svelte:body', 'Body']
 ]);
 
-const valid_meta_tags = Array.from(meta_tags.keys()).concat('svelte:self', 'svelte:component');
+const valid_meta_tags = Array.from(meta_tags.keys()).concat('svelte:self', 'svelte:component', 'svelte:fragment');
 
 const specials = new Map([
 	[
@@ -39,6 +39,7 @@ const specials = new Map([
 
 const SELF = /^svelte:self(?=[\s/>])/;
 const COMPONENT = /^svelte:component(?=[\s/>])/;
+const SLOT = /^svelte:fragment(?=[\s/>])/;
 
 function parent_is_head(stack) {
 	let i = stack.length;
@@ -107,8 +108,9 @@ export default function tag(parser: Parser) {
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
 		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
-			: name === 'title' && parent_is_head(parser.stack) ? 'Title'
-				: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+			: name === 'svelte:fragment' ? 'SlotTemplate'
+				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
+					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
 	const element: TemplateNode = {
 		start,
@@ -219,9 +221,9 @@ export default function tag(parser: Parser) {
 		element.children = read_sequence(
 			parser,
 			() =>
-				parser.template.slice(parser.index, parser.index + 11) === '</textarea>'
+				/^<\/textarea(\s[^>]*)?>/i.test(parser.template.slice(parser.index))
 		);
-		parser.read(/<\/textarea>/);
+		parser.read(/^<\/textarea(\s[^>]*)?>/i);
 		element.end = parser.index;
 	} else if (name === 'script' || name === 'style') {
 		// special case
@@ -264,6 +266,8 @@ function read_tag_name(parser: Parser) {
 	}
 
 	if (parser.read(COMPONENT)) return 'svelte:component';
+
+	if (parser.read(SLOT)) return 'svelte:fragment';
 
 	const name = parser.read_until(/(\s|\/|>)/);
 
@@ -326,6 +330,13 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
+			if (name === null) {
+				parser.error({
+					code: 'empty-attribute-shorthand',
+					message: 'Attribute shorthand cannot be empty'
+				}, start);
+			}
+
 			check_unique(name);
 
 			return {
@@ -374,6 +385,13 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
+		if (directive_name === '') {
+			parser.error({
+				code: 'empty-directive-name',
+				message: `${type} name cannot be empty`
+			}, start + colon_index + 1);
+		}
+
 		if (type === 'Binding' && directive_name !== 'this') {
 			check_unique(directive_name);
 		} else if (type !== 'EventHandler' && type !== 'Action') {
@@ -385,13 +403,6 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 				code: 'invalid-ref-directive',
 				message: `The ref directive is no longer supported — use \`bind:this={${directive_name}}\` instead`
 			}, start);
-		}
-
-		if (type === 'Class' && directive_name === '') {
-			parser.error({
-				code: 'invalid-class-directive',
-				message: 'Class binding name cannot be empty'
-			}, start + colon_index + 1);
 		}
 
 		if (value[0]) {

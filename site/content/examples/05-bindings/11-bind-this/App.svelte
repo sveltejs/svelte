@@ -38,6 +38,12 @@
 	});
 </script>
 
+<canvas
+	bind:this={canvas}
+	width={32}
+	height={32}
+></canvas>
+
 <style>
 	canvas {
 		width: 100%;
@@ -47,9 +53,3 @@
 		mask: url(svelte-logo-mask.svg) 50% 50% no-repeat;
 	}
 </style>
-
-<canvas
-	bind:this={canvas}
-	width={32}
-	height={32}
-></canvas>

@@ -2,10 +2,11 @@ import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
 import Element from '../nodes/Element';
-import { Ast } from '../../interfaces';
+import { Ast, CssHashGetter } from '../../interfaces';
 import Component from '../Component';
 import { CssNode } from './interfaces';
 import hash from '../utils/hash';
+import compiler_warnings from '../compiler_warnings';
 
 function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
@@ -47,7 +48,7 @@ class Rule {
 	constructor(node: CssNode, stylesheet, parent?: Atrule) {
 		this.node = node;
 		this.parent = parent;
-		this.selectors = node.selector.children.map((node: CssNode) => new Selector(node, stylesheet));
+		this.selectors = node.prelude.children.map((node: CssNode) => new Selector(node, stylesheet));
 		this.declarations = node.block.children.map((node: CssNode) => new Declaration(node));
 	}
 
@@ -182,11 +183,11 @@ class Atrule {
 
 	minify(code: MagicString, dev: boolean) {
 		if (this.node.name === 'media') {
-			const expression_char = code.original[this.node.expression.start];
+			const expression_char = code.original[this.node.prelude.start];
 			let c = this.node.start + (expression_char === '(' ? 6 : 7);
-			if (this.node.expression.start > c) code.remove(c, this.node.expression.start);
+			if (this.node.prelude.start > c) code.remove(c, this.node.prelude.start);
 
-			this.node.expression.children.forEach((query: CssNode) => {
+			this.node.prelude.children.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
 			});
@@ -194,17 +195,17 @@ class Atrule {
 			code.remove(c, this.node.block.start);
 		} else if (this.node.name === 'supports') {
 			let c = this.node.start + 9;
-			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
-			this.node.expression.children.forEach((query: CssNode) => {
+			if (this.node.prelude.start - c > 1) code.overwrite(c, this.node.prelude.start, ' ');
+			this.node.prelude.children.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
 			});
 			code.remove(c, this.node.block.start);
 		} else {
 			let c = this.node.start + this.node.name.length + 1;
-			if (this.node.expression) {
-				if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
-				c = this.node.expression.end;
+			if (this.node.prelude) {
+				if (this.node.prelude.start - c > 1) code.overwrite(c, this.node.prelude.start, ' ');
+				c = this.node.prelude.end;
 			}
 			if (this.node.block && this.node.block.start - c > 0) {
 				code.remove(c, this.node.block.start);
@@ -235,7 +236,7 @@ class Atrule {
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>, max_amount_class_specificity_increased: number) {
 		if (is_keyframes_node(this.node)) {
-			this.node.expression.children.forEach(({ type, name, start, end }: CssNode) => {
+			this.node.prelude.children.forEach(({ type, name, start, end }: CssNode) => {
 				if (type === 'Identifier') {
 					if (name.startsWith('-global-')) {
 						code.remove(start, start + 8);
@@ -275,6 +276,10 @@ class Atrule {
 	}
 }
 
+const get_default_css_hash: CssHashGetter = ({ css, hash }) => {
+	return `svelte-${hash(css)}`;
+};
+
 export default class Stylesheet {
 	source: string;
 	ast: Ast;
@@ -289,14 +294,33 @@ export default class Stylesheet {
 
 	nodes_with_css_class: Set<CssNode> = new Set();
 
-	constructor(source: string, ast: Ast, filename: string, dev: boolean) {
+	constructor({
+		source,
+		ast,
+		component_name,
+		filename,
+		dev,
+		get_css_hash = get_default_css_hash
+	}: {
+		source: string;
+		ast: Ast;
+		filename: string | undefined;
+		component_name: string | undefined;
+		dev: boolean;
+		get_css_hash: CssHashGetter;
+	}) {
 		this.source = source;
 		this.ast = ast;
 		this.filename = filename;
 		this.dev = dev;
 
 		if (ast.css && ast.css.children.length) {
-			this.id = `svelte-${hash(ast.css.content.styles)}`;
+			this.id = get_css_hash({
+				filename,
+				name: component_name,
+				css: ast.css.content.styles,
+				hash
+			});
 
 			this.has_styles = true;
 
@@ -317,7 +341,7 @@ export default class Stylesheet {
 						}
 
 						if (is_keyframes_node(node)) {
-							node.expression.children.forEach((expression: CssNode) => {
+							node.prelude.children.forEach((expression: CssNode) => {
 								if (expression.type === 'Identifier' && !expression.name.startsWith('-global-')) {
 									this.keyframes.set(expression.name, `${this.id}-${expression.name}`);
 								}
@@ -425,10 +449,7 @@ export default class Stylesheet {
 	warn_on_unused_selectors(component: Component) {
 		this.children.forEach(child => {
 			child.warn_on_unused_selector((selector: Selector) => {
-				component.warn(selector.node, {
-					code: 'css-unused-selector',
-					message: `Unused CSS selector "${this.source.slice(selector.node.start, selector.node.end)}"`
-				});
+				component.warn(selector.node, compiler_warnings.css_unused_selector(this.source.slice(selector.node.start, selector.node.end)));
 			});
 		});
 	}

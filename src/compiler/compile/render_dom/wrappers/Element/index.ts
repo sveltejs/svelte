@@ -19,13 +19,12 @@ import { add_event_handler } from '../shared/add_event_handlers';
 import { add_action } from '../shared/add_actions';
 import bind_this from '../shared/bind_this';
 import { is_head } from '../shared/is_head';
-import { Identifier } from 'estree';
+import { Identifier, ExpressionStatement, CallExpression } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
 import MustacheTagWrapper from '../MustacheTag';
 import RawMustacheTagWrapper from '../RawMustacheTag';
-import create_slot_block from './create_slot_block';
 import is_dynamic from '../shared/is_dynamic';
 
 interface BindingGroup {
@@ -142,7 +141,6 @@ export default class ElementWrapper extends Wrapper {
 	event_handlers: EventHandler[];
 	class_dependencies: string[];
 
-	slot_block: Block;
 	select_binding_dependencies?: Set<string>;
 
 	var: any;
@@ -175,9 +173,6 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		this.attributes = this.node.attributes.map(attribute => {
-			if (attribute.name === 'slot') {
-				block = create_slot_block(attribute, this, block);
-			}
 			if (attribute.name === 'style') {
 				return new StyleAttributeWrapper(this, block, attribute);
 			}
@@ -232,25 +227,12 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		this.fragment = new FragmentWrapper(renderer, block, node.children, this, strip_whitespace, next_sibling);
-
-		if (this.slot_block) {
-			block.parent.add_dependencies(block.dependencies);
-
-			// appalling hack
-			const index = block.parent.wrappers.indexOf(this);
-			block.parent.wrappers.splice(index, 1);
-			block.wrappers.push(this);
-		}
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		const { renderer } = this;
 
 		if (this.node.name === 'noscript') return;
-
-		if (this.slot_block) {
-			block = this.slot_block;
-		}
 
 		const node = this.var;
 		const nodes = parent_nodes && block.get_unique_name(`${this.var.name}_nodes`); // if we're in unclaimable territory, i.e. <head>, parent_nodes is null
@@ -281,15 +263,23 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		if (parent_node) {
-			block.chunks.mount.push(
-				b`@append(${parent_node}, ${node});`
-			);
+			const append = b`@append(${parent_node}, ${node});`;
+			((append[0] as ExpressionStatement).expression as CallExpression).callee.loc = {
+				start: this.renderer.locate(this.node.start),
+				end: this.renderer.locate(this.node.end)
+			};
+			block.chunks.mount.push(append);
 
 			if (is_head(parent_node)) {
 				block.chunks.destroy.push(b`@detach(${node});`);
 			}
 		} else {
-			block.chunks.mount.push(b`@insert(#target, ${node}, #anchor);`);
+			const insert = b`@insert(#target, ${node}, #anchor);`;
+			((insert[0] as ExpressionStatement).expression as CallExpression).callee.loc = {
+				start: this.renderer.locate(this.node.start),
+				end: this.renderer.locate(this.node.end)
+			};
+			block.chunks.mount.push(insert);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
@@ -390,9 +380,9 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	get_claim_statement(nodes: Identifier) {
-		const attributes = this.node.attributes
-			.filter((attr) => attr.type === 'Attribute')
-			.map((attr) => p`${attr.name}: true`);
+		const attributes = this.attributes
+			.filter((attr) => !(attr instanceof SpreadAttributeWrapper) && !attr.property_name)
+			.map((attr) => p`${(attr as StyleAttributeWrapper | AttributeWrapper).name}: true`);
 
 		const name = this.node.namespace
 			? this.node.name

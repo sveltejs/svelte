@@ -1,0 +1,9 @@
+[
+	{
+		"code": "invalid-slotted-content",
+		"message": "<svelte:fragment> must be a child of a component",
+		"start": { "line": 5, "column": 0, "character": 59 },
+		"end": { "line": 7, "column": 18, "character": 112 },
+		"pos": 59
+	}
+]

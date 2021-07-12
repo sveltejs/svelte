@@ -1,19 +1,19 @@
 import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
 
 /** Callback to inform of a value updates. */
-type Subscriber<T> = (value: T) => void;
+export type Subscriber<T> = (value: T) => void;
 
 /** Unsubscribes from value updates. */
-type Unsubscriber = () => void;
+export type Unsubscriber = () => void;
 
 /** Callback to update a value. */
-type Updater<T> = (value: T) => T;
+export type Updater<T> = (value: T) => T;
 
 /** Cleanup logic callback. */
 type Invalidator<T> = (value?: T) => void;
 
 /** Start and stop notification callbacks. */
-type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
+export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
@@ -22,7 +22,7 @@ export interface Readable<T> {
 	 * @param run subscription callback
 	 * @param invalidate cleanup callback
 	 */
-	subscribe(run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
 }
 
 /** Writable interface for both updating and subscribing. */
@@ -31,13 +31,13 @@ export interface Writable<T> extends Readable<T> {
 	 * Set value and inform subscribers.
 	 * @param value to set
 	 */
-	set(value: T): void;
+	set(this: void, value: T): void;
 
 	/**
 	 * Update value using callback and inform subscribers.
 	 * @param updater callback
 	 */
-	update(updater: Updater<T>): void;
+	update(this: void, updater: Updater<T>): void;
 }
 
 /** Pair of subscriber and invalidator. */
@@ -50,7 +50,7 @@ const subscriber_queue = [];
  * @param value initial value
  * @param {StartStopNotifier}start start and stop notifications for subscriptions
  */
-export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
+export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T> {
 	return {
 		subscribe: writable(value, start).subscribe
 	};
@@ -61,7 +61,7 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
  * @param {*=}value initial value
  * @param {StartStopNotifier=}start start and stop notifications for subscriptions
  */
-export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
+export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
 	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
 
@@ -113,7 +113,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 }
 
 /** One or more `Readable`s. */
-type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>];
+type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
 
 /** One or more values from `Readable` stores. */
 type StoresValues<T> = T extends Readable<infer U> ? U :
@@ -130,6 +130,20 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
 export function derived<S extends Stores, T>(
 	stores: S,
 	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
+	initial_value?: T
+): Readable<T>;
+
+/**
+ * Derived value store by synchronizing one or more readable stores and
+ * applying an aggregation function over its input values.
+ *
+ * @param stores - input stores
+ * @param fn - function callback that aggregates the values
+ * @param initial_value - initial value
+ */
+export function derived<S extends Stores, T>(
+	stores: S,
+	fn: (values: StoresValues<S>) => T,
 	initial_value?: T
 ): Readable<T>;
 

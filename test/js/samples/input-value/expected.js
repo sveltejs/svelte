@@ -64,7 +64,7 @@ function create_fragment(ctx) {
 }
 
 function instance($$self, $$props, $$invalidate) {
-	let name = "change me";
+	let name = 'change me';
 
 	function onInput(event) {
 		$$invalidate(0, name = event.target.value);

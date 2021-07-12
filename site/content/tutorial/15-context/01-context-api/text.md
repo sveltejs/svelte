@@ -19,7 +19,7 @@ setContext(key, {
 });
 ```
 
-The context object can be anything you like. Like [lifecycle functions](tutorial/onmount), `setContext` and `getContext` must be called during component initialisation; since `map` isn't created until the component has mounted, our context object contains a `getMap` function rather than `map` itself.
+The context object can be anything you like. Like [lifecycle functions](tutorial/onmount), `setContext` and `getContext` must be called during component initialisation. Calling it afterwards - for example inside `onMount` - will throw an error. In this example, since `map` isn't created until the component has mounted, our context object contains a `getMap` function rather than `map` itself.
 
 On the other side of the equation, in `MapMarker.svelte`, we can now get a reference to the Mapbox instance:
 

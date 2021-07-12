@@ -11,6 +11,12 @@
 	$: url = item.type === "ask" ? `https://news.ycombinator.com/${item.url}` : item.url;
 </script>
 
+<article>
+	<span>{i + offset + 1}</span>
+	<h2><a target="_blank" href={url}>{item.title}</a></h2>
+	<p class="meta"><a href="#/item/{item.id}">{comment_text()}</a> by {item.user} {item.time_ago}</p>
+</article>
+
 <style>
 	article {
 		position: relative;
@@ -32,9 +38,3 @@
 		color: #333;
 	}
 </style>
-
-<article>
-	<span>{i + offset + 1}</span>
-	<h2><a target="_blank" href={url}>{item.title}</a></h2>
-	<p class="meta"><a href="#/item/{item.id}">{comment_text()}</a> by {item.user} {item.time_ago}</p>
-</article>

@@ -99,7 +99,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { things } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("things" in $$props) $$invalidate(0, things = $$props.things);
+		if ('things' in $$props) $$invalidate(0, things = $$props.things);
 	};
 
 	return [things];
