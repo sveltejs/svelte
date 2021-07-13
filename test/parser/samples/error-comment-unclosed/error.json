@@ -1,5 +1,5 @@
 {
-	"code": "unexpected-eof",
+	"code": "unclosed-comment",
 	"message": "comment was left open, expected -->",
 	"start": {
 		"line": 1,
