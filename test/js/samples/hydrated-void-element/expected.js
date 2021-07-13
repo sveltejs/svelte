@@ -8,7 +8,7 @@ import {
 	detach,
 	element,
 	init,
-	insert,
+	insert_hydration,
 	noop,
 	safe_not_equal,
 	space
@@ -39,9 +39,9 @@ function create_fragment(ctx) {
 			attr(img, "alt", "donuts");
 		},
 		m(target, anchor) {
-			insert(target, img, anchor);
-			insert(target, t, anchor);
-			insert(target, div, anchor);
+			insert_hydration(target, img, anchor);
+			insert_hydration(target, t, anchor);
+			insert_hydration(target, div, anchor);
 		},
 		p: noop,
 		i: noop,
