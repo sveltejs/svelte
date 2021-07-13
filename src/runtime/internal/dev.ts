@@ -203,7 +203,7 @@ export interface SvelteComponentTyped<
  * class ASubclassOfSvelteComponent extends SvelteComponent<{foo: string}> {}
  * const component: typeof SvelteComponent = ASubclassOfSvelteComponent;
  * ```
- * will throw a type error, so we need to seperate the more strictly typed class.
+ * will throw a type error, so we need to separate the more strictly typed class.
  */
 export class SvelteComponentTyped<
 	Props extends Record<string, any> = any,

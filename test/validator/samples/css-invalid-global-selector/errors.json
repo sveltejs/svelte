@@ -3,15 +3,15 @@
 		"code": "css-invalid-global-selector",
 		"message": ":global(...) must contain a single selector",
 		"start": {
-			"line": 5,
+			"line": 11,
 			"column": 5,
-			"character": 58
+			"character": 143
 		},
 		"end": {
-			"line": 5,
+			"line": 11,
 			"column": 24,
-			"character": 77
+			"character": 162
 		},
-		"pos": 58
+		"pos": 143
 	}
 ]

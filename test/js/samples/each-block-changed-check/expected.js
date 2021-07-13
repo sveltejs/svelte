@@ -154,10 +154,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { foo } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("comments" in $$props) $$invalidate(0, comments = $$props.comments);
-		if ("elapsed" in $$props) $$invalidate(1, elapsed = $$props.elapsed);
-		if ("time" in $$props) $$invalidate(2, time = $$props.time);
-		if ("foo" in $$props) $$invalidate(3, foo = $$props.foo);
+		if ('comments' in $$props) $$invalidate(0, comments = $$props.comments);
+		if ('elapsed' in $$props) $$invalidate(1, elapsed = $$props.elapsed);
+		if ('time' in $$props) $$invalidate(2, time = $$props.time);
+		if ('foo' in $$props) $$invalidate(3, foo = $$props.foo);
 	};
 
 	return [comments, elapsed, time, foo];

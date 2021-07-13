@@ -65,7 +65,7 @@ export default class Expression {
 		walk(info, {
 			enter(node: any, parent: any, key: string) {
 				// don't manipulate shorthand props twice
-				if (key === 'value' && parent.shorthand) return;
+				if (key === 'key' && parent.shorthand) return;
 				// don't manipulate `import.meta`, `new.target`
 				if (node.type === 'MetaProperty') return this.skip();
 

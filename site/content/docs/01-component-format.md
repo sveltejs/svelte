@@ -24,7 +24,7 @@ All three sections — script, styles and markup — are optional.
 
 A `<script>` block contains JavaScript that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup. There are four additional rules:
 
-##### 1. `export` creates a component prop
+#### 1. `export` creates a component prop
 
 ---
 
@@ -87,7 +87,7 @@ You can use reserved words as prop names.
 </script>
 ```
 
-##### 2. Assignments are 'reactive'
+#### 2. Assignments are 'reactive'
 
 ---
 
@@ -109,7 +109,7 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 </script>
 ```
 
-##### 3. `$:` marks a statement as reactive
+#### 3. `$:` marks a statement as reactive
 
 ---
 
@@ -171,13 +171,13 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 </script>
 ```
 
-##### 4. Prefix stores with `$` to access their values
+#### 4. Prefix stores with `$` to access their values
 
 ---
 
 A *store* is an object that allows reactive access to a value via a simple *store contract*. The [`svelte/store` module](docs#svelte_store) contains minimal store implementations which fulfil this contract.
 
-Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, and set up a store subscription that will be unsubscribed when appropriate.
+Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, subscribe to the store at component initialization and unsubscribe when appropriate.
 
 Assignments to `$`-prefixed variables require that the variable be a writable store, and will result in a call to the store's `.set` method.
 
