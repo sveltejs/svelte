@@ -5,6 +5,12 @@ export default {
 		<input>
 		<button>click me</button>
 	`,
+	ssrHtml: `
+		<div></div>
+		<div>simple</div>
+		<input value="">
+		<button>click me</button>
+	`,
 
 	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');

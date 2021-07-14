@@ -11,18 +11,6 @@ export default {
 		<p>selected: one</p>
 	`,
 
-	ssrHtml: `
-		<p>selected: one</p>
-
-		<select value=one>
-			<option value='one'>one</option>
-			<option value='two'>two</option>
-			<option value='three'>three</option>
-		</select>
-
-		<p>selected: one</p>
-	`,
-
 	props: {
 		selected: 'one'
 	},

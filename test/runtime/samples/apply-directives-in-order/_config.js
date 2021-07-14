@@ -9,7 +9,7 @@ export default {
 	`,
 
 	ssrHtml: `
-		<input>
+		<input value="">
 		<p></p>
 	`,
 
