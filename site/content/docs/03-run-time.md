@@ -84,6 +84,8 @@ afterUpdate(callback: () => void)
 
 Schedules a callback to run immediately after the component has been updated.
 
+> The first time the callback runs will be after the initial `onMount`
+
 ```sv
 <script>
 	import { afterUpdate } from 'svelte';
