@@ -9,6 +9,7 @@ import Block from './Block';
 import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import { flatten } from '../../utils/flatten';
 
 export default function dom(
 	component: Component,
@@ -550,18 +551,5 @@ export default function dom(
 		body.push(declaration);
 	}
 
-	return { js: flatten(body, []), css };
-}
-
-function flatten(nodes: any[], target: any[]) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (Array.isArray(node)) {
-			flatten(node, target);
-		} else {
-			target.push(node);
-		}
-	}
-
-	return target;
+	return { js: flatten(body), css };
 }

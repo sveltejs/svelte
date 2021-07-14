@@ -36,6 +36,7 @@ import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types
 import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
+import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -171,12 +172,17 @@ export default class Component {
 		}
 
 		this.walk_module_js();
+
+		this.push_ignores(this.ast.instance ? extract_ignores_above_position(this.ast.instance.start, this.ast.html.children) : []);
 		this.walk_instance_js_pre_template();
+		this.pop_ignores();
 
 		this.fragment = new Fragment(this, ast.html);
 		this.name = this.get_unique_name(name);
 
+		this.push_ignores(this.ast.instance ? extract_ignores_above_position(this.ast.instance.start, this.ast.html.children) : []);
 		this.walk_instance_js_post_template();
+		this.pop_ignores();
 
 		this.elements.forEach(element => this.stylesheet.apply(element));
 		if (!compile_options.customElement) this.stylesheet.reify();
@@ -476,6 +482,14 @@ export default class Component {
 	}
 
 	extract_exports(node) {
+		const ignores = extract_svelte_ignore_from_comments(node);
+		if (ignores.length) this.push_ignores(ignores);
+		const result = this._extract_exports(node);
+		if (ignores.length) this.pop_ignores();
+		return result;
+	}
+
+	private _extract_exports(node) {
 		if (node.type === 'ExportDefaultDeclaration') {
 			this.error(node, compiler_errors.default_export);
 		}
@@ -1169,6 +1183,9 @@ export default class Component {
 		}> = [];
 
 		this.ast.instance.content.body.forEach(node => {
+			const ignores = extract_svelte_ignore_from_comments(node);
+			if (ignores.length) this.push_ignores(ignores);
+
 			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 
@@ -1246,6 +1263,8 @@ export default class Component {
 					declaration
 				});
 			}
+
+			if (ignores.length) this.pop_ignores();
 		});
 
 		const lookup = new Map();

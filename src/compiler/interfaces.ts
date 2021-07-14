@@ -24,6 +24,12 @@ export interface MustacheTag extends BaseNode {
 	expression: Node;
 }
 
+export interface Comment extends BaseNode {
+	type: 'Comment';
+	data: string;
+	ignores: string[];
+}
+
 export type DirectiveType = 'Action'
 | 'Animation'
 | 'Binding'
@@ -52,7 +58,8 @@ export type TemplateNode = Text
 | MustacheTag
 | BaseNode
 | Directive
-| Transition;
+| Transition
+| Comment;
 
 export interface Parser {
 	readonly template: string;
