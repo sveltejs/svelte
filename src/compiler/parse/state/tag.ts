@@ -6,6 +6,7 @@ import { is_void } from '../../utils/names';
 import { Parser } from '../index';
 import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
+import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore';
 import parser_errors from '../errors';
 
 // eslint-disable-next-line no-useless-escape
@@ -64,7 +65,8 @@ export default function tag(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'Comment',
-			data
+			data,
+			ignores: extract_svelte_ignore(data)
 		});
 
 		return;

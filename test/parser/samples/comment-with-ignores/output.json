@@ -1,15 +1,15 @@
 {
 	"html": {
 		"start": 0,
-		"end": 18,
+		"end": 30,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 18,
+				"end": 30,
 				"type": "Comment",
-				"data": " a comment ",
-				"ignores": []
+				"data": " svelte-ignore foo bar ",
+				"ignores": ["foo", "bar"]
 			}
 		]
 	}
