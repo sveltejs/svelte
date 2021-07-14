@@ -18,4 +18,4 @@ Returning to our [earlier ice cream example](tutorial/group-inputs), we can repl
 </select>
 ```
 
-**Note:** Press and hold `shift` button for selecting multiple options.
+> Press and hold `shift` key for selecting multiple options.
