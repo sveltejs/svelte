@@ -54,7 +54,7 @@ export function getContext<T>(key): T {
 	return get_current_component().$$.context.get(key);
 }
 
-export function getAllContexts(): Map<any, any> {
+export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
 	return get_current_component().$$.context;
 }
 
