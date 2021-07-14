@@ -1,6 +1,7 @@
 export {
 	setContext,
 	getContext,
+	getAllContexts,
 	hasContext,
 	tick,
 	createEventDispatcher,
