@@ -17,7 +17,7 @@
 <h2>Insecurity questions</h2>
 
 <form on:submit|preventDefault={handleSubmit}>
-	<select bind:value={selected} on:change="{() => answer = ''}">
+	<select bind:value={selected} on:bind="{() => answer = ''}">
 		{#each questions as question}
 			<option value={question}>
 				{question.text}
@@ -36,4 +36,3 @@
 
 <style>
 	input { display: block; width: 500px; max-width: 100%; }
-</style>
