@@ -3,13 +3,12 @@ import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions, CssResult } from '../../interfaces';
 import { walk } from 'estree-walker';
-import { extract_names, Scope } from 'periscopic';
+import { extract_names, Node as PeriscopicNode, Scope } from 'periscopic';
 import { invalidate } from './invalidate';
 import Block from './Block';
 import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
-import { Node as PeriscopicNode } from 'periscopic';
 
 export default function dom(
 	component: Component,
