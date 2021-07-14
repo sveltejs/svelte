@@ -7,6 +7,7 @@
 * Add `varsReport` compiler option to include all variables reference in the component in the `variables` report ([#6192](https://github.com/sveltejs/svelte/pull/6192))
 * Throw compiler error when passing empty directive names ([#6299](https://github.com/sveltejs/svelte/issues/6299))
 * Throw proper error for `export default function() {}` and `export default class {}` rather than crashing the compiler ([#3275](https://github.com/sveltejs/svelte/issues/3275))
+* Fix usage of falsy `input` values ([#6458](https://github.com/sveltejs/svelte/pull/6458))
 * Fix ordering of elements in keyed `{#each}` ([#6445](https://github.com/sveltejs/svelte/pull/6445))
 * Fix `preserveComments` in SSR mode ([#4730](https://github.com/sveltejs/svelte/issues/4730))
 * Fix compiler error when using `:where()` inside `:global()` ([#6434](https://github.com/sveltejs/svelte/issues/6434))
