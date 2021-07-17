@@ -37,6 +37,7 @@ export default class Binding extends Node {
 
 		if (info.expression.type !== 'Identifier' && info.expression.type !== 'MemberExpression') {
 			component.error(info, compiler_errors.invalid_directive_value);
+			return;
 		}
 
 		this.name = info.name;
@@ -50,9 +51,11 @@ export default class Binding extends Node {
 		// make sure we track this as a mutable ref
 		if (scope.is_let(name)) {
 			component.error(this, compiler_errors.invalid_binding_let);
+			return;
 		} else if (scope.names.has(name)) {
 			if (scope.is_await(name)) {
 				component.error(this, compiler_errors.invalid_binding_await);
+				return;
 			}
 
 			scope.dependencies_for_name.get(name).forEach(name => {
@@ -66,12 +69,14 @@ export default class Binding extends Node {
 
 			if (!variable || variable.global) {
 				component.error(this.expression.node as any, compiler_errors.binding_undeclared(name));
+				return;
 			}
 
 			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
 
 			if (info.expression.type === 'Identifier' && !variable.writable) {
 				component.error(this.expression.node as any, compiler_errors.invalid_binding_writibale);
+				return;
 			}
 		}
 

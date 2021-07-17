@@ -22,12 +22,14 @@ export default class Animation extends Node {
 
 		if (parent.animation) {
 			component.error(this, compiler_errors.duplicate_animation);
+			return;
 		}
 
 		const block = parent.parent;
 		if (!block || block.type !== 'EachBlock' || !block.key) {
 			// TODO can we relax the 'immediate child' rule?
 			component.error(this, compiler_errors.invalid_animation_immediate);
+			return;
 		}
 
 		(block as EachBlock).has_animation = true;

@@ -18,17 +18,17 @@ export default class Slot extends Element {
 
 		info.attributes.forEach(attr => {
 			if (attr.type !== 'Attribute' && attr.type !== 'Spread') {
-				component.error(attr, compiler_errors.invalid_slot_directive);
+				return component.error(attr, compiler_errors.invalid_slot_directive);
 			}
 
 			if (attr.name === 'name') {
 				if (attr.value.length !== 1 || attr.value[0].type !== 'Text') {
-					component.error(attr, compiler_errors.dynamic_slot_name);
+					return component.error(attr, compiler_errors.dynamic_slot_name);
 				}
 
 				this.slot_name = attr.value[0].data;
 				if (this.slot_name === 'default') {
-					component.error(attr, compiler_errors.invalid_slot_name);
+					return component.error(attr, compiler_errors.invalid_slot_name);
 				}
 			}
 

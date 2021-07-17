@@ -142,6 +142,7 @@ export default class Element extends Node {
 					const value_attribute = info.attributes.find(node => node.name === 'value');
 					if (value_attribute) {
 						component.error(value_attribute, compiler_errors.textarea_duplicate_value);
+						return;
 					}
 
 					// this is an egregious hack, but it's the easiest way to get <textarea>
@@ -272,22 +273,23 @@ export default class Element extends Node {
 			// Errors
 
 			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
-				component.error(attribute, compiler_errors.illegal_attribute(name));
+				return component.error(attribute, compiler_errors.illegal_attribute(name));
 			}
 
 			if (name === 'slot') {
 				if (!attribute.is_static) {
-					component.error(attribute, compiler_errors.invalid_slot_attribute);
+					return component.error(attribute, compiler_errors.invalid_slot_attribute);
 				}
 
 				if (component.slot_outlets.has(name)) {
-					component.error(attribute, compiler_errors.duplicate_slot_attribute(name));
+					return component.error(attribute, compiler_errors.duplicate_slot_attribute(name));
 
-					component.slot_outlets.add(name);
+					// this code was unreachable. Still needed?
+					// component.slot_outlets.add(name);
 				}
 
 				if (!(parent.type === 'SlotTemplate' || within_custom_element(parent))) {
-					component.error(attribute, compiler_errors.invalid_slotted_content);
+					return component.error(attribute, compiler_errors.invalid_slotted_content);
 				}
 			}
 
@@ -519,7 +521,7 @@ export default class Element extends Node {
 	validate_bindings_foreign() {
 		this.bindings.forEach(binding => {
 			if (binding.name !== 'this') {
-				this.component.error(binding, compiler_errors.invalid_binding_foreign(binding.name));
+				return this.component.error(binding, compiler_errors.invalid_binding_foreign(binding.name));
 			}
 		});
 	}
@@ -535,13 +537,13 @@ export default class Element extends Node {
 			if (!attribute) return null;
 
 			if (!attribute.is_static) {
-				component.error(attribute, compiler_errors.invalid_type);
+				return component.error(attribute, compiler_errors.invalid_type);
 			}
 
 			const value = attribute.get_static_value();
 
 			if (value === true) {
-				component.error(attribute, compiler_errors.missing_type);
+				return component.error(attribute, compiler_errors.missing_type);
 			}
 
 			return value;
@@ -556,7 +558,7 @@ export default class Element extends Node {
 					this.name !== 'textarea' &&
 					this.name !== 'select'
 				) {
-					component.error(binding, compiler_errors.invalid_binding_elements(this.name, 'value'));
+					return component.error(binding, compiler_errors.invalid_binding_elements(this.name, 'value'));
 				}
 
 				if (this.name === 'select') {
@@ -565,45 +567,45 @@ export default class Element extends Node {
 					);
 
 					if (attribute && !attribute.is_static) {
-						component.error(attribute, compiler_errors.dynamic_multiple_attribute);
+						return component.error(attribute, compiler_errors.dynamic_multiple_attribute);
 					}
 				} else {
 					check_type_attribute();
 				}
 			} else if (name === 'checked' || name === 'indeterminate') {
 				if (this.name !== 'input') {
-					component.error(binding, compiler_errors.invalid_binding_elements(this.name, name));
+					return component.error(binding, compiler_errors.invalid_binding_elements(this.name, name));
 				}
 
 				const type = check_type_attribute();
 
 				if (type !== 'checkbox') {
-					component.error(binding, compiler_errors.invalid_binding_no_checkbox(name, type === 'radio'));
+					return component.error(binding, compiler_errors.invalid_binding_no_checkbox(name, type === 'radio'));
 				}
 			} else if (name === 'group') {
 				if (this.name !== 'input') {
-					component.error(binding, compiler_errors.invalid_binding_elements(this.name, 'group'));
+					return component.error(binding, compiler_errors.invalid_binding_elements(this.name, 'group'));
 				}
 
 				const type = check_type_attribute();
 
 				if (type !== 'checkbox' && type !== 'radio') {
-					component.error(binding, compiler_errors.invalid_binding_element_with('<input type="checkbox"> or <input type="radio">', 'group'));
+					return component.error(binding, compiler_errors.invalid_binding_element_with('<input type="checkbox"> or <input type="radio">', 'group'));
 				}
 			} else if (name === 'files') {
 				if (this.name !== 'input') {
-					component.error(binding, compiler_errors.invalid_binding_elements(this.name, 'files'));
+					return component.error(binding, compiler_errors.invalid_binding_elements(this.name, 'files'));
 				}
 
 				const type = check_type_attribute();
 
 				if (type !== 'file') {
-					component.error(binding, compiler_errors.invalid_binding_element_with('<input type="file">', 'files'));
+					return component.error(binding, compiler_errors.invalid_binding_element_with('<input type="file">', 'files'));
 				}
 
 			} else if (name === 'open') {
 				if (this.name !== 'details') {
-					component.error(binding, compiler_errors.invalid_binding_element_with('<details>', name));
+					return component.error(binding, compiler_errors.invalid_binding_element_with('<details>', name));
 				}
 			} else if (
 				name === 'currentTime' ||
@@ -619,22 +621,22 @@ export default class Element extends Node {
 				name === 'ended'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
-					component.error(binding, compiler_errors.invalid_binding_element_with('audio> or <video>', name));
+					return component.error(binding, compiler_errors.invalid_binding_element_with('audio> or <video>', name));
 				}
 			} else if (
 				name === 'videoHeight' ||
 				name === 'videoWidth'
 			) {
 				if (this.name !== 'video') {
-					component.error(binding, compiler_errors.invalid_binding_element_with('<video>', name));
+					return component.error(binding, compiler_errors.invalid_binding_element_with('<video>', name));
 				}
 			} else if (dimensions.test(name)) {
 				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
-					component.error(binding, compiler_errors.invalid_binding_on(binding.name, `<svg>. Use '${name.replace('offset', 'client')}' instead`));
+					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `<svg>. Use '${name.replace('offset', 'client')}' instead`));
 				} else if (svg.test(this.name)) {
-					component.error(binding, compiler_errors.invalid_binding_on(binding.name, 'SVG elements'));
+					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, 'SVG elements'));
 				} else if (is_void(this.name)) {
-					component.error(binding, compiler_errors.invalid_binding_on(binding.name, `void elements like <${this.name}>. Use a wrapper element instead`));
+					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `void elements like <${this.name}>. Use a wrapper element instead`));
 				}
 			} else if (
 				name === 'textContent' ||
@@ -645,12 +647,12 @@ export default class Element extends Node {
 				);
 
 				if (!contenteditable) {
-					component.error(binding, compiler_errors.missing_contenteditable_attribute);
+					return component.error(binding, compiler_errors.missing_contenteditable_attribute);
 				} else if (contenteditable && !contenteditable.is_static) {
-					component.error(contenteditable, compiler_errors.dynamic_contenteditable_attribute);
+					return component.error(contenteditable, compiler_errors.dynamic_contenteditable_attribute);
 				}
 			} else if (name !== 'this') {
-				component.error(binding, compiler_errors.invalid_binding(binding.name));
+				return component.error(binding, compiler_errors.invalid_binding(binding.name));
 			}
 		});
 	}
@@ -672,16 +674,16 @@ export default class Element extends Node {
 
 		this.handlers.forEach(handler => {
 			if (handler.modifiers.has('passive') && handler.modifiers.has('preventDefault')) {
-				component.error(handler, compiler_errors.invalid_event_modifier_combination('passive', 'preventDefault'));
+				return component.error(handler, compiler_errors.invalid_event_modifier_combination('passive', 'preventDefault'));
 			}
 
 			if (handler.modifiers.has('passive') && handler.modifiers.has('nonpassive')) {
-				component.error(handler, compiler_errors.invalid_event_modifier_combination('passive', 'nonpassive'));
+				return component.error(handler, compiler_errors.invalid_event_modifier_combination('passive', 'nonpassive'));
 			}
 
 			handler.modifiers.forEach(modifier => {
 				if (!valid_modifiers.has(modifier)) {
-					component.error(handler, compiler_errors.invalid_event_modifier(list(Array.from(valid_modifiers))));
+					return component.error(handler, compiler_errors.invalid_event_modifier(list(Array.from(valid_modifiers))));
 				}
 
 				if (modifier === 'passive') {
@@ -697,7 +699,7 @@ export default class Element extends Node {
 				if (component.compile_options.legacy && (modifier === 'once' || modifier === 'passive')) {
 					// TODO this could be supported, but it would need a few changes to
 					// how event listeners work
-					component.error(handler, compiler_errors.invalid_event_modifier_legacy(modifier));
+					return component.error(handler, compiler_errors.invalid_event_modifier_legacy(modifier));
 				}
 			});
 

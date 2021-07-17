@@ -123,6 +123,7 @@ export interface CompileOptions {
 	name?: string;
 	filename?: string;
 	generate?: 'dom' | 'ssr' | false;
+	errorMode?: 'throw' | 'warn';
 	varsReport?: 'full' | 'strict' | false;
 
 	sourcemap?: object | string;
