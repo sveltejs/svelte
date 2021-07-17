@@ -86,7 +86,7 @@ export default class Expression {
 					if (name[0] === '$') {
 						const store_name = name.slice(1);
 						if (template_scope.names.has(store_name) || scope.has(store_name)) {
-							component.error(node, compiler_errors.contextual_store);
+							return component.error(node, compiler_errors.contextual_store);
 						}
 					}
 

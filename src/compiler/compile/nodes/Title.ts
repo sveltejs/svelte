@@ -16,11 +16,12 @@ export default class Title extends Node {
 
 		if (info.attributes.length > 0) {
 			component.error(info.attributes[0], compiler_errors.illegal_attribute_title);
+			return;
 		}
 
 		info.children.forEach(child => {
 			if (child.type !== 'Text' && child.type !== 'MustacheTag') {
-				component.error(child, compiler_errors.illegal_structure_title);
+				return component.error(child, compiler_errors.illegal_structure_title);
 			}
 		});
 
