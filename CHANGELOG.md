@@ -5,6 +5,7 @@
 * Expose `svelte/ssr` which exports lifecycle methods as no-ops ([#6416](https://github.com/sveltejs/svelte/pull/6416))
 * Add `|trusted` event modifier ([#6137](https://github.com/sveltejs/svelte/issues/6137))
 * Add `varsReport` compiler option to include all variables reference in the component in the `variables` report ([#6192](https://github.com/sveltejs/svelte/pull/6192))
+* Add `errorMode` compiler option to try to continue compiling when an error is detected ([#6194](https://github.com/sveltejs/svelte/pull/6194))
 * Throw compiler error when passing empty directive names ([#6299](https://github.com/sveltejs/svelte/issues/6299))
 * Throw proper error for `export default function() {}` and `export default class {}` rather than crashing the compiler ([#3275](https://github.com/sveltejs/svelte/issues/3275))
 * Fix usage of falsy `input` values ([#6458](https://github.com/sveltejs/svelte/pull/6458))
