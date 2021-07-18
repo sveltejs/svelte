@@ -464,6 +464,7 @@ function get_directive_type(name: string): DirectiveType {
 }
 
 function read_attribute_value(parser: Parser) {
+	const is_blank = parser.eat("''") ? true : parser.eat('""') ? true : false;
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
 
 	const regex = (
@@ -472,10 +473,24 @@ function read_attribute_value(parser: Parser) {
 				/(\/>|[\s"'=<>`])/
 	);
 
-	const value = read_sequence(parser, () => !!parser.match_regex(regex));
-
-	if (quote_mark) parser.index += 1;
+	let value: TemplateNode[] = [];
+	if (is_blank) {
+		value = [flush_blank_node(parser)];
+	} else {
+		value = read_sequence(parser, () => !!parser.match_regex(regex));
+		if (quote_mark) parser.index += 1;
+	}
 	return value;
+}
+
+function flush_blank_node(parser: Parser): TemplateNode {
+	return {
+		start: parser.index,
+		end: parser.index,
+		type: 'Text',
+		raw: '',
+		data: ''
+	};
 }
 
 function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
