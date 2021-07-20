@@ -128,7 +128,7 @@
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.3",
     "mocha": "^7.0.0",
-    "periscopic": "^2.0.3",
+    "periscopic": "^3.0.4",
     "puppeteer": "^2.1.1",
     "rollup": "^1.27.14",
     "source-map": "^0.7.3",
