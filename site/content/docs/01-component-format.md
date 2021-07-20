@@ -117,7 +117,7 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 		// this method call does not trigger an update
 		arr.push(2);
 		// this assignment will trigger an update
-		// if the markup references `count`
+		// if the markup references `arr`
 		arr = arr
 	}
 </script>
