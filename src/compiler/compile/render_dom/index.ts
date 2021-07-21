@@ -529,21 +529,21 @@ export default function dom(
 			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
 		};
 
-		const optionalParameters = [];
+		const optional_parameters = [];
 		if (should_add_css) {
-			optionalParameters.push(add_css);
+			optional_parameters.push(add_css);
 		} else if (dirty) {
-			optionalParameters.push(x`null`);
+			optional_parameters.push(x`null`);
 		}
 		if (dirty) {
-			optionalParameters.push(dirty);
+			optional_parameters.push(dirty);
 		}
 
 		const declaration = b`
 			class ${name} extends ${superclass} {
 				constructor(options) {
 					super(${options.dev && 'options'});
-					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optionalParameters});
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}
