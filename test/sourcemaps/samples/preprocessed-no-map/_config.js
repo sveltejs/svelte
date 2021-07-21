@@ -1,5 +1,5 @@
 export default {
-	css_map_sources: [],
+	css_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			style: ({ content }) => {
