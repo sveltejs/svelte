@@ -1,13 +1,13 @@
 <script>
 	import { writable } from 'svelte/store';
 
-	let userName1 = writable('init1')
-	let userName2 = writable('init2')
-	let userName3 = writable('init3')
-	let userName4 = writable('init4')
-	let userName5 = writable('init5')
-	let userName6 = writable('init6')
-	let userName7 = writable('init7')
+	let userName1 = writable('init1');
+	let userName2 = writable('init2');
+	let userName3 = writable('init3');
+	let userName4 = writable('init4');
+	let userName5 = writable('init5');
+	let userName6 = writable('init6');
+	let userName7 = writable('init7');
 	
 	let obj = {
 		userName1: 'user1', 
@@ -17,12 +17,12 @@
 		userName5: 'user5',
 		$userName6: 'user6',
 		userName7: 'user7',
-	}
+	};
 	
-	;({userName1: $userName1, $userName2 } = obj)
-	;({$userName3} = obj)
-	;({$userName4} = obj)
-	;({$userName5, $userName6, $userName7} = obj)
+	({userName1: $userName1, $userName2 } = obj);
+	({$userName3} = obj);
+	({$userName4} = obj);
+	({$userName5, $userName6, $userName7} = obj);
 </script>
 
 <div>$userName1: {$userName1}</div>
