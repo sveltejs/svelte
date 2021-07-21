@@ -148,7 +148,7 @@ export default function dom(
 					kind: 'set',
 					key: { type: 'Identifier', name: prop.export_name },
 					value: x`function(${prop.name}) {
-						this.$set({ ${prop.export_name}: ${prop.name} });
+						this.$$set({ ${prop.export_name}: ${prop.name} });
 						@flush();
 					}`
 				});
