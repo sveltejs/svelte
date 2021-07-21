@@ -19,7 +19,7 @@ import error from '../utils/error';
 import get_code_frame from '../utils/get_code_frame';
 import flatten_reference from './utils/flatten_reference';
 import is_used_as_reference from './utils/is_used_as_reference';
-import is_reference from 'is-reference';
+import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
@@ -734,7 +734,7 @@ export default class Component {
 		let generator_count = 0;
 
 		walk(content, {
-			enter(node: Node, parent, prop, index) {
+			enter(node: Node, parent: Node, prop, index) {
 				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
 					generator_count++;
 				}
@@ -862,7 +862,7 @@ export default class Component {
 			this.warn(node as any, compiler_warnings.non_top_level_reactive_declaration);
 		}
 
-		if (is_reference(node, parent)) {
+		if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
 			const object = get_object(node);
 			const { name } = object;
 
@@ -1098,7 +1098,7 @@ export default class Component {
 						scope = map.get(node);
 					}
 
-					if (is_reference(node as Node, parent as Node)) {
+					if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
 						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
 
@@ -1220,7 +1220,7 @@ export default class Component {
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
-						} else if (is_reference(node as Node, parent as Node)) {
+						} else if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
 							const identifier = get_object(node);
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
