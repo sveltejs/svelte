@@ -687,6 +687,12 @@ export default class ElementWrapper extends Wrapper {
 				`);
 			}
 		}
+
+		if (['button', 'input', 'keygen', 'select', 'textarea'].includes(this.node.name)) {
+			block.chunks.mount.push(b`
+				if (${this.var}.autofocus) ${this.var}.focus();
+			`);
+		}
 	}
 
 	add_transitions(
