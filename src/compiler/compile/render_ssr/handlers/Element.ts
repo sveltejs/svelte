@@ -3,7 +3,7 @@ import { get_attribute_expression, get_attribute_value, get_class_attribute_valu
 import { boolean_attributes } from './shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
-import { x } from 'code-red';
+import { p, x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
 import remove_whitespace_children from './utils/remove_whitespace_children';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
@@ -36,6 +36,15 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		class_expression_list.length > 0 &&
 		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
 
+	const style_expression_list = node.styles.map(style_directive => {
+		const { name, expression: { node: expression } } = style_directive;
+		return p`"${name}": ${expression}`;
+	});
+	
+	const style_expression =
+		style_expression_list.length > 0 &&
+		x`{ ${style_expression_list} }`;
+
 	if (node.attributes.some(attr => attr.is_spread)) {
 		// TODO dry this out
 		const args = [];
@@ -65,9 +74,10 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			}
 		});
 
-		renderer.add_expression(x`@spread([${args}], ${class_expression})`);
+		renderer.add_expression(x`@spread([${args}], { classes: ${class_expression}, styles: ${style_expression} })`);
 	} else {
 		let add_class_attribute = !!class_expression;
+		let add_style_attribute = !!style_expression;
 		node.attributes.forEach(attribute => {
 			const name = attribute.name.toLowerCase();
 			const attr_name = node.namespace === namespaces.foreign ? attribute.name : fix_attribute_casing(attribute.name);
@@ -88,6 +98,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				renderer.add_string(` ${attr_name}="`);
 				renderer.add_expression(x`[${get_class_attribute_value(attribute)}, ${class_expression}].join(' ').trim()`);
 				renderer.add_string('"');
+			} else if (name === 'style' && style_expression) {
+				add_style_attribute = false;
+				renderer.add_expression(x`@add_styles(@merge_ssr_styles(${get_attribute_value(attribute)}, ${style_expression}))`);
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const snippet = (attribute.chunks[0] as Expression).node;
 				renderer.add_expression(x`@add_attribute("${attr_name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
@@ -98,7 +111,10 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			}
 		});
 		if (add_class_attribute) {
-			renderer.add_expression(x`@add_classes([${class_expression}].join(' ').trim())`);
+			renderer.add_expression(x`@add_classes((${class_expression}).trim())`);
+		}
+		if (add_style_attribute) {
+			renderer.add_expression(x`@add_styles(${style_expression})`);
 		}
 	}
 

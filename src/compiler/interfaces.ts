@@ -34,6 +34,7 @@ export type DirectiveType = 'Action'
 | 'Animation'
 | 'Binding'
 | 'Class'
+| 'Style'
 | 'EventHandler'
 | 'Let'
 | 'Ref'
@@ -46,7 +47,7 @@ interface BaseDirective extends BaseNode {
 	modifiers: string[];
 }
 
-export interface Transition extends BaseDirective{
+export interface Transition extends BaseDirective {
 	type: 'Transition';
 	intro: boolean;
 	outro: boolean;

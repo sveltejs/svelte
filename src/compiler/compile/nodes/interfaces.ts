@@ -8,6 +8,7 @@ import Binding from './Binding';
 import Body from './Body';
 import CatchBlock from './CatchBlock';
 import Class from './Class';
+import Style from './Style';
 import Comment from './Comment';
 import DebugTag from './DebugTag';
 import EachBlock from './EachBlock';
@@ -62,6 +63,7 @@ export type INode = Action
 | Slot
 | SlotTemplate
 | DefaultSlotTemplate
+| Style
 | Tag
 | Text
 | ThenBlock
