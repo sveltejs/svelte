@@ -5,7 +5,7 @@
 * Support rendering a component in a shadow DOM ([#5869](https://github.com/sveltejs/svelte/issues/5869))
 * Fix `:root` selector being erroneously scoped to component ([#4767](https://github.com/sveltejs/svelte/issues/4767))
 * Fix `.end` in AST for expressions inside attributes ([#6258](https://github.com/sveltejs/svelte/issues/6258))
-* Fix one-way `<select>` binding when it has a spread attribute ([#6433](https://github.com/sveltejs/svelte/issues/))
+* Fix one-way `<select>` binding when it has a spread attribute ([#6433](https://github.com/sveltejs/svelte/issues/6433))
 * Various hydration improvements and fixes ([#6449](https://github.com/sveltejs/svelte/pull/6449))
 * Use smaller versions of internal helpers when compiling without hydration support ([#6462](https://github.com/sveltejs/svelte/issues/6462))
 * Fix two-way binding of values when updating through synchronous component accessors ([#6502](https://github.com/sveltejs/svelte/issues/6502))
@@ -32,7 +32,7 @@
 * Fix compiler error when using `:where()` inside `:global()` ([#6434](https://github.com/sveltejs/svelte/issues/6434))
 * Fix ordering of elements in keyed `{#each}` ([#6444](https://github.com/sveltejs/svelte/issues/6444))
 * Remove deprecated a11y warning `a11y-no-onchange warning` ([#6457](https://github.com/sveltejs/svelte/issues/6457))
-* Fix `:global()` with pseudo element not being seen as global ([#6470](https://github.com/sveltejs/svelte/pull/6470))
+* Fix `:global()` with pseudo element not being seen as global ([#6468](https://github.com/sveltejs/svelte/issues/6468))
 * Allow `:global()` to contain multiple selectors when it is not part of a larger selector ([#6477](https://github.com/sveltejs/svelte/issues/6477))
 * Make `<script>` and `<style>` end tag parsing more robust ([#6511](https://github.com/sveltejs/svelte/pull/6511))
 
