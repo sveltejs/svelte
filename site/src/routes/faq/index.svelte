@@ -6,6 +6,8 @@
 </script>
 
 <script>
+	import { Permalink } from '@sveltejs/site-kit';
+
 	const description = "Frequently Asked Questions about Svelte"
 
 	export let faqs;
@@ -25,9 +27,9 @@
 
 		<article class='faq'>
 			<h2>
-			<span id={faq.fragment} class="offset-anchor"></span>
-			<a class="anchor" rel='prefetch' href='faq#{faq.fragment}' title='{faq.question}'>&nbsp;</a>
-			{faq.metadata.question}
+				<span id={faq.fragment} class="offset-anchor"></span>
+				{faq.metadata.question}
+				<Permalink href='faq#{faq.fragment}' />
 			</h2>
 			<p>{@html faq.answer}</p>
 		</article>

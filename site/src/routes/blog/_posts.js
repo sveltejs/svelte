@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { extract_frontmatter, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
+import { extract_frontmatter, link_renderer, permalink } from '@sveltejs/site-kit/utils/markdown.js';
 import marked from 'marked';
 import { makeSlugProcessor } from '../../utils/slug';
 import { highlight } from '../../utils/highlight';
@@ -39,8 +39,8 @@ export default function get_posts() {
 				return `
 					<h${level}>
 						<span id="${fragment}" class="offset-anchor"></span>
-						<a href="blog/${slug}#${fragment}" class="anchor" aria-hidden="true"></a>
 						${text}
+						${permalink(`blog/${slug}#${fragment}`)}
 					</h${level}>`;
 			};
 
