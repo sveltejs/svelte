@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* Various hydration improvements and fixed ([#6449](https://github.com/sveltejs/svelte/pull/6449))
+* Support rendering a component in a shadow DOM ([#5869](https://github.com/sveltejs/svelte/issues/5869))
+* Various hydration improvements and fixes ([#6449](https://github.com/sveltejs/svelte/pull/6449))
 
 ## 3.39.0
 
