@@ -115,7 +115,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				const value = get_attribute_expression(value_attribute);
 				const type = node.get_static_attribute_value('type');
 				const bound = expression.node;
-				const condition = type === 'checkbox' ? x`~${bound}.indexOf(${value})`: x`${value} === ${bound}`;
+				const condition = type === 'checkbox' ? x`~${bound}.indexOf(${value})` : x`${value} === ${bound}`;
 				renderer.add_expression(x`${condition} ? @add_attribute("checked", true, 1) : ""`);
 			}
 		} else if (contenteditable && (name === 'textContent' || name === 'innerHTML')) {
