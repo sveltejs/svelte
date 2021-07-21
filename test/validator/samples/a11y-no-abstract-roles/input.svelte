@@ -1,0 +1,12 @@
+<div role="command"/>
+<div role="composite"/>
+<div role="input"/>
+<div role="landmark"/>
+<div role="range"/>
+<div role="roletype"/>
+<div role="section"/>
+<div role="sectionhead"/>
+<div role="select"/>
+<div role="structure"/>
+<div role="widget"/>
+<div role="window"/>
