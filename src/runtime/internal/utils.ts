@@ -40,6 +40,16 @@ export function safe_not_equal(a, b) {
 	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
+let src_url_equal_anchor;
+
+export function src_url_equal(element_src, url) {
+	if (!src_url_equal_anchor) {
+		src_url_equal_anchor = document.createElement('a');
+	}
+	src_url_equal_anchor.href = url;
+	return element_src === src_url_equal_anchor.href;
+}
+
 export function not_equal(a, b) {
 	return a != a ? b == b : a !== b;
 }
