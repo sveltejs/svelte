@@ -8,7 +8,8 @@ import {
 	insert,
 	noop,
 	safe_not_equal,
-	select_option
+	select_option,
+	set_input_value
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -31,7 +32,10 @@ function create_fragment(ctx) {
 		m(target, anchor) {
 			insert(target, select, anchor);
 			append(select, option0);
+			set_input_value(option0, "1");
 			append(select, option1);
+			set_input_value(option1, "2");
+			set_input_value(select, /*current*/ ctx[0]);
 			select_option(select, /*current*/ ctx[0]);
 		},
 		p(ctx, [dirty]) {
