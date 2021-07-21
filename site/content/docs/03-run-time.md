@@ -206,7 +206,7 @@ contexts: Map<any, any> = getAllContexts()
 
 ---
 
-Retrieves the whole context map that belongs to the closest parent component. Must be called during component initialisation. Useful for example if you programmatically create a component and want to pass the existing context to it.
+Retrieves the whole context map that belongs to the closest parent component. Must be called during component initialisation. Useful, for example, if you programmatically create a component and want to pass the existing context to it.
 
 ```sv
 <script>
