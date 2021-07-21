@@ -11,7 +11,8 @@ import {
 	insert,
 	noop,
 	safe_not_equal,
-	space
+	space,
+	src_url_equal
 } from "svelte/internal";
 
 function create_fragment(ctx) {
@@ -35,7 +36,7 @@ function create_fragment(ctx) {
 			this.h();
 		},
 		h() {
-			if (img.src !== (img_src_value = "donuts.jpg")) attr(img, "src", img_src_value);
+			if (!src_url_equal(img.src, img_src_value = "donuts.jpg")) attr(img, "src", img_src_value);
 			attr(img, "alt", "donuts");
 		},
 		m(target, anchor) {
