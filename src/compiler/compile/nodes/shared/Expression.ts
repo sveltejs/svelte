@@ -305,8 +305,8 @@ export default class Expression {
 
 							const func_expression = func_declaration[0];
 
-							if (node.type === 'InlineComponent') {
-								// <Comp let:data />
+							if (node.type === 'SlotTemplate') {
+								// <svelte:fragment let:data />
 								this.replace(func_expression);
 							} else {
 								// {#each}, {#await}

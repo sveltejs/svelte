@@ -52,11 +52,6 @@ export default class SlotTemplateWrapper extends Wrapper {
 		});
 		this.renderer.blocks.push(this.block);
 
-		const seen = new Set(lets.map(l => l.name.name));
-		this.parent.node.lets.forEach(l => {
-			if (!seen.has(l.name.name)) lets.push(l);
-		});
-
 		this.parent.set_slot(
 			slot_template_name,
 			get_slot_definition(this.block, scope, lets)
