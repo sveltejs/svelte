@@ -502,7 +502,7 @@ export function claim_html_tag(nodes) {
 		n.claim_order = nodes.claim_info.total_claimed;
 		nodes.claim_info.total_claimed += 1;
 	}
-	return new HtmlTagHydration(html_tag_nodes.slice(1, html_tag_nodes.length - 1));
+	return new HtmlTagHydration(claimed_nodes);
 }
 
 export function set_data(text, data) {
