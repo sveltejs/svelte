@@ -7,7 +7,7 @@ import {
 	detach,
 	element,
 	init,
-	insert,
+	insert_hydration,
 	noop,
 	safe_not_equal,
 	space,
@@ -41,9 +41,9 @@ function create_fragment(ctx) {
 			if (!src_url_equal(img1.src, img1_src_value = "" + (/*slug*/ ctx[1] + ".jpg"))) attr(img1, "src", img1_src_value);
 		},
 		m(target, anchor) {
-			insert(target, img0, anchor);
-			insert(target, t, anchor);
-			insert(target, img1, anchor);
+			insert_hydration(target, img0, anchor);
+			insert_hydration(target, t, anchor);
+			insert_hydration(target, img1, anchor);
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*url*/ 1 && !src_url_equal(img0.src, img0_src_value = /*url*/ ctx[0])) {
