@@ -465,21 +465,20 @@ function get_directive_type(name: string): DirectiveType {
 
 function read_attribute_value(parser: Parser) {
 	const is_blank = parser.eat("''") ? true : parser.eat('""') ? true : false;
-	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
+	if (is_blank) {
+		return [flush_blank_node(parser)];
+	}
 
+	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
 	const regex = (
 		quote_mark === "'" ? /'/ :
 			quote_mark === '"' ? /"/ :
 				/(\/>|[\s"'=<>`])/
 	);
 
-	let value: TemplateNode[] = [];
-	if (is_blank) {
-		value = [flush_blank_node(parser)];
-	} else {
-		value = read_sequence(parser, () => !!parser.match_regex(regex));
-		if (quote_mark) parser.index += 1;
-	}
+	const value = read_sequence(parser, () => !!parser.match_regex(regex));
+
+	if (quote_mark) parser.index += 1;
 	return value;
 }
 
