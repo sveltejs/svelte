@@ -6,6 +6,7 @@
 * Fix `.end` in AST for expressions inside attributes ([#6258](https://github.com/sveltejs/svelte/issues/6258))
 * Various hydration improvements and fixes ([#6449](https://github.com/sveltejs/svelte/pull/6449))
 * Use smaller versions of internal helpers when compiling without hydration support ([#6462](https://github.com/sveltejs/svelte/issues/6462))
+* Fix two-way binding of values when updating through synchronous component accessors ([#6502](https://github.com/sveltejs/svelte/issues/6502))
 
 ## 3.39.0
 
