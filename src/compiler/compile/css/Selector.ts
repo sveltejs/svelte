@@ -274,7 +274,7 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 		const selector = block.selectors[i];
 		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
 
-		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name == 'root')) {
+		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
 			return BlockAppliesToNode.NotPossible;
 		}
 
