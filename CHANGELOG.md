@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.39.0
 
 * Support `bind:group` in SSR ([#4621](https://github.com/sveltejs/svelte/pull/4621))
 * Add a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([#5938](https://github.com/sveltejs/svelte/pull/5938))
