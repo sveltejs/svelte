@@ -36,12 +36,12 @@ function init_hydrate(target: NodeEx) {
 	target.hydrate_init = true;
 
 	type NodeEx2 = NodeEx & {claim_order: number};
-	
-	// We know that all children have claim_order values since the unclaimed have been detached if target is not head
+
+	// We know that all children have claim_order values since the unclaimed have been detached if target is not <head>
 	let children: ArrayLike<NodeEx2> = target.childNodes as NodeListOf<NodeEx2>;
-	
-	// If target is head, there may be children without claim_order
-	if (target.nodeName.toLowerCase() === 'head') {
+
+	// If target is <head>, there may be children without claim_order
+	if (target.nodeName === 'HEAD') {
 		const myChildren = [];
 		for (let i = 0; i < children.length; i++) {
 			const node = children[i];
@@ -51,8 +51,8 @@ function init_hydrate(target: NodeEx) {
 		}
 		children = myChildren;
 	}
-	
-	/* 
+
+	/*
 	* Reorder claimed children optimally.
 	* We can reorder claimed children optimally by finding the longest subsequence of
 	* nodes that are already claimed in order and only moving the rest. The longest
@@ -84,7 +84,7 @@ function init_hydrate(target: NodeEx) {
 		// upper_bound returns first greater value, so we subtract one
 		// with fast path for when we are on the current longest subsequence
 		const seqLen = ((longest > 0 && children[m[longest]].claim_order <= current) ? longest + 1 : upper_bound(1, longest, idx => children[m[idx]].claim_order, current)) - 1;
-		
+
 		p[i] = m[seqLen] + 1;
 
 		const newLen = seqLen + 1;
@@ -132,12 +132,12 @@ export function append(target: NodeEx, node: NodeEx) {
 		if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentElement !== target))) {
 			target.actual_end_child = target.firstChild;
 		}
-		
+
 		// Skip nodes of undefined ordering
 		while ((target.actual_end_child !== null) && (target.actual_end_child.claim_order === undefined)) {
 			target.actual_end_child = target.actual_end_child.nextSibling;
 		}
-		
+
 		if (node !== target.actual_end_child) {
 			// We only insert if the ordering of this node should be modified or the parent node is not target
 			if (node.claim_order !== undefined || node.parentNode !== target) {
@@ -335,7 +335,7 @@ function init_claim_info(nodes: ChildNodeArray) {
 function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (node: ChildNodeEx) => node is R, processNode: (node: ChildNodeEx) => ChildNodeEx | undefined, createNode: () => R, dontUpdateLastIndex: boolean = false) {
 	// Try to find nodes in an order such that we lengthen the longest increasing subsequence
 	init_claim_info(nodes);
-	
+
 	const resultNode = (() => {
 		// We first try to find an element after the previous one
 		for (let i = nodes.claim_info.last_index; i < nodes.length; i++) {
@@ -448,7 +448,7 @@ export function claim_html_tag(nodes) {
 	if (start_index === end_index) {
 		return new HtmlTag();
 	}
-	
+
 	init_claim_info(nodes);
 	const html_tag_nodes = nodes.splice(start_index, end_index + 1);
 	detach(html_tag_nodes[0]);

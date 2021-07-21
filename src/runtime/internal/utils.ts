@@ -40,16 +40,14 @@ export function safe_not_equal(a, b) {
 	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
-const relative_to_absolute : ((url: string) => string) & {anchor?: HTMLAnchorElement} = (url: string) => {
-	if (relative_to_absolute.anchor === undefined) {
-		relative_to_absolute.anchor = document.createElement('a');
-	}
-	relative_to_absolute.anchor.href = url;
-    return relative_to_absolute.anchor.href;
-};
+let src_url_equal_anchor;
 
 export function src_url_equal(element_src, url) {
-	return element_src === relative_to_absolute(url);
+	if (!src_url_equal_anchor) {
+		src_url_equal_anchor = document.createElement('a');
+	}
+	src_url_equal_anchor.href = url;
+	return element_src === src_url_equal_anchor.href;
 }
 
 export function not_equal(a, b) {
