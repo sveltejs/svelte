@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Support rendering a component in a shadow DOM ([#5869](https://github.com/sveltejs/svelte/issues/5869))
+* Fix `.end` in AST for expressions inside attributes ([#6258](https://github.com/sveltejs/svelte/issues/6258))
 * Various hydration improvements and fixes ([#6449](https://github.com/sveltejs/svelte/pull/6449))
 
 ## 3.39.0
