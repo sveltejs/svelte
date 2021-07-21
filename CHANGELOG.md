@@ -24,6 +24,7 @@
 * Make `<script>` and `<style>` end tag parsing more robust ([#6511](https://github.com/sveltejs/svelte/pull/6511))
 * Make it possible to silence more warnings ([#5954](https://github.com/sveltejs/svelte/issues/5954))
 * Do not warn if module variables are not the only dependencies in reactive statements ([#5954](https://github.com/sveltejs/svelte/issues/5954))
+* Add `getAllContexts` ([#6447](https://github.com/sveltejs/svelte/issues/6447))
 
 ## 3.38.3
 
