@@ -3,7 +3,7 @@ import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions, CssResult } from '../../interfaces';
 import { walk } from 'estree-walker';
-import { extract_names, Node as PeriscopicNode, Scope } from 'periscopic';
+import { extract_names, Scope } from 'periscopic';
 import { invalidate } from './invalidate';
 import Block from './Block';
 import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
@@ -253,7 +253,7 @@ export default function dom(
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(extract_names(assignee as PeriscopicNode));
+					const names = new Set(extract_names(assignee as Node));
 
 					this.replace(invalidate(renderer, scope, node, names, execution_context === null));
 				}
