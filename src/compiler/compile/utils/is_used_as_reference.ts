@@ -1,6 +1,5 @@
 import { Node } from 'estree';
-import is_reference from 'is-reference';
-import { NodeWithPropertyDefinition } from 'is-reference';
+import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 
 export default function is_used_as_reference(
 	node: Node,

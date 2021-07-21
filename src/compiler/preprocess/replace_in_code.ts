@@ -32,7 +32,7 @@ function calculate_replacements(
 			get_replacement(...match).then(
 				replacement => {
 					const matched_string = match[0];
-					const offset = match[match.length-2];
+					const offset = match[match.length - 2];
 
 					return ({ offset, length: matched_string.length, replacement });
 				}

@@ -101,7 +101,7 @@ export default class InlineComponent extends Node {
 		});
 
 		const children = [];
-		for (let i=info.children.length - 1; i >= 0; i--) {
+		for (let i = info.children.length - 1; i >= 0; i--) {
 			const child = info.children[i];
 			if (child.type === 'SlotTemplate') {
 				children.push(child);
@@ -117,7 +117,7 @@ export default class InlineComponent extends Node {
 				};
 
 				// transfer attributes
-				for (let i=child.attributes.length - 1; i >= 0; i--) {
+				for (let i = child.attributes.length - 1; i >= 0; i--) {
 					const attribute = child.attributes[i];
 					if (attribute.type === 'Let') {
 						slot_template.attributes.push(attribute);
