@@ -138,7 +138,7 @@ export default class Selector {
 
 		for (let i = start; i < end; i += 1) {
 			if (this.blocks[i].global) {
-				component.error(this.blocks[i].selectors[0], compiler_errors.css_invalid_global);
+				return component.error(this.blocks[i].selectors[0], compiler_errors.css_invalid_global);
 			}
 		}
 

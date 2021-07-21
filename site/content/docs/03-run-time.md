@@ -84,6 +84,8 @@ afterUpdate(callback: () => void)
 
 Schedules a callback to run immediately after the component has been updated.
 
+> The first time the callback runs will be after the initial `onMount`
+
 ```sv
 <script>
 	import { afterUpdate } from 'svelte';
@@ -195,6 +197,24 @@ Checks whether a given `key` has been set in the context of a parent component. 
 	if (hasContext('answer')) {
 		// do something
 	}
+</script>
+```
+
+#### `getAllContexts`
+
+```js
+contexts: Map<any, any> = getAllContexts()
+```
+
+---
+
+Retrieves the whole context map that belongs to the closest parent component. Must be called during component initialisation. Useful, for example, if you programmatically create a component and want to pass the existing context to it.
+
+```sv
+<script>
+	import { getAllContexts } from 'svelte';
+
+	const contexts = getAllContexts();
 </script>
 ```
 
@@ -929,7 +949,7 @@ The following initialisation options can be provided:
 
 | option | default | description |
 | --- | --- | --- |
-| `target` | **none** | An `HTMLElement` to render to. This option is required
+| `target` | **none** | An `HTMLElement` or `ShadowRoot` to render to. This option is required
 | `anchor` | `null` | A child of `target` to render the component immediately before
 | `props` | `{}` | An object of properties to supply to the component
 | `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component

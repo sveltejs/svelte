@@ -5,6 +5,7 @@ import { reserved } from '../utils/names';
 import full_char_code_at from '../utils/full_char_code_at';
 import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../interfaces';
 import error from '../utils/error';
+import parser_errors from './errors';
 
 type ParserState = (parser: Parser) => (ParserState | void);
 
@@ -106,17 +107,18 @@ export class Parser {
 		});
 	}
 
-	eat(str: string, required?: boolean, message?: string) {
+	eat(str: string, required?: boolean, error?: { code: string, message: string }) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
 		}
 
 		if (required) {
-			this.error({
-				code: `unexpected-${this.index === this.template.length ? 'eof' : 'token'}`,
-				message: message || `Expected ${str}`
-			});
+			this.error(error ||
+				(this.index === this.template.length
+					? parser_errors.unexpected_eof_token(str)
+					: parser_errors.unexpected_token(str))
+			);
 		}
 
 		return false;
@@ -218,27 +220,18 @@ export default function parse(
 	// TODO we may want to allow multiple <style> tags —
 	// one scoped, one global. for now, only allow one
 	if (parser.css.length > 1) {
-		parser.error({
-			code: 'duplicate-style',
-			message: 'You can only have one top-level <style> tag per component'
-		}, parser.css[1].start);
+		parser.error(parser_errors.duplicate_style, parser.css[1].start);
 	}
 
 	const instance_scripts = parser.js.filter(script => script.context === 'default');
 	const module_scripts = parser.js.filter(script => script.context === 'module');
 
 	if (instance_scripts.length > 1) {
-		parser.error({
-			code: 'invalid-script',
-			message: 'A component can only have one instance-level <script> element'
-		}, instance_scripts[1].start);
+		parser.error(parser_errors.invalid_script_instance, instance_scripts[1].start);
 	}
 
 	if (module_scripts.length > 1) {
-		parser.error({
-			code: 'invalid-script',
-			message: 'A component can only have one <script context="module"> element'
-		}, module_scripts[1].start);
+		parser.error(parser_errors.invalid_script_module, module_scripts[1].start);
 	}
 
 	return {

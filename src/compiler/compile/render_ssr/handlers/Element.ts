@@ -115,7 +115,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				const value = get_attribute_expression(value_attribute);
 				const type = node.get_static_attribute_value('type');
 				const bound = expression.node;
-				const condition = type === 'checkbox' ? x`~${bound}.indexOf(${value})`: x`${value} === ${bound}`;
+				const condition = type === 'checkbox' ? x`~${bound}.indexOf(${value})` : x`${value} === ${bound}`;
 				renderer.add_expression(x`${condition} ? @add_attribute("checked", true, 1) : ""`);
 			}
 		} else if (contenteditable && (name === 'textContent' || name === 'innerHTML')) {
@@ -126,9 +126,11 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = expression.node;
 			node_contents = x`${snippet} || ""`;
+		} else if (binding.name === 'value' && node.name === 'select') {
+			// NOTE: do not add "value" attribute on <select />
 		} else {
 			const snippet = expression.node;
-			renderer.add_expression(x`@add_attribute("${name}", ${snippet}, 1)`);
+			renderer.add_expression(x`@add_attribute("${name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
 		}
 	});
 

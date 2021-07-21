@@ -46,11 +46,11 @@ export default class SlotTemplate extends Node {
 					if (node.name === 'slot') {
 						this.slot_attribute = new Attribute(component, this, scope, node);
 						if (!this.slot_attribute.is_static) {
-							component.error(node, compiler_errors.invalid_slot_attribute);
+							return component.error(node, compiler_errors.invalid_slot_attribute);
 						}
 						const value = this.slot_attribute.get_static_value();
 						if (typeof value === 'boolean') {
-							component.error(node, compiler_errors.invalid_slot_attribute_value_missing);
+							return component.error(node, compiler_errors.invalid_slot_attribute_value_missing);
 						}
 						this.slot_template_name = value as string;
 						break;
@@ -68,7 +68,7 @@ export default class SlotTemplate extends Node {
 
 	validate_slot_template_placement() {
 		if (this.parent.type !== 'InlineComponent') {
-			this.component.error(this, compiler_errors.invalid_slotted_content_fragment);
+			return this.component.error(this, compiler_errors.invalid_slotted_content_fragment);
 		}
 	}
 }

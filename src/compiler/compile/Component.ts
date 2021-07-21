@@ -10,7 +10,6 @@ import {
 	Scope,
 	extract_identifiers
 } from './utils/scope';
-import { Node as PeriscopicNode } from 'periscopic';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
@@ -20,7 +19,7 @@ import error from '../utils/error';
 import get_code_frame from '../utils/get_code_frame';
 import flatten_reference from './utils/flatten_reference';
 import is_used_as_reference from './utils/is_used_as_reference';
-import is_reference from 'is-reference';
+import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
@@ -36,6 +35,7 @@ import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types
 import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
+import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -171,12 +171,17 @@ export default class Component {
 		}
 
 		this.walk_module_js();
+
+		this.push_ignores(this.ast.instance ? extract_ignores_above_position(this.ast.instance.start, this.ast.html.children) : []);
 		this.walk_instance_js_pre_template();
+		this.pop_ignores();
 
 		this.fragment = new Fragment(this, ast.html);
 		this.name = this.get_unique_name(name);
 
+		this.push_ignores(this.ast.instance ? extract_ignores_above_position(this.ast.instance.start, this.ast.html.children) : []);
 		this.walk_instance_js_post_template();
+		this.pop_ignores();
 
 		this.elements.forEach(element => this.stylesheet.apply(element));
 		if (!compile_options.customElement) this.stylesheet.reify();
@@ -437,14 +442,18 @@ export default class Component {
 			message: string;
 		}
 	) {
-		error(e.message, {
-			name: 'ValidationError',
-			code: e.code,
-			source: this.source,
-			start: pos.start,
-			end: pos.end,
-			filename: this.compile_options.filename
-		});
+		if (this.compile_options.errorMode === 'warn') {
+			this.warn(pos, e);
+		} else {
+			error(e.message, {
+				name: 'ValidationError',
+				code: e.code,
+				source: this.source,
+				start: pos.start,
+				end: pos.end,
+				filename: this.compile_options.filename
+			});
+		}
 	}
 
 	warn(
@@ -484,13 +493,21 @@ export default class Component {
 	}
 
 	extract_exports(node) {
+		const ignores = extract_svelte_ignore_from_comments(node);
+		if (ignores.length) this.push_ignores(ignores);
+		const result = this._extract_exports(node);
+		if (ignores.length) this.pop_ignores();
+		return result;
+	}
+
+	private _extract_exports(node) {
 		if (node.type === 'ExportDefaultDeclaration') {
-			this.error(node, compiler_errors.default_export);
+			return this.error(node, compiler_errors.default_export);
 		}
 
 		if (node.type === 'ExportNamedDeclaration') {
 			if (node.source) {
-				this.error(node, compiler_errors.not_implemented);
+				return this.error(node, compiler_errors.not_implemented);
 			}
 			if (node.declaration) {
 				if (node.declaration.type === 'VariableDeclaration') {
@@ -560,7 +577,7 @@ export default class Component {
 
 		scope.declarations.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node as any, compiler_errors.illegal_declaration);
+				return this.error(node as any, compiler_errors.illegal_declaration);
 			}
 
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
@@ -575,7 +592,7 @@ export default class Component {
 
 		globals.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node as any, compiler_errors.illegal_subscription);
+				return this.error(node as any, compiler_errors.illegal_subscription);
 			} else {
 				this.add_var({
 					name,
@@ -633,7 +650,7 @@ export default class Component {
 
 		instance_scope.declarations.forEach((node, name) => {
 			if (name[0] === '$') {
-				this.error(node as any, compiler_errors.illegal_declaration);
+				return this.error(node as any, compiler_errors.illegal_declaration);
 			}
 
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
@@ -667,7 +684,7 @@ export default class Component {
 				});
 			} else if (name[0] === '$') {
 				if (name === '$' || name[1] === '$') {
-					this.error(node as any, compiler_errors.illegal_global(name));
+					return this.error(node as any, compiler_errors.illegal_global(name));
 				}
 
 				this.add_var({
@@ -725,7 +742,7 @@ export default class Component {
 		let generator_count = 0;
 
 		walk(content, {
-			enter(node: Node, parent, prop, index) {
+			enter(node: Node, parent: Node, prop, index) {
 				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
 					generator_count++;
 				}
@@ -810,7 +827,7 @@ export default class Component {
 
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-					const names = extract_names(assignee as PeriscopicNode);
+					const names = extract_names(assignee as Node);
 
 					const deep = assignee.type === 'MemberExpression';
 
@@ -853,7 +870,7 @@ export default class Component {
 			this.warn(node as any, compiler_warnings.non_top_level_reactive_declaration);
 		}
 
-		if (is_reference(node, parent)) {
+		if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
 			const object = get_object(node);
 			const { name } = object;
 
@@ -864,7 +881,7 @@ export default class Component {
 
 				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
 					if (!((/Function/.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
-						this.error(node as any, compiler_errors.contextual_store);
+						return this.error(node as any, compiler_errors.contextual_store);
 					}
 				}
 			}
@@ -929,7 +946,7 @@ export default class Component {
 
 									if (variable.export_name) {
 										// TODO is this still true post-#3539?
-										component.error(declarator as any, compiler_errors.destructured_prop);
+										return component.error(declarator as any, compiler_errors.destructured_prop);
 									}
 
 									if (variable.subscribable) {
@@ -1089,7 +1106,7 @@ export default class Component {
 						scope = map.get(node);
 					}
 
-					if (is_reference(node as Node, parent as Node)) {
+					if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
 						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
 
@@ -1177,12 +1194,16 @@ export default class Component {
 		}> = [];
 
 		this.ast.instance.content.body.forEach(node => {
+			const ignores = extract_svelte_ignore_from_comments(node);
+			if (ignores.length) this.push_ignores(ignores);
+
 			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 
 				const assignees = new Set<string>();
 				const assignee_nodes = new Set();
 				const dependencies = new Set<string>();
+				const module_dependencies = new Set<string>();
 
 				let scope = this.instance_scope;
 				const map = this.instance_scope_map;
@@ -1207,7 +1228,7 @@ export default class Component {
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
-						} else if (is_reference(node as Node, parent as Node)) {
+						} else if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
 							const identifier = get_object(node);
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
@@ -1219,7 +1240,7 @@ export default class Component {
 									variable.is_reactive_dependency = true;
 									if (variable.module) {
 										should_add_as_dependency = false;
-										component.warn(node as any, compiler_warnings.module_script_variable_reactive_declaration(name));
+										module_dependencies.add(name);
 									}
 								}
 								const is_writable_or_mutated =
@@ -1244,6 +1265,10 @@ export default class Component {
 					}
 				});
 
+				if (module_dependencies.size > 0 && dependencies.size === 0) {
+					component.warn(node.body as any, compiler_warnings.module_script_variable_reactive_declaration(Array.from(module_dependencies)));
+				}
+
 				const { expression } = node.body as ExpressionStatement;
 				const declaration = expression && (expression as AssignmentExpression).left;
 
@@ -1254,6 +1279,8 @@ export default class Component {
 					declaration
 				});
 			}
+
+			if (ignores.length) this.pop_ignores();
 		});
 
 		const lookup = new Map();
@@ -1284,7 +1311,7 @@ export default class Component {
 		if (cycle && cycle.length) {
 			const declarationList = lookup.get(cycle[0]);
 			const declaration = declarationList[0];
-			this.error(declaration.node, compiler_errors.cyclical_reactive_declaration(cycle));
+			return this.error(declaration.node, compiler_errors.cyclical_reactive_declaration(cycle));
 		}
 
 		const add_declaration = declaration => {
@@ -1307,7 +1334,7 @@ export default class Component {
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
 			if (name === '$' || name[1] === '$' && !is_reserved_keyword(name)) {
-				this.error(node, compiler_errors.illegal_global(name));
+				return this.error(node, compiler_errors.illegal_global(name));
 			}
 
 			this.has_reactive_assignments = true; // TODO does this belong here?
@@ -1356,13 +1383,13 @@ function process_component_options(component: Component, nodes) {
 		if (!chunk) return true;
 
 		if (value.length > 1) {
-			component.error(attribute, { code, message });
+			return component.error(attribute, { code, message });
 		}
 
 		if (chunk.type === 'Text') return chunk.data;
 
 		if (chunk.expression.type !== 'Literal') {
-			component.error(attribute, { code, message });
+			return component.error(attribute, { code, message });
 		}
 
 		return chunk.expression.value;
@@ -1378,11 +1405,11 @@ function process_component_options(component: Component, nodes) {
 						const tag = get_value(attribute, compiler_errors.invalid_tag_attribute);
 
 						if (typeof tag !== 'string' && tag !== null) {
-							component.error(attribute, compiler_errors.invalid_tag_attribute);
+							return component.error(attribute, compiler_errors.invalid_tag_attribute);
 						}
 
 						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
-							component.error(attribute, compiler_errors.invalid_tag_property);
+							return component.error(attribute, compiler_errors.invalid_tag_property);
 						}
 
 						if (tag && !component.compile_options.customElement) {
@@ -1397,12 +1424,12 @@ function process_component_options(component: Component, nodes) {
 						const ns = get_value(attribute, compiler_errors.invalid_namespace_attribute);
 
 						if (typeof ns !== 'string') {
-							component.error(attribute, compiler_errors.invalid_namespace_attribute);
+							return component.error(attribute, compiler_errors.invalid_namespace_attribute);
 						}
 
 						if (valid_namespaces.indexOf(ns) === -1) {
 							const match = fuzzymatch(ns, valid_namespaces);
-							component.error(attribute, compiler_errors.invalid_namespace_property(ns, match));
+							return component.error(attribute, compiler_errors.invalid_namespace_property(ns, match));
 						}
 
 						component_options.namespace = ns;
@@ -1415,7 +1442,7 @@ function process_component_options(component: Component, nodes) {
 						const value = get_value(attribute, compiler_errors.invalid_attribute_value(name));
 
 						if (typeof value !== 'boolean') {
-							component.error(attribute, compiler_errors.invalid_attribute_value(name));
+							return component.error(attribute, compiler_errors.invalid_attribute_value(name));
 						}
 
 						component_options[name] = value;
@@ -1423,10 +1450,10 @@ function process_component_options(component: Component, nodes) {
 					}
 
 					default:
-						component.error(attribute, compiler_errors.invalid_options_attribute_unknown);
+						return component.error(attribute, compiler_errors.invalid_options_attribute_unknown);
 				}
 			} else {
-				component.error(attribute, compiler_errors.invalid_options_attribute);
+				return component.error(attribute, compiler_errors.invalid_options_attribute);
 			}
 		});
 	}

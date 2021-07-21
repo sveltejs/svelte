@@ -14,7 +14,7 @@ export function end_hydrating() {
 type NodeEx = Node & {
 	claim_order?: number,
 	hydrate_init? : true,
-	actual_end_child?: Node,
+	actual_end_child?: NodeEx,
 	childNodes: NodeListOf<NodeEx>,
 };
 
@@ -37,8 +37,20 @@ function init_hydrate(target: NodeEx) {
 
 	type NodeEx2 = NodeEx & {claim_order: number};
 
-	// We know that all children have claim_order values since the unclaimed have been detached
-	const children = target.childNodes as NodeListOf<NodeEx2>;
+	// We know that all children have claim_order values since the unclaimed have been detached if target is not <head>
+	let children: ArrayLike<NodeEx2> = target.childNodes as NodeListOf<NodeEx2>;
+
+	// If target is <head>, there may be children without claim_order
+	if (target.nodeName === 'HEAD') {
+		const myChildren = [];
+		for (let i = 0; i < children.length; i++) {
+			const node = children[i];
+			if (node.claim_order !== undefined) {
+				myChildren.push(node);
+			}
+		}
+		children = myChildren;
+	}
 
 	/*
 	* Reorder claimed children optimally.
@@ -70,7 +82,8 @@ function init_hydrate(target: NodeEx) {
 		// Find the largest subsequence length such that it ends in a value less than our current value
 
 		// upper_bound returns first greater value, so we subtract one
-		const seqLen = upper_bound(1, longest + 1, idx => children[m[idx]].claim_order, current) - 1;
+		// with fast path for when we are on the current longest subsequence
+		const seqLen = ((longest > 0 && children[m[longest]].claim_order <= current) ? longest + 1 : upper_bound(1, longest, idx => children[m[idx]].claim_order, current)) - 1;
 
 		p[i] = m[seqLen] + 1;
 
@@ -116,6 +129,42 @@ export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
 
+export function append_styles(
+	target: Node,
+	style_sheet_id: string,
+	styles: string
+) {
+	const append_styles_to = get_root_for_styles(target);
+
+	if (!append_styles_to?.getElementById(style_sheet_id)) {
+		const style = element('style');
+		style.id = style_sheet_id;
+		style.textContent = styles;
+		append_stylesheet(append_styles_to, style);
+	}
+}
+
+export function get_root_for_node(node: Node) {
+	if (!node) return document;
+
+	return (node.getRootNode ? node.getRootNode() : node.ownerDocument); // check for getRootNode because IE is still supported
+}
+
+function get_root_for_styles(node: Node) {
+	const root = get_root_for_node(node);
+	return (root as ShadowRoot).host ? root as ShadowRoot : root as Document;
+}
+
+export function append_empty_stylesheet(node: Node) {
+	const style_element = element('style') as HTMLStyleElement;
+	append_stylesheet(get_root_for_styles(node), style_element);
+	return style_element;
+}
+
+function append_stylesheet(node: ShadowRoot | Document, style: HTMLStyleElement) {
+	append((node as Document).head || node, style);
+}
+
 export function append_hydration(target: NodeEx, node: NodeEx) {
 	if (is_hydrating) {
 		init_hydrate(target);
@@ -123,8 +172,17 @@ export function append_hydration(target: NodeEx, node: NodeEx) {
 		if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentElement !== target))) {
 			target.actual_end_child = target.firstChild;
 		}
+
+		// Skip nodes of undefined ordering
+		while ((target.actual_end_child !== null) && (target.actual_end_child.claim_order === undefined)) {
+			target.actual_end_child = target.actual_end_child.nextSibling;
+		}
+
 		if (node !== target.actual_end_child) {
-			target.insertBefore(node, target.actual_end_child);
+			// We only insert if the ordering of this node should be modified or the parent node is not target
+			if (node.claim_order !== undefined || node.parentNode !== target) {
+				target.insertBefore(node, target.actual_end_child);
+			}
 		} else {
 			target.actual_end_child = node.nextSibling;
 		}
@@ -312,11 +370,15 @@ export function children(element: Element) {
 	return Array.from(element.childNodes);
 }
 
-function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (node: ChildNodeEx) => node is R, processNode: (node: ChildNodeEx) => void, createNode: () => R, dontUpdateLastIndex: boolean = false) {
-	// Try to find nodes in an order such that we lengthen the longest increasing subsequence
+function init_claim_info(nodes: ChildNodeArray) {
 	if (nodes.claim_info === undefined) {
 		nodes.claim_info = {last_index: 0, total_claimed: 0};
 	}
+}
+
+function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (node: ChildNodeEx) => node is R, processNode: (node: ChildNodeEx) => ChildNodeEx | undefined, createNode: () => R, dontUpdateLastIndex: boolean = false) {
+	// Try to find nodes in an order such that we lengthen the longest increasing subsequence
+	init_claim_info(nodes);
 
 	const resultNode = (() => {
 		// We first try to find an element after the previous one
@@ -324,9 +386,13 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 			const node = nodes[i];
 
 			if (predicate(node)) {
-				processNode(node);
+				const replacement = processNode(node);
 
-				nodes.splice(i, 1);
+				if (replacement === undefined) {
+					nodes.splice(i, 1);
+				} else {
+					nodes[i] = replacement;
+				}
 				if (!dontUpdateLastIndex) {
 					nodes.claim_info.last_index = i;
 				}
@@ -341,12 +407,16 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 			const node = nodes[i];
 
 			if (predicate(node)) {
-				processNode(node);
+				const replacement = processNode(node);
 
-				nodes.splice(i, 1);
+				if (replacement === undefined) {
+					nodes.splice(i, 1);
+				} else {
+					nodes[i] = replacement;
+				}
 				if (!dontUpdateLastIndex) {
 					nodes.claim_info.last_index = i;
-				} else {
+				} else if (replacement === undefined) {
 					// Since we spliced before the last_index, we decrease it
 					nodes.claim_info.last_index--;
 				}
@@ -376,6 +446,7 @@ export function claim_element(nodes: ChildNodeArray, name: string, attributes: {
 				}
 			}
 			remove.forEach(v => node.removeAttribute(v));
+			return undefined;
 		},
 		() => svg ? svg_element(name as keyof SVGElementTagNameMap) : element(name as keyof HTMLElementTagNameMap)
 	);
@@ -386,7 +457,14 @@ export function claim_text(nodes: ChildNodeArray, data) {
 		nodes,
 		(node: ChildNode): node is Text => node.nodeType === 3,
 		(node: Text) => {
-			node.data = '' + data;
+			const dataStr = '' + data;
+			if (node.data.startsWith(dataStr)) {
+				if (node.data.length !== dataStr.length) {
+					return node.splitText(dataStr.length);
+				}
+			} else {
+				node.data = dataStr;
+			}
 		},
 		() => text(data),
 		true	// Text nodes should not update last index since it is likely not worth it to eliminate an increasing subsequence of actual elements
@@ -414,9 +492,16 @@ export function claim_html_tag(nodes) {
 	if (start_index === end_index) {
 		return new HtmlTagHydration();
 	}
+
+	init_claim_info(nodes);
 	const html_tag_nodes = nodes.splice(start_index, end_index + 1);
 	detach(html_tag_nodes[0]);
 	detach(html_tag_nodes[html_tag_nodes.length - 1]);
+	const claimed_nodes = html_tag_nodes.slice(1, html_tag_nodes.length - 1);
+	for (const n of claimed_nodes) {
+		n.claim_order = nodes.claim_info.total_claimed;
+		nodes.claim_info.total_claimed += 1;
+	}
 	return new HtmlTagHydration(html_tag_nodes.slice(1, html_tag_nodes.length - 1));
 }
 
@@ -543,7 +628,7 @@ export function custom_event<T=any>(type: string, detail?: T, bubbles: boolean =
 }
 
 export function query_selector_all(selector: string, parent: HTMLElement = document.body) {
-	return Array.from(parent.querySelectorAll(selector));
+	return Array.from(parent.querySelectorAll(selector)) as ChildNodeArray;
 }
 
 export class HtmlTag {

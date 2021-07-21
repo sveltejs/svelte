@@ -9,7 +9,7 @@ import Block from './Block';
 import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
-import { Node as PeriscopicNode } from 'periscopic';
+import { flatten } from '../../utils/flatten';
 
 export default function dom(
 	component: Component,
@@ -50,11 +50,8 @@ export default function dom(
 
 	if (should_add_css) {
 		body.push(b`
-			function ${add_css}() {
-				var style = @element("style");
-				style.id = "${component.stylesheet.id}-style";
-				style.textContent = "${styles}";
-				@append(@_document.head, style);
+			function ${add_css}(target) {
+				@append_styles(target, "${component.stylesheet.id}", "${styles}");
 			}
 		`);
 	}
@@ -253,7 +250,7 @@ export default function dom(
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(extract_names(assignee as PeriscopicNode));
+					const names = new Set(extract_names(assignee as Node));
 
 					this.replace(invalidate(renderer, scope, node, names, execution_context === null));
 				}
@@ -486,7 +483,7 @@ export default function dom(
 
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
 
 					${dev_props_check}
 
@@ -533,12 +530,21 @@ export default function dom(
 			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
 		};
 
+		const optional_parameters = [];
+		if (should_add_css) {
+			optional_parameters.push(add_css);
+		} else if (dirty) {
+			optional_parameters.push(x`null`);
+		}
+		if (dirty) {
+			optional_parameters.push(dirty);
+		}
+
 		const declaration = b`
 			class ${name} extends ${superclass} {
 				constructor(options) {
 					super(${options.dev && 'options'});
-					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}
@@ -551,18 +557,5 @@ export default function dom(
 		body.push(declaration);
 	}
 
-	return { js: flatten(body, []), css };
-}
-
-function flatten(nodes: any[], target: any[]) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (Array.isArray(node)) {
-			flatten(node, target);
-		} else {
-			target.push(node);
-		}
-	}
-
-	return target;
+	return { js: flatten(body), css };
 }

@@ -20,9 +20,9 @@ export default {
 		code: 'non-top-level-reactive-declaration',
 		message: '$: has no effect outside of the top-level'
 	},
-	module_script_variable_reactive_declaration: (name: string) => ({
+	module_script_variable_reactive_declaration: (names: string[]) => ({
 		code: 'module-script-reactive-declaration',
-		message: `"${name}" is declared in a module script and will not be reactive`
+		message: `${names.map(name => `"${name}"`).join(', ')} ${names.length > 1 ? 'are' : 'is'} declared in a module script and will not be reactive`
 	}),
 	missing_declaration: (name: string, has_script: boolean) => ({
 		code: 'missing-declaration',
