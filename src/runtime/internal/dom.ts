@@ -125,6 +125,42 @@ function init_hydrate(target: NodeEx) {
 	}
 }
 
+export function append_styles(
+	target: Node,
+	style_sheet_id: string,
+	styles: string
+) {
+	const append_styles_to = get_root_for_styles(target);
+
+	if (!append_styles_to?.getElementById(style_sheet_id)) {
+		const style = element('style');
+		style.id = style_sheet_id;
+		style.textContent = styles;
+		append_stylesheet(append_styles_to, style);
+	}
+}
+
+export function get_root_for_node(node: Node) {
+	if (!node) return document;
+
+	return (node.getRootNode ? node.getRootNode() : node.ownerDocument); // check for getRootNode because IE is still supported
+}
+
+function get_root_for_styles(node: Node) {
+	const root = get_root_for_node(node);
+	return (root as ShadowRoot).host ? root as ShadowRoot : root as Document;
+}
+
+export function append_empty_stylesheet(node: Node) {
+	const style_element = element('style') as HTMLStyleElement;
+	append_stylesheet(get_root_for_styles(node), style_element);
+	return style_element;
+}
+
+function append_stylesheet(node: ShadowRoot | Document, style: HTMLStyleElement) {
+	append((node as Document).head || node, style);
+}
+
 export function append(target: NodeEx, node: NodeEx) {
 	if (is_hydrating) {
 		init_hydrate(target);

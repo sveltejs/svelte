@@ -1,4 +1,4 @@
-import { element } from './dom';
+import { append_empty_stylesheet, get_root_for_node } from './dom';
 import { raf } from './environment';
 
 interface ExtendedDoc extends Document {
@@ -29,9 +29,9 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 
 	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
 	const name = `__svelte_${hash(rule)}_${uid}`;
-	const doc = node.ownerDocument as ExtendedDoc;
+	const doc = get_root_for_node(node) as unknown as ExtendedDoc;
 	active_docs.add(doc);
-	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet);
+	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = append_empty_stylesheet(node).sheet as CSSStyleSheet);
 	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
 
 	if (!current_rules[name]) {
