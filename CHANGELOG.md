@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.40.0
 
 * Support rendering a component in a shadow DOM ([#5869](https://github.com/sveltejs/svelte/issues/5869))
 * Fix `:root` selector being erroneously scoped to component ([#4767](https://github.com/sveltejs/svelte/issues/4767))
