@@ -527,6 +527,8 @@ export function select_option(select, value) {
 			return;
 		}
 	}
+
+	select.selectedIndex = -1; // no option should be selected
 }
 
 export function select_options(select, value) {
