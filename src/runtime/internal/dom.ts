@@ -566,6 +566,12 @@ export function is_crossorigin() {
 }
 
 export function add_resize_listener(node: HTMLElement, fn: () => void) {
+	if ('ResizeObserver' in window) {
+		// @ts-ignore https://github.com/Microsoft/TypeScript/issues/28502
+		const obs = new ResizeObserver(fn) as any;
+		obs.observe(node);
+		return obs.disconnect.bind(obs);
+	}
 	const computed_style = getComputedStyle(node);
 
 	if (computed_style.position === 'static') {
