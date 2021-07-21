@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Various hydration improvements and fixed ([#6449](https://github.com/sveltejs/svelte/pull/6449))
+
 ## 3.39.0
 
 * Support `bind:group` in SSR ([#4621](https://github.com/sveltejs/svelte/pull/4621))
