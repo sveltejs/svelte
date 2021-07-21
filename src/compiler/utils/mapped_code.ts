@@ -295,8 +295,8 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style'): void {
 	const r_in = '[#@]\\s*sourceMappingURL\\s*=\\s*(\\S*)';
 	const regex = (tag_name == 'script')
-		? new RegExp('(?://'+r_in+')|(?:/\\*'+r_in+'\\s*\\*/)$')
-		: new RegExp('/\\*'+r_in+'\\s*\\*/$');
+		? new RegExp('(?://' + r_in + ')|(?:/\\*' + r_in + '\\s*\\*/)$')
+		: new RegExp('/\\*' + r_in + '\\s*\\*/$');
 	function log_warning(message) {
 		// code_start: help to find preprocessor
 		const code_start = processed.code.length < 100 ? processed.code : (processed.code.slice(0, 100) + ' [...]');
