@@ -949,7 +949,7 @@ The following initialisation options can be provided:
 
 | option | default | description |
 | --- | --- | --- |
-| `target` | **none** | An `HTMLElement` to render to. This option is required
+| `target` | **none** | An `HTMLElement` or `ShadowRoot` to render to. This option is required
 | `anchor` | `null` | A child of `target` to render the component immediately before
 | `props` | `{}` | An object of properties to supply to the component
 | `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component

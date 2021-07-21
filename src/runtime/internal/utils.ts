@@ -89,7 +89,7 @@ export function create_slot(definition, ctx, $$scope, fn) {
 	}
 }
 
-export function get_slot_context(definition, ctx, $$scope, fn) {
+function get_slot_context(definition, ctx, $$scope, fn) {
 	return definition[1] && fn
 		? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
 		: $$scope.ctx;
