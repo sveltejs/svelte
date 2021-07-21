@@ -669,10 +669,10 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			block.chunks.mount.push(b`
-				if (${data}.multiple) @select_options(${this.var}, ${data}.value);
+				(${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);
 			`);
 			block.chunks.update.push(b`
-				if (${block.renderer.dirty(Array.from(dependencies))} && ${data}.multiple) @select_options(${this.var}, ${data}.value);
+				if (${block.renderer.dirty(Array.from(dependencies))}) (${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);;
 			`);
 		} else if (this.node.name === 'input' && this.attributes.find(attr => attr.node.name === 'value')) {
 			const type = this.node.get_static_attribute_value('type');
