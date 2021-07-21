@@ -1,7 +1,7 @@
 import { identity as linear, is_function, noop, run_all } from './utils';
 import { now } from './environment';
 import { loop } from './loop';
-import { create_rule, delete_rule } from './style_manager';
+import { create_rule, delete_rule, create_static_rule, delete_static_rule } from './style_manager';
 import { custom_event } from './dom';
 import { add_render_callback } from './scheduler';
 import { TransitionConfig } from '../transition';
@@ -89,12 +89,14 @@ type TransitionFn = (node: Element, params: any) => TransitionConfig;
 export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
 	let config = fn(node, params);
 	let running = false;
+	let static_class_name;
 	let animation_name;
 	let task;
 	let uid = 0;
 
 	function cleanup() {
 		if (animation_name) delete_rule(node, animation_name);
+		if (static_class_name) delete_static_rule(node, static_class_name);
 	}
 
 	function go() {
@@ -103,9 +105,11 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 			duration = 300,
 			easing = linear,
 			tick = noop,
-			css
+			css,
+			static_css
 		} = config || null_transition;
 
+		if (static_css) static_class_name = create_static_rule(node, static_css);
 		if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
 		tick(0, 1);
 
@@ -170,6 +174,7 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
 	let config = fn(node, params);
 	let running = true;
+	let static_class_name;
 	let animation_name;
 
 	const group = outros;
@@ -182,9 +187,11 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 			duration = 300,
 			easing = linear,
 			tick = noop,
-			css
+			css,
+			static_css
 		} = config || null_transition;
 
+		if (static_css) static_class_name = create_static_rule(node, static_css);
 		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
 
 		const start_time = now() + delay;
@@ -236,6 +243,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 
 			if (running) {
 				if (animation_name) delete_rule(node, animation_name);
+				if (static_class_name) delete_static_rule(node, static_class_name);
 				running = false;
 			}
 		}
@@ -268,6 +276,14 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 	let running_program: Program | null = null;
 	let pending_program: PendingProgram | null = null;
 	let animation_name = null;
+	let static_class_name = null;
+
+	function clear_static_css() {
+		if (static_class_name) {
+			delete_static_rule(node, static_class_name);
+			static_class_name = null;
+		}
+	}
 
 	function clear_animation() {
 		if (animation_name) delete_rule(node, animation_name);
@@ -294,7 +310,8 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			duration = 300,
 			easing = linear,
 			tick = noop,
-			css
+			css,
+			static_css
 		} = config || null_transition;
 
 		const program: PendingProgram = {
@@ -313,6 +330,9 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 		} else {
 			// if this is an intro, and there's a delay, we need to do
 			// an initial tick and/or apply CSS animation immediately
+			if (static_css && !static_class_name) {
+				static_class_name = create_static_rule(node, static_css);
+			}
 			if (css) {
 				clear_animation();
 				animation_name = create_rule(node, t, b, duration, delay, easing, css);
@@ -346,6 +366,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 							if (running_program.b) {
 								// intro — we can tidy up immediately
 								clear_animation();
+								clear_static_css();
 							} else {
 								// outro — needs to be coordinated
 								if (!--running_program.group.r) run_all(running_program.group.c);
@@ -380,6 +401,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 
 		end() {
 			clear_animation();
+			clear_static_css();
 			running_program = pending_program = null;
 		}
 	};
