@@ -6,7 +6,7 @@ import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
 import { LabeledStatement, Statement, Node } from 'estree';
-import { Node as PeriscopicNode , extract_names } from 'periscopic';
+import { extract_names } from 'periscopic';
 import { walk } from 'estree-walker';
 
 import { invalidate } from '../render_dom/invalidate';
@@ -90,7 +90,7 @@ export default function ssr(
 
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-					const names = new Set(extract_names(assignee as PeriscopicNode));
+					const names = new Set(extract_names(assignee as Node));
 					const to_invalidate = new Set<string>();
 
 					for (const name of names) {
