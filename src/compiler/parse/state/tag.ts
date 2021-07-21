@@ -444,10 +444,10 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 		data: null
 	};
 
-	function flush() {
+	function flush(end: number) {
 		if (current_chunk.raw) {
 			current_chunk.data = decode_character_references(current_chunk.raw);
-			current_chunk.end = parser.index;
+			current_chunk.end = end;
 			chunks.push(current_chunk);
 		}
 	}
@@ -458,10 +458,10 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 		const index = parser.index;
 
 		if (done()) {
-			flush();
+			flush(parser.index);
 			return chunks;
 		} else if (parser.eat('{')) {
-			flush();
+			flush(parser.index - 1);
 
 			parser.allow_whitespace();
 			const expression = read_expression(parser);
