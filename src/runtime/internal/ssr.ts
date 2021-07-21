@@ -32,16 +32,31 @@ export function spread(args, classes_to_add) {
 	return str;
 }
 
-export const escaped = {
+const ATTR_REGEX = /[&"]/g;
+const CONTENT_REGEX = /[&<]/g;
+
+const escapes = {
 	'"': '&quot;',
-	"'": '&#39;',
 	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;'
+	'<': '&lt'
 };
 
-export function escape(html) {
-	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+export function escape(html: string, is_attr = false) {
+	if (typeof html !== 'string') return html;
+
+	const pattern = is_attr ? ATTR_REGEX : CONTENT_REGEX;
+	pattern.lastIndex = 0;
+
+	let escaped = '';
+	let last = 0;
+
+	while (pattern.test(html)) {
+		const i = pattern.lastIndex - 1;
+		escaped += html.slice(last, i) + escapes[html[i]];
+		last = i + 1;
+	}
+
+	return escaped + html.slice(last);
 }
 
 export function escape_attribute_value(value) {
@@ -141,7 +156,7 @@ export function create_ssr_component(fn) {
 
 export function add_attribute(name, value, boolean) {
 	if (value == null || (boolean && !value)) return '';
-	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value)) : `"${value}"`}`}`;
+	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value, true)) : `"${value}"`}`}`;
 }
 
 export function add_classes(classes) {
