@@ -668,7 +668,11 @@ export default class Component {
 
 		// NOTE: add store variable first, then only $store value
 		// as `$store` will mark `store` variable as referenced and subscribable
-		const sorted_globals = Array.from(globals.keys()).sort().reverse();
+		const global_keys = Array.from(globals.keys());
+		const sorted_globals = [
+			...global_keys.filter(key => key[0] !== '$'),
+			...global_keys.filter(key => key[0] === '$')
+		];
 
 		sorted_globals.forEach(name => {
 			if (this.var_lookup.has(name)) return;
