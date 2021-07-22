@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix incorrect scoping of `:global()` selectors ([#6550](https://github.com/sveltejs/svelte/issues/6550))
+
 ## 3.40.1
 
 * Fix store reactivity regression when using reactive statements ([#6557](https://github.com/sveltejs/svelte/issues/6557))
