@@ -63,17 +63,16 @@ export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T
  */
 export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
-	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
+	const subscribers: Set<SubscribeInvalidateTuple<T>> = new Set();
 
 	function set(new_value: T): void {
 		if (safe_not_equal(value, new_value)) {
 			value = new_value;
 			if (stop) { // store is ready
 				const run_queue = !subscriber_queue.length;
-				for (let i = 0; i < subscribers.length; i += 1) {
-					const s = subscribers[i];
-					s[1]();
-					subscriber_queue.push(s, value);
+				for (const subscriber of subscribers) {
+					subscriber[1]();
+					subscriber_queue.push(subscriber, value);
 				}
 				if (run_queue) {
 					for (let i = 0; i < subscriber_queue.length; i += 2) {
@@ -91,18 +90,17 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 
 	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
-		subscribers.push(subscriber);
-		if (subscribers.length === 1) {
+		subscribers.add(subscriber);
+		if (subscribers.size === 1) {
 			stop = start(set) || noop;
 		}
 		run(value);
 
 		return () => {
-			const index = subscribers.indexOf(subscriber);
-			if (index !== -1) {
-				subscribers.splice(index, 1);
+			if (subscribers.has(subscriber)) {
+				subscribers.delete(subscriber);
 			}
-			if (subscribers.length === 0) {
+			if (subscribers.size === 0) {
 				stop();
 				stop = null;
 			}
