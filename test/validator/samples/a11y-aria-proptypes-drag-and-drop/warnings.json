@@ -1,0 +1,33 @@
+[
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 45,
+      "column": 45,
+      "line": 1
+    },
+    "message": "A11y: The value for the aria attribute 'aria-dropeffect' must be a space-separated list of one or more of copy, execute, link, move, none, popup",
+    "pos": 6,
+    "start": {
+      "character": 6,
+      "column": 6,
+      "line": 1
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 81,
+      "column": 24,
+      "line": 2
+    },
+    "message": "A11y: The value for the aria attribute 'aria-grabbed' must be exactly one of true, false, or undefined",
+    "pos": 63,
+    "start": {
+      "character": 63,
+      "column": 6,
+      "line": 2
+    }
+  }
+]

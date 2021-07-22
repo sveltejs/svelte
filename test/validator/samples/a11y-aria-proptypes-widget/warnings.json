@@ -1,0 +1,289 @@
+[
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "message": "A11y: The value for the aria attribute 'aria-autocomplete' must be exactly one of inline, list, both, none",
+    "start": {
+      "line": 1,
+      "column": 6,
+      "character": 6
+    },
+    "end": {
+      "line": 1,
+      "column": 29,
+      "character": 29
+    },
+    "pos": 6
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 65,
+      "column": 24,
+      "line": 2
+    },
+    "message": "A11y: The value for the aria attribute 'aria-checked' must be exactly one of true, false, or mixed",
+    "pos": 47,
+    "start": {
+      "character": 47,
+      "column": 6,
+      "line": 2
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 102,
+      "column": 25,
+      "line": 3
+    },
+    "message": "A11y: The value for the aria attribute 'aria-expanded' must be exactly one of true, false, or undefined",
+    "pos": 83,
+    "start": {
+      "character": 83,
+      "column": 6,
+      "line": 3
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 136,
+      "column": 22,
+      "line": 4
+    },
+    "message": "A11y: The value for the aria attribute 'aria-level' must be of type integer",
+    "pos": 120,
+    "start": {
+      "character": 120,
+      "column": 6,
+      "line": 4
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 170,
+      "column": 22,
+      "line": 5
+    },
+    "message": "A11y: The value for the aria attribute 'aria-modal' must be exactly one of true or false",
+    "pos": 154,
+    "start": {
+      "character": 154,
+      "column": 6,
+      "line": 5
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 208,
+      "column": 26,
+      "line": 6
+    },
+    "message": "A11y: The value for the aria attribute 'aria-multiline' must be exactly one of true or false",
+    "pos": 188,
+    "start": {
+      "character": 188,
+      "column": 6,
+      "line": 6
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 252,
+      "column": 32,
+      "line": 7
+    },
+    "message": "A11y: The value for the aria attribute 'aria-multiselectable' must be exactly one of true or false",
+    "pos": 226,
+    "start": {
+      "character": 226,
+      "column": 6,
+      "line": 7
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 308,
+      "column": 44,
+      "line": 8
+    },
+    "message": "A11y: The value for the aria attribute 'aria-orientation' must be exactly one of vertical, undefined, horizontal",
+    "pos": 270,
+    "start": {
+      "character": 270,
+      "column": 6,
+      "line": 8
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 342,
+      "column": 22,
+      "line": 9
+    },
+    "message": "A11y: The value for the aria attribute 'aria-placeholder' must be of type string",
+    "pos": 326,
+    "start": {
+      "character": 326,
+      "column": 6,
+      "line": 9
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 378,
+      "column": 24,
+      "line": 10
+    },
+    "message": "A11y: The value for the aria attribute 'aria-pressed' must be exactly one of true, false, or mixed",
+    "pos": 360,
+    "start": {
+      "character": 360,
+      "column": 6,
+      "line": 10
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 415,
+      "column": 25,
+      "line": 11
+    },
+    "message": "A11y: The value for the aria attribute 'aria-readonly' must be exactly one of true or false",
+    "pos": 396,
+    "start": {
+      "character": 396,
+      "column": 6,
+      "line": 11
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 452,
+      "column": 25,
+      "line": 12
+    },
+    "message": "A11y: The value for the aria attribute 'aria-required' must be exactly one of true or false",
+    "pos": 433,
+    "start": {
+      "character": 433,
+      "column": 6,
+      "line": 12
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 489,
+      "column": 25,
+      "line": 13
+    },
+    "message": "A11y: The value for the aria attribute 'aria-selected' must be exactly one of true, false, or undefined",
+    "pos": 470,
+    "start": {
+      "character": 470,
+      "column": 6,
+      "line": 13
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 539,
+      "column": 38,
+      "line": 14
+    },
+    "message": "A11y: The value for the aria attribute 'aria-sort' must be exactly one of ascending, descending, none, other",
+    "pos": 507,
+    "start": {
+      "character": 507,
+      "column": 6,
+      "line": 14
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 576,
+      "column": 25,
+      "line": 15
+    },
+    "message": "A11y: The value for the aria attribute 'aria-valuemax' must be of type number",
+    "pos": 557,
+    "start": {
+      "character": 557,
+      "column": 6,
+      "line": 15
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 613,
+      "column": 25,
+      "line": 16
+    },
+    "message": "A11y: The value for the aria attribute 'aria-valuemin' must be of type number",
+    "pos": 594,
+    "start": {
+      "character": 594,
+      "column": 6,
+      "line": 16
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 650,
+      "column": 25,
+      "line": 17
+    },
+    "message": "A11y: The value for the aria attribute 'aria-valuenow' must be of type number",
+    "pos": 631,
+    "start": {
+      "character": 631,
+      "column": 6,
+      "line": 17
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 682,
+      "column": 20,
+      "line": 18
+    },
+    "message": "A11y: The value for the aria attribute 'aria-valuetext' must be of type string",
+    "pos": 668,
+    "start": {
+      "character": 668,
+      "column": 6,
+      "line": 18
+    }
+  }
+]

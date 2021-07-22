@@ -1,0 +1,65 @@
+[
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 23,
+      "column": 23,
+      "line": 1
+    },
+    "message": "A11y: The value for the aria attribute 'aria-atomic' must be exactly one of true or false",
+    "pos": 6,
+    "start": {
+      "character": 6,
+      "column": 6,
+      "line": 1
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 56,
+      "column": 21,
+      "line": 2
+    },
+    "message": "A11y: The value for the aria attribute 'aria-busy' must be exactly one of true or false",
+    "pos": 41,
+    "start": {
+      "character": 41,
+      "column": 6,
+      "line": 2
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 102,
+      "column": 34,
+      "line": 3
+    },
+    "message": "A11y: The value for the aria attribute 'aria-live' must be exactly one of assertive, off, polite",
+    "pos": 74,
+    "start": {
+      "character": 74,
+      "column": 6,
+      "line": 3
+    }
+  },
+
+  {
+    "code": "a11y-invalid-aria-attribute-value",
+    "end": {
+      "character": 163,
+      "column": 49,
+      "line": 4
+    },
+    "message": "A11y: The value for the aria attribute 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
+    "pos": 120,
+    "start": {
+      "character": 120,
+      "column": 6,
+      "line": 4
+    }
+  }
+]
