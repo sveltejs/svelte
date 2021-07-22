@@ -433,7 +433,7 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 	return resultNode;
 }
 
-export function claim_element(nodes: ChildNodeArray, name: string, attributes: {[key: string]: boolean}, svg) {
+export function claim_element(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }, create_element: (name: string) => Element | SVGElement = element) {
 	return claim_node<Element | SVGElement>(
 		nodes,
 		(node: ChildNode): node is Element | SVGElement => node.nodeName === name,
@@ -448,7 +448,7 @@ export function claim_element(nodes: ChildNodeArray, name: string, attributes: {
 			remove.forEach(v => node.removeAttribute(v));
 			return undefined;
 		},
-		() => svg ? svg_element(name as keyof SVGElementTagNameMap) : element(name as keyof HTMLElementTagNameMap)
+		() => create_element(name)
 	);
 }
 

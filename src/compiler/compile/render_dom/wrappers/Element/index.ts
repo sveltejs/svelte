@@ -388,7 +388,7 @@ export default class ElementWrapper extends Wrapper {
 			? this.node.name
 			: this.node.name.toUpperCase();
 
-		const svg = this.node.namespace === namespaces.svg ? 1 : null;
+		const svg = this.node.namespace === namespaces.svg ? '@svg_element' : null;
 
 		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
 	}
