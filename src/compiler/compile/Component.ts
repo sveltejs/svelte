@@ -666,8 +666,17 @@ export default class Component {
 			this.node_for_declaration.set(name, node);
 		});
 
-		globals.forEach((node, name) => {
+		// NOTE: add store variable first, then only $store value
+		// as `$store` will mark `store` variable as referenced and subscribable
+		const global_keys = Array.from(globals.keys());
+		const sorted_globals = [
+			...global_keys.filter(key => key[0] !== '$'),
+			...global_keys.filter(key => key[0] === '$')
+		];
+
+		sorted_globals.forEach(name => {
 			if (this.var_lookup.has(name)) return;
+			const node = globals.get(name);
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
 				this.add_var({
