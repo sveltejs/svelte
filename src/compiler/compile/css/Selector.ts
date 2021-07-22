@@ -278,14 +278,12 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 			return BlockAppliesToNode.NotPossible;
 		}
 
-		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
-			continue;
+		if (block.selectors.length === 1 && selector.type === 'PseudoClassSelector' && name === 'global') {
+			return BlockAppliesToNode.NotPossible;
 		}
 
-		if (selector.type === 'PseudoClassSelector' && name === 'global') {
-			// TODO shouldn't see this here... maybe we should enforce that :global(...)
-			// cannot be sandwiched between non-global selectors?
-			return BlockAppliesToNode.NotPossible;
+		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
+			continue;
 		}
 
 		if (selector.type === 'ClassSelector') {
