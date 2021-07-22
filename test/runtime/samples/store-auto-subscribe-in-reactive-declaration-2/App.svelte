@@ -1,7 +1,7 @@
 <script>
-	export let storeContainer;
+	export let store_container;
 
-	$: ({ store } = storeContainer);
+	$: ({ store } = store_container);
 	$: value = $store;
 </script>
 <div>{value}</div>

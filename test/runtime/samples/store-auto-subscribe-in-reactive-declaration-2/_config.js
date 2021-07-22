@@ -5,7 +5,7 @@ export default {
 	`,
 
 	async test({ assert, component, target, window }) {
-		await component.updateValue('Hi Svelte');
+		await component.update_value('Hi Svelte');
 
 		assert.htmlEqual(target.innerHTML, `
 			<div>Hi Svelte</div>

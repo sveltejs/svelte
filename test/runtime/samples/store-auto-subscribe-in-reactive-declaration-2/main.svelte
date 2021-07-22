@@ -2,11 +2,11 @@
 	import { writable } from 'svelte/store';
 	import Child from './App.svelte';
 
-	const storeContainer = { store: writable('Hello World') }
+	const store_container = { store: writable('Hello World') };
 
-	export function updateValue(value) {
-		storeContainer.store = writable(value);
+	export function update_value(value) {
+		store_container.store = writable(value);
 	}
 </script>
 
-<Child {storeContainer} />
+<Child {store_container} />
