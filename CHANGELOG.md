@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.40.2
 
 * Fix dynamic `autofocus={...}` attribute handling ([#4995](https://github.com/sveltejs/svelte/issues/4995))
 * Add filename to combined source map if needed ([#6089](https://github.com/sveltejs/svelte/pull/6089))
