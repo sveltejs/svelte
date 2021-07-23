@@ -464,12 +464,17 @@ function get_directive_type(name: string): DirectiveType {
 }
 
 function read_attribute_value(parser: Parser) {
-	const is_blank = parser.eat("''") ? true : parser.eat('""') ? true : false;
-	if (is_blank) {
-		return [flush_blank_node(parser)];
+	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
+	if (quote_mark && parser.eat(quote_mark)) {
+		return [{
+			start: parser.index,
+			end: parser.index,
+			type: 'Text',
+			raw: '',
+			data: ''
+		}];
 	}
 
-	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
 	const regex = (
 		quote_mark === "'" ? /'/ :
 			quote_mark === '"' ? /"/ :
@@ -480,16 +485,6 @@ function read_attribute_value(parser: Parser) {
 
 	if (quote_mark) parser.index += 1;
 	return value;
-}
-
-function flush_blank_node(parser: Parser): TemplateNode {
-	return {
-		start: parser.index,
-		end: parser.index,
-		type: 'Text',
-		raw: '',
-		data: ''
-	};
 }
 
 function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
