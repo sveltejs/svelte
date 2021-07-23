@@ -2,9 +2,10 @@
 
 ## Unreleased
 
+* Fix dynamic `autofocus={...}` attribute handling ([#4995](https://github.com/sveltejs/svelte/issues/4995))
+* Add filename to combined source map if needed ([#6089](https://github.com/sveltejs/svelte/pull/6089))
+* Fix tracking whether transition has started ([#6399](https://github.com/sveltejs/svelte/pull/6399))
 * Fix incorrect scoping of `:global()` selectors ([#6550](https://github.com/sveltejs/svelte/issues/6550))
-* Add filename to combined source map if needed ([#6089](https://github.com/sveltejs/svelte/issues/6089))
-* Fix tracking whether transition has started ([#6399](https://github.com/sveltejs/svelte/issues/6399))
 
 ## 3.40.1
 
