@@ -143,7 +143,8 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 	return {
 		start() {
 			if (started) return;
-
+			
+			started = true;
 			delete_rule(node);
 
 			if (is_function(config)) {
