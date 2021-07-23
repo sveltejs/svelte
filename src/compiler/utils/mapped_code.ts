@@ -253,7 +253,7 @@ export function combine_sourcemaps(
 
 	// When source maps are combined and the leading map is empty, sources is not set.
 	// Add the filename to the empty array in this case. 
-	// Possibly a bug in the remapping library https://github.com/ampproject/remapping/issues/116
+	// Further improvements to remapping may help address this as well https://github.com/ampproject/remapping/issues/116
 	if (!map.sources.length) map.sources = [filename];
 
 	return map;
