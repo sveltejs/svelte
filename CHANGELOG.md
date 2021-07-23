@@ -7,6 +7,7 @@
 ## 3.40.1
 
 * Fix store reactivity regression when using reactive statements ([#6557](https://github.com/sveltejs/svelte/issues/6557))
+* Add filename to combined source map if needed ([#6089](https://github.com/sveltejs/svelte/issues/6089))
 
 ## 3.40.0
 
