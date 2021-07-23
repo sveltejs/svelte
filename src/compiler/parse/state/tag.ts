@@ -422,6 +422,15 @@ function get_directive_type(name: string): DirectiveType {
 
 function read_attribute_value(parser: Parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
+	if (quote_mark && parser.eat(quote_mark)) {
+		return [{
+			start: parser.index - 1,
+			end: parser.index - 1,
+			type: 'Text',
+			raw: '',
+			data: ''
+		}];
+	}
 
 	const regex = (
 		quote_mark === "'" ? /'/ :
