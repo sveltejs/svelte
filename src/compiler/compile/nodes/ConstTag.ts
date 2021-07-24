@@ -9,6 +9,7 @@ import { walk } from 'estree-walker';
 import { extract_identifiers } from 'periscopic';
 import is_reference from 'is-reference';
 import get_object from '../utils/get_object';
+import compiler_errors from '../compiler_errors';
 
 const allowed_parents = new Set(['EachBlock', 'CatchBlock', 'ThenBlock', 'InlineComponent', 'SlotTemplate']);
 
@@ -26,7 +27,7 @@ export default class ConstTag extends Node {
 		super(component, parent, scope, info);
 
 		if (!allowed_parents.has(parent.type)) {
-			component.error(info, { code: 'invalid-const-placement', message: '{@const} must be the immediate child of {#each}, {:then}, {:catch}, <svelte:fragment> and <Component>' });
+			component.error(info, compiler_errors.invalid_const_placement);
 		}
 		this.node = info;
 		this.scope = scope;
@@ -37,7 +38,7 @@ export default class ConstTag extends Node {
       assignees.add(name);
 			const owner = this.scope.get_owner(name);
 			if (owner === parent) {
-				component.error(info, { code: 'invalid-const-declaration', message: `'${name}' has already been declared` });
+				component.error(info, compiler_errors.invalid_const_declaration(name));
 			}
     });
 
@@ -51,14 +52,14 @@ export default class ConstTag extends Node {
       }
     });
 	}
-	
+
 	parse_expression() {
 		unpack_destructuring(this.contexts, this.node.expression.left);
 		this.expression = new Expression(this.component, this, this.scope, this.node.expression.right);
 		this.contexts.forEach(context => {
 			const owner = this.scope.get_owner(context.key.name);
 			if (owner && owner.type === 'ConstTag' && owner.parent === this.parent) {
-				this.component.error(this.node, { code: 'invalid-const-declaration', message: `'${context.key.name}' has already been declared` });
+				this.component.error(this.node, compiler_errors.invalid_const_declaration(context.key.name));
 			}
 			this.scope.add(context.key.name, this.expression.dependencies, this);
 		});

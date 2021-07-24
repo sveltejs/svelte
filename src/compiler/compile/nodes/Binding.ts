@@ -58,10 +58,7 @@ export default class Binding extends Node {
 				return;
 			}
 			if (scope.is_const(name)) {
-				component.error(this, {
-					code: 'invalid-binding',
-					message: 'Cannot bind to a variable declared with {@const ...}'
-				});
+				component.error(this, compiler_errors.invalid_binding_const);
 			}
 
 			scope.dependencies_for_name.get(name).forEach(name => {

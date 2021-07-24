@@ -4,6 +4,7 @@ import ConstTag from '../ConstTag';
 import map_children from './map_children';
 import { INodeAllowConstTag, INode } from '../interfaces';
 import check_graph_for_cycles from '../../utils/check_graph_for_cycles';
+import compiler_errors from '../../compiler_errors';
 
 export default function get_const_tags(children: TemplateNode[], component: Component, node: INodeAllowConstTag, parent: INode): [ConstTag[], Array<Exclude<INode, ConstTag>>] {
   const const_tags: ConstTagType[] = [];
@@ -67,10 +68,7 @@ function sort_consts_nodes(consts_nodes: ConstTag[], component: Component) {
   if (cycle && cycle.length) {
     const nodeList = lookup.get(cycle[0]);
     const node = nodeList[0];
-    component.error(node.node, {
-      code: 'cyclical-constant-tags',
-      message: `Cyclical dependency detected: ${cycle.join(' → ')}`
-    });
+    component.error(node.node, compiler_errors.cyclical_constant_tags(cycle));
   }
 
   const add_node = (node: ConstNode) => {

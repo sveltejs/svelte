@@ -134,10 +134,7 @@ export default class Expression {
 					names.forEach(name => {
 						if (template_scope.names.has(name)) {
 							if (template_scope.is_const(name)) {
-								component.error(node, {
-									code: 'invalid-const-update',
-									message: `'${name}' is declared using {@const ...} and it is read-only`
-								});
+								component.error(node, compiler_errors.invalid_const_update(name));
 							}
 
 							template_scope.dependencies_for_name.get(name).forEach(name => {

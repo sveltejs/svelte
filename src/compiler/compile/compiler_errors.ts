@@ -40,6 +40,10 @@ export default {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable declared with {#await ... then} or {:catch} blocks'
 	},
+	invalid_binding_const: {
+		code: 'invalid-binding',
+		message: 'Cannot bind to a variable declared with {@const ...}'
+	},
 	invalid_binding_writibale: {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable which is not writable'
@@ -241,5 +245,21 @@ export default {
 	invalid_directive_value: {
 		code: 'invalid-directive-value',
 		message: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
-	}
+	},
+	invalid_const_placement: {
+		code: 'invalid-const-placement',
+		message: '{@const} must be the immediate child of {#each}, {:then}, {:catch}, <svelte:fragment> and <Component>'
+	},
+	invalid_const_declaration: (name: string) => ({
+		code: 'invalid-const-declaration',
+		message: `'${name}' has already been declared`
+	}),
+	invalid_const_update: (name: string) => ({
+		code: 'invalid-const-update',
+		message: `'${name}' is declared using {@const ...} and it is read-only`
+	}),
+	cyclical_constant_tags: (cycle: string[]) => ({
+		code: 'cyclical-constant-tags',
+		message: `Cyclical dependency detected: ${cycle.join(' → ')}`
+	})
 };
