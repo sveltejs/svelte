@@ -962,20 +962,22 @@ A custom transition function can also return a `tick` function, which is called 
 <script>
 	export let visible = false;
 
-	function typewriter(node, { speed = 50 }) {
+	function typewriter(node, { speed = 1 }) {
 		const valid = (
 			node.childNodes.length === 1 &&
 			node.childNodes[0].nodeType === Node.TEXT_NODE
 		);
 
-		if (!valid) return {};
+		if (!valid) {
+			throw new Error(`This transition only works on elements with a single text node child`);
+		}
 
 		const text = node.textContent;
-		const duration = text.length * speed;
+		const duration = text.length / (speed * 0.01) ;
 
 		return {
 			duration,
-			tick: (t, u) => {
+			tick: t => {
 				const i = ~~(text.length * t);
 				node.textContent = text.slice(0, i);
 			}
@@ -984,7 +986,7 @@ A custom transition function can also return a `tick` function, which is called 
 </script>
 
 {#if visible}
-	<p in:typewriter="{{ speed: 20 }}">
+	<p in:typewriter="{{ speed: 1 }}">
 		The quick brown fox jumps over the lazy dog
 	</p>
 {/if}
@@ -1247,7 +1249,7 @@ As with DOM events, if the `on:` directive is used without a value, the componen
 
 ---
 
-As of [Svelte 3.38](https://github.com/sveltejs/svelte/issues/6268) ([RFC](https://github.com/sveltejs/rfcs/pull/13)), you can pass styles as props to components for the purposes of theming, using CSS custom properties. 
+As of [Svelte 3.38](https://github.com/sveltejs/svelte/issues/6268) ([RFC](https://github.com/sveltejs/rfcs/pull/13)), you can pass styles as props to components for the purposes of theming, using CSS custom properties.
 
 Svelte's implementation is essentially syntactic sugar for adding a wrapper element. This example:
 
@@ -1274,7 +1276,7 @@ Desugars to this:
 </div>
 ```
 
-**Note**: Since this is an extra div, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature. Also note that not all browsers support `display: contents`: https://caniuse.com/css-display-contents 
+**Note**: Since this is an extra div, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature. Also note that not all browsers support `display: contents`: https://caniuse.com/css-display-contents
 
 ---
 
