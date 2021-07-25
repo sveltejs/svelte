@@ -185,7 +185,7 @@ export function append_hydration(target: NodeEx, node: NodeEx) {
 		} else {
 			target.actual_end_child = node.nextSibling;
 		}
-	} else if (node.parentNode !== target) {
+	} else if (node.parentNode !== target || node.nextSibling !== null) {
 		target.appendChild(node);
 	}
 }
