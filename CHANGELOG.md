@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix mounting component at detached DOM node ([#6567](https://github.com/sveltejs/svelte/issues/6567))
+
 ## 3.40.2
 
 * Fix dynamic `autofocus={...}` attribute handling ([#4995](https://github.com/sveltejs/svelte/issues/4995))
