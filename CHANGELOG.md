@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix destructuring into variables beginning with `$` so that they result in store updates ([#5653](https://github.com/sveltejs/svelte/issues/5653))
+* Fix `in:` transition configuration not properly updating when it's changed after its initial creation ([#6505](https://github.com/sveltejs/svelte/issues/6505))
 * Fix applying `:global()` for `>` selector combinator ([#6550](https://github.com/sveltejs/svelte/issues/6550))
 * Fix mounting component at detached DOM node ([#6567](https://github.com/sveltejs/svelte/issues/6567))
 
