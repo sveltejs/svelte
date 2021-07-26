@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix applying `:global()` for `>` selector combinator ([#6550](https://github.com/sveltejs/svelte/issues/6550))
 * Fix mounting component at detached DOM node ([#6567](https://github.com/sveltejs/svelte/issues/6567))
 
 ## 3.40.2
