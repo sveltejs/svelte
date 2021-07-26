@@ -169,7 +169,7 @@ export function null_to_empty(value) {
 	return value == null ? '' : value;
 }
 
-export function set_store_value(store, ret, value = ret) {
+export function set_store_value(store, ret, value) {
 	store.set(value);
 	return ret;
 }
