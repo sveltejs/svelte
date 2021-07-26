@@ -24,7 +24,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, AssignmentExpression, Literal } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, Program, ExpressionStatement, AssignmentExpression, Literal, ExportDefaultDeclaration, ExportAllDeclaration } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, x, b } from 'code-red';
@@ -70,6 +70,8 @@ export default class Component {
 	var_lookup: Map<string, Var> = new Map();
 
 	imports: ImportDeclaration[] = [];
+	exports_from: ExportNamedDeclaration[] = [];
+	instance_exports_from: ExportNamedDeclaration[] = [];
 
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
@@ -333,7 +335,8 @@ export default class Component {
 					.map(variable => ({
 						name: variable.name,
 						as: variable.export_name
-					}))
+					})),
+				this.exports_from
 			);
 
 			css = compile_options.customElement
@@ -492,22 +495,27 @@ export default class Component {
 		this.imports.push(node);
 	}
 
-	extract_exports(node) {
+	extract_exports(node, module_script = false) {
 		const ignores = extract_svelte_ignore_from_comments(node);
 		if (ignores.length) this.push_ignores(ignores);
-		const result = this._extract_exports(node);
+		const result = this._extract_exports(node, module_script);
 		if (ignores.length) this.pop_ignores();
 		return result;
 	}
 
-	private _extract_exports(node) {
+	private _extract_exports(node: ExportDefaultDeclaration | ExportNamedDeclaration | ExportAllDeclaration, module_script) {
 		if (node.type === 'ExportDefaultDeclaration') {
-			return this.error(node, compiler_errors.default_export);
+			return this.error(node as any, compiler_errors.default_export);
 		}
 
 		if (node.type === 'ExportNamedDeclaration') {
 			if (node.source) {
-				return this.error(node, compiler_errors.not_implemented);
+				if (module_script) {
+					this.exports_from.push(node);
+				} else {
+					this.instance_exports_from.push(node);
+				}
+				return null;
 			}
 			if (node.declaration) {
 				if (node.declaration.type === 'VariableDeclaration') {
@@ -516,7 +524,7 @@ export default class Component {
 							const variable = this.var_lookup.get(name);
 							variable.export_name = name;
 							if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
-								this.warn(declarator, compiler_warnings.unused_export_let(this.name.name, name));
+								this.warn(declarator as any, compiler_warnings.unused_export_let(this.name.name, name));
 							}
 						});
 					});
@@ -536,7 +544,7 @@ export default class Component {
 						variable.export_name = specifier.exported.name;
 
 						if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
-							this.warn(specifier, compiler_warnings.unused_export_let(this.name.name, specifier.exported.name));
+							this.warn(specifier as any, compiler_warnings.unused_export_let(this.name.name, specifier.exported.name));
 						}
 					}
 				});
@@ -612,7 +620,7 @@ export default class Component {
 			}
 
 			if (/^Export/.test(node.type)) {
-				const replacement = this.extract_exports(node);
+				const replacement = this.extract_exports(node, true);
 				if (replacement) {
 					body[i] = replacement;
 				} else {
