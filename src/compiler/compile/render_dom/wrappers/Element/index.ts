@@ -760,7 +760,7 @@ export default class ElementWrapper extends Wrapper {
 					intro_block = b`
 						@add_render_callback(() => {
 							if (${outro_name}) ${outro_name}.end(1);
-							if (!${intro_name}) ${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+							${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
 							${intro_name}.start();
 						});
 					`;
