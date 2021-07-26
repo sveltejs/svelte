@@ -1,5 +1,4 @@
 export default {
-	solo: true,
 	html: `
 		a,b,undefined,c
 		<br />
