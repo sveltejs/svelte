@@ -134,9 +134,9 @@ export function append_styles(
 	style_sheet_id: string,
 	styles: string
 ) {
-	const append_styles_to = get_root_for_styles(target);
+	const append_styles_to = get_root_for_style(target);
 
-	if (!append_styles_to?.getElementById(style_sheet_id)) {
+	if (!append_styles_to.getElementById(style_sheet_id)) {
 		const style = element('style');
 		style.id = style_sheet_id;
 		style.textContent = styles;
@@ -144,20 +144,19 @@ export function append_styles(
 	}
 }
 
-export function get_root_for_node(node: Node) {
+export function get_root_for_style(node: Node): ShadowRoot | Document {
 	if (!node) return document;
 
-	return (node.getRootNode ? node.getRootNode() : node.ownerDocument); // check for getRootNode because IE is still supported
-}
-
-function get_root_for_styles(node: Node) {
-	const root = get_root_for_node(node);
-	return (root as ShadowRoot).host ? root as ShadowRoot : root as Document;
+	const root = node.getRootNode ? node.getRootNode() : node.ownerDocument;
+	if ((root as ShadowRoot).host) {
+		return root as ShadowRoot;
+	}
+	return document;
 }
 
 export function append_empty_stylesheet(node: Node) {
 	const style_element = element('style') as HTMLStyleElement;
-	append_stylesheet(get_root_for_styles(node), style_element);
+	append_stylesheet(get_root_for_style(node), style_element);
 	return style_element;
 }
 
