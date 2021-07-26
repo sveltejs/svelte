@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.40.3
 
 * Fix `<slot>` data when a transition is cancelled before completing ([#5394](https://github.com/sveltejs/svelte/issues/5394))
 * Fix destructuring into variables beginning with `$` so that they result in store updates ([#5653](https://github.com/sveltejs/svelte/issues/5653))
