@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Support `export { ... } from` syntax in components ([#2214](https://github.com/sveltejs/svelte/issues/2214))
+
 ## 3.40.3
 
 * Fix `<slot>` data when a transition is cancelled before completing ([#5394](https://github.com/sveltejs/svelte/issues/5394))
