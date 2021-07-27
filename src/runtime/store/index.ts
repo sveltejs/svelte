@@ -9,20 +9,26 @@ export type Unsubscriber = () => void;
 /** Callback to update a value. */
 export type Updater<T> = (value: T) => T;
 
-/** Cleanup logic callback. */
-type Invalidator<T> = (value?: T) => void;
+/**
+ * Callback to inform that the store has an invalid value.
+ * 
+ * "Invalid" means that a dependency's value has been updated,
+ * so this store's value should be updated.
+*/
+type Invalidator = () => void;
+/** Callback to inform that the store has a valid value. */
+type Revalidator = () => void;
 
 /** Start and stop notification callbacks. */
-export type StartStopNotifier<T> = (set: Subscriber<T>, invalidate: Invalidator<T>, revalidate: Revalidator) => Unsubscriber | void;
+export type StartStopNotifier<T> = (set: Subscriber<T>, invalidate: Invalidator, revalidate: Revalidator) => Unsubscriber | void;
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
 	/**
 	 * Subscribe on value changes.
 	 * @param run subscription callback
-	 * @param invalidate cleanup callback
 	 */
-	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>, revalidate?: Revalidator): Unsubscriber;
+	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator, revalidate?: Revalidator): Unsubscriber;
 }
 
 /** Writable interface for both updating and subscribing. */
@@ -40,9 +46,7 @@ export interface Writable<T> extends Readable<T> {
 	update(this: void, updater: Updater<T>): void;
 }
 
-type Revalidator = () => void;
-/** Tuple of subscriber, invalidator, and revalidator. */
-type Subscription<T> = [Subscriber<T>, Invalidator<T>, Revalidator];
+type Subscription<T> = [Subscriber<T>, Invalidator, Revalidator];
 
 const subscriber_queue = [];
 
@@ -66,12 +70,14 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 	let stop: Unsubscriber;
 	const subscriptions: Set<Subscription<T>> = new Set();
 
-	function invalidate() {
+	function invalidate_writable() {
+		// Inform all subscribers that this store has an invalid value
 		for (const subscription of subscriptions) {
 			subscription[1]();
 		}
 	}
-	function revalidate() {
+	function revalidate_writable() {
+		// Inform all subscribers that this store has a valid value
 		for (const subscription of subscriptions) {
 			subscription[2]();
 		}
@@ -82,7 +88,7 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 			value = new_value;
 			if (stop) { // store is ready
 				const run_queue = !subscriber_queue.length;
-				invalidate();
+				invalidate_writable();
 				for (const subscription of subscriptions) {
 					subscriber_queue.push(subscription, value);
 				}
@@ -94,7 +100,7 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 				}
 			}
 		} else {
-			revalidate();
+			revalidate_writable();
 		}
 	}
 
@@ -102,11 +108,11 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 		set(fn(value));
 	}
 
-	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop, revalidate: Revalidator = noop): Unsubscriber {
+	function subscribe(run: Subscriber<T>, invalidate: Invalidator = noop, revalidate: Revalidator = noop): Unsubscriber {
 		const subscription: Subscription<T> = [run, invalidate, revalidate];
 		subscriptions.add(subscription);
 		if (subscriptions.size === 1) {
-			stop = start(set, invalidate, revalidate) || noop;
+			stop = start(set, invalidate_writable, revalidate_writable) || noop;
 		}
 		run(value);
 
