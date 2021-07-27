@@ -39,7 +39,8 @@ interface T$$ {
     on_error: any[];
 	skip_bound: boolean;
 	on_disconnect: any[];
-	root:Element|ShadowRoot
+	root:Element|ShadowRoot;
+    parent_component: T$$;
 }
 
 export function bind(component, name, callback) {
@@ -117,12 +118,24 @@ export function attach_error_handler(component, fn) {
 
 export function handle_error(component, e) {
     if (component.$$.on_error.length === 0) {
-        throw e;
+        bubble_error(component, e);
     }
 
     component.$$.on_error.forEach(handler => {
-        handler(e);
+        try {
+            handler(e);
+        } catch (e) {
+            bubble_error(component, e);
+        }
     });
+}
+
+function bubble_error(component, e) {
+    if (component.$$.parent_component) {
+        handle_error(component.$$.parent_component, e);
+    } else {
+        throw e;
+    }
 }
 
 export function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
@@ -152,7 +165,8 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		callbacks: blank_object(),
 		dirty,
 		skip_bound: false,
-		root: options.target || parent_component.$$.root
+		root: options.target || parent_component.$$.root,
+        parent_component
 	};
 
 	append_styles && append_styles($$.root);
