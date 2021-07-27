@@ -3,7 +3,7 @@ import {
 	SvelteComponent,
 	append_hydration,
 	children,
-	claim_element,
+	claim_svg_element,
 	claim_text,
 	detach,
 	init,
@@ -26,9 +26,9 @@ function create_fragment(ctx) {
 			t = text("a title");
 		},
 		l(nodes) {
-			svg = claim_element(nodes, "svg", {}, svg_element);
+			svg = claim_svg_element(nodes, "svg", {});
 			var svg_nodes = children(svg);
-			title = claim_element(svg_nodes, "title", {}, svg_element);
+			title = claim_svg_element(svg_nodes, "title", {});
 			var title_nodes = children(title);
 			t = claim_text(title_nodes, "a title");
 			title_nodes.forEach(detach);
