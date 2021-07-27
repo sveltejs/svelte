@@ -1,3 +1,4 @@
+// cancelled the transition halfway
 export default {
 	html: `
 		<div>Foo</div>

@@ -670,10 +670,10 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			block.chunks.mount.push(b`
-				if (${data}.multiple) @select_options(${this.var}, ${data}.value);
+				(${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);
 			`);
 			block.chunks.update.push(b`
-				if (${block.renderer.dirty(Array.from(dependencies))} && ${data}.multiple) @select_options(${this.var}, ${data}.value);
+				if (${block.renderer.dirty(Array.from(dependencies))}) (${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);;
 			`);
 		} else if (this.node.name === 'input' && this.attributes.find(attr => attr.node.name === 'value')) {
 			const type = this.node.get_static_attribute_value('type');
@@ -687,6 +687,12 @@ export default class ElementWrapper extends Wrapper {
 					}
 				`);
 			}
+		}
+
+		if (['button', 'input', 'keygen', 'select', 'textarea'].includes(this.node.name)) {
+			block.chunks.mount.push(b`
+				if (${this.var}.autofocus) ${this.var}.focus();
+			`);
 		}
 	}
 
@@ -755,7 +761,7 @@ export default class ElementWrapper extends Wrapper {
 					intro_block = b`
 						@add_render_callback(() => {
 							if (${outro_name}) ${outro_name}.end(1);
-							if (!${intro_name}) ${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+							${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
 							${intro_name}.start();
 						});
 					`;

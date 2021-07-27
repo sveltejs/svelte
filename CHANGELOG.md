@@ -1,25 +1,65 @@
 # Svelte changelog
 
-## Unreleased
+## 3.41.0
 
-* Expose `svelte/ssr` which exports lifecycle methods as no-ops ([#6416](https://github.com/sveltejs/svelte/pull/6416))
+* Support `export { ... } from` syntax in components ([#2214](https://github.com/sveltejs/svelte/issues/2214))
+* Support `export let { ... } =` syntax in components ([#5612](https://github.com/sveltejs/svelte/issues/5612))
+* Support `{#await ... then/catch}` without a variable for the resolved/rejected value ([#6270](https://github.com/sveltejs/svelte/issues/6270))
+
+## 3.40.3
+
+* Fix `<slot>` data when a transition is cancelled before completing ([#5394](https://github.com/sveltejs/svelte/issues/5394))
+* Fix destructuring into variables beginning with `$` so that they result in store updates ([#5653](https://github.com/sveltejs/svelte/issues/5653))
+* Fix `in:` transition configuration not properly updating when it's changed after its initial creation ([#6505](https://github.com/sveltejs/svelte/issues/6505))
+* Fix applying `:global()` for `>` selector combinator ([#6550](https://github.com/sveltejs/svelte/issues/6550))
+* Fix mounting component at detached DOM node ([#6567](https://github.com/sveltejs/svelte/issues/6567))
+
+## 3.40.2
+
+* Fix dynamic `autofocus={...}` attribute handling ([#4995](https://github.com/sveltejs/svelte/issues/4995))
+* Add filename to combined source map if needed ([#6089](https://github.com/sveltejs/svelte/pull/6089))
+* In AST, parse empty attribute values as an empty string ([#6286](https://github.com/sveltejs/svelte/issues/6286))
+* Fix tracking whether transition has started ([#6399](https://github.com/sveltejs/svelte/pull/6399))
+* Fix incorrect scoping of `:global()` selectors ([#6550](https://github.com/sveltejs/svelte/issues/6550))
+
+## 3.40.1
+
+* Fix store reactivity regression when using reactive statements ([#6557](https://github.com/sveltejs/svelte/issues/6557))
+
+## 3.40.0
+
+* Support rendering a component in a shadow DOM ([#5869](https://github.com/sveltejs/svelte/issues/5869))
+* Fix `:root` selector being erroneously scoped to component ([#4767](https://github.com/sveltejs/svelte/issues/4767))
+* Fix `.end` in AST for expressions inside attributes ([#6258](https://github.com/sveltejs/svelte/issues/6258))
+* Fix one-way `<select>` binding when it has a spread attribute ([#6433](https://github.com/sveltejs/svelte/issues/6433))
+* Various hydration improvements and fixes ([#6449](https://github.com/sveltejs/svelte/pull/6449))
+* Use smaller versions of internal helpers when compiling without hydration support ([#6462](https://github.com/sveltejs/svelte/issues/6462))
+* Fix two-way binding of values when updating through synchronous component accessors ([#6502](https://github.com/sveltejs/svelte/issues/6502))
+
+## 3.39.0
+
+* Support `bind:group` in SSR ([#4621](https://github.com/sveltejs/svelte/pull/4621))
+* Add a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([#5938](https://github.com/sveltejs/svelte/pull/5938))
+* Make it possible to silence more warnings ([#5954](https://github.com/sveltejs/svelte/issues/5954))
 * Add `|trusted` event modifier ([#6137](https://github.com/sveltejs/svelte/issues/6137))
 * Add `varsReport` compiler option to include all variables reference in the component in the `variables` report ([#6192](https://github.com/sveltejs/svelte/pull/6192))
-* Throw compiler error when passing empty directive names ([#6299](https://github.com/sveltejs/svelte/issues/6299))
+* Add `errorMode` compiler option to try to continue compiling when an error is detected ([#6194](https://github.com/sveltejs/svelte/pull/6194))
+* Expose `svelte/ssr` which exports lifecycle methods as no-ops ([#6416](https://github.com/sveltejs/svelte/pull/6416))
+* Add `getAllContexts` ([#6447](https://github.com/sveltejs/svelte/issues/6447))
 * Throw proper error for `export default function() {}` and `export default class {}` rather than crashing the compiler ([#3275](https://github.com/sveltejs/svelte/issues/3275))
-* Fix usage of falsy `input` values ([#6458](https://github.com/sveltejs/svelte/pull/6458))
-* Fix ordering of elements in keyed `{#each}` ([#6445](https://github.com/sveltejs/svelte/pull/6445))
+* Fix SSR rendering of falsy `input` values ([#4551](https://github.com/sveltejs/svelte/issues/4551))
 * Fix `preserveComments` in SSR mode ([#4730](https://github.com/sveltejs/svelte/issues/4730))
-* Fix compiler error when using `:where()` inside `:global()` ([#6434](https://github.com/sveltejs/svelte/issues/6434))
-* Fix erroneous `unknown prop` warning when using slot on a component ([#6065](https://github.com/sveltejs/svelte/pull/6065))
-* Fix `:global()` with pseudo element not being seen as global ([#6470](https://github.com/sveltejs/svelte/pull/6470))
-* Allow `:global()` to contain multiple selectors when it is not part of a larger selector ([#6477](https://github.com/sveltejs/svelte/issues/6477))
-* Add a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([#5938](https://github.com/sveltejs/svelte/pull/5938))
-* Remove deprecated a11y warning `a11y-no-onchange warning` ([#6457](https://github.com/sveltejs/svelte/issues/6457))
+* Do not warn if `context="module"` variables are not the only dependencies in reactive statements ([#5954](https://github.com/sveltejs/svelte/issues/5954))
 * Stop checking `a11y-media-has-caption` a11y warning on `<audio>` elements ([#6054](https://github.com/sveltejs/svelte/issues/6054))
+* Fix erroneous "unknown prop" warning when using slot on a component ([#6065](https://github.com/sveltejs/svelte/pull/6065))
+* Add sourcemaps to all HTML elements ([#6092](https://github.com/sveltejs/svelte/issues/6092))
 * Relax `derived` function signature ([#6178](https://github.com/sveltejs/svelte/issues/6178))
-* Support `bind:group` in SSR ([#4621](https://github.com/sveltejs/svelte/pull/4621))
-* Add sourcemaps to html elements ([#6427](https://github.com/sveltejs/svelte/pull/6427))
+* Throw compiler error when passing empty directive names ([#6299](https://github.com/sveltejs/svelte/issues/6299))
+* Fix compiler error when using `:where()` inside `:global()` ([#6434](https://github.com/sveltejs/svelte/issues/6434))
+* Fix ordering of elements in keyed `{#each}` ([#6444](https://github.com/sveltejs/svelte/issues/6444))
+* Remove deprecated a11y warning `a11y-no-onchange warning` ([#6457](https://github.com/sveltejs/svelte/issues/6457))
+* Fix `:global()` with pseudo element not being seen as global ([#6468](https://github.com/sveltejs/svelte/issues/6468))
+* Allow `:global()` to contain multiple selectors when it is not part of a larger selector ([#6477](https://github.com/sveltejs/svelte/issues/6477))
 * Make `<script>` and `<style>` end tag parsing more robust ([#6511](https://github.com/sveltejs/svelte/pull/6511))
 
 ## 3.38.3

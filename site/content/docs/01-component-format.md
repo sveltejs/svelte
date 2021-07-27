@@ -95,8 +95,6 @@ To change component state and trigger a re-render, just assign to a locally decl
 
 Update expressions (`count += 1`) and property assignments (`obj.x = y`) have the same effect.
 
-Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. Options for getting around this can be found in the [tutorial](tutorial/updating-arrays-and-objects).
-
 ```sv
 <script>
 	let count = 0;
@@ -105,6 +103,24 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 		// calling this function will trigger an
 		// update if the markup references `count`
 		count = count + 1;
+	}
+</script>
+```
+
+---
+
+Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. A subsequent assignment is required to trigger the update. This and more details can also be found in the [tutorial](tutorial/updating-arrays-and-objects).
+
+```sv
+<script>
+	let arr = [0, 1];
+
+	function handleClick () {
+		// this method call does not trigger an update
+		arr.push(2);
+		// this assignment will trigger an update
+		// if the markup references `arr`
+		arr = arr
 	}
 </script>
 ```

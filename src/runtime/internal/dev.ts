@@ -1,4 +1,4 @@
-import { custom_event, append, insert, detach, listen, attr } from './dom';
+import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
@@ -10,9 +10,19 @@ export function append_dev(target: Node, node: Node) {
 	append(target, node);
 }
 
+export function append_hydration_dev(target: Node, node: Node) {
+	dispatch_dev('SvelteDOMInsert', { target, node });
+	append_hydration(target, node);
+}
+
 export function insert_dev(target: Node, node: Node, anchor?: Node) {
 	dispatch_dev('SvelteDOMInsert', { target, node, anchor });
 	insert(target, node, anchor);
+}
+
+export function insert_hydration_dev(target: Node, node: Node, anchor?: Node) {
+	dispatch_dev('SvelteDOMInsert', { target, node, anchor });
+	insert_hydration(target, node, anchor);
 }
 
 export function detach_dev(node: Node) {
@@ -105,7 +115,7 @@ export interface SvelteComponentDev {
 	[accessor: string]: any;
 }
 interface IComponentOptions<Props extends Record<string, any> = Record<string, any>> {
-	target: Element;
+	target: Element|ShadowRoot;
 	anchor?: Element;
 	props?: Props;
 	context?: Map<any, any>;

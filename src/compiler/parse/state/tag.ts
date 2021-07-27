@@ -7,6 +7,7 @@ import { is_void } from '../../utils/names';
 import { Parser } from '../index';
 import { Directive, DirectiveType, TemplateNode, Text, MustacheTag } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
+import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore';
 import parser_errors from '../errors';
 
 // eslint-disable-next-line no-useless-escape
@@ -65,7 +66,8 @@ export default function tag(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'Comment',
-			data
+			data,
+			ignores: extract_svelte_ignore(data)
 		});
 
 		return;
@@ -461,6 +463,15 @@ function get_directive_type(name: string): DirectiveType {
 
 function read_attribute_value(parser: Parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
+	if (quote_mark && parser.eat(quote_mark)) {
+		return [{
+			start: parser.index - 1,
+			end: parser.index - 1,
+			type: 'Text',
+			raw: '',
+			data: ''
+		}];
+	}
 
 	const regex = (
 		quote_mark === "'" ? /'/ :
@@ -485,10 +496,10 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 
 	const chunks: TemplateNode[] = [];
 
-	function flush() {
+	function flush(end: number) {
 		if (current_chunk.raw) {
 			current_chunk.data = decode_character_references(current_chunk.raw);
-			current_chunk.end = parser.index;
+			current_chunk.end = end;
 			chunks.push(current_chunk);
 		}
 	}
@@ -497,10 +508,10 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 		const index = parser.index;
 
 		if (done()) {
-			flush();
+			flush(parser.index);
 			return chunks;
 		} else if (parser.eat('{')) {
-			flush();
+			flush(parser.index - 1);
 
 			parser.allow_whitespace();
 			const expression = read_expression(parser);

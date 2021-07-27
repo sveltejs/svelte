@@ -124,7 +124,7 @@ function parse_tag_attributes(str: string) {
 		.filter(Boolean)
 		.reduce((attrs, attr) => {
 			const i = attr.indexOf('=');
-			const [key, value] = i > 0 ? [attr.slice(0, i), attr.slice(i+1)] : [attr];
+			const [key, value] = i > 0 ? [attr.slice(0, i), attr.slice(i + 1)] : [attr];
 			const [, unquoted] = (value && value.match(/^['"](.*)['"]$/)) || [];
 
 			return { ...attrs, [key]: unquoted ?? value ?? true };

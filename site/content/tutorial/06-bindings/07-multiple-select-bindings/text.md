@@ -17,3 +17,5 @@ Returning to our [earlier ice cream example](tutorial/group-inputs), we can repl
 	{/each}
 </select>
 ```
+
+> Press and hold the `control` key for selecting multiple options.
