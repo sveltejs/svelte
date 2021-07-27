@@ -6,7 +6,7 @@ import { walk } from 'estree-walker';
 import { extract_names, Scope } from 'periscopic';
 import { invalidate } from './invalidate';
 import Block from './Block';
-import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { flatten } from '../../utils/flatten';
@@ -172,6 +172,46 @@ export default function dom(
 				}`
 			});
 		}
+	});
+
+	component.instance_exports_from.forEach(exports_from => {
+		const import_declaration = {
+			...exports_from,
+			type: 'ImportDeclaration',
+			specifiers: [],
+			source: exports_from.source
+		};
+		component.imports.push(import_declaration as ImportDeclaration);
+
+		exports_from.specifiers.forEach(specifier => {
+			if (component.component_options.accessors) {
+				const name = component.get_unique_name(specifier.exported.name);
+				import_declaration.specifiers.push({
+					...specifier,
+					type: 'ImportSpecifier',
+					imported: specifier.local,
+					local: name
+				});
+
+				accessors.push({
+					type: 'MethodDefinition',
+					kind: 'get',
+					key: { type: 'Identifier', name: specifier.exported.name },
+					value: x`function() {
+						return ${name}
+					}`
+				});
+			} else if (component.compile_options.dev) {
+				accessors.push({
+					type: 'MethodDefinition',
+					kind: 'get',
+					key: { type: 'Identifier', name: specifier.exported.name },
+					value: x`function() {
+						throw new @_Error("<${component.tag}>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+					}`
+				});
+			}
+		});
 	});
 
 	if (component.compile_options.dev) {
