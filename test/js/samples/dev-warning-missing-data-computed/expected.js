@@ -69,6 +69,13 @@ function instance($$self, $$props, $$invalidate) {
 	validate_slots('Component', slots, []);
 	let { foo } = $$props;
 	let bar;
+
+	$$self.$$.on_mount.push(function () {
+		if (foo === undefined && !('foo' in $$props || $$self.$$.bound[$$self.$$.props['foo']])) {
+			console.warn("<Component> was created without expected prop 'foo'");
+		}
+	});
+
 	const writable_props = ['foo'];
 
 	Object.keys($$props).forEach(key => {
@@ -110,13 +117,6 @@ class Component extends SvelteComponentDev {
 			options,
 			id: create_fragment.name
 		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*foo*/ ctx[0] === undefined && !('foo' in props)) {
-			console.warn("<Component> was created without expected prop 'foo'");
-		}
 	}
 
 	get foo() {

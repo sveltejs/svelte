@@ -121,7 +121,7 @@ export default function dom(
 	const accessors = [];
 
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-	let dev_props_check: Node[] | Node;
+	let missing_props_check: Node[] | Node;
 	let inject_state: Expression;
 	let capture_state: Expression;
 	let props_inject: Node[] | Node;
@@ -227,13 +227,13 @@ export default function dom(
 		const expected = props.filter(prop => prop.writable && !prop.initialised);
 
 		if (expected.length) {
-			dev_props_check = b`
-				const { ctx: #ctx } = this.$$;
-				const props = ${options.customElement ? x`this.attributes` : x`options.props || {}`};
-				${expected.map(prop => b`
-				if (${renderer.reference(prop.name)} === undefined && !('${prop.export_name}' in props)) {
-					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
-				}`)}
+			missing_props_check = b`
+				$$self.$$.on_mount.push(function () {
+					${expected.map(prop => b`
+					if (${prop.name} === undefined && !(('${prop.export_name}' in $$props) || $$self.$$.bound[$$self.$$.props['${prop.export_name}']])) {
+						@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
+					}`)}
+				});
 			`;
 		}
 
@@ -476,6 +476,7 @@ export default function dom(
 
 				${instance_javascript}
 
+				${missing_props_check}
 				${unknown_props_check}
 
 				${renderer.binding_groups.size > 0 && b`const $$binding_groups = [${[...renderer.binding_groups.keys()].map(_ => x`[]`)}];`}
@@ -532,8 +533,6 @@ export default function dom(
 					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
 					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
-
-					${dev_props_check}
 
 					if (options) {
 						if (options.target) {
@@ -594,8 +593,6 @@ export default function dom(
 					super(${options.dev && 'options'});
 					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
-
-					${dev_props_check}
 				}
 			}
 		`[0] as ClassDeclaration;
