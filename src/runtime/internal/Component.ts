@@ -106,13 +106,13 @@ function make_dirty(component, i) {
 }
 
 export function attach_error_handler(component, fn) {
-    return () => {
+    return (...rest) => {
         try {
-            fn.call(this, ...arguments);
+            fn.call(this, ...rest);
         } catch (e) {
             handle_error(component, e);
         }
-    }
+    };
 }
 
 export function handle_error(component, e) {
