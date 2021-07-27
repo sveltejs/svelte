@@ -186,10 +186,6 @@ export default {
 		code: 'illegal-global',
 		message: `${name} is an illegal variable name`
 	}),
-	destructured_prop: {
-		code: 'destructured-prop',
-		message: 'Cannot declare props in destructured declaration'
-	},
 	cyclical_reactive_declaration: (cycle: string[]) => ({
 		code: 'cyclical-reactive-declaration',
 		message: `Cyclical dependency detected: ${cycle.join(' → ')}`
