@@ -136,11 +136,14 @@ An element or component can have multiple spread attributes, interspersed with r
 
 Text can also contain JavaScript expressions:
 
+> If you're using a regular expression (`RegExp`) [literal notation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp#literal_notation_and_constructor), you'll need to wrap it in parentheses.
+
 ```sv
 <h1>Hello {name}!</h1>
 <p>{a} + {b} = {a + b}.</p>
-```
 
+<div>{(/^[A-Za-z ]+$/).test(value) ? x : y}</div>
+```
 
 ### Comments
 
@@ -393,7 +396,7 @@ When used around components, this will cause them to be reinstantiated and reini
 
 In a text expression, characters like `<` and `>` are escaped; however, with HTML expressions, they're not.
 
-The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML.
+The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will *not* work, because `</div>` is not valid HTML. It also will *not* compile Svelte code.
 
 > Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
 
@@ -513,6 +516,7 @@ The following modifiers are available:
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
 * `self` — only trigger handler if event.target is the element itself
+* `trusted` — only trigger handler if `event.trusted` is `true`. I.e. if the event is triggered by a user action.
 
 Modifiers can be chained together, e.g. `on:click|once|capture={...}`.
 
@@ -585,7 +589,7 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 
 ---
 
-On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList).
+On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). It is readonly.
 
 ```sv
 <label for="avatar">Upload a picture:</label>
@@ -1236,6 +1240,74 @@ As with DOM events, if the `on:` directive is used without a value, the componen
 <SomeComponent on:whatever/>
 ```
 
+#### [--style-props](style_props)
+
+```sv
+--style-props="anycssvalue"
+```
+
+---
+
+As of [Svelte 3.38](https://github.com/sveltejs/svelte/issues/6268) ([RFC](https://github.com/sveltejs/rfcs/pull/13)), you can pass styles as props to components for the purposes of theming, using CSS custom properties. 
+
+Svelte's implementation is essentially syntactic sugar for adding a wrapper element. This example:
+
+```sv
+<Slider
+  bind:value
+  min={0}
+  --rail-color="black"
+  --track-color="rgb(0, 0, 255)"
+/>
+```
+
+---
+
+Desugars to this:
+
+```sv
+<div style="display: contents; --rail-color: black; --track-color: rgb(0, 0, 255)">
+  <Slider
+    bind:value
+    min={0}
+    max={100}
+  />
+</div>
+```
+
+**Note**: Since this is an extra div, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature. Also note that not all browsers support `display: contents`: https://caniuse.com/css-display-contents 
+
+---
+
+Svelte's CSS Variables support allows for easily themable components:
+
+```sv
+<!-- Slider.svelte -->
+<style>
+  .potato-slider-rail {
+    background-color: var(--rail-color, var(--theme-color, 'purple'));
+  }
+</style>
+```
+
+---
+
+So you can set a high level theme color:
+
+```css
+/* global.css */
+html {
+  --theme-color: black;
+}
+```
+
+---
+
+Or override it at the consumer level:
+
+```sv
+<Slider --rail-color="goldenrod"/>
+```
 
 #### [bind:*property*](bind_component_property)
 
@@ -1376,7 +1448,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 </Card>
 ```
 
-#### [`<slot let:`*name*`={`*value*`}>`](slot_let)
+#### [`<slot key={`*value*`}>`](slot_let)
 
 ---
 
@@ -1475,6 +1547,8 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:window>` element allows you to add event listeners to the `window` object without worrying about removing them when the component is destroyed, or checking for the existence of `window` when server-side rendering.
 
+Contrary to `<svelte:self>` this element can only be at the top level of your component and must never be inside a block or element.
+
 ```sv
 <script>
 	function handleKeydown(event) {
@@ -1512,7 +1586,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 ---
 
-As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`.
+As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`; and it has to appear at the top level of your component.
 
 ```sv
 <svelte:body
@@ -1531,6 +1605,8 @@ As with `<svelte:window>`, this element allows you to add listeners to events on
 ---
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
+
+As with `<svelte:window>` and `<svelte:head>` this element has to appear at the top level of your component and cannot be inside a block or other element.
 
 ```sv
 <svelte:head>

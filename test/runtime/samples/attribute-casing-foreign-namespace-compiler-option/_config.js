@@ -11,6 +11,7 @@ export default {
 	options: {
 		hydrate: false // Hydration test will fail as case sensitivity is only handled for svg elements.
 	},
+	skip_if_hydrate_from_ssr: true,
 	compileOptions: {
 		namespace: 'foreign'
 	},

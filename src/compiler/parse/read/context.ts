@@ -9,6 +9,7 @@ import {
 } from '../utils/bracket';
 import { parse_expression_at } from '../acorn';
 import { Pattern } from 'estree';
+import parser_errors from '../errors';
 
 export default function read_context(
 	parser: Parser
@@ -27,10 +28,7 @@ export default function read_context(
 	}
 
 	if (!is_bracket_open(code)) {
-		parser.error({
-			code: 'unexpected-token',
-			message: 'Expected identifier or destructure pattern'
-		});
+		parser.error(parser_errors.unexpected_token_destructure);
 	}
 
 	const bracket_stack = [code];
@@ -42,12 +40,11 @@ export default function read_context(
 			bracket_stack.push(code);
 		} else if (is_bracket_close(code)) {
 			if (!is_bracket_pair(bracket_stack[bracket_stack.length - 1], code)) {
-				parser.error({
-					code: 'unexpected-token',
-					message: `Expected ${String.fromCharCode(
-						get_bracket_close(bracket_stack[bracket_stack.length - 1])
-					)}`
-				});
+				parser.error(
+					parser_errors.unexpected_token(
+						String.fromCharCode(get_bracket_close(bracket_stack[bracket_stack.length - 1]))
+					)
+				);
 			}
 			bracket_stack.pop();
 			if (bracket_stack.length === 0) {

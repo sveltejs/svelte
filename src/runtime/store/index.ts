@@ -64,16 +64,16 @@ export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T
  */
 export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
-	const subscriptions: Array<Subscription<T>> = [];
+	const subscriptions: Set<Subscription<T>> = new Set();
 
 	function invalidate() {
-		for (let i = 0; i < subscriptions.length; i += 1) {
-			subscriptions[i][1]();
+		for (const subscription of subscriptions) {
+			subscription[1]();
 		}
 	}
 	function revalidate() {
-		for (let i = 0; i < subscriptions.length; i += 1) {
-			subscriptions[i][2]();
+		for (const subscription of subscriptions) {
+			subscription[2]();
 		}
 	}
 
@@ -83,8 +83,8 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 			if (stop) { // store is ready
 				const run_queue = !subscriber_queue.length;
 				invalidate();
-				for (let i = 0; i < subscriptions.length; i += 1) {
-					subscriber_queue.push(subscriptions[i], value);
+				for (const subscription of subscriptions) {
+					subscriber_queue.push(subscription, value);
 				}
 				if (run_queue) {
 					for (let i = 0; i < subscriber_queue.length; i += 2) {
@@ -104,18 +104,15 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 
 	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop, revalidate: Revalidator = noop): Unsubscriber {
 		const subscription: Subscription<T> = [run, invalidate, revalidate];
-		subscriptions.push(subscription);
-		if (subscriptions.length === 1) {
+		subscriptions.add(subscription);
+		if (subscriptions.size === 1) {
 			stop = start(set, invalidate, revalidate) || noop;
 		}
 		run(value);
 
 		return () => {
-			const index = subscriptions.indexOf(subscription);
-			if (index !== -1) {
-				subscriptions.splice(index, 1);
-			}
-			if (subscriptions.length === 0) {
+			subscriptions.delete(subscription);
+			if (subscriptions.size === 0) {
 				stop();
 				stop = null;
 			}
@@ -126,7 +123,7 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 }
 
 /** One or more `Readable`s. */
-type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>];
+type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
 
 /** One or more values from `Readable` stores. */
 type StoresValues<T> = T extends Readable<infer U> ? U :

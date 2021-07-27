@@ -1,8 +1,8 @@
-import { custom_event, append, insert, detach, listen, attr } from './dom';
+import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
-	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }));
+	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, true));
 }
 
 export function append_dev(target: Node, node: Node) {
@@ -10,9 +10,19 @@ export function append_dev(target: Node, node: Node) {
 	append(target, node);
 }
 
+export function append_hydration_dev(target: Node, node: Node) {
+	dispatch_dev('SvelteDOMInsert', { target, node });
+	append_hydration(target, node);
+}
+
 export function insert_dev(target: Node, node: Node, anchor?: Node) {
 	dispatch_dev('SvelteDOMInsert', { target, node, anchor });
 	insert(target, node, anchor);
+}
+
+export function insert_hydration_dev(target: Node, node: Node, anchor?: Node) {
+	dispatch_dev('SvelteDOMInsert', { target, node, anchor });
+	insert_hydration(target, node, anchor);
 }
 
 export function detach_dev(node: Node) {
@@ -104,8 +114,8 @@ export interface SvelteComponentDev {
 	$destroy(): void;
 	[accessor: string]: any;
 }
-interface IComponentOptions {
-	target: Element;
+interface IComponentOptions<Props extends Record<string, any> = Record<string, any>> {
+	target: Element|ShadowRoot;
 	anchor?: Element;
 	props?: Props;
 	context?: Map<any, any>;
@@ -203,7 +213,7 @@ export interface SvelteComponentTyped<
  * class ASubclassOfSvelteComponent extends SvelteComponent<{foo: string}> {}
  * const component: typeof SvelteComponent = ASubclassOfSvelteComponent;
  * ```
- * will throw a type error, so we need to seperate the more strictly typed class.
+ * will throw a type error, so we need to separate the more strictly typed class.
  */
 export class SvelteComponentTyped<
 	Props extends Record<string, any> = any,
@@ -232,7 +242,7 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: IComponentOptions) {
+	constructor(options: IComponentOptions<Props>) {
 		super(options);
 	}
 }

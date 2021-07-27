@@ -1,5 +1,5 @@
 ---
-title: Svelte 3: Rethinking reactivity
+title: "Svelte 3: Rethinking reactivity"
 description: It's finally here
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris

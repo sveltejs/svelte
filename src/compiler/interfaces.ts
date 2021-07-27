@@ -24,6 +24,12 @@ export interface MustacheTag extends BaseNode {
 	expression: Node;
 }
 
+export interface Comment extends BaseNode {
+	type: 'Comment';
+	data: string;
+	ignores: string[];
+}
+
 export type DirectiveType = 'Action'
 | 'Animation'
 | 'Binding'
@@ -40,7 +46,7 @@ interface BaseDirective extends BaseNode {
 	modifiers: string[];
 }
 
-export interface Transition extends BaseDirective{
+export interface Transition extends BaseDirective {
 	type: 'Transition';
 	intro: boolean;
 	outro: boolean;
@@ -52,7 +58,8 @@ export type TemplateNode = Text
 | MustacheTag
 | BaseNode
 | Directive
-| Transition;
+| Transition
+| Comment;
 
 export interface Parser {
 	readonly template: string;
@@ -116,6 +123,8 @@ export interface CompileOptions {
 	name?: string;
 	filename?: string;
 	generate?: 'dom' | 'ssr' | false;
+	errorMode?: 'throw' | 'warn';
+	varsReport?: 'full' | 'strict' | false;
 
 	sourcemap?: object | string;
 	outputFilename?: string;

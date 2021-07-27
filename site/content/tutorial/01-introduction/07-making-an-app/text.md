@@ -4,8 +4,9 @@ title: Making an app
 
 This tutorial is designed to get you familiar with the process of writing components. But at some point, you'll want to start writing components in the comfort of your own text editor.
 
-First, you'll need to integrate Svelte with a build tool. There are officially maintained plugins for [Rollup](https://rollupjs.org) and [webpack](https://webpack.js.org/)...
+First, you'll need to integrate Svelte with a build tool. There are officially maintained plugins for [Vite](https://vitejs.dev/), [Rollup](https://rollupjs.org) and [webpack](https://webpack.js.org/)...
 
+* [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte)
 * [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte)
 * [svelte-loader](https://github.com/sveltejs/svelte-loader)
 

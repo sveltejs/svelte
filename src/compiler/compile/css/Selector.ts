@@ -8,6 +8,7 @@ import { INode } from '../nodes/interfaces';
 import EachBlock from '../nodes/EachBlock';
 import IfBlock from '../nodes/IfBlock';
 import AwaitBlock from '../nodes/AwaitBlock';
+import compiler_errors from '../compiler_errors';
 
 enum BlockAppliesToNode {
 	NotPossible,
@@ -46,8 +47,9 @@ export default class Selector {
 		this.local_blocks = this.blocks.slice(0, i);
 
 		const host_only = this.blocks.length === 1 && this.blocks[0].host;
+		const root_only = this.blocks.length === 1 && this.blocks[0].root;
 
-		this.used = this.local_blocks.length === 0 || host_only;
+		this.used = this.local_blocks.length === 0 || host_only || root_only;
 	}
 
 	apply(node: Element) {
@@ -137,10 +139,26 @@ export default class Selector {
 
 		for (let i = start; i < end; i += 1) {
 			if (this.blocks[i].global) {
-				component.error(this.blocks[i].selectors[0], {
-					code: 'css-invalid-global',
-					message: ':global(...) can be at the start or end of a selector sequence, but not in the middle'
-				});
+				return component.error(this.blocks[i].selectors[0], compiler_errors.css_invalid_global);
+			}
+		}
+
+		this.validate_global_with_multiple_selectors(component);
+	}
+
+	validate_global_with_multiple_selectors(component: Component) {
+		if (this.blocks.length === 1 && this.blocks[0].selectors.length === 1) {
+			// standalone :global() with multiple selectors is OK
+			return;
+		}
+
+		for (const block of this.blocks) {
+			for (const selector of block.selectors) {
+				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+					if (/[^\\],(?!([^([]+[^\\]|[^([\\])[)\]])/.test(selector.children[0].value)) {
+						component.error(selector, compiler_errors.css_invalid_global_selector);
+					}
+				}
 			}
 		}
 	}
@@ -209,7 +227,8 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			if (apply_selector(blocks, get_element_parent(node), to_encapsulate)) {
+			const has_global_parent = blocks.every(block => block.global);
+			if (has_global_parent || apply_selector(blocks, get_element_parent(node), to_encapsulate)) {
 				to_encapsulate.push({ node, block });
 				return true;
 			}
@@ -256,18 +275,16 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 		const selector = block.selectors[i];
 		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
 
-		if (selector.type === 'PseudoClassSelector' && name === 'host') {
+		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
+			return BlockAppliesToNode.NotPossible;
+		}
+
+		if (block.selectors.length === 1 && selector.type === 'PseudoClassSelector' && name === 'global') {
 			return BlockAppliesToNode.NotPossible;
 		}
 
 		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
 			continue;
-		}
-
-		if (selector.type === 'PseudoClassSelector' && name === 'global') {
-			// TODO shouldn't see this here... maybe we should enforce that :global(...)
-			// cannot be sandwiched between non-global selectors?
-			return BlockAppliesToNode.NotPossible;
 		}
 
 		if (selector.type === 'ClassSelector') {
@@ -528,11 +545,11 @@ function has_definite_elements(result: Map<Element, NodeExist>): boolean {
 
 function add_to_map(from: Map<Element, NodeExist>, to: Map<Element, NodeExist>) {
 	from.forEach((exist, element) => {
-		to.set(element, higher_existance(exist, to.get(element)));
+		to.set(element, higher_existence(exist, to.get(element)));
 	});
 }
 
-function higher_existance(exist1: NodeExist | null, exist2: NodeExist | null): NodeExist {
+function higher_existence(exist1: NodeExist | null, exist2: NodeExist | null): NodeExist {
 	if (exist1 === undefined || exist2 === undefined) return exist1 || exist2;
 	return exist1 > exist2 ? exist1 : exist2;
 }
@@ -565,6 +582,7 @@ function loop_child(children: INode[], adjacent_only: boolean) {
 
 class Block {
 	host: boolean;
+	root: boolean;
 	combinator: CssNode;
 	selectors: CssNode[]
 	start: number;
@@ -574,6 +592,7 @@ class Block {
 	constructor(combinator: CssNode) {
 		this.combinator = combinator;
 		this.host = false;
+		this.root = false;
 		this.selectors = [];
 
 		this.start = null;
@@ -587,6 +606,7 @@ class Block {
 			this.start = selector.start;
 			this.host = selector.type === 'PseudoClassSelector' && selector.name === 'host';
 		}
+		this.root = this.root || selector.type === 'PseudoClassSelector' && selector.name === 'root';
 
 		this.selectors.push(selector);
 		this.end = selector.end;
@@ -594,9 +614,10 @@ class Block {
 
 	get global() {
 		return (
-			this.selectors.length === 1 &&
+			this.selectors.length >= 1 &&
 			this.selectors[0].type === 'PseudoClassSelector' &&
-			this.selectors[0].name === 'global'
+			this.selectors[0].name === 'global' &&
+			this.selectors.every((selector) => selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector')
 		);
 	}
 }
