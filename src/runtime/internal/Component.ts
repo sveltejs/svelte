@@ -36,6 +36,7 @@ interface T$$ {
 	context: Map<any, any>;
 	on_mount: any[];
 	on_destroy: any[];
+    on_error: any[];
 	skip_bound: boolean;
 	on_disconnect: any[];
 	root:Element|ShadowRoot
@@ -104,6 +105,26 @@ function make_dirty(component, i) {
 	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
+export function attach_error_handler(component, fn) {
+    return () => {
+        try {
+            fn.call(this, ...arguments);
+        } catch (e) {
+            handle_error(component, e);
+        }
+    }
+}
+
+export function handle_error(component, e) {
+    if (component.$$.on_error.length === 0) {
+        throw e;
+    }
+
+    component.$$.on_error.forEach(handler => {
+        handler(e);
+    });
+}
+
 export function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
 	const parent_component = current_component;
 	set_current_component(component);
@@ -122,6 +143,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		on_mount: [],
 		on_destroy: [],
 		on_disconnect: [],
+        on_error: [],
 		before_update: [],
 		after_update: [],
 		context: new Map(parent_component ? parent_component.$$.context : options.context || []),
@@ -153,7 +175,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	run_all($$.before_update);
 
 	// `false` as a special case of no DOM component
-	$$.fragment = create_fragment ? create_fragment($$.ctx) : false;
+	$$.fragment = create_fragment ? create_fragment($$.ctx, component) : false;
 
 	if (options.target) {
 		if (options.hydrate) {

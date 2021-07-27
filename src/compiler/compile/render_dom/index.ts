@@ -329,7 +329,7 @@ export default function dom(
 	const has_create_fragment = component.compile_options.dev || block.has_content();
 	if (has_create_fragment) {
 		body.push(b`
-			function create_fragment(#ctx) {
+			function create_fragment(#ctx, #component) {
 				${block.get_contents()}
 			}
 		`);
@@ -450,6 +450,15 @@ export default function dom(
 			}) as Expression)
 		};
 
+        const instance_try_block: any = b`
+            try {}
+            catch(e) {
+                @handle_error($$self, e);
+            }
+        `;
+
+        instance_try_block[0].block.body = instance_javascript.flat();
+
 		body.push(b`
 			function ${definition}(${args}) {
 				${injected.map(name => b`let ${name};`)}
@@ -466,7 +475,7 @@ export default function dom(
 				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
 				${compute_slots}
 
-				${instance_javascript}
+				${instance_try_block}
 
 				${unknown_props_check}
 
