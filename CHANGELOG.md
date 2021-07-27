@@ -4,6 +4,7 @@
 
 * Support `export { ... } from` syntax in components ([#2214](https://github.com/sveltejs/svelte/issues/2214))
 * Support `export let { ... } =` syntax in components ([#5612](https://github.com/sveltejs/svelte/issues/5612))
+* Support `{#await ... then/catch}` without a variable for the resolved/rejected value ([#6270](https://github.com/sveltejs/svelte/issues/6270))
 
 ## 3.40.3
 
