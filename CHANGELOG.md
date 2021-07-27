@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Support `export { ... } from` syntax in components ([#2214](https://github.com/sveltejs/svelte/issues/2214))
+* Support `export let { ... } =` syntax in components ([#5612](https://github.com/sveltejs/svelte/issues/5612))
 
 ## 3.40.3
 
