@@ -653,10 +653,7 @@ export default class Element extends Node {
 				}
 			} else if (name === 'complete') {
 				if (this.name !== 'img') {
-					component.error(binding, {
-						code: `invalid-binding`,
-						message: `'${binding.name}' binding can only be used with <img>`
-					});
+					component.error(binding, compiler_errors.invalid_binding_element_with(binding.name, '<img>'));
 				}
 			} else if (name !== 'this') {
 				return component.error(binding, compiler_errors.invalid_binding(binding.name));
