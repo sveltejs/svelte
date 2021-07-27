@@ -48,8 +48,8 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(0, complete);
 	}
 
-	$$self.$set = $$props => {
-		if ("complete" in $$props) $$invalidate(0, complete = $$props.complete);
+	$$self.$$set = $$props => {
+		if ('complete' in $$props) $$invalidate(0, complete = $$props.complete);
 	};
 
 	return [complete, img_load_handler];
