@@ -119,20 +119,28 @@ export function get_slot_changes(definition, $$scope, dirty, fn) {
 	return $$scope.dirty;
 }
 
-export function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
-	const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
+export function update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn) {
 	if (slot_changes) {
 		const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
 		slot.p(slot_context, slot_changes);
 	}
 }
 
-export function update_slot_spread(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_spread_changes_fn, get_slot_context_fn) {
-	const slot_changes = get_slot_spread_changes_fn(dirty) | get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
-	if (slot_changes) {
-		const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
-		slot.p(slot_context, slot_changes);
+export function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
+	const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
+	update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn);
+}
+
+export function get_all_dirty_from_scope($$scope) {
+	if ($$scope.ctx.length > 32) {
+		const dirty = [];
+		const length = $$scope.ctx.length / 32;
+		for (let i = 0; i < length; i++) {
+			dirty[i] = -1;
+		}
+		return dirty;
 	}
+	return -1;
 }
 
 export function exclude_internal_props(props) {
@@ -169,7 +177,7 @@ export function null_to_empty(value) {
 	return value == null ? '' : value;
 }
 
-export function set_store_value(store, ret, value = ret) {
+export function set_store_value(store, ret, value) {
 	store.set(value);
 	return ret;
 }

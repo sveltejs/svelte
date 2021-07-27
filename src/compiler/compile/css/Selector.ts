@@ -227,7 +227,8 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			if (apply_selector(blocks, get_element_parent(node), to_encapsulate)) {
+			const has_global_parent = blocks.every(block => block.global);
+			if (has_global_parent || apply_selector(blocks, get_element_parent(node), to_encapsulate)) {
 				to_encapsulate.push({ node, block });
 				return true;
 			}

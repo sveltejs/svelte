@@ -1,7 +1,7 @@
 import list from '../utils/list';
 import { ModuleFormat } from '../interfaces';
 import { b, x } from 'code-red';
-import { Identifier, ImportDeclaration } from 'estree';
+import { Identifier, ImportDeclaration, ExportNamedDeclaration } from 'estree';
 
 const wrappers = { esm, cjs };
 
@@ -19,20 +19,21 @@ export default function create_module(
 	helpers: Array<{ name: string; alias: Identifier }>,
 	globals: Array<{ name: string; alias: Identifier }>,
 	imports: ImportDeclaration[],
-	module_exports: Export[]
+	module_exports: Export[],
+	exports_from: ExportNamedDeclaration[]
 ) {
 	const internal_path = `${sveltePath}/internal`;
 
 	helpers.sort((a, b) => (a.name < b.name) ? -1 : 1);
 	globals.sort((a, b) => (a.name < b.name) ? -1 : 1);
+	
+	const formatter = wrappers[format];
 
-	if (format === 'esm') {
-		return esm(program, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports);
+	if (!formatter) {
+		throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 	}
 
-	if (format === 'cjs') return cjs(program, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports);
-
-	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
+	return formatter(program, name, banner, sveltePath, internal_path, helpers, globals, imports, module_exports, exports_from);
 }
 
 function edit_source(source, sveltePath) {
@@ -76,7 +77,8 @@ function esm(
 	helpers: Array<{ name: string; alias: Identifier }>,
 	globals: Array<{ name: string; alias: Identifier }>,
 	imports: ImportDeclaration[],
-	module_exports: Export[]
+	module_exports: Export[],
+	exports_from: ExportNamedDeclaration[]
 ) {
 	const import_declaration = {
 		type: 'ImportDeclaration',
@@ -94,6 +96,9 @@ function esm(
 	imports.forEach(node => {
 		node.source.value = edit_source(node.source.value, sveltePath);
 	});
+	exports_from.forEach(node => {
+		node.source!.value = edit_source(node.source!.value, sveltePath);
+	});
 
 	const exports = module_exports.length > 0 && {
 		type: 'ExportNamedDeclaration',
@@ -110,6 +115,7 @@ function esm(
 		${import_declaration}
 		${internal_globals}
 		${imports}
+		${exports_from}
 
 		${program.body}
 
@@ -127,7 +133,8 @@ function cjs(
 	helpers: Array<{ name: string; alias: Identifier }>,
 	globals: Array<{ name: string; alias: Identifier }>,
 	imports: ImportDeclaration[],
-	module_exports: Export[]
+	module_exports: Export[],
+	exports_from: ExportNamedDeclaration[]
 ) {
 	const internal_requires = {
 		type: 'VariableDeclaration',
@@ -183,6 +190,13 @@ function cjs(
 
 	const exports = module_exports.map(x => b`exports.${{ type: 'Identifier', name: x.as }} = ${{ type: 'Identifier', name: x.name }};`);
 
+	const user_exports_from = exports_from.map(node => {
+		const init = x`require("${edit_source(node.source.value, sveltePath)}")`;
+		return node.specifiers.map(specifier => {
+			return b`exports.${specifier.exported} = ${init}.${specifier.local};`;
+		});
+	});
+
 	program.body = b`
 		/* ${banner} */
 
@@ -190,6 +204,7 @@ function cjs(
 		${internal_requires}
 		${internal_globals}
 		${user_requires}
+		${user_exports_from}
 
 		${program.body}
 

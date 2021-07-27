@@ -174,10 +174,6 @@ export default {
 		code: 'default-export',
 		message: 'A component cannot have a default export'
 	},
-	not_implemented: {
-		code: 'not-implemented',
-		message: 'A component currently cannot have an export ... from'
-	},
 	illegal_declaration: {
 		code: 'illegal-declaration',
 		message: 'The $ prefix is reserved, and cannot be used for variable and import names'
