@@ -388,14 +388,23 @@ export default class Block {
 
 		const block = dev && this.get_unique_name('block');
 
+        console.log(this.variables.values());
+        // console.log(x`@handle_error(#component, e)`);
+
 		const body = b`
 			${this.chunks.declarations}
 
-			${Array.from(this.variables.values()).map(({ id, init }) => {
-				return init
-					? b`let ${id} = ${init}`
-					: b`let ${id}`;
+			${Array.from(this.variables.values()).map(({ id }) => {
+				return b`let ${id}`;
 			})}
+
+            try {
+                ${Array.from(this.variables.values()).filter(({ init }) => init !== undefined).map(({ id, init }) => {
+                    return b`${id} = ${init}`;
+                })}
+            } catch (e) {
+                @handle_error(#component, e);
+            }
 
 			${this.chunks.init}
 

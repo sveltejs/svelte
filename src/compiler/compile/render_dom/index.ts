@@ -442,13 +442,7 @@ export default function dom(
 			`;
 		}
 
-		const return_value = {
-			type: 'ArrayExpression',
-			elements: renderer.initial_context.map(member => ({
-				type: 'Identifier',
-				name: member.name
-			}) as Expression)
-		};
+        const return_value_reference = b`let return_values = []`;
 
         const instance_try_block: any = b`
             try {}
@@ -457,7 +451,16 @@ export default function dom(
             }
         `;
 
+		const return_value = {
+			type: 'ArrayExpression',
+			elements: renderer.initial_context.map(member => ({
+				type: 'Identifier',
+				name: member.name
+			}) as Expression)
+		};
+
         instance_try_block[0].block.body = instance_javascript.flat();
+        instance_try_block[0].block.body.push(x`return_values = ${return_value}`);
 
 		body.push(b`
 			function ${definition}(${args}) {
@@ -474,6 +477,8 @@ export default function dom(
 				${component.slots.size || component.compile_options.dev || uses_slots ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
 				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
 				${compute_slots}
+
+                ${return_value_reference}
 
 				${instance_try_block}
 
@@ -501,7 +506,7 @@ export default function dom(
 
 				${uses_props && b`$$props = @exclude_internal_props($$props);`}
 
-				return ${return_value};
+				return return_values;
 			}
 		`);
 	}
