@@ -444,13 +444,6 @@ export default function dom(
 
         const return_value_reference = b`let return_values = []`;
 
-        const instance_try_block: any = b`
-            try {}
-            catch(e) {
-                @handle_error($$self, e);
-            }
-        `;
-
 		const return_value = {
 			type: 'ArrayExpression',
 			elements: renderer.initial_context.map(member => ({
@@ -459,8 +452,40 @@ export default function dom(
 			}) as Expression)
 		};
 
-        instance_try_block[0].block.body = instance_javascript.flat();
-        instance_try_block[0].block.body.push(x`return_values = ${return_value}`);
+        const instance_try_block: any = b`
+            try {
+                ${instance_javascript}
+
+                ${unknown_props_check}
+
+                ${renderer.binding_groups.size > 0 && b`const $$binding_groups = [${[...renderer.binding_groups.keys()].map(_ => x`[]`)}];`}
+
+                ${component.partly_hoisted}
+
+                ${set && b`$$self.$$set = ${set};`}
+
+                ${capture_state && b`$$self.$capture_state = ${capture_state};`}
+
+                ${inject_state && b`$$self.$inject_state = ${inject_state};`}
+
+                ${/* before reactive declarations */ props_inject}
+
+                ${reactive_declarations.length > 0 && b`
+                $$self.$$.update = () => {
+                    ${reactive_declarations}
+                };
+                `}
+
+                ${fixed_reactive_declarations}
+
+                ${uses_props && b`$$props = @exclude_internal_props($$props);`}
+
+                return ${return_value}
+            }
+            catch(e) {
+                @handle_error($$self, e);
+            }
+        `;
 
 		body.push(b`
 			function ${definition}(${args}) {
@@ -481,32 +506,6 @@ export default function dom(
                 ${return_value_reference}
 
 				${instance_try_block}
-
-				${unknown_props_check}
-
-				${renderer.binding_groups.size > 0 && b`const $$binding_groups = [${[...renderer.binding_groups.keys()].map(_ => x`[]`)}];`}
-
-				${component.partly_hoisted}
-
-				${set && b`$$self.$$set = ${set};`}
-
-				${capture_state && b`$$self.$capture_state = ${capture_state};`}
-
-				${inject_state && b`$$self.$inject_state = ${inject_state};`}
-
-				${/* before reactive declarations */ props_inject}
-
-				${reactive_declarations.length > 0 && b`
-				$$self.$$.update = () => {
-					${reactive_declarations}
-				};
-				`}
-
-				${fixed_reactive_declarations}
-
-				${uses_props && b`$$props = @exclude_internal_props($$props);`}
-
-				return return_values;
 			}
 		`);
 	}

@@ -388,9 +388,6 @@ export default class Block {
 
 		const block = dev && this.get_unique_name('block');
 
-        console.log(this.variables.values());
-        // console.log(x`@handle_error(#component, e)`);
-
 		const body = b`
 			${this.chunks.declarations}
 
@@ -403,7 +400,7 @@ export default class Block {
                     return b`${id} = ${init}`;
                 })}
             } catch (e) {
-                @handle_error(#component, e);
+                // @handle_error(#component, e);
             }
 
 			${this.chunks.init}
