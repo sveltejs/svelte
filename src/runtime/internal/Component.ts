@@ -106,10 +106,10 @@ function make_dirty(component, i) {
 	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
-export function attach_error_handler(component, fn) {
+export function attach_error_handler(that: any, component, fn) {
     return (...rest) => {
         try {
-            fn.call(this, ...rest);
+            fn.call(that, ...rest);
         } catch (e) {
             handle_error(component, e);
         }

@@ -461,8 +461,8 @@ export default class Block {
 
 			this.add_variable(dispose);
 
-            this.event_listeners.forEach(event_listener => {
-                event_listener.arguments[2] = x`@attach_error_handler.call(${event_listener.arguments[0]}, #component, ${event_listener.arguments[2]})`;
+            this.event_listeners.forEach((event_listener: any) => {
+                event_listener.arguments[2] = x`@attach_error_handler(${event_listener.arguments[0]}, #component, ${event_listener.arguments[2]})`;
             });
 
 			if (this.event_listeners.length === 1) {
