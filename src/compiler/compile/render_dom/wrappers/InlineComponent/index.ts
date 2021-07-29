@@ -192,7 +192,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			component_opts.properties.push(p`$$inline: true`);
 		}
 
-        if (block.type === "slot") {
+        if (block.type === 'slot') {
             component_opts.properties.push(p`$$in_slot: true`);
         }
 
