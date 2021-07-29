@@ -388,6 +388,10 @@ export default class Block {
 
 		const block = dev && this.get_unique_name('block');
 
+        let init_statements = Array.from(this.variables.values()).filter(({ init }) => init !== undefined).map(({ id, init }) => {
+            return b`${id} = ${init}`;
+        });
+
 		const body = b`
 			${this.chunks.declarations}
 
@@ -395,12 +399,14 @@ export default class Block {
 				return b`let ${id}`;
 			})}
 
-            try {
-                ${Array.from(this.variables.values()).filter(({ init }) => init !== undefined).map(({ id, init }) => {
-                    return b`${id} = ${init}`;
-                })}
-            } catch (e) {
-                // @handle_error(#component, e);
+            ${init_statements.length > 0
+                ? b`
+                    try {
+                        ${init_statements}
+                    } catch (e) {
+                        @handle_error(@get_current_component(), e);
+                    }`
+                : ''
             }
 
 			${this.chunks.init}
