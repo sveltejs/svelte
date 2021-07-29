@@ -192,6 +192,10 @@ export default class InlineComponentWrapper extends Wrapper {
 			component_opts.properties.push(p`$$inline: true`);
 		}
 
+        if (block.type === "slot") {
+            component_opts.properties.push(p`$$in_slot: true`);
+        }
+
 		const fragment_dependencies = new Set(this.slots.size ? ['$$scope'] : []);
 		this.slots.forEach(slot => {
 			slot.block.dependencies.forEach(name => {

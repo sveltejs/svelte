@@ -116,23 +116,25 @@ export function attach_error_handler(that: any, component, fn) {
     };
 }
 
-export function handle_error(component, e) {
-    if (component.$$.on_error.length === 0) {
+export function handle_error(component, e, skip = false) {
+    if (component.$$.on_error.length === 0 || skip) {
         bubble_error(component, e);
     }
 
-    component.$$.on_error.forEach(handler => {
-        try {
-            handler(e);
-        } catch (e) {
-            bubble_error(component, e);
-        }
-    });
+    if (!skip) {
+        component.$$.on_error.forEach(handler => {
+            try {
+                handler(e);
+            } catch (e) {
+                bubble_error(component, e);
+            }
+        });
+    }
 }
 
 function bubble_error(component, e) {
     if (component.$$.parent_component) {
-        handle_error(component.$$.parent_component, e);
+        handle_error(component.$$.parent_component, e, component.$$.in_slot);
     } else {
         throw e;
     }
@@ -166,6 +168,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		dirty,
 		skip_bound: false,
 		root: options.target || parent_component.$$.root,
+        in_slot: options.$$in_slot || false,
         parent_component
 	};
 
