@@ -516,7 +516,7 @@ The following modifiers are available:
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
 * `self` — only trigger handler if event.target is the element itself
-* `trusted` — only trigger handler if `event.trusted` is `true`. I.e. if the event is triggered by a user action.
+* `trusted` — only trigger handler if `event.isTrusted` is `true`. I.e. if the event is triggered by a user action.
 
 Modifiers can be chained together, e.g. `on:click|once|capture={...}`.
 
