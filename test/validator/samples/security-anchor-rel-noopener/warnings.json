@@ -178,5 +178,95 @@
 			"column": 0,
 			"line": 20
 		}
-	}
+	},
+	{
+		"code": "security-anchor-rel-noopener",
+		"end": {
+			"character": 1534,
+			"column": 79,
+			"line": 22
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\"",
+		"pos": 1455,
+		"start": {
+			"character": 1455,
+			"column": 0,
+			"line": 22
+		}
+	},
+	{
+		"code": "security-anchor-rel-noopener",
+		"end": {
+			"character": 1624,
+			"column": 89,
+			"line": 23
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\"",
+		"pos": 1535,
+		"start": {
+			"character": 1535,
+			"column": 0,
+			"line": 23
+		}
+	},
+	{
+		"code": "security-anchor-rel-noopener",
+		"end": {
+			"character": 1759,
+			"column": 80,
+			"line": 25
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\"",
+		"pos": 1679,
+		"start": {
+			"character": 1679,
+			"column": 0,
+			"line": 25
+		}
+	},
+	{
+		"code": "security-anchor-rel-noopener",
+		"end": {
+			"character": 1850,
+			"column": 90,
+			"line": 26
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\"",
+		"pos": 1760,
+		"start": {
+			"character": 1760,
+			"column": 0,
+			"line": 26
+		}
+	},
+	{
+		"code": "security-anchor-rel-noopener",
+		"end": {
+			"character": 1977,
+			"column": 72,
+			"line": 28
+		},
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\"",
+		"pos": 1905,
+		"start": {
+			"character": 1905,
+			"column": 0,
+			"line": 28
+		}
+	},
+	{
+		  "code": "security-anchor-rel-noopener",
+		  "end": {
+		    "character": 2105,
+		    "column": 73,
+		    "line": 30
+		  },
+		  "message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\"",
+		  "pos": 2032,
+		  "start": {
+		    "character": 2032,
+		    "column": 0,
+		    "line": 30
+		  }
+		}
 ]

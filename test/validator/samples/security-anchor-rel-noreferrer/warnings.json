@@ -178,5 +178,95 @@
 			"column": 0,
 			"line": 20
 		}
-	}
+	},
+	{
+		  "code": "security-anchor-rel-noreferrer",
+		  "end": {
+		    "character": 1501,
+		    "column": 72,
+		    "line": 22
+		  },
+		  "message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		  "pos": 1429,
+		  "start": {
+		    "character": 1429,
+		    "column": 0,
+		    "line": 22
+		  }
+		},
+		{
+		  "code": "security-anchor-rel-noreferrer",
+		  "end": {
+		    "character": 1633,
+		    "column": 79,
+		    "line": 24
+		  },
+		  "message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		  "pos": 1554,
+		  "start": {
+		    "character": 1554,
+		    "column": 0,
+		    "line": 24
+		  }
+		},
+		{
+		  "code": "security-anchor-rel-noreferrer",
+		  "end": {
+		    "character": 1721,
+		    "column": 87,
+		    "line": 25
+		  },
+		  "message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		  "pos": 1634,
+		  "start": {
+		    "character": 1634,
+		    "column": 0,
+		    "line": 25
+		  }
+		},
+		{
+		  "code": "security-anchor-rel-noreferrer",
+		  "end": {
+		    "character": 1849,
+		    "column": 75,
+		    "line": 27
+		  },
+		  "message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		  "pos": 1774,
+		  "start": {
+		    "character": 1774,
+		    "column": 0,
+		    "line": 27
+		  }
+		},
+		{
+		  "code": "security-anchor-rel-noreferrer",
+		  "end": {
+		    "character": 1984,
+		    "column": 82,
+		    "line": 29
+		  },
+		  "message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		  "pos": 1902,
+		  "start": {
+		    "character": 1902,
+		    "column": 0,
+		    "line": 29
+		  }
+		},
+		{
+		  "code": "security-anchor-rel-noreferrer",
+		  "end": {
+		    "character": 2075,
+		    "column": 90,
+		    "line": 30
+		  },
+		  "message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		  "pos": 1985,
+		  "start": {
+		    "character": 1985,
+		    "column": 0,
+		    "line": 30
+		  }
+		}
 ]

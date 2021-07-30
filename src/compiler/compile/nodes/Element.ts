@@ -399,7 +399,7 @@ export default class Element extends Node {
 			if (target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
 				const href_static_value = href_attribute.get_static_value() ? href_attribute.get_static_value().toLowerCase() : null;
 
-				if (href_static_value === null || href_static_value.startsWith('http') || href_static_value.startsWith('//')) {
+				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
 					const rel = attribute_map.get('rel');
 					const rel_values = rel ? rel.get_static_value().split(' ') : [];
 					const expected_values = ['noopener', 'noreferrer'];
