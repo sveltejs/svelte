@@ -1559,12 +1559,9 @@ function get_basename(filename: string) {
 }
 
 function get_sourcemap_source_filename(compile_options: CompileOptions) {
-	if (compile_options.filename) {
-		if (compile_options.outputFilename) {
-			return get_relative_path(compile_options.outputFilename, compile_options.filename);
-		} else {
-			return get_basename(compile_options.filename);
-		}
-	}
-	return null;
+	if (!compile_options.filename) return null;
+
+	return compile_options.outputFilename
+		? get_relative_path(compile_options.outputFilename, compile_options.filename)
+		: get_basename(compile_options.filename);
 }
