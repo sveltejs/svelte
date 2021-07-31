@@ -6,7 +6,7 @@ import { walk } from 'estree-walker';
 import { extract_names, Scope } from 'periscopic';
 import { invalidate } from './invalidate';
 import Block from './Block';
-import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression, Identifier } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { flatten } from '../../utils/flatten';
@@ -442,7 +442,7 @@ export default function dom(
 			`;
 		}
 
-        const return_value_reference = b`let return_values = []`;
+        const return_value_reference = b`let #return_values = []`;
 
 		const return_value = {
 			type: 'ArrayExpression',
@@ -451,10 +451,42 @@ export default function dom(
 				name: member.name
 			}) as Expression)
 		};
+        
+        let instance_javascript_with_ctx = [];
+        let initializedIdentifiers = [];
+        instance_javascript.forEach(node => {
+            instance_javascript_with_ctx.push(node);
+
+            if (Array.isArray(node) && node[0].type === "VariableDeclaration" ) {
+                walk(node[0], {
+                    enter(declaration: Identifier) {
+                        if (declaration.type === 'Identifier' && !initializedIdentifiers.includes(declaration.name)) {
+                            let index = renderer.initial_context.findIndex(member => member.name === declaration.name);
+
+                            if (index >= 0) {
+                                node.push(x`#return_values[${index}] = ${declaration}`);
+                                initializedIdentifiers.push(declaration.name);
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (node.type === "FunctionDeclaration") {
+                if (!initializedIdentifiers.includes(node.id.name)) {
+                    let index = renderer.initial_context.findIndex(member => member.name === node.id.name);
+
+                    if (index >= 0) {
+                        instance_javascript_with_ctx.push(x`#return_values[${index}] = ${node.id.name}`);
+                        initializedIdentifiers.push(node.id.name);
+                    }
+                }
+            }
+        });
 
         const instance_try_block: any = b`
             try {
-                ${instance_javascript}
+                ${instance_javascript_with_ctx}
 
                 ${unknown_props_check}
 
@@ -480,10 +512,13 @@ export default function dom(
 
                 ${uses_props && b`$$props = @exclude_internal_props($$props);`}
 
-                return ${return_value}
+                #return_values = ${return_value}
+                return #return_values;
             }
             catch(e) {
+                $$self.$$.ctx = #return_values;
                 @handle_error($$self, e);
+                return #return_values;
             }
         `;
 

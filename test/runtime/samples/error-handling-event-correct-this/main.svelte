@@ -2,7 +2,7 @@
     import { onError } from "svelte";
 
     var a = {};
-    var that;
+    export var that;
     export var error = false;
 
     onError(e => {

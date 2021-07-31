@@ -1,9 +1,12 @@
 <script>
+    import Child from "./child.svelte";
     import { onError } from "svelte";
 
-    var error = false;
+    export var error = false;
 
     onError(e => {
         error = true;
     });
 </script>
+
+<Child />

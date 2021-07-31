@@ -97,6 +97,8 @@ export function create_ssr_component(fn) {
 			on_mount: [],
 			before_update: [],
 			after_update: [],
+            on_error: [],
+            parent_component,
 			callbacks: blank_object()
 		};
 

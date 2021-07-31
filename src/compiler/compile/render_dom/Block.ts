@@ -316,7 +316,12 @@ export default class Block {
 
 				properties.update = x`function #update(${ctx}, ${dirty}) {
 					${this.maintain_context && b`#ctx = ${ctx};`}
-					${this.chunks.update}
+					
+                    try {
+                        ${this.chunks.update}
+                    } catch (e) {
+                        @handle_error(@get_current_component(), e);
+                    }
 				}`;
 			}
 		}

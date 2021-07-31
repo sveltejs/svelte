@@ -186,7 +186,11 @@ export default function ssr(
 
 			${reactive_store_unsubscriptions}
 
-			return ${literal};`;
+			try {
+                return ${literal};
+            } catch (e) {
+                @handle_error(@get_current_component(), e);
+            }`;
 
 	const blocks = [
 		...injected.map(name => b`let ${name};`),
@@ -194,7 +198,13 @@ export default function ssr(
 		slots,
 		...reactive_store_declarations,
 		...reactive_store_subscriptions,
-		instance_javascript,
+		b`
+            try {
+                ${instance_javascript}
+            } catch (e) {
+                @handle_error(@get_current_component(), e);
+            }
+        `,
 		...parent_bindings,
 		css.code && b`$$result.css.add(#css);`,
 		main
