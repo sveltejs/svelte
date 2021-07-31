@@ -393,16 +393,34 @@ export default class Block {
 
 		const block = dev && this.get_unique_name('block');
 
-        const init_statements = Array.from(this.variables.values()).filter(({ init }) => init !== undefined).map(({ id, init }) => {
-            return b`${id} = ${init}`;
+        const init_declarations = [];
+        const init_statements = [];
+
+        Array.from(this.variables.values()).forEach(({ id, init }) => {
+            init_declarations.push(b`let ${id};`);
+            
+            if (init) {
+                init_statements.push(b`${id} = ${init}`);
+            }
+        });
+
+        console.log("H");
+        this.chunks.init.forEach(node => {
+            if (Array.isArray(node) && node[0].type === "VariableDeclaration") {
+                node[0].declarations.forEach(({ id, init }) => {
+                    console.log(id);
+                    init_declarations.push(b`let ${id};`);
+                    init_statements.push(b`${id} = ${init}`);
+                });
+            } else {
+                init_declarations.push(node);
+            }
         });
 
 		const body = b`
 			${this.chunks.declarations}
 
-			${Array.from(this.variables.values()).map(({ id }) => {
-				return b`let ${id}`;
-			})}
+			${init_declarations}
 
             ${init_statements.length > 0
                 ? b`
@@ -413,8 +431,6 @@ export default class Block {
                     }`
                 : ''
             }
-
-			${this.chunks.init}
 
 			${dev
 				? b`

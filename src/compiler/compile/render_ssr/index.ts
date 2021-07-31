@@ -182,11 +182,13 @@ export default function ssr(
 			return $$rendered;
 		`
 		: b`
-			${reactive_declarations}
-
-			${reactive_store_unsubscriptions}
-
 			try {
+                ${instance_javascript}
+
+                ${reactive_declarations}
+
+                ${reactive_store_unsubscriptions}
+
                 return ${literal};
             } catch (e) {
                 @handle_error(@get_current_component(), e);
@@ -198,13 +200,13 @@ export default function ssr(
 		slots,
 		...reactive_store_declarations,
 		...reactive_store_subscriptions,
-		b`
-            try {
-                ${instance_javascript}
-            } catch (e) {
-                @handle_error(@get_current_component(), e);
-            }
-        `,
+		// b`
+        //     try {
+        //         ${instance_javascript}
+        //     } catch (e) {
+        //         @handle_error(@get_current_component(), e);
+        //     }
+        // `,
 		...parent_bindings,
 		css.code && b`$$result.css.add(#css);`,
 		main
