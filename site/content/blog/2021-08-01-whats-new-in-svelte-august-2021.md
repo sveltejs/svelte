@@ -5,17 +5,17 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-From The Changelog ([JS Party Ep. 182](https://changelog.com/jsparty/182)) to Svelte Radio (Episodes [29](https://share.transistor.fm/s/adc23e84) and [30](https://share.transistor.fm/s/6316622d)), it seems that folks couldn't help but talk about Svelte, this month! Also, shadow DOM support and a new export and await functionality are new in Svelte.
+From The Changelog ([JS Party Ep. 182](https://changelog.com/jsparty/182)) to Svelte Radio (Episodes [29](https://share.transistor.fm/s/adc23e84) and [30](https://share.transistor.fm/s/6316622d)), it seems that folks couldn't help but talk about Svelte, this month! Also, shadow DOM support and new export and await functionality are new in Svelte.
 
 ## New in Svelte
-- You can now specify a `ShadowRoot` as the `target` when creating a component - making it possible to render Svelte componetns inside the shadow DOM (**3.40.0**)
+- You can now specify a `ShadowRoot` as the `target` when creating a component - making it possible to render Svelte components inside the shadow DOM (**3.40.0**)
 - The `export { ... } from`, `export let { ... } =` and `{#await ... then/catch}` syntaxes are all now supported in Svelte components (**3.41.0**)
 
 For a full list of features and bug fixes, check out the [Svelte changelog](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
 ## SvelteKit Updates
 - More powerful and configurable rendering options are now available ([#2008](https://github.com/sveltejs/kit/pull/2008))
-- esbuild's configuration is now exposed for use with SvelteKit adapaters ([#1914](https://github.com/sveltejs/kit/pull/1914))
+- esbuild's configuration is now exposed for use with SvelteKit adapters ([#1914](https://github.com/sveltejs/kit/pull/1914))
 - Error messages are friendlier now for common config errors ([#1910](https://github.com/sveltejs/kit/pull/1910))
 - Cookies will only be passed through if the target host is the same as the SvelteKit application or a more specific subdomain of it ([#1847](https://github.com/sveltejs/kit/pull/1847))
 - index.js exports will now be changed to directory exports when packaging - making for nicer imports ([#1905](https://github.com/sveltejs/kit/pull/1905))
@@ -24,8 +24,8 @@ For a full list of features and bug fixes, check out the [Svelte changelog](http
 
 
 ## Features & bug fixes from around svelte/*
-- Language Tools now better supports the "Workplace Trust" functionality (used in VS Code)
-- In svelte2tsk, ambient type declarations are now renamed to avoid conflicting declarations in the future. Users are now expected to provide the ambient type definitions themselves - fixing JS output
+- Language Tools now better support the "Workplace Trust" functionality (used in VS Code)
+- In svelte2tsx, ambient type declarations are now renamed to avoid conflicting declarations in the future. Users are now expected to provide the ambient type definitions themselves - fixing JS output
 - Sapper released v0.29.2 which fixes regex routes, status codes when requesting a directory, and exports when a user has not provided a `base` tag ([changelog](https://github.com/sveltejs/sapper/blob/master/CHANGELOG.md))
 
 ---
@@ -35,7 +35,7 @@ For a full list of features and bug fixes, check out the [Svelte changelog](http
 **Apps & Sites**
 - [Parsnip](https://www.parsnip.ai/) is a mobile-first, progressive-web-app that helps you to learn to cook at home. Check out the [conversation on Reddit](https://www.reddit.com/r/sveltejs/comments/oearb9/learning_to_cook_at_home_with_parsnip_built/) for all the geeky details.
 - [Central Bank Digital Currency (CBDC) tracker](https://www.atlanticcouncil.org/cbdctracker/) is a site that keeps track of how countries around the world are adopting digital currencies.
-- [Svelte Commerce](https://github.com/itswadesh/svelte-commerce) is an advanced Frontend Platform for eCommerce based on Sveltekit.
+- [Svelte Commerce](https://github.com/itswadesh/svelte-commerce) is an advanced frontend platform for eCommerce based on Sveltekit.
 - [neovimcraft](https://neovimcraft.com/) is a SvelteKit site dedicated to neovim plugins
 
 **Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
