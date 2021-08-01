@@ -46,6 +46,23 @@ interface BaseDirective extends BaseNode {
 	modifiers: string[];
 }
 
+export interface Element extends BaseNode {
+	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Body';
+	attributes: Array<BaseDirective | Attribute | SpreadAttribute>;
+	name: string;
+}
+
+export interface Attribute extends BaseNode {
+	type: 'Attribute';
+	name: string;
+	value: any[];
+}
+
+export interface SpreadAttribute extends BaseNode {
+	type: 'Spread';
+	expression: Node;
+}
+
 export interface Transition extends BaseDirective {
 	type: 'Transition';
 	intro: boolean;
@@ -57,6 +74,9 @@ export type Directive = BaseDirective | Transition;
 export type TemplateNode = Text
 | MustacheTag
 | BaseNode
+| Element
+| Attribute
+| SpreadAttribute
 | Directive
 | Transition
 | Comment;
