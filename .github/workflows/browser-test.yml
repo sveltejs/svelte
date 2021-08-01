@@ -15,6 +15,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm install
-      - run: npm test:browser
+      - run: npm run test:browser
         env:
           CI: true
