@@ -42,7 +42,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 **Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
 
 **Educational Content**
-- [How I Built a Cross-Platform Desktop Application with Svelte, Redis, and Rust](https://css-tricks.com/how-i-built-a-cross-platform-desktop-application-with-svelte-redis-and-rust/) is a blog post by Luke Edwards, a Developer Advocate from Cloudflare.
+- [How I Built a Cross-Platform Desktop Application with Svelte, Redis, and Rust](https://css-tricks.com/how-i-built-a-cross-platform-desktop-application-with-svelte-redis-and-rust/) is a blog post by Luke Edwards, Svelte maintainer and Developer Advocate from Cloudflare.
 - [How to Create a Blog with SvelteKit and Strapi](https://strapi.io/blog/how-to-create-a-blog-with-svelte-kit-strapi) is a step-by-step tutorial by Aarnav Pai from Strapi
 - [Sveltekit Markdown Blog](https://www.youtube.com/watch?v=sKKgT0SEioI&list=PLm_Qt4aKpfKgonq1zwaCS6kOD-nbOKx7V) is a YouTube tutorial series by WebJeda.
 - [Using Custom Elements in Svelte](https://css-tricks.com/using-custom-elements-in-svelte/) is a deep dive into custom elements by Geoff Rich.
