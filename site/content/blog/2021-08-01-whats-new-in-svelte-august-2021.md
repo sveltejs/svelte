@@ -14,7 +14,6 @@ From The Changelog ([JS Party Ep. 182](https://changelog.com/jsparty/182)) to Sv
 For a full list of features and bug fixes, check out the [Svelte changelog](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
 ## SvelteKit Updates
-- More powerful and configurable rendering options are now available ([#2008](https://github.com/sveltejs/kit/pull/2008))
 - esbuild's configuration is now exposed for use with SvelteKit adapters ([#1914](https://github.com/sveltejs/kit/pull/1914))
 - Error messages are friendlier now for common config errors ([#1910](https://github.com/sveltejs/kit/pull/1910))
 - Cookies will only be passed through if the target host is the same as the SvelteKit application or a more specific subdomain of it ([#1847](https://github.com/sveltejs/kit/pull/1847))
