@@ -8,8 +8,14 @@ authorURL: https://desandoval.net
 From The Changelog ([JS Party Ep. 182](https://changelog.com/jsparty/182)) to Svelte Radio (Episodes [29](https://share.transistor.fm/s/adc23e84) and [30](https://share.transistor.fm/s/6316622d)), it seems that folks couldn't help but talk about Svelte, this month! Also, shadow DOM support and new export and await functionality are new in Svelte.
 
 ## New in Svelte
-- You can now specify a `ShadowRoot` as the `target` when creating a component - making it possible to render Svelte components inside the shadow DOM (**3.40.0**)
-- The `export { ... } from`, `export let { ... } =` and `{#await ... then/catch}` syntaxes are all now supported in Svelte components (**3.41.0**)
+
+July was the most active month for the Svelte core repo since late 2019 as we really worked to reduce the number of outstanding PRs and saw the release of Svelte 3.39.0, 3.40.0, and 3.41.0. Tons of bug fixes were added as well as the following new features:
+
+- The `|trusted` event modifier allows you to check if an event is trusted before it's called ([#6137](https://github.com/sveltejs/svelte/issues/6137))
+- The new `svelte/ssr` package to support work on improving SvelteKit SSR ([#6416](https://github.com/sveltejs/svelte/pull/6416))
+- A new `errorMode` compiler option to support improved preprocessing of TypeScript files ([#6194](https://github.com/sveltejs/svelte/pull/6194))
+- You can now specify a `ShadowRoot` as the `target` when creating a component - making it possible to render Svelte components inside the shadow DOM ([#5869](https://github.com/sveltejs/svelte/issues/5869))
+- The `export { ... } from` ([#2214](https://github.com/sveltejs/svelte/issues/2214)), `export let { ... } =` ([#5612](https://github.com/sveltejs/svelte/issues/5612)) and `{#await ... then/catch}` ([#6270](https://github.com/sveltejs/svelte/issues/6270)) syntaxes are all now supported in Svelte components
 
 For a full list of features and bug fixes, check out the [Svelte changelog](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
