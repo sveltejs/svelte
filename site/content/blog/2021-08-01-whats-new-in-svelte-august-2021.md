@@ -14,13 +14,15 @@ From The Changelog ([JS Party Ep. 182](https://changelog.com/jsparty/182)) to Sv
 For a full list of features and bug fixes, check out the [Svelte changelog](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
 ## SvelteKit Updates
+- `prerender.force` is now `prerender.onError` which lets you fine-tune which errors fail the build and which do not ([#2007](https://github.com/sveltejs/kit/pull/2007))
 - esbuild's configuration is now exposed for use with SvelteKit adapters ([#1914](https://github.com/sveltejs/kit/pull/1914))
-- Error messages are friendlier now for common config errors ([#1910](https://github.com/sveltejs/kit/pull/1910))
+- Error messages are friendlier now for common config errors ([#1910](https://github.com/sveltejs/kit/pull/1910)) and compiler errors ([#1827](https://github.com/sveltejs/kit/pull/1827))
 - Cookies will only be passed through if the target host is the same as the SvelteKit application or a more specific subdomain of it ([#1847](https://github.com/sveltejs/kit/pull/1847))
 - index.js exports will now be changed to directory exports when packaging - making for nicer imports ([#1905](https://github.com/sveltejs/kit/pull/1905))
 - Vite.js's `mode` is now exposed from `$app/env` ([#1789](https://github.com/sveltejs/kit/pull/1789))
 - Better types across the board ([#1778](https://github.com/sveltejs/kit/pull/1778), [#1791](https://github.com/sveltejs/kit/pull/1791), [#1646](https://github.com/sveltejs/kit/pull/1646))
 
+To see all updates to SvelteKit, check out the [SvelteKit changelog](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md).
 
 ## Features & bug fixes from around svelte/*
 - Language Tools now better support the "Workplace Trust" functionality (used in VS Code)
