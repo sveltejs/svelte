@@ -66,7 +66,8 @@
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
-    "test": "mocha",
+    "test": "mocha --browser=false",
+    "test:browser": "mocha --browser=true",
     "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts",
     "quicktest": "mocha",
     "precoverage": "c8 mocha",
