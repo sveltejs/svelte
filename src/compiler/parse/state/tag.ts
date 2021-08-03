@@ -454,6 +454,10 @@ function read_attribute_value(parser: Parser) {
 		throw error;
 	}
 
+	if (value.length === 0 && !quote_mark) {
+		parser.error(parser_errors.missing_attribute_value);
+	}
+
 	if (quote_mark) parser.index += 1;
 	return value;
 }

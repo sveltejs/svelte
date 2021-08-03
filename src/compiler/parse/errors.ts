@@ -157,6 +157,10 @@ export default {
 		code: 'missing-component-definition',
 		message: '<svelte:component> must have a \'this\' attribute'
 	},
+	missing_attribute_value: {
+		code: 'missing-attribute-value',
+		message: 'Expected value for the attribute'
+	},
 	unclosed_script: {
 		code: 'unclosed-script',
 		message: '<script> must have a closing tag'
