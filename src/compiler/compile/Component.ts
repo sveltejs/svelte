@@ -343,19 +343,21 @@ export default class Component {
 				? { code: null, map: null }
 				: result.css;
 
+			const sourcemap_source_filename = get_sourcemap_source_filename(compile_options);
+
 			js = print(program, {
-				sourceMapSource: compile_options.filename
+				sourceMapSource: sourcemap_source_filename
 			});
 
 			js.map.sources = [
-				compile_options.filename ? get_relative_path(compile_options.outputFilename || '', compile_options.filename) : null
+				sourcemap_source_filename
 			];
 
 			js.map.sourcesContent = [
 				this.source
 			];
 
-			js.map = apply_preprocessor_sourcemap(this.file, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+			js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
 		}
 
 		return {
@@ -1550,4 +1552,16 @@ function get_relative_path(from: string, to: string) {
 	}
 
 	return from_parts.concat(to_parts).join('/');
+}
+
+function get_basename(filename: string) {
+	return filename.split(/[/\\]/).pop();
+}
+
+function get_sourcemap_source_filename(compile_options: CompileOptions) {
+	if (!compile_options.filename) return null;
+
+	return compile_options.outputFilename
+		? get_relative_path(compile_options.outputFilename, compile_options.filename)
+		: get_basename(compile_options.filename);
 }
