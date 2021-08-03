@@ -25,6 +25,6 @@ The full list of modifiers:
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase ([MDN docs](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture))
 * `once` — remove the handler after the first time it runs
 * `self` — only trigger handler if event.target is the element itself
-* `trusted` — only trigger handler if `event.trusted` is `true`. I.e. if the event is triggered by a user action.
+* `trusted` — only trigger handler if `event.isTrusted` is `true`. I.e. if the event is triggered by a user action.
 
 You can chain modifiers together, e.g. `on:click|once|capture={...}`.
