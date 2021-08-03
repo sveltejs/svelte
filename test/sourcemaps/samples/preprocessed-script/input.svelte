@@ -6,4 +6,4 @@
 <script>
 	export let foo = { baritone: { baz: 5 } }
 </script>
-<h1>{foo.bar.baz}</h1>
+<h1>{foo.baritone.baz}</h1>

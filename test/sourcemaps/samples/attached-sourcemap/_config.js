@@ -37,6 +37,9 @@ export default {
 		get_processor('script', 'replace_me_script', 'done_replace_script_1'),
 		get_processor('script', 'done_replace_script_1', 'done_replace_script_2'),
 
+		get_processor('expression', 'replace_me_script', 'done_replace_script_1'),
+		get_processor('expression', 'done_replace_script_1', 'done_replace_script_2'),
+
 		get_processor('style', '.replace_me_style', '.done_replace_style_1'),
 		get_processor('style', '.done_replace_style_1', '.done_replace_style_2')
 

@@ -2,6 +2,7 @@ import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types
 import { getLocator } from 'locate-character';
 import { MappedCode, SourceLocation, parse_attached_sourcemap, sourcemap_add_offset, combine_sourcemaps } from '../utils/mapped_code';
 import { decode_map } from './decode_sourcemap';
+import { Position } from './quick_parser';
 import { replace_in_code, slice_source } from './replace_in_code';
 import { MarkupPreprocessor, Source, Preprocessor, PreprocessorGroup, Processed } from './types';
 
@@ -89,6 +90,20 @@ function processed_content_to_code(processed: Processed, location: SourceLocatio
 	return MappedCode.from_processed(processed.code, decoded_map);
 }
 
+function stringify_attributes(attributes: Record<string, string | boolean>) {
+	return Object.keys(attributes).map(key => {
+		const value = attributes[key];
+		if (typeof value === 'boolean') {
+			if (value) {
+				return key;
+			}
+		} else {
+			const value_string = value.indexOf('"') > -1 ? `'${value}'` : `"${value}"`;
+			return key + '=' + value_string;
+		}
+	}).filter(Boolean).join(' ');
+}
+
 /**
  * Given the whole tag including content, return a `MappedCode`
  * representing the tag content replaced with `processed`.
@@ -96,7 +111,8 @@ function processed_content_to_code(processed: Processed, location: SourceLocatio
 function processed_tag_to_code(
 	processed: Processed,
 	tag_name: 'style' | 'script',
-	attributes: string,
+	original_attributes: string,
+	updated_attributes: string,
 	source: Source
 ): MappedCode {
 	const { file_basename, get_location } = source;
@@ -104,74 +120,55 @@ function processed_tag_to_code(
 	const build_mapped_code = (code: string, offset: number) =>
 		MappedCode.from_source(slice_source(code, offset, source));
 
-	const tag_open = `<${tag_name}${attributes || ''}>`;
+	const original_tag_open = `<${tag_name}${original_attributes || ''}>`;
+	const updated_tag_open = updated_attributes ? `<${tag_name} ${updated_attributes}>` : original_tag_open;
 	const tag_close = `</${tag_name}>`;
 
-	const tag_open_code = build_mapped_code(tag_open, 0);
-	const tag_close_code = build_mapped_code(tag_close, tag_open.length + source.source.length);
-
-	parse_attached_sourcemap(processed, tag_name);
-
-	const content_code = processed_content_to_code(processed, get_location(tag_open.length), file_basename);
+	const tag_open_code = build_mapped_code(updated_tag_open, 0);
+	const tag_close_code = build_mapped_code(tag_close, original_tag_open.length + source.source.length);
+	const content_code = processed_content_to_code(processed, get_location(original_tag_open.length), file_basename);
 
 	return tag_open_code.concat(content_code).concat(tag_close_code);
-}
-
-function parse_tag_attributes(str: string) {
-	// note: won't work with attribute values containing spaces.
-	return str
-		.split(/\s+/)
-		.filter(Boolean)
-		.reduce((attrs, attr) => {
-			const i = attr.indexOf('=');
-			const [key, value] = i > 0 ? [attr.slice(0, i), attr.slice(i + 1)] : [attr];
-			const [, unquoted] = (value && value.match(/^['"](.*)['"]$/)) || [];
-
-			return { ...attrs, [key]: unquoted ?? value ?? true };
-		}, {});
 }
 
 /**
  * Calculate the updates required to process all instances of the specified tag.
  */
 async function process_tag(
-	tag_name: 'style' | 'script',
+	tag_name: 'style' | 'script' | 'expression',
 	preprocessor: Preprocessor,
 	source: Source
 ): Promise<SourceUpdate> {
 	const { filename, source: markup } = source;
-	const tag_regex =
-		tag_name === 'style'
-			? /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi
-			: /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
-
 	const dependencies: string[] = [];
 
 	async function process_single_tag(
-		tag_with_content: string,
-		attributes = '',
-		content = '',
-		tag_offset: number
+		{ source: content, attributes, raw_attributes, offset, length }: Position
 	): Promise<MappedCode> {
-		const no_change = () => MappedCode.from_source(slice_source(tag_with_content, tag_offset, source));
+		const no_change = () => MappedCode.from_source(slice_source(source.source.slice(offset, offset + length), offset, source));
 
 		if (!attributes && !content) return no_change();
-
 		const processed = await preprocessor({
-			content: content || '',
-			attributes: parse_tag_attributes(attributes || ''),
+			content,
+			attributes,
 			markup,
 			filename
 		});
 
 		if (!processed) return no_change();
 		if (processed.dependencies) dependencies.push(...processed.dependencies);
-		if (!processed.map && processed.code === content) return no_change();
+		if (!processed.map && processed.code === content && !('attributes' in processed)) return no_change();
 
-		return processed_tag_to_code(processed, tag_name, attributes, slice_source(content, tag_offset, source));
+		parse_attached_sourcemap(processed, tag_name);
+		if (tag_name === 'expression') {
+			return processed_content_to_code(processed, source.get_location(offset), source.file_basename);
+		} else {
+			const updated_attributes = ('attributes' in processed) ? stringify_attributes(processed.attributes) : null;
+			return processed_tag_to_code(processed, tag_name, raw_attributes, updated_attributes, slice_source(content, offset, source));
+		}
 	}
 
-	const { string, map } = await replace_in_code(tag_regex, process_single_tag, source);
+	const { string, map } = await replace_in_code(tag_name, process_single_tag, source);
 
 	return { string, map, dependencies };
 }
@@ -210,6 +207,7 @@ export default async function preprocess(
 
 	const markup = preprocessors.map(p => p.markup).filter(Boolean);
 	const script = preprocessors.map(p => p.script).filter(Boolean);
+	const expression = preprocessors.map(p => p.expression).filter(Boolean);
 	const style = preprocessors.map(p => p.style).filter(Boolean);
 
 	const result = new PreprocessResult(source, filename);
@@ -223,6 +221,10 @@ export default async function preprocess(
 
 	for (const process of script) {
 		result.update_source(await process_tag('script', process, result));
+	}
+
+	for (const process of expression) {
+		result.update_source(await process_tag('expression', process, result));
 	}
 
 	for (const preprocess of style) {

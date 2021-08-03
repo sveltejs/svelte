@@ -15,4 +15,4 @@
 </script>
 
 <h1>Hello world!</h1>
-<div>Counter value: {count}</div>
+<div>Counter value: {count as number}</div>

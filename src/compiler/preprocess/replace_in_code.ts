@@ -1,4 +1,5 @@
 import { MappedCode } from '../utils/mapped_code';
+import parse, { Position } from './quick_parser';
 import { Source } from './types';
 
 interface Replacement {
@@ -21,24 +22,24 @@ export function slice_source(
 }
 
 function calculate_replacements(
-	re: RegExp,
-	get_replacement: (...match: any[]) => Promise<MappedCode>,
+	tag_name: 'script' | 'style' | 'expression',
+	get_replacement: (position: Position) => Promise<MappedCode>,
 	source: string
 ) {
 	const replacements: Array<Promise<Replacement>> = [];
+	const positions = parse(source);
 
-	source.replace(re, (...match) => {
+	(tag_name === 'script' ? positions.scripts : tag_name === 'expression' ? positions.expressions : positions.styles).forEach(position => {
 		replacements.push(
-			get_replacement(...match).then(
+			get_replacement(position).then(
 				replacement => {
-					const matched_string = match[0];
-					const offset = match[match.length - 2];
+					const length = position.length;
+					const offset = position.offset;
 
-					return ({ offset, length: matched_string.length, replacement });
+					return ({ offset, length, replacement });
 				}
 			)
 		);
-		return '';
 	});
 
 	return Promise.all(replacements);
@@ -65,11 +66,11 @@ function perform_replacements(
 }
 
 export async function replace_in_code(
-	regex: RegExp,
-	get_replacement: (...match: any[]) => Promise<MappedCode>,
+	tag_name: 'script' | 'style' | 'expression',
+	get_replacement: (position: Position) => Promise<MappedCode>,
 	location: Source
 ): Promise<MappedCode> {
-	const replacements = await calculate_replacements(regex, get_replacement, location.source);
+	const replacements = await calculate_replacements(tag_name, get_replacement, location.source);
 
 	return perform_replacements(replacements, location);
 }

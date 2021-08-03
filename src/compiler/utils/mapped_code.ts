@@ -297,9 +297,9 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 }
 
 // parse attached sourcemap in processed.code
-export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style'): void {
+export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style' | 'expression'): void {
 	const r_in = '[#@]\\s*sourceMappingURL\\s*=\\s*(\\S*)';
-	const regex = (tag_name == 'script')
+	const regex = (tag_name == 'script' || tag_name == 'expression')
 		? new RegExp('(?://' + r_in + ')|(?:/\\*' + r_in + '\\s*\\*/)$')
 		: new RegExp('/\\*' + r_in + '\\s*\\*/$');
 	function log_warning(message) {
@@ -308,7 +308,7 @@ export function parse_attached_sourcemap(processed: Processed, tag_name: 'script
 		console.warn(`warning: ${message}. processed.code = ${JSON.stringify(code_start)}`);
 	}
 	processed.code = processed.code.replace(regex, (_, match1, match2) => {
-		const map_url = (tag_name == 'script') ? (match1 || match2) : match1;
+		const map_url = (tag_name == 'script' || tag_name == 'expression') ? (match1 || match2) : match1;
 		const map_data = (map_url.match(/data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/) || [])[1];
 		if (map_data) {
 			// sourceMappingURL is data URL

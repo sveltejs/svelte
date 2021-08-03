@@ -8,4 +8,4 @@
 		replace_me_script = 'hello'
 	;
 </script>
-<h1 class="done_replace_style_2">{done_replace_script_2}</h1>
+<h1 class="done_replace_style_2">{replace_me_script}</h1>
