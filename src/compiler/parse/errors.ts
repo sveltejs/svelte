@@ -169,6 +169,10 @@ export default {
 		code: 'unclosed-comment',
 		message: 'comment was left open, expected -->'
 	},
+	unclosed_attribute_value: (token: string) => ({
+		code: 'unclosed-attribute-value',
+		message: `Expected to close the attribute value with ${token}`
+	}),
 	unexpected_block_close: {
 		code: 'unexpected-block-close',
 		message: 'Unexpected block closing tag'
