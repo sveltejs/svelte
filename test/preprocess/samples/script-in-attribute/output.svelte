@@ -27,10 +27,7 @@
 {:else}
 {/if}
 
-{#each replaced
-as {
-  as
-}}
+{#each replaced as { as }}
   {replaced}
 {/each}
 

@@ -29,10 +29,7 @@
 {:else}
 {/if}
 
-{#each foo
-as {
-  as
-}}
+{#each foo          as { as }}
   {as}
 {/each}
 
