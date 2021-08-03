@@ -1312,7 +1312,7 @@ export default class Component {
 
 								if (variable) {
 									variable.is_reactive_dependency = true;
-									if (variable.module) {
+									if (variable.module && variable.writable) {
 										should_add_as_dependency = false;
 										module_dependencies.add(name);
 									}
