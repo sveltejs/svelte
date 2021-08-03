@@ -8,4 +8,4 @@ export default {
         assert.equal(component.error, true);
         assert.equal(component.that, button);
     }
-}
+};

@@ -404,16 +404,20 @@ export default class Block {
             }
         });
 
-        console.log("H");
         this.chunks.init.forEach(node => {
-            if (Array.isArray(node) && node[0].type === "VariableDeclaration") {
-                node[0].declarations.forEach(({ id, init }) => {
-                    console.log(id);
-                    init_declarations.push(b`let ${id};`);
-                    init_statements.push(b`${id} = ${init}`);
+            if (Array.isArray(node)) {
+                node.forEach((declaration: any) => { // TODO add type to this
+                    if (declaration.declarations) {
+                        declaration.declarations.forEach(({ id, init }) => {
+                            init_declarations.push(b`let ${id}`);
+                            init_statements.push(b`${id} = ${init}`);
+                        });
+                    } else {
+                        init_statements.push(declaration);
+                    }
                 });
             } else {
-                init_declarations.push(node);
+                init_statements.push(node);
             }
         });
 
@@ -428,6 +432,7 @@ export default class Block {
                         ${init_statements}
                     } catch (e) {
                         @handle_error(@get_current_component(), e);
+                        return;
                     }`
                 : ''
             }

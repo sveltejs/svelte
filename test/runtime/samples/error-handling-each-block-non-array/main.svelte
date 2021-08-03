@@ -1,20 +1,14 @@
 <script>
     import { onError } from "svelte";
 
-    var a = [1, 2, 3];
+    var a = {}
     export var error = false;
     
     onError(e => {
         error = true;
     });
-
-    function handleClick() {
-        a = 10;
-    }
 </script>
 
-{#each a as item}
+{#each a.b.c as item}
     {item}
 {/each}
-
-<button on:click={handleClick}></button>

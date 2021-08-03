@@ -7,4 +7,4 @@ export default {
 
         assert.equal(component.error, true);
     }
-}
+};

@@ -453,7 +453,7 @@ export default function dom(
 		};
         
         let instance_javascript_with_ctx = [];
-        let initializedIdentifiers = [];
+        const initializedIdentifiers = [];
 
         if (instance_javascript === null) {
             instance_javascript_with_ctx = instance_javascript;
@@ -461,11 +461,11 @@ export default function dom(
             instance_javascript.forEach(node => {
                 instance_javascript_with_ctx.push(node);
     
-                if (Array.isArray(node) && node[0].type === "VariableDeclaration" ) {
+                if (Array.isArray(node) && node[0].type === 'VariableDeclaration') {
                     walk(node[0], {
                         enter(declaration: Identifier) {
                             if (declaration.type === 'Identifier' && !initializedIdentifiers.includes(declaration.name)) {
-                                let index = renderer.initial_context.findIndex(member => member.name === declaration.name);
+                                const index = renderer.initial_context.findIndex(member => member.name === declaration.name);
     
                                 if (index >= 0) {
                                     node.push(x`#return_values[${index}] = ${declaration}`);
@@ -476,9 +476,9 @@ export default function dom(
                     });
                 }
     
-                if (node.type === "FunctionDeclaration") {
+                if (node.type === 'FunctionDeclaration') {
                     if (!initializedIdentifiers.includes(node.id.name)) {
-                        let index = renderer.initial_context.findIndex(member => member.name === node.id.name);
+                        const index = renderer.initial_context.findIndex(member => member.name === node.id.name);
     
                         if (index >= 0) {
                             instance_javascript_with_ctx.push(x`#return_values[${index}] = ${node.id.name}`);
