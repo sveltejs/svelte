@@ -438,7 +438,25 @@ function read_attribute_value(parser: Parser) {
 				/(\/>|[\s"'=<>`])/
 	);
 
-	const value = read_sequence(parser, () => !!parser.match_regex(regex));
+	let value;
+	try {
+		value = read_sequence(parser, () => !!parser.match_regex(regex));
+	} catch (error) {
+		if (error.code === 'parse-error') {
+			// if the attribute value didn't close + self-closing tag
+			// eg: `<Component test={{a:1} />`
+			// acorn may throw a `Unterminated regular expression` because of `/>`
+			if (parser.template.slice(error.pos - 1, error.pos + 1) === '/>') {
+				parser.index = error.pos;
+				parser.error(parser_errors.unclosed_attribute_value(quote_mark || '}'));
+			}
+		}
+		throw error;
+	}
+
+	if (value.length === 0 && !quote_mark) {
+		parser.error(parser_errors.missing_attribute_value);
+	}
 
 	if (quote_mark) parser.index += 1;
 	return value;
