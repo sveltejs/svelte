@@ -1586,7 +1586,9 @@ All except `scrollX` and `scrollY` are readonly.
 
 ---
 
-As with `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave` which don't fire on `window`; and it has to appear at the top level of your component.
+Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](docs#use_action) on the `<body>` element.
+
+`<svelte:body>` also has to appear at the top level of your component.
 
 ```sv
 <svelte:body
