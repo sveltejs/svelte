@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix regression with reordering keyed `{#each}` blocks when compiling with hydration enabled ([#6561](https://github.com/sveltejs/svelte/issues/6561))
+
 ## 3.42.0
 
 * Allow `use:actions` to be used on `<svelte:body>` ([#3163](https://github.com/sveltejs/svelte/issues/3163))
