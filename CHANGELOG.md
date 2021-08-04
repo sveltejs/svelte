@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.42.1
 
 * Fix regression with reordering keyed `{#each}` blocks when compiling with hydration enabled ([#6561](https://github.com/sveltejs/svelte/issues/6561))
 
