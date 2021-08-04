@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.42.0
 
 * Allow `use:actions` to be used on `<svelte:body>` ([#3163](https://github.com/sveltejs/svelte/issues/3163))
 * Improve parser errors for certain invalid components ([#6259](https://github.com/sveltejs/svelte/issues/6259), [#6288](https://github.com/sveltejs/svelte/issues/6288))
