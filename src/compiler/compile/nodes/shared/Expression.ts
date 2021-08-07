@@ -62,7 +62,7 @@ export default class Expression {
 
 		// discover dependencies, but don't change the code yet
 		walk(info, {
-			enter(node: Node, parent: any, key: string) {
+			enter(node: any, parent: any, key: string) {
 				// don't manipulate shorthand props twice
 				if (key === 'key' && parent.shorthand) return;
 				// don't manipulate `import.meta`, `new.target`
@@ -166,13 +166,13 @@ export default class Expression {
 
 							if (declaration) {
 								if (declaration.kind === 'const' && !deep) {
-									component.error(node as any, {
+									component.error(node, {
 										code: 'assignment-to-const',
 										message: 'You are assigning to a const'
 									});
 								}
 							} else if (variable && variable.writable === false && !deep) {
-								component.error(node as any, {
+								component.error(node, {
 									code: 'assignment-to-const',
 									message: 'You are assigning to a const'
 								});
