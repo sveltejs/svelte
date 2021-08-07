@@ -40,7 +40,7 @@ export function add_action(block: Block, target: string, action: Action) {
 		);
 	} else {
 		block.event_listeners.push(
-			x`@action_destroyer(${id} = ${fn}.call(null, ${target}, ${snippet}))`
+            x`@action_destroyer(${id} = @attach_error_handler(null, @get_current_component(), ${fn}).call(null, ${target}, ${snippet}))`
 		);
 	}
 

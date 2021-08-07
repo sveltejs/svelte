@@ -109,7 +109,7 @@ function make_dirty(component, i) {
 export function attach_error_handler(that: any, component, fn) {
     return (...rest) => {
         try {
-            fn.call(that, ...rest);
+            return fn.call(that, ...rest);
         } catch (e) {
             handle_error(component, e);
         }

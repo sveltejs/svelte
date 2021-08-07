@@ -375,6 +375,36 @@ export default class Block {
 			}
 		}
 
+        if (properties.create.type === 'FunctionExpression') {
+            properties.create.body.body = b`
+                try {
+                    ${properties.create.body.body}
+                } catch (e) {
+                    @handle_error(@get_current_component(), e);
+                }
+            `;
+        }
+
+        if (properties.mount.type === 'FunctionExpression') {
+            properties.mount.body.body = b`
+                try {
+                    ${properties.mount.body.body}
+                } catch (e) {
+                    @handle_error(@get_current_component(), e);
+                }
+            `;
+        }
+
+        if (properties.hydrate?.type === 'FunctionExpression') {
+            properties.hydrate.body.body = b`
+                try {
+                    ${properties.hydrate.body.body}
+                } catch (e) {
+                    @handle_error(@get_current_component(), e);
+                }
+            `;
+        }
+
 		const return_value: any = x`{
 			key: ${properties.key},
 			first: ${properties.first},
@@ -395,6 +425,7 @@ export default class Block {
 
         const init_declarations = [];
         const init_statements = [];
+        const init_functions = [];
 
         Array.from(this.variables.values()).forEach(({ id, init }) => {
             init_declarations.push(b`let ${id};`);
@@ -407,9 +438,12 @@ export default class Block {
         this.chunks.init.forEach(node => {
             if (Array.isArray(node)) {
                 node.forEach((declaration: any) => { // TODO add type to this
-                    if (declaration.declarations) {
+                    if (declaration.type === 'FunctionDeclaration') {
+                        init_declarations.push(b`let ${declaration.id};`);
+                        init_functions.push(b`${declaration.id} = ${declaration}`);
+                    } else if (declaration.type === 'VariableDeclaration') {
                         declaration.declarations.forEach(({ id, init }) => {
-                            init_declarations.push(b`let ${id}`);
+                            init_declarations.push(b`let ${id}`); // TODO declaration is not always `let`
                             init_statements.push(b`${id} = ${init}`);
                         });
                     } else {
@@ -426,9 +460,11 @@ export default class Block {
 
 			${init_declarations}
 
-            ${init_statements.length > 0
+            ${init_statements.length > 0 || init_functions.length > 0
                 ? b`
                     try {
+                        ${init_functions}
+
                         ${init_statements}
                     } catch (e) {
                         @handle_error(@get_current_component(), e);
@@ -490,7 +526,6 @@ export default class Block {
 	render_listeners(chunk: string = '') {
 		if (this.event_listeners.length > 0) {
 			this.add_variable({ type: 'Identifier', name: '#mounted' });
-			this.chunks.destroy.push(b`#mounted = false`);
 
 			const dispose: Identifier = {
 				type: 'Identifier',
@@ -498,10 +533,6 @@ export default class Block {
 			};
 
 			this.add_variable(dispose);
-
-            this.event_listeners.forEach((event_listener: any) => {
-                event_listener.arguments[2] = x`@attach_error_handler(${event_listener.arguments[0]}, @get_current_component(), ${event_listener.arguments[2]})`;
-            });
 
 			if (this.event_listeners.length === 1) {
 				this.chunks.mount.push(
@@ -514,7 +545,11 @@ export default class Block {
 				);
 
 				this.chunks.destroy.push(
-					b`${dispose}();`
+					b`
+                        if (#mounted) {
+                            ${dispose}();
+                        }
+                    `
 				);
 			} else {
 				this.chunks.mount.push(b`
@@ -530,6 +565,8 @@ export default class Block {
 					b`@run_all(${dispose});`
 				);
 			}
+
+            this.chunks.destroy.push(b`#mounted = false`);
 		}
 	}
 }

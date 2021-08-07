@@ -67,7 +67,7 @@ export default class EventHandlerWrapper {
 		}
 
 		block.event_listeners.push(
-			x`@listen(${target}, "${this.node.name}", ${snippet}, ${args})`
+            x`@listen(${target}, "${this.node.name}", @attach_error_handler(${target}, @get_current_component(), ${snippet}), ${args})`
 		);
 	}
 }

@@ -6,7 +6,7 @@ import { walk } from 'estree-walker';
 import { extract_names, Scope } from 'periscopic';
 import { invalidate } from './invalidate';
 import Block from './Block';
-import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression, Identifier } from 'estree';
+import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { flatten } from '../../utils/flatten';
@@ -462,16 +462,12 @@ export default function dom(
                 instance_javascript_with_ctx.push(node);
     
                 if (Array.isArray(node) && node[0].type === 'VariableDeclaration') {
-                    walk(node[0], {
-                        enter(declaration: Identifier) {
-                            if (declaration.type === 'Identifier' && !initializedIdentifiers.includes(declaration.name)) {
-                                const index = renderer.initial_context.findIndex(member => member.name === declaration.name);
-    
-                                if (index >= 0) {
-                                    node.push(x`#return_values[${index}] = ${declaration}`);
-                                    initializedIdentifiers.push(declaration.name);
-                                }
-                            }
+                    node[0].declarations.forEach(({ id }) => {
+                        const index = renderer.initial_context.findIndex(member => member.name === id.name);
+
+                        if (index >= 0) {
+                            instance_javascript_with_ctx.push(b`#return_values[${index}] = ${id};`[0]);
+                            initializedIdentifiers.push(id.name);
                         }
                     });
                 }
@@ -481,7 +477,7 @@ export default function dom(
                         const index = renderer.initial_context.findIndex(member => member.name === node.id.name);
     
                         if (index >= 0) {
-                            instance_javascript_with_ctx.push(x`#return_values[${index}] = ${node.id.name}`);
+                            instance_javascript_with_ctx.push(b`#return_values[${index}] = ${node.id};`[0]);
                             initializedIdentifiers.push(node.id.name);
                         }
                     }
@@ -492,6 +488,12 @@ export default function dom(
 
         const instance_try_block: any = b`
             try {
+                ${reactive_store_declarations}
+
+				${reactive_store_subscriptions}
+
+				${resubscribable_reactive_store_unsubscribers}
+
                 ${instance_javascript_with_ctx}
 
                 ${unknown_props_check}
@@ -533,12 +535,6 @@ export default function dom(
 				${injected.map(name => b`let ${name};`)}
 
 				${rest}
-
-				${reactive_store_declarations}
-
-				${reactive_store_subscriptions}
-
-				${resubscribable_reactive_store_unsubscribers}
 
 				${component.slots.size || component.compile_options.dev || uses_slots ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
 				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}

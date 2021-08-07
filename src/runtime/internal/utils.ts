@@ -1,4 +1,6 @@
 import { Readable } from 'svelte/store';
+import { attach_error_handler } from './Component';
+import { get_current_component } from './lifecycle';
 
 export function noop() {}
 
@@ -185,5 +187,5 @@ export function set_store_value(store, ret, value) {
 export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
 
 export function action_destroyer(action_result) {
-	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
+    return action_result && is_function(action_result.destroy) ? attach_error_handler(action_result, get_current_component(), action_result.destroy) : noop;
 }

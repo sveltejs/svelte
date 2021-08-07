@@ -182,35 +182,25 @@ export default function ssr(
 			return $$rendered;
 		`
 		: b`
-			try {
-                ${instance_javascript}
+			${reactive_declarations}
 
-                ${reactive_declarations}
+			${reactive_store_unsubscriptions}
 
-                ${reactive_store_unsubscriptions}
+			return ${literal};`;
 
-                return ${literal};
-            } catch (e) {
-                @handle_error(@get_current_component(), e);
-            }`;
+    const blocks = [
+        ...injected.map(name => b`let ${name};`),
+        rest,
+        slots,
+        ...reactive_store_declarations,
+        ...reactive_store_subscriptions,
+        instance_javascript,
+        ...parent_bindings,
+        css.code && b`$$result.css.add(#css);`,
+        main
+    ].filter(Boolean);
 
-	const blocks = [
-		...injected.map(name => b`let ${name};`),
-		rest,
-		slots,
-		...reactive_store_declarations,
-		...reactive_store_subscriptions,
-		// b`
-        //     try {
-        //         ${instance_javascript}
-        //     } catch (e) {
-        //         @handle_error(@get_current_component(), e);
-        //     }
-        // `,
-		...parent_bindings,
-		css.code && b`$$result.css.add(#css);`,
-		main
-	].filter(Boolean);
+
 
 	const js = b`
 		${css.code ? b`
@@ -224,7 +214,11 @@ export default function ssr(
 		${component.fully_hoisted}
 
 		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, #slots) => {
-			${blocks}
+			try {
+                ${blocks}
+            } catch (e) {
+                @handle_error(@get_current_component(), e);
+            }
 		});
 	`;
 

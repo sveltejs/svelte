@@ -541,7 +541,7 @@ export default class ElementWrapper extends Wrapper {
 				);
 			} else {
 				block.event_listeners.push(
-					x`@listen(${this.var}, "${name}", ${callee})`
+                    x`@listen(${this.var}, "${name}", @attach_error_handler(${this.var}, @get_current_component(), ${callee}))`
 				);
 			}
 		});
