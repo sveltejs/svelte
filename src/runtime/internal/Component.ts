@@ -121,7 +121,7 @@ export function handle_error(component, e, skip = false) {
         bubble_error(component, e);
     }
 
-    if (!skip) {
+    if (!skip && !e.unhandled) {
         component.$$.on_error.forEach(handler => {
             try {
                 handler(e);
@@ -136,6 +136,7 @@ function bubble_error(component, e) {
     if (component.$$.parent_component) {
         handle_error(component.$$.parent_component, e, component.$$.in_slot);
     } else {
+        e.unhandled = true; // TODO this is very gross
         throw e;
     }
 }
