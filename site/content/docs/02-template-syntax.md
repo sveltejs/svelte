@@ -350,7 +350,7 @@ If you don't care about the pending state, you can also omit the initial block.
 
 ---
 
-If conversely you only want to show the error state, you can omit the `then` block.
+Similarly, if you only want to show the error state, you can omit the `then` block.
 
 ```sv
 {#await promise catch error}
@@ -515,7 +515,7 @@ The following modifiers are available:
 * `nonpassive` — explicitly set `passive: false`
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
 * `once` — remove the handler after the first time it runs
-* `self` — only trigger handler if event.target is the element itself
+* `self` — only trigger handler if `event.target` is the element itself
 * `trusted` — only trigger handler if `event.isTrusted` is `true`. I.e. if the event is triggered by a user action.
 
 Modifiers can be chained together, e.g. `on:click|once|capture={...}`.
@@ -670,7 +670,7 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — six 
 * `playbackRate` — how fast or slow to play the video, where 1 is 'normal'
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
-* `muted` — a boolean value where `true` is muted
+* `muted` — a boolean value indicating whether the player is muted
 
 Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 
@@ -1248,7 +1248,7 @@ As with DOM events, if the `on:` directive is used without a value, the componen
 
 ---
 
-As of [Svelte 3.38](https://github.com/sveltejs/svelte/issues/6268) ([RFC](https://github.com/sveltejs/rfcs/pull/13)), you can pass styles as props to components for the purposes of theming, using CSS custom properties. 
+You can also pass styles as props to components for the purposes of theming, using CSS custom properties.
 
 Svelte's implementation is essentially syntactic sugar for adding a wrapper element. This example:
 
@@ -1275,7 +1275,7 @@ Desugars to this:
 </div>
 ```
 
-**Note**: Since this is an extra div, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature. Also note that not all browsers support `display: contents`: https://caniuse.com/css-display-contents 
+**Note**: Since this is an extra `<div>`, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature.
 
 ---
 
@@ -1547,7 +1547,7 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:window>` element allows you to add event listeners to the `window` object without worrying about removing them when the component is destroyed, or checking for the existence of `window` when server-side rendering.
 
-Contrary to `<svelte:self>` this element can only be at the top level of your component and must never be inside a block or element.
+Unlike `<svelte:self>`, this element may only appear the top level of your component and must never be inside a block or element.
 
 ```sv
 <script>
@@ -1594,6 +1594,7 @@ Similarly to `<svelte:window>`, this element allows you to add listeners to even
 <svelte:body
 	on:mouseenter={handleMouseenter}
 	on:mouseleave={handleMouseleave}
+	use:someAction
 />
 ```
 
@@ -1608,7 +1609,7 @@ Similarly to `<svelte:window>`, this element allows you to add listeners to even
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
 
-As with `<svelte:window>` and `<svelte:head>` this element has to appear at the top level of your component and cannot be inside a block or other element.
+As with `<svelte:window>` and `<svelte:body>`, this element has to appear at the top level of your component and cannot be inside a block or other element.
 
 ```sv
 <svelte:head>
