@@ -520,7 +520,6 @@ export default function dom(
 
                 ${uses_props && b`$$props = @exclude_internal_props($$props);`}
 
-                #return_values = ${return_value}
                 return #return_values;
             }
             catch(e) {
