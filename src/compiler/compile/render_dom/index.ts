@@ -443,17 +443,25 @@ export default function dom(
 		}
 
         const return_value_reference = b`let #return_values = []`;
-
-		const return_value = {
-			type: 'ArrayExpression',
-			elements: renderer.initial_context.map(member => ({
-				type: 'Identifier',
-				name: member.name
-			}) as Expression)
-		};
         
         let instance_javascript_with_ctx = [];
         const initializedIdentifiers = [];
+
+        const add_variable_to_ctx = id => {
+            const index = renderer.initial_context.findIndex(member => member.name === id.name);
+
+            if (index >= 0) {
+                instance_javascript_with_ctx.push(b`#return_values[${index}] = ${id};`[0]);
+                initializedIdentifiers.push(id.name);
+            }
+        }
+
+        const slot_definitions_present = component.slots.size || component.compile_options.dev || uses_slots;
+
+        if (slot_definitions_present) {
+            add_variable_to_ctx({ type: "Identifier", name: "#slots" });
+            add_variable_to_ctx({ type: "Identifier", name: "$$scope" });
+        }
 
         if (instance_javascript === null) {
             instance_javascript_with_ctx = instance_javascript;
@@ -463,23 +471,17 @@ export default function dom(
     
                 if (Array.isArray(node) && node[0].type === 'VariableDeclaration') {
                     node[0].declarations.forEach(({ id }) => {
-                        const index = renderer.initial_context.findIndex(member => member.name === id.name);
-
-                        if (index >= 0) {
-                            instance_javascript_with_ctx.push(b`#return_values[${index}] = ${id};`[0]);
-                            initializedIdentifiers.push(id.name);
+                        if (id.type === 'ObjectPattern') {
+                            id.properties.forEach(property => add_variable_to_ctx(property.key));
+                        } else {
+                            add_variable_to_ctx(id);
                         }
                     });
                 }
     
                 if (node.type === 'FunctionDeclaration') {
                     if (!initializedIdentifiers.includes(node.id.name)) {
-                        const index = renderer.initial_context.findIndex(member => member.name === node.id.name);
-    
-                        if (index >= 0) {
-                            instance_javascript_with_ctx.push(b`#return_values[${index}] = ${node.id};`[0]);
-                            initializedIdentifiers.push(node.id.name);
-                        }
+                        add_variable_to_ctx(node.id);
                     }
                 }
             });
@@ -535,7 +537,7 @@ export default function dom(
 
 				${rest}
 
-				${component.slots.size || component.compile_options.dev || uses_slots ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
+				${slot_definitions_present ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
 				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
 				${compute_slots}
 
