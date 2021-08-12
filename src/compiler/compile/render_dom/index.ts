@@ -454,13 +454,13 @@ export default function dom(
                 instance_javascript_with_ctx.push(b`#return_values[${index}] = ${id};`[0]);
                 initializedIdentifiers.push(id.name);
             }
-        }
+        };
 
         const slot_definitions_present = component.slots.size || component.compile_options.dev || uses_slots;
 
         if (slot_definitions_present) {
-            add_variable_to_ctx({ type: "Identifier", name: "#slots" });
-            add_variable_to_ctx({ type: "Identifier", name: "$$scope" });
+            add_variable_to_ctx({ type: 'Identifier', name: '#slots' });
+            add_variable_to_ctx({ type: 'Identifier', name: '$$scope' });
         }
 
         if (instance_javascript === null) {
