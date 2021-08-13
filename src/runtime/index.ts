@@ -9,6 +9,7 @@ export {
 	getContext,
 	getAllContexts,
 	hasContext,
+	deleteContext,
 	tick,
 	createEventDispatcher,
 	SvelteComponentDev as SvelteComponent,
