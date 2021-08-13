@@ -1,5 +1,5 @@
 <script>
-	import { companies } from "./WhosUsingSvelte.js";
+	import { companies } from './WhosUsingSvelte.js';
 	const randomizer = ({ prominent }) => Math.random();
 	const doSort = (a, b) => randomizer(b) - randomizer(a);
 	const sortedCompanies = companies.sort(doSort);
