@@ -13,7 +13,7 @@ let k = 1;
 $: y = (x*x+k) * (x*x+k) - k;
 ```
 
-And want to abstract perhaps it's natural to think of there as being a function `f(x)` with `k` as a global variable:
+And you want to abstract it. Perhaps it's natural to think of there being a function `f(x)` with `k` as a global variable:
 
 ```js
 let x = 0;
