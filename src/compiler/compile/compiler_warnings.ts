@@ -6,7 +6,7 @@
 export default {
 	custom_element_no_tag: {
 		code: 'custom-element-no-tag',
-		message: 'No custom element \'tag\' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>'			
+		message: 'No custom element \'tag\' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>'
 	},
 	unused_export_let: (component: string, property: string) => ({
 		code: 'unused-export-let',
@@ -132,6 +132,10 @@ export default {
 		code: 'a11y-missing-content',
 		message: `A11y: <${name}> element should have child content`
 	}),
+	a11y_click_event_have_key_events: {
+		code: 'a11y-click-events-have-key-events',
+		message: 'A11y: on:click must be accompanied by at least one of the following: on:keyup, on:keydown, on:keypress'
+	},
 	redundant_event_modifier_for_touch: {
 		code: 'redundant-event-modifier',
 		message: 'Touch event handlers that don\'t use the \'event\' object are passive by default'

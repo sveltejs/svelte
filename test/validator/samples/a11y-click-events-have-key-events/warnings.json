@@ -1,0 +1,17 @@
+[
+	{
+		"code": "a11y-click-events-have-key-events",
+		"end": {
+			"character": 301,
+			"column": 27,
+			"line": 13
+		},
+		"message": "A11y: on:click must be accompanied by at least one of the following: on:keyup, on:keydown, on:keypress",
+		"pos": 274,
+		"start": {
+			"character": 274,
+			"column": 0,
+			"line": 13
+		}
+	}
+]

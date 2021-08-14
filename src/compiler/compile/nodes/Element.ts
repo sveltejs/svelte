@@ -28,6 +28,9 @@ const aria_attribute_set = new Set(aria_attributes);
 const aria_roles = 'alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure form generic graphics-document graphics-object graphics-symbol grid gridcell group heading img link list listbox listitem log main marquee math meter menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' ');
 const aria_role_set = new Set(aria_roles);
 
+const interactive_tags = 'a audio button details embed iframe img input keygen label menu object select textarea video'.split(' ');
+const interactive_tag_set = new Set(interactive_tags);
+
 const a11y_required_attributes = {
 	a: ['href'],
 	area: ['alt', 'aria-label', 'aria-labelledby'],
@@ -515,6 +518,18 @@ export default class Element extends Node {
 
 		if (handlers_map.has('mouseout') && !handlers_map.has('blur')) {
 			component.warn(this, compiler_warnings.a11y_mouse_events_have_key_events('mouseout', 'blur'));
+		}
+
+		if (!interactive_tag_set.has(this.name)) {
+			const has_key_event_handlers = handlers_map.has('keyup') || handlers_map.has('keydown') || handlers_map.has('keypress');
+			const is_aria_hidden = (
+				attribute_map.has('aria-hidden') &&
+				attribute_map.get('aria-hidden').get_static_value() === 'true'
+			);
+
+			if (handlers_map.has('click') && !has_key_event_handlers && !is_aria_hidden) {
+				component.warn(this, compiler_warnings.a11y_click_event_have_key_events);
+			}
 		}
 	}
 
