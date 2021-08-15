@@ -2006,7 +2006,7 @@ Also:
 
 ## 1.10.3
 
-* Prevent `'</script>'` string occurence breaking pages ([#349](https://github.com/sveltejs/svelte/pull/349))
+* Prevent `'</script>'` string occurrence breaking pages ([#349](https://github.com/sveltejs/svelte/pull/349))
 * Allow reference to whitelisted globals without properties ([#333](https://github.com/sveltejs/svelte/pull/333))
 * Don't remove `&nbsp;` incorrectly ([#348](https://github.com/sveltejs/svelte/issues/348))
 * `let` -> `var` in `addCss` block ([#351](https://github.com/sveltejs/svelte/pull/351))

@@ -7,8 +7,8 @@ export function test({ input, css, js }) {
 	let out_obj, loc_output, actual, loc_input, expected;
 
 	out_obj = js;
-	// we need the second occurence of 'done_replace_script_2' in output.js
-	// the first occurence is mapped back to markup '{done_replace_script_2}'
+	// we need the second occurrence of 'done_replace_script_2' in output.js
+	// the first occurrence is mapped back to markup '{done_replace_script_2}'
 	loc_output = out_obj.locate_1('done_replace_script_2');
 	loc_output = out_obj.locate_1('done_replace_script_2', loc_output.character + 1);
 	actual = out_obj.mapConsumer.originalPositionFor(loc_output);
