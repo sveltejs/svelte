@@ -45,5 +45,6 @@
 	span {
 		position: absolute;
 		font-size: 5vw;
+		user-select: none;
 	}
 </style>
