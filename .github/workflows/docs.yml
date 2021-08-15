@@ -24,4 +24,5 @@ jobs:
         with:
           repo: 'svelte'
           branch: 'master'
+          docs_path: 'site/content'
           token: ${{ steps.github-app.outputs.token }}
