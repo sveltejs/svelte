@@ -57,18 +57,18 @@ For all the features and bugfixes see the CHANGELOG for [Svelte](https://github.
 - [Who are my representatives?](https://whoaremyrepresentatives.us/) is a website built with Svelte to help US residents get more info on their congressional representatives
 - [Pick Palette](https://github.com/bluwy/pick-palette) is a color palette manager made with Svelte!
 
-#### In-depth learning:
+### In-depth learning:
 - [Svelte 3 Up and Running](https://www.amazon.com/dp/B08D6T6BKS/ref=cm_sw_r_tw_dp_x_OQMtFb3GPQCB2) is a new book about building production-ready static web apps with Svelte 3
 - [Sapper Tutorial (Crash Course)](https://www.youtube.com/playlist?list=PL4cUxeGkcC9gdr4Qhx83gBBcID-KMe-PQ) walks through the ins-and-outs of Sapper, the Svelte-powered application framework
 - [Svelte Society Day France](https://france.sveltesociety.dev/) happened September 27th featuring a wide variety of topics all in French! You can find the full recording [here](https://www.youtube.com/watch?v=aS1TQ155JK4).
 
-#### Plug-and-play components:
+### Plug-and-play components:
 - [svelte-zoom](https://github.com/vaheqelyan/svelte-zoom) brings "nearly native" pan-and-zoom to images on desktop and mobile
 - [svelte-materialify](https://github.com/TheComputerM/svelte-materialify) is a Material component library for Svelte with over 50 components
 - [svelte-undoable](https://github.com/macfja/svelte-undoable) makes it easy to introduce undo and redo functionality using `bind:`
 - [This Tilt component](https://svelte.dev/repl/7b23ad9d2693424482cd411b0378b55b?version=3.24.1) implements a common UX pattern where the hovered element tilts to follow the mouse
 
-#### Lots of examples of how use JS tech came out this month:
+### Lots of examples of how use JS tech came out this month:
   - [Sapper with PostCSS and Tailwind](https://codechips.me/sapper-with-postcss-and-tailwind/)
   - [PrismJS (Code block syntax highlighting)](https://github.com/phptuts/Svelte-PrismJS)
   - [Filepond (Drag-and-drop file upload)](https://github.com/pqina/svelte-filepond)
