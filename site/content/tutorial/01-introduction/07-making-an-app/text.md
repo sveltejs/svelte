@@ -10,7 +10,7 @@ First, you'll need to integrate Svelte with a build tool. There are officially m
 * [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte)
 * [svelte-loader](https://github.com/sveltejs/svelte-loader)
 
-...and a variety of [community-maintained ones](https://github.com/sveltejs/integrations#bundler-plugins).
+...and a variety of [community-maintained ones](https://sveltesociety.dev/tooling).
 
 Don't worry if you're relatively new to web development and haven't used these tools before. We've prepared a simple step-by-step guide, [Svelte for new developers](blog/svelte-for-new-developers), which walks you through the process.
 

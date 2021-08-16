@@ -63,7 +63,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [Kahi UI](https://github.com/novacbn/kahi-ui) is a Svelte-first UI kit with Dark Mode built-in.
 - [typesafe-i18n](https://github.com/ivanhofer/typesafe-i18n) is an opinionated, fully type-safe, lightweight localization library for TypeScript and JavaScript projects with no external dependencies.
 
-Check out [sveltejs/integrations](https://github.com/sveltejs/integrations) for more templates, adders and adapters from across the Svelte ecosystem.
+Check out the community site [sveltesociety.dev](https://sveltesociety.dev/templates/) for more templates, adders and adapters from across the Svelte ecosystem.
 
 
 ## See you next month!
