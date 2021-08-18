@@ -14,6 +14,8 @@ export const globals = new Set([
 	'decodeURIComponent',
 	'document',
 	'Element',
+	'HTMLElement',
+	'SVGElement',
 	'encodeURI',
 	'encodeURIComponent',
 	'Error',
