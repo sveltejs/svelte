@@ -1,4 +1,4 @@
-import emotion from 'emotion/dist/emotion.umd.min.js';
+import emotion from '@emotion/css/dist/emotion-css.umd.min.js';
 
 const { css } = emotion;
 
