@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.42.2
 
 * Collapse whitespace in `class` and `style` attributes ([#6004](https://github.com/sveltejs/svelte/issues/6004))
 * Deselect all `<option>`s in a `<select>` where the bound `value` doesn't match any of them ([#6126](https://github.com/sveltejs/svelte/issues/6126))
