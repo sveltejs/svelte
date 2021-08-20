@@ -388,9 +388,11 @@ export default class ElementWrapper extends Wrapper {
 			? this.node.name
 			: this.node.name.toUpperCase();
 
-		const svg = this.node.namespace === namespaces.svg ? 1 : null;
-
-		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
+		if (this.node.namespace === namespaces.svg) {
+			return x`@claim_svg_element(${nodes}, "${name}", { ${attributes} })`;
+		} else {
+			return x`@claim_element(${nodes}, "${name}", { ${attributes} })`;
+		}
 	}
 
 	add_directives_in_order (block: Block) {
