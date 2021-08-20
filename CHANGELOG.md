@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add `HTMLElement` and `SVGElement` as known globals ([#6643](https://github.com/sveltejs/svelte/issues/6643))
+* Account for scaling in `flip` animations ([#6657](https://github.com/sveltejs/svelte/issues/6657))
 
 ## 3.42.1
 
