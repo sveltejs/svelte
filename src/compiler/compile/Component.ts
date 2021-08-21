@@ -24,10 +24,10 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, Identifier, Program, ExpressionStatement, AssignmentExpression, Literal } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
-import { print, x, b } from 'code-red';
+import { print, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
 import { apply_preprocessor_sourcemap } from '../utils/mapped_code';
 import Element from './nodes/Element';
@@ -70,6 +70,8 @@ export default class Component {
 	var_lookup: Map<string, Var> = new Map();
 
 	imports: ImportDeclaration[] = [];
+	exports_from: ExportNamedDeclaration[] = [];
+	instance_exports_from: ExportNamedDeclaration[] = [];
 
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
@@ -333,26 +335,29 @@ export default class Component {
 					.map(variable => ({
 						name: variable.name,
 						as: variable.export_name
-					}))
+					})),
+				this.exports_from
 			);
 
 			css = compile_options.customElement
 				? { code: null, map: null }
 				: result.css;
 
+			const sourcemap_source_filename = get_sourcemap_source_filename(compile_options);
+
 			js = print(program, {
-				sourceMapSource: compile_options.filename
+				sourceMapSource: sourcemap_source_filename
 			});
 
 			js.map.sources = [
-				compile_options.filename ? get_relative_path(compile_options.outputFilename || '', compile_options.filename) : null
+				sourcemap_source_filename
 			];
 
 			js.map.sourcesContent = [
 				this.source
 			];
 
-			js.map = apply_preprocessor_sourcemap(this.file, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+			js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
 		}
 
 		return {
@@ -492,22 +497,27 @@ export default class Component {
 		this.imports.push(node);
 	}
 
-	extract_exports(node) {
+	extract_exports(node, module_script = false) {
 		const ignores = extract_svelte_ignore_from_comments(node);
 		if (ignores.length) this.push_ignores(ignores);
-		const result = this._extract_exports(node);
+		const result = this._extract_exports(node, module_script);
 		if (ignores.length) this.pop_ignores();
 		return result;
 	}
 
-	private _extract_exports(node) {
+	private _extract_exports(node: ExportDefaultDeclaration | ExportNamedDeclaration | ExportAllDeclaration, module_script) {
 		if (node.type === 'ExportDefaultDeclaration') {
-			return this.error(node, compiler_errors.default_export);
+			return this.error(node as any, compiler_errors.default_export);
 		}
 
 		if (node.type === 'ExportNamedDeclaration') {
 			if (node.source) {
-				return this.error(node, compiler_errors.not_implemented);
+				if (module_script) {
+					this.exports_from.push(node);
+				} else {
+					this.instance_exports_from.push(node);
+				}
+				return null;
 			}
 			if (node.declaration) {
 				if (node.declaration.type === 'VariableDeclaration') {
@@ -516,7 +526,7 @@ export default class Component {
 							const variable = this.var_lookup.get(name);
 							variable.export_name = name;
 							if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
-								this.warn(declarator, compiler_warnings.unused_export_let(this.name.name, name));
+								this.warn(declarator as any, compiler_warnings.unused_export_let(this.name.name, name));
 							}
 						});
 					});
@@ -536,7 +546,7 @@ export default class Component {
 						variable.export_name = specifier.exported.name;
 
 						if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
-							this.warn(specifier, compiler_warnings.unused_export_let(this.name.name, specifier.exported.name));
+							this.warn(specifier as any, compiler_warnings.unused_export_let(this.name.name, specifier.exported.name));
 						}
 					}
 				});
@@ -612,7 +622,7 @@ export default class Component {
 			}
 
 			if (/^Export/.test(node.type)) {
-				const replacement = this.extract_exports(node);
+				const replacement = this.extract_exports(node, true);
 				if (replacement) {
 					body[i] = replacement;
 				} else {
@@ -935,7 +945,7 @@ export default class Component {
 		let scope = instance_scope;
 
 		walk(this.ast.instance.content, {
-			enter(node: Node, parent, key, index) {
+			enter(node: Node) {
 				if (/Function/.test(node.type)) {
 					return this.skip();
 				}
@@ -944,74 +954,129 @@ export default class Component {
 					scope = map.get(node);
 				}
 
+				if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+					return this.replace(node.declaration);
+				}
+
 				if (node.type === 'VariableDeclaration') {
+					// NOTE: `var` does not follow block scoping
 					if (node.kind === 'var' || scope === instance_scope) {
-						node.declarations.forEach(declarator => {
-							if (declarator.id.type !== 'Identifier') {
-								const inserts = [];
+						const inserts = [];
+						const props = [];
 
-								extract_names(declarator.id).forEach(name => {
-									const variable = component.var_lookup.get(name);
-
-									if (variable.export_name) {
-										// TODO is this still true post-#3539?
-										return component.error(declarator as any, compiler_errors.destructured_prop);
+						function add_new_props(exported, local, default_value) {
+							props.push({
+								type: 'Property',
+								method: false,
+								shorthand: false,
+								computed: false,
+								kind: 'init',
+								key: exported,
+								value: default_value
+									? {
+										type: 'AssignmentPattern',
+										left: local,
+										right: default_value
 									}
+									: local
+							});
+						}
 
+						// transform
+						// ```
+						// export let { x, y = 123 } = OBJ, z = 456
+						// ```
+						// into
+						// ```
+						// let { x: x$, y: y$ = 123 } = OBJ;
+						// let { x = x$, y = y$, z = 456 } = $$props;
+						// ```
+						for (let index = 0; index < node.declarations.length; index++) {
+							const declarator = node.declarations[index];
+							if (declarator.id.type !== 'Identifier') {
+								function get_new_name(local) {
+									const variable = component.var_lookup.get(local.name);
 									if (variable.subscribable) {
 										inserts.push(get_insert(variable));
 									}
-								});
 
-								if (inserts.length) {
-									parent[key].splice(index + 1, 0, ...inserts);
+									if (variable.export_name && variable.writable) {
+										const alias_name = component.get_unique_name(local.name);
+										add_new_props({ type: 'Identifier', name: variable.export_name }, local, alias_name);
+										return alias_name;
+									}
+									return local;
 								}
 
-								return;
+								function rename_identifiers(param: Node) {
+									switch (param.type) {
+										case 'ObjectPattern': {
+											const handle_prop = (prop: Property | RestElement) => {
+												if (prop.type === 'RestElement') {
+													rename_identifiers(prop);
+												} else if (prop.value.type === 'Identifier') {
+													prop.value = get_new_name(prop.value);
+												} else {
+													rename_identifiers(prop.value);
+												}
+											};
+
+											param.properties.forEach(handle_prop);
+											break;
+										}
+										case 'ArrayPattern': {
+											const handle_element = (element: Node, index: number, array: Node[]) => {
+												if (element) {
+													if (element.type === 'Identifier') {
+														array[index] = get_new_name(element);
+													} else {
+														rename_identifiers(element);
+													}
+												}
+											};
+
+											param.elements.forEach(handle_element);
+											break;
+										}
+
+										case 'RestElement':
+											param.argument = get_new_name(param.argument);
+											break;
+
+										case 'AssignmentPattern':
+											param.left = get_new_name(param.left);
+											break;
+									}
+								}
+
+								rename_identifiers(declarator.id);
+							} else {
+								const { name } = declarator.id;
+								const variable = component.var_lookup.get(name);
+								const is_props = variable.export_name && variable.writable;
+								if (is_props) {
+									add_new_props({ type: 'Identifier', name: variable.export_name }, declarator.id, declarator.init);
+									node.declarations.splice(index--, 1);
+								}
+								if (variable.subscribable && (is_props || declarator.init)) {
+									inserts.push(get_insert(variable));
+								}
 							}
+						}
 
-							const { name } = declarator.id;
-							const variable = component.var_lookup.get(name);
-
-							if (variable.export_name && variable.writable) {
-								declarator.id = {
-									type: 'ObjectPattern',
-									properties: [{
-										type: 'Property',
-										method: false,
-										shorthand: false,
-										computed: false,
-										kind: 'init',
-										key: { type: 'Identifier', name: variable.export_name },
-										value: declarator.init
-											? {
-												type: 'AssignmentPattern',
-												left: declarator.id,
-												right: declarator.init
-											}
-											: declarator.id
-									}]
-								};
-
-								declarator.init = x`$$props`;
-							}
-
-							if (variable.subscribable && declarator.init) {
-								const insert = get_insert(variable);
-								parent[key].splice(index + 1, 0, ...insert);
-							}
-						});
+						this.replace(b`
+							${node.declarations.length ? node : null}
+							${ props.length > 0 && b`let { ${ props } } = $$props;`}
+							${inserts}
+						` as any);
+						return this.skip();
 					}
 				}
 			},
 
-			leave(node: Node, parent, _key, index) {
+			leave(node: Node) {
 				if (map.has(node)) {
 					scope = scope.parent;
-				}
-
-				if (node.type === 'ExportNamedDeclaration' && node.declaration) {
-					(parent as Program).body[index] = node.declaration;
 				}
 			}
 		});
@@ -1247,7 +1312,7 @@ export default class Component {
 
 								if (variable) {
 									variable.is_reactive_dependency = true;
-									if (variable.module) {
+									if (variable.module && variable.writable) {
 										should_add_as_dependency = false;
 										module_dependencies.add(name);
 									}
@@ -1487,4 +1552,16 @@ function get_relative_path(from: string, to: string) {
 	}
 
 	return from_parts.concat(to_parts).join('/');
+}
+
+function get_basename(filename: string) {
+	return filename.split(/[/\\]/).pop();
+}
+
+function get_sourcemap_source_filename(compile_options: CompileOptions) {
+	if (!compile_options.filename) return null;
+
+	return compile_options.outputFilename
+		? get_relative_path(compile_options.outputFilename, compile_options.filename)
+		: get_basename(compile_options.filename);
 }

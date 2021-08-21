@@ -174,10 +174,6 @@ export default {
 		code: 'default-export',
 		message: 'A component cannot have a default export'
 	},
-	not_implemented: {
-		code: 'not-implemented',
-		message: 'A component currently cannot have an export ... from'
-	},
 	illegal_declaration: {
 		code: 'illegal-declaration',
 		message: 'The $ prefix is reserved, and cannot be used for variable and import names'
@@ -190,10 +186,6 @@ export default {
 		code: 'illegal-global',
 		message: `${name} is an illegal variable name`
 	}),
-	destructured_prop: {
-		code: 'destructured-prop',
-		message: 'Cannot declare props in destructured declaration'
-	},
 	cyclical_reactive_declaration: (cycle: string[]) => ({
 		code: 'cyclical-reactive-declaration',
 		message: `Cyclical dependency detected: ${cycle.join(' → ')}`
