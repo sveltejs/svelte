@@ -61,10 +61,14 @@
 		cursor: pointer;
 		-webkit-appearance: none;
 	}
+	
+	.arrows {
+		padding: 15px;
+	}
 </style>
 
 <nav>
-	<a rel="prefetch" aria-label="Previous tutorial step" class="no-underline" href="tutorial/{(selected.prev || selected).slug}" class:disabled={!selected.prev}>
+	<a rel="prefetch" aria-label="Previous tutorial step" class="no-underline arrows" href="tutorial/{(selected.prev || selected).slug}" class:disabled={!selected.prev}>
 		<Icon name="arrow-left" />
 	</a>
 
@@ -88,7 +92,7 @@
 		</select>
 	</div>
 
-	<a rel="prefetch" aria-label="Next tutorial step" class="no-underline" href="tutorial/{(selected.next || selected).slug}" class:disabled={!selected.next}>
+	<a rel="prefetch" aria-label="Next tutorial step" class="no-underline arrows" href="tutorial/{(selected.next || selected).slug}" class:disabled={!selected.next}>
 		<Icon name="arrow-right" />
 	</a>
 </nav>
