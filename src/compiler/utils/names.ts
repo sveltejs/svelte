@@ -4,6 +4,7 @@ import full_char_code_at from './full_char_code_at';
 export const globals = new Set([
 	'alert',
 	'Array',
+	'BigInt',
 	'Boolean',
 	'clearInterval',
 	'clearTimeout',
