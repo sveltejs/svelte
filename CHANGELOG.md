@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Export functioning `onDestroy` hook for SSR export ([#6676](https://github.com/sveltejs/svelte/issues/6676)
+* Export functioning `onDestroy` hook for SSR export ([#6676](https://github.com/sveltejs/svelte/issues/6676))
 
 ## 3.42.2
 
