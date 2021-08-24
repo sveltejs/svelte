@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.42.3
 
 * Add `BigInt` as a known global ([#6671](https://github.com/sveltejs/svelte/pull/6671))
 * Fix regression where `onDestroy` in `svelte/ssr` was improperly a no-op ([#6676](https://github.com/sveltejs/svelte/issues/6676))
