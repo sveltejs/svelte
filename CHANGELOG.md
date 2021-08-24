@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* Export functioning `onDestroy` hook for SSR export ([#6676](https://github.com/sveltejs/svelte/issues/6676))
+* Add `BigInt` as a known global ([#6671](https://github.com/sveltejs/svelte/pull/6671))
+* Fix regression where `onDestroy` in `svelte/ssr` was improperly a no-op ([#6676](https://github.com/sveltejs/svelte/issues/6676))
 
 ## 3.42.2
 
