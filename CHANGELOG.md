@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Export functioning `onDestroy` hook for SSR export ([#6676](https://github.com/sveltejs/svelte/issues/6676)
+
 ## 3.42.2
 
 * Collapse whitespace in `class` and `style` attributes ([#6004](https://github.com/sveltejs/svelte/issues/6004))
