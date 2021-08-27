@@ -4,7 +4,7 @@ import {
 	append_hydration,
 	attr,
 	children,
-	claim_element,
+	claim_svg_element,
 	detach,
 	init,
 	insert_hydration,
@@ -24,9 +24,9 @@ function create_fragment(ctx) {
 			this.h();
 		},
 		l(nodes) {
-			svg = claim_element(nodes, "svg", {}, 1);
+			svg = claim_svg_element(nodes, "svg", {});
 			var svg_nodes = children(svg);
-			img = claim_element(svg_nodes, "img", { alt: true, src: true }, 1);
+			img = claim_svg_element(svg_nodes, "img", { alt: true, src: true });
 			svg_nodes.forEach(detach);
 			this.h();
 		},
