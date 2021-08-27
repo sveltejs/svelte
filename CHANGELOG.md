@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix `<select>` with a `{...spread}` attribute that didn't provide a `value` key getting its value improperly unset ([#6675](https://github.com/sveltejs/svelte/issues/6675))
+
 ## 3.42.3
 
 * Add `BigInt` as a known global ([#6671](https://github.com/sveltejs/svelte/pull/6671))
