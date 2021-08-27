@@ -148,7 +148,7 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 	if (!node) return document;
 
 	const root = node.getRootNode ? node.getRootNode() : node.ownerDocument;
-	if ((root as ShadowRoot).host) {
+	if (root && (root as ShadowRoot).host) {
 		return root as ShadowRoot;
 	}
 	return node.ownerDocument;
