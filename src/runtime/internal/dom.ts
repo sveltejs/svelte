@@ -151,7 +151,7 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 	if ((root as ShadowRoot).host) {
 		return root as ShadowRoot;
 	}
-	return document;
+	return node.ownerDocument;
 }
 
 export function append_empty_stylesheet(node: Node) {
