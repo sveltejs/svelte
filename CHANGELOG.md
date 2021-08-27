@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fix styles for transitions and animations being attached to the wrong `document` in `<iframe>`s ([#6637](https://github.com/sveltejs/svelte/issues/6637))
 * Fix `<select>` with a `{...spread}` attribute that didn't provide a `value` key getting its value improperly unset ([#6675](https://github.com/sveltejs/svelte/issues/6675))
 
 ## 3.42.3
