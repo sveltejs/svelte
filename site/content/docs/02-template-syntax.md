@@ -974,7 +974,7 @@ A custom transition function can also return a `tick` function, which is called 
 		}
 
 		const text = node.textContent;
-		const duration = text.length / (speed * 0.01) ;
+		const duration = text.length / (speed * 0.01);
 
 		return {
 			duration,
