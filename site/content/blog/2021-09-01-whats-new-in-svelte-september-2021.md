@@ -28,7 +28,10 @@ If you'd like to help, please consider working on any of the [1.0 milestone issu
 The focus this past month was on continuing iron out any kinks with well over 100 PRs merged. A few new features went in as well...
 
 - SvelteKit will now detect if a prerendered app is trying to access a query paremter and return an error - instead of silently failing ([#2104](https://github.com/sveltejs/kit/pull/2104))
-- create-svelte's final output dir has been standardized as `/build` (vs `/.svelte-kit`) ([#2109](https://github.com/sveltejs/kit/pull/2109))
+- `adapter-node` now lets you [add the Kit middleware to your own server](https://kit.svelte.dev/faq#integrations) for use with other middleware. You can also [add middleware in dev mode](https://kit.svelte.dev/faq#how-do-i-use-x-with-sveltekit-how-do-i-use-middleware) with more improvements to come in this area
+- The new [`sequence` helper lets you chain together multiple `handle` calls](https://kit.svelte.dev/docs#modules-sveltejs-kit-hooks)
+- A new [`handleError` hook](https://kit.svelte.dev/docs#hooks-handleerror) gives you the option to send data to an error tracking service, or to customise the formatting before printing the error to the console.
+- `adapter-node` can now listen on socket path ([#2048](https://github.com/sveltejs/kit/pull/2048))
 
 To see all updates to SvelteKit, check out the [SvelteKit changelog](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md).
 
@@ -40,7 +43,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 **Apps & Sites**
 - [macos-web](https://github.com/PuruVJ/macos-web) by @puruvjdev has been rebuilt with Svelte from the ground up. Check out all the details in this [Twitter thread](https://twitter.com/puruvjdev/status/1426267327687847939)
 - [Brave Search](https://search.brave.com/) is using Svelte
-- [exatorrent](https://github.com/varbhat/exatorrent) is a self-hostable, easy-to-use, lightweight and feature-rich torrent client written in Go and Sveltejs
+- [exatorrent](https://github.com/varbhat/exatorrent) is a self-hostable, easy-to-use, lightweight and feature-rich torrent client written in Go and Svelte
 - [json2TsTypes](https://github.com/jatinhemnani01/json2TsTypes) is a simple tool which will convert your JSON to Typescript Types/Interfaces
 - [Histogram.dev](https://histogram.dev/) generates histograms for each feature in a CSV
 - [cybernetic.dev](https://cybernetic.dev/) is a collection of data-centric UI experiments made while learning Svelte
@@ -67,7 +70,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [svelte-useactions](https://github.com/paolotiu/svelte-useactions) is a fully typed library for passing actions to components
 - [Svelte-Element-Query](https://github.com/leveluptuts/Svelte-Element-Query) is a 322b library/action for element queries
 - [svelte-meta-tags](https://github.com/oekazuma/svelte-meta-tags) is a plug-in that makes managing SEO easier in Svelte projects
-- [svelte-domtree](https://github.com/alex-knyaz/svelte-domtree) lets you visualize the  DOM - similar to DOM tree in Chrome DevTools
+- [svelte-domtree](https://github.com/alex-knyaz/svelte-domtree) lets you visualize the DOM - similar to DOM tree in Chrome DevTools
 - [Diffx](https://github.com/jbjorge/diffx/tree/master/svelte), a cross-framework state management library, just added Svelte support
 - [svelte-ionic-starter](https://github.com/Zettexe/svelte-ionic-starter) a project template for Svelte + Ionic + CapacitorJS apps with live reload and iOS/Android build targets
 - [demo-sveltekit-sanity](https://github.com/stephane-vanraes/demo-sveltekit-sanity/) is a starter kit for SvelteKit and Sanity, an open source React CMS
