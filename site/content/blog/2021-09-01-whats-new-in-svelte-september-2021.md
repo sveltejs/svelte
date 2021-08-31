@@ -25,7 +25,7 @@ Svelte maintainers are [looking for help getting SvelteKit to 1.0](https://githu
 
 If you'd like to help, please consider working on any of the [1.0 milestone issues](https://github.com/sveltejs/kit/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.0).
 
-Some noteable changes in SvelteKit in the last month include...
+The focus this past month was on continuing iron out any kinks with well over 100 PRs merged. A few new features went in as well...
 
 - SvelteKit will now detect if a prerendered app is trying to access a query paremter and return an error - instead of silently failing ([#2104](https://github.com/sveltejs/kit/pull/2104))
 - create-svelte's final output dir has been standardized as `/build` (vs `/.svelte-kit`) ([#2109](https://github.com/sveltejs/kit/pull/2109))
