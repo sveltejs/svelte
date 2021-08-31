@@ -38,7 +38,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 ## Community Showcase
 
 **Apps & Sites**
-- [macos-web](https://github.com/PuruVJ/macos-web) by @purubjdeb has been rebuilt with Svelte from the ground up. Check out all the detials in this [Twitter thread](https://twitter.com/puruvjdev/status/1426267327687847939)
+- [macos-web](https://github.com/PuruVJ/macos-web) by @puruvjdev has been rebuilt with Svelte from the ground up. Check out all the details in this [Twitter thread](https://twitter.com/puruvjdev/status/1426267327687847939)
 - [Brave Search](https://search.brave.com/) is using Svelte
 - [exatorrent](https://github.com/varbhat/exatorrent) is a self-hostable, easy-to-use, lightweight and feature-rich torrent client written in Go and Sveltejs
 - [json2TsTypes](https://github.com/jatinhemnani01/json2TsTypes) is a simple tool which will convert your JSON to Typescript Types/Interfaces
