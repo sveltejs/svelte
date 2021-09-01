@@ -25,7 +25,7 @@ Svelte maintainers are [looking for help getting SvelteKit to 1.0](https://githu
 
 If you'd like to help, please consider working on any of the [1.0 milestone issues](https://github.com/sveltejs/kit/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.0).
 
-The focus this past month was on continuing iron out any kinks with well over 100 PRs merged. A few new features went in as well...
+The focus this past month was on continuing to iron out any kinks, with well over 100 PRs merged. A few new features went in as well...
 
 - SvelteKit will now detect if a prerendered app is trying to access a query parameter and return an error instead of failing silently ([#2104](https://github.com/sveltejs/kit/pull/2104))
 - `adapter-node` now lets you [add the Kit middleware to your own server](https://kit.svelte.dev/faq#integrations) for use with other middleware. You can also [add middleware in dev mode](https://kit.svelte.dev/faq#how-do-i-use-x-with-sveltekit-how-do-i-use-middleware) with more improvements to come in this area
