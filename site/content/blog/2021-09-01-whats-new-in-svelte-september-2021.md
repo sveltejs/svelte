@@ -27,7 +27,7 @@ If you'd like to help, please consider working on any of the [1.0 milestone issu
 
 The focus this past month was on continuing iron out any kinks with well over 100 PRs merged. A few new features went in as well...
 
-- SvelteKit will now detect if a prerendered app is trying to access a query paremter and return an error - instead of silently failing ([#2104](https://github.com/sveltejs/kit/pull/2104))
+- SvelteKit will now detect if a prerendered app is trying to access a query parameter and return an error instead of failing silently ([#2104](https://github.com/sveltejs/kit/pull/2104))
 - `adapter-node` now lets you [add the Kit middleware to your own server](https://kit.svelte.dev/faq#integrations) for use with other middleware. You can also [add middleware in dev mode](https://kit.svelte.dev/faq#how-do-i-use-x-with-sveltekit-how-do-i-use-middleware) with more improvements to come in this area
 - The new [`sequence` helper lets you chain together multiple `handle` calls](https://kit.svelte.dev/docs#modules-sveltejs-kit-hooks)
 - A new [`handleError` hook](https://kit.svelte.dev/docs#hooks-handleerror) gives you the option to send data to an error tracking service, or to customise the formatting before printing the error to the console.
