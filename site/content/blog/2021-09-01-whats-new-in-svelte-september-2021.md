@@ -8,14 +8,14 @@ authorURL: https://desandoval.net
 This month, Svelte was [voted StackOverflow's most loved web framework](https://insights.stackoverflow.com/survey/2021#section-most-loved-dreaded-and-wanted-web-frameworks), Tan Li Hau [talked to Svelte Radio](https://share.transistor.fm/s/84c7521b) about his [Svelte-filled YouTube channel](https://www.youtube.com/channel/UCbmC3HP3FaAFdcZkui8YoMQ), and SvelteKit made even more progress towards its 1.0 release!
 
 ## New in Svelte
+
 - `use:actions` can now be used on `<svelte:body>` (**3.42.0**)
 - `HTMLElement`, `SVGElement` (**3.42.2**) and `BigInt` (**3.42.3**) are now known globals
 - There is less code in Svelte's output thanks to the following improvements in **3.42.2**:
   - Whitespace is now collapsed in class and style attributes
-  - All  `<option>`s in a `<select>` are now deselected when the bound value doesn't match any of them
   - Hydrated components have been updated to only rely upon helpers for creating the types of elements present in the component
 - Scaling is now accounted for in `flip` animations (**3.42.2**)
-
+- All `<option>`s in a `<select>` are now deselected when the bound value doesn't match any of them (**3.42.2**)
 
 For a full list of features and bug fixes, check out the [Svelte changelog](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
