@@ -10,10 +10,10 @@ This month, Svelte was [voted StackOverflow's most loved web framework](https://
 ## New in Svelte
 - `use:actions` can now be used on `<svelte:body>` (**3.42.0**)
 - `HTMLElement`, `SVGElement` (**3.42.2**) and `BigInt` (**3.42.3**) are now known globals
-- Less code in Svelte's output thanks to the following improvements in **3.42.2**:
-  - Collapse whitespace in class and style attributes
-  - Deselect all `<option>`'s in a `<select>` when the bound value doesn't match any of them
-  - In hydrated components, only rely on helpers for creating the types of elements present in the component
+- There is less code in Svelte's output thanks to the following improvements in **3.42.2**:
+  - Whitespace is now collapsed in class and style attributes
+  - All  `<option>`s in a `<select>` are now deselected when the bound value doesn't match any of them
+  - Hydrated components have been updated to only rely upon helpers for creating the types of elements present in the component
 - Scaling is now accounted for in `flip` animations (**3.42.2**)
 
 
