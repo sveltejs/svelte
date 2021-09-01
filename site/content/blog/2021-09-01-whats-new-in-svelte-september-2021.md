@@ -66,7 +66,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [svelte-steps](https://github.com/shaozi/svelte-steps) is a customizable step component written in Svelte
 - [simple-optics-module](https://gitlab.com/Samzelot/simple-optics-module) is an online open source optics tool for experimenting and teaching geometrical optics
 - [inlang](https://github.com/samuelstroschein/inlang) is an internationalization (i18n) tool for SvelteKit apps
-- [Sveno](https://github.com/pocinnovation/sveno) is a component transpiler that transform React components to Svelte components
+- [Sveno](https://github.com/pocinnovation/sveno) is a component transpiler that transforms React components to Svelte components
 - [svelte-useactions](https://github.com/paolotiu/svelte-useactions) is a fully typed library for passing actions to components
 - [Svelte-Element-Query](https://github.com/leveluptuts/Svelte-Element-Query) is a 322b library/action for element queries
 - [svelte-meta-tags](https://github.com/oekazuma/svelte-meta-tags) is a plug-in that makes managing SEO easier in Svelte projects
