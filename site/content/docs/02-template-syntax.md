@@ -651,6 +651,19 @@ Elements with the `contenteditable` attribute support `innerHTML` and `textConte
 <div contenteditable="true" bind:innerHTML={html}></div>
 ```
 
+---
+
+`<details>` elements support binding to the `open` property.
+
+```sv
+<details bind:open={isOpen}>
+	<summary>Details</summary>
+	<p>
+		Something small enough to escape casual notice.
+	</p>
+</details>
+```
+
 ##### Media element bindings
 
 ---
