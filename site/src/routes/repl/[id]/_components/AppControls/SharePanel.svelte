@@ -80,7 +80,7 @@
     border-radius: var(--border-r);
     background-color: var(--back);
     transform: translateX(-50%);
-    z-index: 1;
+    z-index: 15;
   }
 
   textarea {
