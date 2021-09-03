@@ -187,6 +187,7 @@
 	<AppControls
 		{gist}
 		{repl}
+		{version}
 		bind:name
 		bind:zen_mode
 		on:forked={handle_fork}

@@ -2,6 +2,7 @@
 	import { createEventDispatcher, getContext } from 'svelte';
 	import { stores } from '@sapper/app';
 	import UserMenu from './UserMenu.svelte';
+	import SharePanel from './SharePanel.svelte';
 	import { Icon } from '@sveltejs/site-kit';
 	import * as doNotZip from 'do-not-zip';
 	import downloadBlob from '../../../_utils/downloadBlob.js';
@@ -15,12 +16,14 @@
 	export let repl;
 	export let gist;
 	export let name;
+	export let version
 	export let zen_mode;
 
 	let saving = false;
 	let downloading = false;
 	let justSaved = false;
 	let justForked = false;
+	let share = false;
 
 	function wait(ms) {
 		return new Promise(f => setTimeout(f, ms));
@@ -186,6 +189,19 @@ export default app;` });
 			<Icon name="download" />
 		</button>
 
+		<div class="share-ctn">
+			<button class="icon" title="share" on:click={() => share = !share}>
+				<!-- TODO: Add Icon 'check-2' to @sveltejs/site-kit -->
+				<svg xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve">
+					<path fill="currentColor" d="M406,332c-29.636,0-55.969,14.402-72.378,36.571l-141.27-72.195C194.722,288.324,196,279.809,196,271    c0-11.931-2.339-23.324-6.574-33.753l148.06-88.958C354.006,167.679,378.59,180,406,180c49.626,0,90-40.374,90-90    c0-49.626-40.374-90-90-90c-49.626,0-90,40.374-90,90c0,11.47,2.161,22.443,6.09,32.54l-148.43,89.18    C157.152,192.902,132.941,181,106,181c-49.626,0-90,40.374-90,90c0,49.626,40.374,90,90,90c30.122,0,56.832-14.876,73.177-37.666    l140.86,71.985C317.414,403.753,316,412.714,316,422c0,49.626,40.374,90,90,90c49.626,0,90-40.374,90-90    C496,372.374,455.626,332,406,332z M406,30c33.084,0,60,26.916,60,60s-26.916,60-60,60s-60-26.916-60-60S372.916,30,406,30z     M106,331c-33.084,0-60-26.916-60-60s26.916-60,60-60s60,26.916,60,60S139.084,331,106,331z M406,482c-33.084,0-60-26.916-60-60    s26.916-60,60-60s60,26.916,60,60S439.084,482,406,482z"/>
+				</svg>		
+			</button>
+
+			{#if share}
+				<SharePanel {name} {gist} {version} on:close={() => share = false} />
+			{/if}	
+		</div>
+
 		<button class="icon" disabled="{saving || !$session.user}" on:click={() => fork(false)} title="fork">
 			{#if justForked}
 				<Icon name="check" />
@@ -269,6 +285,11 @@ export default app;` });
 	button span {
 		display: none;
 	}
+
+	.share-ctn {
+		position: relative;
+		display: inline;
+	} 
 
 	@media (min-width: 600px) {
 		.icon[title^='fullscreen'] { display: inline }
