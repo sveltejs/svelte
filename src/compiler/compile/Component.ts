@@ -1044,7 +1044,11 @@ export default class Component {
 											break;
 
 										case 'AssignmentPattern':
-											param.left = get_new_name(param.left);
+											if (param.left.type === 'Identifier') {
+												param.left = get_new_name(param.left);
+											} else {
+												rename_identifiers(param.left);
+											}
 											break;
 									}
 								}
