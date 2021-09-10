@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.42.5
 
 * In `draw` transition, account for `stroke-linecap` in determining length ([#4540](https://github.com/sveltejs/svelte/issues/4540))
 * Fix regression with destructuring assignments with default values ([#6699](https://github.com/sveltejs/svelte/issues/6699))
