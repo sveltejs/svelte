@@ -178,7 +178,10 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 	duration,
 	easing = cubicInOut
 }: DrawParams = {}): TransitionConfig {
-	const len = node.getTotalLength();
+	let len = node.getTotalLength();
+	if (getComputedStyle(node).strokeLinecap !== 'butt') {
+		len += parseInt(getComputedStyle(node).strokeWidth);
+	}
 
 	if (duration === undefined) {
 		if (speed === undefined) {
