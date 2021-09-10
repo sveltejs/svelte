@@ -25,7 +25,7 @@ export function spread(args, classes_to_add) {
 		else if (boolean_attributes.has(name.toLowerCase())) {
 			if (value) str += ' ' + name;
 		} else if (value != null) {
-			str += ` ${name}="${String(value).replace(/"/g, '&#34;').replace(/'/g, '&#39;')}"`;
+			str += ` ${name}="${value}"`;
 		}
 	});
 
@@ -42,6 +42,18 @@ export const escaped = {
 
 export function escape(html) {
 	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+}
+
+export function escape_attribute_value(value) {
+	return typeof value === 'string' ? escape(value) : value;
+}
+
+export function escape_object(obj) {
+	const result = {};
+	for (const key in obj) {
+		result[key] = escape_attribute_value(obj[key]);
+	}
+	return result;
 }
 
 export function each(items, fn) {

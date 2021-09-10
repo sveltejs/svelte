@@ -1,0 +1,3 @@
+<p>before</p>
+<!-- a comment -->
+<p>after</p>

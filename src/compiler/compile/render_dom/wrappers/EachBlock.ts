@@ -346,7 +346,7 @@ export default class EachBlockWrapper extends Wrapper {
 			this.else.fragment.render(this.else.block, null, x`#nodes` as Identifier);
 		}
 
-		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`list[i]`), name => renderer.context_lookup.has(name) ? x`child_ctx[${renderer.context_lookup.get(name).index}]`: { type: 'Identifier', name })};`);
+		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`list[i]`), name => renderer.context_lookup.has(name) ? x`child_ctx[${renderer.context_lookup.get(name).index}]` : { type: 'Identifier', name })};`);
 
 		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`);
 		if (this.node.has_binding || this.node.has_index_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);

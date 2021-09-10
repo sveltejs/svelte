@@ -9,11 +9,6 @@ export default {
 		<p>selected: two</p>
 	`,
 
-	ssrHtml: `
-		<select value="two"></select>
-		<p>selected: two</p>
-	`,
-
 	test({ assert, component, target }) {
 		component.items = [ 'one', 'two', 'three' ];
 

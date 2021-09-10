@@ -16,27 +16,31 @@ interface FlipParams {
 	easing?: (t: number) => number;
 }
 
-export function flip(node: Element, animation: { from: DOMRect; to: DOMRect }, params: FlipParams = {}): AnimationConfig {
+export function flip(node: Element, { from, to }: { from: DOMRect; to: DOMRect }, params: FlipParams = {}): AnimationConfig {
 	const style = getComputedStyle(node);
 	const transform = style.transform === 'none' ? '' : style.transform;
-	const scaleX = animation.from.width / node.clientWidth;
-	const scaleY = animation.from.height / node.clientHeight;
 
-	const dx = (animation.from.left - animation.to.left) / scaleX;
-	const dy = (animation.from.top - animation.to.top) / scaleY;
-
-	const d = Math.sqrt(dx * dx + dy * dy);
+	const [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
+	const dx = (from.left + from.width * ox / to.width) - (to.left + ox);
+	const dy = (from.top + from.height * oy / to.height) - (to.top + oy);
 
 	const {
 		delay = 0,
-		duration = (d: number) => Math.sqrt(d) * 120,
+		duration = (d) => Math.sqrt(d) * 120,
 		easing = cubicOut
 	} = params;
 
 	return {
 		delay,
-		duration: is_function(duration) ? duration(d) : duration,
+		duration: is_function(duration) ? duration(Math.sqrt(dx * dx + dy * dy)) : duration,
 		easing,
-		css: (_t, u) => `transform: ${transform} translate(${u * dx}px, ${u * dy}px);`
+		css: (t, u) => {
+			const x = u * dx;
+			const y = u * dy;
+			const sx = t + u * from.width / to.width;
+			const sy = t + u * from.height / to.height;
+
+			return `transform: ${transform} translate(${x}px, ${y}px) scale(${sx}, ${sy});`;
+		}
 	};
 }

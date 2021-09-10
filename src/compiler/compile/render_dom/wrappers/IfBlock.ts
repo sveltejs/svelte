@@ -9,7 +9,7 @@ import FragmentWrapper from './Fragment';
 import { b, x } from 'code-red';
 import { walk } from 'estree-walker';
 import { is_head } from './shared/is_head';
-import { Identifier, Node, UnaryExpression } from 'estree';
+import { Identifier, Node } from 'estree';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -288,7 +288,7 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 
 		block.chunks.init.push(b`
-			let ${current_block_type} = ${select_block_type}(#ctx, ${this.get_initial_dirty_bit()});
+			let ${current_block_type} = ${select_block_type}(#ctx, ${this.renderer.get_initial_dirty()});
 			let ${name} = ${get_block};
 		`);
 
@@ -411,12 +411,12 @@ export default class IfBlockWrapper extends Wrapper {
 
 		if (has_else) {
 			block.chunks.init.push(b`
-				${current_block_type_index} = ${select_block_type}(#ctx, ${this.get_initial_dirty_bit()});
+				${current_block_type_index} = ${select_block_type}(#ctx, ${this.renderer.get_initial_dirty()});
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 			`);
 		} else {
 			block.chunks.init.push(b`
-				if (~(${current_block_type_index} = ${select_block_type}(#ctx, ${this.get_initial_dirty_bit()}))) {
+				if (~(${current_block_type_index} = ${select_block_type}(#ctx, ${this.renderer.get_initial_dirty()}))) {
 					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
 				}
 			`);
@@ -591,22 +591,5 @@ export default class IfBlockWrapper extends Wrapper {
 				${name}.d(${detaching});
 			`);
 		}
-	}
-
-	get_initial_dirty_bit() {
-		const _this = this;
-		// TODO: context-overflow make it less gross
-		const val: UnaryExpression = x`-1` as UnaryExpression;
-		return {
-			get type() {
-				return _this.renderer.context_overflow ? 'ArrayExpression' : 'UnaryExpression';
-			},
-			// as [-1]
-			elements: [val],
-			// as -1
-			operator: val.operator,
-			prefix: val.prefix,
-			argument: val.argument
-		};
 	}
 }

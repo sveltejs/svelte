@@ -9,6 +9,7 @@ export default {
 	options: {
 		hydrate: false // Hydration test will fail as case sensitivity is only handled for svg elements.
 	},
+	skip_if_hydrate_from_ssr: true,
 
 	test({ assert, target }) {
 		const attr = sel => target.querySelector(sel).attributes[0].name;

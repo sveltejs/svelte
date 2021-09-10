@@ -19,7 +19,7 @@ import { add_event_handler } from '../shared/add_event_handlers';
 import { add_action } from '../shared/add_actions';
 import bind_this from '../shared/bind_this';
 import { is_head } from '../shared/is_head';
-import { Identifier } from 'estree';
+import { Identifier, ExpressionStatement, CallExpression } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
@@ -263,15 +263,23 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		if (parent_node) {
-			block.chunks.mount.push(
-				b`@append(${parent_node}, ${node});`
-			);
+			const append = b`@append(${parent_node}, ${node});`;
+			((append[0] as ExpressionStatement).expression as CallExpression).callee.loc = {
+				start: this.renderer.locate(this.node.start),
+				end: this.renderer.locate(this.node.end)
+			};
+			block.chunks.mount.push(append);
 
 			if (is_head(parent_node)) {
 				block.chunks.destroy.push(b`@detach(${node});`);
 			}
 		} else {
-			block.chunks.mount.push(b`@insert(#target, ${node}, #anchor);`);
+			const insert = b`@insert(#target, ${node}, #anchor);`;
+			((insert[0] as ExpressionStatement).expression as CallExpression).callee.loc = {
+				start: this.renderer.locate(this.node.start),
+				end: this.renderer.locate(this.node.end)
+			};
+			block.chunks.mount.push(insert);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
@@ -372,17 +380,19 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	get_claim_statement(nodes: Identifier) {
-		const attributes = this.node.attributes
-			.filter((attr) => attr.type === 'Attribute')
-			.map((attr) => p`${attr.name}: true`);
+		const attributes = this.attributes
+			.filter((attr) => !(attr instanceof SpreadAttributeWrapper) && !attr.property_name)
+			.map((attr) => p`${(attr as StyleAttributeWrapper | AttributeWrapper).name}: true`);
 
 		const name = this.node.namespace
 			? this.node.name
 			: this.node.name.toUpperCase();
 
-		const svg = this.node.namespace === namespaces.svg ? 1 : null;
-
-		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
+		if (this.node.namespace === namespaces.svg) {
+			return x`@claim_svg_element(${nodes}, "${name}", { ${attributes} })`;
+		} else {
+			return x`@claim_element(${nodes}, "${name}", { ${attributes} })`;
+		}
 	}
 
 	add_directives_in_order (block: Block) {
@@ -661,10 +671,10 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			block.chunks.mount.push(b`
-				if (${data}.multiple) @select_options(${this.var}, ${data}.value);
+				(${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);
 			`);
 			block.chunks.update.push(b`
-				if (${block.renderer.dirty(Array.from(dependencies))} && ${data}.multiple) @select_options(${this.var}, ${data}.value);
+				if (${block.renderer.dirty(Array.from(dependencies))} && 'value' in ${data}) (${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);;
 			`);
 		} else if (this.node.name === 'input' && this.attributes.find(attr => attr.node.name === 'value')) {
 			const type = this.node.get_static_attribute_value('type');
@@ -678,6 +688,12 @@ export default class ElementWrapper extends Wrapper {
 					}
 				`);
 			}
+		}
+
+		if (['button', 'input', 'keygen', 'select', 'textarea'].includes(this.node.name)) {
+			block.chunks.mount.push(b`
+				if (${this.var}.autofocus) ${this.var}.focus();
+			`);
 		}
 	}
 
@@ -746,7 +762,7 @@ export default class ElementWrapper extends Wrapper {
 					intro_block = b`
 						@add_render_callback(() => {
 							if (${outro_name}) ${outro_name}.end(1);
-							if (!${intro_name}) ${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+							${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
 							${intro_name}.start();
 						});
 					`;

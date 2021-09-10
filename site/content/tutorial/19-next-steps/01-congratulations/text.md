@@ -6,6 +6,6 @@ You've now finished the Svelte tutorial and are ready to start building apps. Yo
 
 To get set up in your local development environment, check out [the quickstart guide](blog/the-easiest-way-to-get-started).
 
-If you're looking for a more expansive framework that includes routing, server-side rendering and everything else, take a look at [Sapper](https://sapper.svelte.dev).
+If you're looking for a more expansive framework that includes routing, server-side rendering and everything else, take a look at [SvelteKit](https://kit.svelte.dev).
 
 Most importantly: since you're now a member of the Svelte community, you should [join our friendly Discord chatroom](chat). That's where you'll find fellow Svelte users, and it's where we plan the future of the framework.

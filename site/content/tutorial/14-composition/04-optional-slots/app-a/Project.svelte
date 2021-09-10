@@ -4,6 +4,17 @@
 	export let totalTasks = 0;
 </script>
 
+<article class:has-discussion={true}>
+	<div>
+		<h2>{title}</h2>
+		<p>{tasksCompleted}/{totalTasks} tasks completed</p>
+	</div>
+	<div class="discussion">
+		<h3>Comments</h3>
+		<slot name="comments"></slot>
+	</div>
+</article>
+
 <style>
 	article {
 		border: 1px #ccc solid;
@@ -49,14 +60,3 @@
 		border-top: 1px #ccc solid;
 	}
 </style>
-
-<article class:has-discussion={true}>
-	<div>
-		<h2>{title}</h2>
-		<p>{tasksCompleted}/{totalTasks} tasks completed</p>
-	</div>
-	<div class="discussion">
-		<h3>Comments</h3>
-		<slot name="comments"></slot>
-	</div>
-</article>

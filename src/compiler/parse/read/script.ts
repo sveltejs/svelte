@@ -2,27 +2,20 @@ import * as acorn from '../acorn';
 import { Parser } from '../index';
 import { Script } from '../../interfaces';
 import { Node, Program } from 'estree';
-
-const script_closing_tag = '</script>';
+import parser_errors from '../errors';
 
 function get_context(parser: Parser, attributes: any[], start: number): string {
 	const context = attributes.find(attribute => attribute.name === 'context');
 	if (!context) return 'default';
 
 	if (context.value.length !== 1 || context.value[0].type !== 'Text') {
-		parser.error({
-			code: 'invalid-script',
-			message: 'context attribute must be static'
-		}, start);
+		parser.error(parser_errors.invalid_script_context_attribute, start);
 	}
 
 	const value = context.value[0].data;
 
 	if (value !== 'module') {
-		parser.error({
-			code: 'invalid-script',
-			message: 'If the context attribute is supplied, its value must be "module"'
-		}, context.start);
+		parser.error(parser_errors.invalid_script_context_value, context.start);
 	}
 
 	return value;
@@ -30,18 +23,13 @@ function get_context(parser: Parser, attributes: any[], start: number): string {
 
 export default function read_script(parser: Parser, start: number, attributes: Node[]): Script {
 	const script_start = parser.index;
-	const script_end = parser.template.indexOf(script_closing_tag, script_start);
-
-	if (script_end === -1) {
-		parser.error({
-			code: 'unclosed-script',
-			message: '<script> must have a closing tag'
-		});
+	const data = parser.read_until(/<\/script\s*>/, parser_errors.unclosed_script);
+	if (parser.index >= parser.template.length) {
+		parser.error(parser_errors.unclosed_script);
 	}
 
-	const source = parser.template.slice(0, script_start).replace(/[^\n]/g, ' ') +
-		parser.template.slice(script_start, script_end);
-	parser.index = script_end + script_closing_tag.length;
+	const source = parser.template.slice(0, script_start).replace(/[^\n]/g, ' ') + data;
+	parser.read(/<\/script\s*>/);
 
 	let ast: Program;
 

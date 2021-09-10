@@ -1,0 +1,15 @@
+[{
+	"code": "css-invalid-global",
+	"message": ":global(...) can be at the start or end of a selector sequence, but not in the middle",
+	"start": {
+		"line": 2,
+		"column": 6,
+		"character": 14
+	},
+	"end": {
+		"line": 2,
+		"column": 19,
+		"character": 27
+	},
+	"pos": 14
+}]

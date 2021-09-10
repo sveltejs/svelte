@@ -1,7 +1,7 @@
 import { x } from 'code-red';
 import { Node, Identifier, Expression } from 'estree';
 import { walk } from 'estree-walker';
-import is_reference from 'is-reference';
+import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 import { clone } from '../../../utils/clone';
 
 export interface Context {
@@ -85,7 +85,7 @@ function update_reference(contexts: Context[], n: number, expression: Expression
 	expression = clone(expression) as Expression;
 	walk(expression, {
 		enter(node, parent: Node) {
-			if (is_reference(node, parent)) {
+			if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
 				this.replace(find_from_context(node as Identifier));
 				this.skip();
 			}

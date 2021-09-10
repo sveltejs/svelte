@@ -6,7 +6,7 @@ Typically, you won't interact with the Svelte compiler directly, but will instea
 
 * [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) for users of [Rollup](https://rollupjs.org)
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) for users of [webpack](https://webpack.js.org)
-* or one of the [community-maintained plugins](https://github.com/sveltejs/integrations#bundler-plugins)
+* or one of the [community-maintained plugins](https://sveltesociety.dev/tooling)
 
 Nonetheless, it's useful to understand how to use the compiler, since bundler plugins generally expose compiler options to you.
 
@@ -44,7 +44,9 @@ The following options can be passed to the compiler. None are required:
 | `filename` | string | `null`
 | `name` | string | `"Component"`
 | `format` | `"esm"` or `"cjs"` | `"esm"`
-| `generate` | `"dom"` or `"ssr"` | `"dom"`
+| `generate` | `"dom"` or `"ssr"` or `false` | `"dom"`
+| `errorMode` | `"throw"` or `"warn"` | `"throw"`
+| `varsReport` | `"strict"` or `"full"` or `false` | `"strict"`
 | `dev` | boolean | `false`
 | `immutable` | boolean | `false`
 | `hydratable` | boolean | `false`
@@ -66,6 +68,8 @@ The following options can be passed to the compiler. None are required:
 | `name` | `"Component"` | `string` that sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope). It will normally be inferred from `filename`.
 | `format` | `"esm"` | If `"esm"`, creates a JavaScript module (with `import` and `export`). If `"cjs"`, creates a CommonJS module (with `require` and `module.exports`), which is useful in some server-side rendering situations or for testing.
 | `generate` | `"dom"` | If `"dom"`, Svelte emits a JavaScript class for mounting to the DOM. If `"ssr"`, Svelte emits an object with a `render` method suitable for server-side rendering. If `false`, no JavaScript or CSS is returned; just metadata.
+| `errorMode` | `"throw"` | If `"throw"`, Svelte throws when a compilation error occurred. If `"warn"`, Svelte will treat errors as warnings and add them to the warning report.
+| `varsReport` | `"strict"` | If `"strict"`, Svelte returns a variables report with only variables that are not globals nor internals. If `"full"`, Svelte returns a variables report with all detected variables. If `false`, no variables report is returned.
 | `dev` | `false` | If `true`, causes extra code to be added to components that will perform runtime checks and provide debugging information during development.
 | `immutable` | `false` | If `true`, tells the compiler that you promise not to mutate any objects. This allows it to be less conservative about checking whether values have changed.
 | `hydratable` | `false` | If `true` when generating DOM code, enables the `hydrate: true` runtime option, which allows a component to upgrade existing DOM rather than creating new DOM from scratch. When generating SSR code, this adds markers to `<head>` elements so that hydration knows which to replace.
@@ -224,16 +228,24 @@ Each `markup`, `script` or `style` function must return an object (or a Promise 
 
 The `markup` function receives the entire component source text, along with the component's `filename` if it was specified in the third argument.
 
-> Preprocessor functions may additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation. In current versions of Svelte it will be ignored, but future versions of Svelte may take account of preprocessor sourcemaps.
+> Preprocessor functions should additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation.
 
 ```js
 const svelte = require('svelte/compiler');
+const MagicString = require('magic-string');
 
 const { code } = await svelte.preprocess(source, {
 	markup: ({ content, filename }) => {
+		const pos = content.indexOf('foo');
+		if(pos < 0) {
+			return { code: content }
+		}
+		const s = new MagicString(content, { filename })
+		s.overwrite(pos, pos + 3, 'bar', { storeName: true })
 		return {
-			code: content.replace(/foo/g, 'bar')
-		};
+			code: s.toString(),
+			map: s.generateMap()
+		}
 	}
 }, {
 	filename: 'App.svelte'
