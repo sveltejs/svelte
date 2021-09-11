@@ -587,7 +587,7 @@ export default class Component {
 
 		scope.declarations.forEach((node, name) => {
 			if (name[0] === '$') {
-				return this.error(node as any, compiler_errors.illegal_declaration);
+				return this.error(node as any, compiler_errors.illegal_declaration(name));
 			}
 
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
@@ -660,7 +660,7 @@ export default class Component {
 
 		instance_scope.declarations.forEach((node, name) => {
 			if (name[0] === '$') {
-				return this.error(node as any, compiler_errors.illegal_declaration);
+				return this.error(node as any, compiler_errors.illegal_declaration(name));
 			}
 
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');

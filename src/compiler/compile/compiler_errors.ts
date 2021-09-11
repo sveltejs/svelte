@@ -174,10 +174,10 @@ export default {
 		code: 'default-export',
 		message: 'A component cannot have a default export'
 	},
-	illegal_declaration: {
+	illegal_declaration: (name: string) => ({
 		code: 'illegal-declaration',
-		message: 'The $ prefix is reserved, and cannot be used for variable and import names'
-	},
+		message: `The $ prefix is reserved, and cannot be used for variable and import names, but found ${name}`
+	}),
 	illegal_subscription: {
 		code: 'illegal-subscription',
 		message: 'Cannot reference store value inside <script context="module">'
