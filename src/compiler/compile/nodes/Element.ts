@@ -561,10 +561,7 @@ export default class Element extends Node {
 				if (_tabIndexValue) {
 					const tabIndexValue = Number(_tabIndexValue.get_static_value());
 					if (!isNaN(tabIndexValue) && tabIndexValue >= 0) {
-						component.warn(this, {
-							code: 'a11y-no-nointeractive-tabindex',
-							message: 'A11y: not interactive element cannot have positive tabIndex value'
-						});
+						component.warn(this, compiler_warnings.a11y_no_nointeractive_tabindex);
 					}
 				}
 			}
