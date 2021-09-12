@@ -1,3 +1,4 @@
+import { push_array } from '../utils/push_array';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { getLocator } from 'locate-character';
 import { MappedCode, SourceLocation, parse_attached_sourcemap, sourcemap_add_offset, combine_sourcemaps } from '../utils/mapped_code';
@@ -48,7 +49,7 @@ class PreprocessResult implements Source {
 		}
 
 		if (dependencies) {
-			this.dependencies.push(...dependencies);
+			push_array(this.dependencies, dependencies);
 		}
 	}
 
@@ -165,7 +166,7 @@ async function process_tag(
 		});
 
 		if (!processed) return no_change();
-		if (processed.dependencies) dependencies.push(...processed.dependencies);
+		if (processed.dependencies) push_array(dependencies, processed.dependencies);
 		if (!processed.map && processed.code === content) return no_change();
 
 		return processed_tag_to_code(processed, tag_name, attributes, slice_source(content, tag_offset, source));

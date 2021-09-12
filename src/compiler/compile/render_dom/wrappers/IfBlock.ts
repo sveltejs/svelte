@@ -1,3 +1,4 @@
+import { push_array } from '../../../utils/push_array';
 import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
@@ -166,7 +167,7 @@ export default class IfBlockWrapper extends Wrapper {
 			block.has_outro_method = has_outros;
 		});
 
-		renderer.blocks.push(...blocks);
+		push_array(renderer.blocks, blocks);
 	}
 
 	render(

@@ -1,3 +1,4 @@
+import { push_array } from '../../../../utils/push_array';
 import Renderer from '../../Renderer';
 import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
@@ -596,7 +597,7 @@ export default class ElementWrapper extends Wrapper {
 		this.attributes.forEach((attribute) => {
 			if (attribute.node.name === 'class') {
 				const dependencies = attribute.node.get_dependencies();
-				this.class_dependencies.push(...dependencies);
+				push_array(this.class_dependencies, dependencies);
 			}
 		});
 

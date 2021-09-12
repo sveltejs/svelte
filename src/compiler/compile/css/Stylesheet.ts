@@ -1,3 +1,4 @@
+import { push_array } from '../../utils/push_array';
 import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
@@ -351,7 +352,7 @@ export default class Stylesheet {
 							const at_rule_declarations = node.block.children
 								.filter(node => node.type === 'Declaration')
 								.map(node => new Declaration(node));
-							atrule.declarations.push(...at_rule_declarations);
+							push_array(atrule.declarations, at_rule_declarations);
 						}
 
 						current_atrule = atrule;

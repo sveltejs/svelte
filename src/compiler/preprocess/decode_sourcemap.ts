@@ -1,3 +1,4 @@
+import { push_array } from '../utils/push_array';
 import { decode as decode_mappings } from 'sourcemap-codec';
 import { Processed } from './types';
 
@@ -50,7 +51,7 @@ function decoded_sourcemap_from_generator(generator: any) {
 		result_segment = result_line[result_line.length - 1];
 
 		if (mapping.source != null) {
-			result_segment.push(...[
+			push_array(result_segment, [
 				source_idx[mapping.source],
 				mapping.originalLine - 1, // line is one-based
 				mapping.originalColumn

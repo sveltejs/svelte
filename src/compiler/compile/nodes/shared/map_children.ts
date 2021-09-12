@@ -1,3 +1,4 @@
+import { push_array } from '../../../utils/push_array';
 import AwaitBlock from '../AwaitBlock';
 import Body from '../Body';
 import Comment from '../Comment';
@@ -58,7 +59,7 @@ export default function map_children(component, parent, scope, children: Templat
 		if (use_ignores) component.pop_ignores(), ignores = [];
 
 		if (node.type === 'Comment' && node.ignores.length) {
-			ignores.push(...node.ignores);
+			push_array(ignores, node.ignores);
 		}
 
 		if (last) last.next = node;
