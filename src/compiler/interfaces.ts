@@ -116,6 +116,7 @@ export interface Ast {
 	css: Style;
 	instance: Script;
 	module: Script;
+	firstError?: any;
 }
 
 export interface Warning {
@@ -170,6 +171,7 @@ export interface CompileOptions {
 export interface ParserOptions {
 	filename?: string;
 	customElement?: boolean;
+	errorMode?: 'throw' | 'warn' | 'loose';
 }
 
 export interface Visitor {

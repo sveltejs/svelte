@@ -19,6 +19,7 @@ export class Parser {
 	readonly template: string;
 	readonly filename?: string;
 	readonly customElement: boolean;
+	private readonly isLooseParsing: boolean;
 
 	index = 0;
 	stack: TemplateNode[] = [];
@@ -27,6 +28,7 @@ export class Parser {
 	css: Style[] = [];
 	js: Script[] = [];
 	meta_tags = {};
+	firstError?: any;
 	last_auto_closed_tag?: LastAutoClosedTag;
 
 	constructor(template: string, options: ParserOptions) {
@@ -37,6 +39,7 @@ export class Parser {
 		this.template = template.replace(/\s+$/, '');
 		this.filename = options.filename;
 		this.customElement = options.customElement;
+		this.isLooseParsing = options.errorMode === 'loose';
 
 		this.html = {
 			start: null,
@@ -98,13 +101,18 @@ export class Parser {
 	}
 
 	error({ code, message }: { code: string; message: string }, index = this.index) {
-		error(message, {
+		const errorProps = {
 			name: 'ParseError',
 			code,
 			source: this.template,
 			start: index,
 			filename: this.filename
-		});
+		};
+		if (this.isLooseParsing) {
+			this.firstError = this.firstError || errorProps;
+		} else {
+			error(message, errorProps);
+		}
 	}
 
 	eat(str: string, required?: boolean, error?: { code: string, message: string }) {
@@ -238,6 +246,7 @@ export default function parse(
 		html: parser.html,
 		css: parser.css[0],
 		instance: instance_scripts[0],
-		module: module_scripts[0]
+		module: module_scripts[0],
+		firstError: parser.firstError
 	};
 }
