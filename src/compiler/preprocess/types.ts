@@ -1,5 +1,8 @@
 import { Location } from 'locate-character';
 
+/**
+ * @internal
+ */
 export interface Source {
 	source: string;
 	get_location: (search: number) => Location;

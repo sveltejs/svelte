@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Hide private preprocess typings ([#6622](https://github.com/sveltejs/svelte/issues/6622))
+
 ## 3.42.5
 
 * In `draw` transition, account for `stroke-linecap` in determining length ([#4540](https://github.com/sveltejs/svelte/issues/4540))
