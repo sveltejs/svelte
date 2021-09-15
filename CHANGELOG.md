@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Hide private preprocess typings ([#6622](https://github.com/sveltejs/svelte/issues/6622))
+* Fix reactive function in `{:else if}` expression not being properly re-run ([#6727](https://github.com/sveltejs/svelte/pull/6727))
 
 ## 3.42.5
 
