@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## 3.42.5
+## Unreleased
 
 * Hide private preprocess typings ([#6622](https://github.com/sveltejs/svelte/issues/6622))
 
