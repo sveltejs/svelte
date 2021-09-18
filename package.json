@@ -26,10 +26,8 @@
         "import": "./index.mjs",
         "require": "./index.js"
       },
-      "default": {
-        "import": "./ssr.mjs",
-        "require": "./ssr.js"
-      }
+      "import": "./ssr.mjs",
+      "require": "./ssr.js"
     },
     "./compiler": {
       "import": "./compiler.mjs",
