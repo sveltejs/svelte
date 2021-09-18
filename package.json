@@ -22,8 +22,14 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./index.mjs",
-      "require": "./index.js"
+      "browser": {
+        "import": "./index.mjs",
+        "require": "./index.js"
+      },
+      "node": {
+        "import": "./ssr.mjs",
+        "require": "./ssr.js"
+      }
     },
     "./compiler": {
       "import": "./compiler.mjs",
