@@ -129,7 +129,7 @@ export function create_ssr_component(fn) {
 				html,
 				css: {
 					code: Array.from(result.css).map(css => css.code).join('\n'),
-					map: null // TODO
+					map: null // TODO: support css.map
 				},
 				head: result.title + result.head
 			};

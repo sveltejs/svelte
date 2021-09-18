@@ -1,7 +1,6 @@
 import { b } from 'code-red';
 import Component from '../Component';
 import { CompileOptions, CssResult } from '../../interfaces';
-import { string_literal } from '../utils/stringify';
 import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
@@ -200,11 +199,14 @@ export default function ssr(
 		main
 	].filter(Boolean);
 
+	// TODO: support css.map
+	// NOTE: inlining sourcemaps may cause issues for code replacements since
+	// `sourcesContent` contains the raw source code wrapped in double quotes
 	const js = b`
 		${css.code ? b`
 		const #css = {
 			code: "${css.code}",
-			map: ${css.map ? string_literal(css.map.toString()) : 'null'}
+			map: null
 		};` : null}
 
 		${component.extract_javascript(component.ast.module)}
