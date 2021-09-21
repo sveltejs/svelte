@@ -13,7 +13,7 @@ export type Updater<T> = (value: T) => T;
 type Invalidator<T> = (value?: T) => void;
 
 /** Start and stop notification callbacks. */
-export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
+export type StartStopNotifier<T> = (set: Subscriber<T>, update?: (fn: Updater<T>) => void) => Unsubscriber | void;
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
@@ -92,7 +92,7 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
-			stop = start(set) || noop;
+			stop = start(set, update) || noop;
 		}
 		run(value);
 
@@ -125,7 +125,7 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
  */
 export function derived<S extends Stores, T>(
 	stores: S,
-	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
+	fn: (values: StoresValues<S>, set: Subscriber<T>, update?: (fn: Updater<T>) => void) => Unsubscriber | void,
 	initial_value?: T
 ): Readable<T>;
 
@@ -163,7 +163,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 
 	const auto = fn.length < 2;
 
-	return readable(initial_value, (set) => {
+	return readable(initial_value, (set, update) => {
 		let inited = false;
 		const values = [];
 
@@ -175,7 +175,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 				return;
 			}
 			cleanup();
-			const result = fn(single ? values[0] : values, set);
+			const result = fn(single ? values[0] : values, set, update);
 			if (auto) {
 				set(result as T);
 			} else {
