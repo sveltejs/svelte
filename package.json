@@ -22,6 +22,10 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
+      "node": {
+        "import": "./ssr.mjs",
+        "require": "./ssr.js"
+      },
       "import": "./index.mjs",
       "require": "./index.js"
     },
