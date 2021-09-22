@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.43.0
 
 * Use export map to expose no-op versions of lifecycle functions for SSR ([#6743](https://github.com/sveltejs/svelte/pull/6743))
 * Prefer `context` passed to component constructor, even when running synchronously in another component ([#6753](https://github.com/sveltejs/svelte/issues/6753))
