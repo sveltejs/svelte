@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Use export map to expose no-op versions of lifecycle functions for SSR ([#6743](https://github.com/sveltejs/svelte/pull/6743))
 * Handle preprocessors that return empty sourcemaps ([#6757](https://github.com/sveltejs/svelte/pull/6757))
 
 ## 3.42.6
