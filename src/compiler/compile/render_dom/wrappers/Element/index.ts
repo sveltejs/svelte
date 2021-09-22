@@ -619,10 +619,8 @@ export default class ElementWrapper extends Wrapper {
 
 		this.attributes
 			.forEach(attr => {
-				const dependencies = attr.node.get_dependencies();
-
-				const condition = dependencies.length > 0
-					? block.renderer.dirty(dependencies)
+				const condition = attr.node.dependencies.size > 0
+					? block.renderer.dirty(attr.node.get_dependencies())
 					: null;
 
 				if (attr instanceof SpreadAttributeWrapper) {
