@@ -91,7 +91,7 @@ export function create_ssr_component(fn) {
 
 		const $$ = {
 			on_destroy,
-			context: new Map(parent_component ? parent_component.$$.context : context || []),
+			context: new Map(context || (parent_component ? parent_component.$$.context : [])),
 
 			// these will be immediately discarded
 			on_mount: [],
