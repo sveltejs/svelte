@@ -79,10 +79,13 @@ function processed_content_to_code(processed: Processed, location: SourceLocatio
 	if (processed.map) {
 		decoded_map = decode_map(processed);
 
-		// offset only segments pointing at original component source
-		const source_index = decoded_map.sources.indexOf(file_basename);
-		if (source_index !== -1) {
-			sourcemap_add_offset(decoded_map, location, source_index);
+		// decoded map may not have sources for empty maps like `{ mappings: '' }`
+		if (decoded_map.sources) {
+			// offset only segments pointing at original component source
+			const source_index = decoded_map.sources.indexOf(file_basename);
+			if (source_index !== -1) {
+				sourcemap_add_offset(decoded_map, location, source_index);
+			}
 		}
 	}
 
