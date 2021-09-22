@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Handle preprocessors that return empty sourcemaps ([#6757](https://github.com/sveltejs/svelte/pull/6757))
+
 ## 3.42.6
 
 * Hide private preprocess typings ([#6622](https://github.com/sveltejs/svelte/issues/6622))
