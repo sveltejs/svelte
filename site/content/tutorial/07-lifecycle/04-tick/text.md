@@ -2,7 +2,7 @@
 title: tick
 ---
 
-The `tick` function is unlike other lifecycle functions in that you can call it any time, not just when the component first initialises. It returns a promise that resolves as soon as any pending state changes have been applied to the DOM (or immediately, if there are no pending state changes).
+The `tick` function is unlike other lifecycle functions in that you can call any time, not just when the component first initialises. It returns a promise that resolves as soon as any pending state changes have been applied to the DOM (or immediately, if there are no pending state changes).
 
 When you update component state in Svelte, it doesn't update the DOM immediately. Instead, it waits until the next *microtask* to see if there are any other changes that need to be applied, including in other components. Doing so avoids unnecessary work and allows the browser to batch things more effectively.
 
