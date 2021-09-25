@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add `SvelteComponentConstructor` convenience type ([#6770](https://github.com/sveltejs/svelte/pull/6770))
+
 ## 3.43.0
 
 * Use export map to expose no-op versions of lifecycle functions for SSR ([#6743](https://github.com/sveltejs/svelte/pull/6743))

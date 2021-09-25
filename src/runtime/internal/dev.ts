@@ -247,6 +247,22 @@ export class SvelteComponentTyped<
 	}
 }
 
+/**
+ * Convenience-type to represent a Svelte component constructor.
+ * 
+ * Example:
+ * ```ts
+ import ASvelteComponent from './ASvelteComponent.svelte';
+ const ComponentClass: SvelteComponentConstructor = ASvelteComponent;
+ new ComponentClass(..);
+ ```
+ */
+export type SvelteComponentConstructor<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
+> = new (options: IComponentOptions<Props>) => SvelteComponentTyped<Props, Events, Slots>;
+
 export function loop_guard(timeout) {
 	const start = Date.now();
 	return () => {
