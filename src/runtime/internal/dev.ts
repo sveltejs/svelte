@@ -115,7 +115,7 @@ export interface SvelteComponentDev {
 	[accessor: string]: any;
 }
 interface IComponentOptions<Props extends Record<string, any> = Record<string, any>> {
-	target: Element|ShadowRoot;
+	target: Element | ShadowRoot;
 	anchor?: Element;
 	props?: Props;
 	context?: Map<any, any>;

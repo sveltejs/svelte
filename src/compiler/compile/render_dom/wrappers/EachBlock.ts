@@ -57,8 +57,8 @@ export default class EachBlockWrapper extends Wrapper {
 		get_each_context: Identifier;
 		iterations: Identifier;
 		fixed_length: number;
-		data_length: Node|number;
-		view_length: Node|number;
+		data_length: Node | number;
+		view_length: Node | number;
 	}
 
 	context_props: Array<Node | Node[]>;

@@ -25,7 +25,7 @@ export default class Let extends Node {
 			this.value = info.expression;
 
 			walk(info.expression, {
-				enter(node: Identifier|BasePattern) {
+				enter(node: Identifier | BasePattern) {
 					if (!applicable.has(node.type)) {
 						return component.error(node as any, compiler_errors.invalid_let);
 					}
