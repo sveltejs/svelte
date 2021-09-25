@@ -10,7 +10,7 @@ import Text from '../../../nodes/Text';
 
 export interface StyleProp {
 	key: string;
-	value: Array<Text|Expression>;
+	value: Array<Text | Expression>;
 	important: boolean;
 }
 
@@ -69,7 +69,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 	}
 }
 
-function optimize_style(value: Array<Text|Expression>) {
+function optimize_style(value: Array<Text | Expression>) {
 	const props: StyleProp[] = [];
 	let chunks = value.slice();
 
@@ -107,7 +107,7 @@ function optimize_style(value: Array<Text|Expression>) {
 }
 
 function get_style_value(chunks: Array<Text | Expression>) {
-	const value: Array<Text|Expression> = [];
+	const value: Array<Text | Expression> = [];
 
 	let in_url = false;
 	let quote_mark = null;
@@ -185,6 +185,6 @@ function get_style_value(chunks: Array<Text | Expression>) {
 	};
 }
 
-function is_dynamic(value: Array<Text|Expression>) {
+function is_dynamic(value: Array<Text | Expression>) {
 	return value.length > 1 || value[0].type !== 'Text';
 }

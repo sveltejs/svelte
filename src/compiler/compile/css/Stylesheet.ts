@@ -155,7 +155,7 @@ class Declaration {
 
 class Atrule {
 	node: CssNode;
-	children: Array<Atrule|Rule>;
+	children: Array<Atrule | Rule>;
 	declarations: Declaration[];
 
 	constructor(node: CssNode) {
@@ -290,7 +290,7 @@ export default class Stylesheet {
 	has_styles: boolean;
 	id: string;
 
-	children: Array<Rule|Atrule> = [];
+	children: Array<Rule | Atrule> = [];
 	keyframes: Map<string, string> = new Map();
 
 	nodes_with_css_class: Set<CssNode> = new Set();
@@ -415,7 +415,7 @@ export default class Stylesheet {
 
 		if (should_transform_selectors) {
 			const max = Math.max(...this.children.map(rule => rule.get_max_amount_class_specificity_increased()));
-			this.children.forEach((child: (Atrule|Rule)) => {
+			this.children.forEach((child: (Atrule | Rule)) => {
 				child.transform(code, this.id, this.keyframes, max);
 			});
 		}
