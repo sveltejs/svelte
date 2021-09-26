@@ -7,6 +7,7 @@ import EventHandler from './Element/EventHandler';
 import add_event_handlers from './shared/add_event_handlers';
 import { TemplateNode } from '../../../interfaces';
 import Renderer from '../Renderer';
+import add_actions from './shared/add_actions';
 
 export default class BodyWrapper extends Wrapper {
 	node: Body;
@@ -19,5 +20,6 @@ export default class BodyWrapper extends Wrapper {
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
 		add_event_handlers(block, x`@_document.body`, this.handlers);
+		add_actions(block, x`@_document.body`, this.node.actions);
 	}
 }

@@ -251,6 +251,11 @@ export function combine_sourcemaps(
 
 	if (!map.file) delete map.file; // skip optional field `file`
 
+	// When source maps are combined and the leading map is empty, sources is not set.
+	// Add the filename to the empty array in this case. 
+	// Further improvements to remapping may help address this as well https://github.com/ampproject/remapping/issues/116
+	if (!map.sources.length) map.sources = [filename];
+
 	return map;
 }
 
@@ -295,8 +300,8 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style'): void {
 	const r_in = '[#@]\\s*sourceMappingURL\\s*=\\s*(\\S*)';
 	const regex = (tag_name == 'script')
-		? new RegExp('(?://'+r_in+')|(?:/\\*'+r_in+'\\s*\\*/)$')
-		: new RegExp('/\\*'+r_in+'\\s*\\*/$');
+		? new RegExp('(?://' + r_in + ')|(?:/\\*' + r_in + '\\s*\\*/)$')
+		: new RegExp('/\\*' + r_in + '\\s*\\*/$');
 	function log_warning(message) {
 		// code_start: help to find preprocessor
 		const code_start = processed.code.length < 100 ? processed.code : (processed.code.slice(0, 100) + ' [...]');

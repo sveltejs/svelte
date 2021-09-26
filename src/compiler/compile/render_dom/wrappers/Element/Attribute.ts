@@ -86,8 +86,9 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
 			this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
 		}
-		
-		this.is_src = this.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
+
+		// TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
+		this.is_src = this.name === 'src' && (!this.parent.node.namespace || this.parent.node.namespace === namespaces.html);
 		this.should_cache = should_cache(this);
 	}
 
@@ -132,7 +133,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			`);
 		} else if (this.is_src) {
 			block.chunks.hydrate.push(
-				b`if (${element.var}.src !== ${init}) ${method}(${element.var}, "${name}", ${this.last});`
+				b`if (!@src_url_equal(${element.var}.src, ${init})) ${method}(${element.var}, "${name}", ${this.last});`
 			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
 		} else if (property_name) {
@@ -169,8 +170,11 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		}
 
 		// special case – autofocus. has to be handled in a bit of a weird way
-		if (this.node.is_true && name === 'autofocus') {
-			block.autofocus = element.var;
+		if (name === 'autofocus') {
+			block.autofocus = {
+				element_var: element.var,
+				condition_expression: this.node.is_true ? undefined : value
+			};
 		}
 	}
 
@@ -193,7 +197,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 		if (should_cache) {
 			condition = this.is_src
-				? x`${condition} && (${element.var}.src !== (${last} = ${value}))`
+				? x`${condition} && (!@src_url_equal(${element.var}.src, (${last} = ${value})))`
 				: x`${condition} && (${last} !== (${last} = ${value}))`;
 		}
 

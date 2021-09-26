@@ -65,6 +65,31 @@ radius of the selected circle.
 	}
 </script>
 
+<div class="controls">
+	<button on:click="{() => travel(-1)}" disabled="{i === 0}">undo</button>
+	<button on:click="{() => travel(+1)}" disabled="{i === undoStack.length -1}">redo</button>
+</div>
+
+<svg on:click={handleClick} >
+	{#each circles as circle}
+		<circle cx={circle.cx} cy={circle.cy} r={circle.r}
+			on:click="{event => select(circle, event)}"
+			on:contextmenu|stopPropagation|preventDefault="{() => {
+				adjusting = !adjusting;
+				if (adjusting) selected = circle;
+			}}"
+			fill="{circle === selected ? '#ccc': 'white'}"
+		/>
+	{/each}
+</svg>
+
+{#if adjusting}
+	<div class="adjuster">
+		<p>adjust diameter of circle at {selected.cx}, {selected.cy}</p>
+		<input type="range" value={selected.r} on:input={adjust}>
+	</div>
+{/if}
+
 <style>
 	.controls {
 		position: absolute;
@@ -98,28 +123,3 @@ radius of the selected circle.
 		width: 100%;
 	}
 </style>
-
-<div class="controls">
-	<button on:click="{() => travel(-1)}" disabled="{i === 0}">undo</button>
-	<button on:click="{() => travel(+1)}" disabled="{i === undoStack.length -1}">redo</button>
-</div>
-
-<svg on:click={handleClick} >
-	{#each circles as circle}
-		<circle cx={circle.cx} cy={circle.cy} r={circle.r}
-			on:click="{event => select(circle, event)}"
-			on:contextmenu|stopPropagation|preventDefault="{() => {
-				adjusting = !adjusting;
-				if (adjusting) selected = circle;
-			}}"
-			fill="{circle === selected ? '#ccc': 'white'}"
-		/>
-	{/each}
-</svg>
-
-{#if adjusting}
-	<div class="adjuster">
-		<p>adjust diameter of circle at {selected.cx}, {selected.cy}</p>
-		<input type="range" value={selected.r} on:input={adjust}>
-	</div>
-{/if}

@@ -8,7 +8,8 @@
 				"start": 0,
 				"end": 18,
 				"type": "Comment",
-				"data": " a comment "
+				"data": " a comment ",
+				"ignores": []
 			}
 		]
 	}

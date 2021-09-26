@@ -38,13 +38,13 @@
 {#if $page.path !== '/repl/embed'}
 	<Nav {segment} {page} logo="svelte-logo-horizontal.svg">
 		<NavItem segment="tutorial">Tutorial</NavItem>
-		<NavItem segment="docs">API</NavItem>
+		<NavItem segment="docs">Docs</NavItem>
 		<NavItem segment="examples">Examples</NavItem>
 		<NavItem segment="repl">REPL</NavItem>
 		<NavItem segment="blog">Blog</NavItem>
 		<NavItem segment="faq">FAQ</NavItem>
 
-		<NavItem external="https://sapper.svelte.dev">Sapper</NavItem>
+		<NavItem external="https://kit.svelte.dev">SvelteKit</NavItem>
 
 		<NavItem external="chat" title="Discord Chat">
 			<Icon name="message-square"/>

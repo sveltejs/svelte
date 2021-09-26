@@ -2,7 +2,7 @@ import { Node } from 'estree';
 
 export const UNKNOWN = {};
 
-export function gather_possible_values(node: Node, set: Set<string|{}>) {
+export function gather_possible_values(node: Node, set: Set<string | {}>) {
 	if (node.type === 'Literal') {
 		set.add(node.value);
 	} else if (node.type === 'ConditionalExpression') {

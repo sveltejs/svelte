@@ -178,7 +178,11 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 	duration,
 	easing = cubicInOut
 }: DrawParams = {}): TransitionConfig {
-	const len = node.getTotalLength();
+	let len = node.getTotalLength();
+	const style = getComputedStyle(node);
+	if (style.strokeLinecap !== 'butt') {
+		len += parseInt(style.strokeWidth);
+	}
 
 	if (duration === undefined) {
 		if (speed === undefined) {
@@ -207,7 +211,7 @@ export interface CrossfadeParams {
 type ClientRectMap = Map<any, { rect: ClientRect }>;
 
 export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
-	fallback: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
+	fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
 }) {
 	const to_receive: ClientRectMap = new Map();
 	const to_send: ClientRectMap = new Map();

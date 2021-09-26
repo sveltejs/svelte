@@ -25,6 +25,16 @@
 	}
 </script>
 
+<div class="box"
+	use:pannable
+	on:panstart={handlePanStart}
+	on:panmove={handlePanMove}
+	on:panend={handlePanEnd}
+	style="transform:
+		translate({$coords.x}px,{$coords.y}px)
+		rotate({$coords.x * 0.2}deg)"
+></div>
+
 <style>
 	.box {
 		--width: 100px;
@@ -39,13 +49,3 @@
 		cursor: move;
 	}
 </style>
-
-<div class="box"
-	use:pannable
-	on:panstart={handlePanStart}
-	on:panmove={handlePanMove}
-	on:panend={handlePanEnd}
-	style="transform:
-		translate({$coords.x}px,{$coords.y}px)
-		rotate({$coords.x * 0.2}deg)"
-></div>

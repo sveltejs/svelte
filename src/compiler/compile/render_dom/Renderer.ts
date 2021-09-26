@@ -3,7 +3,7 @@ import { CompileOptions, Var } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
 import { x } from 'code-red';
-import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression } from 'estree';
+import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression, UnaryExpression, ArrayExpression } from 'estree';
 import flatten_reference from '../utils/flatten_reference';
 import { reserved_keywords } from '../utils/reserved_keywords';
 import { renderer_invalidate } from './invalidate';
@@ -227,6 +227,31 @@ export default class Renderer {
 				return x`${dirty} & /*${names.join(', ')}*/ ${bitmask[0].n}` as BinaryExpression;
 			}
 		} as any;
+	}
+
+	// NOTE: this method may be called before this.context_overflow / this.context is fully defined
+	// therefore, they can only be evaluated later in a getter function
+	get_initial_dirty(): UnaryExpression | ArrayExpression {
+		const _this = this;
+		// TODO: context-overflow make it less gross
+		const val: UnaryExpression = x`-1` as UnaryExpression;
+		return {
+			get type() {
+				return _this.context_overflow ? 'ArrayExpression' : 'UnaryExpression';
+			},
+			// as [-1]
+			get elements() {
+				const elements = [];
+				for (let i = 0; i < _this.context.length; i += 31) {
+					elements.push(val);
+				}
+				return elements;
+			},
+			// as -1
+			operator: val.operator,
+			prefix: val.prefix,
+			argument: val.argument
+		};
 	}
 
 	reference(node: string | Identifier | MemberExpression) {

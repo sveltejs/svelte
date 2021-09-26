@@ -6,7 +6,7 @@ import { AnimationConfig } from '../animate';
 
 
 //todo: documentation says it is DOMRect, but in IE it would be ClientRect
-type PositionRect = DOMRect|ClientRect;
+type PositionRect = DOMRect | ClientRect;
 
 type AnimationFn = (node: Element, { from, to }: { from: PositionRect; to: PositionRect }, params: any) => AnimationConfig;
 

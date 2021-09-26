@@ -21,6 +21,9 @@
 		"resolveJsonModule": true,
 		"allowSyntheticDefaultImports": true,
 
+		// Hides exports flagged with @internal from the d.ts output
+		"stripInternal": true,
+
 		// TODO: error all the things
 		//"strict": true,
 		"noImplicitThis": true,

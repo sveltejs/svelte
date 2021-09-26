@@ -84,6 +84,8 @@ afterUpdate(callback: () => void)
 
 Schedules a callback to run immediately after the component has been updated.
 
+> The first time the callback runs will be after the initial `onMount`
+
 ```sv
 <script>
 	import { afterUpdate } from 'svelte';
@@ -198,6 +200,24 @@ Checks whether a given `key` has been set in the context of a parent component. 
 </script>
 ```
 
+#### `getAllContexts`
+
+```js
+contexts: Map<any, any> = getAllContexts()
+```
+
+---
+
+Retrieves the whole context map that belongs to the closest parent component. Must be called during component initialisation. Useful, for example, if you programmatically create a component and want to pass the existing context to it.
+
+```sv
+<script>
+	import { getAllContexts } from 'svelte';
+
+	const contexts = getAllContexts();
+</script>
+```
+
 #### `createEventDispatcher`
 
 ```js
@@ -245,10 +265,10 @@ This makes it possible to wrap almost any other reactive state handling library 
 #### `writable`
 
 ```js
-store = writable(value: any)
+store = writable(value?: any)
 ```
 ```js
-store = writable(value: any, (set: (value: any) => void) => () => void)
+store = writable(value?: any, start?: (set: (value: any) => void) => () => void)
 ```
 
 ---
@@ -294,17 +314,17 @@ const unsubscribe = count.subscribe(value => {
 unsubscribe(); // logs 'no more subscribers'
 ```
 
+Note that the value of a `writable` is lost when it is destroyed, for example when the page is refreshed. However, you can write your own logic to sync the value to for example the `localStorage`.
+
 #### `readable`
 
 ```js
-store = readable(value: any, (set: (value: any) => void) => () => void)
+store = readable(value?: any, start?: (set: (value: any) => void) => () => void)
 ```
 
 ---
 
-Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value.
-
-The second argument to `readable` is the same as the second argument to `writable`, except that it is required with `readable` (since otherwise there would be no way to update the store value).
+Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
 
 ```js
 import { readable } from 'svelte/store';
@@ -337,7 +357,7 @@ store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) =
 
 ---
 
-Derives a store from one or more other stores. Whenever those dependencies change, the callback runs.
+Derives a store from one or more other stores. The callback runs initially when the first subscriber subscribes and then whenever the store dependencies change.
 
 In the simplest version, `derived` takes a single store, and the callback returns a derived value.
 
@@ -754,7 +774,7 @@ Animates the stroke of an SVG element, like a snake in a tube. `in` transitions 
 * `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicInOut`) — an [easing function](docs#svelte_easing)
 
-The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will double that duration and setting it to `2` will halve it.
+The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is a modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will double that duration and setting it to `2` will halve it.
 
 ```sv
 <script>
@@ -777,8 +797,36 @@ The `speed` parameter is a means of setting the duration of the transition relat
 ```
 
 
-<!-- Crossfade is coming soon... -->
+#### `crossfade`
 
+The `crossfade` function creates a pair of [transitions](docs#transition_fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
+
+---
+
+`crossfade` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `fallback` (`function`) — A fallback [transition](docs#transition_fn) to use for send when there is no matching element being received, and for receive when there is no element being sent. 
+
+```sv
+<script>
+	import { crossfade } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+
+	const [send, receive] = crossfade({
+		duration:1500,
+		easing: quintOut
+	});
+</script>
+
+{#if condition}
+	<h1 in:send={{key}} out:receive={{key}}>BIG ELEM</h1>
+{:else}
+	<small in:send={{key}} out:receive={{key}}>small elem</small>
+{/if}
+```
 
 
 ### `svelte/animate`
@@ -901,7 +949,7 @@ The following initialisation options can be provided:
 
 | option | default | description |
 | --- | --- | --- |
-| `target` | **none** | An `HTMLElement` to render to. This option is required
+| `target` | **none** | An `HTMLElement` or `ShadowRoot` to render to. This option is required
 | `anchor` | `null` | A child of `target` to render the component immediately before
 | `props` | `{}` | An object of properties to supply to the component
 | `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component

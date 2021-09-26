@@ -79,10 +79,13 @@ function processed_content_to_code(processed: Processed, location: SourceLocatio
 	if (processed.map) {
 		decoded_map = decode_map(processed);
 
-		// offset only segments pointing at original component source
-		const source_index = decoded_map.sources.indexOf(file_basename);
-		if (source_index !== -1) {
-			sourcemap_add_offset(decoded_map, location, source_index);
+		// decoded map may not have sources for empty maps like `{ mappings: '' }`
+		if (decoded_map.sources) {
+			// offset only segments pointing at original component source
+			const source_index = decoded_map.sources.indexOf(file_basename);
+			if (source_index !== -1) {
+				sourcemap_add_offset(decoded_map, location, source_index);
+			}
 		}
 	}
 
@@ -124,7 +127,7 @@ function parse_tag_attributes(str: string) {
 		.filter(Boolean)
 		.reduce((attrs, attr) => {
 			const i = attr.indexOf('=');
-			const [key, value] = i > 0 ? [attr.slice(0, i), attr.slice(i+1)] : [attr];
+			const [key, value] = i > 0 ? [attr.slice(0, i), attr.slice(i + 1)] : [attr];
 			const [, unquoted] = (value && value.match(/^['"](.*)['"]$/)) || [];
 
 			return { ...attrs, [key]: unquoted ?? value ?? true };
@@ -139,7 +142,7 @@ async function process_tag(
 	preprocessor: Preprocessor,
 	source: Source
 ): Promise<SourceUpdate> {
-	const { filename } = source;
+	const { filename, source: markup } = source;
 	const tag_regex =
 		tag_name === 'style'
 			? /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi
@@ -160,6 +163,7 @@ async function process_tag(
 		const processed = await preprocessor({
 			content: content || '',
 			attributes: parse_tag_attributes(attributes || ''),
+			markup,
 			filename
 		});
 
