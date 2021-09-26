@@ -7,7 +7,7 @@ import { ConstTag as ConstTagType } from '../../interfaces';
 import { INodeAllowConstTag } from './interfaces';
 import { walk } from 'estree-walker';
 import { extract_identifiers } from 'periscopic';
-import is_reference from 'is-reference';
+import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 import get_object from '../utils/get_object';
 import compiler_errors from '../compiler_errors';
 
@@ -44,8 +44,8 @@ export default class ConstTag extends Node {
 
     walk(info.expression.right, {
       enter(node, parent) {
-        if (is_reference(node, parent)) {
-          const identifier = get_object(node);
+        if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
+          const identifier = get_object(node as any);
           const { name } = identifier;
           dependencies.add(name);
         }
