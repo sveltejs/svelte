@@ -3,4 +3,4 @@
   const foo = writable('div');
 </script>
 
-<svelte:element tag={$foo}></svelte:element>
+<svelte:element this={$foo}></svelte:element>

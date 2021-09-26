@@ -3,4 +3,4 @@
   let value;
 </script>
 
-<svelte:element tag={tag} bind:value></svelte:element>
+<svelte:element this={tag} bind:value></svelte:element>

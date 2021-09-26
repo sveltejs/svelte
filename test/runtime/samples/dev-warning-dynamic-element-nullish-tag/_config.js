@@ -4,6 +4,6 @@ export default {
 	},
 
 	warnings: [
-		'<svelte:element> expects a non-nullish value in attribute "tag"'
+		'<svelte:element> expects a non-nullish value in attribute "this"'
 	]
 };

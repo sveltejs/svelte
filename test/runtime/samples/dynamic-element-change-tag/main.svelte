@@ -2,4 +2,4 @@
   export let tag = 'div';
 </script>
 
-<svelte:element tag={tag}>Foo</svelte:element>
+<svelte:element this={tag}>Foo</svelte:element>

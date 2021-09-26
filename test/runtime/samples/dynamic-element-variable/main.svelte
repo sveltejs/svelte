@@ -3,4 +3,4 @@
   export let text = "Foo";
 </script>
 
-<svelte:element tag={tag}>{text}</svelte:element>
+<svelte:element this={tag}>{text}</svelte:element>

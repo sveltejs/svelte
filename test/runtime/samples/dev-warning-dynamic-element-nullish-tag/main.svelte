@@ -2,4 +2,4 @@
   let tag = null;
 </script>
 
-<svelte:element {tag}></svelte:element>
+<svelte:element this={tag}></svelte:element>

@@ -3,4 +3,4 @@
   export let foo;
 </script>
 
-<svelte:element tag={tag} bind:this={foo}></svelte:element>
+<svelte:element this={tag} bind:this={foo}></svelte:element>

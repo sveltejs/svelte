@@ -1551,7 +1551,7 @@ If `this` is falsy, no component is rendered.
 ### `<svelte:element>`
 
 ```sv
-<svelte:element tag={expression}/>
+<svelte:element this={expression}/>
 ```
 
 ---
@@ -1560,7 +1560,7 @@ The `<svelte:element>` element lets you render an element of a dynamically speci
 
 The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) does not work with a dynamic tag type.
 
-If `tag` has a nullish value, a warning will be logged in development mode.
+If `this` has a nullish value, a warning will be logged in development mode.
 
 ```sv
 <script>
@@ -1568,7 +1568,7 @@ If `tag` has a nullish value, a warning will be logged in development mode.
 	export let handler;
 </script>
 
-<svelte:element {tag} on:click={handler}>Foo</svelte:element>
+<svelte:element this={tag} on:click={handler}>Foo</svelte:element>
 ```
 
 ### `<svelte:window>`

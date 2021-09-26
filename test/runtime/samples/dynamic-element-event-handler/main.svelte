@@ -3,4 +3,4 @@
   export let handler;
 </script>
 
-<svelte:element tag={tag} on:click={handler}>Foo</svelte:element>
+<svelte:element this={tag} on:click={handler}>Foo</svelte:element>

@@ -2,7 +2,7 @@
   export let tag = 'div', text = 'Foo';
 </script>
 
-<svelte:element tag={tag}>
+<svelte:element this={tag}>
   <div>
     {text}
   </div>

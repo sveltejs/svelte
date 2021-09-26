@@ -184,20 +184,15 @@ export default function tag(parser: Parser) {
 	}
 	
 	if (name === 'svelte:element') {
-		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'tag');
+		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
 		if (index === -1) {
-			parser.error({
-				code: 'missing-element-definition',
-				message: '<svelte:element> must have a \'tag\' attribute'
-			}, start);
+			parser.error(parser_errors.missing_element_definition, start);
 		}
 
 		const definition = element.attributes.splice(index, 1)[0];
-		if (definition.value === true || definition.value.length !== 1 || (definition.value[0].type !== 'Text' && definition.value[0].type !== 'MustacheTag' && definition.value[0].type !== 'AttributeShorthand')) {
-			parser.error({
-				code: 'invalid-element-definition',
-				message: 'invalid element definition'
-			}, definition.start);
+		if (definition.value === true || definition.value.length !== 1 ||
+			(definition.value[0].type !== 'Text' && definition.value[0].type !== 'MustacheTag' && definition.value[0].type !== 'AttributeShorthand')) {
+			parser.error(parser_errors.invalid_element_definition, definition.start);
 		}
 
 		element.tag = definition.value[0].data || definition.value[0].expression;

@@ -3,5 +3,5 @@
   let tag = 'div';
 </script>
 
-<svelte:element tag={heading}>Foo</svelte:element>
-<svelte:element {tag}>Bar</svelte:element>
+<svelte:element this={heading}>Foo</svelte:element>
+<svelte:element this={tag}>Bar</svelte:element>
