@@ -1,5 +1,8 @@
-const sander = require('sander');
+import sander from 'sander';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 process.chdir(`${__dirname}/../..`);
 
 function extract_frontmatter(markdown) {
