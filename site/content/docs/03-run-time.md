@@ -268,7 +268,7 @@ This makes it possible to wrap almost any other reactive state handling library 
 store = writable(value?: any)
 ```
 ```js
-store = writable(value?: any, start?: (set: (value: any) => void, update?: (fn: any => any) => void) => () => void)
+store = writable(value?: any, start?: (set: (value: any) => void, update: (fn: any => any) => void) => () => void)
 ```
 
 ---
@@ -295,7 +295,7 @@ count.update(n => n + 1); // logs '2'
 
 ---
 
-If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store, and optionally an `update` function which works like the `update` method on the store, taking a callback to calculate the store's new value from its old value. It must return a `stop` function that is called when the subscriber count goes from one to zero.
+If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store, and an `update` function which works like the `update` method on the store, taking a callback to calculate the store's new value from its old value. It must return a `stop` function that is called when the subscriber count goes from one to zero.
 
 ```js
 import { writable } from 'svelte/store';
@@ -319,7 +319,7 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 #### `readable`
 
 ```js
-store = readable(value?: any, start?: (set: (value: any) => void) => () => void)
+store = readable(value?: any, start?: (set: (value: any) => void, update: (fn: any => any) => void) => () => void)
 ```
 
 ---
@@ -356,13 +356,13 @@ const ticktock = readable(null, (set, update) => {
 store = derived(a, callback: (a: any) => any)
 ```
 ```js
-store = derived(a, callback: (a: any, set: (value: any) => void, update?: (fn: any => any) => void) => void | () => void, initial_value: any)
+store = derived(a, callback: (a: any, set: (value: any) => void, update: (fn: any => any) => void) => void | () => void, initial_value: any)
 ```
 ```js
 store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
 ```
 ```js
-store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void, update?: (fn: any => any) => void) => void | () => void, initial_value: any)
+store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void, update: (fn: any => any) => void) => void | () => void, initial_value: any)
 ```
 
 ---
