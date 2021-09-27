@@ -68,7 +68,7 @@ function sort_consts_nodes(consts_nodes: ConstTag[], component: Component) {
   if (cycle && cycle.length) {
     const nodeList = lookup.get(cycle[0]);
     const node = nodeList[0];
-    component.error(node.node, compiler_errors.cyclical_constant_tags(cycle));
+    component.error(node.node, compiler_errors.cyclical_const_tags(cycle));
   }
 
   const add_node = (node: ConstNode) => {

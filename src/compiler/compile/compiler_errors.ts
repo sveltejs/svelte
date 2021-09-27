@@ -212,7 +212,7 @@ export default {
 	},
 	invalid_attribute_value: (name: string) => ({
 		code: `invalid-${name}-value`,
-		message: `${name} attribute must be true or false`	
+		message: `${name} attribute must be true or false`
 	}),
 	invalid_options_attribute_unknown: {
 		code: 'invalid-options-attribute',
@@ -248,7 +248,7 @@ export default {
 	},
 	invalid_const_placement: {
 		code: 'invalid-const-placement',
-		message: '{@const} must be the immediate child of {#each}, {:then}, {:catch}, <svelte:fragment> and <Component>'
+		message: '{@const} must be the immediate child of {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>'
 	},
 	invalid_const_declaration: (name: string) => ({
 		code: 'invalid-const-declaration',
@@ -256,10 +256,10 @@ export default {
 	}),
 	invalid_const_update: (name: string) => ({
 		code: 'invalid-const-update',
-		message: `'${name}' is declared using {@const ...} and it is read-only`
+		message: `'${name}' is declared using {@const ...} and is read-only`
 	}),
-	cyclical_constant_tags: (cycle: string[]) => ({
-		code: 'cyclical-constant-tags',
+	cyclical_const_tags: (cycle: string[]) => ({
+		code: 'cyclical-const-tags',
 		message: `Cyclical dependency detected: ${cycle.join(' → ')}`
 	})
 };
