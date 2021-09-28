@@ -25,7 +25,7 @@ Nearly 100 PRs committed again this past month, but there's still lots to do and
 
 > If you think you are too n00b to contribute (you're not), then add tests, or write tests for the feature you want to add, before you add it! Start small, and learn the codebase that way.
 
-If you'd like to help, please consider working on any of the [1.0 milestone issues labeled with "help wanted"](https://github.com/sveltejs/kit/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.0+label%3A%22help+wanted%22.
+If you'd like to help, please consider working on any of the [1.0 milestone issues labeled with "help wanted"](https://github.com/sveltejs/kit/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.0+label%3A%22help+wanted%22).
 
 Notable SvelteKit improvements this month include...
 
