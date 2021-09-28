@@ -180,7 +180,7 @@ export let SvelteElement;
 if (typeof HTMLElement === 'function') {
 	SvelteElement = class extends HTMLElement {
 		$$: T$$;
-		$$set?: ($$props: any) => void;
+		$$set?: ($$props: any) => Promise<void>;
 		constructor() {
 			super();
 			this.attachShadow({ mode: 'open' });
