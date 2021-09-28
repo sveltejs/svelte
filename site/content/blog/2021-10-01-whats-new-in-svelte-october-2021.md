@@ -11,16 +11,17 @@ Keep up the good work, everyone! Now, let's dive into this month's news...
 
 ## New around Svelte
 
-- New additions to Svelte's export map now expose no-op versions of lifecycle functions for SSR. This prevents the need for bundlers to bundle external dependencies that imports `svelte` in order to resolve them to `svelte/ssr` (Svelte **3.43.0**)
+- New additions to Svelte's export map now expose no-op versions of lifecycle functions for SSR (Svelte **3.43.0**)
 - Custom components with a `src` attribute no longer break `svelte-native` builds (Svelte **3.42.4**)
-- Svelte plugin users without [the TypeScript plugin](https://github.com/sveltejs/language-tools/issues/580#issuecomment-832502069) enabled will now be prompted to enable it (Svelte extensions **105.4.0**)
+- Svelte plugin users without [the TypeScript plugin](https://www.npmjs.com/package/typescript-svelte-plugin) enabled will now be prompted to enable it. It enhances TypeScript and JavaScript files with additional intellisense to interact with Svelte files. [Please leave feedback](https://github.com/sveltejs/language-tools/issues/580) if you are using it (Svelte extensions **105.4.0**)
 - Event modifiers have been added to intellisense as autocomplete and hover info (Svelte extensions **105.4.0**)
+- TypeScript users no longer have to strictly separate type imports and value imports when using Svelte version 3.39 or higher and `svelte-preprocess` version 4.9.5 or higher. This means you can now write `import { MyInterface, myValue } from './somewhere` instead of `import type { MyInterface } from './somewhere'; import { myValue } from './somewhere`. Huge thanks to community member [@SomaticIT](https://github.com/SomaticIT) who mainly implemented this!
 
 For a full list of features and bug fixes, check out the [Svelte changelog](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
 ## SvelteKit Updates
 
-Svelte maintainers are [looking for help getting SvelteKit to 1.0](https://github.com/sveltejs/kit/issues/2100). Antony said it well in a [recent comment](https://github.com/sveltejs/kit/issues/2100#issuecomment-895446285) on the issue: 
+Nearly 100 PRs committed again this past month, but there's still lots to do and Svelte maintainers are [looking for help getting SvelteKit to 1.0](https://github.com/sveltejs/kit/issues/2100). Antony said it well in a [recent comment](https://github.com/sveltejs/kit/issues/2100#issuecomment-895446285) on the issue: 
 
 > If you think you are too n00b to contribute (you're not), then add tests, or write tests for the feature you want to add, before you add it! Start small, and learn the codebase that way.
 
@@ -29,12 +30,13 @@ If you'd like to help, please consider working on any of the [1.0 milestone issu
 Notable SvelteKit improvements this month include...
 
 - Service workers are now allowed to access files using the \$lib alias ([#2326](https://github.com/sveltejs/kit/pull/2326))
-- Nested dependency optimization has now been enabled with vite ([#2343](https://github.com/sveltejs/kit/pull/2343))
+- Svelte libraries should now work out-of-the-box without any Vite configuration ([#2343](https://github.com/sveltejs/kit/pull/2343))
 - Improvements to package exports field ([#2345](https://github.com/sveltejs/kit/pull/2345) and [#2327](https://github.com/sveltejs/kit/pull/2327))
-- [breaking] The prerender.pages config option has been renamed to prerender.entries ([#2380](https://github.com/sveltejs/kit/pull/2380))
+- [breaking] The `prerender.pages` config option has been renamed to `prerender.entries` ([#2380](https://github.com/sveltejs/kit/pull/2380))
 - A new generic argument has beend added to allow typing Body from hooks ([#2413](https://github.com/sveltejs/kit/pull/2413))
-- The "svelte" field will be added to package.json when running the package command ([#2431](https://github.com/sveltejs/kit/pull/2431))
-- [breaking] The "context" parameter of the load function was renamed to "stuff" ([#2439](https://github.com/sveltejs/kit/pull/2439))
+- The `svelte` field will be added to package.json when running the package command ([#2431](https://github.com/sveltejs/kit/pull/2431))
+- [breaking] The `context` parameter of the load function was renamed to `stuff` ([#2439](https://github.com/sveltejs/kit/pull/2439))
+- Added an `entryPoint` option for building a custom server with `adapter-node` ([#2414](https://github.com/sveltejs/kit/pull/2414))
 
 To see all updates to SvelteKit, check out the [SvelteKit changelog](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md).
 
@@ -46,10 +48,10 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 **Apps & Sites**
 - [radiofrance](https://www.radiofrance.fr/) just migrated their website to SvelteKit
 - [FLAYKS](https://flayks.com/) is the portfolio site for Félix Péault made with SvelteKit, Sanity, and Anime.js
-- [hirehive](https://www.hirehive.com/) is an candidate and job tracking
+- [hirehive](https://www.hirehive.com/) is a candidate and job tracking site
 - [Microsocial](https://microsocial.xyz/) is an experimental Peer-to-Peer Social Platform 
 - [Dylan Ipsum](https://www.dylanlyrics.app/) is a random text generator to replace lorem ipsum with Bob Dylan lyrics
-- [Chip8 Svelte](https://github.com/mikeyhogarth/chip8-svelte) is CHIP-8 emulator frontend, built on top of CHIP8 Typescript
+- [Chip8 Svelte](https://github.com/mikeyhogarth/chip8-svelte) is a CHIP-8 emulator frontend, built on top of CHIP8 Typescript
 
 **Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
 
@@ -58,7 +60,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [Web Rush Podcast: Svelte Tools and Svelte Society](https://www.webrush.io/episodes/episode-150-svelte-tools-and-svelte-society) Kevin Åberg Kultalahti talks about what Svelte Society is, what he's excited about with Svelte, how important documentation is to any product, and much _much_ more
 - [Svelte: The Compiled Future of Front End](https://www.arahansen.com/the-compiled-future-of-front-end/) details the history of component-based frontends and how a compiler changes everything
 - [Svelte Radio: Contributing to Svelte with Martin 'Grygrflzr' Krisnanto Putra](https://share.transistor.fm/s/10aa305c) Grygrflzr shares his journey to becoming a maintainer and his views on React, Vite and a host of other things
-- [Svelte Radio: Routify 3 with Jake and Willow](https://share.transistor.fm/s/10aa305c) the Svelte Radio crew sits down the maintainers of Routify and talk about the just-released Routify 3
+- [Svelte Radio: Routify 3 with Jake and Willow](https://share.transistor.fm/s/10aa305c) the Svelte Radio crew sits down with the maintainers of Routify and talks about the just-released Routify 3
 - [JS Party: 1Password](https://twitter.com/geoffrich_/status/1441816829853253640?s=20) mentioned on the latest episode of The Changelog's JS Party that they use Svelte to power their in-page suggestions
 
 **Educational Content**
@@ -72,16 +74,15 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 **Libraries, Tools & Components**
 - [sveltekit-netlify-cms](https://github.com/buhrmi/sveltekit-netlify-cms) is a SvelteKit skeleton app configured for use with Netlify CMS
 - [SvelteFireTS](https://github.com/jacobbowdoin/sveltefirets) is a SvelteKit + Typescript + Firebase library inspired by Fireship.io 
-- [stores-x](https://github.com/Anyass3/stores-x) lets you use svelte stores just like vueX
+- [stores-x](https://github.com/Anyass3/stores-x) lets you use Svelte stores just like vueX
 - [sveltekit-snippets](https://github.com/stordahl/sveltekit-snippets) is a VSCode extension that provides snippets for common patterns in SvelteKit & Vanilla Svelte
-- [svelte-xactor](https://github.com/wobsoriano/svelte-xactor) is middleware that allows you to easily convert your xactor machines into a global store that implements store contract
+- [svelte-xactor](https://github.com/wobsoriano/svelte-xactor) is a middleware that allows you to easily convert your xactor machines into a global store that implements the store contract
 - [vite-plugin-pages-svelte](https://github.com/aldy505/vite-plugin-pages-svelte) is a vite plugin for automatic filesystem-based routing
 - [sveltio](https://www.npmjs.com/package/sveltio) is a Svelte wrapper for valtio - a proxy-state library
 - [svelte-transition-classes](https://github.com/rmarscher/svelte-transition-classes) is a custom Svelte transition for adding and swapping CSS classes
-- [Svelte-Boring-Avatars](https://github.com/paolotiu/svelte-boring-avatars) is Svelte port of the popular
-- [Boring Avatars](https://github.com/boringdesigners/boring-avatars) React project
+- [Svelte-Boring-Avatars](https://github.com/paolotiu/svelte-boring-avatars) is Svelte port of the popular [Boring Avatars](https://github.com/boringdesigners/boring-avatars) React project
 - [Svelte DataTables](https://github.com/homescriptone/svelte-datatables) brings DataTable, a popular JavaScript library allowing you to easily display your data in a user-friendly table, into your Svelte project.
-- [focus-svelte](https://github.com/chanced/focus-svelte) is a focus trap for svelte with zero dependencies
+- [focus-svelte](https://github.com/chanced/focus-svelte) is a focus trap for Svelte with zero dependencies
 - [filedrop-svelte](https://github.com/chanced/filedrop-svelte) is a file dropzone action & component for Svelte
 
 
