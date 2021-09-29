@@ -309,7 +309,7 @@ An each block can also have an `{:else}` clause, which is rendered if the list i
 
 ---
 
-Await blocks allow you to branch on the three possible states of a Promise — pending, fulfilled or rejected. The pending state is rendered initially on both the client and server with the resolved state being updated after hydration.
+Await blocks allow you to branch on the three possible states of a Promise — pending, fulfilled or rejected. If using SSR, the server will render the pending state.
 
 ```sv
 {#await promise}
