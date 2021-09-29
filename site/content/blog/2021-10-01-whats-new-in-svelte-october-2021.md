@@ -37,6 +37,7 @@ Notable SvelteKit improvements this month include...
 - The `svelte` field will be added to package.json when running the package command ([#2431](https://github.com/sveltejs/kit/pull/2431))
 - [breaking] The `context` parameter of the load function was renamed to `stuff` ([#2439](https://github.com/sveltejs/kit/pull/2439))
 - Added an `entryPoint` option for building a custom server with `adapter-node` ([#2414](https://github.com/sveltejs/kit/pull/2414))
+- `vite-plugin-svelte` improved support for [useVitePreprocess](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#usevitepreprocess), which uses Vite to automatically preprocess TypeScript, PostCSS, Scss, etc in Svelte components ([#173](https://github.com/sveltejs/vite-plugin-svelte/pull/173))
 
 To see all updates to SvelteKit, check out the [SvelteKit changelog](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md).
 
