@@ -15,7 +15,7 @@ Keep up the good work, everyone! Now, let's dive into this month's news...
 - Custom components with a `src` attribute no longer break `svelte-native` builds (Svelte **3.42.4**)
 - Svelte plugin users without [the TypeScript plugin](https://www.npmjs.com/package/typescript-svelte-plugin) enabled will now be prompted to enable it. It enhances TypeScript and JavaScript files with additional intellisense to interact with Svelte files. [Please leave feedback](https://github.com/sveltejs/language-tools/issues/580) if you are using it (Svelte extensions **105.4.0**)
 - Event modifiers have been added to intellisense as autocomplete and hover info (Svelte extensions **105.4.0**)
-- TypeScript users no longer have to strictly separate type imports and value imports when using Svelte version 3.39 or higher and `svelte-preprocess` version 4.9.5 or higher. This means you can now write `import { MyInterface, myValue } from './somewhere` instead of `import type { MyInterface } from './somewhere'; import { myValue } from './somewhere`. Huge thanks to community member [@SomaticIT](https://github.com/SomaticIT) who mainly implemented this!
+- TypeScript users no longer have to strictly separate type imports and value imports when using Svelte version 3.39 or higher and `svelte-preprocess` version 4.9.5 or higher. This means you can now write `import { MyInterface, myValue } from './somewhere'` instead of `import type { MyInterface } from './somewhere'; import { myValue } from './somewhere'`. Huge thanks to community member [@SomaticIT](https://github.com/SomaticIT) who mainly implemented this!
 
 For a full list of features and bug fixes, check out the [Svelte changelog](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
