@@ -281,6 +281,45 @@ describe('store', () => {
 			unsubscribe();
 		});
 
+		it('provides a boolean array to easily tell what changed', () => {
+			const count = writable(0);
+			const values = [];
+
+			const a = derived(count, $count => {
+				return 'a' + $count;
+			});
+
+			const b = derived(count, $count => {
+				return 'b' + $count;
+			});
+
+			const c = writable(0);
+
+			const combined = derived([a, b, c], ([a, b, c], set, _u, changes) => {
+				const [aChanged, bChanged, cChanged] = changes;
+				if (aChanged && bChanged) {
+					set(a + b);
+				} else if (cChanged) {
+					set('c' + c);
+				} else {
+					set('a or b changed without the other one changing');
+				}
+			});
+
+			const unsubscribe = combined.subscribe(v => {
+				values.push(v);
+			});
+
+			assert.deepEqual(values, ['a0b0']);
+
+			c.set(2);
+			count.set(1);
+
+			assert.deepEqual(values, ['a0b0', 'c2', 'a1b1']);
+
+			unsubscribe();
+		});
+
 		it('derived dependency does not update and shared ancestor updates', () => {
 			const root = writable({ a: 0, b:0 });
 			const values = [];

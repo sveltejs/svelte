@@ -268,7 +268,7 @@ This makes it possible to wrap almost any other reactive state handling library 
 store = writable(value?: any)
 ```
 ```js
-store = writable(value?: any, start?: (set: (value: any) => void) => () => void)
+store = writable(value?: any, start?: (set: (value: any) => void, update: (fn: any => any) => void) => () => void)
 ```
 
 ---
@@ -295,7 +295,7 @@ count.update(n => n + 1); // logs '2'
 
 ---
 
-If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store. It must return a `stop` function that is called when the subscriber count goes from one to zero.
+If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store, and an `update` function which works like the `update` method on the store, taking a callback to calculate the store's new value from its old value. It must return a `stop` function that is called when the subscriber count goes from one to zero.
 
 ```js
 import { writable } from 'svelte/store';
@@ -319,7 +319,7 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 #### `readable`
 
 ```js
-store = readable(value?: any, start?: (set: (value: any) => void) => () => void)
+store = readable(value?: any, start?: (set: (value: any) => void, update: (fn: any => any) => void) => () => void)
 ```
 
 ---
@@ -338,6 +338,16 @@ const time = readable(null, set => {
 
 	return () => clearInterval(interval);
 });
+
+const ticktock = readable(null, (set, update) => {
+	set('tick');
+
+	const interval = setInterval(() => {
+		update(sound => sound === 'tick' ? 'tock' : 'tick');
+	}, 1000);
+
+	return () => clearInterval(interval);
+});
 ```
 
 #### `derived`
@@ -346,13 +356,13 @@ const time = readable(null, set => {
 store = derived(a, callback: (a: any) => any)
 ```
 ```js
-store = derived(a, callback: (a: any, set: (value: any) => void) => void | () => void, initial_value: any)
+store = derived(a, callback: (a: any, set: (value: any) => void, update: (fn: any => any) => void) => void | () => void, initial_value: any)
 ```
 ```js
 store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
 ```
 ```js
-store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void | () => void, initial_value: any)
+store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void, update: (fn: any => any) => void, changed: boolean[]) => void | () => void, initial_value: any)
 ```
 
 ---
@@ -369,9 +379,9 @@ const doubled = derived(a, $a => $a * 2);
 
 ---
 
-The callback can set a value asynchronously by accepting a second argument, `set`, and calling it when appropriate.
+The callback can set a value asynchronously by accepting a second argument, `set`, and an optional third argument, `update`, calling either or both of them when appropriate.
 
-In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` is first called.
+In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` or `update` is first called. If no initial value is specified, the store's initial value will be `undefined`.
 
 ```js
 import { derived } from 'svelte/store';
@@ -379,6 +389,13 @@ import { derived } from 'svelte/store';
 const delayed = derived(a, ($a, set) => {
 	setTimeout(() => set($a), 1000);
 }, 'one moment...');
+
+const delayedIncrement = derived(a, ($a, set, update) => {
+	set($a);
+	setTimeout(() => update(x => x + 1), 1000);
+	// every time $a produces a value, this produces two
+	// values, $a immediately and then $a + 1 a second later
+});
 ```
 
 ---
@@ -401,7 +418,7 @@ const tick = derived(frequency, ($frequency, set) => {
 
 ---
 
-In both cases, an array of arguments can be passed as the first argument instead of a single store.
+In both cases, an array of stores can be passed as the first argument instead of a single store. In this case, the callback can optionally take a fourth argument, `changed`, which will be an array of Booleans describing which store value(s) changed since the last time the callback was called. (In the single-store case, the `changed` array would be pointless since it would always be equal to `[true]`.)
 
 ```js
 import { derived } from 'svelte/store';
@@ -410,6 +427,19 @@ const summed = derived([a, b], ([$a, $b]) => $a + $b);
 
 const delayed = derived([a, b], ([$a, $b], set) => {
 	setTimeout(() => set($a + $b), 1000);
+});
+
+const loggingSum = derived([a, b], ([$a, $b], set, _, changed) => {
+	const [aChanged, bChanged] = changed;
+	if (aChanged) console.log('New value of a', $a);
+	if (bChanged) console.log('New value of b', $b);
+	set($a + $b);
+});
+
+const complexLogic = derived([a, b], ([$a, $b], set, update, changed) => {
+	const [aChanged, bChanged] = changed;
+	if (aChanged) set($a + $b);
+	if (bChanged) update(n => n * 2 - $b);
 });
 ```
 
@@ -808,7 +838,7 @@ The `crossfade` function creates a pair of [transitions](docs#transition_fn) cal
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
-* `fallback` (`function`) — A fallback [transition](docs#transition_fn) to use for send when there is no matching element being received, and for receive when there is no element being sent. 
+* `fallback` (`function`) — A fallback [transition](docs#transition_fn) to use for send when there is no matching element being received, and for receive when there is no element being sent.
 
 ```sv
 <script>
