@@ -25,12 +25,13 @@ let compile = null;
 const sveltePath = process.cwd().split('\\').join('/');
 
 let unhandled_rejection = false;
-process.on('unhandledRejection', err => {
+function unhandledRejection_handler(err) {
 	unhandled_rejection = err;
-});
+}
 
 describe('runtime', () => {
 	before(() => {
+		process.on('unhandledRejection', unhandledRejection_handler);
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
 
@@ -46,6 +47,7 @@ describe('runtime', () => {
 
 		return setupHtmlEqual();
 	});
+	after(() => process.removeListener('unhandledRejection', unhandledRejection_handler));
 
 	const failed = new Set();
 
