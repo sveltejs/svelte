@@ -47,7 +47,7 @@ describe('runtime', () => {
 
 		return setupHtmlEqual();
 	});
-	after(() => process.off('unhandledRejection', unhandledRejection_handler));
+	after(() => process.removeListener('unhandledRejection', unhandledRejection_handler));
 
 	const failed = new Set();
 
