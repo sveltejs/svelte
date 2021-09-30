@@ -1,4 +1,4 @@
-import sh from 'shelljs';
+const sh = require('shelljs');
 
 sh.env['FORCE_UPDATE'] = process.argv.includes('--force=true');
 
