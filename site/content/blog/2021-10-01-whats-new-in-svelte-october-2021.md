@@ -29,7 +29,7 @@ If you'd like to help, please consider working on any of the [1.0 milestone issu
 
 Notable SvelteKit improvements this month include...
 
-- Service workers are now allowed to access files using the \$lib alias ([#2326](https://github.com/sveltejs/kit/pull/2326))
+- Service workers are now allowed to access files using the `$lib` alias ([#2326](https://github.com/sveltejs/kit/pull/2326))
 - Svelte libraries should now work out-of-the-box without any Vite configuration ([#2343](https://github.com/sveltejs/kit/pull/2343))
 - Improvements to package exports field ([#2345](https://github.com/sveltejs/kit/pull/2345) and [#2327](https://github.com/sveltejs/kit/pull/2327))
 - [breaking] The `prerender.pages` config option has been renamed to `prerender.entries` ([#2380](https://github.com/sveltejs/kit/pull/2380))
