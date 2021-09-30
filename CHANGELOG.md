@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.43.1
+
+* Prevent a rejecting promise used in `{#await}` during SSR from appearing as an unhandled rejection ([#6789](https://github.com/sveltejs/svelte/issues/6789))
+
 ## 3.43.0
 
 * Use export map to expose no-op versions of lifecycle functions for SSR ([#6743](https://github.com/sveltejs/svelte/pull/6743))
