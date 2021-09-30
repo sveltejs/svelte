@@ -30,7 +30,9 @@ _output
 /site/.sessions
 /site/static/svelte-app.json
 /site/static/contributors.jpg
+/site/static/donors.jpg
 /site/static/workers
 /site/scripts/svelte-app
 /site/scripts/community
 /site/src/routes/_contributors.js
+/site/src/routes/_donors.js

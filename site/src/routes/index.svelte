@@ -1,6 +1,7 @@
 <script>
 	import { Blurb, Hero, Section } from '@sveltejs/site-kit';
 	import Contributors from './_components/Contributors.svelte';
+	import Donors from './_components/Donors.svelte';
 	import Example from './_components/Example.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte.svelte';
 	// import Lazy from '../components/Lazy.svelte';
@@ -115,9 +116,17 @@ npm run dev
 </Section>
 
 <Section>
+	<h3>Supporters</h3>
+
+	<p>Svelte is free and open source software, made possible by the work of hundreds of volunteers and donors. <a href="https://github.com/sveltejs/svelte">Join us</a> or <a href="https://opencollective.com/svelte">give</a>!</p>
+
 	<h3>Contributors</h3>
 
-	<p>Svelte is free and open source software, made possible by the work of dozens of volunteers. <a href="https://github.com/sveltejs/svelte">Join us!</a></p>
-
 	<Contributors/>
+
+	<p></p>
+
+	<h3>Donors</h3>
+
+	<Donors/>
 </Section>
