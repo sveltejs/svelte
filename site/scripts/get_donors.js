@@ -23,7 +23,10 @@ async function main() {
 	const res = await fetch('https://opencollective.com/svelte/members/all.json');
 	const donors = await res.json();
 
-	let backers = donors
+	const unique = new Map();
+	donors.forEach(d => unique.set(d.profile, d));
+
+	let backers = [...unique.values()]
 		.filter(({ role }) => role === 'BACKER')
 		.sort((a, b) => b.totalAmountDonated - a.totalAmountDonated);
 
