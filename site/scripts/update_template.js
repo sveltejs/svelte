@@ -1,11 +1,9 @@
-import sh from 'shelljs';
-import fs from 'fs';
-import path, { dirname }  from 'path';
-import { fileURLToPath } from 'url';
+const sh = require('shelljs');
+const fs = require('fs');
+const path = require('path');
 
 const force = process.env.FORCE_UPDATE === 'true';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 sh.cd(path.join(__dirname, '..'));
 
 const outputFile = 'static/svelte-app.json';

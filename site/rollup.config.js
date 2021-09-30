@@ -20,9 +20,6 @@ if (!dev && !process.env.MAPBOX_ACCESS_TOKEN) {
 const onwarn = (warning, onwarn) => (warning.code === 'CIRCULAR_DEPENDENCY' && /[/\\]@sapper[/\\]/.test(warning.message)) || onwarn(warning);
 const dedupe = importee => importee === 'svelte' || importee.startsWith('svelte/');
 
-const serverOutput = config.server.output();
-serverOutput.format = 'esm';
-
 export default {
 	client: {
 		input: config.client.input(),
@@ -74,7 +71,7 @@ export default {
 
 	server: {
 		input: config.server.input(),
-		output: serverOutput,
+		output: config.server.output(),
 		plugins: [
 			replace({
 				'process.browser': false,
