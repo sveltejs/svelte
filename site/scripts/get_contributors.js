@@ -1,10 +1,14 @@
-require('dotenv/config');
-const fs = require('fs');
-const fetch = require('node-fetch');
-const Jimp = require('jimp');
+import 'dotenv/config';
+import fs from 'fs';
+import fetch from 'node-fetch';
+import Jimp from 'jimp';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
 
 const force = process.env.FORCE_UPDATE === 'true';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 process.chdir(__dirname);
 
 const outputFile = `../src/routes/_contributors.js`;

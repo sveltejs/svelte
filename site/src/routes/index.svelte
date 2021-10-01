@@ -87,7 +87,7 @@ npm run dev
 
 		<p style="flex: 1">See the <a href="blog/the-easiest-way-to-get-started">quickstart guide</a> for more information.</p>
 
-		<p class="cta"><a rel="prefetch" href="tutorial">Learn Svelte</a></p>
+		<p class="cta"><a sapper:prefetch href="tutorial">Learn Svelte</a></p>
 	</div>
 </Blurb>
 
