@@ -1,7 +1,7 @@
-import { Pool } from 'pg';
+import pg from 'pg';
 
 // Uses `PG*` ENV vars
-export const DB = process.env.PGHOST ? new Pool() : null;
+export const DB = process.env.PGHOST ? new pg.Pool() : null;
 
 export function query(text, values=[]) {
 	return DB.query(text, values).then(r => r.rows);
