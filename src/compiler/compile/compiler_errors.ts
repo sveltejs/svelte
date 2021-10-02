@@ -281,5 +281,9 @@ export default {
 	invalid_component_style_directive: {
 		code: 'invalid-component-style-directive',
 		message: 'Style directives cannot be used on components'
+	},
+	invalid_var_declaration: {
+		code: 'invalid_var_declaration',
+		message: '"var" scope should not extend outside the reactive block'
 	}
 };

@@ -1303,10 +1303,23 @@ export default class Component {
 				const module_dependencies = new Set<string>();
 
 				let scope = this.instance_scope;
+				const {declarations: outset_scope_decalarations} = this.instance_scope;
 				const map = this.instance_scope_map;
 
 				walk(node.body, {
 					enter(node: Node, parent) {
+						if (node.type === 'VariableDeclaration' && node.kind === 'var') {
+							const names = extract_names(node.declarations[0].id);
+							const is_var_in_outset = names.every((i: string) => {
+								if (outset_scope_decalarations.has(i)) {
+									const varNode = outset_scope_decalarations.get(i);
+									return varNode === node;
+								}
+							});
+							if (is_var_in_outset) {
+								return component.error(node as any, compiler_errors.invalid_var_declaration);
+							}
+						}
 						if (map.has(node)) {
 							scope = map.get(node);
 						}
