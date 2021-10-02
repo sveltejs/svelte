@@ -11,7 +11,7 @@ export default {
 		callbacks = [];
 	},
 
-	async test({ assert, component, target }) {
+	async test({ assert, component }) {
 		assert.equal(callbacks.length, 2);
 		assert.equal(JSON.stringify(callbacks), '["1","2"]');
 

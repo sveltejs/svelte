@@ -3,7 +3,7 @@ export default {
 		things: ['a', 'b', 'c']
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.things = [];
 		let div = target.querySelector('div');
 		assert.equal(div.foo, 0);

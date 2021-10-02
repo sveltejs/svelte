@@ -8,7 +8,7 @@ export default {
 	<button>click</button>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const [updateButton1, updateButton2, button] = target.querySelectorAll(
 			'button'
 		);

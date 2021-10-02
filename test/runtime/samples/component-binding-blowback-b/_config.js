@@ -14,7 +14,7 @@ export default {
 		</ol>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const input = target.querySelector('input');
 
 		input.value = 4;

@@ -7,7 +7,7 @@ export default {
 		items
 	},
 
-	test({ assert, component, target }) {
+	test({ assert, component }) {
 		const items = component.items;
 
 		assert.equal( items[0].id, 'a' );

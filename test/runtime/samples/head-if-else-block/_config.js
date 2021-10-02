@@ -3,7 +3,7 @@ export default {
 		condition: false
 	},
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, window }) {
 		assert.equal(window.document.title, '');
 		assert.equal(Boolean(window.document.getElementById('meta')), true);
 

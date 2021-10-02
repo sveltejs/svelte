@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component, target, window }) {
+	test({ assert, target, window }) {
 		const [ control, test ] = target.querySelectorAll( 'p' );
 
 		assert.equal( window.getComputedStyle( control ).color, '' );
