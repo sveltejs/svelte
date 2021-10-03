@@ -21,6 +21,7 @@
 	let downloading = false;
 	let justSaved = false;
 	let justForked = false;
+	let title_input;
 
 	function wait(ms) {
 		return new Promise(f => setTimeout(f, ms));
@@ -167,7 +168,11 @@ export default app;` });
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="app-controls">
+	<button class="icon" on:click="{() => title_input.focus()}">
+		<Icon name="edit" />
+	</button>
 	<input
+		bind:this={title_input}
 		bind:value={name}
 		on:focus="{e => e.target.select()}"
 		use:enter="{e => e.target.blur()}"
@@ -260,9 +265,17 @@ export default app;` });
 		opacity: 0.7;
 		outline: none;
 		flex: 1;
+		margin: 0 0.2em 0 .4rem;
+		padding-top: 0.2em;
+		border-bottom: 1px solid transparent;
 	}
 
+	input:hover {
+		border-bottom: 1px solid currentColor;
+		opacity: 1;
+	}
 	input:focus {
+		border-bottom: 1px solid currentColor;
 		opacity: 1;
 	}
 
