@@ -70,7 +70,7 @@
 
 		<p>Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.</p>
 
-		<p><a href="blog/svelte-3-rethinking-reactivity">Read the introductory blog post</a> to learn more.</p>
+		<p>We're proud that Svelte was recently voted the <a href="https://insights.stackoverflow.com/survey/2021#section-most-loved-dreaded-and-wanted-web-frameworks">most loved web framework</a> with the <a href="https://2020.stateofjs.com/en-US/technologies/front-end-frameworks/">most satisfied developers</a> in a pair of industry surveys. We think you'll love it too. <a href="blog/svelte-3-rethinking-reactivity">Read the introductory blog post</a> to learn more.</p>
 	</div>
 
 	<div style="grid-area: start; display: flex; flex-direction: column; min-width: 0" slot="how">
