@@ -302,7 +302,9 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 		} else if (key === '__value') {
 			(node as any).value = node[key] = attributes[key];
 		} else if (descriptors[key] && descriptors[key].set) {
-			node[key] = attributes[key];
+			if (node[key] !== attributes[key]) {
+				node[key] = attributes[key];
+			}
 		} else {
 			attr(node, key, attributes[key]);
 		}
