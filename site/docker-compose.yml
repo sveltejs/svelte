@@ -1,0 +1,15 @@
+version: "3.0"
+services:
+  postgres:
+    image: postgres:13.4
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${PGDATABASE}
+      - POSTGRES_USER=${PGUSER}
+      - POSTGRES_PASSWORD=${PGPASSWORD}
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "4000:8080"

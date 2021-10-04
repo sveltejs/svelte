@@ -1,7 +1,6 @@
 <script>
 	import { getContext } from 'svelte';
-	import { stores } from '@sapper/app';
-	const { session } = stores();
+	import { session } from '$app/stores';
 
 	const { logout } = getContext('app');
 

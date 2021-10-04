@@ -1,4 +1,4 @@
-# IMPORTANT: Don't use this Dockerfile in your own Sapper projects without also looking at the .dockerignore file.
+# IMPORTANT: Don't use this Dockerfile in your own projects without also looking at the .dockerignore file.
 # Without an appropriate .dockerignore, this Dockerfile will copy a large number of unneeded files into your image.
 
 FROM mhart/alpine-node:12
@@ -19,4 +19,4 @@ COPY --from=0 /app .
 COPY . .
 
 EXPOSE 3000
-CMD ["node", "__sapper__/build"]
+CMD ["node", "build"]

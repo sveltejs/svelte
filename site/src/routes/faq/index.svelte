@@ -1,7 +1,11 @@
 <script context="module">
-	export async function preload() {
-		const faqs = await this.fetch(`faq.json`).then(r => r.json());
-		return { faqs };
+	export async function load({ fetch }) {
+		const faqs = await fetch(`faq.json`).then(r => r.json());
+		return {
+			props: {
+				faqs
+			}
+		};
 	}
 </script>
 

@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import marked from 'marked';
-import send from '@polka/send';
 import { extract_frontmatter, extract_metadata, link_renderer } from '@sveltejs/site-kit/utils/markdown';
 import { highlight } from '../../../utils/highlight';
 
@@ -85,8 +84,8 @@ function get_tutorial(slug) {
 	};
 }
 
-export function get(req, res) {
-	const { slug } = req.params;
+export function get({ params }) {
+	const { slug } = params;
 
 	let tut = cache.get(slug);
 	if (!tut || process.env.NODE_ENV !== 'production') {
@@ -95,8 +94,8 @@ export function get(req, res) {
 	}
 
 	if (tut) {
-		send(res, 200, tut);
-	} else {
-		send(res, 404, { message: 'not found' });
+		return {
+			body: tut
+		};
 	}
 }

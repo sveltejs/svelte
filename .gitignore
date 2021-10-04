@@ -25,7 +25,8 @@ _output
 /types
 
 /site/cypress/screenshots/
-/site/__sapper__/
+/site/.svelte-kit/
+/site/build/
 /site/.env
 /site/.sessions
 /site/static/svelte-app.json

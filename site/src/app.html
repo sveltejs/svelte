@@ -5,8 +5,6 @@
 	<meta name='viewport' content='width=device-width,initial-scale=1'>
 	<meta name='theme-color' content='#ff3e00'>
 
-	%sapper.base%
-
 	<link href=global.css rel=stylesheet>
 	<link href=prism.css rel=stylesheet>
 	<link rel='manifest' href='manifest.json'>
@@ -18,23 +16,15 @@
 	<meta name='twitter:image' content='https://svelte.dev/images/twitter-card.png'>
 	<meta name='og:image' content='https://svelte.dev/images/twitter-card.png'>
 
-	<!-- Sapper generates a <style> tag containing critical CSS
-	     for the current page. CSS for the rest of the app is
-	     lazily loaded when it precaches secondary pages -->
-	%sapper.styles%
-
+	<base href='/'>
+	
 	<!-- This contains the contents of the <svelte:head> component, if
 	     the current page has one -->
-	%sapper.head%
+	%svelte.head%
 </head>
 <body>
 	<!-- The application will be rendered inside this element,
 	     because `app/client.js` references it -->
-	<div id='sapper'>%sapper.html%</div>
-
-	<!-- Sapper creates a <script> tag containing `app/client.js`
-	     and anything else it needs to hydrate the app and
-	     initialise the router -->
-	%sapper.scripts%
+	<div id="svelte">%svelte.body%</div>
 </body>
 </html>

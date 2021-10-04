@@ -1,14 +1,17 @@
 <script context="module">
-	export function preload({ query }) {
+	export function load({ page: { query }}) {
 		return {
-			version: query.version,
-			gist: query.gist,
-			example: query.example
+			props: {
+				version: query.get('version'),
+				gist: query.get('gist'),
+				example: query.get('example')
+			}
 		};
 	}
 </script>
 
 <script>
+	import { browser } from '$app/env';
 	import ReplWidget from '../../components/Repl/ReplWidget.svelte';
 
 	export let version = '3';
@@ -41,7 +44,7 @@
 </svelte:head>
 
 <div class="repl-outer">
-	{#if process.browser}
+	{#if browser}
 		<ReplWidget {version} {gist} {example} embedded={true}/>
 	{/if}
 </div>

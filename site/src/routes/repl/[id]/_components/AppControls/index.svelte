@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher, getContext } from 'svelte';
-	import { stores } from '@sapper/app';
+	import { session } from '$app/stores';
 	import UserMenu from './UserMenu.svelte';
 	import { Icon } from '@sveltejs/site-kit';
 	import * as doNotZip from 'do-not-zip';
@@ -9,7 +9,6 @@
 	import { isMac } from '../../../../../utils/compat.js';
 
 	const dispatch = createEventDispatcher();
-	const { session } = stores();
 	const { login } = getContext('app');
 
 	export let repl;
@@ -156,7 +155,7 @@ var app = new App({
 	target: document.body
 });
 
-export default app;` });
+export ` + 'default app;' });
 
 		downloadBlob(doNotZip.toBlob(files), 'svelte-app.zip');
 

@@ -6,8 +6,8 @@
 		'4_Prefix_stores_with_$_to_access_their_values': 'accessing stores ($)'
 	};
 
-	export async function preload() {
-		const sections = await this.fetch(`docs.json`).then(r => r.json());
+	export async function load({ fetch }) {
+		const sections = await fetch(`docs.json`).then(r => r.json());
 		for (const section of sections) {
 			for (const subsection of section.subsections) {
 				const { slug } = subsection;
@@ -18,7 +18,11 @@
 			}
 		}
 
-		return { sections };
+		return {
+			props: {
+				sections
+			}
+		};
 	}
 </script>
 
