@@ -20,7 +20,7 @@
     "flru": "^1.0.2",
     "httpie": "^1.1.2",
     "jsonwebtoken": "^8.5.1",
-    "marked": "^1.0.0",
+    "marked": "^3.0.0",
     "pg": "^8.7.1",
     "polka": "^1.0.0-next.9",
     "prism-svelte": "^0.4.3",
