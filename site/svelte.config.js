@@ -1,7 +1,5 @@
 import adapter from '@sveltejs/adapter-node';
 
-const API_BASE = process.env.DOCS_PREVIEW ? 'http://localhost:3456' : 'https://api.svelte.dev';
-
 /** @type {import('@sveltejs/kit').Config} */
 export default {
 	kit: {
@@ -11,9 +9,6 @@ export default {
 			enabled: false
 		},
 		vite: () => ({
-			define: {
-				'process.env.API_BASE': JSON.stringify(API_BASE)
-			},
 			optimizeDeps: {
 				include: [
 					'codemirror',
