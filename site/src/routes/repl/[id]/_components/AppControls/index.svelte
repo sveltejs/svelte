@@ -155,7 +155,10 @@ var app = new App({
 	target: document.body
 });
 
-export ` + 'default app;' });
+export `
+		// Break up 'export default' to avoid Vite import scan crashing
+		// See https://github.com/vitejs/vite/pull/5193
+		+ 'default app;' });
 
 		downloadBlob(doNotZip.toBlob(files), 'svelte-app.zip');
 
