@@ -50,7 +50,7 @@
     "jimp": "^0.8.0",
     "mocha": "^6.2.0",
     "node-fetch": "^2.6.1",
-    "node-pg-migrate": "^3.22.0",
+    "node-pg-migrate": "^6.0.0",
     "rollup": "^2.30.0",
     "rollup-plugin-svelte": "^7.0.0",
     "rollup-plugin-terser": "^7.0.0",
