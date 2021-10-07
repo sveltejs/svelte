@@ -111,7 +111,7 @@
     "@rollup/plugin-sucrase": "^3.1.0",
     "@rollup/plugin-typescript": "^2.0.1",
     "@rollup/plugin-virtual": "^2.0.0",
-    "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.7.0",
+    "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.8.0",
     "@types/mocha": "^7.0.0",
     "@types/node": "^8.10.53",
     "@typescript-eslint/eslint-plugin": "^4.31.2",
