@@ -16,7 +16,7 @@
 </label>
 
 {#if visible}
-	<p in:typewriter>
+	<p transition:typewriter>
 		The quick brown fox jumps over the lazy dog
 	</p>
 {/if}
