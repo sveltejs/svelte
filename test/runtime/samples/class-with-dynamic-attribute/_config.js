@@ -5,7 +5,7 @@ export default {
 
 	html: '<div class="one two three"></div>',
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, target }) {
 		component.myClass = 'one';
 
 		assert.htmlEqual(target.innerHTML, `

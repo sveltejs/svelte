@@ -1,6 +1,6 @@
 export default {
 	props: {
-		thePromise: new Promise(resolve => {})
+		thePromise: new Promise(_ => {})
 	},
 
 	html: `

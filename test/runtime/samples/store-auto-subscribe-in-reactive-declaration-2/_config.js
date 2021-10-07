@@ -4,7 +4,7 @@ export default {
 		<div>Hello World</div>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, component, target }) {
 		await component.update_value('Hi Svelte');
 
 		assert.htmlEqual(target.innerHTML, `

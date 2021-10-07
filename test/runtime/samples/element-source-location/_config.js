@@ -5,7 +5,7 @@ export default {
 		dev: true
 	},
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		const h1 = target.querySelector('h1');
 		const p = target.querySelector('p');
 

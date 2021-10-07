@@ -4,7 +4,7 @@ export default {
 		y: true
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.x = true;
 
 		let div = target.querySelector('div');

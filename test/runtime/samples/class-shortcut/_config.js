@@ -6,7 +6,7 @@ export default {
 
 	html: '<div class="foo bar"></div>',
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, target }) {
 		component.foo = false;
 
 		assert.htmlEqual(target.innerHTML, `

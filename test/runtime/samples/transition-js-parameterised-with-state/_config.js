@@ -3,7 +3,7 @@ export default {
 		duration: 200
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.visible = true;
 		const div = target.querySelector('div');
 		assert.equal(div.foo, 0);
