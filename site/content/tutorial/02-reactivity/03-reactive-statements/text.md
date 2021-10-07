@@ -25,3 +25,17 @@ $: if (count >= 10) {
 	count = 9;
 }
 ```
+
+It is worth noting that you will never be alerted that `count` is 10. Regardless of the order of these two blocks, you will first be alerted that `count` is dangerously high before it is reset to 9. Only after this is it then logged to the console and used in the alert. 
+```js
+$: {
+	console.log(`the count is ${count}`);
+	alert(`I SAID THE COUNT IS ${count}`);
+}
+```
+```js
+$: if (count >= 10) {
+	alert(`count is dangerously high!`);
+	count = 9;
+}
+```
