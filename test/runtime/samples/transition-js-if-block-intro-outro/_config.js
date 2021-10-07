@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.visible = true;
 		let div = target.querySelector('div');
 		assert.equal(div.foo, 0);

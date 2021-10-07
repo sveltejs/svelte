@@ -5,7 +5,7 @@ export default {
 	<ul></ul>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const button = target.querySelector('button');
 
 		const event = new window.MouseEvent('click');

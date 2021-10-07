@@ -1,5 +1,5 @@
 export default {
-	async test({ assert, component, target, window, raf }) {
+	async test({ assert, component, target, raf }) {
 		const t = target.querySelector('#t');
 
 		await (component.condition = false);

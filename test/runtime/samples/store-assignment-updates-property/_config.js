@@ -6,7 +6,7 @@ export default {
 		<button></button>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const [btn1, btn2] = target.querySelectorAll('button');
 		const click = new window.MouseEvent('click');
 

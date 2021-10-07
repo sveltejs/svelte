@@ -4,7 +4,7 @@ export default {
 		<div>Foo</div>
 	`,
 
-	async test({ assert, component, target, window, raf }) {
+	async test({ assert, component, target, raf }) {
 		await component.hide();
 		const div = target.querySelector('div');
 

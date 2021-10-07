@@ -2,7 +2,7 @@ export default {
 	props: {
 		things: []
 	},
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		const div = target.querySelector('div');
 		component.things = ['a', 'b', 'c'];
 
