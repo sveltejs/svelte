@@ -844,7 +844,7 @@ export default class Component {
 					scope = map.get(node);
 				}
 
-				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression' || (node.type === 'UnaryExpression' && node.operator === 'delete')) {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 					const names = extract_names(assignee as Node);
 
@@ -1303,7 +1303,7 @@ export default class Component {
 							if (node.operator !== '=') {
 								dependencies.add(left.name);
 							}
-						} else if (node.type === 'UpdateExpression') {
+						} else if (node.type === 'UpdateExpression' || (node.type === 'UnaryExpression' && node.operator === 'delete')) {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
 						} else if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {

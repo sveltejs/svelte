@@ -58,7 +58,8 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 		const pass_value = (
 			extra_args.length > 0 ||
 			(node.type === 'AssignmentExpression' && node.left.type !== 'Identifier') ||
-			(node.type === 'UpdateExpression' && (!node.prefix || node.argument.type !== 'Identifier'))
+			(node.type === 'UpdateExpression' && (!node.prefix || node.argument.type !== 'Identifier')) ||
+			(node.type === 'UnaryExpression' && node.operator === 'delete' && (!node.prefix || node.argument.type !== 'Identifier'))
 		);
 		if (pass_value) {
 			extra_args.unshift({

@@ -125,7 +125,7 @@ export default class Expression {
 					if (node.type === 'AssignmentExpression') {
 						deep = node.left.type === 'MemberExpression';
 						names = extract_names(deep ? get_object(node.left) : node.left);
-					} else if (node.type === 'UpdateExpression') {
+					} else if (node.type === 'UpdateExpression' || (node.type === 'UnaryExpression' && node.operator === 'delete')) {
 						names = extract_names(get_object(node.argument));
 					}
 				}
@@ -343,7 +343,7 @@ export default class Expression {
 					}
 				}
 
-				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression' || (node.type === 'UnaryExpression' && node.operator === 'delete')) {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 
 					const object_name = get_object(assignee).name;

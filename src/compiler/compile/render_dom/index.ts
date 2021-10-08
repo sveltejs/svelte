@@ -283,7 +283,7 @@ export default function dom(
 					execution_context = null;
 				}
 
-				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression' || (node.type === 'UnaryExpression' && node.operator === 'delete')) {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 
 					// normally (`a = 1`, `b.c = 2`), there'll be a single name
