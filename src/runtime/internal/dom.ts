@@ -602,6 +602,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	let unsubscribe: () => void;
 
 	if (crossorigin) {
+		// eslint-disable-next-line no-useless-escape
 		iframe.src = "data:text/html,<script>onresize=function(){parent.postMessage(0,'*')}<\/script>";
 		unsubscribe = listen(window, 'message', (event: MessageEvent) => {
 			if (event.source === iframe.contentWindow) fn();
