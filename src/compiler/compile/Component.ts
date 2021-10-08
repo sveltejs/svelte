@@ -145,7 +145,8 @@ export default class Component {
 			filename: compile_options.filename,
 			component_name: name,
 			dev: compile_options.dev,
-			get_css_hash: compile_options.cssHash
+			get_css_hash: compile_options.cssHash,
+			cssFormat: compile_options.cssFormat
 		});
 		this.stylesheet.validate(this);
 

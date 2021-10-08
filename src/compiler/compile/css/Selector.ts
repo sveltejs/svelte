@@ -1,5 +1,6 @@
 import MagicString from 'magic-string';
-import Stylesheet from './Stylesheet';
+import { walk } from 'estree-walker';
+import Stylesheet, { overwrite } from './Stylesheet';
 import { gather_possible_values, UNKNOWN } from './gather_possible_values';
 import { CssNode } from './interfaces';
 import Component from '../Component';
@@ -67,18 +68,44 @@ export default class Selector {
 		}
 	}
 
-	minify(code: MagicString) {
+	minify(code: MagicString, format: boolean = false) {
 		let c: number = null;
 		this.blocks.forEach((block, i) => {
 			if (i > 0) {
-				if (block.start - c > 1) {
-					code.overwrite(c, block.start, block.combinator.name || ' ');
+				const name = block.combinator.name || '';
+				const separator = format && name ? ` ${name} ` : name;
+				if (format) {
+					// this will add the ' ' around the combinator
+					overwrite(code, c, block.start, separator || ' ');
+				} else if (block.start - c > 1) {
+					code.overwrite( c, block.start, name);
+
 				}
 			}
 
 			c = block.end;
 		});
-	}
+		walk(this.node as any, {
+			enter: (node: any) => {
+				if (node && node.type === 'AttributeSelector') {
+					const char_at_start = code.original[node.start];
+					const char_at_end = code.original[node.end - 1];
+					const matcher = node.matcher || '';
+					const flags = node.flags ? ` ${node.flags}` : '';
+					const indentifier = node.name && node.name.type === 'Identifier' && node.name;
+					if (indentifier) {
+						const { name } = indentifier;
+						const value_start  = node.value && node.value.start;
+						const content = `${char_at_start}${name}${format && value_start ? ' ' : ''}${matcher}${!value_start ? `${flags}${char_at_end}` : ''}`;
+						code.overwrite(node.start, value_start || node.end , content);
+						if (value_start) {
+							code.overwrite(value_start, node.end, `${node.value.value || ''}${flags}${char_at_end}`);
+						}
+					}
+				}
+			}
+		});
+}
 
 	transform(code: MagicString, attr: string, max_amount_class_specificity_increased: number) {
 		const amount_class_specificity_to_increase = max_amount_class_specificity_increased - this.blocks.filter(block => block.should_encapsulate).length;

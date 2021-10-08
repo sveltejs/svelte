@@ -31,7 +31,8 @@ const valid_options = [
 	'loopGuardTimeout',
 	'preserveComments',
 	'preserveWhitespace',
-	'cssHash'
+	'cssHash',
+	'cssFormat'
 ];
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {
@@ -82,7 +83,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = Object.assign({ generate: 'dom', dev: false }, options);
+	options = Object.assign({ generate: 'dom', dev: false,  cssFormat: false }, options);
 
 	const stats = new Stats();
 	const warnings = [];

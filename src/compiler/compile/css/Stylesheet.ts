@@ -21,19 +21,38 @@ const at_rule_has_declaration = ({ block }: CssNode): true =>
 	block.children &&
 	block.children.find((node: CssNode) => node.type === 'Declaration');
 
+export function overwrite (
+	code: MagicString,
+	start: number,
+	end: number,
+	content: string
+) {
+	if (end - start > 0 ) {
+		code.overwrite(start, end, content);
+	} else {
+		code.appendLeft(start, content);
+	}
+}
+
 function minify_declarations(
 	code: MagicString,
 	start: number,
-	declarations: Declaration[]
+	declarations: Declaration[],
+	format:boolean = false,
+	prepend_format: string = ''
 ): number {
 	let c = start;
 
 	declarations.forEach((declaration, i) => {
-		const separator = i > 0 ? ';' : '';
-		if ((declaration.node.start - c) > separator.length) {
+		const default_separator = i > 0 ? ';' : '';
+		// it will add \n and prepend string before every declaration
+		const separator = format ? `${default_separator}\n${prepend_format}` : default_separator;
+		if (format) {
+			overwrite(code, c, declaration.node.start, separator);
+		} else if ((declaration.node.start - c) > default_separator.length) {
 			code.overwrite(c, declaration.node.start, separator);
 		}
-		declaration.minify(code);
+		declaration.minify(code, format);
 		c = declaration.node.end;
 	});
 
@@ -50,7 +69,10 @@ class Rule {
 		this.node = node;
 		this.parent = parent;
 		this.selectors = node.prelude.children.map((node: CssNode) => new Selector(node, stylesheet));
-		this.declarations = node.block.children.map((node: CssNode) => new Declaration(node));
+		this.declarations = node.block.children
+			.filter(node => node.type === 'Declaration')
+			.map((node: CssNode) => new Declaration(node));
+		this.childrens = [];
 	}
 
 	apply(node: Element) {
@@ -63,30 +85,42 @@ class Rule {
 		return this.selectors.some(s => s.used);
 	}
 
-	minify(code: MagicString, _dev: boolean) {
+	minify(code: MagicString, _dev: boolean, format: boolean = false, prepend_format: string = '') {
 		let c = this.node.start;
 		let started = false;
-
+		// if (prepend_format && format) {
+		// 	code.appendLeft(c, prepend_format);
+		// }
 		this.selectors.forEach((selector) => {
 			if (selector.used) {
-				const separator = started ? ',' : '';
-				if ((selector.node.start - c) > separator.length) {
-					code.overwrite(c, selector.node.start, separator);
+				const intial_separator = started ? ',' : '';
+				//this will add \n after every selector in same rule
+				const separator = intial_separator && format ? `${intial_separator}\n` : intial_separator;
+				if ((selector.node.start - c) > intial_separator.length) {
+					overwrite(code, c, selector.node.start, separator);
 				}
-
-				selector.minify(code);
+				selector.minify(code, format);
 				c = selector.node.end;
 
 				started = true;
 			}
 		});
 
-		code.remove(c, this.node.block.start);
-
+		if (format) {
+			// this is to add a space before the rule start or say before {
+			overwrite(code, c, this.node.block.start, ' ');
+		} else {
+			code.remove(c, this.node.block.start);
+		}
 		c = this.node.block.start + 1;
-		c = minify_declarations(code, c, this.declarations);
+		c = minify_declarations(code, c, this.declarations, format, prepend_format);
+		if (format) {
+			//add the next line just before rule end or say before }
+			overwrite(code, c, this.node.block.end - 1, `\n${prepend_format.replace('\t\t', '')}`);
+		} else {
+			code.remove(c, this.node.block.end - 1);
+		}
 
-		code.remove(c, this.node.block.end - 1);
 	}
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>, max_amount_class_specificity_increased: number) {
@@ -129,14 +163,14 @@ class Declaration {
 				if (block.type === 'Identifier') {
 					const name = block.name;
 					if (keyframes.has(name)) {
-						code.overwrite(block.start, block.end, keyframes.get(name));
+						overwrite(code, block.start, block.end, keyframes.get(name));
 					}
 				}
 			});
 		}
 	}
 
-	minify(code: MagicString) {
+	minify(code: MagicString, format: boolean) {
 		if (!this.node.property) return; // @apply, and possibly other weird cases?
 
 		const c = this.node.start + this.node.property.length;
@@ -147,7 +181,10 @@ class Declaration {
 		let start = first.start;
 		while (/\s/.test(code.original[start])) start += 1;
 
-		if (start - c > 1) {
+		if (format) {
+			// this will add the space before the decalaration value;
+			overwrite(code, c, start, ': ');
+		} else if (start - c > 1) {
 			code.overwrite(c, start, ':');
 		}
 	}
@@ -182,56 +219,125 @@ class Atrule {
 		return true; // TODO
 	}
 
-	minify(code: MagicString, dev: boolean) {
-		if (this.node.name === 'media') {
+	minify(code: MagicString, dev: boolean, format: boolean = false, prepend_format: string = '') {
+			if (this.node.name === 'media') {
 			const expression_char = code.original[this.node.prelude.start];
 			let c = this.node.start + (expression_char === '(' ? 6 : 7);
-			if (this.node.prelude.start > c) code.remove(c, this.node.prelude.start);
 
+			code.overwrite(this.node.start, this.node.prelude.start, '@media ');
 			this.node.prelude.children.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
 			});
 
-			code.remove(c, this.node.block.start);
+			if (format) {
+				overwrite(code, c, this.node.block.start, ' ');
+			} else {
+				code.remove(c, this.node.block.start);
+			}
+
 		} else if (this.node.name === 'supports') {
 			let c = this.node.start + 9;
-			if (this.node.prelude.start - c > 1) code.overwrite(c, this.node.prelude.start, ' ');
+			if (format) {
+				overwrite(code, c, this.node.prelude.start, ' ');
+			} else if (this.node.prelude.start - c > 1) {
+				code.overwrite(c, this.node.prelude.start, ' ');
+			}
 			this.node.prelude.children.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
 			});
-			code.remove(c, this.node.block.start);
+
+			if (format) {
+				overwrite(code, c, this.node.block.start, ' ');
+			} else {
+				code.remove(c, this.node.block.start);
+			}
 		} else {
 			let c = this.node.start + this.node.name.length + 1;
 			if (this.node.prelude) {
-				if (this.node.prelude.start - c > 1) code.overwrite(c, this.node.prelude.start, ' ');
+				if (format) {
+					overwrite(code, c, this.node.prelude.start, ' ');
+				} else if (this.node.prelude.start - c > 1) {
+					code.overwrite(c, this.node.prelude.start, ' ');
+				}
 				c = this.node.prelude.end;
 			}
-			if (this.node.block && this.node.block.start - c > 0) {
-				code.remove(c, this.node.block.start);
+			if (this.node.block) {
+				if (format) {
+					overwrite(code, c, this.node.block.start, ' ');
+				} else if (this.node.block.start - c > 0) {
+					code.remove(c, this.node.block.start);
+				}
 			}
 		}
 
 		// TODO other atrules
-
 		if (this.node.block) {
+
 			let c = this.node.block.start + 1;
 			if (this.declarations.length) {
-				c = minify_declarations(code, c, this.declarations);
+				c = minify_declarations(code, c, this.declarations, format, prepend_format);
 				// if the atrule has children, leave the last declaration semicolon alone
 				if (this.children.length) c++;
 			}
 
 			this.children.forEach(child => {
 				if (child.is_used(dev)) {
-					code.remove(c, child.node.start);
-					child.minify(code, dev);
+					if (format && prepend_format) {
+
+						// this will add \n opening of atrule ie.e, after {
+						overwrite(code, c, child.node.start, '\n');
+
+						// this will add the necessary prepend space for case of nested child
+						code.appendLeft(child.node.start, prepend_format);
+					} else {
+						code.remove(c, child.node.start);
+					}
+					child.minify(code, dev, format, `${prepend_format}${prepend_format}`);
 					c = child.node.end;
 				}
 			});
-
-			code.remove(c, this.node.block.end - 1);
+			if (format && prepend_format) {
+				// add \n and prepend string before the closing of the atrule or say before the }
+				// replace is a shortcut to ignore the first iteration
+				overwrite(code, c, this.node.block.end - 1, `\n${prepend_format.replace('\t\t', '')}`);
+			} else {
+				code.remove(c, this.node.block.end - 1);
+			}
+		}
+		if (this.node.prelude) {
+			walk(this.node.prelude.children as any, {
+				enter: (node: any, parent: any) => {
+					if (parent && parent.type === 'MediaFeature') {
+						const char_at_start = code.original[parent.start];
+						const char_at_end = code.original[parent.end - 1];
+						if (node) {
+							code.overwrite(parent.start, node.start , `${char_at_start}${parent.name}:${format ? ' ' : ''}`);
+							let value = '';
+							switch (node.type) {
+								case 'Number' :
+									value = node.value;
+									break;
+								case 'Identifier':
+									value = node.name;
+									break;
+								case 'Dimension':
+									value = `${node.value}${node.unit}`;
+									break;
+								case 'Ratio':
+									value = `${node.start}/${node.left}`;
+									break;
+								default:
+									value = '';
+							} 
+							code.overwrite(node.start, parent.end, `${value}${char_at_end}`);
+						} else {
+							code.overwrite(parent.start, parent.end , `${char_at_start}${parent.name}${char_at_end}`);
+						}
+					}
+				}
+			});
 		}
 	}
 
@@ -294,6 +400,7 @@ export default class Stylesheet {
 	keyframes: Map<string, string> = new Map();
 
 	nodes_with_css_class: Set<CssNode> = new Set();
+	cssFormat: boolean = false;
 
 	constructor({
 		source,
@@ -301,7 +408,8 @@ export default class Stylesheet {
 		component_name,
 		filename,
 		dev,
-		get_css_hash = get_default_css_hash
+		get_css_hash = get_default_css_hash,
+		cssFormat
 	}: {
 		source: string;
 		ast: Ast;
@@ -309,11 +417,13 @@ export default class Stylesheet {
 		component_name: string | undefined;
 		dev: boolean;
 		get_css_hash: CssHashGetter;
+		cssFormat?: boolean,
 	}) {
 		this.source = source;
 		this.ast = ast;
 		this.filename = filename;
 		this.dev = dev;
+		this.cssFormat = cssFormat;
 
 		if (ast.css && ast.css.children.length) {
 			this.id = get_css_hash({
@@ -330,11 +440,10 @@ export default class Stylesheet {
 			let current_atrule: Atrule = null;
 
 			walk(ast.css as any, {
-				enter: (node: any) => {
+				enter: (node: any, parent: any) => {
 					if (node.type === 'Atrule') {
 						const atrule = new Atrule(node);
 						stack.push(atrule);
-
 						if (current_atrule) {
 							current_atrule.children.push(atrule);
 						} else if (depth <= 1) {
@@ -421,10 +530,15 @@ export default class Stylesheet {
 		}
 
 		let c = 0;
-		this.children.forEach(child => {
+		this.children.forEach((child, i) => {
 			if (child.is_used(this.dev)) {
-				code.remove(c, child.node.start);
-				child.minify(code, this.dev);
+				// it will add \n\n after end of every rule
+				if (this.cssFormat && i > 0) {
+					overwrite(code, c, child.node.start, '\n\n');
+				} else {
+					code.remove(c, child.node.start);
+				}
+				child.minify(code, this.dev, this.cssFormat, '\t\t');
 				c = child.node.end;
 			}
 		});
