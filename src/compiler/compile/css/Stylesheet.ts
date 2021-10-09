@@ -321,37 +321,38 @@ class Atrule {
 								if (i > 0) {
 									code.overwrite(c, child.start, ' ');
 								}
+								if (parent && parent.type === 'MediaFeature') {
+									const char_at_start = code.original[parent.start];
+									const char_at_end = code.original[parent.end - 1];
+									if (node) {
+										code.overwrite(parent.start, node.start , `${char_at_start}${parent.name}:${format ? ' ' : ''}`, { contentOnly: true});
+										let value = '';
+										switch (node.type) {
+											case 'Number' :
+												value = node.value;
+												break;
+											case 'Identifier':
+												value = node.name;
+												break;
+											case 'Dimension':
+												value = `${node.value}${node.unit}`;
+												break;
+											case 'Ratio':
+												value = `${node.start}/${node.left}`;
+												break;
+											default:
+												value = '';
+										} 
+										code.overwrite(node.start, parent.end, `${value}${char_at_end}`, { contentOnly: true });
+									} else {
+										code.overwrite(parent.start, parent.end , `${char_at_start}${parent.name}${char_at_end}`, { contentOnly: true });
+									}
+								}
 								c = child.end;
 							}
 						});
 					}
-					if (parent && parent.type === 'MediaFeature') {
-						const char_at_start = code.original[parent.start];
-						const char_at_end = code.original[parent.end - 1];
-						if (node) {
-							code.overwrite(parent.start, node.start , `${char_at_start}${parent.name}:${format ? ' ' : ''}`, { contentOnly: true});
-							let value = '';
-							switch (node.type) {
-								case 'Number' :
-									value = node.value;
-									break;
-								case 'Identifier':
-									value = node.name;
-									break;
-								case 'Dimension':
-									value = `${node.value}${node.unit}`;
-									break;
-								case 'Ratio':
-									value = `${node.start}/${node.left}`;
-									break;
-								default:
-									value = '';
-							} 
-							code.overwrite(node.start, parent.end, `${value}${char_at_end}`, { contentOnly: true });
-						} else {
-							code.overwrite(parent.start, parent.end , `${char_at_start}${parent.name}${char_at_end}`, { contentOnly: true });
-						}
-					}
+
 				}
 			});
 		}
