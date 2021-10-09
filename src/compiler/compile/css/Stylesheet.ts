@@ -221,13 +221,7 @@ class Atrule {
 			const expression_char = code.original[this.node.prelude.start];
 			let c = this.node.start + (expression_char === '(' ? 6 : 7);
 
-			// code.overwrite(this.node.start, this.node.prelude.start, '@media ');
-			if (format) {
-				// Add space before the prelude
-				overwrite(code, c, this.node.prelude.start, ' ');
-			} else if (this.node.prelude.start > c) {
-				code.remove(c, this.node.prelude.start);
-			}
+			if (this.node.prelude.start > c) code.remove(c, this.node.prelude.start);
 
 			this.node.prelude.children.forEach((query: CssNode) => {
 				// TODO minify queries
@@ -320,6 +314,17 @@ class Atrule {
 		if (this.node.prelude) {
 			walk(this.node.prelude.children as any, {
 				enter: (node: any, parent: any) => {
+					if (node.type === 'MediaQuery') {
+						let c = node.start;
+						node.children.forEach((child: any, i: number) => {
+							if (child.type !== 'WhiteSpace') {
+								if (i > 0) {
+									code.overwrite(c, child.start, ' ');
+								}
+								c = child.end;
+							}
+						});
+					}
 					if (parent && parent.type === 'MediaFeature') {
 						const char_at_start = code.original[parent.start];
 						const char_at_end = code.original[parent.end - 1];
