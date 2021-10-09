@@ -184,6 +184,17 @@ class Declaration {
 		} else if (start - c > 1) {
 			code.overwrite(c, start, ':');
 		}
+		// let r = this.node.value.start;
+		// this.node.value.children &&
+		// this.node.value.children.forEach((child: any, i: number) => {
+		// 	if (child.type !== 'WhiteSpace') {
+		// 			if (i > 0) {
+		// 				code.overwrite(r, child.start, ' ', {contentOnly: true});
+		// 			}
+		// 			r = child.end;
+		// 	}
+		// });
+		//Todo walk on the value and minify and format, check https://github.com/csstree/csstree/tree/master/fixtures/ast/value
 	}
 }
 
@@ -217,61 +228,63 @@ class Atrule {
 	}
 
 	minify(code: MagicString, dev: boolean, format: boolean = false, prepend_format: string = '') {
-			if (this.node.name === 'media') {
-			const expression_char = code.original[this.node.prelude.start];
-			let c = this.node.start + (expression_char === '(' ? 6 : 7);
 
-			if (this.node.prelude.start > c) code.remove(c, this.node.prelude.start);
-
-			this.node.prelude.children.forEach((query: CssNode) => {
-				// TODO minify queries
-				c = query.end;
-			});
-
-			if (format) {
-				// Adds space before the prelude
-				overwrite(code, c, this.node.block.start, ' ');
-			} else {
-				code.remove(c, this.node.block.start);
+		const space_before_block = (start, end, content?: string): void => {
+			if (isNaN(start) || isNaN(end)) {
+				return;
 			}
+			if (format) {
+				// Adds space before the block
+				overwrite(code, start, end, content);
+			} else {
+				code.remove(start, end);
+			}
+		};
+
+		const space_before_prelude = (start, end, content?: string): void => {
+			if (isNaN(start) || isNaN(end)) {
+				return;
+			}
+			if (format) {
+				// Add space before the prelude
+				overwrite(code, start, end, content);
+			} else if (end - start > 1) {
+				code.overwrite(start, end, ' ');
+			}
+		};
+
+			// media with no block or media with no prelude is not an error
+		if (this.node.name === 'media') {
+			let c = this.node.start + 6;
+			if (this.node.prelude) {
+				const expression_char = code.original[this.node.prelude.start];
+				c = this.node.start + (expression_char === '(' ? 6 : 7);
+
+				if (this.node.prelude.start > c) code.remove(c, this.node.prelude.start);
+
+				this.node.prelude.children?.forEach((query: CssNode) => {
+					// TODO minify queries
+					c = query.end;
+				});
+			}
+			space_before_block(c, this.node.block?.start, ' ');
 
 		} else if (this.node.name === 'supports') {
 			let c = this.node.start + 9;
-			if (format) {
-				// Add space before the prelude
-				overwrite(code, c, this.node.prelude.start, ' ');
-			} else if (this.node.prelude.start - c > 1) {
-				code.overwrite(c, this.node.prelude.start, ' ');
-			}
-			this.node.prelude.children.forEach((query: CssNode) => {
+			space_before_prelude(c, this.node.prelude?.start, ' ');
+			this.node.prelude?.children?.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
 			});
-
-			if (format) {
-				// Add space before the prelude
-				overwrite(code, c, this.node.block.start, ' ');
-			} else {
-				code.remove(c, this.node.block.start);
-			}
+			space_before_block(c, this.node.block?.start, ' ');
 		} else {
 			let c = this.node.start + this.node.name.length + 1;
 			if (this.node.prelude) {
-				if (format) {
-					// Add space before the prelude
-					overwrite(code, c, this.node.prelude.start, ' ');
-				} else if (this.node.prelude.start - c > 1) {
-					code.overwrite(c, this.node.prelude.start, ' ');
-				}
+				space_before_prelude(c, this.node.prelude.start, ' ');
 				c = this.node.prelude.end;
 			}
 			if (this.node.block) {
-				if (format) {
-					// Add space before the block
-					overwrite(code, c, this.node.block.start, ' ');
-				} else if (this.node.block.start - c > 0) {
-					code.remove(c, this.node.block.start);
-				}
+				space_before_block(c, this.node.block.start, ' ');
 			}
 		}
 
@@ -311,12 +324,13 @@ class Atrule {
 
 		// for cssFormat, it add space before the media feature name
 		// and the node value, it will also minify the MediaFeature node
-		if (this.node.prelude) {
+		//Todo: add css formatting support for import and font-face
+		if (this.node.prelude && this.node.prelude.children) {
 			walk(this.node.prelude.children as any, {
 				enter: (node: any, parent: any) => {
 					if (node.type === 'MediaQuery') {
 						let c = node.start;
-						node.children.forEach((child: any, i: number) => {
+						node.children && node.children.forEach((child: any, i: number) => {
 							if (child.type !== 'WhiteSpace') {
 								if (i > 0) {
 									code.overwrite(c, child.start, ' ');
