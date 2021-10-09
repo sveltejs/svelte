@@ -97,12 +97,24 @@ export default class Selector {
 						const { name } = indentifier;
 						const value_start  = node.value && node.value.start;
 						const content = `${char_at_start}${name}${format && value_start ? ' ' : ''}${matcher}${!value_start ? `${flags}${char_at_end}` : ''}`;
-						code.overwrite(node.start, value_start || node.end , content);
+						code.overwrite(node.start, value_start || node.end , content, { contentOnly: true });
 						if (value_start) {
-							code.overwrite(value_start, node.end, `${node.value.value || ''}${flags}${char_at_end}`);
+							let value = '';
+							switch (node.value.type) {
+								case 'String':
+									value = node.value.value;
+									break;
+								case 'Identifier':
+									value = node.value.name;
+									break;
+								default:
+									value = '';
+							}
+							code.overwrite(value_start, node.end, `${value}${flags}${char_at_end}`, { contentOnly: true});
 						}
 					}
 				}
+
 			}
 		});
 }
