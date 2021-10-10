@@ -1,4 +1,5 @@
-import MagicString from 'magic-string';
+import MagicString, { OverwriteOptions } from 'magic-string';
+import generate from 'css-tree/lib/generator/index.js';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
 import Element from '../nodes/Element';
@@ -25,14 +26,34 @@ export function overwrite (
 	code: MagicString,
 	start: number,
 	end: number,
-	content: string
+	content: string,
+	options?: OverwriteOptions
 ) {
 	if (end - start > 0 ) {
-		code.overwrite(start, end, content);
+		code.overwrite(start, end, content, options);
 	} else {
 		code.appendLeft(start, content);
 	}
 }
+
+export const get_node_value = (node: any) => {
+	switch (node.type) {
+		case 'Number' || 'String' :
+			return node.value;
+		case 'Identifier':
+			return node.name;
+		case 'Dimension':
+			return `${node.value}${node.unit}`;
+		case 'Ratio':
+			return `${node.start}/${node.left}`;
+		case 'String':
+			return node.value;
+		case 'Raw':
+			return node.value;
+		default:
+			return undefined;
+	}
+};
 
 function minify_declarations(
 	code: MagicString,
@@ -184,17 +205,7 @@ class Declaration {
 		} else if (start - c > 1) {
 			code.overwrite(c, start, ':');
 		}
-		// let r = this.node.value.start;
-		// this.node.value.children &&
-		// this.node.value.children.forEach((child: any, i: number) => {
-		// 	if (child.type !== 'WhiteSpace') {
-		// 			if (i > 0) {
-		// 				code.overwrite(r, child.start, ' ', {contentOnly: true});
-		// 			}
-		// 			r = child.end;
-		// 	}
-		// });
-		//Todo walk on the value and minify and format, check https://github.com/csstree/csstree/tree/master/fixtures/ast/value
+
 	}
 }
 
@@ -322,53 +333,6 @@ class Atrule {
 			}
 		}
 
-		// for cssFormat, it add space before the media feature name
-		// and the node value, it will also minify the MediaFeature node
-		//Todo: add css formatting support for import and font-face
-		if (this.node.prelude && this.node.prelude.children) {
-			walk(this.node.prelude.children as any, {
-				enter: (node: any, parent: any) => {
-					if (node.type === 'MediaQuery') {
-						let c = node.start;
-						node.children && node.children.forEach((child: any, i: number) => {
-							if (child.type !== 'WhiteSpace') {
-								if (i > 0) {
-									code.overwrite(c, child.start, ' ');
-								}
-								c = child.end;
-							}
-						});
-					}
-					if (parent && parent.type === 'MediaFeature') {
-						const char_at_start = code.original[parent.start];
-						const char_at_end = code.original[parent.end - 1];
-						if (node) {
-							code.overwrite(parent.start, node.start , `${char_at_start}${parent.name}:${format ? ' ' : ''}`, { contentOnly: true});
-							let value = '';
-							switch (node.type) {
-								case 'Number' :
-									value = node.value;
-									break;
-								case 'Identifier':
-									value = node.name;
-									break;
-								case 'Dimension':
-									value = `${node.value}${node.unit}`;
-									break;
-								case 'Ratio':
-									value = `${node.start}/${node.left}`;
-									break;
-								default:
-									value = '';
-							} 
-							code.overwrite(node.start, parent.end, `${value}${char_at_end}`, { contentOnly: true });
-						} else {
-							code.overwrite(parent.start, parent.end , `${char_at_start}${parent.name}${char_at_end}`, { contentOnly: true });
-						}
-					}
-				}
-			});
-		}
 	}
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>, max_amount_class_specificity_increased: number) {
@@ -558,7 +522,58 @@ export default class Stylesheet {
 			});
 		}
 
+
 		let c = 0;
+		const format = this.cssFormat;
+		walk(this.ast.css.children as any, {
+			enter: (node: any, parent: any) => {
+				if (node.children && node.type === 'Value') {
+					const abc = generate(parent);
+					console.log(abc);
+					let c = node.start;
+					node.children.forEach((child: any, i: number) => {
+						if (child.type !== 'WhiteSpace') {
+							if (i > 0) {
+								if (child.type === 'Operator') {
+								 code.remove(c, child.start);
+							 } else {
+								 overwrite(code, c, child.start, format ? ' ' : '');
+							 }
+						 }
+						 c = child.end;
+						}
+					});
+				}
+				if (parent && parent.type === 'MediaFeature') {
+					const char_at_start = code.original[parent.start];
+					const char_at_end = code.original[parent.end - 1];
+					if (node) {
+						code.overwrite(parent.start, node.start , `${char_at_start}${parent.name}:${this.cssFormat ? ' ' : ''}`, { contentOnly: true});
+						const value = get_node_value(node) || '';
+						code.overwrite(node.start, parent.end, `${value}${char_at_end}`, { contentOnly: true });
+					} else {
+						code.overwrite(parent.start, parent.end , `${char_at_start}${parent.name}${char_at_end}`, { contentOnly: true });
+					}
+				}
+				if (node && node.type === 'AttributeSelector') {
+					const char_at_start = code.original[node.start];
+					const char_at_end = code.original[node.end - 1];
+					const matcher = node.matcher || '';
+					const flags = node.flags ? ` ${node.flags}` : '';
+					const indentifier = node.name && node.name.type === 'Identifier' && node.name;
+					if (indentifier) {
+						const { name } = indentifier;
+						const value_start  = node.value && node.value.start;
+						const content = `${char_at_start}${name}${format && value_start ? ' ' : ''}${matcher}${!value_start ? `${flags}${char_at_end}` : ''}`;
+						code.overwrite(node.start, value_start || node.end , content, { contentOnly: true });
+						if (value_start) {
+							const value = get_node_value(node.value) || '';
+							code.overwrite(value_start, node.end, `${value}${flags}${char_at_end}`, { contentOnly: true});
+						}
+					}
+				}
+			}
+		});
 		this.children.forEach((child, i) => {
 			if (child.is_used(this.dev)) {
 				// it will add \n\n after end of every rule

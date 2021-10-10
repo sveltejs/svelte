@@ -1,5 +1,4 @@
 import MagicString from 'magic-string';
-import { walk } from 'estree-walker';
 import Stylesheet, { overwrite } from './Stylesheet';
 import { gather_possible_values, UNKNOWN } from './gather_possible_values';
 import { CssNode } from './interfaces';
@@ -84,38 +83,6 @@ export default class Selector {
 			}
 
 			c = block.end;
-		});
-		walk(this.node as any, {
-			enter: (node: any) => {
-				if (node && node.type === 'AttributeSelector') {
-					const char_at_start = code.original[node.start];
-					const char_at_end = code.original[node.end - 1];
-					const matcher = node.matcher || '';
-					const flags = node.flags ? ` ${node.flags}` : '';
-					const indentifier = node.name && node.name.type === 'Identifier' && node.name;
-					if (indentifier) {
-						const { name } = indentifier;
-						const value_start  = node.value && node.value.start;
-						const content = `${char_at_start}${name}${format && value_start ? ' ' : ''}${matcher}${!value_start ? `${flags}${char_at_end}` : ''}`;
-						code.overwrite(node.start, value_start || node.end , content, { contentOnly: true });
-						if (value_start) {
-							let value = '';
-							switch (node.value.type) {
-								case 'String':
-									value = node.value.value;
-									break;
-								case 'Identifier':
-									value = node.value.name;
-									break;
-								default:
-									value = '';
-							}
-							code.overwrite(value_start, node.end, `${value}${flags}${char_at_end}`, { contentOnly: true});
-						}
-					}
-				}
-
-			}
 		});
 }
 
