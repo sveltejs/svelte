@@ -8,8 +8,7 @@ import { query } from './utils/db';
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({ request, resolve }) {
-
-	if (process.env.PGHOST) {
+	if (process.env['PGHOST']) {
 		// this is a convenient time to clear out expired sessions
 		query('delete from sessions where expiry < now()');
 
