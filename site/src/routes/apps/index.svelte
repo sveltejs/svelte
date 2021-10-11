@@ -8,7 +8,7 @@
 			if (page.query.offset) {
 				url += `?offset=${encodeURIComponent(page.query.offset)}`;
 			}
-			const r = await this.fetch(url, {
+			const r = await fetch(url, {
 				credentials: 'include'
 			});
 			if (!r.ok) return { status: r.status, body: await r.text() };
