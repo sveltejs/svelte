@@ -1,10 +1,10 @@
-import { query } from '../../utils/db';
+import { query as db_query } from '../../utils/db';
 
 export async function get({ query, locals }) {
 	if (locals.user) {
 		const page_size = 100;
 		const offset = query.get('offset') ? parseInt(query.get('offset')) : 0;
-		const rows = await query(`
+		const rows = await db_query(`
 			select g.uid, g.name, coalesce(g.updated_at, g.created_at) as updated_at
 			from gists g
 			where g.user_id = $1
