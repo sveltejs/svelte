@@ -85,11 +85,13 @@ describe('sourcemaps', () => {
 				);
 			}
 
-			assert.deepEqual(
-				js.map.sources.slice().sort(),
-				(config.js_map_sources || ['input.svelte']).sort(),
-				'js.map.sources is wrong'
-			);
+			if (js.map) {
+				assert.deepEqual(
+					js.map.sources.slice().sort(),
+					(config.js_map_sources || ['input.svelte']).sort(),
+					'js.map.sources is wrong'
+				);
+			}
 			if (css.map) {
 				assert.deepEqual(
 					css.map.sources.slice().sort(),
