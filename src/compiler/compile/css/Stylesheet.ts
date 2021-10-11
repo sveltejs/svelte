@@ -1,5 +1,4 @@
 import MagicString, { OverwriteOptions } from 'magic-string';
-import generate from 'css-tree/lib/generator/index.js';
 import { walk } from 'estree-walker';
 import Selector from './Selector';
 import Element from '../nodes/Element';
@@ -528,19 +527,21 @@ export default class Stylesheet {
 		walk(this.ast.css.children as any, {
 			enter: (node: any, parent: any) => {
 				if (node.children && node.type === 'Value') {
-					const abc = generate(parent);
-					console.log(abc);
 					let c = node.start;
 					node.children.forEach((child: any, i: number) => {
-						if (child.type !== 'WhiteSpace') {
-							if (i > 0) {
-								if (child.type === 'Operator') {
-								 code.remove(c, child.start);
-							 } else {
-								 overwrite(code, c, child.start, format ? ' ' : '');
-							 }
-						 }
-						 c = child.end;
+						if (i > 0) {
+							if (child.type === 'WhiteSpace') {
+								!format && c++;
+							} else if (child.type === 'Operator') {
+								code.remove(c, child.start);
+								c = child.end;
+							} else {
+								format && overwrite(code, c, child.start, ' ');
+								!format && code.remove(c, child.start);
+								c = child.end;
+							}
+						} else {
+							c = child.end;
 						}
 					});
 				}
