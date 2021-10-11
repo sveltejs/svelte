@@ -342,22 +342,29 @@ export default class Component {
 			css = compile_options.customElement
 				? { code: null, map: null }
 				: result.css;
+				
+			const jsSourcemapEnabled = compile_options.enableSourcemap === true || compile_options.enableSourcemap === 'js'
 
-			const sourcemap_source_filename = get_sourcemap_source_filename(compile_options);
+			if (!jsSourcemapEnabled) {
+				js = print(program);
+				js.map = null;
+			} else {
+				const sourcemap_source_filename = get_sourcemap_source_filename(compile_options);
 
-			js = print(program, {
-				sourceMapSource: sourcemap_source_filename
-			});
+				js = print(program, {
+					sourceMapSource: sourcemap_source_filename,
+				});
 
-			js.map.sources = [
-				sourcemap_source_filename
-			];
+				js.map.sources = [
+					sourcemap_source_filename
+				];
 
-			js.map.sourcesContent = [
-				this.source
-			];
+				js.map.sourcesContent = [
+					this.source
+				];
 
-			js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+				js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+			}
 		}
 
 		return {

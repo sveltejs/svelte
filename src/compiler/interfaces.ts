@@ -147,6 +147,7 @@ export interface CompileOptions {
 	varsReport?: 'full' | 'strict' | false;
 
 	sourcemap?: object | string;
+	enableSourcemap?: boolean | 'js' | 'css';
 	outputFilename?: string;
 	cssOutputFilename?: string;
 	sveltePath?: string;
