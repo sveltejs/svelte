@@ -43,6 +43,9 @@
 			const r = await fetch(`repl/create.json`, {
 				method: 'POST',
 				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json'
+				},
 				body: JSON.stringify({
 					name,
 					files: components.map(component => ({
