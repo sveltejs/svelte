@@ -93,20 +93,15 @@ function esm(
 	const internal_globals = get_internal_globals(globals, helpers);
 
 	// edit user imports
-	imports.forEach(node => {
+	function rewrite_import(node) {
 		const value = edit_source(node.source.value, sveltePath);
 		if (node.source.value !== value) {
 			node.source.value = value;
 			node.source.raw = null;
 		}
-	});
-	exports_from.forEach(node => {
-		const value = edit_source(node.source.value, sveltePath);
-		if (node.source.value !== value) {
-			node.source.value = value;
-			node.source.raw = null;
-		}
-	});
+	}
+	imports.forEach(rewrite_import);
+	exports_from.forEach(rewrite_import);
 
 	const exports = module_exports.length > 0 && {
 		type: 'ExportNamedDeclaration',
