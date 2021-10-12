@@ -22,7 +22,8 @@ const read_only_media_attributes = new Set([
 	'seeking',
 	'ended',
 	'videoHeight',
-	'videoWidth'
+	'videoWidth',
+	'readyState'
 ]);
 
 export default class Binding extends Node {
