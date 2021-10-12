@@ -101,6 +101,9 @@
 			const r = await fetch(`repl/${gist.uid}.json`, {
 				method: 'PATCH',
 				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json'
+				},
 				body: JSON.stringify({
 					name,
 					files: components.map(component => ({
