@@ -168,9 +168,6 @@ export default app;` });
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="app-controls">
-	<button class="icon" on:click="{() => title_input.focus()}">
-		<Icon name="edit" />
-	</button>
 	<input
 		bind:this={title_input}
 		bind:value={name}
