@@ -94,10 +94,18 @@ function esm(
 
 	// edit user imports
 	imports.forEach(node => {
-		node.source.value = edit_source(node.source.value, sveltePath);
+		const value = edit_source(node.source.value, sveltePath);
+		node.source.value = value;
+		if (node.source.raw) {
+			node.source.raw = JSON.stringify(value);
+		}
 	});
 	exports_from.forEach(node => {
-		node.source!.value = edit_source(node.source!.value, sveltePath);
+		const value = edit_source(node.source!.value, sveltePath);
+		node.source!.value = value;
+		if (node.source?.raw) {
+			node.source.raw = JSON.stringify(value);
+		}
 	});
 
 	const exports = module_exports.length > 0 && {
