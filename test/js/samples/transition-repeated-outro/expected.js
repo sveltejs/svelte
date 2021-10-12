@@ -14,7 +14,7 @@ import {
 	transition_out
 } from "svelte/internal";
 
-import { fade } from 'svelte/transition';
+import { fade } from "svelte/transition";
 
 function create_if_block(ctx) {
 	let div;

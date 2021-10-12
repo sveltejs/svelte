@@ -11,7 +11,7 @@ import {
 	transition_out
 } from "svelte/internal";
 
-import LazyLoad from './LazyLoad.svelte';
+import LazyLoad from "./LazyLoad.svelte";
 
 function create_fragment(ctx) {
 	let lazyload;
