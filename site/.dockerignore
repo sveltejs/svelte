@@ -2,7 +2,6 @@
 !/Dockerfile
 !/package.json
 !/package-lock.json
-/.svelte-kit/*
 !/build
 !/static
 !/content
