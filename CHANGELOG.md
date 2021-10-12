@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.43.2
+
+* Fix regression where user-specified `import`s were not rewritten according to the `sveltePath` option ([#6834](https://github.com/sveltejs/svelte/issues/6834))
+
 ## 3.43.1
 
 * Prevent a rejecting promise used in `{#await}` during SSR from appearing as an unhandled rejection ([#6789](https://github.com/sveltejs/svelte/issues/6789))
