@@ -82,7 +82,7 @@ The following options can be passed to the compiler. None are required:
 | `loopGuardTimeout` | 0 | A `number` that tells Svelte to break the loop if it blocks the thread for more than `loopGuardTimeout` ms. This is useful to prevent infinite loops. **Only available when `dev: true`**
 | `preserveComments` | `false` | If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
 | `preserveWhitespace` | `false` | If `true`, whitespace inside and between elements is kept as you typed it, rather than removed or collapsed to a single space where possible.
-| `sourcemap` | `object | string` | An initial sourcemap that will be merged into the final output sourcemap.
+| `sourcemap` | `object | string` | An initial sourcemap that will be merged into the final output sourcemap. Usually assigned with the preprocess sourcemap.
 | `enableSourcemap` | `boolean | 'js' | 'css'` | If `true`, Svelte generate sourcemaps for components. Use `js` or `css` for more granular control of sourcemap generation. By default, this is `true`.
 | `outputFilename` | `null` | A `string` used for your JavaScript sourcemap.
 | `cssOutputFilename` | `null` | A `string` used for your CSS sourcemap.
