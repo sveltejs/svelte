@@ -1,5 +1,5 @@
 export default {
   compile_options: {
-    enableSourcemap: 'js'
+    enableSourcemap: { js: true }
   }
 };

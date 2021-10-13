@@ -36,6 +36,7 @@ import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
+import check_enable_sourcemap from './utils/check_enable_sourcemap';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -343,7 +344,7 @@ export default class Component {
 				? { code: null, map: null }
 				: result.css;
 				
-			const jsSourcemapEnabled = compile_options.enableSourcemap === true || compile_options.enableSourcemap === 'js';
+			const jsSourcemapEnabled = check_enable_sourcemap(compile_options.enableSourcemap, 'js');
 
 			if (!jsSourcemapEnabled) {
 				js = print(program);

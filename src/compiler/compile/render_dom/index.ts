@@ -10,6 +10,7 @@ import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statemen
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { flatten } from '../../utils/flatten';
+import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 
 export default function dom(
 	component: Component,
@@ -34,7 +35,7 @@ export default function dom(
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
 	
-	const cssSourcemapEnabled = options.enableSourcemap === true || options.enableSourcemap === 'css';
+	const cssSourcemapEnabled = check_enable_sourcemap(options.enableSourcemap, 'css');
 
 	if (cssSourcemapEnabled) {
 		css.map = apply_preprocessor_sourcemap(options.filename, css.map, options.sourcemap as string | RawSourceMap | DecodedSourceMap);
