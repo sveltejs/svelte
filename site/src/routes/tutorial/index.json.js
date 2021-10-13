@@ -47,7 +47,7 @@ function get_sections() {
 	return sections;
 }
 
-export function get(req, res) {
+export function get() {
 	try {
 		if (!json || process.env.NODE_ENV !== 'production') {
 			json = get_sections();
