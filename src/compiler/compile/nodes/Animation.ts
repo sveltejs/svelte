@@ -32,7 +32,7 @@ export default class Animation extends Node {
 			return;
 		}
 
-		if (block && block.type === 'EachBlock' && !block.key) {
+		if (!block.key) {
 			component.error(this, compiler_errors.invalid_animation_key);
 			return;
 		}
