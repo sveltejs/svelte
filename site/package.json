@@ -37,6 +37,7 @@
     "node-fetch": "^2.6.1",
     "node-pg-migrate": "^6.0.0",
     "shelljs": "^0.8.3",
-    "svelte": "^3.39.0"
+    "svelte": "^3.39.0",
+    "uvu": "^0.5.2"
   }
 }
