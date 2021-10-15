@@ -2,7 +2,7 @@
 	export function load({ page: { query }}) {
 		return {
 			props: {
-				version: query.get('version'),
+				version: query.get('version') || '3',
 				gist: query.get('gist'),
 				example: query.get('example')
 			}
@@ -14,7 +14,7 @@
 	import { browser } from '$app/env';
 	import ReplWidget from '../../components/Repl/ReplWidget.svelte';
 
-	export let version = '3';
+	export let version;
 	export let gist;
 	export let example;
 </script>
