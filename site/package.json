@@ -39,8 +39,5 @@
     "node-pg-migrate": "^6.0.0",
     "shelljs": "^0.8.3",
     "svelte": "^3.39.0"
-  },
-  "engines": {
-    "node": ">=10.0.0"
   }
 }
