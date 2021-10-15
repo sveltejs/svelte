@@ -5,8 +5,8 @@
 
 		if (user) {
 			let url = 'apps.json';
-			if (page.query.offset) {
-				url += `?offset=${encodeURIComponent(page.query.offset)}`;
+			if (page.query.get('offset')) {
+				url += `?offset=${encodeURIComponent(page.query.get('offset'))}`;
 			}
 			const r = await fetch(url, {
 				credentials: 'include'
