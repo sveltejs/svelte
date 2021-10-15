@@ -1,5 +1,5 @@
 import slugify from '@sindresorhus/slugify';
-import {SLUG_SEPARATOR} from '../../config';
+import {SLUG_SEPARATOR} from '../../config.js';
 
 /* url-safe processor */
 

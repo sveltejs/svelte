@@ -10,7 +10,7 @@
     "build": "node scripts/update.js && npm run copy-workers && svelte-kit build",
     "update": "node scripts/update.js --force=true",
     "start": "node build",
-    "test": "mocha -r esm test/**",
+    "test": "uvu test",
     "deploy": "make deploy"
   },
   "dependencies": {
