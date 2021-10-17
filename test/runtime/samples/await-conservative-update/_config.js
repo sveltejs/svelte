@@ -5,7 +5,7 @@ export default {
 		<p>loading...</p>
 	`,
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		return sleep(50).then(() => {
 			assert.htmlEqual(target.innerHTML, `
 				<p>the answer is 42</p>

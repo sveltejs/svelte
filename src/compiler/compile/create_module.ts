@@ -26,7 +26,7 @@ export default function create_module(
 
 	helpers.sort((a, b) => (a.name < b.name) ? -1 : 1);
 	globals.sort((a, b) => (a.name < b.name) ? -1 : 1);
-	
+
 	const formatter = wrappers[format];
 
 	if (!formatter) {
@@ -43,7 +43,7 @@ function edit_source(source, sveltePath) {
 }
 
 function get_internal_globals(
-	globals: Array<{ name: string; alias: Identifier }>, 
+	globals: Array<{ name: string; alias: Identifier }>,
 	helpers: Array<{ name: string; alias: Identifier }>
 ) {
 	return globals.length > 0 && {
@@ -66,7 +66,7 @@ function get_internal_globals(
 			init: helpers.find(({ name }) => name === 'globals').alias
 		}]
 	};
-} 
+}
 
 function esm(
 	program: any,
@@ -93,12 +93,15 @@ function esm(
 	const internal_globals = get_internal_globals(globals, helpers);
 
 	// edit user imports
-	imports.forEach(node => {
-		node.source.value = edit_source(node.source.value, sveltePath);
-	});
-	exports_from.forEach(node => {
-		node.source!.value = edit_source(node.source!.value, sveltePath);
-	});
+	function rewrite_import(node) {
+		const value = edit_source(node.source.value, sveltePath);
+		if (node.source.value !== value) {
+			node.source.value = value;
+			node.source.raw = null;
+		}
+	}
+	imports.forEach(rewrite_import);
+	exports_from.forEach(rewrite_import);
 
 	const exports = module_exports.length > 0 && {
 		type: 'ExportNamedDeclaration',

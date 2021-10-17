@@ -1,6 +1,6 @@
 export default {
 	html: '<div>1</div>',
-	async test({ assert, component, target, window }) {
+	async test({ assert, component, target }) {
 		let div = target.querySelector('div');
 		await component.append(2);
 		assert.htmlEqual(target.innerHTML, '<div>1</div>');

@@ -3,7 +3,7 @@ export default {
 		<div contenteditable=""></div>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const div = target.querySelector('div');
 		const text =  window.document.createTextNode('a');
 		div.insertBefore(text, null);
