@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.44.0
+
+* Add `enableSourcemap` compiler option ([#6835](https://github.com/sveltejs/svelte/pull/6835))
+
 ## 3.43.2
 
 * Fix regression where user-specified `import`s were not rewritten according to the `sveltePath` option ([#6834](https://github.com/sveltejs/svelte/issues/6834))
