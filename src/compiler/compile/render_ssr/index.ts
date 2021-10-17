@@ -201,13 +201,13 @@ export default function ssr(
 		main
 	].filter(Boolean);
 
-	const cssSourcemapEnabled = check_enable_sourcemap(options.enableSourcemap, 'css');
-	
+	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
+
 	const js = b`
 		${css.code ? b`
 		const #css = {
 			code: "${css.code}",
-			map: ${cssSourcemapEnabled && css.map ? string_literal(css.map.toString()) : 'null'}
+			map: ${css_sourcemap_enabled && css.map ? string_literal(css.map.toString()) : 'null'}
 		};` : null}
 
 		${component.extract_javascript(component.ast.module)}

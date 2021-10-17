@@ -343,10 +343,10 @@ export default class Component {
 			css = compile_options.customElement
 				? { code: null, map: null }
 				: result.css;
-				
-			const jsSourcemapEnabled = check_enable_sourcemap(compile_options.enableSourcemap, 'js');
 
-			if (!jsSourcemapEnabled) {
+			const js_sourcemap_enabled = check_enable_sourcemap(compile_options.enableSourcemap, 'js');
+
+			if (!js_sourcemap_enabled) {
 				js = print(program);
 				js.map = null;
 			} else {
