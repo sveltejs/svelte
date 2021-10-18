@@ -1132,7 +1132,7 @@ DOMRect {
 
 ---
 
-An animation is triggered when an element inside a [keyed each block](docs#each) changes its position. Animations do not run for newly added or removed elements. They only run when the data of an existing element changes position within the each block's data. Animate directives must be on an element that is an *immediate* child of a keyed each block.
+An animation is triggered when the contents of a [keyed each block](docs#each) are re-ordered. Animations do not run when an element is added or removed, only when the index of an existing data item within the each block changes. Animate directives must be on an element that is an *immediate* child of a keyed each block.
 
 Animations can be used with Svelte's [built-in animation functions](docs#svelte_animate) or [custom animation functions](docs#Custom_animation_functions).
 
