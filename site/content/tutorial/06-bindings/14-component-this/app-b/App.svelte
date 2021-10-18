@@ -6,4 +6,4 @@
 
 <InputField bind:this={field}/>
 
-<button on:click={() => field.focus()}>Focus field</button>
+<button on:click={field.focus}>Focus field</button>
