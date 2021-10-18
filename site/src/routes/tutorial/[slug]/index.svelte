@@ -180,13 +180,12 @@
 		color: white;
 	}
 
-
 	.chapter-markup :global(ul) {
 		padding: 0 0 0 2em;
 	}
 
 	.chapter-markup :global(blockquote) {
-		background-color: rgba(0,0,0,.17);
+		background-color: rgb(0, 0, 0, .17);
 		color: var(--sidebar-text);
 	}
 
@@ -196,63 +195,63 @@
 	}
 
 	.chapter-markup::-webkit-scrollbar-thumb {
-		background-color: rgba(255,255,255,.7);
+		background-color: rgb(255, 255, 255, .7);
 		border-radius: 1em;
 	}
 
 	.chapter-markup :global(p) > :global(code),
 	.chapter-markup :global(ul) :global(code) {
 		color: var(--sidebar-text);
-		background: rgba(0,0,0,.12);
+		background: rgb(0, 0, 0, .12);
 		padding: .2em .4em .3em;
 		white-space: nowrap;
 		position: relative;
 		top: -0.1em;
 	}
 
-	.controls {
-		border-top: 1px solid rgba(255,255,255,.15);
-		padding: 1em 0 0 0;
-		display: flex;
+	.nav-btns {
+		display: grid;
+		gap: 1.6rem;
+    padding-top: 1em;
+		border-top: 1px solid rgb(255, 255, 255, .1);
 	}
 
-	.show {
-		background: var(--prime);
-		padding: .3em .7em;
-		border-radius: var(--border-r);
-		top: .1em;
-		position: relative;
-		font-size: var(--h5);
-		font-weight: 300;
-		color: rgba(255,255,255,0.7);
+	.nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+		width: 100%;
+    height: 5rem;
+		padding: 0 1.6rem;
+		white-space: nowrap;
+    background: rgb(255, 255, 255, .1);
+    font-size: 1.6rem;
+    color: white;
+    border: unset;
+    border-radius: 6px;
+    transition: 300ms;
 	}
 
-	.show:hover {
-		color: white;
+	.nav-btn:hover {
+		padding: 0 1.6rem;
+    box-shadow: 0 10px 16px rgb(80, 80, 94, .5);
+		border-color: rgb(255, 255, 255, .2);
+    background: rgb(255, 255, 255, .2);
 	}
 
-	a.next {
-		padding-right: 1.2em;
-		background: no-repeat 100% 50% url(/icons/arrow-right.svg);
-		background-size: 1em 1em;
-		margin-left: auto;
+	.nav-btn--edit-chapter {
+		background: unset !important;
+		box-shadow: unset !important;
+		border: 2px solid rgb(255, 255, 255, .1);
 	}
 
-	.improve-chapter {
-		padding: 1em 0 .5em 0;
-	}
-
-	.improve-chapter a {
-		font-size: 14px;
-		text-decoration: none;
-		opacity: .3;
-		padding: 0 .1em 0 1.2em;
-		background: no-repeat 0 50% url(/icons/edit.svg);
-		background-size: 1em 1em;
-	}
-
-	.improve-chapter a:hover {
-		opacity: 1;
+	@media only screen and (min-width: 640px) {
+		.nav-btns {
+			grid-template-columns: repeat(2, 1fr);
+		}
+		.nav-btn--edit-chapter {
+			grid-column: 1 / -1
+		}
 	}
 </style>
 
@@ -276,22 +275,19 @@
 			<div class="chapter-markup" bind:this={scrollable}>
 				{@html chapter.html}
 
-				<div class="controls">
+				<div class="nav-btns">
 					{#if chapter.app_b}
-						<!-- TODO disable this button when the contents of the REPL
-							matches the expected end result -->
-						<button class="show" on:click="{() => completed ? reset() : complete()}">
-							{completed ? 'Reset' : 'Show me'}
+						<!-- TODO: disable this button when the contents of the REPL matches the expected end result. -->
+						<button class="nav-btn show-finished" on:click="{() => completed ? reset() : complete()}">
+							{completed ? 'Reset' : 'Show Finished'}
 						</button>
 					{/if}
 
 					{#if selected.next}
-						<a class="next" href="tutorial/{selected.next.slug}">Next</a>
+						<a class="nav-btn next-page" href="tutorial/{selected.next.slug}">Next</a>
 					{/if}
-				</div>
 
-				<div class="improve-chapter">
-					<a class="no-underline" href={improve_link}>Edit this chapter</a>
+					<a class="nav-btn nav-btn--edit-chapter" href={improve_link}>Edit this Chapter</a>
 				</div>
 			</div>
 		</div>
