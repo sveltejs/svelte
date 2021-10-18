@@ -190,13 +190,20 @@
 	}
 
 	.chapter-markup::-webkit-scrollbar {
-		background-color: var(--second);
-		width: 8px;
+		width: 4px;
 	}
-
+	.chapter-markup::-webkit-scrollbar-track,
 	.chapter-markup::-webkit-scrollbar-thumb {
-		background-color: rgb(255, 255, 255, .7);
-		border-radius: 1em;
+		border-radius: 4px;
+	}
+	.chapter-markup::-webkit-scrollbar-track {
+		background: rgb(255, 255, 255, .2);
+	}
+	.chapter-markup::-webkit-scrollbar-thumb {
+		background: rgb(255, 255, 255, .4);
+	}
+	.chapter-markup::-webkit-scrollbar-thumb:hover {
+		background: rgb(255, 255, 255, .6);
 	}
 
 	.chapter-markup :global(p) > :global(code),
