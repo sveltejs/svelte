@@ -514,7 +514,13 @@ export function claim_html_tag(nodes) {
 
 export function set_data(text, data) {
 	data = '' + data;
-	if (text.wholeText !== data) text.data = data;
+	if (text.data === data) return;
+
+	if (text.parentNode && text.parentNode.hasAttribute('contenteditable')) {
+		text.innerText = data;
+	} else {
+		text.data = data;
+	}
 }
 
 export function set_input_value(input, value) {
