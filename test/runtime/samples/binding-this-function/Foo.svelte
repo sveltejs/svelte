@@ -1,9 +1,8 @@
 <script>
-    let clicked = "False";
+    let clicked = false;
     export function click() {
-        clicked = "True";
+        clicked = true;
     }
 </script>
-
 
 <p>{clicked}</p>

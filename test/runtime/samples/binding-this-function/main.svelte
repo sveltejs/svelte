@@ -1,6 +1,6 @@
 <script>
 	import Foo from './Foo.svelte';
-	export let foo;
+	let foo;
 </script>
 
 <button on:click={foo.click} />

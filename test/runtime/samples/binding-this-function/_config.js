@@ -5,6 +5,6 @@ export default {
 		const eventClick = new window.MouseEvent('click');
 		
 		await button.dispatchEvent(eventClick);
-		assert.htmlEqual(p.innerHTML, 'True');
+		assert.htmlEqual(p.innerHTML, 'true');
 	}
 };
