@@ -33,6 +33,8 @@ export function add_flush_callback(fn) {
 
 let flushing = false;
 const seen_callbacks = new Set();
+let dirty_binding_component_map = new Map();
+
 export function flush() {
 	if (flushing) return;
 	flushing = true;
@@ -43,14 +45,19 @@ export function flush() {
 		for (let i = 0; i < dirty_components.length; i += 1) {
 			const component = dirty_components[i];
 			set_current_component(component);
-			update(component.$$);
+			const is_dirty_from_binding = dirty_binding_component_map.has(component.constructor.name);
+			update(component.$$, is_dirty_from_binding);
 		}
+		dirty_binding_component_map = new Map();
 		set_current_component(null);
 
 		dirty_components.length = 0;
 
-		while (binding_callbacks.length) binding_callbacks.pop()();
-
+		while (binding_callbacks.length) {
+			binding_callbacks.pop()();
+		}
+		dirty_components.forEach((i) =>
+			dirty_binding_component_map.set(i.constructor.name, i));
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause
 		// subsequent updates...
@@ -77,14 +84,14 @@ export function flush() {
 	seen_callbacks.clear();
 }
 
-function update($$) {
+function update($$, is_dirty_from_binding) {
 	if ($$.fragment !== null) {
 		$$.update();
-		run_all($$.before_update);
+		if (!is_dirty_from_binding) run_all($$.before_update);
 		const dirty = $$.dirty;
 		$$.dirty = [-1];
 		$$.fragment && $$.fragment.p($$.ctx, dirty);
-
+		// if (!is_dirty_from_binding) run_all($$.after_update);
 		$$.after_update.forEach(add_render_callback);
 	}
 }
