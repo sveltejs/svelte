@@ -7,8 +7,8 @@
 
 	<base href='/'>
 
-	<link href=global.css rel=stylesheet>
-	<link href=prism.css rel=stylesheet>
+	<link rel='stylesheet' href='global.css'>
+	<link rel='stylesheet' href='prism.css'>
 	<link rel='manifest' href='manifest.json'>
 	<link rel='icon' type='image/png' href='favicon.png'>
 
@@ -17,14 +17,10 @@
 	<meta name='twitter:creator' content='@sveltejs'>
 	<meta name='twitter:image' content='https://svelte.dev/images/twitter-card.png'>
 	<meta name='og:image' content='https://svelte.dev/images/twitter-card.png'>
-	
-	<!-- This contains the contents of the <svelte:head> component, if
-	     the current page has one -->
+
 	%svelte.head%
 </head>
 <body>
-	<!-- The application will be rendered inside this element,
-	     because `app/client.js` references it -->
-	<div id="svelte">%svelte.body%</div>
+	<div id='svelte'>%svelte.body%</div>
 </body>
 </html>
