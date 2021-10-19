@@ -1,7 +1,11 @@
 <script context="module">
-	export async function preload() {
-		const posts = await this.fetch(`blog.json`).then(r => r.json());
-		return { posts };
+	export async function load({ fetch }) {
+		const posts = await fetch(`blog.json`).then(r => r.json());
+		return {
+			props: {
+				posts
+			}
+		};
 	}
 </script>
 
@@ -22,7 +26,7 @@
 <div class='posts stretch'>
 	{#each posts as post}
 		<article class='post' data-pubdate={post.metadata.dateString}>
-			<a class="no-underline" sapper:prefetch href='blog/{post.slug}' title='Read the article »'>
+			<a class="no-underline" sveltekit:prefetch href='blog/{post.slug}' title='Read the article »'>
 				<h2>{post.metadata.title}</h2>
 				<p>{post.metadata.description}</p>
 			</a>

@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import send from '@polka/send';
 import { extract_frontmatter } from '@sveltejs/site-kit/utils/markdown';
 
 let json;
@@ -48,16 +47,21 @@ function get_sections() {
 	return sections;
 }
 
-export function get(req, res) {
+export function get() {
 	try {
 		if (!json || process.env.NODE_ENV !== 'production') {
 			json = get_sections();
 		}
 
-		send(res, 200, json);
+		return {
+			body: json
+		};
 	} catch (err) {
-		send(res, 500, {
-			message: err.message
-		});
+		return {
+			status: 500,
+			body: {
+				message: err.message
+			}
+		};
 	}
 }

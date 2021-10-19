@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher, getContext } from 'svelte';
-	import { stores } from '@sapper/app';
+	import { session } from '$app/stores';
 	import UserMenu from './UserMenu.svelte';
 	import { Icon } from '@sveltejs/site-kit';
 	import * as doNotZip from 'do-not-zip';
@@ -9,7 +9,6 @@
 	import { isMac } from '../../../../../utils/compat.js';
 
 	const dispatch = createEventDispatcher();
-	const { session } = stores();
 	const { login } = getContext('app');
 
 	export let repl;
@@ -44,6 +43,9 @@
 			const r = await fetch(`repl/create.json`, {
 				method: 'POST',
 				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json'
+				},
 				body: JSON.stringify({
 					name,
 					files: components.map(component => ({
@@ -99,6 +101,9 @@
 			const r = await fetch(`repl/${gist.uid}.json`, {
 				method: 'PATCH',
 				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json'
+				},
 				body: JSON.stringify({
 					name,
 					files: components.map(component => ({

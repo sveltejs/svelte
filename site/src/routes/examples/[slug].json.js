@@ -1,10 +1,9 @@
-import send from '@polka/send';
 import { get_example } from './_examples.js';
 
 const cache = new Map();
 
-export function get(req, res) {
-	const { slug } = req.params;
+export function get({ params }) {
+	const { slug } = params;
 
 	let example = cache.get(slug);
 
@@ -14,10 +13,8 @@ export function get(req, res) {
 	}
 
 	if (example) {
-		send(res, 200, example);
-	} else {
-		send(res, 404, {
-			error: 'not found'
-		});
+		return {
+			body: example
+		};
 	}
 }
