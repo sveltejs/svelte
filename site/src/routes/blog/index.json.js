@@ -1,9 +1,8 @@
-import send from '@polka/send';
 import get_posts from './_posts.js';
 
 let json;
 
-export function get(req, res) {
+export function get() {
 	if (!json || process.env.NODE_ENV !== 'production') {
 		const posts = get_posts()
 			.filter(post => !post.metadata.draft)
@@ -17,8 +16,11 @@ export function get(req, res) {
 		json = JSON.stringify(posts);
 	}
 
-	send(res, 200, json, {
-		'Content-Type': 'application/json',
-		'Cache-Control': `max-age=${5 * 60 * 1e3}` // 5 minutes
-	});
+	return {
+		body: json,
+		headers: {
+			'Content-Type': 'application/json',
+			'Cache-Control': `max-age=${5 * 60 * 1e3}` // 5 minutes
+		}
+	}
 }

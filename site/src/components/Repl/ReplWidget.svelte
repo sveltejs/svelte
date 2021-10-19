@@ -1,6 +1,7 @@
 <script>
 	import Repl from '@sveltejs/svelte-repl';
 	import { onMount } from 'svelte';
+	import { browser } from '$app/env';
 
 	import { process_example } from '../../utils/examples';
 	import InputOutputToggle from './InputOutputToggle.svelte';
@@ -12,7 +13,7 @@
 
 	let repl;
 	let name = 'loading...';
-	let width = process.browser
+	let width = browser
 		? window.innerWidth - 32
 		: 1000;
 
@@ -73,7 +74,7 @@
 
 	$: if (embedded) document.title = `${name} • Svelte REPL`;
 
-	$: svelteUrl = process.browser && version === 'local' ?
+	$: svelteUrl = browser && version === 'local' ?
 		`${location.origin}/repl/local` :
 		`https://unpkg.com/svelte@${version}`;
 
@@ -116,7 +117,7 @@
 
 <div class="repl-outer" bind:clientWidth={width} class:mobile>
 	<div class="viewport" class:offset={checked}>
-		{#if process.browser}
+		{#if browser}
 			<Repl
 				bind:this={repl}
 				workersUrl="workers"

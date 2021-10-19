@@ -1,4 +1,3 @@
-import send from '@polka/send';
 import get_posts from '../blog/_posts.js';
 
 const months = ',Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
@@ -46,9 +45,12 @@ const rss = `
 </rss>
 `.replace(/>[^\S]+/gm, '>').replace(/[^\S]+</gm, '<').trim();
 
-export function get(req, res) {
-	send(res, 200, rss, {
-		'Cache-Control': `max-age=${30 * 60 * 1e3}`,
-		'Content-Type': 'application/rss+xml'
-	});
+export function get() {
+	return {
+		body: rss,
+		headers: {
+			'Cache-Control': `max-age=${30 * 60 * 1e3}`,
+			'Content-Type': 'application/rss+xml'			
+		}
+	};
 }
