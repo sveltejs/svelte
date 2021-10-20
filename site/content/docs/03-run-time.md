@@ -533,7 +533,7 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 
 * `stiffness` (`number`, default `0.15`) — a value between 0 and 1 where higher means a 'tighter' spring
 * `damping` (`number`, default `0.8`) — a value between 0 and 1 where lower means a 'springier' spring
-* `precision` (`number`, default `0.001`) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise
+* `precision` (`number`, default `0.01`) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise
 
 ---
 
