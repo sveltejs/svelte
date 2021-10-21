@@ -99,6 +99,10 @@ export default class DynamicElement extends Node {
 		this.children = map_children(component, this, this.scope, info.children);
 
 		this.validate();
+
+		// TODO create BaseElement class or an interface which both DynamicElement and Element use
+		// to resolve the hacky cast
+		component.apply_stylesheet(this as any);
 	}
 
 	validate() {
