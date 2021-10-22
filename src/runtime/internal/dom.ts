@@ -534,17 +534,17 @@ export function set_style(node, key, value, important) {
 }
 
 export function select_option(select, value) {
-	let have_select_attr = false;
+	let count_selected_attr = 0;
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];
-		if (option.hasAttribute('selected')) have_select_attr = true;
+		if (option.hasAttribute('selected')) count_selected_attr++;
 		if (option.__value === value) {
 			option.selected = true;
 			return;
 		}
 	}
 
-	if (!have_select_attr) select.selectedIndex = -1; // no option should be selected
+	if (count_selected_attr === 0) select.selectedIndex = -1; // no option should be selected
 }
 
 export function select_options(select, value) {
