@@ -34,6 +34,7 @@ export function createEventDispatcher<
 
 	return (type: string, detail?: any) => {
 		const callbacks = component.$$.callbacks[type];
+		const eventBinding = component.eventBindings && Object.prototype.hasOwnProperty.call(component.eventBindings, type) ? component.eventBindings[type] : undefined;
 
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
@@ -42,6 +43,12 @@ export function createEventDispatcher<
 			callbacks.slice().forEach(fn => {
 				fn.call(component, event);
 			});
+		}
+
+		if (eventBinding) {
+			// in a server (non-DOM) environment?
+			const event = custom_event(type, detail);
+			eventBinding.call(component, event);
 		}
 	};
 }
@@ -59,7 +66,7 @@ export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
 }
 
 export function hasContext(key): boolean {
-	return get_current_component().$$.context.has(key);	
+	return get_current_component().$$.context.has(key);
 }
 
 // TODO figure out if we still want to support
