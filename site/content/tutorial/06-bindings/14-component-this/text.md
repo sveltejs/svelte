@@ -12,7 +12,7 @@ Now we can programmatically interact with this component using `field`.
 
 ```html
 <button on:click="{() => field.focus()}">
-    Focus field
+	Focus field
 </button>
 ```
 
