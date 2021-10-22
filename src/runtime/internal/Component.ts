@@ -237,6 +237,13 @@ if (typeof HTMLElement === 'function') {
 export class SvelteComponent {
 	$$: T$$;
 	$$set?: ($$props: any) => void;
+	eventBindings: any;
+
+	constructor(props) {
+		if (props && props.props && Object.prototype.hasOwnProperty.call(props.props, 'event:bindings')) {
+			this.eventBindings = props.props['event:bindings'];
+		}
+	}
 
 	$destroy() {
 		destroy_component(this, 1);

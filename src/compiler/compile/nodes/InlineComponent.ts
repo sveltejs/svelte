@@ -126,7 +126,7 @@ export default class InlineComponent extends Node {
 						slot_template.attributes.push(attribute);
 					}
 				}
-		
+
 				children.push(slot_template);
 				info.children.splice(i, 1);
 			}
