@@ -133,10 +133,10 @@ export default class InlineComponent extends Node {
 		}
 
 		if (info.children.some(node => not_whitespace_text(node))) {
-			children.push({ 
+			children.push({
 				start: info.start,
 				end: info.end,
-				type: 'SlotTemplate', 
+				type: 'SlotTemplate',
 				name: 'svelte:fragment',
 				attributes: [],
 				children: info.children
