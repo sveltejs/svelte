@@ -48,13 +48,21 @@ export function createEventDispatcher<
 		if (eventBinding) {
 			// in a server (non-DOM) environment?
 			const event = custom_event(type, detail);
-			eventBinding[0].call(component, event, eventBinding[1].data);
+			try {
+				eventBinding[0].call(component, event, eventBinding[1].data);
+			} catch (e) {
+				console.warn(`A component was instantiated with invalid event:bindings -  ${e}`);
+			}
 		}
 
 		if (catchAll) {
 			// in a server (non-DOM) environment?
-			const event = custom_event(type, detail);
-			catchAll[0].call(component, event,catchAll[1].data);
+			try {
+				const event = custom_event(type, detail);
+				catchAll[0].call(component, event, catchAll[1].data);
+			} catch (e) {
+				console.warn(`A component was instantiated with invalid event:bindings -  ${e}`);
+			}
 		}
 	};
 }
