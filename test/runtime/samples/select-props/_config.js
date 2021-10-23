@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component, target, window }) {
+	test({ assert, component, window }) {
 		const selects = document.querySelectorAll('select');
 
 		const event1 = new window.Event('change');

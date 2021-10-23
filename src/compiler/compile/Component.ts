@@ -36,6 +36,7 @@ import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
+import check_enable_sourcemap from './utils/check_enable_sourcemap';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -343,21 +344,28 @@ export default class Component {
 				? { code: null, map: null }
 				: result.css;
 
-			const sourcemap_source_filename = get_sourcemap_source_filename(compile_options);
+			const js_sourcemap_enabled = check_enable_sourcemap(compile_options.enableSourcemap, 'js');
 
-			js = print(program, {
-				sourceMapSource: sourcemap_source_filename
-			});
+			if (!js_sourcemap_enabled) {
+				js = print(program);
+				js.map = null;
+			} else {
+				const sourcemap_source_filename = get_sourcemap_source_filename(compile_options);
 
-			js.map.sources = [
-				sourcemap_source_filename
-			];
+				js = print(program, {
+					sourceMapSource: sourcemap_source_filename
+				});
 
-			js.map.sourcesContent = [
-				this.source
-			];
+				js.map.sources = [
+					sourcemap_source_filename
+				];
 
-			js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+				js.map.sourcesContent = [
+					this.source
+				];
+
+				js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+			}
 		}
 
 		return {

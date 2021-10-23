@@ -46,6 +46,7 @@
 		height: 100%;
 		padding: 5px 10px;
 		transition: transform 0.2s;
+		min-width:  0; /* Avoid image overflow in Safari */
 	}
 	picture:hover,
 	img:hover {

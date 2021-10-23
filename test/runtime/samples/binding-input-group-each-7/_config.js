@@ -20,7 +20,7 @@ export default {
 		<input type="checkbox" value="c" data-index="z-2">
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		const checked = new Set();
 		const checkInbox = async (i) => {

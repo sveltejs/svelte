@@ -131,6 +131,8 @@ export interface Warning {
 
 export type ModuleFormat = 'esm' | 'cjs';
 
+export type EnableSourcemap = boolean | { js: boolean; css: boolean };
+
 export type CssHashGetter = (args: {
 	name: string;
 	filename: string | undefined;
@@ -147,6 +149,7 @@ export interface CompileOptions {
 	varsReport?: 'full' | 'strict' | false;
 
 	sourcemap?: object | string;
+	enableSourcemap?: EnableSourcemap;
 	outputFilename?: string;
 	cssOutputFilename?: string;
 	sveltePath?: string;

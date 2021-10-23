@@ -1,4 +1,3 @@
-import * as cookie from 'cookie';
 import flru from 'flru';
 import { find, query } from './db';
 
@@ -37,7 +36,7 @@ export const delete_session = async sid => {
 	session_cache.set(sid, null);
 };
 
-const get_user = async sid => {
+export const get_user = async sid => {
 	if (!sid) return null;
 
 	if (!session_cache.has(sid)) {
@@ -50,16 +49,4 @@ const get_user = async sid => {
 	}
 
 	return session_cache.get(sid);
-};
-
-export const authenticate = () => {
-	// this is a convenient time to clear out expired sessions
-	query(`delete from sessions where expiry < now()`);
-
-	return async (req, res, next) => {
-		req.cookies = cookie.parse(req.headers.cookie || '');
-		req.user = await get_user(req.cookies.sid);
-
-		next();
-	};
 };

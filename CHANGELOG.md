@@ -1,5 +1,17 @@
 # Svelte changelog
 
+## 3.44.0
+
+* Add `enableSourcemap` compiler option ([#6835](https://github.com/sveltejs/svelte/pull/6835))
+
+## 3.43.2
+
+* Fix regression where user-specified `import`s were not rewritten according to the `sveltePath` option ([#6834](https://github.com/sveltejs/svelte/issues/6834))
+
+## 3.43.1
+
+* Prevent a rejecting promise used in `{#await}` during SSR from appearing as an unhandled rejection ([#6789](https://github.com/sveltejs/svelte/issues/6789))
+
 ## 3.43.0
 
 * Use export map to expose no-op versions of lifecycle functions for SSR ([#6743](https://github.com/sveltejs/svelte/pull/6743))
