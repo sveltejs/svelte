@@ -48,13 +48,13 @@ export function createEventDispatcher<
 		if (eventBinding) {
 			// in a server (non-DOM) environment?
 			const event = custom_event(type, detail);
-			eventBinding[0].call(component, event);
+			eventBinding[0].call(component, event, eventBinding[1].data);
 		}
 
 		if (catchAll) {
 			// in a server (non-DOM) environment?
 			const event = custom_event(type, detail);
-			catchAll[0].call(component, event);
+			catchAll[0].call(component, event,catchAll[1].data);
 		}
 	};
 }
