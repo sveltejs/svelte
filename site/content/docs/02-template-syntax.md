@@ -1564,7 +1564,7 @@ If `this` has a nullish value, a warning will be logged in development mode.
 
 ```sv
 <script>
-	let tag = "div";
+	let tag = 'div';
 	export let handler;
 </script>
 
