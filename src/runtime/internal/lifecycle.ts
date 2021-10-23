@@ -36,6 +36,8 @@ export function createEventDispatcher<
 		const callbacks = component.$$.callbacks[type];
 		const eventBinding = component.eventBindings && Object.prototype.hasOwnProperty.call(component.eventBindings, type) ? component.eventBindings[type] : undefined;
     const catchAll = component.eventBindings && Object.prototype.hasOwnProperty.call(component.eventBindings, '*') ? component.eventBindings['*'] : undefined;
+		const catchAllBinding = component.$$.callbacks && Object.prototype.hasOwnProperty.call(component.$$.callbacks, '*') ? component.$$.callbacks['*'] : undefined;
+
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
@@ -47,8 +49,8 @@ export function createEventDispatcher<
 
 		if (eventBinding) {
 			// in a server (non-DOM) environment?
-			const event = custom_event(type, detail);
 			try {
+				const event = custom_event(type, detail);
 				eventBinding[0].call(component, event, eventBinding[1].data);
 			} catch (e) {
 				console.warn(`A component was instantiated with invalid event:bindings -  ${e}`);
@@ -62,6 +64,16 @@ export function createEventDispatcher<
 				catchAll[0].call(component, event, catchAll[1].data);
 			} catch (e) {
 				console.warn(`A component was instantiated with invalid event:bindings -  ${e}`);
+			}
+		}
+
+		if (catchAllBinding) {
+			// in a server (non-DOM) environment?
+			try {
+				const event = custom_event(type, detail);
+				catchAllBinding[0].call(component, event, catchAllBinding[1].data);
+			} catch (e) {
+				console.warn(`A component was instantiated with invalid on:* configuration -  ${e}`);
 			}
 		}
 	};
