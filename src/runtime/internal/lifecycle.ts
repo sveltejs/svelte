@@ -35,7 +35,7 @@ export function createEventDispatcher<
 	return (type: string, detail?: any) => {
 		const callbacks = component.$$.callbacks[type];
 		const eventBinding = component.eventBindings && Object.prototype.hasOwnProperty.call(component.eventBindings, type) ? component.eventBindings[type] : undefined;
-
+    const catchAll = component.eventBindings && Object.prototype.hasOwnProperty.call(component.eventBindings, '*') ? component.eventBindings['*'] : undefined;
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
@@ -48,7 +48,13 @@ export function createEventDispatcher<
 		if (eventBinding) {
 			// in a server (non-DOM) environment?
 			const event = custom_event(type, detail);
-			eventBinding.call(component, event);
+			eventBinding[0].call(component, event);
+		}
+
+		if (catchAll) {
+			// in a server (non-DOM) environment?
+			const event = custom_event(type, detail);
+			catchAll[0].call(component, event);
 		}
 	};
 }
