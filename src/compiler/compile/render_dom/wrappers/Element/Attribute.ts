@@ -137,15 +137,16 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
 		} else if (property_name) {
-			block.chunks.hydrate.push(
-				b`${element.var}.${property_name} = ${init};`
-			);
 			const is_selected = property_name === 'selected';
 			const is_boolean = typeof init.value === 'boolean';
 			const attr_val = is_boolean ? x`""` : init;
 			if (is_selected) {
 				block.chunks.hydrate.push(
 					b`${method}(${element.var}, "${name}", ${attr_val});`
+				);
+			} else {
+				block.chunks.hydrate.push(
+					b`${element.var}.${property_name} = ${init};`
 				);
 			}
 			updater = block.renderer.options.dev

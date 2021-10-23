@@ -669,9 +669,10 @@ export default class ElementWrapper extends Wrapper {
 					dependencies.add(dep);
 				}
 			}
-
+			
 			block.chunks.mount.push(b`
-				(${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);
+				('value' in ${data} && !${data}.multiple && @select_option(${this.var}, ${data}.value));
+				(${data}.multiple && @select_options(${this.var}, ${data}.value));
 			`);
 			block.chunks.update.push(b`
 				if (${block.renderer.dirty(Array.from(dependencies))} && 'value' in ${data}) (${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);;

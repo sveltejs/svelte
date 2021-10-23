@@ -534,17 +534,15 @@ export function set_style(node, key, value, important) {
 }
 
 export function select_option(select, value) {
-	let count_selected_attr = 0;
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];
-		if (option.hasAttribute('selected')) count_selected_attr++;
 		if (option.__value === value) {
 			option.selected = true;
 			return;
 		}
 	}
 
-	if (count_selected_attr === 0) select.selectedIndex = -1; // no option should be selected
+	select.selectedIndex = -1; // no option should be selected
 }
 
 export function select_options(select, value) {
@@ -556,6 +554,14 @@ export function select_options(select, value) {
 
 export function select_value(select) {
 	const selected_option = select.querySelector(':checked') || select.options[0];
+	if (select.selectedIndex === -1) {
+		for (let i = 0; i < select.options.length; i += 1) {
+			const option = select.options[i];
+			if (option.hasAttribute('selected')) {
+				return option.__value;
+			}
+		}
+	}
 	return selected_option && selected_option.__value;
 }
 
