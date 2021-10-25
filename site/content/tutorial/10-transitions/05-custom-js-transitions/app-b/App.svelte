@@ -17,7 +17,7 @@
 		return {
 			duration,
 			tick: t => {
-				const i = ~~(text.length * t);
+				const i = Math.trunc(text.length * t);
 				node.textContent = text.slice(0, i);
 			}
 		};
