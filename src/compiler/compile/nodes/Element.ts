@@ -13,6 +13,8 @@ import map_children from './shared/map_children';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
+import { string_literal } from '../utils/stringify';
+import { Literal } from 'estree';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
@@ -132,11 +134,24 @@ export default class Element extends Node {
 	children: INode[];
 	namespace: string;
 	needs_manual_style_scoping: boolean;
-	dynamic_tag?: Expression;
+	// If tag is <svelte:element>, it will be set.
+	dynamic_tag_expr?: Expression = null;
+
+	get is_dynamic_tag(): boolean {
+		return this.name === 'svelte:element';
+	}
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
+
+		if (this.name === 'svelte:element') {
+			if (typeof info.tag === 'string') {
+				this.dynamic_tag_expr = new Expression(component, this, scope, string_literal(info.tag) as Literal);
+			} else {
+				this.dynamic_tag_expr = new Expression(component, this, scope, info.tag);
+			}
+		}
 
 		this.namespace = get_namespace(parent as Element, this, component.namespace);
 

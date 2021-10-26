@@ -10,7 +10,6 @@ import Element from './Element';
 import InlineComponent from './InlineComponent';
 import Window from './Window';
 import { clone } from '../../utils/clone';
-import DynamicElement from './DynamicElement';
 import compiler_errors from '../compiler_errors';
 
 // TODO this should live in a specific binding
@@ -33,7 +32,7 @@ export default class Binding extends Node {
 	is_contextual: boolean;
 	is_readonly: boolean;
 
-	constructor(component: Component, parent: Element | InlineComponent | Window | DynamicElement, scope: TemplateScope, info: TemplateNode) {
+	constructor(component: Component, parent: Element | InlineComponent | Window, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		if (info.expression.type !== 'Identifier' && info.expression.type !== 'MemberExpression') {

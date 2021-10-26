@@ -23,9 +23,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		node.attributes.some((attribute) => attribute.name === 'contenteditable')
 	);
 
-	if (node.dynamic_tag) {
+	if (node.is_dynamic_tag) {
 		renderer.add_string('<');
-		renderer.add_expression(node.dynamic_tag.node as ESExpression);
+		renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 	} else {
 		renderer.add_string(`<${node.name}`);
 	}
@@ -158,9 +158,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		}
 
 		if (!is_void(node.name)) {
-			if (node.dynamic_tag) {
+			if (node.is_dynamic_tag) {
 				renderer.add_string('</');
-				renderer.add_expression(node.dynamic_tag.node as ESExpression);
+				renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 				renderer.add_string('>');
 			} else {
 				renderer.add_string(`</${node.name}>`);
@@ -170,9 +170,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		renderer.render(children, options);
 
 		if (!is_void(node.name)) {
-			if (node.dynamic_tag) {
+			if (node.is_dynamic_tag) {
 				renderer.add_string('</');
-				renderer.add_expression(node.dynamic_tag.node as ESExpression);
+				renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 				renderer.add_string('>');
 			} else {
 				renderer.add_string(`</${node.name}>`);

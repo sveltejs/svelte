@@ -3,13 +3,12 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import { b, x } from 'code-red';
 import { Identifier } from 'estree';
-import DynamicElement from '../../nodes/DynamicElement';
 import ElementWrapper from './Element/index';
 import create_debugging_comment from './shared/create_debugging_comment';
 import Element from '../../nodes/Element';
 
 export default class DynamicElementWrapper extends Wrapper {
-	node: DynamicElement;
+	node: Element;
 	elementWrapper: ElementWrapper;
 	block: Block;
 	dependencies: string[];
@@ -19,14 +18,14 @@ export default class DynamicElementWrapper extends Wrapper {
 		renderer: Renderer,
 		block: Block,
 		parent: Wrapper,
-		node: DynamicElement,
+		node: Element,
 		strip_whitespace: boolean,
 		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
 
 		this.not_static_content();
-		this.dependencies = node.tag.dynamic_dependencies();
+		this.dependencies = node.dynamic_tag_expr.dynamic_dependencies();
 
 		if (this.dependencies.length) {
 			block = block.child({
@@ -36,8 +35,6 @@ export default class DynamicElementWrapper extends Wrapper {
 			});
 			renderer.blocks.push(block);
 		}
-
-		(node as unknown as Element).dynamic_tag = node.tag;
 
 		this.block = block;
 		this.elementWrapper = new ElementWrapper(
@@ -83,7 +80,7 @@ export default class DynamicElementWrapper extends Wrapper {
 		const dynamic = this.block.has_update_method;
 
 		const previous_tag = block.get_unique_name('previous_tag');
-		const snippet = this.node.tag.manipulate(block);
+		const snippet = this.node.dynamic_tag_expr.manipulate(block);
 		block.add_variable(previous_tag, snippet);
 
 		const not_equal = this.renderer.component.component_options.immutable
@@ -128,7 +125,7 @@ export default class DynamicElementWrapper extends Wrapper {
 			if (dynamic) {
 				block.chunks.update.push(b`
 					if (${condition}) {
-						${body}		
+						${body}
 					} else {
 						${this.var}.p(#ctx, #dirty);
 					}

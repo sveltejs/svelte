@@ -1,3 +1,3 @@
 export default {
-	error: "'value' is not a valid binding. svelte:element only supports bind:this"
+	error: "'value' is not a valid binding on <svelte:element> elements"
 };

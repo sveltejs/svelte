@@ -208,7 +208,7 @@ export default {
 	},
 	invalid_attribute_value: (name: string) => ({
 		code: `invalid-${name}-value`,
-		message: `${name} attribute must be true or false`	
+		message: `${name} attribute must be true or false`
 	}),
 	invalid_options_attribute_unknown: {
 		code: 'invalid-options-attribute',

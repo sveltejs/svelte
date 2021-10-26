@@ -5,7 +5,6 @@ import {
 import { get_slot_scope } from './shared/get_slot_scope';
 import { boolean_attributes } from './shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';
-import DynamicElement from '../../nodes/DynamicElement';
 import ElementHandler from './Element';
 import { x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
@@ -14,17 +13,16 @@ import Element from '../../nodes/Element';
 import { Expression as ESExpression } from 'estree';
 
 export default function (
-	node: DynamicElement,
+	node: Element,
 	renderer: Renderer,
 	options: RenderOptions & {
 		slot_scopes: Map<any, any>;
 	}
 ) {
-	const dependencies = node.tag.dynamic_dependencies();
+	const dependencies = node.dynamic_tag_expr.dynamic_dependencies();
 
 	if (dependencies.length === 0) {
-		((node as unknown) as Element).dynamic_tag = node.tag;
-		ElementHandler((node as unknown) as Element, renderer, options);
+		ElementHandler(node, renderer, options);
 	} else {
 		const children = remove_whitespace_children(node.children, node.next);
 
@@ -43,7 +41,7 @@ export default function (
 		}
 
 		renderer.add_string('<');
-		renderer.add_expression(node.tag.node as ESExpression);
+		renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 
 		const class_expression_list = node.classes.map((class_directive) => {
 			const { expression, name } = class_directive;
@@ -184,13 +182,13 @@ export default function (
 			}
 
 			renderer.add_string('</');
-			renderer.add_expression(node.tag.node as ESExpression);
+			renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 			renderer.add_string('>');
 		} else if (slot && nearest_inline_component) {
 			renderer.render(children, options);
 
 			renderer.add_string('</');
-			renderer.add_expression(node.tag.node as ESExpression);
+			renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 			renderer.add_string('>');
 
 			const lets = node.lets;
@@ -208,7 +206,7 @@ export default function (
 			renderer.render(children, options);
 
 			renderer.add_string('</');
-			renderer.add_expression(node.tag.node as ESExpression);
+			renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 			renderer.add_string('>');
 		}
 	}

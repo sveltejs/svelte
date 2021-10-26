@@ -1,7 +1,6 @@
 import AwaitBlock from '../AwaitBlock';
 import Body from '../Body';
 import Comment from '../Comment';
-import DynamicElement from '../DynamicElement';
 import EachBlock from '../EachBlock';
 import Element from '../Element';
 import Head from '../Head';
@@ -26,7 +25,7 @@ function get_constructor(type) {
 		case 'AwaitBlock': return AwaitBlock;
 		case 'Body': return Body;
 		case 'Comment': return Comment;
-		case 'DynamicElement' : return DynamicElement;
+		case 'DynamicElement' : return Element;
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
 		case 'Head': return Head;
