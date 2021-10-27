@@ -344,7 +344,18 @@ function get_event_handler(
 
 	if (context) {
 		const { object, property, store, snippet } = context;
-		lhs = replace_object(lhs, snippet);
+
+		if (snippet.type === 'CallExpression' &&
+		lhs.type === 'MemberExpression' &&
+		snippet.callee.type === 'Identifier' &&
+		snippet.callee.name === '@object_without_properties' &&
+		snippet.arguments.length > 0 &&
+		snippet.arguments[0].type === 'MemberExpression') {
+			lhs.object = snippet.arguments[0];
+		} else {
+			lhs = replace_object(lhs, snippet);
+		}
+
 		contextual_dependencies.add(object.name);
 		contextual_dependencies.add(property.name);
 		contextual_dependencies.delete(name);
