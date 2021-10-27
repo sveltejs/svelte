@@ -10,8 +10,7 @@ import Element from '../../nodes/Element';
 export default class DynamicElementWrapper extends Wrapper {
 	node: Element;
 	elementWrapper: ElementWrapper;
-	block: Block;
-	dependencies: string[];
+	dynamic_element_block: Block;
 	var: Identifier = { type: 'Identifier', name: 'dynamic_element' };
 
 	constructor(
@@ -25,9 +24,8 @@ export default class DynamicElementWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 
 		this.not_static_content();
-		this.dependencies = node.dynamic_tag_expr.dynamic_dependencies();
 
-		if (this.dependencies.length) {
+		if (this.node.dynamic_tag_expr.dynamic_dependencies().length) {
 			block = block.child({
 				comment: create_debugging_comment(node, renderer.component),
 				name: renderer.component.get_unique_name('dynamic_element_block'),
@@ -36,19 +34,19 @@ export default class DynamicElementWrapper extends Wrapper {
 			renderer.blocks.push(block);
 		}
 
-		this.block = block;
+		this.dynamic_element_block = block;
 		this.elementWrapper = new ElementWrapper(
 			renderer,
-			this.block,
+			this.dynamic_element_block,
 			parent,
-			(node as unknown) as Element,
+			node,
 			strip_whitespace,
 			next_sibling
 		);
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
-		if (this.dependencies.length === 0) {
+		if (this.node.dynamic_tag_expr.dynamic_dependencies().length === 0) {
 			this.render_static_tag(block, parent_node, parent_nodes);
 		} else {
 			this.render_dynamic_tag(block, parent_node, parent_nodes);
@@ -60,7 +58,7 @@ export default class DynamicElementWrapper extends Wrapper {
 		parent_node: Identifier,
 		parent_nodes: Identifier
 	) {
-		this.elementWrapper.render(this.block, parent_node, parent_nodes);
+		this.elementWrapper.render(this.dynamic_element_block, parent_node, parent_nodes);
 	}
 
 	render_dynamic_tag(
@@ -69,15 +67,15 @@ export default class DynamicElementWrapper extends Wrapper {
 		parent_nodes: Identifier
 	) {
 		this.elementWrapper.render(
-			this.block,
+			this.dynamic_element_block,
 			null,
 			(x`#nodes` as unknown) as Identifier
 		);
 
 		const has_transitions = !!(
-			this.block.has_intro_method || this.block.has_outro_method
+			this.dynamic_element_block.has_intro_method || this.dynamic_element_block.has_outro_method
 		);
-		const dynamic = this.block.has_update_method;
+		const dynamic = this.dynamic_element_block.has_update_method;
 
 		const previous_tag = block.get_unique_name('previous_tag');
 		const snippet = this.node.dynamic_tag_expr.manipulate(block);
@@ -87,11 +85,11 @@ export default class DynamicElementWrapper extends Wrapper {
 			? x`@not_equal`
 			: x`@safe_not_equal`;
 		const condition = x`${this.renderer.dirty(
-			this.dependencies
+			this.node.dynamic_tag_expr.dynamic_dependencies()
 		)} && ${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
 
 		block.chunks.init.push(b`
-			let ${this.var} = ${this.block.name}(#ctx);
+			let ${this.var} = ${this.dynamic_element_block.name}(#ctx);
 		`);
 
 		block.chunks.create.push(b`${this.var}.c();`);
@@ -116,7 +114,7 @@ export default class DynamicElementWrapper extends Wrapper {
 				@group_outros();
 				@transition_out(${this.var}, 1, 1, @noop);
 				@check_outros();
-				${this.var} = ${this.block.name}(#ctx);
+				${this.var} = ${this.dynamic_element_block.name}(#ctx);
 				${this.var}.c();
 				@transition_in(${this.var});
 				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
