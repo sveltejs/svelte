@@ -85,7 +85,7 @@ export default function tag(parser: Parser) {
 				parser.current().children.length
 			) {
 				parser.error(
-					parser_errors.invalid_element_content(slug, name), 
+					parser_errors.invalid_element_content(slug, name),
 					parser.current().children[0].start
 				);
 			}
@@ -102,13 +102,15 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	const type = meta_tags.has(name)
-		? meta_tags.get(name)
-		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
-			: name === 'svelte:fragment' ? 'SlotTemplate'
-			  : (name === 'svelte:element') ? 'DynamicElement'
-				  : name === 'title' && parent_is_head(parser.stack) ? 'Title'
-					  : name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+	const type = (function () {
+		if (meta_tags.has(name)) return meta_tags.get(name);
+		if ((/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component')) return 'InlineComponent';
+		if (name === 'svelte:fragment') return 'SlotTemplate';
+		if (name === 'svelte:element') return 'DynamicElement';
+		if (name === 'title' && parent_is_head(parser.stack)) return 'Title';
+		if (name === 'slot' && !parser.customElement) return 'Slot';
+		return 'Element';
+	})();
 
 	const element: TemplateNode = {
 		start,
@@ -182,7 +184,7 @@ export default function tag(parser: Parser) {
 
 		element.expression = definition.value[0].expression;
 	}
-	
+
 	if (name === 'svelte:element') {
 		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
 		if (index === -1) {
@@ -276,7 +278,7 @@ function read_tag_name(parser: Parser) {
 		const match = fuzzymatch(name.slice(7), valid_meta_tags);
 
 		parser.error(
-			parser_errors.invalid_tag_name_svelte_element(valid_meta_tags, match), 
+			parser_errors.invalid_tag_name_svelte_element(valid_meta_tags, match),
 			start
 		);
 	}
