@@ -21,7 +21,6 @@
 	let downloading = false;
 	let justSaved = false;
 	let justForked = false;
-	let title_input;
 
 	function wait(ms) {
 		return new Promise(f => setTimeout(f, ms));
@@ -169,7 +168,6 @@ export default app;` });
 
 <div class="app-controls">
 	<input
-		bind:this={title_input}
 		bind:value={name}
 		on:focus="{e => e.target.select()}"
 		use:enter="{e => e.target.blur()}"
