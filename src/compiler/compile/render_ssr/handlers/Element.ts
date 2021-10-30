@@ -23,7 +23,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		node.attributes.some((attribute) => attribute.name === 'contenteditable')
 	);
 
-	if (node.is_dynamic_tag) {
+	if (node.type === 'DynamicElement') {
 		renderer.add_string('<');
 		renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 	} else {
@@ -158,7 +158,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		}
 
 		if (!is_void(node.name)) {
-			if (node.is_dynamic_tag) {
+			if (node.type === 'DynamicElement') {
 				renderer.add_string('</');
 				renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 				renderer.add_string('>');
@@ -170,7 +170,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		renderer.render(children, options);
 
 		if (!is_void(node.name)) {
-			if (node.is_dynamic_tag) {
+			if (node.type === 'DynamicElement') {
 				renderer.add_string('</');
 				renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 				renderer.add_string('>');

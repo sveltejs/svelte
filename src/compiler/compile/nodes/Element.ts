@@ -13,8 +13,6 @@ import map_children from './shared/map_children';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
-import { string_literal } from '../utils/stringify';
-import { Literal } from 'estree';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
@@ -119,7 +117,7 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 }
 
 export default class Element extends Node {
-	type: 'Element';
+	type: 'Element' | 'DynamicElement';
 	name: string;
 	scope: TemplateScope;
 	attributes: Attribute[] = [];
@@ -134,12 +132,7 @@ export default class Element extends Node {
 	children: INode[];
 	namespace: string;
 	needs_manual_style_scoping: boolean;
-	// If tag is <svelte:element>, it will be set.
 	dynamic_tag_expr?: Expression = null;
-
-	get is_dynamic_tag(): boolean {
-		return this.name === 'svelte:element';
-	}
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
@@ -147,8 +140,10 @@ export default class Element extends Node {
 
 		if (this.name === 'svelte:element') {
 			if (typeof info.tag === 'string') {
-				this.dynamic_tag_expr = new Expression(component, this, scope, string_literal(info.tag) as Literal);
+				this.type = 'Element';
+				this.name = info.tag;
 			} else {
+				this.type = 'DynamicElement';
 				this.dynamic_tag_expr = new Expression(component, this, scope, info.tag);
 			}
 		}

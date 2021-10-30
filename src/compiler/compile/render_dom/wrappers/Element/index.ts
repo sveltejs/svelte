@@ -211,7 +211,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 
-		if (node.is_dynamic_tag) {
+		if (node.type === 'DynamicElement') {
 			block.add_dependencies(node.dynamic_tag_expr.dependencies);
 		}
 
@@ -248,7 +248,7 @@ export default class ElementWrapper extends Wrapper {
 			b`${node} = ${render_statement};`
 		);
 
-		if (this.node.is_dynamic_tag && this.renderer.options.dev) {
+		if (this.node.type === 'DynamicElement' && this.renderer.options.dev) {
 			block.chunks.create.push(b`@validate_dynamic_element(${this.node.dynamic_tag_expr.manipulate(block)});`);
 
 			if (renderer.options.hydratable) {
@@ -354,7 +354,7 @@ export default class ElementWrapper extends Wrapper {
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
 
-		if (this.node.is_dynamic_tag) {
+		if (this.node.type === 'DynamicElement') {
 			const dependencies = this.node.dynamic_tag_expr.dynamic_dependencies();
 			if (dependencies.length) {
 				const condition = block.renderer.dirty(
@@ -405,7 +405,7 @@ export default class ElementWrapper extends Wrapper {
 			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)})`;
 		}
 
-		const reference = this.node.is_dynamic_tag ? this.node.dynamic_tag_expr.manipulate(block) : `"${name}"`;
+		const reference = this.node.type === 'DynamicElement' ? this.node.dynamic_tag_expr.manipulate(block) : `"${name}"`;
 		return x`@element(${reference})`;
 	}
 
@@ -417,7 +417,7 @@ export default class ElementWrapper extends Wrapper {
 		const name = this.node.namespace
 			? this.node.name
 			: this.node.name.toUpperCase();
-		const reference = this.node.is_dynamic_tag ? this.node.dynamic_tag_expr.manipulate(block) : `"${name}"`;
+		const reference = this.node.type === 'DynamicElement' ? this.node.dynamic_tag_expr.manipulate(block) : `"${name}"`;
 
 		if (this.node.namespace === namespaces.svg) {
 			return x`@claim_svg_element(${nodes}, ${reference}, { ${attributes} })`;
