@@ -25,16 +25,13 @@ export default class DynamicElementWrapper extends Wrapper {
 
 		this.not_static_content();
 
-		if (this.node.dynamic_tag_expr.dynamic_dependencies().length) {
-			block = block.child({
-				comment: create_debugging_comment(node, renderer.component),
-				name: renderer.component.get_unique_name('dynamic_element_block'),
-				type: 'dynamic_element'
-			});
-			renderer.blocks.push(block);
-		}
+		this.dynamic_element_block = block.child({
+			comment: create_debugging_comment(node, renderer.component),
+			name: renderer.component.get_unique_name('dynamic_element_block'),
+			type: 'dynamic_element'
+		});
+		renderer.blocks.push(this.dynamic_element_block);
 
-		this.dynamic_element_block = block;
 		this.elementWrapper = new ElementWrapper(
 			renderer,
 			this.dynamic_element_block,
@@ -45,23 +42,7 @@ export default class DynamicElementWrapper extends Wrapper {
 		);
 	}
 
-	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
-		if (this.node.dynamic_tag_expr.dynamic_dependencies().length === 0) {
-			this.render_static_tag(block, parent_node, parent_nodes);
-		} else {
-			this.render_dynamic_tag(block, parent_node, parent_nodes);
-		}
-	}
-
-	render_static_tag(
-		_block: Block,
-		parent_node: Identifier,
-		parent_nodes: Identifier
-	) {
-		this.elementWrapper.render(this.dynamic_element_block, parent_node, parent_nodes);
-	}
-
-	render_dynamic_tag(
+	render(
 		block: Block,
 		parent_node: Identifier,
 		parent_nodes: Identifier

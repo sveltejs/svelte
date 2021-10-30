@@ -211,7 +211,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 
-		if (node.type === 'DynamicElement') {
+		if (node.dynamic_tag_expr) {
 			block.add_dependencies(node.dynamic_tag_expr.dependencies);
 		}
 

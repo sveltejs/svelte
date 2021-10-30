@@ -116,7 +116,13 @@ export default class FragmentWrapper {
 
 				link(last_child, last_child = wrapper);
 			} else {
-				const Wrapper = wrappers[child.type];
+				const Wrapper = (function () {
+					if (child.type === 'DynamicElement' && child.dynamic_tag_expr.dynamic_dependencies().length === 0) {
+						return wrappers['Element'];
+					} else {
+						return wrappers[child.type];
+						}
+					}());
 				if (!Wrapper) continue;
 
 				const wrapper = new Wrapper(renderer, block, parent, child, strip_whitespace, last_child || next_sibling);
