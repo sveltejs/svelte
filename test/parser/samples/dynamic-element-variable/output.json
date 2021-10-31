@@ -7,7 +7,7 @@
 			{
 				"start": 0,
 				"end": 44,
-				"type": "DynamicElement",
+				"type": "Element",
 				"name": "svelte:element",
 				"attributes": [],
 				"children": [],
@@ -38,7 +38,7 @@
 			{
 				"start": 45,
 				"end": 101,
-				"type": "DynamicElement",
+				"type": "Element",
 				"name": "svelte:element",
 				"children": [],
 				"attributes": [

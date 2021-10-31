@@ -106,9 +106,9 @@ export default function tag(parser: Parser) {
 		if (meta_tags.has(name)) return meta_tags.get(name);
 		if ((/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component')) return 'InlineComponent';
 		if (name === 'svelte:fragment') return 'SlotTemplate';
-		if (name === 'svelte:element') return 'DynamicElement';
 		if (name === 'title' && parent_is_head(parser.stack)) return 'Title';
 		if (name === 'slot' && !parser.customElement) return 'Slot';
+		if (name === 'svelte:element') return 'Element';
 		return 'Element';
 	})();
 

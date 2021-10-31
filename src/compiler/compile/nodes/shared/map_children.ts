@@ -25,7 +25,6 @@ function get_constructor(type) {
 		case 'AwaitBlock': return AwaitBlock;
 		case 'Body': return Body;
 		case 'Comment': return Comment;
-		case 'DynamicElement' : return Element;
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
 		case 'Head': return Head;

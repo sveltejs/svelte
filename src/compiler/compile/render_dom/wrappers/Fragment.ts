@@ -117,8 +117,8 @@ export default class FragmentWrapper {
 				link(last_child, last_child = wrapper);
 			} else {
 				const Wrapper = (function () {
-					if (child.type === 'DynamicElement' && child.dynamic_tag_expr.dynamic_dependencies().length === 0) {
-						return wrappers['Element'];
+					if (child.type === 'Element' && child.dynamic_tag_expr) {
+						return wrappers['DynamicElement'];
 					} else {
 						return wrappers[child.type];
 						}

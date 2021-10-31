@@ -106,7 +106,7 @@ export default class InlineComponent extends Node {
 			if (child.type === 'SlotTemplate') {
 				children.push(child);
 				info.children.splice(i, 1);
-			} else if ((child.type === 'Element' || child.type === 'DynamicElement' || child.type === 'InlineComponent' || child.type === 'Slot') && child.attributes.find(attribute => attribute.name === 'slot')) {
+			} else if ((child.type === 'Element' || child.type === 'InlineComponent' || child.type === 'Slot') && child.attributes.find(attribute => attribute.name === 'slot')) {
 				const slot_template = {
 					start: child.start,
 					end: child.end,

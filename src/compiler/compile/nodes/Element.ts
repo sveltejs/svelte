@@ -117,7 +117,7 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 }
 
 export default class Element extends Node {
-	type: 'Element' | 'DynamicElement';
+	type: 'Element';
 	name: string;
 	scope: TemplateScope;
 	attributes: Attribute[] = [];
@@ -140,10 +140,8 @@ export default class Element extends Node {
 
 		if (this.name === 'svelte:element') {
 			if (typeof info.tag === 'string') {
-				this.type = 'Element';
 				this.name = info.tag;
 			} else {
-				this.type = 'DynamicElement';
 				this.dynamic_tag_expr = new Expression(component, this, scope, info.tag);
 			}
 		}

@@ -113,7 +113,13 @@ export default class Renderer {
 
 	render(nodes: INode[], options: RenderOptions) {
 		nodes.forEach(node => {
-			const handler = handlers[node.type];
+			const handler = (function () {
+				if (node.type === 'Element' && node.dynamic_tag_expr) {
+					return handlers['DynamicElement'];
+				} else {
+					return handlers[node.type];
+					}
+			}());
 
 			if (!handler) {
 				throw new Error(`No handler for '${node.type}' nodes`);
