@@ -1,7 +1,6 @@
 import AwaitBlock from './handlers/AwaitBlock';
 import Comment from './handlers/Comment';
 import DebugTag from './handlers/DebugTag';
-import DynamicElement from './handlers/DynamicElement';
 import EachBlock from './handlers/EachBlock';
 import Element from './handlers/Element';
 import Head from './handlers/Head';
@@ -28,7 +27,6 @@ const handlers: Record<string, Handler> = {
 	Body: noop,
 	Comment,
 	DebugTag,
-	DynamicElement,
 	EachBlock,
 	Element,
 	Head,
@@ -113,14 +111,7 @@ export default class Renderer {
 
 	render(nodes: INode[], options: RenderOptions) {
 		nodes.forEach(node => {
-			const handler = (function () {
-				if (node.type === 'Element' && node.dynamic_tag_expr) {
-					return handlers['DynamicElement'];
-				} else {
-					return handlers[node.type];
-					}
-			}());
-
+			const handler = handlers[node.type];
 			if (!handler) {
 				throw new Error(`No handler for '${node.type}' nodes`);
 			}
