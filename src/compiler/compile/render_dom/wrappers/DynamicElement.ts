@@ -27,7 +27,7 @@ export default class DynamicElementWrapper extends Wrapper {
 
 		this.dynamic_element_block = block.child({
 			comment: create_debugging_comment(node, renderer.component),
-			name: renderer.component.get_unique_name('dynamic_element_block'),
+			name: renderer.component.get_unique_name('create_dynamic_element'),
 			type: 'dynamic_element'
 		});
 		renderer.blocks.push(this.dynamic_element_block);
@@ -49,20 +49,9 @@ export default class DynamicElementWrapper extends Wrapper {
 			(x`#nodes` as unknown) as Identifier
 		);
 
-		const has_transitions = !!(
-			this.dynamic_element_block.has_intro_method || this.dynamic_element_block.has_outro_method
-		);
-
 		const previous_tag = block.get_unique_name('previous_tag');
 		const snippet = this.node.dynamic_tag_expr.manipulate(block);
 		block.add_variable(previous_tag, snippet);
-
-		const not_equal = this.renderer.component.component_options.immutable
-			? x`@not_equal`
-			: x`@safe_not_equal`;
-		const condition = x`${this.renderer.dirty(
-			this.node.dynamic_tag_expr.dynamic_dependencies()
-		)} && ${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
 
 		block.chunks.init.push(b`
 			let ${this.var} = ${this.dynamic_element_block.name}(#ctx);
@@ -75,41 +64,44 @@ export default class DynamicElementWrapper extends Wrapper {
 		}
 
 		block.chunks.mount.push(
-			b`${this.var}.m(${parent_node || '#target'}, ${
-				parent_node ? 'null' : '#anchor'
-			});`
+			b`${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'
+				});`
 		);
 
+		const has_transitions = !!(
+			this.dynamic_element_block.has_intro_method || this.dynamic_element_block.has_outro_method
+		);
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+
+		const body = b`
+			${has_transitions
+				? b`
+						@group_outros();
+						@transition_out(${this.var}, 1, 1, @noop);
+						@check_outros();
+					`
+				: b`${this.var}.d(1);`
+			}
+			${this.var} = ${this.dynamic_element_block.name}(#ctx);
+			${this.var}.c();
+			${has_transitions && b`@transition_in(${this.var})`}
+			${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+		`;
+
+		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
+		const condition = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
+
+		block.chunks.update.push(b`
+			if (${condition}) {
+				${body}
+			} else {
+				${this.var}.p(#ctx, #dirty);
+			}
+		`);
 
 		if (has_transitions) {
 			block.chunks.intro.push(b`@transition_in(${this.var})`);
 			block.chunks.outro.push(b`@transition_out(${this.var})`);
-
-			const body = b`
-				@group_outros();
-				@transition_out(${this.var}, 1, 1, @noop);
-				@check_outros();
-				${this.var} = ${this.dynamic_element_block.name}(#ctx);
-				${this.var}.c();
-				@transition_in(${this.var});
-				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
-			`;
-
-			block.chunks.update.push(b`
-				if (${condition}) {
-					${body}
-				} else {
-					${this.var}.p(#ctx, #dirty);
-				}
-			`);
-		} else {
-			block.chunks.update.push(b`
-			${this.var}.p(#ctx, #dirty);
-			if (${condition}) {
-				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
-			}
-		`);
 		}
 
 		block.chunks.destroy.push(b`${this.var}.d(detaching)`);
