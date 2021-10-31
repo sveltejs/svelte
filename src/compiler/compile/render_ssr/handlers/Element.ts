@@ -9,7 +9,7 @@ import remove_whitespace_children from './utils/remove_whitespace_children';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
 
-export default function(node: Element, renderer: Renderer, options: RenderOptions) {
+export default function (node: Element, renderer: Renderer, options: RenderOptions) {
 
 	const children = remove_whitespace_children(node.children, node.next);
 

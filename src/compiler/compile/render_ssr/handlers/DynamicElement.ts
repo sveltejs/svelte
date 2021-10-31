@@ -1,8 +1,4 @@
-import {
-	get_attribute_value,
-	get_class_attribute_value
-} from './shared/get_attribute_value';
-import { get_slot_scope } from './shared/get_slot_scope';
+import { get_attribute_expression, get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { boolean_attributes } from './shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';
 import { x } from 'code-red';
@@ -13,7 +9,7 @@ import { Expression as ESExpression } from 'estree';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
 
-export default function (node: Element, renderer: Renderer, options: RenderOptions & { slot_scopes: Map<any, any>}) {
+export default function (node: Element, renderer: Renderer, options: RenderOptions) {
 
 	const children = remove_whitespace_children(node.children, node.next);
 
@@ -25,13 +21,6 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		node.name !== 'input' &&
 		node.attributes.some((attribute) => attribute.name === 'contenteditable')
 	);
-
-	const slot = node.get_static_attribute_value('slot');
-	const nearest_inline_component = node.find_nearest(/InlineComponent/);
-
-	if (slot && nearest_inline_component) {
-		renderer.push();
-	}
 
 	renderer.add_string('<');
 	renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
@@ -57,7 +46,9 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			} else {
 				const attr_name = node.namespace === namespaces.foreign ? attribute.name : fix_attribute_casing(attribute.name);
 				const name = attribute.name.toLowerCase();
-				if (attribute.is_true) {
+				if (name === 'value' && node.name.toLowerCase() === 'textarea') {
+					node_contents = get_attribute_value(attribute);
+				} else if (attribute.is_true) {
 					args.push(x`{ ${attr_name}: true }`);
 				} else if (
 					boolean_attributes.has(name) &&
@@ -66,6 +57,9 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 				) {
 					// a boolean attribute with one non-Text chunk
 					args.push(x`{ ${attr_name}: ${(attribute.chunks[0] as Expression).node} || null }`);
+				} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
+					const snippet = (attribute.chunks[0] as Expression).node;
+					args.push(x`{ ${attr_name}: @escape_attribute_value(${snippet}) }`);
 				} else {
 					args.push(x`{ ${attr_name}: ${get_attribute_value(attribute)} }`);
 				}
@@ -78,7 +72,9 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		node.attributes.forEach(attribute => {
 			const name = attribute.name.toLowerCase();
 			const attr_name = node.namespace === namespaces.foreign ? attribute.name : fix_attribute_casing(attribute.name);
-			if (attribute.is_true) {
+			if (name === 'value' && node.name.toLowerCase() === 'textarea') {
+				node_contents = get_attribute_value(attribute);
+			} else if (attribute.is_true) {
 				renderer.add_string(` ${attr_name}`);
 			} else if (
 				boolean_attributes.has(name) &&
@@ -115,15 +111,27 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		}
 
 		if (name === 'group') {
-			// TODO server-render group bindings
+			const value_attribute = node.attributes.find(({ name }) => name === 'value');
+			if (value_attribute) {
+				const value = get_attribute_expression(value_attribute);
+				const type = node.get_static_attribute_value('type');
+				const bound = expression.node;
+				const condition = type === 'checkbox' ? x`~${bound}.indexOf(${value})` : x`${value} === ${bound}`;
+				renderer.add_expression(x`${condition} ? @add_attribute("checked", true, 1) : ""`);
+			}
 		} else if (contenteditable && (name === 'textContent' || name === 'innerHTML')) {
 			node_contents = expression.node;
 
 			// TODO where was this used?
 			// value = name === 'textContent' ? x`@escape($$value)` : x`$$value`;
+		} else if (binding.name === 'value' && node.name === 'textarea') {
+			const snippet = expression.node;
+			node_contents = x`${snippet} || ""`;
+		} else if (binding.name === 'value' && node.name === 'select') {
+			// NOTE: do not add "value" attribute on <select />
 		} else {
 			const snippet = expression.node;
-			renderer.add_expression(x`@add_attribute("${name}", ${snippet}, 1)`);
+			renderer.add_expression(x`@add_attribute("${name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
 		}
 	});
 
@@ -147,24 +155,6 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		renderer.add_string('</');
 		renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
 		renderer.add_string('>');
-	} else if (slot && nearest_inline_component) {
-		renderer.render(children, options);
-
-		renderer.add_string('</');
-		renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
-		renderer.add_string('>');
-
-		const lets = node.lets;
-		const seen = new Set(lets.map((l) => l.name.name));
-
-		nearest_inline_component.lets.forEach(l => {
-			if (!seen.has(l.name.name)) lets.push(l);
-		});
-
-		options.slot_scopes.set(slot, {
-			input: get_slot_scope(node.lets),
-			output: renderer.pop()
-		});
 	} else {
 		renderer.render(children, options);
 
