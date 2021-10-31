@@ -6,7 +6,6 @@ import Element from '../../nodes/Element';
 import { x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
 import remove_whitespace_children from './utils/remove_whitespace_children';
-import { Expression as ESExpression } from 'estree';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
 
@@ -23,12 +22,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		node.attributes.some((attribute) => attribute.name === 'contenteditable')
 	);
 
-	if (node.type === 'DynamicElement') {
-		renderer.add_string('<');
-		renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
-	} else {
-		renderer.add_string(`<${node.name}`);
-	}
+	renderer.add_string(`<${node.name}`);
 
 	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
@@ -158,25 +152,13 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		}
 
 		if (!is_void(node.name)) {
-			if (node.type === 'DynamicElement') {
-				renderer.add_string('</');
-				renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
-				renderer.add_string('>');
-			} else {
-				renderer.add_string(`</${node.name}>`);
-			}
+			renderer.add_string(`</${node.name}>`);
 		}
 	} else {
 		renderer.render(children, options);
 
 		if (!is_void(node.name)) {
-			if (node.type === 'DynamicElement') {
-				renderer.add_string('</');
-				renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
-				renderer.add_string('>');
-			} else {
-				renderer.add_string(`</${node.name}>`);
-			}
+			renderer.add_string(`</${node.name}>`);
 		}
 	}
 }
