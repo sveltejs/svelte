@@ -42,11 +42,7 @@ export default class DynamicElementWrapper extends Wrapper {
 		);
 	}
 
-	render(
-		block: Block,
-		parent_node: Identifier,
-		parent_nodes: Identifier
-	) {
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		this.elementWrapper.render(
 			this.dynamic_element_block,
 			null,
@@ -56,7 +52,6 @@ export default class DynamicElementWrapper extends Wrapper {
 		const has_transitions = !!(
 			this.dynamic_element_block.has_intro_method || this.dynamic_element_block.has_outro_method
 		);
-		const dynamic = this.dynamic_element_block.has_update_method;
 
 		const previous_tag = block.get_unique_name('previous_tag');
 		const snippet = this.node.dynamic_tag_expr.manipulate(block);
@@ -101,22 +96,14 @@ export default class DynamicElementWrapper extends Wrapper {
 				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
 			`;
 
-			if (dynamic) {
-				block.chunks.update.push(b`
-					if (${condition}) {
-						${body}
-					} else {
-						${this.var}.p(#ctx, #dirty);
-					}
-				`);
-			} else {
-				block.chunks.update.push(b`
-				  if (${condition}) {
-						${body}
-					}
-				`);
-			}
-		} else if (dynamic) {
+			block.chunks.update.push(b`
+				if (${condition}) {
+					${body}
+				} else {
+					${this.var}.p(#ctx, #dirty);
+				}
+			`);
+		} else {
 			block.chunks.update.push(b`
 			${this.var}.p(#ctx, #dirty);
 			if (${condition}) {
