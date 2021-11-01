@@ -42,6 +42,7 @@ To see all updates to Svelte and SvelteKit, check out the [Svelte](https://githu
 **Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
 
 **Podcasts Featuring Svelte**
+- [Svelte Radio](https://www.svelteradio.com/episodes/svelte-summit-is-coming-up-and-svelte-is-growing) dives into the tech behind the recently released Svelte Summit website and a bunch of other fun stuff!
 - [PodRocket](https://podrocket.logrocket.com/rich-harris), LogRocket's podcast, talks Svelte with Rich Harris
 - [Web Rush](https://webrush.io/episodes/episode-153-single-page-application-vs-multi-page-application-with-rich-harris) and Rich Harris talk about the differences between a SPA and MPA, what role the server rendering plays, what client side hydration is, and the state of modern tooling for developing SPA or MPA
 - [devtools.fm](https://devtools.fm/episode/15) talks with Rich Harris about developing engaging data visualizations and building the tools of tomorrow
