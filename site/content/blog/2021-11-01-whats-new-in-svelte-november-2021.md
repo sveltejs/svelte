@@ -5,7 +5,7 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-With SvelteKit crossing both the [80% complete mark](https://github.com/sveltejs/kit/milestone/2), over [5000 stars](https://github.com/sveltejs/kit) on GitHub, and now having more usage than Sapper, there's never been a better time to try it out! Many in the community have, making for quite a large showcase this month...
+With SvelteKit crossing the [80% complete mark](https://github.com/sveltejs/kit/milestone/2), over [5000 stars](https://github.com/sveltejs/kit) on GitHub, and now having more usage than Sapper, there's never been a better time to try it out! Many in the community have, making for quite a large showcase this month...
 
 Also, don't miss out on [Svelte Summit](https://sveltesummit.com/) on November 20th - featuring speakers from around the world. Keep an eye out for a watch party in your area 👀
 
@@ -15,6 +15,7 @@ Now onto what's new!
 - [svelte.dev](https://svelte.dev/) now runs on SvelteKit alongside [sveltesociety.dev](https://sveltesociety.dev). svelte.dev is a relatively complicated site with live code editing, authentication, and a markdown-based blog - making it a great way for us to really test out SvelteKit
 - A new compiler option, `enableSourcemap`, provides more control over the compiler output for JS and CSS sourcemaps (**3.44.0**). With this new feature, SvelteKit and the Vite Svelte plugin can now properly handle environment variables in `.svelte` templates (See [sveltejs/kit#720](https://github.com/sveltejs/kit/issues/720) and [sveltejs/vite-plugin-svelte#201](https://github.com/sveltejs/vite-plugin-svelte/pull/201))
 - The Svelte Language Tools now support configuring the VS Code CSS Language Service settings ([#1219](https://github.com/sveltejs/language-tools/issues/1219))
+- `vite-plugin-svelte` added a new `experimental.prebundleSvelteLibraries` option that makes it much faster to load Svelte libraries with many components like icon libraries and UI frameworks. The option can be set in the root of `svelte.config.js`. Please test it out and give us feedback!
 - SvelteKit will only route endpoints on the client, unless marked as `rel="external"` - reducing the size of the client JS and making it easier to refactor the router in the future ([2656](https://github.com/sveltejs/kit/pull/2656))
 - SvelteKit no longer supports Node 12 ([2604](https://github.com/sveltejs/kit/pull/2604))
 - SvelteKit was upgraded from Vite 2.6.0 to Vite 2.6.12 fixing an issue where Vite would corrupt the Svelte runtime (https://github.com/vitejs/vite/issues/4306). It also included two fixes from the SvelteKit team to avoid or make diagnosing Vite issues in SvelteKit templates easier (https://github.com/vitejs/vite/pull/5192 and https://github.com/vitejs/vite/pull/5193). Vite 2.7 is currently available in beta with additional fixes for SSR
@@ -39,10 +40,8 @@ To see all updates to Svelte and SvelteKit, check out the [Svelte](https://githu
 - [PWA Haven](https://github.com/ThaUnknown/pwa-haven) is a collection of small, fast, simple PWAs to replace native OS apps
 - [DottoBit](https://dottobit.com/) is a multi-color 16-bit drawing program with URL sharing built-in
 - [Former Fast Document for Print](https://github.com/zummon/former) is an invoice generator with beautiful designs, abilities for international languages and auto calculation
-- [Helvetikon](https://github.com/noahsalvi/helvetikon) is a community maintained dictionary for the swiss german language
+- [Helvetikon](https://github.com/noahsalvi/helvetikon) is a community maintained dictionary for the Swiss German language
 - [Palitra App](https://palitra.app/) is a search-based color pallete generator
-
-**Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
 
 **Podcasts Featuring Svelte**
 - [Svelte Radio](https://www.svelteradio.com/episodes/svelte-summit-is-coming-up-and-svelte-is-growing) dives into the tech behind the recently released Svelte Summit website and a bunch of other fun stuff!
