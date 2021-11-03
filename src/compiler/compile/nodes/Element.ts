@@ -16,6 +16,7 @@ import list from '../../utils/list';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
+import { TemplateNode } from '../../interfaces';
 import Component from '../Component';
 import Expression from './shared/Expression';
 import compiler_warnings from '../compiler_warnings';
@@ -134,7 +135,7 @@ export default class Element extends Node {
 	needs_manual_style_scoping: boolean;
 	dynamic_tag_expr?: Expression = null;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
@@ -251,11 +252,22 @@ export default class Element extends Node {
 		this.scope = scope;
 		this.children = map_children(component, this, this.scope, info.children);
 
+		if (this.dynamic_tag_expr) {
+			this.validate_dynamic_element(info);
+		}
 		this.validate();
 
 		this.optimise();
 
 		component.apply_stylesheet(this);
+	}
+
+	validate_dynamic_element(info: TemplateNode) {
+		info.attributes.forEach(node => {
+			if (node.type === 'Animation') {
+				this.component.error(node, compiler_errors.invalid_animation_dynamic_element);
+			}
+		});
 	}
 
 	validate() {
