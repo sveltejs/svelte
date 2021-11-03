@@ -1,11 +1,11 @@
-import Wrapper from './shared/Wrapper';
-import Renderer from '../Renderer';
-import Block from '../Block';
+import Wrapper from '../shared/Wrapper';
+import Renderer from '../../Renderer';
+import Block from '../../Block';
 import { b, x } from 'code-red';
 import { Identifier } from 'estree';
-import ElementWrapper from './Element/index';
-import create_debugging_comment from './shared/create_debugging_comment';
-import Element from '../../nodes/Element';
+import ElementWrapper from './index';
+import create_debugging_comment from '../shared/create_debugging_comment';
+import Element from '../../../nodes/Element';
 
 export default class DynamicElementWrapper extends Wrapper {
 	node: Element;
