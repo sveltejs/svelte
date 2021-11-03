@@ -6,7 +6,11 @@ Ordinarily, transitions will play on elements when any container block is added 
 
 Instead, we'd like transitions to play only when individual items are added and removed — in other words, when the user drags the slider.
 
-We can achieve this with a *local* transition, which only plays when the immediate parent block is added or removed:
+We can achieve this with a *local* transition. Local transitions only play when the block they belong to is created or removed, not when parent blocks are created or removed.
+
+
+
+
 
 ```html
 <div transition:slide|local>
