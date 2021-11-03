@@ -389,23 +389,6 @@ export default class ElementWrapper extends Wrapper {
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
 
-		if (this.node.dynamic_tag_expr) {
-			const dependencies = this.node.dynamic_tag_expr.dynamic_dependencies();
-			if (dependencies.length) {
-				const condition = block.renderer.dirty(
-					dependencies
-				);
-
-				block.chunks.update.push(b`
-					if (${condition}) {
-						@detach(${node});
-						${node} = ${render_statement};
-						${staticChildren}
-					}
-				`);
-			}
-		}
-
 		if (nodes && this.renderer.options.hydratable && !this.void) {
 			block.chunks.claim.push(
 				b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`
@@ -417,6 +400,27 @@ export default class ElementWrapper extends Wrapper {
 			block.chunks.hydrate.push(
 				b`@add_location(${this.var}, ${renderer.file_var}, ${loc.line - 1}, ${loc.column}, ${this.node.start});`
 			);
+		}
+
+		if (this.node.dynamic_tag_expr) {
+			const dependencies = this.node.dynamic_tag_expr.dynamic_dependencies();
+			if (dependencies.length) {
+				const condition = block.renderer.dirty(
+					dependencies
+				);
+
+				const mounted: Identifier = { type: 'Identifier', name: '#mounted' };
+				block.chunks.update.push(b`
+					if (${condition}) {
+						@detach(${node});
+						${node} = ${render_statement};
+						@validate_dynamic_element(${this.node.dynamic_tag_expr.manipulate(block)});
+						${block.chunks.hydrate}
+						${block.event_listeners.length && b`${mounted}  = false`};
+						${staticChildren}
+					}
+				`);
+			}
 		}
 	}
 
@@ -450,32 +454,35 @@ export default class ElementWrapper extends Wrapper {
 			this.child_dynamic_element_block.has_intro_method || this.child_dynamic_element_block.has_outro_method
 		);
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
-
-		const body = b`
-			${has_transitions
-				? b`
-						@group_outros();
-						@transition_out(${this.var}, 1, 1, @noop);
-						@check_outros();
-					`
-				: b`${this.var}.d(1);`
-			}
-			${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
-			${this.var}.c();
-			${has_transitions && b`@transition_in(${this.var})`}
-			${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
-		`;
-
 		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
 		const condition = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
 
-		block.chunks.update.push(b`
+		if (has_transitions) {
+			const body = b`
+				@group_outros();
+				@transition_out(${this.var}, 1, 1, @noop);
+				@check_outros();
+				${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+				${this.var}.c();
+				@transition_in(${this.var});
+				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+			`;
+
+			block.chunks.update.push(b`
+				if (${condition}) {
+					${body}
+				} else {
+					${this.var}.p(#ctx, #dirty);
+				}
+			`);
+		} else {
+			block.chunks.update.push(b`
+			${this.var}.p(#ctx, #dirty);
 			if (${condition}) {
-				${body}
-			} else {
-				${this.var}.p(#ctx, #dirty);
+				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
 			}
 		`);
+		}
 
 		if (has_transitions) {
 			block.chunks.intro.push(b`@transition_in(${this.var})`);
