@@ -8,10 +8,6 @@ Instead, we'd like transitions to play only when individual items are added and 
 
 We can achieve this with a *local* transition. Local transitions only play when the block they belong to is created or removed, not when parent blocks are created or removed.
 
-
-
-
-
 ```html
 <div transition:slide|local>
 	{item}
