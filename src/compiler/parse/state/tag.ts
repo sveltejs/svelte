@@ -102,15 +102,12 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	const type = (function () {
-		if (meta_tags.has(name)) return meta_tags.get(name);
-		if ((/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component')) return 'InlineComponent';
-		if (name === 'svelte:fragment') return 'SlotTemplate';
-		if (name === 'title' && parent_is_head(parser.stack)) return 'Title';
-		if (name === 'slot' && !parser.customElement) return 'Slot';
-		if (name === 'svelte:element') return 'Element';
-		return 'Element';
-	})();
+	const type = meta_tags.has(name)
+		? meta_tags.get(name)
+		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
+			: name === 'svelte:fragment' ? 'SlotTemplate'
+				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
+					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
 	const element: TemplateNode = {
 		start,

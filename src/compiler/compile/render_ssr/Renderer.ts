@@ -112,6 +112,7 @@ export default class Renderer {
 	render(nodes: INode[], options: RenderOptions) {
 		nodes.forEach(node => {
 			const handler = handlers[node.type];
+
 			if (!handler) {
 				throw new Error(`No handler for '${node.type}' nodes`);
 			}

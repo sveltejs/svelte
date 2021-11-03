@@ -126,17 +126,17 @@ export default class InlineComponent extends Node {
 						slot_template.attributes.push(attribute);
 					}
 				}
-
+		
 				children.push(slot_template);
 				info.children.splice(i, 1);
 			}
 		}
 
 		if (info.children.some(node => not_whitespace_text(node))) {
-			children.push({
+			children.push({ 
 				start: info.start,
 				end: info.end,
-				type: 'SlotTemplate',
+				type: 'SlotTemplate', 
 				name: 'svelte:fragment',
 				attributes: [],
 				children: info.children
