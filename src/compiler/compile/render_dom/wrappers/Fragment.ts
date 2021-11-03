@@ -2,7 +2,6 @@ import Wrapper from './shared/Wrapper';
 import AwaitBlock from './AwaitBlock';
 import Body from './Body';
 import DebugTag from './DebugTag';
-import DynamicElement from './Element/DynamicElement';
 import EachBlock from './EachBlock';
 import Element from './Element/index';
 import Head from './Head';
@@ -28,7 +27,6 @@ const wrappers = {
 	Body,
 	Comment: null,
 	DebugTag,
-	DynamicElement,
 	EachBlock,
 	Element,
 	Head,
@@ -116,13 +114,7 @@ export default class FragmentWrapper {
 
 				link(last_child, last_child = wrapper);
 			} else {
-				const Wrapper = (function () {
-					if (child.type === 'Element' && child.dynamic_tag_expr) {
-						return wrappers['DynamicElement'];
-					} else {
-						return wrappers[child.type];
-						}
-					}());
+				const Wrapper = wrappers[child.type];
 				if (!Wrapper) continue;
 
 				const wrapper = new Wrapper(renderer, block, parent, child, strip_whitespace, last_child || next_sibling);
