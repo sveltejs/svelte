@@ -7,7 +7,7 @@ export interface Source {
 	source: string;
 	get_location: (search: number) => Location;
 	file_basename: string;
-	filename: string;
+	filename?: string;
 }
 
 export interface Processed {
