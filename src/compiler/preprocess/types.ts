@@ -19,8 +19,8 @@ export interface Processed {
 
 export type MarkupPreprocessor = (options: {
 	content: string;
-	filename: string;
-}) => Processed | Promise<Processed>;
+	filename?: string;
+}) => Processed | void | Promise<Processed | void>;
 
 export type Preprocessor = (options: {
 	/**
@@ -33,7 +33,7 @@ export type Preprocessor = (options: {
 	 */
 	markup: string;
 	filename?: string;
-}) => Processed | Promise<Processed>;
+}) => Processed | void | Promise<Processed | void>;
 
 export interface PreprocessorGroup {
 	markup?: MarkupPreprocessor;
