@@ -59,7 +59,7 @@ We can get a lot more creative though. Let's make something truly gratuitous:
 				return `
 					transform: scale(${eased}) rotate(${eased * 1080}deg);
 					color: hsl(
-						${~~(t * 360)},
+						${Math.trunc(t * 360)},
 						${Math.min(100, 1000 - 1000 * t)}%,
 						${Math.min(50, 500 - 500 * t)}%
 					);`
