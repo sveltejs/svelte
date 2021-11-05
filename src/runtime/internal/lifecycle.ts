@@ -32,9 +32,7 @@ export function createEventDispatcher<EventMap extends {} = any>(): <EventKey ex
 
 	return (type: string, detail?: any) => {
 		const callbacks = component.$$.callbacks[type];
-		const eventBinding = component.eventBindings && Object.prototype.hasOwnProperty.call(component.eventBindings, type) ? component.eventBindings[type] : undefined;
-		const catchAll = component.eventBindings && Object.prototype.hasOwnProperty.call(component.eventBindings, '*') ? component.eventBindings['*'] : undefined;
-		const catchAllBinding = component.$$.callbacks && Object.prototype.hasOwnProperty.call(component.$$.callbacks, '*') ? component.$$.callbacks['*'] : undefined;
+		const catchAllBinding = component.$$.callbacks[type];
 
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
@@ -43,28 +41,6 @@ export function createEventDispatcher<EventMap extends {} = any>(): <EventKey ex
 			callbacks.slice().forEach(fn => {
 				fn.call(component, event);
 			});
-		}
-
-		if (eventBinding) {
-			// in a server (non-DOM) environment?
-			try {
-				const event = custom_event(type, detail);
-				const data = eventBinding[1] && Object.prototype.hasOwnProperty.call(eventBinding[1], 'data') ? eventBinding[1].data : {};
-				eventBinding[0].call(component, event, data);
-			} catch (e) {
-				console.warn(`A component was instantiated with invalid event:bindings -  ${e}`);
-			}
-		}
-
-		if (catchAll) {
-			// in a server (non-DOM) environment?
-			try {
-				const event = custom_event(type, detail);
-				const data = catchAll[1] && Object.prototype.hasOwnProperty.call(catchAll[1], 'data') ? catchAll[1].data : {};
-				catchAll[0].call(component, event, data);
-			} catch (e) {
-				console.warn(`A component was instantiated with invalid event:bindings -  ${e}`);
-			}
 		}
 
 		if (catchAllBinding) {
