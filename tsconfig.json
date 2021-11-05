@@ -8,7 +8,7 @@
 		// the only missing feature is Array.prototype.values
 		"lib": ["es2017"],
 		"target": "es2017",
-		"sourceMap": true,
+
 		"declaration": true,
 		"declarationDir": "types",
 
