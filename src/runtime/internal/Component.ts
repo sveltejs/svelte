@@ -22,6 +22,7 @@ export interface Fragment {
 	/* outro   */ o: (local: any) => void;
 	/* destroy */ d: (detaching: 0 | 1) => void;
 }
+
 interface T$$ {
 	dirty: number[];
 	ctx: null | any;
@@ -39,6 +40,20 @@ interface T$$ {
 	skip_bound: boolean;
 	on_disconnect: any[];
 	root:Element | ShadowRoot
+}
+
+/**
+ * bind_events
+ * Binds the events provided in options.props, to named callbacks event:bindings
+ * @param props
+ */
+function bind_events(props) {
+	const events = props && props['event:bindings'] ? props['event:bindings'] : {};
+
+	if (Object.keys(events).length) {
+		delete props['event:bindings'];
+	}
+	return events;
 }
 
 export function bind(component, name, callback) {
@@ -127,7 +142,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		context: new Map(options.context || (parent_component ? parent_component.$$.context : [])),
 
 		// everything else
-		callbacks: blank_object(),
+		callbacks: bind_events(options.props),
 		dirty,
 		skip_bound: false,
 		root: options.target || parent_component.$$.root
@@ -238,12 +253,6 @@ export class SvelteComponent {
 	$$: T$$;
 	$$set?: ($$props: any) => void;
 	eventBindings: any;
-
-	constructor(props) {
-		if (props && props.props && Object.prototype.hasOwnProperty.call(props.props, 'event:bindings')) {
-			this.eventBindings = props.props['event:bindings'];
-		}
-	}
 
 	$destroy() {
 		destroy_component(this, 1);

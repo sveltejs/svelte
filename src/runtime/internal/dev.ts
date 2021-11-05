@@ -155,7 +155,7 @@ export class SvelteComponentDev extends SvelteComponent {
 			throw new Error("'target' is a required option");
 		}
 
-		super(options);
+		super();
 	}
 
 	$destroy() {
