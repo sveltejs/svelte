@@ -10,4 +10,4 @@ If you prefer a declarative HTML approach, there's the isomorphic [svelte-routin
 
 If you need hash-based routing on the client side, check out [svelte-spa-router](https://github.com/ItalyPaleAle/svelte-spa-router) or [abstract-state-router](https://github.com/TehShrike/abstract-state-router/).
 
-[Routify](https://routify.dev) is another filesystem-based router, similar to SvelteKit's router, but which is less performant on the server because it relies on JSDOM instead of Svelte's built-in SSR support.
+[Routify](https://routify.dev) is another filesystem-based router, similar to SvelteKit's router. Version 3 supports Svelte's native SSR.
