@@ -249,14 +249,6 @@ export default class ElementWrapper extends Wrapper {
 			b`${node} = ${render_statement};`
 		);
 
-		if (this.node.is_dynamic_element() && this.renderer.options.dev) {
-			block.chunks.create.push(b`@validate_dynamic_element(${this.node.tag_expr.manipulate(block)});`);
-
-			if (renderer.options.hydratable) {
-				block.chunks.claim.push(b`@validate_dynamic_element(${this.node.tag_expr.manipulate(block)});`);
-			}
-		}
-
 		if (renderer.options.hydratable) {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
@@ -369,26 +361,24 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		if (this.node.is_dynamic_element()) {
-			const condition = block.renderer.dirty(
+			block.renderer.dirty(
 				this.node.tag_expr.dynamic_dependencies()
 			);
-
-			const render_statement = this.get_render_statement(block);
-			const mounted: Identifier = { type: 'Identifier', name: '#mounted' };
-			block.chunks.update.push(b`
-				if (${condition}) {
-					@detach(${node});
-					${node} = ${render_statement};
-					@validate_dynamic_element(${this.node.tag_expr.manipulate(block)});
-					${block.chunks.hydrate}
-					${block.event_listeners.length && b`${mounted}  = false`};
-					${staticChildren}
-				}
-			`);
 
 			const previous_tag = block.get_unique_name('previous_tag');
 			const snippet = this.node.tag_expr.manipulate(block);
 			block.add_variable(previous_tag, snippet);
+
+			const render_statement = this.get_render_statement(block);
+			const mounted: Identifier = { type: 'Identifier', name: '#mounted' };
+			const statement = (b`
+				@detach(${node});
+				${node} = ${render_statement};
+				@validate_dynamic_element(${snippet});
+				${block.chunks.hydrate}
+				${block.event_listeners.length && b`${mounted}  = false`};
+				${staticChildren}
+			`);
 
 			const has_transitions = !!(block.has_intro_method || block.has_outro_method);
 			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
@@ -400,7 +390,7 @@ export default class ElementWrapper extends Wrapper {
 					@group_outros();
 					@transition_out(${this.var}, 1, 1, @noop);
 					@check_outros();
-					${this.var} = ${render_statement};
+					${statement}
 					@transition_in(${this.var});
 					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
 				`;
@@ -413,9 +403,17 @@ export default class ElementWrapper extends Wrapper {
 			} else {
 				block.chunks.update.push(b`
 				if (${if_statement}) {
+					${statement}
 					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
 				}
 			`);
+			}
+
+			if (this.renderer.options.dev) {
+				block.chunks.create.push(b`@validate_dynamic_element(${snippet});`);
+				if (renderer.options.hydratable) {
+					block.chunks.claim.push(b`@validate_dynamic_element(${snippet});`);
+				}
 			}
 		}
 	}
