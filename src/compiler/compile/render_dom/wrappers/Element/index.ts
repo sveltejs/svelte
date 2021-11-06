@@ -371,50 +371,28 @@ export default class ElementWrapper extends Wrapper {
 
 			const render_statement = this.get_render_statement(block);
 			const mounted: Identifier = { type: 'Identifier', name: '#mounted' };
-			const statement = (b`
-				@detach(${node});
-				${node} = ${render_statement};
-				${block.chunks.hydrate}
-				${block.event_listeners.length && b`${mounted}  = false`};
-				${staticChildren}
-			`);
-
-			const has_transitions = !!(block.has_intro_method || block.has_outro_method);
 			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 			const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
 			const if_statement = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
 
-			if (has_transitions) {
-				const body = b`
-					${statement}
+			block.chunks.update.push(b`
+				if (${if_statement}) {
+					@detach(${node});
+					${node} = ${render_statement};
+					${block.chunks.hydrate}
+					${block.event_listeners.length && b`${mounted}  = false`};
+					${staticChildren}
 					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
 					${transition_names.outro_name && b`${transition_names.outro_name} = null;`}
-				`;
-
-				block.chunks.update.push(b`
-					if (${if_statement}) {
-						${body}
-					}
-				`);
-			} else {
-				block.chunks.update.push(b`
-				if (${if_statement}) {
-					${statement}
-					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
+					${this.renderer.options.dev && b`@validate_dynamic_element(${snippet});`}
 				}
 			`);
-			}
 
 			if (this.renderer.options.dev) {
 				block.chunks.create.push(b`@validate_dynamic_element(${snippet});`);
 				if (renderer.options.hydratable) {
 					block.chunks.claim.push(b`@validate_dynamic_element(${snippet});`);
 				}
-				block.chunks.update.push(b`
-					if (${if_statement}) {
-						@validate_dynamic_element(${snippet});
-					}
-				`);
 			}
 		}
 	}
