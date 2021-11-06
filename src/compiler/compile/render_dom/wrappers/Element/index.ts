@@ -381,7 +381,7 @@ export default class ElementWrapper extends Wrapper {
 					${block.event_listeners.length && b`${mounted}  = false`};
 					${staticChildren}
 					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
-					${transition_names.outro_name && b`${transition_names.outro_name} = null;`}
+					${transition_names.outro && b`${transition_names.outro} = null;`}
 					${this.renderer.options.dev && b`@validate_dynamic_element(${snippet});`}
 				}
 			`);
@@ -745,21 +745,20 @@ export default class ElementWrapper extends Wrapper {
 
 	add_transitions(
 		block: Block
-	): { intro_name: Identifier | null, outro_name: Identifier | null } {
-		const transition_names = { intro_name: null, outro_name: null };
+	): { intro: Identifier | null, outro: Identifier | null } {
+		const names = { intro: null, outro: null };
 		const { intro, outro } = this.node;
-		if (!intro && !outro) return transition_names;
+		if (!intro && !outro) return names;
 
 		if (intro === outro) {
 			// bidirectional transition
 			const name = block.get_unique_name(`${this.var.name}_transition`);
-			transition_names.intro_name = name;
-			transition_names.outro_name = name;
+			names.intro = names.outro = name;
 			const snippet = intro.expression
 				? intro.expression.manipulate(block)
 				: x`{}`;
 
-			block.add_variable(name);
+			block.add_variable(names.intro);
 
 			const fn = this.renderer.reference(intro.name);
 
@@ -794,13 +793,11 @@ export default class ElementWrapper extends Wrapper {
 
 			block.chunks.destroy.push(b`if (detaching && ${name}) ${name}.end();`);
 		} else {
-			const intro_name = intro && block.get_unique_name(`${this.var.name}_intro`);
-			const outro_name = outro && block.get_unique_name(`${this.var.name}_outro`);
-			transition_names.intro_name = intro_name;
-			transition_names.outro_name = outro_name;
+			names.intro = intro && block.get_unique_name(`${this.var.name}_intro`);
+			names.outro = outro && block.get_unique_name(`${this.var.name}_outro`);
 
 			if (intro) {
-				block.add_variable(intro_name);
+				block.add_variable(names.intro);
 				const snippet = intro.expression
 					? intro.expression.manipulate(block)
 					: x`{}`;
@@ -812,19 +809,19 @@ export default class ElementWrapper extends Wrapper {
 				if (outro) {
 					intro_block = b`
 						@add_render_callback(() => {
-							if (${outro_name}) ${outro_name}.end(1);
-							${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
-							${intro_name}.start();
+							if (${names.outro}) ${names.outro}.end(1);
+							${names.intro} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+							${names.intro}.start();
 						});
 					`;
 
-					block.chunks.outro.push(b`if (${intro_name}) ${intro_name}.invalidate();`);
+					block.chunks.outro.push(b`if (${names.intro}) ${names.intro}.invalidate();`);
 				} else {
 					intro_block = b`
-						if (!${intro_name}) {
+						if (!${names.intro}) {
 							@add_render_callback(() => {
-								${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
-								${intro_name}.start();
+								${names.intro} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+								${names.intro}.start();
 							});
 						}
 					`;
@@ -842,7 +839,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			if (outro) {
-				block.add_variable(outro_name);
+				block.add_variable(names.outro);
 				const snippet = outro.expression
 					? outro.expression.manipulate(block)
 					: x`{}`;
@@ -851,14 +848,14 @@ export default class ElementWrapper extends Wrapper {
 
 				if (!intro) {
 					block.chunks.intro.push(b`
-						if (${outro_name}) ${outro_name}.end(1);
+						if (${names.outro}) ${names.outro}.end(1);
 					`);
 				}
 
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
 				let outro_block = b`
-					${outro_name} = @create_out_transition(${this.var}, ${fn}, ${snippet});
+					${names.outro} = @create_out_transition(${this.var}, ${fn}, ${snippet});
 				`;
 
 				if (outro.is_local) {
@@ -871,7 +868,7 @@ export default class ElementWrapper extends Wrapper {
 
 				block.chunks.outro.push(outro_block);
 
-				block.chunks.destroy.push(b`if (detaching && ${outro_name}) ${outro_name}.end();`);
+				block.chunks.destroy.push(b`if (detaching && ${names.outro}) ${names.outro}.end();`);
 			}
 		}
 
@@ -879,7 +876,7 @@ export default class ElementWrapper extends Wrapper {
 			block.maintain_context = true;
 		}
 
-		return transition_names;
+		return names;
 	}
 
 	add_animation(block: Block) {
