@@ -235,14 +235,6 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
-
-		this.render_element(block, parent_node, parent_nodes);
-		if (this.node.is_dynamic_element()) {
-			this.render_dynamic_element(block, parent_node, parent_nodes);
-		}
-	}
-
-	render_element(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		const { renderer } = this;
 
 		if (this.node.name === 'noscript') return;
@@ -377,63 +369,54 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		if (this.node.is_dynamic_element()) {
-			const dependencies = this.node.tag_expr.dynamic_dependencies();
-			if (dependencies.length) {
-				const condition = block.renderer.dirty(
-					dependencies
-				);
+			const condition = block.renderer.dirty(
+				this.node.tag_expr.dynamic_dependencies()
+			);
 
-				const mounted: Identifier = { type: 'Identifier', name: '#mounted' };
-				block.chunks.update.push(b`
-					if (${condition}) {
-						@detach(${node});
-						${node} = ${render_statement};
-						@validate_dynamic_element(${this.node.tag_expr.manipulate(block)});
-						${block.chunks.hydrate}
-						${block.event_listeners.length && b`${mounted}  = false`};
-						${staticChildren}
-					}
-				`);
-			}
-		}
-	}
-
-	render_dynamic_element(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
-
-		const previous_tag = block.get_unique_name('previous_tag');
-		const snippet = this.node.tag_expr.manipulate(block);
-		block.add_variable(previous_tag, snippet);
-
-		const has_transitions = !!(
-			block.has_intro_method || block.has_outro_method
-		);
-		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
-		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-		const condition = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
-
-		const render_statement = this.get_render_statement(block);
-
-		if (has_transitions) {
-			const body = b`
-				@group_outros();
-				@transition_out(${this.var}, 1, 1, @noop);
-				@check_outros();
-				${this.var} = ${render_statement};
-				@transition_in(${this.var});
-				this.m(${this.get_update_mount_node(anchor)}, ${anchor});
-			`;
-
+			const render_statement = this.get_render_statement(block);
+			const mounted: Identifier = { type: 'Identifier', name: '#mounted' };
 			block.chunks.update.push(b`
 				if (${condition}) {
-					${body}
+					@detach(${node});
+					${node} = ${render_statement};
+					@validate_dynamic_element(${this.node.tag_expr.manipulate(block)});
+					${block.chunks.hydrate}
+					${block.event_listeners.length && b`${mounted}  = false`};
+					${staticChildren}
 				}
 			`);
-		} else {
-			block.chunks.update.push(b`
-			if (${condition}) {
-				this.m(${this.get_update_mount_node(anchor)}, ${anchor});
+
+			const previous_tag = block.get_unique_name('previous_tag');
+			const snippet = this.node.tag_expr.manipulate(block);
+			block.add_variable(previous_tag, snippet);
+
+			const has_transitions = !!(block.has_intro_method || block.has_outro_method);
+			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+			const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
+			const if_statement = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
+
+			if (has_transitions) {
+				const body = b`
+					@group_outros();
+					@transition_out(${this.var}, 1, 1, @noop);
+					@check_outros();
+					${this.var} = ${render_statement};
+					@transition_in(${this.var});
+					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
+				`;
+
+				block.chunks.update.push(b`
+					if (${if_statement}) {
+						${body}
+					}
+				`);
+			} else {
+				block.chunks.update.push(b`
+				if (${if_statement}) {
+					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
+				}
+			`);
 			}
-		`);
 		}
 	}
 
