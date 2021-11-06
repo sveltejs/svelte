@@ -137,7 +137,7 @@ export default class Element extends Node {
 	needs_manual_style_scoping: boolean;
 	tag_expr: Expression;
 
-	is_dynamic_element() {
+	get is_dynamic_element() {
 		return this.name === 'svelte:element';
 	}
 

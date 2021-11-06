@@ -221,7 +221,7 @@ export default class ElementWrapper extends Wrapper {
 				node.intro || node.outro ||
 				node.handlers.length > 0 ||
 				this.node.name === 'option' ||
-				node.is_dynamic_element() ||
+				node.is_dynamic_element ||
 				renderer.options.dev
 			) {
 				this.parent.cannot_use_innerhtml(); // need to use add_location
@@ -358,7 +358,7 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 
-		if (this.node.is_dynamic_element()) {
+		if (this.node.is_dynamic_element) {
 			block.renderer.dirty(
 				this.node.tag_expr.dynamic_dependencies()
 			);
@@ -427,7 +427,7 @@ export default class ElementWrapper extends Wrapper {
 		const name = this.node.namespace
 			? this.node.name
 			: this.node.name.toUpperCase();
-		const reference = this.node.is_dynamic_element() ? this.node.tag_expr.manipulate(block) : `"${name}"`;
+		const reference = this.node.is_dynamic_element ? this.node.tag_expr.manipulate(block) : `"${name}"`;
 
 		if (this.node.namespace === namespaces.svg) {
 			return x`@claim_svg_element(${nodes}, ${reference}, { ${attributes} })`;
