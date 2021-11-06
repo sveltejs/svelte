@@ -165,7 +165,7 @@ export default class ElementWrapper extends Wrapper {
 			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		};
 
-		if (node.dynamic_tag_expr) {
+		if (node.is_dynamic_element()) {
 			if (block.type !== 'child_dynamic_element') {
 				this.not_static_content();
 				this.child_dynamic_element_block = block.child({
@@ -225,6 +225,8 @@ export default class ElementWrapper extends Wrapper {
 			block.add_animation();
 		}
 
+		block.add_dependencies(node.tag_expr.dependencies);
+
 		// add directive and handler dependencies
 		[node.animation, node.outro, ...node.actions, ...node.classes].forEach(directive => {
 			if (directive && directive.expression) {
@@ -237,10 +239,6 @@ export default class ElementWrapper extends Wrapper {
 				block.add_dependencies(handler.expression.dependencies);
 			}
 		});
-
-		if (node.dynamic_tag_expr) {
-			block.add_dependencies(node.dynamic_tag_expr.dependencies);
-		}
 
 		if (this.parent) {
 			if (node.actions.length > 0 ||
@@ -283,11 +281,11 @@ export default class ElementWrapper extends Wrapper {
 			b`${node} = ${render_statement};`
 		);
 
-		if (this.node.dynamic_tag_expr && this.renderer.options.dev) {
-			block.chunks.create.push(b`@validate_dynamic_element(${this.node.dynamic_tag_expr.manipulate(block)});`);
+		if (this.node.is_dynamic_element() && this.renderer.options.dev) {
+			block.chunks.create.push(b`@validate_dynamic_element(${this.node.tag_expr.manipulate(block)});`);
 
 			if (renderer.options.hydratable) {
-				block.chunks.claim.push(b`@validate_dynamic_element(${this.node.dynamic_tag_expr.manipulate(block)});`);
+				block.chunks.claim.push(b`@validate_dynamic_element(${this.node.tag_expr.manipulate(block)});`);
 			}
 		}
 
@@ -402,8 +400,8 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 
-		if (this.node.dynamic_tag_expr) {
-			const dependencies = this.node.dynamic_tag_expr.dynamic_dependencies();
+		if (this.node.is_dynamic_element()) {
+			const dependencies = this.node.tag_expr.dynamic_dependencies();
 			if (dependencies.length) {
 				const condition = block.renderer.dirty(
 					dependencies
@@ -414,7 +412,7 @@ export default class ElementWrapper extends Wrapper {
 					if (${condition}) {
 						@detach(${node});
 						${node} = ${render_statement};
-						@validate_dynamic_element(${this.node.dynamic_tag_expr.manipulate(block)});
+						@validate_dynamic_element(${this.node.tag_expr.manipulate(block)});
 						${block.chunks.hydrate}
 						${block.event_listeners.length && b`${mounted}  = false`};
 						${staticChildren}
@@ -432,7 +430,7 @@ export default class ElementWrapper extends Wrapper {
 		);
 
 		const previous_tag = block.get_unique_name('previous_tag');
-		const snippet = this.node.dynamic_tag_expr.manipulate(block);
+		const snippet = this.node.tag_expr.manipulate(block);
 		block.add_variable(previous_tag, snippet);
 
 		block.chunks.init.push(b`
@@ -497,7 +495,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	get_render_statement(block: Block) {
-		const { name, namespace } = this.node;
+		const { name, namespace, tag_expr } = this.node;
 
 		if (namespace === namespaces.svg) {
 			return x`@svg_element("${name}")`;
@@ -512,7 +510,7 @@ export default class ElementWrapper extends Wrapper {
 			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)})`;
 		}
 
-		const reference = this.node.dynamic_tag_expr ? this.node.dynamic_tag_expr.manipulate(block) : `"${name}"`;
+		const reference = tag_expr.manipulate(block);
 		return x`@element(${reference})`;
 	}
 
@@ -524,7 +522,7 @@ export default class ElementWrapper extends Wrapper {
 		const name = this.node.namespace
 			? this.node.name
 			: this.node.name.toUpperCase();
-		const reference = this.node.dynamic_tag_expr ? this.node.dynamic_tag_expr.manipulate(block) : `"${name}"`;
+		const reference = this.node.is_dynamic_element() ? this.node.tag_expr.manipulate(block) : `"${name}"`;
 
 		if (this.node.namespace === namespaces.svg) {
 			return x`@claim_svg_element(${nodes}, ${reference}, { ${attributes} })`;

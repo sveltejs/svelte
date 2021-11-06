@@ -23,12 +23,8 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		node.attributes.some((attribute) => attribute.name === 'contenteditable')
 	);
 
-	if (node.dynamic_tag_expr) {
-		renderer.add_string('<');
-		renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
-	} else {
-		renderer.add_string(`<${node.name}`);
-	}
+	renderer.add_string('<');
+	renderer.add_expression(node.tag_expr.node as ESExpression);
 
 	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
@@ -165,13 +161,9 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 
 	function add_close_tag() {
 		if (!is_void(node.name)) {
-			if (node.dynamic_tag_expr) {
-				renderer.add_string('</');
-				renderer.add_expression(node.dynamic_tag_expr.node as ESExpression);
-				renderer.add_string('>');
-			} else {
-				renderer.add_string(`</${node.name}>`);
-			}
+			renderer.add_string('</');
+			renderer.add_expression(node.tag_expr.node as ESExpression);
+			renderer.add_string('>');
 		}
 	}
 }

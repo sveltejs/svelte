@@ -19,6 +19,8 @@ import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
 import Component from '../Component';
 import Expression from './shared/Expression';
+import { string_literal } from '../utils/stringify';
+import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 
@@ -133,18 +135,25 @@ export default class Element extends Node {
 	children: INode[];
 	namespace: string;
 	needs_manual_style_scoping: boolean;
-	dynamic_tag_expr?: Expression = null;
+	tag_expr: Expression;
+
+	is_dynamic_element() {
+		return this.name === 'svelte:element';
+	}
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
-		if (this.name === 'svelte:element') {
+		if (info.name === 'svelte:element') {
 			if (typeof info.tag === 'string') {
 				this.name = info.tag;
+				this.tag_expr = new Expression(component, this, scope, string_literal(info.tag) as Literal);
 			} else {
-				this.dynamic_tag_expr = new Expression(component, this, scope, info.tag);
+				this.tag_expr = new Expression(component, this, scope, info.tag);
 			}
+		} else {
+			this.tag_expr = new Expression(component, this, scope, string_literal(info.name) as Literal);
 		}
 
 		this.namespace = get_namespace(parent as Element, this, component.namespace);
@@ -252,7 +261,7 @@ export default class Element extends Node {
 		this.scope = scope;
 		this.children = map_children(component, this, this.scope, info.children);
 
-		if (this.dynamic_tag_expr) {
+		if (this.is_dynamic_element()) {
 			this.validate_dynamic_element(info);
 		}
 		this.validate();
