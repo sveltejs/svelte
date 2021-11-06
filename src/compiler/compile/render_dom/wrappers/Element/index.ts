@@ -221,7 +221,7 @@ export default class ElementWrapper extends Wrapper {
 				node.intro || node.outro ||
 				node.handlers.length > 0 ||
 				this.node.name === 'option' ||
-				node.is_dynamic_element ||
+				node.tag_expr.dynamic_dependencies().length ||
 				renderer.options.dev
 			) {
 				this.parent.cannot_use_innerhtml(); // need to use add_location
