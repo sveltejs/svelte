@@ -374,7 +374,6 @@ export default class ElementWrapper extends Wrapper {
 			const statement = (b`
 				@detach(${node});
 				${node} = ${render_statement};
-				@validate_dynamic_element(${snippet});
 				${block.chunks.hydrate}
 				${block.event_listeners.length && b`${mounted}  = false`};
 				${staticChildren}
@@ -414,6 +413,11 @@ export default class ElementWrapper extends Wrapper {
 				if (renderer.options.hydratable) {
 					block.chunks.claim.push(b`@validate_dynamic_element(${snippet});`);
 				}
+				block.chunks.update.push(b`
+					if (${if_statement}) {
+						@validate_dynamic_element(${snippet});
+					}
+				`);
 			}
 		}
 	}
