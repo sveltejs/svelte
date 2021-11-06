@@ -19,7 +19,6 @@ import { add_event_handler } from '../shared/add_event_handlers';
 import { add_action } from '../shared/add_actions';
 import bind_this from '../shared/bind_this';
 import { is_head } from '../shared/is_head';
-// import create_debugging_comment from '../shared/create_debugging_comment';
 import { Identifier, ExpressionStatement, CallExpression } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
@@ -156,7 +155,6 @@ export default class ElementWrapper extends Wrapper {
 		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
-
 		this.var = {
 			type: 'Identifier',
 			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
