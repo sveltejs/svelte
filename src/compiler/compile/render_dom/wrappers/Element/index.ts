@@ -19,7 +19,7 @@ import { add_event_handler } from '../shared/add_event_handlers';
 import { add_action } from '../shared/add_actions';
 import bind_this from '../shared/bind_this';
 import { is_head } from '../shared/is_head';
-import create_debugging_comment from '../shared/create_debugging_comment';
+// import create_debugging_comment from '../shared/create_debugging_comment';
 import { Identifier, ExpressionStatement, CallExpression } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
@@ -147,9 +147,6 @@ export default class ElementWrapper extends Wrapper {
 	var: any;
 	void: boolean;
 
-	child_dynamic_element_block?: Block = null;
-	child_dynamic_element?: ElementWrapper = null;
-
 	constructor(
 		renderer: Renderer,
 		block: Block,
@@ -164,28 +161,6 @@ export default class ElementWrapper extends Wrapper {
 			type: 'Identifier',
 			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		};
-
-		if (node.is_dynamic_element()) {
-			if (block.type !== 'child_dynamic_element') {
-				this.not_static_content();
-				this.child_dynamic_element_block = block.child({
-					comment: create_debugging_comment(node, renderer.component),
-					name: renderer.component.get_unique_name('create_dynamic_element'),
-					type: 'child_dynamic_element'
-				});
-				renderer.blocks.push(this.child_dynamic_element_block);
-				this.child_dynamic_element = new ElementWrapper(
-					renderer,
-					this.child_dynamic_element_block,
-					parent,
-					node,
-					strip_whitespace,
-					next_sibling
-				);
-			} else {
-				this.var = { type: 'Identifier', name: 'dynamic_element' };
-			}
-		}
 
 		this.void = is_void(node.name);
 
@@ -248,6 +223,7 @@ export default class ElementWrapper extends Wrapper {
 				node.intro || node.outro ||
 				node.handlers.length > 0 ||
 				this.node.name === 'option' ||
+				node.is_dynamic_element() ||
 				renderer.options.dev
 			) {
 				this.parent.cannot_use_innerhtml(); // need to use add_location
@@ -259,10 +235,10 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
-		if (this.child_dynamic_element) {
+
+		this.render_element(block, parent_node, parent_nodes);
+		if (this.node.is_dynamic_element()) {
 			this.render_dynamic_element(block, parent_node, parent_nodes);
-		} else {
-			this.render_element(block, parent_node, parent_nodes);
 		}
 	}
 
@@ -423,71 +399,42 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	render_dynamic_element(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
-		this.child_dynamic_element.render(
-			this.child_dynamic_element_block,
-			null,
-			(x`#nodes` as unknown) as Identifier
-		);
 
 		const previous_tag = block.get_unique_name('previous_tag');
 		const snippet = this.node.tag_expr.manipulate(block);
 		block.add_variable(previous_tag, snippet);
 
-		block.chunks.init.push(b`
-			let ${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
-		`);
-
-		block.chunks.create.push(b`${this.var}.c();`);
-
-		if (this.renderer.options.hydratable) {
-			block.chunks.claim.push(b`${this.var}.l(${parent_nodes});`);
-		}
-
-		block.chunks.mount.push(
-			b`${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'
-				});`
-		);
-
 		const has_transitions = !!(
-			this.child_dynamic_element_block.has_intro_method || this.child_dynamic_element_block.has_outro_method
+			block.has_intro_method || block.has_outro_method
 		);
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
 		const condition = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
+
+		const render_statement = this.get_render_statement(block);
 
 		if (has_transitions) {
 			const body = b`
 				@group_outros();
 				@transition_out(${this.var}, 1, 1, @noop);
 				@check_outros();
-				${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
-				${this.var}.c();
+				${this.var} = ${render_statement};
 				@transition_in(${this.var});
-				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+				this.m(${this.get_update_mount_node(anchor)}, ${anchor});
 			`;
 
 			block.chunks.update.push(b`
 				if (${condition}) {
 					${body}
-				} else {
-					${this.var}.p(#ctx, #dirty);
 				}
 			`);
 		} else {
 			block.chunks.update.push(b`
-			${this.var}.p(#ctx, #dirty);
 			if (${condition}) {
-				${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+				this.m(${this.get_update_mount_node(anchor)}, ${anchor});
 			}
 		`);
 		}
-
-		if (has_transitions) {
-			block.chunks.intro.push(b`@transition_in(${this.var})`);
-			block.chunks.outro.push(b`@transition_out(${this.var})`);
-		}
-
-		block.chunks.destroy.push(b`${this.var}.d(detaching)`);
 	}
 
 	can_use_textcontent() {
