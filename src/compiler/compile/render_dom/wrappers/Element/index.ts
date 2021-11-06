@@ -342,7 +342,7 @@ export default class ElementWrapper extends Wrapper {
 
 		this.add_attributes(block);
 		this.add_directives_in_order(block);
-		this.add_transitions(block);
+		const transition_names = this.add_transitions(block);
 		this.add_animation(block);
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
@@ -386,12 +386,9 @@ export default class ElementWrapper extends Wrapper {
 
 			if (has_transitions) {
 				const body = b`
-					@group_outros();
-					@transition_out(${this.var}, 1, 1, @noop);
-					@check_outros();
 					${statement}
-					@transition_in(${this.var});
 					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
+					${transition_names.outro_name && b`${transition_names.outro_name} = null;`}
 				`;
 
 				block.chunks.update.push(b`
@@ -767,13 +764,16 @@ export default class ElementWrapper extends Wrapper {
 
 	add_transitions(
 		block: Block
-	) {
+	): { intro_name: Identifier | null, outro_name: Identifier | null } {
+		const transition_names = { intro_name: null, outro_name: null };
 		const { intro, outro } = this.node;
-		if (!intro && !outro) return;
+		if (!intro && !outro) return transition_names;
 
 		if (intro === outro) {
 			// bidirectional transition
 			const name = block.get_unique_name(`${this.var.name}_transition`);
+			transition_names.intro_name = name;
+			transition_names.outro_name = name;
 			const snippet = intro.expression
 				? intro.expression.manipulate(block)
 				: x`{}`;
@@ -815,6 +815,8 @@ export default class ElementWrapper extends Wrapper {
 		} else {
 			const intro_name = intro && block.get_unique_name(`${this.var.name}_intro`);
 			const outro_name = outro && block.get_unique_name(`${this.var.name}_outro`);
+			transition_names.intro_name = intro_name;
+			transition_names.outro_name = outro_name;
 
 			if (intro) {
 				block.add_variable(intro_name);
@@ -895,6 +897,8 @@ export default class ElementWrapper extends Wrapper {
 		if ((intro && intro.expression && intro.expression.dependencies.size) || (outro && outro.expression && outro.expression.dependencies.size)) {
 			block.maintain_context = true;
 		}
+
+		return transition_names;
 	}
 
 	add_animation(block: Block) {
