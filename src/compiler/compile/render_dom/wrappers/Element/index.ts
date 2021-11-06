@@ -424,10 +424,15 @@ export default class ElementWrapper extends Wrapper {
 			.filter((attr) => !(attr instanceof SpreadAttributeWrapper) && !attr.property_name)
 			.map((attr) => p`${(attr as StyleAttributeWrapper | AttributeWrapper).name}: true`);
 
-		const name = this.node.namespace
-			? this.node.name
-			: this.node.name.toUpperCase();
-		const reference = this.node.is_dynamic_element ? this.node.tag_expr.manipulate(block) : `"${name}"`;
+		const reference = (function (node) {
+			if (node.tag_expr.node.type === 'Literal') {
+				if (node.namespace) return `"${node.tag_expr.node.value}"`;
+				return `"${(node.tag_expr.node.value as String || '').toUpperCase()}"`;
+			} else {
+				if (node.namespace) return x`${node.tag_expr.manipulate(block)}`;
+				return x`(${node.tag_expr.manipulate(block)} || 'null').toUpperCase()`;
+			}
+		}(this.node));
 
 		if (this.node.namespace === namespaces.svg) {
 			return x`@claim_svg_element(${nodes}, ${reference}, { ${attributes} })`;
