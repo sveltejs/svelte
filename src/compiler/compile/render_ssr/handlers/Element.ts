@@ -24,7 +24,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 	);
 
 	renderer.add_string('<');
-	renderer.add_expression(node.tag_expr.node as ESExpression);
+	add_tag_name();
 
 	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
@@ -162,8 +162,16 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 	function add_close_tag() {
 		if (!is_void(node.name)) {
 			renderer.add_string('</');
-			renderer.add_expression(node.tag_expr.node as ESExpression);
+			add_tag_name();
 			renderer.add_string('>');
+		}
+	}
+
+	function add_tag_name() {
+		if (node.tag_expr.node.type === 'Literal') {
+			renderer.add_string(node.tag_expr.node.value as string);
+		} else {
+			renderer.add_expression(node.tag_expr.node as ESExpression);
 		}
 	}
 }
