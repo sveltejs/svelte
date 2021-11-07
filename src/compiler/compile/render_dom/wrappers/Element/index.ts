@@ -424,15 +424,18 @@ export default class ElementWrapper extends Wrapper {
 			.filter((attr) => !(attr instanceof SpreadAttributeWrapper) && !attr.property_name)
 			.map((attr) => p`${(attr as StyleAttributeWrapper | AttributeWrapper).name}: true`);
 
-		const reference = (function (node) {
-			if (node.tag_expr.node.type === 'Literal') {
-				if (node.namespace) return `"${node.tag_expr.node.value}"`;
-				return `"${(node.tag_expr.node.value as String || '').toUpperCase()}"`;
+		let reference;
+		if (this.node.tag_expr.node.type === 'Literal') {
+			if (this.node.namespace) {
+				reference = `"${this.node.tag_expr.node.value}"`;
 			} else {
-				if (node.namespace) return x`${node.tag_expr.manipulate(block)}`;
-				return x`(${node.tag_expr.manipulate(block)} || 'null').toUpperCase()`;
+				reference = `"${(this.node.tag_expr.node.value as String || '').toUpperCase()}"`;
 			}
-		}(this.node));
+		} else if (this.node.namespace) {
+			reference = x`${this.node.tag_expr.manipulate(block)}`;
+		} else {
+			reference = x`(${this.node.tag_expr.manipulate(block)} || 'null').toUpperCase()`;
+		}
 
 		if (this.node.namespace === namespaces.svg) {
 			return x`@claim_svg_element(${nodes}, ${reference}, { ${attributes} })`;
