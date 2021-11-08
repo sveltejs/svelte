@@ -602,6 +602,22 @@ On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`
 />
 ```
 
+---
+
+`bind:` can be used together with `on:` directives. The order that they are defined in determines the value of the bound variable when the event handler is called.
+
+```sv
+<script>
+	let value = 'Hello World';
+</script>
+
+<input
+	on:input="{() => console.log('Old value:', value)}"
+	bind:value
+	on:input="{() => console.log('New value:', value)}"
+/>
+```
+
 
 ##### Binding `<select>` value
 
