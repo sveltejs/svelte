@@ -203,7 +203,7 @@ export function insert_hydration(target: NodeEx, node: NodeEx, anchor?: NodeEx) 
 }
 
 export function detach(node: Node) {
-	if (node.parentNode){
+	if (node.parentNode) {
 		node.parentNode.removeChild(node);
 	}
 }
