@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix overly restrictive preprocessor types ([#6904](https://github.com/sveltejs/svelte/pull/6904))
+
 ## 3.44.1
 
 * Fix code generation when a multi-line `return` statement contains comments ([code-red#36](https://github.com/Rich-Harris/code-red/issues/36))
