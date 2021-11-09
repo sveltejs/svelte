@@ -33,7 +33,7 @@ export function add_flush_callback(fn) {
 
 let flushing = false;
 const seen_callbacks = new Set();
-let dirty_binding_component_map = new Map();
+let previous_dirty_components = [];
 
 export function flush() {
 	if (flushing) return;
@@ -45,10 +45,10 @@ export function flush() {
 		for (let i = 0; i < dirty_components.length; i += 1) {
 			const component = dirty_components[i];
 			set_current_component(component);
-			const is_dirty_from_binding = dirty_binding_component_map.has(component.constructor.name);
+			const is_dirty_from_binding = previous_dirty_components.indexOf(component) > -1;
 			update(component.$$, is_dirty_from_binding);
 		}
-		dirty_binding_component_map = new Map();
+		previous_dirty_components = [];
 		set_current_component(null);
 
 		dirty_components.length = 0;
@@ -56,8 +56,7 @@ export function flush() {
 		while (binding_callbacks.length) {
 			binding_callbacks.pop()();
 		}
-		dirty_components.forEach((i) =>
-			dirty_binding_component_map.set(i.constructor.name, i));
+		previous_dirty_components = [...dirty_components]
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause
 		// subsequent updates...
