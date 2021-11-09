@@ -45,8 +45,8 @@ export function flush() {
 		for (let i = 0; i < dirty_components.length; i += 1) {
 			const component = dirty_components[i];
 			set_current_component(component);
-			const is_dirty_from_binding = previous_dirty_components.indexOf(component) > -1;
-			update(component.$$, is_dirty_from_binding);
+			const is_previous_dirty = previous_dirty_components.indexOf(component) > -1;
+			update(component.$$, is_previous_dirty);
 		}
 		previous_dirty_components = [];
 		set_current_component(null);
@@ -83,14 +83,14 @@ export function flush() {
 	seen_callbacks.clear();
 }
 
-function update($$, is_dirty_from_binding) {
+function update($$, is_previous_dirty) {
 	if ($$.fragment !== null) {
 		$$.update();
-		if (!is_dirty_from_binding) run_all($$.before_update);
+		if (!is_previous_dirty) run_all($$.before_update);
 		const dirty = $$.dirty;
 		$$.dirty = [-1];
 		$$.fragment && $$.fragment.p($$.ctx, dirty);
-		// if (!is_dirty_from_binding) run_all($$.after_update);
+		// if (!is_previous_dirty) run_all($$.after_update);
 		$$.after_update.forEach(add_render_callback);
 	}
 }
