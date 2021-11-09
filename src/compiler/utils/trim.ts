@@ -1,9 +1,9 @@
-import { startWhitespace, endWhitespace } from './patterns';
+import { start_whitespace, end_whitespace } from './patterns';
 
 export function trim_start(str: string) {
-	return str.replace(startWhitespace, '');
+	return str.replace(start_whitespace, '');
 }
 
 export function trim_end(str: string) {
-	return str.replace(endWhitespace, '');
+	return str.replace(end_whitespace, '');
 }
