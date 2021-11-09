@@ -8,7 +8,7 @@ describe('utils', () => {
 			assert.equal(value, 'svelte content \r\n\t	');
 		});
 
-    it('trim_end', () => {
+		it('trim_end', () => {
 			const value = trim_end('	\r\n\t svelte content \r\n\t	');
 			assert.equal(value, '	\r\n\t svelte content');
 		});
