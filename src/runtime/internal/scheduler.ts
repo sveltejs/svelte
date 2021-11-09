@@ -56,7 +56,7 @@ export function flush() {
 		while (binding_callbacks.length) {
 			binding_callbacks.pop()();
 		}
-		previous_dirty_components = [...dirty_components]
+		previous_dirty_components = [...dirty_components];
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause
 		// subsequent updates...
