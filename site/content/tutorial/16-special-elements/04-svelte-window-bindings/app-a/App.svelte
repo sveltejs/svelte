@@ -4,7 +4,7 @@
 	let y;
 </script>
 
-<svelte:window/>
+<svelte:window bind:scrollY={y}/>
 
 <a class="parallax-container" href="https://www.firewatchgame.com">
 	{#each layers as layer}
