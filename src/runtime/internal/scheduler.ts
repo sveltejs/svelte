@@ -33,7 +33,7 @@ export function add_flush_callback(fn) {
 
 let flushing = false;
 const seen_callbacks = new Set();
-let previous_dirty_components = [];
+let previous_dirty_components = new Set();
 
 export function flush() {
 	if (flushing) return;
@@ -45,10 +45,10 @@ export function flush() {
 		for (let i = 0; i < dirty_components.length; i += 1) {
 			const component = dirty_components[i];
 			set_current_component(component);
-			const is_previous_dirty = previous_dirty_components.indexOf(component) > -1;
+			const is_previous_dirty = previous_dirty_components.has(component);
 			update(component.$$, is_previous_dirty);
 		}
-		previous_dirty_components = [];
+
 		set_current_component(null);
 
 		dirty_components.length = 0;
@@ -56,7 +56,7 @@ export function flush() {
 		while (binding_callbacks.length) {
 			binding_callbacks.pop()();
 		}
-		previous_dirty_components = [...dirty_components];
+		previous_dirty_components = new Set(dirty_components);
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause
 		// subsequent updates...
@@ -81,6 +81,7 @@ export function flush() {
 	update_scheduled = false;
 	flushing = false;
 	seen_callbacks.clear();
+	previous_dirty_components.clear();
 }
 
 function update($$, is_previous_dirty) {
