@@ -1,7 +1,7 @@
-import { run_all } from './utils';
+import { run_all, Queue } from './utils';
 import { set_current_component } from './lifecycle';
 
-export const dirty_components = [];
+export const dirty_components = new Queue<any>();
 export const intros = { enabled: false };
 
 export const binding_callbacks = [];
@@ -31,17 +31,14 @@ export function add_flush_callback(fn) {
 	flush_callbacks.push(fn);
 }
 
-let flushing = false;
 const seen_callbacks = new Set();
 export function flush() {
-	if (flushing) return;
-	flushing = true;
 
 	do {
 		// first, call beforeUpdate functions
 		// and update components
-		for (let i = 0; i < dirty_components.length; i += 1) {
-			const component = dirty_components[i];
+		while (dirty_components.length) {
+			const component = dirty_components.shift();
 			set_current_component(component);
 			update(component.$$);
 		}
@@ -73,7 +70,6 @@ export function flush() {
 	}
 
 	update_scheduled = false;
-	flushing = false;
 	seen_callbacks.clear();
 }
 
