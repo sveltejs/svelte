@@ -271,6 +271,10 @@ export default class ElementWrapper extends Wrapper {
 			(x`#nodes` as unknown) as Identifier
 		);
 
+		const previous_tag = block.get_unique_name('previous_tag');
+		const snippet = this.node.tag_expr.manipulate(block);
+		block.add_variable(previous_tag, snippet);
+
 		block.chunks.init.push(b`
 			let ${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
 		`);
@@ -285,7 +289,20 @@ export default class ElementWrapper extends Wrapper {
 			b`${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
 		);
 
-		block.chunks.update.push(b`${this.var}.p(#ctx, #dirty);`);
+		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
+		const if_statement = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
+
+		block.chunks.update.unshift(b`
+			if (${if_statement}) {
+				${this.var}.d(1);
+				${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+				${this.var}.c();
+				this.m(${this.get_update_mount_node(anchor)}, ${anchor});
+			} else {
+				${this.var}.p(#ctx, #dirty);
+			}
+		`);
 
 		if (this.child_dynamic_element_block.has_intros) {
 			block.chunks.intro.push(b`@transition_in(${this.var});`);
@@ -407,7 +424,7 @@ export default class ElementWrapper extends Wrapper {
 
 		this.add_attributes(block);
 		this.add_directives_in_order(block);
-		const transition_names = this.add_transitions(block);
+		this.add_transitions(block);
 		this.add_animation(block);
 		this.add_classes(block);
 		this.add_manual_style_scoping(block);
@@ -425,33 +442,9 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 
-		const dynamic_dependencies = this.node.tag_expr.dynamic_dependencies();
-		if (block.type === 'child_dynamic_element' && dynamic_dependencies.length > 0) {
-			block.renderer.dirty(dynamic_dependencies);
-
-			const previous_tag = block.get_unique_name('previous_tag');
+		block.renderer.dirty(this.node.tag_expr.dynamic_dependencies());
+		if (block.type === 'child_dynamic_element' && this.node.tag_expr.dependencies.size > 0) {
 			const snippet = this.node.tag_expr.manipulate(block);
-			block.add_variable(previous_tag, snippet);
-
-			const render_statement = this.get_render_statement(block);
-			const mounted: Identifier = { type: 'Identifier', name: '#mounted' };
-			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
-			const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-			const if_statement = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
-
-			block.chunks.update.unshift(b`
-				if (${if_statement}) {
-					@detach(${node});
-					${node} = ${render_statement};
-					${block.chunks.hydrate}
-					${block.event_listeners.length && b`${mounted}  = false`};
-					${staticChildren}
-					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
-					${transition_names.outro && b`${transition_names.outro} = null;`}
-					${this.renderer.options.dev && b`@validate_dynamic_element(${snippet});`}
-				}
-			`);
-
 			if (this.renderer.options.dev) {
 				block.chunks.create.push(b`@validate_dynamic_element(${snippet});`);
 				if (renderer.options.hydratable) {
