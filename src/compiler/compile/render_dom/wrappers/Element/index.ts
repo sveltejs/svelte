@@ -179,14 +179,10 @@ export default class ElementWrapper extends Wrapper {
 			}
 		}
 
-		if (block.type === 'child_dynamic_element') {
-			this.var = { type: 'Identifier', name: 'dynamic_element' };
-		} else {
-			this.var = {
-				type: 'Identifier',
-				name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
-			};
-	}
+		this.var = {
+			type: 'Identifier',
+			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+		};
 
 		this.void = is_void(node.name);
 
@@ -290,12 +286,6 @@ export default class ElementWrapper extends Wrapper {
 		);
 
 		block.chunks.update.push(b`${this.var}.p(#ctx, #dirty);`);
-
-		if (this.child_dynamic_element_block.has_animation) {
-			block.chunks.measure.push(b`${this.var}.r();`);
-			block.chunks.fix.push(b`${this.var}.f();`);
-			block.chunks.animate.push(b`${this.var}.a();`);
-		}
 
 		if (this.child_dynamic_element_block.has_intros) {
 			block.chunks.intro.push(b`@transition_in(${this.var});`);
@@ -435,10 +425,9 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 
-		if (block.type === 'child_dynamic_element') {
-			block.renderer.dirty(
-				this.node.tag_expr.dynamic_dependencies()
-			);
+		const dynamic_dependencies = this.node.tag_expr.dynamic_dependencies();
+		if (block.type === 'child_dynamic_element' && dynamic_dependencies.length > 0) {
+			block.renderer.dirty(dynamic_dependencies);
 
 			const previous_tag = block.get_unique_name('previous_tag');
 			const snippet = this.node.tag_expr.manipulate(block);
@@ -450,7 +439,7 @@ export default class ElementWrapper extends Wrapper {
 			const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
 			const if_statement = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
 
-			block.chunks.update.push(b`
+			block.chunks.update.unshift(b`
 				if (${if_statement}) {
 					@detach(${node});
 					${node} = ${render_statement};
