@@ -260,7 +260,7 @@ export default class Element extends Node {
 		this.scope = scope;
 		this.children = map_children(component, this, this.scope, info.children);
 
-		if (this.is_dynamic_element()) {
+		if (this.is_dynamic_element) {
 			this.validate_dynamic_element(info);
 		}
 		this.validate();
