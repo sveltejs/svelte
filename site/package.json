@@ -9,6 +9,7 @@
     "migrate": "node-pg-migrate -r dotenv/config",
     "build": "node scripts/update.js && npm run copy-workers && svelte-kit build",
     "update": "node scripts/update.js --force=true",
+    "preview": "svelte-kit preview",
     "start": "node build",
     "test": "uvu test",
     "deploy": "make deploy"
@@ -20,7 +21,7 @@
     "flru": "^1.0.2",
     "httpie": "^1.1.2",
     "jsonwebtoken": "^8.5.1",
-    "marked": "^3.0.5",
+    "marked": "3.0.5",
     "pg": "^8.7.1",
     "prism-svelte": "^0.4.3",
     "prismjs": "^1.25.0"
@@ -30,7 +31,7 @@
     "@sveltejs/adapter-node": "next",
     "@sveltejs/kit": "next",
     "@sveltejs/site-kit": "^1.4.0",
-    "@sveltejs/svelte-repl": "^0.3.0",
+    "@sveltejs/svelte-repl": "0.3.0",
     "degit": "^2.1.4",
     "dotenv": "^10.0.0",
     "jimp": "^0.8.0",

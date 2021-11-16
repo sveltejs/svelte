@@ -9,6 +9,14 @@ export default {
 			enabled: false
 		},
 		vite: () => ({
+			// https://github.com/sveltejs/kit/issues/1632#issuecomment-854056053
+			build: {
+				rollupOptions: {
+					output: {
+						manualChunks: undefined
+					}
+				}
+			},
 			optimizeDeps: {
 				include: [
 					'codemirror',
