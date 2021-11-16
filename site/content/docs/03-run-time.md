@@ -848,7 +848,7 @@ The `flip` function calculates the start and end position of an element and anim
 * `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
 
 
-`duration` can be be provided as either:
+`duration` can be provided as either:
 
 - a `number`, in milliseconds.
 - a function, `distance: number => duration: number`, receiving the distance the element will travel in pixels and returning the duration in milliseconds. This allows you to assign a duration that is relative to the distance travelled by each element.
