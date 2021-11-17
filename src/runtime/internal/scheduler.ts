@@ -36,8 +36,10 @@ export function flush() {
 
 	let current_component = null;
 	try {
-		current_component = get_current_component()
-	} catch {}
+		current_component = get_current_component();
+	} catch {
+		// no current component, so leave it as null
+	}
 
 	do {
 		// first, call beforeUpdate functions
