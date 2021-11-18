@@ -31,38 +31,46 @@
         "require": "./ssr.js"
       },
       "import": "./index.mjs",
-      "require": "./index.js"
+      "require": "./index.js",
+      "types": "./types/runtime/index.d.ts"
     },
     "./compiler": {
       "import": "./compiler.mjs",
-      "require": "./compiler.js"
+      "require": "./compiler.js",
+      "types": "./types/compiler/index.d.ts"
     },
     "./animate": {
       "import": "./animate/index.mjs",
-      "require": "./animate/index.js"
+      "require": "./animate/index.js",
+      "types": "./types/runtime/animate/index.d.ts"
     },
     "./easing": {
       "import": "./easing/index.mjs",
-      "require": "./easing/index.js"
+      "require": "./easing/index.js",
+      "types": "./types/runtime/easing/index.d.ts"
     },
     "./internal": {
       "import": "./internal/index.mjs",
-      "require": "./internal/index.js"
+      "require": "./internal/index.js",
+      "types": "./types/runtime/internal/index.d.ts"
     },
     "./motion": {
       "import": "./motion/index.mjs",
-      "require": "./motion/index.js"
+      "require": "./motion/index.js",
+      "types": "./types/runtime/motion/index.d.ts"
     },
     "./register": {
       "require": "./register.js"
     },
     "./store": {
       "import": "./store/index.mjs",
-      "require": "./store/index.js"
+      "require": "./store/index.js",
+      "types": "./types/runtime/store/index.d.ts"
     },
     "./transition": {
       "import": "./transition/index.mjs",
-      "require": "./transition/index.js"
+      "require": "./transition/index.js",
+      "types": "./types/runtime/transition/index.d.ts"
     },
     "./ssr": {
       "import": "./ssr.mjs",
