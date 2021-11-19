@@ -203,8 +203,22 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 		if (this.is_input_value) {
 			const type = element.node.get_static_attribute_value('type');
+			const notTextLikeTypes = [
+				'button',
+				'checkbox',
+				'color',
+				'date',
+				'datetime-local',
+				'file',
+				'hidden',
+				'image',
+				'radio',
+				'range',
+				'reset',
+				'submit'
+			];
 
-			if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
+			if (type !== true && !notTextLikeTypes.includes(type)) {
 				condition = x`${condition} && ${element.var}.${property_name} !== ${should_cache ? last : value}`;
 			}
 		}
