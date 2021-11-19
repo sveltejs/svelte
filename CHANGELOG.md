@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.44.2
 
 * Fix overly restrictive preprocessor types ([#6904](https://github.com/sveltejs/svelte/pull/6904))
 * More specific typing for crossfade function - returns a tuple, not an array ([#6926](https://github.com/sveltejs/svelte/issues/6926))
