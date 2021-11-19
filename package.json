@@ -22,6 +22,7 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
+      "types": "./types/runtime/index.d.ts",
       "browser": {
         "import": "./index.mjs",
         "require": "./index.js"
@@ -31,48 +32,48 @@
         "require": "./ssr.js"
       },
       "import": "./index.mjs",
-      "require": "./index.js",
-      "types": "./types/runtime/index.d.ts"
+      "require": "./index.js"
     },
     "./compiler": {
+      "types": "./types/compiler/index.d.ts",
       "import": "./compiler.mjs",
-      "require": "./compiler.js",
-      "types": "./types/compiler/index.d.ts"
+      "require": "./compiler.js"
     },
     "./animate": {
+      "types": "./types/runtime/animate/index.d.ts",
       "import": "./animate/index.mjs",
-      "require": "./animate/index.js",
-      "types": "./types/runtime/animate/index.d.ts"
+      "require": "./animate/index.js"
     },
     "./easing": {
+      "types": "./types/runtime/easing/index.d.ts",
       "import": "./easing/index.mjs",
-      "require": "./easing/index.js",
-      "types": "./types/runtime/easing/index.d.ts"
+      "require": "./easing/index.js"
     },
     "./internal": {
+      "types": "./types/runtime/internal/index.d.ts",
       "import": "./internal/index.mjs",
-      "require": "./internal/index.js",
-      "types": "./types/runtime/internal/index.d.ts"
+      "require": "./internal/index.js"
     },
     "./motion": {
+      "types": "./types/runtime/motion/index.d.ts",
       "import": "./motion/index.mjs",
-      "require": "./motion/index.js",
-      "types": "./types/runtime/motion/index.d.ts"
+      "require": "./motion/index.js"
     },
     "./register": {
       "require": "./register.js"
     },
     "./store": {
+      "types": "./types/runtime/store/index.d.ts",
       "import": "./store/index.mjs",
-      "require": "./store/index.js",
-      "types": "./types/runtime/store/index.d.ts"
+      "require": "./store/index.js"
     },
     "./transition": {
+      "types": "./types/runtime/transition/index.d.ts",
       "import": "./transition/index.mjs",
-      "require": "./transition/index.js",
-      "types": "./types/runtime/transition/index.d.ts"
+      "require": "./transition/index.js"
     },
     "./ssr": {
+      "types": "./types/runtime/index.d.ts",
       "import": "./ssr.mjs",
       "require": "./ssr.js"
     }
