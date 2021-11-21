@@ -38,7 +38,7 @@ interface T$$ {
 	on_destroy: any[];
 	skip_bound: boolean;
 	on_disconnect: any[];
-	root:Element | ShadowRoot
+	root: Element | ShadowRoot
 }
 
 export function bind(component, name, callback) {
@@ -130,7 +130,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		callbacks: blank_object(),
 		dirty,
 		skip_bound: false,
-		root: options.target || parent_component.$$.root
+		root: options.target || parent_component?.$$.root
 	};
 
 	append_styles && append_styles($$.root);
