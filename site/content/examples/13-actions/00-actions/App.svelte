@@ -8,6 +8,13 @@
 	}
 </script>
 
+<button on:click={() => (showModal = true)}>Show Modal</button>
+{#if showModal}
+	<div class="box" use:clickOutside on:outclick={handleOutclick}>
+		Click outside me!
+	</div>
+{/if}
+
 <style>
 	.box {
 		--width: 100px;
@@ -24,10 +31,3 @@
 		font-weight: bold;
 	}
 </style>
-
-<button on:click={() => (showModal = true)}>Show Modal</button>
-{#if showModal}
-	<div class="box" use:clickOutside on:outclick={handleOutclick}>
-		Click outside me!
-	</div>
-{/if}
