@@ -357,7 +357,7 @@ store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) =
 
 ---
 
-Derives a store from one or more other stores. Whenever those dependencies change, the callback runs.
+Derives a store from one or more other stores. The callback runs initially when the first subscriber subscribes and then whenever the store dependencies change.
 
 In the simplest version, `derived` takes a single store, and the callback returns a derived value.
 
@@ -533,7 +533,7 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 
 * `stiffness` (`number`, default `0.15`) — a value between 0 and 1 where higher means a 'tighter' spring
 * `damping` (`number`, default `0.8`) — a value between 0 and 1 where lower means a 'springier' spring
-* `precision` (`number`, default `0.001`) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise
+* `precision` (`number`, default `0.01`) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise
 
 ---
 
@@ -848,7 +848,7 @@ The `flip` function calculates the start and end position of an element and anim
 * `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
 
 
-`duration` can be be provided as either:
+`duration` can be provided as either:
 
 - a `number`, in milliseconds.
 - a function, `distance: number => duration: number`, receiving the distance the element will travel in pixels and returning the duration in milliseconds. This allows you to assign a duration that is relative to the distance travelled by each element.

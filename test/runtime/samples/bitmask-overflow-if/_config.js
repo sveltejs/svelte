@@ -6,7 +6,7 @@ export default {
 		<button></button>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const button = target.querySelector('button');
 		await button.dispatchEvent(new window.MouseEvent('click'));
 

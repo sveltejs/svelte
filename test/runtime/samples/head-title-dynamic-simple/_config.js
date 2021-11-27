@@ -3,7 +3,7 @@ export default {
 		foo: 'A Title'
 	},
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, window }) {
 		assert.equal(window.document.title, 'A Title');
 
 		component.foo = 'Also A Title';

@@ -1,14 +1,19 @@
 <script context="module">
-	export async function preload({ params }) {
-		const res = await this.fetch(`tutorial/${params.slug}.json`);
+	export async function load({ fetch, page: { params }}) {
+		const res = await fetch(`/tutorial/${params.slug}.json`);
 
 		if (!res.ok) {
-			return this.redirect(301, `tutorial/basics`);
+			return {
+				status: 301,
+				redirect: '/tutorial/basics'
+			}
 		}
 
 		return {
-			slug: params.slug,
-			chapter: await res.json()
+			props: {
+				slug: params.slug,
+				chapter: await res.json()
+			}
 		};
 	}
 </script>
@@ -16,6 +21,7 @@
 <script>
 	import Repl from '@sveltejs/svelte-repl';
 	import { getContext } from 'svelte';
+	import { browser } from '$app/env';
 
 	import ScreenToggle from '../../../components/ScreenToggle.svelte';
 	import TableOfContents from './_TableOfContents.svelte';
@@ -36,7 +42,7 @@
 	let scrollable;
 	const lookup = new Map();
 
-	let width = process.browser ? window.innerWidth : 1000;
+	let width = browser ? window.innerWidth : 1000;
 	let offset = 0;
 
 	sections.forEach(section => {
@@ -50,7 +56,7 @@
 
 			lookup.set(chapter.slug, obj);
 
-			if (process.browser) { // pending https://github.com/sveltejs/svelte/issues/2135
+			if (browser) { // pending https://github.com/sveltejs/svelte/issues/2135
 				if (prev) prev.next = obj;
 				prev = obj;
 			}

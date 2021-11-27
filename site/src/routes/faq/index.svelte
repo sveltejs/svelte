@@ -1,7 +1,11 @@
 <script context="module">
-	export async function preload() {
-		const faqs = await this.fetch(`faq.json`).then(r => r.json());
-		return { faqs };
+	export async function load({ fetch }) {
+		const faqs = await fetch(`faq.json`).then(r => r.json());
+		return {
+			props: {
+				faqs
+			}
+		};
 	}
 </script>
 
@@ -26,7 +30,7 @@
 		<article class='faq'>
 			<h2>
 			<span id={faq.fragment} class="offset-anchor"></span>
-			<a class="anchor" rel='prefetch' href='faq#{faq.fragment}' title='{faq.question}'>&nbsp;</a>
+			<a class="anchor" href='faq#{faq.fragment}' title='{faq.question}'>&nbsp;</a>
 			{faq.metadata.question}
 			</h2>
 			<p>{@html faq.answer}</p>

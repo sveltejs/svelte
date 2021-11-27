@@ -7,7 +7,7 @@ import { add_render_callback } from './scheduler';
 import { TransitionConfig } from '../transition';
 import { Fragment } from './Component';
 
-let promise: Promise<void>|null;
+let promise: Promise<void> | null;
 type INTRO = 1;
 type OUTRO = 0;
 interface Outro {

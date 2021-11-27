@@ -14,7 +14,7 @@ export default {
 		</ul>
 	`,
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		const ul = target.querySelector('ul');
 
 		assert.equal(ul.childNodes.length, 5);

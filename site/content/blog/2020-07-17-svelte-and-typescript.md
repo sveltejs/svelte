@@ -41,7 +41,7 @@ When we say that Svelte now supports TypeScript, we mean a few different things:
 * You get autocompletion hints and type-checking as you're writing components, even in expressions inside markup
 * TypeScript files understand the Svelte component API — no more red squiggles when you import a `.svelte` file into a `.ts` module
 
-#### How does it work?
+### How does it work?
 
 To understand the two main parts of TypeScript support, we'll compare it to the technique TypeScript uses to provide dev tools. There is a compiler `tsc` which you run on the command-line to convert `*.ts` to `*.js`, then there is a `TSServer` which is a node API that responds to requests from text editors. The `TSServer` is what provides all the JavaScript and TypeScript realtime introspection for editors while coding, and it has most of the compiler's code inside it.
 
@@ -52,7 +52,7 @@ The Svelte compiler support for TypeScript is handled by [Christian Kaisermann](
 For the editor level, we took inspiration from [Pine's](https://github.com/octref) work in the [Vue](https://vuejs.org) ecosystem via [Vetur](https://github.com/vuejs/vetur). Vetur provides an [LSP](https://github.com/vuejs/vetur/blob/master/server), a VS Code extension and a [CLI](https://github.com/vuejs/vetur/blob/master/vti). Svelte now also has an [LSP](https://github.com/sveltejs/language-tools/blob/master/packages/language-server), a [VS Code extension](https://github.com/sveltejs/language-tools/blob/master/packages/svelte-vscode) and a [CLI](https://github.com/sveltejs/language-tools/blob/master/packages/svelte-check).
 
 
-#### `*.svelte` Introspection
+### `*.svelte` Introspection
 
 For the official Svelte VS Code extension, we built off the foundations which [James Birtles](https://github.com/UnwrittenFun) has created in [`UnwrittenFun/svelte-vscode`](https://github.com/UnwrittenFun/svelte-vscode) and [`UnwrittenFun/svelte-language-server`](https://github.com/UnwrittenFun/svelte-language-server/).
 
@@ -67,7 +67,7 @@ Before getting started, add the dependencies:
 npm install --save-dev @tsconfig/svelte typescript svelte-preprocess svelte-check
 ```
 
-##### 1. Compiling TypeScript
+### 1. Compiling TypeScript
 
 You first need to set up [`svelte-preprocess`](https://github.com/sveltejs/svelte-preprocess#svelte-preprocess), which passes the contents of your `<script lang="ts">` blocks through the TypeScript compiler.
 
@@ -103,7 +103,7 @@ To configure TypeScript, you will need to create a `tsconfig.json` in the root o
 
 Your `include`/`exclude` may differ per project — these are defaults that should work across most Svelte projects.
 
-##### 2. Editor Support
+### 2. Editor Support
 
 Any editor [using an LSP](https://langserver.org/#implementations-client) can be supported. The [VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) extension has been our primary focus, but there is work in progress [on Atom](https://github.com/sveltejs/language-tools/pull/160), and Vim via [coc-svelte](https://github.com/coc-extensions/coc-svelte) has been updated with the latest LSP.
 
@@ -111,7 +111,7 @@ These editor extensions will improve your coding experience even if you only use
 
 To switch a `<script>` to use TypeScript, use `<script lang="ts">` and that should be it. Hopefully you won't be seeing an ocean of red squiggles.
 
-##### 3. CI Checks
+### 3. CI Checks
 
 Having red squiggles is great, well, kinda. On the long run though, you want to be able to verify that there are no errors in your code. To verify your project is error free, you can use the CLI tool [`svelte-check`](https://www.npmjs.com/package/svelte-check). It acts like an editor asking for errors against all of your `.svelte` files.
 

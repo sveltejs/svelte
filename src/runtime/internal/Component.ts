@@ -8,7 +8,7 @@ import { transition_in } from './transitions';
  * INTERNAL, DO NOT USE. Code may change at any time.
  */
 export interface Fragment {
-	key: string|null;
+	key: string | null;
 	first: null;
 	/* create  */ c: () => void;
 	/* claim   */ l: (nodes: any) => void;
@@ -20,17 +20,17 @@ export interface Fragment {
 	/* animate */ a: () => void;
 	/* intro   */ i: (local: any) => void;
 	/* outro   */ o: (local: any) => void;
-	/* destroy */ d: (detaching: 0|1) => void;
+	/* destroy */ d: (detaching: 0 | 1) => void;
 }
 interface T$$ {
 	dirty: number[];
-	ctx: null|any;
+	ctx: null | any;
 	bound: any;
 	update: () => void;
 	callbacks: any;
 	after_update: any[];
 	props: Record<string, 0 | string>;
-	fragment: null|false|Fragment;
+	fragment: null | false | Fragment;
 	not_equal: any;
 	before_update: any[];
 	context: Map<any, any>;
@@ -38,7 +38,7 @@ interface T$$ {
 	on_destroy: any[];
 	skip_bound: boolean;
 	on_disconnect: any[];
-	root:Element|ShadowRoot
+	root:Element | ShadowRoot
 }
 
 export function bind(component, name, callback) {
@@ -124,7 +124,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		on_disconnect: [],
 		before_update: [],
 		after_update: [],
-		context: new Map(parent_component ? parent_component.$$.context : options.context || []),
+		context: new Map(options.context || (parent_component ? parent_component.$$.context : [])),
 
 		// everything else
 		callbacks: blank_object(),

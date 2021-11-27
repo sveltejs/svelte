@@ -1,127 +1,146 @@
-import send from '@polka/send';
-import body from '../_utils/body.js';
 import * as httpie from 'httpie';
 import { query, find } from '../../../utils/db';
 import { get_example } from '../../examples/_examples.js';
 
-const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } = process.env;
+const GITHUB_CLIENT_ID = process.env['GITHUB_CLIENT_ID'];
+const GITHUB_CLIENT_SECRET = process.env['GITHUB_CLIENT_SECRET'];
 
-async function import_gist(req, res) {
-	const base = `https://api.github.com/gists/${req.params.id}`;
-	const url = `${base}?client_id=${GITHUB_CLIENT_ID}&client_secret=${GITHUB_CLIENT_SECRET}`;
-
-	try {
-		const { data } = await httpie.get(url, {
-			headers: {
-				'User-Agent': 'https://svelte.dev'
-			}
-		});
-
-		// create owner if necessary...
-		let user = await find(`select * from users where uid = $1`, [data.owner.id]);
-
-		if (!user) {
-			const { id, name, login, avatar_url } = data.owner;
-
-			user = await find(`
-				insert into users(uid, name, username, avatar)
-				values ($1, $2, $3, $4)
-				returning *
-			`, [id, name, login, avatar_url]);
-		}
-
-		delete data.files['README.md'];
-		delete data.files['meta.json'];
-
-		const files = Object.keys(data.files).map(key => {
-			const name = key.replace(/\.html$/, '.svelte');
-
-			return {
-				name,
-				source: data.files[key].content
-			};
-		});
-
-		// add gist to database...
-		await query(`
-			insert into gists(uid, user_id, name, files)
-			values ($1, $2, $3, $4)
-		`, [req.params.id, user.id, data.description, JSON.stringify(files)]);
-
-		send(res, 200, {
-			uid: req.params.id,
-			name: data.description,
-			files,
-			owner: data.owner.id
-		});
-	} catch (err) {
-		send(res, err.statusCode, { error: err.message });
-	}
-}
-
-export async function get(req, res) {
+export async function get({ path, params }) {
 	// is this an example?
-	const example = get_example(req.params.id);
+	const example = get_example(params.id);
 
 	if (example) {
-		return send(res, 200, {
-			relaxed: true,
-			uid: req.params.id,
-			name: example.title,
-			files: example.files,
-			owner: null
-		});
+		return {
+			body: {
+				relaxed: true,
+				uid: params.id,
+				name: example.title,
+				files: example.files,
+				owner: null
+			}
+		};
 	}
 
 	if (process.env.NODE_ENV === 'development') {
 		// In dev, proxy requests to load particular REPLs to the real server.
 		// This avoids needing to connect to the real database server.
-		req.pipe(
-			require('https').request({ host: 'svelte.dev', path: req.url })
-		).once('response', res_proxy => {
-			res_proxy.pipe(res);
-			res.writeHead(res_proxy.statusCode, res_proxy.headers);
-		}).once('error', () => res.end());
-		return;
+		try {
+			const res_proxy = await httpie.get(`https://svelte.dev${path}`);
+			return {
+				body: res_proxy.data,
+				status: res_proxy.statusCode,
+				headers: res_proxy.headers
+			};
+		} catch (err) {
+			return {
+				status: err.statusCode,
+				body: { error: err.message }
+			};
+		}
 	}
 
 	const [row] = await query(`
 		select g.*, u.uid as owner from gists g
 		left join users u on g.user_id = u.id
 		where g.uid = $1 limit 1
-	`, [req.params.id]); // via filename pattern
+	`, [params.id]); // via filename pattern
 
 	if (!row) {
-		return import_gist(req, res);
+		const base = `https://api.github.com/gists/${params.id}`;
+		const url = `${base}?client_id=${GITHUB_CLIENT_ID}&client_secret=${GITHUB_CLIENT_SECRET}`;
+
+		try {
+			const { data } = await httpie.get(url, {
+				headers: {
+					'User-Agent': 'https://svelte.dev'
+				}
+			});
+
+			// create owner if necessary...
+			let user = await find(`select * from users where uid = $1`, [data.owner.id]);
+
+			if (!user) {
+				const { id, name, login, avatar_url } = data.owner;
+
+				user = await find(`
+					insert into users(uid, name, username, avatar)
+					values ($1, $2, $3, $4)
+					returning *
+				`, [id, name, login, avatar_url]);
+			}
+
+			delete data.files['README.md'];
+			delete data.files['meta.json'];
+
+			const files = Object.keys(data.files).map(key => {
+				const name = key.replace(/\.html$/, '.svelte');
+
+				return {
+					name,
+					source: data.files[key].content
+				};
+			});
+
+			// add gist to database...
+			await query(`
+				insert into gists(uid, user_id, name, files)
+				values ($1, $2, $3, $4)
+			`, [params.id, user.id, data.description, JSON.stringify(files)]);
+
+			return {
+				body: {
+					uid: params.id,
+					name: data.description,
+					files,
+					owner: data.owner.id
+				}
+			};
+		} catch (err) {
+			return {
+				status: err.statusCode,
+				body: { error: err.message }
+			};
+		}
 	}
 
-	send(res, 200, {
-		uid: row.uid.replace(/-/g, ''),
-		name: row.name,
-		files: row.files,
-		owner: row.owner
-	});
+	return {
+		body: {
+			uid: row.uid.replace(/-/g, ''),
+			name: row.name,
+			files: row.files,
+			owner: row.owner
+		}
+	};
 }
 
-export async function patch(req, res) {
-	const { user } = req;
+export async function patch({ params, locals, body }) {
+	const { user } = locals;
 	if (!user) return;
 
 	let id;
-	const uid = req.params.id;
+	const uid = params.id;
 
 	try {
 		const [row] = await query(`select * from gists where uid = $1 limit 1`, [uid]);
-		if (!row) return send(res, 404, { error: 'Gist not found' });
-		if (row.user_id !== user.id) return send(res, 403, { error: 'Item does not belong to you' });
+		if (!row) {
+			return {
+				status: 404,
+				body: {
+					error: 'Gist not found'
+				}
+			};
+		}
+		if (row.user_id !== user.id) {
+			return { status: 403, body: { error: 'Item does not belong to you' }};
+		}
 		id = row.id;
 	} catch (err) {
 		console.error('PATCH /gists @ select', err);
-		return send(res, 500);
+		return { status: 500 };
 	}
 
 	try {
-		const obj = await body(req);
+		const obj = body;
 		obj.updated_at = 'now()';
 		let k;
 		const cols = [];
@@ -136,14 +155,19 @@ export async function patch(req, res) {
 
 		const [row] = await query(`update gists ${set} where id = ${id} returning *`, vals);
 
-		send(res, 200, {
-			uid: row.uid.replace(/-/g, ''),
-			name: row.name,
-			files: row.files,
-			owner: user.uid,
-		});
+		return {
+			body: {
+				uid: row.uid.replace(/-/g, ''),
+				name: row.name,
+				files: row.files,
+				owner: user.uid,
+			}
+		};
 	} catch (err) {
 		console.error('PATCH /gists @ update', err);
-		send(res, 500, { error: err.message });
+		return {
+			status: 500,
+			body: { error: err.message }
+		};
 	}
 }

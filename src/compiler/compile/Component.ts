@@ -36,6 +36,7 @@ import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
+import check_enable_sourcemap from './utils/check_enable_sourcemap';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -343,19 +344,28 @@ export default class Component {
 				? { code: null, map: null }
 				: result.css;
 
-			js = print(program, {
-				sourceMapSource: compile_options.filename
-			});
+			const js_sourcemap_enabled = check_enable_sourcemap(compile_options.enableSourcemap, 'js');
 
-			js.map.sources = [
-				compile_options.filename ? get_relative_path(compile_options.outputFilename || '', compile_options.filename) : null
-			];
+			if (!js_sourcemap_enabled) {
+				js = print(program);
+				js.map = null;
+			} else {
+				const sourcemap_source_filename = get_sourcemap_source_filename(compile_options);
 
-			js.map.sourcesContent = [
-				this.source
-			];
+				js = print(program, {
+					sourceMapSource: sourcemap_source_filename
+				});
 
-			js.map = apply_preprocessor_sourcemap(this.file, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+				js.map.sources = [
+					sourcemap_source_filename
+				];
+
+				js.map.sourcesContent = [
+					this.source
+				];
+
+				js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+			}
 		}
 
 		return {
@@ -1042,7 +1052,11 @@ export default class Component {
 											break;
 
 										case 'AssignmentPattern':
-											param.left = get_new_name(param.left);
+											if (param.left.type === 'Identifier') {
+												param.left = get_new_name(param.left);
+											} else {
+												rename_identifiers(param.left);
+											}
 											break;
 									}
 								}
@@ -1310,7 +1324,7 @@ export default class Component {
 
 								if (variable) {
 									variable.is_reactive_dependency = true;
-									if (variable.module) {
+									if (variable.module && variable.writable) {
 										should_add_as_dependency = false;
 										module_dependencies.add(name);
 									}
@@ -1550,4 +1564,16 @@ function get_relative_path(from: string, to: string) {
 	}
 
 	return from_parts.concat(to_parts).join('/');
+}
+
+function get_basename(filename: string) {
+	return filename.split(/[/\\]/).pop();
+}
+
+function get_sourcemap_source_filename(compile_options: CompileOptions) {
+	if (!compile_options.filename) return null;
+
+	return compile_options.outputFilename
+		? get_relative_path(compile_options.outputFilename, compile_options.filename)
+		: get_basename(compile_options.filename);
 }

@@ -2,8 +2,6 @@
 !/Dockerfile
 !/package.json
 !/package-lock.json
-!/__sapper__
-/__sapper__/*
-!/__sapper__/build
+!/build
 !/static
 !/content

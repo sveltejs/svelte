@@ -13,7 +13,7 @@ export default {
 
 	intro: true,
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		const divs = target.querySelectorAll('div');
 
 		assert.equal(divs[0].foo, 0);

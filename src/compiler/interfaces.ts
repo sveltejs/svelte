@@ -47,6 +47,23 @@ interface BaseDirective extends BaseNode {
 	modifiers: string[];
 }
 
+export interface Element extends BaseNode {
+	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Body';
+	attributes: Array<BaseDirective | Attribute | SpreadAttribute>;
+	name: string;
+}
+
+export interface Attribute extends BaseNode {
+	type: 'Attribute';
+	name: string;
+	value: any[];
+}
+
+export interface SpreadAttribute extends BaseNode {
+	type: 'Spread';
+	expression: Node;
+}
+
 export interface Transition extends BaseDirective {
 	type: 'Transition';
 	intro: boolean;
@@ -58,6 +75,9 @@ export type Directive = BaseDirective | Transition;
 export type TemplateNode = Text
 | MustacheTag
 | BaseNode
+| Element
+| Attribute
+| SpreadAttribute
 | Directive
 | Transition
 | Comment;
@@ -112,6 +132,8 @@ export interface Warning {
 
 export type ModuleFormat = 'esm' | 'cjs';
 
+export type EnableSourcemap = boolean | { js: boolean; css: boolean };
+
 export type CssHashGetter = (args: {
 	name: string;
 	filename: string | undefined;
@@ -128,6 +150,7 @@ export interface CompileOptions {
 	varsReport?: 'full' | 'strict' | false;
 
 	sourcemap?: object | string;
+	enableSourcemap?: EnableSourcemap;
 	outputFilename?: string;
 	cssOutputFilename?: string;
 	sveltePath?: string;

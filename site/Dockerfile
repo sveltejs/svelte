@@ -1,7 +1,7 @@
-# IMPORTANT: Don't use this Dockerfile in your own Sapper projects without also looking at the .dockerignore file.
+# IMPORTANT: Don't use this Dockerfile in your own projects without also looking at the .dockerignore file.
 # Without an appropriate .dockerignore, this Dockerfile will copy a large number of unneeded files into your image.
 
-FROM mhart/alpine-node:12
+FROM mhart/alpine-node:14
 
 # install dependencies
 WORKDIR /app
@@ -12,11 +12,11 @@ RUN npm ci --production
 # Only copy over the Node pieces we need
 # ~> Saves 35MB
 ###
-FROM mhart/alpine-node:slim-12
+FROM mhart/alpine-node:slim-14
 
 WORKDIR /app
 COPY --from=0 /app .
 COPY . .
 
 EXPOSE 3000
-CMD ["node", "__sapper__/build"]
+CMD ["node", "build"]

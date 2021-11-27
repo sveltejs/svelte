@@ -1,16 +1,23 @@
 <script context="module">
-	export function preload({ query }) {
-		const { gist, example, version } = query;
+	export function load({ page: { query } }) {
+		const gist = query.get('gist');
+		const example = query.get('example');
+		const version = query.get('version');
 
 		// redirect to v2 REPL if appropriate
 		if (/^[^>]?[12]/.test(version)) {
-			const q = Object.keys(query).map(key => `${key}=${query[key]}`).join('&');
-			return this.redirect(302, `https://v2.svelte.dev/repl?${q}`);
+			return {
+				status: 302,
+				redirect: `https://v2.svelte.dev/repl?${query}`
+			};
 		}
 
 		const id = gist || example || 'hello-world';
 		const q = version ? `?version=${version}` : ``;
 
-		this.redirect(301, `repl/${id}${q}`);
+		return {
+			status: 301,
+			redirect: `/repl/${id}${q}`
+		};
 	}
 </script>

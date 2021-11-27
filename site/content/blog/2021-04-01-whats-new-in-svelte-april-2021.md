@@ -54,7 +54,7 @@ Want to learn more about how to get started, what's different compared to Sapper
 - [Sapper Netlify](https://www.npmjs.com/package/sapper-netlify) is a Sapper project that can run on a Netlify function.
 
 
-**Looking for a particular starter?** Check out [svelte-adders](https://github.com/svelte-add/svelte-adders) and a number of other integration examples at [sveltejs/integrations](https://github.com/sveltejs/integrations)
+**Looking for a particular starter?** Check out [svelte-adders](https://github.com/svelte-add/svelte-adders) and a number of other template examples at the community site [sveltesociety.dev](https://sveltesociety.dev/templates/)
 
 **Learning Resources**
 - [How to Build a Website with Svelte and SvelteKit](https://prismic.io/blog/svelte-sveltekit-tutorial) is a step-by-step tutorial walking through the new SvelteKit setup.

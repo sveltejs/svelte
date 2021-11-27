@@ -148,10 +148,10 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 	if (!node) return document;
 
 	const root = node.getRootNode ? node.getRootNode() : node.ownerDocument;
-	if ((root as ShadowRoot).host) {
+	if (root && (root as ShadowRoot).host) {
 		return root as ShadowRoot;
 	}
-	return document;
+	return node.ownerDocument;
 }
 
 export function append_empty_stylesheet(node: Node) {
@@ -185,7 +185,7 @@ export function append_hydration(target: NodeEx, node: NodeEx) {
 		} else {
 			target.actual_end_child = node.nextSibling;
 		}
-	} else if (node.parentNode !== target) {
+	} else if (node.parentNode !== target || node.nextSibling !== null) {
 		target.appendChild(node);
 	}
 }
@@ -432,7 +432,7 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 	return resultNode;
 }
 
-export function claim_element(nodes: ChildNodeArray, name: string, attributes: {[key: string]: boolean}, svg) {
+function claim_element_base(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }, create_element: (name: string) => Element | SVGElement) {
 	return claim_node<Element | SVGElement>(
 		nodes,
 		(node: ChildNode): node is Element | SVGElement => node.nodeName === name,
@@ -447,8 +447,16 @@ export function claim_element(nodes: ChildNodeArray, name: string, attributes: {
 			remove.forEach(v => node.removeAttribute(v));
 			return undefined;
 		},
-		() => svg ? svg_element(name as keyof SVGElementTagNameMap) : element(name as keyof HTMLElementTagNameMap)
+		() => create_element(name)
 	);
+}
+
+export function claim_element(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }) {
+	return claim_element_base(nodes, name, attributes, element);
+}
+
+export function claim_svg_element(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }) {
+	return claim_element_base(nodes, name, attributes, svg_element);
 }
 
 export function claim_text(nodes: ChildNodeArray, data) {
@@ -538,6 +546,8 @@ export function select_option(select, value) {
 			return;
 		}
 	}
+
+	select.selectedIndex = -1; // no option should be selected
 }
 
 export function select_options(select, value) {

@@ -391,7 +391,7 @@ export default class IfBlockWrapper extends Wrapper {
 						? b`
 						${snippet && (
 							dependencies.length > 0
-								? b`if (${block.renderer.dirty(dependencies)}) ${condition} = !!${snippet}`
+								? b`if (${condition} == null || ${block.renderer.dirty(dependencies)}) ${condition} = !!${snippet}`
 								: b`if (${condition} == null) ${condition} = !!${snippet}`
 						)}
 						if (${condition}) return ${i};`

@@ -13,11 +13,11 @@ All three sections — script, styles and markup — are optional.
 	// logic goes here
 </script>
 
+<!-- markup (zero or more items) goes here -->
+
 <style>
 	/* styles go here */
 </style>
-
-<!-- markup (zero or more items) goes here -->
 ```
 
 ### &lt;script&gt;

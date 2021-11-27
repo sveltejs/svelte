@@ -389,9 +389,11 @@ export default class ElementWrapper extends Wrapper {
 			? this.node.name
 			: this.node.name.toUpperCase();
 
-		const svg = this.node.namespace === namespaces.svg ? 1 : null;
-
-		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
+		if (this.node.namespace === namespaces.svg) {
+			return x`@claim_svg_element(${nodes}, "${name}", { ${attributes} })`;
+		} else {
+			return x`@claim_element(${nodes}, "${name}", { ${attributes} })`;
+		}
 	}
 
 	add_directives_in_order (block: Block) {
@@ -673,7 +675,7 @@ export default class ElementWrapper extends Wrapper {
 				(${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);
 			`);
 			block.chunks.update.push(b`
-				if (${block.renderer.dirty(Array.from(dependencies))}) (${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);;
+				if (${block.renderer.dirty(Array.from(dependencies))} && 'value' in ${data}) (${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);;
 			`);
 		} else if (this.node.name === 'input' && this.attributes.find(attr => attr.node.name === 'value')) {
 			const type = this.node.get_static_attribute_value('type');

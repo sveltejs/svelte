@@ -62,7 +62,7 @@ For all the features and bugfixes see the CHANGELOGs for [Svelte](https://github
 - [svelte-store-router](https://github.com/zyxd/svelte-store-router) is a store-based router for Svelte that suggests that routing is just another global state and History API changes are just an optional side-effects of this state.
 - [Routify](https://routify.dev/blog/routify-2-released) just released version 2 of its Svelte router.
 - [svelte-error-boundary](https://www.npmjs.com/package/@crownframework/svelte-error-boundary) provides a simple error boundary component for Svelte that can be can be used with both DOM and SSR targets.
-- [svelte2dts](https://www.npmjs.com/package/svelte2dts) generates d.ts files from svelte files, creating truly sharable and well typed components.
+- [svelte2dts](https://www.npmjs.com/package/svelte2dts) generates d.ts files from svelte files, creating truly shareable and well typed components.
 
 ## See you next month!
 

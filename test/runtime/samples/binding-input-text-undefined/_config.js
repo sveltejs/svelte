@@ -7,7 +7,7 @@ export default {
 		<input>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, component, target }) {
 		const input = target.querySelector('input');
 		assert.equal(input.value, '');
 

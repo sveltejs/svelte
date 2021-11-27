@@ -5,7 +5,7 @@ export default {
 
 	html: '<div class="test-class primary" role="button"></div>',
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, target }) {
 		component.primary = true;
 
 		assert.htmlEqual(
