@@ -21,7 +21,7 @@
 		background-color: #ff3e00;
 		color: #fff;
 		text-align: center;
-		font-style: bold;
+		font-weight: bold;
 	}
 </style>
 
