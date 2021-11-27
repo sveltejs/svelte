@@ -12,7 +12,7 @@ Actions are essentially element-level lifecycle functions. They're useful for th
 In this app, we want to make the orange modal close when the user clicks outside it. It has an event handler for the `outclick` event, but it isn't a native DOM event. We have to dispatch it ourselves. First, import the `clickOutside` function...
 
 ```js
-import { clickOutside } from "./pannable.js";
+import { clickOutside } from "./click_outside.js";
 ```
 
 ...then use it with the element:

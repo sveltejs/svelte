@@ -1,5 +1,5 @@
 <script>
-	import { clickOutside } from "./pannable.js";
+	import { clickOutside } from "./click_outside.js";
 
 	let showModal = true;
 
