@@ -1,6 +1,6 @@
 ---
 title: What's new in Svelte: December 2021
-description: TBD
+description: "Svelte Summit Fall 2021 Recap, Rich Harris joins Vercel, SvelteKit opens GitHub Discussions"
 author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
@@ -8,6 +8,7 @@ authorURL: https://desandoval.net
 With SvelteKit getting more and more stable each day, there's not much to cover in terms of code changes other than bug fixes... So, in this month's newsletter, we'll be covering Svelte Summit Fall 2021!
 
 If you want to dive deep into the last month's worth of bug fixes, check out the [Svelte](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md) and [SvelteKit](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md) changelogs, respectively.
+
 
 ## What happened at Svelte Summit?
 
@@ -53,8 +54,8 @@ If you have feedback on the Svelte Summit, Kev is [looking for feedback on the S
 - [Svelte Crush](https://svelte-crush.netlify.app/) is a Candy Crush style match-3 game
 - [100.000 Corona deaths in Germany](https://twitter.com/h_i_g_s_c_h/status/1463767113563353089?s=20) is a visualization made for Spiegel Gesundheit
 
-
 **Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
+
 
 **Videos, Blogs and Podcasts**
 - [How To Make and Publish a Svelte Library](https://www.youtube.com/watch?v=_TymiadmPrc)
@@ -68,6 +69,7 @@ If you have feedback on the Svelte Summit, Kev is [looking for feedback on the S
 - [Svelte creator: Web development should be more fun](https://www.infoworld.com/article/3639521/svelte-creator-web-development-should-be-more-fun.html)
 - [Svelte Radio: Rich Harris is now working full-time on Svelte 🤯](https://share.transistor.fm/s/d9b04961)
 - [Web Rush: Svelte and Elder.js with Nick Reese](https://webrush.io/episodes/episode-158-svelte-and-elderjs-with-nick-reese)
+
 
 **Libraries, Tools & Components**
 - [svelte-cubed](https://github.com/Rich-Harris/svelte-cubed) is a Three.js component library for Svelte - created by Rich Harris for his presentation at Svelte Summit Fall 2021
