@@ -143,14 +143,14 @@ export default class Element extends Node {
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
-		if (info.name === 'svelte:element' && typeof info.tag === 'string') {
-			this.name = info.tag;
-		} else {
-			this.name = info.name;
-		}
+		this.name = info.name;
 
-		if (info.name === 'svelte:element' && typeof info.tag !== 'string') {
-			this.tag_expr = new Expression(component, this, scope, info.tag);
+		if (info.name === 'svelte:element') {
+			if (typeof info.tag !== 'string') {
+				this.tag_expr = new Expression(component, this, scope, info.tag);
+			} else {
+				this.tag_expr = new Expression(component, this, scope, string_literal(info.tag) as Literal);
+			}
 		} else {
 			this.tag_expr = new Expression(component, this, scope, string_literal(this.name) as Literal);
 		}
