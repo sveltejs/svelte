@@ -298,6 +298,7 @@ export default class ElementWrapper extends Wrapper {
 				${this.var}.d(1);
 				${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
 				${this.var}.c();
+				@transition_in(${this.var});
 				this.m(${this.get_update_mount_node(anchor)}, ${anchor});
 			} else {
 				${this.var}.p(#ctx, #dirty);
