@@ -294,14 +294,13 @@ export default class ElementWrapper extends Wrapper {
 		const if_statement = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
 
 		block.chunks.update.unshift(b`
+			${this.var}.p(#ctx, #dirty);
 			if (${if_statement}) {
 				${this.var}.d(1);
 				${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
 				${this.var}.c();
 				@transition_in(${this.var});
 				this.m(${this.get_update_mount_node(anchor)}, ${anchor});
-			} else {
-				${this.var}.p(#ctx, #dirty);
 			}
 		`);
 
