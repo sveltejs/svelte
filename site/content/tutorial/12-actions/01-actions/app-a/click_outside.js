@@ -4,6 +4,6 @@ export function clickOutside(node) {
 	return {
 		destroy() {
 			// ...cleanup goes here
-		},
+		}
 	};
-};
+}
