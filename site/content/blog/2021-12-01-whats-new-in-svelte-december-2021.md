@@ -1,6 +1,6 @@
 ---
 title: What's new in Svelte: December 2021
-description: "Svelte Summit Fall 2021 Recap, Rich Harris joins Vercel, SvelteKit opens GitHub Discussions"
+description: "Svelte Summit Fall 2021 Recap, Rich Harris joins Vercel, and Kevin goes full-time on Svelte Society"
 author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
@@ -17,24 +17,24 @@ If you missed Svelte Summit, you can watch the entire live stream on [YouTube](h
 Here are the highlights:
 - [Rich Harris](https://twitter.com/rich_harris) took us through a tour of Svelte's history and announced [his move to Vercel](https://vercel.com/blog/vercel-welcomes-rich-harris-creator-of-svelte) - where he will be helping maintain Svelte full-time!
 - [Steph Dietz](https://twitter.com/steph_dietz_) explained how Svelte's simple abstractions makes it easy for beginners and experts alike to learn and use JavaScript - without the boilerplate
-- [Kevin Bridges](https://twitter.com/kevinast) dove deep into Svelte's reactivity logic by visualizing it through `ReflectiveCounter` and showing how to "fine tune" it, as needed
-- [Mateo Morris](https://twitter.com/_mateomorris) launched Primo an all-in-one SvelteKit CMS to help build and manage static sites
+- [Kevin Bridges](https://twitter.com/kevinast) dove deep into Svelte's reactivity logic by visualizing it through `ReflectiveCounter` and showing how to "fine tune" it, as needed. A full "syllabus" for the presentation is available on [Kevin's site](https://wiibridges.com/presentations/ResponsiveSvelte/).
+- [Mateo Morris](https://twitter.com/_mateomorris) launched [Primo](https://primo.af/), an all-in-one SvelteKit CMS to help build and manage static sites
 - [Guillermo Rauch](https://vercel.com/about/rauchg) explained Vercel's commitment to Svelte, what it means to have Rich on the team, and what's coming next from the company...
-- [Geoff Rich](https://twitter.com/geoffrich_) introduced various ways to modify motion and transitions within Svelte to be more accessible to all users of the web
-- [Dean Fogarty](https://df.id.au/) demoed a number of different use-cases for custom stores - transforming data to and from storage mechanisms within Svelte
+- [Geoff Rich](https://twitter.com/geoffrich_) introduced various ways to modify motion and transitions within Svelte to be more accessible to all users of the web. Slides and a full transcription of the talk are available on [Geoff's site](https://geoffrich.net/posts/svelte-summit-2021/).
+- [Dean Fogarty](https://df.id.au/) demoed a number of different use-cases for custom stores - transforming data to and from storage mechanisms within Svelte. Transcript and code is available on [Dean's GitHub](https://github.com/angrytongan/svelte-summit-2021).
 - [Kellen Mace](https://twitter.com/kellenmace) shared how we can let content creators keep using WordPress, while leveraging Svelte on the frontend to provide a phenomenal user experience
-- [Ben Holmes](https://twitter.com/bholmesdev) explained the "islands" architecture and how 11ty + Slinkity can bring these islands to any HTML template
+- [Ben Holmes](https://twitter.com/bholmesdev) explained the "islands" architecture and how 11ty + [Slinkity](https://slinkity.dev/) can bring these islands to any HTML template
 - [Scott Tolinski](https://twitter.com/stolinski) shared the lessons learned from rewriting LevelUpTutorials in Svelte (from React) and "found developer bliss"
 - [Svelte Sirens](https://sveltesirens.dev) was announced as the new Svelte community for women, non-binary and allies. Their first event was on November 29th - all future events can be found on [the Svelte Sirens website](https://sveltesirens.dev/events)
 - [Rich Harris](https://twitter.com/rich_harris) discussed creating libraries with SvelteKit, better ways to link packages when developing, and how SvelteKit helps with modern JavaScript library development
-- [Ken Kunz](https://twitter.com/kennethkunz) explained how finite state machines (and the svelte-fsm library) can make managing Svelte component states more... managable
+- [Ken Kunz](https://twitter.com/kennethkunz) explained how finite state machines (and the svelte-fsm library) can make managing Svelte component states more... managable. Examples from the talk are available on [Ken's GitHub](https://github.com/kenkunz/svelte-fsm/wiki/Examples).
 - [Austin Crim](https://twitter.com/crim_codes) connected learning to code on the web to learning how to play an instrument. By giving learners early wins and introducing the fundamentals through real-world, learning Svelte (and the fundamentals underneath) doesn't have to be a chore
 - [Jesse Skinner](https://twitter.com/JesseSkinner) brought our legacy apps into the future by explaining how to use (and reuse) Svelte components within React (and even jQuery!) projects
-- [Jim Fisk](https://twitter.com/jimafisk) and [Stephanie Luz](https://stephanie-luz.medium.com/) introduced Plenti and its theming tools to make building new Svelte sites much faster
-- [Evyatar Alush](https://twitter.com/evyataral) helped us all make (and maintain) better forms using a powerful validation library called Vest 
+- [Jim Fisk](https://twitter.com/jimafisk) and [Stephanie Luz](https://stephanie-luz.medium.com/) introduced [Plenti](https://plenti.co/) and its theming tools to make building new Svelte sites much faster
+- [Evyatar Alush](https://twitter.com/evyataral) helped us all make (and maintain) better forms using a powerful validation library called [Vest](https://github.com/ealush/vest)
 - Dominik G. presented a fresh take on icon libraries - one that reduces the bundle size of applications and opens up the entire iconify library for use in any Svelte app
 
-Thanks to [Kevin](https://twitter.com/kevmodrome) and all the Svelte Society volunteers for pulling together such an amazing event! You can check out all the talks, broken up into individual videos for convenience, in [this Svelte Society YouTube Playlist](https://www.youtube.com/playlist?list=PL8bMgX1kyZTg2bI9IOMgfBc8lrU3v2itt).
+Thanks to [Kevin](https://twitter.com/kevmodrome) and all the Svelte Society volunteers for pulling together such an amazing event! Excitingly, [Kevin announced](https://twitter.com/kevmodrome/status/1463151477174714373) after the event that he will now be working full-time on Svelte Society. You can check out all the talks, broken up into individual videos for convenience, in [this Svelte Society YouTube Playlist](https://www.youtube.com/playlist?list=PL8bMgX1kyZTg2bI9IOMgfBc8lrU3v2itt).
 
 If you have feedback on the Svelte Summit, Kev is [looking for feedback on the Svelte subreddit](https://www.reddit.com/r/sveltejs/comments/qzgo3k/svelte_summit_feedback/) 👀
 
@@ -69,7 +69,7 @@ If you have feedback on the Svelte Summit, Kev is [looking for feedback on the S
 - [Svelte creator: Web development should be more fun](https://www.infoworld.com/article/3639521/svelte-creator-web-development-should-be-more-fun.html)
 - [Svelte Radio: Rich Harris is now working full-time on Svelte 🤯](https://share.transistor.fm/s/d9b04961)
 - [Web Rush: Svelte and Elder.js with Nick Reese](https://webrush.io/episodes/episode-158-svelte-and-elderjs-with-nick-reese)
-
+- [Building SvelteKit applications with Serverless Redis](https://blog.upstash.com/svelte-with-serverless-redis)
 
 **Libraries, Tools & Components**
 - [svelte-cubed](https://github.com/Rich-Harris/svelte-cubed) is a Three.js component library for Svelte - created by Rich Harris for his presentation at Svelte Summit Fall 2021
