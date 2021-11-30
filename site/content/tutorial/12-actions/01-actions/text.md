@@ -18,7 +18,7 @@ import { clickOutside } from "./click_outside.js";
 ...then use it with the element:
 
 ```html
-<div class="box" use:clickOutside on:outclick="{handleOutclick}">
+<div class="box" use:clickOutside on:outclick="{() => (showModal = false)}">
 	Click outside me!
 </div>
 ```

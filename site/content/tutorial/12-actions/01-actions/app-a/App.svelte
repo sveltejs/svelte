@@ -2,10 +2,6 @@
 
 	
 	let showModal = true;
-
-	function handleOutclick(){
-		showModal = false;
-	}
 </script>
 
 <style>
@@ -27,7 +23,7 @@
 
 <button on:click={() => (showModal = true)}>Show Modal</button>
 {#if showModal}
-	<div class="box" on:outclick={handleOutclick}>
+	<div class="box" on:outclick={() => (showModal = false)}>
 		Click outside me!
 	</div>
 {/if}

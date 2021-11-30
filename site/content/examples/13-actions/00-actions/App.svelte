@@ -2,15 +2,11 @@
 	import { clickOutside } from "./click_outside.js";
 
 	let showModal = true;
-
-	function handleOutclick(){
-		showModal = false;
-	}
 </script>
 
 <button on:click={() => (showModal = true)}>Show Modal</button>
 {#if showModal}
-	<div class="box" use:clickOutside on:outclick={handleOutclick}>
+	<div class="box" use:clickOutside on:outclick={() => (showModal = false)}>
 		Click outside me!
 	</div>
 {/if}
