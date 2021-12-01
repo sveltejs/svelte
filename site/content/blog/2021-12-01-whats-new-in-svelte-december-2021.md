@@ -34,7 +34,7 @@ Here are the highlights:
 - [Evyatar Alush](https://twitter.com/evyataral) helped us all make (and maintain) better forms using a powerful validation library called [Vest](https://github.com/ealush/vest) ([5:08:55](https://www.youtube.com/watch?v=1Df-9EKvZr0&t=18535s))
 - Dominik G. presented a fresh take on icon libraries - one that reduces the bundle size of applications and opens up the entire iconify library for use in any Svelte app ([5:30:04](https://www.youtube.com/watch?v=1Df-9EKvZr0&t=19804s))
 
-Thanks to [Kevin](https://twitter.com/kevmodrome) and all the Svelte Society volunteers for pulling together such an amazing event! Excitingly, [Kevin announced](https://twitter.com/kevmodrome/status/1463151477174714373) after the event that he will now be working full-time on Svelte Society!!! You can check out all the talks, broken up into individual videos for convenience, in [this Svelte Society YouTube Playlist](https://www.youtube.com/playlist?list=PL8bMgX1kyZTg2bI9IOMgfBc8lrU3v2itt).
+Thanks to [Kevin](https://twitter.com/kevmodrome) and all the Svelte Society volunteers for pulling together such an amazing event! Excitingly, [Kevin announced](https://twitter.com/kevmodrome/status/1463151477174714373) after the event that he will now be working full-time on Svelte Society! You can check out all the talks, broken up into individual videos for convenience, in [this Svelte Society YouTube Playlist](https://www.youtube.com/playlist?list=PL8bMgX1kyZTg2bI9IOMgfBc8lrU3v2itt).
 
 If you have feedback on the Svelte Summit, Kev is [looking for feedback on the Svelte subreddit](https://www.reddit.com/r/sveltejs/comments/qzgo3k/svelte_summit_feedback/) 👀
 
