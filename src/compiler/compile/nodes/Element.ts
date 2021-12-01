@@ -46,6 +46,85 @@ const a11y_required_attributes = {
 	object: ['title', 'aria-label', 'aria-labelledby']
 };
 
+// Full list of attributes from https://www.w3.org/TR/wai-aria
+const a11y_attribute_types = new Map([
+	['activedescendant', { type: 'id'}],
+	['atomic', { type: 'boolean' }],
+	['autocomplete', {
+		type: 'token',
+		whitelist: 'inline list both none'.split(' ')
+	}],
+	['busy', { type: 'boolean'}],
+	['checked', { type: 'tristate' }],
+	['colcount', { type: 'integer'}],
+	['colindex', { type: 'integer'}],
+	['colspan', { type: 'integer'}],
+	['controls', { type: 'idlist'}],
+	['current', {
+		type: 'token',
+		whitelist: 'page step location date time true false'.split(' ')
+	}],
+	['details', { type: 'id'}],
+	['describedby', { type: 'idlist'}],
+	['disabled', { type: 'boolean'}],
+	['dropeffect', {
+		type: 'tokenlist',
+		whitelist: 'copy execute link move none popup'.split(' ')
+	}],
+	['errormessage', { type: 'id'}],
+	['expanded', { type: 'boolean_or_undefined' }],
+	['flowto', { type: 'idlist'}],
+	['grabbed', { type: 'boolean_or_undefined'}],
+	['haspopup', {
+		type: 'token',
+		whitelist: 'false true menu listbox tree grid dialog'.split(' ')
+	}],
+	['hidden', { type: 'boolean_or_undefined' }],
+	['invalid', {
+		type: 'token',
+		whitelist: 'grammar false spelling true'.split(' ')
+	}],
+	['keyshortcuts', { type: 'string' }],
+	['label', { type: 'string' }],
+	['labelledby', { type: 'idlist' }],
+	['level', { type: 'integer' }],
+	['live', {
+		type: 'token',
+		whitelist: 'assertive off polite'.split(' ')
+	}],
+	['modal', { type: 'boolean' }],
+	['multiline', { type: 'boolean' }],
+	['multiselectable', { type: 'boolean' }],
+	['orientation', {
+		type: 'token',
+		whitelist: 'vertical undefined horizontal'.split(' ')
+	}],
+	['owns', { type: 'idlist' }],
+	['placeholder', { type: 'string' }],
+	['posinset', { type: 'integer' }],
+	['pressed', { type: 'tristate' }],
+	['readonly', { type: 'boolean' }],
+	['relevant', {
+		type: 'tokenlist',
+		whitelist: 'additions all removals text'.split(' ')
+	}],
+	['required', { type: 'boolean' }],
+	['roledescription', { type: 'string' }],
+	['rowcount', { type: 'integer' }],
+	['rowindex', { type: 'integer' }],
+	['rowspan', { type: 'integer' }],
+	['selected', { type: 'boolean_or_undefined' }],
+	['setsize', { type: 'integer' }],
+	['sort', {
+		type: 'token',
+		whitelist: 'ascending descending none other'.split(' ')
+	}],
+	['valuemax', { type: 'number' }],
+	['valuemin', { type: 'number' }],
+	['valuenow', { type: 'number' }],
+	['valuetext', { type: 'string' }]
+]);
+
 const a11y_distracting_elements = new Set([
 	'blink',
 	'marquee'
