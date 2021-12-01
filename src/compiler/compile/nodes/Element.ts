@@ -256,6 +256,35 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 	return parent_element.namespace;
 }
 
+function is_valid_aria_attribute_value(schema: any, value: any): boolean {
+	switch (schema.type) {
+		case 'boolean':
+		case 'boolean_or_undefined':
+			return typeof value === 'boolean';
+		case 'string':
+			return typeof value === 'string';
+		case 'id':
+			return typeof value === 'string';
+		case 'tristate':
+			return typeof value === 'boolean' || value === 'mixed';
+		case 'integer':
+			return typeof value !== 'boolean' && isNaN(Number(value)) === false;
+		case 'number':
+			return typeof value !== 'boolean' && isNaN(Number(value)) === false;
+		case 'token': // single token
+			return schema.whitelist
+				.indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1;
+		case 'idlist': // if list of ids, split each
+			return typeof value === 'string'
+				&& value.split(' ').every((id) => typeof id === 'string');
+		case 'tokenlist': // if list of tokens, split each
+			return typeof value === 'string'
+				&& value.split(' ').every((token) => schema.whitelist.indexOf(token.toLowerCase()) > -1);
+		default:
+			return false;
+	}
+}
+
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
@@ -509,6 +538,18 @@ export default class Element extends Node {
 
 				if (name === 'aria-hidden' && /^h[1-6]$/.test(this.name)) {
 					component.warn(attribute, compiler_warnings.a11y_hidden(this.name));
+				}
+
+				// aria-proptypes
+				let value = attribute.get_static_value();
+				if (value === 'true') value = true;
+				if (value === 'false') value = false;
+
+				if (value !== null && value !== undefined && a11y_attribute_types.has(type)) {
+					const schema = a11y_attribute_types.get(type);
+					if (!is_valid_aria_attribute_value(schema, value)) {
+						component.warn(attribute, compiler_warnings.a11y_incorrect_attribute_type(schema, name));
+					}
 				}
 			}
 
