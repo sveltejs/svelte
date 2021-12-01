@@ -73,7 +73,7 @@ If you have feedback on the Svelte Summit, Kev is [looking for feedback on the S
 
 **Libraries, Tools & Components**
 - [svelte-cubed](https://github.com/Rich-Harris/svelte-cubed) is a Three.js component library for Svelte - created by Rich Harris for his presentation at Svelte Summit Fall 2021
-- [svelte-fsm](https://github.com/kenkunz/svelte-fsm) is a tiny, simple, expressive, pramgmatic Finite State Machine (FSM) library, optimized for Svelte
+- [svelte-fsm](https://github.com/kenkunz/svelte-fsm) is a tiny, simple, expressive, pragmatic Finite State Machine (FSM) library, optimized for Svelte
 - [bromb](https://github.com/samuelstroschein/bromb) is a feedback widget for websites/web apps that is small and easy to integration/self-host
 - [Spaper](https://github.com/Oli8/spaper) is a set of PaperCSS components for Svelte
 - [svelte-intl-precompile](https://github.com/cibernox/svelte-intl-precompile) is an i18n library for Svelte that analyzes and compiles your translations at build time
