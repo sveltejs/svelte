@@ -48,7 +48,7 @@ If you have feedback on the Svelte Summit, Kev is [looking for feedback on the S
 - [LifeHash](http://lifehash.info/) generates beautiful visual hashes from Blockchain Commons
 - [simple-cloud-music](https://github.com/dufu1991/simple-cloud-music) is a lightweight third-party NetEase cloud music player for modern browsers (likely only works on Chrome)
 - [palette.rocks](https://palette.rocks/) is a color palette generator with contrast-checking built-in
-- [Kadium](https://github.com/probablykasper/kadium) is an app for staying ontop of YouTube channel uploads 
+- [Kadium](https://github.com/probablykasper/kadium) is an app for staying on top of YouTube channel uploads 
 - [Multi-Monitor Calculator](https://multimonitorcalculator.com/) is a tool for planning your multi-monitor setup
 - [Your Home](https://yourhome.fb.com/) is an interactive overview of Facebook's privacy settings
 - [Svelte Crush](https://svelte-crush.netlify.app/) is a Candy Crush style match-3 game
