@@ -20,7 +20,8 @@ if (!force && fs.existsSync(outputFile)) {
 const base = `https://api.github.com/repos/sveltejs/svelte/contributors`;
 const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } = process.env;
 
-const SIZE = 64;
+const MAX = 20;
+const SIZE = 128;
 
 async function main() {
 	const contributors = [];
@@ -37,7 +38,8 @@ async function main() {
 
 	const authors = contributors
 		.filter(({ login }) => !login.includes('[bot]'))
-		.sort((a, b) => b.contributions - a.contributions);
+		.sort((a, b) => b.contributions - a.contributions)
+		.slice(0, MAX);
 
 	const sprite = new Jimp(SIZE * authors.length, SIZE);
 

@@ -17,7 +17,8 @@ if (!force && fs.existsSync(outputFile)) {
 	process.exit(0);
 }
 
-const SIZE = 64;
+const MAX = 20;
+const SIZE = 128;
 
 async function main() {
 	const res = await fetch('https://opencollective.com/svelte/members/all.json');
@@ -28,12 +29,13 @@ async function main() {
 
 	let backers = [...unique.values()]
 		.filter(({ role }) => role === 'BACKER')
-		.sort((a, b) => b.totalAmountDonated - a.totalAmountDonated);
+		.sort((a, b) => b.totalAmountDonated - a.totalAmountDonated)
+		.slice(0, 3 * MAX);
 
 	const included = [];
-	for (let i = 0; i < backers.length; i += 1) {
+	for (let i = 0; included.length < MAX; i += 1) {
 		const backer = backers[i];
-		console.log(`${i} / ${backers.length}: ${backer.name}`);
+		console.log(`${included.length + 1} / ${MAX}: ${backer.name}`);
 
 		try {
 			const image_data = await fetch(backer.image);
