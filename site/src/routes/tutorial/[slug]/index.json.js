@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import marked from 'marked';
+import { marked } from 'marked';
 import { extract_frontmatter, extract_metadata, link_renderer } from '@sveltejs/site-kit/utils/markdown';
 import { highlight } from '../../../utils/highlight';
 
