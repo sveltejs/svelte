@@ -30,7 +30,7 @@
     "@sindresorhus/slugify": "^0.9.1",
     "@sveltejs/adapter-node": "next",
     "@sveltejs/kit": "next",
-    "@sveltejs/site-kit": "^1.4.0",
+    "@sveltejs/site-kit": "^1.4.1",
     "@sveltejs/svelte-repl": "0.3.0",
     "degit": "^2.1.4",
     "dotenv": "^10.0.0",

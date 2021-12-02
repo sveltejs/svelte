@@ -120,13 +120,13 @@ npm run dev
 
 	<p>Svelte is free and open source software, made possible by the work of hundreds of volunteers and donors. <a href="https://github.com/sveltejs/svelte">Join us</a> or <a href="https://opencollective.com/svelte">give</a>!</p>
 
-	<h3>Contributors</h3>
+	<h4>Contributors</h4>
 
 	<Contributors/>
 
 	<p></p>
 
-	<h3>Donors</h3>
+	<h4>Donors</h4>
 
 	<Donors/>
 </Section>
