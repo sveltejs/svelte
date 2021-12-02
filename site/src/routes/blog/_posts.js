@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { extract_frontmatter, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
-import marked from 'marked';
+import { marked } from 'marked';
 import { makeSlugProcessor } from '../../utils/slug';
 import { highlight } from '../../utils/highlight';
 import { SLUG_PRESERVE_UNICODE } from '../../../config';

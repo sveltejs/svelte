@@ -4,7 +4,7 @@ import { SLUG_PRESERVE_UNICODE, SLUG_SEPARATOR } from '../../../config';
 import { extract_frontmatter, extract_metadata, link_renderer } from '@sveltejs/site-kit/utils/markdown.js';
 import { make_session_slug_processor } from '@sveltejs/site-kit/utils/slug';
 import { highlight } from '../../utils/highlight';
-import marked from 'marked';
+import { marked } from 'marked';
 
 const blockTypes = [
 	'blockquote',
