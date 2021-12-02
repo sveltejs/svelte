@@ -644,6 +644,26 @@ export function query_selector_all(selector: string, parent: HTMLElement = docum
 	return Array.from(parent.querySelectorAll(selector)) as ChildNodeArray;
 }
 
+export function get_hydratable_raw_elements(parent: HTMLElement = document.body) {
+	const elements = Array.from(parent.childNodes);
+	let cursor = 0;
+	while (cursor < elements.length) {
+		const start_index = find_comment(elements, 'HTML_TAG_START', cursor);
+		const end_index = find_comment(elements, 'HTML_TAG_END', start_index);
+		if (start_index === end_index) {
+			elements.splice(cursor, elements.length - cursor);
+			break;
+		}
+
+		detach(elements[start_index]);
+		detach(elements[end_index]);
+
+		elements.splice(cursor, 1 + start_index - cursor);
+		cursor += end_index - start_index - 1;
+	}
+	return elements;
+}
+
 export class HtmlTag {
 	// parent for creating node
 	e: HTMLElement;
