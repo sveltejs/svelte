@@ -3,7 +3,7 @@ export default {
 		<p id="my-id" style="width: 65px; color: blue;"></p>
 	`,
 
-	test({ assert, component, target, window }) {
+	test({ assert, target, window }) {
 		const p = target.querySelector('p');
 
 		const styles = window.getComputedStyle(p);

@@ -3,7 +3,7 @@ export default {
 		<p style="height: 40px; color: red;"></p>
 	`,
 
-	test({ assert, component, target, window }) {
+	test({ assert, target, window }) {
 		const p = target.querySelector('p');
 
 		const styles = window.getComputedStyle(p);
