@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: December 2021
+title: "What's new in Svelte: December 2021"
 description: "Svelte Summit Fall 2021 Recap, Rich Harris joins Vercel, and Kevin goes full-time on Svelte Society"
 author: Daniel Sandoval
 authorURL: https://desandoval.net
