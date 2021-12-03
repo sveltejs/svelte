@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: July 2021
+title: "What's new in Svelte: July 2021"
 description: Keeping cool with fixes, TypeScript tooling and tonnes of new features
 author: Daniel Sandoval
 authorURL: https://desandoval.net

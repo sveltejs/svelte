@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: November 2021
+title: "What's new in Svelte: November 2021"
 description: Over 5000 stars to light up the showcase
 author: Daniel Sandoval
 authorURL: https://desandoval.net

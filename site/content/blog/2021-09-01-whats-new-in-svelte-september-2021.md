@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: September 2021
+title: "What's new in Svelte: September 2021"
 description: StackOverflow's most loved web framework
 author: Daniel Sandoval
 authorURL: https://desandoval.net
