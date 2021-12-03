@@ -8,7 +8,7 @@ We're not limited to declaring reactive *values* — we can also run arbitrary *
 $: console.log(`the count is ${count}`);
 ```
 
-> Did you notice we are using [template literal syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals "MDN Web Docs") here? `the count is ${count}` is enclosed by `` ` `` backticks, **not** `'` quotes. This enables us to substitute it with reactive declarations, `${count}` for example. 
+> This example uses [a template literal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals "MDN Web Docs").
 
 You can easily group statements together with a block:
 
