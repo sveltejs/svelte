@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: May 2021
+title: "What's new in Svelte: May 2021"
 description: Working toward SvelteKit 1.0 and a showcase full of SvelteKit sites!
 author: Daniel Sandoval
 authorURL: https://desandoval.net

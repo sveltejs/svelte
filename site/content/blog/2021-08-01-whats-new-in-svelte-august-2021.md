@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: August 2021
+title: "What's new in Svelte: August 2021"
 description: Shadow DOM, export and await - oh my!
 author: Daniel Sandoval
 authorURL: https://desandoval.net
