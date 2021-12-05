@@ -1,0 +1,1 @@
+<div class:one={true}></div>

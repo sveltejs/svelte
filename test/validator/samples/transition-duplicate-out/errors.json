@@ -1,0 +1,15 @@
+[{
+	"code": "duplicate-transition",
+	"message": "An element can only have one 'out' directive",
+	"start": {
+		"line": 6,
+		"column": 13,
+		"character": 71
+	},
+	"end": {
+		"line": 6,
+		"column": 20,
+		"character": 78
+	},
+	"pos": 71
+}]

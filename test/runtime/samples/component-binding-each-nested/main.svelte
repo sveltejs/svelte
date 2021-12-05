@@ -1,0 +1,12 @@
+<script>
+	import Widget from './Widget.svelte';
+
+	export let a = [{ name: 'foo' }, { name: 'bar' }, { name: 'baz' }];
+	export let getName = x => x.name;
+</script>
+
+{#each a as x}
+	<Widget bind:value={x.name}/>
+{/each}
+
+<p>{a.map(getName).join(', ')}</p>

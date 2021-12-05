@@ -1,0 +1,1 @@
+<div>A wild component appears</div>

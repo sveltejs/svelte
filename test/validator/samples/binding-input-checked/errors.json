@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-binding",
+	"message": "'checked' binding can only be used with <input type=\"checkbox\">",
+	"start": {
+		"line": 5,
+		"column": 7,
+		"character": 37
+	},
+	"end": {
+		"line": 5,
+		"column": 25,
+		"character": 55
+	},
+	"pos": 37
+}]

@@ -1,0 +1,15 @@
+[{
+	"code": "missing-declaration",
+	"message": "'foo' is not defined",
+	"start": {
+		"line": 6,
+		"column": 6,
+		"character": 71
+	},
+	"end": {
+		"line": 6,
+		"column": 17,
+		"character": 82
+	},
+	"pos": 71
+}]

@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-slotted-content",
+	"message": "Element with a slot='...' attribute must be a child of a component or a descendant of a custom element",
+	"start": {
+		"line": 7,
+		"column": 7,
+		"character": 100
+	},
+	"end": {
+		"line": 7,
+		"column": 17,
+		"character": 110
+	},
+	"pos": 100
+}]

@@ -1,0 +1,15 @@
+[{
+	"code": "illegal-attribute",
+	"message": "'3aa' is not a valid attribute name",
+	"start": {
+		"line": 1,
+		"column": 3,
+		"character": 3
+	},
+	"end": {
+		"line": 1,
+		"column": 12,
+		"character": 12
+	},
+	"pos": 3
+}]

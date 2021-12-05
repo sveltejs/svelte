@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-ref-directive",
+	"message": "The ref directive is no longer supported — use `bind:this={foo}` instead",
+	"pos": 5,
+	"start": {
+		"line": 1,
+		"column": 5,
+		"character": 5
+	},
+	"end": {
+		"line": 1,
+		"column": 5,
+		"character": 5
+	}
+}]

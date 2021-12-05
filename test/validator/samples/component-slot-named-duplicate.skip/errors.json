@@ -1,0 +1,8 @@
+[{
+	"message": "duplicate 'foo' <slot> element",
+	"start": {
+		"line": 2,
+		"column": 6
+	},
+	"pos": 31
+}]

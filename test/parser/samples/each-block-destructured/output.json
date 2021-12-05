@@ -1,0 +1,268 @@
+{
+	"html": {
+		"start": 41,
+		"end": 112,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 39,
+				"end": 41,
+				"type": "Text",
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"start": 41,
+				"end": 112,
+				"type": "EachBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 48,
+					"end": 55,
+					"loc": {
+						"start": {
+							"line": 5,
+							"column": 7
+						},
+						"end": {
+							"line": 5,
+							"column": 14
+						}
+					},
+					"name": "animals"
+				},
+				"children": [
+					{
+						"start": 83,
+						"end": 104,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 86,
+								"end": 91,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 87,
+									"end": 90,
+									"loc": {
+										"start": {
+											"line": 6,
+											"column": 5
+										},
+										"end": {
+											"line": 6,
+											"column": 8
+										}
+									},
+									"name": "key"
+								}
+							},
+							{
+								"start": 91,
+								"end": 93,
+								"type": "Text",
+								"raw": ": ",
+								"data": ": "
+							},
+							{
+								"start": 93,
+								"end": 100,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 94,
+									"end": 99,
+									"loc": {
+										"start": {
+											"line": 6,
+											"column": 12
+										},
+										"end": {
+											"line": 6,
+											"column": 17
+										}
+									},
+									"name": "value"
+								}
+							}
+						]
+					}
+				],
+				"context": {
+					"type": "ArrayPattern",
+					"start": 59,
+					"end": 80,
+					"loc": {
+						"start": {
+							"line": 5,
+							"column": 19
+						},
+						"end": {
+							"line": 5,
+							"column": 40
+						}
+					},
+					"elements": [
+						{
+							"type": "Identifier",
+							"start": 60,
+							"end": 63,
+							"loc": {
+								"start": {
+									"line": 5,
+									"column": 20
+								},
+								"end": {
+									"line": 5,
+									"column": 23
+								}
+							},
+							"name": "key"
+						},
+						{
+							"type": "Identifier",
+							"start": 65,
+							"end": 70,
+							"loc": {
+								"start": {
+									"line": 5,
+									"column": 25
+								},
+								"end": {
+									"line": 5,
+									"column": 30
+								}
+							},
+							"name": "value"
+						},
+						{
+							"type": "RestElement",
+							"start": 72,
+							"end": 79,
+							"loc": {
+								"start": {
+									"line": 5,
+									"column": 32
+								},
+								"end": {
+									"line": 5,
+									"column": 39
+								}
+							},
+							"argument": {
+								"type": "Identifier",
+								"start": 75,
+								"end": 79,
+								"loc": {
+									"start": {
+										"line": 5,
+										"column": 35
+									},
+									"end": {
+										"line": 5,
+										"column": 39
+									}
+								},
+								"name": "rest"
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 39,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 30,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 3,
+					"column": 0
+				}
+			},
+			"body": [
+				{
+					"type": "ExportNamedDeclaration",
+					"start": 10,
+					"end": 29,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 1
+						},
+						"end": {
+							"line": 2,
+							"column": 20
+						}
+					},
+					"declaration": {
+						"type": "VariableDeclaration",
+						"start": 17,
+						"end": 29,
+						"loc": {
+							"start": {
+								"line": 2,
+								"column": 8
+							},
+							"end": {
+								"line": 2,
+								"column": 20
+							}
+						},
+						"declarations": [
+							{
+								"type": "VariableDeclarator",
+								"start": 21,
+								"end": 28,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 12
+									},
+									"end": {
+										"line": 2,
+										"column": 19
+									}
+								},
+								"id": {
+									"type": "Identifier",
+									"start": 21,
+									"end": 28,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 12
+										},
+										"end": {
+											"line": 2,
+											"column": 19
+										}
+									},
+									"name": "animals"
+								},
+								"init": null
+							}
+						],
+						"kind": "let"
+					},
+					"specifiers": [],
+					"source": null
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}

@@ -1,0 +1,1 @@
+<p class='widget'><slot></slot></p>

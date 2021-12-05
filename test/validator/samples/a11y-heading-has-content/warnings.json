@@ -1,0 +1,33 @@
+[
+	{
+		"code": "a11y-missing-content",
+		"message": "A11y: <h1> element should have child content",
+		"start": {
+			"line": 1,
+			"column": 0,
+			"character": 0
+		},
+		"end": {
+			"line": 1,
+			"column": 9,
+			"character": 9
+		},
+		"pos": 0
+	},
+
+	{
+		"code": "a11y-hidden",
+		"message": "A11y: <h2> element should not be hidden",
+		"start": {
+			"line": 2,
+			"column": 4,
+			"character": 14
+		},
+		"end": {
+			"line": 2,
+			"column": 15,
+			"character": 25
+		},
+		"pos": 14
+	}
+]

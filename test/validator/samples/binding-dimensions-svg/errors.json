@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-binding",
+	"message": "'offsetWidth' is not a valid binding on <svg>. Use 'clientWidth' instead",
+	"pos": 43,
+	"start": {
+		"line": 5,
+		"column": 5,
+		"character": 43
+	},
+	"end": {
+		"line": 5,
+		"column": 21,
+		"character": 59
+	}
+}]

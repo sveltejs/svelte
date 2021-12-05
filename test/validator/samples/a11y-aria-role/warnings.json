@@ -1,0 +1,17 @@
+[
+	{
+		"code": "a11y-unknown-role",
+		"message": "A11y: Unknown role 'toooltip' (did you mean 'tooltip'?)",
+		"start": {
+			"line": 1,
+			"column": 5,
+			"character": 5
+		},
+		"end": {
+			"line": 1,
+			"column": 20,
+			"character": 20
+		},
+		"pos": 5
+	}
+]

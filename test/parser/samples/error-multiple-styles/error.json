@@ -1,0 +1,10 @@
+{
+	"code": "duplicate-style",
+	"message": "You can only have one top-level <style> tag per component",
+	"start": {
+		"line": 9,
+		"column": 0,
+		"character": 58
+	},
+	"pos": 58
+}

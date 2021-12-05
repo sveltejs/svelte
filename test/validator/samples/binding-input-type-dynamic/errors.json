@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-type",
+	"message": "'type' attribute cannot be dynamic if input uses two-way binding",
+	"start": {
+		"line": 6,
+		"column": 24,
+		"character": 70
+	},
+	"end": {
+		"line": 6,
+		"column": 40,
+		"character": 86
+	},
+	"pos": 70
+}]

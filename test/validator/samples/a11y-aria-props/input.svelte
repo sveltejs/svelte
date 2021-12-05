@@ -1,0 +1,1 @@
+<input type="image" aria-labeledby="foo">
