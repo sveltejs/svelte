@@ -34,7 +34,6 @@ export function add_flush_callback(fn) {
 const seen_callbacks = new Set();
 let flushidx = 0;  // Do *not* move this inside the flush() function
 export function flush() {
-
 	const saved_component = current_component;
 
 	do {
