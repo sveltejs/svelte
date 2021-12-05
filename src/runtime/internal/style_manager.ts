@@ -18,6 +18,24 @@ function hash(str: string) {
 	return hash >>> 0;
 }
 
+export function get_svelte_style_sheet_index(style_sheet_list: StyleSheetList) {
+	let svelte_style_sheet_index: number;
+	const svelte_style_sheet_title = 'svelte-stylesheet';
+	
+		for (let i = 0; i < style_sheet_list.length; i++) {
+			if ( style_sheet_list[i].type !== 'text/css') continue;
+			const css = <CSSStyleSheet>style_sheet_list[i];
+			
+		const css_rules = css?.cssRules;
+		if (!css_rules) continue;
+		if (css.title === svelte_style_sheet_title && css_rules.length === 0) {
+			svelte_style_sheet_index = i;
+			break;
+		}
+	}
+	return svelte_style_sheet_index;
+}
+
 export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
 	const step = 16.666 / duration;
 	let keyframes = '{\n';
@@ -31,7 +49,16 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	const name = `__svelte_${hash(rule)}_${uid}`;
 	const doc = get_root_for_style(node) as ExtendedDoc;
 	active_docs.add(doc);
-	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = append_empty_stylesheet(node).sheet as CSSStyleSheet);
+	
+	let svelte_style_sheet_index: number;
+	
+	if (!doc.__svelte_stylesheet) {
+		svelte_style_sheet_index = get_svelte_style_sheet_index(document.styleSheets);
+	}
+
+	const stylesheet = doc.__svelte_stylesheet || 
+		(doc.__svelte_stylesheet = (document.styleSheets[svelte_style_sheet_index] as CSSStyleSheet) ??
+		 append_empty_stylesheet(node).sheet as CSSStyleSheet);
 	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
 
 	if (!current_rules[name]) {

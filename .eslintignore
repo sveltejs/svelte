@@ -2,6 +2,10 @@
 **/expected.js
 _output
 test/*/samples/*/output.js
+test/svelte-styles-csp/*.js
+test/svelte-styles-csp/svelte-test-transitions-no-styles-csp/build/*.js
+test/svelte-styles-csp/svelte-test-transitions-styles-csp/build/*.js
+
 
 # automatically generated
 internal_exports.ts
