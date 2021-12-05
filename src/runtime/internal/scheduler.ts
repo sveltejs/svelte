@@ -35,7 +35,7 @@ const seen_callbacks = new Set();
 let flushidx = 0;  // Do *not* move this inside the flush() function
 export function flush() {
 
-	let current_component = maybe_get_current_component();
+	const current_component = maybe_get_current_component();
 
 	do {
 		// first, call beforeUpdate functions
