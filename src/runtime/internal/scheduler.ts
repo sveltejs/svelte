@@ -1,7 +1,7 @@
-import { run_all, Queue } from './utils';
+import { run_all } from './utils';
 import { get_current_component, set_current_component } from './lifecycle';
 
-export const dirty_components = new Queue<any>();
+export const dirty_components = [];
 export const intros = { enabled: false };
 
 export const binding_callbacks = [];
@@ -32,6 +32,7 @@ export function add_flush_callback(fn) {
 }
 
 const seen_callbacks = new Set();
+let flushidx = 0;  // Do *not* move this inside the flush() function
 export function flush() {
 
 	let current_component = null;
@@ -44,14 +45,16 @@ export function flush() {
 	do {
 		// first, call beforeUpdate functions
 		// and update components
-		while (dirty_components.length) {
-			const component = dirty_components.shift();
+		while (flushidx < dirty_components.length) {
+			const component = dirty_components[flushidx];
+			flushidx++;
 			set_current_component(component);
 			update(component.$$);
 		}
 		set_current_component(null);
 
 		dirty_components.length = 0;
+		flushidx = 0;
 
 		while (binding_callbacks.length) binding_callbacks.pop()();
 

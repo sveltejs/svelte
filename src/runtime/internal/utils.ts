@@ -58,40 +58,6 @@ export function is_empty(obj) {
 	return Object.keys(obj).length === 0;
 }
 
-export class Queue<T> {
-	forward: T[];
-	reverse: T[];
-
-	constructor() {
-		this.forward = [];
-		this.reverse = [];
-	}
-	push(value: T) {
-		return this.forward.push(value);
-	}
-	shift() {
-		if (this.reverse.length === 0) {
-			while (this.forward.length) {
-				this.reverse.push(this.forward.pop());
-			}
-		}
-		return this.reverse.pop();
-	}
-	get length() {
-		return this.forward.length + this.reverse.length;
-	}
-	set length(len: number) {
-		if (len === 0) {
-			this.forward.length = 0;
-			this.reverse.length = 0;
-		} else {
-			while (this.length > len) {
-				this.shift();
-			}
-		}
-	}
-}
-
 export function validate_store(store, name) {
 	if (store != null && typeof store.subscribe !== 'function') {
 		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
