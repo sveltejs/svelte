@@ -1,5 +1,5 @@
 import { run_all } from './utils';
-import { maybe_get_current_component, set_current_component } from './lifecycle';
+import { current_component, set_current_component } from './lifecycle';
 
 export const dirty_components = [];
 export const intros = { enabled: false };
@@ -35,7 +35,7 @@ const seen_callbacks = new Set();
 let flushidx = 0;  // Do *not* move this inside the flush() function
 export function flush() {
 
-	const current_component = maybe_get_current_component();
+	const saved_component = current_component;
 
 	do {
 		// first, call beforeUpdate functions
@@ -70,7 +70,7 @@ export function flush() {
 		render_callbacks.length = 0;
 	} while (dirty_components.length);
 
-	set_current_component(current_component);
+	set_current_component(saved_component);
 
 	while (flush_callbacks.length) {
 		flush_callbacks.pop()();
