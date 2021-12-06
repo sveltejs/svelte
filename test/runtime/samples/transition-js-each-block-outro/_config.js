@@ -3,7 +3,7 @@ export default {
 		things: [ 'a', 'b', 'c' ]
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		const divs = target.querySelectorAll( 'div' );
 
 		component.things = [ 'a' ];

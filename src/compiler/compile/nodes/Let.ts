@@ -2,6 +2,9 @@ import Node from './shared/Node';
 import Component from '../Component';
 import { walk } from 'estree-walker';
 import { BasePattern, Identifier } from 'estree';
+import TemplateScope from './shared/TemplateScope';
+import { TemplateNode } from '../../interfaces';
+import compiler_errors from '../compiler_errors';
 
 const applicable = new Set(['Identifier', 'ObjectExpression', 'ArrayExpression', 'Property']);
 
@@ -11,7 +14,7 @@ export default class Let extends Node {
 	value: Identifier;
 	names: string[] = [];
 
-	constructor(component: Component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		this.name = { type: 'Identifier', name: info.name };
@@ -22,12 +25,9 @@ export default class Let extends Node {
 			this.value = info.expression;
 
 			walk(info.expression, {
-				enter(node: Identifier|BasePattern) {
+				enter(node: Identifier | BasePattern) {
 					if (!applicable.has(node.type)) {
-						component.error(node as any, {
-							code: 'invalid-let',
-							message: 'let directive value must be an identifier or an object/array pattern'
-						});
+						return component.error(node as any, compiler_errors.invalid_let);
 					}
 
 					if (node.type === 'Identifier') {

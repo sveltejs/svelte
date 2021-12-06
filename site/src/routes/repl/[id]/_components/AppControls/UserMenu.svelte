@@ -1,7 +1,6 @@
 <script>
 	import { getContext } from 'svelte';
-	import { stores } from '@sapper/app';
-	const { session } = stores();
+	import { session } from '$app/stores';
 
 	const { logout } = getContext('app');
 
@@ -50,6 +49,7 @@
 		font-family: var(--font);
 		font-size: 1.6rem;
 		opacity: 0.7;
+		padding-top: 6px;
 	}
 
 	.user:hover span {

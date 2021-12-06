@@ -4,6 +4,7 @@ import full_char_code_at from './full_char_code_at';
 export const globals = new Set([
 	'alert',
 	'Array',
+	'BigInt',
 	'Boolean',
 	'clearInterval',
 	'clearTimeout',
@@ -13,6 +14,7 @@ export const globals = new Set([
 	'decodeURI',
 	'decodeURIComponent',
 	'document',
+	'Element',
 	'encodeURI',
 	'encodeURIComponent',
 	'Error',
@@ -23,6 +25,7 @@ export const globals = new Set([
 	'global',
 	'globalThis',
 	'history',
+	'HTMLElement',
 	'Infinity',
 	'InternalError',
 	'Intl',
@@ -35,6 +38,7 @@ export const globals = new Set([
 	'Math',
 	'NaN',
 	'navigator',
+	'Node',
 	'Number',
 	'Object',
 	'parseFloat',
@@ -50,11 +54,13 @@ export const globals = new Set([
 	'setInterval',
 	'setTimeout',
 	'String',
+	'SVGElement',
 	'SyntaxError',
 	'TypeError',
 	'undefined',
 	'URIError',
 	'URL',
+	'URLSearchParams',
 	'window'
 ]);
 

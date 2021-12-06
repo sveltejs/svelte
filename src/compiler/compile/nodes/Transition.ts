@@ -1,6 +1,10 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
+import TemplateScope from './shared/TemplateScope';
+import { TemplateNode } from '../../interfaces';
+import Element from './Element';
+import compiler_errors from '../compiler_errors';
 
 export default class Transition extends Node {
 	type: 'Transition';
@@ -9,7 +13,7 @@ export default class Transition extends Node {
 	expression: Expression;
 	is_local: boolean;
 
-	constructor(component: Component, parent, scope, info) {
+	constructor(component: Component, parent: Element, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		component.warn_if_undefined(info.name, info, scope);
@@ -22,25 +26,12 @@ export default class Transition extends Node {
 
 		if ((info.intro && parent.intro) || (info.outro && parent.outro)) {
 			const parent_transition = (parent.intro || parent.outro);
-
-			const message = this.directive === parent_transition.directive
-				? `An element can only have one '${this.directive}' directive`
-				: `An element cannot have both ${describe(parent_transition)} directive and ${describe(this)} directive`;
-
-			component.error(info, {
-				code: 'duplicate-transition',
-				message
-			});
+			component.error(info, compiler_errors.duplicate_transition(this.directive, parent_transition.directive));
+			return;
 		}
 
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression)
 			: null;
 	}
-}
-
-function describe(transition: Transition) {
-	return transition.directive === 'transition'
-		? "a 'transition'"
-		: `an '${transition.directive}'`;
 }

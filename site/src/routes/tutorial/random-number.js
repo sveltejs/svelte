@@ -1,20 +1,23 @@
-export function get(req, res) {
+export async function get(req) {
 	let { min = '0', max = '100' } = req.query;
 	min = +min;
 	max = +max;
 
-	res.setHeader('Access-Control-Allow-Origin', '*');
-
 	// simulate a long delay
-	setTimeout(() => {
-		// fail sometimes
-		if (Math.random() < 0.333) {
-			res.statusCode = 400;
-			res.end(`Failed to generate random number. Please try again`);
-			return;
-		}
+	await new Promise((res) => setTimeout(res, 1000));
 
-		const num = min + Math.round(Math.random() * (max - min));
-		res.end(String(num));
-	}, 1000);
+	// fail sometimes
+	if (Math.random() < 0.333) {
+		return {
+			status: 400,
+			headers: { 'Access-Control-Allow-Origin': '*' },
+			body: `Failed to generate random number. Please try again`
+		};
+	}
+
+	const num = min + Math.round(Math.random() * (max - min));
+	return {
+		headers: { 'Access-Control-Allow-Origin': '*' },
+		body: String(num)
+	};
 }

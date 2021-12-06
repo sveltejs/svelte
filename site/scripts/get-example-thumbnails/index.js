@@ -1,7 +1,7 @@
-const fs = require('fs');
-const puppeteer = require('puppeteer');
-const Jimp = require('jimp');
-const c = require('kleur');
+import fs from 'fs';
+import puppeteer from 'puppeteer';
+import Jimp from 'jimp';
+import c from 'kleur';
 
 const slugs = [];
 

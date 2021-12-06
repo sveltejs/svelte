@@ -3,6 +3,8 @@ import Expression from './shared/Expression';
 import Component from '../Component';
 import { sanitize } from '../../utils/names';
 import { Identifier } from 'estree';
+import TemplateScope from './shared/TemplateScope';
+import { TemplateNode } from '../../interfaces';
 
 export default class EventHandler extends Node {
 	type: 'EventHandler';
@@ -13,7 +15,7 @@ export default class EventHandler extends Node {
 	uses_context = false;
 	can_make_passive = false;
 
-	constructor(component: Component, parent, template_scope, info) {
+	constructor(component: Component, parent: Node, template_scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, template_scope, info);
 
 		this.name = info.name;

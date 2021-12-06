@@ -3,7 +3,7 @@
 export default {
 	html: "<svg class='foo'></svg>",
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		const svg = target.querySelector('svg');
 
 		assert.equal(svg.namespaceURI, 'http://www.w3.org/2000/svg');

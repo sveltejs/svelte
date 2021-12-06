@@ -14,7 +14,7 @@ import {
 	transition_out
 } from "svelte/internal";
 
-import { fade } from "svelte/transition";
+import { fade } from 'svelte/transition';
 
 function create_if_block(ctx) {
 	let div;
@@ -103,7 +103,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { num = 1 } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("num" in $$props) $$invalidate(0, num = $$props.num);
+		if ('num' in $$props) $$invalidate(0, num = $$props.num);
 	};
 
 	return [num];

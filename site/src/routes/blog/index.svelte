@@ -1,7 +1,11 @@
 <script context="module">
-	export async function preload() {
-		const posts = await this.fetch(`blog.json`).then(r => r.json());
-		return { posts };
+	export async function load({ fetch }) {
+		const posts = await fetch(`blog.json`).then(r => r.json());
+		return {
+			props: {
+				posts
+			}
+		};
 	}
 </script>
 
@@ -18,10 +22,11 @@
 	<meta name="Description" content="Articles about Svelte and UI development">
 </svelte:head>
 
+<h1 class="visually-hidden">Blog</h1>
 <div class='posts stretch'>
 	{#each posts as post}
 		<article class='post' data-pubdate={post.metadata.dateString}>
-			<a class="no-underline" rel='prefetch' href='blog/{post.slug}' title='Read the article »'>
+			<a class="no-underline" sveltekit:prefetch href='blog/{post.slug}' title='Read the article »'>
 				<h2>{post.metadata.title}</h2>
 				<p>{post.metadata.description}</p>
 			</a>

@@ -1,8 +1,10 @@
 <script context="module">
-	export function preload({ params, query }) {
+	export function load({ page: { params, query }}) {
 		return {
-			version: query.version || '3',
-			id: params.id
+			props: {
+				version: query.get('version') || '3',
+				id: params.id
+			}
 		};
 	}
 </script>
@@ -10,22 +12,24 @@
 <script>
 	import Repl from '@sveltejs/svelte-repl';
 	import { onMount } from 'svelte';
-	import { goto, stores } from '@sapper/app';
+	import { browser } from '$app/env';
+	import { goto } from '$app/navigation';
+	import { session } from '$app/stores';
+	import { mapbox_setup } from '../../../config';
 	import InputOutputToggle from '../../../components/Repl/InputOutputToggle.svelte';
 	import AppControls from './_components/AppControls/index.svelte';
 
 	export let version;
 	export let id;
 
-	const { session } = stores();
-
 	let repl;
 	let gist;
 	let name = 'Loading...';
 	let zen_mode = false;
 	let is_relaxed_gist = false;
-	let width = process.browser ? window.innerWidth : 1000;
+	let width = browser ? window.innerWidth : 1000;
 	let checked = false;
+	let modified_count = 0;
 
 	function update_query_string(version) {
 		const params = [];
@@ -33,8 +37,8 @@
 		if (version !== 'latest') params.push(`version=${version}`);
 
 		const url = params.length > 0
-			? `repl/${id}?${params.join('&')}`
-			: `repl/${id}`;
+			? `/repl/${id}?${params.join('&')}`
+			: `/repl/${id}`;
 
 		history.replaceState({}, 'x', url);
 	}
@@ -48,7 +52,7 @@
 		}
 
 		// TODO handle `relaxed` logic
-		fetch(`repl/${id}.json`).then(r => {
+		fetch(`/repl/${id}.json`).then(r => {
 			if (r.ok) {
 				r.json().then(data => {
 					gist = data;
@@ -82,7 +86,7 @@
 		});
 	}
 
-	$: if (process.browser) fetch_gist(id);
+	$: if (browser) fetch_gist(id);
 
 	onMount(() => {
 		if (version !== 'local') {
@@ -100,14 +104,15 @@
 		goto(`/repl/${gist.uid}?version=${version}`);
 	}
 
-	$: svelteUrl = process.browser && version === 'local' ?
+	function handle_change(event) {
+		modified_count = event.detail.components.filter(c => c.modified).length;
+	}
+
+	$: svelteUrl = browser && version === 'local' ?
 		`${location.origin}/repl/local` :
 		`https://unpkg.com/svelte@${version}`;
 
 	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
-
-	// needed for context API example
-	const mapbox_setup = `window.MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;`;
 
 	$: mobile = width < 540;
 
@@ -167,26 +172,9 @@
 		z-index: 111;
 	}
 
-	.pane { width: 100%; height: 100% }
-
-	.loading {
-		text-align: center;
-		color: var(--second);
-		font-weight: 400;
-		margin: 2em 0 0 0;
-		opacity: 0;
-		animation: fade-in .4s;
-		animation-delay: .2s;
-		animation-fill-mode: both;
-	}
-
 	@keyframes fade-in {
 		0%   { opacity: 0 }
 		100% { opacity: 1 }
-	}
-
-	.input {
-		padding: 2.4em 0 0 0;
 	}
 </style>
 
@@ -206,10 +194,11 @@
 		{repl}
 		bind:name
 		bind:zen_mode
+		bind:modified_count
 		on:forked={handle_fork}
 	/>
 
-	{#if process.browser}
+	{#if browser}
 		<div class="viewport" class:offset={checked}>
 			<Repl
 				bind:this={repl}
@@ -219,6 +208,9 @@
 				{relaxed}
 				fixed={mobile}
 				injectedJS={mapbox_setup}
+				on:change={handle_change}
+				on:add={handle_change}
+				on:remove={handle_change}
 			/>
 		</div>
 

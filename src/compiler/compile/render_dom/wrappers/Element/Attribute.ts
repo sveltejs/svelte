@@ -8,6 +8,7 @@ import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
 import handle_select_value_binding from './handle_select_value_binding';
 import { Identifier, Node } from 'estree';
+import { namespaces } from '../../../../utils/namespaces';
 
 export class BaseAttributeWrapper {
 	node: Attribute;
@@ -48,9 +49,10 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			// special case — <option value={foo}> — see below
 			if (this.parent.node.name === 'option' && node.name === 'value') {
 				let select: ElementWrapper = this.parent;
-				while (select && (select.node.type !== 'Element' || select.node.name !== 'select'))
+				while (select && (select.node.type !== 'Element' || select.node.name !== 'select')) {
 					// @ts-ignore todo: doublecheck this, but looks to be correct
 					select = select.parent;
+				}
 
 				if (select && select.select_binding_dependencies) {
 					select.select_binding_dependencies.forEach(prop => {
@@ -66,15 +68,27 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			}
 		}
 
-		this.name = fix_attribute_casing(this.node.name);
-		this.metadata = this.get_metadata();
-		this.is_indirectly_bound_value = is_indirectly_bound_value(this);
-		this.property_name = this.is_indirectly_bound_value
-			? '__value'
-			: this.metadata && this.metadata.property_name;
-		this.is_src = this.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
-		this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
-		this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
+		if (this.parent.node.namespace == namespaces.foreign) {
+			// leave attribute case alone for elements in the "foreign" namespace
+			this.name = this.node.name;
+			this.metadata = this.get_metadata();
+			this.is_indirectly_bound_value = false;
+			this.property_name = null;
+			this.is_select_value_attribute = false;
+			this.is_input_value = false;
+		} else {
+			this.name = fix_attribute_casing(this.node.name);
+			this.metadata = this.get_metadata();
+			this.is_indirectly_bound_value = is_indirectly_bound_value(this);
+			this.property_name = this.is_indirectly_bound_value
+				? '__value'
+				: this.metadata && this.metadata.property_name;
+			this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
+			this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
+		}
+
+		// TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
+		this.is_src = this.name === 'src' && (!this.parent.node.namespace || this.parent.node.namespace === namespaces.html);
 		this.should_cache = should_cache(this);
 	}
 
@@ -119,7 +133,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			`);
 		} else if (this.is_src) {
 			block.chunks.hydrate.push(
-				b`if (${element.var}.src !== ${init}) ${method}(${element.var}, "${name}", ${this.last});`
+				b`if (!@src_url_equal(${element.var}.src, ${init})) ${method}(${element.var}, "${name}", ${this.last});`
 			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
 		} else if (property_name) {
@@ -156,8 +170,11 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		}
 
 		// special case – autofocus. has to be handled in a bit of a weird way
-		if (this.node.is_true && name === 'autofocus') {
-			block.autofocus = element.var;
+		if (name === 'autofocus') {
+			block.autofocus = {
+				element_var: element.var,
+				condition_expression: this.node.is_true ? undefined : value
+			};
 		}
 	}
 
@@ -180,7 +197,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 		if (should_cache) {
 			condition = this.is_src
-				? x`${condition} && (${element.var}.src !== (${last} = ${value}))`
+				? x`${condition} && (!@src_url_equal(${element.var}.src, (${last} = ${value})))`
 				: x`${condition} && (${last} !== (${last} = ${value}))`;
 		}
 

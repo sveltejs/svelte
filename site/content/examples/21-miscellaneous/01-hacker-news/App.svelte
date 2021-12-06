@@ -26,6 +26,16 @@
 	onMount(hashchange);
 </script>
 
+<svelte:window on:hashchange={hashchange}/>
+
+<main>
+	{#if item}
+		<Item {item} returnTo="#/top/{page}"/>
+	{:else if page}
+		<List {page}/>
+	{/if}
+</main>
+
 <style>
 	main {
 		position: relative;
@@ -45,13 +55,3 @@
 		color: rgb(0,0,150);
 	}
 </style>
-
-<svelte:window on:hashchange={hashchange}/>
-
-<main>
-	{#if item}
-		<Item {item} returnTo="#/top/{page}"/>
-	{:else if page}
-		<List {page}/>
-	{/if}
-</main>

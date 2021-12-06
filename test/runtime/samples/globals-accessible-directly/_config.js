@@ -1,7 +1,7 @@
 export default {
 	html: '',
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		assert.htmlEqual(target.innerHTML, 'NaN');
 	}
 };

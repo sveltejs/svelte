@@ -1,7 +1,9 @@
 <script context="module">
-	export async function preload({ params }) {
-		const res = await this.fetch(`blog/${params.slug}.json`);
-		return res.ok ? { post: await res.json() } : this.error(404, 'Not found');
+	export async function load({ fetch, page: { params } }) {
+		const res = await fetch(`/blog/${params.slug}.json`);
+		if (res.ok) {
+			return { props: { post: await res.json() }};
+		}
 	}
 </script>
 
@@ -172,17 +174,4 @@
 			margin: 2em auto;
 		}
 	}
-
-	/* @media (min-width: 1460px) {
-		.post :global(iframe) {
-			width: 1360px;
-			margin: 2em -280px;
-		}
-	}
-
-	@media (min-height: 800px) {
-		.post :global(iframe) {
-			height: 640px;
-		}
-	} */
 </style>

@@ -11,7 +11,7 @@ export default {
 		dev: true
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.visible = true;
 		assert.htmlEqual(target.innerHTML, `
 			<div class="row">

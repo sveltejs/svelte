@@ -4,6 +4,7 @@ import map_children from './shared/map_children';
 import Block from '../render_dom/Block';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
+import { TemplateNode } from '../../interfaces';
 
 export default class Fragment extends Node {
 	type: 'Fragment';
@@ -11,7 +12,7 @@ export default class Fragment extends Node {
 	children: INode[];
 	scope: TemplateScope;
 
-	constructor(component: Component, info: any) {
+	constructor(component: Component, info: TemplateNode) {
 		const scope = new TemplateScope();
 		super(component, null, scope, info);
 

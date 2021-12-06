@@ -2,7 +2,7 @@
 title: beforeUpdate and afterUpdate
 ---
 
-The `beforeUpdate` function schedules work to happen immediately before the DOM has been updated. `afterUpdate` is its counterpart, used for running code once the DOM is in sync with your data.
+The `beforeUpdate` function schedules work to happen immediately before the DOM is updated. `afterUpdate` is its counterpart, used for running code once the DOM is in sync with your data.
 
 Together, they're useful for doing things imperatively that are difficult to achieve in a purely state-driven way, like updating the scroll position of an element.
 

@@ -1,6 +1,7 @@
 <script>
 	import { Blurb, Hero, Section } from '@sveltejs/site-kit';
 	import Contributors from './_components/Contributors.svelte';
+	import Donors from './_components/Donors.svelte';
 	import Example from './_components/Example.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte.svelte';
 	// import Lazy from '../components/Lazy.svelte';
@@ -34,6 +35,7 @@
 	<meta name="Description" content="Cybernetically enhanced web apps">
 </svelte:head>
 
+<h1 class="visually-hidden">Svelte</h1>
 <Hero
 	title="Svelte"
 	tagline="Cybernetically enhanced web apps"
@@ -68,7 +70,7 @@
 
 		<p>Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.</p>
 
-		<p><a href="blog/svelte-3-rethinking-reactivity">Read the introductory blog post</a> to learn more.</p>
+		<p>We're proud that Svelte was recently voted the <a href="https://insights.stackoverflow.com/survey/2021#section-most-loved-dreaded-and-wanted-web-frameworks">most loved web framework</a> with the <a href="https://2020.stateofjs.com/en-US/technologies/front-end-frameworks/">most satisfied developers</a> in a pair of industry surveys. We think you'll love it too. <a href="blog/svelte-3-rethinking-reactivity">Read the introductory blog post</a> to learn more.</p>
 	</div>
 
 	<div style="grid-area: start; display: flex; flex-direction: column; min-width: 0" slot="how">
@@ -76,6 +78,8 @@
 npx degit <a href="https://github.com/sveltejs/template" style="user-select: initial;">sveltejs/template</a> my-svelte-project
 <span class="token comment"># or download and extract <a href="https://github.com/sveltejs/template/archive/master.zip">this .zip file</a></span>
 cd my-svelte-project
+<span class="token comment"># to use <a href="blog/svelte-and-typescript">TypeScript</a> run:</span>
+<span class="token comment"># node scripts/setupTypeScript.js</span>
 
 npm install
 npm run dev
@@ -83,7 +87,7 @@ npm run dev
 
 		<p style="flex: 1">See the <a href="blog/the-easiest-way-to-get-started">quickstart guide</a> for more information.</p>
 
-		<p class="cta"><a rel="prefetch" href="tutorial">Learn Svelte</a></p>
+		<p class="cta"><a sveltekit:prefetch href="tutorial">Learn Svelte</a></p>
 	</div>
 </Blurb>
 
@@ -112,9 +116,17 @@ npm run dev
 </Section>
 
 <Section>
-	<h3>Contributors</h3>
+	<h3>Supporters</h3>
 
-	<p>Svelte is free and open source software, made possible by the work of dozens of volunteers. <a href="https://github.com/sveltejs/svelte">Join us!</a></p>
+	<p>Svelte is free and open source software, made possible by the work of hundreds of volunteers and donors. <a href="https://github.com/sveltejs/svelte">Join us</a> or <a href="https://opencollective.com/svelte">give</a>!</p>
+
+	<h4>Contributors</h4>
 
 	<Contributors/>
+
+	<p></p>
+
+	<h4>Donors</h4>
+
+	<Donors/>
 </Section>

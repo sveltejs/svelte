@@ -1,22 +1,22 @@
 <script context="module">
-	export async function preload(page, { user }) {
+	export async function load({ fetch, page, session: { user }}) {
 		let apps = [];
 		let offset = null;
 
 		if (user) {
 			let url = 'apps.json';
-			if (page.query.offset) {
-				url += `?offset=${encodeURIComponent(page.query.offset)}`;
+			if (page.query.get('offset')) {
+				url += `?offset=${encodeURIComponent(page.query.get('offset'))}`;
 			}
-			const r = await this.fetch(url, {
+			const r = await fetch(url, {
 				credentials: 'include'
 			});
-			if (!r.ok) return this.error(r.status, await r.text());
+			if (!r.ok) return { status: r.status, body: await r.text() };
 
 			({ apps, offset } = await r.json());
 		}
 
-		return { user, apps, offset };
+		return { props: { user, apps, offset }};
 	}
 </script>
 

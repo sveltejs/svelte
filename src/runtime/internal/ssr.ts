@@ -25,7 +25,7 @@ export function spread(args, classes_to_add) {
 		else if (boolean_attributes.has(name.toLowerCase())) {
 			if (value) str += ' ' + name;
 		} else if (value != null) {
-			str += ` ${name}="${String(value).replace(/"/g, '&#34;').replace(/'/g, '&#39;')}"`;
+			str += ` ${name}="${value}"`;
 		}
 	});
 
@@ -42,6 +42,18 @@ export const escaped = {
 
 export function escape(html) {
 	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+}
+
+export function escape_attribute_value(value) {
+	return typeof value === 'string' ? escape(value) : value;
+}
+
+export function escape_object(obj) {
+	const result = {};
+	for (const key in obj) {
+		result[key] = escape_attribute_value(obj[key]);
+	}
+	return result;
 }
 
 export function each(items, fn) {
@@ -74,12 +86,12 @@ export function debug(file, line, column, values) {
 let on_destroy;
 
 export function create_ssr_component(fn) {
-	function $$render(result, props, bindings, slots) {
+	function $$render(result, props, bindings, slots, context) {
 		const parent_component = current_component;
 
 		const $$ = {
 			on_destroy,
-			context: new Map(parent_component ? parent_component.$$.context : []),
+			context: new Map(context || (parent_component ? parent_component.$$.context : [])),
 
 			// these will be immediately discarded
 			on_mount: [],
@@ -97,7 +109,7 @@ export function create_ssr_component(fn) {
 	}
 
 	return {
-		render: (props = {}, options = {}) => {
+		render: (props = {}, { $$slots = {}, context = new Map() } = {}) => {
 			on_destroy = [];
 
 			const result: {
@@ -109,7 +121,7 @@ export function create_ssr_component(fn) {
 				}>;
 			} = { title: '', head: '', css: new Set() };
 
-			const html = $$render(result, props, {}, options);
+			const html = $$render(result, props, {}, $$slots, context);
 
 			run_all(on_destroy);
 

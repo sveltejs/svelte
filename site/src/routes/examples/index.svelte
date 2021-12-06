@@ -1,7 +1,7 @@
 <!-- FIXME sometimes it adds a trailing slash when landing -->
 <script context="module">
-	export async function preload() {
-		const sections = await this.fetch(`examples.json`).then(r => r.json());
+	export async function load({ fetch }) {
+		const sections = await fetch(`examples.json`).then(r => r.json());
 		const title_by_slug = sections.reduce((acc, {examples}) => {
 			examples.forEach(({slug, title}) => {
 				acc[slug] = title;
@@ -10,13 +10,18 @@
 			return acc;
 		}, {});
 
-		return {sections, title_by_slug};
+		return {
+			props: {
+				sections,
+				title_by_slug
+			}
+		};
 	}
 </script>
 
 <script>
 	import { onMount } from 'svelte';
-	import { goto } from '@sapper/app';
+	import { goto } from '$app/navigation';
 	import Repl from '@sveltejs/svelte-repl';
 
 	import ScreenToggle from '../../components/ScreenToggle.svelte';
@@ -100,6 +105,7 @@
 	<meta name="Description" content="Interactive example Svelte apps">
 </svelte:head>
 
+<h1 class="visually-hidden">Examples</h1>
 <div class='examples-container' bind:clientWidth={width}>
 	<div class="viewport offset-{offset}">
 		<TableOfContents {sections} active_section={active_slug} {isLoading} />

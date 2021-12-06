@@ -6,11 +6,16 @@ Set up the site sub-project:
 git clone https://github.com/sveltejs/svelte.git
 cd site
 npm ci
-npm run update
 npm run dev
 ```
 
 and navigate to [localhost:3000](http://localhost:3000).
+
+The first time you run the site locally, it will update the list of Contributors and REPL dependencies. After this it won't run again unless you force it by running:
+
+```bash
+npm run update
+```
 
 ## Running using the local copy of Svelte
 
@@ -25,7 +30,6 @@ npm ci
 PUBLISH=1 npm run build
 cd site
 npm ci
-npm run update
 npm run dev
 ```
 
@@ -47,16 +51,16 @@ In order for the REPL's GitHub integration to work properly when running locally
 
 ## Building the site
 
-To build the website, run `npm run build`. The output can be found in `__sapper__/build`.
+To build the website, run `npm run build`. The output can be found in `build`.
 
 ## Testing
 
 Tests can be run using `npm run test`.
 
 
-## Linking `@sveltejs/site-kit` and `@sveltejs/site-repl`
+## Linking `@sveltejs/site-kit` and `@sveltejs/svelte-repl`
 
-This site depends on `@sveltejs/site-kit`, a collection of styles, components and icons used in common by *.svelte.dev websites, and `@sveltejs/site-repl`.
+This site depends on `@sveltejs/site-kit` (a collection of styles, components and icons used in common by *.svelte.dev websites), and `@sveltejs/svelte-repl`.
 
 In order to work on features that depend on those packages, you need to [link](https://docs.npmjs.com/cli/link) their repositories:
 
@@ -70,7 +74,7 @@ In order to work on features that depend on those packages, you need to [link](h
 - `cd <svelte-repo>/site`
 - `npm link @sveltejs/site-kit`
 - `npm link @sveltejs/svelte-repl`
- 
+
 
 
 ## Translating the API docs

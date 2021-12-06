@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher, getContext } from 'svelte';
-	import { stores } from '@sapper/app';
+	import { session } from '$app/stores';
 	import UserMenu from './UserMenu.svelte';
 	import { Icon } from '@sveltejs/site-kit';
 	import * as doNotZip from 'do-not-zip';
@@ -9,14 +9,13 @@
 	import { isMac } from '../../../../../utils/compat.js';
 
 	const dispatch = createEventDispatcher();
-	const { session } = stores();
 	const { login } = getContext('app');
 
 	export let repl;
 	export let gist;
 	export let name;
 	export let zen_mode;
-	export let bundle;
+	export let modified_count;
 
 	let saving = false;
 	let downloading = false;
@@ -45,6 +44,9 @@
 			const r = await fetch(`repl/create.json`, {
 				method: 'POST',
 				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json'
+				},
 				body: JSON.stringify({
 					name,
 					files: components.map(component => ({
@@ -61,6 +63,9 @@
 
 			const gist = await r.json();
 			dispatch('forked', { gist });
+
+			modified_count = 0;
+			repl.markSaved();
 
 			if (intentWasSave) {
 				justSaved = true;
@@ -100,6 +105,9 @@
 			const r = await fetch(`repl/${gist.uid}.json`, {
 				method: 'PATCH',
 				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json'
+				},
 				body: JSON.stringify({
 					name,
 					files: components.map(component => ({
@@ -116,6 +124,8 @@
 
 			await r.json();
 
+			modified_count = 0;
+			repl.markSaved();
 			justSaved = true;
 			await wait(600);
 			justSaved = false;
@@ -200,6 +210,9 @@ export default app;` });
 				<Icon name="check" />
 			{:else}
 				<Icon name="save" />
+				{#if modified_count}
+					<div class="badge">{modified_count}</div>
+				{/if}
 			{/if}
 		</button>
 
@@ -261,14 +274,35 @@ export default app;` });
 		opacity: 0.7;
 		outline: none;
 		flex: 1;
+		margin: 0 0.2em 0 .4rem;
+		padding-top: 0.2em;
+		border-bottom: 1px solid transparent;
 	}
 
+	input:hover {
+		border-bottom: 1px solid currentColor;
+		opacity: 1;
+	}
 	input:focus {
+		border-bottom: 1px solid currentColor;
 		opacity: 1;
 	}
 
 	button span {
 		display: none;
+	}
+
+	.badge {
+		background: #ff3e00;
+		border-radius: 100%;
+		font-size: 10px;
+		padding: 1px 0 0 0;
+		width: 15px;
+		height: 15px;
+		line-height: 15px;
+		position: absolute;
+		top: 10px;
+		right: 0px;
 	}
 
 	@media (min-width: 600px) {

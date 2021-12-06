@@ -24,6 +24,12 @@ export interface MustacheTag extends BaseNode {
 	expression: Node;
 }
 
+export interface Comment extends BaseNode {
+	type: 'Comment';
+	data: string;
+	ignores: string[];
+}
+
 export type DirectiveType = 'Action'
 | 'Animation'
 | 'Binding'
@@ -40,7 +46,24 @@ interface BaseDirective extends BaseNode {
 	modifiers: string[];
 }
 
-export interface Transition extends BaseDirective{
+export interface Element extends BaseNode {
+	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Body';
+	attributes: Array<BaseDirective | Attribute | SpreadAttribute>;
+	name: string;
+}
+
+export interface Attribute extends BaseNode {
+	type: 'Attribute';
+	name: string;
+	value: any[];
+}
+
+export interface SpreadAttribute extends BaseNode {
+	type: 'Spread';
+	expression: Node;
+}
+
+export interface Transition extends BaseDirective {
 	type: 'Transition';
 	intro: boolean;
 	outro: boolean;
@@ -51,8 +74,12 @@ export type Directive = BaseDirective | Transition;
 export type TemplateNode = Text
 | MustacheTag
 | BaseNode
+| Element
+| Attribute
+| SpreadAttribute
 | Directive
-| Transition;
+| Transition
+| Comment;
 
 export interface Parser {
 	readonly template: string;
@@ -104,12 +131,25 @@ export interface Warning {
 
 export type ModuleFormat = 'esm' | 'cjs';
 
+export type EnableSourcemap = boolean | { js: boolean; css: boolean };
+
+export type CssHashGetter = (args: {
+	name: string;
+	filename: string | undefined;
+	css: string;
+	hash: (input: string) => string;
+}) => string;
+
 export interface CompileOptions {
 	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
 	generate?: 'dom' | 'ssr' | false;
+	errorMode?: 'throw' | 'warn';
+	varsReport?: 'full' | 'strict' | false;
 
+	sourcemap?: object | string;
+	enableSourcemap?: EnableSourcemap;
 	outputFilename?: string;
 	cssOutputFilename?: string;
 	sveltePath?: string;
@@ -123,6 +163,8 @@ export interface CompileOptions {
 	tag?: string;
 	css?: boolean;
 	loopGuardTimeout?: number;
+	namespace?: string;
+	cssHash?: CssHashGetter;
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;
@@ -164,7 +206,7 @@ export interface Var {
 	imported?: boolean;
 }
 
-export interface CssResult { 
+export interface CssResult {
 	code: string;
 	map: SourceMap;
 }

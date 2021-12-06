@@ -3,10 +3,14 @@ import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions, CssResult } from '../../interfaces';
 import { walk } from 'estree-walker';
-import { extract_names, Scope } from '../utils/scope';
+import { extract_names, Scope } from 'periscopic';
 import { invalidate } from './invalidate';
 import Block from './Block';
-import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
+import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import { flatten } from '../../utils/flatten';
+import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 
 export default function dom(
 	component: Component,
@@ -30,7 +34,16 @@ export default function dom(
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
-	const styles = component.stylesheet.has_styles && options.dev
+
+	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
+
+	if (css_sourcemap_enabled) {
+		css.map = apply_preprocessor_sourcemap(options.filename, css.map, options.sourcemap as string | RawSourceMap | DecodedSourceMap);
+	} else {
+		css.map = null;
+	}
+
+	const styles = css_sourcemap_enabled && component.stylesheet.has_styles && options.dev
 		? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
 		: css.code;
 
@@ -44,11 +57,8 @@ export default function dom(
 
 	if (should_add_css) {
 		body.push(b`
-			function ${add_css}() {
-				var style = @element("style");
-				style.id = "${component.stylesheet.id}-style";
-				style.textContent = "${styles}";
-				@append(@_document.head, style);
+			function ${add_css}(target) {
+				@append_styles(target, "${component.stylesheet.id}", "${styles}");
 			}
 		`);
 	}
@@ -145,7 +155,7 @@ export default function dom(
 					kind: 'set',
 					key: { type: 'Identifier', name: prop.export_name },
 					value: x`function(${prop.name}) {
-						this.$set({ ${prop.export_name}: ${prop.name} });
+						this.$$set({ ${prop.export_name}: ${prop.name} });
 						@flush();
 					}`
 				});
@@ -169,6 +179,46 @@ export default function dom(
 				}`
 			});
 		}
+	});
+
+	component.instance_exports_from.forEach(exports_from => {
+		const import_declaration = {
+			...exports_from,
+			type: 'ImportDeclaration',
+			specifiers: [],
+			source: exports_from.source
+		};
+		component.imports.push(import_declaration as ImportDeclaration);
+
+		exports_from.specifiers.forEach(specifier => {
+			if (component.component_options.accessors) {
+				const name = component.get_unique_name(specifier.exported.name);
+				import_declaration.specifiers.push({
+					...specifier,
+					type: 'ImportSpecifier',
+					imported: specifier.local,
+					local: name
+				});
+
+				accessors.push({
+					type: 'MethodDefinition',
+					kind: 'get',
+					key: { type: 'Identifier', name: specifier.exported.name },
+					value: x`function() {
+						return ${name}
+					}`
+				});
+			} else if (component.compile_options.dev) {
+				accessors.push({
+					type: 'MethodDefinition',
+					kind: 'get',
+					key: { type: 'Identifier', name: specifier.exported.name },
+					value: x`function() {
+						throw new @_Error("<${component.tag}>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+					}`
+				});
+			}
+		});
 	});
 
 	if (component.compile_options.dev) {
@@ -247,7 +297,7 @@ export default function dom(
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(extract_names(assignee));
+					const names = new Set(extract_names(assignee as Node));
 
 					this.replace(invalidate(renderer, scope, node, names, execution_context === null));
 				}
@@ -394,7 +444,7 @@ export default function dom(
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
 				@_Object.keys($$props).forEach(key => {
-					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$') @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
+					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
 			`;
 		}
@@ -409,6 +459,8 @@ export default function dom(
 
 		body.push(b`
 			function ${definition}(${args}) {
+				${injected.map(name => b`let ${name};`)}
+
 				${rest}
 
 				${reactive_store_declarations}
@@ -434,8 +486,6 @@ export default function dom(
 				${capture_state && b`$$self.$capture_state = ${capture_state};`}
 
 				${inject_state && b`$$self.$inject_state = ${inject_state};`}
-
-				${injected.map(name => b`let ${name};`)}
 
 				${/* before reactive declarations */ props_inject}
 
@@ -467,14 +517,20 @@ export default function dom(
 	}
 
 	if (options.customElement) {
+
+		let init_props = x`@attribute_to_object(this.attributes)`;
+		if (uses_slots) {
+			init_props = x`{ ...${init_props}, $$slots: @get_custom_elements_slots(this) }`;
+		}
+
 		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
 
 					${dev_props_check}
 
@@ -521,12 +577,21 @@ export default function dom(
 			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
 		};
 
+		const optional_parameters = [];
+		if (should_add_css) {
+			optional_parameters.push(add_css);
+		} else if (dirty) {
+			optional_parameters.push(x`null`);
+		}
+		if (dirty) {
+			optional_parameters.push(dirty);
+		}
+
 		const declaration = b`
 			class ${name} extends ${superclass} {
 				constructor(options) {
 					super(${options.dev && 'options'});
-					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
 
 					${dev_props_check}
@@ -539,18 +604,5 @@ export default function dom(
 		body.push(declaration);
 	}
 
-	return { js: flatten(body, []), css };
-}
-
-function flatten(nodes: any[], target: any[]) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (Array.isArray(node)) {
-			flatten(node, target);
-		} else {
-			target.push(node);
-		}
-	}
-
-	return target;
+	return { js: flatten(body), css };
 }

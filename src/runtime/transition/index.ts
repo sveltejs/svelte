@@ -1,7 +1,7 @@
 import { cubicOut, cubicInOut, linear } from 'svelte/easing';
 import { assign, is_function } from 'svelte/internal';
 
-type EasingFunction = (t: number) => number;
+export type EasingFunction = (t: number) => number;
 
 export interface TransitionConfig {
 	delay?: number;
@@ -11,7 +11,7 @@ export interface TransitionConfig {
 	tick?: (t: number, u: number) => void;
 }
 
-interface BlurParams {
+export interface BlurParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -25,7 +25,7 @@ export function blur(node: Element, {
 	easing = cubicInOut,
 	amount = 5,
 	opacity = 0
-}: BlurParams): TransitionConfig {
+}: BlurParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const f = style.filter === 'none' ? '' : style.filter;
@@ -40,7 +40,7 @@ export function blur(node: Element, {
 	};
 }
 
-interface FadeParams {
+export interface FadeParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -50,7 +50,7 @@ export function fade(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = linear
-}: FadeParams): TransitionConfig {
+}: FadeParams = {}): TransitionConfig {
 	const o = +getComputedStyle(node).opacity;
 
 	return {
@@ -61,7 +61,7 @@ export function fade(node: Element, {
 	};
 }
 
-interface FlyParams {
+export interface FlyParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -77,7 +77,7 @@ export function fly(node: Element, {
 	x = 0,
 	y = 0,
 	opacity = 0
-}: FlyParams): TransitionConfig {
+}: FlyParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
@@ -94,7 +94,7 @@ export function fly(node: Element, {
 	};
 }
 
-interface SlideParams {
+export interface SlideParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -104,7 +104,7 @@ export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
 	easing = cubicOut
-}: SlideParams): TransitionConfig {
+}: SlideParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const height = parseFloat(style.height);
@@ -132,7 +132,7 @@ export function slide(node: Element, {
 	};
 }
 
-interface ScaleParams {
+export interface ScaleParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -146,7 +146,7 @@ export function scale(node: Element, {
 	easing = cubicOut,
 	start = 0,
 	opacity = 0
-}: ScaleParams): TransitionConfig {
+}: ScaleParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
@@ -165,7 +165,7 @@ export function scale(node: Element, {
 	};
 }
 
-interface DrawParams {
+export interface DrawParams {
 	delay?: number;
 	speed?: number;
 	duration?: number | ((len: number) => number);
@@ -177,8 +177,12 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 	speed,
 	duration,
 	easing = cubicInOut
-}: DrawParams): TransitionConfig {
-	const len = node.getTotalLength();
+}: DrawParams = {}): TransitionConfig {
+	let len = node.getTotalLength();
+	const style = getComputedStyle(node);
+	if (style.strokeLinecap !== 'butt') {
+		len += parseInt(style.strokeWidth);
+	}
 
 	if (duration === undefined) {
 		if (speed === undefined) {
@@ -198,7 +202,7 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 	};
 }
 
-interface CrossfadeParams {
+export interface CrossfadeParams {
 	delay?: number;
 	duration?: number | ((len: number) => number);
 	easing?: EasingFunction;
@@ -207,8 +211,21 @@ interface CrossfadeParams {
 type ClientRectMap = Map<any, { rect: ClientRect }>;
 
 export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
-	fallback: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
-}) {
+	fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
+}): [
+  (
+    node: Element,
+    params: CrossfadeParams & {
+      key: any;
+    }
+  ) => () => TransitionConfig,
+  (
+    node: Element,
+    params: CrossfadeParams & {
+      key: any;
+    }
+  ) => () => TransitionConfig
+] {
 	const to_receive: ClientRectMap = new Map();
 	const to_send: ClientRectMap = new Map();
 
@@ -237,7 +254,7 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 			css: (t, u) => `
 				opacity: ${t * opacity};
 				transform-origin: top left;
-				transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1-t) * dw}, ${t + (1-t) * dh});
+				transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${t + (1 - t) * dh});
 			`
 		};
 	}

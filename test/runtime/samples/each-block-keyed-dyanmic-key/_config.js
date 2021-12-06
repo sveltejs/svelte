@@ -9,6 +9,10 @@ export default {
 		}
 	},
 
+	before_test() {
+		count = 0;
+	},
+
 	html: `
 		<div>foo</div>
 		<div>foo</div>

@@ -15,7 +15,7 @@ export default {
 		<p>selected: foo</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const buttons = target.querySelectorAll('button');
 		const event = new window.MouseEvent('click');
 

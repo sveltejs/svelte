@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component, target, window }) {
+	test({ assert, target, window }) {
 		// Click events don't focus elements in JSDOM – obviously they would
 		// in real browsers. More realistically, you'd use this for e.g.
 		// this.select(), but that's harder to test than this.focus()

@@ -1,24 +1,32 @@
 <script>
-	// `current` is updated whenever the prop value changes...
-	export let current;
+	const emojis = {
+        apple: "🍎",
+        banana: "🍌",
+        carrot: "🥕",
+        doughnut: "🍩",
+        egg: "🥚"
+	}
 
-	// ...but `initial` is fixed upon initialisation
-	const initial = current;
+	// the name is updated whenever the prop value changes...
+	export let name;
+
+	// ...but the "emoji" variable is fixed upon initialisation of the component
+	const emoji = emojis[name];
 </script>
 
 <p>
-	<span style="background-color: {initial}">initial</span>
-	<span style="background-color: {current}">current</span>
+	<span>The emoji for { name } is { emoji }</span>
 </p>
 
 <style>
+	p {
+		margin: 0.8em 0;
+	}
 	span {
 		display: inline-block;
-		padding: 0.2em 0.5em;
-		margin: 0 0.2em 0.2em 0;
-		width: 4em;
+		padding: 0.2em 1em 0.3em;
 		text-align: center;
 		border-radius: 0.2em;
-		color: white;
+		background-color: #FFDFD3;
 	}
 </style>
