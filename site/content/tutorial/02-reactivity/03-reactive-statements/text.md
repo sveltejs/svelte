@@ -23,7 +23,7 @@ You can even put the `$:` in front of things like `if` blocks:
 
 ```js
 $: if (count >= 10) {
-	alert(`count is dangerously high!`);
+	alert('count is dangerously high!');
 	count = 9;
 }
 ```
