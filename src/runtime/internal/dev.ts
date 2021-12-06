@@ -159,7 +159,8 @@ export class SvelteComponentDev extends SvelteComponent {
 		if (!options.target && !current_component) {
 			throw new Error(
 				"Multiple Svelte instances detected. This can happen if you use Svelte components which are precompiled to JavaScript. " +
-					"Ensure to use the raw Svelte version of these components, or set the 'target' option instead");
+					"Ensure to use the raw Svelte version of these components, or set the 'target' option instead"
+			);
 		}
 
 		super();
