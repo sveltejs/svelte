@@ -152,14 +152,12 @@ export class SvelteComponentDev extends SvelteComponent {
 	$$slot_def: any;
 
 	constructor(options: IComponentOptions) {
-		// Ensure target is specified unless it is created inlined.
-		// Also ensure current_component is not null as it would be used as the component parent.
-		// It could be null if the Svelte instance isn't deduped, which target is then required.
-		if (
-			!options ||
-			(!options.target && (!options.$$inline || !current_component))
-		) {
+		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
+		}
+
+		if (!options.target && !current_component) {
+			throw new Error("Multiple Svelte instances detected. Please ensure only one instance exists, or set the 'target' option");
 		}
 
 		super();
