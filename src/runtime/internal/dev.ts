@@ -1,5 +1,6 @@
 import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
+import { current_component } from './lifecycle';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, true));
@@ -151,7 +152,13 @@ export class SvelteComponentDev extends SvelteComponent {
 	$$slot_def: any;
 
 	constructor(options: IComponentOptions) {
-		if (!options || (!options.target && !options.$$inline)) {
+		// Ensure target is specified unless it is created inlined.
+		// Also ensure current_component is not null as it would be used as the component parent.
+		// It could be null if the Svelte instance isn't deduped, which target is then required.
+		if (
+			!options ||
+			(!options.target && (!options.$$inline || !current_component))
+		) {
 			throw new Error("'target' is a required option");
 		}
 
