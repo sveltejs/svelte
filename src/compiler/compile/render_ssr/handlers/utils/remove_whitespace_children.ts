@@ -26,7 +26,7 @@ export default function remove_whitespace_children(children: INode[], next?: INo
 					  trimmable_at(child, next)
 					: !child.has_ancestor('EachBlock');
 
-				if (should_trim) {
+				if (should_trim && !child.keep_space()) {
 					data = trim_end(data);
 					if (!data) continue;
 				}
@@ -47,7 +47,7 @@ export default function remove_whitespace_children(children: INode[], next?: INo
 	}
 
 	const first = nodes[0];
-	if (first && first.type === 'Text') {
+	if (first && first.type === 'Text' && !first.keep_space()) {
 		first.data = trim_start(first.data);
 		if (!first.data) {
 			first.var = null;
