@@ -126,29 +126,3 @@
 		width: 100%;
 	}
 </style>
-<<<<<<< HEAD
-
-<h1>Caminandes: Llamigos</h1>
-<p>From <a href="https://cloud.blender.org/open-projects">Blender Open Projects</a>. CC-BY</p>
-
-<div>
-	<video
-		poster="https://sveltejs.github.io/assets/caminandes-llamigos.jpg"
-		src="https://sveltejs.github.io/assets/caminandes-llamigos.mp4"
-		on:mousemove={handleMousemove}
-		on:mousedown={handleMousedown}>
-		<track kind="captions">
-	</video>
-
-	<div class="controls" style="opacity: {duration && showControls ? 1 : 0}">
-		<progress value="{(time / duration) || 0}"/>
-
-		<div class="info">
-			<span class="time">{format(time)}</span>
-			<span>click anywhere to {paused ? 'play' : 'pause'} / drag to seek</span>
-			<span class="time">{format(duration)}</span>
-		</div>
-	</div>
-</div>
-=======
->>>>>>> 67f79dd934659b9a67b3ec57f191115424d2e589
