@@ -69,14 +69,13 @@ export function flush() {
 		render_callbacks.length = 0;
 	} while (dirty_components.length);
 
-	set_current_component(saved_component);
-
 	while (flush_callbacks.length) {
 		flush_callbacks.pop()();
 	}
 
 	update_scheduled = false;
 	seen_callbacks.clear();
+	set_current_component(saved_component);
 }
 
 function update($$) {
