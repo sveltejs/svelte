@@ -70,6 +70,21 @@ export default class BindingWrapper {
 		return dependencies;
 	}
 
+	get_update_dependencies() {
+		const object = get_object(this.node.expression.node).name;
+		const dependencies = new Set();
+		dependencies.add(object);
+
+
+		const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(object);
+		if (indirect_dependencies) {
+			indirect_dependencies.forEach(indirect_dependency => {
+				dependencies.add(indirect_dependency);
+			});
+		}
+		return dependencies;
+	}
+
 	is_readonly_media_attribute() {
 		return this.node.is_readonly_media_attribute();
 	}

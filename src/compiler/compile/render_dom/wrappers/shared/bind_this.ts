@@ -12,7 +12,7 @@ export default function bind_this(component: Component, block: Block, binding: B
 	const callee = block.renderer.reference(fn.name);
 
 	const { contextual_dependencies, mutation } = binding.handler;
-	const dependencies = binding.get_dependencies();
+	const dependencies = binding.get_update_dependencies();
 
 	const body = b`
 		${mutation}

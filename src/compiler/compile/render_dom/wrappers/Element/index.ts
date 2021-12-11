@@ -466,7 +466,7 @@ export default class ElementWrapper extends Wrapper {
 
 		binding_group.bindings.forEach(binding => {
 			// TODO this is a mess
-			add_to_set(dependencies, binding.get_dependencies());
+			add_to_set(dependencies, binding.get_update_dependencies());
 			add_to_set(contextual_dependencies, binding.handler.contextual_dependencies);
 
 			binding.render(block, lock);
