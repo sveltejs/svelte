@@ -40,11 +40,11 @@ export function add_flush_callback(fn) {
 // Since callbacks might update component values, which could trigger another
 // call to flush(), the following steps guard against this:
 // 1. During beforeUpdate, any updated components will be added to the
-// dirty_components array and will cause a reentrant call to flush(). Because
-// the flush index is kept outside the function, the reentrant call will pick
-// up where the earlier call left off and go through all dirty components. The
-// current_component value is saved and restored so that the reentrant call will
-// not interfere with the "parent" flush() call.
+//    dirty_components array and will cause a reentrant call to flush(). Because
+//    the flush index is kept outside the function, the reentrant call will pick
+//    up where the earlier call left off and go through all dirty components. The
+//    current_component value is saved and restored so that the reentrant call will
+//    not interfere with the "parent" flush() call.
 // 2. bind:this callbacks cannot trigger new flush() calls.
 // 3. During afterUpdate, any updated components will NOT have their afterUpdate
 //    callback called a second time; the seen_callbacks set, outside the flush()
