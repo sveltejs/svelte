@@ -1,7 +1,7 @@
 <script>
 	export async function run_async_function() {
 		await loop();
-	};
+	}
 
 	async function loop() {
 		let i = 0;
