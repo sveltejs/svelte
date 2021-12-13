@@ -72,7 +72,7 @@ export default class BindingWrapper {
 
 	get_update_dependencies() {
 		const object = get_object(this.node.expression.node).name;
-		const dependencies = new Set();
+		const dependencies = new Set<string>();
 		dependencies.add(object);
 
 
