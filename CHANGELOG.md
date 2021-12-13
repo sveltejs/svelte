@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix `bind:this` binding inside `onMount` for manually instantiated component ([#6760](https://github.com/sveltejs/svelte/issues/6760))
+
 ## 3.44.2
 
 * Fix overly restrictive preprocessor types ([#6904](https://github.com/sveltejs/svelte/pull/6904))
