@@ -4,6 +4,6 @@ export default {
 		loopGuardTimeout: 1
 	},
 	async test({ component }) {
-		await component.run_generator();
+		await component.run_async_function();
 	}
 };
