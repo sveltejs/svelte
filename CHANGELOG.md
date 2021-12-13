@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.44.3
 
 * Fix `bind:this` binding inside `onMount` for manually instantiated component ([#6760](https://github.com/sveltejs/svelte/issues/6760))
 * Prevent cursor jumps for other `type="text"`-like `<input>`s ([#6914](https://github.com/sveltejs/svelte/issues/6914))
