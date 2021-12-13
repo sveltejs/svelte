@@ -78,7 +78,7 @@ export const companies = [
 		alt: "Transloadit",
 	},
 	{
-		href: "https://www.ubs.com/ch/en.html",
+		href: "https://www.ubs.com",
 		filename: "UBS_Logo_Semibold.svg",
 		alt: "UBS",
 	},
