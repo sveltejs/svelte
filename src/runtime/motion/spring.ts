@@ -49,6 +49,8 @@ interface SpringOpts {
 	stiffness?: number;
 	damping?: number;
 	precision?: number;
+	tick?: number;
+	limit?: number;
 }
 
 interface SpringUpdateOpts {
@@ -64,11 +66,13 @@ export interface Spring<T> extends Readable<T>{
 	precision: number;
 	damping: number;
 	stiffness: number;
+	tick: number;
+	limit: number;
 }
 
 export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 	const store = writable(value);
-	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
+	const { stiffness = 0.15, damping = 0.8, precision = 0.01, tick = 16, limit = 30 } = opts;
 
 	let last_time: number;
 	let task: Task;
@@ -110,22 +114,31 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
 
+				last_time = Math.max(last_time, now - tick * limit);
+				while ( last_time < now ) {
+					const elapsed = Math.min(tick, now - last_time);
+					last_time += elapsed;
+
 				const ctx: TickContext<T> = {
 					inv_mass,
 					opts: spring,
 					settled: true, // tick_spring may signal false
-					dt: (now - last_time) * 60 / 1000
+					dt: elapsed * 60 / 1000
 				};
 				const next_value = tick_spring(ctx, last_value, value, target_value);
 
 				last_time = now;
 				last_value = value;
-				store.set(value = next_value);
+				value = next_value;
 
 				if (ctx.settled) {
 					task = null;
+					store.set(value);				
+					return false;
 				}
-				return !ctx.settled;
+				}
+				store.set(value);				
+				return true;
 			});
 		}
 
@@ -142,7 +155,9 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 		subscribe: store.subscribe,
 		stiffness,
 		damping,
-		precision
+		precision,
+		tick,
+		limit
 	};
 
 	return spring;
