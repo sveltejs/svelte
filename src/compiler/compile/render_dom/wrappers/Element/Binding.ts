@@ -71,18 +71,27 @@ export default class BindingWrapper {
 	}
 
 	get_update_dependencies() {
-		const object = get_object(this.node.expression.node).name;
+		const object = this.object;
 		const dependencies = new Set<string>();
-		dependencies.add(object);
-
-
-		const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(object);
-		if (indirect_dependencies) {
-			indirect_dependencies.forEach(indirect_dependency => {
-				dependencies.add(indirect_dependency);
-			});
+		if (this.node.expression.template_scope.names.has(object)) {
+			this.node.expression.template_scope.dependencies_for_name
+				.get(object)
+				.forEach((name) => dependencies.add(name));
+		} else {
+			dependencies.add(object);
 		}
-		return dependencies;
+
+		const result = new Set(dependencies);
+		dependencies.forEach((dependency) => {
+			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(dependency);
+			if (indirect_dependencies) {
+				indirect_dependencies.forEach(indirect_dependency => {
+					result.add(indirect_dependency);
+				});
+			}
+		});
+
+		return result;
 	}
 
 	is_readonly_media_attribute() {
