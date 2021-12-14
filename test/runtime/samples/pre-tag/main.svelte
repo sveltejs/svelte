@@ -1,4 +1,4 @@
-<pre>
+<pre id="pre">
   A
   B
   <span>
@@ -9,7 +9,7 @@
   F
 </pre>
 
-<div>
+<div id="div">
   A
   B
   <span>
@@ -20,7 +20,7 @@
   F
 </div>
 
-<div>
+<div id="div-with-pre">
   <pre>
     A
     B
