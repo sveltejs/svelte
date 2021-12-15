@@ -7,7 +7,7 @@ authorURL: https://twitter.com/Rich_Harris
 
 This short guide is designed to help you — someone who has looked at the [tutorial](/tutorial) and wants to start creating Svelte apps, but doesn't have a ton of experience using JavaScript build tooling — get up and running.
 
-If there are things that don't make sense, or that we're glossing over, feel free to [raise an issue](https://github.com/sveltejs/svelte/issues) or [suggest edits to this page](https://github.com/sveltejs/svelte/blob/master/site/content/blog/2019-04-16-svelte-for-new-developers.md) that will help us help more people.
+If there are things that don't make sense, or that we're glossing over, feel free to [raise an issue](https://github.com/sveltejs/svelte/issues) or [suggest edits to this page](https://github.com/sveltejs/svelte/blob/master/site-content/blog/2019-04-16-svelte-for-new-developers.md) that will help us help more people.
 
 If you get stuck at any point following this guide, the best place to ask for help is in the [chatroom](https://svelte.dev/chat).
 
