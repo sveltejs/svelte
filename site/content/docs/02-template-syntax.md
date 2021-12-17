@@ -459,7 +459,7 @@ The `{@debug}` tag without any arguments will insert a `debugger` statement that
 As well as attributes, elements can have *directives*, which control the element's behaviour in some way.
 
 
-#### [on:*eventname*](on_element_event)
+#### on:*eventname*
 
 ```sv
 on:eventname={handler}
@@ -549,7 +549,7 @@ It's possible to have multiple event listeners for the same event:
 <button on:click={increment} on:click={track}>Click me!</button>
 ```
 
-#### [bind:*property*](bind_element_property)
+#### bind:*property*
 
 ```sv
 bind:property={variable}
@@ -770,7 +770,7 @@ Inputs that work together can use `bind:group`.
 <input type="checkbox" bind:group={fillings} value="Guac (extra)">
 ```
 
-#### [bind:this](bind_element)
+#### bind:this
 
 ```sv
 bind:this={dom_node}
@@ -1249,7 +1249,7 @@ A custom animation function can also return a `tick` function, which is called *
 
 ### Component directives
 
-#### [on:*eventname*](on_component_event)
+#### on:*eventname*
 
 ```sv
 on:eventname={handler}
@@ -1271,7 +1271,7 @@ As with DOM events, if the `on:` directive is used without a value, the componen
 <SomeComponent on:whatever/>
 ```
 
-#### [--style-props](style_props)
+#### --style-props
 
 ```sv
 --style-props="anycssvalue"
@@ -1340,7 +1340,7 @@ Or override it at the consumer level:
 <Slider --rail-color="goldenrod"/>
 ```
 
-#### [bind:*property*](bind_component_property)
+#### bind:*property*
 
 ```sv
 bind:property={variable}
@@ -1354,7 +1354,7 @@ You can bind to component props using the same syntax as for elements.
 <Keypad bind:value={pin}/>
 ```
 
-#### [bind:this](bind_component)
+#### bind:this
 
 ```sv
 bind:this={component_instance}
@@ -1410,7 +1410,7 @@ The content is exposed in the child component using the `<slot>` element, which 
 </Widget>
 ```
 
-#### [`<slot name="`*name*`">`](slot_name)
+#### `<slot name="`*name*`">`
 
 ---
 
@@ -1453,7 +1453,7 @@ In order to place content in a slot without using a wrapper element, you can use
 ```
 
 
-#### [`$$slots`](slots_object)
+#### `$$slots`
 
 ---
 
@@ -1479,7 +1479,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 </Card>
 ```
 
-#### [`<slot key={`*value*`}>`](slot_let)
+#### `<slot key={`*value*`}>`
 
 ---
 
