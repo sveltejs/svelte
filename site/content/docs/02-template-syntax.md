@@ -459,7 +459,7 @@ The `{@debug}` tag without any arguments will insert a `debugger` statement that
 As well as attributes, elements can have *directives*, which control the element's behaviour in some way.
 
 
-#### [on:*eventname*](on_element_event)
+#### on:*eventname*
 
 ```sv
 on:eventname={handler}
@@ -549,7 +549,7 @@ It's possible to have multiple event listeners for the same event:
 <button on:click={increment} on:click={track}>Click me!</button>
 ```
 
-#### [bind:*property*](bind_element_property)
+#### bind:*property*
 
 ```sv
 bind:property={variable}
@@ -770,7 +770,7 @@ Inputs that work together can use `bind:group`.
 <input type="checkbox" bind:group={fillings} value="Guac (extra)">
 ```
 
-#### [bind:this](bind_element)
+#### bind:this
 
 ```sv
 bind:this={dom_node}
@@ -929,7 +929,7 @@ The `transition:` directive indicates a *bidirectional* transition, which means 
 {/if}
 ```
 
-> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](docs#Client-side_component_API).
+> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](docs#run-time-client-side-component-api).
 
 ##### Transition parameters
 
@@ -1148,9 +1148,9 @@ DOMRect {
 
 ---
 
-An animation is triggered when the contents of a [keyed each block](docs#each) are re-ordered. Animations do not run when an element is added or removed, only when the index of an existing data item within the each block changes. Animate directives must be on an element that is an *immediate* child of a keyed each block.
+An animation is triggered when the contents of a [keyed each block](docs#template-syntax-each) are re-ordered. Animations do not run when an element is added or removed, only when the index of an existing data item within the each block changes. Animate directives must be on an element that is an *immediate* child of a keyed each block.
 
-Animations can be used with Svelte's [built-in animation functions](docs#svelte_animate) or [custom animation functions](docs#Custom_animation_functions).
+Animations can be used with Svelte's [built-in animation functions](docs#run-time-svelte-animate) or [custom animation functions](docs#template-syntax-element-directives-animate-fn-custom-animation-functions).
 
 ```sv
 <!-- When `list` is reordered the animation will run-->
@@ -1249,7 +1249,7 @@ A custom animation function can also return a `tick` function, which is called *
 
 ### Component directives
 
-#### [on:*eventname*](on_component_event)
+#### on:*eventname*
 
 ```sv
 on:eventname={handler}
@@ -1257,7 +1257,7 @@ on:eventname={handler}
 
 ---
 
-Components can emit events using [createEventDispatcher](docs#createEventDispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
+Components can emit events using [createEventDispatcher](docs#run-time-svelte-createeventdispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
 
 ```sv
 <SomeComponent on:whatever={handler}/>
@@ -1271,7 +1271,7 @@ As with DOM events, if the `on:` directive is used without a value, the componen
 <SomeComponent on:whatever/>
 ```
 
-#### [--style-props](style_props)
+#### --style-props
 
 ```sv
 --style-props="anycssvalue"
@@ -1340,7 +1340,7 @@ Or override it at the consumer level:
 <Slider --rail-color="goldenrod"/>
 ```
 
-#### [bind:*property*](bind_component_property)
+#### bind:*property*
 
 ```sv
 bind:property={variable}
@@ -1354,7 +1354,7 @@ You can bind to component props using the same syntax as for elements.
 <Keypad bind:value={pin}/>
 ```
 
-#### [bind:this](bind_component)
+#### bind:this
 
 ```sv
 bind:this={component_instance}
@@ -1410,7 +1410,7 @@ The content is exposed in the child component using the `<slot>` element, which 
 </Widget>
 ```
 
-#### [`<slot name="`*name*`">`](slot_name)
+#### `<slot name="`*name*`">`
 
 ---
 
@@ -1453,7 +1453,7 @@ In order to place content in a slot without using a wrapper element, you can use
 ```
 
 
-#### [`$$slots`](slots_object)
+#### `$$slots`
 
 ---
 
@@ -1479,7 +1479,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 </Card>
 ```
 
-#### [`<slot key={`*value*`}>`](slot_let)
+#### `<slot key={`*value*`}>`
 
 ---
 
@@ -1617,7 +1617,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 ---
 
-Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](docs#use_action) on the `<body>` element.
+Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](docs#template-syntax-element-directives-use-action) on the `<body>` element.
 
 `<svelte:body>` also has to appear at the top level of your component.
 
@@ -1657,7 +1657,7 @@ As with `<svelte:window>` and `<svelte:body>`, this element has to appear at the
 
 ---
 
-The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the [compiler section](docs#svelte_compile). The possible options are:
+The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the [compiler section](docs#compile-time-svelte-compile). The possible options are:
 
 * `immutable={true}` — you never use mutable data, so the compiler can do simple referential equality checks to determine if values have changed
 * `immutable={false}` — the default. Svelte will be more conservative about whether or not mutable objects have changed
@@ -1672,7 +1672,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 
 ### `<svelte:fragment>`
 
-The `<svelte:fragment>` element allows you to place content in a [named slot](docs#slot_name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
+The `<svelte:fragment>` element allows you to place content in a [named slot](docs#template-syntax-slot-slot-name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
 
 ```sv
 <!-- Widget.svelte -->
