@@ -1,9 +1,17 @@
 # Svelte changelog
 
-## Unreleased
+## 3.44.3
+
+* Fix `bind:this` binding inside `onMount` for manually instantiated component ([#6760](https://github.com/sveltejs/svelte/issues/6760))
+* Prevent cursor jumps with one-way binding for other `type="text"`-like `<input>`s ([#6941](https://github.com/sveltejs/svelte/pull/6941))
+* Exclude `async` loops from `loopGuardTimeout` ([#6945](https://github.com/sveltejs/svelte/issues/6945))
+
+## 3.44.2
 
 * Fix overly restrictive preprocessor types ([#6904](https://github.com/sveltejs/svelte/pull/6904))
 * More specific typing for crossfade function - returns a tuple, not an array ([#6926](https://github.com/sveltejs/svelte/issues/6926))
+* Add `URLSearchParams` as a known global ([#6938](https://github.com/sveltejs/svelte/pull/6938))
+* Add `types` field to `exports` map ([#6939](https://github.com/sveltejs/svelte/issues/6939))
 
 ## 3.44.1
 

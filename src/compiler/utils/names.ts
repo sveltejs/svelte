@@ -60,6 +60,7 @@ export const globals = new Set([
 	'undefined',
 	'URIError',
 	'URL',
+	'URLSearchParams',
 	'window'
 ]);
 
