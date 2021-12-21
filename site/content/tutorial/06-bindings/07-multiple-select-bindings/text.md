@@ -4,7 +4,7 @@ title: Select multiple
 
 A select can have a `multiple` attribute, in which case it will populate an array rather than selecting a single value.
 
-Returning to our [earlier ice cream example](tutorial/group-inputs), we can replace the checkboxes with a `<select multiple>`:
+Returning to our [earlier ice cream example](/tutorial/group-inputs), we can replace the checkboxes with a `<select multiple>`:
 
 ```html
 <h2>Flavours</h2>
