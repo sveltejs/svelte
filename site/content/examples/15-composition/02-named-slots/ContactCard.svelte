@@ -41,7 +41,7 @@
 		line-height: 1.2;
 	}
 
-	.address { background-image: url(tutorial/icons/map-marker.svg) }
-	.email   { background-image: url(tutorial/icons/email.svg) }
+	.address { background-image: url(/tutorial/icons/map-marker.svg) }
+	.email   { background-image: url(/tutorial/icons/email.svg) }
 	.missing { color: #999 }
 </style>
