@@ -5,7 +5,7 @@ title: Run time
 
 ### `svelte`
 
-The `svelte` package exposes [lifecycle functions](tutorial/onmount) and the [context API](tutorial/context-api).
+The `svelte` package exposes [lifecycle functions](/tutorial/onmount) and the [context API](/tutorial/context-api).
 
 #### `onMount`
 
@@ -541,7 +541,7 @@ As with [`tweened`](docs#run-time-svelte-motion-tweened) stores, `set` and `upda
 
 Both `set` and `update` can take a second argument — an object with `hard` or `soft` properties. `{ hard: true }` sets the target value immediately; `{ soft: n }` preserves existing momentum for `n` seconds before settling. `{ soft: true }` is equivalent to `{ soft: 0.5 }`.
 
-[See a full example on the spring tutorial.](tutorial/spring)
+[See a full example on the spring tutorial.](/tutorial/spring)
 
 ```sv
 <script>
@@ -589,7 +589,7 @@ Animates the opacity of an element from 0 to the current opacity for `in` transi
 * `duration` (`number`, default 400) — milliseconds the transition lasts
 * `easing` (`function`, default `linear`) — an [easing function](docs#run-time-svelte-easing)
 
-You can see the `fade` transition in action in the [transition tutorial](tutorial/transition).
+You can see the `fade` transition in action in the [transition tutorial](/tutorial/transition).
 
 ```sv
 <script>
@@ -664,7 +664,7 @@ Animates the x and y positions and the opacity of an element. `in` transitions a
 * `y` (`number`, default 0) - the y offset to animate out to and in from
 * `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 
-You can see the `fly` transition in action in the [transition tutorial](tutorial/adding-parameters-to-transitions).
+You can see the `fly` transition in action in the [transition tutorial](/tutorial/adding-parameters-to-transitions).
 
 ```sv
 <script>
@@ -855,7 +855,7 @@ The `flip` function calculates the start and end position of an element and anim
 
 ---
 
-You can see a full example on the [animations tutorial](tutorial/animate)
+You can see a full example on the [animations tutorial](/tutorial/animate)
 
 
 ```sv
@@ -879,7 +879,7 @@ You can see a full example on the [animations tutorial](tutorial/animate)
 
 Easing functions specify the rate of change over time and are useful when working with Svelte's built-in transitions and animations as well as the tweened and spring utilities. `svelte/easing` contains 31 named exports, a `linear` ease and 3 variants of 10 different easing functions: `in`, `out` and `inOut`.
 
-You can explore the various eases using the [ease visualiser](examples#easing) in the [examples section](examples).
+You can explore the various eases using the [ease visualiser](/examples#easing) in the [examples section](/examples).
 
 
 | ease | in | out | inOut |

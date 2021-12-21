@@ -1022,7 +1022,7 @@ A custom transition function can also return a `tick` function, which is called 
 {/if}
 ```
 
-If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](tutorial/deferred-transitions) possible.
+If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](/tutorial/deferred-transitions) possible.
 
 
 ##### Transition events
@@ -1644,7 +1644,7 @@ As with `<svelte:window>` and `<svelte:body>`, this element has to appear at the
 
 ```sv
 <svelte:head>
-	<link rel="stylesheet" href="tutorial/dark-theme.css">
+	<link rel="stylesheet" href="/tutorial/dark-theme.css">
 </svelte:head>
 ```
 
