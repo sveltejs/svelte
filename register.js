@@ -5,7 +5,7 @@ const { compile } = require('./compiler.js');
 const extensions = ['.svelte', '.html'];
 let compileOptions = {};
 
-function capitalise(name) {
+function capitalize(name) {
 	return name[0].toUpperCase() + name.slice(1);
 }
 
@@ -31,7 +31,7 @@ function registerExtension(extension) {
 
 		const options = Object.assign({}, compileOptions, {
 			filename,
-			name: capitalise(name),
+			name: capitalize(name),
 			generate: 'ssr',
 			format: 'cjs'
 		});
