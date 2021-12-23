@@ -40,10 +40,10 @@ The markers can now add themselves to the map.
 In `mapbox.js` you'll see this line:
 
 ```js
-const key = {};
+const key = Symbol();
 ```
 
-We can use anything as a key — we could do `setContext('mapbox', ...)` for example. The downside of using a string is that different component libraries might accidentally use the same one; using an object literal means the keys are guaranteed not to conflict in any circumstance (since an object only has referential equality to itself, i.e. `{} !== {}` whereas `"x" === "x"`), even when you have multiple different contexts operating across many component layers.
+Technically, we can use any value as a key — we could do `setContext('mapbox', ...)` for example. The downside of using a string is that different component libraries might accidentally use the same one; using [symbols](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol), on the other hand, means that the keys are guaranteed not to conflict in any circumstance, even when you have multiple different contexts operating across many component layers, since a symbol is essentially a unique identifier.
 
 ## Contexts vs. stores
 
