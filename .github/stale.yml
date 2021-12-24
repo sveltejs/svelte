@@ -28,7 +28,7 @@ staleLabel: stale-bot
 #   Your comment here.
 
 # Limit the number of actions per hour, from 1-30. Default is 30
-limitPerRun: 30
+limitPerRun: 1
 
 # Optionally, specify configuration settings that are specific to just 'issues' or 'pulls':
 pulls:
