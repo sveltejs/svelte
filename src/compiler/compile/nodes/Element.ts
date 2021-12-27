@@ -351,6 +351,54 @@ export default class Element extends Node {
 					const match = fuzzymatch(value, aria_roles);
 					component.warn(attribute, compiler_warnings.a11y_unknown_role(value, match));
 				}
+
+				// no-redundant-roles
+				// https://www.w3.org/TR/html-aria/#don-t-add-redundant-roles
+				if (this.name === value) {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value))
+				}
+				if (this.name === 'nav' && value === 'navigation') {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value))
+				}
+
+				if (this.name === 'a' && value === 'link') {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value))
+				}
+
+				if (this.name === 'fieldset' && value === 'group') {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value))
+				}
+
+				if (this.name === 'ul' && value === 'list') {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value))
+				}
+
+				if (this.name === 'main' && value === 'main') {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value))
+				}
+
+				let { parent } = this;
+				let is_parent_section_or_article = false;
+
+				while (parent) {
+					let parent_name = (parent as Element).name
+					if ( parent_name === 'section' || parent_name === 'article') {
+						is_parent_section_or_article = true;
+						break;
+					}
+					if (parent.type === 'Element') {
+						break;
+					}
+					parent = parent.parent;
+				}
+
+				if (this.name === 'header' && value === 'banner' && !is_parent_section_or_article) {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value))
+				}
+
+				if (this.name === 'footer' && value === 'contentinfo' && !is_parent_section_or_article) {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value))
+				}
 			}
 
 			// no-access-key
