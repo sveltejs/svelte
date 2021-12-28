@@ -11,7 +11,7 @@ There are two halves to the context API — `setContext` and `getContext`. If a 
 Let's set the context first. In `Map.svelte`, import `setContext` from `svelte` and `key` from `mapbox.js` and call `setContext`:
 
 ```js
-import { onMount, setContext } from 'svelte';
+import { onDestroy, setContext } from 'svelte';
 import { mapbox, key } from './mapbox.js';
 
 setContext(key, {
