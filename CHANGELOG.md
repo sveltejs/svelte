@@ -2,7 +2,7 @@
 
 ## unreleased
 
-* Fix non-boolean attribute rendering in SSR to render truthy values as is, making it consistent with DOM rendering.
+* Fix non-boolean attribute rendering in SSR to render truthy values as is, making it consistent with DOM rendering. ([#6121](https://github.com/sveltejs/svelte/issues/6121))
 
 ## 3.44.3
 
