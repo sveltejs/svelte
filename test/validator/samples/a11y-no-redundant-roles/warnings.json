@@ -1,0 +1,107 @@
+[
+    {
+        "code": "a11y-no-redundant-roles",
+        "end": {
+            "character": 21,
+            "column": 21,
+            "line": 1
+        },
+        "message": "A11y: Redundant role 'button'",
+        "pos": 8,
+        "start": {
+            "character": 8,
+            "column": 8,
+            "line": 1
+        }
+    },
+    {
+        "code": "a11y-no-redundant-roles",
+        "end": {
+            "character": 47,
+            "column": 22,
+            "line": 2
+        },
+        "message": "A11y: Redundant role 'navigation'",
+        "pos": 30,
+        "start": {
+            "character": 30,
+            "column": 5,
+            "line": 2
+        }
+    },
+    {
+        "code": "a11y-no-redundant-roles",
+        "end": {
+            "character": 74,
+            "column": 23,
+            "line": 3
+        },
+        "message": "A11y: Redundant role 'link'",
+        "pos": 63,
+        "start": {
+            "character": 63,
+            "column": 12,
+            "line": 3
+        }
+    },
+    {
+        "code": "a11y-no-redundant-roles",
+        "end": {
+            "character": 108,
+            "column": 21,
+            "line": 5
+        },
+        "message": "A11y: Redundant role 'banner'",
+        "pos": 95,
+        "start": {
+            "character": 95,
+            "column": 8,
+            "line": 5
+        }
+    },
+    {
+        "code": "a11y-no-redundant-roles",
+        "end": {
+            "character": 145,
+            "column": 26,
+            "line": 6
+        },
+        "message": "A11y: Redundant role 'contentinfo'",
+        "pos": 127,
+        "start": {
+            "character": 127,
+            "column": 8,
+            "line": 6
+        }
+    },
+    {
+        "code": "a11y-no-redundant-roles",
+        "end": {
+            "character": 173,
+            "column": 17,
+            "line": 7
+        },
+        "message": "A11y: Redundant role 'main'",
+        "pos": 162,
+        "start": {
+            "character": 162,
+            "column": 6,
+            "line": 7
+        }
+    },
+    {
+        "code": "a11y-no-redundant-roles",
+        "end": {
+            "character": 173,
+            "column": 17,
+            "line": 7
+        },
+        "message": "A11y: Redundant role 'main'",
+        "pos": 162,
+        "start": {
+            "character": 162,
+            "column": 6,
+            "line": 7
+        }
+    }
+]
