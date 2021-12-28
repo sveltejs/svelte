@@ -445,7 +445,7 @@ store = tweened(value: any, options)
 Tweened stores update their values over a fixed duration. The following options are available:
 
 * `delay` (`number`, default 0) — milliseconds before starting
-* `duration` (`number`, default 400) — milliseconds the tween lasts
+* `duration` (`number` | `function`, default 400) — milliseconds the tween lasts
 * `easing` (`function`, default `t => t`) — an [easing function](/docs#run-time-svelte-easing)
 * `interpolate` (`function`) — see below
 
