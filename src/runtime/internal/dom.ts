@@ -635,7 +635,7 @@ export interface CustomEventOpts {
 	cancelable?: boolean;
 }
 
-export function custom_event<T=any>(type: string, detail?: T, opts?: CustomEventOpts) {
+export function custom_event<T=any>(type: string, detail?: T, opts: CustomEventOpts = {}) {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, opts.bubbles, opts.cancelable, detail);
 	return e;
