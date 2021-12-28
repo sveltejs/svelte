@@ -630,9 +630,14 @@ export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event<T=any>(type: string, detail?: T, bubbles: boolean = false) {
+export interface CustomEventOpts {
+	bubbles?: boolean;
+	cancelable?: boolean;
+}
+
+export function custom_event<T=any>(type: string, detail?: T, opts?: CustomEventOpts) {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
-	e.initCustomEvent(type, bubbles, false, detail);
+	e.initCustomEvent(type, opts.bubbles, opts.cancelable, detail);
 	return e;
 }
 

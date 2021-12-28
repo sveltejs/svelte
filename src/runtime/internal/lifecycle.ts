@@ -1,4 +1,4 @@
-import { custom_event } from './dom';
+import { custom_event, CustomEventOpts } from './dom';
 
 export let current_component;
 
@@ -32,13 +32,13 @@ export function createEventDispatcher<
 >(): <EventKey extends Extract<keyof EventMap, string>>(type: EventKey, detail?: EventMap[EventKey]) => void {
 	const component = get_current_component();
 
-	return (type: string, detail?: any) => {
+	return (type: string, detail?: any, opts?: CustomEventOpts) => {
 		const callbacks = component.$$.callbacks[type];
 
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
-			const event = custom_event(type, detail);
+			const event = custom_event(type, detail, opts);
 			callbacks.slice().forEach(fn => {
 				fn.call(component, event);
 			});
