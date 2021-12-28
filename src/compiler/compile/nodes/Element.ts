@@ -353,7 +353,6 @@ export default class Element extends Node {
 				}
 
 				// no-redundant-roles
-				// https://www.w3.org/TR/html-aria/#don-t-add-redundant-roles
 				if (this.name === value) {
 					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value))
 				}
