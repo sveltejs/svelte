@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## unreleased
+
+* Fix non-boolean attribute rendering in SSR to render truthy values as is, making it consistent with DOM rendering.
+
 ## 3.44.3
 
 * Fix `bind:this` binding inside `onMount` for manually instantiated component ([#6760](https://github.com/sveltejs/svelte/issues/6760))
