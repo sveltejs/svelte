@@ -22,7 +22,7 @@ describe('store', () => {
 			assert.deepEqual(values, [0, 1, 2]);
 		});
 
-		it('creates an undefined writable store', () => {
+		it('creates an empty writable store', () => {
 			const store = writable();
 			const values = [];
 
@@ -32,8 +32,22 @@ describe('store', () => {
 
 			unsubscribe();
 
-			assert.deepEqual(values, [undefined]);
+			assert.deepEqual(values, []);
 		});
+
+		it('creates a null writable store', () => {
+			const store = writable(null);
+			const values = [];
+
+			const unsubscribe = store.subscribe(value => {
+				values.push(value);
+			});
+
+			unsubscribe();
+
+			assert.deepEqual(values, [null]);
+		});
+
 
 		it('calls provided subscribe handler', () => {
 			let called = 0;
@@ -128,7 +142,7 @@ describe('store', () => {
 			assert.deepEqual(values, [0, 1, 2]);
 		});
 
-		it('creates an undefined readable store', () => {
+		it('creates an empty readable store', () => {
 			const store = readable();
 			const values = [];
 
@@ -138,7 +152,7 @@ describe('store', () => {
 
 			unsubscribe();
 
-			assert.deepEqual(values, [undefined]);
+			assert.deepEqual(values, []);
 		});
 
 		it('creates a readable store without updater', () => {

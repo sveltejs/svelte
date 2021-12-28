@@ -65,8 +65,11 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 	let stop: Unsubscriber;
 	const subscribers: Set<SubscribeInvalidateTuple<T>> = new Set();
 
+	let runOnSubscribe = value !== undefined;
+
 	function set(new_value: T): void {
 		if (safe_not_equal(value, new_value)) {
+			runOnSubscribe = true;
 			value = new_value;
 			if (stop) { // store is ready
 				const run_queue = !subscriber_queue.length;
@@ -94,7 +97,7 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 		if (subscribers.size === 1) {
 			stop = start(set) || noop;
 		}
-		run(value);
+		if (runOnSubscribe) run(value);
 
 		return () => {
 			subscribers.delete(subscriber);
