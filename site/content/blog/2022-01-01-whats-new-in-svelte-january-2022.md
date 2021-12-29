@@ -33,22 +33,23 @@ Happy new year, Svelte Community! Lots to share this month across Svelte, Svelte
 
 **Learning and Listening**
 
-_Blogs_
+_To Read_
 - [Mutating Query Params in SvelteKit Without Page Reloads or Navigations](https://dev.to/mohamadharith/mutating-query-params-in-sveltekit-without-page-reloads-or-navigations-2i2b) by Mohamad Harith
 - [Svelte for Reactaholics : A guide for React developers](https://www.100ms.live/blog/svelte-guide-for-react-developers) by Puru Vijay
 - [Svelte's lifecycle methods can be used anywhere](https://geoffrich.net/posts/svelte-lifecycle-examples/) and [The many meanings of $ in Svelte](https://geoffrich.net/posts/svelte-$-meanings/) by Geoff Rich
 - [Vercel and Svelte: A Perfect Match for Web Developers](https://thenewstack.io/vercel-and-svelte-a-perfect-match-for-web-developers/) by Darryl K. Taft
 - [User-defined TailwindCSS Color Scheme with Svelte Stores](https://blog.dayslice.io/user-defined-tailwindcss-color-scheme-with-svelte-stores-ad80ca2cf038) by jeremy zaborowski
 - [Ionic 6 + Svelte 🚀](https://medium.com/@raymondboswel/ionic-6-svelte-ae904caa82df) by Raymond Boswel
+- [What happened in #Svelte language tools this year](https://twitter.com/dummdidumm_/status/1474158105395179525?t=ytj2K2Q52iD5-lNyLnQaAQ&s=19) by Simon H
 
-_Videos_
+_To Watch_
 - [The Future of Svelte (Interview with Rich Harris)](https://www.youtube.com/watch?v=uQntFkK8Z54) by Lee Robinson, Director of Developer Relations at Vercel
 - [Svelte is becoming the go-to framework](https://www.youtube.com/watch?v=fo6BKY2xR2w&t=1834s) for Obsidian plugin developers
 - [Sveltekit WordPress Headless Blog](https://www.youtube.com/watch?v=c0UDVgjPxFw) by WebJeda
 - [Getting started with SvelteKit](https://www.youtube.com/watch?v=i2suPKMPUFA) by Lihau Tan
 - [Deploy a full-stack SvelteKit app on Cloudflare Pages](https://www.youtube.com/watch?v=Wc1_U6Dy5Tw) by 1nf
 
-_Podcasts_
+_To Listen To_
 - [Syntax podcast: How To Do Things In Svelte](https://podcasts.apple.com/ca/podcast/how-to-do-things-in-svelte/id1253186678?i=1000544796072)
 - [JS Party #205: So much Sveltey goodness (w/ Rich Harris)](https://changelog.com/jsparty/205)
 
@@ -58,6 +59,7 @@ _Podcasts_
 - [Percival](https://github.com/ekzhang/percival) is a declarative data query and visualization language
 - [Svelte FlatList](https://github.com/snuffyDev/svelte-flatlist) is a mobile-friendly, simple, and customizable draggable menu
 - [svelte-keyed](https://github.com/bryanmylee/svelte-keyed) is a writable derived store for objects and arrays
+- [Svemix](https://github.com/svemix/svemix) is Remix for Svelte - providing server scripts inside your Svelte components/routes, which will be transformed into endpoints
 
 Want to add something to the showcase? Need help bringing your next idea to life in Svelte? Join us on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs).
 
