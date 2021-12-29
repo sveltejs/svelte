@@ -104,8 +104,24 @@ function make_dirty(component, i) {
 	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
-export function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
-	const parent_component = current_component;
+function is_svelte_element(component) {
+  while (component) {
+    if (component.constructor === SvelteElement)
+      return true;
+    component = Object.getPrototypeOf(component);
+  }
+  return false;
+}
+
+function find_containing_component(component) {
+  while (component && !is_svelte_element(component)) {
+    component = component.parentNode;
+  }
+  return component;
+}
+
+function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
+  const parent_component = options.customElement ? find_containing_component(component.parentNode) : current_component;
 	set_current_component(component);
 
 	const $$: T$$ = component.$$ = {
