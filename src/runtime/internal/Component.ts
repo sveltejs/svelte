@@ -120,7 +120,7 @@ function find_containing_component(component) {
   return component;
 }
 
-function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
+export function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
   const parent_component = options.customElement ? find_containing_component(component.parentNode) : current_component;
 	set_current_component(component);
 
