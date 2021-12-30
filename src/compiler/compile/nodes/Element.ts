@@ -370,23 +370,17 @@ export default class Element extends Node {
 				}
 
 				// no-redundant-roles
-				if (this.name === value) {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				} else if (this.name === 'nav' && value === 'navigation') {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				} else if (this.name === 'a' && value === 'link') {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				} else if (this.name === 'fieldset' && value === 'group') {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				} else if (this.name === 'ul' && value === 'list') {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
+				if (this.name === value || 
+					this.name === 'nav' && value === 'navigation' ||
+					this.name === 'a' && value === 'link' ||
+					this.name === 'fieldset' && value === 'group' ||
+					this.name === 'ul' && value === 'list') {
+						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
+					}
 
 				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
 				if (!is_parent_section_or_article) {
-					if (this.name === 'header' && value === 'banner') {
-						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-					} else if (this.name === 'footer' && value === 'contentinfo') {
+					if (this.name === 'header' && value === 'banner' || this.name === 'footer' && value === 'contentinfo') {
 						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 					}
 				}
