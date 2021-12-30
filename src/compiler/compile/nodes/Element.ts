@@ -394,19 +394,14 @@ export default class Element extends Node {
 				}
 
 				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article'])
+				if (!is_parent_section_or_article) {
+					if (this.name === 'header' && value === 'banner') {
+						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 					}
-					if (parent.type === 'Element') {
-						break;
+	
+					else if (this.name === 'footer' && value === 'contentinfo') {
+						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 					}
-					parent = parent.parent;
-				}
-
-				if (this.name === 'header' && value === 'banner' && !is_parent_section_or_article) {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
-
-				if (this.name === 'footer' && value === 'contentinfo' && !is_parent_section_or_article) {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 				}
 			}
 
