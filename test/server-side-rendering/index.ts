@@ -52,7 +52,7 @@ describe('ssr', () => {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		(solo ? it.only : it)(dir, () => {
+		(solo ? it.only : it)(dir, (done) => {
 			dir = path.resolve(`${__dirname}/samples`, dir);
 
 			cleanRequireCache();
@@ -131,6 +131,7 @@ describe('ssr', () => {
 				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
 				throw err;
 			} finally {
+				done();
 				set_current_component(null);
 			}
 		});

@@ -35,7 +35,7 @@ describe('runtime', () => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
 
-		require.extensions['.svelte'] = function(module, filename) {
+		require.extensions['.svelte'] = function (module, filename) {
 			const options = Object.assign({
 				filename
 			}, compileOptions);
@@ -65,7 +65,7 @@ describe('runtime', () => {
 		}
 
 		const testName = `${dir} ${hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''}`;
-		(config.skip ? it.skip : solo ? it.only : it)(testName, () => {
+		(config.skip ? it.skip : solo ? it.only : it)(testName, (done) => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -96,7 +96,7 @@ describe('runtime', () => {
 			glob('**/*.svelte', { cwd }).forEach(file => {
 				if (file[0] === '_') return;
 
-				const dir  = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
+				const dir = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
 				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
 
 				if (fs.existsSync(out)) {
@@ -120,7 +120,7 @@ describe('runtime', () => {
 				}
 			});
 
-			return Promise.resolve()
+			Promise.resolve()
 				.then(() => {
 					// hack to support transition tests
 					clear_loops();
@@ -203,7 +203,7 @@ describe('runtime', () => {
 					}
 
 					if (config.test) {
-						return Promise.resolve(config.test({
+						config.test({
 							assert,
 							component,
 							mod,
@@ -211,13 +211,12 @@ describe('runtime', () => {
 							window,
 							raf,
 							compileOptions
-						})).then(() => {
-							component.$destroy();
-
-							if (unhandled_rejection) {
-								throw unhandled_rejection;
-							}
 						});
+						component.$destroy();
+
+						if (unhandled_rejection) {
+							throw unhandled_rejection;
+						}
 					} else {
 						component.$destroy();
 						assert.htmlEqual(target.innerHTML, '');
@@ -245,6 +244,7 @@ describe('runtime', () => {
 				.catch(err => {
 					// print a clickable link to open the directory
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+					done();
 					throw err;
 				})
 				.then(() => {
@@ -255,6 +255,7 @@ describe('runtime', () => {
 					flush();
 
 					if (config.after_test) config.after_test();
+					done();
 				});
 		});
 	}
