@@ -297,3 +297,14 @@ export async function getNewPage(browser: Browser): Promise<Page> {
 
 	return page;
 }
+
+export async function retryAsync<T>(fn: () => Promise<T>): Promise<T> {
+	let attempts = 0;
+	while (attempts <= 3) {
+		try {
+			return await fn();
+		} catch (err) {
+			if (++attempts >= 3) throw err;
+		}
+	}
+}

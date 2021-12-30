@@ -4,7 +4,7 @@ import * as http from 'http';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import puppeteer from 'puppeteer';
-import { addLineNumbers, loadConfig, loadSvelte, getNewPage } from '../helpers';
+import { addLineNumbers, loadConfig, loadSvelte, getNewPage, retryAsync } from '../helpers';
 import { deepEqual } from 'assert';
 
 const page = `
@@ -17,6 +17,7 @@ const page = `
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
 describe('custom-elements', function () {
+	// Note: Increase the timeout in preparation for restarting Chromium due to SIGSEGV.
 	this.timeout(10000);
 	let svelte;
 	let server;
@@ -44,7 +45,7 @@ describe('custom-elements', function () {
 	}
 
 	async function launchPuppeteer() {
-		return await puppeteer.launch();
+		return await retryAsync(() => puppeteer.launch());
 	}
 
 	before(async () => {

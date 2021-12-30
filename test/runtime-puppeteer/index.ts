@@ -10,7 +10,8 @@ import {
 	loadSvelte,
 	mkdirp,
 	prettyPrintPuppeteerAssertionError,
-	getNewPage
+	getNewPage,
+	retryAsync
 } from '../helpers';
 import { deepEqual } from 'assert';
 
@@ -50,12 +51,14 @@ function create_server() {
 }
 
 async function launchPuppeteer() {
-	return await puppeteer.launch();
+	return await retryAsync(() => puppeteer.launch());
 }
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('runtime (puppeteer)', () => {
+describe('runtime (puppeteer)', function () {
+	// Note: Increase the timeout in preparation for restarting Chromium due to SIGSEGV.
+	this.timeout(10000);
 	before(async () => {
 		svelte = loadSvelte(false);
 		console.log('[runtime-puppeteer] Loaded Svelte');
