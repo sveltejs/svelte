@@ -259,6 +259,7 @@ export default class Element extends Node {
 			this.validate_bindings_foreign();
 		} else {
 			this.validate_attributes_a11y();
+			this.validate_handlers_a11y();
 			this.validate_special_cases();
 			this.validate_bindings();
 			this.validate_content();
@@ -309,6 +310,25 @@ export default class Element extends Node {
 				}
 			}
 		});
+	}
+
+	validate_handlers_a11y() {
+		const { component, handlers } = this;
+
+		const handlers_map = new Map();
+		handlers.forEach(handler => (
+			handlers_map.set(handler.name, handler)
+		));
+
+		const up_press_down = (
+			handlers_map.has('keyup') ||
+			handlers_map.has('keydown') ||
+			handlers_map.has('keypress')
+		);
+
+		if (handlers_map.has('click') && !up_press_down) {
+			return component.warn(this, compiler_warnings.a11y_click_events_have_key_events());
+		}
 	}
 
 	validate_attributes_a11y() {
