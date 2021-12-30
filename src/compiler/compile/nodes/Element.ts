@@ -98,7 +98,7 @@ const react_attributes = new Map([
 
 const attributes_to_compact_whitespace = ['class', 'style'];
 
-function is_parent(parent: INode, elements: Array<string>) {
+function is_parent(parent: INode, elements: string[]) {
 	let check = false;
 
 	while (parent) {
@@ -372,30 +372,21 @@ export default class Element extends Node {
 				// no-redundant-roles
 				if (this.name === value) {
 					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
-				else if (this.name === 'nav' && value === 'navigation') {
+				} else if (this.name === 'nav' && value === 'navigation') {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
+				} else if (this.name === 'a' && value === 'link') {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
+				} else if (this.name === 'fieldset' && value === 'group') {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
+				} else if (this.name === 'ul' && value === 'list') {
 					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 				}
 
-				else if (this.name === 'a' && value === 'link') {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
-
-				else if (this.name === 'fieldset' && value === 'group') {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
-
-				else if (this.name === 'ul' && value === 'list') {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
-
-				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article'])
+				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
 				if (!is_parent_section_or_article) {
 					if (this.name === 'header' && value === 'banner') {
 						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-					}
-	
-					else if (this.name === 'footer' && value === 'contentinfo') {
+					} else if (this.name === 'footer' && value === 'contentinfo') {
 						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 					}
 				}
