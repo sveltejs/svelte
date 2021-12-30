@@ -9,7 +9,8 @@ import {
 	loadConfig,
 	loadSvelte,
 	mkdirp,
-	prettyPrintPuppeteerAssertionError
+	prettyPrintPuppeteerAssertionError,
+	getNewPage
 } from '../helpers';
 import { deepEqual } from 'assert';
 
@@ -48,6 +49,10 @@ function create_server() {
 	});
 }
 
+async function launchPuppeteer() {
+	return await puppeteer.launch();
+}
+
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
 describe('runtime (puppeteer)', () => {
@@ -56,7 +61,7 @@ describe('runtime (puppeteer)', () => {
 		console.log('[runtime-puppeteer] Loaded Svelte');
 		server = await create_server();
 		console.log('[runtime-puppeteer] Started server');
-		browser = await puppeteer.launch();
+		browser = await launchPuppeteer();
 		console.log('[runtime-puppeteer] Launched puppeteer browser');
 	});
 
@@ -205,27 +210,7 @@ describe('runtime (puppeteer)', () => {
 			const result = await bundle.generate({ format: 'iife', name: 'test' });
 			code = result.output[0].code;
 
-			const page = await browser.newPage();
-
-			page.on('console', (type) => {
-				console[type._type](type._text);
-			});
-
-			page.on('error', error => {
-				console.log('>>> an error happened');
-				console.error(error);
-			});
-
-			try {
-				await page.goto('http://localhost:6789');
-
-				const result = await page.evaluate(() => test(document.querySelector('main')));
-				if (result) console.log(result);
-			} catch (err) {
-				failed.add(dir);
-				prettyPrintPuppeteerAssertionError(err.message);
-				throw err;
-			} finally {
+			function assertWarnings() {
 				if (config.warnings) {
 					deepEqual(warnings.map(w => ({
 						code: w.code,
@@ -240,6 +225,27 @@ describe('runtime (puppeteer)', () => {
 					throw new Error('Received unexpected warnings');
 				}
 			}
+			// NOTE: Chromium may exit due to SIGSEGV, so retry in that case.
+			let count = 0;
+			do {
+				count++;
+				try {
+					const page = await getNewPage(browser);
+					await page.goto('http://localhost:6789');
+					const result = await page.evaluate(() => test(document.querySelector('main')));
+					if (result) console.log(result);
+					assertWarnings();
+					break;
+				} catch (err) {
+					if (count === 5 || browser.isConnected()) {
+						failed.add(dir);
+						prettyPrintPuppeteerAssertionError(err.message);
+						assertWarnings();
+						throw err;
+					}
+					browser = await launchPuppeteer();
+				}
+			} while (count <= 5);
 		});
 	}
 

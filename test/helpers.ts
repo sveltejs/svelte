@@ -5,10 +5,11 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
 export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void, htmlEqualWithComments: (actual, expected, message?) => void };
+import { Browser, Page } from 'puppeteer';
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
-export function loadSvelte(test) {
+export function loadSvelte(test: boolean = false) {
 	process.env.TEST = test ? 'true' : '';
 
 	const resolved = require.resolve('../compiler.js');
@@ -55,7 +56,7 @@ export function cleanRequireCache() {
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 
-const window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
+const window = new jsdom.JSDOM('<main></main>', { virtualConsole }).window;
 global.document = window.document;
 global.navigator = window.navigator;
 global.getComputedStyle = window.getComputedStyle;
@@ -68,7 +69,7 @@ for (const key of Object.getOwnPropertyNames(global)) {
 }
 
 // implement mock scroll
-window.scrollTo = function(pageXOffset, pageYOffset) {
+window.scrollTo = function (pageXOffset, pageYOffset) {
 	window.pageXOffset = pageXOffset;
 	window.pageYOffset = pageYOffset;
 };
@@ -243,7 +244,7 @@ const original_set_timeout = global.setTimeout;
 export function useFakeTimers() {
 	const callbacks = [];
 
-	global.setTimeout = function(fn) {
+	global.setTimeout = function (fn) {
 		callbacks.push(fn);
 	};
 
@@ -278,4 +279,21 @@ export function prettyPrintPuppeteerAssertionError(message) {
 	if (match) {
 		assert.equal(match[1], match[2]);
 	}
+}
+
+export async function getNewPage(browser: Browser): Promise<Page> {
+	const pages = await browser.pages();
+	if (pages.length) return pages[0];
+	const page = await browser.newPage();
+
+	page.on('console', (type) => {
+		console[type._type](type._text);
+	});
+
+	page.on('error', error => {
+		console.log('>>> an error happened');
+		console.error(error);
+	});
+
+	return page;
 }
