@@ -88,20 +88,5 @@
             "column": 6,
             "line": 7
         }
-    },
-    {
-        "code": "a11y-no-redundant-roles",
-        "end": {
-            "character": 173,
-            "column": 17,
-            "line": 7
-        },
-        "message": "A11y: Redundant role 'main'",
-        "pos": 162,
-        "start": {
-            "character": 162,
-            "column": 6,
-            "line": 7
-        }
     }
 ]
