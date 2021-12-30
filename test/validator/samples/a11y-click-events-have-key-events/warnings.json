@@ -1,0 +1,32 @@
+[
+    {
+        "code": "a11y-unknown-role",
+        "end": {
+            "character": 39,
+            "column": 39,
+            "line": 1
+        },
+        "message": "A11y: on:click should be accompanied by one of the following: on:keyup, on:keydown or on:keypress",
+        "pos": 0,
+        "start": {
+            "character": 0,
+            "column": 0,
+            "line": 1
+        }
+    },
+    {
+        "code": "a11y-unknown-role",
+        "end": {
+            "character": 73,
+            "column": 33,
+            "line": 2
+        },
+        "message": "A11y: on:click should be accompanied by one of the following: on:keyup, on:keydown or on:keypress",
+        "pos": 40,
+        "start": {
+            "character": 40,
+            "column": 0,
+            "line": 2
+        }
+    }
+]
