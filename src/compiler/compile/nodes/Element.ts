@@ -98,6 +98,23 @@ const react_attributes = new Map([
 
 const attributes_to_compact_whitespace = ['class', 'style'];
 
+function is_parent(parent: INode, elements: Array<string>) {
+	let check = false;
+
+	while (parent) {
+		const parent_name = (parent as Element).name;
+		if (elements.includes(parent_name)) {
+			check = true;
+			break;
+		}
+		if (parent.type === 'Element') {
+			break;
+		}
+		parent = parent.parent;
+	}
+	return check;
+}
+
 function get_namespace(parent: Element, element: Element, explicit_namespace: string) {
 	const parent_element = parent.find_nearest(/^Element/);
 
@@ -376,14 +393,7 @@ export default class Element extends Node {
 					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 				}
 
-				let { parent } = this;
-				let is_parent_section_or_article = false;
-
-				while (parent) {
-					const parent_name = (parent as Element).name;
-					if ( parent_name === 'section' || parent_name === 'article') {
-						is_parent_section_or_article = true;
-						break;
+				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article'])
 					}
 					if (parent.type === 'Element') {
 						break;
