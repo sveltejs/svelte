@@ -373,23 +373,19 @@ export default class Element extends Node {
 				if (this.name === value) {
 					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 				}
-				if (this.name === 'nav' && value === 'navigation') {
+				else if (this.name === 'nav' && value === 'navigation') {
 					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 				}
 
-				if (this.name === 'a' && value === 'link') {
+				else if (this.name === 'a' && value === 'link') {
 					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 				}
 
-				if (this.name === 'fieldset' && value === 'group') {
+				else if (this.name === 'fieldset' && value === 'group') {
 					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 				}
 
-				if (this.name === 'ul' && value === 'list') {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
-
-				if (this.name === 'main' && value === 'main') {
+				else if (this.name === 'ul' && value === 'list') {
 					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 				}
 
