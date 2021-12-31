@@ -7,13 +7,22 @@ authorURL: https://desandoval.net
 
 Happy new year, Svelte Community! Lots to share this month across Svelte, SvelteKit, Language Tools and the Showcase. Thanks to everyone who made 2021 a great year to use Svelte. Looking forward to the next one 🚀
 
-## What's new in `svelte/*`
-- [Svelte 3.44.3](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3443) is out with a few bug fixes in the binding and loop code
-- Svelte Language Tools has introduced support for the then/catch shorthands from Svelte 3.41 and TypeScript's "go to" functionality ([105.8.0 and later](https://github.com/sveltejs/language-tools/releases/tag/extensions-105.8.0))
-- After the [update to Vite 2.7](https://github.com/sveltejs/kit/pull/3018), SvelteKit users are [reporting significant performance improvements](https://www.reddit.com/r/sveltejs/comments/rljhfc/sveltekit_massive_compiler_improvement_by/)
+## What's new in SvelteKit
 - `@sveltejs/adapter-static` for SvelteKit now has a `precompress` option to make brotli compression of assets and pages easier to do out of the box ([#3079](https://github.com/sveltejs/kit/pull/3079))
 - Concurrency mode in SvelteKit will now prerender pages in parallel ([#3120](https://github.com/sveltejs/kit/pull/3120)). It is enabled by default in `1.0.0-next.205` and later
+- CSS is now automaticallly before JS for improved page performance (https://github.com/sveltejs/kit/commit/d138efe21692f5925f1e89afc0a33f42d6a1a711)
+- A new config option adds the ability to disable service worker registration to do your own custom registration (https://github.com/sveltejs/kit/pull/2988)
+- SSR route-splitting is here - breaking monolithic builds into smaller pieces for improved startup and routing performance (https://github.com/sveltejs/kit/pull/2931)
+- SvelteKit server will now automatically restart when the config files is changed (https://github.com/sveltejs/vite-plugin-svelte/pull/237)
+- `request.origin/path/query` is now `request.url` - simplifying the config and page `load` functions (https://github.com/sveltejs/kit/pull/3126)
+
+
+## Other new bits from `svelte/*`
+- [Svelte 3.44.3](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3443) is out with a few bug fixes in the binding and loop code
+- Svelte Language Tools has introduced support for the then/catch shorthands from Svelte 3.41 and TypeScript's "go to" functionality ([105.8.0 and later](https://github.com/sveltejs/language-tools/releases/tag/extensions-105.8.0))
+- After the [update to Vite 2.7](https://github.com/sveltejs/kit/pull/3018), SvelteKit users are [reporting significant performance improvements](https://www.reddit.com/r/sveltejs/comments/rljhfc/sveltekit_massive_compiler_improvement_by/) and loading third-parties libraries in SSR has also been greatly improved
 - The Svelte REPL got a nice upgrade as well - letting you delete saved REPLs. Try it out by logging in at [svelte.dev/apps](https://svelte.dev/apps)
+
 
 ---
 
@@ -28,7 +37,9 @@ Happy new year, Svelte Community! Lots to share this month across Svelte, Svelte
 - [Version 0.2 of Tangent](http://tangentnotes.com/Download), a Svelte-based note writing app, is now in beta
 - [Intl Explorer](https://github.com/jesperorb/intl-explorer) is a tool for viewing output for all possible formatters for Intl
 
-**Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** The Svelte Society [needs your help](https://github.com/svelte-society/sveltesociety-2021/issues) as we rewrite the community site in SvelteKit.
+A lot of work this month has gone into migrating the Svelte main website and Svelte REPL to live in the https://github.com/sveltejs/sites repository - including a brand new homepage for [svelte.dev](https://svelte.dev/). Thanks to all the contributors who made this possible!
+
+If you're looking for a fun SvelteKit project to work on, [you can contribute to the Svelte Society site rewrite](https://github.com/svelte-society/sveltesociety-2021/issues) 💅
 
 
 **Learning and Listening**
