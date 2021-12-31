@@ -10,11 +10,11 @@ Happy new year, Svelte Community! Lots to share this month across Svelte, Svelte
 ## What's new in SvelteKit
 - `@sveltejs/adapter-static` for SvelteKit now has a `precompress` option to make brotli compression of assets and pages easier to do out of the box ([#3079](https://github.com/sveltejs/kit/pull/3079))
 - Concurrency mode in SvelteKit will now prerender pages in parallel ([#3120](https://github.com/sveltejs/kit/pull/3120)). It is enabled by default in `1.0.0-next.205` and later
-- CSS is now automaticallly before JS for improved page performance (https://github.com/sveltejs/kit/commit/d138efe21692f5925f1e89afc0a33f42d6a1a711)
-- A new config option adds the ability to disable service worker registration to do your own custom registration (https://github.com/sveltejs/kit/pull/2988)
-- SSR route-splitting is here - breaking monolithic builds into smaller pieces for improved startup and routing performance (https://github.com/sveltejs/kit/pull/2931)
-- SvelteKit server will now automatically restart when the config files is changed (https://github.com/sveltejs/vite-plugin-svelte/pull/237)
-- `request.origin/path/query` is now `request.url` - simplifying the config and page `load` functions (https://github.com/sveltejs/kit/pull/3126)
+- CSS is now automaticallly before JS for improved page performance ([d13efe](https://github.com/sveltejs/kit/commit/d138efe21692f5925f1e89afc0a33f42d6a1a711))
+- A new config option adds the ability to disable service worker registration to do your own custom registration ([#2988](https://github.com/sveltejs/kit/pull/2988))
+- SSR route-splitting is here - breaking monolithic builds into smaller pieces for improved startup and routing performance ([#2931](https://github.com/sveltejs/kit/pull/2931))
+- SvelteKit server will now automatically restart when the config files is changed ([vite-plugin-svelte#237](https://github.com/sveltejs/vite-plugin-svelte/pull/237))
+- `request.origin/path/query` is now `request.url` - simplifying the config and page `load` functions ([#3126](https://github.com/sveltejs/kit/pull/3126))
 
 
 ## Other new bits from `svelte/*`
