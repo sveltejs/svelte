@@ -370,17 +370,57 @@ export default class Element extends Node {
 				}
 
 				// no-redundant-roles
-				if (this.name === value || 
-					this.name === 'nav' && value === 'navigation' ||
-					this.name === 'a' && value === 'link' ||
-					this.name === 'fieldset' && value === 'group' ||
-					this.name === 'ul' && value === 'list') {
-						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-					}
+				const implicit_semantics = new Map([
+					['a', 'link'],
+					['article', 'article'],
+					['aside', 'complementary'],
+					['body', 'document'],
+					['datalist', 'listbox'],
+					['dd', 'definition'],
+					['dfn', 'term'],
+					['details', 'group'],
+					['dt', 'term'],
+					['fieldset', 'group'],
+					['form', 'form'],
+					['h1', 'heading'],
+					['h2', 'heading'],
+					['h3', 'heading'],
+					['h4', 'heading'],
+					['h5', 'heading'],
+					['h6', 'heading'],
+					['hr', 'separator'],
+					['li', 'listitem'],
+					['menu', 'list'],
+					['nav', 'navigation'],
+					['ol', 'list'],
+					['optgroup', 'group'],
+					['output', 'status'],
+					['progress', 'progressbar'],
+					['section', 'region'],
+					['summary', 'button'],
+					['tbody', 'rowgroup'],
+					['textarea', 'textbox'],
+					['tfoot', 'rowgroup'],
+					['thead', 'rowgroup'],
+					['tr', 'row'],
+					['ul', 'list']
+				]);
 
+				const has_redundant_role = value === implicit_semantics.get(this.name);
+
+				if (this.name === value || has_redundant_role) {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
+				}
+
+				// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
+				const nested_implicit_semantics = new Map([
+					['header', 'banner'],
+					['footer', 'contentinfo']
+				]);
 				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
 				if (!is_parent_section_or_article) {
-					if (this.name === 'header' && value === 'banner' || this.name === 'footer' && value === 'contentinfo') {
+					const has_nested_redundant_role = value === nested_implicit_semantics.get(this.name);
+					if (has_nested_redundant_role) {
 						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
 					}
 				}
