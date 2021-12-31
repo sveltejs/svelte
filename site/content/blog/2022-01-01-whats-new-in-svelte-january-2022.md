@@ -13,14 +13,14 @@ Happy new year, Svelte Community! Lots to share this month across Svelte, Svelte
 - CSS is now automaticallly before JS for improved page performance ([d13efe](https://github.com/sveltejs/kit/commit/d138efe21692f5925f1e89afc0a33f42d6a1a711))
 - A new config option adds the ability to disable service worker registration to do your own custom registration ([#2988](https://github.com/sveltejs/kit/pull/2988))
 - SSR route-splitting is here - breaking monolithic builds into smaller pieces for improved startup and routing performance ([#2931](https://github.com/sveltejs/kit/pull/2931))
-- SvelteKit server will now automatically restart when the config files is changed ([vite-plugin-svelte#237](https://github.com/sveltejs/vite-plugin-svelte/pull/237))
 - `request.origin/path/query` is now `request.url` - simplifying the config and page `load` functions ([#3126](https://github.com/sveltejs/kit/pull/3126))
+- After the [update to Vite 2.7](https://github.com/sveltejs/kit/pull/3018), SvelteKit users are [reporting significant performance improvements](https://www.reddit.com/r/sveltejs/comments/rljhfc/sveltekit_massive_compiler_improvement_by/) and loading third-parties libraries in SSR has also been greatly improved
+- SvelteKit server will now automatically restart when the config files is changed ([vite-plugin-svelte#237](https://github.com/sveltejs/vite-plugin-svelte/pull/237))
 
 
 ## Other new bits from `svelte/*`
 - [Svelte 3.44.3](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3443) is out with a few bug fixes in the binding and loop code
 - Svelte Language Tools has introduced support for the then/catch shorthands from Svelte 3.41 and TypeScript's "go to" functionality ([105.8.0 and later](https://github.com/sveltejs/language-tools/releases/tag/extensions-105.8.0))
-- After the [update to Vite 2.7](https://github.com/sveltejs/kit/pull/3018), SvelteKit users are [reporting significant performance improvements](https://www.reddit.com/r/sveltejs/comments/rljhfc/sveltekit_massive_compiler_improvement_by/) and loading third-parties libraries in SSR has also been greatly improved
 - The Svelte REPL got a nice upgrade as well - letting you delete saved REPLs. Try it out by logging in at [svelte.dev/apps](https://svelte.dev/apps)
 
 
