@@ -77,7 +77,6 @@ const a11y_nested_implicit_semantics = new Map([
 
 const a11y_implicit_semantics = new Map([
 	['a', 'link'],
-	['article', 'article'],
 	['aside', 'complementary'],
 	['body', 'document'],
 	['datalist', 'listbox'],
