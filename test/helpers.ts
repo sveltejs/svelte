@@ -287,7 +287,7 @@ export async function retryAsync<T>(fn: () => Promise<T>, maxAttempts: number = 
 			return await fn();
 		} catch (err) {
 			if (++attempts >= maxAttempts) throw err;
-			new Promise(resolve => setTimeout(resolve, interval));
+			await new Promise(resolve => setTimeout(resolve, interval));
 		}
 	}
 }
