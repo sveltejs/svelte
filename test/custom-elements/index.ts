@@ -4,7 +4,7 @@ import * as http from 'http';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import puppeteer from 'puppeteer';
-import { addLineNumbers, loadConfig, loadSvelte, getNewPage, retryAsync } from '../helpers';
+import { addLineNumbers, loadConfig, loadSvelte, retryAsync } from '../helpers';
 import { deepEqual } from 'assert';
 
 const page = `
@@ -129,11 +129,22 @@ describe('custom-elements', function () {
 			do {
 				count++;
 				try {
-					const page = await getNewPage(browser);
+					const page = await browser.newPage();
+
+					page.on('console', (type) => {
+						console[type._type](type._text);
+					});
+
+					page.on('error', error => {
+						console.log('>>> an error happened');
+						console.error(error);
+					});
+
 					await page.goto('http://localhost:6789');
 					const result = await page.evaluate(() => test(document.querySelector('main')));
 					if (result) console.log(result);
 					assertWarnings();
+					await page.close();
 					break;
 				} catch (err) {
 					if (count === 5 || browser.isConnected()) {

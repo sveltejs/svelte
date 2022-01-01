@@ -5,7 +5,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
 export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void, htmlEqualWithComments: (actual, expected, message?) => void };
-import { Browser, Page } from 'puppeteer';
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
@@ -279,23 +278,6 @@ export function prettyPrintPuppeteerAssertionError(message) {
 	if (match) {
 		assert.equal(match[1], match[2]);
 	}
-}
-
-export async function getNewPage(browser: Browser): Promise<Page> {
-	const pages = await browser.pages();
-	if (pages.length) return pages[0];
-	const page = await browser.newPage();
-
-	page.on('console', (type) => {
-		console[type._type](type._text);
-	});
-
-	page.on('error', error => {
-		console.log('>>> an error happened');
-		console.error(error);
-	});
-
-	return page;
 }
 
 export async function retryAsync<T>(fn: () => Promise<T>): Promise<T> {
