@@ -280,13 +280,14 @@ export function prettyPrintPuppeteerAssertionError(message) {
 	}
 }
 
-export async function retryAsync<T>(fn: () => Promise<T>, maxAttempts: number = 3): Promise<T> {
+export async function retryAsync<T>(fn: () => Promise<T>, maxAttempts: number = 3, interval: number = 1000): Promise<T> {
 	let attempts = 0;
 	while (attempts <= maxAttempts) {
 		try {
 			return await fn();
 		} catch (err) {
 			if (++attempts >= maxAttempts) throw err;
+			new Promise(resolve => setTimeout(resolve, interval));
 		}
 	}
 }
