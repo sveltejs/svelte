@@ -53,20 +53,22 @@ describe('ssr', () => {
 		}
 
 		(solo ? it.only : it)(dir, (done) => {
-			dir = path.resolve(`${__dirname}/samples`, dir);
-
-			cleanRequireCache();
-
-			const compileOptions = {
-				sveltePath,
-				...config.compileOptions,
-				generate: 'ssr',
-				format: 'cjs'
-			};
-
-			require('../../register')(compileOptions);
 
 			try {
+
+				dir = path.resolve(`${__dirname}/samples`, dir);
+
+				cleanRequireCache();
+
+				const compileOptions = {
+					sveltePath,
+					...config.compileOptions,
+					generate: 'ssr',
+					format: 'cjs'
+				};
+
+				require('../../register')(compileOptions);
+
 				const Component = require(`${dir}/main.svelte`).default;
 
 				const expectedHtml = tryToReadFile(`${dir}/_expected.html`);
@@ -131,8 +133,8 @@ describe('ssr', () => {
 				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
 				throw err;
 			} finally {
-				done();
 				set_current_component(null);
+				done();
 			}
 		});
 	});
