@@ -203,7 +203,7 @@ describe('runtime', () => {
 					}
 
 					if (config.test) {
-						config.test({
+						return Promise.resolve(config.test({
 							assert,
 							component,
 							mod,
@@ -211,12 +211,13 @@ describe('runtime', () => {
 							window,
 							raf,
 							compileOptions
-						});
-						component.$destroy();
+						})).then(() => {
+							component.$destroy();
 
-						if (unhandled_rejection) {
-							throw unhandled_rejection;
-						}
+							if (unhandled_rejection) {
+								throw unhandled_rejection;
+							}
+						});
 					} else {
 						component.$destroy();
 						assert.htmlEqual(target.innerHTML, '');
