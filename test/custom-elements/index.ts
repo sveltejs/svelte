@@ -152,6 +152,8 @@ describe('custom-elements', function () {
 						assertWarnings();
 						throw err;
 					}
+					console.debug(err.stack || err);
+					console.log('RESTARTING Chromium...');
 					browser = await launchPuppeteer();
 				}
 			} while (count <= 5);
