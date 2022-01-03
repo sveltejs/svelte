@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add `a11y-no-redundant-roles` warning ([#7067](https://github.com/sveltejs/svelte/pull/7067))
+
 ## 3.44.3
 
 * Fix `bind:this` binding inside `onMount` for manually instantiated component ([#6760](https://github.com/sveltejs/svelte/issues/6760))
