@@ -115,6 +115,23 @@ const a11y_implicit_semantics = new Map([
 	['ul', 'list']
 ]);
 
+const a11y_interactive = new Set([
+	'a',
+	'button',
+	'select'
+]);
+
+const input_type_interactive = new Set([
+	'button',
+	'checkbox',
+	'color',
+	'file',
+	'image',
+	'radio',
+	'reset',
+	'submit'
+]);
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
@@ -557,20 +574,12 @@ export default class Element extends Node {
 
 		// click-events-have-key-events
 		if (handlers_map.has('click')) {
-
-			const a11y_interactive = new Set([
-				'a',
-				'button',
-				'select'
-			]);
-
 			if (a11y_interactive.has(this.name)) {
 				return;
 			}
 
 			if (this.name === 'input') {
 				const input_type = attribute_map.get('type');
-				const input_type_interactive = new Set(['button', 'checkbox', 'color', 'file', 'image', 'radio', 'reset', 'submit']);
 
 				if (input_type && input_type_interactive.has(input_type.get_static_value())) {
 					return;
@@ -606,16 +615,16 @@ export default class Element extends Node {
 				return;
 			}
 
-			const hasKeyEvent =
+			const has_key_event =
 				handlers_map.has('keydown') ||
 				handlers_map.has('keyup') ||
 				handlers_map.has('keypress');
 
-			if (!hasKeyEvent) {
-				component.warn(this, {
-					code: `a11y-click-events-have-key-events`,
-					message: `A11y: visible, non-interactive elements with on:click event must be accompanied by a on:keydown, on:keyup or on:keypress event.`
-				});
+			if (!has_key_event) {
+				component.warn(
+					this,
+					compiler_warnings.a11y_click_events_have_key_events()
+				);
 			}
 		}
 

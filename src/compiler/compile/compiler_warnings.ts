@@ -175,6 +175,10 @@ export default {
 		code: 'a11y-mouse-events-have-key-events',
 		message: `A11y: on:${event} must be accompanied by on:${accompanied_by}`
 	}),
+	a11y_click_events_have_key_events: () => ({
+		code: 'a11y-click-events-have-key-events',
+		message: 'A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.'
+	}),
 	a11y_missing_content: (name: string) => ({
 		code: 'a11y-missing-content',
 		message: `A11y: <${name}> element should have child content`
