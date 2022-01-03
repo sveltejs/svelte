@@ -70,6 +70,46 @@ const a11y_labelable = new Set([
 	'textarea'
 ]);
 
+const a11y_nested_implicit_semantics = new Map([
+	['header', 'banner'],
+	['footer', 'contentinfo']
+]);
+
+const a11y_implicit_semantics = new Map([
+	['a', 'link'],
+	['aside', 'complementary'],
+	['body', 'document'],
+	['datalist', 'listbox'],
+	['dd', 'definition'],
+	['dfn', 'term'],
+	['details', 'group'],
+	['dt', 'term'],
+	['fieldset', 'group'],
+	['form', 'form'],
+	['h1', 'heading'],
+	['h2', 'heading'],
+	['h3', 'heading'],
+	['h4', 'heading'],
+	['h5', 'heading'],
+	['h6', 'heading'],
+	['hr', 'separator'],
+	['li', 'listitem'],
+	['menu', 'list'],
+	['nav', 'navigation'],
+	['ol', 'list'],
+	['optgroup', 'group'],
+	['output', 'status'],
+	['progress', 'progressbar'],
+	['section', 'region'],
+	['summary', 'button'],
+	['tbody', 'rowgroup'],
+	['textarea', 'textbox'],
+	['tfoot', 'rowgroup'],
+	['thead', 'rowgroup'],
+	['tr', 'row'],
+	['ul', 'list']
+]);
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
@@ -97,6 +137,23 @@ const react_attributes = new Map([
 ]);
 
 const attributes_to_compact_whitespace = ['class', 'style'];
+
+function is_parent(parent: INode, elements: string[]) {
+	let check = false;
+
+	while (parent) {
+		const parent_name = (parent as Element).name;
+		if (elements.includes(parent_name)) {
+			check = true;
+			break;
+		}
+		if (parent.type === 'Element') {
+			break;
+		}
+		parent = parent.parent;
+	}
+	return check;
+}
 
 function get_namespace(parent: Element, element: Element, explicit_namespace: string) {
 	const parent_element = parent.find_nearest(/^Element/);
@@ -350,6 +407,22 @@ export default class Element extends Node {
 					// @ts-ignore
 					const match = fuzzymatch(value, aria_roles);
 					component.warn(attribute, compiler_warnings.a11y_unknown_role(value, match));
+				}
+
+				// no-redundant-roles
+				const has_redundant_role = value === a11y_implicit_semantics.get(this.name);
+
+				if (this.name === value || has_redundant_role) {
+					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
+				}
+
+				// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
+				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
+				if (!is_parent_section_or_article) {
+					const has_nested_redundant_role = value === a11y_nested_implicit_semantics.get(this.name);
+					if (has_nested_redundant_role) {
+						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
+					}
 				}
 			}
 
