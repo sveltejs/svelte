@@ -18,8 +18,8 @@ function create_fragment(ctx) {
 
 	return {
 		c() {
-			svg = document.createElementNS("https://svelte.dev/docs#svelte_options", "svg");
-			img = document.createElementNS("https://svelte.dev/docs#svelte_options", "img");
+			svg = document.createElementNS("https://svelte.dev/docs#template-syntax-svelte-options", "svg");
+			img = document.createElementNS("https://svelte.dev/docs#template-syntax-svelte-options", "img");
 			this.h();
 		},
 		l(nodes) {
