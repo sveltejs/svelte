@@ -243,7 +243,7 @@ const original_set_timeout = global.setTimeout;
 export function useFakeTimers() {
 	const callbacks = [];
 
-	global.setTimeout = function (fn) {
+	global.setTimeout = function(fn) {
 		callbacks.push(fn);
 	};
 
