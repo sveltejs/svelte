@@ -578,10 +578,14 @@ export default class Element extends Node {
 				return;
 			}
 
-			if (this.name === 'input') {
-				const input_type = attribute_map.get('type');
+			const type_attribute = attribute_map.get('type');
 
-				if (input_type && input_type_interactive.has(input_type.get_static_value())) {
+			if (this.name === 'input') {
+				if (
+					type_attribute &&
+					(!type_attribute.is_static ||
+						input_type_interactive.has(type_attribute.get_static_value()))
+				) {
 					return;
 				}
 			}
@@ -592,14 +596,15 @@ export default class Element extends Node {
 
 			const aria_hidden_attribute = attribute_map.get('aria-hidden');
 			const aria_hidden_value =
-				aria_hidden_attribute && aria_hidden_attribute.get_static_value();
+				aria_hidden_attribute &&
+				(!aria_hidden_attribute.is_static ||
+					aria_hidden_attribute.get_static_value());
 
 			// aria-hidden value is string, check its boolean value with JSON.parse()
 			if (aria_hidden_value && JSON.parse(aria_hidden_value)) {
 				return;
 			}
 
-			const type_attribute = attribute_map.get('type');
 			const type_value = type_attribute && type_attribute.get_static_value();
 
 			if (type_value && type_value === 'hidden') {
@@ -609,7 +614,9 @@ export default class Element extends Node {
 			const role_attribute = attribute_map.get('role');
 			const role_value = role_attribute && role_attribute.get_static_value();
 			const presentation_role_value =
-				role_value === 'presentation' || role_value === 'none';
+				role_value === null ||
+				role_value === 'presentation' ||
+				role_value === 'none';
 
 			if (presentation_role_value) {
 				return;

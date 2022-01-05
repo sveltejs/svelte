@@ -2,12 +2,15 @@
 	function noop() {}
 
 	let props = {};
+
+	const dynamicTypeValue = "checkbox";
+	const dynamicAriaHiddenValue = "false";
+	const dynamicRole = "button";
 </script>
 
 <!-- should warn -->
 <div on:click={noop} />
 <div on:click={noop} aria-hidden="false" />
-<div on:click={noop} role={undefined} />
 
 <section on:click={noop} />
 <main on:click={noop} />
@@ -25,6 +28,7 @@
 <select on:click={noop} />
 
 <input type="button" on:click={noop} />
+<input type={dynamicTypeValue} on:click={noop} />
 
 <div on:click={noop} {...props} />
 <div on:click={noop} on:keydown={noop} />
@@ -40,6 +44,8 @@
 <div on:click={noop} aria-hidden />
 <div on:click={noop} aria-hidden="true" />
 <div on:click={noop} aria-hidden="false" on:keydown={noop} />
+<div on:click={noop} aria-hidden={dynamicAriaHiddenValue} />
 
 <div on:click={noop} role="presentation" />
 <div on:click={noop} role="none" />
+<div on:click={noop} role={dynamicRole} />

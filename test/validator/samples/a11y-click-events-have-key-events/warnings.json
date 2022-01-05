@@ -2,136 +2,121 @@
 	{
 		"code": "a11y-click-events-have-key-events",
 		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 12,
+			"column": 0,
+			"character": 190
+		},
 		"end": {
-			"character": 102,
+			"line": 12,
 			"column": 23,
-			"line": 8
+			"character": 213
 		},
-		"start": {
-			"character": 79,
-			"column": 0,
-			"line": 8
-		},
-		"pos": 79
+		"pos": 190
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 13,
+			"column": 0,
+			"character": 214
+		},
 		"end": {
-			"character": 146,
+			"line": 13,
 			"column": 43,
-			"line": 9
+			"character": 257
 		},
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
-		"pos": 103,
-		"start": {
-			"character": 103,
-			"column": 0,
-			"line": 9
-		}
+		"pos": 214
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
-		"end": {
-			"character": 187,
-			"column": 40,
-			"line": 10
-		},
 		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
-		"pos": 147,
 		"start": {
-			"character": 147,
+			"line": 15,
 			"column": 0,
-			"line": 10
-		}
-	},
-	{
-		"code": "a11y-click-events-have-key-events",
+			"character": 259
+		},
 		"end": {
-			"character": 216,
+			"line": 15,
 			"column": 27,
-			"line": 12
+			"character": 286
 		},
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
-		"pos": 189,
-		"start": {
-			"character": 189,
-			"column": 0,
-			"line": 12
-		}
+		"pos": 259
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 16,
+			"column": 0,
+			"character": 287
+		},
 		"end": {
-			"character": 241,
+			"line": 16,
 			"column": 24,
-			"line": 13
+			"character": 311
 		},
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
-		"pos": 217,
-		"start": {
-			"character": 217,
-			"column": 0,
-			"line": 13
-		}
+		"pos": 287
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 17,
+			"column": 0,
+			"character": 312
+		},
 		"end": {
-			"character": 269,
+			"line": 17,
 			"column": 27,
-			"line": 14
+			"character": 339
 		},
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
-		"pos": 242,
-		"start": {
-			"character": 242,
-			"column": 0,
-			"line": 14
-		}
+		"pos": 312
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 18,
+			"column": 0,
+			"character": 340
+		},
 		"end": {
-			"character": 296,
+			"line": 18,
 			"column": 26,
-			"line": 15
+			"character": 366
 		},
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
-		"pos": 270,
-		"start": {
-			"character": 270,
-			"column": 0,
-			"line": 15
-		}
+		"pos": 340
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 19,
+			"column": 0,
+			"character": 367
+		},
 		"end": {
-			"character": 323,
+			"line": 19,
 			"column": 26,
-			"line": 16
+			"character": 393
 		},
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
-		"pos": 297,
-		"start": {
-			"character": 297,
-			"column": 0,
-			"line": 16
-		}
+		"pos": 367
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 21,
+			"column": 0,
+			"character": 395
+		},
 		"end": {
-			"character": 362,
+			"line": 21,
 			"column": 37,
-			"line": 18
+			"character": 432
 		},
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
-		"pos": 325,
-		"start": {
-			"character": 325,
-			"column": 0,
-			"line": 18
-		}
+		"pos": 395
 	}
 ]
