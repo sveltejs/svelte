@@ -35,7 +35,7 @@ describe('runtime', () => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
 
-		require.extensions['.svelte'] = function (module, filename) {
+		require.extensions['.svelte'] = function(module, filename) {
 			const options = Object.assign({
 				filename
 			}, compileOptions);
