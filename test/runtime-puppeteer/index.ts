@@ -55,7 +55,7 @@ async function launchPuppeteer() {
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('runtime (puppeteer)', function () {
+describe('runtime (puppeteer)', function() {
 	// Note: Increase the timeout in preparation for restarting Chromium due to SIGSEGV.
 	this.timeout(10000);
 	before(async () => {
