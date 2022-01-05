@@ -2,12 +2,18 @@ import { append_empty_stylesheet, get_root_for_style } from './dom';
 import { raf } from './environment';
 
 interface ExtendedDoc extends Document {
-	__svelte_stylesheet: CSSStyleSheet;
-	__svelte_rules: Record<string, true>;
+	[key: string]: any;
 }
 
 const active_docs = new Set<ExtendedDoc>();
 let active = 0;
+
+// A suitable unique ID to create separate style sheets per Svelte runtime. Fixes issue #7026.
+// It is possible a more universal / UUID may be relevant to use instead of `Date.now` in the future.
+// Define unique keys to store the style transitions so one Svelte runtime does not clobber the data of another.
+const unique_id = Date.now();
+const svelte_stylesheet = `__svelte_stylesheet_${unique_id}`;
+const svelte_rules = `__svelte_rules_${unique_id}`;
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function hash(str: string) {
@@ -31,8 +37,8 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	const name = `__svelte_${hash(rule)}_${uid}`;
 	const doc = get_root_for_style(node) as ExtendedDoc;
 	active_docs.add(doc);
-	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = append_empty_stylesheet(node).sheet as CSSStyleSheet);
-	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
+	const stylesheet = doc[svelte_stylesheet] || (doc[svelte_stylesheet] = append_empty_stylesheet(node).sheet as CSSStyleSheet);
+	const current_rules = doc[svelte_rules] || (doc[svelte_rules] = {});
 
 	if (!current_rules[name]) {
 		current_rules[name] = true;
@@ -64,10 +70,10 @@ export function clear_rules() {
 	raf(() => {
 		if (active) return;
 		active_docs.forEach(doc => {
-			const stylesheet = doc.__svelte_stylesheet;
+			const stylesheet = doc[svelte_stylesheet];
 			let i = stylesheet.cssRules.length;
 			while (i--) stylesheet.deleteRule(i);
-			doc.__svelte_rules = {};
+			doc[svelte_rules] = {};
 		});
 		active_docs.clear();
 	});
