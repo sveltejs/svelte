@@ -124,7 +124,7 @@ describe('custom-elements', function () {
 				}
 			}
 
-			// NOTE: Chromium may exit due to SIGSEGV, so retry in that case.
+			// NOTE: Chromium may exit with SIGSEGV, so retry in that case
 			let count = 0;
 			do {
 				count++;
