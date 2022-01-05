@@ -68,7 +68,7 @@ for (const key of Object.getOwnPropertyNames(global)) {
 }
 
 // implement mock scroll
-window.scrollTo = function (pageXOffset, pageYOffset) {
+window.scrollTo = function(pageXOffset, pageYOffset) {
 	window.pageXOffset = pageXOffset;
 	window.pageYOffset = pageYOffset;
 };
