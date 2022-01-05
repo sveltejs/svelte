@@ -227,7 +227,7 @@ describe('runtime (puppeteer)', function() {
 					throw new Error('Received unexpected warnings');
 				}
 			}
-			// NOTE: Chromium may exit due to SIGSEGV, so retry in that case.
+			// NOTE: Chromium may exit with SIGSEGV, so retry in that case
 			let count = 0;
 			do {
 				count++;
