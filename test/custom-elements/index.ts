@@ -16,7 +16,7 @@ const page = `
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('custom-elements', function () {
+describe('custom-elements', function() {
 	// Note: Increase the timeout in preparation for restarting Chromium due to SIGSEGV.
 	this.timeout(10000);
 	let svelte;
