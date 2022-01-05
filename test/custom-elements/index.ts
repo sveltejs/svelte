@@ -4,7 +4,7 @@ import * as http from 'http';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import puppeteer from 'puppeteer';
-import { addLineNumbers, loadConfig, loadSvelte, retryAsync } from '../helpers';
+import { addLineNumbers, loadConfig, loadSvelte, retryAsync, executeBrowserTest } from '../helpers';
 import { deepEqual } from 'assert';
 
 const page = `
@@ -124,39 +124,14 @@ describe('custom-elements', function() {
 				}
 			}
 
-			// NOTE: Chromium may exit with SIGSEGV, so retry in that case
-			let count = 0;
-			do {
-				count++;
-				try {
-					const page = await browser.newPage();
-
-					page.on('console', (type) => {
-						console[type._type](type._text);
-					});
-
-					page.on('error', error => {
-						console.log('>>> an error happened');
-						console.error(error);
-					});
-
-					await page.goto('http://localhost:6789');
-					const result = await page.evaluate(() => test(document.querySelector('main')));
-					if (result) console.log(result);
+			browser = await executeBrowserTest(
+				browser,
+				launchPuppeteer,
+				assertWarnings,
+				() => {
+					console.log(addLineNumbers(code));
 					assertWarnings();
-					await page.close();
-					break;
-				} catch (err) {
-					if (count === 5 || browser.isConnected()) {
-						console.log(addLineNumbers(code));
-						assertWarnings();
-						throw err;
-					}
-					console.debug(err.stack || err);
-					console.log('RESTARTING Chromium...');
-					browser = await launchPuppeteer();
-				}
-			} while (count <= 5);
+				});
 		});
 	});
 });

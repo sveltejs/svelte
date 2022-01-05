@@ -291,3 +291,38 @@ export async function retryAsync<T>(fn: () => Promise<T>, maxAttempts: number = 
 		}
 	}
 }
+
+// NOTE: Chromium may exit with SIGSEGV, so retry in that case
+export async function executeBrowserTest<T>(browser, launchPuppeteer: () => Promise<T>, additionalAssertion: () => void, onError: (err: Error) => void) {
+	let count = 0;
+	do {
+		count++;
+		try {
+			const page = await browser.newPage();
+
+			page.on('console', (type) => {
+				console[type._type](type._text);
+			});
+
+			page.on('error', error => {
+				console.log('>>> an error happened');
+				console.error(error);
+			});
+			await page.goto('http://localhost:6789');
+			const result = await page.evaluate(() => test(document.querySelector('main')));
+			if (result) console.log(result);
+			additionalAssertion();
+			await page.close();
+			break;
+		} catch (err) {
+			if (count === 5 || browser.isConnected()) {
+				onError(err);
+				throw err;
+			}
+			console.debug(err.stack || err);
+			console.log('RESTARTING Chromium...');
+			browser = await launchPuppeteer();
+		}
+	} while (count <= 5);
+	return browser;
+}

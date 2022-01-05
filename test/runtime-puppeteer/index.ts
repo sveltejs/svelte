@@ -10,7 +10,8 @@ import {
 	loadSvelte,
 	mkdirp,
 	prettyPrintPuppeteerAssertionError,
-	retryAsync
+	retryAsync,
+	executeBrowserTest
 } from '../helpers';
 import { deepEqual } from 'assert';
 
@@ -227,40 +228,16 @@ describe('runtime (puppeteer)', function() {
 					throw new Error('Received unexpected warnings');
 				}
 			}
-			// NOTE: Chromium may exit with SIGSEGV, so retry in that case
-			let count = 0;
-			do {
-				count++;
-				try {
-					const page = await browser.newPage();
 
-					page.on('console', (type) => {
-						console[type._type](type._text);
-					});
-
-					page.on('error', error => {
-						console.log('>>> an error happened');
-						console.error(error);
-					});
-
-					await page.goto('http://localhost:6789');
-					const result = await page.evaluate(() => test(document.querySelector('main')));
-					if (result) console.log(result);
+			browser = await executeBrowserTest(
+				browser,
+				launchPuppeteer,
+				assertWarnings,
+				(err) => {
+					failed.add(dir);
+					prettyPrintPuppeteerAssertionError(err.message);
 					assertWarnings();
-					await page.close();
-					break;
-				} catch (err) {
-					if (count === 5 || browser.isConnected()) {
-						failed.add(dir);
-						prettyPrintPuppeteerAssertionError(err.message);
-						assertWarnings();
-						throw err;
-					}
-					console.debug(err.stack || err);
-					console.log('RESTARTING Chromium...');
-					browser = await launchPuppeteer();
-				}
-			} while (count <= 5);
+				});
 		});
 	}
 
