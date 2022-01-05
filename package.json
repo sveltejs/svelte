@@ -83,8 +83,8 @@
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
-    "test": "mocha",
-    "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts",
+    "test": "mocha --exit",
+    "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts --exit",
     "quicktest": "mocha",
     "precoverage": "c8 mocha",
     "coverage": "c8 report --reporter=text-lcov > coverage.lcov && c8 report --reporter=html",
