@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.45.0
 
 * Fix non-boolean attribute rendering in SSR to render truthy values as-is ([#6121](https://github.com/sveltejs/svelte/issues/6121))
 * Fix binding to a member expression also invalidating the member property ([#6921](https://github.com/sveltejs/svelte/issues/6921))
