@@ -2,30 +2,30 @@
 	{
 		"code": "unused-export-let",
 		"message": "Component_1 has unused export property 'default_value_5'. If it is for external reference only, please consider using `export const default_value_5`",
-		"pos": 179,
+		"pos": 172,
 		"start": {
-			"character": 179,
-			"column": 13,
+			"character": 172,
+			"column": 12,
 			"line": 8
 		},
 		"end": {
-			"character": 194,
-			"column": 28,
+			"character": 187,
+			"column": 27,
 			"line": 8
 		}
 	},
 	{
 		"code": "unused-export-let",
 		"message": "Component_1 has unused export property 'default_value_6'. If it is for external reference only, please consider using `export const default_value_6`",
-		"pos": 209,
+		"pos": 201,
 		"start": {
-			"character": 209,
-			"column": 13,
+			"character": 201,
+			"column": 12,
 			"line": 9
 		},
 		"end": {
-			"character": 224,
-			"column": 28,
+			"character": 216,
+			"column": 27,
 			"line": 9
 		}
 	}
