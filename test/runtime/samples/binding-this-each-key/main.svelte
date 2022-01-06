@@ -3,6 +3,8 @@
 
 	export let refs = [];
 
+	// note that this is NOT data.slice().reverse()
+	// as that wouldn't have triggered an infinite loop
 	$: list = data.reverse();
 </script>
 
