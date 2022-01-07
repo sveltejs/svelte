@@ -9,9 +9,9 @@ const active_docs = new Set<ExtendedDoc>();
 let active = 0;
 
 // A suitable unique ID to create separate style sheets per Svelte runtime. Fixes issue #7026.
-// It is possible a more universal / UUID may be relevant to use instead of `Date.now` in the future.
+// It is possible a more universal / UUID may be relevant to use instead of `Math.random` in the future.
 // Define unique keys to store the style transitions so one Svelte runtime does not clobber the data of another.
-const unique_id = Date.now();
+const unique_id = Math.random();
 const svelte_stylesheet = `__svelte_stylesheet_${unique_id}`;
 const svelte_rules = `__svelte_rules_${unique_id}`;
 
@@ -37,8 +37,8 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	const name = `__svelte_${hash(rule)}_${uid}`;
 	const doc = get_root_for_style(node) as ExtendedDoc;
 	active_docs.add(doc);
-	const stylesheet = doc[svelte_stylesheet] || (doc[svelte_stylesheet] = append_empty_stylesheet(node).sheet as CSSStyleSheet);
-	const current_rules = doc[svelte_rules] || (doc[svelte_rules] = {});
+	const stylesheet: CSSStyleSheet = doc[svelte_stylesheet] || (doc[svelte_stylesheet] = append_empty_stylesheet(node).sheet as CSSStyleSheet);
+	const current_rules: Record<string, true> = doc[svelte_rules] || (doc[svelte_rules] = {});
 
 	if (!current_rules[name]) {
 		current_rules[name] = true;
@@ -70,7 +70,7 @@ export function clear_rules() {
 	raf(() => {
 		if (active) return;
 		active_docs.forEach(doc => {
-			const stylesheet = doc[svelte_stylesheet];
+			const stylesheet: CSSStyleSheet = doc[svelte_stylesheet];
 			let i = stylesheet.cssRules.length;
 			while (i--) stylesheet.deleteRule(i);
 			doc[svelte_rules] = {};
