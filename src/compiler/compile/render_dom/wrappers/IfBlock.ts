@@ -266,15 +266,15 @@ export default class IfBlockWrapper extends Wrapper {
 		if (this.needs_update) {
 			block.chunks.init.push(b`
 				function ${select_block_type}(#ctx, #dirty) {
-					${this.branches.map(({ dependencies, condition, snippet, block }) => condition
+					${this.branches.map(({ dependencies, condition, snippet }) => {
+						return b`${snippet && dependencies.length > 0 ? b`if (${block.renderer.dirty(dependencies)}) ${condition} = null;` : null}`;
+					})}
+					${this.branches.map(({ condition, snippet, block }) => condition
 					? b`
-					${snippet && (
-						dependencies.length > 0
-							? b`if (${condition} == null || ${block.renderer.dirty(dependencies)}) ${condition} = !!${snippet}`
-							: b`if (${condition} == null) ${condition} = !!${snippet}`
+						${snippet && b`if (${condition} == null) ${condition} = !!${snippet}`}
+						if (${condition}) return ${block.name};`
+					: b`return ${block.name};`
 					)}
-					if (${condition}) return ${block.name};`
-					: b`return ${block.name};`)}
 				}
 			`);
 		} else {
@@ -387,13 +387,12 @@ export default class IfBlockWrapper extends Wrapper {
 			${this.needs_update
 				? b`
 					function ${select_block_type}(#ctx, #dirty) {
-						${this.branches.map(({ dependencies, condition, snippet }, i) => condition
+						${this.branches.map(({ dependencies, condition, snippet }) => {
+							return b`${snippet && dependencies.length > 0 ? b`if (${block.renderer.dirty(dependencies)}) ${condition} = null;` : null}`;
+						})}
+						${this.branches.map(({ condition, snippet }, i) => condition
 						? b`
-						${snippet && (
-							dependencies.length > 0
-								? b`if (${condition} == null || ${block.renderer.dirty(dependencies)}) ${condition} = !!${snippet}`
-								: b`if (${condition} == null) ${condition} = !!${snippet}`
-						)}
+						${snippet && b`if (${condition} == null) ${condition} = !!${snippet}`}
 						if (${condition}) return ${i};`
 						: b`return ${i};`)}
 						${!has_else && b`return -1;`}
