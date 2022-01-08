@@ -160,23 +160,21 @@ export default class ElementWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		if (node.is_dynamic_element) {
-			if (block.type !== 'child_dynamic_element') {
-				this.child_dynamic_element_block = block.child({
-					comment: create_debugging_comment(node, renderer.component),
-					name: renderer.component.get_unique_name('create_dynamic_element'),
-					type: 'child_dynamic_element'
-				});
-				renderer.blocks.push(this.child_dynamic_element_block);
-				this.child_dynamic_element = new ElementWrapper(
-					renderer,
-					this.child_dynamic_element_block,
-					parent,
-					node,
-					strip_whitespace,
-					next_sibling
-				);
-			}
+		if (node.is_dynamic_element && block.type !== 'child_dynamic_element') {
+			this.child_dynamic_element_block = block.child({
+				comment: create_debugging_comment(node, renderer.component),
+				name: renderer.component.get_unique_name('create_dynamic_element'),
+				type: 'child_dynamic_element'
+			});
+			renderer.blocks.push(this.child_dynamic_element_block);
+			this.child_dynamic_element = new ElementWrapper(
+				renderer,
+				this.child_dynamic_element_block,
+				parent,
+				node,
+				strip_whitespace,
+				next_sibling
+			);
 		}
 
 		this.var = {
@@ -1046,7 +1044,7 @@ export default class ElementWrapper extends Wrapper {
 				if (should_cache) {
 					block.chunks.update.push(b`
 							if (${block.renderer.dirty(dependencies)} && (${cached_snippet} !== (${cached_snippet} = ${snippet}))) {
-								${updater}	
+								${updater}
 							}
 					`);
 				} else {
