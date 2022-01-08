@@ -3,7 +3,7 @@ import get_object from '../utils/get_object';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
-import {dimensions, sizing} from '../../utils/patterns';
+import { dimensions, sizing } from '../../utils/patterns';
 import { Node as ESTreeNode } from 'estree';
 import { TemplateNode } from '../../interfaces';
 import Element from './Element';
