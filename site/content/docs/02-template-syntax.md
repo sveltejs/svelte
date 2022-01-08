@@ -821,6 +821,46 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 <div class:active class:inactive={!active} class:isAdmin>...</div>
 ```
 
+#### style:*property*
+
+```sv
+style:property={value}
+```
+```sv
+style:property="value"
+```
+```sv
+style:property
+```
+
+---
+
+The `style:` directive provides a shorthand for setting multiple styles on an element.
+
+```sv
+<!-- These are equivalent -->
+<div style:color="red">...</div>
+<div style="color: red;">...</div>
+
+<!-- Variables can be used -->
+<div style:color={myColor}>...</div>
+
+<!-- Shorthand, for when property and variable name match -->
+<div style:color>...</div>
+
+<!-- Multiple styles can be included -->
+<div style:color style:width="12rem" style:background-color={darkMode ? "black" : "white"}>...</div>
+```
+
+---
+
+When `style:` directives are combined with `style` attributes, the directives will take precedence:
+
+```sv
+<div style="color: blue;" style:color="red">This will be red</div>
+```
+
+
 
 #### use:*action*
 
