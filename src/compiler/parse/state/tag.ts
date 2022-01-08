@@ -1,10 +1,11 @@
+import { TemplateLiteral, TemplateElement, Expression } from 'estree';
 import read_expression from '../read/expression';
 import read_script from '../read/script';
 import read_style from '../read/style';
 import { decode_character_references, closing_tag_omitted } from '../utils/html';
 import { is_void } from '../../utils/names';
 import { Parser } from '../index';
-import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
+import { Directive, DirectiveType, TemplateNode, Text, MustacheTag } from '../../interfaces';
 import fuzzymatch from '../../utils/fuzzymatch';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore';
 import parser_errors from '../errors';
@@ -270,6 +271,36 @@ function read_tag_name(parser: Parser) {
 	return name;
 }
 
+function node_to_template_literal(value: Array<Text | MustacheTag>): TemplateLiteral {
+	let quasi: TemplateElement = {
+		type: 'TemplateElement',
+		value: { raw: '', cooked: null },
+		tail: false
+	};
+	const literal: TemplateLiteral = {
+		type: 'TemplateLiteral',
+		expressions: [],
+		quasis: []
+	};
+
+	value.forEach((node) => {
+		if (node.type === 'Text') {
+			quasi.value.raw += node.raw;
+		} else if (node.type === 'MustacheTag') {
+			literal.quasis.push(quasi);
+			literal.expressions.push(node.expression as Expression);
+			quasi = {
+				type: 'TemplateElement',
+				value: { raw: '', cooked: null },
+				tail: false
+			};
+		}
+	});
+	quasi.tail = true;
+	literal.quasis.push(quasi);
+	return literal;
+}
+
 function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const start = parser.index;
 
@@ -365,9 +396,17 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			parser.error(parser_errors.invalid_ref_directive(directive_name), start);
 		}
 
-		if (value[0]) {
-			if ((value as any[]).length > 1 || value[0].type === 'Text') {
-				parser.error(parser_errors.invalid_directive_value, value[0].start);
+		const first_value = value[0];
+		let expression = null;
+
+		if (first_value) {
+			const attribute_contains_text = (value as any[]).length > 1 || first_value.type === 'Text';
+			if (type === 'Style') {
+				expression = attribute_contains_text ? node_to_template_literal(value as Array<Text | MustacheTag>) : first_value.expression;
+			} else if (attribute_contains_text) {
+				parser.error(parser_errors.invalid_directive_value, first_value.start);
+			} else {
+				expression = first_value.expression;
 			}
 		}
 
@@ -377,7 +416,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			type,
 			name: directive_name,
 			modifiers,
-			expression: (value[0] && value[0].expression) || null
+			expression
 		};
 
 		if (type === 'Transition') {
@@ -386,7 +425,8 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			directive.outro = direction === 'out' || direction === 'transition';
 		}
 
-		if (!directive.expression && (type === 'Binding' || type === 'Class')) {
+		// Directive name is expression, e.g. <p class:isRed />
+		if (!directive.expression && (type === 'Binding' || type === 'Class' || type === 'Style')) {
 			directive.expression = {
 				start: directive.start + colon_index + 1,
 				end: directive.end,
@@ -414,6 +454,7 @@ function get_directive_type(name: string): DirectiveType {
 	if (name === 'animate') return 'Animation';
 	if (name === 'bind') return 'Binding';
 	if (name === 'class') return 'Class';
+	if (name === 'style') return 'Style';
 	if (name === 'on') return 'EventHandler';
 	if (name === 'let') return 'Let';
 	if (name === 'ref') return 'Ref';
@@ -471,6 +512,8 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 		data: null
 	};
 
+	const chunks: TemplateNode[] = [];
+
 	function flush(end: number) {
 		if (current_chunk.raw) {
 			current_chunk.data = decode_character_references(current_chunk.raw);
@@ -478,8 +521,6 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 			chunks.push(current_chunk);
 		}
 	}
-
-	const chunks: TemplateNode[] = [];
 
 	while (parser.index < parser.template.length) {
 		const index = parser.index;
