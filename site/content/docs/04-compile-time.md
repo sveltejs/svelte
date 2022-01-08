@@ -6,7 +6,7 @@ Typically, you won't interact with the Svelte compiler directly, but will instea
 
 * [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) for users of [Rollup](https://rollupjs.org)
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) for users of [webpack](https://webpack.js.org)
-* or one of the [community-maintained plugins](https://sveltesociety.dev/tooling)
+* or one of the [community-maintained plugins](https://sveltesociety.dev/tools)
 
 Nonetheless, it's useful to understand how to use the compiler, since bundler plugins generally expose compiler options to you.
 
@@ -190,7 +190,7 @@ const ast = svelte.parse(source, { filename: 'App.svelte' });
 
 ### `svelte.preprocess`
 
-A number of [community-maintained preprocessing plugins](https://github.com/sveltejs/integrations#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
+A number of [community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
 
 You can write your own preprocessor using the `svelte.preprocess` API.
 

@@ -10,13 +10,13 @@ Lots to cover this month with releases from across the Svelte ecosystem. Most im
 Let's dive into the news 🐬
 
 ## What's new in `sveltejs/svelte`
-* SSR store handling has been reworked to subscribe and unsubscribe as in DOM mode. SSR stores should work much more consistently now (**3.31.2**, see [custom stores](https://svelte.dev/examples#custom-stores) and [Server-side component API ](https://svelte.dev/docs#Server-side_component_API))
+* SSR store handling has been reworked to subscribe and unsubscribe as in DOM mode. SSR stores should work much more consistently now (**3.31.2**, see [custom stores](https://svelte.dev/examples/custom-stores) and [Server-side component API ](https://svelte.dev/docs#run-time-server-side-component-api))
 * Multiple instances of the same action are now allowed on an element (**3.32.0**, [example](https://svelte.dev/repl/01a14375951749dab9579cb6860eccde?version=3.32.0))
 * The new `foreign` namespace should make it easier for alternative compile targets (like Svelte Native and SvelteGUI) by disabling certain HTML5-specific behaviour and checks (**3.32.0**, [more info](https://github.com/sveltejs/svelte/pull/5652))
 * Support for inline comment sourcemaps in code from preprocessors (**3.32.0**)
 * Destructured defaults are now allowed to refer to other variables (**3.33.0**, [example](https://svelte.dev/repl/0ee7227e1b45465b9b47d7a5ae2d1252?version=3.33.0))
 * Custom elements will now call `onMount` functions when connecting and clean up when disconnecting (**3.33.0**, checkout [this PR](https://github.com/sveltejs/svelte/pull/4522) for an interesting conversation on how folks are using Svelte with Web Components)
-* A `cssHash` option has been added to the compiler options to control the classname used for CSS scoping (**3.34.0**, [docs](https://svelte.dev/docs#svelte_compile))
+* A `cssHash` option has been added to the compiler options to control the classname used for CSS scoping (**3.34.0**, [docs](https://svelte.dev/docs#compile-time-svelte-compile))
 * Continued improvement to Typescript definitions
 
 For a complete list of changes, including bug fixes and links to PRs, check out [the CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md)

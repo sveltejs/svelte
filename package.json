@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.44.0",
+  "version": "3.45.0",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -22,6 +22,11 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
+      "types": "./types/runtime/index.d.ts",
+      "browser": {
+        "import": "./index.mjs",
+        "require": "./index.js"
+      },
       "node": {
         "import": "./ssr.mjs",
         "require": "./ssr.js"
@@ -30,22 +35,27 @@
       "require": "./index.js"
     },
     "./compiler": {
+      "types": "./types/compiler/index.d.ts",
       "import": "./compiler.mjs",
       "require": "./compiler.js"
     },
     "./animate": {
+      "types": "./types/runtime/animate/index.d.ts",
       "import": "./animate/index.mjs",
       "require": "./animate/index.js"
     },
     "./easing": {
+      "types": "./types/runtime/easing/index.d.ts",
       "import": "./easing/index.mjs",
       "require": "./easing/index.js"
     },
     "./internal": {
+      "types": "./types/runtime/internal/index.d.ts",
       "import": "./internal/index.mjs",
       "require": "./internal/index.js"
     },
     "./motion": {
+      "types": "./types/runtime/motion/index.d.ts",
       "import": "./motion/index.mjs",
       "require": "./motion/index.js"
     },
@@ -53,14 +63,17 @@
       "require": "./register.js"
     },
     "./store": {
+      "types": "./types/runtime/store/index.d.ts",
       "import": "./store/index.mjs",
       "require": "./store/index.js"
     },
     "./transition": {
+      "types": "./types/runtime/transition/index.d.ts",
       "import": "./transition/index.mjs",
       "require": "./transition/index.js"
     },
     "./ssr": {
+      "types": "./types/runtime/index.d.ts",
       "import": "./ssr.mjs",
       "require": "./ssr.js"
     }
@@ -70,8 +83,8 @@
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
-    "test": "mocha",
-    "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts",
+    "test": "mocha --exit",
+    "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts --exit",
     "quicktest": "mocha",
     "precoverage": "c8 mocha",
     "coverage": "c8 report --reporter=text-lcov > coverage.lcov && c8 report --reporter=html",
@@ -119,7 +132,7 @@
     "acorn": "^8.4.1",
     "agadoo": "^1.1.0",
     "c8": "^5.0.1",
-    "code-red": "^0.2.2",
+    "code-red": "^0.2.4",
     "codecov": "^3.5.0",
     "css-tree": "^1.1.2",
     "eslint": "^7.32.0",

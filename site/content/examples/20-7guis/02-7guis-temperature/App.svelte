@@ -14,8 +14,8 @@
 </script>
 
 <!-- https://eugenkiss.github.io/7guis/tasks/#temp -->
-<input value={c} on:input="{e => setBothFromC(e.target.value)}" type=number> °c =
-<input value={f} on:input="{e => setBothFromF(e.target.value)}" type=number> °f
+<input value={c} on:input="{e => setBothFromC(e.target.value)}" type=number> °C =
+<input value={f} on:input="{e => setBothFromF(e.target.value)}" type=number> °F
 
 <style>
 	input {

@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: June 2021
+title: "What's new in Svelte: June 2021"
 description: Progress towards SvelteKit 1.0 and tighter TypeScript/Svelte integrations in language tools
 author: Daniel Sandoval
 authorURL: https://desandoval.net

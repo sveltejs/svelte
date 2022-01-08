@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: October 2021
+title: "What's new in Svelte: October 2021"
 description: A whole year of "What's new in Svelte"
 author: Daniel Sandoval
 authorURL: https://desandoval.net

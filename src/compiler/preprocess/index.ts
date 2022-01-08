@@ -30,7 +30,7 @@ class PreprocessResult implements Source {
 
 	get_location: ReturnType<typeof getLocator>;
 
-	constructor(public source: string, public filename: string) {
+	constructor(public source: string, public filename?: string) {
 		this.update_source({ string: source });
 
 		// preprocess source must be relative to itself or equal null
@@ -179,10 +179,10 @@ async function process_tag(
 	return { string, map, dependencies };
 }
 
-async function process_markup(filename: string, process: MarkupPreprocessor, source: Source) {
+async function process_markup(process: MarkupPreprocessor, source: Source) {
 	const processed = await process({
 		content: source.source,
-		filename
+		filename: source.filename
 	});
 
 	if (processed) {
@@ -206,8 +206,7 @@ export default async function preprocess(
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
 	options?: { filename?: string }
 ): Promise<Processed> {
-	// @ts-ignore todo: doublecheck
-	const filename = (options && options.filename) || preprocessor.filename; // legacy
+	const filename: string | undefined = (options && options.filename) || (preprocessor as any).filename; // legacy
 
 	const preprocessors = preprocessor ? (Array.isArray(preprocessor) ? preprocessor : [preprocessor]) : [];
 
@@ -221,7 +220,7 @@ export default async function preprocess(
 	// to make debugging easier = detect low-resolution sourcemaps in fn combine_mappings
 
 	for (const process of markup) {
-		result.update_source(await process_markup(filename, process, result));
+		result.update_source(await process_markup(process, result));
 	}
 
 	for (const process of script) {

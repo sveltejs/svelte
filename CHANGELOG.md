@@ -1,5 +1,32 @@
 # Svelte changelog
 
+## 3.45.0
+
+* Fix non-boolean attribute rendering in SSR to render truthy values as-is ([#6121](https://github.com/sveltejs/svelte/issues/6121))
+* Fix binding to a member expression also invalidating the member property ([#6921](https://github.com/sveltejs/svelte/issues/6921))
+* Fix default values in `{#each}`/etc. destructurings not being considered references for the purposes of compiler warnings ([#6964](https://github.com/sveltejs/svelte/issues/6964))
+* Fix `{:else if}` value incorrectly being cached ([#7043](https://github.com/sveltejs/svelte/pull/7043))
+* Add `a11y-no-redundant-roles` warning ([#7067](https://github.com/sveltejs/svelte/pull/7067))
+* Fix code generation error with arrow functions whose bodies are object destructuring assignments ([#7087](https://github.com/sveltejs/svelte/issues/7087))
+
+## 3.44.3
+
+* Fix `bind:this` binding inside `onMount` for manually instantiated component ([#6760](https://github.com/sveltejs/svelte/issues/6760))
+* Prevent cursor jumps with one-way binding for other `type="text"`-like `<input>`s ([#6941](https://github.com/sveltejs/svelte/pull/6941))
+* Exclude `async` loops from `loopGuardTimeout` ([#6945](https://github.com/sveltejs/svelte/issues/6945))
+
+## 3.44.2
+
+* Fix overly restrictive preprocessor types ([#6904](https://github.com/sveltejs/svelte/pull/6904))
+* More specific typing for crossfade function - returns a tuple, not an array ([#6926](https://github.com/sveltejs/svelte/issues/6926))
+* Add `URLSearchParams` as a known global ([#6938](https://github.com/sveltejs/svelte/pull/6938))
+* Add `types` field to `exports` map ([#6939](https://github.com/sveltejs/svelte/issues/6939))
+
+## 3.44.1
+
+* Fix code generation when a multi-line `return` statement contains comments ([code-red#36](https://github.com/Rich-Harris/code-red/issues/36))
+* Fix code generation when `for`/`if`/`while` statements have empty bodies ([#6884](https://github.com/sveltejs/svelte/issues/6884))
+
 ## 3.44.0
 
 * Add `enableSourcemap` compiler option ([#6835](https://github.com/sveltejs/svelte/pull/6835))

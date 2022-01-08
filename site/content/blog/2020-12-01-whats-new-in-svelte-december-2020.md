@@ -10,7 +10,7 @@ It's the last "What's new in Svelte" of the year and there's lots to celebrate! 
 ## New features & impactful bug fixes
 
 1. `$$props`, `$$restProps`, and `$$slots` are all now supported in custom web components (**3.29.5**, [Example](https://svelte.dev/repl/ad8e6f39cd20403dacd1be84d71e498d?version=3.29.5)) and  `slot` components now support spread props: `<slot {...foo} />` (**3.30.0**)
-2. A new `hasContext` lifecycle function makes it easy to check whether a `key` has been set in the context of a parent component (**3.30.0** & **3.30.1**, [Docs](https://svelte.dev/docs#hasContext))
+2. A new `hasContext` lifecycle function makes it easy to check whether a `key` has been set in the context of a parent component (**3.30.0** & **3.30.1**, [Docs](https://svelte.dev/docs#run-time-svelte-hascontext))
 3. There is now a new `SvelteComponentTyped` class which makes it easier to add strongly typed components that extend base Svelte components. Component library and framework authors rejoice! An example: `export class YourComponent extends SvelteComponentTyped<{aProp: boolean}, {click: MouseEvent}, {default: {aSlot: string}}> {}` (**3.31.0**, [RFC](https://github.com/sveltejs/rfcs/pull/37))
 4. Transitions within `{:else}` blocks should now complete successfully (**3.29.5**, [Example](https://svelte.dev/repl/49cef205e5da459594ef2eafcbd41593?version=3.29.5))
 5. Svelte now includes an export map, which explicitly states which files can be imported from its npm package (**3.29.5** with some fixes in **3.29.6**, **3.29.7** and **3.30.0**)

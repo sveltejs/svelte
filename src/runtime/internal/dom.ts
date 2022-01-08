@@ -530,7 +530,11 @@ export function set_input_type(input, type) {
 }
 
 export function set_style(node, key, value, important) {
-	node.style.setProperty(key, value, important ? 'important' : '');
+	if (value === null) {
+		node.style.removeProperty(key);
+	} else {
+		node.style.setProperty(key, value, important ? 'important' : '');
+	}
 }
 
 export function select_option(select, value) {
