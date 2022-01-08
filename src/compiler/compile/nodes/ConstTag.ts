@@ -54,7 +54,12 @@ export default class ConstTag extends Node {
 	}
 
 	parse_expression() {
-		unpack_destructuring(this.contexts, this.node.expression.left);
+		unpack_destructuring({
+			contexts: this.contexts,
+			node: this.node.expression.left,
+			scope: this.scope,
+			component: this.component,
+		});
 		this.expression = new Expression(this.component, this, this.scope, this.node.expression.right);
 		this.contexts.forEach(context => {
 			const owner = this.scope.get_owner(context.key.name);
