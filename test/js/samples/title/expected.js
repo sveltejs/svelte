@@ -23,7 +23,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { custom } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("custom" in $$props) $$invalidate(0, custom = $$props.custom);
+		if ('custom' in $$props) $$invalidate(0, custom = $$props.custom);
 	};
 
 	return [custom];

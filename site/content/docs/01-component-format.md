@@ -13,22 +13,22 @@ All three sections — script, styles and markup — are optional.
 	// logic goes here
 </script>
 
+<!-- markup (zero or more items) goes here -->
+
 <style>
 	/* styles go here */
 </style>
-
-<!-- markup (zero or more items) goes here -->
 ```
 
 ### &lt;script&gt;
 
 A `<script>` block contains JavaScript that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup. There are four additional rules:
 
-##### 1. `export` creates a component prop
+#### 1. `export` creates a component prop
 
 ---
 
-Svelte uses the `export` keyword to mark a variable declaration as a *property* or *prop*, which means it becomes accessible to consumers of the component (see the section on [attributes and props](docs#Attributes_and_props) for more information).
+Svelte uses the `export` keyword to mark a variable declaration as a *property* or *prop*, which means it becomes accessible to consumers of the component (see the section on [attributes and props](/docs#template-syntax-attributes-and-props) for more information).
 
 ```sv
 <script>
@@ -44,7 +44,7 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 
 You can specify a default initial value for a prop. It will be used if the component's consumer doesn't specify the prop on the component (or if its initial value is `undefined`) when instantiating the component. Note that whenever a prop is removed by the consumer, its value is set to `undefined` rather than the initial value.
 
-In development mode (see the [compiler options](docs#svelte_compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
+In development mode (see the [compiler options](/docs#compile-time-svelte-compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
 
 ```sv
 <script>
@@ -56,6 +56,8 @@ In development mode (see the [compiler options](docs#svelte_compile)), a warning
 ---
 
 If you export a `const`, `class` or `function`, it is readonly from outside the component. Function *expressions* are valid props, however.
+
+Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](/docs#template-syntax-element-directives-bind-element).
 
 ```sv
 <script>
@@ -85,15 +87,13 @@ You can use reserved words as prop names.
 </script>
 ```
 
-##### 2. Assignments are 'reactive'
+#### 2. Assignments are 'reactive'
 
 ---
 
 To change component state and trigger a re-render, just assign to a locally declared variable.
 
 Update expressions (`count += 1`) and property assignments (`obj.x = y`) have the same effect.
-
-Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. Options for getting around this can be found in the [tutorial](tutorial/updating-arrays-and-objects).
 
 ```sv
 <script>
@@ -107,7 +107,25 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 </script>
 ```
 
-##### 3. `$:` marks a statement as reactive
+---
+
+Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. A subsequent assignment is required to trigger the update. This and more details can also be found in the [tutorial](/tutorial/updating-arrays-and-objects).
+
+```sv
+<script>
+	let arr = [0, 1];
+
+	function handleClick () {
+		// this method call does not trigger an update
+		arr.push(2);
+		// this assignment will trigger an update
+		// if the markup references `arr`
+		arr = arr
+	}
+</script>
+```
+
+#### 3. `$:` marks a statement as reactive
 
 ---
 
@@ -169,13 +187,13 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 </script>
 ```
 
-##### 4. Prefix stores with `$` to access their values
+#### 4. Prefix stores with `$` to access their values
 
 ---
 
-A *store* is an object that allows reactive access to a value via a simple *store contract*. The [`svelte/store` module](docs#svelte_store) contains minimal store implementations which fulfil this contract.
+A *store* is an object that allows reactive access to a value via a simple *store contract*. The [`svelte/store` module](/docs#run-time-svelte-store) contains minimal store implementations which fulfil this contract.
 
-Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, and set up a store subscription that will be unsubscribed when appropriate.
+Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, subscribe to the store at component initialization and unsubscribe when appropriate.
 
 Assignments to `$`-prefixed variables require that the variable be a writable store, and will result in a call to the store's `.set` method.
 
@@ -204,7 +222,7 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 store = { subscribe: (subscription: (value: any) => void) => (() => void), set?: (value: any) => void }
 ```
 
-You can create your own stores without relying on [`svelte/store`](docs#svelte_store), by implementing the *store contract*:
+You can create your own stores without relying on [`svelte/store`](/docs#run-time-svelte-store), by implementing the *store contract*:
 
 1. A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes.
 2. The `.subscribe` method must return an unsubscribe function. Calling an unsubscribe function must stop its subscription, and its corresponding subscription function must not be called again by the store.
@@ -223,7 +241,7 @@ You can `export` bindings from this block, and they will become exports of the c
 
 You cannot `export default`, since the default export is the component itself.
 
-> Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](docs#svelte_store).
+> Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](/docs#run-time-svelte-store).
 
 ```sv
 <script context="module">
@@ -277,6 +295,15 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 			 to this component */
 		color: goldenrod;
 	}
+
+	p:global(.red) {
+		/* this will apply to all <p> elements belonging to this 
+			 component with a class of red, even if class="red" does
+			 not initially appear in the markup, and is instead 
+			 added at runtime. This is useful when the class 
+			 of the element is dynamically applied, for instance 
+			 when updating the element's classList property directly. */
+	}
 </style>
 ```
 
@@ -290,4 +317,24 @@ The `-global-` part will be removed when compiled, and the keyframe then be refe
 <style>
 	@keyframes -global-my-animation-name {...}
 </style>
+```
+
+---
+
+There should only be 1 top-level `<style>` tag per component.
+
+However, it is possible to have `<style>` tag nested inside other elements or logic blocks.
+
+In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
+
+```html
+<div>
+	<style>
+		/* this style tag will be inserted as-is */
+		div {
+			/* this will apply to all `<div>` elements in the DOM */
+			color: red;
+		}
+	</style>
+</div>
 ```

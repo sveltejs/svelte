@@ -6,15 +6,29 @@ export const invalid_attribute_name_character = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFF
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 
-export function spread(args, classes_to_add) {
+export function spread(args, attrs_to_add) {
 	const attributes = Object.assign({}, ...args);
-	if (classes_to_add) {
-		if (attributes.class == null) {
-			attributes.class = classes_to_add;
-		} else {
-			attributes.class += ' ' + classes_to_add;
+	if (attrs_to_add) {
+		const classes_to_add = attrs_to_add.classes;
+		const styles_to_add = attrs_to_add.styles;
+
+		if (classes_to_add) {
+			if (attributes.class == null) {
+				attributes.class = classes_to_add;
+			} else {
+				attributes.class += ' ' + classes_to_add;
+			}
+		}
+		
+		if (styles_to_add) {
+			if (attributes.style == null) {
+				attributes.style = style_object_to_string(styles_to_add);
+			} else {
+				attributes.style = style_object_to_string(merge_ssr_styles(attributes.style, styles_to_add));
+			}
 		}
 	}
+
 	let str = '';
 
 	Object.keys(attributes).forEach(name => {
@@ -25,11 +39,33 @@ export function spread(args, classes_to_add) {
 		else if (boolean_attributes.has(name.toLowerCase())) {
 			if (value) str += ' ' + name;
 		} else if (value != null) {
-			str += ` ${name}="${String(value).replace(/"/g, '&#34;').replace(/'/g, '&#39;')}"`;
+			str += ` ${name}="${value}"`;
 		}
 	});
 
 	return str;
+}
+
+export function merge_ssr_styles(style_attribute, style_directive) {
+	const style_object = {};
+	for (const individual_style of style_attribute.split(';')) {
+		const colon_index = individual_style.indexOf(':');
+		const name = individual_style.slice(0, colon_index).trim();
+		const value = individual_style.slice(colon_index + 1).trim();
+		if (!name) continue;
+		style_object[name] = value;
+	}
+	
+	for (const name in style_directive) {
+		const value = style_directive[name];
+		if (value) {
+			style_object[name] = value;
+		} else {
+			delete style_object[name];
+		}
+	}
+
+	return style_object;
 }
 
 export const escaped = {
@@ -42,6 +78,18 @@ export const escaped = {
 
 export function escape(html) {
 	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+}
+
+export function escape_attribute_value(value) {
+	return typeof value === 'string' ? escape(value) : value;
+}
+
+export function escape_object(obj) {
+	const result = {};
+	for (const key in obj) {
+		result[key] = escape_attribute_value(obj[key]);
+	}
+	return result;
 }
 
 export function each(items, fn) {
@@ -74,12 +122,12 @@ export function debug(file, line, column, values) {
 let on_destroy;
 
 export function create_ssr_component(fn) {
-	function $$render(result, props, bindings, slots) {
+	function $$render(result, props, bindings, slots, context) {
 		const parent_component = current_component;
 
 		const $$ = {
 			on_destroy,
-			context: new Map(parent_component ? parent_component.$$.context : []),
+			context: new Map(context || (parent_component ? parent_component.$$.context : [])),
 
 			// these will be immediately discarded
 			on_mount: [],
@@ -97,7 +145,7 @@ export function create_ssr_component(fn) {
 	}
 
 	return {
-		render: (props = {}, options = {}) => {
+		render: (props = {}, { $$slots = {}, context = new Map() } = {}) => {
 			on_destroy = [];
 
 			const result: {
@@ -109,7 +157,7 @@ export function create_ssr_component(fn) {
 				}>;
 			} = { title: '', head: '', css: new Set() };
 
-			const html = $$render(result, props, {}, options);
+			const html = $$render(result, props, {}, $$slots, context);
 
 			run_all(on_destroy);
 
@@ -129,9 +177,22 @@ export function create_ssr_component(fn) {
 
 export function add_attribute(name, value, boolean) {
 	if (value == null || (boolean && !value)) return '';
-	return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value)) : `"${value}"`}`}`;
+	return ` ${name}${value === true && boolean_attributes.has(name) ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value)) : `"${value}"`}`}`;
 }
 
 export function add_classes(classes) {
 	return classes ? ` class="${classes}"` : '';
+}
+
+function style_object_to_string(style_object) {
+	return Object.keys(style_object)
+		.filter(key => style_object[key])
+		.map(key => `${key}: ${style_object[key]};`)
+		.join(' ');
+}
+
+export function add_styles(style_object) {
+  const styles = style_object_to_string(style_object);
+
+  return styles ? ` style="${styles}"` : '';
 }

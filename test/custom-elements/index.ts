@@ -4,7 +4,7 @@ import * as http from 'http';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import puppeteer from 'puppeteer';
-import { addLineNumbers, loadConfig, loadSvelte } from '../helpers';
+import { addLineNumbers, loadConfig, loadSvelte, retryAsync, executeBrowserTest } from '../helpers';
 import { deepEqual } from 'assert';
 
 const page = `
@@ -17,8 +17,8 @@ const page = `
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
 describe('custom-elements', function() {
+	// Note: Increase the timeout in preparation for restarting Chromium due to SIGSEGV.
 	this.timeout(10000);
-
 	let svelte;
 	let server;
 	let browser;
@@ -44,12 +44,16 @@ describe('custom-elements', function() {
 		});
 	}
 
+	async function launchPuppeteer() {
+		return await retryAsync(() => puppeteer.launch());
+	}
+
 	before(async () => {
 		svelte = loadSvelte();
 		console.log('[custom-element] Loaded Svelte');
 		server = await create_server();
 		console.log('[custom-element] Started server');
-		browser = await puppeteer.launch();
+		browser = await launchPuppeteer();
 		console.log('[custom-element] Launched puppeteer browser');
 	});
 
@@ -108,26 +112,7 @@ describe('custom-elements', function() {
 			const result = await bundle.generate({ format: 'iife', name: 'test' });
 			code = result.output[0].code;
 
-			const page = await browser.newPage();
-
-			page.on('console', (type) => {
-				console[type._type](type._text);
-			});
-
-			page.on('error', error => {
-				console.log('>>> an error happened');
-				console.error(error);
-			});
-
-			try {
-				await page.goto('http://localhost:6789');
-
-				const result = await page.evaluate(() => test(document.querySelector('main')));
-				if (result) console.log(result);
-			} catch (err) {
-				console.log(addLineNumbers(code));
-				throw err;
-			} finally {
+			function assertWarnings() {
 				if (expected_warnings) {
 					deepEqual(warnings.map(w => ({
 						code: w.code,
@@ -138,6 +123,15 @@ describe('custom-elements', function() {
 					})), expected_warnings);
 				}
 			}
+
+			browser = await executeBrowserTest(
+				browser,
+				launchPuppeteer,
+				assertWarnings,
+				() => {
+					console.log(addLineNumbers(code));
+					assertWarnings();
+				});
 		});
 	});
 });

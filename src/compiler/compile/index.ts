@@ -13,7 +13,10 @@ const valid_options = [
 	'name',
 	'filename',
 	'sourcemap',
+	'enableSourcemap',
 	'generate',
+	'errorMode',
+	'varsReport',
 	'outputFilename',
 	'cssOutputFilename',
 	'sveltePath',
@@ -80,7 +83,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = Object.assign({ generate: 'dom', dev: false }, options);
+	options = Object.assign({ generate: 'dom', dev: false, enableSourcemap: true }, options);
 
 	const stats = new Stats();
 	const warnings = [];

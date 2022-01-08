@@ -13,7 +13,7 @@ import {
 	text
 } from "svelte/internal";
 
-import { writable } from "svelte/store";
+import { writable } from 'svelte/store';
 
 function create_fragment(ctx) {
 	let h1;

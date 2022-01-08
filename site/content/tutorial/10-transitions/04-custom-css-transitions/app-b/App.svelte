@@ -13,7 +13,7 @@
 				return `
 					transform: scale(${eased}) rotate(${eased * 1080}deg);
 					color: hsl(
-						${~~(t * 360)},
+						${Math.trunc(t * 360)},
 						${Math.min(100, 1000 - 1000 * t)}%,
 						${Math.min(50, 500 - 500 * t)}%
 					);`
@@ -21,6 +21,17 @@
 		};
 	}
 </script>
+
+<label>
+	<input type="checkbox" bind:checked={visible}>
+	visible
+</label>
+
+{#if visible}
+	<div class="centered" in:spin="{{duration: 8000}}" out:fade>
+		<span>transitions!</span>
+	</div>
+{/if}
 
 <style>
 	.centered {
@@ -36,14 +47,3 @@
 		font-size: 4em;
 	}
 </style>
-
-<label>
-	<input type="checkbox" bind:checked={visible}>
-	visible
-</label>
-
-{#if visible}
-	<div class="centered" in:spin="{{duration: 8000}}" out:fade>
-		<span>transitions!</span>
-	</div>
-{/if}

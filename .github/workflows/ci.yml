@@ -3,34 +3,39 @@ on: [push, pull_request]
 jobs:
   Tests:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [8, 10, 12, 14, 16]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm install
+      - run: npm test
+        env:
+          CI: true
+  Lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v2
+        with:
+          cache: npm
+      - run: 'npm i && npm run lint'
+  Unit:
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [8, 10, 12, 14]
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm install
-    - run: npm test
-      env:
-        CI: true
-  Lint:
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
-    - run: 'npm i && npm run lint'
-  Unit:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-    steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
-    - run: 'npm i && npm run test:unit'
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v2
+        with:
+          cache: npm
+      - run: 'npm i && npm run test:unit'

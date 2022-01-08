@@ -23,9 +23,9 @@ function create_fragment(ctx) {
 	let t1_value = /*b*/ ctx[1]?.optional + "";
 	let t1;
 	let t2;
-	let t3_value = /*c*/ ctx[2]["computed"] + "";
+	let t3_value = /*c*/ ctx[2]['computed'] + "";
 	let t3;
-	let t4_value = /*d*/ ctx[3]?.["computed_optional"] + "";
+	let t4_value = /*d*/ ctx[3]?.['computed_optional'] + "";
 	let t4;
 	let t5;
 	let t6_value = /*e*/ ctx[4]() + "";
@@ -48,8 +48,8 @@ function create_fragment(ctx) {
 			props: {
 				a: /*a*/ ctx[0].normal,
 				b: /*b*/ ctx[1]?.optional,
-				c: /*c*/ ctx[2]["computed"],
-				d: /*d*/ ctx[3]?.["computed_optional"],
+				c: /*c*/ ctx[2]['computed'],
+				d: /*d*/ ctx[3]?.['computed_optional'],
 				e: /*e*/ ctx[4](),
 				f: /*f*/ ctx[5]?.()
 			}
@@ -71,8 +71,8 @@ function create_fragment(ctx) {
 			create_component(component.$$.fragment);
 			attr(div, "a", div_a_value = /*a*/ ctx[0].normal);
 			attr(div, "b", div_b_value = /*b*/ ctx[1]?.optional);
-			attr(div, "c", div_c_value = /*c*/ ctx[2]["computed"]);
-			attr(div, "d", div_d_value = /*d*/ ctx[3]?.["computed_optional"]);
+			attr(div, "c", div_c_value = /*c*/ ctx[2]['computed']);
+			attr(div, "d", div_d_value = /*d*/ ctx[3]?.['computed_optional']);
 			attr(div, "e", div_e_value = /*e*/ ctx[4]());
 			attr(div, "f", div_f_value = /*f*/ ctx[5]?.());
 		},
@@ -94,8 +94,8 @@ function create_fragment(ctx) {
 		p(ctx, [dirty]) {
 			if ((!current || dirty & /*a*/ 1) && t0_value !== (t0_value = /*a*/ ctx[0].normal + "")) set_data(t0, t0_value);
 			if ((!current || dirty & /*b*/ 2) && t1_value !== (t1_value = /*b*/ ctx[1]?.optional + "")) set_data(t1, t1_value);
-			if ((!current || dirty & /*c*/ 4) && t3_value !== (t3_value = /*c*/ ctx[2]["computed"] + "")) set_data(t3, t3_value);
-			if ((!current || dirty & /*d*/ 8) && t4_value !== (t4_value = /*d*/ ctx[3]?.["computed_optional"] + "")) set_data(t4, t4_value);
+			if ((!current || dirty & /*c*/ 4) && t3_value !== (t3_value = /*c*/ ctx[2]['computed'] + "")) set_data(t3, t3_value);
+			if ((!current || dirty & /*d*/ 8) && t4_value !== (t4_value = /*d*/ ctx[3]?.['computed_optional'] + "")) set_data(t4, t4_value);
 			if ((!current || dirty & /*e*/ 16) && t6_value !== (t6_value = /*e*/ ctx[4]() + "")) set_data(t6, t6_value);
 			if ((!current || dirty & /*f*/ 32) && t7_value !== (t7_value = /*f*/ ctx[5]?.() + "")) set_data(t7, t7_value);
 
@@ -107,11 +107,11 @@ function create_fragment(ctx) {
 				attr(div, "b", div_b_value);
 			}
 
-			if (!current || dirty & /*c*/ 4 && div_c_value !== (div_c_value = /*c*/ ctx[2]["computed"])) {
+			if (!current || dirty & /*c*/ 4 && div_c_value !== (div_c_value = /*c*/ ctx[2]['computed'])) {
 				attr(div, "c", div_c_value);
 			}
 
-			if (!current || dirty & /*d*/ 8 && div_d_value !== (div_d_value = /*d*/ ctx[3]?.["computed_optional"])) {
+			if (!current || dirty & /*d*/ 8 && div_d_value !== (div_d_value = /*d*/ ctx[3]?.['computed_optional'])) {
 				attr(div, "d", div_d_value);
 			}
 
@@ -126,8 +126,8 @@ function create_fragment(ctx) {
 			const component_changes = {};
 			if (dirty & /*a*/ 1) component_changes.a = /*a*/ ctx[0].normal;
 			if (dirty & /*b*/ 2) component_changes.b = /*b*/ ctx[1]?.optional;
-			if (dirty & /*c*/ 4) component_changes.c = /*c*/ ctx[2]["computed"];
-			if (dirty & /*d*/ 8) component_changes.d = /*d*/ ctx[3]?.["computed_optional"];
+			if (dirty & /*c*/ 4) component_changes.c = /*c*/ ctx[2]['computed'];
+			if (dirty & /*d*/ 8) component_changes.d = /*d*/ ctx[3]?.['computed_optional'];
 			if (dirty & /*e*/ 16) component_changes.e = /*e*/ ctx[4]();
 			if (dirty & /*f*/ 32) component_changes.f = /*f*/ ctx[5]?.();
 			component.$set(component_changes);
@@ -168,12 +168,12 @@ function instance($$self, $$props, $$invalidate) {
 	let Component;
 
 	$$self.$$set = $$props => {
-		if ("a" in $$props) $$invalidate(0, a = $$props.a);
-		if ("b" in $$props) $$invalidate(1, b = $$props.b);
-		if ("c" in $$props) $$invalidate(2, c = $$props.c);
-		if ("d" in $$props) $$invalidate(3, d = $$props.d);
-		if ("e" in $$props) $$invalidate(4, e = $$props.e);
-		if ("f" in $$props) $$invalidate(5, f = $$props.f);
+		if ('a' in $$props) $$invalidate(0, a = $$props.a);
+		if ('b' in $$props) $$invalidate(1, b = $$props.b);
+		if ('c' in $$props) $$invalidate(2, c = $$props.c);
+		if ('d' in $$props) $$invalidate(3, d = $$props.d);
+		if ('e' in $$props) $$invalidate(4, e = $$props.e);
+		if ('f' in $$props) $$invalidate(5, f = $$props.f);
 	};
 
 	return [a, b, c, d, e, f, Component];

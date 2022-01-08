@@ -1,11 +1,14 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
-import { children, detach } from './dom';
+import { children, detach, start_hydrating, end_hydrating } from './dom';
 import { transition_in } from './transitions';
 
-interface Fragment {
-	key: string|null;
+/**
+ * INTERNAL, DO NOT USE. Code may change at any time.
+ */
+export interface Fragment {
+	key: string | null;
 	first: null;
 	/* create  */ c: () => void;
 	/* claim   */ l: (nodes: any) => void;
@@ -17,17 +20,17 @@ interface Fragment {
 	/* animate */ a: () => void;
 	/* intro   */ i: (local: any) => void;
 	/* outro   */ o: (local: any) => void;
-	/* destroy */ d: (detaching: 0|1) => void;
+	/* destroy */ d: (detaching: 0 | 1) => void;
 }
 interface T$$ {
 	dirty: number[];
-	ctx: null|any;
+	ctx: null | any;
 	bound: any;
 	update: () => void;
 	callbacks: any;
 	after_update: any[];
 	props: Record<string, 0 | string>;
-	fragment: null|false|Fragment;
+	fragment: null | false | Fragment;
 	not_equal: any;
 	before_update: any[];
 	context: Map<any, any>;
@@ -35,6 +38,7 @@ interface T$$ {
 	on_destroy: any[];
 	skip_bound: boolean;
 	on_disconnect: any[];
+	root:Element | ShadowRoot
 }
 
 export function bind(component, name, callback) {
@@ -100,7 +104,7 @@ function make_dirty(component, i) {
 	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
-export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
+export function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
 	const parent_component = current_component;
 	set_current_component(component);
 
@@ -120,13 +124,16 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		on_disconnect: [],
 		before_update: [],
 		after_update: [],
-		context: new Map(parent_component ? parent_component.$$.context : []),
+		context: new Map(options.context || (parent_component ? parent_component.$$.context : [])),
 
 		// everything else
 		callbacks: blank_object(),
 		dirty,
-		skip_bound: false
+		skip_bound: false,
+		root: options.target || parent_component.$$.root
 	};
+
+	append_styles && append_styles($$.root);
 
 	let ready = false;
 
@@ -150,6 +157,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	if (options.target) {
 		if (options.hydrate) {
+			start_hydrating();
 			const nodes = children(options.target);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			$$.fragment && $$.fragment!.l(nodes);
@@ -161,6 +169,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 		if (options.intro) transition_in(component.$$.fragment);
 		mount_component(component, options.target, options.anchor, options.customElement);
+		end_hydrating();
 		flush();
 	}
 

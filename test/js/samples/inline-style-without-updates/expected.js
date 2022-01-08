@@ -30,7 +30,7 @@ function create_fragment(ctx) {
 	};
 }
 
-let color = "red";
+let color = 'red';
 
 class Component extends SvelteComponent {
 	constructor(options) {

@@ -2,17 +2,6 @@
 	let current = 'foo';
 </script>
 
-<style>
-	button {
-		display: block;
-	}
-
-	.selected {
-		background-color: #ff3e00;
-		color: white;
-	}
-</style>
-
 <button
 	class:selected="{current === 'foo'}"
 	on:click="{() => current = 'foo'}"
@@ -27,3 +16,14 @@
 	class:selected="{current === 'baz'}"
 	on:click="{() => current = 'baz'}"
 >baz</button>
+
+<style>
+	button {
+		display: block;
+	}
+
+	.selected {
+		background-color: #ff3e00;
+		color: white;
+	}
+</style>

@@ -13,7 +13,7 @@ export default {
 			<button>Increment</button>
 		</div>
 	`,
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const [button1, button2, button3] = target.querySelectorAll('button');
 		const event = new window.MouseEvent('click');
 

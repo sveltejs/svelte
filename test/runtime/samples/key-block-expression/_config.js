@@ -1,6 +1,6 @@
 export default {
 	html: '<div>000</div>',
-	async test({ assert, component, target, window }) {
+	async test({ assert, component, target }) {
 		let div = target.querySelector('div');
 		component.value = 2;
 		assert.htmlEqual(target.innerHTML, '<div>200</div>');

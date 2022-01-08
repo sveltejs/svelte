@@ -54,6 +54,10 @@ export function getContext<T>(key): T {
 	return get_current_component().$$.context.get(key);
 }
 
+export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
+	return get_current_component().$$.context;
+}
+
 export function hasContext(key): boolean {
 	return get_current_component().$$.context.has(key);	
 }
@@ -65,6 +69,7 @@ export function bubble(component, event) {
 	const callbacks = component.$$.callbacks[event.type];
 
 	if (callbacks) {
-		callbacks.slice().forEach(fn => fn(event));
+		// @ts-ignore
+		callbacks.slice().forEach(fn => fn.call(this, event));
 	}
 }

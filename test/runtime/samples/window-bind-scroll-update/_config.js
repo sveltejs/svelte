@@ -24,7 +24,7 @@ export default {
 		clock = null;
 	},
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, component, window }) {
 		assert.equal(window.pageYOffset, 0);
 
 		// clear the previous 'scrolling' state

@@ -16,6 +16,8 @@ import { is_reserved_keyword } from '../../utils/reserved_keywords';
 import replace_object from '../../utils/replace_object';
 import is_contextual from './is_contextual';
 import EachBlock from '../EachBlock';
+import { clone } from '../../../utils/clone';
+import compiler_errors from '../../compiler_errors';
 
 type Owner = INode;
 
@@ -62,7 +64,7 @@ export default class Expression {
 		walk(info, {
 			enter(node: any, parent: any, key: string) {
 				// don't manipulate shorthand props twice
-				if (key === 'value' && parent.shorthand) return;
+				if (key === 'key' && parent.shorthand) return;
 				// don't manipulate `import.meta`, `new.target`
 				if (node.type === 'MetaProperty') return this.skip();
 
@@ -83,10 +85,7 @@ export default class Expression {
 					if (name[0] === '$') {
 						const store_name = name.slice(1);
 						if (template_scope.names.has(store_name) || scope.has(store_name)) {
-							component.error(node, {
-								code: 'contextual-store',
-								message: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
-							});
+							return component.error(node, compiler_errors.contextual_store);
 						}
 					}
 
@@ -195,7 +194,7 @@ export default class Expression {
 		const node = walk(this.node, {
 			enter(node: any, parent: any) {
 				if (node.type === 'Property' && node.shorthand) {
-					node.value = JSON.parse(JSON.stringify(node.value));
+					node.value = clone(node.value);
 					node.shorthand = false;
 				}
 
@@ -355,7 +354,7 @@ export default class Expression {
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(extract_names(assignee));
+					const names = new Set(extract_names(assignee as Node));
 
 					const traced: Set<string> = new Set();
 					names.forEach(name => {

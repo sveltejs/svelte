@@ -9,6 +9,7 @@ import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
+import compiler_errors from '../compiler_errors';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -18,6 +19,7 @@ export default class InlineComponent extends Node {
 	bindings: Binding[] = [];
 	handlers: EventHandler[] = [];
 	lets: Let[] = [];
+	css_custom_properties: Attribute[] = [];
 	children: INode[];
 	scope: TemplateScope;
 
@@ -40,12 +42,13 @@ export default class InlineComponent extends Node {
 			/* eslint-disable no-fallthrough */
 			switch (node.type) {
 				case 'Action':
-					component.error(node, {
-						code: 'invalid-action',
-						message: 'Actions can only be applied to DOM elements, not components'
-					});
+					return component.error(node, compiler_errors.invalid_action);
 
 				case 'Attribute':
+					if (node.name.startsWith('--')) {
+						this.css_custom_properties.push(new Attribute(component, this, scope, node));
+						break;
+					}
 					// fallthrough
 				case 'Spread':
 					this.attributes.push(new Attribute(component, this, scope, node));
@@ -56,10 +59,7 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Class':
-					component.error(node, {
-						code: 'invalid-class',
-						message: 'Classes can only be applied to DOM elements, not components'
-					});
+					return component.error(node, compiler_errors.invalid_class);
 
 				case 'EventHandler':
 					this.handlers.push(new EventHandler(component, this, scope, node));
@@ -70,10 +70,7 @@ export default class InlineComponent extends Node {
 					break;
 
 				case 'Transition':
-					component.error(node, {
-						code: 'invalid-transition',
-						message: 'Transitions can only be applied to DOM elements, not components'
-					});
+					return component.error(node, compiler_errors.invalid_transition);
 
 				default:
 					throw new Error(`Not implemented: ${node.type}`);
@@ -98,16 +95,13 @@ export default class InlineComponent extends Node {
 		this.handlers.forEach(handler => {
 			handler.modifiers.forEach(modifier => {
 				if (modifier !== 'once') {
-					component.error(handler, {
-						code: 'invalid-event-modifier',
-						message: "Event modifiers other than 'once' can only be used on DOM elements"
-					});
+					return component.error(handler, compiler_errors.invalid_event_modifier_component);
 				}
 			});
 		});
 
 		const children = [];
-		for (let i=info.children.length - 1; i >= 0; i--) {
+		for (let i = info.children.length - 1; i >= 0; i--) {
 			const child = info.children[i];
 			if (child.type === 'SlotTemplate') {
 				children.push(child);
@@ -123,7 +117,7 @@ export default class InlineComponent extends Node {
 				};
 
 				// transfer attributes
-				for (let i=child.attributes.length - 1; i >= 0; i--) {
+				for (let i = child.attributes.length - 1; i >= 0; i--) {
 					const attribute = child.attributes[i];
 					if (attribute.type === 'Let') {
 						slot_template.attributes.push(attribute);

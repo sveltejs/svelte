@@ -11,23 +11,11 @@ export default {
 		<p>selected: b</p>
 	`,
 
-	ssrHtml: `
-		<p>selected: b</p>
-
-		<select value=b>
-			<option value='a'>a</option>
-			<option value='b'>b</option>
-			<option value='c'>c</option>
-		</select>
-
-		<p>selected: b</p>
-	`,
-
 	props: {
 		selected: 'b'
 	},
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		const select = target.querySelector('select');
 		const options = [...target.querySelectorAll('option')];
 

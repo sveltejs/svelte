@@ -71,7 +71,7 @@ export default class Block {
 	get_unique_name: (name: string) => Identifier;
 
 	has_update_method = false;
-	autofocus: string;
+	autofocus?: { element_var: string, condition_expression?: any };
 
 	constructor(options: BlockOptions) {
 		this.parent = options.parent;
@@ -239,7 +239,11 @@ export default class Block {
 		}
 
 		if (this.autofocus) {
-			this.chunks.mount.push(b`${this.autofocus}.focus();`);
+			if (this.autofocus.condition_expression) {
+				this.chunks.mount.push(b`if (${this.autofocus.condition_expression}) ${this.autofocus.element_var}.focus();`);
+			} else {
+				this.chunks.mount.push(b`${this.autofocus.element_var}.focus();`);
+			}
 		}
 
 		this.render_listeners();
