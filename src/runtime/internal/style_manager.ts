@@ -6,7 +6,7 @@ interface StyleInformation {
 	rules: Record<string, true>;
 }
 
-const active_docs = new Map<Document | ShadowRoot, StyleInformation>();
+const managed_styles = new Map<Document | ShadowRoot, StyleInformation>();
 let active = 0;
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
@@ -20,7 +20,7 @@ function hash(str: string) {
 
 function create_style_information(doc: Document | ShadowRoot, node: Element & ElementCSSInlineStyle) {
 	const info = { stylesheet: append_empty_stylesheet(node), rules: {} };
-	active_docs.set(doc, info);
+	managed_styles.set(doc, info);
 	return info;
 }
 
@@ -37,7 +37,7 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	const name = `__svelte_${hash(rule)}_${uid}`;
 	const doc = get_root_for_style(node);
 
-	const { stylesheet, rules } = active_docs.get(doc) || create_style_information(doc, node);
+	const { stylesheet, rules } = managed_styles.get(doc) || create_style_information(doc, node);
 
 	if (!rules[name]) {
 		rules[name] = true;
@@ -68,12 +68,12 @@ export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string
 export function clear_rules() {
 	raf(() => {
 		if (active) return;
-		active_docs.forEach(doc => {
-			const { stylesheet } = doc;
+		managed_styles.forEach(info => {
+			const { stylesheet } = info;
 			let i = stylesheet.cssRules.length;
 			while (i--) stylesheet.deleteRule(i);
-			doc.rules = {};
+			info.rules = {};
 		});
-		active_docs.clear();
+		managed_styles.clear();
 	});
 }
