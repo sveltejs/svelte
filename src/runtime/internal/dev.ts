@@ -108,7 +108,7 @@ export function validate_slots(name, slot, keys) {
 }
 
 export function validate_dynamic_element(tag) {
-	if (tag == null) {
+	if (!tag) {
 		console.warn('<svelte:element> expects a non-nullish value in attribute "this"');
 	}
 }

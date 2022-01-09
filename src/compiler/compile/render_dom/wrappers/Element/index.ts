@@ -274,17 +274,17 @@ export default class ElementWrapper extends Wrapper {
 		block.add_variable(previous_tag, snippet);
 
 		block.chunks.init.push(b`
-			let ${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+			let ${this.var} = ${snippet} && ${this.child_dynamic_element_block.name}(#ctx);
 		`);
 
-		block.chunks.create.push(b`${this.var}.c();`);
+		block.chunks.create.push(b`if (${this.var}) ${this.var}.c();`);
 
 		if (this.renderer.options.hydratable) {
-			block.chunks.claim.push(b`${this.var}.l(${parent_nodes});`);
+			block.chunks.claim.push(b`if (${this.var}) ${this.var}.l(${parent_nodes});`);
 		}
 
 		block.chunks.mount.push(
-			b`${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
+			b`if (${this.var}) ${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
 		);
 
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
@@ -292,13 +292,18 @@ export default class ElementWrapper extends Wrapper {
 		const if_statement = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
 
 		block.chunks.update.unshift(b`
-			${this.var}.p(#ctx, #dirty);
-			if (${if_statement}) {
+		  if (${snippet}) {
+				if (${this.var}) ${this.var}.p(#ctx, #dirty);
+				if (${if_statement}) {
+					if (${this.var}) ${this.var}.d(1);
+					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+					${this.var}.c();
+					@transition_in(${this.var});
+					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
+				}
+			} else if (${this.var}) {
 				${this.var}.d(1);
-				${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
-				${this.var}.c();
-				@transition_in(${this.var});
-				this.m(${this.get_update_mount_node(anchor)}, ${anchor});
+				${this.var} = null;
 			}
 		`);
 
@@ -310,7 +315,15 @@ export default class ElementWrapper extends Wrapper {
 			block.chunks.outro.push(b`@transition_out(${this.var});`);
 		}
 
-		block.chunks.destroy.push(b`${this.var}.d(detaching)`);
+		block.chunks.destroy.push(b`if (${this.var}) ${this.var}.d(detaching)`);
+
+		if (this.renderer.options.dev) {
+			block.chunks.create.push(b`@validate_dynamic_element(${snippet});`);
+			if (this.renderer.options.hydratable) {
+				block.chunks.claim.push(b`@validate_dynamic_element(${snippet});`);
+			}
+			block.chunks.update.push(b`@validate_dynamic_element(${snippet});`);
+		}
 	}
 
 	render_element(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
@@ -442,15 +455,6 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		block.renderer.dirty(this.node.tag_expr.dynamic_dependencies());
-		if (block.type === 'child_dynamic_element' && this.node.tag_expr.dependencies.size > 0) {
-			const snippet = this.node.tag_expr.manipulate(block);
-			if (this.renderer.options.dev) {
-				block.chunks.create.push(b`@validate_dynamic_element(${snippet});`);
-				if (renderer.options.hydratable) {
-					block.chunks.claim.push(b`@validate_dynamic_element(${snippet});`);
-				}
-			}
-		}
 	}
 
 	can_use_textcontent() {
