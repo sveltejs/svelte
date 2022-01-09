@@ -1,12 +1,12 @@
 import { append_empty_stylesheet, get_root_for_style } from './dom';
 import { raf } from './environment';
 
-interface ExtendedDoc extends Document {
-	__svelte_stylesheet: CSSStyleSheet;
-	__svelte_rules: Record<string, true>;
+interface StyleInformation {
+	stylesheet: CSSStyleSheet;
+	rules: Record<string, true>;
 }
 
-const active_docs = new Set<ExtendedDoc>();
+const active_docs = new Map<Document | ShadowRoot, StyleInformation>();
 let active = 0;
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
@@ -17,6 +17,12 @@ function hash(str: string) {
 	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
 	return hash >>> 0;
 }
+
+const create_style_information = (doc: Document | ShadowRoot, node: Element & ElementCSSInlineStyle) => {
+	const info = { stylesheet: append_empty_stylesheet(node), rules: {} };
+	active_docs.set(doc, info);
+	return info;
+};
 
 export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
 	const step = 16.666 / duration;
@@ -29,13 +35,12 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 
 	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
 	const name = `__svelte_${hash(rule)}_${uid}`;
-	const doc = get_root_for_style(node) as ExtendedDoc;
-	active_docs.add(doc);
-	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = append_empty_stylesheet(node).sheet as CSSStyleSheet);
-	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
+	const doc = get_root_for_style(node);
 
-	if (!current_rules[name]) {
-		current_rules[name] = true;
+	const { stylesheet, rules } = active_docs.get(doc) || create_style_information(doc, node);
+
+	if (!rules[name]) {
+		rules[name] = true;
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
 	}
 
@@ -64,10 +69,10 @@ export function clear_rules() {
 	raf(() => {
 		if (active) return;
 		active_docs.forEach(doc => {
-			const stylesheet = doc.__svelte_stylesheet;
+			const { stylesheet } = doc;
 			let i = stylesheet.cssRules.length;
 			while (i--) stylesheet.deleteRule(i);
-			doc.__svelte_rules = {};
+			doc.rules = {};
 		});
 		active_docs.clear();
 	});
