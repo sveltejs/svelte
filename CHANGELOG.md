@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add style directives ([RFC #42](https://github.com/sveltejs/rfcs/pull/42))
+* Fix hydration when using `@html` ([#7115](https://github.com/sveltejs/svelte/issues/7115))
+
 ## 3.45.0
 
 * Fix non-boolean attribute rendering in SSR to render truthy values as-is ([#6121](https://github.com/sveltejs/svelte/issues/6121))
