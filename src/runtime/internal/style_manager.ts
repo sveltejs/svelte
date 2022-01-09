@@ -18,11 +18,11 @@ function hash(str: string) {
 	return hash >>> 0;
 }
 
-const create_style_information = (doc: Document | ShadowRoot, node: Element & ElementCSSInlineStyle) => {
+function create_style_information(doc: Document | ShadowRoot, node: Element & ElementCSSInlineStyle) {
 	const info = { stylesheet: append_empty_stylesheet(node), rules: {} };
 	active_docs.set(doc, info);
 	return info;
-};
+}
 
 export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
 	const step = 16.666 / duration;
