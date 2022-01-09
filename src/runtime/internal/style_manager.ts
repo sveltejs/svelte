@@ -6,6 +6,8 @@ interface StyleInformation {
 	rules: Record<string, true>;
 }
 
+// we need to store the information for multiple documents because a Svelte application could also contain iframes
+// https://github.com/sveltejs/svelte/issues/3624
 const managed_styles = new Map<Document | ShadowRoot, StyleInformation>();
 let active = 0;
 
