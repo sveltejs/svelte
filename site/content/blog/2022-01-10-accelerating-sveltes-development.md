@@ -28,7 +28,7 @@ Svelte has been made possible by the work of a large, dedicated community. Svelt
 - ignatiusmb - regular SvelteKit contributor especially to TypeScript support
 - RedHatter - creator of Svelte Devtools
 
-Svelte began accepting donations via OpenCollective (https://opencollective.com/svelte) last year and has now had over $50,000 donated to-date. We hope that these funds will allow existing maintainers to spend more time on Svelte or that the funds could otherwise support Svelte on a part-time or contract basis, which we will continue to investigate.
+Svelte began accepting donations via [OpenCollective](https://opencollective.com/svelte) last year and has now had over $50,000 donated to-date. We hope that these funds will allow existing maintainers to spend more time on Svelte or that the funds could otherwise support Svelte on a part-time or contract basis, which we will continue to investigate.
 
 ## Partnerships
 
