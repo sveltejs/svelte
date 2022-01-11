@@ -453,6 +453,29 @@ The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the 
 The `{@debug}` tag without any arguments will insert a `debugger` statement that gets triggered when *any* state changes, as opposed to the specified variables.
 
 
+### {@const ...}
+
+```sv
+{@const assignment}
+```
+
+---
+
+The `{@const ...}` tag defines a local constant.
+
+```sv
+<script>
+  export let boxes;
+</script>
+
+{#each boxes as box}
+  {@const area = box.width * box.height}
+	{box.width} * {box.height} = {area}
+{/each}
+```
+
+`{@const}` is only allowed as direct child of `{#each}`, `{:then}`, `{:catch}`, `<Component />` or `<svelte:fragment />`.
+
 
 ### Element directives
 

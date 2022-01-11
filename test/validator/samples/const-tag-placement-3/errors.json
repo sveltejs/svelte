@@ -1,0 +1,9 @@
+[
+	{
+		"code": "invalid-const-placement",
+		"message": "{@const} must be the immediate child of {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>",
+		"start": { "line": 7, "column": 4, "character": 63 },
+		"end": { "line": 7, "column": 18, "character": 77 },
+		"pos": 63
+	}
+]
