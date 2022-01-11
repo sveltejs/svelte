@@ -4,6 +4,7 @@
 
 * Add style directives ([RFC #42](https://github.com/sveltejs/rfcs/pull/42))
 * Fix hydration when using `@html` ([#7115](https://github.com/sveltejs/svelte/issues/7115))
+* Fix style manager conflicts when using multiple Svelte instances ([#7026](https://github.com/sveltejs/svelte/issues/7026))
 
 ## 3.45.0
 
