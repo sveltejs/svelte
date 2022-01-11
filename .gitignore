@@ -9,6 +9,7 @@ node_modules
 /compiler.*js
 /index.*js
 /ssr.*js
+/action
 /internal
 /store
 /easing
