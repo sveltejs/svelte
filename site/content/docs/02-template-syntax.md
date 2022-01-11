@@ -474,7 +474,7 @@ The `{@const ...}` tag defines a local constant.
 {/each}
 ```
 
-`{@const}` is only allowed as direct child of `{#each}` block, `{#then}` and `{#catch}` block, `<Component />` and `<svelte:fragment />` element.
+`{@const}` is only allowed as direct child of `{#each}`, `{:then}`, `{:catch}`, `<Component />` or `<svelte:fragment />`.
 
 
 ### Element directives
