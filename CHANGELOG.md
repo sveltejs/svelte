@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.46.0
 
 * Implement `{@const}` tag ([RFC #33](https://github.com/sveltejs/rfcs/pull/33), [#6413](https://github.com/sveltejs/svelte/pull/6413))
 * Implement `style:` directive ([RFC #42](https://github.com/sveltejs/rfcs/pull/42), [#5923](https://github.com/sveltejs/svelte/pull/5923))
