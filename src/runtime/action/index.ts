@@ -4,5 +4,5 @@ export interface ActionReturn<Parameters = any> {
 }
 
 export interface Action<Parameters = any> {
-	(node: HTMLElement, parameters: Parameters): ActionReturn<Parameters>;
+	(node: HTMLElement, parameters: Parameters): void | ActionReturn<Parameters>;
 }
