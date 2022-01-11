@@ -2,9 +2,10 @@
 
 ## Unreleased
 
-* Add style directives ([RFC #42](https://github.com/sveltejs/rfcs/pull/42))
-* Fix hydration when using `@html` ([#7115](https://github.com/sveltejs/svelte/issues/7115))
+* Implement `{@const}` tag ([RFC #33](https://github.com/sveltejs/rfcs/pull/33), [#6413](https://github.com/sveltejs/svelte/pull/6413))
+* Implement `style:` directive ([RFC #42](https://github.com/sveltejs/rfcs/pull/42), [#5923](https://github.com/sveltejs/svelte/pull/5923))
 * Fix style manager conflicts when using multiple Svelte instances ([#7026](https://github.com/sveltejs/svelte/issues/7026))
+* Fix hydration when using `{@html}` ([#7115](https://github.com/sveltejs/svelte/issues/7115))
 
 ## 3.45.0
 
