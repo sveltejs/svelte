@@ -1,14 +1,15 @@
 import ElseBlock from './ElseBlock';
 import Expression from './shared/Expression';
-import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 import Element from './Element';
+import ConstTag from './ConstTag';
 import { Context, unpack_destructuring } from './shared/Context';
 import { Node } from 'estree';
 import Component from '../Component';
 import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
+import get_const_tags from './shared/get_const_tags';
 
 export default class EachBlock extends AbstractBlock {
 	type: 'EachBlock';
@@ -22,6 +23,7 @@ export default class EachBlock extends AbstractBlock {
 	key: Expression;
 	scope: TemplateScope;
 	contexts: Context[];
+	const_tags: ConstTag[];
 	has_animation: boolean;
 	has_binding = false;
 	has_index_binding = false;
@@ -57,7 +59,7 @@ export default class EachBlock extends AbstractBlock {
 
 		this.has_animation = false;
 
-		this.children = map_children(component, this, this.scope, info.children);
+		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
 
 		if (this.has_animation) {
 			if (this.children.length !== 1) {

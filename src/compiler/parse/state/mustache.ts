@@ -375,6 +375,28 @@ export default function mustache(parser: Parser) {
 			type: 'DebugTag',
 			identifiers
 		});
+	} else if (parser.eat('@const')) {
+		// {@const a = b}
+		parser.require_whitespace();
+
+		const expression = read_expression(parser);
+
+		if (!(expression.type === 'AssignmentExpression' && expression.operator === '=')) {
+			parser.error({
+				code: 'invalid-const-args',
+				message: '{@const ...} must be an assignment.'
+			}, start);
+		}
+
+		parser.allow_whitespace();
+		parser.eat('}', true);
+
+		parser.current().children.push({
+			start,
+			end: parser.index,
+			type: 'ConstTag',
+			expression
+		});
 	} else {
 		const expression = read_expression(parser);
 

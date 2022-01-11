@@ -1,4 +1,4 @@
-import { Node, Program } from 'estree';
+import { AssignmentExpression, Node, Program } from 'estree';
 import { SourceMap } from 'magic-string';
 
 interface BaseNode {
@@ -20,7 +20,7 @@ export interface Text extends BaseNode {
 }
 
 export interface MustacheTag extends BaseNode {
-	type: 'MustacheTag';
+	type: 'MustacheTag' | 'RawMustacheTag';
 	expression: Node;
 }
 
@@ -28,6 +28,16 @@ export interface Comment extends BaseNode {
 	type: 'Comment';
 	data: string;
 	ignores: string[];
+}
+
+export interface ConstTag extends BaseNode {
+	type: 'ConstTag';
+	expression: AssignmentExpression;
+}
+
+interface DebugTag extends BaseNode {
+	type: 'DebugTag';
+	identifiers: Node[]
 }
 
 export type DirectiveType = 'Action'
@@ -73,6 +83,8 @@ export interface Transition extends BaseDirective {
 export type Directive = BaseDirective | Transition;
 
 export type TemplateNode = Text
+| ConstTag
+| DebugTag
 | MustacheTag
 | BaseNode
 | Element

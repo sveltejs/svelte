@@ -57,6 +57,9 @@ export default class Binding extends Node {
 				component.error(this, compiler_errors.invalid_binding_await);
 				return;
 			}
+			if (scope.is_const(name)) {
+				component.error(this, compiler_errors.invalid_binding_const);
+			}
 
 			scope.dependencies_for_name.get(name).forEach(name => {
 				const variable = component.var_lookup.get(name);
