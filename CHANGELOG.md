@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Handle kebab case style directives ([#7122](https://github.com/sveltejs/svelte/issues/7122))
+
 ## 3.46.0
 
 * Implement `{@const}` tag ([RFC #33](https://github.com/sveltejs/rfcs/pull/33), [#6413](https://github.com/sveltejs/svelte/pull/6413))
