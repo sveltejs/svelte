@@ -1,5 +1,5 @@
 export interface ActionReturn<Parameters = any> {
-	update?: (parameters?: Parameters) => void;
+	update?: (parameters: Parameters) => void;
 	destroy?: () => void;
 }
 
