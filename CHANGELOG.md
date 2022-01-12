@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* Handle kebab case style directives ([#7122](https://github.com/sveltejs/svelte/issues/7122))
+* Handle `style:kebab-case` directives ([#7122](https://github.com/sveltejs/svelte/issues/7122))
+* Improve AST produced for `style:` directives ([#7127](https://github.com/sveltejs/svelte/pull/7127)
 
 ## 3.46.0
 
