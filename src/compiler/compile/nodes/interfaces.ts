@@ -8,7 +8,7 @@ import Binding from './Binding';
 import Body from './Body';
 import CatchBlock from './CatchBlock';
 import Class from './Class';
-import Style from './Style';
+import StyleDirective from './StyleDirective';
 import Comment from './Comment';
 import ConstTag from './ConstTag';
 import DebugTag from './DebugTag';
@@ -63,7 +63,7 @@ export type INode = Action
 | RawMustacheTag
 | Slot
 | SlotTemplate
-| Style
+| StyleDirective
 | Tag
 | Text
 | ThenBlock

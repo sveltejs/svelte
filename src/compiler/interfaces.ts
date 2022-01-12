@@ -44,13 +44,18 @@ export type DirectiveType = 'Action'
 | 'Animation'
 | 'Binding'
 | 'Class'
-| 'Style'
+| 'StyleDirective'
 | 'EventHandler'
 | 'Let'
 | 'Ref'
 | 'Transition';
 
 interface BaseDirective extends BaseNode {
+	type: DirectiveType;
+	name: string;
+}
+
+interface BaseExpressionDirective extends BaseDirective {
 	type: DirectiveType;
 	expression: null | Node;
 	name: string;
@@ -74,13 +79,13 @@ export interface SpreadAttribute extends BaseNode {
 	expression: Node;
 }
 
-export interface Transition extends BaseDirective {
+export interface Transition extends BaseExpressionDirective {
 	type: 'Transition';
 	intro: boolean;
 	outro: boolean;
 }
 
-export type Directive = BaseDirective | Transition;
+export type Directive = BaseDirective | BaseExpressionDirective | Transition;
 
 export type TemplateNode = Text
 | ConstTag
