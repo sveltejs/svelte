@@ -59,8 +59,8 @@ We’re also testing out [GitHub discussions on SvelteKit](https://github.com/sv
 
 ## Things to watch
 
-In Svelte core, RFCs have been merged for [constants in markup](https://github.com/sveltejs/rfcs/blob/master/text/0007-markup-constants.md) and [style directives](https://github.com/sveltejs/rfcs/blob/master/text/0008-style-directives.md). Look for these features to be added to Svelte soon!
+SvelteKit is continuing to progress towards 1.0 and, in just the past week, we have added major features like [improved client-only rendering](https://github.com/sveltejs/kit/pull/2804) and [the ability to pass data from child components to layouts](https://github.com/sveltejs/kit/pull/3252) (e.g. to support easier management of `<meta>` tags). We're currently working on a number of high priority items such as adding [routing hooks](https://github.com/sveltejs/kit/pull/3293) and discussing API designs for features like streaming and file uploads.
 
-In SvelteKit, we’re continuing to progress towards 1.0 and in the very near-term will be adding major features like [improved client-only rendering](https://github.com/sveltejs/kit/pull/2804) and [the ability to pass data from child components to layouts](https://github.com/sveltejs/kit/pull/3252) (e.g. to support easier management of `<meta>` tags).
+While a lot of effort has been going into SvelteKit recently, we continue to progress the entire ecosystem. [Svelte 3.46.0](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3460) was one of our biggest releases in awhile with two major new features added: [constants in markup](https://github.com/sveltejs/rfcs/blob/master/text/0007-markup-constants.md) and [style directives](https://github.com/sveltejs/rfcs/blob/master/text/0008-style-directives.md).
 
-Svelte and SvelteKit’s trajectory have been accelerated by the numerous investments above and there will be many more updates to come — subscribe to the [blog](/blog) via [RSS](/blog/rss.xml) or check monthly to be the first to get them.
+Svelte and SvelteKit’s trajectories have been accelerated by the numerous investments above and there will be many more updates to come — subscribe to the [blog](/blog) via [RSS](/blog/rss.xml) or check monthly to be the first to get them.
