@@ -17,7 +17,7 @@ To help developers build fully-featured applications with Svelte without worryin
 
 Rich Harris, Svelte’s creator, has [joined Vercel to work on Svelte full-time](https://vercel.com/blog/vercel-welcomes-rich-harris-creator-of-svelte). We’re incredibly excited to have Rich’s level of involvement in Svelte increase even more and have him steward Svelte into the future.
 
-Svelte has been made possible by the work of a large, dedicated community. Svelte has added numerous core maintainers over the course of the pandemic. In alphabetical order:
+Svelte has been made possible by the work of a large, dedicated community. Svelte has added numerous core maintainers over the course of the pandemic, including three this past week. In alphabetical order:
 - [benmccann](https://github.com/benmccann) - primary maintainer of SvelteKit for much of 2021
 - [bluwy](https://github.com/bluwy) - major contributor across SvelteKit, vite-plugin-svelte, and Vite
 - [dominikg](https://github.com/dominikg) - creator of vite-plugin-svelte
@@ -32,7 +32,7 @@ Svelte has been made possible by the work of a large, dedicated community. Svelt
 - [RedHatter](https://github.com/RedHatter) - creator of Svelte Devtools
 - [rixo](https://github.com/rixo) - creator of svelte-hmr
 
-Svelte began accepting donations via [OpenCollective](https://opencollective.com/svelte) last year and has now had over $50,000 donated to-date. We hope that these funds will allow existing maintainers to spend more time on Svelte or that the funds could otherwise support Svelte on a part-time or contract basis, which we will continue to investigate.
+Svelte began accepting donations via [OpenCollective](https://opencollective.com/svelte) last year and has now had over $60,000 donated to-date with [Cohere](https://cohere.ai/) giving $10,000 just today. We hope that these funds will allow existing maintainers to spend more time on Svelte or that the funds could otherwise support Svelte on a part-time or contract basis, which we will continue to investigate.
 
 ## Partnerships
 
