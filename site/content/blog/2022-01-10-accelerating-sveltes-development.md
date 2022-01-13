@@ -22,7 +22,8 @@ Svelte has been made possible by the work of a large, dedicated community. Svelt
 - [bluwy](https://github.com/bluwy) - major contributor across SvelteKit, vite-plugin-svelte, and Vite
 - [dominikg](https://github.com/dominikg) - creator of vite-plugin-svelte
 - [dummdidumm](https://github.com/dummdidumm) - maintainer of language-tools, which includes the VS Code extension and `svelte-check`
-- [ehrencrona](https://github.com/ehrencrona) - contributor to SvelteKit and employee at Hyperlab who use Svelte
+- [ehrencrona](https://github.com/ehrencrona) - contributor to SvelteKit and uses Svelte and work
+- [geoffrich](https://github.com/geoffrich) - has driven efforts to improve the accessibility of the Svelte site and documentation
 - [GrygrFlzr](https://github.com/GrygrFlzr) - holds a unique status as a maintainer of both SvelteKit and Vite
 - [Halfnelson](https://github.com/Halfnelson) - creator of svelte-native
 - [ignatiusmb](https://github.com/ignatiusmb) - regular SvelteKit contributor especially to TypeScript support
