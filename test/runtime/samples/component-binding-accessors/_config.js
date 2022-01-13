@@ -1,5 +1,5 @@
 export default {
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const [input1, input2] = target.querySelectorAll('input');
 		assert.equal(input1.value, 'something');
 		assert.equal(input2.value, 'something');

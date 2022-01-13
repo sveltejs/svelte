@@ -6,7 +6,7 @@ The `<svelte:head>` element allows you to insert elements inside the `<head>` of
 
 ```html
 <svelte:head>
-	<link rel="stylesheet" href="tutorial/dark-theme.css">
+	<link rel="stylesheet" href="/tutorial/dark-theme.css">
 </svelte:head>
 ```
 

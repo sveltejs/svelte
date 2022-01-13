@@ -1,4 +1,5 @@
 export {
+	onDestroy,
 	setContext,
 	getContext,
 	getAllContexts,
@@ -10,6 +11,5 @@ export {
 } from './index';
 
 export function onMount() {}
-export function onDestroy() {}
 export function beforeUpdate() {}
 export function afterUpdate() {}

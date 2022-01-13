@@ -40,7 +40,7 @@ Aside from all that, we've been tempted by the thought of rewriting Sapper for a
 
 ## How is this new thing different?
 
-The first of those foundational assumptions is that you need to use a module bundler like [webpack](https://webpack.js.org/) or [Rollup](http://rollupjs.org/) to build apps. These tools trace the dependency graph of your application, analysing and transforming code along the way (turning Svelte components to JS modules, for example), in order to create bundles of code that can run anywhere. As the original creator of Rollup, I can attest that it is a surprisingly complex problem with fiendish edge cases.
+The first of those foundational assumptions is that you need to use a module bundler like [webpack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/) to build apps. These tools trace the dependency graph of your application, analysing and transforming code along the way (turning Svelte components to JS modules, for example), in order to create bundles of code that can run anywhere. As the original creator of Rollup, I can attest that it is a surprisingly complex problem with fiendish edge cases.
 
 You certainly needed a bundler several years ago, because browsers didn't natively support the `import` keyword, but it's much less true today. Right now, we're seeing the rise of the *unbundled development* workflow, which is radically simpler: instead of eagerly bundling your app, a dev server can serve modules (converted to JavaScript, if necessary) *on-demand*, meaning startup is essentially instantaneous however large your app becomes.
 

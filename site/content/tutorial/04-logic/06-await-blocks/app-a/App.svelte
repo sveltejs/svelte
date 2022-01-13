@@ -1,6 +1,6 @@
 <script>
 	async function getRandomNumber() {
-		const res = await fetch(`tutorial/random-number`);
+		const res = await fetch(`/tutorial/random-number`);
 		const text = await res.text();
 
 		if (res.ok) {

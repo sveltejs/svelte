@@ -12,7 +12,7 @@ export default {
 	before_test() {
 		called = 0;
 	},
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		assert.equal(called, 1);
 
 		const input = target.querySelector('input');

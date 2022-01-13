@@ -52,21 +52,23 @@ describe('ssr', () => {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		(solo ? it.only : it)(dir, () => {
-			dir = path.resolve(`${__dirname}/samples`, dir);
-
-			cleanRequireCache();
-
-			const compileOptions = {
-				sveltePath,
-				...config.compileOptions,
-				generate: 'ssr',
-				format: 'cjs'
-			};
-
-			require('../../register')(compileOptions);
+		(solo ? it.only : it)(dir, (done) => {
 
 			try {
+
+				dir = path.resolve(`${__dirname}/samples`, dir);
+
+				cleanRequireCache();
+
+				const compileOptions = {
+					sveltePath,
+					...config.compileOptions,
+					generate: 'ssr',
+					format: 'cjs'
+				};
+
+				require('../../register')(compileOptions);
+
 				const Component = require(`${dir}/main.svelte`).default;
 
 				const expectedHtml = tryToReadFile(`${dir}/_expected.html`);
@@ -132,6 +134,7 @@ describe('ssr', () => {
 				throw err;
 			} finally {
 				set_current_component(null);
+				done();
 			}
 		});
 	});

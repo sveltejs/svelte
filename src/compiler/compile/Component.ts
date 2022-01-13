@@ -24,7 +24,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b } from 'code-red';
@@ -36,6 +36,7 @@ import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
+import check_enable_sourcemap from './utils/check_enable_sourcemap';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -343,19 +344,28 @@ export default class Component {
 				? { code: null, map: null }
 				: result.css;
 
-			js = print(program, {
-				sourceMapSource: compile_options.filename
-			});
+			const js_sourcemap_enabled = check_enable_sourcemap(compile_options.enableSourcemap, 'js');
 
-			js.map.sources = [
-				compile_options.filename ? get_relative_path(compile_options.outputFilename || '', compile_options.filename) : null
-			];
+			if (!js_sourcemap_enabled) {
+				js = print(program);
+				js.map = null;
+			} else {
+				const sourcemap_source_filename = get_sourcemap_source_filename(compile_options);
 
-			js.map.sourcesContent = [
-				this.source
-			];
+				js = print(program, {
+					sourceMapSource: sourcemap_source_filename
+				});
 
-			js.map = apply_preprocessor_sourcemap(this.file, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+				js.map.sources = [
+					sourcemap_source_filename
+				];
+
+				js.map.sourcesContent = [
+					this.source
+				];
+
+				js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+			}
 		}
 
 		return {
@@ -756,12 +766,13 @@ export default class Component {
 		};
 		let scope_updated = false;
 
-		let generator_count = 0;
+		const current_function_stack = [];
+		let current_function: FunctionDeclaration | FunctionExpression = null;
 
 		walk(content, {
 			enter(node: Node, parent: Node, prop, index) {
-				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
-					generator_count++;
+				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) {
+					current_function_stack.push(current_function = node);
 				}
 
 				if (map.has(node)) {
@@ -790,12 +801,13 @@ export default class Component {
 			},
 
 			leave(node: Node) {
-				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
-					generator_count--;
+				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) {
+					current_function_stack.pop();
+					current_function = current_function_stack[current_function_stack.length - 1];
 				}
 
 				// do it on leave, to prevent infinite loop
-				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0 && generator_count <= 0) {
+				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0 && (!current_function || (!current_function.generator && !current_function.async))) {
 					const to_replace_for_loop_protect = component.loop_protect(node, scope, component.compile_options.loopGuardTimeout);
 					if (to_replace_for_loop_protect) {
 						this.replace(to_replace_for_loop_protect);
@@ -1042,7 +1054,11 @@ export default class Component {
 											break;
 
 										case 'AssignmentPattern':
-											param.left = get_new_name(param.left);
+											if (param.left.type === 'Identifier') {
+												param.left = get_new_name(param.left);
+											} else {
+												rename_identifiers(param.left);
+											}
 											break;
 									}
 								}
@@ -1310,7 +1326,7 @@ export default class Component {
 
 								if (variable) {
 									variable.is_reactive_dependency = true;
-									if (variable.module) {
+									if (variable.module && variable.writable) {
 										should_add_as_dependency = false;
 										module_dependencies.add(name);
 									}
@@ -1550,4 +1566,16 @@ function get_relative_path(from: string, to: string) {
 	}
 
 	return from_parts.concat(to_parts).join('/');
+}
+
+function get_basename(filename: string) {
+	return filename.split(/[/\\]/).pop();
+}
+
+function get_sourcemap_source_filename(compile_options: CompileOptions) {
+	if (!compile_options.filename) return null;
+
+	return compile_options.outputFilename
+		? get_relative_path(compile_options.outputFilename, compile_options.filename)
+		: get_basename(compile_options.filename);
 }

@@ -157,6 +157,10 @@ export default {
 		code: 'missing-component-definition',
 		message: '<svelte:component> must have a \'this\' attribute'
 	},
+	missing_attribute_value: {
+		code: 'missing-attribute-value',
+		message: 'Expected value for the attribute'
+	},
 	unclosed_script: {
 		code: 'unclosed-script',
 		message: '<script> must have a closing tag'
@@ -169,6 +173,10 @@ export default {
 		code: 'unclosed-comment',
 		message: 'comment was left open, expected -->'
 	},
+	unclosed_attribute_value: (token: string) => ({
+		code: 'unclosed-attribute-value',
+		message: `Expected to close the attribute value with ${token}`
+	}),
 	unexpected_block_close: {
 		code: 'unexpected-block-close',
 		message: 'Unexpected block closing tag'

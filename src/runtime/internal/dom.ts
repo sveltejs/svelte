@@ -148,16 +148,16 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 	if (!node) return document;
 
 	const root = node.getRootNode ? node.getRootNode() : node.ownerDocument;
-	if ((root as ShadowRoot).host) {
+	if (root && (root as ShadowRoot).host) {
 		return root as ShadowRoot;
 	}
-	return document;
+	return node.ownerDocument;
 }
 
 export function append_empty_stylesheet(node: Node) {
 	const style_element = element('style') as HTMLStyleElement;
 	append_stylesheet(get_root_for_style(node), style_element);
-	return style_element;
+	return style_element.sheet as CSSStyleSheet;
 }
 
 function append_stylesheet(node: ShadowRoot | Document, style: HTMLStyleElement) {
@@ -185,7 +185,7 @@ export function append_hydration(target: NodeEx, node: NodeEx) {
 		} else {
 			target.actual_end_child = node.nextSibling;
 		}
-	} else if (node.parentNode !== target) {
+	} else if (node.parentNode !== target || node.nextSibling !== null) {
 		target.appendChild(node);
 	}
 }
@@ -432,7 +432,7 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 	return resultNode;
 }
 
-export function claim_element(nodes: ChildNodeArray, name: string, attributes: {[key: string]: boolean}, svg) {
+function claim_element_base(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }, create_element: (name: string) => Element | SVGElement) {
 	return claim_node<Element | SVGElement>(
 		nodes,
 		(node: ChildNode): node is Element | SVGElement => node.nodeName === name,
@@ -447,8 +447,16 @@ export function claim_element(nodes: ChildNodeArray, name: string, attributes: {
 			remove.forEach(v => node.removeAttribute(v));
 			return undefined;
 		},
-		() => svg ? svg_element(name as keyof SVGElementTagNameMap) : element(name as keyof HTMLElementTagNameMap)
+		() => create_element(name)
 	);
+}
+
+export function claim_element(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }) {
+	return claim_element_base(nodes, name, attributes, element);
+}
+
+export function claim_svg_element(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }) {
+	return claim_element_base(nodes, name, attributes, svg_element);
 }
 
 export function claim_text(nodes: ChildNodeArray, data) {
@@ -493,7 +501,7 @@ export function claim_html_tag(nodes) {
 	}
 
 	init_claim_info(nodes);
-	const html_tag_nodes = nodes.splice(start_index, end_index + 1);
+	const html_tag_nodes = nodes.splice(start_index, end_index - start_index + 1);
 	detach(html_tag_nodes[0]);
 	detach(html_tag_nodes[html_tag_nodes.length - 1]);
 	const claimed_nodes = html_tag_nodes.slice(1, html_tag_nodes.length - 1);
@@ -522,7 +530,11 @@ export function set_input_type(input, type) {
 }
 
 export function set_style(node, key, value, important) {
-	node.style.setProperty(key, value, important ? 'important' : '');
+	if (value === null) {
+		node.style.removeProperty(key);
+	} else {
+		node.style.setProperty(key, value, important ? 'important' : '');
+	}
 }
 
 export function select_option(select, value) {
@@ -534,6 +546,8 @@ export function select_option(select, value) {
 			return;
 		}
 	}
+
+	select.selectedIndex = -1; // no option should be selected
 }
 
 export function select_options(select, value) {

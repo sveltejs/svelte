@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component, target }) {
+	test({ assert, component }) {
 		assert.equal(component.qux, 2);
 
 		component.foo = 2;

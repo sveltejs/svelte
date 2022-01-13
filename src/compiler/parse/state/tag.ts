@@ -1,13 +1,13 @@
+import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
+import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore';
+import fuzzymatch from '../../utils/fuzzymatch';
+import { is_void } from '../../utils/names';
+import parser_errors from '../errors';
+import { Parser } from '../index';
 import read_expression from '../read/expression';
 import read_script from '../read/script';
 import read_style from '../read/style';
-import { decode_character_references, closing_tag_omitted } from '../utils/html';
-import { is_void } from '../../utils/names';
-import { Parser } from '../index';
-import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
-import fuzzymatch from '../../utils/fuzzymatch';
-import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore';
-import parser_errors from '../errors';
+import { closing_tag_omitted, decode_character_references } from '../utils/html';
 
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
@@ -365,9 +365,25 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			parser.error(parser_errors.invalid_ref_directive(directive_name), start);
 		}
 
-		if (value[0]) {
-			if ((value as any[]).length > 1 || value[0].type === 'Text') {
-				parser.error(parser_errors.invalid_directive_value, value[0].start);
+		if (type === 'StyleDirective') {
+			return {
+				start,
+				end,
+				type,
+				name: directive_name,
+				value
+			};
+		}
+
+		const first_value = value[0];
+		let expression = null;
+
+		if (first_value) {
+			const attribute_contains_text = (value as any[]).length > 1 || first_value.type === 'Text';
+			if (attribute_contains_text) {
+				parser.error(parser_errors.invalid_directive_value, first_value.start);
+			} else {
+				expression = first_value.expression;
 			}
 		}
 
@@ -377,7 +393,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			type,
 			name: directive_name,
 			modifiers,
-			expression: (value[0] && value[0].expression) || null
+			expression
 		};
 
 		if (type === 'Transition') {
@@ -386,6 +402,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			directive.outro = direction === 'out' || direction === 'transition';
 		}
 
+		// Directive name is expression, e.g. <p class:isRed />
 		if (!directive.expression && (type === 'Binding' || type === 'Class')) {
 			directive.expression = {
 				start: directive.start + colon_index + 1,
@@ -414,6 +431,7 @@ function get_directive_type(name: string): DirectiveType {
 	if (name === 'animate') return 'Animation';
 	if (name === 'bind') return 'Binding';
 	if (name === 'class') return 'Class';
+	if (name === 'style') return 'StyleDirective';
 	if (name === 'on') return 'EventHandler';
 	if (name === 'let') return 'Let';
 	if (name === 'ref') return 'Ref';
@@ -438,7 +456,25 @@ function read_attribute_value(parser: Parser) {
 				/(\/>|[\s"'=<>`])/
 	);
 
-	const value = read_sequence(parser, () => !!parser.match_regex(regex));
+	let value;
+	try {
+		value = read_sequence(parser, () => !!parser.match_regex(regex));
+	} catch (error) {
+		if (error.code === 'parse-error') {
+			// if the attribute value didn't close + self-closing tag
+			// eg: `<Component test={{a:1} />`
+			// acorn may throw a `Unterminated regular expression` because of `/>`
+			if (parser.template.slice(error.pos - 1, error.pos + 1) === '/>') {
+				parser.index = error.pos;
+				parser.error(parser_errors.unclosed_attribute_value(quote_mark || '}'));
+			}
+		}
+		throw error;
+	}
+
+	if (value.length === 0 && !quote_mark) {
+		parser.error(parser_errors.missing_attribute_value);
+	}
 
 	if (quote_mark) parser.index += 1;
 	return value;
@@ -453,6 +489,8 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 		data: null
 	};
 
+	const chunks: TemplateNode[] = [];
+
 	function flush(end: number) {
 		if (current_chunk.raw) {
 			current_chunk.data = decode_character_references(current_chunk.raw);
@@ -460,8 +498,6 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 			chunks.push(current_chunk);
 		}
 	}
-
-	const chunks: TemplateNode[] = [];
 
 	while (parser.index < parser.template.length) {
 		const index = parser.index;

@@ -340,6 +340,7 @@ export default class ElementWrapper extends Wrapper {
 		this.add_transitions(block);
 		this.add_animation(block);
 		this.add_classes(block);
+		this.add_styles(block);
 		this.add_manual_style_scoping(block);
 
 		if (nodes && this.renderer.options.hydratable && !this.void) {
@@ -388,9 +389,11 @@ export default class ElementWrapper extends Wrapper {
 			? this.node.name
 			: this.node.name.toUpperCase();
 
-		const svg = this.node.namespace === namespaces.svg ? 1 : null;
-
-		return x`@claim_element(${nodes}, "${name}", { ${attributes} }, ${svg})`;
+		if (this.node.namespace === namespaces.svg) {
+			return x`@claim_svg_element(${nodes}, "${name}", { ${attributes} })`;
+		} else {
+			return x`@claim_element(${nodes}, "${name}", { ${attributes} })`;
+		}
 	}
 
 	add_directives_in_order (block: Block) {
@@ -464,7 +467,7 @@ export default class ElementWrapper extends Wrapper {
 
 		binding_group.bindings.forEach(binding => {
 			// TODO this is a mess
-			add_to_set(dependencies, binding.get_dependencies());
+			add_to_set(dependencies, binding.get_update_dependencies());
 			add_to_set(contextual_dependencies, binding.handler.contextual_dependencies);
 
 			binding.render(block, lock);
@@ -672,7 +675,7 @@ export default class ElementWrapper extends Wrapper {
 				(${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);
 			`);
 			block.chunks.update.push(b`
-				if (${block.renderer.dirty(Array.from(dependencies))}) (${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);;
+				if (${block.renderer.dirty(Array.from(dependencies))} && 'value' in ${data}) (${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);;
 			`);
 		} else if (this.node.name === 'input' && this.attributes.find(attr => attr.node.name === 'value')) {
 			const type = this.node.get_static_attribute_value('type');
@@ -904,6 +907,43 @@ export default class ElementWrapper extends Wrapper {
 				if (any_dynamic_dependencies) {
 					block.chunks.update.push(b`
 						if (${condition}) {
+							${updater}
+						}
+					`);
+				}
+			}
+		});
+	}
+
+	add_styles(block: Block) {
+		const has_spread = this.node.attributes.some(attr => attr.is_spread);
+		this.node.styles.forEach((style_directive) => {
+			const { name, expression, should_cache } = style_directive;
+
+			const snippet = expression.manipulate(block);
+			let cached_snippet;
+			if (should_cache) {
+				cached_snippet = block.get_unique_name(`style_${name.replace(/-/g, '_')}`);
+				block.add_variable(cached_snippet, snippet);
+			}
+
+			const updater = b`@set_style(${this.var}, "${name}", ${should_cache ? cached_snippet : snippet}, false)`;
+
+			block.chunks.hydrate.push(updater);
+
+			const dependencies = expression.dynamic_dependencies();
+			if (has_spread) {
+				block.chunks.update.push(updater);
+			} else if (dependencies.length > 0) {
+				if (should_cache) {
+					block.chunks.update.push(b`
+							if (${block.renderer.dirty(dependencies)} && (${cached_snippet} !== (${cached_snippet} = ${snippet}))) {
+								${updater}	
+							}
+					`);
+				} else {
+					block.chunks.update.push(b`
+						if (${block.renderer.dirty(dependencies)}) {
 							${updater}
 						}
 					`);

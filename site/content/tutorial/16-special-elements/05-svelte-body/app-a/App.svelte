@@ -11,7 +11,7 @@
 <img
 	class:curious={hereKitty}
 	alt="Kitten wants to know what's going on"
-	src="tutorial/kitten.png"
+	src="/tutorial/kitten.png"
 >
 
 <style>

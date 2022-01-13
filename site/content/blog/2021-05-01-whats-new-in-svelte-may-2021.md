@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: May 2021
+title: "What's new in Svelte: May 2021"
 description: Working toward SvelteKit 1.0 and a showcase full of SvelteKit sites!
 author: Daniel Sandoval
 authorURL: https://desandoval.net
@@ -57,7 +57,7 @@ Last week, Svelte Summit blew us away with a mountain of content! [Check out the
 - [Adds Supabase to Svelte](https://github.com/joshnuss/svelte-supabase) is an experimental command to run to add Supabase to your SvelteKit project
 - [svelte-babylon](https://github.com/SectorXUSA/svelte-babylon) lets you use BabylonJS like A-Frame through reactive Svelte Components
 
-**Looking for a starter or integration?** Check out [svelte-adders](https://github.com/svelte-add/svelte-adders) and a number of other integration examples at [sveltejs/integrations](https://github.com/sveltejs/integrations)
+**Looking for a starter or integration?** Check out [svelte-adders](https://github.com/svelte-add/svelte-adders) and a number of other template examples at the community site [sveltesociety.dev](https://sveltesociety.dev/templates)
 
 
 **Learning Resources**
