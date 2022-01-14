@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Export `FlipParams` interface from "svelte/animate" ([#7103](https://github.com/sveltejs/svelte/issues/7103))
+* Fix `style:` directive reactivity inside `{#each}` block ([#7136](https://github.com/sveltejs/svelte/issues/7136))
 
 ## 3.46.1
 
