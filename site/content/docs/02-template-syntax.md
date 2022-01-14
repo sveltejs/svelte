@@ -1608,7 +1608,7 @@ All except `scrollX` and `scrollY` are readonly.
 <svelte:window bind:scrollY={y}/>
 ```
 
-> Note that only subsequent changes to the bound variable of `scrollX` and `scrollY` will cause scrolling automatically. The initial value will not cause scrolling as it brings accessibility issues. However if the scrolling behaviour is desired, call `scrollTo()` in `onMount()` instead.
+> Note that the page will not be scrolled to the initial value to avoid accessibility issues. Only subsequent changes to the bound variable of `scrollX` and `scrollY` will cause scrolling. However, if the scrolling behaviour is desired, call `scrollTo()` in `onMount()`.
 
 ### `<svelte:body>`
 
