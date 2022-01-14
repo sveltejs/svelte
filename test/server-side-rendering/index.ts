@@ -128,13 +128,13 @@ describe('ssr', () => {
 				}
 
 				if (show) showOutput(dir, { generate: 'ssr', format: 'cjs' });
+				done();
 			} catch (err) {
 				showOutput(dir, { generate: 'ssr', format: 'cjs' });
 				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
-				throw err;
+				done(err);
 			} finally {
 				set_current_component(null);
-				done();
 			}
 		});
 	});
