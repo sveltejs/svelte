@@ -5,8 +5,6 @@ author: Ben McCann
 authorURL: https://www.benmccann.com/
 ---
 
-# Accelerating Svelte's Development
-
 [Svelte](/) is a frontend framework for building fast reactive web apps with less code. If you’re new here, [check out the tutorial](/tutorial) or [examples](/examples) to get a feel for it.
 
 Svelte was [launched 5 years ago](https://news.ycombinator.com/item?id=13069841) and has [come a long way in the time since](https://www.youtube.com/watch?v=YeY5M29-WcY). In 2021, as usage more than doubled, it was voted the [most loved](https://insights.stackoverflow.com/survey/2021#section-most-loved-dreaded-and-wanted-web-frameworks) framework with the [most satisfied](https://2020.stateofjs.com/en-US/technologies/front-end-frameworks/) developers in a pair of surveys. Alongside high-profile companies like The New York Times, Apple, Spotify, Square, Rakuten, Bloomberg, Reuters, Ikea, Brave, and countless others, Svelte is used to power everything from hobby projects to embedded systems interfaces.
