@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Export `FlipParams` interface from "svelte/animate" ([#7103](https://github.com/sveltejs/svelte/issues/7103))
+
 ## 3.46.1
 
 * Handle `style:kebab-case` directives ([#7122](https://github.com/sveltejs/svelte/issues/7122))
