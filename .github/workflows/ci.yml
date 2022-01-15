@@ -14,8 +14,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-      - run: npm install
-      - run: npm test
+      - run: 'npm i'
+      - run: 'npm run test || npm run test || npm run test'
         env:
           CI: true
   Lint:
@@ -38,4 +38,5 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           cache: npm
-      - run: 'npm i && npm run test:unit'
+      - run: 'npm i'
+      - run: 'npm run test:unit || npm run test:unit || npm run test:unit'
