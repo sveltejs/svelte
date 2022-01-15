@@ -4,6 +4,7 @@ import Action from './Action';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { Element } from '../../interfaces';
+import compiler_warnings from '../compiler_warnings';
 
 export default class Document extends Node {
 	type: 'Document';
@@ -22,5 +23,15 @@ export default class Document extends Node {
 				// TODO there shouldn't be anything else here...
 			}
 		});
+
+		const handlers_map = new Set();
+
+		this.handlers.forEach(handler => (
+			handlers_map.add(handler.name)
+		));
+
+		if (handlers_map.has('mouseenter') || handlers_map.has('mouseleave')) {
+			component.warn(this, compiler_warnings.avoid_mouse_events_on_document);
+		}
 	}
 }
