@@ -253,7 +253,15 @@ export default class Expression {
 
 					const declaration = b`const ${id} = ${node}`;
 
-					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
+					if (owner.type === 'ConstTag') {
+						walk(node, {
+							enter(node: Node) {
+								if (node.type === 'Identifier') {
+									this.replace(block.renderer.reference(node, ctx));
+								}
+							}
+						});
+					} else if (dependencies.size === 0 && contextual_dependencies.size === 0) {
 						// we can hoist this out of the component completely
 						component.fully_hoisted.push(declaration);
 
