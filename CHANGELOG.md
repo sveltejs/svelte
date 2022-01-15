@@ -4,6 +4,11 @@
 
 * Ignore whitespace in `{#each}` blocks when containing elements with `animate:` ([#5477](https://github.com/sveltejs/svelte/pull/5477))
 
+## 3.46.2
+
+* Export `FlipParams` interface from `svelte/animate` ([#7103](https://github.com/sveltejs/svelte/issues/7103))
+* Fix `style:` directive reactivity inside `{#each}` block ([#7136](https://github.com/sveltejs/svelte/issues/7136))
+
 ## 3.46.1
 
 * Handle `style:kebab-case` directives ([#7122](https://github.com/sveltejs/svelte/issues/7122))

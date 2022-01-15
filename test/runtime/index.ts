@@ -245,7 +245,7 @@ describe('runtime', () => {
 				.catch(err => {
 					// print a clickable link to open the directory
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
-					done();
+					done(err);
 					throw err;
 				})
 				.then(() => {
