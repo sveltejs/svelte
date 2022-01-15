@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Ignore whitespace in `{#each}` blocks when containing elements with `animate:` ([#5477](https://github.com/sveltejs/svelte/pull/5477))
+
 ## 3.46.2
 
 * Export `FlipParams` interface from `svelte/animate` ([#7103](https://github.com/sveltejs/svelte/issues/7103))
