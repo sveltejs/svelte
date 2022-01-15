@@ -1697,6 +1697,25 @@ All except `scrollX` and `scrollY` are readonly.
 
 > Note that the page will not be scrolled to the initial value to avoid accessibility issues. Only subsequent changes to the bound variable of `scrollX` and `scrollY` will cause scrolling. However, if the scrolling behaviour is desired, call `scrollTo()` in `onMount()`.
 
+### `<svelte:document>`
+
+```sv
+<svelte:document on:event={handler}/>
+```
+
+---
+
+Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document`, such as `visibilitychange`, which don't fire on `window`. It also lets you use [actions](/docs#template-syntax-element-directives-use-action) on `document`.
+
+`<svelte:document>` also has to appear at the top level of your component.
+
+```sv
+<svelte:document
+	on:visibilitychange={handleVisibilityChange}
+	use:someAction
+/>
+```
+
 ### `<svelte:body>`
 
 ```sv
