@@ -157,7 +157,7 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 export function append_empty_stylesheet(node: Node) {
 	const style_element = element('style') as HTMLStyleElement;
 	append_stylesheet(get_root_for_style(node), style_element);
-	return style_element;
+	return style_element.sheet as CSSStyleSheet;
 }
 
 function append_stylesheet(node: ShadowRoot | Document, style: HTMLStyleElement) {
@@ -501,7 +501,7 @@ export function claim_html_tag(nodes) {
 	}
 
 	init_claim_info(nodes);
-	const html_tag_nodes = nodes.splice(start_index, end_index + 1);
+	const html_tag_nodes = nodes.splice(start_index, end_index - start_index + 1);
 	detach(html_tag_nodes[0]);
 	detach(html_tag_nodes[html_tag_nodes.length - 1]);
 	const claimed_nodes = html_tag_nodes.slice(1, html_tag_nodes.length - 1);

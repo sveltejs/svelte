@@ -1,12 +1,14 @@
 import { append_empty_stylesheet, get_root_for_style } from './dom';
 import { raf } from './environment';
 
-interface ExtendedDoc extends Document {
-	__svelte_stylesheet: CSSStyleSheet;
-	__svelte_rules: Record<string, true>;
+interface StyleInformation {
+	stylesheet: CSSStyleSheet;
+	rules: Record<string, true>;
 }
 
-const active_docs = new Set<ExtendedDoc>();
+// we need to store the information for multiple documents because a Svelte application could also contain iframes
+// https://github.com/sveltejs/svelte/issues/3624
+const managed_styles = new Map<Document | ShadowRoot, StyleInformation>();
 let active = 0;
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
@@ -16,6 +18,12 @@ function hash(str: string) {
 
 	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
 	return hash >>> 0;
+}
+
+function create_style_information(doc: Document | ShadowRoot, node: Element & ElementCSSInlineStyle) {
+	const info = { stylesheet: append_empty_stylesheet(node), rules: {} };
+	managed_styles.set(doc, info);
+	return info;
 }
 
 export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
@@ -29,13 +37,12 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 
 	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
 	const name = `__svelte_${hash(rule)}_${uid}`;
-	const doc = get_root_for_style(node) as ExtendedDoc;
-	active_docs.add(doc);
-	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = append_empty_stylesheet(node).sheet as CSSStyleSheet);
-	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
+	const doc = get_root_for_style(node);
 
-	if (!current_rules[name]) {
-		current_rules[name] = true;
+	const { stylesheet, rules } = managed_styles.get(doc) || create_style_information(doc, node);
+
+	if (!rules[name]) {
+		rules[name] = true;
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
 	}
 
@@ -63,12 +70,12 @@ export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string
 export function clear_rules() {
 	raf(() => {
 		if (active) return;
-		active_docs.forEach(doc => {
-			const stylesheet = doc.__svelte_stylesheet;
+		managed_styles.forEach(info => {
+			const { stylesheet } = info;
 			let i = stylesheet.cssRules.length;
 			while (i--) stylesheet.deleteRule(i);
-			doc.__svelte_rules = {};
+			info.rules = {};
 		});
-		active_docs.clear();
+		managed_styles.clear();
 	});
 }

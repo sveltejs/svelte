@@ -453,6 +453,29 @@ The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the 
 The `{@debug}` tag without any arguments will insert a `debugger` statement that gets triggered when *any* state changes, as opposed to the specified variables.
 
 
+### {@const ...}
+
+```sv
+{@const assignment}
+```
+
+---
+
+The `{@const ...}` tag defines a local constant.
+
+```sv
+<script>
+  export let boxes;
+</script>
+
+{#each boxes as box}
+  {@const area = box.width * box.height}
+	{box.width} * {box.height} = {area}
+{/each}
+```
+
+`{@const}` is only allowed as direct child of `{#each}`, `{:then}`, `{:catch}`, `<Component />` or `<svelte:fragment />`.
+
 
 ### Element directives
 
@@ -1648,6 +1671,7 @@ All except `scrollX` and `scrollY` are readonly.
 <svelte:window bind:scrollY={y}/>
 ```
 
+> Note that the page will not be scrolled to the initial value to avoid accessibility issues. Only subsequent changes to the bound variable of `scrollX` and `scrollY` will cause scrolling. However, if the scrolling behaviour is desired, call `scrollTo()` in `onMount()`.
 
 ### `<svelte:body>`
 

@@ -204,7 +204,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		// add directive and handler dependencies
-		[node.animation, node.outro, ...node.actions, ...node.classes].forEach(directive => {
+		[node.animation, node.outro, ...node.actions, ...node.classes, ...node.styles].forEach(directive => {
 			if (directive && directive.expression) {
 				block.add_dependencies(directive.expression.dependencies);
 			}
@@ -952,7 +952,7 @@ export default class ElementWrapper extends Wrapper {
 			const snippet = expression.manipulate(block);
 			let cached_snippet;
 			if (should_cache) {
-				cached_snippet = block.get_unique_name(`style_${name}`);
+				cached_snippet = block.get_unique_name(`style_${name.replace(/-/g, '_')}`);
 				block.add_variable(cached_snippet, snippet);
 			}
 

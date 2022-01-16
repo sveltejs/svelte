@@ -7,7 +7,7 @@ import Transition from './Transition';
 import Animation from './Animation';
 import Action from './Action';
 import Class from './Class';
-import Style from './Style';
+import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
@@ -181,7 +181,7 @@ export default class Element extends Node {
 	actions: Action[] = [];
 	bindings: Binding[] = [];
 	classes: Class[] = [];
-	styles: Style[] = [];
+	styles: StyleDirective[] = [];
 	handlers: EventHandler[] = [];
 	lets: Let[] = [];
 	intro?: Transition = null;
@@ -265,8 +265,8 @@ export default class Element extends Node {
 					this.classes.push(new Class(component, this, scope, node));
 					break;
 
-				case 'Style':
-					this.styles.push(new Style(component, this, scope, node));
+				case 'StyleDirective':
+					this.styles.push(new StyleDirective(component, this, scope, node));
 					break;
 
 				case 'EventHandler':

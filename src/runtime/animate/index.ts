@@ -10,7 +10,7 @@ export interface AnimationConfig {
 	tick?: (t: number, u: number) => void;
 }
 
-interface FlipParams {
+export interface FlipParams {
 	delay?: number;
 	duration?: number | ((len: number) => number);
 	easing?: (t: number) => number;
