@@ -631,14 +631,9 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 }
 
 export function add_resize_observer(node: HTMLElement, fn: (arg: any) => void) {
-	if ('ResizeObserver' in window) {
-		// @ts-ignore https://github.com/Microsoft/TypeScript/issues/28502
-		const observer = new ResizeObserver(entries => fn(entries.values().next().value));
-		observer.observe(node);
-		return () => observer.disconnect();
-	} else {
-		return noop;
-	}
+	const observer = new ResizeObserver(entries => fn(entries.values().next().value));
+	observer.observe(node);
+	return () => observer.disconnect();
 }
 
 export function toggle_class(element, name, toggle) {

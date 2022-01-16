@@ -1,4 +1,4 @@
-import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
+import { custom_event, add_resize_observer, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
@@ -87,6 +87,14 @@ export function set_data_dev(text, data) {
 
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
 	text.data = data;
+}
+
+export function add_resize_observer_dev(node: HTMLElement, fn: (arg: any) => void, binding_name: string) {
+	if ('ResizeObserver' in  window) {
+		add_resize_observer(node, fn);
+	} else {
+		throw new Error(`${binding_name} uses the ResizeObserver API, but it is not supported in this browser.`);
+	}
 }
 
 export function validate_each_argument(arg) {
