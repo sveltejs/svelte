@@ -17,12 +17,6 @@
 		elements.add(audio);
 		return () => elements.delete(audio);
 	});
-
-	function stopOthers() {
-		elements.forEach(element => {
-			if (element !== audio) element.pause();
-		});
-	}
 </script>
 
 <article class:playing={!paused}>
@@ -32,7 +26,6 @@
 	<audio
 		bind:this={audio}
 		bind:paused
-		on:play={stopOthers}
 		controls
 		{src}
 	></audio>
