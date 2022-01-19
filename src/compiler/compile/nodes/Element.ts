@@ -735,11 +735,6 @@ export default class Element extends Node {
 					return component.error(contenteditable, compiler_errors.dynamic_contenteditable_attribute);
 				}
 			} else if (name !== 'this' && !sizing.test(name)) {
-				component.error(binding, {
-					code: 'invalid-binding',
-					message: `'${binding.name}' is not a valid binding`
-				});
-			} else if (name !== 'this') {
 				return component.error(binding, compiler_errors.invalid_binding(binding.name));
 			}
 		});
