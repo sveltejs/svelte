@@ -1,4 +1,4 @@
-import { has_prop, noop } from './utils';
+import { has_prop } from './utils';
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
@@ -631,6 +631,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 }
 
 export function add_resize_observer(node: HTMLElement, fn: (arg: any) => void) {
+	// @ts-ignore ResizeObserver is not available in current tsconfig lib
 	const observer = new ResizeObserver(entries => fn(entries.values().next().value));
 	observer.observe(node);
 	return () => observer.disconnect();
