@@ -564,9 +564,15 @@ export default class ElementWrapper extends Wrapper {
 				const resize_observer = block.get_unique_name(`${this.var.name}_resize_observer`);
 				block.add_variable(resize_observer);
 
-				block.chunks.mount.push(
-					b`${resize_observer} = @add_resize_observer(${this.var}, ${callee}.bind(${this.var}));`
-				);
+				if (renderer.options.dev) {
+					block.chunks.mount.push(
+						b`${resize_observer} = @add_resize_observer_dev(${this.var}, ${callee}.bind(${this.var}), ${this.var.name});`
+					);
+				} else {
+					block.chunks.mount.push(
+						b`${resize_observer} = @add_resize_observer(${this.var}, ${callee}.bind(${this.var}));`
+					);
+				}
 
 				block.chunks.destroy.push(
 					b`${resize_observer}();`
