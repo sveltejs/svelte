@@ -4,10 +4,10 @@ title: Custom stores
 
 As long as an object correctly implements the `subscribe` method, it's a store. Beyond that, anything goes. It's very easy, therefore, to create custom stores with domain-specific logic.
 
-For example, the `count` store from our earlier example could include `increment`, `decrement` and `reset` methods and avoid exposing `set` and `update`:
+For example, the `counter` store from our earlier example could include `increment`, `decrement` and `reset` methods and avoid exposing `set` and `update`:
 
 ```js
-function createCount() {
+function createCounter() {
 	const { subscribe, set, update } = writable(0);
 
 	return {

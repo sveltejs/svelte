@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 
-function createCount() {
+function createCounter() {
 	const { subscribe, set, update } = writable(0);
 
 	return {
@@ -11,4 +11,4 @@ function createCount() {
 	};
 }
 
-export const count = createCount();
+export const counter = createCounter();
