@@ -1,17 +1,17 @@
 <script>
-	import { count } from './stores.js';
+	import { counter } from './stores.js';
 	import Incrementer from './Incrementer.svelte';
 	import Decrementer from './Decrementer.svelte';
 	import Resetter from './Resetter.svelte';
 
-	let count_value;
+	let counterValue;
 
-	count.subscribe(value => {
-		count_value = value;
+	counter.subscribe(value => {
+		counterValue = value;
 	});
 </script>
 
-<h1>The count is {count_value}</h1>
+<h1>The counter is {counterValue}</h1>
 
 <Incrementer/>
 <Decrementer/>

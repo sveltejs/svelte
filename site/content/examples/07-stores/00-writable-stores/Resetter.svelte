@@ -1,8 +1,8 @@
 <script>
-	import { count } from './stores.js';
+	import { counter } from './stores.js';
 
 	function reset() {
-		count.set(0);
+		counter.set(0);
 	}
 </script>
 
