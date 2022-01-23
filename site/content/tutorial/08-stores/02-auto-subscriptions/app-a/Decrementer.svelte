@@ -1,8 +1,8 @@
 <script>
-	import { count } from './stores.js';
+	import { counter } from './stores.js';
 
 	function decrement() {
-		count.update(n => n - 1);
+		counter.update(n => n - 1);
 	}
 </script>
 
