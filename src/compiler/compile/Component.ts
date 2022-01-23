@@ -196,8 +196,8 @@ export default class Component {
 
 		if (add_to_lookup) {
 			if (this.var_lookup.has(variable.name)) {
-				const existsVar = this.var_lookup.get(variable.name);
-				if (existsVar.module && existsVar.imported) {
+				const exists_var = this.var_lookup.get(variable.name);
+				if (exists_var.module && exists_var.imported) {
 					this.error(node as any, compiler_errors.illegal_variable_declaration);
 				}
 			}
