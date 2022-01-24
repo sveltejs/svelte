@@ -26,7 +26,6 @@ export default class BindingWrapper {
 	};
 	snippet: Node;
 	is_readonly: boolean;
-	has_arg: boolean;
 	needs_lock: boolean;
 
 	constructor(block: Block, node: Binding, parent: ElementWrapper | InlineComponentWrapper) {
@@ -53,8 +52,6 @@ export default class BindingWrapper {
 		this.snippet = this.node.expression.manipulate(block);
 
 		this.is_readonly = this.node.is_readonly;
-
-		this.has_arg = this.node.has_arg;
 
 		this.needs_lock = this.node.name === 'currentTime';  // TODO others?
 	}

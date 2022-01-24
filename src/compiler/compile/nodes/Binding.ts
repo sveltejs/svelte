@@ -31,7 +31,6 @@ export default class Binding extends Node {
 	raw_expression: ESTreeNode; // TODO exists only for bind:this — is there a more elegant solution?
 	is_contextual: boolean;
 	is_readonly: boolean;
-	has_arg: boolean;
 
 	constructor(component: Component, parent: Element | InlineComponent | Window, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
@@ -91,8 +90,6 @@ export default class Binding extends Node {
 			(isElement(parent) &&
 				((parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
 					(parent.name === 'input' && type === 'file')) /* TODO others? */);
-
-		this.has_arg = sizing.test(this.name);
 	}
 
 	is_readonly_media_attribute() {

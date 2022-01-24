@@ -487,7 +487,6 @@ export default class ElementWrapper extends Wrapper {
 			block.add_variable(animation_frame);
 		}
 
-		const has_arg = binding_group.bindings[0].has_arg;
 		const has_local_function = contextual_dependencies.size > 0 || needs_lock || animation_frame;
 
 		let callee = renderer.reference(handler);
@@ -508,13 +507,6 @@ export default class ElementWrapper extends Wrapper {
 						${callee}.call(${this.var}, ${args});
 					}
 				`);
-			} else if (has_arg) {
-				block.chunks.init.push(b`
-					function ${handler}(arg) {
-						${needs_lock && b`${lock} = true;`}
-						${callee}.call(${this.var}, arg, ${args});
-					}
-				`);
 			} else {
 				block.chunks.init.push(b`
 					function ${handler}() {
@@ -531,10 +523,6 @@ export default class ElementWrapper extends Wrapper {
 			type: 'Identifier',
 			name
 		}));
-
-		if (has_arg) {
-			params.unshift({ type: 'Identifier', name: 'arg' });
-		}
 
 		this.renderer.component.partly_hoisted.push(b`
 			function ${handler}(${params}) {
