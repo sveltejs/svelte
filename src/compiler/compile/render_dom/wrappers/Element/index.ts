@@ -554,7 +554,7 @@ export default class ElementWrapper extends Wrapper {
 
 				if (renderer.options.dev) {
 					block.chunks.mount.push(
-						b`${resize_observer} = @add_resize_observer_dev(${this.var}, ${callee}.bind(${this.var}), ${this.var.name});`
+						b`${resize_observer} = @add_resize_observer_dev(${this.var.name}, ${this.var}, ${callee}.bind(${this.var}));`
 					);
 				} else {
 					block.chunks.mount.push(

@@ -89,9 +89,9 @@ export function set_data_dev(text, data) {
 	text.data = data;
 }
 
-export function add_resize_observer_dev(node: HTMLElement, fn: (arg: any) => void, binding_name: string) {
+export function add_resize_observer_dev(binding_name: string, node: HTMLElement, fn: (arg: any) => void, opts?: ResizeObserverOptions) {
 	if ('ResizeObserver' in  window) {
-		add_resize_observer(node, fn);
+		add_resize_observer(node, fn, opts);
 	} else {
 		throw new Error(`${binding_name} uses the ResizeObserver API, but it is not supported in this browser.`);
 	}
