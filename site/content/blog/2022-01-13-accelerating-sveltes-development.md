@@ -64,4 +64,4 @@ SvelteKit is continuing to progress towards 1.0 and, in just the past week, we h
 
 While a lot of effort has been going into SvelteKit recently, we continue to progress the entire ecosystem. [Svelte 3.46.0](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3460) was one of our biggest releases in awhile with two major new features added: [constants in markup](https://github.com/sveltejs/rfcs/blob/master/text/0007-markup-constants.md) and [style directives](https://github.com/sveltejs/rfcs/blob/master/text/0008-style-directives.md).
 
-Svelte and SvelteKit’s trajectories have been accelerated by the numerous investments above and there will be many more updates to come — subscribe to the [blog](/blog) via [RSS](/blog/rss.xml) or check monthly to be the first to get them.
+Svelte and SvelteKit’s trajectories have been accelerated by the numerous investments above and there will be many more updates to come — subscribe to the [blog](/blog) via [RSS](https://svelte.dev/blog/rss.xml) or check monthly to be the first to get them.
