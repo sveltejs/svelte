@@ -1,0 +1,355 @@
+{
+	"html": {
+		"start": 0,
+		"end": 252,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 29,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 22,
+						"type": "StyleDirective",
+						"name": "color",
+						"value": [
+							{
+								"start": 18,
+								"end": 21,
+								"type": "Text",
+								"raw": "red",
+								"data": "red"
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"start": 29,
+				"end": 30,
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"start": 30,
+				"end": 59,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 35,
+						"end": 52,
+						"type": "StyleDirective",
+						"name": "color",
+						"value": [
+							{
+								"start": 48,
+								"end": 51,
+								"type": "Text",
+								"raw": "red",
+								"data": "red"
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"start": 59,
+				"end": 60,
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"start": 60,
+				"end": 87,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 65,
+						"end": 80,
+						"type": "StyleDirective",
+						"name": "color",
+						"value": [
+							{
+								"start": 77,
+								"end": 80,
+								"type": "Text",
+								"raw": "red",
+								"data": "red"
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"start": 87,
+				"end": 88,
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"start": 88,
+				"end": 127,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 93,
+						"end": 120,
+						"type": "StyleDirective",
+						"name": "color",
+						"value": [
+							{
+								"start": 106,
+								"end": 109,
+								"type": "Text",
+								"raw": "red",
+								"data": "red"
+							},
+							{
+								"start": 109,
+								"end": 119,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 110,
+									"end": 118,
+									"loc": {
+										"start": {
+											"line": 4,
+											"column": 22
+										},
+										"end": {
+											"line": 4,
+											"column": 30
+										}
+									},
+									"name": "variable"
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"start": 127,
+				"end": 128,
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"start": 128,
+				"end": 167,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 133,
+						"end": 160,
+						"type": "StyleDirective",
+						"name": "color",
+						"value": [
+							{
+								"start": 146,
+								"end": 149,
+								"type": "Text",
+								"raw": "red",
+								"data": "red"
+							},
+							{
+								"start": 149,
+								"end": 159,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 150,
+									"end": 158,
+									"loc": {
+										"start": {
+											"line": 5,
+											"column": 22
+										},
+										"end": {
+											"line": 5,
+											"column": 30
+										}
+									},
+									"name": "variable"
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"start": 167,
+				"end": 168,
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"start": 168,
+				"end": 205,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 173,
+						"end": 198,
+						"type": "StyleDirective",
+						"name": "color",
+						"value": [
+							{
+								"start": 185,
+								"end": 188,
+								"type": "Text",
+								"raw": "red",
+								"data": "red"
+							},
+							{
+								"start": 188,
+								"end": 198,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 189,
+									"end": 197,
+									"loc": {
+										"start": {
+											"line": 6,
+											"column": 21
+										},
+										"end": {
+											"line": 6,
+											"column": 29
+										}
+									},
+									"name": "variable"
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"start": 205,
+				"end": 206,
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"start": 206,
+				"end": 252,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 211,
+						"end": 245,
+						"type": "StyleDirective",
+						"name": "color",
+						"value": [
+							{
+								"start": 223,
+								"end": 245,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "TemplateLiteral",
+									"start": 224,
+									"end": 244,
+									"loc": {
+										"start": {
+											"line": 7,
+											"column": 18
+										},
+										"end": {
+											"line": 7,
+											"column": 38
+										}
+									},
+									"expressions": [
+										{
+											"type": "Identifier",
+											"start": 235,
+											"end": 242,
+											"loc": {
+												"start": {
+													"line": 7,
+													"column": 29
+												},
+												"end": {
+													"line": 7,
+													"column": 36
+												}
+											},
+											"name": "literal"
+										}
+									],
+									"quasis": [
+										{
+											"type": "TemplateElement",
+											"start": 225,
+											"end": 233,
+											"loc": {
+												"start": {
+													"line": 7,
+													"column": 19
+												},
+												"end": {
+													"line": 7,
+													"column": 27
+												}
+											},
+											"value": {
+												"raw": "template",
+												"cooked": "template"
+											},
+											"tail": false
+										},
+										{
+											"type": "TemplateElement",
+											"start": 243,
+											"end": 243,
+											"loc": {
+												"start": {
+													"line": 7,
+													"column": 37
+												},
+												"end": {
+													"line": 7,
+													"column": 37
+												}
+											},
+											"value": {
+												"raw": "",
+												"cooked": ""
+											},
+											"tail": true
+										}
+									]
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			}
+		]
+	}
+}

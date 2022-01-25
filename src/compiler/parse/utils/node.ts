@@ -19,6 +19,8 @@ export function to_string(node: TemplateNode) {
 			return '{@html} block';
 		case 'DebugTag':
 			return '{@debug} block';
+		case 'ConstTag':
+			return '{@const} tag';
 		case 'Element':
 		case 'InlineComponent':
 		case 'Slot':

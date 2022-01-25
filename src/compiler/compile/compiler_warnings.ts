@@ -76,6 +76,10 @@ export default {
 		code: 'a11y-unknown-role',
 		message: `A11y: Unknown role '${role}'` + (suggestion ? ` (did you mean '${suggestion}'?)` : '')
 	}),
+	a11y_no_redundant_roles: (role: string | boolean) => ({
+		code: 'a11y-no-redundant-roles',
+		message: `A11y: Redundant role '${role}'`
+	}),
 	a11y_accesskey: {
 		code: 'a11y-accesskey',
 		message: 'A11y: Avoid using accesskey'

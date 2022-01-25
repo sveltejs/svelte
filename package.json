@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.44.3",
+  "version": "3.46.2",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -83,8 +83,8 @@
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
-    "test": "mocha",
-    "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts",
+    "test": "mocha --exit",
+    "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts --exit",
     "quicktest": "mocha",
     "precoverage": "c8 mocha",
     "coverage": "c8 report --reporter=text-lcov > coverage.lcov && c8 report --reporter=html",
@@ -132,7 +132,7 @@
     "acorn": "^8.4.1",
     "agadoo": "^1.1.0",
     "c8": "^5.0.1",
-    "code-red": "^0.2.3",
+    "code-red": "^0.2.4",
     "codecov": "^3.5.0",
     "css-tree": "^1.1.2",
     "eslint": "^7.32.0",

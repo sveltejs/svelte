@@ -126,7 +126,15 @@ export default class InlineComponent extends Node {
 						slot_template.attributes.push(attribute);
 					}
 				}
-		
+				// transfer const
+				for (let i = child.children.length - 1; i >= 0; i--) {
+					const child_child = child.children[i];
+					if (child_child.type === 'ConstTag') {
+						slot_template.children.push(child_child);
+						child.children.splice(i, 1);
+					}
+				}
+
 				children.push(slot_template);
 				info.children.splice(i, 1);
 			}

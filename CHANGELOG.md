@@ -1,5 +1,35 @@
 # Svelte changelog
 
+## Unreleased
+
+* Ignore whitespace in `{#each}` blocks when containing elements with `animate:` ([#5477](https://github.com/sveltejs/svelte/pull/5477))
+
+## 3.46.2
+
+* Export `FlipParams` interface from `svelte/animate` ([#7103](https://github.com/sveltejs/svelte/issues/7103))
+* Fix `style:` directive reactivity inside `{#each}` block ([#7136](https://github.com/sveltejs/svelte/issues/7136))
+
+## 3.46.1
+
+* Handle `style:kebab-case` directives ([#7122](https://github.com/sveltejs/svelte/issues/7122))
+* Improve AST produced for `style:` directives ([#7127](https://github.com/sveltejs/svelte/pull/7127))
+
+## 3.46.0
+
+* Implement `{@const}` tag ([RFC #33](https://github.com/sveltejs/rfcs/pull/33), [#6413](https://github.com/sveltejs/svelte/pull/6413))
+* Implement `style:` directive ([RFC #42](https://github.com/sveltejs/rfcs/pull/42), [#5923](https://github.com/sveltejs/svelte/pull/5923))
+* Fix style manager conflicts when using multiple Svelte instances ([#7026](https://github.com/sveltejs/svelte/issues/7026))
+* Fix hydration when using `{@html}` ([#7115](https://github.com/sveltejs/svelte/issues/7115))
+
+## 3.45.0
+
+* Fix non-boolean attribute rendering in SSR to render truthy values as-is ([#6121](https://github.com/sveltejs/svelte/issues/6121))
+* Fix binding to a member expression also invalidating the member property ([#6921](https://github.com/sveltejs/svelte/issues/6921))
+* Fix default values in `{#each}`/etc. destructurings not being considered references for the purposes of compiler warnings ([#6964](https://github.com/sveltejs/svelte/issues/6964))
+* Fix `{:else if}` value incorrectly being cached ([#7043](https://github.com/sveltejs/svelte/pull/7043))
+* Add `a11y-no-redundant-roles` warning ([#7067](https://github.com/sveltejs/svelte/pull/7067))
+* Fix code generation error with arrow functions whose bodies are object destructuring assignments ([#7087](https://github.com/sveltejs/svelte/issues/7087))
+
 ## 3.44.3
 
 * Fix `bind:this` binding inside `onMount` for manually instantiated component ([#6760](https://github.com/sveltejs/svelte/issues/6760))
