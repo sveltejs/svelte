@@ -11,7 +11,6 @@ import { Node, Identifier } from 'estree';
 import add_to_set from '../../../utils/add_to_set';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import handle_select_value_binding from './handle_select_value_binding';
-import { sizing } from '../../../../utils/patterns';
 
 export default class BindingWrapper {
 	node: Binding;
@@ -388,7 +387,7 @@ function get_event_handler(
 	const value = get_value_from_dom(renderer, binding.parent, binding, block, contextual_dependencies);
 
 	const mutation = b`
-		${lhs} = ${sizing.test(name) ? `arg.${name}` : value};
+		${lhs} = ${value};
 		${set_store}
 	`;
 

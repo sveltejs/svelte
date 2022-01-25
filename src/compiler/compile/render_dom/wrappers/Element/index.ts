@@ -12,7 +12,7 @@ import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
-import { dimensions, sizing } from '../../../../utils/patterns';
+import { dimensions, sizing_border_box, sizing_content_box, sizing_device_pixel_content_box } from '../../../../utils/patterns';
 import Binding from './Binding';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
@@ -63,9 +63,19 @@ const events = [
 			dimensions.test(name)
 	},
 	{
-		event_names: ['elementresizeobserve'],
+		event_names: ['elementresizeobserveborderbox'],
 		filter: (_node: Element, name: string) =>
-			sizing.test(name)
+			sizing_border_box.test(name)
+	},
+	{
+		event_names: ['elementresizeobservecontentbox'],
+		filter: (_node: Element, name: string) =>
+			sizing_content_box.test(name)
+	},
+	{
+		event_names: ['elementresizeobservedevicepixelcontentbox'],
+		filter: (_node: Element, name: string) =>
+			sizing_device_pixel_content_box.test(name)
 	},
 
 	// media events
@@ -547,18 +557,30 @@ export default class ElementWrapper extends Wrapper {
 				block.chunks.destroy.push(
 					b`${resize_listener}();`
 				);
-			} else if (name === 'elementresizeobserve') {
-				// special case
+			} else if (name.startsWith('elementresizeobserve')) {
 				const resize_observer = block.get_unique_name(`${this.var.name}_resize_observer`);
 				block.add_variable(resize_observer);
 
+				let box = 'content-box'
+				switch (name) {
+					case 'elementresizeobserveborderbox':
+						box = 'border-box';
+						break;
+					case 'elementresizeobservecontentbox':
+						box = 'content-box';
+						break;
+					case 'elementresizeobservedevicepixelcontentbox':
+						box = 'device-pixel-content-box';
+						break;
+				}
+
 				if (renderer.options.dev) {
 					block.chunks.mount.push(
-						b`${resize_observer} = @add_resize_observer_dev(${this.var.name}, ${this.var}, ${callee}.bind(${this.var}));`
+						b`${resize_observer} = @add_resize_observer_dev(${this.var}, ${callee}, { box: "${box}" });`
 					);
 				} else {
 					block.chunks.mount.push(
-						b`${resize_observer} = @add_resize_observer(${this.var}, ${callee}.bind(${this.var}));`
+						b`${resize_observer} = @add_resize_observer(${this.var}, ${callee}, { box: "${box}" });`
 					);
 				}
 
