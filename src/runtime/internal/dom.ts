@@ -491,15 +491,8 @@ export function claim_comment(nodes:ChildNodeArray, data) {
 		nodes,
 		(node: ChildNode): node is Comment => node.nodeType === 8,
 		(node: Comment) => {
-			const dataStr = '' + data;
-			if (node.data.startsWith(dataStr)) {
-				if (node.data.length !== dataStr.length) {
-					node.data = dataStr;
-					return comment(node.data.slice(dataStr.length));
-				}
-			} else {
-				node.data = dataStr;
-			}
+			node.data =  '' + data;
+			return undefined;
 		},
 		() => comment(data),
 		true
