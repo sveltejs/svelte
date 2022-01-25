@@ -71,7 +71,10 @@ export default class InlineComponent extends Node {
 
 				case 'Transition':
 					return component.error(node, compiler_errors.invalid_transition);
-
+				
+				case 'StyleDirective':
+					throw new Error(`Currently, style directives only work on elements. Error occurred on <${this.name}> component.`);
+	
 				default:
 					throw new Error(`Not implemented: ${node.type}`);
 			}
