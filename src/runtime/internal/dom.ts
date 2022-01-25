@@ -630,7 +630,7 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	};
 }
 
-export function add_resize_observer(node: HTMLElement, fn: () => void, opts?: ResizeObserverOptions) {
+export function add_resize_observer(node: HTMLElement, fn: () => void, opts?: any) {
 	// @ts-ignore ResizeObserver is not available in current tsconfig lib
 	const observer = new ResizeObserver(entries => fn.call(entries.values().next().value));
 	observer.observe(node, opts);
