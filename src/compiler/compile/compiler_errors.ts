@@ -264,6 +264,6 @@ export default {
 	}),
 	invalid_component_style_directive: {
 		code: 'invalid-component-style-directive',
-		message: 'Style directives on components are not currently supported.'
+		message: 'Style directives cannot be used on components'
 	}
 };
