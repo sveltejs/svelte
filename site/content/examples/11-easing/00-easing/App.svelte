@@ -5,12 +5,12 @@
 	import Grid from './Grid.svelte';
 	import Controls from './Controls.svelte';
 
-	import { eases, types } from './eases.js';
+	import { easesGroupBy, eases, types } from './eases.js';
 
-	let current_type = 'In';
-	let current_ease = 'sine';
+	let current_type = easesGroupBy[0];
+	let current_ease = Object.keys(eases)[0];
 	let duration = 2000;
-	let current = eases.get(current_ease)[current_type];
+	let current = eases[current_ease][current_type];
 	let playing = false;
 	let width;
 
@@ -33,7 +33,7 @@
 		playing = false;
 	}
 
-	$: current = eases.get(current_ease)[current_type];
+	$: current = eases[current_ease][current_type];
 	$: current && runAnimations();
 </script>
 

@@ -19,7 +19,7 @@
 			<h3>Ease</h3>
 			{#if mobile}
 				<select bind:value={current_ease}>
-					{#each [...eases] as [name]}
+					{#each Object.keys(eases) as name}
 						<option
 							value={name}
 							class:selected={name === current_ease}
@@ -30,7 +30,7 @@
 				</select>
 			{:else}
 				<ul>
-					{#each [...eases] as [name]}
+					{#each Object.keys(eases) as name}
 						<li
 							class:selected={name === current_ease}
 							on:click={() => current_ease = name}
@@ -43,7 +43,7 @@
 			<h3>Type</h3>
 			{#if mobile }
 				<select bind:value={current_type}>
-					{#each types as [name, type]}
+					{#each types as {name, type}}
 						<option
 							value={type}
 						>
@@ -53,7 +53,7 @@
 				</select>
 			{:else}
 				<ul>
-					{#each types as [name, type]}
+					{#each types as {name, type}}
 						<li
 							class:selected={type === current_type}
 							on:click={() => current_type = type}

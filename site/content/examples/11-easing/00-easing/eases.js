@@ -1,43 +1,40 @@
 import * as eases from 'svelte/easing';
 
-const processed_eases = {};
-
-for (const ease in eases) {
-	if (ease === "linear") {
-		processed_eases.linear = eases.linear;
-	} else {
-		const name = ease.replace(/In$|InOut$|Out$/, '');
-		const type = ease.match(/In$|InOut$|Out$/)[0];
-
-		if (!(name in processed_eases)) processed_eases[name] = {};
-		processed_eases[name][type] = {};
-		processed_eases[name][type].fn = eases[ease];
-
-		let shape = 'M0 1000';
-		for (let i = 1; i <= 1000; i++) {
-			shape = `${shape} L${(i / 1000) * 1000} ${1000 - eases[ease](i / 1000) * 1000} `;
-			processed_eases[name][type].shape = shape;
-		}
-	}
+function calculateShape (easeFn) {
+    let result = 'M0 1000';
+    for (let i = 1; i <= 1000; i++) {
+        result = `${result} L${(i / 1000) * 1000} ${1000 - easeFn(i / 1000) * 1000} `;
+    }
+    return result;
 }
 
-const sorted_eases = new Map([
-	['sine', processed_eases.sine],
-	['quad', processed_eases.quad],
-	['cubic', processed_eases.cubic],
-	['quart', processed_eases.quart],
-	['quint', processed_eases.quint],
-	['expo', processed_eases.expo],
-	['circ', processed_eases.circ],
-	['back', processed_eases.back],
-	['elastic', processed_eases.elastic],
-	['bounce', processed_eases.bounce],
-]);
+function getEasesGroupBy (endings) {
+	const result = {};
+
+	for (const ease in eases) {
+		const ending = endings.find((ending) => ease.endsWith(ending));
+		if (!ending) continue;
+	
+		const key = ending;
+		const name = ease.substring(0, ease.length - ending.length);
+		const fn = eases[ease];
+		const shape = calculateShape(fn);
+	
+		result[name] = result[name] || {};
+		result[name][key] = { fn, shape };
+	}
+
+	return result;
+}
+
+export const easesGroupBy = ['In', 'InOut', 'Out'];
+
+export const processedEases = getEasesGroupBy(easesGroupBy);
 
 export const types = [
-	['Ease In', 'In'],
-	['Ease Out', 'Out'],
-	['Ease In Out', 'InOut']
+    { name: 'Ease In', type: easesGroupBy[0] },
+    { name: 'Ease Out', type: easesGroupBy[1] },
+    { name: 'Ease In Out', type: easesGroupBy[2] },
 ];
 
-export { sorted_eases as eases };
+export { processedEases as eases };
