@@ -7,10 +7,10 @@
 
 	import { easesGroupBy, eases, types } from './eases.js';
 
-	let current_type = easesGroupBy[0];
-	let current_ease = Object.keys(eases)[0];
+	let currentType = easesGroupBy[0];
+	let currentEase = Object.keys(eases)[0];
 	let duration = 2000;
-	let current = eases[current_ease][current_type];
+	let current = eases[currentEase][currentType];
 	let playing = false;
 	let width;
 
@@ -33,7 +33,7 @@
 		playing = false;
 	}
 
-	$: current = eases[current_ease][current_type];
+	$: current = eases[currentEase][currentType];
 	$: current && runAnimations();
 </script>
 
@@ -70,8 +70,8 @@
 		{playing}
 		{width}
 		bind:duration
-		bind:current_ease
-		bind:current_type
+		bind:currentEase
+		bind:currentType
 		on:play={runAnimations}
 	/>
 </div>

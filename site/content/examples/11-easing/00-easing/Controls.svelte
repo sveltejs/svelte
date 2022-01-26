@@ -1,8 +1,8 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 
-	export let current_ease;
-	export let current_type;
+	export let currentEase;
+	export let currentType;
 	export let eases;
 	export let types;
 	export let duration;
@@ -18,11 +18,11 @@
 		<div class="easing-types">
 			<h3>Ease</h3>
 			{#if mobile}
-				<select bind:value={current_ease}>
+				<select bind:value={currentEase}>
 					{#each Object.keys(eases) as name}
 						<option
 							value={name}
-							class:selected={name === current_ease}
+							class:selected={name === currentEase}
 						>
 							{name}
 						</option>
@@ -32,17 +32,18 @@
 				<ul>
 					{#each Object.keys(eases) as name}
 						<li
-							class:selected={name === current_ease}
-							on:click={() => current_ease = name}
+							class:selected={name === currentEase}
+							on:click={() => currentEase = name}
 						>
 							{name}
 						</li>
 					{/each}
 				</ul>
 			{/if}
+
 			<h3>Type</h3>
 			{#if mobile }
-				<select bind:value={current_type}>
+				<select bind:value={currentType}>
 					{#each types as {name, type}}
 						<option
 							value={type}
@@ -55,8 +56,8 @@
 				<ul>
 					{#each types as {name, type}}
 						<li
-							class:selected={type === current_type}
-							on:click={() => current_type = type}
+							class:selected={type === currentType}
+							on:click={() => currentType = type}
 						>
 							{name}
 					</li>
