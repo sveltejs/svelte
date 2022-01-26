@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Ignore whitespace in `{#each}` blocks when containing elements with `animate:` ([#5477](https://github.com/sveltejs/svelte/pull/5477))
+* Fix compiler crash when `{@const}` contains arrow functions ([#7134](https://github.com/sveltejs/svelte/issues/7134))
 
 ## 3.46.2
 
