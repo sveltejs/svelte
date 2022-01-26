@@ -1,9 +1,9 @@
 <script>
-	import { counter } from './stores.js';
+	import { count } from './stores.js';
 </script>
 
-<h1>The counter is {$counter}</h1>
+<h1>The count is {$count}</h1>
 
-<button on:click={counter.increment}>+</button>
-<button on:click={counter.decrement}>-</button>
-<button on:click={counter.reset}>reset</button>
+<button on:click={count.increment}>+</button>
+<button on:click={count.decrement}>-</button>
+<button on:click={count.reset}>reset</button>

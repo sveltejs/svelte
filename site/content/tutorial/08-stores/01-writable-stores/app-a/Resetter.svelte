@@ -1,5 +1,5 @@
 <script>
-	import { counter } from './stores.js';
+	import { count } from './stores.js';
 
 	function reset() {
 		// TODO reset the count
