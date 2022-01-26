@@ -73,7 +73,7 @@ export default class InlineComponent extends Node {
 					return component.error(node, compiler_errors.invalid_transition);
 				
 				case 'StyleDirective':
-					return component.error(node, compiler_errors.invalid_style_directive);
+					return component.error(node, compiler_errors.invalid_component_style_directive);
 	
 				default:
 					throw new Error(`Not implemented: ${node.type}`);

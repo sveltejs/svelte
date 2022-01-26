@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-style-directive",
+		"code": "invalid-component-style-directive",
 		"message": "Style directives on components are not currently supported.",
 		"start": { "line": 7, "column": 19, "character": 97 },
 		"end": { "line": 7, "column": 36, "character": 114 },
