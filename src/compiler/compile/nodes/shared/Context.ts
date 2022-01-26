@@ -187,7 +187,7 @@ function mark_referenced(
 			if (is_reference(node, parent)) {
 				const { name } = flatten_reference(node);
 				if (!scope.is_let(name) && !scope.names.has(name)) {
-					component.add_reference(name);
+					component.add_reference(node, name);
 				}
 			}
 		}
