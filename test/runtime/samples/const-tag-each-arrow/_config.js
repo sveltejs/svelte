@@ -1,6 +1,6 @@
 export default {
 	html: `
-  		<p>#FF0000</p>
+			<p>#FF0000</p>
 			<p>#00FF00</p>
 			<p>#0000FF</p>
 	`,
