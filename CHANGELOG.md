@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Ignore whitespace in `{#each}` blocks when containing elements with `animate:` ([#5477](https://github.com/sveltejs/svelte/pull/5477))
+* Throw compiler error when variable in `context="instance"` collides with import in `context="module"` ([#7090](https://github.com/sveltejs/svelte/issues/7090))
 * Fix compiler crash when `{@const}` contains arrow functions ([#7134](https://github.com/sveltejs/svelte/issues/7134))
 
 ## 3.46.2
