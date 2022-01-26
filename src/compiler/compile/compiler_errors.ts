@@ -190,6 +190,10 @@ export default {
 		code: 'illegal-global',
 		message: `${name} is an illegal variable name`
 	}),
+	illegal_variable_declaration: {
+		code: 'illegal-variable-declaration',
+		message: 'Cannot declare same variable name which is imported inside <script context="module">'
+	},
 	cyclical_reactive_declaration: (cycle: string[]) => ({
 		code: 'cyclical-reactive-declaration',
 		message: `Cyclical dependency detected: ${cycle.join(' → ')}`

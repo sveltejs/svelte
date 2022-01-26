@@ -110,7 +110,7 @@ export default class Expression {
 							dependencies.add(name);
 						}
 
-						component.add_reference(name);
+						component.add_reference(node, name);
 						component.warn_if_undefined(name, nodes[0], template_scope);
 					}
 
@@ -144,7 +144,7 @@ export default class Expression {
 							const each_block = template_scope.get_owner(name);
 							(each_block as EachBlock).has_binding = true;
 						} else {
-							component.add_reference(name);
+							component.add_reference(node, name);
 
 							const variable = component.var_lookup.get(name);
 							if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
@@ -220,7 +220,7 @@ export default class Expression {
 							});
 						} else {
 							dependencies.add(name);
-							component.add_reference(name); // TODO is this redundant/misplaced?
+							component.add_reference(node, name); // TODO is this redundant/misplaced?
 						}
 					} else if (is_contextual(component, template_scope, name)) {
 						const reference = block.renderer.reference(node, ctx);
@@ -267,7 +267,7 @@ export default class Expression {
 
 						this.replace(id as any);
 
-						component.add_var({
+						component.add_var(node, {
 							name: id.name,
 							internal: true,
 							hoistable: true,

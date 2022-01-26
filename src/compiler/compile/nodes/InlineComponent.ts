@@ -29,7 +29,7 @@ export default class InlineComponent extends Node {
 		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
 			const name = info.name.split('.')[0]; // accommodate namespaces
 			component.warn_if_undefined(name, info, scope);
-			component.add_reference(name);
+			component.add_reference(this as any, name);
 		}
 
 		this.name = info.name;
@@ -141,10 +141,10 @@ export default class InlineComponent extends Node {
 		}
 
 		if (info.children.some(node => not_whitespace_text(node))) {
-			children.push({ 
+			children.push({
 				start: info.start,
 				end: info.end,
-				type: 'SlotTemplate', 
+				type: 'SlotTemplate',
 				name: 'svelte:fragment',
 				attributes: [],
 				children: info.children
