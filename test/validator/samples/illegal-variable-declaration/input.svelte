@@ -1,9 +1,9 @@
 <script context="module">
-	import { FOO } from "./dummy.svelte"
+	import { FOO } from './dummy.svelte';
 </script>
 
 <script>
-	let FOO
+	let FOO;
 </script>
 
 {FOO}
