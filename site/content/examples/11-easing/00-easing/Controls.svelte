@@ -44,7 +44,7 @@
 			<h3>Type</h3>
 			{#if mobile }
 				<select bind:value={currentType}>
-					{#each types as {name, type}}
+					{#each types as [name, type]}
 						<option
 							value={type}
 						>
@@ -54,7 +54,7 @@
 				</select>
 			{:else}
 				<ul>
-					{#each types as {name, type}}
+					{#each types as [name, type]}
 						<li
 							class:selected={type === currentType}
 							on:click={() => currentType = type}

@@ -32,9 +32,9 @@ export const easesGroupBy = ['In', 'InOut', 'Out'];
 export const processedEases = getEasesGroupBy(easesGroupBy);
 
 export const types = [
-    { name: 'Ease In', type: easesGroupBy[0] },
-    { name: 'Ease Out', type: easesGroupBy[1] },
-    { name: 'Ease In Out', type: easesGroupBy[2] },
+    ['Ease In', easesGroupBy[0]],
+    ['Ease Out', easesGroupBy[1]],
+    ['Ease In Out', easesGroupBy[2]],
 ];
 
 export { processedEases as eases };
