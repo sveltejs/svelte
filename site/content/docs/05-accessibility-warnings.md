@@ -221,7 +221,7 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 <!-- A11y: Redundant role 'button' -->
 <button role="button" />
 
-<!-- A11y: Redunant role 'img' -->
+<!-- A11y: Redundant role 'img' -->
 <img role="img" src="foo.jpg" />
 ```
 
