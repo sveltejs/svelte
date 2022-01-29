@@ -18,6 +18,7 @@ import Text from '../Text';
 import Title from '../Title';
 import Window from '../Window';
 import { TemplateNode } from '../../../interfaces';
+import { push_array } from '../../../utils/push_array';
 
 export type Children = ReturnType<typeof map_children>;
 
@@ -60,7 +61,7 @@ export default function map_children(component, parent, scope, children: Templat
 		if (use_ignores) component.pop_ignores(), ignores = [];
 
 		if (node.type === 'Comment' && node.ignores.length) {
-			ignores.push(...node.ignores);
+			push_array(ignores, node.ignores);
 		}
 
 		if (last) last.next = node;
