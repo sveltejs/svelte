@@ -3,7 +3,6 @@ title: Setting up your editor
 description: Instructions for configuring linting and syntax highlighting
 author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
-draft: true
 ---
 
 *__Coming soon__*
