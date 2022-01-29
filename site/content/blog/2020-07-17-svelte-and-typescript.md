@@ -10,7 +10,7 @@ It's been by far the most requested feature for a while, and it's finally here: 
 We think it'll give you a much nicer development experience — one that also scales beautifully to larger Svelte code bases — regardless of whether you use TypeScript or JavaScript.
 
 <figure>
-	<img alt="Screenshot of TypeScript in Svelte" src="media/svelte-ts.png">
+	<img alt="Screenshot of TypeScript in Svelte" src="/media/svelte-ts.png">
 	<figcaption>Image of TypeScript + Svelte in VS Code (theme is <a href="https://marketplace.visualstudio.com/items?itemName=karyfoundation.theme-karyfoundation-themes">Kary Pro</a>.)</figcaption>
 </figure>
 

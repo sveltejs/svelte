@@ -1,13 +1,15 @@
-import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 import AwaitBlock from './AwaitBlock';
 import Component from '../Component';
 import { TemplateNode } from '../../interfaces';
+import get_const_tags from './shared/get_const_tags';
+import ConstTag from './ConstTag';
 
 export default class CatchBlock extends AbstractBlock {
 	type: 'CatchBlock';
 	scope: TemplateScope;
+	const_tags: ConstTag[];
 
 	constructor(component: Component, parent: AwaitBlock, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
@@ -18,7 +20,8 @@ export default class CatchBlock extends AbstractBlock {
 				this.scope.add(context.key.name, parent.expression.dependencies, this);
 			});
 		}
-		this.children = map_children(component, parent, this.scope, info.children);
+
+		([this.const_tags, this.children] = get_const_tags(info.children, component, this, parent));
 
 		if (!info.skip) {
 			this.warn_if_empty_block();

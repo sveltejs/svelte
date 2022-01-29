@@ -10,7 +10,7 @@ Lots to cover this month with releases from across the Svelte ecosystem. Most im
 Let's dive into the news 🐬
 
 ## What's new in `sveltejs/svelte`
-* SSR store handling has been reworked to subscribe and unsubscribe as in DOM mode. SSR stores should work much more consistently now (**3.31.2**, see [custom stores](https://svelte.dev/examples#custom-stores) and [Server-side component API ](https://svelte.dev/docs#run-time-server-side-component-api))
+* SSR store handling has been reworked to subscribe and unsubscribe as in DOM mode. SSR stores should work much more consistently now (**3.31.2**, see [custom stores](https://svelte.dev/examples/custom-stores) and [Server-side component API ](https://svelte.dev/docs#run-time-server-side-component-api))
 * Multiple instances of the same action are now allowed on an element (**3.32.0**, [example](https://svelte.dev/repl/01a14375951749dab9579cb6860eccde?version=3.32.0))
 * The new `foreign` namespace should make it easier for alternative compile targets (like Svelte Native and SvelteGUI) by disabling certain HTML5-specific behaviour and checks (**3.32.0**, [more info](https://github.com/sveltejs/svelte/pull/5652))
 * Support for inline comment sourcemaps in code from preprocessors (**3.32.0**)

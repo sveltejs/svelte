@@ -12,13 +12,13 @@ We think you're going to love it.
 
 ## What is Svelte?
 
-Svelte is a component framework — like React or Vue — but with an important difference. Traditional frameworks allow you to write *declarative* state-driven code, but there's a penalty: the browser must do extra work to convert those declarative structures into DOM operations, using techniques like [virtual DOM diffing](blog/virtual-dom-is-pure-overhead) that eat into your frame budget and tax the garbage collector.
+Svelte is a component framework — like React or Vue — but with an important difference. Traditional frameworks allow you to write *declarative* state-driven code, but there's a penalty: the browser must do extra work to convert those declarative structures into DOM operations, using techniques like [virtual DOM diffing](/blog/virtual-dom-is-pure-overhead) that eat into your frame budget and tax the garbage collector.
 
 Instead, Svelte runs at *build time*, converting your components into highly efficient *imperative* code that surgically updates the DOM. As a result, you're able to write ambitious applications with excellent performance characteristics.
 
-The first version of Svelte was all about [testing a hypothesis](blog/frameworks-without-the-framework) — that a purpose-built compiler could generate rock-solid code that delivered a great user experience. The second was a small upgrade that tidied things up a bit.
+The first version of Svelte was all about [testing a hypothesis](/blog/frameworks-without-the-framework) — that a purpose-built compiler could generate rock-solid code that delivered a great user experience. The second was a small upgrade that tidied things up a bit.
 
-Version 3 is a significant overhaul. Our focus for the last five or six months has been on delivering an outstanding *developer* experience. It's now possible to write components with [significantly less boilerplate](blog/write-less-code) than you'll find elsewhere. Try the brand new [tutorial](tutorial) and see what we mean — if you're familiar with other frameworks we think you'll be pleasantly surprised.
+Version 3 is a significant overhaul. Our focus for the last five or six months has been on delivering an outstanding *developer* experience. It's now possible to write components with [significantly less boilerplate](/blog/write-less-code) than you'll find elsewhere. Try the brand new [tutorial](/tutorial) and see what we mean — if you're familiar with other frameworks we think you'll be pleasantly surprised.
 
 To make that possible we first needed to rethink the concept at the heart of modern UI frameworks: reactivity.
 
@@ -94,4 +94,4 @@ We don't take this lightly: hopefully once you've experienced Svelte 3 you'll un
 
 As grueling as this release has been, we're nowhere near finished. We have a ton of ideas for generating smarter, more compact code, and a long feature wish-list. [Sapper](https://sapper.svelte.dev), our Next.js-style app framework, is still in the middle of being updated to use Svelte 3. The [Svelte Native](https://svelte-native.technology/) community project, which allows you to write Android and iOS apps in Svelte, is making solid progress but deserves more complete support from core. We don't yet have the bounty of editor extensions, syntax highlighters, component kits, devtools and so on that other frameworks have, and we should fix that. We *really* want to add first-class TypeScript support.
 
-But in the meantime we think Svelte 3 is the best way to build web apps yet. Take an hour to go through the [tutorial](tutorial) and we hope to convince you of the same. Either way, we'd love to see you in our [Discord chatroom](chat) and on [GitHub](https://github.com/sveltejs/svelte) — everyone is welcome, especially you.
+But in the meantime we think Svelte 3 is the best way to build web apps yet. Take an hour to go through the [tutorial](/tutorial) and we hope to convince you of the same. Either way, we'd love to see you in our [Discord chatroom](https://svelte.dev/chat) and on [GitHub](https://github.com/sveltejs/svelte) — everyone is welcome, especially you.

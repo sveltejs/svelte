@@ -76,9 +76,9 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 			slot_scopes
 		}));
 
-		slot_scopes.forEach(({ input, output }, name) => {
+		slot_scopes.forEach(({ input, output, statements }, name) => {
 			slot_fns.push(
-				p`${name}: (${input}) => ${output}`
+				p`${name}: (${input}) => { ${statements}; return ${output}; }`
 			);
 		});
 	}

@@ -3,6 +3,9 @@ import { Node, Identifier, Expression } from 'estree';
 import { walk } from 'estree-walker';
 import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 import { clone } from '../../../utils/clone';
+import Component from '../../Component';
+import flatten_reference from '../../utils/flatten_reference';
+import TemplateScope from './TemplateScope';
 
 export interface Context {
 	key: Identifier;
@@ -11,7 +14,21 @@ export interface Context {
 	default_modifier: (node: Node, to_ctx: (name: string) => Node) => Node;
 }
 
-export function unpack_destructuring(contexts: Context[], node: Node, modifier: Context['modifier'] = node => node, default_modifier: Context['default_modifier'] = node => node) {
+export function unpack_destructuring({
+	contexts,
+	node,
+	modifier = (node) => node,
+	default_modifier = (node) => node,
+	scope,
+	component
+}: {
+	contexts: Context[];
+	node: Node;
+	modifier?: Context['modifier'];
+	default_modifier?: Context['default_modifier'];
+	scope: TemplateScope;
+	component: Component;
+}) {
 	if (!node) return;
 
 	if (node.type === 'Identifier') {
@@ -29,13 +46,41 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
 			if (element && element.type === 'RestElement') {
-				unpack_destructuring(contexts, element, node => x`${modifier(node)}.slice(${i})` as Node, default_modifier);
+				unpack_destructuring({
+					contexts,
+					node: element,
+					modifier: (node) => x`${modifier(node)}.slice(${i})` as Node,
+					default_modifier,
+					scope,
+					component
+				});
 			} else if (element && element.type === 'AssignmentPattern') {
 				const n = contexts.length;
+				mark_referenced(element.right, scope, component);
 
-				unpack_destructuring(contexts, element.left, node => x`${modifier(node)}[${i}]`, (node, to_ctx) => x`${node} !== undefined ? ${node} : ${update_reference(contexts, n, element.right, to_ctx)}` as Node);
+				unpack_destructuring({
+					contexts,
+					node: element.left,
+					modifier: (node) => x`${modifier(node)}[${i}]`,
+					default_modifier: (node, to_ctx) =>
+						x`${node} !== undefined ? ${node} : ${update_reference(
+							contexts,
+							n,
+							element.right,
+							to_ctx
+						)}` as Node,
+					scope,
+					component
+				});
 			} else {
-				unpack_destructuring(contexts, element, node => x`${modifier(node)}[${i}]` as Node, default_modifier);
+				unpack_destructuring({
+					contexts,
+					node: element,
+					modifier: (node) => x`${modifier(node)}[${i}]` as Node,
+					default_modifier,
+					scope,
+					component
+				});
 			}
 		});
 	} else if (node.type === 'ObjectPattern') {
@@ -43,12 +88,17 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 
 		node.properties.forEach((property) => {
 			if (property.type === 'RestElement') {
-				unpack_destructuring(
+				unpack_destructuring({
 					contexts,
-					property.argument,
-					node => x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node,
-					default_modifier
-				);
+					node: property.argument,
+					modifier: (node) =>
+						x`@object_without_properties(${modifier(
+							node
+						)}, [${used_properties}])` as Node,
+					default_modifier,
+					scope,
+					component
+				});
 			} else {
 				const key = property.key as Identifier;
 				const value = property.value;
@@ -57,16 +107,43 @@ export function unpack_destructuring(contexts: Context[], node: Node, modifier: 
 				if (value.type === 'AssignmentPattern') {
 					const n = contexts.length;
 
-					unpack_destructuring(contexts, value.left, node => x`${modifier(node)}.${key.name}`, (node, to_ctx) => x`${node} !== undefined ? ${node} : ${update_reference(contexts, n, value.right, to_ctx)}` as Node);
+					mark_referenced(value.right, scope, component);
+
+					unpack_destructuring({
+						contexts,
+						node: value.left,
+						modifier: (node) => x`${modifier(node)}.${key.name}`,
+						default_modifier: (node, to_ctx) =>
+							x`${node} !== undefined ? ${node} : ${update_reference(
+								contexts,
+								n,
+								value.right,
+								to_ctx
+							)}` as Node,
+						scope,
+						component
+					});
 				} else {
-					unpack_destructuring(contexts, value, node => x`${modifier(node)}.${key.name}` as Node, default_modifier);
+					unpack_destructuring({
+						contexts,
+						node: value,
+						modifier: (node) => x`${modifier(node)}.${key.name}` as Node,
+						default_modifier,
+						scope,
+						component
+					});
 				}
 			}
 		});
 	}
 }
 
-function update_reference(contexts: Context[], n: number, expression: Expression, to_ctx: (name: string) => Node): Node {
+function update_reference(
+	contexts: Context[],
+	n: number,
+	expression: Expression,
+	to_ctx: (name: string) => Node
+): Node {
 	const find_from_context = (node: Identifier) => {
 		for (let i = n; i < contexts.length; i++) {
 			const { key } = contexts[i];
@@ -85,7 +162,12 @@ function update_reference(contexts: Context[], n: number, expression: Expression
 	expression = clone(expression) as Expression;
 	walk(expression, {
 		enter(node, parent: Node) {
-			if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
+			if (
+				is_reference(
+					node as NodeWithPropertyDefinition,
+					parent as NodeWithPropertyDefinition
+				)
+			) {
 				this.replace(find_from_context(node as Identifier));
 				this.skip();
 			}
@@ -93,4 +175,21 @@ function update_reference(contexts: Context[], n: number, expression: Expression
 	});
 
 	return expression;
+}
+
+function mark_referenced(
+	node: Node,
+	scope: TemplateScope,
+	component: Component
+) {
+	walk(node, {
+		enter(node: any, parent: any) {
+			if (is_reference(node, parent)) {
+				const { name } = flatten_reference(node);
+				if (!scope.is_let(name) && !scope.names.has(name)) {
+					component.add_reference(node, name);
+				}
+			}
+		}
+	});
 }

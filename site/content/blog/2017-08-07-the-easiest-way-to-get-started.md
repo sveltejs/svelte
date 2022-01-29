@@ -12,7 +12,7 @@ Because of that, getting started with it can be a little bit confusing at first.
 
 ## 1. Use the REPL
 
-The [Svelte REPL](repl) is the easiest way to begin. You can choose from a list of examples to get you started, and tweak them until they do what you want.
+The [Svelte REPL](/repl) is the easiest way to begin. You can choose from a list of examples to get you started, and tweak them until they do what you want.
 
 <aside><p>You'll need to have <a href="https://nodejs.org/">Node.js</a> installed, and know how to use the terminal</p></aside>
 
@@ -52,7 +52,7 @@ npm run dev
 
 This will create a new project in the `my-svelte-project` directory, install its dependencies, and start a server on http://localhost:5000.
 
-You can find more information about using TypeScript [here](blog/svelte-and-typescript).
+You can find more information about using TypeScript [here](/blog/svelte-and-typescript).
 
 Once you've tinkered a bit and understood how everything fits together, you can fork [sveltejs/template](https://github.com/sveltejs/template) and start doing this instead:
 

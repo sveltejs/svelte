@@ -453,6 +453,29 @@ The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the 
 The `{@debug}` tag without any arguments will insert a `debugger` statement that gets triggered when *any* state changes, as opposed to the specified variables.
 
 
+### {@const ...}
+
+```sv
+{@const assignment}
+```
+
+---
+
+The `{@const ...}` tag defines a local constant.
+
+```sv
+<script>
+  export let boxes;
+</script>
+
+{#each boxes as box}
+  {@const area = box.width * box.height}
+	{box.width} * {box.height} = {area}
+{/each}
+```
+
+`{@const}` is only allowed as direct child of `{#each}`, `{:then}`, `{:catch}`, `<Component />` or `<svelte:fragment />`.
+
 
 ### Element directives
 
@@ -821,6 +844,46 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 <div class:active class:inactive={!active} class:isAdmin>...</div>
 ```
 
+#### style:*property*
+
+```sv
+style:property={value}
+```
+```sv
+style:property="value"
+```
+```sv
+style:property
+```
+
+---
+
+The `style:` directive provides a shorthand for setting multiple styles on an element.
+
+```sv
+<!-- These are equivalent -->
+<div style:color="red">...</div>
+<div style="color: red;">...</div>
+
+<!-- Variables can be used -->
+<div style:color={myColor}>...</div>
+
+<!-- Shorthand, for when property and variable name match -->
+<div style:color>...</div>
+
+<!-- Multiple styles can be included -->
+<div style:color style:width="12rem" style:background-color={darkMode ? "black" : "white"}>...</div>
+```
+
+---
+
+When `style:` directives are combined with `style` attributes, the directives will take precedence:
+
+```sv
+<div style="color: blue;" style:color="red">This will be red</div>
+```
+
+
 
 #### use:*action*
 
@@ -929,7 +992,7 @@ The `transition:` directive indicates a *bidirectional* transition, which means 
 {/if}
 ```
 
-> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](docs#run-time-client-side-component-api).
+> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](/docs#run-time-client-side-component-api).
 
 ##### Transition parameters
 
@@ -1022,7 +1085,7 @@ A custom transition function can also return a `tick` function, which is called 
 {/if}
 ```
 
-If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](tutorial/deferred-transitions) possible.
+If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](/tutorial/deferred-transitions) possible.
 
 
 ##### Transition events
@@ -1148,9 +1211,9 @@ DOMRect {
 
 ---
 
-An animation is triggered when the contents of a [keyed each block](docs#template-syntax-each) are re-ordered. Animations do not run when an element is added or removed, only when the index of an existing data item within the each block changes. Animate directives must be on an element that is an *immediate* child of a keyed each block.
+An animation is triggered when the contents of a [keyed each block](/docs#template-syntax-each) are re-ordered. Animations do not run when an element is added or removed, only when the index of an existing data item within the each block changes. Animate directives must be on an element that is an *immediate* child of a keyed each block.
 
-Animations can be used with Svelte's [built-in animation functions](docs#run-time-svelte-animate) or [custom animation functions](docs#template-syntax-element-directives-animate-fn-custom-animation-functions).
+Animations can be used with Svelte's [built-in animation functions](/docs#run-time-svelte-animate) or [custom animation functions](/docs#template-syntax-element-directives-animate-fn-custom-animation-functions).
 
 ```sv
 <!-- When `list` is reordered the animation will run-->
@@ -1257,7 +1320,7 @@ on:eventname={handler}
 
 ---
 
-Components can emit events using [createEventDispatcher](docs#run-time-svelte-createeventdispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
+Components can emit events using [createEventDispatcher](/docs#run-time-svelte-createeventdispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
 
 ```sv
 <SomeComponent on:whatever={handler}/>
@@ -1608,6 +1671,7 @@ All except `scrollX` and `scrollY` are readonly.
 <svelte:window bind:scrollY={y}/>
 ```
 
+> Note that the page will not be scrolled to the initial value to avoid accessibility issues. Only subsequent changes to the bound variable of `scrollX` and `scrollY` will cause scrolling. However, if the scrolling behaviour is desired, call `scrollTo()` in `onMount()`.
 
 ### `<svelte:body>`
 
@@ -1617,7 +1681,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 ---
 
-Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](docs#template-syntax-element-directives-use-action) on the `<body>` element.
+Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](/docs#template-syntax-element-directives-use-action) on the `<body>` element.
 
 `<svelte:body>` also has to appear at the top level of your component.
 
@@ -1644,7 +1708,7 @@ As with `<svelte:window>` and `<svelte:body>`, this element has to appear at the
 
 ```sv
 <svelte:head>
-	<link rel="stylesheet" href="tutorial/dark-theme.css">
+	<link rel="stylesheet" href="/tutorial/dark-theme.css">
 </svelte:head>
 ```
 
@@ -1657,7 +1721,7 @@ As with `<svelte:window>` and `<svelte:body>`, this element has to appear at the
 
 ---
 
-The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the [compiler section](docs#compile-time-svelte-compile). The possible options are:
+The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the [compiler section](/docs#compile-time-svelte-compile). The possible options are:
 
 * `immutable={true}` — you never use mutable data, so the compiler can do simple referential equality checks to determine if values have changed
 * `immutable={false}` — the default. Svelte will be more conservative about whether or not mutable objects have changed
@@ -1672,7 +1736,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 
 ### `<svelte:fragment>`
 
-The `<svelte:fragment>` element allows you to place content in a [named slot](docs#template-syntax-slot-slot-name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
+The `<svelte:fragment>` element allows you to place content in a [named slot](/docs#template-syntax-slot-slot-name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
 
 ```sv
 <!-- Widget.svelte -->
