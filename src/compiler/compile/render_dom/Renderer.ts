@@ -264,7 +264,7 @@ export default class Renderer {
 
 		// TODO is this correct?
 		if (this.component.var_lookup.get(name)) {
-			this.component.add_reference(name);
+			this.component.add_reference(node, name);
 		}
 
 		if (member !== undefined) {
