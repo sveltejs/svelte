@@ -27,7 +27,7 @@ export function onDestroy(fn: () => any) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
-interface DispatchOptions {
+export interface DispatchOptions {
 	cancelable?: boolean;
 }
 

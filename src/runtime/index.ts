@@ -11,6 +11,7 @@ export {
 	hasContext,
 	tick,
 	createEventDispatcher,
+	DispatchOptions,
 	SvelteComponentDev as SvelteComponent,
 	SvelteComponentTyped
 } from 'svelte/internal';
