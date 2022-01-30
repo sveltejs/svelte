@@ -228,7 +228,7 @@ dispatch: ((name: string, detail?: any) => void) = createEventDispatcher();
 
 Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-component-event). Event dispatchers are functions that can take two arguments: `name` and `detail`.
 
-Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture) and are not cancellable with `event.preventDefault()`. The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
+Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture). The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
 
 ```sv
 <script>
@@ -252,6 +252,27 @@ Events dispatched from child components can be listened to in their parent. Any 
 </script>
 
 <Child on:notify="{callbackFunction}"/>
+```
+
+---
+
+Events can also be cancelable by passing a third parameter to the dispatch function. Event listeners can then call `event.preventDefault()` to control the dispatcher's return value.
+
+```sv
+<script>
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+
+	function notify() {
+		const shouldContinue = dispatch('notify', 'detail value', { cancelable: true });
+		if (shouldContinue) {
+			// no one called preventDefault
+		} else {
+			// a listener called preventDefault
+		}
+	}
+</script>
 ```
 
 ### `svelte/store`
