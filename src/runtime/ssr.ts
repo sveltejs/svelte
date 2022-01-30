@@ -6,7 +6,6 @@ export {
 	hasContext,
 	tick,
 	createEventDispatcher,
-	DispatchOptions,
 	SvelteComponent,
 	SvelteComponentTyped
 } from './index';
