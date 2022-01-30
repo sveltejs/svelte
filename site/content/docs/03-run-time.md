@@ -221,7 +221,7 @@ Retrieves the whole context map that belongs to the closest parent component. Mu
 #### `createEventDispatcher`
 
 ```js
-dispatch: ((name: string, detail?: any) => void) = createEventDispatcher();
+dispatch: ((name: string, detail?: any, options?: DispatchOptions) => boolean) = createEventDispatcher();
 ```
 
 ---

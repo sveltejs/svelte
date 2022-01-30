@@ -37,7 +37,7 @@ export function createEventDispatcher<EventMap extends {} = any>(): <
 	type: EventKey,
 	detail?: EventMap[EventKey],
 	options?: DispatchOptions
-) => void {
+) => boolean {
 	const component = get_current_component();
 
 	return (type: string, detail?: any, { cancelable = false } = {}): boolean => {
