@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add a third parameter to the returned function of `createEventDispatcher` that allows passing an object of `{ cancelable: true }` to create a cancelable custom event. The returned function will also return a boolean depending on whether the event is cancelled.
+
 ## 3.46.3
 
 * Ignore whitespace in `{#each}` blocks when containing elements with `animate:` ([#5477](https://github.com/sveltejs/svelte/pull/5477))
