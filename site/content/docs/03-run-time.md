@@ -256,7 +256,7 @@ Events dispatched from child components can be listened to in their parent. Any 
 
 ---
 
-Events can also be cancelable by passing a third parameter to the dispatch function. Event listeners can then call `event.preventDefault()` to control the dispatcher's return value.
+Events can be cancelable by passing a third parameter to the dispatch function. The function returns `false` if the event is cancelled with `event.preventDefault()`, otherwise it returns `true`.
 
 ```sv
 <script>
