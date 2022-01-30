@@ -27,9 +27,17 @@ export function onDestroy(fn: () => any) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
-export function createEventDispatcher<
-	EventMap extends {} = any
->(): <EventKey extends Extract<keyof EventMap, string>>(type: EventKey, detail?: EventMap[EventKey]) => void {
+interface DispatchOptions {
+	cancelable?: boolean;
+}
+
+export function createEventDispatcher<EventMap extends {} = any>(): <
+	EventKey extends Extract<keyof EventMap, string>
+>(
+	type: EventKey,
+	detail?: EventMap[EventKey],
+	options?: DispatchOptions
+) => void {
 	const component = get_current_component();
 
 	return (type: string, detail?: any, { cancelable = false } = {}): boolean => {
