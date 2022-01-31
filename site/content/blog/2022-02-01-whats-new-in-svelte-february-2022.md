@@ -15,11 +15,12 @@ Let's take a look...
 - Check out **3.46.1 - 3.46.3** for fixes to the `{@const}` tag and `style:` directive, along with a number of fixes to animations
 
 ## What's new in SvelteKit
-- `inlineStyleThreshold` allows you to specify where inline stylesheets are inserted into the page ([#2620](https://github.com/sveltejs/kit/pull/2620))
-- `beforeNavigate`/`afterNavigate` lifecycle functions lets you add functionality before or after a page navigation ([#3293](https://github.com/sveltejs/kit/pull/3293))
-- Content Security Policy (CSP) is now supported for increased security when using inline javascript or stylesheets ([#3499](https://github.com/sveltejs/kit/pull/3499))
-- `kit.routes` config allows you to customise public/private modules during build ([#3576](https://github.com/sveltejs/kit/pull/3576))
-- `prerender.subfolders` config lets you prerender index.html files as their subfolder's name ([#2632](https://github.com/sveltejs/kit/pull/2632)) 
+- Breaking change: use `Request` and `Response` objects in endpoints and hooks ([#3384](https://github.com/sveltejs/kit/pull/3384))
+- `inlineStyleThreshold` allows you to specify where inline stylesheets are inserted into the page ([Docs](https://kit.svelte.dev/docs#configuration-inlinestylethreshold), [#2620](https://github.com/sveltejs/kit/pull/2620))
+- `beforeNavigate`/`afterNavigate` lifecycle functions lets you add functionality before or after a page navigation ([Docs](https://kit.svelte.dev/docs#modules-$app-navigation), [#3293](https://github.com/sveltejs/kit/pull/3293))
+- Content Security Policy (CSP) is now supported for increased security when using inline javascript or stylesheets ([Docs](https://kit.svelte.dev/docs#configuration-csp), [#3499](https://github.com/sveltejs/kit/pull/3499))
+- `kit.routes` config allows you to customise public/private modules during build ([Docs](https://kit.svelte.dev/docs#configuration-routes), [#3576](https://github.com/sveltejs/kit/pull/3576))
+- `prerender.createIndexFiles` config lets you prerender index.html files as their subfolder's name ([Docs](https://kit.svelte.dev/docs#configuration-prerender), [#2632](https://github.com/sveltejs/kit/pull/2632)) 
 
 
 ---
@@ -61,8 +62,6 @@ _To Read_
 - [How to build a full stack serverless application with Svelte and GraphQL](https://dev.to/shadid12/how-to-build-a-full-stack-serverless-application-with-svelte-graphql-and-fauna-5427) by Shadid Haque
 - [How to Deploy SvelteKit Apps to Github Pages](https://sveltesaas.com/articles/sveltekit-github-pages-guide/)
 - [Creating a dApp with SvelteKit](https://anthonyriley.org/2021/12/31/creating-a-dapp-with-sveltekit/) by Anthony Riley
-- [Accelerated Guide to Fullstack Web3 with ASS (Anchor, Solana, and Svelte)](https://dev.to/0xmuse/accelerated-guide-to-fullstack-web3-with-ass-anchor-solana-and-svelte-1mg) by 0xMuse
-- [Building a cryptocurrency site with Svelte, Python and TimescaleDB](https://tradingstrategy.ai/blog/building-cryptocurrency-website) by Trading Strategy
 - [Comparing Svelte Reactivity Options](https://opendirective.net/2022/01/06/comparing-svelte-reactivity-options/) by Steve Lee
 
 _To Watch_
