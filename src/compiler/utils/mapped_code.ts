@@ -2,6 +2,7 @@ import { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/rem
 import remapping from '@ampproject/remapping';
 import { SourceMap } from 'magic-string';
 import { Source, Processed } from '../preprocess/types';
+import { push_array } from './push_array';
 
 export type SourceLocation = {
 	line: number;
@@ -58,14 +59,6 @@ function merge_tables<T>(this_table: T[], other_table: T[]): [T[], number[], boo
 		}
 	}
 	return [new_table, idx_map, val_changed, idx_changed];
-}
-
-function pushArray<T>(_this: T[], other: T[]) {
-	// We use push to mutate in place for memory and perf reasons
-	// We use the for loop instead of _this.push(...other) to avoid the JS engine's function argument limit (65,535 in JavascriptCore)
-	for (let i = 0; i < other.length; i++) {
-		_this.push(other[i]);
-	}
 }
 
 export class MappedCode {
@@ -159,10 +152,10 @@ export class MappedCode {
 		}
 
 		// combine last line + first line
-		pushArray(m1.mappings[m1.mappings.length - 1], m2.mappings.shift());
+		push_array(m1.mappings[m1.mappings.length - 1], m2.mappings.shift());
 
 		// append other lines
-		pushArray(m1.mappings, m2.mappings);
+		push_array(m1.mappings, m2.mappings);
 
 		return this;
 	}

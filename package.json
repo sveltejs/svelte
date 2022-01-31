@@ -127,7 +127,7 @@
     "@typescript-eslint/parser": "^4.31.2",
     "acorn": "^8.4.1",
     "agadoo": "^1.1.0",
-    "code-red": "^0.2.4",
+    "code-red": "^0.2.5",
     "css-tree": "^1.1.2",
     "eslint": "^7.32.0",
     "eslint-plugin-import": "^2.24.2",
