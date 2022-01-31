@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* prevent `maximum call stack size exceeded` error on large pages ([#4694](https://github.com/sveltejs/svelte/issues/4694))
+* Avoid `maximum call stack size exceeded` errors on large components ([#4694](https://github.com/sveltejs/svelte/issues/4694))
 
 ## 3.46.3
 
