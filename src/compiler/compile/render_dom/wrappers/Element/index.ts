@@ -26,6 +26,7 @@ import Action from '../../../nodes/Action';
 import MustacheTagWrapper from '../MustacheTag';
 import RawMustacheTagWrapper from '../RawMustacheTag';
 import is_dynamic from '../shared/is_dynamic';
+import { push_array } from '../../../../utils/push_array';
 
 interface BindingGroup {
 	events: string[];
@@ -597,7 +598,7 @@ export default class ElementWrapper extends Wrapper {
 		this.attributes.forEach((attribute) => {
 			if (attribute.node.name === 'class') {
 				const dependencies = attribute.node.get_dependencies();
-				this.class_dependencies.push(...dependencies);
+				push_array(this.class_dependencies, dependencies);
 			}
 		});
 
