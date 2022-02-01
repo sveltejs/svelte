@@ -5,34 +5,42 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-Happy February, everyone! Over the last month or so, we've seen Svelte and SvelteKit develop at rapid speed, new community rules across the [Reddit](https://www.reddit.com/r/sveltejs/comments/s9n8ou/new_rules/), [GitHub](https://github.com/sveltejs/community/blob/main/CODE_OF_CONDUCT.md) and [Discord](https://discord.com/channels/457912077277855764/831611707667382303/935264550436102315), and quite a few amazing apps, tutorials and libraries.
+Happy February, everyone! Over the last month or so, we've seen Svelte and SvelteKit [develop at rapid speed](accelerating-sveltes-development), new community rules across the [Reddit](https://www.reddit.com/r/sveltejs/comments/s9n8ou/new_rules/), [GitHub](https://github.com/sveltejs/community/blob/main/CODE_OF_CONDUCT.md) and [Discord](https://discord.com/channels/457912077277855764/831611707667382303/935264550436102315), and quite a few amazing apps, tutorials and libraries.
 
 Let's take a look...
 
 ## Highlights from the Svelte changelog
-- **3.45.0** brought a [new a11y warning `a11y-no-redundant-roles`](https://svelte.dev/docs#accessibility-warnings-a11y-no-redundant-roles), destructring and caching fixes
+- **3.45.0** brought a [new a11y warning `a11y-no-redundant-roles`](https://svelte.dev/docs#accessibility-warnings-a11y-no-redundant-roles), destructuring and caching fixes
 - **3.46.0** added the much requested [`{@const}` tag](https://svelte.dev/docs#template-syntax-const) and [`style:` directive](https://svelte.dev/docs#template-syntax-element-directives-style-property)
 - Check out **3.46.1 - 3.46.3** for fixes to the `{@const}` tag and `style:` directive, along with a number of fixes to animations
+- [AST output is now available in the Svelte REPL](https://svelte.dev/repl/hello-world)
 
 ## What's new in SvelteKit
-- Breaking change: use `Request` and `Response` objects in endpoints and hooks ([#3384](https://github.com/sveltejs/kit/pull/3384))
 - `inlineStyleThreshold` allows you to specify where inline stylesheets are inserted into the page ([Docs](https://kit.svelte.dev/docs#configuration-inlinestylethreshold), [#2620](https://github.com/sveltejs/kit/pull/2620))
 - `beforeNavigate`/`afterNavigate` lifecycle functions lets you add functionality before or after a page navigation ([Docs](https://kit.svelte.dev/docs#modules-$app-navigation), [#3293](https://github.com/sveltejs/kit/pull/3293))
+- Platform context can now be passed from adapters ([Docs](https://kit.svelte.dev/docs#adapters-supported-environments-platform-specific-context), [#3429](https://github.com/sveltejs/kit/pull/3429))
+- Hooks now have an `ssr` parameter in `resolve` to make it easier to skip SSR, when needed ([Docs](https://kit.svelte.dev/docs#hooks-handle, [#2804](https://github.com/sveltejs/kit/pull/2804))
+- `$page.stuff` provides a mechanism for pages to pass data 'upward' to layouts ([Docs](https://kit.svelte.dev/docs#loading-input-stuff), [#3252](https://github.com/sveltejs/kit/pull/3252))
+- Fallthrough routes let you specify where to route when an route can't be loaded ([Docs](https://kit.svelte.dev/docs#routing-advanced-fallthrough-routes), [#3217](https://github.com/sveltejs/kit/pull/3217))
+
+**New configs**
 - Content Security Policy (CSP) is now supported for increased security when using inline javascript or stylesheets ([Docs](https://kit.svelte.dev/docs#configuration-csp), [#3499](https://github.com/sveltejs/kit/pull/3499))
 - `kit.routes` config allows you to customise public/private modules during build ([Docs](https://kit.svelte.dev/docs#configuration-routes), [#3576](https://github.com/sveltejs/kit/pull/3576))
-- `prerender.createIndexFiles` config lets you prerender index.html files as their subfolder's name ([Docs](https://kit.svelte.dev/docs#configuration-prerender), [#2632](https://github.com/sveltejs/kit/pull/2632)) 
+- `prerender.createIndexFiles` config lets you prerender index.html files as their subfolder's name ([Docs](https://kit.svelte.dev/docs#configuration-prerender), [#2632](https://github.com/sveltejs/kit/pull/2632))
+- HTTP methods can now be overridden using `kit.methodOverride` ([Docs](https://kit.svelte.dev/docs#routing-endpoints-http-method-overrides), [#2989](https://github.com/sveltejs/kit/pull/2989))
+
+**Config changes**
+- `config.kit.hydrate` and `config.kit.router` are now nested under `config.kit.browser` ([Docs](https://kit.svelte.dev/docs#configuration-browser), [3578](https://github.com/sveltejs/kit/pull/3578))
+
+**Breaking change**
+- use `Request` and `Response` objects in endpoints and hooks ([#3384](https://github.com/sveltejs/kit/pull/3384))
 
 
 ---
 
 ## Community Showcase
 
-**A quick note before diving into the Showcase:** The 2021 [State of JS](https://stateofjs.com/) survey is now live (yes, in 2022). A lot of newcomers to Svelte saw it for the first time in the State of JS survey and, every year, Svelte gets more and more attention through it. If you've got a few minutes, please share your honest opinion about Svelte in the survey. It means a lot!
-
-Now onto the fun stuff...
-
 **Apps & Sites**
-- [AST output is now available in the Svelte REPL](https://svelte.dev/repl/hello-world)
 - [timb(re)](https://paullj.github.io/timb) is a live music programming environment
 - [Music for Programming](https://musicforprogramming.net/latest/) is a series of mixes intended for listening while `${task}` to focus the brain and inspire the mind
 - [Team Tale](https://teamtale.app/) allows two authors to write the same story in a tag-team sort of fashion
@@ -44,6 +52,7 @@ Now onto the fun stuff...
 - [base.report](https://base.report/) is a modern research platform for serious investors
 - [String](https://string.kampsy.xyz/) turns your Phone into a secure portable audio recorder, making it easy to capture and share personal notes, family moments, classroom lectures, and more
 - [The Raytracer Challenge REPL](https://github.com/jakobwesthoff/the_raytracer_challenge_repl) provides a live editor interface to configure a raytraced scene and render it live in any modern browser
+- [awesome-svelte-kit](https://github.com/janosh/awesome-svelte-kit) is a list of awesome examples of SvelteKit in the wild
 - [Map Projection Explorer](https://www.geo-projections.com/) lets you explore different map projections and explains their differences
 - [Rubiks](https://github.com/MeharGaur/rubiks) is a Rubik's Cube simulator
 - [Pianisto](https://pianisto.net/) is a working piano made with SVG, ToneJS and a lot of patience
