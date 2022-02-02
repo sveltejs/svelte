@@ -7,7 +7,7 @@
 * Better error message when trying to use style directives on inline components ([#7177](https://github.com/sveltejs/svelte/issues/7177))
 * Add `FormData` as a known global ([#7199](https://github.com/sveltejs/svelte/pull/7199))
 * Mark `css`/`instance`/`module` Ast properties as optional ([#7204](https://github.com/sveltejs/svelte/pull/7204))
-* Add a third parameter to the returned function of `createEventDispatcher` that allows passing an object of `{ cancelable: true }` to create a cancelable custom event. The returned function will also return a boolean depending on whether the event is cancelled. ([#7064](https://github.com/sveltejs/svelte/pull/7064))
+* Add a third parameter to the returned function of `createEventDispatcher` that allows passing an object of `{ cancelable: true }` to create a cancelable custom event. The returned function will also return a boolean depending on whether the event is cancelled ([#7064](https://github.com/sveltejs/svelte/pull/7064))
 
 ## 3.46.3
 
