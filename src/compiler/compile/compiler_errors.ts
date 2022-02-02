@@ -265,5 +265,9 @@ export default {
 	cyclical_const_tags: (cycle: string[]) => ({
 		code: 'cyclical-const-tags',
 		message: `Cyclical dependency detected: ${cycle.join(' → ')}`
-	})
+	}),
+	invalid_component_style_directive: {
+		code: 'invalid-component-style-directive',
+		message: 'Style directives cannot be used on components'
+	}
 };
