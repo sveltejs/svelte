@@ -43,4 +43,21 @@ export default class Text extends Node {
 
 		return parent_element.namespace || elements_without_text.has(parent_element.name);
 	}
+
+	keep_space(): boolean {
+		if (this.component.component_options.preserveWhitespace) return true;
+		return this.within_pre();
+	}
+
+	within_pre(): boolean {
+		let node = this.parent;
+		while (node) {
+			if (node.type === 'Element' && node.name === 'pre') {
+				return true;
+			}
+			node = node.parent;
+		}
+
+		return false;
+	}
 }
