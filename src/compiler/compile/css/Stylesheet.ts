@@ -8,6 +8,7 @@ import { CssNode } from './interfaces';
 import hash from '../utils/hash';
 import compiler_warnings from '../compiler_warnings';
 import { extract_ignores_above_position } from '../../utils/extract_svelte_ignore';
+import { push_array } from '../../utils/push_array';
 
 function remove_css_prefix(name: string): string {
 	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
@@ -351,7 +352,7 @@ export default class Stylesheet {
 							const at_rule_declarations = node.block.children
 								.filter(node => node.type === 'Declaration')
 								.map(node => new Declaration(node));
-							atrule.declarations.push(...at_rule_declarations);
+							push_array(atrule.declarations, at_rule_declarations);
 						}
 
 						current_atrule = atrule;

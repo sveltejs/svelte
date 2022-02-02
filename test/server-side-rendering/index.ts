@@ -83,9 +83,13 @@ describe('ssr', () => {
 				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
 
 				try {
-					(compileOptions.preserveComments
-						? assert.htmlEqualWithComments
-						: assert.htmlEqual)(html, expectedHtml);
+					if (config.withoutNormalizeHtml) {
+						assert.strictEqual(html.trim(), expectedHtml.trim().replace(/\r\n/g, '\n'));
+					} else {
+						(compileOptions.preserveComments
+							? assert.htmlEqualWithComments
+							: assert.htmlEqual)(html, expectedHtml);
+					}
 				} catch (error) {
 					if (shouldUpdateExpected()) {
 						fs.writeFileSync(`${dir}/_expected.html`, html);
