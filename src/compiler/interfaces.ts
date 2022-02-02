@@ -131,9 +131,9 @@ export interface Style extends BaseNode {
 
 export interface Ast {
 	html: TemplateNode;
-	css: Style;
-	instance: Script;
-	module: Script;
+	css?: Style;
+	instance?: Script;
+	module?: Script;
 }
 
 export interface Warning {
