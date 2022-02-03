@@ -28,7 +28,7 @@ In `ContactCard.svelte`, add a `name` attribute to each slot:
 </article>
 ```
 
-Then, add elements with corresponding `slot="..."` attributes inside the `<ContactCard>` component:
+Then, add elements with corresponding `slot="..."` attributes inside the `<App>` component:
 
 ```html
 <ContactCard>
