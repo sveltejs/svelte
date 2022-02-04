@@ -10,7 +10,7 @@ import Block from '../../render_dom/Block';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
 import { b } from 'code-red';
 import { invalidate } from '../../render_dom/invalidate';
-import { Node, FunctionExpression, Identifier } from 'estree';
+import { BaseNode, Node, BaseFunction, FunctionExpression, Identifier, Pattern, MemberExpression } from 'estree';
 import { INode } from '../interfaces';
 import { is_reserved_keyword } from '../../utils/reserved_keywords';
 import replace_object from '../../utils/replace_object';
@@ -254,11 +254,33 @@ export default class Expression {
 					const declaration = b`const ${id} = ${node}`;
 
 					if (owner.type === 'ConstTag') {
+						const param_names_stack: string[][] = [];
+						const is_base_function = (node: BaseNode): node is BaseFunction => 'params' in node;
+						const is_member_expression = (node: BaseNode): node is MemberExpression => 'computed' in node;
+						const push_params = (params: Pattern[]) => {
+							const param_names: string[] = [];
+							params.forEach((param => {
+								walk(param, {
+									enter(node: Node) {
+										if (node.type === 'Identifier') param_names.push(node.name);
+									}
+								});
+							}));
+							param_names_stack.push(param_names);
+						};
+						const is_context = (node: Identifier, parent: Node, key: string): boolean => {
+							if (key === 'params' || (key === 'property' && is_member_expression(parent) && !parent.computed)) return false;
+							return !param_names_stack.some((param_names) => param_names.includes(node.name));
+						};
 						walk(node, {
-							enter(node: Node) {
-								if (node.type === 'Identifier') {
+							enter(node: Node, parent: Node, key: string) {
+								if (is_base_function(node)) push_params(node.params);
+								if (node.type === 'Identifier' && is_context(node, parent, key)) {
 									this.replace(block.renderer.reference(node, ctx));
 								}
+							},
+							leave(node: Node) {
+								if (is_base_function(node)) param_names_stack.pop();
 							}
 						});
 					} else if (dependencies.size === 0 && contextual_dependencies.size === 0) {
