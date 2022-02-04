@@ -36,6 +36,8 @@ type ExtractObjectValues<Object extends Record<any, any>> = Object[keyof Object]
 type ConstructDispatchFunction<EventMap extends Record<string, any>, EventKey extends keyof EventMap> =
 	EventMap[EventKey] extends never
 	? (type: EventKey) => void
+	: undefined extends EventMap[EventKey]
+	? (type: EventKey, detail?: EventMap[EventKey]) => void
 	: (type: EventKey, detail: EventMap[EventKey]) => void
 
 type CreateDispatchFunctionMap<EventMap> = {
