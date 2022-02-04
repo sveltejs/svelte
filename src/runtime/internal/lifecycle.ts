@@ -27,12 +27,29 @@ export function onDestroy(fn: () => any) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void
+	? I
+	: never
+
+type ExtractObjectValues<Object extends Record<any, any>> = Object[keyof Object]
+
+type ConstructDispatchFunction<EventMap extends Record<string, any>, EventKey extends keyof EventMap> =
+	EventMap[EventKey] extends never
+	? (type: EventKey) => void
+	: (type: EventKey, detail: EventMap[EventKey]) => void
+
+type CreateDispatchFunctionMap<EventMap> = {
+	[Key in keyof EventMap]: ConstructDispatchFunction<EventMap, Key>
+}
+
+type EventDispatcher<EventMap extends Record<string, any>> = UnionToIntersection<ExtractObjectValues<CreateDispatchFunctionMap<EventMap>>>
+
 export function createEventDispatcher<
-	EventMap extends {} = any
->(): <EventKey extends Extract<keyof EventMap, string>>(type: EventKey, detail?: EventMap[EventKey]) => void {
+	EventMap extends Record<string, any> = any
+>(): EventDispatcher<EventMap> {
 	const component = get_current_component();
 
-	return (type: string, detail?: any) => {
+	return ((type: string, detail?: any) => {
 		const callbacks = component.$$.callbacks[type];
 
 		if (callbacks) {
@@ -43,7 +60,7 @@ export function createEventDispatcher<
 				fn.call(component, event);
 			});
 		}
-	};
+	}) as EventDispatcher<EventMap>;
 }
 
 export function setContext<T>(key, context: T) {
@@ -59,7 +76,7 @@ export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
 }
 
 export function hasContext(key): boolean {
-	return get_current_component().$$.context.has(key);	
+	return get_current_component().$$.context.has(key);
 }
 
 // TODO figure out if we still want to support
