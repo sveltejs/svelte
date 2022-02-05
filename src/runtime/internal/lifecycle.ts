@@ -34,9 +34,9 @@ type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
 type ExtractObjectValues<Object extends Record<any, any>> = Object[keyof Object]
 
 type ConstructDispatchFunction<EventMap extends Record<string, any>, EventKey extends keyof EventMap> =
-	EventMap[EventKey] extends never
+	EventMap[EventKey] extends never | null
 	? (type: EventKey) => void
-	: undefined extends EventMap[EventKey]
+	: null extends EventMap[EventKey]
 	? (type: EventKey, detail?: EventMap[EventKey]) => void
 	: (type: EventKey, detail: EventMap[EventKey]) => void
 
