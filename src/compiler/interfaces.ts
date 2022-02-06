@@ -118,10 +118,49 @@ export interface Script extends BaseNode {
 	content: Program;
 }
 
+export interface StyleAttribute extends BaseNode {
+  type: 'Attribute';
+  name: string;
+  value: true | MustacheTag | any[];
+}
+
+export interface StyleSelector extends BaseNode {
+  type: 'Selector';
+  children: any[];
+}
+
+export interface StyleDeclarationValue extends BaseNode {
+  type: 'Value';
+  children: any[];
+}
+
+export interface StyleDeclaration extends BaseNode {
+  type: 'Declaration';
+  important: boolean;
+  property: string;
+  value: StyleDeclarationValue;
+}
+
+export interface StyleNode extends BaseNode {
+  type: 'Rule';
+  prelude: {
+    type: 'SelectorList';
+    children: StyleSelector[];
+    start: number;
+    end: number;
+  };
+  block: {
+    type: 'Block';
+    children: StyleDeclaration[];
+    start: number;
+    end: number;
+  }
+}
+
 export interface Style extends BaseNode {
 	type: 'Style';
-	attributes: any[]; // TODO
-	children: any[]; // TODO add CSS node types
+	attributes: StyleAttribute[];
+	children: StyleNode[];
 	content: {
 		start: number;
 		end: number;
