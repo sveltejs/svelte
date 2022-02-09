@@ -21,12 +21,8 @@ export function flip(node: Element, { from, to }: { from: DOMRect; to: DOMRect }
 	const transform = style.transform === 'none' ? '' : style.transform;
 
 	const [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
-	const scale = {
-		x: to.width / node.clientWidth,
-		y: to.height / node.clientHeight
-	};
-	const dx = ((from.left / scale.x) + (from.width / scale.x) * ox / (to.width / scale.x)) - ((to.left / scale.x) + ox);
-	const dy = ((from.top / scale.y) + (from.height / scale.y) * oy / (to.height / scale.y)) - ((to.top / scale.y) + oy);
+	const dx = ((from.left - to.left) * node.clientWidth + from.width * ox) / to.width - ox;
+	const dy = ((from.top - to.top) * node.clientHeight + from.height * oy) / to.height - oy;
 
 	const {
 		delay = 0,
