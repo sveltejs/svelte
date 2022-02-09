@@ -1,5 +1,6 @@
 import { cubicOut, cubicInOut, linear } from 'svelte/easing';
 import { assign, is_function } from 'svelte/internal';
+
 /** 
  * 
  * Easing functions specify the rate of change over time and are useful when working with Svelte's built-in transitions and animations as well as the tweened and spring utilities. `svelte/easing` contains 31 named exports, a `linear` ease and 3 variants of 10 different easing functions: `in`, `out` and `inOut`.
@@ -113,6 +114,7 @@ export interface FadeParams {
 	/** (`function`, default `linear`) — an [easing function](https://svelte.dev/docs#run-time-svelte-easing) */
 	easing?: EasingFunction;
 }
+
 /**
  * 
  * ```html
@@ -257,6 +259,7 @@ export interface SlideParams {
 	/** (`function`, default `cubicOut`) — an [easing function](https://svelte.dev/docs#run-time-svelte-easing) */
 	easing?: EasingFunction;
 }
+
 /**
  * 
  * ```html
@@ -340,6 +343,7 @@ export interface ScaleParams {
 	/** (`number`, default 0) - the opacity value to animate out to and in from */
 	opacity?: number;
 }
+
 /**
  * 
  * ```html
@@ -418,6 +422,7 @@ export interface DrawParams {
 	/** (`function`, default `cubicInOut`) — an [easing function](https://svelte.dev/docs#run-time-svelte-easing) */
 	easing?: EasingFunction;
 }
+
 /**
  * 
  * ```html
@@ -510,6 +515,7 @@ export interface CrossfadeParams {
 }
 
 type ClientRectMap = Map<any, { rect: ClientRect }>;
+
 /**
  * 
  * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.

@@ -284,7 +284,7 @@ export class SvelteComponent {
 		};
 	}
 	/**
-	 *  * 
+	 * 
 	 * ```ts
 	 * component.$set(props)
 	 * ```
