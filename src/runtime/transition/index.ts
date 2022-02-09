@@ -510,6 +510,9 @@ export interface CrossfadeParams {
 	duration?: number | ((len: number) => number);
 	/** (`function`, default `cubicOut`) — an [easing function](https://svelte.dev/docs#run-time-svelte-easing) */
 	easing?: EasingFunction;
+}
+
+export interface CrossfadeInput extends CrossfadeParams {
 	/** (`function`) — A fallback [transition](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) to use for send when there is no matching element being received, and for receive when there is no element being sent.  */
 	fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
 }
@@ -551,7 +554,7 @@ type ClientRectMap = Map<any, { rect: ClientRect }>;
  * @param options 
  * @returns a pair of transitions 
  */
-export function crossfade({ fallback, ...defaults }: CrossfadeParams): [
+export function crossfade({ fallback, ...defaults }: CrossfadeInput): [
 	(
 		node: Element,
 		params: CrossfadeParams & {
