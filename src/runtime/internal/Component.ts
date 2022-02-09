@@ -239,12 +239,12 @@ export class SvelteComponent {
 	$$set?: ($$props: any) => void;
 	/**
 	 * 
-	   * ```ts
-	   * component.$destroy()
-	   * ```
-	   * 
-	   * Removes a component from the DOM and triggers any `onDestroy` handlers.
-	   * 
+	 * ```ts
+	 * component.$destroy()
+	 * ```
+	 * 
+	 * Removes a component from the DOM and triggers any `onDestroy` handlers.
+	 * 
 	 */
 	$destroy() {
 		destroy_component(this, 1);
