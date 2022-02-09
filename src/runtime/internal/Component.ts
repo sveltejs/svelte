@@ -38,7 +38,7 @@ interface T$$ {
 	on_destroy: any[];
 	skip_bound: boolean;
 	on_disconnect: any[];
-	root:Element | ShadowRoot
+	root: Element | ShadowRoot
 }
 
 export function bind(component, name, callback) {
@@ -237,12 +237,43 @@ if (typeof HTMLElement === 'function') {
 export class SvelteComponent {
 	$$: T$$;
 	$$set?: ($$props: any) => void;
-
+	/**
+	 * 
+	   * ```ts
+	   * component.$destroy()
+	   * ```
+	   * 
+	   * Removes a component from the DOM and triggers any `onDestroy` handlers.
+	   * 
+	 */
 	$destroy() {
 		destroy_component(this, 1);
 		this.$destroy = noop;
 	}
-
+	/**
+	 * 
+	 * ```ts
+	 * component.$on(event, callback)
+	 * ```
+	 * 
+	 * ---
+	 * 
+	 * Causes the `callback` function to be called whenever the component dispatches an `event`.
+	 * 
+	 * A function is returned that will remove the event listener when called.
+	 * 
+	 * ```ts
+	 * const off = app.$on('selected', event => {
+	 * 	console.log(event.detail.selection);
+	 * });
+	 * 
+	 * off();
+	 * ```
+	 * 
+	 * @param type 
+	 * @param callback 
+	 * @returns a function  that will remove the event listener when called.
+	 */
 	$on(type, callback) {
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 		callbacks.push(callback);
@@ -252,7 +283,23 @@ export class SvelteComponent {
 			if (index !== -1) callbacks.splice(index, 1);
 		};
 	}
-
+	/**
+	 *  * 
+	 * ```ts
+	 * component.$set(props)
+	 * ```
+	 * 
+	 * ---
+	 * 
+	 * Programmatically sets props on an instance. `component.$set({ x: 1 })` is equivalent to `x = 1` inside the component's `<script>` block.
+	 * 
+	 * Calling this method schedules an update for the next microtask — the DOM is *not* updated synchronously.
+	 * 
+	 * ```ts
+	 * component.$set({ answer: 42 });
+	 * ```
+	 * 
+	 */
 	$set($$props) {
 		if (this.$$set && !is_empty($$props)) {
 			this.$$.skip_bound = true;

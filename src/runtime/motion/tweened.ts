@@ -54,30 +54,127 @@ function get_interpolator(a, b) {
 	throw new Error(`Cannot interpolate ${type} values`);
 }
 
-interface Options<T> {
+export interface TweenedOptions<T> {
+	/**(`number`, default 0) — milliseconds before starting */ 
 	delay?: number;
+	/** (`number` | `function`, default 400) — milliseconds the tween lasts*/
 	duration?: number | ((from: T, to: T) => number);
+	/** (`function`, default `t => t`) — an [easing function](https://svelte.dev/docs#run-time-svelte-easing) */
 	easing?: (t: number) => number;
+	/**
+	 * (`function`) —   it allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours
+	 */
 	interpolate?: (a: T, b: T) => (t: number) => T;
 }
 
-type Updater<T> = (target_value: T, value: T) => T;
+export type TweenedUpdater<T> = (target_value: T, value: T) => T;
 
 export interface Tweened<T> extends Readable<T> {
-	set(value: T, opts?: Options<T>): Promise<void>;
+	set(value: T, opts?: TweenedOptions<T>): Promise<void>;
 
-	update(updater: Updater<T>, opts?: Options<T>): Promise<void>;
+	update(updater: TweenedUpdater<T>, opts?: TweenedOptions<T>): Promise<void>;
 }
 
-export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
-	const store = writable(value);
+/**
+ * 
+ * ```ts
+ * store = tweened(value: any, options)
+ * ```
+ * 
+ * Tweened stores update their values over a fixed duration. The following options are available:
+ * 
+ * * `delay` (`number`, default 0) — milliseconds before starting
+ * * `duration` (`number` | `function`, default 400) — milliseconds the tween lasts
+ * * `easing` (`function`, default `t => t`) — an [easing function](https://svelte.dev/docs#run-time-svelte-easing)
+ * * `interpolate` (`function`) — see below
+ * 
+ * `store.set` and `store.update` can accept a second `options` argument that will override the options passed in upon instantiation.
+ * 
+ * Both functions return a Promise that resolves when the tween completes. If the tween is interrupted, the promise will never resolve.
+ * 
+ * ---
+ * 
+ * Out of the box, Svelte will interpolate between two numbers, two arrays or two objects (as long as the arrays and objects are the same 'shape', and their 'leaf' properties are also numbers).
+ * 
+ * ```html
+ * <script>
+ * 	import { tweened } from 'svelte/motion';
+ * 	import { cubicOut } from 'svelte/easing';
+ * 
+ * 	const size = tweened(1, {
+ * 		duration: 300,
+ * 		easing: cubicOut
+ * 	});
+ * 
+ * 	function handleClick() {
+ * 		// this is equivalent to size.update(n => n + 1)
+ * 		$size += 1;
+ * 	}
+ * </script>
+ * 
+ * <button
+ * 	on:click={handleClick}
+ * 	style="transform: scale({$size}); transform-origin: 0 0"
+ * >embiggen</button>
+ * ```
+ * 
+ * ---
+ * 
+ * If the initial value is `undefined` or `null`, the first value change will take effect immediately. This is useful when you have tweened values that are based on props, and don't want any motion when the component first renders.
+ * 
+ * ```ts
+ * const size = tweened(undefined, {
+ * 	duration: 300,
+ * 	easing: cubicOut
+ * });
+ * 
+ * $: $size = big ? 100 : 10;
+ * ```
+ * 
+ * ---
+ * 
+ * The `interpolate` option allows you to tween between *any* arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
+ * 
+ * ```html
+ * <script>
+ * 	import { interpolateLab } from 'd3-interpolate';
+ * 	import { tweened } from 'svelte/motion';
+ * 
+ * 	const colors = [
+ * 		'rgb(255, 62, 0)',
+ * 		'rgb(64, 179, 255)',
+ * 		'rgb(103, 103, 120)'
+ * 	];
+ * 
+ * 	const color = tweened(colors[0], {
+ * 		duration: 800,
+ * 		interpolate: interpolateLab
+ * 	});
+ * </script>
+ * 
+ * {#each colors as c}
+ * 	<button
+ * 		style="background-color: {c}; color: white; border: none;"
+ * 		on:click="{e => color.set(c)}"
+ * 	>{c}</button>
+ * {/each}
+ * 
+ * <h1 style="color: {$color}">{$color}</h1>
+ * ```
+ * 
+ * @param initialValue 
+ * @param defaults 
+ * @returns tweened store
+ */
+export function tweened<T>(initialValue?: T, defaults: TweenedOptions<T> = {}): Tweened<T> {
+	const store = writable(initialValue);
 
 	let task: Task;
-	let target_value = value;
+	let target_value = initialValue;
 
-	function set(new_value: T, opts?: Options<T>) {
-		if (value == null) {
-			store.set(value = new_value);
+	function set(new_value: T, opts?: TweenedOptions<T>) {
+		if (initialValue == null) {
+			store.set(initialValue = new_value);
 			return Promise.resolve();
 		}
 
@@ -99,7 +196,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 				previous_task = null;
 			}
 
-			store.set(value = target_value);
+			store.set(initialValue = target_value);
 			return Promise.resolve();
 		}
 
@@ -110,8 +207,8 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 			if (now < start) return true;
 
 			if (!started) {
-				fn = interpolate(value, new_value);
-				if (typeof duration === 'function') duration = duration(value, new_value);
+				fn = interpolate(initialValue, new_value);
+				if (typeof duration === 'function') duration = duration(initialValue, new_value);
 				started = true;
 			}
 
@@ -123,12 +220,12 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 			const elapsed = now - start;
 
 			if (elapsed > duration) {
-				store.set(value = new_value);
+				store.set(initialValue = new_value);
 				return false;
 			}
 
 			// @ts-ignore
-			store.set(value = fn(easing(elapsed / duration)));
+			store.set(initialValue = fn(easing(elapsed / duration)));
 			return true;
 		});
 
@@ -137,7 +234,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 
 	return {
 		set,
-		update: (fn, opts?: Options<T>) => set(fn(target_value, value), opts),
+		update: (fn, opts?: TweenedOptions<T>) => set(fn(target_value, initialValue), opts),
 		subscribe: store.subscribe
 	};
 }

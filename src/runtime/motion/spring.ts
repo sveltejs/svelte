@@ -45,50 +45,101 @@ function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, ta
 	}
 }
 
-interface SpringOpts {
+export interface SpringOptions {
+	/**(`number`, default `0.15`) — a value between 0 and 1 where higher means a 'tighter' spring */
 	stiffness?: number;
+	/**(`number`, default `0.8`) — a value between 0 and 1 where lower means a 'springier' spring */
 	damping?: number;
+	/**(`number`, default `0.01`) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise */
 	precision?: number;
 }
 
-interface SpringUpdateOpts {
+export interface SpringUpdateOptions {
+	/**`{ hard: true }` sets the target value immediately */
 	hard?: any;
+	/** `{ soft: n }` preserves existing momentum for `n` seconds before settling. `{ soft: true }` is equivalent to `{ soft: 0.5 }` */
 	soft?: string | number | boolean;
 }
 
-type Updater<T> = (target_value: T, value: T) => T;
+export type SpringUpdater<T> = (target_value: T, value: T) => T;
 
 export interface Spring<T> extends Readable<T>{
-	set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
-	update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
-	precision: number;
-	damping: number;
+	set: (new_value: T, opts?: SpringUpdateOptions) => Promise<void>;
+	update: (fn: SpringUpdater<T>, opts?: SpringUpdateOptions) => Promise<void>;
+	/**(`number`, default `0.15`) — a value between 0 and 1 where higher means a 'tighter' spring */
 	stiffness: number;
+	/**(`number`, default `0.8`) — a value between 0 and 1 where lower means a 'springier' spring */
+	damping: number;
+	/**(`number`, default `0.01`) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise */
+	precision: number;
 }
-
-export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
-	const store = writable(value);
+/**
+ * 
+ * ```ts
+ * store = spring(value: any, options)
+ * ```
+ * 
+ * A `spring` store gradually changes to its target value based on its `stiffness` and `damping` parameters. Whereas `tweened` stores change their values over a fixed duration, `spring` stores change over a duration that is determined by their existing velocity, allowing for more natural-seeming motion in many situations. The following options are available:
+ * 
+ * * `stiffness` (`number`, default `0.15`) — a value between 0 and 1 where higher means a 'tighter' spring
+ * * `damping` (`number`, default `0.8`) — a value between 0 and 1 where lower means a 'springier' spring
+ * * `precision` (`number`, default `0.01`) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise
+ * 
+ * ---
+ * 
+ * As with [`tweened`](https://svelte.dev/docs#run-time-svelte-motion-tweened) stores, `set` and `update` return a Promise that resolves if the spring settles. The `store.stiffness` and `store.damping` properties can be changed while the spring is in motion, and will take immediate effect.
+ * 
+ * Both `set` and `update` can take a second argument — an object with `hard` or `soft` properties. `{ hard: true }` sets the target value immediately; `{ soft: n }` preserves existing momentum for `n` seconds before settling. `{ soft: true }` is equivalent to `{ soft: 0.5 }`.
+ * 
+ * [See a full example on the spring tutorial.](https://svelte.dev/tutorial/spring)
+ * 
+ * ```html
+ * <script>
+ * 	import { spring } from 'svelte/motion';
+ * 
+ * 	const coords = spring({ x: 50, y: 50 }, {
+ * 		stiffness: 0.1,
+ * 		damping: 0.25
+ * 	});
+ * </script>
+ * ```
+ * 
+ * ---
+ * 
+ * If the initial value is `undefined` or `null`, the first value change will take effect immediately, just as with `tweened` values (see above).
+ * 
+ * ```ts
+ * const size = spring();
+ * $: $size = big ? 100 : 10;
+ * ```
+ * 
+ * @param initialValue 
+ * @param opts 
+ * @returns spring store
+ */
+export function spring<T=any>(initialValue?: T, opts: SpringOptions = {}): Spring<T> {
+	const store = writable(initialValue);
 	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
 
 	let last_time: number;
 	let task: Task;
 	let current_token: object;
-	let last_value: T = value;
-	let target_value: T = value;
+	let last_value: T = initialValue;
+	let target_value: T = initialValue;
 
 	let inv_mass = 1;
 	let inv_mass_recovery_rate = 0;
 	let cancel_task = false;
 
-	function set(new_value: T, opts: SpringUpdateOpts = {}): Promise<void> {
+	function set(new_value: T, opts: SpringUpdateOptions = {}): Promise<void> {
 		target_value = new_value;
 		const token = current_token = {};
 
-		if (value == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
+		if (initialValue == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
 			cancel_task = true; // cancel any running animation
 			last_time = now();
 			last_value = new_value;
-			store.set(value = target_value);
+			store.set(initialValue = target_value);
 			return Promise.resolve();
 		} else if (opts.soft) {
 			const rate = opts.soft === true ? .5 : +opts.soft;
@@ -116,11 +167,11 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 					settled: true, // tick_spring may signal false
 					dt: (now - last_time) * 60 / 1000
 				};
-				const next_value = tick_spring(ctx, last_value, value, target_value);
+				const next_value = tick_spring(ctx, last_value, initialValue, target_value);
 
 				last_time = now;
-				last_value = value;
-				store.set(value = next_value);
+				last_value = initialValue;
+				store.set(initialValue = next_value);
 
 				if (ctx.settled) {
 					task = null;
@@ -138,7 +189,7 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 
 	const spring: Spring<T> = {
 		set,
-		update: (fn, opts: SpringUpdateOpts) => set(fn(target_value, value), opts),
+		update: (fn, opts: SpringUpdateOptions) => set(fn(target_value, initialValue), opts),
 		subscribe: store.subscribe,
 		stiffness,
 		damping,

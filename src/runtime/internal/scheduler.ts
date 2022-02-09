@@ -17,7 +17,30 @@ export function schedule_update() {
 		resolved_promise.then(flush);
 	}
 }
-
+/**
+ * 
+ * ```ts
+ * promise: Promise = tick()
+ * ```
+ * 
+ * ---
+ * 
+ * Returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
+ * 
+ * ```html
+ * <script>
+ * 	import { beforeUpdate, tick } from 'svelte';
+ * 
+ * 	beforeUpdate(async () => {
+ * 		console.log('the component is about to update');
+ * 		await tick();
+ * 		console.log('the component just updated');
+ * 	});
+ * </script>
+ * ```
+ *  
+ * @returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none
+ */
 export function tick() {
 	schedule_update();
 	return resolved_promise;
