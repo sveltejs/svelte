@@ -60,7 +60,7 @@ Using unfinished software to build an app that will be seen by millions of peopl
 
 ## The road to 1.0
 
-You can see the list of outstanding issues with the 1.0 milestone on our [issue tracker](https://github.com/sveltejs/kit/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.0). Alongside that work, we plan to upgrade the documentation and add more [adapters](https://kit.svelte.dev/docs#adapters).
+You can see the list of outstanding issues with the 1.0 milestone on our [issue tracker](https://github.com/sveltejs/kit/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.0). Alongside that work, we plan to upgrade the documentation and add more [adapters](https://kit.svelte.dev/docs/adapters).
 
 Most importantly though, we need your feedback to help us make the best possible app framework. Try it out, and let us know which pieces are missing.
 
