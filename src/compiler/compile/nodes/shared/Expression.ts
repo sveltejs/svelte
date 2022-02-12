@@ -110,7 +110,7 @@ export default class Expression {
 							dependencies.add(name);
 						}
 
-						component.add_reference(name);
+						component.add_reference(node, name);
 						component.warn_if_undefined(name, nodes[0], template_scope);
 					}
 
@@ -133,6 +133,10 @@ export default class Expression {
 				if (names) {
 					names.forEach(name => {
 						if (template_scope.names.has(name)) {
+							if (template_scope.is_const(name)) {
+								component.error(node, compiler_errors.invalid_const_update(name));
+							}
+
 							template_scope.dependencies_for_name.get(name).forEach(name => {
 								const variable = component.var_lookup.get(name);
 								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
@@ -140,7 +144,7 @@ export default class Expression {
 							const each_block = template_scope.get_owner(name);
 							(each_block as EachBlock).has_binding = true;
 						} else {
-							component.add_reference(name);
+							component.add_reference(node, name);
 
 							const variable = component.var_lookup.get(name);
 							if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
@@ -172,7 +176,7 @@ export default class Expression {
 	}
 
 	// TODO move this into a render-dom wrapper?
-	manipulate(block?: Block) {
+	manipulate(block?: Block, ctx?: string | void) {
 		// TODO ideally we wouldn't end up calling this method
 		// multiple times
 		if (this.manipulated) return this.manipulated;
@@ -216,10 +220,10 @@ export default class Expression {
 							});
 						} else {
 							dependencies.add(name);
-							component.add_reference(name); // TODO is this redundant/misplaced?
+							component.add_reference(node, name); // TODO is this redundant/misplaced?
 						}
 					} else if (is_contextual(component, template_scope, name)) {
-						const reference = block.renderer.reference(node);
+						const reference = block.renderer.reference(node, ctx);
 						this.replace(reference);
 					}
 
@@ -249,13 +253,21 @@ export default class Expression {
 
 					const declaration = b`const ${id} = ${node}`;
 
-					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
+					if (owner.type === 'ConstTag') {
+						walk(node, {
+							enter(node: Node) {
+								if (node.type === 'Identifier') {
+									this.replace(block.renderer.reference(node, ctx));
+								}
+							}
+						});
+					} else if (dependencies.size === 0 && contextual_dependencies.size === 0) {
 						// we can hoist this out of the component completely
 						component.fully_hoisted.push(declaration);
 
 						this.replace(id as any);
 
-						component.add_var({
+						component.add_var(node, {
 							name: id.name,
 							internal: true,
 							hoistable: true,

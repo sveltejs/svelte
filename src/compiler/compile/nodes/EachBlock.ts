@@ -1,14 +1,16 @@
 import ElseBlock from './ElseBlock';
 import Expression from './shared/Expression';
-import map_children from './shared/map_children';
 import TemplateScope from './shared/TemplateScope';
 import AbstractBlock from './shared/AbstractBlock';
 import Element from './Element';
+import ConstTag from './ConstTag';
 import { Context, unpack_destructuring } from './shared/Context';
 import { Node } from 'estree';
 import Component from '../Component';
 import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
+import { INode } from './interfaces';
+import get_const_tags from './shared/get_const_tags';
 
 export default class EachBlock extends AbstractBlock {
 	type: 'EachBlock';
@@ -22,6 +24,7 @@ export default class EachBlock extends AbstractBlock {
 	key: Expression;
 	scope: TemplateScope;
 	contexts: Context[];
+	const_tags: ConstTag[];
 	has_animation: boolean;
 	has_binding = false;
 	has_index_binding = false;
@@ -57,9 +60,11 @@ export default class EachBlock extends AbstractBlock {
 
 		this.has_animation = false;
 
-		this.children = map_children(component, this, this.scope, info.children);
+		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
 
 		if (this.has_animation) {
+			this.children = this.children.filter(child => !isEmptyNode(child));
+
 			if (this.children.length !== 1) {
 				const child = this.children.find(child => !!(child as Element).animation);
 				component.error((child as Element).animation, compiler_errors.invalid_animation_sole);
@@ -73,4 +78,8 @@ export default class EachBlock extends AbstractBlock {
 			? new ElseBlock(component, this, this.scope, info.else)
 			: null;
 	}
+}
+
+function isEmptyNode(node: INode) {
+	return node.type === 'Text' && node.data.trim() === '';
 }

@@ -29,7 +29,7 @@ export default class InlineComponent extends Node {
 		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
 			const name = info.name.split('.')[0]; // accommodate namespaces
 			component.warn_if_undefined(name, info, scope);
-			component.add_reference(name);
+			component.add_reference(this as any, name);
 		}
 
 		this.name = info.name;
@@ -71,7 +71,10 @@ export default class InlineComponent extends Node {
 
 				case 'Transition':
 					return component.error(node, compiler_errors.invalid_transition);
-
+				
+				case 'StyleDirective':
+					return component.error(node, compiler_errors.invalid_component_style_directive);
+	
 				default:
 					throw new Error(`Not implemented: ${node.type}`);
 			}
@@ -126,17 +129,25 @@ export default class InlineComponent extends Node {
 						slot_template.attributes.push(attribute);
 					}
 				}
-		
+				// transfer const
+				for (let i = child.children.length - 1; i >= 0; i--) {
+					const child_child = child.children[i];
+					if (child_child.type === 'ConstTag') {
+						slot_template.children.push(child_child);
+						child.children.splice(i, 1);
+					}
+				}
+
 				children.push(slot_template);
 				info.children.splice(i, 1);
 			}
 		}
 
 		if (info.children.some(node => not_whitespace_text(node))) {
-			children.push({ 
+			children.push({
 				start: info.start,
 				end: info.end,
-				type: 'SlotTemplate', 
+				type: 'SlotTemplate',
 				name: 'svelte:fragment',
 				attributes: [],
 				children: info.children

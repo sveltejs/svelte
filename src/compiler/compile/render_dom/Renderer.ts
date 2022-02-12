@@ -254,7 +254,7 @@ export default class Renderer {
 		};
 	}
 
-	reference(node: string | Identifier | MemberExpression) {
+	reference(node: string | Identifier | MemberExpression, ctx: string | void = '#ctx') {
 		if (typeof node === 'string') {
 			node = { type: 'Identifier', name: node };
 		}
@@ -264,11 +264,11 @@ export default class Renderer {
 
 		// TODO is this correct?
 		if (this.component.var_lookup.get(name)) {
-			this.component.add_reference(name);
+			this.component.add_reference(node, name);
 		}
 
 		if (member !== undefined) {
-			const replacement = x`/*${member.name}*/ #ctx[${member.index}]` as MemberExpression;
+			const replacement = x`/*${member.name}*/ ${ctx}[${member.index}]` as MemberExpression;
 
 			if (nodes[0].loc) replacement.object.loc = nodes[0].loc;
 			nodes[0] = replacement;

@@ -27,6 +27,7 @@ import MustacheTagWrapper from '../MustacheTag';
 import RawMustacheTagWrapper from '../RawMustacheTag';
 import is_dynamic from '../shared/is_dynamic';
 import create_debugging_comment from '../shared/create_debugging_comment';
+import { push_array } from '../../../../utils/push_array';
 
 interface BindingGroup {
 	events: string[];
@@ -223,7 +224,7 @@ export default class ElementWrapper extends Wrapper {
 		block.add_dependencies(node.tag_expr.dependencies);
 
 		// add directive and handler dependencies
-		[node.animation, node.outro, ...node.actions, ...node.classes].forEach(directive => {
+		[node.animation, node.outro, ...node.actions, ...node.classes, ...node.styles].forEach(directive => {
 			if (directive && directive.expression) {
 				block.add_dependencies(directive.expression.dependencies);
 			}
@@ -707,7 +708,7 @@ export default class ElementWrapper extends Wrapper {
 		this.attributes.forEach((attribute) => {
 			if (attribute.node.name === 'class') {
 				const dependencies = attribute.node.get_dependencies();
-				this.class_dependencies.push(...dependencies);
+				push_array(this.class_dependencies, dependencies);
 			}
 		});
 
@@ -1033,7 +1034,7 @@ export default class ElementWrapper extends Wrapper {
 			const snippet = expression.manipulate(block);
 			let cached_snippet;
 			if (should_cache) {
-				cached_snippet = block.get_unique_name(`style_${name}`);
+				cached_snippet = block.get_unique_name(`style_${name.replace(/-/g, '_')}`);
 				block.add_variable(cached_snippet, snippet);
 			}
 

@@ -16,8 +16,6 @@ node_modules
 /transition
 /animate
 /scratch/
-/coverage/
-/coverage.lcov
 /test/*/samples/_
 /yarn-error.log
 _actual*.*

@@ -83,9 +83,13 @@ describe('ssr', () => {
 				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
 
 				try {
-					(compileOptions.preserveComments
-						? assert.htmlEqualWithComments
-						: assert.htmlEqual)(html, expectedHtml);
+					if (config.withoutNormalizeHtml) {
+						assert.strictEqual(html.trim(), expectedHtml.trim().replace(/\r\n/g, '\n'));
+					} else {
+						(compileOptions.preserveComments
+							? assert.htmlEqualWithComments
+							: assert.htmlEqual)(html, expectedHtml);
+					}
 				} catch (error) {
 					if (shouldUpdateExpected()) {
 						fs.writeFileSync(`${dir}/_expected.html`, html);
@@ -128,13 +132,13 @@ describe('ssr', () => {
 				}
 
 				if (show) showOutput(dir, { generate: 'ssr', format: 'cjs' });
+				done();
 			} catch (err) {
 				showOutput(dir, { generate: 'ssr', format: 'cjs' });
 				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
-				throw err;
+				done(err);
 			} finally {
 				set_current_component(null);
-				done();
 			}
 		});
 	});

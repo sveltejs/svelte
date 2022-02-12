@@ -1,0 +1,9 @@
+[
+	{
+		"code": "invalid-binding",
+		"message": "Cannot bind to a variable declared with {@const ...}",
+		"start": { "line": 7, "column": 9, "character": 89 },
+		"end": { "line": 7, "column": 23, "character": 103 },
+		"pos": 89
+	}
+]
