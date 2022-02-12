@@ -200,7 +200,7 @@ export default class Element extends Node {
 		return this.name === 'svelte:element';
 	}
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
