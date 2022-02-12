@@ -251,13 +251,6 @@ export class SvelteComponent {
 		this.$destroy = noop;
 	}
 	/**
-	 * 
-	 * ```ts
-	 * component.$on(event, callback)
-	 * ```
-	 * 
-	 * ---
-	 * 
 	 * Causes the `callback` function to be called whenever the component dispatches an `event`.
 	 * 
 	 * A function is returned that will remove the event listener when called.
@@ -284,13 +277,6 @@ export class SvelteComponent {
 		};
 	}
 	/**
-	 * 
-	 * ```ts
-	 * component.$set(props)
-	 * ```
-	 * 
-	 * ---
-	 * 
 	 * Programmatically sets props on an instance. `component.$set({ x: 1 })` is equivalent to `x = 1` inside the component's `<script>` block.
 	 * 
 	 * Calling this method schedules an update for the next microtask — the DOM is *not* updated synchronously.

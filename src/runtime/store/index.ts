@@ -46,13 +46,6 @@ type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
 const subscriber_queue = [];
 
 /**
- * 
- * ```ts
- * store = readable(value?: any, start?: (set: (value: any) => void) => () => void)
- * ```
- * 
- * ---
- * 
  * Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
  * 
  * ```ts
@@ -80,16 +73,6 @@ export function readable<T>(initialValue?: T, start?: StartStopNotifier<T>): Rea
 }
 
 /**
- * 
- * ```ts
- * store = writable(initial_value?: any)
- * ```
- * ```ts
- * store = writable(initial_value?: any, start?: (set: (value: any) => void) => () => void)
- * ```
- * 
- * ---
- * 
  * Function that creates a store which has values that can be set from 'outside' components. It gets created as an object with additional `set` and `update` methods.
  * 
  * `set` is a method that takes one argument which is the value to be set. The store value gets set to the value of the argument if the store value is not already equal to it.
@@ -192,25 +175,6 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
 	{ [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
 /**
- *
- * ```ts
- * store = derived(a, callback: (a: any) => any)
- * ```
- * ---
- * ```ts
- * store = derived(a, callback: (a: any, set: (value: any) => void) => void | () => void, initial_value: any)
- * ```
- * ---
- * ```ts
- * store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
- * ```
- * ---
- * ```ts
- * store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void | () => void, initial_value: any)
- * ```
- * 
- * ---
- * 
  * Derives a store from one or more other stores. The callback runs initially when the first subscriber subscribes and then whenever the store dependencies change.
  * 
  * In the simplest version, `derived` takes a single store, and the callback returns a derived value.

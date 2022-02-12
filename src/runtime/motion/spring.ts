@@ -74,11 +74,6 @@ export interface Spring<T> extends Readable<T>{
 	precision: number;
 }
 /**
- * 
- * ```ts
- * store = spring(value: any, options)
- * ```
- * 
  * A `spring` store gradually changes to its target value based on its `stiffness` and `damping` parameters. Whereas `tweened` stores change their values over a fixed duration, `spring` stores change over a duration that is determined by their existing velocity, allowing for more natural-seeming motion in many situations. The following options are available:
  * 
  * * `stiffness` (`number`, default `0.15`) — a value between 0 and 1 where higher means a 'tighter' spring

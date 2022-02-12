@@ -18,13 +18,6 @@ export function schedule_update() {
 	}
 }
 /**
- * 
- * ```ts
- * promise: Promise = tick()
- * ```
- * 
- * ---
- * 
  * Returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
  * 
  * ```html

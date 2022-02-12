@@ -76,11 +76,6 @@ export interface Tweened<T> extends Readable<T> {
 }
 
 /**
- * 
- * ```ts
- * store = tweened(value: any, options)
- * ```
- * 
  * Tweened stores update their values over a fixed duration. The following options are available:
  * 
  * * `delay` (`number`, default 0) — milliseconds before starting
