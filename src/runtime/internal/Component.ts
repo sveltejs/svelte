@@ -298,7 +298,6 @@ export class SvelteComponent {
 	 * ```ts
 	 * component.$set({ answer: 42 });
 	 * ```
-	 * 
 	 */
 	$set($$props) {
 		if (this.$$set && !is_empty($$props)) {
