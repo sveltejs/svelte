@@ -50,6 +50,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 	const extra_args = tail.map(variable => get_invalidated(variable)).filter(Boolean);
 
 	if (is_store_value) {
+		// TODO: check why there are 4 parameters, but `set_store_value` only expects 3
 		return x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name}, ${extra_args})`;
 	}
 
