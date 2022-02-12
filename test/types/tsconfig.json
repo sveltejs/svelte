@@ -1,0 +1,28 @@
+{
+	"compilerOptions": {
+		"moduleResolution": "node",
+		"module": "ESNext",
+		"lib": ["ESNext", "DOM"],
+		"target": "ESNext",
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"baseUrl": "../../",
+		"allowJs": true,
+		"checkJs": true,
+		"paths": {
+			"$runtime/*": ["src/runtime/*"]
+		},
+		// enable strictest options
+		"allowUnreachableCode": false,
+		"alwaysStrict": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"strict": true,
+	},
+	"include": ["**/*.test-types.ts"]
+}

@@ -83,8 +83,9 @@
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
-    "test": "mocha --exit",
+    "test": "mocha --exit && npm run test:types",
     "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts --exit",
+    "test:types": "tsc --project test/types/tsconfig.json --noEmit",
     "quicktest": "mocha",
     "build": "rollup -c && npm run tsd",
     "prepare": "npm run build",
