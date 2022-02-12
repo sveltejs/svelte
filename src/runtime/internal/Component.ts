@@ -272,7 +272,7 @@ export class SvelteComponent {
 	 * 
 	 * @param type 
 	 * @param callback 
-	 * @returns a function  that will remove the event listener when called.
+	 * @returns a function that will remove the event listener when called
 	 */
 	$on(type, callback) {
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
