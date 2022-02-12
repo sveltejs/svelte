@@ -7,7 +7,7 @@ At the heart of Svelte is a powerful system of *reactivity* for keeping the DOM 
 To demonstrate it, we first need to wire up an event handler. Replace line 9 with this:
 
 ```html
-<button on:click={incrementCount}>
+<button on:click={incrementCount} />
 ```
 
 Inside the `incrementCount` function, all we need to do is change the value of `count`:
