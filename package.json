@@ -148,7 +148,7 @@
     "sourcemap-codec": "^1.4.8",
     "tiny-glob": "^0.2.6",
     "tslib": "^2.0.3",
-    "typescript": "^3.7.5"
+    "typescript": "^3.9.10"
   },
   "nyc": {
     "include": [
