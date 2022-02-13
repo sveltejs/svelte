@@ -1,5 +1,5 @@
 <script>
-export let visible = true;
+export let visible = false;
 
 function foo(node, params) {
 	return {
