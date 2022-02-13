@@ -5,10 +5,10 @@ export default {
 
 	async test({ raf, assert, component, window }) {
 		component.visible = true;
-		raf.tick(100)
+		raf.tick(100);
 		component.visible = false;
-		raf.tick(200)
-		raf.tick(60)
+		raf.tick(200);
+		raf.tick(60);
 
 		assert.htmlEqual(
 			window.document.head.innerHTML,

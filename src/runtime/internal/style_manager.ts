@@ -42,7 +42,7 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	const { style_element, rules } = managed_styles.get(doc) || create_style_information(doc);
 	
 	if (!rules[name]) {
-		const stylesheet = append_stylesheet(doc, style_element)
+		const stylesheet = append_stylesheet(doc, style_element);
 		rules[name] = true;
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
 	}
@@ -74,7 +74,7 @@ export function clear_rules() {
 		if (active) return;
 		managed_styles.forEach(info => {
 			const { style_element } = info;
-			detach(style_element)
+			detach(style_element);
 			info.rules = {};
 		});
 		managed_styles.clear();
