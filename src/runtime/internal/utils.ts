@@ -27,13 +27,11 @@ export function blank_object(): {} {
 	return Object.create(null);
 }
 
-type FunctionWithoutArguments = () => unknown
-
-export function run(fn: FunctionWithoutArguments) {
+export function run(fn: Function) {
 	return fn();
 }
 
-export function run_all(fns: FunctionWithoutArguments[]) {
+export function run_all(fns: Function[]) {
 	fns.forEach(run);
 }
 
@@ -59,7 +57,7 @@ export function not_equal(a: unknown, b: unknown) {
 	return a != a ? b == b : a !== b;
 }
 
-export function is_empty(obj: Record<string | number | symbol, unknown>) {
+export function is_empty(obj: Record<PropertyKey, unknown>) {
 	return Object.keys(obj).length === 0;
 }
 
@@ -147,21 +145,21 @@ export function get_all_dirty_from_scope($$scope) {
 	return -1;
 }
 
-export function exclude_internal_props(props) {
-	const result = {};
+export function exclude_internal_props<P extends Record<PropertyKey, unknown>>(props: P) {
+	const result: Partial<P> = {};
 	for (const k in props) if (k[0] !== '$') result[k] = props[k];
 	return result;
 }
 
-export function compute_rest_props(props, keys) {
-	const rest = {};
+export function compute_rest_props<P extends Record<PropertyKey, unknown>>(props: P, keys: string[] | Set<string>) {
+	const rest: Partial<P> = {};
 	keys = new Set(keys);
 	for (const k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
 	return rest;
 }
 
-export function compute_slots(slots) {
-	const result = {};
+export function compute_slots<S extends Map<string, unknown>>(slots: S) {
+	const result = {} as Record<keyof S, true>;
 	for (const key in slots) {
 		result[key] = true;
 	}

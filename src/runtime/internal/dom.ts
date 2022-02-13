@@ -1,5 +1,31 @@
 import { has_prop } from './utils';
 
+// marks a part in the code where types
+// 1. should be improved or
+// 2. where casting is needed in order to satisfy TypeScript
+// 	a deeper look at these parts is needed to check if they can be replaced with a normal cast or if they currently contain a potential bug
+type TODO<T = any> = T
+
+type NodeEx = Node & {
+	claim_order?: number,
+	hydrate_init?: true,
+	actual_end_child?: NodeEx,
+	childNodes: NodeListOf<NodeEx>,
+}
+
+type HTMLInputElementEx = HTMLInputElement & {
+	__value: string
+}
+
+type HTMLSelectElementEx = HTMLSelectElement & {
+	__value: string
+	options: HTMLOptionElementEx[]
+}
+
+type HTMLOptionElementEx = HTMLOptionElement & {
+	__value: string
+}
+
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
 let is_hydrating = false;
@@ -10,13 +36,6 @@ export function start_hydrating() {
 export function end_hydrating() {
 	is_hydrating = false;
 }
-
-type NodeEx = Node & {
-	claim_order?: number,
-	hydrate_init? : true,
-	actual_end_child?: NodeEx,
-	childNodes: NodeListOf<NodeEx>,
-};
 
 function upper_bound(low: number, high: number, key: (index: number) => number, value: number) {
 	// Return first index of value larger than input value in the range [low, high)
@@ -35,7 +54,7 @@ function init_hydrate(target: NodeEx) {
 	if (target.hydrate_init) return;
 	target.hydrate_init = true;
 
-	type NodeEx2 = NodeEx & {claim_order: number};
+	type NodeEx2 = NodeEx & { claim_order: number };
 
 	// We know that all children have claim_order values since the unclaimed have been detached if target is not <head>
 	let children: ArrayLike<NodeEx2> = target.childNodes as NodeListOf<NodeEx2>;
@@ -151,7 +170,7 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 	if (root && (root as ShadowRoot).host) {
 		return root as ShadowRoot;
 	}
-	return node.ownerDocument;
+	return node.ownerDocument as TODO<Document>;
 }
 
 export function append_empty_stylesheet(node: Node) {
@@ -169,12 +188,12 @@ export function append_hydration(target: NodeEx, node: NodeEx) {
 		init_hydrate(target);
 
 		if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentElement !== target))) {
-			target.actual_end_child = target.firstChild;
+			target.actual_end_child = target.firstChild as TODO<NodeEx>;
 		}
 
 		// Skip nodes of undefined ordering
-		while ((target.actual_end_child !== null) && (target.actual_end_child.claim_order === undefined)) {
-			target.actual_end_child = target.actual_end_child.nextSibling;
+		while ((target.actual_end_child !== null) && ((target.actual_end_child as NodeEx).claim_order === undefined)) {
+			target.actual_end_child = (target.actual_end_child as NodeEx).nextSibling as TODO<ChildNode>;
 		}
 
 		if (node !== target.actual_end_child) {
@@ -183,7 +202,7 @@ export function append_hydration(target: NodeEx, node: NodeEx) {
 				target.insertBefore(node, target.actual_end_child);
 			}
 		} else {
-			target.actual_end_child = node.nextSibling;
+			target.actual_end_child = node.nextSibling as ChildNode | undefined;
 		}
 	} else if (node.parentNode !== target || node.nextSibling !== null) {
 		target.appendChild(node);
@@ -203,10 +222,27 @@ export function insert_hydration(target: NodeEx, node: NodeEx, anchor?: NodeEx) 
 }
 
 export function detach(node: Node) {
-	node.parentNode.removeChild(node);
+	(node.parentNode as TODO<Node>).removeChild(node);
 }
 
-export function destroy_each(iterations, detaching) {
+// TODO: import this interface from /src/runtime/internal/Component.ts
+interface Fragment {
+	key: string | null;
+	first: null;
+	/* create  */ c: () => void;
+	/* claim   */ l: (nodes: any) => void;
+	/* hydrate */ h: () => void;
+	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
+	/* update  */ p: (ctx: any, dirty: any) => void;
+	/* measure */ r: () => void;
+	/* fix     */ f: () => void;
+	/* animate */ a: () => void;
+	/* intro   */ i: (local: any) => void;
+	/* outro   */ o: (local: any) => void;
+	/* destroy */ d: (detaching: 0 | 1) => void;
+}
+
+export function destroy_each(iterations: Fragment[], detaching: 0 | 1) {
 	for (let i = 0; i < iterations.length; i += 1) {
 		if (iterations[i]) iterations[i].d(detaching);
 	}
@@ -256,32 +292,28 @@ export function listen(node: EventTarget, event: string, handler: EventListenerO
 	return () => node.removeEventListener(event, handler, options);
 }
 
-export function prevent_default(fn) {
-	return function(event) {
+export function prevent_default<E extends Event>(fn: (event: E) => void) {
+	return function (this: unknown, event: E) {
 		event.preventDefault();
-		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
 
-export function stop_propagation(fn) {
-	return function(event) {
+export function stop_propagation<E extends Event>(fn: (event: E) => void) {
+	return function (this: unknown, event: E) {
 		event.stopPropagation();
-		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
 
-export function self(fn) {
-	return function(event) {
-		// @ts-ignore
+export function self<E extends Event>(fn: (event: E) => void) {
+	return function (this: unknown, event: E) {
 		if (event.target === this) fn.call(this, event);
 	};
 }
 
-export function trusted(fn) {
-	return function(event) {
-		// @ts-ignore
+export function trusted<E extends Event>(fn: (event: E) => void) {
+	return function (this: unknown, event: E) {
 		if (event.isTrusted) fn.call(this, event);
 	};
 }
@@ -291,20 +323,20 @@ export function attr(node: Element, attribute: string, value?: string) {
 	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
 }
 
-export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
+export function set_attributes<N extends Element & ElementCSSInlineStyle>(node: N, attributes: { [K in keyof N]: N[K] }) {
 	// @ts-ignore
 	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
 	for (const key in attributes) {
 		if (attributes[key] == null) {
 			node.removeAttribute(key);
 		} else if (key === 'style') {
-			node.style.cssText = attributes[key];
+			node.style.cssText = attributes[key] as unknown as TODO<string>;
 		} else if (key === '__value') {
 			(node as any).value = node[key] = attributes[key];
 		} else if (descriptors[key] && descriptors[key].set) {
 			node[key] = attributes[key];
 		} else {
-			attr(node, key, attributes[key]);
+			attr(node, key, attributes[key] as unknown as TODO<string>);
 		}
 	}
 }
@@ -315,19 +347,20 @@ export function set_svg_attributes(node: Element & ElementCSSInlineStyle, attrib
 	}
 }
 
-export function set_custom_element_data(node, prop, value) {
+export function set_custom_element_data(node: Element, prop: string, value: string) {
 	if (prop in node) {
-		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
+		//@ts-ignore
+		node[prop] = typeof node[(prop as keyof typeof node)] === 'boolean' && value === '' ? true : value;
 	} else {
 		attr(node, prop, value);
 	}
 }
 
-export function xlink_attr(node, attribute, value) {
+export function xlink_attr(node: Element, attribute: string, value: string) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
-export function get_binding_group_value(group, __value, checked) {
+export function get_binding_group_value(group: HTMLInputElementEx[], __value: string, checked: boolean) {
 	const value = new Set();
 	for (let i = 0; i < group.length; i += 1) {
 		if (group[i].checked) value.add(group[i].__value);
@@ -338,11 +371,11 @@ export function get_binding_group_value(group, __value, checked) {
 	return Array.from(value);
 }
 
-export function to_number(value) {
+export function to_number(value: TODO) {
 	return value === '' ? null : +value;
 }
 
-export function time_ranges_to_array(ranges) {
+export function time_ranges_to_array(ranges: TimeRanges) {
 	const array = [];
 	for (let i = 0; i < ranges.length; i += 1) {
 		array.push({ start: ranges.start(i), end: ranges.end(i) });
@@ -353,17 +386,19 @@ export function time_ranges_to_array(ranges) {
 type ChildNodeEx = ChildNode & NodeEx;
 
 type ChildNodeArray = ChildNodeEx[] & {
-	claim_info?: {
-		/**
-		 * The index of the last claimed element
-		 */
-		last_index: number;
-		/**
-		 * The total number of elements claimed
-		 */
-		total_claimed: number;
-	}
-};
+	claim_info?: ClaimInfo
+}
+
+type ClaimInfo = {
+	/**
+	 * The index of the last claimed element
+	 */
+	last_index: number;
+	/**
+	 * The total number of elements claimed
+	 */
+	total_claimed: number;
+}
 
 export function children(element: Element) {
 	return Array.from(element.childNodes);
@@ -371,17 +406,17 @@ export function children(element: Element) {
 
 function init_claim_info(nodes: ChildNodeArray) {
 	if (nodes.claim_info === undefined) {
-		nodes.claim_info = {last_index: 0, total_claimed: 0};
+		nodes.claim_info = { last_index: 0, total_claimed: 0 };
 	}
 }
 
-function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (node: ChildNodeEx) => node is R, processNode: (node: ChildNodeEx) => ChildNodeEx | undefined, createNode: () => R, dontUpdateLastIndex: boolean = false) {
+function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (node: ChildNodeEx) => node is R, processNode: (node: R) => R | undefined, createNode: () => R, dontUpdateLastIndex: boolean = false) {
 	// Try to find nodes in an order such that we lengthen the longest increasing subsequence
 	init_claim_info(nodes);
 
 	const resultNode = (() => {
 		// We first try to find an element after the previous one
-		for (let i = nodes.claim_info.last_index; i < nodes.length; i++) {
+		for (let i = (nodes.claim_info as TODO<ClaimInfo>).last_index; i < nodes.length; i++) {
 			const node = nodes[i];
 
 			if (predicate(node)) {
@@ -393,7 +428,7 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 					nodes[i] = replacement;
 				}
 				if (!dontUpdateLastIndex) {
-					nodes.claim_info.last_index = i;
+					(nodes.claim_info as TODO<ClaimInfo>).last_index = i;
 				}
 				return node;
 			}
@@ -402,7 +437,7 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 
 		// Otherwise, we try to find one before
 		// We iterate in reverse so that we don't go too far back
-		for (let i = nodes.claim_info.last_index - 1; i >= 0; i--) {
+		for (let i = (nodes.claim_info as TODO<ClaimInfo>).last_index - 1; i >= 0; i--) {
 			const node = nodes[i];
 
 			if (predicate(node)) {
@@ -414,10 +449,10 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 					nodes[i] = replacement;
 				}
 				if (!dontUpdateLastIndex) {
-					nodes.claim_info.last_index = i;
+					(nodes.claim_info as TODO<ClaimInfo>).last_index = i;
 				} else if (replacement === undefined) {
 					// Since we spliced before the last_index, we decrease it
-					nodes.claim_info.last_index--;
+					(nodes.claim_info as TODO<ClaimInfo>).last_index--;
 				}
 				return node;
 			}
@@ -427,16 +462,16 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 		return createNode();
 	})();
 
-	resultNode.claim_order = nodes.claim_info.total_claimed;
-	nodes.claim_info.total_claimed += 1;
+	resultNode.claim_order = (nodes.claim_info as TODO<ClaimInfo>).total_claimed;
+	(nodes.claim_info as TODO<ClaimInfo>).total_claimed += 1;
 	return resultNode;
 }
 
 function claim_element_base(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }, create_element: (name: string) => Element | SVGElement) {
 	return claim_node<Element | SVGElement>(
 		nodes,
-		(node: ChildNode): node is Element | SVGElement => node.nodeName === name,
-		(node: Element) => {
+		(node): node is Element | SVGElement => node.nodeName === name,
+		(node) => {
 			const remove = [];
 			for (let j = 0; j < node.attributes.length; j++) {
 				const attribute = node.attributes[j];
@@ -459,11 +494,11 @@ export function claim_svg_element(nodes: ChildNodeArray, name: string, attribute
 	return claim_element_base(nodes, name, attributes, svg_element);
 }
 
-export function claim_text(nodes: ChildNodeArray, data) {
+export function claim_text(nodes: ChildNodeArray, data: string) {
 	return claim_node<Text>(
 		nodes,
-		(node: ChildNode): node is Text => node.nodeType === 3,
-		(node: Text) => {
+		(node): node is Text => node.nodeType === 3,
+		(node) => {
 			const dataStr = '' + data;
 			if (node.data.startsWith(dataStr)) {
 				if (node.data.length !== dataStr.length) {
@@ -478,21 +513,21 @@ export function claim_text(nodes: ChildNodeArray, data) {
 	);
 }
 
-export function claim_space(nodes) {
+export function claim_space(nodes: ChildNodeArray) {
 	return claim_text(nodes, ' ');
 }
 
-function find_comment(nodes, text, start) {
+function find_comment(nodes: ChildNodeArray, text: string, start: number) {
 	for (let i = start; i < nodes.length; i += 1) {
 		const node = nodes[i];
-		if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === text) {
+		if (node.nodeType === 8 /* comment node */ && (node.textContent as TODO<string>).trim() === text) {
 			return i;
 		}
 	}
 	return nodes.length;
 }
 
-export function claim_html_tag(nodes) {
+export function claim_html_tag(nodes: ChildNodeArray) {
 	// find html opening tag
 	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
 	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
@@ -506,22 +541,22 @@ export function claim_html_tag(nodes) {
 	detach(html_tag_nodes[html_tag_nodes.length - 1]);
 	const claimed_nodes = html_tag_nodes.slice(1, html_tag_nodes.length - 1);
 	for (const n of claimed_nodes) {
-		n.claim_order = nodes.claim_info.total_claimed;
-		nodes.claim_info.total_claimed += 1;
+		n.claim_order = (nodes.claim_info as TODO<ClaimInfo>).total_claimed;
+		(nodes.claim_info as TODO<ClaimInfo>).total_claimed += 1;
 	}
 	return new HtmlTagHydration(claimed_nodes);
 }
 
-export function set_data(text, data) {
+export function set_data(text: Text, data: string) {
 	data = '' + data;
 	if (text.wholeText !== data) text.data = data;
 }
 
-export function set_input_value(input, value) {
+export function set_input_value(input: HTMLInputElement, value: string | null) {
 	input.value = value == null ? '' : value;
 }
 
-export function set_input_type(input, type) {
+export function set_input_type(input: HTMLInputElement, type: string) {
 	try {
 		input.type = type;
 	} catch (e) {
@@ -529,7 +564,7 @@ export function set_input_type(input, type) {
 	}
 }
 
-export function set_style(node, key, value, important) {
+export function set_style(node: HTMLElement, key: string, value: string, important: boolean) {
 	if (value === null) {
 		node.style.removeProperty(key);
 	} else {
@@ -537,7 +572,7 @@ export function set_style(node, key, value, important) {
 	}
 }
 
-export function select_option(select, value) {
+export function select_option(select: HTMLSelectElementEx, value: string) {
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];
 
@@ -550,20 +585,20 @@ export function select_option(select, value) {
 	select.selectedIndex = -1; // no option should be selected
 }
 
-export function select_options(select, value) {
+export function select_options(select: HTMLSelectElementEx, value: string) {
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];
-		option.selected = ~value.indexOf(option.__value);
+		option.selected = ~value.indexOf(option.__value) as unknown as TODO<boolean>;
 	}
 }
 
-export function select_value(select) {
-	const selected_option = select.querySelector(':checked') || select.options[0];
+export function select_value(select: HTMLSelectElementEx) {
+	const selected_option = (select.querySelector(':checked') || select.options[0]) as HTMLOptionElementEx;
 	return selected_option && selected_option.__value;
 }
 
-export function select_multiple_value(select) {
-	return [].map.call(select.querySelectorAll(':checked'), option => option.__value);
+export function select_multiple_value(select: HTMLSelectElement) {
+	return [].map.call(select.querySelectorAll(':checked'), (option: HTMLOptionElementEx) => option.__value);
 }
 
 // unfortunately this can't be a constant as that wouldn't be tree-shakeable
@@ -607,13 +642,13 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 
 	if (crossorigin) {
 		iframe.src = "data:text/html,<script>onresize=function(){parent.postMessage(0,'*')}</script>";
-		unsubscribe = listen(window, 'message', (event: MessageEvent) => {
+		unsubscribe = listen(window, 'message', ((event: MessageEvent) => {
 			if (event.source === iframe.contentWindow) fn();
-		});
+		}) as TODO<EventListener>);
 	} else {
 		iframe.src = 'about:blank';
 		iframe.onload = () => {
-			unsubscribe = listen(iframe.contentWindow, 'resize', fn);
+			unsubscribe = listen(iframe.contentWindow as TODO<Window>, 'resize', fn);
 		};
 	}
 
@@ -630,13 +665,14 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	};
 }
 
-export function toggle_class(element, name, toggle) {
+export function toggle_class(element: HTMLElement, name: string, toggle: true) {
+	// TODO: why not use `element.classList.toggle` ?
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event<T=any>(type: string, detail?: T, bubbles: boolean = false) {
+export function custom_event<T = any>(type: string, detail?: T, bubbles: boolean = false) {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
-	e.initCustomEvent(type, bubbles, false, detail);
+	e.initCustomEvent(type, bubbles, false, detail as TODO<T>);
 	return e;
 }
 
@@ -650,11 +686,14 @@ export class HtmlTag {
 	// html tag nodes
 	n: ChildNode[];
 	// target
+	//@ts-ignore
 	t: HTMLElement;
 	// anchor
+	//@ts-ignore
 	a: HTMLElement;
 
 	constructor() {
+		//@ts-ignore
 		this.e = this.n = null;
 	}
 
@@ -662,13 +701,14 @@ export class HtmlTag {
 		this.h(html);
 	}
 
-	m(html: string, target: HTMLElement, anchor: HTMLElement = null) {
+	m(html: string, target: HTMLElement, anchor: HTMLElement | null = null) {
 		if (!this.e) {
 			this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
 			this.t = target;
 			this.c(html);
 		}
 
+		//@ts-ignore
 		this.i(anchor);
 	}
 
@@ -677,7 +717,7 @@ export class HtmlTag {
 		this.n = Array.from(this.e.childNodes);
 	}
 
-	i(anchor) {
+	i(anchor: Node) {
 		for (let i = 0; i < this.n.length; i += 1) {
 			insert(this.t, this.n[i], anchor);
 		}
@@ -700,6 +740,7 @@ export class HtmlTagHydration extends HtmlTag {
 
 	constructor(claimed_nodes?: ChildNode[]) {
 		super();
+		//@ts-ignore
 		this.e = this.n = null;
 		this.l = claimed_nodes;
 	}
@@ -710,7 +751,7 @@ export class HtmlTagHydration extends HtmlTag {
 			super.c(html);
 		}
 	}
-	i(anchor) {
+	i(anchor: NodeEx) {
 		for (let i = 0; i < this.n.length; i += 1) {
 			insert_hydration(this.t, this.n[i], anchor);
 		}
@@ -718,17 +759,17 @@ export class HtmlTagHydration extends HtmlTag {
 }
 
 export function attribute_to_object(attributes: NamedNodeMap) {
-	const result = {};
-	for (const attribute of attributes) {
+	const result: Record<string, string> = {};
+	for (const attribute of attributes as unknown as Iterable<Attr>) {
 		result[attribute.name] = attribute.value;
 	}
 	return result;
 }
 
 export function get_custom_elements_slots(element: HTMLElement) {
-	const result = {};
-	element.childNodes.forEach((node: Element) => {
-		result[node.slot || 'default'] = true;
+	const result: Record<string, true> = {};
+	element.childNodes.forEach((node) => {
+		result[(node as TODO<Element>).slot || 'default'] = true;
 	});
 	return result;
 }

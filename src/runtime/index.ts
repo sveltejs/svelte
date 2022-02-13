@@ -1,4 +1,4 @@
-import './ambient';
+import './ambient.d.ts';
 
 export {
 	onMount,
