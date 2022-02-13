@@ -29,15 +29,7 @@ export default class TextWrapper extends Wrapper {
 		if (this.renderer.component.component_options.preserveWhitespace) return false;
 		if (/[\S\u00A0]/.test(this.data)) return false;
 
-		let node = this.parent && this.parent.node;
-		while (node) {
-			if (node.type === 'Element' && node.name === 'pre') {
-				return false;
-			}
-			node = node.parent;
-		}
-
-		return true;
+		return !this.node.within_pre();
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {

@@ -10,6 +10,7 @@ import { b, x } from 'code-red';
 import { walk } from 'estree-walker';
 import { is_head } from './shared/is_head';
 import { Identifier, Node } from 'estree';
+import { push_array } from '../../../utils/push_array';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -166,7 +167,7 @@ export default class IfBlockWrapper extends Wrapper {
 			block.has_outro_method = has_outros;
 		});
 
-		renderer.blocks.push(...blocks);
+		push_array(renderer.blocks, blocks);
 	}
 
 	render(

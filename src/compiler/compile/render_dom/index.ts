@@ -11,6 +11,7 @@ import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { flatten } from '../../utils/flatten';
 import check_enable_sourcemap from '../utils/check_enable_sourcemap';
+import { push_array } from '../../utils/push_array';
 
 export default function dom(
 	component: Component,
@@ -67,7 +68,7 @@ export default function dom(
 	// TODO the deconflicted names of blocks are reversed... should set them here
 	const blocks = renderer.blocks.slice().reverse();
 
-	body.push(...blocks.map(block => {
+	push_array(body, blocks.map(block => {
 		// TODO this is a horrible mess — renderer.blocks
 		// contains a mixture of Blocks and Nodes
 		if ((block as Block).render) return (block as Block).render();
@@ -562,7 +563,7 @@ export default function dom(
 			});
 		}
 
-		declaration.body.body.push(...accessors);
+		push_array(declaration.body.body, accessors);
 
 		body.push(declaration);
 
@@ -599,7 +600,7 @@ export default function dom(
 			}
 		`[0] as ClassDeclaration;
 
-		declaration.body.body.push(...accessors);
+		push_array(declaration.body.body, accessors);
 
 		body.push(declaration);
 	}
