@@ -24,7 +24,7 @@ npm install
 npm run dev -- --open
 ```
 
-You'll find documentation at [kit.svelte.dev/docs](https://kit.svelte.dev/docs). If you have a [Sapper](https://sapper.svelte.dev) app that you'd like to migrate to SvelteKit, you'll find instructions at [kit.svelte.dev/migrating](https://kit.svelte.dev/migrating).
+You'll find documentation at [kit.svelte.dev/docs](https://kit.svelte.dev/docs). If you have a [Sapper](https://sapper.svelte.dev) app that you'd like to migrate to SvelteKit, you'll find instructions at [kit.svelte.dev/docs/migrating](https://kit.svelte.dev/docs/migrating).
 
 The source code is available at [github.com/sveltejs/kit](https://github.com/sveltejs/kit). Issues and pull requests are disabled while we finish getting our house in order, but we'll be making it fully open in the near future.
 
