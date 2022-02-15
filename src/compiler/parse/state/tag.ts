@@ -84,7 +84,7 @@ export default function tag(parser: Parser) {
 				parser.current().children.length
 			) {
 				parser.error(
-					parser_errors.invalid_element_content(slug, name), 
+					parser_errors.invalid_element_content(slug, name),
 					parser.current().children[0].start
 				);
 			}
@@ -197,6 +197,14 @@ export default function tag(parser: Parser) {
 
 	parser.eat('>', true);
 
+	// A leading newline character immediately following the pre element start tag is stripped
+	// See spec: https://www.w3.org/TR/2011/WD-html5-20110113/grouping-content.html#the-pre-element
+	if (!is_closing_tag && name === 'pre') {
+		if (!parser.eat('\r\n')) {
+			parser.eat('\n');
+		}
+	}
+
 	if (self_closing) {
 		// don't push self-closing elements onto the stack
 		element.end = parser.index;
@@ -258,7 +266,7 @@ function read_tag_name(parser: Parser) {
 		const match = fuzzymatch(name.slice(7), valid_meta_tags);
 
 		parser.error(
-			parser_errors.invalid_tag_name_svelte_element(valid_meta_tags, match), 
+			parser_errors.invalid_tag_name_svelte_element(valid_meta_tags, match),
 			start
 		);
 	}
