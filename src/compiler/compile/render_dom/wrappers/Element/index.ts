@@ -12,7 +12,7 @@ import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
-import { dimensions } from '../../../../utils/patterns';
+import { dimensions, start_newline } from '../../../../utils/patterns';
 import Binding from './Binding';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
@@ -939,7 +939,7 @@ export default class ElementWrapper extends Wrapper {
 				if (should_cache) {
 					block.chunks.update.push(b`
 							if (${block.renderer.dirty(dependencies)} && (${cached_snippet} !== (${cached_snippet} = ${snippet}))) {
-								${updater}	
+								${updater}
 							}
 					`);
 				} else {
@@ -1014,6 +1014,15 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 
 			if (!wrapper.void) {
 				state.quasi.value.raw += '>';
+
+				if (wrapper.node.name === 'pre') {
+					// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
+					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+					const first = wrapper.fragment.nodes[0];
+					if (first && first.node.type === 'Text' && start_newline.test(first.node.data)) {
+						state.quasi.value.raw += '\n';
+					}
+				}
 
 				to_html(wrapper.fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
