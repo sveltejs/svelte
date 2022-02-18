@@ -4,9 +4,9 @@ title: Nested components
 
 It would be impractical to put your entire app in a single component. Instead, we can import components from other files and then use them as though we were including elements.
 
-NOTE: Remember that in Svelte, an application is composed from one or more components and each component is a reusable self-contained block of code that encapsulates HTML, CSS, and JavaScript that belong together, written into a `.svelte` file.
-
 We now present you 2 files in the editor on the right (upper bar) to click on, `App.svelte` and `Nested.svelte`.
+
+Each component is a reusable self-contained block of code that encapsulates HTML, CSS, and JavaScript that belong together, written into a `.svelte` file.
 
 Let's add a `<script>` tag to `App.svelte` that imports the file and our component `Nested.svelte` to our app...
 
