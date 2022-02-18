@@ -183,7 +183,7 @@ describe('runtime (puppeteer)', function() {
 						},
 						transform(code, id) {
 							if (id.endsWith('.svelte')) {
-								const compiled = svelte.compile(code.replace(/\r/g, ''), {
+								const compiled = svelte.compile(code, {
 									...config.compileOptions,
 									hydratable: hydrate,
 									immutable: config.immutable,

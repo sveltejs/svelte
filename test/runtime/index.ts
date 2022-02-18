@@ -40,7 +40,7 @@ describe('runtime', () => {
 				filename
 			}, compileOptions);
 
-			const { js: { code } } = compile(fs.readFileSync(filename, 'utf-8').replace(/\r/g, ''), options);
+			const { js: { code } } = compile(fs.readFileSync(filename, 'utf-8'), options);
 
 			return module._compile(code, filename);
 		};
@@ -107,7 +107,7 @@ describe('runtime', () => {
 
 				try {
 					const { js } = compile(
-						fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r/g, ''),
+						fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 						{
 							...compileOptions,
 							filename: file

@@ -91,7 +91,7 @@ describe('custom-elements', function() {
 
 						transform(code, id) {
 							if (id.endsWith('.svelte')) {
-								const compiled = svelte.compile(code.replace(/\r/g, ''), {
+								const compiled = svelte.compile(code, {
 									customElement: true,
 									dev: config.dev
 								});

@@ -83,6 +83,8 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
+	const normalizedSource = source.replace(/(\r\n)|\r/g, '\n'); // Normalize line-endings (CRLF -> LF)
+
 	options = Object.assign({ generate: 'dom', dev: false, enableSourcemap: true }, options);
 
 	const stats = new Stats();
@@ -91,13 +93,13 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	validate_options(options, warnings);
 
 	stats.start('parse');
-	const ast = parse(source, options);
+	const ast = parse(normalizedSource, options);
 	stats.stop('parse');
 
 	stats.start('create component');
 	const component = new Component(
 		ast,
-		source,
+		normalizedSource,
 		options.name || get_name_from_filename(options.filename) || 'Component',
 		options,
 		stats,
