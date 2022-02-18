@@ -8,7 +8,7 @@ We now present you 2 files in the editor on the right (upper bar) to click on, `
 
 Each component is a reusable self-contained block of code that encapsulates HTML, CSS, and JavaScript that belong together, written into a `.svelte` file.
 
-Let's add a `<script>` tag to `App.svelte` that imports the file and our component `Nested.svelte` to our app...
+Let's add a `<script>` tag to `App.svelte` that imports the file (our component) `Nested.svelte` into our app...
 
 ```html
 <script>
