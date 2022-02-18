@@ -1,3 +1,6 @@
+# Set default behavior to automatically normalize line endings on check-in
+* text=auto
+
 /site/** -linguist-detectable
 /test/**/samples/** -linguist-detectable
 /**/*.svelte linguist-detectable
