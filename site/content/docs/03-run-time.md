@@ -162,6 +162,22 @@ Like lifecycle functions, this must be called during component initialisation.
 
 > Context is not inherently reactive. If you need reactive values in context then you can pass a store into context, which *will* be reactive.
 
+#### Reactive ContextAPI
+
+```
+<script>
+	import { setContext } from 'svelte'
+	import { writable } from 'svelte/store'
+
+	let count = writable(0)
+	setContext('count', count)
+</script>
+
+Count is: {$count}
+```
+
+More about [Reactive ContextAPI in the tutorial](https://svelte.dev/tutorial/reactive-contextapi)
+
 #### `getContext`
 
 ```js
