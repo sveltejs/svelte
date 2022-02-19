@@ -11,6 +11,7 @@ More on that and other new features and fixes below!
 
 ## New across Svelte and Language Tools
 - Any highlights from the Svelte Changelog? Feels like it was mostly bugfixes
+...
 - svelte.dev is [now available in Russian](https://ru.svelte.dev/)! If you'd like to contribute to the community transaltions, check out [sveltejs-translations/content-server](https://github.com/sveltejs-translations/content-server)
 - Accessing properties in markups has been improved in the Svelte language tools ([105.12.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-105.12.0)) - working around some known issues with autocomplete ([#538](https://github.com/sveltejs/language-tools/issues/538), [#786](https://github.com/sveltejs/language-tools/issues/786) and [#1302](https://github.com/sveltejs/language-tools/issues/1302))
 
