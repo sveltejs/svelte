@@ -9,7 +9,7 @@ Add the following style attribute to the paragraph element:
 
 Great, now you can style the paragraph using variables that can change based on your input and you don't have to make a class for every possible value.
 
-This can get unwieldly if you have to spread the style directive over multiple lines for readability, and missing any of the semicolons will make it invalid. Svelte provides a nicer way to write inline styles and that is to use the style directive like this:
+This can however get unwieldly if you have to write a rather long string, and missing any of the semicolons will make it invalid. Svelte provides a nicer way to write inline styles and that is to use the style directive like this:
 
 ```html
 <p 
