@@ -18,4 +18,4 @@ This can get unwieldly if you have to spread the style directive over multiple l
 >
 ```
 
-They share a few qualities with the class directive. One is you can use a shorthand when the name of the property and the variable are the same. So `style:color="{color}"` can be written as just `style:color`. Another is that the directives will take precedence when you set the same property through a style attribute.
+They share a few qualities with the class directive. You can use a shorthand when the name of the property and the variable are the same. So `style:color="{color}"` can be written as just `style:color`. Another is that the directives will take precedence when you set the same property through a style attribute.
