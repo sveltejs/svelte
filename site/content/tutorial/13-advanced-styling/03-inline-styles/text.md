@@ -9,7 +9,7 @@ Add the following style attribute to the paragraph element:
 
 Great, now you can style the paragraph using variables that can change based on your input and you don't have to make a class for every possible value.
 
-There is a way to make this look nicer though, and that is to use the style directive.
+This can get unwieldly if you have to spread the style directive over multiple lines for readability, and missing any of the semicolons will make it invalid. Svelte provides a nicer way to write inline styles and that is to use the style directive like this:
 
 ```html
 <p 
@@ -18,4 +18,4 @@ There is a way to make this look nicer though, and that is to use the style dire
 >
 ```
 
-Not only that but just like the class directive, you can use a shorthand when the name of the property and the variable are the same. So `style:color="{color}"` can be written as just `style:color`.
+They share a few qualities with the class directive. One is you can use a shorthand when the name of the property and the variable are the same. So `style:color="{color}"` can be written as just `style:color`. Another is that the directives will take precedence when you set the same property through a style attribute.
