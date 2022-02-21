@@ -5,7 +5,7 @@ title: Inline styles and the style directive
 Apart from adding styles inside style tags, you can also add styles to individual elements using the style attribute. Usually you will want to do styling through CSS, but this can come in handy for dynamic styles, especially when combined with CSS custom properties.
 
 Add the following style attribute to the paragraph element:
-`style="color: {color}; --o: {backgroundOpacity};"`
+`style="color: {color}; --o: {bgOpacity};"`
 
 Great, now you can style the paragraph using variables that can change based on your input and you don't have to make a class for every possible value.
 
@@ -14,7 +14,7 @@ This can however get unwieldly if you have to write a rather long string, and mi
 ```html
 <p 
 	style:color 
-	style:--o={backgroundOpacity}
+	style:--o={bgOpacity}
 >
 ```
 

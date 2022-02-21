@@ -1,11 +1,11 @@
 <script>
-	let backgroundOpacity = 0.5;
-	$: color = backgroundOpacity < 0.6 ? '#000' : '#fff';
+	let bgOpacity = 0.5;
+	$: color = bgOpacity < 0.6 ? '#000' : '#fff';
 </script>
 
-<input type="range" min="0" max="1" step="0.1" bind:value={backgroundOpacity} />
+<input type="range" min="0" max="1" step="0.1" bind:value={bgOpacity} />
 
-<p style:color style:--o={backgroundOpacity}>This is a paragraph.</p>
+<p style:color style:--o={bgOpacity}>This is a paragraph.</p>
 
 <style>
 	p {
