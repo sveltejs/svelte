@@ -10,5 +10,6 @@
 
 	div {
 		--foo: ;
+		--bar: !important;
 	}
 </style>
