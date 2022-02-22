@@ -7,4 +7,8 @@
 	div {
 		--test: 10;
 	}
+
+	div {
+		--foo: ;
+	}
 </style>

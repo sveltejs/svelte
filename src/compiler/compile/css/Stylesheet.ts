@@ -145,6 +145,8 @@ class Declaration {
 			? this.node.value.children[0]
 			: this.node.value;
 
+		if (first.type === 'Raw' && /^\s+$/.test(first.value)) return;
+
 		let start = first.start;
 		while (/\s/.test(code.original[start])) start += 1;
 
