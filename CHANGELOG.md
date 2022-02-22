@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+- Add `aria-description` to the list of allowed ARIA attributes ([#7301](https://github.com/sveltejs/svelte/issues/7301))
+
 ## 3.46.4
 
 * Avoid `maximum call stack size exceeded` errors on large components ([#4694](https://github.com/sveltejs/svelte/issues/4694))
