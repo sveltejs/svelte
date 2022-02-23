@@ -11,8 +11,8 @@ To make it reactive, we need to convert the initial value of the `count` to a re
 ```HTML
 <!-- Parent.svelte -->
 <script>
-	import { writable } from 'svelte/store'
-	let count = writable(0)
+	import { writable } from 'svelte/store';
+	let count = writable(0);
 </script>
 ```
 

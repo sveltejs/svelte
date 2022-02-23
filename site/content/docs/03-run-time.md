@@ -166,11 +166,11 @@ Like lifecycle functions, this must be called during component initialisation.
 
 ```
 <script>
-	import { setContext } from 'svelte'
-	import { writable } from 'svelte/store'
+	import { setContext } from 'svelte';
+	import { writable } from 'svelte/store';
 
-	let count = writable(0)
-	setContext('count', count)
+	let count = writable(0);
+	setContext('count', count);
 </script>
 
 Count is: {$count}
