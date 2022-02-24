@@ -8,7 +8,7 @@ draft: true
 
 *__Coming soon__*
 
-This post will walk you through setting up your editor so that recognises Svelte files:
+This post will walk you through setting up your editor so that it recognises Svelte files:
 
 * eslint-plugin-svelte3
 * svelte-vscode
