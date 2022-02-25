@@ -6,15 +6,17 @@ You can even bind to properties inside an `each` block.
 
 ```html
 {#each todos as todo}
-	<input
-		type=checkbox
-		bind:checked={todo.done}
-	>
+	<div class:done={todo.done}>
+		<input
+			type=checkbox
+			bind:checked={todo.done}
+		>
 
-	<input
-		placeholder="What needs to be done?"
-		bind:value={todo.text}
-	>
+		<input
+			placeholder="What needs to be done?"
+			bind:value={todo.text}
+		>
+	</div>
 {/each}
 ```
 
