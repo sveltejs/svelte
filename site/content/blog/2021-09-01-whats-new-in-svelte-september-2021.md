@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: September 2021
+title: "What's new in Svelte: September 2021"
 description: StackOverflow's most loved web framework
 author: Daniel Sandoval
 authorURL: https://desandoval.net
@@ -29,8 +29,8 @@ The focus this past month was on continuing to iron out any kinks, with well ove
 
 - SvelteKit will now detect if a prerendered app is trying to access a query parameter and return an error instead of failing silently ([#2104](https://github.com/sveltejs/kit/pull/2104))
 - `adapter-node` now lets you [add the Kit middleware to your own server](https://kit.svelte.dev/faq#integrations) for use with other middleware. You can also [add middleware in dev mode](https://kit.svelte.dev/faq#how-do-i-use-x-with-sveltekit-how-do-i-use-middleware) with more improvements to come in this area
-- The new [`sequence` helper lets you chain together multiple `handle` calls](https://kit.svelte.dev/docs#modules-sveltejs-kit-hooks)
-- A new [`handleError` hook](https://kit.svelte.dev/docs#hooks-handleerror) gives you the option to send data to an error tracking service, or to customise the formatting before printing the error to the console.
+- The new [`sequence` helper lets you chain together multiple `handle` calls](https://kit.svelte.dev/docs/modules#sveltejs-kit-hooks)
+- A new [`handleError` hook](https://kit.svelte.dev/docs/hooks#handleerror) gives you the option to send data to an error tracking service, or to customise the formatting before printing the error to the console.
 - `adapter-node` can now listen on socket path ([#2048](https://github.com/sveltejs/kit/pull/2048))
 
 To see all updates to SvelteKit, check out the [SvelteKit changelog](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md).

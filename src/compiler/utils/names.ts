@@ -22,6 +22,7 @@ export const globals = new Set([
 	'Event',
 	'EventSource',
 	'fetch',
+	'FormData',
 	'global',
 	'globalThis',
 	'history',
@@ -60,6 +61,7 @@ export const globals = new Set([
 	'undefined',
 	'URIError',
 	'URL',
+	'URLSearchParams',
 	'window'
 ]);
 

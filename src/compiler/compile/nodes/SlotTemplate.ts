@@ -1,4 +1,3 @@
-import map_children from './shared/map_children';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import Node from './shared/Node';
@@ -6,12 +5,15 @@ import Let from './Let';
 import Attribute from './Attribute';
 import { INode } from './interfaces';
 import compiler_errors from '../compiler_errors';
+import get_const_tags from './shared/get_const_tags';
+import ConstTag from './ConstTag';
 
 export default class SlotTemplate extends Node {
 	type: 'SlotTemplate';
 	scope: TemplateScope;
 	children: INode[];
 	lets: Let[] = [];
+	const_tags: ConstTag[];
 	slot_attribute: Attribute;
 	slot_template_name: string = 'default';
 
@@ -63,7 +65,7 @@ export default class SlotTemplate extends Node {
 		});
 
 		this.scope = scope;
-		this.children = map_children(component, this, this.scope, info.children);
+		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
 	}
 
 	validate_slot_template_placement() {

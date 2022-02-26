@@ -7,11 +7,11 @@ export default {
 		<button>Toggle outside</button>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const button = target.querySelectorAll('button')[1];
 		const div = target.querySelector('div');
 		await div.dispatchEvent(new window.MouseEvent('click'));
-		
+
 		assert.htmlEqual(target.innerHTML, `
 			<div>
 				<button slot="target">Toggle inside 1</button>
@@ -19,7 +19,7 @@ export default {
 			</div>
 			<button>Toggle outside</button>
 		`);
-		
+
 		await button.dispatchEvent(new window.MouseEvent('click'));
 		assert.htmlEqual(target.innerHTML, `
 			<div>

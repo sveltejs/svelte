@@ -1,7 +1,7 @@
 export default {
 	html: '<button>???</button>',
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const event = new window.MouseEvent('click', {
 			clientX: 42,
 			clientY: 42

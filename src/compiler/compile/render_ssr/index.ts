@@ -10,6 +10,7 @@ import { extract_names } from 'periscopic';
 import { walk } from 'estree-walker';
 
 import { invalidate } from '../render_dom/invalidate';
+import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 
 export default function ssr(
 	component: Component,
@@ -200,11 +201,13 @@ export default function ssr(
 		main
 	].filter(Boolean);
 
+	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
+
 	const js = b`
 		${css.code ? b`
 		const #css = {
 			code: "${css.code}",
-			map: ${css.map ? string_literal(css.map.toString()) : 'null'}
+			map: ${css_sourcemap_enabled && css.map ? string_literal(css.map.toString()) : 'null'}
 		};` : null}
 
 		${component.extract_javascript(component.ast.module)}

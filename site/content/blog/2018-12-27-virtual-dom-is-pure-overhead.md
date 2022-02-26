@@ -47,7 +47,7 @@ Misunderstood claims about virtual DOM performance date back to the launch of Re
 > This is actually extremely fast, primarily because most DOM operations tend to be slow. There's been a lot of performance work on the DOM, but most DOM operations tend to drop frames.
 
 <figure>
-	<img alt="Pete Hunt at JSConfEU 2013" src="media/rethinking-best-practices.jpg">
+	<img alt="Pete Hunt at JSConfEU 2013" src="/media/rethinking-best-practices.jpg">
 	<figcaption>Screenshot from <a href="https://www.youtube.com/watch?v=x7cQ3mrcKaY">Rethinking Best Practices</a> at JSConfEU 2013</figcaption>
 </figure>
 

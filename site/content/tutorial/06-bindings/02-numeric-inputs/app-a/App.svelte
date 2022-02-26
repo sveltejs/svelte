@@ -14,3 +14,8 @@
 </label>
 
 <p>{a} + {b} = {a + b}</p>
+
+<style>
+	label { display: flex }
+	input, p { margin: 6px }
+</style>

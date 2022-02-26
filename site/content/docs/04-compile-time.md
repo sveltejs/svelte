@@ -6,7 +6,7 @@ Typically, you won't interact with the Svelte compiler directly, but will instea
 
 * [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) for users of [Rollup](https://rollupjs.org)
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) for users of [webpack](https://webpack.js.org)
-* or one of the [community-maintained plugins](https://sveltesociety.dev/tooling)
+* or one of the [community-maintained plugins](https://sveltesociety.dev/tools)
 
 Nonetheless, it's useful to understand how to use the compiler, since bundler plugins generally expose compiler options to you.
 
@@ -82,6 +82,8 @@ The following options can be passed to the compiler. None are required:
 | `loopGuardTimeout` | 0 | A `number` that tells Svelte to break the loop if it blocks the thread for more than `loopGuardTimeout` ms. This is useful to prevent infinite loops. **Only available when `dev: true`**
 | `preserveComments` | `false` | If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
 | `preserveWhitespace` | `false` | If `true`, whitespace inside and between elements is kept as you typed it, rather than removed or collapsed to a single space where possible.
+| `sourcemap` | `object \| string` | An initial sourcemap that will be merged into the final output sourcemap. This is usually the preprocessor sourcemap.
+| `enableSourcemap` | `boolean \| { js: boolean; css: boolean; }` | If `true`, Svelte generate sourcemaps for components. Use an object with `js` or `css` for more granular control of sourcemap generation. By default, this is `true`.
 | `outputFilename` | `null` | A `string` used for your JavaScript sourcemap.
 | `cssOutputFilename` | `null` | A `string` used for your CSS sourcemap.
 | `sveltePath` | `"svelte"` | The location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.
@@ -176,7 +178,7 @@ ast: object = svelte.parse(
 
 ---
 
-The `parse` function parses a component, returning only its abstract syntax tree. Unlike compiling with the `generate: false` option, this will not perform any validation or other analysis of the component beyond parsing it.
+The `parse` function parses a component, returning only its abstract syntax tree. Unlike compiling with the `generate: false` option, this will not perform any validation or other analysis of the component beyond parsing it. Note that the returned AST is not considered public API, so breaking changes could occur at any point in time.
 
 
 ```js
@@ -188,7 +190,7 @@ const ast = svelte.parse(source, { filename: 'App.svelte' });
 
 ### `svelte.preprocess`
 
-A number of [community-maintained preprocessing plugins](https://github.com/sveltejs/integrations#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
+A number of [community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
 
 You can write your own preprocessor using the `svelte.preprocess` API.
 

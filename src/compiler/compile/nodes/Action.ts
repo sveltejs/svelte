@@ -18,7 +18,7 @@ export default class Action extends Node {
 		component.warn_if_undefined(object, info, scope);
 
 		this.name = info.name;
-		component.add_reference(object);
+		component.add_reference(this as any, object);
 
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression)

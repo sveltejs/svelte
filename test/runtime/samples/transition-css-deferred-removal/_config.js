@@ -3,7 +3,7 @@ export default {
 		visible: true
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.visible = false;
 
 		const outer = target.querySelector('.outer');

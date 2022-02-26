@@ -1,6 +1,6 @@
 export default {
 	html: '<div>3</div>',
-	async test({ assert, component, target, window }) {
+	async test({ assert, component, target }) {
 		const div = target.querySelector('div');
 
 		await component.mutate();

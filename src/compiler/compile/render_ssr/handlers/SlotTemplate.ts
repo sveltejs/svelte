@@ -3,9 +3,9 @@ import SlotTemplate from '../../nodes/SlotTemplate';
 import remove_whitespace_children from './utils/remove_whitespace_children';
 import { get_slot_scope } from './shared/get_slot_scope';
 import InlineComponent from '../../nodes/InlineComponent';
-import Element from '../../nodes/Element';
+import { get_const_tags } from './shared/get_const_tags';
 
-export default function(node: SlotTemplate | Element | InlineComponent, renderer: Renderer, options: RenderOptions & {
+export default function(node: SlotTemplate, renderer: Renderer, options: RenderOptions & {
 	slot_scopes: Map<any, any>;
 }) {
 	const parent_inline_component = node.parent as InlineComponent;
@@ -31,7 +31,8 @@ export default function(node: SlotTemplate | Element | InlineComponent, renderer
 
 		options.slot_scopes.set(node.slot_template_name, {
 			input: get_slot_scope(node.lets),
-			output: slot_fragment_content
+			output: slot_fragment_content,
+			statements: get_const_tags(node.const_tags)
 		});
 	}
 }

@@ -24,7 +24,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b } from 'code-red';
@@ -36,6 +36,7 @@ import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
+import check_enable_sourcemap from './utils/check_enable_sourcemap';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -190,27 +191,33 @@ export default class Component {
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
 
-	add_var(variable: Var, add_to_lookup = true) {
+	add_var(node: Node, variable: Var, add_to_lookup = true) {
 		this.vars.push(variable);
 
 		if (add_to_lookup) {
+			if (this.var_lookup.has(variable.name)) {
+				const exists_var = this.var_lookup.get(variable.name);
+				if (exists_var.module && exists_var.imported) {
+					this.error(node as any, compiler_errors.illegal_variable_declaration);
+				}
+			}
 			this.var_lookup.set(variable.name, variable);
 		}
 	}
 
-	add_reference(name: string) {
+	add_reference(node: Node, name: string) {
 		const variable = this.var_lookup.get(name);
 
 		if (variable) {
 			variable.referenced = true;
 		} else if (is_reserved_keyword(name)) {
-			this.add_var({
+			this.add_var(node, {
 				name,
 				injected: true,
 				referenced: true
 			});
 		} else if (name[0] === '$') {
-			this.add_var({
+			this.add_var(node, {
 				name,
 				injected: true,
 				referenced: true,
@@ -227,7 +234,7 @@ export default class Component {
 			}
 		} else {
 			if (this.compile_options.varsReport === 'full') {
-				this.add_var({ name, referenced: true }, false);
+				this.add_var(node, { name, referenced: true }, false);
 			}
 
 			this.used_names.add(name);
@@ -343,21 +350,28 @@ export default class Component {
 				? { code: null, map: null }
 				: result.css;
 
-			const sourcemap_source_filename = get_sourcemap_source_filename(compile_options);
+			const js_sourcemap_enabled = check_enable_sourcemap(compile_options.enableSourcemap, 'js');
 
-			js = print(program, {
-				sourceMapSource: sourcemap_source_filename
-			});
+			if (!js_sourcemap_enabled) {
+				js = print(program);
+				js.map = null;
+			} else {
+				const sourcemap_source_filename = get_sourcemap_source_filename(compile_options);
 
-			js.map.sources = [
-				sourcemap_source_filename
-			];
+				js = print(program, {
+					sourceMapSource: sourcemap_source_filename
+				});
 
-			js.map.sourcesContent = [
-				this.source
-			];
+				js.map.sources = [
+					sourcemap_source_filename
+				];
 
-			js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+				js.map.sourcesContent = [
+					this.source
+				];
+
+				js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+			}
 		}
 
 		return {
@@ -591,12 +605,14 @@ export default class Component {
 			}
 
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
+			const imported = node.type.startsWith('Import');
 
-			this.add_var({
+			this.add_var(node, {
 				name,
 				module: true,
 				hoistable: true,
-				writable
+				writable,
+				imported
 			});
 		});
 
@@ -604,7 +620,7 @@ export default class Component {
 			if (name[0] === '$') {
 				return this.error(node as any, compiler_errors.illegal_subscription);
 			} else {
-				this.add_var({
+				this.add_var(node, {
 					name,
 					global: true,
 					hoistable: true
@@ -666,7 +682,7 @@ export default class Component {
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
 			const imported = node.type.startsWith('Import');
 
-			this.add_var({
+			this.add_var(node, {
 				name,
 				initialised: instance_scope.initialised_declarations.has(name),
 				writable,
@@ -689,7 +705,7 @@ export default class Component {
 			const node = globals.get(name);
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
-				this.add_var({
+				this.add_var(node, {
 					name,
 					injected: true,
 					writable: true,
@@ -697,7 +713,7 @@ export default class Component {
 					initialised: true
 				});
 			} else if (is_reserved_keyword(name)) {
-				this.add_var({
+				this.add_var(node, {
 					name,
 					injected: true
 				});
@@ -706,14 +722,14 @@ export default class Component {
 					return this.error(node as any, compiler_errors.illegal_global(name));
 				}
 
-				this.add_var({
+				this.add_var(node, {
 					name,
 					injected: true,
 					mutated: true,
 					writable: true
 				});
 
-				this.add_reference(name.slice(1));
+				this.add_reference(node, name.slice(1));
 
 				const variable = this.var_lookup.get(name.slice(1));
 				if (variable) {
@@ -721,7 +737,7 @@ export default class Component {
 					variable.referenced_from_script = true;
 				}
 			} else {
-				this.add_var({
+				this.add_var(node, {
 					name,
 					global: true,
 					hoistable: true
@@ -758,12 +774,13 @@ export default class Component {
 		};
 		let scope_updated = false;
 
-		let generator_count = 0;
+		const current_function_stack = [];
+		let current_function: FunctionDeclaration | FunctionExpression = null;
 
 		walk(content, {
 			enter(node: Node, parent: Node, prop, index) {
-				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
-					generator_count++;
+				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) {
+					current_function_stack.push(current_function = node);
 				}
 
 				if (map.has(node)) {
@@ -792,12 +809,13 @@ export default class Component {
 			},
 
 			leave(node: Node) {
-				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
-					generator_count--;
+				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) {
+					current_function_stack.pop();
+					current_function = current_function_stack[current_function_stack.length - 1];
 				}
 
 				// do it on leave, to prevent infinite loop
-				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0 && generator_count <= 0) {
+				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0 && (!current_function || (!current_function.generator && !current_function.async))) {
 					const to_replace_for_loop_protect = component.loop_protect(node, scope, component.compile_options.loopGuardTimeout);
 					if (to_replace_for_loop_protect) {
 						this.replace(to_replace_for_loop_protect);

@@ -10,6 +10,8 @@ import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statemen
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { flatten } from '../../utils/flatten';
+import check_enable_sourcemap from '../utils/check_enable_sourcemap';
+import { push_array } from '../../utils/push_array';
 
 export default function dom(
 	component: Component,
@@ -34,9 +36,15 @@ export default function dom(
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
 
-	css.map = apply_preprocessor_sourcemap(options.filename, css.map, options.sourcemap as string | RawSourceMap | DecodedSourceMap);
+	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
 
-	const styles = component.stylesheet.has_styles && options.dev
+	if (css_sourcemap_enabled) {
+		css.map = apply_preprocessor_sourcemap(options.filename, css.map, options.sourcemap as string | RawSourceMap | DecodedSourceMap);
+	} else {
+		css.map = null;
+	}
+
+	const styles = css_sourcemap_enabled && component.stylesheet.has_styles && options.dev
 		? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
 		: css.code;
 
@@ -60,7 +68,7 @@ export default function dom(
 	// TODO the deconflicted names of blocks are reversed... should set them here
 	const blocks = renderer.blocks.slice().reverse();
 
-	body.push(...blocks.map(block => {
+	push_array(body, blocks.map(block => {
 		// TODO this is a horrible mess — renderer.blocks
 		// contains a mixture of Blocks and Nodes
 		if ((block as Block).render) return (block as Block).render();
@@ -521,7 +529,7 @@ export default function dom(
 				constructor(options) {
 					super();
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
 					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
 
@@ -555,7 +563,7 @@ export default function dom(
 			});
 		}
 
-		declaration.body.body.push(...accessors);
+		push_array(declaration.body.body, accessors);
 
 		body.push(declaration);
 
@@ -592,7 +600,7 @@ export default function dom(
 			}
 		`[0] as ClassDeclaration;
 
-		declaration.body.body.push(...accessors);
+		push_array(declaration.body.body, accessors);
 
 		body.push(declaration);
 	}

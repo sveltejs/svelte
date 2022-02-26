@@ -10,6 +10,7 @@ import { b, x } from 'code-red';
 import { walk } from 'estree-walker';
 import { is_head } from './shared/is_head';
 import { Identifier, Node } from 'estree';
+import { push_array } from '../../../utils/push_array';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -166,7 +167,7 @@ export default class IfBlockWrapper extends Wrapper {
 			block.has_outro_method = has_outros;
 		});
 
-		renderer.blocks.push(...blocks);
+		push_array(renderer.blocks, blocks);
 	}
 
 	render(
@@ -266,15 +267,15 @@ export default class IfBlockWrapper extends Wrapper {
 		if (this.needs_update) {
 			block.chunks.init.push(b`
 				function ${select_block_type}(#ctx, #dirty) {
-					${this.branches.map(({ dependencies, condition, snippet, block }) => condition
+					${this.branches.map(({ dependencies, condition, snippet }) => {
+						return b`${snippet && dependencies.length > 0 ? b`if (${block.renderer.dirty(dependencies)}) ${condition} = null;` : null}`;
+					})}
+					${this.branches.map(({ condition, snippet, block }) => condition
 					? b`
-					${snippet && (
-						dependencies.length > 0
-							? b`if (${condition} == null || ${block.renderer.dirty(dependencies)}) ${condition} = !!${snippet}`
-							: b`if (${condition} == null) ${condition} = !!${snippet}`
+						${snippet && b`if (${condition} == null) ${condition} = !!${snippet}`}
+						if (${condition}) return ${block.name};`
+					: b`return ${block.name};`
 					)}
-					if (${condition}) return ${block.name};`
-					: b`return ${block.name};`)}
 				}
 			`);
 		} else {
@@ -387,13 +388,12 @@ export default class IfBlockWrapper extends Wrapper {
 			${this.needs_update
 				? b`
 					function ${select_block_type}(#ctx, #dirty) {
-						${this.branches.map(({ dependencies, condition, snippet }, i) => condition
+						${this.branches.map(({ dependencies, condition, snippet }) => {
+							return b`${snippet && dependencies.length > 0 ? b`if (${block.renderer.dirty(dependencies)}) ${condition} = null;` : null}`;
+						})}
+						${this.branches.map(({ condition, snippet }, i) => condition
 						? b`
-						${snippet && (
-							dependencies.length > 0
-								? b`if (${condition} == null || ${block.renderer.dirty(dependencies)}) ${condition} = !!${snippet}`
-								: b`if (${condition} == null) ${condition} = !!${snippet}`
-						)}
+						${snippet && b`if (${condition} == null) ${condition} = !!${snippet}`}
 						if (${condition}) return ${i};`
 						: b`return ${i};`)}
 						${!has_else && b`return -1;`}
