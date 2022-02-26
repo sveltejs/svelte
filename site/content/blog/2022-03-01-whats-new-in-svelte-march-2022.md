@@ -48,7 +48,7 @@ More on that and other new features and fixes below!
 Want to work on a SvelteKit site with others? [Contribute to the Svelte Society site](https://github.com/svelte-society/sveltesociety.dev/issues)!
 
 
-**Learning and Listening**
+**Learning Resources**
 
 _To Read_
 - [Svelte Components as Web Components](https://medium.com/@yesmeno/svelte-components-as-web-components-b400d1253504) by Matias Meno
