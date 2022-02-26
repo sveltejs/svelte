@@ -2,9 +2,10 @@ export default {
 	// solo: 1,
 
 	html: `
-		<template>
-			<div>foo</div>
-		</template>
+	<template id="t1">
+	    <div>foo</div>
+	</template>
+	<template id="t2">123</template>
 	`,
 
 	test({ assert, target }) {
