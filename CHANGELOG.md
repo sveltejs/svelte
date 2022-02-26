@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Add `aria-description` to the list of allowed ARIA attributes ([#7301](https://github.com/sveltejs/svelte/issues/7301))
+- Add TypeScript interfaces for typing actions ([#6538](https://github.com/sveltejs/svelte/issues/6538))
 
 ## 3.46.4
 
