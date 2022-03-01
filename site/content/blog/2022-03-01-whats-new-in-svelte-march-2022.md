@@ -7,7 +7,7 @@ authorURL: https://desandoval.net
 
 Just announced: [Svelte Summit Spring](https://www.sveltesummit.com/) will be taking place on April 30, 2022. The 5th Virtual Svelte Conference is [looking for speakers](https://www.sveltesummit.com/#speakers) and [sponsors](https://www.sveltesummit.com/sponsors)... so it's time to dust off those proposals!
 
-Also, some long-requested features were added to SvelteKit this month... including page endpoints! This change in how `load` function works makes it easier to fetch data required for basic pages, redirect from POST responses and handle 404s and other errors.
+Also, some long-requested features were added to SvelteKit this month... including page endpoints! This change in how the `load` function works makes it easier to fetch data required for basic pages, redirect from POST responses and handle 404s and other errors.
 
 More on that and other new features and fixes below!
 
