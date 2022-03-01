@@ -7,13 +7,15 @@ authorURL: https://desandoval.net
 
 Just announced: [Svelte Summit Spring](https://www.sveltesummit.com/) will be taking place on April 30, 2022. The 5th Virtual Svelte Conference is [looking for speakers](https://www.sveltesummit.com/#speakers) and [sponsors](https://www.sveltesummit.com/sponsors)... so it's time to dust off those proposals!
 
-Also, some long-requested features were added to SvelteKit this month... including page endpoints! This change in how `load` functions makes it easier to fetch data required for basic pages, redirect from POST responses and handle 404s and other errors.
+Also, some long-requested features were added to SvelteKit this month... including page endpoints! This change in how `load` functions work makes it easier to fetch data required for basic pages, redirect from POST responses and handle 404s and other errors.
 
 More on that and other new features and fixes below!
 
 ## What's new in SvelteKit
+- The docs are now searchable and multipage with type definitions and hoverable code examples - Check them out at [kit.svelte.dev/docs](https://kit.svelte.dev/docs/)
 - Page endpoints significantly decrease the boilerplate needed when loading a page ([Issue](https://github.com/sveltejs/kit/issues/3532), [PR](https://github.com/sveltejs/kit/pull/3679), [Docs](https://kit.svelte.dev/docs/routing#endpoints-page-endpoints))
 - Application versioning and update detection support lets you determine what to do when a route fails to load after an app update ([Issue](https://github.com/sveltejs/kit/issues/87), [PR](https://github.com/sveltejs/kit/pull/3412), [Docs](https://kit.svelte.dev/docs/configuration#version))
+- A new option in `npm init svelte@next` will now set up Playwright automatically for testing ([PR](https://github.com/sveltejs/kit/pull/4056))
 
 
 **Breaking Changes**
