@@ -255,8 +255,11 @@ export default class Expression {
 
 					if (owner.type === 'ConstTag') {
 						walk(node, {
-							enter(node: Node) {
-								if (node.type === 'Identifier') {
+							enter(node: Node, parent: Node) {
+								if (node.type === 'Identifier' &&
+									  // ignore parts of member expressions,
+									  // in obj.key1.key2, Identifiers key1 and key2 should not be replaced
+									  (parent.type !== 'MemberExpression' || parent.property !== node)) {
 									this.replace(block.renderer.reference(node, ctx));
 								}
 							}
