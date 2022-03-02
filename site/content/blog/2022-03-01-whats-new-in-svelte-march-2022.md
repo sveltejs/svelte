@@ -80,7 +80,7 @@ _To Watch_
 - [walk-and-graph-svelte-components](https://github.com/j2l/walk-and-graph-svelte-components) is a CLI node script to walk svelte and js files, to draw a beautiful JPG of your dependencies aka "imports"
 - [Felte](https://www.npmjs.com/package/felte) is a simple to use form library for Svelte
 - [svelte-use-tooltip](https://github.com/untemps/svelte-use-tooltip) is a Svelte action to display a tooltip
-[persistent-svelte-store](https://github.com/omer-g/persistent-svelte-store) is a generic persistent writable store, built from scratch in TypeScript according to the Svelte store contract
+- [persistent-svelte-store](https://github.com/omer-g/persistent-svelte-store) is a generic persistent writable store, built from scratch in TypeScript according to the Svelte store contract
 
 What'd we miss? Join us on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs) to continue the conversation.
 
