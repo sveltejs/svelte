@@ -519,7 +519,7 @@ export default class Component {
 		return result;
 	}
 
-	private _extract_exports(node: ExportDefaultDeclaration | ExportNamedDeclaration | ExportAllDeclaration, module_script) {
+	private _extract_exports(node: ExportDefaultDeclaration | ExportNamedDeclaration | ExportAllDeclaration, module_script: boolean) {
 		if (node.type === 'ExportDefaultDeclaration') {
 			return this.error(node as any, compiler_errors.default_export);
 		}
@@ -539,7 +539,7 @@ export default class Component {
 						extract_names(declarator.id).forEach(name => {
 							const variable = this.var_lookup.get(name);
 							variable.export_name = name;
-							if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
+							if (!module_script && variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
 								this.warn(declarator as any, compiler_warnings.unused_export_let(this.name.name, name));
 							}
 						});
@@ -559,7 +559,7 @@ export default class Component {
 					if (variable) {
 						variable.export_name = specifier.exported.name;
 
-						if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
+						if (!module_script && variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
 							this.warn(specifier as any, compiler_warnings.unused_export_let(this.name.name, specifier.exported.name));
 						}
 					}
