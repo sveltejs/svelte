@@ -734,7 +734,7 @@ export function get_custom_elements_slots(element: HTMLElement) {
 }
 
 
-type ActionWithParams<Node extends HTMLElement = HTMLElement, Params extends any = any> = (
+type ActionWithParams<Node extends HTMLElement = HTMLElement, Params = any> = (
 	node: Node,
 	options: Params
 ) => {
@@ -746,6 +746,6 @@ type ActionWithoutParams<Node extends HTMLElement = HTMLElement> = (node: Node) 
 	destroy?: () => void
 }
 
-export type Action<Node extends HTMLElement = HTMLElement, Params extends any = void> = void extends Params
+export type Action<Node extends HTMLElement = HTMLElement, Params = void> = void extends Params
 	? ActionWithoutParams<Node>
 	: ActionWithParams<Node, Params>
