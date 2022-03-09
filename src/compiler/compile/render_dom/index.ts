@@ -569,7 +569,7 @@ export default function dom(
 
 		if (component.tag != null) {
 			body.push(b`
-				@_customElements.define("${component.tag}", ${name});
+				!@_customElements.get("${component.tag}") && @_customElements.define("${component.tag}", ${name});
 			`);
 		}
 	} else {
