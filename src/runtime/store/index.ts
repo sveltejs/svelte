@@ -10,7 +10,7 @@ export type Unsubscriber = () => void;
 export type Updater<T> = (value: T) => T;
 
 /** Cleanup logic callback. */
-type Invalidator<T> = (value?: T) => void;
+export type Invalidator<T> = (value?: T) => void;
 
 /** Start and stop notification callbacks. */
 export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
@@ -41,7 +41,7 @@ export interface Writable<T> extends Readable<T> {
 }
 
 /** Pair of subscriber and invalidator. */
-type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
+export type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
 
 const subscriber_queue = [];
 
@@ -109,10 +109,10 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 }
 
 /** One or more `Readable`s. */
-type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
+export type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
 
 /** One or more values from `Readable` stores. */
-type StoresValues<T> = T extends Readable<infer U> ? U :
+export type StoresValues<T> = T extends Readable<infer U> ? U :
 	{ [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
 /**
