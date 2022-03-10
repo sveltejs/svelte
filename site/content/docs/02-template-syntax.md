@@ -627,31 +627,21 @@ On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`
 
 ---
 
-Bindings use event handlers internally to sync the values. The event that is listened for will differ based on the element and the type of binding used. Therefore, the order of `bind:` and `on:` directives can have consequences.
+If you're using `bind:` directives together with `on:` directives, their order can affect what value the bound variable has when the event handler is called.
 
 ```sv
 <script>
-	let value = 50;
-	
-	$: console.log("2nd", value)
+	let value = 'Hello World';
 </script>
 
-
-<div on:input="{() => console.log('4th', value)}">
-	<!--bind:value on range inputs listens to the 'input' event-->
-	<input
-		type="range"
-
-		on:change="{() => console.log('5th', value)}"
-		
-		on:input="{() => console.log('1st', value)}"
-		bind:value
-		on:input="{() => console.log('3rd', value)}"
-	/>
-</div>
+<input
+	on:input="{() => console.log('Old value:', value)}"
+	bind:value
+	on:input="{() => console.log('New value:', value)}"
+/>
 ```
 
-In the above example, the `1st` input handler will be called before the binding updates the value, so it'll log the old value, whereas `3rd` will log the new value. However, the `change` event only fires when you let go of the slider, so even though the change handler is declared before the input handlers, it'll always be triggered last.
+Here we were binding to the value of a text input, which uses the `input` event internally. Bindings on other elements may use different events such as `change`.
 
 ##### Binding `<select>` value
 
