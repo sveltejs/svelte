@@ -651,7 +651,7 @@ Bindings use event handlers internally to sync the values. The event that is lis
 </div>
 ```
 
-The `1st` input handler will be called before the binding updates the value, so it'll log the old value, whereas `3rd` will log the new value. However, the `change` event only fires when you let go of the slider, so even though the change handler is declared before the input handlers, it'll always be triggered last.
+In the above example, the `1st` input handler will be called before the binding updates the value, so it'll log the old value, whereas `3rd` will log the new value. However, the `change` event only fires when you let go of the slider, so even though the change handler is declared before the input handlers, it'll always be triggered last.
 
 ##### Binding `<select>` value
 
