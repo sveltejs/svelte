@@ -650,7 +650,7 @@ export class HtmlTag {
 	// html tag nodes
 	n: ChildNode[];
 	// target
-	t: HTMLElement;
+	t: HTMLElement | DocumentFragment;
 	// anchor
 	a: HTMLElement;
 
@@ -665,7 +665,7 @@ export class HtmlTag {
 	m(html: string, target: HTMLElement, anchor: HTMLElement = null) {
 		if (!this.e) {
 			this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
-			this.t = target;
+			this.t = target.tagName !== 'TEMPLATE' ? target : (target as HTMLTemplateElement).content;
 			this.c(html);
 		}
 
@@ -674,7 +674,7 @@ export class HtmlTag {
 
 	h(html: string) {
 		this.e.innerHTML = html;
-		this.n = Array.from(this.e.childNodes);
+		this.n = Array.from(this.e.nodeName == 'TEMPLATE' ? (this.e as HTMLTemplateElement).content.childNodes : this.e.childNodes);
 	}
 
 	i(anchor) {
