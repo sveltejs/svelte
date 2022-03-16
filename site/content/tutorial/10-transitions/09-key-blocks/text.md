@@ -6,7 +6,7 @@ Key blocks destroy and recreate their contents when the value of an expression c
 
 ```html
 {#key value}
-	<div transition:fade>{value}</div>
+	<span style="display: inline-block" in:fly={{ y: -30 }}>
 {/key}
 ```
 
