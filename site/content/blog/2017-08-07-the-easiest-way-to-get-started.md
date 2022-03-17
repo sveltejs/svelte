@@ -31,8 +31,7 @@ npm install
 npm run dev
 ```
 
-This will serve your app on [localhost:5000](http://localhost:5000) and rebuild it with [Rollup](https://rollupjs.org) every time you make a change to the files in `svelte-app/src`.
-
+This will serve your app on [localhost:8080](http://localhost:8080) and rebuild it with [Rollup](https://rollupjs.org) every time you make a change to the files in `svelte-app/src`.
 
 ## 2. Use degit
 
@@ -50,7 +49,7 @@ npm install
 npm run dev
 ```
 
-This will create a new project in the `my-svelte-project` directory, install its dependencies, and start a server on http://localhost:5000.
+This will create a new project in the `my-svelte-project` directory, install its dependencies, and start a server on http://localhost:8080.
 
 You can find more information about using TypeScript [here](/blog/svelte-and-typescript).
 
