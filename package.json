@@ -113,7 +113,7 @@
   "bugs": {
     "url": "https://github.com/sveltejs/svelte/issues"
   },
-  "homepage": "https://github.com/sveltejs/svelte#README",
+  "homepage": "https://svelte.dev",
   "devDependencies": {
     "@ampproject/remapping": "^0.3.0",
     "@rollup/plugin-commonjs": "^11.0.0",
