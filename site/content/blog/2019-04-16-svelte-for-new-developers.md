@@ -78,7 +78,7 @@ npm run dev
 
 Running the `dev` script starts a program called [Rollup](https://rollupjs.org/guide/en/). Rollup's job is to take your application's source files (so far, just `src/main.js` and `src/App.svelte`), pass them to other programs (including Svelte, in our case) and convert them into the code that will actually run when you open the application in a browser.
 
-Speaking of which, open a browser and navigate to http://localhost:5000. This is your application running on a local *web server* (hence 'localhost') on port 5000.
+Speaking of which, open a browser and navigate to http://localhost:8080. This is your application running on a local *web server* (hence 'localhost') on port 8080.
 
 Try changing `src/App.svelte` and saving it. The application will reload with your changes.
 
@@ -99,7 +99,7 @@ Your `public` directory now contains a compressed `bundle.js` file containing yo
 npm run start
 ```
 
-This will run the app on http://localhost:5000.
+This will run the app on http://localhost:8080.
 
 
 ## Next steps
