@@ -76,6 +76,7 @@ _To Read_
 - [React ⇆ Svelte Cheatsheet](https://dev.to/joshnuss/react-to-svelte-cheatsheet-1a2a) lists the simularities and differences between the two libraries - by Joshua Nussbaum
 
 _To Watch_
+- [Svelte Extravaganza | Async](https://www.youtube.com/watch?v=mT4CLVHgtSg) by pngwn
 - [6 Svelte Packages You Should Know](https://www.youtube.com/watch?v=y5SrUKcX_Co) and [Basic React To Svelte Conversion](https://www.youtube.com/watch?v=DiSuwLlhOxs) by LevelUpTuts
 - [Page/Shadow Endpoint in SvelteKit](https://www.youtube.com/watch?v=j-9D5UDyVOM) by WebJeda
 - [Custom Svelte Store: Higher Order Store](https://www.youtube.com/watch?v=p1aPfVyZ1IY) by lihautan
