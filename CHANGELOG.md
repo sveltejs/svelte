@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.46.5
 
 * Add TypeScript interfaces for typing actions ([#6538](https://github.com/sveltejs/svelte/issues/6538))
 * Do not generate `unused-export-let` warning inside `<script context="module">` blocks ([#7055](https://github.com/sveltejs/svelte/issues/7055))
