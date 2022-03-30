@@ -4,9 +4,9 @@ export default {
 	`,
 
 	test({ assert, component, target, window }) {
-		const p = target.querySelector('div');
+		const div = target.querySelector('div');
 
-		const styles = window.getComputedStyle(p);
+		const styles = window.getComputedStyle(div);
 		assert.equal(styles.color, 'red');
 	}
 };

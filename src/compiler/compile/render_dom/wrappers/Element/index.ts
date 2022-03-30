@@ -219,6 +219,7 @@ export default class ElementWrapper extends Wrapper {
 				node.classes.length > 0 ||
 				node.intro || node.outro ||
 				node.handlers.length > 0 ||
+				node.styles.length > 0 ||
 				this.node.name === 'option' ||
 				renderer.options.dev
 			) {
