@@ -1,8 +1,8 @@
 # Svelte changelog
 
-## Unreleased
+## 3.46.6
 
-* Add action folder to published files ([#7407](https://github.com/sveltejs/svelte/pull/7407))
+* Actually include action TypeScript interface in published package ([#7407](https://github.com/sveltejs/svelte/pull/7407))
 
 ## 3.46.5
 
