@@ -12,6 +12,7 @@ More on that, and what else is new in Svelte, as we dive in...
 ## What's new in SvelteKit
 - Param matchers allow you to check if a url parameter matches before rendering a page - replacing the need for fallthrough routes for this purpose ([Docs](https://kit.svelte.dev/docs/routing#advanced-routing-matching), [#4334](https://github.com/sveltejs/kit/pull/4334))
 - Explicit redirects can now be handled directly from endpoints ([#4260](https://github.com/sveltejs/kit/pull/4260))
+- `svelte-kit sync` ([#4182](https://github.com/sveltejs/kit/pull/4182)), TypeScript 4.6 ([#4190](https://github.com/sveltejs/kit/pull/4190)) and Vite 2.9 were released - adding non-blocking dependency optimization and experimental CSS source maps in dev mode as well as a number of bug fixes contributed by the SvelteKit team ([#4468](https://github.com/sveltejs/kit/pull/4468))
 
 
 **New Config Options**
@@ -26,6 +27,7 @@ More on that, and what else is new in Svelte, as we dive in...
 - Adapters are now required to supply a `getClientAddress` function ([#4289](https://github.com/sveltejs/kit/pull/4289))
 - `InputProps` and `OutputProps` can now be typed separately in generated `Load` ([#4305](https://github.com/sveltejs/kit/pull/4305))
 - The `\$` character is no longer allowed in dynamic parameters ([#4334](https://github.com/sveltejs/kit/pull/4334))
+- `svelte-kit package` has been marked as experimental so changes to it after Kit 1.0 will not be considered breaking ([#4164](https://github.com/sveltejs/kit/pull/4164))
 
 
 ## New across the Svelte ecosystem
