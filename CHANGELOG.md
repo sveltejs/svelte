@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add action folder to published files ([#7407](https://github.com/sveltejs/svelte/pull/7407))
+
 ## 3.46.5
 
 * Add TypeScript interfaces for typing actions ([#6538](https://github.com/sveltejs/svelte/issues/6538))
