@@ -16,7 +16,7 @@
     "transition",
     "easing",
     "motion",
-    "svelte",
+    "action",
     "README.md"
   ],
   "exports": {
