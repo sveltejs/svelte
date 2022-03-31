@@ -16,9 +16,8 @@
     "transition",
     "easing",
     "motion",
-    "svelte",
-    "README.md",
-    "action"
+    "action",
+    "README.md"
   ],
   "exports": {
     "./package.json": "./package.json",
