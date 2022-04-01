@@ -9,10 +9,16 @@ export default {
 		assert.equal(component.updateText, '');
 		assert.equal(component.destroyText, '');
 
+		component.opt = 'opt2';
+		
+		assert.equal(component.tag, 'h1');
+		assert.equal(component.updateText, 'update: h1,opt2');
+		assert.equal(component.destroyText, '');
+
 		component.tag = 'h2';
 
 		assert.equal(component.tag, 'h2');
-		assert.equal(component.updateText, 'update: h2');
+		assert.equal(component.updateText, 'update: h1,opt2');
 		assert.equal(component.destroyText, 'destroy');
 		assert.htmlEqual(target.innerHTML, `
 			<h2>tag is h2.</h2>

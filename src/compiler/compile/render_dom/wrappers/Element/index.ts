@@ -272,41 +272,63 @@ export default class ElementWrapper extends Wrapper {
 		);
 
 		const previous_tag = block.get_unique_name('previous_tag');
-		const snippet = this.node.tag_expr.manipulate(block);
-		block.add_variable(previous_tag, snippet);
+		const tag = this.node.tag_expr.manipulate(block);
+		block.add_variable(previous_tag, tag);
 
 		block.chunks.init.push(b`
-			let ${this.var} = ${snippet} && ${this.child_dynamic_element_block.name}(#ctx);
+			let ${this.var} = ${tag} && ${this.child_dynamic_element_block.name}(#ctx);
 		`);
 
-		block.chunks.create.push(b`if (${this.var}) ${this.var}.c();`);
+		block.chunks.create.push(b`
+			if (${this.var}) ${this.var}.c();
+		`);
 
 		if (this.renderer.options.hydratable) {
-			block.chunks.claim.push(b`if (${this.var}) ${this.var}.l(${parent_nodes});`);
+			block.chunks.claim.push(b`
+				if (${this.var}) ${this.var}.l(${parent_nodes});
+			`);
 		}
 
-		block.chunks.mount.push(
-			b`if (${this.var}) ${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
-		);
+		block.chunks.mount.push(b`
+			if (${this.var}) ${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
+		`);
 
-		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+		const anchor = block.get_unique_name(`${this.child_dynamic_element_block.name.name}_anchor`);
+		const has_transitions = !!(this.node.intro || this.node.outro);
 		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-		const if_statement = x`${not_equal}(${previous_tag}, ${previous_tag} = ${snippet})`;
 
-		block.chunks.update.unshift(b`
-		  if (${snippet}) {
-				if (${this.var}) ${this.var}.p(#ctx, #dirty);
-				if (${if_statement}) {
-					if (${this.var}) ${this.var}.d(1);
+		block.chunks.update.push(b`
+			if (${tag}) {
+				if (!${previous_tag}) {
 					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
 					${this.var}.c();
-					@transition_in(${this.var});
-					this.m(${this.get_update_mount_node(anchor)}, ${anchor});
+					${has_transitions && b`@transition_in(${this.var})`}
+					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+				} else if (${not_equal}(${previous_tag}, ${tag})) {
+					${this.var}.d(1);
+					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+					${this.var}.c();
+					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+				} else {
+					${this.var}.p(#ctx, #dirty);
 				}
-			} else if (${this.var}) {
-				${this.var}.d(1);
-				${this.var} = null;
+			} else if (${previous_tag}) {
+				${
+					has_transitions
+						? b`
+							@group_outros();
+							@transition_out(${this.var}, 1, 1, () => {
+								${this.var} = null;
+							});
+							@check_outros();
+						`
+						: b`
+							${this.var}.d(1);
+							${this.var} = null;
+						`
+				}
 			}
+			${previous_tag} = ${tag};
 		`);
 
 		if (this.child_dynamic_element_block.has_intros) {
@@ -319,13 +341,23 @@ export default class ElementWrapper extends Wrapper {
 
 		block.chunks.destroy.push(b`if (${this.var}) ${this.var}.d(detaching)`);
 
-		if (this.renderer.options.dev) {
-			block.chunks.create.push(b`@validate_dynamic_element(${snippet});`);
-			if (this.renderer.options.hydratable) {
-				block.chunks.claim.push(b`@validate_dynamic_element(${snippet});`);
-			}
-			block.chunks.update.push(b`@validate_dynamic_element(${snippet});`);
+		if (this.node.animation) {
+			block.chunks.measure.push(b`${this.var}.r()`);
+			block.chunks.fix.push(b`${this.var}.f()`);
+			block.chunks.animate.push(b`${this.var}.a()`);
 		}
+
+		// Needs to come last due to statement ordering
+		block.add_element(
+			anchor as Identifier,
+			x`@empty()`,
+			parent_nodes && x`@empty()`,
+			parent_node
+		);
+	}
+
+	is_dom_node() {
+		return super.is_dom_node() && !this.child_dynamic_element;
 	}
 
 	render_element(block: Block, parent_node: Identifier, parent_nodes: Identifier) {

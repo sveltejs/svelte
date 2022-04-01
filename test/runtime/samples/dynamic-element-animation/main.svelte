@@ -1,8 +1,6 @@
 <script>
-	let tag = 'div';
-	let things = [
-		{ id: 1, name: 'a' },
-	];
+	export let things;
+	export let tag;
 
 	function flip(node, animation, params) {
 		const dx = animation.from.left - animation.to.left;
@@ -16,5 +14,5 @@
 </script>
 
 {#each things as thing (thing.id)}
-	<svelte:element this={tag} animate:flip></svelte:element>
+	<svelte:element this={tag} animate:flip>{thing.name}</svelte:element>
 {/each}
