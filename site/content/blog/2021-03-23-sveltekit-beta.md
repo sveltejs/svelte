@@ -24,7 +24,7 @@ npm install
 npm run dev -- --open
 ```
 
-You'll find documentation at [kit.svelte.dev/docs](https://kit.svelte.dev/docs). If you have a [Sapper](https://sapper.svelte.dev) app that you'd like to migrate to SvelteKit, you'll find instructions at [kit.svelte.dev/migrating](https://kit.svelte.dev/migrating).
+You'll find documentation at [kit.svelte.dev/docs](https://kit.svelte.dev/docs). If you have a [Sapper](https://sapper.svelte.dev) app that you'd like to migrate to SvelteKit, you'll find instructions at [kit.svelte.dev/docs/migrating](https://kit.svelte.dev/docs/migrating).
 
 The source code is available at [github.com/sveltejs/kit](https://github.com/sveltejs/kit). Issues and pull requests are disabled while we finish getting our house in order, but we'll be making it fully open in the near future.
 
@@ -60,7 +60,7 @@ Using unfinished software to build an app that will be seen by millions of peopl
 
 ## The road to 1.0
 
-You can see the list of outstanding issues with the 1.0 milestone on our [issue tracker](https://github.com/sveltejs/kit/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.0). Alongside that work, we plan to upgrade the documentation and add more [adapters](https://kit.svelte.dev/docs#adapters).
+You can see the list of outstanding issues with the 1.0 milestone on our [issue tracker](https://github.com/sveltejs/kit/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.0). Alongside that work, we plan to upgrade the documentation and add more [adapters](https://kit.svelte.dev/docs/adapters).
 
 Most importantly though, we need your feedback to help us make the best possible app framework. Try it out, and let us know which pieces are missing.
 

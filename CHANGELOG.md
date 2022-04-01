@@ -1,5 +1,18 @@
 # Svelte changelog
 
+## 3.46.6
+
+* Actually include action TypeScript interface in published package ([#7407](https://github.com/sveltejs/svelte/pull/7407))
+
+## 3.46.5
+
+* Add TypeScript interfaces for typing actions ([#6538](https://github.com/sveltejs/svelte/issues/6538))
+* Do not generate `unused-export-let` warning inside `<script context="module">` blocks ([#7055](https://github.com/sveltejs/svelte/issues/7055))
+* Do not collapse whitespace-only CSS vars ([#7152](https://github.com/sveltejs/svelte/issues/7152))
+* Add `aria-description` to the list of allowed ARIA attributes ([#7301](https://github.com/sveltejs/svelte/issues/7301))
+* Fix attribute escaping during SSR ([#7327](https://github.com/sveltejs/svelte/issues/7327))
+* Prevent `.innerHTML` optimization from being used when `style:` directive is present ([#7386](https://github.com/sveltejs/svelte/issues/7386))
+
 ## 3.46.4
 
 * Avoid `maximum call stack size exceeded` errors on large components ([#4694](https://github.com/sveltejs/svelte/issues/4694))

@@ -177,7 +177,8 @@ export function create_ssr_component(fn) {
 
 export function add_attribute(name, value, boolean) {
 	if (value == null || (boolean && !value)) return '';
-	return ` ${name}${value === true && boolean_attributes.has(name) ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value)) : `"${value}"`}`}`;
+	const assignment = (boolean && value === true) ? '' : `="${escape_attribute_value(value.toString())}"`;
+	return ` ${name}${assignment}`;
 }
 
 export function add_classes(classes) {
