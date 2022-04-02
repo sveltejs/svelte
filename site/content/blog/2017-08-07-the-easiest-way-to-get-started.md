@@ -10,9 +10,9 @@ Svelte is a [new kind of framework](/blog/frameworks-without-the-framework). Rat
 Because of that, getting started with it can be a little bit confusing at first. How, you might reasonably ask, do you make a Svelte app?
 
 
-## 1. Use the REPL (Read-Eval-Print Loop)
+## 1. Use the REPL
 
-The [Svelte REPL](/repl) is the easiest way to begin. This is an interactive environment that allows you to modify code and instantly see the result. 
+The [Svelte REPL](/repl) (Read-Eval-Print Loop) is the easiest way to begin. This is an interactive environment that allows you to modify code and instantly see the result. 
 
 You can choose from a list of [examples](/examples/), click the [REPL](/repl) link, and then tweak them until they do what you want.
 
