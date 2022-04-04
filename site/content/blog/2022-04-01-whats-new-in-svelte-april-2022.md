@@ -75,7 +75,7 @@ _To Read_
 - [Lazy-Loading Firebase with SvelteKit](https://www.captaincodeman.com/lazy-loading-firebase-with-sveltekit) and [HeadlessUI Components with Svelte](https://www.captaincodeman.com/headlessui-components-with-svelte) by Captain Codeman
 - [SvelteKit Accessibility Testing: Automated CI A11y Tests](https://rodneylab.com/sveltekit-accessibility-testing/) by Rodney Lab
 - [Getting Started with KitQL and GraphCMS](https://scottspence.com/posts/getting-started-with-kitql-and-graphcms) by Scott Spence
-- [React ⇆ Svelte Cheatsheet](https://dev.to/joshnuss/react-to-svelte-cheatsheet-1a2a) lists the simularities and differences between the two libraries - by Joshua Nussbaum
+- [React ⇆ Svelte Cheatsheet](https://dev.to/joshnuss/react-to-svelte-cheatsheet-1a2a) lists the similarities and differences between the two libraries - by Joshua Nussbaum
 
 _To Watch_
 - [Svelte Extravaganza | Async](https://www.youtube.com/watch?v=mT4CLVHgtSg) by pngwn
@@ -89,7 +89,7 @@ _To Watch_
 
 **Libraries, Tools & Components**
 - [SvelTable](https://sveltable.io/) is a feature rich, data table component built with Svelte
-- [svelte-cyberComp](https://github.com/Cybersteam00/svelte-cyberComp) is a powerful, lightweight Svelte Components writen in Svelte and Typescript
+- [svelte-cyberComp](https://github.com/Cybersteam00/svelte-cyberComp) is a powerful, lightweight component library written in Svelte and Typescript
 - [Flowbite Svelte](https://github.com/shinokada/flowbite-svelte) is an unofficial Flowbite component library for Svelte
 - [Svelte-Tide-Project](https://github.com/jbertovic/svelte-tide-project) is a starter template for Svelte frontend apps with Rust Tide backend server
 - [Fetch Inject](https://github.com/vhscom/fetch-inject#sveltekit) implements a performance optimization technique for managing asynchronous JavaScript dependencies - now with Svelte support
