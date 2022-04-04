@@ -56,6 +56,7 @@ export const globals = new Set([
 	'setTimeout',
 	'String',
 	'SVGElement',
+	'Symbol',
 	'SyntaxError',
 	'TypeError',
 	'undefined',
