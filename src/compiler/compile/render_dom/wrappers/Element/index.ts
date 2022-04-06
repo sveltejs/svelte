@@ -276,6 +276,7 @@ export default class ElementWrapper extends Wrapper {
 		block.add_variable(previous_tag, tag);
 
 		block.chunks.init.push(b`
+			${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
 			let ${this.var} = ${tag} && ${this.child_dynamic_element_block.name}(#ctx);
 		`);
 
@@ -306,6 +307,7 @@ export default class ElementWrapper extends Wrapper {
 					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
 				} else if (${not_equal}(${previous_tag}, ${tag})) {
 					${this.var}.d(1);
+					${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
 					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
 					${this.var}.c();
 					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
