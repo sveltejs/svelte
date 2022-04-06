@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add `Symbol` as a known global ([#7419](https://github.com/sveltejs/svelte/pull/7419))
+
 ## 3.46.6
 
 * Actually include action TypeScript interface in published package ([#7407](https://github.com/sveltejs/svelte/pull/7407))
