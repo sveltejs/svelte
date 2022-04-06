@@ -293,7 +293,7 @@ export default class ElementWrapper extends Wrapper {
 			if (${this.var}) ${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 		`);
 
-		const anchor = block.get_unique_name(`${this.child_dynamic_element_block.name.name}_anchor`);
+		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 		const has_transitions = !!(this.node.intro || this.node.outro);
 		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
 
@@ -346,14 +346,6 @@ export default class ElementWrapper extends Wrapper {
 			block.chunks.fix.push(b`${this.var}.f()`);
 			block.chunks.animate.push(b`${this.var}.a()`);
 		}
-
-		// Needs to come last due to statement ordering
-		block.add_element(
-			anchor as Identifier,
-			x`@empty()`,
-			parent_nodes && x`@empty()`,
-			parent_node
-		);
 	}
 
 	is_dom_node() {
