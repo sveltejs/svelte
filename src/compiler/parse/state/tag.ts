@@ -189,9 +189,7 @@ export default function tag(parser: Parser) {
 		}
 
 		const definition = element.attributes.splice(index, 1)[0];
-		if (definition.value === true
-			|| definition.value.length !== 1
-			|| !['Text', 'MustacheTag', 'AttributeShorthand'].includes(definition.value[0].type)) {
+		if (definition.value === true	|| !['Text', 'MustacheTag', 'AttributeShorthand'].includes(definition.value[0].type)) {
 			parser.error(parser_errors.invalid_element_definition, definition.start);
 		}
 
