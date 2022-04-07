@@ -1,12 +1,12 @@
 <script>
-	export let updateText = "";
-	export let destroyText = "";
-  export let tag = "h1";
+  export let logs = [];
+	export let tag = "h1";
   export let opt = "opt1";
   function foo(node, {tag, opt}) {
+    logs.push(`create: ${tag},${opt}`);
     return {
-      update: ({tag, opt}) => updateText = `update: ${tag},${opt}`,
-      destroy: () => destroyText = 'destroy'
+      update: ({tag, opt}) => logs.push(`update: ${tag},${opt}`),
+      destroy: () => logs.push('destroy'),
     };
   }
 </script>
