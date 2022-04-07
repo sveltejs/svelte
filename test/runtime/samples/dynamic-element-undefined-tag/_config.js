@@ -1,5 +1,4 @@
 export default {
-	solo: true,
 	html: '',
 	test({ component, target, assert }) {
 		component.tag = 'h1';

@@ -135,6 +135,8 @@ const events = [
 	}
 ];
 
+const CHILD_DYNAMIC_ELEMENT_BLOCK = 'child_dynamic_element';
+
 export default class ElementWrapper extends Wrapper {
 	node: Element;
 	fragment: FragmentWrapper;
@@ -161,11 +163,11 @@ export default class ElementWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		if (node.is_dynamic_element && block.type !== 'child_dynamic_element') {
+		if (node.is_dynamic_element && block.type !== CHILD_DYNAMIC_ELEMENT_BLOCK) {
 			this.child_dynamic_element_block = block.child({
 				comment: create_debugging_comment(node, renderer.component),
 				name: renderer.component.get_unique_name('create_dynamic_element'),
-				type: 'child_dynamic_element'
+				type: CHILD_DYNAMIC_ELEMENT_BLOCK
 			});
 			renderer.blocks.push(this.child_dynamic_element_block);
 			this.child_dynamic_element = new ElementWrapper(
@@ -344,9 +346,14 @@ export default class ElementWrapper extends Wrapper {
 		block.chunks.destroy.push(b`if (${this.var}) ${this.var}.d(detaching)`);
 
 		if (this.node.animation) {
-			block.chunks.measure.push(b`${this.var}.r()`);
-			block.chunks.fix.push(b`${this.var}.f()`);
-			block.chunks.animate.push(b`${this.var}.a()`);
+			const measurements = block.get_unique_name('measurements');
+			block.add_variable(measurements);
+			block.chunks.measure.push(b`${measurements} = ${this.var}.r()`);
+			block.chunks.fix.push(b`${this.var}.f();`);
+			block.chunks.animate.push(b`
+				${this.var}.s(${measurements});
+				${this.var}.a()
+			`);
 		}
 	}
 
@@ -982,6 +989,11 @@ export default class ElementWrapper extends Wrapper {
 		block.chunks.measure.push(b`
 			${rect} = ${this.var}.getBoundingClientRect();
 		`);
+
+		if (block.type === CHILD_DYNAMIC_ELEMENT_BLOCK) {
+			block.chunks.measure.push(b`return ${rect}`);
+			block.chunks.restore_measurements.push(b`${rect} = #measurement;`);
+		}
 
 		block.chunks.fix.push(b`
 			@fix_position(${this.var});
