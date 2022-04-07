@@ -28,6 +28,9 @@ export default class InlineComponent extends Node {
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
+		this.cannot_use_innerhtml();
+		this.not_static_content();
+
 		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
 			const name = info.name.split('.')[0]; // accommodate namespaces
 			component.warn_if_undefined(name, info, scope);

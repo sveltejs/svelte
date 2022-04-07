@@ -39,6 +39,7 @@ import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 import check_enable_sourcemap from './utils/check_enable_sourcemap';
 import is_dynamic from './render_dom/wrappers/shared/is_dynamic';
+import Tag from './nodes/shared/Tag';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -110,6 +111,8 @@ export default class Component {
 
 	slots: Map<string, Slot> = new Map();
 	slot_outlets: Set<string> = new Set();
+
+	tags: Tag[] = []
 
 	constructor(
 		ast: Ast,
@@ -762,6 +765,7 @@ export default class Component {
 
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
+		this.check_if_tags_content_dynamic();
 	}
 
 	post_template_walk() {
@@ -1490,6 +1494,12 @@ export default class Component {
 		};
 
 		unsorted_reactive_declarations.forEach(add_declaration);
+	}
+
+	check_if_tags_content_dynamic() {
+		this.tags.forEach(tag => {
+			tag.check_if_content_dynamic();
+		});
 	}
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {

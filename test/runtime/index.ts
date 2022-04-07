@@ -45,7 +45,7 @@ describe('runtime', () => {
 			return module._compile(code, filename);
 		};
 
-		return setupHtmlEqual();
+		return setupHtmlEqual({ removeDataSvelte: true });
 	});
 	after(() => process.removeListener('unhandledRejection', unhandledRejection_handler));
 
@@ -159,10 +159,12 @@ describe('runtime', () => {
 						// ssr into target
 						compileOptions.generate = 'ssr';
 						cleanRequireCache();
+						if (config.before_test) config.before_test();
 						const SsrSvelteComponent = require(`./samples/${dir}/main.svelte`).default;
 						const { html } = SsrSvelteComponent.render(config.props);
 						target.innerHTML = html;
 						delete compileOptions.generate;
+						if (config.after_test) config.after_test();
 					} else {
 						target.innerHTML = '';
 					}

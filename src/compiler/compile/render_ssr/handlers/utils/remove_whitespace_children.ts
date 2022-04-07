@@ -39,6 +39,7 @@ export default function remove_whitespace_children(children: INode[], next?: INo
 				continue;
 			}
 
+			child.data = data;
 			nodes.unshift(child);
 			link(last_child, last_child = child);
 		} else {

@@ -160,6 +160,17 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		}
 	});
 
+	if (options.hydratable) {
+		if (options.head_id) {
+			renderer.add_string(` data-svelte="${options.head_id}"`);
+		}
+
+		if (node.can_optimise_to_html_string && !options.has_added_svelte_hash) {
+			renderer.add_string(` data-svelte="${node.hash()}"`);
+			options = { ...options, has_added_svelte_hash: true };
+		}
+	}
+
 	renderer.add_string('>');
 
 	if (node_contents !== undefined) {

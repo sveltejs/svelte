@@ -140,11 +140,12 @@ function cleanChildren(node) {
 	}
 }
 
-export function normalizeHtml(window, html, preserveComments = false) {
+export function normalizeHtml(window, html, { removeDataSvelte = false, preserveComments = false }: { removeDataSvelte?: boolean, preserveComments?: boolean} = {}) {
 	try {
 		const node = window.document.createElement('div');
 		node.innerHTML = html
 			.replace(/(<!--.*?-->)/g, preserveComments ? '$1' : '')
+			.replace(/(data-svelte="[^"]+")/g, removeDataSvelte ? '': '$1')
 			.replace(/>[\s\r\n]+</g, '><')
 			.trim();
 		cleanChildren(node);
@@ -154,22 +155,22 @@ export function normalizeHtml(window, html, preserveComments = false) {
 	}
 }
 
-export function setupHtmlEqual() {
+export function setupHtmlEqual(options?: { removeDataSvelte?: boolean }) {
 	const window = env();
 
 	// eslint-disable-next-line no-import-assign
 	assert.htmlEqual = (actual, expected, message) => {
 		assert.deepEqual(
-			normalizeHtml(window, actual),
-			normalizeHtml(window, expected),
+			normalizeHtml(window, actual, options),
+			normalizeHtml(window, expected, options),
 			message
 		);
 	};
 	// eslint-disable-next-line no-import-assign
 	assert.htmlEqualWithComments = (actual, expected, message) => {
 		assert.deepEqual(
-			normalizeHtml(window, actual, true),
-			normalizeHtml(window, expected, true),
+			normalizeHtml(window, actual, { ...options, preserveComments: true }),
+			normalizeHtml(window, expected, { ...options, preserveComments: true }),
 			message
 		);
 	};
