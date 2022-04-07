@@ -1,18 +1,18 @@
-let logs = [];
+const logs = [];
 
 export default {
-	html: "<button>Reset!</button>",
+	html: '<button>Reset!</button>',
 	props: {
-		logs,
+		logs
 	},
 	async test({ assert, component, target, raf }) {
-		assert.deepEqual(logs, ["mount"]);
+		assert.deepEqual(logs, ['mount']);
 
-		const button = target.querySelector("button");
+		const button = target.querySelector('button');
 
-		const click = new window.MouseEvent("click");
+		const click = new window.MouseEvent('click');
 		await button.dispatchEvent(click);
 
-		assert.deepEqual(logs, ["mount", "unmount", "mount"]);
-	},
+		assert.deepEqual(logs, ['mount', 'unmount', 'mount']);
+	}
 };
