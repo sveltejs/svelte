@@ -36,6 +36,7 @@ export default class KeyBlockWrapper extends Wrapper {
 				name: renderer.component.get_unique_name('create_key_block'),
 				type: 'key'
 			});
+			block.add_dependencies(node.expression.dependencies);
 			renderer.blocks.push(block);
 		}
 
