@@ -10,7 +10,7 @@ import Block from '../../render_dom/Block';
 import is_dynamic from '../../render_dom/wrappers/shared/is_dynamic';
 import { b } from 'code-red';
 import { invalidate } from '../../render_dom/invalidate';
-import { BaseNode, Node, BaseFunction, FunctionExpression, Identifier, Pattern, MemberExpression } from 'estree';
+import { Node, FunctionExpression, Identifier } from 'estree';
 import { INode } from '../interfaces';
 import { is_reserved_keyword } from '../../utils/reserved_keywords';
 import replace_object from '../../utils/replace_object';
