@@ -148,7 +148,7 @@ setContext(key: any, context: any)
 
 ---
 
-Associates an arbitrary `context` object with the current component and the specified `key`. The context is then available to children of the component (including slotted content) with `getContext`.
+Associates an arbitrary `context` object with the current component and the specified `key` and returns that object. The context is then available to children of the component (including slotted content) with `getContext`.
 
 Like lifecycle functions, this must be called during component initialisation.
 
