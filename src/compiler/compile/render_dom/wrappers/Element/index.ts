@@ -992,7 +992,13 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 			// element
 			state.quasi.value.raw += `<${wrapper.node.name}`;
 
+			const is_empty_textarea = wrapper.node.name === 'textarea' && wrapper.fragment.nodes.length === 0;
+
 			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
+				if (is_empty_textarea && attr.node.name === 'value') {
+					// The value attribute of <textarea> renders as content.
+					return;
+				}
 				state.quasi.value.raw += ` ${fix_attribute_casing(attr.node.name)}="`;
 
 				attr.node.chunks.forEach(chunk => {
@@ -1021,6 +1027,32 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 					const first = wrapper.fragment.nodes[0];
 					if (first && first.node.type === 'Text' && start_newline.test(first.node.data)) {
 						state.quasi.value.raw += '\n';
+					}
+				}
+
+				if (is_empty_textarea) {
+					// The <textarea> renders the value attribute as content because the content is stored in the value attribute.
+					const value_attribute = wrapper.attributes.find(attr => attr.node.name === 'value');
+					if (value_attribute) {
+						// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
+						// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+						const first = value_attribute.node.chunks[0];
+						if (first && first.type === 'Text' && start_newline.test(first.data)) {
+							state.quasi.value.raw += '\n';
+						}
+						value_attribute.node.chunks.forEach(chunk => {
+							if (chunk.type === 'Text') {
+								state.quasi.value.raw += escape_html(chunk.data);
+							} else {
+								literal.quasis.push(state.quasi);
+								literal.expressions.push(chunk.manipulate(block));
+
+								state.quasi = {
+									type: 'TemplateElement',
+									value: { raw: '' }
+								};
+							}
+						});
 					}
 				}
 

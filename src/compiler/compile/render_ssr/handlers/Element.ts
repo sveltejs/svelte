@@ -40,7 +40,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		const { name, expression: { node: expression } } = style_directive;
 		return p`"${name}": ${expression}`;
 	});
-	
+
 	const style_expression =
 		style_expression_list.length > 0 &&
 		x`{ ${style_expression_list} }`;
@@ -164,6 +164,11 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 			renderer.add_expression(x`($$value => $$value === void 0 ? ${result} : $$value)(${node_contents})`);
 		} else {
+			if (node.name === 'textarea') {
+				// Restore the leading newline immediately after `<textarea>`.
+				// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+				renderer.add_string('\n');
+			}
 			renderer.add_expression(node_contents);
 		}
 

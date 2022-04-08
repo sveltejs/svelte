@@ -11,7 +11,7 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { dimensions } from '../../utils/patterns';
+import { dimensions, start_newline } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
@@ -208,6 +208,12 @@ export default class Element extends Node {
 
 					// this is an egregious hack, but it's the easiest way to get <textarea>
 					// children treated the same way as a value attribute
+					const first = info.children[0];
+					if (first && first.type === 'Text') {
+						// The leading newline character should be stripped.
+						// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+						first.data = first.data.replace(start_newline, '');
+					}
 					info.attributes.push({
 						type: 'Attribute',
 						name: 'value',
