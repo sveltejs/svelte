@@ -1627,6 +1627,28 @@ If `this` is falsy, no component is rendered.
 <svelte:component this={currentSelection.component} foo={bar}/>
 ```
 
+### `<svelte:element>`
+
+```sv
+<svelte:element this={expression}/>
+```
+
+---
+
+The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when rich text content from a CMS. If the tag is changed, the children will be preserved unless there's a transition attached to the element. Any properties and event listeners present will be applied to the element.
+
+The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) does not work with a dynamic tag type.
+
+If `this` has a nullish value, a warning will be logged in development mode.
+
+```sv
+<script>
+	let tag = 'div';
+	export let handler;
+</script>
+
+<svelte:element this={tag} on:click={handler}>Foo</svelte:element>
+```
 
 ### `<svelte:window>`
 

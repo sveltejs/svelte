@@ -1,0 +1,17 @@
+[
+	{
+		"message": "Invalid element definition",
+		"code": "invalid-element-definition",
+		"start": {
+			"line": 2,
+			"column": 17,
+			"character": 23
+		},
+		"end": {
+			"line": 2,
+			"column": 17,
+			"character": 23
+		},
+		"pos": 23
+	}
+]
