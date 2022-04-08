@@ -8,8 +8,9 @@ import Expression from '../../nodes/shared/Expression';
 import remove_whitespace_children from './utils/remove_whitespace_children';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
+import { Expression as ESExpression } from 'estree';
 
-export default function(node: Element, renderer: Renderer, options: RenderOptions) {
+export default function (node: Element, renderer: Renderer, options: RenderOptions) {
 
 	const children = remove_whitespace_children(node.children, node.next);
 
@@ -22,7 +23,8 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		node.attributes.some((attribute) => attribute.name === 'contenteditable')
 	);
 
-	renderer.add_string(`<${node.name}`);
+	renderer.add_string('<');
+	add_tag_name();
 
 	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
@@ -167,14 +169,25 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			renderer.add_expression(node_contents);
 		}
 
-		if (!is_void(node.name)) {
-			renderer.add_string(`</${node.name}>`);
-		}
+		add_close_tag();
 	} else {
 		renderer.render(children, options);
+		add_close_tag();
+	}
 
+	function add_close_tag() {
 		if (!is_void(node.name)) {
-			renderer.add_string(`</${node.name}>`);
+			renderer.add_string('</');
+			add_tag_name();
+			renderer.add_string('>');
+		}
+	}
+
+	function add_tag_name() {
+		if (node.tag_expr.node.type === 'Literal') {
+			renderer.add_string(node.tag_expr.node.value as string);
+		} else {
+			renderer.add_expression(node.tag_expr.node as ESExpression);
 		}
 	}
 }
