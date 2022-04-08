@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add `Symbol` as a known global ([#7419](https://github.com/sveltejs/svelte/pull/7419))
+* Fix `{#key}` block not reactive when the key variable is not being used ([#7422](https://github.com/sveltejs/svelte/pull/7422))
 
 ## 3.46.6
 
