@@ -16,7 +16,7 @@ Let's add a `<script>` tag to `App.svelte` that imports the file (our component)
 </script>
 ```
 
-...then add the component `Nested` to use it in the app markup:
+...then use component `Nested` in the app markup:
 
 ```html
 <p>This is a paragraph.</p>
