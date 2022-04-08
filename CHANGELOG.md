@@ -5,6 +5,7 @@
 * Add `Symbol` as a known global ([#7419](https://github.com/sveltejs/svelte/pull/7419))
 * Fix `{#key}` block not reactive when the key variable is not being used ([#7422](https://github.com/sveltejs/svelte/pull/7422))
 * Add support for dynamic elements through `<svelte:element>` ([#2324](https://github.com/sveltejs/svelte/issues/2324))
+* Better context checks for identifiers in `{@const ..}` tags ([#7222](https://github.com/sveltejs/svelte/pull/7222))
 
 ## 3.46.6
 
