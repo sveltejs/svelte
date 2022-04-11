@@ -32,7 +32,7 @@ export type ActionReturn<Parameter = any> = void extends Parameter
  * The following example defines an action that only works on `<div>` elements
  * and optionally accepts a parameter which it has a default value for:
  * ```ts
- * export const myAction: Action<HTMLDivElement, { someProperty: boolean }> = (node, param = { someProperty: true }) => {
+ * export const myAction: Action<HTMLDivElement, undefined | { someProperty: boolean }> = (node, param = { someProperty: true }) => {
  *   // ...
  * }
  * ```
@@ -44,4 +44,6 @@ export type ActionReturn<Parameter = any> = void extends Parameter
 export type Action<Element = HTMLElement, Parameter = any> = 
 	void extends Parameter
 	? <Node extends Element>(node: Node) => void | ActionReturn<Parameter>
+	: undefined extends Parameter
+	? <Node extends Element>(node: Node, parameter?: Parameter) => void | ActionReturn<Parameter>
 	: <Node extends Element>(node: Node, parameter: Parameter) => void | ActionReturn<Parameter>;
