@@ -1,4 +1,4 @@
-import { custom_event } from './dom';
+import {custom_event} from './dom';
 
 export let current_component;
 
@@ -27,13 +27,12 @@ export function onDestroy(fn: () => any) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
-export function createEventDispatcher<
-	EventMap extends {} = any
->(): <EventKey extends Extract<keyof EventMap, string>>(type: EventKey, detail?: EventMap[EventKey]) => void {
+export function createEventDispatcher<EventMap extends {} = any>(): <EventKey extends Extract<keyof EventMap, string>>(type: EventKey, detail?: EventMap[EventKey]) => void {
 	const component = get_current_component();
 
 	return (type: string, detail?: any) => {
 		const callbacks = component.$$.callbacks[type];
+		const catchAllBinding = component.$$.callbacks[type];
 
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
@@ -42,6 +41,17 @@ export function createEventDispatcher<
 			callbacks.slice().forEach(fn => {
 				fn.call(component, event);
 			});
+		}
+
+		if (catchAllBinding) {
+			// in a server (non-DOM) environment?
+			try {
+				const event = custom_event(type, detail);
+				const data = catchAllBinding[1] && Object.prototype.hasOwnProperty.call(catchAllBinding[1], 'data') ? catchAllBinding[1].data : {};
+				catchAllBinding[0].call(component, event, data);
+			} catch (e) {
+				console.warn(`A component was instantiated with invalid on:* configuration -  ${e}`);
+			}
 		}
 	};
 }
@@ -60,17 +70,12 @@ export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
 }
 
 export function hasContext(key): boolean {
-	return get_current_component().$$.context.has(key);	
+	return get_current_component().$$.context.has(key);
 }
 
-// TODO figure out if we still want to support
+// TODO figure out if we still want to support - yes we do :)
 // shorthand events, or if we want to implement
 // a real bubbling mechanism
 export function bubble(component, event) {
-	const callbacks = component.$$.callbacks[event.type];
-
-	if (callbacks) {
-		// @ts-ignore
-		callbacks.slice().forEach(fn => fn.call(this, event));
-	}
+	component.$$.ctx[0]['event:bindings'][event.type][0](component.$$.ctx[0]['event:bindings'][event.type][1]);
 }
