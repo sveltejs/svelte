@@ -17,10 +17,14 @@
  *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
  */
-export interface ActionReturn<Parameter = any> {
-	update?: (parameter: Parameter) => void;
-	destroy?: () => void;
-}
+export type ActionReturn<Parameter = any> = void extends Parameter
+	? {
+		destroy?: () => void;
+	}
+	: {
+		update?: (parameter: Parameter) => void;
+		destroy?: () => void;
+	}
 
 /**
  * Actions are functions that are called when an element is created.
@@ -37,6 +41,7 @@ export interface ActionReturn<Parameter = any> {
  *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
  */
-export interface Action<Element = HTMLElement, Parameter = any> {
-	<Node extends Element>(node: Node, parameter?: Parameter): void | ActionReturn<Parameter>;
-}
+export type Action<Element = HTMLElement, Parameter = any> = 
+	void extends Parameter
+	? <Node extends Element>(node: Node) => void | ActionReturn<Parameter>
+	: <Node extends Element>(node: Node, parameter: Parameter) => void | ActionReturn<Parameter>;
