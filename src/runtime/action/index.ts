@@ -36,7 +36,9 @@ export type ActionReturn<Parameter = any> = void extends Parameter
  *   // ...
  * }
  * ```
- * You can return an object with methods `update` and `destroy` from the function.
+ * If your action doesn't accept a parameter, type if as `Action<HTMLElement, void>`.
+ *
+ * You can return an object with methods `update` (if the action accepts a parameter) and `destroy` from the function.
  * See interface `ActionReturn` for more details.
  *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
