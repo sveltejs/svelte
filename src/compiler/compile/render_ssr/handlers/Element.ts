@@ -168,9 +168,15 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			renderer.add_expression(x`($$value => $$value === void 0 ? ${result} : $$value)(${node_contents})`);
 		} else {
 			if (node.name === 'textarea') {
-				// Restore the leading newline immediately after `<textarea>`.
+				// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
 				// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
-				renderer.add_string('\n');
+				const value_attribute = node.attributes.find(({ name }) => name === 'value');
+				if (value_attribute) {
+					const first = value_attribute.chunks[0];
+					if (first && first.type === 'Text' && start_newline.test(first.data)) {
+						renderer.add_string('\n');
+					}
+				}
 			}
 			renderer.add_expression(node_contents);
 		}
