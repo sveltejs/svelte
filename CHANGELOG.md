@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Return the context object in `setContext` [#7427](https://github.com/sveltejs/svelte/issues/7427)
+
 ## 3.47.0
 
 * Add support for dynamic elements through `<svelte:element>` ([#2324](https://github.com/sveltejs/svelte/issues/2324))
