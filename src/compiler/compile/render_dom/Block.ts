@@ -48,6 +48,7 @@ export default class Block {
 		hydrate: Array<Node | Node[]>;
 		mount: Array<Node | Node[]>;
 		measure: Array<Node | Node[]>;
+		restore_measurements: Array<Node | Node[]>;
 		fix: Array<Node | Node[]>;
 		animate: Array<Node | Node[]>;
 		intro: Array<Node | Node[]>;
@@ -96,6 +97,7 @@ export default class Block {
 			hydrate: [],
 			mount: [],
 			measure: [],
+			restore_measurements: [],
 			fix: [],
 			animate: [],
 			intro: [],
@@ -326,6 +328,12 @@ export default class Block {
 				${this.chunks.measure}
 			}`;
 
+			if (this.chunks.restore_measurements.length) {
+				properties.restore_measurements = x`function #restore_measurements(#measurement) {
+					${this.chunks.restore_measurements}
+				}`;
+			}
+
 			properties.fix = x`function #fix() {
 				${this.chunks.fix}
 			}`;
@@ -379,6 +387,7 @@ export default class Block {
 			m: ${properties.mount},
 			p: ${properties.update},
 			r: ${properties.measure},
+			s: ${properties.restore_measurements},
 			f: ${properties.fix},
 			a: ${properties.animate},
 			i: ${properties.intro},

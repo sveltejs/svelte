@@ -46,8 +46,9 @@ export function createEventDispatcher<
 	};
 }
 
-export function setContext<T>(key, context: T) {
+export function setContext<T>(key, context: T): T {
 	get_current_component().$$.context.set(key, context);
+	return context;
 }
 
 export function getContext<T>(key): T {

@@ -1,5 +1,16 @@
 # Svelte changelog
 
+## Unreleased
+
+* Return the context object in `setContext` [#7427](https://github.com/sveltejs/svelte/issues/7427)
+
+## 3.47.0
+
+* Add support for dynamic elements through `<svelte:element>` ([#2324](https://github.com/sveltejs/svelte/issues/2324))
+* Miscellaneous variable context fixes in `{@const}` ([#7222](https://github.com/sveltejs/svelte/pull/7222))
+* Fix `{#key}` block not being reactive when the key variable is not otherwise used ([#7408](https://github.com/sveltejs/svelte/issues/7408))
+* Add `Symbol` as a known global ([#7418](https://github.com/sveltejs/svelte/issues/7418))
+
 ## 3.46.6
 
 * Actually include action TypeScript interface in published package ([#7407](https://github.com/sveltejs/svelte/pull/7407))

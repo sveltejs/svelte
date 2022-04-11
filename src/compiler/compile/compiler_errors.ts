@@ -246,6 +246,10 @@ export default {
 		code: 'invalid-animation',
 		message: 'An element that uses the animate directive must be the sole child of a keyed each block'
 	},
+	invalid_animation_dynamic_element: {
+		code: 'invalid-animation',
+		message: '<svelte:element> cannot have a animate directive'
+	},
 	invalid_directive_value: {
 		code: 'invalid-directive-value',
 		message: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
