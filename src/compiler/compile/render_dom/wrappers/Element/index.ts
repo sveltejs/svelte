@@ -1001,19 +1001,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 				}
 				state.quasi.value.raw += ` ${fix_attribute_casing(attr.node.name)}="`;
 
-				attr.node.chunks.forEach(chunk => {
-					if (chunk.type === 'Text') {
-						state.quasi.value.raw += escape_html(chunk.data);
-					} else {
-						literal.quasis.push(state.quasi);
-						literal.expressions.push(chunk.manipulate(block));
-
-						state.quasi = {
-							type: 'TemplateElement',
-							value: { raw: '' }
-						};
-					}
-				});
+				to_html_for_attr_value(attr, block, literal, state);
 
 				state.quasi.value.raw += '"';
 			});
@@ -1040,19 +1028,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 						if (first && first.type === 'Text' && start_newline.test(first.data)) {
 							state.quasi.value.raw += '\n';
 						}
-						value_attribute.node.chunks.forEach(chunk => {
-							if (chunk.type === 'Text') {
-								state.quasi.value.raw += escape_html(chunk.data);
-							} else {
-								literal.quasis.push(state.quasi);
-								literal.expressions.push(chunk.manipulate(block));
-
-								state.quasi = {
-									type: 'TemplateElement',
-									value: { raw: '' }
-								};
-							}
-						});
+						to_html_for_attr_value(value_attribute, block, literal, state);
 					}
 				}
 
@@ -1062,6 +1038,22 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 			} else {
 				state.quasi.value.raw += '/>';
 			}
+		}
+	});
+}
+
+function to_html_for_attr_value(attr: AttributeWrapper | StyleAttributeWrapper | SpreadAttributeWrapper, block: Block, literal: any, state: any) {
+	attr.node.chunks.forEach(chunk => {
+		if (chunk.type === 'Text') {
+			state.quasi.value.raw += escape_html(chunk.data);
+		} else {
+			literal.quasis.push(state.quasi);
+			literal.expressions.push(chunk.manipulate(block));
+
+			state.quasi = {
+				type: 'TemplateElement',
+				value: { raw: '' }
+			};
 		}
 	});
 }
