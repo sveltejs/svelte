@@ -198,6 +198,16 @@ export default class Element extends Node {
 		this.namespace = get_namespace(parent as Element, this, component.namespace);
 
 		if (this.namespace !== namespaces.foreign) {
+			if (this.name === 'pre' || this.name === 'textarea') {
+				const first = info.children[0];
+				if (first && first.type === 'Text') {
+					// The leading newline character should be stripped.
+					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+					first.data = first.data.replace(start_newline, '');
+				}
+			}
+
 			if (this.name === 'textarea') {
 				if (info.children.length > 0) {
 					const value_attribute = info.attributes.find(node => node.name === 'value');
@@ -208,12 +218,6 @@ export default class Element extends Node {
 
 					// this is an egregious hack, but it's the easiest way to get <textarea>
 					// children treated the same way as a value attribute
-					const first = info.children[0];
-					if (first && first.type === 'Text') {
-						// The leading newline character should be stripped.
-						// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
-						first.data = first.data.replace(start_newline, '');
-					}
 					info.attributes.push({
 						type: 'Attribute',
 						name: 'value',

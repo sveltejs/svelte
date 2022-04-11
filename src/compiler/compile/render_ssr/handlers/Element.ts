@@ -8,6 +8,7 @@ import Expression from '../../nodes/shared/Expression';
 import remove_whitespace_children from './utils/remove_whitespace_children';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
+import { start_newline } from '../../../utils/patterns';
 
 export default function(node: Element, renderer: Renderer, options: RenderOptions) {
 
@@ -176,6 +177,15 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			renderer.add_string(`</${node.name}>`);
 		}
 	} else {
+		if (node.name === 'pre') {
+			// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
+			// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+			// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+			const first = children[0];
+			if (first && first.type === 'Text' && start_newline.test(first.data)) {
+				renderer.add_string('\n');
+			}
+		}
 		renderer.render(children, options);
 
 		if (!is_void(node.name)) {

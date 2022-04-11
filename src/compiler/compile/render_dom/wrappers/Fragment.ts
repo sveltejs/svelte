@@ -21,7 +21,6 @@ import Block from '../Block';
 import { trim_start, trim_end } from '../../../utils/trim';
 import { link } from '../../../utils/link';
 import { Identifier } from 'estree';
-import { start_newline } from '../../../utils/patterns';
 
 const wrappers = {
 	AwaitBlock,
@@ -131,8 +130,6 @@ export default class FragmentWrapper {
 			if (first && first.node.type === 'Text') {
 				if (!first.node.keep_space()) {
 					first.data = trim_start(first.data);
-				} else if (first.node.should_strip_leading_newline()) {
-					first.data = first.data.replace(start_newline, '');
 				}
 				if (!first.data) {
 					first.var = null;

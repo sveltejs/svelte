@@ -49,15 +49,6 @@ export default class Text extends Node {
 		return this.within_pre();
 	}
 
-	/**
-	 * @returns If true, the leading newline character should be stripped.
-	 * @see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
-	 */
-	should_strip_leading_newline(): boolean {
-		const parent = this.parent;
-		return parent.type === 'Element' && parent.name === 'pre' && parent.children[0] === this;
-	}
-
 	within_pre(): boolean {
 		let node = this.parent;
 		while (node) {
