@@ -8,14 +8,3 @@ Add the following style attribute to the paragraph element:
 `style="color: {color}; --opacity: {bgOpacity};"`
 
 Great, now you can style the paragraph using variables that change based on your input without having to make a class for every possible value.
-
-This can however get unwieldly if you have to write a rather long string, and missing any of the semicolons will make it invalid. Svelte provides a nicer way to write inline styles and that is to use the style directive like this:
-
-```html
-<p 
-	style:color 
-	style:--opacity={bgOpacity}
->
-```
-
-They share a few qualities with class directives. You can use a shorthand when the name of the property and the variable are the same. So `style:color="{color}"` can be written as just `style:color`. Another is that the directives will take precedence when you set the same property through a style attribute.
