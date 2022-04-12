@@ -13,4 +13,6 @@ Change the style attribute of the paragraph to the following:
 >
 ```
 
-Style directives share a few qualities with class directives. You can use a shorthand when the name of the property and the variable are the same. So `style:color="{color}"` can be written as just `style:color`. And just like class directives, the directives will take precedence if you set the same property through a style attribute.
+The style directive shares a few qualities with the class directive. You can use a shorthand when the name of the property and the variable are the same. So `style:color="{color}"` can be written as just `style:color`.
+
+Similar to the class directive, the style directive will take precedence if you try to set the same property through a style attribute.
