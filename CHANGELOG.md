@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Return the context object in `setContext` [#7427](https://github.com/sveltejs/svelte/issues/7427)
+* Fix `{@const}` tag not working inside Component when there's no `let:` [#7189](https://github.com/sveltejs/svelte/issues/7189)
 
 ## 3.47.0
 
