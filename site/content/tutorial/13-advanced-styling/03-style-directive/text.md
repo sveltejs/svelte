@@ -1,5 +1,5 @@
 ---
-title: Inline styles and the style directive
+title: The style directive
 ---
 
 Being able to set css properties dynamically is nice, however this can get unwieldly if you have to write a long string, and mistakes like missing any of the semicolons could make the whole string invalid. Therefore, Svelte provides a nicer way to write inline styles with the style directive.
