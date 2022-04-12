@@ -1627,6 +1627,28 @@ If `this` is falsy, no component is rendered.
 <svelte:component this={currentSelection.component} foo={bar}/>
 ```
 
+### `<svelte:element>`
+
+```sv
+<svelte:element this={expression}/>
+```
+
+---
+
+The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when rich text content from a CMS. If the tag is changed, the children will be preserved unless there's a transition attached to the element. Any properties and event listeners present will be applied to the element.
+
+The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) does not work with a dynamic tag type.
+
+If `this` has a nullish value, a warning will be logged in development mode.
+
+```sv
+<script>
+	let tag = 'div';
+	export let handler;
+</script>
+
+<svelte:element this={tag} on:click={handler}>Foo</svelte:element>
+```
 
 ### `<svelte:window>`
 
@@ -1683,7 +1705,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](/docs#template-syntax-element-directives-use-action) on the `<body>` element.
 
-`<svelte:body>` also has to appear at the top level of your component.
+As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
 
 ```sv
 <svelte:body
@@ -1704,7 +1726,7 @@ Similarly to `<svelte:window>`, this element allows you to add listeners to even
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
 
-As with `<svelte:window>` and `<svelte:body>`, this element has to appear at the top level of your component and cannot be inside a block or other element.
+As with `<svelte:window>` and `<svelte:body>`, this element may only appear at the top level of your component and must never be inside a block or element.
 
 ```sv
 <svelte:head>

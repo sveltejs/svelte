@@ -2,76 +2,76 @@
 	{
 		"code": "unused-export-let",
 		"end": {
-			"character": 103,
-			"column": 12,
-			"line": 8
+			"character": 519,
+			"column": 13,
+			"line": 31
 		},
-		"message": "Component has unused export property 'd'. If it is for external reference only, please consider using `export const d`",
-		"pos": 102,
+		"message": "Component has unused export property 'd2'. If it is for external reference only, please consider using `export const d2`",
+		"pos": 517,
 		"start": {
-			"character": 102,
+			"character": 517,
 			"column": 11,
-			"line": 8
+			"line": 31
 		}
 	},
 	{
 		"code": "unused-export-let",
 		"end": {
-			"character": 106,
+			"character": 523,
+			"column": 17,
+			"line": 31
+		},
+		"message": "Component has unused export property 'e2'. If it is for external reference only, please consider using `export const e2`",
+		"pos": 521,
+		"start": {
+			"character": 521,
 			"column": 15,
-			"line": 8
-		},
-		"message": "Component has unused export property 'e'. If it is for external reference only, please consider using `export const e`",
-		"pos": 105,
-		"start": {
-			"character": 105,
-			"column": 14,
-			"line": 8
+			"line": 31
 		}
 	},
 	{
 		"code": "unused-export-let",
 		"end": {
-			"character": 130,
-			"column": 18,
-			"line": 9
+			"character": 549,
+			"column": 19,
+			"line": 32
 		},
-		"message": "Component has unused export property 'g'. If it is for external reference only, please consider using `export const g`",
-		"pos": 125,
+		"message": "Component has unused export property 'g2'. If it is for external reference only, please consider using `export const g2`",
+		"pos": 543,
 		"start": {
-			"character": 125,
+			"character": 543,
 			"column": 13,
-			"line": 9
+			"line": 32
 		}
 	},
 	{
 		"code": "unused-export-let",
 		"end": {
-			"character": 150,
-			"column": 18,
-			"line": 10
+			"character": 570,
+			"column": 19,
+			"line": 33
 		},
-		"message": "Component has unused export property 'h'. If it is for external reference only, please consider using `export const h`",
-		"pos": 145,
+		"message": "Component has unused export property 'h2'. If it is for external reference only, please consider using `export const h2`",
+		"pos": 564,
 		"start": {
-			"character": 145,
+			"character": 564,
 			"column": 13,
-			"line": 10
+			"line": 33
 		}
 	},
 	{
 		"code": "unused-export-let",
 		"end": {
-			"character": 199,
-			"column": 25,
-			"line": 12
+			"character": 621,
+			"column": 26,
+			"line": 35
 		},
-		"message": "Component has unused export property 'j'. If it is for external reference only, please consider using `export const j`",
-		"pos": 187,
+		"message": "Component has unused export property 'j2'. If it is for external reference only, please consider using `export const j2`",
+		"pos": 608,
 		"start": {
-			"character": 187,
+			"character": 608,
 			"column": 13,
-			"line": 12
+			"line": 35
 		}
 	}
 ]

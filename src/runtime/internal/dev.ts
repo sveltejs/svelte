@@ -107,6 +107,12 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
+export function validate_dynamic_element(tag: unknown) {
+	if (tag && typeof tag !== 'string') {
+		throw new Error('<svelte:element> expects "this" attribute to be a string.');
+	}
+}
+
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;

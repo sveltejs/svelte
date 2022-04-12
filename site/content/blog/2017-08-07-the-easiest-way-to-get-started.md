@@ -12,7 +12,9 @@ Because of that, getting started with it can be a little bit confusing at first.
 
 ## 1. Use the REPL
 
-The [Svelte REPL](/repl) is the easiest way to begin. You can choose from a list of examples to get you started, and tweak them until they do what you want.
+The [Svelte REPL](/repl) (Read-Eval-Print Loop) is the easiest way to begin. This is an interactive environment that allows you to modify code and instantly see the result. 
+
+You can choose from a list of [examples](/examples/), click the [REPL](/repl) link, and then tweak them until they do what you want.
 
 <aside><p>You'll need to have <a href="https://nodejs.org/">Node.js</a> installed, and know how to use the terminal</p></aside>
 
@@ -31,8 +33,7 @@ npm install
 npm run dev
 ```
 
-This will serve your app on [localhost:5000](http://localhost:5000) and rebuild it with [Rollup](https://rollupjs.org) every time you make a change to the files in `svelte-app/src`.
-
+This will serve your app on [localhost:8080](http://localhost:8080) and rebuild it with [Rollup](https://rollupjs.org) every time you make a change to the files in `svelte-app/src`.
 
 ## 2. Use degit
 
@@ -50,7 +51,7 @@ npm install
 npm run dev
 ```
 
-This will create a new project in the `my-svelte-project` directory, install its dependencies, and start a server on http://localhost:5000.
+This will create a new project in the `my-svelte-project` directory, install its dependencies, and start a server on http://localhost:8080.
 
 You can find more information about using TypeScript [here](/blog/svelte-and-typescript).
 
