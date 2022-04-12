@@ -5,6 +5,7 @@
 * Return the context object in `setContext` [#7427](https://github.com/sveltejs/svelte/issues/7427)
 * Fix `{@const}` tag not working inside Component when there's no `let:` [#7189](https://github.com/sveltejs/svelte/issues/7189)
 * Ignore comments in `{#each}` blocks when containing elements with `animate:` ([#3999](https://github.com/sveltejs/svelte/issues/3999))
+* Add a third parameter to the returned function of `createEventDispatcher` that allows passing an object of `{ cancelable: true }` to create a cancelable custom event. The returned function when called will also return a boolean depending on whether the event is cancelled ([#7064](https://github.com/sveltejs/svelte/pull/7064))
 
 ## 3.47.0
 
