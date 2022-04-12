@@ -242,6 +242,10 @@ export default {
 		code: 'invalid-animation',
 		message: 'An element that uses the animate directive must be the immediate child of a keyed each block'
 	},
+	invalid_animation_key: {
+		code: 'invalid-animation',
+		message: 'An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?'
+	},
 	invalid_animation_sole: {
 		code: 'invalid-animation',
 		message: 'An element that uses the animate directive must be the sole child of a keyed each block'
