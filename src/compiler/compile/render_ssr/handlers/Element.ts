@@ -1,4 +1,4 @@
-import { is_void } from '../../../utils/names';
+import { is_void } from '../../../../shared/utils/names';
 import { get_attribute_expression, get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { boolean_attributes } from './shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';

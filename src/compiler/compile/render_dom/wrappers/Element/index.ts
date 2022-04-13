@@ -2,7 +2,7 @@ import Renderer from '../../Renderer';
 import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
-import { is_void } from '../../../../utils/names';
+import { is_void } from '../../../../../shared/utils/names';
 import FragmentWrapper from '../Fragment';
 import { escape_html, string_literal } from '../../../utils/stringify';
 import TextWrapper from '../Text';
