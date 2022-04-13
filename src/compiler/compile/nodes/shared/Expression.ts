@@ -90,7 +90,7 @@ export default class Expression {
 					}
 
 					if (template_scope.is_let(name)) {
-						if (!function_expression) { // TODO should this be `!lazy` ?
+						if (!lazy) {
 							contextual_dependencies.add(name);
 							dependencies.add(name);
 						}
