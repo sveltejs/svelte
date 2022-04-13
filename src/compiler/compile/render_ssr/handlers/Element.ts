@@ -197,11 +197,15 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 	}
 
 	function add_close_tag() {
-		if (!is_void(node.name)) {
-			renderer.add_string('</');
-			add_tag_name();
-			renderer.add_string('>');
+		if (node.tag_expr.node.type === 'Literal') {
+			if (!is_void(node.tag_expr.node.value as string)) {
+				renderer.add_string('</');
+				add_tag_name();
+				renderer.add_string('>');
+			}
+			return;
 		}
+		renderer.add_expression(x`((tag) => @is_void(String(tag || '')) ? '' : \`</\${tag}>\`)(${node.tag_expr.node})`);
 	}
 
 	function add_tag_name() {
