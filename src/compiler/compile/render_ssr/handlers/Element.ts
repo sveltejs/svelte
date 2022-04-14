@@ -8,6 +8,7 @@ import Expression from '../../nodes/shared/Expression';
 import remove_whitespace_children from './utils/remove_whitespace_children';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
+import { start_newline } from '../../../utils/patterns';
 import { Expression as ESExpression } from 'estree';
 
 export default function (node: Element, renderer: Renderer, options: RenderOptions) {
@@ -42,7 +43,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		const { name, expression: { node: expression } } = style_directive;
 		return p`"${name}": ${expression}`;
 	});
-	
+
 	const style_expression =
 		style_expression_list.length > 0 &&
 		x`{ ${style_expression_list} }`;
@@ -166,11 +167,31 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 
 			renderer.add_expression(x`($$value => $$value === void 0 ? ${result} : $$value)(${node_contents})`);
 		} else {
+			if (node.name === 'textarea') {
+				// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
+				// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+				const value_attribute = node.attributes.find(({ name }) => name === 'value');
+				if (value_attribute) {
+					const first = value_attribute.chunks[0];
+					if (first && first.type === 'Text' && start_newline.test(first.data)) {
+						renderer.add_string('\n');
+					}
+				}
+			}
 			renderer.add_expression(node_contents);
 		}
 
 		add_close_tag();
 	} else {
+		if (node.name === 'pre') {
+			// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
+			// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+			// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+			const first = children[0];
+			if (first && first.type === 'Text' && start_newline.test(first.data)) {
+				renderer.add_string('\n');
+			}
+		}
 		renderer.render(children, options);
 		add_close_tag();
 	}

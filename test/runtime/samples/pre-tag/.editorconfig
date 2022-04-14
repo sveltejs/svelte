@@ -1,0 +1,2 @@
+[main.svelte]
+trim_trailing_whitespace = unset
