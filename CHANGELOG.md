@@ -6,7 +6,8 @@
 * Fix `{@const}` tag not working inside Component when there's no `let:` [#7189](https://github.com/sveltejs/svelte/issues/7189)
 * Ignore comments in `{#each}` blocks when containing elements with `animate:` ([#3999](https://github.com/sveltejs/svelte/issues/3999))
 * Add a third parameter to the returned function of `createEventDispatcher` that allows passing an object of `{ cancelable: true }` to create a cancelable custom event. The returned function when called will also return a boolean depending on whether the event is cancelled ([#7064](https://github.com/sveltejs/svelte/pull/7064))
-* Fix value of `let:` bindings not updating in certain cases ([#7440](https://github.com/sveltejs/svelte/issues/7440)) 
+* Fix value of `let:` bindings not updating in certain cases ([#7440](https://github.com/sveltejs/svelte/issues/7440))
+* Strip leading newline after `<pre>` and `<textarea>` ([#7264](https://github.com/sveltejs/svelte/issues/7264))
 
 ## 3.47.0
 

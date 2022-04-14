@@ -11,7 +11,7 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { dimensions } from '../../utils/patterns';
+import { dimensions, start_newline } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
@@ -216,6 +216,20 @@ export default class Element extends Node {
 		this.namespace = get_namespace(parent as Element, this, component.namespace);
 
 		if (this.namespace !== namespaces.foreign) {
+			if (this.name === 'pre' || this.name === 'textarea') {
+				const first = info.children[0];
+				if (first && first.type === 'Text') {
+					// The leading newline character needs to be stripped because of a qirk,
+					// it is ignored by browsers if the tag and its contents are set through
+					// innerHTML (NOT if set through the innerHTML of the tag or dynamically).
+					// Therefore strip it here but add it back in the appropriate
+					// places if there's another newline afterwards.
+					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+					first.data = first.data.replace(start_newline, '');
+				}
+			}
+
 			if (this.name === 'textarea') {
 				if (info.children.length > 0) {
 					const value_attribute = info.attributes.find(node => node.name === 'value');

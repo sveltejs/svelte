@@ -12,7 +12,7 @@ import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
-import { dimensions } from '../../../../utils/patterns';
+import { dimensions, start_newline } from '../../../../utils/patterns';
 import Binding from './Binding';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
@@ -1114,6 +1114,9 @@ export default class ElementWrapper extends Wrapper {
 function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapper | RawMustacheTagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
 		if (wrapper instanceof TextWrapper) {
+			// Don't add the <pre>/<textare> newline logic here because pre/textarea.innerHTML
+			// would keep the leading newline, too, only someParent.innerHTML = '..<pre/textarea>..' won't
+
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
 
 			const parent = wrapper.node.parent as Element;
@@ -1141,22 +1144,16 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 			// element
 			state.quasi.value.raw += `<${wrapper.node.name}`;
 
+			const is_empty_textarea = wrapper.node.name === 'textarea' && wrapper.fragment.nodes.length === 0;
+
 			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
+				if (is_empty_textarea && attr.node.name === 'value') {
+					// The value attribute of <textarea> renders as content.
+					return;
+				}
 				state.quasi.value.raw += ` ${fix_attribute_casing(attr.node.name)}="`;
 
-				attr.node.chunks.forEach(chunk => {
-					if (chunk.type === 'Text') {
-						state.quasi.value.raw += escape_html(chunk.data);
-					} else {
-						literal.quasis.push(state.quasi);
-						literal.expressions.push(chunk.manipulate(block));
-
-						state.quasi = {
-							type: 'TemplateElement',
-							value: { raw: '' }
-						};
-					}
-				});
+				to_html_for_attr_value(attr, block, literal, state);
 
 				state.quasi.value.raw += '"';
 			});
@@ -1164,12 +1161,51 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 			if (!wrapper.void) {
 				state.quasi.value.raw += '>';
 
+				if (wrapper.node.name === 'pre') {
+					// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
+					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+					const first = wrapper.fragment.nodes[0];
+					if (first && first.node.type === 'Text' && start_newline.test(first.node.data)) {
+						state.quasi.value.raw += '\n';
+					}
+				}
+
+				if (is_empty_textarea) {
+					// The <textarea> renders the value attribute as content because the content is stored in the value attribute.
+					const value_attribute = wrapper.attributes.find(attr => attr.node.name === 'value');
+					if (value_attribute) {
+						// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
+						// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+						const first = value_attribute.node.chunks[0];
+						if (first && first.type === 'Text' && start_newline.test(first.data)) {
+							state.quasi.value.raw += '\n';
+						}
+						to_html_for_attr_value(value_attribute, block, literal, state);
+					}
+				}
+
 				to_html(wrapper.fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
 				state.quasi.value.raw += `</${wrapper.node.name}>`;
 			} else {
 				state.quasi.value.raw += '/>';
 			}
+		}
+	});
+}
+
+function to_html_for_attr_value(attr: AttributeWrapper | StyleAttributeWrapper | SpreadAttributeWrapper, block: Block, literal: any, state: any) {
+	attr.node.chunks.forEach(chunk => {
+		if (chunk.type === 'Text') {
+			state.quasi.value.raw += escape_html(chunk.data);
+		} else {
+			literal.quasis.push(state.quasi);
+			literal.expressions.push(chunk.manipulate(block));
+
+			state.quasi = {
+				type: 'TemplateElement',
+				value: { raw: '' }
+			};
 		}
 	});
 }
