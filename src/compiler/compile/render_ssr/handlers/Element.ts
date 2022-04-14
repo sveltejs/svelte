@@ -1,6 +1,6 @@
 import { is_void } from '../../../../shared/utils/names';
 import { get_attribute_expression, get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
-import { boolean_attributes } from './shared/boolean_attributes';
+import { boolean_attributes } from '../../../../shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
 import { p, x } from 'code-red';
