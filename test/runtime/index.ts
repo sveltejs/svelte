@@ -155,14 +155,13 @@ describe('runtime', () => {
 
 					const target = window.document.querySelector('main');
 
-					let ssrHtml: string | undefined = undefined;
 					if (hydrate && from_ssr_html) {
 						// ssr into target
 						compileOptions.generate = 'ssr';
 						cleanRequireCache();
 						const SsrSvelteComponent = require(`./samples/${dir}/main.svelte`).default;
-						ssrHtml = SsrSvelteComponent.render(config.props).html;
-						target.innerHTML = ssrHtml;
+						const { html } = SsrSvelteComponent.render(config.props);
+						target.innerHTML = html;
 						delete compileOptions.generate;
 					} else {
 						target.innerHTML = '';
@@ -211,8 +210,7 @@ describe('runtime', () => {
 							target,
 							window,
 							raf,
-							compileOptions,
-							ssrHtml
+							compileOptions
 						})).then(() => {
 							component.$destroy();
 
