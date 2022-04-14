@@ -26,9 +26,14 @@ export default class Animation extends Node {
 		}
 
 		const block = parent.parent;
-		if (!block || block.type !== 'EachBlock' || !block.key) {
+		if (!block || block.type !== 'EachBlock') {
 			// TODO can we relax the 'immediate child' rule?
 			component.error(this, compiler_errors.invalid_animation_immediate);
+			return;
+		}
+
+		if (!block.key) {
+			component.error(this, compiler_errors.invalid_animation_key);
 			return;
 		}
 
