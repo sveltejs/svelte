@@ -27,6 +27,7 @@ export class ElseBlockWrapper extends Wrapper {
 		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
+		add_const_tags_context(renderer, this.node.const_tags);
 
 		this.block = block.child({
 			comment: create_debugging_comment(node, this.renderer.component),
@@ -257,6 +258,18 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		if (this.else) {
+			let else_ctx = x`#ctx`;
+			if (this.else.node.const_tags.length > 0) {
+				const get_ctx_name = this.renderer.component.get_unique_name('get_else_ctx');
+				this.renderer.blocks.push(b`
+					function ${get_ctx_name}(#ctx) {
+						const child_ctx = #ctx.slice();
+						${add_const_tags(block, this.else.node.const_tags, 'child_ctx')}
+						return child_ctx;
+					}
+				`);
+				else_ctx = x`${get_ctx_name}(#ctx)`;
+			}
 			const each_block_else = component.get_unique_name(`${this.var.name}_else`);
 
 			block.chunks.init.push(b`let ${each_block_else} = null;`);
@@ -264,7 +277,7 @@ export default class EachBlockWrapper extends Wrapper {
 			// TODO neaten this up... will end up with an empty line in the block
 			block.chunks.init.push(b`
 				if (!${this.vars.data_length}) {
-					${each_block_else} = ${this.else.block.name}(#ctx);
+					${each_block_else} = ${this.else.block.name}(${else_ctx});
 				}
 			`);
 
@@ -304,9 +317,9 @@ export default class EachBlockWrapper extends Wrapper {
 			if (this.else.block.has_update_method) {
 				this.updates.push(b`
 					if (!${this.vars.data_length} && ${each_block_else}) {
-						${each_block_else}.p(#ctx, #dirty);
+						${each_block_else}.p(${else_ctx}, #dirty);
 					} else if (!${this.vars.data_length}) {
-						${each_block_else} = ${this.else.block.name}(#ctx);
+						${each_block_else} = ${this.else.block.name}(${else_ctx});
 						${each_block_else}.c();
 						${has_transitions && b`@transition_in(${each_block_else}, 1);`}
 						${each_block_else}.m(${update_mount_node}, ${update_anchor_node});
@@ -321,7 +334,7 @@ export default class EachBlockWrapper extends Wrapper {
 							${destroy_block_else};
 						}
 					} else if (!${each_block_else}) {
-						${each_block_else} = ${this.else.block.name}(#ctx);
+						${each_block_else} = ${this.else.block.name}(${else_ctx});
 						${each_block_else}.c();
 						${has_transitions && b`@transition_in(${each_block_else}, 1);`}
 						${each_block_else}.m(${update_mount_node}, ${update_anchor_node});
