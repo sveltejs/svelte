@@ -1114,6 +1114,9 @@ export default class ElementWrapper extends Wrapper {
 function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapper | RawMustacheTagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
 		if (wrapper instanceof TextWrapper) {
+			// Don't add the <pre>/<textare> newline logic here because pre/textarea.innerHTML
+			// would keep the leading newline, too, only someParent.innerHTML = '..<pre/textarea>..' won't
+
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
 
 			const parent = wrapper.node.parent as Element;
