@@ -415,13 +415,15 @@ export default class ElementWrapper extends Wrapper {
 
 		const { can_use_textcontent, can_optimise_to_html_string } = this.node;
 
+		const to_optimise_hydration = can_optimise_to_html_string || (!is_head(parent_node) && this.node.children.length === 1 && this.node.children[0].type === 'RawMustacheTag');
+
 		if (hydratable) {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
-					${node} = ${this.get_claim_statement(block, parent_nodes, can_optimise_to_html_string)};
+					${node} = ${this.get_claim_statement(block, parent_nodes, to_optimise_hydration)};
 				`);
 
-				if (!can_optimise_to_html_string && !this.void && this.node.children.length > 0) {
+				if (!to_optimise_hydration && !this.void && this.node.children.length > 0) {
 					block.chunks.claim.push(b`
 						var ${nodes} = ${children};
 					`);
@@ -534,7 +536,7 @@ export default class ElementWrapper extends Wrapper {
 		this.add_styles(block);
 		this.add_manual_style_scoping(block);
 
-		if (nodes && hydratable && !this.void && !can_optimise_to_html_string) {
+		if (nodes && hydratable && !this.void && !to_optimise_hydration) {
 			block.chunks.claim.push(
 				b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`
 			);
@@ -570,7 +572,7 @@ export default class ElementWrapper extends Wrapper {
 		return x`@element(${reference})`;
 	}
 
-	get_claim_statement(block: Block, nodes: Identifier, can_optimise_to_html_string: boolean) {
+	get_claim_statement(block: Block, nodes: Identifier, to_optimise_hydration: boolean) {
 		const attributes = this.attributes
 			.filter((attr) => !(attr instanceof SpreadAttributeWrapper) && !attr.property_name)
 			.map((attr) => p`${(attr as StyleAttributeWrapper | AttributeWrapper).name}: true`);
@@ -588,7 +590,7 @@ export default class ElementWrapper extends Wrapper {
 			reference = x`(${this.node.tag_expr.manipulate(block)} || 'null').toUpperCase()`;
 		}
 
-		if (can_optimise_to_html_string) {
+		if (to_optimise_hydration) {
 			attributes.push(p`["data-svelte"]: true`);
 		}
 

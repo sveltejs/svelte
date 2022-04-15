@@ -9,6 +9,7 @@ import MustacheTag from '../../nodes/MustacheTag';
 import RawMustacheTag from '../../nodes/RawMustacheTag';
 import { is_head } from './shared/is_head';
 import { Identifier, Node } from 'estree';
+import hash from '../../utils/hash';
 
 export default class RawMustacheTagWrapper extends Tag {
 	var: Identifier = { type: 'Identifier', name: 'raw' };
@@ -35,7 +36,7 @@ export default class RawMustacheTagWrapper extends Tag {
 				content => insert(content)
 			);
 
-			block.chunks.mount.push(insert(init));
+			block.chunks.mount.push(b`if (@get_svelte_dataset(${parent_node}) !== "${hash(JSON.stringify(this.node.expression.node))}") ${insert(init)}`);
 		} else {
 			const needs_anchor = in_head || (this.next ? !this.next.is_dom_node() : (!this.parent || !this.parent.is_dom_node()));
 
