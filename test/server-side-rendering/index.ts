@@ -83,13 +83,7 @@ describe('ssr', () => {
 				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
 
 				try {
-					if (config.withoutNormalizeHtml) {
-						assert.strictEqual(html.trim().replace(/\r\n/g, '\n'), expectedHtml.trim().replace(/\r\n/g, '\n'));
-					} else {
-						(compileOptions.preserveComments
-							? assert.htmlEqualWithComments
-							: assert.htmlEqual)(html, expectedHtml);
-					}
+					assert.htmlEqualWithOptions(html, expectedHtml, { preserveComments: compileOptions.preserveComments, withoutNormalizeHtml: config.withoutNormalizeHtml });
 				} catch (error) {
 					if (shouldUpdateExpected()) {
 						fs.writeFileSync(`${dir}/_expected.html`, html);
@@ -214,9 +208,15 @@ describe('ssr', () => {
 					});
 
 					if (config.ssrHtml) {
-						assert.htmlEqual(html, config.ssrHtml);
+						assert.htmlEqualWithOptions(html, config.ssrHtml, {
+							preserveComments: compileOptions.preserveComments, 
+							withoutNormalizeHtml: config.withoutNormalizeHtml
+						});
 					} else if (config.html) {
-						assert.htmlEqual(html, config.html);
+						assert.htmlEqualWithOptions(html, config.html, {
+							preserveComments: compileOptions.preserveComments, 
+							withoutNormalizeHtml: config.withoutNormalizeHtml
+						});
 					}
 
 					if (config.test_ssr) {

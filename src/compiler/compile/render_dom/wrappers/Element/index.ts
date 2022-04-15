@@ -1218,7 +1218,11 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 			// Don't add the <pre>/<textarea> newline logic here because pre/textarea.innerHTML
 			// would keep the leading newline, too, only someParent.innerHTML = '..<pre/textarea>..' won't
 
-			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
+			if (wrapper.use_space()) {
+				// use space instead of the text content
+				state.quasi.value.raw += ' ';
+				return;
+			}
 
 			const parent = wrapper.node.parent as Element;
 

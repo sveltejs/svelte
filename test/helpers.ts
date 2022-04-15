@@ -4,7 +4,7 @@ import glob from 'tiny-glob/sync';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
-export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void, htmlEqualWithComments: (actual, expected, message?) => void };
+export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void, htmlEqualWithOptions: (actual, expected, options, message?) => void };
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
@@ -140,7 +140,7 @@ function cleanChildren(node) {
 	}
 }
 
-export function normalizeHtml(window, html, { removeDataSvelte = false, preserveComments = false }: { removeDataSvelte?: boolean, preserveComments?: boolean} = {}) {
+export function normalizeHtml(window, html, { removeDataSvelte = false, preserveComments = false }: { removeDataSvelte?: boolean, preserveComments?: boolean }) {
 	try {
 		const node = window.document.createElement('div');
 		node.innerHTML = html
@@ -155,7 +155,12 @@ export function normalizeHtml(window, html, { removeDataSvelte = false, preserve
 	}
 }
 
-export function setupHtmlEqual(options?: { removeDataSvelte?: boolean }) {
+export function normalizeNewline(html: string) {
+	// return html.trim().replace(/\r\n/g, '\n')
+	return html.replace(/\r\n/g, '\n');
+}
+
+export function setupHtmlEqual(options: { removeDataSvelte?: boolean } = {}) {
 	const window = env();
 
 	// eslint-disable-next-line no-import-assign
@@ -167,10 +172,14 @@ export function setupHtmlEqual(options?: { removeDataSvelte?: boolean }) {
 		);
 	};
 	// eslint-disable-next-line no-import-assign
-	assert.htmlEqualWithComments = (actual, expected, message) => {
+	assert.htmlEqualWithOptions = (actual, expected, { preserveComments, withoutNormalizeHtml }, message) => {
 		assert.deepEqual(
-			normalizeHtml(window, actual, { ...options, preserveComments: true }),
-			normalizeHtml(window, expected, { ...options, preserveComments: true }),
+			withoutNormalizeHtml
+				? normalizeNewline(actual).replace(/(\sdata-svelte="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
+				: normalizeHtml(window, actual, { ...options, preserveComments }),
+			withoutNormalizeHtml
+				? normalizeNewline(expected).replace(/(\sdata-svelte="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
+				: normalizeHtml(window, expected, { ...options, preserveComments }),
 			message
 		);
 	};
