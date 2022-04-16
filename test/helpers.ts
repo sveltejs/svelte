@@ -156,7 +156,6 @@ export function normalizeHtml(window, html, { removeDataSvelte = false, preserve
 }
 
 export function normalizeNewline(html: string) {
-	// return html.trim().replace(/\r\n/g, '\n')
 	return html.replace(/\r\n/g, '\n');
 }
 
